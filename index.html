@@ -3,61 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>AllonaHub</title>
 
 <style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
 
 body{
-margin:0;
-font-family:Arial,sans-serif;
-background:linear-gradient(135deg,#021B33,#003D5C,#0D6E8A);
+background:linear-gradient(135deg,#041c32,#0a4b78,#0d8bff);
+min-height:100vh;
 color:white;
-height:100vh;
+}
+
+header{
+padding:25px 60px;
 display:flex;
-justify-content:center;
+justify-content:space-between;
 align-items:center;
 }
 
-.container{
+.logo{
+font-size:32px;
+font-weight:700;
+color:#ffd700;
+}
+
+.menu{
+display:flex;
+gap:25px;
+}
+
+.menu a{
+color:white;
+text-decoration:none;
+font-weight:500;
+}
+
+.hero{
+height:85vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
 text-align:center;
+padding:20px;
 }
 
-h1{
-font-size:60px;
-margin-bottom:10px;
+.hero h1{
+font-size:72px;
+margin-bottom:20px;
 }
 
-p{
+.hero p{
 font-size:22px;
+max-width:900px;
 opacity:.9;
+margin-bottom:40px;
 }
 
-.btn{
-display:inline-block;
-margin-top:30px;
-padding:15px 40px;
-background:#FFD700;
+.main-btn{
+background:#ffd700;
 color:black;
+padding:18px 45px;
+border-radius:15px;
 text-decoration:none;
 font-weight:bold;
-border-radius:15px;
+font-size:18px;
 }
 
-</style>
+.modules{
+padding:80px 40px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:25px;
+max-width:1400px;
+margin:auto;
+}
 
+.card{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+border-radius:20px;
+padding:30px;
+transition:.3s;
+cursor:pointer;
+}
+
+.card:hover{
+transform:translateY(-8px);
+}
+
+.card h3{
+margin-bottom:10px;
+color:#ffd700;
+}
+
+footer{
+text-align:center;
+padding:30px;
+opacity:.7;
+}
+</style>
 </head>
 
 <body>
 
-<div class="container">
-<h1>AllonaHub</h1>
-<p>AllonaHub İlk Canlı Deploy Testi</p>
+<header>
+<div class="logo">AllonaHub</div>
 
-<a href="#" class="btn">
+<div class="menu">
+<a href="#">HP Dünyası</a>
+<a href="#">Shop</a>
+<a href="#">Food</a>
+<a href="#">Taxi</a>
+<a href="#">Career</a>
+</div>
+</header>
+
+<section class="hero">
+<h1>AllonaHub</h1>
+
+<p>
+Dünyanın yeni nesil süper uygulaması.
+Alışveriş, yemek, kariyer, ulaşım, ödüller ve partner ekosistemi tek platformda.
+</p>
+
+<a href="#" class="main-btn">
 HP Dünyasına Gir
 </a>
 
+</section>
+
+<section class="modules">
+
+<div class="card">
+<h3>HP Dünyası</h3>
+<p>Ödüller, seviyeler ve sadakat sistemi.</p>
 </div>
+
+<div class="card">
+<h3>Allona Shop</h3>
+<p>E-ticaret ve premium alışveriş deneyimi.</p>
+</div>
+
+<div class="card">
+<h3>Food</h3>
+<p>Yemek siparişi ve restoran ağı.</p>
+</div>
+
+<div class="card">
+<h3>Taxi</h3>
+<p>Hızlı ulaşım ve şehir içi mobilite.</p>
+</div>
+
+<div class="card">
+<h3>Career</h3>
+<p>İş ilanları ve kariyer fırsatları.</p>
+</div>
+
+<div class="card">
+<h3>Maritime</h3>
+<p>Gemi personeli ve denizcilik çözümleri.</p>
+</div>
+
+</section>
+
+<footer>
+©️ 2026 AllonaHub
+</footer>
 
 </body>
 </html>
