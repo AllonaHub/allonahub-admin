@@ -509,7 +509,7 @@ h1{font-size:48px}
 .card-yemek{background-image:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1)),url("images/yemek.png")!important;}
 .card-market{background-image:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1)),url("images/market.png")!important;}
 .card-taksi{background-image:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1)),url("images/taksi.png")!important;}
-.card-saglik{background-image:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1)),url("images/saglik.png")!important;} 
+.card-saglik{background-image:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.1)),url("images/saglık.png")!important;} 
 .home-hero{
   min-height:260px !important;
   display:flex !important;
@@ -672,6 +672,104 @@ nav a{
   border-radius:999px!important;
   box-shadow:0 0 20px rgba(0,225,255,.35)!important;
 }  
+.hero-dashboard{
+  display:grid;
+  grid-template-columns:1fr 2fr 1fr;
+  gap:24px;
+  align-items:center;
+  padding:42px 7%;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(0,225,255,.18),transparent 35%),
+    linear-gradient(135deg,rgba(0,40,80,.45),rgba(2,8,20,.95));
+  border-bottom:1px solid rgba(0,225,255,.18);
+}
+
+.hero-left,
+.hero-right{
+  background:rgba(0,20,45,.62);
+  border:1px solid rgba(0,225,255,.35);
+  border-radius:24px;
+  padding:24px;
+  min-height:180px;
+  box-shadow:0 0 26px rgba(0,180,255,.16);
+}
+
+.sun-animation{
+  font-size:46px;
+  animation:sunGlow 2.4s infinite alternate;
+}
+
+@keyframes sunGlow{
+  from{transform:scale(1); filter:drop-shadow(0 0 8px #ffd700);}
+  to{transform:scale(1.2); filter:drop-shadow(0 0 28px #ffd700);}
+}
+
+#liveClock{
+  margin-top:10px;
+  font-size:36px;
+  font-weight:900;
+  color:#00e5ff;
+  letter-spacing:2px;
+}
+
+.location-line{
+  margin-top:10px;
+  color:#bdefff;
+  font-size:15px;
+}
+
+.hero-center{
+  text-align:center;
+}
+
+.hero-center h1{
+  color:#ffd700;
+  font-size:34px;
+  line-height:1.25;
+  margin-bottom:14px;
+}
+
+.hero-center p{
+  color:rgba(255,255,255,.86);
+  font-size:17px;
+  line-height:1.5;
+}
+
+.promo-rotator{
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.promo-icon{
+  font-size:48px;
+  margin-bottom:12px;
+  animation:promoFloat 2.6s infinite ease-in-out;
+}
+
+@keyframes promoFloat{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-8px);}
+}
+
+.promo-rotator h3{
+  color:#ffd700;
+  font-size:24px;
+  margin-bottom:10px;
+}
+
+.promo-rotator p{
+  color:rgba(255,255,255,.82);
+  font-size:15px;
+  line-height:1.45;
+}
+
+@media(max-width:900px){
+  .hero-dashboard{
+    grid-template-columns:1fr;
+    text-align:center;
+  }
+}
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
@@ -694,7 +792,28 @@ nav a{
 <a class="login" href="#">Giriş Yap</a>
 </nav>
 </header>
-<section id="modules" class="modules-section">
+  
+  <section class="hero-dashboard">
+
+  <div class="hero-left">
+    <div class="sun-animation">☀️</div>
+    <div id="liveClock">00:00:00</div>
+    <div class="location-line">🌎 🇹🇷 Türkiye · İstanbul</div>
+  </div>
+
+  <div class="hero-center">
+    <h1>🌎 Global Süper Ekosisteme Hoş Geldiniz</h1>
+    <p>Alışveriş, yemek, market, taksi, denizcilik,Hukuk, kariyer ve çok daha fazlası tek platformda.</p>
+  </div>
+
+  <div class="hero-right promo-rotator">
+    <div class="promo-icon" id="promoIcon">💎</div>
+    <h3 id="promoTitle">HP Kazan</h3>
+    <p id="promoText">AllonaHub’da keşfettikçe ödül dünyasına yaklaş.</p>
+  </div>
+
+</section>
+  <section id="modules" class="modules-section">
   <div class="section-head">
 <p>Tek uygulamada alışveriş, yemek, taksi, denizcilik, Hukuk, kariyer ve daha fazlası.</p>
   </div>
@@ -790,21 +909,11 @@ nav a{
 </section>
 <section id="modules" class="modules-section">
   <div class="section-head">
-    <span>AllonaHub Modülleri</span>
+   
     <h2>Tek ekosistemde tüm hizmetler</h2>
     <p>Alışverişten yemeğe, taksiden denizciliğe kadar tüm ihtiyaçlar tek merkezde.</p>
   </div>
 
-  <div class="modules-grid">
-    <div class="module-card">🛍️<h3>Shop</h3><p>Premium alışveriş ve pazaryeri.</p></div>
-    <div class="module-card">🍔<h3>Food</h3><p>Restoran, paket servis ve yemek siparişi.</p></div>
-    <div class="module-card">🛒<h3>Market</h3><p>Günlük market ve hızlı teslimat.</p></div>
-    <div class="module-card">🚕<h3>Taxi</h3><p>Şehir içi ulaşım ve mobilite.</p></div>
-    <div class="module-card">⚓<h3>Maritime</h3><p>Gemi personeli ve denizcilik çözümleri.</p></div>
-    <div class="module-card">💼<h3>Career</h3><p>İş ilanları, freelancer ve kariyer fırsatları.</p></div>
-    <div class="module-card">🧭<h3>Consultancy</h3><p>Vize, oturum, çalışma izni ve danışmanlık.</p></div>
-    <div class="module-card">👑<h3>HP Wallet</h3><p>Ödül, seviye ve sadakat ekonomisi.</p></div>
-  </div>
 </section>
 <section class="section" id="partner">
 <div class="partner">
@@ -817,6 +926,53 @@ nav a{
 <footer>
 ©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
 </footer>
+<script>
+function updateClock(){
+  const now = new Date();
+  document.getElementById("liveClock").textContent =
+    now.toLocaleTimeString("tr-TR");
+}
+setInterval(updateClock,1000);
+updateClock();
 
+const promos = [
+  {
+    icon:"💎",
+    title:"HP Kazan",
+    text:"AllonaHub’da keşfettikçe ödül dünyasına yaklaş."
+  },
+  {
+    icon:"🛍️",
+    title:"Alışverişi Keşfet",
+    text:"Shop, market ve fırsatlar tek ekosistemde seni bekliyor."
+  },
+  {
+    icon:"🚕",
+    title:"Taksi & Ulaşım",
+    text:"Şehir içi ihtiyaçlar için hızlı ve güvenli çözümler."
+  },
+  {
+    icon:"⚓",
+    title:"Denizcilik & Kariyer",
+    text:"Crew, iş ilanları ve profesyonel fırsatlar AllonaHub’da."
+  },
+  {
+    icon:"🎁",
+    title:"Giriş Yap, Avantajları Aç",
+    text:"Üyelikle kişisel panel, HP ve özel fırsatlar aktif olur."
+  }
+];
+
+let promoIndex = 0;
+
+function rotatePromo(){
+  promoIndex = (promoIndex + 1) % promos.length;
+  document.getElementById("promoIcon").textContent = promos[promoIndex].icon;
+  document.getElementById("promoTitle").textContent = promos[promoIndex].title;
+  document.getElementById("promoText").textContent = promos[promoIndex].text;
+}
+
+setInterval(rotatePromo,4000);
+</script>
 </body>
 </html>
