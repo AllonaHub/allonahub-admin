@@ -252,6 +252,49 @@ h1{font-size:48px}
 
 .search-box span{
   opacity:.65;
+} 
+.modules-grid.large-grid{
+  display:grid !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:14px !important;
+}
+
+.modules-grid.large-grid .module-card{
+  height:150px !important;
+  min-height:150px !important;
+  padding:14px !important;
+  border-radius:18px !important;
+  background-image:linear-gradient(to bottom,rgba(0,10,30,.10),rgba(0,10,30,.88)),var(--img) !important;
+  background-size:cover !important;
+  background-position:center !important;
+  display:flex !important;
+  flex-direction:column !important;
+  justify-content:flex-end !important;
+  text-decoration:none !important;
+}
+
+.modules-grid.large-grid .module-card h3{
+  position:static !important;
+  font-size:17px !important;
+  margin:0 0 6px !important;
+  color:#ffd700 !important;
+}
+
+.modules-grid.large-grid .module-card p{
+  position:static !important;
+  font-size:11px !important;
+  line-height:1.3 !important;
+  color:white !important;
+}
+
+.modules-grid.large-grid .module-card iconify-icon{
+  display:none !important;
+}
+
+@media(max-width:900px){
+  .modules-grid.large-grid{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
 }  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -291,11 +334,12 @@ h1{font-size:48px}
   </div>
 
 <div class="modules-grid large-grid">
-  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?shopping,store')"><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></a>
-  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?food,restaurant')"><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></a>
-  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?market,grocery')"><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></a>
-  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?taxi,car')"><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></a>
-  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?health,beauty')"><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></a>
+  <a class="module-card" href="#"><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></a>
+  <a class="module-card" href="#"><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></a>
+  <a class="module-card" href="#"><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></a>
+  <a class="module-card" href="#"><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></a>
+  <a class="module-card" href="#"><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></a>
+
 
   <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?travel,tourism')"><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p></a>
   <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?real-estate,house')"><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></a>
