@@ -202,6 +202,41 @@ h1{font-size:48px}
   color:#00e5ff;
   filter:drop-shadow(0 0 14px rgba(0,225,255,.75));
   margin-bottom:14px;
+} 
+.home-hero{
+  padding:80px 7% 45px;
+  text-align:center;
+  background:radial-gradient(circle at center,rgba(0,210,255,.18),transparent 45%);
+}
+
+.hero-brand{
+  font-size:56px;
+  font-weight:900;
+  color:#ffd700;
+  text-shadow:0 0 24px rgba(255,215,0,.45);
+}
+
+.hero-sub{
+  margin:16px auto 28px;
+  max-width:760px;
+  font-size:20px;
+  color:rgba(255,255,255,.82);
+}
+
+.search-box{
+  max-width:780px;
+  margin:0 auto;
+  padding:18px 24px;
+  border-radius:999px;
+  border:1px solid rgba(0,225,255,.55);
+  background:rgba(0,20,45,.75);
+  box-shadow:0 0 28px rgba(0,180,255,.22);
+  color:white;
+  font-size:16px;
+}
+
+.search-box span{
+  opacity:.65;
 }  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -223,19 +258,14 @@ h1{font-size:48px}
 </nav>
 </header>
 
-<section class="hero">
-<div class="hero-box">
-<div class="badge">Yeni Nesil Süper Uygulama Ekosistemi</div>
-<h1>AllonaHub</h1>
-<p>
-Alışveriş, yemek, taksi, kariyer, maritime, partner ağı ve HP ödül ekonomisini
-tek merkezde birleştiren global dijital ekosistem.
-</p>
-<div class="buttons">
-<a class="btn gold" href="#wallet">HP Dünyasına Gir</a>
-<a class="btn dark" href="#modules">Ekosistemi Keşfet</a>
-</div>
-</div>
+<section class="home-hero">
+  <div class="hero-brand">ALLONAHUB</div>
+  <p class="hero-sub">
+    Tek uygulamada alışveriş, yemek, taksi, denizcilik, kariyer ve daha fazlası.
+  </p>
+  <div class="search-box">
+    🔍 <span>Aradığınız hizmet, kategori veya özelliği yazın...</span>
+  </div>
 </section>
 
 <section id="modules" class="modules-section">
