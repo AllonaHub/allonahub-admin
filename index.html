@@ -27,7 +27,20 @@ display:flex;justify-content:space-between;align-items:center;
 padding:22px 7%;backdrop-filter:blur(18px);
 background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.1)
 }
-.logo{font-size:30px;font-weight:900;color:#ffd700;text-shadow:0 0 20px #ffd70077}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:32px;
+  font-weight:800;
+  color:#ffd700;
+}
+
+.logo img{
+  width:52px;
+  height:52px;
+  object-fit:contain;
+}
 nav{display:flex;gap:24px;align-items:center}
 nav a{color:white;text-decoration:none;font-size:14px;opacity:.9}
 .login{padding:12px 22px;background:#ffd700;color:#000;border-radius:999px;font-weight:800}
@@ -169,7 +182,10 @@ h1{font-size:48px}
 <body>
 
 <header>
-<div class="logo">AllonaHub</div>
+<div class="logo">
+  <img src="A0CA9EE5-6571-4AD8-9492-699642374AC6.PNG" alt="AllonaHub Logo">
+  <span>AllonaHub</span>
+</div>
 <nav>
 <a href="#modules">Modüller</a>
 <a href="#wallet">HP Wallet</a>
