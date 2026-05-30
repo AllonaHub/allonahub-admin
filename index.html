@@ -419,7 +419,40 @@ h1{font-size:48px}
 .modules-grid.large-grid .module-card::before{
   display:none!important;
 }
-  
+.modules-grid.large-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  gap:14px!important;
+}
+
+.modules-grid.large-grid .module-card{
+  height:170px!important;
+  min-height:170px!important;
+  padding:0!important;
+  position:relative!important;
+  overflow:hidden!important;
+  display:block!important;
+}
+
+.modules-grid.large-grid .module-card img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  display:block!important;
+  z-index:1!important;
+  border-radius:18px!important;
+}
+
+.modules-grid.large-grid .module-card::before{
+  display:none!important;
+}
+
+.modules-grid.large-grid .module-card h3,
+.modules-grid.large-grid .module-card p{
+  display:none!important;
+}  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
