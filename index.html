@@ -4,8 +4,29 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AllonaHub | Yeni Nesil Süper Uygulama</title>
-
 <style>
+  .large-grid{
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+}
+
+.large-grid .module-card{
+  min-height:175px;
+  text-align:center;
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(0,80,140,.45),rgba(0,15,35,.85));
+  border:1px solid rgba(0,225,255,.55);
+  box-shadow:0 0 24px rgba(0,180,255,.22), inset 0 0 20px rgba(0,150,255,.12);
+}
+
+.large-grid .module-card h3{
+  color:white;
+  font-size:20px;
+}
+
+.large-grid .module-card p{
+  font-size:13px;
+}
+
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{background:#020814;color:white;overflow-x:hidden}
 body:before{
@@ -175,8 +196,15 @@ h1{font-size:48px}
   font-size:15px;
   line-height:1.5;
   color:rgba(255,255,255,.78);
+} 
+.module-card iconify-icon{
+  font-size:58px;
+  color:#00e5ff;
+  filter:drop-shadow(0 0 14px rgba(0,225,255,.75));
+  margin-bottom:14px;
 }  
 </style>
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
 
 <body>
@@ -210,20 +238,32 @@ tek merkezde birleştiren global dijital ekosistem.
 </div>
 </section>
 
-<section class="section" id="modules">
-<h2 class="section-title">AllonaHub Modülleri</h2>
-<p class="section-sub">Tek platform, çoklu hizmet, güçlü sadakat ekonomisi.</p>
+<section id="modules" class="modules-section">
+  <div class="section-head">
+    <span>AllonaHub</span>
+    <h2>Tüm Hizmet Kategorileri</h2>
+    <p>İhtiyacın olan tüm hizmetler tek ekosistemde.</p>
+  </div>
 
-<div class="grid">
-<div class="card"><div class="icon">💎</div><h3>HP Dünyası</h3><p>HP kazan, harca, seviye atla ve ayrıcalıklara ulaş.</p></div>
-<div class="card"><div class="icon">🛍️</div><h3>Allona Shop</h3><p>Premium alışveriş ve pazar yeri deneyimi.</p></div>
-<div class="card"><div class="icon">🍔</div><h3>Food</h3><p>Restoranlar, yemek siparişi ve günlük HP kazanımı.</p></div>
-<div class="card"><div class="icon">🚕</div><h3>Taxi</h3><p>Şehir içi ulaşım ve mobilite çözümleri.</p></div>
-<div class="card"><div class="icon">💼</div><h3>Career</h3><p>İş ilanları, kariyer fırsatları ve aday havuzu.</p></div>
-<div class="card"><div class="icon">⚓</div><h3>Maritime</h3><p>Gemi personeli, crew çözümleri ve denizcilik ağı.</p></div>
-<div class="card"><div class="icon">🏨</div><h3>Hotel</h3><p>Konaklama, seyahat ve partner otel fırsatları.</p></div>
-<div class="card"><div class="icon">🤝</div><h3>Partner Paneli</h3><p>İşletmeler için ürün, hizmet ve kampanya yönetimi.</p></div>
-</div>
+<div class="modules-grid large-grid">
+  <a class="module-card" href="#"><iconify-icon icon="mdi:airplane"></iconify-icon><h3>Seyahat</h3><p>Uçak bileti, otel ve tur hizmetleri</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:home-city"></iconify-icon><h3>Gayrimenkul</h3><p>Kiralık, satılık ve yatırım fırsatları</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:ferry"></iconify-icon><h3>Denizcilik</h3><p>Gemi hizmetleri ve denizcilik çözümleri</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:car-sports"></iconify-icon><h3>Otomotiv</h3><p>Araç al-sat, servis ve yedek parça</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:theater"></iconify-icon><h3>Eğlence</h3><p>Etkinlik, konser ve organizasyon</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:paw"></iconify-icon><h3>Evcil Hayvan</h3><p>Mama, bakım ve veteriner hizmetleri</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:shopping"></iconify-icon><h3>Alışveriş</h3><p>Moda, elektronik ve kozmetik</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:tshirt-crew"></iconify-icon><h3>Moda & Giyim</h3><p>Kadın, erkek ve çocuk giyim</p></a>
+
+  <a class="module-card" href="#"><iconify-icon icon="mdi:heart-pulse"></iconify-icon><h3>Sağlık & Güzellik</h3><p>Sağlık, bakım ve güzellik</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:school"></iconify-icon><h3>Eğitim</h3><p>Kurslar ve eğitim hizmetleri</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:wallet"></iconify-icon><h3>Finans</h3><p>Kredi, sigorta ve yatırım</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:food"></iconify-icon><h3>Yemek & Restoran</h3><p>Restoran, kafe ve paket servis</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:laptop"></iconify-icon><h3>Teknoloji</h3><p>Elektronik, yazılım ve servis</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:dumbbell"></iconify-icon><h3>Spor & Fitness</h3><p>Spor salonu ve ekipman</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:palette"></iconify-icon><h3>Sanat & Tasarım</h3><p>Tasarım ve yaratıcı hizmetler</p></a>
+  <a class="module-card" href="#"><iconify-icon icon="mdi:briefcase"></iconify-icon><h3>İş & Kariyer</h3><p>İlanlar, freelancer ve CV desteği</p></a>
+</div> 
 </section>
 
 <section class="section" id="wallet">
