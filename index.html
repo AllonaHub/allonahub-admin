@@ -357,6 +357,40 @@ h1{font-size:48px}
 
 .modules-grid.large-grid .module-card p{
     color:white;
+}
+.modules-grid.large-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  gap:14px!important;
+}
+
+.modules-grid.large-grid .module-card{
+  height:170px!important;
+  min-height:170px!important;
+  padding:0!important;
+  position:relative!important;
+  overflow:hidden!important;
+  display:block!important;
+}
+
+.modules-grid.large-grid .module-card img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  display:block!important;
+  z-index:1!important;
+  border-radius:18px!important;
+}
+
+.modules-grid.large-grid .module-card::before{
+  display:none!important;
+}
+
+.modules-grid.large-grid .module-card h3,
+.modules-grid.large-grid .module-card p{
+  display:none!important;
 }  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -403,25 +437,25 @@ h1{font-size:48px}
 </a>
 
 <a class="module-card" href="#">
-<img src="images/allona-yemek.png">
+<img src="allona-yemek.png">
 <h3>Allona Yemek</h3>
 <p>Restoran ve paket servis</p>
 </a>
 
 <a class="module-card" href="#">
-<img src="images/allona-market.png">
+<img src="allona-market.png">
 <h3>Allona Market</h3>
 <p>Günlük market ihtiyaçları</p>
 </a>
 
 <a class="module-card" href="#">
-<img src="images/allona-taksi.png">
+<img src="allona-taksi.png">
 <h3>Allona Taksi</h3>
 <p>Şehir içi ulaşım</p>
 </a>
 
 <a class="module-card" href="#">
-<img src="images/allona-saglik.png">
+<img src="allona-saglik.png">
 <h3>Allona Sağlık</h3>
 <p>Sağlık ve güzellik</p>
 </a>  
