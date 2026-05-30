@@ -100,6 +100,69 @@ h1{font-size:48px}
 .hero p{font-size:18px}
 .section-title{font-size:32px}
 }
+.modules-section{
+  padding:80px 7%;
+  background:linear-gradient(180deg,#061b33,#020814);
+}
+
+.section-head{
+  text-align:center;
+  max-width:760px;
+  margin:0 auto 45px;
+}
+
+.section-head span{
+  color:#ffd700;
+  font-weight:800;
+  letter-spacing:1px;
+}
+
+.section-head h2{
+  font-size:42px;
+  margin:14px 0;
+  color:white;
+}
+
+.section-head p{
+  color:rgba(255,255,255,.75);
+  font-size:17px;
+}
+
+.modules-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:22px;
+}
+
+.module-card{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(0,225,255,.35);
+  border-radius:26px;
+  padding:30px 24px;
+  min-height:190px;
+  color:white;
+  box-shadow:0 0 24px rgba(0,170,255,.16);
+  transition:.25s ease;
+  font-size:34px;
+}
+
+.module-card:hover{
+  transform:translateY(-8px);
+  box-shadow:0 0 36px rgba(0,225,255,.35);
+  border-color:#00e5ff;
+}
+
+.module-card h3{
+  font-size:23px;
+  margin:18px 0 10px;
+  color:#ffd700;
+}
+
+.module-card p{
+  font-size:15px;
+  line-height:1.5;
+  color:rgba(255,255,255,.78);
+}  
 </style>
 </head>
 
@@ -194,10 +257,27 @@ tek merkezde birleştiren global dijital ekosistem.
 </div>
 </div>
 </section>
+<section id="modules" class="modules-section">
+  <div class="section-head">
+    <span>AllonaHub Modülleri</span>
+    <h2>Tek ekosistemde tüm hizmetler</h2>
+    <p>Alışverişten yemeğe, taksiden denizciliğe kadar tüm ihtiyaçlar tek merkezde.</p>
+  </div>
 
+  <div class="modules-grid">
+    <div class="module-card">🛍️<h3>Shop</h3><p>Premium alışveriş ve pazaryeri.</p></div>
+    <div class="module-card">🍔<h3>Food</h3><p>Restoran, paket servis ve yemek siparişi.</p></div>
+    <div class="module-card">🛒<h3>Market</h3><p>Günlük market ve hızlı teslimat.</p></div>
+    <div class="module-card">🚕<h3>Taxi</h3><p>Şehir içi ulaşım ve mobilite.</p></div>
+    <div class="module-card">⚓<h3>Maritime</h3><p>Gemi personeli ve denizcilik çözümleri.</p></div>
+    <div class="module-card">💼<h3>Career</h3><p>İş ilanları, freelancer ve kariyer fırsatları.</p></div>
+    <div class="module-card">🧭<h3>Consultancy</h3><p>Vize, oturum, çalışma izni ve danışmanlık.</p></div>
+    <div class="module-card">👑<h3>HP Wallet</h3><p>Ödül, seviye ve sadakat ekonomisi.</p></div>
+  </div>
+</section>
 <section class="section" id="partner">
 <div class="partner">
-<h2>AllonaHub Partner Ekosistemine Katıl Auto Deploy Test Başarılı woow</h2>
+<h2>AllonaHub Partner Ekosistemine Katıl</h2>
 <p>Restoran, mağaza, ulaşım, kariyer, maritime ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
 <a class="btn gold" href="#">Partner Başvurusu Yap</a>
 </div>
