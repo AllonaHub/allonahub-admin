@@ -1,250 +1,211 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AllonaHub | Daha Fazlası</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AllonaHub | Yeni Nesil Süper Uygulama</title>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#020814;color:white;overflow-x:hidden}
+body:before{
+content:"";position:fixed;inset:0;z-index:-2;
+background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+linear-gradient(135deg,#020814,#061b33,#002b4d);
 }
-
-body{
-background:#03142d;
-color:white;
+body:after{
+content:"";position:fixed;inset:0;z-index:-1;
+background:linear-gradient(120deg,transparent,#00d5ff18,transparent);
+animation:wave 8s infinite linear;
 }
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:20px;
+header{
+position:sticky;top:0;z-index:10;
+display:flex;justify-content:space-between;align-items:center;
+padding:22px 7%;backdrop-filter:blur(18px);
+background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.1)
 }
+.logo{font-size:30px;font-weight:900;color:#ffd700;text-shadow:0 0 20px #ffd70077}
+nav{display:flex;gap:24px;align-items:center}
+nav a{color:white;text-decoration:none;font-size:14px;opacity:.9}
+.login{padding:12px 22px;background:#ffd700;color:#000;border-radius:999px;font-weight:800}
 
-.location{
-background:rgba(255,255,255,.08);
-padding:12px 18px;
-border-radius:20px;
-border:1px solid rgba(0,255,255,.3);
+.hero{
+min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:70px 7% 40px
 }
-
-.logo{
-text-align:center;
-padding:20px;
+.hero-box{
+max-width:1000px;padding:55px;border-radius:35px;
+background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+box-shadow:0 0 60px rgba(0,213,255,.25);backdrop-filter:blur(22px)
 }
+.badge{display:inline-block;margin-bottom:20px;padding:10px 18px;border-radius:999px;background:rgba(255,215,0,.16);color:#ffd700;font-weight:800}
+h1{font-size:76px;margin-bottom:20px}
+.hero p{font-size:22px;line-height:1.5;opacity:.92;margin-bottom:35px}
+.buttons{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.btn{padding:17px 34px;border-radius:16px;text-decoration:none;font-weight:900}
+.btn.gold{background:#ffd700;color:#000}
+.btn.dark{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2)}
 
-.logo-a{
-font-size:70px;
-font-weight:bold;
-color:#4fe3ff;
-text-shadow:0 0 25px #4fe3ff;
-}
+.section{padding:70px 7%}
+.section-title{text-align:center;font-size:42px;margin-bottom:15px}
+.section-sub{text-align:center;opacity:.75;margin-bottom:40px}
 
-.logo h1{
-font-size:42px;
-color:#ffd700;
-}
-
-.logo p{
-letter-spacing:4px;
-opacity:.8;
-}
-
-.icons{
-font-size:22px;
-}
-
-.search-area{
-padding:20px;
-max-width:1100px;
-margin:auto;
-}
-
-.search-box{
-width:100%;
-padding:18px;
-border-radius:20px;
-border:none;
-font-size:18px;
-}
-
-.request-btn{
-margin-top:15px;
-background:#0d6efd;
-padding:15px;
-text-align:center;
-border-radius:18px;
-font-weight:bold;
-}
-
-.section-title{
-text-align:center;
-font-size:28px;
-margin-top:30px;
-margin-bottom:25px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:20px;
-padding:20px;
-max-width:1300px;
-margin:auto;
-}
-
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
 .card{
-background:rgba(255,255,255,.05);
-border:1px solid rgba(0,255,255,.25);
-border-radius:22px;
-padding:30px;
-text-align:center;
-transition:.3s;
+padding:28px;border-radius:24px;background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(18px);
+transition:.3s;min-height:165px
 }
+.card:hover{transform:translateY(-8px);box-shadow:0 20px 45px rgba(0,213,255,.22)}
+.icon{font-size:34px;margin-bottom:15px}
+.card h3{color:#ffd700;margin-bottom:10px}
+.card p{opacity:.82;line-height:1.45}
 
-.card:hover{
-transform:translateY(-5px);
-box-shadow:0 0 25px rgba(0,255,255,.3);
+.wallet{
+display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px
 }
-
-.icon{
-font-size:40px;
-margin-bottom:15px;
+.stat{
+padding:30px;border-radius:25px;background:linear-gradient(135deg,rgba(255,215,0,.16),rgba(0,213,255,.12));
+border:1px solid rgba(255,255,255,.16)
 }
+.stat h2{font-size:44px;color:#ffd700}
+.stat p{opacity:.8;margin-top:8px}
 
-.card h3{
-margin-bottom:10px;
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.tier{
+padding:32px;border-radius:28px;background:rgba(0,0,0,.35);
+border:1px solid rgba(255,255,255,.16)
 }
+.tier.featured{border-color:#ffd700;box-shadow:0 0 45px rgba(255,215,0,.18)}
+.tier h3{font-size:26px;color:#ffd700;margin-bottom:12px}
+.tier ul{list-style:none;margin-top:18px}
+.tier li{margin:12px 0;opacity:.88}
 
-.card p{
-font-size:14px;
-opacity:.8;
+.partner{
+text-align:center;padding:60px;border-radius:35px;background:rgba(255,255,255,.08);
+border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(20px)
 }
+.partner h2{font-size:42px;margin-bottom:15px}
+.partner p{opacity:.82;margin-bottom:28px}
 
-.bottom-menu{
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-background:#041a36;
-display:flex;
-justify-content:space-around;
-padding:15px;
-border-top:1px solid rgba(255,255,255,.15);
+footer{text-align:center;padding:35px;opacity:.65;border-top:1px solid rgba(255,255,255,.1)}
+
+@media(max-width:768px){
+header{flex-direction:column;gap:15px}
+nav{flex-wrap:wrap;justify-content:center}
+h1{font-size:48px}
+.hero-box{padding:35px 22px}
+.hero p{font-size:18px}
+.section-title{font-size:32px}
 }
-
-.bottom-menu div{
-text-align:center;
-font-size:14px;
-}
-
-.hp-center{
-color:#ffd700;
-font-weight:bold;
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
+<header>
+<div class="logo">AllonaHub</div>
+<nav>
+<a href="#modules">Modüller</a>
+<a href="#wallet">HP Wallet</a>
+<a href="#premium">Premium</a>
+<a href="#partner">Partner Ol</a>
+<a class="login" href="#">Giriş Yap</a>
+</nav>
+</header>
 
-<div class="location">
-📍 Başakşehir, İstanbul
+<section class="hero">
+<div class="hero-box">
+<div class="badge">Yeni Nesil Süper Uygulama Ekosistemi</div>
+<h1>AllonaHub</h1>
+<p>
+Alışveriş, yemek, taksi, kariyer, maritime, partner ağı ve HP ödül ekonomisini
+tek merkezde birleştiren global dijital ekosistem.
+</p>
+<div class="buttons">
+<a class="btn gold" href="#wallet">HP Dünyasına Gir</a>
+<a class="btn dark" href="#modules">Ekosistemi Keşfet</a>
 </div>
-
-<div class="icons">
-🔔 💬 👑
 </div>
+</section>
 
-</div>
-
-<div class="logo">
-
-<div class="logo-a">A</div>
-
-<h1>ALLONAHUB</h1>
-
-<p>DAHA FAZLASI</p>
-
-</div>
-
-<div class="search-area">
-
-<input class="search-box"
-placeholder="Aradığınız hizmet, kategori veya özellik...">
-
-<div class="request-btn">
-💡 Öneri & Talep Oluştur
-</div>
-
-</div>
-
-<h2 class="section-title">
-TÜM HİZMET KATEGORİLERİ
-</h2>
+<section class="section" id="modules">
+<h2 class="section-title">AllonaHub Modülleri</h2>
+<p class="section-sub">Tek platform, çoklu hizmet, güçlü sadakat ekonomisi.</p>
 
 <div class="grid">
+<div class="card"><div class="icon">💎</div><h3>HP Dünyası</h3><p>HP kazan, harca, seviye atla ve ayrıcalıklara ulaş.</p></div>
+<div class="card"><div class="icon">🛍️</div><h3>Allona Shop</h3><p>Premium alışveriş ve pazar yeri deneyimi.</p></div>
+<div class="card"><div class="icon">🍔</div><h3>Food</h3><p>Restoranlar, yemek siparişi ve günlük HP kazanımı.</p></div>
+<div class="card"><div class="icon">🚕</div><h3>Taxi</h3><p>Şehir içi ulaşım ve mobilite çözümleri.</p></div>
+<div class="card"><div class="icon">💼</div><h3>Career</h3><p>İş ilanları, kariyer fırsatları ve aday havuzu.</p></div>
+<div class="card"><div class="icon">⚓</div><h3>Maritime</h3><p>Gemi personeli, crew çözümleri ve denizcilik ağı.</p></div>
+<div class="card"><div class="icon">🏨</div><h3>Hotel</h3><p>Konaklama, seyahat ve partner otel fırsatları.</p></div>
+<div class="card"><div class="icon">🤝</div><h3>Partner Paneli</h3><p>İşletmeler için ürün, hizmet ve kampanya yönetimi.</p></div>
+</div>
+</section>
 
-<div class="card">
-<div class="icon">🎁</div>
-<h3>HP Dünyası</h3>
-<p>Ödüller, seviyeler ve sadakat sistemi</p>
+<section class="section" id="wallet">
+<h2 class="section-title">Hub Wallet</h2>
+<p class="section-sub">HP ve XP ekonomisinin merkezi.</p>
+
+<div class="wallet">
+<div class="stat"><h2>0 HP</h2><p>Başlangıç HP bakiyesi</p></div>
+<div class="stat"><h2>Level 1</h2><p>Yeni kullanıcı seviyesi</p></div>
+<div class="stat"><h2>0 XP</h2><p>Görev, alışveriş ve etkileşim puanı</p></div>
+</div>
+</section>
+
+<section class="section" id="premium">
+<h2 class="section-title">Premium Üyelikler</h2>
+<p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
+
+<div class="tiers">
+<div class="tier">
+<h3>Hub+</h3>
+<p>Başlangıç premium paketi.</p>
+<ul>
+<li>✓ HP bonusları</li>
+<li>✓ Özel kampanyalar</li>
+<li>✓ Seviye koruma avantajı</li>
+</ul>
 </div>
 
-<div class="card">
-<div class="icon">🛍️</div>
-<h3>Allona Shop</h3>
-<p>E-ticaret ve premium alışveriş</p>
+<div class="tier featured">
+<h3>Gold</h3>
+<p>En dengeli avantaj paketi.</p>
+<ul>
+<li>✓ Daha yüksek HP kazanımı</li>
+<li>✓ Partner indirimleri</li>
+<li>✓ Öncelikli kampanyalar</li>
+</ul>
 </div>
 
-<div class="card">
-<div class="icon">🍔</div>
-<h3>Food</h3>
-<p>Yemek siparişi ve restoran ağı</p>
+<div class="tier">
+<h3>Elite Black</h3>
+<p>Prestij ve özel erişim seviyesi.</p>
+<ul>
+<li>✓ VIP rozet</li>
+<li>✓ Elite kampanyalar</li>
+<li>✓ Özel partner ayrıcalıkları</li>
+</ul>
 </div>
-
-<div class="card">
-<div class="icon">🚕</div>
-<h3>Taxi</h3>
-<p>Şehir içi ulaşım çözümleri</p>
 </div>
+</section>
 
-<div class="card">
-<div class="icon">💼</div>
-<h3>Career</h3>
-<p>İş ilanları ve kariyer fırsatları</p>
+<section class="section" id="partner">
+<div class="partner">
+<h2>AllonaHub Partner Ekosistemine Katıl</h2>
+<p>Restoran, mağaza, ulaşım, kariyer, maritime ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
+<a class="btn gold" href="#">Partner Başvurusu Yap</a>
 </div>
+</section>
 
-<div class="card">
-<div class="icon">⚓</div>
-<h3>Maritime</h3>
-<p>Gemi personeli ve denizcilik</p>
-</div>
-
-</div>
-
-<div style="height:120px;"></div>
-
-<div class="bottom-menu">
-
-<div>🏠<br>Ana Sayfa</div>
-
-<div>🔍<br>Keşfet</div>
-
-<div class="hp-center">👑<br>HP Dünyası</div>
-
-<div>🛒<br>Sepetim</div>
-
-<div>👤<br>Hesabım</div>
-
-</div>
+<footer>
+©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
+</footer>
 
 </body>
 </html>
