@@ -674,26 +674,25 @@ nav a{
 }  
 .hero-dashboard{
   display:grid;
-  grid-template-columns:1fr 2fr 1fr;
-  gap:24px;
+  grid-template-columns:260px 1fr 260px;
+  gap:30px;
   align-items:center;
-  padding:42px 7%;
-  background:
-    radial-gradient(circle at 20% 20%,rgba(0,225,255,.18),transparent 35%),
-    linear-gradient(135deg,rgba(0,40,80,.45),rgba(2,8,20,.95));
-  border-bottom:1px solid rgba(0,225,255,.18);
+  padding:35px 7%!important;
+  min-height:320px;
 }
-
-.hero-left,
+.hero-left{
+  height:220px
+}
+  .hero-center h1{
+    font-size:42px!important;
+    line-height:1.15!important;
+}   
+    .hero-center p{
+    font-size:16px!important;
+}   
 .hero-right{
-  background:rgba(0,20,45,.62);
-  border:1px solid rgba(0,225,255,.35);
-  border-radius:24px;
-  padding:24px;
-  min-height:180px;
-  box-shadow:0 0 26px rgba(0,180,255,.16);
+  height:220px
 }
-
 .sun-animation{
   font-size:46px;
   animation:sunGlow 2.4s infinite alternate;
@@ -723,10 +722,11 @@ nav a{
 }
 
 .hero-center h1{
-  color:#ffd700;
-  font-size:34px;
-  line-height:1.25;
-  margin-bottom:14px;
+  color:#ffffff;
+  font-size:52px;
+  line-height:1.1;
+  margin-bottom:16px;
+  font-weight:800
 }
 
 .hero-center p{
