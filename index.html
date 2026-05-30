@@ -5,28 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AllonaHub | Yeni Nesil Süper Uygulama</title>
 <style>
-  .large-grid{
-  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+.large-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:18px;
 }
 
-.large-grid .module-card{
-  min-height:175px;
-  text-align:center;
+.module-card{
+  min-height:185px;
   border-radius:22px;
-  background:linear-gradient(180deg,rgba(0,80,140,.45),rgba(0,15,35,.85));
-  border:1px solid rgba(0,225,255,.55);
-  box-shadow:0 0 24px rgba(0,180,255,.22), inset 0 0 20px rgba(0,150,255,.12);
+  overflow:hidden;
+  position:relative;
+  padding:0;
+  background-image:linear-gradient(to bottom,rgba(0,10,30,.15),rgba(0,10,30,.92)),var(--img);
+  background-size:cover;
+  background-position:center;
 }
 
-.large-grid .module-card h3{
-  color:white;
+.module-card h3{
+  position:absolute;
+  left:16px;
+  bottom:42px;
+  color:#fff;
   font-size:20px;
 }
 
-.large-grid .module-card p{
-  font-size:13px;
+.module-card p{
+  position:absolute;
+  left:16px;
+  right:16px;
+  bottom:18px;
+  font-size:12px;
+  color:rgba(255,255,255,.82);
 }
 
+@media(max-width:900px){
+  .large-grid{grid-template-columns:repeat(2,1fr);}
+}  
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{background:#020814;color:white;overflow-x:hidden}
 body:before{
@@ -276,24 +291,41 @@ h1{font-size:48px}
   </div>
 
 <div class="modules-grid large-grid">
-  <a class="module-card" href="#"><iconify-icon icon="mdi:airplane"></iconify-icon><h3>Seyahat</h3><p>Uçak bileti, otel ve tur hizmetleri</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:home-city"></iconify-icon><h3>Gayrimenkul</h3><p>Kiralık, satılık ve yatırım fırsatları</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:ferry"></iconify-icon><h3>Denizcilik</h3><p>Gemi hizmetleri ve denizcilik çözümleri</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:car-sports"></iconify-icon><h3>Otomotiv</h3><p>Araç al-sat, servis ve yedek parça</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:theater"></iconify-icon><h3>Eğlence</h3><p>Etkinlik, konser ve organizasyon</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:paw"></iconify-icon><h3>Evcil Hayvan</h3><p>Mama, bakım ve veteriner hizmetleri</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:shopping"></iconify-icon><h3>Alışveriş</h3><p>Moda, elektronik ve kozmetik</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:tshirt-crew"></iconify-icon><h3>Moda & Giyim</h3><p>Kadın, erkek ve çocuk giyim</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?shopping,store')"><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?food,restaurant')"><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?market,grocery')"><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?taxi,car')"><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?health,beauty')"><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></a>
 
-  <a class="module-card" href="#"><iconify-icon icon="mdi:heart-pulse"></iconify-icon><h3>Sağlık & Güzellik</h3><p>Sağlık, bakım ve güzellik</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:school"></iconify-icon><h3>Eğitim</h3><p>Kurslar ve eğitim hizmetleri</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:wallet"></iconify-icon><h3>Finans</h3><p>Kredi, sigorta ve yatırım</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:food"></iconify-icon><h3>Yemek & Restoran</h3><p>Restoran, kafe ve paket servis</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:laptop"></iconify-icon><h3>Teknoloji</h3><p>Elektronik, yazılım ve servis</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:dumbbell"></iconify-icon><h3>Spor & Fitness</h3><p>Spor salonu ve ekipman</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:palette"></iconify-icon><h3>Sanat & Tasarım</h3><p>Tasarım ve yaratıcı hizmetler</p></a>
-  <a class="module-card" href="#"><iconify-icon icon="mdi:briefcase"></iconify-icon><h3>İş & Kariyer</h3><p>İlanlar, freelancer ve CV desteği</p></a>
-</div> 
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?travel,tourism')"><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?real-estate,house')"><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?ship,yacht')"><h3>Denizcilik</h3><p>Gemi ve crew hizmetleri</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?law,justice')"><h3>Hukuk</h3><p>Avukat ve danışmanlık</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?consulting,business')"><h3>Danışmanlık</h3><p>Profesyonel destek</p></a>
+
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?pet,cat,dog')"><h3>Evcil Hayvan</h3><p>Bakım ve ürünler</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?agriculture,farm')"><h3>Tarımcılık</h3><p>Tarım ve üretim</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?technology,laptop')"><h3>Teknoloji</h3><p>Yazılım ve elektronik</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?fitness,gym')"><h3>Spor & Fitness</h3><p>Spor ve ekipman</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?art,design')"><h3>Sanat Tasarım</h3><p>Tasarım ve yaratıcılık</p></a>
+
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?renovation,decor')"><h3>Tadilat & Dekorasyon</h3><p>Ev ve ofis çözümleri</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?automotive,car')"><h3>Otomotiv</h3><p>Araç ve servis</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?career,office')"><h3>İş & Kariyer</h3><p>İlan ve freelancer</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?concert,event')"><h3>Eğlence & Etkinlik</h3><p>Konser ve etkinlik</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?advertising,media')"><h3>Medya & Reklam</h3><p>Tanıtım ve sosyal medya</p></a>
+
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?finance,money')"><h3>Finans</h3><p>Kredi ve yatırım</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?insurance,security')"><h3>Sigorta</h3><p>Konut, araç ve sağlık</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?marketing,media')"><h3>Medya & Reklam</h3><p>Marka ve reklam</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?home,lifestyle')"><h3>Yaşam</h3><p>Günlük yaşam hizmetleri</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?cars,transport')"><h3>Araçlar</h3><p>Kiralama ve transfer</p></a>
+
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?cargo,delivery')"><h3>Kargo & Nakliye</h3><p>Taşıma ve lojistik</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?organization,event')"><h3>Organizasyon</h3><p>Etkinlik planlama</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?security,camera')"><h3>Güvenlik</h3><p>Alarm ve koruma</p></a>
+  <a class="module-card" href="#" style="--img:url('https://source.unsplash.com/600x400/?services,more')"><h3>Diğer Hizmetler</h3><p>Tüm diğer hizmetler</p></a>
+</div>
 </section>
 
 <section class="section" id="wallet">
