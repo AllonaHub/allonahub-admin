@@ -105,14 +105,6 @@ border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(20px)
 
 footer{text-align:center;padding:35px;opacity:.65;border-top:1px solid rgba(255,255,255,.1)}
 
-@media(max-width:768px){
-header{flex-direction:column;gap:15px}
-nav{flex-wrap:wrap;justify-content:center}
-h1{font-size:20px}
-.hero-box{padding:35px 22px}
-.hero p{font-size:20px}
-.section-title{font-size:32px}
-}
 .modules-section{
   padding:80px 7%;
   background:linear-gradient(180deg,#061b33,#020814);
@@ -461,129 +453,94 @@ html, body{
   overflow-x:hidden!important;
 }
 
-@media(max-width:768px){
+/* =========================
+   ALLONAHUB RESPONSIVE
+========================= */
+
+@media (max-width:1024px){
+
+  .hero-dashboard{
+    grid-template-columns:1fr !important;
+    gap:20px !important;
+    text-align:center;
+  }
+
+  .modules-grid.large-grid{
+    grid-template-columns:repeat(2,1fr)!important;
+  }
+
+}
+
+@media (max-width:768px){
 
   body{
     overflow-x:hidden!important;
   }
 
   header{
-    width:100%!important;
-    max-width:100%!important;
-    display:flex!important;
     flex-direction:column!important;
-    align-items:center!important;
-    justify-content:center!important;
-    padding:18px 14px!important;
-    gap:14px!important;
-  }
-
-  .logo{
-    justify-content:center!important;
-  }
-
-  .logo img{
-    width:28px!important;
-    height:auto!important;
-  }
-
-  .logo span{
-    font-size:28px!important;
-  }
-
-  .nav-search{
-    width:100%!important;
-    max-width:100%!important;
-    margin:0!important;
-    height:44px!important;
-    font-size:14px!important;
+    gap:12px!important;
+    padding:15px!important;
   }
 
   nav{
     display:none!important;
   }
 
-  section{
+  .nav-search{
     width:100%!important;
     max-width:100%!important;
-    overflow:hidden!important;
   }
 
   .hero-dashboard{
-    width:100%!important;
-    max-width:100%!important;
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:center!important;
-    justify-content:center!important;
-    text-align:center!important;
-    padding:28px 18px!important;
-    gap:20px!important;
     grid-template-columns:1fr!important;
+    padding:20px!important;
   }
 
-  .hero-dashboard > div{
+  .hero-left,
+  .hero-right{
     width:100%!important;
-    max-width:100%!important;
-  }
-
-  .hero-dashboard h1{
-    font-size:38px!important;
-    line-height:1.15!important;
-    text-align:center!important;
-    margin:0 auto 14px!important;
-    max-width:100%!important;
-  }
-
-  .hero-dashboard p{
-    font-size:17px!important;
-    line-height:1.45!important;
-    text-align:center!important;
-    margin:0 auto!important;
-    max-width:100%!important;
-  }
-
-  .promo-rotator{
-    width:100%!important;
-    max-width:100%!important;
-    margin:0 auto!important;
-  }
-
-  .modules-section{
-    width:100%!important;
-    max-width:100%!important;
-    padding:28px 14px!important;
   }
 
   .modules-grid.large-grid{
-    width:100%!important;
-    max-width:100%!important;
-    display:grid!important;
     grid-template-columns:repeat(2,1fr)!important;
     gap:12px!important;
   }
 
-  .modules-grid.large-grid .module-card{
-    width:100%!important;
-    min-width:0!important;
-    height:170px!important;
-    border-radius:18px!important;
-    padding:12px!important;
-    background-size:cover!important;
-    background-position:center!important;
+  .module-card{
+    min-height:170px!important;
   }
 
-  .modules-grid.large-grid .module-card h3{
+}
+
+@media (max-width:480px){
+
+  .modules-grid.large-grid{
+    grid-template-columns:repeat(2,1fr)!important;
+    gap:10px!important;
+  }
+
+  .module-card{
+    min-height:145px!important;
+  }
+
+  .module-card h3{
     font-size:15px!important;
-    line-height:1.1!important;
   }
 
-  .modules-grid.large-grid .module-card p{
+  .module-card p{
     font-size:11px!important;
-    line-height:1.2!important;
   }
 
-}  
+  h1{
+    font-size:34px!important;
+  }
+
+  .section-title{
+    font-size:28px!important;
+  }
+
+}
   
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
