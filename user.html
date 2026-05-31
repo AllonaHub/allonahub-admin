@@ -98,6 +98,10 @@ linear-gradient(180deg,#06172d,#020812 65%)}
 .cards{gap:7px}
 .money-card h2{font-size:18px}
 }
+.hub-card{
+text-decoration:none;
+color:white;
+}  
 </style>
 </head>
 
@@ -165,11 +169,12 @@ linear-gradient(180deg,#06172d,#020812 65%)}
 
 <div class="section-title"><h3>HUB’LARIM</h3><span>Tümünü Gör ›</span></div>
 <div class="hubs">
-  <div class="hub-card"><div class="hicon">🍔</div><p>AllonaFood</p></div>
-  <div class="hub-card"><div class="hicon">🛒</div><p>AllonaMarket</p></div>
-  <div class="hub-card"><div class="hicon">🛍️</div><p>AllonaShop</p></div>
-  <div class="hub-card"><div class="hicon">🚙</div><p>AllonaRide</p></div>
-  <div class="hub-card"><div class="hicon">⚪</div><p>Tümü</p></div>
+<a class="hub-card" href="allonashop.html"><div class="hicon">🛍️</div><p>AllonaShop</p></a>
+<a class="hub-card" href="allonayemek.html"><div class="hicon">🍔</div><p>AllonaFood</p></a>
+<a class="hub-card" href="allonamarket.html"><div class="hicon">🛒</div><p>AllonaMarket</p></a>
+<a class="hub-card" href="allonashop.html"><div class="hicon">🛍️</div><p>AllonaShop</p></a>
+<a class="hub-card" href="allonataksi.html"><div class="hicon">🚙</div><p>AllonaRide</p></a>
+<a class="hub-card" href="index.html"><div class="hicon">⚪</div><p>Tümü</p></a> 
 </div>
 
 <div class="benefits" id="benefits">
@@ -184,7 +189,7 @@ linear-gradient(180deg,#06172d,#020812 65%)}
 <div class="tx"><div class="ticon">🍔</div><div><h4>AllonaFood</h4><p>Sipariş tamamlandı</p></div><div class="hp">+50 HP</div><div>›</div></div>
 <div class="tx"><div class="ticon">🎯</div><div><h4>Görev Tamamlandı</h4><p>3 görev tamamlandı</p></div><div class="hp">+30 HP</div><div>›</div></div>
 
-<div class="level-switch" id="levelButtons"></div>
+
 
 <div class="bottom">
   <div class="tab"><div>🏠</div>Ana Sayfa</div>
@@ -210,13 +215,6 @@ const levels = [
  {l:10,theme:'prestige',rank:'PRESTIGE',icon:'♛',hp:'35.750 HP',cash:'3.850,00 ₺',hub:'2.850,00 ₺',xp:'350.000 / 500.000 XP',p:'70%',w:'70%',streak:150}
 ];
 
-const btns=document.getElementById('levelButtons');
-levels.forEach((x,i)=>{
- const b=document.createElement('button');
- b.innerText=x.l;
- b.onclick=()=>setLevel(i);
- btns.appendChild(b);
-});
 
 function setLevel(i){
  const x=levels[i];
@@ -237,7 +235,33 @@ function setLevel(i){
  btns.children[i].classList.add('active');
 }
 
-setLevel(0);
+const currentUser = {
+  name: localStorage.getItem("userName") || "Misafir Kullanıcı",
+  xp: parseInt(localStorage.getItem("userXP")) || 400,
+  hp: localStorage.getItem("userHP") || "250 HP",
+  cashout: localStorage.getItem("userCashout") || "0,00 ₺",
+  hubcash: localStorage.getItem("userHubCash") || "0,00 ₺",
+  memberNo: localStorage.getItem("userMemberNo") || "000000001"
+};
+  
+document.querySelector(".user h2").innerText = currentUser.name;
+document.querySelector(".user .pill").innerText = "Üye No: " + currentUser.memberNo;
+  
+function getLevelByXP(xp){
+  if(xp >= 500000) return 10;
+  if(xp >= 350000) return 9;
+  if(xp >= 100000) return 8;
+  if(xp >= 72450) return 7;
+  if(xp >= 68450) return 6;
+  if(xp >= 27350) return 5;
+  if(xp >= 24000) return 4;
+  if(xp >= 6750) return 3;
+  if(xp >= 1050) return 2;
+  return 1;
+}
+
+const userLevel = getLevelByXP(currentUser.xp);
+setLevel(userLevel - 1);
 </script>
 
 </body>
