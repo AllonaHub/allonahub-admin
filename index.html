@@ -502,10 +502,23 @@ html, body{
     width:100%!important;
   }
 
-  .modules-grid.large-grid{
-    grid-template-columns:repeat(2,1fr)!important;
-    gap:12px!important;
-  }
+ .modules-grid.large-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  gap:6px!important;
+}
+
+.modules-grid.large-grid .module-card{
+  height:95px!important;
+  padding:6px!important;
+}
+
+.modules-grid.large-grid .module-card h3{
+  font-size:10px!important;
+}
+
+.modules-grid.large-grid .module-card p{
+  display:none!important;
+}
 
   .module-card{
     min-height:170px!important;
