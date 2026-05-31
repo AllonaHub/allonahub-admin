@@ -17,7 +17,12 @@ body.elite{--main:#b245ff;--soft:#1b082d;--gold:#ffd700;--accent:#b245ff}
 body.black{--main:#ffd700;--soft:#090909;--gold:#ffd700;--accent:#a600ff}
 body.prestige{--main:#a855ff;--soft:#16051f;--gold:#d9a7ff;--accent:#a855ff}
 
-.app{max-width:430px;margin:auto;min-height:100vh;padding:18px;background:
+.app{
+width:100%;
+max-width:1400px;
+margin:auto;
+padding:20px;
+}
 radial-gradient(circle at top left,var(--main),transparent 22%),
 linear-gradient(180deg,#06172d,#020812 65%)}
 
@@ -91,12 +96,39 @@ linear-gradient(180deg,#06172d,#020812 65%)}
 .level-switch button{min-width:38px;padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d1f39;color:white}
 .level-switch button.active{background:var(--main);color:#001;font-weight:900}
 
-@media(max-width:420px){
-.profile{grid-template-columns:105px 1fr 90px}
-.avatar{width:100px;height:100px}
-.badge-icon{width:82px;height:82px}
-.cards{gap:7px}
-.money-card h2{font-size:18px}
+@media(min-width:1024px){
+
+.app{
+max-width:1400px;
+}
+
+.profile{
+display:grid;
+grid-template-columns:320px 1fr 320px;
+gap:20px;
+align-items:start;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:20px;
+}
+
+.hubs{
+display:grid;
+grid-template-columns:repeat(6,1fr);
+gap:15px;
+}
+
+.transactions{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.bottom-nav{
+display:none;
 }
 .hub-card{
 text-decoration:none;
