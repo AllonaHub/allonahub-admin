@@ -456,17 +456,68 @@ nav a{
   display:none!important;
 }
 
-@media(max-width:1000px){
+@media(max-width:768px){
+
+  header{
+    flex-wrap:wrap!important;
+    height:auto!important;
+    padding:14px 18px!important;
+    gap:12px!important;
+  }
+
+  .logo span{
+    font-size:22px!important;
+  }
+
+  .nav-search{
+    order:3!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:8px 0 0!important;
+    font-size:12px!important;
+    height:40px!important;
+  }
+
+  nav{
+    display:none!important;
+  }
+
+  .hero-dashboard{
+    grid-template-columns:1fr!important;
+    gap:14px!important;
+    padding:20px 5%!important;
+    text-align:center!important;
+  }
+
   .modules-grid.large-grid{
     grid-template-columns:repeat(2,1fr)!important;
+    gap:12px!important;
   }
-}
 
-@media(max-width:600px){
-  .modules-grid.large-grid{
-    grid-template-columns:1fr!important;
+  .modules-grid.large-grid .module-card{
+    height:150px!important;
+    border-radius:18px!important;
+    padding:12px!important;
+  }
+
+  .modules-grid.large-grid .module-card h3{
+    font-size:15px!important;
+  }
+
+  .modules-grid.large-grid .module-card p{
+    font-size:11px!important;
+  }
+
+  .section-head h2{
+    font-size:28px!important;
+  }
+
+  .section-head p{
+    font-size:14px!important;
   }
   
+}
+
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
