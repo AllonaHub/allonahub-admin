@@ -21,10 +21,12 @@ body.prestige{--main:#a855ff;--soft:#16051f;--gold:#d9a7ff;--accent:#a855ff}
 width:100%;
 max-width:1400px;
 margin:auto;
-padding:20px;
+min-height:100vh  
+padding:24px;
+background:
+radial-gradient(circle at top left,var(--main),transparent 20%),
+linear-gradient(180deg,#06172d,#020812 65%);
 }
-radial-gradient(circle at top left,var(--main),transparent 22%),
-linear-gradient(180deg,#06172d,#020812 65%)}
 
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .icon-btn{width:48px;height:48px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 18px var(--main)}
@@ -96,44 +98,99 @@ linear-gradient(180deg,#06172d,#020812 65%)}
 .level-switch button{min-width:38px;padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d1f39;color:white}
 .level-switch button.active{background:var(--main);color:#001;font-weight:900}
 
-@media(min-width:1024px){
+ @media(min-width:1024px){
 
 .app{
-max-width:1400px;
-}
-
-.profile{
 display:grid;
-grid-template-columns:320px 1fr 320px;
-gap:20px;
+grid-template-columns:340px 1fr 360px;
+gap:22px;
 align-items:start;
 }
 
+.top{
+grid-column:1/4;
+}
+
+.profile{
+grid-column:1/2;
+display:flex;
+flex-direction:column;
+align-items:center;
+text-align:center;
+position:sticky;
+top:20px;
+}
+
+.avatar{
+width:190px;
+height:190px;
+}
+
+.avatar-inner{
+font-size:76px;
+}
+
+.user h2{
+font-size:34px;
+}
+
+.badge{
+margin-top:20px;
+}
+
+.badge-icon{
+width:150px;
+height:150px;
+font-size:70px;
+}
+
 .cards{
-display:grid;
+grid-column:2/4;
 grid-template-columns:repeat(3,1fr);
-gap:20px;
+gap:18px;
+margin:0;
+}
+
+.xp-card{
+grid-column:2/4;
+}
+
+.quick-grid{
+grid-column:2/4;
+grid-template-columns:repeat(6,1fr);
+}
+
+.banner{
+grid-column:2/4;
+min-height:190px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
+.section-title,
+.hubs,
+.benefits,
+.tx{
+grid-column:2/4;
 }
 
 .hubs{
-display:grid;
 grid-template-columns:repeat(6,1fr);
-gap:15px;
 }
 
-.transactions{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
+.benefits{
+grid-template-columns:repeat(4,1fr);
 }
 
-.bottom-nav{
+.bottom{
 display:none;
 }
-.hub-card{
-text-decoration:none;
-color:white;
-}  
+
+.level-switch{
+display:none;
+}
+
 </style>
 </head>
 
