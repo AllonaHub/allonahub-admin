@@ -6,119 +6,339 @@
 <title>Allona Shop</title>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#071426;color:white}
-header{position:sticky;top:0;z-index:10;background:#08172d;display:flex;align-items:center;gap:20px;padding:18px 40px;border-bottom:1px solid rgba(0,229,255,.18)}
-.logo{font-size:28px;font-weight:900;color:#ffd700}
-.search{flex:1}
-.search input{width:100%;padding:15px 22px;border-radius:30px;border:1px solid rgba(0,229,255,.35);background:#0d203d;color:white;font-size:15px}
-.nav{display:flex;gap:18px;font-weight:700}
-.nav a{color:white;text-decoration:none}
-.wrap{display:grid;grid-template-columns:250px 1fr 280px;gap:22px;padding:28px}
-.panel,.hero,.product,.side-card{background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20);border-radius:22px;box-shadow:0 0 24px rgba(0,229,255,.10)}
-.panel{padding:18px}
-.panel h3{color:#ffd700;margin-top:0}
-.cat{padding:13px 10px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between}
-.hero{padding:36px;min-height:260px;background:linear-gradient(135deg,rgba(0,50,120,.9),rgba(3,12,30,.95)),url('shop.png');background-size:cover;background-position:center;display:flex;align-items:center}
-.hero h1{font-size:48px;margin:0;color:white}
-.hero span{color:#ffd700}
-.hero p{font-size:18px;max-width:460px;line-height:1.5}
-.btn{display:inline-block;background:#ffd700;color:#061225;text-decoration:none;padding:14px 26px;border-radius:14px;font-weight:900;margin-top:12px}
-.features{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
-.feature{background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.18);border-radius:18px;padding:18px;font-weight:800}
-.section-title{display:flex;justify-content:space-between;align-items:center;margin:24px 0 14px}
-.section-title h2{margin:0;color:#ffd700}
-.products{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.product{overflow:hidden}
-.product img{width:100%;height:160px;object-fit:cover}
-.info{padding:14px}
-.info h3{margin:0 0 8px;font-size:16px}
-.price{color:#ffd700;font-size:20px;font-weight:900}
-.cart-btn{margin-top:10px;width:100%;padding:11px;border:0;border-radius:12px;background:#00e5ff;color:#061225;font-weight:900}
-.side{display:flex;flex-direction:column;gap:16px}
-.side-card{padding:20px}
-.side-card h3{color:#ffd700;margin-top:0}
-.total{font-size:26px;color:#ffd700;font-weight:900}
-.small{opacity:.75;font-size:13px}
-@media(max-width:900px){
-.wrap{grid-template-columns:1fr;padding:15px}
-.nav{display:none}
-.features,.products{grid-template-columns:repeat(2,1fr)}
-.hero h1{font-size:34px}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
 }
+
+body{
+background:#071426;
+color:white;
+}
+
+header{
+background:#08172d;
+padding:18px 30px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+border-bottom:1px solid rgba(0,229,255,.2);
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:12px;
+font-size:28px;
+font-weight:900;
+color:#ffd700;
+}
+
+.logo img{
+height:42px;
+}
+
+.search{
+flex:1;
+margin:0 30px;
+}
+
+.search input{
+width:100%;
+padding:14px 20px;
+border-radius:30px;
+border:none;
+background:#102443;
+color:white;
+}
+
+.menu{
+display:flex;
+gap:20px;
+}
+
+.menu a{
+color:white;
+text-decoration:none;
+font-weight:700;
+}
+
+.container{
+display:grid;
+grid-template-columns:250px 1fr 280px;
+gap:20px;
+padding:20px;
+}
+
+.sidebar,
+.rightbar,
+.card{
+background:#0d1f39;
+border-radius:20px;
+border:1px solid rgba(0,229,255,.15);
+}
+
+.sidebar{
+padding:20px;
+}
+
+.sidebar h3{
+color:#ffd700;
+margin-bottom:15px;
+}
+
+.sidebar ul{
+list-style:none;
+}
+
+.sidebar li{
+padding:12px 0;
+border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.hero{
+background:linear-gradient(135deg,#0c2b60,#081325);
+border-radius:25px;
+padding:40px;
+margin-bottom:20px;
+}
+
+.hero h1{
+font-size:52px;
+margin-bottom:15px;
+}
+
+.hero span{
+color:#ffd700;
+}
+
+.hero p{
+font-size:18px;
+max-width:550px;
+line-height:1.6;
+}
+
+.hero button{
+margin-top:20px;
+padding:14px 25px;
+background:#ffd700;
+border:none;
+border-radius:12px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.section-title{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin:20px 0;
+}
+
+.section-title h2{
+color:#ffd700;
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+}
+
+.product{
+background:#102443;
+border-radius:20px;
+overflow:hidden;
+}
+
+.product img{
+width:100%;
+height:180px;
+object-fit:cover;
+}
+
+.product-content{
+padding:15px;
+}
+
+.price{
+font-size:22px;
+font-weight:bold;
+color:#ffd700;
+margin:10px 0;
+}
+
+.product button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#00d4ff;
+font-weight:bold;
+cursor:pointer;
+}
+
+.rightbar{
+padding:20px;
+height:fit-content;
+}
+
+.rightbar h3{
+color:#ffd700;
+margin-bottom:15px;
+}
+
+.hp-box{
+margin-top:20px;
+padding:15px;
+background:#102443;
+border-radius:15px;
+}
+
+@media(max-width:1000px){
+
+.container{
+grid-template-columns:1fr;
+}
+
+.products{
+grid-template-columns:repeat(2,1fr);
+}
+
+.search{
+display:none;
+}
+
+}
+
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">Allona Shop</div>
-  <div class="search"><input placeholder="Ürün, marka veya kategori ara..."></div>
-  <div class="nav">
-    <a href="index.html">Ana Sayfa</a>
-    <a href="#">Favoriler</a>
-    <a href="#">Sepet</a>
-    <a href="#">Hesabım</a>
-  </div>
+
+<div class="logo">
+<img src="logo.png">
+<span>Allona Shop</span>
+</div>
+
+<div class="search">
+<input type="text" placeholder="Ürün, marka veya kategori ara...">
+</div>
+
+<div class="menu">
+<a href="index.html">Ana Sayfa</a>
+<a href="#">Favoriler</a>
+<a href="#">Sepet</a>
+<a href="#">Hesabım</a>
+</div>
+
 </header>
 
-<div class="wrap">
+<div class="container">
 
-  <aside class="panel">
-    <h3>Kategoriler</h3>
-    <div class="cat">Takı & Aksesuar <span>›</span></div>
-    <div class="cat">Moda & Giyim <span>›</span></div>
-    <div class="cat">Güzellik <span>›</span></div>
-    <div class="cat">Ev & Yaşam <span>›</span></div>
-    <div class="cat">Elektronik <span>›</span></div>
-    <div class="cat">Spor <span>›</span></div>
-    <div class="cat">Otomotiv <span>›</span></div>
-    <div class="cat">Tüm Kategoriler <span>›</span></div>
-  </aside>
+<div class="sidebar">
 
-  <main>
-    <section class="hero">
-      <div>
-        <h1>Allona Shop<br><span>Aradığın her şey</span><br>tek platformda!</h1>
-        <p>Avantajlı fiyatlar, hızlı teslimat, güvenli alışveriş ve HP kazandıran özel kampanyalar.</p>
-        <a class="btn" href="#">Alışverişe Başla</a>
-      </div>
-    </section>
+<h3>Kategoriler</h3>
 
-    <div class="features">
-      <div class="feature">🚚 Hızlı Teslimat</div>
-      <div class="feature">🔒 Güvenli Ödeme</div>
-      <div class="feature">🎁 HP Kazan</div>
-      <div class="feature">↩️ Kolay İade</div>
-    </div>
+<ul>
+<li>💍 Takı & Aksesuar</li>
+<li>👗 Moda & Giyim</li>
+<li>💄 Kozmetik</li>
+<li>🏠 Ev & Yaşam</li>
+<li>📱 Elektronik</li>
+<li>🏋️ Spor</li>
+<li>🚗 Otomotiv</li>
+<li>📚 Tüm Kategoriler</li>
+</ul>
 
-    <div class="section-title">
-      <h2>Fırsat Ürünleri</h2>
-      <span>Tümünü Gör ›</span>
-    </div>
+</div>
 
-    <section class="products">
-      <div class="product"><img src="https://picsum.photos/400/400?11"><div class="info"><h3>Premium Kolye</h3><div class="price">499,99 ₺</div><button class="cart-btn">Sepete Ekle</button></div></div>
-      <div class="product"><img src="https://picsum.photos/400/400?12"><div class="info"><h3>Akıllı Saat</h3><div class="price">899,99 ₺</div><button class="cart-btn">Sepete Ekle</button></div></div>
-      <div class="product"><img src="https://picsum.photos/400/400?13"><div class="info"><h3>Kozmetik Set</h3><div class="price">749,99 ₺</div><button class="cart-btn">Sepete Ekle</button></div></div>
-      <div class="product"><img src="https://picsum.photos/400/400?14"><div class="info"><h3>Spor Ayakkabı</h3><div class="price">1.299,99 ₺</div><button class="cart-btn">Sepete Ekle</button></div></div>
-    </section>
-  </main>
+<div>
 
-  <aside class="side">
-    <div class="side-card">
-      <h3>Sepetim</h3>
-      <p>2 ürün sepette</p>
-      <div class="total">1.249,90 ₺</div>
-      <a class="btn" href="#">Sepete Git</a>
-    </div>
+<div class="hero">
 
-    <div class="side-card">
-      <h3>HP Kampanyası</h3>
-      <p>Bugün alışverişte ekstra HP kazan.</p>
-      <p class="small">Premium üyeler için özel avantajlar aktif.</p>
-    </div>
-  </aside>
+<h1>Allona Shop<br><span>Aradığın her şey</span><br>tek platformda</h1>
+
+<p>
+Premium alışveriş deneyimi, hızlı teslimat,
+güvenli ödeme ve HP kazandıran fırsatlar.
+</p>
+
+<button>Alışverişe Başla</button>
+
+</div>
+
+<div class="section-title">
+<h2>🔥 Fırsat Ürünleri</h2>
+<span>Tümünü Gör</span>
+</div>
+
+<div class="products">
+
+<div class="product">
+<img src="https://picsum.photos/400/400?11">
+<div class="product-content">
+<h3>Premium Takı Seti</h3>
+<div class="price">799,99 ₺</div>
+<button>Sepete Ekle</button>
+</div>
+</div>
+
+<div class="product">
+<img src="https://picsum.photos/400/400?12">
+<div class="product-content">
+<h3>Akıllı Saat</h3>
+<div class="price">1.299,99 ₺</div>
+<button>Sepete Ekle</button>
+</div>
+</div>
+
+<div class="product">
+<img src="https://picsum.photos/400/400?13">
+<div class="product-content">
+<h3>Kozmetik Set</h3>
+<div class="price">599,99 ₺</div>
+<button>Sepete Ekle</button>
+</div>
+</div>
+
+<div class="product">
+<img src="https://picsum.photos/400/400?14">
+<div class="product-content">
+<h3>Spor Ayakkabı</h3>
+<div class="price">1.499,99 ₺</div>
+<button>Sepete Ekle</button>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="rightbar">
+
+<h3>🛒 Sepetim</h3>
+
+<p>2 Ürün</p>
+
+<h2 style="color:#ffd700;">1.249,90 ₺</h2>
+
+<div class="hp-box">
+<h3>🎁 HP Kazan</h3>
+<p>Bu hafta alışverişlerden ekstra HP kazan.</p>
+</div>
+
+<div class="hp-box">
+<h3>⭐ Premium Üye</h3>
+<p>Özel kampanyalara erişim sağla.</p>
+</div>
+
+</div>
 
 </div>
 
