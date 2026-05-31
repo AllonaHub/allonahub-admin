@@ -775,6 +775,101 @@ html, body{
   }
 
 }
+.live-ads-section{
+  max-width:1200px;
+  margin:35px auto;
+  padding:0 20px;
+}
+
+.live-ads-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.live-ads-head h2{
+  color:#ffd700;
+  font-size:32px;
+  margin:0;
+}
+
+.live-ads-head p{
+  color:rgba(255,255,255,.7);
+  margin:6px 0 0;
+}
+
+.live-ads-head a{
+  color:#00e5ff;
+  text-decoration:none;
+  font-weight:800;
+}
+
+.live-ads-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+}
+
+.live-ad-card{
+  position:relative;
+  overflow:hidden;
+  min-height:150px;
+  border-radius:22px;
+  padding:18px;
+  background:linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));
+  border:1px solid rgba(0,229,255,.25);
+  box-shadow:0 0 22px rgba(0,229,255,.12);
+  transition:.4s;
+}
+
+.live-ad-card:hover{
+  transform:translateY(-5px) scale(1.02);
+  box-shadow:0 0 35px rgba(0,229,255,.28);
+}
+
+.ad-glow{
+  position:absolute;
+  width:90px;
+  height:90px;
+  right:-25px;
+  top:-25px;
+  border-radius:50%;
+  background:radial-gradient(circle,#00e5ff,transparent 70%);
+  opacity:.35;
+  animation:adPulse 3s infinite alternate;
+}
+
+.ad-label{
+  display:inline-block;
+  font-size:12px;
+  color:#00e5ff;
+  margin-bottom:14px;
+  font-weight:900;
+}
+
+.ad-title{
+  color:#ffd700;
+  font-size:19px;
+  margin:0 0 8px;
+}
+
+.ad-desc{
+  font-size:13px;
+  color:rgba(255,255,255,.78);
+  line-height:1.35;
+}
+
+.ad-meta{
+  margin-top:12px;
+  font-size:12px;
+  color:rgba(255,255,255,.65);
+}
+
+@keyframes adPulse{
+  from{transform:scale(1);opacity:.25}
+  to{transform:scale(1.35);opacity:.55}
+}
   
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -828,6 +923,59 @@ html, body{
   
 </section> 
 
+  <section class="live-ads-section">
+  <div class="live-ads-head">
+    <div>
+      <h2>Canlı İlanlar</h2>
+      <p>Admin onaylı ilanlar sırayla yayında.</p>
+    </div>
+    <a href="#">Tüm İlanları Gör</a>
+  </div>
+
+  <div class="live-ads-grid">
+
+    <div class="live-ad-card" data-type="pet">
+      <div class="ad-glow"></div>
+      <span class="ad-label">Evcil Hayvan</span>
+      <h3 class="ad-title">Yükleniyor...</h3>
+      <p class="ad-desc"></p>
+      <div class="ad-meta"></div>
+    </div>
+
+    <div class="live-ad-card" data-type="job">
+      <div class="ad-glow"></div>
+      <span class="ad-label">İş İlanı</span>
+      <h3 class="ad-title">Yükleniyor...</h3>
+      <p class="ad-desc"></p>
+      <div class="ad-meta"></div>
+    </div>
+
+    <div class="live-ad-card" data-type="maritime">
+      <div class="ad-glow"></div>
+      <span class="ad-label">Denizcilik</span>
+      <h3 class="ad-title">Yükleniyor...</h3>
+      <p class="ad-desc"></p>
+      <div class="ad-meta"></div>
+    </div>
+
+    <div class="live-ad-card" data-type="realestate">
+      <div class="ad-glow"></div>
+      <span class="ad-label">Gayrimenkul</span>
+      <h3 class="ad-title">Yükleniyor...</h3>
+      <p class="ad-desc"></p>
+      <div class="ad-meta"></div>
+    </div>
+
+    <div class="live-ad-card" data-type="service">
+      <div class="ad-glow"></div>
+      <span class="ad-label">Hizmet Talebi</span>
+      <h3 class="ad-title">Yükleniyor...</h3>
+      <p class="ad-desc"></p>
+      <div class="ad-meta"></div>
+    </div>
+
+  </div>
+</section>
   <section id="modules" class="modules-section">
   <div class="section-head">
 <p>Tek uygulamada alışveriş, yemek, taksi, denizcilik, Hukuk, kariyer ve daha fazlası.</p>
@@ -1016,6 +1164,57 @@ function updateHeroTime(){
 
 updateHeroTime();
 setInterval(updateHeroTime,1000);
-</script>  
+</script> 
+  
+<script>
+const approvedAds = {
+  pet:[
+    {title:"Kayıp Kedi Aranıyor",desc:"Beyaz-gri British, son görüldüğü yer Kadıköy.",meta:"Kayıp • Kadıköy • 2 saat önce"},
+    {title:"Golden Sahiplendirme",desc:"Aşıları tam, aile ortamına uygun.",meta:"Sahiplendirme • Ataşehir"},
+    {title:"Bulunan Köpek",desc:"Tasmali erkek köpek bulundu.",meta:"Bulundu • Beşiktaş"}
+  ],
+  job:[
+    {title:"Muhasebe Personeli",desc:"Tam zamanlı ofis pozisyonu.",meta:"İş İlanı • İstanbul"},
+    {title:"E-Ticaret Uzmanı",desc:"Pazaryeri ürün yönetimi bilen ekip arkadaşı.",meta:"Aranıyor • Hibrit"},
+    {title:"Satış Danışmanı",desc:"Mağaza satış deneyimi olan.",meta:"Aranıyor • Avrupa Yakası"}
+  ],
+  maritime:[
+    {title:"2nd Engineer Aranıyor",desc:"Bulk carrier için deneyimli personel.",meta:"Denizcilik • Acil"},
+    {title:"AB Aranıyor",desc:"24 ay deneyimli güverte personeli.",meta:"Crew • İstanbul"},
+    {title:"Chief Officer",desc:"Kuru yük gemisi için aday aranıyor.",meta:"Maritime • Başvuru açık"}
+  ],
+  realestate:[
+    {title:"2+1 Kiralık Daire",desc:"Site içinde, ulaşımı kolay.",meta:"Kiralık • Beylikdüzü"},
+    {title:"Satılık Villa",desc:"Bahçeli, güvenlikli lüks yaşam alanı.",meta:"Satılık • Büyükçekmece"},
+    {title:"Ofis Kiralık",desc:"Merkezi konum, hazır kullanıma uygun.",meta:"Kiralık • Şişli"}
+  ],
+  service:[
+    {title:"Acil Tesisatçı Aranıyor",desc:"Su kaçağı için yakındaki ustalar.",meta:"Hizmet Talebi • Acil"},
+    {title:"Ev Temizliği",desc:"Haftalık temizlik hizmeti aranıyor.",meta:"Aranıyor • Kadıköy"},
+    {title:"Boyacı Usta",desc:"2+1 daire boya işi için teklif bekleniyor.",meta:"Teklif • İstanbul"}
+  ]
+};
+
+let adIndex = {};
+
+function rotateAds(){
+  document.querySelectorAll(".live-ad-card").forEach(card=>{
+    const type = card.dataset.type;
+    const ads = approvedAds[type];
+    adIndex[type] = (adIndex[type] || 0) % ads.length;
+    const ad = ads[adIndex[type]];
+
+    card.querySelector(".ad-title").textContent = ad.title;
+    card.querySelector(".ad-desc").textContent = ad.desc;
+    card.querySelector(".ad-meta").textContent = ad.meta;
+
+    adIndex[type]++;
+  });
+}
+
+rotateAds();
+setInterval(rotateAds,6000);
+</script>
+  
 </body>
 </html>
