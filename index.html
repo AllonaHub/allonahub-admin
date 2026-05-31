@@ -742,37 +742,38 @@ html, body{
 }
 
 @media(max-width:768px){
+
+  body{
+    min-width:1200px!important;
+    overflow-x:auto!important;
+  }
+
+  header{
+    flex-direction:row!important;
+    width:1200px!important;
+    max-width:1200px!important;
+  }
+
   .premium-hero{
-    grid-template-columns:1fr!important;
-    padding:0 16px!important;
-    margin:25px auto 35px!important;
+    width:1200px!important;
+    max-width:1200px!important;
+    grid-template-columns:280px 1fr 280px!important;
+    padding:0 20px!important;
   }
 
-  .hero-main-card{
-    min-height:auto!important;
-    padding:30px 22px!important;
+  .modules-section{
+    width:1200px!important;
+    max-width:1200px!important;
   }
 
-  .hero-main-card h1{
-    font-size:38px!important;
+  .modules-grid.large-grid{
+    grid-template-columns:repeat(5,1fr)!important;
   }
 
-  .hero-main-card p{
-    font-size:17px!important;
+  .module-card{
+    height:180px!important;
   }
 
-  .hero-time-card,
-  .hero-reward-card{
-    text-align:center;
-  }
-
-  .time-visual{
-    margin:0 auto;
-  }
-
-  .hero-location{
-    justify-content:center;
-  }
 }
   
 </style>
