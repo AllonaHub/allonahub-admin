@@ -541,6 +541,226 @@ html, body{
   }
 
 }
+  .premium-hero{
+  width:100%;
+  max-width:1200px;
+  margin:35px auto 45px;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:280px 1fr 280px;
+  gap:22px;
+  align-items:stretch;
+}
+
+.hero-time-card,
+.hero-main-card,
+.hero-reward-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:30px;
+  padding:28px;
+  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+  border:1px solid rgba(0,229,255,.28);
+  box-shadow:0 0 35px rgba(0,229,255,.14), inset 0 0 24px rgba(255,255,255,.04);
+}
+
+.hero-main-card{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:330px;
+}
+
+.hero-main-card h1{
+  font-size:52px;
+  line-height:1.08;
+  margin:0 0 18px;
+  color:white;
+  text-shadow:0 0 24px rgba(0,229,255,.25);
+}
+
+.hero-main-card p{
+  font-size:19px;
+  line-height:1.5;
+  color:rgba(255,255,255,.82);
+  max-width:620px;
+  margin:0 auto;
+}
+
+.hero-greeting{
+  font-size:34px;
+  font-weight:800;
+  margin-top:18px;
+}
+
+.hero-clock{
+  margin:18px 0 25px;
+  font-size:36px;
+  letter-spacing:7px;
+  color:#00e5ff;
+  text-shadow:0 0 18px #00e5ff;
+}
+
+.hero-location{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  font-size:18px;
+  color:white;
+}
+
+.hero-location p{
+  margin:4px 0 0;
+  color:rgba(255,255,255,.7);
+}
+
+.pin-dot{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:#ff375f;
+  box-shadow:0 0 18px #ff375f;
+}
+
+.time-visual{
+  width:88px;
+  height:88px;
+  border-radius:50%;
+  position:relative;
+  filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));
+  animation:floatPulse 3s ease-in-out infinite;
+}
+
+.sun-visual{
+  --time-glow:#ffd700;
+  background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%);
+}
+
+.day-visual{
+  --time-glow:#00e5ff;
+  background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%);
+}
+
+.evening-visual{
+  --time-glow:#b245ff;
+  background:radial-gradient(circle,#fff 0%,#b245ff 35%,#ff9f1c 80%);
+}
+
+.night-visual{
+  --time-glow:#7df9ff;
+  background:radial-gradient(circle at 35% 35%,#fff 0%,#b8f7ff 18%,#274bff 45%,#080b28 80%);
+}
+
+.time-visual::before,
+.time-visual::after{
+  content:"";
+  position:absolute;
+  inset:-14px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.35);
+  animation:spinGlow 6s linear infinite;
+}
+
+.time-visual::after{
+  inset:-26px;
+  border-color:rgba(0,229,255,.22);
+  animation-duration:10s;
+}
+
+.hero-orb{
+  width:180px;
+  height:180px;
+  position:absolute;
+  right:-45px;
+  top:-45px;
+  border-radius:50%;
+  background:radial-gradient(circle,#00e5ff,transparent 65%);
+  opacity:.28;
+  animation:orbMove 5s ease-in-out infinite alternate;
+}
+
+.diamond-visual{
+  width:90px;
+  height:90px;
+  margin:0 auto 18px;
+  background:linear-gradient(135deg,#bffcff,#007cff,#001c80);
+  clip-path:polygon(50% 0%,100% 35%,75% 100%,25% 100%,0% 35%);
+  box-shadow:0 0 25px #00e5ff;
+  animation:diamondGlow 2.4s ease-in-out infinite alternate;
+}
+
+.hero-reward-card{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.hero-reward-card h3{
+  font-size:30px;
+  color:#ffd700;
+  margin:0 0 12px;
+}
+
+.hero-reward-card p{
+  font-size:16px;
+  color:rgba(255,255,255,.78);
+}
+
+@keyframes floatPulse{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-8px) scale(1.07)}
+}
+
+@keyframes spinGlow{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+
+@keyframes orbMove{
+  from{transform:translate(0,0) scale(1)}
+  to{transform:translate(-25px,25px) scale(1.25)}
+}
+
+@keyframes diamondGlow{
+  from{transform:scale(1) rotate(0deg);filter:brightness(1)}
+  to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}
+}
+
+@media(max-width:768px){
+  .premium-hero{
+    grid-template-columns:1fr!important;
+    padding:0 16px!important;
+    margin:25px auto 35px!important;
+  }
+
+  .hero-main-card{
+    min-height:auto!important;
+    padding:30px 22px!important;
+  }
+
+  .hero-main-card h1{
+    font-size:38px!important;
+  }
+
+  .hero-main-card p{
+    font-size:17px!important;
+  }
+
+  .hero-time-card,
+  .hero-reward-card{
+    text-align:center;
+  }
+
+  .time-visual{
+    margin:0 auto;
+  }
+
+  .hero-location{
+    justify-content:center;
+  }
+}
   
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -564,66 +784,36 @@ html, body{
 <a class="login" href="user.html">Giriş Yap</a>
 </nav>
 </header>
-  <section style="display:grid;grid-template-columns:180px 1fr 240px;align-items:center;gap:24px;padding:28px 7%;min-height:210px;background:linear-gradient(135deg,rgba(0,40,80,.45),rgba(2,8,20,.95));border-bottom:1px solid rgba(0,225,255,.18);">
+<section class="premium-hero">
 
-  <div style="text-align:left;">
+  <div class="hero-time-card">
+    <div id="timeVisual" class="time-visual sun-visual"></div>
+    <div id="heroGreeting" class="hero-greeting">Günaydın</div>
+    <div id="heroClock" class="hero-clock">00:00:00</div>
 
-  <div style="
-  font-size:24px;
-  margin-bottom:8px;
-  ">
-  ☀️ Günaydın
+    <div class="hero-location">
+      <span class="pin-dot"></span>
+      <div>
+        <strong>İstanbul</strong>
+        <p>Türkiye</p>
+      </div>
+    </div>
   </div>
 
-  <div id="liveClock" style="
-  font-size:42px;
-  font-weight:900;
-  color:#00e5ff;
-  font-family:'Courier New',monospace;
-  letter-spacing:3px;
-  text-shadow:
-  0 0 10px #00e5ff,
-  0 0 20px #00e5ff,
-  0 0 40px rgba(0,229,255,.6);
-  ">
-  00:00:00
+  <div class="hero-main-card">
+    <div class="hero-orb"></div>
+    <h1>Global Süper<br>Ekosisteme Hoş Geldiniz</h1>
+    <p>Alışveriş, yemek, market, taksi, denizcilik, hukuk, kariyer ve çok daha fazlası tek platformda.</p>
   </div>
 
-  <div style="
-  margin-top:10px;
-  color:#bdefff;
-  font-size:14px;
-  ">
-  📍 İstanbul
+  <div class="hero-reward-card">
+    <div class="diamond-visual"></div>
+    <h3>HP Kazan</h3>
+    <p>AllonaHub’da keşfettikçe ödül dünyasına yaklaş.</p>
   </div>
+  
+</section> 
 
-  <div style="
-  color:#bdefff;
-  font-size:14px;
-  ">
-  🇹🇷 Türkiye
-  </div>
-
-</div>
-  <div style="text-align:center;">
-    <h1 style="font-size:30px!important;line-height:1.15!important;margin:0 0 10px!important;color:#fff!important;font-weight:800!important;">
-      🌎 Global Süper Ekosisteme Hoş Geldiniz
-    </h1>
-    <p style="font-size:14px!important;line-height:1.4!important;margin:0!important;color:rgba(255,255,255,.86)!important;">
-      Alışveriş, yemek, market, taksi, denizcilik, hukuk, kariyer ve çok daha fazlası tek platformda.
-    </p>
-  </div>
-
-  <div style="text-align:center;background:rgba(0,20,45,.65);border:1px solid rgba(0,225,255,.35);border-radius:18px;padding:14px;box-shadow:0 0 18px rgba(0,180,255,.16);">
-    <div id="promoIcon" style="font-size:26px;">💎</div>
-    <h3 id="promoTitle" style="font-size:17px!important;margin:4px 0!important;color:#ffd700!important;">HP Kazan</h3>
-    <p id="promoText" style="font-size:13px!important;line-height:1.35!important;margin:0!important;color:white!important;">
-      AllonaHub’da keşfettikçe ödül dünyasına yaklaş.
-    </p>
-  </div>
-
-</section>
-</section>
   <section id="modules" class="modules-section">
   <div class="section-head">
 <p>Tek uygulamada alışveriş, yemek, taksi, denizcilik, Hukuk, kariyer ve daha fazlası.</p>
@@ -660,7 +850,7 @@ html, body{
 <a class="module-card" href="#" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('nakliye.png');"><div><h3>Nakliye</h3><p>Şehir içi ve şehirlerarası taşıma</p></div></a>
 <a class="module-card" href="#" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('organizasyon.png');"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p></div></a>
 
-</div>
+</div>   
 </section>
 
 <section class="section" id="wallet">
@@ -777,5 +967,41 @@ function rotatePromo(){
 
 setInterval(rotatePromo,4000);
 </script>
+<script>
+function updateHeroTime(){
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+
+  const clock = document.getElementById("heroClock");
+  const greeting = document.getElementById("heroGreeting");
+  const visual = document.getElementById("timeVisual");
+
+  const pad = n => String(n).padStart(2,"0");
+  clock.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+  const total = h * 60 + m;
+
+  visual.className = "time-visual";
+
+  if(total >= 300 && total <= 720){
+    greeting.textContent = "Günaydın";
+    visual.classList.add("sun-visual");
+  }else if(total >= 721 && total <= 1140){
+    greeting.textContent = "Merhaba";
+    visual.classList.add("day-visual");
+  }else if(total >= 1141 && total <= 1380){
+    greeting.textContent = "İyi Akşamlar";
+    visual.classList.add("evening-visual");
+  }else{
+    greeting.textContent = "İyi Geceler";
+    visual.classList.add("night-visual");
+  }
+}
+
+updateHeroTime();
+setInterval(updateHeroTime,1000);
+</script>  
 </body>
 </html>
