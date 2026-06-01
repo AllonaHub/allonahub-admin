@@ -870,6 +870,61 @@ html, body{
   from{transform:scale(1);opacity:.25}
   to{transform:scale(1.35);opacity:.55}
 }
+.live-stats-section{
+    max-width:1400px;
+    margin:20px auto 25px;
+    padding:0 20px;
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:15px;
+}
+
+.stat-live-card{
+    position:relative;
+    background:rgba(0,20,45,.75);
+    border:1px solid rgba(0,225,255,.25);
+    border-radius:18px;
+    padding:18px;
+    text-align:center;
+    overflow:hidden;
+}
+
+.stat-live-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at top right,
+    rgba(0,255,255,.22),transparent 60%);
+}
+
+.stat-live-card p{
+    color:#9adfff;
+    font-size:13px;
+    margin:0 0 8px;
+}
+
+.stat-live-card h3{
+    color:#fff;
+    font-size:26px;
+    margin:0;
+}
+
+.stat-dot{
+    width:10px;
+    height:10px;
+    background:#00ff66;
+    border-radius:50%;
+    display:inline-block;
+    margin-bottom:10px;
+    box-shadow:0 0 12px #00ff66;
+    animation:pulseLive 1.5s infinite;
+}
+
+@keyframes pulseLive{
+    0%{transform:scale(1)}
+    50%{transform:scale(1.5)}
+    100%{transform:scale(1)}
+}
   
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
@@ -922,7 +977,40 @@ html, body{
   </div>
   
 </section> 
+<section class="live-stats-section">
 
+  <div class="stat-live-card">
+    <span class="stat-dot"></span>
+    <p>Aktif Kullanıcı</p>
+    <h3 id="activeUsers">12.481</h3>
+  </div>
+
+  <div class="stat-live-card">
+    <span class="stat-dot"></span>
+    <p>Aktif İlan</p>
+    <h3 id="activeAds">1.942</h3>
+  </div>
+
+  <div class="stat-live-card">
+    <span class="stat-dot"></span>
+    <p>Yeni İş İlanı</p>
+    <h3 id="jobAds">326</h3>
+  </div>
+
+  <div class="stat-live-card">
+    <span class="stat-dot"></span>
+    <p>Crew Başvurusu</p>
+    <h3 id="crewApps">89</h3>
+  </div>
+
+  <div class="stat-live-card">
+    <span class="stat-dot"></span>
+    <p>Bugün Dağıtılan HP</p>
+    <h3 id="dailyHP">245.800</h3>
+  </div>
+
+</section>
+  
   <section class="live-ads-section">
   <div class="live-ads-head">
     <div>
@@ -1214,6 +1302,36 @@ function rotateAds(){
 
 rotateAds();
 setInterval(rotateAds,6000);
+</script>
+<script>
+const demoStats = {
+  activeUsers: 12481,
+  activeAds: 1942,
+  jobAds: 326,
+  crewApps: 89,
+  dailyHP: 245800
+};
+
+function formatNumber(num){
+  return Number(num).toLocaleString("tr-TR");
+}
+
+function updateLiveStats(data){
+  document.getElementById("activeUsers").textContent = formatNumber(data.activeUsers);
+  document.getElementById("activeAds").textContent = formatNumber(data.activeAds);
+  document.getElementById("jobAds").textContent = formatNumber(data.jobAds);
+  document.getElementById("crewApps").textContent = formatNumber(data.crewApps);
+  document.getElementById("dailyHP").textContent = formatNumber(data.dailyHP);
+}
+
+updateLiveStats(demoStats);
+
+// Gelecekte gerçek API bağlanınca burası demo verinin üstüne yazacak
+/*
+fetch("/api/live-stats")
+  .then(res => res.json())
+  .then(realData => updateLiveStats(realData));
+*/
 </script>
   
 </body>
