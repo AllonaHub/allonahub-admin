@@ -925,23 +925,37 @@ html, body{
     50%{transform:scale(1.5)}
     100%{transform:scale(1)}
 }
-  
-/* GENEL GENİŞLİK AYARI */
+/* FINAL GENİŞLİK KONTROLÜ */
+body{
+  min-width:1200px!important;
+  overflow-x:auto!important;
+}
+
+header,
 .premium-hero,
 .live-stats-section,
 .live-ads-section,
 .modules-section,
 .wallet-section,
 .premium-section{
-  width:94vw!important;
-  max-width:1500px!important;
+  width:1200px!important;
+  max-width:1200px!important;
   margin-left:auto!important;
   margin-right:auto!important;
 }
 
-/* MODÜL KARTLARINI SIĞDIR */
+.premium-hero{
+  grid-template-columns:280px 1fr 280px!important;
+  gap:22px!important;
+}
+
+.live-stats-section,
+.live-ads-grid,
 .modules-grid.large-grid{
   grid-template-columns:repeat(5,1fr)!important;
+}
+
+.modules-grid.large-grid{
   gap:14px!important;
 }
 
@@ -951,9 +965,7 @@ html, body{
   padding:14px!important;
 }
 
-/* İLAN KARTLARINI SIĞDIR */
 .live-ads-grid{
-  grid-template-columns:repeat(5,1fr)!important;
   gap:14px!important;
 }
 
@@ -961,18 +973,7 @@ html, body{
   min-height:135px!important;
   padding:16px!important;
 }
-
-/* HERO BİRAZ DAHA TOPARLANSIN */
-.premium-hero{
-  grid-template-columns:260px 1fr 260px!important;
-  gap:18px!important;
-}
-
-.hero-time-card,
-.hero-main-card,
-.hero-reward-card{
-  padding:24px!important;
-}  
+  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
