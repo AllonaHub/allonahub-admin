@@ -54,53 +54,105 @@ linear-gradient(180deg,#06172d,#020812 65%);
 .money-card h2{font-size:22px;color:var(--main);margin:8px 0}
 .money-card .emoji{font-size:34px;margin-top:8px}
 
+..hp-showcase{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.hp-banner{
+position:relative;
+overflow:hidden;
+border-radius:28px;
+padding:28px;
+min-height:260px;
+background:linear-gradient(135deg,#04152e,#082d5a,#061b33);
+border:1px solid rgba(255,215,0,.25);
+box-shadow:0 0 35px rgba(0,229,255,.15);
+}
+
+.hp-banner h2{
+font-size:42px;
+margin-bottom:10px;
+color:#ffd700;
+}
+
+.hp-banner p{
+font-size:18px;
+opacity:.9;
+max-width:500px;
+}
+
+.hp-btn{
+display:inline-block;
+margin-top:20px;
+padding:14px 28px;
+border-radius:50px;
+background:linear-gradient(135deg,#ffd700,#ffb300);
+color:#000;
+font-weight:700;
+text-decoration:none;
+}
+
+.wheel-premium{
+position:absolute;
+right:40px;
+top:50%;
+transform:translateY(-50%);
+width:260px;
+height:260px;
+border-radius:50%;
+border:8px solid rgba(255,215,0,.9);
+background:
+conic-gradient(
+#0b2f5e 0deg 45deg,
+#08254a 45deg 90deg,
+#0b2f5e 90deg 135deg,
+#08254a 135deg 180deg,
+#0b2f5e 180deg 225deg,
+#08254a 225deg 270deg,
+#0b2f5e 270deg 315deg,
+#08254a 315deg 360deg
+);
+box-shadow:0 0 40px rgba(255,215,0,.35);
+animation:wheelSpin 25s linear infinite;
+}
+
+.wheel-center{
+position:absolute;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+width:80px;
+height:80px;
+border-radius:50%;
+background:linear-gradient(135deg,#ffd700,#ffb300);
+}
+
+.side-cards{
+display:grid;
+gap:20px;
+}
+
+.side-card{
+border-radius:24px;
+padding:22px;
+background:linear-gradient(135deg,#061b33,#0a2f5d);
+border:1px solid rgba(255,215,0,.15);
+min-height:120px;
+}
+
+.side-card h3{
+color:#ffd700;
+margin-bottom:10px;
+}
+
+@keyframes wheelSpin{
+from{transform:translateY(-50%) rotate(0deg);}
+to{transform:translateY(-50%) rotate(360deg);}
+}
 .xp-card{padding:16px;margin-bottom:16px}
-.wheel-card{
-  position:absolute;
-  left:390px;
-  top:285px;
-  width:520px;
-  min-height:210px;
-  padding:24px;
-  border-radius:28px;
-  text-align:center;
-  background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(0,40,80,.72));
-  border:1px solid rgba(0,229,255,.35);
-  box-shadow:0 0 35px rgba(0,229,255,.22);
-  z-index:2;
-}
-
-.wheel-title{
-  font-size:24px;
-  font-weight:800;
-  color:#00e5ff;
-  margin-bottom:10px;
-}
-
-.wheel-circle{
-  font-size:70px;
-  margin:8px 0;
-  animation:spinwheel 6s linear infinite;
-}
-
-.wheel-desc{
-  opacity:.82;
-  margin-bottom:14px;
-}
-
-.wheel-btn{
-  background:#00e5ff;
-  color:#00111f;
-  border:none;
-  padding:11px 28px;
-  border-radius:999px;
-  font-weight:800;
-}
-
-@keyframes spinwheel{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
-}
 .xp-top{display:flex;justify-content:space-between;align-items:center}
 .lv{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,var(--main),#091528);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;box-shadow:0 0 22px var(--main)}
 .xp-info{flex:1;margin-left:14px}
@@ -275,20 +327,34 @@ display:none;
   <div class="money-card"><p>CASHOUT BAKİYE</p><h2 id="cashout">0,00 ₺</h2><div class="emoji">👛</div></div>
   <div class="money-card"><p>HUB CASH</p><h2 id="hubcash">0,00 ₺</h2><div class="emoji">💳</div></div>
 </div>
-<div class="wheel-card">
-    <div class="wheel-title">🎁 Günlük Şans Çarkı</div>
+<div class="hp-showcase">
 
-    <div class="wheel-circle">
-        🎡
-    </div>
+<div class="hp-banner">
+<h2>HP Kazan!</h2>
+<p>
+Her alışverişte, görevde ve partner kullanımında HP topla.
+Kupon oluştur, indirim kazan ve seviyeni yükselt.
+</p>
 
-    <div class="wheel-desc">
-        Her gün ücretsiz çevir ve HP veya kupon kazan.
-    </div>
+<a href="#" class="hp-btn">HP Dünyasına Git</a>
 
-    <button class="wheel-btn">
-        Çarkı Çevir
-    </button>
+<div class="wheel-premium">
+<div class="wheel-center"></div>
+</div>
+</div>
+
+<div class="side-cards">
+
+<div class="side-card">
+<h3>Günlük Görevler</h3>
+<p>Bugünkü görevlerini tamamla ve ekstra HP kazan.</p>
+</div>
+
+<div class="side-card">
+<h3>Premium Avantajlar</h3>
+<p>Gold ve Elite üyelik ayrıcalıklarını keşfet.</p>
+</div>
+
 </div>
 <div class="xp-card">
   <div class="xp-top">
