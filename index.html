@@ -420,7 +420,6 @@ html, body{
   gap:22px;
   align-items:stretch;
 }
-
 .hero-time-card,
 .hero-main-card,
 .hero-reward-card{
@@ -428,6 +427,7 @@ html, body{
   overflow:hidden;
   border-radius:30px;
   padding:28px;
+  min-height:260px;
   background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
   border:1px solid rgba(0,229,255,.28);
   box-shadow:0 0 35px rgba(0,229,255,.14), inset 0 0 24px rgba(255,255,255,.04);
@@ -597,40 +597,6 @@ html, body{
   to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}
 }
 
-@media(max-width:768px){
-
-  body{
-    min-width:1200px!important;
-    overflow-x:auto!important;
-  }
-
-  header{
-    flex-direction:row!important;
-    width:1200px!important;
-    max-width:1200px!important;
-  }
-
-  .premium-hero{
-    width:1200px!important;
-    max-width:1200px!important;
-    grid-template-columns:280px 1fr 280px!important;
-    padding:0 20px!important;
-  }
-
-  .modules-section{
-    width:1200px!important;
-    max-width:1200px!important;
-  }
-
-  .modules-grid.large-grid{
-    grid-template-columns:repeat(5,1fr)!important;
-  }
-
-  .module-card{
-    height:180px!important;
-  }
-
-}
 .live-ads-section{
   max-width:1200px;
   margin:35px auto;
@@ -785,16 +751,16 @@ body{
   min-width:1200px!important;
   overflow-x:auto!important;
 }
-.premium-hero,
-.live-stats-section,
-.live-ads-section,
-.modules-section{
+.premium-hero{
   width:1200px!important;
   max-width:1200px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
+  margin:35px auto 45px!important;
+  padding:0 20px!important;
+  display:grid!important;
+  grid-template-columns:280px 1fr 280px!important;
+  gap:22px!important;
+  align-items:stretch!important;
 }
-
 .modules-grid.large-grid,
 .live-ads-grid,
 .live-stats-section{
