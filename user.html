@@ -55,6 +55,47 @@ linear-gradient(180deg,#06172d,#020812 65%);
 .money-card .emoji{font-size:34px;margin-top:8px}
 
 .xp-card{padding:16px;margin-bottom:16px}
+.wheel-card{
+    margin-bottom:20px;
+    padding:25px;
+    border-radius:25px;
+    text-align:center;
+    background:linear-gradient(135deg,#061b33,#0a3f66);
+    border:1px solid rgba(0,229,255,.35);
+}
+
+.wheel-title{
+    font-size:24px;
+    font-weight:700;
+    color:#00e5ff;
+    margin-bottom:15px;
+}
+
+.wheel-circle{
+    font-size:90px;
+    margin:15px 0;
+    animation:spinwheel 6s linear infinite;
+}
+
+.wheel-desc{
+    opacity:.8;
+    margin-bottom:20px;
+}
+
+.wheel-btn{
+    background:#00e5ff;
+    color:#00111f;
+    border:none;
+    padding:12px 30px;
+    border-radius:15px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+@keyframes spinwheel{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+} 
 .xp-top{display:flex;justify-content:space-between;align-items:center}
 .lv{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,var(--main),#091528);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;box-shadow:0 0 22px var(--main)}
 .xp-info{flex:1;margin-left:14px}
@@ -209,7 +250,7 @@ display:none;
 </div>
 
 <div class="profile">
-  <div class="avatar"><div class="avatar-inner">😎</div><div class="camera">📷</div></div>
+  <div class="avatar"><div class="avatar-inner"></div><div class="camera">📷</div></div>
   <div class="user">
     <p>Merhaba,</p>
     <h2>Arda Demir</h2>
@@ -229,7 +270,21 @@ display:none;
   <div class="money-card"><p>CASHOUT BAKİYE</p><h2 id="cashout">0,00 ₺</h2><div class="emoji">👛</div></div>
   <div class="money-card"><p>HUB CASH</p><h2 id="hubcash">0,00 ₺</h2><div class="emoji">💳</div></div>
 </div>
+<div class="wheel-card">
+    <div class="wheel-title">🎁 Günlük Şans Çarkı</div>
 
+    <div class="wheel-circle">
+        🎡
+    </div>
+
+    <div class="wheel-desc">
+        Her gün ücretsiz çevir ve HP veya kupon kazan.
+    </div>
+
+    <button class="wheel-btn">
+        Çarkı Çevir
+    </button>
+</div>
 <div class="xp-card">
   <div class="xp-top">
     <div class="lv">Lv.<span id="lvBox">1</span></div>
