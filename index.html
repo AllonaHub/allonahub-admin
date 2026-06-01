@@ -926,6 +926,53 @@ html, body{
     100%{transform:scale(1)}
 }
   
+/* GENEL GENİŞLİK AYARI */
+.premium-hero,
+.live-stats-section,
+.live-ads-section,
+.modules-section,
+.wallet-section,
+.premium-section{
+  width:94vw!important;
+  max-width:1500px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+/* MODÜL KARTLARINI SIĞDIR */
+.modules-grid.large-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  gap:14px!important;
+}
+
+.modules-grid.large-grid .module-card{
+  height:165px!important;
+  min-height:165px!important;
+  padding:14px!important;
+}
+
+/* İLAN KARTLARINI SIĞDIR */
+.live-ads-grid{
+  grid-template-columns:repeat(5,1fr)!important;
+  gap:14px!important;
+}
+
+.live-ad-card{
+  min-height:135px!important;
+  padding:16px!important;
+}
+
+/* HERO BİRAZ DAHA TOPARLANSIN */
+.premium-hero{
+  grid-template-columns:260px 1fr 260px!important;
+  gap:18px!important;
+}
+
+.hero-time-card,
+.hero-main-card,
+.hero-reward-card{
+  padding:24px!important;
+}  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
