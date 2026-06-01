@@ -336,71 +336,7 @@ nav a{
   border-radius:999px!important;
   box-shadow:0 0 20px rgba(0,225,255,.35)!important;
 }
- .hero-dashboard{
-  display:grid!important;
-  grid-template-columns:180px 1fr 230px!important;
-  gap:22px!important;
-  align-items:center!important;
-  padding:28px 7%!important;
-  min-height:220px!important;
-  background:linear-gradient(135deg,rgba(0,40,80,.45),rgba(2,8,20,.95))!important;
-  border-bottom:1px solid rgba(0,225,255,.18)!important;
-}
-
-.hero-left{
-  text-align:left!important;
-}
-
-.hero-center{
-  text-align:center!important;
-}
-
-.hero-right{
-  text-align:center!important;
-}
-
-.hero-center h1{
-  font-size:30px!important;
-  line-height:1.15!important;
-  margin:0 0 12px!important;
-  color:#fff!important;
-}
-
-.hero-center p{
-  font-size:14px!important;
-  line-height:1.4!important;
-  margin:0!important;
-  color:rgba(255,255,255,.86)!important;
-}
-
-#liveClock{
-  font-size:18px!important;
-  color:#00e5ff!important;
-}
-
-.sun-animation{
-  font-size:22px!important;
-}
-
-.location-line{
-  font-size:13px!important;
-  color:#bdefff!important;
-}
-
-.promo-icon{
-  font-size:26px!important;
-}
-
-.promo-rotator h3{
-  font-size:17px!important;
-  margin:4px 0!important;
-  color:#ffd700!important;
-}
-
-.promo-rotator p{
-  font-size:13px!important;
-  line-height:1.35!important;
-}
+ 
 .modules-grid.large-grid{
   display:grid!important;
   grid-template-columns:repeat(5,1fr)!important;
@@ -452,86 +388,6 @@ html, body{
   max-width:100%;
   overflow-x:hidden!important;
 }
-
-/* =========================
-   ALLONAHUB RESPONSIVE
-========================= */
-
-@media (max-width:1024px){
-
-  .hero-dashboard{
-    grid-template-columns:1fr !important;
-    gap:20px !important;
-    text-align:center;
-  }
-
-  .modules-grid.large-grid{
-    grid-template-columns:repeat(2,1fr)!important;
-  }
-
-}
-
-@media (max-width:768px){
-
-  body{
-    overflow-x:hidden!important;
-  }
-
-  header{
-    flex-direction:column!important;
-    gap:12px!important;
-    padding:15px!important;
-  }
-
-  nav{
-    display:none!important;
-  }
-
-  .nav-search{
-    width:100%!important;
-    max-width:100%!important;
-  }
-
-  .hero-dashboard{
-    grid-template-columns:1fr!important;
-    padding:20px!important;
-  }
-
-  .hero-left,
-  .hero-right{
-    width:100%!important;
-  }
-
- .modules-grid.large-grid{
-  grid-template-columns:repeat(5,1fr)!important;
-  gap:6px!important;
-}
-
-.modules-grid.large-grid .module-card{
-  height:95px!important;
-  padding:6px!important;
-}
-
-.modules-grid.large-grid .module-card h3{
-  font-size:10px!important;
-}
-
-.modules-grid.large-grid .module-card p{
-  display:none!important;
-}
-
-  .module-card{
-    min-height:170px!important;
-  }
-
-}
-
-@media (max-width:480px){
-
-  .modules-grid.large-grid{
-    grid-template-columns:repeat(2,1fr)!important;
-    gap:10px!important;
-  }
 
   .module-card{
     min-height:145px!important;
@@ -925,55 +781,29 @@ html, body{
     50%{transform:scale(1.5)}
     100%{transform:scale(1)}
 }
-/* FINAL GENİŞLİK KONTROLÜ */
 body{
   min-width:1200px!important;
   overflow-x:auto!important;
 }
-
-header,
 .premium-hero,
 .live-stats-section,
 .live-ads-section,
-.modules-section,
-.wallet-section,
-.premium-section{
+.modules-section{
   width:1200px!important;
   max-width:1200px!important;
   margin-left:auto!important;
   margin-right:auto!important;
 }
 
-.premium-hero{
-  grid-template-columns:280px 1fr 280px!important;
-  gap:22px!important;
-}
-
-.live-stats-section,
+.modules-grid.large-grid,
 .live-ads-grid,
-.modules-grid.large-grid{
+.live-stats-section{
   grid-template-columns:repeat(5,1fr)!important;
 }
 
-.modules-grid.large-grid{
-  gap:14px!important;
-}
-
 .modules-grid.large-grid .module-card{
-  height:165px!important;
-  min-height:165px!important;
-  padding:14px!important;
-}
-
-.live-ads-grid{
-  gap:14px!important;
-}
-
-.live-ad-card{
-  min-height:135px!important;
-  padding:16px!important;
-}
-  
+  height:175px!important;
+}  
 </style>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 </head>
@@ -1198,14 +1028,7 @@ header,
 </div>
 </div>
 </section>
-<section id="modules" class="modules-section">
-  <div class="section-head">
-   
-    <h2>Tek ekosistemde tüm hizmetler</h2>
-    <p>Alışverişten yemeğe, taksiden denizciliğe kadar tüm ihtiyaçlar tek merkezde.</p>
-  </div>
 
-</section>
 <section class="section" id="partner">
 <div class="partner">
 <h2>AllonaHub Partner Ekosistemine Katıl</h2>
@@ -1217,54 +1040,7 @@ header,
 <footer>
 ©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
 </footer>
-<script>
-function updateClock(){
-  const now = new Date();
-  document.getElementById("liveClock").textContent =
-    now.toLocaleTimeString("tr-TR");
-}
-setInterval(updateClock,1000);
-updateClock();
 
-const promos = [
-  {
-    icon:"💎",
-    title:"HP Kazan",
-    text:"AllonaHub’da keşfettikçe ödül dünyasına yaklaş."
-  },
-  {
-    icon:"🛍️",
-    title:"Alışverişi Keşfet",
-    text:"Shop, market ve fırsatlar tek ekosistemde seni bekliyor."
-  },
-  {
-    icon:"🚕",
-    title:"Taksi & Ulaşım",
-    text:"Şehir içi ihtiyaçlar için hızlı ve güvenli çözümler."
-  },
-  {
-    icon:"⚓",
-    title:"Denizcilik & Kariyer",
-    text:"Crew, iş ilanları ve profesyonel fırsatlar AllonaHub’da."
-  },
-  {
-    icon:"🎁",
-    title:"Giriş Yap, Avantajları Aç",
-    text:"Üyelikle kişisel panel, HP ve özel fırsatlar aktif olur."
-  }
-];
-
-let promoIndex = 0;
-
-function rotatePromo(){
-  promoIndex = (promoIndex + 1) % promos.length;
-  document.getElementById("promoIcon").textContent = promos[promoIndex].icon;
-  document.getElementById("promoTitle").textContent = promos[promoIndex].title;
-  document.getElementById("promoText").textContent = promos[promoIndex].text;
-}
-
-setInterval(rotatePromo,4000);
-</script>
 <script>
 function updateHeroTime(){
   const now = new Date();
