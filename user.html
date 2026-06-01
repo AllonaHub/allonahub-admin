@@ -4,49 +4,131 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
 <title>AllonaHub Kullanıcı Paneli</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
-body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff44,transparent 35%),radial-gradient(circle at bottom right,#ffd70022,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
 .panel{width:1320px;margin:0 auto;padding:28px}
-.card{background:rgba(255,255,255,.05);border:1px solid rgba(0,229,255,.25);border-radius:28px;padding:24px}
-.top{display:grid;grid-template-columns:300px 1fr 1fr 1fr;gap:18px}
-.profile{text-align:center}
-.avatar{width:130px;height:130px;border-radius:50%;margin:auto;background:linear-gradient(135deg,#063d78,#031226)}
-.money h2{color:#00e5ff}
+.header{height:82px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.logo{display:flex;align-items:center;gap:12px;color:#ffd700;font-size:30px;font-weight:900}
+.logo img{width:42px;height:42px;object-fit:contain}
+.back{color:white;text-decoration:none;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.3);padding:12px 22px;border-radius:999px}
+
+.top-grid{display:grid;grid-template-columns:330px repeat(3,1fr);gap:18px;margin-bottom:20px}
+.card{border-radius:28px;padding:24px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 28px rgba(0,229,255,.13)}
+.profile{text-align:center;min-height:255px}
+.avatar{width:120px;height:120px;border-radius:50%;margin:0 auto 16px;background:linear-gradient(135deg,#063d78,#031226);border:2px solid rgba(0,229,255,.45);box-shadow:0 0 30px rgba(0,229,255,.35)}
+.profile h1{font-size:30px;margin-bottom:8px}
+.profile p{opacity:.75}
+.badge{display:inline-block;margin-top:14px;padding:8px 16px;border-radius:999px;background:rgba(255,215,0,.13);border:1px solid rgba(255,215,0,.3);color:#ffd700;font-weight:900}
+
+.money h4{font-size:14px;opacity:.75;margin-bottom:18px}
+.money h2{font-size:36px;color:#00e5ff}
+.money p{margin-top:12px;opacity:.7}
+
+.main-grid{display:grid;grid-template-columns:330px 1fr;gap:18px}
+.level-card{text-align:center}
+.level-orb{width:120px;height:120px;border-radius:30px;margin:0 auto 16px;background:linear-gradient(135deg,#00e5ff,#064dd8);box-shadow:0 0 35px rgba(0,229,255,.4)}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.quick div{border-radius:18px;background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.22);padding:18px;text-align:center;font-weight:800}
+
+.showcase{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;margin-bottom:18px}
+.hp-banner{position:relative;min-height:310px;border-radius:30px;padding:32px;overflow:hidden;background:radial-gradient(circle at 78% 55%,rgba(255,215,0,.24),transparent 29%),linear-gradient(135deg,#03172f,#082f5f,#041225);border:1px solid rgba(255,215,0,.25);box-shadow:0 0 38px rgba(0,229,255,.16)}
+.hp-banner h2{font-size:50px;line-height:1.05;color:#ffd700;margin-bottom:16px}
+.hp-banner p{font-size:18px;opacity:.86;max-width:520px;line-height:1.45}
+.hp-btn{display:inline-block;margin-top:22px;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+.wheel{position:absolute;right:36px;bottom:25px;width:220px;height:220px;border-radius:50%;background:conic-gradient(#06244d 0 45deg,#0a3974 45deg 90deg,#06244d 90deg 135deg,#0a3974 135deg 180deg,#06244d 180deg 225deg,#0a3974 225deg 270deg,#06244d 270deg 315deg,#0a3974 315deg 360deg);border:8px solid #d9a93a;box-shadow:0 0 35px rgba(255,215,0,.4);animation:spin 35s linear infinite}
+.wheel:before{content:"";position:absolute;inset:42%;border-radius:50%;background:#ffd700;box-shadow:0 0 18px rgba(255,215,0,.8)}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+.side-stack{display:grid;gap:18px}
+.side-card h3{color:#ffd700;font-size:24px;margin-bottom:10px}
+.side-card p{opacity:.78;line-height:1.4}
+
+.xp-card{display:flex;align-items:center;gap:18px}
+.lv{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#00e5ff,#0756d9);display:flex;align-items:center;justify-content:center;font-weight:900}
+.xp-info{flex:1}
+.xp-info h3{font-size:20px;margin-bottom:6px}
+.bar{height:16px;background:rgba(255,255,255,.12);border-radius:999px;margin-top:12px;overflow:hidden}
+.fill{height:100%;width:40%;background:linear-gradient(90deg,#00e5ff,#37ffd2)}
+.percent{color:#00e5ff;font-weight:900;font-size:22px}
+
+.tasks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.task h4{color:#ffd700;margin-bottom:8px}
+.task p{font-size:13px;opacity:.78}
 </style>
 </head>
-
 <body>
 
 <div class="panel">
+  <div class="header">
+    <div class="logo"><img src="allona.logo.png"> AllonaHub</div>
+    <a class="back" href="index.html">Ana Sayfaya Dön</a>
+  </div>
 
-<div class="top">
+  <div class="top-grid">
+    <div class="card profile">
+      <div class="avatar"></div>
+      <p>Merhaba,</p>
+      <h1>Misafir Kullanıcı</h1>
+      <p>Üye No: 000000001</p>
+      <div class="badge">NEW MEMBER</div>
+    </div>
 
-<div class="card profile">
-<div class="avatar"></div>
-<h2>Misafir Kullanıcı</h2>
-<p>Üye No: 000000001</p>
-</div>
+    <div class="card money"><h4>TOPLAM HP</h4><h2>250 HP</h2><p>Kullanılabilir ödül puanı</p></div>
+    <div class="card money"><h4>CASHOUT BAKİYE</h4><h2>0,00 ₺</h2><p>Uygun seviyede çekilebilir</p></div>
+    <div class="card money"><h4>HUB CASH</h4><h2>0,00 ₺</h2><p>Platform içi kullanım</p></div>
+  </div>
 
-<div class="card money">
-<h4>TOPLAM HP</h4>
-<h2>250 HP</h2>
-</div>
+  <div class="main-grid">
+    <div>
+      <div class="card level-card">
+        <div class="level-orb"></div>
+        <h2>LEVEL 1</h2>
+        <p>NEW MEMBER</p>
+      </div>
 
-<div class="card money">
-<h4>CASHOUT</h4>
-<h2>0,00 ₺</h2>
-</div>
+      <div class="quick">
+        <div>Görevler</div>
+        <div>Kuponlarım</div>
+        <div>HP Dünyası</div>
+        <div>Davet Et</div>
+      </div>
+    </div>
 
-<div class="card money">
-<h4>HUB CASH</h4>
-<h2>0,00 ₺</h2>
-</div>
+    <div>
+      <div class="showcase">
+        <div class="hp-banner">
+          <h2>HER HARCAMADA<br>HP KAZAN!</h2>
+          <p>AllonaHub’da alışveriş, yemek, market, partner ödeme ve görevlerle HP topla. HP’lerini kupona çevir, avantaj kazan.</p>
+          <a href="#" class="hp-btn">HP Dünyasına Git</a>
+          <div class="wheel"></div>
+        </div>
 
-</div>
+        <div class="side-stack">
+          <div class="card side-card"><h3>Günlük Görevler</h3><p>Görevleri tamamla, streak kazan ve ekstra HP topla.</p></div>
+          <div class="card side-card"><h3>Premium Avantajlar</h3><p>Gold ve Elite üyeliklerle özel kampanyaları aç.</p></div>
+        </div>
+      </div>
 
+      <div class="card xp-card">
+        <div class="lv">Lv.1</div>
+        <div class="xp-info">
+          <h3>SEVİYE XP PUANI</h3>
+          <p>400 / 1.000 XP</p>
+          <div class="bar"><div class="fill"></div></div>
+        </div>
+        <div class="percent">40%</div>
+      </div>
+
+      <div class="tasks">
+        <div class="card task"><h4>Günlük Giriş</h4><p>Bugün giriş yaparak HP kazan.</p></div>
+        <div class="card task"><h4>Alışveriş Görevi</h4><p>İlk siparişten ekstra HP kazan.</p></div>
+        <div class="card task"><h4>Partner Ödeme</h4><p>QR ödeme ile HP ödülü aç.</p></div>
+        <div class="card task"><h4>Kupon Oluştur</h4><p>HP’ni indirim kuponuna çevir.</p></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 </body>
