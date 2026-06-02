@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Hukuk | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 390px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:23px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:285px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:640px}
+.hero-card{padding:24px;min-height:285px}
+.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}
+.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+
+.legal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.legal-card{padding:22px;min-height:190px}
+.legal-card h3{color:#ffd700;margin-bottom:10px}
+.legal-card p{opacity:.76;line-height:1.5}
+
+.request{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:16px}
+.req-card{padding:24px;min-height:190px}
+.req-card h3{color:#ffd700;font-size:25px;margin-bottom:10px}
+.req-card p{opacity:.78;line-height:1.45}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+
+.bar-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.bar-main{padding:30px;min-height:255px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.bar-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}
+.bar-main p{opacity:.82;line-height:1.6}
+.bar-steps{display:grid;gap:10px;margin-top:16px}
+.bar-steps div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.bar-side{padding:24px}
+.bar-side h3{color:#ffd700;font-size:25px;margin-bottom:10px}
+.bar-side p{opacity:.78;line-height:1.45}
+
+.expert-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.expert{padding:16px;min-height:250px}
+.expert-img{height:130px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.expert-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#ffd70088,transparent 65%)}
+.expert b{color:#ffd700;font-size:18px}
+.expert p{font-size:13px;opacity:.72;margin:6px 0}
+.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.process{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.step{padding:20px;min-height:132px}
+.step h3{color:#ffd700;margin-bottom:8px}
+.step p{opacity:.75;font-size:13px;line-height:1.45}
+
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
+.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}
+.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+
+.ethic{padding:22px;margin-top:18px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.08)}
+.ethic b{color:#ffd700}
+
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+  <a href="#">Hukuki Taleplerim</a>
+  <a href="#">Belgelerim</a>
+  <a href="#">Baro Partner Alanı</a>
+  <a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+  <div class="brand glass"><img src="allona.logo.png"><b>Allona</b><span>Hub</span></div>
+  <div class="search glass"><div class="search-mark"></div><input placeholder="Dava türü, danışmanlık, sözleşme, avukat veya baro ara..."></div>
+  <div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Taleplerim</a><a href="#">Randevularım</a></div>
+</div>
+
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Hukuk Alanları</div>
+  <a href="#">Yabancılar Hukuku</a><a href="#">Şirket</a><a href="#">Gayrimenkul</a><a href="#">Sözleşme</a><a href="#">İcra</a><a href="#">Aile</a><a href="#">Ceza</a><a href="#">İş Hukuku</a><a href="#">Arabuluculuk</a>
+</div>
+
+<section class="hero">
+  <div class="hero-main glass">
+    <h1>Allona Hukuk<br>Güvenilir Hukuki Erişim</h1>
+    <p>Barolar, avukatlar, hukuk büroları ve kullanıcılar için etik, doğrulamalı ve kurumsal hukuki hizmet erişim altyapısı.</p>
+  </div>
+  <div class="hero-card glass">
+    <h3>Ön Görüşme Talebi</h3>
+    <p>Kullanıcı konu başlığını seçer, belgelerini yükler ve uygun hukuk uzmanına yönlendirilir.</p>
+    <div class="flow"><div>Konu seç</div><div>Belge yükle</div><div>Randevu oluştur</div></div>
+  </div>
+  <div class="hero-card glass">
+    <h3>Baro Partner Sistemi</h3>
+    <p>Barolar ve yetkili hukuk kurumları için doğrulanmış kurumsal erişim, yönlendirme ve takip alanı.</p>
+    <div class="flow"><div>Doğrulama</div><div>Uzmanlık alanı</div><div>Kurumsal panel</div></div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Hukuki Hizmet Alanları</h2><a href="#">Tümünü Gör</a></div>
+<div class="legal-grid">
+  <div class="legal-card glass"><h3>Yabancılar Hukuku</h3><p>İkamet, deport, çalışma izni, vatandaşlık ve idari dava süreçleri.</p></div>
+  <div class="legal-card glass"><h3>Şirket Hukuku</h3><p>Şirket kuruluşu, ortaklık, ticari sözleşme ve kurumsal danışmanlık.</p></div>
+  <div class="legal-card glass"><h3>Gayrimenkul Hukuku</h3><p>Tapu, kira, satış, proje, sözleşme ve yatırım süreçleri.</p></div>
+  <div class="legal-card glass"><h3>Sözleşme İnceleme</h3><p>İş, hizmet, kira, satış ve partner sözleşmesi ön kontrolü.</p></div>
+  <div class="legal-card glass"><h3>İcra & Alacak</h3><p>Alacak takibi, ödeme planı, icra işlemleri ve hukuki bilgilendirme.</p></div>
+  <div class="legal-card glass"><h3>Aile Hukuku</h3><p>Boşanma, nafaka, velayet ve aile hukuku danışmanlığı.</p></div>
+  <div class="legal-card glass"><h3>Ceza Hukuku</h3><p>Soruşturma, ifade, savunma hazırlığı ve dosya değerlendirme.</p></div>
+  <div class="legal-card glass"><h3>Arabuluculuk</h3><p>Alternatif uyuşmazlık çözümü ve anlaşma süreçleri.</p></div>
+</div>
+
+<div class="section-title"><h2>Hızlı Hukuki Talep</h2><a href="#">Taleplerim</a></div>
+<div class="request">
+  <div class="req-card glass"><h3>Talep Oluştur</h3><p>Hukuki konunu seç, açıklama ekle ve uygun uzmanlık alanına yönlendiril.</p><div class="input-box">Örn: İkamet reddi, sözleşme, kira, şirket</div><a class="btn" href="#">Hukuki Talep Başlat</a></div>
+  <div class="req-card glass"><h3>Belge Yükleme</h3><p>Dosya, karar, sözleşme veya yazışmalar güvenli belge alanına eklenir.</p><div class="input-box">PDF / görsel / belge yükleme alanı</div></div>
+  <div class="req-card glass"><h3>Randevu & Teklif</h3><p>Uygun avukat veya kurum ön görüşme, teklif ve süreç planı sunar.</p><div class="input-box">Online / ofis / telefon görüşmesi</div></div>
+</div>
+
+<div class="section-title"><h2>Barolar İçin Kurumsal Partner Alanı</h2><a href="#">Baro Başvurusu</a></div>
+<section class="bar-grid">
+  <div class="bar-main glass">
+    <h2>Barolar İçin Dijital Erişim ve Yönlendirme Altyapısı</h2>
+    <p>Allona Hukuk; baroların ve doğrulanmış hukuk kurumlarının kullanıcılarla güvenli, etik ve düzenli şekilde temas kurabileceği kurumsal bir erişim katmanı sunar.</p>
+    <div class="bar-steps">
+      <div>1. Baro / kurum doğrulaması</div>
+      <div>2. Uzmanlık alanı ve yönlendirme kategorileri</div>
+      <div>3. Talep havuzu ve belge kontrol ekranı</div>
+      <div>4. Randevu, takip ve raporlama paneli</div>
+    </div>
+  </div>
+  <div class="bar-side glass">
+    <h3>Neden Barolar İçin Değerli?</h3>
+    <p>Hukuki yardım, yönlendirme, talep yoğunluğu analizi, dijital belge akışı ve kurumsal görünürlük tek ekranda yönetilebilir.</p>
+    <a class="btn" href="#">Kurumsal Partnerlik Talebi</a>
+  </div>
+</section>
+
+<div class="ethic glass">
+  <b>Etik ve Meslek Kuralları Notu:</b> Allona Hukuk, hukuki hizmetleri reklam diliyle değil; doğrulanmış uzmanlık, kurumsal yönlendirme, belge yönetimi ve randevu altyapısı mantığıyla sunar. Gerçek sistemde avukatlık meslek kuralları, baro düzenlemeleri ve ilgili mevzuat dikkate alınmalıdır.
+</div>
+
+<div class="section-title"><h2>Doğrulanmış Hukuk Uzmanları</h2><a href="#">Uzmanları Gör</a></div>
+<div class="expert-grid">
+  <div class="expert glass"><div class="expert-img"></div><b>Yabancılar Hukuku</b><p>İkamet, deport, çalışma izni</p><div class="meta"><span>Doğrulanmış</span><span>Randevu</span></div></div>
+  <div class="expert glass"><div class="expert-img"></div><b>Ticaret Hukuku</b><p>Şirket, sözleşme, ortaklık</p><div class="meta"><span>Kurumsal</span><span>Teklif</span></div></div>
+  <div class="expert glass"><div class="expert-img"></div><b>Gayrimenkul Hukuku</b><p>Tapu, kira, satış sözleşmesi</p><div class="meta"><span>Uzmanlık</span><span>İnceleme</span></div></div>
+  <div class="expert glass"><div class="expert-img"></div><b>Arabuluculuk</b><p>Uyuşmazlık çözümü</p><div class="meta"><span>Online</span><span>Randevu</span></div></div>
+</div>
+
+<div class="section-title"><h2>Hukuki Süreç Akışı</h2><a href="#">Süreç Takibi</a></div>
+<div class="process">
+  <div class="step glass"><h3>1. Talep</h3><p>Kullanıcı hukuki konuyu seçer.</p></div>
+  <div class="step glass"><h3>2. Belge</h3><p>İlgili evraklar güvenli alana yüklenir.</p></div>
+  <div class="step glass"><h3>3. Yönlendirme</h3><p>Uygun uzmanlık alanına aktarılır.</p></div>
+  <div class="step glass"><h3>4. Randevu</h3><p>Ön görüşme ve teklif süreci oluşur.</p></div>
+  <div class="step glass"><h3>5. Takip</h3><p>Dosya durumu panelden takip edilir.</p></div>
+</div>
+
+<section class="partner-cta glass">
+  <div>
+    <h2>Avukat, Hukuk Bürosu veya Baro Partneri Ol</h2>
+    <p>Allona Hukuk partner paneliyle talep yönetimi, belge kontrolü, randevu akışı, uzmanlık alanı sınıflandırması, kurumsal raporlama ve güvenli iletişim tek sistemde çalışır.</p>
+    <a class="btn" href="#">Hukuk Partnerliği Başvurusu</a>
+  </div>
+  <div class="panel-list">
+    <div>Talep ve dosya yönetimi</div>
+    <div>Belge kontrol ekranı</div>
+    <div>Randevu ve teklif akışı</div>
+    <div>Baro / kurum doğrulama alanı</div>
+    <div>Uzmanlık bazlı yönlendirme</div>
+    <div>Kurumsal raporlama</div>
+  </div>
+</section>
+
+<section class="info glass">
+  <h2>Allona Hukuk: Kurumsal, Etik ve Doğrulanmış Hukuki Erişim</h2>
+  <p>Allona Hukuk; kullanıcıların hukuki ihtiyaçlarını doğru uzmanlık alanlarına yönlendiren, belge yönetimi ve randevu altyapısı sağlayan premium hukuk erişim modülüdür. Platformun amacı hukuki hizmetleri kontrolsüz şekilde pazarlamak değil; kullanıcı ile doğrulanmış hukuk profesyonelleri arasında güvenli, düzenli ve etik bir dijital temas alanı oluşturmaktır.</p>
+  <h3>Barolar İçin Dijital Dönüşüm Katmanı</h3>
+  <p>Barolar ve kurumsal hukuk yapıları, talep yoğunluğunu, alan bazlı başvuruları, belge akışını ve yönlendirme süreçlerini daha düzenli takip edebilir. Böylece vatandaşın hukuki erişimi daha anlaşılır ve takip edilebilir hale gelir.</p>
+  <h3>AllonaHub Ekosistemiyle Bağlantı</h3>
+  <p>Allona Hukuk; Allona Danışmanlık, Allona Gayrimenkul, Allona Finans, Allona Maritime ve diğer modüllerle bağlantılı çalışabilir. Örneğin gayrimenkul satışında sözleşme inceleme, şirket kuruluşunda ticari danışmanlık, yabancılar hukuku dosyasında ikamet danışmanlığı aynı ekosistemden yönetilebilir.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Legal access, bar association, lawyer and document workflow ecosystem.</div>
+
+</div>
+</body>
+</html>
