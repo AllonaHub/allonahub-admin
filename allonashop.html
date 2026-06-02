@@ -2,345 +2,268 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Allona Shop</title>
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Shop | AllonaHub</title>
 
 <style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
-}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
 
-body{
-background:#071426;
-color:white;
-}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
 
-header{
-background:#08172d;
-padding:18px 30px;
-display:flex;
-align-items:center;
-justify-content:space-between;
-border-bottom:1px solid rgba(0,229,255,.2);
-}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 330px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
 
-.logo{
-display:flex;
-align-items:center;
-gap:12px;
-font-size:28px;
-font-weight:900;
-color:#ffd700;
-}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
 
-.logo img{
-height:42px;
-}
+.catbar{height:64px;display:flex;align-items:center;gap:24px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
 
-.search{
-flex:1;
-margin:0 30px;
-}
+.ads{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.ad{min-height:160px;padding:22px;border-radius:26px;background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(255,215,0,.08));border:1px solid rgba(255,215,0,.18)}
+.ad.big{min-height:220px;grid-row:span 2;background:radial-gradient(circle at right,#00e5ff33,transparent 38%),linear-gradient(135deg,#04152e,#082f5f)}
+.ad h2,.ad h3{color:#ffd700;margin-bottom:10px}
+.ad p{opacity:.78;line-height:1.4}
 
-.search input{
-width:100%;
-padding:14px 20px;
-border-radius:30px;
-border:none;
-background:#102443;
-color:white;
-}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
 
-.menu{
-display:flex;
-gap:20px;
-}
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.product{min-height:245px;padding:16px;border-radius:24px;text-decoration:none;color:white}
+.product-img{height:130px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.product-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.product b{color:#ffd700}
+.product p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:21px;font-weight:900;margin-top:8px}
 
-.menu a{
-color:white;
-text-decoration:none;
-font-weight:700;
-}
+.hp-campaigns{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.hp-card{padding:22px;min-height:130px}
+.hp-card h3{color:#ffd700;margin-bottom:8px}
+.hp-card p{opacity:.75}
 
-.container{
-display:grid;
-grid-template-columns:250px 1fr 280px;
-gap:20px;
-padding:20px;
-}
+.category-grid,.brand-grid,.mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.cat-card,.brand-card,.mini-card{padding:20px;min-height:105px;text-decoration:none;color:white}
+.cat-card b,.brand-card b,.mini-card b{color:#ffd700}
+.cat-card p,.brand-card p,.mini-card p{font-size:13px;opacity:.7;margin-top:8px}
 
-.sidebar,
-.rightbar,
-.card{
-background:#0d1f39;
-border-radius:20px;
-border:1px solid rgba(0,229,255,.15);
-}
+.mega{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:18px}
+.mega-col{padding:20px}
+.mega-col h3{color:#ffd700;margin-bottom:12px}
+.mega-col h4{color:#00e5ff;margin:14px 0 7px;font-size:14px}
+.mega-col p{font-size:13px;opacity:.76;line-height:1.55}
 
-.sidebar{
-padding:20px;
-}
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
 
-.sidebar h3{
-color:#ffd700;
-margin-bottom:15px;
-}
-
-.sidebar ul{
-list-style:none;
-}
-
-.sidebar li{
-padding:12px 0;
-border-bottom:1px solid rgba(255,255,255,.08);
-}
-
-.hero{
-background:linear-gradient(135deg,#0c2b60,#081325);
-border-radius:25px;
-padding:40px;
-margin-bottom:20px;
-}
-
-.hero h1{
-font-size:52px;
-margin-bottom:15px;
-}
-
-.hero span{
-color:#ffd700;
-}
-
-.hero p{
-font-size:18px;
-max-width:550px;
-line-height:1.6;
-}
-
-.hero button{
-margin-top:20px;
-padding:14px 25px;
-background:#ffd700;
-border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.section-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin:20px 0;
-}
-
-.section-title h2{
-color:#ffd700;
-}
-
-.products{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:15px;
-}
-
-.product{
-background:#102443;
-border-radius:20px;
-overflow:hidden;
-}
-
-.product img{
-width:100%;
-height:180px;
-object-fit:cover;
-}
-
-.product-content{
-padding:15px;
-}
-
-.price{
-font-size:22px;
-font-weight:bold;
-color:#ffd700;
-margin:10px 0;
-}
-
-.product button{
-width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
-background:#00d4ff;
-font-weight:bold;
-cursor:pointer;
-}
-
-.rightbar{
-padding:20px;
-height:fit-content;
-}
-
-.rightbar h3{
-color:#ffd700;
-margin-bottom:15px;
-}
-
-.hp-box{
-margin-top:20px;
-padding:15px;
-background:#102443;
-border-radius:15px;
-}
-
-@media(max-width:1000px){
-
-.container{
-grid-template-columns:1fr;
-}
-
-.products{
-grid-template-columns:repeat(2,1fr);
-}
-
-.search{
-display:none;
-}
-
-}
-
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
 </style>
 </head>
 
 <body>
+<div class="page">
 
-<header>
-
-<div class="logo">
-<img src="allona.logo.png">
-<span>Allona Shop</span>
+<div class="top-links">
+  <a href="#">İndirim Kuponlarım</a>
+  <a href="#">Ekosisteme Katıl</a>
+  <a href="#">Hakkımızda</a>
+  <a href="#">Yardım ve Destek</a>
 </div>
 
-<div class="search">
-<input type="text" placeholder="Ürün, marka veya kategori ara...">
+<div class="header">
+  <div class="brand glass">
+    <img src="allona.logo.png" alt="AllonaHub">
+    <b>Allona</b><span>Hub</span>
+  </div>
+
+  <div class="search glass">
+    <div class="search-mark"></div>
+    <input placeholder="Ürün, marka, kategori veya kampanya ara...">
+  </div>
+
+  <div class="actions glass">
+    <a href="user.html">Giriş Yap</a>
+    <a href="#">Favorilerim</a>
+    <a href="#">Sepetim</a>
+  </div>
 </div>
 
-<div class="menu">
-<a href="index.html">Ana Sayfa</a>
-<a href="#">Favoriler</a>
-<a href="#">Sepet</a>
-<a href="#">Hesabım</a>
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Kategoriler</div>
+  <a href="#kadın">Kadın</a>
+  <a href="#erkek">Erkek</a>
+  <a href="#ev">Ev & Yaşam</a>
+  <a href="#anne">Anne & Çocuk</a>
+  <a href="#kozmetik">Kozmetik</a>
+  <a href="#market">Süpermarket</a>
+  <a href="#ayakkabi">Ayakkabı & Çanta</a>
+  <a href="#spor">Spor & Outdoor</a>
+  <a href="index.html#modules">Hublar</a>
+  <a href="#enler">Çok Satanlar</a>
 </div>
 
-</header>
+<section class="ads">
+  <div class="ad big"><h2>Allona Shop’ta Büyük Fırsatlar</h2><p>İndirimli ürünler, HP kazandıran alışverişler ve ekosistem avantajları tek vitrinde.</p></div>
+  <div class="ad"><h3>İndirimde Olanlar</h3><p>Bugünün öne çıkan fırsatları.</p></div>
+  <div class="ad"><h3>Hub Reklamları</h3><p>Yemek, taksi, hukuk ve diğer modüllerden avantajlar.</p></div>
+  <div class="ad"><h3>Kampanyalar</h3><p>Partner destekli özel alışveriş fırsatları.</p></div>
+  <div class="ad"><h3>Yeni Gelenler</h3><p>Yeni eklenen ürünleri keşfet.</p></div>
+  <div class="ad"><h3>Allona Sanat</h3><p>Tasarım, dekorasyon ve özel koleksiyonlar.</p></div>
+</section>
 
-<div class="container">
+<div class="section-title"><h2>Popüler Ürünler</h2><a href="#">Tümünü Gör</a></div>
+<div class="product-grid">
+  <a class="product glass" data-module-tags="shop,guzellik"><div class="product-img"></div><b>Premium Bakım Seti</b><p>Güzellik & bakım kategorisi</p><div class="price">799,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,kadin"><div class="product-img"></div><b>Yeni Sezon Çanta</b><p>Kadın aksesuar</p><div class="price">1.299,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,spor"><div class="product-img"></div><b>Spor Outdoor Set</b><p>Fitness ve günlük kullanım</p><div class="price">649,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,market"><div class="product-img"></div><b>Temizlik Paketi</b><p>Ev & süpermarket</p><div class="price">399,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,elektronik"><div class="product-img"></div><b>Akıllı Saat</b><p>Elektronik aksesuar</p><div class="price">1.999,99 ₺</div></a>
+</div>
 
-<div class="sidebar">
+<div class="section-title"><h2>HP ve İndirim Fırsatları</h2><a href="#">HP Dünyası</a></div>
+<div class="hp-campaigns">
+  <div class="hp-card glass"><h3>2000 HP Üzeri Alışveriş</h3><p>HP ile özel alışveriş avantajlarını aç.</p></div>
+  <div class="hp-card glass"><h3>%10 İndirimde</h3><p>Seçili ürünlerde anlık indirimler.</p></div>
+  <div class="hp-card glass"><h3>%20 ve Üzeri</h3><p>Yüksek indirimli kampanya ürünleri.</p></div>
+  <div class="hp-card glass"><h3>Tamamını HP ile Öde</h3><p>Uygun ürünlerde HP ile ödeme avantajı.</p></div>
+</div>
 
-<h3>Kategoriler</h3>
+<div class="section-title"><h2>Keşfet</h2><a href="#kategoriDetay">Kategori Detayları</a></div>
+<div class="category-grid">
+  <a class="cat-card glass" href="#kadın"><b>Kadın</b><p>Giyim, ayakkabı, çanta, kozmetik</p></a>
+  <a class="cat-card glass" href="#erkek"><b>Erkek</b><p>Giyim, ayakkabı, bakım, elektronik</p></a>
+  <a class="cat-card glass" href="#anne"><b>Anne & Çocuk</b><p>Bebek, oyuncak, bakım, güvenlik</p></a>
+  <a class="cat-card glass" href="#ev"><b>Ev & Yaşam</b><p>Mobilya, dekorasyon, mutfak</p></a>
+  <a class="cat-card glass" href="#market"><b>Süpermarket</b><p>Gıda, temizlik, petshop</p></a>
+  <a class="cat-card glass" href="#kozmetik"><b>Kozmetik</b><p>Makyaj, bakım, parfüm</p></a>
+  <a class="cat-card glass" href="#ayakkabi"><b>Ayakkabı & Çanta</b><p>Kadın, erkek, çocuk</p></a>
+  <a class="cat-card glass" href="#elektronik"><b>Elektronik</b><p>Telefon, TV, bilgisayar</p></a>
+  <a class="cat-card glass" href="#spor"><b>Spor & Outdoor</b><p>Fitness, kamp, bisiklet</p></a>
+  <a class="cat-card glass" href="#kitap"><b>Kitap & Kırtasiye</b><p>Kitap, ofis, hobi, sanat</p></a>
+</div>
 
-<ul>
-<li>💍 Takı & Aksesuar</li>
-<li>👗 Moda & Giyim</li>
-<li>💄 Kozmetik</li>
-<li>🏠 Ev & Yaşam</li>
-<li>📱 Elektronik</li>
-<li>🏋️ Spor</li>
-<li>🚗 Otomotiv</li>
-<li>📚 Tüm Kategoriler</li>
-</ul>
+<div class="section-title"><h2>Markalar</h2><a href="#">Marka Başvurusu</a></div>
+<div class="brand-grid">
+  <div class="brand-card glass"><b>Allona Shop</b><p>Resmi mağaza</p></div>
+  <div class="brand-card glass"><b>Partner Marka</b><p>Başvurdukça burada görünür</p></div>
+  <div class="brand-card glass"><b>Premium Marka</b><p>Onaylı satıcı alanı</p></div>
+  <div class="brand-card glass"><b>Yeni Marka</b><p>Ekosisteme katılanlar</p></div>
+  <div class="brand-card glass"><b>Elite Partner</b><p>Öne çıkan iş ortakları</p></div>
+</div>
+
+<div class="section-title" id="enler"><h2>Enler</h2><a href="#">Tümünü Gör</a></div>
+<div class="mini-grid">
+  <div class="mini-card glass"><b>En Çok Satanlar</b><p>Satış hacmi yüksek ürünler</p></div>
+  <div class="mini-card glass"><b>En Trend Olanlar</b><p>Favori ve görüntülenme artışı</p></div>
+  <div class="mini-card glass"><b>En Çok HP Kazandıran</b><p>Avantajlı ürünler</p></div>
+  <div class="mini-card glass"><b>En Yeni Ürünler</b><p>Yeni eklenen katalog</p></div>
+  <div class="mini-card glass"><b>En İyi Partnerler</b><p>Yüksek memnuniyetli satıcılar</p></div>
+</div>
+
+<div class="section-title"><h2>Hub Ürünler</h2><a href="#">Avantajlı Ürünler</a></div>
+<div class="product-grid">
+  <a class="product glass" data-module-tags="shop,hub"><div class="product-img"></div><b>Allona Avantaj Paketi</b><p>Hub özel ürün</p><div class="price">599,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,hub,market"><div class="product-img"></div><b>Market Ekonomi Seti</b><p>Günlük ihtiyaç</p><div class="price">349,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,hub,guzellik"><div class="product-img"></div><b>Bakım Koleksiyonu</b><p>Hub avantajlı</p><div class="price">899,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,hub,spor"><div class="product-img"></div><b>Fitness Başlangıç Seti</b><p>Spor ürünleri</p><div class="price">749,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,hub,anne"><div class="product-img"></div><b>Bebek Bakım Seti</b><p>Anne & çocuk</p><div class="price">499,99 ₺</div></a>
+</div>
+
+<div class="section-title"><h2>Sana Özel</h2><a href="#">Kişisel Öneriler</a></div>
+<div class="mini-grid">
+  <div class="mini-card glass"><b>Sağlık</b><p>Kişisel bakım ve yaşam ürünleri</p></div>
+  <div class="mini-card glass"><b>Güzellik & Bakım</b><p>Bakım rutinleri ve kozmetik</p></div>
+  <div class="mini-card glass"><b>Temizlik</b><p>Ev ve hijyen ihtiyaçları</p></div>
+  <div class="mini-card glass"><b>Ayakkabı</b><p>Günlük ve spor modeller</p></div>
+  <div class="mini-card glass"><b>Çanta</b><p>Stil tamamlayıcı ürünler</p></div>
+</div>
+
+<div class="section-title"><h2>Kuponlu Ürünler</h2><a href="#">Kupon Oluştur</a></div>
+<div class="product-grid">
+  <a class="product glass" data-module-tags="shop,coupon"><div class="product-img"></div><b>Kuponlu Takı Seti</b><p>Satıcı kupon reklamı</p><div class="price">399,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,coupon"><div class="product-img"></div><b>Kuponlu Kozmetik</b><p>Partner kampanyası</p><div class="price">299,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,coupon"><div class="product-img"></div><b>Kuponlu Ayakkabı</b><p>Özel indirim</p><div class="price">899,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,coupon"><div class="product-img"></div><b>Kuponlu Ev Seti</b><p>Ev & yaşam</p><div class="price">699,99 ₺</div></a>
+  <a class="product glass" data-module-tags="shop,coupon"><div class="product-img"></div><b>Kuponlu Market</b><p>Süpermarket fırsatı</p><div class="price">249,99 ₺</div></a>
+</div>
+
+<div class="section-title"><h2>Bunlar da İlginizi Çekebilir</h2><a href="#">Tüm Markalar</a></div>
+<div class="brand-grid">
+  <div class="brand-card glass"><b>Başvuran Marka</b><p>Onaylandıkça burada görünür.</p></div>
+  <div class="brand-card glass"><b>Yeni Partner</b><p>Aktif kampanya alanı</p></div>
+  <div class="brand-card glass"><b>Premium Satıcı</b><p>Öne çıkan ürünler</p></div>
+  <div class="brand-card glass"><b>Hub Partner</b><p>Çoklu modül görünürlüğü</p></div>
+  <div class="brand-card glass"><b>Elite Marka</b><p>Güven skoru yüksek</p></div>
+</div>
+
+<section id="kategoriDetay" class="mega">
+  <div class="mega-col glass" id="kadın"><h3>Kadın</h3><h4>Giyim</h4><p>Elbise, tişört, gömlek, kot pantolon, ceket, etek, kazak, tesettür, büyük beden, sweatshirt, kaban, hırka.</p><h4>Ayakkabı & Çanta</h4><p>Topuklu, sneaker, babet, bot, çizme, omuz çantası, sırt çantası, cüzdan, abiye çanta.</p><h4>Kozmetik & İç Giyim</h4><p>Parfüm, makyaj, cilt bakım, saç bakım, pijama, gecelik, iç giyim, fantezi giyim.</p></div>
+  <div class="mega-col glass" id="erkek"><h3>Erkek</h3><h4>Giyim</h4><p>Tişört, gömlek, pantolon, mont, takım elbise, sweatshirt, blazer, polar, büyük beden.</p><h4>Ayakkabı & Aksesuar</h4><p>Spor ayakkabı, klasik ayakkabı, bot, loafer, saat, gözlük, cüzdan, kemer.</p><h4>Elektronik & Spor</h4><p>Cep telefonu, akıllı saat, laptop, oyun konsolları, spor ekipmanları, kamp malzemeleri.</p></div>
+  <div class="mega-col glass" id="anne"><h3>Anne & Çocuk</h3><h4>Bebek</h4><p>Bebek takımları, yenidoğan, tulum, body, battaniye, bebek bakım, bebek bezi, ıslak mendil.</p><h4>Çocuk</h4><p>Kız çocuk, erkek çocuk, ayakkabı, okul çantası, oyuncak, eğitici ürünler, akülü araba.</p><h4>Beslenme & Güvenlik</h4><p>Biberon, emzik, mama sandalyesi, oto koltuğu, bebek arabası, park yatak.</p></div>
+  <div class="mega-col glass" id="ev"><h3>Ev & Yaşam</h3><h4>Sofra & Mutfak</h4><p>Tencere, tava, yemek takımı, kahvaltı takımı, saklama kabı, kahve fincanı.</p><h4>Ev Tekstili & Dekorasyon</h4><p>Nevresim, yorgan, halı, perde, ayna, tablo, vazo, oda kokusu, mum.</p><h4>Mobilya & Yapı Market</h4><p>Salon, yatak odası, çalışma odası, mutfak dolabı, hırdavat, boya, matkap.</p></div>
+  <div class="mega-col glass" id="market"><h3>Süpermarket</h3><h4>Ev & Temizlik</h4><p>Çamaşır deterjanı, bulaşık deterjanı, mop, oda kokusu, kağıt havlu, temizlik bezi.</p><h4>Gıda</h4><p>Çay, kahve, atıştırmalık, kahvaltılık, makarna, yağ, un, baharat, süt, içecek.</p><h4>Petshop</h4><p>Kedi maması, köpek maması, kedi kumu, tasma, kuş yemleri, akvaryum ürünleri.</p></div>
+  <div class="mega-col glass" id="kozmetik"><h3>Kozmetik</h3><h4>Makyaj</h4><p>Göz makyajı, ten makyajı, ruj, maskara, eyeliner, allık, highlighter, far paleti.</p><h4>Cilt & Saç Bakımı</h4><p>Yüz kremi, temizleme, serum, güneş kremi, şampuan, saç boyası, saç şekillendirici.</p><h4>Kişisel Bakım</h4><p>Duş jeli, deodorant, ağız bakım, tıraş, epilasyon, hijyen ürünleri.</p></div>
+  <div class="mega-col glass" id="ayakkabi"><h3>Ayakkabı & Çanta</h3><h4>Kadın</h4><p>Spor ayakkabı, topuklu, bot, sandalet, sneaker, omuz çantası, portföy, valiz.</p><h4>Erkek</h4><p>Günlük ayakkabı, klasik, bot, sneaker, cüzdan, spor çanta, laptop çantası.</p><h4>Çocuk</h4><p>Okul çantası, çocuk spor ayakkabı, bot, sandalet, lisanslı çantalar.</p></div>
+  <div class="mega-col glass" id="elektronik"><h3>Elektronik</h3><h4>Küçük Ev Aletleri</h4><p>Süpürge, robot süpürge, ütü, kahve makinesi, airfryer, blender seti.</p><h4>Telefon & Bilgisayar</h4><p>Cep telefonu, kılıf, powerbank, laptop, tablet, monitör, klavye, mouse.</p><h4>TV & Oyun</h4><p>Televizyon, kulaklık, hoparlör, Playstation, Xbox, oyuncu ekipmanları.</p></div>
+  <div class="mega-col glass" id="spor"><h3>Spor & Outdoor</h3><h4>Spor Giyim</h4><p>Spor tişört, tayt, eşofman, sweatshirt, forma, spor ayakkabı.</p><h4>Fitness</h4><p>Dambıl, yoga matı, koşu bandı, kondisyon bisikleti, protein tozu, shaker.</p><h4>Outdoor</h4><p>Kamp, bisiklet, dalış, balıkçılık, kayak, çadır, termos, aksiyon kamera.</p></div>
+  <div class="mega-col glass" id="kitap"><h3>Kitap & Kırtasiye</h3><h4>Kitap</h4><p>Sınav hazırlık, roman, kişisel gelişim, çocuk kitapları, yabancı dil, çizgi roman.</p><h4>Kırtasiye</h4><p>Defter, ajanda, kalem, boya seti, dosya, ofis gereçleri, fotokopi kağıdı.</p><h4>Hobi & Sanat</h4><p>Tuval, fırça, akrilik boya, örgü ipi, puzzle, satranç, müzik aletleri.</p></div>
+</section>
+
+<section class="info glass">
+  <h2>Dünyaya Açılan Türkiye’nin Süper Online Ekosistemi: AllonaHub</h2>
+  <p>AllonaHub, alışverişten yemeğe, ulaşımdan hukuka, kariyerden denizciliğe kadar günlük hayatın farklı ihtiyaçlarını tek merkezde birleştiren yeni nesil dijital ekosistemdir. Kullanıcılar tek hesapla alışveriş yapabilir, hizmet alabilir, HP kazanabilir ve ekosistem avantajlarından faydalanabilir.</p>
+
+  <h3>Türkiye’nin Süper Online Ekosistemi Sitesi</h3>
+  <p>AllonaHub yalnızca bir alışveriş sitesi değil; kullanıcı, partner, marka, hizmet sağlayıcı ve modülleri bir araya getiren ölçeklenebilir bir süper platform vizyonudur. Bu yapı sayesinde kullanıcılar farklı sektörlerde dağılmadan tek güvenli çatı altında işlem yapabilir.</p>
+
+  <h3>Dijital Ekosistemde Bütün Sektörleri Bir Arada Toplayan Platform</h3>
+  <p>AllonaHub mimarisinde ürünler, hizmetler, partnerler ve modüller ortak veri mantığıyla çalışır. Bir partner Allona Shop’a ürün yüklediğinde ürünün kategori etiketi uygunsa Güzellik, Spor, Market, Evcil Hayvan veya ilgili diğer modüllerde de otomatik görünür olabilir. Böylece her ürün doğru kullanıcıya daha hızlı ulaşır.</p>
+
+  <h3>AllonaHub’un Yaşamı Kolaylaştıran Özellikleri</h3>
+  <p>HP ödül sistemi, Hub Cash, kuponlar, partner kampanyaları, merkezi bildirimler, kullanıcı paneli, partner paneli ve gelecekteki Wallet altyapısı ile AllonaHub kullanıcıya yalnızca alışveriş değil; bağlılık, avantaj ve kolaylık sunar.</p>
+
+  <h3>Allona Shop Çeşitliliği</h3>
+  <p>Allona Shop; kadın, erkek, anne & çocuk, ev & yaşam, süpermarket, kozmetik, ayakkabı & çanta, elektronik, spor & outdoor, kitap & kırtasiye gibi geniş kategori yapısıyla farklı ürün gruplarını tek premium alışveriş deneyiminde toplar.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Global partner-based super-app ecosystem.</div>
 
 </div>
 
-<div>
-
-<div class="hero">
-
-<h1>Allona Shop<br><span>Aradığın her şey</span><br>tek platformda</h1>
-
-<p>
-Premium alışveriş deneyimi, hızlı teslimat,
-güvenli ödeme ve HP kazandıran fırsatlar.
-</p>
-
-<button>Alışverişe Başla</button>
-
-</div>
-
-<div class="section-title">
-<h2>🔥 Fırsat Ürünleri</h2>
-<span>Tümünü Gör</span>
-</div>
-
-<div class="products">
-
-<div class="product">
-<img src="https://picsum.photos/400/400?11">
-<div class="product-content">
-<h3>Premium Takı Seti</h3>
-<div class="price">799,99 ₺</div>
-<button>Sepete Ekle</button>
-</div>
-</div>
-
-<div class="product">
-<img src="https://picsum.photos/400/400?12">
-<div class="product-content">
-<h3>Akıllı Saat</h3>
-<div class="price">1.299,99 ₺</div>
-<button>Sepete Ekle</button>
-</div>
-</div>
-
-<div class="product">
-<img src="https://picsum.photos/400/400?13">
-<div class="product-content">
-<h3>Kozmetik Set</h3>
-<div class="price">599,99 ₺</div>
-<button>Sepete Ekle</button>
-</div>
-</div>
-
-<div class="product">
-<img src="https://picsum.photos/400/400?14">
-<div class="product-content">
-<h3>Spor Ayakkabı</h3>
-<div class="price">1.499,99 ₺</div>
-<button>Sepete Ekle</button>
-</div>
-</div>
-
-</div>
-
-</div>
-
-<div class="rightbar">
-
-<h3>🛒 Sepetim</h3>
-
-<p>2 Ürün</p>
-
-<h2 style="color:#ffd700;">1.249,90 ₺</h2>
-
-<div class="hp-box">
-<h3>🎁 HP Kazan</h3>
-<p>Bu hafta alışverişlerden ekstra HP kazan.</p>
-</div>
-
-<div class="hp-box">
-<h3>⭐ Premium Üye</h3>
-<p>Özel kampanyalara erişim sağla.</p>
-</div>
-
-</div>
-
-</div>
+<script>
+/*
+Partner ürün görünürlük mimarisi:
+Ürün sisteme yüklendiğinde kategori ve moduleTags alanı tutulur.
+Örnek:
+{
+  title:"Protein Tozu",
+  category:"Sporcu Besinleri",
+  moduleTags:["shop","spor","market"]
+}
+Bu sayede ürün Allona Shop içinde görünür; uygunsa Spor & Fitness veya Market modülünde de listelenir.
+Gerçek backend bağlanınca bu alan API'den beslenecek.
+*/
+</script>
 
 </body>
 </html>
