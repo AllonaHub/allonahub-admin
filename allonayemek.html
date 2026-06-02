@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Yemek | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:23px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.45fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:260px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.5;max-width:620px}
+.hero-card{padding:24px;min-height:260px}
+.hero-card h3{color:#ffd700;font-size:28px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.order-flow{margin-top:18px;display:grid;gap:10px}
+.flow-step{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+
+.category-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:14px}
+.food-cat{min-height:100px;text-align:center;padding:17px;text-decoration:none;color:white}
+.food-icon{width:38px;height:38px;margin:0 auto 11px;border-radius:14px;background:linear-gradient(135deg,#ffd700,#00e5ff);box-shadow:0 0 20px rgba(0,229,255,.28)}
+.food-cat b{font-size:14px}
+
+.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.promo{padding:22px;min-height:135px}
+.promo h3{color:#ffd700;margin-bottom:8px}
+.promo p{opacity:.75;line-height:1.45}
+
+.restaurant-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.restaurant{min-height:250px;padding:16px;text-decoration:none;color:white}
+.rest-img{height:130px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.rest-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#ffd70088,transparent 65%)}
+.restaurant b{color:#ffd700;font-size:18px}
+.restaurant p{font-size:13px;opacity:.72;margin:6px 0}
+.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.menu-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.menu-item{min-height:230px;padding:16px;text-decoration:none;color:white}
+.menu-img{height:120px;border-radius:18px;background:linear-gradient(135deg,#0a3974,#041225);margin-bottom:13px}
+.menu-item b{color:#ffd700}
+.menu-item p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:20px;font-weight:900}
+
+.courier-zone{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}
+.courier-card{padding:24px;min-height:165px}
+.courier-card h3{color:#ffd700;font-size:25px;margin-bottom:9px}
+.courier-card p{opacity:.78;line-height:1.45}
+
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
+.partner-cta p{opacity:.82;line-height:1.6}
+.btn{display:inline-block;margin-top:18px;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+.panel-list{display:grid;gap:10px}
+.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+  <a href="#">Yemek Kuponlarım</a>
+  <a href="#">Restoran Partneri Ol</a>
+  <a href="#">Kurye Başvurusu</a>
+  <a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+  <div class="brand glass"><img src="allona.logo.png"><b>Allona</b><span>Hub</span></div>
+  <div class="search glass"><div class="search-mark"></div><input placeholder="Restoran, yemek, mutfak veya kampanya ara..."></div>
+  <div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Sepetim</a></div>
+</div>
+
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Kategoriler</div>
+  <a href="#">Pizza</a><a href="#">Burger</a><a href="#">Kebap</a><a href="#">Döner</a><a href="#">Tatlı</a><a href="#">Kahve</a><a href="#">Sağlıklı</a><a href="#">Vegan</a><a href="#">Market</a><a href="#">Çok Satanlar</a>
+</div>
+
+<section class="hero">
+  <div class="hero-main glass">
+    <h1>Allona Yemek<br>Lezzet Ekosistemi</h1>
+    <p>Restoranlar, kampanyalar, hızlı teslimat, HP kazandıran menüler ve Allona Kurye ağı tek premium yemek deneyiminde birleşir.</p>
+  </div>
+  <div class="hero-card glass">
+    <h3>HP Kazandıran Sipariş</h3>
+    <p>Yemek siparişi verdikçe HP kazan, kupon oluştur ve sonraki siparişlerinde avantaj elde et.</p>
+    <div class="order-flow"><div class="flow-step">Sipariş oluştur</div><div class="flow-step">Restoran hazırlar</div><div class="flow-step">Kurye atanır</div></div>
+  </div>
+  <div class="hero-card glass">
+    <h3>Canlı Teslimat Akışı</h3>
+    <p>Sipariş hazır olduğunda sistem otomatik Allona Kurye havuzuna bildirim gönderir ve en uygun kurye atanır.</p>
+    <div class="order-flow"><div class="flow-step">Yakındaki kuryeler</div><div class="flow-step">Canlı takip</div><div class="flow-step">Teslimat + HP</div></div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Yemek Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="category-grid">
+  <a class="food-cat glass"><div class="food-icon"></div><b>Pizza</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Burger</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Kebap</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Döner</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Tatlı</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Kahve</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Sağlıklı</b></a>
+  <a class="food-cat glass"><div class="food-icon"></div><b>Vegan</b></a>
+</div>
+
+<div class="section-title"><h2>Kampanyalar</h2><a href="#">Tüm Kampanyalar</a></div>
+<div class="promo-grid">
+  <div class="promo glass"><h3>İlk Siparişe HP</h3><p>Yeni kullanıcılar ilk yemek siparişinde ekstra HP kazanır.</p></div>
+  <div class="promo glass"><h3>%20 Menü İndirimi</h3><p>Seçili restoranlarda günün menü fırsatları.</p></div>
+  <div class="promo glass"><h3>Premium Üyelere Özel</h3><p>Gold ve Elite üyeler için özel restoran avantajları.</p></div>
+  <div class="promo glass"><h3>HP ile Kupon Oluştur</h3><p>HP’lerini yemek kuponuna çevir.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Restoranlar</h2><a href="#">Yakınımdakiler</a></div>
+<div class="restaurant-grid">
+  <a class="restaurant glass" data-module-tags="food,courier,hp"><div class="rest-img"></div><b>Allona Burger House</b><p>Burger • Patates • İçecek</p><div class="meta"><span>30-40 dk</span><span>+35 HP</span></div></a>
+  <a class="restaurant glass" data-module-tags="food,courier,hp"><div class="rest-img"></div><b>Blue Pizza</b><p>Pizza • İtalyan • Kampanya</p><div class="meta"><span>25-35 dk</span><span>+25 HP</span></div></a>
+  <a class="restaurant glass" data-module-tags="food,courier,hp"><div class="rest-img"></div><b>Kebap Prestige</b><p>Kebap • Lahmacun • Izgara</p><div class="meta"><span>35-45 dk</span><span>+40 HP</span></div></a>
+  <a class="restaurant glass" data-module-tags="food,courier,hp"><div class="rest-img"></div><b>Fit Bowl</b><p>Sağlıklı • Salata • Protein</p><div class="meta"><span>20-30 dk</span><span>+30 HP</span></div></a>
+</div>
+
+<div class="section-title"><h2>HP Kazandıran Menüler</h2><a href="#">HP Dünyası</a></div>
+<div class="menu-grid">
+  <a class="menu-item glass" data-module-tags="food,hp"><div class="menu-img"></div><b>Premium Burger Menü</b><p>Ekstra HP kazandırır</p><div class="price">289,99 ₺</div></a>
+  <a class="menu-item glass" data-module-tags="food,hp"><div class="menu-img"></div><b>Pizza Duo Menü</b><p>2 kişilik fırsat</p><div class="price">399,99 ₺</div></a>
+  <a class="menu-item glass" data-module-tags="food,hp"><div class="menu-img"></div><b>Fit Protein Bowl</b><p>Sağlıklı seçim</p><div class="price">249,99 ₺</div></a>
+  <a class="menu-item glass" data-module-tags="food,hp"><div class="menu-img"></div><b>Tatlı & Kahve Seti</b><p>Kuponlu fırsat</p><div class="price">179,99 ₺</div></a>
+  <a class="menu-item glass" data-module-tags="food,hp"><div class="menu-img"></div><b>Kebap Aile Menüsü</b><p>Avantajlı paket</p><div class="price">599,99 ₺</div></a>
+</div>
+
+<div class="section-title"><h2>Hızlı Teslimat & Allona Kurye</h2><a href="#">Kurye Paneli</a></div>
+<div class="courier-zone">
+  <div class="courier-card glass"><h3>Otomatik Kurye Bildirimi</h3><p>Restoran siparişi hazırladığında sistem otomatik Allona Kurye havuzuna görev oluşturur.</p></div>
+  <div class="courier-card glass"><h3>Yakındaki Kurye</h3><p>Sistem en yakın müsait kuryeleri sıralar ve teslimat akışını başlatır.</p></div>
+  <div class="courier-card glass"><h3>Canlı Takip</h3><p>Kullanıcı sipariş durumunu, restoran hazırlığını ve kurye teslimatını panelden takip eder.</p></div>
+</div>
+
+<section class="partner-cta glass">
+  <div>
+    <h2>Restoranını Allona Yemek’e Taşı</h2>
+    <p>AllonaHub partner paneliyle menü yönetimi, sipariş bildirimi, kampanya oluşturma, HP avantajları ve kurye bağlantısı tek sistemde çalışır.</p>
+    <a class="btn" href="partner.html">Restoran Partneri Ol</a>
+  </div>
+  <div class="panel-list">
+    <div>Menü ve fiyat yönetimi</div>
+    <div>Sipariş hazırlama akışı</div>
+    <div>Kurye sistemine otomatik bildirim</div>
+    <div>HP ve kupon kampanyaları</div>
+  </div>
+</section>
+
+<section class="info glass">
+  <h2>Allona Yemek: Lezzet, Hız ve HP Avantajı Tek Ekranda</h2>
+  <p>Allona Yemek; restoranları, kullanıcıları ve kuryeleri AllonaHub ekosistemi içinde birleştiren premium yemek sipariş modülüdür. Kullanıcılar yemek siparişi verirken HP kazanabilir, restoran kampanyalarından yararlanabilir ve teslimat sürecini canlı takip edebilir.</p>
+  <h3>Yemek Siparişinden Kurye Teslimatına Bağlı Sistem</h3>
+  <p>Sipariş oluştuğunda restoran paneline düşer, restoran hazırlık sürecini başlatır ve hazır olduğunda sistem kurye modülünü tetikler. Böylece Allona Yemek ve Allona Kurye kontrollü şekilde birbirine bağlı çalışır.</p>
+  <h3>Restoranlar İçin Güçlü Partner Paneli</h3>
+  <p>Restoran partnerleri yalnızca yemek modülüne erişir; menü, sipariş, kampanya ve teslimat durumlarını yönetir. Başka modüllerin verilerine karışmaz, sistem rol bazlı yetkiyle güvenli şekilde çalışır.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Food, courier and partner ecosystem.</div>
+
+</div>
+</body>
+</html>
