@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Tarım | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{
+content:"";position:fixed;inset:0;z-index:-2;
+background:
+radial-gradient(circle at top left,#63ff0050,transparent 30%),
+radial-gradient(circle at bottom right,#ffd70030,transparent 30%),
+linear-gradient(135deg,#020814,#061b20,#071b09)
+}
+body:after{
+content:"";position:fixed;inset:0;z-index:-1;
+background:linear-gradient(120deg,transparent,#9cff0015,transparent);
+animation:wave 8s infinite linear
+}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{
+background:linear-gradient(145deg,rgba(5,30,24,.92),rgba(3,10,20,.96));
+border:1px solid rgba(156,255,0,.28);
+box-shadow:0 0 30px rgba(156,255,0,.12),inset 0 0 22px rgba(255,255,255,.04);
+border-radius:26px;position:relative;overflow:hidden
+}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.brand small{display:block;font-size:12px;color:#9cff00;margin-top:2px}
+
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #ffd700;border-radius:50%;position:relative;box-shadow:0 0 14px #ffd700}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#ffd700;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#9cff00;border-radius:10px;box-shadow:0 0 12px #9cff00}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.5fr 330px;gap:18px;margin-bottom:20px}
+.hero-main{
+min-height:370px;padding:34px;
+background:
+linear-gradient(to right,rgba(0,0,0,.72),rgba(0,0,0,.28)),
+url('tarim.png');
+background-size:cover;background-position:center;
+border:1px solid rgba(255,215,0,.45)
+}
+.hero-main h1{font-size:48px;color:#9cff00;line-height:1.05;margin-bottom:10px}
+.hero-main h2{font-size:39px;line-height:1.14;margin-bottom:18px}
+.hero-main p{font-size:20px;opacity:.92;line-height:1.5;max-width:650px}
+.hero-main p b{color:#9cff00}
+
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:35px}
+.stat{height:74px;border-radius:16px;background:rgba(0,0,0,.42);border:1px solid rgba(255,215,0,.38);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.stat b{font-size:20px;color:white}.stat span{font-size:12px;opacity:.8;margin-top:4px}
+
+.price-panel{padding:18px}
+.price-panel h3{color:#9cff00;font-size:25px;margin-bottom:14px}
+.price-row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.12);padding:13px 0;font-size:15px}
+.price-row b{color:white}.price-row span{color:#9cff00;font-weight:900}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#9cff00,#ffd700);color:#020814;text-decoration:none;font-weight:900;border:0}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#9cff00;font-size:30px}
+.section-title a{color:#ffd700;text-decoration:none;font-weight:900}
+
+.grid-7{display:grid;grid-template-columns:repeat(7,1fr);gap:14px}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-3{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:16px}
+
+.cat-card{padding:14px;min-height:205px;text-decoration:none;color:white}
+.cat-img{height:105px;border-radius:18px;background:linear-gradient(135deg,#173f0b,#020814);margin-bottom:12px}
+.cat-card h3{color:#9cff00;font-size:17px;margin-bottom:7px}
+.cat-card p{font-size:13px;opacity:.78;line-height:1.45}
+
+.product{padding:14px;min-height:235px;text-decoration:none;color:white}
+.product-img{height:118px;border-radius:18px;background:linear-gradient(135deg,#173f0b,#020814);margin-bottom:12px}
+.product b{color:white;font-size:16px}
+.price{color:#9cff00;font-size:22px;font-weight:900;margin:8px 0}
+.product small{opacity:.7}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Çiftçi Paneli</a>
+<a href="#">Kooperatifler</a>
+<a href="#">Piyasa Fiyatları</a>
+<a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass">
+<img src="allona.logo.png">
+<div><b>Allona</b><span>Hub</span><small>Tarımın Dijital Gücü</small></div>
+</div>
+
+<div class="search glass">
+<div class="search-mark"></div>
+<input placeholder="Ürün, kategori, firma veya tarım hizmeti ara...">
+</div>
+
+<div class="actions glass">
+<a href="user.html">Bildirimler</a>
+<a href="#">Favorilerim</a>
+<a href="#">Sepetim</a>
+</div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Tarım</div>
+<a href="#">Ürünler</a>
+<a href="#">Tarımsal Girdi</a>
+<a href="#">Canlı Hayvan</a>
+<a href="#">Tarım Makineleri</a>
+<a href="#">Hasat & Depolama</a>
+<a href="#">Eğitim & Danışmanlık</a>
+<a href="#">Piyasa Fiyatları</a>
+<a href="#">Sigorta</a>
+<a href="#">Kooperatifler</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Tarım</h1>
+<h2>Topraktan Sofraya<br>Dijital Tarım Ekosistemi</h2>
+<p>Tohumdan hasada, üreticiden tüketime her şey <b>AllonaHub</b>'da.</p>
+
+<div class="stats">
+<div class="stat"><b>50.000+</b><span>Çiftçi & Üretici</span></div>
+<div class="stat"><b>10.000+</b><span>Ürün Çeşidi</span></div>
+<div class="stat"><b>5.000+</b><span>Tedarikçi Firma</span></div>
+<div class="stat"><b>81 İlde</b><span>Hızlı Teslimat</span></div>
+<div class="stat"><b>%100</b><span>Güvenli Alışveriş</span></div>
+</div>
+</div>
+
+<aside class="price-panel glass">
+<h3>Piyasa Fiyatları</h3>
+<div class="price-row"><b>Buğday / Ton</b><span>9.250 ₺ ↑</span></div>
+<div class="price-row"><b>Arpa / Ton</b><span>8.100 ₺ ↑</span></div>
+<div class="price-row"><b>Mısır / Ton</b><span>9.800 ₺ ↑</span></div>
+<div class="price-row"><b>Ayçiçeği / Ton</b><span>20.500 ₺ ↑</span></div>
+<div class="price-row"><b>Pamuk / Ton</b><span>23.000 ₺ ↑</span></div>
+<div class="price-row"><b>Soya / Ton</b><span>14.750 ₺ ↑</span></div>
+<a class="btn" href="#">Tüm Fiyatları Gör</a>
+</aside>
+</section>
+
+<div class="section-title"><h2>Kategoriler</h2><a href="#">Tüm Kategoriler</a></div>
+<div class="grid-7">
+<a class="cat-card glass"><div class="cat-img"></div><h3>Tohum & Fideler</h3><p>Sebze, meyve, tahıl ve endüstriyel tohumlar.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Gübre & İlaç</h3><p>Bitki koruma, besleme ve verim ürünleri.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Tarım Makineleri</h3><p>Traktör, ekipman ve yedek parçalar.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Hasat & Depolama</h3><p>Hasat makineleri ve depo sistemleri.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Sulama Sistemleri</h3><p>Damlama, yağmurlama ve tarla sulama.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Yem & Hayvancılık</h3><p>Yem, katkı, büyükbaş ve küçükbaş ürünleri.</p></a>
+<a class="cat-card glass"><div class="cat-img"></div><h3>Bahçe & Bağ</h3><p>Bağcılık, meyvecilik ve bahçe ürünleri.</p></a>
+</div>
+
+<div class="section-title">
+<h2>Öne Çıkan Tarım Ürünleri</h2>
+<a href="#">Tüm Ürünler</a>
+</div>
+
+<div class="grid-5">
+
+<a class="product glass">
+<div class="product-img"></div>
+<b>Sertifikalı Buğday Tohumu</b>
+<div class="price">1.250 ₺</div>
+<small>+50 HP Kazan</small>
+</a>
+
+<a class="product glass">
+<div class="product-img"></div>
+<b>Organik Gübre 50 KG</b>
+<div class="price">890 ₺</div>
+<small>+35 HP Kazan</small>
+</a>
+
+<a class="product glass">
+<div class="product-img"></div>
+<b>Damla Sulama Seti</b>
+<div class="price">4.990 ₺</div>
+<small>+120 HP Kazan</small>
+</a>
+
+<a class="product glass">
+<div class="product-img"></div>
+<b>Arpa Tohumu</b>
+<div class="price">975 ₺</div>
+<small>+40 HP Kazan</small>
+</a>
+
+<a class="product glass">
+<div class="product-img"></div>
+<b>Mısır Tohumu</b>
+<div class="price">1.890 ₺</div>
+<small>+65 HP Kazan</small>
+</a>
+
+</div>
+
+<div class="section-title">
+<h2>Çiftçi Hizmetleri</h2>
+<a href="#">Tüm Hizmetler</a>
+</div>
+
+<div class="grid-4">
+
+<div class="cat-card glass">
+<div class="cat-img"></div>
+<h3>Tarımsal Danışmanlık</h3>
+<p>Ziraat mühendislerinden online danışmanlık hizmeti.</p>
+</div>
+
+<div class="cat-card glass">
+<div class="cat-img"></div>
+<h3>Tarım Sigortaları</h3>
+<p>TARSİM, ürün sigortaları ve üretici koruma paketleri.</p>
+</div>
+
+<div class="cat-card glass">
+<div class="cat-img"></div>
+<h3>Finansman & Krediler</h3>
+<p>Tarım kredileri ve üretici destek paketleri.</p>
+</div>
+
+<div class="cat-card glass">
+<div class="cat-img"></div>
+<h3>Kooperatifler</h3>
+<p>Kooperatifler ve toplu alım avantajları.</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>AllonaHub Entegrasyonları</h2>
+<a href="#">Detaylar</a>
+</div>
+
+<div class="grid-3">
+
+<div class="glass" style="padding:25px">
+<h2 style="color:#9cff00;margin-bottom:10px">
+🚛 Lojistik & Nakliye
+</h2>
+<p style="line-height:1.7;opacity:.85">
+Üreticiler ürünlerini doğrudan
+Allona Lojistik ve Allona Nakliye
+modülleri üzerinden sevk edebilir.
+</p>
+</div>
+
+<div class="glass" style="padding:25px">
+<h2 style="color:#9cff00;margin-bottom:10px">
+🌍 İthalat & İhracat
+</h2>
+<p style="line-height:1.7;opacity:.85">
+Üreticiler ürünlerini global pazarlara
+Allona Trade ile ulaştırabilir.
+</p>
+</div>
+
+<div class="glass" style="padding:25px">
+<h2 style="color:#9cff00;margin-bottom:10px">
+💳 Hub Wallet
+</h2>
+<p style="line-height:1.7;opacity:.85">
+HP kazanımı, kupon sistemi,
+QR ödeme ve çiftçi kampanyaları.
+</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Partner Ol</h2>
+<a href="#">Başvur</a>
+</div>
+
+<div class="glass" style="padding:35px">
+
+<h2 style="color:#9cff00;font-size:34px;margin-bottom:15px">
+Allona Tarım Partneri Ol
+</h2>
+
+<p style="line-height:1.8;font-size:16px;opacity:.88">
+Tohum firmaları, gübre üreticileri,
+ziraat mühendisleri, traktör satıcıları,
+kooperatifler ve tarımsal hizmet sağlayıcıları
+Allona Tarım Partner Paneli üzerinden
+ürün ve hizmetlerini milyonlarca kullanıcıya
+sunabilir.
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:25px">
+
+<div class="glass" style="padding:18px;text-align:center">
+🌾<br><br>Tohum Firmaları
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+🚜<br><br>Tarım Makineleri
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+🧑‍🌾<br><br>Ziraat Uzmanları
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+🏭<br><br>Kooperatifler
+</div>
+
+</div>
+
+<a class="btn" href="partner.html">
+Partner Başvurusu Yap
+</a>
+
+</div>
+
+<div class="glass" style="padding:35px;margin-top:25px">
+
+<h2 style="color:#9cff00;margin-bottom:15px">
+Allona Tarım Nedir?
+</h2>
+
+<p style="line-height:1.9;opacity:.85">
+Allona Tarım; üreticileri, tedarikçileri,
+kooperatifleri, tarım uzmanlarını,
+lojistik firmalarını ve alıcıları
+aynı platformda buluşturan dijital
+tarım ekosistemidir.
+</p>
+
+<br>
+
+<p style="line-height:1.9;opacity:.85">
+Tohumdan hasada, depolamadan ihracata,
+finansmandan sigortaya kadar tüm süreçler
+AllonaHub çatısı altında birbirine bağlı çalışır.
+</p>
+
+</div>
+
+<div style="height:40px"></div>
+
+</div>
+</body>
+</html>  
