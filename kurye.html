@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Kurye | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.2fr 1.4fr;gap:18px;margin-bottom:18px}
+.hero-left{min-height:430px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-left h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}.hero-left p{font-size:18px;opacity:.85;line-height:1.55}
+.input-box{height:54px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.map{padding:16px;min-height:430px}
+.fake-map{height:100%;min-height:398px;border-radius:24px;background:
+linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),
+linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),
+radial-gradient(circle at 20% 25%,#00e5ff55,transparent 9%),
+radial-gradient(circle at 75% 65%,#ffd70055,transparent 8%),
+linear-gradient(135deg,#03172f,#082f5f,#020814);
+background-size:55px 55px,55px 55px,100% 100%,100% 100%,100% 100%;position:relative;overflow:hidden}
+.route{position:absolute;left:110px;top:120px;width:580px;height:190px;border:4px dashed rgba(0,229,255,.75);border-radius:50%;transform:rotate(-12deg);filter:drop-shadow(0 0 12px #00e5ff)}
+.courier{position:absolute;width:50px;height:30px;border-radius:18px;background:linear-gradient(135deg,#ffd700,#00e5ff);box-shadow:0 0 20px rgba(255,215,0,.7)}
+.c1{left:150px;top:135px}.c2{right:160px;bottom:130px}.c3{right:300px;top:80px}
+.map-card{position:absolute;left:24px;bottom:24px;width:280px;padding:18px;border-radius:20px;background:rgba(2,8,20,.78);border:1px solid rgba(0,229,255,.28)}
+.map-card h3{color:#ffd700;margin-bottom:8px}.map-card p{font-size:13px;opacity:.76}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:145px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.delivery{padding:16px;min-height:260px;text-decoration:none;color:white}.delivery-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px}
+.delivery b{color:#ffd700;font-size:18px}.delivery p{font-size:13px;opacity:.72;margin:6px 0}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.flow-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.step{padding:18px;min-height:125px}.step h3{color:#ffd700;margin-bottom:8px}.step p{font-size:13px;opacity:.75;line-height:1.45}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Teslimatlarım</a><a href="#">Kurye Başvurusu</a><a href="#">Partner Teslimatları</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><img src="allona.logo.png"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Kurye, paket, restoran siparişi, market teslimatı veya gönderi ara..."></div>
+<div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Gönderilerim</a><a href="#">Kurye Ol</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Kurye</div>
+<a href="#">Yemek Teslimatı</a><a href="#">Market Teslimatı</a><a href="#">Shop Kargo</a><a href="#">Aynı Gün</a><a href="#">Express</a><a href="#">Motor Kurye</a><a href="#">Araçlı Kurye</a><a href="#">Partner</a>
+</div>
+
+<section class="hero">
+<div class="hero-left glass">
+<h1>Allona Kurye<br>Canlı Teslimat Ağı</h1>
+<p>Allona Yemek, Market, Shop, Sağlık, Petshop ve partner işletmelerden gelen teslimatları tek kurye havuzunda yöneten akıllı teslimat modülü.</p>
+<div class="input-box">Alış noktası: Restoran / market / mağaza / eczane</div>
+<div class="input-box">Teslim noktası: Kullanıcı adresi</div>
+<div class="input-box">Teslimat tipi: Express / planlı / aynı gün</div>
+<a class="btn" href="#">Kurye Talebi Oluştur</a>
+</div>
+
+<div class="map glass">
+<div class="fake-map">
+<div class="route"></div>
+<div class="courier c1"></div><div class="courier c2"></div><div class="courier c3"></div>
+<div class="map-card"><h3>Yakında 14 kurye</h3><p>Ortalama atanma: 3 dk • Canlı teslimat takibi aktif</p></div>
+</div>
+</div>
+</section>
+
+<div class="section-title"><h2>Kurye Hizmetleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Yemek Teslimatı</h3><p>Allona Yemek siparişleri restoran panelinden kurye havuzuna düşer.</p></div>
+<div class="card glass"><h3>Market Teslimatı</h3><p>Partner market siparişleri hızlı teslimat akışına bağlanır.</p></div>
+<div class="card glass"><h3>Shop Kargo</h3><p>AllonaShop mağaza teslimatları ve aynı gün gönderim.</p></div>
+<div class="card glass"><h3>Eczane Teslimatı</h3><p>Partner eczane onaylı teslimat süreçleri.</p></div>
+<div class="card glass"><h3>Petshop Teslimatı</h3><p>Mama, pet ürünleri ve veteriner bağlantılı gönderimler.</p></div>
+<div class="card glass"><h3>Express Kurye</h3><p>Acil ve hızlı teslimat talepleri.</p></div>
+<div class="card glass"><h3>Planlı Teslimat</h3><p>Belirli saat aralığında teslimat planlama.</p></div>
+<div class="card glass"><h3>Motor Kurye</h3><p>Şehir içi hızlı teslimat operasyonları.</p></div>
+<div class="card glass"><h3>Araçlı Kurye</h3><p>Büyük paket, market ve toplu gönderiler.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Teslimat tamamlanınca kullanıcı ve partner akışı ödüllenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Aktif Teslimat Akışı</h2><a href="#">Canlı Panel</a></div>
+<div class="grid-4">
+<div class="delivery glass"><div class="delivery-img"></div><b>Yemek Siparişi</b><p>Restoran hazırladı, kurye atanıyor.</p><div class="meta"><span>12 dk</span><span>Yemek</span></div></div>
+<div class="delivery glass"><div class="delivery-img"></div><b>Market Sepeti</b><p>Partner market siparişi hazırlanıyor.</p><div class="meta"><span>28 dk</span><span>Market</span></div></div>
+<div class="delivery glass"><div class="delivery-img"></div><b>Shop Gönderisi</b><p>Mağazadan teslim alınacak.</p><div class="meta"><span>Aynı Gün</span><span>Shop</span></div></div>
+<div class="delivery glass"><div class="delivery-img"></div><b>Eczane Paketi</b><p>Partner eczane onayı bekleniyor.</p><div class="meta"><span>Onaylı</span><span>Sağlık</span></div></div>
+</div>
+
+<div class="section-title"><h2>Teslimat Süreci</h2><a href="#">Süreç Takibi</a></div>
+<div class="flow-grid">
+<div class="step glass"><h3>1. Sipariş</h3><p>Yemek, market, shop veya partner siparişi oluşur.</p></div>
+<div class="step glass"><h3>2. Hazırlık</h3><p>Partner işletme siparişi hazırlar.</p></div>
+<div class="step glass"><h3>3. Kurye Havuzu</h3><p>Görev en yakın uygun kuryelere düşer.</p></div>
+<div class="step glass"><h3>4. Atama</h3><p>Kurye görevi kabul eder ve yola çıkar.</p></div>
+<div class="step glass"><h3>5. Canlı Takip</h3><p>Kullanıcı teslimatı haritadan izler.</p></div>
+<div class="step glass"><h3>6. Teslimat</h3><p>Teslimat tamamlanır, HP ve ödeme kaydı işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Modül Bağlantıları</h2><a href="index.html#modules">Tüm Modüller</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Allona Yemek</h3><p>Restoran siparişi → kurye atama → canlı takip.</p></div>
+<div class="card glass"><h3>Allona Market</h3><p>Market sepeti → paket hazırlık → hızlı teslimat.</p></div>
+<div class="card glass"><h3>Allona Shop</h3><p>Mağaza ürünü → aynı gün / planlı teslimat.</p></div>
+<div class="card glass"><h3>Allona Sağlık</h3><p>Partner eczane onayı → ilaç teslimatı.</p></div>
+<div class="card glass"><h3>Allona Evcil Hayvan</h3><p>Petshop ürünü → mama ve bakım teslimatı.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Kurye, Lojistik Firması veya Partner İşletme Ol</h2>
+<p>Allona Kurye partner paneliyle teslimat görevleri, canlı rota, ödeme geçmişi, teslimat durumu, performans, puan, HP kampanyaları ve modül bağlantıları tek sistemde çalışır.</p>
+<a class="btn" href="partner.html">Kurye Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Kurye müsaitlik yönetimi</div>
+<div>Canlı görev ve rota paneli</div>
+<div>Restoran / market / shop bağlantısı</div>
+<div>Teslimat durum güncellemesi</div>
+<div>Ödeme ve hak ediş takibi</div>
+<div>Performans ve güven skoru</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Kurye: Ekosistemin Canlı Teslimat Omurgası</h2>
+<p>Allona Kurye; yemek, market, shop, sağlık, petshop ve partner işletmelerden gelen gönderileri tek merkezli kurye havuzunda yöneten teslimat modülüdür.</p>
+<h3>Tek Kurye Havuzu, Çoklu Modül</h3>
+<p>Allona Yemek’ten gelen restoran siparişi, Allona Market’ten gelen sepet, AllonaShop’tan gelen mağaza teslimatı ve Allona Sağlık’tan gelen eczane onaylı gönderi aynı kurye altyapısına bağlanabilir.</p>
+<h3>Canlı Takip ve Güven Skoru</h3>
+<p>Kullanıcı teslimatı canlı takip eder. Kurye performansı, teslimat süresi, iptal oranı, müşteri memnuniyeti ve güven skoru sistem içinde izlenir.</p>
+<h3>Wallet ve HP Bağlantısı</h3>
+<p>Teslimat tamamlandığında ödeme kaydı, kurye hak edişi, partner komisyonu ve kullanıcı HP ödülü AllonaHub finans altyapısına bağlanır.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Courier, logistics, delivery and live tracking ecosystem.</div>
+
+</div>
+
+<script>
+/*
+Kurye entegrasyon mantığı:
+order.module = food | market | shop | health | pet
+order.status = created | preparing | ready_for_pickup | courier_assigned | picked_up | delivered
+
+Hazır olan sipariş Allona Kurye havuzuna düşer.
+En yakın müsait kurye atanır.
+Teslimat tamamlanınca Wallet / HP / hak ediş kayıtları işlenir.
+*/
+</script>
+
+</body>
+</html>
