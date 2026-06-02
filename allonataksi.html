@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Taksi | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:24px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.2fr 1.4fr;gap:18px;margin-bottom:18px}
+.booking{padding:28px;min-height:430px}
+.booking h1{font-size:46px;color:#ffd700;line-height:1.05;margin-bottom:14px}
+.booking p{opacity:.82;font-size:17px;line-height:1.5;margin-bottom:20px}
+.input-box{height:58px;border-radius:18px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 18px;margin-bottom:12px}
+.pin{width:16px;height:16px;border-radius:50%;background:#00e5ff;box-shadow:0 0 16px #00e5ff;margin-right:12px}
+.pin.gold{background:#ffd700;box-shadow:0 0 16px #ffd700}
+.input-box span{opacity:.78}
+.ride-options{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.ride{padding:16px;text-align:center;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.ride b{color:#ffd700}
+.ride p{font-size:12px;opacity:.68;margin-top:5px}
+.call-btn{display:block;text-align:center;text-decoration:none;margin-top:16px;padding:15px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-weight:900}
+
+.map{min-height:430px;padding:18px}
+.fake-map{height:100%;min-height:394px;border-radius:24px;background:
+linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px),
+linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),
+radial-gradient(circle at 20% 25%,#00e5ff55,transparent 9%),
+radial-gradient(circle at 70% 60%,#ffd70055,transparent 8%),
+linear-gradient(135deg,#03172f,#082f5f,#020814);
+background-size:55px 55px,55px 55px,100% 100%,100% 100%,100% 100%;
+position:relative;overflow:hidden}
+.route{position:absolute;left:120px;top:120px;width:560px;height:190px;border:4px dashed rgba(0,229,255,.75);border-radius:50%;transform:rotate(-14deg);filter:drop-shadow(0 0 12px #00e5ff)}
+.car{position:absolute;width:48px;height:28px;border-radius:18px;background:linear-gradient(135deg,#ffd700,#00e5ff);box-shadow:0 0 20px rgba(255,215,0,.7)}
+.car.c1{left:150px;top:135px}.car.c2{right:160px;bottom:130px}.car.c3{right:300px;top:80px}
+.map-card{position:absolute;left:24px;bottom:24px;width:260px;padding:18px;border-radius:20px;background:rgba(2,8,20,.78);border:1px solid rgba(0,229,255,.28)}
+.map-card h3{color:#ffd700;margin-bottom:8px}
+.map-card p{font-size:13px;opacity:.76}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:22px;min-height:135px}
+.card h3{color:#ffd700;margin-bottom:8px}
+.card p{opacity:.75;line-height:1.45}
+
+.driver-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.driver{padding:16px;min-height:245px}
+.driver-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:13px;position:relative;overflow:hidden}
+.driver-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.driver b{color:#ffd700}
+.driver p{font-size:13px;opacity:.72;margin:6px 0}
+.meta{display:flex;justify-content:space-between;margin-top:10px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.flow-zone{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.flow-step{padding:20px;min-height:125px}
+.flow-step b{color:#ffd700}
+.flow-step p{font-size:13px;opacity:.74;margin-top:8px;line-height:1.45}
+
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
+.partner-cta p{opacity:.82;line-height:1.6}
+.btn{display:inline-block;margin-top:18px;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+.panel-list{display:grid;gap:10px}
+.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+  <a href="#">Yolculuklarım</a>
+  <a href="#">Sürücü Başvurusu</a>
+  <a href="#">Kurumsal Taksi</a>
+  <a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+  <div class="brand glass"><img src="allona.logo.png"><b>Allona</b><span>Hub</span></div>
+  <div class="search glass"><div class="search-mark"></div><input placeholder="Nereye gitmek istiyorsun? Lokasyon, durak veya adres ara..."></div>
+  <div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Cüzdan</a></div>
+</div>
+
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Taksi Hizmetleri</div>
+  <a href="#">Ekonomik</a><a href="#">Konfor</a><a href="#">VIP</a><a href="#">Kadın Sürücü</a><a href="#">Aile</a><a href="#">Havalimanı</a><a href="#">Kurumsal</a><a href="#">HP Kazandıran</a>
+</div>
+
+<section class="hero">
+  <div class="booking glass">
+    <h1>Allona Taksi<br>Akıllı Ulaşım</h1>
+    <p>Yakındaki sürücüler, canlı harita, güvenli ödeme, HP kazandıran yolculuklar ve AllonaHub Wallet bağlantısı tek ekranda.</p>
+    <div class="input-box"><div class="pin"></div><span>Alış noktası: Mevcut konum</span></div>
+    <div class="input-box"><div class="pin gold"></div><span>Varış noktası seç</span></div>
+
+    <div class="ride-options">
+      <div class="ride"><b>Ekonomik</b><p>Uygun fiyat</p></div>
+      <div class="ride"><b>Konfor</b><p>Daha geniş araç</p></div>
+      <div class="ride"><b>VIP</b><p>Premium sürüş</p></div>
+    </div>
+
+    <a class="call-btn" href="#">Taksi Çağır</a>
+  </div>
+
+  <div class="map glass">
+    <div class="fake-map">
+      <div class="route"></div>
+      <div class="car c1"></div>
+      <div class="car c2"></div>
+      <div class="car c3"></div>
+      <div class="map-card">
+        <h3>Yakında 8 sürücü</h3>
+        <p>Tahmini varış: 4 dk • Ortalama puan: 4.9</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Yolculuk Seçenekleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-4">
+  <div class="card glass"><h3>Ekonomik Taksi</h3><p>Günlük ulaşım için uygun fiyatlı seçenek.</p></div>
+  <div class="card glass"><h3>Konfor Taksi</h3><p>Geniş araç, yüksek sürücü puanı, konforlu yolculuk.</p></div>
+  <div class="card glass"><h3>VIP Transfer</h3><p>Özel araç, havalimanı ve premium ulaşım.</p></div>
+  <div class="card glass"><h3>HP Kazandıran Yolculuk</h3><p>Yolculuk tamamlanınca Wallet’a HP işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Yakındaki Sürücüler</h2><a href="#">Haritada Gör</a></div>
+<div class="driver-grid">
+  <div class="driver glass"><div class="driver-img"></div><b>Ahmet K.</b><p>Ekonomik • 4 dk uzaklıkta</p><div class="meta"><span>4.9 Puan</span><span>+20 HP</span></div></div>
+  <div class="driver glass"><div class="driver-img"></div><b>Mehmet A.</b><p>Konfor • 6 dk uzaklıkta</p><div class="meta"><span>4.8 Puan</span><span>+25 HP</span></div></div>
+  <div class="driver glass"><div class="driver-img"></div><b>Selin T.</b><p>Kadın sürücü • 8 dk uzaklıkta</p><div class="meta"><span>5.0 Puan</span><span>+30 HP</span></div></div>
+  <div class="driver glass"><div class="driver-img"></div><b>VIP Transfer</b><p>Premium araç • Rezervasyon</p><div class="meta"><span>Elite</span><span>+50 HP</span></div></div>
+</div>
+
+<div class="section-title"><h2>Yolculuk Akışı</h2><a href="#">Güvenlik Merkezi</a></div>
+<div class="flow-zone">
+  <div class="flow-step glass"><b>1. Konum Seç</b><p>Alış ve varış noktasını belirle.</p></div>
+  <div class="flow-step glass"><b>2. Araç Tipi</b><p>Ekonomik, konfor veya VIP seç.</p></div>
+  <div class="flow-step glass"><b>3. Sürücü Atama</b><p>Yakındaki uygun sürücü atanır.</p></div>
+  <div class="flow-step glass"><b>4. Canlı Takip</b><p>Harita üzerinden yolculuğu izle.</p></div>
+  <div class="flow-step glass"><b>5. HP Kazan</b><p>Yolculuk sonunda HP Wallet’a işlenir.</p></div>
+</div>
+
+<section class="partner-cta glass">
+  <div>
+    <h2>Sürücü veya Taksi Partneri Ol</h2>
+    <p>Allona Taksi sürücü paneliyle yolculuk bildirimleri, rota takibi, ödeme geçmişi, puan sistemi ve HP destekli müşteri sadakati tek sistemde çalışır.</p>
+    <a class="btn" href="partner.html">Sürücü Başvurusu Yap</a>
+  </div>
+  <div class="panel-list">
+    <div>Sürücü müsaitlik yönetimi</div>
+    <div>Yolculuk ve rota bildirimi</div>
+    <div>Wallet ödeme geçmişi</div>
+    <div>Puan ve güven skoru sistemi</div>
+  </div>
+</section>
+
+<section class="info glass">
+  <h2>Allona Taksi: Haritalı, Güvenli ve HP Kazandıran Ulaşım</h2>
+  <p>Allona Taksi; kullanıcı, sürücü ve ödeme süreçlerini AllonaHub ekosistemi içinde birleştiren akıllı ulaşım modülüdür. Kullanıcılar yolculuk yaparken canlı harita üzerinden sürücüyü takip edebilir, güvenli ödeme yapabilir ve her tamamlanan yolculuktan HP kazanabilir.</p>
+  <h3>Harita ve Sürücü Atama Mantığı</h3>
+  <p>Gerçek sistemde kullanıcının konumu alınır, yakındaki müsait sürücüler listelenir ve araç tipi, puan, mesafe ve müsaitlik durumuna göre en uygun sürücü atanır. Bu demo sayfada harita alanı premium görsel temsil olarak hazırlanmıştır.</p>
+  <h3>AllonaHub Wallet Bağlantısı</h3>
+  <p>Yolculuk tamamlandığında ödeme kaydı, sürücü hak edişi, platform komisyonu ve kullanıcı HP ödülü sistem içinde işlenir. Böylece taksi deneyimi yalnızca ulaşım değil, ekosistem bağlılığı sağlayan bir hizmete dönüşür.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Taxi, map, driver and wallet ecosystem.</div>
+
+</div>
+</body>
+</html>
