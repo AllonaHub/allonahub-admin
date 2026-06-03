@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
@@ -329,9 +329,8 @@ nav a:hover{color:#00e5ff!important}
 }
 .tiers{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px.1fr));
-  gap:24px;
-  align-items:start;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
 }
 .tier{
   padding:28px;
@@ -339,7 +338,7 @@ nav a:hover{color:#00e5ff!important}
   background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
   border:1px solid rgba(0,229,255,.24);
   box-shadow:0 0 28px rgba(0,229,255,.10),inset 0 0 22px rgba(255,255,255,.04);
-  min-height:auto;
+  min-height:470px;
 }
 .tier.featured{border-color:#ffd700;box-shadow:0 0 45px rgba(255,215,0,.18)}
 .tier.legend{border-color:#00e5ff;box-shadow:0 0 48px rgba(0,229,255,.20)}
@@ -348,25 +347,15 @@ nav a:hover{color:#00e5ff!important}
 .tier ul{list-style:none;margin-top:18px}
 .tier li{margin:10px 0;opacity:.9;font-size:14px}
 .tier-price{
-display:inline-block;
-margin-top:12px;
-padding:10px 18px;
-border-radius:14px;
-text-align:center;
-background:linear-gradient(135deg,rgba(255,215,0,.95),rgba(0,229,255,.35));
-border:1px solid rgba(255,215,0,.45);
-color:#fff700;
-font-size:22px;
-font-weight:900;
-text-decoration:none;
-cursor:pointer;
-transition:.3s;
-box-shadow:0 0 14px rgba(0,229,255,.22);
-}
-
-.tier-price:hover{
-transform:scale(1.05);
-box-shadow:0 0 25px rgba(255,215,0,.35);
+  margin-top:22px;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,215,0,.18),rgba(0,229,255,.10));
+  border:1px solid rgba(255,215,0,.22);
+  color:#ffd700;
+  font-size:23px;
+  font-weight:900;
+  text-align:center;
 }
 .tier-price:hover{
 transform:scale(1.05);
@@ -566,9 +555,9 @@ box-shadow:0 0 25px rgba(255,215,0,.35);
         <li>✔️ Özel kampanyalar</li>
         <li>✔️ Seviye koruma</li>
       </ul>
-      <a href="odeme.html?paket=aplus" class="tier-price">109,99 ₺ / Ay
-    </a>
-</div>
+      <a href="odeme.html?paket=aplus"  class="tier-price">109,99 ₺ / Ay</a>
+    </div>
+
     <div class="tier featured">
       <h3>Gold</h3>
       <p>En dengeli paket</p>
@@ -581,9 +570,9 @@ box-shadow:0 0 25px rgba(255,215,0,.35);
         <li>✔️ Partner indirimleri</li>
         <li>✔️ Öncelikli kampanyalar</li>
       </ul>
-      <a href="odeme.html?paket=gold" class="tier-price">229,99 ₺ / Ay
-    </a>
-</div>
+      <a href="odeme.html?paket=gold"  class="tier-price">229,99 ₺ / Ay</a>
+    </div>
+
     <div class="tier">
       <h3>Elite Black</h3>
       <p>Prestij ve özel erişim</p>
@@ -599,9 +588,9 @@ box-shadow:0 0 25px rgba(255,215,0,.35);
         <li>✔️ Elite kampanyalar</li>
         <li>✔️ Özel partner ayrıcalığı</li>
       </ul>
-      <a href="odeme.html?paket=eliteblack"  class="tier-price">1499,99 ₺ / Ay
-    </a>
-</div>
+      <a href="odeme.html?paket=eliteblack" class="tier-price">1499,99 ₺ / Ay</a>
+    </div>
+
     <div class="tier legend">
       <h3>LEGEND</h3>
       <p>Yılda ortalama üyelik ücretinin 5-10 katı kadar avantaj</p>
@@ -624,8 +613,8 @@ box-shadow:0 0 25px rgba(255,215,0,.35);
         <li>✔️ AllonaHub kart ücretsiz</li>
         <li>✔️ Öncelikli müşteri desteği</li>
       </ul>
-     <a href="odeme.html?paket=legend" class="tier-price">1999,99 ₺ / Ay
-    </a>
+      <a href="odeme.html?paket=legend" class="tier-price">1999,99 ₺ / Ay
+      </a>
   </div>
 </section>
 
