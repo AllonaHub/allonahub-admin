@@ -329,8 +329,9 @@ nav a:hover{color:#00e5ff!important}
 }
 .tiers{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:20px;
+  grid-template-columns:repeat(auto-fit,minmax(280px.1fr));
+  gap:24px;
+  align-items:start;
 }
 .tier{
   padding:28px;
