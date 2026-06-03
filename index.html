@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
 <title>AllonaHub | Yeni Nesil Süper Uygulama</title>
-<style>
 
+<style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{background:#020814;color:white;overflow-x:hidden}
 body:before{
@@ -21,95 +21,32 @@ animation:wave 8s infinite linear;
 }
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 
-.card:hover{transform:translateY(-8px);box-shadow:0 20px 45px rgba(0,213,255,.22)}
-.icon{font-size:34px;margin-bottom:15px}
-.card h3{color:#ffd700;margin-bottom:10px}
-.card p{opacity:.82;line-height:1.45}
-
-.wallet{
-display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px
-}
-.stat{
-padding:30px;border-radius:25px;background:linear-gradient(135deg,rgba(255,215,0,.16),rgba(0,213,255,.12));
-border:1px solid rgba(255,255,255,.16)
-}
-.stat h2{font-size:44px;color:#ffd700}
-.stat p{opacity:.8;margin-top:8px}
-
-.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
-.tier{
-padding:32px;border-radius:28px;background:rgba(0,0,0,.35);
-border:1px solid rgba(255,255,255,.16)
-}
-.tier.featured{border-color:#ffd700;box-shadow:0 0 45px rgba(255,215,0,.18)}
-.tier h3{font-size:26px;color:#ffd700;margin-bottom:12px}
-.tier ul{list-style:none;margin-top:18px}
-.tier li{margin:12px 0;opacity:.88}
-
-.partner{
-text-align:center;padding:60px;border-radius:35px;background:rgba(255,255,255,.08);
-border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(20px)
-}
-.partner h2{font-size:42px;margin-bottom:15px}
-.partner p{opacity:.82;margin-bottom:28px}
-
-footer{text-align:center;padding:35px;opacity:.65;border-top:1px solid rgba(255,255,255,.1)}
-
-.modules-section{
-  width:1320px;
+a{text-decoration:none}
+.top-mini-nav{
   max-width:1320px;
-  margin:0 auto;
-  padding:10px;
-  background:linear-gradient(180deg,#061b33,#020814);
+  margin:10px auto 0;
+  padding:0 20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:18px;
+  font-size:12px;
 }
-.section-head{
-  text-align:center;
-  max-width:760px;
-  margin:0 auto 45px;
-}
+.top-mini-nav a{color:rgba(255,255,255,.72)}
+.top-mini-nav a:hover{color:#00e5ff}
 
-.section-head span{
-  color:#ffd700;
-  font-weight:800;
-  letter-spacing:1px;
-}
-.section-head h2{
-  font-size:42px;
-  margin:14px 0;
-  color:white;
-}
-.section-head p{
-  color:rgba(255,255,255,.75);
-  font-size:17px;
-}
-.module-card:hover{
-  transform:translateY(-8px);
-  box-shadow:0 0 36px rgba(0,225,255,.35);
-  border-color:#00e5ff;
-}
-.hero-brand{
-  font-size:56px;
-  font-weight:900;
-  color:#ffd700;
-  text-shadow:0 0 24px rgba(255,215,0,.45);
-}
-
-.hero-sub{
-  margin:16px auto 28px;
-  max-width:760px;
-  font-size:20px;
-  color:rgba(255,255,255,.82);
-}
-  
 header{
   height:92px!important;
   padding:0 7%!important;
   display:flex!important;
   align-items:center!important;
   justify-content:space-between!important;
-  gap:32px!important;
+  gap:28px!important;
   background:rgba(2,8,20,.88)!important;
   border-bottom:1px solid rgba(0,225,255,.18)!important;
+  position:sticky;
+  top:0;
+  z-index:50;
+  backdrop-filter:blur(18px);
 }
 
 .logo{
@@ -118,53 +55,62 @@ header{
   gap:12px!important;
   flex-shrink:0!important;
 }
-
 .logo img{
   width:55px!important;
   height:55px!important;
   object-fit:contain!important;
 }
-
-.logo span{
-  font-size:30px!important;
-  font-weight:800!important;
-  color:#ffd700!important;
-  white-space:nowrap!important;
-}
+.logo-title{font-size:30px!important;font-weight:900!important;white-space:nowrap!important}
+.logo-title .gold{color:#ffd700!important}
+.logo-title .blue{color:#00e5ff!important}
 
 .nav-search{
   flex:1!important;
-  max-width:520px!important;
+  max-width:560px!important;
   height:48px!important;
-  padding:0 22px!important;
+  padding:0 8px 0 18px!important;
   border-radius:999px!important;
   border:1px solid rgba(0,225,255,.75)!important;
   background:rgba(0,18,40,.86)!important;
   box-shadow:0 0 22px rgba(0,180,255,.22)!important;
-  color:rgba(255,255,255,.82)!important;
   display:flex!important;
   align-items:center!important;
-  justify-content:flex-start!important;
   gap:10px!important;
-  font-size:15px!important;
-  font-weight:500!important;
-  white-space:nowrap!important;
+}
+.nav-search input{
+  flex:1;
+  height:100%;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:white;
+  font-size:15px;
+}
+.nav-search input::placeholder{color:rgba(255,255,255,.62)}
+.search-btn{
+  height:36px;
+  padding:0 18px;
+  border:0;
+  border-radius:999px;
+  background:linear-gradient(135deg,#00e5ff,#0077ff);
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(0,225,255,.35);
 }
 
 nav{
   display:flex!important;
   align-items:center!important;
-  gap:26px!important;
+  gap:22px!important;
   flex-shrink:0!important;
 }
-
 nav a{
   color:white!important;
   font-size:15px!important;
-  font-weight:600!important;
-  text-decoration:none!important;
+  font-weight:700!important;
 }
-
+nav a:hover{color:#00e5ff!important}
 .login{
   background:#00d5e8!important;
   color:white!important;
@@ -172,13 +118,167 @@ nav a{
   border-radius:999px!important;
   box-shadow:0 0 20px rgba(0,225,255,.35)!important;
 }
- 
+
+.premium-hero{
+  width:100%;
+  max-width:1320px;
+  margin:25px auto 25px;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:1fr 1.6fr 1fr;
+  gap:22px;
+  align-items:stretch;
+}
+.hero-time-card,.hero-main-card,.hero-reward-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:30px;
+  padding:28px;
+  min-height:220px;
+  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+  border:1px solid rgba(0,229,255,.28);
+  box-shadow:0 0 35px rgba(0,229,255,.14), inset 0 0 24px rgba(255,255,255,.04);
+}
+.hero-main-card{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:330px;
+}
+.hero-main-card h1{
+  font-size:52px;
+  line-height:1.08;
+  margin:0 0 18px;
+  color:white;
+  text-shadow:0 0 24px rgba(0,229,255,.25);
+}
+.hero-main-card p{
+  font-size:19px;
+  line-height:1.5;
+  color:rgba(255,255,255,.82);
+  max-width:620px;
+  margin:0 auto;
+}
+.hero-greeting{font-size:34px;font-weight:800;margin-top:18px}
+.hero-clock{
+  margin:18px 0 25px;
+  font-size:36px;
+  letter-spacing:7px;
+  color:#00e5ff;
+  text-shadow:0 0 18px #00e5ff;
+}
+.hero-location{display:flex;gap:14px;align-items:center;font-size:18px;color:white}
+.hero-location p{margin:4px 0 0;color:rgba(255,255,255,.7)}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f}
+.time-visual{
+  width:88px;height:88px;border-radius:50%;position:relative;
+  filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));
+  animation:floatPulse 3s ease-in-out infinite;
+}
+.sun-visual{--time-glow:#ffd700;background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%)}
+.day-visual{--time-glow:#00e5ff;background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%)}
+.evening-visual{--time-glow:#b245ff;background:radial-gradient(circle,#fff 0%,#b245ff 35%,#ff9f1c 80%)}
+.night-visual{--time-glow:#7df9ff;background:radial-gradient(circle at 35% 35%,#fff 0%,#b8f7ff 18%,#274bff 45%,#080b28 80%)}
+.time-visual::before,.time-visual::after{
+  content:"";position:absolute;inset:-14px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.35);
+  animation:spinGlow 6s linear infinite;
+}
+.time-visual::after{inset:-26px;border-color:rgba(0,229,255,.22);animation-duration:10s}
+.hero-orb{
+  width:180px;height:180px;position:absolute;right:-45px;top:-45px;border-radius:50%;
+  background:radial-gradient(circle,#00e5ff,transparent 65%);
+  opacity:.28;animation:orbMove 5s ease-in-out infinite alternate;
+}
+.diamond-visual{
+  width:90px;height:90px;margin:0 auto 18px;
+  background:linear-gradient(135deg,#bffcff,#007cff,#001c80);
+  clip-path:polygon(50% 0%,100% 35%,75% 100%,25% 100%,0% 35%);
+  box-shadow:0 0 25px #00e5ff;
+  animation:diamondGlow 2.4s ease-in-out infinite alternate;
+}
+.hero-reward-card{text-align:center;display:flex;flex-direction:column;justify-content:center}
+.hero-reward-card h3{font-size:30px;color:#ffd700;margin:0 0 12px}
+.hero-reward-card p{font-size:16px;color:rgba(255,255,255,.78)}
+@keyframes floatPulse{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.07)}}
+@keyframes spinGlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes orbMove{from{transform:translate(0,0) scale(1)}to{transform:translate(-25px,25px) scale(1.25)}}
+@keyframes diamondGlow{from{transform:scale(1) rotate(0deg);filter:brightness(1)}to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}}
+
+.live-stats-section{
+  max-width:1320px;
+  margin:20px auto 25px;
+  padding:0 20px;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:15px;
+}
+.stat-live-card{
+  position:relative;
+  background:rgba(0,20,45,.75);
+  border:1px solid rgba(0,225,255,.25);
+  border-radius:18px;
+  padding:18px;
+  text-align:center;
+  overflow:hidden;
+}
+.stat-live-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at top right,rgba(0,255,255,.22),transparent 60%);
+}
+.stat-live-card p{color:#9adfff;font-size:13px;margin:0 0 8px}
+.stat-live-card h3{color:#fff;font-size:26px;margin:0}
+.stat-dot{
+  width:10px;height:10px;background:#00ff66;border-radius:50%;
+  display:inline-block;margin-bottom:10px;
+  box-shadow:0 0 12px #00ff66;
+  animation:pulseLive 1.5s infinite;
+}
+@keyframes pulseLive{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+
+.live-ads-section{max-width:1320px;margin:35px auto;padding:0 20px}
+.live-ads-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.live-ads-head h2{color:#ffd700;font-size:32px;margin:0}
+.live-ads-head p{color:rgba(255,255,255,.7);margin:6px 0 0}
+.live-ads-head a{color:#00e5ff;font-weight:800}
+.live-ads-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.live-ad-card{
+  position:relative;overflow:hidden;min-height:150px;border-radius:22px;padding:18px;
+  background:linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));
+  border:1px solid rgba(0,229,255,.25);
+  box-shadow:0 0 22px rgba(0,229,255,.12);
+  transition:.4s;
+}
+.live-ad-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 0 35px rgba(0,229,255,.28)}
+.ad-glow{
+  position:absolute;width:90px;height:90px;right:-25px;top:-25px;border-radius:50%;
+  background:radial-gradient(circle,#00e5ff,transparent 70%);
+  opacity:.35;animation:adPulse 3s infinite alternate;
+}
+.ad-label{display:inline-block;font-size:12px;color:#00e5ff;margin-bottom:14px;font-weight:900}
+.ad-title{color:#ffd700;font-size:19px;margin:0 0 8px}
+.ad-desc{font-size:13px;color:rgba(255,255,255,.78);line-height:1.35}
+.ad-meta{margin-top:12px;font-size:12px;color:rgba(255,255,255,.65)}
+@keyframes adPulse{from{transform:scale(1);opacity:.25}to{transform:scale(1.35);opacity:.55}}
+
+.modules-section{
+  width:100%;
+  max-width:1320px;
+  margin:0 auto;
+  padding:28px 10px;
+  background:linear-gradient(180deg,#061b33,#020814);
+}
+.section-head{text-align:center;max-width:760px;margin:0 auto 35px}
+.section-head span{color:#ffd700;font-weight:900;letter-spacing:1px}
+.section-head h2{font-size:42px;margin:14px 0;color:white}
+.section-head p{color:rgba(255,255,255,.75);font-size:17px}
+
 .modules-grid.large-grid{
   display:grid!important;
   grid-template-columns:repeat(5,1fr)!important;
   gap:18px!important;
 }
-
 .modules-grid.large-grid .module-card{
   height:230px!important;
   border-radius:24px!important;
@@ -193,20 +293,17 @@ nav a{
   box-shadow:0 0 22px rgba(0,180,255,.18)!important;
   transition:.3s ease!important;
 }
-
 .modules-grid.large-grid .module-card:hover{
   transform:translateY(-7px) scale(1.02)!important;
   box-shadow:0 0 34px rgba(0,225,255,.45)!important;
   border-color:#00e5ff!important;
 }
-
 .modules-grid.large-grid .module-card h3{
   color:#ffd700!important;
   font-size:21px!important;
   margin:0 0 6px!important;
   text-shadow:0 0 12px rgba(0,0,0,.8)!important;
 }
-
 .modules-grid.large-grid .module-card p{
   color:white!important;
   font-size:13px!important;
@@ -214,379 +311,130 @@ nav a{
   text-shadow:0 0 10px rgba(0,0,0,.9)!important;
 }
 
-.modules-grid.large-grid .module-card img,
-.modules-grid.large-grid .module-card iconify-icon,
-.modules-grid.large-grid .module-card::before{
-  display:none!important;
-}
-  .premium-hero{
-  width:100%;
+.section{
   max-width:1320px;
-  margin:25px auto 25px;
+  margin:55px auto;
   padding:0 20px;
-  display:grid;
-  grid-template-columns:1fr 1.6fr 1fr;
-  gap:22px;
-  align-items:stretch;
 }
-.hero-time-card,
-.hero-main-card,
-.hero-reward-card{
-  position:relative;
-  overflow:hidden;
-  border-radius:30px;
+.section-title{
+  color:#ffd700;
+  font-size:38px;
+  text-align:center;
+  margin-bottom:12px;
+}
+.section-sub{
+  text-align:center;
+  color:rgba(255,255,255,.72);
+  margin-bottom:28px;
+}
+.tiers{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+.tier{
   padding:28px;
-  min-height:220px;
+  border-radius:28px;
   background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-  border:1px solid rgba(0,229,255,.28);
-  box-shadow:0 0 35px rgba(0,229,255,.14), inset 0 0 24px rgba(255,255,255,.04);
+  border:1px solid rgba(0,229,255,.24);
+  box-shadow:0 0 28px rgba(0,229,255,.10),inset 0 0 22px rgba(255,255,255,.04);
+  min-height:470px;
 }
-
-.hero-main-card{
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  min-height:330px;
-}
-
-.hero-main-card h1{
-  font-size:52px;
-  line-height:1.08;
-  margin:0 0 18px;
-  color:white;
-  text-shadow:0 0 24px rgba(0,229,255,.25);
-}
-
-.hero-main-card p{
-  font-size:19px;
-  line-height:1.5;
-  color:rgba(255,255,255,.82);
-  max-width:620px;
-  margin:0 auto;
-}
-
-.hero-greeting{
-  font-size:34px;
-  font-weight:800;
-  margin-top:18px;
-}
-
-.hero-clock{
-  margin:18px 0 25px;
-  font-size:36px;
-  letter-spacing:7px;
-  color:#00e5ff;
-  text-shadow:0 0 18px #00e5ff;
-}
-
-.hero-location{
-  display:flex;
-  gap:14px;
-  align-items:center;
-  font-size:18px;
-  color:white;
-}
-
-.hero-location p{
-  margin:4px 0 0;
-  color:rgba(255,255,255,.7);
-}
-
-.pin-dot{
-  width:14px;
-  height:14px;
-  border-radius:50%;
-  background:#ff375f;
-  box-shadow:0 0 18px #ff375f;
-}
-
-.time-visual{
-  width:88px;
-  height:88px;
-  border-radius:50%;
-  position:relative;
-  filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));
-  animation:floatPulse 3s ease-in-out infinite;
-}
-
-.sun-visual{
-  --time-glow:#ffd700;
-  background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%);
-}
-
-.day-visual{
-  --time-glow:#00e5ff;
-  background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%);
-}
-
-.evening-visual{
-  --time-glow:#b245ff;
-  background:radial-gradient(circle,#fff 0%,#b245ff 35%,#ff9f1c 80%);
-}
-
-.night-visual{
-  --time-glow:#7df9ff;
-  background:radial-gradient(circle at 35% 35%,#fff 0%,#b8f7ff 18%,#274bff 45%,#080b28 80%);
-}
-
-.time-visual::before,
-.time-visual::after{
-  content:"";
-  position:absolute;
-  inset:-14px;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,.35);
-  animation:spinGlow 6s linear infinite;
-}
-
-.time-visual::after{
-  inset:-26px;
-  border-color:rgba(0,229,255,.22);
-  animation-duration:10s;
-}
-
-.hero-orb{
-  width:180px;
-  height:180px;
-  position:absolute;
-  right:-45px;
-  top:-45px;
-  border-radius:50%;
-  background:radial-gradient(circle,#00e5ff,transparent 65%);
-  opacity:.28;
-  animation:orbMove 5s ease-in-out infinite alternate;
-}
-
-.diamond-visual{
-  width:90px;
-  height:90px;
-  margin:0 auto 18px;
-  background:linear-gradient(135deg,#bffcff,#007cff,#001c80);
-  clip-path:polygon(50% 0%,100% 35%,75% 100%,25% 100%,0% 35%);
-  box-shadow:0 0 25px #00e5ff;
-  animation:diamondGlow 2.4s ease-in-out infinite alternate;
-}
-
-.hero-reward-card{
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-}
-
-.hero-reward-card h3{
-  font-size:30px;
+.tier.featured{border-color:#ffd700;box-shadow:0 0 45px rgba(255,215,0,.18)}
+.tier.legend{border-color:#00e5ff;box-shadow:0 0 48px rgba(0,229,255,.20)}
+.tier h3{font-size:30px;color:#ffd700;margin-bottom:10px}
+.tier p{opacity:.82;line-height:1.45;margin-bottom:14px}
+.tier ul{list-style:none;margin-top:18px}
+.tier li{margin:10px 0;opacity:.9;font-size:14px}
+.tier-price{
+  margin-top:22px;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,215,0,.18),rgba(0,229,255,.10));
+  border:1px solid rgba(255,215,0,.22);
   color:#ffd700;
-  margin:0 0 12px;
-}
-
-.hero-reward-card p{
-  font-size:16px;
-  color:rgba(255,255,255,.78);
-}
-
-@keyframes floatPulse{
-  0%,100%{transform:translateY(0) scale(1)}
-  50%{transform:translateY(-8px) scale(1.07)}
-}
-
-@keyframes spinGlow{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(360deg)}
-}
-
-@keyframes orbMove{
-  from{transform:translate(0,0) scale(1)}
-  to{transform:translate(-25px,25px) scale(1.25)}
-}
-
-@keyframes diamondGlow{
-  from{transform:scale(1) rotate(0deg);filter:brightness(1)}
-  to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}
-}
-
-.live-ads-section{
-  max-width:1320px;
-  margin:35px auto;
-  padding:0 20px;
-}
-
-.live-ads-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:18px;
-}
-
-.live-ads-head h2{
-  color:#ffd700;
-  font-size:32px;
-  margin:0;
-}
-
-.live-ads-head p{
-  color:rgba(255,255,255,.7);
-  margin:6px 0 0;
-}
-
-.live-ads-head a{
-  color:#00e5ff;
-  text-decoration:none;
-  font-weight:800;
-}
-
-.live-ads-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:14px;
-}
-
-.live-ad-card{
-  position:relative;
-  overflow:hidden;
-  min-height:150px;
-  border-radius:22px;
-  padding:18px;
-  background:linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));
-  border:1px solid rgba(0,229,255,.25);
-  box-shadow:0 0 22px rgba(0,229,255,.12);
-  transition:.4s;
-}
-
-.live-ad-card:hover{
-  transform:translateY(-5px) scale(1.02);
-  box-shadow:0 0 35px rgba(0,229,255,.28);
-}
-
-.ad-glow{
-  position:absolute;
-  width:90px;
-  height:90px;
-  right:-25px;
-  top:-25px;
-  border-radius:50%;
-  background:radial-gradient(circle,#00e5ff,transparent 70%);
-  opacity:.35;
-  animation:adPulse 3s infinite alternate;
-}
-
-.ad-label{
-  display:inline-block;
-  font-size:12px;
-  color:#00e5ff;
-  margin-bottom:14px;
+  font-size:23px;
   font-weight:900;
+  text-align:center;
 }
 
-.ad-title{
-  color:#ffd700;
-  font-size:19px;
-  margin:0 0 8px;
+.partner{
+  text-align:center;
+  padding:55px;
+  border-radius:35px;
+  background:radial-gradient(circle at top,#00e5ff22,transparent 34%),linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));
+  border:1px solid rgba(0,229,255,.32);
+  box-shadow:0 0 40px rgba(0,229,255,.14),inset 0 0 22px rgba(255,255,255,.04);
+}
+.partner h2{font-size:42px;margin-bottom:15px;color:#ffd700}
+.partner p{opacity:.82;margin-bottom:28px;line-height:1.6}
+.btn{
+  display:inline-block;
+  padding:14px 28px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#ffd700,#c89200);
+  color:#020814;
+  font-weight:900;
+  box-shadow:0 0 22px rgba(255,215,0,.28);
 }
 
-.ad-desc{
+.footer-main{
+  max-width:1320px;
+  margin:45px auto 0;
+  padding:35px 20px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.footer-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:22px;
+}
+.footer-col h3{color:#ffd700;margin-bottom:14px}
+.footer-col a,.footer-col p{
+  display:block;
+  color:rgba(255,255,255,.72);
   font-size:13px;
-  color:rgba(255,255,255,.78);
-  line-height:1.35;
+  line-height:1.8;
 }
-
-.ad-meta{
-  margin-top:12px;
-  font-size:12px;
-  color:rgba(255,255,255,.65);
-}
-
-@keyframes adPulse{
-  from{transform:scale(1);opacity:.25}
-  to{transform:scale(1.35);opacity:.55}
-}
-.live-stats-section{
-    max-width:1320px;
-    margin:20px auto 25px;
-    padding:0 20px;
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:15px;
-}
-
-.stat-live-card{
-    position:relative;
-    background:rgba(0,20,45,.75);
-    border:1px solid rgba(0,225,255,.25);
-    border-radius:18px;
-    padding:18px;
-    text-align:center;
-    overflow:hidden;
-}
-
-.stat-live-card::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:radial-gradient(circle at top right,
-    rgba(0,255,255,.22),transparent 60%);
-}
-
-.stat-live-card p{
-    color:#9adfff;
-    font-size:13px;
-    margin:0 0 8px;
-}
-
-.stat-live-card h3{
-    color:#fff;
-    font-size:26px;
-    margin:0;
-}
-
-.stat-dot{
-    width:10px;
-    height:10px;
-    background:#00ff66;
-    border-radius:50%;
-    display:inline-block;
-    margin-bottom:10px;
-    box-shadow:0 0 12px #00ff66;
-    animation:pulseLive 1.5s infinite;
-}
-
-@keyframes pulseLive{
-    0%{transform:scale(1)}
-    50%{transform:scale(1.5)}
-    100%{transform:scale(1)}
-}
-.premium-hero,
-.live-stats-section,
-.live-ads-section,
-.modules-section{
-  width:100%!important;
-  max-width:1320px!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
+.footer-bottom{
+  text-align:center;
+  padding:25px;
+  opacity:.65;
 }
 </style>
-  
 </head>
 
 <body>
 
-<header>
-<div class="logo">
-  <img src="allona.logo.png" alt="AllonaHub Logo">
-  <span>AllonaHub</span>
-  </div>
-  <div class="nav-search">
-    <span>🔍</span> Aradığınız hizmet, kategori veya özelliği yazın...
+<div class="top-mini-nav">
+  <a href="hp-nedir.html">HP nedir?</a>
+  <a href="kuponlar.html">İndirim Kuponu</a>
+  <a href="partner.html">Ekosisteme Katıl</a>
+  <a href="hakkimizda.html">Hakkımızda</a>
+  <a href="destek.html">Yardım ve Destek</a>
 </div>
-<nav>
-<a href="#modules">Modüller</a>
-<a href="#wallet">HP Wallet</a>
-<a href="#premium">Premium</a>
-<a href="partner.html">Partner Ol</a>
-<a class="login" href="user.html">Giriş Yap</a>
-</nav>
+
+<header>
+  <a class="logo" href="index.html">
+    <img src="allona.logo.png" alt="AllonaHub Logo">
+    <div class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></div>
+  </a>
+
+  <div class="nav-search">
+    <span>🔍</span>
+    <input id="globalSearchInput" placeholder="Aradığınız hizmet, kategori veya özelliği yazın...">
+    <button class="search-btn" onclick="globalSearch()">Ara</button>
+  </div>
+
+  <nav>
+    <a href="#modules">Hizmetlerimiz</a>
+    <a href="hubwallet.html">HUB Wallet</a>
+    <a href="premium.html">Premium</a>
+    <a href="partner.html">Partner Ol</a>
+    <a class="login" href="user.html">Giriş Yap</a>
+  </nav>
 </header>
+
 <section class="premium-hero">
 
   <div class="hero-time-card">
@@ -597,8 +445,8 @@ nav a{
     <div class="hero-location">
       <span class="pin-dot"></span>
       <div>
-        <strong>İstanbul</strong>
-        <p>Türkiye</p>
+        <strong id="heroCity">İstanbul</strong>
+        <p id="heroCountry">Türkiye</p>
       </div>
     </div>
   </div>
@@ -611,46 +459,21 @@ nav a{
 
   <div class="hero-reward-card">
     <div class="diamond-visual"></div>
-    <h3>HP Kazan</h3>
-    <p>AllonaHub’da keşfettikçe ödül dünyasına yaklaş.</p>
-  </div>
-  
-</section> 
-<section class="live-stats-section">
-
-  <div class="stat-live-card">
-    <span class="stat-dot"></span>
-    <p>Aktif Kullanıcı</p>
-    <h3 id="activeUsers">12.481</h3>
-  </div>
-
-  <div class="stat-live-card">
-    <span class="stat-dot"></span>
-    <p>Aktif İlan</p>
-    <h3 id="activeAds">1.942</h3>
-  </div>
-
-  <div class="stat-live-card">
-    <span class="stat-dot"></span>
-    <p>Yeni İş İlanı</p>
-    <h3 id="jobAds">326</h3>
-  </div>
-
-  <div class="stat-live-card">
-    <span class="stat-dot"></span>
-    <p>Crew Başvurusu</p>
-    <h3 id="crewApps">89</h3>
-  </div>
-
-  <div class="stat-live-card">
-    <span class="stat-dot"></span>
-    <p>Bugün Dağıtılan HP</p>
-    <h3 id="dailyHP">245.800</h3>
+    <h3>HP ile Öde</h3>
+    <p>HP kazan, HP ile alışveriş yap.</p>
   </div>
 
 </section>
-  
-  <section class="live-ads-section">
+
+<section class="live-stats-section">
+  <div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Kullanıcı</p><h3 id="activeUsers">12.481</h3></div>
+  <div class="stat-live-card"><span class="stat-dot"></span><p>Aktif İlan</p><h3 id="activeAds">1.942</h3></div>
+  <div class="stat-live-card"><span class="stat-dot"></span><p>Yeni İş İlanı</p><h3 id="jobAds">326</h3></div>
+  <div class="stat-live-card"><span class="stat-dot"></span><p>Crew Başvurusu</p><h3 id="crewApps">89</h3></div>
+  <div class="stat-live-card"><span class="stat-dot"></span><p>Bugün Dağıtılan HP</p><h3 id="dailyHP">245.800</h3></div>
+</section>
+
+<section class="live-ads-section">
   <div class="live-ads-head">
     <div>
       <h2>Canlı İlanlar</h2>
@@ -660,51 +483,22 @@ nav a{
   </div>
 
   <div class="live-ads-grid">
-
-    <div class="live-ad-card" data-type="pet">
-      <div class="ad-glow"></div>
-      <span class="ad-label">Evcil Hayvan</span>
-      <h3 class="ad-title">Yükleniyor...</h3>
-      <p class="ad-desc"></p>
-      <div class="ad-meta"></div>
-    </div>
-
-    <div class="live-ad-card" data-type="job">
-      <div class="ad-glow"></div>
-      <span class="ad-label">İş İlanı</span>
-      <h3 class="ad-title">Yükleniyor...</h3>
-      <p class="ad-desc"></p>
-      <div class="ad-meta"></div>
-    </div>
-
-    <div class="live-ad-card" data-type="maritime">
-      <div class="ad-glow"></div>
-      <span class="ad-label">Denizcilik</span>
-      <h3 class="ad-title">Yükleniyor...</h3>
-      <p class="ad-desc"></p>
-      <div class="ad-meta"></div>
-    </div>
-
-    <div class="live-ad-card" data-type="realestate">
-      <div class="ad-glow"></div>
-      <span class="ad-label">Gayrimenkul</span>
-      <h3 class="ad-title">Yükleniyor...</h3>
-      <p class="ad-desc"></p>
-      <div class="ad-meta"></div>
-    </div>
-
-    <div class="live-ad-card" data-type="service">
-      <div class="ad-glow"></div>
-      <span class="ad-label">Hizmet Talebi</span>
-      <h3 class="ad-title">Yükleniyor...</h3>
-      <p class="ad-desc"></p>
-      <div class="ad-meta"></div>
-    </div>
-
+    <div class="live-ad-card" data-type="pet"><div class="ad-glow"></div><span class="ad-label">Evcil Hayvan</span><h3 class="ad-title">Yükleniyor...</h3><p class="ad-desc"></p><div class="ad-meta"></div></div>
+    <div class="live-ad-card" data-type="job"><div class="ad-glow"></div><span class="ad-label">İş İlanı</span><h3 class="ad-title">Yükleniyor...</h3><p class="ad-desc"></p><div class="ad-meta"></div></div>
+    <div class="live-ad-card" data-type="maritime"><div class="ad-glow"></div><span class="ad-label">Denizcilik</span><h3 class="ad-title">Yükleniyor...</h3><p class="ad-desc"></p><div class="ad-meta"></div></div>
+    <div class="live-ad-card" data-type="realestate"><div class="ad-glow"></div><span class="ad-label">Gayrimenkul</span><h3 class="ad-title">Yükleniyor...</h3><p class="ad-desc"></p><div class="ad-meta"></div></div>
+    <div class="live-ad-card" data-type="service"><div class="ad-glow"></div><span class="ad-label">Hizmet Talebi</span><h3 class="ad-title">Yükleniyor...</h3><p class="ad-desc"></p><div class="ad-meta"></div></div>
   </div>
 </section>
-  <section id="modules" class="modules-section">
-<div class="modules-grid large-grid">
+
+<section id="modules" class="modules-section">
+  <div class="section-head">
+    <span>ALLONAHUB EKOSİSTEMİ</span>
+    <h2>Hizmetlerimiz</h2>
+    <p>Tek hesapla alışverişten sağlığa, finansdan lojistiğe, eğitimden kariyere kadar tüm hizmetlere ulaş.</p>
+  </div>
+
+  <div class="modules-grid large-grid">
 
 <a class="module-card" href="allonashop.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('shop.png');"><div><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></div></a>
 <a class="module-card" href="allonayemek.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('yemek.png');"><div><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></div></a>
@@ -713,96 +507,163 @@ nav a{
 <a class="module-card" href="allonasaglik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('saglik.png');"><div><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></div></a>
 
 <a class="module-card" href="allonaseyahat.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('seyahat.png');"><div><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p></div></a>
-<a class="module-card" href="gayrimenkul.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('gayrimenkul.png');"><div><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></div></a>
-<a class="module-card" href="denizcilik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('denizcilik.png');"><div><h3>Denizcilik</h3><p>Gemi ve crew hizmetleri</p></div></a>
-<a class="module-card" href="hukuk.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('hukuk.png');"><div><h3>Hukuk</h3><p>Avukat ve danışmanlık</p></div></a>
-<a class="module-card" href="danismanlik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('danismanlik.png');"><div><h3>Danışmanlık</h3><p>Profesyonel destek</p></div></a>
+<a class="module-card" href="allonagayrimenkul.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('gayrimenkul.png');"><div><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></div></a>
+<a class="module-card" href="allonadenizcilik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('denizcilik.png');"><div><h3>Denizcilik</h3><p>Gemi ve crew hizmetleri</p></div></a>
+<a class="module-card" href="allonahukuk.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('hukuk.png');"><div><h3>Hukuk</h3><p>Avukat ve danışmanlık</p></div></a>
+<a class="module-card" href="allonadanismanlik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('danismanlik.png');"><div><h3>Danışmanlık</h3><p>Profesyonel destek</p></div></a>
 
-<a class="module-card" href="/allonaegitim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('egitim.png');"><div><h3>Eğitim</h3><p>Kurslar ve öğrenim</p></div></a>
-<a class="module-card" href="kariyer.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('kariyer.png');"><div><h3>Kariyer</h3><p>İş ve kariyer fırsatları</p></div></a>
-<a class="module-card" href="finans.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('finans.png');"><div><h3>Finans</h3><p>Ödeme ve finansal hizmetler</p></div></a>
-<a class="module-card" href="otomotiv.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('otomotiv.png');"><div><h3>Otomotiv</h3><p>Araç ve ulaşım çözümleri</p></div></a>
-<a class="module-card" href="eglence.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('eglence.png');"><div><h3>Eğlence & Etkinlik</h3><p>Festival, konser ve etkinlikler</p></div></a>
+<a class="module-card" href="allonaegitim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('egitim.png');"><div><h3>Eğitim</h3><p>Kurslar ve öğrenim</p></div></a>
+<a class="module-card" href="allonakariyer.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('kariyer.png');"><div><h3>Kariyer</h3><p>İş ve kariyer fırsatları</p></div></a>
+<a class="module-card" href="allonafinans.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('finans.png');"><div><h3>Finans</h3><p>Ödeme ve finansal hizmetler</p></div></a>
+<a class="module-card" href="allonaotomotiv.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('otomotiv.png');"><div><h3>Otomotiv</h3><p>Araç ve ulaşım çözümleri</p></div></a>
+<a class="module-card" href="allonaeglence.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('eglence.png');"><div><h3>Eğlence & Etkinlik</h3><p>Festival, konser ve etkinlikler</p></div></a>
 
-<a class="module-card" href="allonapet.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('evcilhayvan.png');"><div><h3>Evcil Hayvan</h3><p>Veteriner, bakım ve ürünler</p></div></a>
-<a class="module-card" href="teknoloji.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('teknoloji.png');"><div><h3>Teknoloji</h3><p>Elektronik ve dijital çözümler</p></div></a>
-<a class="module-card" href="sportiv.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('sporfitnes.png');"><div><h3>Spor & Fitness</h3><p>Spor salonu ve sağlıklı yaşam</p></div></a>
-<a class="module-card" href="guzellik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('guzellik.png');"><div><h3>Güzellik & Kozmetik</h3><p>Bakım, kozmetik ve güzellik</p></div></a>
-<a class="module-card" href="sigorta.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('sigorta.png');"><div><h3>Sigorta</h3><p>Araç, konut ve sağlık sigortası</p></div></a>
+<a class="module-card" href="allonaevcilhayvan.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('evcilhayvan.png');"><div><h3>Evcil Hayvan</h3><p>Veteriner, bakım ve ürünler</p></div></a>
+<a class="module-card" href="allonateknoloji.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('teknoloji.png');"><div><h3>Teknoloji</h3><p>Elektronik ve dijital çözümler</p></div></a>
+<a class="module-card" href="allonasporfitness.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('sporfitnes.png');"><div><h3>Spor & Fitness</h3><p>Spor salonu ve sağlıklı yaşam</p></div></a>
+<a class="module-card" href="allonaguzellik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('guzellik.png');"><div><h3>Güzellik & Kozmetik</h3><p>Bakım, kozmetik ve güzellik</p></div></a>
+<a class="module-card" href="allonasigorta.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('sigorta.png');"><div><h3>Sigorta</h3><p>Araç, konut ve sağlık sigortası</p></div></a>
 
-<a class="module-card" href="kurye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('kurye.png');"><div><h3>Kurye & Teslimat</h3><p>Hızlı kurye ve teslimat</p></div></a>
-<a class="module-card" href="evhizmetleri.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('evhizmetleri.png');"><div><h3>Ev Hizmetleri</h3><p>Temizlik, elektrik ve tadilat</p></div></a>
-<a class="module-card" href="kargolojistik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('lojistik.png');"><div><h3>Kargo & Lojistik</h3><p>Depo, taşıma ve lojistik</p></div></a>
-<a class="module-card" href="nakliye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('nakliye.png');"><div><h3>Nakliye</h3><p>Ev taşıma,ofis taşıma,parça eşya,asansörlü nakliye</p></div></a>
-<a class="module-card" href="organizasyondugun.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('organizasyon.png');"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p></div></a>
+<a class="module-card" href="allonakurye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('kurye.png');"><div><h3>Kurye & Teslimat</h3><p>Hızlı kurye ve teslimat</p></div></a>
+<a class="module-card" href="allonaevhizmetleri.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('evhizmetleri.png');"><div><h3>Ev Hizmetleri</h3><p>Temizlik, elektrik ve tadilat</p></div></a>
+<a class="module-card" href="allonalojistik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('lojistik.png');"><div><h3>Kargo & Lojistik</h3><p>Depo, taşıma ve lojistik</p></div></a>
+<a class="module-card" href="allonanakliye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('nakliye.png');"><div><h3>Nakliye</h3><p>Ev, ofis, parça eşya ve asansörlü nakliye</p></div></a>
+<a class="module-card" href="allonaorganizasyon.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('organizasyon.png');"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p></div></a>
 
-<a class="module-card" href="tarim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('tarim.png');"><div><h3>Allona Tarım</h3><p>Çifçilik,gübre,TARSİM</p></div></a>
-<a class="module-card" href="insaat.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('insaatyapi.png');"><div><h3>İnşaat</h3><p>Mütahitler,inşaatçılar,inşaat mühendisleri</p></div></a>
-<a class="module-card" href="muhendislik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('muhendislik.png');"><div><h3>Allona Mühendislik</h3><p>Kimya Mühendisi,Makine Mühendisi,Yazılım Mühendisi...</p></div></a>
-<a class="module-card" href="trade.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('trade.png');"><div><h3>Trade(İthalat & İhracat)</h3><p>İthalat talepleri,Dış ticaret,Global firmalar</p></div></a>
-<a class="module-card" href="yenibolum.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('xxx.png');"><div><h3>Yeni Bölüm</h3><p>Yeni Bölüm</p></div></a>
-  
-</div>   
-</section>
+<a class="module-card" href="allonatarim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('tarim.png');"><div><h3>Allona Tarım</h3><p>Çiftçilik, gübre, tohum ve TARSİM</p></div></a>
+<a class="module-card" href="allonainsaat.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('insaatyapi.png');"><div><h3>İnşaat & Yapı</h3><p>Müteahhit, yapı, proje ve mühendislik</p></div></a>
+<a class="module-card" href="allonamuhendislik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('muhendislik.png');"><div><h3>Allona Mühendislik</h3><p>Teknik proje, çizim ve mühendislik</p></div></a>
+<a class="module-card" href="allonatrade.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('trade.png');"><div><h3>Trade</h3><p>İthalat, ihracat ve global ticaret</p></div></a>
+<a class="module-card" href="hubwallet.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('wallet.png');"><div><h3>HUB Wallet</h3><p>HP, kupon, QR ödeme ve Allona Pay</p></div></a>
 
-<section class="section" id="wallet">
-<h2 class="section-title">Hub Wallet</h2>
-<p class="section-sub">HP ve XP ekonomisinin merkezi.</p>
-
-<div class="wallet">
-<div class="stat"><h2>0 HP</h2><p>Başlangıç HP bakiyesi</p></div>
-<div class="stat"><h2>Level 1</h2><p>Yeni kullanıcı seviyesi</p></div>
-<div class="stat"><h2>0 XP</h2><p>Görev, alışveriş ve etkileşim puanı</p></div>
-</div>
+  </div>
 </section>
 
 <section class="section" id="premium">
-<h2 class="section-title">Premium Üyelikler</h2>
-<p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
+  <h2 class="section-title">Premium Üyelikler</h2>
+  <p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
 
-<div class="tiers">
-<div class="tier">
-<h3>Hub+</h3>
-<p>Başlangıç premium paketi.</p>
-<ul>
-<li>✓ HP bonusları</li>
-<li>✓ Özel kampanyalar</li>
-<li>✓ Seviye koruma avantajı</li>
-</ul>
-</div>
+  <div class="tiers">
+    <div class="tier">
+      <h3>A+</h3>
+      <p>Premium Başlangıç Paketi</p>
+      <ul>
+        <li>✔️ HP bonusları</li>
+        <li>✔️ Özel kampanyalar</li>
+        <li>✔️ Seviye koruma</li>
+      </ul>
+      <div class="tier-price">109,99 ₺ / Ay</div>
+    </div>
 
-<div class="tier featured">
-<h3>Gold</h3>
-<p>En dengeli avantaj paketi.</p>
-<ul>
-<li>✓ Daha yüksek HP kazanımı</li>
-<li>✓ Partner indirimleri</li>
-<li>✓ Öncelikli kampanyalar</li>
-</ul>
-</div>
+    <div class="tier featured">
+      <h3>Gold</h3>
+      <p>En dengeli paket</p>
+      <ul>
+        <li>✔️ HP bonusları</li>
+        <li>✔️ Özel kampanyalar</li>
+        <li>✔️ Seviye koruma</li>
+        <li>✔️ Hızlı seviye yükseltme (x2)</li>
+        <li>✔️ Daha fazla HP kazan</li>
+        <li>✔️ Partner indirimleri</li>
+        <li>✔️ Öncelikli kampanyalar</li>
+      </ul>
+      <div class="tier-price">229,99 ₺ / Ay</div>
+    </div>
 
-<div class="tier">
-<h3>Elite Black</h3>
-<p>Prestij ve özel erişim seviyesi.</p>
-<ul>
-<li>✓ VIP rozet</li>
-<li>✓ Elite kampanyalar</li>
-<li>✓ Özel partner ayrıcalıkları</li>
-</ul>
-</div>
-</div>
+    <div class="tier">
+      <h3>Elite Black</h3>
+      <p>Prestij ve özel erişim</p>
+      <ul>
+        <li>✔️ VIP rozet</li>
+        <li>✔️ HP bonusları</li>
+        <li>✔️ Özel kampanyalar</li>
+        <li>✔️ Seviye koruma</li>
+        <li>✔️ Hızlı seviye yükseltme (x2)</li>
+        <li>✔️ Daha fazla HP kazan</li>
+        <li>✔️ Partner indirimleri</li>
+        <li>✔️ Öncelikli kampanyalar</li>
+        <li>✔️ Elite kampanyalar</li>
+        <li>✔️ Özel partner ayrıcalığı</li>
+      </ul>
+      <div class="tier-price">1499,99 ₺ / Ay</div>
+    </div>
+
+    <div class="tier legend">
+      <h3>LEGEND</h3>
+      <p>Yılda ortalama üyelik ücretinin 5-10 katı kadar avantaj</p>
+      <ul>
+        <li>✔️ VIP rozet</li>
+        <li>✔️ Özel tasarımlı profil</li>
+        <li>✔️ Bütün alışverişlerde %5 indirim</li>
+        <li>✔️ HP bonusları</li>
+        <li>✔️ Özel kampanyalar</li>
+        <li>✔️ Seviye koruma</li>
+        <li>✔️ Hızlı seviye yükseltme (x2)</li>
+        <li>✔️ Daha fazla HP kazan</li>
+        <li>✔️ Partner indirimleri</li>
+        <li>✔️ Öncelikli kampanyalar</li>
+        <li>✔️ Elite kampanyalar açık</li>
+        <li>✔️ Özel partner ayrıcalığı</li>
+        <li>✔️ Ücretsiz kargo</li>
+        <li>✔️ Doğum günü hediyesi</li>
+        <li>✔️ Bütün işlemlerde HP avantajı (x2)</li>
+        <li>✔️ AllonaHub kart ücretsiz</li>
+        <li>✔️ Öncelikli müşteri desteği</li>
+      </ul>
+      <div class="tier-price">1999,99 ₺ / Ay</div>
+    </div>
+  </div>
 </section>
 
 <section class="section" id="partner">
-<div class="partner">
-<h2>AllonaHub Partner Ekosistemine Katıl</h2>
-<p>Restoran, mağaza, ulaşım, kariyer, maritime ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
-<a class="btn gold" href="#">Partner Başvurusu Yap</a>
-</div>
+  <div class="partner">
+    <h2>AllonaHub Partner Ekosistemine Katıl</h2>
+    <p>Restoran, mağaza, ulaşım, kariyer, denizcilik, sağlık, finans, lojistik ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
+    <a class="btn" href="partner.html">Partner Başvurusu Yap</a>
+  </div>
 </section>
 
-<footer>
-©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
+<footer class="footer-main">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h3>AllonaHub</h3>
+      <a href="hakkimizda.html">Hakkımızda</a>
+      <a href="iletisim.html">İletişim</a>
+      <a href="yardim.html">Yardım ve Destek</a>
+      <a href="partner.html">Ekosisteme Katıl</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>Yasal</h3>
+      <a href="kvkk.html">KVKK Aydınlatma Metni</a>
+      <a href="gizlilik.html">Gizlilik Politikası</a>
+      <a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
+      <a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>Sözleşmeler</h3>
+      <a href="iptal-iade.html">İptal ve İade Politikası</a>
+      <a href="teslimat-kargo.html">Teslimat ve Kargo</a>
+      <a href="kullanici-uyelik.html">Kullanıcı Üyelik Sözleşmesi</a>
+      <a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
+      <a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>İletişim</h3>
+      <p>HP ve Hub Wallet Kuralları</p>
+      <a href="hp-wallet-kurallari.html">Kuralları Gör</a>
+      <p>WP destek hattı: +90 542 778 18 68</p>
+      <p>info@allonahub.com</p>
+      <p>allonahub@gmail.com</p>
+      <p>0(212) 982 80 77</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    ©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
+  </div>
 </footer>
 
 <script>
@@ -820,7 +681,6 @@ function updateHeroTime(){
   clock.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
 
   const total = h * 60 + m;
-
   visual.className = "time-visual";
 
   if(total >= 300 && total <= 720){
@@ -837,11 +697,29 @@ function updateHeroTime(){
     visual.classList.add("night-visual");
   }
 }
-
 updateHeroTime();
 setInterval(updateHeroTime,1000);
-</script> 
-  
+</script>
+
+<script>
+function setLocationByBrowser(){
+  if(!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      document.getElementById("heroCity").textContent = "Konum algılandı";
+      document.getElementById("heroCountry").textContent = 
+        pos.coords.latitude.toFixed(3) + ", " + pos.coords.longitude.toFixed(3);
+    },
+    function(){
+      document.getElementById("heroCity").textContent = "İstanbul";
+      document.getElementById("heroCountry").textContent = "Türkiye";
+    }
+  );
+}
+setLocationByBrowser();
+</script>
+
 <script>
 const approvedAds = {
   pet:[
@@ -872,7 +750,6 @@ const approvedAds = {
 };
 
 let adIndex = {};
-
 function rotateAds(){
   document.querySelectorAll(".live-ad-card").forEach(card=>{
     const type = card.dataset.type;
@@ -887,10 +764,10 @@ function rotateAds(){
     adIndex[type]++;
   });
 }
-
 rotateAds();
 setInterval(rotateAds,6000);
 </script>
+
 <script>
 const demoStats = {
   activeUsers: 12481,
@@ -911,16 +788,55 @@ function updateLiveStats(data){
   document.getElementById("crewApps").textContent = formatNumber(data.crewApps);
   document.getElementById("dailyHP").textContent = formatNumber(data.dailyHP);
 }
-
 updateLiveStats(demoStats);
-
-// Gelecekte gerçek API bağlanınca burası demo verinin üstüne yazacak
-/*
-fetch("/api/live-stats")
-  .then(res => res.json())
-  .then(realData => updateLiveStats(realData));
-*/
 </script>
-  
+
+<script>
+const searchRoutes = [
+  {keys:["shop","alışveriş","pazaryeri","ürün"],url:"allonashop.html"},
+  {keys:["yemek","restoran","burger","pizza"],url:"allonayemek.html"},
+  {keys:["market","süpermarket","gıda"],url:"allonamarket.html"},
+  {keys:["taksi","ulaşım"],url:"allonataksi.html"},
+  {keys:["sağlık","doktor","eczane"],url:"allonasaglik.html"},
+  {keys:["seyahat","otel","turizm","bilet"],url:"allonaseyahat.html"},
+  {keys:["gayrimenkul","ev","arsa","kiralık","satılık"],url:"allonagayrimenkul.html"},
+  {keys:["denizcilik","gemi","crew","maritime"],url:"allonadenizcilik.html"},
+  {keys:["hukuk","avukat"],url:"allonahukuk.html"},
+  {keys:["danışmanlık","vize","ikamet"],url:"allonadanismanlik.html"},
+  {keys:["eğitim","kurs"],url:"allonaegitim.html"},
+  {keys:["kariyer","iş","cv"],url:"allonakariyer.html"},
+  {keys:["finans","kredi"],url:"allonafinans.html"},
+  {keys:["otomotiv","araç","araba"],url:"allonaotomotiv.html"},
+  {keys:["eğlence","etkinlik","konser","maç"],url:"allonaeglence.html"},
+  {keys:["evcil","pet","veteriner"],url:"allonaevcilhayvan.html"},
+  {keys:["teknoloji","telefon","bilgisayar"],url:"allonateknoloji.html"},
+  {keys:["spor","fitness"],url:"allonasporfitness.html"},
+  {keys:["güzellik","kozmetik"],url:"allonaguzellik.html"},
+  {keys:["sigorta","kasko","dask"],url:"allonasigorta.html"},
+  {keys:["kurye","teslimat"],url:"allonakurye.html"},
+  {keys:["ev hizmetleri","temizlik","usta"],url:"allonaevhizmetleri.html"},
+  {keys:["kargo","lojistik"],url:"allonalojistik.html"},
+  {keys:["nakliye","taşıma"],url:"allonanakliye.html"},
+  {keys:["organizasyon","düğün","nişan"],url:"allonaorganizasyon.html"},
+  {keys:["tarım","çiftçi","gübre","tohum"],url:"allonatarim.html"},
+  {keys:["inşaat","yapı","müteahhit"],url:"allonainsaat.html"},
+  {keys:["mühendislik","mühendis"],url:"allonamuhendislik.html"},
+  {keys:["trade","ithalat","ihracat"],url:"allonatrade.html"},
+  {keys:["wallet","cüzdan","hp","pay"],url:"hubwallet.html"}
+];
+
+function globalSearch(){
+  const q = document.getElementById("globalSearchInput").value.toLowerCase().trim();
+  if(!q){return}
+  const found = searchRoutes.find(item => item.keys.some(k => q.includes(k)));
+  if(found){window.location.href = found.url}
+  else{window.location.href = "arama.html?q=" + encodeURIComponent(q)}
+}
+
+document.getElementById("globalSearchInput").addEventListener("keydown",function(e){
+  if(e.key === "Enter"){globalSearch()}
+});
+</script>
+
 </body>
-</html>
+</html>    
