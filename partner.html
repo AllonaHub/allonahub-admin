@@ -6,7 +6,45 @@
 <title>AllonaHub Partner Girişi</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "BURAYA_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "BURAYA_ANON_KEY";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+async function partnerLogin(){
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+
+  if(!email || !password){
+    alert("E-posta ve şifre giriniz.");
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if(error){
+    alert("Giriş başarısız: " + error.message);
+    return;
+  }
+
+  localStorage.setItem("allonaPartnerLoggedIn","true");
+  localStorage.setItem("allonaPartnerEmail",email);
+  localStorage.setItem("allonaPartnerUserId",data.user.id);
+
+  window.location.href="partner-panel.html";
+}
+</script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
