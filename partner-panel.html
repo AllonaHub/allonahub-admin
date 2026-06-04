@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>AllonaHub Partner Panel</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+html{scroll-behavior:smooth}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+button{border:0;cursor:pointer}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 45px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.topbar{height:84px;display:grid;grid-template-columns:285px 1fr 430px;gap:18px;margin-bottom:18px;align-items:center}
+.brand{height:84px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.panel-title{height:84px;padding:18px 24px;display:flex;flex-direction:column;justify-content:center}
+.panel-title h1{color:#ffd700;font-size:27px;margin-bottom:6px}
+.panel-title p{opacity:.74;font-size:13px}
+
+.top-actions{height:84px;display:flex;align-items:center;justify-content:space-around;padding:0 14px;overflow:visible}
+.top-actions button,.top-actions a{background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20);color:white;border-radius:16px;padding:12px 14px;font-weight:900}
+.top-actions button:hover,.top-actions a:hover{color:#ffd700;border-color:#ffd70066}
+
+.partner-profile{position:relative}
+.profile-drop{display:none;position:absolute;right:0;top:56px;width:330px;background:#031326;border:1px solid #00e5ff66;border-radius:24px;padding:18px;box-shadow:0 0 35px #00e5ff44;z-index:80}
+.partner-profile:hover .profile-drop{display:block}
+.profile-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.avatar{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle,#00e5ff,#061b33);border:2px solid #ffd700;display:flex;align-items:center;justify-content:center;font-weight:900;color:#020814;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.profile-head h3{color:#ffd700;font-size:17px}
+.profile-head p{font-size:12px;opacity:.75}
+.score{display:flex;align-items:center;gap:10px;margin:12px 0}
+.score b{background:#00c56a;color:white;padding:6px 12px;border-radius:10px}
+.level-box{margin:14px 0;padding:12px;border-radius:16px;background:rgba(255,255,255,.06)}
+.level-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.level-bar{height:10px;border-radius:20px;background:rgba(255,255,255,.10);overflow:hidden}
+.level-fill{height:100%;width:64%;background:linear-gradient(90deg,#00e5ff,#ffd700);box-shadow:0 0 15px #00e5ff}
+.profile-menu a,.profile-menu button{display:block;width:100%;text-align:left;background:transparent;color:white;padding:11px;border-radius:12px;font-weight:800}
+.profile-menu a:hover,.profile-menu button:hover{background:#00e5ff18;color:#ffd700}
+
+.layout{display:grid;grid-template-columns:285px 1fr;gap:18px}
+.sidebar{min-height:860px;padding:18px}
+.side-partner{padding:16px;border-radius:22px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);margin-bottom:16px}
+.side-partner h2{color:#ffd700;font-size:20px;margin-bottom:5px}
+.side-partner p{font-size:12px;opacity:.75;line-height:1.45}
+.side-status{margin-top:10px;display:flex;gap:8px;align-items:center;font-size:12px}
+.dot{width:9px;height:9px;border-radius:50%;background:#00ff90;box-shadow:0 0 12px #00ff90}
+.partner-type-select{width:100%;height:42px;border-radius:14px;background:#061b33;color:white;border:1px solid rgba(0,229,255,.25);padding:0 12px;margin-top:12px;outline:0}
+.partner-type-select option{background:#061b33;color:white}
+
+.menu-group-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin:18px 8px 8px}
+.menu-btn{width:100%;height:46px;margin:6px 0;border-radius:15px;background:transparent;color:white;display:flex;align-items:center;gap:11px;padding:0 14px;font-weight:900;text-align:left}
+.menu-btn i{width:20px;color:#00e5ff}
+.menu-btn:hover,.menu-btn.active{background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(255,215,0,.10));color:#ffd700;border:1px solid rgba(0,229,255,.22)}
+
+.content{min-height:860px;padding:24px}
+.hero-dashboard{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:18px}
+.welcome{padding:25px;min-height:190px}
+.welcome h2{font-size:34px;color:#ffd700;margin-bottom:9px}
+.welcome p{opacity:.78;line-height:1.55}
+.quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.quick-actions button{height:48px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
+.quick-actions button:nth-child(2){background:linear-gradient(135deg,#ffd700,#b88700);color:#020814}
+
+.status-card{padding:22px}
+.status-card h3{color:#ffd700;margin-bottom:14px}
+.status-list{display:grid;gap:10px}
+.status-line{display:flex;justify-content:space-between;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,.06)}
+.status-line b{color:#00e5ff}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{padding:20px;min-height:118px}
+.kpi small{opacity:.65;font-weight:800}
+.kpi h3{font-size:30px;color:#ffd700;margin:8px 0}
+.kpi p{font-size:12px;opacity:.72}
+.kpi.warning h3{color:#ff5b5b}
+.kpi.success h3{color:#00ff90}
+
+.section-box{display:none}
+.section-box.active{display:block}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 16px}
+.section-head h2{color:#ffd700;font-size:30px}
+.section-head p{opacity:.65;font-size:13px}
+.panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.panel-card{padding:20px;min-height:150px}
+.panel-card h3{color:#ffd700;margin-bottom:8px}
+.panel-card p{opacity:.72;font-size:13px;line-height:1.45}
+.panel-card button{margin-top:14px;padding:11px 15px;border-radius:14px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44}
+
+.table-box{padding:18px;margin-top:16px}
+.table-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}
+.table-top input,.table-top select{height:42px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);color:white;padding:0 12px;outline:0}
+.table-top select option{background:#061b33;color:white}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:13px;border-bottom:1px solid rgba(255,255,255,.10);text-align:left}
+th{color:#ffd700}
+td{opacity:.86}
+.badge-pill{padding:6px 10px;border-radius:10px;background:#00e5ff18;color:#00e5ff;font-weight:900;font-size:12px}
+.badge-red{background:#ff3b3b18;color:#ff6b6b}
+.badge-green{background:#00ff9018;color:#00ff90}
+.badge-gold{background:#ffd70022;color:#ffd700}
+
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.input{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 15px}
+.input input,.input select,.input textarea{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:14px}
+.input select option{background:#061b33;color:white}
+.textarea{height:105px;padding:12px 15px;grid-column:span 2}
+.textarea textarea{resize:none}
+.primary-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:15px;font-weight:900}
+.blue-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-size:15px;font-weight:900}
+
+.notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:390px;line-height:1.45}
+.notice b{color:#ffd700}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<header class="topbar">
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png" alt="AllonaHub">
+<div><b>Allona</b><span>Hub</span></div>
+</a>
+
+<div class="panel-title glass">
+<h1>Partner Yönetim Merkezi</h1>
+<p>Partner tipine göre değişen dinamik panel sistemi.</p>
+</div>
+
+<div class="top-actions glass">
+<a href="allonashop.html">Mağazaya Git</a>
+<button onclick="openSection('notifications')">Duyurularım</button>
+
+<div class="partner-profile">
+<button><i class="fa-solid fa-user-shield"></i> <span id="topPartnerName">ALLONA SHOP</span> ▾</button>
+
+<div class="profile-drop">
+<div class="profile-head">
+<div class="avatar" id="profileAvatar">AS</div>
+<div>
+<h3 id="profileName">ALLONA SHOP</h3>
+<p>Partner ID: <span id="profileId">ALP-295481</span></p>
+</div>
+</div>
+
+<div class="score">
+<b id="profileScore">8.0 / 10</b>
+<span>Partner Puanı</span>
+</div>
+
+<div class="level-box">
+<div class="level-row">
+<span id="profileLevel">Level 4</span>
+<span>64%</span>
+</div>
+<div class="level-bar"><div class="level-fill"></div></div>
+</div>
+
+<div class="profile-menu">
+<a href="#" onclick="openSection('settings')">Hesap Bilgileri</a>
+<a href="#" onclick="openSection('users')">Kullanıcı Yönetimi</a>
+<a href="#" onclick="openSection('process')">Süreç Takibi</a>
+<a href="#" onclick="openSection('violations')">İhlaller</a>
+<a href="#" onclick="openSection('support')">Destek Talepleri</a>
+<a href="#" onclick="openSection('knowledge')">Bilgi Merkezi</a>
+<a href="#" onclick="openSection('rules')">Platform Kuralları</a>
+<a href="#" onclick="openSection('commission')">Komisyon ve Vade Oranları</a>
+<a href="#" onclick="openSection('docs')">Entegrasyon Dokümanı</a>
+<button onclick="logoutPartner()">Çıkış Yap</button>
+</div>
+</div>
+</div>
+</div>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar glass">
+<div class="side-partner">
+<h2 id="sidePartnerName">ALLONA SHOP</h2>
+<p id="sidePartnerInfo">Shop partner paneli • Ürün, sipariş, kargo ve kampanya yönetimi</p>
+<div class="side-status"><span class="dot"></span><span>Aktif Partner</span></div>
+
+<select id="partnerTypeSelect" class="partner-type-select" onchange="changePartnerType(this.value)">
+<option value="shop">Shop / E-Ticaret</option>
+<option value="legal">Avukat / Hukuk</option>
+<option value="food">Restoran / Yemek</option>
+<option value="market">Market</option>
+<option value="maritime">Denizcilik</option>
+<option value="career">İK & Kariyer</option>
+<option value="health">Sağlık</option>
+<option value="realestate">Gayrimenkul</option>
+<option value="auto">Otomotiv</option>
+<option value="education">Eğitim</option>
+<option value="beauty">Güzellik</option>
+</select>
+</div>
+
+<div id="dynamicMenu"></div>
+</aside>
+
+<main class="content glass">
+
+<section id="dashboard" class="section-box active">
+<div class="hero-dashboard">
+<div class="welcome glass">
+<h2 id="welcomeTitle">Hoş geldiniz, Allona Shop</h2>
+<p id="welcomeDesc">Bugünkü operasyon, sipariş, ürün ve kampanya özetlerinizi buradan takip edebilirsiniz.</p>
+<div class="quick-actions" id="quickActions"></div>
+</div>
+
+<div class="status-card glass">
+<h3>Partner Durumu</h3>
+<div class="status-list">
+<div class="status-line"><span>Durum</span><b>Aktif</b></div>
+<div class="status-line"><span>Rozet</span><b>Gold Partner</b></div>
+<div class="status-line"><span>Güven Skoru</span><b>92%</b></div>
+<div class="status-line"><span>Seviye</span><b>Level 4</b></div>
+</div>
+</div>
+</div>
+
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<div class="table-box glass">
+<div class="section-head">
+<div>
+<h2 id="mainTableTitle">Operasyon Özeti</h2>
+<p>Partner tipine göre değişen canlı işlem listesi.</p>
+</div>
+<button class="blue-btn" onclick="showNotice('Excel indirme backend bağlanınca aktif edilecek.')">Excel ile İndir</button>
+</div>
+
+<div class="table-top">
+<input placeholder="Müşteri / Sipariş / Ürün ara">
+<select><option>Bugün</option><option>Son 7 Gün</option><option>Bu Ay</option></select>
+<select><option>Tüm Durumlar</option><option>Bekleyen</option><option>Aktif</option><option>Tamamlandı</option></select>
+</div>
+
+<table>
+<thead id="tableHead"></thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+</section>
+<section id="dynamicSection" class="section-box"></section>
+
+<section id="notifications" class="section-box">
+<div class="section-head">
+<div>
+<h2>Duyurularım</h2>
+<p>AllonaHub sistem bildirimleri ve partner duyuruları.</p>
+</div>
+</div>
+<div class="panel-grid">
+<div class="panel-card glass"><h3>Yeni Özellik</h3><p>Partner reklam alanları yakında aktif edilecek.</p><button>Detay</button></div>
+<div class="panel-card glass"><h3>Ödeme Al</h3><p>QR ödeme ve HP kupon sistemi geliştirme aşamasında.</p><button>İncele</button></div>
+<div class="panel-card glass"><h3>Platform Kuralları</h3><p>Yeni partner kuralları ve güvenlik politikaları güncellendi.</p><button>Oku</button></div>
+</div>
+</section>
+
+<section id="settings" class="section-box">
+<div class="section-head">
+<div>
+<h2>Hesap Bilgileri</h2>
+<p>Partner firma bilgileri, logo, profil ve mağaza ayarları.</p>
+</div>
+</div>
+
+<div class="form-grid">
+<div class="input"><input id="editPartnerName" placeholder="Firma Adı"></div>
+<div class="input"><input id="editPartnerId" placeholder="Partner ID" disabled></div>
+<div class="input"><input id="editScore" placeholder="Partner Puanı"></div>
+<div class="input"><input id="editLevel" placeholder="Seviye"></div>
+<div class="input"><input id="editLogo" placeholder="Profil Logo URL"></div>
+<div class="input"><input id="editCity" placeholder="Şehir"></div>
+<div class="input textarea"><textarea id="editDesc" placeholder="Firma açıklaması"></textarea></div>
+<button class="primary-btn" onclick="savePartnerProfile()">Bilgileri Kaydet</button>
+<button class="blue-btn" onclick="showNotice('Logo ve profil resmi Supabase Storage ile gerçek yüklenecek.')">Profil Resmi Düzenle</button>
+</div>
+</section>
+
+<section id="users" class="section-box">
+<div class="section-head"><div><h2>Kullanıcı Yönetimi</h2><p>Partner hesabına ekip üyesi ekleme ve yetki yönetimi.</p></div></div>
+<div class="panel-grid">
+<div class="panel-card glass"><h3>Admin</h3><p>Tüm mağaza ve ödeme yetkilerine erişir.</p><button>Ekle</button></div>
+<div class="panel-card glass"><h3>Operasyon</h3><p>Sipariş, kargo ve müşteri taleplerini yönetir.</p><button>Ekle</button></div>
+<div class="panel-card glass"><h3>Finans</h3><p>Ödemeler, fatura ve raporları görür.</p><button>Ekle</button></div>
+</div>
+</section>
+
+<section id="process" class="section-box">
+<div class="section-head"><div><h2>Süreç Takibi</h2><p>Başvuru, onay, ürün ve ödeme süreçleri.</p></div></div>
+<div class="kpi-grid">
+<div class="kpi glass"><small>Başvuru</small><h3>Onaylandı</h3><p>Partner hesabı aktif.</p></div>
+<div class="kpi glass"><small>Belgeler</small><h3>3/5</h3><p>Eksik belge kontrolü.</p></div>
+<div class="kpi glass"><small>Ürün Onayı</small><h3>0</h3><p>İncelemede ürün yok.</p></div>
+<div class="kpi glass"><small>Ödeme</small><h3>Beklemede</h3><p>İyzico entegrasyonu bekleniyor.</p></div>
+</div>
+</section>
+
+<section id="violations" class="section-box">
+<div class="section-head"><div><h2>İhlaller</h2><p>Platform kalite ve operasyon ihlal puanları.</p></div></div>
+<div class="table-box glass">
+<table>
+<thead><tr><th>Tarih</th><th>Konu</th><th>Puan</th><th>Durum</th></tr></thead>
+<tbody>
+<tr><td>04.06.2026</td><td>Demo kayıt</td><td>0</td><td><span class="badge-pill badge-green">Temiz</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="support" class="section-box">
+<div class="section-head"><div><h2>Destek Talepleri</h2><p>AllonaHub destek ekibiyle iletişime geç.</p></div></div>
+<div class="form-grid">
+<div class="input"><select><option>Konu Seç</option><option>Ürün</option><option>Ödeme</option><option>Kargo</option><option>Teknik Destek</option></select></div>
+<div class="input"><input placeholder="Başlık"></div>
+<div class="input textarea"><textarea placeholder="Mesajınızı yazın"></textarea></div>
+<button class="primary-btn" onclick="showNotice('Destek talebi backend bağlanınca gönderilecek.')">Destek Talebi Oluştur</button>
+</div>
+</section>
+
+<section id="knowledge" class="section-box">
+<div class="section-head"><div><h2>Bilgi Merkezi</h2><p>Partner eğitimleri, rehberler ve büyüme önerileri.</p></div></div>
+<div class="panel-grid">
+<div class="panel-card glass"><h3>Ürün Yükleme Eğitimi</h3><p>Ürünleri doğru kategori ve görsellerle yükleme.</p><button>Aç</button></div>
+<div class="panel-card glass"><h3>Satıcı Bilgi Merkezi</h3><p>Operasyon, fiyatlandırma ve müşteri memnuniyeti.</p><button>Aç</button></div>
+<div class="panel-card glass"><h3>Büyüme Önerileri</h3><p>Satışları artırmak için aksiyon planları.</p><button>Aç</button></div>
+</div>
+</section>
+
+<section id="rules" class="section-box">
+<div class="section-head"><div><h2>Platform Kuralları</h2><p>AllonaHub partner kullanım ve satış kuralları.</p></div></div>
+<div class="panel-grid">
+<div class="panel-card glass"><h3>Ürün Kuralları</h3><p>Yasaklı ürünler, görsel kuralları ve açıklama standartları.</p></div>
+<div class="panel-card glass"><h3>Hizmet Kuralları</h3><p>Randevu, danışmanlık ve operasyon hizmet standartları.</p></div>
+<div class="panel-card glass"><h3>HP Kuralları</h3><p>Kampanya, kupon ve kötüye kullanım önleme kuralları.</p></div>
+</div>
+</section>
+
+<section id="commission" class="section-box">
+<div class="section-head"><div><h2>Komisyon ve Vade Oranları</h2><p>Modül bazlı komisyon ve ödeme vadeleri.</p></div></div>
+<div class="table-box glass">
+<table>
+<thead><tr><th>Modül</th><th>Komisyon</th><th>Vade</th><th>Durum</th></tr></thead>
+<tbody>
+<tr><td>Shop</td><td>%8 - %18</td><td>7-14 gün</td><td><span class="badge-pill">Planlandı</span></td></tr>
+<tr><td>Food</td><td>%8 - %15</td><td>7 gün</td><td><span class="badge-pill">Planlandı</span></td></tr>
+<tr><td>Legal</td><td>Hizmet bazlı</td><td>İş tamamlanınca</td><td><span class="badge-pill">Planlandı</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="docs" class="section-box">
+<div class="section-head"><div><h2>Entegrasyon Dokümanı</h2><p>API, ürün aktarımı, sipariş ve ödeme entegrasyon rehberleri.</p></div></div>
+<div class="panel-grid">
+<div class="panel-card glass"><h3>Ürün API</h3><p>Ürün yükleme ve güncelleme servisleri.</p><button>Yakında</button></div>
+<div class="panel-card glass"><h3>Sipariş API</h3><p>Sipariş ve kargo güncelleme servisleri.</p><button>Yakında</button></div>
+<div class="panel-card glass"><h3>Ödeme API</h3><p>QR ödeme, HP kupon ve hakediş akışları.</p><button>Yakında</button></div>
+</div>
+</section>
+</main>
+</div>
+
+<div id="notice" class="notice"></div>
+
+</div>
+
+<script>
+const partnerProfiles={
+  shop:{
+    name:"ALLONA SHOP",
+    id:"ALP-295481",
+    typeText:"Shop partner paneli • Ürün, sipariş, kargo ve kampanya yönetimi",
+    score:"8.0 / 10",
+    level:"Level 4",
+    desc:"Bugünkü operasyon, sipariş, ürün ve kampanya özetlerinizi buradan takip edebilirsiniz.",
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["products","fa-box","Ürünler"],
+      ["addProduct","fa-plus","Ürün Ekle"],
+      ["orders","fa-truck","Sipariş & Kargo"],
+      ["finance","fa-wallet","Finans"],
+      ["pricing","fa-tags","Promosyon & Fiyat"],
+      ["reports","fa-chart-pie","Raporlar"],
+      ["customer","fa-comments","Mağaza & Müşteri"],
+      ["ads","fa-bullhorn","Reklam"],
+      ["growth","fa-seedling","Gelişim"],
+      ["documents","fa-file-contract","Belgeler"],
+      ["support","fa-headset","Destek"],
+      ["settings","fa-gear","Ayarlar"]
+    ],
+    kpis:[
+      ["Geciken Siparişler","0","Bugün geciken yok","success"],
+      ["Bugün Kargolanacak","1","Hazırlanması gereken sipariş","warning"],
+      ["Yeni Sipariş","1","Yeni işlem bekliyor","warning"],
+      ["Kargoda","1","Taşıma durumunda",""],
+      ["Teslim Edilen","14","Tamamlanan paket","success"],
+      ["Fatura Bekleyen","1","Fatura işlemi gerekli","warning"],
+      ["Aktif Ürün","346","Yayında olan ürün","success"],
+      ["Pasif Ürün","232","Pasif listedeki ürün",""]
+    ],
+    tableHead:["Sipariş No","Müşteri","Ürün","Tutar","Durum"],
+    tableRows:[
+      ["#11289357513","Liliya Akgül","Etnik Saç Aksesuarı","1.699,99 ₺","Kargolanacak"],
+      ["#11289357514","Demo Müşteri","Saten Gecelik Seti","2.199,99 ₺","Fatura Bekliyor"],
+      ["#11289357515","Allona Test","Premium Takı Seti","799,99 ₺","Hazırlanıyor"]
+    ],
+    quick:["Ürün Ekle","Siparişleri Aç","Reklam Ver","Kupon Oluştur"]
+  },
+
+  legal:{
+    name:"ALLONA LEGAL",
+    id:"ALP-LEGAL-1042",
+    typeText:"Hukuk partner paneli • Danışmanlık, randevu, dosya ve müvekkil yönetimi",
+    score:"9.2 / 10",
+    level:"Level 6",
+    desc:"Danışmanlık talepleri, randevular, dosya süreçleri ve müvekkil mesajlarını yönetin.",
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["consults","fa-scale-balanced","Danışmanlık Talepleri"],
+      ["appointments","fa-calendar-check","Randevular"],
+      ["cases","fa-folder-open","Dosyalar"],
+      ["documents","fa-file-signature","Belge Yönetimi"],
+      ["messages","fa-message","Müvekkil Mesajları"],
+      ["finance","fa-wallet","Ücret & Hakediş"],
+      ["reports","fa-chart-pie","Raporlar"],
+      ["customer","fa-star","Yorumlar"],
+      ["settings","fa-gear","Uzmanlık Ayarları"],
+      ["support","fa-headset","Destek"]
+    ],
+    kpis:[
+      ["Yeni Talep","4","Cevap bekleyen danışmanlık","warning"],
+      ["Bugünkü Randevu","2","Planlı görüşme",""],
+      ["Aktif Dosya","8","Devam eden süreç",""],
+      ["Belge Bekleyen","3","Müvekkilden belge bekleniyor","warning"],
+      ["Tamamlanan","21","Kapanan işlem","success"],
+      ["Ortalama Puan","9.2","Müvekkil memnuniyeti","success"],
+      ["Hakediş","12.500 ₺","Bekleyen ödeme",""],
+      ["Yanıt Süresi","18 dk","Ortalama cevap süresi","success"]
+    ],
+    tableHead:["Talep No","Müvekkil","Konu","Tarih","Durum"],
+    tableRows:[
+      ["#LGL-1001","Demo Müvekkil","İkamet Danışmanlığı","Bugün","Yanıt Bekliyor"],
+      ["#LGL-1002","Ayşe K.","Sözleşme İnceleme","Yarın","Randevu Oluştu"],
+      ["#LGL-1003","Murat T.","Dava Dosyası","04.06.2026","Belge Bekliyor"]
+    ],
+    quick:["Randevu Aç","Talep Yanıtla","Belge Yükle","Ücret Tanımla"]
+  },
+
+  food:{
+    name:"ALLONA FOOD PARTNER",
+    id:"ALP-FOOD-2208",
+    typeText:"Restoran partner paneli • Menü, sipariş, kurye ve kampanya yönetimi",
+    score:"8.7 / 10",
+    level:"Level 5",
+    desc:"Restoran siparişleri, menü ürünleri, kurye durumları ve kampanyaları takip edin.",
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["menu","fa-utensils","Menü Yönetimi"],
+      ["orders","fa-bag-shopping","Siparişler"],
+      ["courier","fa-motorcycle","Kurye Durumu"],
+      ["qrpay","fa-qrcode","QR Ödeme"],
+      ["campaigns","fa-gift","Kampanyalar"],
+      ["workingHours","fa-clock","Çalışma Saatleri"],
+      ["finance","fa-wallet","Finans"],
+      ["customer","fa-comments","Yorumlar"],
+      ["ads","fa-bullhorn","Reklam"],
+      ["settings","fa-gear","Ayarlar"],
+      ["support","fa-headset","Destek"]
+    ],
+    kpis:[
+      ["Yeni Sipariş","6","Hazırlanmayı bekliyor","warning"],
+      ["Hazırlanıyor","3","Mutfakta işlemde",""],
+      ["Kuryede","2","Teslimat aşamasında",""],
+      ["Teslim Edildi","34","Bugünkü tamamlanan","success"],
+      ["İptal","0","Bugün iptal yok","success"],
+      ["Ortalama Süre","24 dk","Hazırlık ortalaması",""],
+      ["Ciro","8.450 ₺","Bugünkü ciro","success"],
+      ["Puan","8.7","Restoran puanı","success"]
+    ],
+    tableHead:["Sipariş No","Müşteri","Menü","Tutar","Durum"],
+    tableRows:[
+      ["#FD-501","Müşteri 1","Burger Menü","349 ₺","Hazırlanıyor"],
+      ["#FD-502","Müşteri 2","Pizza Menü","429 ₺","Kuryede"],
+      ["#FD-503","Müşteri 3","Tatlı & İçecek","189 ₺","Yeni"]
+    ],
+    quick:["Menü Ekle","Siparişleri Aç","QR Ödeme Al","Kampanya Aç"]
+  },
+
+  market:{
+    name:"ALLONA MARKET",
+    id:"ALP-MARKET-3310",
+    typeText:"Market partner paneli • Ürün, stok, hızlı teslimat ve sipariş yönetimi",
+    score:"8.5 / 10",
+    level:"Level 5",
+    desc:"Market ürünleri, stoklar, teslimat operasyonları ve kampanyaları yönetin.",
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["products","fa-box","Ürünler"],
+      ["stock","fa-warehouse","Stok Yönetimi"],
+      ["orders","fa-truck-fast","Sipariş & Teslimat"],
+      ["campaigns","fa-gift","Kampanyalar"],
+      ["finance","fa-wallet","Finans"],
+      ["reports","fa-chart-pie","Raporlar"],
+      ["customer","fa-comments","Müşteri Talepleri"],
+      ["ads","fa-bullhorn","Reklam"],
+      ["settings","fa-gear","Ayarlar"],
+      ["support","fa-headset","Destek"]
+    ],
+    kpis:[
+      ["Yeni Sipariş","9","Toplanmayı bekliyor","warning"],
+      ["Eksik Stok","12","Stok güncellemesi gerekli","warning"],
+      ["Teslimatta","4","Kurye üzerinde",""],
+      ["Teslim Edilen","41","Bugünkü teslimat","success"],
+      ["Aktif Ürün","1.240","Yayındaki ürün","success"],
+      ["Pasif Ürün","80","Güncelleme bekliyor",""],
+      ["Ciro","15.300 ₺","Bugünkü ciro","success"],
+      ["İade","1","İade talebi","warning"]
+    ],
+    tableHead:["Sipariş No","Müşteri","Paket","Tutar","Durum"],
+    tableRows:[
+      ["#MRK-701","Müşteri A","Temizlik Paketi","799 ₺","Toplanıyor"],
+      ["#MRK-702","Müşteri B","Gıda Paketi","1.250 ₺","Teslimatta"],
+      ["#MRK-703","Müşteri C","Petshop Paketi","490 ₺","Yeni"]
+    ],
+    quick:["Ürün Ekle","Stok Güncelle","Siparişleri Aç","Kampanya Aç"]
+  },
+
+  maritime:{
+    name:"ALLONA MARITIME",
+    id:"ALP-MRT-7712",
+    typeText:"Denizcilik partner paneli • Crew, gemi ilanı, CV havuzu ve broker talepleri",
+    score:"9.0 / 10",
+    level:"Level 7",
+    desc:"Denizcilik iş ilanları, personel başvuruları, CV havuzu ve gemi operasyonları.",
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["crew","fa-ship","Crew Talepleri"],
+      ["vessels","fa-anchor","Gemi İlanları"],
+      ["cv","fa-id-card","CV Havuzu"],
+      ["applications","fa-users","Personel Başvuruları"],
+      ["contracts","fa-file-signature","Sözleşmeler"],
+      ["broker","fa-handshake","Broker Talepleri"],
+      ["finance","fa-wallet","Maritime Finans"],
+      ["reports","fa-chart-pie","Raporlar"],
+      ["settings","fa-gear","Ayarlar"],
+      ["support","fa-headset","Destek"]
+    ],
+    kpis:[
+      ["Yeni CV","18","İncelenecek aday","warning"],
+      ["Aktif Gemi İlanı","6","Yayında","success"],
+      ["Crew Talebi","4","Açık pozisyon","warning"],
+      ["Eşleşme","11","Uygun aday",""],
+      ["Sözleşme","2","İmza bekliyor","warning"],
+      ["Tamamlanan","9","Kapanan crew","success"],
+      ["Broker Talebi","3","Yeni teklif",""],
+      ["Puan","9.0","Partner puanı","success"]
+    ],
+    tableHead:["Talep No","Gemi","Pozisyon","Aday","Durum"],
+    tableRows:[
+      ["#MRT-201","Bulk Carrier","2nd Engineer","3 Aday","İncelemede"],
+      ["#MRT-202","General Cargo","AB Seaman","5 Aday","Eşleşme Var"],
+      ["#MRT-203","Tanker","Cook","2 Aday","Belge Bekliyor"]
+    ],
+    quick:["Crew Talebi Aç","Gemi İlanı Ekle","CV Havuzu","Sözleşme Oluştur"]
+  }
+};
+
+const fallbackTypes={
+  career:["ALLONA CAREER","İK & kariyer partner paneli • İş ilanları, adaylar ve başvuru süreçleri"],
+  health:["ALLONA HEALTH","Sağlık partner paneli • Randevu, hizmet, uzman ve hasta talepleri"],
+  realestate:["ALLONA ESTATE","Gayrimenkul partner paneli • İlan, portföy, teklif ve müşteri yönetimi"],
+  auto:["ALLONA AUTO","Otomotiv partner paneli • Araç ilanı, ekspertiz ve satış süreçleri"],
+  education:["ALLONA EDU","Eğitim partner paneli • Kurs, öğrenci, ders ve içerik yönetimi"],
+  beauty:["ALLONA BEAUTY","Güzellik partner paneli • Randevu, hizmet paketi ve müşteri yönetimi"]
+};
+
+function buildFallback(type){
+  const base=fallbackTypes[type]||["ALLONA PARTNER","Partner paneli"];
+  return{
+    name:base[0],
+    id:"ALP-"+type.toUpperCase()+"-0001",
+    typeText:base[1],
+    score:"8.4 / 10",
+    level:"Level 3",
+    desc:base[1],
+    menu:[
+      ["dashboard","fa-chart-line","Dashboard"],
+      ["appointments","fa-calendar-check","Randevular / Talepler"],
+      ["services","fa-list","Hizmet Yönetimi"],
+      ["customer","fa-comments","Müşteri Mesajları"],
+      ["finance","fa-wallet","Finans"],
+      ["reports","fa-chart-pie","Raporlar"],
+      ["ads","fa-bullhorn","Reklam"],
+      ["growth","fa-seedling","Gelişim"],
+      ["documents","fa-file-contract","Belgeler"],
+      ["settings","fa-gear","Ayarlar"],
+      ["support","fa-headset","Destek"]
+    ],
+    kpis:[
+      ["Yeni Talep","3","İşlem bekliyor","warning"],
+      ["Bugünkü Randevu","2","Planlandı",""],
+      ["Aktif Hizmet","12","Yayında","success"],
+      ["Tamamlanan","18","Bu ay","success"],
+      ["Bekleyen Ödeme","2","Hakediş bekliyor","warning"],
+      ["Puan","8.4","Partner puanı","success"],
+      ["Reklam","0","Aktif reklam yok",""],
+      ["Bildirim","5","Yeni duyuru","warning"]
+    ],
+    tableHead:["Kayıt No","Müşteri","Konu","Tutar","Durum"],
+    tableRows:[
+      ["#GEN-101","Demo Müşteri","Hizmet Talebi","450 ₺","Bekliyor"],
+      ["#GEN-102","Test Kullanıcı","Randevu","800 ₺","Planlandı"],
+      ["#GEN-103","Allona Üye","Danışmanlık","1.200 ₺","Tamamlandı"]
+    ],
+    quick:["Hizmet Ekle","Randevu Aç","Duyuru Gönder","Reklam Ver"]
+  }
+}
+
+let currentType="shop";
+let currentProfile=partnerProfiles.shop;
+
+function changePartnerType(type){
+  currentType=type;
+  currentProfile=partnerProfiles[type]||buildFallback(type);
+  renderPartnerPanel();
+  openSection("dashboard");
+}
+
+function renderPartnerPanel(){
+  document.getElementById("topPartnerName").textContent=currentProfile.name;
+  document.getElementById("profileName").textContent=currentProfile.name;
+  document.getElementById("profileId").textContent=currentProfile.id;
+  document.getElementById("profileScore").textContent=currentProfile.score;
+  document.getElementById("profileLevel").textContent=currentProfile.level;
+  document.getElementById("sidePartnerName").textContent=currentProfile.name;
+  document.getElementById("sidePartnerInfo").textContent=currentProfile.typeText;
+  document.getElementById("welcomeTitle").textContent="Hoş geldiniz, "+currentProfile.name;
+  document.getElementById("welcomeDesc").textContent=currentProfile.desc;
+
+  const initials=currentProfile.name.split(" ").map(x=>x[0]).join("").slice(0,2);
+  document.getElementById("profileAvatar").textContent=initials;
+
+  renderMenu();
+  renderQuickActions();
+  renderKpis();
+  renderTable();
+}
+
+function renderMenu(){
+  const menu=document.getElementById("dynamicMenu");
+  menu.innerHTML=`<div class="menu-group-title">Panel Menüsü</div>`+
+  currentProfile.menu.map(item=>`
+    <button class="menu-btn ${item[0]==='dashboard'?'active':''}" onclick="openSection('${item[0]}',this)">
+      <i class="fa-solid ${item[1]}"></i>${item[2]}
+    </button>
+  `).join("");
+}
+
+function renderQuickActions(){
+  document.getElementById("quickActions").innerHTML=currentProfile.quick.map((q,i)=>`
+    <button onclick="quickAction('${q}')">${q}</button>
+  `).join("");
+}
+
+function renderKpis(){
+  document.getElementById("kpiGrid").innerHTML=currentProfile.kpis.map(k=>`
+    <div class="kpi glass ${k[3]||''}">
+      <small>${k[0]}</small>
+      <h3>${k[1]}</h3>
+      <p>${k[2]}</p>
+    </div>
+  `).join("");
+}
+
+function renderTable(){
+  document.getElementById("tableHead").innerHTML="<tr>"+currentProfile.tableHead.map(h=>`<th>${h}</th>`).join("")+"</tr>";
+  document.getElementById("tableBody").innerHTML=currentProfile.tableRows.map(r=>`
+    <tr>${r.map((c,i)=>`<td>${i===4?statusBadge(c):c}</td>`).join("")}</tr>
+  `).join("");
+}
+
+function statusBadge(text){
+  let cls="badge-pill";
+  if(text.includes("Bekliyor")||text.includes("Yeni")||text.includes("Kargolanacak"))cls+=" badge-red";
+  if(text.includes("Tamamlandı")||text.includes("Teslim")||text.includes("Onay"))cls+=" badge-green";
+  return `<span class="${cls}">${text}</span>`;
+}
+
+function openSection(id,btn){
+  document.querySelectorAll(".section-box").forEach(s=>s.classList.remove("active"));
+
+  if(id==="dashboard"){
+    document.getElementById("dashboard").classList.add("active");
+  }else{
+    const staticSection=document.getElementById(id);
+    if(staticSection){
+      staticSection.classList.add("active");
+    }else{
+      renderDynamicSection(id);
+      document.getElementById("dynamicSection").classList.add("active");
+    }
+  }
+
+  document.querySelectorAll(".menu-btn").forEach(b=>b.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+}
+
+function renderDynamicSection(id){
+  const labels={
+    products:"Ürünler",
+    addProduct:"Ürün Ekle",
+    orders:"Sipariş & Kargo",
+    finance:"Finans",
+    pricing:"Promosyon & Fiyat",
+    reports:"Raporlar",
+    customer:"Mağaza & Müşteri",
+    ads:"Reklam",
+    growth:"Gelişim",
+    documents:"Belgeler",
+    consults:"Danışmanlık Talepleri",
+    appointments:"Randevular",
+    cases:"Dosyalar",
+    messages:"Mesajlar",
+    menu:"Menü Yönetimi",
+    courier:"Kurye Durumu",
+    qrpay:"QR Ödeme",
+    campaigns:"Kampanyalar",
+    workingHours:"Çalışma Saatleri",
+    stock:"Stok Yönetimi",
+    crew:"Crew Talepleri",
+    vessels:"Gemi İlanları",
+    cv:"CV Havuzu",
+    applications:"Personel Başvuruları",
+    contracts:"Sözleşmeler",
+    broker:"Broker Talepleri",
+    services:"Hizmet Yönetimi"
+  };
+
+  if(id==="addProduct"){
+    renderAddProductSection();
+    return;
+  }
+
+  const title=labels[id]||"Panel Bölümü";
+
+  document.getElementById("dynamicSection").innerHTML=`
+    <div class="section-head">
+      <div>
+        <h2>${title}</h2>
+        <p>${currentProfile.name} için ${title.toLowerCase()} alanı.</p>
+      </div>
+      <button class="blue-btn" onclick="showNotice('${title} modülü Supabase bağlantısı ile gerçek veriye bağlanacak.')">Modülü Test Et</button>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel-card glass"><h3>${title} Özeti</h3><p>Bu bölüm partner tipine göre özelleştirilmiş işlem alanıdır.</p><button>Detay</button></div>
+      <div class="panel-card glass"><h3>Aktif Kayıtlar</h3><p>Bekleyen, aktif ve tamamlanan kayıtlar burada listelenecek.</p><button>Listele</button></div>
+      <div class="panel-card glass"><h3>Raporlama</h3><p>Performans, işlem ve finans raporları bu modüle göre gösterilecek.</p><button>Rapor Aç</button></div>
+    </div>
+
+    <div class="table-box glass">
+      <div class="table-top">
+        <input placeholder="${title} içinde ara">
+        <select><option>Tüm Durumlar</option><option>Aktif</option><option>Bekleyen</option><option>Tamamlanan</option></select>
+        <select><option>Bugün</option><option>Son 7 Gün</option><option>Bu Ay</option></select>
+      </div>
+      <table>
+        <thead><tr><th>Kayıt</th><th>Açıklama</th><th>Tarih</th><th>Durum</th></tr></thead>
+        <tbody>
+          <tr><td>#${id.toUpperCase()}-001</td><td>${title} demo kaydı</td><td>04.06.2026</td><td><span class="badge-pill">Planlandı</span></td></tr>
+          <tr><td>#${id.toUpperCase()}-002</td><td>Backend bağlantısı bekleniyor</td><td>04.06.2026</td><td><span class="badge-pill badge-gold">Hazır</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+  function renderAddProductSection(){
+  document.getElementById("dynamicSection").innerHTML=`
+    <div class="section-head">
+      <div>
+        <h2>Ürün Ekle</h2>
+        <p>${currentProfile.name} için ürün / hizmet ekleme alanı.</p>
+      </div>
+      <button class="blue-btn" onclick="showNotice('Toplu ürün yükleme Excel/Supabase bağlantısı ile aktif edilecek.')">Toplu Yükleme</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="input"><input id="productName" placeholder="Ürün / Hizmet Adı"></div>
+      <div class="input"><input id="productBrand" placeholder="Marka / Firma"></div>
+
+      <div class="input">
+        <select id="productCategory">
+          <option value="">Kategori Seç</option>
+          <option>Kadın</option>
+          <option>Erkek</option>
+          <option>Ev & Yaşam</option>
+          <option>Anne & Çocuk</option>
+          <option>Kozmetik</option>
+          <option>Ayakkabı & Çanta</option>
+          <option>Spor & Outdoor</option>
+          <option>AllonaMarket</option>
+          <option>Hukuk Hizmeti</option>
+          <option>Denizcilik</option>
+          <option>Restoran Menü</option>
+          <option>Sağlık Hizmeti</option>
+          <option>Güzellik Hizmeti</option>
+        </select>
+      </div>
+
+      <div class="input"><input id="productPrice" type="number" placeholder="Satış Fiyatı"></div>
+      <div class="input"><input id="productOldPrice" type="number" placeholder="Eski Fiyat / Piyasa Fiyatı"></div>
+      <div class="input"><input id="productStock" type="number" placeholder="Stok / Kontenjan"></div>
+      <div class="input"><input id="productImage" placeholder="Görsel URL"></div>
+
+      <div class="input">
+        <select id="productStatus">
+          <option value="review">İncelemeye Gönder</option>
+          <option value="draft">Taslak Kaydet</option>
+          <option value="active">Yayına Hazır</option>
+        </select>
+      </div>
+
+      <div class="input">
+        <select id="productCoupon">
+          <option value="false">Kupon Yok</option>
+          <option value="true">Kuponlu Ürün</option>
+        </select>
+      </div>
+
+      <div class="input">
+        <select id="productHp">
+          <option value="false">HP Kazandırmaz</option>
+          <option value="true">HP Kazandırır</option>
+        </select>
+      </div>
+
+      <div class="input textarea">
+        <textarea id="productDesc" placeholder="Ürün / hizmet açıklaması"></textarea>
+      </div>
+
+      <button class="primary-btn" onclick="saveProduct()">Ürünü Kaydet</button>
+      <button class="blue-btn" onclick="clearProductForm()">Formu Temizle</button>
+    </div>
+
+    <div class="table-box glass">
+      <div class="section-head">
+        <div>
+          <h2>Eklenen Ürünler</h2>
+          <p>Bu listede partner tarafından eklenen ürünler görünür.</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th></tr>
+        </thead>
+        <tbody id="partnerProductsTable"></tbody>
+      </table>
+    </div>
+  `;
+
+  renderPartnerProductsTable();
+}
+
+function getPartnerProducts(){
+  return JSON.parse(localStorage.getItem("allonaPartnerProducts") || "[]");
+}
+
+function setPartnerProducts(data){
+  localStorage.setItem("allonaPartnerProducts", JSON.stringify(data));
+}
+
+function saveProduct(){
+  const name=document.getElementById("productName").value.trim();
+  const brand=document.getElementById("productBrand").value.trim();
+  const category=document.getElementById("productCategory").value.trim();
+  const price=document.getElementById("productPrice").value.trim();
+  const oldPrice=document.getElementById("productOldPrice").value.trim();
+  const stock=document.getElementById("productStock").value.trim();
+  const image=document.getElementById("productImage").value.trim();
+  const status=document.getElementById("productStatus").value;
+  const coupon=document.getElementById("productCoupon").value==="true";
+  const hp=document.getElementById("productHp").value==="true";
+  const desc=document.getElementById("productDesc").value.trim();
+
+  if(!name){showNotice("Ürün / hizmet adı zorunlu.");return}
+  if(!category){showNotice("Kategori seçmelisin.");return}
+  if(!price){showNotice("Satış fiyatı zorunlu.");return}
+
+  const products=getPartnerProducts();
+
+  products.unshift({
+    id:"PRD-"+Date.now(),
+    name,
+    brand:brand || currentProfile.name,
+    category,
+    price:Number(price),
+    oldPrice:oldPrice?Number(oldPrice):null,
+    stock:stock?Number(stock):0,
+    image,
+    status,
+    coupon,
+    hp,
+    desc,
+    partnerName:currentProfile.name,
+    partnerId:currentProfile.id,
+    createdAt:new Date().toLocaleString("tr-TR")
+  });
+
+  setPartnerProducts(products);
+  renderPartnerProductsTable();
+  clearProductForm();
+  showNotice("<b>Ürün kaydedildi ✅</b><br>Supabase bağlantısından sonra Allona Shop vitrinine otomatik düşecek.");
+}
+
+function renderPartnerProductsTable(){
+  const table=document.getElementById("partnerProductsTable");
+  if(!table)return;
+
+  const products=getPartnerProducts();
+
+  if(!products.length){
+    table.innerHTML=`<tr><td colspan="5">Henüz ürün eklenmedi.</td></tr>`;
+    return;
+  }
+
+  table.innerHTML=products.map(p=>`
+    <tr>
+      <td>${p.name}</td>
+      <td>${p.category}</td>
+      <td>${p.price.toLocaleString("tr-TR")} ₺</td>
+      <td>${p.stock}</td>
+      <td>${productStatusBadge(p.status)}</td>
+    </tr>
+  `).join("");
+}
+
+function productStatusBadge(status){
+  if(status==="active")return `<span class="badge-pill badge-green">Yayına Hazır</span>`;
+  if(status==="draft")return `<span class="badge-pill badge-gold">Taslak</span>`;
+  return `<span class="badge-pill">İncelemede</span>`;
+}
+
+function clearProductForm(){
+  ["productName","productBrand","productPrice","productOldPrice","productStock","productImage","productDesc"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value="";
+  });
+
+  if(document.getElementById("productCategory"))document.getElementById("productCategory").value="";
+  if(document.getElementById("productStatus"))document.getElementById("productStatus").value="review";
+  if(document.getElementById("productCoupon"))document.getElementById("productCoupon").value="false";
+  if(document.getElementById("productHp"))document.getElementById("productHp").value="false";
+}
+
+function quickAction(action){
+  if(action.includes("Ürün"))openSection("addProduct");
+  else if(action.includes("Sipariş"))openSection("orders");
+  else if(action.includes("Reklam"))openSection("ads");
+  else if(action.includes("Kupon")||action.includes("Kampanya"))openSection("pricing");
+  else if(action.includes("Randevu"))openSection("appointments");
+  else if(action.includes("Talep"))openSection("consults");
+  else if(action.includes("Belge"))openSection("documents");
+  else if(action.includes("QR"))openSection("qrpay");
+  else if(action.includes("Crew"))openSection("crew");
+  else if(action.includes("Gemi"))openSection("vessels");
+  else if(action.includes("CV"))openSection("cv");
+  else showNotice(action+" alanı açılacak.");
+}
+
+function savePartnerProfile(){
+  const name=document.getElementById("editPartnerName").value.trim();
+  const score=document.getElementById("editScore").value.trim();
+  const level=document.getElementById("editLevel").value.trim();
+  const logo=document.getElementById("editLogo").value.trim();
+  const desc=document.getElementById("editDesc").value.trim();
+
+  if(name){
+    currentProfile.name=name.toUpperCase();
+  }
+
+  if(score){
+    currentProfile.score=score;
+  }
+
+  if(level){
+    currentProfile.level=level;
+  }
+
+  if(desc){
+    currentProfile.desc=desc;
+  }
+
+  renderPartnerPanel();
+
+  if(logo){
+    document.getElementById("profileAvatar").innerHTML=`<img src="${logo}" alt="Partner Logo">`;
+  }
+
+  showNotice("<b>Partner bilgileri güncellendi ✅</b><br>Gerçek kayıt Supabase bağlanınca veritabanına yazılacak.");
+}
+
+function logoutPartner(){
+  localStorage.removeItem("allonaPartnerLoggedIn");
+  localStorage.removeItem("allonaPartnerEmail");
+  window.location.href="partner.html";
+}
+
+function showNotice(message){
+  const n=document.getElementById("notice");
+  n.innerHTML=message;
+  n.style.display="block";
+  setTimeout(()=>{n.style.display="none"},4300);
+}
+
+renderPartnerPanel();
+</script>
+
+</body>
+</html>
