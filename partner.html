@@ -2,94 +2,343 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
 <title>AllonaHub Partner Paneli</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#071426;color:white}
-header{display:flex;justify-content:space-between;align-items:center;padding:20px 35px;background:#08172d;border-bottom:1px solid rgba(0,229,255,.2)}
-.logo{display:flex;align-items:center;gap:12px;color:#ffd700;font-size:26px;font-weight:900}
-.logo img{height:42px}
-nav a{color:white;text-decoration:none;margin-left:20px;font-weight:700}
-.main{padding:28px;display:grid;grid-template-columns:260px 1fr;gap:24px}
-.sidebar,.card{background:#0d1f39;border:1px solid rgba(0,229,255,.18);border-radius:22px;padding:22px;box-shadow:0 0 22px rgba(0,229,255,.08)}
-.sidebar h3,.card h3{color:#ffd700;margin-bottom:16px}
-.menu div{padding:13px;border-bottom:1px solid rgba(255,255,255,.08)}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:24px}
-.stat{background:#102443;border:1px solid rgba(0,229,255,.18);border-radius:20px;padding:20px}
-.stat h2{color:#00e5ff;font-size:30px}
-.modules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.module{background:#102443;border-radius:18px;padding:18px;border:1px solid rgba(0,229,255,.18)}
-.active{border-color:#00e5ff;box-shadow:0 0 18px rgba(0,229,255,.25)}
-.locked{opacity:.45}
-.badge{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:20px;background:#00e5ff;color:#061225;font-weight:900;font-size:12px}
-.table{margin-top:24px}
-.row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;padding:14px;border-bottom:1px solid rgba(255,255,255,.08)}
-@media(max-width:900px){.main{grid-template-columns:1fr}.grid,.modules{grid-template-columns:1fr}nav{display:none}}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 55px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:28px;position:relative;overflow:hidden}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 380px;gap:18px;align-items:center;margin-bottom:24px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{font-size:30px;color:#ffd700}
+.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 14px 0 22px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search button{height:42px;padding:0 20px;border:0;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;cursor:pointer}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{font-weight:800;color:white}
+.actions a:hover{color:#00e5ff}
+
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;margin-bottom:28px}
+.hero-main{padding:38px;min-height:470px}
+.hero-main h1{font-size:52px;color:#ffd700;line-height:1.05;margin-bottom:18px}
+.hero-main p{font-size:18px;opacity:.82;line-height:1.6;max-width:700px}
+.hero-badges{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:28px}
+.badge{padding:16px;border-radius:18px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);text-align:center}
+.badge b{display:block;color:#ffd700;font-size:24px;margin-bottom:4px}
+.badge small{opacity:.75}
+
+.partner-login{padding:32px;min-height:470px}
+.partner-login h2{font-size:34px;color:#ffd700;margin-bottom:8px;text-align:center}
+.partner-login p{text-align:center;opacity:.75;line-height:1.45;margin-bottom:22px}
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:22px}
+.tab{flex:1;border:0;background:transparent;color:white;padding:13px;border-radius:14px;font-weight:900;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,229,255,.3)}
+.form{display:none}
+.form.active{display:block}
+.input{height:54px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:13px}
+.input input,.input select{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.input select option{background:#061b33;color:white}
+.btn{width:100%;height:54px;border:0;border-radius:16px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22)}
+.secondary-btn{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16);margin-top:12px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:36px 0 16px}
+.section-title h2{font-size:34px;color:#ffd700}
+.section-title a{color:#00e5ff;font-weight:900}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.card{padding:22px;min-height:155px}
+.card h3{color:#ffd700;margin-bottom:9px}
+.card p{font-size:13px;opacity:.76;line-height:1.45}
+
+.flow-box{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.pay-preview{padding:30px;min-height:380px}
+.pay-preview h2{color:#ffd700;font-size:34px;margin-bottom:12px}
+.pay-preview p{opacity:.8;line-height:1.55;margin-bottom:20px}
+.payment-screen{padding:22px;border-radius:24px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20)}
+.pay-row{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.pay-row b{color:#ffd700}
+.qr-box{width:120px;height:120px;margin:20px auto;border-radius:18px;background:linear-gradient(135deg,#fff,#cdefff);display:flex;align-items:center;justify-content:center;color:#020814;font-weight:900;box-shadow:0 0 22px rgba(0,229,255,.35)}
+
+.footer-main{margin-top:38px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
+
+.social-icons{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:24px;margin-top:25px}
+.social-icons a{width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 18px rgba(0,229,255,.20);transition:.35s;font-size:22px}
+.social-icons span{font-size:11px;font-weight:600;color:#fff;opacity:.9}
+.social-icons .wa{color:#25D366}.social-icons .ig{background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);color:white}.social-icons .x{color:white}.social-icons .fb{color:#1877F2}.social-icons .yt{color:#FF0000}.social-icons .li{color:#0A66C2}.social-icons .tg{color:#229ED9}.social-icons .tk{color:white}.social-icons .mail{color:#ffd700}
 </style>
 </head>
+
 <body>
+<div class="page">
 
-<header>
-  <div class="logo">
-    <img src="allona.logo.png">
-    <span>Partner Paneli</span>
-  </div>
-  <nav>
-    <a href="index.html">Ana Sayfa</a>
-    <a href="#">Bildirimler</a>
-    <a href="#">Destek</a>
-    <a href="#">Çıkış</a>
-  </nav>
-</header>
+<div class="header">
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png">
+<div><b>Allona</b><span>Hub</span></div>
+</a>
 
-<div class="main">
-
-<aside class="sidebar">
-  <h3>Partner Menüsü</h3>
-  <div class="menu">
-    <div>📊 Genel Bakış</div>
-    <div>🛍️ Ürünler / Hizmetler</div>
-    <div>📦 Siparişler</div>
-    <div>🔔 Bildirimler</div>
-    <div>💰 Kazançlar</div>
-    <div>⚙️ Yetkiler</div>
-    <div>🆘 Destek</div>
-  </div>
-</aside>
-
-<section>
-
-<div class="grid">
-  <div class="stat"><p>Bugünkü Sipariş</p><h2>24</h2></div>
-  <div class="stat"><p>Aktif Ürün/Hizmet</p><h2>186</h2></div>
-  <div class="stat"><p>Bekleyen Bildirim</p><h2>7</h2></div>
-  <div class="stat"><p>Aylık Kazanç</p><h2>₺84.250</h2></div>
+<div class="search glass">
+<span>🔍</span>
+<input id="partnerSearchInput" placeholder="Partner, ödeme, kampanya, mağaza, QR veya sektör ara...">
+<button onclick="partnerSearch()">Ara</button>
 </div>
 
-<div class="card">
-  <h3>Modül Yetkileri</h3>
-  <div class="modules">
-    <div class="module active"><h3>Allona Shop</h3><p>Ürün yükleme, stok, sipariş takibi.</p><span class="badge">Aktif</span></div>
-    <div class="module locked"><h3>Allona Yemek</h3><p>Restoran menüsü ve sipariş yönetimi.</p><span class="badge">Kapalı</span></div>
-    <div class="module locked"><h3>Kurye Sistemi</h3><p>Teslimat görevleri ve rota yönetimi.</p><span class="badge">Kapalı</span></div>
-    <div class="module locked"><h3>Denizcilik</h3><p>İlan, CV ve aday yönetimi.</p><span class="badge">Kapalı</span></div>
-    <div class="module locked"><h3>Hukuk</h3><p>Danışan, randevu ve dosya yönetimi.</p><span class="badge">Kapalı</span></div>
-    <div class="module locked"><h3>Ev Hizmetleri</h3><p>İş talebi, teklif ve randevu.</p><span class="badge">Kapalı</span></div>
-  </div>
+<div class="actions glass">
+<a href="index.html">Ana Sayfa</a>
+<a href="user.html">Kullanıcı Girişi</a>
+<a href="hubwallet.html">HUB Wallet</a>
+</div>
 </div>
 
-<div class="card table">
-  <h3>Son İşlemler</h3>
-  <div class="row"><b>İşlem</b><b>Modül</b><b>Durum</b><b>Zaman</b></div>
-  <div class="row"><span>Yeni sipariş</span><span>Shop</span><span>Hazırlanıyor</span><span>5 dk önce</span></div>
-  <div class="row"><span>Stok güncellendi</span><span>Shop</span><span>Başarılı</span><span>18 dk önce</span></div>
-  <div class="row"><span>Yeni bildirim</span><span>Kurye</span><span>Yetki yok</span><span>32 dk önce</span></div>
+<section class="hero">
+
+<div class="hero-main glass">
+<h1>AllonaHub Partner Ekosistemine Katıl</h1>
+<p>Restoran, market, mağaza, sağlık, hukuk, gayrimenkul, denizcilik, kurye, lojistik, spor, güzellik, eğitim ve hizmet sağlayıcıları için tek merkezli dijital büyüme paneli.</p>
+
+<div class="hero-badges">
+<div class="badge"><b>QR</b><small>Ödeme Al</small></div>
+<div class="badge"><b>HP</b><small>Kampanya Yönet</small></div>
+<div class="badge"><b>24/7</b><small>Panel Erişimi</small></div>
+</div>
+
+<p style="margin-top:26px">Partnerler AllonaHub üzerinden müşteri kazanır, kampanya açar, ödeme talebi oluşturur, HP kupon kabul eder ve hizmetlerini tüm ekosistemde görünür hale getirir.</p>
+</div>
+
+<div class="partner-login glass">
+<h2>Partner Girişi</h2>
+<p>Mevcut partnerler giriş yapabilir, yeni işletmeler başvuru oluşturabilir.</p>
+
+<div class="tabs">
+<button class="tab active" onclick="openPartnerTab('login', event)">Giriş</button>
+<button class="tab" onclick="openPartnerTab('apply', event)">Başvuru</button>
+</div>
+
+<div id="login" class="form active">
+<div class="input"><input placeholder="E-posta veya partner numarası"></div>
+<div class="input"><input type="password" placeholder="Şifre"></div>
+<button class="btn" onclick="partnerDemo()">Partner Paneline Giriş</button>
+<button class="btn secondary-btn">Google ile Giriş</button>
+</div>
+
+<div id="apply" class="form">
+<div class="input"><input placeholder="Firma / İşletme Adı"></div>
+<div class="input"><input placeholder="Yetkili Ad Soyad"></div>
+<div class="input"><input placeholder="E-posta"></div>
+<div class="input"><input placeholder="Telefon"></div>
+<div class="input">
+<select>
+<option>Sektör Seç</option>
+<option>Restoran & Yemek</option>
+<option>Market</option>
+<option>Mağaza & E-Ticaret</option>
+<option>Sağlık & Eczane</option>
+<option>Hukuk & Danışmanlık</option>
+<option>Gayrimenkul</option>
+<option>Denizcilik</option>
+<option>Kurye & Lojistik</option>
+<option>Spor & Fitness</option>
+<option>Güzellik & Kozmetik</option>
+<option>Ev Hizmetleri</option>
+</select>
+</div>
+<button class="btn" onclick="partnerDemo()">Partner Başvurusu Gönder</button>
+</div>
 </div>
 
 </section>
 
+<div class="section-title">
+<h2>Partner Türleri</h2>
+<a href="#">Tüm Sektörler</a>
 </div>
+
+<div class="grid-5">
+<div class="card glass"><h3>Restoran</h3><p>Yemek siparişi, paket servis, QR ödeme ve HP kampanyaları.</p></div>
+<div class="card glass"><h3>Market</h3><p>Günlük ihtiyaç, hızlı teslimat ve kampanya yönetimi.</p></div>
+<div class="card glass"><h3>Mağaza</h3><p>Ürün listeleme, Allona Shop görünürlüğü ve pazaryeri entegrasyonu.</p></div>
+<div class="card glass"><h3>Sağlık</h3><p>Klinik, eczane, randevu, reçete onayı ve teslimat akışları.</p></div>
+<div class="card glass"><h3>Hukuk</h3><p>Avukat, danışmanlık, randevu ve dosya yönetimi.</p></div>
+<div class="card glass"><h3>Gayrimenkul</h3><p>İlan, ekspertiz, kira, satış ve proje tanıtımı.</p></div>
+<div class="card glass"><h3>Denizcilik</h3><p>Crew, brokerlik, navlun, gemi ilanı ve personel süreçleri.</p></div>
+<div class="card glass"><h3>Kurye</h3><p>Teslimat havuzu, görev alma, rota ve ödeme takibi.</p></div>
+<div class="card glass"><h3>Spor</h3><p>Spor salonu, üyelik, ders, antrenör ve kampanya yönetimi.</p></div>
+<div class="card glass"><h3>Hizmet</h3><p>Temizlik, tadilat, nakliye, organizasyon ve yerel hizmetler.</p></div>
+</div>
+<div class="section-title">
+<h2>Ödeme Al Sistemi</h2>
+<a href="hubwallet.html">HUB Wallet</a>
+</div>
+
+<section class="flow-box">
+
+<div class="pay-preview glass">
+<h2>QR ile Ödeme Al</h2>
+<p>Partner panelinden tutar gir, ödeme talebi oluştur, kullanıcı QR ile ödeme yapsın. Kullanıcının HP kuponu varsa sistem tutardan otomatik düşer.</p>
+
+<div class="payment-screen">
+<div class="pay-row"><span>Talep Edilen Tutar</span><b>850 ₺</b></div>
+<div class="pay-row"><span>HP Kupon İndirimi</span><b>-125 ₺</b></div>
+<div class="pay-row"><span>Ödenecek Tutar</span><b>725 ₺</b></div>
+<div class="qr-box">QR</div>
+<button class="btn">Ödeme Talebi Oluştur</button>
+</div>
+</div>
+
+<div class="pay-preview glass">
+<h2>Partner Panelinde Neler Olacak?</h2>
+<p>AllonaHub partnerleri tek panelden işletme bilgilerini, kampanyalarını, ürünlerini, ödeme taleplerini, yorumlarını ve performanslarını yönetebilecek.</p>
+
+<div class="grid-4" style="grid-template-columns:repeat(2,1fr)">
+<div class="card glass"><h3>Ödeme Al</h3><p>QR, kart, wallet ve HP kuponlu ödeme.</p></div>
+<div class="card glass"><h3>Kampanya Aç</h3><p>HP destekli partner kampanyaları.</p></div>
+<div class="card glass"><h3>İlan / Ürün Yönet</h3><p>Modüle göre hizmet, ürün veya ilan ekleme.</p></div>
+<div class="card glass"><h3>Performans</h3><p>Ciro, sipariş, yorum ve müşteri analizi.</p></div>
+</div>
+</div>
+
+</section>
+
+<div class="section-title">
+<h2>Partner Avantajları</h2>
+<a href="#">Detaylar</a>
+</div>
+
+<div class="grid-4">
+<div class="card glass"><h3>Daha Fazla Görünürlük</h3><p>İşletmen AllonaHub modüllerinde doğru müşteriye görünür.</p></div>
+<div class="card glass"><h3>HP Ekonomisi</h3><p>Kullanıcılar HP ve kupon avantajı ile partnerlere daha sık döner.</p></div>
+<div class="card glass"><h3>Güvenli Ödeme</h3><p>Ödeme talepleri, kuponlar ve işlem geçmişi kayıt altında tutulur.</p></div>
+<div class="card glass"><h3>Tek Panel</h3><p>Ürün, hizmet, kampanya, ödeme ve raporlar tek merkezden yönetilir.</p></div>
+</div>
+
+<div class="section-title">
+<h2>Başvuru Süreci</h2>
+<a href="#">Süreç</a>
+</div>
+
+<div class="grid-4">
+<div class="card glass"><h3>1. Başvuru</h3><p>İşletme bilgilerini gir ve partner başvurunu gönder.</p></div>
+<div class="card glass"><h3>2. Kontrol</h3><p>AllonaHub ekibi sektör, belge ve uygunluk kontrolü yapar.</p></div>
+<div class="card glass"><h3>3. Panel Açılışı</h3><p>Onaylanan partner için panel erişimi aktif edilir.</p></div>
+<div class="card glass"><h3>4. Satış & Ödeme</h3><p>Ürün, hizmet, kampanya ve QR ödeme akışları başlatılır.</p></div>
+</div>
+
+<footer class="footer-main">
+
+<div class="footer-grid">
+
+<div class="footer-col">
+<h3>AllonaHub</h3>
+<a href="hakkimizda.html">Hakkımızda</a>
+<a href="iletisim.html">İletişim</a>
+<a href="destek.html">Yardım ve Destek</a>
+<a href="partner.html">Ekosisteme Katıl</a>
+<a href="kariyer.html">Kariyer</a>
+<a href="partner.html">Partner Ol</a>
+</div>
+
+<div class="footer-col">
+<h3>Yasal</h3>
+<a href="kvkk.html">KVKK Aydınlatma Metni</a>
+<a href="gizlilik.html">Gizlilik Politikası</a>
+<a href="cerez-politikasi.html">Çerez Politikası</a>
+<a href="kullanim-sartlari.html">Kullanım Şartları</a>
+<a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
+<a href="hp-wallet-kurallari.html">HP ve Hub Wallet Kuralları</a>
+<a href="guvenlik-politikasi.html">Güvenlik Politikası</a>
+</div>
+
+<div class="footer-col">
+<h3>E-Ticaret</h3>
+<a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
+<a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
+<a href="iptal-iade.html">İptal ve İade Politikası</a>
+<a href="teslimat-kargo.html">Teslimat ve Kargo</a>
+<a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
+</div>
+
+<div class="footer-col">
+<h3>İletişim</h3>
+<p>allonahub@gmail.com</p>
+<p>info@allonahub.com</p>
+<p>Atatürk Mahallesi Güner Sokak 1/1B<br>Blok B1 Daire No:203<br>Küçükçekmece / İstanbul</p>
+<p>0 (212) 982 80 77</p>
+<p>WP destek hattı: +90 542 778 18 68</p>
+<p>MERSİS No: Yakında Eklenecek</p>
+<p>Vergi No: Yakında Eklenecek</p>
+<p>KEP: Yakında Eklenecek</p>
+</div>
+
+</div>
+
+<hr style="margin:30px 0;border:0;border-top:1px solid rgba(255,255,255,.12);">
+
+<div class="social-icons">
+<a class="wa" href="https://wa.me/905427781868" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+<a class="ig" href="https://instagram.com/allonahub" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+<a class="x" href="#" target="_blank"><i class="fab fa-x-twitter"></i><span>X</span></a>
+<a class="fb" href="#" target="_blank"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+<a class="yt" href="#" target="_blank"><i class="fab fa-youtube"></i><span>YouTube</span></a>
+<a class="li" href="#" target="_blank"><i class="fab fa-linkedin-in"></i><span>LinkedIn</span></a>
+<a class="tg" href="#" target="_blank"><i class="fab fa-telegram"></i><span>Telegram</span></a>
+<a class="tk" href="#" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok</span></a>
+<a class="mail" href="mailto:info@allonahub.com"><i class="fas fa-envelope"></i><span>E-Mail</span></a>
+</div>
+
+<div class="footer-bottom">
+<p>©️ 2026 AllonaHub</p>
+<p>Global Partner-Based Super App Ecosystem</p>
+</div>
+
+</footer>
+
+</div>
+
+<script>
+function openPartnerTab(tabId,event){
+document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+document.getElementById(tabId).classList.add("active");
+event.target.classList.add("active");
+}
+
+function partnerDemo(){
+alert("Partner başvuru ve giriş sistemi backend bağlantısı sonrası aktif edilecek.");
+}
+
+function partnerSearch(){
+const q=document.getElementById("partnerSearchInput").value.toLowerCase().trim();
+if(!q)return;
+
+if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="hubwallet.html";
+else if(q.includes("kampanya")||q.includes("hp"))window.location.href="hp-wallet-kurallari.html";
+else if(q.includes("yemek")||q.includes("restoran"))window.location.href="allonayemek.html";
+else if(q.includes("market"))window.location.href="allonamarket.html";
+else if(q.includes("shop")||q.includes("mağaza"))window.location.href="allonashop.html";
+else if(q.includes("kurye"))window.location.href="allonakurye.html";
+else window.location.href="arama.html?q="+encodeURIComponent(q);
+}
+
+document.getElementById("partnerSearchInput").addEventListener("keydown",function(e){
+if(e.key==="Enter")partnerSearch();
+});
+</script>
 
 </body>
 </html>
