@@ -131,18 +131,18 @@ a{text-decoration:none;color:inherit}
 <div id="login" class="form active">
 <div class="phone-row">
 <div id="loginPicker" class="country-picker"></div>
-<div class="input"><input placeholder="Telefon numarası veya e-posta"></div>
+<div class="input"><input id="loginEmail" placeholder="e-posta"></div>
 </div>
-<div class="input"><input type="password" placeholder="Şifre"></div>
-<button class="btn" onclick="demoLogin()">Giriş Yap</button>
-<button class="btn social-btn">Google ile Giriş Yap</button>
+<div class=<input id="loginPassword" type="password" placeholder="Şifre">
+<button class="btn" onclick="LoginUser()">Giriş Yap</button>
+<button class="btn social-btn">LoginWithGoogle</button>
 <button class="btn social-btn icloud-btn">iCloud ile Giriş Yap</button>
 <div class="link-row"><a href="#">Telefon ile giriş</a><a href="destek.html">Güvenlik merkezi</a></div>
 </div>
 
 <div id="register" class="form">
 <div class="input"><input placeholder="Ad Soyad"></div>
-<div class="input"><input placeholder="E-posta"></div>
+<div class="input"><input id="registerEmail" placeholder="E-posta"></div>
 <div class="phone-row">
 <div id="registerPicker" class="country-picker"></div>
 <div class="input"><input placeholder="Telefon numarası"></div>
@@ -150,7 +150,7 @@ a{text-decoration:none;color:inherit}
 <div class="input"><input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()"></div>
 <div class="input"><input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()"></div>
 <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
-<button id="registerBtn" class="btn" onclick="registerCheck()">Ücretsiz Hesap Oluştur</button>
+<button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
 <button class="btn social-btn">Google ile Kayıt Ol</button>
 <button class="btn social-btn icloud-btn">iCloud ile Kayıt Ol</button>
 </div>
@@ -503,6 +503,75 @@ else window.location.href="arama.html?q="+encodeURIComponent(q);
 document.getElementById("userSearchInput").addEventListener("keydown",function(e){
 if(e.key==="Enter")userSearch();
 });
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+async function registerUser() {
+
+  const email =
+    document.getElementById("registerEmail").value;
+
+  const password =
+    document.getElementById("password1").value;
+
+  const { error } =
+    await supabase.auth.signUp({
+      email,
+      password
+    });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  alert("Kayıt başarılı. E-postanı kontrol et.");
+}
+
+async function LoginUser() {
+
+  const email =
+    document.getElementById("loginEmail").value;
+
+  const password =
+    document.getElementById("loginPassword").value;
+
+  const { error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  window.location.href="dashboard.html";
+}
+
+async function LoginWithGoogle() {
+
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo:
+      "https://allonahub.github.io/allonahub-admin/"
+    }
+  });
+
+}
+
+</script>
 </script>
 
 </body>
