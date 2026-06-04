@@ -7,182 +7,243 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{min-width:1320px;background:#020814;color:#fff;overflow-x:auto}
-body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00c8ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 32%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
-body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00e5ff18,transparent);animation:wave 8s infinite linear}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
 
-.panel{width:1320px;margin:0 auto;padding:22px 22px 70px}
-.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:28px;position:relative;overflow:hidden}
 
-.topbar{height:78px;display:grid;grid-template-columns:300px 1fr 430px;gap:18px;align-items:center;margin-bottom:18px}
-.brand{height:78px;display:flex;align-items:center;gap:14px;padding:0 20px}
-.menu-lines{width:34px;height:24px;display:flex;flex-direction:column;justify-content:space-between}
-.menu-lines span{height:3px;border-radius:6px;background:#00e5ff;box-shadow:0 0 12px #00e5ff}
-.brand img{width:42px;height:42px;object-fit:contain}
-.brand b{font-size:28px;color:#ffd700}
-.search{height:58px;display:flex;align-items:center;gap:14px;padding:0 24px}
-.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
-.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
-.search span{opacity:.75}
-.nav{height:58px;display:flex;align-items:center;justify-content:space-around}
-.nav a{color:#fff;text-decoration:none;font-weight:800}
-.notify-dot{width:9px;height:9px;background:#00ff99;border-radius:50%;box-shadow:0 0 14px #00ff99;display:inline-block;margin-left:6px}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:18px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{font-size:30px;color:#ffd700}
+.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 22px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{font-weight:800;color:white}
 
-.balance{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:18px}
-.balance-card{padding:18px 22px;min-height:96px}
-.balance-card p{font-size:13px;opacity:.7;margin-bottom:8px}
-.balance-card h2{font-size:30px;color:#00e5ff}
-.balance-card small{opacity:.62}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:22px}
+.login-box{padding:30px;min-height:520px}
+.login-box h1{font-size:42px;color:#ffd700;margin-bottom:10px}
+.login-box p{opacity:.78;line-height:1.55;margin-bottom:22px}
 
-.hero-layout{display:grid;grid-template-columns:300px 1fr 300px;gap:18px;margin-bottom:18px}
-.profile{min-height:405px;text-align:center;padding:24px}
-.avatar{width:150px;height:150px;border-radius:50%;margin:0 auto 18px;background:radial-gradient(circle at 35% 30%,#1ddfff,#063d78 42%,#031226 75%);border:2px solid rgba(0,229,255,.45);box-shadow:0 0 35px rgba(0,229,255,.35);position:relative}
-.avatar:before{content:"";position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(255,255,255,.25)}
-.profile h1{font-size:30px;margin-bottom:8px}
-.profile p{opacity:.72}
-.streak{margin-top:18px;padding:12px;border-radius:18px;background:rgba(255,215,0,.10);border:1px solid rgba(255,215,0,.22);color:#ffd700;font-weight:900}
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:20px}
+.tab{flex:1;border:0;background:transparent;color:white;padding:13px;border-radius:14px;font-weight:900;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,229,255,.3)}
 
-.rank{min-height:405px;text-align:center;padding:24px}
-.rank-orb{width:150px;height:150px;border-radius:34px;margin:18px auto;background:linear-gradient(135deg,#00e5ff,#064dd8);box-shadow:0 0 42px rgba(0,229,255,.45);display:flex;align-items:center;justify-content:center}
-.rank-orb:before{content:"";width:54px;height:54px;background:#fff;clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%);box-shadow:0 0 18px #fff}
-.rank h2{color:#ffd700;font-size:28px;margin-bottom:10px}
-.rank p{opacity:.75}
+.form{display:none}
+.form.active{display:block}
+.input{height:54px;border-radius:17px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:13px}
+.input input{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.input input::placeholder{color:rgba(255,255,255,.55)}
 
-.wheel-area{min-height:405px;padding:22px;text-align:center}
-.wheel-title{font-size:28px;color:#ffd700;margin-bottom:8px}
-.wheel-sub{opacity:.72;margin-bottom:12px}
-.wheel-wrap{width:270px;height:270px;margin:0 auto;position:relative}
-.pointer{position:absolute;left:50%;top:-12px;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:38px solid #ffd700;filter:drop-shadow(0 0 12px #ffd700);z-index:5}
-.wheel{width:270px;height:270px;border-radius:50%;border:9px solid #d9a93a;background:conic-gradient(#073c78 0 45deg,#031a38 45deg 90deg,#073c78 90deg 135deg,#031a38 135deg 180deg,#073c78 180deg 225deg,#031a38 225deg 270deg,#073c78 270deg 315deg,#031a38 315deg 360deg);box-shadow:0 0 36px rgba(0,229,255,.34),0 0 28px rgba(255,215,0,.28);position:relative;transition:transform 4s cubic-bezier(.18,.86,.22,1)}
-.wheel-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,#ffd700,#b8860b);box-shadow:0 0 24px rgba(255,215,0,.75);border:5px solid #04152e}
-.segment{position:absolute;left:50%;top:50%;width:106px;height:22px;transform-origin:0 0;font-size:12px;font-weight:900;color:white;text-shadow:0 0 8px #000}
-.s1{transform:rotate(22deg) translate(44px,-11px)}.s2{transform:rotate(67deg) translate(44px,-11px)}.s3{transform:rotate(112deg) translate(44px,-11px)}.s4{transform:rotate(157deg) translate(44px,-11px)}.s5{transform:rotate(202deg) translate(44px,-11px)}.s6{transform:rotate(247deg) translate(44px,-11px)}.s7{transform:rotate(292deg) translate(44px,-11px)}.s8{transform:rotate(337deg) translate(44px,-11px)}
-.spin-btn{margin-top:14px;border:0;border-radius:999px;padding:13px 28px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-weight:900;cursor:pointer}
-.spin-result{margin-top:10px;color:#00e5ff;font-weight:900;min-height:22px}
+.btn{width:100%;height:54px;border:0;border-radius:17px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22)}
+.google-btn{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16);margin-top:12px}
+.link-row{display:flex;justify-content:space-between;margin-top:14px;font-size:13px;color:#00e5ff}
 
-.premium-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
-.premium-item{padding:16px 20px;min-height:74px}
-.premium-item b{color:#ffd700;font-size:19px}.premium-item p{font-size:13px;opacity:.72;margin-top:4px}
+.preview{padding:28px;min-height:520px}
+.profile-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.avatar{width:88px;height:88px;border-radius:50%;background:radial-gradient(circle,#00e5ff,#002b7a 70%);box-shadow:0 0 28px rgba(0,229,255,.5);position:relative}
+.avatar:after{content:"";position:absolute;inset:12px;border-radius:50%;background:linear-gradient(135deg,#ffffff55,transparent)}
+.profile-top h2{font-size:30px;color:#ffd700}
+.profile-top p{opacity:.72;margin-top:4px}
 
-.hubs{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px}
-.hub-card{padding:18px;text-align:center;text-decoration:none;color:white;min-height:96px}
-.hub-icon{width:34px;height:34px;margin:0 auto 10px;border-radius:12px;background:linear-gradient(135deg,#00e5ff,#0756d9);box-shadow:0 0 18px rgba(0,229,255,.35)}
-.hub-card b{font-size:14px}.hub-card small{display:block;margin-top:5px;opacity:.62}
+.level-card{padding:18px;border-radius:22px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);margin-bottom:16px}
+.level-card h3{color:#ffd700;margin-bottom:10px}
+.bar{height:16px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
+.bar span{display:block;height:100%;width:28%;background:linear-gradient(90deg,#00e5ff,#ffd700);border-radius:999px;box-shadow:0 0 18px rgba(0,229,255,.5)}
 
-.xp-card{padding:22px;margin-bottom:18px}
-.xp-row{display:flex;align-items:center;gap:18px}
-.lv{width:78px;height:78px;border-radius:22px;background:linear-gradient(135deg,#00e5ff,#0756d9);display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 0 28px rgba(0,229,255,.35)}
-.xp-info{flex:1}.xp-info h3{font-size:22px;margin-bottom:7px}.xp-info p{opacity:.75}
-.bar{height:18px;background:rgba(255,255,255,.12);border-radius:999px;margin-top:12px;overflow:hidden}
-.fill{height:100%;width:40%;background:linear-gradient(90deg,#00e5ff,#37ffd2);box-shadow:0 0 18px #00e5ff}
-.next-level{color:#ffd700;font-weight:900;text-align:right}
+.wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.wallet-mini{padding:15px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
+.wallet-mini b{display:block;color:#ffd700;font-size:22px;margin-bottom:5px}
+.wallet-mini small{opacity:.72}
 
-.action-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
-.action-card{padding:18px;min-height:112px}
-.action-card b{color:#ffd700}.action-card p{font-size:13px;opacity:.72;margin-top:8px}
-.notification{position:absolute;right:13px;top:13px;width:22px;height:22px;border-radius:50%;background:#00ff99;color:#001;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px #00ff99}
+.quick-section{margin-top:22px}
+.quick-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.quick-title h2{color:#ffd700;font-size:28px}
+.quick-title a{color:#00e5ff;font-weight:900}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.quick-card{min-height:135px;padding:18px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.24);box-shadow:0 0 22px rgba(0,229,255,.10)}
+.quick-card h3{color:#ffd700;margin-bottom:8px}
+.quick-card p{font-size:13px;opacity:.75;line-height:1.4}
 
-.service-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.service-card{padding:20px;min-height:110px}
-.service-card b{color:#00e5ff}.service-card p{font-size:13px;opacity:.72;margin-top:8px}
-
-.transactions{padding:22px}
-.transactions h2{color:#ffd700;margin-bottom:14px}
-.tx{display:grid;grid-template-columns:1fr 180px 140px;gap:10px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.tx span{opacity:.72}
+.notice{position:absolute;right:16px;top:16px;background:#ff375f;color:white;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
 </style>
 </head>
 
 <body>
-<div class="panel">
+<div class="page">
 
-<div class="topbar">
-  <div class="brand glass"><div class="menu-lines"><span></span><span></span><span></span></div><img src="allona.logo.png"><b>AllonaHub</b></div>
-  <div class="search glass"><div class="search-mark"></div><span>Hizmet, sipariş, kupon veya partner ara...</span></div>
-  <div class="nav glass"><a href="index.html">Ana Sayfa</a><a href="#">Bildirim<span class="notify-dot"></span></a><a href="#">Çıkış</a></div>
+<div class="header">
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png">
+<div><b>Allona</b><span>Hub</span></div>
+</a>
+
+<div class="search glass">
+<span>🔍</span>
+<input placeholder="Panelde ara: HP, kupon, sipariş, bildirim, seviye...">
 </div>
 
-<div class="balance">
-  <div class="balance-card glass"><p>KAZANILAN HP</p><h2 id="hpBalance">250 HP</h2><small>Görev ve alışverişlerden kazanıldı</small></div>
-  <div class="balance-card glass"><p>CASH OUT</p><h2 id="cashBalance">0,00 ₺</h2><small>Seviye uygunluğunda çekilebilir</small></div>
-  <div class="balance-card glass"><p>HUB CASH</p><h2 id="hubCash">0,00 ₺</h2><small>Platform içi kullanım bakiyesi</small></div>
-  <div class="balance-card glass"><p>BEKLEYEN ÖDÜL</p><h2>3</h2><small>Aktif görev ve kampanya hakkı</small></div>
+<div class="actions glass">
+<a href="index.html">Ana Sayfa</a>
+<a href="hubwallet.html">HUB Wallet</a>
+<a href="premium.html">Premium</a>
+</div>
 </div>
 
-<div class="hero-layout">
-  <div class="profile glass"><div class="avatar"></div><p>Merhaba,</p><h1>Misafir Kullanıcı</h1><p>Üye No: 000000001</p><div class="streak">Günlük Streak: 12 Gün</div></div>
+<section class="hero">
 
-  <div class="wheel-area glass">
-    <h2 class="wheel-title">Günlük Ödül Çarkı</h2>
-    <p class="wheel-sub">Günde 1 kez çevir, kazancın Wallet’a işlensin.</p>
-    <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="rewardWheel"><div class="segment s1">125₺ Kupon</div><div class="segment s2">50 HP</div><div class="segment s3">Boş</div><div class="segment s4">25 HP</div><div class="segment s5">75₺ Kupon</div><div class="segment s6">50₺ Hub Cash</div><div class="segment s7">Boş</div><div class="segment s8">Tekrar Çevir</div><div class="wheel-center"></div></div></div>
-    <button class="spin-btn" onclick="spinWheel()">Günlük Çevir</button>
-    <div class="spin-result" id="spinResult"></div>
-  </div>
+<div class="login-box glass">
+<h1>AllonaHub’a Giriş Yap</h1>
+<p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara, premium avantajlara ve partner ödemelerine eriş.</p>
 
-  <div class="rank glass"><h2>Seviye Rozeti</h2><div class="rank-orb"></div><h2>LEVEL 1</h2><p>Sonraki seviye: Level 2</p></div>
+<div class="tabs">
+<button class="tab active" onclick="openTab('login')">Giriş Yap</button>
+<button class="tab" onclick="openTab('register')">Kayıt Ol</button>
+<button class="tab" onclick="openTab('forgot')">Şifremi Unuttum</button>
 </div>
 
-<div class="premium-strip">
-  <div class="premium-item glass"><b>Premium A+</b><p>Ekstra HP, özel görevler ve hızlı destek.</p></div>
-  <div class="premium-item glass"><b>Gold</b><p>Daha yüksek HP çarpanı ve özel kuponlar.</p></div>
-  <div class="premium-item glass"><b>Elite</b><p>Prestij rozetleri ve özel partner avantajları.</p></div>
+<div id="login" class="form active">
+<div class="input"><input placeholder="E-posta veya telefon"></div>
+<div class="input"><input type="password" placeholder="Şifre"></div>
+<button class="btn" onclick="demoLogin()">Giriş Yap</button>
+<button class="btn google-btn">Google ile Giriş Yap</button>
+<div class="link-row">
+<a href="#">Telefon ile giriş</a>
+<a href="#">Güvenlik merkezi</a>
+</div>
 </div>
 
-<div class="hubs">
-  <a class="hub-card glass" href="allonashop.html"><div class="hub-icon"></div><b>Allona Shop</b><small>Alışveriş</small></a>
-  <a class="hub-card glass" href="#"><div class="hub-icon"></div><b>Allona Yemek</b><small>Sipariş</small></a>
-  <a class="hub-card glass" href="#"><div class="hub-icon"></div><b>Allona Taksi</b><small>Ulaşım</small></a>
-  <a class="hub-card glass" href="#"><div class="hub-icon"></div><b>Allona Hukuk</b><small>Destek</small></a>
-  <a class="hub-card glass" href="#"><div class="hub-icon"></div><b>Finans</b><small>Wallet</small></a>
-  <a class="hub-card glass" href="index.html#modules"><div class="hub-icon"></div><b>Tümünü Gör</b><small>Modüller</small></a>
+<div id="register" class="form">
+<div class="input"><input placeholder="Ad Soyad"></div>
+<div class="input"><input placeholder="E-posta"></div>
+<div class="input"><input placeholder="Telefon"></div>
+<div class="input"><input type="password" placeholder="Şifre oluştur"></div>
+<button class="btn" onclick="demoLogin()">Ücretsiz Hesap Oluştur</button>
+<button class="btn google-btn">Google ile Kayıt Ol</button>
 </div>
 
-<div class="xp-card glass">
-  <div class="xp-row"><div class="lv">Lv.1</div><div class="xp-info"><h3>SEVİYE XP PUANI</h3><p>Mevcut: 400 XP / Hedef: 1.000 XP</p><div class="bar"><div class="fill"></div></div></div><div class="next-level">Sonraki Seviye<br>Level 2</div></div>
+<div id="forgot" class="form">
+<div class="input"><input placeholder="E-posta veya telefon"></div>
+<button class="btn">Şifre Sıfırlama Linki Gönder</button>
+<p style="margin-top:16px;font-size:13px;opacity:.72">Güvenlik nedeniyle doğrulama kodu SMS/e-posta ile gönderilecektir.</p>
+</div>
 </div>
 
-<div class="action-grid">
-  <div class="action-card glass"><div class="notification">3</div><b>Görevler</b><p>Tamamlanacak günlük görevler.</p></div>
-  <div class="action-card glass"><div class="notification">1</div><b>Günlük Giriş</b><p>Bugünkü giriş ödülünü al.</p></div>
-  <div class="action-card glass"><div class="notification">2</div><b>Kuponlarım</b><p>Aktif indirim hakların.</p></div>
-  <div class="action-card glass"><b>Puan Dükkanı</b><p>HP ile avantajları aç.</p></div>
-  <div class="action-card glass"><div class="notification">1</div><b>Arkadaşını Davet Et</b><p>Davetle ekstra HP kazan.</p></div>
+<div class="preview glass">
+<div class="profile-top">
+<div class="avatar"></div>
+<div>
+<h2>Misafir Kullanıcı</h2>
+<p>Üye No: AH0000001</p>
+<p>🔥 12 Günlük Streak</p>
+</div>
 </div>
 
-<div class="service-grid">
-  <div class="service-card glass"><b>Kargolarım</b><p>Aktif gönderi ve teslimat takibi.</p></div>
-  <div class="service-card glass"><b>Daha Fazla HP Kazan</b><p>Ek görev ve partner fırsatları.</p></div>
-  <div class="service-card glass"><b>Özel Kampanyalar</b><p>Sana özel indirimler.</p></div>
-  <div class="service-card glass"><b>Destek</b><p>Yardım ve talep merkezi.</p></div>
+<div class="level-card">
+<h3>NEW MEMBER · Level 1</h3>
+<div class="bar"><span></span></div>
+<p style="margin-top:10px;opacity:.72">280 / 1000 XP · Sonraki seviye: Level 2</p>
 </div>
 
-<div class="transactions glass"><h2>Son İşlemlerim</h2><div class="tx"><b>Günlük giriş ödülü</b><span>Bugün</span><b>+20 HP</b></div><div class="tx"><b>Allona Shop ziyaret</b><span>Bugün</span><b>+5 XP</b></div><div class="tx"><b>Kupon görüntülendi</b><span>Dün</span><b>Aktif</b></div></div>
+<div class="wallet-grid">
+<div class="wallet-mini"><b>250 HP</b><small>Toplam HP</small></div>
+<div class="wallet-mini"><b>0 ₺</b><small>Cashout</small></div>
+<div class="wallet-mini"><b>0 ₺</b><small>Hub Cash</small></div>
+</div>
+
+<div class="quick-section">
+<div class="quick-title">
+<h2>Panel Ön İzleme</h2>
+<a href="hubwallet.html">Wallet’a Git</a>
+</div>
+
+<div class="quick-grid">
+<div class="quick-card"><span class="notice">3</span><h3>Bildirimler</h3><p>Sipariş, kampanya ve ödeme talepleri.</p></div>
+<div class="quick-card"><h3>Kuponlarım</h3><p>HP ile oluşturulan ve aktif kuponlar.</p></div>
+<div class="quick-card"><h3>Görevler</h3><p>Günlük giriş, yorum, alışveriş ve davet görevleri.</p></div>
+<div class="quick-card"><h3>Premium</h3><p>A+, Gold, Elite Black ve Legend avantajları.</p></div>
+</div>
+</div>
+</div>
+
+</section>
+<section class="quick-section">
+
+<div class="quick-title">
+<h2>AllonaHub Avantajları</h2>
+<a href="premium.html">Tümünü Gör</a>
+</div>
+
+<div class="quick-grid">
+
+<div class="quick-card">
+<h3>HP Dünyası</h3>
+<p>Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p>
+</div>
+
+<div class="quick-card">
+<h3>Partner Ödemeleri</h3>
+<p>QR ile ödeme yap, HP kazan, kampanyalara katıl ve tüm işlemlerini tek panelden yönet.</p>
+</div>
+
+<div class="quick-card">
+<h3>Seviye Sistemi</h3>
+<p>XP kazanarak seviyeni yükselt. Daha yüksek seviyeler daha fazla avantaj getirir.</p>
+</div>
+
+<div class="quick-card">
+<h3>Premium Avantajlar</h3>
+<p>A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p>
+</div>
+
+</div>
+</section>
+
+<footer style="margin-top:35px;text-align:center;padding:30px;border-top:1px solid rgba(255,255,255,.1);opacity:.75">
+
+<p style="margin-bottom:10px">
+©️ 2026 AllonaHub
+</p>
+
+<p>
+Global Partner Based Super-App Ecosystem
+</p>
+
+</footer>
 
 </div>
 
 <script>
-let hp=250, hubCash=0, spins=Number(localStorage.getItem("dailySpinUsed")||0);
-const rewards=["125₺ Kupon","50 HP","Boş","25 HP","75₺ Kupon","50₺ Hub Cash","Boş","Tekrar Çevir"];
-function spinWheel(){
-  const result=document.getElementById("spinResult");
-  if(spins>=1){result.textContent="Bugünkü çevirme hakkın kullanıldı.";return}
-  const index=Math.floor(Math.random()*rewards.length);
-  const deg=360*6 + (360-index*45);
-  document.getElementById("rewardWheel").style.transform=`rotate(${deg}deg)`;
-  setTimeout(()=>{
-    const reward=rewards[index];
-    if(reward==="50 HP") hp+=50;
-    if(reward==="25 HP") hp+=25;
-    if(reward==="50₺ Hub Cash") hubCash+=50;
-    if(reward==="Tekrar Çevir"){spins=0;result.textContent="Tekrar çevirme hakkı kazandın.";return}
-    spins=1;localStorage.setItem("dailySpinUsed","1");
-    document.getElementById("hpBalance").textContent=hp+" HP";
-    document.getElementById("hubCash").textContent=hubCash.toLocaleString("tr-TR",{minimumFractionDigits:2})+" ₺";
-    result.textContent="Kazandığın ödül: "+reward;
-  },4100)
+
+function openTab(tabId){
+
+document.querySelectorAll(".form").forEach(el=>{
+el.classList.remove("active");
+});
+
+document.querySelectorAll(".tab").forEach(el=>{
+el.classList.remove("active");
+});
+
+document.getElementById(tabId).classList.add("active");
+
+event.target.classList.add("active");
+
 }
+
+function demoLogin(){
+
+alert("Demo giriş ekranı. Gerçek giriş sistemi daha sonra bağlanacak.");
+
+}
+
 </script>
+
 </body>
 </html>
