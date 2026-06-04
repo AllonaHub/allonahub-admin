@@ -376,14 +376,11 @@ async function sendPartnerApplication(){
     showNotice("<b>Partner başvurun alındı.</b><br>Başvuru bilgileri AllonaHub ekibine mail olarak gönderildi.");
     clearApplyForm();
 
-  }catch(err){
-    console.error(err);
-    showNotice("<b>Başvuru maili gönderilemedi.</b><br>EmailJS Service ID, Template ID veya Public Key'i kontrol et.");
-  }finally{
-    btns[0].disabled=false;
-    btns[0].textContent="Başvuruyu Gönder";
   }
-}
+  catch(err){
+    console.error(err);
+    alert(JSON.stringify(err));
+}}
 
 function partnerLogin(){
   const email=document.getElementById("loginEmail").value.trim();
