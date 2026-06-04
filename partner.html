@@ -321,14 +321,16 @@ function showNotice(message){
   setTimeout(()=>{n.style.display="none"},4500);
 }
 
-function clearApplyForm(){
+function clearApplyForm(showMsg=true){
   ["partner_name","contact_name","email","phone","message"].forEach(id=>{
     document.getElementById(id).value="";
   });
   document.getElementById("category").value="";
-  showNotice("Başvuru formu temizlendi.");
-}
 
+  if(showMsg){
+    showNotice("Başvuru formu temizlendi.");
+  }
+}
 function getApplyData(){
   return {
     partner_name: document.getElementById("partner_name").value.trim(),
@@ -364,24 +366,26 @@ async function sendPartnerApplication(){
     return;
   }
 
-  const btns=document.querySelectorAll(".form-actions .btn");
-  btns[0].disabled=true;
-  btns[0].textContent="Gönderiliyor...";
+  const sendBtn=document.querySelector(".form-actions .btn");
+  sendBtn.disabled=true;
+  sendBtn.textContent="Gönderiliyor...";
 
   try{
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, data);
 
     localStorage.setItem("lastPartnerApplication", JSON.stringify(data));
 
-    showNotice("<b>Partner başvurun alındı.</b><br>Başvuru bilgileri AllonaHub ekibine mail olarak gönderildi.");
-    clearApplyForm();
+    showNotice("<b>Başvurunuz alındı ✅</b><br>AllonaHub ekibine mail olarak gönderildi.");
+    clearApplyForm(false);
 
-  }
-  catch(err){
+  }catch(err){
     console.error(err);
-    alert(JSON.stringify(err));
-}}
-
+    showNotice("<b>Başvuru maili gönderilemedi.</b><br>Lütfen daha sonra tekrar deneyin.");
+  }finally{
+    sendBtn.disabled=false;
+    sendBtn.textContent="Başvuruyu Gönder";
+  }
+}
 function partnerLogin(){
   const email=document.getElementById("loginEmail").value.trim();
   const pass=document.getElementById("loginPassword").value.trim();
