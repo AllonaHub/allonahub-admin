@@ -2,174 +2,392 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>AllonaHub Kullanıcı Girişi</title>
 
-<title>AllonaHub Giriş</title>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:#020814;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-}
-
-.card{
-width:420px;
-max-width:95%;
-background:#081625;
-padding:30px;
-border-radius:20px;
-box-shadow:0 0 30px rgba(0,180,255,.25);
-}
-
-h1{
-text-align:center;
-margin-bottom:25px;
-}
-
-input{
-width:100%;
-padding:14px;
-margin-bottom:12px;
-border:none;
-border-radius:10px;
-box-sizing:border-box;
-}
-
-button{
-width:100%;
-padding:14px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-size:16px;
-margin-bottom:10px;
-}
-
-.primary{
-background:#00bfff;
-color:white;
-}
-
-.google{
-background:white;
-color:black;
-}
-
-.link{
-text-align:center;
-cursor:pointer;
-margin-top:10px;
-color:#8ddcff;
-}
-
-.form{
-display:none;
-}
-
-.form.active{
-display:block;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+.page{width:1320px;margin:0 auto;padding:18px 22px 50px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:28px;position:relative;overflow:hidden}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:24px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{font-size:30px;color:#ffd700}.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 14px 0 22px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search input::placeholder{color:rgba(255,255,255,.55)}
+.search button{height:42px;padding:0 20px;border:0;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;cursor:pointer;box-shadow:0 0 16px rgba(0,229,255,.28)}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{font-weight:800;color:white}.actions a:hover{color:#00e5ff}
+.hero{display:flex;justify-content:center;margin-bottom:26px}
+.login-box{width:760px;padding:38px;min-height:620px}
+.login-box h1{font-size:46px;color:#ffd700;margin-bottom:10px;text-align:center}
+.login-box p{opacity:.78;line-height:1.55;margin-bottom:26px;text-align:center}
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:24px}
+.tab{flex:1;border:0;background:transparent;color:white;padding:14px;border-radius:14px;font-weight:900;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,229,255,.3)}
+.form{display:none}.form.active{display:block}
+.input{height:56px;border-radius:17px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:14px}
+.input input{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.input input::placeholder{color:rgba(255,255,255,.55)}
+.phone-row{display:grid;grid-template-columns:260px 1fr;gap:12px}
+.country-picker{position:relative;margin-bottom:14px}
+.country-selected{height:56px;border-radius:17px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;justify-content:space-between;padding:0 16px;cursor:pointer}
+.country-dropdown{display:none;position:absolute;top:64px;left:0;width:100%;max-height:270px;overflow:auto;background:#061b33;border:1px solid rgba(0,229,255,.35);border-radius:18px;z-index:99;box-shadow:0 0 28px rgba(0,229,255,.20)}
+.country-dropdown.active{display:block}
+.country-search{height:46px;width:calc(100% - 20px);margin:10px;background:rgba(255,255,255,.08);border:1px solid rgba(0,229,255,.22);border-radius:14px;color:white;padding:0 12px;outline:0}
+.country-item{padding:12px 14px;cursor:pointer;font-size:14px;color:white;border-bottom:1px solid rgba(255,255,255,.06)}
+.country-item:hover{background:rgba(0,229,255,.12)}
+.country-code-tag{color:#ffd700;font-weight:900}
+.warning-text{display:none;color:#ff4f6d;font-size:13px;font-weight:800;margin:-4px 0 12px}
+.warning-text.show{display:block}
+.btn{width:100%;height:56px;border:0;border-radius:17px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22);transition:.3s}
+.btn.error{background:linear-gradient(135deg,#ff375f,#8b001d)!important;color:white!important}
+.social-btn{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16);margin-top:12px}
+.icloud-btn{background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(0,229,255,.12));color:white;border:1px solid rgba(0,229,255,.22)}
+.link-row{display:flex;justify-content:space-between;margin-top:14px;font-size:13px;color:#00e5ff}
+.quick-section{margin-top:26px}.quick-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.quick-title h2{color:#ffd700;font-size:30px}.quick-title a{color:#00e5ff;font-weight:900}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.quick-card{min-height:145px;padding:20px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.24);box-shadow:0 0 22px rgba(0,229,255,.10)}
+.quick-card h3{color:#ffd700;margin-bottom:8px}.quick-card p{font-size:13px;opacity:.75;line-height:1.45}
+.footer-main{margin-top:34px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.social-icons{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:24px;margin-top:25px}
+.social-icons a{width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 18px rgba(0,229,255,.20);transition:.35s;font-size:22px}
+.social-icons a:hover{transform:translateY(-5px) scale(1.08)}
+.social-icons span{font-size:11px;font-weight:600;color:#fff;opacity:.9}
+.social-icons .wa{color:#25D366}.social-icons .ig{background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);color:white}.social-icons .x{color:white}.social-icons .fb{color:#1877F2}.social-icons .yt{color:#FF0000}.social-icons .li{color:#0A66C2}.social-icons .tg{color:#229ED9}.social-icons .tk{color:white}.social-icons .mail{color:#ffd700}
+.store-buttons{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:35px}
+.store-btn{padding:14px 24px;border-radius:16px;font-weight:700;color:white;background:rgba(255,255,255,.08);border:1px solid rgba(0,229,255,.25);box-shadow:0 0 18px rgba(0,229,255,.15)}
+.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
 </style>
 </head>
 
 <body>
+<div class="page">
 
-<div class="card">
+<div class="header">
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png">
+<div><b>Allona</b><span>Hub</span></div>
+</a>
 
-<h1>AllonaHub</h1>
-
-<div id="login" class="form active">
-
-<input id="loginEmail" placeholder="E-posta">
-
-<input id="loginPassword" type="password" placeholder="Şifre">
-
-<button class="primary" onclick="LoginUser()">
-Giriş Yap
-</button>
-
-<button class="google" onclick="LoginWithGoogle()">
-Google ile Giriş Yap
-</button>
-
-<div class="link" onclick="showRegister()">
-Ücretsiz Hesap Oluştur
+<div class="search glass">
+<span>🔍</span>
+<input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+<button onclick="userSearch()">Ara</button>
 </div>
 
+<div class="actions glass">
+<a href="index.html">Ana Sayfa</a>
+<a href="hubwallet.html">HUB Wallet</a>
+<a href="premium.html">Premium</a>
+</div>
+</div>
+
+<section class="hero">
+<div class="login-box glass">
+<h1>AllonaHub’a Giriş Yap</h1>
+<p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
+
+<div class="tabs">
+<button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
+<button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
+<button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
+</div>
+
+<div id="login" class="form active">
+<div class="phone-row">
+<div id="loginPicker" class="country-picker"></div>
+<div class="input"><input id="loginEmail" placeholder="E-posta"></div>
+</div>
+<div class="input"><input id="loginPassword" type="password" placeholder="Şifre"></div>
+<button class="btn" onclick="loginUser()">Giriş Yap</button>
+<button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
+<button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+<div class="link-row"><a href="#">Telefon ile giriş</a><a href="destek.html">Güvenlik merkezi</a></div>
 </div>
 
 <div id="register" class="form">
+<div class="input"><input id="fullName" placeholder="Ad Soyad"></div>
+<div class="input"><input id="registerEmail" placeholder="E-posta"></div>
+<div class="phone-row">
+<div id="registerPicker" class="country-picker"></div>
+<div class="input"><input id="registerPhone" placeholder="Telefon numarası"></div>
+</div>
+<div class="input"><input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()"></div>
+<div class="input"><input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()"></div>
+<div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
+<button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
+<button class="btn social-btn" onclick="loginWithGoogle()">Google ile Kayıt Ol</button>
+<button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Kayıt Ol</button>
+</div>
 
-<input id="registerEmail" placeholder="E-posta">
+<div id="forgot" class="form">
+<div class="phone-row">
+<div id="forgotPicker" class="country-picker"></div>
+<div class="input"><input id="forgotEmail" placeholder="E-posta"></div>
+</div>
+<button class="btn" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
+<p style="margin-top:16px;font-size:13px;opacity:.72;text-align:center">Güvenlik nedeniyle doğrulama linki e-posta ile gönderilecektir.</p>
+</div>
 
-<input id="password1" type="password" placeholder="Şifre">
+</div>
+</section>
 
-<input id="password2" type="password" placeholder="Şifre Tekrar">
+<section class="quick-section">
+<div class="quick-title">
+<h2>AllonaHub Avantajları</h2>
+<a href="premium.html">Tümünü Gör</a>
+</div>
 
-<button class="primary" onclick="registerUser()">
-Ücretsiz Hesap Oluştur
-</button>
+<div class="quick-grid">
+<div class="quick-card"><h3>HP Dünyası</h3><p>Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p></div>
+<div class="quick-card"><h3>Partner Ödemeleri</h3><p>QR ile ödeme yap, HP kazan, kampanyalara katıl ve tüm işlemlerini tek panelden yönet.</p></div>
+<div class="quick-card"><h3>Seviye Sistemi</h3><p>XP kazanarak seviyeni yükselt. Daha yüksek seviyeler daha fazla avantaj getirir.</p></div>
+<div class="quick-card"><h3>Premium Avantajlar</h3><p>A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p></div>
+</div>
+</section>
 
-<div class="link" onclick="showLogin()">
-Girişe Dön
+<footer class="footer-main">
+<div class="footer-grid">
+
+<div class="footer-col">
+<h3>AllonaHub</h3>
+<a href="hakkimizda.html">Hakkımızda</a>
+<a href="iletisim.html">İletişim</a>
+<a href="destek.html">Yardım ve Destek</a>
+<a href="partner.html">Ekosisteme Katıl</a>
+<a href="kariyer.html">Kariyer</a>
+<a href="partner.html">Partner Ol</a>
+</div>
+
+<div class="footer-col">
+<h3>Yasal</h3>
+<a href="kvkk.html">KVKK Aydınlatma Metni</a>
+<a href="gizlilik.html">Gizlilik Politikası</a>
+<a href="cerez-politikasi.html">Çerez Politikası</a>
+<a href="kullanim-sartlari.html">Kullanım Şartları</a>
+<a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
+<a href="hp-wallet-kurallari.html">HP ve Hub Wallet Kuralları</a>
+<a href="guvenlik-politikasi.html">Güvenlik Politikası</a>
+</div>
+
+<div class="footer-col">
+<h3>E-Ticaret</h3>
+<a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
+<a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
+<a href="iptal-iade.html">İptal ve İade Politikası</a>
+<a href="teslimat-kargo.html">Teslimat ve Kargo</a>
+<a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
+</div>
+
+<div class="footer-col">
+<h3>İletişim</h3>
+<p>allonahub@gmail.com</p>
+<p>info@allonahub.com</p>
+<p>Atatürk Mahallesi Güner Sokak 1/1B<br>Blok B1 Daire No:203<br>Küçükçekmece / İstanbul</p>
+<p>0 (212) 982 80 77</p>
+<p>WP destek hattı: +90 542 778 18 68</p>
+<p>MERSİS No: Yakında Eklenecek</p>
+<p>Vergi No: Yakında Eklenecek</p>
+<p>KEP: Yakında Eklenecek</p>
 </div>
 
 </div>
 
+<hr style="margin:30px 0;border:0;border-top:1px solid rgba(255,255,255,.12);">
+
+<div class="social-icons">
+<a class="wa" href="https://wa.me/905427781868" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+<a class="ig" href="https://instagram.com/allonahub" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+<a class="x" href="#" target="_blank"><i class="fab fa-x-twitter"></i><span>X</span></a>
+<a class="fb" href="#" target="_blank"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+<a class="yt" href="#" target="_blank"><i class="fab fa-youtube"></i><span>YouTube</span></a>
+<a class="li" href="#" target="_blank"><i class="fab fa-linkedin-in"></i><span>LinkedIn</span></a>
+<a class="tg" href="#" target="_blank"><i class="fab fa-telegram"></i><span>Telegram</span></a>
+<a class="tk" href="#" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok</span></a>
+<a class="mail" href="mailto:info@allonahub.com"><i class="fas fa-envelope"></i><span>E-Mail</span></a>
+</div>
+
+<div class="store-buttons">
+<a href="#" class="store-btn"> App Store</a>
+<a href="#" class="store-btn">▶️ Google Play</a>
+</div>
+
+<div class="footer-bottom">
+<p>©️ 2026 AllonaHub</p>
+<p>Global Partner-Based Super App Ecosystem</p>
+</div>
+</footer>
 </div>
 
 <script>
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_URL =
-"https://xqvikrysciguzholdjeb.supabase.co";
+const SITE_URL="https://allonahub.github.io/allonahub-admin/user.html";
 
-const SUPABASE_KEY =
-"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const countries=[
+{n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
+{n:"Amerika Birleşik Devletleri",c:"+1",f:"🇺🇸",iso:"US"},{n:"Kanada",c:"+1",f:"🇨🇦",iso:"CA"},
+{n:"Birleşik Krallık",c:"+44",f:"🇬🇧",iso:"GB"},{n:"Almanya",c:"+49",f:"🇩🇪",iso:"DE"},
+{n:"Fransa",c:"+33",f:"🇫🇷",iso:"FR"},{n:"İtalya",c:"+39",f:"🇮🇹",iso:"IT"},
+{n:"İspanya",c:"+34",f:"🇪🇸",iso:"ES"},{n:"Hollanda",c:"+31",f:"🇳🇱",iso:"NL"},
+{n:"Belçika",c:"+32",f:"🇧🇪",iso:"BE"},{n:"İsviçre",c:"+41",f:"🇨🇭",iso:"CH"},
+{n:"Avusturya",c:"+43",f:"🇦🇹",iso:"AT"},{n:"İsveç",c:"+46",f:"🇸🇪",iso:"SE"},
+{n:"Norveç",c:"+47",f:"🇳🇴",iso:"NO"},{n:"Danimarka",c:"+45",f:"🇩🇰",iso:"DK"},
+{n:"Finlandiya",c:"+358",f:"🇫🇮",iso:"FI"},{n:"Polonya",c:"+48",f:"🇵🇱",iso:"PL"},
+{n:"Rusya",c:"+7",f:"🇷🇺",iso:"RU"},{n:"Ukrayna",c:"+380",f:"🇺🇦",iso:"UA"},
+{n:"Gürcistan",c:"+995",f:"🇬🇪",iso:"GE"},{n:"Kazakistan",c:"+7",f:"🇰🇿",iso:"KZ"},
+{n:"Özbekistan",c:"+998",f:"🇺🇿",iso:"UZ"},{n:"Türkmenistan",c:"+993",f:"🇹🇲",iso:"TM"},
+{n:"Kırgızistan",c:"+996",f:"🇰🇬",iso:"KG"},{n:"İran",c:"+98",f:"🇮🇷",iso:"IR"},
+{n:"Irak",c:"+964",f:"🇮🇶",iso:"IQ"},{n:"Suriye",c:"+963",f:"🇸🇾",iso:"SY"},
+{n:"Suudi Arabistan",c:"+966",f:"🇸🇦",iso:"SA"},{n:"Birleşik Arap Emirlikleri",c:"+971",f:"🇦🇪",iso:"AE"},
+{n:"Katar",c:"+974",f:"🇶🇦",iso:"QA"},{n:"Kuveyt",c:"+965",f:"🇰🇼",iso:"KW"},
+{n:"Bahreyn",c:"+973",f:"🇧🇭",iso:"BH"},{n:"Umman",c:"+968",f:"🇴🇲",iso:"OM"},
+{n:"Mısır",c:"+20",f:"🇪🇬",iso:"EG"},{n:"Fas",c:"+212",f:"🇲🇦",iso:"MA"},
+{n:"Tunus",c:"+216",f:"🇹🇳",iso:"TN"},{n:"Cezayir",c:"+213",f:"🇩🇿",iso:"DZ"},
+{n:"Libya",c:"+218",f:"🇱🇾",iso:"LY"},{n:"Güney Afrika",c:"+27",f:"🇿🇦",iso:"ZA"},
+{n:"Nijerya",c:"+234",f:"🇳🇬",iso:"NG"},{n:"Kenya",c:"+254",f:"🇰🇪",iso:"KE"},
+{n:"Hindistan",c:"+91",f:"🇮🇳",iso:"IN"},{n:"Pakistan",c:"+92",f:"🇵🇰",iso:"PK"},
+{n:"Bangladeş",c:"+880",f:"🇧🇩",iso:"BD"},{n:"Çin",c:"+86",f:"🇨🇳",iso:"CN"},
+{n:"Japonya",c:"+81",f:"🇯🇵",iso:"JP"},{n:"Güney Kore",c:"+82",f:"🇰🇷",iso:"KR"},
+{n:"Endonezya",c:"+62",f:"🇮🇩",iso:"ID"},{n:"Malezya",c:"+60",f:"🇲🇾",iso:"MY"},
+{n:"Singapur",c:"+65",f:"🇸🇬",iso:"SG"},{n:"Tayland",c:"+66",f:"🇹🇭",iso:"TH"},
+{n:"Vietnam",c:"+84",f:"🇻🇳",iso:"VN"},{n:"Filipinler",c:"+63",f:"🇵🇭",iso:"PH"},
+{n:"Avustralya",c:"+61",f:"🇦🇺",iso:"AU"},{n:"Yeni Zelanda",c:"+64",f:"🇳🇿",iso:"NZ"},
+{n:"Brezilya",c:"+55",f:"🇧🇷",iso:"BR"},{n:"Arjantin",c:"+54",f:"🇦🇷",iso:"AR"},
+{n:"Meksika",c:"+52",f:"🇲🇽",iso:"MX"},{n:"Kolombiya",c:"+57",f:"🇨🇴",iso:"CO"},
+{n:"Şili",c:"+56",f:"🇨🇱",iso:"CL"},{n:"Peru",c:"+51",f:"🇵🇪",iso:"PE"}
+];
 
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
+let selectedCountries={loginPicker:countries[0],registerPicker:countries[0],forgotPicker:countries[0]};
 
-function showRegister(){
-document.getElementById("login").classList.remove("active");
-document.getElementById("register").classList.add("active");
+function createCountryPicker(id){
+const box=document.getElementById(id);
+box.innerHTML=`
+<div class="country-selected" onclick="toggleCountryDropdown('${id}')">
+<span id="${id}Text">${selectedCountries[id].f} ${selectedCountries[id].n} <span class="country-code-tag">${selectedCountries[id].c}</span></span>
+<span>⌄</span>
+</div>
+<div id="${id}Dropdown" class="country-dropdown">
+<input class="country-search" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
+<div id="${id}List"></div>
+</div>`;
+renderCountryList(id,countries);
 }
 
-function showLogin(){
-document.getElementById("register").classList.remove("active");
-document.getElementById("login").classList.add("active");
+function toggleCountryDropdown(id){
+document.querySelectorAll(".country-dropdown").forEach(el=>{if(el.id!==id+"Dropdown")el.classList.remove("active")});
+document.getElementById(id+"Dropdown").classList.toggle("active");
+}
+
+function renderCountryList(id,list){
+document.getElementById(id+"List").innerHTML=list.map(item=>`
+<div class="country-item" onclick="selectCountry('${id}','${item.iso}')">
+${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>
+</div>`).join("");
+}
+
+function filterCountries(id,q){
+q=q.toLowerCase().trim();
+const list=countries.filter(x=>x.n.toLowerCase().includes(q)||x.c.includes(q)||x.iso.toLowerCase().includes(q));
+renderCountryList(id,list);
+}
+
+function selectCountry(id,iso){
+const item=countries.find(x=>x.iso===iso)||countries[0];
+selectedCountries[id]=item;
+document.getElementById(id+"Text").innerHTML=`${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>`;
+document.getElementById(id+"Dropdown").classList.remove("active");
+}
+
+function setCountryByLocale(){
+const lang=(navigator.language||"tr-TR").toUpperCase();
+let iso="TR";
+if(lang.includes("AZ"))iso="AZ";
+else if(lang.includes("US"))iso="US";
+else if(lang.includes("GB"))iso="GB";
+else if(lang.includes("DE"))iso="DE";
+else if(lang.includes("FR"))iso="FR";
+else if(lang.includes("RU"))iso="RU";
+else if(lang.includes("AE"))iso="AE";
+["loginPicker","registerPicker","forgotPicker"].forEach(id=>selectCountry(id,iso));
+}
+
+function openTab(tabId,event){
+document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+document.getElementById(tabId).classList.add("active");
+event.target.classList.add("active");
+}
+
+function checkPasswords(){
+const p1=document.getElementById("password1").value;
+const p2=document.getElementById("password2").value;
+const warning=document.getElementById("passwordWarning");
+const btn=document.getElementById("registerBtn");
+
+if(!p1&&!p2){
+warning.classList.remove("show");
+btn.classList.remove("error");
+btn.textContent="Ücretsiz Hesap Oluştur";
+return;
+}
+
+if(p2&&p1!==p2){
+warning.classList.add("show");
+btn.classList.add("error");
+btn.textContent="Şifreler Aynı Değil";
+}else{
+warning.classList.remove("show");
+btn.classList.remove("error");
+btn.textContent="Ücretsiz Hesap Oluştur";
+}
 }
 
 async function registerUser(){
+const email=document.getElementById("registerEmail").value.trim();
+const password=document.getElementById("password1").value;
+const password2=document.getElementById("password2").value;
+const fullName=document.getElementById("fullName").value.trim();
+const phone=document.getElementById("registerPhone").value.trim();
+const country=selectedCountries.registerPicker;
 
-const email =
-document.getElementById("registerEmail").value;
-
-const password =
-document.getElementById("password1").value;
-
-const password2 =
-document.getElementById("password2").value;
+if(!email||!password){
+alert("E-posta ve şifre zorunludur.");
+return;
+}
 
 if(password!==password2){
-alert("Şifreler aynı değil");
+checkPasswords();
 return;
 }
 
-const { error } =
-await supabaseClient.auth.signUp({
-email,
-password
+const { error }=await supabaseClient.auth.signUp({
+email:email,
+password:password,
+options:{
+emailRedirectTo:SITE_URL,
+data:{
+full_name:fullName,
+phone:country.c+" "+phone,
+country:country.n
+}
+}
 });
 
 if(error){
@@ -177,21 +395,21 @@ alert(error.message);
 return;
 }
 
-alert("Kayıt başarılı. E-postanı kontrol et.");
+alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
 }
 
-async function LoginUser(){
+async function loginUser(){
+const email=document.getElementById("loginEmail").value.trim();
+const password=document.getElementById("loginPassword").value;
 
-const email =
-document.getElementById("loginEmail").value;
+if(!email||!password){
+alert("E-posta ve şifre gir.");
+return;
+}
 
-const password =
-document.getElementById("loginPassword").value;
-
-const { error } =
-await supabaseClient.auth.signInWithPassword({
-email,
-password
+const { error }=await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
 });
 
 if(error){
@@ -199,22 +417,67 @@ alert(error.message);
 return;
 }
 
-alert("Giriş başarılı");
 window.location.href="index.html";
 }
 
-async function LoginWithGoogle(){
-
+async function loginWithGoogle(){
 await supabaseClient.auth.signInWithOAuth({
 provider:"google",
-options:{
-redirectTo:
-"https://allonahub.github.io/allonahub-admin/user.html"
+options:{redirectTo:SITE_URL}
+});
+}
+
+async function resetPassword(){
+const email=document.getElementById("forgotEmail").value.trim();
+
+if(!email){
+alert("Lütfen e-posta adresini yaz.");
+return;
+}
+
+const { error }=await supabaseClient.auth.resetPasswordForEmail(email,{
+redirectTo:SITE_URL
+});
+
+if(error){
+alert(error.message);
+return;
+}
+
+alert("Şifre sıfırlama bağlantısı e-postana gönderildi.");
+}
+
+function icloudInfo(){
+alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacak.");
+}
+
+function userSearch(){
+const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
+if(!q)return;
+if(q.includes("hp")||q.includes("wallet")||q.includes("cüzdan"))window.location.href="hubwallet.html";
+else if(q.includes("kupon"))window.location.href="kuponlar.html";
+else if(q.includes("premium")||q.includes("üyelik"))window.location.href="premium.html";
+else if(q.includes("destek")||q.includes("yardım")||q.includes("güvenlik"))window.location.href="destek.html";
+else window.location.href="arama.html?q="+encodeURIComponent(q);
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+["loginPicker","registerPicker","forgotPicker"].forEach(createCountryPicker);
+setCountryByLocale();
+
+const search=document.getElementById("userSearchInput");
+if(search){
+search.addEventListener("keydown",function(e){
+if(e.key==="Enter")userSearch();
+});
 }
 });
 
+document.addEventListener("click",function(e){
+if(!e.target.closest(".country-picker")){
+document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
 }
-
+});
 </script>
 
 </body>
