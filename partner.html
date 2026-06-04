@@ -180,6 +180,27 @@ button{cursor:pointer;border:0}
 
   <input id="phone" inputmode="numeric" placeholder="Telefon numarası">
 </div>
+<div class="input"><input id="tax_number" placeholder="Vergi Numarası"></div>
+
+<div class="input"><input id="tax_office" placeholder="Vergi Dairesi"></div>
+
+<div class="input">
+<select id="company_type">
+<option value="">Şirket Türü Seç</option>
+<option>Şahıs Şirketi</option>
+<option>Limited Şirket</option>
+<option>Anonim Şirket</option>
+<option>Kooperatif</option>
+<option>Dernek / Vakıf</option>
+<option>Bireysel Hizmet Sağlayıcı</option>
+</select>
+</div>
+
+<div class="input"><input id="website" placeholder="Web Sitesi (opsiyonel)"></div>
+
+<div class="input"><input id="city" placeholder="İl / Şehir"></div>
+
+<div class="input"><input id="country" placeholder="Ülke"></div>
 <div class="input">
 <select id="category">
 <option value="">Sektör Seç</option>
@@ -373,18 +394,30 @@ function clearApplyForm(showMsg=true){
   }
 }
 function getApplyData(){
-  return {
+  return{
     partner_name: document.getElementById("partner_name").value.trim(),
     contact_name: document.getElementById("contact_name").value.trim(),
     email: document.getElementById("email").value.trim(),
+
     phone: document.getElementById("countryCode").value + " " + document.getElementById("phone").value.trim(),
+
+    tax_number: document.getElementById("tax_number").value.trim(),
+    tax_office: document.getElementById("tax_office").value.trim(),
+    company_type: document.getElementById("company_type").value.trim(),
+    website: document.getElementById("website").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    country: document.getElementById("country").value.trim(),
+
     category: document.getElementById("category").value.trim(),
     message: document.getElementById("message").value.trim(),
     date: new Date().toLocaleString("tr-TR")
   };
 }
-
 function validateApply(data){
+  if(!data.tax_number)return "Vergi numarası zorunlu.";
+  if(!data.company_type)return "Şirket türü seçiniz.";
+  if(!data.city)return "Şehir bilgisi zorunlu.";
+  if(!data.country)return "Ülke bilgisi zorunlu.";
   if(!data.partner_name)return "Firma / İşletme adı zorunlu.";
   if(!data.contact_name)return "Yetkili ad soyad zorunlu.";
   if(!data.email || !data.email.includes("@"))return "Geçerli bir e-posta gir.";
