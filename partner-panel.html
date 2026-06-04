@@ -124,6 +124,7 @@ td{opacity:.86}
 .notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:390px;line-height:1.45}
 .notice b{color:#ffd700}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -382,6 +383,9 @@ td{opacity:.86}
 </div>
 
 <script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxdmlrcnlzY2lndXpob2xkamViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MjY3NTUsImV4cCI6MjA5NjEwMjc1NX0.kdpMZ2YIBXpuM2cFu7j20eZKvJ2qb9xuoH4loNcFMiI";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const livePartner = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
 if(livePartner){
   localStorage.setItem("allonaPartnerType", (livePartner.partner_type || "shop").toLowerCase());
@@ -836,7 +840,7 @@ function renderDynamicSection(id){
       <div class="input"><input id="productPrice" type="number" placeholder="Satış Fiyatı"></div>
       <div class="input"><input id="productOldPrice" type="number" placeholder="Eski Fiyat / Piyasa Fiyatı"></div>
       <div class="input"><input id="productStock" type="number" placeholder="Stok / Kontenjan"></div>
-      <div class="input"><input id="productImage" placeholder="Görsel URL"></div>
+      <div class="input"><input id="productImageFile" type="file" accept="image/*"></div>
 
       <div class="input">
         <select id="productStatus">
