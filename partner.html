@@ -138,7 +138,48 @@ button{cursor:pointer;border:0}
 <div class="input"><input id="partner_name" placeholder="Firma / İşletme Adı"></div>
 <div class="input"><input id="contact_name" placeholder="Yetkili Ad Soyad"></div>
 <div class="input"><input id="email" placeholder="E-posta"></div>
-<div class="input"><input id="phone" placeholder="Telefon"></div>
+<div class="input">
+  <select id="countryCode" style="width:260px;border-right:1px solid rgba(255,255,255,.15);margin-right:10px;">
+    <option value="+90">🇹🇷 Türkiye +90</option>
+    <option value="+994">🇦🇿 Azerbaycan +994</option>
+    <option value="+1">🇺🇸 ABD / Kanada +1</option>
+    <option value="+44">🇬🇧 İngiltere +44</option>
+    <option value="+49">🇩🇪 Almanya +49</option>
+    <option value="+33">🇫🇷 Fransa +33</option>
+    <option value="+39">🇮🇹 İtalya +39</option>
+    <option value="+34">🇪🇸 İspanya +34</option>
+    <option value="+31">🇳🇱 Hollanda +31</option>
+    <option value="+32">🇧🇪 Belçika +32</option>
+    <option value="+41">🇨🇭 İsviçre +41</option>
+    <option value="+43">🇦🇹 Avusturya +43</option>
+    <option value="+7">🇷🇺 Rusya / Kazakistan +7</option>
+    <option value="+380">🇺🇦 Ukrayna +380</option>
+    <option value="+971">🇦🇪 BAE +971</option>
+    <option value="+966">🇸🇦 Suudi Arabistan +966</option>
+    <option value="+974">🇶🇦 Katar +974</option>
+    <option value="+965">🇰🇼 Kuveyt +965</option>
+    <option value="+973">🇧🇭 Bahreyn +973</option>
+    <option value="+968">🇴🇲 Umman +968</option>
+    <option value="+20">🇪🇬 Mısır +20</option>
+    <option value="+212">🇲🇦 Fas +212</option>
+    <option value="+216">🇹🇳 Tunus +216</option>
+    <option value="+213">🇩🇿 Cezayir +213</option>
+    <option value="+86">🇨🇳 Çin +86</option>
+    <option value="+81">🇯🇵 Japonya +81</option>
+    <option value="+82">🇰🇷 Güney Kore +82</option>
+    <option value="+91">🇮🇳 Hindistan +91</option>
+    <option value="+62">🇮🇩 Endonezya +62</option>
+    <option value="+60">🇲🇾 Malezya +60</option>
+    <option value="+65">🇸🇬 Singapur +65</option>
+    <option value="+61">🇦🇺 Avustralya +61</option>
+    <option value="+64">🇳🇿 Yeni Zelanda +64</option>
+    <option value="+55">🇧🇷 Brezilya +55</option>
+    <option value="+52">🇲🇽 Meksika +52</option>
+    <option value="+27">🇿🇦 Güney Afrika +27</option>
+  </select>
+
+  <input id="phone" inputmode="numeric" placeholder="Telefon numarası">
+</div>
 <div class="input">
 <select id="category">
 <option value="">Sektör Seç</option>
@@ -336,7 +377,7 @@ function getApplyData(){
     partner_name: document.getElementById("partner_name").value.trim(),
     contact_name: document.getElementById("contact_name").value.trim(),
     email: document.getElementById("email").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
+    phone: document.getElementById("countryCode").value + " " + document.getElementById("phone").value.trim(),
     category: document.getElementById("category").value.trim(),
     message: document.getElementById("message").value.trim(),
     date: new Date().toLocaleString("tr-TR")
@@ -347,7 +388,11 @@ function validateApply(data){
   if(!data.partner_name)return "Firma / İşletme adı zorunlu.";
   if(!data.contact_name)return "Yetkili ad soyad zorunlu.";
   if(!data.email || !data.email.includes("@"))return "Geçerli bir e-posta gir.";
-  if(!data.phone)return "Telefon numarası zorunlu.";
+ const rawPhone = document.getElementById("phone").value.replace(/\D/g,"");
+
+if(!rawPhone)return "Telefon numarası zorunlu.";
+if(rawPhone.length < 7)return "Telefon numarası çok kısa görünüyor.";
+if(rawPhone.length > 15)return "Telefon numarası çok uzun görünüyor.";
   if(!data.category)return "Sektör seçmelisin.";
   return "";
 }
@@ -424,6 +469,9 @@ function partnerSearch(){
 
 document.getElementById("partnerSearchInput").addEventListener("keydown",function(e){
   if(e.key==="Enter")partnerSearch();
+});
+document.getElementById("phone").addEventListener("input", function(){
+  this.value = this.value.replace(/[^\d\s]/g,"").replace(/\s+/g," ");
 });
 </script>
 
