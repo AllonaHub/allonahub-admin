@@ -382,6 +382,15 @@ td{opacity:.86}
 </div>
 
 <script>
+const livePartner = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
+if(livePartner){
+  localStorage.setItem("allonaPartnerType", (livePartner.partner_type || "shop").toLowerCase());
+  localStorage.setItem("allonaPartnerName", livePartner.partner_name || "Allona Partner");
+  localStorage.setItem("allonaPartnerId", livePartner.partner_id || "");
+  localStorage.setItem("allonaPartnerScore", livePartner.score || "0");
+  localStorage.setItem("allonaPartnerLevel", livePartner.level || "1");
+  localStorage.setItem("allonaPartnerXp", livePartner.xp || "0");
+}  
 const partnerProfiles={
   shop:{
     name:"ALLONA SHOP",
