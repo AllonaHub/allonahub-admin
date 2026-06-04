@@ -506,73 +506,124 @@ if(e.key==="Enter")userSearch();
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
 const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function registerUser() {
-
-  const email =
-    document.getElementById("registerEmail").value;
-
-  const password =
-    document.getElementById("password1").value;
-
-  const { error } =
-    await supabase.auth.signUp({
-      email,
-      password
-    });
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  alert("Kayıt başarılı. E-postanı kontrol et.");
+function openTab(tabId,event){
+document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+document.getElementById(tabId).classList.add("active");
+event.target.classList.add("active");
 }
 
-async function LoginUser() {
+function checkPasswords(){
+const p1=document.getElementById("password1").value;
+const p2=document.getElementById("password2").value;
+const warning=document.getElementById("passwordWarning");
+const btn=document.getElementById("registerBtn");
 
-  const email =
-    document.getElementById("loginEmail").value;
-
-  const password =
-    document.getElementById("loginPassword").value;
-
-  const { error } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  window.location.href="dashboard.html";
+if(!p1&&!p2){
+warning.classList.remove("show");
+btn.classList.remove("error");
+btn.textContent="Ücretsiz Hesap Oluştur";
+return;
 }
 
-async function LoginWithGoogle() {
-
-  await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo:
-      "https://allonahub.github.io/allonahub-admin/"
-    }
-  });
-
+if(p2 && p1!==p2){
+warning.classList.add("show");
+btn.classList.add("error");
+btn.textContent="Şifreler Aynı Değil";
+}else{
+warning.classList.remove("show");
+btn.classList.remove("error");
+btn.textContent="Ücretsiz Hesap Oluştur";
+}
 }
 
-</script>
-</script>
+async function registerCheck(){
+const email=document.getElementById("registerEmail").value.trim();
+const password=document.getElementById("password1").value;
+const password2=document.getElementById("password2").value;
+
+if(!email || !password){
+alert("E-posta ve şifre zorunludur.");
+return;
+}
+
+if(password!==password2){
+checkPasswords();
+return;
+}
+
+const { error } = await supabaseClient.auth.signUp({
+email:email,
+password:password,
+options:{
+emailRedirectTo:"https://allonahub.github.io/allonahub-admin/user.html"
+}
+});
+
+if(error){
+alert(error.message);
+return;
+}
+
+alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
+}
+
+async function LoginUser(){
+const email=document.getElementById("loginEmail").value.trim();
+const password=document.getElementById("loginPassword").value;
+
+if(!email || !password){
+alert("E-posta ve şifre gir.");
+return;
+}
+
+const { error } = await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error){
+alert(error.message);
+return;
+}
+
+window.location.href="dashboard.html";
+}
+
+async function LoginWithGoogle(){
+await supabaseClient.auth.signInWithOAuth({
+provider:"google",
+options:{
+redirectTo:"https://allonahub.github.io/allonahub-admin/user.html"
+}
+});
+}
+
+function userSearch(){
+const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
+if(!q)return;
+
+if(q.includes("hp")||q.includes("wallet")||q.includes("cüzdan")) window.location.href="hubwallet.html";
+else if(q.includes("kupon")) window.location.href="kuponlar.html";
+else if(q.includes("premium")||q.includes("üyelik")) window.location.href="premium.html";
+else if(q.includes("destek")||q.includes("yardım")||q.includes("güvenlik")) window.location.href="destek.html";
+else window.location.href="arama.html?q="+encodeURIComponent(q);
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+const search=document.getElementById("userSearchInput");
+if(search){
+search.addEventListener("keydown",function(e){
+if(e.key==="Enter")userSearch();
+});
+}
+});
+</script></script>
 
 </body>
 </html>
