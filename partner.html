@@ -18,35 +18,48 @@ const supabaseClient = supabase.createClient(
 );
 
 async function partnerLogin(){
-  
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
-  
-console.log("Login başladı");
-console.log(email);
-console.log(password);
-  
-  if(!email || !password){
-    alert("E-posta ve şifre giriniz.");
-    return;
-  }
+  alert("Giriş fonksiyonu başladı");
 
-  const { data, error } =
-    await supabaseClient.auth.signInWithPassword({
-      email,
-      password
+  try{
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+
+    if(!email || !password){
+      alert("E-posta ve şifre giriniz.");
+      return;
+    }
+
+    if(!SUPABASE_URL || SUPABASE_URL.includes("BURAYA")){
+      alert("Supabase URL eksik.");
+      return;
+    }
+
+    if(!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("BURAYA")){
+      alert("Supabase Key eksik.");
+      return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
     });
 
-  if(error){
-    alert("Giriş başarısız: " + error.message);
-    return;
+    if(error){
+      alert("Giriş başarısız: " + error.message);
+      return;
+    }
+
+    alert("Giriş başarılı. Panele yönlendiriliyorsun.");
+
+    localStorage.setItem("allonaPartnerLoggedIn","true");
+    localStorage.setItem("allonaPartnerEmail",email);
+    localStorage.setItem("allonaPartnerUserId",data.user.id);
+
+    window.location.href = "partner-panel.html";
+
+  }catch(err){
+    alert("Kod hatası: " + err.message);
   }
-
-  localStorage.setItem("allonaPartnerLoggedIn","true");
-  localStorage.setItem("allonaPartnerEmail",email);
-  localStorage.setItem("allonaPartnerUserId",data.user.id);
-
-  window.location.href="partner-panel.html";
 }
 </script>
 
