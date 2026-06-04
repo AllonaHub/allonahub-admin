@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
-<title>AllonaHub Kullanıcı Paneli</title>
+<title>AllonaHub Kullanıcı Girişi</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
@@ -13,7 +13,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 a{text-decoration:none;color:inherit}
 
-.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.page{width:1320px;margin:0 auto;padding:18px 22px 50px}
 .glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:28px;position:relative;overflow:hidden}
 
 .header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:18px}
@@ -21,57 +21,61 @@ a{text-decoration:none;color:inherit}
 .brand img{width:48px;height:48px;object-fit:contain}
 .brand b{font-size:30px;color:#ffd700}
 .brand span{font-size:30px;color:#00e5ff;font-weight:900}
-.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 22px}
+
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 14px 0 22px}
 .search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search input::placeholder{color:rgba(255,255,255,.55)}
+.search button{height:42px;padding:0 20px;border:0;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;cursor:pointer;box-shadow:0 0 16px rgba(0,229,255,.28)}
+
 .actions{height:60px;display:flex;align-items:center;justify-content:space-around}
 .actions a{font-weight:800;color:white}
+.actions a:hover{color:#00e5ff}
 
-.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:22px}
-.login-box{padding:30px;min-height:520px}
-.login-box h1{font-size:42px;color:#ffd700;margin-bottom:10px}
-.login-box p{opacity:.78;line-height:1.55;margin-bottom:22px}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:26px}
+.login-box{padding:34px;min-height:560px}
+.login-box h1{font-size:44px;color:#ffd700;margin-bottom:10px}
+.login-box p{opacity:.78;line-height:1.55;margin-bottom:24px}
 
-.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:20px}
-.tab{flex:1;border:0;background:transparent;color:white;padding:13px;border-radius:14px;font-weight:900;cursor:pointer}
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:22px}
+.tab{flex:1;border:0;background:transparent;color:white;padding:14px;border-radius:14px;font-weight:900;cursor:pointer}
 .tab.active{background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,229,255,.3)}
 
 .form{display:none}
 .form.active{display:block}
-.input{height:54px;border-radius:17px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:13px}
+.input{height:56px;border-radius:17px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:14px}
 .input input{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
 .input input::placeholder{color:rgba(255,255,255,.55)}
 
-.btn{width:100%;height:54px;border:0;border-radius:17px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22)}
+.btn{width:100%;height:56px;border:0;border-radius:17px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;cursor:pointer;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22)}
 .google-btn{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16);margin-top:12px}
 .link-row{display:flex;justify-content:space-between;margin-top:14px;font-size:13px;color:#00e5ff}
 
-.preview{padding:28px;min-height:520px}
-.profile-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
-.avatar{width:88px;height:88px;border-radius:50%;background:radial-gradient(circle,#00e5ff,#002b7a 70%);box-shadow:0 0 28px rgba(0,229,255,.5);position:relative}
-.avatar:after{content:"";position:absolute;inset:12px;border-radius:50%;background:linear-gradient(135deg,#ffffff55,transparent)}
-.profile-top h2{font-size:30px;color:#ffd700}
-.profile-top p{opacity:.72;margin-top:4px}
+.benefit-box{padding:34px;min-height:560px}
+.benefit-box h2{font-size:40px;color:#ffd700;margin-bottom:12px}
+.benefit-box p{opacity:.8;line-height:1.55;margin-bottom:24px}
 
-.level-card{padding:18px;border-radius:22px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);margin-bottom:16px}
-.level-card h3{color:#ffd700;margin-bottom:10px}
-.bar{height:16px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden}
-.bar span{display:block;height:100%;width:28%;background:linear-gradient(90deg,#00e5ff,#ffd700);border-radius:999px;box-shadow:0 0 18px rgba(0,229,255,.5)}
+.benefit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.benefit-card{min-height:130px;padding:20px;border-radius:22px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18)}
+.benefit-card h3{color:#ffd700;margin-bottom:8px}
+.benefit-card p{font-size:13px;opacity:.74;line-height:1.4;margin:0}
 
-.wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-.wallet-mini{padding:15px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}
-.wallet-mini b{display:block;color:#ffd700;font-size:22px;margin-bottom:5px}
-.wallet-mini small{opacity:.72}
+.security-note{margin-top:20px;padding:18px;border-radius:20px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.22)}
+.security-note b{color:#ffd700}
 
-.quick-section{margin-top:22px}
+.quick-section{margin-top:26px}
 .quick-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
-.quick-title h2{color:#ffd700;font-size:28px}
+.quick-title h2{color:#ffd700;font-size:30px}
 .quick-title a{color:#00e5ff;font-weight:900}
 .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.quick-card{min-height:135px;padding:18px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.24);box-shadow:0 0 22px rgba(0,229,255,.10)}
+.quick-card{min-height:145px;padding:20px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.24);box-shadow:0 0 22px rgba(0,229,255,.10)}
 .quick-card h3{color:#ffd700;margin-bottom:8px}
-.quick-card p{font-size:13px;opacity:.75;line-height:1.4}
+.quick-card p{font-size:13px;opacity:.75;line-height:1.45}
 
-.notice{position:absolute;right:16px;top:16px;background:#ff375f;color:white;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:900}
+.footer-main{margin-top:34px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;padding-top:25px;opacity:.65}
 </style>
 </head>
 
@@ -86,7 +90,8 @@ a{text-decoration:none;color:inherit}
 
 <div class="search glass">
 <span>🔍</span>
-<input placeholder="Panelde ara: HP, kupon, sipariş, bildirim, seviye...">
+<input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+<button onclick="userSearch()">Ara</button>
 </div>
 
 <div class="actions glass">
@@ -100,12 +105,12 @@ a{text-decoration:none;color:inherit}
 
 <div class="login-box glass">
 <h1>AllonaHub’a Giriş Yap</h1>
-<p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara, premium avantajlara ve partner ödemelerine eriş.</p>
+<p>Tek hesapla AllonaHub ekosistemindeki hizmetlere, HP dünyasına, kuponlara, premium avantajlara ve partner ödeme taleplerine eriş.</p>
 
 <div class="tabs">
-<button class="tab active" onclick="openTab('login')">Giriş Yap</button>
-<button class="tab" onclick="openTab('register')">Kayıt Ol</button>
-<button class="tab" onclick="openTab('forgot')">Şifremi Unuttum</button>
+<button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
+<button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
+<button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
 </div>
 
 <div id="login" class="form active">
@@ -115,7 +120,7 @@ a{text-decoration:none;color:inherit}
 <button class="btn google-btn">Google ile Giriş Yap</button>
 <div class="link-row">
 <a href="#">Telefon ile giriş</a>
-<a href="#">Güvenlik merkezi</a>
+<a href="destek.html">Güvenlik merkezi</a>
 </div>
 </div>
 
@@ -135,40 +140,19 @@ a{text-decoration:none;color:inherit}
 </div>
 </div>
 
-<div class="preview glass">
-<div class="profile-top">
-<div class="avatar"></div>
-<div>
-<h2>Misafir Kullanıcı</h2>
-<p>Üye No: AH0000001</p>
-<p>🔥 12 Günlük Streak</p>
-</div>
+<div class="benefit-box glass">
+<h2>Tek Hesap, Tüm Ekosistem</h2>
+<p>AllonaHub hesabın; alışveriş, yemek, market, taksi, sağlık, kariyer, hukuk, denizcilik, sigorta, lojistik ve daha fazlasını tek merkezden yönetmeni sağlar.</p>
+
+<div class="benefit-grid">
+<div class="benefit-card"><h3>HUB Wallet</h3><p>HP, Hub Cash, kupon ve QR ödeme akışını tek panelde yönet.</p></div>
+<div class="benefit-card"><h3>HP ile Öde</h3><p>HP kazan, kupon oluştur ve partner kampanyalarında avantaj yakala.</p></div>
+<div class="benefit-card"><h3>Premium Üyelik</h3><p>A+, Gold, Elite Black ve Legend avantajlarından yararlan.</p></div>
+<div class="benefit-card"><h3>Güvenli Panel</h3><p>Bildirimler, ödeme talepleri, siparişler ve destek tek yerde.</p></div>
 </div>
 
-<div class="level-card">
-<h3>NEW MEMBER · Level 1</h3>
-<div class="bar"><span></span></div>
-<p style="margin-top:10px;opacity:.72">280 / 1000 XP · Sonraki seviye: Level 2</p>
-</div>
-
-<div class="wallet-grid">
-<div class="wallet-mini"><b>250 HP</b><small>Toplam HP</small></div>
-<div class="wallet-mini"><b>0 ₺</b><small>Cashout</small></div>
-<div class="wallet-mini"><b>0 ₺</b><small>Hub Cash</small></div>
-</div>
-
-<div class="quick-section">
-<div class="quick-title">
-<h2>Panel Ön İzleme</h2>
-<a href="hubwallet.html">Wallet’a Git</a>
-</div>
-
-<div class="quick-grid">
-<div class="quick-card"><span class="notice">3</span><h3>Bildirimler</h3><p>Sipariş, kampanya ve ödeme talepleri.</p></div>
-<div class="quick-card"><h3>Kuponlarım</h3><p>HP ile oluşturulan ve aktif kuponlar.</p></div>
-<div class="quick-card"><h3>Görevler</h3><p>Günlük giriş, yorum, alışveriş ve davet görevleri.</p></div>
-<div class="quick-card"><h3>Premium</h3><p>A+, Gold, Elite Black ve Legend avantajları.</p></div>
-</div>
+<div class="security-note">
+<b>Güvenlik Notu:</b> Gerçek giriş sistemi bağlandığında telefon/e-posta doğrulama, cihaz güvenliği ve oturum kontrolü aktif edilecektir.
 </div>
 </div>
 
@@ -205,44 +189,89 @@ a{text-decoration:none;color:inherit}
 </div>
 </section>
 
-<footer style="margin-top:35px;text-align:center;padding:30px;border-top:1px solid rgba(255,255,255,.1);opacity:.75">
+<footer class="footer-main">
+<div class="footer-grid">
 
-<p style="margin-bottom:10px">
-©️ 2026 AllonaHub
-</p>
+<div class="footer-col">
+<h3>AllonaHub</h3>
+<a href="hakkimizda.html">Hakkımızda</a>
+<a href="iletisim.html">İletişim</a>
+<a href="destek.html">Yardım ve Destek</a>
+<a href="partner.html">Ekosisteme Katıl</a>
+</div>
 
-<p>
-Global Partner Based Super-App Ecosystem
-</p>
+<div class="footer-col">
+<h3>Yasal</h3>
+<a href="kvkk.html">KVKK Aydınlatma Metni</a>
+<a href="gizlilik.html">Gizlilik Politikası</a>
+<a href="cerez-politikasi.html">Çerez Politikası</a>
+<a href="kullanici-uyelik.html">Kullanıcı Üyelik Sözleşmesi</a>
+<a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
+</div>
 
+<div class="footer-col">
+<h3>E-Ticaret</h3>
+<a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
+<a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
+<a href="iptal-iade.html">İptal ve İade Politikası</a>
+<a href="teslimat-kargo.html">Teslimat ve Kargo</a>
+<a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
+</div>
+
+<div class="footer-col">
+<h3>İletişim</h3>
+<a href="hp-wallet-kurallari.html">HP ve Hub Wallet Kuralları</a>
+<a href="allona-pay-kullanim.html">Allona Pay Kullanım Şartları</a>
+<a href="guvenlik-politikasi.html">Güvenlik Politikası</a>
+<p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
+<p>Atatürk Mah. Güner Sokak 1/1B Blok B1 Daire No:203 Küçükçekmece / İstanbul</p>
+<p>WP destek hattı: +90 542 778 18 68</p>
+<p>info@allonahub.com</p>
+<p>allonahub@gmail.com</p>
+<p>0(212) 982 80 77</p>
+</div>
+
+</div>
+
+<div class="footer-bottom">
+©️ 2026 AllonaHub. Global partner-based super-app ecosystem.
+</div>
 </footer>
 
 </div>
 
 <script>
-
-function openTab(tabId){
-
-document.querySelectorAll(".form").forEach(el=>{
-el.classList.remove("active");
-});
-
-document.querySelectorAll(".tab").forEach(el=>{
-el.classList.remove("active");
-});
-
+function openTab(tabId, event){
+document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
 document.getElementById(tabId).classList.add("active");
-
 event.target.classList.add("active");
-
 }
 
 function demoLogin(){
-
-alert("Demo giriş ekranı. Gerçek giriş sistemi daha sonra bağlanacak.");
-
+alert("Demo giriş ekranı. Gerçek giriş sistemi backend ve veritabanı bağlanınca aktif olacak.");
 }
 
+function userSearch(){
+const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
+if(!q){return}
+
+if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
+window.location.href="hubwallet.html";
+}else if(q.includes("kupon")){
+window.location.href="kuponlar.html";
+}else if(q.includes("premium") || q.includes("üyelik")){
+window.location.href="premium.html";
+}else if(q.includes("destek") || q.includes("yardım") || q.includes("güvenlik")){
+window.location.href="destek.html";
+}else{
+window.location.href="arama.html?q="+encodeURIComponent(q);
+}
+}
+
+document.getElementById("userSearchInput").addEventListener("keydown",function(e){
+if(e.key==="Enter"){userSearch()}
+});
 </script>
 
 </body>
