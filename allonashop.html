@@ -585,6 +585,49 @@ function showNotice(msg){
   setTimeout(()=>{n.style.display="none"},4200);
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function loadAllonaShopProducts(){
+  const grid = document.getElementById("newProductsGrid");
+
+  if(!grid) return;
+
+  grid.innerHTML = "<p>Ürünler yükleniyor...</p>";
+
+  const { data, error } = await supabaseClient
+    .from("products")
+    .select("*")
+    .eq("status", "active")
+    .order("created_at", { ascending:false });
+
+  if(error){
+    grid.innerHTML = "<p>Ürünler yüklenemedi: " + error.message + "</p>";
+    return;
+  }
+
+  if(!data || !data.length){
+    grid.innerHTML = "<p>Yayında ürün bulunamadı.</p>";
+    return;
+  }
+
+  grid.innerHTML = data.map(p => `
+    <div class="product-card glass">
+      <img src="${p.image_url || 'allona-shop.png'}" style="width:100%;height:210px;object-fit:cover;border-radius:18px;margin-bottom:12px;">
+      <h3>${p.product_name || "Ürün"}</h3>
+      <p>${p.category || ""}</p>
+      <b style="color:#ffd700;font-size:22px;">${Number(p.price || 0).toLocaleString("tr-TR")} ₺</b>
+      <button onclick="alert('Sepet sistemi bağlanacak')" style="margin-top:12px;width:100%;height:44px;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;border:0;">Sepete Ekle</button>
+    </div>
+  `).join("");
+}
+
+document.addEventListener("DOMContentLoaded", loadAllonaShopProducts);
+</script>
+  
 </body>
 </html>
