@@ -124,7 +124,9 @@ td{opacity:.86}
 .notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:390px;line-height:1.45}
 .notice b{color:#ffd700}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  
+</script>
 </head>
 
 <body>
@@ -868,7 +870,7 @@ function renderDynamicSection(id){
         <textarea id="productDesc" placeholder="Ürün / hizmet açıklaması"></textarea>
       </div>
 
-      <button class="primary-btn" onclick="saveProduct()">Ürünü Kaydet</button>
+     <input id="productImageFile" type="file" accept="image/*">
       <button class="blue-btn" onclick="clearProductForm()">Formu Temizle</button>
     </div>
 
@@ -1043,6 +1045,83 @@ function showNotice(message){
 }
 
 renderPartnerPanel();
+async function uploadProductImage(){
+  const fileInput=document.getElementById("productImageFile");
+  if(!fileInput || !fileInput.files || !fileInput.files[0]) return "";
+
+  const file=fileInput.files[0];
+  const fileExt=file.name.split(".").pop();
+  const fileName=`products/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+  const {error:uploadError}=await supabaseClient.storage
+    .from("product-images")
+    .upload(fileName,file);
+
+  if(uploadError) throw uploadError;
+
+  const {data}=supabaseClient.storage
+    .from("product-images")
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
+}
+
+async function saveProduct(){
+  const partner=JSON.parse(localStorage.getItem("allonaPartnerProfile") || "{}");
+
+  const productName=document.getElementById("productName")?.value.trim();
+  const category=document.getElementById("productCategory")?.value.trim();
+  const brand=document.getElementById("productBrand")?.value.trim();
+  const oldPrice=document.getElementById("productOldPrice")?.value || null;
+  const price=document.getElementById("productPrice")?.value || null;
+  const stock=document.getElementById("productStock")?.value || 0;
+  const couponStatus=document.getElementById("productCoupon")?.value || "";
+  const hpStatus=document.getElementById("productHp")?.value || "";
+  const description=document.getElementById("productDesc")?.value.trim();
+
+  if(!productName){
+    showNotice("Ürün adı zorunlu.");
+    return;
+  }
+
+  if(!price){
+    showNotice("Satış fiyatı zorunlu.");
+    return;
+  }
+
+  try{
+    showNotice("Ürün kaydediliyor...");
+
+    const imageUrl=await uploadProductImage();
+
+    const {error}=await supabaseClient.from("products").insert([{
+      partner_id: partner.partner_id || localStorage.getItem("allonaPartnerId") || "",
+      partner_email: partner.email || localStorage.getItem("allonaPartnerEmail") || "",
+      product_name: productName,
+      category: category,
+      brand: brand,
+      old_price: oldPrice,
+      price: price,
+      stock: stock,
+      image_url: imageUrl,
+      coupon_status: couponStatus,
+      hp_status: hpStatus,
+      description: description,
+      status: "pending"
+    }]);
+
+    if(error){
+      showNotice("Ürün kaydedilemedi: "+error.message);
+      return;
+    }
+
+    showNotice("<b>Ürün kaydedildi ✅</b><br>Ürün onay bekliyor durumuna alındı.");
+    clearProductForm();
+
+  }catch(err){
+    showNotice("Ürün kaydedilemedi: "+err.message);
+  }
+}  
 </script>
 
 </body>
