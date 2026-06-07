@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AllonaHub | Yakında Hizmetinizde</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top left, rgba(0,183,255,.35), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(255,215,0,.25), transparent 30%),
+    linear-gradient(135deg,#020814,#061b33,#001f3f);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.wrapper{
+  width:90%;
+  max-width:760px;
+  padding:55px 35px;
+  text-align:center;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:32px;
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(22px);
+  box-shadow:
+    0 0 45px rgba(0,183,255,.25),
+    0 0 80px rgba(255,215,0,.10);
+}
+
+.logo{
+  font-size:34px;
+  font-weight:900;
+  letter-spacing:1px;
+  margin-bottom:22px;
+  background:linear-gradient(90deg,#00c8ff,#ffffff,#ffd700);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.badge{
+  display:inline-block;
+  padding:10px 22px;
+  border-radius:999px;
+  border:1px solid rgba(255,215,0,.5);
+  color:#ffd700;
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:28px;
+  background:rgba(255,215,0,.08);
+}
+
+h1{
+  font-size:46px;
+  line-height:1.15;
+  margin-bottom:18px;
+  text-shadow:0 0 25px rgba(0,200,255,.45);
+}
+
+p{
+  font-size:18px;
+  line-height:1.7;
+  color:rgba(255,255,255,.78);
+  max-width:580px;
+  margin:0 auto 34px;
+}
+
+.btn{
+  display:inline-block;
+  padding:15px 30px;
+  border-radius:16px;
+  text-decoration:none;
+  color:#06111f;
+  font-weight:900;
+  background:linear-gradient(135deg,#00c8ff,#ffd700);
+  box-shadow:0 0 28px rgba(0,200,255,.35);
+  transition:.25s;
+}
+
+.btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 0 40px rgba(255,215,0,.45);
+}
+
+.glow{
+  position:absolute;
+  width:320px;
+  height:320px;
+  border-radius:50%;
+  background:rgba(0,200,255,.12);
+  filter:blur(60px);
+  z-index:-1;
+}
+
+.glow.one{
+  top:8%;
+  left:8%;
+}
+
+.glow.two{
+  bottom:8%;
+  right:8%;
+  background:rgba(255,215,0,.12);
+}
+
+@media(max-width:600px){
+  h1{
+    font-size:34px;
+  }
+
+  .logo{
+    font-size:28px;
+  }
+
+  p{
+    font-size:16px;
+  }
+
+  .wrapper{
+    padding:42px 24px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="glow one"></div>
+<div class="glow two"></div>
+
+<div class="wrapper">
+  <div class="logo">AllonaHub</div>
+
+  <div class="badge">Premium ekosistem hazırlanıyor</div>
+
+  <h1>Yakında Hizmetinizde</h1>
+
+  <p>
+    Bu modül şu anda AllonaHub premium hizmet ağına hazırlanıyor.
+    Allona Shop aktif olarak geliştirilmeye devam ediyor.  
+    Diğer hizmetler adım adım yayına alınacaktır.
+  </p>
+
+  <a class="btn" href="index.html">Ana Sayfaya Dön</a>
+</div>
+
+</body>
+</html>
