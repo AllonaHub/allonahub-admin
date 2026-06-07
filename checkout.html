@@ -214,6 +214,7 @@ function renderOrder(){
 document.getElementById("hpUse").addEventListener("change", renderOrder);
 
 async function placeOrder(){
+
   const fullName = document.getElementById("fullName").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -225,6 +226,84 @@ async function placeOrder(){
     return;
   }
 
+  const cart = getCart();
+
+  if(!cart.length){
+    showNotice("Sepetin boş.");
+    return;
+  }
+
+  const orderNo = "ALN-" + Date.now();
+
+  let subtotal = 0;
+
+  cart.forEach(item=>{
+    const p = products.find(x=>String(x.id)===String(item.id));
+    if(p){
+      subtotal += Number(p.price || 0) * item.qty;
+    }
+  });
+
+  const hpDiscount = Number(document.getElementById("hpUse").value || 0);
+  const shipping = subtotal >= 750 ? 0 : 89.90;
+  const total = Math.max(0, subtotal - hpDiscount + shipping);
+
+  const { data: orderData, error: orderError } = await supabaseClient
+    .from("orders")
+    .insert([{
+      order_no: orderNo,
+      customer_name: fullName,
+      customer_phone: phone,
+      customer_email: email,
+      city: city,
+      address: address,
+      subtotal: subtotal,
+      discount: hpDiscount,
+      shipping: shipping,
+      total: total,
+      payment_status: "pending",
+      order_status: "new"
+    }])
+    .select()
+    .single();
+
+  if(orderError){
+    console.error(orderError);
+    showNotice("Sipariş oluşturulamadı.");
+    return;
+  }
+
+  const orderItems = cart.map(item=>{
+    const p = products.find(x=>String(x.id)===String(item.id));
+
+    return {
+      order_id: orderData.id,
+      product_id: item.id,
+      product_name: p?.product_name || p?.name || "Ürün",
+      price: Number(p?.price || 0),
+      quantity: item.qty,
+      partner_id: p?.partner_id || null
+    };
+  });
+
+  const { error: itemsError } = await supabaseClient
+    .from("order_items")
+    .insert(orderItems);
+
+  if(itemsError){
+    console.error(itemsError);
+    showNotice("Sipariş ürünleri kaydedilemedi.");
+    return;
+  }
+
+  localStorage.removeItem("allonaCart");
+
+  showNotice("<b>Sipariş oluşturuldu.</b><br>Sipariş No: " + orderNo);
+
+  setTimeout(()=>{
+    window.location.href = "order-success.html?order=" + orderNo;
+  },1500);
+}
   showNotice("<b>Ödeme altyapısı hazırlanıyor.</b><br>iyzico bağlantısı sonraki aşamada aktif edilecek.");
 
   /*
