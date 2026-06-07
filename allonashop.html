@@ -509,7 +509,7 @@ function showNotice(text){
 function productCard(product){
 
 return `
-<div class="product glass">
+<div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
 
   <div class="product-img">
 
@@ -549,13 +549,13 @@ return `
 
     <button
       class="buy-btn"
-      onclick="addToCart('${product.id}')">
+     onclick="event.stopPropagation();addToCart('${product.id}')"
       Satın Al
     </button>
 
     <button
       class="fav-btn"
-      onclick="toggleFav('${product.id}')">
+     onclick="event.stopPropagation();toggleFav('${product.id}')"
       ♥️
     </button>
 
@@ -563,7 +563,7 @@ return `
 
   <button
     class="cart-btn"
-    onclick="addToCart('${product.id}')">
+ onclick="event.stopPropagation();addToCart('${product.id}')"
     Sepete Ekle
   </button>
 
