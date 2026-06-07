@@ -304,16 +304,7 @@ async function placeOrder(){
     window.location.href = "order-success.html?order=" + orderNo;
   },1500);
 }
-  showNotice("<b>Ödeme altyapısı hazırlanıyor.</b><br>iyzico bağlantısı sonraki aşamada aktif edilecek.");
-
-  /*
-  Sonraki aşamada burası:
-  1. orders tablosuna sipariş oluşturacak
-  2. order_items tablosuna ürünleri yazacak
-  3. Backend/Hetzner API üzerinden iyzico ödeme linki oluşturacak
-  */
-}
-
+ 
 loadCheckout();
 </script>
 
