@@ -411,7 +411,31 @@ a{
 .product b{
   min-height:48px;
 }
+.buy-btn,
+.cart-btn,
+.fav-btn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-indent:0 !important;
+  font-size:15px !important;
+  line-height:1 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
 
+.buy-btn{
+  color:#ffffff !important;
+}
+
+.cart-btn{
+  color:#031326 !important;
+}
+
+.fav-btn{
+  color:#ffd700 !important;
+  font-size:24px !important;
+}
 </style>
 </head>
 
@@ -545,70 +569,44 @@ function showNotice(text){
     box.style.display = "none";
   },3500);
 }
-
 function productCard(product){
 
-return `
-<div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
+  const name = product.product_name || product.name || "Ürün";
+  const image = product.image_url || "allona-shop.png";
+  const category = product.category || "Kategori";
 
-  <div class="product-img">
+  return `
+    <div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
 
-    <img
-      src="${product.image_url || 'allona-shop.png'}"
-      alt="${product.product_name || ''}"
-      onerror="this.src='allona-shop.png'"
-    >
+      <div class="product-img">
+        <img src="${image}" alt="${name}" onerror="this.src='allona-shop.png'">
+      </div>
 
-  </div>
+      <b>${name}</b>
 
-  <b>
-    ${product.product_name || "Ürün"}
-  </b>
+      <p>${category}</p>
 
-  <p>
-    ${product.category || "Kategori"}
-  </p>
+      <div class="price">
+        ${product.old_price ? `<span class="old-price">${money(product.old_price)}</span>` : ""}
+        ${money(product.price)}
+      </div>
 
-  <div class="price">
+      <div class="product-actions">
+        <button type="button" class="buy-btn" onclick="event.stopPropagation();addToCart('${product.id}')">
+          Satın Al
+        </button>
 
-    ${
-      product.old_price
-      ?
-      `<span class="old-price">
-      ${money(product.old_price)}
-      </span>`
-      :
-      ""
-    }
+        <button type="button" class="fav-btn" onclick="event.stopPropagation();toggleFav('${product.id}')">
+          ♥️
+        </button>
+      </div>
 
-    ${money(product.price)}
+      <button type="button" class="cart-btn" onclick="event.stopPropagation();addToCart('${product.id}')">
+        Sepete Ekle
+      </button>
 
-  </div>
-
-  <div class="product-actions">
-
-    <button
-      class="buy-btn"
-     onclick="event.stopPropagation();addToCart('${product.id}')"
-      Satın Al
-    </button>
-
-    <button
-      class="fav-btn"
-     onclick="event.stopPropagation();toggleFav('${product.id}')"
-      ♥️
-    </button>
-
-  </div>
-
-  <button
-    class="cart-btn"
- onclick="event.stopPropagation();addToCart('${product.id}')"
-    Sepete Ekle
-  </button>
-
-</div>
-`;
+    </div>
+  `;
 }
 console.log("SUPABSE BAĞLANDI");
 async function loadProducts(){
