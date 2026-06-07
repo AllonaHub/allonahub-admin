@@ -473,7 +473,7 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
-const supabase =
+const supabaseClient =
 window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_KEY
@@ -582,7 +582,7 @@ console.log("ÜRÜNLER YÜKLENİYOR");
   "<p>Ürünler yükleniyor...</p>";
 
   const {data,error} =
-  await supabase
+  await supabaseClient
   .from("products")
   .select("*")
   .order("created_at",
