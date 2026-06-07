@@ -570,9 +570,9 @@ return `
 </div>
 `;
 }
-
+console.log("SUPABSE BAĞLANDI");
 async function loadProducts(){
-
+console.log("ÜRÜNLER YÜKLENİYOR");
   const grid =
   document.getElementById(
   "productsGrid"
@@ -585,7 +585,6 @@ async function loadProducts(){
   await supabase
   .from("products")
   .select("*")
-  .eq("status","active")
   .order("created_at",
   {
     ascending:false
