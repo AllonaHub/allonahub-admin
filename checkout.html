@@ -269,6 +269,7 @@ async function placeOrder(){
 
   if(orderError){
     console.error(orderError);
+    alert(JSON.stringify(orderError));
     showNotice("Sipariş oluşturulamadı.");
     return;
   }
