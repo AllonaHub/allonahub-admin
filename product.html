@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Ürün Detayı | Allona Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  min-width:1320px;
+  background:#020814;
+  color:white;
+  overflow-x:auto;
+}
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:
+  radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+  radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+  linear-gradient(135deg,#020814,#061b33,#002b4d);
+}
+.page{
+  width:1320px;
+  margin:0 auto;
+  padding:25px;
+}
+.glass{
+  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+  border:1px solid rgba(0,229,255,.26);
+  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
+  border-radius:26px;
+}
+.header{
+  height:82px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 24px;
+  margin-bottom:22px;
+}
+.logo{
+  font-size:28px;
+  font-weight:900;
+}
+.logo b{color:#ffd700}
+.logo span{color:#00e5ff}
+.header a{
+  color:white;
+  text-decoration:none;
+  font-weight:900;
+}
+.product-detail{
+  display:grid;
+  grid-template-columns:560px 1fr;
+  gap:28px;
+  padding:28px;
+}
+.product-image{
+  height:560px;
+  border-radius:24px;
+  overflow:hidden;
+  background:white;
+}
+.product-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.product-info h1{
+  color:#ffd700;
+  font-size:34px;
+  margin-bottom:14px;
+  line-height:1.25;
+}
+.category{
+  color:#00e5ff;
+  font-weight:900;
+  margin-bottom:20px;
+}
+.price{
+  font-size:34px;
+  font-weight:900;
+  color:#00e5ff;
+  margin-bottom:12px;
+}
+.old-price{
+  color:#ffffff77;
+  text-decoration:line-through;
+  font-size:20px;
+  margin-left:10px;
+}
+.desc{
+  opacity:.78;
+  line-height:1.7;
+  margin:24px 0;
+  font-size:16px;
+}
+.buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:25px;
+}
+button{
+  height:52px;
+  border:0;
+  border-radius:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+.cart{
+  background:linear-gradient(135deg,#ffd700,#b88700);
+  color:#031326;
+}
+.buy{
+  background:linear-gradient(135deg,#00e5ff,#0077ff);
+  color:white;
+}
+.notice{
+  position:fixed;
+  right:25px;
+  bottom:25px;
+  background:#031326;
+  border:1px solid #00e5ff88;
+  border-radius:18px;
+  padding:15px 18px;
+  display:none;
+}
+.notice b{color:#ffd700}
+.loading{
+  padding:40px;
+  font-size:20px;
+  color:#ffd700;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="header glass">
+    <a class="logo" href="allona-shop.html">
+      <b>Allona</b> <span>Shop</span>
+    </a>
+
+    <a href="allona-shop.html">Mağazaya Dön</a>
+  </div>
+
+  <div id="detailArea" class="glass loading">
+    Ürün yükleniyor...
+  </div>
+
+</div>
+
+<div id="notice" class="notice"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentProduct = null;
+
+function money(value){
+  return Number(value || 0).toLocaleString("tr-TR",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  }) + " ₺";
+}
+
+function showNotice(text){
+  const box = document.getElementById("notice");
+  box.innerHTML = text;
+  box.style.display = "block";
+  setTimeout(()=>{box.style.display="none"},3500);
+}
+
+function getProductId(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("id");
+}
+
+async function loadProduct(){
+  const id = getProductId();
+  const area = document.getElementById("detailArea");
+
+  if(!id){
+    area.innerHTML = "Ürün ID bulunamadı.";
+    return;
+  }
+
+  const {data,error} = await supabase
+    .from("products")
+    .select("*")
+    .eq("id",id)
+    .single();
+
+  if(error || !data){
+    area.innerHTML = "Ürün bulunamadı.";
+    console.error(error);
+    return;
+  }
+
+  currentProduct = data;
+
+  const name = data.product_name || data.name || data.title || "Allona Shop Ürünü";
+  const image = data.image_url || data.image || "allona-shop.png";
+  const category = data.category || "Allona Shop";
+  const description = data.description || data.product_description || "Bu ürün Allona Shop premium ürün koleksiyonunda yer almaktadır.";
+
+  area.className = "product-detail glass";
+
+  area.innerHTML = `
+    <div class="product-image">
+      <img src="${image}" alt="${name}" onerror="this.src='allona-shop.png'">
+    </div>
+
+    <div class="product-info">
+      <h1>${name}</h1>
+
+      <div class="category">${category}</div>
+
+      <div class="price">
+        ${money(data.price)}
+        ${
+          data.old_price
+          ? `<span class="old-price">${money(data.old_price)}</span>`
+          : ""
+        }
+      </div>
+
+      <div class="desc">${description}</div>
+
+      <p>Stok: <b>${data.stock || 0}</b></p>
+
+      <div class="buttons">
+        <button class="cart" onclick="addToCart()">Sepete Ekle</button>
+        <button class="buy" onclick="buyNow()">Hemen Al</button>
+      </div>
+    </div>
+  `;
+}
+
+function getCart(){
+  return JSON.parse(localStorage.getItem("allonaCart") || "[]");
+}
+
+function setCart(cart){
+  localStorage.setItem("allonaCart",JSON.stringify(cart));
+}
+
+function addToCart(){
+  if(!currentProduct) return;
+
+  const cart = getCart();
+  const found = cart.find(x => String(x.id) === String(currentProduct.id));
+
+  if(found){
+    found.qty++;
+  }else{
+    cart.push({
+      id: currentProduct.id,
+      qty: 1
+    });
+  }
+
+  setCart(cart);
+  showNotice("<b>Ürün sepete eklendi.</b>");
+}
+
+function buyNow(){
+  addToCart();
+  showNotice("<b>Ödeme sistemi yakında iyzico ile aktif edilecek.</b>");
+}
+
+loadProduct();
+</script>
+
+</body>
+</html>
