@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Sepetim | Allona Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+  radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+  linear-gradient(135deg,#020814,#061b33,#002b4d);
+}
+.page{width:1320px;margin:0 auto;padding:24px}
+.glass{
+  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+  border:1px solid rgba(0,229,255,.26);
+  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
+  border-radius:26px;
+}
+.header{
+  height:82px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;margin-bottom:22px;
+}
+.logo{font-size:28px;font-weight:900;text-decoration:none}
+.logo b{color:#ffd700}
+.logo span{color:#00e5ff}
+.header a{color:white;text-decoration:none;font-weight:900}
+h1{color:#ffd700;margin-bottom:20px;font-size:36px}
+.cart-layout{display:grid;grid-template-columns:1fr 380px;gap:22px}
+.cart-list{padding:24px}
+.cart-item{
+  display:grid;grid-template-columns:110px 1fr 130px 60px;
+  gap:18px;align-items:center;padding:16px 0;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.cart-item img{width:110px;height:110px;object-fit:cover;border-radius:18px;background:white}
+.cart-item h3{color:#ffd700;font-size:18px;margin-bottom:8px}
+.cart-item p{opacity:.75}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{
+  width:34px;height:34px;border-radius:10px;border:0;
+  background:#00e5ff;color:white;font-weight:900;cursor:pointer;
+}
+.remove{
+  width:40px;height:40px;border-radius:12px;border:0;
+  background:#ffffff18;color:white;font-size:22px;cursor:pointer;
+}
+.summary{padding:24px;height:max-content;position:sticky;top:20px}
+.summary h2{color:#ffd700;margin-bottom:18px}
+.row{display:flex;justify-content:space-between;margin:12px 0;opacity:.85}
+.total{font-size:24px;color:#00e5ff;font-weight:900;border-top:1px solid #ffffff22;padding-top:16px;margin-top:16px}
+.checkout{
+  width:100%;height:52px;border:0;border-radius:18px;margin-top:20px;
+  background:linear-gradient(135deg,#00e5ff,#0077ff);
+  color:white;font-weight:900;font-size:16px;cursor:pointer;
+}
+.back{
+  width:100%;height:48px;border:0;border-radius:18px;margin-top:12px;
+  background:linear-gradient(135deg,#ffd700,#b88700);
+  color:#031326;font-weight:900;cursor:pointer;
+}
+.empty{padding:45px;text-align:center;color:#ffd700;font-size:22px}
+.notice{
+  position:fixed;right:25px;bottom:25px;background:#031326;
+  border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;
+  display:none;box-shadow:0 0 25px #00e5ff44;
+}
+.notice b{color:#ffd700}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="header glass">
+    <a class="logo" href="allonashop.html">
+      <b>Allona</b> <span>Shop</span>
+    </a>
+    <a href="allonashop.html">Mağazaya Dön</a>
+  </div>
+
+  <h1>Sepetim</h1>
+
+  <div class="cart-layout">
+    <div id="cartList" class="cart-list glass">
+      Ürünler yükleniyor...
+    </div>
+
+    <div class="summary glass">
+      <h2>Sipariş Özeti</h2>
+      <div class="row"><span>Ara Toplam</span><b id="subTotal">0 ₺</b></div>
+      <div class="row"><span>Kargo</span><b id="shipping">0 ₺</b></div>
+      <div class="row total"><span>Toplam</span><b id="grandTotal">0 ₺</b></div>
+
+      <button class="checkout" onclick="goCheckout()">Güvenli Ödeme</button>
+      <button class="back" onclick="window.location.href='allonashop.html'">Alışverişe Devam Et</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="notice" class="notice"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let products = [];
+
+function money(value){
+  return Number(value || 0).toLocaleString("tr-TR",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  }) + " ₺";
+}
+
+function showNotice(text){
+  const box = document.getElementById("notice");
+  box.innerHTML = text;
+  box.style.display = "block";
+  setTimeout(()=>{box.style.display="none"},3500);
+}
+
+function getCart(){
+  return JSON.parse(localStorage.getItem("allonaCart") || "[]");
+}
+
+function setCart(cart){
+  localStorage.setItem("allonaCart", JSON.stringify(cart));
+  renderCart();
+}
+
+async function loadCartProducts(){
+  const cart = getCart();
+
+  if(!cart.length){
+    renderCart();
+    return;
+  }
+
+  const ids = cart.map(item => item.id);
+
+  const {data,error} = await supabaseClient
+    .from("products")
+    .select("*")
+    .in("id", ids);
+
+  if(error){
+    document.getElementById("cartList").innerHTML = "Sepet ürünleri yüklenemedi.";
+    console.error(error);
+    return;
+  }
+
+  products = data || [];
+  renderCart();
+}
+
+function renderCart(){
+  const cart = getCart();
+  const area = document.getElementById("cartList");
+
+  if(!cart.length){
+    area.innerHTML = `<div class="empty">Sepetin boş.</div>`;
+    updateSummary(0);
+    return;
+  }
+
+  let total = 0;
+
+  area.innerHTML = cart.map(item => {
+    const p = products.find(x => String(x.id) === String(item.id));
+
+    if(!p) return "";
+
+    const name = p.product_name || p.name || "Ürün";
+    const image = p.image_url || "allona-shop.png";
+    const price = Number(p.price || 0);
+    const lineTotal = price * item.qty;
+    total += lineTotal;
+
+    return `
+      <div class="cart-item">
+        <img src="${image}" onerror="this.src='allona-shop.png'">
+
+        <div>
+          <h3>${name}</h3>
+          <p>${p.category || "Allona Shop"}</p>
+          <p>${money(price)}</p>
+        </div>
+
+        <div class="qty">
+          <button onclick="changeQty('${item.id}',-1)">-</button>
+          <b>${item.qty}</b>
+          <button onclick="changeQty('${item.id}',1)">+</button>
+        </div>
+
+        <button class="remove" onclick="removeItem('${item.id}')">×</button>
+      </div>
+    `;
+  }).join("");
+
+  updateSummary(total);
+}
+
+function updateSummary(total){
+  const shipping = total > 0 ? 0 : 0;
+  document.getElementById("subTotal").textContent = money(total);
+  document.getElementById("shipping").textContent = money(shipping);
+  document.getElementById("grandTotal").textContent = money(total + shipping);
+}
+
+function changeQty(id, amount){
+  let cart = getCart();
+  const item = cart.find(x => String(x.id) === String(id));
+
+  if(!item) return;
+
+  item.qty += amount;
+
+  if(item.qty <= 0){
+    cart = cart.filter(x => String(x.id) !== String(id));
+  }
+
+  setCart(cart);
+}
+
+function removeItem(id){
+  const cart = getCart().filter(x => String(x.id) !== String(id));
+  setCart(cart);
+  showNotice("<b>Ürün sepetten çıkarıldı.</b>");
+}
+
+function goCheckout(){
+  const cart = getCart();
+
+  if(!cart.length){
+    showNotice("Sepetin boş.");
+    return;
+  }
+
+  window.location.href = "checkout.html";
+}
+
+loadCartProducts();
+</script>
+
+</body>
+</html>
