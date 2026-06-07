@@ -608,6 +608,10 @@ function productCard(product){
     </div>
   `;
 }
+function buyNow(id){
+  addToCart(id);
+  window.location.href = "cart.html";
+}
 console.log("SUPABSE BAĞLANDI");
 async function loadProducts(){
 console.log("ÜRÜNLER YÜKLENİYOR");
