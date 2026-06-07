@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Ödeme | Allona Shop</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+.page{width:1320px;margin:0 auto;padding:24px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px}
+.header{height:82px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;margin-bottom:22px}
+.logo{text-decoration:none;font-size:28px;font-weight:900}
+.logo b{color:#ffd700}.logo span{color:#00e5ff}
+.header a{color:white;text-decoration:none;font-weight:900}
+h1{color:#ffd700;margin-bottom:22px;font-size:36px}
+.checkout-layout{display:grid;grid-template-columns:1fr 390px;gap:22px}
+.form-box{padding:26px}
+.form-box h2,.summary h2{color:#ffd700;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field.full{grid-column:span 2}
+label{font-size:13px;color:#00e5ff;font-weight:900}
+input,textarea,select{
+  width:100%;border:1px solid rgba(0,229,255,.28);background:#031326;color:white;
+  border-radius:15px;padding:14px;outline:none;font-size:14px
+}
+textarea{min-height:95px;resize:none}
+.summary{padding:24px;height:max-content;position:sticky;top:20px}
+.item{display:flex;gap:12px;margin-bottom:12px;border-bottom:1px solid #ffffff18;padding-bottom:12px}
+.item img{width:62px;height:62px;object-fit:cover;border-radius:12px;background:white}
+.item b{color:#ffd700;font-size:13px}
+.item p{font-size:12px;opacity:.75;margin-top:5px}
+.row{display:flex;justify-content:space-between;margin:12px 0;opacity:.85}
+.total{font-size:24px;color:#00e5ff;font-weight:900;border-top:1px solid #ffffff22;padding-top:16px;margin-top:16px}
+.pay-btn{
+  width:100%;height:54px;border:0;border-radius:18px;margin-top:20px;
+  background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;font-size:16px;cursor:pointer
+}
+.back-btn{
+  width:100%;height:48px;border:0;border-radius:18px;margin-top:12px;
+  background:linear-gradient(135deg,#ffd700,#b88700);color:#031326;font-weight:900;cursor:pointer
+}
+.notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none;box-shadow:0 0 25px #00e5ff44;max-width:380px}
+.notice b{color:#ffd700}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+  <div class="header glass">
+    <a class="logo" href="allonashop.html"><b>Allona</b> <span>Shop</span></a>
+    <a href="cart.html">Sepete Dön</a>
+  </div>
+
+  <h1>Güvenli Ödeme</h1>
+
+  <div class="checkout-layout">
+
+    <div class="form-box glass">
+      <h2>Teslimat Bilgileri</h2>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Ad Soyad</label>
+          <input id="fullName" placeholder="Adınız Soyadınız">
+        </div>
+
+        <div class="field">
+          <label>Telefon</label>
+          <input id="phone" placeholder="+90 5XX XXX XX XX">
+        </div>
+
+        <div class="field">
+          <label>E-posta</label>
+          <input id="email" placeholder="ornek@mail.com">
+        </div>
+
+        <div class="field">
+          <label>Şehir</label>
+          <input id="city" placeholder="İstanbul">
+        </div>
+
+        <div class="field full">
+          <label>Teslimat Adresi</label>
+          <textarea id="address" placeholder="Mahalle, sokak, bina, daire ve açık adres"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Kupon Kodu</label>
+          <input id="coupon" placeholder="ALLONA10">
+        </div>
+
+        <div class="field">
+          <label>HP Kullanımı</label>
+          <select id="hpUse">
+            <option value="0">HP kullanma</option>
+            <option value="50">50 TL HP indirimi</option>
+            <option value="100">100 TL HP indirimi</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary glass">
+      <h2>Sipariş Özeti</h2>
+
+      <div id="orderItems">Ürünler yükleniyor...</div>
+
+      <div class="row"><span>Ara Toplam</span><b id="subTotal">0 ₺</b></div>
+      <div class="row"><span>HP / Kupon İndirimi</span><b id="discount">0 ₺</b></div>
+      <div class="row"><span>Kargo</span><b id="shipping">0 ₺</b></div>
+      <div class="row total"><span>Toplam</span><b id="grandTotal">0 ₺</b></div>
+
+      <button class="pay-btn" onclick="placeOrder()">iyzico ile Ödemeye Geç</button>
+      <button class="back-btn" onclick="window.location.href='cart.html'">Sepeti Düzenle</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="notice" class="notice"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let products = [];
+let currentTotal = 0;
+
+function money(value){
+  return Number(value || 0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " ₺";
+}
+
+function showNotice(text){
+  const box=document.getElementById("notice");
+  box.innerHTML=text;
+  box.style.display="block";
+  setTimeout(()=>{box.style.display="none"},4000);
+}
+
+function getCart(){
+  return JSON.parse(localStorage.getItem("allonaCart") || "[]");
+}
+
+async function loadCheckout(){
+  const cart = getCart();
+
+  if(!cart.length){
+    document.getElementById("orderItems").innerHTML = "Sepet boş.";
+    return;
+  }
+
+  const ids = cart.map(x=>x.id);
+
+  const {data,error} = await supabaseClient
+    .from("products")
+    .select("*")
+    .in("id",ids);
+
+  if(error){
+    document.getElementById("orderItems").innerHTML = "Ürünler yüklenemedi.";
+    console.error(error);
+    return;
+  }
+
+  products = data || [];
+  renderOrder();
+}
+
+function renderOrder(){
+  const cart = getCart();
+  let subtotal = 0;
+
+  document.getElementById("orderItems").innerHTML = cart.map(item=>{
+    const p = products.find(x=>String(x.id)===String(item.id));
+    if(!p) return "";
+
+    const name = p.product_name || p.name || "Ürün";
+    const img = p.image_url || "allona-shop.png";
+    const price = Number(p.price || 0);
+    subtotal += price * item.qty;
+
+    return `
+      <div class="item">
+        <img src="${img}" onerror="this.src='allona-shop.png'">
+        <div>
+          <b>${name}</b>
+          <p>${money(price)} x ${item.qty}</p>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const hpDiscount = Number(document.getElementById("hpUse").value || 0);
+  const shipping = subtotal >= 750 ? 0 : 89.90;
+  const total = Math.max(0, subtotal - hpDiscount + shipping);
+
+  currentTotal = total;
+
+  document.getElementById("subTotal").textContent = money(subtotal);
+  document.getElementById("discount").textContent = "-" + money(hpDiscount);
+  document.getElementById("shipping").textContent = money(shipping);
+  document.getElementById("grandTotal").textContent = money(total);
+}
+
+document.getElementById("hpUse").addEventListener("change", renderOrder);
+
+async function placeOrder(){
+  const fullName = document.getElementById("fullName").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const city = document.getElementById("city").value.trim();
+  const address = document.getElementById("address").value.trim();
+
+  if(!fullName || !phone || !email || !city || !address){
+    showNotice("Lütfen teslimat bilgilerini eksiksiz doldur.");
+    return;
+  }
+
+  showNotice("<b>Ödeme altyapısı hazırlanıyor.</b><br>iyzico bağlantısı sonraki aşamada aktif edilecek.");
+
+  /*
+  Sonraki aşamada burası:
+  1. orders tablosuna sipariş oluşturacak
+  2. order_items tablosuna ürünleri yazacak
+  3. Backend/Hetzner API üzerinden iyzico ödeme linki oluşturacak
+  */
+}
+
+loadCheckout();
+</script>
+
+</body>
+</html>
