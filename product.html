@@ -5,137 +5,62 @@
 <meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
 <title>Ürün Detayı | Allona Shop</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{
-  min-width:1320px;
-  background:#020814;
-  color:white;
-  overflow-x:auto;
-}
-body:before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  background:
-  radial-gradient(circle at top left,#00b7ff55,transparent 35%),
-  radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
-  linear-gradient(135deg,#020814,#061b33,#002b4d);
-}
-.page{
-  width:1320px;
-  margin:0 auto;
-  padding:25px;
-}
-.glass{
-  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-  border:1px solid rgba(0,229,255,.26);
-  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-  border-radius:26px;
-}
-.header{
-  height:82px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 24px;
-  margin-bottom:22px;
-}
-.logo{
-  font-size:28px;
-  font-weight:900;
-}
-.logo b{color:#ffd700}
-.logo span{color:#00e5ff}
-.header a{
-  color:white;
-  text-decoration:none;
-  font-weight:900;
-}
-.product-detail{
-  display:grid;
-  grid-template-columns:560px 1fr;
-  gap:28px;
-  padding:28px;
-}
-.product-image{
-  height:560px;
-  border-radius:24px;
-  overflow:hidden;
-  background:white;
-}
-.product-image img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.product-info h1{
-  color:#ffd700;
-  font-size:34px;
-  margin-bottom:14px;
-  line-height:1.25;
-}
-.category{
-  color:#00e5ff;
-  font-weight:900;
-  margin-bottom:20px;
-}
-.price{
-  font-size:34px;
-  font-weight:900;
-  color:#00e5ff;
-  margin-bottom:12px;
-}
-.old-price{
-  color:#ffffff77;
-  text-decoration:line-through;
-  font-size:20px;
-  margin-left:10px;
-}
-.desc{
-  opacity:.78;
-  line-height:1.7;
-  margin:24px 0;
-  font-size:16px;
-}
-.buttons{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  margin-top:25px;
-}
-button{
-  height:52px;
-  border:0;
-  border-radius:18px;
-  font-weight:900;
-  cursor:pointer;
-}
-.cart{
-  background:linear-gradient(135deg,#ffd700,#b88700);
-  color:#031326;
-}
-.buy{
-  background:linear-gradient(135deg,#00e5ff,#0077ff);
-  color:white;
-}
-.notice{
-  position:fixed;
-  right:25px;
-  bottom:25px;
-  background:#031326;
-  border:1px solid #00e5ff88;
-  border-radius:18px;
-  padding:15px 18px;
-  display:none;
-}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+a{text-decoration:none;color:inherit}
+button{border:none;cursor:pointer}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;overflow:hidden}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 340px;gap:18px;align-items:center;margin-bottom:22px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 20px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search button{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;padding:12px 20px;border-radius:18px}
+
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a,.actions button{background:transparent;color:white;font-weight:900}
+
+.product-detail{display:grid;grid-template-columns:560px 1fr;gap:24px;padding:28px}
+.image-box{height:620px;border-radius:24px;background:#061b33;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.image-box img{width:100%;height:100%;object-fit:cover}
+
+.info h1{font-size:38px;color:#ffd700;margin-bottom:12px;line-height:1.15}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.tag{padding:8px 12px;border-radius:99px;background:rgba(0,229,255,.10);border:1px solid rgba(0,229,255,.25);color:#00e5ff;font-size:13px;font-weight:900}
+.hp{color:#ffd700;border-color:rgba(255,215,0,.35);background:rgba(255,215,0,.10)}
+
+.price{font-size:34px;color:#00e5ff;font-weight:900;margin:18px 0}
+.old-price{text-decoration:line-through;color:#ffffff88;font-size:20px;margin-right:12px}
+.desc{opacity:.82;line-height:1.65;font-size:16px;margin:18px 0 24px}
+
+.stock{font-weight:900;margin:14px 0;color:#00ff99}
+.stock.no{color:#ff4f6d}
+
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.buy{height:56px;border-radius:18px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;font-size:16px}
+.cart{height:56px;border-radius:18px;background:linear-gradient(135deg,#ffd700,#b88700);color:#031326;font-weight:900;font-size:16px}
+.fav{height:50px;margin-top:14px;width:100%;border-radius:18px;background:rgba(255,255,255,.08);color:#ffd700;font-weight:900;font-size:16px;border:1px solid rgba(255,215,0,.25)}
+
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:26px}
+.trust{padding:20px;min-height:120px}
+.trust h3{color:#ffd700;margin-bottom:8px}
+.trust p{opacity:.75;font-size:13px;line-height:1.45}
+
+.notice{position:fixed;right:25px;bottom:25px;z-index:999;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;box-shadow:0 0 25px #00e5ff44;display:none}
 .notice b{color:#ffd700}
-.loading{
-  padding:40px;
-  font-size:20px;
-  color:#ffd700;
-}
+
+.footer{margin-top:35px;padding:30px;text-align:center;color:#ffffff99}
+.footer b{color:#ffd700}
 </style>
 </head>
 
@@ -143,144 +68,246 @@ button{
 
 <div class="page">
 
-  <div class="header glass">
-    <a class="logo" href="allona-shop.html">
-      <b>Allona</b> <span>Shop</span>
-    </a>
+<div class="header">
+<a class="brand glass" href="allonashop.html">
+<img src="allona.logo.png">
+<b>Allona</b><span>Shop</span>
+</a>
 
-    <a href="allona-shop.html">Mağazaya Dön</a>
-  </div>
+<div class="search glass">
+<input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
+<button onclick="goSearch()">Ara</button>
+</div>
 
-  <div id="detailArea" class="glass loading">
-    Ürün yükleniyor...
-  </div>
+<div class="actions glass">
+<a href="user.html">Hesabım</a>
+<a href="allonashop.html">Mağaza</a>
+<button onclick="goCart()">Sepetim <span id="cartCount">0</span></button>
+</div>
+</div>
 
+<section class="product-detail glass">
+
+<div class="image-box">
+<img id="productImage" src="allona-shop.png">
+</div>
+
+<div class="info">
+<h1 id="productName">Ürün yükleniyor...</h1>
+
+<div class="meta">
+<span id="productBrand" class="tag">Marka</span>
+<span id="productCategory" class="tag">Kategori</span>
+<span id="hpTag" class="tag hp" style="display:none">HP Avantajı</span>
+<span id="couponTag" class="tag" style="display:none">Kuponlu</span>
+</div>
+
+<div id="productPrice" class="price">0,00 ₺</div>
+
+<div id="productStock" class="stock">Stok kontrol ediliyor...</div>
+
+<p id="productDesc" class="desc">
+Ürün açıklaması yükleniyor...
+</p>
+
+<div class="btn-row">
+<button class="buy" onclick="buyNow()">Hemen Al</button>
+<button class="cart" onclick="addToCart()">Sepete Ekle</button>
+</div>
+
+<button class="fav" onclick="toggleFav()">♥️ Favorilere Ekle</button>
+</div>
+
+</section>
+
+<div class="trust-grid">
+<div class="trust glass"><h3>Güvenli Alışveriş</h3><p>Ödeme ve sipariş süreçleri AllonaHub sistemi üzerinden takip edilir.</p></div>
+<div class="trust glass"><h3>İade Politikası</h3><p>İade ve değişim süreçleri ilgili ürün ve satıcı koşullarına göre yürütülür.</p></div>
+<div class="trust glass"><h3>HP Avantajı</h3><p>Uygun ürünlerde HP kazanımı ve kupon avantajları sunulur.</p></div>
+<div class="trust glass"><h3>Partner Mağaza</h3><p>Ürünler AllonaHub partner ekosistemi üzerinden yayınlanır.</p></div>
 </div>
 
 <div id="notice" class="notice"></div>
+<footer class="footer glass">
+<b>AllonaHub</b><br>
+©️ 2026 Allworksin Business Danışmanlık Ticaret Ltd. Şti.
+</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div>
 
 <script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentProduct=null;
 
-let currentProduct = null;
+function getProductId(){
+const params=new URLSearchParams(window.location.search);
+return params.get("id");
+}
 
 function money(value){
-  return Number(value || 0).toLocaleString("tr-TR",{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  }) + " ₺";
+return Number(value||0).toLocaleString("tr-TR",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})+" ₺";
 }
 
 function showNotice(text){
-  const box = document.getElementById("notice");
-  box.innerHTML = text;
-  box.style.display = "block";
-  setTimeout(()=>{box.style.display="none"},3500);
-}
-
-function getProductId(){
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id");
+const box=document.getElementById("notice");
+box.innerHTML=text;
+box.style.display="block";
+setTimeout(()=>{box.style.display="none"},3000);
 }
 
 async function loadProduct(){
-  const id = getProductId();
-  const area = document.getElementById("detailArea");
+const id=getProductId();
 
-  if(!id){
-    area.innerHTML = "Ürün ID bulunamadı.";
-    return;
-  }
+if(!id){
+document.getElementById("productName").textContent="Ürün bulunamadı";
+document.getElementById("productDesc").textContent="Geçerli ürün bağlantısı bulunamadı.";
+return;
+}
 
-  const {data,error} = await supabase
-    .from("products")
-    .select("*")
-    .eq("id",id)
-    .single();
+const {data,error}=await supabaseClient
+.from("products")
+.select("*")
+.eq("id",id)
+.single();
 
-  if(error || !data){
-    area.innerHTML = "Ürün bulunamadı.";
-    console.error(error);
-    return;
-  }
+if(error||!data){
+console.error(error);
+document.getElementById("productName").textContent="Ürün yüklenemedi";
+document.getElementById("productDesc").textContent="Ürün bilgisi alınamadı.";
+return;
+}
 
-  currentProduct = data;
+currentProduct=data;
 
-  const name = data.product_name || data.name || data.title || "Allona Shop Ürünü";
-  const image = data.image_url || data.image || "allona-shop.png";
-  const category = data.category || "Allona Shop";
-  const description = data.description || data.product_description || "Bu ürün Allona Shop premium ürün koleksiyonunda yer almaktadır.";
+const name=data.product_name||data.name||"Ürün";
+const image=data.image_url||"allona-shop.png";
+const brand=data.brand||"Allona Shop";
+const category=data.category||"Kategori";
+const desc=data.description||"Bu ürün AllonaHub partner ekosistemi üzerinden satışa sunulmaktadır.";
+const stock=Number(data.stock||0);
 
-  area.className = "product-detail glass";
+document.title=name+" | Allona Shop";
+document.getElementById("productImage").src=image;
+document.getElementById("productImage").onerror=function(){this.src="allona-shop.png"};
+document.getElementById("productName").textContent=name;
+document.getElementById("productBrand").textContent=brand;
+document.getElementById("productCategory").textContent=category;
+document.getElementById("productDesc").textContent=desc;
 
-  area.innerHTML = `
-    <div class="product-image">
-      <img src="${image}" alt="${name}" onerror="this.src='allona-shop.png'">
-    </div>
+let priceHtml="";
+if(data.old_price&&Number(data.old_price)>Number(data.price)){
+priceHtml+=`<span class="old-price">${money(data.old_price)}</span>`;
+}
+priceHtml+=money(data.price);
+document.getElementById("productPrice").innerHTML=priceHtml;
 
-    <div class="product-info">
-      <h1>${name}</h1>
+const stockEl=document.getElementById("productStock");
+if(stock>0){
+stockEl.textContent="Stokta var · "+stock+" adet";
+stockEl.classList.remove("no");
+}else{
+stockEl.textContent="Stokta yok";
+stockEl.classList.add("no");
+}
 
-      <div class="category">${category}</div>
-
-      <div class="price">
-        ${money(data.price)}
-        ${
-          data.old_price
-          ? `<span class="old-price">${money(data.old_price)}</span>`
-          : ""
-        }
-      </div>
-
-      <div class="desc">${description}</div>
-
-      <p>Stok: <b>${data.stock || 0}</b></p>
-
-      <div class="buttons">
-        <button class="cart" onclick="addToCart()">Sepete Ekle</button>
-        <button class="buy" onclick="buyNow()">Hemen Al</button>
-      </div>
-    </div>
-  `;
+if(data.hp_status){
+document.getElementById("hpTag").style.display="inline-block";
+}
+if(data.coupon_status){
+document.getElementById("couponTag").style.display="inline-block";
+}
 }
 
 function getCart(){
-  return JSON.parse(localStorage.getItem("allonaCart") || "[]");
+return JSON.parse(localStorage.getItem("allonaCart")||"[]");
 }
 
 function setCart(cart){
-  localStorage.setItem("allonaCart",JSON.stringify(cart));
+localStorage.setItem("allonaCart",JSON.stringify(cart));
+updateCartCount();
 }
 
 function addToCart(){
-  if(!currentProduct) return;
+if(!currentProduct){
+showNotice("Ürün bilgisi alınamadı.");
+return;
+}
 
-  const cart = getCart();
-  const found = cart.find(x => String(x.id) === String(currentProduct.id));
+let cart=getCart();
+let found=cart.find(x=>String(x.id)===String(currentProduct.id));
 
-  if(found){
-    found.qty++;
-  }else{
-    cart.push({
-      id: currentProduct.id,
-      qty: 1
-    });
-  }
+if(found){
+found.qty++;
+}else{
+cart.push({id:currentProduct.id,qty:1});
+}
 
-  setCart(cart);
-  showNotice("<b>Ürün sepete eklendi.</b>");
+setCart(cart);
+showNotice("<b>Ürün sepete eklendi.</b>");
 }
 
 function buyNow(){
-  addToCart();
-  showNotice("<b>Ödeme sistemi yakında iyzico ile aktif edilecek.</b>");
+addToCart();
+window.location.href="cart.html";
 }
 
+function updateCartCount(){
+const total=getCart().reduce((sum,item)=>sum+Number(item.qty||0),0);
+document.getElementById("cartCount").textContent=total;
+}
+
+function goCart(){
+window.location.href="cart.html";
+}
+
+function getFavs(){
+return JSON.parse(localStorage.getItem("allonaFavs")||"[]");
+}
+
+function setFavs(favs){
+localStorage.setItem("allonaFavs",JSON.stringify(favs));
+}
+
+function toggleFav(){
+if(!currentProduct){
+showNotice("Ürün bilgisi alınamadı.");
+return;
+}
+
+let favs=getFavs();
+const id=String(currentProduct.id);
+
+if(favs.includes(id)){
+favs=favs.filter(x=>x!==id);
+showNotice("Ürün favorilerden çıkarıldı.");
+}else{
+favs.push(id);
+showNotice("<b>Ürün favorilere eklendi.</b>");
+}
+
+setFavs(favs);
+}
+
+function goSearch(){
+const q=document.getElementById("searchInput").value.trim();
+if(!q){
+window.location.href="allonashop.html";
+return;
+}
+window.location.href="allonashop.html?search="+encodeURIComponent(q);
+}
+
+document.getElementById("searchInput").addEventListener("keydown",function(e){
+if(e.key==="Enter")goSearch();
+});
+
+updateCartCount();
 loadProduct();
 </script>
 
