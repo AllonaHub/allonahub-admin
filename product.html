@@ -32,7 +32,7 @@ button{border:none;cursor:pointer}
 
 .product-detail{display:grid;grid-template-columns:560px 1fr;gap:24px;padding:28px}
 .image-box{height:620px;border-radius:24px;background:#061b33;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.image-box img{width:100%;height:100%;object-fit:cover}
+.image-box img{width:100%;height:100%;object-fit:cover;transition:.15s;transform-origin:center;}
 
 .info h1{font-size:38px;color:#ffd700;margin-bottom:12px;line-height:1.15}
 .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
@@ -89,7 +89,10 @@ button{border:none;cursor:pointer}
 <section class="product-detail glass">
 
 <div class="image-box">
-<img id="productImage" src="allona-shop.png">
+<img id="productImage"
+src="allona-shop.png"
+onmausemove="zoomImage(event)"
+onmauseleave="resetZoom()">  
 </div>
 
 <div class="info">
@@ -309,6 +312,27 @@ if(e.key==="Enter")goSearch();
 
 updateCartCount();
 loadProduct();
+function zoomImage(e){
+
+const img=document.getElementById("productImage");
+
+const rect=img.getBoundingClientRect();
+
+const x=((e.clientX-rect.left)/rect.width)*100;
+const y=((e.clientY-rect.top)/rect.height)*100;
+
+img.style.transformOrigin=x+"% "+y+"%";
+img.style.transform="scale(2)";
+}
+
+function resetZoom(){
+
+const img=document.getElementById("productImage");
+
+img.style.transform="scale(1)";
+img.style.transformOrigin="center";
+
+}
 </script>
 
 </body>
