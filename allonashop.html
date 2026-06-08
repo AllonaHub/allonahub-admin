@@ -434,10 +434,10 @@ box.style.display="none";
 function productCard(product){
 
 return `
-<div class="product glass">
+<div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
 
 <div class="product-img">
-<img src="${product.image_url || 'allona-shop.png'}">
+<img src="${product.image_url || 'allona-shop.png'}" onerror="this.src='allona-shop.png'">
 </div>
 
 <b>${product.product_name || 'Ürün'}</b>
@@ -455,18 +455,18 @@ ${money(product.price)}
 
 <div class="product-actions">
 <button class="buy-btn"
-onclick="buyNow('${product.id}')">
+onclick="event.stopPropagation(); buyNow('${product.id}')">
 Satın Al
 </button>
 
 <button class="fav-btn"
-onclick="toggleFav('${product.id}')">
+onclick="event.stopPropagation(); toggleFav('${product.id}')">
 ♥️
 </button>
 </div>
 
 <button class="cart-btn"
-onclick="addToCart('${product.id}')">
+onclick="event.stopPropagation(); addToCart('${product.id}')">
 Sepete Ekle
 </button>
 
