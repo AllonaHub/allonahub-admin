@@ -29,6 +29,7 @@
   --muted:#b8d8f2;
   --danger:#ff4d6d;
   --success:#25D366;
+  --dark:#07101f;
 }
 
 body{
@@ -44,7 +45,7 @@ body:before{
   inset:0;
   z-index:-3;
   background:
-    radial-gradient(circle at top left,rgba(0,217,255,.34),transparent 34%),
+    radial-gradient(circle at top left,rgba(0,217,255,.36),transparent 34%),
     radial-gradient(circle at bottom right,rgba(255,215,0,.18),transparent 32%),
     linear-gradient(135deg,#020814,#061b33,#001827);
 }
@@ -63,11 +64,13 @@ body:after{
 }
 
 a{
-  text-decoration:none;
   color:inherit;
+  text-decoration:none;
 }
 
-button,input,select{
+button,
+input,
+select{
   font-family:inherit;
 }
 
@@ -80,24 +83,80 @@ button{
   min-height:100vh;
 }
 
+.container{
+  max-width:1440px;
+  margin:auto;
+  padding:0 22px;
+}
+
+.glass{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:28px;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+  backdrop-filter:blur(18px);
+}
+
+.section{
+  padding:28px 0;
+}
+
+.section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.section-head h2{
+  font-size:25px;
+  font-weight:950;
+  letter-spacing:-.4px;
+}
+
+.section-head p{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:5px;
+}
+
+.view-all{
+  min-height:38px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:white;
+  padding:0 14px;
+  font-size:13px;
+  font-weight:850;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.view-all i{
+  color:var(--gold);
+}
+
 /* HEADER */
 
 .shop-header{
   position:sticky;
   top:0;
-  z-index:100;
+  z-index:200;
   background:rgba(2,8,20,.88);
-  backdrop-filter:blur(20px);
+  backdrop-filter:blur(22px);
   border-bottom:1px solid var(--border);
 }
 
 .header-inner{
-  max-width:1420px;
+  max-width:1440px;
   margin:auto;
   padding:14px 22px;
   display:flex;
   align-items:center;
-  gap:18px;
+  gap:16px;
 }
 
 .logo-area{
@@ -108,15 +167,15 @@ button{
 }
 
 .logo-mark{
-  width:44px;
-  height:44px;
-  border-radius:15px;
+  width:46px;
+  height:46px;
+  border-radius:16px;
   display:flex;
   align-items:center;
   justify-content:center;
-  background:linear-gradient(135deg,rgba(0,217,255,.24),rgba(255,215,0,.20));
+  background:linear-gradient(135deg,rgba(0,217,255,.25),rgba(255,215,0,.18));
   border:1px solid rgba(255,255,255,.18);
-  box-shadow:0 0 24px rgba(0,217,255,.20);
+  box-shadow:0 0 26px rgba(0,217,255,.22);
 }
 
 .logo-mark i{
@@ -132,18 +191,18 @@ button{
 
 .logo-text strong{
   font-size:23px;
-  font-weight:900;
-  letter-spacing:.2px;
+  font-weight:950;
   color:var(--blue);
+}
+
+.logo-text strong b{
+  color:var(--gold);
 }
 
 .logo-text span{
   font-size:12px;
   color:var(--muted);
-}
-
-.logo-text strong b{
-  color:var(--gold);
+  margin-top:3px;
 }
 
 /* SEARCH */
@@ -227,7 +286,7 @@ button{
 
 .header-btn span{
   font-size:13px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .badge{
@@ -243,11 +302,11 @@ button{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-weight:900;
+  font-weight:950;
   border:2px solid #020814;
 }
 
-/* ACCOUNT DROPDOWN */
+/* ACCOUNT MENU */
 
 .account-wrap{
   position:relative;
@@ -257,9 +316,9 @@ button{
   position:absolute;
   top:58px;
   right:0;
-  width:260px;
+  width:270px;
   display:none;
-  background:rgba(5,18,36,.96);
+  background:rgba(5,18,36,.97);
   border:1px solid var(--border);
   border-radius:22px;
   padding:12px;
@@ -297,99 +356,20 @@ button{
   width:18px;
 }
 
-/* TOP CATEGORY BAR */
+/* LOADING / EMPTY / TOAST */
 
-.top-category-bar{
-  border-top:1px solid rgba(255,255,255,.06);
-  background:rgba(255,255,255,.035);
-}
-
-.top-category-inner{
-  max-width:1420px;
-  margin:auto;
-  padding:10px 22px;
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  scrollbar-width:none;
-}
-
-.top-category-inner::-webkit-scrollbar{
-  display:none;
-}
-
-.top-cat-btn{
-  white-space:nowrap;
-  border:1px solid rgba(255,255,255,.13);
-  background:rgba(255,255,255,.065);
-  color:white;
-  border-radius:999px;
-  padding:9px 15px;
-  font-size:13px;
-  font-weight:800;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  transition:.25s;
-}
-
-.top-cat-btn i{
-  color:var(--gold);
-}
-
-.top-cat-btn:hover,
-.top-cat-btn.active{
-  background:linear-gradient(135deg,rgba(0,217,255,.28),rgba(255,215,0,.13));
-  border-color:rgba(0,217,255,.55);
-  box-shadow:0 0 18px rgba(0,217,255,.18);
-}
-
-/* GLOBAL SECTIONS */
-
-.container{
-  max-width:1420px;
-  margin:auto;
-  padding:0 22px;
-}
-
-.section-title{
-  display:flex;
-  align-items:end;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:18px;
-}
-
-.section-title h2{
-  font-size:25px;
-  font-weight:900;
-}
-
-.section-title p{
-  color:var(--muted);
-  font-size:14px;
-  margin-top:5px;
-}
-
-.glass{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:28px;
-  box-shadow:0 24px 80px rgba(0,0,0,.25);
-  backdrop-filter:blur(18px);
-}
-
-/* LOADING */
-
-.loading{
+.loading,
+.empty-state{
   width:100%;
-  min-height:260px;
+  min-height:240px;
   display:flex;
   align-items:center;
   justify-content:center;
   flex-direction:column;
-  gap:15px;
+  gap:14px;
   color:var(--muted);
+  text-align:center;
+  padding:30px;
 }
 
 .spinner{
@@ -405,7 +385,14 @@ button{
   to{transform:rotate(360deg)}
 }
 
-/* TOAST */
+.empty-state i{
+  font-size:42px;
+  color:var(--gold);
+}
+
+.empty-state h3{
+  color:white;
+}
 
 .toast{
   position:fixed;
@@ -433,9 +420,9 @@ button{
   margin-bottom:4px;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE BASE */
 
-@media(max-width:1100px){
+@media(max-width:1120px){
   .header-inner{
     flex-wrap:wrap;
   }
@@ -466,355 +453,526 @@ button{
   .header-btn span{
     display:none;
   }
-
-  .top-category-inner{
-    padding:9px 14px;
-  }
 }
-  /* HERO */
+  /* TOP CATEGORY NAV */
 
-.hero-section{
-  padding:28px 0 18px;
-}
-
-.hero-grid{
-  display:grid;
-  grid-template-columns:1.55fr .75fr;
-  gap:18px;
-}
-
-.hero-main{
-  min-height:330px;
-  border-radius:34px;
-  padding:38px;
+.category-nav{
+  border-top:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.035);
   position:relative;
-  overflow:hidden;
-  background:
-    radial-gradient(circle at 78% 20%,rgba(255,215,0,.26),transparent 30%),
-    radial-gradient(circle at 15% 10%,rgba(0,217,255,.34),transparent 35%),
-    linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.045));
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 30px 90px rgba(0,0,0,.34);
 }
 
-.hero-main:after{
-  content:"";
-  position:absolute;
-  right:-80px;
-  bottom:-110px;
-  width:360px;
-  height:360px;
-  border-radius:50%;
-  background:rgba(0,217,255,.12);
-  filter:blur(4px);
+.category-nav-inner{
+  max-width:1440px;
+  margin:auto;
+  padding:10px 22px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  overflow-x:auto;
+  scrollbar-width:none;
 }
 
-.hero-kicker{
-  display:inline-flex;
+.category-nav-inner::-webkit-scrollbar{
+  display:none;
+}
+
+.all-category-btn,
+.top-cat-btn{
+  white-space:nowrap;
+  min-height:40px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.065);
+  color:white;
+  border-radius:999px;
+  padding:0 15px;
+  font-size:13px;
+  font-weight:850;
+  display:flex;
   align-items:center;
   gap:8px;
-  padding:9px 14px;
-  border-radius:999px;
-  background:rgba(255,215,0,.12);
-  border:1px solid rgba(255,215,0,.32);
-  color:var(--gold);
-  font-size:13px;
-  font-weight:900;
-  margin-bottom:18px;
-}
-
-.hero-main h1{
-  max-width:650px;
-  font-size:48px;
-  line-height:1.06;
-  font-weight:950;
-  letter-spacing:-1.2px;
-  margin-bottom:16px;
-}
-
-.hero-main h1 span{
-  color:var(--blue);
-}
-
-.hero-main p{
-  max-width:610px;
-  color:#d8efff;
-  font-size:17px;
-  line-height:1.65;
-  margin-bottom:24px;
-}
-
-.hero-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  position:relative;
-  z-index:2;
-}
-
-.primary-btn,
-.secondary-btn{
-  min-height:48px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.16);
-  padding:0 18px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  font-weight:900;
-  color:white;
   transition:.25s;
 }
 
-.primary-btn{
-  background:linear-gradient(135deg,var(--blue),var(--blue2));
-  box-shadow:0 12px 34px rgba(0,119,255,.27);
+.all-category-btn{
+  background:linear-gradient(135deg,rgba(0,217,255,.18),rgba(255,215,0,.10));
+  border-color:rgba(0,217,255,.35);
 }
 
-.secondary-btn{
-  background:rgba(255,255,255,.085);
-}
-
-.primary-btn:hover,
-.secondary-btn:hover{
-  transform:translateY(-3px);
-}
-
-.hero-side{
-  display:grid;
-  gap:18px;
-}
-
-.side-card{
-  min-height:156px;
-  padding:24px;
-  border-radius:30px;
-  position:relative;
-  overflow:hidden;
-  background:rgba(255,255,255,.075);
-  border:1px solid rgba(255,255,255,.14);
-}
-
-.side-card i{
-  width:46px;
-  height:46px;
-  border-radius:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,217,255,.12);
+.all-category-btn i,
+.top-cat-btn i{
   color:var(--gold);
-  font-size:20px;
-  margin-bottom:16px;
 }
 
-.side-card h3{
-  font-size:20px;
-  margin-bottom:8px;
+.all-category-btn:hover,
+.top-cat-btn:hover,
+.top-cat-btn.active{
+  background:linear-gradient(135deg,rgba(0,217,255,.28),rgba(255,215,0,.13));
+  border-color:rgba(0,217,255,.55);
+  box-shadow:0 0 18px rgba(0,217,255,.18);
 }
 
-.side-card p{
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.5;
+/* MEGA MENU */
+
+.mega-overlay{
+  position:fixed;
+  inset:0;
+  z-index:240;
+  background:rgba(0,0,0,.46);
+  display:none;
 }
 
-.side-card:after{
-  content:"";
-  position:absolute;
-  right:-55px;
-  bottom:-55px;
-  width:150px;
-  height:150px;
-  border-radius:50%;
-  background:rgba(0,217,255,.12);
+.mega-overlay.active{
+  display:block;
 }
 
-/* CATEGORY MEGA AREA */
-
-.category-section{
-  padding:18px 0 22px;
+.mega-menu{
+  position:fixed;
+  top:118px;
+  left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  z-index:260;
+  width:min(1380px,calc(100vw - 44px));
+  max-height:74vh;
+  display:none;
+  background:rgba(5,18,36,.98);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:28px;
+  overflow:hidden;
+  box-shadow:0 35px 120px rgba(0,0,0,.58);
+  backdrop-filter:blur(24px);
 }
 
-.category-layout{
+.mega-menu.active{
   display:grid;
-  grid-template-columns:270px 1fr;
-  gap:18px;
+  grid-template-columns:280px 1fr;
+  animation:megaIn .18s ease forwards;
 }
 
-.category-sidebar{
-  padding:16px;
+@keyframes megaIn{
+  from{
+    opacity:0;
+    transform:translateX(-50%) translateY(-12px);
+  }
+  to{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
 }
 
-.sidebar-title{
-  font-size:16px;
+.mega-left{
+  padding:18px;
+  border-right:1px solid rgba(255,255,255,.10);
+  overflow:auto;
+  background:rgba(255,255,255,.035);
+}
+
+.mega-title{
+  font-size:15px;
+  color:var(--gold);
   font-weight:950;
   margin-bottom:12px;
-  color:var(--gold);
   display:flex;
   align-items:center;
-  gap:8px;
+  justify-content:space-between;
+  gap:10px;
 }
 
-.sidebar-category-list{
+.mega-main-list{
   display:flex;
   flex-direction:column;
   gap:8px;
 }
 
-.side-category-btn{
+.mega-main-btn{
   width:100%;
-  min-height:45px;
-  border:1px solid rgba(255,255,255,.11);
+  min-height:44px;
+  border-radius:15px;
+  border:1px solid rgba(255,255,255,.10);
   background:rgba(255,255,255,.055);
   color:white;
-  border-radius:15px;
-  padding:0 12px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:8px;
-  font-weight:800;
+  gap:10px;
+  padding:0 12px;
+  font-weight:850;
   transition:.22s;
 }
 
-.side-category-btn span{
+.mega-main-btn span{
   display:flex;
   align-items:center;
   gap:9px;
 }
 
-.side-category-btn i{
+.mega-main-btn i{
   color:var(--blue);
 }
 
-.side-category-btn:hover,
-.side-category-btn.active{
+.mega-main-btn:hover,
+.mega-main-btn.active{
   background:rgba(0,217,255,.14);
   border-color:rgba(0,217,255,.38);
 }
 
-.category-content{
-  padding:18px;
+.mega-right{
+  padding:20px;
+  overflow:auto;
 }
 
-.featured-categories{
+.mega-right-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.mega-right-head h3{
+  font-size:24px;
+  font-weight:950;
+}
+
+.mega-right-head p{
+  color:var(--muted);
+  font-size:13px;
+  margin-top:5px;
+}
+
+.mega-close{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:white;
+}
+
+.mega-columns{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:14px;
+  gap:16px;
 }
 
-.feature-card{
-  min-height:138px;
-  border-radius:22px;
-  padding:18px;
+.mega-group{
+  padding:16px;
+  border-radius:20px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.mega-group h4{
+  font-size:15px;
+  color:var(--gold);
+  margin-bottom:11px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.mega-sub-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.mega-sub-list button{
+  border:0;
+  background:transparent;
+  color:rgba(255,255,255,.82);
+  text-align:left;
+  font-size:13px;
+  line-height:1.35;
+  padding:4px 0;
+  transition:.2s;
+}
+
+.mega-sub-list button:hover{
+  color:var(--blue);
+  transform:translateX(4px);
+}
+
+/* HERO ADS */
+
+.hero-ads-section{
+  padding:26px 0 16px;
+}
+
+.hero-ads-grid{
+  display:grid;
+  grid-template-columns:1.35fr .85fr .85fr;
+  grid-template-rows:170px 170px;
+  gap:18px;
+}
+
+.ad-card{
   position:relative;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.12);
+  border-radius:30px;
   background:
-    linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.04));
-  cursor:pointer;
+    radial-gradient(circle at 78% 15%,rgba(255,215,0,.28),transparent 30%),
+    radial-gradient(circle at 12% 18%,rgba(0,217,255,.34),transparent 34%),
+    linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.045));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 30px 90px rgba(0,0,0,.32);
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+.ad-card.large{
+  grid-row:span 2;
+  padding:38px;
+}
+
+.ad-card:after{
+  content:"";
+  position:absolute;
+  right:-70px;
+  bottom:-90px;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  background:rgba(0,217,255,.12);
+  filter:blur(4px);
+}
+
+.ad-card img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:.42;
+}
+
+.ad-card-content{
+  position:relative;
+  z-index:2;
+}
+
+.ad-kicker{
+  width:max-content;
+  max-width:100%;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,215,0,.13);
+  border:1px solid rgba(255,215,0,.30);
+  color:var(--gold);
+  font-size:12px;
+  font-weight:950;
+  margin-bottom:12px;
+}
+
+.ad-card h2{
+  font-size:36px;
+  line-height:1.08;
+  font-weight:950;
+  max-width:570px;
+}
+
+.ad-card h3{
+  font-size:21px;
+  line-height:1.15;
+  font-weight:950;
+}
+
+.ad-card p{
+  color:#d8efff;
+  font-size:14px;
+  line-height:1.5;
+  margin-top:8px;
+  max-width:560px;
+}
+
+.ad-card.large p{
+  font-size:16px;
+  line-height:1.6;
+}
+
+.ad-btn{
+  width:max-content;
+  min-height:40px;
+  margin-top:14px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  padding:0 14px;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:white;
+  font-size:13px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* PROMO STRIPS */
+
+.promo-strip-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+}
+
+.promo-mini{
+  min-height:110px;
+  border-radius:24px;
+  padding:18px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.13);
+  display:flex;
+  align-items:center;
+  gap:15px;
   transition:.25s;
 }
 
-.feature-card:hover{
+.promo-mini:hover{
   transform:translateY(-4px);
-  border-color:rgba(0,217,255,.48);
-  box-shadow:0 18px 40px rgba(0,217,255,.13);
-}
-
-.feature-card i{
-  color:var(--gold);
-  font-size:26px;
-  margin-bottom:20px;
-}
-
-.feature-card h3{
-  font-size:17px;
-  margin-bottom:6px;
-}
-
-.feature-card p{
-  color:var(--muted);
-  font-size:13px;
-}
-
-.feature-card:after{
-  content:"";
-  position:absolute;
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  right:-40px;
-  bottom:-45px;
-  background:rgba(0,217,255,.11);
-}
-
-/* FILTER BAR */
-
-.product-section{
-  padding:22px 0 60px;
-}
-
-.filter-bar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:18px;
-  padding:14px;
-  border-radius:24px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
-}
-
-.filter-left,
-.filter-right{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.filter-pill{
-  min-height:38px;
-  border-radius:999px;
-  padding:0 14px;
-  background:rgba(255,255,255,.075);
-  border:1px solid rgba(255,255,255,.13);
-  color:white;
-  font-size:13px;
-  font-weight:800;
-}
-
-.filter-pill.active{
-  background:rgba(0,217,255,.18);
   border-color:rgba(0,217,255,.45);
 }
 
-.sort-select{
-  min-height:40px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.13);
-  background:rgba(5,18,36,.9);
-  color:white;
-  padding:0 12px;
-  outline:0;
+.promo-mini-icon{
+  min-width:48px;
+  width:48px;
+  height:48px;
+  border-radius:17px;
+  background:rgba(0,217,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gold);
+  font-size:20px;
 }
 
-/* PRODUCT GRID */
+.promo-mini h3{
+  font-size:17px;
+  margin-bottom:5px;
+}
+
+.promo-mini p{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}
+
+/* RESPONSIVE CATEGORY/HERO */
+
+@media(max-width:1180px){
+  .mega-menu.active{
+    grid-template-columns:1fr;
+  }
+
+  .mega-left{
+    border-right:0;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+
+  .mega-main-list{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .mega-columns{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .hero-ads-grid{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto;
+  }
+
+  .ad-card.large{
+    grid-column:1/-1;
+    grid-row:auto;
+    min-height:290px;
+  }
+
+  .promo-strip-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:760px){
+  .mega-menu{
+    top:105px;
+    width:calc(100vw - 24px);
+    max-height:78vh;
+  }
+
+  .mega-main-list{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .mega-columns{
+    grid-template-columns:1fr;
+  }
+
+  .hero-ads-grid{
+    grid-template-columns:1fr;
+  }
+
+  .ad-card,
+  .ad-card.large{
+    min-height:230px;
+    padding:24px;
+  }
+
+  .ad-card h2{
+    font-size:30px;
+  }
+
+  .promo-strip-grid{
+    grid-template-columns:1fr;
+  }
+}
+  /* PRODUCT SECTIONS */
+
+.product-row-section{
+  padding:24px 0;
+}
+
+.product-row{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:260px;
+  gap:18px;
+  overflow-x:auto;
+  padding:4px 2px 14px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,217,255,.45) rgba(255,255,255,.08);
+}
+
+.product-row::-webkit-scrollbar{
+  height:8px;
+}
+
+.product-row::-webkit-scrollbar-track{
+  background:rgba(255,255,255,.08);
+  border-radius:999px;
+}
+
+.product-row::-webkit-scrollbar-thumb{
+  background:rgba(0,217,255,.45);
+  border-radius:999px;
+}
+
+/* GRID PRODUCTS */
 
 .products-grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:20px;
+  grid-template-columns:repeat(5,1fr);
+  gap:18px;
 }
 
 .product-card{
   position:relative;
   overflow:hidden;
-  border-radius:28px;
+  border-radius:26px;
   background:rgba(255,255,255,.075);
   border:1px solid rgba(255,255,255,.13);
   transition:.28s;
@@ -827,7 +985,7 @@ button{
 }
 
 .product-image{
-  height:275px;
+  height:245px;
   position:relative;
   overflow:hidden;
   background:linear-gradient(135deg,#08162a,#0b2d4f);
@@ -844,15 +1002,15 @@ button{
 }
 
 .product-placeholder{
-  width:86px;
-  height:86px;
+  width:84px;
+  height:84px;
   border-radius:28px;
   display:flex;
   align-items:center;
   justify-content:center;
   background:rgba(0,217,255,.12);
   color:var(--gold);
-  font-size:36px;
+  font-size:35px;
 }
 
 .product-badges{
@@ -884,6 +1042,10 @@ button{
   color:var(--blue);
 }
 
+.product-badge.green{
+  color:var(--success);
+}
+
 .favorite-btn{
   position:absolute;
   top:12px;
@@ -910,7 +1072,7 @@ button{
 }
 
 .product-info{
-  padding:17px;
+  padding:15px;
 }
 
 .product-category{
@@ -918,13 +1080,29 @@ button{
   font-size:12px;
   font-weight:900;
   margin-bottom:8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .product-title{
-  font-size:16px;
+  font-size:15px;
   line-height:1.35;
-  min-height:43px;
+  min-height:41px;
   margin-bottom:10px;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+.product-brand{
+  color:rgba(255,255,255,.55);
+  font-size:12px;
+  margin-bottom:10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .product-meta{
@@ -959,7 +1137,7 @@ button{
 .price-box strong{
   display:block;
   color:var(--gold);
-  font-size:22px;
+  font-size:21px;
   line-height:1;
 }
 
@@ -967,12 +1145,14 @@ button{
   color:rgba(255,255,255,.45);
   font-size:12px;
   text-decoration:line-through;
+  display:block;
+  margin-bottom:4px;
 }
 
 .hp-reward{
   font-size:12px;
   color:var(--success);
-  font-weight:900;
+  font-weight:950;
   background:rgba(37,211,102,.12);
   border:1px solid rgba(37,211,102,.25);
   border-radius:999px;
@@ -983,16 +1163,17 @@ button{
 .product-actions{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:9px;
+  gap:8px;
 }
 
 .cart-btn,
 .buy-btn{
-  min-height:42px;
+  min-height:41px;
   border-radius:14px;
   border:1px solid rgba(255,255,255,.13);
   color:white;
   font-weight:950;
+  font-size:13px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1008,246 +1189,250 @@ button{
   color:#07101f;
 }
 
-.empty-state{
-  grid-column:1/-1;
-  min-height:300px;
-  border-radius:28px;
-  background:rgba(255,255,255,.055);
-  border:1px dashed rgba(255,255,255,.18);
+.product-wide-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:18px;
+}
+
+/* DISCOVERY / CAMPAIGN CARDS */
+
+.discovery-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+}
+
+.discovery-card{
+  min-height:170px;
+  border-radius:26px;
+  padding:22px;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 80% 20%,rgba(255,215,0,.18),transparent 28%),
+    linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.045));
+  border:1px solid rgba(255,255,255,.13);
+  transition:.25s;
+}
+
+.discovery-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(0,217,255,.45);
+}
+
+.discovery-card i{
+  width:50px;
+  height:50px;
+  border-radius:18px;
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-  text-align:center;
-  padding:30px;
-  color:var(--muted);
-}
-
-.empty-state i{
-  font-size:44px;
+  background:rgba(0,217,255,.12);
   color:var(--gold);
-  margin-bottom:14px;
+  font-size:21px;
+  margin-bottom:18px;
 }
 
-.empty-state h3{
-  color:white;
+.discovery-card h3{
+  font-size:20px;
   margin-bottom:8px;
 }
 
-/* RESPONSIVE 2 */
-
-@media(max-width:1180px){
-  .hero-grid{
-    grid-template-columns:1fr;
-  }
-
-  .hero-side{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .category-layout{
-    grid-template-columns:1fr;
-  }
-
-  .sidebar-category-list{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-  }
-
-  .featured-categories{
-    grid-template-columns:repeat(3,1fr);
-  }
-
-  .products-grid{
-    grid-template-columns:repeat(3,1fr);
-  }
+.discovery-card p{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.45;
 }
 
-@media(max-width:850px){
-  .hero-main{
-    padding:28px;
-    min-height:auto;
-  }
-
-  .hero-main h1{
-    font-size:34px;
-  }
-
-  .hero-side{
-    grid-template-columns:1fr;
-  }
-
-  .sidebar-category-list{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .featured-categories{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .products-grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .filter-bar{
-    align-items:flex-start;
-    flex-direction:column;
-  }
+.discovery-card button{
+  margin-top:14px;
+  min-height:36px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:white;
+  padding:0 13px;
+  font-weight:850;
 }
 
-@media(max-width:560px){
-  .featured-categories,
-  .products-grid,
-  .sidebar-category-list{
-    grid-template-columns:1fr;
-  }
+/* BRAND SECTION */
 
-  .product-image{
-    height:245px;
-  }
-}
-  /* FOOTER */
-
-.shop-footer{
-  margin-top:30px;
-  border-top:1px solid rgba(255,255,255,.12);
-  background:rgba(2,8,20,.86);
-  backdrop-filter:blur(18px);
-}
-
-.footer-inner{
-  max-width:1420px;
-  margin:auto;
-  padding:38px 22px 28px;
-}
-
-.footer-grid{
+.brand-grid{
   display:grid;
-  grid-template-columns:1.2fr .8fr .8fr .8fr;
-  gap:24px;
-  margin-bottom:26px;
+  grid-template-columns:repeat(6,1fr);
+  gap:14px;
 }
 
-.footer-brand h2{
-  font-size:28px;
-  color:var(--blue);
-  margin-bottom:10px;
-}
-
-.footer-brand h2 span{
-  color:var(--gold);
-}
-
-.footer-brand p{
-  color:var(--muted);
-  line-height:1.6;
-  font-size:14px;
-  max-width:410px;
-}
-
-.footer-col h3{
-  color:var(--gold);
-  font-size:16px;
-  margin-bottom:13px;
-}
-
-.footer-col a{
-  display:block;
-  color:var(--muted);
-  font-size:14px;
-  margin-bottom:9px;
-  transition:.2s;
-}
-
-.footer-col a:hover{
-  color:var(--blue);
-  transform:translateX(4px);
-}
-
-/* SENİN İSTEDİĞİN SOSYAL İKON FOOTER ALANI */
-
-.social-icons{
+.brand-card{
+  min-height:92px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.065);
   display:flex;
-  justify-content:space-evenly;
   align-items:center;
-  width:100%;
-  margin-top:20px;
-  padding:15px 0;
-  flex-wrap:wrap;
+  justify-content:center;
+  text-align:center;
+  padding:14px;
+  color:white;
+  font-weight:950;
+  transition:.25s;
+}
+
+.brand-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(0,217,255,.45);
+  color:var(--blue);
+}
+
+/* ENLER */
+
+.enler-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
   gap:20px;
 }
 
-.social-icons a{
-  width:58px;
-  height:58px;
+.enler-box{
+  padding:20px;
+}
+
+.enler-mini-list{
   display:flex;
   flex-direction:column;
+  gap:12px;
+}
+
+.enler-item{
+  display:grid;
+  grid-template-columns:58px 1fr auto;
+  align-items:center;
+  gap:12px;
+  padding:10px;
+  border-radius:18px;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.enler-rank{
+  width:58px;
+  height:58px;
+  border-radius:17px;
+  display:flex;
   align-items:center;
   justify-content:center;
-  gap:6px;
-  border-radius:50%;
-  background:rgba(255,255,255,.06);
+  color:var(--gold);
+  background:rgba(0,217,255,.12);
   font-size:22px;
-  text-decoration:none;
-  transition:.35s;
-  box-shadow:0 0 15px rgba(0,229,255,.18);
+  font-weight:950;
 }
 
-.social-icons span{
-  font-size:11px;
-  font-weight:600;
-  color:#ffffff;
-  opacity:.85;
+.enler-info h4{
+  font-size:14px;
+  margin-bottom:5px;
 }
 
-.social-icons a:hover{
-  transform:translateY(-5px) scale(1.08);
-  box-shadow:0 0 25px rgba(0,229,255,.48);
+.enler-info p{
+  color:var(--muted);
+  font-size:12px;
 }
 
-.social-icons .wa{color:#25D366}
-
-.social-icons .ig{
-  background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);
-  color:white;
+.enler-price{
+  color:var(--gold);
+  font-weight:950;
 }
 
-.social-icons .x{color:white}
-.social-icons .fb{color:#1877F2}
-.social-icons .yt{color:#FF0000}
-.social-icons .li{color:#0A66C2}
-.social-icons .tg{color:#229ED9}
-.social-icons .tk{color:white}
-.social-icons .mail{color:#ffd700}
+/* SECTION FILTER / SEARCH RESULTS */
 
-.footer-bottom{
-  margin-top:24px;
-  padding-top:20px;
-  border-top:1px solid rgba(255,255,255,.10);
-  display:flex;
+.search-result-bar{
+  display:none;
+  margin:18px 0 0;
+  padding:15px 18px;
+  border-radius:20px;
+  background:rgba(0,217,255,.10);
+  border:1px solid rgba(0,217,255,.25);
   align-items:center;
   justify-content:space-between;
-  gap:16px;
-  flex-wrap:wrap;
-  color:rgba(255,255,255,.62);
-  font-size:13px;
+  gap:12px;
 }
 
-.footer-bottom-links{
+.search-result-bar.active{
   display:flex;
-  gap:14px;
-  flex-wrap:wrap;
 }
 
-.footer-bottom-links a{
-  color:rgba(255,255,255,.62);
-}
-
-.footer-bottom-links a:hover{
+.search-result-bar strong{
   color:var(--gold);
 }
 
-/* CART DRAWER */
+.clear-search{
+  min-height:36px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:white;
+  padding:0 14px;
+  font-weight:850;
+}
+
+/* RESPONSIVE PRODUCTS */
+
+@media(max-width:1280px){
+  .products-grid,
+  .product-wide-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  .brand-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
+}
+
+@media(max-width:980px){
+  .products-grid,
+  .product-wide-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .discovery-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .enler-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:720px){
+  .products-grid,
+  .product-wide-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+
+  .product-row{
+    grid-auto-columns:230px;
+  }
+
+  .product-image{
+    height:215px;
+  }
+
+  .brand-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .discovery-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:430px){
+  .products-grid,
+  .product-wide-grid{
+    grid-template-columns:1fr;
+  }
+}
+  /* CART DRAWER */
 
 .drawer-overlay{
   position:fixed;
@@ -1264,8 +1449,8 @@ button{
 .cart-drawer{
   position:fixed;
   top:0;
-  right:-430px;
-  width:420px;
+  right:-440px;
+  width:430px;
   max-width:92vw;
   height:100vh;
   z-index:350;
@@ -1351,7 +1536,7 @@ button{
 .cart-item-info p{
   color:var(--gold);
   font-size:13px;
-  font-weight:900;
+  font-weight:950;
 }
 
 .qty-controls{
@@ -1419,7 +1604,7 @@ button{
   font-size:15px;
 }
 
-/* MINI MODAL */
+/* PRODUCT MODAL */
 
 .modal-overlay{
   position:fixed;
@@ -1437,7 +1622,7 @@ button{
 }
 
 .quick-modal{
-  width:720px;
+  width:760px;
   max-width:96vw;
   background:rgba(5,18,36,.98);
   border:1px solid rgba(255,255,255,.14);
@@ -1461,12 +1646,12 @@ button{
 .quick-modal-body{
   padding:20px;
   display:grid;
-  grid-template-columns:260px 1fr;
+  grid-template-columns:290px 1fr;
   gap:20px;
 }
 
 .quick-modal-img{
-  min-height:260px;
+  min-height:290px;
   border-radius:22px;
   background:rgba(0,217,255,.10);
   overflow:hidden;
@@ -1485,7 +1670,14 @@ button{
 
 .quick-modal-info h2{
   font-size:24px;
-  margin-bottom:10px;
+  margin-bottom:8px;
+}
+
+.quick-modal-brand{
+  color:var(--blue);
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:12px;
 }
 
 .quick-modal-info p{
@@ -1495,7 +1687,7 @@ button{
 }
 
 .quick-modal-price{
-  font-size:26px;
+  font-size:27px;
   font-weight:950;
   color:var(--gold);
   margin-bottom:16px;
@@ -1533,7 +1725,148 @@ button{
   color:white;
 }
 
-/* RESPONSIVE FOOTER / DRAWER / MODAL */
+/* FOOTER */
+
+.shop-footer{
+  margin-top:30px;
+  border-top:1px solid rgba(255,255,255,.12);
+  background:rgba(2,8,20,.86);
+  backdrop-filter:blur(18px);
+}
+
+.footer-inner{
+  max-width:1440px;
+  margin:auto;
+  padding:38px 22px 28px;
+}
+
+.footer-grid{
+  display:grid;
+  grid-template-columns:1.2fr .8fr .8fr .8fr;
+  gap:24px;
+  margin-bottom:26px;
+}
+
+.footer-brand h2{
+  font-size:28px;
+  color:var(--blue);
+  margin-bottom:10px;
+}
+
+.footer-brand h2 span{
+  color:var(--gold);
+}
+
+.footer-brand p{
+  color:var(--muted);
+  line-height:1.6;
+  font-size:14px;
+  max-width:410px;
+}
+
+.footer-col h3{
+  color:var(--gold);
+  font-size:16px;
+  margin-bottom:13px;
+}
+
+.footer-col a{
+  display:block;
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:9px;
+  transition:.2s;
+}
+
+.footer-col a:hover{
+  color:var(--blue);
+  transform:translateX(4px);
+}
+
+/* SENİN ONAYLADIĞIN SOSYAL İKON ALANI */
+
+.social-icons{
+  display:flex;
+  justify-content:space-evenly;
+  align-items:center;
+  width:100%;
+  margin-top:20px;
+  padding:15px 0;
+  flex-wrap:wrap;
+  gap:20px;
+}
+
+.social-icons a{
+  width:58px;
+  height:58px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  font-size:22px;
+  text-decoration:none;
+  transition:.35s;
+  box-shadow:0 0 15px rgba(0,229,255,.18);
+}
+
+.social-icons span{
+  font-size:11px;
+  font-weight:600;
+  color:#ffffff;
+  opacity:.85;
+}
+
+.social-icons a:hover{
+  transform:translateY(-5px) scale(1.08);
+  box-shadow:0 0 25px rgba(0,229,255,.48);
+}
+
+.social-icons .wa{color:#25D366}
+
+.social-icons .ig{
+  background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);
+  color:white;
+}
+
+.social-icons .x{color:white}
+.social-icons .fb{color:#1877F2}
+.social-icons .yt{color:#FF0000}
+.social-icons .li{color:#0A66C2}
+.social-icons .tg{color:#229ED9}
+.social-icons .tk{color:white}
+.social-icons .mail{color:#ffd700}
+
+.footer-bottom{
+  margin-top:24px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.10);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  color:rgba(255,255,255,.62);
+  font-size:13px;
+}
+
+.footer-bottom-links{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.footer-bottom-links a{
+  color:rgba(255,255,255,.62);
+}
+
+.footer-bottom-links a:hover{
+  color:var(--gold);
+}
+
+/* RESPONSIVE MODAL / FOOTER */
 
 @media(max-width:900px){
   .footer-grid{
@@ -1545,7 +1878,7 @@ button{
   }
 
   .quick-modal-img{
-    min-height:220px;
+    min-height:230px;
   }
 }
 
@@ -1571,21 +1904,23 @@ button{
 <div class="page">
 
 <header class="shop-header">
+
   <div class="header-inner">
 
     <a href="index.html" class="logo-area">
       <div class="logo-mark">
-        <i class="fa-solid fa-gem"></i>
+        <i class="fa-solid fa-water"></i>
       </div>
+
       <div class="logo-text">
-        <strong>Allona<b>Shop</b></strong>
-        <span>AllonaHub Mağaza Modülü</span>
+        <strong>Allona<b>Hub</b></strong>
+        <span>Allona Shop Modülü</span>
       </div>
     </a>
 
     <div class="search-box">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input id="searchInput" type="text" placeholder="Ürün, kategori veya marka ara...">
+      <input id="searchInput" type="text" placeholder="Ürün, kategori, marka, SKU veya barkod ara...">
       <button id="searchBtn">
         <i class="fa-solid fa-arrow-right"></i>
       </button>
@@ -1606,12 +1941,14 @@ button{
       </button>
 
       <div class="account-wrap">
+
         <button class="header-btn" id="accountBtn">
           <i class="fa-regular fa-user"></i>
           <span>Hesabım</span>
         </button>
 
         <div class="account-menu" id="accountMenu">
+
           <a href="user-panel.html">
             <i class="fa-solid fa-user"></i>
             Kullanıcı Paneli
@@ -1631,308 +1968,193 @@ button{
             <i class="fa-solid fa-user-plus"></i>
             Kayıt Ol
           </a>
+
         </div>
+
       </div>
 
     </div>
+
   </div>
 
-  <div class="top-category-bar">
-    <div class="top-category-inner" id="topCategoryBar">
+  <nav class="category-nav">
 
-      <button class="top-cat-btn active" data-category="all">
+    <div class="category-nav-inner">
+
+      <button class="all-category-btn" id="openMegaBtn">
+        <i class="fa-solid fa-bars"></i>
+        Kategoriler
+      </button>
+
+      <button class="top-cat-btn active" data-filter-category="all">
         <i class="fa-solid fa-border-all"></i>
         Tümü
       </button>
 
-      <button class="top-cat-btn" data-category="Kadın">
-        <i class="fa-solid fa-person-dress"></i>
+      <button class="top-cat-btn" data-filter-category="Kadın">
         Kadın
       </button>
 
-      <button class="top-cat-btn" data-category="Erkek">
-        <i class="fa-solid fa-person"></i>
+      <button class="top-cat-btn" data-filter-category="Erkek">
         Erkek
       </button>
 
-      <button class="top-cat-btn" data-category="Anne & Çocuk">
-        <i class="fa-solid fa-baby"></i>
-        Anne & Çocuk
-      </button>
-
-      <button class="top-cat-btn" data-category="Ev & Yaşam">
-        <i class="fa-solid fa-couch"></i>
+      <button class="top-cat-btn" data-filter-category="Ev & Yaşam">
         Ev & Yaşam
       </button>
 
-      <button class="top-cat-btn" data-category="Süpermarket">
-        <i class="fa-solid fa-basket-shopping"></i>
-        Süpermarket
+      <button class="top-cat-btn" data-filter-category="Anne & Çocuk">
+        Anne & Çocuk
       </button>
 
-      <button class="top-cat-btn" data-category="Kozmetik">
-        <i class="fa-solid fa-spray-can-sparkles"></i>
+      <button class="top-cat-btn" data-filter-category="Kozmetik">
         Kozmetik
       </button>
 
-      <button class="top-cat-btn" data-category="Ayakkabı & Çanta">
-        <i class="fa-solid fa-shoe-prints"></i>
+      <button class="top-cat-btn" data-filter-category="Süpermarket">
+        Süpermarket
+      </button>
+
+      <button class="top-cat-btn" data-filter-category="Ayakkabı & Çanta">
         Ayakkabı & Çanta
       </button>
 
-      <button class="top-cat-btn" data-category="Elektronik">
-        <i class="fa-solid fa-mobile-screen"></i>
-        Elektronik
-      </button>
-
-      <button class="top-cat-btn" data-category="Spor & Outdoor">
-        <i class="fa-solid fa-dumbbell"></i>
+      <button class="top-cat-btn" data-filter-category="Spor & Outdoor">
         Spor & Outdoor
       </button>
 
-      <button class="top-cat-btn" data-category="Takı & Aksesuar">
-        <i class="fa-solid fa-gem"></i>
-        Takı & Aksesuar
+      <button class="top-cat-btn" data-special-section="hub">
+        Hublar
       </button>
 
-      <button class="top-cat-btn" data-category="İç Giyim">
-        <i class="fa-solid fa-shirt"></i>
-        İç Giyim
-      </button>
-
-      <button class="top-cat-btn" data-category="Premium Koleksiyon">
-        <i class="fa-solid fa-crown"></i>
-        Premium Koleksiyon
+      <button class="top-cat-btn" data-special-section="best">
+        Çok Satanlar
       </button>
 
     </div>
-  </div>
+
+  </nav>
+
 </header>
 
+<!-- MEGA MENU -->
+
+<div class="mega-overlay" id="megaOverlay"></div>
+
+<div class="mega-menu" id="megaMenu">
+
+  <div class="mega-left">
+
+    <div class="mega-title">
+      <span>
+        <i class="fa-solid fa-layer-group"></i>
+        Tüm Kategoriler
+      </span>
+    </div>
+
+    <div class="mega-main-list" id="megaMainList">
+      <!-- JS ile dolacak -->
+    </div>
+
+  </div>
+
+  <div class="mega-right">
+
+    <div class="mega-right-head">
+
+      <div>
+        <h3 id="megaActiveTitle">Kadın</h3>
+        <p>Kategori ve alt kategorilerden hızlıca ürünlere ulaş.</p>
+      </div>
+
+      <button class="mega-close" id="closeMegaBtn">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+    <div class="mega-columns" id="megaColumns">
+      <!-- JS ile dolacak -->
+    </div>
+
+  </div>
+
+</div>
+
 <main>
+  <!-- HERO: 5 GÜNLÜK PARTNER REKLAM KARTI -->
 
-  <section class="hero-section">
+  <section class="hero-ads-section">
     <div class="container">
 
-      <div class="hero-grid">
+      <div class="hero-ads-grid" id="heroAdsGrid">
 
-        <div class="hero-main">
-          <div class="hero-kicker">
-            <i class="fa-solid fa-bolt"></i>
-            AllonaHub Premium Marketplace
-          </div>
+        <div class="ad-card large">
+          <div class="ad-card-content">
+            <div class="ad-kicker">
+              <i class="fa-solid fa-bolt"></i>
+              Günlük Partner Reklamı
+            </div>
 
-          <h1>
-            Güvenli, hızlı ve premium <span>Allona Shop</span> deneyimi
-          </h1>
+            <h2>Bugünün öne çıkan Allona Shop fırsatları</h2>
 
-          <p>
-            Kadın, erkek, anne & çocuk, ev yaşam, kozmetik, takı, aksesuar ve premium koleksiyonlar
-            AllonaHub güvencesiyle tek mağaza deneyiminde birleşiyor.
-          </p>
+            <p>
+              Partner mağazaların günlük reklamları, kampanyaları ve avantajlı ürünleri
+              bu alanda yayınlanacak.
+            </p>
 
-          <div class="hero-actions">
-            <button class="primary-btn" data-scroll-products>
+            <button class="ad-btn" data-scroll-target="discountProductsSection">
               <i class="fa-solid fa-bag-shopping"></i>
-              Alışverişe Başla
-            </button>
-
-            <button class="secondary-btn" data-category-shortcut="Premium Koleksiyon">
-              <i class="fa-solid fa-crown"></i>
-              Premium Koleksiyon
-            </button>
-
-            <button class="secondary-btn" data-category-shortcut="Takı & Aksesuar">
-              <i class="fa-solid fa-gem"></i>
-              Takı & Aksesuar
+              Fırsatları Gör
             </button>
           </div>
         </div>
 
-        <div class="hero-side">
+        <div class="ad-card">
+          <div class="ad-card-content">
+            <div class="ad-kicker">
+              <i class="fa-solid fa-gem"></i>
+              Premium Seçim
+            </div>
 
-          <div class="side-card">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h3>Güvenli Alışveriş</h3>
-            <p>Ürünler AllonaHub kontrol sistemi ve partner onay süreçleriyle listelenir.</p>
+            <h3>Takı & Aksesuar</h3>
+            <p>Parlayan ürünleri keşfet.</p>
           </div>
-
-          <div class="side-card">
-            <i class="fa-solid fa-coins"></i>
-            <h3>HP Kazan</h3>
-            <p>Alışveriş yaptıkça HP kazan, ileride kupon ve avantajlarda kullan.</p>
-          </div>
-
         </div>
 
-      </div>
-
-    </div>
-  </section>
-  <section class="category-section">
-    <div class="container">
-
-      <div class="category-layout">
-
-        <aside class="category-sidebar glass">
-          <div class="sidebar-title">
-            <i class="fa-solid fa-layer-group"></i>
-            Ana Kategoriler
-          </div>
-
-          <div class="sidebar-category-list">
-
-            <button class="side-category-btn active" data-category="all">
-              <span><i class="fa-solid fa-border-all"></i> Tümü</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Kadın">
-              <span><i class="fa-solid fa-person-dress"></i> Kadın</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Erkek">
-              <span><i class="fa-solid fa-person"></i> Erkek</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Anne & Çocuk">
-              <span><i class="fa-solid fa-baby"></i> Anne & Çocuk</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Ev & Yaşam">
-              <span><i class="fa-solid fa-couch"></i> Ev & Yaşam</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Süpermarket">
-              <span><i class="fa-solid fa-basket-shopping"></i> Süpermarket</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Kozmetik">
-              <span><i class="fa-solid fa-spray-can-sparkles"></i> Kozmetik</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Ayakkabı & Çanta">
-              <span><i class="fa-solid fa-shoe-prints"></i> Ayakkabı & Çanta</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Elektronik">
-              <span><i class="fa-solid fa-mobile-screen"></i> Elektronik</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Spor & Outdoor">
-              <span><i class="fa-solid fa-dumbbell"></i> Spor & Outdoor</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Takı & Aksesuar">
-              <span><i class="fa-solid fa-gem"></i> Takı & Aksesuar</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="İç Giyim">
-              <span><i class="fa-solid fa-shirt"></i> İç Giyim</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button class="side-category-btn" data-category="Premium Koleksiyon">
-              <span><i class="fa-solid fa-crown"></i> Premium Koleksiyon</span>
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-          </div>
-        </aside>
-
-        <div class="category-content glass">
-
-          <div class="section-title">
-            <div>
-              <h2>Allona Shop Kategorileri</h2>
-              <p>Partner ürünleri kategoriye göre otomatik listelenir.</p>
-            </div>
-          </div>
-
-          <div class="featured-categories">
-
-            <div class="feature-card" data-category="Kadın">
-              <i class="fa-solid fa-person-dress"></i>
-              <h3>Kadın</h3>
-              <p>Giyim, takı, aksesuar, iç giyim</p>
-            </div>
-
-            <div class="feature-card" data-category="Erkek">
-              <i class="fa-solid fa-person"></i>
-              <h3>Erkek</h3>
-              <p>Giyim, saat, ayakkabı, bakım</p>
-            </div>
-
-            <div class="feature-card" data-category="Anne & Çocuk">
-              <i class="fa-solid fa-baby"></i>
-              <h3>Anne & Çocuk</h3>
-              <p>Bebek, çocuk, oyuncak, bakım</p>
-            </div>
-
-            <div class="feature-card" data-category="Ev & Yaşam">
-              <i class="fa-solid fa-couch"></i>
-              <h3>Ev & Yaşam</h3>
-              <p>Dekorasyon, mutfak, yaşam ürünleri</p>
-            </div>
-
-            <div class="feature-card" data-category="Süpermarket">
-              <i class="fa-solid fa-basket-shopping"></i>
-              <h3>Süpermarket</h3>
-              <p>Gıda, temizlik, günlük ihtiyaçlar</p>
-            </div>
-
-            <div class="feature-card" data-category="Kozmetik">
-              <i class="fa-solid fa-spray-can-sparkles"></i>
-              <h3>Kozmetik</h3>
-              <p>Bakım, parfüm, makyaj, güzellik</p>
-            </div>
-
-            <div class="feature-card" data-category="Ayakkabı & Çanta">
-              <i class="fa-solid fa-shoe-prints"></i>
-              <h3>Ayakkabı & Çanta</h3>
-              <p>Çanta, topuklu, sneaker, klasik</p>
-            </div>
-
-            <div class="feature-card" data-category="Elektronik">
-              <i class="fa-solid fa-mobile-screen"></i>
-              <h3>Elektronik</h3>
-              <p>Telefon, aksesuar, teknoloji</p>
-            </div>
-
-            <div class="feature-card" data-category="Spor & Outdoor">
-              <i class="fa-solid fa-dumbbell"></i>
-              <h3>Spor & Outdoor</h3>
-              <p>Spor ekipmanları ve outdoor ürünler</p>
-            </div>
-
-            <div class="feature-card" data-category="Takı & Aksesuar">
-              <i class="fa-solid fa-gem"></i>
-              <h3>Takı & Aksesuar</h3>
-              <p>Kolye, bileklik, yüzük, küpe</p>
-            </div>
-
-            <div class="feature-card" data-category="İç Giyim">
+        <div class="ad-card">
+          <div class="ad-card-content">
+            <div class="ad-kicker">
               <i class="fa-solid fa-shirt"></i>
-              <h3>İç Giyim</h3>
-              <p>Gecelik, pijama, premium setler</p>
+              Yeni Koleksiyon
             </div>
 
-            <div class="feature-card" data-category="Premium Koleksiyon">
-              <i class="fa-solid fa-crown"></i>
-              <h3>Premium Koleksiyon</h3>
-              <p>Seçili ürünler ve özel kampanyalar</p>
+            <h3>Giyim & İç Giyim</h3>
+            <p>Yeni gelen ürünleri incele.</p>
+          </div>
+        </div>
+
+        <div class="ad-card">
+          <div class="ad-card-content">
+            <div class="ad-kicker">
+              <i class="fa-solid fa-coins"></i>
+              HP Avantajı
             </div>
 
+            <h3>HP ile avantaj kazan</h3>
+            <p>Alışverişte HP fırsatları.</p>
+          </div>
+        </div>
+
+        <div class="ad-card">
+          <div class="ad-card-content">
+            <div class="ad-kicker">
+              <i class="fa-solid fa-store"></i>
+              Partner Mağaza
+            </div>
+
+            <h3>Günün partneri</h3>
+            <p>Öne çıkan marka alanı.</p>
           </div>
         </div>
 
@@ -1941,44 +2163,644 @@ button{
     </div>
   </section>
 
-  <section class="product-section" id="productsSection">
+  <!-- KAMPANYA / VİTRİN KISA KARTLARI -->
+
+  <section class="section">
     <div class="container">
 
-      <div class="section-title">
+      <div class="promo-strip-grid">
+
+        <div class="promo-mini" data-scroll-target="discountProductsSection">
+          <div class="promo-mini-icon">
+            <i class="fa-solid fa-percent"></i>
+          </div>
+
+          <div>
+            <h3>İndirimde Olanlar</h3>
+            <p>Fiyatı düşen ve kampanyalı ürünleri gör.</p>
+          </div>
+        </div>
+
+        <div class="promo-mini" data-scroll-target="newProductsSection">
+          <div class="promo-mini-icon">
+            <i class="fa-solid fa-sparkles"></i>
+          </div>
+
+          <div>
+            <h3>Yeni Gelenler</h3>
+            <p>Yeni yüklenen partner ürünleri.</p>
+          </div>
+        </div>
+
+        <div class="promo-mini" data-scroll-target="campaignSection">
+          <div class="promo-mini-icon">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+
+          <div>
+            <h3>Kampanyalar</h3>
+            <p>Güncel reklam ve fırsat alanları.</p>
+          </div>
+        </div>
+
+        <div class="promo-mini" data-scroll-target="allonaArtSection">
+          <div class="promo-mini-icon">
+            <i class="fa-solid fa-palette"></i>
+          </div>
+
+          <div>
+            <h3>Allona Sanat</h3>
+            <p>Özel tasarım ve sanat odaklı ürünler.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HP VE İNDİRİM REKLAM BLOKLARI -->
+
+  <section class="section">
+    <div class="container">
+
+      <div class="section-head">
         <div>
-          <h2 id="productTitle">Tüm Ürünler</h2>
-          <p id="productSubtitle">Supabase products tablosundan aktif ürünler listelenir.</p>
+          <h2>HP & İndirim Avantajları</h2>
+          <p>AllonaHub kullanıcılarına özel fırsat vitrinleri.</p>
         </div>
       </div>
 
-      <div class="filter-bar">
+      <div class="discovery-grid">
 
-        <div class="filter-left">
-          <button class="filter-pill active" data-stock-filter="all">
-            Tüm Ürünler
-          </button>
-
-          <button class="filter-pill" data-stock-filter="in_stock">
-            Stokta Var
-          </button>
-
-          <button class="filter-pill" data-stock-filter="premium">
-            Premium
-          </button>
-
-          <button class="filter-pill" data-stock-filter="discount">
-            İndirimli
-          </button>
+        <div class="discovery-card" data-filter-hp="2000">
+          <i class="fa-solid fa-coins"></i>
+          <h3>2000 HP üzeri ile alışveriş</h3>
+          <p>HP avantajı sunan ürünleri keşfet.</p>
+          <button>Ürünleri Gör</button>
         </div>
 
-        <div class="filter-right">
-          <select class="sort-select" id="sortSelect">
-            <option value="newest">En Yeni</option>
-            <option value="price_low">Fiyat Artan</option>
-            <option value="price_high">Fiyat Azalan</option>
-            <option value="name_az">A-Z</option>
-          </select>
+        <div class="discovery-card" data-filter-discount="10">
+          <i class="fa-solid fa-tag"></i>
+          <h3>%10 indirimde</h3>
+          <p>%10 ve üzeri indirimli ürünler.</p>
+          <button>İncele</button>
         </div>
+
+        <div class="discovery-card" data-filter-discount="20">
+          <i class="fa-solid fa-fire"></i>
+          <h3>%20 ve üzeri indirim</h3>
+          <p>Daha yüksek kampanyalı ürünler.</p>
+          <button>Fırsatları Aç</button>
+        </div>
+
+        <div class="discovery-card" data-filter-hp-full="true">
+          <i class="fa-solid fa-wallet"></i>
+          <h3>Tamamını HP ile öde</h3>
+          <p>HP ödeme avantajı tanımlı ürünler.</p>
+          <button>HP Ürünleri</button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ARAMA / KATEGORİ SONUÇ ALANI -->
+
+  <section class="section" id="searchResultsSection">
+    <div class="container">
+
+      <div class="search-result-bar" id="searchResultBar">
+        <div>
+          <strong id="searchResultTitle">Arama Sonuçları</strong>
+          <span id="searchResultText">0 ürün listeleniyor.</span>
+        </div>
+
+        <button class="clear-search" id="clearSearchBtn">
+          <i class="fa-solid fa-xmark"></i>
+          Temizle
+        </button>
+      </div>
+
+      <div class="products-grid" id="searchResultsGrid"></div>
+
+    </div>
+  </section>
+  <!-- GÜNCEL SATIŞTA OLAN ÜRÜNLER -->
+
+  <section class="product-row-section" id="currentProductsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Güncel Satışta Olan Ürünler</h2>
+          <p>Partnerlerin yayında olan aktif ürünleri.</p>
+        </div>
+
+        <button class="view-all" data-filter-category="all">
+          Tümünü Gör
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="currentProductsRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Güncel ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- İNDİRİMDE OLANLAR -->
+
+  <section class="product-row-section" id="discountProductsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>İndirimde Olanlar</h2>
+          <p>Eski fiyatı olan ve fiyat avantajı sunan ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="discount">
+          Tüm İndirimleri Gör
+          <i class="fa-solid fa-percent"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="discountProductsRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>İndirimli ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- YÜKLENMİŞ GÖRSELLER DEĞİŞEN / KAMPANYALAR -->
+
+  <section class="section" id="campaignSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Kampanyalar</h2>
+          <p>Partnerlerin reklam, kupon ve kampanya görselleri burada döner.</p>
+        </div>
+      </div>
+
+      <div class="discovery-grid">
+
+        <div class="discovery-card" data-open-section="coupon">
+          <i class="fa-solid fa-ticket"></i>
+          <h3>Kupon Kampanyaları</h3>
+          <p>Kupon oluşturan partner ürünleri.</p>
+          <button>Kuponlu Ürünleri Gör</button>
+        </div>
+
+        <div class="discovery-card" data-open-section="discount">
+          <i class="fa-solid fa-tags"></i>
+          <h3>Fiyat Avantajı</h3>
+          <p>Fiyatı düşen ve indirimde olan ürünler.</p>
+          <button>İndirimleri Aç</button>
+        </div>
+
+        <div class="discovery-card" data-open-section="hub">
+          <i class="fa-solid fa-circle-nodes"></i>
+          <h3>Hub Avantajları</h3>
+          <p>AllonaHub destekli avantajlı ürünler.</p>
+          <button>Hub Ürünleri</button>
+        </div>
+
+        <div class="discovery-card" data-open-section="popular">
+          <i class="fa-solid fa-chart-line"></i>
+          <h3>Trend Kampanyalar</h3>
+          <p>En çok ilgi gören ürün vitrinleri.</p>
+          <button>Trendleri Gör</button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ALLONA SANAT -->
+
+  <section class="product-row-section" id="allonaArtSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Allona Sanat</h2>
+          <p>Sanat, tasarım, hediye ve özel üretim hissi veren ürünler.</p>
+        </div>
+
+        <button class="view-all" data-filter-keyword="sanat">
+          Keşfet
+          <i class="fa-solid fa-palette"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="allonaArtRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Allona Sanat ürünleri yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- YENİ GELEN ÜRÜNLER -->
+
+  <section class="product-row-section" id="newProductsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Yeni Gelen Ürünler</h2>
+          <p>En son yüklenen ve onaylanan ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="new">
+          Yeni Ürünleri Gör
+          <i class="fa-solid fa-sparkles"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="newProductsRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Yeni gelen ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- POPÜLER ÜRÜNLER -->
+
+  <section class="product-row-section" id="popularProductsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Popüler Ürünler</h2>
+          <p>Favori, görüntülenme ve sepet davranışına göre öne çıkanlar.</p>
+        </div>
+
+        <button class="view-all" data-open-section="popular">
+          Popülerleri Gör
+          <i class="fa-solid fa-fire"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="popularProductsRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Popüler ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+  <!-- EN ÇOK SATILANLAR -->
+
+  <section class="product-row-section" id="bestSellerSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>En Çok Satılanlar</h2>
+          <p>Sipariş geçmişi ve satış verilerine göre öne çıkan ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="best">
+          Çok Satanları Gör
+          <i class="fa-solid fa-ranking-star"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="bestSellerRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Çok satan ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FİYATI DÜŞENLER -->
+
+  <section class="product-row-section" id="priceDropSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Fiyatı Düşenler</h2>
+          <p>Eski fiyatı yeni fiyatından yüksek olan avantajlı ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="price_drop">
+          Fiyatı Düşenleri Gör
+          <i class="fa-solid fa-arrow-trend-down"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="priceDropRow">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Fiyatı düşen ürünler yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- KEŞFET -->
+
+  <section class="section" id="discoverSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Keşfet</h2>
+          <p>Allona Shop içinde hızlıca ilgi alanına göre gezin.</p>
+        </div>
+      </div>
+
+      <div class="discovery-grid">
+
+        <div class="discovery-card" data-filter-keyword="takı">
+          <i class="fa-solid fa-gem"></i>
+          <h3>Takı Dünyası</h3>
+          <p>Kolye, bileklik, yüzük, küpe ve premium aksesuarlar.</p>
+          <button>Keşfet</button>
+        </div>
+
+        <div class="discovery-card" data-filter-keyword="gecelik">
+          <i class="fa-solid fa-shirt"></i>
+          <h3>İç Giyim & Gecelik</h3>
+          <p>Premium görünüm, kombin ve özel koleksiyon ürünleri.</p>
+          <button>İncele</button>
+        </div>
+
+        <div class="discovery-card" data-filter-keyword="ev">
+          <i class="fa-solid fa-couch"></i>
+          <h3>Ev & Yaşam</h3>
+          <p>Ev dekorasyon, düzenleyici, mutfak ve yaşam ürünleri.</p>
+          <button>Aç</button>
+        </div>
+
+        <div class="discovery-card" data-filter-keyword="kozmetik">
+          <i class="fa-solid fa-spray-can-sparkles"></i>
+          <h3>Güzellik & Bakım</h3>
+          <p>Kozmetik, bakım ve kişisel bakım ürünleri.</p>
+          <button>Bak</button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MARKALAR -->
+
+  <section class="section" id="brandsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Markalar</h2>
+          <p>Partner başvuruları onaylandıkça markalar burada görünecek.</p>
+        </div>
+
+        <button class="view-all" id="refreshBrandsBtn">
+          Yenile
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+      </div>
+
+      <div class="brand-grid" id="brandGrid">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Markalar yükleniyor...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ENLER -->
+
+  <section class="section" id="enlerSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Enler</h2>
+          <p>Allona Shop içinde en çok satanlar ve en trend olanlar.</p>
+        </div>
+      </div>
+
+      <div class="enler-grid">
+
+        <div class="enler-box glass">
+
+          <div class="section-head">
+            <div>
+              <h2>En Çok Satanlar</h2>
+              <p>Satış adetlerine göre sıralanır.</p>
+            </div>
+          </div>
+
+          <div class="enler-mini-list" id="enBestList">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Liste hazırlanıyor...</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="enler-box glass">
+
+          <div class="section-head">
+            <div>
+              <h2>En Trend Olanlar</h2>
+              <p>Favori, görüntülenme ve popülerlik sinyallerine göre.</p>
+            </div>
+          </div>
+
+          <div class="enler-mini-list" id="enTrendList">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>Trend ürünler hazırlanıyor...</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+  <!-- HUB ÜRÜNLER -->
+
+  <section class="product-row-section" id="hubProductsSection">
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Hub Ürünler</h2>
+          <p>AllonaHub avantajları, HP desteği ve özel kampanyalar içeren ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="hub">
+          Hub Ürünlerini Gör
+          <i class="fa-solid fa-circle-nodes"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="hubProductsRow">
+
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Hub ürünleri yükleniyor...</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SANA ÖZEL -->
+
+  <section class="section" id="forYouSection">
+
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Sana Özel</h2>
+          <p>Davranışlarına ve ilgi alanlarına göre seçilen kategoriler.</p>
+        </div>
+      </div>
+
+      <div class="discovery-grid">
+
+        <div class="discovery-card" data-category="Sağlık">
+          <i class="fa-solid fa-heart-pulse"></i>
+          <h3>Sağlık</h3>
+          <p>Sağlık ürünleri ve destekleyici ürünler.</p>
+          <button>Ürünleri Gör</button>
+        </div>
+
+        <div class="discovery-card" data-category="Güzellik & Bakım">
+          <i class="fa-solid fa-spa"></i>
+          <h3>Güzellik & Bakım</h3>
+          <p>Kozmetik ve bakım kategorileri.</p>
+          <button>Keşfet</button>
+        </div>
+
+        <div class="discovery-card" data-category="Temizlik">
+          <i class="fa-solid fa-pump-soap"></i>
+          <h3>Temizlik</h3>
+          <p>Ev temizliği ve hijyen ürünleri.</p>
+          <button>İncele</button>
+        </div>
+
+        <div class="discovery-card" data-category="Ayakkabı">
+          <i class="fa-solid fa-shoe-prints"></i>
+          <h3>Ayakkabı</h3>
+          <p>En çok ilgi gören ayakkabı ürünleri.</p>
+          <button>Bak</button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- KUPONLU ÜRÜNLER -->
+
+  <section class="product-row-section" id="couponProductsSection">
+
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Kuponlu Ürünler</h2>
+          <p>Partnerlerin kupon kampanyası oluşturduğu ürünler.</p>
+        </div>
+
+        <button class="view-all" data-open-section="coupon">
+          Kuponları Gör
+          <i class="fa-solid fa-ticket"></i>
+        </button>
+      </div>
+
+      <div class="product-row" id="couponProductsRow">
+
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Kuponlu ürünler yükleniyor...</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- BUNLAR DA İLGİNİZİ ÇEKEBİLİR -->
+
+  <section class="section" id="interestSection">
+
+    <div class="container">
+
+      <div class="section-head">
+        <div>
+          <h2>Bunlar da İlginizi Çekebilir</h2>
+          <p>Platformdaki markalar ve önerilen içerikler.</p>
+        </div>
+      </div>
+
+      <div class="brand-grid" id="interestBrandGrid">
+
+        <div class="brand-card">
+          Marka Yükleniyor...
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- TÜM ÜRÜNLER GRID -->
+
+  <section class="section" id="allProductsSection">
+
+    <div class="container">
+
+      <div class="section-head">
+
+        <div>
+          <h2>Tüm Ürünler</h2>
+          <p>Arama, filtreleme ve kategori seçimlerine göre listelenen ürünler.</p>
+        </div>
+
+        <button class="view-all" id="refreshProductsBtn">
+          Yenile
+          <i class="fa-solid fa-rotate"></i>
+        </button>
 
       </div>
 
@@ -1986,141 +2808,23 @@ button{
 
         <div class="loading">
           <div class="spinner"></div>
-          <p>Allona Shop ürünleri yükleniyor...</p>
+          <p>Ürünler yükleniyor...</p>
         </div>
 
       </div>
 
     </div>
+
   </section>
-  <footer class="shop-footer">
-
-  <div class="footer-inner">
-
-    <div class="footer-grid">
-
-      <div class="footer-brand">
-        <h2>Allona<span>Shop</span></h2>
-
-        <p>
-          AllonaHub ekosisteminin premium alışveriş modülü.
-          Güvenli ödeme, hızlı teslimat, partner mağazalar,
-          HP ödülleri ve merkezi müşteri deneyimi.
-        </p>
-      </div>
-
-      <div class="footer-col">
-        <h3>Kurumsal</h3>
-
-        <a href="#">Hakkımızda</a>
-        <a href="#">Partner Başvurusu</a>
-        <a href="#">Kariyer</a>
-        <a href="#">İletişim</a>
-      </div>
-
-      <div class="footer-col">
-        <h3>Yardım Merkezi</h3>
-
-        <a href="#">Sipariş Takibi</a>
-        <a href="#">İade Politikası</a>
-        <a href="#">Teslimat Bilgileri</a>
-        <a href="#">Sık Sorulan Sorular</a>
-      </div>
-
-      <div class="footer-col">
-        <h3>Yasal</h3>
-
-        <a href="#">KVKK</a>
-        <a href="#">Mesafeli Satış</a>
-        <a href="#">Gizlilik Politikası</a>
-        <a href="#">Kullanım Şartları</a>
-      </div>
-
-    </div>
-
-    <!-- SOSYAL MEDYA -->
-
-    <div class="social-icons">
-
-      <a class="wa" href="https://wa.me/905427781868" target="_blank">
-        <i class="fab fa-whatsapp"></i>
-        <span>WhatsApp</span>
-      </a>
-
-      <a class="ig" href="https://instagram.com/allonahub" target="_blank">
-        <i class="fab fa-instagram"></i>
-        <span>Instagram</span>
-      </a>
-
-      <a class="x" href="#" target="_blank">
-        <i class="fab fa-x-twitter"></i>
-        <span>X</span>
-      </a>
-
-      <a class="fb" href="#" target="_blank">
-        <i class="fab fa-facebook-f"></i>
-        <span>Facebook</span>
-      </a>
-
-      <a class="yt" href="#" target="_blank">
-        <i class="fab fa-youtube"></i>
-        <span>YouTube</span>
-      </a>
-
-      <a class="li" href="#" target="_blank">
-        <i class="fab fa-linkedin-in"></i>
-        <span>LinkedIn</span>
-      </a>
-
-      <a class="tg" href="#" target="_blank">
-        <i class="fab fa-telegram"></i>
-        <span>Telegram</span>
-      </a>
-
-      <a class="tk" href="#" target="_blank">
-        <i class="fab fa-tiktok"></i>
-        <span>TikTok</span>
-      </a>
-
-      <a class="mail" href="mailto:info@allonahub.com">
-        <i class="fas fa-envelope"></i>
-        <span>E-Mail</span>
-      </a>
-
-    </div>
-
-    <div class="footer-bottom">
-
-      <div>
-        ©️ 2026 AllonaHub & Allona Shop.
-        Tüm hakları saklıdır.
-      </div>
-
-      <div class="footer-bottom-links">
-        <a href="#">KVKK</a>
-        <a href="#">Çerez Politikası</a>
-        <a href="#">Gizlilik</a>
-        <a href="#">Kullanım Şartları</a>
-      </div>
-
-    </div>
-
-  </div>
-
-</footer>
-
-</main>
+  </main>
 
 <!-- TOAST -->
-
 <div class="toast" id="toast"></div>
 
 <!-- DRAWER OVERLAY -->
-
 <div class="drawer-overlay" id="drawerOverlay"></div>
 
-<!-- SEPET -->
-
+<!-- SEPET DRAWER -->
 <div class="cart-drawer" id="cartDrawer">
 
   <div class="drawer-head">
@@ -2134,17 +2838,9 @@ button{
     </button>
   </div>
 
-  <div class="cart-items" id="cartItems">
-
-    <div class="loading">
-      <i class="fa-solid fa-cart-shopping"></i>
-      <p>Sepetiniz boş.</p>
-    </div>
-
-  </div>
+  <div class="cart-items" id="cartItems"></div>
 
   <div class="drawer-footer">
-
     <div class="cart-summary-row">
       <span>Ara Toplam</span>
       <strong id="cartSubtotal">₺0</strong>
@@ -2164,25 +2860,21 @@ button{
       <i class="fa-solid fa-credit-card"></i>
       Siparişi Tamamla
     </button>
-
   </div>
 
 </div>
 
-<!-- HIZLI ÜRÜN MODALI -->
-
+<!-- ÜRÜN MODALI -->
 <div class="modal-overlay" id="productModal">
 
   <div class="quick-modal">
 
     <div class="quick-modal-head">
-
       <h3>Ürün Detayı</h3>
 
       <button class="close-modal" id="closeModalBtn">
         <i class="fa-solid fa-xmark"></i>
       </button>
-
     </div>
 
     <div class="quick-modal-body">
@@ -2192,21 +2884,17 @@ button{
       </div>
 
       <div class="quick-modal-info">
+        <div class="quick-modal-brand" id="modalBrand">Allona Shop</div>
 
-        <h2 id="modalTitle">
-          Ürün Adı
-        </h2>
+        <h2 id="modalTitle">Ürün Adı</h2>
 
         <p id="modalDescription">
           Ürün açıklaması burada gösterilecek.
         </p>
 
-        <div class="quick-modal-price" id="modalPrice">
-          ₺0
-        </div>
+        <div class="quick-modal-price" id="modalPrice">₺0</div>
 
         <div class="quick-modal-actions">
-
           <button class="modal-cart" id="modalAddCart">
             <i class="fa-solid fa-cart-shopping"></i>
             Sepete Ekle
@@ -2216,9 +2904,7 @@ button{
             <i class="fa-solid fa-bolt"></i>
             Satın Al
           </button>
-
         </div>
-
       </div>
 
     </div>
@@ -2228,41 +2914,785 @@ button{
 </div>
 
 <script>
-  const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co/rest/v1/";
 const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let allProducts = [];
-let filteredProducts = [];
+let allPartners = [];
 let cart = JSON.parse(localStorage.getItem("allona_cart")) || [];
 let favorites = JSON.parse(localStorage.getItem("allona_favorites")) || [];
-let activeCategory = "all";
-let activeStockFilter = "all";
 let selectedModalProduct = null;
+let activeMegaCategory = "Kadın";
+
+const CATEGORY_TREE = {
+  "Kadın": {
+    "Giyim": [
+      "Elbise","Tişört","Gömlek","Kot Pantolon","Kot Ceket","Pantolon",
+      "Mont","Bluz","Ceket","Etek","Kazak","Tesettür","Büyük Beden",
+      "Trençkot","Yağmurluk & Rüzgarlık","Sweatshirt","Kaban","Hırka","Palto"
+    ],
+    "Ayakkabı": [
+      "Topuklu Ayakkabı","Sneaker","Günlük Ayakkabı","Babet","Sandalet",
+      "Bot","Çizme","Kar Botu","Loafer"
+    ],
+    "Çanta": [
+      "Omuz Çantası","Sırt Çantası","Bel Çantası","Okul Çantası",
+      "Laptop Çantası","Portföy","Postacı Çantası","El Çantası",
+      "Kanvas Çanta","Makyaj Çantası","Abiye Çanta","Çapraz Çanta",
+      "Bez Çanta","Anne Bebek Çantası","Evrak Çantası","Tote Çanta",
+      "Beslenme Çantası","Kartlık","Cüzdan","Kadın Spor Çantası"
+    ],
+    "Aksesuar": [
+      "Saat","Takı","Cüzdan","Atkı","Bere","Eldiven","Kemer","Şal"
+    ],
+    "Ev & İç Giyim": [
+      "Pijama Takımı","Gecelik","Sütyen","İç Çamaşırı Takımları",
+      "Fantezi Giyim","Çorap","Korse","Külot","Büstiyer","Bralet",
+      "Atlet & Body","Kombinezon","Jartiyer"
+    ],
+    "Kozmetik": [
+      "Parfüm","Göz Makyajı","Cilt Bakımı","Saç Bakımı","Makyaj",
+      "Ağız Bakımı","Cinsel Sağlık","Vücut Bakımı","Hijyenik Ped",
+      "Duş Jeli & Kremleri","Ruj","Dudak Nemlendirici",
+      "Aydınlatıcı & Highlighter","Eyeliner","Ten Makyajı",
+      "Manikür & Pedikür","BB & CC Krem","El Kremi","Yüz Nemlendirici"
+    ],
+    "Spor & Outdoor": [
+      "Sweatshirt","Tişört","Spor Sütyeni","Tayt","Eşofman"
+    ]
+  },
+
+  "Erkek": {
+    "Giyim": [
+      "Tişört","Şort","Gömlek","Eşofman","Pantolon","Ceket","Kot Pantolon",
+      "Yelek","Kazak","Mont","Takım Elbise","Sweatshirt","Deri Mont",
+      "Kaban","Hırka","Trençkot","Palto","Yağmurluk","Blazer","Polar"
+    ],
+    "Ayakkabı": [
+      "Spor Ayakkabı","Günlük Ayakkabı","Yürüyüş Ayakkabısı","Krampon",
+      "Sneaker","Klasik Ayakkabı","Bot","Kar Botu","Deri Ayakkabı",
+      "Loafer","Ev Terliği","Koşu Ayakkabısı","Çizme"
+    ],
+    "Kişisel Bakım": [
+      "Parfüm","Cinsel Sağlık","Tıraş Bıçağı","Deodorant"
+    ],
+    "Çanta": [
+      "Sırt Çantası","Spor Çanta","Laptop Çantası","Valiz & Bavul",
+      "Postacı Çantası","Bel Çantası","Bez Çanta","Evrak Çantası","Cüzdan"
+    ],
+    "Büyük Beden": [
+      "Büyük Beden Sweatshirt","Büyük Beden Tişört","Büyük Beden Gömlek",
+      "Büyük Beden Pantolon","Büyük Beden Mont","Büyük Beden Kazak",
+      "Büyük Beden Hırka","Büyük Beden Kaban","Büyük Beden Eşofman Altı"
+    ],
+    "Saat & Aksesuar": [
+      "Saat","Güneş Gözlüğü","Cüzdan","Kemer","Çanta","Şapka","Kartlık",
+      "Valiz","Kravat","Boyunluk","Atkı","Bere","Eldiven"
+    ],
+    "İç Giyim": [
+      "Boxer","Çorap","Pijama","Atlet","İçlik"
+    ],
+    "Spor & Outdoor": [
+      "Eşofman","Spor Ayakkabı","Tişört","Sweatshirt","Forma","Spor Çorap",
+      "Spor Giyim","Outdoor Ayakkabı","Outdoor Bot","Spor Ekipmanları",
+      "Outdoor Ekipmanları","Sporcu Besinleri","Sporcu Aksesuarları",
+      "Sneaker","Scooter","Bisiklet","Dalış Malzemeleri","Rüzgarlık",
+      "Aksiyon Kamerası","Kamp Malzemeleri"
+    ],
+    "Elektronik": [
+      "Tıraş Makinesi","Cep Telefonu","Akıllı Saat","Akıllı Bileklik",
+      "Laptop","Oyun & Konsollar","Elektrikli Bisiklet",
+      "E-pin ve Cüzdan Kodu","Playstation 5","Hediye Kartları",
+      "Bluetooth Kulaklık","Gaming PC","Oyuncu Koltuğu","Drone"
+    ]
+  },
+
+  "Anne & Çocuk": {
+    "Bebek": [
+      "Bebek Takımları","Ayakkabı","Hastane Çıkışı","Yenidoğan Kıyafetleri",
+      "Tulum","Body & Zıbın","Tişört & Atlet","Elbise","Şort","Bebek Patiği",
+      "Hırka","Battaniye","Alt Üst Takım","Tişört","Etek","Çorap","Şapka",
+      "Eldiven","Eşofman","Bere"
+    ],
+    "Kız Çocuk": [
+      "Elbise","Sweatshirt","Spor Ayakkabı","Eşofman","İç Giyim & Pijama",
+      "Tişört & Atlet","Tayt","Günlük Ayakkabı","Şort","Mont",
+      "Çocuk Oyun Evi","Oyuncak Bebek","Kaban","Abiye & Elbise",
+      "Ceket","Pantolon","Kazak","Bot","Şapka & Bere & Eldiven"
+    ],
+    "Erkek Çocuk": [
+      "Sweatshirt","Spor Ayakkabı","Eşofman","İç Giyim & Pijama",
+      "Tişört & Atlet","Günlük Ayakkabı","Okul Çantası","Şort","Gömlek",
+      "Mont","Oyuncak Traktör","Akülü Araba","Kumandalı Araba","Bisiklet",
+      "Boxer","İçlik","Bot","Krampon","Takım Elbise"
+    ],
+    "Bebek Bakım": [
+      "Bebek Bezi","Bebek Şampuanı","Krem & Yağlar","Bebek Çantası",
+      "Bebek Sabunları","Bebek Deterjanları","Bebek Vücut Kremi",
+      "Islak Mendil","Bebek Yağı","Bebek Buhar Makinesi"
+    ],
+    "Oyuncak": [
+      "Eğitici Oyuncaklar","Oyuncak Araba","Oyuncak Bebek",
+      "Bebek & Okul Öncesi","Kumandalı Oyuncak","Robot Oyuncak",
+      "Çocuk Çizim Tableti"
+    ]
+  },
+  "Beslenme & Emzirme": [
+      "Biberon & Emzik","Göğüs Pompası","Mama Sandalyesi","Mama Önlüğü",
+      "Alıştırma Bardağı","Biberon Temizleyici","Biberon Seti","Bebek Maması",
+      "Kavanoz Mama","Sterilizatör","Bebek Bakım Çantası","Yemek Setleri",
+      "Kaşık Maması","Buharlı Pişirici","Termal Çanta","Süt Pompası",
+      "Emzirme Önlüğü","Emzirme Minderi","Göğüs Pedi","Göğüs Kremi"
+    ],
+    "Taşıma & Güvenlik": [
+      "Bebek Arabası & Puset","Park Yatak","Ana Kucağı","Portbebe & Kanguru",
+      "Yürüteç","Oto Koltuğu","Baston Puset","Kanguru","Bebek Salıncakları"
+    ],
+    "Bebek Odası": [
+      "Bebek Beşiği","Bebek Yatağı","Bebek Nevresimleri","Oyuncak Sepetleri",
+      "Bebek Cibinlik","Oyuncak Dolabı","Bebek Odası Mobilyaları",
+      "Bebek Oyun Matları","Bebek Oyun Parkı"
+    ]
+  },
+
+  "Ev & Yaşam": {
+    "Sofra & Mutfak": [
+      "Tencere & Tencere Seti","Tava","Düdüklü Tencere","Yemek Takımı",
+      "Kahvaltı Takımı","Tabak","Çatal Kaşık Bıçak Seti","Saklama Kabı",
+      "Bardak","Kahve Fincanı"
+    ],
+    "Ev Gereçleri": [
+      "Hurç","Düzenleyiciler","Askı","Çamaşır Sepeti","Banyo Düzenleyici",
+      "Banyo Setleri","Ütü Masası ve Aksesuarları","Makyaj & Takı Organizeri"
+    ],
+    "Aydınlatma": [
+      "Avize","Lambader","Masa ve Gece Lambası"
+    ],
+    "Ev Tekstili": [
+      "Nevresim & Pike Takımı","Yastık & Yorgan","Çarşaf & Alez",
+      "Yatak Örtüsü & Battaniye","Uyku Seti","Koltuk Örtüsü","Havlu & Bornoz",
+      "Banyo Paspası","Halı & Kilim","Perde","Seccade"
+    ],
+    "Ev Dekorasyon": [
+      "Ayna","Tablo","Dekoratif Çiçek & Vazo","Kırlent & Kırlent Kılıfı",
+      "Duvar Saati","Oda Kokusu & Mum"
+    ],
+    "Mobilya": [
+      "Salon & Oturma Odası","Yatak Odası","Bahçe Mobilyası","Çalışma Odası",
+      "Yemek Odası","Oturma Grupları","Genç Odası","Koltuk Takımı",
+      "Mutfak Dolabı","Şifonyer","Mutfak Tezgahı","Dolap","Gardırop",
+      "Sandalye","Zigon"
+    ],
+    "Hobi": [
+      "Parti Malzemeleri","Müzik Alet ve Ekipmanları","Hediyelik Ürünler",
+      "Hobi Malzemeleri","Uzaktan Kumandalı Araçlar","Drone","Oyun Grupları",
+      "Hediye Sepeti","Led Işık"
+    ],
+    "Kitap": [
+      "Sınav Hazırlık Kitapları","Ders ve Yardımcı Kitaplar",
+      "Roman & Edebiyat Kitapları","Kişisel Gelişim & Psikoloji Kitaplar",
+      "Çocuk Bakım Kitapları","Yabancı Dil Eğitim Kitapları","E-Kitaplar",
+      "Din Kitapları","Çizgi Roman ve Manga","Yabancı Dil Çocuk Kitapları"
+    ],
+    "Spor & Outdoor": [
+      "Koşu Bandı","Dumbell & Ağırlık","Pilates & Yoga","Eliptik Bisiklet",
+      "Yoga Matı","Sporcu Eldiveni","Pilates Topu","Sporcu Sulukları","Termoslar"
+    ],
+    "Kırtasiye": [
+      "Defter","Ajanda","Fotokopi Kağıdı","Kalem","Boya Seti",
+      "Dosyalama Arşivleme","Masaüstü Gereçleri","Ofis Teknolojisi"
+    ],
+    "Otomobil & Motosiklet": [
+      "Oto Aksesuar","Oto Paspası","Oto Lastik","Kask","Kol Dayama & Kolçak",
+      "Güneşlik & Perde","Araç Kokusu","Motosiklet Eldiveni","Motosiklet Botu",
+      "Motosiklet Sepeti"
+    ],
+    "Yapı Market": [
+      "Banyo Yapı Malzemeleri","Elektrikli El Aleti","Hırdavat Ürünleri",
+      "Boya","Matkap","Ampul","Vidalama"
+    ]
+  },
+
+  "Süpermarket": {
+    "Ev & Temizlik": [
+      "Çamaşır Yıkama","Bulaşık Yıkama","Paspas & Mop","Çamaşır Deterjanı",
+      "Bulaşık Deterjanı","Oda Kokusu","Banyo Temizleyiciler","Yumuşatıcı",
+      "Islak Mendil","Tuvalet Kağıdı","Kağıt Havlu","Temizlik Bezi"
+    ],
+    "Kişisel Bakım": [
+      "Saç Bakım","Ağda & Epilasyon","Banyo & Duş","Ağız Bakım","Cilt Bakım",
+      "Vücut Bakım","Deodorant ve Roll On","Şarjlı Diş Fırçaları",
+      "Kadın Hijyen","Kolonya","Tıraş Ürünleri","Güneş Ürünleri"
+    ],
+    "Bebek Bakım": [
+      "Süt Arttırıcı İçecekler","Bebek Ek Besin","Bebek Bezi",
+      "Islak Mendil & Havlu","Bebek Kozmetik","Bebek Burun Aspiratörü",
+      "Bebek Diş Fırçası","Bebek Mamaları","Bebek Diş Macunu",
+      "Bebek Temizleme Pamuğu","Bebek Güneş Kremi","Bebek Pudrası",
+      "Bebek Tırnak Makası","Bebek Yağı","Bebek Bakım Seti",
+      "Bebek Şampuanı","Bebek Kolonyası","Bebek Bakım Örtüsü"
+    ],
+    "Gıda ve İçecek": [
+      "Çay","Özel Gıda","Atıştırmalık","Kahvaltılık","Kuru Gıda","Kahve",
+      "Makarna","Salça","Sıvı Yağ","Un","Tuz & Baharat","Çorba","Gevrek",
+      "Yulaf","Konserve","Şeker","Süt","Pasta Süslemeleri","Bitki Çayları",
+      "Gazsız İçecekler"
+    ],
+    "Atıştırmalık": [
+      "Kuru Meyve","Kuruyemiş","Cips","Çikolata","Gofret","Bisküvi",
+      "Kraker","Şekerleme","Sakız","Protein Bar","Sağlıklı Atıştırmalıklar",
+      "Unlu Mamüller","Kek"
+    ],
+    "Petshop": [
+      "Kedi Maması","Kedi Kumu","Köpek Maması","Kedi Vitamini","Köpek Tasması",
+      "Kuş Ürünleri","Akvaryum Ürünleri","Kedi Box & Taşıma Çantaları",
+      "Kedi ve Köpek Oyuncakları","Kedi Yaş Mamaları","Kedi Ödül Mamaları",
+      "Köpek Ödül Mamaları","Kısır Kedi Mamaları","Kedi Şampuanı",
+      "Su ve Mama Kapları","Kuş Yemleri","Kedi ve Köpek Yatakları",
+      "Yavru Kedi Mamaları","Akvaryum Balık Yemi","Kedi Tuvaleti",
+      "Kedi Fırça ve Tarağı","Kedi Tırmalaması"
+    ]
+  },
+
+  "Kozmetik": {
+    "Makyaj": [
+      "Göz Makyajı","Ten Makyajı","Dudak Makyajı","Makyaj Seti","Oje & Aseton",
+      "Fondöten","Ruj","Dudak Kalemi","Maskara","Eyeliner","Göz Kalemi",
+      "Kapatıcılar","Allık","Highlighter","BB & CC Krem","Kontür ve Paletler",
+      "Pudra","Takma Tırnak","Far Paleti"
+    ],
+    "Cilt Bakımı": [
+      "Yüz Kremi","Yüz Temizleme","Yüz Maskesi","Göz Bakımı","Güneş Koruyucu",
+      "Cilt Serumu","El & Ayak Bakımı","Tonikler","Nemlendiriciler",
+      "Yüz Maskeleri","Peeling","El Kremleri","Vücut Losyonları",
+      "Selülit Kremleri","Makyaj Temizleyici","Güneş Kremleri",
+      "At Kılı Fırçaları","Cilt Sıkılaştırıcılar","Vücut Spreyleri"
+    ],
+    "Parfüm & Deodorant": [
+      "Parfüm","Parfüm Setleri","Deodorant","Vücut Spreyi"
+    ],
+    "Saç Bakımı": [
+      "Şampuan","Saç Şekillendirici","Saç Serumu & Maskesi","Saç Boyası",
+      "Mor Şampuan","Kuru Şampuan","Saç Köpüğü","Saç Kremi","Fön Suyu",
+      "Saç Bakım Spreyi","Renk Açıcı","Geçici Saç Boyaları","Saç Makası",
+      "Tarak","Saç Bantları","Toka","Saç Vitamini","Saç Toniği","Wax"
+    ],
+    "Kişisel Bakım": [
+      "Duş Jelleri","Şampuan","Pamuk","Vücut Spreyleri","Parfüm","Deodorant",
+      "Ağız Bakım Suyu","Diş Fırçası","Diş Macunu","Diş İpi",
+      "Şarjlı Diş Fırçaları","Törpüler","Kaş Makası","Günlük Ped",
+      "Mesane Pedi","Kese","Banyo Lifi","Diş Beyazlatıcı","Gıda Takviyeleri"
+    ],
+    "Saç Şekillendirici": [
+      "Saç Köpüğü","Saç Spreyi","Jöle","Wax"
+    ],
+    "Makyaj Aksesuarları": [
+      "Makyaj Fırçaları","Makyaj Süngerleri","Makyaj Çantaları",
+      "Cımbız","Kirpik Kıvırıcı"
+    ],
+    "Epilasyon & Tıraş": [
+      "Ağda","Tıraş Bıçağı","Epilatör","Tıraş Köpüğü","Ağda Bantları"
+    ],
+    "Genel Bakım": [
+      "Cinsel Sağlık","Hijyenik Ped","Vücut Bakımı","El ve Ayak Bakımı",
+      "Duş Jeli ve Kremi","Bakım Yağları","Ayak Törpüleri","Katı Sabun",
+      "Sıvı Sabun","Pamuk","El Dezenfektanı"
+    ]
+  },
+  "Ayakkabı & Çanta": {
+    "Kadın Ayakkabı": [
+      "Spor Ayakkabı","Topuklu Ayakkabı","Günlük Ayakkabı","Bot & Bootie",
+      "Sandalet","Terlik","Sneaker","Babet","Loafer","Anne Ayakkabısı",
+      "Taşlı Sandalet","Hastane Terlikleri","Topuklu Terlik","Topuklu Bot",
+      "Çizme","Kovboy Çizmesi","Dolgu Topuk Ayakkabı","Kar Botu",
+      "Yağmur Botu","Panduf"
+    ],
+    "Erkek Ayakkabı": [
+      "Spor Ayakkabı","Günlük Ayakkabı","Klasik Ayakkabı","Bot","Sneaker",
+      "Koşu Ayakkabısı","Krampon","Loafer","Halı Saha Ayakkabısı",
+      "Sandalet","Çizme","Postal","Basketbol Ayakkabısı","Terlik",
+      "Ev Terliği","Panduf","Deniz Ayakkabısı","Süet Ayakkabı",
+      "Yürüyüş Ayakkabısı"
+    ],
+    "Çocuk Ayakkabı": [
+      "Spor Ayakkabı","Günlük Ayakkabı","Babet","Bot","Sneaker",
+      "Sandalet","Terlik","Panduf","Çizme","Basketbol Ayakkabısı","Krampon"
+    ],
+    "Çocuk Çanta": [
+      "Sırt Çantası","Okul Çantası","Çekçekli Çanta","Beslenme Çantası",
+      "Lisanslı Çantalar","Bel Çantası","Postacı Çanta"
+    ],
+    "Erkek Aksesuar": [
+      "Saat","Güneş Gözlüğü","Cüzdan","Kemer","Şapka","Bileklik",
+      "Kravat","Kolye","Rozet","Papyon"
+    ],
+    "Kadın Aksesuar": [
+      "Saat","Takı","Şapka","Güneş Gözlüğü","Saç Aksesuarları",
+      "Kemer","Gümüş Kolye","Hasır Bilezik"
+    ],
+    "Kadın Çanta": [
+      "Omuz Çantası","Sırt Çantası","Cüzdan","Spor Çantası","Bel Çantası",
+      "El Çantası","Portföy","Bez Çanta","Kartlık","Abiye Çanta",
+      "Postacı Çantası","Plaj Çantası","Laptop Çantası","Kapitone Çanta",
+      "Evrak Çantası","Kutu Çanta","Makyaj Çantası","Peluş Çanta",
+      "Hasır Çanta","Valiz & Bavul"
+    ],
+    "Erkek Çanta": [
+      "Sırt Çantası","Postacı Çantası","Cüzdan & Kartlık","Spor Çantası",
+      "Laptop Çantası","Bel Çantası","Omuz Çantası","Portföy Çanta",
+      "Tıraş Çantası","Olta Çantası","Okul Çantası","Valiz",
+      "Outdoor Çanta","El Çantası"
+    ]
+  },
+
+  "Elektronik": {
+    "Küçük Ev Aletleri": [
+      "Süpürge","Robot Süpürge","Dikey Süpürge","Ütü","Kahve Makinesi",
+      "Çay Makinesi","Blender Seti","Tost Makinesi","Doğrayıcı & Rondo",
+      "Su Isıtıcı & Kettle","Mikser & Mikser Seti","Airfryer & Fritöz"
+    ],
+    "Giyilebilir Teknoloji": [
+      "Akıllı Saat","Akıllı Bileklik","VR Gözlük"
+    ],
+    "Telefon": [
+      "Cep Telefonu","Android Cep Telefonları","iPhone Cep Telefonu",
+      "Telefon Kılıfları","Şarj Cihazları","Powerbank",
+      "Araç İçi Telefon Tutucu","iPhone Kılıflar","Kulaklıklar"
+    ],
+    "Foto & Kamera": [
+      "Aksiyon Kamera","Fotoğraf Makinesi","Video Kamera",
+      "Şipşak Fotoğraf Makinesi","Dijital Fotoğraf Makinesi",
+      "Kamera Lensleri","Hafıza Kartı"
+    ],
+    "TV & Görüntü & Ses": [
+      "Televizyon","Smart TV","QLED TV","OLED TV","TV Kumandaları",
+      "Media Player","Hoparlör","Kulaklık","Uydu Alıcısı","Çanak Anten",
+      "HDMI Kablo","Akım Korumalı Prizler","Kablo & Adaptör","LNB",
+      "TV Ekran Koruyucu","TV Askı Aparatı","Kablolu Hoparlör"
+    ],
+    "Dijital Kod & Ürünler": [
+      "Dijital Hediye Kartları","E-pin & Cüzdan Kodları","Ön Ödemeli Kartlar"
+    ],
+    "Beyaz Eşya": [
+      "Buzdolabı","Çamaşır Makinesi","Bulaşık Makinesi","Kurutma Makinesi",
+      "Derin Dondurucu","Ankastre Setler","Kombi","Mikrodalga Fırın",
+      "Aspiratör","Mini & Midi Fırın","Ankastre Davlumbaz","Ankastre Ocak"
+    ],
+    "Bilgisayar & Tablet": [
+      "Bilgisayarlar","Tablet","Bilgisayar Bileşenleri","Monitör",
+      "Yazıcı & Tarayıcı","Ağ & Modem","Klavye","Mouse","Grafik Tablet",
+      "SSD","RAM","Ekran Kartı","Çocuk Çizim Tableti"
+    ],
+    "Kişisel Bakım Aletleri": [
+      "Saç Düzleştirici","Saç Maşası","Saç Kurutma Makinesi",
+      "Tıraş Makinesi","Tartı","Epilasyon Aletleri","IPL Lazer Epilasyon"
+    ],
+    "Oyunculara Özel": [
+      "Playstation","Xbox","Nintendo","Playstation Oyunları",
+      "Konsol Aksesuarları","Oyuncu Bilgisayarı","Oyuncu Donanımları",
+      "Oyuncu Monitörleri","Oyuncu Koltuğu","Oyuncu Kulaklığı",
+      "Oyuncu Mouse","Oyuncu Klavyesi","Bilgisayar Oyunları"
+    ],
+    "Elektronik Aksesuarlar": [
+      "Bilgisayar Aksesuar","Telefon Aksesuarları","TV Aksesuarları",
+      "Veri Depolama"
+    ],
+    "Klima & Isıtıcılar": [
+      "Klima","Kombi","Isıtıcılar","Vantilatör","Şofben","Termosifon",
+      "Hava Temizleyici","Hava Nemlendirici"
+    ]
+  },
+
+  "Spor & Outdoor": {
+    "Spor Üst Giyim": [
+      "Spor Tişört","Ceket & Yelek","Yağmurluk","Spor Sütyeni",
+      "Sweatshirt","Atlet","Forma","Spor Mont","Spor Şapka"
+    ],
+    "Spor Alt Giyim": [
+      "Eşofman Takımı","Tayt","Şort","Termal Giyim","Çorap",
+      "Spor Pantolon","Terlik","Eşofman"
+    ],
+    "Top": [
+      "Basketbol Topu"
+    ],
+    "Spor Ayakkabı": [
+      "Sneaker","Koşu Ayakkabısı","Halı Saha Ayakkabısı",
+      "Basketbol Ayakkabısı","Yürüyüş Ayakkabısı","Outdoor Ayakkabı",
+      "Tenis Ayakkabısı","Voleybol Ayakkabısı","Fitness Ayakkabısı",
+      "Deniz Ayakkabısı","Outdoor Bot","Terlik","Sandalet","Çizme",
+      "Bot","Kar Botu","Kayak Ayakkabısı","Snowboard Botu","Havuz Terliği"
+    ],
+    "Evde Spor Aletleri": [
+      "Elastik Bant","El Yayı","Mat","Çalışma İstasyonları","Atlama İpi",
+      "Boks Eldiveni","Dambıl Seti","Eliptik Bisiklet","Barfiks Barı",
+      "Eldiven","Kettlebell","Kondisyon Bisikleti","Yürüme Bandı",
+      "Pilates Topu","Kürek Çekme Aleti","Boks Bandajı","Crossfit"
+    ],
+    "Spor Malzemeleri": [
+      "Deniz & Plaj","Kaykay","Paten","Kamp Malzemeleri",
+      "Dağcılık & Tırmanış","Aksiyon Kamera","Çadır Uyku Tulumu",
+      "Su Sporu Malzemeleri","Dalış Malzemeleri","Balıkçılık Malzemeleri",
+      "Tenis Malzemeleri","Kayak ve Snowboard","Okçuluk","Çadır",
+      "Havlu","Suluk","Matlar","Bisiklet","Termos","Pilates Topları"
+    ],
+    "Bisiklet": [
+      "Çocuk Bisikletleri","Elektrikli Bisikletler","Bisikletçi Ekipmanları",
+      "Bisiklet Gözlükleri","Bisiklet Kaskları"
+    ],
+    "Fitness Kondisyon": [
+      "Pilates Malzemeleri","Fitness Aletleri","Kondisyon Bisikleti",
+      "Koşu Bandı","Yoga Malzemeleri","Dambıl Seti","Ağırlık Plakaları","Barfiks"
+    ],
+    "Sporcu Besinleri": [
+      "Protein Tozu","Amino Asit","Karbonhidrat","L-Karnitin (CLA)",
+      "Güç ve Performans","Gıda Takviyesi & Vitaminler","Kreatin",
+      "Protein Bar","Shaker"
+    ]
+  },
+
+  "Kitap & Kırtasiye": {
+    "Parti Malzemeleri": [
+      "Led Işık","Düğün & Kına","Yılbaşı Süsü","Yılbaşı Ağacı","Balon"
+    ],
+    "Hobi Malzemeleri": [
+      "Örgü İpi","Boncuk","Kumaş","Nakış Kiti","Örgü Kiti"
+    ],
+    "Drone": [],
+    "Uzaktan Kumandalı Araçlar": [],
+    "Çakmak Ürünleri": [
+      "Benzinli Çakmak","Klasik Çakmak"
+    ],
+    "Müzik Aletleri": [
+      "Pikap & Gramofon","Gitar","Plak","Piyano","Org"
+    ],
+    "Hediyelik Ürünler": [
+      "Konsept Hediyelik","Figür","Hediye Kutusu","Kar Küresi",
+      "Paketleme Malzemesi"
+    ],
+    "E-Kitap Okuyucu": [],
+    "Din ve Mitoloji": [],
+    "Kişisel Gelişim": [
+      "Bireysel Gelişim"
+    ],
+    "Hobi, Sanat, Akademik": [],
+    "Oyun Grupları": [
+      "Puzzle","Oyun Kartları","Okey Takımı","Satranç","Maket"
+    ],
+    "Kırtasiye": [
+      "Defter","Ajanda","Etiket","Suluk & Matara","Yazı Tahtası",
+      "Pano","Silgi","Makas","Yapıştırıcı"
+    ],
+    "Yabancı Dil Kitapları": [
+      "Yabancı Dil Eğitimi","Yabancı Dil Roman","Yabancı Dil Çocuk Kitapları"
+    ],
+    "Çizgi Roman, Dergi ve Gazete": [],
+    "Ofis": [
+      "Fotokopi Kağıdı","Pil & Şarj Cihazı","Yazarkasa ve Terazi",
+      "Hesap Makinesi","Dosya & Klasör","Zımba & Delgeç",
+      "Para Sayma Makinesi","Ciltleme Makinesi","Ofis Sarf Tüketim"
+    ],
+    "Kalem": [
+      "Keçeli Kalem","Fosforlu Kalem","Uçlu Kalem","Tükenmez Kalem",
+      "Kurşun Kalem","Kalem Kutusu","Kalem Ucu","Tahta Kalemi",
+      "Teknik Çizim Kalemi"
+    ],
+    "Eğitim": [
+      "Sınav Hazırlık"
+    ],
+    "Boya & Sanatsal Malzemeler": [
+      "Akrilik Boya","Tuval & Şövale","Sanatsal Kağıt",
+      "Kuru Boya Kalemi","Fırça","Kumaş Boyası","Pastel Boya",
+      "Sulu Boya","Ahşap Boyası"
+    ],
+    "Çocuk ve Ebeveyn Kitapları": [
+      "Aktivite & Eğitici Kitaplar","Çocuk Masal ve Öykü Kitabı",
+      "Çocuk Bakımı & Ebeveynlik","Boyama Kitapları","Sesli Çocuk Kitapları"
+    ],
+    "İş, Ekonomi & Pazarlama": []
+  }
+};
+  /* ===========================
+   DOM ELEMENTLERİ
+=========================== */
+
+const megaMenu = document.getElementById("megaMenu");
+const megaOverlay = document.getElementById("megaOverlay");
+
+const openMegaBtn = document.getElementById("openMegaBtn");
+const closeMegaBtn = document.getElementById("closeMegaBtn");
+
+const megaMainList = document.getElementById("megaMainList");
+const megaColumns = document.getElementById("megaColumns");
+const megaActiveTitle = document.getElementById("megaActiveTitle");
+
+const accountBtn = document.getElementById("accountBtn");
+const accountMenu = document.getElementById("accountMenu");
+
+/* ===========================
+   ACCOUNT MENU
+=========================== */
+
+accountBtn?.addEventListener("click",(e)=>{
+
+  e.stopPropagation();
+
+  accountMenu.classList.toggle("active");
+
+});
+
+document.addEventListener("click",(e)=>{
+
+  if(
+    !accountMenu.contains(e.target) &&
+    !accountBtn.contains(e.target)
+  ){
+    accountMenu.classList.remove("active");
+  }
+
+});
+
+/* ===========================
+   MEGA MENU OPEN
+=========================== */
+
+function openMegaMenu(){
+
+  megaMenu.classList.add("active");
+  megaOverlay.classList.add("active");
+
+}
+
+function closeMegaMenu(){
+
+  megaMenu.classList.remove("active");
+  megaOverlay.classList.remove("active");
+
+}
+
+openMegaBtn?.addEventListener("click",openMegaMenu);
+closeMegaBtn?.addEventListener("click",closeMegaMenu);
+megaOverlay?.addEventListener("click",closeMegaMenu);
+
+/* ===========================
+   KATEGORİLERİ OLUŞTUR
+=========================== */
+
+function buildMegaMenu(){
+
+  megaMainList.innerHTML = "";
+
+  Object.keys(CATEGORY_TREE).forEach((category,index)=>{
+
+    const btn = document.createElement("button");
+
+    btn.className = "mega-main-btn";
+
+    if(index === 0){
+      btn.classList.add("active");
+    }
+
+    btn.innerHTML = `
+      <span>${category}</span>
+      <i class="fa-solid fa-chevron-right"></i>
+    `;
+
+    btn.addEventListener("mouseenter",()=>{
+
+      document
+      .querySelectorAll(".mega-main-btn")
+      .forEach(x=>x.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      renderMegaColumns(category);
+
+    });
+
+    btn.addEventListener("click",()=>{
+
+      document
+      .querySelectorAll(".mega-main-btn")
+      .forEach(x=>x.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      renderMegaColumns(category);
+
+    });
+
+    megaMainList.appendChild(btn);
+
+  });
+
+  renderMegaColumns(Object.keys(CATEGORY_TREE)[0]);
+
+}
+
+/* ===========================
+   ALT KATEGORİLER
+=========================== */
+
+function renderMegaColumns(category){
+
+  activeMegaCategory = category;
+
+  megaActiveTitle.textContent = category;
+
+  megaColumns.innerHTML = "";
+
+  const groups = CATEGORY_TREE[category];
+
+  Object.keys(groups).forEach(group=>{
+
+    const col = document.createElement("div");
+
+    col.className = "mega-column";
+
+    let itemsHTML = "";
+
+    groups[group].forEach(sub=>{
+
+      itemsHTML += `
+      <button
+      class="mega-sub-item"
+      data-category="${category}"
+      data-sub="${sub}">
+        ${sub}
+      </button>
+      `;
+
+    });
+
+    col.innerHTML = `
+      <h4>${group}</h4>
+      <div class="mega-sub-list">
+        ${itemsHTML}
+      </div>
+    `;
+
+    megaColumns.appendChild(col);
+
+  });
+
+}
+
+/* ===========================
+   ALT KATEGORİ TIKLAMA
+=========================== */
+
+document.addEventListener("click",(e)=>{
+
+  const item = e.target.closest(".mega-sub-item");
+
+  if(!item) return;
+
+  const category =
+    item.dataset.category;
+
+  const sub =
+    item.dataset.sub;
+
+  closeMegaMenu();
+
+  filterProducts(category,sub);
+
+});
+
+/* ===========================
+   YATAY MENÜLER
+=========================== */
+
+document
+.querySelectorAll(".top-cat-btn")
+.forEach(btn=>{
+
+  btn.addEventListener("click",()=>{
+
+    document
+    .querySelectorAll(".top-cat-btn")
+    .forEach(x=>x.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    const category =
+      btn.dataset.filterCategory;
+
+    if(category){
+
+      filterProducts(category);
+
+    }
+
+  });
+
+});
+
+/* ===========================
+   SAYFA BAŞLARKEN
+=========================== */
+
+buildMegaMenu();
+  /* ===========================
+   TEMEL DOM REFERANSLARI
+=========================== */
+
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const searchResultBar = document.getElementById("searchResultBar");
+const searchResultTitle = document.getElementById("searchResultTitle");
+const searchResultText = document.getElementById("searchResultText");
+const searchResultsGrid = document.getElementById("searchResultsGrid");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
 
 const productsGrid = document.getElementById("productsGrid");
-const searchInput = document.getElementById("searchInput");
-const sortSelect = document.getElementById("sortSelect");
-const cartCount = document.getElementById("cartCount");
-const favoriteCount = document.getElementById("favoriteCount");
-const cartDrawer = document.getElementById("cartDrawer");
-const drawerOverlay = document.getElementById("drawerOverlay");
-const cartItems = document.getElementById("cartItems");
-const productTitle = document.getElementById("productTitle");
-const productSubtitle = document.getElementById("productSubtitle");
+
+const currentProductsRow = document.getElementById("currentProductsRow");
+const discountProductsRow = document.getElementById("discountProductsRow");
+const newProductsRow = document.getElementById("newProductsRow");
+const popularProductsRow = document.getElementById("popularProductsRow");
+const bestSellerRow = document.getElementById("bestSellerRow");
+const priceDropRow = document.getElementById("priceDropRow");
+const allonaArtRow = document.getElementById("allonaArtRow");
+const hubProductsRow = document.getElementById("hubProductsRow");
+const couponProductsRow = document.getElementById("couponProductsRow");
+
+const brandGrid = document.getElementById("brandGrid");
+const interestBrandGrid = document.getElementById("interestBrandGrid");
+
+const enBestList = document.getElementById("enBestList");
+const enTrendList = document.getElementById("enTrendList");
+
+/* ===========================
+   YARDIMCI FONKSİYONLAR
+=========================== */
 
 function money(value){
   const number = Number(value || 0);
-  return number.toLocaleString("tr-TR", {
+
+  return number.toLocaleString("tr-TR",{
     style:"currency",
     currency:"TRY"
   });
 }
 
+function cleanText(value){
+  return String(value || "").trim();
+}
+
+function lower(value){
+  return cleanText(value).toLowerCase();
+}
+
 function showToast(title,message){
   const toast = document.getElementById("toast");
-  toast.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
+
+  toast.innerHTML = `
+    <strong>${title}</strong>
+    <span>${message}</span>
+  `;
+
   toast.classList.add("active");
 
   setTimeout(()=>{
@@ -2275,496 +3705,1487 @@ function saveLocal(){
   localStorage.setItem("allona_favorites",JSON.stringify(favorites));
 }
 
-function updateCounts(){
-  cartCount.textContent = cart.reduce((sum,item)=>sum + item.qty,0);
-  favoriteCount.textContent = favorites.length;
-}
-
-async function loadProducts(){
-  productsGrid.innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Allona Shop ürünleri yükleniyor...</p>
-    </div>
-  `;
-
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*")
-    .eq("status","active")
-    .order("created_at",{ ascending:false });
-
-  if(error){
-    productsGrid.innerHTML = `
-      <div class="empty-state">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <h3>Ürünler yüklenemedi</h3>
-        <p>Supabase bağlantısını veya products tablo alanlarını kontrol et.</p>
-      </div>
-    `;
-    console.error(error);
-    return;
-  }
-
-  allProducts = data || [];
-  applyFilters();
-}
-
-function applyFilters(){
-  const keyword = searchInput.value.trim().toLowerCase();
-
-  filteredProducts = allProducts.filter(product=>{
-    const name = String(product.name || product.title || "").toLowerCase();
-    const category = String(product.category || "").toLowerCase();
-    const subcategory = String(product.subcategory || "").toLowerCase();
-    const brand = String(product.brand || "").toLowerCase();
-
-    const matchSearch =
-      !keyword ||
-      name.includes(keyword) ||
-      category.includes(keyword) ||
-      subcategory.includes(keyword) ||
-      brand.includes(keyword);
-
-    const matchCategory =
-      activeCategory === "all" ||
-      String(product.category || "") === activeCategory;
-
-    const stock = Number(product.stock || 0);
-    const price = Number(product.price || product.sale_price || 0);
-    const oldPrice = Number(product.old_price || product.compare_price || 0);
-
-    let matchStock = true;
-
-    if(activeStockFilter === "in_stock"){
-      matchStock = stock > 0;
-    }
-
-    if(activeStockFilter === "premium"){
-      matchStock =
-        product.is_premium === true ||
-        String(product.collection || "").toLowerCase().includes("premium") ||
-        String(product.category || "") === "Premium Koleksiyon";
-    }
-
-    if(activeStockFilter === "discount"){
-      matchStock = oldPrice > price && price > 0;
-    }
-
-    return matchSearch && matchCategory && matchStock;
-  });
-
-  sortProducts();
-  renderProducts();
-
-  productTitle.textContent = activeCategory === "all" ? "Tüm Ürünler" : activeCategory;
-  productSubtitle.textContent = `${filteredProducts.length} ürün listeleniyor.`;
-}
-
-function sortProducts(){
-  const sort = sortSelect.value;
-
-  filteredProducts.sort((a,b)=>{
-    const priceA = Number(a.price || a.sale_price || 0);
-    const priceB = Number(b.price || b.sale_price || 0);
-    const nameA = String(a.name || a.title || "");
-    const nameB = String(b.name || b.title || "");
-
-    if(sort === "price_low") return priceA - priceB;
-    if(sort === "price_high") return priceB - priceA;
-    if(sort === "name_az") return nameA.localeCompare(nameB,"tr");
-    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-  });
+function getProductName(product){
+  return (
+    product.product_name ||
+    product.name ||
+    product.title ||
+    "İsimsiz Ürün"
+  );
 }
 
 function getProductImage(product){
-  return product.image_url || product.main_image || product.image || "";
-}
+  if(product.image_url) return product.image_url;
 
-function getProductName(product){
-  return product.name || product.title || "İsimsiz Ürün";
+  if(Array.isArray(product.image_urls) && product.image_urls.length){
+    return product.image_urls[0];
+  }
+
+  if(product.main_image) return product.main_image;
+  if(product.image) return product.image;
+
+  return "";
 }
 
 function getProductPrice(product){
   return Number(product.price || product.sale_price || 0);
 }
 
-function renderProducts(){
-  if(!filteredProducts.length){
-    productsGrid.innerHTML = `
+function getOldPrice(product){
+  return Number(product.old_price || product.compare_price || 0);
+}
+
+function getProductCategory(product){
+  return cleanText(product.category || "Allona Shop");
+}
+
+function getProductSubcategory(product){
+  return cleanText(product.subcategory || product.sub_category || "");
+}
+
+function getProductBrand(product){
+  return cleanText(product.brand || product.partner_name || "Allona Shop");
+}
+
+function isProductActive(product){
+  const status = lower(product.status);
+
+  return (
+    status === "active" ||
+    status === "approved" ||
+    status === "yayında" ||
+    status === "yayinda" ||
+    status === "published" ||
+    status === "onaylandı" ||
+    status === "onaylandi"
+  );
+}
+
+function isDiscounted(product){
+  const price = getProductPrice(product);
+  const oldPrice = getOldPrice(product);
+
+  return oldPrice > price && price > 0;
+}
+
+function discountRate(product){
+  const price = getProductPrice(product);
+  const oldPrice = getOldPrice(product);
+
+  if(!oldPrice || oldPrice <= price) return 0;
+
+  return Math.round(((oldPrice - price) / oldPrice) * 100);
+}
+
+function isCouponProduct(product){
+  const coupon = lower(product.coupon_status);
+
+  return (
+    coupon === "active" ||
+    coupon === "aktif" ||
+    coupon === "true" ||
+    coupon === "yes" ||
+    coupon === "var"
+  );
+}
+
+function isHpProduct(product){
+  const hp = lower(product.hp_status);
+
+  return (
+    hp === "active" ||
+    hp === "aktif" ||
+    hp === "true" ||
+    hp === "yes" ||
+    hp === "var" ||
+    Number(product.hp_amount || 0) > 0
+  );
+}
+
+function isHubProduct(product){
+  return (
+    isHpProduct(product) ||
+    product.is_featured === true ||
+    lower(product.collection).includes("hub") ||
+    lower(product.category).includes("hub")
+  );
+}
+
+function getHpReward(product){
+  const price = getProductPrice(product);
+
+  if(product.hp_amount){
+    return Number(product.hp_amount);
+  }
+
+  if(isHpProduct(product)){
+    return Math.max(5,Math.floor(price * 0.02));
+  }
+
+  return Math.max(1,Math.floor(price * 0.01));
+}
+
+function normalizeForSearch(product){
+  return [
+    product.product_name,
+    product.name,
+    product.description,
+    product.category,
+    product.subcategory,
+    product.brand,
+    product.sku,
+    product.barcode,
+    product.partner_email
+  ].map(x=>lower(x)).join(" ");
+}
+
+/* ===========================
+   SUPABASE ÜRÜN ÇEKME
+=========================== */
+
+async function loadProducts(){
+
+  setLoading(currentProductsRow,"Güncel ürünler yükleniyor...");
+  setLoading(productsGrid,"Tüm ürünler yükleniyor...");
+
+  const { data, error } = await supabaseClient
+    .from("products")
+    .select("*")
+    .order("created_at",{ ascending:false });
+
+  if(error){
+    console.error("Products error:",error);
+
+    const message = `
       <div class="empty-state">
-        <i class="fa-solid fa-box-open"></i>
-        <h3>Ürün bulunamadı</h3>
-        <p>Bu kategori veya arama için aktif ürün yok.</p>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Ürünler yüklenemedi</h3>
+        <p>Supabase products tablosu, RLS policy veya API key kontrol edilmeli.</p>
       </div>
     `;
+
+    currentProductsRow.innerHTML = message;
+    productsGrid.innerHTML = message;
+
+    showToast("Supabase Hatası","Ürünler çekilemedi. Console hatasını kontrol et.");
     return;
   }
 
-  productsGrid.innerHTML = filteredProducts.map(product=>{
-    const image = getProductImage(product);
-    const name = getProductName(product);
-    const price = getProductPrice(product);
-    const oldPrice = Number(product.old_price || product.compare_price || 0);
-    const stock = Number(product.stock || 0);
-    const isFav = favorites.includes(product.id);
-    const hp = Math.max(1,Math.floor(price * 0.01));
+  allProducts = (data || []).filter(isProductActive);
 
-    return `
-      <div class="product-card" data-id="${product.id}">
+  renderAllProductSections();
+}
 
-        <div class="product-image" onclick="openProductModal('${product.id}')">
+/* ===========================
+   PARTNER / MARKA ÇEKME
+=========================== */
+
+async function loadPartners(){
+
+  const { data, error } = await supabaseClient
+    .from("partners")
+    .select("*")
+    .order("created_at",{ ascending:false });
+
+  if(error){
+    console.warn("Partners error:",error);
+
+    renderBrandsFromProducts();
+    return;
+  }
+
+  allPartners = (data || []).filter(partner=>{
+    const status = lower(partner.status);
+
+    return (
+      status === "active" ||
+      status === "approved" ||
+      status === "onaylandı" ||
+      status === "onaylandi" ||
+      status === "yayında" ||
+      status === "yayinda"
+    );
+  });
+
+  renderBrands();
+}
+
+/* ===========================
+   LOADING / EMPTY
+=========================== */
+
+function setLoading(target,message){
+  if(!target) return;
+
+  target.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>${message}</p>
+    </div>
+  `;
+}
+
+function setEmpty(target,title,message){
+  if(!target) return;
+
+  target.innerHTML = `
+    <div class="empty-state">
+      <i class="fa-solid fa-box-open"></i>
+      <h3>${title}</h3>
+      <p>${message}</p>
+    </div>
+  `;
+}
+  /* ===========================
+   ÜRÜN KARTI HTML
+=========================== */
+
+function productCard(product){
+
+  const id = product.id;
+  const name = getProductName(product);
+  const image = getProductImage(product);
+  const price = getProductPrice(product);
+  const oldPrice = getOldPrice(product);
+  const category = getProductCategory(product);
+  const subcategory = getProductSubcategory(product);
+  const brand = getProductBrand(product);
+  const stock = Number(product.stock || 0);
+  const hp = getHpReward(product);
+  const fav = favorites.includes(String(id));
+  const rate = discountRate(product);
+
+  return `
+    <div class="product-card" data-product-id="${id}">
+
+      <div class="product-image" onclick="openProductModal('${id}')">
+
+        ${
+          image
+          ? `<img src="${image}" alt="${name}">`
+          : `<div class="product-placeholder"><i class="fa-solid fa-gem"></i></div>`
+        }
+
+        <div class="product-badges">
+
           ${
-            image
-            ? `<img src="${image}" alt="${name}">`
-            : `<div class="product-placeholder"><i class="fa-solid fa-gem"></i></div>`
+            stock > 0
+            ? `<span class="product-badge blue">Stokta</span>`
+            : `<span class="product-badge">Stok Yok</span>`
           }
 
-          <div class="product-badges">
-            ${stock > 0 ? `<span class="product-badge blue">Stokta</span>` : `<span class="product-badge">Stok Yok</span>`}
-            ${oldPrice > price && price > 0 ? `<span class="product-badge gold">İndirim</span>` : ``}
-          </div>
+          ${
+            rate > 0
+            ? `<span class="product-badge gold">%${rate} İndirim</span>`
+            : ``
+          }
 
-          <button class="favorite-btn ${isFav ? "active" : ""}" onclick="event.stopPropagation(); toggleFavorite('${product.id}')">
-            <i class="${isFav ? "fa-solid" : "fa-regular"} fa-heart"></i>
-          </button>
+          ${
+            isHpProduct(product)
+            ? `<span class="product-badge green">HP</span>`
+            : ``
+          }
+
         </div>
 
-        <div class="product-info">
-          <div class="product-category">${product.category || "Allona Shop"}</div>
+        <button
+          class="favorite-btn ${fav ? "active" : ""}"
+          onclick="event.stopPropagation(); toggleFavorite('${id}')">
+          <i class="${fav ? "fa-solid" : "fa-regular"} fa-heart"></i>
+        </button>
 
-          <h3 class="product-title">${name}</h3>
+      </div>
 
-          <div class="product-meta">
-            <div class="rating">
-              <i class="fa-solid fa-star"></i>
-              4.8
-            </div>
-            <div class="stock">${stock} stok</div>
+      <div class="product-info">
+
+        <div class="product-category">
+          ${category}${subcategory ? " / " + subcategory : ""}
+        </div>
+
+        <h3 class="product-title">${name}</h3>
+
+        <div class="product-brand">
+          ${brand}
+        </div>
+
+        <div class="product-meta">
+          <div class="rating">
+            <i class="fa-solid fa-star"></i>
+            4.8
           </div>
 
-          <div class="price-row">
-            <div class="price-box">
-              ${oldPrice > price && price > 0 ? `<span>${money(oldPrice)}</span>` : ``}
-              <strong>${money(price)}</strong>
-            </div>
+          <div class="stock">
+            ${stock} stok
+          </div>
+        </div>
 
-            <div class="hp-reward">
-              +${hp} HP
-            </div>
+        <div class="price-row">
+
+          <div class="price-box">
+            ${
+              oldPrice > price && price > 0
+              ? `<span>${money(oldPrice)}</span>`
+              : ``
+            }
+
+            <strong>${money(price)}</strong>
           </div>
 
-          <div class="product-actions">
-            <button class="cart-btn" onclick="addToCart('${product.id}')">
-              <i class="fa-solid fa-cart-shopping"></i>
-              Sepete Ekle
-            </button>
-
-            <button class="buy-btn" onclick="buyNow('${product.id}')">
-              <i class="fa-solid fa-bolt"></i>
-              Satın Al
-            </button>
+          <div class="hp-reward">
+            +${hp} HP
           </div>
+
+        </div>
+
+        <div class="product-actions">
+
+          <button class="cart-btn" onclick="addToCart('${id}')">
+            <i class="fa-solid fa-cart-shopping"></i>
+            Sepete Ekle
+          </button>
+
+          <button class="buy-btn" onclick="buyNow('${id}')">
+            <i class="fa-solid fa-bolt"></i>
+            Satın Al
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
+
+/* ===========================
+   ÜRÜN ROW RENDER
+=========================== */
+
+function renderProductRow(target,products,emptyTitle="Ürün bulunamadı"){
+
+  if(!target) return;
+
+  if(!products.length){
+    setEmpty(
+      target,
+      emptyTitle,
+      "Bu alanda gösterilecek aktif ürün bulunamadı."
+    );
+    return;
+  }
+
+  target.innerHTML = products
+    .map(productCard)
+    .join("");
+
+}
+
+/* ===========================
+   GRID RENDER
+=========================== */
+
+function renderProductGrid(target,products,emptyTitle="Ürün bulunamadı"){
+
+  if(!target) return;
+
+  if(!products.length){
+    setEmpty(
+      target,
+      emptyTitle,
+      "Arama veya kategoriye uygun ürün yok."
+    );
+    return;
+  }
+
+  target.innerHTML = products
+    .map(productCard)
+    .join("");
+
+}
+
+/* ===========================
+   BÖLÜMLERİ DOLDUR
+=========================== */
+
+function renderAllProductSections(){
+
+  const current =
+    allProducts.slice(0,20);
+
+  const discounts =
+    allProducts
+    .filter(isDiscounted)
+    .sort((a,b)=>discountRate(b) - discountRate(a))
+    .slice(0,20);
+
+  const newest =
+    [...allProducts]
+    .sort((a,b)=>new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .slice(0,20);
+
+  const popular =
+    [...allProducts]
+    .sort((a,b)=>
+      Number(b.views || 0) +
+      Number(b.favorite_count || 0) -
+      Number(a.views || 0) -
+      Number(a.favorite_count || 0)
+    )
+    .slice(0,20);
+
+  const best =
+    [...allProducts]
+    .sort((a,b)=>Number(b.sales_count || 0) - Number(a.sales_count || 0))
+    .slice(0,20);
+
+  const priceDrops =
+    allProducts
+    .filter(isDiscounted)
+    .sort((a,b)=>discountRate(b) - discountRate(a))
+    .slice(0,20);
+
+  const art =
+    allProducts
+    .filter(product=>{
+      const text = normalizeForSearch(product);
+
+      return (
+        text.includes("sanat") ||
+        text.includes("hediye") ||
+        text.includes("tasarım") ||
+        text.includes("tasarim") ||
+        text.includes("dekoratif")
+      );
+    })
+    .slice(0,20);
+
+  const hub =
+    allProducts
+    .filter(isHubProduct)
+    .slice(0,20);
+
+  const coupon =
+    allProducts
+    .filter(isCouponProduct)
+    .slice(0,20);
+
+  renderProductRow(currentProductsRow,current,"Güncel ürün yok");
+  renderProductRow(discountProductsRow,discounts,"İndirimli ürün yok");
+  renderProductRow(newProductsRow,newest,"Yeni ürün yok");
+  renderProductRow(popularProductsRow,popular.length ? popular : newest,"Popüler ürün yok");
+  renderProductRow(bestSellerRow,best.length ? best : newest,"Çok satan ürün yok");
+  renderProductRow(priceDropRow,priceDrops,"Fiyatı düşen ürün yok");
+  renderProductRow(allonaArtRow,art.length ? art : newest,"Allona Sanat ürünü yok");
+  renderProductRow(hubProductsRow,hub.length ? hub : newest,"Hub ürünü yok");
+  renderProductRow(couponProductsRow,coupon.length ? coupon : discounts,"Kuponlu ürün yok");
+
+  renderProductGrid(productsGrid,allProducts.slice(0,40),"Ürün bulunamadı");
+
+  renderEnler(best.length ? best : newest,popular.length ? popular : newest);
+
+}
+
+/* ===========================
+   ENLER RENDER
+=========================== */
+
+function renderEnler(bestProducts,trendProducts){
+
+  renderMiniList(enBestList,bestProducts.slice(0,6));
+  renderMiniList(enTrendList,trendProducts.slice(0,6));
+
+}
+
+function renderMiniList(target,products){
+
+  if(!target) return;
+
+  if(!products.length){
+    setEmpty(target,"Liste boş","Henüz yeterli ürün verisi yok.");
+    return;
+  }
+
+  target.innerHTML = products.map((product,index)=>{
+
+    const name = getProductName(product);
+    const price = getProductPrice(product);
+
+    return `
+      <div class="enler-item" onclick="openProductModal('${product.id}')">
+
+        <div class="enler-rank">
+          ${index + 1}
+        </div>
+
+        <div class="enler-info">
+          <h4>${name}</h4>
+          <p>${getProductBrand(product)} • ${getProductCategory(product)}</p>
+        </div>
+
+        <div class="enler-price">
+          ${money(price)}
         </div>
 
       </div>
     `;
+
   }).join("");
+
 }
+  /* ===========================
+   MARKALAR
+=========================== */
 
-function setCategory(category){
-  activeCategory = category;
+function renderBrands(){
 
-  document.querySelectorAll("[data-category]").forEach(btn=>{
-    btn.classList.toggle("active",btn.dataset.category === category);
+  const approvedPartners = allPartners.filter(partner=>{
+    const status = lower(partner.status);
+
+    return (
+      status === "active" ||
+      status === "approved" ||
+      status === "onaylandı" ||
+      status === "onaylandi" ||
+      status === "yayında" ||
+      status === "yayinda"
+    );
   });
 
-  applyFilters();
+  if(!approvedPartners.length){
+    renderBrandsFromProducts();
+    return;
+  }
 
-  document.getElementById("productsSection").scrollIntoView({
+  const brandHTML = approvedPartners.slice(0,24).map(partner=>{
+
+    const name =
+      partner.partner_name ||
+      partner.brand ||
+      partner.company_name ||
+      partner.email ||
+      "Allona Partner";
+
+    return `
+      <button class="brand-card" onclick="filterByBrand('${escapeJS(name)}')">
+        ${name}
+      </button>
+    `;
+
+  }).join("");
+
+  brandGrid.innerHTML = brandHTML;
+  interestBrandGrid.innerHTML = brandHTML;
+
+}
+
+function renderBrandsFromProducts(){
+
+  const brands = [
+    ...new Set(
+      allProducts
+      .map(product=>getProductBrand(product))
+      .filter(Boolean)
+    )
+  ];
+
+  if(!brands.length){
+    const empty = `
+      <div class="brand-card">
+        Marka bekleniyor
+      </div>
+    `;
+
+    brandGrid.innerHTML = empty;
+    interestBrandGrid.innerHTML = empty;
+    return;
+  }
+
+  const brandHTML = brands.slice(0,24).map(name=>`
+    <button class="brand-card" onclick="filterByBrand('${escapeJS(name)}')">
+      ${name}
+    </button>
+  `).join("");
+
+  brandGrid.innerHTML = brandHTML;
+  interestBrandGrid.innerHTML = brandHTML;
+
+}
+
+function escapeJS(value){
+  return String(value || "")
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'");
+}
+
+/* ===========================
+   ARAMA SONUCU GÖSTER
+=========================== */
+
+function showSearchResults(title,products){
+
+  searchResultBar.classList.add("active");
+
+  searchResultTitle.textContent = title;
+  searchResultText.textContent = `${products.length} ürün listeleniyor.`;
+
+  renderProductGrid(
+    searchResultsGrid,
+    products,
+    "Sonuç bulunamadı"
+  );
+
+  document.getElementById("searchResultsSection")
+  .scrollIntoView({
     behavior:"smooth"
   });
+
 }
 
+function clearSearchResults(){
+
+  searchInput.value = "";
+
+  searchResultBar.classList.remove("active");
+  searchResultsGrid.innerHTML = "";
+
+}
+
+/* ===========================
+   GENEL ARAMA
+=========================== */
+
+function runSearch(){
+
+  const keyword = lower(searchInput.value);
+
+  if(!keyword){
+    showToast("Arama","Lütfen aramak istediğin ürün veya kategoriyi yaz.");
+    return;
+  }
+
+  const results = allProducts.filter(product=>{
+
+    const text = normalizeForSearch(product);
+
+    return text.includes(keyword);
+
+  });
+
+  showSearchResults(`"${searchInput.value}" arama sonuçları`,results);
+
+}
+
+searchBtn?.addEventListener("click",runSearch);
+
+searchInput?.addEventListener("keydown",(e)=>{
+
+  if(e.key === "Enter"){
+    runSearch();
+  }
+
+});
+
+searchInput?.addEventListener("input",()=>{
+
+  clearTimeout(window.allonaSearchTimer);
+
+  window.allonaSearchTimer = setTimeout(()=>{
+
+    const keyword = lower(searchInput.value);
+
+    if(keyword.length >= 2){
+      runSearch();
+    }
+
+    if(keyword.length === 0){
+      clearSearchResults();
+    }
+
+  },350);
+
+});
+
+clearSearchBtn?.addEventListener("click",clearSearchResults);
+
+/* ===========================
+   KATEGORİ / ALT KATEGORİ FİLTRELEME
+=========================== */
+
+function filterProducts(category="all",subcategory=""){
+
+  let results = [];
+
+  if(category === "all"){
+
+    results = allProducts;
+
+  }else{
+
+    results = allProducts.filter(product=>{
+
+      const productCategory = lower(getProductCategory(product));
+      const productSub = lower(getProductSubcategory(product));
+      const searchText = normalizeForSearch(product);
+
+      const cat = lower(category);
+      const sub = lower(subcategory);
+
+      const matchCategory =
+        productCategory === cat ||
+        searchText.includes(cat);
+
+      const matchSub =
+        !sub ||
+        productSub === sub ||
+        searchText.includes(sub);
+
+      return matchCategory && matchSub;
+
+    });
+
+  }
+
+  const title =
+    subcategory
+    ? `${category} / ${subcategory}`
+    : category === "all"
+      ? "Tüm Ürünler"
+      : category;
+
+  showSearchResults(title,results);
+
+}
+
+/* ===========================
+   MARKA FİLTRELEME
+=========================== */
+
+function filterByBrand(brandName){
+
+  const brand = lower(brandName);
+
+  const results = allProducts.filter(product=>{
+    return lower(getProductBrand(product)) === brand;
+  });
+
+  showSearchResults(`${brandName} ürünleri`,results);
+
+}
+
+/* ===========================
+   ANAHTAR KELİME FİLTRELEME
+=========================== */
+
+function filterByKeyword(keyword){
+
+  const key = lower(keyword);
+
+  const results = allProducts.filter(product=>{
+    return normalizeForSearch(product).includes(key);
+  });
+
+  showSearchResults(`${keyword} ürünleri`,results);
+
+}
+
+/* ===========================
+   ÖZEL BÖLÜM FİLTRELEME
+=========================== */
+
+function openSection(section){
+
+  let results = [];
+  let title = "Ürünler";
+
+  if(section === "discount"){
+    results = allProducts.filter(isDiscounted);
+    title = "İndirimde Olanlar";
+  }
+
+  if(section === "new"){
+    results = [...allProducts]
+    .sort((a,b)=>new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    title = "Yeni Gelen Ürünler";
+  }
+
+  if(section === "popular"){
+    results = [...allProducts]
+    .sort((a,b)=>
+      Number(b.views || 0) +
+      Number(b.favorite_count || 0) -
+      Number(a.views || 0) -
+      Number(a.favorite_count || 0)
+    );
+
+    title = "Popüler Ürünler";
+  }
+
+  if(section === "best"){
+    results = [...allProducts]
+    .sort((a,b)=>Number(b.sales_count || 0) - Number(a.sales_count || 0));
+
+    title = "En Çok Satılanlar";
+  }
+
+  if(section === "price_drop"){
+    results = allProducts
+    .filter(isDiscounted)
+    .sort((a,b)=>discountRate(b) - discountRate(a));
+
+    title = "Fiyatı Düşenler";
+  }
+
+  if(section === "hub"){
+    results = allProducts.filter(isHubProduct);
+    title = "Hub Ürünler";
+  }
+
+  if(section === "coupon"){
+    results = allProducts.filter(isCouponProduct);
+    title = "Kuponlu Ürünler";
+  }
+
+  showSearchResults(title,results);
+
+}
+
+/* ===========================
+   DATA ATTRIBUTE BUTONLARI
+=========================== */
+
+document.addEventListener("click",(e)=>{
+
+  const categoryBtn = e.target.closest("[data-filter-category]");
+  if(categoryBtn){
+    filterProducts(categoryBtn.dataset.filterCategory);
+    return;
+  }
+
+  const keywordBtn = e.target.closest("[data-filter-keyword]");
+  if(keywordBtn){
+    filterByKeyword(keywordBtn.dataset.filterKeyword);
+    return;
+  }
+
+  const openBtn = e.target.closest("[data-open-section]");
+  if(openBtn){
+    openSection(openBtn.dataset.openSection);
+    return;
+  }
+
+  const scrollBtn = e.target.closest("[data-scroll-target]");
+  if(scrollBtn){
+
+    const target =
+      document.getElementById(scrollBtn.dataset.scrollTarget);
+
+    if(target){
+      target.scrollIntoView({
+        behavior:"smooth"
+      });
+    }
+
+    return;
+  }
+
+  const specialBtn = e.target.closest("[data-special-section]");
+  if(specialBtn){
+    openSection(specialBtn.dataset.specialSection);
+    return;
+  }
+
+  const hp2000 = e.target.closest("[data-filter-hp]");
+  if(hp2000){
+
+    const results = allProducts.filter(product=>{
+      return getHpReward(product) >= Number(hp2000.dataset.filterHp);
+    });
+
+    showSearchResults("2000 HP üzeri alışveriş ürünleri",results);
+    return;
+
+  }
+
+  const hpFull = e.target.closest("[data-filter-hp-full]");
+  if(hpFull){
+
+    const results = allProducts.filter(product=>{
+      return (
+        lower(product.hp_full_payment) === "true" ||
+        product.hp_full_payment === true
+      );
+    });
+
+    showSearchResults("Tamamını HP ile öde",results);
+    return;
+
+  }
+
+  const discountBtn = e.target.closest("[data-filter-discount]");
+  if(discountBtn){
+
+    const rate = Number(discountBtn.dataset.filterDiscount);
+
+    const results = allProducts.filter(product=>{
+      return discountRate(product) >= rate;
+    });
+
+    showSearchResults(`%${rate} ve üzeri indirimli ürünler`,results);
+    return;
+
+  }
+
+});
+
+/* ===========================
+   YENİLE BUTONLARI
+=========================== */
+
+document.getElementById("refreshProductsBtn")
+?.addEventListener("click",loadProducts);
+
+document.getElementById("refreshBrandsBtn")
+?.addEventListener("click",loadPartners);
+  /* ===========================
+   COUNT GÜNCELLE
+=========================== */
+
+function updateCounts(){
+
+  const cartCount =
+    document.getElementById("cartCount");
+
+  const favoriteCount =
+    document.getElementById("favoriteCount");
+
+  const totalCartQty =
+    cart.reduce((sum,item)=>sum + Number(item.qty || 0),0);
+
+  cartCount.textContent = totalCartQty;
+  favoriteCount.textContent = favorites.length;
+
+}
+
+/* ===========================
+   FAVORİLER
+=========================== */
+
+function toggleFavorite(productId){
+
+  const id = String(productId);
+
+  if(favorites.includes(id)){
+
+    favorites = favorites.filter(x=>x !== id);
+
+    showToast(
+      "Favoriler",
+      "Ürün favorilerden çıkarıldı."
+    );
+
+  }else{
+
+    favorites.push(id);
+
+    showToast(
+      "Favoriler",
+      "Ürün favorilere eklendi."
+    );
+
+  }
+
+  saveLocal();
+  updateCounts();
+  renderAllProductSections();
+
+}
+
+document
+.getElementById("favoritesBtn")
+?.addEventListener("click",()=>{
+
+  if(!favorites.length){
+
+    showToast(
+      "Favoriler",
+      "Henüz favori ürün eklenmedi."
+    );
+
+    return;
+
+  }
+
+  const favProducts =
+    allProducts.filter(product=>
+      favorites.includes(String(product.id))
+    );
+
+  showSearchResults(
+    "Favorilerim",
+    favProducts
+  );
+
+});
+
+/* ===========================
+   SEPETE EKLE
+=========================== */
+
 function addToCart(productId){
-  const product = allProducts.find(p=>String(p.id) === String(productId));
+
+  const product =
+    allProducts.find(p=>String(p.id) === String(productId));
 
   if(!product){
+
     showToast("Hata","Ürün bulunamadı.");
     return;
+
   }
 
-  if(Number(product.stock || 0) <= 0){
-    showToast("Stok Yok","Bu ürün şu anda stokta yok.");
+  const stock =
+    Number(product.stock || 0);
+
+  if(stock <= 0){
+
+    showToast(
+      "Stok Yok",
+      "Bu ürün şu anda stokta yok."
+    );
+
     return;
+
   }
 
-  const existing = cart.find(item=>String(item.id) === String(productId));
+  const existing =
+    cart.find(item=>String(item.id) === String(productId));
 
   if(existing){
+
+    if(existing.qty >= stock){
+
+      showToast(
+        "Stok Sınırı",
+        "Bu üründen daha fazla sepete eklenemez."
+      );
+
+      return;
+
+    }
+
     existing.qty += 1;
+
   }else{
+
     cart.push({
       id:product.id,
       name:getProductName(product),
       price:getProductPrice(product),
+      old_price:getOldPrice(product),
       image:getProductImage(product),
+      brand:getProductBrand(product),
+      category:getProductCategory(product),
+      partner_id:product.partner_id || null,
+      partner_email:product.partner_email || null,
+      sku:product.sku || "",
+      barcode:product.barcode || "",
       qty:1
     });
+
   }
 
   saveLocal();
   updateCounts();
   renderCart();
 
-  showToast("Sepete Eklendi",`${getProductName(product)} sepete eklendi.`);
+  showToast(
+    "Sepete Eklendi",
+    `${getProductName(product)} sepete eklendi.`
+  );
+
 }
 
-function removeFromCart(productId){
-  cart = cart.filter(item=>String(item.id) !== String(productId));
-  saveLocal();
-  updateCounts();
-  renderCart();
+/* ===========================
+   SATIN AL
+=========================== */
+
+function buyNow(productId){
+
+  addToCart(productId);
+  openCart();
+
 }
+
+/* ===========================
+   SEPET RENDER
+=========================== */
+
+function renderCart(){
+
+  const cartItems =
+    document.getElementById("cartItems");
+
+  if(!cartItems) return;
+
+  if(!cart.length){
+
+    cartItems.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <h3>Sepetiniz boş</h3>
+        <p>Ürün eklediğinizde burada görünecek.</p>
+      </div>
+    `;
+
+    updateCartTotals();
+    return;
+
+  }
+
+  cartItems.innerHTML =
+    cart.map(item=>`
+
+      <div class="cart-item">
+
+        <div class="cart-item-img">
+          ${
+            item.image
+            ? `<img src="${item.image}" alt="${item.name}">`
+            : `<i class="fa-solid fa-gem"></i>`
+          }
+        </div>
+
+        <div class="cart-item-info">
+
+          <h4>${item.name}</h4>
+
+          <p>${money(item.price)}</p>
+
+          <div class="qty-controls">
+
+            <button onclick="changeQty('${item.id}',-1)">
+              -
+            </button>
+
+            <span>${item.qty}</span>
+
+            <button onclick="changeQty('${item.id}',1)">
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+        <button class="remove-cart" onclick="removeFromCart('${item.id}')">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+
+      </div>
+
+    `).join("");
+
+  updateCartTotals();
+
+}
+
+/* ===========================
+   SEPET MİKTAR
+=========================== */
 
 function changeQty(productId,change){
-  const item = cart.find(i=>String(i.id) === String(productId));
+
+  const item =
+    cart.find(i=>String(i.id) === String(productId));
+
   if(!item) return;
+
+  const product =
+    allProducts.find(p=>String(p.id) === String(productId));
+
+  const stock =
+    product ? Number(product.stock || 0) : 999999;
 
   item.qty += change;
 
   if(item.qty <= 0){
+
     removeFromCart(productId);
     return;
+
+  }
+
+  if(item.qty > stock){
+
+    item.qty = stock;
+
+    showToast(
+      "Stok Sınırı",
+      "Bu ürün için maksimum stok adedine ulaşıldı."
+    );
+
   }
 
   saveLocal();
   updateCounts();
   renderCart();
+
 }
 
-function renderCart(){
-  if(!cart.length){
-    cartItems.innerHTML = `
-      <div class="loading">
-        <i class="fa-solid fa-cart-shopping"></i>
-        <p>Sepetiniz boş.</p>
-      </div>
-    `;
+function removeFromCart(productId){
 
-    document.getElementById("cartSubtotal").textContent = money(0);
-    document.getElementById("cartShipping").textContent = money(0);
-    document.getElementById("cartTotal").textContent = money(0);
-    return;
-  }
+  cart =
+    cart.filter(item=>String(item.id) !== String(productId));
 
-  cartItems.innerHTML = cart.map(item=>`
-    <div class="cart-item">
+  saveLocal();
+  updateCounts();
+  renderCart();
 
-      <div class="cart-item-img">
-        ${
-          item.image
-          ? `<img src="${item.image}" alt="${item.name}">`
-          : `<i class="fa-solid fa-gem"></i>`
-        }
-      </div>
-
-      <div class="cart-item-info">
-        <h4>${item.name}</h4>
-        <p>${money(item.price)}</p>
-
-        <div class="qty-controls">
-          <button onclick="changeQty('${item.id}',-1)">-</button>
-          <span>${item.qty}</span>
-          <button onclick="changeQty('${item.id}',1)">+</button>
-        </div>
-      </div>
-
-      <button class="remove-cart" onclick="removeFromCart('${item.id}')">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-
-    </div>
-  `).join("");
-
-  const subtotal = cart.reduce((sum,item)=>sum + item.price * item.qty,0);
-  const shipping = subtotal > 0 && subtotal < 750 ? 89.90 : 0;
-  const total = subtotal + shipping;
-
-  document.getElementById("cartSubtotal").textContent = money(subtotal);
-  document.getElementById("cartShipping").textContent = money(shipping);
-  document.getElementById("cartTotal").textContent = money(total);
 }
+
+/* ===========================
+   SEPET TOPLAM
+=========================== */
+
+function updateCartTotals(){
+
+  const subtotal =
+    cart.reduce((sum,item)=>
+      sum + Number(item.price || 0) * Number(item.qty || 0),0
+    );
+
+  const shipping =
+    subtotal > 0 && subtotal < 750
+    ? 89.90
+    : 0;
+
+  const total =
+    subtotal + shipping;
+
+  document.getElementById("cartSubtotal").textContent =
+    money(subtotal);
+
+  document.getElementById("cartShipping").textContent =
+    money(shipping);
+
+  document.getElementById("cartTotal").textContent =
+    money(total);
+
+}
+
+/* ===========================
+   SEPET AÇ / KAPAT
+=========================== */
 
 function openCart(){
-  cartDrawer.classList.add("active");
-  drawerOverlay.classList.add("active");
+
+  document
+  .getElementById("cartDrawer")
+  .classList.add("active");
+
+  document
+  .getElementById("drawerOverlay")
+  .classList.add("active");
+
   renderCart();
+
 }
 
 function closeCart(){
-  cartDrawer.classList.remove("active");
-  drawerOverlay.classList.remove("active");
+
+  document
+  .getElementById("cartDrawer")
+  .classList.remove("active");
+
+  document
+  .getElementById("drawerOverlay")
+  .classList.remove("active");
+
 }
 
-function toggleFavorite(productId){
-  if(favorites.includes(productId)){
-    favorites = favorites.filter(id=>id !== productId);
-    showToast("Favoriler","Ürün favorilerden çıkarıldı.");
-  }else{
-    favorites.push(productId);
-    showToast("Favoriler","Ürün favorilere eklendi.");
-  }
+document
+.getElementById("cartBtn")
+?.addEventListener("click",openCart);
 
-  saveLocal();
-  updateCounts();
-  renderProducts();
-}
+document
+.getElementById("closeCartBtn")
+?.addEventListener("click",closeCart);
+
+document
+.getElementById("drawerOverlay")
+?.addEventListener("click",closeCart);
+
+/* ===========================
+   ÜRÜN MODALI
+=========================== */
 
 function openProductModal(productId){
-  const product = allProducts.find(p=>String(p.id) === String(productId));
+
+  const product =
+    allProducts.find(p=>String(p.id) === String(productId));
+
   if(!product) return;
 
   selectedModalProduct = product;
 
-  const image = getProductImage(product);
+  const image =
+    getProductImage(product);
 
-  document.getElementById("modalTitle").textContent = getProductName(product);
+  document.getElementById("modalBrand").textContent =
+    getProductBrand(product);
+
+  document.getElementById("modalTitle").textContent =
+    getProductName(product);
+
   document.getElementById("modalDescription").textContent =
     product.description ||
-    product.short_description ||
     "Bu ürün Allona Shop partner mağazası tarafından listelenmiştir.";
 
-  document.getElementById("modalPrice").textContent = money(getProductPrice(product));
+  document.getElementById("modalPrice").textContent =
+    money(getProductPrice(product));
 
-  document.getElementById("modalImage").innerHTML = image
+  document.getElementById("modalImage").innerHTML =
+    image
     ? `<img src="${image}" alt="${getProductName(product)}">`
     : `<i class="fa-solid fa-image"></i>`;
 
-  document.getElementById("productModal").classList.add("active");
+  document
+  .getElementById("productModal")
+  .classList.add("active");
+
 }
 
 function closeProductModal(){
-  document.getElementById("productModal").classList.remove("active");
+
+  document
+  .getElementById("productModal")
+  .classList.remove("active");
+
   selectedModalProduct = null;
+
 }
 
-function buyNow(productId){
-  addToCart(productId);
-  openCart();
-  showToast("Satın Alma","Ödeme adımına geçmek için sepeti kontrol et.");
-}
+document
+.getElementById("closeModalBtn")
+?.addEventListener("click",closeProductModal);
 
-document.querySelectorAll("[data-category]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    setCategory(btn.dataset.category);
-  });
-});
+document
+.getElementById("productModal")
+?.addEventListener("click",(e)=>{
 
-document.querySelectorAll("[data-category-shortcut]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    setCategory(btn.dataset.categoryShortcut);
-  });
-});
-
-document.querySelectorAll("[data-stock-filter]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    activeStockFilter = btn.dataset.stockFilter;
-
-    document.querySelectorAll("[data-stock-filter]").forEach(b=>{
-      b.classList.remove("active");
-    });
-
-    btn.classList.add("active");
-    applyFilters();
-  });
-});
-
-document.querySelector("[data-scroll-products]").addEventListener("click",()=>{
-  document.getElementById("productsSection").scrollIntoView({
-    behavior:"smooth"
-  });
-});
-
-document.getElementById("searchBtn").addEventListener("click",applyFilters);
-
-searchInput.addEventListener("input",()=>{
-  clearTimeout(window.searchTimer);
-  window.searchTimer = setTimeout(applyFilters,250);
-});
-
-sortSelect.addEventListener("change",applyFilters);
-
-document.getElementById("cartBtn").addEventListener("click",openCart);
-document.getElementById("closeCartBtn").addEventListener("click",closeCart);
-drawerOverlay.addEventListener("click",closeCart);
-
-document.getElementById("accountBtn").addEventListener("click",(e)=>{
-  e.stopPropagation();
-  document.getElementById("accountMenu").classList.toggle("active");
-});
-
-document.addEventListener("click",(e)=>{
-  const menu = document.getElementById("accountMenu");
-  const accountWrap = document.querySelector(".account-wrap");
-
-  if(!accountWrap.contains(e.target)){
-    menu.classList.remove("active");
-  }
-});
-
-document.getElementById("closeModalBtn").addEventListener("click",closeProductModal);
-
-document.getElementById("productModal").addEventListener("click",(e)=>{
   if(e.target.id === "productModal"){
     closeProductModal();
   }
+
 });
 
-document.getElementById("modalAddCart").addEventListener("click",()=>{
+document
+.getElementById("modalAddCart")
+?.addEventListener("click",()=>{
+
   if(selectedModalProduct){
+
     addToCart(selectedModalProduct.id);
     closeProductModal();
+
   }
+
 });
 
-document.getElementById("modalBuyNow").addEventListener("click",()=>{
+document
+.getElementById("modalBuyNow")
+?.addEventListener("click",()=>{
+
   if(selectedModalProduct){
+
     buyNow(selectedModalProduct.id);
     closeProductModal();
+
   }
+
 });
 
-document.getElementById("checkoutBtn").addEventListener("click",()=>{
+/* ===========================
+   CHECKOUT
+=========================== */
+
+document
+.getElementById("checkoutBtn")
+?.addEventListener("click",()=>{
+
   if(!cart.length){
-    showToast("Sepet Boş","Ödeme için önce ürün eklemelisin.");
+
+    showToast(
+      "Sepet Boş",
+      "Ödeme için önce ürün eklemelisin."
+    );
+
     return;
+
   }
 
-  localStorage.setItem("allona_checkout_cart",JSON.stringify(cart));
+  localStorage.setItem(
+    "allona_checkout_cart",
+    JSON.stringify(cart)
+  );
+
   window.location.href = "checkout.html";
-});
 
-document.getElementById("favoritesBtn").addEventListener("click",()=>{
-  if(!favorites.length){
-    showToast("Favoriler","Henüz favori ürün eklenmedi.");
-    return;
+});
+  /* ===========================
+   SAYFA BAŞLATMA
+=========================== */
+
+async function initAllonaShop(){
+
+  updateCounts();
+  renderCart();
+
+  await loadProducts();
+  await loadPartners();
+
+  if(!allProducts.length){
+
+    setEmpty(
+      productsGrid,
+      "Henüz aktif ürün yok",
+      "products tablosunda status değeri active / approved / yayında olan ürün bulunamadı."
+    );
+
   }
 
-  activeCategory = "all";
-  filteredProducts = allProducts.filter(product=>favorites.includes(product.id));
-  productTitle.textContent = "Favorilerim";
-  productSubtitle.textContent = `${filteredProducts.length} favori ürün listeleniyor.`;
-  renderProducts();
+  showToast(
+    "Allona Shop",
+    "Mağaza sistemi hazır."
+  );
 
-  document.getElementById("productsSection").scrollIntoView({
-    behavior:"smooth"
-  });
+}
+
+/* ===========================
+   GÜVENLİ FALLBACK
+=========================== */
+
+window.addEventListener("error",(event)=>{
+
+  console.error("Allona Shop JS Error:",event.error);
+
+  showToast(
+    "Sistem Uyarısı",
+    "Sayfada bir işlem hatası oluştu. Console kontrol edilmeli."
+  );
+
 });
 
-updateCounts();
-renderCart();
-loadProducts();
+/* ===========================
+   BAŞLAT
+=========================== */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+  initAllonaShop();
+
+});
 </script>
 
 </div>
