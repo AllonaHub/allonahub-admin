@@ -149,6 +149,7 @@ td{opacity:.9}
 <div class="level-row"><span id="profileLevel">Level 1</span><span id="profileXpText">0 XP</span></div>
 <div class="level-bar"><div class="level-fill" id="levelFill"></div></div>
 </div>
+  
 <div class="profile-menu">
 <a href="#" onclick="openSection('settings')">Hesap Bilgileri</a>
 <a href="#" onclick="openSection('products')">Ürünler</a>
@@ -531,6 +532,96 @@ function renderDynamicSection(id){
   `;
 }
 
+if(id === "settings"){
+
+document.getElementById("dynamicSection").innerHTML = `
+<div class="section-head">
+<h2>Kargo Ayarları</h2>
+<p>Çalıştığınız kargo firmasını tanımlayın.</p>
+</div>
+
+<div class="panel-card">
+<label>Kargo Firması</label>
+<select id="cargoCompany">
+<option>Yurtiçi Kargo</option>
+<option>MNG Kargo</option>
+<option>Aras Kargo</option>
+<option>Sürat Kargo</option>
+<option>PTT Kargo</option>
+<option>UPS</option>
+</select>
+
+<br><br>
+
+<label>Müşteri Kodu</label>
+<input id="cargoCustomerCode" type="text">
+
+<br><br>
+
+<label>API Key</label>
+<input id="cargoApiKey" type="text">
+
+<br><br>
+
+<label>API Secret</label>
+<input id="cargoApiSecret" type="text">
+
+<br><br>
+
+<button onclick="saveCargoSettings()">
+Kaydet
+</button>
+
+</div>
+`;
+
+loadCargoSettings();
+return;
+}
+async function loadCargoSettings(){
+
+const {data} = await supabaseClient
+.from("partners")
+.select("*")
+.eq("partner_id", partnerId)
+.single();
+
+if(!data) return;
+
+document.getElementById("cargoCompany").value =
+data.preferred_cargo_company || "";
+
+document.getElementById("cargoCustomerCode").value =
+data.cargo_customer_code || "";
+
+document.getElementById("cargoApiKey").value =
+data.cargo_api_key || "";
+
+document.getElementById("cargoApiSecret").value =
+data.cargo_api_secret || "";
+}
+
+async function saveCargoSettings(){
+
+await supabaseClient
+.from("partners")
+.update({
+preferred_cargo_company:
+document.getElementById("cargoCompany").value,
+
+cargo_customer_code:
+document.getElementById("cargoCustomerCode").value,
+
+cargo_api_key:
+document.getElementById("cargoApiKey").value,
+
+cargo_api_secret:
+document.getElementById("cargoApiSecret").value
+})
+.eq("partner_id", partnerId);
+
+alert("Kargo ayarları kaydedildi");
+}
 function renderMenu(){
   const menu = getMenuForPartner();
 
