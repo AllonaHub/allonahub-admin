@@ -5,437 +5,107 @@
 <meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
 <title>Allona Shop | AllonaHub</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial,Helvetica,sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+html{scroll-behavior:smooth}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none}
 
-html{
-  scroll-behavior:smooth;
-}
+.page{width:1320px;margin:0 auto;padding:16px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
 
-body{
-  min-width:1320px;
-  background:#020814;
-  color:white;
-  overflow-x:auto;
-}
+.top-links{height:30px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.88;margin-bottom:8px}
+.top-links a:hover{color:#00e5ff}
 
-body:before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-2;
-  background:
-    radial-gradient(circle at top left,#00b7ff55,transparent 35%),
-    radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
-    linear-gradient(135deg,#020814,#061b33,#002b4d);
-}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 370px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
 
-body:after{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  background:linear-gradient(120deg,transparent,#00d5ff18,transparent);
-  animation:wave 8s infinite linear;
-}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 20px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search input::placeholder{color:rgba(255,255,255,.55)}
+.search button{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;padding:12px 20px;border-radius:18px;box-shadow:0 0 16px #00e5ff55}
 
-@keyframes wave{
-  0%{transform:translateX(-40%)}
-  100%{transform:translateX(40%)}
-}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a,.actions button{background:transparent;color:white;font-weight:900;font-size:14px}
+.actions a:hover,.actions button:hover{color:#ffd700}
+.count-badge{background:#ffd700;color:#031326;border-radius:99px;padding:2px 7px;font-size:12px;margin-left:4px}
 
-.page{
-  width:1320px;
-  margin:0 auto;
-  padding:18px 22px 60px;
-}
+.nav-wrap{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.category-btn{height:54px;padding:0 24px;border-radius:20px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;font-size:16px;box-shadow:0 0 20px #00e5ff44}
+.quick-nav{height:54px;flex:1;display:flex;align-items:center;gap:18px;padding:0 22px;overflow:hidden}
+.quick-nav button{background:transparent;color:white;font-weight:900;font-size:14px;white-space:nowrap}
+.quick-nav button:hover{color:#ffd700}
 
-.glass{
-  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-  border:1px solid rgba(0,229,255,.26);
-  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-  border-radius:26px;
-  position:relative;
-  overflow:hidden;
-}
+.mega-menu{display:none;position:absolute;left:22px;right:22px;top:170px;z-index:50;padding:24px;border-radius:28px;background:linear-gradient(145deg,#061b33,#020814);border:1px solid rgba(0,229,255,.35);box-shadow:0 0 45px rgba(0,229,255,.25)}
+.mega-menu.active{display:grid;grid-template-columns:240px 1fr;gap:20px}
+.mega-left{display:flex;flex-direction:column;gap:8px;border-right:1px solid rgba(255,255,255,.12);padding-right:16px}
+.mega-left button{height:42px;border-radius:14px;background:rgba(255,255,255,.06);color:white;text-align:left;padding:0 14px;font-weight:900}
+.mega-left button.active,.mega-left button:hover{background:linear-gradient(135deg,#ffd700,#b88700);color:#031326}
+.mega-right{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mega-col h4{color:#ffd700;margin-bottom:10px;font-size:16px}
+.mega-col button{display:block;background:transparent;color:rgba(255,255,255,.78);font-size:13px;line-height:1.8;text-align:left}
+.mega-col button:hover{color:#00e5ff}
 
-button{
-  cursor:pointer;
-  border:none;
-}
+.hero-ads{display:grid;grid-template-columns:1.35fr repeat(2,1fr);grid-template-rows:180px 180px;gap:16px;margin-bottom:24px}
+.ad-card{padding:24px;border-radius:26px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,rgba(0,229,255,.14),rgba(255,215,0,.08));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 25px rgba(0,229,255,.12)}
+.ad-card.big{grid-row:span 2}
+.ad-card h2,.ad-card h3{color:#ffd700}
+.ad-card h2{font-size:42px;line-height:1.05}
+.ad-card p{opacity:.78;line-height:1.45;margin-top:8px}
+.ad-card button{align-self:flex-start;margin-top:16px;padding:12px 18px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
 
-a{
-  text-decoration:none;
-  color:inherit;
-}
-  .top-links{
-  height:32px;
-  display:flex;
-  justify-content:flex-end;
-  align-items:center;
-  gap:20px;
-  font-size:12px;
-  opacity:.86;
-  margin-bottom:8px;
-}
+.promo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.promo-card{padding:20px;min-height:115px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.9),rgba(3,10,24,.96));border:1px solid rgba(255,215,0,.24)}
+.promo-card h3{color:#ffd700;margin-bottom:7px}
+.promo-card p{font-size:13px;opacity:.75;line-height:1.4}
 
-.top-links a:hover{
-  color:#00e5ff;
-}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:30px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title button{color:#00e5ff;background:transparent;font-weight:900;font-size:15px}
 
-.header{
-  height:82px;
-  display:grid;
-  grid-template-columns:310px 1fr 360px;
-  gap:18px;
-  align-items:center;
-  margin-bottom:14px;
-}
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;align-items:start}
+.product{min-height:415px;padding:15px;border-radius:24px;color:white;display:flex;flex-direction:column}
+.product-img{height:230px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:13px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.product-img img{width:100%;height:100%;object-fit:cover;display:block}
+.product b{color:#ffd700;font-size:15px;min-height:46px;line-height:1.35}
+.product p{font-size:13px;opacity:.72;margin:6px 0;min-height:32px;line-height:1.35}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.tag{font-size:11px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.22);padding:5px 7px;border-radius:99px;color:#00e5ff}
+.hp-tag{color:#ffd700;border-color:rgba(255,215,0,.30);background:rgba(255,215,0,.10)}
+.price{color:#00e5ff;font-size:21px;font-weight:900;margin:4px 0 10px}
+.old-price{text-decoration:line-through;opacity:.55;color:#ddd;margin-right:8px;font-size:14px}
+.product-actions{margin-top:auto;display:grid;grid-template-columns:1fr 48px;gap:10px}
+.buy-btn{height:40px;border-radius:15px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
+.fav-btn{height:40px;border-radius:15px;background:#ffffff12;color:#ffd700;font-size:22px;border:1px solid #ffd70033;display:flex;align-items:center;justify-content:center}
+.cart-btn{height:38px;border-radius:14px;background:linear-gradient(135deg,#ffd700,#b88700);color:#031326;font-weight:900;margin-top:8px;width:100%}
 
-.brand{
-  height:82px;
-  display:flex;
-  align-items:center;
-  gap:13px;
-  padding:0 20px;
-}
+.brand-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.brand-card{height:90px;border-radius:20px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;color:#ffd700;background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20)}
 
-.brand img{
-  width:44px;
-  height:44px;
-  object-fit:contain;
-}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:26px}
+.info-card{padding:22px;min-height:135px}
+.info-card h3{color:#ffd700;margin-bottom:8px}
+.info-card p{opacity:.75;line-height:1.45;font-size:14px}
 
-.brand b{
-  font-size:29px;
-  color:#ffd700;
-}
+.notice{position:fixed;right:25px;bottom:25px;z-index:999;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;box-shadow:0 0 25px #00e5ff44;display:none;max-width:350px}
+.notice b{color:#ffd700}
 
-.brand span{
-  font-size:29px;
-  color:#00e5ff;
-  font-weight:900;
-}
-
-.search{
-  height:60px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:0 20px;
-}
-
-.search-mark{
-  width:25px;
-  height:25px;
-  border:3px solid #00e5ff;
-  border-radius:50%;
-  position:relative;
-  box-shadow:0 0 14px #00e5ff;
-}
-
-.search-mark:after{
-  content:"";
-  position:absolute;
-  width:11px;
-  height:3px;
-  background:#00e5ff;
-  right:-9px;
-  bottom:-5px;
-  transform:rotate(45deg);
-  border-radius:4px;
-}
-
-.search input{
-  flex:1;
-  background:transparent;
-  border:0;
-  outline:0;
-  color:white;
-  font-size:15px;
-}
-
-.search button{
-  background:linear-gradient(135deg,#00e5ff,#0077ff);
-  color:white;
-  font-weight:900;
-  padding:12px 20px;
-  border-radius:18px;
-  box-shadow:0 0 16px #00e5ff55;
-}
-
-.actions{
-  height:60px;
-  display:flex;
-  align-items:center;
-  justify-content:space-around;
-}
-
-.actions a,
-.actions button{
-  background:transparent;
-  color:white;
-  font-weight:900;
-  font-size:14px;
-}
-
-.actions a:hover,
-.actions button:hover{
-  color:#ffd700;
-}
-
-.hero{
-  padding:40px;
-  margin-bottom:22px;
-}
-
-.hero h1{
-  color:#ffd700;
-  font-size:42px;
-  margin-bottom:10px;
-}
-
-.hero p{
-  opacity:.8;
-  font-size:16px;
-  max-width:700px;
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin:28px 0 14px;
-}
-
-.section-title h2{
-  color:#ffd700;
-  font-size:30px;
-}
-  .section-title button{
-  color:#00e5ff;
-  background:transparent;
-  font-weight:900;
-  font-size:15px;
-}
-
-.product-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:16px;
-}
-
-.product{
-  min-height:355px;
-  padding:15px;
-  border-radius:24px;
-  color:white;
-  display:flex;
-  flex-direction:column;
-}
-
-.product-img{
-  height:170px;
-  border-radius:18px;
-  background:linear-gradient(135deg,#073c78,#020814);
-  margin-bottom:13px;
-  overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.product-img img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-.product b{
-  color:#ffd700;
-  font-size:15px;
-  min-height:38px;
-  line-height:1.35;
-}
-
-.product p{
-  font-size:13px;
-  opacity:.72;
-  margin:6px 0;
-  min-height:34px;
-  line-height:1.35;
-}
-
-.price{
-  color:#00e5ff;
-  font-size:21px;
-  font-weight:900;
-  margin:4px 0 10px;
-}
-
-.old-price{
-  text-decoration:line-through;
-  opacity:.55;
-  color:#ddd;
-  margin-right:8px;
-  font-size:14px;
-}
-
-.product-actions{
-  margin-top:auto;
-  display:grid;
-  grid-template-columns:1fr 42px;
-  gap:8px;
-}
-
-.buy-btn{
-  height:40px;
-  border-radius:15px;
-  background:linear-gradient(135deg,#00e5ff,#0077ff);
-  color:white;
-  font-weight:900;
-}
-
-.fav-btn{
-  height:40px;
-  border-radius:15px;
-  background:#ffffff12;
-  color:#ffd700;
-  font-size:20px;
-  border:1px solid #ffd70033;
-}
-
-.cart-btn{
-  height:38px;
-  border-radius:14px;
-  background:linear-gradient(135deg,#ffd700,#b88700);
-  color:#031326;
-  font-weight:900;
-  margin-top:8px;
-  width:100%;
-}
-
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  margin-top:26px;
-}
-
-.info-card{
-  padding:22px;
-  min-height:135px;
-}
-
-.info-card h3{
-  color:#ffd700;
-  margin-bottom:8px;
-}
-
-.info-card p{
-  opacity:.75;
-  line-height:1.45;
-  font-size:14px;
-}
-  .notice{
-  position:fixed;
-  right:25px;
-  bottom:25px;
-  z-index:999;
-  background:#031326;
-  border:1px solid #00e5ff88;
-  border-radius:18px;
-  padding:15px 18px;
-  box-shadow:0 0 25px #00e5ff44;
-  display:none;
-  max-width:350px;
-}
-
-.notice b{
-  color:#ffd700;
-}
-
-.footer{
-  margin-top:35px;
-  padding:30px;
-  text-align:center;
-  color:#ffffff99;
-}
-
-.footer b{
-  color:#ffd700;
-}
-.product{
-  width:280px;
-}
-
-.product-grid{
-  align-items:start;
-}
-
-.product-actions{
-  display:grid;
-  grid-template-columns:1fr 48px;
-  gap:10px;
-}
-
-.buy-btn{
-  font-size:14px;
-  color:white !important;
-  padding:0 12px;
-}
-
-.fav-btn{
-  color:#ffd700 !important;
-  font-size:22px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.cart-btn{
-  font-size:15px;
-  color:#031326 !important;
-}
-
-.product-img{
-  height:230px;
-}
-
-.product b{
-  min-height:48px;
-}
-.buy-btn,
-.cart-btn,
-.fav-btn{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-indent:0 !important;
-  font-size:15px !important;
-  line-height:1 !important;
-  opacity:1 !important;
-  visibility:visible !important;
-}
-
-.buy-btn{
-  color:#ffffff !important;
-}
-
-.cart-btn{
-  color:#031326 !important;
-}
-
-.fav-btn{
-  color:#ffd700 !important;
-  font-size:24px !important;
-}
+.footer-main{margin-top:35px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
 </style>
 </head>
 
@@ -444,90 +114,233 @@ a{
 <div class="page">
 
 <div class="top-links">
-  <a href="index.html">Ana Sayfa</a>
-  <a href="partner.html">Partner Başvurusu</a>
-  <a href="iletisim.html">İletişim</a>
-  <a href="yardim.html">Destek</a>
+<a href="index.html">Ana Sayfa</a>
+<a href="partner.html">Partner Başvurusu</a>
+<a href="iletisim.html">İletişim</a>
+<a href="yardim.html">Destek</a>
 </div>
 
 <div class="header">
 
-  <a class="brand glass" href="index.html">
-    <img src="allona.logo.png" alt="AllonaHub">
-    <b>Allona</b><span>Shop</span>
-  </a>
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png" alt="AllonaHub">
+<b>Allona</b><span>Shop</span>
+</a>
 
-  <div class="search glass">
-    <div class="search-mark"></div>
-    <input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
-    <button onclick="searchProducts()">Ara</button>
-  </div>
+<div class="search glass">
+<div class="search-mark"></div>
+<input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
+<button onclick="searchProducts()">Ara</button>
+</div>
 
-  <div class="actions glass">
-    <a href="user.html">Hesabım</a>
-    <button onclick="openFavorites()">Favoriler</button>
-    <button onclick="toggleCart()">
-      Sepetim
-      <span id="cartCount">0</span>
-    </button>
-  </div>
+<div class="actions glass">
+<a href="user.html">Hesabım</a>
+<button onclick="openFavorites()">Favoriler <span id="favCount" class="count-badge">0</span></button>
+<button onclick="toggleCart()">Sepetim <span id="cartCount" class="count-badge">0</span></button>
+</div>
 
 </div>
 
-<div class="hero glass">
-  <h1>Allona Shop</h1>
-
-  <p>
-    Takı, aksesuar, ev yaşam ürünleri ve partner mağazalarının
-    premium ürünlerini tek noktadan keşfedin.
-  </p>
+<div class="nav-wrap">
+<button class="category-btn" onclick="toggleMega()">☰ Kategoriler</button>
+<div class="quick-nav glass">
+<button onclick="filterByCategory('Kadın')">Kadın</button>
+<button onclick="filterByCategory('Erkek')">Erkek</button>
+<button onclick="filterByCategory('Ev & Yaşam')">Ev & Yaşam</button>
+<button onclick="filterByCategory('Anne & Çocuk')">Anne & Çocuk</button>
+<button onclick="filterByCategory('Kozmetik')">Kozmetik</button>
+<button onclick="filterByCategory('Süpermarket')">Süpermarket</button>
+<button onclick="filterByCategory('Ayakkabı & Çanta')">Ayakkabı & Çanta</button>
+<button onclick="scrollToSection('hubProducts')">Hublar</button>
+<button onclick="scrollToSection('bestSellers')">Çok Satanlar</button>
 </div>
+</div>
+
+<div id="megaMenu" class="mega-menu">
+<div id="megaLeft" class="mega-left"></div>
+<div id="megaRight" class="mega-right"></div>
+</div>
+
+<section class="hero-ads">
+
+<div class="ad-card big">
+<div>
+<h2>Allona Shop’ta Premium Alışveriş</h2>
+<p>Partner mağazalardan günlük fırsatlar, HP avantajları ve güvenli alışveriş tek merkezde.</p>
+</div>
+<button onclick="scrollToSection('activeProducts')">Alışverişe Başla</button>
+</div>
+
+<div class="ad-card">
+<div>
+<h3>Günün Partner Reklamı</h3>
+<p>Partner kampanyaları burada yayınlanır.</p>
+</div>
+<button>Keşfet</button>
+</div>
+
+<div class="ad-card">
+<div>
+<h3>HP ile Öde</h3>
+<p>Seçili ürünlerde HP kupon avantajı.</p>
+</div>
+<button onclick="scrollToSection('hpProducts')">HP Ürünleri</button>
+</div>
+
+<div class="ad-card">
+<div>
+<h3>Yeni Gelenler</h3>
+<p>En yeni ürünleri ilk sen gör.</p>
+</div>
+<button onclick="scrollToSection('newProducts')">Yeni Ürünler</button>
+</div>
+
+<div class="ad-card">
+<div>
+<h3>Kuponlu Ürünler</h3>
+<p>Partner destekli indirim ve kuponlar.</p>
+</div>
+<button onclick="scrollToSection('couponProducts')">Kuponları Gör</button>
+</div>
+
+</section>
+
+<div class="promo-strip">
+<div class="promo-card"><h3>2000 HP Üzeri</h3><p>HP bakiyesi yüksek kullanıcılar için avantajlı alışveriş.</p></div>
+<div class="promo-card"><h3>%10 İndirimde</h3><p>Seçili ürünlerde hızlı kampanya alanı.</p></div>
+<div class="promo-card"><h3>%20 ve Üzeri</h3><p>Fiyatı düşen ürünleri burada öne çıkar.</p></div>
+<div class="promo-card"><h3>Tamamını HP ile Öde</h3><p>Gelecekte HP ödeme destekli ürünler.</p></div>
+</div>
+
+<section id="activeProducts">
+<div class="section-title">
+<h2>Aktif Ürünler</h2>
+<button onclick="showAllProducts()">Tümünü Gör</button>
+</div>
+<div id="productsGrid" class="product-grid"><p>Ürünler yükleniyor...</p></div>
+</section>
+ <section id="discountProducts">
+<div class="section-title">
+<h2>İndirimde Olanlar</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="discountGrid" class="product-grid"></div>
+</section>
+
+<section id="newProducts">
+<div class="section-title">
+<h2>Yeni Gelenler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="newGrid" class="product-grid"></div>
+</section>
+
+<section id="hubProducts">
+<div class="section-title">
+<h2>Hub Ürünler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="hubGrid" class="product-grid"></div>
+</section>
+
+<section id="bestSellers">
+<div class="section-title">
+<h2>En Çok Satanlar</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="bestGrid" class="product-grid"></div>
+</section>
+
+<section id="couponProducts">
+<div class="section-title">
+<h2>Kuponlu Ürünler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="couponGrid" class="product-grid"></div>
+</section>
 
 <div class="section-title">
-  <h2>Yeni Eklenen Ürünler</h2>
+<h2>Markalar</h2>
 </div>
 
-<div id="productsGrid" class="product-grid">
-  <p>Ürünler yükleniyor...</p>
-</div>
-
-<div class="section-title">
-  <h2>AllonaHub Avantajları</h2>
+<div id="brandsGrid" class="brand-grid">
+<div class="brand-card">Allona Shop</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
 </div>
 
 <div class="info-grid">
 
-  <div class="info-card glass">
-    <h3>HP Kazan</h3>
-    <p>Alışveriş yaptıkça HP puanı kazan ve kampanyalarda kullan.</p>
-  </div>
+<div class="info-card glass">
+<h3>HP Kazan</h3>
+<p>Alışveriş yaptıkça HP kazan ve kuponlara dönüştür.</p>
+</div>
 
-  <div class="info-card glass">
-    <h3>Premium Üyelik</h3>
-    <p>Özel kampanyalara ve avantajlara erişim sağla.</p>
-  </div>
+<div class="info-card glass">
+<h3>Premium Üyelik</h3>
+<p>Gold, Elite ve Legend avantajlarına eriş.</p>
+</div>
 
-  <div class="info-card glass">
-    <h3>Güvenli Alışveriş</h3>
-    <p>Tüm siparişler merkezi sistem tarafından takip edilir.</p>
-  </div>
+<div class="info-card glass">
+<h3>Güvenli Alışveriş</h3>
+<p>Siparişler merkezi sistem tarafından takip edilir.</p>
+</div>
 
-  <div class="info-card glass">
-    <h3>Partner Ağı</h3>
-    <p>Binlerce partner mağaza tek ekosistemde buluşacak.</p>
-  </div>
+<div class="info-card glass">
+<h3>Partner Ekosistemi</h3>
+<p>Binlerce partner tek ekosistemde buluşacak.</p>
+</div>
 
 </div>
+
 <div id="notice" class="notice"></div>
 
-<footer class="footer glass">
-  <b>AllonaHub</b><br>
-  ©️ 2026 Allworksin Business Danışmanlık Ticaret Ltd. Şti.
+<footer class="footer-main">
+
+<div class="footer-grid">
+
+<div class="footer-col">
+<h3>AllonaHub</h3>
+<a href="#">Hakkımızda</a>
+<a href="#">İletişim</a>
+<a href="#">Partner Ol</a>
+<a href="#">Kariyer</a>
+</div>
+
+<div class="footer-col">
+<h3>Yasal</h3>
+<a href="#">KVKK</a>
+<a href="#">Gizlilik</a>
+<a href="#">Çerez Politikası</a>
+<a href="#">Kullanım Şartları</a>
+</div>
+
+<div class="footer-col">
+<h3>E-Ticaret</h3>
+<a href="#">Mesafeli Satış</a>
+<a href="#">İade Politikası</a>
+<a href="#">Teslimat</a>
+</div>
+
+<div class="footer-col">
+<h3>İletişim</h3>
+<p>info@allonahub.com</p>
+<p>İstanbul / Türkiye</p>
+<p>+90 542 778 18 68</p>
+</div>
+
+</div>
+
+<div class="footer-bottom">
+©️ 2026 AllonaHub - Global Partner Based Super App
+</div>
+
 </footer>
 
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -543,204 +356,223 @@ SUPABASE_URL,
 SUPABASE_KEY
 );
 
-let products = [];
+let products=[];
 
-function money(value){
-  return Number(value || 0)
-  .toLocaleString(
-    "tr-TR",
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    }
-  ) + " ₺";
+const megaCategories={
+"Kadın":["Giyim","Takı","Aksesuar","İç Giyim"],
+"Erkek":["Giyim","Saat","Ayakkabı","Aksesuar"],
+"Anne & Çocuk":["Bebek","Oyuncak","Anne Ürünleri"],
+"Ev & Yaşam":["Mobilya","Dekorasyon","Mutfak"],
+"Kozmetik":["Makyaj","Parfüm","Bakım"],
+"Süpermarket":["Gıda","İçecek","Temizlik"]
+};
+
+function toggleMega(){
+
+const menu=
+document.getElementById("megaMenu");
+
+menu.classList.toggle("active");
+
+renderMega();
+
+}
+
+function renderMega(){
+
+const left=
+document.getElementById("megaLeft");
+
+const right=
+document.getElementById("megaRight");
+
+left.innerHTML="";
+right.innerHTML="";
+
+Object.keys(megaCategories)
+.forEach(cat=>{
+
+left.innerHTML+=
+`<button onclick="filterByCategory('${cat}')">${cat}</button>`;
+
+right.innerHTML+=`
+<div class="mega-col">
+<h4>${cat}</h4>
+${megaCategories[cat]
+.map(x=>`<button>${x}</button>`)
+.join("")}
+</div>
+`;
+
+});
+
+}
+
+function money(v){
+return Number(v||0)
+.toLocaleString("tr-TR",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})+" ₺";
 }
 
 function showNotice(text){
 
-  const box =
-  document.getElementById("notice");
+const box=
+document.getElementById("notice");
 
-  box.innerHTML = text;
+box.innerHTML=text;
 
-  box.style.display = "block";
+box.style.display="block";
 
-  setTimeout(()=>{
-    box.style.display = "none";
-  },3500);
+setTimeout(()=>{
+box.style.display="none";
+},3000);
+
 }
+
 function productCard(product){
 
-  const name = product.product_name || product.name || "Ürün";
-  const image = product.image_url || "allona-shop.png";
-  const category = product.category || "Kategori";
+return `
+<div class="product glass">
 
-  return `
-    <div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
+<div class="product-img">
+<img src="${product.image_url || 'allona-shop.png'}">
+</div>
 
-      <div class="product-img">
-        <img src="${image}" alt="${name}" onerror="this.src='allona-shop.png'">
-      </div>
+<b>${product.product_name || 'Ürün'}</b>
 
-      <b>${name}</b>
+<p>${product.category || 'Kategori'}</p>
 
-      <p>${category}</p>
+<div class="tag-row">
+<div class="tag">Partner</div>
+<div class="tag hp-tag">HP</div>
+</div>
 
-      <div class="price">
-        ${product.old_price ? `<span class="old-price">${money(product.old_price)}</span>` : ""}
-        ${money(product.price)}
-      </div>
+<div class="price">
+${money(product.price)}
+</div>
 
-      <div class="product-actions">
-        <button type="button" class="buy-btn" onclick="event.stopPropagation();buyNow('${product.id}')">
-          Satın Al
-        </button>
+<div class="product-actions">
+<button class="buy-btn"
+onclick="buyNow('${product.id}')">
+Satın Al
+</button>
 
-        <button type="button" class="fav-btn" onclick="event.stopPropagation();toggleFav('${product.id}')">
-          ♥️
-        </button>
-      </div>
+<button class="fav-btn"
+onclick="toggleFav('${product.id}')">
+♥️
+</button>
+</div>
 
-      <button type="button" class="cart-btn" onclick="event.stopPropagation();addToCart('${product.id}')">
-        Sepete Ekle
-      </button>
+<button class="cart-btn"
+onclick="addToCart('${product.id}')">
+Sepete Ekle
+</button>
 
-    </div>
-  `;
+</div>
+`;
+
 }
-function buyNow(id){
-  addToCart(id);
-  window.location.href = "cart.html";
-}
-console.log("SUPABSE BAĞLANDI");
+
 async function loadProducts(){
-console.log("ÜRÜNLER YÜKLENİYOR");
-  const grid =
-  document.getElementById(
-  "productsGrid"
-  );
 
-  grid.innerHTML =
-  "<p>Ürünler yükleniyor...</p>";
+const {data,error}=
+await supabaseClient
+.from("products")
+.select("*")
+.order("created_at",{ascending:false});
 
-  const {data,error} =
-  await supabaseClient
-  .from("products")
-  .select("*")
-  .order("created_at",
-  {
-    ascending:false
-  });
+if(error){
 
-  if(error){
+document.getElementById("productsGrid")
+.innerHTML="<p>Ürünler yüklenemedi</p>";
 
-    grid.innerHTML =
-    "<p>Ürünler yüklenemedi.</p>";
+return;
+}
 
-    console.error(error);
+products=data || [];
 
-    return;
-  }
+document.getElementById("productsGrid")
+.innerHTML=
+products.map(productCard).join("");
 
-  products = data || [];
+document.getElementById("discountGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-  if(!products.length){
+document.getElementById("newGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-    grid.innerHTML =
-    "<p>Henüz ürün bulunmuyor.</p>";
+document.getElementById("hubGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-    return;
-  }
+document.getElementById("bestGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-  grid.innerHTML =
-  products
-  .map(productCard)
-  .join("");
+document.getElementById("couponGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
+
 }
 
 function searchProducts(){
 
-  const text =
-  document
-  .getElementById(
-  "searchInput"
-  )
-  .value
-  .toLowerCase()
-  .trim();
-
-  if(!text){
-
-    loadProducts();
-    return;
-  }
-
-  const result =
-  products.filter(p=>{
-
-    return (
-      String(
-      p.product_name || ""
-      )
-      .toLowerCase()
-      .includes(text)
-
-      ||
-
-      String(
-      p.category || ""
-      )
-      .toLowerCase()
-      .includes(text)
-
-      ||
-
-      String(
-      p.brand || ""
-      )
-      .toLowerCase()
-      .includes(text)
-
-    );
-
-  });
-
-  document
-  .getElementById(
-  "productsGrid"
-  )
-  .innerHTML =
-  result.length
-  ?
-  result.map(productCard).join("")
-  :
-  "<p>Sonuç bulunamadı.</p>";
-}
-
+const q=
 document
-.getElementById(
-"searchInput"
-)
-.addEventListener(
-"keydown",
-function(e){
+.getElementById("searchInput")
+.value
+.toLowerCase();
 
-if(e.key==="Enter"){
+const result=
+products.filter(p=>
 
-searchProducts();
+String(p.product_name||"")
+.toLowerCase()
+.includes(q)
 
-}
+||
 
-});
+String(p.category||"")
+.toLowerCase()
+.includes(q)
 
-function getCart(){
-
-return JSON.parse(
-localStorage.getItem(
-"allonaCart"
-) || "[]"
 );
 
+document
+.getElementById("productsGrid")
+.innerHTML=
+result.map(productCard).join("");
+
+}
+
+function filterByCategory(cat){
+
+const result=
+products.filter(p=>
+
+String(p.category||"")
+.toLowerCase()
+.includes(cat.toLowerCase())
+
+);
+
+document
+.getElementById("productsGrid")
+.innerHTML=
+result.map(productCard).join("");
+
+document
+.getElementById("megaMenu")
+.classList.remove("active");
+
+}
+
+function getCart(){
+return JSON.parse(localStorage.getItem("allonaCart")||"[]");
 }
 
 function setCart(cart){
@@ -756,13 +588,10 @@ updateCartCount();
 
 function addToCart(id){
 
-let cart =
-getCart();
+let cart=getCart();
 
-let found =
-cart.find(
-x=>String(x.id)===String(id)
-);
+let found=
+cart.find(x=>x.id==id);
 
 if(found){
 
@@ -779,71 +608,27 @@ qty:1
 
 setCart(cart);
 
-showNotice(
-"<b>Ürün sepete eklendi.</b>"
-);
+showNotice("<b>Ürün sepete eklendi</b>");
 
 }
 
-function updateCartCount(){
+function buyNow(id){
 
-const total =
-getCart()
-.reduce(
-(sum,item)=>
-sum + item.qty,
-0
-);
+addToCart(id);
 
-document
-.getElementById(
-"cartCount"
-)
-.textContent =
-total;
-
-}
-
-function toggleCart(){
-
-showNotice(
-"Sepet ekranı bir sonraki aşamada bağlanacak."
-);
-
-}
-
-function getFavs(){
-
-return JSON.parse(
-localStorage.getItem(
-"allonaFavs"
-) || "[]"
-);
-
-}
-
-function setFavs(favs){
-
-localStorage.setItem(
-"allonaFavs",
-JSON.stringify(favs)
-);
+window.location.href=
+"cart.html";
 
 }
 
 function toggleFav(id){
 
-let favs =
-getFavs();
+let favs=
+JSON.parse(localStorage.getItem("allonaFavs")||"[]");
 
-if(
-favs.includes(id)
-){
+if(favs.includes(id)){
 
-favs =
-favs.filter(
-x=>x!==id
-);
+favs=favs.filter(x=>x!=id);
 
 }else{
 
@@ -851,23 +636,75 @@ favs.push(id);
 
 }
 
-setFavs(favs);
-
-showNotice(
-"Favoriler güncellendi."
+localStorage.setItem(
+"allonaFavs",
+JSON.stringify(favs)
 );
+
+updateFavCount();
+
+showNotice("Favoriler güncellendi");
+
+}
+
+function updateCartCount(){
+
+const total=
+getCart().reduce(
+(a,b)=>a+b.qty,
+0
+);
+
+document.getElementById("cartCount")
+.textContent=total;
+
+}
+
+function updateFavCount(){
+
+const total=
+JSON.parse(
+localStorage.getItem("allonaFavs")||"[]"
+).length;
+
+document.getElementById("favCount")
+.textContent=total;
+
+}
+
+function toggleCart(){
+
+window.location.href=
+"cart.html";
 
 }
 
 function openFavorites(){
 
-showNotice(
-"Favoriler sayfası sonraki aşamada bağlanacak."
-);
+window.location.href=
+"favorites.html";
+
+}
+
+function scrollToSection(id){
+
+document
+.getElementById(id)
+.scrollIntoView({
+behavior:"smooth"
+});
+
+}
+
+function showAllProducts(){
+
+loadProducts();
 
 }
 
 updateCartCount();
+updateFavCount();
+renderMega();
 loadProducts();
 
 </script>
