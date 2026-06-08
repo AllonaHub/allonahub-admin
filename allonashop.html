@@ -1,1 +1,874 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Shop | AllonaHub</title>
 
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  min-width:1320px;
+  background:#020814;
+  color:white;
+  overflow-x:auto;
+}
+
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  background:
+    radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+    radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+    linear-gradient(135deg,#020814,#061b33,#002b4d);
+}
+
+body:after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:linear-gradient(120deg,transparent,#00d5ff18,transparent);
+  animation:wave 8s infinite linear;
+}
+
+@keyframes wave{
+  0%{transform:translateX(-40%)}
+  100%{transform:translateX(40%)}
+}
+
+.page{
+  width:1320px;
+  margin:0 auto;
+  padding:18px 22px 60px;
+}
+
+.glass{
+  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+  border:1px solid rgba(0,229,255,.26);
+  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
+  border-radius:26px;
+  position:relative;
+  overflow:hidden;
+}
+
+button{
+  cursor:pointer;
+  border:none;
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+  .top-links{
+  height:32px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:20px;
+  font-size:12px;
+  opacity:.86;
+  margin-bottom:8px;
+}
+
+.top-links a:hover{
+  color:#00e5ff;
+}
+
+.header{
+  height:82px;
+  display:grid;
+  grid-template-columns:310px 1fr 360px;
+  gap:18px;
+  align-items:center;
+  margin-bottom:14px;
+}
+
+.brand{
+  height:82px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:0 20px;
+}
+
+.brand img{
+  width:44px;
+  height:44px;
+  object-fit:contain;
+}
+
+.brand b{
+  font-size:29px;
+  color:#ffd700;
+}
+
+.brand span{
+  font-size:29px;
+  color:#00e5ff;
+  font-weight:900;
+}
+
+.search{
+  height:60px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:0 20px;
+}
+
+.search-mark{
+  width:25px;
+  height:25px;
+  border:3px solid #00e5ff;
+  border-radius:50%;
+  position:relative;
+  box-shadow:0 0 14px #00e5ff;
+}
+
+.search-mark:after{
+  content:"";
+  position:absolute;
+  width:11px;
+  height:3px;
+  background:#00e5ff;
+  right:-9px;
+  bottom:-5px;
+  transform:rotate(45deg);
+  border-radius:4px;
+}
+
+.search input{
+  flex:1;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:white;
+  font-size:15px;
+}
+
+.search button{
+  background:linear-gradient(135deg,#00e5ff,#0077ff);
+  color:white;
+  font-weight:900;
+  padding:12px 20px;
+  border-radius:18px;
+  box-shadow:0 0 16px #00e5ff55;
+}
+
+.actions{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+}
+
+.actions a,
+.actions button{
+  background:transparent;
+  color:white;
+  font-weight:900;
+  font-size:14px;
+}
+
+.actions a:hover,
+.actions button:hover{
+  color:#ffd700;
+}
+
+.hero{
+  padding:40px;
+  margin-bottom:22px;
+}
+
+.hero h1{
+  color:#ffd700;
+  font-size:42px;
+  margin-bottom:10px;
+}
+
+.hero p{
+  opacity:.8;
+  font-size:16px;
+  max-width:700px;
+}
+
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:28px 0 14px;
+}
+
+.section-title h2{
+  color:#ffd700;
+  font-size:30px;
+}
+  .section-title button{
+  color:#00e5ff;
+  background:transparent;
+  font-weight:900;
+  font-size:15px;
+}
+
+.product-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:16px;
+}
+
+.product{
+  min-height:355px;
+  padding:15px;
+  border-radius:24px;
+  color:white;
+  display:flex;
+  flex-direction:column;
+}
+
+.product-img{
+  height:170px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#073c78,#020814);
+  margin-bottom:13px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.product-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.product b{
+  color:#ffd700;
+  font-size:15px;
+  min-height:38px;
+  line-height:1.35;
+}
+
+.product p{
+  font-size:13px;
+  opacity:.72;
+  margin:6px 0;
+  min-height:34px;
+  line-height:1.35;
+}
+
+.price{
+  color:#00e5ff;
+  font-size:21px;
+  font-weight:900;
+  margin:4px 0 10px;
+}
+
+.old-price{
+  text-decoration:line-through;
+  opacity:.55;
+  color:#ddd;
+  margin-right:8px;
+  font-size:14px;
+}
+
+.product-actions{
+  margin-top:auto;
+  display:grid;
+  grid-template-columns:1fr 42px;
+  gap:8px;
+}
+
+.buy-btn{
+  height:40px;
+  border-radius:15px;
+  background:linear-gradient(135deg,#00e5ff,#0077ff);
+  color:white;
+  font-weight:900;
+}
+
+.fav-btn{
+  height:40px;
+  border-radius:15px;
+  background:#ffffff12;
+  color:#ffd700;
+  font-size:20px;
+  border:1px solid #ffd70033;
+}
+
+.cart-btn{
+  height:38px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#ffd700,#b88700);
+  color:#031326;
+  font-weight:900;
+  margin-top:8px;
+  width:100%;
+}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-top:26px;
+}
+
+.info-card{
+  padding:22px;
+  min-height:135px;
+}
+
+.info-card h3{
+  color:#ffd700;
+  margin-bottom:8px;
+}
+
+.info-card p{
+  opacity:.75;
+  line-height:1.45;
+  font-size:14px;
+}
+  .notice{
+  position:fixed;
+  right:25px;
+  bottom:25px;
+  z-index:999;
+  background:#031326;
+  border:1px solid #00e5ff88;
+  border-radius:18px;
+  padding:15px 18px;
+  box-shadow:0 0 25px #00e5ff44;
+  display:none;
+  max-width:350px;
+}
+
+.notice b{
+  color:#ffd700;
+}
+
+.footer{
+  margin-top:35px;
+  padding:30px;
+  text-align:center;
+  color:#ffffff99;
+}
+
+.footer b{
+  color:#ffd700;
+}
+.product{
+  width:280px;
+}
+
+.product-grid{
+  align-items:start;
+}
+
+.product-actions{
+  display:grid;
+  grid-template-columns:1fr 48px;
+  gap:10px;
+}
+
+.buy-btn{
+  font-size:14px;
+  color:white !important;
+  padding:0 12px;
+}
+
+.fav-btn{
+  color:#ffd700 !important;
+  font-size:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.cart-btn{
+  font-size:15px;
+  color:#031326 !important;
+}
+
+.product-img{
+  height:230px;
+}
+
+.product b{
+  min-height:48px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<div class="top-links">
+  <a href="index.html">Ana Sayfa</a>
+  <a href="partner.html">Partner Başvurusu</a>
+  <a href="iletisim.html">İletişim</a>
+  <a href="yardim.html">Destek</a>
+</div>
+
+<div class="header">
+
+  <a class="brand glass" href="index.html">
+    <img src="allona.logo.png" alt="AllonaHub">
+    <b>Allona</b><span>Shop</span>
+  </a>
+
+  <div class="search glass">
+    <div class="search-mark"></div>
+    <input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
+    <button onclick="searchProducts()">Ara</button>
+  </div>
+
+  <div class="actions glass">
+    <a href="user.html">Hesabım</a>
+    <button onclick="openFavorites()">Favoriler</button>
+    <button onclick="toggleCart()">
+      Sepetim
+      <span id="cartCount">0</span>
+    </button>
+  </div>
+
+</div>
+
+<div class="hero glass">
+  <h1>Allona Shop</h1>
+
+  <p>
+    Takı, aksesuar, ev yaşam ürünleri ve partner mağazalarının
+    premium ürünlerini tek noktadan keşfedin.
+  </p>
+</div>
+
+<div class="section-title">
+  <h2>Yeni Eklenen Ürünler</h2>
+</div>
+
+<div id="productsGrid" class="product-grid">
+  <p>Ürünler yükleniyor...</p>
+</div>
+
+<div class="section-title">
+  <h2>AllonaHub Avantajları</h2>
+</div>
+
+<div class="info-grid">
+
+  <div class="info-card glass">
+    <h3>HP Kazan</h3>
+    <p>Alışveriş yaptıkça HP puanı kazan ve kampanyalarda kullan.</p>
+  </div>
+
+  <div class="info-card glass">
+    <h3>Premium Üyelik</h3>
+    <p>Özel kampanyalara ve avantajlara erişim sağla.</p>
+  </div>
+
+  <div class="info-card glass">
+    <h3>Güvenli Alışveriş</h3>
+    <p>Tüm siparişler merkezi sistem tarafından takip edilir.</p>
+  </div>
+
+  <div class="info-card glass">
+    <h3>Partner Ağı</h3>
+    <p>Binlerce partner mağaza tek ekosistemde buluşacak.</p>
+  </div>
+
+</div>
+<div id="notice" class="notice"></div>
+
+<footer class="footer glass">
+  <b>AllonaHub</b><br>
+  ©️ 2026 Allworksin Business Danışmanlık Ticaret Ltd. Şti.
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+"https://xqvikrysciguzholdjeb.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+let products = [];
+
+function money(value){
+  return Number(value || 0)
+  .toLocaleString(
+    "tr-TR",
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }
+  ) + " ₺";
+}
+
+function showNotice(text){
+
+  const box =
+  document.getElementById("notice");
+
+  box.innerHTML = text;
+
+  box.style.display = "block";
+
+  setTimeout(()=>{
+    box.style.display = "none";
+  },3500);
+}
+
+function productCard(product){
+
+return `
+<div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
+
+  <div class="product-img">
+
+    <img
+      src="${product.image_url || 'allona-shop.png'}"
+      alt="${product.product_name || ''}"
+      onerror="this.src='allona-shop.png'"
+    >
+
+  </div>
+
+  <b>
+    ${product.product_name || "Ürün"}
+  </b>
+
+  <p>
+    ${product.category || "Kategori"}
+  </p>
+
+  <div class="price">
+
+    ${
+      product.old_price
+      ?
+      `<span class="old-price">
+      ${money(product.old_price)}
+      </span>`
+      :
+      ""
+    }
+
+    ${money(product.price)}
+
+  </div>
+
+  <div class="product-actions">
+
+    <button
+      class="buy-btn"
+     onclick="event.stopPropagation();addToCart('${product.id}')"
+      Satın Al
+    </button>
+
+    <button
+      class="fav-btn"
+     onclick="event.stopPropagation();toggleFav('${product.id}')"
+      ♥️
+    </button>
+
+  </div>
+
+  <button
+    class="cart-btn"
+ onclick="event.stopPropagation();addToCart('${product.id}')"
+    Sepete Ekle
+  </button>
+
+</div>
+`;
+}
+console.log("SUPABSE BAĞLANDI");
+async function loadProducts(){
+console.log("ÜRÜNLER YÜKLENİYOR");
+  const grid =
+  document.getElementById(
+  "productsGrid"
+  );
+
+  grid.innerHTML =
+  "<p>Ürünler yükleniyor...</p>";
+
+  const {data,error} =
+  await supabaseClient
+  .from("products")
+  .select("*")
+  .order("created_at",
+  {
+    ascending:false
+  });
+
+  if(error){
+
+    grid.innerHTML =
+    "<p>Ürünler yüklenemedi.</p>";
+
+    console.error(error);
+
+    return;
+  }
+
+  products = data || [];
+
+  if(!products.length){
+
+    grid.innerHTML =
+    "<p>Henüz ürün bulunmuyor.</p>";
+
+    return;
+  }
+
+  grid.innerHTML =
+  products
+  .map(productCard)
+  .join("");
+}
+
+function searchProducts(){
+
+  const text =
+  document
+  .getElementById(
+  "searchInput"
+  )
+  .value
+  .toLowerCase()
+  .trim();
+
+  if(!text){
+
+    loadProducts();
+    return;
+  }
+
+  const result =
+  products.filter(p=>{
+
+    return (
+      String(
+      p.product_name || ""
+      )
+      .toLowerCase()
+      .includes(text)
+
+      ||
+
+      String(
+      p.category || ""
+      )
+      .toLowerCase()
+      .includes(text)
+
+      ||
+
+      String(
+      p.brand || ""
+      )
+      .toLowerCase()
+      .includes(text)
+
+    );
+
+  });
+
+  document
+  .getElementById(
+  "productsGrid"
+  )
+  .innerHTML =
+  result.length
+  ?
+  result.map(productCard).join("")
+  :
+  "<p>Sonuç bulunamadı.</p>";
+}
+
+document
+.getElementById(
+"searchInput"
+)
+.addEventListener(
+"keydown",
+function(e){
+
+if(e.key==="Enter"){
+
+searchProducts();
+
+}
+
+});
+
+function getCart(){
+
+return JSON.parse(
+localStorage.getItem(
+"allonaCart"
+) || "[]"
+);
+
+}
+
+function setCart(cart){
+
+localStorage.setItem(
+"allonaCart",
+JSON.stringify(cart)
+);
+
+updateCartCount();
+
+}
+
+function addToCart(id){
+
+let cart =
+getCart();
+
+let found =
+cart.find(
+x=>String(x.id)===String(id)
+);
+
+if(found){
+
+found.qty++;
+
+}else{
+
+cart.push({
+id:id,
+qty:1
+});
+
+}
+
+setCart(cart);
+
+showNotice(
+"<b>Ürün sepete eklendi.</b>"
+);
+
+}
+
+function updateCartCount(){
+
+const total =
+getCart()
+.reduce(
+(sum,item)=>
+sum + item.qty,
+0
+);
+
+document
+.getElementById(
+"cartCount"
+)
+.textContent =
+total;
+
+}
+
+function toggleCart(){
+
+showNotice(
+"Sepet ekranı bir sonraki aşamada bağlanacak."
+);
+
+}
+
+function getFavs(){
+
+return JSON.parse(
+localStorage.getItem(
+"allonaFavs"
+) || "[]"
+);
+
+}
+
+function setFavs(favs){
+
+localStorage.setItem(
+"allonaFavs",
+JSON.stringify(favs)
+);
+
+}
+
+function toggleFav(id){
+
+let favs =
+getFavs();
+
+if(
+favs.includes(id)
+){
+
+favs =
+favs.filter(
+x=>x!==id
+);
+
+}else{
+
+favs.push(id);
+
+}
+
+setFavs(favs);
+
+showNotice(
+"Favoriler güncellendi."
+);
+
+}
+
+function openFavorites(){
+
+showNotice(
+"Favoriler sayfası sonraki aşamada bağlanacak."
+);
+
+}
+
+updateCartCount();
+loadProducts();
+
+</script>
+
+</body>
+</html>
