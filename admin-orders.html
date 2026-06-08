@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320">
+<title>Admin Siparişler</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+body{
+background:#020814;
+color:white;
+min-width:1320px;
+}
+
+body:before{
+content:"";
+position:fixed;
+inset:0;
+z-index:-1;
+background:
+radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+linear-gradient(135deg,#020814,#061b33,#002b4d);
+}
+
+.wrapper{
+width:1320px;
+margin:auto;
+padding:30px;
+}
+
+.title{
+font-size:42px;
+font-weight:900;
+color:#ffd700;
+margin-bottom:25px;
+}
+
+.order{
+background:rgba(5,25,50,.92);
+border:1px solid rgba(0,229,255,.25);
+border-radius:20px;
+padding:20px;
+margin-bottom:15px;
+}
+
+.row{
+display:flex;
+justify-content:space-between;
+margin-bottom:10px;
+}
+
+.label{
+color:#8fb6d8;
+}
+
+select{
+background:#021426;
+color:white;
+padding:10px;
+border-radius:10px;
+border:1px solid #00e5ff44;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:linear-gradient(135deg,#00e5ff,#0077ff);
+color:white;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<div class="title">
+Sipariş Yönetimi
+</div>
+
+<div id="orders"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+"https://xqvfkrysciguzholdjeb.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+async function loadOrders(){
+
+const {data,error} =
+await supabaseClient
+.from("orders")
+.select("*")
+.order("created_at",{ascending:false});
+
+if(error){
+console.error(error);
+return;
+}
+
+document.getElementById("orders").innerHTML =
+data.map(order=>`
+
+<div class="order">
+
+<div class="row">
+<b>${order.order_no}</b>
+<span>${order.created_at}</span>
+</div>
+
+<div class="row">
+<span>${order.customer_name}</span>
+<span>${order.customer_phone}</span>
+</div>
+
+<div class="row">
+<span>${order.customer_email}</span>
+<span>${order.city}</span>
+</div>
+
+<div class="row">
+<b>${order.total} ₺</b>
+
+<select onchange="updateStatus('${order.id}',this.value)">
+
+<option value="new"
+${order.order_status==="new"?"selected":""}>
+Yeni
+</option>
+
+<option value="preparing"
+${order.order_status==="preparing"?"selected":""}>
+Hazırlanıyor
+</option>
+
+<option value="shipped"
+${order.order_status==="shipped"?"selected":""}>
+Kargoda
+</option>
+
+<option value="delivered"
+${order.order_status==="delivered"?"selected":""}>
+Teslim Edildi
+</option>
+
+<option value="cancelled"
+${order.order_status==="cancelled"?"selected":""}>
+İptal
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+`).join("");
+
+}
+
+async function updateStatus(id,status){
+
+await supabaseClient
+.from("orders")
+.update({
+order_status:status
+})
+.eq("id",id);
+
+alert("Güncellendi");
+
+}
+
+loadOrders();
+
+</script>
+
+</body>
+</html>
