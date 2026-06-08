@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Sipariş Alındı | Allona Shop</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+.page{width:1320px;margin:0 auto;padding:40px}
+.card{max-width:760px;margin:90px auto;padding:45px;text-align:center;border-radius:30px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 35px rgba(0,229,255,.18)}
+h1{color:#ffd700;font-size:42px;margin-bottom:18px}
+p{font-size:18px;opacity:.82;line-height:1.6}
+.order{margin:25px auto;padding:18px;border-radius:18px;background:#00e5ff14;color:#00e5ff;font-size:24px;font-weight:900}
+.btns{display:flex;gap:14px;justify-content:center;margin-top:30px}
+a{padding:15px 26px;border-radius:16px;text-decoration:none;font-weight:900}
+.shop{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white}
+.home{background:linear-gradient(135deg,#ffd700,#b88700);color:#031326}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <h1>Siparişiniz Alındı ✅</h1>
+    <p>Allona Shop siparişiniz başarıyla oluşturuldu. Ödeme altyapısı iyzico ile aktif edildiğinde ödeme adımı tamamlanacaktır.</p>
+    <div class="order" id="orderNo">Sipariş No: -</div>
+    <div class="btns">
+      <a class="shop" href="allonashop.html">Mağazaya Dön</a>
+      <a class="home" href="index.html">Ana Sayfa</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const order = params.get("order") || "-";
+document.getElementById("orderNo").textContent = "Sipariş No: " + order;
+</script>
+</body>
+</html>
