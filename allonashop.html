@@ -2,8 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Allona Shop | AllonaHub</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{
@@ -13,864 +17,2756 @@
   font-family:Arial,Helvetica,sans-serif;
 }
 
-html{
-  scroll-behavior:smooth;
+:root{
+  --bg:#020814;
+  --panel:rgba(255,255,255,.075);
+  --panel2:rgba(255,255,255,.11);
+  --border:rgba(255,255,255,.14);
+  --blue:#00d9ff;
+  --blue2:#0077ff;
+  --gold:#ffd700;
+  --text:#ffffff;
+  --muted:#b8d8f2;
+  --danger:#ff4d6d;
+  --success:#25D366;
 }
 
 body{
-  min-width:1320px;
-  background:#020814;
-  color:white;
-  overflow-x:auto;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
 }
 
 body:before{
   content:"";
   position:fixed;
   inset:0;
-  z-index:-2;
+  z-index:-3;
   background:
-    radial-gradient(circle at top left,#00b7ff55,transparent 35%),
-    radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
-    linear-gradient(135deg,#020814,#061b33,#002b4d);
+    radial-gradient(circle at top left,rgba(0,217,255,.34),transparent 34%),
+    radial-gradient(circle at bottom right,rgba(255,215,0,.18),transparent 32%),
+    linear-gradient(135deg,#020814,#061b33,#001827);
 }
 
 body:after{
   content:"";
   position:fixed;
   inset:0;
-  z-index:-1;
-  background:linear-gradient(120deg,transparent,#00d5ff18,transparent);
-  animation:wave 8s infinite linear;
-}
-
-@keyframes wave{
-  0%{transform:translateX(-40%)}
-  100%{transform:translateX(40%)}
-}
-
-.page{
-  width:1320px;
-  margin:0 auto;
-  padding:18px 22px 60px;
-}
-
-.glass{
-  background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-  border:1px solid rgba(0,229,255,.26);
-  box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-  border-radius:26px;
-  position:relative;
-  overflow:hidden;
-}
-
-button{
-  cursor:pointer;
-  border:none;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.8),transparent);
 }
 
 a{
   text-decoration:none;
   color:inherit;
 }
-  .top-links{
-  height:32px;
+
+button,input,select{
+  font-family:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.page{
+  width:100%;
+  min-height:100vh;
+}
+
+/* HEADER */
+
+.shop-header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(2,8,20,.88);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+
+.header-inner{
+  max-width:1420px;
+  margin:auto;
+  padding:14px 22px;
   display:flex;
-  justify-content:flex-end;
   align-items:center;
-  gap:20px;
-  font-size:12px;
-  opacity:.86;
-  margin-bottom:8px;
-}
-
-.top-links a:hover{
-  color:#00e5ff;
-}
-
-.header{
-  height:82px;
-  display:grid;
-  grid-template-columns:310px 1fr 360px;
   gap:18px;
-  align-items:center;
-  margin-bottom:14px;
 }
 
-.brand{
-  height:82px;
+.logo-area{
   display:flex;
   align-items:center;
-  gap:13px;
-  padding:0 20px;
+  gap:11px;
+  min-width:max-content;
 }
 
-.brand img{
+.logo-mark{
   width:44px;
   height:44px;
-  object-fit:contain;
-}
-
-.brand b{
-  font-size:29px;
-  color:#ffd700;
-}
-
-.brand span{
-  font-size:29px;
-  color:#00e5ff;
-  font-weight:900;
-}
-
-.search{
-  height:60px;
+  border-radius:15px;
   display:flex;
   align-items:center;
-  gap:14px;
-  padding:0 20px;
+  justify-content:center;
+  background:linear-gradient(135deg,rgba(0,217,255,.24),rgba(255,215,0,.20));
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 0 24px rgba(0,217,255,.20);
 }
 
-.search-mark{
-  width:25px;
-  height:25px;
-  border:3px solid #00e5ff;
-  border-radius:50%;
-  position:relative;
-  box-shadow:0 0 14px #00e5ff;
+.logo-mark i{
+  color:var(--gold);
+  font-size:20px;
 }
 
-.search-mark:after{
-  content:"";
-  position:absolute;
-  width:11px;
-  height:3px;
-  background:#00e5ff;
-  right:-9px;
-  bottom:-5px;
-  transform:rotate(45deg);
-  border-radius:4px;
+.logo-text{
+  display:flex;
+  flex-direction:column;
+  line-height:1.05;
 }
 
-.search input{
+.logo-text strong{
+  font-size:23px;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:var(--blue);
+}
+
+.logo-text span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.logo-text strong b{
+  color:var(--gold);
+}
+
+/* SEARCH */
+
+.search-box{
   flex:1;
-  background:transparent;
+  min-width:260px;
+  height:48px;
+  display:flex;
+  align-items:center;
+  background:rgba(255,255,255,.075);
+  border:1px solid var(--border);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.16);
+}
+
+.search-box i{
+  color:var(--blue);
+  padding-left:17px;
+}
+
+.search-box input{
+  flex:1;
+  height:100%;
   border:0;
   outline:0;
+  background:transparent;
   color:white;
+  padding:0 14px;
   font-size:15px;
 }
 
-.search button{
-  background:linear-gradient(135deg,#00e5ff,#0077ff);
-  color:white;
-  font-weight:900;
-  padding:12px 20px;
-  border-radius:18px;
-  box-shadow:0 0 16px #00e5ff55;
+.search-box input::placeholder{
+  color:rgba(255,255,255,.55);
 }
 
-.actions{
-  height:60px;
+.search-box button{
+  width:58px;
+  height:100%;
+  border:0;
+  color:white;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  font-size:16px;
+}
+
+/* HEADER ACTIONS */
+
+.header-actions{
   display:flex;
   align-items:center;
-  justify-content:space-around;
+  gap:10px;
 }
 
-.actions a,
-.actions button{
+.header-btn{
+  min-width:48px;
+  height:48px;
+  padding:0 13px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.075);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  position:relative;
+  transition:.25s;
+}
+
+.header-btn:hover{
+  transform:translateY(-2px);
+  background:rgba(0,217,255,.15);
+  border-color:rgba(0,217,255,.45);
+}
+
+.header-btn i{
+  font-size:17px;
+  color:var(--blue);
+}
+
+.header-btn span{
+  font-size:13px;
+  font-weight:700;
+}
+
+.badge{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  min-width:20px;
+  height:20px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff3b7a,#ff9a00);
+  color:white;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  border:2px solid #020814;
+}
+
+/* ACCOUNT DROPDOWN */
+
+.account-wrap{
+  position:relative;
+}
+
+.account-menu{
+  position:absolute;
+  top:58px;
+  right:0;
+  width:260px;
+  display:none;
+  background:rgba(5,18,36,.96);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:12px;
+  box-shadow:0 25px 80px rgba(0,0,0,.45);
+  backdrop-filter:blur(18px);
+}
+
+.account-menu.active{
+  display:block;
+}
+
+.account-menu a,
+.account-menu button{
+  width:100%;
+  min-height:42px;
+  border:0;
+  border-radius:14px;
   background:transparent;
   color:white;
-  font-weight:900;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
   font-size:14px;
+  transition:.2s;
 }
 
-.actions a:hover,
-.actions button:hover{
-  color:#ffd700;
+.account-menu a:hover,
+.account-menu button:hover{
+  background:rgba(0,217,255,.12);
 }
 
-.hero{
-  padding:40px;
-  margin-bottom:22px;
+.account-menu i{
+  color:var(--gold);
+  width:18px;
 }
 
-.hero h1{
-  color:#ffd700;
-  font-size:42px;
-  margin-bottom:10px;
+/* TOP CATEGORY BAR */
+
+.top-category-bar{
+  border-top:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.035);
 }
 
-.hero p{
-  opacity:.8;
-  font-size:16px;
-  max-width:700px;
+.top-category-inner{
+  max-width:1420px;
+  margin:auto;
+  padding:10px 22px;
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.top-category-inner::-webkit-scrollbar{
+  display:none;
+}
+
+.top-cat-btn{
+  white-space:nowrap;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.065);
+  color:white;
+  border-radius:999px;
+  padding:9px 15px;
+  font-size:13px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:.25s;
+}
+
+.top-cat-btn i{
+  color:var(--gold);
+}
+
+.top-cat-btn:hover,
+.top-cat-btn.active{
+  background:linear-gradient(135deg,rgba(0,217,255,.28),rgba(255,215,0,.13));
+  border-color:rgba(0,217,255,.55);
+  box-shadow:0 0 18px rgba(0,217,255,.18);
+}
+
+/* GLOBAL SECTIONS */
+
+.container{
+  max-width:1420px;
+  margin:auto;
+  padding:0 22px;
 }
 
 .section-title{
   display:flex;
+  align-items:end;
   justify-content:space-between;
-  align-items:center;
-  margin:28px 0 14px;
+  gap:14px;
+  margin-bottom:18px;
 }
 
 .section-title h2{
-  color:#ffd700;
-  font-size:30px;
-}
-  .section-title button{
-  color:#00e5ff;
-  background:transparent;
+  font-size:25px;
   font-weight:900;
-  font-size:15px;
 }
 
-.product-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:16px;
+.section-title p{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:5px;
 }
 
-.product{
-  min-height:355px;
-  padding:15px;
-  border-radius:24px;
+.glass{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:28px;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+  backdrop-filter:blur(18px);
+}
+
+/* LOADING */
+
+.loading{
+  width:100%;
+  min-height:260px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:15px;
+  color:var(--muted);
+}
+
+.spinner{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  border:4px solid rgba(255,255,255,.12);
+  border-top-color:var(--blue);
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+/* TOAST */
+
+.toast{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:999;
+  min-width:260px;
+  max-width:360px;
+  display:none;
+  background:rgba(5,18,36,.96);
+  border:1px solid rgba(0,217,255,.35);
   color:white;
+  border-radius:18px;
+  padding:15px 17px;
+  box-shadow:0 18px 60px rgba(0,0,0,.45);
+}
+
+.toast.active{
+  display:block;
+}
+
+.toast strong{
+  display:block;
+  color:var(--gold);
+  margin-bottom:4px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1100px){
+  .header-inner{
+    flex-wrap:wrap;
+  }
+
+  .search-box{
+    order:3;
+    flex-basis:100%;
+  }
+
+  .header-actions{
+    margin-left:auto;
+  }
+}
+
+@media(max-width:720px){
+  .header-inner{
+    padding:12px 14px;
+  }
+
+  .container{
+    padding:0 14px;
+  }
+
+  .logo-text strong{
+    font-size:20px;
+  }
+
+  .header-btn span{
+    display:none;
+  }
+
+  .top-category-inner{
+    padding:9px 14px;
+  }
+}
+  /* HERO */
+
+.hero-section{
+  padding:28px 0 18px;
+}
+
+.hero-grid{
+  display:grid;
+  grid-template-columns:1.55fr .75fr;
+  gap:18px;
+}
+
+.hero-main{
+  min-height:330px;
+  border-radius:34px;
+  padding:38px;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 78% 20%,rgba(255,215,0,.26),transparent 30%),
+    radial-gradient(circle at 15% 10%,rgba(0,217,255,.34),transparent 35%),
+    linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.045));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 30px 90px rgba(0,0,0,.34);
+}
+
+.hero-main:after{
+  content:"";
+  position:absolute;
+  right:-80px;
+  bottom:-110px;
+  width:360px;
+  height:360px;
+  border-radius:50%;
+  background:rgba(0,217,255,.12);
+  filter:blur(4px);
+}
+
+.hero-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 14px;
+  border-radius:999px;
+  background:rgba(255,215,0,.12);
+  border:1px solid rgba(255,215,0,.32);
+  color:var(--gold);
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:18px;
+}
+
+.hero-main h1{
+  max-width:650px;
+  font-size:48px;
+  line-height:1.06;
+  font-weight:950;
+  letter-spacing:-1.2px;
+  margin-bottom:16px;
+}
+
+.hero-main h1 span{
+  color:var(--blue);
+}
+
+.hero-main p{
+  max-width:610px;
+  color:#d8efff;
+  font-size:17px;
+  line-height:1.65;
+  margin-bottom:24px;
+}
+
+.hero-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  position:relative;
+  z-index:2;
+}
+
+.primary-btn,
+.secondary-btn{
+  min-height:48px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.16);
+  padding:0 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  font-weight:900;
+  color:white;
+  transition:.25s;
+}
+
+.primary-btn{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  box-shadow:0 12px 34px rgba(0,119,255,.27);
+}
+
+.secondary-btn{
+  background:rgba(255,255,255,.085);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover{
+  transform:translateY(-3px);
+}
+
+.hero-side{
+  display:grid;
+  gap:18px;
+}
+
+.side-card{
+  min-height:156px;
+  padding:24px;
+  border-radius:30px;
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.14);
+}
+
+.side-card i{
+  width:46px;
+  height:46px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,217,255,.12);
+  color:var(--gold);
+  font-size:20px;
+  margin-bottom:16px;
+}
+
+.side-card h3{
+  font-size:20px;
+  margin-bottom:8px;
+}
+
+.side-card p{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.5;
+}
+
+.side-card:after{
+  content:"";
+  position:absolute;
+  right:-55px;
+  bottom:-55px;
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  background:rgba(0,217,255,.12);
+}
+
+/* CATEGORY MEGA AREA */
+
+.category-section{
+  padding:18px 0 22px;
+}
+
+.category-layout{
+  display:grid;
+  grid-template-columns:270px 1fr;
+  gap:18px;
+}
+
+.category-sidebar{
+  padding:16px;
+}
+
+.sidebar-title{
+  font-size:16px;
+  font-weight:950;
+  margin-bottom:12px;
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.sidebar-category-list{
   display:flex;
   flex-direction:column;
+  gap:8px;
 }
 
-.product-img{
-  height:170px;
-  border-radius:18px;
-  background:linear-gradient(135deg,#073c78,#020814);
-  margin-bottom:13px;
+.side-category-btn{
+  width:100%;
+  min-height:45px;
+  border:1px solid rgba(255,255,255,.11);
+  background:rgba(255,255,255,.055);
+  color:white;
+  border-radius:15px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-weight:800;
+  transition:.22s;
+}
+
+.side-category-btn span{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.side-category-btn i{
+  color:var(--blue);
+}
+
+.side-category-btn:hover,
+.side-category-btn.active{
+  background:rgba(0,217,255,.14);
+  border-color:rgba(0,217,255,.38);
+}
+
+.category-content{
+  padding:18px;
+}
+
+.featured-categories{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.feature-card{
+  min-height:138px;
+  border-radius:22px;
+  padding:18px;
+  position:relative;
   overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.04));
+  cursor:pointer;
+  transition:.25s;
+}
+
+.feature-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(0,217,255,.48);
+  box-shadow:0 18px 40px rgba(0,217,255,.13);
+}
+
+.feature-card i{
+  color:var(--gold);
+  font-size:26px;
+  margin-bottom:20px;
+}
+
+.feature-card h3{
+  font-size:17px;
+  margin-bottom:6px;
+}
+
+.feature-card p{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.feature-card:after{
+  content:"";
+  position:absolute;
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  right:-40px;
+  bottom:-45px;
+  background:rgba(0,217,255,.11);
+}
+
+/* FILTER BAR */
+
+.product-section{
+  padding:22px 0 60px;
+}
+
+.filter-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:18px;
+  padding:14px;
+  border-radius:24px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.filter-left,
+.filter-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.filter-pill{
+  min-height:38px;
+  border-radius:999px;
+  padding:0 14px;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.13);
+  color:white;
+  font-size:13px;
+  font-weight:800;
+}
+
+.filter-pill.active{
+  background:rgba(0,217,255,.18);
+  border-color:rgba(0,217,255,.45);
+}
+
+.sort-select{
+  min-height:40px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(5,18,36,.9);
+  color:white;
+  padding:0 12px;
+  outline:0;
+}
+
+/* PRODUCT GRID */
+
+.products-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+
+.product-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.13);
+  transition:.28s;
+}
+
+.product-card:hover{
+  transform:translateY(-5px);
+  border-color:rgba(0,217,255,.48);
+  box-shadow:0 22px 60px rgba(0,0,0,.33);
+}
+
+.product-image{
+  height:275px;
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(135deg,#08162a,#0b2d4f);
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.product-img img{
+.product-image img{
   width:100%;
   height:100%;
   object-fit:cover;
   display:block;
 }
 
-.product b{
-  color:#ffd700;
-  font-size:15px;
-  min-height:38px;
-  line-height:1.35;
-}
-
-.product p{
-  font-size:13px;
-  opacity:.72;
-  margin:6px 0;
-  min-height:34px;
-  line-height:1.35;
-}
-
-.price{
-  color:#00e5ff;
-  font-size:21px;
-  font-weight:900;
-  margin:4px 0 10px;
-}
-
-.old-price{
-  text-decoration:line-through;
-  opacity:.55;
-  color:#ddd;
-  margin-right:8px;
-  font-size:14px;
-}
-
-.product-actions{
-  margin-top:auto;
-  display:grid;
-  grid-template-columns:1fr 42px;
-  gap:8px;
-}
-
-.buy-btn{
-  height:40px;
-  border-radius:15px;
-  background:linear-gradient(135deg,#00e5ff,#0077ff);
-  color:white;
-  font-weight:900;
-}
-
-.fav-btn{
-  height:40px;
-  border-radius:15px;
-  background:#ffffff12;
-  color:#ffd700;
-  font-size:20px;
-  border:1px solid #ffd70033;
-}
-
-.cart-btn{
-  height:38px;
-  border-radius:14px;
-  background:linear-gradient(135deg,#ffd700,#b88700);
-  color:#031326;
-  font-weight:900;
-  margin-top:8px;
-  width:100%;
-}
-
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  margin-top:26px;
-}
-
-.info-card{
-  padding:22px;
-  min-height:135px;
-}
-
-.info-card h3{
-  color:#ffd700;
-  margin-bottom:8px;
-}
-
-.info-card p{
-  opacity:.75;
-  line-height:1.45;
-  font-size:14px;
-}
-  .notice{
-  position:fixed;
-  right:25px;
-  bottom:25px;
-  z-index:999;
-  background:#031326;
-  border:1px solid #00e5ff88;
-  border-radius:18px;
-  padding:15px 18px;
-  box-shadow:0 0 25px #00e5ff44;
-  display:none;
-  max-width:350px;
-}
-
-.notice b{
-  color:#ffd700;
-}
-
-.footer{
-  margin-top:35px;
-  padding:30px;
-  text-align:center;
-  color:#ffffff99;
-}
-
-.footer b{
-  color:#ffd700;
-}
-.product{
-  width:280px;
-}
-
-.product-grid{
-  align-items:start;
-}
-
-.product-actions{
-  display:grid;
-  grid-template-columns:1fr 48px;
-  gap:10px;
-}
-
-.buy-btn{
-  font-size:14px;
-  color:white !important;
-  padding:0 12px;
-}
-
-.fav-btn{
-  color:#ffd700 !important;
-  font-size:22px;
+.product-placeholder{
+  width:86px;
+  height:86px;
+  border-radius:28px;
   display:flex;
   align-items:center;
   justify-content:center;
+  background:rgba(0,217,255,.12);
+  color:var(--gold);
+  font-size:36px;
+}
+
+.product-badges{
+  position:absolute;
+  top:12px;
+  left:12px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  z-index:2;
+}
+
+.product-badge{
+  width:max-content;
+  padding:7px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:950;
+  background:rgba(2,8,20,.72);
+  border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(10px);
+}
+
+.product-badge.gold{
+  color:var(--gold);
+}
+
+.product-badge.blue{
+  color:var(--blue);
+}
+
+.favorite-btn{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(2,8,20,.58);
+  color:white;
+  backdrop-filter:blur(12px);
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:.2s;
+}
+
+.favorite-btn:hover,
+.favorite-btn.active{
+  color:#ff477e;
+  border-color:rgba(255,71,126,.5);
+  background:rgba(255,71,126,.13);
+}
+
+.product-info{
+  padding:17px;
+}
+
+.product-category{
+  color:var(--blue);
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.product-title{
+  font-size:16px;
+  line-height:1.35;
+  min-height:43px;
+  margin-bottom:10px;
+}
+
+.product-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.rating{
+  color:var(--gold);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+
+.stock{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.price-row{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.price-box strong{
+  display:block;
+  color:var(--gold);
+  font-size:22px;
+  line-height:1;
+}
+
+.price-box span{
+  color:rgba(255,255,255,.45);
+  font-size:12px;
+  text-decoration:line-through;
+}
+
+.hp-reward{
+  font-size:12px;
+  color:var(--success);
+  font-weight:900;
+  background:rgba(37,211,102,.12);
+  border:1px solid rgba(37,211,102,.25);
+  border-radius:999px;
+  padding:6px 9px;
+  white-space:nowrap;
+}
+
+.product-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.cart-btn,
+.buy-btn{
+  min-height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.13);
+  color:white;
+  font-weight:950;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
 }
 
 .cart-btn{
-  font-size:15px;
-  color:#031326 !important;
-}
-
-.product-img{
-  height:230px;
-}
-
-.product b{
-  min-height:48px;
-}
-.buy-btn,
-.cart-btn,
-.fav-btn{
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-indent:0 !important;
-  font-size:15px !important;
-  line-height:1 !important;
-  opacity:1 !important;
-  visibility:visible !important;
+  background:rgba(0,217,255,.14);
 }
 
 .buy-btn{
-  color:#ffffff !important;
+  background:linear-gradient(135deg,var(--gold),#e09b00);
+  color:#07101f;
 }
 
-.cart-btn{
-  color:#031326 !important;
+.empty-state{
+  grid-column:1/-1;
+  min-height:300px;
+  border-radius:28px;
+  background:rgba(255,255,255,.055);
+  border:1px dashed rgba(255,255,255,.18);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  color:var(--muted);
 }
 
-.fav-btn{
-  color:#ffd700 !important;
-  font-size:24px !important;
+.empty-state i{
+  font-size:44px;
+  color:var(--gold);
+  margin-bottom:14px;
+}
+
+.empty-state h3{
+  color:white;
+  margin-bottom:8px;
+}
+
+/* RESPONSIVE 2 */
+
+@media(max-width:1180px){
+  .hero-grid{
+    grid-template-columns:1fr;
+  }
+
+  .hero-side{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .category-layout{
+    grid-template-columns:1fr;
+  }
+
+  .sidebar-category-list{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .featured-categories{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .products-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(max-width:850px){
+  .hero-main{
+    padding:28px;
+    min-height:auto;
+  }
+
+  .hero-main h1{
+    font-size:34px;
+  }
+
+  .hero-side{
+    grid-template-columns:1fr;
+  }
+
+  .sidebar-category-list{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .featured-categories{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .products-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .filter-bar{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+@media(max-width:560px){
+  .featured-categories,
+  .products-grid,
+  .sidebar-category-list{
+    grid-template-columns:1fr;
+  }
+
+  .product-image{
+    height:245px;
+  }
+}
+  /* FOOTER */
+
+.shop-footer{
+  margin-top:30px;
+  border-top:1px solid rgba(255,255,255,.12);
+  background:rgba(2,8,20,.86);
+  backdrop-filter:blur(18px);
+}
+
+.footer-inner{
+  max-width:1420px;
+  margin:auto;
+  padding:38px 22px 28px;
+}
+
+.footer-grid{
+  display:grid;
+  grid-template-columns:1.2fr .8fr .8fr .8fr;
+  gap:24px;
+  margin-bottom:26px;
+}
+
+.footer-brand h2{
+  font-size:28px;
+  color:var(--blue);
+  margin-bottom:10px;
+}
+
+.footer-brand h2 span{
+  color:var(--gold);
+}
+
+.footer-brand p{
+  color:var(--muted);
+  line-height:1.6;
+  font-size:14px;
+  max-width:410px;
+}
+
+.footer-col h3{
+  color:var(--gold);
+  font-size:16px;
+  margin-bottom:13px;
+}
+
+.footer-col a{
+  display:block;
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:9px;
+  transition:.2s;
+}
+
+.footer-col a:hover{
+  color:var(--blue);
+  transform:translateX(4px);
+}
+
+/* SENİN İSTEDİĞİN SOSYAL İKON FOOTER ALANI */
+
+.social-icons{
+  display:flex;
+  justify-content:space-evenly;
+  align-items:center;
+  width:100%;
+  margin-top:20px;
+  padding:15px 0;
+  flex-wrap:wrap;
+  gap:20px;
+}
+
+.social-icons a{
+  width:58px;
+  height:58px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  font-size:22px;
+  text-decoration:none;
+  transition:.35s;
+  box-shadow:0 0 15px rgba(0,229,255,.18);
+}
+
+.social-icons span{
+  font-size:11px;
+  font-weight:600;
+  color:#ffffff;
+  opacity:.85;
+}
+
+.social-icons a:hover{
+  transform:translateY(-5px) scale(1.08);
+  box-shadow:0 0 25px rgba(0,229,255,.48);
+}
+
+.social-icons .wa{color:#25D366}
+
+.social-icons .ig{
+  background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);
+  color:white;
+}
+
+.social-icons .x{color:white}
+.social-icons .fb{color:#1877F2}
+.social-icons .yt{color:#FF0000}
+.social-icons .li{color:#0A66C2}
+.social-icons .tg{color:#229ED9}
+.social-icons .tk{color:white}
+.social-icons .mail{color:#ffd700}
+
+.footer-bottom{
+  margin-top:24px;
+  padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.10);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+  color:rgba(255,255,255,.62);
+  font-size:13px;
+}
+
+.footer-bottom-links{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.footer-bottom-links a{
+  color:rgba(255,255,255,.62);
+}
+
+.footer-bottom-links a:hover{
+  color:var(--gold);
+}
+
+/* CART DRAWER */
+
+.drawer-overlay{
+  position:fixed;
+  inset:0;
+  z-index:300;
+  background:rgba(0,0,0,.58);
+  display:none;
+}
+
+.drawer-overlay.active{
+  display:block;
+}
+
+.cart-drawer{
+  position:fixed;
+  top:0;
+  right:-430px;
+  width:420px;
+  max-width:92vw;
+  height:100vh;
+  z-index:350;
+  background:rgba(5,18,36,.98);
+  border-left:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(20px);
+  box-shadow:-20px 0 80px rgba(0,0,0,.5);
+  transition:.32s;
+  display:flex;
+  flex-direction:column;
+}
+
+.cart-drawer.active{
+  right:0;
+}
+
+.drawer-head{
+  padding:20px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.drawer-head h3{
+  font-size:20px;
+}
+
+.drawer-close{
+  width:38px;
+  height:38px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:white;
+}
+
+.cart-items{
+  flex:1;
+  overflow:auto;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.cart-item{
+  display:grid;
+  grid-template-columns:72px 1fr auto;
+  gap:12px;
+  align-items:center;
+  padding:10px;
+  border-radius:18px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.cart-item-img{
+  width:72px;
+  height:72px;
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(0,217,255,.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gold);
+}
+
+.cart-item-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.cart-item-info h4{
+  font-size:14px;
+  margin-bottom:5px;
+  line-height:1.25;
+}
+
+.cart-item-info p{
+  color:var(--gold);
+  font-size:13px;
+  font-weight:900;
+}
+
+.qty-controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:8px;
+}
+
+.qty-controls button{
+  width:26px;
+  height:26px;
+  border-radius:9px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:white;
+}
+
+.qty-controls span{
+  min-width:20px;
+  text-align:center;
+  font-size:13px;
+}
+
+.remove-cart{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(255,77,109,.28);
+  background:rgba(255,77,109,.12);
+  color:#ff6b88;
+}
+
+.drawer-footer{
+  padding:18px;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+
+.cart-summary-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.cart-summary-row.total{
+  color:white;
+  font-size:18px;
+  font-weight:950;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+
+.checkout-btn{
+  width:100%;
+  min-height:48px;
+  margin-top:14px;
+  border:0;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--gold),#e09b00);
+  color:#07101f;
+  font-weight:950;
+  font-size:15px;
+}
+
+/* MINI MODAL */
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:400;
+  background:rgba(0,0,0,.62);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal-overlay.active{
+  display:flex;
+}
+
+.quick-modal{
+  width:720px;
+  max-width:96vw;
+  background:rgba(5,18,36,.98);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:28px;
+  overflow:hidden;
+  box-shadow:0 30px 100px rgba(0,0,0,.55);
+}
+
+.quick-modal-head{
+  padding:18px 20px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.quick-modal-head h3{
+  font-size:20px;
+}
+
+.quick-modal-body{
+  padding:20px;
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:20px;
+}
+
+.quick-modal-img{
+  min-height:260px;
+  border-radius:22px;
+  background:rgba(0,217,255,.10);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--gold);
+  font-size:46px;
+}
+
+.quick-modal-img img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.quick-modal-info h2{
+  font-size:24px;
+  margin-bottom:10px;
+}
+
+.quick-modal-info p{
+  color:var(--muted);
+  line-height:1.6;
+  margin-bottom:14px;
+}
+
+.quick-modal-price{
+  font-size:26px;
+  font-weight:950;
+  color:var(--gold);
+  margin-bottom:16px;
+}
+
+.quick-modal-actions{
+  display:flex;
+  gap:10px;
+}
+
+.quick-modal-actions button{
+  flex:1;
+  min-height:46px;
+  border-radius:15px;
+  border:1px solid rgba(255,255,255,.13);
+  font-weight:950;
+}
+
+.modal-cart{
+  background:rgba(0,217,255,.14);
+  color:white;
+}
+
+.modal-buy{
+  background:linear-gradient(135deg,var(--gold),#e09b00);
+  color:#07101f;
+}
+
+.close-modal{
+  width:38px;
+  height:38px;
+  border-radius:13px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.07);
+  color:white;
+}
+
+/* RESPONSIVE FOOTER / DRAWER / MODAL */
+
+@media(max-width:900px){
+  .footer-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .quick-modal-body{
+    grid-template-columns:1fr;
+  }
+
+  .quick-modal-img{
+    min-height:220px;
+  }
+}
+
+@media(max-width:560px){
+  .footer-grid{
+    grid-template-columns:1fr;
+  }
+
+  .cart-drawer{
+    width:100vw;
+    max-width:100vw;
+  }
+
+  .footer-bottom{
+    align-items:flex-start;
+    flex-direction:column;
+  }
 }
 </style>
 </head>
-
 <body>
 
 <div class="page">
 
-<div class="top-links">
-  <a href="index.html">Ana Sayfa</a>
-  <a href="partner.html">Partner Başvurusu</a>
-  <a href="iletisim.html">İletişim</a>
-  <a href="yardim.html">Destek</a>
-</div>
+<header class="shop-header">
+  <div class="header-inner">
 
-<div class="header">
-
-  <a class="brand glass" href="index.html">
-    <img src="allona.logo.png" alt="AllonaHub">
-    <b>Allona</b><span>Shop</span>
-  </a>
-
-  <div class="search glass">
-    <div class="search-mark"></div>
-    <input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
-    <button onclick="searchProducts()">Ara</button>
-  </div>
-
-  <div class="actions glass">
-    <a href="user.html">Hesabım</a>
-    <button onclick="openFavorites()">Favoriler</button>
-    <button onclick="toggleCart()">
-      Sepetim
-      <span id="cartCount">0</span>
-    </button>
-  </div>
-
-</div>
-
-<div class="hero glass">
-  <h1>Allona Shop</h1>
-
-  <p>
-    Takı, aksesuar, ev yaşam ürünleri ve partner mağazalarının
-    premium ürünlerini tek noktadan keşfedin.
-  </p>
-</div>
-
-<div class="section-title">
-  <h2>Yeni Eklenen Ürünler</h2>
-</div>
-
-<div id="productsGrid" class="product-grid">
-  <p>Ürünler yükleniyor...</p>
-</div>
-
-<div class="section-title">
-  <h2>AllonaHub Avantajları</h2>
-</div>
-
-<div class="info-grid">
-
-  <div class="info-card glass">
-    <h3>HP Kazan</h3>
-    <p>Alışveriş yaptıkça HP puanı kazan ve kampanyalarda kullan.</p>
-  </div>
-
-  <div class="info-card glass">
-    <h3>Premium Üyelik</h3>
-    <p>Özel kampanyalara ve avantajlara erişim sağla.</p>
-  </div>
-
-  <div class="info-card glass">
-    <h3>Güvenli Alışveriş</h3>
-    <p>Tüm siparişler merkezi sistem tarafından takip edilir.</p>
-  </div>
-
-  <div class="info-card glass">
-    <h3>Partner Ağı</h3>
-    <p>Binlerce partner mağaza tek ekosistemde buluşacak.</p>
-  </div>
-
-</div>
-<div id="notice" class="notice"></div>
-
-<footer class="footer glass">
-  <b>AllonaHub</b><br>
-  ©️ 2026 Allworksin Business Danışmanlık Ticaret Ltd. Şti.
-</footer>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-
-const SUPABASE_URL =
-"https://xqvikrysciguzholdjeb.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
-
-let products = [];
-
-function money(value){
-  return Number(value || 0)
-  .toLocaleString(
-    "tr-TR",
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    }
-  ) + " ₺";
-}
-
-function showNotice(text){
-
-  const box =
-  document.getElementById("notice");
-
-  box.innerHTML = text;
-
-  box.style.display = "block";
-
-  setTimeout(()=>{
-    box.style.display = "none";
-  },3500);
-}
-function productCard(product){
-
-  const name = product.product_name || product.name || "Ürün";
-  const image = product.image_url || "allona-shop.png";
-  const category = product.category || "Kategori";
-
-  return `
-    <div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
-
-      <div class="product-img">
-        <img src="${image}" alt="${name}" onerror="this.src='allona-shop.png'">
+    <a href="index.html" class="logo-area">
+      <div class="logo-mark">
+        <i class="fa-solid fa-gem"></i>
       </div>
-
-      <b>${name}</b>
-
-      <p>${category}</p>
-
-      <div class="price">
-        ${product.old_price ? `<span class="old-price">${money(product.old_price)}</span>` : ""}
-        ${money(product.price)}
+      <div class="logo-text">
+        <strong>Allona<b>Shop</b></strong>
+        <span>AllonaHub Mağaza Modülü</span>
       </div>
+    </a>
 
-      <div class="product-actions">
-        <button type="button" class="buy-btn" onclick="event.stopPropagation();buyNow('${product.id}')">
-          Satın Al
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="searchInput" type="text" placeholder="Ürün, kategori veya marka ara...">
+      <button id="searchBtn">
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+
+    <div class="header-actions">
+
+      <button class="header-btn" id="favoritesBtn">
+        <i class="fa-regular fa-heart"></i>
+        <span>Favoriler</span>
+        <b class="badge" id="favoriteCount">0</b>
+      </button>
+
+      <button class="header-btn" id="cartBtn">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span>Sepet</span>
+        <b class="badge" id="cartCount">0</b>
+      </button>
+
+      <div class="account-wrap">
+        <button class="header-btn" id="accountBtn">
+          <i class="fa-regular fa-user"></i>
+          <span>Hesabım</span>
         </button>
 
-        <button type="button" class="fav-btn" onclick="event.stopPropagation();toggleFav('${product.id}')">
-          ♥️
-        </button>
+        <div class="account-menu" id="accountMenu">
+          <a href="user-panel.html">
+            <i class="fa-solid fa-user"></i>
+            Kullanıcı Paneli
+          </a>
+
+          <a href="partner-panel.html">
+            <i class="fa-solid fa-store"></i>
+            Partner Paneli
+          </a>
+
+          <a href="login.html">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Giriş Yap
+          </a>
+
+          <a href="register.html">
+            <i class="fa-solid fa-user-plus"></i>
+            Kayıt Ol
+          </a>
+        </div>
       </div>
 
-      <button type="button" class="cart-btn" onclick="event.stopPropagation();addToCart('${product.id}')">
-        Sepete Ekle
+    </div>
+  </div>
+
+  <div class="top-category-bar">
+    <div class="top-category-inner" id="topCategoryBar">
+
+      <button class="top-cat-btn active" data-category="all">
+        <i class="fa-solid fa-border-all"></i>
+        Tümü
+      </button>
+
+      <button class="top-cat-btn" data-category="Kadın">
+        <i class="fa-solid fa-person-dress"></i>
+        Kadın
+      </button>
+
+      <button class="top-cat-btn" data-category="Erkek">
+        <i class="fa-solid fa-person"></i>
+        Erkek
+      </button>
+
+      <button class="top-cat-btn" data-category="Anne & Çocuk">
+        <i class="fa-solid fa-baby"></i>
+        Anne & Çocuk
+      </button>
+
+      <button class="top-cat-btn" data-category="Ev & Yaşam">
+        <i class="fa-solid fa-couch"></i>
+        Ev & Yaşam
+      </button>
+
+      <button class="top-cat-btn" data-category="Süpermarket">
+        <i class="fa-solid fa-basket-shopping"></i>
+        Süpermarket
+      </button>
+
+      <button class="top-cat-btn" data-category="Kozmetik">
+        <i class="fa-solid fa-spray-can-sparkles"></i>
+        Kozmetik
+      </button>
+
+      <button class="top-cat-btn" data-category="Ayakkabı & Çanta">
+        <i class="fa-solid fa-shoe-prints"></i>
+        Ayakkabı & Çanta
+      </button>
+
+      <button class="top-cat-btn" data-category="Elektronik">
+        <i class="fa-solid fa-mobile-screen"></i>
+        Elektronik
+      </button>
+
+      <button class="top-cat-btn" data-category="Spor & Outdoor">
+        <i class="fa-solid fa-dumbbell"></i>
+        Spor & Outdoor
+      </button>
+
+      <button class="top-cat-btn" data-category="Takı & Aksesuar">
+        <i class="fa-solid fa-gem"></i>
+        Takı & Aksesuar
+      </button>
+
+      <button class="top-cat-btn" data-category="İç Giyim">
+        <i class="fa-solid fa-shirt"></i>
+        İç Giyim
+      </button>
+
+      <button class="top-cat-btn" data-category="Premium Koleksiyon">
+        <i class="fa-solid fa-crown"></i>
+        Premium Koleksiyon
       </button>
 
     </div>
-  `;
-}
-function buyNow(id){
-  addToCart(id);
-  window.location.href = "cart.html";
-}
-console.log("SUPABSE BAĞLANDI");
-async function loadProducts(){
-console.log("ÜRÜNLER YÜKLENİYOR");
-  const grid =
-  document.getElementById(
-  "productsGrid"
-  );
+  </div>
+</header>
 
-  grid.innerHTML =
-  "<p>Ürünler yükleniyor...</p>";
+<main>
 
-  const {data,error} =
-  await supabaseClient
-  .from("products")
-  .select("*")
-  .order("created_at",
-  {
-    ascending:false
+  <section class="hero-section">
+    <div class="container">
+
+      <div class="hero-grid">
+
+        <div class="hero-main">
+          <div class="hero-kicker">
+            <i class="fa-solid fa-bolt"></i>
+            AllonaHub Premium Marketplace
+          </div>
+
+          <h1>
+            Güvenli, hızlı ve premium <span>Allona Shop</span> deneyimi
+          </h1>
+
+          <p>
+            Kadın, erkek, anne & çocuk, ev yaşam, kozmetik, takı, aksesuar ve premium koleksiyonlar
+            AllonaHub güvencesiyle tek mağaza deneyiminde birleşiyor.
+          </p>
+
+          <div class="hero-actions">
+            <button class="primary-btn" data-scroll-products>
+              <i class="fa-solid fa-bag-shopping"></i>
+              Alışverişe Başla
+            </button>
+
+            <button class="secondary-btn" data-category-shortcut="Premium Koleksiyon">
+              <i class="fa-solid fa-crown"></i>
+              Premium Koleksiyon
+            </button>
+
+            <button class="secondary-btn" data-category-shortcut="Takı & Aksesuar">
+              <i class="fa-solid fa-gem"></i>
+              Takı & Aksesuar
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-side">
+
+          <div class="side-card">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Güvenli Alışveriş</h3>
+            <p>Ürünler AllonaHub kontrol sistemi ve partner onay süreçleriyle listelenir.</p>
+          </div>
+
+          <div class="side-card">
+            <i class="fa-solid fa-coins"></i>
+            <h3>HP Kazan</h3>
+            <p>Alışveriş yaptıkça HP kazan, ileride kupon ve avantajlarda kullan.</p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+  <section class="category-section">
+    <div class="container">
+
+      <div class="category-layout">
+
+        <aside class="category-sidebar glass">
+          <div class="sidebar-title">
+            <i class="fa-solid fa-layer-group"></i>
+            Ana Kategoriler
+          </div>
+
+          <div class="sidebar-category-list">
+
+            <button class="side-category-btn active" data-category="all">
+              <span><i class="fa-solid fa-border-all"></i> Tümü</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Kadın">
+              <span><i class="fa-solid fa-person-dress"></i> Kadın</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Erkek">
+              <span><i class="fa-solid fa-person"></i> Erkek</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Anne & Çocuk">
+              <span><i class="fa-solid fa-baby"></i> Anne & Çocuk</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Ev & Yaşam">
+              <span><i class="fa-solid fa-couch"></i> Ev & Yaşam</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Süpermarket">
+              <span><i class="fa-solid fa-basket-shopping"></i> Süpermarket</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Kozmetik">
+              <span><i class="fa-solid fa-spray-can-sparkles"></i> Kozmetik</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Ayakkabı & Çanta">
+              <span><i class="fa-solid fa-shoe-prints"></i> Ayakkabı & Çanta</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Elektronik">
+              <span><i class="fa-solid fa-mobile-screen"></i> Elektronik</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Spor & Outdoor">
+              <span><i class="fa-solid fa-dumbbell"></i> Spor & Outdoor</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Takı & Aksesuar">
+              <span><i class="fa-solid fa-gem"></i> Takı & Aksesuar</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="İç Giyim">
+              <span><i class="fa-solid fa-shirt"></i> İç Giyim</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button class="side-category-btn" data-category="Premium Koleksiyon">
+              <span><i class="fa-solid fa-crown"></i> Premium Koleksiyon</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+          </div>
+        </aside>
+
+        <div class="category-content glass">
+
+          <div class="section-title">
+            <div>
+              <h2>Allona Shop Kategorileri</h2>
+              <p>Partner ürünleri kategoriye göre otomatik listelenir.</p>
+            </div>
+          </div>
+
+          <div class="featured-categories">
+
+            <div class="feature-card" data-category="Kadın">
+              <i class="fa-solid fa-person-dress"></i>
+              <h3>Kadın</h3>
+              <p>Giyim, takı, aksesuar, iç giyim</p>
+            </div>
+
+            <div class="feature-card" data-category="Erkek">
+              <i class="fa-solid fa-person"></i>
+              <h3>Erkek</h3>
+              <p>Giyim, saat, ayakkabı, bakım</p>
+            </div>
+
+            <div class="feature-card" data-category="Anne & Çocuk">
+              <i class="fa-solid fa-baby"></i>
+              <h3>Anne & Çocuk</h3>
+              <p>Bebek, çocuk, oyuncak, bakım</p>
+            </div>
+
+            <div class="feature-card" data-category="Ev & Yaşam">
+              <i class="fa-solid fa-couch"></i>
+              <h3>Ev & Yaşam</h3>
+              <p>Dekorasyon, mutfak, yaşam ürünleri</p>
+            </div>
+
+            <div class="feature-card" data-category="Süpermarket">
+              <i class="fa-solid fa-basket-shopping"></i>
+              <h3>Süpermarket</h3>
+              <p>Gıda, temizlik, günlük ihtiyaçlar</p>
+            </div>
+
+            <div class="feature-card" data-category="Kozmetik">
+              <i class="fa-solid fa-spray-can-sparkles"></i>
+              <h3>Kozmetik</h3>
+              <p>Bakım, parfüm, makyaj, güzellik</p>
+            </div>
+
+            <div class="feature-card" data-category="Ayakkabı & Çanta">
+              <i class="fa-solid fa-shoe-prints"></i>
+              <h3>Ayakkabı & Çanta</h3>
+              <p>Çanta, topuklu, sneaker, klasik</p>
+            </div>
+
+            <div class="feature-card" data-category="Elektronik">
+              <i class="fa-solid fa-mobile-screen"></i>
+              <h3>Elektronik</h3>
+              <p>Telefon, aksesuar, teknoloji</p>
+            </div>
+
+            <div class="feature-card" data-category="Spor & Outdoor">
+              <i class="fa-solid fa-dumbbell"></i>
+              <h3>Spor & Outdoor</h3>
+              <p>Spor ekipmanları ve outdoor ürünler</p>
+            </div>
+
+            <div class="feature-card" data-category="Takı & Aksesuar">
+              <i class="fa-solid fa-gem"></i>
+              <h3>Takı & Aksesuar</h3>
+              <p>Kolye, bileklik, yüzük, küpe</p>
+            </div>
+
+            <div class="feature-card" data-category="İç Giyim">
+              <i class="fa-solid fa-shirt"></i>
+              <h3>İç Giyim</h3>
+              <p>Gecelik, pijama, premium setler</p>
+            </div>
+
+            <div class="feature-card" data-category="Premium Koleksiyon">
+              <i class="fa-solid fa-crown"></i>
+              <h3>Premium Koleksiyon</h3>
+              <p>Seçili ürünler ve özel kampanyalar</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <section class="product-section" id="productsSection">
+    <div class="container">
+
+      <div class="section-title">
+        <div>
+          <h2 id="productTitle">Tüm Ürünler</h2>
+          <p id="productSubtitle">Supabase products tablosundan aktif ürünler listelenir.</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+
+        <div class="filter-left">
+          <button class="filter-pill active" data-stock-filter="all">
+            Tüm Ürünler
+          </button>
+
+          <button class="filter-pill" data-stock-filter="in_stock">
+            Stokta Var
+          </button>
+
+          <button class="filter-pill" data-stock-filter="premium">
+            Premium
+          </button>
+
+          <button class="filter-pill" data-stock-filter="discount">
+            İndirimli
+          </button>
+        </div>
+
+        <div class="filter-right">
+          <select class="sort-select" id="sortSelect">
+            <option value="newest">En Yeni</option>
+            <option value="price_low">Fiyat Artan</option>
+            <option value="price_high">Fiyat Azalan</option>
+            <option value="name_az">A-Z</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="products-grid" id="productsGrid">
+
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Allona Shop ürünleri yükleniyor...</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+  <footer class="shop-footer">
+
+  <div class="footer-inner">
+
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <h2>Allona<span>Shop</span></h2>
+
+        <p>
+          AllonaHub ekosisteminin premium alışveriş modülü.
+          Güvenli ödeme, hızlı teslimat, partner mağazalar,
+          HP ödülleri ve merkezi müşteri deneyimi.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h3>Kurumsal</h3>
+
+        <a href="#">Hakkımızda</a>
+        <a href="#">Partner Başvurusu</a>
+        <a href="#">Kariyer</a>
+        <a href="#">İletişim</a>
+      </div>
+
+      <div class="footer-col">
+        <h3>Yardım Merkezi</h3>
+
+        <a href="#">Sipariş Takibi</a>
+        <a href="#">İade Politikası</a>
+        <a href="#">Teslimat Bilgileri</a>
+        <a href="#">Sık Sorulan Sorular</a>
+      </div>
+
+      <div class="footer-col">
+        <h3>Yasal</h3>
+
+        <a href="#">KVKK</a>
+        <a href="#">Mesafeli Satış</a>
+        <a href="#">Gizlilik Politikası</a>
+        <a href="#">Kullanım Şartları</a>
+      </div>
+
+    </div>
+
+    <!-- SOSYAL MEDYA -->
+
+    <div class="social-icons">
+
+      <a class="wa" href="https://wa.me/905427781868" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+        <span>WhatsApp</span>
+      </a>
+
+      <a class="ig" href="https://instagram.com/allonahub" target="_blank">
+        <i class="fab fa-instagram"></i>
+        <span>Instagram</span>
+      </a>
+
+      <a class="x" href="#" target="_blank">
+        <i class="fab fa-x-twitter"></i>
+        <span>X</span>
+      </a>
+
+      <a class="fb" href="#" target="_blank">
+        <i class="fab fa-facebook-f"></i>
+        <span>Facebook</span>
+      </a>
+
+      <a class="yt" href="#" target="_blank">
+        <i class="fab fa-youtube"></i>
+        <span>YouTube</span>
+      </a>
+
+      <a class="li" href="#" target="_blank">
+        <i class="fab fa-linkedin-in"></i>
+        <span>LinkedIn</span>
+      </a>
+
+      <a class="tg" href="#" target="_blank">
+        <i class="fab fa-telegram"></i>
+        <span>Telegram</span>
+      </a>
+
+      <a class="tk" href="#" target="_blank">
+        <i class="fab fa-tiktok"></i>
+        <span>TikTok</span>
+      </a>
+
+      <a class="mail" href="mailto:info@allonahub.com">
+        <i class="fas fa-envelope"></i>
+        <span>E-Mail</span>
+      </a>
+
+    </div>
+
+    <div class="footer-bottom">
+
+      <div>
+        ©️ 2026 AllonaHub & Allona Shop.
+        Tüm hakları saklıdır.
+      </div>
+
+      <div class="footer-bottom-links">
+        <a href="#">KVKK</a>
+        <a href="#">Çerez Politikası</a>
+        <a href="#">Gizlilik</a>
+        <a href="#">Kullanım Şartları</a>
+      </div>
+
+    </div>
+
+  </div>
+
+</footer>
+
+</main>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"></div>
+
+<!-- DRAWER OVERLAY -->
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- SEPET -->
+
+<div class="cart-drawer" id="cartDrawer">
+
+  <div class="drawer-head">
+    <h3>
+      <i class="fa-solid fa-cart-shopping"></i>
+      Sepetim
+    </h3>
+
+    <button class="drawer-close" id="closeCartBtn">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <div class="cart-items" id="cartItems">
+
+    <div class="loading">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <p>Sepetiniz boş.</p>
+    </div>
+
+  </div>
+
+  <div class="drawer-footer">
+
+    <div class="cart-summary-row">
+      <span>Ara Toplam</span>
+      <strong id="cartSubtotal">₺0</strong>
+    </div>
+
+    <div class="cart-summary-row">
+      <span>Kargo</span>
+      <strong id="cartShipping">₺0</strong>
+    </div>
+
+    <div class="cart-summary-row total">
+      <span>Genel Toplam</span>
+      <strong id="cartTotal">₺0</strong>
+    </div>
+
+    <button class="checkout-btn" id="checkoutBtn">
+      <i class="fa-solid fa-credit-card"></i>
+      Siparişi Tamamla
+    </button>
+
+  </div>
+
+</div>
+
+<!-- HIZLI ÜRÜN MODALI -->
+
+<div class="modal-overlay" id="productModal">
+
+  <div class="quick-modal">
+
+    <div class="quick-modal-head">
+
+      <h3>Ürün Detayı</h3>
+
+      <button class="close-modal" id="closeModalBtn">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+    <div class="quick-modal-body">
+
+      <div class="quick-modal-img" id="modalImage">
+        <i class="fa-solid fa-image"></i>
+      </div>
+
+      <div class="quick-modal-info">
+
+        <h2 id="modalTitle">
+          Ürün Adı
+        </h2>
+
+        <p id="modalDescription">
+          Ürün açıklaması burada gösterilecek.
+        </p>
+
+        <div class="quick-modal-price" id="modalPrice">
+          ₺0
+        </div>
+
+        <div class="quick-modal-actions">
+
+          <button class="modal-cart" id="modalAddCart">
+            <i class="fa-solid fa-cart-shopping"></i>
+            Sepete Ekle
+          </button>
+
+          <button class="modal-buy" id="modalBuyNow">
+            <i class="fa-solid fa-bolt"></i>
+            Satın Al
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allProducts = [];
+let filteredProducts = [];
+let cart = JSON.parse(localStorage.getItem("allona_cart")) || [];
+let favorites = JSON.parse(localStorage.getItem("allona_favorites")) || [];
+let activeCategory = "all";
+let activeStockFilter = "all";
+let selectedModalProduct = null;
+
+const productsGrid = document.getElementById("productsGrid");
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
+const cartCount = document.getElementById("cartCount");
+const favoriteCount = document.getElementById("favoriteCount");
+const cartDrawer = document.getElementById("cartDrawer");
+const drawerOverlay = document.getElementById("drawerOverlay");
+const cartItems = document.getElementById("cartItems");
+const productTitle = document.getElementById("productTitle");
+const productSubtitle = document.getElementById("productSubtitle");
+
+function money(value){
+  const number = Number(value || 0);
+  return number.toLocaleString("tr-TR", {
+    style:"currency",
+    currency:"TRY"
   });
+}
+
+function showToast(title,message){
+  const toast = document.getElementById("toast");
+  toast.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
+  toast.classList.add("active");
+
+  setTimeout(()=>{
+    toast.classList.remove("active");
+  },2600);
+}
+
+function saveLocal(){
+  localStorage.setItem("allona_cart",JSON.stringify(cart));
+  localStorage.setItem("allona_favorites",JSON.stringify(favorites));
+}
+
+function updateCounts(){
+  cartCount.textContent = cart.reduce((sum,item)=>sum + item.qty,0);
+  favoriteCount.textContent = favorites.length;
+}
+
+async function loadProducts(){
+  productsGrid.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Allona Shop ürünleri yükleniyor...</p>
+    </div>
+  `;
+
+  const { data, error } = await supabaseClient
+    .from("products")
+    .select("*")
+    .eq("status","active")
+    .order("created_at",{ ascending:false });
 
   if(error){
-
-    grid.innerHTML =
-    "<p>Ürünler yüklenemedi.</p>";
-
+    productsGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Ürünler yüklenemedi</h3>
+        <p>Supabase bağlantısını veya products tablo alanlarını kontrol et.</p>
+      </div>
+    `;
     console.error(error);
-
     return;
   }
 
-  products = data || [];
-
-  if(!products.length){
-
-    grid.innerHTML =
-    "<p>Henüz ürün bulunmuyor.</p>";
-
-    return;
-  }
-
-  grid.innerHTML =
-  products
-  .map(productCard)
-  .join("");
+  allProducts = data || [];
+  applyFilters();
 }
 
-function searchProducts(){
+function applyFilters(){
+  const keyword = searchInput.value.trim().toLowerCase();
 
-  const text =
-  document
-  .getElementById(
-  "searchInput"
-  )
-  .value
-  .toLowerCase()
-  .trim();
+  filteredProducts = allProducts.filter(product=>{
+    const name = String(product.name || product.title || "").toLowerCase();
+    const category = String(product.category || "").toLowerCase();
+    const subcategory = String(product.subcategory || "").toLowerCase();
+    const brand = String(product.brand || "").toLowerCase();
 
-  if(!text){
+    const matchSearch =
+      !keyword ||
+      name.includes(keyword) ||
+      category.includes(keyword) ||
+      subcategory.includes(keyword) ||
+      brand.includes(keyword);
 
-    loadProducts();
-    return;
-  }
+    const matchCategory =
+      activeCategory === "all" ||
+      String(product.category || "") === activeCategory;
 
-  const result =
-  products.filter(p=>{
+    const stock = Number(product.stock || 0);
+    const price = Number(product.price || product.sale_price || 0);
+    const oldPrice = Number(product.old_price || product.compare_price || 0);
 
-    return (
-      String(
-      p.product_name || ""
-      )
-      .toLowerCase()
-      .includes(text)
+    let matchStock = true;
 
-      ||
+    if(activeStockFilter === "in_stock"){
+      matchStock = stock > 0;
+    }
 
-      String(
-      p.category || ""
-      )
-      .toLowerCase()
-      .includes(text)
+    if(activeStockFilter === "premium"){
+      matchStock =
+        product.is_premium === true ||
+        String(product.collection || "").toLowerCase().includes("premium") ||
+        String(product.category || "") === "Premium Koleksiyon";
+    }
 
-      ||
+    if(activeStockFilter === "discount"){
+      matchStock = oldPrice > price && price > 0;
+    }
 
-      String(
-      p.brand || ""
-      )
-      .toLowerCase()
-      .includes(text)
-
-    );
-
+    return matchSearch && matchCategory && matchStock;
   });
 
-  document
-  .getElementById(
-  "productsGrid"
-  )
-  .innerHTML =
-  result.length
-  ?
-  result.map(productCard).join("")
-  :
-  "<p>Sonuç bulunamadı.</p>";
+  sortProducts();
+  renderProducts();
+
+  productTitle.textContent = activeCategory === "all" ? "Tüm Ürünler" : activeCategory;
+  productSubtitle.textContent = `${filteredProducts.length} ürün listeleniyor.`;
 }
 
-document
-.getElementById(
-"searchInput"
-)
-.addEventListener(
-"keydown",
-function(e){
+function sortProducts(){
+  const sort = sortSelect.value;
 
-if(e.key==="Enter"){
+  filteredProducts.sort((a,b)=>{
+    const priceA = Number(a.price || a.sale_price || 0);
+    const priceB = Number(b.price || b.sale_price || 0);
+    const nameA = String(a.name || a.title || "");
+    const nameB = String(b.name || b.title || "");
 
-searchProducts();
-
+    if(sort === "price_low") return priceA - priceB;
+    if(sort === "price_high") return priceB - priceA;
+    if(sort === "name_az") return nameA.localeCompare(nameB,"tr");
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
 }
 
+function getProductImage(product){
+  return product.image_url || product.main_image || product.image || "";
+}
+
+function getProductName(product){
+  return product.name || product.title || "İsimsiz Ürün";
+}
+
+function getProductPrice(product){
+  return Number(product.price || product.sale_price || 0);
+}
+
+function renderProducts(){
+  if(!filteredProducts.length){
+    productsGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-box-open"></i>
+        <h3>Ürün bulunamadı</h3>
+        <p>Bu kategori veya arama için aktif ürün yok.</p>
+      </div>
+    `;
+    return;
+  }
+
+  productsGrid.innerHTML = filteredProducts.map(product=>{
+    const image = getProductImage(product);
+    const name = getProductName(product);
+    const price = getProductPrice(product);
+    const oldPrice = Number(product.old_price || product.compare_price || 0);
+    const stock = Number(product.stock || 0);
+    const isFav = favorites.includes(product.id);
+    const hp = Math.max(1,Math.floor(price * 0.01));
+
+    return `
+      <div class="product-card" data-id="${product.id}">
+
+        <div class="product-image" onclick="openProductModal('${product.id}')">
+          ${
+            image
+            ? `<img src="${image}" alt="${name}">`
+            : `<div class="product-placeholder"><i class="fa-solid fa-gem"></i></div>`
+          }
+
+          <div class="product-badges">
+            ${stock > 0 ? `<span class="product-badge blue">Stokta</span>` : `<span class="product-badge">Stok Yok</span>`}
+            ${oldPrice > price && price > 0 ? `<span class="product-badge gold">İndirim</span>` : ``}
+          </div>
+
+          <button class="favorite-btn ${isFav ? "active" : ""}" onclick="event.stopPropagation(); toggleFavorite('${product.id}')">
+            <i class="${isFav ? "fa-solid" : "fa-regular"} fa-heart"></i>
+          </button>
+        </div>
+
+        <div class="product-info">
+          <div class="product-category">${product.category || "Allona Shop"}</div>
+
+          <h3 class="product-title">${name}</h3>
+
+          <div class="product-meta">
+            <div class="rating">
+              <i class="fa-solid fa-star"></i>
+              4.8
+            </div>
+            <div class="stock">${stock} stok</div>
+          </div>
+
+          <div class="price-row">
+            <div class="price-box">
+              ${oldPrice > price && price > 0 ? `<span>${money(oldPrice)}</span>` : ``}
+              <strong>${money(price)}</strong>
+            </div>
+
+            <div class="hp-reward">
+              +${hp} HP
+            </div>
+          </div>
+
+          <div class="product-actions">
+            <button class="cart-btn" onclick="addToCart('${product.id}')">
+              <i class="fa-solid fa-cart-shopping"></i>
+              Sepete Ekle
+            </button>
+
+            <button class="buy-btn" onclick="buyNow('${product.id}')">
+              <i class="fa-solid fa-bolt"></i>
+              Satın Al
+            </button>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }).join("");
+}
+
+function setCategory(category){
+  activeCategory = category;
+
+  document.querySelectorAll("[data-category]").forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.category === category);
+  });
+
+  applyFilters();
+
+  document.getElementById("productsSection").scrollIntoView({
+    behavior:"smooth"
+  });
+}
+
+function addToCart(productId){
+  const product = allProducts.find(p=>String(p.id) === String(productId));
+
+  if(!product){
+    showToast("Hata","Ürün bulunamadı.");
+    return;
+  }
+
+  if(Number(product.stock || 0) <= 0){
+    showToast("Stok Yok","Bu ürün şu anda stokta yok.");
+    return;
+  }
+
+  const existing = cart.find(item=>String(item.id) === String(productId));
+
+  if(existing){
+    existing.qty += 1;
+  }else{
+    cart.push({
+      id:product.id,
+      name:getProductName(product),
+      price:getProductPrice(product),
+      image:getProductImage(product),
+      qty:1
+    });
+  }
+
+  saveLocal();
+  updateCounts();
+  renderCart();
+
+  showToast("Sepete Eklendi",`${getProductName(product)} sepete eklendi.`);
+}
+
+function removeFromCart(productId){
+  cart = cart.filter(item=>String(item.id) !== String(productId));
+  saveLocal();
+  updateCounts();
+  renderCart();
+}
+
+function changeQty(productId,change){
+  const item = cart.find(i=>String(i.id) === String(productId));
+  if(!item) return;
+
+  item.qty += change;
+
+  if(item.qty <= 0){
+    removeFromCart(productId);
+    return;
+  }
+
+  saveLocal();
+  updateCounts();
+  renderCart();
+}
+
+function renderCart(){
+  if(!cart.length){
+    cartItems.innerHTML = `
+      <div class="loading">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <p>Sepetiniz boş.</p>
+      </div>
+    `;
+
+    document.getElementById("cartSubtotal").textContent = money(0);
+    document.getElementById("cartShipping").textContent = money(0);
+    document.getElementById("cartTotal").textContent = money(0);
+    return;
+  }
+
+  cartItems.innerHTML = cart.map(item=>`
+    <div class="cart-item">
+
+      <div class="cart-item-img">
+        ${
+          item.image
+          ? `<img src="${item.image}" alt="${item.name}">`
+          : `<i class="fa-solid fa-gem"></i>`
+        }
+      </div>
+
+      <div class="cart-item-info">
+        <h4>${item.name}</h4>
+        <p>${money(item.price)}</p>
+
+        <div class="qty-controls">
+          <button onclick="changeQty('${item.id}',-1)">-</button>
+          <span>${item.qty}</span>
+          <button onclick="changeQty('${item.id}',1)">+</button>
+        </div>
+      </div>
+
+      <button class="remove-cart" onclick="removeFromCart('${item.id}')">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+
+    </div>
+  `).join("");
+
+  const subtotal = cart.reduce((sum,item)=>sum + item.price * item.qty,0);
+  const shipping = subtotal > 0 && subtotal < 750 ? 89.90 : 0;
+  const total = subtotal + shipping;
+
+  document.getElementById("cartSubtotal").textContent = money(subtotal);
+  document.getElementById("cartShipping").textContent = money(shipping);
+  document.getElementById("cartTotal").textContent = money(total);
+}
+
+function openCart(){
+  cartDrawer.classList.add("active");
+  drawerOverlay.classList.add("active");
+  renderCart();
+}
+
+function closeCart(){
+  cartDrawer.classList.remove("active");
+  drawerOverlay.classList.remove("active");
+}
+
+function toggleFavorite(productId){
+  if(favorites.includes(productId)){
+    favorites = favorites.filter(id=>id !== productId);
+    showToast("Favoriler","Ürün favorilerden çıkarıldı.");
+  }else{
+    favorites.push(productId);
+    showToast("Favoriler","Ürün favorilere eklendi.");
+  }
+
+  saveLocal();
+  updateCounts();
+  renderProducts();
+}
+
+function openProductModal(productId){
+  const product = allProducts.find(p=>String(p.id) === String(productId));
+  if(!product) return;
+
+  selectedModalProduct = product;
+
+  const image = getProductImage(product);
+
+  document.getElementById("modalTitle").textContent = getProductName(product);
+  document.getElementById("modalDescription").textContent =
+    product.description ||
+    product.short_description ||
+    "Bu ürün Allona Shop partner mağazası tarafından listelenmiştir.";
+
+  document.getElementById("modalPrice").textContent = money(getProductPrice(product));
+
+  document.getElementById("modalImage").innerHTML = image
+    ? `<img src="${image}" alt="${getProductName(product)}">`
+    : `<i class="fa-solid fa-image"></i>`;
+
+  document.getElementById("productModal").classList.add("active");
+}
+
+function closeProductModal(){
+  document.getElementById("productModal").classList.remove("active");
+  selectedModalProduct = null;
+}
+
+function buyNow(productId){
+  addToCart(productId);
+  openCart();
+  showToast("Satın Alma","Ödeme adımına geçmek için sepeti kontrol et.");
+}
+
+document.querySelectorAll("[data-category]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    setCategory(btn.dataset.category);
+  });
 });
 
-function getCart(){
-
-return JSON.parse(
-localStorage.getItem(
-"allonaCart"
-) || "[]"
-);
-
-}
-
-function setCart(cart){
-
-localStorage.setItem(
-"allonaCart",
-JSON.stringify(cart)
-);
-
-updateCartCount();
-
-}
-
-function addToCart(id){
-
-let cart =
-getCart();
-
-let found =
-cart.find(
-x=>String(x.id)===String(id)
-);
-
-if(found){
-
-found.qty++;
-
-}else{
-
-cart.push({
-id:id,
-qty:1
+document.querySelectorAll("[data-category-shortcut]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    setCategory(btn.dataset.categoryShortcut);
+  });
 });
 
-}
+document.querySelectorAll("[data-stock-filter]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    activeStockFilter = btn.dataset.stockFilter;
 
-setCart(cart);
+    document.querySelectorAll("[data-stock-filter]").forEach(b=>{
+      b.classList.remove("active");
+    });
 
-showNotice(
-"<b>Ürün sepete eklendi.</b>"
-);
+    btn.classList.add("active");
+    applyFilters();
+  });
+});
 
-}
+document.querySelector("[data-scroll-products]").addEventListener("click",()=>{
+  document.getElementById("productsSection").scrollIntoView({
+    behavior:"smooth"
+  });
+});
 
-function updateCartCount(){
+document.getElementById("searchBtn").addEventListener("click",applyFilters);
 
-const total =
-getCart()
-.reduce(
-(sum,item)=>
-sum + item.qty,
-0
-);
+searchInput.addEventListener("input",()=>{
+  clearTimeout(window.searchTimer);
+  window.searchTimer = setTimeout(applyFilters,250);
+});
 
-document
-.getElementById(
-"cartCount"
-)
-.textContent =
-total;
+sortSelect.addEventListener("change",applyFilters);
 
-}
+document.getElementById("cartBtn").addEventListener("click",openCart);
+document.getElementById("closeCartBtn").addEventListener("click",closeCart);
+drawerOverlay.addEventListener("click",closeCart);
 
-function toggleCart(){
+document.getElementById("accountBtn").addEventListener("click",(e)=>{
+  e.stopPropagation();
+  document.getElementById("accountMenu").classList.toggle("active");
+});
 
-showNotice(
-"Sepet ekranı bir sonraki aşamada bağlanacak."
-);
+document.addEventListener("click",(e)=>{
+  const menu = document.getElementById("accountMenu");
+  const accountWrap = document.querySelector(".account-wrap");
 
-}
+  if(!accountWrap.contains(e.target)){
+    menu.classList.remove("active");
+  }
+});
 
-function getFavs(){
+document.getElementById("closeModalBtn").addEventListener("click",closeProductModal);
 
-return JSON.parse(
-localStorage.getItem(
-"allonaFavs"
-) || "[]"
-);
+document.getElementById("productModal").addEventListener("click",(e)=>{
+  if(e.target.id === "productModal"){
+    closeProductModal();
+  }
+});
 
-}
+document.getElementById("modalAddCart").addEventListener("click",()=>{
+  if(selectedModalProduct){
+    addToCart(selectedModalProduct.id);
+    closeProductModal();
+  }
+});
 
-function setFavs(favs){
+document.getElementById("modalBuyNow").addEventListener("click",()=>{
+  if(selectedModalProduct){
+    buyNow(selectedModalProduct.id);
+    closeProductModal();
+  }
+});
 
-localStorage.setItem(
-"allonaFavs",
-JSON.stringify(favs)
-);
+document.getElementById("checkoutBtn").addEventListener("click",()=>{
+  if(!cart.length){
+    showToast("Sepet Boş","Ödeme için önce ürün eklemelisin.");
+    return;
+  }
 
-}
+  localStorage.setItem("allona_checkout_cart",JSON.stringify(cart));
+  window.location.href = "checkout.html";
+});
 
-function toggleFav(id){
+document.getElementById("favoritesBtn").addEventListener("click",()=>{
+  if(!favorites.length){
+    showToast("Favoriler","Henüz favori ürün eklenmedi.");
+    return;
+  }
 
-let favs =
-getFavs();
+  activeCategory = "all";
+  filteredProducts = allProducts.filter(product=>favorites.includes(product.id));
+  productTitle.textContent = "Favorilerim";
+  productSubtitle.textContent = `${filteredProducts.length} favori ürün listeleniyor.`;
+  renderProducts();
 
-if(
-favs.includes(id)
-){
+  document.getElementById("productsSection").scrollIntoView({
+    behavior:"smooth"
+  });
+});
 
-favs =
-favs.filter(
-x=>x!==id
-);
-
-}else{
-
-favs.push(id);
-
-}
-
-setFavs(favs);
-
-showNotice(
-"Favoriler güncellendi."
-);
-
-}
-
-function openFavorites(){
-
-showNotice(
-"Favoriler sayfası sonraki aşamada bağlanacak."
-);
-
-}
-
-updateCartCount();
+updateCounts();
+renderCart();
 loadProducts();
-
 </script>
 
+</div>
 </body>
 </html>
