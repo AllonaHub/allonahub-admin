@@ -15,10 +15,12 @@ body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
 body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
 body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
 a{text-decoration:none;color:inherit}
 button{border:0;cursor:pointer}
 .page{width:1320px;margin:0 auto;padding:18px 22px 45px}
 .glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
 .topbar{height:84px;display:grid;grid-template-columns:285px 1fr 430px;gap:18px;margin-bottom:18px;align-items:center}
 .brand{height:84px;display:flex;align-items:center;gap:13px;padding:0 20px}
 .brand img{width:48px;height:48px;object-fit:contain}
@@ -27,9 +29,11 @@ button{border:0;cursor:pointer}
 .panel-title{height:84px;padding:18px 24px;display:flex;flex-direction:column;justify-content:center}
 .panel-title h1{color:#ffd700;font-size:27px;margin-bottom:6px}
 .panel-title p{opacity:.74;font-size:13px}
+
 .top-actions{height:84px;display:flex;align-items:center;justify-content:space-around;padding:0 14px;overflow:visible}
 .top-actions button,.top-actions a{background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20);color:white;border-radius:16px;padding:12px 14px;font-weight:900}
 .top-actions button:hover,.top-actions a:hover{color:#ffd700;border-color:#ffd70066}
+
 .partner-profile{position:relative}
 .profile-drop{display:none;position:absolute;right:0;top:56px;width:330px;background:#031326;border:1px solid #00e5ff66;border-radius:24px;padding:18px;box-shadow:0 0 35px #00e5ff44;z-index:80}
 .partner-profile:hover .profile-drop{display:block}
@@ -54,10 +58,12 @@ button{border:0;cursor:pointer}
 .side-partner p{font-size:12px;opacity:.75;line-height:1.45}
 .side-status{margin-top:10px;display:flex;gap:8px;align-items:center;font-size:12px}
 .dot{width:9px;height:9px;border-radius:50%;background:#00ff90;box-shadow:0 0 12px #00ff90}
+
 .menu-group-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin:18px 8px 8px}
 .menu-btn{width:100%;height:46px;margin:6px 0;border-radius:15px;background:transparent;color:white;display:flex;align-items:center;gap:11px;padding:0 14px;font-weight:900;text-align:left}
 .menu-btn i{width:20px;color:#00e5ff}
 .menu-btn:hover,.menu-btn.active{background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(255,215,0,.10));color:#ffd700;border:1px solid rgba(0,229,255,.22)}
+
 .content{min-height:860px;padding:24px}
 .section-box{display:none}
 .section-box.active{display:block}
@@ -68,11 +74,13 @@ button{border:0;cursor:pointer}
 .quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
 .quick-actions button{height:48px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
 .quick-actions button:nth-child(2){background:linear-gradient(135deg,#ffd700,#b88700);color:#020814}
+
 .status-card{padding:22px}
 .status-card h3{color:#ffd700;margin-bottom:14px}
 .status-list{display:grid;gap:10px}
 .status-line{display:flex;justify-content:space-between;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,.06)}
 .status-line b{color:#00e5ff}
+
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .kpi{padding:20px;min-height:118px}
 .kpi small{opacity:.65;font-weight:800}
@@ -80,14 +88,17 @@ button{border:0;cursor:pointer}
 .kpi p{font-size:12px;opacity:.72}
 .kpi.warning h3{color:#ff5b5b}
 .kpi.success h3{color:#00ff90}
+
 .section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 16px}
 .section-head h2{color:#ffd700;font-size:30px}
 .section-head p{opacity:.65;font-size:13px}
+
 .panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .panel-card{padding:20px;min-height:150px}
 .panel-card h3{color:#ffd700;margin-bottom:8px}
 .panel-card p{opacity:.72;font-size:13px;line-height:1.45}
 .panel-card button{margin-top:14px;padding:11px 15px;border-radius:14px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44}
+
 .table-box{padding:18px;margin-top:16px}
 .table-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}
 .table-top input,.table-top select{height:42px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);color:white;padding:0 12px;outline:0}
@@ -96,21 +107,39 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:13px;border-bottom:1px solid rgba(255,255,255,.10);text-align:left;vertical-align:middle}
 th{color:#ffd700}
 td{opacity:.9}
+
 .product-thumb{width:54px;height:54px;border-radius:12px;object-fit:cover;border:1px solid rgba(0,229,255,.25);background:#061b33}
 .badge-pill{padding:6px 10px;border-radius:10px;background:#00e5ff18;color:#00e5ff;font-weight:900;font-size:12px}
 .badge-red{background:#ff3b3b18;color:#ff6b6b}
 .badge-green{background:#00ff9018;color:#00ff90}
 .badge-gold{background:#ffd70022;color:#ffd700}
+
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .input{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 15px}
 .input input,.input select,.input textarea{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:14px}
 .input select option{background:#061b33;color:white}
 .textarea{height:105px;padding:12px 15px;grid-column:span 2}
 .textarea textarea{resize:none}
+
 .primary-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:15px;font-weight:900}
 .blue-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-size:15px;font-weight:900}
 .red-btn{height:38px;border-radius:12px;background:#ff3b3b22;color:#ff6b6b;font-weight:900;border:1px solid #ff3b3b44;padding:0 12px}
 .small-btn{height:38px;border-radius:12px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44;padding:0 12px}
+
+.cargo-box{padding:22px;margin-top:16px}
+.cargo-box label{display:block;color:#00e5ff;font-weight:900;margin:13px 0 7px}
+.cargo-box input,.cargo-box select{
+  width:100%;
+  height:50px;
+  border-radius:16px;
+  background:rgba(0,229,255,.08);
+  border:1px solid rgba(0,229,255,.24);
+  color:white;
+  padding:0 15px;
+  outline:0;
+}
+.cargo-box option{background:#061b33;color:white}
+
 .notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:430px;line-height:1.45}
 .notice b{color:#ffd700}
 </style>
@@ -127,11 +156,12 @@ td{opacity:.9}
 
 <div class="panel-title glass">
 <h1>Partner Yönetim Merkezi</h1>
-<p>Gerçek Supabase bağlantılı partner paneli.</p>
+<p>Ürün, sipariş, kargo, finans ve partner operasyon merkezi.</p>
 </div>
 
 <div class="top-actions glass">
 <a href="allonashop.html">Mağazaya Git</a>
+<a href="partner-orders.html">Siparişlerim</a>
 <button onclick="openSection('notifications')">Duyurularım</button>
 
 <div class="partner-profile">
@@ -144,16 +174,20 @@ td{opacity:.9}
 <p>Partner ID: <span id="profileId">-</span></p>
 </div>
 </div>
+
 <div class="score"><b id="profileScore">0 / 10</b><span>Partner Puanı</span></div>
+
 <div class="level-box">
 <div class="level-row"><span id="profileLevel">Level 1</span><span id="profileXpText">0 XP</span></div>
 <div class="level-bar"><div class="level-fill" id="levelFill"></div></div>
 </div>
-  
+
 <div class="profile-menu">
 <a href="#" onclick="openSection('settings')">Hesap Bilgileri</a>
+<a href="#" onclick="openSection('cargoSettings')">Kargo Ayarları</a>
 <a href="#" onclick="openSection('products')">Ürünler</a>
 <a href="#" onclick="openSection('addProduct')">Ürün Ekle</a>
+<a href="partner-orders.html">Siparişlerim</a>
 <a href="#" onclick="openSection('support')">Destek Talepleri</a>
 <button onclick="logoutPartner()">Çıkış Yap</button>
 </div>
@@ -161,8 +195,8 @@ td{opacity:.9}
 </div>
 </div>
 </header>
-
 <div class="layout">
+
 <aside class="sidebar glass">
 <div class="side-partner">
 <h2 id="sidePartnerName">Partner</h2>
@@ -173,16 +207,18 @@ td{opacity:.9}
 </aside>
 
 <main class="content glass">
+
 <section id="dashboard" class="section-box active">
 <div class="hero-dashboard">
 <div class="welcome glass">
 <h2 id="welcomeTitle">Hoş geldiniz</h2>
 <p id="welcomeDesc">Panel yükleniyor...</p>
+
 <div class="quick-actions">
 <button onclick="openSection('addProduct')">Ürün Ekle</button>
 <button onclick="openSection('products')">Ürünleri Aç</button>
-<button onclick="openSection('orders')">Siparişleri Aç</button>
-<button onclick="openSection('ads')">Reklam Yönet</button>
+<button onclick="window.location.href='partner-orders.html'">Siparişleri Aç</button>
+<button onclick="openSection('cargoSettings')">Kargo Ayarları</button>
 </div>
 </div>
 
@@ -207,14 +243,23 @@ td{opacity:.9}
 </div>
 <button class="blue-btn" onclick="loadProducts()">Yenile</button>
 </div>
+
 <table>
 <thead>
-<tr><th>Görsel</th><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th></tr>
+<tr>
+<th>Görsel</th>
+<th>Ürün</th>
+<th>Kategori</th>
+<th>Fiyat</th>
+<th>Stok</th>
+<th>Durum</th>
+</tr>
 </thead>
 <tbody id="dashboardProductsTable"></tbody>
 </table>
 </div>
 </section>
+
 <section id="products" class="section-box">
 <div class="section-head">
 <div>
@@ -331,23 +376,81 @@ td{opacity:.9}
 <button class="blue-btn" onclick="clearProductForm()">Formu Temizle</button>
 </div>
 </section>
-
 <section id="orders" class="section-box">
 <div class="section-head">
 <div>
 <h2>Sipariş & Kargo</h2>
-<p>Sipariş modülü için altyapı hazır. Sipariş tablosu bağlandığında canlı çalışacak.</p>
+<p>Partner siparişleri ayrı ekrandan yönetilir. Partner sadece siparişi onaylar; kargo süreçleri sistemle otomatikleşir.</p>
 </div>
+<a class="blue-btn" style="display:flex;align-items:center;justify-content:center;padding:0 18px" href="partner-orders.html">Siparişlerime Git</a>
 </div>
+
 <div class="panel-grid">
-<div class="panel-card glass"><h3>Yeni Siparişler</h3><p>products ve orders altyapısı sonrası siparişler burada listelenecek.</p><button onclick="showNotice('orders tablosu sonraki aşamada bağlanacak.')">Aç</button></div>
-<div class="panel-card glass"><h3>Kargo İşlemleri</h3><p>Kargo etiketi, paket durumu ve takip numarası alanları hazırlanacak.</p><button onclick="showNotice('Kargo entegrasyonu sonraki aşamada bağlanacak.')">Aç</button></div>
-<div class="panel-card glass"><h3>İade Talepleri</h3><p>İade ve iptal süreçleri ayrı tabloya bağlanacak.</p><button onclick="showNotice('İade modülü sonraki aşamada bağlanacak.')">Aç</button></div>
+<div class="panel-card glass">
+<h3>Yeni Siparişler</h3>
+<p>Yeni siparişler partner sipariş ekranına düşer.</p>
+<button onclick="window.location.href='partner-orders.html'">Aç</button>
+</div>
+
+<div class="panel-card glass">
+<h3>Kargo Ayarları</h3>
+<p>Partner çalıştığı kargo firmasını önceden seçer.</p>
+<button onclick="openSection('cargoSettings')">Ayarları Aç</button>
+</div>
+
+<div class="panel-card glass">
+<h3>İade Talepleri</h3>
+<p>İade ve iptal süreçleri sonraki aşamada bağlanacak.</p>
+<button onclick="showNotice('İade modülü sonraki aşamada bağlanacak.')">Aç</button>
+</div>
+</div>
+</section>
+
+<section id="cargoSettings" class="section-box">
+<div class="section-head">
+<div>
+<h2>Kargo Ayarları</h2>
+<p>Çalıştığınız kargo firmasını ve müşteri kodunuzu tanımlayın.</p>
+</div>
+<button class="blue-btn" onclick="loadCargoSettings()">Yenile</button>
+</div>
+
+<div class="cargo-box glass">
+<label>Kargo Firması</label>
+<select id="cargoCompany">
+<option value="">Kargo firması seç</option>
+<option value="Yurtici">Yurtiçi Kargo</option>
+<option value="MNG">MNG Kargo</option>
+<option value="Aras">Aras Kargo</option>
+<option value="Surat">Sürat Kargo</option>
+<option value="PTT">PTT Kargo</option>
+<option value="Hepsijet">HepsiJET</option>
+<option value="KolayGelsin">Kolay Gelsin</option>
+<option value="UPS">UPS</option>
+</select>
+
+<label>Müşteri Kodu</label>
+<input id="cargoCustomerCode" placeholder="Kargo müşteri kodunuz">
+
+<label>API Key</label>
+<input id="cargoApiKey" placeholder="API Key">
+
+<label>API Secret</label>
+<input id="cargoApiSecret" placeholder="API Secret">
+
+<br><br>
+<button class="primary-btn" onclick="saveCargoSettings()">Kargo Ayarlarını Kaydet</button>
 </div>
 </section>
 
 <section id="finance" class="section-box">
-<div class="section-head"><div><h2>Finans</h2><p>Hakediş, ödeme ve komisyon alanı.</p></div></div>
+<div class="section-head">
+<div>
+<h2>Finans</h2>
+<p>Hakediş, ödeme ve komisyon alanı.</p>
+</div>
+</div>
+
 <div class="panel-grid">
 <div class="panel-card glass"><h3>Hakediş</h3><p>Ödeme sağlayıcı entegrasyonu sonrası canlı hesaplanacak.</p></div>
 <div class="panel-card glass"><h3>Komisyon</h3><p>Modül bazlı komisyon kuralları burada gösterilecek.</p></div>
@@ -356,7 +459,13 @@ td{opacity:.9}
 </section>
 
 <section id="ads" class="section-box">
-<div class="section-head"><div><h2>Reklam</h2><p>Partner reklam ve görünürlük kampanyaları.</p></div></div>
+<div class="section-head">
+<div>
+<h2>Reklam</h2>
+<p>Partner reklam ve görünürlük kampanyaları.</p>
+</div>
+</div>
+
 <div class="panel-grid">
 <div class="panel-card glass"><h3>Ürün Reklamı</h3><p>Ürün bazlı reklam verme altyapısı hazırlanacak.</p></div>
 <div class="panel-card glass"><h3>Mağaza Reklamı</h3><p>Partner mağazası öne çıkarma alanı.</p></div>
@@ -365,11 +474,17 @@ td{opacity:.9}
 </section>
 
 <section id="notifications" class="section-box">
-<div class="section-head"><div><h2>Duyurularım</h2><p>AllonaHub sistem bildirimleri.</p></div></div>
+<div class="section-head">
+<div>
+<h2>Duyurularım</h2>
+<p>AllonaHub sistem bildirimleri.</p>
+</div>
+</div>
+
 <div class="panel-grid">
 <div class="panel-card glass"><h3>Sistem Hazır</h3><p>Partner girişi, products tablosu ve Storage altyapısı bağlandı.</p></div>
-<div class="panel-card glass"><h3>Ürün Yükleme</h3><p>Ürün ekleme modülü Supabase’e kayıt yapacak şekilde hazırlanıyor.</p></div>
-<div class="panel-card glass"><h3>Toplu Yükleme</h3><p>CSV/Excel toplu ürün yükleme sonraki aşamada bağlanacak.</p></div>
+<div class="panel-card glass"><h3>Ürün Yükleme</h3><p>Ürün ekleme modülü Supabase’e kayıt yapacak şekilde hazırlandı.</p></div>
+<div class="panel-card glass"><h3>Kargo Ayarları</h3><p>Partner kargo tercihi veritabanına kaydedilir.</p></div>
 </div>
 </section>
 
@@ -393,14 +508,29 @@ td{opacity:.9}
 <div class="input"><input id="editCity" placeholder="Şehir"></div>
 <div class="input textarea"><textarea id="editDesc" placeholder="Firma açıklaması"></textarea></div>
 <button class="primary-btn" onclick="savePartnerProfile()">Bilgileri Kaydet</button>
-<button class="blue-btn" onclick="showNotice('Profil resmi yükleme sonraki aşamada product-images dışında ayrı partner-logos bucket ile bağlanacak.')">Profil Resmi Düzenle</button>
+<button class="blue-btn" onclick="openSection('cargoSettings')">Kargo Ayarları</button>
 </div>
 </section>
 
 <section id="support" class="section-box">
-<div class="section-head"><div><h2>Destek Talepleri</h2><p>Destek talebi altyapısı sonraki tabloda canlıya alınacak.</p></div></div>
+<div class="section-head">
+<div>
+<h2>Destek Talepleri</h2>
+<p>Destek talebi altyapısı sonraki tabloda canlıya alınacak.</p>
+</div>
+</div>
+
 <div class="form-grid">
-<div class="input"><select><option>Konu Seç</option><option>Ürün</option><option>Ödeme</option><option>Kargo</option><option>Teknik Destek</option></select></div>
+<div class="input">
+<select>
+<option>Konu Seç</option>
+<option>Ürün</option>
+<option>Ödeme</option>
+<option>Kargo</option>
+<option>Teknik Destek</option>
+</select>
+</div>
+
 <div class="input"><input placeholder="Başlık"></div>
 <div class="input textarea"><textarea placeholder="Mesajınızı yazın"></textarea></div>
 <button class="primary-btn" onclick="showNotice('Destek talebi için support_tickets tablosu sonraki aşamada bağlanacak.')">Destek Talebi Oluştur</button>
@@ -408,6 +538,7 @@ td{opacity:.9}
 </section>
 
 <section id="dynamicSection" class="section-box"></section>
+
 </main>
 </div>
 
@@ -428,36 +559,9 @@ const menuByType = {
     ["products","fa-box","Ürünler"],
     ["addProduct","fa-plus","Ürün Ekle"],
     ["orders","fa-truck","Sipariş & Kargo"],
+    ["cargoSettings","fa-box-open","Kargo Ayarları"],
     ["finance","fa-wallet","Finans"],
     ["ads","fa-bullhorn","Reklam"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  food: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-utensils","Menü Ürünleri"],
-    ["addProduct","fa-plus","Menü Ekle"],
-    ["orders","fa-bag-shopping","Siparişler"],
-    ["finance","fa-wallet","Finans"],
-    ["ads","fa-bullhorn","Kampanyalar"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  maritime: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-ship","Crew / Hizmetler"],
-    ["addProduct","fa-plus","Hizmet Ekle"],
-    ["orders","fa-anchor","Talepler"],
-    ["finance","fa-wallet","Maritime Finans"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  legal: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-scale-balanced","Hizmetler"],
-    ["addProduct","fa-plus","Hizmet Ekle"],
-    ["orders","fa-folder-open","Dosyalar"],
-    ["finance","fa-wallet","Hakediş"],
     ["settings","fa-gear","Ayarlar"],
     ["support","fa-headset","Destek"]
   ],
@@ -466,6 +570,7 @@ const menuByType = {
     ["products","fa-box","Ürün / Hizmetler"],
     ["addProduct","fa-plus","Ürün / Hizmet Ekle"],
     ["orders","fa-list","Talepler"],
+    ["cargoSettings","fa-box-open","Kargo Ayarları"],
     ["finance","fa-wallet","Finans"],
     ["settings","fa-gear","Ayarlar"],
     ["support","fa-headset","Destek"]
@@ -483,7 +588,10 @@ function getMenuForPartner(){
 
 function money(value){
   const n = Number(value || 0);
-  return n.toLocaleString("tr-TR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " ₺";
+  return n.toLocaleString("tr-TR", {
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  }) + " ₺";
 }
 
 function safeText(value, fallback=""){
@@ -494,13 +602,16 @@ function showNotice(message){
   const n = document.getElementById("notice");
   n.innerHTML = message;
   n.style.display = "block";
-  setTimeout(() => { n.style.display = "none"; }, 4300);
+  setTimeout(() => {
+    n.style.display = "none";
+  }, 4300);
 }
 
 function openSection(id){
   document.querySelectorAll(".section-box").forEach(s => s.classList.remove("active"));
 
   const target = document.getElementById(id);
+
   if(target){
     target.classList.add("active");
   }else{
@@ -509,11 +620,13 @@ function openSection(id){
   }
 
   document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("active"));
+
   const activeBtn = document.querySelector(`.menu-btn[data-section="${id}"]`);
   if(activeBtn) activeBtn.classList.add("active");
 
   if(id === "products") loadProducts();
   if(id === "addProduct") clearProductForm(false);
+  if(id === "cargoSettings") loadCargoSettings();
 }
 
 function renderDynamicSection(id){
@@ -524,6 +637,7 @@ function renderDynamicSection(id){
         <p>Bu modül için altyapı hazır. İlgili tablo ve API bağlandığında canlı çalışacak.</p>
       </div>
     </div>
+
     <div class="panel-grid">
       <div class="panel-card glass"><h3>Altyapı Hazır</h3><p>Bu alan modüler yapı için ayrıldı.</p></div>
       <div class="panel-card glass"><h3>Supabase Bağlantısı</h3><p>İlgili tablo oluşturulduğunda buraya canlı veri çekilecek.</p></div>
@@ -532,96 +646,6 @@ function renderDynamicSection(id){
   `;
 }
 
-if(id === "settings"){
-
-document.getElementById("dynamicSection").innerHTML = `
-<div class="section-head">
-<h2>Kargo Ayarları</h2>
-<p>Çalıştığınız kargo firmasını tanımlayın.</p>
-</div>
-
-<div class="panel-card">
-<label>Kargo Firması</label>
-<select id="cargoCompany">
-<option>Yurtiçi Kargo</option>
-<option>MNG Kargo</option>
-<option>Aras Kargo</option>
-<option>Sürat Kargo</option>
-<option>PTT Kargo</option>
-<option>UPS</option>
-</select>
-
-<br><br>
-
-<label>Müşteri Kodu</label>
-<input id="cargoCustomerCode" type="text">
-
-<br><br>
-
-<label>API Key</label>
-<input id="cargoApiKey" type="text">
-
-<br><br>
-
-<label>API Secret</label>
-<input id="cargoApiSecret" type="text">
-
-<br><br>
-
-<button onclick="saveCargoSettings()">
-Kaydet
-</button>
-
-</div>
-`;
-
-loadCargoSettings();
-return;
-}
-async function loadCargoSettings(){
-
-const {data} = await supabaseClient
-.from("partners")
-.select("*")
-.eq("partner_id", partnerId)
-.single();
-
-if(!data) return;
-
-document.getElementById("cargoCompany").value =
-data.preferred_cargo_company || "";
-
-document.getElementById("cargoCustomerCode").value =
-data.cargo_customer_code || "";
-
-document.getElementById("cargoApiKey").value =
-data.cargo_api_key || "";
-
-document.getElementById("cargoApiSecret").value =
-data.cargo_api_secret || "";
-}
-
-async function saveCargoSettings(){
-
-await supabaseClient
-.from("partners")
-.update({
-preferred_cargo_company:
-document.getElementById("cargoCompany").value,
-
-cargo_customer_code:
-document.getElementById("cargoCustomerCode").value,
-
-cargo_api_key:
-document.getElementById("cargoApiKey").value,
-
-cargo_api_secret:
-document.getElementById("cargoApiSecret").value
-})
-.eq("partner_id", partnerId);
-
-alert("Kargo ayarları kaydedildi");
-}
 function renderMenu(){
   const menu = getMenuForPartner();
 
@@ -647,6 +671,7 @@ function getPartnerInitials(name){
 
 function renderPartnerProfile(){
   const p = currentPartner || {};
+
   const name = safeText(p.partner_name, "Allona Partner");
   const partnerId = safeText(p.partner_id, "-");
   const type = safeText(p.partner_type, "shop");
@@ -677,6 +702,7 @@ function renderPartnerProfile(){
   document.getElementById("partnerLevelText").textContent = "Level " + level;
 
   const avatar = document.getElementById("profileAvatar");
+
   if(p.logo_url){
     avatar.innerHTML = `<img src="${p.logo_url}" alt="Partner Logo">`;
   }else{
@@ -695,8 +721,7 @@ function renderPartnerProfile(){
 
   renderMenu();
 }
-
-async function loadPartnerProfile(){
+  async function loadPartnerProfile(){
   const localProfile = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
   const email = localProfile?.email || localStorage.getItem("allonaPartnerEmail");
 
@@ -725,6 +750,7 @@ async function loadPartnerProfile(){
   }
 
   currentPartner = data;
+
   localStorage.setItem("allonaPartnerProfile", JSON.stringify(data));
   localStorage.setItem("allonaPartnerEmail", data.email || email);
   localStorage.setItem("allonaPartnerId", data.partner_id || "");
@@ -766,7 +792,58 @@ async function savePartnerProfile(){
   renderPartnerProfile();
   showNotice("<b>Partner bilgileri güncellendi ✅</b>");
 }
-  async function uploadProductImage(){
+
+async function loadCargoSettings(){
+  if(!currentPartner?.id) return;
+
+  const {data,error} = await supabaseClient
+    .from("partners")
+    .select("*")
+    .eq("id", currentPartner.id)
+    .single();
+
+  if(error){
+    showNotice("Kargo ayarları alınamadı: " + error.message);
+    return;
+  }
+
+  document.getElementById("cargoCompany").value = data.preferred_cargo_company || "";
+  document.getElementById("cargoCustomerCode").value = data.cargo_customer_code || "";
+  document.getElementById("cargoApiKey").value = data.cargo_api_key || "";
+  document.getElementById("cargoApiSecret").value = data.cargo_api_secret || "";
+}
+
+async function saveCargoSettings(){
+  if(!currentPartner?.id){
+    showNotice("Partner kaydı bulunamadı.");
+    return;
+  }
+
+  const updateData = {
+    preferred_cargo_company: document.getElementById("cargoCompany").value,
+    cargo_customer_code: document.getElementById("cargoCustomerCode").value.trim() || null,
+    cargo_api_key: document.getElementById("cargoApiKey").value.trim() || null,
+    cargo_api_secret: document.getElementById("cargoApiSecret").value.trim() || null
+  };
+
+  const {data,error} = await supabaseClient
+    .from("partners")
+    .update(updateData)
+    .eq("id", currentPartner.id)
+    .select("*")
+    .single();
+
+  if(error){
+    showNotice("Kargo ayarları kaydedilemedi: " + error.message);
+    return;
+  }
+
+  currentPartner = data;
+  localStorage.setItem("allonaPartnerProfile", JSON.stringify(data));
+  showNotice("<b>Kargo ayarları kaydedildi ✅</b>");
+}
+
+async function uploadProductImage(){
   const fileInput = document.getElementById("productImageFile");
 
   if(!fileInput || !fileInput.files || !fileInput.files[0]){
@@ -867,7 +944,7 @@ async function saveProduct(){
       return;
     }
 
-    showNotice("<b>Ürün kaydedildi ✅</b><br>Ürün Supabase products tablosuna eklendi.");
+    showNotice("<b>Ürün kaydedildi ✅</b>");
     clearProductForm();
     await loadProducts();
     openSection("products");
@@ -881,35 +958,25 @@ async function saveProduct(){
 }
 
 function clearProductForm(showMsg=true){
-  const ids = [
-    "productName",
-    "productBrand",
-    "productPrice",
-    "productOldPrice",
-    "productStock",
-    "productSku",
-    "productBarcode",
-    "productDesc"
-  ];
-
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = "";
+  [
+    "productName","productBrand","productPrice","productOldPrice",
+    "productStock","productSku","productBarcode","productDesc"
+  ].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value="";
   });
 
-  if(document.getElementById("productCategory")) document.getElementById("productCategory").value = "";
-  if(document.getElementById("productStatus")) document.getElementById("productStatus").value = "pending";
-  if(document.getElementById("productCoupon")) document.getElementById("productCoupon").value = "false";
-  if(document.getElementById("productHp")) document.getElementById("productHp").value = "false";
-  if(document.getElementById("productImageFile")) document.getElementById("productImageFile").value = "";
+  if(document.getElementById("productCategory")) document.getElementById("productCategory").value="";
+  if(document.getElementById("productStatus")) document.getElementById("productStatus").value="pending";
+  if(document.getElementById("productCoupon")) document.getElementById("productCoupon").value="false";
+  if(document.getElementById("productHp")) document.getElementById("productHp").value="false";
+  if(document.getElementById("productImageFile")) document.getElementById("productImageFile").value="";
 
   if(showMsg) showNotice("Ürün formu temizlendi.");
 }
 
 async function loadProducts(){
-  if(!currentPartner?.partner_id){
-    return;
-  }
+  if(!currentPartner?.partner_id) return;
 
   const { data, error } = await supabaseClient
     .from("products")
@@ -952,18 +1019,17 @@ function filterProducts(){
     list = list.filter(p => {
       const d = new Date(p.created_at);
       const diffDays = (now - d) / (1000 * 60 * 60 * 24);
-
       if(dateFilter === "today") return diffDays < 1;
       if(dateFilter === "week") return diffDays <= 7;
       if(dateFilter === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-
       return true;
     });
   }
 
   renderProductsTable(list);
 }
-  function statusBadge(status){
+
+function statusBadge(status){
   const s = String(status || "pending");
 
   if(s === "active") return `<span class="badge-pill badge-green">Yayında</span>`;
@@ -1173,7 +1239,8 @@ async function updateProduct(id){
     btn.textContent = "Ürünü Kaydet";
   }
 }
-  function logoutPartner(){
+
+function logoutPartner(){
   localStorage.removeItem("allonaPartnerProfile");
   localStorage.removeItem("allonaPartnerEmail");
   localStorage.removeItem("allonaPartnerId");
@@ -1183,9 +1250,7 @@ async function updateProduct(id){
 }
 
 async function checkPartnerSession(){
-  const profile = JSON.parse(
-    localStorage.getItem("allonaPartnerProfile") || "null"
-  );
+  const profile = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
 
   if(!profile){
     showNotice("Partner oturumu bulunamadı.");
@@ -1199,24 +1264,15 @@ async function checkPartnerSession(){
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
-
   const hasSession = await checkPartnerSession();
-
   if(!hasSession) return;
-
   await loadPartnerProfile();
-
 });
 
 window.addEventListener("storage", async function(e){
-
   if(e.key==="allonaPartnerProfile"){
-
     try{
-
-      currentPartner = JSON.parse(
-        localStorage.getItem("allonaPartnerProfile") || "null"
-      );
+      currentPartner = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
 
       if(currentPartner){
         renderPartnerProfile();
@@ -1226,26 +1282,18 @@ window.addEventListener("storage", async function(e){
     }catch(err){
       console.error(err);
     }
-
   }
-
 });
 
 async function refreshDashboard(){
-
   await loadPartnerProfile();
   await loadProducts();
-
 }
 
 setInterval(async ()=>{
-
   if(currentPartner?.partner_id){
-
     await loadProducts();
-
   }
-
 },60000);
 
 console.log("✅ AllonaHub Partner Panel Loaded");
