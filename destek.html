@@ -264,7 +264,7 @@
           <div class="icon">☎</div>
           <div>
             <strong>Telefon</strong>
-            <a href="tel:+905XXXXXXXXX">+90 5XX XXX XX XX</a>
+            <a href="tel:+905427781868">+90 542778 18 68</a>
           </div>
         </div>
 
@@ -272,7 +272,7 @@
           <div class="icon">☘</div>
           <div>
             <strong>WhatsApp</strong>
-            <a href="https://wa.me/905XXXXXXXXX" target="_blank">WhatsApp üzerinden yazın</a>
+            <a href="https://wa.me/905427781868" target="_blank">WhatsApp üzerinden yazın</a>
           </div>
         </div>
 
@@ -336,7 +336,7 @@
   </main>
 
   <script>
-    emailjs.init("YOUR_PUBLIC_KEY");
+    emailjs.init("j_8unIhsqi5PEVebP");
 
     document.getElementById("supportForm").addEventListener("submit", function(e) {
       e.preventDefault();
@@ -347,7 +347,7 @@
       button.disabled = true;
       button.textContent = "Gönderiliyor...";
 
-      emailjs.sendForm("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", this)
+      emailjs.sendForm("service_s9myas7", "template_i7xzsya", this)
         .then(function() {
           status.style.display = "block";
           status.style.color = "#9ff6c4";
