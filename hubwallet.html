@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HP Dünyası | AllonaHub</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #063b52, #02080d 70%);
+      color: #fff;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      max-width: 920px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 215, 120, 0.25);
+      border-radius: 28px;
+      padding: 34px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(18px);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 215, 120, 0.12);
+      color: #ffd979;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 38px;
+      color: #ffd979;
+    }
+
+    p {
+      line-height: 1.7;
+      color: #d8eef7;
+      font-size: 16px;
+    }
+
+    .notice {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(0, 180, 216, 0.10);
+      border: 1px solid rgba(0, 180, 216, 0.28);
+      color: #e9fbff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 26px;
+    }
+
+    .mini-card {
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .mini-card h3 {
+      margin: 0 0 8px;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .mini-card span {
+      color: #9edff2;
+      font-size: 14px;
+      line-height: 1.5;
+      display: block;
+    }
+
+    .btn {
+      margin-top: 28px;
+      display: inline-block;
+      padding: 13px 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #00b4d8, #ffd979);
+      color: #06131a;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .card {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="badge">AllonaHub Sadakat Programı</div>
+
+      <h1>HP Dünyası</h1>
+
+      <p>
+        HP Dünyası, AllonaHub kullanıcılarının kampanya avantajlarını, sadakat puanlarını,
+        indirim haklarını ve platform içi ödüllerini görüntüleyebileceği özel bir sadakat alanıdır.
+      </p>
+
+      <div class="notice">
+        <strong>Bilgilendirme:</strong>
+        HUB Wallet elektronik para hesabı veya ödeme kuruluşu hizmeti değildir.
+        Kullanıcılar bu alana para yükleyemez, üçüncü kişilere para transfer edemez
+        ve nakit çekim yapamaz. Bu alan yalnızca sadakat puanları, kampanya avantajları
+        ve indirim haklarının görüntülenmesi amacıyla tasarlanmıştır.
+      </div>
+
+      <div class="grid">
+        <div class="mini-card">
+          <h3>HP Kazan</h3>
+          <span>Alışverişler, kampanyalar ve platform içi avantajlarla sadakat puanı kazan.</span>
+        </div>
+
+        <div class="mini-card">
+          <h3>Kupon Hakları</h3>
+          <span>Uygun kampanyalarda indirim ve avantaj kuponlarını görüntüle.</span>
+        </div>
+
+        <div class="mini-card">
+          <h3>Sadakat Avantajları</h3>
+          <span>AllonaHub üyelik seviyene göre özel avantajları keşfet.</span>
+        </div>
+      </div>
+
+      <a href="index.html" class="btn">Ana Sayfaya Dön</a>
+    </section>
+  </main>
+</body>
+</html>
