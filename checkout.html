@@ -45,30 +45,210 @@ textarea{min-height:95px;resize:none}
 }
 .notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none;box-shadow:0 0 25px #00e5ff44;max-width:380px}
 .notice b{color:#ffd700}
-  .payment-logos{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-margin-top:15px;
+ .payment-box{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(0,212,255,.28);
+  box-shadow:
+    0 0 30px rgba(0,180,216,.16),
+    inset 0 0 28px rgba(255,255,255,.03);
 }
 
-.pay-logo{
-background:#fff;
-color:#111;
-padding:8px 14px;
-border-radius:10px;
-font-size:12px;
-font-weight:700;
+.payment-box::before{
+  content:"";
+  position:absolute;
+  top:-80px;
+  right:-80px;
+  width:180px;
+  height:180px;
+  background:radial-gradient(circle,rgba(0,212,255,.28),transparent 70%);
+  pointer-events:none;
 }
 
-.pay-logo.iyzico{
-color:#0b64d8;
+.payment-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:18px;
 }
 
-.secure-note{
-margin-top:12px;
-font-size:13px;
-color:#9fdff2;
+.payment-badge{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(255,217,121,.12);
+  border:1px solid rgba(255,217,121,.28);
+  color:#ffd979;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.payment-head h2{
+  margin:0;
+  color:#ffd979;
+}
+
+.secure-icon{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,212,255,.12);
+  border:1px solid rgba(0,212,255,.25);
+  box-shadow:0 0 18px rgba(0,212,255,.22);
+}
+
+.payment-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.payment-grid .full{
+  grid-column:1 / -1;
+}
+
+.payment-box label{
+  display:block;
+  color:#8eeaff;
+  font-size:12px;
+  margin-bottom:7px;
+}
+
+.payment-box input{
+  width:100%;
+  padding:13px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.075);
+  color:#fff;
+  outline:none;
+}
+
+.payment-box input::placeholder{
+  color:rgba(230,250,255,.58);
+}
+
+.iyzico-pay-btn{
+  width:100%;
+  margin-top:16px;
+  padding:14px 18px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#00b4d8,#2672ff);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 0 24px rgba(0,180,216,.25);
+}
+
+.iyzico-brand-box{
+  margin-top:16px;
+  padding:10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.92);
+  text-align:center;
+}
+
+.iyzico-brand{
+  width:100%;
+  max-width:220px;
+  height:auto;
+  display:block;
+  margin:auto;
+}
+
+.payment-brand-strip{
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.brand-title{
+  display:block;
+  text-align:center;
+  color:#bfefff;
+  font-size:11px;
+  margin-bottom:9px;
+}
+
+.brand-logos{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.card-logo{
+  height:30px;
+  min-width:56px;
+  padding:0 10px;
+  border-radius:9px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:12px;
+  box-shadow:0 0 14px rgba(0,212,255,.12);
+}
+
+.card-logo.visa{
+  color:#1a4fb7;
+  font-style:italic;
+  letter-spacing:.5px;
+}
+
+.card-logo.amex{
+  color:#fff;
+  background:linear-gradient(135deg,#1c7ed6,#00b4d8);
+  letter-spacing:.4px;
+}
+
+.card-logo.mastercard{
+  position:relative;
+  min-width:58px;
+  background:#fff;
+  gap:0;
+}
+
+.card-logo.mastercard span{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  display:block;
+}
+
+.card-logo.mastercard span:first-child{
+  background:#eb001b;
+  margin-right:-7px;
+}
+
+.card-logo.mastercard span:last-child{
+  background:#f79e1b;
+}
+
+.payment-note{
+  margin:12px 0 0;
+  padding:12px;
+  border-radius:14px;
+  background:rgba(0,180,216,.08);
+  border:1px solid rgba(0,180,216,.18);
+  color:#ccefff;
+  font-size:12px;
+  line-height:1.6;
+}
+
+@media(max-width:768px){
+  .payment-grid{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -131,44 +311,62 @@ color:#9fdff2;
       </div>
     </div>
 <div class="form-box glass">
-  <h2>Kart Bilgileri</h2>
+<div class="payment-box glass">
+  <div class="payment-head">
+    <div>
+      <span class="payment-badge">Güvenli Kart Ödemesi</span>
+      <h2>Kart Bilgileri</h2>
+    </div>
+    <div class="secure-icon">🔒</div>
+  </div>
 
-  <div class="form-grid">
-
-    <div class="field">
+  <div class="payment-grid">
+    <div class="field full">
       <label>Kart Üzerindeki İsim</label>
       <input type="text" placeholder="Ad Soyad">
     </div>
 
-    <div class="field">
+    <div class="field full">
       <label>Kart Numarası</label>
-      <input type="text" placeholder="0000 0000 0000 0000">
+      <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
     </div>
 
     <div class="field">
-      <label>Son Kullanma Tarihi</label>
-      <input type="text" placeholder="AA/YY">
+      <label>Son Kullanma</label>
+      <input type="text" placeholder="AA/YY" maxlength="5">
     </div>
 
     <div class="field">
       <label>CVV</label>
-      <input type="password" placeholder="***">
+      <input type="password" placeholder="•••" maxlength="4">
     </div>
-
   </div>
 
-  <div class="payment-logos">
-    <div class="pay-logo iyzico">iyzico</div>
-    <div class="pay-logo">VISA</div>
-    <div class="pay-logo">Mastercard</div>
-    <div class="pay-logo">AMEX</div>
+  <button type="button" class="iyzico-pay-btn" onclick="placeOrder()">
+    🔒 iyzico ile Güvenli Ödeme
+  </button>
+
+  <div class="iyzico-brand-box">
+    <img src="iyzico_ile_ode_colored_horizontal.png" alt="iyzico ile öde" class="iyzico-brand">
   </div>
 
-  <p class="secure-note">
-    Ödeme işlemleri iyzico güvenli ödeme altyapısı üzerinden gerçekleştirilecektir.
+  <div class="payment-brand-strip">
+    <span class="brand-title">Desteklenen Kartlar</span>
+
+    <div class="brand-logos">
+      <div class="card-logo visa">VISA</div>
+      <div class="card-logo mastercard">
+        <span></span><span></span>
+      </div>
+      <div class="card-logo amex">AMEX</div>
+    </div>
+  </div>
+
+  <p class="payment-note">
+    Kart bilgileriniz AllonaHub sunucularında saklanmaz. Ödeme işlemleri iyzico güvenli ödeme altyapısı üzerinden gerçekleştirilir.
   </p>
 </div>
-    <div class="summary glass">
+  <div class="summary glass">
       <h2>Sipariş Özeti</h2>
 
       <div id="orderItems">Ürünler yükleniyor...</div>
