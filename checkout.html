@@ -391,10 +391,28 @@ async function placeOrder(){
   const address = document.getElementById("address").value.trim();
 
   if(!fullName || !phone || !email || !city || !district || !address){
-    showNotice("Lütfen teslimat bilgilerini eksiksiz doldur.");
+    showNotice("Lütfen teslimat bilgilerini eksiksiz doldurun.");
     return;
   }
+const cardName = document.getElementById("cardName").value.trim();
+const cardNumber = document.getElementById("cardNumber").value.replace(/\s/g, "").trim();
+const cardExp = document.getElementById("cardExp").value.trim();
+const cardCvv = document.getElementById("cardCvv").value.trim();
 
+if(!cardName || !cardNumber || !cardExp || !cardCvv){
+  showNotice("Lütfen kart bilgilerini eksiksiz doldurun.");
+  return;
+}
+
+if(cardNumber.length < 16){
+  showNotice("Kart numarası eksik.");
+  return;
+}
+
+if(cardCvv.length < 3){
+  showNotice("CVV giriniz.");
+  return;
+}  
   const cart = getCart();
   if(!cart.length){
     showNotice("Sepetin boş.");
