@@ -1,120 +1,206 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sayfa Başlığı</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hakkımızda | AllonaHub</title>
 
-<style>
-body{
-max-width:1000px;
-margin:auto;
-padding:30px;
-font-family:Arial,sans-serif;
-background:#ffffff;
-color:#222;
-line-height:1.7;
-}
+  <style>
+    body{
+      margin:0;
+      font-family:Inter,Arial,sans-serif;
+      background:linear-gradient(180deg,#061425,#020814);
+      color:#eef6ff;
+    }
 
-h1{
-margin-bottom:20px;
-}
+    .about-page{
+      min-height:100vh;
+      padding:90px 22px;
+      background:
+        radial-gradient(circle at top left,rgba(0,200,255,.16),transparent 30%),
+        radial-gradient(circle at top right,rgba(120,92,255,.13),transparent 28%),
+        linear-gradient(180deg,#061425,#020814);
+    }
 
-h2{
-margin-top:25px;
-}
-</style>
+    .about-container{
+      max-width:980px;
+      margin:auto;
+    }
 
+    .about-label{
+      color:#65dfff;
+      font-size:14px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      font-weight:700;
+      margin-bottom:18px;
+    }
+
+    h1{
+      font-size:clamp(36px,6vw,64px);
+      line-height:1.08;
+      margin:0 0 26px;
+      background:linear-gradient(90deg,#ffffff,#74dcff,#8b7cff);
+      -webkit-background-clip:text;
+      color:transparent;
+    }
+
+    .lead{
+      font-size:19px;
+      line-height:1.85;
+      color:#c4d3e6;
+      max-width:850px;
+      margin-bottom:52px;
+    }
+
+    .about-content{
+      display:grid;
+      gap:34px;
+    }
+
+    .about-block{
+      border-left:2px solid rgba(0,200,255,.55);
+      padding-left:24px;
+    }
+
+    .about-block h2{
+      font-size:26px;
+      margin:0 0 14px;
+      color:#ffffff;
+    }
+
+    .about-block p{
+      margin:0;
+      color:#b8c6d8;
+      font-size:16px;
+      line-height:1.85;
+    }
+
+    .about-final{
+      margin-top:58px;
+      padding-top:34px;
+      border-top:1px solid rgba(255,255,255,.12);
+    }
+
+    .about-final h2{
+      font-size:clamp(30px,4vw,46px);
+      margin:0 0 16px;
+      color:#fff;
+    }
+
+    .about-final p{
+      color:#b8c6d8;
+      font-size:17px;
+      line-height:1.8;
+      margin:0;
+    }
+
+    .brand{
+      color:#65dfff;
+      font-weight:800;
+    }
+
+    @media(max-width:600px){
+      .about-page{
+        padding:60px 18px;
+      }
+
+      .lead{
+        font-size:17px;
+      }
+
+      .about-block{
+        padding-left:18px;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <main class="about-page">
+    <div class="about-container">
 
-<h1>Hakkımızda</h1>
+      <div class="about-label">AllonaHub Hakkında</div>
 
-HAKKIMIZDA
+      <h1>Dijital hizmetleri tek ekosistemde buluşturuyoruz.</h1>
 
-AllonaHub’a Hoş Geldiniz
+      <p class="lead">
+        <span class="brand">AllonaHub</span>, bireysel kullanıcılar ile işletmeleri
+        güvenilir, kolay ve modern bir dijital platformda bir araya getirmek amacıyla
+        geliştirilen çok modüllü bir teknoloji platformudur.
+      </p>
 
-AllonaHub, kullanıcıları, işletmeleri ve hizmet sağlayıcılarını tek platform altında buluşturmayı hedefleyen yenilikçi bir dijital ekosistemdir.
+      <div class="about-content">
 
-Platformumuzun amacı; güvenli ödeme altyapısı, kullanıcı odaklı hizmet anlayışı ve güçlü partner ağı ile alışveriş, hizmet ve iş dünyasını tek merkezde bir araya getirmektir.
+        <section class="about-block">
+          <h2>Biz Kimiz?</h2>
+          <p>
+            AllonaHub; alışveriş, hizmet, iş ortaklığı, kampanya ve dijital çözümleri
+            tek bir yapı altında sunmayı hedefleyen yeni nesil bir platformdur.
+            Amacımız, kullanıcıların farklı ihtiyaçlarına tek hesap üzerinden kolayca
+            ulaşabilmesini sağlamak ve işletmelerin dijital dünyada daha verimli şekilde
+            yer almasına destek olmaktır.
+          </p>
+        </section>
 
-⸻
+        <section class="about-block">
+          <h2>Vizyonumuz</h2>
+          <p>
+            Teknolojiyi günlük yaşamı kolaylaştıran çözümlere dönüştürerek kullanıcılar
+            ile işletmeler arasında güvene dayalı, sürdürülebilir ve gelişime açık bir
+            dijital ekosistem oluşturmak.
+          </p>
+        </section>
 
-Misyonumuz
+        <section class="about-block">
+          <h2>Misyonumuz</h2>
+          <p>
+            Kullanıcıların ihtiyaç duyduğu ürün ve hizmetlere daha kolay erişebilmesini
+            sağlamak, iş ortaklarımızın dijital dönüşüm süreçlerini desteklemek ve
+            güvenilir bir platform deneyimi sunmak.
+          </p>
+        </section>
 
-Kullanıcılara güvenilir, hızlı ve kolay erişilebilir dijital hizmetler sunmak, işletmelerin büyümesine katkı sağlamak ve sürdürülebilir bir ekosistem oluşturmaktır.
+        <section class="about-block">
+          <h2>Ne Sunuyoruz?</h2>
+          <p>
+            AllonaHub; e-ticaret, partner yönetimi, kampanya sistemleri, kullanıcı paneli,
+            sipariş süreçleri ve farklı hizmet modüllerini aşamalı olarak geliştiren
+            modüler bir dijital platformdur. Platform yapısı, kullanıcı deneyimini sade,
+            hızlı ve anlaşılır hale getirecek şekilde tasarlanmaktadır.
+          </p>
+        </section>
 
-⸻
+        <section class="about-block">
+          <h2>Güven ve Şeffaflık</h2>
+          <p>
+            Kullanıcı güveni AllonaHub için temel önceliklerden biridir. Kişisel verilerin
+            korunmasına, kullanıcı bilgilerinin gizliliğine ve ödeme süreçlerinin güvenli
+            altyapılar üzerinden yürütülmesine önem verilir. Tüm süreçlerin ilgili mevzuata
+            uygun şekilde ilerletilmesi hedeflenmektedir.
+          </p>
+        </section>
 
-Vizyonumuz
+        <section class="about-block">
+          <h2>Sürekli Gelişim</h2>
+          <p>
+            AllonaHub, kullanıcı ve iş ortaklarından gelen geri bildirimlerle gelişmeye
+            devam eden bir platformdur. Amacımız; sade, güvenilir, modern ve sürdürülebilir
+            bir dijital deneyim sunmaktır.
+          </p>
+        </section>
 
-Yerel ve global ölçekte faaliyet gösteren, farklı sektörleri tek platformda birleştiren, güven odaklı ve teknolojik bir süper uygulama ekosistemi oluşturmaktır.
+      </div>
 
-⸻
+      <div class="about-final">
+        <h2>Tek Platform. Birçok Çözüm.</h2>
+        <p>
+          <span class="brand">AllonaHub</span>, kullanıcıları ve işletmeleri dijital dünyada
+          güvenle buluşturmak için geliştirilen modern bir teknoloji platformudur.
+        </p>
+      </div>
 
-Hizmetlerimiz
-
-AllonaHub bünyesinde mevcut ve planlanan hizmetler:
-
-* E-Ticaret ve Marketplace
-* İş ve Kariyer Hizmetleri
-* Denizcilik ve Crewing Hizmetleri
-* Danışmanlık Hizmetleri
-* Partner İşletme Çözümleri
-* Dijital Sadakat ve Ödül Sistemleri
-* Ödeme ve Kampanya Çözümleri
-
-⸻
-
-Güvenlik ve Şeffaflık
-
-Kullanıcı güvenliği AllonaHub’ın önceliklerindendir.
-
-Ödeme işlemleri lisanslı ödeme kuruluşları aracılığıyla gerçekleştirilir.
-
-Kişisel veriler yürürlükteki mevzuat ve KVKK hükümlerine uygun şekilde korunur.
-
-⸻
-
-Partner Ekosistemi
-
-AllonaHub, farklı sektörlerden işletmelerin ürün ve hizmetlerini kullanıcılara ulaştırabilecekleri bir platform sunar.
-
-Partnerlerimiz kalite, güvenilirlik ve müşteri memnuniyeti kriterleri doğrultusunda değerlendirilmektedir.
-
-⸻
-
-Şirket Bilgileri
-
-ALLWORKSIN BUSINESS DANIŞMANLIK TİCARET LTD. ŞTİ.
-
-Adres:
-Atatürk Mahallesi Güner Sokak 1/1B Blok B1 Daire No:203
-Küçükçekmece / İstanbul
-
-Vergi No:
-0551945688
-
-Telefon:
-+90 542 778 18 68
-
-E-Posta:
-allonahub@gmail.com
-
-Web Sitesi:
-www.allonahub.com
-
-⸻
-
-İletişim
-
-Sorularınız, önerileriniz veya iş birliği talepleriniz için bizimle iletişime geçebilirsiniz.
-
-E-posta:
-allonahub@gmail.com
-
-Telefon:
-+90 542 778 18 68
-
+    </div>
+  </main>
 </body>
 </html>
