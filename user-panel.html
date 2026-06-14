@@ -945,6 +945,61 @@ else if(q.includes("premium") || q.includes("üyelik")){
 
  // <-- panelSearch() fonksiyonunun kapanışı
   }
+
+async function forceRealProfileData(){
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+
+  if(!session || !session.user){
+    window.location.href="user.html";
+    return;
+  }
+
+  const { data:profile, error } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  if(error){
+    console.error("PROFILE ERROR:", error);
+    return;
+  }
+
+  if(!profile){
+    console.error("PROFILE NOT FOUND");
+    return;
+  }
+
+  const fullName = profile.full_name || session.user.email || "AllonaHub Üyesi";
+  const title = profile.profession_title || "Üye";
+  const profession = profile.profession_name || "AllonaHub Üyesi";
+  const sector = profile.sector_name || "Genel";
+  const initials = fullName.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
+
+  document.getElementById("welcomeTitle").innerHTML = `<span>${title} ${fullName.split(" ")[0]}, hoş geldin</span>`;
+  document.getElementById("welcomeText").textContent = `${sector} / ${profession} profiline göre AllonaHub panelin hazırlanıyor.`;
+
+  document.getElementById("heroInitials").textContent = initials;
+  document.getElementById("profileInitials").textContent = initials;
+
+  document.getElementById("profileName").textContent = fullName;
+  document.getElementById("profileInfo").textContent = `${title} • ${profession}`;
+
+  document.getElementById("hpValue").textContent = (profile.hp || 0) + " HP";
+  document.getElementById("hpWalletValue").textContent = profile.hp || 0;
+  document.getElementById("xpValue").textContent = profile.xp || 0;
+
+  document.getElementById("premiumValue").textContent = profile.premium_level || "Basic";
+
+  document.getElementById("progressText").textContent = (profile.progress || 42) + "%";
+  document.getElementById("progressBar").style.width = (profile.progress || 42) + "%";
+
+  document.getElementById("userIdText").textContent = "AH-" + session.user.id.slice(0,8).toUpperCase();
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  setTimeout(forceRealProfileData,500);
+});
   
 </script>
 </body>
