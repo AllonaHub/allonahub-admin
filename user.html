@@ -7,10 +7,14 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="user-service.js"></script>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
 
 :root{
   --blue:#0077ff;
@@ -22,7 +26,6 @@
   --muted:#6b7b8f;
   --line:rgba(0,150,255,.22);
   --gold:#f5b942;
-  --red:#ff375f;
 }
 
 body{
@@ -40,7 +43,8 @@ body:before{
   position:fixed;
   inset:0;
   z-index:-2;
-  background:linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
+  background:
+    linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
   animation:wave 9s infinite linear;
 }
 
@@ -49,7 +53,10 @@ body:before{
   100%{transform:translateX(40%)}
 }
 
-a{text-decoration:none;color:inherit}
+a{
+  text-decoration:none;
+  color:inherit;
+}
 
 .page{
   width:1320px;
@@ -60,7 +67,9 @@ a{text-decoration:none;color:inherit}
 .glass{
   background:rgba(255,255,255,.86);
   border:1px solid var(--line);
-  box-shadow:0 0 28px rgba(0,213,255,.13),inset 0 0 22px rgba(255,255,255,.65);
+  box-shadow:
+    0 0 28px rgba(0,213,255,.13),
+    inset 0 0 22px rgba(255,255,255,.65);
   border-radius:28px;
   position:relative;
   overflow:hidden;
@@ -74,6 +83,8 @@ a{text-decoration:none;color:inherit}
   background:linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
   pointer-events:none;
 }
+
+/* HEADER */
 
 .header{
   height:82px;
@@ -110,7 +121,8 @@ a{text-decoration:none;color:inherit}
   font-weight:900;
   text-shadow:0 0 12px rgba(0,213,255,.45);
 }
-  .search{
+
+.search{
   height:60px;
   display:flex;
   align-items:center;
@@ -163,7 +175,7 @@ a{text-decoration:none;color:inherit}
   color:var(--blue);
 }
 
-/* LOGIN AREA */
+/* HERO LOGIN */
 
 .hero{
   display:flex;
@@ -275,7 +287,8 @@ a{text-decoration:none;color:inherit}
   grid-template-columns:260px 1fr;
   gap:12px;
 }
-  .country-picker{
+
+.country-picker{
   position:relative;
   margin-bottom:14px;
 }
@@ -343,7 +356,7 @@ a{text-decoration:none;color:inherit}
 
 .warning-text{
   display:none;
-  color:var(--red);
+  color:#ff375f;
   font-size:13px;
   font-weight:800;
   margin:-4px 0 12px;
@@ -398,48 +411,7 @@ a{text-decoration:none;color:inherit}
   color:var(--blue);
   font-weight:800;
 }
-
-/* PROFESSION */
-
-.profession-wrap{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.profession-box{
-  position:relative;
-}
-
-.profession-results{
-  display:none;
-  position:absolute;
-  top:64px;
-  left:0;
-  right:0;
-  max-height:260px;
-  overflow:auto;
-  background:white;
-  border:1px solid rgba(0,150,255,.28);
-  border-radius:18px;
-  box-shadow:0 0 28px rgba(0,213,255,.18);
-  z-index:120;
-}
-
-.profession-results.active{
-  display:block;
-}
-
-.profession-item{
-  padding:12px 14px;
-  border-bottom:1px solid rgba(0,0,0,.05);
-  cursor:pointer;
-  color:var(--text);
-}
-
-.profession-item:hover{
-  background:#eef8ff;
-}
+  /* QUICK CARDS */
 
 .quick-section{
   margin-top:26px;
@@ -461,7 +433,8 @@ a{text-decoration:none;color:inherit}
   color:var(--blue);
   font-weight:900;
 }
-  .quick-grid{
+
+.quick-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:14px;
@@ -598,394 +571,344 @@ a{text-decoration:none;color:inherit}
   line-height:1.8;
 }
 
+/* PROFESSION SELECTOR */
+
+.profession-wrap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.profession-box{
+  position:relative;
+}
+
+.profession-results{
+  display:none;
+  position:absolute;
+  top:64px;
+  left:0;
+  right:0;
+  max-height:260px;
+  overflow:auto;
+  background:white;
+  border:1px solid rgba(0,150,255,.28);
+  border-radius:18px;
+  box-shadow:0 0 28px rgba(0,213,255,.18);
+  z-index:120;
+}
+
+.profession-results.active{
+  display:block;
+}
+
+.profession-item{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(0,0,0,.05);
+  cursor:pointer;
+  color:var(--text);
+}
+
+.profession-item:hover{
+  background:#eef8ff;
+}
+
+.required-dot{
+  color:#ff375f;
+  font-weight:900;
+}
+
 @media(max-width:900px){
-  body{min-width:100%}
-  .page{width:100%}
+  body{
+    min-width:100%;
+  }
+
+  .page{
+    width:100%;
+  }
 }
 </style>
 </head>
+
 <body>
 <div class="page">
 
-  <div class="header">
-    <a class="brand glass" href="index.html">
-      <img src="allona.logo.png" alt="AllonaHub">
-      <div><b>Allona</b><span>Hub</span></div>
-    </a>
+<div class="header">
+  <a class="brand glass" href="index.html">
+    <img src="allona.logo.png" alt="AllonaHub">
+    <div><b>Allona</b><span>Hub</span></div>
+  </a>
 
-    <div class="search glass">
-      <span><i class="fa-solid fa-magnifying-glass"></i></span>
-      <input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
-      <button onclick="userSearch()">Ara</button>
-    </div>
-
-    <div class="actions glass">
-      <a href="index.html">Ana Sayfa</a>
-      <a href="hubwallet.html">HUB Wallet</a>
-      <a href="premium.html">Premium</a>
-    </div>
+  <div class="search glass">
+    <span><i class="fa-solid fa-magnifying-glass"></i></span>
+    <input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+    <button onclick="userSearch()">Ara</button>
   </div>
 
-  <section class="hero">
-    <div class="login-box glass">
-
-      <h1>Allona<span>Hub</span>’a Giriş Yap</h1>
-      <p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
-
-      <div class="tabs">
-        <button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
-        <button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
-        <button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
-      </div>
-
-      <div id="login" class="form active">
-        <div class="phone-row">
-          <div id="loginPicker" class="country-picker"></div>
-          <div class="input">
-            <input id="loginEmail" placeholder="E-posta">
-          </div>
-        </div>
-
-        <div class="input">
-          <input id="loginPassword" type="password" placeholder="Şifre">
-        </div>
-
-        <button class="btn" onclick="loginUser()">Giriş Yap</button>
-        <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
-        <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
-
-        <div class="link-row">
-          <a href="#">Telefon ile giriş</a>
-          <a href="destek.html">Güvenlik merkezi</a>
-        </div>
-      </div>
-      <!-- REGISTER -->
-
-      <div id="register" class="form">
-
-        <div class="input">
-          <input id="fullName" placeholder="Ad Soyad">
-        </div>
-
-        <div class="input">
-          <input id="registerEmail" type="email" placeholder="E-posta">
-        </div>
-
-        <div class="phone-row">
-
-          <div id="registerPicker" class="country-picker"></div>
-
-          <div class="input">
-            <input id="registerPhone" placeholder="Telefon Numarası">
-          </div>
-
-        </div>
-
-        <div class="profession-wrap">
-
-          <div class="select-box">
-            <select id="sectorSelect" onchange="onSectorChange()">
-              <option value="">Sektör Seçiniz *</option>
-            </select>
-          </div>
-
-          <div class="profession-box">
-
-            <div class="input">
-              <input
-                id="professionSearch"
-                placeholder="Meslek ara ve seç *"
-                autocomplete="off"
-                oninput="filterProfessions()">
-            </div>
-
-            <div id="professionResults" class="profession-results"></div>
-
-          </div>
-
-        </div>
-
-        <p class="form-note">
-          Meslek seçimi zorunludur. AllonaHub sana özel paneli, iş ilanlarını,
-          kampanyaları ve bildirimleri bu bilgiye göre oluşturacaktır.
-        </p>
-
-        <input type="hidden" id="selectedProfessionKey">
-        <input type="hidden" id="selectedProfessionName">
-        <input type="hidden" id="selectedProfessionTitle">
-
-        <div class="input">
-          <input
-            id="password1"
-            type="password"
-            placeholder="Şifre oluştur"
-            oninput="checkPasswords()">
-        </div>
-
-        <div class="input">
-          <input
-            id="password2"
-            type="password"
-            placeholder="Şifreyi tekrar gir"
-            oninput="checkPasswords()">
-        </div>
-
-        <div id="passwordWarning" class="warning-text">
-          Şifreler aynı değil.
-        </div>
-
-        <button
-          id="registerBtn"
-          class="btn"
-          onclick="registerUser()">
-
-          Ücretsiz Hesap Oluştur
-
-        </button>
-
-        <button
-          class="btn social-btn"
-          onclick="loginWithGoogle()">
-
-          Google ile Kayıt Ol
-
-        </button>
-
-        <button
-          class="btn social-btn icloud-btn"
-          onclick="icloudInfo()">
-
-          iCloud ile Kayıt Ol
-
-        </button>
-
-      </div>
-      <!-- FORGOT PASSWORD -->
-
-      <div id="forgot" class="form">
-
-        <div class="input">
-          <input
-            id="forgotEmail"
-            type="email"
-            placeholder="Kayıtlı E-posta Adresiniz">
-        </div>
-
-        <button
-          class="btn"
-          onclick="resetPassword()">
-
-          Şifre Sıfırlama Bağlantısı Gönder
-
-        </button>
-
-        <p style="
-          margin-top:18px;
-          font-size:13px;
-          color:#6f8094;
-          line-height:1.7;
-          text-align:center">
-
-          Güvenliğiniz için şifre sıfırlama bağlantısı yalnızca
-          kayıtlı e-posta adresinize gönderilecektir.
-
-        </p>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ALLONAHUB AVANTAJLARI -->
-
-  <section class="quick-section">
-
-    <div class="quick-title">
-
-      <h2>AllonaHub Avantajları</h2>
-
-      <a href="premium.html">
-        Tümünü Gör
-      </a>
-
-    </div>
-
-    <div class="quick-grid">
-
-      <div class="quick-card">
-
-        <h3>HP Dünyası</h3>
-
-        <p>
-
-          Alışverişlerden, görevlerden ve partner işlemlerinden HP kazan.
-          HP'lerini kupona dönüştür veya Hub Wallet içerisinde kullan.
-
-        </p>
-
-      </div>
-
-      <div class="quick-card">
-
-        <h3>Mesleğe Özel Deneyim</h3>
-
-        <p>
-
-          Doktor, avukat, denizci, yazılımcı, çiftçi veya yüzlerce farklı
-          meslek grubuna özel kişiselleştirilmiş panel.
-
-        </p>
-
-      </div>
-
-      <div class="quick-card">
-
-        <h3>Akıllı Bildirimler</h3>
-
-        <p>
-
-          Sana uygun iş ilanları, kampanyalar, etkinlikler ve fırsatlar
-          otomatik olarak gösterilir.
-
-        </p>
-
-      </div>
-
-      <div class="quick-card">
-
-        <h3>Premium Avantajlar</h3>
-
-        <p>
-
-          Basic, Silver, Gold, Platinum, Elite Black ve Legend
-          üyelikleriyle çok daha fazla ayrıcalık kazan.
-
-        </p>
-
-      </div>
-
-    </div>
-
-  </section>
-
-  <footer class="footer-main">
-
-    <div class="footer-grid">
-      <div class="footer-col">
-        <h3>AllonaHub</h3>
-        <a href="hakkimizda.html">Hakkımızda</a>
-        <a href="iletisim.html">İletişim</a>
-        <a href="destek.html">Yardım ve Destek</a>
-        <a href="partner.html">Ekosisteme Katıl</a>
-        <a href="kariyer.html">Kariyer</a>
-        <a href="partner.html">Partner Ol</a>
-      </div>
-
-      <div class="footer-col">
-        <h3>Yasal</h3>
-        <a href="kvkk.html">KVKK Aydınlatma Metni</a>
-        <a href="gizlilik.html">Gizlilik Politikası</a>
-        <a href="cerez-politikasi.html">Çerez Politikası</a>
-        <a href="kullanim-sartlari.html">Kullanım Şartları</a>
-        <a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
-        <a href="hp-wallet-kurallari.html">HP ve Hub Wallet Kuralları</a>
-        <a href="guvenlik-politikasi.html">Güvenlik Politikası</a>
-      </div>
-
-      <div class="footer-col">
-        <h3>E-Ticaret</h3>
-        <a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
-        <a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
-        <a href="iptal-iade.html">İptal ve İade Politikası</a>
-        <a href="teslimat-kargo.html">Teslimat ve Kargo</a>
-        <a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
-      </div>
-
-      <div class="footer-col">
-        <h3>İletişim</h3>
-        <p>allonahub@gmail.com</p>
-        <p>info@allonahub.com</p>
-        <p>Atatürk Mahallesi Güner Sokak 1/1B<br>Blok B1 Daire No:203<br>Küçükçekmece / İstanbul</p>
-        <p>0 (212) 982 80 77</p>
-        <p>WP destek hattı: +90 542 778 18 68</p>
-        <p>MERSİS No: Yakında Eklenecek</p>
-        <p>Vergi No: Yakında Eklenecek</p>
-        <p>KEP: Yakında Eklenecek</p>
-      </div>
-
-    </div>
-
-    <hr style="margin:30px 0;border:0;border-top:1px solid rgba(0,150,255,.14);">
-
-    <div class="social-icons">
-      <a class="wa" href="https://wa.me/905427781868" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
-      <a class="ig" href="https://instagram.com/allonahub" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span></a>
-      <a class="x" href="#" target="_blank"><i class="fab fa-x-twitter"></i><span>X</span></a>
-      <a class="fb" href="#" target="_blank"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
-      <a class="yt" href="#" target="_blank"><i class="fab fa-youtube"></i><span>YouTube</span></a>
-      <a class="li" href="#" target="_blank"><i class="fab fa-linkedin-in"></i><span>LinkedIn</span></a>
-      <a class="tg" href="#" target="_blank"><i class="fab fa-telegram"></i><span>Telegram</span></a>
-      <a class="tk" href="#" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok</span></a>
-      <a class="mail" href="mailto:info@allonahub.com"><i class="fas fa-envelope"></i><span>E-Mail</span></a>
-    </div>
-
-    <div class="store-buttons">
-      <a href="#" class="store-btn"> App Store</a>
-      <a href="#" class="store-btn">▶️ Google Play</a>
-    </div>
-
-    <div class="footer-bottom">
-      <p>©️ 2026 AllonaHub</p>
-      <p>Global Partner-Based Super App Ecosystem</p>
-    </div>
-
-  </footer>
-
+  <div class="actions glass">
+    <a href="index.html">Ana Sayfa</a>
+    <a href="hubwallet.html">HUB Wallet</a>
+    <a href="premium.html">Premium</a>
+  </div>
 </div>
+<section class="hero">
+  <div class="login-box glass">
+
+    <h1>Allona<span>Hub</span>’a Giriş Yap</h1>
+    <p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
+      <button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
+      <button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login" class="form active">
+      <div class="phone-row">
+        <div id="loginPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="loginEmail" placeholder="E-posta">
+        </div>
+      </div>
+
+      <div class="input">
+        <input id="loginPassword" type="password" placeholder="Şifre">
+      </div>
+
+      <button class="btn" onclick="loginUser()">Giriş Yap</button>
+      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
+      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+
+      <div class="link-row">
+        <a href="#">Telefon ile giriş</a>
+        <a href="destek.html">Güvenlik merkezi</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register" class="form">
+
+      <div class="input">
+        <input id="fullName" placeholder="Ad Soyad">
+      </div>
+
+      <div class="input">
+        <input id="registerEmail" placeholder="E-posta">
+      </div>
+
+      <div class="phone-row">
+        <div id="registerPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="registerPhone" placeholder="Telefon numarası">
+        </div>
+      </div>
+
+      <div class="profession-wrap">
+
+        <div class="select-box">
+          <select id="sectorSelect" onchange="onSectorChange()">
+            <option value="">Sektör Seçiniz *</option>
+          </select>
+        </div>
+
+        <div class="profession-box">
+          <div class="input">
+            <input id="professionSearch" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
+          </div>
+          <div id="professionResults" class="profession-results"></div>
+        </div>
+
+      </div>
+
+      <p class="form-note">
+        Meslek seçimi zorunludur. AllonaHub karşılama, panel önerileri, iş ilanları ve bildirimleri seçilen mesleğe göre kişiselleştirir.
+      </p>
+
+      <input type="hidden" id="selectedProfessionKey">
+      <input type="hidden" id="selectedProfessionName">
+      <input type="hidden" id="selectedProfessionTitle">
+
+      <div class="input">
+        <input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()">
+      </div>
+
+      <div class="input">
+        <input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()">
+      </div>
+
+      <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
+
+      <button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
+      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Kayıt Ol</button>
+      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Kayıt Ol</button>
+    </div>
+
+    <!-- FORGOT -->
+    <div id="forgot" class="form">
+      <div class="phone-row">
+        <div id="forgotPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="forgotEmail" placeholder="E-posta">
+        </div>
+      </div>
+
+      <button class="btn" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
+
+      <p style="margin-top:16px;font-size:13px;color:#6f8094;text-align:center">
+        Güvenlik nedeniyle doğrulama linki e-posta ile gönderilecektir.
+      </p>
+    </div>
+
+  </div>
+</section>
+<section class="quick-section">
+  <div class="quick-title">
+    <h2>AllonaHub Avantajları</h2>
+    <a href="premium.html">Tümünü Gör</a>
+  </div>
+
+  <div class="quick-grid">
+    <div class="quick-card">
+      <h3>HP Dünyası</h3>
+      <p>Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Mesleğe Özel Panel</h3>
+      <p>Denizci, doktor, çiftçi, avukat veya farklı meslek grupları için kişiselleştirilmiş deneyim.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Akıllı Bildirimler</h3>
+      <p>İş ilanları, kampanyalar ve partner fırsatları mesleğine göre sana özel gösterilir.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Premium Avantajlar</h3>
+      <p>A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer-main">
+  <div class="footer-grid">
+
+    <div class="footer-col">
+      <h3>AllonaHub</h3>
+      <a href="hakkimizda.html">Hakkımızda</a>
+      <a href="iletisim.html">İletişim</a>
+      <a href="destek.html">Yardım ve Destek</a>
+      <a href="partner.html">Ekosisteme Katıl</a>
+      <a href="kariyer.html">Kariyer</a>
+      <a href="partner.html">Partner Ol</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>Yasal</h3>
+      <a href="kvkk.html">KVKK Aydınlatma Metni</a>
+      <a href="gizlilik.html">Gizlilik Politikası</a>
+      <a href="cerez-politikasi.html">Çerez Politikası</a>
+      <a href="kullanim-sartlari.html">Kullanım Şartları</a>
+      <a href="partner-uyelik.html">Partner Üyelik Sözleşmesi</a>
+      <a href="hp-wallet-kurallari.html">HP ve Hub Wallet Kuralları</a>
+      <a href="guvenlik-politikasi.html">Güvenlik Politikası</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>E-Ticaret</h3>
+      <a href="mesafeli-satis.html">Mesafeli Satış Sözleşmesi</a>
+      <a href="on-bilgilendirme.html">Ön Bilgilendirme Formu</a>
+      <a href="iptal-iade.html">İptal ve İade Politikası</a>
+      <a href="teslimat-kargo.html">Teslimat ve Kargo</a>
+      <a href="pazaryeri-satis.html">Pazaryeri Satış Sözleşmesi</a>
+    </div>
+
+    <div class="footer-col">
+      <h3>İletişim</h3>
+      <p>allonahub@gmail.com</p>
+      <p>info@allonahub.com</p>
+      <p>Atatürk Mahallesi Güner Sokak 1/1B<br>Blok B1 Daire No:203<br>Küçükçekmece / İstanbul</p>
+      <p>0 (212) 982 80 77</p>
+      <p>WP destek hattı: +90 542 778 18 68</p>
+      <p>MERSİS No: Yakında Eklenecek</p>
+      <p>Vergi No: Yakında Eklenecek</p>
+      <p>KEP: Yakında Eklenecek</p>
+    </div>
+
+  </div>
+  <hr style="margin:30px 0;border:0;border-top:1px solid rgba(0,150,255,.14);">
+
+  <div class="social-icons">
+    <a class="wa" href="https://wa.me/905427781868" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+    <a class="ig" href="https://instagram.com/allonahub" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+    <a class="x" href="#" target="_blank"><i class="fab fa-x-twitter"></i><span>X</span></a>
+    <a class="fb" href="#" target="_blank"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+    <a class="yt" href="#" target="_blank"><i class="fab fa-youtube"></i><span>YouTube</span></a>
+    <a class="li" href="#" target="_blank"><i class="fab fa-linkedin-in"></i><span>LinkedIn</span></a>
+    <a class="tg" href="#" target="_blank"><i class="fab fa-telegram"></i><span>Telegram</span></a>
+    <a class="tk" href="#" target="_blank"><i class="fab fa-tiktok"></i><span>TikTok</span></a>
+    <a class="mail" href="mailto:info@allonahub.com"><i class="fas fa-envelope"></i><span>E-Mail</span></a>
+  </div>
+
+  <div class="store-buttons">
+    <a href="#" class="store-btn"> App Store</a>
+    <a href="#" class="store-btn">▶️ Google Play</a>
+  </div>
+
+  <div class="footer-bottom">
+    <p>©️ 2026 AllonaHub</p>
+    <p>Global Partner-Based Super App Ecosystem</p>
+  </div>
+</footer>
+</div>
+
 <script>
-const SITE_URL="https://allonahub.github.io/allonahub-admin/user-panel.html";
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const SITE_URL="https://allonahub.github.io/allonahub-admin/user.html";
 
 const countries=[
-  {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},
-  {n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
-  {n:"Amerika Birleşik Devletleri",c:"+1",f:"🇺🇸",iso:"US"},
-  {n:"Kanada",c:"+1",f:"🇨🇦",iso:"CA"},
-  {n:"Birleşik Krallık",c:"+44",f:"🇬🇧",iso:"GB"},
-  {n:"Almanya",c:"+49",f:"🇩🇪",iso:"DE"},
-  {n:"Fransa",c:"+33",f:"🇫🇷",iso:"FR"},
-  {n:"İtalya",c:"+39",f:"🇮🇹",iso:"IT"},
-  {n:"İspanya",c:"+34",f:"🇪🇸",iso:"ES"},
-  {n:"Hollanda",c:"+31",f:"🇳🇱",iso:"NL"},
-  {n:"Belçika",c:"+32",f:"🇧🇪",iso:"BE"},
-  {n:"İsviçre",c:"+41",f:"🇨🇭",iso:"CH"},
-  {n:"Avusturya",c:"+43",f:"🇦🇹",iso:"AT"},
-  {n:"Rusya",c:"+7",f:"🇷🇺",iso:"RU"},
-  {n:"Ukrayna",c:"+380",f:"🇺🇦",iso:"UA"},
-  {n:"Gürcistan",c:"+995",f:"🇬🇪",iso:"GE"},
-  {n:"Kazakistan",c:"+7",f:"🇰🇿",iso:"KZ"},
-  {n:"Özbekistan",c:"+998",f:"🇺🇿",iso:"UZ"},
-  {n:"Türkmenistan",c:"+993",f:"🇹🇲",iso:"TM"},
-  {n:"İran",c:"+98",f:"🇮🇷",iso:"IR"},
-  {n:"Irak",c:"+964",f:"🇮🇶",iso:"IQ"},
-  {n:"Birleşik Arap Emirlikleri",c:"+971",f:"🇦🇪",iso:"AE"},
-  {n:"Katar",c:"+974",f:"🇶🇦",iso:"QA"},
-  {n:"Suudi Arabistan",c:"+966",f:"🇸🇦",iso:"SA"},
-  {n:"Hindistan",c:"+91",f:"🇮🇳",iso:"IN"},
-  {n:"Pakistan",c:"+92",f:"🇵🇰",iso:"PK"},
-  {n:"Çin",c:"+86",f:"🇨🇳",iso:"CN"},
-  {n:"Japonya",c:"+81",f:"🇯🇵",iso:"JP"},
-  {n:"Güney Kore",c:"+82",f:"🇰🇷",iso:"KR"},
-  {n:"Avustralya",c:"+61",f:"🇦🇺",iso:"AU"},
-  {n:"Brezilya",c:"+55",f:"🇧🇷",iso:"BR"},
-  {n:"Meksika",c:"+52",f:"🇲🇽",iso:"MX"}
+{n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
+{n:"Amerika Birleşik Devletleri",c:"+1",f:"🇺🇸",iso:"US"},{n:"Kanada",c:"+1",f:"🇨🇦",iso:"CA"},
+{n:"Birleşik Krallık",c:"+44",f:"🇬🇧",iso:"GB"},{n:"Almanya",c:"+49",f:"🇩🇪",iso:"DE"},
+{n:"Fransa",c:"+33",f:"🇫🇷",iso:"FR"},{n:"İtalya",c:"+39",f:"🇮🇹",iso:"IT"},
+{n:"İspanya",c:"+34",f:"🇪🇸",iso:"ES"},{n:"Hollanda",c:"+31",f:"🇳🇱",iso:"NL"},
+{n:"Belçika",c:"+32",f:"🇧🇪",iso:"BE"},{n:"İsviçre",c:"+41",f:"🇨🇭",iso:"CH"},
+{n:"Avusturya",c:"+43",f:"🇦🇹",iso:"AT"},{n:"İsveç",c:"+46",f:"🇸🇪",iso:"SE"},
+{n:"Norveç",c:"+47",f:"🇳🇴",iso:"NO"},{n:"Danimarka",c:"+45",f:"🇩🇰",iso:"DK"},
+{n:"Finlandiya",c:"+358",f:"🇫🇮",iso:"FI"},{n:"Polonya",c:"+48",f:"🇵🇱",iso:"PL"},
+{n:"Rusya",c:"+7",f:"🇷🇺",iso:"RU"},{n:"Ukrayna",c:"+380",f:"🇺🇦",iso:"UA"},
+{n:"Gürcistan",c:"+995",f:"🇬🇪",iso:"GE"},{n:"Kazakistan",c:"+7",f:"🇰🇿",iso:"KZ"},
+{n:"Özbekistan",c:"+998",f:"🇺🇿",iso:"UZ"},{n:"Türkmenistan",c:"+993",f:"🇹🇲",iso:"TM"},
+{n:"Kırgızistan",c:"+996",f:"🇰🇬",iso:"KG"},{n:"İran",c:"+98",f:"🇮🇷",iso:"IR"},
+{n:"Irak",c:"+964",f:"🇮🇶",iso:"IQ"},{n:"Suriye",c:"+963",f:"🇸🇾",iso:"SY"},
+{n:"Suudi Arabistan",c:"+966",f:"🇸🇦",iso:"SA"},{n:"Birleşik Arap Emirlikleri",c:"+971",f:"🇦🇪",iso:"AE"},
+{n:"Katar",c:"+974",f:"🇶🇦",iso:"QA"},{n:"Kuveyt",c:"+965",f:"🇰🇼",iso:"KW"},
+{n:"Bahreyn",c:"+973",f:"🇧🇭",iso:"BH"},{n:"Umman",c:"+968",f:"🇴🇲",iso:"OM"},
+{n:"Mısır",c:"+20",f:"🇪🇬",iso:"EG"},{n:"Fas",c:"+212",f:"🇲🇦",iso:"MA"},
+{n:"Tunus",c:"+216",f:"🇹🇳",iso:"TN"},{n:"Cezayir",c:"+213",f:"🇩🇿",iso:"DZ"},
+{n:"Libya",c:"+218",f:"🇱🇾",iso:"LY"},{n:"Güney Afrika",c:"+27",f:"🇿🇦",iso:"ZA"},
+{n:"Nijerya",c:"+234",f:"🇳🇬",iso:"NG"},{n:"Kenya",c:"+254",f:"🇰🇪",iso:"KE"},
+{n:"Hindistan",c:"+91",f:"🇮🇳",iso:"IN"},{n:"Pakistan",c:"+92",f:"🇵🇰",iso:"PK"},
+{n:"Bangladeş",c:"+880",f:"🇧🇩",iso:"BD"},{n:"Çin",c:"+86",f:"🇨🇳",iso:"CN"},
+{n:"Japonya",c:"+81",f:"🇯🇵",iso:"JP"},{n:"Güney Kore",c:"+82",f:"🇰🇷",iso:"KR"},
+{n:"Endonezya",c:"+62",f:"🇮🇩",iso:"ID"},{n:"Malezya",c:"+60",f:"🇲🇾",iso:"MY"},
+{n:"Singapur",c:"+65",f:"🇸🇬",iso:"SG"},{n:"Tayland",c:"+66",f:"🇹🇭",iso:"TH"},
+{n:"Vietnam",c:"+84",f:"🇻🇳",iso:"VN"},{n:"Filipinler",c:"+63",f:"🇵🇭",iso:"PH"},
+{n:"Avustralya",c:"+61",f:"🇦🇺",iso:"AU"},{n:"Yeni Zelanda",c:"+64",f:"🇳🇿",iso:"NZ"},
+{n:"Brezilya",c:"+55",f:"🇧🇷",iso:"BR"},{n:"Arjantin",c:"+54",f:"🇦🇷",iso:"AR"},
+{n:"Meksika",c:"+52",f:"🇲🇽",iso:"MX"},{n:"Kolombiya",c:"+57",f:"🇨🇴",iso:"CO"},
+{n:"Şili",c:"+56",f:"🇨🇱",iso:"CL"},{n:"Peru",c:"+51",f:"🇵🇪",iso:"PE"}
 ];
 
 let selectedCountries={
   loginPicker:countries[0],
-  registerPicker:countries[0]
+  registerPicker:countries[0],
+  forgotPicker:countries[0]
 };
-
-let selectedProfession=null;
   const sectors=[
   {
     key:"maritime",
@@ -1038,10 +961,17 @@ let selectedProfession=null;
       {key:"psychiatrist",name:"Psikiyatrist",title:"Dr."},
       {key:"dietitian",name:"Diyetisyen",title:"Diyetisyen"},
       {key:"physiotherapist",name:"Fizyoterapist",title:"Fizyoterapist"},
-      {key:"veterinarian",name:"Veteriner",title:"Veteriner"}
+      {key:"veterinarian",name:"Veteriner",title:"Veteriner"},
+      {key:"lab_technician",name:"Laboratuvar Teknikeri",title:"Tekniker"},
+      {key:"radiology_technician",name:"Radyoloji Teknikeri",title:"Tekniker"},
+      {key:"surgeon",name:"Cerrah",title:"Dr."},
+      {key:"cardiologist",name:"Kardiyolog",title:"Dr."},
+      {key:"orthopedist",name:"Ortopedi Uzmanı",title:"Dr."},
+      {key:"pediatrician",name:"Çocuk Doktoru",title:"Dr."},
+      {key:"family_physician",name:"Aile Hekimi",title:"Dr."}
     ]
   },
-    {
+  {
     key:"law",
     name:"Hukuk",
     title:"Hukukçu",
@@ -1104,7 +1034,7 @@ let selectedProfession=null;
       {key:"ui_ux_designer",name:"UI/UX Tasarımcı",title:"Tasarımcı"}
     ]
   },
-    {
+  {
     key:"business",
     name:"İş & Ticaret",
     title:"İş Profesyoneli",
@@ -1119,7 +1049,7 @@ let selectedProfession=null;
       {key:"finance_specialist",name:"Finans Uzmanı",title:"Finans Uzmanı"},
       {key:"banker",name:"Bankacı",title:"Bankacı"},
       {key:"insurance_specialist",name:"Sigortacı",title:"Sigortacı"},
-      {key:"real_estate_agent",name:"Emlak Danışmanı",title:"Emlak Danışmanı"}
+      {key:"real_estate_agent",name:"Emlak Danışmanı",title:"Emlakçı"}
     ]
   },
   {
@@ -1148,7 +1078,7 @@ let selectedProfession=null;
       {key:"courier",name:"Kurye",title:"Kurye"},
       {key:"taxi_driver",name:"Taksi Şoförü",title:"Taksici"},
       {key:"truck_driver",name:"Tır Şoförü",title:"Tır Şoförü"},
-      {key:"logistics_manager",name:"Lojistik Müdürü",title:"Lojistik Müdürü"},
+      {key:"logistics_manager",name:"Lojistik Müdürü",title:"Lojistikçi"},
       {key:"warehouse_worker",name:"Depo Personeli",title:"Depo Personeli"},
       {key:"pilot",name:"Pilot",title:"Pilot"},
       {key:"flight_attendant",name:"Kabin Memuru",title:"Kabin Memuru"}
@@ -1185,15 +1115,10 @@ function getSelectedSector(){
 function onSectorChange(){
   selectedProfession=null;
 
-  const professionSearch=document.getElementById("professionSearch");
-  const selectedKey=document.getElementById("selectedProfessionKey");
-  const selectedName=document.getElementById("selectedProfessionName");
-  const selectedTitle=document.getElementById("selectedProfessionTitle");
-
-  if(professionSearch)professionSearch.value="";
-  if(selectedKey)selectedKey.value="";
-  if(selectedName)selectedName.value="";
-  if(selectedTitle)selectedTitle.value="";
+  document.getElementById("professionSearch").value="";
+  document.getElementById("selectedProfessionKey").value="";
+  document.getElementById("selectedProfessionName").value="";
+  document.getElementById("selectedProfessionTitle").value="";
 
   renderProfessionResults([]);
 }
@@ -1201,9 +1126,7 @@ function onSectorChange(){
 function filterProfessions(){
   const sector=getSelectedSector();
   const box=document.getElementById("professionResults");
-  const q=(document.getElementById("professionSearch")?.value || "").toLowerCase().trim();
-
-  if(!box)return;
+  const q=document.getElementById("professionSearch").value.toLowerCase().trim();
 
   if(!sector){
     box.innerHTML=`<div class="profession-item">Önce sektör seçiniz</div>`;
@@ -1267,36 +1190,28 @@ function selectProfession(key){
 
   document.getElementById("professionResults").classList.remove("active");
 }
-  function getGreetingPreview(fullName){
+
+function getGreetingPreview(fullName){
   const firstName=(fullName||"").trim().split(" ")[0]||"";
-  const title=selectedProfession?.title||"Üye";
-
+  const title=selectedProfession?.title||"";
   if(!firstName)return "";
-
   return `${title} ${firstName}, hoş geldin`;
 }
-
-function createCountryPicker(id){
+  function createCountryPicker(id){
   const box=document.getElementById(id);
   if(!box)return;
-
-  const selected=selectedCountries[id] || countries[0];
 
   box.innerHTML=`
     <div class="country-selected" onclick="toggleCountryDropdown('${id}')">
       <span id="${id}Text">
-        ${selected.f} ${selected.n}
-        <span class="country-code-tag">${selected.c}</span>
+        ${selectedCountries[id].f} ${selectedCountries[id].n}
+        <span class="country-code-tag">${selectedCountries[id].c}</span>
       </span>
       <span>⌄</span>
     </div>
 
     <div id="${id}Dropdown" class="country-dropdown">
-      <input
-        class="country-search"
-        placeholder="Ülke adı veya kod yaz..."
-        oninput="filterCountries('${id}', this.value)">
-
+      <input class="country-search" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
       <div id="${id}List"></div>
     </div>
   `;
@@ -1306,16 +1221,10 @@ function createCountryPicker(id){
 
 function toggleCountryDropdown(id){
   document.querySelectorAll(".country-dropdown").forEach(el=>{
-    if(el.id!==id+"Dropdown"){
-      el.classList.remove("active");
-    }
+    if(el.id!==id+"Dropdown")el.classList.remove("active");
   });
 
-  const dropdown=document.getElementById(id+"Dropdown");
-
-  if(dropdown){
-    dropdown.classList.toggle("active");
-  }
+  document.getElementById(id+"Dropdown").classList.toggle("active");
 }
 
 function renderCountryList(id,list){
@@ -1324,36 +1233,32 @@ function renderCountryList(id,list){
 
   listBox.innerHTML=list.map(item=>`
     <div class="country-item" onclick="selectCountry('${id}','${item.iso}')">
-      ${item.f} ${item.n}
-      <span class="country-code-tag">${item.c}</span>
+      ${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>
     </div>
   `).join("");
 }
 
 function filterCountries(id,q){
-  const value=(q||"").toLowerCase().trim();
+  q=q.toLowerCase().trim();
 
   const list=countries.filter(x=>
-    x.n.toLowerCase().includes(value) ||
-    x.c.includes(value) ||
-    x.iso.toLowerCase().includes(value)
+    x.n.toLowerCase().includes(q) ||
+    x.c.includes(q) ||
+    x.iso.toLowerCase().includes(q)
   );
 
   renderCountryList(id,list);
 }
-  function selectCountry(id,iso){
-  const item=countries.find(x=>x.iso===iso)||countries[0];
 
+function selectCountry(id,iso){
+  const item=countries.find(x=>x.iso===iso)||countries[0];
   selectedCountries[id]=item;
 
   const text=document.getElementById(id+"Text");
   const dropdown=document.getElementById(id+"Dropdown");
 
   if(text){
-    text.innerHTML=`
-      ${item.f} ${item.n}
-      <span class="country-code-tag">${item.c}</span>
-    `;
+    text.innerHTML=`${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>`;
   }
 
   if(dropdown){
@@ -1373,25 +1278,14 @@ function setCountryByLocale(){
   else if(lang.includes("RU"))iso="RU";
   else if(lang.includes("AE"))iso="AE";
 
-  ["loginPicker","registerPicker"].forEach(id=>{
-    selectCountry(id,iso);
-  });
+  ["loginPicker","registerPicker","forgotPicker"].forEach(id=>selectCountry(id,iso));
 }
 
 function openTab(tabId,event){
-  document.querySelectorAll(".form").forEach(el=>{
-    el.classList.remove("active");
-  });
+  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
 
-  document.querySelectorAll(".tab").forEach(el=>{
-    el.classList.remove("active");
-  });
-
-  const selectedForm=document.getElementById(tabId);
-
-  if(selectedForm){
-    selectedForm.classList.add("active");
-  }
+  document.getElementById(tabId).classList.add("active");
 
   if(event && event.target){
     event.target.classList.add("active");
@@ -1399,21 +1293,19 @@ function openTab(tabId,event){
 }
 
 function checkPasswords(){
-  const p1=document.getElementById("password1")?.value || "";
-  const p2=document.getElementById("password2")?.value || "";
+  const p1=document.getElementById("password1").value;
+  const p2=document.getElementById("password2").value;
   const warning=document.getElementById("passwordWarning");
   const btn=document.getElementById("registerBtn");
 
-  if(!warning || !btn)return;
-
-  if(!p1 && !p2){
+  if(!p1&&!p2){
     warning.classList.remove("show");
     btn.classList.remove("error");
     btn.textContent="Ücretsiz Hesap Oluştur";
     return;
   }
 
-  if(p2 && p1!==p2){
+  if(p2&&p1!==p2){
     warning.classList.add("show");
     btn.classList.add("error");
     btn.textContent="Şifreler Aynı Değil";
@@ -1424,30 +1316,24 @@ function checkPasswords(){
   }
 }
   async function registerUser(){
-
-  const fullName=document.getElementById("fullName").value.trim();
-  const email=document.getElementById("registerEmail").value.trim().toLowerCase();
-  const phone=document.getElementById("registerPhone").value.trim();
-
+  const email=document.getElementById("registerEmail").value.trim();
   const password=document.getElementById("password1").value;
   const password2=document.getElementById("password2").value;
+  const fullName=document.getElementById("fullName").value.trim();
+  const phone=document.getElementById("registerPhone").value.trim();
+  const country=selectedCountries.registerPicker;
 
-  if(fullName===""){
+  if(!fullName){
     alert("Ad Soyad zorunludur.");
     return;
   }
 
-  if(email===""){
-    alert("E-posta adresi zorunludur.");
+  if(!email || !password){
+    alert("E-posta ve şifre zorunludur.");
     return;
   }
 
-  if(password.length<6){
-    alert("Şifre en az 6 karakter olmalıdır.");
-    return;
-  }
-
-  if(password!==password2){
+  if(password !== password2){
     checkPasswords();
     return;
   }
@@ -1459,38 +1345,25 @@ function checkPasswords(){
 
   const greeting=getGreetingPreview(fullName);
 
-  const {data,error}=await supabaseClient.auth.signUp({
-
-    email,
-    password,
-
+  const { error }=await supabaseClient.auth.signUp({
+    email:email,
+    password:password,
     options:{
-
       emailRedirectTo:SITE_URL,
-
       data:{
-
         full_name:fullName,
-
-        phone:selectedCountries.registerPicker.c+" "+phone,
-
-        country:selectedCountries.registerPicker.n,
+        phone:country.c+" "+phone,
+        country:country.n,
 
         sector_key:selectedProfession.sectorKey,
         sector_name:selectedProfession.sectorName,
-
         profession_key:selectedProfession.key,
         profession_name:selectedProfession.name,
         profession_title:selectedProfession.title,
-
         module:selectedProfession.module,
-
         greeting:greeting
-
       }
-
     }
-
   });
 
   if(error){
@@ -1498,60 +1371,34 @@ function checkPasswords(){
     return;
   }
 
-  const user=data.user;
+  localStorage.setItem("allonahub_user_profile",JSON.stringify({
+    full_name:fullName,
+    phone:country.c+" "+phone,
+    country:country.n,
+    sector_key:selectedProfession.sectorKey,
+    sector_name:selectedProfession.sectorName,
+    profession_key:selectedProfession.key,
+    profession_name:selectedProfession.name,
+    profession_title:selectedProfession.title,
+    module:selectedProfession.module,
+    greeting:greeting
+  }));
 
-  localStorage.setItem(
-    "allonahub_user_profile",
-    JSON.stringify({
-
-      user_id:user?.id || "",
-
-      full_name:fullName,
-      email:email,
-
-      phone:selectedCountries.registerPicker.c+" "+phone,
-      country:selectedCountries.registerPicker.n,
-
-      sector_key:selectedProfession.sectorKey,
-      sector_name:selectedProfession.sectorName,
-
-      profession_key:selectedProfession.key,
-      profession_name:selectedProfession.name,
-      profession_title:selectedProfession.title,
-
-      module:selectedProfession.module,
-
-      greeting:greeting,
-
-      hp:100,
-      xp:0,
-      wallet_balance:0,
-      premium_level:"Basic"
-
-    })
-  );
-
-  alert("Kayıt başarılı.\n\nLütfen e-posta adresinizi doğrulayın.");
-
+  alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
 }
-  async function loginUser(){
 
-  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
+async function loginUser(){
+  const email=document.getElementById("loginEmail").value.trim();
   const password=document.getElementById("loginPassword").value;
 
-  if(email===""){
-    alert("E-posta adresinizi yazınız.");
+  if(!email || !password){
+    alert("E-posta ve şifre gir.");
     return;
   }
 
-  if(password===""){
-    alert("Şifrenizi yazınız.");
-    return;
-  }
-
-  const {data,error}=await supabaseClient.auth.signInWithPassword({
-    email,
-    password
+  const { data, error }=await supabaseClient.auth.signInWithPassword({
+    email:email,
+    password:password
   });
 
   if(error){
@@ -1559,80 +1406,44 @@ function checkPasswords(){
     return;
   }
 
-  const user=data.user;
+  const user=data?.user;
 
-  if(!user){
-    alert("Kullanıcı oturumu oluşturulamadı.");
-    return;
+  if(user){
+    const meta=user.user_metadata || {};
+
+    localStorage.setItem("allonahub_user_profile",JSON.stringify({
+      full_name:meta.full_name || "",
+      phone:meta.phone || "",
+      country:meta.country || "",
+      sector_key:meta.sector_key || "",
+      sector_name:meta.sector_name || "",
+      profession_key:meta.profession_key || "",
+      profession_name:meta.profession_name || "",
+      profession_title:meta.profession_title || "",
+      module:meta.module || "",
+      greeting:meta.greeting || ""
+    }));
   }
 
-  const meta=user.user_metadata || {};
-
-  const localProfile={
-    user_id:user.id,
-
-    full_name:meta.full_name || "AllonaHub Üyesi",
-    email:user.email || email,
-
-    phone:meta.phone || "",
-    country:meta.country || "",
-
-    sector_key:meta.sector_key || "other",
-    sector_name:meta.sector_name || "Diğer",
-
-    profession_key:meta.profession_key || "other_profession",
-    profession_name:meta.profession_name || "Diğer Meslek",
-    profession_title:meta.profession_title || "Üye",
-
-    module:meta.module || "general",
-
-    greeting:meta.greeting || "",
-
-    hp:100,
-    xp:0,
-    wallet_balance:0,
-    premium_level:"Basic"
-  };
-
-  localStorage.setItem("allonahub_user_profile",JSON.stringify(localProfile));
-
-  const profile=await getProfile();
-
-  if(!profile){
-    alert("Profil oluşturulamadı. Lütfen tekrar deneyiniz.");
-    return;
-  }
-
-  window.location.href="user-panel.html";
+  window.location.href="index.html";
 }
-  async function loginWithGoogle(){
 
-  const {error}=await supabaseClient.auth.signInWithOAuth({
-
+async function loginWithGoogle(){
+  await supabaseClient.auth.signInWithOAuth({
     provider:"google",
-
-    options:{
-      redirectTo:SITE_URL
-    }
-
+    options:{redirectTo:SITE_URL}
   });
-
-  if(error){
-    alert(error.message);
-  }
-
 }
 
 async function resetPassword(){
+  const email=document.getElementById("forgotEmail").value.trim();
 
-  const email=document.getElementById("forgotEmail").value.trim().toLowerCase();
-
-  if(email===""){
-    alert("Lütfen kayıtlı e-posta adresinizi yazınız.");
+  if(!email){
+    alert("Lütfen e-posta adresini yaz.");
     return;
   }
 
-  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
+  const { error }=await supabaseClient.auth.resetPasswordForEmail(email,{
     redirectTo:SITE_URL
   });
 
@@ -1641,16 +1452,13 @@ async function resetPassword(){
     return;
   }
 
-  alert("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.");
-
+  alert("Şifre sıfırlama bağlantısı e-postana gönderildi.");
 }
 
 function icloudInfo(){
-  alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacaktır.");
+  alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacak.");
 }
-
-function userSearch(){
-
+  function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
 
   if(!q)return;
@@ -1676,11 +1484,10 @@ function userSearch(){
   else{
     window.location.href="arama.html?q="+encodeURIComponent(q);
   }
-
 }
-  document.addEventListener("DOMContentLoaded",async function(){
 
-  ["loginPicker","registerPicker"].forEach(createCountryPicker);
+document.addEventListener("DOMContentLoaded",function(){
+  ["loginPicker","registerPicker","forgotPicker"].forEach(createCountryPicker);
 
   populateSectors();
   setCountryByLocale();
@@ -1689,28 +1496,7 @@ function userSearch(){
 
   if(search){
     search.addEventListener("keydown",function(e){
-      if(e.key==="Enter"){
-        userSearch();
-      }
-    });
-  }
-
-  const loginEmail=document.getElementById("loginEmail");
-  const loginPassword=document.getElementById("loginPassword");
-
-  if(loginEmail){
-    loginEmail.addEventListener("keydown",function(e){
-      if(e.key==="Enter"){
-        loginUser();
-      }
-    });
-  }
-
-  if(loginPassword){
-    loginPassword.addEventListener("keydown",function(e){
-      if(e.key==="Enter"){
-        loginUser();
-      }
+      if(e.key==="Enter")userSearch();
     });
   }
 
@@ -1721,79 +1507,18 @@ function userSearch(){
       filterProfessions();
     });
   }
-
-  const currentUser=await getCurrentUser();
-
-  if(currentUser){
-    await getProfile();
-    window.location.href="user-panel.html";
-  }
-
 });
-  document.addEventListener("click",function(e){
 
+document.addEventListener("click",function(e){
   if(!e.target.closest(".country-picker")){
-    document.querySelectorAll(".country-dropdown").forEach(dropdown=>{
-      dropdown.classList.remove("active");
-    });
+    document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
   }
 
   if(!e.target.closest(".profession-box")){
-    const results=document.getElementById("professionResults");
-    if(results){
-      results.classList.remove("active");
-    }
+    const box=document.getElementById("professionResults");
+    if(box)box.classList.remove("active");
   }
-
 });
-
-window.addEventListener("storage",function(e){
-
-  if(e.key==="allonahub_user_profile"){
-
-    try{
-      JSON.parse(e.newValue || "{}");
-    }catch(err){
-      localStorage.removeItem("allonahub_user_profile");
-    }
-
-  }
-
-});
-
-window.addEventListener("pageshow",async function(){
-
-  const user=await getCurrentUser();
-
-  if(user){
-
-    await getProfile();
-
-    if(
-      location.pathname.endsWith("user.html") ||
-      location.pathname.endsWith("login.html")
-    ){
-      window.location.replace("user-panel.html");
-    }
-
-  }
-
-});
-
-window.addEventListener("unhandledrejection",function(event){
-
-  console.error("Promise Error:",event.reason);
-
-});
-
-window.addEventListener("error",function(event){
-
-  console.error("JavaScript Error:",event.error || event.message);
-
-});
-
-console.log("%cAllonaHub Auth System Ready",
-"color:#00d5ff;font-size:16px;font-weight:bold;");
 </script>
 
 </body>
