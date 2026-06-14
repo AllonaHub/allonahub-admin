@@ -526,6 +526,7 @@ body{
 
 }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -549,7 +550,7 @@ body{
       </select>
 
       <button onclick="saveCV()">Kaydet</button>
-      <button onclick="window.print()">PDF / Yazdır</button>
+      <button onclick="downloadPDF()">PDF İndir</button>
       <button class="secondary" onclick="resetForm()">Temizle</button>
     </div>
   </div>
@@ -2433,6 +2434,35 @@ function renderSea(){
 
     tbody.appendChild(tr);
   });
+}
+  function downloadPDF(){
+  const element = document.querySelector(".previewWrap");
+
+  const fileName =
+    (valueOf("firstName") || "AllonaHub") + "_" +
+    (valueOf("familyName") || "Maritime") + "_CV.pdf";
+
+  const opt = {
+    margin: 0,
+    filename: fileName.replace(/\s+/g, "_"),
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: ["css", "legacy"],
+      before: ".cvPage"
+    }
+  };
+
+  html2pdf().set(opt).from(element).save();
 }
 </script>
 
