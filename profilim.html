@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>AllonaHub Profilim</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+:root{
+  --blue:#0077ff;
+  --neon:#00d5ff;
+  --deep:#0a2540;
+  --soft:#f4fbff;
+  --card:#ffffff;
+  --text:#102033;
+  --muted:#6b7b8f;
+  --line:rgba(0,150,255,.22);
+  --gold:#f5b942;
+  --green:#18c37e;
+  --red:#ff375f;
+}
+
+body{
+  min-width:1320px;
+  background:
+    radial-gradient(circle at top left,rgba(0,213,255,.18),transparent 32%),
+    radial-gradient(circle at bottom right,rgba(0,119,255,.12),transparent 30%),
+    linear-gradient(135deg,#ffffff,#f4fbff,#ffffff);
+  color:var(--text);
+  overflow-x:auto;
+}
+
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
+  animation:wave 9s infinite linear;
+}
+
+@keyframes wave{
+  0%{transform:translateX(-40%)}
+  100%{transform:translateX(40%)}
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+.page{
+  width:1320px;
+  margin:0 auto;
+  padding:18px 22px 50px;
+}
+
+.glass{
+  background:rgba(255,255,255,.88);
+  border:1px solid var(--line);
+  box-shadow:
+    0 0 28px rgba(0,213,255,.13),
+    inset 0 0 22px rgba(255,255,255,.65);
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(14px);
+}
+
+.header{
+  height:86px;
+  display:grid;
+  grid-template-columns:310px 1fr 380px;
+  gap:18px;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.brand{
+  height:86px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:0 20px;
+}
+
+.brand img{
+  width:54px;
+  height:54px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 12px rgba(0,213,255,.45));
+}
+
+.brand b{
+  font-size:30px;
+  color:var(--deep);
+}
+
+.brand span{
+  font-size:30px;
+  color:var(--blue);
+  font-weight:900;
+  text-shadow:0 0 12px rgba(0,213,255,.45);
+}
+
+.search{
+  height:62px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 14px 0 22px;
+}
+
+.search i{
+  color:var(--blue);
+}
+
+.search input{
+  flex:1;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:var(--text);
+  font-size:15px;
+}
+
+.search input::placeholder{
+  color:#8293a7;
+}
+
+.search button{
+  height:42px;
+  padding:0 20px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(0,213,255,.35);
+}
+
+.top-actions{
+  height:62px;
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+}
+
+.top-actions a,
+.top-actions button{
+  font-weight:900;
+  color:var(--deep);
+  background:transparent;
+  border:0;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.top-actions a:hover,
+.top-actions button:hover{
+  color:var(--blue);
+}
+
+/* PROFILE LAYOUT */
+
+.profile-layout{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:22px;
+  align-items:start;
+}
+
+.side-profile{
+  padding:26px;
+  text-align:center;
+}
+
+.avatar-box{
+  width:130px;
+  height:130px;
+  margin:0 auto 16px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  box-shadow:0 0 30px rgba(0,213,255,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:42px;
+  font-weight:900;
+  border:6px solid white;
+  position:relative;
+}
+
+.avatar-box img{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  object-fit:cover;
+  display:none;
+}
+
+.avatar-upload{
+  margin-top:12px;
+}
+
+.avatar-upload input{
+  display:none;
+}
+
+.avatar-upload label{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  height:42px;
+  padding:0 16px;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(0,213,255,.32);
+}
+
+.side-profile h2{
+  margin-top:16px;
+  color:var(--deep);
+  font-size:26px;
+}
+
+.side-profile p{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.45;
+  margin-top:6px;
+}
+
+.badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  margin-top:16px;
+}
+
+.badge{
+  padding:8px 10px;
+  border-radius:999px;
+  background:#eef8ff;
+  border:1px solid rgba(0,150,255,.16);
+  color:var(--blue);
+  font-size:12px;
+  font-weight:900;
+}
+  .main-profile{
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+.profile-card{
+  padding:26px;
+}
+
+.card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.card-head h2{
+  color:var(--deep);
+  font-size:26px;
+}
+
+.card-head span{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.form-grid.three{
+  grid-template-columns:repeat(3,1fr);
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field label{
+  font-size:12px;
+  font-weight:900;
+  color:var(--deep);
+}
+
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  min-height:52px;
+  border-radius:16px;
+  border:1px solid rgba(0,150,255,.22);
+  background:#f7fcff;
+  outline:none;
+  padding:0 14px;
+  color:var(--text);
+  font-size:14px;
+}
+
+.field textarea{
+  padding:14px;
+  min-height:96px;
+  resize:vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  border-color:var(--neon);
+  box-shadow:0 0 16px rgba(0,213,255,.20);
+}
+
+.full{
+  grid-column:1 / -1;
+}
+
+.info-box{
+  padding:18px;
+  border-radius:20px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.16);
+  color:var(--muted);
+  line-height:1.5;
+  font-size:13px;
+}
+
+.status-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.status-card{
+  padding:18px;
+  border-radius:20px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.16);
+}
+
+.status-card i{
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  box-shadow:0 0 16px rgba(0,213,255,.28);
+  margin-bottom:12px;
+}
+
+.status-card b{
+  display:block;
+  color:var(--deep);
+  margin-bottom:5px;
+}
+
+.status-card span{
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+}
+
+.privacy-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.toggle-card{
+  padding:18px;
+  border-radius:20px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.16);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.toggle-card b{
+  display:block;
+  color:var(--deep);
+  margin-bottom:4px;
+}
+
+.toggle-card p{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+}
+
+.toggle-card input{
+  width:22px;
+  height:22px;
+  accent-color:var(--blue);
+}
+
+.action-row{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:20px;
+}
+
+.blue-btn{
+  min-height:48px;
+  padding:0 22px;
+  border:0;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(0,213,255,.34);
+}
+
+.outline-btn{
+  min-height:48px;
+  padding:0 22px;
+  border-radius:16px;
+  background:white;
+  color:var(--deep);
+  font-weight:900;
+  cursor:pointer;
+  border:1px solid rgba(0,150,255,.22);
+}
+
+.profession-results{
+  display:none;
+  position:absolute;
+  top:58px;
+  left:0;
+  right:0;
+  max-height:260px;
+  overflow:auto;
+  background:white;
+  border:1px solid rgba(0,150,255,.28);
+  border-radius:18px;
+  box-shadow:0 0 28px rgba(0,213,255,.18);
+  z-index:120;
+}
+
+.profession-results.active{
+  display:block;
+}
+
+.profession-box{
+  position:relative;
+}
+
+.profession-item{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(0,0,0,.05);
+  cursor:pointer;
+  color:var(--text);
+}
+
+.profession-item:hover{
+  background:#eef8ff;
+}
+
+.module-preview{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+
+.module-mini{
+  padding:18px;
+  border-radius:20px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.16);
+}
+
+.module-mini i{
+  color:var(--blue);
+  font-size:22px;
+  margin-bottom:10px;
+}
+
+.module-mini b{
+  display:block;
+  color:var(--deep);
+  margin-bottom:6px;
+}
+
+.module-mini span{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+}
+
+@media(max-width:900px){
+  body{
+    min-width:100%;
+  }
+
+  .page{
+    width:100%;
+  }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <a class="brand glass" href="index.html">
+      <img src="allona.logo.png" alt="AllonaHub">
+      <div><b>Allona</b><span>Hub</span></div>
+    </a>
+
+    <div class="search glass">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input id="profileSearchInput" placeholder="Profil, belge, güvenlik, meslek veya destek ara...">
+      <button onclick="profileSearch()">Ara</button>
+    </div>
+
+    <div class="top-actions glass">
+      <a href="user-panel.html">Panel</a>
+      <a href="hubwallet.html">Wallet</a>
+      <a href="premium.html">Premium</a>
+      <button onclick="logoutUser()">Çıkış</button>
+    </div>
+  </div>
+
+  <main class="profile-layout">
+
+    <aside class="side-profile glass">
+      <div class="avatar-box">
+        <span id="avatarInitials">AH</span>
+        <img id="avatarPreview" alt="Profil Fotoğrafı">
+      </div>
+
+      <div class="avatar-upload">
+        <input type="file" id="avatarInput" accept="image/*">
+        <label for="avatarInput">
+          <i class="fa-solid fa-camera"></i>
+          Fotoğraf Yükle
+        </label>
+      </div>
+
+      <h2 id="sideName">AllonaHub Üyesi</h2>
+      <p id="sideInfo">Profil bilgileri yükleniyor.</p>
+
+      <div class="badges" id="sideBadges">
+        <span class="badge">Founding Member</span>
+        <span class="badge">Basic</span>
+      </div>
+
+      <div class="info-box" style="margin-top:18px;text-align:left;">
+        <b style="color:var(--deep);display:block;margin-bottom:8px;">AllonaHub ID</b>
+        <span id="profileUserId">AH-USER-000000</span>
+      </div>
+    </aside>
+
+    <section class="main-profile">
+
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Kimlik Bilgileri</h2>
+          <span>Temel kullanıcı bilgileri</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Ad Soyad</label>
+            <input id="fullName" placeholder="Ad Soyad">
+          </div>
+
+          <div class="field">
+            <label>E-posta</label>
+            <input id="email" placeholder="E-posta" disabled>
+          </div>
+
+          <div class="field">
+            <label>Telefon</label>
+            <input id="phone" placeholder="+90 ...">
+          </div>
+
+          <div class="field">
+            <label>Ülke</label>
+            <input id="country" placeholder="Türkiye">
+          </div>
+
+          <div class="field">
+            <label>Şehir</label>
+            <input id="city" placeholder="İstanbul">
+          </div>
+
+          <div class="field">
+            <label>Doğum Tarihi</label>
+            <input id="birthDate" type="date">
+          </div>
+
+          <div class="field full">
+            <label>Kısa Profil Açıklaması</label>
+            <textarea id="bio" placeholder="Kendini, uzmanlığını veya mesleki hedeflerini kısaca yaz..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Meslek & Sektör</h2>
+          <span>Panel deneyimi bu bilgilere göre kişiselleştirilir</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Sektör</label>
+            <select id="sectorSelect" onchange="onSectorChange()">
+              <option value="">Sektör Seçiniz</option>
+            </select>
+          </div>
+
+          <div class="field profession-box">
+            <label>Meslek</label>
+            <input id="professionSearch" placeholder="Meslek ara ve seç" oninput="filterProfessions()" autocomplete="off">
+            <div id="professionResults" class="profession-results"></div>
+          </div>
+
+          <div class="field">
+            <label>Mesleki Unvan</label>
+            <input id="professionTitle" placeholder="Dr., Denizci, Av., Çiftçi..." readonly>
+          </div>
+
+          <div class="field">
+            <label>Deneyim Yılı</label>
+            <input id="experienceYear" type="number" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-top:16px;">
+          Meslek seçimin; karşılama metni, bildirimler, iş ilanları, partner önerileri ve panel modüllerini otomatik kişiselleştirir.
+        </div>
+      </div>
+
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Modül Profilin</h2>
+          <span>Seçilen mesleğe göre önerilen alanlar</span>
+        </div>
+
+        <div class="module-preview" id="modulePreview"></div>
+      </div>
+
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Doğrulama Merkezi</h2>
+          <span>Güven skoru ve hesap doğrulamaları</span>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+            <b>E-posta</b>
+            <span id="emailStatus">Kontrol ediliyor</span>
+          </div>
+
+          <div class="status-card">
+            <i class="fa-solid fa-phone-volume"></i>
+            <b>Telefon</b>
+            <span id="phoneStatus">Bekliyor</span>
+          </div>
+
+          <div class="status-card">
+            <i class="fa-solid fa-id-card"></i>
+            <b>Kimlik / Belge</b>
+            <span>Yakında</span>
+          </div>
+
+          <div class="status-card">
+            <i class="fa-solid fa-shield-halved"></i>
+            <b>Güven Skoru</b>
+            <span id="trustScore">Başlangıç</span>
+          </div>
+        </div>
+      </div>
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Gizlilik Ayarları</h2>
+          <span>Profil ve iletişim görünürlüğü</span>
+        </div>
+
+        <div class="privacy-row">
+          <div class="toggle-card">
+            <div>
+              <b>Profilim şirketlere görünsün</b>
+              <p>Mesleğine uygun partnerler ve şirketler profilini görüntüleyebilir.</p>
+            </div>
+            <input id="profileVisible" type="checkbox" checked>
+          </div>
+
+          <div class="toggle-card">
+            <div>
+              <b>İletişim bilgilerim kilitli kalsın</b>
+              <p>Şirketler iletişim bilgilerini ödeme/başvuru süreci sonrası görebilsin.</p>
+            </div>
+            <input id="contactLocked" type="checkbox" checked>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Belgelerim</h2>
+          <span>Kimlik, sertifika, diploma ve mesleki belgeler</span>
+        </div>
+
+        <div class="module-preview">
+          <div class="module-mini">
+            <i class="fa-solid fa-id-card"></i>
+            <b>Kimlik / Pasaport</b>
+            <span>Kimlik veya pasaport belgeni güvenli şekilde ekle.</span>
+          </div>
+
+          <div class="module-mini">
+            <i class="fa-solid fa-certificate"></i>
+            <b>Sertifikalar</b>
+            <span>Mesleğine göre STCW, diploma, ruhsat veya yeterlilik belgeleri.</span>
+          </div>
+
+          <div class="module-mini">
+            <i class="fa-solid fa-file-medical"></i>
+            <b>Sağlık / Uygunluk</b>
+            <span>Sağlık raporu, medical certificate veya uygunluk belgeleri.</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="outline-btn" onclick="location.href='belgeler.html'">
+            Belgelerimi Aç
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-card glass">
+        <div class="card-head">
+          <h2>Profil İşlemleri</h2>
+          <span>Değişiklikleri kaydet</span>
+        </div>
+
+        <div class="info-box">
+          Kaydettiğin bilgiler kullanıcı paneline, mesleğe özel modüllere, iş ilanı eşleştirmelerine ve AllonaHub dijital kimliğine aktarılır.
+        </div>
+
+        <div class="action-row">
+          <button class="outline-btn" onclick="location.href='user-panel.html'">
+            Panele Dön
+          </button>
+
+          <button class="blue-btn" onclick="saveProfile()">
+            Profili Kaydet
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+<script>
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+let currentProfile=null;
+let selectedProfession=null;
+
+const sectors=[
+  {
+    key:"maritime",
+    name:"Denizcilik",
+    title:"Denizci",
+    module:"maritime",
+    professions:[
+      {key:"master",name:"Kaptan / Master",title:"Kaptan"},
+      {key:"chief_officer",name:"Chief Officer / 1. Zabit",title:"Chief Officer"},
+      {key:"second_officer",name:"Second Officer / 2. Zabit",title:"2. Zabit"},
+      {key:"third_officer",name:"Third Officer / 3. Zabit",title:"3. Zabit"},
+      {key:"deck_cadet",name:"Deck Cadet / Güverte Stajyeri",title:"Denizci"},
+      {key:"chief_engineer",name:"Chief Engineer / Başmühendis",title:"Başmühendis"},
+      {key:"second_engineer",name:"Second Engineer / 2. Mühendis",title:"2. Mühendis"},
+      {key:"third_engineer",name:"Third Engineer / 3. Mühendis",title:"3. Mühendis"},
+      {key:"fourth_engineer",name:"Fourth Engineer / 4. Mühendis",title:"4. Mühendis"},
+      {key:"eto",name:"ETO / Elektrik Zabiti",title:"ETO"},
+      {key:"bosun",name:"Bosun / Reis",title:"Reis"},
+      {key:"able_seaman",name:"Able Seaman / Usta Gemici",title:"Denizci"},
+      {key:"ordinary_seaman",name:"Ordinary Seaman / Gemici",title:"Denizci"},
+      {key:"oiler",name:"Oiler / Yağcı",title:"Denizci"},
+      {key:"motorman",name:"Motorman / Motorcu",title:"Denizci"},
+      {key:"wiper",name:"Wiper / Silici",title:"Denizci"},
+      {key:"fitter",name:"Fitter / Fitter",title:"Fitter"},
+      {key:"welder",name:"Welder / Kaynakçı",title:"Kaynakçı"},
+      {key:"pumpman",name:"Pumpman / Pompacı",title:"Pompacı"},
+      {key:"cook",name:"Cook / Aşçı",title:"Aşçı"},
+      {key:"chief_cook",name:"Chief Cook / Baş Aşçı",title:"Baş Aşçı"},
+      {key:"steward",name:"Steward / Kamarot",title:"Kamarot"},
+      {key:"marine_surveyor",name:"Marine Surveyor / Deniz Sörveyörü",title:"Sörveyör"},
+      {key:"crewing_manager",name:"Crewing Manager",title:"Crewing Manager"}
+    ]
+  },
+  {
+    key:"health",
+    name:"Sağlık",
+    title:"Sağlık Profesyoneli",
+    module:"health",
+    professions:[
+      {key:"doctor",name:"Doktor",title:"Dr."},
+      {key:"dentist",name:"Diş Hekimi",title:"Dt."},
+      {key:"pharmacist",name:"Eczacı",title:"Ecz."},
+      {key:"nurse",name:"Hemşire",title:"Hemşire"},
+      {key:"midwife",name:"Ebe",title:"Ebe"},
+      {key:"paramedic",name:"Paramedik",title:"Paramedik"},
+      {key:"psychologist",name:"Psikolog",title:"Psikolog"},
+      {key:"psychiatrist",name:"Psikiyatrist",title:"Dr."},
+      {key:"dietitian",name:"Diyetisyen",title:"Diyetisyen"},
+      {key:"physiotherapist",name:"Fizyoterapist",title:"Fizyoterapist"},
+      {key:"veterinarian",name:"Veteriner",title:"Veteriner"}
+    ]
+  },
+  {
+    key:"law",
+    name:"Hukuk",
+    title:"Hukukçu",
+    module:"legal",
+    professions:[
+      {key:"lawyer",name:"Avukat",title:"Av."},
+      {key:"judge",name:"Hakim",title:"Hakim"},
+      {key:"prosecutor",name:"Savcı",title:"Savcı"},
+      {key:"notary",name:"Noter",title:"Noter"},
+      {key:"legal_consultant",name:"Hukuk Danışmanı",title:"Danışman"}
+    ]
+  },
+  {
+    key:"agriculture",
+    name:"Tarım & Hayvancılık",
+    title:"Çiftçi",
+    module:"agriculture",
+    professions:[
+      {key:"farmer",name:"Çiftçi",title:"Çiftçi"},
+      {key:"agricultural_engineer",name:"Ziraat Mühendisi",title:"Ziraat Mühendisi"},
+      {key:"livestock_breeder",name:"Hayvancılık Üreticisi",title:"Üretici"},
+      {key:"beekeeper",name:"Arıcı",title:"Arıcı"},
+      {key:"fisherman",name:"Balıkçı",title:"Balıkçı"},
+      {key:"greenhouse_grower",name:"Seracı",title:"Seracı"}
+    ]
+  },
+  {
+    key:"education",
+    name:"Eğitim",
+    title:"Eğitimci",
+    module:"education",
+    professions:[
+      {key:"teacher",name:"Öğretmen",title:"Öğretmen"},
+      {key:"academic",name:"Akademisyen",title:"Akademisyen"},
+      {key:"instructor",name:"Eğitmen",title:"Eğitmen"},
+      {key:"student",name:"Öğrenci",title:"Öğrenci"}
+    ]
+  },
+  {
+    key:"technology",
+    name:"Teknoloji & Bilişim",
+    title:"Teknoloji Uzmanı",
+    module:"technology",
+    professions:[
+      {key:"software_developer",name:"Yazılımcı",title:"Yazılımcı"},
+      {key:"frontend_developer",name:"Frontend Developer",title:"Developer"},
+      {key:"backend_developer",name:"Backend Developer",title:"Developer"},
+      {key:"fullstack_developer",name:"Full Stack Developer",title:"Developer"},
+      {key:"data_analyst",name:"Veri Analisti",title:"Analist"},
+      {key:"ai_engineer",name:"Yapay Zeka Mühendisi",title:"AI Engineer"},
+      {key:"cyber_security",name:"Siber Güvenlik Uzmanı",title:"Güvenlik Uzmanı"}
+    ]
+  },
+  {
+    key:"business",
+    name:"İş & Ticaret",
+    title:"İş Profesyoneli",
+    module:"business",
+    professions:[
+      {key:"business_owner",name:"İşletme Sahibi",title:"İşletmeci"},
+      {key:"entrepreneur",name:"Girişimci",title:"Girişimci"},
+      {key:"manager",name:"Yönetici",title:"Yönetici"},
+      {key:"sales_specialist",name:"Satış Uzmanı",title:"Satış Uzmanı"},
+      {key:"marketing_specialist",name:"Pazarlama Uzmanı",title:"Pazarlama Uzmanı"},
+      {key:"accountant",name:"Muhasebeci",title:"Muhasebeci"},
+      {key:"finance_specialist",name:"Finans Uzmanı",title:"Finans Uzmanı"},
+      {key:"real_estate_agent",name:"Emlak Danışmanı",title:"Emlakçı"}
+    ]
+  },
+  {
+    key:"other",
+    name:"Diğer",
+    title:"AllonaHub Üyesi",
+    module:"general",
+    professions:[
+      {key:"freelancer",name:"Freelancer",title:"Freelancer"},
+      {key:"retired",name:"Emekli",title:"Emekli"},
+      {key:"job_seeker",name:"İş Arıyorum",title:"Aday"},
+      {key:"other_profession",name:"Diğer Meslek",title:"Üye"}
+    ]
+  }
+];
+  function getInitials(name){
+  const parts=(name||"AllonaHub Üyesi").trim().split(" ").filter(Boolean);
+
+  if(parts.length===1){
+    return parts[0].slice(0,2).toUpperCase();
+  }
+
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+
+function makeUserId(user){
+  if(!user || !user.id){
+    return "AH-USER-000000";
+  }
+
+  return "AH-" + user.id.slice(0,8).toUpperCase();
+}
+
+function getFirstName(name){
+  return (name||"").trim().split(" ")[0] || "Üye";
+}
+
+function getGreeting(profile){
+  const firstName=getFirstName(profile.full_name);
+  const title=profile.profession_title || "Üye";
+
+  return `${title} ${firstName}, hoş geldin`;
+}
+
+async function checkAuth(){
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+
+  if(!session || !session.user){
+    window.location.href="user.html";
+    return;
+  }
+
+  currentUser=session.user;
+
+  loadProfileFromUser(session.user);
+  renderProfile();
+}
+
+function loadProfileFromUser(user){
+  const meta=user.user_metadata || {};
+  const local=JSON.parse(localStorage.getItem("allonahub_user_profile") || "{}");
+
+  currentProfile={
+    full_name:meta.full_name || local.full_name || "AllonaHub Üyesi",
+    email:user.email || "",
+    phone:meta.phone || local.phone || "",
+    country:meta.country || local.country || "",
+    city:local.city || "",
+    birth_date:local.birth_date || "",
+    bio:local.bio || "",
+
+    sector_key:meta.sector_key || local.sector_key || "other",
+    sector_name:meta.sector_name || local.sector_name || "Diğer",
+    profession_key:meta.profession_key || local.profession_key || "other_profession",
+    profession_name:meta.profession_name || local.profession_name || "Diğer Meslek",
+    profession_title:meta.profession_title || local.profession_title || "Üye",
+    module:meta.module || local.module || "general",
+    experience_year:local.experience_year || "",
+
+    profile_visible:local.profile_visible !== false,
+    contact_locked:local.contact_locked !== false,
+    avatar:local.avatar || "",
+    greeting:meta.greeting || local.greeting || ""
+  };
+
+  selectedProfession={
+    sectorKey:currentProfile.sector_key,
+    sectorName:currentProfile.sector_name,
+    key:currentProfile.profession_key,
+    name:currentProfile.profession_name,
+    title:currentProfile.profession_title,
+    module:currentProfile.module
+  };
+}
+
+function populateSectors(){
+  const select=document.getElementById("sectorSelect");
+  if(!select)return;
+
+  select.innerHTML=`<option value="">Sektör Seçiniz</option>`+
+    sectors.map(s=>`<option value="${s.key}">${s.name}</option>`).join("");
+}
+
+function getSelectedSector(){
+  const key=document.getElementById("sectorSelect")?.value;
+  return sectors.find(s=>s.key===key)||null;
+}
+function onSectorChange(){
+  selectedProfession=null;
+
+  document.getElementById("professionSearch").value="";
+  document.getElementById("professionTitle").value="";
+
+  renderProfessionResults([]);
+  renderModulePreview();
+}
+
+function filterProfessions(){
+  const sector=getSelectedSector();
+  const box=document.getElementById("professionResults");
+  const q=document.getElementById("professionSearch").value.toLowerCase().trim();
+
+  if(!sector){
+    box.innerHTML=`<div class="profession-item">Önce sektör seçiniz</div>`;
+    box.classList.add("active");
+    return;
+  }
+
+  let list=sector.professions;
+
+  if(q){
+    list=list.filter(p=>
+      p.name.toLowerCase().includes(q) ||
+      p.title.toLowerCase().includes(q) ||
+      p.key.toLowerCase().includes(q)
+    );
+  }
+
+  renderProfessionResults(list);
+}
+
+function renderProfessionResults(list){
+  const box=document.getElementById("professionResults");
+  if(!box)return;
+
+  if(!list.length){
+    box.innerHTML="";
+    box.classList.remove("active");
+    return;
+  }
+
+  box.innerHTML=list.map(p=>`
+    <div class="profession-item" onclick="selectProfession('${p.key}')">
+      <b>${p.name}</b><br>
+      <small>${p.title} olarak karşılanır</small>
+    </div>
+  `).join("");
+
+  box.classList.add("active");
+}
+
+function selectProfession(key){
+  const sector=getSelectedSector();
+  if(!sector)return;
+
+  const profession=sector.professions.find(p=>p.key===key);
+  if(!profession)return;
+
+  selectedProfession={
+    sectorKey:sector.key,
+    sectorName:sector.name,
+    module:sector.module,
+    key:profession.key,
+    name:profession.name,
+    title:profession.title
+  };
+
+  document.getElementById("professionSearch").value=profession.name;
+  document.getElementById("professionTitle").value=profession.title;
+  document.getElementById("professionResults").classList.remove("active");
+
+  renderModulePreview();
+}
+
+function renderProfile(){
+  populateSectors();
+
+  document.getElementById("fullName").value=currentProfile.full_name || "";
+  document.getElementById("email").value=currentProfile.email || "";
+  document.getElementById("phone").value=currentProfile.phone || "";
+  document.getElementById("country").value=currentProfile.country || "";
+  document.getElementById("city").value=currentProfile.city || "";
+  document.getElementById("birthDate").value=currentProfile.birth_date || "";
+  document.getElementById("bio").value=currentProfile.bio || "";
+  document.getElementById("experienceYear").value=currentProfile.experience_year || "";
+
+  document.getElementById("sectorSelect").value=currentProfile.sector_key || "";
+  document.getElementById("professionSearch").value=currentProfile.profession_name || "";
+  document.getElementById("professionTitle").value=currentProfile.profession_title || "";
+
+  document.getElementById("profileVisible").checked=currentProfile.profile_visible;
+  document.getElementById("contactLocked").checked=currentProfile.contact_locked;
+
+  document.getElementById("sideName").textContent=currentProfile.full_name || "AllonaHub Üyesi";
+  document.getElementById("sideInfo").textContent=
+    `${currentProfile.profession_title} • ${currentProfile.profession_name} • ${currentProfile.country || "Ülke belirtilmedi"}`;
+
+  document.getElementById("profileUserId").textContent=makeUserId(currentUser);
+
+  const initials=getInitials(currentProfile.full_name);
+  document.getElementById("avatarInitials").textContent=initials;
+
+  if(currentProfile.avatar){
+    const img=document.getElementById("avatarPreview");
+    img.src=currentProfile.avatar;
+    img.style.display="block";
+    document.getElementById("avatarInitials").style.display="none";
+  }
+
+  document.getElementById("emailStatus").textContent =
+    currentUser?.email_confirmed_at ? "Doğrulandı" : "Bekliyor";
+
+  document.getElementById("phoneStatus").textContent =
+    currentProfile.phone ? "Kayıtlı" : "Eksik";
+
+  document.getElementById("trustScore").textContent =
+    currentProfile.phone && currentProfile.profession_key ? "Orta" : "Başlangıç";
+
+  renderBadges();
+  renderModulePreview();
+}
+  const modulePreviewSets={
+  maritime:[
+    {icon:"fa-ship",title:"Maritime CV",text:"Çok dilli denizci CV oluşturma."},
+    {icon:"fa-certificate",title:"Sertifikalar",text:"STCW, Medical ve yeterlilik takibi."},
+    {icon:"fa-briefcase",title:"Gemi İşleri",text:"Pozisyonuna uygun ilan eşleştirme."}
+  ],
+  health:[
+    {icon:"fa-user-doctor",title:"Sağlık Profili",text:"Uzmanlık ve hizmet bilgileri."},
+    {icon:"fa-calendar-check",title:"Randevular",text:"Dijital randevu altyapısı."},
+    {icon:"fa-hospital",title:"Sağlık Partnerleri",text:"Klinik, eczane ve sağlık ağı."}
+  ],
+  agriculture:[
+    {icon:"fa-seedling",title:"Tarım Profili",text:"Ürün, bölge ve üretici bilgileri."},
+    {icon:"fa-tractor",title:"Ekipman",text:"Makine ve hizmet talepleri."},
+    {icon:"fa-store",title:"Tarım Pazarı",text:"Ürünlerini AllonaHub’da göster."}
+  ],
+  legal:[
+    {icon:"fa-scale-balanced",title:"Hukuk Profili",text:"Danışmanlık ve belge süreçleri."},
+    {icon:"fa-file-signature",title:"Belgeler",text:"Sözleşme ve dosya yönetimi."},
+    {icon:"fa-comments",title:"Talepler",text:"Danışmanlık başvuruları."}
+  ],
+  education:[
+    {icon:"fa-graduation-cap",title:"Eğitim Profili",text:"Kurs, ders ve sertifika bilgileri."},
+    {icon:"fa-book-open",title:"Kurslar",text:"Eğitim içerikleri ve kayıtlar."},
+    {icon:"fa-language",title:"Dil & Sınav",text:"Dil seviyesi ve sınav hedefleri."}
+  ],
+  technology:[
+    {icon:"fa-code",title:"Teknoloji Profili",text:"Proje, portföy ve dijital yetenekler."},
+    {icon:"fa-laptop-code",title:"Projeler",text:"Yazılım ve tasarım portföyü."},
+    {icon:"fa-shield-halved",title:"AI & Güvenlik",text:"Yapay zeka ve siber araçlar."}
+  ],
+  business:[
+    {icon:"fa-chart-line",title:"İş Profili",text:"Satış, finans ve pazarlama bilgileri."},
+    {icon:"fa-handshake",title:"Partnerlik",text:"AllonaHub partner fırsatları."},
+    {icon:"fa-bullhorn",title:"Reklam",text:"Mesleğine uygun kampanyalar."}
+  ],
+  general:[
+    {icon:"fa-user",title:"Profil",text:"Dijital kimliğini tamamla."},
+    {icon:"fa-wallet",title:"Wallet",text:"HP, kupon ve bakiye yönetimi."},
+    {icon:"fa-gem",title:"Premium",text:"Premium avantajları keşfet."}
+  ]
+};
+
+function renderModulePreview(){
+  const box=document.getElementById("modulePreview");
+  if(!box)return;
+
+  const module=selectedProfession?.module || currentProfile?.module || "general";
+  const list=modulePreviewSets[module] || modulePreviewSets.general;
+
+  box.innerHTML=list.map(item=>`
+    <div class="module-mini">
+      <i class="fa-solid ${item.icon}"></i>
+      <b>${item.title}</b>
+      <span>${item.text}</span>
+    </div>
+  `).join("");
+}
+
+function renderBadges(){
+  const box=document.getElementById("sideBadges");
+  if(!box)return;
+
+  const badges=[
+    "Founding Member",
+    currentProfile.profession_title || "Üye",
+    "Basic"
+  ];
+
+  if(currentProfile.module==="maritime")badges.push("Maritime Profile");
+  if(currentProfile.module==="health")badges.push("Health Profile");
+  if(currentProfile.module==="agriculture")badges.push("Agriculture Profile");
+  if(currentProfile.module==="legal")badges.push("Legal Profile");
+
+  box.innerHTML=badges.map(b=>`<span class="badge">${b}</span>`).join("");
+}
+
+function collectProfileData(){
+  const sector=getSelectedSector();
+
+  return {
+    full_name:document.getElementById("fullName").value.trim(),
+    email:document.getElementById("email").value.trim(),
+    phone:document.getElementById("phone").value.trim(),
+    country:document.getElementById("country").value.trim(),
+    city:document.getElementById("city").value.trim(),
+    birth_date:document.getElementById("birthDate").value,
+    bio:document.getElementById("bio").value.trim(),
+
+    sector_key:selectedProfession?.sectorKey || sector?.key || currentProfile.sector_key,
+    sector_name:selectedProfession?.sectorName || sector?.name || currentProfile.sector_name,
+    profession_key:selectedProfession?.key || currentProfile.profession_key,
+    profession_name:selectedProfession?.name || document.getElementById("professionSearch").value.trim() || currentProfile.profession_name,
+    profession_title:selectedProfession?.title || document.getElementById("professionTitle").value.trim() || currentProfile.profession_title,
+    module:selectedProfession?.module || sector?.module || currentProfile.module,
+    experience_year:document.getElementById("experienceYear").value,
+
+    profile_visible:document.getElementById("profileVisible").checked,
+    contact_locked:document.getElementById("contactLocked").checked,
+    avatar:currentProfile.avatar || "",
+    greeting:""
+  };
+}
+
+async function saveProfile(){
+  const profile=collectProfileData();
+
+  if(!profile.full_name){
+    alert("Ad Soyad zorunludur.");
+    return;
+  }
+
+  if(!profile.profession_key || !profile.profession_name){
+    alert("Lütfen sektör ve meslek seçiniz.");
+    return;
+  }
+
+  profile.greeting=getGreeting(profile);
+
+  const { error }=await supabaseClient.auth.updateUser({
+    data:{
+      full_name:profile.full_name,
+      phone:profile.phone,
+      country:profile.country,
+      sector_key:profile.sector_key,
+      sector_name:profile.sector_name,
+      profession_key:profile.profession_key,
+      profession_name:profile.profession_name,
+      profession_title:profile.profession_title,
+      module:profile.module,
+      greeting:profile.greeting
+    }
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  currentProfile=profile;
+  localStorage.setItem("allonahub_user_profile",JSON.stringify(profile));
+
+  renderProfile();
+
+  alert("Profil kaydedildi ✅");
+}
+  const avatarInput=document.getElementById("avatarInput");
+
+if(avatarInput){
+  avatarInput.addEventListener("change",function(){
+    const file=this.files && this.files[0];
+    if(!file)return;
+
+    const reader=new FileReader();
+
+    reader.onload=function(e){
+      const img=document.getElementById("avatarPreview");
+      const initials=document.getElementById("avatarInitials");
+
+      if(img){
+        img.src=e.target.result;
+        img.style.display="block";
+      }
+
+      if(initials){
+        initials.style.display="none";
+      }
+
+      if(currentProfile){
+        currentProfile.avatar=e.target.result;
+        localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function profileSearch(){
+  const q=document.getElementById("profileSearchInput").value.toLowerCase().trim();
+
+  if(!q)return;
+
+  if(q.includes("panel")){
+    window.location.href="user-panel.html";
+  }
+  else if(q.includes("belge") || q.includes("sertifika")){
+    window.location.href="belgeler.html";
+  }
+  else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
+    window.location.href="hubwallet.html";
+  }
+  else if(q.includes("premium") || q.includes("üyelik")){
+    window.location.href="premium.html";
+  }
+  else if(q.includes("destek") || q.includes("yardım")){
+    window.location.href="destek.html";
+  }
+  else if(q.includes("cv")){
+    window.location.href="maritime-cv.html";
+  }
+  else{
+    window.location.href="arama.html?q="+encodeURIComponent(q);
+  }
+}
+
+async function logoutUser(){
+  await supabaseClient.auth.signOut();
+  localStorage.removeItem("allonahub_user_profile");
+  window.location.href="user.html";
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  checkAuth();
+
+  const search=document.getElementById("profileSearchInput");
+
+  if(search){
+    search.addEventListener("keydown",function(e){
+      if(e.key==="Enter")profileSearch();
+    });
+  }
+
+  const professionSearch=document.getElementById("professionSearch");
+
+  if(professionSearch){
+    professionSearch.addEventListener("focus",function(){
+      filterProfessions();
+    });
+  }
+});
+
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".profession-box")){
+    const box=document.getElementById("professionResults");
+    if(box)box.classList.remove("active");
+  }
+});
+</script>
+
+</body>
+</html>
