@@ -1388,7 +1388,7 @@ function checkPasswords(){
 }
 
 async function loginUser(){
-  const email=document.getElementById("loginEmail").value.trim();
+  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
   const password=document.getElementById("loginPassword").value;
 
   if(!email || !password){
@@ -1396,7 +1396,7 @@ async function loginUser(){
     return;
   }
 
-  const { data, error }=await supabaseClient.auth.signInWithPassword({
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email:email,
     password:password
   });
@@ -1406,28 +1406,35 @@ async function loginUser(){
     return;
   }
 
-  const user=data?.user;
+  const user=data.user;
+  const meta=user.user_metadata || {};
 
-  if(user){
-    const meta=user.user_metadata || {};
+  const { data:existingProfile } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
 
-    localStorage.setItem("allonahub_user_profile",JSON.stringify({
-      full_name:meta.full_name || "",
-      phone:meta.phone || "",
-      country:meta.country || "",
-      sector_key:meta.sector_key || "",
-      sector_name:meta.sector_name || "",
-      profession_key:meta.profession_key || "",
-      profession_name:meta.profession_name || "",
-      profession_title:meta.profession_title || "",
-      module:meta.module || "",
-      greeting:meta.greeting || ""
-    }));
+  if(!existingProfile){
+    await supabaseClient
+      .from("profiles")
+      .insert({
+        user_id:user.id,
+        email:user.email,
+        full_name:meta.full_name || "AllonaHub Üyesi",
+        phone:meta.phone || null,
+        country:meta.country || null,
+        sector_key:meta.sector_key || null,
+        sector_name:meta.sector_name || null,
+        profession_key:meta.profession_key || null,
+        profession_name:meta.profession_name || null,
+        profession_title:meta.profession_title || null,
+        module:meta.module || null
+      });
   }
 
   window.location.href="user-panel.html";
 }
-
 async function loginWithGoogle(){
   await supabaseClient.auth.signInWithOAuth({
     provider:"google",
