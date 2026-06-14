@@ -834,19 +834,66 @@ return `${title} ${name}, hoş geldin`;
 }
 
 async function checkAuth(){
-const { data:{ session } } = await supabaseClient.auth.getSession();
+  const { data:{ session } } = await supabaseClient.auth.getSession();
 
-if(!session || !session.user){
-window.location.href="user.html";
-return;
+  if(!session || !session.user){
+    window.location.href="user.html";
+    return;
+  }
+
+  currentUser=session.user;
+
+  const { data:profile, error } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  if(error){
+    console.error("Profil çekme hatası:", error);
+    alert("Profil bilgileri yüklenemedi.");
+    return;
+  }
+
+  if(!profile){
+    alert("Profil kaydı bulunamadı.");
+    return;
+  }
+
+  currentProfile={
+    full_name:profile.full_name || "AllonaHub Üyesi",
+    email:profile.email || session.user.email || "",
+    phone:profile.phone || "",
+    country:profile.country || "",
+    city:profile.city || "",
+    birth_date:profile.birth_date || "",
+    bio:profile.bio || "",
+
+    sector_key:profile.sector_key || "other",
+    sector_name:profile.sector_name || "Genel",
+    profession_key:profile.profession_key || "other_profession",
+    profession_name:profile.profession_name || "AllonaHub Üyesi",
+    profession_title:profile.profession_title || "Üye",
+    module:profile.module || "general",
+
+    avatar:profile.avatar_url || "",
+    avatar_url:profile.avatar_url || "",
+    
+const stats={
+    hp:profile.hp || 0,
+    xp:profile.xp || 0,
+    level:profile.level || 1,
+    wallet_balance:profile.wallet_balance || 0,
+    premium_level:profile.premium_level || "Basic",
+    progress:profile.progress || 42,
+
+    greeting:profile.greeting || ""
+  };
+
+  localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
+
+  renderPanel();
 }
-
-currentUser=session.user;
-
-loadProfileFromUser(session.user);
-renderPanel();
-}
-
 function loadProfileFromUser(user){
 const meta=user.user_metadata || {};
 const local=JSON.parse(localStorage.getItem("allonahub_user_profile") || "{}");
@@ -868,21 +915,37 @@ greeting:meta.greeting || local.greeting || ""
 
 localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
 }
-@@ -872,7 +873,7 @@
-icon:"fa-ship",
-title:"Maritime CV",
-text:"Denizci CV’ni oluştur, çok dilli PDF indir ve crewing firmalarına hazır hale getir.",
-      link:"maritime-cv.html"
-      link:"cv-form.html"
-},
-{
-icon:"fa-certificate",
-@@ -1266,7 +1267,7 @@
+function panelSearch(){
+  const q=document.getElementById("panelSearchInput").value.toLowerCase().trim();
+  
 if(!q)return;
 
 if(q.includes("cv")){
-    window.location.href="maritime-cv.html";
     window.location.href="cv-form.html";
 }
 else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
 window.location.href="hubwallet.html";
+else if(q.includes("premium") || q.includes("üyelik")){
+
+    window.location.href="premium.html";
+
+  }
+
+  else if(q.includes("profil")){
+
+    window.location.href="profil.html";
+
+  }
+
+  else{
+
+    window.location.href="arama.html?q="+encodeURIComponent(q);
+
+  }
+
+ // <-- panelSearch() fonksiyonunun kapanışı
+  }
+  
+</script>
+</body>
+</html>
