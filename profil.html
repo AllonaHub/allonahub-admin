@@ -7,8 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="user-service.js"></script>
-  
+
 <style>
 *{
   margin:0;
@@ -783,7 +782,7 @@ a{
             Panele Dön
           </button>
 
-          <button class="blue-btn" onclick="saveProfilePage()">
+          <button class="blue-btn" onclick="saveProfile()">
             Profili Kaydet
           </button>
         </div>
@@ -793,7 +792,10 @@ a{
   </main>
 </div>
 <script>
-  
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 let currentUser=null;
 let currentProfile=null;
 let selectedProfession=null;
@@ -963,22 +965,19 @@ function getGreeting(profile){
 }
 
 async function checkAuth(){
-  currentUser = await requireAuth();
-  if(!currentUser) return;
+  const { data:{ session } } = await supabaseClient.auth.getSession();
 
-  currentProfile = await getProfile();
+  if(!session || !session.user){
+    window.location.href="user.html";
+    return;
+  }
 
-  selectedProfession = {
-    sectorKey: currentProfile.sector_key,
-    sectorName: currentProfile.sector_name,
-    key: currentProfile.profession_key,
-    name: currentProfile.profession_name,
-    title: currentProfile.profession_title,
-    module: currentProfile.module
-  };
+  currentUser=session.user;
 
+  loadProfileFromUser(session.user);
   renderProfile();
 }
+
 function loadProfileFromUser(user){
   const meta=user.user_metadata || {};
   const local=JSON.parse(localStorage.getItem("allonahub_user_profile") || "{}");
@@ -1255,8 +1254,9 @@ function collectProfileData(){
     greeting:""
   };
 }
-async function saveProfilePage(){
-  const profile = collectProfileData();
+
+async function saveProfile(){
+  const profile=collectProfileData();
 
   if(!profile.full_name){
     alert("Ad Soyad zorunludur.");
@@ -1268,87 +1268,67 @@ async function saveProfilePage(){
     return;
   }
 
-  profile.avatar = currentProfile?.avatar || currentProfile?.avatar_url || "";
-  profile.avatar_url = profile.avatar;
-  profile.greeting = getGreeting(profile);
+  profile.greeting=getGreeting(profile);
 
-  const ok = await saveProfile(profile);
+  const { error }=await supabaseClient.auth.updateUser({
+    data:{
+      full_name:profile.full_name,
+      phone:profile.phone,
+      country:profile.country,
+      sector_key:profile.sector_key,
+      sector_name:profile.sector_name,
+      profession_key:profile.profession_key,
+      profession_name:profile.profession_name,
+      profession_title:profile.profession_title,
+      module:profile.module,
+      greeting:profile.greeting
+    }
+  });
 
-  if(!ok){
-    alert("Profil kaydedilemedi.");
+  if(error){
+    alert(error.message);
     return;
   }
 
-  currentProfile = await getProfile();
+  currentProfile=profile;
+  localStorage.setItem("allonahub_user_profile",JSON.stringify(profile));
+
   renderProfile();
 
   alert("Profil kaydedildi ✅");
 }
-  async function uploadAvatarToSupabase(file){
-  if(!currentUser){
-    alert("Oturum bulunamadı.");
-    return null;
-  }
-
-  const ext = file.name.split(".").pop().toLowerCase();
-  const filePath = `${currentUser.id}/avatar-${Date.now()}.${ext}`;
-
-  const { error:uploadError } = await supabaseClient.storage
-    .from("avatars")
-    .upload(filePath, file, {
-      cacheControl:"3600",
-      upsert:true
-    });
-
-  if(uploadError){
-    alert("Fotoğraf yüklenemedi: " + uploadError.message);
-    return null;
-  }
-
-  const { data } = supabaseClient.storage
-    .from("avatars")
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
-}
-
-const avatarInput=document.getElementById("avatarInput");
+  const avatarInput=document.getElementById("avatarInput");
 
 if(avatarInput){
-  avatarInput.addEventListener("change", async function(){
+  avatarInput.addEventListener("change",function(){
     const file=this.files && this.files[0];
     if(!file)return;
 
-    const avatarUrl = await uploadAvatarToSupabase(file);
+    const reader=new FileReader();
 
-    if(!avatarUrl)return;
+    reader.onload=function(e){
+      const img=document.getElementById("avatarPreview");
+      const initials=document.getElementById("avatarInitials");
 
-    const img=document.getElementById("avatarPreview");
-    const initials=document.getElementById("avatarInitials");
-
-    if(img){
-      img.src=avatarUrl;
-      img.style.display="block";
-    }
-
-    if(initials){
-      initials.style.display="none";
-    }
-
-    if(currentProfile){
-      currentProfile.avatar=avatarUrl;
-      localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
-    }
-
-    await supabaseClient.auth.updateUser({
-      data:{
-        avatar:avatarUrl
+      if(img){
+        img.src=e.target.result;
+        img.style.display="block";
       }
-    });
 
-    alert("Profil fotoğrafı güncellendi ✅");
+      if(initials){
+        initials.style.display="none";
+      }
+
+      if(currentProfile){
+        currentProfile.avatar=e.target.result;
+        localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
+      }
+    };
+
+    reader.readAsDataURL(file);
   });
 }
+
 function profileSearch(){
   const q=document.getElementById("profileSearchInput").value.toLowerCase().trim();
 
