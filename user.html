@@ -868,7 +868,7 @@ const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SITE_URL="https://allonahub.github.io/allonahub-admin/user.html";
+const SITE_URL="https://allonahub.github.io/allonahub-admin/user-panel.html";
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1425,7 +1425,7 @@ async function loginUser(){
     }));
   }
 
-  window.location.href="index.html";
+  window.location.href="user-panel.html";
 }
 
 async function loginWithGoogle(){
