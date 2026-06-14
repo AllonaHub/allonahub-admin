@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AllonaHub Maritime CV Builder</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(0,213,255,.25), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(0,90,255,.18), transparent 35%),
+    linear-gradient(135deg,#020814,#061a2f,#020814);
+  color:#fff;
+  min-height:100vh;
+  padding:30px;
+}
+
+.app{
+  max-width:1500px;
+  margin:auto;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:22px 28px;
+  border:1px solid rgba(0,213,255,.45);
+  border-radius:24px;
+  background:rgba(2,8,20,.75);
+  box-shadow:0 0 35px rgba(0,213,255,.25);
+  margin-bottom:25px;
+}
+
+.logoBox{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.logoMark{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  border:1px solid #00d5ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:22px;
+  color:#00eaff;
+  box-shadow:0 0 25px rgba(0,213,255,.8);
+}
+
+.logoText h1{
+  font-size:28px;
+  color:#fff;
+  letter-spacing:1px;
+}
+
+.logoText span{
+  color:#00d5ff;
+  font-size:14px;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+}
+
+button{
+  border:none;
+  cursor:pointer;
+  padding:12px 18px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#00d5ff,#006bff);
+  color:#00101d;
+  font-weight:800;
+  box-shadow:0 0 18px rgba(0,213,255,.45);
+}
+
+button.secondary{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border:1px solid rgba(0,213,255,.35);
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:420px 1fr;
+  gap:25px;
+  align-items:start;
+}
+
+.formPanel{
+  background:rgba(2,8,20,.86);
+  border:1px solid rgba(0,213,255,.35);
+  border-radius:24px;
+  padding:22px;
+  box-shadow:0 0 30px rgba(0,213,255,.18);
+  max-height:calc(100vh - 140px);
+  overflow:auto;
+}
+
+.formPanel h2{
+  color:#00d5ff;
+  margin-bottom:18px;
+}
+
+.group{
+  margin-bottom:22px;
+  padding-bottom:18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.group h3{
+  font-size:15px;
+  color:#f6b64b;
+  margin-bottom:12px;
+  text-transform:uppercase;
+}
+
+label{
+  display:block;
+  font-size:12px;
+  color:#9edff2;
+  margin:9px 0 5px;
+}
+
+input, textarea, select{
+  width:100%;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid rgba(0,213,255,.28);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  outline:none;
+}
+
+textarea{
+  min-height:80px;
+  resize:vertical;
+}
+
+input:focus, textarea:focus, select:focus{
+  border-color:#00d5ff;
+  box-shadow:0 0 12px rgba(0,213,255,.35);
+}
+
+.row2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.row3{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+}
+
+/* CV PREVIEW */
+
+.previewWrap{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(0,213,255,.25);
+  border-radius:24px;
+  padding:20px;
+  overflow:auto;
+}
+
+.cvPage{
+  width:900px;
+  min-height:1270px;
+  background:#fff;
+  color:#111;
+  margin:0 auto 25px;
+  padding:28px;
+  border:2px dotted #111;
+  position:relative;
+  font-family:"Times New Roman", serif;
+}
+
+.cvNeonBorder{
+  position:absolute;
+  inset:10px;
+  border:2px solid #148de6;
+  box-shadow:0 0 8px rgba(0,153,255,.7);
+  pointer-events:none;
+}
+
+.cvHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:28px;
+  position:relative;
+  z-index:2;
+}
+
+.cvTitle{
+  font-size:50px;
+  color:#c50000;
+  font-style:italic;
+  font-weight:900;
+  margin-top:70px;
+  margin-left:50px;
+}
+
+.cvLogo{
+  text-align:center;
+  color:#004d7a;
+  font-family:Arial, sans-serif;
+  font-weight:900;
+}
+
+.cvLogo .mark{
+  width:110px;
+  height:80px;
+  border:2px solid #00aaff;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  margin:auto;
+  color:#003b63;
+  box-shadow:0 0 12px #00d5ff;
+}
+
+.cvLogo span{
+  display:block;
+  margin-top:6px;
+  font-size:16px;
+  letter-spacing:1px;
+}
+
+.sectionTitle{
+  color:#e9762b;
+  font-size:25px;
+  font-weight:900;
+  font-style:italic;
+  margin:20px 0 12px 75px;
+}
+
+.cvTable{
+  width:100%;
+  border-collapse:collapse;
+  font-size:21px;
+  font-style:italic;
+  font-weight:700;
+  margin-bottom:16px;
+}
+
+.cvTable th{
+  background:#4f86bf;
+  color:#fff;
+  border:1px solid #4f86bf;
+  padding:5px 8px;
+  font-size:22px;
+}
+
+.cvTable td{
+  border:1px solid #4f86bf;
+  padding:5px 8px;
+  vertical-align:top;
+}
+
+.cvTable .labelCell{
+  width:30%;
+}
+
+.cvTable .blueHead{
+  background:#4f86bf;
+  color:#fff;
+}
+
+.red{
+  color:red;
+}
+
+.photoCell{
+  width:230px;
+  height:290px;
+  padding:0!important;
+  text-align:center;
+}
+
+.photoCell img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.emptyPhoto{
+  width:100%;
+  height:100%;
+  background:linear-gradient(135deg,#dbe9ff,#f5f5f5);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#777;
+  font-family:Arial;
+  font-size:15px;
+}
+
+.noteBox{
+  height:260px;
+  border:2px solid #4f86bf;
+  padding:12px;
+  font-size:26px;
+  color:red;
+  font-style:italic;
+  font-weight:900;
+}
+
+@media print{
+  body{
+    background:#fff;
+    padding:0;
+  }
+
+  .topbar,
+  .formPanel{
+    display:none;
+  }
+
+  .layout{
+    display:block;
+  }
+
+  .previewWrap{
+    border:none;
+    padding:0;
+    background:#fff;
+  }
+
+  .cvPage{
+    margin:0;
+    page-break-after:always;
+    border:2px dotted #111;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="logoBox">
+      <div class="logoMark">AH</div>
+      <div class="logoText">
+        <h1>AllonaHub Maritime CV Builder</h1>
+        <span>Neon Blue Professional Seafarer CV System</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="window.print()">PDF / Yazdır</button>
+      <button class="secondary" onclick="resetForm()">Temizle</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT FORM PANEL -->
+    <aside class="formPanel">
+      <h2>CV Bilgileri</h2>
+
+      <div class="group">
+        <h3>Personal Details</h3>
+
+        <label>Position</label>
+        <input id="position" value="MOTORMAN (OILER)" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>Family Name</label>
+            <input id="familyName" value="SAFARLI" oninput="syncCV()">
+          </div>
+          <div>
+            <label>First Name</label>
+            <input id="firstName" value="ANAR" oninput="syncCV()">
+          </div>
+        </div>
+
+        <label>Father’s Name</label>
+        <input id="fatherName" value="AFLATUN" oninput="syncCV()">
+
+        <label>Date and Place of Birth</label>
+        <input id="birth" value="29.11.2002" oninput="syncCV()">
+
+        <label>Marital Status</label>
+        <input id="marital" value="SINGLE" oninput="syncCV()">
+
+        <label>Permanent Address</label>
+        <input id="address" value="AZERBAIJAN, LANKARAN" oninput="syncCV()">
+
+        <label>Nearest Airport</label>
+        <textarea id="airport" oninput="syncCV()">Heydar Aliyev International Airport
+Baku, Azerbaijan</textarea>
+
+        <label>Photo</label>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+
+      <div class="group">
+        <h3>Body Details</h3>
+
+        <div class="row3">
+          <div>
+            <label>Height</label>
+            <input id="height" value="170 cm" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Weight</label>
+            <input id="weight" value="79 kg" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Eyes Color</label>
+            <input id="eyes" value="BROWN" oninput="syncCV()">
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label>Hair Color</label>
+            <input id="hair" value="BLACK" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Safety Shoes</label>
+            <input id="shoes" value="42" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Overalls</label>
+            <input id="overall" value="XL" oninput="syncCV()">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Contact Details</h3>
+
+        <label>Mobile</label>
+        <input id="mobile" value="+994 10 314 20 42 (Whatsapp)" oninput="syncCV()">
+
+        <label>E-mail Address</label>
+        <input id="email" value="anarseferli595@gmail.com" oninput="syncCV()">
+      </div>
+
+      <div class="group">
+        <h3>Next of Kin</h3>
+
+        <label>Next of Kin</label>
+        <input id="kinName" value="SAFARLI.A" oninput="syncCV()">
+
+        <label>Phone</label>
+        <input id="kinPhone" value="+994 50 429 92 95" oninput="syncCV()">
+
+        <label>Relationship</label>
+        <input id="kinRelation" value="Brother" oninput="syncCV()">
+
+        <label>Address</label>
+        <input id="kinAddress" value="Azerbaijan" oninput="syncCV()">
+      </div>
+
+      <div class="group">
+        <h3>Travel Passport Details</h3>
+
+        <label>Document</label>
+        <input id="passportDoc" value="PASSPORT" oninput="syncCV()">
+
+        <label>Number</label>
+        <input id="passportNo" value="C03158575" oninput="syncCV()">
+
+        <label>Place of Issue</label>
+        <input id="passportPlace" value="Azerbaijan" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>Issued</label>
+            <input id="passportIssued" value="11.05.2023" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Valid</label>
+            <input id="passportValid" value="10.05.2033" oninput="syncCV()">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Computer Skills</h3>
+
+        <label>Windows</label>
+        <input id="windows" value="Average" oninput="syncCV()">
+
+        <label>Microsoft Office</label>
+        <input id="office" value="Excellent" oninput="syncCV()">
+
+        <label>Internet</label>
+        <input id="internet" value="Average" oninput="syncCV()">
+      </div>
+      <div class="group">
+        <h3>Seaman’s Book Details</h3>
+
+        <label>Seaman Book Document Number</label>
+        <input id="seamanBookNo" value="DQK 027327" oninput="syncCV()">
+
+        <label>Seaman Book Place of Issue</label>
+        <input id="seamanBookPlace" value="Azerbaijan, Baku" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>Issued</label>
+            <input id="seamanBookIssued" value="29.03.2024" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Valid</label>
+            <input id="seamanBookValid" value="29.03.2029" oninput="syncCV()">
+          </div>
+        </div>
+
+        <label>Seafarers Identity Document Number</label>
+        <input id="seafarerIdNo" value="AZE 032202" oninput="syncCV()">
+
+        <label>Seafarers Identity Place of Issue</label>
+        <input id="seafarerIdPlace" value="Azerbaijan, Baku" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>Issued</label>
+            <input id="seafarerIdIssued" value="29.03.2024" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Valid</label>
+            <input id="seafarerIdValid" value="29.03.2029" oninput="syncCV()">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Education</h3>
+
+        <label>Full Name of School</label>
+        <input id="schoolName" value="IST Services" oninput="syncCV()">
+
+        <label>Place of Issue</label>
+        <input id="schoolPlace" value="Azerbaijan, Baku" oninput="syncCV()">
+
+        <label>Grade / Class</label>
+        <input id="schoolGrade" value="Rating forming part of an engine-room watch" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>From</label>
+            <input id="schoolFrom" value="05.07.2023" oninput="syncCV()">
+          </div>
+          <div>
+            <label>To</label>
+            <input id="schoolTo" value="08.01.2024" oninput="syncCV()">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Knowledge of Language</h3>
+
+        <label>Azerbaijan</label>
+        <div class="row3">
+          <input id="azSpeak" value="Excellent" oninput="syncCV()" placeholder="Speaking">
+          <input id="azRead" value="Excellent" oninput="syncCV()" placeholder="Reading">
+          <input id="azWrite" value="Excellent" oninput="syncCV()" placeholder="Writing">
+        </div>
+
+        <label>Turkish</label>
+        <div class="row3">
+          <input id="trSpeak" value="Excellent" oninput="syncCV()" placeholder="Speaking">
+          <input id="trRead" value="Excellent" oninput="syncCV()" placeholder="Reading">
+          <input id="trWrite" value="Excellent" oninput="syncCV()" placeholder="Writing">
+        </div>
+
+        <label>English</label>
+        <div class="row3">
+          <input id="enSpeak" value="Average" oninput="syncCV()" placeholder="Speaking">
+          <input id="enRead" value="Average" oninput="syncCV()" placeholder="Reading">
+          <input id="enWrite" value="Average" oninput="syncCV()" placeholder="Writing">
+        </div>
+
+        <label>Russian</label>
+        <div class="row3">
+          <input id="ruSpeak" value="Average" oninput="syncCV()" placeholder="Speaking">
+          <input id="ruRead" value="Average" oninput="syncCV()" placeholder="Reading">
+          <input id="ruWrite" value="Average" oninput="syncCV()" placeholder="Writing">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Medical Information</h3>
+
+        <label>Document</label>
+        <input id="medicalDoc" value="Med.Certificate" oninput="syncCV()">
+
+        <label>Grade</label>
+        <input id="medicalGrade" value="Rating forming part of an engine-room watch" oninput="syncCV()">
+
+        <label>Place of Issue</label>
+        <input id="medicalPlace" value="Azerbaijan, Baku" oninput="syncCV()">
+
+        <div class="row2">
+          <div>
+            <label>Date of Issue</label>
+            <input id="medicalIssue" value="01.06.2023" oninput="syncCV()">
+          </div>
+          <div>
+            <label>Date of Expiry</label>
+            <input id="medicalExpiry" value="01.06.2025" oninput="syncCV()">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Certificate of Competency</h3>
+
+        <label>Class / Grade</label>
+        <input id="competencyClass" value="Rating forming part of an engine-room watch" oninput="syncCV()">
+
+        <label>Issuing Country</label>
+        <input id="competencyCountry" value="Azerbaijan" oninput="syncCV()">
+
+        <label>Certificate</label>
+        <textarea id="competencyCertificate" oninput="syncCV()">Marine Administration
+ID No: RP14729
+No: 0563/24</textarea>
+
+        <label>Date Issued</label>
+        <input id="competencyIssued" value="12.03.2024" oninput="syncCV()">
+
+        <label>Expires</label>
+        <input id="competencyExpires" value="No Limit" oninput="syncCV()">
+
+        <label>Details of Limitations</label>
+        <input id="competencyLimit" value="A-III/4" oninput="syncCV()">
+      </div>
+
+      <div class="group">
+        <h3>Additional Certificates</h3>
+
+        <div id="additionalInputs"></div>
+
+        <button type="button" onclick="addAdditional()">+ Additional Satırı Ekle</button>
+      </div>
+
+      <div class="group">
+        <h3>STCW and Other Certificates</h3>
+
+        <div id="stcwInputs"></div>
+
+        <button type="button" onclick="addSTCW()">+ STCW Sertifika Ekle</button>
+      </div>
+
+      <div class="group">
+        <h3>Sea Experience</h3>
+
+        <div id="seaInputs"></div>
+
+        <button type="button" onclick="addSea()">+ Deniz Tecrübesi Ekle</button>
+      </div>
+
+      <div class="group">
+        <h3>Note</h3>
+
+        <textarea id="note" oninput="syncCV()">Note:</textarea>
+      </div>
+
+    </aside>
+    <!-- RIGHT PREVIEW PANEL -->
+    <main class="previewWrap">
+
+      <!-- PAGE 1 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle">Application Form</div>
+
+          <div class="cvLogo">
+            <div class="mark">AH</div>
+            <span>ALLONAHUB</span>
+            <small>MARITIME</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle">Personal Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell">Position</td>
+            <td colspan="2" class="red" id="cv_position">MOTORMAN (OILER)</td>
+          </tr>
+
+          <tr>
+            <td class="labelCell">Family Name</td>
+            <td id="cv_familyName">SAFARLI</td>
+            <td rowspan="9" class="photoCell">
+              <div class="emptyPhoto" id="emptyPhoto">PHOTO</div>
+              <img id="cv_photo" style="display:none;">
+            </td>
+          </tr>
+
+          <tr>
+            <td>First Name</td>
+            <td id="cv_firstName">ANAR</td>
+          </tr>
+
+          <tr>
+            <td>Father’s Name</td>
+            <td id="cv_fatherName">AFLATUN</td>
+          </tr>
+
+          <tr>
+            <td>Date and Place of Birth</td>
+            <td id="cv_birth">29.11.2002</td>
+          </tr>
+
+          <tr>
+            <td>Marital Status</td>
+            <td id="cv_marital">SINGLE</td>
+          </tr>
+
+          <tr>
+            <td>Permanent Address</td>
+            <td id="cv_address">AZERBAIJAN, LANKARAN</td>
+          </tr>
+
+          <tr>
+            <td>Nearest Airport</td>
+            <td id="cv_airport">Heydar Aliyev International Airport<br>Baku, Azerbaijan</td>
+          </tr>
+
+          <tr>
+            <td>Height</td>
+            <td id="cv_height">170 cm</td>
+          </tr>
+
+          <tr>
+            <td>Weight</td>
+            <td id="cv_weight">79 kg</td>
+          </tr>
+        </table>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell">Eyes Color</td>
+            <td id="cv_eyes">BROWN</td>
+            <td class="labelCell">Hair Color</td>
+            <td id="cv_hair">BLACK</td>
+          </tr>
+
+          <tr>
+            <td>Safety Shoes</td>
+            <td id="cv_shoes">42</td>
+            <td>Overalls</td>
+            <td id="cv_overall">XL</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Contact Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell">Mobile</td>
+            <td id="cv_mobile">+994 10 314 20 42 (Whatsapp)</td>
+          </tr>
+
+          <tr>
+            <td>E-mail Address</td>
+            <td id="cv_email">anarseferli595@gmail.com</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Next of Kin</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell">Next of Kin</td>
+            <td id="cv_kinName">SAFARLI.A</td>
+          </tr>
+
+          <tr>
+            <td>Phone</td>
+            <td id="cv_kinPhone">+994 50 429 92 95</td>
+          </tr>
+
+          <tr>
+            <td>Relationship</td>
+            <td id="cv_kinRelation">Brother</td>
+          </tr>
+
+          <tr>
+            <td>Address</td>
+            <td id="cv_kinAddress">Azerbaijan</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Travel Passport Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Document</th>
+            <th>Number</th>
+            <th>Place of Issue</th>
+            <th>Issued</th>
+            <th>Valid</th>
+          </tr>
+
+          <tr>
+            <td id="cv_passportDoc">PASSPORT</td>
+            <td id="cv_passportNo">C03158575</td>
+            <td id="cv_passportPlace">Azerbaijan</td>
+            <td id="cv_passportIssued">11.05.2023</td>
+            <td id="cv_passportValid">10.05.2033</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Computer Skills</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell">Windows</td>
+            <td id="cv_windows">Average</td>
+          </tr>
+
+          <tr>
+            <td>Microsoft Office</td>
+            <td id="cv_office">Excellent</td>
+          </tr>
+
+          <tr>
+            <td>Internet</td>
+            <td id="cv_internet">Average</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- PAGE 2 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvLogo" style="text-align:right;margin-bottom:18px;">
+          <div class="mark" style="margin-left:auto;">AH</div>
+          <span>ALLONAHUB</span>
+          <small>MARITIME CV</small>
+        </div>
+
+        <div class="sectionTitle">Seaman’s Book Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Document</th>
+            <th>Number</th>
+            <th>Place of Issue</th>
+            <th>Issued</th>
+            <th>Valid</th>
+          </tr>
+
+          <tr>
+            <td>Seaman book</td>
+            <td id="cv_seamanBookNo">DQK 027327</td>
+            <td id="cv_seamanBookPlace">Azerbaijan, Baku</td>
+            <td id="cv_seamanBookIssued">29.03.2024</td>
+            <td id="cv_seamanBookValid">29.03.2029</td>
+          </tr>
+
+          <tr>
+            <td>SEAFARERS IDENTITY</td>
+            <td id="cv_seafarerIdNo">AZE 032202</td>
+            <td id="cv_seafarerIdPlace">Azerbaijan, Baku</td>
+            <td id="cv_seafarerIdIssued">29.03.2024</td>
+            <td id="cv_seafarerIdValid">29.03.2029</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Education</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Full name of School</th>
+            <th>Place of Issue</th>
+            <th>Grade/Class</th>
+            <th>From</th>
+            <th>To</th>
+          </tr>
+
+          <tr>
+            <td id="cv_schoolName">IST Services</td>
+            <td id="cv_schoolPlace">Azerbaijan, Baku</td>
+            <td id="cv_schoolGrade">Rating forming part of an engine-room watch</td>
+            <td id="cv_schoolFrom">05.07.2023</td>
+            <td id="cv_schoolTo">08.01.2024</td>
+          </tr>
+        </table>
+        <div class="sectionTitle">Knowledge of Language</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Languages</th>
+            <th>Speaking</th>
+            <th>Reading</th>
+            <th>Writing</th>
+          </tr>
+          <tr>
+            <td>Azerbaijan</td>
+            <td id="cv_azSpeak">Excellent</td>
+            <td id="cv_azRead">Excellent</td>
+            <td id="cv_azWrite">Excellent</td>
+          </tr>
+          <tr>
+            <td>Turkish</td>
+            <td id="cv_trSpeak">Excellent</td>
+            <td id="cv_trRead">Excellent</td>
+            <td id="cv_trWrite">Excellent</td>
+          </tr>
+          <tr>
+            <td>English</td>
+            <td id="cv_enSpeak">Average</td>
+            <td id="cv_enRead">Average</td>
+            <td id="cv_enWrite">Average</td>
+          </tr>
+          <tr>
+            <td>Russian</td>
+            <td id="cv_ruSpeak">Average</td>
+            <td id="cv_ruRead">Average</td>
+            <td id="cv_ruWrite">Average</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Medical Information</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Document</th>
+            <th>Grade</th>
+            <th>Place of issue</th>
+            <th>Date of issue</th>
+            <th>Date of expiry</th>
+          </tr>
+          <tr>
+            <td id="cv_medicalDoc">Med.Certificate</td>
+            <td id="cv_medicalGrade">Rating forming part of an engine-room watch</td>
+            <td id="cv_medicalPlace">Azerbaijan, Baku</td>
+            <td id="cv_medicalIssue">01.06.2023</td>
+            <td id="cv_medicalExpiry">01.06.2025</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Certificate of Competency</div>
+
+        <table class="cvTable">
+          <tr>
+            <th>Class/Grade</th>
+            <th>Issuing country</th>
+            <th>Certificate</th>
+            <th>Date issued</th>
+            <th>Expires</th>
+            <th>Details of Limitations</th>
+          </tr>
+          <tr>
+            <td id="cv_competencyClass">Rating forming part of an engine-room watch</td>
+            <td id="cv_competencyCountry">Azerbaijan</td>
+            <td id="cv_competencyCertificate">Marine Administration<br>ID No: RP14729<br>No: 0563/24</td>
+            <td id="cv_competencyIssued">12.03.2024</td>
+            <td id="cv_competencyExpires">No Limit</td>
+            <td id="cv_competencyLimit">A-III/4</td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle">Additionals</div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th>Name of course / Certificate</th>
+              <th>Institute</th>
+              <th>Place</th>
+              <th>Date of issue</th>
+              <th>Cert.No</th>
+              <th>Date of expiry</th>
+            </tr>
+          </thead>
+          <tbody id="cv_additionalRows">
+            <tr>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- PAGE 3 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvLogo" style="text-align:right;margin-bottom:18px;">
+          <div class="mark" style="margin-left:auto;">AH</div>
+          <span>ALLONAHUB</span>
+          <small>MARITIME CV</small>
+        </div>
+
+        <div class="sectionTitle">STCW and Other Certificates</div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th>Name of course/Certificate</th>
+              <th>Institute</th>
+              <th>Place</th>
+              <th>Date of issue</th>
+              <th>Rank</th>
+              <th>Cert.No</th>
+              <th>Date of expiry</th>
+            </tr>
+          </thead>
+          <tbody id="cv_stcwRows"></tbody>
+        </table>
+
+        <div class="sectionTitle">Sea Experience</div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th>Vessel</th>
+              <th>Company</th>
+              <th>Type of vessel</th>
+              <th>Flag</th>
+              <th>DWT</th>
+              <th>GRT</th>
+              <th>Rank</th>
+              <th>Sign on</th>
+              <th>Sign off</th>
+            </tr>
+          </thead>
+          <tbody id="cv_seaRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PAGE 4 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvLogo" style="text-align:right;margin-bottom:30px;">
+          <div class="mark" style="margin-left:auto;">AH</div>
+          <span>ALLONAHUB</span>
+          <small>MARITIME CV</small>
+        </div>
+
+        <div class="noteBox" id="cv_note">Note:</div>
+      </section>
+      </main>
+  </div>
+</div>
+
+<script>
+const textFields = [
+  "position",
+  "familyName",
+  "firstName",
+  "fatherName",
+  "birth",
+  "marital",
+  "address",
+  "airport",
+  "height",
+  "weight",
+  "eyes",
+  "hair",
+  "shoes",
+  "overall",
+  "mobile",
+  "email",
+  "kinName",
+  "kinPhone",
+  "kinRelation",
+  "kinAddress",
+  "passportDoc",
+  "passportNo",
+  "passportPlace",
+  "passportIssued",
+  "passportValid",
+  "windows",
+  "office",
+  "internet",
+  "seamanBookNo",
+  "seamanBookPlace",
+  "seamanBookIssued",
+  "seamanBookValid",
+  "seafarerIdNo",
+  "seafarerIdPlace",
+  "seafarerIdIssued",
+  "seafarerIdValid",
+  "schoolName",
+  "schoolPlace",
+  "schoolGrade",
+  "schoolFrom",
+  "schoolTo",
+  "azSpeak",
+  "azRead",
+  "azWrite",
+  "trSpeak",
+  "trRead",
+  "trWrite",
+  "enSpeak",
+  "enRead",
+  "enWrite",
+  "ruSpeak",
+  "ruRead",
+  "ruWrite",
+  "medicalDoc",
+  "medicalGrade",
+  "medicalPlace",
+  "medicalIssue",
+  "medicalExpiry",
+  "competencyClass",
+  "competencyCountry",
+  "competencyCertificate",
+  "competencyIssued",
+  "competencyExpires",
+  "competencyLimit",
+  "note"
+];
+
+function valueOf(id){
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+
+function htmlValue(id){
+  return valueOf(id).replace(/\n/g, "<br>");
+}
+
+function setCV(id, value){
+  const el = document.getElementById("cv_" + id);
+  if(el){
+    el.innerHTML = value || "";
+  }
+}
+
+function syncCV(){
+  textFields.forEach(id => {
+    setCV(id, htmlValue(id));
+  });
+
+  renderAdditionals();
+  renderSTCW();
+  renderSea();
+}
+  const additionalData = [
+  {
+    name: "-",
+    institute: "-",
+    place: "-",
+    issue: "-",
+    cert: "-",
+    expiry: "-"
+  }
+];
+
+const stcwData = [
+  {
+    name: "International Safety Management Code",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "19.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SP-4053-23",
+    expiry: "19.12.2028"
+  },
+  {
+    name: "Proficiency in survival craft and boats other than fast rescue boats",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "28.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SL-4648-23",
+    expiry: "27.12.2028"
+  },
+  {
+    name: "Training for seafarers with designated security duties",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "21.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SH-3432-23",
+    expiry: "21.12.2028"
+  },
+  {
+    name: "Basic safety training",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "15.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SO-5826-23",
+    expiry: "15.12.2028"
+  },
+  {
+    name: "Ship Security-related familiarization security-awareness training",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "08.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SI-3850-23",
+    expiry: "08.12.2028"
+  },
+  {
+    name: "Basic training and qualifications on oil and chemical tanker cargo operations",
+    institute: "Azerbaijan Marine Administration",
+    place: "Azerbaijan Baku",
+    issue: "29.12.2023",
+    rank: "Rating forming part of an engine-room watch",
+    cert: "SA-1136-23",
+    expiry: "29.12.2028"
+  }
+];
+
+const seaData = [
+  {
+    vessel: "SVETLOMOR-2",
+    company: "Caspian Shipping",
+    type: "Offshore Tug/Supply Ship",
+    flag: "Azerbaijan",
+    dwt: "1000",
+    grt: "1695",
+    rank: "CADET",
+    signon: "02.10.2023",
+    signoff: "05.01.2024"
+  },
+  {
+    vessel: "M/V EFE",
+    company: "Ege Denizçilik",
+    type: "General Cargo",
+    flag: "ST KİTTS & NEVİS",
+    dwt: "334",
+    grt: "397",
+    rank: "OİLER",
+    signon: "13.08.2025",
+    signoff: "09.03.2026"
+  }
+];
+
+function inputHtml(value, placeholder, oninput){
+  return `<input value="${escapeAttr(value)}" placeholder="${placeholder}" oninput="${oninput}">`;
+}
+
+function escapeAttr(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHTML(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+}
+  function renderAdditionalInputs(){
+  const box = document.getElementById("additionalInputs");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  additionalData.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "group";
+    div.style.border = "1px solid rgba(0,213,255,.18)";
+    div.style.padding = "12px";
+    div.style.borderRadius = "14px";
+
+    div.innerHTML = `
+      <h3>Additional ${index + 1}</h3>
+
+      <label>Name of Course / Certificate</label>
+      <input value="${escapeAttr(item.name)}" oninput="updateAdditional(${index}, 'name', this.value)">
+
+      <label>Institute</label>
+      <input value="${escapeAttr(item.institute)}" oninput="updateAdditional(${index}, 'institute', this.value)">
+
+      <label>Place</label>
+      <input value="${escapeAttr(item.place)}" oninput="updateAdditional(${index}, 'place', this.value)">
+
+      <label>Date of Issue</label>
+      <input value="${escapeAttr(item.issue)}" oninput="updateAdditional(${index}, 'issue', this.value)">
+
+      <label>Cert.No</label>
+      <input value="${escapeAttr(item.cert)}" oninput="updateAdditional(${index}, 'cert', this.value)">
+
+      <label>Date of Expiry</label>
+      <input value="${escapeAttr(item.expiry)}" oninput="updateAdditional(${index}, 'expiry', this.value)">
+
+      <button type="button" class="secondary" onclick="removeAdditional(${index})">Satırı Sil</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function updateAdditional(index, key, value){
+  if(!additionalData[index]) return;
+  additionalData[index][key] = value;
+  renderAdditionals();
+}
+
+function addAdditional(){
+  additionalData.push({
+    name: "",
+    institute: "",
+    place: "",
+    issue: "",
+    cert: "",
+    expiry: ""
+  });
+
+  renderAdditionalInputs();
+  renderAdditionals();
+}
+
+function removeAdditional(index){
+  additionalData.splice(index, 1);
+
+  if(additionalData.length === 0){
+    additionalData.push({
+      name: "-",
+      institute: "-",
+      place: "-",
+      issue: "-",
+      cert: "-",
+      expiry: "-"
+    });
+  }
+
+  renderAdditionalInputs();
+  renderAdditionals();
+}
+
+function renderAdditionals(){
+  const tbody = document.getElementById("cv_additionalRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  additionalData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(item.name)}</td>
+      <td>${escapeHTML(item.institute)}</td>
+      <td>${escapeHTML(item.place)}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+  function renderSTCWInputs(){
+
+    const box=document.getElementById("stcwInputs");
+    if(!box) return;
+
+    box.innerHTML="";
+
+    stcwData.forEach((item,index)=>{
+
+        const div=document.createElement("div");
+        div.className="group";
+        div.style.border="1px solid rgba(0,213,255,.20)";
+        div.style.padding="15px";
+        div.style.borderRadius="15px";
+
+        div.innerHTML=`
+
+        <h3>STCW ${index+1}</h3>
+
+        <label>Certificate Name</label>
+        <input value="${escapeAttr(item.name)}"
+        oninput="updateSTCW(${index},'name',this.value)">
+
+        <label>Institute</label>
+        <input value="${escapeAttr(item.institute)}"
+        oninput="updateSTCW(${index},'institute',this.value)">
+
+        <label>Place</label>
+        <input value="${escapeAttr(item.place)}"
+        oninput="updateSTCW(${index},'place',this.value)">
+
+        <div class="row2">
+
+            <div>
+                <label>Date Issued</label>
+                <input value="${escapeAttr(item.issue)}"
+                oninput="updateSTCW(${index},'issue',this.value)">
+            </div>
+
+            <div>
+                <label>Rank</label>
+                <input value="${escapeAttr(item.rank)}"
+                oninput="updateSTCW(${index},'rank',this.value)">
+            </div>
+
+        </div>
+
+        <div class="row2">
+
+            <div>
+                <label>Certificate No</label>
+                <input value="${escapeAttr(item.cert)}"
+                oninput="updateSTCW(${index},'cert',this.value)">
+            </div>
+
+            <div>
+                <label>Expiry</label>
+                <input value="${escapeAttr(item.expiry)}"
+                oninput="updateSTCW(${index},'expiry',this.value)">
+            </div>
+
+        </div>
+
+        <button
+        type="button"
+        class="secondary"
+        onclick="removeSTCW(${index})">
+        Sertifikayı Sil
+        </button>
+
+        `;
+
+        box.appendChild(div);
+
+    });
+
+}
+
+function updateSTCW(index,key,value){
+
+    stcwData[index][key]=value;
+
+    renderSTCW();
+
+}
+
+function addSTCW(){
+
+    stcwData.push({
+
+        name:"",
+        institute:"",
+        place:"",
+        issue:"",
+        rank:"",
+        cert:"",
+        expiry:""
+
+    });
+
+    renderSTCWInputs();
+    renderSTCW();
+
+}
+
+function removeSTCW(index){
+
+    stcwData.splice(index,1);
+
+    renderSTCWInputs();
+    renderSTCW();
+
+}
+
+function renderSTCW(){
+
+    const tbody=document.getElementById("cv_stcwRows");
+
+    if(!tbody) return;
+
+    tbody.innerHTML="";
+
+    stcwData.forEach(item=>{
+
+        tbody.innerHTML+=`
+
+        <tr>
+
+            <td>${escapeHTML(item.name)}</td>
+
+            <td>${escapeHTML(item.institute)}</td>
+
+            <td>${escapeHTML(item.place)}</td>
+
+            <td>${escapeHTML(item.issue)}</td>
+
+            <td>${escapeHTML(item.rank)}</td>
+
+            <td>${escapeHTML(item.cert)}</td>
+
+            <td>${escapeHTML(item.expiry)}</td>
+
+        </tr>
+
+        `;
+
+    });
+
+}
+  function renderSeaInputs(){
+  const box = document.getElementById("seaInputs");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  seaData.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "group";
+    div.style.border = "1px solid rgba(0,213,255,.20)";
+    div.style.padding = "15px";
+    div.style.borderRadius = "15px";
+
+    div.innerHTML = `
+      <h3>Sea Experience ${index + 1}</h3>
+
+      <label>Vessel</label>
+      <input value="${escapeAttr(item.vessel)}" oninput="updateSea(${index}, 'vessel', this.value)">
+
+      <label>Company</label>
+      <input value="${escapeAttr(item.company)}" oninput="updateSea(${index}, 'company', this.value)">
+
+      <label>Type of Vessel</label>
+      <input value="${escapeAttr(item.type)}" oninput="updateSea(${index}, 'type', this.value)">
+
+      <label>Flag</label>
+      <input value="${escapeAttr(item.flag)}" oninput="updateSea(${index}, 'flag', this.value)">
+
+      <div class="row2">
+        <div>
+          <label>DWT</label>
+          <input value="${escapeAttr(item.dwt)}" oninput="updateSea(${index}, 'dwt', this.value)">
+        </div>
+        <div>
+          <label>GRT</label>
+          <input value="${escapeAttr(item.grt)}" oninput="updateSea(${index}, 'grt', this.value)">
+        </div>
+      </div>
+
+      <label>Rank</label>
+      <input value="${escapeAttr(item.rank)}" oninput="updateSea(${index}, 'rank', this.value)">
+
+      <div class="row2">
+        <div>
+          <label>Sign On</label>
+          <input value="${escapeAttr(item.signon)}" oninput="updateSea(${index}, 'signon', this.value)">
+        </div>
+        <div>
+          <label>Sign Off</label>
+          <input value="${escapeAttr(item.signoff)}" oninput="updateSea(${index}, 'signoff', this.value)">
+        </div>
+      </div>
+
+      <button type="button" class="secondary" onclick="removeSea(${index})">Tecrübeyi Sil</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function updateSea(index, key, value){
+  if(!seaData[index]) return;
+  seaData[index][key] = value;
+  renderSea();
+}
+
+function addSea(){
+  seaData.push({
+    vessel: "",
+    company: "",
+    type: "",
+    flag: "",
+    dwt: "",
+    grt: "",
+    rank: "",
+    signon: "",
+    signoff: ""
+  });
+
+  renderSeaInputs();
+  renderSea();
+}
+
+function removeSea(index){
+  seaData.splice(index, 1);
+  renderSeaInputs();
+  renderSea();
+}
+
+function renderSea(){
+  const tbody = document.getElementById("cv_seaRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  seaData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(item.vessel)}</td>
+      <td>${escapeHTML(item.company)}</td>
+      <td>${escapeHTML(item.type)}</td>
+      <td>${escapeHTML(item.flag)}</td>
+      <td>${escapeHTML(item.dwt)}</td>
+      <td>${escapeHTML(item.grt)}</td>
+      <td>${escapeHTML(item.rank)}</td>
+      <td>${escapeHTML(item.signon)}</td>
+      <td>${escapeHTML(item.signoff)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+  const photoInput = document.getElementById("photoInput");
+
+if(photoInput){
+  photoInput.addEventListener("change", function(){
+    const file = this.files && this.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      const img = document.getElementById("cv_photo");
+      const empty = document.getElementById("emptyPhoto");
+
+      if(img){
+        img.src = e.target.result;
+        img.style.display = "block";
+      }
+
+      if(empty){
+        empty.style.display = "none";
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function resetForm(){
+  const ok = confirm("Tüm bilgiler temizlensin mi?");
+  if(!ok) return;
+
+  document.querySelectorAll("input, textarea").forEach(el => {
+    if(el.type !== "file"){
+      el.value = "";
+    }
+  });
+
+  const img = document.getElementById("cv_photo");
+  const empty = document.getElementById("emptyPhoto");
+
+  if(img){
+    img.src = "";
+    img.style.display = "none";
+  }
+
+  if(empty){
+    empty.style.display = "flex";
+  }
+
+  additionalData.length = 0;
+  additionalData.push({
+    name: "-",
+    institute: "-",
+    place: "-",
+    issue: "-",
+    cert: "-",
+    expiry: "-"
+  });
+
+  stcwData.length = 0;
+  seaData.length = 0;
+
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+});
+</script>
+
+</body>
+</html>
