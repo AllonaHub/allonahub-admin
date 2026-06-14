@@ -862,7 +862,8 @@ function loadProfileFromUser(user){
     profession_title:meta.profession_title || local.profession_title || "Üye",
     module:meta.module || local.module || "general",
     greeting:meta.greeting || local.greeting || ""
-  };
+    avatar: local.avatar || meta.avatar || "",
+    };
 
   localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
 }
@@ -872,7 +873,7 @@ function loadProfileFromUser(user){
       icon:"fa-ship",
       title:"Maritime CV",
       text:"Denizci CV’ni oluştur, çok dilli PDF indir ve crewing firmalarına hazır hale getir.",
-      link:"maritime-cv.html"
+      link:"cv-form.html"
     },
     {
       icon:"fa-certificate",
@@ -1266,7 +1267,7 @@ function renderTasks(){
   if(!q)return;
 
   if(q.includes("cv")){
-    window.location.href="maritime-cv.html";
+    window.location.href="cv-form.html";
   }
   else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
     window.location.href="hubwallet.html";
