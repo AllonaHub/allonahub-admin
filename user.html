@@ -1397,8 +1397,8 @@ async function loginUser(){
   }
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email:email,
-    password:password
+    email: email,
+    password: password
   });
 
   if(error){
@@ -1406,42 +1406,10 @@ async function loginUser(){
     return;
   }
 
-  const user=data.user;
-  const meta=user.user_metadata || {};
+  localStorage.removeItem("allonahub_user_profile");
 
-  const { data:existingProfile } = await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if(!existingProfile){
-    await supabaseClient
-      .from("profiles")
-      .insert({
-        user_id:user.id,
-        email:user.email,
-        full_name:meta.full_name || "AllonaHub Üyesi",
-        phone:meta.phone || null,
-        country:meta.country || null,
-        sector_key:meta.sector_key || null,
-        sector_name:meta.sector_name || null,
-        profession_key:meta.profession_key || null,
-        profession_name:meta.profession_name || null,
-        profession_title:meta.profession_title || null,
-        module:meta.module || null
-      });
-  }
-
-  window.location.href="user-panel.html";
+  window.location.href = "user-panel.html";
 }
-async function loginWithGoogle(){
-  await supabaseClient.auth.signInWithOAuth({
-    provider:"google",
-    options:{redirectTo:SITE_URL}
-  });
-}
-
 async function resetPassword(){
   const email=document.getElementById("forgotEmail").value.trim();
 
