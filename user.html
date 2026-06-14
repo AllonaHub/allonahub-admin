@@ -7,7 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="user-service.js"></script>
+
 <style>
 *{
   margin:0;
@@ -864,8 +864,11 @@ a{
 </div>
 
 <script>
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SITE_URL="https://allonahub.github.io/allonahub-admin/user-panel.html";
+const SITE_URL="https://allonahub.github.io/allonahub-admin/user.html";
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1342,7 +1345,7 @@ function checkPasswords(){
 
   const greeting=getGreetingPreview(fullName);
 
-  const { data,error }=await supabaseClient.auth.signUp({
+  const { error }=await supabaseClient.auth.signUp({
     email:email,
     password:password,
     options:{
@@ -1381,12 +1384,9 @@ function checkPasswords(){
     greeting:greeting
   }));
 
- if(data?.session){
-  await getProfile();
-  window.location.href="user-panel.html";
-}else{
   alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
 }
+
 async function loginUser(){
   const email=document.getElementById("loginEmail").value.trim();
   const password=document.getElementById("loginPassword").value;
@@ -1425,7 +1425,7 @@ async function loginUser(){
     }));
   }
 
-  window.location.href="user-panel.html";
+  window.location.href="index.html";
 }
 
 async function loginWithGoogle(){
@@ -1456,7 +1456,7 @@ async function resetPassword(){
 }
 
 function icloudInfo(){
-  alert("Başka Yöntem Deneyiniz.");
+  alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacak.");
 }
   function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
