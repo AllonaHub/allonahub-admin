@@ -868,7 +868,7 @@ const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SITE_URL="https://allonahub.github.io/allonahub-admin/user.html";
+const SITE_URL="https://allonahub.github.io/allonahub-admin/user-panel.html";
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1419,7 +1419,7 @@ async function resetPassword(){
   }
 
   const { error }=await supabaseClient.auth.resetPasswordForEmail(email,{
-    redirectTo:SITE_URL
+    redirectTo:"https://allonahub.github.io/allonahub-admin/reset-password.html"
   });
 
   if(error){
@@ -1431,7 +1431,7 @@ async function resetPassword(){
 }
 
 function icloudInfo(){
-  alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacak.");
+  alert("Giriş İçin Başka Bir Yöntem deneyiniz.");
 }
   function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
