@@ -1384,7 +1384,8 @@ function checkPasswords(){
     greeting:greeting
   }));
 
-  alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
+ alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
+window.location.href="user-panel.html";
 }
 
 async function loginUser(){
@@ -1456,7 +1457,7 @@ async function resetPassword(){
 }
 
 function icloudInfo(){
-  alert("iCloud ile giriş Apple Developer hesabı bağlandıktan sonra aktif olacak.");
+  alert("Başka Yöntem Deneyiniz.");
 }
   function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
