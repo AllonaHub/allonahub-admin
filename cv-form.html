@@ -405,7 +405,7 @@ textarea:focus{
 
   <div class="topbar">
     <div class="brand">
-      <img src="allona-logo.png" alt="AllonaHub Logo">
+      <img src="allona.logo.png" alt="AllonaHub Logo">
       <div>
         <h1>AllonaHub Maritime CV Builder</h1>
         <span>Premium Neon Blue Seafarer Application System</span>
@@ -2171,6 +2171,141 @@ document.addEventListener("DOMContentLoaded", function(){
   renderSeaInputs();
   syncCV();
 });
+  const valueTranslations = {
+  excellent:{ en:"Excellent", tr:"Mükemmel", az:"Əla", ru:"Отлично" },
+  good:{ en:"Good", tr:"İyi", az:"Yaxşı", ru:"Хорошо" },
+  average:{ en:"Average", tr:"Orta", az:"Orta", ru:"Средний" },
+  poor:{ en:"Poor", tr:"Zayıf", az:"Zəif", ru:"Слабый" },
+
+  single:{ en:"Single", tr:"Bekar", az:"Subay", ru:"Холост" },
+  married:{ en:"Married", tr:"Evli", az:"Evli", ru:"Женат" },
+
+  azerbaijan:{ en:"Azerbaijan", tr:"Azerbaycan", az:"Azərbaycan", ru:"Азербайджан" },
+  turkey:{ en:"Turkey", tr:"Türkiye", az:"Türkiyə", ru:"Турция" },
+  russia:{ en:"Russia", tr:"Rusya", az:"Rusiya", ru:"Россия" },
+  baku:{ en:"Baku", tr:"Bakü", az:"Bakı", ru:"Баку" },
+
+  oiler:{ en:"Oiler", tr:"Yağcı", az:"Yağçı", ru:"Моторист" },
+  motorman:{ en:"Motorman", tr:"Makine Tayfası", az:"Motorçu", ru:"Моторист" },
+  cadet:{ en:"Cadet", tr:"Stajyer", az:"Kadet", ru:"Кадет" },
+  captain:{ en:"Captain", tr:"Kaptan", az:"Kapitan", ru:"Капитан" },
+  engineer:{ en:"Engineer", tr:"Mühendis", az:"Mühəndis", ru:"Инженер" }
+};
+
+function normalizeText(value){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/ı/g,"i")
+    .replace(/ə/g,"e")
+    .replace(/ü/g,"u")
+    .replace(/ö/g,"o")
+    .replace(/ş/g,"s")
+    .replace(/ç/g,"c")
+    .replace(/ğ/g,"g")
+    .replace(/\s+/g," ");
+}
+
+function translateUserValue(value){
+  const raw = String(value || "");
+  const key = normalizeText(raw);
+
+  for(const itemKey in valueTranslations){
+    const item = valueTranslations[itemKey];
+
+    const matched = Object.values(item).some(v => normalizeText(v) === key);
+
+    if(matched){
+      return item[currentLang] || raw;
+    }
+  }
+
+  return raw;
+}
+
+function syncCV(){
+  textFields.forEach(id => {
+    const translated = translateUserValue(valueOf(id));
+    setCV(id, escapeHTML(translated).replace(/\n/g, "<br>"));
+  });
+
+  renderAdditionals();
+  renderSTCW();
+  renderSea();
+}
+  function translateDynamicValue(value){
+  return translateUserValue(value);
+}
+
+function renderAdditionals(){
+  const tbody = document.getElementById("cv_additionalRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  additionalData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSTCW(){
+  const tbody = document.getElementById("cv_stcwRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  stcwData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSea(){
+  const tbody = document.getElementById("cv_seaRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  seaData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.vessel))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.company))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.type))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.flag))}</td>
+      <td>${escapeHTML(item.dwt)}</td>
+      <td>${escapeHTML(item.grt)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(item.signon)}</td>
+      <td>${escapeHTML(item.signoff)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
 </script>
 
 </body>
