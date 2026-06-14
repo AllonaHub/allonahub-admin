@@ -7,7 +7,8 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+  <script src="user-service.js"></script>
+  
 <style>
 *{
   margin:0;
@@ -792,10 +793,7 @@ a{
   </main>
 </div>
 <script>
-const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
+  
 let currentUser=null;
 let currentProfile=null;
 let selectedProfession=null;
@@ -965,19 +963,22 @@ function getGreeting(profile){
 }
 
 async function checkAuth(){
-  const { data:{ session } } = await supabaseClient.auth.getSession();
+  currentUser = await requireAuth();
+  if(!currentUser) return;
 
-  if(!session || !session.user){
-    window.location.href="user.html";
-    return;
-  }
+  currentProfile = await getProfile();
 
-  currentUser=session.user;
+  selectedProfession = {
+    sectorKey: currentProfile.sector_key,
+    sectorName: currentProfile.sector_name,
+    key: currentProfile.profession_key,
+    name: currentProfile.profession_name,
+    title: currentProfile.profession_title,
+    module: currentProfile.module
+  };
 
-  loadProfileFromUser(session.user);
   renderProfile();
 }
-
 function loadProfileFromUser(user){
   const meta=user.user_metadata || {};
   const local=JSON.parse(localStorage.getItem("allonahub_user_profile") || "{}");
@@ -1254,9 +1255,8 @@ function collectProfileData(){
     greeting:""
   };
 }
-
-async function saveProfile(){
-  const profile=collectProfileData();
+async function saveProfilePage(){
+  const profile = collectProfileData();
 
   if(!profile.full_name){
     alert("Ad Soyad zorunludur.");
@@ -1268,32 +1268,18 @@ async function saveProfile(){
     return;
   }
 
-  profile.greeting=getGreeting(profile);
+  profile.avatar = currentProfile?.avatar || currentProfile?.avatar_url || "";
+  profile.avatar_url = profile.avatar;
+  profile.greeting = getGreeting(profile);
 
-  const { error }=await supabaseClient.auth.updateUser({
-    data:{
-      full_name:profile.full_name,
-      phone:profile.phone,
-      country:profile.country,
-      avatar:profile.avatar,
-      sector_key:profile.sector_key,
-      sector_name:profile.sector_name,
-      profession_key:profile.profession_key,
-      profession_name:profile.profession_name,
-      profession_title:profile.profession_title,
-      module:profile.module,
-      greeting:profile.greeting
-    }
-  });
+  const ok = await saveProfile(profile);
 
-  if(error){
-    alert(error.message);
+  if(!ok){
+    alert("Profil kaydedilemedi.");
     return;
   }
 
-  currentProfile=profile;
-  localStorage.setItem("allonahub_user_profile",JSON.stringify(profile));
-
+  currentProfile = await getProfile();
   renderProfile();
 
   alert("Profil kaydedildi ✅");
