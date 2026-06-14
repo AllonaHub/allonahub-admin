@@ -2436,61 +2436,33 @@ function renderSea(){
     tbody.appendChild(tr);
   });
 }
-function downloadPDF(){
+async function downloadPDF(){
   const first = valueOf("firstName").trim() || "User";
   const last = valueOf("familyName").trim() || "CV";
   const fileName = `AllonaHub_CV_${first}_${last}.pdf`.replace(/\s+/g, "_");
 
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "mm", "a4");
+
   const pages = document.querySelectorAll(".cvPage");
 
-  const pdfArea = document.createElement("div");
-  pdfArea.style.width = "210mm";
-  pdfArea.style.background = "#fff";
-  pdfArea.style.position = "fixed";
-  pdfArea.style.left = "0";
-  pdfArea.style.top = "0";
-  pdfArea.style.zIndex = "999999";
-  pdfArea.style.padding = "0";
-  pdfArea.style.margin = "0";
-
-  pages.forEach(page => {
-    const clone = page.cloneNode(true);
-    clone.style.width = "210mm";
-    clone.style.height = "297mm";
-    clone.style.minHeight = "297mm";
-    clone.style.margin = "0";
-    clone.style.padding = "10mm";
-    clone.style.boxSizing = "border-box";
-    clone.style.overflow = "hidden";
-    clone.style.pageBreakAfter = "always";
-    pdfArea.appendChild(clone);
-  });
-
-  document.body.appendChild(pdfArea);
-
-  const opt = {
-    margin: 0,
-    filename: fileName,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: {
+  for(let i = 0; i < pages.length; i++){
+    const canvas = await html2canvas(pages[i], {
       scale: 2,
       useCORS: true,
-      backgroundColor: "#ffffff"
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    }
-  };
-
-  html2pdf()
-    .set(opt)
-    .from(pdfArea)
-    .save()
-    .then(() => {
-      pdfArea.remove();
+      backgroundColor: "#ffffff",
+      scrollX: 0,
+      scrollY: 0
     });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+    if(i > 0) pdf.addPage();
+
+    pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+  }
+
+  pdf.save(fileName);
 }
 </script>
 
