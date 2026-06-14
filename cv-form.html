@@ -527,7 +527,8 @@ body{
 }
 
 </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -2437,6 +2438,11 @@ function renderSea(){
   });
 }
 async function downloadPDF(){
+  if(!window.html2canvas || !window.jspdf){
+    alert("PDF kütüphanesi yüklenmedi. İnternet bağlantısını kontrol edin.");
+    return;
+  }
+
   const first = valueOf("firstName").trim() || "User";
   const last = valueOf("familyName").trim() || "CV";
   const fileName = `AllonaHub_CV_${first}_${last}.pdf`.replace(/\s+/g, "_");
@@ -2450,14 +2456,14 @@ async function downloadPDF(){
     const canvas = await html2canvas(pages[i], {
       scale: 2,
       useCORS: true,
-      backgroundColor: "#ffffff",
-      scrollX: 0,
-      scrollY: 0
+      backgroundColor: "#ffffff"
     });
 
     const imgData = canvas.toDataURL("image/jpeg", 0.98);
 
-    if(i > 0) pdf.addPage();
+    if(i > 0){
+      pdf.addPage();
+    }
 
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
   }
