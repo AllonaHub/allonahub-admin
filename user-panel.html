@@ -791,9 +791,6 @@ a{
   </main>
 </div>
 <script>
-const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentUser=null;
 let currentProfile=null;
@@ -834,50 +831,14 @@ function getGreeting(profile){
 }
 
 async function checkAuth(){
-  const { data:{ session } } = await supabaseClient.auth.getSession();
+  currentUser = await requireAuth();
+  if(!currentUser) return;
 
-  if(!session || !session.user){
-    window.location.href="user.html";
-    return;
-}
-  currentUser = session.user;
+  currentProfile = await getProfile();
 
-loadProfileFromUser(session.user);
-
-const dbProfile = await loadProfileFromDB(session.user.id);
-
-if(dbProfile){
-    currentProfile = {
-        ...currentProfile,
-        ...dbProfile
-    };
+  renderPanel();
 }
 
-renderPanel();}
-
-async function loadProfileFromDB(userId){
-  const { data, error } = await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if(error || !data) return null;
-
-  return {
-    full_name:data.full_name || "AllonaHub Üyesi",
-    phone:data.phone || "",
-    country:data.country || "",
-    sector_key:data.sector_key || "general",
-    sector_name:data.sector_name || "Genel",
-    profession_key:data.profession_key || "",
-    profession_name:data.profession_name || "AllonaHub Üyesi",
-    profession_title:data.profession_title || "Üye",
-    module:data.module || "general",
-    avatar:data.avatar_url || "",
-    greeting:data.profession_title ? `${data.profession_title} ${(data.full_name||"Üye").split(" ")[0]}, hoş geldin` : ""
-  };
-}
   localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
 }
   const moduleSets={
