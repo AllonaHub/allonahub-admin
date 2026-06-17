@@ -2,1596 +2,711 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Allona Shop | Güvenli Online Alışveriş</title>
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Shop | AllonaHub</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial,Helvetica,sans-serif;
-}
-
-:root{
-  --dark:#020814;
-  --blue:#00aeea;
-  --blue2:#0077ff;
-  --gold:#d4a017;
-  --text:#14213d;
-  --muted:#667085;
-  --bg:#f6f8fb;
-  --border:#e6e9ef;
-  --white:#ffffff;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-}
-
-a{
-  text-decoration:none;
-  color:inherit;
-}
-
-button{
-  font-family:inherit;
-}
-
-.container{
-  max-width:1200px;
-  margin:0 auto;
-  padding:0 20px;
-}
-
-/* TOPBAR */
-.topbar{
-  background:var(--dark);
-  color:white;
-  font-size:13px;
-  padding:9px 0;
-}
-
-.topbar .container{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-}
-
-.topbar span{
-  color:rgba(255,255,255,.82);
-}
-
-/* HEADER */
-header{
-  background:white;
-  border-bottom:1px solid var(--border);
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-
-.header-inner{
-  height:84px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:24px;
-}
-
-.logo{
-  font-size:30px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.logo .gold{
-  color:var(--gold);
-}
-
-.logo .blue{
-  color:var(--blue);
-}
-
-.search{
-  flex:1;
-  max-width:500px;
-  display:flex;
-  align-items:center;
-  border:1px solid #d9e2ec;
-  border-radius:999px;
-  background:white;
-  overflow:hidden;
-}
-
-.search input{
-  flex:1;
-  border:0;
-  outline:0;
-  padding:14px 18px;
-  font-size:15px;
-}
-
-.search button{
-  border:0;
-  background:linear-gradient(135deg,var(--blue),var(--blue2));
-  color:white;
-  padding:14px 23px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-nav{
-  display:flex;
-  align-items:center;
-  gap:17px;
-  font-size:14px;
-  font-weight:800;
-  white-space:nowrap;
-}
-
-nav a:hover{
-  color:var(--blue);
-}
-
-.header-actions{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.icon-btn{
-  border:1px solid var(--border);
-  background:white;
-  color:var(--text);
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  cursor:pointer;
-  font-size:18px;
-  position:relative;
-}
-
-.badge{
-  position:absolute;
-  top:-6px;
-  right:-6px;
-  background:var(--gold);
-  color:var(--dark);
-  font-size:11px;
-  font-weight:900;
-  width:19px;
-  height:19px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-}
-
-.login-btn{
-  background:var(--blue);
-  color:white;
-  padding:12px 18px;
-  border-radius:999px;
-  font-weight:900;
-}
-
-/* HERO */
-.hero{
-  background:
-    radial-gradient(circle at top left,rgba(0,174,234,.35),transparent 38%),
-    linear-gradient(135deg,#020814,#06385a,#00aeea);
-  color:white;
-  padding:72px 0;
-}
-
-.hero-grid{
-  display:grid;
-  grid-template-columns:1.1fr .9fr;
-  gap:36px;
-  align-items:center;
-}
-
-.hero h1{
-  font-size:48px;
-  line-height:1.12;
-  margin-bottom:18px;
-}
-
-.hero p{
-  font-size:18px;
-  line-height:1.65;
-  color:rgba(255,255,255,.86);
-  margin-bottom:28px;
-}
-
-.hero-buttons{
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-}
-
-.btn{
-  display:inline-block;
-  border:0;
-  cursor:pointer;
-  padding:15px 26px;
-  border-radius:999px;
-  font-weight:900;
-  font-size:15px;
-}
-
-.btn-gold{
-  background:var(--gold);
-  color:var(--dark);
-}
-
-.btn-light{
-  background:white;
-  color:var(--dark);
-}
-
-.hero-card{
-  background:white;
-  color:var(--text);
-  border-radius:28px;
-  padding:30px;
-  box-shadow:0 20px 55px rgba(0,0,0,.22);
-}
-
-.hero-card h3{
-  font-size:24px;
-  color:var(--dark);
-  margin-bottom:16px;
-}
-
-.hero-card ul{
-  list-style:none;
-}
-
-.hero-card li{
-  color:#4a5568;
-  margin:13px 0;
-  font-size:15px;
-}
-
-/* SECTIONS */
-.section{
-  padding:60px 0;
-}
-
-.section-title{
-  text-align:center;
-  font-size:34px;
-  color:var(--dark);
-  margin-bottom:12px;
-}
-
-.section-sub{
-  text-align:center;
-  color:var(--muted);
-  margin-bottom:34px;
-}
-
-/* CATEGORY */
-.categories{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:18px;
-}
-
-.cat{
-  background:white;
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:24px;
-  text-align:center;
-  box-shadow:0 8px 24px rgba(0,0,0,.05);
-  cursor:pointer;
-  transition:.25s;
-}
-
-.cat:hover{
-  transform:translateY(-5px);
-  border-color:var(--blue);
-}
-
-.cat h3{
-  color:var(--dark);
-  margin-bottom:8px;
-}
-
-.cat p{
-  color:var(--muted);
-  font-size:14px;
-  line-height:1.5;
-}
-
-/* PRODUCTS */
-.products{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:22px;
-}
-
-.product{
-  background:white;
-  border:1px solid var(--border);
-  border-radius:22px;
-  overflow:hidden;
-  box-shadow:0 8px 24px rgba(0,0,0,.06);
-  transition:.25s;
-}
-
-.product:hover{
-  transform:translateY(-5px);
-  box-shadow:0 14px 36px rgba(0,0,0,.10);
-}
-
-.product-img{
-  height:220px;
-  background:linear-gradient(135deg,#edf7fb,#d9f3fb);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--blue);
-  font-size:42px;
-  font-weight:900;
-  overflow:hidden;
-}
-
-.product-img img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.product-body{
-  padding:18px;
-}
-
-.product-body h3{
-  font-size:17px;
-  color:var(--dark);
-  margin-bottom:8px;
-}
-
-.product-body p{
-  font-size:14px;
-  color:var(--muted);
-  line-height:1.5;
-  margin-bottom:12px;
-  min-height:42px;
-}
-
-.price{
-  font-size:21px;
-  font-weight:900;
-  color:var(--dark);
-  margin-bottom:14px;
-}
-
-.product-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr 46px;
-  gap:8px;
-}
-
-.product-actions button{
-  border:0;
-  padding:11px 8px;
-  border-radius:10px;
-  font-weight:900;
-  cursor:pointer;
-  font-size:13px;
-}
-
-.add-cart{
-  background:var(--blue);
-  color:white;
-}
-
-.buy-now{
-  background:var(--gold);
-  color:var(--dark);
-}
-
-.favorite{
-  background:#eef4f8;
-  color:var(--text);
-  font-size:18px!important;
-}
-
-.empty-state{
-  grid-column:1/-1;
-  background:white;
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:35px;
-  text-align:center;
-  color:var(--muted);
-}
-
-/* CART DRAWER */
-.drawer-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:180;
-  display:none;
-}
-
-.drawer-overlay.active{
-  display:block;
-}
-
-.cart-drawer{
-  position:fixed;
-  top:0;
-  right:-420px;
-  width:400px;
-  max-width:92%;
-  height:100vh;
-  background:white;
-  z-index:200;
-  transition:.3s;
-  box-shadow:-20px 0 45px rgba(0,0,0,.2);
-  display:flex;
-  flex-direction:column;
-}
-
-.cart-drawer.active{
-  right:0;
-}
-
-.cart-head{
-  padding:20px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.cart-head h3{
-  color:var(--dark);
-}
-
-.cart-head button{
-  border:0;
-  background:#eef4f8;
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  cursor:pointer;
-  font-size:18px;
-}
-
-.cart-items{
-  flex:1;
-  overflow:auto;
-  padding:16px;
-}
-
-.cart-item{
-  display:grid;
-  grid-template-columns:64px 1fr;
-  gap:12px;
-  border-bottom:1px solid var(--border);
-  padding:12px 0;
-}
-
-.cart-item img{
-  width:64px;
-  height:64px;
-  border-radius:12px;
-  object-fit:cover;
-  background:#eef4f8;
-}
-
-.cart-item h4{
-  font-size:14px;
-  color:var(--dark);
-  margin-bottom:5px;
-}
-
-.cart-item p{
-  font-size:13px;
-  color:var(--muted);
-}
-
-.qty-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:8px;
-}
-
-.qty-row button{
-  border:0;
-  background:#eef4f8;
-  width:25px;
-  height:25px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:900;
-}
-
-.remove-btn{
-  color:#d92d20;
-  cursor:pointer;
-  font-size:12px;
-  margin-top:7px;
-  display:inline-block;
-}
-
-.cart-footer{
-  border-top:1px solid var(--border);
-  padding:18px;
-}
-
-.cart-total{
-  display:flex;
-  justify-content:space-between;
-  font-size:18px;
-  font-weight:900;
-  margin-bottom:14px;
-}
-
-.checkout-btn{
-  width:100%;
-  border:0;
-  background:var(--gold);
-  color:var(--dark);
-  padding:15px;
-  border-radius:14px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-/* MODALS */
-.modal-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  z-index:300;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.modal-overlay.active{
-  display:flex;
-}
-
-.modal{
-  width:100%;
-  max-width:440px;
-  background:white;
-  border-radius:24px;
-  padding:26px;
-  box-shadow:0 25px 60px rgba(0,0,0,.25);
-}
-
-.modal h3{
-  font-size:25px;
-  color:var(--dark);
-  margin-bottom:10px;
-}
-
-.modal p{
-  color:var(--muted);
-  line-height:1.5;
-  margin-bottom:18px;
-}
-
-.form-group{
-  margin-bottom:14px;
-}
-
-.form-group label{
-  display:block;
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:7px;
-  color:var(--dark);
-}
-
-.form-group input{
-  width:100%;
-  height:48px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:0 14px;
-  outline:none;
-  font-size:15px;
-}
-
-.form-group input:focus{
-  border-color:var(--blue);
-}
-
-.modal-actions{
-  display:flex;
-  gap:10px;
-  margin-top:16px;
-}
-
-.modal-actions button{
-  flex:1;
-  border:0;
-  padding:13px;
-  border-radius:12px;
-  font-weight:900;
-  cursor:pointer;
-}
-
-.primary-btn{
-  background:var(--blue);
-  color:white;
-}
-
-.secondary-btn{
-  background:#eef4f8;
-  color:var(--text);
-}
-
-.switch-auth{
-  text-align:center;
-  margin-top:16px;
-  color:var(--muted);
-  font-size:14px;
-}
-
-.switch-auth button{
-  border:0;
-  background:transparent;
-  color:var(--blue);
-  font-weight:900;
-  cursor:pointer;
-}
-
-/* INFO */
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:22px;
-}
-
-.info{
-  background:white;
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:28px;
-  box-shadow:0 8px 24px rgba(0,0,0,.05);
-}
-
-.info h3{
-  color:var(--dark);
-  margin-bottom:12px;
-}
-
-.info p{
-  color:var(--muted);
-  line-height:1.7;
-  font-size:14px;
-}
-
-/* ABOUT */
-.about{
-  background:white;
-  border:1px solid var(--border);
-  border-radius:26px;
-  padding:38px;
-  box-shadow:0 8px 24px rgba(0,0,0,.05);
-}
-
-.about h2{
-  text-align:left;
-  margin-bottom:12px;
-}
-
-.about p{
-  color:#4a5568;
-  line-height:1.8;
-  margin-top:12px;
-}
-
-/* FOOTER */
-footer{
-  background:var(--dark);
-  color:white;
-  padding:55px 0 25px;
-}
-
-.footer-grid{
-  display:grid;
-  grid-template-columns:1.4fr repeat(3,1fr);
-  gap:30px;
-}
-
-footer h3,
-footer h4{
-  color:var(--gold);
-  margin-bottom:16px;
-}
-
-footer p,
-footer a{
-  display:block;
-  color:rgba(255,255,255,.72);
-  font-size:14px;
-  line-height:1.9;
-}
-
-.payments{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-
-.payments span{
-  border:1px solid rgba(255,255,255,.18);
-  padding:8px 10px;
-  border-radius:8px;
-  font-size:12px;
-}
-
-.bottom{
-  text-align:center;
-  margin-top:35px;
-  padding-top:20px;
-  border-top:1px solid rgba(255,255,255,.12);
-  color:rgba(255,255,255,.6);
-  font-size:13px;
-}
-
-/* RESPONSIVE */
-@media(max-width:950px){
-  .header-inner{
-    height:auto;
-    padding:16px 0;
-    flex-wrap:wrap;
-  }
-
-  .search{
-    order:3;
-    max-width:100%;
-    width:100%;
-  }
-
-  .hero-grid{
-    grid-template-columns:1fr;
-  }
-
-  .categories,
-  .products,
-  .info-grid,
-  .footer-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-  .hero h1{
-    font-size:38px;
-  }
-}
-
-@media(max-width:620px){
-  nav{
-    flex-wrap:wrap;
-  }
-
-  .categories,
-  .products,
-  .info-grid,
-  .footer-grid{
-    grid-template-columns:1fr;
-  }
-
-  .product-actions{
-    grid-template-columns:1fr;
-  }
-
-  .favorite{
-    width:100%;
-  }
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+html{scroll-behavior:smooth}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none}
+
+.page{width:1320px;margin:0 auto;padding:16px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:30px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.88;margin-bottom:8px}
+.top-links a:hover{color:#00e5ff}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 370px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 20px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search input::placeholder{color:rgba(255,255,255,.55)}
+.search button{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;padding:12px 20px;border-radius:18px;box-shadow:0 0 16px #00e5ff55}
+
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a,.actions button{background:transparent;color:white;font-weight:900;font-size:14px}
+.actions a:hover,.actions button:hover{color:#ffd700}
+.count-badge{background:#ffd700;color:#031326;border-radius:99px;padding:2px 7px;font-size:12px;margin-left:4px}
+
+.nav-wrap{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.category-btn{height:54px;padding:0 24px;border-radius:20px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;font-size:16px;box-shadow:0 0 20px #00e5ff44}
+.quick-nav{height:54px;flex:1;display:flex;align-items:center;gap:18px;padding:0 22px;overflow:hidden}
+.quick-nav button{background:transparent;color:white;font-weight:900;font-size:14px;white-space:nowrap}
+.quick-nav button:hover{color:#ffd700}
+
+.mega-menu{display:none;position:absolute;left:22px;right:22px;top:170px;z-index:50;padding:24px;border-radius:28px;background:linear-gradient(145deg,#061b33,#020814);border:1px solid rgba(0,229,255,.35);box-shadow:0 0 45px rgba(0,229,255,.25)}
+.mega-menu.active{display:grid;grid-template-columns:240px 1fr;gap:20px}
+.mega-left{display:flex;flex-direction:column;gap:8px;border-right:1px solid rgba(255,255,255,.12);padding-right:16px}
+.mega-left button{height:42px;border-radius:14px;background:rgba(255,255,255,.06);color:white;text-align:left;padding:0 14px;font-weight:900}
+.mega-left button.active,.mega-left button:hover{background:linear-gradient(135deg,#ffd700,#b88700);color:#031326}
+.mega-right{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mega-col h4{color:#ffd700;margin-bottom:10px;font-size:16px}
+.mega-col button{display:block;background:transparent;color:rgba(255,255,255,.78);font-size:13px;line-height:1.8;text-align:left}
+.mega-col button:hover{color:#00e5ff}
+
+.hero-ads{display:grid;grid-template-columns:1.35fr repeat(2,1fr);grid-template-rows:180px 180px;gap:16px;margin-bottom:24px}
+.ad-card{padding:24px;border-radius:26px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,rgba(0,229,255,.14),rgba(255,215,0,.08));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 25px rgba(0,229,255,.12)}
+.ad-card.big{grid-row:span 2}
+.ad-card h2,.ad-card h3{color:#ffd700}
+.ad-card h2{font-size:42px;line-height:1.05}
+.ad-card p{opacity:.78;line-height:1.45;margin-top:8px}
+.ad-card button{align-self:flex-start;margin-top:16px;padding:12px 18px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
+
+.promo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.promo-card{padding:20px;min-height:115px;border-radius:22px;background:linear-gradient(145deg,rgba(5,25,50,.9),rgba(3,10,24,.96));border:1px solid rgba(255,215,0,.24)}
+.promo-card h3{color:#ffd700;margin-bottom:7px}
+.promo-card p{font-size:13px;opacity:.75;line-height:1.4}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:30px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title button{color:#00e5ff;background:transparent;font-weight:900;font-size:15px}
+
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;align-items:start}
+.product{min-height:415px;padding:15px;border-radius:24px;color:white;display:flex;flex-direction:column}
+.product-img{height:230px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:13px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.product-img img{width:100%;height:100%;object-fit:cover;display:block}
+.product b{color:#ffd700;font-size:15px;min-height:46px;line-height:1.35}
+.product p{font-size:13px;opacity:.72;margin:6px 0;min-height:32px;line-height:1.35}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.tag{font-size:11px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.22);padding:5px 7px;border-radius:99px;color:#00e5ff}
+.hp-tag{color:#ffd700;border-color:rgba(255,215,0,.30);background:rgba(255,215,0,.10)}
+.price{color:#00e5ff;font-size:21px;font-weight:900;margin:4px 0 10px}
+.old-price{text-decoration:line-through;opacity:.55;color:#ddd;margin-right:8px;font-size:14px}
+.product-actions{margin-top:auto;display:grid;grid-template-columns:1fr 48px;gap:10px}
+.buy-btn{height:40px;border-radius:15px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
+.fav-btn{height:40px;border-radius:15px;background:#ffffff12;color:#ffd700;font-size:22px;border:1px solid #ffd70033;display:flex;align-items:center;justify-content:center}
+.cart-btn{height:38px;border-radius:14px;background:linear-gradient(135deg,#ffd700,#b88700);color:#031326;font-weight:900;margin-top:8px;width:100%}
+
+.brand-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.brand-card{height:90px;border-radius:20px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;color:#ffd700;background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20)}
+
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:26px}
+.info-card{padding:22px;min-height:135px}
+.info-card h3{color:#ffd700;margin-bottom:8px}
+.info-card p{opacity:.75;line-height:1.45;font-size:14px}
+
+.notice{position:fixed;right:25px;bottom:25px;z-index:999;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;box-shadow:0 0 25px #00e5ff44;display:none;max-width:350px}
+.notice b{color:#ffd700}
+
+.footer-main{margin-top:35px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div class="container">
-    <span>Güvenli alışveriş • Hızlı teslimat • Kolay iade</span>
-    <span>Destek: allonahub@gmail.com</span>
-  </div>
+<div class="page">
+
+<div class="top-links">
+<a href="index.html">Ana Sayfa</a>
+<a href="partner.html">Partner Başvurusu</a>
+<a href="iletisim.html">İletişim</a>
+<a href="yardim.html">Destek</a>
 </div>
 
-<header>
-  <div class="container header-inner">
+<div class="header">
 
-    <a href="index.html" class="logo">
-      <span class="gold">Allona</span> <span class="blue">Shop</span>
-    </a>
+<a class="brand glass" href="index.html">
+<img src="allona.logo.png" alt="AllonaHub">
+<b>Allona</b><span>Shop</span>
+</a>
 
-    <div class="search">
-      <input id="searchInput" type="text" placeholder="Ürün, kategori veya marka ara...">
-      <button onclick="searchProducts()">Ara</button>
-    </div>
+<div class="search glass">
+<div class="search-mark"></div>
+<input id="searchInput" placeholder="Ürün, kategori veya marka ara...">
+<button onclick="searchProducts()">Ara</button>
+</div>
 
-    <nav>
-      <a href="#urunler">Ürünler</a>
-      <a href="#hakkimizda">Hakkımızda</a>
-      <a href="#teslimat">Teslimat</a>
-      <a href="#iletisim">İletişim</a>
-    </nav>
+<div class="actions glass">
+<a href="user.html">Hesabım</a>
+<button onclick="openFavorites()">Favoriler <span id="favCount" class="count-badge">0</span></button>
+<button onclick="toggleCart()">Sepetim <span id="cartCount" class="count-badge">0</span></button>
+</div>
 
-    <div class="header-actions">
-      <button class="icon-btn" onclick="openFavorites()" title="Favoriler">
-        ♡
-        <span class="badge" id="favCount">0</span>
-      </button>
+</div>
 
-      <button class="icon-btn" onclick="openCart()" title="Sepet">
-        🛒
-        <span class="badge" id="cartCount">0</span>
-      </button>
+<div class="nav-wrap">
+<button class="category-btn" onclick="toggleMega()">☰ Kategoriler</button>
+<div class="quick-nav glass">
+<button onclick="filterByCategory('Kadın')">Kadın</button>
+<button onclick="filterByCategory('Erkek')">Erkek</button>
+<button onclick="filterByCategory('Ev & Yaşam')">Ev & Yaşam</button>
+<button onclick="filterByCategory('Anne & Çocuk')">Anne & Çocuk</button>
+<button onclick="filterByCategory('Kozmetik')">Kozmetik</button>
+<button onclick="filterByCategory('Süpermarket')">Süpermarket</button>
+<button onclick="filterByCategory('Ayakkabı & Çanta')">Ayakkabı & Çanta</button>
+<button onclick="scrollToSection('hubProducts')">Hublar</button>
+<button onclick="scrollToSection('bestSellers')">Çok Satanlar</button>
+</div>
+</div>
 
-      <a href="javascript:void(0)" id="authButton" class="login-btn" onclick="openAuthModal()">Giriş Yap</a>
-    </div>
+<div id="megaMenu" class="mega-menu">
+<div id="megaLeft" class="mega-left"></div>
+<div id="megaRight" class="mega-right"></div>
+</div>
 
-  </div>
-</header>
+<section class="hero-ads">
 
-<section class="hero">
-  <div class="container hero-grid">
+<div class="ad-card big">
+<div>
+<h2>Allona Shop’ta Premium Alışveriş</h2>
+<p>Partner mağazalardan günlük fırsatlar, HP avantajları ve güvenli alışveriş tek merkezde.</p>
+</div>
+<button onclick="scrollToSection('activeProducts')">Alışverişe Başla</button>
+</div>
 
-    <div>
-      <h1>Allona Shop ile güvenli online alışveriş</h1>
-      <p>
-        Takı, aksesuar, kozmetik, tekstil ve yaşam ürünlerinde seçili ürünleri
-        güvenli ödeme altyapısı ve kolay iade imkânı ile müşterilerimize sunuyoruz.
-      </p>
+<div class="ad-card">
+<div>
+<h3>Günün Partner Reklamı</h3>
+<p>Partner kampanyaları burada yayınlanır.</p>
+</div>
+<button>Keşfet</button>
+</div>
 
-      <div class="hero-buttons">
-        <a href="#urunler" class="btn btn-gold">Ürünleri İncele</a>
-        <a href="#teslimat" class="btn btn-light">Teslimat & İade</a>
-      </div>
-    </div>
+<div class="ad-card">
+<div>
+<h3>HP ile Öde</h3>
+<p>Seçili ürünlerde HP kupon avantajı.</p>
+</div>
+<button onclick="scrollToSection('hpProducts')">HP Ürünleri</button>
+</div>
 
-    <div class="hero-card">
-      <h3>Alışveriş Avantajları</h3>
-      <ul>
-        <li>✔ Güvenli ödeme altyapısı</li>
-        <li>✔ Sipariş sonrası bilgilendirme</li>
-        <li>✔ Mesafeli satış sözleşmesi</li>
-        <li>✔ 14 gün içinde cayma hakkı</li>
-        <li>✔ Türkiye içi teslimat</li>
-      </ul>
-    </div>
+<div class="ad-card">
+<div>
+<h3>Yeni Gelenler</h3>
+<p>En yeni ürünleri ilk sen gör.</p>
+</div>
+<button onclick="scrollToSection('newProducts')">Yeni Ürünler</button>
+</div>
 
-  </div>
-</section>
-<section class="section">
-  <div class="container">
-    <h2 class="section-title">Kategoriler</h2>
-    <p class="section-sub">Allona Shop’ta satışa sunulan ana ürün grupları</p>
+<div class="ad-card">
+<div>
+<h3>Kuponlu Ürünler</h3>
+<p>Partner destekli indirim ve kuponlar.</p>
+</div>
+<button onclick="scrollToSection('couponProducts')">Kuponları Gör</button>
+</div>
 
-    <div class="categories">
-      <div class="cat" onclick="filterCategory('takı')">
-        <h3>Takı & Aksesuar</h3>
-        <p>Kolye, yüzük, bileklik ve özel aksesuarlar.</p>
-      </div>
-
-      <div class="cat" onclick="filterCategory('tekstil')">
-        <h3>Tekstil</h3>
-        <p>Günlük kullanım ve seçili tekstil ürünleri.</p>
-      </div>
-
-      <div class="cat" onclick="filterCategory('kozmetik')">
-        <h3>Kozmetik</h3>
-        <p>Bakım ve kişisel kullanım ürünleri.</p>
-      </div>
-
-      <div class="cat" onclick="filterCategory('yaşam')">
-        <h3>Yaşam Ürünleri</h3>
-        <p>Ev ve günlük yaşam için pratik ürünler.</p>
-      </div>
-    </div>
-  </div>
 </section>
 
-<section class="section" id="urunler">
-  <div class="container">
-    <h2 class="section-title">Ürünler</h2>
-    <p class="section-sub">Supabase üzerinden satışa açık ürünler otomatik listelenir</p>
+<div class="promo-strip">
+<div class="promo-card"><h3>2000 HP Üzeri</h3><p>HP bakiyesi yüksek kullanıcılar için avantajlı alışveriş.</p></div>
+<div class="promo-card"><h3>%10 İndirimde</h3><p>Seçili ürünlerde hızlı kampanya alanı.</p></div>
+<div class="promo-card"><h3>%20 ve Üzeri</h3><p>Fiyatı düşen ürünleri burada öne çıkar.</p></div>
+<div class="promo-card"><h3>Tamamını HP ile Öde</h3><p>Gelecekte HP ödeme destekli ürünler.</p></div>
+</div>
 
-    <div class="products" id="productGrid">
-      <div class="empty-state">Ürünler yükleniyor...</div>
-    </div>
-  </div>
+<section id="activeProducts">
+<div class="section-title">
+<h2>Aktif Ürünler</h2>
+<button onclick="showAllProducts()">Tümünü Gör</button>
+</div>
+<div id="productsGrid" class="product-grid"><p>Ürünler yükleniyor...</p></div>
+</section>
+ <section id="discountProducts">
+<div class="section-title">
+<h2>İndirimde Olanlar</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="discountGrid" class="product-grid"></div>
 </section>
 
-<section class="section" id="teslimat">
-  <div class="container">
-    <h2 class="section-title">Güvenli Alışveriş Bilgileri</h2>
-    <p class="section-sub">Müşteri deneyimini şeffaf ve güvenli hale getiriyoruz</p>
-
-    <div class="info-grid">
-      <div class="info">
-        <h3>Teslimat</h3>
-        <p>
-          Siparişler, ödeme onayından sonra hazırlanarak anlaşmalı kargo firmaları
-          aracılığıyla müşteriye ulaştırılır. Teslimat süresi ürün ve teslimat adresine
-          göre değişiklik gösterebilir.
-        </p>
-      </div>
-
-      <div class="info">
-        <h3>İade & Cayma Hakkı</h3>
-        <p>
-          Müşteriler, mevzuata uygun şekilde 14 gün içerisinde cayma hakkını kullanabilir.
-          İade süreci ürünün kullanılmamış, yeniden satılabilir durumda olması ve yasal
-          istisnalar dikkate alınarak değerlendirilir.
-        </p>
-      </div>
-
-      <div class="info">
-        <h3>Güvenli Ödeme</h3>
-        <p>
-          Ödemeler güvenli ödeme altyapısı üzerinden alınır. Kart bilgileriniz Allona Shop
-          tarafından saklanmaz. Ödeme işlemleri güvenli servis sağlayıcılar üzerinden yürütülür.
-        </p>
-      </div>
-    </div>
-  </div>
+<section id="newProducts">
+<div class="section-title">
+<h2>Yeni Gelenler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="newGrid" class="product-grid"></div>
 </section>
 
-<section class="section" id="hakkimizda">
-  <div class="container">
-    <div class="about">
-      <h2 class="section-title">Hakkımızda</h2>
-
-      <p>
-        Allona Shop, Allworksin Business Danışmanlık Tic. Ltd. Şti. bünyesinde faaliyet
-        gösteren online alışveriş mağazasıdır. Müşterilerine güvenli, düzenli ve şeffaf
-        bir alışveriş deneyimi sunmayı hedefler.
-      </p>
-
-      <p>
-        Ürün seçimi, sipariş yönetimi, teslimat ve satış sonrası destek süreçlerinde
-        müşteri memnuniyeti esas alınır. Allona Shop üzerinden sunulan ürünler, mesafeli
-        satış kurallarına uygun şekilde müşterilere ulaştırılır.
-      </p>
-    </div>
-  </div>
+<section id="hubProducts">
+<div class="section-title">
+<h2>Hub Ürünler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="hubGrid" class="product-grid"></div>
 </section>
 
-<footer id="iletisim">
-  <div class="container footer-grid">
+<section id="bestSellers">
+<div class="section-title">
+<h2>En Çok Satanlar</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="bestGrid" class="product-grid"></div>
+</section>
 
-    <div>
-      <h3>Allona Shop</h3>
-      <p>Güvenli online alışveriş mağazası.</p>
+<section id="couponProducts">
+<div class="section-title">
+<h2>Kuponlu Ürünler</h2>
+<button>Hepsini Gör</button>
+</div>
+<div id="couponGrid" class="product-grid"></div>
+</section>
 
-      <div class="payments">
-        <span>iyzico</span>
-        <span>Visa</span>
-        <span>Mastercard</span>
-        <span>AMEX</span>
-      </div>
-    </div>
+<div class="section-title">
+<h2>Markalar</h2>
+</div>
 
-    <div>
-      <h4>Kurumsal</h4>
-      <a href="hakkimizda.html">Hakkımızda</a>
-      <a href="iletisim.html">İletişim</a>
-      <a href="destek.html">Destek</a>
-    </div>
+<div id="brandsGrid" class="brand-grid">
+<div class="brand-card">Allona Shop</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+<div class="brand-card">Yakında</div>
+</div>
 
-    <div>
-      <h4>Yasal</h4>
-      <a href="mesafeli-satis-sozlesmesi.html">Mesafeli Satış Sözleşmesi</a>
-      <a href="gizlilik.html">Gizlilik Politikası</a>
-      <a href="kvkk.html">KVKK Aydınlatma Metni</a>
-      <a href="iade-politikasi.html">İade Politikası</a>
-    </div>
+<div class="info-grid">
 
-    <div>
-      <h4>İletişim</h4>
-      <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
-      <p>İstanbul / Türkiye</p>
-      <p>E-posta: allonahub@gmail.com</p>
-      <p>Çalışma Saatleri: 09:00 - 18:00</p>
-    </div>
+<div class="info-card glass">
+<h3>HP Kazan</h3>
+<p>Alışveriş yaptıkça HP kazan ve kuponlara dönüştür.</p>
+</div>
 
-  </div>
+<div class="info-card glass">
+<h3>Premium Üyelik</h3>
+<p>Gold, Elite ve Legend avantajlarına eriş.</p>
+</div>
 
-  <div class="container bottom">
-    ©️ 2026 Allona Shop. Tüm hakları saklıdır.
-  </div>
+<div class="info-card glass">
+<h3>Güvenli Alışveriş</h3>
+<p>Siparişler merkezi sistem tarafından takip edilir.</p>
+</div>
+
+<div class="info-card glass">
+<h3>Partner Ekosistemi</h3>
+<p>Binlerce partner tek ekosistemde buluşacak.</p>
+</div>
+
+</div>
+
+<div id="notice" class="notice"></div>
+
+<footer class="footer-main">
+
+<div class="footer-grid">
+
+<div class="footer-col">
+<h3>AllonaHub</h3>
+<a href="hakkimizda.html">Hakkımızda</a>
+<a href="iletişim.html">İletişim</a>
+<a href="partner.html">Partner Ol</a>
+<a href="#">Kariyer</a>
+</div>
+
+<div class="footer-col">
+<h3>Yasal</h3>
+<a href="kvkk.html">KVKK</a>
+<a href="gizlilik.html">Gizlilik</a>
+<a href="cerez.html">Çerez Politikası</a>
+<a href="#">Kullanım Şartları</a>
+</div>
+
+<div class="footer-col">
+<h3>E-Ticaret</h3>
+<a href="mesafeli-satis.html">Mesafeli Satış</a>
+<a href="iade-politikasi.html">İade Politikası</a>
+<a href="teslimat.html">Teslimat</a>
+</div>
+
+<div class="footer-col">
+<h3>İletişim</h3>
+<p>info@allonahub.com</p>
+<p>İstanbul / Türkiye</p>
+<p>+90 542 778 18 68</p>
+</div>
+
+</div>
+
+<div class="footer-bottom">
+©️ 2026 AllonaHub - Global Partner Based Super App
+</div>
+
 </footer>
 
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeCart()"></div>
-
-<aside class="cart-drawer" id="cartDrawer">
-  <div class="cart-head">
-    <h3>Sepetim</h3>
-    <button onclick="closeCart()">×</button>
-  </div>
-
-  <div class="cart-items" id="cartItems">
-    <p>Sepet yükleniyor...</p>
-  </div>
-
-  <div class="cart-footer">
-    <div class="cart-total">
-      <span>Toplam</span>
-      <span id="cartTotal">0 TL</span>
-    </div>
-
-    <button class="checkout-btn" onclick="goCheckout()">Güvenli Ödemeye Geç</button>
-  </div>
-</aside>
-
-<div class="modal-overlay" id="authModal">
-  <div class="modal">
-    <h3 id="authTitle">Giriş Yap</h3>
-    <p id="authDesc">Siparişlerinizi takip etmek ve güvenli alışveriş yapmak için giriş yapın.</p>
-
-    <div class="form-group" id="nameGroup" style="display:none">
-      <label>Ad Soyad</label>
-      <input type="text" id="authName" placeholder="Ad Soyad">
-    </div>
-
-    <div class="form-group">
-      <label>E-posta</label>
-      <input type="email" id="authEmail" placeholder="ornek@email.com">
-    </div>
-
-    <div class="form-group">
-      <label>Şifre</label>
-      <input type="password" id="authPassword" placeholder="Şifreniz">
-    </div>
-
-    <div class="modal-actions">
-      <button class="secondary-btn" onclick="closeAuthModal()">Kapat</button>
-      <button class="primary-btn" id="authSubmitBtn" onclick="loginUser()">Giriş Yap</button>
-    </div>
-
-    <div class="switch-auth">
-      <span id="authSwitchText">Hesabınız yok mu?</span>
-      <button onclick="toggleAuthMode()" id="authSwitchBtn">Kayıt Ol</button>
-    </div>
-  </div>
 </div>
+
 <script>
-/* =========================
-   SUPABASE AYARLARI
-   ========================= */
 
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL =
+"https://xqvikrysciguzholdjeb.supabase.co";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_KEY =
+"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
-/*
-Supabase products tablosu için önerilen kolonlar:
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
-id
-name
-description
-price
-image_url
-category
-status
-stock
-created_at
+let products=[];
 
-status = active olmalı.
-*/
+const megaCategories={
+"Kadın":["Giyim","Takı","Aksesuar","İç Giyim"],
+"Erkek":["Giyim","Saat","Ayakkabı","Aksesuar"],
+"Anne & Çocuk":["Bebek","Oyuncak","Anne Ürünleri"],
+"Ev & Yaşam":["Mobilya","Dekorasyon","Mutfak"],
+"Kozmetik":["Makyaj","Parfüm","Bakım"],
+"Süpermarket":["Gıda","İçecek","Temizlik"]
+};
 
+function toggleMega(){
 
-/* =========================
-   GLOBAL STATE
-   ========================= */
+const menu=
+document.getElementById("megaMenu");
 
-let allProducts = [];
-let currentUser = null;
-let authMode = "login";
+menu.classList.toggle("active");
 
+renderMega();
 
-/* =========================
-   HELPERS
-   ========================= */
-
-function money(value){
-  return Number(value || 0).toLocaleString("tr-TR", {
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  }) + " TL";
 }
 
-function safeText(value){
-  return String(value || "").replace(/[<>]/g, "");
+function renderMega(){
+
+const left=
+document.getElementById("megaLeft");
+
+const right=
+document.getElementById("megaRight");
+
+left.innerHTML="";
+right.innerHTML="";
+
+Object.keys(megaCategories)
+.forEach(cat=>{
+
+left.innerHTML+=
+`<button onclick="filterByCategory('${cat}')">${cat}</button>`;
+
+right.innerHTML+=`
+<div class="mega-col">
+<h4>${cat}</h4>
+${megaCategories[cat]
+.map(x=>`<button>${x}</button>`)
+.join("")}
+</div>
+`;
+
+});
+
 }
 
-function getCart(){
-  return JSON.parse(localStorage.getItem("allona_shop_cart") || "[]");
+function money(v){
+return Number(v||0)
+.toLocaleString("tr-TR",{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})+" ₺";
 }
 
-function saveCart(cart){
-  localStorage.setItem("allona_shop_cart", JSON.stringify(cart));
-  updateCartCount();
+function showNotice(text){
+
+const box=
+document.getElementById("notice");
+
+box.innerHTML=text;
+
+box.style.display="block";
+
+setTimeout(()=>{
+box.style.display="none";
+},3000);
+
 }
 
-function getFavorites(){
-  return JSON.parse(localStorage.getItem("allona_shop_favorites") || "[]");
+function productCard(product){
+
+return `
+<div class="product glass" onclick="window.location.href='product.html?id=${product.id}'">
+
+<div class="product-img">
+<img src="${product.image_url || 'allona-shop.png'}" onerror="this.src='allona-shop.png'">
+</div>
+
+<b>${product.product_name || 'Ürün'}</b>
+
+<p>${product.category || 'Kategori'}</p>
+
+<div class="tag-row">
+<div class="tag">Partner</div>
+<div class="tag hp-tag">HP</div>
+</div>
+
+<div class="price">
+${money(product.price)}
+</div>
+
+<div class="product-actions">
+<button class="buy-btn"
+onclick="event.stopPropagation(); buyNow('${product.id}')">
+Satın Al
+</button>
+
+<button class="fav-btn"
+onclick="event.stopPropagation(); toggleFav('${product.id}')">
+♥️
+</button>
+</div>
+
+<button class="cart-btn"
+onclick="event.stopPropagation(); addToCart('${product.id}')">
+Sepete Ekle
+</button>
+
+</div>
+`;
+
 }
-
-function saveFavorites(favorites){
-  localStorage.setItem("allona_shop_favorites", JSON.stringify(favorites));
-  updateFavCount();
-}
-
-function findProduct(productId){
-  return allProducts.find(p => String(p.id) === String(productId));
-}
-
-
-/* =========================
-   AUTH
-   ========================= */
-
-async function checkUser(){
-  const { data } = await supabaseClient.auth.getUser();
-  currentUser = data?.user || null;
-  updateAuthButton();
-}
-
-function updateAuthButton(){
-  const authButton = document.getElementById("authButton");
-
-  if(!authButton) return;
-
-  if(currentUser){
-    authButton.textContent = "Hesabım";
-    authButton.onclick = openAccountMenu;
-  }else{
-    authButton.textContent = "Giriş Yap";
-    authButton.onclick = openAuthModal;
-  }
-}
-
-function openAuthModal(){
-  document.getElementById("authModal").classList.add("active");
-}
-
-function closeAuthModal(){
-  document.getElementById("authModal").classList.remove("active");
-}
-
-function toggleAuthMode(){
-  authMode = authMode === "login" ? "register" : "login";
-
-  const title = document.getElementById("authTitle");
-  const desc = document.getElementById("authDesc");
-  const nameGroup = document.getElementById("nameGroup");
-  const submitBtn = document.getElementById("authSubmitBtn");
-  const switchText = document.getElementById("authSwitchText");
-  const switchBtn = document.getElementById("authSwitchBtn");
-
-  if(authMode === "register"){
-    title.textContent = "Kayıt Ol";
-    desc.textContent = "Allona Shop hesabınızı oluşturun ve siparişlerinizi kolayca takip edin.";
-    nameGroup.style.display = "block";
-    submitBtn.textContent = "Kayıt Ol";
-    submitBtn.onclick = registerUser;
-    switchText.textContent = "Zaten hesabınız var mı?";
-    switchBtn.textContent = "Giriş Yap";
-  }else{
-    title.textContent = "Giriş Yap";
-    desc.textContent = "Siparişlerinizi takip etmek ve güvenli alışveriş yapmak için giriş yapın.";
-    nameGroup.style.display = "none";
-    submitBtn.textContent = "Giriş Yap";
-    submitBtn.onclick = loginUser;
-    switchText.textContent = "Hesabınız yok mu?";
-    switchBtn.textContent = "Kayıt Ol";
-  }
-}
-
-async function loginUser(){
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value.trim();
-
-  if(!email || !password){
-    alert("Lütfen e-posta ve şifre girin.");
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    alert("Giriş yapılamadı: " + error.message);
-    return;
-  }
-
-  currentUser = data.user;
-  closeAuthModal();
-  updateAuthButton();
-  alert("Giriş başarılı.");
-}
-
-async function registerUser(){
-  const name = document.getElementById("authName").value.trim();
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value.trim();
-
-  if(!name || !email || !password){
-    alert("Lütfen ad soyad, e-posta ve şifre girin.");
-    return;
-  }
-
-  if(password.length < 6){
-    alert("Şifre en az 6 karakter olmalı.");
-    return;
-  }
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options:{
-      data:{
-        full_name:name
-      }
-    }
-  });
-
-  if(error){
-    alert("Kayıt oluşturulamadı: " + error.message);
-    return;
-  }
-
-  currentUser = data.user || null;
-  closeAuthModal();
-  updateAuthButton();
-
-  alert("Kayıt oluşturuldu. Supabase e-posta doğrulaması açıksa gelen kutunuzu kontrol edin.");
-}
-
-async function logoutUser(){
-  await supabaseClient.auth.signOut();
-  currentUser = null;
-  updateAuthButton();
-  alert("Çıkış yapıldı.");
-}
-
-function openAccountMenu(){
-  const ok = confirm("Hesabınız açık.\n\nTamam: Çıkış Yap\nİptal: Hesapta kal");
-  if(ok){
-    logoutUser();
-  }
-}
-
-
-/* =========================
-   PRODUCTS
-   ========================= */
 
 async function loadProducts(){
-  const grid = document.getElementById("productGrid");
-  if(!grid) return;
 
-  grid.innerHTML = `<div class="empty-state">Ürünler yükleniyor...</div>`;
+const {data,error}=
+await supabaseClient
+.from("products")
+.select("*")
+.order("created_at",{ascending:false});
 
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending:false });
+if(error){
 
-  if(error){
-    console.error(error);
-    grid.innerHTML = `
-      <div class="empty-state">
-        Ürünler yüklenirken hata oluştu.<br>
-        Supabase URL, anon key veya products tablo izinlerini kontrol edin.
-      </div>
-    `;
-    return;
-  }
+document.getElementById("productsGrid")
+.innerHTML="<p>Ürünler yüklenemedi</p>";
 
-  allProducts = data || [];
-
-  renderProducts(allProducts);
+return;
 }
 
-function renderProducts(products){
-  const grid = document.getElementById("productGrid");
-  if(!grid) return;
+products=data || [];
 
-  if(!products || products.length === 0){
-    grid.innerHTML = `<div class="empty-state">Şu anda satışta ürün bulunmamaktadır.</div>`;
-    return;
-  }
+document.getElementById("productsGrid")
+.innerHTML=
+products.map(productCard).join("");
 
-  grid.innerHTML = products.map(product => {
-    const id = safeText(product.id);
-    const name = safeText(product.name || "Ürün");
-    const desc = safeText(product.description || "Allona Shop ürünü");
-    const image = safeText(product.image_url || "");
-    const price = money(product.price);
-    const favs = getFavorites();
-    const isFav = favs.includes(String(product.id));
+document.getElementById("discountGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-    return `
-      <div class="product">
-        <div class="product-img">
-          ${
-            image
-              ? `<img src="${image}" alt="${name}">`
-              : `<span>AS</span>`
-          }
-        </div>
+document.getElementById("newGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-        <div class="product-body">
-          <h3>${name}</h3>
-          <p>${desc}</p>
-          <div class="price">${price}</div>
+document.getElementById("hubGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
 
-          <div class="product-actions">
-            <button class="add-cart" onclick="addToCart('${id}')">Sepete Ekle</button>
-            <button class="buy-now" onclick="buyNow('${id}')">Şimdi Al</button>
-            <button class="favorite" onclick="toggleFavorite('${id}')">${isFav ? "♥️" : "♡"}</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
+document.getElementById("bestGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
+
+document.getElementById("couponGrid")
+.innerHTML=
+products.slice(0,5).map(productCard).join("");
+
 }
 
 function searchProducts(){
-  const q = document.getElementById("searchInput").value.trim().toLowerCase();
 
-  if(!q){
-    renderProducts(allProducts);
-    return;
-  }
+const q=
+document
+.getElementById("searchInput")
+.value
+.toLowerCase();
 
-  const filtered = allProducts.filter(p => {
-    const name = String(p.name || "").toLowerCase();
-    const desc = String(p.description || "").toLowerCase();
-    const cat = String(p.category || "").toLowerCase();
+const result=
+products.filter(p=>
 
-    return name.includes(q) || desc.includes(q) || cat.includes(q);
-  });
+String(p.product_name||"")
+.toLowerCase()
+.includes(q)
 
-  renderProducts(filtered);
+||
+
+String(p.category||"")
+.toLowerCase()
+.includes(q)
+
+);
+
+document
+.getElementById("productsGrid")
+.innerHTML=
+result.map(productCard).join("");
+
 }
 
-function filterCategory(category){
-  const q = String(category || "").toLowerCase();
+function filterByCategory(cat){
 
-  const filtered = allProducts.filter(p => {
-    const cat = String(p.category || "").toLowerCase();
-    const name = String(p.name || "").toLowerCase();
-    return cat.includes(q) || name.includes(q);
-  });
+const result=
+products.filter(p=>
 
-  renderProducts(filtered);
-  document.getElementById("urunler").scrollIntoView({ behavior:"smooth" });
+String(p.category||"")
+.toLowerCase()
+.includes(cat.toLowerCase())
+
+);
+
+document
+.getElementById("productsGrid")
+.innerHTML=
+result.map(productCard).join("");
+
+document
+.getElementById("megaMenu")
+.classList.remove("active");
+
 }
 
-document.getElementById("searchInput")?.addEventListener("keydown", function(e){
-  if(e.key === "Enter"){
-    searchProducts();
-  }
+function getCart(){
+return JSON.parse(localStorage.getItem("allonaCart")||"[]");
+}
+
+function setCart(cart){
+
+localStorage.setItem(
+"allonaCart",
+JSON.stringify(cart)
+);
+
+updateCartCount();
+
+}
+
+function addToCart(id){
+
+let cart=getCart();
+
+let found=
+cart.find(x=>x.id==id);
+
+if(found){
+
+found.qty++;
+
+}else{
+
+cart.push({
+id:id,
+qty:1
 });
 
-
-/* =========================
-   CART
-   ========================= */
-
-function addToCart(productId){
-  const product = findProduct(productId);
-
-  if(!product){
-    alert("Ürün bulunamadı.");
-    return;
-  }
-
-  const cart = getCart();
-  const existing = cart.find(item => String(item.product_id) === String(productId));
-
-  if(existing){
-    existing.quantity += 1;
-  }else{
-    cart.push({
-      product_id:String(productId),
-      quantity:1
-    });
-  }
-
-  saveCart(cart);
-  renderCart();
-  alert("Ürün sepete eklendi.");
 }
 
-function buyNow(productId){
-  addToCart(productId);
-  goCheckout();
+setCart(cart);
+
+showNotice("<b>Ürün sepete eklendi</b>");
+
+}
+
+function buyNow(id){
+
+addToCart(id);
+
+window.location.href=
+"cart.html";
+
+}
+
+function toggleFav(id){
+
+let favs=
+JSON.parse(localStorage.getItem("allonaFavs")||"[]");
+
+if(favs.includes(id)){
+
+favs=favs.filter(x=>x!=id);
+
+}else{
+
+favs.push(id);
+
+}
+
+localStorage.setItem(
+"allonaFavs",
+JSON.stringify(favs)
+);
+
+updateFavCount();
+
+showNotice("Favoriler güncellendi");
+
 }
 
 function updateCartCount(){
-  const cart = getCart();
-  const count = cart.reduce((sum,item) => sum + Number(item.quantity || 0), 0);
-  document.getElementById("cartCount").textContent = count;
-}
 
-function openCart(){
-  renderCart();
-  document.getElementById("drawerOverlay").classList.add("active");
-  document.getElementById("cartDrawer").classList.add("active");
-}
+const total=
+getCart().reduce(
+(a,b)=>a+b.qty,
+0
+);
 
-function closeCart(){
-  document.getElementById("drawerOverlay").classList.remove("active");
-  document.getElementById("cartDrawer").classList.remove("active");
-}
+document.getElementById("cartCount")
+.textContent=total;
 
-function renderCart(){
-  const cartItems = document.getElementById("cartItems");
-  const totalEl = document.getElementById("cartTotal");
-  const cart = getCart();
-
-  if(!cartItems || !totalEl) return;
-
-  if(cart.length === 0){
-    cartItems.innerHTML = `<p style="color:#667085">Sepetiniz boş.</p>`;
-    totalEl.textContent = money(0);
-    return;
-  }
-
-  let total = 0;
-
-  cartItems.innerHTML = cart.map(item => {
-    const product = findProduct(item.product_id);
-
-    if(!product) return "";
-
-    const qty = Number(item.quantity || 1);
-    const price = Number(product.price || 0);
-    total += price * qty;
-
-    const name = safeText(product.name || "Ürün");
-    const image = safeText(product.image_url || "");
-
-    return `
-      <div class="cart-item">
-        <img src="${image || "https://via.placeholder.com/120?text=AS"}" alt="${name}">
-
-        <div>
-          <h4>${name}</h4>
-          <p>${money(price)}</p>
-
-          <div class="qty-row">
-            <button onclick="changeQty('${item.product_id}', -1)">-</button>
-            <strong>${qty}</strong>
-            <button onclick="changeQty('${item.product_id}', 1)">+</button>
-          </div>
-
-          <span class="remove-btn" onclick="removeFromCart('${item.product_id}')">Sepetten çıkar</span>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  totalEl.textContent = money(total);
-}
-
-function changeQty(productId, delta){
-  const cart = getCart();
-  const item = cart.find(i => String(i.product_id) === String(productId));
-
-  if(!item) return;
-
-  item.quantity = Number(item.quantity || 1) + delta;
-
-  if(item.quantity <= 0){
-    removeFromCart(productId);
-    return;
-  }
-
-  saveCart(cart);
-  renderCart();
-}
-
-function removeFromCart(productId){
-  let cart = getCart();
-  cart = cart.filter(i => String(i.product_id) !== String(productId));
-  saveCart(cart);
-  renderCart();
-}
-
-function goCheckout(){
-  const cart = getCart();
-
-  if(cart.length === 0){
-    alert("Sepetiniz boş.");
-    return;
-  }
-
-  if(!currentUser){
-    alert("Ödeme adımına geçmek için giriş yapmanız gerekiyor.");
-    openAuthModal();
-    return;
-  }
-
-  localStorage.setItem("allona_checkout_cart", JSON.stringify(cart));
-  window.location.href = "checkout.html";
-}
-
-
-/* =========================
-   FAVORITES
-   ========================= */
-
-function toggleFavorite(productId){
-  let favorites = getFavorites();
-
-  if(favorites.includes(String(productId))){
-    favorites = favorites.filter(id => String(id) !== String(productId));
-  }else{
-    favorites.push(String(productId));
-  }
-
-  saveFavorites(favorites);
-  renderProducts(allProducts);
 }
 
 function updateFavCount(){
-  const count = getFavorites().length;
-  document.getElementById("favCount").textContent = count;
+
+const total=
+JSON.parse(
+localStorage.getItem("allonaFavs")||"[]"
+).length;
+
+document.getElementById("favCount")
+.textContent=total;
+
+}
+
+function toggleCart(){
+
+window.location.href=
+"cart.html";
+
 }
 
 function openFavorites(){
-  const favorites = getFavorites();
 
-  if(favorites.length === 0){
-    alert("Favori ürününüz yok.");
-    return;
-  }
+window.location.href=
+"favorites.html";
 
-  const favProducts = allProducts.filter(p => favorites.includes(String(p.id)));
-  renderProducts(favProducts);
-  document.getElementById("urunler").scrollIntoView({ behavior:"smooth" });
 }
 
+function scrollToSection(id){
 
-/* =========================
-   INIT
-   ========================= */
+document
+.getElementById(id)
+.scrollIntoView({
+behavior:"smooth"
+});
 
-async function initAllonaShop(){
-  updateCartCount();
-  updateFavCount();
-  await checkUser();
-  await loadProducts();
-  renderCart();
 }
 
-initAllonaShop();
+function showAllProducts(){
+
+loadProducts();
+
+}
+
+updateCartCount();
+updateFavCount();
+renderMega();
+loadProducts();
+
 </script>
 
 </body>
