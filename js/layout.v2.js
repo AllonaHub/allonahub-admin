@@ -43,6 +43,7 @@
           <div class="container nav-row__inner">
             <nav class="nav-links" data-nav-links aria-label="Ana menü">
               <a href="${core.url("index.html")}" ${active("index.html")}>Vitrin</a>
+              <a href="${core.url("ecosystem.html")}" ${active("ecosystem.html")}>Ekosistem</a>
               <a href="${core.url("shop.html")}" ${active("shop.html")}>Mağaza</a>
               <a href="${core.url("cart.html")}" ${active("cart.html")}>Sepet</a>
               <a href="${core.url("checkout.html")}" ${active("checkout.html")}>Ödeme</a>
