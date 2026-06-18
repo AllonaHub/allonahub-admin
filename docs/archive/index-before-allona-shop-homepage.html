@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaHub | Premium E-Ticaret</title>
+  <meta name="description" content="AllonaHub ile premium, güvenli ve hızlı online alışveriş deneyimi.">
+  <meta property="og:title" content="AllonaHub">
+  <meta property="og:description" content="AllonaHub ile güvenli, hızlı ve premium online alışveriş.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="images/allonahub-shopping-hero.png">
+  <link rel="canonical" href="https://allonahub.com/">
+  <link rel="stylesheet" href="css/styles.v2.css">
+</head>
+<body>
+  <div class="site-shell" data-page="shop">
+    <div data-layout="header"></div>
+
+    <main class="site-main">
+      <section class="container hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="eyebrow">AllonaHub</p>
+          <h1 id="hero-title">Premium alışveriş, tek güvenli merkezde.</h1>
+          <p>Seçili ürünleri güncel stok, güvenli ödeme ve hızlı sepet deneyimiyle AllonaHub kalitesinde keşfedin.</p>
+          <div class="hero__actions">
+            <a class="btn" href="shop.html">Alışverişe Başla</a>
+            <a class="btn btn--light" href="#featured-products">Öne Çıkanlar</a>
+          </div>
+        </div>
+        <picture class="hero__media">
+          <img src="images/allonahub-shopping-hero.png" alt="AllonaHub premium alışveriş ve güvenli ödeme görseli" loading="eager">
+        </picture>
+      </section>
+
+      <section class="container trust-strip" aria-label="AllonaHub avantajları">
+        <div class="trust-item"><strong>Güvenli ödeme</strong><span>Kart bilgileri iyzico ekranında girilir.</span></div>
+        <div class="trust-item"><strong>Canlı stok</strong><span>Ürün durumu Supabase üzerinden okunur.</span></div>
+        <div class="trust-item"><strong>Hızlı sepet</strong><span>Adet ve toplamlar anlık hesaplanır.</span></div>
+        <div class="trust-item"><strong>Üyelik</strong><span>Profil, sipariş ve favoriler tek hesapta tutulur.</span></div>
+      </section>
+
+      <section class="container section" id="featured-products">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Vitrin</p>
+            <h2>Aktif Ürünler</h2>
+          </div>
+          <a class="btn btn--light" href="shop.html">Tümünü Gör</a>
+        </div>
+
+        <form class="filters" data-product-filters>
+          <div class="field">
+            <label for="home-search">Arama</label>
+            <input id="home-search" type="search" data-filter-search placeholder="Ürün, kategori veya marka">
+          </div>
+          <div class="field">
+            <label for="home-category">Kategori</label>
+            <select id="home-category" data-filter-category><option value="">Tüm kategoriler</option></select>
+          </div>
+          <div class="field">
+            <label for="home-min">Min fiyat</label>
+            <input id="home-min" type="number" min="0" step="1" data-filter-min>
+          </div>
+          <div class="field">
+            <label for="home-max">Max fiyat</label>
+            <input id="home-max" type="number" min="0" step="1" data-filter-max>
+          </div>
+          <div class="field">
+            <label for="home-sort">Sıralama</label>
+            <select id="home-sort" data-filter-sort>
+              <option value="newest">En yeni</option>
+              <option value="best_selling">En çok satan</option>
+              <option value="price_asc">Fiyat artan</option>
+              <option value="price_desc">Fiyat azalan</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="product-grid" data-products-grid></div>
+      </section>
+
+      <section class="container section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Yeni</p>
+            <h2>Yeni Gelenler</h2>
+          </div>
+        </div>
+        <div class="product-grid" data-new-grid></div>
+      </section>
+
+      <section class="container section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Popüler</p>
+            <h2>En Çok Satanlar</h2>
+          </div>
+        </div>
+        <div class="product-grid" data-best-grid></div>
+      </section>
+    </main>
+
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/supabase-client.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/layout.v2.js" defer></script>
+  <script src="js/shop-page.js" defer></script>
+</body>
+</html>
