@@ -98,26 +98,30 @@
     const product = normalizeProduct(raw);
     const disabled = product.stock <= 0;
     const image = sanitizeUrl(product.image_url);
+    const rating = Number(product.rating || product.average_rating || 4.8).toFixed(1);
+    const discount = product.discount_label || product.discount || (product.compare_at_price > product.price ? "İndirim" : "Fırsat");
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
         <a class="product-card__media" href="${escapeHTML(productUrl(product))}" aria-label="${escapeHTML(product.name)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("images/product-fallback.svg")}'">
         </a>
+        <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
         <div class="product-card__body">
           <div class="product-card__meta">
             <span class="pill">${escapeHTML(product.category)}</span>
+            <span class="pill pill--deal">${escapeHTML(discount)}</span>
             <span class="${disabled ? "stock stock--out" : "stock"}">${disabled ? "Stok yok" : `${product.stock} stok`}</span>
           </div>
           <h3><a href="${escapeHTML(productUrl(product))}">${escapeHTML(product.name)}</a></h3>
           <p class="product-card__description">${escapeHTML(truncate(product.description, 92))}</p>
+          <div class="product-rating">★ ${escapeHTML(rating)}</div>
           <div class="price-row">
             <span class="price">${money(product.price)}</span>
             <span class="pill pill--gold">Allona</span>
           </div>
           <div class="product-card__actions">
-            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
-            <button class="icon-btn" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
+            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Hızlı Sepete Ekle</button>
           </div>
         </div>
       </article>

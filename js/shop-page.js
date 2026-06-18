@@ -2,6 +2,129 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   let products = [];
+  const fallbackProducts = [
+    {
+      id: "demo-shop-01",
+      name: "Allona Premium Kulaklık",
+      description: "Günlük kullanım ve çalışma için yüksek konforlu kablosuz kulaklık.",
+      category: "Teknoloji",
+      brand: "Allona",
+      price: 1299,
+      stock: 24,
+      sold_count: 186,
+      rating: 4.8,
+      discount: "%18",
+      image_url: "teknoloji.png",
+      created_at: "2026-06-15T09:00:00Z"
+    },
+    {
+      id: "demo-shop-02",
+      name: "Akıllı Market Sepeti",
+      description: "Market alışverişi ve günlük ihtiyaçlar için avantajlı başlangıç paketi.",
+      category: "Market",
+      brand: "Allona Market",
+      price: 849,
+      stock: 42,
+      sold_count: 244,
+      rating: 4.7,
+      discount: "%12",
+      image_url: "market.png",
+      created_at: "2026-06-14T09:00:00Z"
+    },
+    {
+      id: "demo-shop-03",
+      name: "Gold Üyelere Özel Paket",
+      description: "HP avantajları, kampanya erişimi ve özel alışveriş ayrıcalıkları.",
+      category: "Premium",
+      brand: "AllonaHub",
+      price: 229,
+      stock: 99,
+      sold_count: 391,
+      rating: 4.9,
+      discount: "HP+",
+      image_url: "wallet.png",
+      created_at: "2026-06-13T09:00:00Z"
+    },
+    {
+      id: "demo-shop-04",
+      name: "Ev Yaşam Temizlik Seti",
+      description: "Ev hizmetleri kategorisinden seçili ürünlerle pratik bakım seti.",
+      category: "Ev Hizmetleri",
+      brand: "Allona",
+      price: 399,
+      stock: 31,
+      sold_count: 128,
+      rating: 4.6,
+      discount: "%22",
+      image_url: "evhizmetleri.png",
+      created_at: "2026-06-12T09:00:00Z"
+    },
+    {
+      id: "demo-shop-05",
+      name: "Spor & Fitness Başlangıç",
+      description: "Sağlıklı yaşam rutinine başlamak için seçili spor ekipmanları.",
+      category: "Spor",
+      brand: "Allona Spor",
+      price: 699,
+      stock: 18,
+      sold_count: 96,
+      rating: 4.5,
+      discount: "Yeni",
+      image_url: "sporfitnes.png",
+      created_at: "2026-06-11T09:00:00Z"
+    },
+    {
+      id: "demo-shop-06",
+      name: "Allona Yemek Menü Fırsatı",
+      description: "Restoran kampanyaları için avantajlı menü ve kupon paketi.",
+      category: "Yemek",
+      brand: "Allona Yemek",
+      price: 289,
+      stock: 60,
+      sold_count: 318,
+      rating: 4.8,
+      discount: "%15",
+      image_url: "yemek.png",
+      created_at: "2026-06-10T09:00:00Z"
+    },
+    {
+      id: "demo-shop-07",
+      name: "Pet Bakım Avantaj Seti",
+      description: "Evcil dostlar için bakım, sağlık ve günlük ihtiyaç seti.",
+      category: "Evcil Hayvan",
+      brand: "Allona Pet",
+      price: 549,
+      stock: 27,
+      sold_count: 112,
+      rating: 4.7,
+      discount: "%10",
+      image_url: "evcilhayvan.png",
+      created_at: "2026-06-09T09:00:00Z"
+    },
+    {
+      id: "demo-shop-08",
+      name: "Seyahat Planlama Paketi",
+      description: "Konaklama, ulaşım ve tur planlaması için premium keşif paketi.",
+      category: "Seyahat",
+      brand: "Allona Seyahat",
+      price: 999,
+      stock: 15,
+      sold_count: 74,
+      rating: 4.6,
+      discount: "HP x2",
+      image_url: "seyahat.png",
+      created_at: "2026-06-08T09:00:00Z"
+    }
+  ].map(core.normalizeProduct);
+
+  function withTimeout(promise, timeoutMs) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        window.setTimeout(() => reject(new Error("Ürün sorgusu zaman aşımına uğradı.")), timeoutMs);
+      })
+    ]);
+  }
 
   function filtersFromDom() {
     return {
@@ -40,11 +163,13 @@
   function renderGrid(target, items) {
     const node = typeof target === "string" ? document.querySelector(target) : target;
     if (!node) return;
-    if (!items.length) {
+    const limit = Number(node.dataset.previewLimit || 0);
+    const visibleItems = limit ? items.slice(0, limit) : items;
+    if (!visibleItems.length) {
       node.innerHTML = `<div class="empty-state">Bu filtrelerle eşleşen aktif ürün bulunamadı.</div>`;
       return;
     }
-    node.innerHTML = items.map(core.productCard).join("");
+    node.innerHTML = visibleItems.map(core.productCard).join("");
   }
 
   function renderCategoryOptions() {
@@ -54,25 +179,46 @@
     select.innerHTML = `<option value="">Tüm kategoriler</option>${categories.map((category) => `<option value="${core.escapeHTML(category)}">${core.escapeHTML(category)}</option>`).join("")}`;
   }
 
+  function syncFiltersFromParams() {
+    const searchInput = document.querySelector("[data-filter-search]");
+    const categorySelect = document.querySelector("[data-filter-category]");
+    const sortSelect = document.querySelector("[data-filter-sort]");
+    const q = core.getParam("q");
+    const category = core.getParam("category");
+    const sort = core.getParam("sort");
+
+    if (searchInput && q) searchInput.value = q;
+    if (categorySelect && category) categorySelect.value = category;
+    if (sortSelect && sort) sortSelect.value = sort;
+  }
+
   function renderHomeSections() {
     renderGrid("[data-products-grid]", applyLocalFilters());
     renderGrid("[data-new-grid]", products.slice(0, 4));
     renderGrid("[data-best-grid]", [...products].sort((a, b) => b.sold_count - a.sold_count).slice(0, 4));
     renderGrid("[data-featured-grid]", products.filter((item) => item.stock > 0).slice(0, 4));
+    renderGrid("[data-recommended-grid]", products.filter((item) => item.stock > 0).slice(4, 8));
   }
 
   async function loadProducts() {
-    const loadingTargets = ["[data-products-grid]", "[data-new-grid]", "[data-best-grid]", "[data-featured-grid]"];
+    const loadingTargets = ["[data-products-grid]", "[data-new-grid]", "[data-best-grid]", "[data-featured-grid]", "[data-recommended-grid]"];
     loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
 
     try {
-      products = await App.db.products.listActive({ sort: "newest" });
+      const liveProducts = await withTimeout(App.db?.products?.listActive({ sort: "newest" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500);
+      products = liveProducts.length ? liveProducts : fallbackProducts;
+      if (!liveProducts.length) {
+        console.warn("Supabase products boş döndü, mağaza vitrin fallback ürünleri gösteriliyor.");
+      }
       renderCategoryOptions();
-      const searchInput = document.querySelector("[data-filter-search]");
-      if (searchInput && core.getParam("q")) searchInput.value = core.getParam("q");
+      syncFiltersFromParams();
       renderHomeSections();
     } catch (error) {
-      loadingTargets.forEach((target) => core.renderStatus(target, error.message || "Ürünler yüklenemedi.", "error"));
+      console.warn("Supabase products yüklenemedi, mağaza vitrin fallback ürünleri gösteriliyor:", error.message || error);
+      products = fallbackProducts;
+      renderCategoryOptions();
+      syncFiltersFromParams();
+      renderHomeSections();
     }
   }
 
@@ -94,9 +240,63 @@
     }
   }
 
+  function initShopPromoSlider() {
+    const slider = document.querySelector("[data-shop-promo-slider]");
+    if (!slider) return;
+    const slides = [...slider.querySelectorAll("[data-shop-promo-slide]")];
+    const dotsWrap = slider.querySelector("[data-shop-promo-dots]");
+    const prev = slider.querySelector("[data-shop-promo-prev]");
+    const next = slider.querySelector("[data-shop-promo-next]");
+    if (!slides.length || !dotsWrap) return;
+
+    let index = 0;
+    let timer;
+
+    function show(nextIndex) {
+      index = (nextIndex + slides.length) % slides.length;
+      slides.forEach((slide, slideIndex) => slide.classList.toggle("is-active", slideIndex === index));
+      dotsWrap.querySelectorAll("button").forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
+    }
+
+    function restart() {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => show(index + 1), 3000);
+    }
+
+    slides.forEach((_, slideIndex) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("aria-label", `${slideIndex + 1}. kampanyayı göster`);
+      dot.addEventListener("click", () => {
+        show(slideIndex);
+        restart();
+      });
+      dotsWrap.appendChild(dot);
+    });
+
+    if (prev) {
+      prev.addEventListener("click", () => {
+        show(index - 1);
+        restart();
+      });
+    }
+    if (next) {
+      next.addEventListener("click", () => {
+        show(index + 1);
+        restart();
+      });
+    }
+
+    slider.addEventListener("mouseenter", () => window.clearInterval(timer));
+    slider.addEventListener("mouseleave", restart);
+    show(0);
+    restart();
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     if (!document.querySelector("[data-page='shop']")) return;
     bindFilters();
+    initShopPromoSlider();
     loadProducts();
   });
 })();

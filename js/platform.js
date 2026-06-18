@@ -11,14 +11,19 @@
     { code: "ar", label: "AR" }
   ];
   const themes = [
-    { code: "ocean", label: "Okyanus" },
-    { code: "forest", label: "Yeşil" },
-    { code: "sunset", label: "Gün Batımı" },
-    { code: "graphite", label: "Grafit" }
+    { code: "neon", label: "Beyaz Neon" },
+    { code: "allona", label: "Deniz Mavisi" },
+    { code: "marketplace", label: "Ferah Market" }
   ];
+  const themeAliases = {
+    ocean: "allona",
+    forest: "marketplace",
+    sunset: "neon",
+    graphite: "allona"
+  };
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: localStorage.getItem(THEME_KEY) || "ocean",
+    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "neon",
     packs: {}
   };
 
@@ -41,7 +46,8 @@
   }
 
   function applyTheme(theme) {
-    const selected = themes.some((item) => item.code === theme) ? theme : "ocean";
+    const normalized = themeAliases[theme] || theme;
+    const selected = themes.some((item) => item.code === normalized) ? normalized : "neon";
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);

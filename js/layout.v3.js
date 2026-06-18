@@ -11,8 +11,9 @@
     return `
       <div class="top-bar">
         <div class="container top-bar__inner">
-          <span>AllonaHub güvenli alışveriş deneyimi</span>
+          <span>AllonaHub güvenli alışveriş ve hizmet ekosistemi</span>
           <nav class="top-bar__links" aria-label="Üst bağlantılar">
+            <a href="${core.url("bildirimler.html")}">Bildirimler</a>
             <a href="${core.url("orders.html")}">Siparişlerim</a>
             <a href="${core.url("addresses.html")}">Adreslerim</a>
             <a href="${core.url("favorites.html")}">Favorilerim</a>
@@ -25,10 +26,16 @@
             <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
           </a>
           <form class="search-form" data-site-search>
-            <input type="search" name="q" autocomplete="off" placeholder="Ürün, kategori veya marka ara" aria-label="Ürün ara">
+            <input type="search" name="q" autocomplete="off" placeholder="Ürün, kategori, hizmet veya marka ara" aria-label="Ürün, kategori, hizmet veya marka ara">
             <button class="btn" type="submit">Ara</button>
           </form>
           <div class="header-actions">
+            <a class="icon-btn" href="${core.url("bildirimler.html")}" aria-label="Bildirimler">
+              🔔
+            </a>
+            <a class="icon-btn icon-btn--wide" href="${core.url("hubwallet.html")}" aria-label="Hub Wallet">
+              Wallet
+            </a>
             <a class="icon-btn" href="${core.url("favorites.html")}" aria-label="Favoriler">
               ♡ <span class="badge" data-fav-count>0</span>
             </a>
@@ -59,31 +66,35 @@
   function footerMarkup() {
     const year = new Date().getFullYear();
     const socials = [
-      ["WhatsApp", "WA", "https://wa.me/905427781868", "social-link--whatsapp"],
-      ["Instagram", "IG", "https://www.instagram.com/allonahub", "social-link--instagram"],
-      ["X", "X", "https://x.com/allonahub", "social-link--x"],
-      ["LinkedIn", "in", "https://www.linkedin.com/company/allonahub", "social-link--linkedin"],
-      ["YouTube", "▶", "https://www.youtube.com/@allonahub", "social-link--youtube"],
-      ["Nsosyal", "N", "https://nsosyal.com/allonahub", "social-link--nsosyal"],
-      ["TikTok", "♪", "https://www.tiktok.com/@allonahub", "social-link--tiktok"]
+      ["WhatsApp", "WA", "https://wa.me/905427781868", "wa"],
+      ["Instagram", "IG", "https://www.instagram.com/allonahub", "ig"],
+      ["X", "X", "https://x.com/allonahub", "x"],
+      ["Facebook", "f", "https://www.facebook.com/allonahub", "fb"],
+      ["YouTube", "yt", "https://www.youtube.com/@allonahub", "yt"],
+      ["LinkedIn", "in", "https://www.linkedin.com/company/allonahub", "li"],
+      ["Telegram", "tg", "https://t.me/allonahub", "tg"],
+      ["TikTok", "tk", "https://www.tiktok.com/@allonahub", "tk"],
+      ["E-Mail", "@", "mailto:info@allonahub.com", "mail"]
     ];
     return `
-      <footer class="site-footer">
+      <footer class="site-footer allona-user-footer">
         <div class="container footer-grid">
           <div class="footer-col">
             <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
               <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
             </a>
+            <p>Tek hesapla alışveriş, hizmet, partner, ödeme ve dijital çözümler.</p>
             <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
             <p>İstanbul / Türkiye</p>
-            <p>allonahub@gmail.com</p>
+            <p>info@allonahub.com</p>
           </div>
           <div class="footer-col">
-            <h3>Mağaza</h3>
+            <h3>Alışveriş</h3>
             <a href="${core.url("shop.html")}">Ürünler</a>
             <a href="${core.url("allonashop.html")}">Allona Shop</a>
             <a href="${core.url("allonayemek.html")}">Allona Yemek</a>
             <a href="${core.url("allonamarket.html")}">Allona Market</a>
+            <a href="${core.url("kuponlar.html")}">Kuponlar</a>
             <a href="${core.url("favorites.html")}">Favorilerim</a>
             <a href="${core.url("orders.html")}">Siparişlerim</a>
           </div>
@@ -92,7 +103,8 @@
             <a href="${core.url("hakkimizda.html")}">Hakkımızda</a>
             <a href="${core.url("iletisim.html")}">İletişim</a>
             <a href="${core.url("destek.html")}">Destek Merkezi</a>
-            <a href="${core.url("kuponlar.html")}">Kuponlar</a>
+            <a href="${core.url("belgeler.html")}">Belgelerim</a>
+            <a href="${core.url("bildirimler.html")}">Bildirimler</a>
             <a href="${core.url("teslimat-kargo.html")}">Teslimat ve Kargo</a>
             <a href="${core.url("iade-politikasi.html")}">İade ve Cayma Hakkı</a>
           </div>
@@ -103,6 +115,7 @@
             <a href="${core.url("hubwallet.html")}">HUB Wallet</a>
             <a href="${core.url("premium.html")}">Premium</a>
             <a href="${core.url("allonakariyer.html")}">Kariyer</a>
+            <a href="${core.url("partner-uyelik.html")}">Partner Üyelik</a>
           </div>
           <div class="footer-col">
             <h3>Yasal</h3>
@@ -110,24 +123,29 @@
             <a href="${core.url("on-bilgilendirme.html")}">Ön Bilgilendirme Formu</a>
             <a href="${core.url("gizlilik.html")}">Gizlilik Politikası</a>
             <a href="${core.url("kvkk.html")}">KVKK Aydınlatma Metni</a>
-            <a href="${core.url("cerez.html")}">Çerez Politikası</a>
+            <a href="${core.url("cerez-politikasi.html")}">Çerez Politikası</a>
             <a href="${core.url("kullanim-sartlari.html")}">Kullanım Şartları</a>
+            <a href="${core.url("guvenlik-politikasi.html")}">Güvenlik Politikası</a>
           </div>
         </div>
-        <div class="container footer-social" aria-label="AllonaHub sosyal medya bağlantıları">
+        <div class="container social-icons" aria-label="AllonaHub sosyal medya bağlantıları">
           ${socials.map(([label, icon, href, className]) => `
-            <a class="social-link ${className}" href="${href}" target="_blank" rel="noopener" aria-label="${label}">
-              <span class="social-link__icon">${icon}</span>
+            <a class="${className}" href="${href}" target="_blank" rel="noopener" aria-label="${label}">
+              <b>${icon}</b>
               <span>${label}</span>
             </a>
           `).join("")}
+        </div>
+        <div class="container store-buttons" aria-label="AllonaHub mobil uygulama bağlantıları">
+          <a href="${core.url("premium.html")}" class="store-btn">AllonaHub Premium</a>
+          <a href="${core.url("hubwallet.html")}" class="store-btn">HUB Wallet</a>
         </div>
         <div class="container footer-bottom">
           <span>© ${year} AllonaHub. Tüm hakları saklıdır.</span>
           <span class="footer-bottom__links">
             <a href="${core.url("kullanim-sartlari.html")}">Kullanım Şartları</a>
             <a href="${core.url("gizlilik.html")}">Gizlilik Politikası</a>
-            <a href="${core.url("cerez.html")}">Çerez Politikası</a>
+            <a href="${core.url("cerez-politikasi.html")}">Çerez Politikası</a>
           </span>
         </div>
       </footer>
