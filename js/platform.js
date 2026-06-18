@@ -11,9 +11,9 @@
     { code: "ar", label: "AR" }
   ];
   const themes = [
-    { code: "neon", label: "Beyaz Neon" },
-    { code: "allona", label: "Deniz Mavisi" },
-    { code: "marketplace", label: "Ferah Market" }
+    { code: "neon", label: "Premium Neon" },
+    { code: "allona", label: "Deniz Premium" },
+    { code: "marketplace", label: "Market Premium" }
   ];
   const themeAliases = {
     ocean: "allona",
@@ -266,7 +266,14 @@
       bindControlValues();
       return;
     }
-    const account = document.querySelector("[data-account-link], a.login");
+    const account = document.querySelector([
+      "[data-account-link]",
+      "a.login",
+      ".actions a[href$='user.html']",
+      ".actions a[href$='login.html']",
+      "nav a[href$='user.html']",
+      "nav a[href$='login.html']"
+    ].join(","));
     if (account) {
       account.insertAdjacentHTML("afterend", controlsMarkup(account.classList.contains("login") ? "home" : ""));
       bindControlValues();
