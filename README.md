@@ -2,7 +2,7 @@
 
 Bu repository artık AllonaHub'un ana geliştirme reposudur. `index.html`, AllonaHub süper uygulama ekosisteminin halka açık ana sayfasıdır.
 
-Yeni mimaride ana sayfanın kaynak kabul edilen tasarımı `index.html` dosyasıdır ve aynı kod `docs/architecture/allonahub-superapp-homepage-canonical.html` altında referans olarak saklanır. Ana sayfa kodu kullanıcı tarafından verilen tek dosyalık HTML/CSS/JS yapıdır. Açık talimat gelmedikçe bu kod değiştirilmez; yeni özellikler, modül sayfaları, destek sayfaları ve e-ticaret altyapısı bu anasayfa kararına göre geliştirilir.
+Yeni mimaride ana sayfanın kaynak kabul edilen tasarımı `index.html` dosyasıdır ve aynı kod `docs/architecture/allonahub-superapp-homepage-canonical.html` altında referans olarak saklanır. Kullanıcı tarafından verilen ana sayfa tasarımı korunur; bakım kolaylığı için stiller `css/allonahub-home.css`, davranış kodları `js/allonahub-home.js` dosyasında tutulur. Yeni özellikler, modül sayfaları, destek sayfaları ve e-ticaret altyapısı bu anasayfa kararına göre geliştirilir.
 
 ## Teknoloji
 

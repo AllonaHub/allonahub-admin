@@ -24,9 +24,12 @@ AllonaHub is the public super-app ecosystem homepage. The homepage presents:
 ## File Organization
 
 - `index.html`: exact provided AllonaHub super-app homepage.
-- `docs/architecture/allonahub-superapp-homepage-canonical.html`: exact canonical copy of the current homepage.
+- `css/allonahub-home.css`: extracted homepage styles.
+- `js/allonahub-home.js`: extracted homepage behavior, search, clock, location, and stat scripts.
+- `docs/architecture/allonahub-superapp-homepage-canonical.html`: canonical copy of the current modular homepage HTML.
 - `docs/archive/index-before-allona-shop-homepage.html`: previous homepage preserved for reference.
 - `docs/archive/index-before-super-app-homepage-*.html`: prior canonical homepage versions preserved before replacement.
+- `docs/archive/index-inline-super-app-homepage-*.html`: original inline CSS/JS homepage preserved before modularization.
 - `odeme.html`: compatibility copy of the existing `ode.html` payment page.
 - `kuponlar.html`, `kullanım-sartları.html`, `ayakında.html`, `premium.html`, `arama.html`: compatibility routes used by the provided homepage.
 - `muhendislik.png`, `trade.png`, `wallet.png`: compatibility visual assets used by the provided homepage.
@@ -34,7 +37,7 @@ AllonaHub is the public super-app ecosystem homepage. The homepage presents:
 ## Development Rules
 
 - Do not delete existing GitHub files without explicit permission.
-- Keep the provided homepage unchanged.
+- Keep the provided homepage design and content intact while allowing CSS/JS to live in separate project files.
 - Build new features and supporting pages around the AllonaHub homepage contract.
 - Preserve payment safety: card data must not be stored in frontend or Supabase tables.
 - Legal text pages must be reviewed before live production use.

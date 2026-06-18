@@ -6,6 +6,8 @@ AllonaHub premium, canlı, güven veren ve modüler bir süper uygulama deneyimi
 
 Yeni görsel kaynak `index.html` içindeki kullanıcı tarafından verilen anasayfadır. Açık talimat gelmedikçe bu anasayfa kodu değiştirilmez; yeni sayfalar ve bileşenler bu tasarım diline göre uyarlanır.
 
+Anasayfa stilleri `css/allonahub-home.css`, davranış kodları `js/allonahub-home.js` dosyasında tutulur. Yeni düzenlemelerde inline `<style>`, inline `<script>` ve inline event handler kullanımından kaçınılır.
+
 ## Renkler
 
 - Ana koyu renk: gece laciverti `#020814`

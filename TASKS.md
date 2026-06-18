@@ -16,6 +16,7 @@
 - [x] Önceki kanonik anasayfayı `docs/archive/index-before-super-app-homepage-*.html` altında arşivle.
 - [x] Yeni kanonik referansı `docs/architecture/allonahub-superapp-homepage-canonical.html` olarak sakla.
 - [x] Yeni anasayfanın beklediği uyumluluk rota ve görsellerini ekle.
+- [x] Anasayfa CSS ve JavaScript kodlarını `css/allonahub-home.css` ve `js/allonahub-home.js` dosyalarına ayır.
 
 ## Öncelik 1 - Üretime Hazırlık
 
