@@ -35,7 +35,7 @@
             <a class="icon-btn" href="${core.url("cart.html")}" aria-label="Sepet">
               🛒 <span class="badge" data-cart-count>0</span>
             </a>
-            <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Hesabım</a>
+            <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Giriş Yap</a>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
           </div>
         </div>
@@ -119,7 +119,7 @@
     const user = await App.auth.getUser();
     if (user) {
       link.href = core.url("profile.html");
-      link.textContent = "Profil";
+      link.textContent = "Hesabım";
     }
   }
 

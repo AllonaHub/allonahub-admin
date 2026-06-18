@@ -14,37 +14,636 @@
   <link rel="stylesheet" href="css/platform.css">
 </head>
 <body>
-  <div class="site-shell" data-page="shop">
+  <div class="site-shell shop-landing" data-page="shop">
     <div data-layout="header"></div>
 
-    <main class="site-main">
-      <section class="container hero" aria-labelledby="hero-title">
-        <div class="hero__content">
-          <p class="eyebrow">AllonaHub</p>
-          <h1 id="hero-title">Premium alışveriş, tek güvenli merkezde.</h1>
-          <p>Seçili ürünleri güncel stok, güvenli ödeme ve hızlı sepet deneyimiyle AllonaHub kalitesinde keşfedin.</p>
-          <div class="hero__actions">
-            <a class="btn" href="shop.html">Alışverişe Başla</a>
-            <a class="btn btn--light" href="#featured-products">Öne Çıkanlar</a>
+    <section class="container shop-category-menu shop-category-menu--top" aria-label="AllonaShop kategorileri">
+      <nav class="shop-category-rail" aria-label="Trendyol tarzı kategori menüsü">
+        <div class="shop-category-item">
+          <a class="shop-category-trigger is-active" href="shop.html">Vitrin</a>
+          <div class="shop-category-mega" role="menu" aria-label="Vitrin kategorileri">
+            <div class="shop-mega-col">
+              <h3>Hızlı Keşif</h3>
+              <a href="shop.html?sort=best_selling">Çok Satanlar</a>
+              <a href="shop.html?sort=newest">Yeni Gelenler</a>
+              <a href="shop.html?q=F%C4%B1rsat">Fırsatlar</a>
+              <a href="shop.html?q=Allona">Allona Seçkisi</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Popüler</h3>
+              <a href="shop.html?q=Tak%C4%B1">Takı &amp; Aksesuar</a>
+              <a href="shop.html?q=Kad%C4%B1n">Kadın Ürünleri</a>
+              <a href="shop.html?q=Premium">Premium Ürünler</a>
+              <a href="shop.html?q=HP">HP Avantajlı</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Partner Vitrini</h3>
+              <a href="shop.html?q=G%C3%BCn%C3%BCn%20%C3%9Cr%C3%BCn%C3%BC">Günün Ürünleri</a>
+              <a href="shop.html?q=Kampanya">Kampanyalar</a>
+              <a href="shop.html?q=Yeni%20Partner">Yeni Partnerler</a>
+              <a href="shop.html?q=Se%C3%A7ili">Seçili Markalar</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Günün vitrin ürünleri</strong>
+              <span>Partner ürünleri ve kampanyaları tek ekranda keşfet.</span>
+            </div>
           </div>
         </div>
-        <picture class="hero__media">
-          <img src="images/allonahub-shopping-hero.png" alt="AllonaHub premium alışveriş ve güvenli ödeme görseli" loading="eager">
-        </picture>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Kad%C4%B1n&amp;q=Kad%C4%B1n">Kadın</a>
+          <div class="shop-category-mega" role="menu" aria-label="Kadın kategorileri">
+            <div class="shop-mega-col">
+              <h3>Giyim</h3>
+              <a href="shop.html?category=Kad%C4%B1n&amp;q=Elbise">Elbise</a>
+              <a href="shop.html?category=Kad%C4%B1n&amp;q=Bluz">Bluz</a>
+              <a href="shop.html?category=Kad%C4%B1n&amp;q=Ceket">Ceket</a>
+              <a href="shop.html?category=Kad%C4%B1n&amp;q=%C4%B0%C3%A7%20Giyim">İç Giyim</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Takı &amp; Aksesuar</h3>
+              <a href="shop.html?q=Kolye">Kolye</a>
+              <a href="shop.html?q=K%C3%BCpe">Küpe</a>
+              <a href="shop.html?q=Bileklik">Bileklik</a>
+              <a href="shop.html?q=Sa%C3%A7%20Aksesuar%C4%B1">Saç Aksesuarı</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Çanta &amp; Ayakkabı</h3>
+              <a href="shop.html?q=%C3%87anta">Çanta</a>
+              <a href="shop.html?q=Topuklu">Topuklu</a>
+              <a href="shop.html?q=Sneaker">Sneaker</a>
+              <a href="shop.html?q=Sandalet">Sandalet</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Kadın vitrininde öne çıkanlar</strong>
+              <span>Takı, aksesuar ve seçili partner koleksiyonları.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Erkek&amp;q=Erkek">Erkek</a>
+          <div class="shop-category-mega" role="menu" aria-label="Erkek kategorileri">
+            <div class="shop-mega-col">
+              <h3>Giyim</h3>
+              <a href="shop.html?category=Erkek&amp;q=G%C3%B6mlek">Gömlek</a>
+              <a href="shop.html?category=Erkek&amp;q=T-shirt">T-shirt</a>
+              <a href="shop.html?category=Erkek&amp;q=Pantolon">Pantolon</a>
+              <a href="shop.html?category=Erkek&amp;q=Mont">Mont</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Aksesuar</h3>
+              <a href="shop.html?q=Saat">Saat</a>
+              <a href="shop.html?q=C%C3%BCzdan">Cüzdan</a>
+              <a href="shop.html?q=Kemer">Kemer</a>
+              <a href="shop.html?q=G%C3%B6zl%C3%BCk">Gözlük</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Ayakkabı</h3>
+              <a href="shop.html?q=Erkek%20Ayakkab%C4%B1">Günlük Ayakkabı</a>
+              <a href="shop.html?q=Spor%20Ayakkab%C4%B1">Spor Ayakkabı</a>
+              <a href="shop.html?q=Bot">Bot</a>
+              <a href="shop.html?q=Klasik%20Ayakkab%C4%B1">Klasik</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Erkek koleksiyonu</strong>
+              <span>Giyim, aksesuar ve günlük ürünlere hızlı ulaş.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Anne%20%26%20%C3%87ocuk&amp;q=Anne%20%C3%87ocuk">Anne &amp; Çocuk</a>
+          <div class="shop-category-mega" role="menu" aria-label="Anne ve çocuk kategorileri">
+            <div class="shop-mega-col">
+              <h3>Bebek</h3>
+              <a href="shop.html?q=Bebek%20Giyim">Bebek Giyim</a>
+              <a href="shop.html?q=Bebek%20Bak%C4%B1m">Bebek Bakım</a>
+              <a href="shop.html?q=Bebek%20Arabasi">Bebek Arabası</a>
+              <a href="shop.html?q=Mama">Mama</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Çocuk</h3>
+              <a href="shop.html?q=%C3%87ocuk%20Giyim">Çocuk Giyim</a>
+              <a href="shop.html?q=Oyuncak">Oyuncak</a>
+              <a href="shop.html?q=Okul">Okul</a>
+              <a href="shop.html?q=Kitap">Kitap</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Anne</h3>
+              <a href="shop.html?q=Anne%20%C3%9Cr%C3%BCnleri">Anne Ürünleri</a>
+              <a href="shop.html?q=Emzirme">Emzirme</a>
+              <a href="shop.html?q=Hamile">Hamile</a>
+              <a href="shop.html?q=Bak%C4%B1m">Bakım</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Aile alışverişi</strong>
+              <span>Anne, bebek ve çocuk ihtiyaçları aynı menüde.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Ev%20%26%20Ya%C5%9Fam&amp;q=Ev%20Ya%C5%9Fam">Ev &amp; Yaşam</a>
+          <div class="shop-category-mega" role="menu" aria-label="Ev ve yaşam kategorileri">
+            <div class="shop-mega-col">
+              <h3>Ev</h3>
+              <a href="shop.html?q=Mobilya">Mobilya</a>
+              <a href="shop.html?q=Dekorasyon">Dekorasyon</a>
+              <a href="shop.html?q=Ayd%C4%B1nlatma">Aydınlatma</a>
+              <a href="shop.html?q=Ev%20Tekstili">Ev Tekstili</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Mutfak</h3>
+              <a href="shop.html?q=Mutfak">Mutfak Gereçleri</a>
+              <a href="shop.html?q=Sofra">Sofra</a>
+              <a href="shop.html?q=Kahve">Kahve</a>
+              <a href="shop.html?q=K%C3%BC%C3%A7%C3%BCk%20Ev%20Aleti">Küçük Ev Aleti</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Yaşam</h3>
+              <a href="shop.html?q=Bah%C3%A7e">Bahçe</a>
+              <a href="shop.html?q=Temizlik">Temizlik</a>
+              <a href="shop.html?q=D%C3%BCzenleyici">Düzenleyici</a>
+              <a href="shop.html?q=Hobi">Hobi</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Evi yenile</strong>
+              <span>Dekorasyon, mutfak ve günlük yaşam ürünleri.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=S%C3%BCpermarket&amp;q=S%C3%BCpermarket">Süpermarket</a>
+          <div class="shop-category-mega" role="menu" aria-label="Süpermarket kategorileri">
+            <div class="shop-mega-col">
+              <h3>Gıda</h3>
+              <a href="shop.html?q=Kahvalt%C4%B1">Kahvaltılık</a>
+              <a href="shop.html?q=At%C4%B1%C5%9Ft%C4%B1rmal%C4%B1k">Atıştırmalık</a>
+              <a href="shop.html?q=%C4%B0%C3%A7ecek">İçecek</a>
+              <a href="shop.html?q=Organik">Organik</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Ev İhtiyaçları</h3>
+              <a href="shop.html?q=Temizlik">Temizlik</a>
+              <a href="shop.html?q=Ka%C4%9F%C4%B1t">Kağıt Ürünleri</a>
+              <a href="shop.html?q=Petshop">Petshop</a>
+              <a href="shop.html?q=Bebek%20Bezi">Bebek Bezi</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Bakım</h3>
+              <a href="shop.html?q=Ki%C5%9Fisel%20Bak%C4%B1m">Kişisel Bakım</a>
+              <a href="shop.html?q=Hijyen">Hijyen</a>
+              <a href="shop.html?q=Sa%C4%9Fl%C4%B1k">Sağlık</a>
+              <a href="shop.html?q=Vitamin">Vitamin</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Günlük ihtiyaçlar</strong>
+              <span>Market sepetini hızlı ve düzenli şekilde tamamla.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Kozmetik&amp;q=Kozmetik">Kozmetik</a>
+          <div class="shop-category-mega" role="menu" aria-label="Kozmetik kategorileri">
+            <div class="shop-mega-col">
+              <h3>Makyaj</h3>
+              <a href="shop.html?q=Ruj">Ruj</a>
+              <a href="shop.html?q=Fond%C3%B6ten">Fondöten</a>
+              <a href="shop.html?q=Maskara">Maskara</a>
+              <a href="shop.html?q=All%C4%B1k">Allık</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Bakım</h3>
+              <a href="shop.html?q=Cilt%20Bak%C4%B1m">Cilt Bakım</a>
+              <a href="shop.html?q=Sa%C3%A7%20Bak%C4%B1m">Saç Bakım</a>
+              <a href="shop.html?q=V%C3%BCcut%20Bak%C4%B1m">Vücut Bakım</a>
+              <a href="shop.html?q=G%C3%BCne%C5%9F%20Kremi">Güneş Kremi</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Parfüm</h3>
+              <a href="shop.html?q=Kad%C4%B1n%20Parf%C3%BCm">Kadın Parfüm</a>
+              <a href="shop.html?q=Erkek%20Parf%C3%BCm">Erkek Parfüm</a>
+              <a href="shop.html?q=Unisex%20Parf%C3%BCm">Unisex</a>
+              <a href="shop.html?q=Set">Setler</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Bakım vitrini</strong>
+              <span>Güzellik, kişisel bakım ve parfüm kategorileri.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Ayakkab%C4%B1%20%26%20%C3%87anta&amp;q=Ayakkab%C4%B1%20%C3%87anta">Ayakkabı &amp; Çanta</a>
+          <div class="shop-category-mega" role="menu" aria-label="Ayakkabı ve çanta kategorileri">
+            <div class="shop-mega-col">
+              <h3>Ayakkabı</h3>
+              <a href="shop.html?q=Sneaker">Sneaker</a>
+              <a href="shop.html?q=Topuklu">Topuklu</a>
+              <a href="shop.html?q=Bot">Bot</a>
+              <a href="shop.html?q=Sandalet">Sandalet</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Çanta</h3>
+              <a href="shop.html?q=Omuz%20%C3%87antas%C4%B1">Omuz Çantası</a>
+              <a href="shop.html?q=S%C4%B1rt%20%C3%87antas%C4%B1">Sırt Çantası</a>
+              <a href="shop.html?q=El%20%C3%87antas%C4%B1">El Çantası</a>
+              <a href="shop.html?q=Valiz">Valiz</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Aksesuar</h3>
+              <a href="shop.html?q=C%C3%BCzdan">Cüzdan</a>
+              <a href="shop.html?q=Kartl%C4%B1k">Kartlık</a>
+              <a href="shop.html?q=Bak%C4%B1m%20%C3%9Cr%C3%BCn%C3%BC">Bakım Ürünleri</a>
+              <a href="shop.html?q=Seyahat">Seyahat</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Stil tamamlayıcıları</strong>
+              <span>Ayakkabı, çanta ve aksesuarları tek alanda incele.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Elektronik&amp;q=Elektronik">Elektronik</a>
+          <div class="shop-category-mega" role="menu" aria-label="Elektronik kategorileri">
+            <div class="shop-mega-col">
+              <h3>Teknoloji</h3>
+              <a href="shop.html?q=Telefon">Telefon</a>
+              <a href="shop.html?q=Bilgisayar">Bilgisayar</a>
+              <a href="shop.html?q=Tablet">Tablet</a>
+              <a href="shop.html?q=Kulakl%C4%B1k">Kulaklık</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Aksesuar</h3>
+              <a href="shop.html?q=%C5%9Earj">Şarj Ürünleri</a>
+              <a href="shop.html?q=K%C4%B1l%C4%B1f">Kılıf</a>
+              <a href="shop.html?q=Ak%C4%B1ll%C4%B1%20Saat">Akıllı Saat</a>
+              <a href="shop.html?q=Oyun">Oyun</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Ev Elektroniği</h3>
+              <a href="shop.html?q=TV">TV</a>
+              <a href="shop.html?q=Ses%20Sistemi">Ses Sistemi</a>
+              <a href="shop.html?q=K%C3%BC%C3%A7%C3%BCk%20Ev%20Aleti">Küçük Ev Aleti</a>
+              <a href="shop.html?q=Ak%C4%B1ll%C4%B1%20Ev">Akıllı Ev</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Teknoloji fırsatları</strong>
+              <span>Elektronik ve aksesuar kampanyalarını yakala.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Saat%20%26%20Aksesuar&amp;q=Saat%20Aksesuar">Saat &amp; Aksesuar</a>
+          <div class="shop-category-mega" role="menu" aria-label="Saat ve aksesuar kategorileri">
+            <div class="shop-mega-col">
+              <h3>Saat</h3>
+              <a href="shop.html?q=Kad%C4%B1n%20Saat">Kadın Saat</a>
+              <a href="shop.html?q=Erkek%20Saat">Erkek Saat</a>
+              <a href="shop.html?q=Ak%C4%B1ll%C4%B1%20Saat">Akıllı Saat</a>
+              <a href="shop.html?q=Spor%20Saat">Spor Saat</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Aksesuar</h3>
+              <a href="shop.html?q=G%C3%B6zl%C3%BCk">Gözlük</a>
+              <a href="shop.html?q=%C5%9Eapka">Şapka</a>
+              <a href="shop.html?q=Kemer">Kemer</a>
+              <a href="shop.html?q=C%C3%BCzdan">Cüzdan</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Takı</h3>
+              <a href="shop.html?q=Kolye">Kolye</a>
+              <a href="shop.html?q=K%C3%BCpe">Küpe</a>
+              <a href="shop.html?q=Y%C3%BCz%C3%BCk">Yüzük</a>
+              <a href="shop.html?q=Halhal">Halhal</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Detaylarla tamamla</strong>
+              <span>Saat, takı ve günlük aksesuarları keşfet.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-category-item">
+          <a class="shop-category-trigger" href="shop.html?category=Spor%20%26%20Outdoor&amp;q=Spor%20Outdoor">Spor &amp; Outdoor</a>
+          <div class="shop-category-mega" role="menu" aria-label="Spor ve outdoor kategorileri">
+            <div class="shop-mega-col">
+              <h3>Spor Giyim</h3>
+              <a href="shop.html?q=Spor%20Ayakkab%C4%B1">Spor Ayakkabı</a>
+              <a href="shop.html?q=E%C5%9Fofman">Eşofman</a>
+              <a href="shop.html?q=Tayt">Tayt</a>
+              <a href="shop.html?q=Forma">Forma</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Outdoor</h3>
+              <a href="shop.html?q=Kamp">Kamp</a>
+              <a href="shop.html?q=Bisiklet">Bisiklet</a>
+              <a href="shop.html?q=Y%C3%BCr%C3%BCy%C3%BC%C5%9F">Yürüyüş</a>
+              <a href="shop.html?q=Deniz">Deniz Sporları</a>
+            </div>
+            <div class="shop-mega-col">
+              <h3>Fitness</h3>
+              <a href="shop.html?q=Fitness">Fitness</a>
+              <a href="shop.html?q=Yoga">Yoga</a>
+              <a href="shop.html?q=Ekipman">Ekipman</a>
+              <a href="shop.html?q=Protein">Protein</a>
+            </div>
+            <div class="shop-mega-feature">
+              <strong>Aktif yaşam</strong>
+              <span>Spor, outdoor ve performans ürünleri.</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </section>
+
+    <main class="site-main">
+      <section class="container shop-promo-slider" data-shop-promo-slider aria-label="AllonaShop kampanya alanı">
+        <button class="shop-promo-control shop-promo-control--prev" type="button" data-shop-promo-prev aria-label="Önceki kampanya">‹</button>
+        <div class="shop-promo-track" data-shop-promo-track>
+          <article class="shop-promo-slide is-active" data-shop-promo-slide>
+            <img src="allona-shop.png" alt="Allona Shop premium alışveriş kampanyası" loading="eager">
+            <div class="shop-promo-content">
+              <p class="eyebrow">Allona Shop</p>
+              <h1 id="hero-title">Premium pazar yeri deneyimi.</h1>
+              <p>Seçili ürünleri güvenli ödeme, hızlı sepet ve HP avantajlarıyla keşfedin.</p>
+              <strong>Yeni üyelere özel alışveriş fırsatları</strong>
+              <a class="btn" href="#featured-products">Alışverişe Başla</a>
+            </div>
+          </article>
+          <article class="shop-promo-slide" data-shop-promo-slide>
+            <img src="shop.png" alt="AllonaShop kategori kampanyası" loading="lazy">
+            <div class="shop-promo-content">
+              <p class="eyebrow">Kategori Fırsatları</p>
+              <h2>Elektronikten ev yaşamına hızlı keşif.</h2>
+              <p>Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek vitrinde.</p>
+              <strong>Güncel stok ve fiyat altyapısı hazır</strong>
+              <a class="btn" href="shop.html">Kataloğu Aç</a>
+            </div>
+          </article>
+          <article class="shop-promo-slide" data-shop-promo-slide>
+            <img src="teknoloji.png" alt="Teknoloji ürünleri kampanyası" loading="lazy">
+            <div class="shop-promo-content">
+              <p class="eyebrow">Teknoloji</p>
+              <h2>Yeni gelen ürünleri yakalayın.</h2>
+              <p>Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı vitrin yapısı.</p>
+              <strong>Favori, puanlama ve hızlı sepete ekle</strong>
+              <a class="btn" href="shop.html?category=Teknoloji">Teknolojiyi İncele</a>
+            </div>
+          </article>
+          <article class="shop-promo-slide" data-shop-promo-slide>
+            <img src="market.png" alt="Market ve günlük ürün kampanyası" loading="lazy">
+            <div class="shop-promo-content">
+              <p class="eyebrow">Günlük Alışveriş</p>
+              <h2>Market, bakım ve ev ihtiyaçları.</h2>
+              <p>Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.</p>
+              <strong>Mobilde yatay kaydırmalı kategori deneyimi</strong>
+              <a class="btn" href="shop.html?category=Market">Market Ürünleri</a>
+            </div>
+          </article>
+          <article class="shop-promo-slide" data-shop-promo-slide>
+            <img src="wallet.png" alt="HUB Wallet alışveriş avantajları" loading="lazy">
+            <div class="shop-promo-content">
+              <p class="eyebrow">HUB Wallet</p>
+              <h2>HP, kupon ve premium avantaj.</h2>
+              <p>Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.</p>
+              <strong>Premium üyeliklerle daha fazla kazanım</strong>
+              <a class="btn" href="hubwallet.html">Wallet'a Git</a>
+            </div>
+          </article>
+        </div>
+        <button class="shop-promo-control shop-promo-control--next" type="button" data-shop-promo-next aria-label="Sonraki kampanya">›</button>
+        <div class="shop-promo-dots" data-shop-promo-dots aria-label="Kampanya seçimi"></div>
       </section>
 
-      <section class="container trust-strip" aria-label="AllonaHub avantajları">
-        <div class="trust-item"><strong>Güvenli ödeme</strong><span>Kart bilgileri iyzico ekranında girilir.</span></div>
-        <div class="trust-item"><strong>Canlı stok</strong><span>Ürün durumu Supabase üzerinden okunur.</span></div>
-        <div class="trust-item"><strong>Hızlı sepet</strong><span>Adet ve toplamlar anlık hesaplanır.</span></div>
-        <div class="trust-item"><strong>Üyelik</strong><span>Profil, sipariş ve favoriler tek hesapta tutulur.</span></div>
+      <section class="container shop-category-menu" aria-label="AllonaShop kategorileri">
+        <nav class="shop-category-rail" aria-label="Trendyol tarzı kategori menüsü">
+          <div class="shop-category-item">
+            <a class="shop-category-trigger is-active" href="shop.html">Vitrin</a>
+            <div class="shop-category-mega" role="menu" aria-label="Vitrin kategorileri">
+              <div class="shop-mega-col">
+                <h3>Hızlı Keşif</h3>
+                <a href="shop.html?sort=best_selling">Çok Satanlar</a>
+                <a href="shop.html?sort=newest">Yeni Gelenler</a>
+                <a href="shop.html?q=F%C4%B1rsat">Fırsatlar</a>
+                <a href="shop.html?q=Allona">Allona Seçkisi</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Popüler</h3>
+                <a href="shop.html?q=Tak%C4%B1">Takı &amp; Aksesuar</a>
+                <a href="shop.html?q=Kad%C4%B1n">Kadın Ürünleri</a>
+                <a href="shop.html?q=Premium">Premium Ürünler</a>
+                <a href="shop.html?q=HP">HP Avantajlı</a>
+              </div>
+              <div class="shop-mega-feature">
+                <strong>Günün vitrin ürünleri</strong>
+                <span>Partner ürünleri ve kampanyaları tek ekranda keşfet.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Kad%C4%B1n&amp;q=Kad%C4%B1n">Kadın</a>
+            <div class="shop-category-mega" role="menu" aria-label="Kadın kategorileri">
+              <div class="shop-mega-col">
+                <h3>Giyim</h3>
+                <a href="shop.html?category=Kad%C4%B1n&amp;q=Kad%C4%B1n%20Giyim">Elbise</a>
+                <a href="shop.html?category=Kad%C4%B1n&amp;q=Bluz">Bluz</a>
+                <a href="shop.html?category=Kad%C4%B1n&amp;q=Ceket">Ceket</a>
+                <a href="shop.html?category=Kad%C4%B1n&amp;q=%C4%B0%C3%A7%20Giyim">İç Giyim</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Takı &amp; Aksesuar</h3>
+                <a href="shop.html?q=Kolye">Kolye</a>
+                <a href="shop.html?q=K%C3%BCpe">Küpe</a>
+                <a href="shop.html?q=Bileklik">Bileklik</a>
+                <a href="shop.html?q=Sa%C3%A7%20Aksesuar%C4%B1">Saç Aksesuarı</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Çanta &amp; Ayakkabı</h3>
+                <a href="shop.html?q=%C3%87anta">Çanta</a>
+                <a href="shop.html?q=Topuklu">Topuklu</a>
+                <a href="shop.html?q=Sneaker">Sneaker</a>
+                <a href="shop.html?q=Sandalet">Sandalet</a>
+              </div>
+              <div class="shop-mega-feature">
+                <strong>Kadın vitrininde öne çıkanlar</strong>
+                <span>Takı, aksesuar ve seçili partner koleksiyonları.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Erkek&amp;q=Erkek">Erkek</a>
+            <div class="shop-category-mega" role="menu" aria-label="Erkek kategorileri">
+              <div class="shop-mega-col">
+                <h3>Giyim</h3>
+                <a href="shop.html?category=Erkek&amp;q=G%C3%B6mlek">Gömlek</a>
+                <a href="shop.html?category=Erkek&amp;q=T-shirt">T-shirt</a>
+                <a href="shop.html?category=Erkek&amp;q=Pantolon">Pantolon</a>
+                <a href="shop.html?category=Erkek&amp;q=Mont">Mont</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Aksesuar</h3>
+                <a href="shop.html?q=Saat">Saat</a>
+                <a href="shop.html?q=C%C3%BCzdan">Cüzdan</a>
+                <a href="shop.html?q=Kemer">Kemer</a>
+                <a href="shop.html?q=G%C3%B6zl%C3%BCk">Gözlük</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Ayakkabı</h3>
+                <a href="shop.html?q=Erkek%20Ayakkab%C4%B1">Günlük Ayakkabı</a>
+                <a href="shop.html?q=Spor%20Ayakkab%C4%B1">Spor Ayakkabı</a>
+                <a href="shop.html?q=Bot">Bot</a>
+                <a href="shop.html?q=Klasik%20Ayakkab%C4%B1">Klasik</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Anne%20%26%20%C3%87ocuk&amp;q=Anne%20%C3%87ocuk">Anne &amp; Çocuk</a>
+            <div class="shop-category-mega" role="menu" aria-label="Anne ve çocuk kategorileri">
+              <div class="shop-mega-col">
+                <h3>Bebek</h3>
+                <a href="shop.html?q=Bebek%20Giyim">Bebek Giyim</a>
+                <a href="shop.html?q=Bebek%20Bak%C4%B1m">Bebek Bakım</a>
+                <a href="shop.html?q=Bebek%20Arabasi">Bebek Arabası</a>
+                <a href="shop.html?q=Mama">Mama</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Çocuk</h3>
+                <a href="shop.html?q=%C3%87ocuk%20Giyim">Çocuk Giyim</a>
+                <a href="shop.html?q=Oyuncak">Oyuncak</a>
+                <a href="shop.html?q=Okul">Okul</a>
+                <a href="shop.html?q=Kitap">Kitap</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Anne</h3>
+                <a href="shop.html?q=Anne%20%C3%9Cr%C3%BCnleri">Anne Ürünleri</a>
+                <a href="shop.html?q=Emzirme">Emzirme</a>
+                <a href="shop.html?q=Hamile">Hamile</a>
+                <a href="shop.html?q=Bak%C4%B1m">Bakım</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Ev%20%26%20Ya%C5%9Fam&amp;q=Ev%20Ya%C5%9Fam">Ev &amp; Yaşam</a>
+            <div class="shop-category-mega" role="menu" aria-label="Ev ve yaşam kategorileri">
+              <div class="shop-mega-col">
+                <h3>Ev</h3>
+                <a href="shop.html?q=Mobilya">Mobilya</a>
+                <a href="shop.html?q=Dekorasyon">Dekorasyon</a>
+                <a href="shop.html?q=Ayd%C4%B1nlatma">Aydınlatma</a>
+                <a href="shop.html?q=Ev%20Tekstili">Ev Tekstili</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Mutfak</h3>
+                <a href="shop.html?q=Mutfak">Mutfak Gereçleri</a>
+                <a href="shop.html?q=Sofra">Sofra</a>
+                <a href="shop.html?q=Kahve">Kahve</a>
+                <a href="shop.html?q=K%C3%BC%C3%A7%C3%BCk%20Ev%20Aleti">Küçük Ev Aleti</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Yaşam</h3>
+                <a href="shop.html?q=Bah%C3%A7e">Bahçe</a>
+                <a href="shop.html?q=Temizlik">Temizlik</a>
+                <a href="shop.html?q=D%C3%BCzenleyici">Düzenleyici</a>
+                <a href="shop.html?q=Hobi">Hobi</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Kozmetik&amp;q=Kozmetik">Kozmetik</a>
+            <div class="shop-category-mega" role="menu" aria-label="Kozmetik kategorileri">
+              <div class="shop-mega-col">
+                <h3>Makyaj</h3>
+                <a href="shop.html?q=Ruj">Ruj</a>
+                <a href="shop.html?q=Fond%C3%B6ten">Fondöten</a>
+                <a href="shop.html?q=Maskara">Maskara</a>
+                <a href="shop.html?q=All%C4%B1k">Allık</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Bakım</h3>
+                <a href="shop.html?q=Cilt%20Bak%C4%B1m">Cilt Bakım</a>
+                <a href="shop.html?q=Sa%C3%A7%20Bak%C4%B1m">Saç Bakım</a>
+                <a href="shop.html?q=V%C3%BCcut%20Bak%C4%B1m">Vücut Bakım</a>
+                <a href="shop.html?q=G%C3%BCne%C5%9F%20Kremi">Güneş Kremi</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Parfüm</h3>
+                <a href="shop.html?q=Kad%C4%B1n%20Parf%C3%BCm">Kadın Parfüm</a>
+                <a href="shop.html?q=Erkek%20Parf%C3%BCm">Erkek Parfüm</a>
+                <a href="shop.html?q=Unisex%20Parf%C3%BCm">Unisex</a>
+                <a href="shop.html?q=Set">Setler</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=S%C3%BCpermarket&amp;q=S%C3%BCpermarket">Süpermarket</a>
+            <div class="shop-category-mega" role="menu" aria-label="Süpermarket kategorileri">
+              <div class="shop-mega-col">
+                <h3>Gıda</h3>
+                <a href="shop.html?q=Kahvalt%C4%B1">Kahvaltılık</a>
+                <a href="shop.html?q=At%C4%B1%C5%9Ft%C4%B1rmal%C4%B1k">Atıştırmalık</a>
+                <a href="shop.html?q=%C4%B0%C3%A7ecek">İçecek</a>
+                <a href="shop.html?q=Organik">Organik</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Ev İhtiyaçları</h3>
+                <a href="shop.html?q=Temizlik">Temizlik</a>
+                <a href="shop.html?q=Ka%C4%9F%C4%B1t">Kağıt Ürünleri</a>
+                <a href="shop.html?q=Petshop">Petshop</a>
+                <a href="shop.html?q=Bebek%20Bezi">Bebek Bezi</a>
+              </div>
+              <div class="shop-mega-feature">
+                <strong>Hızlı sepet</strong>
+                <span>Günlük ihtiyaçları tek sepetle tamamla.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="shop-category-item">
+            <a class="shop-category-trigger" href="shop.html?category=Ayakkab%C4%B1%20%26%20%C3%87anta&amp;q=Ayakkab%C4%B1%20%C3%87anta">Ayakkabı &amp; Çanta</a>
+            <div class="shop-category-mega" role="menu" aria-label="Ayakkabı ve çanta kategorileri">
+              <div class="shop-mega-col">
+                <h3>Ayakkabı</h3>
+                <a href="shop.html?q=Sneaker">Sneaker</a>
+                <a href="shop.html?q=Topuklu">Topuklu</a>
+                <a href="shop.html?q=Bot">Bot</a>
+                <a href="shop.html?q=Sandalet">Sandalet</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Çanta</h3>
+                <a href="shop.html?q=Omuz%20%C3%87antas%C4%B1">Omuz Çantası</a>
+                <a href="shop.html?q=S%C4%B1rt%20%C3%87antas%C4%B1">Sırt Çantası</a>
+                <a href="shop.html?q=El%20%C3%87antas%C4%B1">El Çantası</a>
+                <a href="shop.html?q=Valiz">Valiz</a>
+              </div>
+              <div class="shop-mega-col">
+                <h3>Aksesuar</h3>
+                <a href="shop.html?q=C%C3%BCzdan">Cüzdan</a>
+                <a href="shop.html?q=Kartl%C4%B1k">Kartlık</a>
+                <a href="shop.html?q=Bak%C4%B1m%20%C3%9Cr%C3%BCn%C3%BC">Bakım Ürünleri</a>
+                <a href="shop.html?q=Seyahat">Seyahat</a>
+              </div>
+            </div>
+          </div>
+        </nav>
       </section>
 
       <section class="container section" id="featured-products">
         <div class="section-header">
           <div>
-            <p class="eyebrow">Vitrin</p>
-            <h2>Aktif Ürünler</h2>
+            <p class="eyebrow">Popüler</p>
+            <h2>Popüler Ürünler</h2>
           </div>
           <a class="btn btn--light" href="shop.html">Tümünü Gör</a>
         </div>
@@ -77,7 +676,7 @@
           </div>
         </form>
 
-        <div class="product-grid" data-products-grid></div>
+        <div class="product-grid" data-products-grid data-preview-limit="8"></div>
       </section>
 
       <section class="container section">
@@ -98,6 +697,28 @@
           </div>
         </div>
         <div class="product-grid" data-best-grid></div>
+      </section>
+
+      <section class="container section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Seçki</p>
+            <h2>Öne Çıkan Ürünler</h2>
+          </div>
+          <a class="link-btn" href="favorites.html">Favorilerime Git</a>
+        </div>
+        <div class="product-grid" data-featured-grid></div>
+      </section>
+
+      <section class="container section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Kişisel</p>
+            <h2>Sana Özel Öneriler</h2>
+          </div>
+          <a class="link-btn" href="profile.html">Profilimi Güncelle</a>
+        </div>
+        <div class="product-grid" data-recommended-grid></div>
       </section>
     </main>
 

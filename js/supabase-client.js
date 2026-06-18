@@ -127,6 +127,27 @@
     return core.normalizeProduct(data);
   }
 
+  async function listShopPartnerAds(limit) {
+    const { data, error } = await client()
+      .from("partner_ads")
+      .select("*, product:products(*)")
+      .eq("status", "active")
+      .in("placement", ["allonashop_hero", "shop_hero"])
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+    const now = Date.now();
+    return (data || [])
+      .filter((ad) => {
+        const startsOk = !ad.starts_at || new Date(ad.starts_at).getTime() <= now;
+        const endsOk = !ad.ends_at || new Date(ad.ends_at).getTime() >= now;
+        return startsOk && endsOk;
+      })
+      .slice(0, limit || 5);
+  }
+
   async function listOrders(scope) {
     let query = client().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
     if (scope && scope.userId) query = query.eq("user_id", scope.userId);
@@ -176,6 +197,9 @@
       upsert: upsertProduct,
       updateFields: updateProductFields,
       delete: deleteProduct
+    },
+    ads: {
+      shopHero: listShopPartnerAds
     },
     orders: {
       list: listOrders,
