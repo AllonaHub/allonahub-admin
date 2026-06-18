@@ -2,7 +2,7 @@
 
 ## Marka Hissi
 
-Allona Shop premium, temiz, güven veren ve modern bir e-ticaret deneyimi sunmalıdır. Arayüz ilk bakışta mağaza gibi çalışmalı; kullanıcıya henüz açılmayan AllonaHub modülleri gösterilmemelidir.
+AllonaHub premium, temiz, güven veren ve modern bir e-ticaret deneyimi sunmalıdır. Arayüz ilk bakışta mağaza gibi çalışmalı; kullanıcıya henüz açılmayan AllonaHub modülleri gösterilmemelidir.
 
 ## Renkler
 

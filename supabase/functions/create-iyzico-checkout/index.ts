@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
         return {
           id: String(item.product_id || item.id),
           price: amount(totalPrice),
-          name: String(item.product_name || "Allona Shop Ürün"),
+          name: String(item.product_name || "AllonaHub Ürün"),
           category1: String((item.product_snapshot as Record<string, unknown> | null)?.category || "Genel"),
           itemType: "PHYSICAL"
         };

@@ -1,6 +1,6 @@
 # DATABASE
 
-Allona Shop Supabase üzerinde PostgreSQL kullanır. Temel kural: müşteri tarafı sadece güvenli RLS politikalarıyla izin verilen veriye erişir; ödeme ve kritik sipariş onayı Edge Functions üzerinden yapılır.
+AllonaHub Supabase üzerinde PostgreSQL kullanır. Temel kural: müşteri tarafı sadece güvenli RLS politikalarıyla izin verilen veriye erişir; ödeme ve kritik sipariş onayı Edge Functions üzerinden yapılır.
 
 ## Ana Tablolar
 

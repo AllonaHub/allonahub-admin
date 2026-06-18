@@ -8,7 +8,7 @@
 - [x] Kullanıcı adres yönetimini Supabase `addresses` tablosuna bağla.
 - [x] Checkout akışını iyzico CheckoutForm Edge Function sözleşmesine bağla.
 - [x] Checkout yasal onaylarını ve iyzico yönlendirme mantığını kart bilgisi toplamadan hazırla.
-- [x] Footer yasal linklerini ve şirket bilgilerini Allona Shop odağıyla düzenle.
+- [x] Footer yasal linklerini ve şirket bilgilerini AllonaHub odağıyla düzenle.
 - [x] Supabase SQL şemasını ve RLS politikalarını dokümante et.
 - [ ] Supabase SQL Editor üzerinden `supabase/schema.sql` içeriğini canlı projeye uygula.
 - [ ] Supabase Storage bucketlarını oluştur: `product-images`, `brand-assets`, `partner-documents`.

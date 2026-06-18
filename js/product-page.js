@@ -31,8 +31,8 @@
     `;
 
     core.setMeta({
-      title: `${product.meta_title || product.name} | Allona Shop`,
-      description: product.meta_description || product.description || "Allona Shop ürün detayı.",
+      title: `${product.meta_title || product.name} | AllonaHub`,
+      description: product.meta_description || product.description || "AllonaHub ürün detayı.",
       image,
       url: window.location.href,
       schema: {

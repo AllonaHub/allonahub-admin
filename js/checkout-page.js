@@ -58,13 +58,13 @@
   function friendlyCheckoutError(error) {
     const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
     if (/schema cache|could not find|column/i.test(message)) {
-      return "Sipariş kaydı için veritabanı alanları güncellenmeli. Lütfen kısa süre sonra tekrar deneyin veya Allona destek ile iletişime geçin.";
+      return "Sipariş kaydı için veritabanı alanları güncellenmeli. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.";
     }
     if (/row-level security|permission denied|unauthorized|forbidden/i.test(message)) {
       return "Sipariş oluşturmak için oturum yetkiniz doğrulanamadı. Lütfen çıkış yapıp tekrar giriş yapın.";
     }
     if (/failed to fetch|network|function|edge/i.test(message)) {
-      return "Sipariş oluşturulurken bağlantı sorunu oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.";
+      return "Ödeme sayfasına yönlendirilirken bağlantı sorunu oluştu. Lütfen tekrar deneyin.";
     }
     return "Sipariş oluşturulamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin.";
   }
@@ -76,6 +76,7 @@
     const address = compactLines([
       data.shipping_address,
       data.shipping_district ? `İlçe: ${data.shipping_district}` : "",
+      data.shipping_city ? `İl: ${data.shipping_city}` : "",
       data.shipping_zip ? `Posta kodu: ${data.shipping_zip}` : "",
       data.billing_same === "on" ? "Fatura adresi teslimat adresiyle aynı." : "",
       data.billing_same !== "on" && data.billing_address ? `Fatura adresi: ${data.billing_address}` : "",
@@ -147,7 +148,9 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = form.querySelector("button[type='submit']");
+      const originalText = button.textContent;
       button.disabled = true;
+      button.textContent = "Ödeme ekranı hazırlanıyor...";
 
       try {
         const user = await App.auth.requireAuth();
@@ -166,18 +169,19 @@
         try {
           payment = await App.db.payments.createIyzicoCheckout(order.id, buyer);
         } catch (paymentError) {
-          core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat iyzico ödeme sayfası açılamadı. Lütfen kısa süre sonra tekrar deneyin veya Allona destek ile iletişime geçin.", "error");
+          core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat iyzico kart bilgileri ekranı açılamadı. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.", "error");
           return;
         }
         if (payment && payment.paymentPageUrl) {
           window.location.href = payment.paymentPageUrl;
           return;
         }
-        core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak iyzico ödeme adresi dönmedi. Edge Function ayarlarını kontrol edin.", "error");
+        core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak iyzico kart bilgileri ekranı açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
       } catch (error) {
         core.renderStatus("[data-checkout-status]", friendlyCheckoutError(error), "error");
       } finally {
         button.disabled = false;
+        button.textContent = originalText;
       }
     });
 

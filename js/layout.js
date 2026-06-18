@@ -11,7 +11,7 @@
     return `
       <div class="top-bar">
         <div class="container top-bar__inner">
-          <span>Allona Shop güvenli alışveriş deneyimi</span>
+          <span>AllonaHub güvenli alışveriş deneyimi</span>
           <nav class="top-bar__links" aria-label="Üst bağlantılar">
             <a href="${core.url("orders.html")}">Siparişlerim</a>
             <a href="${core.url("addresses.html")}">Adreslerim</a>
@@ -21,9 +21,9 @@
       </div>
       <header class="site-header">
         <div class="container header-main">
-          <a class="brand" href="${core.url("index.html")}" aria-label="Allona Shop ana sayfa">
-            <img src="${core.url("images/allona-logo.svg")}" alt="Allona Shop">
-            <span class="brand__name">Allona <span class="brand__accent">Shop</span></span>
+          <a class="brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
+            <img src="${core.url("images/allona-logo-mark.png")}" alt="AllonaHub">
+            <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
           </a>
           <form class="search-form" data-site-search>
             <input type="search" name="q" autocomplete="off" placeholder="Ürün, kategori veya marka ara" aria-label="Ürün ara">
@@ -57,11 +57,23 @@
 
   function footerMarkup() {
     const year = new Date().getFullYear();
+    const socials = [
+      ["WhatsApp", "WA", "https://wa.me/905427781868", "social-link--whatsapp"],
+      ["Instagram", "IG", "https://www.instagram.com/allonahub", "social-link--instagram"],
+      ["X", "X", "https://x.com/allonahub", "social-link--x"],
+      ["LinkedIn", "in", "https://www.linkedin.com/company/allonahub", "social-link--linkedin"],
+      ["YouTube", "▶", "https://www.youtube.com/@allonahub", "social-link--youtube"],
+      ["Nsosyal", "N", "https://nsosyal.com/allonahub", "social-link--nsosyal"],
+      ["TikTok", "♪", "https://www.tiktok.com/@allonahub", "social-link--tiktok"]
+    ];
     return `
       <footer class="site-footer">
         <div class="container footer-grid">
           <div class="footer-col">
-            <h2>Allona Shop</h2>
+            <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
+              <img src="${core.url("images/allona-logo-mark.png")}" alt="">
+              <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
+            </a>
             <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
             <p>İstanbul / Türkiye</p>
             <p>allonahub@gmail.com</p>
@@ -89,7 +101,15 @@
             <a href="${core.url("kullanim-sartlari.html")}">Kullanım Şartları</a>
           </div>
         </div>
-        <div class="container footer-bottom">© ${year} Allona Shop. Tüm hakları saklıdır.</div>
+        <div class="container footer-social" aria-label="AllonaHub sosyal medya bağlantıları">
+          ${socials.map(([label, icon, href, className]) => `
+            <a class="social-link ${className}" href="${href}" target="_blank" rel="noopener" aria-label="${label}">
+              <span class="social-link__icon">${icon}</span>
+              <span>${label}</span>
+            </a>
+          `).join("")}
+        </div>
+        <div class="container footer-bottom">© ${year} AllonaHub. Tüm hakları saklıdır.</div>
       </footer>
     `;
   }

@@ -27,7 +27,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--soft);
+  background:
+    radial-gradient(circle at 82% 6%, rgba(0, 168, 200, 0.16), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, var(--soft) 44%, #ffffff 100%);
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
@@ -135,17 +137,29 @@ img {
 }
 
 .brand img {
-  width: 42px;
-  height: 42px;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 12px 26px rgba(0, 124, 145, 0.18);
 }
 
 .brand__name {
-  color: var(--sea-dark);
-  font-size: 1.18rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  font-size: 1.26rem;
+  font-weight: 950;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.72), 0 10px 20px rgba(7, 82, 99, 0.12);
 }
 
+.brand__allona,
 .brand__accent {
   color: var(--gold);
+}
+
+.brand__hub {
+  color: var(--sea-2);
 }
 
 .search-form {
@@ -306,12 +320,24 @@ img {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(320px, 1.08fr);
   align-items: stretch;
-  background: var(--white);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(238, 251, 254, 0.88)),
+    var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 22px 60px rgba(7, 82, 99, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.82);
   overflow: hidden;
   min-height: 420px;
+  position: relative;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
 .hero__content {
@@ -320,6 +346,8 @@ img {
   flex-direction: column;
   justify-content: center;
   gap: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .eyebrow {
@@ -359,13 +387,25 @@ img {
 
 .hero__media {
   min-height: 320px;
-  background: #eef8fb;
+  background: linear-gradient(135deg, #eefbfe, #ffffff);
+  position: relative;
 }
 
 .hero__media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.hero__media::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 8% 14%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgba(0, 124, 145, 0.18);
+  filter: blur(32px);
+  pointer-events: none;
 }
 
 .trust-strip {
@@ -464,6 +504,18 @@ img {
 .field textarea {
   min-height: 104px;
   resize: vertical;
+}
+
+.field input[type="checkbox"] {
+  width: auto;
+  min-height: auto;
+  padding: 0;
+}
+
+.field label:has(input[type="checkbox"]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .field input:focus,
@@ -746,6 +798,62 @@ img {
   align-items: start;
 }
 
+.payment-methods {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #ffffff, #f0fbfe);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.payment-methods__title {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.payment-logos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.payment-logo {
+  min-height: 34px;
+  min-width: 68px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  padding: 0 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(16, 35, 47, 0.06);
+}
+
+.payment-logo--iyzico {
+  color: #0a7ea4;
+}
+
+.payment-logo--visa {
+  color: #1434cb;
+}
+
+.payment-logo--mastercard {
+  color: #eb001b;
+}
+
+.payment-logo--amex {
+  color: #006fcf;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -928,6 +1036,22 @@ img {
   color: var(--gold-2);
 }
 
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+  font-weight: 950;
+}
+
+.footer-brand img {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
 .footer-col a,
 .footer-col p {
   display: block;
@@ -936,6 +1060,49 @@ img {
   font-size: 0.92rem;
   line-height: 1.9;
 }
+
+.footer-social {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 0 22px;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border-radius: 999px;
+  padding: 0 12px 0 8px;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.social-link__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.social-link--whatsapp .social-link__icon { background: #25d366; }
+.social-link--instagram .social-link__icon { background: #d62976; }
+.social-link--x .social-link__icon { background: #111111; }
+.social-link--linkedin .social-link__icon { background: #0a66c2; }
+.social-link--youtube .social-link__icon { background: #ff0033; }
+.social-link--nsosyal .social-link__icon { background: var(--sea); }
+.social-link--tiktok .social-link__icon { background: #00a8c8; }
 
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
@@ -1025,6 +1192,11 @@ img {
     font-size: 1rem;
   }
 
+  .brand img {
+    width: 44px;
+    height: 44px;
+  }
+
   .header-actions {
     gap: 6px;
   }
@@ -1097,5 +1269,28 @@ img {
   .btn,
   .link-btn {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-main {
+    grid-template-columns: 1fr;
+  }
+
+  .brand {
+    width: 100%;
+  }
+
+  .brand__name {
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .search-form {
+    width: 100%;
   }
 }

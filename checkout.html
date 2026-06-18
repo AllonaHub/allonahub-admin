@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Checkout | Allona Shop</title>
-  <meta name="description" content="Allona Shop teslimat, fatura ve iyzico ödeme hazırlığı.">
+  <title>Checkout | AllonaHub</title>
+  <meta name="description" content="AllonaHub teslimat, fatura ve iyzico ödeme hazırlığı.">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -88,9 +88,18 @@
               <label for="billing-city">Fatura ili</label>
               <input id="billing-city" name="billing_city">
             </div>
+            <div class="payment-methods" aria-label="Desteklenen ödeme yöntemleri">
+              <span class="payment-methods__title">Kart bilgileri güvenli iyzico ödeme ekranında girilir.</span>
+              <div class="payment-logos" aria-hidden="true">
+                <span class="payment-logo payment-logo--iyzico">iyzico</span>
+                <span class="payment-logo payment-logo--visa">VISA</span>
+                <span class="payment-logo payment-logo--mastercard">Mastercard</span>
+                <span class="payment-logo payment-logo--amex">AMEX</span>
+              </div>
+            </div>
           </div>
           <div class="form-actions">
-            <button class="btn" type="submit">iyzico ile Ödemeye Geç</button>
+            <button class="btn" type="submit">Kart Bilgilerine Devam Et</button>
             <a class="btn btn--light" href="cart.html">Sepete Dön</a>
           </div>
         </form>

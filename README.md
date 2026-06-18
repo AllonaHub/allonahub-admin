@@ -1,6 +1,6 @@
-# Allona Shop / AllonaHub
+# AllonaHub / AllonaHub
 
-Bu repository artık Allona Shop'un ana geliştirme reposudur. Allona Shop, AllonaHub ekosisteminin ilk halka açık modülüdür. Bu repo şu an yalnızca profesyonel e-ticaret deneyimine odaklanır; yemek, market, taksi, sağlık ve diğer modüller altyapıda düşünülür ama kullanıcı arayüzünde gösterilmez.
+Bu repository artık AllonaHub'un ana geliştirme reposudur. AllonaHub, AllonaHub ekosisteminin ilk halka açık modülüdür. Bu repo şu an yalnızca profesyonel e-ticaret deneyimine odaklanır; yemek, market, taksi, sağlık ve diğer modüller altyapıda düşünülür ama kullanıcı arayüzünde gösterilmez.
 
 ## Teknoloji
 
