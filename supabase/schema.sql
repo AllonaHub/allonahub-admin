@@ -220,37 +220,26 @@ create trigger coupons_set_updated_at
 
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
-  order_number text not null unique default ('ALN-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))),
-  user_id uuid not null references public.profiles(id) on delete restrict,
+  order_no text not null unique default ('ALN-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))),
+  user_id uuid references public.profiles(id) on delete set null default auth.uid(),
   customer_name text not null,
   customer_email text not null,
   customer_phone text,
-  shipping_address jsonb not null,
-  billing_address jsonb not null,
-  address_id uuid references public.addresses(id) on delete set null,
-  coupon_code text,
+  city text not null,
+  address text not null,
   subtotal numeric(12,2) not null default 0,
-  shipping_total numeric(12,2) not null default 0,
-  discount_total numeric(12,2) not null default 0,
+  shipping numeric(12,2) not null default 0,
+  discount numeric(12,2) not null default 0,
   total numeric(12,2) not null default 0,
-  total_amount numeric(12,2) not null default 0,
-  shipping_fee numeric(12,2) not null default 0,
-  discount_amount numeric(12,2) not null default 0,
-  status public.order_status not null default 'pending',
   order_status public.order_status not null default 'pending',
   payment_status public.payment_status not null default 'pending',
-  legal_acceptances jsonb,
   tracking_number text,
-  iyzico_token text,
-  iyzico_payment_id text,
-  payment_page_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists orders_user_idx on public.orders(user_id, created_at desc);
 create index if not exists orders_status_idx on public.orders(order_status, payment_status);
-create index if not exists orders_status_new_idx on public.orders(status, payment_status);
 
 drop trigger if exists orders_set_updated_at on public.orders;
 create trigger orders_set_updated_at
@@ -263,9 +252,7 @@ create table if not exists public.order_items (
   product_id uuid references public.products(id) on delete set null,
   product_name text not null,
   quantity integer not null check (quantity > 0),
-  unit_price numeric(12,2) not null check (unit_price >= 0),
-  total_price numeric(12,2) not null check (total_price >= 0),
-  product_snapshot jsonb,
+  price numeric(12,2) not null check (price >= 0),
   created_at timestamptz not null default now()
 );
 

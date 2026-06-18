@@ -150,9 +150,7 @@
       product_id: item.product.id,
       product_name: item.product.name,
       quantity: item.qty,
-      unit_price: item.product.price,
-      total_price: item.product.price * item.qty,
-      product_snapshot: item.product
+      price: item.product.price
     }));
 
     const { error: itemError } = await client().from("order_items").insert(rows);

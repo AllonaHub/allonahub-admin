@@ -104,8 +104,11 @@ Deno.serve(async (req) => {
       return json({ error: "Forbidden" }, 403);
     }
 
-    const shipping = order.shipping_address || {};
-    const billing = order.billing_address || {};
+    const shipping = order.shipping_address || {
+      address: order.address,
+      city: order.city
+    };
+    const billing = order.billing_address || shipping;
     const { name, surname } = splitName(order.customer_name);
     const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
     const callbackUrl = `${callbackUrlBase}?orderId=${encodeURIComponent(order.id)}`;
@@ -116,7 +119,7 @@ Deno.serve(async (req) => {
       price: amount(order.subtotal),
       paidPrice: amount(order.total_amount ?? order.total),
       currency: "TRY",
-      basketId: order.order_number || order.id,
+      basketId: order.order_no || order.order_number || order.id,
       paymentGroup: "PRODUCT",
       callbackUrl,
       enabledInstallments: [1, 2, 3, 6, 9],
@@ -147,13 +150,18 @@ Deno.serve(async (req) => {
         city: billing.city || shipping.city || "İstanbul",
         country: "Turkey"
       },
-      basketItems: (order.order_items || []).map((item: Record<string, unknown>) => ({
-        id: String(item.product_id || item.id),
-        price: amount(item.total_price),
-        name: String(item.product_name || "Allona Shop Ürün"),
-        category1: String((item.product_snapshot as Record<string, unknown> | null)?.category || "Genel"),
-        itemType: "PHYSICAL"
-      }))
+      basketItems: (order.order_items || []).map((item: Record<string, unknown>) => {
+        const quantity = Number(item.quantity || 1);
+        const unitPrice = Number(item.price || item.unit_price || 0);
+        const totalPrice = item.total_price ?? unitPrice * quantity;
+        return {
+          id: String(item.product_id || item.id),
+          price: amount(totalPrice),
+          name: String(item.product_name || "Allona Shop Ürün"),
+          category1: String((item.product_snapshot as Record<string, unknown> | null)?.category || "Genel"),
+          itemType: "PHYSICAL"
+        };
+      })
     };
 
     const body = JSON.stringify(iyzicoPayload);
@@ -177,9 +185,7 @@ Deno.serve(async (req) => {
     await admin
       .from("orders")
       .update({
-        payment_status: "awaiting_payment",
-        iyzico_token: result.token,
-        payment_page_url: result.paymentPageUrl
+        payment_status: "awaiting_payment"
       })
       .eq("id", order.id);
 

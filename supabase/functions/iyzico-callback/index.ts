@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const orderId = url.searchParams.get("orderId");
     const token = await tokenFromRequest(req);
+    if (!orderId) return response("Missing orderId", 400);
     if (!token) return response("Missing token", 400);
 
     const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
@@ -103,17 +104,13 @@ Deno.serve(async (req) => {
     const paymentStatus = result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
 
-    let query = admin
+    const query = admin
       .from("orders")
       .update({
         payment_status: paymentStatus,
-        status: orderStatus,
-        order_status: orderStatus,
-        iyzico_token: token,
-        iyzico_payment_id: result.paymentId || null
-      });
-
-    query = orderId ? query.eq("id", orderId) : query.eq("iyzico_token", token);
+        order_status: orderStatus
+      })
+      .eq("id", orderId);
     const { error } = await query;
     if (error) throw error;
 
