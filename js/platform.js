@@ -6,9 +6,9 @@
   const ASSET_VERSION = (() => {
     try {
       const current = document.currentScript && document.currentScript.src;
-      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live2" : "20260619-live2";
+      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live3" : "20260619-live3";
     } catch (error) {
-      return "20260619-live2";
+      return "20260619-live3";
     }
   })();
   const languages = [
@@ -753,9 +753,10 @@
     const loggedIn = await hasAuthenticatedUser();
     if (!loggedIn) {
       links.forEach((link) => {
-        if (!link.matches("[data-account-link], a.login")) return;
+        link.href = assetUrl("login.html");
         link.textContent = localizedText("Giriş Yap");
         link.setAttribute("aria-label", localizedText("Giriş Yap"));
+        link.setAttribute("data-account-link", "");
       });
       return;
     }
