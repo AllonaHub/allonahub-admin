@@ -130,36 +130,30 @@ img {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   font-weight: 850;
   letter-spacing: 0;
   white-space: nowrap;
 }
 
-.brand img {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  object-fit: cover;
-  box-shadow: 0 12px 26px rgba(0, 124, 145, 0.18);
-}
-
 .brand__name {
   display: inline-flex;
   align-items: baseline;
-  gap: 1px;
-  font-size: 1.26rem;
+  gap: 2px;
+  font-size: 1.42rem;
   font-weight: 950;
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.72), 0 10px 20px rgba(7, 82, 99, 0.12);
+  line-height: 1;
 }
 
 .brand__allona,
 .brand__accent {
   color: var(--gold);
+  text-shadow: 0 1px 0 #ffe3a5, 0 4px 10px rgba(201, 154, 46, 0.22);
 }
 
 .brand__hub {
   color: var(--sea-2);
+  text-shadow: 0 1px 0 #b9f6ff, 0 4px 10px rgba(0, 124, 145, 0.24);
 }
 
 .search-form {
@@ -1039,17 +1033,9 @@ img {
 .footer-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   margin-bottom: 12px;
-  font-size: 1.2rem;
+  font-size: 1.34rem;
   font-weight: 950;
-}
-
-.footer-brand img {
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
-  object-fit: cover;
 }
 
 .footer-col a,
@@ -1189,12 +1175,7 @@ img {
   }
 
   .brand__name {
-    font-size: 1rem;
-  }
-
-  .brand img {
-    width: 44px;
-    height: 44px;
+    font-size: 1.08rem;
   }
 
   .header-actions {

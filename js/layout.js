@@ -22,7 +22,6 @@
       <header class="site-header">
         <div class="container header-main">
           <a class="brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-            <img src="${core.url("images/allona-logo-mark.png")}" alt="AllonaHub">
             <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
           </a>
           <form class="search-form" data-site-search>
@@ -46,7 +45,7 @@
               <a href="${core.url("index.html")}" ${active("index.html")}>Vitrin</a>
               <a href="${core.url("shop.html")}" ${active("shop.html")}>Mağaza</a>
               <a href="${core.url("cart.html")}" ${active("cart.html")}>Sepet</a>
-              <a href="${core.url("checkout.html")}" ${active("checkout.html")}>Checkout</a>
+              <a href="${core.url("checkout.html")}" ${active("checkout.html")}>Ödeme</a>
               <a href="${core.url("profile.html")}" ${active("profile.html")}>Profil</a>
             </nav>
           </div>
@@ -71,7 +70,6 @@
         <div class="container footer-grid">
           <div class="footer-col">
             <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-              <img src="${core.url("images/allona-logo-mark.png")}" alt="">
               <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
             </a>
             <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
