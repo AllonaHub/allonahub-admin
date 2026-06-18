@@ -44,6 +44,20 @@
     };
   }
 
+  function remoteAddressPayload(raw, userId) {
+    const address = raw || {};
+    return {
+      user_id: userId,
+      title: address.title || "Adres",
+      full_name: address.full_name || "",
+      phone: address.phone || "",
+      address: address.address || "",
+      district: address.district || "",
+      city: address.city || "",
+      zip_code: address.zip_code || ""
+    };
+  }
+
   async function initProfile() {
     const form = document.querySelector("[data-profile-form]");
     if (!form) return;
@@ -190,7 +204,8 @@
       const button = form.querySelector("button[type='submit']");
       button.disabled = true;
       try {
-        const payload = normalizeAddress({ ...core.parseForm(form), user_id: user.id });
+        const formPayload = core.parseForm(form);
+        const payload = normalizeAddress(formPayload);
         if (state.source === "local") {
           const addresses = [payload, ...readLocalAddresses(user.id)];
           writeLocalAddresses(user.id, addresses);
@@ -200,7 +215,7 @@
           return;
         }
 
-        const { error } = await App.db.client().from("addresses").insert({ ...payload, user_id: user.id });
+        const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload, user.id));
         if (error) {
           if (isAddressesSchemaError(error)) {
             const addresses = [payload, ...readLocalAddresses(user.id)];
