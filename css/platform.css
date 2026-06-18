@@ -597,6 +597,18 @@ body[data-theme] .product-card__media {
   backdrop-filter: blur(16px);
 }
 
+.shop-landing .site-header .nav-row,
+.shop-landing .trust-strip,
+.shop-landing .site-main > .shop-category-menu:not(.shop-category-menu--top) {
+  display: none;
+}
+
+.shop-category-menu--top {
+  top: 112px;
+  margin-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+
 .shop-category-rail {
   position: relative;
   display: flex;
@@ -935,6 +947,48 @@ body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-s
   background: var(--ah-footer-panel);
   border: 1px solid var(--ah-footer-line);
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ah-primary) 10%, transparent);
+}
+
+.store-btn--app {
+  min-width: 188px;
+  min-height: 58px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 9px 18px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #050a12, #101c2c);
+  border-color: color-mix(in srgb, var(--ah-primary) 30%, transparent);
+}
+
+.store-btn--app::before {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--ah-bg-strong);
+  font-weight: 950;
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-accent-soft));
+  content: attr(data-store-icon);
+}
+
+.store-btn__text {
+  display: grid;
+  gap: 2px;
+  line-height: 1.05;
+  text-align: left;
+}
+
+.store-btn__kicker {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.store-btn--app strong {
+  color: #ffffff;
+  font-size: 1.05rem;
 }
 
 .footer-bottom {

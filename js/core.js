@@ -121,7 +121,7 @@
             <span class="pill pill--gold">Allona</span>
           </div>
           <div class="product-card__actions">
-            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Hızlı Sepete Ekle</button>
+            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Hemen Al</button>
           </div>
         </div>
       </article>

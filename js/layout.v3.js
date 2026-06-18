@@ -139,8 +139,18 @@
           `).join("")}
         </div>
         <div class="container store-buttons" aria-label="AllonaHub mobil uygulama bağlantıları">
-          <a href="${core.url("premium.html")}" class="store-btn">AllonaHub Premium</a>
-          <a href="${core.url("hubwallet.html")}" class="store-btn">HUB Wallet</a>
+          <a href="https://www.apple.com/app-store/" class="store-btn store-btn--app" data-store-icon="A" target="_blank" rel="noopener" aria-label="App Store'dan indir">
+            <span class="store-btn__text">
+              <span class="store-btn__kicker">Download on the</span>
+              <strong>App Store</strong>
+            </span>
+          </a>
+          <a href="https://play.google.com/store" class="store-btn store-btn--app" data-store-icon="G" target="_blank" rel="noopener" aria-label="Google Play'den indir">
+            <span class="store-btn__text">
+              <span class="store-btn__kicker">GET IT ON</span>
+              <strong>Google Play</strong>
+            </span>
+          </a>
         </div>
         <div class="container footer-bottom">
           <span>© ${year} AllonaHub. Tüm hakları saklıdır.</span>

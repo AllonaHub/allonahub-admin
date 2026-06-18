@@ -5,6 +5,7 @@
   const REMOTE_CACHE_PREFIX = "allona.remoteTranslations.";
   const languages = [
     { code: "tr", label: "TR" },
+    { code: "az", label: "AZ" },
     { code: "en", label: "EN" },
     { code: "de", label: "DE" },
     { code: "ru", label: "RU" },
@@ -26,6 +27,329 @@
     theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "neon",
     packs: {}
   };
+  const embeddedLanguagePacks = {
+    az: {
+      dir: "ltr",
+      keys: {
+        languageLabel: "Dil seçimi"
+      },
+      phrases: {
+        "Dil seçimi": "Dil seçimi",
+        "Tema seçimi": "Tema seçimi",
+        "AllonaHub güvenli alışveriş ve hizmet ekosistemi": "AllonaHub təhlükəsiz alış-veriş və xidmət ekosistemi",
+        "AllonaHub güvenli alışveriş deneyimi": "AllonaHub təhlükəsiz alış-veriş təcrübəsi",
+        "Üst bağlantılar": "Üst bağlantılar",
+        "Bildirimler": "Bildirişlər",
+        "Siparişlerim": "Sifarişlərim",
+        "Adreslerim": "Ünvanlarım",
+        "Favorilerim": "Sevimlilərim",
+        "Favoriler": "Sevimlilər",
+        "Sepet": "Səbət",
+        "Ödeme": "Ödəniş",
+        "Giriş Yap": "Daxil ol",
+        "Hesabım": "Hesabım",
+        "Profil": "Profil",
+        "Menüyü aç": "Menyunu aç",
+        "Ana menü": "Əsas menyu",
+        "AllonaHub ana sayfa": "AllonaHub ana səhifə",
+        "Ürün, kategori, hizmet veya marka ara": "Məhsul, kateqoriya, xidmət və ya brend axtar",
+        "Ürün, kategori veya marka ara": "Məhsul, kateqoriya və ya brend axtar",
+        "Ürün ara": "Məhsul axtar",
+        "Ara": "Axtar",
+        "Allona Shop": "Allona Mağaza",
+        "Allona Yemek": "Allona Yemək",
+        "Allona Market": "Allona Market",
+        "Allona Maritime": "Allona Dənizçilik",
+        "Allona Denizcilik": "Allona Dənizçilik",
+        "Allona East": "Allona Şərq",
+        "AllonaHub Ekosistemi": "AllonaHub Ekosistemi",
+        "Premium E-Ticaret": "Premium E-ticarət",
+        "Premium pazar yeri deneyimi.": "Premium market yeri təcrübəsi.",
+        "Seçili ürünleri güvenli ödeme, hızlı sepet ve HP avantajlarıyla keşfedin.": "Seçilmiş məhsulları təhlükəsiz ödəniş, sürətli səbət və HP üstünlükləri ilə kəşf edin.",
+        "Yeni üyelere özel alışveriş fırsatları": "Yeni üzvlər üçün xüsusi alış-veriş fürsətləri",
+        "Alışverişe Başla": "Alış-verişə başla",
+        "Kategori Fırsatları": "Kateqoriya fürsətləri",
+        "Elektronikten ev yaşamına hızlı keşif.": "Elektronikadan ev və yaşam məhsullarına sürətli kəşf.",
+        "Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek vitrinde.": "Populyar kateqoriyalar, kampaniyalar və etibarlı məhsul kartları bir vitrində.",
+        "Güncel stok ve fiyat altyapısı hazır": "Aktual stok və qiymət infrastrukturu hazırdır",
+        "Kataloğu Aç": "Kataloqu aç",
+        "Teknoloji": "Texnologiya",
+        "Yeni gelen ürünleri yakalayın.": "Yeni gələn məhsulları qaçırmayın.",
+        "Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı vitrin yapısı.": "Elektronika, aksesuar və rəqəmsal məhsullar üçün satış yönümlü vitrin quruluşu.",
+        "Favori, puanlama ve hızlı sepete ekle": "Sevimli, reytinq və sürətli səbətə əlavə et",
+        "Teknolojiyi İncele": "Texnologiyanı incələ",
+        "Günlük Alışveriş": "Gündəlik alış-veriş",
+        "Market, bakım ve ev ihtiyaçları.": "Market, baxım və ev ehtiyacları.",
+        "Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.": "Tək ekranda sürətli qərar, aydın qiymət və mobil öncəli alış-veriş axını.",
+        "Mobilde yatay kaydırmalı kategori deneyimi": "Mobildə üfüqi sürüşdürülən kateqoriya təcrübəsi",
+        "Market Ürünleri": "Market məhsulları",
+        "HP, kupon ve premium avantaj.": "HP, kupon və premium üstünlük.",
+        "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.": "Alış-veriş motivasiyasını artıran loyallıq, kupon və üzvlük sahələri ilə uyğundur.",
+        "Premium üyeliklerle daha fazla kazanım": "Premium üzvlüklərlə daha çox qazanc",
+        "Wallet'a Git": "Wallet-a keç",
+        "AllonaShop kampanya alanı": "AllonaShop kampaniya sahəsi",
+        "Önceki kampanya": "Əvvəlki kampaniya",
+        "Sonraki kampanya": "Növbəti kampaniya",
+        "Kampanya seçimi": "Kampaniya seçimi",
+        "AllonaShop kategorileri": "AllonaShop kateqoriyaları",
+        "Trendyol tarzı kategori menüsü": "Trendyol tipli kateqoriya menyusu",
+        "Vitrin": "Vitrin",
+        "Kadın": "Qadın",
+        "Erkek": "Kişi",
+        "Anne & Çocuk": "Ana və Uşaq",
+        "Ev & Yaşam": "Ev və Yaşam",
+        "Süpermarket": "Supermarket",
+        "Kozmetik": "Kosmetika",
+        "Ayakkabı & Çanta": "Ayaqqabı və Çanta",
+        "Elektronik": "Elektronika",
+        "Saat & Aksesuar": "Saat və Aksesuar",
+        "Spor & Outdoor": "İdman və Outdoor",
+        "Hızlı Keşif": "Sürətli kəşf",
+        "Çok Satanlar": "Ən çox satılanlar",
+        "Yeni Gelenler": "Yeni gələnlər",
+        "Fırsatlar": "Fürsətlər",
+        "Allona Seçkisi": "Allona seçkisi",
+        "Popüler": "Populyar",
+        "Takı & Aksesuar": "Zinət və aksesuar",
+        "Kadın Ürünleri": "Qadın məhsulları",
+        "Premium Ürünler": "Premium məhsullar",
+        "HP Avantajlı": "HP üstünlüklü",
+        "Partner Vitrini": "Partner vitrini",
+        "Günün Ürünleri": "Günün məhsulları",
+        "Kampanyalar": "Kampaniyalar",
+        "Yeni Partnerler": "Yeni partnerlər",
+        "Seçili Markalar": "Seçilmiş brendlər",
+        "Günün vitrin ürünleri": "Günün vitrin məhsulları",
+        "Partner ürünleri ve kampanyaları tek ekranda keşfet.": "Partner məhsullarını və kampaniyalarını tək ekranda kəşf et.",
+        "Kadın kategorileri": "Qadın kateqoriyaları",
+        "Giyim": "Geyim",
+        "Elbise": "Don",
+        "Bluz": "Bluz",
+        "Ceket": "Jaket",
+        "İç Giyim": "İç geyim",
+        "Kolye": "Boyunbağı",
+        "Küpe": "Sırğa",
+        "Bileklik": "Qolbaq",
+        "Saç Aksesuarı": "Saç aksesuarı",
+        "Çanta & Ayakkabı": "Çanta və ayaqqabı",
+        "Çanta": "Çanta",
+        "Topuklu": "Dabanlı ayaqqabı",
+        "Sneaker": "Sneaker",
+        "Sandalet": "Sandal",
+        "Kadın vitrininde öne çıkanlar": "Qadın vitrinində önə çıxanlar",
+        "Takı, aksesuar ve seçili partner koleksiyonları.": "Zinət, aksesuar və seçilmiş partner kolleksiyaları.",
+        "Erkek kategorileri": "Kişi kateqoriyaları",
+        "Gömlek": "Köynək",
+        "T-shirt": "T-shirt",
+        "Pantolon": "Şalvar",
+        "Mont": "Gödəkçə",
+        "Aksesuar": "Aksesuar",
+        "Saat": "Saat",
+        "Cüzdan": "Pulqabı",
+        "Kemer": "Kəmər",
+        "Gözlük": "Eynək",
+        "Ayakkabı": "Ayaqqabı",
+        "Günlük Ayakkabı": "Gündəlik ayaqqabı",
+        "Spor Ayakkabı": "İdman ayaqqabısı",
+        "Bot": "Bot",
+        "Klasik": "Klassik",
+        "Erkek koleksiyonu": "Kişi kolleksiyası",
+        "Giyim, aksesuar ve günlük ürünlere hızlı ulaş.": "Geyim, aksesuar və gündəlik məhsullara sürətli çat.",
+        "Anne ve çocuk kategorileri": "Ana və uşaq kateqoriyaları",
+        "Bebek": "Körpə",
+        "Bebek Giyim": "Körpə geyimi",
+        "Bebek Bakım": "Körpə baxımı",
+        "Bebek Arabası": "Körpə arabası",
+        "Mama": "Uşaq qidası",
+        "Çocuk": "Uşaq",
+        "Çocuk Giyim": "Uşaq geyimi",
+        "Oyuncak": "Oyuncaq",
+        "Okul": "Məktəb",
+        "Kitap": "Kitab",
+        "Anne": "Ana",
+        "Anne Ürünleri": "Ana məhsulları",
+        "Emzirme": "Əmizdirmə",
+        "Hamile": "Hamiləlik",
+        "Bakım": "Baxım",
+        "Aile alışverişi": "Ailə alış-verişi",
+        "Anne, bebek ve çocuk ihtiyaçları aynı menüde.": "Ana, körpə və uşaq ehtiyacları eyni menyudadır.",
+        "Ev ve yaşam kategorileri": "Ev və yaşam kateqoriyaları",
+        "Ev": "Ev",
+        "Mobilya": "Mebel",
+        "Dekorasyon": "Dekorasiya",
+        "Aydınlatma": "İşıqlandırma",
+        "Ev Tekstili": "Ev tekstili",
+        "Mutfak": "Mətbəx",
+        "Mutfak Gereçleri": "Mətbəx ləvazimatları",
+        "Sofra": "Süfrə",
+        "Kahve": "Qəhvə",
+        "Küçük Ev Aleti": "Kiçik məişət texnikası",
+        "Yaşam": "Yaşam",
+        "Bahçe": "Bağ",
+        "Temizlik": "Təmizlik",
+        "Düzenleyici": "Təşkilatçı",
+        "Hobi": "Hobbi",
+        "Evi yenile": "Evi yenilə",
+        "Dekorasyon, mutfak ve günlük yaşam ürünleri.": "Dekorasiya, mətbəx və gündəlik yaşam məhsulları.",
+        "Süpermarket kategorileri": "Supermarket kateqoriyaları",
+        "Gıda": "Qida",
+        "Kahvaltılık": "Səhər yeməyi məhsulları",
+        "Atıştırmalık": "Qəlyanaltı",
+        "İçecek": "İçki",
+        "Organik": "Orqanik",
+        "Ev İhtiyaçları": "Ev ehtiyacları",
+        "Kağıt Ürünleri": "Kağız məhsulları",
+        "Petshop": "Ev heyvanları mağazası",
+        "Bebek Bezi": "Uşaq bezi",
+        "Kişisel Bakım": "Şəxsi baxım",
+        "Hijyen": "Gigiyena",
+        "Sağlık": "Sağlamlıq",
+        "Vitamin": "Vitamin",
+        "Günlük ihtiyaçlar": "Gündəlik ehtiyaclar",
+        "Market sepetini hızlı ve düzenli şekilde tamamla.": "Market səbətini sürətli və nizamlı tamamla.",
+        "Kozmetik kategorileri": "Kosmetika kateqoriyaları",
+        "Makyaj": "Makiyaj",
+        "Ruj": "Dodaq boyası",
+        "Fondöten": "Tonal krem",
+        "Maskara": "Tuş",
+        "Allık": "Ənlik",
+        "Cilt Bakım": "Dəri baxımı",
+        "Saç Bakım": "Saç baxımı",
+        "Vücut Bakım": "Bədən baxımı",
+        "Güneş Kremi": "Günəş kremi",
+        "Parfüm": "Ətir",
+        "Kadın Parfüm": "Qadın ətri",
+        "Erkek Parfüm": "Kişi ətri",
+        "Unisex": "Uniseks",
+        "Setler": "Setlər",
+        "Bakım vitrini": "Baxım vitrini",
+        "Güzellik, kişisel bakım ve parfüm kategorileri.": "Gözəllik, şəxsi baxım və ətir kateqoriyaları.",
+        "Ayakkabı ve çanta kategorileri": "Ayaqqabı və çanta kateqoriyaları",
+        "Omuz Çantası": "Çiyin çantası",
+        "Sırt Çantası": "Bel çantası",
+        "El Çantası": "Əl çantası",
+        "Valiz": "Çamadan",
+        "Kartlık": "Kart qabı",
+        "Bakım Ürünleri": "Baxım məhsulları",
+        "Seyahat": "Səyahət",
+        "Stil tamamlayıcıları": "Stili tamamlayanlar",
+        "Ayakkabı, çanta ve aksesuarları tek alanda incele.": "Ayaqqabı, çanta və aksesuarları tək sahədə incələ.",
+        "Elektronik kategorileri": "Elektronika kateqoriyaları",
+        "Telefon": "Telefon",
+        "Bilgisayar": "Kompüter",
+        "Tablet": "Planşet",
+        "Kulaklık": "Qulaqlıq",
+        "Şarj Ürünleri": "Şarj məhsulları",
+        "Kılıf": "Qoruyucu qab",
+        "Akıllı Saat": "Ağıllı saat",
+        "Oyun": "Oyun",
+        "Ev Elektroniği": "Ev elektronikası",
+        "TV": "TV",
+        "Ses Sistemi": "Səs sistemi",
+        "Akıllı Ev": "Ağıllı ev",
+        "Teknoloji fırsatları": "Texnologiya fürsətləri",
+        "Elektronik ve aksesuar kampanyalarını yakala.": "Elektronika və aksesuar kampaniyalarını qaçırma.",
+        "Saat ve aksesuar kategorileri": "Saat və aksesuar kateqoriyaları",
+        "Kadın Saat": "Qadın saatı",
+        "Erkek Saat": "Kişi saatı",
+        "Spor Saat": "İdman saatı",
+        "Şapka": "Papaq",
+        "Takı": "Zinət",
+        "Yüzük": "Üzük",
+        "Halhal": "Ayaq bilərziyi",
+        "Detaylarla tamamla": "Detallarla tamamla",
+        "Saat, takı ve günlük aksesuarları keşfet.": "Saat, zinət və gündəlik aksesuarları kəşf et.",
+        "Spor ve outdoor kategorileri": "İdman və outdoor kateqoriyaları",
+        "Spor Giyim": "İdman geyimi",
+        "Eşofman": "İdman dəsti",
+        "Tayt": "Leggings",
+        "Forma": "Forma",
+        "Kamp": "Kamp",
+        "Bisiklet": "Velosiped",
+        "Yürüyüş": "Gəzinti",
+        "Deniz Sporları": "Dəniz idmanları",
+        "Fitness": "Fitness",
+        "Yoga": "Yoqa",
+        "Ekipman": "Avadanlıq",
+        "Protein": "Protein",
+        "Aktif yaşam": "Aktiv həyat",
+        "Spor, outdoor ve performans ürünleri.": "İdman, outdoor və performans məhsulları.",
+        "Popüler Ürünler": "Populyar məhsullar",
+        "Tümünü Gör": "Hamısına bax",
+        "Arama": "Axtarış",
+        "Ürün, kategori veya marka": "Məhsul, kateqoriya və ya brend",
+        "Kategori": "Kateqoriya",
+        "Tüm kategoriler": "Bütün kateqoriyalar",
+        "Min fiyat": "Minimum qiymət",
+        "Max fiyat": "Maksimum qiymət",
+        "Sıralama": "Sıralama",
+        "En yeni": "Ən yeni",
+        "En çok satan": "Ən çox satılan",
+        "Fiyat artan": "Qiymət artan",
+        "Fiyat azalan": "Qiymət azalan",
+        "Yeni": "Yeni",
+        "En Çok Satanlar": "Ən çox satılanlar",
+        "Seçki": "Seçki",
+        "Öne Çıkan Ürünler": "Önə çıxan məhsullar",
+        "Favorilerime Git": "Sevimlilərimə keç",
+        "Kişisel": "Şəxsi",
+        "Sana Özel Öneriler": "Sənin üçün tövsiyələr",
+        "Profilimi Güncelle": "Profilimi yenilə",
+        "Favoriye ekle": "Sevimlilərə əlavə et",
+        "Hemen Al": "İndi al",
+        "Stok yok": "Stok yoxdur",
+        "stok": "stok",
+        "İndirim": "Endirim",
+        "Fırsat": "Fürsət",
+        "Genel": "Ümumi",
+        "Ürün": "Məhsul",
+        "Özel El İşlemeli Boham": "Xüsusi əl işləməli bohça",
+        "Zarif sallantılı Halhal": "Zərif sallanan halhal",
+        "Leaf Aura Tasarım Küpe": "Leaf Aura dizayn sırğa",
+        "Özel El İşlemeli Yüzük": "Xüsusi əl işləməli üzük",
+        "Laura Özel El İşi Kolye": "Laura xüsusi əl işi boyunbağı",
+        "ALLONA Etnik Yaprak Detaylı Yüz Aksesuarı": "ALLONA etnik yarpaq detallı üz aksesuarı",
+        "Alışveriş": "Alış-veriş",
+        "Mağaza": "Mağaza",
+        "Ürünler": "Məhsullar",
+        "Kuponlar": "Kuponlar",
+        "Müşteri": "Müştəri",
+        "Hakkımızda": "Haqqımızda",
+        "İletişim": "Əlaqə",
+        "Destek Merkezi": "Dəstək mərkəzi",
+        "Belgelerim": "Sənədlərim",
+        "Teslimat ve Kargo": "Çatdırılma və karqo",
+        "İade ve Cayma Hakkı": "Qaytarma və imtina hüququ",
+        "Ekosistem": "Ekosistem",
+        "Tüm Modüller": "Bütün modullar",
+        "Partner Başvurusu": "Partner müraciəti",
+        "Premium": "Premium",
+        "Kariyer": "Karyera",
+        "Partner Üyelik": "Partner üzvlüyü",
+        "Yasal": "Hüquqi",
+        "Mesafeli Satış Sözleşmesi": "Məsafəli satış müqaviləsi",
+        "Ön Bilgilendirme Formu": "İlkin məlumat forması",
+        "Gizlilik Politikası": "Məxfilik siyasəti",
+        "KVKK Aydınlatma Metni": "KVKK məlumatlandırma mətni",
+        "Çerez Politikası": "Çərəz siyasəti",
+        "Kullanım Şartları": "İstifadə şərtləri",
+        "Güvenlik Politikası": "Təhlükəsizlik siyasəti",
+        "Tek hesapla alışveriş, hizmet, partner, ödeme ve dijital çözümler.": "Tək hesabla alış-veriş, xidmət, partner, ödəniş və rəqəmsal həllər.",
+        "Tüm hakları saklıdır.": "Bütün hüquqlar qorunur.",
+        "AllonaHub sosyal medya bağlantıları": "AllonaHub sosial media bağlantıları",
+        "AllonaHub mobil uygulama bağlantıları": "AllonaHub mobil tətbiq bağlantıları",
+        "App Store'dan indir": "App Store-dan endir",
+        "Google Play'den indir": "Google Play-dən endir",
+        "Download on the": "Buradan endir",
+        "GET IT ON": "Buradan əldə et",
+        "App Store": "App Store",
+        "Google Play": "Google Play"
+      }
+    }
+  };
+  let translationObserver = null;
+  let languageRefreshTimer = null;
+  let isApplyingLanguage = false;
 
   function isNestedPage() {
     return /\/(admin|partner)\//.test(window.location.pathname);
@@ -62,14 +386,33 @@
     try {
       const response = await fetch(assetUrl(`i18n/${selected}.json`), { cache: "no-cache" });
       if (!response.ok) throw new Error(`i18n ${selected} ${response.status}`);
-      const pack = await response.json();
+      const remotePack = await response.json();
+      const embeddedPack = embeddedLanguagePacks[selected] || {};
+      const pack = {
+        ...embeddedPack,
+        ...remotePack,
+        keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}) },
+        phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}) }
+      };
       state.packs[selected] = pack;
       return pack;
     } catch (error) {
       console.warn("AllonaHub language pack could not be loaded:", error.message);
-      state.packs[selected] = { dir: "ltr", phrases: {}, keys: {} };
+      state.packs[selected] = embeddedLanguagePacks[selected] || { dir: "ltr", phrases: {}, keys: {} };
       return state.packs[selected];
     }
+  }
+
+  function shouldSkipTranslateNode(parent) {
+    if (!parent) return true;
+    if (/^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT|SELECT|OPTION)$/i.test(parent.tagName)) return true;
+    return Boolean(parent.closest("[data-no-translate], .logo-title, .brand__name, .platform-brand-normalized"));
+  }
+
+  function shouldSkipTranslateAttribute(node) {
+    if (!node) return true;
+    if (/^(SCRIPT|STYLE|NOSCRIPT)$/i.test(node.tagName)) return true;
+    return Boolean(node.closest("[data-no-translate], .logo-title, .brand__name, .platform-brand-normalized"));
   }
 
   function ownTextNodes(root) {
@@ -77,10 +420,7 @@
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         const parent = node.parentElement;
-        if (!parent) return NodeFilter.FILTER_REJECT;
-        if (/^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA|INPUT|SELECT|OPTION)$/i.test(parent.tagName)) {
-          return NodeFilter.FILTER_REJECT;
-        }
+        if (shouldSkipTranslateNode(parent)) return NodeFilter.FILTER_REJECT;
         if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
         return NodeFilter.FILTER_ACCEPT;
       }
@@ -91,7 +431,7 @@
 
   function translateExactText(pack) {
     const phrases = pack.phrases || {};
-    const roots = document.querySelectorAll("header, nav, main, footer, .top-mini-nav, .site-shell");
+    const roots = document.body ? [document.body] : [];
     roots.forEach((root) => {
       ownTextNodes(root).forEach((node) => {
         if (!node.__allonaSourceText) node.__allonaSourceText = node.textContent;
@@ -107,10 +447,27 @@
       });
     });
 
-    document.querySelectorAll("[placeholder]").forEach((node) => {
-      if (!node.__allonaSourcePlaceholder) node.__allonaSourcePlaceholder = node.getAttribute("placeholder");
-      const translated = phrases[node.__allonaSourcePlaceholder];
-      node.setAttribute("placeholder", translated || node.__allonaSourcePlaceholder);
+    document.querySelectorAll("option").forEach((node) => {
+      if (!node.__allonaSourceText) node.__allonaSourceText = node.textContent;
+      const source = node.__allonaSourceText.trim();
+      const translated = phrases[source];
+      if (!translated) {
+        node.textContent = node.__allonaSourceText;
+        return;
+      }
+      const prefix = node.__allonaSourceText.match(/^\s*/)[0];
+      const suffix = node.__allonaSourceText.match(/\s*$/)[0];
+      node.textContent = `${prefix}${translated}${suffix}`;
+    });
+
+    ["placeholder", "aria-label", "title", "alt"].forEach((attribute) => {
+      document.querySelectorAll(`[${attribute}]`).forEach((node) => {
+        if (shouldSkipTranslateAttribute(node)) return;
+        const key = `__allonaSource_${attribute}`;
+        if (!node[key]) node[key] = node.getAttribute(attribute);
+        const translated = phrases[node[key]];
+        node.setAttribute(attribute, translated || node[key]);
+      });
     });
   }
 
@@ -121,7 +478,7 @@
   function sourceTextNodes(pack) {
     const phrases = pack.phrases || {};
     const nodes = [];
-    const roots = document.querySelectorAll("header, nav, main, footer, .top-mini-nav, .site-shell");
+    const roots = document.body ? [document.body] : [];
     roots.forEach((root) => {
       ownTextNodes(root).forEach((node) => {
         const source = (node.__allonaSourceText || node.textContent || "").trim();
@@ -195,13 +552,37 @@
     const pack = await loadLanguage(selected);
     document.documentElement.lang = selected;
     document.documentElement.dir = pack.dir || (selected === "ar" ? "rtl" : "ltr");
-    translateExactText(pack);
-    translateOnline(selected, pack);
+    isApplyingLanguage = true;
+    try {
+      translateExactText(pack);
+      await translateOnline(selected, pack);
+    } finally {
+      isApplyingLanguage = false;
+    }
     document.querySelectorAll("[data-language-select]").forEach((node) => {
       node.value = selected;
       node.setAttribute("aria-label", (pack.keys && pack.keys.languageLabel) || "Dil");
     });
     document.dispatchEvent(new CustomEvent("allona:language-changed", { detail: { language: selected } }));
+  }
+
+  function scheduleLanguageRefresh() {
+    if (state.language === "tr" || isApplyingLanguage) return;
+    window.clearTimeout(languageRefreshTimer);
+    languageRefreshTimer = window.setTimeout(() => {
+      applyLanguage(state.language);
+    }, 80);
+  }
+
+  function startTranslationObserver() {
+    if (translationObserver || !document.body) return;
+    translationObserver = new MutationObserver((mutations) => {
+      if (isApplyingLanguage) return;
+      if (mutations.some((mutation) => mutation.addedNodes && mutation.addedNodes.length)) {
+        scheduleLanguageRefresh();
+      }
+    });
+    translationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   function controlsMarkup(mode) {
@@ -408,6 +789,7 @@
       normalizePlatformBrand();
       mountControls();
       applyTheme(state.theme);
+      startTranslationObserver();
       applyLanguage(state.language).then(updateAccountLinks);
       updateAccountLinks();
     });
@@ -420,6 +802,7 @@
     applyTheme(state.theme);
     mountControls();
     repairEmptyLinks();
+    startTranslationObserver();
     await applyLanguage(state.language);
     await updateAccountLinks();
   }
