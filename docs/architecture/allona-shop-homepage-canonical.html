@@ -1,275 +1,321 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Allona Shop | Online Alışveriş Mağazası</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>AllonaHub | Yeni Nesil Süper Uygulama</title>
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{background:#f6f8fb;color:#14213d}
-a{text-decoration:none;color:inherit}
-.container{max-width:1200px;margin:auto;padding:0 20px}
-
-.topbar{background:#020814;color:#fff;font-size:13px;padding:9px 0}
-.topbar .container{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
-
-header{background:white;position:sticky;top:0;z-index:50;border-bottom:1px solid #e6e9ef}
-.header-inner{height:82px;display:flex;align-items:center;justify-content:space-between;gap:25px}
-.logo{font-size:30px;font-weight:900}
-.logo .gold{color:#d4a017}.logo .blue{color:#00aeea}
-.search{flex:1;max-width:520px;display:flex;border:1px solid #d9e2ec;border-radius:999px;overflow:hidden;background:#fff}
-.search input{flex:1;border:0;outline:0;padding:14px 18px;font-size:15px}
-.search button{border:0;background:#00aeea;color:white;padding:0 24px;font-weight:800;cursor:pointer}
-nav{display:flex;gap:18px;font-size:14px;font-weight:700}
-nav a:hover{color:#00aeea}
-
-.hero{background:linear-gradient(135deg,#020814,#06385a,#00aeea);color:white;padding:70px 0}
-.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:35px;align-items:center}
-.hero h1{font-size:48px;line-height:1.12;margin-bottom:18px}
-.hero p{font-size:18px;line-height:1.6;color:rgba(255,255,255,.85);margin-bottom:26px}
-.btn{display:inline-block;background:#d4a017;color:#020814;padding:15px 28px;border-radius:999px;font-weight:900}
-.hero-card{background:white;color:#14213d;border-radius:26px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.18)}
-.hero-card h3{font-size:24px;margin-bottom:15px;color:#020814}
-.hero-card li{list-style:none;margin:13px 0;color:#4a5568}
-
-.section{padding:60px 0}
-.section-title{text-align:center;font-size:34px;margin-bottom:12px;color:#020814}
-.section-sub{text-align:center;color:#667085;margin-bottom:35px}
-
-.categories{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.cat{background:white;border:1px solid #e6e9ef;border-radius:20px;padding:24px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.05)}
-.cat h3{margin-bottom:8px;color:#020814}
-.cat p{color:#667085;font-size:14px}
-
-.products{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
-.product{background:white;border:1px solid #e6e9ef;border-radius:22px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.product-img{height:210px;background:linear-gradient(135deg,#edf7fb,#d9f3fb);display:flex;align-items:center;justify-content:center;color:#00aeea;font-size:42px;font-weight:900}
-.product-body{padding:18px}
-.product-body h3{font-size:17px;margin-bottom:8px}
-.product-body p{font-size:14px;color:#667085;line-height:1.5;margin-bottom:12px}
-.price{font-size:21px;font-weight:900;color:#020814;margin-bottom:14px}
-.buy{display:block;text-align:center;background:#00aeea;color:white;padding:12px;border-radius:12px;font-weight:900}
-
-.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.info{background:white;border:1px solid #e6e9ef;border-radius:22px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,.05)}
-.info h3{margin-bottom:12px;color:#020814}
-.info p{color:#667085;line-height:1.7;font-size:14px}
-
-.about{background:white;border-radius:26px;padding:38px;border:1px solid #e6e9ef;box-shadow:0 8px 24px rgba(0,0,0,.05)}
-.about p{color:#4a5568;line-height:1.8;margin-top:12px}
-
-footer{background:#020814;color:white;padding:55px 0 25px}
-.footer-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:30px}
-footer h3,footer h4{color:#d4a017;margin-bottom:16px}
-footer p,footer a{display:block;color:rgba(255,255,255,.72);font-size:14px;line-height:1.9}
-.payments{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.payments span{border:1px solid rgba(255,255,255,.18);padding:8px 10px;border-radius:8px;font-size:12px}
-.bottom{text-align:center;margin-top:35px;padding-top:20px;border-top:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:13px}
-
-@media(max-width:900px){
-.header-inner,.hero-grid{grid-template-columns:1fr;display:grid;height:auto;padding:18px 0}
-nav{flex-wrap:wrap}
-.categories,.products,.info-grid,.footer-grid{grid-template-columns:1fr 1fr}
-.hero h1{font-size:36px}
-}
-@media(max-width:600px){
-.categories,.products,.info-grid,.footer-grid{grid-template-columns:1fr}
-.search{max-width:100%}
-}
-</style>
+<link rel="stylesheet" href="css/allonahub-home.css">
 </head>
 
 <body>
 
-<div class="topbar">
-  <div class="container">
-    <span>Güvenli alışveriş • Hızlı teslimat • Kolay iade</span>
-    <span>Destek: allonahub@gmail.com</span>
-  </div>
+<div class="top-mini-nav">
+<a href="hp-nedir.html">HP nedir?</a>
+<a href="kuponlar.html">İndirim Kuponu</a>
+<a href="partner.html">Ekosisteme Katıl</a>
+<a href="hakkimizda.html">Hakkımızda</a>
+<a href="destek.html">Yardım ve Destek</a>
 </div>
 
 <header>
-  <div class="container header-inner">
-    <a href="index.html" class="logo"><span class="gold">Allona</span> <span class="blue">Shop</span></a>
+<a class="logo" href="index.html">
+<img src="allona.logo.png" alt="AllonaHub Logo">
+<div class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></div>
+</a>
 
-    <div class="search">
-      <input type="text" placeholder="Ürün, kategori veya marka ara...">
-      <button>Ara</button>
-    </div>
+<div class="nav-search">
+<span>🔍</span>
+<input id="globalSearchInput" placeholder="Aradığınız hizmet, kategori veya özelliği yazın...">
+<button class="search-btn" type="button" data-global-search>Ara</button>
+</div>
 
-    <nav>
-      <a href="#urunler">Ürünler</a>
-      <a href="#hakkimizda">Hakkımızda</a>
-      <a href="#teslimat">Teslimat</a>
-      <a href="#iletisim">İletişim</a>
-    </nav>
-  </div>
+<nav>
+<a href="#modules">Hizmetlerimiz</a>
+<a href="hubwallet.html">HUB Wallet</a>
+<a href="premium.html">Premium</a>
+<a href="partner.html">Partner Ol</a>
+<a class="login" href="user.html">Giriş Yap</a>
+</nav>
 </header>
 
-<section class="hero">
-  <div class="container hero-grid">
-    <div>
-      <h1>Allona Shop ile güvenli online alışveriş</h1>
-      <p>Takı, aksesuar, kozmetik, tekstil ve yaşam ürünlerinde seçili ürünleri güvenli ödeme altyapısı ve kolay iade imkânı ile müşterilerimize sunuyoruz.</p>
-      <a href="#urunler" class="btn">Ürünleri İncele</a>
-    </div>
+<section class="premium-hero">
+<div class="hero-time-card">
+<div id="timeVisual" class="time-visual sun-visual"></div>
+<div id="heroGreeting" class="hero-greeting">Günaydın</div>
+<div id="heroClock" class="hero-clock">00:00:00</div>
+<div class="hero-location">
+<span class="pin-dot"></span>
+<div>
+<strong id="heroCity">İstanbul</strong>
+<p id="heroCountry">Türkiye</p>
+</div>
+</div>
+</div>
 
-    <div class="hero-card">
-      <h3>Alışveriş Avantajları</h3>
-      <ul>
-        <li>✔ Güvenli ödeme altyapısı</li>
-        <li>✔ Sipariş sonrası bilgilendirme</li>
-        <li>✔ Mesafeli satış sözleşmesi</li>
-        <li>✔ 14 gün içinde cayma hakkı</li>
-        <li>✔ Türkiye içi teslimat</li>
-      </ul>
-    </div>
-  </div>
+<div class="hero-main-card">
+<div class="hero-orb"></div>
+<h1>Global Süper<br>Ekosisteme Hoş Geldiniz</h1>
+<p>Alışveriş, kampanyalar ve partner hizmetleri için yeni nesil dijital ekosistem</p>
+</div>
+
+<div class="hero-reward-card">
+<div class="diamond-visual"></div>
+<h3>HP Dünyası</h3>
+<p>Ödüller, kampanyalar ve sadakat avantajlarını keşfet.</p>
+</div>
 </section>
 
-<section class="section">
-  <div class="container">
-    <h2 class="section-title">Kategoriler</h2>
-    <p class="section-sub">Allona Shop’ta satışa sunulan ana ürün grupları</p>
-
-    <div class="categories">
-      <div class="cat"><h3>Takı & Aksesuar</h3><p>Kolye, yüzük, bileklik ve özel aksesuarlar.</p></div>
-      <div class="cat"><h3>Tekstil</h3><p>Günlük kullanım ve seçili tekstil ürünleri.</p></div>
-      <div class="cat"><h3>Kozmetik</h3><p>Bakım ve kişisel kullanım ürünleri.</p></div>
-      <div class="cat"><h3>Yaşam Ürünleri</h3><p>Ev ve günlük yaşam için pratik ürünler.</p></div>
-    </div>
-  </div>
+<section class="live-stats-section">
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Kullanıcı</p><h3 id="activeUsers">12.481</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Partner</p><h3 id="activeAds">1.942</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Yeni Üyeler</p><h3 id="jobAds">326</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Crew</p><h3 id="crewApps">89</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Sadakat Puanı</p><h3 id="dailyHP">245.800</h3></div>
 </section>
 
-<section class="section" id="urunler">
-  <div class="container">
-    <h2 class="section-title">Öne Çıkan Ürünler</h2>
-    <p class="section-sub">Satışa uygun örnek ürün listesi</p>
+<section id="modules" class="modules-section">
+<div class="section-head">
+<span>ALLONAHUB EKOSİSTEMİ</span>
+<h2>Hizmetlerimiz</h2>
+<p>Tek hesapla alışverişten sağlığa, tarımdan lojistiğe, eğitimden kariyere kadar tüm hizmetlere ulaş.</p>
+</div>
 
-    <div class="products">
-      <div class="product">
-        <div class="product-img">A</div>
-        <div class="product-body">
-          <h3>Zarif Kolye Modeli</h3>
-          <p>Günlük kullanım için şık ve modern aksesuar.</p>
-          <div class="price">499,99 TL</div>
-          <a class="buy" href="odeme.html">Sepete Ekle</a>
-        </div>
-      </div>
+<div class="modules-grid large-grid">
 
-      <div class="product">
-        <div class="product-img">S</div>
-        <div class="product-body">
-          <h3>Çelik Bileklik</h3>
-          <p>Dayanıklı, sade ve premium görünümlü bileklik.</p>
-          <div class="price">349,99 TL</div>
-          <a class="buy" href="odeme.html">Sepete Ekle</a>
-        </div>
-      </div>
+<a class="module-card module-card--shop" href="allonashop.html"><div><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></div></a>
+<a class="module-card module-card--yemek" href="allonayemek.html"><div><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></div></a>
+<a class="module-card module-card--market" href="yakında.html"><div><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></div></a>
+<a class="module-card module-card--taksi" href="yakında.html"><div><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></div></a>
+<a class="module-card module-card--saglik" href="yakında.html"><div><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></div></a>
 
-      <div class="product">
-        <div class="product-img">L</div>
-        <div class="product-body">
-          <h3>Minimal Yüzük</h3>
-          <p>Şık kombinler için tamamlayıcı aksesuar.</p>
-          <div class="price">289,99 TL</div>
-          <a class="buy" href="odeme.html">Sepete Ekle</a>
-        </div>
-      </div>
+<a class="module-card module-card--seyahat" href="yakında.html"><div><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p></div></a>
+<a class="module-card module-card--gayrimenkul" href="yakında.html"><div><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></div></a>
+<a class="module-card module-card--denizcilik" href="denizcilik.html"><div><h3>Denizcilik</h3><p>Gemi ve crew hizmetleri</p></div></a>
+<a class="module-card module-card--hukuk" href="yakında.html"><div><h3>Hukuk</h3><p>Avukat ve danışmanlık</p></div></a>
+<a class="module-card module-card--danismanlik" href="yakında.html"><div><h3>Danışmanlık</h3><p>Profesyonel destek</p></div></a>
 
-      <div class="product">
-        <div class="product-img">O</div>
-        <div class="product-body">
-          <h3>Özel Takı Seti</h3>
-          <p>Hediye ve özel günler için seçili set ürünü.</p>
-          <div class="price">899,99 TL</div>
-          <a class="buy" href="odeme.html">Sepete Ekle</a>
-        </div>
-      </div>
-    </div>
-  </div>
+<a class="module-card module-card--egitim" href="yakında.html"><div><h3>Eğitim</h3><p>Kurslar ve öğrenim</p></div></a>
+<a class="module-card module-card--kariyer" href="yakında.html"><div><h3>Kariyer</h3><p>İş ve kariyer fırsatları</p></div></a>
+<a class="module-card module-card--finans" href="yakında.html"><div><h3>Finans</h3><p>Ödeme ve finansal hizmetler</p></div></a>
+<a class="module-card module-card--otomotiv" href="ayakında.html"><div><h3>Otomotiv</h3><p>Araç ve ulaşım çözümleri</p></div></a>
+<a class="module-card module-card--eglence" href="yakında.html"><div><h3>Eğlence & Etkinlik</h3><p>Festival, konser ve etkinlikler</p></div></a>
+
+<a class="module-card module-card--evcilhayvan" href="yakında.html"><div><h3>Evcil Hayvan</h3><p>Veteriner, bakım ve ürünler</p></div></a>
+<a class="module-card module-card--teknoloji" href="yakında.html"><div><h3>Teknoloji</h3><p>Elektronik ve dijital çözümler</p></div></a>
+<a class="module-card module-card--sporfitnes" href="yakında.html"><div><h3>Spor & Fitness</h3><p>Spor salonu ve sağlıklı yaşam</p></div></a>
+<a class="module-card module-card--guzellik" href="yakında.html"><div><h3>Güzellik & Kozmetik</h3><p>Bakım, kozmetik ve güzellik</p></div></a>
+<a class="module-card module-card--sigorta" href="yakında.html"><div><h3>Sigorta</h3><p>Araç, konut ve sağlık sigortası</p></div></a>
+
+<a class="module-card module-card--kurye" href="yakında.html"><div><h3>Kurye & Teslimat</h3><p>Hızlı kurye ve teslimat</p></div></a>
+<a class="module-card module-card--evhizmetleri" href="yakında.html"><div><h3>Ev Hizmetleri</h3><p>Temizlik, elektrik ve tadilat</p></div></a>
+<a class="module-card module-card--lojistik" href="yakında.html"><div><h3>Kargo & Lojistik</h3><p>Depo, taşıma ve lojistik</p></div></a>
+<a class="module-card module-card--nakliye" href="yakında.html"><div><h3>Nakliye</h3><p>Ev, ofis, parça eşya ve asansörlü nakliye</p></div></a>
+<a class="module-card module-card--organizasyon" href="yakında.html"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p></div></a>
+
+<a class="module-card module-card--tarim" href="yakında.html"><div><h3>Allona Tarım</h3><p>Çiftçilik, gübre, tohum ve TARSİM</p></div></a>
+<a class="module-card module-card--insaatyapi" href="yakında.html"><div><h3>İnşaat & Yapı</h3><p>Müteahhit, yapı, proje ve mühendislik</p></div></a>
+<a class="module-card module-card--muhendislik" href="yakında.html"><div><h3>Mühendislik</h3><p>Teknik proje, çizim ve mühendislik</p></div></a>
+<a class="module-card module-card--trade" href="yakında.html"><div><h3>Trade</h3><p>İthalat, ihracat ve global ticaret</p></div></a>
+<a class="module-card module-card--wallet" href="yakında.html"><div><h3>Otelcilik</h3><p>Otel kiralama,konaklama</p></div></a>
+
+</div>
 </section>
 
-<section class="section" id="teslimat">
-  <div class="container">
-    <h2 class="section-title">Güvenli Alışveriş Bilgileri</h2>
-    <p class="section-sub">Müşteri deneyimini şeffaf ve güvenli hale getiriyoruz</p>
+<section class="section" id="premium">
+<h2 class="section-title">Premium Üyelikler</h2>
+<p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
 
-    <div class="info-grid">
-      <div class="info">
-        <h3>Teslimat</h3>
-        <p>Siparişler, ödeme onayından sonra hazırlanarak anlaşmalı kargo firmaları aracılığıyla müşteriye ulaştırılır.</p>
-      </div>
-      <div class="info">
-        <h3>İade & Cayma Hakkı</h3>
-        <p>Müşteriler, mevzuata uygun şekilde 14 gün içerisinde cayma hakkını kullanabilir. İade süreci ürün durumuna göre değerlendirilir.</p>
-      </div>
-      <div class="info">
-        <h3>Güvenli Ödeme</h3>
-        <p>Ödemeler güvenli ödeme altyapısı üzerinden alınır. Kart bilgileriniz Allona Shop tarafından saklanmaz.</p>
-      </div>
-    </div>
-  </div>
+<div class="tiers">
+
+<div class="tier">
+<h3>A+</h3>
+<p>Premium Başlangıç Paketi</p>
+<ul>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+</ul>
+<a href="odeme.html?paket=aplus" class="tier-price">109,99 ₺ / Ay</a>
+</div>
+
+<div class="tier featured">
+<h3>Gold</h3>
+<p>En dengeli paket</p>
+<ul>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+</ul>
+<a href="odeme.html?paket=gold" class="tier-price">229,99 ₺ / Ay</a>
+</div>
+
+<div class="tier">
+<h3>Elite Black</h3>
+<p>Prestij ve özel erişim</p>
+<ul>
+<li>✔️ VIP rozet</li>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+<li>✔️ Elite kampanyalar</li>
+<li>✔️ Özel partner ayrıcalığı</li>
+</ul>
+<a href="odeme.html?paket=eliteblack" class="tier-price">1499,99 ₺ / Ay</a>
+</div>
+
+<div class="tier legend">
+<h3>LEGEND</h3>
+<p>Yılda ortalama üyelik ücretinin 5-10 katı kadar avantaj</p>
+<ul>
+<li>✔️ VIP rozet</li>
+<li>✔️ Özel tasarımlı profil</li>
+<li>✔️ Bütün alışverişlerde %5 indirim</li>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+<li>✔️ Elite kampanyalar açık</li>
+<li>✔️ Özel partner ayrıcalığı</li>
+<li>✔️ Ücretsiz kargo</li>
+<li>✔️ Doğum günü hediyesi</li>
+<li>✔️ Bütün işlemlerde HP avantajı (x2)</li>
+<li>✔️ AllonaHub kart ücretsiz</li>
+<li>✔️ Öncelikli müşteri desteği</li>
+</ul>
+<a href="odeme.html?paket=legend" class="tier-price">1999,99 ₺ / Ay</a>
+</div>
+
+</div>
 </section>
 
-<section class="section" id="hakkimizda">
-  <div class="container">
-    <div class="about">
-      <h2 class="section-title" style="text-align:left;margin-bottom:10px">Hakkımızda</h2>
+<section class="section" id="partner">
+<div class="partner">
+<h2>AllonaHub Partner Ekosistemine Katıl</h2>
+<p>Restoran, mağaza, ulaşım, kariyer, denizcilik, sağlık, finans, lojistik ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
+<a class="btn" href="partner.html">Partner Başvurusu Yap</a>
+</div>
+</section>
+
+<footer class="ah-footer">
+  <div class="ah-footer-glow"></div>
+
+  <div class="ah-footer-main">
+    <div class="ah-footer-brand">
+      <div class="ah-logo">
+        <span class="ah-logo-icon">A</span>
+        <span>Allona<span>Hub</span></span>
+      </div>
+
       <p>
-        Allona Shop, Allworksin Business Danışmanlık Tic. Ltd. Şti. bünyesinde faaliyet gösteren online alışveriş mağazasıdır.
-        Müşterilerine güvenli, düzenli ve şeffaf bir alışveriş deneyimi sunmayı hedefler.
+        AllonaHub; alışveriş, hizmet, partner, ödeme ve dijital çözümleri
+        tek ekosistemde birleştiren yeni nesil platformdur.
       </p>
-      <p>
-        Ürün seçimi, sipariş yönetimi, teslimat ve satış sonrası destek süreçlerinde müşteri memnuniyeti esas alınır.
-        Allona Shop üzerinden sunulan ürünler, mesafeli satış kurallarına uygun şekilde müşterilere ulaştırılır.
-      </p>
-    </div>
-  </div>
-</section>
 
-<footer id="iletisim">
-  <div class="container footer-grid">
-    <div>
-      <h3>Allona Shop</h3>
-      <p>Güvenli online alışveriş mağazası.</p>
-      <div class="payments">
-        <span>iyzico</span>
-        <span>Visa</span>
-        <span>Mastercard</span>
-        <span>AMEX</span>
+      <div class="ah-trust">
+        <div>🛡️ <span>Güvenli</span></div>
+        <div>⚡ <span>Hızlı</span></div>
+        <div>🎧 <span>Destek</span></div>
+        <div>💎 <span>Premium</span></div>
+      </div>
+
+      <div class="ah-newsletter">
+        <h4>Bültenimize abone olun</h4>
+        <p>Kampanyalar, fırsatlar ve AllonaHub yeniliklerinden haberdar olun.</p>
+        <form>
+          <input type="email" placeholder="E-posta adresiniz">
+          <button type="button">→</button>
+        </form>
       </div>
     </div>
 
-    <div>
+    <div class="ah-footer-col">
       <h4>Kurumsal</h4>
       <a href="hakkimizda.html">Hakkımızda</a>
+      <a href="#">Kariyer</a>
+      <a href="#">Basın & Medya</a>
       <a href="iletisim.html">İletişim</a>
-      <a href="destek.html">Destek</a>
     </div>
 
-    <div>
+    <div class="ah-footer-col">
+      <h4>Modüller</h4>
+      <a href="#">Allona Shop</a>
+      <a href="#">Allona Yemek</a>
+      <a href="#">Allona Market</a>
+      <a href="#">Allona Taxi</a>
+      <a href="#">Allona Partner</a>
+      <a href="#">Tüm Modüller</a>
+    </div>
+
+    <div class="ah-footer-col">
+      <h4>Kaynaklar</h4>
+      <a href="#">Blog</a>
+      <a href="#">Sıkça Sorulan Sorular</a>
+      <a href="#">Destek Merkezi</a>
+      <a href="#">Partner Başvurusu</a>
+      <a href="#">Hizmet Durumu</a>
+    </div>
+
+    <div class="ah-footer-col">
       <h4>Yasal</h4>
-      <a href="mesafeli-satis-sozlesmesi.html">Mesafeli Satış Sözleşmesi</a>
-      <a href="gizlilik.html">Gizlilik Politikası</a>
-      <a href="kvkk.html">KVKK Aydınlatma Metni</a>
-      <a href="iade-politikasi.html">İade Politikası</a>
+      <a href="#">Kullanım Şartları</a>
+      <a href="#">Gizlilik Politikası</a>
+      <a href="#">Çerez Politikası</a>
+      <a href="#">KVKK Aydınlatma Metni</a>
+      <a href="#">Mesafeli Satış Sözleşmesi</a>
     </div>
 
-    <div>
+    <div class="ah-footer-contact">
       <h4>İletişim</h4>
-      <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
-      <p>İstanbul / Türkiye</p>
-      <p>E-posta: allonahub@gmail.com</p>
-      <p>Çalışma Saatleri: 09:00 - 18:00</p>
+
+      <p>📍 İstanbul / Türkiye</p>
+      <a href="destek.html">Hızlı İletişim</a>
+      <p>✉️ allonahub@gmail.com</p>
+      <p>🏢 Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
+      <p>🕘 Pzt - Cum: 09:00 - 18:00</p>
     </div>
   </div>
 
-  <div class="container bottom">
-    ©️ 2026 Allona Shop. Tüm hakları saklıdır.
+  <div class="ah-footer-bottom">
+    <div>
+      ©️ 2026 <strong>AllonaHub</strong>. Tüm hakları saklıdır.
+      <div class="ah-bottom-links">
+        <a href="kullanım-sartları.html">Kullanım Şartları</a>
+        <a href="gizlilik.html">Gizlilik Politikası</a>
+        <a href="cerez.html">Çerez Politikası</a>
+      </div>
+    </div>
+
+    <div class="ah-social">
+      <span>Bizi takip edin</span>
+      <a href="#">in</a> <a href="#">f</a> <a href="#">ig</a> <a href="#">x</a> <a href="#">yt</a>
+    </div>
+
+    <div class="ah-payments">
+      <span>Güvenli Ödeme</span>
+      <div>
+        <b>iyzico</b>
+        <b>Mastercard</b>
+        <b>Visa</b>
+        <b>AMEX</b>
+      </div>
+    </div>
   </div>
 </footer>
 
+  
+
+<script src="js/allonahub-home.js" defer></script>
 </body>
 </html>

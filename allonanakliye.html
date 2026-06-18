@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Nakliye | AllonaHub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:315px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:315px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:150px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.quote-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.quote-main{padding:28px;min-height:275px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.quote-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.quote-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.move{padding:16px;min-height:265px;text-decoration:none;color:white}.move-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.move-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.move b{color:#ffd700;font-size:18px}.move p{font-size:13px;opacity:.72;margin:6px 0}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.step{padding:18px;min-height:125px}.step h3{color:#ffd700;margin-bottom:8px}.step p{font-size:13px;opacity:.75;line-height:1.45}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Nakliye Taleplerim</a><a href="#">Tekliflerim</a><a href="#">Nakliyeci Partneri Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Evden eve nakliye, ofis taşıma, parça eşya, şehirler arası veya asansörlü taşıma ara..."></div>
+<div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Taleplerim</a><a href="#">Teklif Al</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Nakliye</div>
+<a href="#">Evden Eve</a><a href="#">Ofis Taşıma</a><a href="#">Parça Eşya</a><a href="#">Şehirler Arası</a><a href="#">Asansörlü</a><a href="#">Depolama</a><a href="#">Paketleme</a><a href="#">Sigortalı</a><a href="#">Acil</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Nakliye<br>Güvenli Taşınma Ekosistemi</h1>
+<p>Evden eve nakliye, ofis taşıma, parça eşya, şehirler arası nakliye, asansörlü taşıma, paketleme, depolama ve sigortalı taşınma tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>Teklif Toplama</h3>
+<p>Kullanıcı taşınma bilgilerini girer, doğrulanmış nakliye partnerlerinden teklif alır ve süreç panelden takip edilir.</p>
+<div class="flow"><div>Taşınma türü</div><div>Adres bilgisi</div><div>Teklif al</div></div>
+</div>
+<div class="hero-card glass">
+<h3>Sigortalı Taşıma</h3>
+<p>Taşınma sürecinde eşya listesi, paketleme, taşıma sigortası ve teslimat onayı birlikte çalışır.</p>
+<div class="flow"><div>Eşya listesi</div><div>Sigorta</div><div>Teslim onayı</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Nakliye Hizmetleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Evden Eve Nakliye</h3><p>Ev taşıma, paketleme, yükleme ve teslimat hizmeti.</p></div>
+<div class="card glass"><h3>Ofis Taşıma</h3><p>Şirket, ofis, depo ve ticari alan taşıma.</p></div>
+<div class="card glass"><h3>Parça Eşya</h3><p>Az eşya, tek ürün, mobilya veya küçük taşıma işleri.</p></div>
+<div class="card glass"><h3>Şehirler Arası</h3><p>Türkiye geneli uzun mesafe nakliye hizmetleri.</p></div>
+<div class="card glass"><h3>Asansörlü Taşıma</h3><p>Yüksek katlar için dış cephe asansörlü taşıma.</p></div>
+<div class="card glass"><h3>Paketleme</h3><p>Koli, balonlu naylon, mobilya sarma ve hassas eşya koruma.</p></div>
+<div class="card glass"><h3>Depolama</h3><p>Kısa/uzun dönem güvenli eşya depolama.</p></div>
+<div class="card glass"><h3>Sigortalı Nakliye</h3><p>Eşya taşıma sigortası ve hasar takip akışı.</p></div>
+<div class="card glass"><h3>Acil Nakliye</h3><p>Aynı gün veya hızlı taşınma talepleri.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Taşınma tamamlandığında HP ve kupon avantajı.</p></div>
+</div>
+
+<div class="section-title"><h2>Hızlı Nakliye Teklifi</h2><a href="#">Tekliflerim</a></div>
+<section class="quote-box">
+<div class="quote-main glass">
+<h2>Taşınma Bilgilerini Gir, Teklifleri Karşılaştır</h2>
+<p>Çıkış ve varış adresini, oda sayısını, kat bilgisini, asansör durumunu ve taşıma tarihini gir. Uygun nakliye partnerleri teklif sunsun.</p>
+<div class="input-box">Taşınma türü: Ev / ofis / parça eşya / şehirler arası</div>
+<div class="input-box">Çıkış adresi → Varış adresi</div>
+<div class="input-box">Oda sayısı, kat, asansör, tarih</div>
+<a class="btn" href="#">Nakliye Teklifi Oluştur</a>
+</div>
+<div class="quote-main glass">
+<h2>Eşya Listesi & Sigorta</h2>
+<p>Taşınacak eşyalar listeye eklenir. Hassas eşya, beyaz eşya, mobilya ve elektronik ürünler için sigortalı taşıma seçeneği sunulur.</p>
+<div class="input-box">Eşya listesi oluştur</div>
+<div class="input-box">Hassas / elektronik / beyaz eşya belirt</div>
+<div class="input-box">Sigorta talebi ekle</div>
+<a class="btn" href="allonasigorta.html">Sigorta Bağlantısı</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Popüler Nakliye Paketleri</h2><a href="#">Paketler</a></div>
+<div class="grid-4">
+<div class="move glass"><div class="move-img"></div><b>1+1 Ev Taşıma</b><p>Paketleme + taşıma + teslimat</p><div class="meta"><span>+80 HP</span><span>Şehir içi</span></div></div>
+<div class="move glass"><div class="move-img"></div><b>Asansörlü Nakliye</b><p>Yüksek katlar için hızlı çözüm</p><div class="meta"><span>+120 HP</span><span>Premium</span></div></div>
+<div class="move glass"><div class="move-img"></div><b>Ofis Taşıma</b><p>Kurumsal planlı taşıma</p><div class="meta"><span>+150 HP</span><span>İşletme</span></div></div>
+<div class="move glass"><div class="move-img"></div><b>Parça Eşya</b><p>Tek ürün veya az eşya taşıma</p><div class="meta"><span>+40 HP</span><span>Ekonomik</span></div></div>
+</div>
+
+<div class="section-title"><h2>Taşınma Süreci</h2><a href="#">Süreç Takibi</a></div>
+<div class="timeline">
+<div class="step glass"><h3>1. Talep</h3><p>Taşınma bilgileri sisteme girilir.</p></div>
+<div class="step glass"><h3>2. Teklif</h3><p>Nakliye partnerleri fiyat ve hizmet sunar.</p></div>
+<div class="step glass"><h3>3. Onay</h3><p>Kullanıcı teklif ve tarihi onaylar.</p></div>
+<div class="step glass"><h3>4. Paketleme</h3><p>Eşyalar hazırlanır ve korunur.</p></div>
+<div class="step glass"><h3>5. Taşıma</h3><p>Yükleme, sevkiyat ve teslimat yapılır.</p></div>
+<div class="step glass"><h3>6. Teslim</h3><p>Kullanıcı onayıyla ödeme ve HP işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Ekosistem Bağlantıları</h2><a href="index.html#modules">Tüm Modüller</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Allona Gayrimenkul</h3><p>Yeni ev bulunduğunda nakliye teklifi önerilir.</p></div>
+<div class="card glass"><h3>Allona Ev Hizmetleri</h3><p>Taşınma sonrası temizlik, boya ve montaj hizmetleri.</p></div>
+<div class="card glass"><h3>Allona Sigorta</h3><p>Sigortalı taşıma ve hasar takip bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Kargo & Lojistik</h3><p>Şehirler arası yük ve depo bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Market</h3><p>Yeni eve temel ihtiyaç ve temizlik sepeti.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Nakliye Firması, Taşıma Ekibi veya Depo Partneri Ol</h2>
+<p>Allona Nakliye partner paneliyle teklif, taşıma takvimi, araç/ekip yönetimi, asansörlü taşıma, eşya listesi, sigorta bağlantısı, ödeme ve HP kampanyaları tek sistemden yönetilir.</p>
+<a class="btn" href="partner.html">Nakliye Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Teklif ve randevu yönetimi</div>
+<div>Araç, ekip ve bölge planlama</div>
+<div>Eşya listesi ve paketleme kontrolü</div>
+<div>Sigortalı taşıma bağlantısı</div>
+<div>Teslimat ve hasar takip alanı</div>
+<div>HP ve kupon kampanyaları</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Nakliye: Taşınmayı Güvenli ve Planlı Hale Getiren Ekosistem</h2>
+<p>Allona Nakliye; evden eve taşıma, ofis taşıma, parça eşya, şehirler arası nakliye, paketleme, depolama ve sigortalı taşıma süreçlerini AllonaHub ekosistemi içinde birleştiren premium taşınma modülüdür.</p>
+<h3>Gayrimenkulden Taşınmaya Tek Akış</h3>
+<p>Kullanıcı Allona Gayrimenkul’de yeni ev bulduktan sonra Allona Nakliye üzerinden teklif alabilir; taşınma sonrası Allona Ev Hizmetleri ile temizlik, boya ve montaj hizmetlerini planlayabilir.</p>
+<h3>Güven, Sigorta ve HP</h3>
+<p>Taşıma süreci eşya listesi, partner doğrulama, sigorta bağlantısı, teslimat onayı ve HP kazanımıyla daha kontrollü hale gelir.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Moving, transport, storage and relocation ecosystem.</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Teknoloji | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:310px;padding:30px;background:radial-gradient(circle at right,#00e5ff33,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:310px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:145px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.product{padding:16px;min-height:285px;text-decoration:none;color:white}
+.product-img{height:145px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.product-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.product b{color:#ffd700;font-size:18px}.product p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:22px;font-weight:900;margin-top:8px}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.sync-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.sync-main{padding:28px;min-height:270px;background:radial-gradient(circle at right,#ffd70033,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.sync-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.sync-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Teknoloji Kuponlarım</a><a href="#">Garanti Takibi</a><a href="#">Teknoloji Partneri Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Telefon, bilgisayar, oyun, akıllı saat, TV veya teknoloji ürünü ara..."></div>
+<div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Sepetim</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Teknoloji</div>
+<a href="#">Telefon</a><a href="#">Bilgisayar</a><a href="#">Gaming</a><a href="#">TV & Ses</a><a href="#">Akıllı Saat</a><a href="#">Kamera</a><a href="#">Beyaz Eşya</a><a href="#">Aksesuar</a><a href="#">Servis</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Teknoloji<br>Dijital Ürün Ekosistemi</h1>
+<p>Telefon, bilgisayar, gaming, akıllı saat, TV, ses sistemleri, kamera, beyaz eşya, aksesuar, garanti ve teknik servis ürünleri AllonaHub ile eşleşen merkezi teknoloji modülünde birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>AllonaHub Eşleşmesi</h3>
+<p>Partner teknoloji ürünü AllonaHub’a yüklendiğinde uygun etiketlerle Allona Teknoloji’de de otomatik görünür.</p>
+<div class="flow"><div>Ürün yükle</div><div>Etiket kontrol</div><div>İki modülde görün</div></div>
+</div>
+<div class="hero-card glass">
+<h3>Garanti & Servis</h3>
+<p>Ürün garanti takibi, teknik servis talebi ve aksesuar satışları tek panelden yönetilir.</p>
+<div class="flow"><div>Garanti</div><div>Servis</div><div>Yedek parça</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Teknoloji Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Cep Telefonu</h3><p>iPhone, Android telefonlar ve telefon aksesuarları.</p></div>
+<div class="card glass"><h3>Bilgisayar & Tablet</h3><p>Laptop, tablet, monitör, klavye, mouse ve bileşenler.</p></div>
+<div class="card glass"><h3>Gaming</h3><p>Playstation, Xbox, gaming PC, oyuncu ekipmanları.</p></div>
+<div class="card glass"><h3>TV & Ses</h3><p>Televizyon, kulaklık, hoparlör, soundbar ve medya cihazları.</p></div>
+<div class="card glass"><h3>Akıllı Saat</h3><p>Akıllı saat, bileklik ve giyilebilir teknolojiler.</p></div>
+<div class="card glass"><h3>Foto & Kamera</h3><p>Kamera, aksiyon kamera, lens ve hafıza kartları.</p></div>
+<div class="card glass"><h3>Beyaz Eşya</h3><p>Buzdolabı, çamaşır, bulaşık, kurutma ve ankastre ürünler.</p></div>
+<div class="card glass"><h3>Küçük Ev Aletleri</h3><p>Süpürge, kahve makinesi, airfryer ve mutfak cihazları.</p></div>
+<div class="card glass"><h3>Teknik Servis</h3><p>Bakım, onarım, kurulum ve garanti talebi.</p></div>
+<div class="card glass"><h3>Dijital Kod</h3><p>E-pin, oyun kodu, cüzdan kodu ve dijital kartlar.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Teknoloji Ürünleri</h2><a href="allonashop.html">AllonaHub’a Git</a></div>
+<div class="grid-4">
+<a class="product glass" data-module-tags="technology,shop,electronics,hp"><div class="product-img"></div><b>Akıllı Saat Pro</b><p>AllonaHub + Teknoloji eşleşmeli</p><div class="price">1.999,99 ₺</div><div class="meta"><span>+80 HP</span><span>Garanti</span></div></a>
+<a class="product glass" data-module-tags="technology,shop,phone,hp"><div class="product-img"></div><b>Telefon Aksesuar Paketi</b><p>Kılıf, şarj, ekran koruyucu</p><div class="price">499,99 ₺</div><div class="meta"><span>+25 HP</span><span>Aksesuar</span></div></a>
+<a class="product glass" data-module-tags="technology,shop,gaming,hp"><div class="product-img"></div><b>Gaming Kulaklık</b><p>Oyuncu ekipmanı</p><div class="price">899,99 ₺</div><div class="meta"><span>+45 HP</span><span>Gaming</span></div></a>
+<a class="product glass" data-module-tags="technology,shop,home,hp"><div class="product-img"></div><b>Robot Süpürge</b><p>Küçük ev aleti</p><div class="price">8.499,99 ₺</div><div class="meta"><span>+180 HP</span><span>Ev</span></div></a>
+</div>
+
+<div class="section-title"><h2>AllonaHub Ürün Eşleşme Mantığı</h2><a href="#">Partner Paneli</a></div>
+<section class="sync-box">
+<div class="sync-main glass">
+<h2>Tek Ürün, Çoklu Modül Görünürlüğü</h2>
+<p>Partner bir teknoloji ürünü AllonaHub’a yüklediğinde ürünün kategori, marka, barkod, SKU ve moduleTags bilgisi kontrol edilir. Uygunsa aynı ürün Allona Teknoloji modülünde de görünür. Teknoloji modülüne yüklenen ürün de AllonaHub katalog havuzuna düşer.</p>
+<div class="input-box">Örnek etiket: moduleTags = shop, technology, electronics</div>
+<div class="input-box">Kategori eşleşmesi: Elektronik / Telefon / Gaming / Beyaz Eşya</div>
+<div class="input-box">Tek stok, tek SKU, çoklu vitrin görünürlüğü</div>
+<a class="btn" href="#">Eşleşme Kurallarını Gör</a>
+</div>
+<div class="sync-main glass">
+<h2>Partner Ürün Akışı</h2>
+<p>Gerçek sistemde ürün merkezi ürün havuzuna kaydedilir. AllonaHub, Allona Teknoloji ve uygun diğer modüller aynı master ürünü gösterir. Böylece stok, fiyat ve kampanya karışmaz.</p>
+<div class="input-box">1. Ürün partner panelinden yüklenir</div>
+<div class="input-box">2. Kategori ve etiket kontrol edilir</div>
+<div class="input-box">3. İlgili modüllerde yayınlanır</div>
+<a class="btn" href="partner.html">Partner Ürün Yükle</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Garanti, Servis ve Kurulum</h2><a href="#">Servis Talebi</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Garanti Takibi</h3><p>Fatura, garanti süresi ve servis geçmişi takibi.</p></div>
+<div class="card glass"><h3>Teknik Servis</h3><p>Telefon, bilgisayar, TV ve beyaz eşya servis talebi.</p></div>
+<div class="card glass"><h3>Kurulum</h3><p>TV, beyaz eşya ve akıllı ev ürünleri kurulumu.</p></div>
+<div class="card glass"><h3>Yedek Parça</h3><p>Adaptör, batarya, ekran, kablo ve aksesuar talepleri.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Teknoloji alışverişi ve servis işleminden HP kazan.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Teknoloji Mağazası, Servis veya Marka Partneri Ol</h2>
+<p>Allona Teknoloji partner paneliyle ürün, stok, garanti, servis, kurulum, kampanya, HP avantajı ve AllonaHub eşleşmesi tek sistemde yönetilir.</p>
+<a class="btn" href="partner.html">Teknoloji Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Merkezi ürün ve SKU yönetimi</div>
+<div>AllonaHub + Teknoloji eşleşmesi</div>
+<div>Garanti ve servis paneli</div>
+<div>Kurulum ve randevu akışı</div>
+<div>HP ve kupon kampanyaları</div>
+<div>Fiyat / stok tek merkez kontrolü</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Teknoloji: AllonaHub ile Bağlı Dijital Ürün Merkezi</h2>
+<p>Allona Teknoloji; elektronik ürünler, telefonlar, bilgisayarlar, gaming ekipmanları, beyaz eşya, akıllı cihazlar, teknik servis ve garanti süreçlerini AllonaHub içinde yöneten premium teknoloji modülüdür.</p>
+<h3>AllonaHub ile Çift Yönlü Ürün Görünürlüğü</h3>
+<p>Partner ürünleri tek master ürün havuzuna yüklenir. Ürün teknoloji kategorisine uygunsa AllonaHub’ta ve Allona Teknoloji’de aynı anda görünür. Böylece aynı ürün için farklı stok, farklı fiyat veya karışık barkod problemi oluşmaz.</p>
+<h3>Merkezi Stok, SKU ve Kampanya Kontrolü</h3>
+<p>Ürünlerin SKU, barkod, fiyat, stok, marka, görsel ve kampanya bilgileri merkezi yönetilir. Kullanıcı hangi modülden ürünü görürse görsün sipariş aynı ürün havuzundan ilerler.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Technology, electronics, service and AllonaHub product ecosystem.</div>
+
+</div>
+
+<script>
+/*
+Ürün eşleşme mantığı:
+Partner ürünü merkezi MASTER_PRODUCT havuzuna yükler.
+
+Örnek:
+{
+  sku:"TEL-000001",
+  title:"Akıllı Saat Pro",
+  category:"Elektronik / Akıllı Saat",
+  moduleTags:["shop","technology","electronics"],
+  stock:25,
+  price:1999.99
+}
+
+Kural:
+moduleTags içinde "technology" varsa Allona Teknoloji'de görünür.
+moduleTags içinde "shop" varsa AllonaHub'ta görünür.
+Aynı ürün, aynı stok ve aynı fiyatla çoklu modülde listelenir.
+*/
+</script>
+
+</body>
+</html>

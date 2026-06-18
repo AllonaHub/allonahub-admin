@@ -1,8 +1,8 @@
-# AllonaHub / Allona Shop
+# AllonaHub
 
-Bu repository artık AllonaHub'un ana geliştirme reposudur. Allona Shop, AllonaHub ekosisteminin halka açık online alışveriş mağazasıdır.
+Bu repository artık AllonaHub'un ana geliştirme reposudur. `index.html`, AllonaHub süper uygulama ekosisteminin halka açık ana sayfasıdır.
 
-Yeni mimaride ana sayfanın kaynak kabul edilen tasarımı `index.html` dosyasıdır ve aynı kod `docs/architecture/allona-shop-homepage-canonical.html` altında referans olarak saklanır. Ana sayfa kodu kullanıcı tarafından verilen tek dosyalık HTML/CSS yapıdır. Açık talimat gelmedikçe bu kod değiştirilmez; yeni özellikler, destek sayfaları ve e-ticaret altyapısı bu anasayfa kararına göre geliştirilir.
+Yeni mimaride ana sayfanın kaynak kabul edilen tasarımı `index.html` dosyasıdır ve aynı kod `docs/architecture/allonahub-superapp-homepage-canonical.html` altında referans olarak saklanır. Kullanıcı tarafından verilen ana sayfa tasarımı korunur; bakım kolaylığı için stiller `css/allonahub-home.css`, davranış kodları `js/allonahub-home.js` dosyasında tutulur. Yeni özellikler, modül sayfaları, destek sayfaları ve e-ticaret altyapısı bu anasayfa kararına göre geliştirilir.
 
 ## Teknoloji
 
@@ -58,6 +58,6 @@ supabase/
 - Checkout öncesinde teslimat, fatura, sipariş özeti, kupon, kargo ve yasal onaylar tamamlanır.
 - Güvenlik Supabase RLS, Edge Functions ve minimum yetki prensibiyle ilerler.
 - Var olan çalışan özellikler silinmez; değişiklikler geriye dönük uyumluluğu korur.
-- `index.html` yeni Allona Shop anasayfa kaynağıdır; destekleyici mimari bu sayfanın marka, renk, kategori ve güven mesajlarına göre kurulmalıdır.
+- `index.html` yeni AllonaHub süper uygulama anasayfa kaynağıdır; destekleyici mimari bu sayfanın marka, modül, premium ve partner ekosistemi mesajlarına göre kurulmalıdır.
 
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `TASKS.md`, `DATABASE.md`, `API.md`, `DEPLOY.md` ve `STYLE_GUIDE.md` dosyalarını kullan.

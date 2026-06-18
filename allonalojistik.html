@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Kargo & Lojistik | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:315px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:315px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:150px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.shipment{padding:16px;min-height:265px;text-decoration:none;color:white}.shipment-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.shipment-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.shipment b{color:#ffd700;font-size:18px}.shipment p{font-size:13px;opacity:.72;margin:6px 0}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.quote-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.quote-main{padding:28px;min-height:275px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.quote-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.quote-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.step{padding:18px;min-height:125px}.step h3{color:#ffd700;margin-bottom:8px}.step p{font-size:13px;opacity:.75;line-height:1.45}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Gönderilerim</a><a href="#">Kargo Takip</a><a href="#">Lojistik Partneri Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Kargo takip, lojistik, depo, ihracat, ithalat veya taşıma ara..."></div>
+<div class="actions glass"><a href="user.html">Giriş Yap</a><a href="#">Gönderilerim</a><a href="#">Teklif Al</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Kargo & Lojistik</div>
+<a href="#">Kargo</a><a href="#">Lojistik</a><a href="#">Depolama</a><a href="#">Fulfillment</a><a href="#">İhracat</a><a href="#">İthalat</a><a href="#">Soğuk Zincir</a><a href="#">Ağır Yük</a><a href="#">Gümrük</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Kargo & Lojistik<br>Global Taşıma Ekosistemi</h1>
+<p>Kargo, e-ticaret fulfillment, depo yönetimi, ihracat-ithalat, gümrük, parsiyel yük, komple taşıma, soğuk zincir ve ağır yük lojistiği tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>E-Ticaret Kargo Akışı</h3>
+<p>AllonaHub siparişleri merkezi kargo havuzuna düşer, en uygun kargo/kurye partneri seçilir, takip numarası kullanıcı paneline işlenir.</p>
+<div class="flow"><div>Sipariş</div><div>Kargo seçimi</div><div>Takip</div></div>
+</div>
+<div class="hero-card glass">
+<h3>Lojistik Teklif Sistemi</h3>
+<p>İşletmeler rota, ağırlık, hacim ve teslim şartlarını girerek partner lojistik firmalarından teklif alabilir.</p>
+<div class="flow"><div>Rota gir</div><div>Teklif al</div><div>Sevkiyat takip</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Kargo & Lojistik Hizmetleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Standart Kargo</h3><p>Yurtiçi paket gönderimi, takip ve teslimat bildirimi.</p></div>
+<div class="card glass"><h3>Aynı Gün Teslimat</h3><p>Şehir içi hızlı teslimat ve Allona Kurye bağlantısı.</p></div>
+<div class="card glass"><h3>Fulfillment</h3><p>E-ticaret ürün depolama, paketleme ve kargo çıkışı.</p></div>
+<div class="card glass"><h3>Depolama</h3><p>Kısa/uzun dönem depo, stok ve raf yönetimi.</p></div>
+<div class="card glass"><h3>İhracat Kargo</h3><p>Yurtdışı gönderi, gümrük evrakı ve takip.</p></div>
+<div class="card glass"><h3>İthalat Lojistiği</h3><p>Yurtdışı tedarik, gümrükleme ve teslimat akışı.</p></div>
+<div class="card glass"><h3>Parsiyel Taşıma</h3><p>Kısmi yükler için uygun rota ve maliyet optimizasyonu.</p></div>
+<div class="card glass"><h3>Komple Taşıma</h3><p>Kamyon, tır, konteyner ve proje lojistiği.</p></div>
+<div class="card glass"><h3>Soğuk Zincir</h3><p>Gıda, sağlık ve hassas ürünler için ısı kontrollü taşıma.</p></div>
+<div class="card glass"><h3>Gümrük</h3><p>İhracat, ithalat, beyanname ve evrak süreçleri.</p></div>
+</div>
+
+<div class="section-title"><h2>Hızlı Gönderi / Lojistik Teklifi</h2><a href="#">Tekliflerim</a></div>
+<section class="quote-box">
+<div class="quote-main glass">
+<h2>Gönderi Bilgisi Gir, En Uygun Teklifi Al</h2>
+<p>Gönderi türünü, çıkış-varış noktasını, ağırlık, desi, hacim ve teslim süresini gir. Sistem uygun kargo, kurye veya lojistik partnerlerini listeler.</p>
+<div class="input-box">Gönderi türü: Paket / palet / konteyner / soğuk zincir</div>
+<div class="input-box">Çıkış noktası → Varış noktası</div>
+<div class="input-box">Ağırlık / desi / hacim / teslim süresi</div>
+<a class="btn" href="#">Teklif Talebi Oluştur</a>
+</div>
+<div class="quote-main glass">
+<h2>Kargo Takip</h2>
+<p>Kullanıcı takip numarası veya sipariş numarası ile kargo durumunu görüntüleyebilir. Partner kargo firmaları durum güncellemelerini panelden işler.</p>
+<div class="input-box">Takip numarası gir</div>
+<div class="input-box">Sipariş numarası ile ara</div>
+<div class="input-box">Teslimat bildirimi ve HP kaydı</div>
+<a class="btn" href="#">Kargo Takip Et</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Aktif Lojistik Akışları</h2><a href="#">Canlı Panel</a></div>
+<div class="grid-4">
+<div class="shipment glass"><div class="shipment-img"></div><b>AllonaHub Siparişi</b><p>Depodan çıkış bekliyor.</p><div class="meta"><span>Shop</span><span>Kargo</span></div></div>
+<div class="shipment glass"><div class="shipment-img"></div><b>Market Toplu Sevkiyat</b><p>Partner markete stok transferi.</p><div class="meta"><span>Market</span><span>Depo</span></div></div>
+<div class="shipment glass"><div class="shipment-img"></div><b>İhracat Gönderisi</b><p>Gümrük evrakları kontrol ediliyor.</p><div class="meta"><span>Export</span><span>Gümrük</span></div></div>
+<div class="shipment glass"><div class="shipment-img"></div><b>Soğuk Zincir Taşıma</b><p>Isı kontrollü sevkiyat planlandı.</p><div class="meta"><span>Sağlık</span><span>Cold Chain</span></div></div>
+</div>
+
+<div class="section-title"><h2>Sevkiyat Süreci</h2><a href="#">Süreç Takibi</a></div>
+<div class="timeline">
+<div class="step glass"><h3>1. Talep</h3><p>Gönderi veya lojistik talebi oluşturulur.</p></div>
+<div class="step glass"><h3>2. Teklif</h3><p>Partner kargo/lojistik firmaları teklif verir.</p></div>
+<div class="step glass"><h3>3. Onay</h3><p>Kullanıcı veya işletme teklifi onaylar.</p></div>
+<div class="step glass"><h3>4. Alım</h3><p>Paket veya yük teslim alınır.</p></div>
+<div class="step glass"><h3>5. Takip</h3><p>Taşıma süreci canlı takip edilir.</p></div>
+<div class="step glass"><h3>6. Teslim</h3><p>Teslimat tamamlanır, kayıt ve HP işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Ekosistem Bağlantıları</h2><a href="index.html#modules">Tüm Modüller</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>AllonaHub</h3><p>E-ticaret siparişleri, kargo ve fulfillment akışı.</p></div>
+<div class="card glass"><h3>Allona Market</h3><p>Stok transferi, market sevkiyatı ve depo bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Kurye</h3><p>Aynı gün ve şehir içi teslimat bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Denizcilik</h3><p>Yük, navlun, liman ve konteyner bağlantıları.</p></div>
+<div class="card glass"><h3>Allona Sigorta</h3><p>Nakliyat, yük ve taşıma sigortası bağlantısı.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Kargo Firması, Depo, Lojistik veya Gümrük Partneri Ol</h2>
+<p>Allona Kargo & Lojistik partner paneliyle gönderi, teklif, depo, fulfillment, ihracat-ithalat, gümrük, takip, sigorta ve HP kampanyaları tek sistemden yönetilir.</p>
+<a class="btn" href="partner.html">Lojistik Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Kargo ve takip yönetimi</div>
+<div>Lojistik teklif paneli</div>
+<div>Depo ve fulfillment akışı</div>
+<div>Gümrük evrak kontrolü</div>
+<div>Nakliyat sigortası bağlantısı</div>
+<div>HP ve partner kampanyaları</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Kargo & Lojistik: Ekosistemin Taşıma Omurgası</h2>
+<p>Allona Kargo & Lojistik; e-ticaret siparişleri, kargo gönderileri, fulfillment, depolama, ithalat, ihracat, gümrük, parsiyel yük, komple taşıma ve soğuk zincir süreçlerini AllonaHub içinde birleştiren lojistik modülüdür.</p>
+<h3>AllonaHub ve Partner Siparişleri</h3>
+<p>AllonaHub’ta oluşan siparişler merkezi kargo havuzuna düşebilir. Partner mağazalar ürün çıkışı, takip numarası, teslimat durumu ve iade sürecini tek panelden yönetebilir.</p>
+<h3>Global Lojistik ve Denizcilik Bağlantısı</h3>
+<p>Yük, navlun, konteyner, liman ve gümrük süreçleri Allona Denizcilik ve Allona Sigorta modülleriyle birlikte çalışabilir. Böylece ticari lojistik uçtan uca takip edilebilir.</p>
+</section>
+
+<div class="footer glass">©️ 2026 AllonaHub — Cargo, logistics, fulfillment, customs and delivery ecosystem.</div>
+
+</div>
+</body>
+</html>
