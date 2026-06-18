@@ -1,6 +1,8 @@
 :root,
 body[data-theme="neon"],
-body[data-theme="sunset"] {
+body[data-theme="allona"],
+body[data-theme="ocean"],
+body[data-theme="graphite"] {
   --ah-bg: #020814;
   --ah-bg-mid: #061b33;
   --ah-bg-strong: #031326;
@@ -38,33 +40,31 @@ body[data-theme="sunset"] {
   --shadow-soft: var(--ah-shadow-soft);
 }
 
-body[data-theme="allona"],
-body[data-theme="ocean"],
-body[data-theme="graphite"] {
-  --ah-bg: #020a12;
-  --ah-bg-mid: #063047;
-  --ah-bg-strong: #042337;
-  --ah-primary: #24e6ff;
-  --ah-primary-strong: #00a8c8;
-  --ah-secondary: #0077ff;
-  --ah-accent: #ffd86b;
+body[data-theme="sunset"] {
+  --ah-bg: #160712;
+  --ah-bg-mid: #351332;
+  --ah-bg-strong: #240b24;
+  --ah-primary: #ff8c42;
+  --ah-primary-strong: #ff3d81;
+  --ah-secondary: #ffb347;
+  --ah-accent: #ffd166;
   --ah-accent-soft: #ffe08a;
-  --ah-ink: #f7fbff;
-  --ah-muted: rgba(235, 248, 255, 0.74);
-  --ah-line: rgba(36, 230, 255, 0.25);
-  --ah-soft: rgba(4, 35, 55, 0.92);
-  --ah-surface: #063047;
-  --ah-card: linear-gradient(145deg, rgba(6, 48, 71, 0.92), rgba(2, 12, 24, 0.96));
+  --ah-ink: #fff8f2;
+  --ah-muted: rgba(255, 244, 236, 0.76);
+  --ah-line: rgba(255, 140, 66, 0.28);
+  --ah-soft: rgba(36, 11, 36, 0.92);
+  --ah-surface: #351332;
+  --ah-card: linear-gradient(145deg, rgba(55, 20, 48, 0.92), rgba(20, 6, 18, 0.96));
   --ah-page-bg:
-    radial-gradient(circle at top left, rgba(36, 230, 255, 0.28), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(255, 216, 107, 0.18), transparent 30%),
-    linear-gradient(135deg, #020a12, #063047, #003b5c);
-  --ah-page-sheen: linear-gradient(120deg, transparent, rgba(36, 230, 255, 0.11), transparent);
-  --ah-footer-bg: #020a12;
-  --ah-footer-panel: rgba(6, 48, 71, 0.92);
-  --ah-footer-line: rgba(36, 230, 255, 0.22);
-  --ah-shadow: 0 0 34px rgba(36, 230, 255, 0.20);
-  --ah-shadow-soft: 0 0 22px rgba(36, 230, 255, 0.11);
+    radial-gradient(circle at top left, rgba(255, 61, 129, 0.30), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(255, 209, 102, 0.22), transparent 32%),
+    linear-gradient(135deg, #160712, #351332, #7a271d);
+  --ah-page-sheen: linear-gradient(120deg, transparent, rgba(255, 140, 66, 0.11), transparent);
+  --ah-footer-bg: #160712;
+  --ah-footer-panel: rgba(55, 20, 48, 0.92);
+  --ah-footer-line: rgba(255, 140, 66, 0.22);
+  --ah-shadow: 0 0 34px rgba(255, 140, 66, 0.20);
+  --ah-shadow-soft: 0 0 22px rgba(255, 140, 66, 0.11);
 }
 
 body[data-theme="marketplace"],
@@ -93,6 +93,33 @@ body[data-theme="forest"] {
   --ah-footer-line: rgba(125, 249, 255, 0.20);
   --ah-shadow: 0 0 34px rgba(125, 249, 255, 0.18);
   --ah-shadow-soft: 0 0 22px rgba(125, 249, 255, 0.10);
+}
+
+body[data-theme="white"] {
+  --ah-bg: #f7fbff;
+  --ah-bg-mid: #ffffff;
+  --ah-bg-strong: #ffffff;
+  --ah-primary: #00b7ff;
+  --ah-primary-strong: #0077ff;
+  --ah-secondary: #16d6d9;
+  --ah-accent: #f6b900;
+  --ah-accent-soft: #ffcf33;
+  --ah-ink: #10212f;
+  --ah-muted: rgba(16, 33, 47, 0.68);
+  --ah-line: rgba(0, 119, 255, 0.18);
+  --ah-soft: rgba(255, 255, 255, 0.84);
+  --ah-surface: #ffffff;
+  --ah-card: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(236, 248, 255, 0.88));
+  --ah-page-bg:
+    radial-gradient(circle at top left, rgba(0, 183, 255, 0.18), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(255, 207, 51, 0.18), transparent 30%),
+    linear-gradient(135deg, #ffffff, #f2fbff, #eaf7ff);
+  --ah-page-sheen: linear-gradient(120deg, transparent, rgba(0, 183, 255, 0.08), transparent);
+  --ah-footer-bg: #ffffff;
+  --ah-footer-panel: rgba(255, 255, 255, 0.92);
+  --ah-footer-line: rgba(0, 119, 255, 0.16);
+  --ah-shadow: 0 18px 42px rgba(0, 119, 255, 0.14);
+  --ah-shadow-soft: 0 10px 26px rgba(0, 119, 255, 0.10);
 }
 
 html[dir="rtl"] body {
@@ -391,6 +418,107 @@ body[data-theme] .search-form input::placeholder,
 body[data-theme] .field input::placeholder,
 body[data-theme] .field textarea::placeholder {
   color: color-mix(in srgb, var(--ah-ink) 54%, transparent) !important;
+}
+
+body[data-theme]:has(.premium-hero) header {
+  background: color-mix(in srgb, var(--ah-bg-strong) 88%, transparent) !important;
+  border-bottom-color: var(--ah-line) !important;
+  box-shadow: 0 0 28px color-mix(in srgb, var(--ah-primary) 15%, transparent) !important;
+}
+
+body[data-theme]:has(.premium-hero) nav a,
+body[data-theme]:has(.premium-hero) .top-mini-nav a {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme]:has(.premium-hero) nav a:hover,
+body[data-theme]:has(.premium-hero) .top-mini-nav a:hover {
+  color: var(--ah-primary) !important;
+}
+
+body[data-theme]:has(.premium-hero) .nav-search,
+body[data-theme]:has(.premium-hero) .hero-time-card,
+body[data-theme]:has(.premium-hero) .hero-main-card,
+body[data-theme]:has(.premium-hero) .hero-reward-card,
+body[data-theme]:has(.premium-hero) .stat-live-card,
+body[data-theme]:has(.premium-hero) .tier,
+body[data-theme]:has(.premium-hero) .partner {
+  background: var(--ah-card) !important;
+  border-color: var(--ah-line) !important;
+  color: var(--ah-ink) !important;
+  box-shadow: var(--ah-shadow-soft) !important;
+}
+
+body[data-theme]:has(.premium-hero) .modules-section {
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--ah-primary) 10%, transparent), transparent 32%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ah-bg-mid) 78%, transparent), color-mix(in srgb, var(--ah-bg) 96%, transparent)) !important;
+}
+
+body[data-theme]:has(.premium-hero) .hero-main-card h1,
+body[data-theme]:has(.premium-hero) .section-head h2,
+body[data-theme]:has(.premium-hero) .partner h2 {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme]:has(.premium-hero) .hero-main-card p,
+body[data-theme]:has(.premium-hero) .hero-reward-card p,
+body[data-theme]:has(.premium-hero) .section-head p,
+body[data-theme]:has(.premium-hero) .section-sub,
+body[data-theme]:has(.premium-hero) .partner p,
+body[data-theme]:has(.premium-hero) .tier p,
+body[data-theme]:has(.premium-hero) .tier li,
+body[data-theme]:has(.premium-hero) .hero-location p {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme]:has(.premium-hero) .hero-clock,
+body[data-theme]:has(.premium-hero) .stat-live-card p,
+body[data-theme]:has(.premium-hero) .live-ads-head a {
+  color: var(--ah-primary) !important;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--ah-primary) 32%, transparent) !important;
+}
+
+body[data-theme]:has(.premium-hero) .hero-reward-card h3,
+body[data-theme]:has(.premium-hero) .section-head span,
+body[data-theme]:has(.premium-hero) .section-title,
+body[data-theme]:has(.premium-hero) .tier h3,
+body[data-theme]:has(.premium-hero) .footer-col h3 {
+  color: var(--ah-accent-soft) !important;
+}
+
+body[data-theme="white"] {
+  color: var(--ah-ink);
+}
+
+body[data-theme="white"] .site-header,
+body[data-theme="white"]:has(.premium-hero) header,
+body[data-theme="white"] .top-bar {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="white"] .btn,
+body[data-theme="white"] .search-btn,
+body[data-theme="white"] .login {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong)) !important;
+}
+
+body[data-theme="white"] .shop-promo-slide,
+body[data-theme="white"] .platform-hero {
+  background:
+    radial-gradient(circle at 82% 14%, color-mix(in srgb, var(--ah-primary) 16%, transparent), transparent 34%),
+    linear-gradient(135deg, #ffffff, #eaf7ff) !important;
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="white"] .shop-promo-content,
+body[data-theme="white"] .shop-promo-content h1,
+body[data-theme="white"] .shop-promo-content h2,
+body[data-theme="white"] .shop-promo-content p,
+body[data-theme="white"] .shop-promo-content strong {
+  color: var(--ah-ink) !important;
 }
 
 body[data-theme] .search-mark,
@@ -780,7 +908,7 @@ body[data-theme] .price {
   color: var(--ah-primary);
 }
 
-body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)) {
+body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) {
   width: min(100% - 32px, 1000px);
   max-width: 1000px !important;
   margin: auto !important;
@@ -788,7 +916,7 @@ body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-s
   line-height: 1.8;
 }
 
-body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)) > h1:first-of-type {
+body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) > h1:first-of-type {
   margin: 0 0 26px;
   color: transparent;
   background: linear-gradient(90deg, var(--ah-ink), var(--ah-primary), var(--ah-secondary));
@@ -798,13 +926,20 @@ body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-s
   line-height: 1.08;
 }
 
-body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)) > h2,
-body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)) article {
+body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) > h2,
+body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) article {
   color: var(--ah-ink);
 }
 
-body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)) .site-footer {
+body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) .site-footer {
   margin-top: 42px;
+}
+
+body[data-theme]:has(.premium-hero) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .site-footer {

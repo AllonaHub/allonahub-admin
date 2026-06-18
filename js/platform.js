@@ -3,6 +3,14 @@
   const LANG_KEY = "allona.language";
   const THEME_KEY = "allona.theme";
   const REMOTE_CACHE_PREFIX = "allona.remoteTranslations.";
+  const ASSET_VERSION = (() => {
+    try {
+      const current = document.currentScript && document.currentScript.src;
+      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live2" : "20260619-live2";
+    } catch (error) {
+      return "20260619-live2";
+    }
+  })();
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
@@ -12,19 +20,20 @@
     { code: "ar", label: "AR" }
   ];
   const themes = [
-    { code: "neon", label: "Premium Neon" },
-    { code: "allona", label: "Deniz Premium" },
-    { code: "marketplace", label: "Market Premium" }
+    { code: "ocean", label: "Deniz" },
+    { code: "sunset", label: "Gün Batımı" },
+    { code: "forest", label: "Yeşil" },
+    { code: "white", label: "Beyaz" }
   ];
   const themeAliases = {
-    ocean: "allona",
-    forest: "marketplace",
-    sunset: "neon",
-    graphite: "allona"
+    neon: "ocean",
+    allona: "ocean",
+    marketplace: "forest",
+    graphite: "ocean"
   };
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "neon",
+    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
     packs: {}
   };
   const embeddedLanguagePacks = {
@@ -362,10 +371,10 @@
   }
 
   function ensurePlatformCss() {
-    if (document.querySelector('link[href$="css/platform.css"], link[href$="../css/platform.css"]')) return;
+    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => (link.getAttribute("href") || "").includes("css/platform.css"))) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = assetUrl("css/platform.css");
+    link.href = assetUrl(`css/platform.css?v=${ASSET_VERSION}`);
     document.head.appendChild(link);
   }
 
@@ -384,7 +393,7 @@
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     if (state.packs[selected]) return state.packs[selected];
     try {
-      const response = await fetch(assetUrl(`i18n/${selected}.json`), { cache: "no-cache" });
+      const response = await fetch(assetUrl(`i18n/${selected}.json?v=${ASSET_VERSION}`), { cache: "no-cache" });
       if (!response.ok) throw new Error(`i18n ${selected} ${response.status}`);
       const remotePack = await response.json();
       const embeddedPack = embeddedLanguagePacks[selected] || {};
@@ -429,6 +438,49 @@
     return nodes;
   }
 
+  function normalizePhrase(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function phraseEntries(phrases) {
+    if (phrases.__allonaEntries) return phrases.__allonaEntries;
+    const entries = Object.entries(phrases)
+      .filter(([source, translated]) => source && translated && source !== translated)
+      .sort((a, b) => b[0].length - a[0].length);
+    Object.defineProperty(phrases, "__allonaEntries", { value: entries, enumerable: false });
+    return entries;
+  }
+
+  function normalizedPhraseMap(phrases) {
+    if (phrases.__allonaNormalized) return phrases.__allonaNormalized;
+    const normalized = {};
+    Object.entries(phrases).forEach(([source, translated]) => {
+      normalized[normalizePhrase(source)] = translated;
+    });
+    Object.defineProperty(phrases, "__allonaNormalized", { value: normalized, enumerable: false });
+    return normalized;
+  }
+
+  function translatePhrase(phrases, source) {
+    const original = String(source || "");
+    const trimmed = original.trim();
+    if (!trimmed) return "";
+    const direct = phrases[trimmed] || normalizedPhraseMap(phrases)[normalizePhrase(trimmed)];
+    if (direct) return direct;
+
+    let translated = trimmed;
+    phraseEntries(phrases).forEach(([from, to]) => {
+      if (!translated.includes(from)) return;
+      translated = translated.split(from).join(to);
+    });
+    return translated !== trimmed ? translated : "";
+  }
+
+  function localizedText(source) {
+    const pack = state.packs[state.language] || embeddedLanguagePacks[state.language] || {};
+    return translatePhrase(pack.phrases || {}, source) || source;
+  }
+
   function translateExactText(pack) {
     const phrases = pack.phrases || {};
     const roots = document.body ? [document.body] : [];
@@ -436,7 +488,7 @@
       ownTextNodes(root).forEach((node) => {
         if (!node.__allonaSourceText) node.__allonaSourceText = node.textContent;
         const source = node.__allonaSourceText.trim();
-        const translated = phrases[source];
+        const translated = translatePhrase(phrases, source);
         if (!translated) {
           node.textContent = node.__allonaSourceText;
           return;
@@ -450,7 +502,7 @@
     document.querySelectorAll("option").forEach((node) => {
       if (!node.__allonaSourceText) node.__allonaSourceText = node.textContent;
       const source = node.__allonaSourceText.trim();
-      const translated = phrases[source];
+      const translated = translatePhrase(phrases, source);
       if (!translated) {
         node.textContent = node.__allonaSourceText;
         return;
@@ -465,7 +517,7 @@
         if (shouldSkipTranslateAttribute(node)) return;
         const key = `__allonaSource_${attribute}`;
         if (!node[key]) node[key] = node.getAttribute(attribute);
-        const translated = phrases[node[key]];
+        const translated = translatePhrase(phrases, node[key]);
         node.setAttribute(attribute, translated || node[key]);
       });
     });
@@ -702,15 +754,15 @@
     if (!loggedIn) {
       links.forEach((link) => {
         if (!link.matches("[data-account-link], a.login")) return;
-        link.textContent = "Giriş Yap";
-        link.setAttribute("aria-label", "Giriş Yap");
+        link.textContent = localizedText("Giriş Yap");
+        link.setAttribute("aria-label", localizedText("Giriş Yap"));
       });
       return;
     }
     links.forEach((link) => {
       link.href = assetUrl("profile.html");
-      link.textContent = "Hesabım";
-      link.setAttribute("aria-label", "Hesabım");
+      link.textContent = localizedText("Hesabım");
+      link.setAttribute("aria-label", localizedText("Hesabım"));
       link.setAttribute("data-account-link", "");
     });
   }
