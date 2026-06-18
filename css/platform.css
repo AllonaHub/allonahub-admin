@@ -121,6 +121,57 @@ html[dir="rtl"] .header-actions {
   outline-offset: 2px;
 }
 
+.platform-brand-normalized,
+.brand.platform-brand-normalized,
+.logo.platform-brand-normalized,
+.footer-brand.platform-brand-normalized {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  color: var(--ah-ink) !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  cursor: pointer;
+}
+
+.platform-brand-normalized img,
+.brand.platform-brand-normalized img,
+.logo.platform-brand-normalized img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.site-header .platform-brand-normalized img,
+.footer-brand.platform-brand-normalized img {
+  width: 42px;
+  height: 42px;
+}
+
+.platform-brand-normalized .logo-title,
+.logo-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  color: var(--ah-ink);
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.platform-brand-normalized .gold,
+.logo-title .gold {
+  color: var(--ah-accent-soft);
+}
+
+.platform-brand-normalized .blue,
+.logo-title .blue {
+  color: var(--ah-primary);
+}
+
 header .platform-controls,
 .top-mini-nav .platform-controls,
 nav .platform-controls {
@@ -143,6 +194,14 @@ body:not(:has(.site-shell)) header .platform-select option {
 body[data-theme] {
   background: var(--ah-page-bg) !important;
   color: var(--ah-ink);
+}
+
+body[data-theme]::before {
+  background: var(--ah-page-bg) !important;
+}
+
+body[data-theme]::after {
+  display: none !important;
 }
 
 body[data-theme] .site-header {
@@ -177,6 +236,24 @@ body[data-theme] .field textarea:focus {
 
 body[data-theme] .card,
 body[data-theme] .panel,
+body[data-theme] .glass,
+body[data-theme] .soft,
+body[data-theme] .header,
+body[data-theme] .search,
+body[data-theme] .actions,
+body[data-theme] .catbar,
+body[data-theme] .hero-main,
+body[data-theme] .hero-card,
+body[data-theme] .promo,
+body[data-theme] .restaurant,
+body[data-theme] .menu-item,
+body[data-theme] .product,
+body[data-theme] .market-cat,
+body[data-theme] .food-cat,
+body[data-theme] .delivery-card,
+body[data-theme] .partner-cta,
+body[data-theme] .info,
+body[data-theme] .sticky-cart,
 body[data-theme] .product-card,
 body[data-theme] .summary-card,
 body[data-theme] .auth-card,
@@ -189,6 +266,61 @@ body[data-theme] .platform-card {
   background: var(--ah-card);
   border-color: var(--ah-line);
   box-shadow: var(--ah-shadow-soft);
+}
+
+body[data-theme] .page,
+body[data-theme] .section-title h2,
+body[data-theme] .hero-main h1,
+body[data-theme] .hero-card h3,
+body[data-theme] .promo h3,
+body[data-theme] .restaurant b,
+body[data-theme] .menu-item b,
+body[data-theme] .product b,
+body[data-theme] .delivery-card h3,
+body[data-theme] .partner-cta h2,
+body[data-theme] .info h2 {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .hero-main h1 span,
+body[data-theme] .cat-menu,
+body[data-theme] .section-title a,
+body[data-theme] .price,
+body[data-theme] .meta,
+body[data-theme] .info h3 {
+  color: var(--ah-primary-strong) !important;
+}
+
+body[data-theme] .top-links a,
+body[data-theme] .catbar a,
+body[data-theme] .actions a,
+body[data-theme] .hero-main p,
+body[data-theme] .hero-card p,
+body[data-theme] .promo p,
+body[data-theme] .restaurant p,
+body[data-theme] .menu-item p,
+body[data-theme] .product p,
+body[data-theme] .delivery-card p,
+body[data-theme] .partner-cta p,
+body[data-theme] .info p,
+body[data-theme] .flow div,
+body[data-theme] .flow-step,
+body[data-theme] .panel-list div {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme] .search input,
+body[data-theme] .nav-search input {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .search-mark,
+body[data-theme] .lines span,
+body[data-theme] .market-icon,
+body[data-theme] .food-icon {
+  border-color: var(--ah-primary) !important;
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-accent-soft)) !important;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ah-primary) 28%, transparent) !important;
 }
 
 body[data-theme] .btn,

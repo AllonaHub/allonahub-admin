@@ -116,6 +116,53 @@
       created_at: "2026-06-08T09:00:00Z"
     }
   ].map(core.normalizeProduct);
+  const fallbackHeroAds = [
+    {
+      title: "Premium pazar yeri deneyimi.",
+      subtitle: "Allona Shop",
+      campaign_text: "Yeni üyelere özel alışveriş fırsatları",
+      description: "Seçili ürünleri güvenli ödeme, hızlı sepet ve HP avantajlarıyla keşfedin.",
+      image_url: "allona-shop.png",
+      cta_label: "Alışverişe Başla",
+      link_url: "#featured-products"
+    },
+    {
+      title: "Elektronikten ev yaşamına hızlı keşif.",
+      subtitle: "Kategori Fırsatları",
+      campaign_text: "Güncel stok ve fiyat altyapısı hazır",
+      description: "Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek vitrinde.",
+      image_url: "shop.png",
+      cta_label: "Kataloğu Aç",
+      link_url: "shop.html"
+    },
+    {
+      title: "Yeni gelen ürünleri yakalayın.",
+      subtitle: "Teknoloji",
+      campaign_text: "Favori, puanlama ve hızlı sepete ekle",
+      description: "Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı vitrin yapısı.",
+      image_url: "teknoloji.png",
+      cta_label: "Teknolojiyi İncele",
+      link_url: "shop.html?category=Teknoloji"
+    },
+    {
+      title: "Market, bakım ve ev ihtiyaçları.",
+      subtitle: "Günlük Alışveriş",
+      campaign_text: "Mobilde yatay kaydırmalı kategori deneyimi",
+      description: "Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.",
+      image_url: "market.png",
+      cta_label: "Market Ürünleri",
+      link_url: "shop.html?category=Market"
+    },
+    {
+      title: "HP, kupon ve premium avantaj.",
+      subtitle: "HUB Wallet",
+      campaign_text: "Premium üyeliklerle daha fazla kazanım",
+      description: "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.",
+      image_url: "wallet.png",
+      cta_label: "Wallet'a Git",
+      link_url: "hubwallet.html"
+    }
+  ];
 
   function withTimeout(promise, timeoutMs) {
     return Promise.race([
@@ -200,6 +247,88 @@
     renderGrid("[data-recommended-grid]", products.filter((item) => item.stock > 0).slice(4, 8));
   }
 
+  function heroAdFromProduct(product) {
+    const item = core.normalizeProduct(product);
+    return {
+      title: item.name,
+      subtitle: item.brand || item.category || "Partner Ürünü",
+      campaign_text: item.discount || item.discount_label || `${core.money(item.price)} / hızlı sepet`,
+      description: item.description || "Partner ürününü AllonaShop vitrininde güvenli ödeme ve HP avantajıyla inceleyin.",
+      image_url: item.image_url,
+      cta_label: "Ürünü İncele",
+      link_url: core.productUrl(item),
+      source_id: item.id
+    };
+  }
+
+  function heroAdFromRecord(ad) {
+    const product = ad.product ? core.normalizeProduct(ad.product) : null;
+    return {
+      title: ad.title || product?.name || "Partner reklamı",
+      subtitle: ad.subtitle || product?.brand || product?.category || "Günlük Partner Reklamı",
+      campaign_text: ad.campaign_text || product?.discount || product?.discount_label || "Bugüne özel görünürlük",
+      description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst vitrinde keşfedin.",
+      image_url: ad.image_url || product?.image_url || "allona-shop.png",
+      cta_label: ad.cta_label || "İncele",
+      link_url: ad.link_url || (product ? core.productUrl(product) : "shop.html"),
+      source_id: ad.id || product?.id
+    };
+  }
+
+  function uniqueAds(items) {
+    const seen = new Set();
+    return items.filter((item) => {
+      const key = item.source_id || `${item.title}-${item.link_url}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  async function loadHeroAds(productList) {
+    let remoteAds = [];
+    if (App.config?.partnerAdsEnabled) {
+      try {
+        remoteAds = await withTimeout(App.db?.ads?.shopHero(5) || Promise.resolve([]), 3000);
+      } catch (error) {
+        console.warn("Partner günlük reklamları yüklenemedi, ürün/fallback vitrini kullanılacak:", error.message || error);
+      }
+    }
+
+    const partnerProducts = productList.filter((item) => item.partner_id).map(heroAdFromProduct);
+    const popularProducts = [...productList].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
+    const ads = uniqueAds([
+      ...remoteAds.map(heroAdFromRecord),
+      ...partnerProducts,
+      ...popularProducts,
+      ...fallbackHeroAds
+    ]);
+    return ads.slice(0, 5);
+  }
+
+  function renderHeroAds(ads) {
+    const slider = document.querySelector("[data-shop-promo-slider]");
+    const track = slider?.querySelector("[data-shop-promo-track]");
+    if (!slider || !track || !ads.length) return;
+    track.innerHTML = ads.map((ad, index) => `
+      <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide>
+        <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "allona-shop.png"))}" alt="${core.escapeHTML(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
+        <div class="shop-promo-content">
+          <p class="eyebrow">${core.escapeHTML(ad.subtitle)}</p>
+          <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${core.escapeHTML(ad.title)}</h${index === 0 ? "1" : "2"}>
+          <p>${core.escapeHTML(ad.description)}</p>
+          <strong>${core.escapeHTML(ad.campaign_text)}</strong>
+          <a class="btn" href="${core.escapeHTML(ad.link_url || "shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  async function refreshHeroAds() {
+    renderHeroAds(await loadHeroAds(products));
+    initShopPromoSlider();
+  }
+
   async function loadProducts() {
     const loadingTargets = ["[data-products-grid]", "[data-new-grid]", "[data-best-grid]", "[data-featured-grid]", "[data-recommended-grid]"];
     loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
@@ -213,12 +342,14 @@
       renderCategoryOptions();
       syncFiltersFromParams();
       renderHomeSections();
+      await refreshHeroAds();
     } catch (error) {
       console.warn("Supabase products yüklenemedi, mağaza vitrin fallback ürünleri gösteriliyor:", error.message || error);
       products = fallbackProducts;
       renderCategoryOptions();
       syncFiltersFromParams();
       renderHomeSections();
+      await refreshHeroAds();
     }
   }
 
@@ -243,6 +374,7 @@
   function initShopPromoSlider() {
     const slider = document.querySelector("[data-shop-promo-slider]");
     if (!slider) return;
+    if (slider.__shopPromoTimer) window.clearInterval(slider.__shopPromoTimer);
     const slides = [...slider.querySelectorAll("[data-shop-promo-slide]")];
     const dotsWrap = slider.querySelector("[data-shop-promo-dots]");
     const prev = slider.querySelector("[data-shop-promo-prev]");
@@ -250,7 +382,6 @@
     if (!slides.length || !dotsWrap) return;
 
     let index = 0;
-    let timer;
 
     function show(nextIndex) {
       index = (nextIndex + slides.length) % slides.length;
@@ -259,10 +390,11 @@
     }
 
     function restart() {
-      window.clearInterval(timer);
-      timer = window.setInterval(() => show(index + 1), 3000);
+      window.clearInterval(slider.__shopPromoTimer);
+      slider.__shopPromoTimer = window.setInterval(() => show(index + 1), 3000);
     }
 
+    dotsWrap.innerHTML = "";
     slides.forEach((_, slideIndex) => {
       const dot = document.createElement("button");
       dot.type = "button";
@@ -275,20 +407,20 @@
     });
 
     if (prev) {
-      prev.addEventListener("click", () => {
+      prev.onclick = () => {
         show(index - 1);
         restart();
-      });
+      };
     }
     if (next) {
-      next.addEventListener("click", () => {
+      next.onclick = () => {
         show(index + 1);
         restart();
-      });
+      };
     }
 
-    slider.addEventListener("mouseenter", () => window.clearInterval(timer));
-    slider.addEventListener("mouseleave", restart);
+    slider.onmouseenter = () => window.clearInterval(slider.__shopPromoTimer);
+    slider.onmouseleave = restart;
     show(0);
     restart();
   }

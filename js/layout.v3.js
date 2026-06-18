@@ -23,7 +23,8 @@
       <header class="site-header">
         <div class="container header-main">
           <a class="brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-            <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
+            <img src="${core.url("allona.logo.png")}" alt="AllonaHub Logo">
+            <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
           </a>
           <form class="search-form" data-site-search>
             <input type="search" name="q" autocomplete="off" placeholder="Ürün, kategori, hizmet veya marka ara" aria-label="Ürün, kategori, hizmet veya marka ara">
@@ -81,7 +82,8 @@
         <div class="container footer-grid">
           <div class="footer-col">
             <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-              <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
+              <img src="${core.url("allona.logo.png")}" alt="AllonaHub Logo">
+              <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
             </a>
             <p>Tek hesapla alışveriş, hizmet, partner, ödeme ve dijital çözümler.</p>
             <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>

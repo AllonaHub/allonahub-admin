@@ -217,6 +217,47 @@
     `;
   }
 
+  function brandMarkup() {
+    return `
+      <img src="${assetUrl("allona.logo.png")}" alt="AllonaHub Logo">
+      <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
+    `;
+  }
+
+  function normalizeBrandNode(node) {
+    if (!node || node.dataset.platformBrand === "ready") return;
+    node.dataset.platformBrand = "ready";
+    node.classList.add("platform-brand-normalized");
+    node.innerHTML = brandMarkup();
+    if (node.tagName !== "A") {
+      node.setAttribute("role", "link");
+      node.setAttribute("tabindex", "0");
+      node.addEventListener("click", () => {
+        window.location.href = assetUrl("index.html");
+      });
+      node.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          window.location.href = assetUrl("index.html");
+        }
+      });
+    }
+  }
+
+  function normalizePlatformBrand() {
+    const selectors = [
+      "header .logo",
+      ".header > .logo",
+      ".topbar > .logo",
+      ".site-header .brand",
+      ".page > .header .brand",
+      ".header > .brand",
+      ".topbar > .brand",
+      ".footer-brand"
+    ];
+    document.querySelectorAll(selectors.join(",")).forEach(normalizeBrandNode);
+  }
+
   function mountControls() {
     if (document.querySelector("[data-platform-controls]")) return;
     const slot = document.querySelector("[data-platform-controls-slot]");
@@ -288,6 +329,7 @@
       if (themeSelect) applyTheme(themeSelect.value);
     });
     document.addEventListener("allona:layout-ready", () => {
+      normalizePlatformBrand();
       mountControls();
       applyTheme(state.theme);
       applyLanguage(state.language);
@@ -296,6 +338,7 @@
 
   async function init() {
     ensurePlatformCss();
+    normalizePlatformBrand();
     applyTheme(state.theme);
     mountControls();
     repairEmptyLinks();
