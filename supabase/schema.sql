@@ -172,7 +172,7 @@ create trigger products_set_updated_at
 
 create table if not exists public.addresses (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   title text not null default 'Adres',
   full_name text,
   phone text,

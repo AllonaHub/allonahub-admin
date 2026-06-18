@@ -650,6 +650,12 @@ img {
   background: #f1fbf6;
 }
 
+.status-box--warning {
+  color: #815f12;
+  border-color: #efdca8;
+  background: #fff8e6;
+}
+
 .page-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
