@@ -160,7 +160,7 @@
     const user = await App.auth.getUser();
     if (user) {
       link.href = core.url("profile.html");
-      link.textContent = "Profil";
+      link.textContent = "Hesabım";
     }
   }
 

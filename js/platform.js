@@ -258,6 +258,70 @@
     document.querySelectorAll(selectors.join(",")).forEach(normalizeBrandNode);
   }
 
+  function accountLinkCandidates() {
+    const selectors = [
+      "[data-account-link]",
+      "a.login",
+      "a[href$='user.html']",
+      "a[href$='login.html']"
+    ];
+    return [...document.querySelectorAll(selectors.join(","))].filter((link) => {
+      const text = (link.textContent || "").trim().toLocaleLowerCase("tr-TR");
+      const isAccountText = /giriş|login|hesab|kullanıcı girişi/.test(text);
+      const isHeaderLink = Boolean(link.closest("header, nav, .header, .actions, .header-actions, .top-links, .top-mini-nav"));
+      return link.matches("[data-account-link], a.login") || (isHeaderLink && isAccountText);
+    });
+  }
+
+  function hasStoredAuthSession() {
+    try {
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index) || "";
+        if (!/^sb-.+-auth-token$/.test(key)) continue;
+        const payload = JSON.parse(localStorage.getItem(key) || "null");
+        const session = payload && (payload.currentSession || payload.session || payload);
+        if (!session) continue;
+        if (session.access_token || session.user || session.refresh_token) return true;
+      }
+    } catch (error) {
+      return false;
+    }
+    return false;
+  }
+
+  async function hasAuthenticatedUser() {
+    try {
+      if (App.auth && App.auth.getUser) {
+        const user = await App.auth.getUser();
+        if (user) return true;
+      }
+      if (App.auth && App.auth.getSession) {
+        const session = await App.auth.getSession();
+        if (session) return true;
+      }
+      if (App.supabase && App.supabase.auth && App.supabase.auth.getSession) {
+        const { data } = await App.supabase.auth.getSession();
+        if (data && data.session) return true;
+      }
+    } catch (error) {
+      // The local Supabase session check below keeps legacy module headers responsive.
+    }
+    return hasStoredAuthSession();
+  }
+
+  async function updateAccountLinks() {
+    const links = accountLinkCandidates();
+    if (!links.length) return;
+    const loggedIn = await hasAuthenticatedUser();
+    if (!loggedIn) return;
+    links.forEach((link) => {
+      link.href = assetUrl("profile.html");
+      link.textContent = "Hesabım";
+      link.setAttribute("aria-label", "Hesabım");
+      link.setAttribute("data-account-link", "");
+    });
+  }
+
   function mountControls() {
     if (document.querySelector("[data-platform-controls]")) return;
     const slot = document.querySelector("[data-platform-controls-slot]");
@@ -266,14 +330,7 @@
       bindControlValues();
       return;
     }
-    const account = document.querySelector([
-      "[data-account-link]",
-      "a.login",
-      ".actions a[href$='user.html']",
-      ".actions a[href$='login.html']",
-      "nav a[href$='user.html']",
-      "nav a[href$='login.html']"
-    ].join(","));
+    const account = accountLinkCandidates()[0];
     if (account) {
       account.insertAdjacentHTML("afterend", controlsMarkup(account.classList.contains("login") ? "home" : ""));
       bindControlValues();
@@ -339,8 +396,10 @@
       normalizePlatformBrand();
       mountControls();
       applyTheme(state.theme);
-      applyLanguage(state.language);
+      applyLanguage(state.language).then(updateAccountLinks);
+      updateAccountLinks();
     });
+    document.addEventListener("allona:language-changed", updateAccountLinks);
   }
 
   async function init() {
@@ -350,6 +409,7 @@
     mountControls();
     repairEmptyLinks();
     await applyLanguage(state.language);
+    await updateAccountLinks();
   }
 
   bindEvents();
