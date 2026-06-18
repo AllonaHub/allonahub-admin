@@ -1,5 +1,15 @@
 # TASKS
 
+## Öncelik 0 - Yeni Allona Shop Mimari Kararı
+
+- [x] Kullanıcı tarafından verilen tek dosyalık Allona Shop anasayfasını `index.html` olarak birebir kaydet.
+- [x] Önceki anasayfayı silmeden `docs/archive/index-before-allona-shop-homepage.html` altında arşivle.
+- [x] Kanonik anasayfa referansını `docs/architecture/allona-shop-homepage-canonical.html` olarak sakla.
+- [x] Ana sayfadaki ürün CTA bağlantısı için `odeme.html` uyumluluk sayfasını ekle.
+- [x] Ana sayfadaki yasal bağlantı için `mesafeli-satis-sozlesmesi.html` uyumluluk sayfasını ekle.
+- [x] Yeni mimari kararını `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md` ile dokümante et.
+- [ ] Canlıya çıkmadan önce yasal metinleri hukuk/onay sürecinden geçir.
+
 ## Öncelik 1 - Üretime Hazırlık
 
 - [x] Tek dosyalık mevcut mağaza kodunu modüler proje yapısına taşı.
