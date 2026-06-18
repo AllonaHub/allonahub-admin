@@ -275,6 +275,11 @@
 
   function hasStoredAuthSession() {
     try {
+      const localProfile = localStorage.getItem("allonahub_user_profile");
+      if (localProfile) {
+        const profile = JSON.parse(localProfile);
+        if (profile && (profile.email || profile.full_name || profile.user_id || profile.id)) return true;
+      }
       for (let index = 0; index < localStorage.length; index += 1) {
         const key = localStorage.key(index) || "";
         if (!/^sb-.+-auth-token$/.test(key)) continue;
@@ -313,7 +318,14 @@
     const links = accountLinkCandidates();
     if (!links.length) return;
     const loggedIn = await hasAuthenticatedUser();
-    if (!loggedIn) return;
+    if (!loggedIn) {
+      links.forEach((link) => {
+        if (!link.matches("[data-account-link], a.login")) return;
+        link.textContent = "Giriş Yap";
+        link.setAttribute("aria-label", "Giriş Yap");
+      });
+      return;
+    }
     links.forEach((link) => {
       link.href = assetUrl("profile.html");
       link.textContent = "Hesabım";
