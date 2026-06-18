@@ -529,6 +529,7 @@ body{
 </style>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="css/platform.css">
 </head>
 <body>
 
@@ -2467,6 +2468,9 @@ async function downloadPDF(){
   pdf.save(fileName);
 }
 </script>
-
+  <div data-layout="footer"></div>
+  <script src="js/core.js" defer></script>
+  <script src="js/layout.v3.js" defer></script>
+  <script src="js/platform.js" defer></script>
 </body>
 </html>

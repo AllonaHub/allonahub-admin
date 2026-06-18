@@ -4,6 +4,8 @@ Bu repository artık AllonaHub'un ana geliştirme reposudur. `index.html`, Allon
 
 Yeni mimaride ana sayfanın kaynak kabul edilen tasarımı `index.html` dosyasıdır ve aynı kod `docs/architecture/allonahub-superapp-homepage-canonical.html` altında referans olarak saklanır. Kullanıcı tarafından verilen ana sayfa tasarımı korunur; bakım kolaylığı için stiller `css/allonahub-home.css`, davranış kodları `js/allonahub-home.js` dosyasında tutulur. Yeni özellikler, modül sayfaları, destek sayfaları ve e-ticaret altyapısı bu anasayfa kararına göre geliştirilir.
 
+Platform genelinde ortak footer `js/layout.v3.js` tarafından üretilir ve sayfalarda `data-layout="footer"` alanına basılır. Dil seçimi, tema seçimi, boş link güvenli yönlendirmesi ve gelecekteki internet tabanlı çeviri entegrasyonu `js/platform.js`, `css/platform.css` ve `i18n/` paketleri üzerinden yönetilir.
+
 ## Teknoloji
 
 - Frontend: HTML5, CSS3, Vanilla JavaScript
@@ -45,6 +47,7 @@ admin/
 partner/
 css/
 js/
+i18n/
 images/
 assets/
 docs/
@@ -59,5 +62,7 @@ supabase/
 - Güvenlik Supabase RLS, Edge Functions ve minimum yetki prensibiyle ilerler.
 - Var olan çalışan özellikler silinmez; değişiklikler geriye dönük uyumluluğu korur.
 - `index.html` yeni AllonaHub süper uygulama anasayfa kaynağıdır; destekleyici mimari bu sayfanın marka, modül, premium ve partner ekosistemi mesajlarına göre kurulmalıdır.
+- Footer, dil seçici ve tema seçici bütün mevcut ve yeni modüllerde ortak platform davranışı olarak korunur.
+- İç linkler 404 üretmemeli; yeni aksiyonlar gerçek sayfaya, ilgili modüle veya arama/destek akışına yönlenmelidir.
 
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `TASKS.md`, `DATABASE.md`, `API.md`, `DEPLOY.md` ve `STYLE_GUIDE.md` dosyalarını kullan.

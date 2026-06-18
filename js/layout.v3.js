@@ -36,6 +36,7 @@
               🛒 <span class="badge" data-cart-count>0</span>
             </a>
             <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Hesabım</a>
+            <span class="platform-controls-slot" data-platform-controls-slot></span>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
           </div>
         </div>
@@ -80,6 +81,9 @@
           <div class="footer-col">
             <h3>Mağaza</h3>
             <a href="${core.url("shop.html")}">Ürünler</a>
+            <a href="${core.url("allonashop.html")}">Allona Shop</a>
+            <a href="${core.url("allonayemek.html")}">Allona Yemek</a>
+            <a href="${core.url("allonamarket.html")}">Allona Market</a>
             <a href="${core.url("favorites.html")}">Favorilerim</a>
             <a href="${core.url("orders.html")}">Siparişlerim</a>
           </div>
@@ -87,8 +91,18 @@
             <h3>Müşteri</h3>
             <a href="${core.url("hakkimizda.html")}">Hakkımızda</a>
             <a href="${core.url("iletisim.html")}">İletişim</a>
+            <a href="${core.url("destek.html")}">Destek Merkezi</a>
+            <a href="${core.url("kuponlar.html")}">Kuponlar</a>
             <a href="${core.url("teslimat-kargo.html")}">Teslimat ve Kargo</a>
             <a href="${core.url("iade-politikasi.html")}">İade ve Cayma Hakkı</a>
+          </div>
+          <div class="footer-col">
+            <h3>Ekosistem</h3>
+            <a href="${core.url("ecosystem.html#modules")}">Tüm Modüller</a>
+            <a href="${core.url("partner.html")}">Partner Başvurusu</a>
+            <a href="${core.url("hubwallet.html")}">HUB Wallet</a>
+            <a href="${core.url("premium.html")}">Premium</a>
+            <a href="${core.url("allonakariyer.html")}">Kariyer</a>
           </div>
           <div class="footer-col">
             <h3>Yasal</h3>
@@ -108,7 +122,14 @@
             </a>
           `).join("")}
         </div>
-        <div class="container footer-bottom">© ${year} AllonaHub. Tüm hakları saklıdır.</div>
+        <div class="container footer-bottom">
+          <span>© ${year} AllonaHub. Tüm hakları saklıdır.</span>
+          <span class="footer-bottom__links">
+            <a href="${core.url("kullanim-sartlari.html")}">Kullanım Şartları</a>
+            <a href="${core.url("gizlilik.html")}">Gizlilik Politikası</a>
+            <a href="${core.url("cerez.html")}">Çerez Politikası</a>
+          </span>
+        </div>
       </footer>
     `;
   }
@@ -161,6 +182,7 @@
     if (App.cart) App.cart.updateBadges();
     updateAccountLink();
     updateRemoteFavoriteCount();
+    document.dispatchEvent(new CustomEvent("allona:layout-ready"));
   }
 
   document.addEventListener("DOMContentLoaded", bindLayout);

@@ -135,7 +135,7 @@ const q=document.getElementById("globalSearchInput").value.toLowerCase().trim();
 if(!q){return}
 const found=searchRoutes.find(item=>item.keys.some(k=>q.includes(k)));
 if(found){window.location.href=found.url}
-else{window.location.href="arama.html?q="+encodeURIComponent(q)}
+else{window.location.href=["arama","html"].join(".")+"?q="+encodeURIComponent(q)}
 }
 
 window.globalSearch=globalSearch;
