@@ -1,0 +1,38 @@
+{
+  "dir": "ltr",
+  "keys": {
+    "languageLabel": "Язык"
+  },
+  "phrases": {
+    "HP nedir?": "Что такое HP?",
+    "İndirim Kuponu": "Купоны",
+    "Ekosisteme Katıl": "Присоединиться",
+    "Hakkımızda": "О нас",
+    "Yardım ve Destek": "Помощь",
+    "Hizmetlerimiz": "Услуги",
+    "HUB Wallet": "HUB Wallet",
+    "Premium": "Премиум",
+    "Partner Ol": "Стать партнером",
+    "Giriş Yap": "Войти",
+    "Hesabım": "Аккаунт",
+    "Profil": "Профиль",
+    "AllonaHub Ekosistemi": "Экосистема AllonaHub",
+    "Premium Üyelikler": "Премиум подписки",
+    "Partner Başvurusu Yap": "Подать заявку",
+    "Kurumsal": "Компания",
+    "Modüller": "Модули",
+    "Kaynaklar": "Ресурсы",
+    "Yasal": "Правовая информация",
+    "Mağaza": "Магазин",
+    "Müşteri": "Клиент",
+    "Ürünler": "Товары",
+    "Favorilerim": "Избранное",
+    "Siparişlerim": "Заказы",
+    "İletişim": "Контакты",
+    "Gizlilik Politikası": "Политика конфиденциальности",
+    "Çerez Politikası": "Политика cookies",
+    "Kullanım Şartları": "Условия использования",
+    "Aradığınız hizmet, kategori veya özelliği yazın...": "Искать услугу, категорию или функцию...",
+    "Ara": "Поиск"
+  }
+}

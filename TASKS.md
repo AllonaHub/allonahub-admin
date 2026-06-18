@@ -18,6 +18,16 @@
 - [x] Yeni anasayfanın beklediği uyumluluk rota ve görsellerini ekle.
 - [x] Anasayfa CSS ve JavaScript kodlarını `css/allonahub-home.css` ve `js/allonahub-home.js` dosyalarına ayır.
 
+## Öncelik 0.2 - Platform Geneli Ortak Deneyim
+
+- [x] `login.html` ile aynı `data-layout="footer"` mekanizmasını bütün modüllere yay.
+- [x] Ortak footer içeriğini `js/layout.v3.js` üzerinden tek kaynak haline getir.
+- [x] Dil seçici ve tema seçiciyi Giriş Yap / Hesabım alanının yanına ekle.
+- [x] Platform temalarını `ocean`, `forest`, `sunset`, `graphite` olarak tanımla.
+- [x] Çok dilli yapı için `i18n/` dil paketlerini ve opsiyonel online çeviri endpoint altyapısını ekle.
+- [x] Dosyası olmayan iç bağlantıları çalışan sayfalara veya gerçek modül hedeflerine bağla.
+- [x] Yeni destek/uyumluluk sayfalarını ortak header, ortak footer ve ana sayfa tasarım diliyle oluştur.
+
 ## Öncelik 1 - Üretime Hazırlık
 
 - [x] Tek dosyalık mevcut mağaza kodunu modüler proje yapısına taşı.
@@ -27,6 +37,7 @@
 - [x] Checkout akışını iyzico CheckoutForm Edge Function sözleşmesine bağla.
 - [x] Checkout yasal onaylarını ve iyzico yönlendirme mantığını kart bilgisi toplamadan hazırla.
 - [x] Footer yasal linklerini ve şirket bilgilerini AllonaHub odağıyla düzenle.
+- [x] Footer, dil ve tema altyapısını platform geneline bağla.
 - [x] Supabase SQL şemasını ve RLS politikalarını dokümante et.
 - [ ] Supabase SQL Editor üzerinden `supabase/schema.sql` içeriğini canlı projeye uygula.
 - [ ] Supabase Storage bucketlarını oluştur: `product-images`, `brand-assets`, `partner-documents`.

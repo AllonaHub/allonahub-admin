@@ -9,6 +9,7 @@
     defaultShipping: 89.9,
     freeShippingThreshold: 1500,
     iyzicoFunctionName: "create-iyzico-checkout",
+    translationEndpoint: "",
     storageKeys: {
       cart: "allona_cart_v2",
       favorites: "allona_favorites_v2"

@@ -8,6 +8,8 @@ Yeni görsel kaynak `index.html` içindeki kullanıcı tarafından verilen anasa
 
 Anasayfa stilleri `css/allonahub-home.css`, davranış kodları `js/allonahub-home.js` dosyasında tutulur. Yeni düzenlemelerde inline `<style>`, inline `<script>` ve inline event handler kullanımından kaçınılır.
 
+Ortak footer, dil seçici ve tema seçici platform standardıdır. Yeni sayfalarda `css/platform.css`, `js/platform.js` ve `data-layout="footer"` kullanılır; footer kopyalanmaz.
+
 ## Renkler
 
 - Ana koyu renk: gece laciverti `#020814`
@@ -16,6 +18,7 @@ Anasayfa stilleri `css/allonahub-home.css`, davranış kodları `js/allonahub-ho
 - İkinci renk: altın `#ffd700`
 - Arka plan: koyu degrade ve ışıklı kartlar
 - Kartlar: beyaz, hafif gölge
+- Kullanıcı temaları: `ocean`, `forest`, `sunset`, `graphite`
 
 ## UI Kuralları
 
@@ -26,6 +29,8 @@ Anasayfa stilleri `css/allonahub-home.css`, davranış kodları `js/allonahub-ho
 - Butonlar erişilebilir kontrastta olmalı.
 - Form alanlarında label kullanılmalı.
 - Mobilde temel aksiyonlar tek elle ulaşılabilir olmalı.
+- Giriş Yap / Hesabım alanının yanında dil ve tema seçimi görünür kalmalı.
+- Boş veya geçici linkler 404 üretmemeli; ilgili modül, destek, arama veya partner akışına bağlanmalı.
 
 ## Tipografi
 
