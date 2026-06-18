@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adreslerim | Allona Shop</title>
+  <meta name="description" content="Allona Shop teslimat adresleri.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Adreslerim</h1>
+        </div>
+      </section>
+      <section class="container account-grid">
+        <nav class="side-menu" aria-label="Hesap menüsü">
+          <a href="profile.html">Profil</a>
+          <a href="addresses.html" aria-current="page">Adreslerim</a>
+          <a href="orders.html">Siparişlerim</a>
+          <a href="favorites.html">Favorilerim</a>
+          <button type="button" data-sign-out>Çıkış Yap</button>
+        </nav>
+        <div>
+          <form class="panel" data-address-form>
+            <div class="form-grid">
+              <div class="field">
+                <label for="address-title">Adres başlığı</label>
+                <input id="address-title" name="title" required>
+              </div>
+              <div class="field">
+                <label for="address-name">Alıcı adı</label>
+                <input id="address-name" name="full_name" required autocomplete="name">
+              </div>
+              <div class="field">
+                <label for="address-phone">Telefon</label>
+                <input id="address-phone" name="phone" autocomplete="tel">
+              </div>
+              <div class="field">
+                <label for="address-city">İl</label>
+                <input id="address-city" name="city" required autocomplete="address-level1">
+              </div>
+              <div class="field">
+                <label for="address-district">İlçe</label>
+                <input id="address-district" name="district" autocomplete="address-level2">
+              </div>
+              <div class="field">
+                <label for="address-zip">Posta kodu</label>
+                <input id="address-zip" name="zip_code" autocomplete="postal-code">
+              </div>
+              <div class="field field--full">
+                <label for="address-body">Açık adres</label>
+                <textarea id="address-body" name="address" required autocomplete="street-address"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="submit">Adresi Kaydet</button>
+            </div>
+          </form>
+          <div class="section cart-list" data-address-list></div>
+        </div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/supabase-client.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/layout.js" defer></script>
+  <script src="js/account-page.js" defer></script>
+</body>
+</html>

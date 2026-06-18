@@ -3,24 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sepet | Allona Shop</title>
-  <meta name="description" content="Allona Shop sepetiniz.">
+  <title>Favorilerim | Allona Shop</title>
+  <meta name="description" content="Allona Shop favori ürünleriniz.">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="site-shell" data-page="cart">
+  <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
       <section class="container page-heading">
         <div>
-          <p class="eyebrow">Sepet</p>
-          <h1>Sepetim</h1>
-          <p>Adetleri güncelleyin, toplamı kontrol edin ve checkout adımına geçin.</p>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Favorilerim</h1>
         </div>
       </section>
-      <section class="container page-grid">
-        <div class="cart-list" data-cart-list></div>
-        <aside class="summary-card" data-cart-summary></aside>
+      <section class="container account-grid">
+        <nav class="side-menu" aria-label="Hesap menüsü">
+          <a href="profile.html">Profil</a>
+          <a href="addresses.html">Adreslerim</a>
+          <a href="orders.html">Siparişlerim</a>
+          <a href="favorites.html" aria-current="page">Favorilerim</a>
+          <button type="button" data-sign-out>Çıkış Yap</button>
+        </nav>
+        <div class="product-grid" data-favorites-grid></div>
       </section>
     </main>
     <div data-layout="footer"></div>
@@ -33,6 +38,6 @@
   <script src="js/auth.js" defer></script>
   <script src="js/cart.js" defer></script>
   <script src="js/layout.js" defer></script>
-  <script src="js/cart-page.js" defer></script>
+  <script src="js/account-page.js" defer></script>
 </body>
 </html>

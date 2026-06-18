@@ -1,0 +1,95 @@
+(function () {
+  const App = window.Allona = window.Allona || {};
+  const core = App.core;
+  let lines = [];
+
+  function renderSummary() {
+    const summary = document.querySelector("[data-cart-summary]");
+    if (!summary) return;
+    const totals = App.cart.totals(lines);
+    summary.innerHTML = `
+      <h2>Sipariş Özeti</h2>
+      <div class="summary-line"><span>Ara toplam</span><strong>${core.money(totals.subtotal)}</strong></div>
+      <div class="summary-line"><span>Kargo</span><strong>${totals.shipping ? core.money(totals.shipping) : "Ücretsiz"}</strong></div>
+      <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
+      <a class="btn btn--full" href="${core.url("checkout.html")}" ${lines.length ? "" : "aria-disabled='true'"}>Checkout</a>
+      <button class="btn btn--light btn--full" type="button" data-clear-cart>Sepeti Temizle</button>
+    `;
+  }
+
+  function renderCart() {
+    const list = document.querySelector("[data-cart-list]");
+    if (!list) return;
+    if (!lines.length) {
+      list.innerHTML = `<div class="empty-state">Sepetinizde ürün yok. <a href="${core.url("shop.html")}">Mağazaya dönün</a>.</div>`;
+      renderSummary();
+      return;
+    }
+
+    list.innerHTML = lines.map((item) => `
+      <article class="cart-item" data-cart-row="${core.escapeHTML(item.product.id)}">
+        <img src="${core.escapeHTML(core.sanitizeUrl(item.product.image_url))}" alt="${core.escapeHTML(item.product.name)}" loading="lazy" onerror="this.src='${core.url("images/product-fallback.svg")}'">
+        <div>
+          <h3><a href="${core.escapeHTML(core.productUrl(item.product))}">${core.escapeHTML(item.product.name)}</a></h3>
+          <p>${core.escapeHTML(item.product.category)} · ${core.money(item.product.price)}</p>
+        </div>
+        <div class="cart-item__actions">
+          <div class="quantity-control">
+            <button type="button" data-cart-dec="${core.escapeHTML(item.product.id)}">-</button>
+            <span>${item.qty}</span>
+            <button type="button" data-cart-inc="${core.escapeHTML(item.product.id)}">+</button>
+          </div>
+          <strong>${core.money(item.product.price * item.qty)}</strong>
+          <button class="btn btn--danger" type="button" data-cart-remove="${core.escapeHTML(item.product.id)}">Sil</button>
+        </div>
+      </article>
+    `).join("");
+    renderSummary();
+  }
+
+  async function loadCart() {
+    const list = document.querySelector("[data-cart-list]");
+    if (!list) return;
+    core.renderStatus(list, "Sepet yükleniyor...");
+    try {
+      lines = await App.cart.hydrate();
+      renderCart();
+    } catch (error) {
+      core.renderStatus(list, error.message || "Sepet yüklenemedi.", "error");
+    }
+  }
+
+  function bindCart() {
+    document.addEventListener("click", async (event) => {
+      const inc = event.target.closest("[data-cart-inc]");
+      const dec = event.target.closest("[data-cart-dec]");
+      const remove = event.target.closest("[data-cart-remove]");
+      const clear = event.target.closest("[data-clear-cart]");
+
+      if (inc) {
+        const item = lines.find((line) => String(line.product.id) === String(inc.dataset.cartInc));
+        if (item) App.cart.setQty(item.product.id, item.qty + 1);
+        await loadCart();
+      }
+      if (dec) {
+        const item = lines.find((line) => String(line.product.id) === String(dec.dataset.cartDec));
+        if (item) App.cart.setQty(item.product.id, Math.max(1, item.qty - 1));
+        await loadCart();
+      }
+      if (remove) {
+        App.cart.remove(remove.dataset.cartRemove);
+        await loadCart();
+      }
+      if (clear) {
+        App.cart.clear();
+        await loadCart();
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!document.querySelector("[data-page='cart']")) return;
+    bindCart();
+    loadCart();
+  });
+})();
