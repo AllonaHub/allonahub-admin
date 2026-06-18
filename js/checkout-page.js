@@ -48,17 +48,6 @@
     }
   }
 
-  function createOrderNo() {
-    const now = new Date();
-    const date = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2, "0"),
-      String(now.getDate()).padStart(2, "0")
-    ].join("");
-    const random = Math.random().toString(36).slice(2, 8).toUpperCase();
-    return `ALN-${date}-${Date.now().toString(36).toUpperCase()}-${random}`;
-  }
-
   function compactLines(lines) {
     return lines
       .map((line) => String(line || "").trim())
@@ -99,18 +88,20 @@
     ]);
 
     return {
-      order_no: createOrderNo(),
       customer_name: data.full_name,
-      customer_email: data.email,
       customer_phone: data.phone,
+      customer_email: data.email,
       city: data.shipping_city,
       address,
       subtotal: totals.subtotal,
-      shipping: totals.shipping,
       discount: totals.discount,
+      shipping: totals.shipping,
       total: totals.total,
+      payment_status: "pending",
       order_status: "pending",
-      payment_status: "pending"
+      partner_status: "pending",
+      tracking_number: "",
+      cargo_company: ""
     };
   }
 
@@ -165,7 +156,6 @@
           core.renderStatus("[data-checkout-status]", "Ödeme öncesi yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
           return;
         }
-        form.user_id.value = user.id;
         const orderPayload = calculateOrderPayload(form);
         const order = await App.db.orders.create(orderPayload, lines);
         const buyer = {
