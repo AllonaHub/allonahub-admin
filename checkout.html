@@ -1,502 +1,112 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ödeme | Allona Shop</title>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{background:#020814;color:#fff;min-height:100vh}
-body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
-.page{max-width:1320px;width:95%;margin:0 auto;padding:24px}
-.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px}
-.header{height:82px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;margin-bottom:22px}
-.logo{text-decoration:none;font-size:28px;font-weight:900}.logo b{color:#ffd700}.logo span{color:#00e5ff}.header a{color:white;text-decoration:none;font-weight:900}
-h1{color:#ffd700;margin-bottom:22px;font-size:36px}
-
-.checkout-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,.85fr);gap:24px;align-items:start}
-.checkout-left,.checkout-right{display:flex;flex-direction:column;gap:18px;min-width:0}
-.form-box,.summary,.payment-box{padding:26px}
-.form-box h2,.summary h2,.payment-box h2{color:#ffd700;margin-bottom:18px}
-.form-grid,.payment-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:span 2}
-label{font-size:13px;color:#00e5ff;font-weight:900}
-input,textarea,select{width:100%;border:1px solid rgba(0,229,255,.28);background:#031326;color:white;border-radius:15px;padding:14px;outline:none;font-size:14px}
-textarea{min-height:95px;resize:none}
-select option{background:#031326;color:white}
-
-.item{display:flex;gap:12px;margin-bottom:12px;border-bottom:1px solid #ffffff18;padding-bottom:12px}
-.item img{width:62px;height:62px;object-fit:cover;border-radius:12px;background:white}
-.item b{color:#ffd700;font-size:13px}.item p{font-size:12px;opacity:.75;margin-top:5px}
-.row{display:flex;justify-content:space-between;margin:12px 0;opacity:.85}
-.total{font-size:24px;color:#00e5ff;font-weight:900;border-top:1px solid #ffffff22;padding-top:16px;margin-top:16px}
-.pay-btn,.back-btn{width:100%;height:54px;border:0;border-radius:18px;margin-top:14px;font-weight:900;cursor:pointer}
-.pay-btn{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-size:16px}
-.back-btn{background:linear-gradient(135deg,#ffd700,#b88700);color:#031326}
-
-.payment-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
-.payment-badge{display:inline-block;padding:6px 11px;border-radius:999px;background:rgba(255,217,121,.12);border:1px solid rgba(255,217,121,.28);color:#ffd979;font-size:11px;margin-bottom:8px}
-.secure-icon{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.25)}
-.brand-row{margin-top:15px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
-.brand-pill{height:30px;min-width:56px;padding:0 9px;border-radius:9px;background:#fff;color:#111;display:flex;justify-content:center;align-items:center;font-size:11px;font-weight:900}
-.brand-pill.iyzico-small{width:76px;min-width:76px;padding:4px 7px}
-.brand-pill.iyzico-small img{width:100%;height:100%;object-fit:contain;display:block}
-.brand-pill.visa{color:#1a4fb7;font-style:italic;letter-spacing:.5px}
-.brand-pill.amex{color:#fff;background:linear-gradient(135deg,#1c7ed6,#00b4d8)}
-.brand-pill.mastercard{min-width:56px;gap:0}
-.brand-pill.mastercard span{width:20px;height:20px;border-radius:50%;display:block}
-.brand-pill.mastercard span:first-child{background:#eb001b;margin-right:-7px}
-.brand-pill.mastercard span:last-child{background:#f79e1b}
-.payment-note{margin:13px 0 0;padding:12px;border-radius:13px;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.18);color:#ccefff;font-size:12px;line-height:1.55}
-.notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none;box-shadow:0 0 25px #00e5ff44;max-width:380px;z-index:99}.notice b{color:#ffd700}
-
-@media(max-width:900px){
-  .page{width:100%;padding:16px}
-  .checkout-layout{grid-template-columns:1fr}
-  .form-grid,.payment-grid{grid-template-columns:1fr}
-  .field.full{grid-column:span 1}
-  h1{font-size:30px}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Allona Shop</title>
+  <meta name="description" content="Allona Shop teslimat, fatura ve iyzico ödeme hazırlığı.">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
-
 <body>
-<div class="page">
-
-  <div class="header glass">
-    <a class="logo" href="allonashop.html"><b>Allona</b> <span>Shop</span></a>
-    <a href="cart.html">Sepete Dön</a>
-  </div>
-
-  <h1>Güvenli Ödeme</h1>
-
-  <div class="checkout-layout">
-
-    <div class="checkout-left">
-      <div class="form-box glass">
-        <h2>Teslimat Bilgileri</h2>
-
-        <div class="form-grid">
-          <div class="field">
-            <label>Ad Soyad</label>
-            <input id="fullName" placeholder="Adınız Soyadınız">
-          </div>
-
-          <div class="field">
-            <label>Telefon</label>
-            <input id="phone" placeholder="+90 5XX XXX XX XX">
-          </div>
-
-          <div class="field">
-            <label>E-posta</label>
-            <input id="email" placeholder="ornek@mail.com">
-          </div>
-
-          <div class="field">
-            <label>Şehir</label>
-            <select id="city">
-              <option value="">Şehir seçiniz</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>İlçe</label>
-            <input id="district" list="districtList" placeholder="İlçe arayın">
-            <datalist id="districtList"></datalist>
-          </div>
-
-          <div class="field">
-            <label>HP Kuponu Kullan</label>
-            <select id="hpCouponSelect">
-              <option value="0">HP kuponu kullanma</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Kampanya Kupon Kodu</label>
-            <input id="couponCode" placeholder="ALLONA10">
-          </div>
-
-          <div class="field full">
-            <label>Teslimat Adresi</label>
-            <textarea id="address" placeholder="Mahalle, sokak, bina, daire ve açık adres"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary glass">
-        <h2>Sipariş Özeti</h2>
-
-        <div id="orderItems">Ürünler yükleniyor...</div>
-
-        <div class="row"><span>Ara Toplam</span><b id="subTotal">0 ₺</b></div>
-        <div class="row"><span>HP / Kupon İndirimi</span><b id="discount">0 ₺</b></div>
-        <div class="row"><span>Kargo</span><b id="shipping">0 ₺</b></div>
-        <div class="row total"><span>Toplam</span><b id="grandTotal">0 ₺</b></div>
-
-        <button class="pay-btn" onclick="placeOrder()">🔒 iyzico ile Güvenli Ödeme</button>
-        <button class="back-btn" onclick="window.location.href='cart.html'">Sepeti Düzenle</button>
-      </div>
-    </div>
-
-    <div class="checkout-right">
-      <div class="payment-box glass">
-        <div class="payment-head">
-          <div>
-            <span class="payment-badge">Güvenli Kart Ödemesi</span>
-            <h2>Kart Bilgileri</h2>
-          </div>
-          <div class="secure-icon">🔒</div>
-        </div>
-
-        <div class="payment-grid">
-          <div class="field full">
-            <label>Kart Üzerindeki İsim</label>
-            <input id="cardName" type="text" placeholder="Ad Soyad">
-          </div>
-
-          <div class="field full">
-            <label>Kart Numarası</label>
-            <input id="cardNumber" type="text" placeholder="0000 0000 0000 0000" maxlength="19">
-          </div>
-
-          <div class="field">
-            <label>Son Kullanma</label>
-            <input id="cardExp" type="text" placeholder="AA/YY" maxlength="5">
-          </div>
-
-          <div class="field">
-            <label>CVV</label>
-            <input id="cardCvv" type="password" placeholder="•••" maxlength="4">
-          </div>
-        </div>
-
-        <div class="brand-row">
-          <div class="brand-pill iyzico-small">
-            <img src="iyzico_ile_ode_colored_horizontal.png" alt="iyzico ile öde">
-          </div>
-          <div class="brand-pill visa">VISA</div>
-          <div class="brand-pill mastercard"><span></span><span></span></div>
-          <div class="brand-pill amex">AMEX</div>
-        </div>
-
-        <p class="payment-note">
-          Kart bilgileriniz AllonaHub sunucularında saklanmaz. Ödeme işlemleri iyzico güvenli ödeme altyapısı üzerinden gerçekleştirilir.
-        </p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div id="notice" class="notice"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let products = [];
-let currentTotal = 0;
-let currentDiscount = 0;
-
-const CITIES = [
-"Adana","Adıyaman","Afyonkarahisar","Ağrı","Amasya","Ankara","Antalya","Artvin","Aydın","Balıkesir","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkari","Hatay","Isparta","Mersin","İstanbul","İzmir","Kars","Kastamonu","Kayseri","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Kahramanmaraş","Mardin","Muğla","Muş","Nevşehir","Niğde","Ordu","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Tekirdağ","Tokat","Trabzon","Tunceli","Şanlıurfa","Uşak","Van","Yozgat","Zonguldak","Aksaray","Bayburt","Karaman","Kırıkkale","Batman","Şırnak","Bartın","Ardahan","Iğdır","Yalova","Karabük","Kilis","Osmaniye","Düzce"
-];
-
-const DISTRICTS = {
-"İstanbul":["Adalar","Arnavutköy","Ataşehir","Avcılar","Bağcılar","Bahçelievler","Bakırköy","Başakşehir","Bayrampaşa","Beşiktaş","Beykoz","Beylikdüzü","Beyoğlu","Büyükçekmece","Çatalca","Çekmeköy","Esenler","Esenyurt","Eyüpsultan","Fatih","Gaziosmanpaşa","Güngören","Kadıköy","Kağıthane","Kartal","Küçükçekmece","Maltepe","Pendik","Sancaktepe","Sarıyer","Silivri","Sultanbeyli","Sultangazi","Şile","Şişli","Tuzla","Ümraniye","Üsküdar","Zeytinburnu"],
-"Ankara":["Altındağ","Ayaş","Bala","Beypazarı","Çamlıdere","Çankaya","Çubuk","Elmadağ","Etimesgut","Evren","Gölbaşı","Güdül","Haymana","Kahramankazan","Kalecik","Keçiören","Kızılcahamam","Mamak","Nallıhan","Polatlı","Pursaklar","Sincan","Şereflikoçhisar","Yenimahalle"],
-"İzmir":["Aliağa","Balçova","Bayındır","Bayraklı","Bergama","Beydağ","Bornova","Buca","Çeşme","Çiğli","Dikili","Foça","Gaziemir","Güzelbahçe","Karabağlar","Karaburun","Karşıyaka","Kemalpaşa","Kınık","Kiraz","Konak","Menderes","Menemen","Narlıdere","Ödemiş","Seferihisar","Selçuk","Tire","Torbalı","Urla"],
-"Antalya":["Akseki","Aksu","Alanya","Demre","Döşemealtı","Elmalı","Finike","Gazipaşa","Gündoğmuş","İbradı","Kaş","Kemer","Kepez","Konyaaltı","Korkuteli","Kumluca","Manavgat","Muratpaşa","Serik"],
-"Bursa":["Büyükorhan","Gemlik","Gürsu","Harmancık","İnegöl","İznik","Karacabey","Keles","Kestel","Mudanya","Mustafakemalpaşa","Nilüfer","Orhaneli","Orhangazi","Osmangazi","Yenişehir","Yıldırım"],
-"Kocaeli":["Başiskele","Çayırova","Darıca","Derince","Dilovası","Gebze","Gölcük","İzmit","Kandıra","Karamürsel","Kartepe","Körfez"],
-"Konya":["Ahırlı","Akören","Akşehir","Altınekin","Beyşehir","Bozkır","Cihanbeyli","Çeltik","Çumra","Derbent","Derebucak","Doğanhisar","Emirgazi","Ereğli","Güneysınır","Hadim","Halkapınar","Hüyük","Ilgın","Kadınhanı","Karapınar","Karatay","Kulu","Meram","Sarayönü","Selçuklu","Seydişehir","Taşkent","Tuzlukçu","Yalıhüyük","Yunak"]
-};
-
-function money(value){
-  return Number(value || 0).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " ₺";
-}
-
-function showNotice(text){
-  const box=document.getElementById("notice");
-  box.innerHTML=text;
-  box.style.display="block";
-  setTimeout(()=>{box.style.display="none"},4200);
-}
-
-function getCart(){
-  return JSON.parse(localStorage.getItem("allonaCart") || "[]");
-}
-
-function loadCities(){
-  const citySelect = document.getElementById("city");
-  CITIES.forEach(city=>{
-    const opt=document.createElement("option");
-    opt.value=city;
-    opt.textContent=city;
-    citySelect.appendChild(opt);
-  });
-}
-
-async function loadDistricts(city){
-  const districtInput = document.getElementById("district");
-  const list = document.getElementById("districtList");
-  districtInput.value = "";
-  list.innerHTML = "";
-
-  let districts = DISTRICTS[city] || [];
-
-  if(!districts.length){
-    try{
-      const res = await fetch("https://turkiyeapi.dev/api/v1/provinces?name=" + encodeURIComponent(city));
-      const json = await res.json();
-      districts = json?.data?.[0]?.districts?.map(x=>x.name) || [];
-    }catch(e){
-      districts = [];
-    }
-  }
-
-  if(!districts.length){
-    showNotice("Bu şehir için ilçe listesi alınamadı. Lütfen daha sonra tekrar deneyin.");
-    return;
-  }
-
-  districts.forEach(d=>{
-    const opt=document.createElement("option");
-    opt.value=d;
-    list.appendChild(opt);
-  });
-}
-
-function loadHpCoupons(){
-  const select = document.getElementById("hpCouponSelect");
-  const coupons = JSON.parse(localStorage.getItem("allonaHpCoupons") || "[]");
-  const validCoupons = coupons.filter(c =>
-    c &&
-    c.status !== "used" &&
-    c.active !== false &&
-    (Number(c.amount) === 50 || Number(c.amount) === 125)
-  );
-
-  select.innerHTML = `<option value="0">HP kuponu kullanma</option>`;
-
-  if(!validCoupons.length){
-    const opt=document.createElement("option");
-    opt.value="0";
-    opt.textContent="Kullanılabilir HP kuponu yok";
-    opt.disabled=true;
-    select.appendChild(opt);
-    return;
-  }
-
-  validCoupons.forEach(c=>{
-    const opt=document.createElement("option");
-    opt.value=Number(c.amount);
-    opt.dataset.code=c.code || "";
-    opt.textContent=(c.code ? c.code + " - " : "") + Number(c.amount) + " TL HP Kuponu";
-    select.appendChild(opt);
-  });
-}
-
-async function loadCheckout(){
-  const cart = getCart();
-
-  if(!cart.length){
-    document.getElementById("orderItems").innerHTML = "Sepet boş.";
-    renderOrder();
-    return;
-  }
-
-  const ids = cart.map(x=>x.id);
-
-  const {data,error} = await supabaseClient
-    .from("products")
-    .select("*")
-    .in("id",ids);
-
-  if(error){
-    document.getElementById("orderItems").innerHTML = "Ürünler yüklenemedi.";
-    console.error(error);
-    return;
-  }
-
-  products = data || [];
-  renderOrder();
-}
-
-function renderOrder(){
-  const cart = getCart();
-  let subtotal = 0;
-
-  if(!cart.length){
-    document.getElementById("subTotal").textContent = money(0);
-    document.getElementById("discount").textContent = "-" + money(0);
-    document.getElementById("shipping").textContent = money(0);
-    document.getElementById("grandTotal").textContent = money(0);
-    return;
-  }
-
-  document.getElementById("orderItems").innerHTML = cart.map(item=>{
-    const p = products.find(x=>String(x.id)===String(item.id));
-    if(!p) return "";
-
-    const name = p.product_name || p.name || "Ürün";
-    const img = p.image_url || "allona-shop.png";
-    const price = Number(p.price || 0);
-    const qty = Number(item.qty || 1);
-    subtotal += price * qty;
-
-    return `
-      <div class="item">
-        <img src="${img}" onerror="this.src='allona-shop.png'">
+  <div class="site-shell" data-page="checkout">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
         <div>
-          <b>${name}</b>
-          <p>${money(price)} x ${qty}</p>
+          <p class="eyebrow">Checkout</p>
+          <h1>Güvenli Ödeme</h1>
+          <p>Teslimat ve fatura bilgileri alınır; kart bilgileri yalnızca iyzico ekranında girilir.</p>
         </div>
-      </div>
-    `;
-  }).join("");
+      </section>
 
-  const hpDiscount = Number(document.getElementById("hpCouponSelect").value || 0);
-  const couponCode = document.getElementById("couponCode").value.trim().toUpperCase();
+      <section class="container checkout-grid">
+        <form class="panel" data-checkout-form>
+          <input type="hidden" name="user_id">
+          <div data-checkout-status></div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="full-name">Ad Soyad</label>
+              <input id="full-name" name="full_name" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="phone">Telefon</label>
+              <input id="phone" name="phone" required autocomplete="tel">
+            </div>
+            <div class="field">
+              <label for="email">E-posta</label>
+              <input id="email" type="email" name="email" required autocomplete="email">
+            </div>
+            <div class="field">
+              <label for="identity-number">T.C. Kimlik / Vergi No</label>
+              <input id="identity-number" name="identity_number" inputmode="numeric" minlength="10" required>
+            </div>
+            <div class="field field--full">
+              <label for="shipping-address">Teslimat Adresi</label>
+              <textarea id="shipping-address" name="shipping_address" required autocomplete="shipping street-address"></textarea>
+            </div>
+            <div class="field">
+              <label for="shipping-district">İlçe</label>
+              <input id="shipping-district" name="shipping_district" required>
+            </div>
+            <div class="field">
+              <label for="shipping-city">İl</label>
+              <input id="shipping-city" name="shipping_city" required autocomplete="shipping address-level1">
+            </div>
+            <div class="field">
+              <label for="shipping-zip">Posta kodu</label>
+              <input id="shipping-zip" name="shipping_zip" autocomplete="shipping postal-code">
+            </div>
+            <div class="field">
+              <label for="coupon-code">Kupon</label>
+              <input id="coupon-code" name="coupon_code" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="invoice-type">Fatura türü</label>
+              <select id="invoice-type" name="invoice_type">
+                <option value="individual">Bireysel</option>
+                <option value="company">Kurumsal</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="tax-office">Vergi dairesi</label>
+              <input id="tax-office" name="tax_office">
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="billing_same" checked> Fatura adresi teslimat adresiyle aynı</label>
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="pre_info_accepted" required> <a href="on-bilgilendirme.html" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu okudum ve onaylıyorum.</label>
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="distance_sales_accepted" required> <a href="mesafeli-satis.html" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a>'ni okudum ve onaylıyorum.</label>
+            </div>
+            <div class="field field--full hidden" data-billing-extra>
+              <label for="billing-address">Fatura Adresi</label>
+              <textarea id="billing-address" name="billing_address"></textarea>
+            </div>
+            <div class="field hidden" data-billing-extra>
+              <label for="billing-city">Fatura ili</label>
+              <input id="billing-city" name="billing_city">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">iyzico ile Ödemeye Geç</button>
+            <a class="btn btn--light" href="cart.html">Sepete Dön</a>
+          </div>
+        </form>
+        <aside class="summary-card" data-checkout-summary></aside>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
 
-  let campaignDiscount = 0;
-  if(couponCode === "ALLONA10"){
-    campaignDiscount = subtotal * 0.10;
-  }
-
-  const totalDiscount = hpDiscount + campaignDiscount;
-  const shipping = subtotal >= 750 ? 0 : 89.90;
-  const total = Math.max(0, subtotal - totalDiscount + shipping);
-
-  currentDiscount = totalDiscount;
-  currentTotal = total;
-
-  document.getElementById("subTotal").textContent = money(subtotal);
-  document.getElementById("discount").textContent = "-" + money(totalDiscount);
-  document.getElementById("shipping").textContent = money(shipping);
-  document.getElementById("grandTotal").textContent = money(total);
-}
-
-async function placeOrder(){
-  const fullName = document.getElementById("fullName").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const city = document.getElementById("city").value.trim();
-  const district = document.getElementById("district").value.trim();
-  const address = document.getElementById("address").value.trim();
-
-  if(!fullName || !phone || !email || !city || !district || !address){
-    showNotice("Lütfen teslimat bilgilerini eksiksiz doldurun.");
-    return;
-  }
-const cardName = document.getElementById("cardName").value.trim();
-const cardNumber = document.getElementById("cardNumber").value.replace(/\s/g, "").trim();
-const cardExp = document.getElementById("cardExp").value.trim();
-const cardCvv = document.getElementById("cardCvv").value.trim();
-
-if(!cardName || !cardNumber || !cardExp || !cardCvv){
-  showNotice("Lütfen kart bilgilerini eksiksiz doldurun.");
-  return;
-}
-
-if(cardNumber.length < 16){
-  showNotice("Kart numarası eksik.");
-  return;
-}
-
-if(cardCvv.length < 3){
-  showNotice("CVV giriniz.");
-  return;
-}  
-  const cart = getCart();
-  if(!cart.length){
-    showNotice("Sepetin boş.");
-    return;
-  }
-
-  let subtotal = 0;
-  cart.forEach(item=>{
-    const p = products.find(x=>String(x.id)===String(item.id));
-    if(p) subtotal += Number(p.price || 0) * Number(item.qty || 1);
-  });
-
-  const hpDiscount = Number(document.getElementById("hpCouponSelect").value || 0);
-  const couponCode = document.getElementById("couponCode").value.trim().toUpperCase();
-  const campaignDiscount = couponCode === "ALLONA10" ? subtotal * 0.10 : 0;
-  const totalDiscount = hpDiscount + campaignDiscount;
-  const shipping = subtotal >= 750 ? 0 : 89.90;
-  const total = Math.max(0, subtotal - totalDiscount + shipping);
-  const orderNo = "ALN-" + Date.now();
-
-  const { data: orderData, error: orderError } = await supabaseClient
-    .from("orders")
-    .insert([{
-      order_no: orderNo,
-      customer_name: fullName,
-      customer_phone: phone,
-      customer_email: email,
-      city: city,
-      address: city + "/" + district + "-" + address,
-      subtotal: subtotal,
-      discount: totalDiscount,
-      shipping: shipping,
-      total: total,
-      payment_status: "pending",
-      order_status: "new"
-    }])
-    .select()
-    .single();
-
-  if(orderError){
-    console.error(orderError);
-    showNotice("Sipariş oluşturulamadı.");
-    return;
-  }
-
-  const orderItems = cart.map(item=>{
-    const p = products.find(x=>String(x.id)===String(item.id));
-    return {
-      order_id: orderData.id,
-      product_id: item.id,
-      product_name: p?.product_name || p?.name || "Ürün",
-      price: Number(p?.price || 0),
-      quantity: Number(item.qty || 1),
-      partner_id: p?.partner_id || null
-    };
-  });
-
-  const { error: itemsError } = await supabaseClient
-    .from("order_items")
-    .insert(orderItems);
-
-  if(itemsError){
-    console.error(itemsError);
-    showNotice("Sipariş ürünleri kaydedilemedi.");
-    return;
-  }
-
-  localStorage.removeItem("allonaCart");
-
-  showNotice("<b>Sipariş oluşturuldu.</b><br>Sipariş No: " + orderNo);
-
-  setTimeout(()=>{
-    window.location.href = "order-success.html?order=" + orderNo;
-  },1200);
-}
-
-document.getElementById("city").addEventListener("change", e=>loadDistricts(e.target.value));
-document.getElementById("hpCouponSelect").addEventListener("change", renderOrder);
-document.getElementById("couponCode").addEventListener("input", renderOrder);
-
-loadCities();
-loadHpCoupons();
-loadCheckout();
-</script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/supabase-client.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/layout.js" defer></script>
+  <script src="js/checkout-page.js" defer></script>
 </body>
 </html>

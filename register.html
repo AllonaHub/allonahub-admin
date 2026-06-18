@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kayıt Ol | Allona Shop</title>
+  <meta name="description" content="Allona Shop hesabı oluşturun.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main auth-layout">
+      <section class="auth-card">
+        <div>
+          <p class="eyebrow">Yeni hesap</p>
+          <h1>Kayıt Ol</h1>
+        </div>
+        <form data-register-form>
+          <div class="field">
+            <label for="register-name">Ad Soyad</label>
+            <input id="register-name" name="full_name" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="register-phone">Telefon</label>
+            <input id="register-phone" name="phone" autocomplete="tel">
+          </div>
+          <div class="field">
+            <label for="register-email">E-posta</label>
+            <input id="register-email" type="email" name="email" required autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="register-password">Şifre</label>
+            <input id="register-password" type="password" name="password" required minlength="8" autocomplete="new-password">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--full" type="submit">Kayıt Ol</button>
+          </div>
+        </form>
+        <p class="auth-switch">Hesabınız var mı? <a href="login.html">Giriş yapın</a></p>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/supabase-client.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/layout.js" defer></script>
+  <script src="js/auth-pages.js" defer></script>
+</body>
+</html>

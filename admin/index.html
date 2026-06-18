@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel | Allona Shop</title>
+  <meta name="description" content="Allona Shop admin paneli.">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="site-shell" data-page="admin">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Yönetim</p>
+          <h1>Admin Panel</h1>
+          <p>Ürün, sipariş, kullanıcı ve kupon yönetimi.</p>
+        </div>
+      </section>
+
+      <section class="container admin-layout" data-admin-shell>
+        <nav class="side-menu" aria-label="Admin menüsü">
+          <a href="#products">Ürünler</a>
+          <a href="#orders">Siparişler</a>
+          <a href="#users">Kullanıcılar</a>
+          <a href="#coupons">Kuponlar</a>
+        </nav>
+
+        <div>
+          <section class="panel" id="products">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ürün Yönetimi</p>
+                <h2>Ürün Ekle / Düzenle</h2>
+              </div>
+            </div>
+            <form data-admin-product-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="admin-name">Ürün adı</label>
+                  <input id="admin-name" name="name" required>
+                </div>
+                <div class="field">
+                  <label for="admin-category">Kategori</label>
+                  <input id="admin-category" name="category" required>
+                </div>
+                <div class="field">
+                  <label for="admin-price">Fiyat</label>
+                  <input id="admin-price" type="number" min="0" step="0.01" name="price" required>
+                </div>
+                <div class="field">
+                  <label for="admin-stock">Stok</label>
+                  <input id="admin-stock" type="number" min="0" step="1" name="stock" required>
+                </div>
+                <div class="field">
+                  <label for="admin-status">Durum</label>
+                  <select id="admin-status" name="status">
+                    <option value="active">active</option>
+                    <option value="draft">draft</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="admin-image">Görsel URL</label>
+                  <input id="admin-image" name="image_url" type="url">
+                </div>
+                <div class="field">
+                  <label for="admin-meta-title">Meta Title</label>
+                  <input id="admin-meta-title" name="meta_title">
+                </div>
+                <div class="field">
+                  <label for="admin-slug">SEO URL</label>
+                  <input id="admin-slug" name="slug">
+                </div>
+                <div class="field field--full">
+                  <label for="admin-description">Açıklama</label>
+                  <textarea id="admin-description" name="description"></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="admin-meta-description">Meta Description</label>
+                  <textarea id="admin-meta-description" name="meta_description"></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Ürünü Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div data-admin-products></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="orders">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Sipariş</p>
+                <h2>Siparişler</h2>
+              </div>
+            </div>
+            <div data-admin-orders></div>
+          </section>
+
+          <section class="panel section" id="users">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Kullanıcı</p>
+                <h2>Kullanıcılar</h2>
+              </div>
+            </div>
+            <div data-admin-users></div>
+          </section>
+
+          <section class="panel section" id="coupons">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Kupon</p>
+                <h2>Kuponlar</h2>
+              </div>
+            </div>
+            <div data-admin-coupons></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js" defer></script>
+  <script src="../js/core.js" defer></script>
+  <script src="../js/supabase-client.js" defer></script>
+  <script src="../js/auth.js" defer></script>
+  <script src="../js/cart.js" defer></script>
+  <script src="../js/layout.js" defer></script>
+  <script src="../js/admin.js" defer></script>
+</body>
+</html>

@@ -878,8 +878,7 @@ async function checkAuth(){
 
     avatar:profile.avatar_url || "",
     avatar_url:profile.avatar_url || "",
-    
-const stats={
+
     hp:profile.hp || 0,
     xp:profile.xp || 0,
     level:profile.level || 1,
@@ -908,10 +907,9 @@ profession_key:meta.profession_key || local.profession_key || "",
 profession_name:meta.profession_name || local.profession_name || "AllonaHub Üyesi",
 profession_title:meta.profession_title || local.profession_title || "Üye",
 module:meta.module || local.module || "general",
-greeting:meta.greeting || local.greeting || ""
+greeting:meta.greeting || local.greeting || "",
+avatar: local.avatar || meta.avatar || ""
   };
-    avatar: local.avatar || meta.avatar || "",
-    };
 
 localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
 }
@@ -925,6 +923,7 @@ if(q.includes("cv")){
 }
 else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
 window.location.href="hubwallet.html";
+}
 else if(q.includes("premium") || q.includes("üyelik")){
 
     window.location.href="premium.html";
