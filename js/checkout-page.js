@@ -48,43 +48,67 @@
     }
   }
 
+  function createOrderNo() {
+    const now = new Date();
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0")
+    ].join("");
+    const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return `ALN-${date}-${Date.now().toString(36).toUpperCase()}-${random}`;
+  }
+
+  function compactLines(lines) {
+    return lines
+      .map((line) => String(line || "").trim())
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  function friendlyCheckoutError(error) {
+    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+    if (/schema cache|could not find|column/i.test(message)) {
+      return "Sipariş kaydı için veritabanı alanları güncellenmeli. Lütfen kısa süre sonra tekrar deneyin veya Allona destek ile iletişime geçin.";
+    }
+    if (/row-level security|permission denied|unauthorized|forbidden/i.test(message)) {
+      return "Sipariş oluşturmak için oturum yetkiniz doğrulanamadı. Lütfen çıkış yapıp tekrar giriş yapın.";
+    }
+    if (/failed to fetch|network|function|edge/i.test(message)) {
+      return "Sipariş oluşturulurken bağlantı sorunu oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.";
+    }
+    return "Sipariş oluşturulamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin.";
+  }
+
   function calculateOrderPayload(form) {
     const data = core.parseForm(form);
     const totals = App.cart.totals(lines, appliedCoupon);
+    const acceptedAt = new Date().toISOString();
+    const address = compactLines([
+      data.shipping_address,
+      data.shipping_district ? `İlçe: ${data.shipping_district}` : "",
+      data.shipping_zip ? `Posta kodu: ${data.shipping_zip}` : "",
+      data.billing_same === "on" ? "Fatura adresi teslimat adresiyle aynı." : "",
+      data.billing_same !== "on" && data.billing_address ? `Fatura adresi: ${data.billing_address}` : "",
+      data.billing_same !== "on" && data.billing_city ? `Fatura ili: ${data.billing_city}` : "",
+      data.invoice_type ? `Fatura türü: ${data.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
+      data.identity_number ? `T.C./Vergi No: ${data.identity_number}` : "",
+      data.tax_office ? `Vergi dairesi: ${data.tax_office}` : "",
+      data.coupon_code ? `Kupon: ${String(data.coupon_code).trim().toUpperCase()}` : "",
+      `Yasal onaylar: Ön bilgilendirme ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
+    ]);
+
     return {
-      user_id: data.user_id,
+      order_no: createOrderNo(),
       customer_name: data.full_name,
       customer_email: data.email,
       customer_phone: data.phone,
-      shipping_address: {
-        title: data.address_title || "Teslimat",
-        address: data.shipping_address,
-        district: data.shipping_district,
-        city: data.shipping_city,
-        zip_code: data.shipping_zip
-      },
-      billing_address: {
-        type: data.invoice_type,
-        tax_identity: data.tax_identity,
-        tax_office: data.tax_office,
-        address: data.billing_same === "on" ? data.shipping_address : data.billing_address,
-        city: data.billing_same === "on" ? data.shipping_city : data.billing_city
-      },
-      coupon_code: data.coupon_code || null,
-      address_id: null,
+      city: data.shipping_city,
+      address,
       subtotal: totals.subtotal,
-      shipping_total: totals.shipping,
-      discount_total: totals.discount,
+      shipping: totals.shipping,
+      discount: totals.discount,
       total: totals.total,
-      total_amount: totals.total,
-      shipping_fee: totals.shipping,
-      discount_amount: totals.discount,
-      status: "pending",
-      legal_acceptances: {
-        pre_info_accepted: data.pre_info_accepted === "on",
-        distance_sales_accepted: data.distance_sales_accepted === "on",
-        accepted_at: new Date().toISOString()
-      },
       order_status: "pending",
       payment_status: "pending"
     };
@@ -148,14 +172,20 @@
           identityNumber: form.identity_number.value || "11111111111",
           ip: "0.0.0.0"
         };
-        const payment = await App.db.payments.createIyzicoCheckout(order.id, buyer);
+        let payment;
+        try {
+          payment = await App.db.payments.createIyzicoCheckout(order.id, buyer);
+        } catch (paymentError) {
+          core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat iyzico ödeme sayfası açılamadı. Lütfen kısa süre sonra tekrar deneyin veya Allona destek ile iletişime geçin.", "error");
+          return;
+        }
         if (payment && payment.paymentPageUrl) {
           window.location.href = payment.paymentPageUrl;
           return;
         }
         core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak iyzico ödeme adresi dönmedi. Edge Function ayarlarını kontrol edin.", "error");
       } catch (error) {
-        core.renderStatus("[data-checkout-status]", error.message || "Sipariş oluşturulamadı.", "error");
+        core.renderStatus("[data-checkout-status]", friendlyCheckoutError(error), "error");
       } finally {
         button.disabled = false;
       }

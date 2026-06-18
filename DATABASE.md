@@ -51,32 +51,31 @@ Giriş yapan kullanıcıların favorileri Supabase'de saklanır. Misafir favoril
 
 ### orders / order_items
 
-Sipariş ve sipariş kalemleri.
+Sipariş ve sipariş kalemleri. Mevcut üretim modeli `addresses` tablosuna bağlı checkout kullanmaz; teslimat ve fatura detayları doğrudan sipariş kaydındaki `city` ve `address` alanlarında saklanır. Bu nedenle frontend `orders.address_id` göndermez.
 
 - `orders.id`
-- `orders.user_id`
-- `orders.total_amount`
-- `orders.shipping_fee`
-- `orders.discount_amount`
-- `orders.status`
+- `orders.order_no`
+- `orders.customer_name`
+- `orders.customer_email`
+- `orders.customer_phone`
+- `orders.city`
+- `orders.address`
+- `orders.subtotal`
+- `orders.shipping`
+- `orders.discount`
+- `orders.total`
 - `order_status`: `pending`, `confirmed`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
 - `payment_status`: `pending`, `awaiting_payment`, `paid`, `failed`, `refunded`
-- `address_id`
-- `legal_acceptances`
 - `tracking_number`
-- `iyzico_token`
-- `iyzico_payment_id`
-
-Geçiş uyumluluğu için şemada `total`, `shipping_total`, `discount_total` ve `order_status` alanları da korunur. Yeni kod `total_amount`, `shipping_fee`, `discount_amount` ve `status` alanlarını ana sözleşme olarak kullanır.
 
 `order_items` temel alanları:
 
 - `id`
 - `order_id`
 - `product_id`
+- `product_name`
 - `quantity`
-- `unit_price`
-- `total_price`
+- `price`
 
 ### coupons
 
@@ -84,4 +83,58 @@ Checkout sırasında uygulanacak kampanya kodları.
 
 ## SQL
 
-Canlı Supabase projesine uygulanacak şema `supabase/schema.sql` dosyasındadır. SQL çalıştırıldıktan sonra Auth, Storage ve Edge Function ayarları `DEPLOY.md` sırasıyla tamamlanmalıdır.
+Canlı Supabase projesi için checkout ile uyumlu doğrudan adres modeli aşağıdaki SQL'dir. Bu SQL `orders.address_id` eklemez; checkout teslimat bilgisini `orders.city` ve `orders.address` alanlarına yazar.
+
+```sql
+create extension if not exists pgcrypto;
+
+alter table public.orders
+  add column if not exists order_no text,
+  add column if not exists customer_name text,
+  add column if not exists customer_email text,
+  add column if not exists customer_phone text,
+  add column if not exists city text,
+  add column if not exists address text,
+  add column if not exists subtotal numeric(12,2) default 0,
+  add column if not exists shipping numeric(12,2) default 0,
+  add column if not exists discount numeric(12,2) default 0,
+  add column if not exists total numeric(12,2) default 0,
+  add column if not exists order_status text default 'pending',
+  add column if not exists payment_status text default 'pending',
+  add column if not exists tracking_number text,
+  add column if not exists created_at timestamptz default now();
+
+alter table public.orders
+  alter column order_no set default ('ALN-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))),
+  alter column subtotal set default 0,
+  alter column shipping set default 0,
+  alter column discount set default 0,
+  alter column total set default 0,
+  alter column order_status set default 'pending',
+  alter column payment_status set default 'pending',
+  alter column created_at set default now();
+
+update public.orders
+set order_no = 'ALN-' || to_char(coalesce(created_at, now()), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))
+where order_no is null or order_no = '';
+
+create unique index if not exists orders_order_no_key on public.orders(order_no);
+create index if not exists orders_status_idx on public.orders(order_status, payment_status);
+
+alter table public.order_items
+  add column if not exists order_id uuid references public.orders(id) on delete cascade,
+  add column if not exists product_id uuid references public.products(id) on delete set null,
+  add column if not exists product_name text,
+  add column if not exists quantity integer default 1,
+  add column if not exists price numeric(12,2) default 0,
+  add column if not exists created_at timestamptz default now();
+
+alter table public.order_items
+  alter column quantity set default 1,
+  alter column price set default 0,
+  alter column created_at set default now();
+
+create index if not exists order_items_order_idx on public.order_items(order_id);
+```
+
+Yeni kurulumlar için tam şema `supabase/schema.sql` dosyasındadır. SQL çalıştırıldıktan sonra Auth, Storage ve Edge Function ayarları `DEPLOY.md` sırasıyla tamamlanmalıdır.
