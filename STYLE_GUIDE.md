@@ -2,17 +2,17 @@
 
 ## Marka Hissi
 
-Allona Shop premium, temiz, güven veren ve modern bir e-ticaret deneyimi sunmalıdır. Arayüz ilk bakışta mağaza gibi çalışmalı; kullanıcıya henüz açılmayan AllonaHub modülleri gösterilmemelidir.
+AllonaHub premium, canlı, güven veren ve modüler bir süper uygulama deneyimi sunmalıdır. Ana sayfa ilk bakışta ekosistem kapısı gibi çalışmalı; modüller, premium üyelik ve partner ekosistemi net görünmelidir.
 
 Yeni görsel kaynak `index.html` içindeki kullanıcı tarafından verilen anasayfadır. Açık talimat gelmedikçe bu anasayfa kodu değiştirilmez; yeni sayfalar ve bileşenler bu tasarım diline göre uyarlanır.
 
 ## Renkler
 
 - Ana koyu renk: gece laciverti `#020814`
-- Metin rengi: koyu mavi `#14213d`
-- Vurgu mavisi: canlı mavi `#00aeea`
-- İkinci renk: altın `#d4a017`
-- Arka plan: açık gri `#f6f8fb`
+- İkinci koyu renk: ekosistem laciverti `#061b33`
+- Vurgu mavisi: neon mavi `#00e5ff`
+- İkinci renk: altın `#ffd700`
+- Arka plan: koyu degrade ve ışıklı kartlar
 - Kartlar: beyaz, hafif gölge
 
 ## UI Kuralları

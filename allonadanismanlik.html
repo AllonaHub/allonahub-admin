@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Danışmanlık | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:#fff;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:
+radial-gradient(circle at top left,#00b7ff44,transparent 35%),
+radial-gradient(circle at bottom right,#ffd70022,transparent 30%),
+linear-gradient(135deg,#020814,#061b33,#002b4d)}
+.page{width:1320px;margin:auto;padding:18px 22px 60px}
+
+.glass{
+background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
+border:1px solid rgba(0,229,255,.25);
+border-radius:26px;
+box-shadow:0 0 30px rgba(0,229,255,.12);
+}
+
+.header{
+display:grid;
+grid-template-columns:300px 1fr 360px;
+gap:18px;
+margin-bottom:18px;
+}
+
+.brand,.search,.actions{
+height:80px;
+display:flex;
+align-items:center;
+}
+
+.brand{padding:0 20px}
+.brand b{font-size:30px;color:#ffd700}
+.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+
+.search{padding:0 25px}
+.search input{
+width:100%;
+background:none;
+border:none;
+outline:none;
+color:white;
+font-size:16px;
+}
+
+.actions{
+justify-content:space-around;
+}
+.actions a{
+color:white;
+text-decoration:none;
+font-weight:800;
+}
+
+.hero{
+display:grid;
+grid-template-columns:1.2fr 1fr;
+gap:18px;
+margin-bottom:20px;
+}
+
+.hero-left{
+padding:30px;
+min-height:420px;
+}
+
+.hero-left h1{
+font-size:52px;
+color:#ffd700;
+margin-bottom:15px;
+}
+
+.hero-left p{
+opacity:.85;
+line-height:1.7;
+margin-bottom:20px;
+}
+
+.hero-right{
+padding:25px;
+}
+
+.input{
+height:56px;
+display:flex;
+align-items:center;
+padding:0 18px;
+background:rgba(255,255,255,.05);
+border-radius:16px;
+margin-bottom:12px;
+}
+
+.btn{
+display:flex;
+justify-content:center;
+align-items:center;
+height:58px;
+background:linear-gradient(135deg,#ffd700,#c69000);
+border-radius:999px;
+text-decoration:none;
+color:#02111f;
+font-weight:900;
+}
+
+.section-title{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin:28px 0 14px;
+}
+
+.section-title h2{
+font-size:30px;
+color:#ffd700;
+}
+
+.grid-4{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:16px;
+}
+
+.card{
+padding:20px;
+min-height:220px;
+}
+
+.card h3{
+color:#ffd700;
+margin-bottom:12px;
+}
+
+.card p{
+opacity:.8;
+line-height:1.6;
+}
+
+.icon{
+width:50px;
+height:50px;
+border-radius:16px;
+background:linear-gradient(135deg,#ffd700,#00e5ff);
+margin-bottom:14px;
+}
+
+.flow{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:16px;
+}
+
+.step{
+padding:20px;
+min-height:140px;
+}
+
+.step h3{
+color:#ffd700;
+margin-bottom:10px;
+}
+
+.partner{
+display:grid;
+grid-template-columns:1.4fr 1fr;
+gap:20px;
+padding:30px;
+margin-top:25px;
+}
+
+.partner h2{
+font-size:34px;
+color:#ffd700;
+margin-bottom:10px;
+}
+
+.partner-list{
+display:grid;
+gap:10px;
+}
+
+.partner-list div{
+padding:14px;
+background:rgba(255,255,255,.05);
+border-radius:16px;
+}
+
+.info{
+padding:30px;
+margin-top:25px;
+}
+
+.info h2{
+font-size:32px;
+color:#ffd700;
+margin-bottom:12px;
+}
+
+.info h3{
+margin-top:20px;
+margin-bottom:8px;
+color:#00e5ff;
+}
+
+.info p{
+line-height:1.8;
+opacity:.85;
+}
+
+.footer{
+margin-top:25px;
+padding:25px;
+text-align:center;
+opacity:.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<div class="header">
+
+<div class="brand glass">
+<b>Allona</b><span>Hub</span>
+</div>
+
+<div class="search glass">
+<input placeholder="Vize, çalışma izni, şirket kuruluşu, eğitim veya danışmanlık ara...">
+</div>
+
+<div class="actions glass">
+<a href="user.html">Giriş Yap</a>
+<a href="#">Taleplerim</a>
+<a href="#">Belgelerim</a>
+</div>
+
+</div>
+
+<section class="hero">
+
+<div class="hero-left glass">
+<h1>Allona Danışmanlık</h1>
+
+<p>
+Uluslararası danışmanlık hizmetlerini tek platformda birleştiren premium sistem.
+Vize, ikamet, çalışma izni, şirket kuruluşu, e-ticaret, finans, hukuk,
+eğitim ve denizcilik danışmanlığı tek merkezden yönetilir.
+</p>
+
+<p>
+Uzman seç, belgelerini yükle, teklif al ve süreci adım adım takip et.
+</p>
+
+</div>
+
+<div class="hero-right glass">
+
+<div class="input">Danışmanlık Türü Seç</div>
+<div class="input">Ülke / Şehir</div>
+<div class="input">İhtiyaç Konusu</div>
+<div class="input">Belge Yükleme</div>
+
+<a class="btn" href="#">Teklif Talebi Oluştur</a>
+
+</div>
+
+</section>
+
+<div class="section-title">
+<h2>Danışmanlık Hizmetleri</h2>
+</div>
+
+<div class="grid-4">
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Vize & İkamet</h3>
+<p>Turistik, öğrenci, yatırımcı ve oturum süreçleri.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Çalışma İzni</h3>
+<p>Şirket sahipleri ve çalışanlar için başvuru yönetimi.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Şirket Kuruluşu</h3>
+<p>Türkiye ve yurtdışında şirket kurulum danışmanlığı.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>E-Ticaret</h3>
+<p>Pazaryeri, marka, operasyon ve büyüme danışmanlığı.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Denizcilik</h3>
+<p>Crewing, gemi personeli ve maritime danışmanlığı.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Eğitim</h3>
+<p>Üniversite, dil okulu ve yurtdışı eğitim süreçleri.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Hukuk</h3>
+<p>Partner avukatlarla hukuki danışmanlık.</p>
+</div>
+
+<div class="card glass">
+<div class="icon"></div>
+<h3>Finans & Yatırım</h3>
+<p>Finansal planlama ve yatırım danışmanlığı.</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Danışmanlık Süreci</h2>
+</div>
+
+<div class="flow">
+
+<div class="step glass">
+<h3>1. Talep</h3>
+İhtiyacını sisteme gir.
+</div>
+
+<div class="step glass">
+<h3>2. Uzman</h3>
+Uygun danışman atanır.
+</div>
+
+<div class="step glass">
+<h3>3. Belge</h3>
+Evraklar yüklenir ve incelenir.
+</div>
+
+<div class="step glass">
+<h3>4. Teklif</h3>
+Ücret ve süreç planı sunulur.
+</div>
+
+<div class="step glass">
+<h3>5. Sonuç</h3>
+Süreç tamamlanır ve HP kazanılır.
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>HP Kazandıran Hizmetler</h2>
+</div>
+
+<div class="grid-4">
+
+<div class="card glass">
+<h3>Çalışma İzni</h3>
+<p>Başvuru tamamlandığında HP kazan.</p>
+</div>
+
+<div class="card glass">
+<h3>Şirket Kuruluşu</h3>
+<p>Kuruluş paketlerinde ekstra HP.</p>
+</div>
+
+<div class="card glass">
+<h3>E-Ticaret Danışmanlığı</h3>
+<p>Partner hizmetlerinden HP avantajı.</p>
+</div>
+
+<div class="card glass">
+<h3>Premium Paketler</h3>
+<p>Elite üyeler için daha yüksek HP.</p>
+</div>
+
+</div>
+
+<section class="partner glass">
+
+<div>
+<h2>Danışman Partneri Ol</h2>
+
+<p>
+Avukatlar, danışmanlar, eğitim kurumları, göç uzmanları,
+finans danışmanları ve maritime danışmanları AllonaHub Partner Paneli
+üzerinden hizmet verebilir.
+</p>
+
+<a class="btn" href="#">Partner Başvurusu</a>
+
+</div>
+
+<div class="partner-list">
+
+<div>Danışan Yönetimi</div>
+<div>Belge Kontrol Paneli</div>
+<div>Teklif Yönetimi</div>
+<div>Online Görüşmeler</div>
+<div>HP Kampanyaları</div>
+<div>Raporlama Sistemi</div>
+
+</div>
+
+</section>
+
+<section class="info glass">
+
+<h2>Allona Danışmanlık Ekosistemi</h2>
+
+<p>
+Allona Danışmanlık, bireyleri ve işletmeleri uzmanlarla buluşturan
+uluslararası bir danışmanlık platformudur.
+</p>
+
+<h3>Belge Yönetimi</h3>
+<p>
+Kullanıcılar evraklarını güvenli şekilde sisteme yükleyebilir,
+uzmanlar gerekli kontrolleri gerçekleştirebilir.
+</p>
+
+<h3>Uzman Eşleştirme</h3>
+<p>
+Başvurular otomatik olarak ilgili uzmanlık alanlarına yönlendirilir.
+</p>
+
+<h3>AllonaHub Entegrasyonu</h3>
+<p>
+Danışmanlık hizmetleri Allona Hukuk, Allona Finans,
+Allona Maritime ve diğer modüllerle entegre çalışır.
+</p>
+
+</section>
+
+<div class="footer glass">
+©️ 2026 AllonaHub — Global Consultancy Ecosystem
+</div>
+
+</div>
+
+</body>
+</html>
