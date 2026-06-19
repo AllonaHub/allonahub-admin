@@ -868,13 +868,13 @@ img {
 
 .payment-logo {
   min-height: 34px;
-  min-width: 66px;
+  min-width: 52px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   border-radius: 7px;
-  padding: 0 10px;
+  padding: 0 8px;
   background: var(--white);
   border: 1px solid var(--line);
   color: var(--ink);
@@ -885,6 +885,13 @@ img {
 
 .payment-logo--iyzico {
   color: #0a7ea4;
+  min-width: 104px;
+}
+
+.payment-logo--iyzico img {
+  display: block;
+  width: 92px;
+  height: auto;
 }
 
 .payment-logo--visa {
@@ -893,7 +900,7 @@ img {
 
 .payment-logo--mastercard {
   color: #1f2937;
-  min-width: 112px;
+  min-width: 96px;
 }
 
 .payment-logo--mastercard::before {

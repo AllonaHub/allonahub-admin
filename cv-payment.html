@@ -136,14 +136,14 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
   background:rgba(255,255,255,.06);
 }
 .brandBadge{
-  min-width:66px;
+  min-width:52px;
   min-height:34px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:6px;
   border-radius:10px;
-  padding:0 10px;
+  padding:0 8px;
   color:#061a2f;
   background:#fff;
   border:1px solid rgba(255,255,255,.58);
@@ -152,9 +152,19 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
   box-shadow:0 12px 24px rgba(0,0,0,.18);
 }
 .brandBadge--iyzico{color:#6337ff;letter-spacing:-.2px}
+.brandBadge--iyzico{
+  min-width:104px;
+  background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
+  border-color:rgba(0,213,255,.24);
+}
+.brandBadge--iyzico img{
+  display:block;
+  width:92px;
+  height:auto;
+}
 .brandBadge--visa{color:#1434cb;font-style:italic;letter-spacing:.7px}
 .brandBadge--amex{color:#006fcf;letter-spacing:.4px}
-.brandBadge--mastercard{color:#222;min-width:112px}
+.brandBadge--mastercard{color:#222;min-width:96px}
 .brandBadge--mastercard:before{
   content:"";
   width:28px;
@@ -253,7 +263,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
 
         <button class="payBtn" type="submit">Ödeme Yap</button>
         <div class="paymentBrands" aria-label="Desteklenen ödeme markaları">
-          <span class="brandBadge brandBadge--iyzico">iyzico</span>
+          <span class="brandBadge brandBadge--iyzico"><img src="images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde"></span>
           <span class="brandBadge brandBadge--visa">VISA</span>
           <span class="brandBadge brandBadge--mastercard">Mastercard</span>
           <span class="brandBadge brandBadge--amex">AMEX</span>
