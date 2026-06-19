@@ -3,6 +3,7 @@
   const client = sync && sync.createClient ? sync.createClient() : null;
   let currentUser = null;
   let currentProfile = null;
+  let profileSyncBound = false;
 
   const moduleCards = {
     maritime: [
@@ -198,6 +199,47 @@
     renderTransactions(profile);
   }
 
+  function isCurrentUserProfile(profile) {
+    if (!profile || !currentUser) return false;
+    return [profile.id, profile.user_id].filter(Boolean).includes(currentUser.id);
+  }
+
+  function applyProfileUpdate(profile) {
+    if (!isCurrentUserProfile(profile)) return;
+    renderPanel(profile);
+    showStatus("Profil bilgilerin panele yansıtıldı.");
+  }
+
+  function bindProfileSyncEvents() {
+    if (profileSyncBound || !sync) return;
+    profileSyncBound = true;
+
+    window.addEventListener(sync.PROFILE_EVENT || "allonahub:profile-updated", (event) => {
+      applyProfileUpdate(event.detail);
+    });
+
+    window.addEventListener("storage", (event) => {
+      if (event.key !== sync.STORAGE_KEY || !event.newValue) return;
+      try {
+        applyProfileUpdate(JSON.parse(event.newValue));
+      } catch (error) {
+        // The next page load will read the stored profile again.
+      }
+    });
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const channel = new BroadcastChannel(sync.PROFILE_CHANNEL || "allonahub-profile-sync");
+        channel.onmessage = (event) => {
+          if (!event.data || event.data.type !== (sync.PROFILE_EVENT || "allonahub:profile-updated")) return;
+          applyProfileUpdate(event.data.profile);
+        };
+      }
+    } catch (error) {
+      // Storage events and reloads keep the panel in sync when BroadcastChannel is unavailable.
+    }
+  }
+
   async function initPanel() {
     if (!client || !sync) {
       showStatus("Supabase bağlantısı hazırlanamadı.");
@@ -212,6 +254,7 @@
       }
       currentUser = loaded.user;
       renderPanel(loaded.profile);
+      bindProfileSyncEvents();
       bindNavigation();
     } catch (error) {
       console.error("Kullanıcı paneli yüklenemedi:", error);

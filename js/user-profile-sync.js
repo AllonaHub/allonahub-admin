@@ -1,5 +1,7 @@
 (function () {
   const STORAGE_KEY = "allonahub_user_profile";
+  const PROFILE_EVENT = "allonahub:profile-updated";
+  const PROFILE_CHANNEL = "allonahub-profile-sync";
   const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
@@ -48,6 +50,29 @@
       if (value !== undefined && value !== null && value !== "") return value;
     }
     return "";
+  }
+
+  function timestamp(value) {
+    const time = Date.parse(value || "");
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  function notifyProfileChange(profile) {
+    try {
+      window.dispatchEvent(new CustomEvent(PROFILE_EVENT, { detail: profile }));
+    } catch (error) {
+      // Some legacy browsers may not support CustomEvent in file contexts.
+    }
+
+    try {
+      if ("BroadcastChannel" in window) {
+        const channel = new BroadcastChannel(PROFILE_CHANNEL);
+        channel.postMessage({ type: PROFILE_EVENT, profile });
+        channel.close();
+      }
+    } catch (error) {
+      // Local storage is still updated, so the panel can read the latest profile on load.
+    }
   }
 
   function safeAvatarUrl(value) {
@@ -135,36 +160,42 @@
     const rawLocal = storedProfile();
     const localUserId = rawLocal.user_id || rawLocal.id || "";
     const local = !user.id || !localUserId || localUserId === user.id ? rawLocal : {};
+    const localTime = timestamp(local.updated_at);
+    const localIsFresh = localTime > 0 && localTime >= timestamp(dbProfile?.updated_at);
+    const pick = (dbValue, metaValue, localValue, fallback) => localIsFresh
+      ? firstDefined(localValue, dbValue, metaValue, fallback)
+      : firstDefined(dbValue, metaValue, localValue, fallback);
     const profile = {
       id: user.id || local.id || dbProfile?.id || "",
       user_id: user.id || local.user_id || dbProfile?.id || "",
       member_no: makeUserId(user),
-      full_name: firstDefined(dbProfile?.full_name, meta.full_name, local.full_name, user.email, "AllonaHub Üyesi"),
+      full_name: pick(dbProfile?.full_name, meta.full_name, local.full_name, user.email || "AllonaHub Üyesi"),
       email: firstDefined(user.email, dbProfile?.email, meta.email, local.email, ""),
-      phone: firstDefined(dbProfile?.phone, meta.phone, local.phone, ""),
-      country: firstDefined(dbProfile?.country, meta.country, local.country, ""),
-      city: firstDefined(dbProfile?.city, meta.city, local.city, ""),
-      birth_date: firstDefined(dbProfile?.birth_date, meta.birth_date, local.birth_date, ""),
-      bio: firstDefined(dbProfile?.bio, meta.bio, local.bio, ""),
-      sector_key: firstDefined(dbProfile?.sector_key, meta.sector_key, local.sector_key, "other"),
-      sector_name: firstDefined(dbProfile?.sector_name, meta.sector_name, local.sector_name, "Diğer"),
-      profession_key: firstDefined(dbProfile?.profession_key, meta.profession_key, local.profession_key, "other_profession"),
-      profession_name: firstDefined(dbProfile?.profession_name, meta.profession_name, local.profession_name, "Diğer Meslek"),
-      profession_title: firstDefined(dbProfile?.profession_title, meta.profession_title, local.profession_title, "Üye"),
-      module: firstDefined(dbProfile?.module, meta.module, local.module, "general"),
-      experience_year: firstDefined(dbProfile?.experience_year, meta.experience_year, local.experience_year, ""),
-      profile_visible: firstDefined(dbProfile?.profile_visible, meta.profile_visible, local.profile_visible, true) !== false,
-      contact_locked: firstDefined(dbProfile?.contact_locked, meta.contact_locked, local.contact_locked, true) !== false,
-      avatar: safeAvatarUrl(firstDefined(dbProfile?.avatar_url, meta.avatar_url, local.avatar, local.avatar_url, "")),
-      avatar_url: safeAvatarUrl(firstDefined(dbProfile?.avatar_url, meta.avatar_url, local.avatar_url, local.avatar, "")),
-      hp: asNumber(firstDefined(dbProfile?.hp, meta.hp, local.hp), 250),
-      xp: asNumber(firstDefined(dbProfile?.xp, meta.xp, local.xp), 0),
-      streak: asNumber(firstDefined(dbProfile?.streak, meta.streak, local.streak), 0),
-      cashout_balance: asNumber(firstDefined(dbProfile?.cashout_balance, meta.cashout_balance, local.cashout_balance), 0),
-      hub_cash: asNumber(firstDefined(dbProfile?.hub_cash, meta.hub_cash, local.hub_cash, local.wallet_balance), 0),
-      wallet_balance: asNumber(firstDefined(dbProfile?.wallet_balance, meta.wallet_balance, local.wallet_balance, local.hub_cash), 0),
-      premium_level: firstDefined(dbProfile?.premium_level, meta.premium_level, local.premium_level, "Basic"),
-      greeting: firstDefined(dbProfile?.greeting, meta.greeting, local.greeting, "")
+      phone: pick(dbProfile?.phone, meta.phone, local.phone, ""),
+      country: pick(dbProfile?.country, meta.country, local.country, ""),
+      city: pick(dbProfile?.city, meta.city, local.city, ""),
+      birth_date: pick(dbProfile?.birth_date, meta.birth_date, local.birth_date, ""),
+      bio: pick(dbProfile?.bio, meta.bio, local.bio, ""),
+      sector_key: pick(dbProfile?.sector_key, meta.sector_key, local.sector_key, "other"),
+      sector_name: pick(dbProfile?.sector_name, meta.sector_name, local.sector_name, "Diğer"),
+      profession_key: pick(dbProfile?.profession_key, meta.profession_key, local.profession_key, "other_profession"),
+      profession_name: pick(dbProfile?.profession_name, meta.profession_name, local.profession_name, "Diğer Meslek"),
+      profession_title: pick(dbProfile?.profession_title, meta.profession_title, local.profession_title, "Üye"),
+      module: pick(dbProfile?.module, meta.module, local.module, "general"),
+      experience_year: pick(dbProfile?.experience_year, meta.experience_year, local.experience_year, ""),
+      profile_visible: pick(dbProfile?.profile_visible, meta.profile_visible, local.profile_visible, true) !== false,
+      contact_locked: pick(dbProfile?.contact_locked, meta.contact_locked, local.contact_locked, true) !== false,
+      avatar: safeAvatarUrl(pick(dbProfile?.avatar_url, meta.avatar_url, local.avatar || local.avatar_url, "")),
+      avatar_url: safeAvatarUrl(pick(dbProfile?.avatar_url, meta.avatar_url, local.avatar_url || local.avatar, "")),
+      hp: asNumber(pick(dbProfile?.hp, meta.hp, local.hp), 250),
+      xp: asNumber(pick(dbProfile?.xp, meta.xp, local.xp), 0),
+      streak: asNumber(pick(dbProfile?.streak, meta.streak, local.streak), 0),
+      cashout_balance: asNumber(pick(dbProfile?.cashout_balance, meta.cashout_balance, local.cashout_balance), 0),
+      hub_cash: asNumber(pick(dbProfile?.hub_cash, meta.hub_cash, local.hub_cash || local.wallet_balance), 0),
+      wallet_balance: asNumber(pick(dbProfile?.wallet_balance, meta.wallet_balance, local.wallet_balance || local.hub_cash), 0),
+      premium_level: pick(dbProfile?.premium_level, meta.premium_level, local.premium_level, "Basic"),
+      greeting: pick(dbProfile?.greeting, meta.greeting, local.greeting, ""),
+      updated_at: pick(dbProfile?.updated_at, meta.updated_at, local.updated_at, "")
     };
 
     const levelInfo = levelFromXp(profile.xp);
@@ -259,19 +290,21 @@
       experience_year: profile.experience_year || "",
       profile_visible: profile.profile_visible !== false,
       contact_locked: profile.contact_locked !== false,
+      avatar_url: safeAvatarUrl(profile.avatar_url || profile.avatar || ""),
       hp: asNumber(profile.hp, 250),
       xp: asNumber(profile.xp, 0),
       streak: asNumber(profile.streak, 0),
       cashout_balance: asNumber(profile.cashout_balance, 0),
       hub_cash: asNumber(profile.hub_cash, 0),
-      premium_level: profile.premium_level || "Basic"
+      premium_level: profile.premium_level || "Basic",
+      updated_at: profile.updated_at || new Date().toISOString()
     };
   }
 
   async function save(client, rawProfile) {
     const session = await getSession(client);
     if (!session || !session.user) throw new Error("Profil kaydetmek için giriş yapmalısınız.");
-    const merged = { ...storedProfile(), ...rawProfile, id: session.user.id, user_id: session.user.id };
+    const merged = { ...storedProfile(), ...rawProfile, id: session.user.id, user_id: session.user.id, updated_at: new Date().toISOString() };
     const levelInfo = levelFromXp(merged.xp);
     merged.level = levelInfo.current.level;
     merged.level_name = levelInfo.current.name;
@@ -300,6 +333,7 @@
     }
 
     setStoredProfile(merged);
+    notifyProfileChange(merged);
     return merged;
   }
 
@@ -310,6 +344,8 @@
 
   window.AllonaProfileSync = {
     STORAGE_KEY,
+    PROFILE_EVENT,
+    PROFILE_CHANNEL,
     LEVELS,
     SUPABASE_URL,
     SUPABASE_KEY,
@@ -323,6 +359,7 @@
     makeUserId,
     initials,
     safeAvatarUrl,
+    notifyProfileChange,
     load,
     save
   };

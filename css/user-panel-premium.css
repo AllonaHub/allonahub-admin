@@ -25,7 +25,10 @@ html {
 body.user-panel-page {
   min-width: 0;
   min-height: 100vh;
+  width: 100% !important;
+  max-width: none !important;
   margin: 0;
+  padding: 0 !important;
   overflow-x: hidden;
   background:
     radial-gradient(circle at 14% 5%, color-mix(in srgb, var(--panel-accent) 42%, transparent), transparent 24rem),
@@ -34,6 +37,22 @@ body.user-panel-page {
     linear-gradient(160deg, #01040b, var(--panel-bg), var(--panel-bg-2), #01040b);
   color: var(--panel-text);
   font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.35;
+}
+
+body.user-panel-page[data-theme] {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.user-panel-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.35 !important;
 }
 
 body.user-panel-page::before {
@@ -120,7 +139,7 @@ a {
 }
 
 .premium-shell {
-  width: min(100%, 1220px);
+  width: min(calc(100% - 24px), 1720px);
   margin: 0 auto;
   padding: clamp(14px, 2.4vw, 28px) clamp(12px, 2.2vw, 28px) 112px;
 }
@@ -1038,8 +1057,73 @@ a {
   }
 }
 
+@media (min-width: 1280px) {
+  .premium-shell {
+    width: min(calc(100vw - 40px), 1760px);
+    padding-inline: clamp(20px, 2vw, 38px);
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(330px, .65fr);
+  }
+
+  .identity-card {
+    min-height: 400px;
+    grid-template-columns: minmax(210px, 285px) minmax(0, 1fr);
+  }
+
+  .level-emblem {
+    min-height: 400px;
+  }
+
+  .level-crest {
+    width: min(78%, 285px);
+  }
+
+  .metric-grid {
+    gap: clamp(16px, 1.4vw, 24px);
+  }
+
+  .metric-card {
+    min-height: 220px;
+  }
+
+  .metric-visual {
+    height: 90px;
+  }
+
+  .action-tile,
+  .hub-card {
+    min-height: 150px;
+  }
+
+  .reward-banner {
+    min-height: 230px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+  }
+
+  .bottom-nav {
+    width: min(100%, 980px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .premium-shell {
+    width: min(calc(100vw - 56px), 1840px);
+  }
+
+  .hero-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(360px, .55fr);
+  }
+
+  .reward-banner {
+    grid-template-columns: minmax(0, 1.55fr) minmax(340px, .45fr);
+  }
+}
+
 @media (max-width: 620px) {
   .premium-shell {
+    width: 100%;
     padding-inline: 10px;
   }
 
