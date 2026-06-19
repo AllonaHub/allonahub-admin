@@ -1,10 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 import { config } from "../config.js";
 
 export const supabaseAdmin = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
+  },
+  realtime: {
+    transport: WebSocket
   }
 });
 
@@ -18,6 +22,9 @@ export function supabaseForUser(jwt) {
     auth: {
       persistSession: false,
       autoRefreshToken: false
+    },
+    realtime: {
+      transport: WebSocket
     }
   });
 }
