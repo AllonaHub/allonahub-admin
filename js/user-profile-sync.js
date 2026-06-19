@@ -57,6 +57,28 @@
     return Number.isFinite(time) ? time : 0;
   }
 
+  function sourceOrder(dbProfile, meta, local) {
+    const sources = [
+      { name: "db", data: dbProfile || {}, time: timestamp(dbProfile?.updated_at), priority: 3 },
+      { name: "meta", data: meta || {}, time: timestamp(meta?.updated_at), priority: 2 },
+      { name: "local", data: local || {}, time: timestamp(local?.updated_at), priority: 1 }
+    ];
+    if (!sources.some((source) => source.time > 0)) return sources;
+    return sources.slice().sort((a, b) => (b.time - a.time) || (b.priority - a.priority));
+  }
+
+  function readSourceValue(sources, fields, fallback) {
+    const fieldList = Array.isArray(fields) ? fields : [fields];
+    for (let sourceIndex = 0; sourceIndex < sources.length; sourceIndex += 1) {
+      const data = sources[sourceIndex].data || {};
+      for (let fieldIndex = 0; fieldIndex < fieldList.length; fieldIndex += 1) {
+        const value = data[fieldList[fieldIndex]];
+        if (value !== undefined && value !== null && value !== "") return value;
+      }
+    }
+    return fallback !== undefined ? fallback : "";
+  }
+
   function notifyProfileChange(profile) {
     try {
       window.dispatchEvent(new CustomEvent(PROFILE_EVENT, { detail: profile }));
@@ -160,42 +182,41 @@
     const rawLocal = storedProfile();
     const localUserId = rawLocal.user_id || rawLocal.id || "";
     const local = !user.id || !localUserId || localUserId === user.id ? rawLocal : {};
-    const localTime = timestamp(local.updated_at);
-    const localIsFresh = localTime > 0 && localTime >= timestamp(dbProfile?.updated_at);
-    const pick = (dbValue, metaValue, localValue, fallback) => localIsFresh
-      ? firstDefined(localValue, dbValue, metaValue, fallback)
-      : firstDefined(dbValue, metaValue, localValue, fallback);
+    const sources = sourceOrder(dbProfile, meta, local);
+    const pick = (fields, fallback) => readSourceValue(sources, fields, fallback);
     const profile = {
       id: user.id || local.id || dbProfile?.id || "",
       user_id: user.id || local.user_id || dbProfile?.id || "",
       member_no: makeUserId(user),
-      full_name: pick(dbProfile?.full_name, meta.full_name, local.full_name, user.email || "AllonaHub Üyesi"),
-      email: firstDefined(user.email, dbProfile?.email, meta.email, local.email, ""),
-      phone: pick(dbProfile?.phone, meta.phone, local.phone, ""),
-      country: pick(dbProfile?.country, meta.country, local.country, ""),
-      city: pick(dbProfile?.city, meta.city, local.city, ""),
-      birth_date: pick(dbProfile?.birth_date, meta.birth_date, local.birth_date, ""),
-      bio: pick(dbProfile?.bio, meta.bio, local.bio, ""),
-      sector_key: pick(dbProfile?.sector_key, meta.sector_key, local.sector_key, "other"),
-      sector_name: pick(dbProfile?.sector_name, meta.sector_name, local.sector_name, "Diğer"),
-      profession_key: pick(dbProfile?.profession_key, meta.profession_key, local.profession_key, "other_profession"),
-      profession_name: pick(dbProfile?.profession_name, meta.profession_name, local.profession_name, "Diğer Meslek"),
-      profession_title: pick(dbProfile?.profession_title, meta.profession_title, local.profession_title, "Üye"),
-      module: pick(dbProfile?.module, meta.module, local.module, "general"),
-      experience_year: pick(dbProfile?.experience_year, meta.experience_year, local.experience_year, ""),
-      profile_visible: pick(dbProfile?.profile_visible, meta.profile_visible, local.profile_visible, true) !== false,
-      contact_locked: pick(dbProfile?.contact_locked, meta.contact_locked, local.contact_locked, true) !== false,
-      avatar: safeAvatarUrl(pick(dbProfile?.avatar_url, meta.avatar_url, local.avatar || local.avatar_url, "")),
-      avatar_url: safeAvatarUrl(pick(dbProfile?.avatar_url, meta.avatar_url, local.avatar_url || local.avatar, "")),
-      hp: asNumber(pick(dbProfile?.hp, meta.hp, local.hp), 250),
-      xp: asNumber(pick(dbProfile?.xp, meta.xp, local.xp), 0),
-      streak: asNumber(pick(dbProfile?.streak, meta.streak, local.streak), 0),
-      cashout_balance: asNumber(pick(dbProfile?.cashout_balance, meta.cashout_balance, local.cashout_balance), 0),
-      hub_cash: asNumber(pick(dbProfile?.hub_cash, meta.hub_cash, local.hub_cash || local.wallet_balance), 0),
-      wallet_balance: asNumber(pick(dbProfile?.wallet_balance, meta.wallet_balance, local.wallet_balance || local.hub_cash), 0),
-      premium_level: pick(dbProfile?.premium_level, meta.premium_level, local.premium_level, "Basic"),
-      greeting: pick(dbProfile?.greeting, meta.greeting, local.greeting, ""),
-      updated_at: pick(dbProfile?.updated_at, meta.updated_at, local.updated_at, "")
+      full_name: pick("full_name", user.email || "AllonaHub Üyesi"),
+      email: firstDefined(user.email, pick("email", ""), ""),
+      phone: pick("phone", ""),
+      country: pick("country", ""),
+      city: pick("city", ""),
+      birth_date: pick("birth_date", ""),
+      bio: pick("bio", ""),
+      sector_key: pick("sector_key", "other"),
+      sector_name: pick("sector_name", "Diğer"),
+      profession_key: pick("profession_key", "other_profession"),
+      profession_name: pick("profession_name", "Diğer Meslek"),
+      profession_title: pick("profession_title", "Üye"),
+      module: pick("module", "general"),
+      experience_year: pick("experience_year", ""),
+      profile_visible: pick("profile_visible", true) !== false,
+      contact_locked: pick("contact_locked", true) !== false,
+      avatar: safeAvatarUrl(pick(["avatar_url", "avatar"], "")),
+      avatar_url: safeAvatarUrl(pick(["avatar_url", "avatar"], "")),
+      hp: asNumber(pick("hp", 250), 250),
+      xp: asNumber(pick("xp"), 0),
+      streak: asNumber(pick("streak"), 0),
+      cashout_balance: asNumber(pick("cashout_balance"), 0),
+      hub_cash: asNumber(pick(["hub_cash", "wallet_balance"]), 0),
+      wallet_balance: asNumber(pick(["wallet_balance", "hub_cash"]), 0),
+      premium_level: pick("premium_level", "Basic"),
+      greeting: pick("greeting", ""),
+      last_daily_login_date: pick("last_daily_login_date", ""),
+      last_daily_login_at: pick("last_daily_login_at", ""),
+      updated_at: pick("updated_at", "")
     };
 
     const levelInfo = levelFromXp(profile.xp);
@@ -296,7 +317,10 @@
       streak: asNumber(profile.streak, 0),
       cashout_balance: asNumber(profile.cashout_balance, 0),
       hub_cash: asNumber(profile.hub_cash, 0),
+      wallet_balance: asNumber(profile.wallet_balance || profile.hub_cash, 0),
       premium_level: profile.premium_level || "Basic",
+      last_daily_login_date: profile.last_daily_login_date || "",
+      last_daily_login_at: profile.last_daily_login_at || "",
       updated_at: profile.updated_at || new Date().toISOString()
     };
   }
@@ -337,6 +361,40 @@
     return merged;
   }
 
+  async function updateEconomy(client, changes) {
+    const loaded = await load(client);
+    if (!loaded || !loaded.profile) throw new Error("HP/XP güncellemek için giriş yapmalısınız.");
+    const base = loaded.profile;
+    const next = { ...base };
+    const numericFields = ["hp", "xp", "streak", "cashout_balance", "hub_cash", "wallet_balance"];
+
+    numericFields.forEach((field) => {
+      const setField = `${field}_set`;
+      if (Object.prototype.hasOwnProperty.call(changes || {}, setField)) {
+        next[field] = Math.max(0, asNumber(changes[setField], asNumber(base[field], 0)));
+        return;
+      }
+      if (Object.prototype.hasOwnProperty.call(changes || {}, field)) {
+        next[field] = Math.max(0, asNumber(base[field], 0) + asNumber(changes[field], 0));
+      }
+    });
+
+    if (Object.prototype.hasOwnProperty.call(changes || {}, "hub_cash") && !Object.prototype.hasOwnProperty.call(changes || {}, "wallet_balance")) {
+      next.wallet_balance = next.hub_cash;
+    }
+    if (Object.prototype.hasOwnProperty.call(changes || {}, "wallet_balance") && !Object.prototype.hasOwnProperty.call(changes || {}, "hub_cash")) {
+      next.hub_cash = next.wallet_balance;
+    }
+
+    ["last_daily_login_date", "last_daily_login_at"].forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(changes || {}, field)) {
+        next[field] = String(changes[field] || "").slice(0, 48);
+      }
+    });
+
+    return save(client, next);
+  }
+
   function createClient() {
     if (!window.supabase) return null;
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -361,6 +419,7 @@
     safeAvatarUrl,
     notifyProfileChange,
     load,
-    save
+    save,
+    updateEconomy
   };
 })();

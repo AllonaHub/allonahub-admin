@@ -88,6 +88,27 @@
     showStatus.timer = window.setTimeout(() => node.classList.remove("is-visible"), 2600);
   }
 
+  function localDateKey() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function dailyRewardKey() {
+    return `allonahub.daily-login.${currentUser?.id || "guest"}.${localDateKey()}`;
+  }
+
+  function dailyRewardValues() {
+    const level = Math.max(1, Number(currentProfile?.level || 1));
+    return {
+      hp: Math.max(20, Math.round(level * 8)),
+      xp: Math.max(20, Math.round(level * 10)),
+      streak: 1
+    };
+  }
+
   function profileFirstName(profile) {
     return String(profile.full_name || "Üye").trim().split(/\s+/)[0] || "Üye";
   }
@@ -101,9 +122,53 @@
     window.location.href = target;
   }
 
+  async function claimDailyLoginReward() {
+    if (!client || !sync || !sync.updateEconomy || !currentUser) {
+      goTo("gorevler.html");
+      return;
+    }
+
+    const key = dailyRewardKey();
+    const today = localDateKey();
+    if (localStorage.getItem(key) || currentProfile?.last_daily_login_date === today) {
+      showStatus("Bugünkü günlük giriş ödülün zaten işlendi.");
+      return;
+    }
+
+    const reward = dailyRewardValues();
+    try {
+      const updated = await sync.updateEconomy(client, {
+        ...reward,
+        last_daily_login_date: today,
+        last_daily_login_at: new Date().toISOString()
+      });
+      currentProfile = updated;
+      renderPanel(updated);
+      localStorage.setItem(key, JSON.stringify({ ...reward, claimed_at: new Date().toISOString() }));
+      showStatus(`+${reward.hp} HP ve +${reward.xp} XP hesabına işlendi.`);
+    } catch (error) {
+      console.error("Günlük giriş ödülü işlenemedi:", error);
+      showStatus("Günlük giriş ödülü güvenli şekilde işlenemedi.");
+    }
+  }
+
+  function handlePanelAction(action) {
+    if (action === "daily-login") {
+      claimDailyLoginReward();
+      return;
+    }
+    goTo(action);
+  }
+
   function bindNavigation() {
-    document.querySelectorAll("[data-go]").forEach((node) => {
-      node.addEventListener("click", () => goTo(node.dataset.go));
+    document.querySelectorAll("[data-go], [data-panel-action]").forEach((node) => {
+      node.addEventListener("click", () => {
+        if (node.dataset.panelAction) {
+          handlePanelAction(node.dataset.panelAction);
+          return;
+        }
+        goTo(node.dataset.go);
+      });
     });
 
     const search = $("#panelSearchInput");

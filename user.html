@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AllonaHub Kullanıcı Girişi</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -29,7 +29,6 @@
 }
 
 body{
-  min-width:1320px;
   background:
     radial-gradient(circle at top left,rgba(0,213,255,.20),transparent 32%),
     radial-gradient(circle at bottom right,rgba(0,119,255,.14),transparent 30%),
@@ -59,7 +58,7 @@ a{
 }
 
 .page{
-  width:1320px;
+  width:min(1320px,100%);
   margin:0 auto;
   padding:18px 22px 50px;
 }
@@ -160,15 +159,27 @@ a{
 }
 
 .actions{
-  height:60px;
+  min-height:60px;
   display:flex;
   align-items:center;
-  justify-content:space-around;
+  justify-content:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:8px 12px;
 }
 
 .actions a{
   font-weight:800;
   color:var(--deep);
+}
+
+.actions .platform-controls-slot{
+  display:inline-flex;
+}
+
+.actions .platform-controls{
+  width:auto;
+  justify-content:flex-end;
 }
 
 .actions a:hover{
@@ -619,16 +630,74 @@ a{
 }
 
 @media(max-width:900px){
-  body{
-    min-width:100%;
-  }
-
   .page{
     width:100%;
+    padding:14px 12px 38px;
+  }
+
+  .header{
+    height:auto;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .brand,
+  .search,
+  .actions{
+    width:100%;
+    min-height:58px;
+  }
+
+  .search{
+    padding:10px 12px;
+  }
+
+  .search input{
+    min-width:0;
+  }
+
+  .actions{
+    justify-content:flex-start;
+  }
+
+  .hero{
+    justify-content:stretch;
+  }
+
+  .login-box{
+    width:100%;
+    min-height:auto;
+    padding:24px;
+    border-radius:22px;
+  }
+
+  .profession-wrap{
+    grid-template-columns:1fr;
+  }
+
+  .phone-row,
+  .quick-grid,
+  .footer-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tabs{
+    flex-wrap:wrap;
+  }
+
+  .tab{
+    flex:1 1 140px;
+  }
+
+  .quick-title{
+    align-items:flex-start;
+    gap:10px;
+    flex-direction:column;
   }
 }
 </style>
-  <link rel="stylesheet" href="css/platform.css?v=20260619-live9">
+  <link rel="stylesheet" href="css/platform.css?v=20260620-mobile1">
 </head>
 
 <body>
@@ -649,6 +718,7 @@ a{
     <a href="index.html">Ana Sayfa</a>
     <a href="hubwallet.html">Kupon</a>
     <a href="premium.html">Premium</a>
+    <span class="platform-controls-slot" data-platform-controls-slot></span>
   </div>
 </div>
 <section class="hero">
@@ -1428,6 +1498,6 @@ document.addEventListener("click",function(e){
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/platform.js?v=20260620-account1" defer></script>
+  <script src="js/platform.js?v=20260620-mobile1" defer></script>
 </body>
 </html>

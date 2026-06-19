@@ -342,6 +342,21 @@ nav a:hover{color:#00e5ff!important}
   font-size:13px;
 }
 
+@media(max-width:1400px){
+  header{
+    padding:0 4%!important;
+    gap:18px!important;
+  }
+
+  header nav{
+    gap:14px!important;
+  }
+
+  .nav-search{
+    max-width:460px!important;
+  }
+}
+
 @media(max-width:1100px){
   .ah-footer-main{
     grid-template-columns:repeat(2,1fr);
@@ -454,7 +469,12 @@ nav a:hover{color:#00e5ff!important}
   }
 
   .platform-controls-slot{
+    order:-1;
     flex:0 0 auto;
+  }
+
+  .platform-controls-slot .platform-controls{
+    width:auto;
   }
 
   .nav-search{
