@@ -1024,6 +1024,20 @@ a {
   }
 }
 
+@media (min-width: 981px) {
+  .premium-shell {
+    padding-bottom: 34px;
+  }
+
+  .bottom-nav {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    margin: 28px auto 34px;
+  }
+}
+
 @media (max-width: 620px) {
   .premium-shell {
     padding-inline: 10px;

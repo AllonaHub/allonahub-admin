@@ -568,7 +568,7 @@ a{
       </div>
 
       <div class="avatar-upload">
-        <input type="file" id="avatarInput" accept="image/*">
+        <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp">
         <label for="avatarInput">
           <i class="fa-solid fa-camera"></i>
           Fotoğraf Yükle
@@ -984,7 +984,7 @@ const sectors=[
     ]
   }
 ];
-  function getInitials(name){
+function getInitials(name){
   const parts=(name||"AllonaHub Üyesi").trim().split(" ").filter(Boolean);
 
   if(parts.length===1){
@@ -992,6 +992,35 @@ const sectors=[
   }
 
   return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+
+function escapeHTML(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function safeAvatarUrl(value){
+  if(window.AllonaProfileSync && window.AllonaProfileSync.safeAvatarUrl){
+    return window.AllonaProfileSync.safeAvatarUrl(value);
+  }
+
+  const raw=String(value || "").trim();
+  if(!raw)return "";
+  if(raw.length > 3 * 1024 * 1024)return "";
+  if(/^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=]+$/i.test(raw))return raw;
+
+  try{
+    const parsed=new URL(raw, window.location.href);
+    if(["https:","http:"].includes(parsed.protocol))return parsed.href;
+  }catch(error){
+    return "";
+  }
+
+  return "";
 }
 
 function makeUserId(user){
@@ -1204,11 +1233,18 @@ function renderProfile(){
   const initials=getInitials(currentProfile.full_name);
   document.getElementById("avatarInitials").textContent=initials;
 
-  if(currentProfile.avatar){
+  const avatar=safeAvatarUrl(currentProfile.avatar || currentProfile.avatar_url || "");
+
+  if(avatar){
     const img=document.getElementById("avatarPreview");
-    img.src=currentProfile.avatar;
+    img.src=avatar;
     img.style.display="block";
     document.getElementById("avatarInitials").style.display="none";
+  }else{
+    const img=document.getElementById("avatarPreview");
+    img.removeAttribute("src");
+    img.style.display="none";
+    document.getElementById("avatarInitials").style.display="inline";
   }
 
   document.getElementById("emailStatus").textContent =
@@ -1359,7 +1395,7 @@ function renderBadges(){
   if(currentProfile.module==="agriculture")badges.push("Agriculture Profile");
   if(currentProfile.module==="legal")badges.push("Legal Profile");
 
-  box.innerHTML=badges.map(b=>`<span class="badge">${b}</span>`).join("");
+  box.innerHTML=badges.map(b=>`<span class="badge">${escapeHTML(b)}</span>`).join("");
 }
 
 function collectProfileData(){
@@ -1445,14 +1481,36 @@ if(avatarInput){
     const file=this.files && this.files[0];
     if(!file)return;
 
+    const allowedTypes=["image/jpeg","image/png","image/webp"];
+    const maxSize=2 * 1024 * 1024;
+
+    if(!allowedTypes.includes(file.type)){
+      alert("Profil fotoğrafı JPEG, PNG veya WebP formatında olmalıdır.");
+      this.value="";
+      return;
+    }
+
+    if(file.size > maxSize){
+      alert("Profil fotoğrafı en fazla 2 MB olabilir.");
+      this.value="";
+      return;
+    }
+
     const reader=new FileReader();
 
     reader.onload=function(e){
+      const safeUrl=safeAvatarUrl(e.target.result);
+
+      if(!safeUrl){
+        alert("Profil fotoğrafı güvenli biçimde okunamadı.");
+        return;
+      }
+
       const img=document.getElementById("avatarPreview");
       const initials=document.getElementById("avatarInitials");
 
       if(img){
-        img.src=e.target.result;
+        img.src=safeUrl;
         img.style.display="block";
       }
 
@@ -1461,8 +1519,8 @@ if(avatarInput){
       }
 
       if(currentProfile){
-        currentProfile.avatar=e.target.result;
-        currentProfile.avatar_url=e.target.result;
+        currentProfile.avatar=safeUrl;
+        currentProfile.avatar_url=safeUrl;
         localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
       }
     };

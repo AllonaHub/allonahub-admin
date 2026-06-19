@@ -115,7 +115,7 @@
 
   function renderAvatar(profile) {
     const initials = sync.initials(profile.full_name);
-    const avatar = profile.avatar_url || profile.avatar || "";
+    const avatar = sync.safeAvatarUrl ? sync.safeAvatarUrl(profile.avatar_url || profile.avatar || "") : (profile.avatar_url || profile.avatar || "");
     const nodes = ["#profileAvatar", "#miniAvatar"];
     nodes.forEach((selector) => {
       const node = $(selector);

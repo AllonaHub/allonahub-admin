@@ -50,6 +50,20 @@
     return "";
   }
 
+  function safeAvatarUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (raw.length > 3 * 1024 * 1024) return "";
+    if (/^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=]+$/i.test(raw)) return raw;
+    try {
+      const parsed = new URL(raw, window.location.href);
+      if (["https:", "http:"].includes(parsed.protocol)) return parsed.href;
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
   function makeUserId(user) {
     if (!user || !user.id) return "AH-USER-000000";
     return `AH-${String(user.id).slice(0, 8).toUpperCase()}`;
@@ -139,8 +153,8 @@
       experience_year: firstDefined(local.experience_year, meta.experience_year, dbProfile?.experience_year, ""),
       profile_visible: firstDefined(local.profile_visible, meta.profile_visible, dbProfile?.profile_visible, true) !== false,
       contact_locked: firstDefined(local.contact_locked, meta.contact_locked, dbProfile?.contact_locked, true) !== false,
-      avatar: firstDefined(local.avatar, local.avatar_url, meta.avatar_url, dbProfile?.avatar_url, ""),
-      avatar_url: firstDefined(local.avatar_url, local.avatar, meta.avatar_url, dbProfile?.avatar_url, ""),
+      avatar: safeAvatarUrl(firstDefined(local.avatar, local.avatar_url, meta.avatar_url, dbProfile?.avatar_url, "")),
+      avatar_url: safeAvatarUrl(firstDefined(local.avatar_url, local.avatar, meta.avatar_url, dbProfile?.avatar_url, "")),
       hp: asNumber(firstDefined(local.hp, meta.hp, dbProfile?.hp), 250),
       xp: asNumber(firstDefined(local.xp, meta.xp, dbProfile?.xp), 0),
       streak: asNumber(firstDefined(local.streak, meta.streak, dbProfile?.streak), 0),
@@ -213,7 +227,7 @@
       experience_year: profile.experience_year === "" ? null : Number(profile.experience_year || 0),
       profile_visible: profile.profile_visible !== false,
       contact_locked: profile.contact_locked !== false,
-      avatar_url: profile.avatar_url || profile.avatar || "",
+      avatar_url: safeAvatarUrl(profile.avatar_url || profile.avatar || ""),
       hp: asNumber(profile.hp, 250),
       xp: asNumber(profile.xp, 0),
       level: levelFromXp(profile.xp).current.level,
@@ -306,6 +320,7 @@
     cvTarget,
     makeUserId,
     initials,
+    safeAvatarUrl,
     load,
     save
   };
