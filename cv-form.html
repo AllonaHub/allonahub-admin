@@ -33,12 +33,13 @@ body{
     linear-gradient(135deg,#020814,#061a2f,#020814);
   color:#fff;
   min-height:100vh;
-  padding:30px;
+  padding:clamp(12px, 2vw, 30px);
+  overflow-x:hidden;
 }
 
 .app{
-  max-width:1560px;
-  margin:auto;
+  width:min(100%, 1760px);
+  margin:0 auto;
 }
 
 /* TOP BAR */
@@ -47,8 +48,8 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:20px;
-  padding:22px 28px;
+  gap:clamp(14px, 2vw, 22px);
+  padding:clamp(16px, 2vw, 24px);
   border:1px solid rgba(0,213,255,.45);
   border-radius:26px;
   background:rgba(2,8,20,.78);
@@ -118,8 +119,8 @@ select{
 
 .layout{
   display:grid;
-  grid-template-columns:430px 1fr;
-  gap:25px;
+  grid-template-columns:minmax(330px, 420px) minmax(0, 1fr);
+  gap:clamp(14px, 2vw, 25px);
   align-items:start;
 }
 
@@ -127,10 +128,11 @@ select{
   background:rgba(2,8,20,.88);
   border:1px solid rgba(0,213,255,.35);
   border-radius:24px;
-  padding:22px;
+  padding:clamp(16px, 1.8vw, 22px);
   box-shadow:0 0 30px rgba(0,213,255,.18);
   max-height:calc(100vh - 145px);
   overflow:auto;
+  min-width:0;
 }
 
 .formPanel h2{
@@ -183,13 +185,13 @@ textarea:focus{
 
 .row2{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:10px;
 }
 
 .row3{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:10px;
 }
 
@@ -199,17 +201,22 @@ textarea:focus{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(0,213,255,.25);
   border-radius:24px;
-  padding:20px;
-  overflow:auto;
+  padding:clamp(10px, 1.6vw, 20px);
+  overflow:hidden;
+  min-width:0;
+  display:grid;
+  justify-items:center;
+  align-content:start;
 }
 
 .cvPage{
-  width:900px;
+  width:min(900px, 100%);
+  max-width:100%;
   min-height:1270px;
   background:#fff;
   color:var(--text);
   margin:0 auto 25px;
-  padding:34px;
+  padding:clamp(18px, 3.2vw, 34px);
   border:2px solid rgba(0,126,255,.35);
   position:relative;
   font-family:Arial, Helvetica, sans-serif;
@@ -248,7 +255,7 @@ textarea:focus{
 }
 
 .cvTitle{
-  font-size:42px;
+  font-size:clamp(25px, 4.2vw, 42px);
   color:#005aaa;
   font-weight:900;
   letter-spacing:.5px;
@@ -256,12 +263,13 @@ textarea:focus{
 
 .cvBrand{
   text-align:center;
-  width:170px;
+  width:clamp(112px, 16vw, 170px);
 }
 
 .cvBrand img{
-  width:118px;
-  height:78px;
+  width:clamp(82px, 12vw, 118px);
+  height:auto;
+  max-height:78px;
   object-fit:contain;
   filter:drop-shadow(0 0 7px rgba(0,174,255,.55));
 }
@@ -296,7 +304,7 @@ textarea:focus{
 
 .sectionTitle{
   color:#005aaa;
-  font-size:22px;
+  font-size:clamp(15px, 2.2vw, 22px);
   font-weight:900;
   text-transform:uppercase;
   margin:18px 0 10px;
@@ -317,7 +325,8 @@ textarea:focus{
 .cvTable{
   width:100%;
   border-collapse:collapse;
-  font-size:15px;
+  table-layout:fixed;
+  font-size:clamp(10px, 1.25vw, 15px);
   font-weight:700;
   margin-bottom:15px;
   position:relative;
@@ -328,15 +337,18 @@ textarea:focus{
   background:linear-gradient(135deg,#004f9e,#00aaff);
   color:#fff;
   border:1px solid #1597ff;
-  padding:7px 8px;
-  font-size:14px;
+  padding:clamp(4px, .7vw, 7px) clamp(5px, .8vw, 8px);
+  font-size:clamp(9.5px, 1.1vw, 14px);
+  overflow-wrap:anywhere;
 }
 
 .cvTable td{
   border:1px solid #1597ff;
-  padding:7px 8px;
+  padding:clamp(4px, .7vw, 7px) clamp(5px, .8vw, 8px);
   vertical-align:top;
   color:#172231;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 .cvTable .labelCell{
@@ -346,8 +358,8 @@ textarea:focus{
 }
 
 .photoCell{
-  width:220px;
-  height:285px;
+  width:clamp(116px, 22vw, 220px);
+  height:clamp(150px, 30vw, 285px);
   padding:0!important;
   text-align:center;
   border:2px solid #00aaff!important;
@@ -373,14 +385,143 @@ textarea:focus{
 }
 
 .noteBox{
-  height:260px;
+  min-height:260px;
   border:2px solid #1597ff;
   padding:14px;
-  font-size:20px;
+  font-size:clamp(14px, 1.8vw, 20px);
   color:#172231;
   font-weight:800;
   position:relative;
   z-index:2;
+}
+
+@media (min-width: 1540px){
+  .layout{
+    grid-template-columns:minmax(360px, 450px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1280px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+
+  .formPanel{
+    max-height:none;
+    overflow:visible;
+  }
+
+  .previewWrap{
+    border-radius:20px;
+  }
+}
+
+@media (max-width: 720px){
+  .topbar{
+    flex-direction:column;
+    align-items:stretch;
+    border-radius:20px;
+  }
+
+  .brand{
+    align-items:flex-start;
+  }
+
+  .brand img{
+    width:54px;
+    height:54px;
+  }
+
+  .brand h1{
+    font-size:20px;
+  }
+
+  .actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .actions select,
+  .actions button{
+    width:100%;
+  }
+
+  .row2,
+  .row3{
+    grid-template-columns:1fr;
+  }
+
+  .cvPage{
+    min-height:auto;
+    margin-bottom:16px;
+    border-width:1px;
+  }
+
+  .cvPage:before{
+    font-size:46px;
+  }
+
+  .cvNeonBorder{
+    inset:7px;
+    border-width:1px;
+  }
+
+  .cvHeader{
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .cvBrand{
+    width:98px;
+  }
+
+  .cvBrand strong{
+    font-size:11px;
+  }
+
+  .cvBrand small{
+    font-size:8px;
+  }
+
+  .sectionTitle{
+    margin:13px 0 8px;
+  }
+
+  .cvTable{
+    margin-bottom:10px;
+  }
+
+  .cvTable .labelCell{
+    width:34%;
+  }
+
+  .photoCell{
+    width:96px;
+    height:126px;
+  }
+
+  .emptyPhoto{
+    font-size:10px;
+  }
+}
+
+@media (max-width: 420px){
+  .actions{
+    grid-template-columns:1fr;
+  }
+
+  .cvPage{
+    padding:14px;
+  }
+
+  .cvTitle{
+    font-size:20px;
+  }
+
+  .photoCell{
+    width:78px;
+    height:108px;
+  }
 }
 
 @page{
@@ -530,8 +671,37 @@ body{
  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
+  <style>
+    html body.cv-form-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)){
+      width:auto!important;
+      max-width:none!important;
+      margin:0!important;
+      padding:clamp(12px, 2vw, 30px)!important;
+      line-height:normal!important;
+    }
+
+    body.cv-form-page[data-theme] .app{
+      width:min(100%, 1760px)!important;
+      max-width:1760px!important;
+      margin:0 auto!important;
+    }
+
+    body.cv-form-page.pdf-capture{
+      overflow-x:visible!important;
+    }
+
+    body.cv-form-page.pdf-capture .previewWrap{
+      overflow:visible!important;
+    }
+
+    body.cv-form-page.pdf-capture .cvPage{
+      width:900px!important;
+      min-height:1270px!important;
+      padding:34px!important;
+    }
+  </style>
 </head>
-<body>
+<body class="cv-form-page">
 
 <div class="app">
 
@@ -2449,20 +2619,27 @@ async function downloadPDF(){
 
   const pages = document.querySelectorAll(".cvPage");
 
-  for(let i = 0; i < pages.length; i++){
-    const canvas = await html2canvas(pages[i], {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff"
-    });
+  document.body.classList.add("pdf-capture");
+  await new Promise(resolve => requestAnimationFrame(resolve));
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.98);
+  try{
+    for(let i = 0; i < pages.length; i++){
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
 
-    if(i > 0){
-      pdf.addPage();
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+      if(i > 0){
+        pdf.addPage();
+      }
+
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
     }
-
-    pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+  } finally {
+    document.body.classList.remove("pdf-capture");
   }
 
   pdf.save(fileName);
