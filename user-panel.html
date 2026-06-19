@@ -593,7 +593,7 @@ width:100%;
 }
 }
 </style>
-  <link rel="stylesheet" href="css/platform.css?v=20260619-live3">
+  <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
 </head>
 <body>
 <div class="page">
@@ -605,13 +605,13 @@ width:100%;
 
 <div class="search glass">
 <i class="fa-solid fa-magnifying-glass"></i>
-<input id="panelSearchInput" placeholder="CV, HP, Wallet, iş ilanları, belgeler veya destek ara...">
+<input id="panelSearchInput" placeholder="CV, HP, Kupon, iş ilanları, belgeler veya destek ara...">
 <button onclick="panelSearch()">Ara</button>
 </div>
 
 <div class="top-actions glass">
 <a href="index.html">Ana Sayfa</a>
-<a href="hubwallet.html">Wallet</a>
+<a href="hubwallet.html">Kupon</a>
 <a href="premium.html">Premium</a>
 <button onclick="logoutUser()">Çıkış</button>
 </div>
@@ -665,7 +665,7 @@ AllonaHub hesabın hazırlanıyor. Profil bilgilerin yüklendikten sonra panelin
 
 <div class="wallet-row">
 <div class="wallet-card">
-<span>HUB WALLET</span>
+<span>KUPON</span>
 <b id="walletValue">0₺</b>
 <small>Aktif bakiye</small>
 </div>
@@ -773,7 +773,7 @@ AllonaHub hesabın hazırlanıyor. Profil bilgilerin yüklendikten sonra panelin
 </button>
 
 <button class="outline-btn" onclick="location.href='hubwallet.html'">
-<i class="fa-solid fa-wallet"></i> Wallet Aç
+<i class="fa-solid fa-wallet"></i> Kupon Aç
 </button>
 
 <button class="outline-btn" onclick="location.href='premium.html'">
@@ -921,7 +921,7 @@ if(!q)return;
 if(q.includes("cv")){
     window.location.href="cv-form.html";
 }
-else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
+else if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
 window.location.href="hubwallet.html";
 }
 else if(q.includes("premium") || q.includes("üyelik")){
@@ -1002,8 +1002,8 @@ document.addEventListener("DOMContentLoaded",function(){
   
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live3" defer></script>
-  <script src="js/layout.v3.js?v=20260619-live3" defer></script>
-  <script src="js/platform.js?v=20260619-live3" defer></script>
+  <script src="js/core.js?v=20260619-live4" defer></script>
+  <script src="js/layout.v3.js?v=20260619-live4" defer></script>
+  <script src="js/platform.js?v=20260619-live4" defer></script>
 </body>
 </html>

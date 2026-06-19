@@ -6,9 +6,9 @@
   const ASSET_VERSION = (() => {
     try {
       const current = document.currentScript && document.currentScript.src;
-      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live3" : "20260619-live3";
+      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live4" : "20260619-live4";
     } catch (error) {
-      return "20260619-live3";
+      return "20260619-live4";
     }
   })();
   const languages = [
@@ -95,7 +95,7 @@
         "HP, kupon ve premium avantaj.": "HP, kupon və premium üstünlük.",
         "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.": "Alış-veriş motivasiyasını artıran loyallıq, kupon və üzvlük sahələri ilə uyğundur.",
         "Premium üyeliklerle daha fazla kazanım": "Premium üzvlüklərlə daha çox qazanc",
-        "Wallet'a Git": "Wallet-a keç",
+        "Kupona Git": "Kupona keç",
         "AllonaShop kampanya alanı": "AllonaShop kampaniya sahəsi",
         "Önceki kampanya": "Əvvəlki kampaniya",
         "Sonraki kampanya": "Növbəti kampaniya",
@@ -154,7 +154,7 @@
         "Mont": "Gödəkçə",
         "Aksesuar": "Aksesuar",
         "Saat": "Saat",
-        "Cüzdan": "Pulqabı",
+        "Kupon": "Kupon",
         "Kemer": "Kəmər",
         "Gözlük": "Eynək",
         "Ayakkabı": "Ayaqqabı",
@@ -802,7 +802,7 @@
       [/partner|başvuru|restoran partneri|hizmet veren/i, "partner.html"],
       [/destek|yardım|sss|sıkça/i, "destek.html"],
       [/kampanya|kupon/i, "kuponlar.html"],
-      [/hp|wallet|cüzdan|puan/i, "hubwallet.html"],
+      [/hp|wallet|kupon|puan/i, "hubwallet.html"],
       [/gizlilik/i, "gizlilik.html"],
       [/çerez/i, "cerez.html"],
       [/kvkk/i, "kvkk.html"],

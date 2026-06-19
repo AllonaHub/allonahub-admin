@@ -155,11 +155,11 @@
     },
     {
       title: "HP, kupon ve premium avantaj.",
-      subtitle: "HUB Wallet",
+      subtitle: "Kupon",
       campaign_text: "Premium üyeliklerle daha fazla kazanım",
       description: "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.",
       image_url: "wallet.png",
-      cta_label: "Wallet'a Git",
+      cta_label: "Kupona Git",
       link_url: "hubwallet.html"
     }
   ];

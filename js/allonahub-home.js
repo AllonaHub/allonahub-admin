@@ -127,7 +127,7 @@ const searchRoutes=[
 {keys:["inşaat","yapı","müteahhit"],url:"allonainsaat.html"},
 {keys:["mühendislik","mühendis"],url:"allonamuhendislik.html"},
 {keys:["trade","ithalat","ihracat"],url:"allonatrade.html"},
-{keys:["wallet","cüzdan","hp","pay"],url:"hubwallet.html"}
+{keys:["wallet","kupon","hp","pay"],url:"hubwallet.html"}
 ];
 
 function globalSearch(){

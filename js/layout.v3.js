@@ -34,8 +34,8 @@
             <a class="icon-btn" href="${core.url("bildirimler.html")}" aria-label="Bildirimler">
               🔔
             </a>
-            <a class="icon-btn icon-btn--wide" href="${core.url("hubwallet.html")}" aria-label="Hub Wallet">
-              Wallet
+            <a class="icon-btn icon-btn--wide" href="${core.url("hubwallet.html")}" aria-label="Kupon">
+              Kupon
             </a>
             <a class="icon-btn" href="${core.url("favorites.html")}" aria-label="Favoriler">
               ♡ <span class="badge" data-fav-count>0</span>
@@ -114,7 +114,7 @@
             <h3>Ekosistem</h3>
             <a href="${core.url("ecosystem.html#modules")}">Tüm Modüller</a>
             <a href="${core.url("partner.html")}">Partner Başvurusu</a>
-            <a href="${core.url("hubwallet.html")}">HUB Wallet</a>
+            <a href="${core.url("hubwallet.html")}">Kupon</a>
             <a href="${core.url("premium.html")}">Premium</a>
             <a href="${core.url("allonakariyer.html")}">Kariyer</a>
             <a href="${core.url("partner-uyelik.html")}">Partner Üyelik</a>

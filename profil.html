@@ -533,7 +533,7 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="css/platform.css?v=20260619-live3">
+  <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
 </head>
 <body>
 <div class="page">
@@ -551,7 +551,7 @@ a{
 
     <div class="top-actions glass">
       <a href="user-panel.html">Panel</a>
-      <a href="hubwallet.html">Wallet</a>
+      <a href="hubwallet.html">Kupon</a>
       <a href="premium.html">Premium</a>
       <button onclick="logoutUser()">Çıkış</button>
     </div>
@@ -1189,7 +1189,7 @@ function renderProfile(){
   ],
   general:[
     {icon:"fa-user",title:"Profil",text:"Dijital kimliğini tamamla."},
-    {icon:"fa-wallet",title:"Wallet",text:"HP, kupon ve bakiye yönetimi."},
+    {icon:"fa-wallet",title:"Kupon",text:"HP, kupon ve bakiye yönetimi."},
     {icon:"fa-gem",title:"Premium",text:"Premium avantajları keşfet."}
   ]
 };
@@ -1340,7 +1340,7 @@ function profileSearch(){
   else if(q.includes("belge") || q.includes("sertifika")){
     window.location.href="belgeler.html";
   }
-  else if(q.includes("hp") || q.includes("wallet") || q.includes("cüzdan")){
+  else if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
     window.location.href="hubwallet.html";
   }
   else if(q.includes("premium") || q.includes("üyelik")){
@@ -1391,8 +1391,8 @@ document.addEventListener("click",function(e){
 });
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live3" defer></script>
-  <script src="js/layout.v3.js?v=20260619-live3" defer></script>
-  <script src="js/platform.js?v=20260619-live3" defer></script>
+  <script src="js/core.js?v=20260619-live4" defer></script>
+  <script src="js/layout.v3.js?v=20260619-live4" defer></script>
+  <script src="js/platform.js?v=20260619-live4" defer></script>
 </body>
 </html>
