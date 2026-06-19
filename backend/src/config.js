@@ -43,6 +43,27 @@ export const config = {
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),
   paymentsDisabled: readBool("PAYMENTS_DISABLED", false),
   auditEnabled: readBool("AUDIT_LOG_ENABLED", true),
+  autoDefense: {
+    enabled: readBool("AUTO_DEFENSE_ENABLED", true),
+    scoreThreshold: readNumber("AUTO_DEFENSE_SCORE_THRESHOLD", 12),
+    windowMinutes: readNumber("AUTO_DEFENSE_WINDOW_MINUTES", 10),
+    ipBlockMinutes: readNumber("AUTO_DEFENSE_IP_BLOCK_MINUTES", 15),
+    adminLockMinutes: readNumber("AUTO_DEFENSE_ADMIN_LOCK_MINUTES", 10),
+    strictModeMinutes: readNumber("AUTO_DEFENSE_STRICT_MODE_MINUTES", 10),
+    maxRecentIncidents: readNumber("AUTO_DEFENSE_MAX_RECENT_INCIDENTS", 100),
+    revokeSuspiciousSessions: readBool("AUTO_DEFENSE_REVOKE_SESSIONS", false),
+    ipDenylist: csv(readEnv("AUTO_DEFENSE_IP_DENYLIST", { required: false, defaultValue: "" })),
+    cfBotScoreBlockBelow: readNumber("AUTO_DEFENSE_CF_BOT_SCORE_BLOCK_BELOW", 10),
+    cfThreatScoreBlockAbove: readNumber("AUTO_DEFENSE_CF_THREAT_SCORE_BLOCK_ABOVE", 50)
+  },
+  alerts: {
+    telegramBotToken: readEnv("TELEGRAM_BOT_TOKEN", { required: false, defaultValue: "" }),
+    telegramChatId: readEnv("TELEGRAM_CHAT_ID", { required: false, defaultValue: "" }),
+    emailWebhookUrl: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_URL", { required: false, defaultValue: "" }),
+    emailWebhookSecret: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
+    alertFrom: readEnv("SECURITY_ALERT_FROM", { required: false, defaultValue: "security@allonahub.com" }),
+    alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" })
+  },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
     url: readEnv("SUPABASE_URL"),

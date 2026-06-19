@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
+import { registerAutoDefense } from "./lib/auto-defense.js";
 import { registerRoutes } from "./routes/index.js";
 
 function requestId() {
@@ -74,6 +75,8 @@ export async function buildApp() {
       });
     }
   });
+
+  registerAutoDefense(app);
 
   await app.register(cors, {
     origin(origin, callback) {

@@ -169,6 +169,12 @@ Etkiler:
 - `MAINTENANCE_MODE`: health/ready dışında API bakımda.
 - `EMERGENCY_API_DISABLED`: health dışında tüm API kapalı.
 
+Otomatik saldırı algılama, geçici IP bloklama, admin kilidi, strict mode, Telegram/e-posta alarmı, rollback hazırlığı ve safe mode komutları için:
+
+```text
+docs/security/incident-response-auto-defense.md
+```
+
 ## 11. Secure Deployment
 
 Her deploy öncesi:

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { config } from "../config.js";
+import { autoDefenseStatus } from "../lib/auto-defense.js";
 import {
   auditEvent,
   authContext,
@@ -548,5 +549,27 @@ export function registerRoutes(app) {
       metadata: { limit: query.limit, severity: query.severity || "all" }
     });
     return { ok: true, events: data || [] };
+  });
+
+  app.get("/v1/admin/security/auto-defense", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "admin.security.auto_defense"
+    });
+    const status = autoDefenseStatus();
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.security.auto_defense_viewed",
+      resourceType: "auto_defense",
+      metadata: {
+        blocked_ip_count: status.blockedIpCount,
+        recent_incident_count: status.recentIncidents.length
+      }
+    });
+    return { ok: true, autoDefense: status };
   });
 }

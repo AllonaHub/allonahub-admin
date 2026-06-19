@@ -30,12 +30,20 @@ services:
       traefik.docker.network: coolify
       traefik.http.middlewares.allonahub-api-gzip.compress: "true"
       traefik.http.middlewares.allonahub-api-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.allonahub-api-ratelimit.ratelimit.average: "120"
+      traefik.http.middlewares.allonahub-api-ratelimit.ratelimit.burst: "80"
+      traefik.http.middlewares.allonahub-api-headers.headers.stsSeconds: "31536000"
+      traefik.http.middlewares.allonahub-api-headers.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.allonahub-api-headers.headers.stsPreload: "true"
+      traefik.http.middlewares.allonahub-api-headers.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.allonahub-api-headers.headers.frameDeny: "true"
+      traefik.http.middlewares.allonahub-api-headers.headers.referrerPolicy: no-referrer
       traefik.http.routers.allonahub-api-http.entrypoints: http
       traefik.http.routers.allonahub-api-http.rule: Host(`api.allonahub.com`)
       traefik.http.routers.allonahub-api-http.middlewares: allonahub-api-redirect
       traefik.http.routers.allonahub-api-https.entrypoints: https
       traefik.http.routers.allonahub-api-https.rule: Host(`api.allonahub.com`)
-      traefik.http.routers.allonahub-api-https.middlewares: allonahub-api-gzip
+      traefik.http.routers.allonahub-api-https.middlewares: allonahub-api-headers,allonahub-api-ratelimit,allonahub-api-gzip
       traefik.http.routers.allonahub-api-https.tls: "true"
       traefik.http.routers.allonahub-api-https.tls.certresolver: letsencrypt
       traefik.http.services.allonahub-api.loadbalancer.server.port: "3000"
