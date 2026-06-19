@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 
     const { orderId, buyer = {} } = await req.json();
     if (!orderId) return json({ error: "orderId is required" }, 400);
-    if (!buyer.identityNumber) return json({ error: "identityNumber is required" }, 400);
+    const identityNumber = String(buyer.identityNumber || "11111111111").replace(/\D/g, "") || "11111111111";
 
     const { data: profile } = await admin
       .from("profiles")
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         id: authData.user.id,
         name,
         surname,
-        identityNumber: String(buyer.identityNumber),
+        identityNumber,
         email: order.customer_email,
         gsmNumber: order.customer_phone || "",
         registrationAddress: shipping.address || "",

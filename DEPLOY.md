@@ -31,6 +31,8 @@ supabase functions deploy iyzico-callback
 
 CV ödeme akışı için `iyzico-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
 
+Kartlı ödeme formları e-posta, telefon ve kart bilgisi alanlarıyla iyzico onayı sonrası doğrudan kartlı ödeme entegrasyonuna hazırdır. Kart verisi AllonaHub veritabanında saklanmamalı; canlı entegrasyonda iyzico'nun PCI uyumlu tokenizasyon/ödeme API akışına bağlanmalıdır.
+
 ## 3. GitHub
 
 1. Dosyaları GitHub reposuna yükle.

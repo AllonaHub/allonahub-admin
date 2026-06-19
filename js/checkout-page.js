@@ -82,7 +82,6 @@
       data.billing_same !== "on" && data.billing_address ? `Fatura adresi: ${data.billing_address}` : "",
       data.billing_same !== "on" && data.billing_city ? `Fatura ili: ${data.billing_city}` : "",
       data.invoice_type ? `Fatura türü: ${data.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
-      data.identity_number ? `T.C./Vergi No: ${data.identity_number}` : "",
       data.tax_office ? `Vergi dairesi: ${data.tax_office}` : "",
       data.coupon_code ? `Kupon: ${String(data.coupon_code).trim().toUpperCase()}` : "",
       `Yasal onaylar: Ön bilgilendirme ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
@@ -106,9 +105,30 @@
     };
   }
 
+  function formatCardInputs(form) {
+    if (!form.card_number || !form.card_expiry || !form.card_cvc) return;
+
+    form.card_number.addEventListener("input", () => {
+      form.card_number.value = form.card_number.value
+        .replace(/\D/g, "")
+        .slice(0, 16)
+        .replace(/(\d{4})(?=\d)/g, "$1 ");
+    });
+
+    form.card_expiry.addEventListener("input", () => {
+      const value = form.card_expiry.value.replace(/\D/g, "").slice(0, 4);
+      form.card_expiry.value = value.length > 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
+    });
+
+    form.card_cvc.addEventListener("input", () => {
+      form.card_cvc.value = form.card_cvc.value.replace(/\D/g, "").slice(0, 4);
+    });
+  }
+
   function bindCheckout() {
     const form = document.querySelector("[data-checkout-form]");
     if (!form) return;
+    formatCardInputs(form);
 
     async function applyCoupon() {
       const code = String(form.coupon_code.value || "").trim().toUpperCase();
@@ -150,7 +170,7 @@
       const button = form.querySelector("button[type='submit']");
       const originalText = button.textContent;
       button.disabled = true;
-      button.textContent = "Ödeme ekranı hazırlanıyor...";
+      button.textContent = "Ödeme hazırlanıyor...";
 
       try {
         const user = await App.auth.requireAuth();
@@ -162,21 +182,22 @@
         const orderPayload = calculateOrderPayload(form);
         const order = await App.db.orders.create(orderPayload, lines);
         const buyer = {
-          identityNumber: form.identity_number.value || "11111111111",
+          email: form.email.value,
+          phone: form.phone.value,
           ip: "0.0.0.0"
         };
         let payment;
         try {
           payment = await App.db.payments.createIyzicoCheckout(order.id, buyer);
         } catch (paymentError) {
-          core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat iyzico kart bilgileri ekranı açılamadı. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.", "error");
+          core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.", "error");
           return;
         }
         if (payment && payment.paymentPageUrl) {
           window.location.href = payment.paymentPageUrl;
           return;
         }
-        core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak iyzico kart bilgileri ekranı açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
+        core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
       } catch (error) {
         core.renderStatus("[data-checkout-status]", friendlyCheckoutError(error), "error");
       } finally {

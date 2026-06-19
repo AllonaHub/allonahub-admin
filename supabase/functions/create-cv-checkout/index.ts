@@ -82,7 +82,8 @@ Deno.serve(async (req) => {
     }
 
     const bodyData = await req.json().catch(() => ({}));
-    const identityNumber = String(bodyData.identityNumber || "11111111111").replace(/\D/g, "") || "11111111111";
+    const identityNumber = "11111111111";
+    const buyerEmail = String(bodyData.buyerEmail || authData.user.email || "");
     const buyerPhone = String(bodyData.buyerPhone || authData.user.phone || "");
 
     const { data: profile } = await admin
@@ -122,7 +123,7 @@ Deno.serve(async (req) => {
         name,
         surname,
         identityNumber,
-        email: authData.user.email,
+        email: buyerEmail || authData.user.email,
         gsmNumber: buyerPhone || profile?.phone || "",
         registrationAddress: "AllonaHub Dijital CV",
         city: "İstanbul",

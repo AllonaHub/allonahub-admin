@@ -210,7 +210,7 @@
     const { data, error } = await App.db.client().functions.invoke(functionName, {
       body: {
         deviceKey: await getDeviceKey(),
-        identityNumber: payload && payload.identityNumber || "",
+        buyerEmail: payload && payload.buyerEmail || "",
         buyerPhone: payload && payload.buyerPhone || ""
       }
     });

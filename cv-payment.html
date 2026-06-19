@@ -8,6 +8,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{
+  --payment-page-pad:clamp(16px,3vw,42px);
   font-family:Arial,Helvetica,sans-serif;
   min-height:100vh;
   color:#fff;
@@ -15,9 +16,9 @@ body{
     radial-gradient(circle at top left,rgba(0,213,255,.24),transparent 34%),
     radial-gradient(circle at bottom right,rgba(246,182,75,.18),transparent 34%),
     linear-gradient(135deg,#020814,#061a2f,#020814);
-  padding:clamp(16px,3vw,42px);
+  padding:var(--payment-page-pad);
 }
-.paymentShell{width:min(1120px,100%);margin:0 auto}
+.paymentShell{width:min(1120px,calc(100vw - (var(--payment-page-pad) * 2)));margin:0 auto}
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -59,6 +60,8 @@ body{
 }
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:22px;align-items:start}
 .card{
+  width:100%;
+  min-width:0;
   border:1px solid rgba(0,213,255,.28);
   border-radius:26px;
   padding:clamp(18px,2.4vw,28px);
@@ -95,12 +98,79 @@ input{
   outline:none;
 }
 input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
+.cardFields{
+  margin-top:16px;
+  padding:16px;
+  border-radius:20px;
+  border:1px solid rgba(0,213,255,.24);
+  background:linear-gradient(145deg,rgba(0,213,255,.08),rgba(255,255,255,.04));
+}
+.cardFields__head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:4px;
+}
+.cardFields__head strong{color:#fff;font-size:15px}
+.cardFields__head span{color:#9edff2;font-size:12px;font-weight:800;text-align:right}
+.cardRow{display:grid;grid-template-columns:1fr 120px;gap:12px}
 .payBtn{
   width:100%;
   margin-top:18px;
   color:#00101d;
   background:linear-gradient(135deg,#00d5ff,#f6b64b);
   box-shadow:0 0 22px rgba(0,213,255,.32);
+}
+.paymentBrands{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  margin-top:14px;
+  padding:10px;
+  border-radius:18px;
+  border:1px solid rgba(0,213,255,.18);
+  background:rgba(255,255,255,.06);
+}
+.brandBadge{
+  min-width:66px;
+  min-height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:10px;
+  padding:0 10px;
+  color:#061a2f;
+  background:#fff;
+  border:1px solid rgba(255,255,255,.58);
+  font-size:12px;
+  font-weight:950;
+  box-shadow:0 12px 24px rgba(0,0,0,.18);
+}
+.brandBadge--iyzico{color:#6337ff;letter-spacing:-.2px}
+.brandBadge--visa{color:#1434cb;font-style:italic;letter-spacing:.7px}
+.brandBadge--amex{color:#006fcf;letter-spacing:.4px}
+.brandBadge--mastercard{color:#222;min-width:112px}
+.brandBadge--mastercard:before{
+  content:"";
+  width:28px;
+  height:18px;
+  display:inline-block;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 50%,#eb001b 0 43%,transparent 45%),
+    radial-gradient(circle at 62% 50%,#f79e1b 0 43%,transparent 45%);
+}
+.secureLine{
+  margin-top:10px;
+  color:#a9d8e8;
+  font-size:12px;
+  line-height:1.5;
+  text-align:center;
 }
 .status{
   margin-top:14px;
@@ -118,6 +188,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
   .topbar{flex-direction:column;align-items:stretch}
   .grid{grid-template-columns:1fr}
   .backBtn{text-align:center}
+  .cardRow{grid-template-columns:1fr}
 }
 </style>
 <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
@@ -142,7 +213,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
       <p>Her hesap için 2 ücretsiz CV/PDF üretim hakkı bulunur. Haklar bittikten sonra her yeni CV üretimi için tek kullanımlık ücretli kredi alınır.</p>
       <div class="features">
         <div class="feature"><strong>Tek kullanımlık kredi</strong><p>Ödeme sonrası hesabına 1 CV üretim kredisi tanımlanır.</p></div>
-        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme ekranında tamamlanır.</p></div>
+        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.</p></div>
         <div class="feature"><strong>Kısıtlama yok</strong><p>Bu ödeme kuralı dışında kullanıcıya farklı bir kullanım kısıtı uygulanmaz.</p></div>
       </div>
     </article>
@@ -154,15 +225,44 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
       <div class="summaryLine summaryTotal"><span>Toplam</span><span id="cvTotalLine">-</span></div>
 
       <form id="cvPaymentForm">
-        <label for="identityNumber">T.C. / Vergi No</label>
-        <input id="identityNumber" name="identityNumber" inputmode="numeric" maxlength="11" placeholder="11111111111" autocomplete="off">
+        <label for="buyerEmail">E-posta</label>
+        <input id="buyerEmail" name="buyerEmail" type="email" placeholder="ornek@allonahub.com" autocomplete="email" required>
         <label for="buyerPhone">Telefon</label>
-        <input id="buyerPhone" name="buyerPhone" inputmode="tel" placeholder="+90 5xx xxx xx xx" autocomplete="tel">
-        <button class="payBtn" type="submit">iyzico Güvenli Ödemeye Git</button>
+        <input id="buyerPhone" name="buyerPhone" inputmode="tel" placeholder="+90 5xx xxx xx xx" autocomplete="tel" required>
+
+        <div class="cardFields">
+          <div class="cardFields__head">
+            <strong>Kart Bilgileri</strong>
+            <span>Güvenli ödeme</span>
+          </div>
+          <label for="cardHolder">Kart Üzerindeki İsim</label>
+          <input id="cardHolder" name="cardHolder" autocomplete="cc-name" placeholder="Ad Soyad" required>
+          <label for="cardNumber">Kart Numarası</label>
+          <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
+          <div class="cardRow">
+            <div>
+              <label for="cardExpiry">Son Kullanma Tarihi</label>
+              <input id="cardExpiry" name="cardExpiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
+            </div>
+            <div>
+              <label for="cardCvc">CVC</label>
+              <input id="cardCvc" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
+            </div>
+          </div>
+        </div>
+
+        <button class="payBtn" type="submit">Ödeme Yap</button>
+        <div class="paymentBrands" aria-label="Desteklenen ödeme markaları">
+          <span class="brandBadge brandBadge--iyzico">iyzico</span>
+          <span class="brandBadge brandBadge--visa">VISA</span>
+          <span class="brandBadge brandBadge--mastercard">Mastercard</span>
+          <span class="brandBadge brandBadge--amex">AMEX</span>
+        </div>
+        <div class="secureLine">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</div>
       </form>
 
       <div class="status" data-cv-access-status>CV hak durumu kontrol ediliyor...</div>
-      <div class="status" id="cvPaymentStatus">Ödeme başlatıldığında iyzico güvenli ödeme sayfasına yönlendirileceksiniz.</div>
+      <div class="status" id="cvPaymentStatus">Ödeme başlatıldığında güvenli ödeme oturumu hazırlanacaktır.</div>
       <p class="finePrint">Ödeme başarılı olursa hesabınıza 1 CV üretim kredisi eklenir ve tekrar CV formuna dönebilirsiniz.</p>
     </aside>
   </section>
@@ -173,7 +273,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
 <script src="js/core.js?v=20260619-live4" defer></script>
 <script src="js/supabase-client.js?v=20260619-live4" defer></script>
 <script src="js/auth.js?v=20260619-live4" defer></script>
-<script src="js/cv-access.js?v=20260619-cvpay2" defer></script>
+<script src="js/cv-access.js?v=20260619-payform1" defer></script>
 <script src="js/layout.v3.js?v=20260619-live4" defer></script>
 <script src="js/platform.js?v=20260619-live4" defer></script>
 <script>
@@ -189,19 +289,41 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const form = document.getElementById("cvPaymentForm");
   const status = document.getElementById("cvPaymentStatus");
+  const cardNumber = document.getElementById("cardNumber");
+  const cardExpiry = document.getElementById("cardExpiry");
+  const cardCvc = document.getElementById("cardCvc");
+
+  try{
+    const user = App.auth && App.auth.getUser ? await App.auth.getUser() : null;
+    if(user && user.email && !form.buyerEmail.value){
+      form.buyerEmail.value = user.email;
+    }
+  }catch(error){}
+
+  cardNumber.addEventListener("input", () => {
+    cardNumber.value = cardNumber.value.replace(/\D/g,"").slice(0,16).replace(/(\d{4})(?=\d)/g,"$1 ");
+  });
+  cardExpiry.addEventListener("input", () => {
+    const value = cardExpiry.value.replace(/\D/g,"").slice(0,4);
+    cardExpiry.value = value.length > 2 ? `${value.slice(0,2)}/${value.slice(2)}` : value;
+  });
+  cardCvc.addEventListener("input", () => {
+    cardCvc.value = cardCvc.value.replace(/\D/g,"").slice(0,4);
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const button = form.querySelector("button[type='submit']");
     const original = button.textContent;
     button.disabled = true;
     button.textContent = "Ödeme hazırlanıyor...";
-    status.textContent = "iyzico ödeme ekranı hazırlanıyor.";
+    status.textContent = "Güvenli ödeme oturumu hazırlanıyor.";
     try{
       if(!App.cvAccess || !App.cvAccess.createCVCheckout){
         throw new Error("CV ödeme modülü yüklenemedi.");
       }
       const payment = await App.cvAccess.createCVCheckout({
-        identityNumber: form.identityNumber.value,
+        buyerEmail: form.buyerEmail.value,
         buyerPhone: form.buyerPhone.value
       });
       if(payment && payment.paymentPageUrl){

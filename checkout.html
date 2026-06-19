@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ödeme | AllonaHub</title>
-  <meta name="description" content="AllonaHub teslimat, fatura ve iyzico ödeme hazırlığı.">
-  <link rel="stylesheet" href="css/styles.v2.css?v=20260619-live4">
+  <meta name="description" content="AllonaHub teslimat, fatura ve kartlı ödeme hazırlığı.">
+  <link rel="stylesheet" href="css/styles.v2.css?v=20260619-payform1">
   <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
 </head>
 <body>
@@ -16,7 +16,7 @@
         <div>
           <p class="eyebrow">Ödeme</p>
           <h1>Güvenli Ödeme</h1>
-          <p>Teslimat ve fatura bilgileri alınır; kart bilgileri yalnızca iyzico ekranında girilir.</p>
+          <p>Teslimat, fatura ve kart bilgileri güvenli ödeme akışı için hazırlanır.</p>
         </div>
       </section>
 
@@ -36,10 +36,6 @@
             <div class="field">
               <label for="email">E-posta</label>
               <input id="email" type="email" name="email" required autocomplete="email">
-            </div>
-            <div class="field">
-              <label for="identity-number">T.C. Kimlik / Vergi No</label>
-              <input id="identity-number" name="identity_number" inputmode="numeric" minlength="10" required>
             </div>
             <div class="field field--full">
               <label for="shipping-address">Teslimat Adresi</label>
@@ -89,8 +85,37 @@
               <label for="billing-city">Fatura ili</label>
               <input id="billing-city" name="billing_city">
             </div>
+
+            <div class="payment-card-panel">
+              <div class="payment-card-panel__head">
+                <strong>Kart Bilgileri</strong>
+                <span>Güvenli ödeme</span>
+              </div>
+              <div class="payment-card-grid">
+                <div class="field field--full">
+                  <label for="card-holder">Kart Üzerindeki İsim</label>
+                  <input id="card-holder" name="card_holder" autocomplete="cc-name" placeholder="Ad Soyad" required>
+                </div>
+                <div class="field field--full">
+                  <label for="card-number">Kart Numarası</label>
+                  <input id="card-number" name="card_number" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
+                </div>
+                <div class="field">
+                  <label for="card-expiry">Son Kullanma Tarihi</label>
+                  <input id="card-expiry" name="card_expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
+                </div>
+                <div class="field">
+                  <label for="card-cvc">CVC</label>
+                  <input id="card-cvc" name="card_cvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Ödeme Yap</button>
+            <a class="btn btn--light" href="cart.html">Sepete Dön</a>
             <div class="payment-methods" aria-label="Desteklenen ödeme yöntemleri">
-              <span class="payment-methods__title">Kart bilgileri güvenli iyzico ödeme ekranında girilir.</span>
+              <span class="payment-methods__title">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</span>
               <div class="payment-logos" aria-hidden="true">
                 <span class="payment-logo payment-logo--iyzico">iyzico</span>
                 <span class="payment-logo payment-logo--visa">VISA</span>
@@ -98,10 +123,6 @@
                 <span class="payment-logo payment-logo--amex">AMEX</span>
               </div>
             </div>
-          </div>
-          <div class="form-actions">
-            <button class="btn" type="submit">Kart Bilgilerine Devam Et</button>
-            <a class="btn btn--light" href="cart.html">Sepete Dön</a>
           </div>
         </form>
         <aside class="summary-card" data-checkout-summary></aside>
@@ -117,7 +138,7 @@
   <script src="js/auth.js?v=20260619-live4" defer></script>
   <script src="js/cart.js?v=20260619-live4" defer></script>
   <script src="js/layout.v3.js?v=20260619-live4" defer></script>
-  <script src="js/checkout-page.js" defer></script>
+  <script src="js/checkout-page.js?v=20260619-payform1" defer></script>
   <script src="js/platform.js?v=20260619-live4" defer></script>
 </body>
 </html>
