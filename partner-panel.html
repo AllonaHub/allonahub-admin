@@ -491,7 +491,7 @@ function safeText(value, fallback=""){
 
 function showNotice(message){
   const n = document.getElementById("notice");
-  n.innerHTML = message;
+  n.textContent = String(message || "");
   n.style.display = "block";
   setTimeout(() => { n.style.display = "none"; }, 4300);
 }
@@ -623,7 +623,8 @@ async function loadPartnerProfile(){
     .maybeSingle();
 
   if(error){
-    showNotice("Partner bilgisi alınamadı: " + error.message);
+    console.error("Partner bilgisi alınamadı", error);
+    showNotice("Partner bilgisi şu anda alınamadı.");
     return;
   }
 
@@ -666,7 +667,8 @@ async function savePartnerProfile(){
     .single();
 
   if(error){
-    showNotice("Partner bilgileri güncellenemedi: " + error.message);
+    console.error("Partner bilgileri güncellenemedi", error);
+    showNotice("Partner bilgileri güncellenemedi.");
     return;
   }
 
@@ -683,7 +685,14 @@ async function savePartnerProfile(){
   }
 
   const file = fileInput.files[0];
-  const fileExt = file.name.split(".").pop();
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const fileExt = String(file.name.split(".").pop() || "").toLowerCase();
+  if(!allowedTypes.includes(file.type) || !["jpg","jpeg","png","webp"].includes(fileExt)){
+    throw new Error("Sadece JPG, PNG veya WEBP görsel yüklenebilir.");
+  }
+  if(file.size > 5 * 1024 * 1024){
+    throw new Error("Ürün görseli en fazla 5 MB olabilir.");
+  }
   const fileName = `products/${currentPartner.partner_id || "partner"}-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
   const { error: uploadError } = await supabaseClient.storage
@@ -772,7 +781,8 @@ async function saveProduct(){
       .insert([insertData]);
 
     if(error){
-      showNotice("Ürün kaydedilemedi: " + error.message);
+      console.error("Ürün kaydedilemedi", error);
+      showNotice("Ürün kaydedilemedi.");
       return;
     }
 
@@ -782,7 +792,8 @@ async function saveProduct(){
     openSection("products");
 
   }catch(err){
-    showNotice("Ürün kaydedilemedi: " + err.message);
+    console.error("Ürün kaydedilemedi", err);
+    showNotice("Ürün kaydedilemedi.");
   }finally{
     btn.disabled = false;
     btn.textContent = "Ürünü Kaydet";
@@ -827,7 +838,8 @@ async function loadProducts(){
     .order("created_at", { ascending:false });
 
   if(error){
-    showNotice("Ürünler alınamadı: " + error.message);
+    console.error("Ürünler alınamadı", error);
+    showNotice("Ürünler şu anda alınamadı.");
     return;
   }
 
@@ -978,7 +990,8 @@ async function deleteProduct(id){
     .eq("partner_id", currentPartner.partner_id);
 
   if(error){
-    showNotice("Ürün silinemedi: " + error.message);
+    console.error("Ürün silinemedi", error);
+    showNotice("Ürün silinemedi.");
     return;
   }
 
@@ -1061,7 +1074,8 @@ async function updateProduct(id){
       .eq("partner_id", currentPartner.partner_id);
 
     if(error){
-      showNotice("Ürün güncellenemedi: " + error.message);
+      console.error("Ürün güncellenemedi", error);
+      showNotice("Ürün güncellenemedi.");
       return;
     }
 
@@ -1076,7 +1090,8 @@ async function updateProduct(id){
     openSection("products");
 
   }catch(err){
-    showNotice("Ürün güncellenemedi: " + err.message);
+    console.error("Ürün güncellenemedi", err);
+    showNotice("Ürün güncellenemedi.");
   }finally{
     btn.disabled = false;
     btn.textContent = "Ürünü Kaydet";
@@ -1160,7 +1175,7 @@ setInterval(async ()=>{
 console.log("✅ AllonaHub Partner Panel Loaded");
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live5" defer></script>
+  <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
 </body>

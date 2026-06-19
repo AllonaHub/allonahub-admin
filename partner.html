@@ -285,9 +285,21 @@ emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
 
 function showNotice(message){
   const n=document.getElementById("notice");
-  n.innerHTML=message;
+  n.textContent=String(message || "");
   n.style.display="block";
   setTimeout(()=>{n.style.display="none"},4500);
+}
+
+function partnerRateLimit(key,limit,windowMs){
+  const storageKey="allona_rate:"+key;
+  const now=Date.now();
+  let hits=[];
+  try{hits=JSON.parse(localStorage.getItem(storageKey)||"[]")}catch(err){hits=[]}
+  hits=hits.filter(time=>now-Number(time)<windowMs);
+  if(hits.length>=limit)return false;
+  hits.push(now);
+  localStorage.setItem(storageKey,JSON.stringify(hits));
+  return true;
 }
 
 function openPartnerTab(tabId,event){
@@ -325,7 +337,7 @@ async function partnerLogin(){
     const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
 
     if(error){
-      showNotice("Giriş başarısız: "+error.message);
+      showNotice("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
       return;
     }
 
@@ -337,7 +349,7 @@ async function partnerLogin(){
       .maybeSingle();
 
     if(partnerError){
-      showNotice("Partner kaydı okunamadı: "+partnerError.message);
+      showNotice("Partner kaydı şu anda okunamadı.");
       return;
     }
 
@@ -359,7 +371,7 @@ async function partnerLogin(){
     window.location.href="partner-panel.html";
 
   }catch(err){
-    showNotice("Giriş sırasında hata oluştu: "+err.message);
+    showNotice("Giriş sırasında hata oluştu. Lütfen tekrar deneyin.");
   }finally{
     btn.disabled=false;
     btn.textContent="Partner Paneline Giriş";
@@ -367,8 +379,10 @@ async function partnerLogin(){
 }
 
 function getApplyData(){
+  const partnerName=document.getElementById("partner_name").value.trim();
   return{
-    partner_name:document.getElementById("partner_name").value.trim(),
+    partner_name:partnerName,
+    company_name:partnerName,
     contact_name:document.getElementById("contact_name").value.trim(),
     email:document.getElementById("email").value.trim().toLowerCase(),
     phone:document.getElementById("countryCode").value+" "+document.getElementById("phone").value.trim(),
@@ -389,6 +403,14 @@ function validateApply(data){
   if(!data.partner_name)return "Firma / İşletme adı zorunlu.";
   if(!data.contact_name)return "Yetkili ad soyad zorunlu.";
   if(!data.email || !data.email.includes("@"))return "Geçerli bir e-posta gir.";
+  if(data.website){
+    try{
+      const parsed=new URL(data.website);
+      if(!["http:","https:"].includes(parsed.protocol))return "Web sitesi adresini kontrol et.";
+    }catch(err){
+      return "Web sitesi adresini kontrol et.";
+    }
+  }
 
   const rawPhone=document.getElementById("phone").value.replace(/\D/g,"");
   if(!rawPhone)return "Telefon numarası zorunlu.";
@@ -405,6 +427,11 @@ function validateApply(data){
 }
 
 async function sendPartnerApplication(){
+  if(!partnerRateLimit("partner-application",3,60*60*1000)){
+    showNotice("Çok sık başvuru denemesi yapıldı. Lütfen biraz bekleyin.");
+    return;
+  }
+
   const data=getApplyData();
   const error=validateApply(data);
 
@@ -423,18 +450,20 @@ async function sendPartnerApplication(){
       .insert([data]);
 
     if(supabaseError){
-      showNotice("Başvuru Supabase'e kaydedilemedi: "+supabaseError.message);
+      console.error("Partner başvurusu kaydedilemedi", supabaseError);
+      showNotice("Başvuru şu anda kaydedilemedi. Lütfen daha sonra tekrar deneyin.");
       return;
     }
 
     await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
 
     localStorage.setItem("lastPartnerApplication",JSON.stringify(data));
-    showNotice("<b>Başvurunuz alındı ✅</b><br>Başvuru kaydedildi ve mail gönderildi.");
+    showNotice("Başvurunuz alındı. Başvuru kaydedildi ve mail gönderildi.");
     clearApplyForm(false);
 
   }catch(err){
-    showNotice("Başvuru gönderilemedi: "+err.message);
+    console.error("Partner başvurusu gönderilemedi", err);
+    showNotice("Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
   }finally{
     sendBtn.disabled=false;
     sendBtn.textContent="Başvuruyu Gönder";
@@ -481,7 +510,7 @@ document.getElementById("phone").addEventListener("input",function(){
 });
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live5" defer></script>
+  <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
 </body>

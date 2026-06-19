@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const security = App.security;
   const ADDRESS_STORAGE_PREFIX = "allona_addresses_v1:";
 
   function addressStorageKey(userId) {
@@ -33,6 +34,31 @@
     const address = raw || {};
     return {
       id: address.id || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      title: security ? security.normalizeText(address.title || "Adres", { max: 80 }) : address.title || "Adres",
+      full_name: security ? security.normalizeText(address.full_name, { max: 120 }) : address.full_name || "",
+      phone: security ? security.normalizeText(address.phone, { max: 30 }) : address.phone || "",
+      address: security ? security.normalizeMultiline(address.address, { max: 600 }) : address.address || "",
+      district: security ? security.normalizeText(address.district, { max: 90 }) : address.district || "",
+      city: security ? security.normalizeText(address.city, { max: 90 }) : address.city || "",
+      zip_code: security ? security.normalizeText(address.zip_code, { max: 20 }) : address.zip_code || "",
+      is_default: Boolean(address.is_default),
+      created_at: address.created_at || new Date().toISOString()
+    };
+  }
+
+  function validateAddress(raw) {
+    const address = normalizeAddress(raw);
+    if (address.title.length < 2) throw new Error("Adres başlığını kontrol edin.");
+    if (address.full_name.length < 2) throw new Error("Alıcı adını kontrol edin.");
+    if (security && address.phone && !security.isPhone(address.phone)) throw new Error("Telefon numarasını kontrol edin.");
+    if (address.city.length < 2) throw new Error("İl bilgisini kontrol edin.");
+    if (address.address.length < 10) throw new Error("Açık adres en az 10 karakter olmalıdır.");
+    return address;
+  }
+
+  function remoteAddressPayload(raw) {
+    const address = validateAddress(raw);
+    return {
       title: address.title || "Adres",
       full_name: address.full_name || "",
       phone: address.phone || "",
@@ -40,21 +66,7 @@
       district: address.district || "",
       city: address.city || "",
       zip_code: address.zip_code || "",
-      created_at: address.created_at || new Date().toISOString()
-    };
-  }
-
-  function remoteAddressPayload(raw, userId) {
-    const address = raw || {};
-    return {
-      user_id: userId,
-      title: address.title || "Adres",
-      full_name: address.full_name || "",
-      phone: address.phone || "",
-      address: address.address || "",
-      district: address.district || "",
-      city: address.city || "",
-      zip_code: address.zip_code || ""
+      is_default: Boolean(address.is_default)
     };
   }
 
@@ -204,8 +216,10 @@
       const button = form.querySelector("button[type='submit']");
       button.disabled = true;
       try {
+        const limit = security && security.rateLimit(`address:${user.id}`, { limit: 8, windowMs: 10 * 60 * 1000 });
+        if (limit && !limit.allowed) throw new Error("Çok sık adres işlemi yapıldı. Lütfen biraz bekleyin.");
         const formPayload = core.parseForm(form);
-        const payload = normalizeAddress(formPayload);
+        const payload = validateAddress(formPayload);
         if (state.source === "local") {
           const addresses = [payload, ...readLocalAddresses(user.id)];
           writeLocalAddresses(user.id, addresses);
@@ -215,7 +229,7 @@
           return;
         }
 
-        const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload, user.id));
+        const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload));
         if (error) {
           if (isAddressesSchemaError(error)) {
             const addresses = [payload, ...readLocalAddresses(user.id)];
@@ -232,7 +246,10 @@
         await loadAddresses(user.id);
         core.toast("Adres kaydedildi.");
       } catch (error) {
-        core.toast("Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.", "error");
+        const message = /kontrol edin|bekleyin|karakter/i.test(error.message || "")
+          ? error.message
+          : (security ? security.publicErrorMessage(error, "Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.") : "Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.");
+        core.toast(message, "error");
       } finally {
         button.disabled = false;
       }

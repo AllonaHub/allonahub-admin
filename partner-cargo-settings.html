@@ -80,7 +80,7 @@ let currentPartner = null;
 
 function showNotice(msg){
   const n=document.getElementById("notice");
-  n.innerHTML=msg;
+  n.textContent=String(msg || "");
   n.style.display="block";
   setTimeout(()=>n.style.display="none",3500);
 }
@@ -137,19 +137,20 @@ async function saveCargoSettings(){
     .single();
 
   if(error){
-    showNotice("Kargo firması kaydedilemedi: "+error.message);
+    console.error("Kargo firması kaydedilemedi", error);
+    showNotice("Kargo firması kaydedilemedi.");
     return;
   }
 
   currentPartner=data;
   localStorage.setItem("allonaPartnerProfile",JSON.stringify(data));
-  showNotice("<b>Kargo firması kaydedildi ✅</b>");
+  showNotice("Kargo firması kaydedildi.");
 }
 
 loadPartner();
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live5" defer></script>
+  <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
 </body>

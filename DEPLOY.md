@@ -4,18 +4,21 @@
 
 1. Supabase projesinde SQL Editor aç.
 2. `supabase/schema.sql` içeriğini çalıştır.
-3. Auth URL ayarlarına canlı domaini ekle.
-4. Storage bucketlarını oluştur:
+3. Ardından `supabase/migrations/20260619110000_security_hardening.sql` migration'ını çalıştır.
+4. Auth URL ayarlarına canlı domaini ekle.
+5. Storage bucketlarını oluştur:
    - `product-images`
    - `brand-assets`
    - `partner-documents`
-5. Edge Function secretlarını ekle:
+6. Edge Function secretlarını ekle:
 
 ```bash
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
 supabase secrets set IYZICO_API_KEY="..."
 supabase secrets set IYZICO_SECRET_KEY="..."
 supabase secrets set IYZICO_BASE_URL="https://sandbox-api.iyzipay.com"
 supabase secrets set SITE_URL="https://allonahub.com"
+supabase secrets set ALLOWED_ORIGINS="https://allonahub.com"
 supabase secrets set CV_PRICE_TRY="149.99"
 ```
 
@@ -44,6 +47,9 @@ Kartlı ödeme formları e-posta, telefon ve kart bilgisi alanlarıyla iyzico on
 - SSL: Full
 - Cache: HTML kısa, CSS/JS/assets uzun cache
 - WAF: temel bot ve rate limit kuralları
+- Rate limit: kayıt, giriş, partner başvuru, checkout ve CV ödeme URL'leri
+- Security Headers: HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- Bot koruması: şüpheli form POST ve hızlı checkout denemelerine challenge
 - Redirect: `http` -> `https`
 - Domain: canlı özel domain
 

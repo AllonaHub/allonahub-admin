@@ -1,17 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
-
 const encoder = new TextEncoder();
 
-function json(body: unknown, status = 200) {
+function allowedOrigin(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const configured = (Deno.env.get("ALLOWED_ORIGINS") || Deno.env.get("SITE_URL") || "https://allonahub.com")
+    .split(",")
+    .map((item) => item.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const allowList = [...configured, ...local];
+  return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
+}
+
+function corsHeaders(req: Request) {
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin"
+  };
+}
+
+function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" }
   });
 }
 
@@ -58,13 +72,15 @@ async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: s
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders(req) });
   }
   if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json(req, { error: "Method not allowed" }, 405);
   }
 
   try {
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > 12000) return json(req, { error: "Request body is too large" }, 413);
     const supabaseUrl = env("SUPABASE_URL");
     const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
     const apiKey = env("IYZICO_API_KEY");
@@ -78,13 +94,29 @@ Deno.serve(async (req) => {
     const jwt = authHeader.replace("Bearer ", "");
     const { data: authData, error: authError } = await admin.auth.getUser(jwt);
     if (authError || !authData.user) {
-      return json({ error: "Unauthorized" }, 401);
+      return json(req, { error: "Unauthorized" }, 401);
     }
 
     const bodyData = await req.json().catch(() => ({}));
     const identityNumber = "11111111111";
     const buyerEmail = String(bodyData.buyerEmail || authData.user.email || "");
     const buyerPhone = String(bodyData.buyerPhone || authData.user.phone || "");
+    if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(buyerEmail)) {
+      return json(req, { error: "Invalid buyer information" }, 400);
+    }
+    if (buyerPhone && buyerPhone.replace(/\D/g, "").length > 15) {
+      return json(req, { error: "Invalid buyer information" }, 400);
+    }
+
+    const { count: recentCount, error: recentError } = await admin
+      .from("cv_payments")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", authData.user.id)
+      .gte("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString());
+    if (recentError) throw recentError;
+    if (Number(recentCount || 0) >= 5) {
+      return json(req, { error: "Çok sık ödeme denemesi yapıldı. Lütfen biraz bekleyin." }, 429);
+    }
 
     const { data: profile } = await admin
       .from("profiles")
@@ -171,7 +203,8 @@ Deno.serve(async (req) => {
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
       await admin.from("cv_payments").update({ status: "failed" }).eq("id", payment.id);
-      return json({ error: result.errorMessage || "CV payment checkout could not be initialized", details: result }, 400);
+      console.error("CV iyzico checkout failed", { cvPaymentId: payment.id, result });
+      return json(req, { error: "CV ödeme oturumu başlatılamadı." }, 400);
     }
 
     await admin
@@ -182,12 +215,13 @@ Deno.serve(async (req) => {
       })
       .eq("id", payment.id);
 
-    return json({
+    return json(req, {
       paymentPageUrl: result.paymentPageUrl,
       token: result.token,
       cvPaymentId: payment.id
     });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Unexpected error" }, 500);
+    console.error("create-cv-checkout failed", error);
+    return json(req, { error: "CV ödeme işlemi şu anda başlatılamadı." }, 500);
   }
 });

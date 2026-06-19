@@ -1,17 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
-
 const encoder = new TextEncoder();
 
-function json(body: unknown, status = 200) {
+function allowedOrigin(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const configured = (Deno.env.get("ALLOWED_ORIGINS") || Deno.env.get("SITE_URL") || "https://allonahub.com")
+    .split(",")
+    .map((item) => item.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const allowList = [...configured, ...local];
+  return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
+}
+
+function corsHeaders(req: Request) {
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin"
+  };
+}
+
+function json(req: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" }
   });
 }
 
@@ -58,13 +72,15 @@ async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: s
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders(req) });
   }
   if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json(req, { error: "Method not allowed" }, 405);
   }
 
   try {
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > 20000) return json(req, { error: "Request body is too large" }, 413);
     const supabaseUrl = env("SUPABASE_URL");
     const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
     const apiKey = env("IYZICO_API_KEY");
@@ -77,11 +93,11 @@ Deno.serve(async (req) => {
     const jwt = authHeader.replace("Bearer ", "");
     const { data: authData, error: authError } = await admin.auth.getUser(jwt);
     if (authError || !authData.user) {
-      return json({ error: "Unauthorized" }, 401);
+      return json(req, { error: "Unauthorized" }, 401);
     }
 
-    const { orderId, buyer = {} } = await req.json();
-    if (!orderId) return json({ error: "orderId is required" }, 400);
+    const { orderId, buyer = {} } = await req.json().catch(() => ({}));
+    if (!orderId || !/^[0-9a-f-]{36}$/i.test(String(orderId))) return json(req, { error: "Invalid order" }, 400);
     const identityNumber = String(buyer.identityNumber || "11111111111").replace(/\D/g, "") || "11111111111";
 
     const { data: profile } = await admin
@@ -97,11 +113,11 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (orderError) throw orderError;
-    if (!order) return json({ error: "Order not found" }, 404);
+    if (!order) return json(req, { error: "Order not found" }, 404);
 
     const adminRoles = ["admin", "super_admin"];
     if (order.user_id !== authData.user.id && !adminRoles.includes(profile?.role)) {
-      return json({ error: "Forbidden" }, 403);
+      return json(req, { error: "Forbidden" }, 403);
     }
 
     const shipping = order.shipping_address || {
@@ -179,7 +195,8 @@ Deno.serve(async (req) => {
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
       await admin.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
-      return json({ error: result.errorMessage || "iyzico checkout could not be initialized", details: result }, 400);
+      console.error("iyzico checkout failed", { orderId: order.id, result });
+      return json(req, { error: "Ödeme oturumu başlatılamadı." }, 400);
     }
 
     await admin
@@ -189,11 +206,12 @@ Deno.serve(async (req) => {
       })
       .eq("id", order.id);
 
-    return json({
+    return json(req, {
       paymentPageUrl: result.paymentPageUrl,
       token: result.token
     });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Unexpected error" }, 500);
+    console.error("create-iyzico-checkout failed", error);
+    return json(req, { error: "Ödeme işlemi şu anda başlatılamadı." }, 500);
   }
 });

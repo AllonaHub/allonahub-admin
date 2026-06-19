@@ -1,17 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
-};
-
 const encoder = new TextEncoder();
 
-function response(body: string, status = 200, contentType = "text/plain") {
+function allowedOrigin(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const configured = (Deno.env.get("ALLOWED_ORIGINS") || Deno.env.get("SITE_URL") || "https://allonahub.com")
+    .split(",")
+    .map((item) => item.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const allowList = [...configured, ...local];
+  return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
+}
+
+function corsHeaders(req: Request) {
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin(req),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Vary": "Origin"
+  };
+}
+
+function response(req: Request, body: string, status = 200, contentType = "text/plain") {
   return new Response(body, {
     status,
-    headers: { ...corsHeaders, "Content-Type": contentType }
+    headers: { ...corsHeaders(req), "Content-Type": contentType }
   });
 }
 
@@ -64,7 +78,7 @@ async function tokenFromRequest(req: Request) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return response("ok");
+    return response(req, "ok");
   }
 
   try {
@@ -80,8 +94,10 @@ Deno.serve(async (req) => {
     const orderId = url.searchParams.get("orderId");
     const cvPaymentId = url.searchParams.get("cvPaymentId");
     const token = await tokenFromRequest(req);
-    if (!orderId && !cvPaymentId) return response("Missing orderId or cvPaymentId", 400);
-    if (!token) return response("Missing token", 400);
+    if (!orderId && !cvPaymentId) return response(req, "Missing payment reference", 400);
+    if (orderId && !/^[0-9a-f-]{36}$/i.test(orderId)) return response(req, "Invalid payment reference", 400);
+    if (cvPaymentId && !/^[0-9a-f-]{36}$/i.test(cvPaymentId)) return response(req, "Invalid payment reference", 400);
+    if (!token || token.length > 500) return response(req, "Missing token", 400);
 
     const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
     const payload = {
@@ -112,7 +128,7 @@ Deno.serve(async (req) => {
         .eq("id", cvPaymentId)
         .maybeSingle();
       if (cvPaymentError) throw cvPaymentError;
-      if (!cvPayment) return response("CV payment not found", 404);
+      if (!cvPayment) return response(req, "CV payment not found", 404);
 
       let shouldCreditCV = false;
       if (paymentStatus === "paid") {
@@ -186,6 +202,7 @@ Deno.serve(async (req) => {
     const target = `${siteUrl.replace(/\/$/, "")}/orders.html?payment=${paymentStatus}`;
     return Response.redirect(target, 303);
   } catch (error) {
-    return response(error instanceof Error ? error.message : "Unexpected error", 500);
+    console.error("iyzico-callback failed", error);
+    return response(req, "Payment callback could not be completed", 500);
   }
 });

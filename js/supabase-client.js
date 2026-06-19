@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   const config = App.config;
+  const security = App.security;
 
   if (window.supabase && config.supabaseUrl && config.supabaseAnonKey) {
     App.supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
@@ -43,6 +44,11 @@
       const maxMatch = !max || item.price <= max;
       return categoryMatch && searchMatch && minMatch && maxMatch;
     });
+  }
+
+  function missingBackend(error) {
+    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+    return /function|schema cache|could not find|does not exist|not found/i.test(message);
   }
 
   async function listActiveProducts(filters) {
@@ -94,17 +100,20 @@
   }
 
   async function upsertProduct(payload) {
+    const cleanName = security ? security.normalizeText(payload.name, { max: 180 }) : String(payload.name || "").trim();
+    if (!cleanName) throw new Error("Ürün adı zorunludur.");
+    if (payload.id && security && !security.isUuid(payload.id)) throw new Error("Ürün kimliği geçersiz.");
     const product = {
-      name: payload.name,
-      description: payload.description || "",
+      name: cleanName,
+      description: security ? security.normalizeMultiline(payload.description, { max: 1800 }) : payload.description || "",
       price: Number(payload.price || 0),
       stock: Number(payload.stock || 0),
-      image_url: payload.image_url || "",
-      category: payload.category || "Genel",
-      status: payload.status || "active",
-      slug: payload.slug || core.slugify(payload.name),
-      meta_title: payload.meta_title || payload.name,
-      meta_description: payload.meta_description || payload.description || ""
+      image_url: security ? security.sanitizePublicUrl(payload.image_url) : payload.image_url || "",
+      category: security ? security.normalizeText(payload.category || "Genel", { max: 90 }) : payload.category || "Genel",
+      status: ["active", "draft", "archived"].includes(payload.status) ? payload.status : "active",
+      slug: payload.slug ? core.slugify(payload.slug) : core.slugify(cleanName),
+      meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
+      meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || ""
     };
 
     const query = payload.id
@@ -117,12 +126,18 @@
   }
 
   async function deleteProduct(id) {
+    if (security && !security.isUuid(id)) throw new Error("Ürün kimliği geçersiz.");
     const { error } = await client().from("products").delete().eq("id", id);
     if (error) throw error;
   }
 
   async function updateProductFields(id, payload) {
-    const { data, error } = await client().from("products").update(payload).eq("id", id).select("*").single();
+    if (security && !security.isUuid(id)) throw new Error("Ürün kimliği geçersiz.");
+    const cleanPayload = { ...payload };
+    if (Object.prototype.hasOwnProperty.call(cleanPayload, "stock")) {
+      cleanPayload.stock = Math.max(0, Number(cleanPayload.stock || 0));
+    }
+    const { data, error } = await client().from("products").update(cleanPayload).eq("id", id).select("*").single();
     if (error) throw error;
     return core.normalizeProduct(data);
   }
@@ -157,13 +172,42 @@
   }
 
   async function updateOrder(id, payload) {
+    if (security && !security.isUuid(id)) throw new Error("Sipariş kimliği geçersiz.");
     const { data, error } = await client().from("orders").update(payload).eq("id", id).select("*").single();
     if (error) throw error;
     return data;
   }
 
   async function createOrder(order, items) {
-    const { data: created, error } = await client().from("orders").insert(order).select("*").single();
+    const lines = (items || [])
+      .map((item) => ({
+        product_id: String(item.product && item.product.id || item.id || ""),
+        quantity: Math.max(1, Math.min(99, Number(item.qty || item.quantity || 1)))
+      }))
+      .filter((item) => !security || security.isUuid(item.product_id));
+    if (!lines.length) throw new Error("Sipariş için geçerli ürün bulunamadı.");
+
+    try {
+      const { data, error } = await client().rpc("create_secure_order", {
+        p_customer_name: order.customer_name,
+        p_customer_email: order.customer_email,
+        p_customer_phone: order.customer_phone,
+        p_city: order.city,
+        p_address: order.address,
+        p_items: lines,
+        p_coupon_code: order.coupon_code || null
+      });
+      if (error) throw error;
+      if (typeof data === "string") return JSON.parse(data);
+      return data;
+    } catch (error) {
+      if (!missingBackend(error)) throw error;
+      console.warn("Güvenli sipariş RPC henüz aktif değil; RLS korumalı klasik akış kullanılıyor.", error);
+    }
+
+    const fallbackOrder = { ...order };
+    delete fallbackOrder.coupon_code;
+    const { data: created, error } = await client().from("orders").insert(fallbackOrder).select("*").single();
     if (error) throw error;
 
     const rows = items.map((item) => ({

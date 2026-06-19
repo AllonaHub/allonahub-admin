@@ -1,5 +1,6 @@
 (function () {
   const App = window.Allona = window.Allona || {};
+  const security = App.security;
 
   async function getSession() {
     if (!App.supabase) return null;
@@ -14,19 +15,23 @@
   }
 
   async function signIn(email, password) {
-    const { data, error } = await App.supabase.auth.signInWithPassword({ email, password });
+    const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
+    const { data, error } = await App.supabase.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) throw error;
     return data;
   }
 
   async function signUp({ email, password, full_name, phone }) {
+    const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
+    const cleanName = security ? security.normalizeText(full_name, { max: 120 }) : String(full_name || "").trim();
+    const cleanPhone = security ? security.normalizeText(phone, { max: 30 }) : String(phone || "").trim();
     const { data, error } = await App.supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
         data: {
-          full_name,
-          phone
+          full_name: cleanName,
+          phone: cleanPhone
         }
       }
     });
@@ -75,8 +80,8 @@
 
     const profile = {
       id: user.id,
-      full_name: payload.full_name || "",
-      phone: payload.phone || "",
+      full_name: security ? security.normalizeText(payload.full_name, { max: 120 }) : payload.full_name || "",
+      phone: security ? security.normalizeText(payload.phone, { max: 30 }) : payload.phone || "",
       role: current?.role || "customer",
       updated_at: new Date().toISOString()
     };

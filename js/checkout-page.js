@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const security = App.security;
   let lines = [];
   let appliedCoupon = null;
 
@@ -71,38 +72,70 @@
 
   function calculateOrderPayload(form) {
     const data = core.parseForm(form);
+    const clean = {
+      full_name: security ? security.normalizeText(data.full_name, { max: 120 }) : String(data.full_name || "").trim(),
+      phone: security ? security.normalizeText(data.phone, { max: 30 }) : String(data.phone || "").trim(),
+      email: security ? security.normalizeText(data.email, { max: 180 }).toLowerCase() : String(data.email || "").trim().toLowerCase(),
+      shipping_address: security ? security.normalizeMultiline(data.shipping_address, { max: 700 }) : String(data.shipping_address || "").trim(),
+      shipping_district: security ? security.normalizeText(data.shipping_district, { max: 90 }) : String(data.shipping_district || "").trim(),
+      shipping_city: security ? security.normalizeText(data.shipping_city, { max: 90 }) : String(data.shipping_city || "").trim(),
+      shipping_zip: security ? security.normalizeText(data.shipping_zip, { max: 20 }) : String(data.shipping_zip || "").trim(),
+      billing_address: security ? security.normalizeMultiline(data.billing_address, { max: 700 }) : String(data.billing_address || "").trim(),
+      billing_city: security ? security.normalizeText(data.billing_city, { max: 90 }) : String(data.billing_city || "").trim(),
+      invoice_type: data.invoice_type === "company" ? "company" : "individual",
+      tax_office: security ? security.normalizeText(data.tax_office, { max: 90 }) : String(data.tax_office || "").trim(),
+      coupon_code: security ? security.normalizeText(data.coupon_code, { max: 40 }).toUpperCase() : String(data.coupon_code || "").trim().toUpperCase(),
+      billing_same: data.billing_same,
+      card_holder: data.card_holder,
+      card_number: data.card_number,
+      card_expiry: data.card_expiry,
+      card_cvc: data.card_cvc
+    };
+    validateCheckoutData(clean);
     const totals = App.cart.totals(lines, appliedCoupon);
     const acceptedAt = new Date().toISOString();
     const address = compactLines([
-      data.shipping_address,
-      data.shipping_district ? `İlçe: ${data.shipping_district}` : "",
-      data.shipping_city ? `İl: ${data.shipping_city}` : "",
-      data.shipping_zip ? `Posta kodu: ${data.shipping_zip}` : "",
-      data.billing_same === "on" ? "Fatura adresi teslimat adresiyle aynı." : "",
-      data.billing_same !== "on" && data.billing_address ? `Fatura adresi: ${data.billing_address}` : "",
-      data.billing_same !== "on" && data.billing_city ? `Fatura ili: ${data.billing_city}` : "",
-      data.invoice_type ? `Fatura türü: ${data.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
-      data.tax_office ? `Vergi dairesi: ${data.tax_office}` : "",
-      data.coupon_code ? `Kupon: ${String(data.coupon_code).trim().toUpperCase()}` : "",
+      clean.shipping_address,
+      clean.shipping_district ? `İlçe: ${clean.shipping_district}` : "",
+      clean.shipping_city ? `İl: ${clean.shipping_city}` : "",
+      clean.shipping_zip ? `Posta kodu: ${clean.shipping_zip}` : "",
+      clean.billing_same === "on" ? "Fatura adresi teslimat adresiyle aynı." : "",
+      clean.billing_same !== "on" && clean.billing_address ? `Fatura adresi: ${clean.billing_address}` : "",
+      clean.billing_same !== "on" && clean.billing_city ? `Fatura ili: ${clean.billing_city}` : "",
+      clean.invoice_type ? `Fatura türü: ${clean.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
+      clean.tax_office ? `Vergi dairesi: ${clean.tax_office}` : "",
+      clean.coupon_code ? `Kupon: ${clean.coupon_code}` : "",
       `Yasal onaylar: Ön bilgilendirme ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
     ]);
 
     return {
-      customer_name: data.full_name,
-      customer_phone: data.phone,
-      customer_email: data.email,
-      city: data.shipping_city,
+      customer_name: clean.full_name,
+      customer_phone: clean.phone,
+      customer_email: clean.email,
+      city: clean.shipping_city,
       address,
       subtotal: totals.subtotal,
       discount: totals.discount,
       shipping: totals.shipping,
       total: totals.total,
+      coupon_code: clean.coupon_code,
       payment_status: "pending",
       order_status: "pending",
       partner_status: "pending",
       tracking_number: "",
       cargo_company: ""
     };
+  }
+
+  function validateCheckoutData(data) {
+    if (!lines.length) throw new Error("Sepetinizde ürün bulunmalıdır.");
+    if (!data.full_name || data.full_name.length < 2) throw new Error("Ad soyad bilgisini kontrol edin.");
+    if (security && !security.isPhone(data.phone)) throw new Error("Telefon numarasını kontrol edin.");
+    if (security && !security.isEmail(data.email)) throw new Error("E-posta adresini kontrol edin.");
+    if (!data.shipping_city || data.shipping_city.length < 2) throw new Error("İl bilgisini kontrol edin.");
+    if (!data.shipping_address || data.shipping_address.length < 10) throw new Error("Teslimat adresini kontrol edin.");
+    const cardError = security ? security.validateCardFields(data) : "";
+    if (cardError) throw new Error(cardError);
   }
 
   function formatCardInputs(form) {
@@ -173,6 +206,10 @@
       button.textContent = "Ödeme hazırlanıyor...";
 
       try {
+        const limit = security && security.rateLimit("checkout", { limit: 5, windowMs: 10 * 60 * 1000 });
+        if (limit && !limit.allowed) {
+          throw new Error("Çok sık ödeme denemesi yapıldı. Lütfen biraz bekleyin.");
+        }
         const user = await App.auth.requireAuth();
         if (!user) return;
         if (!form.pre_info_accepted.checked || !form.distance_sales_accepted.checked) {
@@ -199,7 +236,10 @@
         }
         core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
       } catch (error) {
-        core.renderStatus("[data-checkout-status]", friendlyCheckoutError(error), "error");
+        const message = /kontrol edin|Sepetinizde|bekleyin|Kart|CVC/i.test(error.message || "")
+          ? error.message
+          : friendlyCheckoutError(error);
+        core.renderStatus("[data-checkout-status]", message, "error");
       } finally {
         button.disabled = false;
         button.textContent = originalText;

@@ -136,6 +136,25 @@ return String(value ?? "")
 .replace(/'/g,"&#039;");
 }
 
+async function requireAdmin(){
+const {data:{user}} = await supabaseClient.auth.getUser();
+if(!user){
+window.location.href="login.html?returnTo="+encodeURIComponent(window.location.pathname);
+return false;
+}
+const {data:profile,error} = await supabaseClient
+.from("profiles")
+.select("role")
+.eq("id",user.id)
+.maybeSingle();
+if(error || !profile || !["admin","super_admin"].includes(profile.role)){
+document.getElementById("orders").textContent="Bu alana erişim yetkiniz yok.";
+document.getElementById("riskNotifications").textContent="";
+return false;
+}
+return true;
+}
+
 async function loadRiskNotifications(){
 
 const target=document.getElementById("riskNotifications");
@@ -150,7 +169,7 @@ await supabaseClient
 
 if(error){
 console.error(error);
-target.innerHTML = `<div class="risk">Risk bildirimleri yüklenemedi: ${safe(error.message)}</div>`;
+target.innerHTML = `<div class="risk">Risk bildirimleri yüklenemedi.</div>`;
 return;
 }
 
@@ -200,27 +219,27 @@ data.map(order=>`
 <div class="order">
 
 <div class="row">
-<b>${order.order_no}</b>
-<span>${order.created_at}</span>
+<b>${safe(order.order_no)}</b>
+<span>${safe(order.created_at)}</span>
 </div>
 
 <div class="row">
-<span>${order.customer_name}</span>
-<span>${order.customer_phone}</span>
+<span>${safe(order.customer_name)}</span>
+<span>${safe(order.customer_phone)}</span>
 </div>
 
 <div class="row">
-<span>${order.customer_email}</span>
-<span>${order.city}</span>
+<span>${safe(order.customer_email)}</span>
+<span>${safe(order.city)}</span>
 </div>
 
 <div class="row">
-<b>${order.total} ₺</b>
+<b>${safe(order.total)} ₺</b>
 
 <select onchange="updateStatus('${order.id}',this.value)">
 
-<option value="new"
-${order.order_status==="new"?"selected":""}>
+<option value="pending"
+${order.order_status==="pending"?"selected":""}>
 Yeni
 </option>
 
@@ -255,24 +274,39 @@ ${order.order_status==="cancelled"?"selected":""}>
 }
 
 async function updateStatus(id,status){
+const allowed=["pending","confirmed","preparing","shipped","delivered","cancelled","refunded"];
+if(!allowed.includes(status)){
+alert("Geçersiz sipariş durumu.");
+return;
+}
 
-await supabaseClient
+const {error}=await supabaseClient
 .from("orders")
 .update({
 order_status:status
 })
 .eq("id",id);
 
+if(error){
+console.error(error);
+alert("Sipariş güncellenemedi.");
+return;
+}
+
 alert("Güncellendi");
 
 }
 
+requireAdmin().then(ok=>{
+if(ok){
 loadOrders();
 loadRiskNotifications();
+}
+});
 
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live5" defer></script>
+  <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
 </body>

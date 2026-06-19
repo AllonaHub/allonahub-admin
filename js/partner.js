@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const security = App.security;
 
   async function guard() {
     const shell = document.querySelector("[data-partner-shell]");
@@ -8,7 +9,7 @@
     try {
       return await App.auth.requireRole(["partner", "admin", "super_admin"]);
     } catch (error) {
-      shell.innerHTML = `<div class="status-box status-box--error">${core.escapeHTML(error.message)}</div>`;
+      shell.innerHTML = `<div class="status-box status-box--error">${core.escapeHTML(security ? security.publicErrorMessage(error, "Bu alana erişim yetkiniz yok.") : "Bu alana erişim yetkiniz yok.")}</div>`;
       return null;
     }
   }
@@ -51,7 +52,7 @@
       const reportProducts = document.querySelector("[data-report-products]");
       if (reportProducts) reportProducts.textContent = products.length;
     } catch (error) {
-      core.renderStatus(target, error.message || "Ürünler yüklenemedi.", "error");
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Ürünler yüklenemedi.") : "Ürünler yüklenemedi.", "error");
     }
   }
 
@@ -83,7 +84,7 @@
       if (reportOrders) reportOrders.textContent = orders.filter((order) => (order.status || order.order_status) === "pending").length;
       if (reportPayments) reportPayments.textContent = orders.filter((order) => order.payment_status === "awaiting_payment").length;
     } catch (error) {
-      core.renderStatus(target, error.message || "Siparişler yüklenemedi.", "error");
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Siparişler yüklenemedi.") : "Siparişler yüklenemedi.", "error");
     }
   }
 
@@ -92,10 +93,17 @@
       const input = event.target.closest("[data-partner-stock]");
       if (!input) return;
       try {
-        await App.db.products.updateFields(input.dataset.partnerStock, { stock: Number(input.value) });
+        const limit = security && security.rateLimit("partner-stock-update", { limit: 30, windowMs: 10 * 60 * 1000 });
+        if (limit && !limit.allowed) throw new Error("Çok sık stok işlemi yapıldı. Lütfen biraz bekleyin.");
+        const stock = Math.max(0, Math.min(100000, Number(input.value || 0)));
+        input.value = stock;
+        await App.db.products.updateFields(input.dataset.partnerStock, { stock });
         core.toast("Stok güncellendi.");
       } catch (error) {
-        core.toast(error.message || "Stok güncellenemedi.", "error");
+        const message = /bekleyin/i.test(error.message || "")
+          ? error.message
+          : (security ? security.publicErrorMessage(error, "Stok güncellenemedi.") : "Stok güncellenemedi.");
+        core.toast(message, "error");
       }
     });
   }

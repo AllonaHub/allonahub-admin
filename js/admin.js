@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const security = App.security;
 
   function rowStatus(value) {
     return `<span class="pill ${value === "active" || value === "paid" ? "pill--gold" : ""}">${core.escapeHTML(value || "-")}</span>`;
@@ -12,7 +13,7 @@
     try {
       return await App.auth.requireRole(["admin", "super_admin"]);
     } catch (error) {
-      shell.innerHTML = `<div class="status-box status-box--error">${core.escapeHTML(error.message)}</div>`;
+      shell.innerHTML = `<div class="status-box status-box--error">${core.escapeHTML(security ? security.publicErrorMessage(error, "Bu alana erişim yetkiniz yok.") : "Bu alana erişim yetkiniz yok.")}</div>`;
       return null;
     }
   }
@@ -45,8 +46,8 @@
           </table>
         </div>
       `;
-    } catch (error) {
-      core.renderStatus(target, error.message || "Ürünler yüklenemedi.", "error");
+      } catch (error) {
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Ürünler yüklenemedi.") : "Ürünler yüklenemedi.", "error");
     }
   }
 
@@ -79,8 +80,8 @@
           </table>
         </div>
       `;
-    } catch (error) {
-      core.renderStatus(target, error.message || "Siparişler yüklenemedi.", "error");
+      } catch (error) {
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Siparişler yüklenemedi.") : "Siparişler yüklenemedi.", "error");
     }
   }
 
@@ -108,8 +109,8 @@
           </table>
         </div>
       `;
-    } catch (error) {
-      core.renderStatus(target, error.message || "Kullanıcılar yüklenemedi.", "error");
+      } catch (error) {
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Kullanıcılar yüklenemedi.") : "Kullanıcılar yüklenemedi.", "error");
     }
   }
 
@@ -137,8 +138,8 @@
           </table>
         </div>
       `;
-    } catch (error) {
-      core.renderStatus(target, error.message || "Kuponlar yüklenemedi.", "error");
+      } catch (error) {
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Kuponlar yüklenemedi.") : "Kuponlar yüklenemedi.", "error");
     }
   }
 
@@ -176,8 +177,8 @@
           </table>
         </div>
       ` : `<div class="status-box">Henüz riskli CV profili bildirimi yok.</div>`;
-    } catch (error) {
-      core.renderStatus(target, error.message || "Risk bildirimleri yüklenemedi.", "error");
+      } catch (error) {
+      core.renderStatus(target, security ? security.publicErrorMessage(error, "Risk bildirimleri yüklenemedi.") : "Risk bildirimleri yüklenemedi.", "error");
     }
   }
 
@@ -189,13 +190,18 @@
       const button = form.querySelector("button[type='submit']");
       button.disabled = true;
       try {
+        const limit = security && security.rateLimit("admin-product-save", { limit: 20, windowMs: 10 * 60 * 1000 });
+        if (limit && !limit.allowed) throw new Error("Çok sık ürün işlemi yapıldı. Lütfen biraz bekleyin.");
         await App.db.products.upsert(core.parseForm(form));
         form.reset();
         form.id.value = "";
         core.toast("Ürün kaydedildi.");
         await loadProducts();
       } catch (error) {
-        core.toast(error.message || "Ürün kaydedilemedi.", "error");
+        const message = /bekleyin|zorunludur|geçersiz/i.test(error.message || "")
+          ? error.message
+          : (security ? security.publicErrorMessage(error, "Ürün kaydedilemedi.") : "Ürün kaydedilemedi.");
+        core.toast(message, "error");
       } finally {
         button.disabled = false;
       }
@@ -213,11 +219,16 @@
       }
       if (del) {
         try {
+          const limit = security && security.rateLimit("admin-product-delete", { limit: 10, windowMs: 10 * 60 * 1000 });
+          if (limit && !limit.allowed) throw new Error("Çok sık silme işlemi yapıldı. Lütfen biraz bekleyin.");
           await App.db.products.delete(del.dataset.deleteProduct);
           core.toast("Ürün silindi.");
           await loadProducts();
         } catch (error) {
-          core.toast(error.message || "Ürün silinemedi.", "error");
+          const message = /bekleyin/i.test(error.message || "")
+            ? error.message
+            : (security ? security.publicErrorMessage(error, "Ürün silinemedi.") : "Ürün silinemedi.");
+          core.toast(message, "error");
         }
       }
     });
@@ -228,10 +239,15 @@
       const status = event.target.closest("[data-order-status]");
       if (!status) return;
       try {
+        const limit = security && security.rateLimit("admin-order-update", { limit: 30, windowMs: 10 * 60 * 1000 });
+        if (limit && !limit.allowed) throw new Error("Çok sık sipariş işlemi yapıldı. Lütfen biraz bekleyin.");
         await App.db.orders.update(status.dataset.orderStatus, { status: status.value, order_status: status.value });
         core.toast("Sipariş durumu güncellendi.");
       } catch (error) {
-        core.toast(error.message || "Sipariş güncellenemedi.", "error");
+        const message = /bekleyin/i.test(error.message || "")
+          ? error.message
+          : (security ? security.publicErrorMessage(error, "Sipariş güncellenemedi.") : "Sipariş güncellenemedi.");
+        core.toast(message, "error");
       }
     });
 
@@ -239,10 +255,12 @@
       const tracking = event.target.closest("[data-tracking-number]");
       if (!tracking) return;
       try {
-        await App.db.orders.update(tracking.dataset.trackingNumber, { tracking_number: tracking.value });
+        const value = security ? security.normalizeText(tracking.value, { max: 80 }) : tracking.value;
+        await App.db.orders.update(tracking.dataset.trackingNumber, { tracking_number: value });
+        tracking.value = value;
         core.toast("Kargo takip numarası güncellendi.");
       } catch (error) {
-        core.toast(error.message || "Kargo bilgisi güncellenemedi.", "error");
+        core.toast(security ? security.publicErrorMessage(error, "Kargo bilgisi güncellenemedi.") : "Kargo bilgisi güncellenemedi.", "error");
       }
     }, true);
   }

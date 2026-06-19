@@ -201,6 +201,125 @@
     return Object.fromEntries(new FormData(form).entries());
   }
 
+  function normalizeText(value, options) {
+    const settings = options || {};
+    const max = Number(settings.max || 500);
+    return String(value ?? "")
+      .replace(/[\u0000-\u001f\u007f]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, max);
+  }
+
+  function normalizeMultiline(value, options) {
+    const settings = options || {};
+    const max = Number(settings.max || 1200);
+    return String(value ?? "")
+      .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+      .slice(0, max);
+  }
+
+  function isEmail(value) {
+    return /^[^\s@]{2,120}@[^\s@]{2,120}\.[^\s@]{2,20}$/i.test(String(value || "").trim());
+  }
+
+  function isPhone(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
+  function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
+  }
+
+  function sanitizePublicUrl(value) {
+    const raw = normalizeText(value, { max: 300 });
+    if (!raw) return "";
+    try {
+      const parsed = new URL(raw);
+      if (["https:", "http:"].includes(parsed.protocol)) return parsed.href;
+    } catch (error) {
+      return "";
+    }
+    return "";
+  }
+
+  function cardNumberIsValid(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    if (digits.length < 12 || digits.length > 19) return false;
+    let sum = 0;
+    let doubleDigit = false;
+    for (let i = digits.length - 1; i >= 0; i -= 1) {
+      let digit = Number(digits[i]);
+      if (doubleDigit) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      doubleDigit = !doubleDigit;
+    }
+    return sum % 10 === 0;
+  }
+
+  function expiryIsValid(value) {
+    const match = String(value || "").match(/^(\d{2})\/(\d{2})$/);
+    if (!match) return false;
+    const month = Number(match[1]);
+    const year = 2000 + Number(match[2]);
+    if (month < 1 || month > 12) return false;
+    const now = new Date();
+    const expires = new Date(year, month, 0, 23, 59, 59);
+    return expires >= new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+
+  function validateCardFields(data) {
+    const holder = normalizeText(data.card_holder, { max: 100 });
+    const cvc = String(data.card_cvc || "").replace(/\D/g, "");
+    if (holder.length < 3) return "Kart üzerindeki isim zorunludur.";
+    if (!cardNumberIsValid(data.card_number)) return "Kart numarasını kontrol edin.";
+    if (!expiryIsValid(data.card_expiry)) return "Kart son kullanma tarihini kontrol edin.";
+    if (cvc.length < 3 || cvc.length > 4) return "CVC bilgisini kontrol edin.";
+    return "";
+  }
+
+  function rateLimit(key, options) {
+    const settings = options || {};
+    const limit = Number(settings.limit || 5);
+    const windowMs = Number(settings.windowMs || 60000);
+    const storageKey = `allona_rate:${key}`;
+    const now = Date.now();
+    let hits = [];
+    try {
+      hits = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch (error) {
+      hits = [];
+    }
+    hits = hits.filter((time) => now - Number(time) < windowMs);
+    if (hits.length >= limit) {
+      return {
+        allowed: false,
+        retryAfter: Math.ceil((windowMs - (now - Number(hits[0]))) / 1000)
+      };
+    }
+    hits.push(now);
+    localStorage.setItem(storageKey, JSON.stringify(hits));
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  function publicErrorMessage(error, fallback) {
+    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+    if (/row-level security|permission denied|forbidden|unauthorized|jwt|auth/i.test(message)) {
+      return "Bu işlem için oturum yetkiniz doğrulanamadı. Lütfen tekrar giriş yapın.";
+    }
+    if (/network|failed to fetch|timeout/i.test(message)) {
+      return "Bağlantı sorunu oluştu. Lütfen kısa süre sonra tekrar deneyin.";
+    }
+    return fallback || "İşlem şu anda tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.";
+  }
+
   function debounce(fn, wait) {
     let timeout;
     return function (...args) {
@@ -225,5 +344,17 @@
     toast,
     parseForm,
     debounce
+  };
+
+  App.security = {
+    normalizeText,
+    normalizeMultiline,
+    isEmail,
+    isPhone,
+    isUuid,
+    sanitizePublicUrl,
+    validateCardFields,
+    rateLimit,
+    publicErrorMessage
   };
 })();

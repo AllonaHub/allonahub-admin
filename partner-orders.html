@@ -49,13 +49,38 @@ const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const PARTNER_ID = "ALP-295481";
-
 function showNotice(msg){
   const n=document.getElementById("notice");
-  n.innerHTML=msg;
+  n.textContent=String(msg || "");
   n.style.display="block";
   setTimeout(()=>n.style.display="none",3500);
+}
+
+function safe(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+async function requirePartner(){
+  const {data:{user}}=await supabaseClient.auth.getUser();
+  if(!user){
+    window.location.href="partner.html";
+    return false;
+  }
+  const {data:profile,error}=await supabaseClient
+    .from("profiles")
+    .select("role")
+    .eq("id",user.id)
+    .maybeSingle();
+  if(error || !profile || !["partner","admin","super_admin"].includes(profile.role)){
+    document.getElementById("orders").textContent="Bu alana erişim yetkiniz yok.";
+    return false;
+  }
+  return true;
 }
 
 async function loadOrders(){
@@ -70,10 +95,14 @@ async function loadOrders(){
     return;
   }
 
-  const {data:items,error:itemsError}=await supabaseClient
+  let itemQuery=supabaseClient
     .from("order_items")
-    .select("*")
-    .eq("partner_id",PARTNER_ID);
+    .select("*");
+  const partnerId=localStorage.getItem("allonaPartnerId") || "";
+  if(partnerId){
+    itemQuery=itemQuery.eq("partner_id",partnerId);
+  }
+  const {data:items,error:itemsError}=await itemQuery;
 
   if(itemsError){
     document.getElementById("orders").innerHTML="Sipariş ürünleri yüklenemedi.";
@@ -97,24 +126,24 @@ async function loadOrders(){
       <div class="card">
         <div class="top">
           <div>
-            <div class="order-no">${order.order_no}</div>
-            <div>${order.customer_name} • ${order.customer_phone}</div>
+            <div class="order-no">${safe(order.order_no)}</div>
+            <div>${safe(order.customer_name)} • ${safe(order.customer_phone)}</div>
           </div>
-          <div class="status">${statusText(order.partner_status || order.order_status)}</div>
+          <div class="status">${safe(statusText(order.partner_status || order.order_status))}</div>
         </div>
 
         <div class="grid">
-          <div><b>Şehir:</b> ${order.city || "-"}</div>
+          <div><b>Şehir:</b> ${safe(order.city || "-")}</div>
           <div><b>Tutar:</b> ${Number(order.total||0).toLocaleString("tr-TR")} ₺</div>
-          <div><b>Ödeme:</b> ${order.payment_status || "pending"}</div>
+          <div><b>Ödeme:</b> ${safe(order.payment_status || "pending")}</div>
         </div>
 
-        <div><b>Adres:</b> ${order.address || "-"}</div>
+        <div><b>Adres:</b> ${safe(order.address || "-")}</div>
 
         <div class="items">
           ${orderItems.map(item=>`
             <div class="item">
-              <span>${item.product_name}</span>
+              <span>${safe(item.product_name)}</span>
               <span>${item.quantity} adet • ${Number(item.price||0).toLocaleString("tr-TR")} ₺</span>
             </div>
           `).join("")}
@@ -144,6 +173,10 @@ function statusText(status){
 }
 
 async function approveOrder(orderId){
+  if(!/^[0-9a-f-]{36}$/i.test(String(orderId))){
+    showNotice("Sipariş kimliği geçersiz.");
+    return;
+  }
   const {error}=await supabaseClient
     .from("orders")
     .update({
@@ -159,14 +192,16 @@ async function approveOrder(orderId){
     return;
   }
 
-  showNotice("<b>Sipariş onaylandı.</b><br>Müşteriye hazırlanıyor bilgisi gönderilecek.");
+  showNotice("Sipariş onaylandı. Müşteriye hazırlanıyor bilgisi gönderilecek.");
   loadOrders();
 }
 
-loadOrders();
+requirePartner().then(ok=>{
+  if(ok) loadOrders();
+});
 </script>
   <div data-layout="footer"></div>
-  <script src="js/core.js?v=20260619-live5" defer></script>
+  <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
 </body>
