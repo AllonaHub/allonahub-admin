@@ -162,6 +162,26 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
   width:92px;
   height:auto;
 }
+.iyzico-logo--colored{display:none!important}
+.iyzico-logo--white{display:block!important}
+body[data-theme="white"] .brandBadge--iyzico{
+  background:#fff;
+  border-color:rgba(0,119,255,.18);
+}
+body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--colored{display:block!important}
+body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--white{display:none!important}
+body[data-theme="ocean"] .brandBadge--iyzico,
+body[data-theme="sunset"] .brandBadge--iyzico,
+body[data-theme="forest"] .brandBadge--iyzico{
+  background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
+  border-color:rgba(0,213,255,.24);
+}
+body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--colored,
+body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--colored,
+body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--colored{display:none!important}
+body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--white,
+body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--white,
+body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white{display:block!important}
 .brandBadge--visa{color:#1434cb;font-style:italic;letter-spacing:.7px}
 .brandBadge--amex{color:#006fcf;letter-spacing:.4px}
 .brandBadge--mastercard{color:#222;min-width:96px}
@@ -263,7 +283,10 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
 
         <button class="payBtn" type="submit">Ödeme Yap</button>
         <div class="paymentBrands" aria-label="Desteklenen ödeme markaları">
-          <span class="brandBadge brandBadge--iyzico"><img src="images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde"></span>
+          <span class="brandBadge brandBadge--iyzico">
+            <img class="iyzico-logo iyzico-logo--colored" src="images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
+            <img class="iyzico-logo iyzico-logo--white" src="images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
+          </span>
           <span class="brandBadge brandBadge--visa">VISA</span>
           <span class="brandBadge brandBadge--mastercard">Mastercard</span>
           <span class="brandBadge brandBadge--amex">AMEX</span>

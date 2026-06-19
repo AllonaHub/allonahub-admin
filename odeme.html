@@ -143,6 +143,26 @@
       height:auto;
     }
 
+    .iyzico-logo--white{display:none!important}
+
+    body[data-theme="ocean"] .logo.iyzico,
+    body[data-theme="sunset"] .logo.iyzico,
+    body[data-theme="forest"] .logo.iyzico{
+      background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
+      border:1px solid rgba(0,213,255,.24);
+    }
+
+    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--colored,
+    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--colored,
+    body[data-theme="forest"] .logo.iyzico .iyzico-logo--colored{display:none!important}
+
+    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--white,
+    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--white,
+    body[data-theme="forest"] .logo.iyzico .iyzico-logo--white{display:block!important}
+
+    body[data-theme="white"] .logo.iyzico .iyzico-logo--colored{display:block!important}
+    body[data-theme="white"] .logo.iyzico .iyzico-logo--white{display:none!important}
+
     .summary-item{
       display:flex;
       justify-content:space-between;
@@ -224,7 +244,10 @@
           </div>
 
           <div class="logos">
-            <div class="logo iyzico"><img src="images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde"></div>
+            <div class="logo iyzico">
+              <img class="iyzico-logo iyzico-logo--colored" src="images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
+              <img class="iyzico-logo iyzico-logo--white" src="images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
+            </div>
             <div class="logo">VISA</div>
             <div class="logo">Mastercard</div>
             <div class="logo">AMEX</div>
