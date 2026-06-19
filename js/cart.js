@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   const config = App.config;
+  let favoriteRefreshTimer = null;
 
   function read(key, fallback) {
     try {
@@ -97,6 +98,47 @@
     });
   }
 
+  function setFavoriteButtonState(button, isFavorite) {
+    if (!button) return;
+    button.classList.toggle("is-favorite", isFavorite);
+    button.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+    button.setAttribute("aria-label", isFavorite ? "Favoriden çıkar" : "Favoriye ekle");
+    if (button.classList.contains("product-card__favorite")) {
+      button.textContent = isFavorite ? "♥" : "♡";
+    } else if (isFavorite) {
+      button.textContent = "Favoriden Çıkar";
+    } else {
+      button.textContent = "Favoriye Ekle";
+    }
+  }
+
+  function syncFavoriteButtons(ids) {
+    const favoriteIds = new Set((ids || getLocalFavorites()).map(String));
+    document.querySelectorAll("[data-fav-product]").forEach((button) => {
+      setFavoriteButtonState(button, favoriteIds.has(String(button.dataset.favProduct)));
+    });
+  }
+
+  async function refreshFavoriteUi() {
+    try {
+      const ids = await favoriteIds();
+      syncFavoriteButtons(ids);
+      document.querySelectorAll("[data-fav-count]").forEach((node) => {
+        node.textContent = ids.length;
+      });
+    } catch (error) {
+      syncFavoriteButtons();
+      updateBadges();
+    }
+  }
+
+  function scheduleFavoriteRefresh() {
+    window.clearTimeout(favoriteRefreshTimer);
+    favoriteRefreshTimer = window.setTimeout(() => {
+      refreshFavoriteUi();
+    }, 80);
+  }
+
   function getLocalFavorites() {
     return read(config.storageKeys.favorites, []);
   }
@@ -126,6 +168,7 @@
       const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
       setLocalFavorites(next);
       core.toast("Favoriler güncellendi.");
+      syncFavoriteButtons(next);
       return next.includes(id);
     }
 
@@ -141,6 +184,7 @@
       if (error) throw error;
       core.toast("Favoriden çıkarıldı.");
       updateBadges();
+      refreshFavoriteUi();
       return false;
     }
 
@@ -148,6 +192,7 @@
     if (error) throw error;
     core.toast("Favoriye eklendi.");
     updateBadges();
+    refreshFavoriteUi();
     return true;
   }
 
@@ -173,7 +218,8 @@
     ids: favoriteIds,
     toggle: toggleFavorite,
     hydrate: hydrateFavorites,
-    count: () => getLocalFavorites().length
+    count: () => getLocalFavorites().length,
+    refreshUi: refreshFavoriteUi
   };
 
   document.addEventListener("click", async (event) => {
@@ -186,13 +232,32 @@
 
     if (favButton) {
       try {
-        await App.favorites.toggle(favButton.dataset.favProduct);
+        favButton.disabled = true;
+        const isFavorite = await App.favorites.toggle(favButton.dataset.favProduct);
+        document.querySelectorAll("[data-fav-product]").forEach((button) => {
+          if (String(button.dataset.favProduct) === String(favButton.dataset.favProduct)) {
+            setFavoriteButtonState(button, isFavorite);
+          }
+        });
       } catch (error) {
         core.toast(error.message || "Favori güncellenemedi.", "error");
+      } finally {
+        favButton.disabled = false;
       }
     }
   });
 
-  document.addEventListener("DOMContentLoaded", updateBadges);
-  window.addEventListener("storage", updateBadges);
+  const favoriteObserver = new MutationObserver(() => {
+    scheduleFavoriteRefresh();
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    updateBadges();
+    refreshFavoriteUi();
+    favoriteObserver.observe(document.body, { childList: true, subtree: true });
+  });
+  window.addEventListener("storage", () => {
+    updateBadges();
+    refreshFavoriteUi();
+  });
 })();

@@ -37,11 +37,13 @@
             <a class="icon-btn icon-btn--wide" href="${core.url("hubwallet.html")}" aria-label="Kupon">
               Kupon
             </a>
-            <a class="icon-btn" href="${core.url("favorites.html")}" aria-label="Favoriler">
-              ♡ <span class="badge" data-fav-count>0</span>
+            <a class="icon-btn icon-btn--count icon-btn--favorite" href="${core.url("favorites.html")}" aria-label="Favoriler">
+              <span class="header-action-icon header-action-icon--heart" aria-hidden="true">♥</span>
+              <span class="badge" data-fav-count>0</span>
             </a>
-            <a class="icon-btn" href="${core.url("cart.html")}" aria-label="Sepet">
-              🛒 <span class="badge" data-cart-count>0</span>
+            <a class="icon-btn icon-btn--count icon-btn--cart" href="${core.url("cart.html")}" aria-label="Sepet">
+              <span class="header-action-icon header-action-icon--cart" aria-hidden="true"></span>
+              <span class="badge" data-cart-count>0</span>
             </a>
             <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Giriş Yap</a>
             <span class="platform-controls-slot" data-platform-controls-slot></span>
