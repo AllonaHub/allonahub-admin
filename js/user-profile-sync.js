@@ -132,37 +132,39 @@
   function normalizeProfile(session, dbProfile) {
     const user = session?.user || {};
     const meta = user.user_metadata || {};
-    const local = storedProfile();
+    const rawLocal = storedProfile();
+    const localUserId = rawLocal.user_id || rawLocal.id || "";
+    const local = !user.id || !localUserId || localUserId === user.id ? rawLocal : {};
     const profile = {
       id: user.id || local.id || dbProfile?.id || "",
       user_id: user.id || local.user_id || dbProfile?.id || "",
       member_no: makeUserId(user),
-      full_name: firstDefined(local.full_name, meta.full_name, dbProfile?.full_name, user.email, "AllonaHub Üyesi"),
-      email: firstDefined(user.email, local.email, meta.email, ""),
-      phone: firstDefined(local.phone, meta.phone, dbProfile?.phone, ""),
-      country: firstDefined(local.country, meta.country, dbProfile?.country, ""),
-      city: firstDefined(local.city, meta.city, dbProfile?.city, ""),
-      birth_date: firstDefined(local.birth_date, meta.birth_date, dbProfile?.birth_date, ""),
-      bio: firstDefined(local.bio, meta.bio, dbProfile?.bio, ""),
-      sector_key: firstDefined(local.sector_key, meta.sector_key, dbProfile?.sector_key, "other"),
-      sector_name: firstDefined(local.sector_name, meta.sector_name, dbProfile?.sector_name, "Diğer"),
-      profession_key: firstDefined(local.profession_key, meta.profession_key, dbProfile?.profession_key, "other_profession"),
-      profession_name: firstDefined(local.profession_name, meta.profession_name, dbProfile?.profession_name, "Diğer Meslek"),
-      profession_title: firstDefined(local.profession_title, meta.profession_title, dbProfile?.profession_title, "Üye"),
-      module: firstDefined(local.module, meta.module, dbProfile?.module, "general"),
-      experience_year: firstDefined(local.experience_year, meta.experience_year, dbProfile?.experience_year, ""),
-      profile_visible: firstDefined(local.profile_visible, meta.profile_visible, dbProfile?.profile_visible, true) !== false,
-      contact_locked: firstDefined(local.contact_locked, meta.contact_locked, dbProfile?.contact_locked, true) !== false,
-      avatar: safeAvatarUrl(firstDefined(local.avatar, local.avatar_url, meta.avatar_url, dbProfile?.avatar_url, "")),
-      avatar_url: safeAvatarUrl(firstDefined(local.avatar_url, local.avatar, meta.avatar_url, dbProfile?.avatar_url, "")),
-      hp: asNumber(firstDefined(local.hp, meta.hp, dbProfile?.hp), 250),
-      xp: asNumber(firstDefined(local.xp, meta.xp, dbProfile?.xp), 0),
-      streak: asNumber(firstDefined(local.streak, meta.streak, dbProfile?.streak), 0),
-      cashout_balance: asNumber(firstDefined(local.cashout_balance, meta.cashout_balance, dbProfile?.cashout_balance), 0),
-      hub_cash: asNumber(firstDefined(local.hub_cash, local.wallet_balance, meta.hub_cash, dbProfile?.hub_cash), 0),
-      wallet_balance: asNumber(firstDefined(local.wallet_balance, local.hub_cash, meta.wallet_balance, dbProfile?.wallet_balance), 0),
-      premium_level: firstDefined(local.premium_level, meta.premium_level, dbProfile?.premium_level, "Basic"),
-      greeting: firstDefined(local.greeting, meta.greeting, dbProfile?.greeting, "")
+      full_name: firstDefined(dbProfile?.full_name, meta.full_name, local.full_name, user.email, "AllonaHub Üyesi"),
+      email: firstDefined(user.email, dbProfile?.email, meta.email, local.email, ""),
+      phone: firstDefined(dbProfile?.phone, meta.phone, local.phone, ""),
+      country: firstDefined(dbProfile?.country, meta.country, local.country, ""),
+      city: firstDefined(dbProfile?.city, meta.city, local.city, ""),
+      birth_date: firstDefined(dbProfile?.birth_date, meta.birth_date, local.birth_date, ""),
+      bio: firstDefined(dbProfile?.bio, meta.bio, local.bio, ""),
+      sector_key: firstDefined(dbProfile?.sector_key, meta.sector_key, local.sector_key, "other"),
+      sector_name: firstDefined(dbProfile?.sector_name, meta.sector_name, local.sector_name, "Diğer"),
+      profession_key: firstDefined(dbProfile?.profession_key, meta.profession_key, local.profession_key, "other_profession"),
+      profession_name: firstDefined(dbProfile?.profession_name, meta.profession_name, local.profession_name, "Diğer Meslek"),
+      profession_title: firstDefined(dbProfile?.profession_title, meta.profession_title, local.profession_title, "Üye"),
+      module: firstDefined(dbProfile?.module, meta.module, local.module, "general"),
+      experience_year: firstDefined(dbProfile?.experience_year, meta.experience_year, local.experience_year, ""),
+      profile_visible: firstDefined(dbProfile?.profile_visible, meta.profile_visible, local.profile_visible, true) !== false,
+      contact_locked: firstDefined(dbProfile?.contact_locked, meta.contact_locked, local.contact_locked, true) !== false,
+      avatar: safeAvatarUrl(firstDefined(dbProfile?.avatar_url, meta.avatar_url, local.avatar, local.avatar_url, "")),
+      avatar_url: safeAvatarUrl(firstDefined(dbProfile?.avatar_url, meta.avatar_url, local.avatar_url, local.avatar, "")),
+      hp: asNumber(firstDefined(dbProfile?.hp, meta.hp, local.hp), 250),
+      xp: asNumber(firstDefined(dbProfile?.xp, meta.xp, local.xp), 0),
+      streak: asNumber(firstDefined(dbProfile?.streak, meta.streak, local.streak), 0),
+      cashout_balance: asNumber(firstDefined(dbProfile?.cashout_balance, meta.cashout_balance, local.cashout_balance), 0),
+      hub_cash: asNumber(firstDefined(dbProfile?.hub_cash, meta.hub_cash, local.hub_cash, local.wallet_balance), 0),
+      wallet_balance: asNumber(firstDefined(dbProfile?.wallet_balance, meta.wallet_balance, local.wallet_balance, local.hub_cash), 0),
+      premium_level: firstDefined(dbProfile?.premium_level, meta.premium_level, local.premium_level, "Basic"),
+      greeting: firstDefined(dbProfile?.greeting, meta.greeting, local.greeting, "")
     };
 
     const levelInfo = levelFromXp(profile.xp);

@@ -46,7 +46,7 @@
   }
 
   async function resetPassword(email) {
-    const redirectTo = `${window.location.origin}${App.core.url("profile.html")}`;
+    const redirectTo = `${window.location.origin}${App.core.url("profil.html")}`;
     const { error } = await App.supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
   }

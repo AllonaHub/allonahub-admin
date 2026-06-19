@@ -47,7 +47,7 @@
               <a href="${core.url("shop.html")}" ${active("shop.html")}>Mağaza</a>
               <a href="${core.url("cart.html")}" ${active("cart.html")}>Sepet</a>
               <a href="${core.url("checkout.html")}" ${active("checkout.html")}>Ödeme</a>
-              <a href="${core.url("profile.html")}" ${active("profile.html")}>Profil</a>
+              <a href="${core.url("user-panel.html")}" ${active("user-panel.html")}>Hesabım</a>
             </nav>
           </div>
         </div>
@@ -118,7 +118,7 @@
     if (!link || !App.auth) return;
     const user = await App.auth.getUser();
     if (user) {
-      link.href = core.url("profile.html");
+      link.href = core.url("user-panel.html");
       link.textContent = "Hesabım";
     }
   }

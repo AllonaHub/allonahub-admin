@@ -31,7 +31,7 @@
         const decodedReturnTo = returnTo ? decodeURIComponent(returnTo) : "";
         window.location.href = decodedReturnTo && decodedReturnTo.startsWith("/") && !decodedReturnTo.startsWith("//")
           ? decodedReturnTo
-          : core.url("profile.html");
+          : core.url("user-panel.html");
       } catch (error) {
         const message = /Çok fazla|e-posta/i.test(error.message || "") ? error.message : authError(error, "Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
         core.toast(message, "error");
@@ -71,7 +71,7 @@
           await App.cvAccess.ensureAccess("signup");
         }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
-        window.location.href = core.url("profile.html");
+        window.location.href = core.url("user-panel.html");
       } catch (error) {
         const message = /çok fazla|kontrol edin|geçerli|şifre/i.test(error.message || "") ? error.message : authError(error, "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
         core.toast(message, "error");
