@@ -49,6 +49,16 @@ Sunucuda Coolify varsa önerilen ayar:
 
 Coolify yoksa veya sade yapı tercih edilirse `docker-compose.prod.yml + Nginx` kullanılır.
 
+Mevcut sunucuda Coolify proxy zaten 80/443 portlarını yönetiyorsa Nginx kurmayın.
+Bu durumda backend API ayrı container olarak Traefik'e bağlanır:
+
+```bash
+cd /opt/allonahub
+docker compose -f docker-compose.hetzner-traefik.yml up -d --build
+docker compose -f docker-compose.hetzner-traefik.yml ps
+curl https://api.allonahub.com/health
+```
+
 ## Docker ve Nginx Kurulumu
 
 Ubuntu üzerinde:
@@ -109,6 +119,14 @@ Container:
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml logs -f --tail=100
 curl http://127.0.0.1:3000/health
+```
+
+Coolify/Traefik olan sunucuda:
+
+```bash
+docker compose -f docker-compose.hetzner-traefik.yml up -d --build
+docker compose -f docker-compose.hetzner-traefik.yml logs -f --tail=100
+curl https://api.allonahub.com/health
 ```
 
 ## Nginx ve SSL
