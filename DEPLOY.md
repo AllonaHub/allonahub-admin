@@ -5,8 +5,10 @@
 1. Supabase projesinde SQL Editor aç.
 2. `supabase/schema.sql` içeriğini çalıştır.
 3. Ardından `supabase/migrations/20260619110000_security_hardening.sql` migration'ını çalıştır.
-4. Auth URL ayarlarına canlı domaini ekle.
-5. Storage bucketlarını oluştur:
+4. Admin, partner, kurye ve finans rolleri için Supabase MFA ayarlarını etkinleştir.
+5. MFA aktif olduktan sonra `supabase/migrations/20260619193000_enterprise_security_controls.sql` migration'ını çalıştır.
+6. Auth URL ayarlarına canlı domaini ekle.
+7. Storage bucketlarını oluştur:
    - `product-images`
    - `brand-assets`
    - `partner-documents`
@@ -57,11 +59,11 @@ Ana deploy komutları:
 ```bash
 cp deploy/hetzner/.env.production.example deploy/hetzner/.env.production
 nano deploy/hetzner/.env.production
-docker compose -f docker-compose.prod.yml up -d --build
-curl http://127.0.0.1:3000/health
+docker compose -f docker-compose.hetzner-traefik.yml up -d --build
+curl https://api.allonahub.com/health
 ```
 
-Nginx config:
+Coolify olmayan Nginx sunucularında alternatif config:
 
 ```bash
 cp deploy/hetzner/nginx/api.allonahub.com.conf /etc/nginx/sites-available/api.allonahub.com
@@ -72,10 +74,11 @@ systemctl reload nginx
 
 ## 4. Cloudflare
 
-- SSL: Full
+- SSL: Full Strict
 - Cache: HTML kısa, CSS/JS/assets uzun cache
 - WAF: temel bot ve rate limit kuralları
-- Rate limit: kayıt, giriş, partner başvuru, checkout ve CV ödeme URL'leri
+- Rate limit: kayıt, giriş, partner başvuru, checkout, CV ödeme, admin ve cron URL'leri
+- Cloudflare Access: `admin.allonahub.com` ve Coolify dashboard için zorunlu
 - Security Headers: HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 - Bot koruması: şüpheli form POST ve hızlı checkout denemelerine challenge
 - Redirect: `http` -> `https`
@@ -92,4 +95,6 @@ systemctl reload nginx
 - Aynı cihazdan ikinci veya sonraki hesap CV hakkı talep ederse admin bildiriminde riskli profil görünüyor.
 - Ücretsiz CV hakları bitince kullanıcı `cv-payment.html` sayfasına yönleniyor.
 - Admin rolü olmayan kullanıcı admin paneline erişemiyor.
+- Admin, partner, kurye ve finans kritik işlemleri MFA olmadan reddediliyor.
+- `public.security_audit_events` tablosunda sipariş, ödeme, callback, admin ve yetki reddi eventleri oluşuyor.
 - Mobil, tablet ve desktop görünüm kontrol edildi.

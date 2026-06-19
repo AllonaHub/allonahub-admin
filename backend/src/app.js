@@ -9,6 +9,13 @@ function requestId() {
   return `aln-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function requestHostname(request) {
+  return String(request.headers.host || "")
+    .split(":")[0]
+    .trim()
+    .toLowerCase();
+}
+
 export async function buildApp() {
   const app = Fastify({
     logger: {
@@ -28,7 +35,44 @@ export async function buildApp() {
 
   await app.register(helmet, {
     global: true,
-    contentSecurityPolicy: false
+    contentSecurityPolicy: false,
+    hidePoweredBy: true,
+    frameguard: { action: "deny" },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
+  });
+
+  app.addHook("onRequest", async (request, reply) => {
+    const pathname = request.url.split("?")[0];
+    const hostname = requestHostname(request);
+
+    if (config.allowedHosts.length && hostname && !config.allowedHosts.includes(hostname)) {
+      request.log.warn({ hostname }, "Blocked request with unexpected host");
+      return reply.code(421).send({
+        ok: false,
+        error: "HOST_NOT_ALLOWED",
+        message: "İstek doğrulanamadı."
+      });
+    }
+
+    if (config.emergencyApiDisabled && pathname !== "/health") {
+      return reply.code(503).send({
+        ok: false,
+        error: "API_DISABLED",
+        message: "Sistem geçici olarak koruma modunda."
+      });
+    }
+
+    if (config.maintenanceMode && !["/health", "/ready"].includes(pathname)) {
+      return reply.code(503).send({
+        ok: false,
+        error: "MAINTENANCE_MODE",
+        message: "Sistem bakım modunda."
+      });
+    }
   });
 
   await app.register(cors, {

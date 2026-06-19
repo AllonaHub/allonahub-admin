@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { config } from "../config.js";
-import { authContext, isAdmin, isPartner, supabaseAdmin } from "../lib/supabase.js";
+import {
+  auditEvent,
+  authContext,
+  hasMfa,
+  hasRole,
+  isAdmin,
+  isPartner,
+  mfaRequiredForRole,
+  supabaseAdmin
+} from "../lib/supabase.js";
 import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload } from "../lib/iyzico.js";
 
 const uuidSchema = z.string().uuid();
@@ -30,15 +39,28 @@ const cvCheckoutSchema = z.object({
   buyerPhone: phoneSchema
 });
 
+const auditQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional()
+});
+
 function clientIp(request) {
   return String(request.headers["cf-connecting-ip"] || request.ip || "0.0.0.0").split(",")[0].trim();
 }
 
-function assertAuth(ctx) {
-  if (!ctx?.user) {
-    const error = new Error("Oturum doğrulanamadı.");
-    error.statusCode = 401;
-    throw error;
+function requestHostname(request) {
+  return String(request.headers.host || "").split(":")[0].trim().toLowerCase();
+}
+
+function httpError(message, statusCode) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+function assertPaymentsEnabled() {
+  if (config.paymentsDisabled) {
+    throw httpError("Ödeme sistemi geçici olarak koruma modunda.", 503);
   }
 }
 
@@ -46,9 +68,72 @@ function redirect(reply, target) {
   return reply.code(303).header("Location", target).send();
 }
 
-async function requireAuth(request) {
+function assertAdminBoundary(request) {
+  const hostname = requestHostname(request);
+  if (config.adminHosts.length && hostname && !config.adminHosts.includes(hostname)) {
+    throw httpError("Admin ağı doğrulanamadı.", 403);
+  }
+
+  const ip = clientIp(request);
+  if (config.adminIpAllowlist.length && !config.adminIpAllowlist.includes(ip)) {
+    throw httpError("Admin IP doğrulaması başarısız.", 403);
+  }
+}
+
+async function requireAuth(request, options = {}) {
   const ctx = await authContext(request);
-  assertAuth(ctx);
+  const action = options.action || "auth.required";
+
+  if (!ctx?.user) {
+    await auditEvent({
+      request,
+      action: "auth.denied",
+      severity: "warning",
+      metadata: { action, path: request.url.split("?")[0] }
+    });
+    throw httpError("Oturum doğrulanamadı.", 401);
+  }
+
+  if (options.roles?.length && !hasRole(ctx.profile, options.roles)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "authz.denied",
+      severity: "warning",
+      metadata: { action, required_roles: options.roles }
+    });
+    throw httpError("Bu işlem için yetkiniz yok.", 403);
+  }
+
+  if (options.mfa && mfaRequiredForRole(ctx.profile.role) && !hasMfa(ctx)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "mfa.required",
+      severity: "warning",
+      metadata: { action, aal: ctx.authenticatorAssuranceLevel }
+    });
+    throw httpError("Bu işlem için iki aşamalı doğrulama gerekli.", 403);
+  }
+
+  if (options.adminBoundary) {
+    try {
+      assertAdminBoundary(request);
+    } catch (error) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "admin.boundary_denied",
+        severity: "critical",
+        metadata: { hostname: requestHostname(request), ip: clientIp(request) }
+      });
+      throw error;
+    }
+  }
+
   return ctx;
 }
 
@@ -135,7 +220,7 @@ export function registerRoutes(app) {
   });
 
   app.post("/v1/orders", async (request, reply) => {
-    const ctx = await requireAuth(request);
+    const ctx = await requireAuth(request, { action: "order.create" });
     const payload = createOrderSchema.parse(request.body || {});
     const { data, error } = await ctx.db.rpc("create_secure_order", {
       p_customer_name: payload.customer_name,
@@ -147,29 +232,67 @@ export function registerRoutes(app) {
       p_coupon_code: payload.coupon_code || null
     });
     if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "order.create",
+      resourceType: "order",
+      resourceId: data?.id || null,
+      metadata: { item_count: payload.items.length, coupon: Boolean(payload.coupon_code) }
+    });
     return reply.code(201).send({ ok: true, order: data });
   });
 
   app.post("/v1/payments/iyzico/checkout", async (request) => {
-    const ctx = await requireAuth(request);
+    assertPaymentsEnabled();
+    const ctx = await requireAuth(request, { action: "payment.checkout", mfa: true });
     const payload = orderCheckoutSchema.parse(request.body || {});
     const order = await getOrderForPayment(payload.orderId, ctx);
     const checkout = await initializeIyzicoCheckout({ order, ctx, request });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "payment.checkout_initialized",
+      resourceType: "order",
+      resourceId: order.id,
+      metadata: { provider: "iyzico", amount: Number(order.total_amount ?? order.total ?? 0) }
+    });
     return { ok: true, ...checkout };
   });
 
   app.all("/v1/payments/iyzico/callback", async (request, reply) => {
+    assertPaymentsEnabled();
     const payload = await bodyOrQuery(request);
     const token = String(payload.token || "").trim();
     const orderId = payload.orderId ? uuidSchema.parse(payload.orderId) : "";
     const cvPaymentId = payload.cvPaymentId ? uuidSchema.parse(payload.cvPaymentId) : "";
 
     if (!token || token.length > 500 || (!orderId && !cvPaymentId)) {
+      await auditEvent({
+        request,
+        action: "payment.callback_invalid",
+        severity: "critical",
+        metadata: { provider: "iyzico", has_order_id: Boolean(orderId), has_cv_payment_id: Boolean(cvPaymentId) }
+      });
       return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
     }
 
     const { ok, result } = await queryIyzicoCheckoutDetail(token, cvPaymentId || orderId || token);
     const paymentStatus = ok && result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
+    await auditEvent({
+      request,
+      action: "payment.callback_verified",
+      resourceType: cvPaymentId ? "cv_payment" : "order",
+      resourceId: cvPaymentId || orderId,
+      severity: paymentStatus === "paid" ? "info" : "warning",
+      metadata: {
+        provider: "iyzico",
+        provider_status: result.status || "unknown",
+        payment_status: result.paymentStatus || "unknown"
+      }
+    });
 
     if (cvPaymentId) {
       const { data: payment, error: paymentError } = await supabaseAdmin
@@ -225,7 +348,8 @@ export function registerRoutes(app) {
   });
 
   app.post("/v1/cv/checkout", async (request) => {
-    const ctx = await requireAuth(request);
+    assertPaymentsEnabled();
+    const ctx = await requireAuth(request, { action: "cv.checkout", mfa: true });
     const payload = cvCheckoutSchema.parse(request.body || {});
 
     const { count: recentCount, error: recentError } = await supabaseAdmin
@@ -259,6 +383,16 @@ export function registerRoutes(app) {
     const { ok, result } = await iyzicoPost(uriPath, checkoutPayload);
     if (!ok || result.status !== "success") {
       await supabaseAdmin.from("cv_payments").update({ status: "failed" }).eq("id", payment.id);
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "cv.checkout_failed",
+        resourceType: "cv_payment",
+        resourceId: payment.id,
+        severity: "warning",
+        metadata: { provider: "iyzico", provider_status: result.status || "unknown" }
+      });
       const error = new Error("CV ödeme oturumu başlatılamadı.");
       error.statusCode = 400;
       throw error;
@@ -269,11 +403,24 @@ export function registerRoutes(app) {
       .update({ status: "awaiting_payment", iyzico_token: result.token || null })
       .eq("id", payment.id);
 
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "cv.checkout_initialized",
+      resourceType: "cv_payment",
+      resourceId: payment.id,
+      metadata: { provider: "iyzico", amount: Number(payment.amount || config.cvPriceTry) }
+    });
     return { ok: true, paymentPageUrl: result.paymentPageUrl, token: result.token, cvPaymentId: payment.id };
   });
 
   app.get("/v1/partner/commission/preview", async (request) => {
-    const ctx = await requireAuth(request);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      mfa: true,
+      action: "partner.commission.preview"
+    });
     if (!isPartner(ctx.profile)) {
       const error = new Error("Partner yetkisi gerekli.");
       error.statusCode = 403;
@@ -305,19 +452,18 @@ export function registerRoutes(app) {
   });
 
   app.post("/v1/hp-wallet/ledger", async (request) => {
-    const ctx = await requireAuth(request);
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "hp_wallet.ledger"
+    });
     const body = z.object({
       userId: uuidSchema.optional(),
       amount: z.coerce.number().min(-100000).max(100000),
       reason: z.string().trim().min(2).max(180),
       reference: z.string().trim().max(120).optional()
     }).parse(request.body || {});
-
-    if (body.userId && body.userId !== ctx.user.id && !isAdmin(ctx.profile)) {
-      const error = new Error("Bu HP Wallet işlemi için yetkiniz yok.");
-      error.statusCode = 403;
-      throw error;
-    }
 
     const targetUserId = body.userId || ctx.user.id;
     const { error } = await supabaseAdmin
@@ -335,11 +481,27 @@ export function registerRoutes(app) {
         }
       });
     if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "hp_wallet.ledger_recorded",
+      resourceType: "user",
+      resourceId: targetUserId,
+      severity: "warning",
+      metadata: { amount: body.amount, reference: body.reference || "" }
+    });
     return { ok: true };
   });
 
   app.post("/v1/cron/reconcile-payments", async (request) => {
     if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.reconcile_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
       const error = new Error("Cron yetkisi doğrulanamadı.");
       error.statusCode = 401;
       throw error;
@@ -358,5 +520,33 @@ export function registerRoutes(app) {
       checked: data?.length || 0,
       staleOrders: data || []
     };
+  });
+
+  app.get("/v1/admin/security/audit-events", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "admin.security.audit_events"
+    });
+    const query = auditQuerySchema.parse(request.query || {});
+    let dbQuery = supabaseAdmin
+      .from("security_audit_events")
+      .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, request_id, metadata, created_at")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.severity) dbQuery = dbQuery.eq("severity", query.severity);
+
+    const { data, error } = await dbQuery;
+    if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.security.audit_events_viewed",
+      resourceType: "security_audit_events",
+      metadata: { limit: query.limit, severity: query.severity || "all" }
+    });
+    return { ok: true, events: data || [] };
   });
 }
