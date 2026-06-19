@@ -12,6 +12,9 @@
       button.disabled = true;
       try {
         await App.auth.signIn(data.email, data.password);
+        if (App.cvAccess && App.cvAccess.ensureAccess) {
+          await App.cvAccess.ensureAccess("login");
+        }
         const returnTo = core.getParam("returnTo");
         window.location.href = returnTo ? decodeURIComponent(returnTo) : core.url("profile.html");
       } catch (error) {
@@ -31,7 +34,13 @@
       const data = core.parseForm(form);
       button.disabled = true;
       try {
+        if (App.cvAccess && App.cvAccess.reportSignupAttempt) {
+          await App.cvAccess.reportSignupAttempt(data.email, "register_submit");
+        }
         await App.auth.signUp(data);
+        if (App.cvAccess && App.cvAccess.ensureAccess) {
+          await App.cvAccess.ensureAccess("signup");
+        }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
         window.location.href = core.url("profile.html");
       } catch (error) {

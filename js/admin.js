@@ -142,6 +142,45 @@
     }
   }
 
+  async function loadNotifications() {
+    const target = document.querySelector("[data-admin-notifications]");
+    if (!target) return;
+    core.renderStatus(target, "Risk bildirimleri yükleniyor...");
+    try {
+      const { data, error } = await App.db.client()
+        .from("admin_notifications")
+        .select("*, profile:profiles(full_name, phone)")
+        .in("kind", ["cv_device_risk", "cv_device_signup_attempt"])
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      const rows = data || [];
+      target.innerHTML = rows.length ? `
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Bildirim</th><th>Kullanıcı</th><th>Risk</th><th>Tarih</th></tr></thead>
+            <tbody>
+              ${rows.map((item) => {
+                const meta = item.metadata || {};
+                const profile = item.profile || {};
+                return `
+                  <tr>
+                    <td><strong>${core.escapeHTML(item.title)}</strong><br>${core.escapeHTML(item.message)}</td>
+                    <td>${core.escapeHTML(profile.full_name || item.user_id || "-")}</td>
+                    <td>${rowStatus(item.severity)}<br><small>Cihaz hesap sayısı: ${core.escapeHTML(meta.device_account_count || meta.known_account_count || "-")}</small></td>
+                    <td>${item.created_at ? new Date(item.created_at).toLocaleString("tr-TR") : "-"}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      ` : `<div class="status-box">Henüz riskli CV profili bildirimi yok.</div>`;
+    } catch (error) {
+      core.renderStatus(target, error.message || "Risk bildirimleri yüklenemedi.", "error");
+    }
+  }
+
   function bindProductForm() {
     const form = document.querySelector("[data-admin-product-form]");
     if (!form) return;
@@ -218,5 +257,6 @@
     loadOrders();
     loadUsers();
     loadCoupons();
+    loadNotifications();
   });
 })();

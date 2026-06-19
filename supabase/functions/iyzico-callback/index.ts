@@ -78,14 +78,15 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const orderId = url.searchParams.get("orderId");
+    const cvPaymentId = url.searchParams.get("cvPaymentId");
     const token = await tokenFromRequest(req);
-    if (!orderId) return response("Missing orderId", 400);
+    if (!orderId && !cvPaymentId) return response("Missing orderId or cvPaymentId", 400);
     if (!token) return response("Missing token", 400);
 
     const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
     const payload = {
       locale: "tr",
-      conversationId: orderId || token,
+      conversationId: cvPaymentId || orderId || token,
       token
     };
     const body = JSON.stringify(payload);
@@ -103,6 +104,74 @@ Deno.serve(async (req) => {
 
     const paymentStatus = result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
+
+    if (cvPaymentId) {
+      const { data: cvPayment, error: cvPaymentError } = await admin
+        .from("cv_payments")
+        .select("*")
+        .eq("id", cvPaymentId)
+        .maybeSingle();
+      if (cvPaymentError) throw cvPaymentError;
+      if (!cvPayment) return response("CV payment not found", 404);
+
+      let shouldCreditCV = false;
+      if (paymentStatus === "paid") {
+        const { data: updatedPayment, error: updatePaymentError } = await admin
+          .from("cv_payments")
+          .update({
+            status: paymentStatus,
+            iyzico_token: token
+          })
+          .eq("id", cvPaymentId)
+          .neq("status", "paid")
+          .select("id")
+          .maybeSingle();
+        if (updatePaymentError) throw updatePaymentError;
+        shouldCreditCV = Boolean(updatedPayment);
+      } else if (cvPayment.status !== "paid") {
+        const { error: updatePaymentError } = await admin
+          .from("cv_payments")
+          .update({
+            status: paymentStatus,
+            iyzico_token: token
+          })
+          .eq("id", cvPaymentId);
+        if (updatePaymentError) throw updatePaymentError;
+      }
+
+      if (paymentStatus === "paid" && shouldCreditCV) {
+        const { data: access, error: accessError } = await admin
+          .from("cv_access_accounts")
+          .select("*")
+          .eq("user_id", cvPayment.user_id)
+          .maybeSingle();
+        if (accessError) throw accessError;
+
+        if (access) {
+          const { error: creditError } = await admin
+            .from("cv_access_accounts")
+            .update({
+              paid_credits: Number(access.paid_credits || 0) + 1
+            })
+            .eq("user_id", cvPayment.user_id);
+          if (creditError) throw creditError;
+        } else {
+          const { error: insertAccessError } = await admin
+            .from("cv_access_accounts")
+            .insert({
+              user_id: cvPayment.user_id,
+              free_limit: 0,
+              free_used: 0,
+              paid_credits: 1,
+              risk_reason: "paid_before_cv_access"
+            });
+          if (insertAccessError) throw insertAccessError;
+        }
+      }
+
+      const target = `${siteUrl.replace(/\/$/, "")}/career-cv-form.html?payment=${paymentStatus}`;
+      return Response.redirect(target, 303);
+    }
 
     const query = admin
       .from("orders")

@@ -16,6 +16,7 @@ supabase secrets set IYZICO_API_KEY="..."
 supabase secrets set IYZICO_SECRET_KEY="..."
 supabase secrets set IYZICO_BASE_URL="https://sandbox-api.iyzipay.com"
 supabase secrets set SITE_URL="https://allonahub.com"
+supabase secrets set CV_PRICE_TRY="149.99"
 ```
 
 Canlı geçişte `IYZICO_BASE_URL` iyzico üretim adresine alınmalıdır.
@@ -24,8 +25,11 @@ Canlı geçişte `IYZICO_BASE_URL` iyzico üretim adresine alınmalıdır.
 
 ```bash
 supabase functions deploy create-iyzico-checkout
+supabase functions deploy create-cv-checkout
 supabase functions deploy iyzico-callback
 ```
+
+CV ödeme akışı için `iyzico-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
 
 ## 3. GitHub
 
@@ -48,5 +52,8 @@ supabase functions deploy iyzico-callback
 - Register, login, forgot password, profile akışı çalışıyor.
 - Sepet toplamı doğru hesaplanıyor.
 - Checkout sipariş oluşturuyor ve iyzico sayfasına yönlendiriyor.
+- CV formunda ilk hesap için 2 ücretsiz CV/PDF üretim hakkı çalışıyor.
+- Aynı cihazdan ikinci veya sonraki hesap CV hakkı talep ederse admin bildiriminde riskli profil görünüyor.
+- Ücretsiz CV hakları bitince kullanıcı `cv-payment.html` sayfasına yönleniyor.
 - Admin rolü olmayan kullanıcı admin paneline erişemiyor.
 - Mobil, tablet ve desktop görünüm kontrol edildi.

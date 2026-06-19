@@ -75,6 +75,25 @@ background:linear-gradient(135deg,#00e5ff,#0077ff);
 color:white;
 font-weight:bold;
 }
+
+.risk-title{
+font-size:28px;
+font-weight:900;
+color:#ffd700;
+margin:30px 0 16px;
+}
+
+.risk{
+background:linear-gradient(145deg,rgba(70,28,18,.92),rgba(5,25,50,.92));
+border:1px solid rgba(255,215,0,.32);
+border-radius:20px;
+padding:18px;
+margin-bottom:14px;
+box-shadow:0 0 24px rgba(255,215,0,.10);
+}
+
+.risk b{color:#ffd700}
+.risk small{display:block;color:#9edff2;margin-top:8px}
 </style>
   <link rel="stylesheet" href="css/platform.css?v=20260619-live4">
 </head>
@@ -86,6 +105,9 @@ font-weight:bold;
 <div class="title">
 Sipariş Yönetimi
 </div>
+
+<div class="risk-title">Riskli CV Profilleri</div>
+<div id="riskNotifications"></div>
 
 <div id="orders"></div>
 
@@ -104,6 +126,60 @@ window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_KEY
 );
+
+function safe(value){
+return String(value ?? "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+}
+
+async function loadRiskNotifications(){
+
+const target=document.getElementById("riskNotifications");
+
+const {data,error} =
+await supabaseClient
+.from("admin_notifications")
+.select("*, profile:profiles(full_name, phone)")
+.in("kind",["cv_device_risk","cv_device_signup_attempt"])
+.order("created_at",{ascending:false})
+.limit(30);
+
+if(error){
+console.error(error);
+target.innerHTML = `<div class="risk">Risk bildirimleri yüklenemedi: ${safe(error.message)}</div>`;
+return;
+}
+
+if(!data || !data.length){
+target.innerHTML = `<div class="risk">Henüz riskli CV profili bildirimi yok.</div>`;
+return;
+}
+
+target.innerHTML =
+data.map(item=>{
+const meta=item.metadata||{};
+const profile=item.profile||{};
+return `
+<div class="risk">
+<div class="row">
+<b>${safe(item.title)}</b>
+<span>${new Date(item.created_at).toLocaleString("tr-TR")}</span>
+</div>
+<div>${safe(item.message)}</div>
+<small>
+Kullanıcı: ${safe(profile.full_name || item.user_id || "-")} |
+E-posta: ${safe(meta.email || "-")} |
+Cihaz hesap sayısı: ${safe(meta.device_account_count || meta.known_account_count || "-")}
+</small>
+</div>
+`;
+}).join("");
+
+}
 
 async function loadOrders(){
 
@@ -192,6 +268,7 @@ alert("Güncellendi");
 }
 
 loadOrders();
+loadRiskNotifications();
 
 </script>
   <div data-layout="footer"></div>

@@ -143,6 +143,24 @@ Sipariş ve sipariş kalemleri. Mevcut üretim modeli `addresses` tablosuna bağ
 
 Checkout sırasında uygulanacak kampanya kodları.
 
+### CV hak, ödeme ve risk tabloları
+
+Akıllı CV üretiminde kullanıcı formu doldurabilir; kısıtlama sadece CV/PDF üretim anında uygulanır.
+
+- `cv_device_accounts`: cihaz anahtarı ile kullanıcı eşleşmesini tutar.
+- `cv_access_accounts`: kullanıcı başına ücretsiz hak, kullanılan hak, ücretli kredi ve risk durumunu tutar.
+- `cv_generations`: her başarılı CV/PDF üretimini kayıt altına alır.
+- `cv_payments`: CV üretim kredisi için iyzico ödeme kayıtlarını tutar.
+- `admin_notifications`: admin paneline düşen riskli profil ve cihaz bildirimlerini tutar.
+
+İş kuralı:
+
+- İlk cihaz hesabına 2 ücretsiz CV/PDF üretim hakkı tanımlanır.
+- Aynı cihazdan ikinci veya sonraki hesap açılırsa/denenirse admin bildirimi oluşur.
+- Aynı cihazdaki ikinci ve sonraki hesaplara ücretsiz CV hakkı verilmez.
+- Ücretsiz hak bittikten sonra kullanıcı `cv-payment.html` üzerinden ücretli CV üretim kredisi alır.
+- Bu CV hak kuralı dışında kullanıcıya başka kısıtlama uygulanmaz.
+
 ## SQL
 
 Canlı Supabase projesi için checkout ile uyumlu doğrudan adres modeli aşağıdaki SQL'dir. Bu SQL `orders.address_id` eklemez; checkout teslimat bilgisini `orders.city` ve `orders.address` alanlarına yazar.

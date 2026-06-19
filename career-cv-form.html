@@ -157,6 +157,25 @@ input:focus,textarea:focus,select:focus{border-color:var(--neon);box-shadow:0 0 
 }
 .entryItem textarea{min-height:74px}
 .entryAdd{width:100%;margin-top:10px}
+.cvAccessStatus{
+  margin:-10px 0 18px;
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid rgba(0,213,255,.28);
+  background:linear-gradient(135deg,rgba(0,213,255,.13),rgba(255,255,255,.05));
+  color:#dff8ff;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.5;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
+}
+.cvAccessStatus[data-state="risk"]{
+  border-color:rgba(246,182,75,.55);
+  background:linear-gradient(135deg,rgba(246,182,75,.16),rgba(0,213,255,.06));
+}
+.cvAccessStatus[data-state="paid"]{
+  border-color:rgba(255,255,255,.22);
+}
 .previewWrap{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(0,213,255,.25);
@@ -393,10 +412,11 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
     <div class="actions">
       <a class="btn secondary" href="kariyer.html">Kariyere Dön</a>
       <button type="button" onclick="saveCV()">Kaydet</button>
-      <button type="button" onclick="downloadPDF()">PDF İndir</button>
+      <button type="button" onclick="downloadPDF()">CV / PDF Üret</button>
       <button type="button" class="secondary" onclick="resetForm()">Temizle</button>
     </div>
   </div>
+  <div class="cvAccessStatus" data-cv-access-status>CV hak durumu kontrol ediliyor...</div>
 
   <div class="layout">
     <aside class="formPanel">
@@ -997,6 +1017,10 @@ async function downloadPDF(){
     alert("PDF kütüphanesi yüklenmedi. İnternet bağlantısını kontrol edin.");
     return;
   }
+  if(window.Allona && window.Allona.cvAccess && window.Allona.cvAccess.claimGeneration){
+    const access = await window.Allona.cvAccess.claimGeneration({title:textValue("fullName","Aday")});
+    if(!access || access.allowed === false) return;
+  }
   const fileName = `AllonaHub_Kariyer_CV_${textValue("fullName","Aday")}.pdf`.replace(/\s+/g,"_");
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF("p","mm","a4");
@@ -1013,6 +1037,9 @@ async function downloadPDF(){
     document.body.classList.remove("pdf-capture");
   }
   pdf.save(fileName);
+  if(window.Allona && window.Allona.cvAccess && window.Allona.cvAccess.renderStatus){
+    window.Allona.cvAccess.renderStatus("[data-cv-access-status]");
+  }
 }
 document.addEventListener("DOMContentLoaded", () => {
   populateSectors();
@@ -1023,10 +1050,18 @@ document.addEventListener("DOMContentLoaded", () => {
   el("photoInput").addEventListener("change", handlePhotoUpload);
   loadCV();
   syncCV();
+  if(window.Allona && window.Allona.cvAccess && window.Allona.cvAccess.renderStatus){
+    window.Allona.cvAccess.renderStatus("[data-cv-access-status]");
+  }
 });
 </script>
 <div data-layout="footer"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="js/config.js?v=20260619-live4" defer></script>
 <script src="js/core.js?v=20260619-live4" defer></script>
+<script src="js/supabase-client.js?v=20260619-live4" defer></script>
+<script src="js/auth.js?v=20260619-live4" defer></script>
+<script src="js/cv-access.js?v=20260619-cvpay2" defer></script>
 <script src="js/layout.v3.js?v=20260619-live4" defer></script>
 <script src="js/platform.js?v=20260619-live4" defer></script>
 </body>
