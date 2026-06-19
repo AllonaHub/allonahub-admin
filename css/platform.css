@@ -1089,8 +1089,8 @@ body[data-theme] .product-card__media {
 }
 
 .shop-category-menu {
-  position: sticky;
-  top: 124px;
+  position: relative;
+  top: auto;
   z-index: 18;
   margin-top: 18px;
   border: 1px solid color-mix(in srgb, var(--ah-primary) 24%, transparent);
@@ -1107,7 +1107,7 @@ body[data-theme] .product-card__media {
 }
 
 .shop-category-menu--top {
-  top: 112px;
+  top: auto;
   margin-top: 0;
   border-radius: 0 0 8px 8px;
 }
@@ -1531,9 +1531,9 @@ body[data-theme]:has(.premium-hero) {
   justify-content: center;
   border-radius: 7px;
   padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 10px 24px rgba(0, 213, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(29, 78, 216, 0.14);
+  box-shadow: 0 10px 24px rgba(0, 104, 255, 0.14);
 }
 
 .footer-iyzico-badge img {
