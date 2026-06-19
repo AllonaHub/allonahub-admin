@@ -128,6 +128,35 @@ input:focus,textarea:focus,select:focus{border-color:var(--neon);box-shadow:0 0 
   font-size:13px;
   line-height:1.5;
 }
+.entryList{display:grid;gap:12px;margin-top:10px}
+.entryToolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 2px}
+.entryToolbar span{color:#c9f5ff;font-size:12px;line-height:1.4}
+.entryItem{
+  padding:12px;
+  border:1px solid rgba(0,213,255,.24);
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(0,213,255,.08),rgba(255,255,255,.035));
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+.entryItem__head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.entryItem__head b{color:#fff;font-size:13px}
+.entryRemove{
+  padding:7px 10px;
+  border-radius:10px;
+  background:rgba(255,255,255,.07);
+  color:#c9f5ff;
+  border:1px solid rgba(0,213,255,.24);
+  box-shadow:none;
+  font-size:12px;
+}
+.entryItem textarea{min-height:74px}
+.entryAdd{width:100%;margin-top:10px}
 .previewWrap{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(0,213,255,.25);
@@ -265,6 +294,44 @@ input:focus,textarea:focus,select:focus{border-color:var(--neon);box-shadow:0 0 
 .cvTable{width:100%;border-collapse:collapse;table-layout:fixed;font-size:clamp(10px,1.25vw,15px);font-weight:700;margin-bottom:15px;position:relative;z-index:2}
 .cvTable th{background:linear-gradient(135deg,#004f9e,#00aaff);color:#fff;border:1px solid #1597ff;padding:clamp(4px,.7vw,7px) clamp(5px,.8vw,8px);font-size:clamp(9.5px,1.1vw,14px);overflow-wrap:anywhere}
 .cvTable td{border:1px solid #1597ff;padding:clamp(4px,.7vw,7px) clamp(5px,.8vw,8px);vertical-align:top;color:#172231;overflow-wrap:anywhere;word-break:break-word}
+.detailPage .cvHeader{align-items:center}
+.timelineList{display:grid;gap:12px;position:relative;z-index:2}
+.timelineItem{
+  position:relative;
+  padding:12px 12px 12px 18px;
+  border:1px solid rgba(21,151,255,.55);
+  border-radius:14px;
+  background:linear-gradient(135deg,#ffffff,#edf9ff);
+  box-shadow:0 8px 22px rgba(0,86,150,.08);
+  overflow-wrap:anywhere;
+}
+.timelineItem:before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:13px;
+  bottom:13px;
+  width:4px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#00d5ff,#0077ff);
+  box-shadow:0 0 10px rgba(0,213,255,.55);
+}
+.timelineTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:4px}
+.timelineRole{color:#004d91;font-weight:950;font-size:15px;line-height:1.35}
+.timelineMeta{color:#0077aa;font-weight:900;font-size:12px;white-space:nowrap}
+.timelineOrg{color:#172231;font-size:13px;font-weight:850;margin-bottom:6px}
+.timelineText{color:#243447;font-size:13px;font-weight:700;line-height:1.55;white-space:pre-line}
+.timelineEmpty{
+  border:1px dashed rgba(21,151,255,.65);
+  border-radius:14px;
+  padding:14px;
+  color:#6f8397;
+  background:#f5fbff;
+  font-weight:800;
+  font-size:13px;
+  position:relative;
+  z-index:2;
+}
 html body.career-cv-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)){width:auto!important;max-width:none!important;margin:0!important;padding:clamp(12px,2vw,30px)!important;line-height:normal!important}
 body.career-cv-page[data-theme] .app{width:min(100%,1760px)!important;max-width:1760px!important;margin:0 auto!important}
 body.career-cv-page.pdf-capture{overflow-x:visible!important}
@@ -292,6 +359,8 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
   .cvBrand{width:105px}
   .cvBrand strong{font-size:11px}
   .cvBrand small{font-size:8px}
+  .timelineTop{display:block}
+  .timelineMeta{white-space:normal;margin-top:3px}
 }
 @media (max-width:420px){
   .actions{grid-template-columns:1fr}
@@ -378,18 +447,30 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
 
       <div class="group">
         <h3>Deneyim</h3>
-        <label for="experience">İş deneyimi</label>
-        <textarea id="experience" oninput="syncCV(); autoSaveCV();"></textarea>
-        <label for="achievements">Başarılar / ölçülebilir sonuçlar</label>
-        <textarea id="achievements" oninput="syncCV(); autoSaveCV();"></textarea>
+        <div class="entryToolbar">
+          <span>Her iş deneyimini ayrı satır olarak ekle. Tarih, kurum ve sonuç odaklı açıklama CV'de profesyonel akışa dönüşür.</span>
+        </div>
+        <div class="entryList" id="experienceInputs"></div>
+        <button type="button" class="secondary entryAdd" onclick="addExperience()">+ Deneyim Satırı Ekle</button>
+        <div class="entryToolbar">
+          <span>Başarıları ayrı satırlarda yaz. Ölçülebilir sonuçlar işe alım tarafında daha güçlü görünür.</span>
+        </div>
+        <div class="entryList" id="achievementInputs"></div>
+        <button type="button" class="secondary entryAdd" onclick="addAchievement()">+ Başarı Satırı Ekle</button>
       </div>
 
       <div class="group">
         <h3>Eğitim ve Belgeler</h3>
-        <label for="education">Eğitim</label>
-        <textarea id="education" oninput="syncCV(); autoSaveCV();"></textarea>
-        <label for="certificates">Sertifika / lisans / belge</label>
-        <textarea id="certificates" oninput="syncCV(); autoSaveCV();"></textarea>
+        <div class="entryToolbar">
+          <span>Okul, bölüm ve dönem bilgilerini satır satır ekle. Birden fazla eğitim kaydı desteklenir.</span>
+        </div>
+        <div class="entryList" id="educationInputs"></div>
+        <button type="button" class="secondary entryAdd" onclick="addEducation()">+ Eğitim Satırı Ekle</button>
+        <div class="entryToolbar">
+          <span>Sertifika, lisans, belge ve yetkinlik kayıtlarını ayrı satırlar halinde düzenle.</span>
+        </div>
+        <div class="entryList" id="certificateInputs"></div>
+        <button type="button" class="secondary entryAdd" onclick="addCertificate()">+ Sertifika Satırı Ekle</button>
       </div>
 
       <div class="group">
@@ -432,10 +513,10 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
 
         <div class="sectionTitle">Deneyim ve Eğitim</div>
         <div class="cvGrid">
-          <article class="cvCard"><h3>İş Deneyimi</h3><p id="cv_experience"></p></article>
-          <article class="cvCard"><h3>Başarılar</h3><p id="cv_achievements"></p></article>
-          <article class="cvCard"><h3>Eğitim</h3><p id="cv_education"></p></article>
-          <article class="cvCard"><h3>Sertifikalar</h3><p id="cv_certificates"></p></article>
+          <article class="cvCard"><h3>İş Deneyimi</h3><p id="cv_experienceSummary"></p></article>
+          <article class="cvCard"><h3>Başarılar</h3><p id="cv_achievementSummary"></p></article>
+          <article class="cvCard"><h3>Eğitim</h3><p id="cv_educationSummary"></p></article>
+          <article class="cvCard"><h3>Sertifikalar</h3><p id="cv_certificateSummary"></p></article>
         </div>
 
         <div class="sectionTitle">Sektör Uyum Alanı</div>
@@ -444,6 +525,8 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
           <tr><td id="cv_profession"></td><td id="cv_sectorDetails"></td><td id="cv_languages"></td></tr>
         </table>
       </section>
+
+      <div id="detailPages"></div>
     </main>
   </div>
 </div>
@@ -451,6 +534,10 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
 <script>
 const STORAGE_KEY = "allonahub_career_cv_v1";
 let photoData = "";
+let experienceRows = [];
+let achievementRows = [];
+let educationRows = [];
+let certificateRows = [];
 const sectors = {
   ecommerce:{name:"E-Ticaret & Pazaryeri", professions:["E-Ticaret Operasyon Uzmanı","Pazaryeri Uzmanı","Ürün Yönetimi Uzmanı","Dijital Satış Uzmanı"], skills:["Pazaryeri yönetimi","Ürün listeleme","SKU ve stok takibi","Kampanya yönetimi","Müşteri deneyimi"], detail:"Pazaryeri, stok, kategori, kampanya veya operasyon deneyimi"},
   technology:{name:"Teknoloji & Yazılım", professions:["Frontend Developer","Backend Developer","Full Stack Developer","UI/UX Designer","Data Analyst","IT Support Specialist"], skills:["HTML/CSS/JavaScript","API entegrasyonu","Veri analizi","Git","Problem çözme"], detail:"Teknoloji stack, proje, repo, ürün veya yazılım deneyimi"},
@@ -477,6 +564,271 @@ function escapeHTML(value){return String(value || "").replace(/&/g,"&amp;").repl
 function splitTags(value){return String(value || "").split(/,|\n/).map(v => v.trim()).filter(Boolean)}
 function tagsHTML(items){return (items.length ? items : ["Bilgi girildikçe burada görünecek"]).map(item => `<span class="tag">${escapeHTML(item)}</span>`).join("")}
 function textValue(id, fallback){return (el(id)?.value || "").trim() || fallback || ""}
+function escapeAttr(value){return escapeHTML(value).replace(/"/g,"&quot;")}
+function blankExperience(){return {role:"",company:"",location:"",start:"",end:"",details:""}}
+function blankAchievement(){return {title:"",metric:"",date:"",details:""}}
+function blankEducation(){return {degree:"",school:"",location:"",start:"",end:"",details:""}}
+function blankCertificate(){return {name:"",issuer:"",date:"",credential:"",details:""}}
+function normalizeRows(rows, blankFactory){
+  return (Array.isArray(rows) ? rows : []).filter(Boolean).map(row => ({...blankFactory(), ...row}));
+}
+function ensureRows(){
+  if(!experienceRows.length) experienceRows = [blankExperience()];
+  if(!achievementRows.length) achievementRows = [blankAchievement()];
+  if(!educationRows.length) educationRows = [blankEducation()];
+  if(!certificateRows.length) certificateRows = [blankCertificate()];
+}
+function hasRowValue(row, keys){return keys.some(key => String(row?.[key] || "").trim())}
+function compactRows(rows, keys){return (rows || []).filter(row => hasRowValue(row, keys))}
+function rowPeriod(row){return [row.start, row.end].map(value => String(value || "").trim()).filter(Boolean).join(" - ")}
+function rowMeta(parts){return parts.map(value => String(value || "").trim()).filter(Boolean).join(" • ")}
+function firstRowSummary(rows, type){
+  const labels = {
+    experience:"İş deneyimi bilgileri girildikçe burada profesyonel formatta görünür.",
+    achievement:"Ölçülebilir başarılar, hedefler veya güçlü sonuçlar burada listelenir.",
+    education:"Eğitim bilgileri girildikçe burada görünür.",
+    certificate:"Sertifika ve belgeler girildikçe burada görünür."
+  };
+  const fields = {
+    experience:["role","company","location","start","end","details"],
+    achievement:["title","metric","date","details"],
+    education:["degree","school","location","start","end","details"],
+    certificate:["name","issuer","date","credential","details"]
+  };
+  const entries = compactRows(rows, fields[type] || []);
+  if(!entries.length) return labels[type] || "";
+  const row = entries[0];
+  let title = "";
+  let meta = "";
+  let detail = "";
+  if(type === "experience"){
+    title = row.role || "Pozisyon";
+    meta = rowMeta([row.company, row.location, rowPeriod(row)]);
+    detail = row.details;
+  } else if(type === "achievement"){
+    title = row.title || "Başarı";
+    meta = rowMeta([row.metric, row.date]);
+    detail = row.details;
+  } else if(type === "education"){
+    title = row.degree || "Eğitim";
+    meta = rowMeta([row.school, row.location, rowPeriod(row)]);
+    detail = row.details;
+  } else {
+    title = row.name || "Sertifika";
+    meta = rowMeta([row.issuer, row.date, row.credential]);
+    detail = row.details;
+  }
+  const extra = entries.length > 1 ? `\n+${entries.length - 1} ek kayıt detay sayfasında.` : "";
+  return [title, meta, detail].filter(Boolean).join("\n") + extra;
+}
+const timelineFields = {
+  experience:["role","company","location","start","end","details"],
+  achievement:["title","metric","date","details"],
+  education:["degree","school","location","start","end","details"],
+  certificate:["name","issuer","date","credential","details"]
+};
+function timelineRowsHTML(entries, type){
+  const emptyText = {
+    experience:"Deneyim satırları eklendikçe işe alım odaklı zaman akışı burada oluşur.",
+    achievement:"Başarılar eklendikçe ölçülebilir sonuçlar burada ayrı kartlar halinde görünür.",
+    education:"Eğitim kayıtları eklendikçe akademik geçmiş burada düzenlenir.",
+    certificate:"Sertifika ve belge kayıtları eklendikçe bu bölüm güçlenir."
+  };
+  if(!entries.length) return `<div class="timelineEmpty">${escapeHTML(emptyText[type] || "Bilgi girildikçe burada görünür.")}</div>`;
+  return entries.map(row => {
+    let title = "";
+    let org = "";
+    let meta = "";
+    let details = "";
+    if(type === "experience"){
+      title = row.role || "Pozisyon";
+      org = row.company || "";
+      meta = rowMeta([row.location, rowPeriod(row)]);
+      details = row.details;
+    } else if(type === "achievement"){
+      title = row.title || "Başarı";
+      org = row.metric || "";
+      meta = row.date || "";
+      details = row.details;
+    } else if(type === "education"){
+      title = row.degree || "Eğitim";
+      org = row.school || "";
+      meta = rowMeta([row.location, rowPeriod(row)]);
+      details = row.details;
+    } else {
+      title = row.name || "Sertifika";
+      org = row.issuer || "";
+      meta = rowMeta([row.date, row.credential]);
+      details = row.details;
+    }
+    return `<article class="timelineItem">
+      <div class="timelineTop">
+        <div class="timelineRole">${escapeHTML(title)}</div>
+        ${meta ? `<div class="timelineMeta">${escapeHTML(meta)}</div>` : ""}
+      </div>
+      ${org ? `<div class="timelineOrg">${escapeHTML(org)}</div>` : ""}
+      ${details ? `<div class="timelineText">${escapeHTML(details)}</div>` : ""}
+    </article>`;
+  }).join("");
+}
+function timelineHTML(rows, type){
+  return timelineRowsHTML(compactRows(rows, timelineFields[type] || []), type);
+}
+function chunkRows(entries, size){
+  const chunks = [];
+  for(let index = 0; index < entries.length; index += size) chunks.push(entries.slice(index, index + size));
+  return chunks;
+}
+function detailPageShellHTML(fullName, profession, title, subtitle, body){
+  return `<section class="cvPage detailPage">
+    <div class="cvNeonBorder"></div>
+    <div class="cvHeader">
+      <div>
+        <div class="cvTitle">Recruitment Details</div>
+        <div class="candidateName">${escapeHTML(fullName)}</div>
+        <div class="candidateMeta">${escapeHTML(subtitle || `${profession} için işe alım odaklı detaylar`)}</div>
+      </div>
+      <div class="cvBrand">
+        <strong>ALLONAHUB</strong>
+        <small>Career Smart CV</small>
+      </div>
+    </div>
+    <div class="sectionTitle">${escapeHTML(title)}</div>
+    ${body}
+  </section>`;
+}
+function detailPagesHTML(fullName, profession){
+  const configs = [
+    {type:"experience", title:"Profesyonel Deneyim", rows:experienceRows, size:4},
+    {type:"achievement", title:"Ölçülebilir Başarılar", rows:achievementRows, size:5},
+    {type:"education", title:"Eğitim Geçmişi", rows:educationRows, size:5},
+    {type:"certificate", title:"Sertifika ve Belgeler", rows:certificateRows, size:5}
+  ];
+  const pages = [];
+  const experienceEntries = compactRows(experienceRows, timelineFields.experience);
+  chunkRows(experienceEntries, 4).forEach((chunk,index,chunks) => {
+    const pageInfo = chunks.length > 1 ? ` • Sayfa ${index + 1}/${chunks.length}` : "";
+    pages.push(detailPageShellHTML(
+      fullName,
+      profession,
+      "Profesyonel Deneyim",
+      `${profession} için işe alım odaklı detaylar${pageInfo}`,
+      `<div class="timelineList">${timelineRowsHTML(chunk, "experience")}</div>`
+    ));
+  });
+  const supportConfigs = configs.slice(1).map(config => ({
+    ...config,
+    entries: compactRows(config.rows, timelineFields[config.type] || [])
+  }));
+  const supportCount = supportConfigs.reduce((total,config) => total + config.entries.length, 0);
+  if(supportCount && supportCount <= 6){
+    const supportBody = supportConfigs
+      .filter(config => config.entries.length)
+      .map(config => `<div class="sectionTitle">${escapeHTML(config.title)}</div><div class="timelineList">${timelineRowsHTML(config.entries, config.type)}</div>`)
+      .join("");
+    pages.push(detailPageShellHTML(fullName, profession, "Başarı, Eğitim ve Belgeler", `${profession} için destekleyici işe alım detayları`, supportBody));
+  } else if(supportCount){
+    supportConfigs.forEach(config => {
+      if(!config.entries.length) return;
+      const chunks = chunkRows(config.entries, config.size);
+      chunks.forEach((chunk,index) => {
+        const pageInfo = chunks.length > 1 ? ` • Sayfa ${index + 1}/${chunks.length}` : "";
+        pages.push(detailPageShellHTML(
+          fullName,
+          profession,
+          config.title,
+          `${profession} için işe alım odaklı detaylar${pageInfo}`,
+          `<div class="timelineList">${timelineRowsHTML(chunk, config.type)}</div>`
+        ));
+      });
+    });
+  }
+  if(pages.length) return pages.join("");
+  const emptyBody = configs.map(config => `<div class="sectionTitle">${escapeHTML(config.title)}</div><div class="timelineList">${timelineHTML(config.rows, config.type)}</div>`).join("");
+  return detailPageShellHTML(fullName, profession, "İşe Alım Detayları", `${profession} için detaylar`, emptyBody);
+}
+function renderExperienceInputs(){
+  ensureRows();
+  el("experienceInputs").innerHTML = experienceRows.map((row,index) => `<article class="entryItem">
+    <div class="entryItem__head"><b>Deneyim ${index + 1}</b><button type="button" class="entryRemove" onclick="removeExperience(${index})">Kaldır</button></div>
+    <div class="row2">
+      <div><label>Pozisyon</label><input value="${escapeAttr(row.role)}" oninput="updateExperience(${index},'role',this.value)"></div>
+      <div><label>Kurum / Şirket</label><input value="${escapeAttr(row.company)}" oninput="updateExperience(${index},'company',this.value)"></div>
+    </div>
+    <div class="row3">
+      <div><label>Şehir</label><input value="${escapeAttr(row.location)}" oninput="updateExperience(${index},'location',this.value)"></div>
+      <div><label>Başlangıç</label><input value="${escapeAttr(row.start)}" oninput="updateExperience(${index},'start',this.value)" placeholder="2022"></div>
+      <div><label>Bitiş</label><input value="${escapeAttr(row.end)}" oninput="updateExperience(${index},'end',this.value)" placeholder="Devam"></div>
+    </div>
+    <label>Görev, sorumluluk ve sonuç</label>
+    <textarea oninput="updateExperience(${index},'details',this.value)" placeholder="Örn: Ekip operasyonlarını yönettim, süreçleri hızlandırdım, müşteri memnuniyetini artırdım.">${escapeHTML(row.details)}</textarea>
+  </article>`).join("");
+}
+function renderAchievementInputs(){
+  ensureRows();
+  el("achievementInputs").innerHTML = achievementRows.map((row,index) => `<article class="entryItem">
+    <div class="entryItem__head"><b>Başarı ${index + 1}</b><button type="button" class="entryRemove" onclick="removeAchievement(${index})">Kaldır</button></div>
+    <div class="row3">
+      <div><label>Başlık</label><input value="${escapeAttr(row.title)}" oninput="updateAchievement(${index},'title',this.value)" placeholder="Satış hedefi"></div>
+      <div><label>Ölçü / Etki</label><input value="${escapeAttr(row.metric)}" oninput="updateAchievement(${index},'metric',this.value)" placeholder="%20 artış"></div>
+      <div><label>Tarih / Dönem</label><input value="${escapeAttr(row.date)}" oninput="updateAchievement(${index},'date',this.value)" placeholder="2025"></div>
+    </div>
+    <label>Açıklama</label>
+    <textarea oninput="updateAchievement(${index},'details',this.value)" placeholder="Örn: Kampanya planlamasıyla aylık satış hedefini aştım.">${escapeHTML(row.details)}</textarea>
+  </article>`).join("");
+}
+function renderEducationInputs(){
+  ensureRows();
+  el("educationInputs").innerHTML = educationRows.map((row,index) => `<article class="entryItem">
+    <div class="entryItem__head"><b>Eğitim ${index + 1}</b><button type="button" class="entryRemove" onclick="removeEducation(${index})">Kaldır</button></div>
+    <div class="row2">
+      <div><label>Okul / Kurum</label><input value="${escapeAttr(row.school)}" oninput="updateEducation(${index},'school',this.value)"></div>
+      <div><label>Bölüm / Program</label><input value="${escapeAttr(row.degree)}" oninput="updateEducation(${index},'degree',this.value)"></div>
+    </div>
+    <div class="row3">
+      <div><label>Şehir</label><input value="${escapeAttr(row.location)}" oninput="updateEducation(${index},'location',this.value)"></div>
+      <div><label>Başlangıç</label><input value="${escapeAttr(row.start)}" oninput="updateEducation(${index},'start',this.value)"></div>
+      <div><label>Bitiş</label><input value="${escapeAttr(row.end)}" oninput="updateEducation(${index},'end',this.value)"></div>
+    </div>
+    <label>Notlar / dereceler</label>
+    <textarea oninput="updateEducation(${index},'details',this.value)" placeholder="Örn: Bitirme projesi, derece, uzmanlık alanı.">${escapeHTML(row.details)}</textarea>
+  </article>`).join("");
+}
+function renderCertificateInputs(){
+  ensureRows();
+  el("certificateInputs").innerHTML = certificateRows.map((row,index) => `<article class="entryItem">
+    <div class="entryItem__head"><b>Sertifika ${index + 1}</b><button type="button" class="entryRemove" onclick="removeCertificate(${index})">Kaldır</button></div>
+    <div class="row2">
+      <div><label>Sertifika / Belge Adı</label><input value="${escapeAttr(row.name)}" oninput="updateCertificate(${index},'name',this.value)"></div>
+      <div><label>Veren Kurum</label><input value="${escapeAttr(row.issuer)}" oninput="updateCertificate(${index},'issuer',this.value)"></div>
+    </div>
+    <div class="row2">
+      <div><label>Tarih</label><input value="${escapeAttr(row.date)}" oninput="updateCertificate(${index},'date',this.value)"></div>
+      <div><label>Lisans / Belge No</label><input value="${escapeAttr(row.credential)}" oninput="updateCertificate(${index},'credential',this.value)"></div>
+    </div>
+    <label>Açıklama</label>
+    <textarea oninput="updateCertificate(${index},'details',this.value)" placeholder="Örn: Kapsam, yetki, geçerlilik veya uzmanlık notu.">${escapeHTML(row.details)}</textarea>
+  </article>`).join("");
+}
+function renderAllInputs(){
+  renderExperienceInputs();
+  renderAchievementInputs();
+  renderEducationInputs();
+  renderCertificateInputs();
+}
+function rowChanged(){syncCV(); autoSaveCV()}
+function updateExperience(index,key,value){experienceRows[index][key] = value; rowChanged()}
+function updateAchievement(index,key,value){achievementRows[index][key] = value; rowChanged()}
+function updateEducation(index,key,value){educationRows[index][key] = value; rowChanged()}
+function updateCertificate(index,key,value){certificateRows[index][key] = value; rowChanged()}
+function addExperience(){experienceRows.push(blankExperience()); renderExperienceInputs(); rowChanged()}
+function addAchievement(){achievementRows.push(blankAchievement()); renderAchievementInputs(); rowChanged()}
+function addEducation(){educationRows.push(blankEducation()); renderEducationInputs(); rowChanged()}
+function addCertificate(){certificateRows.push(blankCertificate()); renderCertificateInputs(); rowChanged()}
+function removeExperience(index){experienceRows.splice(index,1); ensureRows(); renderExperienceInputs(); rowChanged()}
+function removeAchievement(index){achievementRows.splice(index,1); ensureRows(); renderAchievementInputs(); rowChanged()}
+function removeEducation(index){educationRows.splice(index,1); ensureRows(); renderEducationInputs(); rowChanged()}
+function removeCertificate(index){certificateRows.splice(index,1); ensureRows(); renderCertificateInputs(); rowChanged()}
 function populateSectors(){
   el("sector").innerHTML = Object.entries(sectors).map(([key,item]) => `<option value="${key}">${item.name}</option>`).join("");
 }
@@ -564,13 +916,14 @@ function syncCV(){
   el("cv_strength").textContent = `${profession} rolü için ${data.skills.slice(0,3).join(", ")} odağı.`;
   el("cv_skills").innerHTML = tagsHTML(splitTags(textValue("skills", data.skills.join(", "))));
   el("cv_softSkills").innerHTML = tagsHTML(splitTags(textValue("softSkills", defaults.soft.join(", "))));
-  el("cv_experience").innerHTML = escapeHTML(textValue("experience","İş deneyimi bilgileri girildikçe burada profesyonel formatta görünür.")).replace(/\n/g,"<br>");
-  el("cv_achievements").innerHTML = escapeHTML(textValue("achievements","Ölçülebilir başarılar, hedefler veya güçlü sonuçlar burada listelenir.")).replace(/\n/g,"<br>");
-  el("cv_education").innerHTML = escapeHTML(textValue("education","Eğitim bilgileri")).replace(/\n/g,"<br>");
-  el("cv_certificates").innerHTML = escapeHTML(textValue("certificates","Sertifika ve belgeler")).replace(/\n/g,"<br>");
+  el("cv_experienceSummary").innerHTML = escapeHTML(firstRowSummary(experienceRows,"experience")).replace(/\n/g,"<br>");
+  el("cv_achievementSummary").innerHTML = escapeHTML(firstRowSummary(achievementRows,"achievement")).replace(/\n/g,"<br>");
+  el("cv_educationSummary").innerHTML = escapeHTML(firstRowSummary(educationRows,"education")).replace(/\n/g,"<br>");
+  el("cv_certificateSummary").innerHTML = escapeHTML(firstRowSummary(certificateRows,"certificate")).replace(/\n/g,"<br>");
   el("cv_profession").textContent = profession;
   el("cv_sectorDetails").innerHTML = escapeHTML(textValue("sectorDetails", data.detail)).replace(/\n/g,"<br>");
   el("cv_languages").textContent = textValue("languages","Türkçe");
+  el("detailPages").innerHTML = detailPagesHTML(fullName, profession);
 }
 function getData(){
   return {
@@ -584,10 +937,10 @@ function getData(){
     summary: el("summary").value,
     skills: el("skills").value,
     softSkills: el("softSkills").value,
-    experience: el("experience").value,
-    achievements: el("achievements").value,
-    education: el("education").value,
-    certificates: el("certificates").value,
+    experienceRows,
+    achievementRows,
+    educationRows,
+    certificateRows,
     sectorDetails: el("sectorDetails").value,
     languages: el("languages").value,
     photo: photoData
@@ -598,6 +951,16 @@ function applyData(data){
   if(data.sector && sectors[data.sector]) el("sector").value = data.sector;
   handleSectorChange();
   Object.entries(data).forEach(([key,value]) => { if(el(key)) el(key).value = value || ""; });
+  experienceRows = normalizeRows(data.experienceRows, blankExperience);
+  achievementRows = normalizeRows(data.achievementRows, blankAchievement);
+  educationRows = normalizeRows(data.educationRows, blankEducation);
+  certificateRows = normalizeRows(data.certificateRows, blankCertificate);
+  if(!experienceRows.length && data.experience) experienceRows = [{...blankExperience(), details:data.experience}];
+  if(!achievementRows.length && data.achievements) achievementRows = [{...blankAchievement(), details:data.achievements}];
+  if(!educationRows.length && data.education) educationRows = [{...blankEducation(), details:data.education}];
+  if(!certificateRows.length && data.certificates) certificateRows = [{...blankCertificate(), details:data.certificates}];
+  ensureRows();
+  renderAllInputs();
   setPhoto(data.photo || "");
 }
 function saveCV(){
@@ -619,6 +982,11 @@ function resetForm(){
   if(!confirm("Form temizlensin mi?")) return;
   localStorage.removeItem(STORAGE_KEY);
   document.querySelectorAll("input, textarea").forEach(item => item.value = "");
+  experienceRows = [blankExperience()];
+  achievementRows = [blankAchievement()];
+  educationRows = [blankEducation()];
+  certificateRows = [blankCertificate()];
+  renderAllInputs();
   setPhoto("");
   el("sector").value = "general";
   handleSectorChange();
@@ -635,8 +1003,12 @@ async function downloadPDF(){
   document.body.classList.add("pdf-capture");
   await new Promise(resolve => requestAnimationFrame(resolve));
   try{
-    const canvas = await html2canvas(document.querySelector(".cvPage"), {scale:2,useCORS:true,backgroundColor:"#ffffff"});
-    pdf.addImage(canvas.toDataURL("image/jpeg", .98), "JPEG", 0, 0, 210, 297);
+    const pages = Array.from(document.querySelectorAll(".cvPage"));
+    for(const [index,page] of pages.entries()){
+      const canvas = await html2canvas(page, {scale:2,useCORS:true,backgroundColor:"#ffffff"});
+      if(index > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL("image/jpeg", .98), "JPEG", 0, 0, 210, 297);
+    }
   } finally {
     document.body.classList.remove("pdf-capture");
   }
@@ -646,6 +1018,8 @@ document.addEventListener("DOMContentLoaded", () => {
   populateSectors();
   el("sector").value = "general";
   handleSectorChange();
+  ensureRows();
+  renderAllInputs();
   el("photoInput").addEventListener("change", handlePhotoUpload);
   loadCV();
   syncCV();
