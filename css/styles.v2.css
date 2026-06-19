@@ -901,20 +901,23 @@ img {
 
 body[data-theme="ocean"] .payment-logo--iyzico,
 body[data-theme="sunset"] .payment-logo--iyzico,
-body[data-theme="forest"] .payment-logo--iyzico {
+body[data-theme="forest"] .payment-logo--iyzico,
+body[data-theme="turquoise"] .payment-logo--iyzico {
   background: linear-gradient(145deg, rgba(5, 25, 50, 0.94), rgba(2, 8, 20, 0.98));
   border-color: rgba(0, 213, 255, 0.24);
 }
 
 body[data-theme="ocean"] .payment-logo--iyzico .iyzico-logo--colored,
 body[data-theme="sunset"] .payment-logo--iyzico .iyzico-logo--colored,
-body[data-theme="forest"] .payment-logo--iyzico .iyzico-logo--colored {
+body[data-theme="forest"] .payment-logo--iyzico .iyzico-logo--colored,
+body[data-theme="turquoise"] .payment-logo--iyzico .iyzico-logo--colored {
   display: none;
 }
 
 body[data-theme="ocean"] .payment-logo--iyzico .iyzico-logo--white,
 body[data-theme="sunset"] .payment-logo--iyzico .iyzico-logo--white,
-body[data-theme="forest"] .payment-logo--iyzico .iyzico-logo--white {
+body[data-theme="forest"] .payment-logo--iyzico .iyzico-logo--white,
+body[data-theme="turquoise"] .payment-logo--iyzico .iyzico-logo--white {
   display: block;
 }
 
@@ -932,7 +935,10 @@ body[data-theme="white"] .payment-logo--iyzico .iyzico-logo--white {
 
 .payment-logo--mastercard {
   color: #1f2937;
-  min-width: 96px;
+  min-width: 54px;
+  width: 58px;
+  padding-inline: 6px;
+  font-size: 0;
 }
 
 .payment-logo--mastercard::before {

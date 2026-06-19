@@ -172,19 +172,22 @@ body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--colored{display:block
 body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--white{display:none!important}
 body[data-theme="ocean"] .brandBadge--iyzico,
 body[data-theme="sunset"] .brandBadge--iyzico,
-body[data-theme="forest"] .brandBadge--iyzico{
+body[data-theme="forest"] .brandBadge--iyzico,
+body[data-theme="turquoise"] .brandBadge--iyzico{
   background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
   border-color:rgba(0,213,255,.24);
 }
 body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--colored,
 body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--colored,
-body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--colored{display:none!important}
+body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--colored,
+body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--colored{display:none!important}
 body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--white,
 body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--white,
-body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white{display:block!important}
+body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white,
+body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:block!important}
 .brandBadge--visa{color:#1434cb;font-style:italic;letter-spacing:.7px}
 .brandBadge--amex{color:#006fcf;letter-spacing:.4px}
-.brandBadge--mastercard{color:#222;min-width:96px}
+.brandBadge--mastercard{color:#222;min-width:54px;width:58px;padding-inline:6px;font-size:0}
 .brandBadge--mastercard:before{
   content:"";
   width:28px;
@@ -221,7 +224,7 @@ body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white{display:block!
   .cardRow{grid-template-columns:1fr}
 }
 </style>
-<link rel="stylesheet" href="css/platform.css?v=20260619-live4">
+<link rel="stylesheet" href="css/platform.css?v=20260619-live5">
 </head>
 <body>
 <main class="paymentShell">
@@ -288,7 +291,7 @@ body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white{display:block!
             <img class="iyzico-logo iyzico-logo--white" src="images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
           </span>
           <span class="brandBadge brandBadge--visa">VISA</span>
-          <span class="brandBadge brandBadge--mastercard">Mastercard</span>
+          <span class="brandBadge brandBadge--mastercard" aria-label="Mastercard"></span>
           <span class="brandBadge brandBadge--amex">AMEX</span>
         </div>
         <div class="secureLine">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</div>
@@ -303,12 +306,12 @@ body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white{display:block!
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script src="js/config.js?v=20260619-cvpay2" defer></script>
-<script src="js/core.js?v=20260619-live4" defer></script>
-<script src="js/supabase-client.js?v=20260619-live4" defer></script>
-<script src="js/auth.js?v=20260619-live4" defer></script>
+<script src="js/core.js?v=20260619-live5" defer></script>
+<script src="js/supabase-client.js?v=20260619-live5" defer></script>
+<script src="js/auth.js?v=20260619-live5" defer></script>
 <script src="js/cv-access.js?v=20260619-payform1" defer></script>
-<script src="js/layout.v3.js?v=20260619-live4" defer></script>
-<script src="js/platform.js?v=20260619-live4" defer></script>
+<script src="js/layout.v3.js?v=20260619-live5" defer></script>
+<script src="js/platform.js?v=20260619-live5" defer></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const App = window.Allona || {};

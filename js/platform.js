@@ -6,9 +6,9 @@
   const ASSET_VERSION = (() => {
     try {
       const current = document.currentScript && document.currentScript.src;
-      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live4" : "20260619-live4";
+      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live5" : "20260619-live5";
     } catch (error) {
-      return "20260619-live4";
+      return "20260619-live5";
     }
   })();
   const languages = [
@@ -23,6 +23,7 @@
     { code: "ocean", label: "Deniz" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
+    { code: "turquoise", label: "Turkuaz" },
     { code: "white", label: "Beyaz" }
   ];
   const themeAliases = {
@@ -380,12 +381,19 @@
 
   function applyTheme(theme) {
     const normalized = themeAliases[theme] || theme;
-    const selected = themes.some((item) => item.code === normalized) ? normalized : "neon";
+    const selected = themes.some((item) => item.code === normalized) ? normalized : "ocean";
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);
     document.querySelectorAll("[data-theme-select]").forEach((node) => {
       node.value = selected;
+    });
+    document.querySelectorAll("[data-theme-current]").forEach((node) => {
+      node.textContent = currentTheme().label;
+    });
+    document.querySelectorAll("[data-theme-option]").forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.themeOption === selected);
+      node.setAttribute("aria-checked", node.dataset.themeOption === selected ? "true" : "false");
     });
   }
 
@@ -615,6 +623,13 @@
       node.value = selected;
       node.setAttribute("aria-label", (pack.keys && pack.keys.languageLabel) || "Dil");
     });
+    document.querySelectorAll("[data-language-current]").forEach((node) => {
+      node.textContent = currentLanguage().label;
+    });
+    document.querySelectorAll("[data-language-option]").forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.languageOption === selected);
+      node.setAttribute("aria-checked", node.dataset.languageOption === selected ? "true" : "false");
+    });
     document.dispatchEvent(new CustomEvent("allona:language-changed", { detail: { language: selected } }));
   }
 
@@ -637,15 +652,35 @@
     translationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
+  function currentLanguage() {
+    return languages.find((item) => item.code === state.language) || languages[0];
+  }
+
+  function currentTheme() {
+    return themes.find((item) => item.code === state.theme) || themes[0];
+  }
+
   function controlsMarkup(mode) {
     return `
       <div class="platform-controls ${mode === "home" ? "platform-controls--home" : ""}" data-platform-controls>
-        <select class="platform-select" data-language-select aria-label="Dil seçimi">
-          ${languages.map((item) => `<option value="${item.code}">${item.label}</option>`).join("")}
-        </select>
-        <select class="platform-select" data-theme-select aria-label="Tema seçimi">
-          ${themes.map((item) => `<option value="${item.code}">${item.label}</option>`).join("")}
-        </select>
+        <div class="platform-control platform-control--language" data-platform-control>
+          <button class="platform-control-btn platform-language-btn" type="button" data-platform-menu-toggle aria-label="Dil seçimi" aria-haspopup="menu" aria-expanded="false">
+            <span class="platform-globe" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span class="platform-control-value" data-language-current>${currentLanguage().label}</span>
+          </button>
+          <div class="platform-menu" data-platform-menu role="menu" aria-label="Dil seçimi">
+            ${languages.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.language ? "true" : "false"}" class="platform-menu-item ${item.code === state.language ? "is-active" : ""}" data-language-option="${item.code}">${item.label}</button>`).join("")}
+          </div>
+        </div>
+        <div class="platform-control platform-control--theme" data-platform-control>
+          <button class="platform-control-btn platform-theme-btn" type="button" data-platform-menu-toggle aria-label="Tema seçimi" aria-haspopup="menu" aria-expanded="false">
+            <span class="platform-theme-dot" aria-hidden="true"></span>
+            <span class="platform-control-value" data-theme-current>${currentTheme().label}</span>
+          </button>
+          <div class="platform-menu platform-menu--wide" data-platform-menu role="menu" aria-label="Tema seçimi">
+            ${themes.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.theme ? "true" : "false"}" class="platform-menu-item ${item.code === state.theme ? "is-active" : ""}" data-theme-option="${item.code}"><span class="platform-theme-swatch platform-theme-swatch--${item.code}" aria-hidden="true"></span>${item.label}</button>`).join("")}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -790,6 +825,12 @@
     document.querySelectorAll("[data-theme-select]").forEach((node) => {
       node.value = state.theme;
     });
+    document.querySelectorAll("[data-language-current]").forEach((node) => {
+      node.textContent = currentLanguage().label;
+    });
+    document.querySelectorAll("[data-theme-current]").forEach((node) => {
+      node.textContent = currentTheme().label;
+    });
   }
 
   function inferRoute(label) {
@@ -838,6 +879,40 @@
       const themeSelect = event.target.closest("[data-theme-select]");
       if (themeSelect) applyTheme(themeSelect.value);
     });
+    document.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-platform-menu-toggle]");
+      if (toggle) {
+        const control = toggle.closest("[data-platform-control]");
+        const nextState = !control.classList.contains("is-open");
+        closePlatformMenus(control);
+        control.classList.toggle("is-open", nextState);
+        toggle.setAttribute("aria-expanded", nextState ? "true" : "false");
+        return;
+      }
+
+      const languageOption = event.target.closest("[data-language-option]");
+      if (languageOption) {
+        event.preventDefault();
+        applyLanguage(languageOption.dataset.languageOption);
+        closePlatformMenus();
+        return;
+      }
+
+      const themeOption = event.target.closest("[data-theme-option]");
+      if (themeOption) {
+        event.preventDefault();
+        applyTheme(themeOption.dataset.themeOption);
+        closePlatformMenus();
+        return;
+      }
+
+      if (!event.target.closest("[data-platform-controls]")) {
+        closePlatformMenus();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closePlatformMenus();
+    });
     document.addEventListener("allona:layout-ready", () => {
       normalizePlatformBrand();
       mountControls();
@@ -847,6 +922,15 @@
       updateAccountLinks();
     });
     document.addEventListener("allona:language-changed", updateAccountLinks);
+  }
+
+  function closePlatformMenus(except) {
+    document.querySelectorAll("[data-platform-control]").forEach((control) => {
+      if (except && control === except) return;
+      control.classList.remove("is-open");
+      const toggle = control.querySelector("[data-platform-menu-toggle]");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+    });
   }
 
   async function init() {
