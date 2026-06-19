@@ -796,7 +796,7 @@
       return;
     }
     links.forEach((link) => {
-      link.href = assetUrl("profile.html");
+      link.href = assetUrl("profil.html");
       link.textContent = localizedText("Hesabım");
       link.setAttribute("aria-label", localizedText("Hesabım"));
       link.setAttribute("data-account-link", "");
@@ -839,7 +839,7 @@
       [/sepet|ödeme|sipariş/i, "cart.html"],
       [/favori/i, "favorites.html"],
       [/adres/i, "addresses.html"],
-      [/profil|hesab/i, "profile.html"],
+      [/profil|hesab/i, "profil.html"],
       [/partner|başvuru|restoran partneri|hizmet veren/i, "partner.html"],
       [/destek|yardım|sss|sıkça/i, "destek.html"],
       [/kampanya|kupon/i, "kuponlar.html"],

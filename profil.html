@@ -2,11 +2,12 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AllonaHub Profilim</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/user-profile-sync.js?v=20260619-user1"></script>
 
 <style>
 *{
@@ -534,8 +535,9 @@ a{
 }
 </style>
   <link rel="stylesheet" href="css/platform.css?v=20260619-live9">
+  <link rel="stylesheet" href="css/profile-premium-sync.css?v=20260619-user1">
 </head>
-<body>
+<body class="profile-sync-page">
 <div class="page">
 
   <div class="header">
@@ -551,7 +553,7 @@ a{
 
     <div class="top-actions glass">
       <a href="user-panel.html">Panel</a>
-      <a href="hubwallet.html">Kupon</a>
+      <a href="kuponlar.html">Kupon</a>
       <a href="premium.html">Premium</a>
       <button onclick="logoutUser()">Çıkış</button>
     </div>
@@ -675,6 +677,21 @@ a{
         </div>
 
         <div class="module-preview" id="modulePreview"></div>
+      </div>
+
+      <div class="profile-card glass">
+        <div class="cv-center-card">
+          <div>
+            <div class="card-head" style="margin-bottom:0;">
+              <h2>CV Merkezi</h2>
+              <span id="cvRouteLabel">Mesleğine uygun CV</span>
+            </div>
+            <p id="cvRouteHint">Denizcilik meslekleri Maritime CV formuna, diğer sektörler akıllı kariyer CV formuna yönlendirilir.</p>
+          </div>
+          <button class="blue-btn" type="button" id="profileCvButton">
+            CV Oluştur
+          </button>
+        </div>
       </div>
 
       <div class="profile-card glass">
@@ -923,6 +940,38 @@ const sectors=[
     ]
   },
   {
+    key:"food",
+    name:"Restoran & Gıda",
+    title:"Gıda Profesyoneli",
+    module:"food",
+    professions:[
+      {key:"restaurant_owner",name:"Restoran Sahibi",title:"Restoran Sahibi"},
+      {key:"chef",name:"Şef",title:"Şef"},
+      {key:"cook_food",name:"Aşçı",title:"Aşçı"},
+      {key:"barista",name:"Barista",title:"Barista"},
+      {key:"waiter",name:"Garson",title:"Garson"},
+      {key:"baker",name:"Fırıncı",title:"Fırıncı"},
+      {key:"pastry_chef",name:"Pastacı",title:"Pastacı"},
+      {key:"caterer",name:"Catering İşletmecisi",title:"Catering"}
+    ]
+  },
+  {
+    key:"transport",
+    name:"Ulaşım & Lojistik",
+    title:"Lojistik Profesyoneli",
+    module:"transport",
+    professions:[
+      {key:"driver",name:"Şoför",title:"Şoför"},
+      {key:"courier",name:"Kurye",title:"Kurye"},
+      {key:"taxi_driver",name:"Taksi Şoförü",title:"Taksici"},
+      {key:"truck_driver",name:"Tır Şoförü",title:"Tır Şoförü"},
+      {key:"logistics_manager",name:"Lojistik Müdürü",title:"Lojistikçi"},
+      {key:"warehouse_worker",name:"Depo Personeli",title:"Depo Personeli"},
+      {key:"pilot",name:"Pilot",title:"Pilot"},
+      {key:"flight_attendant",name:"Kabin Memuru",title:"Kabin Memuru"}
+    ]
+  },
+  {
     key:"other",
     name:"Diğer",
     title:"AllonaHub Üyesi",
@@ -974,6 +1023,27 @@ async function checkAuth(){
 
   currentUser=session.user;
 
+  if(window.AllonaProfileSync){
+    try{
+      const loaded=await window.AllonaProfileSync.load(supabaseClient);
+      if(loaded && loaded.profile){
+        currentProfile=loaded.profile;
+        selectedProfession={
+          sectorKey:currentProfile.sector_key,
+          sectorName:currentProfile.sector_name,
+          key:currentProfile.profession_key,
+          name:currentProfile.profession_name,
+          title:currentProfile.profession_title,
+          module:currentProfile.module
+        };
+        renderProfile();
+        return;
+      }
+    }catch(error){
+      console.warn("Ortak profil senkronu yüklenemedi:", error.message || error);
+    }
+  }
+
   loadProfileFromUser(session.user);
   renderProfile();
 }
@@ -1001,7 +1071,8 @@ function loadProfileFromUser(user){
 
     profile_visible:local.profile_visible !== false,
     contact_locked:local.contact_locked !== false,
-    avatar:local.avatar || "",
+    avatar:local.avatar || local.avatar_url || "",
+    avatar_url:local.avatar_url || local.avatar || "",
     greeting:meta.greeting || local.greeting || ""
   };
 
@@ -1102,6 +1173,7 @@ function selectProfession(key){
   document.getElementById("professionResults").classList.remove("active");
 
   renderModulePreview();
+  renderCvAction();
 }
 
 function renderProfile(){
@@ -1150,6 +1222,7 @@ function renderProfile(){
 
   renderBadges();
   renderModulePreview();
+  renderCvAction();
 }
   const modulePreviewSets={
   maritime:[
@@ -1187,6 +1260,16 @@ function renderProfile(){
     {icon:"fa-handshake",title:"Partnerlik",text:"AllonaHub partner fırsatları."},
     {icon:"fa-bullhorn",title:"Reklam",text:"Mesleğine uygun kampanyalar."}
   ],
+  food:[
+    {icon:"fa-utensils",title:"Restoran Profili",text:"Menü, hizmet ve gıda kariyer bilgileri."},
+    {icon:"fa-store",title:"Market & Yemek",text:"AllonaYemek ve AllonaMarket bağlantısı."},
+    {icon:"fa-file-lines",title:"Akıllı CV",text:"Gıda sektörü için profesyonel CV alanı."}
+  ],
+  transport:[
+    {icon:"fa-truck-fast",title:"Lojistik Profili",text:"Kurye, sürücü ve lojistik bilgileri."},
+    {icon:"fa-taxi",title:"AllonaRide",text:"Taksi ve ulaşım modülü bağlantısı."},
+    {icon:"fa-file-lines",title:"Akıllı CV",text:"Ulaşım sektörü için profesyonel CV alanı."}
+  ],
   general:[
     {icon:"fa-user",title:"Profil",text:"Dijital kimliğini tamamla."},
     {icon:"fa-wallet",title:"Kupon",text:"HP, kupon ve bakiye yönetimi."},
@@ -1208,6 +1291,57 @@ function renderModulePreview(){
       <span>${item.text}</span>
     </div>
   `).join("");
+}
+
+function currentCvTarget(){
+  const profile={
+    ...currentProfile,
+    sector_key:selectedProfession?.sectorKey || currentProfile?.sector_key,
+    sector_name:selectedProfession?.sectorName || currentProfile?.sector_name,
+    profession_key:selectedProfession?.key || currentProfile?.profession_key,
+    profession_name:selectedProfession?.name || currentProfile?.profession_name,
+    profession_title:selectedProfession?.title || currentProfile?.profession_title,
+    module:selectedProfession?.module || currentProfile?.module
+  };
+
+  if(window.AllonaProfileSync){
+    return window.AllonaProfileSync.cvTarget(profile);
+  }
+
+  const text=[
+    profile.module,
+    profile.sector_key,
+    profile.sector_name,
+    profile.profession_key,
+    profile.profession_name,
+    profile.profession_title
+  ].join(" ").toLowerCase();
+
+  return /maritime|deniz|gemi|kaptan|zabit|stcw|crew/.test(text) ? "cv-form.html?v=20260619-cv2" : "career-cv-form.html";
+}
+
+function renderCvAction(){
+  const button=document.getElementById("profileCvButton");
+  const label=document.getElementById("cvRouteLabel");
+  const hint=document.getElementById("cvRouteHint");
+  if(!button)return;
+
+  const target=currentCvTarget();
+  const isMaritime=target.includes("cv-form.html");
+  button.textContent=isMaritime ? "Denizcilik CV Oluştur" : "Akıllı CV Oluştur";
+  button.onclick=function(){
+    window.location.href=target;
+  };
+
+  if(label){
+    label.textContent=isMaritime ? "Maritime CV formu" : "Ortak akıllı CV formu";
+  }
+
+  if(hint){
+    hint.textContent=isMaritime
+      ? "Denizcilik mesleği seçildiği için kullanıcı doğrudan Maritime CV formuna yönlendirilir."
+      : "Bu sektör için kariyer modülündeki ortak meslek seçilebilen akıllı CV formu kullanılır.";
+  }
 }
 
 function renderBadges(){
@@ -1251,6 +1385,7 @@ function collectProfileData(){
     profile_visible:document.getElementById("profileVisible").checked,
     contact_locked:document.getElementById("contactLocked").checked,
     avatar:currentProfile.avatar || "",
+    avatar_url:currentProfile.avatar_url || currentProfile.avatar || "",
     greeting:""
   };
 }
@@ -1270,32 +1405,38 @@ async function saveProfile(){
 
   profile.greeting=getGreeting(profile);
 
-  const { error }=await supabaseClient.auth.updateUser({
-    data:{
-      full_name:profile.full_name,
-      phone:profile.phone,
-      country:profile.country,
-      sector_key:profile.sector_key,
-      sector_name:profile.sector_name,
-      profession_key:profile.profession_key,
-      profession_name:profile.profession_name,
-      profession_title:profile.profession_title,
-      module:profile.module,
-      greeting:profile.greeting
-    }
-  });
+  try{
+    if(window.AllonaProfileSync){
+      currentProfile=await window.AllonaProfileSync.save(supabaseClient, profile);
+    }else{
+      const { error }=await supabaseClient.auth.updateUser({
+        data:{
+          full_name:profile.full_name,
+          phone:profile.phone,
+          country:profile.country,
+          sector_key:profile.sector_key,
+          sector_name:profile.sector_name,
+          profession_key:profile.profession_key,
+          profession_name:profile.profession_name,
+          profession_title:profile.profession_title,
+          module:profile.module,
+          greeting:profile.greeting
+        }
+      });
 
-  if(error){
-    alert(error.message);
+      if(error)throw error;
+      currentProfile=profile;
+      localStorage.setItem("allonahub_user_profile",JSON.stringify(profile));
+    }
+  }catch(error){
+    console.error("Profil kaydetme hatası:", error);
+    alert(error.message || "Profil güvenli şekilde kaydedilemedi.");
     return;
   }
 
-  currentProfile=profile;
-  localStorage.setItem("allonahub_user_profile",JSON.stringify(profile));
-
   renderProfile();
 
-  alert("Profil kaydedildi ✅");
+  alert("Profil kaydedildi.");
 }
   const avatarInput=document.getElementById("avatarInput");
 
@@ -1321,6 +1462,7 @@ if(avatarInput){
 
       if(currentProfile){
         currentProfile.avatar=e.target.result;
+        currentProfile.avatar_url=e.target.result;
         localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
       }
     };
@@ -1341,7 +1483,7 @@ function profileSearch(){
     window.location.href="belgeler.html";
   }
   else if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
-    window.location.href="hubwallet.html";
+    window.location.href="kuponlar.html";
   }
   else if(q.includes("premium") || q.includes("üyelik")){
     window.location.href="premium.html";
@@ -1350,7 +1492,7 @@ function profileSearch(){
     window.location.href="destek.html";
   }
   else if(q.includes("cv")){
-    window.location.href="cv-form.html?v=20260619-cv2";
+    window.location.href=currentCvTarget();
   }
   else{
     window.location.href="arama.html?q="+encodeURIComponent(q);

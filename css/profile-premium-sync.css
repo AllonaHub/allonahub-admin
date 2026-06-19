@@ -1,0 +1,126 @@
+body.profile-sync-page {
+  min-width: 0;
+  background:
+    radial-gradient(circle at 10% 4%, rgba(0, 213, 255, .2), transparent 28rem),
+    radial-gradient(circle at 90% 18%, rgba(124, 77, 255, .14), transparent 26rem),
+    linear-gradient(145deg, #020712, #07182b 48%, #020712);
+}
+
+body.profile-sync-page .page {
+  width: min(100%, 1320px);
+}
+
+body.profile-sync-page .glass,
+body.profile-sync-page .profile-card,
+body.profile-sync-page .side-profile {
+  border-color: rgba(78, 205, 255, .28);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, .09), transparent 35%),
+    rgba(5, 16, 32, .86);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .34), 0 0 34px rgba(0, 213, 255, .15);
+  color: #f6fbff;
+}
+
+body.profile-sync-page .brand b,
+body.profile-sync-page .side-profile h2,
+body.profile-sync-page .card-head h2,
+body.profile-sync-page .field label,
+body.profile-sync-page .status-card b,
+body.profile-sync-page .toggle-card b,
+body.profile-sync-page .module-mini b,
+body.profile-sync-page .info-box b {
+  color: #f6fbff !important;
+}
+
+body.profile-sync-page .top-actions a,
+body.profile-sync-page .top-actions button,
+body.profile-sync-page .side-profile p,
+body.profile-sync-page .card-head span,
+body.profile-sync-page .info-box,
+body.profile-sync-page .status-card span,
+body.profile-sync-page .toggle-card p,
+body.profile-sync-page .module-mini span {
+  color: #bcd0e8 !important;
+}
+
+body.profile-sync-page .top-actions {
+  gap: 10px;
+  padding: 10px;
+}
+
+body.profile-sync-page .top-actions a,
+body.profile-sync-page .top-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(78, 205, 255, .22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .06);
+  white-space: nowrap;
+}
+
+body.profile-sync-page .field input,
+body.profile-sync-page .field select,
+body.profile-sync-page .field textarea,
+body.profile-sync-page .profession-results,
+body.profile-sync-page .info-box,
+body.profile-sync-page .status-card,
+body.profile-sync-page .toggle-card,
+body.profile-sync-page .module-mini {
+  border-color: rgba(78, 205, 255, .24);
+  background: rgba(255, 255, 255, .06);
+  color: #f6fbff;
+}
+
+body.profile-sync-page .field input:disabled {
+  opacity: .72;
+}
+
+body.profile-sync-page .profession-item {
+  color: #f6fbff;
+}
+
+body.profile-sync-page .profession-item:hover {
+  background: rgba(0, 213, 255, .14);
+}
+
+.cv-center-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.cv-center-card p {
+  margin: 8px 0 0;
+  color: #bcd0e8;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  body.profile-sync-page .header,
+  body.profile-sync-page .profile-layout,
+  body.profile-sync-page .form-grid,
+  body.profile-sync-page .privacy-row,
+  body.profile-sync-page .status-grid,
+  body.profile-sync-page .module-preview,
+  .cv-center-card {
+    grid-template-columns: 1fr;
+  }
+
+  body.profile-sync-page .header {
+    height: auto;
+  }
+
+  body.profile-sync-page .top-actions,
+  body.profile-sync-page .action-row {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  body.profile-sync-page .top-actions {
+    height: auto;
+  }
+}

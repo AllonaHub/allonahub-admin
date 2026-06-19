@@ -1,1007 +1,293 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
-<title>AllonaHub Kullanıcı Paneli</title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,Helvetica,sans-serif;
-}
-
-:root{
---blue:#0077ff;
---neon:#00d5ff;
---deep:#0a2540;
---soft:#f4fbff;
---card:#ffffff;
---text:#102033;
---muted:#6b7b8f;
---line:rgba(0,150,255,.22);
---gold:#f5b942;
---green:#18c37e;
---red:#ff375f;
-}
-
-body{
-min-width:1320px;
-background:
-radial-gradient(circle at top left,rgba(0,213,255,.20),transparent 32%),
-radial-gradient(circle at bottom right,rgba(0,119,255,.14),transparent 30%),
-linear-gradient(135deg,#ffffff,#f4fbff,#ffffff);
-color:var(--text);
-overflow-x:auto;
-}
-
-body:before{
-content:"";
-position:fixed;
-inset:0;
-z-index:-1;
-background:linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
-animation:wave 9s infinite linear;
-}
-
-@keyframes wave{
-0%{transform:translateX(-40%)}
-100%{transform:translateX(40%)}
-}
-
-a{
-text-decoration:none;
-color:inherit;
-}
-
-.page{
-width:1320px;
-margin:0 auto;
-padding:18px 22px 50px;
-}
-
-.glass{
-background:rgba(255,255,255,.88);
-border:1px solid var(--line);
-box-shadow:
-0 0 28px rgba(0,213,255,.13),
-inset 0 0 22px rgba(255,255,255,.65);
-border-radius:28px;
-position:relative;
-overflow:hidden;
-backdrop-filter:blur(14px);
-}
-
-.glass:after{
-content:"";
-position:absolute;
-inset:0;
-background:linear-gradient(120deg,transparent,rgba(0,213,255,.09),transparent);
-pointer-events:none;
-}
-
-/* HEADER */
-
-.header{
-height:86px;
-display:grid;
-grid-template-columns:310px 1fr 380px;
-gap:18px;
-align-items:center;
-margin-bottom:24px;
-}
-
-.brand{
-height:86px;
-display:flex;
-align-items:center;
-gap:13px;
-padding:0 20px;
-}
-
-.brand img{
-width:54px;
-height:54px;
-object-fit:contain;
-filter:drop-shadow(0 0 12px rgba(0,213,255,.45));
-}
-
-.brand b{
-font-size:30px;
-color:var(--deep);
-}
-
-.brand span{
-font-size:30px;
-color:var(--blue);
-font-weight:900;
-text-shadow:0 0 12px rgba(0,213,255,.45);
-}
-
-.search{
-height:62px;
-display:flex;
-align-items:center;
-gap:12px;
-padding:0 14px 0 22px;
-}
-
-.search i{
-color:var(--blue);
-}
-
-.search input{
-flex:1;
-background:transparent;
-border:0;
-outline:0;
-color:var(--text);
-font-size:15px;
-}
-
-.search input::placeholder{
-color:#8293a7;
-}
-
-.search button{
-height:42px;
-padding:0 20px;
-border:0;
-border-radius:14px;
-background:linear-gradient(135deg,var(--neon),var(--blue));
-color:white;
-font-weight:900;
-cursor:pointer;
-box-shadow:0 0 18px rgba(0,213,255,.35);
-}
-
-.top-actions{
-height:62px;
-display:flex;
-align-items:center;
-justify-content:space-around;
-}
-
-.top-actions a,
-.top-actions button{
-font-weight:900;
-color:var(--deep);
-background:transparent;
-border:0;
-cursor:pointer;
-font-size:14px;
-}
-
-.top-actions a:hover,
-.top-actions button:hover{
-color:var(--blue);
-}
-
-/* MAIN GRID */
-
-.dashboard{
-display:grid;
-grid-template-columns:1fr 360px;
-gap:22px;
-align-items:start;
-}
-
-.main-col{
-display:flex;
-flex-direction:column;
-gap:22px;
-}
-
-.side-col{
-display:flex;
-flex-direction:column;
-gap:22px;
-}
-
-/* HERO CARD */
-
-.welcome-card{
-min-height:250px;
-padding:30px;
-display:grid;
-grid-template-columns:1fr 280px;
-gap:24px;
-align-items:center;
-}
-
-.welcome-kicker{
-color:var(--blue);
-font-weight:900;
-margin-bottom:8px;
-}
-
-.welcome-card h1{
-font-size:42px;
-color:var(--deep);
-margin-bottom:12px;
-}
-
-.welcome-card h1 span{
-color:var(--blue);
-text-shadow:0 0 14px rgba(0,213,255,.35);
-}
-
-.welcome-card p{
-color:var(--muted);
-line-height:1.6;
-max-width:680px;
-}
-
-.hero-stats{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:12px;
-margin-top:22px;
-}
-
-.stat-mini{
-background:#f7fcff;
-border:1px solid rgba(0,150,255,.18);
-border-radius:18px;
-padding:14px;
-}
-
-.stat-mini b{
-display:block;
-color:var(--deep);
-font-size:22px;
-}
-
-.stat-mini span{
-color:var(--muted);
-font-size:12px;
-font-weight:800;
-}
-
-.profile-orb{
-width:210px;
-height:210px;
-border-radius:50%;
-margin:auto;
-background:
-radial-gradient(circle at 35% 30%,#ffffff,#c8f4ff 35%,#0077ff 80%);
-box-shadow:0 0 45px rgba(0,213,255,.38);
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:64px;
-font-weight:900;
-border:6px solid white;
-}
-/* CARDS */
-
-.section-head{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:14px;
-}
-
-.section-head h2{
-font-size:26px;
-color:var(--deep);
-}
-
-.section-head a{
-color:var(--blue);
-font-weight:900;
-}
-
-.module-grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:16px;
-}
-
-.module-card{
-min-height:150px;
-padding:22px;
-border-radius:24px;
-background:white;
-border:1px solid rgba(0,150,255,.18);
-box-shadow:0 0 24px rgba(0,213,255,.10);
-transition:.3s;
-cursor:pointer;
-}
-
-.module-card:hover{
-transform:translateY(-4px);
-box-shadow:0 0 34px rgba(0,213,255,.24);
-}
-
-.module-icon{
-width:48px;
-height:48px;
-border-radius:16px;
-display:flex;
-align-items:center;
-justify-content:center;
-margin-bottom:14px;
-color:white;
-background:linear-gradient(135deg,var(--neon),var(--blue));
-box-shadow:0 0 18px rgba(0,213,255,.32);
-font-size:20px;
-}
-
-.module-card h3{
-color:var(--deep);
-margin-bottom:8px;
-}
-
-.module-card p{
-color:var(--muted);
-font-size:13px;
-line-height:1.45;
-}
-
-.wallet-row{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:14px;
-}
-
-.wallet-card{
-padding:22px;
-border-radius:24px;
-background:white;
-border:1px solid rgba(0,150,255,.18);
-box-shadow:0 0 24px rgba(0,213,255,.10);
-}
-
-.wallet-card span{
-display:block;
-color:var(--muted);
-font-size:12px;
-font-weight:900;
-margin-bottom:8px;
-}
-
-.wallet-card b{
-font-size:28px;
-color:var(--deep);
-}
-
-.wallet-card small{
-display:block;
-margin-top:8px;
-color:var(--green);
-font-weight:900;
-}
-
-.panel-card{
-padding:24px;
-}
-
-.task-list{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.task-item{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:14px;
-border-radius:18px;
-background:#f7fcff;
-border:1px solid rgba(0,150,255,.14);
-}
-
-.task-item b{
-color:var(--deep);
-}
-
-.task-item span{
-color:var(--blue);
-font-weight:900;
-font-size:13px;
-}
-
-.notification-list{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.notice{
-padding:15px;
-border-radius:18px;
-background:#f7fcff;
-border:1px solid rgba(0,150,255,.14);
-}
-
-.notice b{
-display:block;
-color:var(--deep);
-margin-bottom:5px;
-}
-
-.notice span{
-color:var(--muted);
-font-size:12px;
-font-weight:800;
-}
-
-/* SIDE PROFILE */
-
-.profile-card{
-padding:24px;
-text-align:center;
-}
-
-.avatar{
-width:105px;
-height:105px;
-margin:0 auto 14px;
-border-radius:50%;
-background:linear-gradient(135deg,var(--neon),var(--blue));
-box-shadow:0 0 28px rgba(0,213,255,.32);
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:38px;
-font-weight:900;
-border:5px solid white;
-}
-
-.profile-card h3{
-font-size:24px;
-color:var(--deep);
-margin-bottom:5px;
-}
-
-.profile-card p{
-color:var(--muted);
-font-size:13px;
-line-height:1.45;
-}
-
-.badges{
-display:flex;
-flex-wrap:wrap;
-gap:8px;
-justify-content:center;
-margin-top:16px;
-}
-
-.badge{
-padding:8px 10px;
-border-radius:999px;
-background:#eef8ff;
-border:1px solid rgba(0,150,255,.16);
-color:var(--blue);
-font-size:12px;
-font-weight:900;
-}
-
-.progress-box{
-margin-top:18px;
-text-align:left;
-}
-
-.progress-top{
-display:flex;
-justify-content:space-between;
-color:var(--deep);
-font-weight:900;
-font-size:13px;
-margin-bottom:8px;
-}
-
-.progress{
-height:12px;
-border-radius:999px;
-background:#e8f5ff;
-overflow:hidden;
-}
-
-.progress span{
-display:block;
-height:100%;
-width:42%;
-background:linear-gradient(90deg,var(--neon),var(--blue));
-box-shadow:0 0 14px rgba(0,213,255,.38);
-}
-
-.qr-card{
-padding:22px;
-text-align:center;
-}
-
-.qr-box{
-width:150px;
-height:150px;
-margin:14px auto;
-border-radius:20px;
-background:
-linear-gradient(90deg,var(--deep) 10px,transparent 10px) 0 0/30px 30px,
-linear-gradient(var(--deep) 10px,transparent 10px) 0 0/30px 30px,
-white;
-border:8px solid white;
-box-shadow:0 0 22px rgba(0,213,255,.22);
-}
-
-.qr-card h3{
-color:var(--deep);
-}
-
-.qr-card p{
-color:var(--muted);
-font-size:13px;
-}
-
-.blue-btn{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-gap:8px;
-min-height:44px;
-padding:0 18px;
-border-radius:14px;
-background:linear-gradient(135deg,var(--neon),var(--blue));
-color:white;
-font-weight:900;
-border:0;
-cursor:pointer;
-box-shadow:0 0 18px rgba(0,213,255,.32);
-}
-
-.outline-btn{
-display:inline-flex;
-align-items:center;
-justify-content:center;
-gap:8px;
-min-height:44px;
-padding:0 18px;
-border-radius:14px;
-background:white;
-color:var(--deep);
-font-weight:900;
-border:1px solid rgba(0,150,255,.22);
-cursor:pointer;
-}
-
-.empty-state{
-padding:24px;
-border-radius:24px;
-background:#f7fcff;
-border:1px dashed rgba(0,150,255,.28);
-color:var(--muted);
-line-height:1.5;
-}
-
-@media(max-width:900px){
-body{
-min-width:100%;
-}
-
-.page{
-width:100%;
-}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaHub Kullanıcı Paneli</title>
+  <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/platform.css?v=20260619-live9">
+  <link rel="stylesheet" href="css/user-panel-premium.css?v=20260619-user1">
 </head>
-<body>
-<div class="page">
-
-<div class="header">
-<a class="brand glass" href="index.html">
-<div><b>Allona</b><span>Hub</span></div>
-</a>
-
-<div class="search glass">
-<i class="fa-solid fa-magnifying-glass"></i>
-<input id="panelSearchInput" placeholder="CV, HP, Kupon, iş ilanları, belgeler veya destek ara...">
-<button onclick="panelSearch()">Ara</button>
-</div>
-
-<div class="top-actions glass">
-<a href="index.html">Ana Sayfa</a>
-<a href="hubwallet.html">Kupon</a>
-<a href="premium.html">Premium</a>
-<button onclick="logoutUser()">Çıkış</button>
-</div>
-</div>
-
-<main class="dashboard">
-
-<section class="main-col">
-
-<div class="welcome-card glass">
-<div>
-<div class="welcome-kicker" id="welcomeKicker">AllonaHub Digital Identity</div>
-
-<h1 id="welcomeTitle">
-Hoş geldin
-</h1>
-
-<p id="welcomeText">
-AllonaHub hesabın hazırlanıyor. Profil bilgilerin yüklendikten sonra panelin mesleğine göre kişiselleştirilecek.
-</p>
-
-<div class="hero-stats">
-<div class="stat-mini">
-<b id="hpValue">0 HP</b>
-<span>Hub Points</span>
-</div>
-
-<div class="stat-mini">
-<b id="levelValue">Level 1</b>
-<span>Seviye</span>
-</div>
-
-<div class="stat-mini">
-<b id="matchValue">0</b>
-<span>Uygun Fırsat</span>
-</div>
-</div>
-</div>
-
-<div class="profile-orb" id="heroInitials">AH</div>
-</div>
-
-<div class="glass panel-card">
-<div class="section-head">
-<h2>Mesleğine Özel Alanlar</h2>
-<a href="#">Tüm Modüller</a>
-</div>
-
-<div class="module-grid" id="professionModules"></div>
-</div>
-
-<div class="wallet-row">
-<div class="wallet-card">
-<span>KUPON</span>
-<b id="walletValue">0₺</b>
-<small>Aktif bakiye</small>
-</div>
-
-<div class="wallet-card">
-<span>HP BAKİYE</span>
-<b id="hpWalletValue">0</b>
-<small>Kupon ve avantajlarda kullan</small>
-</div>
-
-<div class="wallet-card">
-<span>XP</span>
-<b id="xpValue">0</b>
-<small>Seviye ilerlemesi</small>
-</div>
-
-<div class="wallet-card">
-<span>PREMIUM</span>
-<b id="premiumValue">Basic</b>
-<small>Yükseltilebilir üyelik</small>
-</div>
-</div>
-<div class="glass panel-card">
-<div class="section-head">
-<h2>Bugünkü Görevler</h2>
-<a href="gorevler.html">Tümünü Gör</a>
-</div>
-
-<div class="task-list" id="taskList">
-<div class="task-item">
-<b>Profilini tamamla</b>
-<span>+25 HP</span>
-</div>
-
-<div class="task-item">
-<b>Telefonunu doğrula</b>
-<span>+15 HP</span>
-</div>
-
-<div class="task-item">
-<b>İlk modülünü keşfet</b>
-<span>+10 HP</span>
-</div>
-</div>
-</div>
-
-<div class="glass panel-card">
-<div class="section-head">
-<h2>Akıllı Bildirimler</h2>
-<a href="bildirimler.html">Tümünü Gör</a>
-</div>
-
-<div class="notification-list" id="notificationList">
-<div class="notice">
-<b>AllonaHub hesabın hazır</b>
-<span>Profil bilgilerine göre panelin kişiselleştiriliyor.</span>
-</div>
-</div>
-</div>
-
-</section>
-
-<aside class="side-col">
-
-<div class="profile-card glass">
-<div class="avatar" id="profileInitials">AH</div>
-
-<h3 id="profileName">AllonaHub Üyesi</h3>
-<p id="profileInfo">Meslek ve profil bilgileri yükleniyor.</p>
-
-<div class="badges" id="badgeList">
-<span class="badge">Founding Member</span>
-<span class="badge">Basic</span>
-</div>
-
-<div class="progress-box">
-<div class="progress-top">
-<span>Level Progress</span>
-<span id="progressText">42%</span>
-</div>
-<div class="progress">
-<span id="progressBar"></span>
-</div>
-</div>
-</div>
-
-<div class="qr-card glass">
-<h3>AllonaHub ID</h3>
-<div class="qr-box"></div>
-<p id="userIdText">AH-USER-000000</p>
-<br>
-<button class="blue-btn" onclick="copyUserId()">
-<i class="fa-solid fa-copy"></i> ID Kopyala
-</button>
-</div>
-
-<div class="glass panel-card">
-<div class="section-head">
-<h2>Hızlı İşlemler</h2>
-</div>
-
-<div class="task-list">
-<button class="outline-btn" onclick="location.href='profil.html'">
-<i class="fa-solid fa-user"></i> Profili Düzenle
-</button>
-
-<button class="outline-btn" onclick="location.href='hubwallet.html'">
-<i class="fa-solid fa-wallet"></i> Kupon Aç
-</button>
-
-<button class="outline-btn" onclick="location.href='premium.html'">
-<i class="fa-solid fa-gem"></i> Premium’a Geç
-</button>
-
-<button class="outline-btn" onclick="location.href='destek.html'">
-<i class="fa-solid fa-headset"></i> Destek Al
-</button>
-</div>
-</div>
-
-</aside>
-
-</main>
-</div>
-<script>
-const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-let currentUser=null;
-let currentProfile=null;
-
-const defaultStats={
-hp:100,
-xp:40,
-level:1,
-wallet:0,
-premium:"Basic",
-progress:42
-};
-
-function getInitials(name){
-const parts=(name||"AllonaHub Üyesi").trim().split(" ").filter(Boolean);
-if(parts.length===1)return parts[0].slice(0,2).toUpperCase();
-return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
-}
-
-function makeUserId(user){
-if(!user || !user.id)return "AH-USER-000000";
-return "AH-" + user.id.slice(0,8).toUpperCase();
-}
-
-function getFirstName(name){
-return (name||"").trim().split(" ")[0] || "Üye";
-}
-
-function getGreeting(profile){
-const name=getFirstName(profile.full_name);
-const title=profile.profession_title || "AllonaHub Üyesi";
-
-if(title==="Dr." || title==="Av." || title==="Dt." || title==="Ecz."){
-return `${title} ${name}, hoş geldin`;
-}
-
-return `${title} ${name}, hoş geldin`;
-}
-
-async function checkAuth(){
-  const { data:{ session } } = await supabaseClient.auth.getSession();
-
-  if(!session || !session.user){
-    window.location.href="user.html";
-    return;
-  }
-
-  currentUser=session.user;
-
-  const { data:profile, error } = await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .maybeSingle();
-
-  if(error){
-    console.error("Profil çekme hatası:", error);
-    alert("Profil bilgileri yüklenemedi.");
-    return;
-  }
-
-  if(!profile){
-    alert("Profil kaydı bulunamadı.");
-    return;
-  }
-
-  currentProfile={
-    full_name:profile.full_name || "AllonaHub Üyesi",
-    email:profile.email || session.user.email || "",
-    phone:profile.phone || "",
-    country:profile.country || "",
-    city:profile.city || "",
-    birth_date:profile.birth_date || "",
-    bio:profile.bio || "",
-
-    sector_key:profile.sector_key || "other",
-    sector_name:profile.sector_name || "Genel",
-    profession_key:profile.profession_key || "other_profession",
-    profession_name:profile.profession_name || "AllonaHub Üyesi",
-    profession_title:profile.profession_title || "Üye",
-    module:profile.module || "general",
-
-    avatar:profile.avatar_url || "",
-    avatar_url:profile.avatar_url || "",
-
-    hp:profile.hp || 0,
-    xp:profile.xp || 0,
-    level:profile.level || 1,
-    wallet_balance:profile.wallet_balance || 0,
-    premium_level:profile.premium_level || "Basic",
-    progress:profile.progress || 42,
-
-    greeting:profile.greeting || ""
-  };
-
-  localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
-
-  renderPanel();
-}
-function loadProfileFromUser(user){
-const meta=user.user_metadata || {};
-const local=JSON.parse(localStorage.getItem("allonahub_user_profile") || "{}");
-
-currentProfile={
-full_name:meta.full_name || local.full_name || "AllonaHub Üyesi",
-phone:meta.phone || local.phone || "",
-country:meta.country || local.country || "",
-sector_key:meta.sector_key || local.sector_key || "general",
-sector_name:meta.sector_name || local.sector_name || "Genel",
-profession_key:meta.profession_key || local.profession_key || "",
-profession_name:meta.profession_name || local.profession_name || "AllonaHub Üyesi",
-profession_title:meta.profession_title || local.profession_title || "Üye",
-module:meta.module || local.module || "general",
-greeting:meta.greeting || local.greeting || "",
-avatar: local.avatar || meta.avatar || ""
-  };
-
-localStorage.setItem("allonahub_user_profile",JSON.stringify(currentProfile));
-}
-function panelSearch(){
-  const q=document.getElementById("panelSearchInput").value.toLowerCase().trim();
-  
-if(!q)return;
-
-if(q.includes("cv")){
-    window.location.href="cv-form.html?v=20260619-cv2";
-}
-else if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
-window.location.href="hubwallet.html";
-}
-else if(q.includes("premium") || q.includes("üyelik")){
-
-    window.location.href="premium.html";
-
-  }
-
-  else if(q.includes("profil")){
-
-    window.location.href="profil.html";
-
-  }
-
-  else{
-
-    window.location.href="arama.html?q="+encodeURIComponent(q);
-
-  }
-
- // <-- panelSearch() fonksiyonunun kapanışı
-  }
-
-async function forceRealProfileData(){
-  const { data:{ session } } = await supabaseClient.auth.getSession();
-
-  if(!session || !session.user){
-    window.location.href="user.html";
-    return;
-  }
-
-  const { data:profile, error } = await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .maybeSingle();
-
-  if(error){
-    console.error("PROFILE ERROR:", error);
-    return;
-  }
-
-  if(!profile){
-    console.error("PROFILE NOT FOUND");
-    return;
-  }
-
-  const fullName = profile.full_name || session.user.email || "AllonaHub Üyesi";
-  const title = profile.profession_title || "Üye";
-  const profession = profile.profession_name || "AllonaHub Üyesi";
-  const sector = profile.sector_name || "Genel";
-  const initials = fullName.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
-
-  document.getElementById("welcomeTitle").innerHTML = `<span>${title} ${fullName.split(" ")[0]}, hoş geldin</span>`;
-  document.getElementById("welcomeText").textContent = `${sector} / ${profession} profiline göre AllonaHub panelin hazırlanıyor.`;
-
-  document.getElementById("heroInitials").textContent = initials;
-  document.getElementById("profileInitials").textContent = initials;
-
-  document.getElementById("profileName").textContent = fullName;
-  document.getElementById("profileInfo").textContent = `${title} • ${profession}`;
-
-  document.getElementById("hpValue").textContent = (profile.hp || 0) + " HP";
-  document.getElementById("hpWalletValue").textContent = profile.hp || 0;
-  document.getElementById("xpValue").textContent = profile.xp || 0;
-
-  document.getElementById("premiumValue").textContent = profile.premium_level || "Basic";
-
-  document.getElementById("progressText").textContent = (profile.progress || 42) + "%";
-  document.getElementById("progressBar").style.width = (profile.progress || 42) + "%";
-
-  document.getElementById("userIdText").textContent = "AH-" + session.user.id.slice(0,8).toUpperCase();
-}
-
-document.addEventListener("DOMContentLoaded",function(){
-  setTimeout(forceRealProfileData,500);
-});
-  
-</script>
+<body class="user-panel-page" data-level-theme="new-member">
+  <div class="premium-shell">
+    <header class="premium-topbar" aria-label="AllonaHub kullanıcı panel üst menüsü">
+      <button class="premium-icon-btn" type="button" data-go="index.html" aria-label="Ana sayfa">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <a class="premium-brand" href="index.html" aria-label="AllonaHub ana sayfa">
+        <img src="allona.logo.png" alt="AllonaHub Logo">
+        <span>
+          <strong>ALLONAHUB</strong>
+          <span>Hayatını AllonaHub'la kolaylaştır.</span>
+        </span>
+      </a>
+
+      <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler">
+        <i class="fa-solid fa-bell"></i>
+        <span class="count">3</span>
+      </a>
+    </header>
+
+    <main>
+      <section class="hero-grid" aria-label="Profil ve seviye özeti">
+        <article class="identity-card premium-glass">
+          <a class="avatar-stage" href="profil.html" aria-label="Profil fotoğrafını düzenle">
+            <span class="avatar-photo" id="profileAvatar">AH</span>
+            <span class="avatar-camera"><i class="fa-solid fa-camera"></i></span>
+          </a>
+
+          <div class="identity-copy">
+            <span class="hello">Merhaba,</span>
+            <div class="identity-name">
+              <h1 id="fullName">AllonaHub Üyesi</h1>
+              <a class="edit-chip" href="profil.html" aria-label="Profili düzenle">
+                <i class="fa-solid fa-pen"></i>
+              </a>
+            </div>
+            <button class="member-no" type="button" onclick="copyUserId()">
+              <i class="fa-solid fa-id-badge"></i>
+              <span id="memberNo">AH-USER-000000</span>
+            </button>
+            <a class="tier-pill" href="premium.html">
+              <i class="fa-solid fa-crown"></i>
+              <span id="tierName">New Member</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+            <div class="streak-pill">
+              <i class="fa-solid fa-fire"></i>
+              <span id="streakValue">0 Günlük Streak</span>
+              <i class="fa-regular fa-circle-question"></i>
+            </div>
+            <p id="professionLine" class="member-no">Profil bilgileri yükleniyor.</p>
+          </div>
+        </article>
+
+        <article class="level-emblem premium-glass">
+          <div>
+            <div class="level-crest">
+              <div class="level-crest-inner" id="levelNumber">Lv.1</div>
+            </div>
+            <h2 id="levelName">New Member</h2>
+            <p id="levelBonus">Başlangıç HP alanı</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="metric-grid" aria-label="HP ve bakiye kartları">
+        <article class="metric-card premium-glass">
+          <div class="metric-top">
+            <span>TOPLAM HP</span>
+            <i class="fa-regular fa-circle-question"></i>
+          </div>
+          <div class="metric-value"><span id="hpValue">250</span> <small>HP</small></div>
+          <div class="metric-visual">
+            <span class="coin-stack" aria-hidden="true"></span>
+            <a class="metric-arrow" href="kuponlar.html" aria-label="Kuponlara git">
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="metric-card premium-glass">
+          <div class="metric-top">
+            <span>CASHOUT BAKİYE</span>
+            <i class="fa-regular fa-circle-question"></i>
+          </div>
+          <div class="metric-value" id="cashoutValue">0,00 ₺</div>
+          <div class="metric-visual">
+            <span class="wallet-visual" aria-hidden="true"></span>
+            <a class="metric-arrow" href="kuponlar.html" aria-label="Cashout alanına git">
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </div>
+        </article>
+
+        <article class="metric-card premium-glass">
+          <div class="metric-top">
+            <span>HUB CASH</span>
+            <i class="fa-regular fa-circle-question"></i>
+          </div>
+          <div class="metric-value" id="hubCashValue">0,00 ₺</div>
+          <div class="metric-visual">
+            <span class="card-visual" aria-hidden="true"></span>
+            <a class="metric-arrow" href="kuponlar.html" aria-label="Hub Cash alanına git">
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <section class="xp-card premium-glass" aria-label="Seviye XP puanı">
+        <div class="xp-badge"><span id="xpBadge">Lv.1</span></div>
+        <div class="xp-body">
+          <div class="xp-head">
+            <div>
+              <h2>SEVİYE XP PUANI</h2>
+              <p id="remainingXp">Yeni seviyeye hazırlanıyor.</p>
+            </div>
+            <div class="next-tier">
+              Sonraki Seviye
+              <span id="nextLevelLabel">Lv.2 Blue</span>
+            </div>
+          </div>
+          <div class="xp-progress" aria-hidden="true">
+            <span id="xpProgressBar"></span>
+          </div>
+          <div class="xp-foot">
+            <span class="xp-total" id="xpTotal">0 / 75 XP</span>
+            <span id="xpPercent">0%</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="action-rail" aria-label="Kısa yollar">
+        <button class="action-tile premium-glass" type="button" data-go="gorevler.html">
+          <span class="action-icon"><i class="fa-solid fa-bullseye"></i><span class="action-badge">3</span></span>
+          <b>Görevler</b>
+        </button>
+        <button class="action-tile premium-glass" type="button" data-go="user-panel.html">
+          <span class="action-icon"><i class="fa-solid fa-calendar-check"></i><span class="action-badge">1</span></span>
+          <b>Günlük Giriş</b>
+        </button>
+        <button class="action-tile premium-glass" type="button" data-go="kuponlar.html">
+          <span class="action-icon"><i class="fa-solid fa-ticket"></i><span class="action-badge">2</span></span>
+          <b>Kuponlarım</b>
+        </button>
+        <button class="action-tile premium-glass" type="button" data-go="premium.html">
+          <span class="action-icon"><i class="fa-solid fa-star"></i></span>
+          <b>Puan Dükkanı</b>
+        </button>
+        <button class="action-tile premium-glass" type="button" data-go="destek.html">
+          <span class="action-icon"><i class="fa-solid fa-gift"></i><span class="action-badge">1</span></span>
+          <b>Arkadaşını Davet Et</b>
+        </button>
+        <button class="action-tile premium-glass" type="button" id="cvAction" data-go="cv">
+          <span class="action-icon"><i class="fa-solid fa-file-lines"></i></span>
+          <b id="cvActionText">Akıllı CV Oluştur</b>
+        </button>
+      </section>
+
+      <section class="reward-banner premium-glass" aria-label="Günlük giriş ödülü">
+        <div>
+          <h2>HER GÜN GİRİŞ YAP, HP KAZAN!</h2>
+          <p>Giriş yap, görevleri tamamla ve seviyeni büyüt. İlk dört seviye hızlı ilerler, sonrasında statü yolculuğu zorlaşır.</p>
+          <button class="premium-btn" type="button" data-go="gorevler.html">
+            GİRİŞ YAP
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+        <div class="gift-scene" aria-hidden="true">
+          <div class="gift-box"></div>
+        </div>
+      </section>
+
+      <section class="section-row" aria-label="Mesleğe özel modüller">
+        <div class="section-title">
+          <div>
+            <h2>Mesleğine Özel Alanlar</h2>
+            <a id="moduleHint" href="profil.html">Profil bilgilerine göre hazırlanıyor.</a>
+          </div>
+          <a href="ecosystem.html#modules">Tümünü Gör</a>
+        </div>
+        <div class="action-rail" id="moduleGrid"></div>
+      </section>
+
+      <section class="section-row" aria-label="Hublarım">
+        <div class="section-title">
+          <h2>HUB'LARIM</h2>
+          <a href="ecosystem.html#modules">Tümünü Gör</a>
+        </div>
+        <div class="hub-grid">
+          <a class="hub-card premium-glass" href="allonayemek.html">
+            <i class="fa-solid fa-burger"></i>
+            <b>AllonaFood</b>
+          </a>
+          <a class="hub-card premium-glass" href="allonamarket.html">
+            <i class="fa-solid fa-basket-shopping"></i>
+            <b>AllonaMarket</b>
+          </a>
+          <a class="hub-card premium-glass" href="allonashop.html">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <b>AllonaShop</b>
+          </a>
+          <a class="hub-card premium-glass" href="allonataksi.html">
+            <i class="fa-solid fa-car-side"></i>
+            <b>AllonaRide</b>
+          </a>
+          <a class="hub-card premium-glass" href="ecosystem.html#modules">
+            <i class="fa-solid fa-grip"></i>
+            <b>Tümü</b>
+          </a>
+        </div>
+
+        <div class="benefit-strip premium-glass">
+          <div class="benefit">
+            <i class="fa-solid fa-truck-fast"></i>
+            <span><b>Ücretsiz Kargo</b><span>Tüm siparişlerde</span></span>
+          </div>
+          <div class="benefit">
+            <i class="fa-solid fa-coins"></i>
+            <span><b>Daha Fazla HP Kazan</b><span>Seviyene göre bonus</span></span>
+          </div>
+          <div class="benefit">
+            <i class="fa-solid fa-percent"></i>
+            <span><b>Özel Kampanyalar</b><span>Sana özel fırsatlar</span></span>
+          </div>
+          <div class="benefit">
+            <i class="fa-solid fa-headset"></i>
+            <span><b>Öncelikli Destek</b><span>7/24 hızlı destek</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-row" aria-label="Son işlemlerim">
+        <div class="section-title">
+          <h2>SON İŞLEMLERİM</h2>
+          <a href="bildirimler.html">Tümünü Gör</a>
+        </div>
+        <div class="transaction-list" id="transactionList"></div>
+      </section>
+
+      <section class="section-row" aria-label="Panel araması">
+        <div class="premium-glass" style="padding:16px;display:flex;gap:10px;align-items:center;">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="panelSearchInput" type="search" placeholder="CV, HP, kupon, profil, belge veya destek ara..." style="flex:1;min-width:0;background:transparent;border:0;color:#fff;outline:0;font:inherit;">
+          <button class="premium-btn" type="button" onclick="panelSearch()">Ara</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Kullanıcı panel alt menüsü">
+    <a class="active" href="index.html">
+      <i class="fa-solid fa-house"></i>
+      <span>Ana Sayfa</span>
+    </a>
+    <a href="allonashop.html">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <span>Alışveriş</span>
+    </a>
+    <a class="bottom-logo" href="user-panel.html" aria-label="AllonaHub panel">
+      <img src="allona.logo.png" alt="">
+    </a>
+    <a href="kuponlar.html">
+      <i class="fa-solid fa-ticket"></i>
+      <span>Kuponlarım</span>
+    </a>
+    <a href="profil.html">
+      <i class="fa-regular fa-user"></i>
+      <span>Profilim</span>
+    </a>
+  </nav>
+
+  <div class="panel-status" id="panelStatus" role="status" aria-live="polite"></div>
   <div data-layout="footer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/user-profile-sync.js?v=20260619-user1" defer></script>
+  <script src="js/user-panel-premium.js?v=20260619-user1" defer></script>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260619-live9" defer></script>
   <script src="js/platform.js?v=20260619-live9" defer></script>
