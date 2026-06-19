@@ -42,6 +42,34 @@ Kartlı ödeme formları e-posta, telefon ve kart bilgisi alanlarıyla iyzico on
 2. Varsayılan branch'i korumaya al.
 3. Cloudflare Pages veya GitHub Pages yayını bağla.
 
+## 3.1 Hetzner Backend API
+
+Frontend GitHub Pages/Cloudflare tarafında kalır. Backend API Hetzner CPX31 üzerinde `api.allonahub.com` olarak çalıştırılır.
+
+Detaylı kurulum:
+
+```text
+docs/deploy/hetzner-cpx31-backend.md
+```
+
+Ana deploy komutları:
+
+```bash
+cp deploy/hetzner/.env.production.example deploy/hetzner/.env.production
+nano deploy/hetzner/.env.production
+docker compose -f docker-compose.prod.yml up -d --build
+curl http://127.0.0.1:3000/health
+```
+
+Nginx config:
+
+```bash
+cp deploy/hetzner/nginx/api.allonahub.com.conf /etc/nginx/sites-available/api.allonahub.com
+ln -sf /etc/nginx/sites-available/api.allonahub.com /etc/nginx/sites-enabled/api.allonahub.com
+nginx -t
+systemctl reload nginx
+```
+
 ## 4. Cloudflare
 
 - SSL: Full

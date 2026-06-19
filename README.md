@@ -10,6 +10,7 @@ Platform genelinde ortak footer `js/layout.v3.js` tarafından üretilir ve sayfa
 
 - Frontend: HTML5, CSS3, Vanilla JavaScript
 - Backend: Supabase
+- Production API: Hetzner CPX31 üzerinde Docker + Nginx ile `api.allonahub.com`
 - Auth: Supabase Auth
 - Database: PostgreSQL (Supabase)
 - Storage: Supabase Storage
@@ -60,6 +61,7 @@ supabase/
 - Kart bilgisi frontend veya Supabase veritabanında tutulmaz; ödeme iyzico CheckoutForm ekranında tamamlanır.
 - Checkout öncesinde teslimat, fatura, sipariş özeti, kupon, kargo ve yasal onaylar tamamlanır.
 - Güvenlik Supabase RLS, Edge Functions ve minimum yetki prensibiyle ilerler.
+- Service role key ve iyzico secret değerleri frontend'e yazılmaz; Hetzner backend veya Supabase Edge Function secret ortamında tutulur.
 - Var olan çalışan özellikler silinmez; değişiklikler geriye dönük uyumluluğu korur.
 - `index.html` yeni AllonaHub süper uygulama anasayfa kaynağıdır; destekleyici mimari bu sayfanın marka, modül, premium ve partner ekosistemi mesajlarına göre kurulmalıdır.
 - Footer, dil seçici ve tema seçici bütün mevcut ve yeni modüllerde ortak platform davranışı olarak korunur.

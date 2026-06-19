@@ -1,6 +1,7 @@
 # API
 
 Frontend doğrudan Supabase JavaScript SDK kullanır. Kritik ödeme adımları Supabase Edge Functions üzerinden ilerler.
+Production backend devreye alındığında kritik işlemler `https://api.allonahub.com` altındaki Hetzner API üzerinden yürütülür; Supabase veritabanı ve Auth kullanılmaya devam eder.
 
 ## Supabase Client
 
@@ -59,5 +60,28 @@ iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.paym
 
 - Kart verisi Allona tarafında toplanmaz.
 - iyzico API key ve secret sadece Supabase Edge Function secret olarak tutulur.
+- Hetzner backend kullanımında iyzico API key, iyzico secret ve Supabase service role key sadece sunucu environment içinde tutulur.
 - Supabase anon key frontend için kullanılır; service role key asla frontend'e konmaz.
 - RLS kapatılmaz.
+
+## Hetzner Backend API
+
+Base URL:
+
+```text
+https://api.allonahub.com
+```
+
+Endpointler:
+
+- `GET /health`: API sağlık kontrolü.
+- `GET /ready`: Supabase bağlantı hazırlık kontrolü.
+- `POST /v1/orders`: Auth zorunlu, güvenli sipariş oluşturma RPC'sini çağırır.
+- `POST /v1/payments/iyzico/checkout`: Auth zorunlu, sipariş için iyzico ödeme oturumu başlatır.
+- `GET|POST /v1/payments/iyzico/callback`: iyzico dönüşünü işler.
+- `POST /v1/cv/checkout`: Auth zorunlu, CV ödeme oturumu başlatır.
+- `GET /v1/partner/commission/preview`: Partner/admin komisyon önizleme.
+- `POST /v1/hp-wallet/ledger`: HP Wallet işlem kayıt taslağı.
+- `POST /v1/cron/reconcile-payments`: `x-cron-secret` ile cron ödeme kontrolü.
+
+Detaylı deploy: `docs/deploy/hetzner-cpx31-backend.md`.
