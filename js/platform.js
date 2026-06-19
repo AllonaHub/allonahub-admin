@@ -6,9 +6,9 @@
   const ASSET_VERSION = (() => {
     try {
       const current = document.currentScript && document.currentScript.src;
-      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live7" : "20260619-live7";
+      return current ? new URL(current, window.location.href).searchParams.get("v") || "20260619-live8" : "20260619-live8";
     } catch (error) {
-      return "20260619-live7";
+      return "20260619-live8";
     }
   })();
   const languages = [

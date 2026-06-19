@@ -1317,6 +1317,27 @@ body[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-s
   margin-top: 42px;
 }
 
+body > [data-layout="footer"],
+body > .payment-footer-mount {
+  width: 100vw !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  margin-left: min(0px, calc(50% - 50vw)) !important;
+}
+
+body[data-theme]:has(> .glow.one):has(> [data-layout="footer"]) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  overflow-y: auto !important;
+}
+
+body[data-theme]:has(> .glow.one):has(> [data-layout="footer"]) > .wrapper {
+  margin: clamp(42px, 8vh, 80px) auto 48px !important;
+}
+
 body[data-theme]:has(.premium-hero) {
   width: 100% !important;
   max-width: none !important;
