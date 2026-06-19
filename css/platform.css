@@ -796,6 +796,106 @@ body[data-theme="white"] .shop-promo-content strong {
   color: var(--ah-ink) !important;
 }
 
+body[data-theme="white"] .page,
+body[data-theme="white"] .glass,
+body[data-theme="white"] .hero-main,
+body[data-theme="white"] .hero-card,
+body[data-theme="white"] .finance-main,
+body[data-theme="white"] .partner-cta,
+body[data-theme="white"] .info,
+body[data-theme="white"] .warning,
+body[data-theme="white"] .card,
+body[data-theme="white"] .offer,
+body[data-theme="white"] .listing,
+body[data-theme="white"] .course,
+body[data-theme="white"] .ticket,
+body[data-theme="white"] .pet-card,
+body[data-theme="white"] .service,
+body[data-theme="white"] .move,
+body[data-theme="white"] .shipment,
+body[data-theme="white"] .job,
+body[data-theme="white"] .vehicle,
+body[data-theme="white"] .package,
+body[data-theme="white"] .project,
+body[data-theme="white"] .cat-card,
+body[data-theme="white"] .delivery,
+body[data-theme="white"] .restaurant,
+body[data-theme="white"] .menu-item,
+body[data-theme="white"] .product,
+body[data-theme="white"] .platform-card,
+body[data-theme="white"] .tier,
+body[data-theme="white"] .stat-live-card {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="white"] .page :where(p, li, label, small, .flow div, .panel-list div, .input-box, .summary-item, .finePrint, .secureLine, .status),
+body[data-theme="white"] .glass :where(p, span:not(.gold):not(.blue), li, label),
+body[data-theme="white"] .card :where(p, span, li),
+body[data-theme="white"] .offer p,
+body[data-theme="white"] .listing p,
+body[data-theme="white"] .course p,
+body[data-theme="white"] .ticket p,
+body[data-theme="white"] .pet-card p,
+body[data-theme="white"] .service p,
+body[data-theme="white"] .move p,
+body[data-theme="white"] .shipment p,
+body[data-theme="white"] .job p,
+body[data-theme="white"] .vehicle p,
+body[data-theme="white"] .package p,
+body[data-theme="white"] .project p,
+body[data-theme="white"] .delivery p {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme="white"] .page :where(h1, h2, h3, h4, b, strong),
+body[data-theme="white"] .glass :where(h1, h2, h3, h4, b, strong),
+body[data-theme="white"] .card :where(h1, h2, h3, h4, b, strong),
+body[data-theme="white"] .offer b,
+body[data-theme="white"] .listing b,
+body[data-theme="white"] .course b,
+body[data-theme="white"] .ticket b,
+body[data-theme="white"] .pet-card b,
+body[data-theme="white"] .service b,
+body[data-theme="white"] .move b,
+body[data-theme="white"] .shipment b,
+body[data-theme="white"] .job b,
+body[data-theme="white"] .vehicle b,
+body[data-theme="white"] .package b,
+body[data-theme="white"] .project b,
+body[data-theme="white"] .delivery b {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="white"] .page :where(.section-title h2, .hero-main h1, .hero-card h3, .finance-main h2, .partner-cta h2, .info h2, .card h3, .warning b) {
+  color: var(--ah-accent) !important;
+}
+
+body[data-theme="white"] .page :where(.section-title a, .cat-menu, .meta, .info h3, .price, .stock) {
+  color: var(--ah-primary-strong) !important;
+}
+
+body[data-theme="white"] .modules-grid.large-grid .module-card,
+body[data-theme="white"] .modules-grid.large-grid .module-card :where(h3, p, span, b, strong) {
+  color: #ffffff !important;
+}
+
+body[data-theme="white"]:has(.premium-hero) .hero-location,
+body[data-theme="white"]:has(.premium-hero) .hero-location strong,
+body[data-theme="white"]:has(.premium-hero) .stat-live-card h3 {
+  color: var(--ah-ink) !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="white"] .shop-category-mega,
+body[data-theme="white"] .shop-mega-feature,
+body[data-theme="white"] .shop-mega-feature strong {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="white"] .shop-mega-feature span {
+  color: var(--ah-muted) !important;
+}
+
 body[data-theme] .search-mark,
 body[data-theme] .lines span,
 body[data-theme] .market-icon,
@@ -1226,18 +1326,20 @@ body[data-theme]:has(.premium-hero) {
 
 .site-footer {
   margin-top: auto;
-  padding: 30px 0 22px;
-  color: var(--ah-ink);
+  padding: 70px 0 34px;
+  color: #eaf2ff;
   background:
-    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--ah-primary) 12%, transparent), transparent 30%),
-    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--ah-accent-soft) 12%, transparent), transparent 28%),
-    linear-gradient(180deg, var(--ah-footer-bg), var(--ah-bg));
-  border-top: 1px solid var(--ah-footer-line);
+    radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--ah-primary) 20%, transparent), transparent 32%),
+    radial-gradient(circle at 90% 20%, color-mix(in srgb, var(--ah-secondary) 14%, transparent), transparent 28%),
+    linear-gradient(180deg, #071525 0%, #030912 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .site-footer .container {
-  width: min(100% - 32px, 1180px);
+  width: min(100%, 1320px);
   margin-inline: auto;
+  padding-inline: 20px;
+  box-sizing: border-box;
 }
 
 .site-footer a {
@@ -1247,9 +1349,9 @@ body[data-theme]:has(.premium-hero) {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1.25fr) repeat(4, minmax(150px, 1fr));
-  gap: 22px;
-  padding: 4px 0 22px;
+  grid-template-columns: minmax(250px, 1.45fr) repeat(4, minmax(150px, 1fr));
+  gap: 30px;
+  padding: 0 0 32px;
 }
 
 .footer-brand {
@@ -1262,23 +1364,25 @@ body[data-theme]:has(.premium-hero) {
 
 .footer-col h2,
 .footer-col h3 {
-  margin: 0 0 12px;
-  color: var(--ah-accent-soft);
-  font-size: 1rem;
+  margin: 0 0 16px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .footer-col a,
 .footer-col p {
   display: block;
   margin: 0;
-  color: var(--ah-muted);
+  color: #c2cad8;
   font-size: 0.92rem;
-  line-height: 1.9;
+  line-height: 1.85;
 }
 
 .footer-col a:hover,
 .footer-bottom a:hover {
-  color: var(--ah-primary);
+  color: #5fd7ff;
 }
 
 .footer-social,
@@ -1288,8 +1392,8 @@ body[data-theme]:has(.premium-hero) {
   justify-content: center;
   gap: 18px;
   flex-wrap: wrap;
-  padding: 22px 0 10px;
-  border-top: 1px solid var(--ah-footer-line);
+  padding: 26px 0 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .social-link,
@@ -1302,10 +1406,10 @@ body[data-theme]:has(.premium-hero) {
   justify-content: center;
   gap: 6px;
   border-radius: 50%;
-  color: var(--ah-primary-strong);
-  background: var(--ah-footer-panel);
-  border: 1px solid var(--ah-footer-line);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--ah-primary) 12%, transparent);
+  color: var(--ah-primary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 28px rgba(0, 213, 255, 0.10);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   font-size: 1rem;
   font-weight: 900;
@@ -1314,8 +1418,8 @@ body[data-theme]:has(.premium-hero) {
 .social-link:hover,
 .social-icons a:hover {
   transform: translateY(-5px) scale(1.06);
-  border-color: color-mix(in srgb, var(--ah-primary) 34%, var(--ah-footer-line));
-  box-shadow: 0 18px 38px color-mix(in srgb, var(--ah-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--ah-primary) 38%, rgba(255, 255, 255, 0.16));
+  box-shadow: 0 18px 38px color-mix(in srgb, var(--ah-primary) 22%, transparent);
 }
 
 .social-link__icon,
@@ -1327,7 +1431,7 @@ body[data-theme]:has(.premium-hero) {
 .social-icons span {
   font-size: 0.68rem;
   font-weight: 800;
-  color: var(--ah-ink);
+  color: #eaf2ff;
 }
 
 .social-icons .wa { color: #25d366; }
@@ -1349,7 +1453,7 @@ body[data-theme]:has(.premium-hero) {
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 18px 0 6px;
+  padding: 20px 0 10px;
 }
 
 .store-btn {
@@ -1360,9 +1464,9 @@ body[data-theme]:has(.premium-hero) {
   border-radius: 8px;
   padding: 0 22px;
   font-weight: 850;
-  color: var(--ah-ink);
-  background: var(--ah-footer-panel);
-  border: 1px solid var(--ah-footer-line);
+  color: #eaf2ff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ah-primary) 10%, transparent);
 }
 
@@ -1408,14 +1512,43 @@ body[data-theme]:has(.premium-hero) {
   font-size: 1.05rem;
 }
 
+.footer-payment-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0 20px;
+  color: #aeb9ca;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.footer-iyzico-badge {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 24px rgba(0, 213, 255, 0.08);
+}
+
+.footer-iyzico-badge img {
+  width: 74px;
+  height: auto;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
   gap: 18px;
   flex-wrap: wrap;
-  border-top: 1px solid var(--ah-footer-line);
-  color: var(--ah-muted);
-  padding: 18px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  color: #aeb9ca;
+  padding: 24px 0 0;
   font-size: 0.88rem;
 }
 
@@ -1423,6 +1556,37 @@ body[data-theme]:has(.premium-hero) {
   display: inline-flex;
   gap: 14px;
   flex-wrap: wrap;
+}
+
+body[data-theme="white"] .site-footer {
+  color: #eaf2ff !important;
+}
+
+body[data-theme="white"] .site-footer .footer-brand,
+body[data-theme="white"] .site-footer .social-icons span,
+body[data-theme="white"] .site-footer .store-btn,
+body[data-theme="white"] .site-footer .store-btn--app strong {
+  color: #ffffff !important;
+}
+
+body[data-theme="white"] .site-footer .footer-brand .gold {
+  color: var(--ah-accent-soft) !important;
+}
+
+body[data-theme="white"] .site-footer .footer-brand .blue {
+  color: var(--ah-primary) !important;
+}
+
+body[data-theme="white"] .site-footer .footer-col a:not(.footer-brand),
+body[data-theme="white"] .site-footer .footer-col p {
+  color: #c2cad8 !important;
+}
+
+body[data-theme="white"] .site-footer .footer-bottom,
+body[data-theme="white"] .site-footer .footer-bottom a,
+body[data-theme="white"] .site-footer .footer-payment-strip,
+body[data-theme="white"] .site-footer .store-btn__kicker {
+  color: #aeb9ca !important;
 }
 
 .platform-page {

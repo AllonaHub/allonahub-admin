@@ -152,6 +152,12 @@
             </span>
           </a>
         </div>
+        <div class="container footer-payment-strip" aria-label="AllonaHub güvenli ödeme altyapısı">
+          <span>Güvenli ödeme altyapısı</span>
+          <span class="footer-iyzico-badge">
+            <img src="${core.url("images/payments/iyzico-pay-tr-white-horizontal.svg")}" alt="iyzico ile öde" loading="lazy">
+          </span>
+        </div>
         <div class="container footer-bottom">
           <span>© ${year} AllonaHub. Tüm hakları saklıdır.</span>
           <span class="footer-bottom__links">

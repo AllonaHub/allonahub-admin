@@ -217,6 +217,15 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
 }
 .status[data-state="risk"]{border-color:rgba(246,182,75,.55);background:rgba(246,182,75,.12)}
 .finePrint{margin-top:14px;color:#a9d8e8;font-size:13px}
+.payment-footer-mount{
+  margin:clamp(28px,4vw,52px) calc(var(--payment-page-pad) * -1) calc(var(--payment-page-pad) * -1);
+}
+.payment-footer-mount .site-footer{
+  width:100vw;
+  margin-top:0;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+}
 @media(max-width:860px){
   .topbar{flex-direction:column;align-items:stretch}
   .grid{grid-template-columns:1fr}
@@ -224,7 +233,7 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
   .cardRow{grid-template-columns:1fr}
 }
 </style>
-<link rel="stylesheet" href="css/platform.css?v=20260619-live5">
+<link rel="stylesheet" href="css/platform.css?v=20260619-live6">
 </head>
 <body>
 <main class="paymentShell">
@@ -303,6 +312,7 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
     </aside>
   </section>
 </main>
+<div class="payment-footer-mount" data-layout="footer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script src="js/config.js?v=20260619-cvpay2" defer></script>
@@ -310,8 +320,8 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
 <script src="js/supabase-client.js?v=20260619-live5" defer></script>
 <script src="js/auth.js?v=20260619-live5" defer></script>
 <script src="js/cv-access.js?v=20260619-payform1" defer></script>
-<script src="js/layout.v3.js?v=20260619-live5" defer></script>
-<script src="js/platform.js?v=20260619-live5" defer></script>
+<script src="js/layout.v3.js?v=20260619-live6" defer></script>
+<script src="js/platform.js?v=20260619-live6" defer></script>
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const App = window.Allona || {};
