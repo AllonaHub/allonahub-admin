@@ -47,12 +47,12 @@
             </a>
             <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Giriş Yap</a>
             <span class="platform-controls-slot" data-platform-controls-slot></span>
-            <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
+            <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
           </div>
         </div>
         <div class="nav-row">
           <div class="container nav-row__inner">
-            <nav class="nav-links" data-nav-links aria-label="Ana menü">
+            <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
               <a href="${core.url("index.html")}" ${active("index.html")}>Vitrin</a>
               <a href="${core.url("ecosystem.html")}" ${active("ecosystem.html")}>Ekosistem</a>
               <a href="${core.url("shop.html")}" ${active("shop.html")}>Mağaza</a>
@@ -194,6 +194,19 @@
     }
   }
 
+  function setMobileNav(open) {
+    const nav = document.querySelector("[data-nav-links]");
+    const toggle = document.querySelector("[data-nav-toggle]");
+    const header = document.querySelector(".site-header");
+    if (!nav || !toggle || !header) return;
+
+    nav.classList.toggle("is-open", open);
+    header.classList.toggle("nav-open", open);
+    document.body.classList.toggle("menu-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Menüyü kapat" : "Menüyü aç");
+  }
+
   function bindLayout() {
     document.querySelectorAll("[data-layout='header']").forEach((node) => {
       node.innerHTML = headerMarkup();
@@ -212,9 +225,21 @@
 
     document.addEventListener("click", (event) => {
       const toggle = event.target.closest("[data-nav-toggle]");
-      if (!toggle) return;
-      const nav = document.querySelector("[data-nav-links]");
-      if (nav) nav.classList.toggle("is-open");
+      if (toggle) {
+        const open = toggle.getAttribute("aria-expanded") !== "true";
+        setMobileNav(open);
+        return;
+      }
+
+      if (event.target.closest("[data-nav-links] a")) {
+        setMobileNav(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setMobileNav(false);
+      }
     });
 
     if (App.cart) App.cart.updateBadges();

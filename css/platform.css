@@ -149,6 +149,17 @@ body[data-theme="white"] {
   --ah-shadow-soft: 0 10px 26px rgba(0, 119, 255, 0.10);
 }
 
+body {
+  min-width: 0 !important;
+}
+
+.page,
+.wrapper {
+  box-sizing: border-box;
+  max-width: 1320px;
+  width: min(100% - 24px, 1320px) !important;
+}
+
 html[dir="rtl"] body {
   direction: rtl;
 }
@@ -2117,6 +2128,250 @@ body[data-theme] .partner {
   }
 
   .platform-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    overflow-x: clip;
+  }
+
+  .page,
+  .wrapper {
+    width: min(100% - 16px, 1320px) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .header {
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  .brand,
+  .search,
+  .actions,
+  .catbar,
+  .top-links {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+
+  .brand,
+  .search {
+    min-height: 54px;
+  }
+
+  .search input {
+    min-width: 0;
+  }
+
+  .actions,
+  .catbar,
+  .top-links,
+  .hero-badges,
+  .meta {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    white-space: normal !important;
+  }
+
+  .actions a,
+  .catbar a,
+  .top-links a {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .hero,
+  .hero-grid,
+  .module-grid,
+  .request-grid,
+  .listing-grid,
+  .market-board,
+  .partner-cta,
+  .category-grid,
+  .promo-grid,
+  .restaurant-grid,
+  .menu-grid,
+  .grid,
+  .grid-7,
+  .grid-5,
+  .grid-4,
+  .grid-3,
+  .stats,
+  .cards,
+  .features,
+  .content-grid,
+  .panel-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .hero-main,
+  .hero-card,
+  .request-main,
+  .request-side,
+  .partner-cta,
+  .info,
+  .glass {
+    min-height: auto !important;
+    border-radius: 20px !important;
+  }
+
+  .hero-main,
+  .hero-card,
+  .request-main,
+  .request-side,
+  .partner-cta,
+  .info {
+    padding: 20px !important;
+  }
+
+  .hero-main h1 {
+    font-size: 34px !important;
+    line-height: 1.1 !important;
+  }
+
+  .hero-main h2,
+  .request-main h2,
+  .partner-cta h2,
+  .info h2,
+  .section-title h2 {
+    font-size: 28px !important;
+    line-height: 1.16 !important;
+  }
+
+  .hero-main p {
+    font-size: 16px !important;
+  }
+
+  .listing-img {
+    height: 180px !important;
+  }
+
+  body[data-theme]:has(.premium-hero) header nav a,
+  body[data-theme]:has(.premium-hero) .login {
+    color: var(--ah-ink) !important;
+  }
+
+  .platform-controls {
+    gap: 8px;
+  }
+
+  .platform-control-btn {
+    width: 100%;
+    padding-inline: 10px;
+  }
+
+  .platform-theme-btn {
+    min-width: 0;
+  }
+
+  .platform-menu {
+    top: max(68px, env(safe-area-inset-top));
+  }
+
+  .platform-hero {
+    padding: 28px 18px;
+  }
+
+  .platform-hero h1 {
+    font-size: 34px;
+    line-height: 1.1;
+  }
+
+  .platform-section h2 {
+    font-size: 28px;
+  }
+
+  .footer-social,
+  .social-icons,
+  .store-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .social-link,
+  .social-icons a,
+  .store-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .page,
+  .wrapper {
+    width: min(100% - 12px, 1320px) !important;
+  }
+
+  .brand b,
+  .brand span {
+    font-size: 24px !important;
+  }
+
+  .search {
+    padding-inline: 14px !important;
+  }
+
+  .actions a,
+  .catbar a,
+  .top-links a {
+    font-size: 13px !important;
+  }
+
+  .hero-main,
+  .hero-card,
+  .request-main,
+  .request-side,
+  .partner-cta,
+  .info {
+    padding: 18px !important;
+  }
+
+  .hero-main h1 {
+    font-size: 30px !important;
+  }
+
+  .listing-img {
+    height: 150px !important;
+  }
+
+  .platform-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .platform-control {
+    width: 100%;
+  }
+
+  .platform-menu {
+    top: max(58px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  .platform-hero h1 {
+    font-size: 30px;
+  }
+
+  .platform-card {
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .footer-social,
+  .social-icons,
+  .store-buttons {
     grid-template-columns: 1fr;
   }
 }
