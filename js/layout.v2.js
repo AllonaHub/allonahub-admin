@@ -33,8 +33,17 @@
             <a class="icon-btn" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               ♡ <span class="badge" data-fav-count>0</span>
             </a>
-            <a class="icon-btn" href="${core.url("/pages/commerce/cart.html")}" aria-label="Sepet">
-              🛒 <span class="badge" data-cart-count>0</span>
+            <a class="icon-btn icon-btn--count icon-btn--cart" href="${core.url("/pages/commerce/cart.html")}" aria-label="Sepet">
+              <span class="header-action-icon header-action-icon--cart" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3.5 4.5h2.2l2.1 10.1a2.2 2.2 0 0 0 2.1 1.7h7.5a2.2 2.2 0 0 0 2.1-1.6l1.4-5.5H7"></path>
+                  <path d="M9.5 11.5h8.2"></path>
+                  <path d="M10.2 13.8h6.4"></path>
+                  <circle cx="10.3" cy="20" r="1.55"></circle>
+                  <circle cx="18" cy="20" r="1.55"></circle>
+                </svg>
+              </span>
+              <span class="badge" data-cart-count>0</span>
             </a>
             <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/login.html")}" data-account-link>Giriş Yap</a>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
