@@ -4,32 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Maritime | AllonaHub</title>
-  <meta name="description" content="AllonaHub denizcilik ve maritime ekosistemi.">
+  <meta name="description" content="AllonaHub denizcilik ve maritime ekosistemi için global giriş sayfası.">
   <link rel="stylesheet" href="css/styles.v2.css?v=20260619-live5">
   <link rel="stylesheet" href="css/platform.css?v=20260620-mobile1">
+  <link rel="stylesheet" href="css/maritime-module.css?v=20260620-maritime1">
 </head>
-<body>
+<body class="maritime-module-page">
   <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
-      <div class="container platform-page">
-        <section class="platform-hero">
-          <p class="platform-eyebrow">Denizcilik</p>
-          <h1>Maritime Ekosistemi</h1>
-          <p>Crew başvuruları, gemi operasyonları, navlun talepleri, broker bağlantıları ve denizcilik hizmetleri AllonaHub çatısı altında birleşir.</p>
-        </section>
-        <section class="platform-section">
-          <h2>Maritime Modülleri</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Crew</h3><p>Gemi personeli CV, pozisyon ve başvuru takibi.</p></article>
-            <article class="platform-card"><h3>Navlun</h3><p>Yük, rota, tonaj ve teklif süreçleri için talep altyapısı.</p></article>
-            <article class="platform-card"><h3>Broker</h3><p>Gemi, acente ve teknik hizmet bağlantıları için partner akışı.</p></article>
+      <div class="maritime-container maritime-stack">
+        <section class="maritime-gateway">
+          <div class="maritime-gateway__content">
+            <p class="maritime-eyebrow">Maritime Gateway</p>
+            <h1>AllonaHub maritime operasyon giriş noktası</h1>
+            <p>Crew başvuruları, gemi operasyonları, navlun talepleri, broker bağlantıları, acente hizmetleri ve denizcilik belgeleri Allona Denizcilik modülünde birleşir.</p>
+            <div class="maritime-actions">
+              <a class="maritime-btn" href="allonadenizcilik.html">Allona Denizcilik</a>
+              <a class="maritime-btn maritime-btn--muted" href="cv-form.html?v=20260619-cv2&module=maritime">Maritime CV</a>
+              <a class="maritime-btn maritime-btn--muted" href="partner.html?module=maritime">Partner Ol</a>
+            </div>
+          </div>
+          <div class="maritime-gateway__media">
+            <img src="denizcilik.png" alt="AllonaHub maritime ekosistem görseli" loading="eager">
           </div>
         </section>
-        <div class="platform-actions">
-          <a class="platform-action" href="allonadenizcilik.html">Allona Denizcilik</a>
-          <a class="platform-action platform-action--secondary" href="cv-form.html?v=20260619-cv2">Maritime CV</a>
-        </div>
+
+        <section class="maritime-section">
+          <div class="maritime-section__head">
+            <div>
+              <h2>Maritime modülleri</h2>
+              <p>Global maritime kullanıcıları için Türkçe modüle, CV akışına ve partner başvurusuna doğrudan erişim.</p>
+            </div>
+          </div>
+          <div class="maritime-grid">
+            <article class="maritime-card"><span class="maritime-card__tag">Crew</span><h3>CV ve başvuru</h3><p>Denizci profili, sertifika, tecrübe ve açık pozisyon eşleşmesi.</p><a class="maritime-card__link" href="cv-form.html?v=20260619-cv2&module=maritime">CV formu</a></article>
+            <article class="maritime-card"><span class="maritime-card__tag">Freight</span><h3>Navlun talepleri</h3><p>Yük, rota, tonaj, laycan ve teklif süreçleri için operasyon taslağı.</p><a class="maritime-card__link" href="allonadenizcilik.html#operations">Talep merkezi</a></article>
+            <article class="maritime-card"><span class="maritime-card__tag">Partner</span><h3>Broker ve acente ağı</h3><p>Gemi şirketi, broker, acente, teknik servis ve crewing partner akışı.</p><a class="maritime-card__link" href="partner.html?module=maritime">Partner başvurusu</a></article>
+          </div>
+        </section>
       </div>
     </main>
     <div data-layout="footer"></div>

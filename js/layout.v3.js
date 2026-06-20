@@ -115,6 +115,7 @@
           <div class="footer-col">
             <h3>Ekosistem</h3>
             <a href="${core.url("ecosystem.html#modules")}">Tüm Modüller</a>
+            <a href="${core.url("allonadenizcilik.html")}">Allona Denizcilik</a>
             <a href="${core.url("partner.html")}">Partner Başvurusu</a>
             <a href="${core.url("hubwallet.html")}">Kupon</a>
             <a href="${core.url("premium.html")}">Premium</a>

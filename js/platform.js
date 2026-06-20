@@ -824,6 +824,7 @@
       [/destek|yardım|sss|sıkça/i, "destek.html"],
       [/kampanya|kupon/i, "kuponlar.html"],
       [/hp|wallet|kupon|puan/i, "hubwallet.html"],
+      [/deniz|maritime|gemi|crew|navlun|broker/i, "allonadenizcilik.html"],
       [/gizlilik/i, "gizlilik.html"],
       [/çerez/i, "cerez.html"],
       [/kvkk/i, "kvkk.html"],

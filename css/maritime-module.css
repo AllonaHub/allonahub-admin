@@ -1,0 +1,530 @@
+body.maritime-module-page {
+  background: var(--ah-page-bg);
+  color: var(--ah-ink);
+}
+
+body.maritime-module-page .site-main {
+  padding: 30px 0 0;
+}
+
+.maritime-container {
+  width: min(100% - 32px, 1200px);
+  margin: 0 auto;
+}
+
+.maritime-stack {
+  display: grid;
+  gap: 28px;
+}
+
+.maritime-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.maritime-hero__content,
+.maritime-hero__visual,
+.maritime-panel,
+.maritime-card,
+.maritime-listing,
+.maritime-flow,
+.maritime-cta,
+.maritime-gateway {
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: var(--ah-card);
+  box-shadow: var(--ah-shadow-soft);
+}
+
+.maritime-hero__content {
+  padding: 42px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(3, 20, 36, 0.94), rgba(6, 84, 113, 0.9)),
+    linear-gradient(90deg, rgba(255, 209, 102, 0.16), rgba(249, 115, 91, 0.08));
+}
+
+.maritime-eyebrow {
+  margin: 0 0 12px;
+  color: #ffe3a3;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.maritime-hero h1 {
+  max-width: 820px;
+  margin: 0 0 16px;
+  font-size: 3.55rem;
+  line-height: 1.03;
+  letter-spacing: 0;
+}
+
+.maritime-hero__lead {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.maritime-actions,
+.maritime-filter,
+.maritime-quick-nav,
+.maritime-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.maritime-actions {
+  margin-top: 26px;
+}
+
+.maritime-btn,
+.maritime-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.maritime-btn {
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-secondary));
+  color: #ffffff;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--ah-primary) 24%, transparent);
+}
+
+.maritime-btn--light {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.maritime-btn--muted {
+  background: color-mix(in srgb, var(--ah-primary) 9%, transparent);
+  color: var(--ah-primary-strong);
+  box-shadow: none;
+}
+
+.maritime-hero__visual {
+  overflow: hidden;
+  background: #061525;
+}
+
+.maritime-hero__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  object-fit: cover;
+}
+
+.maritime-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.maritime-metric {
+  min-height: 112px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: var(--ah-card);
+  padding: 18px;
+  box-shadow: var(--ah-shadow-soft);
+}
+
+.maritime-metric strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ah-primary-strong);
+  font-size: 1.7rem;
+}
+
+.maritime-metric span {
+  color: var(--ah-muted);
+  line-height: 1.45;
+}
+
+.maritime-quick-nav {
+  position: static;
+  padding: 10px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-card) 92%, transparent);
+  box-shadow: var(--ah-shadow-soft);
+}
+
+.maritime-chip {
+  min-height: 40px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  color: var(--ah-ink);
+}
+
+.maritime-chip:hover,
+.maritime-chip.is-active {
+  background: var(--ah-primary-strong);
+  color: #ffffff;
+}
+
+.maritime-section {
+  display: grid;
+  gap: 16px;
+}
+
+.maritime-section__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+}
+
+.maritime-section__head h2 {
+  margin: 0;
+  color: var(--ah-ink);
+  font-size: 2rem;
+  letter-spacing: 0;
+}
+
+.maritime-section__head p {
+  max-width: 740px;
+  margin: 8px 0 0;
+  color: var(--ah-muted);
+  line-height: 1.65;
+}
+
+.maritime-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.maritime-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.maritime-card,
+.maritime-listing {
+  padding: 22px;
+}
+
+.maritime-card h3,
+.maritime-listing h3,
+.maritime-flow h3,
+.maritime-panel h3 {
+  margin: 0 0 9px;
+  color: var(--ah-primary-strong);
+  letter-spacing: 0;
+}
+
+.maritime-card p,
+.maritime-listing p,
+.maritime-flow p,
+.maritime-panel p {
+  margin: 0;
+  color: var(--ah-muted);
+  line-height: 1.55;
+}
+
+.maritime-card__tag,
+.maritime-listing__tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--ah-accent-soft) 18%, transparent);
+  color: color-mix(in srgb, var(--ah-ink) 84%, var(--ah-accent-soft));
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.maritime-card__link,
+.maritime-listing__link {
+  display: inline-flex;
+  margin-top: 16px;
+  color: var(--ah-primary-strong);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.maritime-operations {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.65fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.maritime-panel {
+  padding: 24px;
+}
+
+.maritime-form {
+  display: grid;
+  gap: 14px;
+}
+
+.maritime-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.maritime-field {
+  display: grid;
+  gap: 7px;
+}
+
+.maritime-field label {
+  color: var(--ah-ink);
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.maritime-field input,
+.maritime-field select,
+.maritime-field textarea {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-card) 90%, #ffffff);
+  color: var(--ah-ink);
+  padding: 0 12px;
+  font: inherit;
+}
+
+.maritime-field textarea {
+  min-height: 96px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.maritime-request-summary {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.maritime-summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--ah-line);
+  padding: 0 0 10px;
+  color: var(--ah-muted);
+}
+
+.maritime-summary-row strong {
+  color: var(--ah-ink);
+}
+
+.maritime-status {
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--ah-primary) 32%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  padding: 11px 12px;
+  color: var(--ah-primary-strong);
+  font-weight: 850;
+}
+
+.maritime-listings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.maritime-listing {
+  display: grid;
+  align-content: space-between;
+  min-height: 238px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.maritime-listing[hidden] {
+  display: none;
+}
+
+.maritime-meta-row {
+  margin-top: 16px;
+}
+
+.maritime-meta-row span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  color: var(--ah-primary-strong);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.maritime-flow {
+  padding: 24px;
+}
+
+.maritime-flow ol {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: flow;
+}
+
+.maritime-flow li {
+  position: relative;
+  min-height: 46px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  padding: 12px 12px 12px 48px;
+  color: var(--ah-muted);
+  counter-increment: flow;
+}
+
+.maritime-flow li::before {
+  content: counter(flow);
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--ah-primary-strong);
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.maritime-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 28px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(5, 76, 105, 0.94), rgba(17, 24, 39, 0.94)),
+    linear-gradient(90deg, rgba(255, 209, 102, 0.22), rgba(20, 184, 166, 0.16));
+}
+
+.maritime-cta h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 2rem;
+}
+
+.maritime-cta p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+}
+
+.maritime-gateway {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.5fr);
+  gap: 20px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.maritime-gateway__content {
+  padding: 34px;
+}
+
+.maritime-gateway__media {
+  height: 100%;
+  min-height: 320px;
+  background: #061525;
+}
+
+.maritime-gateway__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 980px) {
+  .maritime-hero,
+  .maritime-operations,
+  .maritime-cta,
+  .maritime-gateway {
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-grid,
+  .maritime-listings,
+  .maritime-grid--four,
+  .maritime-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-hero h1 {
+    font-size: 2.7rem;
+  }
+
+  .maritime-section__head {
+    display: grid;
+  }
+}
+
+@media (max-width: 640px) {
+  body.maritime-module-page .site-main {
+    padding-top: 18px;
+  }
+
+  .maritime-container {
+    width: min(100% - 22px, 1200px);
+  }
+
+  .maritime-hero__content,
+  .maritime-panel,
+  .maritime-card,
+  .maritime-listing,
+  .maritime-flow,
+  .maritime-cta,
+  .maritime-gateway__content {
+    padding: 18px;
+  }
+
+  .maritime-hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .maritime-hero__visual img,
+  .maritime-gateway__media {
+    min-height: 260px;
+  }
+
+  .maritime-grid,
+  .maritime-listings,
+  .maritime-grid--four,
+  .maritime-metrics,
+  .maritime-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-quick-nav {
+    position: static;
+  }
+}
