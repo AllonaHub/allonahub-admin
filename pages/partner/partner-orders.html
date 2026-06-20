@@ -22,7 +22,9 @@ h1{font-size:38px;color:#ffd700}
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0;color:#dcefff}
 .items{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)}
 .item{display:flex;justify-content:space-between;margin:8px 0;color:#ffffffcc}
-button{padding:12px 18px;border:none;border-radius:14px;font-weight:900;cursor:pointer}
+button,select{padding:12px 18px;border:none;border-radius:14px;font-weight:900}
+select{background:#031326;color:white;border:1px solid rgba(0,229,255,.32)}
+button{cursor:pointer}
 .approve{background:linear-gradient(135deg,#00e5ff,#0077ff);color:white}
 .disabled{background:#ffffff22;color:#ffffff88;cursor:not-allowed}
 .notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none}
@@ -120,21 +122,22 @@ async function loadOrders(){
 
   document.getElementById("orders").innerHTML=partnerOrders.map(order=>{
     const orderItems=items.filter(i=>i.order_id===order.id);
-    const isNew=(order.partner_status||order.order_status)==="new";
+    const partnerState=order.partner_status || order.status || order.order_status || "pending";
+    const allowedStatuses=["preparing","shipped","delivered"];
 
     return `
       <div class="card">
         <div class="top">
           <div>
-            <div class="order-no">${safe(order.order_no)}</div>
+            <div class="order-no"><a class="back" href="partner-order-detail.html?id=${safe(order.id)}">${safe(order.order_number || order.order_no)}</a></div>
             <div>${safe(order.customer_name)} • ${safe(order.customer_phone)}</div>
           </div>
-          <div class="status">${safe(statusText(order.partner_status || order.order_status))}</div>
+          <div class="status">${safe(statusText(partnerState))}</div>
         </div>
 
         <div class="grid">
           <div><b>Şehir:</b> ${safe(order.city || "-")}</div>
-          <div><b>Tutar:</b> ${Number(order.total||0).toLocaleString("tr-TR")} ₺</div>
+          <div><b>Brüt:</b> ${Number(order.grand_total || order.total || 0).toLocaleString("tr-TR")} ₺</div>
           <div><b>Ödeme:</b> ${safe(order.payment_status || "pending")}</div>
         </div>
 
@@ -144,18 +147,16 @@ async function loadOrders(){
           ${orderItems.map(item=>`
             <div class="item">
               <span>${safe(item.product_name)}</span>
-              <span>${item.quantity} adet • ${Number(item.price||0).toLocaleString("tr-TR")} ₺</span>
+              <span>${item.quantity} adet • Brüt ${Number(item.total_price || (item.price * item.quantity) || 0).toLocaleString("tr-TR")} ₺ • Komisyon ${Number(item.platform_commission || 0).toLocaleString("tr-TR")} ₺ • Net ${Number(item.partner_net_earning || item.total_price || 0).toLocaleString("tr-TR")} ₺</span>
             </div>
           `).join("")}
         </div>
 
         <br>
 
-        ${
-          isNew
-          ? `<button class="approve" onclick="approveOrder('${order.id}')">Siparişi Onayla</button>`
-          : `<button class="disabled" disabled>Onaylandı</button>`
-        }
+        <select aria-label="Sipariş durumu" onchange="updatePartnerStatus('${order.id}',this.value)">
+          ${allowedStatuses.map(status=>`<option value="${status}" ${partnerState===status ? "selected" : ""}>${safe(statusText(status))}</option>`).join("")}
+        </select>
       </div>
     `;
   }).join("");
@@ -164,7 +165,9 @@ async function loadOrders(){
 function statusText(status){
   const map={
     new:"Yeni Sipariş",
+    pending:"Yeni Sipariş",
     approved:"Hazırlanıyor",
+    preparing:"Hazırlanıyor",
     shipped:"Kargoya Verildi",
     delivered:"Teslim Edildi",
     cancelled:"İptal"
@@ -172,27 +175,33 @@ function statusText(status){
   return map[status] || status || "Yeni";
 }
 
-async function approveOrder(orderId){
+async function updatePartnerStatus(orderId,status){
   if(!/^[0-9a-f-]{36}$/i.test(String(orderId))){
     showNotice("Sipariş kimliği geçersiz.");
     return;
   }
+  const allowed=["preparing","shipped","delivered"];
+  if(!allowed.includes(status)){
+    showNotice("Partner sadece hazırlanıyor, kargoda veya teslim edildi durumlarını seçebilir.");
+    return;
+  }
+  const payload={
+    partner_status:status,
+    order_status:status,
+    status:status
+  };
   const {error}=await supabaseClient
     .from("orders")
-    .update({
-      partner_status:"approved",
-      order_status:"preparing",
-      approved_at:new Date().toISOString()
-    })
+    .update(payload)
     .eq("id",orderId);
 
   if(error){
     console.error(error);
-    showNotice("Sipariş onaylanamadı.");
+    showNotice("Sipariş güncellenemedi.");
     return;
   }
 
-  showNotice("Sipariş onaylandı. Müşteriye hazırlanıyor bilgisi gönderilecek.");
+  showNotice("Sipariş durumu güncellendi.");
   loadOrders();
 }
 

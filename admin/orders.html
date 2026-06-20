@@ -66,6 +66,17 @@ border-radius:10px;
 border:1px solid #00e5ff44;
 }
 
+textarea{
+width:100%;
+min-height:72px;
+margin:10px 0;
+padding:12px;
+border-radius:12px;
+border:1px solid #00e5ff44;
+background:#021426;
+color:white;
+}
+
 button{
 padding:10px 15px;
 border:none;
@@ -214,12 +225,12 @@ return;
 }
 
 document.getElementById("orders").innerHTML =
-data.map(order=>`
+(!data || !data.length) ? `<div class="order">Henüz sipariş bulunmuyor.</div>` : data.map(order=>`
 
 <div class="order">
 
 <div class="row">
-<b>${safe(order.order_no)}</b>
+<b><a style="color:#ffd700" href="order-detail.html?id=${safe(order.id)}">${safe(order.order_number || order.order_no)}</a></b>
 <span>${safe(order.created_at)}</span>
 </div>
 
@@ -234,38 +245,74 @@ data.map(order=>`
 </div>
 
 <div class="row">
-<b>${safe(order.total)} ₺</b>
+<b>${Number(order.grand_total || order.total || 0).toLocaleString("tr-TR")} ₺</b>
+<span>Kupon: ${Number(order.coupon_discount || order.discount || 0).toLocaleString("tr-TR")} ₺ | HP: ${Number(order.hp_discount || 0).toLocaleString("tr-TR")} ₺</span>
+</div>
+
+<div class="row">
+<span>Ödeme: ${safe(order.payment_status || "pending")}</span>
+<span>Fraud: ${safe(order.fraud_status || "normal")}</span>
+</div>
+
+<div class="row">
 
 <select onchange="updateStatus('${order.id}',this.value)">
 
 <option value="pending"
-${order.order_status==="pending"?"selected":""}>
+${(order.status || order.order_status)==="pending"?"selected":""}>
 Yeni
 </option>
 
+<option value="awaiting_payment"
+${(order.status || order.order_status)==="awaiting_payment"?"selected":""}>
+Ödeme Bekliyor
+</option>
+
+<option value="paid"
+${(order.status || order.order_status)==="paid"?"selected":""}>
+Ödendi
+</option>
+
 <option value="preparing"
-${order.order_status==="preparing"?"selected":""}>
+${(order.status || order.order_status)==="preparing"?"selected":""}>
 Hazırlanıyor
 </option>
 
 <option value="shipped"
-${order.order_status==="shipped"?"selected":""}>
+${(order.status || order.order_status)==="shipped"?"selected":""}>
 Kargoda
 </option>
 
 <option value="delivered"
-${order.order_status==="delivered"?"selected":""}>
+${(order.status || order.order_status)==="delivered"?"selected":""}>
 Teslim Edildi
 </option>
 
 <option value="cancelled"
-${order.order_status==="cancelled"?"selected":""}>
+${(order.status || order.order_status)==="cancelled"?"selected":""}>
 İptal
+</option>
+
+<option value="refunded"
+${(order.status || order.order_status)==="refunded"?"selected":""}>
+İade Edildi
 </option>
 
 </select>
 
+<select onchange="updateFraud('${order.id}',this.value)">
+<option value="normal" ${order.fraud_status==="normal"?"selected":""}>Risk Normal</option>
+<option value="review" ${order.fraud_status==="review"?"selected":""}>Fraud Review</option>
+<option value="blocked" ${order.fraud_status==="blocked"?"selected":""}>Bloke</option>
+</select>
+
+<button onclick="cancelOrder('${order.id}')">İptal Et</button>
+<button onclick="markRefundPending('${order.id}')">Refund Pending</button>
+
 </div>
+
+<textarea id="note-${order.id}" placeholder="Admin notu">${safe(order.admin_note || "")}</textarea>
+<button onclick="saveAdminNote('${order.id}')">Admin Notunu Kaydet</button>
 
 </div>
 
@@ -274,7 +321,7 @@ ${order.order_status==="cancelled"?"selected":""}>
 }
 
 async function updateStatus(id,status){
-const allowed=["pending","confirmed","preparing","shipped","delivered","cancelled","refunded"];
+const allowed=["pending","awaiting_payment","paid","preparing","shipped","delivered","cancelled","refunded"];
 if(!allowed.includes(status)){
 alert("Geçersiz sipariş durumu.");
 return;
@@ -283,7 +330,8 @@ return;
 const {error}=await supabaseClient
 .from("orders")
 .update({
-order_status:status
+order_status:status,
+status:status
 })
 .eq("id",id);
 
@@ -295,6 +343,52 @@ return;
 
 alert("Güncellendi");
 
+}
+
+async function updateFraud(id,fraudStatus){
+const allowed=["normal","review","blocked"];
+if(!allowed.includes(fraudStatus)){
+alert("Geçersiz fraud durumu.");
+return;
+}
+const {error}=await supabaseClient.from("orders").update({fraud_status:fraudStatus}).eq("id",id);
+if(error){
+console.error(error);
+alert("Fraud durumu güncellenemedi.");
+return;
+}
+alert("Fraud durumu güncellendi.");
+}
+
+async function cancelOrder(id){
+if(!confirm("Siparişi iptal etmek istiyor musun?")) return;
+await updateStatus(id,"cancelled");
+loadOrders();
+}
+
+async function markRefundPending(id){
+const {error}=await supabaseClient
+.from("orders")
+.update({fraud_status:"review",admin_note:"Refund pending - admin incelemesi bekliyor."})
+.eq("id",id);
+if(error){
+console.error(error);
+alert("Refund pending işaretlenemedi.");
+return;
+}
+alert("Refund pending işaretlendi.");
+loadOrders();
+}
+
+async function saveAdminNote(id){
+const node=document.getElementById("note-"+id);
+const {error}=await supabaseClient.from("orders").update({admin_note:node ? node.value : ""}).eq("id",id);
+if(error){
+console.error(error);
+alert("Admin notu kaydedilemedi.");
+return;
+}
+alert("Admin notu kaydedildi.");
 }
 
 requireAdmin().then(ok=>{

@@ -827,7 +827,7 @@
       [/partner|başvuru|restoran partneri|hizmet veren/i, "/pages/partner/partner.html"],
       [/destek|yardım|sss|sıkça/i, "/pages/company/destek.html"],
       [/kampanya|kupon/i, "/pages/commerce/kuponlar.html"],
-      [/hp|wallet|kupon|puan/i, "/pages/wallet/hubwallet.html"],
+      [/hp|wallet|kupon|puan/i, "/pages/account/rewards.html"],
       [/gizlilik/i, "/pages/legal/gizlilik.html"],
       [/çerez/i, "/pages/legal/cerez.html"],
       [/kvkk/i, "/pages/legal/kvkk.html"],

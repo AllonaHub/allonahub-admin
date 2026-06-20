@@ -59,6 +59,27 @@ async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: s
   };
 }
 
+function legacyOrderPayload(payload: Record<string, unknown>) {
+  const next = { ...payload };
+  delete next.status;
+  if (next.order_status === "paid") next.order_status = "confirmed";
+  if (next.order_status === "awaiting_payment") next.order_status = "pending";
+  return next;
+}
+
+function shouldRetryLegacyOrderUpdate(error: unknown) {
+  const message = String((error as { message?: string })?.message || error || "");
+  return /status|order_status|schema cache|invalid input value/i.test(message);
+}
+
+async function updateOrder(admin: ReturnType<typeof createClient>, orderId: string, payload: Record<string, unknown>) {
+  const { error } = await admin.from("orders").update(payload).eq("id", orderId);
+  if (!error) return;
+  if (!shouldRetryLegacyOrderUpdate(error)) throw error;
+  const retry = await admin.from("orders").update(legacyOrderPayload(payload)).eq("id", orderId);
+  if (retry.error) throw retry.error;
+}
+
 async function tokenFromRequest(req: Request) {
   const url = new URL(req.url);
   const queryToken = url.searchParams.get("token");
@@ -119,7 +140,7 @@ Deno.serve(async (req) => {
     const result = await iyzicoResponse.json();
 
     const paymentStatus = result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
-    const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
+    const orderStatus = paymentStatus === "paid" ? "paid" : "pending";
 
     if (cvPaymentId) {
       const { data: cvPayment, error: cvPaymentError } = await admin
@@ -189,15 +210,11 @@ Deno.serve(async (req) => {
       return Response.redirect(target, 303);
     }
 
-    const query = admin
-      .from("orders")
-      .update({
-        payment_status: paymentStatus,
-        order_status: orderStatus
-      })
-      .eq("id", orderId);
-    const { error } = await query;
-    if (error) throw error;
+    await updateOrder(admin, orderId, {
+      payment_status: paymentStatus,
+      order_status: orderStatus,
+      status: orderStatus
+    });
 
     const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=${paymentStatus}`;
     return Response.redirect(target, 303);

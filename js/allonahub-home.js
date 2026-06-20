@@ -130,7 +130,7 @@ const searchRoutes=[
 {keys:["trade","ithalat","ihracat"],url:"/pages/ecosystem/allonatrade.html"},
 {keys:["otelcilik","otel","konaklama"],url:"/pages/ecosystem/allonaotelcilik.html"},
 {keys:["kupon","hp","kampanya","indirim"],url:"/pages/commerce/kuponlar.html"},
-{keys:["wallet","pay"],url:"/pages/wallet/hubwallet.html"}
+{keys:["wallet","pay"],url:"/pages/account/rewards.html"}
 ];
 
 function globalSearch(){

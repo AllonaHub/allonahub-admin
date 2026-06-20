@@ -15,7 +15,7 @@
     { level: 6, minXp: 1500, name: "Diamond", key: "diamond", accent: "#20c8ff", bonus: "%20 ekstra HP" },
     { level: 7, minXp: 3000, name: "Elite", key: "elite", accent: "#b35cff", bonus: "Elite fırsatlar" },
     { level: 8, minXp: 6000, name: "Elite Diamond", key: "elite-diamond", accent: "#59e6ff", bonus: "VIP avantajlar" },
-    { level: 9, minXp: 12000, name: "Elite Black", key: "elite-black", accent: "#f4c15d", bonus: "Yüksek cashout limiti" },
+    { level: 9, minXp: 12000, name: "Elite Black", key: "elite-black", accent: "#f4c15d", bonus: "Yüksek kampanya limiti" },
     { level: 10, minXp: 25000, name: "Prestige", key: "prestige", accent: "#c15cff", bonus: "Prestige görevleri" },
     { level: 11, minXp: 50000, name: "Prestige Prime", key: "prestige-prime", accent: "#cfa2ff", bonus: "Prime partner fırsatları" },
     { level: 12, minXp: 100000, name: "Prestige Royal", key: "prestige-royal", accent: "#f6d07a", bonus: "Royal destek hattı" },

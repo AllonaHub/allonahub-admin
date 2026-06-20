@@ -26,6 +26,14 @@
     localStorage.setItem(addressStorageKey(userId), JSON.stringify(addresses));
   }
 
+  function normalizeDefaultAddresses(addresses) {
+    const list = (addresses || []).map(normalizeAddress);
+    if (!list.length) return [];
+    const defaultIndex = list.findIndex((address) => address.is_default);
+    const activeIndex = defaultIndex >= 0 ? defaultIndex : 0;
+    return list.map((address, index) => ({ ...address, is_default: index === activeIndex }));
+  }
+
   function addressFallbackMessage() {
     return "Adres tablosu Supabase'de henüz aktif görünmüyor. Adresler bu cihazda geçici olarak saklanıyor; kalıcı kayıt için docs/reference/DATABASE.md içindeki addresses SQL'i Supabase SQL Editor'da çalıştırılmalı.";
   }
@@ -56,9 +64,10 @@
     return address;
   }
 
-  function remoteAddressPayload(raw) {
+  function remoteAddressPayload(raw, userId) {
     const address = validateAddress(raw);
     return {
+      user_id: userId,
       title: address.title || "Adres",
       full_name: address.full_name || "",
       phone: address.phone || "",
@@ -66,7 +75,7 @@
       district: address.district || "",
       city: address.city || "",
       zip_code: address.zip_code || "",
-      is_default: Boolean(address.is_default)
+      is_default: raw.is_default === "on" || Boolean(address.is_default)
     };
   }
 
@@ -123,8 +132,8 @@
             <tbody>
               ${orders.map((order) => `
                 <tr>
-                  <td>${core.escapeHTML(order.order_number || order.id)}</td>
-                  <td>${core.money(order.total_amount || order.total)}</td>
+                  <td><a href="${core.url(`/pages/account/order-detail.html?id=${order.id}`)}">${core.escapeHTML(order.order_number || order.order_no || order.id)}</a></td>
+                  <td>${core.money(order.grand_total || order.total_amount || order.total)}</td>
                   <td>${core.escapeHTML(order.status || order.order_status || "pending")}</td>
                   <td>${core.escapeHTML(order.payment_status || "pending")}</td>
                   <td>${core.escapeHTML(order.tracking_number || "-")}</td>
@@ -159,20 +168,24 @@
   function renderAddresses(list, addresses, source) {
     const localMode = source === "local";
     const warning = localMode ? `<div class="status-box status-box--warning">${core.escapeHTML(addressFallbackMessage())}</div>` : "";
-    if (!addresses.length) {
+    const normalized = normalizeDefaultAddresses(addresses);
+    if (!normalized.length) {
       list.innerHTML = `${warning}<div class="empty-state">Kayıtlı adres bulunmuyor.</div>`;
       return;
     }
     list.innerHTML = `
       ${warning}
-      ${addresses.map((address) => `
+      ${normalized.map((address) => `
         <article class="data-card">
           <div class="section-header">
             <div>
-              <h2>${core.escapeHTML(address.title || "Adres")}</h2>
+              <h2>${core.escapeHTML(address.title || "Adres")} ${address.is_default ? "<span class=\"status-pill\">Varsayılan</span>" : ""}</h2>
               <p>${core.escapeHTML(address.full_name || "")} ${core.escapeHTML(address.phone || "")}</p>
             </div>
-            <button class="btn btn--danger" type="button" data-delete-address="${core.escapeHTML(address.id)}" data-address-source="${localMode ? "local" : "remote"}">Sil</button>
+            <div class="form-actions">
+              ${address.is_default ? "" : `<button class="btn btn--light" type="button" data-default-address="${core.escapeHTML(address.id)}" data-address-source="${localMode ? "local" : "remote"}">Varsayılan Yap</button>`}
+              <button class="btn btn--danger" type="button" data-delete-address="${core.escapeHTML(address.id)}" data-address-source="${localMode ? "local" : "remote"}">Sil</button>
+            </div>
           </div>
           <p>${core.escapeHTML(address.address)}</p>
           <p>${core.escapeHTML([address.district, address.city, address.zip_code].filter(Boolean).join(" / "))}</p>
@@ -190,6 +203,7 @@
         .from("addresses")
         .select("*")
         .eq("user_id", userId)
+        .order("is_default", { ascending: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
       renderAddresses(list, (data || []).map(normalizeAddress), "remote");
@@ -221,7 +235,11 @@
         const formPayload = core.parseForm(form);
         const payload = validateAddress(formPayload);
         if (state.source === "local") {
-          const addresses = [payload, ...readLocalAddresses(user.id)];
+          const current = readLocalAddresses(user.id);
+          const addresses = normalizeDefaultAddresses([
+            { ...payload, is_default: formPayload.is_default === "on" || current.length === 0 },
+            ...current.map((address) => ({ ...address, is_default: formPayload.is_default === "on" ? false : address.is_default }))
+          ]);
           writeLocalAddresses(user.id, addresses);
           renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
           form.reset();
@@ -229,10 +247,14 @@
           return;
         }
 
-        const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload));
+        const { error } = await App.db.client().from("addresses").insert(remoteAddressPayload(formPayload, user.id));
         if (error) {
           if (isAddressesSchemaError(error)) {
-            const addresses = [payload, ...readLocalAddresses(user.id)];
+            const current = readLocalAddresses(user.id);
+            const addresses = normalizeDefaultAddresses([
+              { ...payload, is_default: formPayload.is_default === "on" || current.length === 0 },
+              ...current.map((address) => ({ ...address, is_default: formPayload.is_default === "on" ? false : address.is_default }))
+            ]);
             writeLocalAddresses(user.id, addresses);
             state.source = "local";
             renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
@@ -257,10 +279,35 @@
 
     document.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-delete-address]");
-      if (!button) return;
+      const defaultButton = event.target.closest("[data-default-address]");
+      if (!button && !defaultButton) return;
       try {
+        if (defaultButton) {
+          if (defaultButton.dataset.addressSource === "local") {
+            const addresses = normalizeDefaultAddresses(readLocalAddresses(user.id).map((address) => ({
+              ...address,
+              is_default: address.id === defaultButton.dataset.defaultAddress
+            })));
+            writeLocalAddresses(user.id, addresses);
+            renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
+            core.toast("Varsayılan adres güncellendi.");
+            return;
+          }
+
+          const { error } = await App.db.client()
+            .from("addresses")
+            .update({ is_default: true })
+            .eq("id", defaultButton.dataset.defaultAddress)
+            .eq("user_id", user.id);
+          if (error) throw error;
+          const nextState = await loadAddresses(user.id);
+          state.source = nextState.source;
+          core.toast("Varsayılan adres güncellendi.");
+          return;
+        }
+
         if (button.dataset.addressSource === "local") {
-          const addresses = readLocalAddresses(user.id).filter((address) => address.id !== button.dataset.deleteAddress);
+          const addresses = normalizeDefaultAddresses(readLocalAddresses(user.id).filter((address) => address.id !== button.dataset.deleteAddress));
           writeLocalAddresses(user.id, addresses);
           renderAddresses(document.querySelector("[data-address-list]"), addresses, "local");
           core.toast("Adres silindi.");

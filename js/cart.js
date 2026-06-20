@@ -25,7 +25,77 @@
     updateBadges();
   }
 
-  function add(productId, qty) {
+  function backendMissing(error) {
+    const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+    return /function|schema cache|could not find|does not exist|not found/i.test(message);
+  }
+
+  function remoteCartLines(cart) {
+    return ((cart && cart.items) || [])
+      .map((item) => {
+        const product = item.product ? core.normalizeProduct(item.product) : null;
+        return {
+          id: item.product_id || product?.id,
+          qty: Math.max(1, Number(item.quantity || item.qty || 1)),
+          quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
+          product
+        };
+      })
+      .filter((item) => item.product);
+  }
+
+  function mirrorRemoteCart(cart) {
+    const lines = remoteCartLines(cart);
+    setItems(lines.map((line) => ({
+      id: line.product.id,
+      qty: line.qty,
+      added_at: new Date().toISOString()
+    })));
+    return lines;
+  }
+
+  async function currentUser() {
+    return App.auth ? App.auth.getUser() : null;
+  }
+
+  async function migrateLocalCartIfNeeded() {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) return null;
+    const localItems = getItems();
+    const remote = await App.db.cart.get();
+    if (((remote && remote.items) || []).length) {
+      let next = remote;
+      const remoteIds = new Set(remoteCartLines(remote).map((line) => String(line.id || line.product.id)));
+      for (const item of localItems) {
+        if (!remoteIds.has(String(item.id))) {
+          next = await App.db.cart.add(item.id, Math.max(1, Number(item.qty || 1)));
+        }
+      }
+      mirrorRemoteCart(next);
+      return next;
+    }
+    if (!localItems.length) return remote;
+    let next = remote;
+    for (const item of localItems) {
+      next = await App.db.cart.add(item.id, Math.max(1, Number(item.qty || 1)));
+    }
+    mirrorRemoteCart(next);
+    return next;
+  }
+
+  async function syncLocalToRemote() {
+    try {
+      const user = await currentUser();
+      if (!user || !App.db || !App.db.cart) return hydrateLocal();
+      const remote = await migrateLocalCartIfNeeded();
+      return mirrorRemoteCart(remote || await App.db.cart.get());
+    } catch (error) {
+      if (backendMissing(error)) return hydrateLocal();
+      throw error;
+    }
+  }
+
+  function addLocal(productId, qty) {
     const id = String(productId);
     const amount = Math.max(1, Number(qty || 1));
     const items = getItems();
@@ -39,29 +109,94 @@
     core.toast("Ürün sepete eklendi.");
   }
 
-  function setQty(productId, qty) {
+  async function add(productId, qty) {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) {
+      addLocal(productId, qty);
+      return;
+    }
+    try {
+      await migrateLocalCartIfNeeded();
+      const remote = await App.db.cart.add(String(productId), Math.max(1, Number(qty || 1)));
+      mirrorRemoteCart(remote);
+      core.toast("Ürün sepete eklendi.");
+    } catch (error) {
+      if (!backendMissing(error)) throw error;
+      addLocal(productId, qty);
+    }
+  }
+
+  function setQtyLocal(productId, qty) {
     const nextQty = Number(qty);
-    const items = getItems().map((item) => {
-      if (String(item.id) !== String(productId)) return item;
-      return { ...item, qty: Math.max(1, nextQty || 1) };
-    });
+    const items = nextQty <= 0
+      ? getItems().filter((item) => String(item.id) !== String(productId))
+      : getItems().map((item) => {
+        if (String(item.id) !== String(productId)) return item;
+        return { ...item, qty: Math.max(1, nextQty || 1) };
+      });
     setItems(items);
   }
 
-  function remove(productId) {
+  async function setQty(productId, qty) {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) {
+      setQtyLocal(productId, qty);
+      return;
+    }
+    try {
+      const remote = await App.db.cart.setQuantity(String(productId), Number(qty || 0));
+      mirrorRemoteCart(remote);
+    } catch (error) {
+      if (!backendMissing(error)) throw error;
+      setQtyLocal(productId, qty);
+    }
+  }
+
+  function removeLocal(productId) {
     setItems(getItems().filter((item) => String(item.id) !== String(productId)));
     core.toast("Ürün sepetten çıkarıldı.");
   }
 
-  function clear() {
+  async function remove(productId) {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) {
+      removeLocal(productId);
+      return;
+    }
+    try {
+      const remote = await App.db.cart.setQuantity(String(productId), 0);
+      mirrorRemoteCart(remote);
+      core.toast("Ürün sepetten çıkarıldı.");
+    } catch (error) {
+      if (!backendMissing(error)) throw error;
+      removeLocal(productId);
+    }
+  }
+
+  function clearLocal() {
     setItems([]);
+  }
+
+  async function clear() {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) {
+      clearLocal();
+      return;
+    }
+    try {
+      const remote = await App.db.cart.clear();
+      mirrorRemoteCart(remote);
+    } catch (error) {
+      if (!backendMissing(error)) throw error;
+      clearLocal();
+    }
   }
 
   function count() {
     return getItems().reduce((total, item) => total + Number(item.qty || 0), 0);
   }
 
-  async function hydrate() {
+  async function hydrateLocal() {
     const cartItems = getItems();
     const products = await App.db.products.byIds(cartItems.map((item) => item.id));
     const byId = new Map(products.map((product) => [String(product.id), product]));
@@ -74,17 +209,32 @@
       .filter((item) => item.product);
   }
 
-  function totals(lines, coupon) {
+  async function hydrate() {
+    const user = await currentUser();
+    if (!user || !App.db || !App.db.cart) return hydrateLocal();
+    try {
+      const remote = await migrateLocalCartIfNeeded();
+      return mirrorRemoteCart(remote || await App.db.cart.get());
+    } catch (error) {
+      if (backendMissing(error)) return hydrateLocal();
+      throw error;
+    }
+  }
+
+  function totals(lines, coupon, hpToUse) {
     const subtotal = (lines || []).reduce((sum, item) => sum + item.product.price * item.qty, 0);
     const shipping = subtotal >= config.freeShippingThreshold || subtotal === 0 ? 0 : config.defaultShipping;
     const discount = coupon && coupon.type === "percent"
       ? subtotal * (Number(coupon.value || 0) / 100)
       : Number(coupon && coupon.value || 0);
-    const safeDiscount = Math.min(subtotal, Math.max(0, discount));
+    const hpDiscount = Math.min(Math.max(0, Number(hpToUse || 0)), 100, Math.floor(subtotal * 0.2));
+    const safeDiscount = Math.min(subtotal, Math.max(0, discount) + hpDiscount);
     return {
       subtotal,
       shipping,
-      discount: safeDiscount,
+      discount: Math.min(subtotal, Math.max(0, discount)),
+      hpDiscount,
+      discountTotal: safeDiscount,
       total: Math.max(0, subtotal + shipping - safeDiscount)
     };
   }
@@ -208,8 +358,10 @@
     setQty,
     remove,
     clear,
+    clearLocal,
     count,
     hydrate,
+    syncLocalToRemote,
     totals,
     updateBadges
   };
@@ -227,7 +379,14 @@
     const favButton = event.target.closest("[data-fav-product]");
 
     if (addButton) {
-      App.cart.add(addButton.dataset.addProduct);
+      try {
+        addButton.disabled = true;
+        await App.cart.add(addButton.dataset.addProduct);
+      } catch (error) {
+        core.toast(error.message || "Ürün sepete eklenemedi.", "error");
+      } finally {
+        addButton.disabled = false;
+      }
     }
 
     if (favButton) {
