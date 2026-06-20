@@ -879,6 +879,57 @@ function pageUrl(path){
 }
 
 const SITE_URL=pageUrl("user-panel.html");
+const RESET_URL=pageUrl("reset-password.html");
+
+function normalizeEmail(value){
+  return String(value || "").trim().toLowerCase().slice(0,180);
+}
+
+function isEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || ""));
+}
+
+function strongEnoughPassword(value){
+  return String(value || "").length >= 8;
+}
+
+function clearAuthArtifacts(){
+  [
+    "allonahub_user_profile",
+    "allonahub_auth_verified_at",
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType"
+  ].forEach(key=>localStorage.removeItem(key));
+
+  for(let i=localStorage.length-1;i>=0;i-=1){
+    const key=localStorage.key(i) || "";
+    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
+      localStorage.removeItem(key);
+    }
+  }
+}
+
+function rateLimitAction(key, limit, windowMs){
+  const storageKey="allona_rate:"+key;
+  const now=Date.now();
+  let hits=[];
+  try{hits=JSON.parse(localStorage.getItem(storageKey) || "[]")}catch(error){hits=[]}
+  hits=hits.filter(time=>now-Number(time)<windowMs);
+  if(hits.length>=limit){
+    return {allowed:false,retryAfter:Math.ceil((windowMs-(now-Number(hits[0])))/1000)};
+  }
+  hits.push(now);
+  localStorage.setItem(storageKey,JSON.stringify(hits));
+  return {allowed:true,retryAfter:0};
+}
+
+function secureAuthAlert(message){
+  alert(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
+}
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1325,21 +1376,32 @@ function checkPasswords(){
     btn.textContent="Ücretsiz Hesap Oluştur";
   }
 }
-  async function registerUser(){
-  const email=document.getElementById("registerEmail").value.trim();
+async function registerUser(){
+  const email=normalizeEmail(document.getElementById("registerEmail").value);
   const password=document.getElementById("password1").value;
   const password2=document.getElementById("password2").value;
   const fullName=document.getElementById("fullName").value.trim();
   const phone=document.getElementById("registerPhone").value.trim();
   const country=selectedCountries.registerPicker;
+  const limit=rateLimitAction("register",5,60*60*1000);
+
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla kayıt denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
 
   if(!fullName){
     alert("Ad Soyad zorunludur.");
     return;
   }
 
-  if(!email || !password){
-    alert("E-posta ve şifre zorunludur.");
+  if(!isEmail(email)){
+    alert("Geçerli bir e-posta adresi giriniz.");
+    return;
+  }
+
+  if(!strongEnoughPassword(password)){
+    alert("Şifre en az 8 karakter olmalıdır.");
     return;
   }
 
@@ -1355,70 +1417,98 @@ function checkPasswords(){
 
   const greeting=getGreetingPreview(fullName);
 
-  const { error }=await supabaseClient.auth.signUp({
-    email:email,
-    password:password,
-    options:{
-      emailRedirectTo:SITE_URL,
-      data:{
-        full_name:fullName,
-        phone:country.c+" "+phone,
-        country:country.n,
+  try{
+    const { error }=await supabaseClient.auth.signUp({
+      email:email,
+      password:password,
+      options:{
+        emailRedirectTo:SITE_URL,
+        data:{
+          full_name:fullName,
+          phone:country.c+" "+phone,
+          country:country.n,
 
-        sector_key:selectedProfession.sectorKey,
-        sector_name:selectedProfession.sectorName,
-        profession_key:selectedProfession.key,
-        profession_name:selectedProfession.name,
-        profession_title:selectedProfession.title,
-        module:selectedProfession.module,
-        greeting:greeting
+          sector_key:selectedProfession.sectorKey,
+          sector_name:selectedProfession.sectorName,
+          profession_key:selectedProfession.key,
+          profession_name:selectedProfession.name,
+          profession_title:selectedProfession.title,
+          module:selectedProfession.module,
+          greeting:greeting
+        }
       }
+    });
+
+    if(error){
+      secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
+      return;
     }
-  });
 
-  if(error){
-    alert(error.message);
-    return;
+    localStorage.setItem("allonahub_user_profile",JSON.stringify({
+      full_name:fullName,
+      phone:country.c+" "+phone,
+      country:country.n,
+      sector_key:selectedProfession.sectorKey,
+      sector_name:selectedProfession.sectorName,
+      profession_key:selectedProfession.key,
+      profession_name:selectedProfession.name,
+      profession_title:selectedProfession.title,
+      module:selectedProfession.module,
+      greeting:greeting
+    }));
+
+    alert("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
+  }catch(error){
+    secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
   }
-
-  localStorage.setItem("allonahub_user_profile",JSON.stringify({
-    full_name:fullName,
-    phone:country.c+" "+phone,
-    country:country.n,
-    sector_key:selectedProfession.sectorKey,
-    sector_name:selectedProfession.sectorName,
-    profession_key:selectedProfession.key,
-    profession_name:selectedProfession.name,
-    profession_title:selectedProfession.title,
-    module:selectedProfession.module,
-    greeting:greeting
-  }));
-
-  alert("Kayıt başarılı. Lütfen e-postanı kontrol et.");
 }
 
 async function loginUser(){
-  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
+  const email=normalizeEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
+  const limit=rateLimitAction("login",8,15*60*1000);
 
-  if(!email || !password){
-    alert("E-posta ve şifre gir.");
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
     return;
   }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
-
-  if(error){
-    alert(error.message);
+  if(!isEmail(email) || !password){
+    secureAuthAlert("E-posta ve şifrenizi kontrol edin.");
     return;
   }
 
-  localStorage.removeItem("allonahub_user_profile");
+  try{
+    clearAuthArtifacts();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
 
-  window.location.href = "user-panel.html";
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(error || !data || !data.user){
+      secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+      return;
+    }
+
+    const { data:verified, error:verifyError } = await supabaseClient.auth.getUser();
+    if(verifyError || !verified || !verified.user || verified.user.id !== data.user.id){
+      clearAuthArtifacts();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      secureAuthAlert("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+      return;
+    }
+
+    localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+    window.location.href = "user-panel.html";
+  }catch(error){
+    secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+  }
 }
 
 async function loginWithGoogle(){
@@ -1442,23 +1532,26 @@ async function loginWithGoogle(){
 }
 
 async function resetPassword(){
-  const email=document.getElementById("forgotEmail").value.trim();
+  const email=normalizeEmail(document.getElementById("forgotEmail").value);
+  const limit=rateLimitAction("forgot-password",4,30*60*1000);
 
-  if(!email){
-    alert("Lütfen e-posta adresini yaz.");
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla deneme. Lütfen kısa süre sonra tekrar deneyin.");
     return;
   }
 
-  const { error }=await supabaseClient.auth.resetPasswordForEmail(email,{
-    redirectTo:pageUrl("reset-password.html")
-  });
-
-  if(error){
-    alert(error.message);
+  if(!isEmail(email)){
+    secureAuthAlert("Geçerli bir e-posta adresi giriniz.");
     return;
   }
 
-  alert("Şifre sıfırlama bağlantısı e-postana gönderildi.");
+  try{
+    await supabaseClient.auth.resetPasswordForEmail(email,{
+      redirectTo:RESET_URL
+    });
+  }catch(error){}
+
+  alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
 }
 
 function icloudInfo(){
@@ -1529,6 +1622,6 @@ document.addEventListener("click",function(e){
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/platform.js?v=20260620-mobile1" defer></script>
+  <script src="js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

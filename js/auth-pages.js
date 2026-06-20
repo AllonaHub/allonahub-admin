@@ -28,8 +28,8 @@
 
   async function redirectAuthenticatedUser(session) {
     if (!isAuthLandingPage()) return;
-    const currentSession = session || await App.auth.getSession();
-    if (!currentSession) return;
+    const user = await App.auth.getUser();
+    if (!user) return;
 
     const returnTo = safeReturnTo(core.getParam("returnTo"));
     window.location.replace(returnTo);

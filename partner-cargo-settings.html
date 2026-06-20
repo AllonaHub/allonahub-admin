@@ -2,16 +2,16 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kargo Ayarları | AllonaHub Partner</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{min-width:1320px;background:#020814;color:white}
+body{min-width:0;background:#020814;color:white;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
-.page{width:1320px;margin:0 auto;padding:30px}
+.page{width:min(1320px,100%);margin:0 auto;padding:30px}
 .glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px}
 .header{height:84px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;margin-bottom:24px}
 .logo{font-size:28px;font-weight:900;text-decoration:none}
@@ -27,6 +27,13 @@ button{width:100%;height:54px;margin-top:22px;border:0;border-radius:18px;backgr
 .info{margin-top:22px;padding:18px;border-radius:18px;background:#00e5ff12;border:1px solid #00e5ff33}
 .notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none;box-shadow:0 0 25px #00e5ff44}
 .notice b{color:#ffd700}
+@media(max-width:720px){
+  .page{padding:16px 12px 34px}
+  .header{height:auto;min-height:74px;gap:10px;flex-direction:column;align-items:flex-start;padding:18px}
+  .card{padding:24px 18px;border-radius:22px}
+  h1{font-size:clamp(2rem,9vw,2.6rem)}
+  .notice{left:14px;right:14px;bottom:14px}
+}
 </style>
   <link rel="stylesheet" href="css/platform.css?v=20260620-mobile1">
 </head>
@@ -74,9 +81,27 @@ Partner siparişi sadece onaylar. Sipariş hazırlanıyor durumuna geçer. Kargo
 <script>
 const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true
+  }
+});
 
 let currentPartner = null;
+
+function clearPartnerAuth(){
+  [
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType",
+    "allonahub_auth_verified_at"
+  ].forEach(key=>localStorage.removeItem(key));
+}
 
 function showNotice(msg){
   const n=document.getElementById("notice");
@@ -87,9 +112,30 @@ function showNotice(msg){
 
 async function loadPartner(){
   const profile = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
-  const email = profile?.email || localStorage.getItem("allonaPartnerEmail");
+  const localUserId = localStorage.getItem("allonaPartnerUserId") || "";
+  const {data:authData,error:authError}=await supabaseClient.auth.getUser();
+
+  if(authError || !authData || !authData.user){
+    clearPartnerAuth();
+    showNotice("Güvenli oturum doğrulanamadı.");
+    setTimeout(()=>window.location.href="partner.html",1200);
+    return;
+  }
+
+  if(localUserId && localUserId !== authData.user.id){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+    showNotice("Oturum bilgisi cihazda uyuşmuyor.");
+    setTimeout(()=>window.location.href="partner.html",1200);
+    return;
+  }
+
+  const email = (authData.user.email || profile?.email || localStorage.getItem("allonaPartnerEmail") || "").trim().toLowerCase();
 
   if(!email){
+    clearPartnerAuth();
     showNotice("Partner oturumu bulunamadı.");
     setTimeout(()=>window.location.href="partner.html",1200);
     return;
@@ -103,12 +149,23 @@ async function loadPartner(){
     .maybeSingle();
 
   if(error || !data){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(err){}
     showNotice("Aktif partner kaydı bulunamadı.");
+    setTimeout(()=>window.location.href="partner.html",1200);
     return;
   }
 
   currentPartner=data;
   localStorage.setItem("allonaPartnerProfile",JSON.stringify(data));
+  localStorage.setItem("allonaPartnerEmail",data.email || email);
+  localStorage.setItem("allonaPartnerUserId",authData.user.id);
+  localStorage.setItem("allonaPartnerId",data.partner_id || "");
+  localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
+  localStorage.setItem("allonaPartnerLoggedIn","true");
+  localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
   document.getElementById("cargoCompany").value =
   data.preferred_cargo_company || "";
@@ -152,6 +209,6 @@ loadPartner();
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/platform.js?v=20260620-mobile1" defer></script>
+  <script src="js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

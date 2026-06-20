@@ -416,6 +416,26 @@ function partnerRateLimit(key,limit,windowMs){
   return true;
 }
 
+function normalizePartnerEmail(value){
+  return String(value || "").trim().toLowerCase().slice(0,180);
+}
+
+function validPartnerEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || ""));
+}
+
+function clearPartnerAuth(){
+  [
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType",
+    "allonahub_auth_verified_at"
+  ].forEach(key=>localStorage.removeItem(key));
+}
+
 function openPartnerTab(tabId,event){
   document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
@@ -435,11 +455,16 @@ function openPartnerTab(tabId,event){
 }
 
 async function partnerLogin(){
-  const email=document.getElementById("loginEmail").value.trim().toLowerCase();
-  const password=document.getElementById("loginPassword").value.trim();
+  const email=normalizePartnerEmail(document.getElementById("loginEmail").value);
+  const password=document.getElementById("loginPassword").value;
 
-  if(!email || !password){
-    showNotice("E-posta ve şifre giriniz.");
+  if(!partnerRateLimit("partner-login",8,15*60*1000)){
+    showNotice("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!validPartnerEmail(email) || !password){
+    showNotice("E-posta ve şifrenizi kontrol edin.");
     return;
   }
 
@@ -448,10 +473,25 @@ async function partnerLogin(){
   btn.textContent="Giriş yapılıyor...";
 
   try{
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+
     const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
 
-    if(error){
+    if(error || !data || !data.user){
       showNotice("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
+      return;
+    }
+
+    const {data:verified,error:verifyError}=await supabaseClient.auth.getUser();
+    if(verifyError || !verified || !verified.user || verified.user.id !== data.user.id){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
       return;
     }
 
@@ -463,17 +503,29 @@ async function partnerLogin(){
       .maybeSingle();
 
     if(partnerError){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
       showNotice("Partner kaydı şu anda okunamadı.");
       return;
     }
 
     if(!partner){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
       showNotice("Bu e-posta için partner kaydı bulunamadı.");
       return;
     }
 
     if(partner.status && partner.status !== "active"){
-      showNotice("Partner hesabınız henüz aktif değil. Durum: "+partner.status);
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Partner hesabınız henüz aktif değil.");
       return;
     }
 
@@ -481,6 +533,9 @@ async function partnerLogin(){
     localStorage.setItem("allonaPartnerEmail",email);
     localStorage.setItem("allonaPartnerUserId",data.user.id);
     localStorage.setItem("allonaPartnerProfile",JSON.stringify(partner));
+    localStorage.setItem("allonaPartnerId",partner.partner_id || "");
+    localStorage.setItem("allonaPartnerType",partner.partner_type || "shop");
+    localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
     window.location.href="partner-panel.html";
 
@@ -628,6 +683,6 @@ initPartnerGoogleCallback();
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/platform.js?v=20260620-mobile1" defer></script>
+  <script src="js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

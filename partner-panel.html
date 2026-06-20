@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AllonaHub Partner Panel</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -11,13 +11,13 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 html{scroll-behavior:smooth}
-body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body{min-width:0;background:#020814;color:white;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
 body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 a{text-decoration:none;color:inherit}
 button{border:0;cursor:pointer}
-.page{width:1320px;margin:0 auto;padding:18px 22px 45px}
+.page{width:min(1320px,100%);margin:0 auto;padding:18px 22px 45px}
 .glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
 .topbar{height:84px;display:grid;grid-template-columns:285px 1fr 430px;gap:18px;margin-bottom:18px;align-items:center}
 .brand{height:84px;display:flex;align-items:center;gap:13px;padding:0 20px}
@@ -113,6 +113,23 @@ td{opacity:.9}
 .small-btn{height:38px;border-radius:12px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44;padding:0 12px}
 .notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:430px;line-height:1.45}
 .notice b{color:#ffd700}
+@media(max-width:980px){
+  body{overflow-x:hidden}
+  .page{width:100%;padding:14px 12px 34px}
+  .topbar{height:auto;grid-template-columns:1fr;gap:12px}
+  .brand,.panel-title,.top-actions{height:auto;min-height:64px;width:100%}
+  .top-actions{justify-content:flex-start;gap:10px;flex-wrap:wrap;padding:12px}
+  .layout{grid-template-columns:1fr}
+  .sidebar{min-height:auto}
+  .content{min-height:auto;padding:16px}
+  .hero-dashboard,.kpi-grid,.panel-grid,.form-grid{grid-template-columns:1fr}
+  .textarea{grid-column:auto}
+  .quick-actions{grid-template-columns:1fr}
+  .table-box{overflow-x:auto}
+  table{min-width:720px}
+  .profile-drop{left:0;right:auto;width:min(330px,calc(100vw - 32px))}
+  .notice{left:14px;right:14px;bottom:14px;max-width:none}
+}
 </style>
   <link rel="stylesheet" href="css/platform.css?v=20260620-mobile1">
 </head>
@@ -416,10 +433,29 @@ td{opacity:.9}
 <script>
 const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true
+  }
+});
 
 let currentPartner = null;
+let currentAuthUser = null;
 let allProducts = [];
+
+function clearPartnerAuth(){
+  [
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType",
+    "allonahub_auth_verified_at"
+  ].forEach(key=>localStorage.removeItem(key));
+}
 
 const menuByType = {
   shop: [
@@ -607,7 +643,7 @@ function renderPartnerProfile(){
 
 async function loadPartnerProfile(){
   const localProfile = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
-  const email = localProfile?.email || localStorage.getItem("allonaPartnerEmail");
+  const email = (currentAuthUser && currentAuthUser.email || localProfile?.email || localStorage.getItem("allonaPartnerEmail") || "").trim().toLowerCase();
 
   if(!email){
     showNotice("Partner oturumu bulunamadı. Giriş sayfasına yönlendiriliyorsun.");
@@ -629,6 +665,10 @@ async function loadPartnerProfile(){
   }
 
   if(!data){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
     showNotice("Aktif partner kaydı bulunamadı.");
     setTimeout(() => window.location.href = "partner.html", 1400);
     return;
@@ -637,8 +677,11 @@ async function loadPartnerProfile(){
   currentPartner = data;
   localStorage.setItem("allonaPartnerProfile", JSON.stringify(data));
   localStorage.setItem("allonaPartnerEmail", data.email || email);
+  localStorage.setItem("allonaPartnerUserId", currentAuthUser?.id || localStorage.getItem("allonaPartnerUserId") || "");
   localStorage.setItem("allonaPartnerId", data.partner_id || "");
   localStorage.setItem("allonaPartnerType", data.partner_type || "shop");
+  localStorage.setItem("allonaPartnerLoggedIn", "true");
+  localStorage.setItem("allonahub_auth_verified_at", new Date().toISOString());
 
   renderPartnerProfile();
   await loadProducts();
@@ -1097,12 +1140,11 @@ async function updateProduct(id){
     btn.textContent = "Ürünü Kaydet";
   }
 }
-  function logoutPartner(){
-  localStorage.removeItem("allonaPartnerProfile");
-  localStorage.removeItem("allonaPartnerEmail");
-  localStorage.removeItem("allonaPartnerId");
-  localStorage.removeItem("allonaPartnerType");
-
+async function logoutPartner(){
+  clearPartnerAuth();
+  try{
+    await supabaseClient.auth.signOut({scope:"local"});
+  }catch(error){}
   window.location.href = "partner.html";
 }
 
@@ -1110,8 +1152,40 @@ async function checkPartnerSession(){
   const profile = JSON.parse(
     localStorage.getItem("allonaPartnerProfile") || "null"
   );
+  const localUserId = localStorage.getItem("allonaPartnerUserId") || "";
 
-  if(!profile){
+  try{
+    const {data,error}=await supabaseClient.auth.getUser();
+    if(error || !data || !data.user){
+      clearPartnerAuth();
+      showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
+      setTimeout(()=>{
+        window.location.href="partner.html";
+      },1200);
+      return false;
+    }
+    if(localUserId && localUserId !== data.user.id){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Oturum bilgisi cihazda uyuşmuyor. Tekrar giriş yapmalısınız.");
+      setTimeout(()=>{
+        window.location.href="partner.html";
+      },1200);
+      return false;
+    }
+    currentAuthUser=data.user;
+  }catch(error){
+    clearPartnerAuth();
+    showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
+    setTimeout(()=>{
+      window.location.href="partner.html";
+    },1200);
+    return false;
+  }
+
+  if(!profile && !currentAuthUser?.email){
     showNotice("Partner oturumu bulunamadı.");
     setTimeout(()=>{
       window.location.href="partner.html";
@@ -1177,6 +1251,6 @@ console.log("✅ AllonaHub Partner Panel Loaded");
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/platform.js?v=20260620-mobile1" defer></script>
+  <script src="js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

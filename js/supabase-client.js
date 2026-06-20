@@ -14,6 +14,48 @@
     });
   }
 
+  function clearAuthArtifacts(options) {
+    const settings = options || {};
+    const explicitKeys = [
+      "allonahub_user_profile",
+      "allonahub_auth_verified_at",
+      "allonaPartnerLoggedIn",
+      "allonaPartnerEmail",
+      "allonaPartnerUserId",
+      "allonaPartnerProfile",
+      "allonaPartnerId",
+      "allonaPartnerType"
+    ];
+
+    explicitKeys.forEach((key) => localStorage.removeItem(key));
+
+    const removablePrefixes = [
+      "allonahub.daily-login.",
+      "allona_rate:login",
+      "allona_rate:partner-login"
+    ];
+
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index) || "";
+      if (removablePrefixes.some((prefix) => key.startsWith(prefix))) {
+        localStorage.removeItem(key);
+      }
+      if (settings.supabaseTokens && /^sb-.+-auth-token$/.test(key)) {
+        localStorage.removeItem(key);
+      }
+    }
+  }
+
+  App.clearAuthArtifacts = clearAuthArtifacts;
+
+  if (App.supabase && App.supabase.auth && App.supabase.auth.onAuthStateChange) {
+    App.supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+        clearAuthArtifacts();
+      }
+    });
+  }
+
   function client() {
     if (!App.supabase) {
       throw new Error("Supabase istemcisi yüklenemedi.");

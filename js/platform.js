@@ -742,23 +742,6 @@
   }
 
   function hasStoredAuthSession() {
-    try {
-      const localProfile = localStorage.getItem("allonahub_user_profile");
-      if (localProfile) {
-        const profile = JSON.parse(localProfile);
-        if (profile && (profile.email || profile.full_name || profile.user_id || profile.id)) return true;
-      }
-      for (let index = 0; index < localStorage.length; index += 1) {
-        const key = localStorage.key(index) || "";
-        if (!/^sb-.+-auth-token$/.test(key)) continue;
-        const payload = JSON.parse(localStorage.getItem(key) || "null");
-        const session = payload && (payload.currentSession || payload.session || payload);
-        if (!session) continue;
-        if (session.access_token || session.user || session.refresh_token) return true;
-      }
-    } catch (error) {
-      return false;
-    }
     return false;
   }
 
@@ -768,16 +751,12 @@
         const user = await App.auth.getUser();
         if (user) return true;
       }
-      if (App.auth && App.auth.getSession) {
-        const session = await App.auth.getSession();
-        if (session) return true;
-      }
-      if (App.supabase && App.supabase.auth && App.supabase.auth.getSession) {
-        const { data } = await App.supabase.auth.getSession();
-        if (data && data.session) return true;
+      if (App.supabase && App.supabase.auth && App.supabase.auth.getUser) {
+        const { data, error } = await App.supabase.auth.getUser();
+        if (!error && data && data.user) return true;
       }
     } catch (error) {
-      // The local Supabase session check below keeps legacy module headers responsive.
+      // Header state must not trust stale local storage after password/session changes.
     }
     return hasStoredAuthSession();
   }

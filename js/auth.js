@@ -2,22 +2,66 @@
   const App = window.Allona = window.Allona || {};
   const security = App.security;
 
+  function clearLocalAuthState(options) {
+    if (App.clearAuthArtifacts) App.clearAuthArtifacts(options);
+  }
+
+  function authSafeError(message) {
+    return new Error(message || "Oturum doğrulanamadı. Lütfen tekrar giriş yapın.");
+  }
+
+  function passwordLooksSafe(password) {
+    const value = String(password || "");
+    return value.length >= 8;
+  }
+
   async function getSession() {
     if (!App.supabase) return null;
-    const { data } = await App.supabase.auth.getSession();
-    return data.session || null;
+    try {
+      const { data } = await App.supabase.auth.getSession();
+      const session = data.session || null;
+      if (!session) return null;
+      if (session.expires_at && session.expires_at * 1000 < Date.now() - 30000) return null;
+      return session;
+    } catch (error) {
+      return null;
+    }
   }
 
   async function getUser() {
     if (!App.supabase) return null;
-    const { data } = await App.supabase.auth.getUser();
-    return data.user || null;
+    try {
+      const { data, error } = await App.supabase.auth.getUser();
+      if (error) return null;
+      return data.user || null;
+    } catch (error) {
+      return null;
+    }
   }
 
   async function signIn(email, password) {
     const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
+    if (security && !security.isEmail(cleanEmail)) throw authSafeError("Geçerli bir e-posta adresi girin.");
+    if (!String(password || "")) throw authSafeError("E-posta ve şifrenizi kontrol edin.");
+    clearLocalAuthState();
+    try {
+      await App.supabase.auth.signOut({ scope: "local" });
+    } catch (error) {
+      // Eski veya bozuk local session giriş denemesini engellemesin.
+    }
     const { data, error } = await App.supabase.auth.signInWithPassword({ email: cleanEmail, password });
-    if (error) throw error;
+    if (error) throw authSafeError("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+    const verifiedUser = await getUser();
+    if (!verifiedUser || (data.user && verifiedUser.id !== data.user.id)) {
+      clearLocalAuthState({ supabaseTokens: true });
+      try {
+        await App.supabase.auth.signOut({ scope: "local" });
+      } catch (error) {
+        // Giriş zaten doğrulanmadı.
+      }
+      throw authSafeError("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+    }
+    localStorage.setItem("allonahub_auth_verified_at", new Date().toISOString());
     return data;
   }
 
@@ -62,6 +106,9 @@
     const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
     const cleanName = security ? security.normalizeText(full_name, { max: 120 }) : String(full_name || "").trim();
     const cleanPhone = security ? security.normalizeText(phone, { max: 30 }) : String(phone || "").trim();
+    if (security && !security.isEmail(cleanEmail)) throw authSafeError("Geçerli bir e-posta adresi girin.");
+    if (cleanName.length < 2) throw authSafeError("Ad soyad alanını kontrol edin.");
+    if (!passwordLooksSafe(password)) throw authSafeError("Şifre en az 8 karakter olmalıdır.");
     const { data, error } = await App.supabase.auth.signUp({
       email: cleanEmail,
       password,
@@ -72,20 +119,24 @@
         }
       }
     });
-    if (error) throw error;
+    if (error) throw authSafeError("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
     return data;
   }
 
-  async function signOut() {
-    const { error } = await App.supabase.auth.signOut();
-    if (error) throw error;
+  async function signOut(options) {
+    const scope = options && options.scope || "local";
+    const { error } = await App.supabase.auth.signOut({ scope });
+    if (error) throw authSafeError("Çıkış işlemi tamamlanamadı. Lütfen tekrar deneyin.");
+    clearLocalAuthState();
     window.location.href = App.core.url("index.html");
   }
 
   async function resetPassword(email) {
-    const redirectTo = `${window.location.origin}${App.core.url("profil.html")}`;
-    const { error } = await App.supabase.auth.resetPasswordForEmail(email, { redirectTo });
-    if (error) throw error;
+    const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
+    if (security && !security.isEmail(cleanEmail)) throw authSafeError("Geçerli bir e-posta adresi girin.");
+    const redirectTo = new URL(App.core.url("reset-password.html"), window.location.origin).href;
+    const { error } = await App.supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo });
+    if (error) throw authSafeError("Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
   }
 
   async function getProfile(userId) {
@@ -169,6 +220,7 @@
     signOut,
     resetPassword,
     requireAuth,
-    requireRole
+    requireRole,
+    clearLocalAuthState
   };
 })();
