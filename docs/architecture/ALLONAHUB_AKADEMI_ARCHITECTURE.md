@@ -40,6 +40,41 @@ Status degerleri:
 
 Public sitede yalnizca `status = published` icerikler gosterilmelidir.
 
+## Video ve Ders Modeli
+
+Akademi TV bolumu video, ders listesi, canli egitim ve sertifika akisina hazir olacak sekilde tasarlanir. Ilk public fazda ders verisi statik HTML ve `js/academy-page.js` uzerinden calisir; sonraki fazda Supabase tablosuna baglanabilir.
+
+Supabase icin hedef tablo: `academy_lessons`
+
+Alanlar:
+
+- `title`
+- `slug`
+- `category`
+- `summary`
+- `video_url`
+- `poster_url`
+- `duration`
+- `level`
+- `visibility`
+- `status`
+- `sort_order`
+- `published_at`
+- `updated_at`
+
+Video kaynak kurallari:
+
+- `video_url` YouTube, Vimeo, MP4 veya WebM olabilir.
+- Public sitede yalnizca `status = published` ve `visibility = public` dersler gosterilir.
+- Partner dersleri `visibility = partner` olarak tutulur ve partner oturumu olmadan public listede oynatilmaz.
+- Sertifika fazinda izleme durumu, test sonucu ve sertifika kaydi ayri kullanici iliskili tablolara tasinir.
+
+Hedef ek tablolar:
+
+- `academy_live_sessions`: Canli egitim tarihi, baslik, aciklama, kayit linki ve durum bilgisi.
+- `academy_learning_paths`: Derslerin rota ve siralama yapisi.
+- `academy_certificates`: Kullanici, rota, tamamlanma ve sertifika kaydi.
+
 ## SEO
 
 `allonahub-akademi.html` sayfasi su SEO temelini icerir:
