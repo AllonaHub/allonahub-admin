@@ -7,7 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/js/user-profile-sync.js?v=20260620-mobile1"></script>
+<script src="../../js/user-profile-sync.js?v=20260620-mobile1"></script>
 
 <style>
 *{
@@ -534,14 +534,14 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile2">
-  <link rel="stylesheet" href="/css/profile-premium-sync.css?v=20260620-audit1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260620-mobile2">
+  <link rel="stylesheet" href="../../css/profile-premium-sync.css?v=20260620-audit1">
 </head>
 <body class="profile-sync-page">
 <div class="page">
 
   <div class="header">
-    <a class="brand glass" href="/index.html">
+    <a class="brand glass" href="../../index.html">
       <div><b>Allona</b><span>Hub</span></div>
     </a>
 
@@ -552,9 +552,9 @@ a{
     </div>
 
     <div class="top-actions glass">
-      <a href="/pages/account/user-panel.html">Panel</a>
-      <a href="/pages/commerce/kuponlar.html">Kupon</a>
-      <a href="/pages/account/premium.html">Premium</a>
+      <a href="user-panel.html">Panel</a>
+      <a href="../commerce/kuponlar.html">Kupon</a>
+      <a href="premium.html">Premium</a>
       <button onclick="logoutUser()">Çıkış</button>
     </div>
   </div>
@@ -778,7 +778,7 @@ a{
         </div>
 
         <div class="action-row">
-          <button class="outline-btn" onclick="location.href='/pages/account/belgeler.html'">
+          <button class="outline-btn" onclick="location.href='belgeler.html'">
             Belgelerimi Aç
           </button>
         </div>
@@ -795,7 +795,7 @@ a{
         </div>
 
         <div class="action-row">
-          <button class="outline-btn" onclick="location.href='/pages/account/user-panel.html'">
+          <button class="outline-btn" onclick="location.href='user-panel.html'">
             Panele Dön
           </button>
 
@@ -1046,7 +1046,7 @@ async function checkAuth(){
   const { data:{ session } } = await supabaseClient.auth.getSession();
 
   if(!session || !session.user){
-    window.location.href="/pages/account/user.html";
+    window.location.href="user.html";
     return;
   }
 
@@ -1353,7 +1353,7 @@ function currentCvTarget(){
     profile.profession_title
   ].join(" ").toLowerCase();
 
-  return /maritime|deniz|gemi|kaptan|zabit|stcw|crew/.test(text) ? "/pages/career/cv-form.html?v=20260619-cv2" : "/pages/career/career-cv-form.html";
+  return /maritime|deniz|gemi|kaptan|zabit|stcw|crew/.test(text) ? "../career/cv-form.html?v=20260619-cv2" : "../career/career-cv-form.html";
 }
 
 function renderCvAction(){
@@ -1363,7 +1363,7 @@ function renderCvAction(){
   if(!button)return;
 
   const target=currentCvTarget();
-  const isMaritime=target.includes("/pages/career/cv-form.html");
+  const isMaritime=target.includes("../career/cv-form.html");
   button.textContent=isMaritime ? "Denizcilik CV Oluştur" : "Akıllı CV Oluştur";
   button.onclick=function(){
     window.location.href=target;
@@ -1535,32 +1535,32 @@ function profileSearch(){
   if(!q)return;
 
   if(q.includes("panel")){
-    window.location.href="/pages/account/user-panel.html";
+    window.location.href="user-panel.html";
   }
   else if(q.includes("belge") || q.includes("sertifika")){
-    window.location.href="/pages/account/belgeler.html";
+    window.location.href="belgeler.html";
   }
   else if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
-    window.location.href="/pages/commerce/kuponlar.html";
+    window.location.href="../commerce/kuponlar.html";
   }
   else if(q.includes("premium") || q.includes("üyelik")){
-    window.location.href="/pages/account/premium.html";
+    window.location.href="premium.html";
   }
   else if(q.includes("destek") || q.includes("yardım")){
-    window.location.href="/pages/company/destek.html";
+    window.location.href="../company/destek.html";
   }
   else if(q.includes("cv")){
     window.location.href=currentCvTarget();
   }
   else{
-    window.location.href="/pages/search/arama.html?q="+encodeURIComponent(q);
+    window.location.href="../search/arama.html?q="+encodeURIComponent(q);
   }
 }
 
 async function logoutUser(){
   await supabaseClient.auth.signOut();
   localStorage.removeItem("allonahub_user_profile");
-  window.location.href="/pages/account/user.html";
+  window.location.href="user.html";
 }
 
 document.addEventListener("DOMContentLoaded",function(){
@@ -1590,8 +1590,8 @@ document.addEventListener("click",function(e){
   }
 });
 </script>
-  <script src="/js/core.js?v=20260619-sec1" defer></script>
-  <script src="/js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

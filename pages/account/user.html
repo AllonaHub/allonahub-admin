@@ -697,14 +697,14 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260620-mobile2">
 </head>
 
 <body>
 <div class="page">
 
 <div class="header">
-  <a class="brand glass" href="/index.html">
+  <a class="brand glass" href="../../index.html">
     <div><b>Allona</b><span>Hub</span></div>
   </a>
 
@@ -715,9 +715,9 @@ a{
   </div>
 
   <div class="actions glass">
-    <a href="/index.html">Ana Sayfa</a>
-    <a href="/pages/wallet/hubwallet.html">Kupon</a>
-    <a href="/pages/account/premium.html">Premium</a>
+    <a href="../../index.html">Ana Sayfa</a>
+    <a href="../wallet/hubwallet.html">Kupon</a>
+    <a href="premium.html">Premium</a>
     <span class="platform-controls-slot" data-platform-controls-slot></span>
   </div>
 </div>
@@ -752,7 +752,7 @@ a{
 
       <div class="link-row">
         <a href="#">Telefon ile giriş</a>
-        <a href="/pages/company/destek.html">Güvenlik merkezi</a>
+        <a href="../company/destek.html">Güvenlik merkezi</a>
       </div>
     </div>
 
@@ -835,7 +835,7 @@ a{
 <section class="quick-section">
   <div class="quick-title">
     <h2>AllonaHub Avantajları</h2>
-    <a href="/pages/account/premium.html">Tümünü Gör</a>
+    <a href="premium.html">Tümünü Gör</a>
   </div>
 
   <div class="quick-grid">
@@ -878,8 +878,8 @@ function pageUrl(path){
   return new URL(path, window.location.href).href;
 }
 
-const SITE_URL=pageUrl("/pages/account/user-panel.html");
-const RESET_URL=pageUrl("/pages/account/reset-password.html");
+const SITE_URL=pageUrl("user-panel.html");
+const RESET_URL=pageUrl("reset-password.html");
 
 function normalizeEmail(value){
   return String(value || "").trim().toLowerCase().slice(0,180);
@@ -1505,15 +1505,15 @@ async function loginUser(){
     }
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
-    window.location.href = "/pages/account/user-panel.html";
+    window.location.href = "user-panel.html";
   }catch(error){
     secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
   }
 }
 
 async function loginWithGoogle(){
-  const redirectUrl=new URL("/pages/account/login.html", window.location.href);
-  redirectUrl.searchParams.set("returnTo","/pages/account/user-panel.html");
+  const redirectUrl=new URL("login.html", window.location.href);
+  redirectUrl.searchParams.set("returnTo","user-panel.html");
 
   const { error }=await supabaseClient.auth.signInWithOAuth({
     provider:"google",
@@ -1563,25 +1563,25 @@ function icloudInfo(){
   if(!q)return;
 
   if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
-    window.location.href="/pages/wallet/hubwallet.html";
+    window.location.href="../wallet/hubwallet.html";
   }
   else if(q.includes("kupon")){
-    window.location.href="/pages/commerce/kuponlar.html";
+    window.location.href="../commerce/kuponlar.html";
   }
   else if(q.includes("premium") || q.includes("üyelik")){
-    window.location.href="/pages/account/premium.html";
+    window.location.href="premium.html";
   }
   else if(q.includes("destek") || q.includes("yardım") || q.includes("güvenlik")){
-    window.location.href="/pages/company/destek.html";
+    window.location.href="../company/destek.html";
   }
   else if(q.includes("deniz") || q.includes("maritime") || q.includes("gemi")){
-    window.location.href="/pages/ecosystem/maritime.html";
+    window.location.href="../ecosystem/maritime.html";
   }
   else if(q.includes("cv")){
-    window.location.href="/pages/career/cv-form.html?v=20260619-cv2";
+    window.location.href="../career/cv-form.html?v=20260619-cv2";
   }
   else{
-    window.location.href="/pages/search/arama.html?q="+encodeURIComponent(q);
+    window.location.href="../search/arama.html?q="+encodeURIComponent(q);
   }
 }
 
@@ -1620,8 +1620,8 @@ document.addEventListener("click",function(e){
 });
 </script>
   <div data-layout="footer"></div>
-  <script src="/js/core.js?v=20260619-sec1" defer></script>
-  <script src="/js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

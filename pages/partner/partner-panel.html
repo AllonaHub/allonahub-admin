@@ -131,14 +131,14 @@ td{opacity:.9}
   .notice{left:14px;right:14px;bottom:14px;max-width:none}
 }
 </style>
-  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260620-mobile2">
 </head>
 
 <body>
 <div class="page">
 
 <header class="topbar">
-<a class="brand glass" href="/index.html">
+<a class="brand glass" href="../../index.html">
 <div><b>Allona</b><span>Hub</span></div>
 </a>
 
@@ -148,7 +148,7 @@ td{opacity:.9}
 </div>
 
 <div class="top-actions glass">
-<a href="/pages/commerce/allonashop.html">Mağazaya Git</a>
+<a href="../commerce/allonashop.html">Mağazaya Git</a>
 <button onclick="openSection('notifications')">Duyurularım</button>
 
 <div class="partner-profile">
@@ -647,7 +647,7 @@ async function loadPartnerProfile(){
 
   if(!email){
     showNotice("Partner oturumu bulunamadı. Giriş sayfasına yönlendiriliyorsun.");
-    setTimeout(() => window.location.href = "/pages/partner/partner.html", 1200);
+    setTimeout(() => window.location.href = "partner.html", 1200);
     return;
   }
 
@@ -670,7 +670,7 @@ async function loadPartnerProfile(){
       await supabaseClient.auth.signOut({scope:"local"});
     }catch(error){}
     showNotice("Aktif partner kaydı bulunamadı.");
-    setTimeout(() => window.location.href = "/pages/partner/partner.html", 1400);
+    setTimeout(() => window.location.href = "partner.html", 1400);
     return;
   }
 
@@ -1145,7 +1145,7 @@ async function logoutPartner(){
   try{
     await supabaseClient.auth.signOut({scope:"local"});
   }catch(error){}
-  window.location.href = "/pages/partner/partner.html";
+  window.location.href = "partner.html";
 }
 
 async function checkPartnerSession(){
@@ -1160,7 +1160,7 @@ async function checkPartnerSession(){
       clearPartnerAuth();
       showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
       setTimeout(()=>{
-        window.location.href="/pages/partner/partner.html";
+        window.location.href="partner.html";
       },1200);
       return false;
     }
@@ -1171,7 +1171,7 @@ async function checkPartnerSession(){
       }catch(error){}
       showNotice("Oturum bilgisi cihazda uyuşmuyor. Tekrar giriş yapmalısınız.");
       setTimeout(()=>{
-        window.location.href="/pages/partner/partner.html";
+        window.location.href="partner.html";
       },1200);
       return false;
     }
@@ -1180,7 +1180,7 @@ async function checkPartnerSession(){
     clearPartnerAuth();
     showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
     setTimeout(()=>{
-      window.location.href="/pages/partner/partner.html";
+      window.location.href="partner.html";
     },1200);
     return false;
   }
@@ -1188,7 +1188,7 @@ async function checkPartnerSession(){
   if(!profile && !currentAuthUser?.email){
     showNotice("Partner oturumu bulunamadı.");
     setTimeout(()=>{
-      window.location.href="/pages/partner/partner.html";
+      window.location.href="partner.html";
     },1200);
     return false;
   }
@@ -1249,8 +1249,8 @@ setInterval(async ()=>{
 console.log("✅ AllonaHub Partner Panel Loaded");
 </script>
   <div data-layout="footer"></div>
-  <script src="/js/core.js?v=20260619-sec1" defer></script>
-  <script src="/js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

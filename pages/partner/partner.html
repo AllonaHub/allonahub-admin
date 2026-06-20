@@ -100,14 +100,14 @@ body{overflow-x:hidden}
 .section-title{align-items:flex-start;gap:10px;flex-direction:column}
 }
 </style>
-  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260620-mobile2">
 </head>
 
 <body>
 <div class="page">
 
 <div class="header">
-<a class="brand glass" href="/index.html">
+<a class="brand glass" href="../../index.html">
 <div><b>Allona</b><span>Hub</span></div>
 </a>
 
@@ -118,9 +118,9 @@ body{overflow-x:hidden}
 </div>
 
 <div class="actions glass">
-<a href="/index.html">Ana Sayfa</a>
-<a href="/pages/account/login.html">Kullanıcı Girişi</a>
-<a href="/pages/wallet/hubwallet.html">Kupon</a>
+<a href="../../index.html">Ana Sayfa</a>
+<a href="../account/login.html">Kullanıcı Girişi</a>
+<a href="../wallet/hubwallet.html">Kupon</a>
 <span class="platform-controls-slot" data-platform-controls-slot></span>
 </div>
 </div>
@@ -316,7 +316,7 @@ function showNotice(message){
 }
 
 async function partnerLoginWithGoogle(){
-  const redirectUrl=new URL("/pages/partner/partner.html", window.location.href);
+  const redirectUrl=new URL("partner.html", window.location.href);
   redirectUrl.searchParams.set("partnerOAuth","google");
 
   try{
@@ -389,7 +389,7 @@ async function completePartnerGoogleLogin(session){
   localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
   localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
-  window.location.href="/pages/partner/partner-panel.html";
+  window.location.href="partner-panel.html";
 }
 
 function initPartnerGoogleCallback(){
@@ -556,7 +556,7 @@ async function partnerLogin(){
     localStorage.setItem("allonaPartnerType",partner.partner_type || "shop");
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
-    window.location.href="/pages/partner/partner-panel.html";
+    window.location.href="partner-panel.html";
 
   }catch(err){
     showNotice("Giriş sırasında hata oluştu. Lütfen tekrar deneyin.");
@@ -680,13 +680,13 @@ function partnerSearch(){
     return;
   }
 
-  if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="/pages/wallet/hubwallet.html";
-  else if(q.includes("kampanya")||q.includes("hp"))window.location.href="/pages/wallet/hp-wallet-kurallari.html";
-  else if(q.includes("yemek")||q.includes("restoran"))window.location.href="/pages/commerce/allonayemek.html";
-  else if(q.includes("market"))window.location.href="/pages/commerce/allonamarket.html";
-  else if(q.includes("shop")||q.includes("mağaza"))window.location.href="/pages/commerce/allonashop.html";
-  else if(q.includes("kurye"))window.location.href="/pages/ecosystem/allonakurye.html";
-  else window.location.href="/pages/search/arama.html?q="+encodeURIComponent(q);
+  if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="../wallet/hubwallet.html";
+  else if(q.includes("kampanya")||q.includes("hp"))window.location.href="../wallet/hp-wallet-kurallari.html";
+  else if(q.includes("yemek")||q.includes("restoran"))window.location.href="../commerce/allonayemek.html";
+  else if(q.includes("market"))window.location.href="../commerce/allonamarket.html";
+  else if(q.includes("shop")||q.includes("mağaza"))window.location.href="../commerce/allonashop.html";
+  else if(q.includes("kurye"))window.location.href="../ecosystem/allonakurye.html";
+  else window.location.href="../search/arama.html?q="+encodeURIComponent(q);
 }
 
 document.getElementById("partnerSearchInput").addEventListener("keydown",function(e){
@@ -700,8 +700,8 @@ document.getElementById("phone").addEventListener("input",function(){
 initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
-  <script src="/js/core.js?v=20260619-sec1" defer></script>
-  <script src="/js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260620-auth2" defer></script>
 </body>
 </html>

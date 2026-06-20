@@ -122,12 +122,48 @@
     return target ? `${target}${match[2] || ""}` : raw;
   }
 
+  function detectBasePath() {
+    try {
+      const script = document.currentScript && document.currentScript.src;
+      if (script) {
+        const scriptPath = new URL(script, window.location.href).pathname;
+        const marker = "/js/core.js";
+        if (scriptPath.endsWith(marker)) {
+          return scriptPath.slice(0, -marker.length);
+        }
+      }
+
+      const pagePath = window.location.pathname;
+      const markers = ["/pages/", "/admin/", "/partner/", "/index.html"];
+      for (const marker of markers) {
+        const index = pagePath.indexOf(marker);
+        if (index > 0) return pagePath.slice(0, index);
+      }
+
+      if (/\.github\.io$/i.test(window.location.hostname)) {
+        const firstSegment = pagePath.split("/").filter(Boolean)[0];
+        return firstSegment ? `/${firstSegment}` : "";
+      }
+    } catch (error) {
+      // Fall through to root paths when the browser blocks URL inspection.
+    }
+    return "";
+  }
+
+  const basePath = detectBasePath().replace(/\/$/, "");
+
+  function withBasePath(path) {
+    if (!path.startsWith("/")) return path;
+    if (basePath && (path === basePath || path.startsWith(`${basePath}/`))) return path;
+    return `${basePath}${path}`;
+  }
+
   function url(path) {
     const mapped = mapLegacyPath(path);
-    if (/^(https?:)?\/\//.test(mapped) || mapped.startsWith("mailto:") || mapped.startsWith("tel:") || mapped.startsWith("#") || mapped.startsWith("/")) {
+    if (/^(https?:)?\/\//.test(mapped) || mapped.startsWith("mailto:") || mapped.startsWith("tel:") || mapped.startsWith("#")) {
       return mapped;
     }
-    return mapped;
+    return withBasePath(mapped);
   }
 
   function escapeHTML(value) {

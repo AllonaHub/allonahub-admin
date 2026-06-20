@@ -362,7 +362,7 @@
   let isApplyingLanguage = false;
 
   function isNestedPage() {
-    return /\/(admin|partner)\//.test(window.location.pathname);
+    return /\/(admin|pages|partner)\//.test(window.location.pathname);
   }
 
   function assetUrl(path) {
@@ -372,7 +372,7 @@
   }
 
   function ensurePlatformCss() {
-    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => (link.getAttribute("href") || "").includes("/css/platform.css"))) return;
+    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => (link.getAttribute("href") || "").includes("css/platform.css"))) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = assetUrl(`/css/platform.css?v=${ASSET_VERSION}`);
