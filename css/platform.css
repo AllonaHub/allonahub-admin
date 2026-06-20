@@ -2671,3 +2671,166 @@ html {
 ) .logo-title .blue {
   color: #00e5ff !important;
 }
+
+/* Global mobile guardrail: headers should not trap the viewport on small screens. */
+@media (max-width: 720px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .site-header,
+  body > header {
+    position: relative !important;
+    top: auto !important;
+    z-index: 10 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .header-main {
+    width: min(calc(100% - 24px), var(--ah-wide-page-max)) !important;
+    min-height: 0 !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 10px 0 !important;
+  }
+
+  .site-header .brand,
+  .header-main .brand,
+  .header-main .logo {
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .header-main .search-form {
+    order: 2 !important;
+    grid-column: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .header-actions {
+    order: 3 !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none;
+  }
+
+  .header-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .header-actions > * {
+    flex: 0 0 auto !important;
+  }
+
+  .header-actions .link-btn,
+  .header-actions .icon-btn,
+  .platform-control-btn,
+  .platform-select {
+    min-height: 38px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+  }
+
+  .nav-row {
+    position: static !important;
+  }
+
+  .nav-row__inner {
+    min-height: 0 !important;
+    padding: 8px 0 10px !important;
+  }
+
+  .nav-links,
+  .nav-links.is-open {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .platform-controls,
+  .platform-controls-slot {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+
+  body:has(.premium-hero) > header nav {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 8px !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none;
+  }
+
+  body:has(.premium-hero) > header nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  body:has(.premium-hero) > header nav > * {
+    flex: 0 0 auto !important;
+  }
+
+  body:has(.premium-hero) > header nav a,
+  body:has(.premium-hero) > header nav .login,
+  body:has(.premium-hero) > header nav .platform-control-btn,
+  body:has(.premium-hero) > header nav .platform-select {
+    min-height: 36px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  body:has(.premium-hero) > header nav .platform-controls,
+  body:has(.premium-hero) > header nav .platform-controls-slot {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    flex-wrap: nowrap !important;
+  }
+
+  body:has(.premium-hero) > header nav .platform-theme-btn {
+    min-width: 92px !important;
+  }
+
+  :where(
+    .page,
+    .wrapper,
+    .container,
+    .site-main,
+    .site-shell,
+    .platform-shell,
+    .platform-page,
+    .page-shell,
+    .module-shell,
+    .content-shell,
+    .account-shell,
+    .partner-shell,
+    .admin-shell,
+    .dashboard-shell,
+    .profile-shell,
+    .checkout-shell,
+    .cart-shell
+  ) {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+}
