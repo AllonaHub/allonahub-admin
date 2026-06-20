@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaHub Super Admin</title>
+  <link rel="stylesheet" href="../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../css/super-admin.css?v=20260621-super1">
+</head>
+<body data-page="super-admin" data-theme="graphite">
+  <div class="sa-shell" data-super-admin-shell>
+    <aside class="sa-sidebar" aria-label="Super Admin Navigation">
+      <a class="sa-brand" href="../index.html" aria-label="AllonaHub">
+        <img src="../images/brand/allona.logo.png" alt="AllonaHub Logo">
+        <span><b>Allona</b>Hub</span>
+      </a>
+      <nav class="sa-nav" data-sa-nav>
+        <button class="is-active" type="button" data-view-target="dashboard">Dashboard</button>
+        <button type="button" data-view-target="users">Kullanıcılar</button>
+        <button type="button" data-view-target="partners">Partnerler</button>
+        <button type="button" data-view-target="security">Güvenlik</button>
+        <button type="button" data-view-target="settings">Sistem</button>
+        <button type="button" data-view-target="modules">Modüller</button>
+        <button type="button" data-view-target="audit">Audit Log</button>
+      </nav>
+    </aside>
+
+    <main class="sa-main">
+      <header class="sa-topbar">
+        <div>
+          <p class="sa-kicker">Security-First Control Plane</p>
+          <h1>Süper Admin Paneli</h1>
+        </div>
+        <div class="sa-session">
+          <span data-sa-role>Super Admin</span>
+          <button class="sa-btn sa-btn-ghost" type="button" data-sa-refresh>Yenile</button>
+          <button class="sa-btn sa-btn-danger" type="button" data-sa-signout>Çıkış</button>
+        </div>
+      </header>
+
+      <div class="sa-alert" data-sa-alert hidden></div>
+
+      <section class="sa-view is-active" data-view="dashboard">
+        <div class="sa-grid sa-grid-stats" data-dashboard-metrics></div>
+        <div class="sa-grid sa-grid-two">
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Sistem Sağlığı</h2>
+              <span data-system-health-badge>Kontrol ediliyor</span>
+            </div>
+            <div class="sa-health" data-system-health></div>
+          </section>
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Şema Durumu</h2>
+              <span>Supabase</span>
+            </div>
+            <div class="sa-list" data-schema-warnings></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="users">
+        <div class="sa-panel">
+          <div class="sa-panel-head sa-panel-head-row">
+            <div>
+              <h2>Kullanıcı Yönetimi</h2>
+              <span data-users-count>0 kayıt</span>
+            </div>
+            <form class="sa-filters" data-users-filter>
+              <input name="search" type="search" placeholder="Kullanıcı ara">
+              <select name="role">
+                <option value="">Tüm roller</option>
+                <option value="customer">Customer</option>
+                <option value="partner">Partner</option>
+                <option value="courier">Courier</option>
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+              <select name="account_status">
+                <option value="">Tüm durumlar</option>
+                <option value="active">Aktif</option>
+                <option value="passive">Pasif</option>
+                <option value="suspended">Askıda</option>
+              </select>
+              <button class="sa-btn" type="submit">Filtrele</button>
+            </form>
+          </div>
+          <div class="sa-table-wrap" data-users-table></div>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="partners">
+        <div class="sa-grid sa-grid-two">
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Partner Başvuruları</h2>
+              <span data-partner-app-count>0 kayıt</span>
+            </div>
+            <div class="sa-table-wrap" data-partner-applications></div>
+          </section>
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Partner Mağazaları</h2>
+              <span data-partner-business-count>0 kayıt</span>
+            </div>
+            <div class="sa-table-wrap" data-partner-businesses></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="security">
+        <div class="sa-grid sa-grid-stats" data-security-metrics></div>
+        <div class="sa-grid sa-grid-two">
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Şüpheli IP'ler</h2>
+              <span>Son olaylar</span>
+            </div>
+            <div class="sa-list" data-suspicious-ips></div>
+          </section>
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Güvenlik Kayıtları</h2>
+              <span>Risk akışı</span>
+            </div>
+            <div class="sa-table-wrap" data-security-events></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="settings">
+        <div class="sa-panel">
+          <div class="sa-panel-head">
+            <h2>Sistem Ayarları</h2>
+            <span data-settings-env>Backend bayrakları</span>
+          </div>
+          <div class="sa-settings" data-settings-list></div>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="modules">
+        <div class="sa-panel">
+          <div class="sa-panel-head">
+            <h2>Modül Yönetimi</h2>
+            <span>Ekosistem kontrolü</span>
+          </div>
+          <div class="sa-module-grid" data-modules-list></div>
+        </div>
+      </section>
+
+      <section class="sa-view" data-view="audit">
+        <div class="sa-panel">
+          <div class="sa-panel-head">
+            <h2>Audit Log</h2>
+            <span>Append-only kayıtlar</span>
+          </div>
+          <div class="sa-table-wrap" data-audit-log></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="sa-modal" data-confirm-modal hidden>
+    <div class="sa-modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <h2 id="confirmTitle">İşlem Onayı</h2>
+      <p data-confirm-message></p>
+      <label>
+        İşlem nedeni
+        <textarea data-confirm-reason rows="3" maxlength="900"></textarea>
+      </label>
+      <div class="sa-modal-actions">
+        <button class="sa-btn sa-btn-ghost" type="button" data-confirm-cancel>Vazgeç</button>
+        <button class="sa-btn sa-btn-danger" type="button" data-confirm-accept>Onayla</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js?v=20260619-sec1"></script>
+  <script src="../js/core.js?v=20260621-super1"></script>
+  <script src="../js/supabase-client.js?v=20260619-sec1"></script>
+  <script src="../js/auth.js?v=20260620-auth2"></script>
+  <script src="../js/super-admin.js?v=20260621-super1"></script>
+</body>
+</html>

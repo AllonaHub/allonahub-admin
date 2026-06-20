@@ -19,6 +19,7 @@
     "user-panel.html": "/pages/account/user-panel.html",
     "user.html": "/pages/account/user.html",
     "admin-orders.html": "/admin/orders.html",
+    "super-admin.html": "/admin/super-admin.html",
     "allonakariyer.html": "/pages/career/allonakariyer.html",
     "career-cv-form.html": "/pages/career/career-cv-form.html",
     "cv-form.html": "/pages/career/cv-form.html",

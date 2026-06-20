@@ -14,6 +14,8 @@
 /user-panel.html /pages/account/user-panel.html 301
 /user.html /pages/account/user.html 301
 /admin-orders.html /admin/orders.html 301
+/super-admin.html /admin/super-admin.html 301
+/super-admin /admin/super-admin.html 301
 /allonakariyer.html /pages/career/allonakariyer.html 301
 /career-cv-form.html /pages/career/career-cv-form.html 301
 /cv-form.html /pages/career/cv-form.html 301
