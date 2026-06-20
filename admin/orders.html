@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320">
+<title>Admin Siparişler</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+body{
+background:#020814;
+color:white;
+min-width:1320px;
+}
+
+body:before{
+content:"";
+position:fixed;
+inset:0;
+z-index:-1;
+background:
+radial-gradient(circle at top left,#00b7ff55,transparent 35%),
+radial-gradient(circle at bottom right,#ffd70033,transparent 30%),
+linear-gradient(135deg,#020814,#061b33,#002b4d);
+}
+
+.wrapper{
+width:1320px;
+margin:auto;
+padding:30px;
+}
+
+.title{
+font-size:42px;
+font-weight:900;
+color:#ffd700;
+margin-bottom:25px;
+}
+
+.order{
+background:rgba(5,25,50,.92);
+border:1px solid rgba(0,229,255,.25);
+border-radius:20px;
+padding:20px;
+margin-bottom:15px;
+}
+
+.row{
+display:flex;
+justify-content:space-between;
+margin-bottom:10px;
+}
+
+.label{
+color:#8fb6d8;
+}
+
+select{
+background:#021426;
+color:white;
+padding:10px;
+border-radius:10px;
+border:1px solid #00e5ff44;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:linear-gradient(135deg,#00e5ff,#0077ff);
+color:white;
+font-weight:bold;
+}
+
+.risk-title{
+font-size:28px;
+font-weight:900;
+color:#ffd700;
+margin:30px 0 16px;
+}
+
+.risk{
+background:linear-gradient(145deg,rgba(70,28,18,.92),rgba(5,25,50,.92));
+border:1px solid rgba(255,215,0,.32);
+border-radius:20px;
+padding:18px;
+margin-bottom:14px;
+box-shadow:0 0 24px rgba(255,215,0,.10);
+}
+
+.risk b{color:#ffd700}
+.risk small{display:block;color:#9edff2;margin-top:8px}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<div class="title">
+Sipariş Yönetimi
+</div>
+
+<div class="risk-title">Riskli CV Profilleri</div>
+<div id="riskNotifications"></div>
+
+<div id="orders"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+"https://xqvikrysciguzholdjeb.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+function safe(value){
+return String(value ?? "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+}
+
+async function requireAdmin(){
+const {data:{user}} = await supabaseClient.auth.getUser();
+if(!user){
+window.location.href="/pages/account/login.html?returnTo="+encodeURIComponent(window.location.pathname);
+return false;
+}
+const {data:profile,error} = await supabaseClient
+.from("profiles")
+.select("role")
+.eq("id",user.id)
+.maybeSingle();
+if(error || !profile || !["admin","super_admin"].includes(profile.role)){
+document.getElementById("orders").textContent="Bu alana erişim yetkiniz yok.";
+document.getElementById("riskNotifications").textContent="";
+return false;
+}
+return true;
+}
+
+async function loadRiskNotifications(){
+
+const target=document.getElementById("riskNotifications");
+
+const {data,error} =
+await supabaseClient
+.from("admin_notifications")
+.select("*, profile:profiles(full_name, phone)")
+.in("kind",["cv_device_risk","cv_device_signup_attempt"])
+.order("created_at",{ascending:false})
+.limit(30);
+
+if(error){
+console.error(error);
+target.innerHTML = `<div class="risk">Risk bildirimleri yüklenemedi.</div>`;
+return;
+}
+
+if(!data || !data.length){
+target.innerHTML = `<div class="risk">Henüz riskli CV profili bildirimi yok.</div>`;
+return;
+}
+
+target.innerHTML =
+data.map(item=>{
+const meta=item.metadata||{};
+const profile=item.profile||{};
+return `
+<div class="risk">
+<div class="row">
+<b>${safe(item.title)}</b>
+<span>${new Date(item.created_at).toLocaleString("tr-TR")}</span>
+</div>
+<div>${safe(item.message)}</div>
+<small>
+Kullanıcı: ${safe(profile.full_name || item.user_id || "-")} |
+E-posta: ${safe(meta.email || "-")} |
+Cihaz hesap sayısı: ${safe(meta.device_account_count || meta.known_account_count || "-")}
+</small>
+</div>
+`;
+}).join("");
+
+}
+
+async function loadOrders(){
+
+const {data,error} =
+await supabaseClient
+.from("orders")
+.select("*")
+.order("created_at",{ascending:false});
+
+if(error){
+console.error(error);
+return;
+}
+
+document.getElementById("orders").innerHTML =
+data.map(order=>`
+
+<div class="order">
+
+<div class="row">
+<b>${safe(order.order_no)}</b>
+<span>${safe(order.created_at)}</span>
+</div>
+
+<div class="row">
+<span>${safe(order.customer_name)}</span>
+<span>${safe(order.customer_phone)}</span>
+</div>
+
+<div class="row">
+<span>${safe(order.customer_email)}</span>
+<span>${safe(order.city)}</span>
+</div>
+
+<div class="row">
+<b>${safe(order.total)} ₺</b>
+
+<select onchange="updateStatus('${order.id}',this.value)">
+
+<option value="pending"
+${order.order_status==="pending"?"selected":""}>
+Yeni
+</option>
+
+<option value="preparing"
+${order.order_status==="preparing"?"selected":""}>
+Hazırlanıyor
+</option>
+
+<option value="shipped"
+${order.order_status==="shipped"?"selected":""}>
+Kargoda
+</option>
+
+<option value="delivered"
+${order.order_status==="delivered"?"selected":""}>
+Teslim Edildi
+</option>
+
+<option value="cancelled"
+${order.order_status==="cancelled"?"selected":""}>
+İptal
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+`).join("");
+
+}
+
+async function updateStatus(id,status){
+const allowed=["pending","confirmed","preparing","shipped","delivered","cancelled","refunded"];
+if(!allowed.includes(status)){
+alert("Geçersiz sipariş durumu.");
+return;
+}
+
+const {error}=await supabaseClient
+.from("orders")
+.update({
+order_status:status
+})
+.eq("id",id);
+
+if(error){
+console.error(error);
+alert("Sipariş güncellenemedi.");
+return;
+}
+
+alert("Güncellendi");
+
+}
+
+requireAdmin().then(ok=>{
+if(ok){
+loadOrders();
+loadRiskNotifications();
+}
+});
+
+</script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

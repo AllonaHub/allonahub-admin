@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Yardım ve Destek | AllonaHub</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0, 212, 255, .25), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(255, 217, 121, .18), transparent 35%),
+        linear-gradient(180deg, #02070c, #062536, #02070c);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: auto;
+      padding: 50px 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header .badge {
+      display: inline-block;
+      padding: 8px 15px;
+      border-radius: 999px;
+      background: rgba(255, 217, 121, .12);
+      border: 1px solid rgba(255, 217, 121, .25);
+      color: #ffd979;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 42px;
+      color: #ffd979;
+      text-shadow: 0 0 25px rgba(255, 217, 121, .35);
+    }
+
+    .header p {
+      color: #c9edf7;
+      line-height: 1.7;
+      max-width: 720px;
+      margin: 14px auto 0;
+    }
+
+    .support-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .contact-card,
+    .form-card {
+      background: rgba(255, 255, 255, .075);
+      border: 1px solid rgba(0, 212, 255, .18);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      box-shadow:
+        0 0 35px rgba(0, 180, 216, .12),
+        0 20px 70px rgba(0, 0, 0, .45);
+    }
+
+    .contact-card {
+      border-color: rgba(255, 217, 121, .25);
+    }
+
+    .contact-card h2,
+    .form-card h2 {
+      margin: 0 0 18px;
+      color: #ffd979;
+      font-size: 26px;
+    }
+
+    .contact-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 14px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 212, 255, .13);
+      color: #00d4ff;
+      font-size: 20px;
+      box-shadow: 0 0 18px rgba(0, 212, 255, .25);
+      flex-shrink: 0;
+    }
+
+    .contact-item strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    .contact-item a,
+    .contact-item span {
+      color: #bfeaf6;
+      text-decoration: none;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    .socials {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .socials a {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #ffd979;
+      text-decoration: none;
+      font-size: 20px;
+      box-shadow: 0 0 18px rgba(255, 217, 121, .14);
+      transition: .25s;
+    }
+
+    .socials a:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,217,121,.45);
+      box-shadow: 0 0 28px rgba(255, 217, 121, .25);
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 15px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.13);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      outline: none;
+      font-size: 15px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(220,245,255,.65);
+    }
+
+    select {
+      color: #dff8ff;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .submit-btn {
+      border: none;
+      cursor: pointer;
+      padding: 15px 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #00b4d8, #ffd979);
+      color: #06131a;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 0 28px rgba(0, 180, 216, .25);
+      transition: .25s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 35px rgba(255, 217, 121, .28);
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #9ff6c4;
+      display: none;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 26px;
+      color: #ffd979;
+      text-decoration: none;
+    }
+
+    @media (max-width: 850px) {
+      .support-grid,
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 32px;
+      }
+
+      .contact-card,
+      .form-card {
+        padding: 22px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+  <main class="page">
+    <section class="header">
+      <div class="badge">AllonaHub Destek Merkezi</div>
+      <h1>Yardım ve Destek</h1>
+      <p>
+        AllonaHub hakkında destek almak, partnerlik başvurusu yapmak veya bizimle hızlıca iletişime geçmek için aşağıdaki formu kullanabilirsiniz.
+      </p>
+    </section>
+
+    <section class="support-grid">
+      <div class="contact-card">
+        <h2>İletişim Bilgileri</h2>
+
+        <div class="contact-item">
+          <div class="icon">☎</div>
+          <div>
+            <strong>Telefon</strong>
+            <a href="tel:+905427781868">+90 542778 18 68</a>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="icon">☘</div>
+          <div>
+            <strong>WhatsApp</strong>
+            <a href="https://wa.me/905427781868" target="_blank">WhatsApp üzerinden yazın</a>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="icon">✉</div>
+          <div>
+            <strong>E-posta</strong>
+            <a href="mailto:allonahub@gmail.com">allonahub@gmail.com</a>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="icon">⌖</div>
+          <div>
+            <strong>Şirket</strong>
+            <span>Allworksin Business Danışmanlık Tic. Ltd. Şti.</span>
+          </div>
+        </div>
+
+        <div class="socials">
+          <a href="#" title="Instagram">◎</a>
+          <a href="#" title="TikTok">♪</a>
+          <a href="#" title="LinkedIn">in</a>
+          <a href="#" title="X">𝕏</a>
+        </div>
+
+        <a href="/index.html" class="back-btn">← Ana Sayfaya Dön</a>
+      </div>
+
+      <div class="form-card">
+        <h2>Hızlı İletişim</h2>
+
+        <form id="supportForm">
+          <div class="row">
+            <input type="text" name="name" placeholder="Ad Soyad" required />
+            <input type="tel" name="phone" placeholder="Telefon Numaranız" required />
+          </div>
+
+          <div class="row">
+            <input type="email" name="email" placeholder="E-posta Adresiniz" required />
+            <select name="subject" required>
+              <option value="">Konu Seçiniz</option>
+              <option value="Genel Destek">Genel Destek</option>
+              <option value="Partner Başvurusu">Partner Başvurusu</option>
+              <option value="AllonaHub">AllonaHub</option>
+              <option value="HP Dünyası">HP Dünyası</option>
+              <option value="Teknik Destek">Teknik Destek</option>
+            </select>
+          </div>
+
+          <textarea name="message" placeholder="Mesajınızı yazın..." required></textarea>
+
+          <button type="submit" class="submit-btn">Başvuruyu Gönder</button>
+
+          <div id="formStatus" class="status">
+            Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    emailjs.init("j_8unIhsqi5PEVebP");
+
+    document.getElementById("supportForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const status = document.getElementById("formStatus");
+      const button = document.querySelector(".submit-btn");
+
+      button.disabled = true;
+      button.textContent = "Gönderiliyor...";
+
+      emailjs.sendForm("service_s9myas7", "template_i7xzsya", this)
+        .then(function() {
+          status.style.display = "block";
+          status.style.color = "#9ff6c4";
+          status.textContent = "Mesajınız başarıyla gönderildi.";
+          document.getElementById("supportForm").reset();
+        })
+        .catch(function() {
+          status.style.display = "block";
+          status.style.color = "#ffb4b4";
+          status.textContent = "Mesaj gönderilemedi. Lütfen daha sonra tekrar deneyin.";
+        })
+        .finally(function() {
+          button.disabled = false;
+          button.textContent = "Başvuruyu Gönder";
+        });
+    });
+  </script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

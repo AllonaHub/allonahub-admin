@@ -1057,7 +1057,7 @@ body[data-theme] .product-card:hover {
 
 body[data-theme] .product-card__media {
   background:
-    url("../images/product-fallback.svg") center / 58% no-repeat,
+    url("/images/product-fallback.svg") center / 58% no-repeat,
     radial-gradient(circle at 80% 8%, color-mix(in srgb, var(--ah-primary) 14%, transparent), transparent 35%),
     var(--ah-soft);
   border-bottom-color: color-mix(in srgb, var(--ah-primary) 18%, transparent);

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Eğitim | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 400px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:300px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:300px}
+.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}
+.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+
+.edu-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.edu-card{padding:20px;min-height:145px}
+.edu-card h3{color:#ffd700;margin-bottom:8px}
+.edu-card p{font-size:13px;opacity:.75;line-height:1.45}
+
+.course-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.course{padding:16px;min-height:275px;text-decoration:none;color:white}
+.course-img{height:135px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.course-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.course b{color:#ffd700;font-size:18px}
+.course p{font-size:13px;opacity:.72;margin:6px 0}
+.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.price{color:#00e5ff;font-size:21px;font-weight:900;margin-top:8px}
+
+.request-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.request-main{padding:28px;min-height:260px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.request-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}
+.request-main p{opacity:.82;line-height:1.6}
+.req-steps{display:grid;gap:10px;margin-top:16px}
+.req-steps div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.request-side{padding:24px}
+.request-side h3{color:#ffd700;font-size:25px;margin-bottom:10px}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
+.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}
+.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+  <a href="#">Eğitimlerim</a>
+  <a href="#">Sertifikalarım</a>
+  <a href="#">Üniversite Başvurularım</a>
+  <a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+  <div class="brand glass"><b>Allona</b><span>Hub</span></div>
+  <div class="search glass"><div class="search-mark"></div><input placeholder="Üniversite, kurs, sertifika, dil okulu veya eğitim ara..."></div>
+  <div class="actions glass"><a href="/pages/account/login.html">Giriş Yap</a><a href="#">Kurslarım</a><a href="#">Başvurularım</a></div>
+</div>
+
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Eğitim</div>
+  <a href="#">Üniversite</a><a href="#">Dil Okulu</a><a href="#">Online Eğitim</a><a href="#">Sertifika</a><a href="#">Maritime Academy</a><a href="#">Yapay Zeka</a><a href="#">Yazılım</a><a href="#">Sınav Hazırlık</a>
+</div>
+
+<section class="hero">
+  <div class="hero-main glass">
+    <h1>Allona Eğitim<br>Geleceğe Açılan Akademi</h1>
+    <p>Üniversite başvuruları, dil okulları, online eğitimler, sertifikalar, mesleki eğitimler, denizcilik eğitimleri, yapay zeka akademisi ve kariyer bağlantısı tek premium platformda.</p>
+  </div>
+  <div class="hero-card glass">
+    <h3>Sertifika → Kariyer</h3>
+    <p>Eğitimi tamamlayan kullanıcının sertifikası Allona Kariyer profiline işlenebilir.</p>
+    <div class="flow"><div>Eğitim seç</div><div>Tamamla</div><div>Kariyere aktar</div></div>
+  </div>
+  <div class="hero-card glass">
+    <h3>HP Kazandıran Eğitim</h3>
+    <p>Eğitim satın al, tamamla, sertifika kazan ve AllonaHub Kupon’a HP ekle.</p>
+    <div class="flow"><div>Satın al</div><div>Bitir</div><div>HP kazan</div></div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Eğitim Modülleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="edu-grid">
+  <div class="edu-card glass"><h3>Üniversiteler</h3><p>Türkiye, Azerbaycan, Avrupa, Amerika, Kanada ve İngiltere başvuruları.</p></div>
+  <div class="edu-card glass"><h3>Dil Okulları</h3><p>İngilizce, Almanca, İspanyolca, Fransızca, Arapça ve Rusça.</p></div>
+  <div class="edu-card glass"><h3>Online Eğitim</h3><p>Uzaktan eğitimler, canlı dersler ve dijital kampüs.</p></div>
+  <div class="edu-card glass"><h3>Sertifika Programları</h3><p>Mesleki ve uluslararası geçerli sertifika eğitimleri.</p></div>
+  <div class="edu-card glass"><h3>Yapay Zeka Akademisi</h3><p>ChatGPT, prompt engineering, AI automation ve no-code.</p></div>
+  <div class="edu-card glass"><h3>Denizcilik Eğitimleri</h3><p>STCW, GOC, ECDIS, Radar, Tanker ve Bridge Team.</p></div>
+  <div class="edu-card glass"><h3>Yazılım & Teknoloji</h3><p>Frontend, backend, veri, otomasyon ve dijital ürün geliştirme.</p></div>
+  <div class="edu-card glass"><h3>İşletme & Finans</h3><p>Girişimcilik, finans, e-ticaret ve operasyon yönetimi.</p></div>
+  <div class="edu-card glass"><h3>Çocuk Eğitimleri</h3><p>Erken gelişim, dil, kodlama ve yaratıcı eğitimler.</p></div>
+  <div class="edu-card glass"><h3>Sınav Hazırlık</h3><p>KPSS, YKS, DGS, ALES, yabancı dil ve mesleki sınavlar.</p></div>
+</div>
+
+<div class="section-title"><h2>Öne Çıkan Eğitimler</h2><a href="#">Tüm Kurslar</a></div>
+<div class="course-grid">
+  <a class="course glass" data-module-tags="education,career,hp"><div class="course-img"></div><b>Yapay Zeka ve ChatGPT Uzmanlığı</b><p>Prompt, otomasyon ve iş süreçleri</p><div class="meta"><span>Online</span><span>+150 HP</span></div><div class="price">1.999 ₺</div></a>
+  <a class="course glass" data-module-tags="education,language,career"><div class="course-img"></div><b>İngilizce B2 Programı</b><p>Dil okulu ve sertifika takibi</p><div class="meta"><span>Canlı</span><span>+120 HP</span></div><div class="price">3.499 ₺</div></a>
+  <a class="course glass" data-module-tags="education,maritime,career"><div class="course-img"></div><b>STCW Temel Eğitim</b><p>Maritime profile işlenebilir</p><div class="meta"><span>Denizcilik</span><span>+200 HP</span></div><div class="price">4.999 ₺</div></a>
+  <a class="course glass" data-module-tags="education,ecommerce,career"><div class="course-img"></div><b>E-Ticaret Operasyon Eğitimi</b><p>Pazaryeri, SKU, ürün yönetimi</p><div class="meta"><span>İşletme</span><span>+100 HP</span></div><div class="price">1.499 ₺</div></a>
+</div>
+
+<div class="section-title"><h2>Üniversite ve Yurtdışı Başvuru</h2><a href="#">Başvuru Takibi</a></div>
+<section class="request-grid">
+  <div class="request-main glass">
+    <h2>Üniversiteden Kariyere Tek Platform</h2>
+    <p>Kullanıcı hedef ülke, bölüm ve eğitim seviyesini seçer. Partner eğitim danışmanları başvuru, belge, kabul ve kayıt sürecini takip eder.</p>
+    <div class="req-steps">
+      <div>1. Ülke ve bölüm seçimi</div>
+      <div>2. Belge listesi ve dosya yükleme</div>
+      <div>3. Partner kurum / danışman kontrolü</div>
+      <div>4. Başvuru, kabul ve kayıt takibi</div>
+    </div>
+  </div>
+  <div class="request-side glass">
+    <h3>Hızlı Başvuru Formu</h3>
+    <div class="input-box">Hedef ülke seç</div>
+    <div class="input-box">Eğitim seviyesi</div>
+    <div class="input-box">Bölüm / program</div>
+    <div class="input-box">Belgelerim</div>
+    <a class="btn" href="#">Başvuru Talebi Oluştur</a>
+  </div>
+</section>
+
+<div class="section-title"><h2>Maritime Academy</h2><a href="/pages/ecosystem/allonadenizcilik.html">Denizcilik Modülüne Git</a></div>
+<div class="edu-grid">
+  <div class="edu-card glass"><h3>STCW</h3><p>Temel denizcilik güvenlik eğitimleri.</p></div>
+  <div class="edu-card glass"><h3>GOC</h3><p>Global maritime communication sertifikaları.</p></div>
+  <div class="edu-card glass"><h3>ECDIS</h3><p>Elektronik harita ve seyir sistemleri.</p></div>
+  <div class="edu-card glass"><h3>Radar</h3><p>Radar, ARPA ve seyir güvenliği eğitimleri.</p></div>
+  <div class="edu-card glass"><h3>Tanker</h3><p>Petrol, kimyasal ve tanker operasyonları.</p></div>
+</div>
+
+<div class="section-title"><h2>Premium Eğitim Avantajları</h2><a href="/pages/account/user.html">Üyelik Paneli</a></div>
+<div class="edu-grid">
+  <div class="edu-card glass"><h3>Gold Üyelik</h3><p>Seçili eğitimlerde %10 indirim ve ekstra HP.</p></div>
+  <div class="edu-card glass"><h3>Elite Üyelik</h3><p>Seçili eğitimlerde %20 indirim ve öncelikli destek.</p></div>
+  <div class="edu-card glass"><h3>Elite Black</h3><p>VIP mentorluk ve özel eğitim paketleri.</p></div>
+  <div class="edu-card glass"><h3>Sertifika Rozeti</h3><p>Tamamlanan eğitimler kullanıcı profilinde görünür.</p></div>
+  <div class="edu-card glass"><h3>HP Ödülleri</h3><p>Satın alma, tamamlama ve sertifikadan HP kazan.</p></div>
+</div>
+
+<section class="partner-cta glass">
+  <div>
+    <h2>Üniversite, Kurs veya Eğitim Partneri Ol</h2>
+    <p>Allona Eğitim partner paneliyle program ekleme, başvuru yönetimi, öğrenci dosyaları, sertifika takibi, canlı eğitim, kampanya ve HP avantajları tek sistemde çalışır.</p>
+    <a class="btn" href="/pages/partner/partner.html">Eğitim Partneri Ol</a>
+  </div>
+  <div class="panel-list">
+    <div>Program ve kurs yönetimi</div>
+    <div>Öğrenci başvuru takibi</div>
+    <div>Belge ve sertifika paneli</div>
+    <div>Canlı / online ders yönetimi</div>
+    <div>HP ve indirim kampanyaları</div>
+    <div>Kariyer ve maritime bağlantısı</div>
+  </div>
+</section>
+
+<section class="info glass">
+  <h2>Türkiye’nin Eğitim Ekosistemi: Allona Eğitim</h2>
+  <p>Allona Eğitim; üniversiteler, dil okulları, sertifika programları, online eğitimler, mesleki kurslar, denizcilik akademileri ve teknoloji eğitimlerini AllonaHub ekosistemi içinde birleştiren premium eğitim modülüdür.</p>
+
+  <h3>Üniversiteden Kariyere Tek Platform</h3>
+  <p>Kullanıcı bir eğitim programına başvurabilir, belgelerini yükleyebilir, sertifika kazanabilir ve bu kazanımı Allona Kariyer ya da Allona Denizcilik profilinde gösterebilir.</p>
+
+  <h3>Dijital Eğitim ve Sertifika Dünyası</h3>
+  <p>Online eğitimler, canlı dersler, mentor programları ve sertifika süreçleri tek panelden yönetilir. Eğitim tamamlandığında kullanıcının seviye sistemi ve HP ekonomisiyle bağlantılı kazanımlar oluşur.</p>
+
+  <h3>Allona Eğitim ile Geleceğe Hazırlan</h3>
+  <p>Allona Eğitim yalnızca kurs listeleyen bir alan değil; öğrenme, başvuru, belge, sertifika, kariyer ve ödül sistemini birbirine bağlayan yeni nesil eğitim ekosistemidir.</p>
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

@@ -127,7 +127,7 @@
     return {
       allowed: false,
       payment_required: true,
-      payment_url: "cv-payment.html?reason=limit",
+      payment_url: "/pages/career/cv-payment.html?reason=limit",
       remaining_free: 0,
       paid_credits: access.paid_credits,
       is_risky: access.is_risky,
@@ -170,7 +170,7 @@
         if (error) throw error;
         const result = normalizeResult(data);
         if (result && result.payment_required) {
-          window.location.href = App.core.url(result.payment_url || "cv-payment.html?reason=limit");
+          window.location.href = App.core.url(result.payment_url || "/pages/career/cv-payment.html?reason=limit");
           return result;
         }
         return result || { allowed: false };
@@ -181,7 +181,7 @@
 
     const fallback = await localClaimGeneration(user);
     if (fallback.payment_required) {
-      window.location.href = App.core.url(fallback.payment_url || "cv-payment.html?reason=limit");
+      window.location.href = App.core.url(fallback.payment_url || "/pages/career/cv-payment.html?reason=limit");
     }
     return fallback;
   }

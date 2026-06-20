@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AllonaHub Maritime CV Builder</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+:root{
+  --bg:#020814;
+  --panel:#07182b;
+  --neon:#00d5ff;
+  --blue:#0077ff;
+  --deep:#003b7a;
+  --gold:#f6b64b;
+  --white:#ffffff;
+  --text:#172231;
+  --line:#1597ff;
+  --soft:#eaf8ff;
+}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(0,213,255,.25), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(0,90,255,.20), transparent 35%),
+    linear-gradient(135deg,#020814,#061a2f,#020814);
+  color:#fff;
+  min-height:100vh;
+  padding:clamp(12px, 2vw, 30px);
+  overflow-x:hidden;
+}
+
+.app{
+  width:min(100%, 1760px);
+  margin:0 auto;
+}
+
+/* TOP BAR */
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:clamp(14px, 2vw, 22px);
+  padding:clamp(16px, 2vw, 24px);
+  border:1px solid rgba(0,213,255,.45);
+  border-radius:26px;
+  background:rgba(2,8,20,.78);
+  box-shadow:0 0 38px rgba(0,213,255,.25);
+  margin-bottom:25px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.brand img{
+  width:72px;
+  height:72px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 16px rgba(0,213,255,.85));
+}
+
+.brand h1{
+  font-size:28px;
+  letter-spacing:.5px;
+}
+
+.brand span{
+  display:block;
+  margin-top:4px;
+  color:var(--neon);
+  font-size:14px;
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+button{
+  border:none;
+  cursor:pointer;
+  padding:12px 17px;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:#00101d;
+  font-weight:900;
+  box-shadow:0 0 18px rgba(0,213,255,.45);
+}
+
+button.secondary{
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border:1px solid rgba(0,213,255,.35);
+}
+
+select{
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(0,213,255,.45);
+  background:#07182b;
+  color:#fff;
+  font-weight:800;
+  outline:none;
+}
+
+/* MAIN LAYOUT */
+
+.layout{
+  display:grid;
+  grid-template-columns:minmax(330px, 420px) minmax(0, 1fr);
+  gap:clamp(14px, 2vw, 25px);
+  align-items:start;
+}
+
+.formPanel{
+  background:rgba(2,8,20,.88);
+  border:1px solid rgba(0,213,255,.35);
+  border-radius:24px;
+  padding:clamp(16px, 1.8vw, 22px);
+  box-shadow:0 0 30px rgba(0,213,255,.18);
+  max-height:calc(100vh - 145px);
+  overflow:auto;
+  min-width:0;
+}
+
+.formPanel h2{
+  color:var(--neon);
+  margin-bottom:18px;
+}
+
+.group{
+  margin-bottom:22px;
+  padding-bottom:18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.group h3{
+  font-size:15px;
+  color:var(--gold);
+  margin-bottom:12px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+label{
+  display:block;
+  font-size:12px;
+  color:#9edff2;
+  margin:9px 0 5px;
+}
+
+input,
+textarea{
+  width:100%;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid rgba(0,213,255,.28);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  outline:none;
+}
+
+textarea{
+  min-height:78px;
+  resize:vertical;
+}
+
+input:focus,
+textarea:focus{
+  border-color:var(--neon);
+  box-shadow:0 0 12px rgba(0,213,255,.35);
+}
+
+.row2{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+}
+
+.row3{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+/* PREVIEW */
+
+.previewWrap{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(0,213,255,.25);
+  border-radius:24px;
+  padding:clamp(10px, 1.6vw, 20px);
+  overflow:hidden;
+  min-width:0;
+  display:grid;
+  justify-items:center;
+  align-content:start;
+}
+
+.cvPage{
+  width:min(900px, 100%);
+  max-width:100%;
+  min-height:1270px;
+  background:#fff;
+  color:var(--text);
+  margin:0 auto 25px;
+  padding:clamp(18px, 3.2vw, 34px);
+  border:2px solid rgba(0,126,255,.35);
+  position:relative;
+  font-family:Arial, Helvetica, sans-serif;
+  overflow:hidden;
+}
+
+.cvPage:before{
+  content:"ALLONAHUB";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:95px;
+  font-weight:900;
+  color:rgba(0,170,255,.035);
+  transform:rotate(-24deg);
+  pointer-events:none;
+}
+
+.cvNeonBorder{
+  position:absolute;
+  inset:12px;
+  border:2px solid var(--line);
+  box-shadow:0 0 10px rgba(0,153,255,.55);
+  pointer-events:none;
+}
+
+.cvHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:26px;
+  position:relative;
+  z-index:2;
+}
+
+.cvTitle{
+  font-size:clamp(25px, 4.2vw, 42px);
+  color:#005aaa;
+  font-weight:900;
+  letter-spacing:.5px;
+}
+
+.cvBrand{
+  text-align:center;
+  width:clamp(112px, 16vw, 170px);
+}
+
+.cvBrand img{
+  width:clamp(82px, 12vw, 118px);
+  height:auto;
+  max-height:78px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 7px rgba(0,174,255,.55));
+}
+.logoFallback{
+  display:none;
+  font-size:22px;
+  font-weight:900;
+  color:#005aaa;
+  letter-spacing:.5px;
+  text-shadow:0 0 8px rgba(0,213,255,.55);
+}
+
+.allonaLogoImg{
+  max-width:130px;
+  max-height:85px;
+  object-fit:contain;
+}
+  .cvBrand strong{
+  display:block;
+  color:#004d91;
+  font-size:15px;
+  letter-spacing:1px;
+}
+
+.cvBrand small{
+  color:#0088cc;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.sectionTitle{
+  color:#005aaa;
+  font-size:clamp(15px, 2.2vw, 22px);
+  font-weight:900;
+  text-transform:uppercase;
+  margin:18px 0 10px;
+  position:relative;
+  z-index:2;
+}
+
+.sectionTitle:after{
+  content:"";
+  display:block;
+  width:90px;
+  height:3px;
+  margin-top:5px;
+  background:linear-gradient(90deg,var(--neon),transparent);
+  box-shadow:0 0 8px rgba(0,213,255,.7);
+}
+
+.cvTable{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:clamp(10px, 1.25vw, 15px);
+  font-weight:700;
+  margin-bottom:15px;
+  position:relative;
+  z-index:2;
+}
+
+.cvTable th{
+  background:linear-gradient(135deg,#004f9e,#00aaff);
+  color:#fff;
+  border:1px solid #1597ff;
+  padding:clamp(4px, .7vw, 7px) clamp(5px, .8vw, 8px);
+  font-size:clamp(9.5px, 1.1vw, 14px);
+  overflow-wrap:anywhere;
+}
+
+.cvTable td{
+  border:1px solid #1597ff;
+  padding:clamp(4px, .7vw, 7px) clamp(5px, .8vw, 8px);
+  vertical-align:top;
+  color:#172231;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.cvTable .labelCell{
+  width:30%;
+  color:#004f9e;
+  font-weight:900;
+}
+
+.photoCell{
+  width:clamp(116px, 22vw, 220px);
+  height:clamp(150px, 30vw, 285px);
+  padding:0!important;
+  text-align:center;
+  border:2px solid #00aaff!important;
+}
+
+.photoCell img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.emptyPhoto{
+  width:100%;
+  height:100%;
+  background:linear-gradient(135deg,#eaf8ff,#ffffff);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#0077aa;
+  font-size:15px;
+  font-weight:900;
+}
+
+.noteBox{
+  min-height:260px;
+  border:2px solid #1597ff;
+  padding:14px;
+  font-size:clamp(14px, 1.8vw, 20px);
+  color:#172231;
+  font-weight:800;
+  position:relative;
+  z-index:2;
+}
+
+@media (min-width: 1540px){
+  .layout{
+    grid-template-columns:minmax(360px, 450px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1280px){
+  .layout{
+    grid-template-columns:1fr;
+  }
+
+  .formPanel{
+    max-height:none;
+    overflow:visible;
+  }
+
+  .previewWrap{
+    border-radius:20px;
+  }
+}
+
+@media (max-width: 720px){
+  .topbar{
+    flex-direction:column;
+    align-items:stretch;
+    border-radius:20px;
+  }
+
+  .brand{
+    align-items:flex-start;
+  }
+
+  .brand img{
+    width:54px;
+    height:54px;
+  }
+
+  .brand h1{
+    font-size:20px;
+  }
+
+  .actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .actions select,
+  .actions button{
+    width:100%;
+  }
+
+  .row2,
+  .row3{
+    grid-template-columns:1fr;
+  }
+
+  .cvPage{
+    min-height:auto;
+    margin-bottom:16px;
+    border-width:1px;
+  }
+
+  .cvPage:before{
+    font-size:46px;
+  }
+
+  .cvNeonBorder{
+    inset:7px;
+    border-width:1px;
+  }
+
+  .cvHeader{
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .cvBrand{
+    width:98px;
+  }
+
+  .cvBrand strong{
+    font-size:11px;
+  }
+
+  .cvBrand small{
+    font-size:8px;
+  }
+
+  .sectionTitle{
+    margin:13px 0 8px;
+  }
+
+  .cvTable{
+    margin-bottom:10px;
+  }
+
+  .cvTable .labelCell{
+    width:34%;
+  }
+
+  .photoCell{
+    width:96px;
+    height:126px;
+  }
+
+  .emptyPhoto{
+    font-size:10px;
+  }
+}
+
+@media (max-width: 420px){
+  .actions{
+    grid-template-columns:1fr;
+  }
+
+  .cvPage{
+    padding:14px;
+  }
+
+  .cvTitle{
+    font-size:20px;
+  }
+
+  .photoCell{
+    width:78px;
+    height:108px;
+  }
+}
+
+@page{
+  size:A4 portrait;
+  margin:0;
+}
+@page{
+    size:A4 portrait;
+    margin:0;
+}
+
+@media print{
+
+html,
+body{
+
+    width:210mm;
+    margin:0;
+    padding:0;
+    background:#fff!important;
+
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+
+}
+
+.topbar,
+.formPanel{
+
+    display:none!important;
+
+}
+
+.app,
+.layout,
+.previewWrap{
+
+    display:block!important;
+    width:210mm!important;
+
+    margin:0!important;
+    padding:0!important;
+
+    background:#fff!important;
+    border:none!important;
+    box-shadow:none!important;
+
+    overflow:visible!important;
+
+}
+
+.previewWrap{
+
+    overflow:visible!important;
+
+}
+
+.cvPage{
+
+    width:210mm!important;
+
+    min-height:296.5mm!important;
+
+    margin:0!important;
+
+    padding:10mm!important;
+
+    border:none!important;
+
+    box-shadow:none!important;
+
+    overflow:hidden!important;
+
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+
+}
+
+.cvPage:not(:last-child){
+
+    page-break-after:always!important;
+    break-after:page!important;
+
+}
+
+.cvPage:last-child{
+
+    page-break-after:auto!important;
+    break-after:auto!important;
+
+}
+
+.cvTitle{
+
+    font-size:30px!important;
+
+}
+
+.sectionTitle{
+
+    font-size:16px!important;
+
+    margin:10px 0 6px!important;
+
+}
+
+.cvTable{
+
+    font-size:10.5px!important;
+
+    margin-bottom:8px!important;
+
+}
+
+.cvTable th,
+.cvTable td{
+
+    padding:4px 5px!important;
+
+    font-size:10.5px!important;
+
+}
+
+.photoCell{
+
+    width:42mm!important;
+    height:52mm!important;
+
+}
+
+.cvBrand img{
+
+    width:80px!important;
+    height:auto!important;
+
+}
+
+.noteBox{
+
+    min-height:190mm!important;
+
+}
+
+}
+
+</style>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+  <style>
+    html body.cv-form-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)){
+      width:auto!important;
+      max-width:none!important;
+      margin:0!important;
+      padding:clamp(12px, 2vw, 30px)!important;
+      line-height:normal!important;
+    }
+
+    body.cv-form-page[data-theme] .app{
+      width:min(100%, 1760px)!important;
+      max-width:1760px!important;
+      margin:0 auto!important;
+    }
+
+    body.cv-form-page.pdf-capture{
+      overflow-x:visible!important;
+    }
+
+    body.cv-form-page.pdf-capture .previewWrap{
+      overflow:visible!important;
+    }
+
+    body.cv-form-page.pdf-capture .cvPage{
+      width:900px!important;
+      min-height:1270px!important;
+      padding:34px!important;
+    }
+  </style>
+</head>
+<body class="cv-form-page">
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+     <div class="logoFallback">AllonaHub</div>
+      <div>
+        <h1>AllonaHub Maritime CV Builder</h1>
+        <span>Premium Neon Blue Seafarer Application System</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <select id="langSelect" onchange="changeLanguage(this.value)">
+        <option value="en">EN</option>
+        <option value="tr">TR</option>
+        <option value="az">AZ</option>
+        <option value="ru">RU</option>
+      </select>
+
+      <button onclick="saveCV()">Kaydet</button>
+      <button onclick="downloadPDF()">PDF İndir</button>
+      <button class="secondary" onclick="resetForm()">Temizle</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT FORM PANEL -->
+    <aside class="formPanel">
+
+      <h2 data-i18n="formTitle">CV Bilgileri</h2>
+
+      <div class="group">
+        <h3 data-i18n="personalDetails">Personal Details</h3>
+
+        <label data-i18n="position">Position</label>
+        <input id="position" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="familyName">Family Name</label>
+            <input id="familyName" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="firstName">First Name</label>
+            <input id="firstName" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+
+        <label data-i18n="fatherName">Father’s Name</label>
+        <input id="fatherName" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="birth">Date and Place of Birth</label>
+        <input id="birth" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="marital">Marital Status</label>
+        <input id="marital" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="address">Permanent Address</label>
+        <input id="address" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="airport">Nearest Airport</label>
+        <textarea id="airport" oninput="syncCV(); autoSaveCV();"></textarea>
+
+        <label data-i18n="photo">Photo</label>
+        <input type="file" id="photoInput" accept="image/*">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="bodyDetails">Body Details</h3>
+
+        <div class="row3">
+          <div>
+            <label data-i18n="height">Height</label>
+            <input id="height" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="weight">Weight</label>
+            <input id="weight" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="eyes">Eyes Color</label>
+            <input id="eyes" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label data-i18n="hair">Hair Color</label>
+            <input id="hair" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="shoes">Safety Shoes</label>
+            <input id="shoes" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="overall">Overalls</label>
+            <input id="overall" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="contactDetails">Contact Details</h3>
+
+        <label data-i18n="mobile">Mobile</label>
+        <input id="mobile" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="email">E-mail Address</label>
+        <input id="email" value="" oninput="syncCV(); autoSaveCV();">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="nextOfKin">Next of Kin</h3>
+
+        <label data-i18n="kinName">Next of Kin</label>
+        <input id="kinName" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="kinPhone">Phone</label>
+        <input id="kinPhone" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="kinRelation">Relationship</label>
+        <input id="kinRelation" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="kinAddress">Address</label>
+        <input id="kinAddress" value="" oninput="syncCV(); autoSaveCV();">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="passportDetails">Travel Passport Details</h3>
+
+        <label data-i18n="document">Document</label>
+        <input id="passportDoc" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="number">Number</label>
+        <input id="passportNo" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="placeOfIssue">Place of Issue</label>
+        <input id="passportPlace" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="passportIssued" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="passportValid" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="computerSkills">Computer Skills</h3>
+
+        <label data-i18n="windows">Windows</label>
+        <input id="windows" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="office">Microsoft Office</label>
+        <input id="office" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="internet">Internet</label>
+        <input id="internet" value="" oninput="syncCV(); autoSaveCV();">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="seamanBookDetails">Seaman’s Book Details</h3>
+
+        <label data-i18n="seamanBookNo">Seaman Book Document Number</label>
+        <input id="seamanBookNo" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="seamanBookPlace">Seaman Book Place of Issue</label>
+        <input id="seamanBookPlace" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="seamanBookIssued" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="seamanBookValid" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+
+        <label data-i18n="seafarerIdNo">Seafarers Identity Document Number</label>
+        <input id="seafarerIdNo" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="seafarerIdPlace">Seafarers Identity Place of Issue</label>
+        <input id="seafarerIdPlace" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="seafarerIdIssued" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="seafarerIdValid" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="education">Education</h3>
+
+        <label data-i18n="schoolName">Full Name of School</label>
+        <input id="schoolName" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="schoolPlace">Place of Issue</label>
+        <input id="schoolPlace" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="schoolGrade">Grade / Class</label>
+        <input id="schoolGrade" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="from">From</label>
+            <input id="schoolFrom" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="to">To</label>
+            <input id="schoolTo" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="languageKnowledge">Knowledge of Language</h3>
+
+        <label data-i18n="azerbaijanLang">Azerbaijan</label>
+        <div class="row3">
+          <input id="azSpeak" value="" oninput="syncCV(); autoSaveCV();" data-ph="speaking">
+          <input id="azRead" value="" oninput="syncCV(); autoSaveCV();" data-ph="reading">
+          <input id="azWrite" value="" oninput="syncCV(); autoSaveCV();" data-ph="writing">
+        </div>
+
+        <label data-i18n="turkishLang">Turkish</label>
+        <div class="row3">
+          <input id="trSpeak" value="" oninput="syncCV(); autoSaveCV();" data-ph="speaking">
+          <input id="trRead" value="" oninput="syncCV(); autoSaveCV();" data-ph="reading">
+          <input id="trWrite" value="" oninput="syncCV(); autoSaveCV();" data-ph="writing">
+        </div>
+
+        <label data-i18n="englishLang">English</label>
+        <div class="row3">
+          <input id="enSpeak" value="" oninput="syncCV(); autoSaveCV();" data-ph="speaking">
+          <input id="enRead" value="" oninput="syncCV(); autoSaveCV();" data-ph="reading">
+          <input id="enWrite" value="" oninput="syncCV(); autoSaveCV();" data-ph="writing">
+        </div>
+
+        <label data-i18n="russianLang">Russian</label>
+        <div class="row3">
+          <input id="ruSpeak" value="" oninput="syncCV(); autoSaveCV();" data-ph="speaking">
+          <input id="ruRead" value="" oninput="syncCV(); autoSaveCV();" data-ph="reading">
+          <input id="ruWrite" value="" oninput="syncCV(); autoSaveCV();" data-ph="writing">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="medicalInfo">Medical Information</h3>
+
+        <label data-i18n="document">Document</label>
+        <input id="medicalDoc" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="grade">Grade</label>
+        <input id="medicalGrade" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="placeOfIssue">Place of Issue</label>
+        <input id="medicalPlace" value="" oninput="syncCV(); autoSaveCV();">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="dateOfIssue">Date of Issue</label>
+            <input id="medicalIssue" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+
+          <div>
+            <label data-i18n="dateOfExpiry">Date of Expiry</label>
+            <input id="medicalExpiry" value="" oninput="syncCV(); autoSaveCV();">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="competency">Certificate of Competency</h3>
+
+        <label data-i18n="classGrade">Class / Grade</label>
+        <input id="competencyClass" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="issuingCountry">Issuing Country</label>
+        <input id="competencyCountry" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="certificate">Certificate</label>
+        <textarea id="competencyCertificate" oninput="syncCV(); autoSaveCV();"></textarea>
+
+        <label data-i18n="dateIssued">Date Issued</label>
+        <input id="competencyIssued" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="expires">Expires</label>
+        <input id="competencyExpires" value="" oninput="syncCV(); autoSaveCV();">
+
+        <label data-i18n="limitations">Details of Limitations</label>
+        <input id="competencyLimit" value="" oninput="syncCV(); autoSaveCV();">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="additionalCertificates">Additional Certificates</h3>
+        <div id="additionalInputs"></div>
+        <button type="button" onclick="addAdditional()" data-i18n="addAdditional">+ Add Additional Row</button>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="stcwCertificates">STCW and Other Certificates</h3>
+        <div id="stcwInputs"></div>
+        <button type="button" onclick="addSTCW()" data-i18n="addSTCW">+ Add STCW Certificate</button>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="seaExperience">Sea Experience</h3>
+        <div id="seaInputs"></div>
+        <button type="button" onclick="addSea()" data-i18n="addSea">+ Add Sea Experience</button>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="note">Note</h3>
+        <textarea id="note" oninput="syncCV(); autoSaveCV();"></textarea>
+      </div>
+
+    </aside>
+    <!-- RIGHT PREVIEW PANEL -->
+    <main class="previewWrap">
+
+      <!-- PAGE 1 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="personalDetails">Personal Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="position">Position</td>
+            <td colspan="2" id="cv_position"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="familyName">Family Name</td>
+            <td id="cv_familyName"></td>
+            <td rowspan="9" class="photoCell">
+              <div class="emptyPhoto" id="emptyPhoto" data-i18n="photo">PHOTO</div>
+              <img id="cv_photo" style="display:none;">
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="firstName">First Name</td>
+            <td id="cv_firstName"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="fatherName">Father’s Name</td>
+            <td id="cv_fatherName"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="birth">Date and Place of Birth</td>
+            <td id="cv_birth"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="marital">Marital Status</td>
+            <td id="cv_marital"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="address">Permanent Address</td>
+            <td id="cv_address"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="airport">Nearest Airport</td>
+            <td id="cv_airport"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="height">Height</td>
+            <td id="cv_height"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="weight">Weight</td>
+            <td id="cv_weight"></td>
+          </tr>
+        </table>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="eyes">Eyes Color</td>
+            <td id="cv_eyes"></td>
+            <td class="labelCell" data-i18n="hair">Hair Color</td>
+            <td id="cv_hair"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="shoes">Safety Shoes</td>
+            <td id="cv_shoes"></td>
+            <td class="labelCell" data-i18n="overall">Overalls</td>
+            <td id="cv_overall"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="contactDetails">Contact Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="mobile">Mobile</td>
+            <td id="cv_mobile"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="email">E-mail Address</td>
+            <td id="cv_email"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="nextOfKin">Next of Kin</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="kinName">Next of Kin</td>
+            <td id="cv_kinName"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinPhone">Phone</td>
+            <td id="cv_kinPhone"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinRelation">Relationship</td>
+            <td id="cv_kinRelation"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinAddress">Address</td>
+            <td id="cv_kinAddress"></td>
+          </tr>
+        </table>
+        <div class="sectionTitle" data-i18n="passportDetails">Travel Passport Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="number">Number</th>
+            <th data-i18n="placeOfIssue">Place of Issue</th>
+            <th data-i18n="issued">Issued</th>
+            <th data-i18n="valid">Valid</th>
+          </tr>
+
+          <tr>
+            <td id="cv_passportDoc"></td>
+            <td id="cv_passportNo"></td>
+            <td id="cv_passportPlace"></td>
+            <td id="cv_passportIssued"></td>
+            <td id="cv_passportValid"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="computerSkills">Computer Skills</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="windows">Windows</td>
+            <td id="cv_windows"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="office">Microsoft Office</td>
+            <td id="cv_office"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="internet">Internet</td>
+            <td id="cv_internet"></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- PAGE 2 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="seamanBookDetails">Seaman’s Book Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="number">Number</th>
+            <th data-i18n="placeOfIssue">Place of Issue</th>
+            <th data-i18n="issued">Issued</th>
+            <th data-i18n="valid">Valid</th>
+          </tr>
+
+          <tr>
+            <td data-i18n="seamanBook">Seaman Book</td>
+            <td id="cv_seamanBookNo"></td>
+            <td id="cv_seamanBookPlace"></td>
+            <td id="cv_seamanBookIssued"></td>
+            <td id="cv_seamanBookValid"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="seafarerIdentity">Seafarers Identity</td>
+            <td id="cv_seafarerIdNo"></td>
+            <td id="cv_seafarerIdPlace"></td>
+            <td id="cv_seafarerIdIssued"></td>
+            <td id="cv_seafarerIdValid"></td>
+          </tr>
+        </table>
+        <div class="sectionTitle" data-i18n="education">Education</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="schoolName">School</th>
+            <th data-i18n="placeOfIssue">Place</th>
+            <th data-i18n="classGrade">Grade / Class</th>
+            <th data-i18n="from">From</th>
+            <th data-i18n="to">To</th>
+          </tr>
+
+          <tr>
+            <td id="cv_schoolName"></td>
+            <td id="cv_schoolPlace"></td>
+            <td id="cv_schoolGrade"></td>
+            <td id="cv_schoolFrom"></td>
+            <td id="cv_schoolTo"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="languageKnowledge">
+          Knowledge of Language
+        </div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="language">Language</th>
+            <th data-i18n="speaking">Speaking</th>
+            <th data-i18n="reading">Reading</th>
+            <th data-i18n="writing">Writing</th>
+          </tr>
+
+          <tr>
+            <td data-i18n="azerbaijani">Azerbaijani</td>
+            <td id="cv_azSpeak"></td>
+            <td id="cv_azRead"></td>
+            <td id="cv_azWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="turkish">Turkish</td>
+            <td id="cv_trSpeak"></td>
+            <td id="cv_trRead"></td>
+            <td id="cv_trWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="english">English</td>
+            <td id="cv_enSpeak"></td>
+            <td id="cv_enRead"></td>
+            <td id="cv_enWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="russian">Russian</td>
+            <td id="cv_ruSpeak"></td>
+            <td id="cv_ruRead"></td>
+            <td id="cv_ruWrite"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="medicalInfo">
+          Medical Information
+        </div>
+
+        <table class="cvTable">
+
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="grade">Grade</th>
+            <th data-i18n="placeOfIssue">Place</th>
+            <th data-i18n="dateIssued">Date Issued</th>
+            <th data-i18n="dateExpiry">Expiry</th>
+          </tr>
+
+          <tr>
+            <td id="cv_medicalDoc"></td>
+            <td id="cv_medicalGrade"></td>
+            <td id="cv_medicalPlace"></td>
+            <td id="cv_medicalIssue"></td>
+            <td id="cv_medicalExpiry"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="certificateCompetency">
+          Certificate of Competency
+        </div>
+
+        <table class="cvTable">
+
+          <tr>
+            <th data-i18n="classGrade">Class / Grade</th>
+            <th data-i18n="issuingCountry">Country</th>
+            <th data-i18n="certificate">Certificate</th>
+            <th data-i18n="dateIssued">Issued</th>
+            <th data-i18n="expires">Expires</th>
+            <th data-i18n="limitations">Limitations</th>
+          </tr>
+
+          <tr>
+            <td id="cv_competencyClass"></td>
+            <td id="cv_competencyCountry"></td>
+            <td id="cv_competencyCertificate"></td>
+            <td id="cv_competencyIssued"></td>
+            <td id="cv_competencyExpires"></td>
+            <td id="cv_competencyLimit"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="additionalCertificates">
+          Additional Certificates
+        </div>
+
+        <table class="cvTable">
+
+          <thead>
+
+          <tr>
+            <th data-i18n="courseName">Course / Certificate</th>
+            <th data-i18n="institute">Institute</th>
+            <th data-i18n="place">Place</th>
+            <th data-i18n="dateIssued">Issued</th>
+            <th>Cert. No</th>
+            <th data-i18n="dateExpiry">Expiry</th>
+          </tr>
+
+          </thead>
+
+          <tbody id="cv_additionalRows"></tbody>
+
+        </table>
+
+      </section>
+      <!-- PAGE 3 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="stcwCertificates">
+          STCW and Other Certificates
+        </div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th data-i18n="courseName">Course / Certificate</th>
+              <th data-i18n="institute">Institute</th>
+              <th data-i18n="place">Place</th>
+              <th data-i18n="dateIssued">Issued</th>
+              <th data-i18n="rank">Rank</th>
+              <th>Cert. No</th>
+              <th data-i18n="dateExpiry">Expiry</th>
+            </tr>
+          </thead>
+
+          <tbody id="cv_stcwRows"></tbody>
+        </table>
+
+        <div class="sectionTitle" data-i18n="seaExperience">
+          Sea Experience
+        </div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th data-i18n="vessel">Vessel</th>
+              <th data-i18n="company">Company</th>
+              <th data-i18n="vesselType">Type of Vessel</th>
+              <th data-i18n="flag">Flag</th>
+              <th>DWT</th>
+              <th>GRT</th>
+              <th data-i18n="rank">Rank</th>
+              <th data-i18n="signOn">Sign On</th>
+              <th data-i18n="signOff">Sign Off</th>
+            </tr>
+          </thead>
+
+          <tbody id="cv_seaRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PAGE 4 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="note">Note</div>
+
+        <div class="noteBox" id="cv_note"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+<script>
+const STORAGE_KEY = "allonahub_maritime_cv_v2";
+let currentLang = "en";
+
+const textFields = [
+  "position","familyName","firstName","fatherName","birth","marital","address","airport",
+  "height","weight","eyes","hair","shoes","overall",
+  "mobile","email","kinName","kinPhone","kinRelation","kinAddress",
+  "passportDoc","passportNo","passportPlace","passportIssued","passportValid",
+  "windows","office","internet",
+  "seamanBookNo","seamanBookPlace","seamanBookIssued","seamanBookValid",
+  "seafarerIdNo","seafarerIdPlace","seafarerIdIssued","seafarerIdValid",
+  "schoolName","schoolPlace","schoolGrade","schoolFrom","schoolTo",
+  "azSpeak","azRead","azWrite","trSpeak","trRead","trWrite",
+  "enSpeak","enRead","enWrite","ruSpeak","ruRead","ruWrite",
+  "medicalDoc","medicalGrade","medicalPlace","medicalIssue","medicalExpiry",
+  "competencyClass","competencyCountry","competencyCertificate",
+  "competencyIssued","competencyExpires","competencyLimit","note"
+];
+
+let additionalData = [];
+let stcwData = [];
+let seaData = [];
+
+function valueOf(id){
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+
+function htmlValue(id){
+  return escapeHTML(valueOf(id)).replace(/\n/g, "<br>");
+}
+
+function setCV(id, value){
+  const el = document.getElementById("cv_" + id);
+  if(el){
+    el.innerHTML = value || "";
+  }
+}
+
+function syncCV(){
+  textFields.forEach(id => {
+    setCV(id, htmlValue(id));
+  });
+
+  renderAdditionals();
+  renderSTCW();
+  renderSea();
+}
+
+function escapeAttr(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHTML(value){
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+  const translations = {
+  en: {
+    formTitle:"CV Information",
+    applicationForm:"Application Form",
+    personalDetails:"Personal Details",
+    bodyDetails:"Body Details",
+    contactDetails:"Contact Details",
+    nextOfKin:"Next of Kin",
+    passportDetails:"Travel Passport Details",
+    computerSkills:"Computer Skills",
+    seamanBookDetails:"Seaman’s Book Details",
+    education:"Education",
+    languageKnowledge:"Knowledge of Language",
+    medicalInfo:"Medical Information",
+    competency:"Certificate of Competency",
+    certificateCompetency:"Certificate of Competency",
+    additionalCertificates:"Additional Certificates",
+    stcwCertificates:"STCW and Other Certificates",
+    seaExperience:"Sea Experience",
+    note:"Note",
+
+    position:"Position",
+    familyName:"Family Name",
+    firstName:"First Name",
+    fatherName:"Father’s Name",
+    birth:"Date and Place of Birth",
+    marital:"Marital Status",
+    address:"Permanent Address",
+    airport:"Nearest Airport",
+    photo:"PHOTO",
+
+    height:"Height",
+    weight:"Weight",
+    eyes:"Eyes Color",
+    hair:"Hair Color",
+    shoes:"Safety Shoes",
+    overall:"Overalls",
+
+    mobile:"Mobile",
+    email:"E-mail Address",
+    kinName:"Next of Kin",
+    kinPhone:"Phone",
+    kinRelation:"Relationship",
+    kinAddress:"Address",
+
+    document:"Document",
+    number:"Number",
+    placeOfIssue:"Place of Issue",
+    issued:"Issued",
+    valid:"Valid",
+
+    windows:"Windows",
+    office:"Microsoft Office",
+    internet:"Internet",
+
+    seamanBook:"Seaman Book",
+    seafarerIdentity:"Seafarers Identity",
+    seamanBookNo:"Seaman Book Document Number",
+    seamanBookPlace:"Seaman Book Place of Issue",
+    seafarerIdNo:"Seafarers Identity Document Number",
+    seafarerIdPlace:"Seafarers Identity Place of Issue",
+
+    schoolName:"Full Name of School",
+    schoolPlace:"Place of Issue",
+    schoolGrade:"Grade / Class",
+    from:"From",
+    to:"To",
+
+    language:"Language",
+    azerbaijanLang:"Azerbaijani",
+    turkishLang:"Turkish",
+    englishLang:"English",
+    russianLang:"Russian",
+    azerbaijani:"Azerbaijani",
+    turkish:"Turkish",
+    english:"English",
+    russian:"Russian",
+    speaking:"Speaking",
+    reading:"Reading",
+    writing:"Writing",
+
+    grade:"Grade",
+    dateOfIssue:"Date of Issue",
+    dateOfExpiry:"Date of Expiry",
+    dateIssued:"Date Issued",
+    dateExpiry:"Date of Expiry",
+
+    classGrade:"Class / Grade",
+    issuingCountry:"Issuing Country",
+    certificate:"Certificate",
+    expires:"Expires",
+    limitations:"Details of Limitations",
+
+    courseName:"Course / Certificate",
+    institute:"Institute",
+    place:"Place",
+    rank:"Rank",
+    vessel:"Vessel",
+    company:"Company",
+    vesselType:"Type of Vessel",
+    flag:"Flag",
+    signOn:"Sign On",
+    signOff:"Sign Off",
+
+    addAdditional:"+ Add Additional Row",
+    addSTCW:"+ Add STCW Certificate",
+    addSea:"+ Add Sea Experience",
+    deleteRow:"Delete Row",
+    deleteCertificate:"Delete Certificate",
+    deleteExperience:"Delete Experience"
+  },
+    tr: {
+    formTitle:"CV Bilgileri",
+    applicationForm:"Başvuru Formu",
+    personalDetails:"Kişisel Bilgiler",
+    bodyDetails:"Fiziksel Bilgiler",
+    contactDetails:"İletişim Bilgileri",
+    nextOfKin:"Yakın Kişi Bilgileri",
+    passportDetails:"Pasaport Bilgileri",
+    computerSkills:"Bilgisayar Bilgisi",
+    seamanBookDetails:"Gemiadamı Cüzdanı Bilgileri",
+    education:"Eğitim",
+    languageKnowledge:"Dil Bilgisi",
+    medicalInfo:"Sağlık Bilgileri",
+    competency:"Yeterlilik Belgesi",
+    certificateCompetency:"Yeterlilik Belgesi",
+    additionalCertificates:"Ek Sertifikalar",
+    stcwCertificates:"STCW ve Diğer Sertifikalar",
+    seaExperience:"Deniz Tecrübesi",
+    note:"Not",
+
+    position:"Pozisyon",
+    familyName:"Soyadı",
+    firstName:"Adı",
+    fatherName:"Baba Adı",
+    birth:"Doğum Tarihi ve Yeri",
+    marital:"Medeni Durum",
+    address:"Daimi Adres",
+    airport:"En Yakın Havalimanı",
+    photo:"FOTOĞRAF",
+
+    height:"Boy",
+    weight:"Kilo",
+    eyes:"Göz Rengi",
+    hair:"Saç Rengi",
+    shoes:"İş Ayakkabısı",
+    overall:"Tulum Bedeni",
+
+    mobile:"Telefon",
+    email:"E-posta Adresi",
+    kinName:"Yakın Kişi",
+    kinPhone:"Telefon",
+    kinRelation:"Yakınlık Derecesi",
+    kinAddress:"Adres",
+
+    document:"Belge",
+    number:"Numara",
+    placeOfIssue:"Düzenleme Yeri",
+    issued:"Veriliş",
+    valid:"Geçerlilik",
+
+    windows:"Windows",
+    office:"Microsoft Office",
+    internet:"İnternet",
+
+    seamanBook:"Gemiadamı Cüzdanı",
+    seafarerIdentity:"Gemiadamı Kimliği",
+    seamanBookNo:"Gemiadamı Cüzdanı Belge No",
+    seamanBookPlace:"Gemiadamı Cüzdanı Düzenleme Yeri",
+    seafarerIdNo:"Gemiadamı Kimliği Belge No",
+    seafarerIdPlace:"Gemiadamı Kimliği Düzenleme Yeri",
+
+    schoolName:"Okul Adı",
+    schoolPlace:"Düzenleme Yeri",
+    schoolGrade:"Derece / Sınıf",
+    from:"Başlangıç",
+    to:"Bitiş",
+
+    language:"Dil",
+    azerbaijanLang:"Azerbaycanca",
+    turkishLang:"Türkçe",
+    englishLang:"İngilizce",
+    russianLang:"Rusça",
+    azerbaijani:"Azerbaycanca",
+    turkish:"Türkçe",
+    english:"İngilizce",
+    russian:"Rusça",
+    speaking:"Konuşma",
+    reading:"Okuma",
+    writing:"Yazma",
+
+    grade:"Derece",
+    dateOfIssue:"Veriliş Tarihi",
+    dateOfExpiry:"Son Geçerlilik Tarihi",
+    dateIssued:"Veriliş Tarihi",
+    dateExpiry:"Son Geçerlilik",
+
+    classGrade:"Sınıf / Derece",
+    issuingCountry:"Düzenleyen Ülke",
+    certificate:"Sertifika",
+    expires:"Geçerlilik",
+    limitations:"Sınırlamalar",
+
+    courseName:"Kurs / Sertifika",
+    institute:"Kurum",
+    place:"Yer",
+    rank:"Rütbe",
+    vessel:"Gemi",
+    company:"Şirket",
+    vesselType:"Gemi Tipi",
+    flag:"Bayrak",
+    signOn:"Katılış",
+    signOff:"Ayrılış",
+
+    addAdditional:"+ Ek Sertifika Ekle",
+    addSTCW:"+ STCW Sertifikası Ekle",
+    addSea:"+ Deniz Tecrübesi Ekle",
+    deleteRow:"Satırı Sil",
+    deleteCertificate:"Sertifikayı Sil",
+    deleteExperience:"Tecrübeyi Sil"
+  },
+
+  az: {
+    formTitle:"CV Məlumatları",
+    applicationForm:"Müraciət Forması",
+    personalDetails:"Şəxsi Məlumatlar",
+    bodyDetails:"Fiziki Məlumatlar",
+    contactDetails:"Əlaqə Məlumatları",
+    nextOfKin:"Yaxın Şəxs Məlumatları",
+    passportDetails:"Pasport Məlumatları",
+    computerSkills:"Kompüter Bilikləri",
+    seamanBookDetails:"Dənizçi Kitabçası Məlumatları",
+    education:"Təhsil",
+    languageKnowledge:"Dil Bilikləri",
+    medicalInfo:"Tibbi Məlumatlar",
+    competency:"Səriştə Sertifikatı",
+    certificateCompetency:"Səriştə Sertifikatı",
+    additionalCertificates:"Əlavə Sertifikatlar",
+    stcwCertificates:"STCW və Digər Sertifikatlar",
+    seaExperience:"Dəniz Təcrübəsi",
+    note:"Qeyd",
+
+    position:"Vəzifə",
+    familyName:"Soyad",
+    firstName:"Ad",
+    fatherName:"Ata Adı",
+    birth:"Doğum Tarixi və Yeri",
+    marital:"Ailə Vəziyyəti",
+    address:"Daimi Ünvan",
+    airport:"Ən Yaxın Hava Limanı",
+    photo:"FOTO",
+
+    height:"Boy",
+    weight:"Çəki",
+    eyes:"Göz Rəngi",
+    hair:"Saç Rəngi",
+    shoes:"İş Ayaqqabısı",
+    overall:"Kombinezon Ölçüsü",
+
+    mobile:"Mobil",
+    email:"E-poçt Ünvanı",
+    kinName:"Yaxın Şəxs",
+    kinPhone:"Telefon",
+    kinRelation:"Qohumluq Dərəcəsi",
+    kinAddress:"Ünvan",
+
+    document:"Sənəd",
+    number:"Nömrə",
+    placeOfIssue:"Verilmə Yeri",
+    issued:"Verilmə Tarixi",
+    valid:"Etibarlıdır",
+
+    windows:"Windows",
+    office:"Microsoft Office",
+    internet:"İnternet",
+
+    seamanBook:"Dənizçi Kitabçası",
+    seafarerIdentity:"Dənizçi Şəxsiyyət Sənədi",
+    seamanBookNo:"Dənizçi Kitabçası Sənəd No",
+    seamanBookPlace:"Dənizçi Kitabçası Verilmə Yeri",
+    seafarerIdNo:"Dənizçi Şəxsiyyət Sənədi No",
+    seafarerIdPlace:"Dənizçi Şəxsiyyət Sənədi Verilmə Yeri",
+
+    schoolName:"Məktəb Adı",
+    schoolPlace:"Verilmə Yeri",
+    schoolGrade:"Dərəcə / Sinif",
+    from:"Başlanğıc",
+    to:"Bitiş",
+
+    language:"Dil",
+    azerbaijanLang:"Azərbaycanca",
+    turkishLang:"Türkcə",
+    englishLang:"İngiliscə",
+    russianLang:"Rusca",
+    azerbaijani:"Azərbaycanca",
+    turkish:"Türkcə",
+    english:"İngiliscə",
+    russian:"Rusca",
+    speaking:"Danışıq",
+    reading:"Oxuma",
+    writing:"Yazı",
+
+    grade:"Dərəcə",
+    dateOfIssue:"Verilmə Tarixi",
+    dateOfExpiry:"Bitmə Tarixi",
+    dateIssued:"Verilmə Tarixi",
+    dateExpiry:"Bitmə Tarixi",
+
+    classGrade:"Sinif / Dərəcə",
+    issuingCountry:"Verən Ölkə",
+    certificate:"Sertifikat",
+    expires:"Etibarlılıq",
+    limitations:"Məhdudiyyətlər",
+
+    courseName:"Kurs / Sertifikat",
+    institute:"Qurum",
+    place:"Yer",
+    rank:"Rütbə",
+    vessel:"Gəmi",
+    company:"Şirkət",
+    vesselType:"Gəmi Tipi",
+    flag:"Bayraq",
+    signOn:"Giriş",
+    signOff:"Çıxış",
+
+    addAdditional:"+ Əlavə Sertifikat Əlavə Et",
+    addSTCW:"+ STCW Sertifikatı Əlavə Et",
+    addSea:"+ Dəniz Təcrübəsi Əlavə Et",
+    deleteRow:"Sətri Sil",
+    deleteCertificate:"Sertifikatı Sil",
+    deleteExperience:"Təcrübəni Sil"
+  },
+    ru: {
+    formTitle:"Информация CV",
+    applicationForm:"Форма Заявки",
+    personalDetails:"Личная Информация",
+    bodyDetails:"Физические Данные",
+    contactDetails:"Контактная Информация",
+    nextOfKin:"Ближайший Родственник",
+    passportDetails:"Паспортные Данные",
+    computerSkills:"Навыки Работы с Компьютером",
+    seamanBookDetails:"Данные Мореходной Книжки",
+    education:"Образование",
+    languageKnowledge:"Знание Языков",
+    medicalInfo:"Медицинская Информация",
+    competency:"Сертификат Компетентности",
+    certificateCompetency:"Сертификат Компетентности",
+    additionalCertificates:"Дополнительные Сертификаты",
+    stcwCertificates:"STCW и Другие Сертификаты",
+    seaExperience:"Морской Опыт",
+    note:"Примечание",
+
+    position:"Должность",
+    familyName:"Фамилия",
+    firstName:"Имя",
+    fatherName:"Отчество",
+    birth:"Дата и Место Рождения",
+    marital:"Семейное Положение",
+    address:"Постоянный Адрес",
+    airport:"Ближайший Аэропорт",
+    photo:"ФОТО",
+
+    height:"Рост",
+    weight:"Вес",
+    eyes:"Цвет Глаз",
+    hair:"Цвет Волос",
+    shoes:"Защитная Обувь",
+    overall:"Размер Комбинезона",
+
+    mobile:"Мобильный",
+    email:"Электронная Почта",
+    kinName:"Ближайший Родственник",
+    kinPhone:"Телефон",
+    kinRelation:"Степень Родства",
+    kinAddress:"Адрес",
+
+    document:"Документ",
+    number:"Номер",
+    placeOfIssue:"Место Выдачи",
+    issued:"Выдан",
+    valid:"Действителен",
+
+    windows:"Windows",
+    office:"Microsoft Office",
+    internet:"Интернет",
+
+    seamanBook:"Мореходная Книжка",
+    seafarerIdentity:"Удостоверение Моряка",
+    seamanBookNo:"Номер Мореходной Книжки",
+    seamanBookPlace:"Место Выдачи Мореходной Книжки",
+    seafarerIdNo:"Номер Удостоверения Моряка",
+    seafarerIdPlace:"Место Выдачи Удостоверения Моряка",
+
+    schoolName:"Название Учебного Заведения",
+    schoolPlace:"Место Выдачи",
+    schoolGrade:"Степень / Класс",
+    from:"С",
+    to:"До",
+
+    language:"Язык",
+    azerbaijanLang:"Азербайджанский",
+    turkishLang:"Турецкий",
+    englishLang:"Английский",
+    russianLang:"Русский",
+    azerbaijani:"Азербайджанский",
+    turkish:"Турецкий",
+    english:"Английский",
+    russian:"Русский",
+    speaking:"Разговор",
+    reading:"Чтение",
+    writing:"Письмо",
+
+    grade:"Степень",
+    dateOfIssue:"Дата Выдачи",
+    dateOfExpiry:"Срок Действия",
+    dateIssued:"Дата Выдачи",
+    dateExpiry:"Срок Действия",
+
+    classGrade:"Класс / Степень",
+    issuingCountry:"Страна Выдачи",
+    certificate:"Сертификат",
+    expires:"Истекает",
+    limitations:"Ограничения",
+
+    courseName:"Курс / Сертификат",
+    institute:"Учреждение",
+    place:"Место",
+    rank:"Должность",
+    vessel:"Судно",
+    company:"Компания",
+    vesselType:"Тип Судна",
+    flag:"Флаг",
+    signOn:"Посадка",
+    signOff:"Списание",
+
+    addAdditional:"+ Добавить Сертификат",
+    addSTCW:"+ Добавить STCW",
+    addSea:"+ Добавить Морской Опыт",
+    deleteRow:"Удалить Строку",
+    deleteCertificate:"Удалить Сертификат",
+    deleteExperience:"Удалить Опыт"
+  }
+};
+
+function t(key){
+  return translations[currentLang]?.[key] || translations.en[key] || key;
+}
+
+function changeLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem("allonahub_cv_lang", lang);
+  translatePage();
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+}
+
+function translatePage(){
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+
+  document.querySelectorAll("[data-ph]").forEach(el => {
+    const key = el.getAttribute("data-ph");
+    el.placeholder = t(key);
+  });
+}
+  function renderAdditionalInputs(){
+  const box = document.getElementById("additionalInputs");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  additionalData.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "group";
+    div.style.border = "1px solid rgba(0,213,255,.18)";
+    div.style.padding = "12px";
+    div.style.borderRadius = "14px";
+
+    div.innerHTML = `
+      <h3>${t("additionalCertificates")} ${index + 1}</h3>
+
+      <label>${t("courseName")}</label>
+      <input value="${escapeAttr(item.name)}" oninput="updateAdditional(${index}, 'name', this.value)">
+
+      <label>${t("institute")}</label>
+      <input value="${escapeAttr(item.institute)}" oninput="updateAdditional(${index}, 'institute', this.value)">
+
+      <label>${t("place")}</label>
+      <input value="${escapeAttr(item.place)}" oninput="updateAdditional(${index}, 'place', this.value)">
+
+      <label>${t("dateIssued")}</label>
+      <input value="${escapeAttr(item.issue)}" oninput="updateAdditional(${index}, 'issue', this.value)">
+
+      <label>Cert. No</label>
+      <input value="${escapeAttr(item.cert)}" oninput="updateAdditional(${index}, 'cert', this.value)">
+
+      <label>${t("dateExpiry")}</label>
+      <input value="${escapeAttr(item.expiry)}" oninput="updateAdditional(${index}, 'expiry', this.value)">
+
+      <button type="button" class="secondary" onclick="removeAdditional(${index})">${t("deleteRow")}</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function updateAdditional(index, key, value){
+  if(!additionalData[index]) return;
+  additionalData[index][key] = value;
+  renderAdditionals();
+  autoSaveCV();
+}
+
+function addAdditional(){
+  additionalData.push({
+    name:"",
+    institute:"",
+    place:"",
+    issue:"",
+    cert:"",
+    expiry:""
+  });
+
+  renderAdditionalInputs();
+  renderAdditionals();
+  autoSaveCV();
+}
+
+function removeAdditional(index){
+  additionalData.splice(index, 1);
+  renderAdditionalInputs();
+  renderAdditionals();
+  autoSaveCV();
+}
+
+function renderAdditionals(){
+  const tbody = document.getElementById("cv_additionalRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  additionalData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(item.name)}</td>
+      <td>${escapeHTML(item.institute)}</td>
+      <td>${escapeHTML(item.place)}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSTCWInputs(){
+  const box = document.getElementById("stcwInputs");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  stcwData.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "group";
+    div.style.border = "1px solid rgba(0,213,255,.20)";
+    div.style.padding = "15px";
+    div.style.borderRadius = "15px";
+
+    div.innerHTML = `
+      <h3>${t("stcwCertificates")} ${index + 1}</h3>
+
+      <label>${t("courseName")}</label>
+      <input value="${escapeAttr(item.name)}" oninput="updateSTCW(${index}, 'name', this.value)">
+
+      <label>${t("institute")}</label>
+      <input value="${escapeAttr(item.institute)}" oninput="updateSTCW(${index}, 'institute', this.value)">
+
+      <label>${t("place")}</label>
+      <input value="${escapeAttr(item.place)}" oninput="updateSTCW(${index}, 'place', this.value)">
+
+      <div class="row2">
+        <div>
+          <label>${t("dateIssued")}</label>
+          <input value="${escapeAttr(item.issue)}" oninput="updateSTCW(${index}, 'issue', this.value)">
+        </div>
+
+        <div>
+          <label>${t("rank")}</label>
+          <input value="${escapeAttr(item.rank)}" oninput="updateSTCW(${index}, 'rank', this.value)">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Cert. No</label>
+          <input value="${escapeAttr(item.cert)}" oninput="updateSTCW(${index}, 'cert', this.value)">
+        </div>
+
+        <div>
+          <label>${t("dateExpiry")}</label>
+          <input value="${escapeAttr(item.expiry)}" oninput="updateSTCW(${index}, 'expiry', this.value)">
+        </div>
+      </div>
+
+      <button type="button" class="secondary" onclick="removeSTCW(${index})">${t("deleteCertificate")}</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function updateSTCW(index, key, value){
+  if(!stcwData[index]) return;
+  stcwData[index][key] = value;
+  renderSTCW();
+  autoSaveCV();
+}
+  function addSTCW(){
+  stcwData.push({
+    name:"",
+    institute:"",
+    place:"",
+    issue:"",
+    rank:"",
+    cert:"",
+    expiry:""
+  });
+
+  renderSTCWInputs();
+  renderSTCW();
+  autoSaveCV();
+}
+
+function removeSTCW(index){
+  stcwData.splice(index, 1);
+  renderSTCWInputs();
+  renderSTCW();
+  autoSaveCV();
+}
+
+function renderSTCW(){
+  const tbody = document.getElementById("cv_stcwRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  stcwData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(item.name)}</td>
+      <td>${escapeHTML(item.institute)}</td>
+      <td>${escapeHTML(item.place)}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(item.rank)}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSeaInputs(){
+  const box = document.getElementById("seaInputs");
+  if(!box) return;
+
+  box.innerHTML = "";
+
+  seaData.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "group";
+    div.style.border = "1px solid rgba(0,213,255,.20)";
+    div.style.padding = "15px";
+    div.style.borderRadius = "15px";
+
+    div.innerHTML = `
+      <h3>${t("seaExperience")} ${index + 1}</h3>
+
+      <label>${t("vessel")}</label>
+      <input value="${escapeAttr(item.vessel)}" oninput="updateSea(${index}, 'vessel', this.value)">
+
+      <label>${t("company")}</label>
+      <input value="${escapeAttr(item.company)}" oninput="updateSea(${index}, 'company', this.value)">
+
+      <label>${t("vesselType")}</label>
+      <input value="${escapeAttr(item.type)}" oninput="updateSea(${index}, 'type', this.value)">
+
+      <label>${t("flag")}</label>
+      <input value="${escapeAttr(item.flag)}" oninput="updateSea(${index}, 'flag', this.value)">
+
+      <div class="row2">
+        <div>
+          <label>DWT</label>
+          <input value="${escapeAttr(item.dwt)}" oninput="updateSea(${index}, 'dwt', this.value)">
+        </div>
+
+        <div>
+          <label>GRT</label>
+          <input value="${escapeAttr(item.grt)}" oninput="updateSea(${index}, 'grt', this.value)">
+        </div>
+      </div>
+
+      <label>${t("rank")}</label>
+      <input value="${escapeAttr(item.rank)}" oninput="updateSea(${index}, 'rank', this.value)">
+
+      <div class="row2">
+        <div>
+          <label>${t("signOn")}</label>
+          <input value="${escapeAttr(item.signon)}" oninput="updateSea(${index}, 'signon', this.value)">
+        </div>
+
+        <div>
+          <label>${t("signOff")}</label>
+          <input value="${escapeAttr(item.signoff)}" oninput="updateSea(${index}, 'signoff', this.value)">
+        </div>
+      </div>
+
+      <button type="button" class="secondary" onclick="removeSea(${index})">${t("deleteExperience")}</button>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function updateSea(index, key, value){
+  if(!seaData[index]) return;
+  seaData[index][key] = value;
+  renderSea();
+  autoSaveCV();
+}
+  function addSea(){
+  seaData.push({
+    vessel:"",
+    company:"",
+    type:"",
+    flag:"",
+    dwt:"",
+    grt:"",
+    rank:"",
+    signon:"",
+    signoff:""
+  });
+
+  renderSeaInputs();
+  renderSea();
+  autoSaveCV();
+}
+
+function removeSea(index){
+  seaData.splice(index, 1);
+  renderSeaInputs();
+  renderSea();
+  autoSaveCV();
+}
+
+function renderSea(){
+  const tbody = document.getElementById("cv_seaRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  seaData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(item.vessel)}</td>
+      <td>${escapeHTML(item.company)}</td>
+      <td>${escapeHTML(item.type)}</td>
+      <td>${escapeHTML(item.flag)}</td>
+      <td>${escapeHTML(item.dwt)}</td>
+      <td>${escapeHTML(item.grt)}</td>
+      <td>${escapeHTML(item.rank)}</td>
+      <td>${escapeHTML(item.signon)}</td>
+      <td>${escapeHTML(item.signoff)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function getCVData(){
+  const fields = {};
+
+  textFields.forEach(id => {
+    fields[id] = valueOf(id);
+  });
+
+  return {
+    lang: currentLang,
+    fields,
+    additionalData,
+    stcwData,
+    seaData,
+    photo: document.getElementById("cv_photo")?.src || ""
+  };
+}
+
+function saveCV(){
+  const data = getCVData();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  alert("CV kaydedildi ✅");
+}
+
+function autoSaveCV(){
+  const data = getCVData();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+  function loadCV(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(!saved) return;
+
+  try{
+    const data = JSON.parse(saved);
+
+    if(data.lang){
+      currentLang = data.lang;
+      const langSelect = document.getElementById("langSelect");
+      if(langSelect) langSelect.value = currentLang;
+    }
+
+    if(data.fields){
+      Object.keys(data.fields).forEach(id => {
+        const el = document.getElementById(id);
+        if(el){
+          el.value = data.fields[id] || "";
+        }
+      });
+    }
+
+    additionalData = Array.isArray(data.additionalData) ? data.additionalData : [];
+    stcwData = Array.isArray(data.stcwData) ? data.stcwData : [];
+    seaData = Array.isArray(data.seaData) ? data.seaData : [];
+
+    if(data.photo){
+      const img = document.getElementById("cv_photo");
+      const empty = document.getElementById("emptyPhoto");
+
+      if(img){
+        img.src = data.photo;
+        img.style.display = "block";
+      }
+
+      if(empty){
+        empty.style.display = "none";
+      }
+    }
+
+  }catch(err){
+    console.warn("CV yüklenemedi:", err);
+  }
+}
+
+const photoInput = document.getElementById("photoInput");
+
+if(photoInput){
+  photoInput.addEventListener("change", function(){
+    const file = this.files && this.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      const img = document.getElementById("cv_photo");
+      const empty = document.getElementById("emptyPhoto");
+
+      if(img){
+        img.src = e.target.result;
+        img.style.display = "block";
+      }
+
+      if(empty){
+        empty.style.display = "none";
+      }
+
+      autoSaveCV();
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+  function resetForm(){
+  const ok = confirm("Tüm bilgiler temizlensin mi?");
+  if(!ok) return;
+
+  textFields.forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.value = "";
+    }
+  });
+
+  additionalData = [];
+  stcwData = [];
+  seaData = [];
+
+  const img = document.getElementById("cv_photo");
+  const empty = document.getElementById("emptyPhoto");
+  const fileInput = document.getElementById("photoInput");
+
+  if(img){
+    img.src = "";
+    img.style.display = "none";
+  }
+
+  if(empty){
+    empty.style.display = "flex";
+  }
+
+  if(fileInput){
+    fileInput.value = "";
+  }
+
+  localStorage.removeItem(STORAGE_KEY);
+
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const savedLang = localStorage.getItem("allonahub_cv_lang");
+  if(savedLang && translations[savedLang]){
+    currentLang = savedLang;
+  }
+
+  const langSelect = document.getElementById("langSelect");
+  if(langSelect){
+    langSelect.value = currentLang;
+  }
+
+  loadCV();
+
+  translatePage();
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+});
+  const valueTranslations = {
+  excellent:{ en:"Excellent", tr:"Mükemmel", az:"Əla", ru:"Отлично" },
+  good:{ en:"Good", tr:"İyi", az:"Yaxşı", ru:"Хорошо" },
+  average:{ en:"Average", tr:"Orta", az:"Orta", ru:"Средний" },
+  poor:{ en:"Poor", tr:"Zayıf", az:"Zəif", ru:"Слабый" },
+
+  single:{ en:"Single", tr:"Bekar", az:"Subay", ru:"Холост" },
+  married:{ en:"Married", tr:"Evli", az:"Evli", ru:"Женат" },
+
+  azerbaijan:{ en:"Azerbaijan", tr:"Azerbaycan", az:"Azərbaycan", ru:"Азербайджан" },
+  turkey:{ en:"Turkey", tr:"Türkiye", az:"Türkiyə", ru:"Турция" },
+  russia:{ en:"Russia", tr:"Rusya", az:"Rusiya", ru:"Россия" },
+  baku:{ en:"Baku", tr:"Bakü", az:"Bakı", ru:"Баку" },
+
+  oiler:{ en:"Oiler", tr:"Yağcı", az:"Yağçı", ru:"Моторист" },
+  motorman:{ en:"Motorman", tr:"Makine Tayfası", az:"Motorçu", ru:"Моторист" },
+  cadet:{ en:"Cadet", tr:"Stajyer", az:"Kadet", ru:"Кадет" },
+  captain:{ en:"Captain", tr:"Kaptan", az:"Kapitan", ru:"Капитан" },
+  engineer:{ en:"Engineer", tr:"Mühendis", az:"Mühəndis", ru:"Инженер" }
+};
+
+function normalizeText(value){
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/ı/g,"i")
+    .replace(/ə/g,"e")
+    .replace(/ü/g,"u")
+    .replace(/ö/g,"o")
+    .replace(/ş/g,"s")
+    .replace(/ç/g,"c")
+    .replace(/ğ/g,"g")
+    .replace(/\s+/g," ");
+}
+
+function translateUserValue(value){
+  const raw = String(value || "");
+  const key = normalizeText(raw);
+
+  for(const itemKey in valueTranslations){
+    const item = valueTranslations[itemKey];
+
+    const matched = Object.values(item).some(v => normalizeText(v) === key);
+
+    if(matched){
+      return item[currentLang] || raw;
+    }
+  }
+
+  return raw;
+}
+
+function syncCV(){
+  textFields.forEach(id => {
+    const translated = translateUserValue(valueOf(id));
+    setCV(id, escapeHTML(translated).replace(/\n/g, "<br>"));
+  });
+
+  renderAdditionals();
+  renderSTCW();
+  renderSea();
+}
+  function translateDynamicValue(value){
+  return translateUserValue(value);
+}
+
+function renderAdditionals(){
+  const tbody = document.getElementById("cv_additionalRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  additionalData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSTCW(){
+  const tbody = document.getElementById("cv_stcwRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  stcwData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(item.cert)}</td>
+      <td>${escapeHTML(item.expiry)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSea(){
+  const tbody = document.getElementById("cv_seaRows");
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  seaData.forEach(item => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escapeHTML(translateDynamicValue(item.vessel))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.company))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.type))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.flag))}</td>
+      <td>${escapeHTML(item.dwt)}</td>
+      <td>${escapeHTML(item.grt)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(item.signon)}</td>
+      <td>${escapeHTML(item.signoff)}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+async function downloadPDF(){
+  if(!window.html2canvas || !window.jspdf){
+    alert("PDF kütüphanesi yüklenmedi. İnternet bağlantısını kontrol edin.");
+    return;
+  }
+
+  const first = valueOf("firstName").trim() || "User";
+  const last = valueOf("familyName").trim() || "CV";
+  const fileName = `AllonaHub_CV_${first}_${last}.pdf`.replace(/\s+/g, "_");
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("p", "mm", "a4");
+
+  const pages = document.querySelectorAll(".cvPage");
+
+  document.body.classList.add("pdf-capture");
+  await new Promise(resolve => requestAnimationFrame(resolve));
+
+  try{
+    for(let i = 0; i < pages.length; i++){
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+
+      if(i > 0){
+        pdf.addPage();
+      }
+
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+    }
+  } finally {
+    document.body.classList.remove("pdf-capture");
+  }
+
+  pdf.save(fileName);
+}
+</script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

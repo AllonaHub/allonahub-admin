@@ -8,52 +8,52 @@
   const moduleCards = {
     maritime: [
       ["fa-ship", "Maritime CV", "Denizcilik CV formunu aç", "cv"],
-      ["fa-certificate", "Belgeler", "STCW ve sertifika takibi", "belgeler.html"],
-      ["fa-briefcase", "Gemi İşleri", "Pozisyona uygun ilanlar", "allonadenizcilik.html"]
+      ["fa-certificate", "Belgeler", "STCW ve sertifika takibi", "/pages/account/belgeler.html"],
+      ["fa-briefcase", "Gemi İşleri", "Pozisyona uygun ilanlar", "/pages/ecosystem/allonadenizcilik.html"]
     ],
     health: [
-      ["fa-user-doctor", "Sağlık Profili", "Uzmanlık ve hizmet bilgileri", "allonasaglik.html"],
-      ["fa-calendar-check", "Randevular", "Hasta ve randevu alanı", "allonasaglik.html"],
+      ["fa-user-doctor", "Sağlık Profili", "Uzmanlık ve hizmet bilgileri", "/pages/ecosystem/allonasaglik.html"],
+      ["fa-calendar-check", "Randevular", "Hasta ve randevu alanı", "/pages/ecosystem/allonasaglik.html"],
       ["fa-file-waveform", "Akıllı CV", "Sağlık kariyer CV'si", "cv"]
     ],
     agriculture: [
-      ["fa-seedling", "Tarım Profili", "Üretici ve bölge bilgileri", "allonatarim.html"],
-      ["fa-tractor", "Ekipman", "Makine ve hizmet talepleri", "allonatarim.html"],
+      ["fa-seedling", "Tarım Profili", "Üretici ve bölge bilgileri", "/pages/ecosystem/allonatarim.html"],
+      ["fa-tractor", "Ekipman", "Makine ve hizmet talepleri", "/pages/ecosystem/allonatarim.html"],
       ["fa-file-lines", "Akıllı CV", "Tarım kariyer CV'si", "cv"]
     ],
     legal: [
-      ["fa-scale-balanced", "Hukuk Profili", "Danismanlik ve dosyalar", "allonahukuk.html"],
-      ["fa-file-signature", "Belgeler", "Sozlesme ve evrak takibi", "belgeler.html"],
+      ["fa-scale-balanced", "Hukuk Profili", "Danismanlik ve dosyalar", "/pages/ecosystem/allonahukuk.html"],
+      ["fa-file-signature", "Belgeler", "Sozlesme ve evrak takibi", "/pages/account/belgeler.html"],
       ["fa-file-lines", "Akilli CV", "Hukuk kariyer CV'si", "cv"]
     ],
     education: [
-      ["fa-graduation-cap", "Egitim Profili", "Kurs ve sertifika bilgileri", "allonaegitim.html"],
-      ["fa-book-open", "Kurslar", "Egitim icerikleri", "allonaegitim.html"],
+      ["fa-graduation-cap", "Egitim Profili", "Kurs ve sertifika bilgileri", "/pages/ecosystem/allonaegitim.html"],
+      ["fa-book-open", "Kurslar", "Egitim icerikleri", "/pages/ecosystem/allonaegitim.html"],
       ["fa-file-lines", "Akilli CV", "Egitim kariyer CV'si", "cv"]
     ],
     technology: [
-      ["fa-code", "Teknoloji Profili", "Proje ve portföy alanı", "teknoloji.html"],
-      ["fa-shield-halved", "AI & Güvenlik", "Dijital yetenekler", "teknoloji.html"],
+      ["fa-code", "Teknoloji Profili", "Proje ve portföy alanı", "/pages/ecosystem/teknoloji.html"],
+      ["fa-shield-halved", "AI & Güvenlik", "Dijital yetenekler", "/pages/ecosystem/teknoloji.html"],
       ["fa-file-lines", "Akıllı CV", "Teknoloji kariyer CV'si", "cv"]
     ],
     business: [
-      ["fa-chart-line", "İş Profili", "Satış ve finans alanı", "allonakariyer.html"],
-      ["fa-handshake", "Partnerlik", "AllonaHub partner fırsatları", "partner.html"],
+      ["fa-chart-line", "İş Profili", "Satış ve finans alanı", "/pages/career/allonakariyer.html"],
+      ["fa-handshake", "Partnerlik", "AllonaHub partner fırsatları", "/pages/partner/partner.html"],
       ["fa-file-lines", "Akıllı CV", "Kariyer CV'si oluştur", "cv"]
     ],
     food: [
-      ["fa-utensils", "Restoran Profili", "Gıda ve restoran alanı", "allonayemek.html"],
-      ["fa-store", "Market Bağlantısı", "Ürün ve kampanya yönetimi", "allonamarket.html"],
+      ["fa-utensils", "Restoran Profili", "Gıda ve restoran alanı", "/pages/commerce/allonayemek.html"],
+      ["fa-store", "Market Bağlantısı", "Ürün ve kampanya yönetimi", "/pages/commerce/allonamarket.html"],
       ["fa-file-lines", "Akıllı CV", "Gıda sektörü CV'si", "cv"]
     ],
     transport: [
-      ["fa-truck-fast", "Lojistik Profili", "Kurye ve tasima alani", "allonalojistik.html"],
-      ["fa-taxi", "Taksi Bağlantısı", "Sürücü ve rota fırsatları", "allonataksi.html"],
+      ["fa-truck-fast", "Lojistik Profili", "Kurye ve tasima alani", "/pages/ecosystem/allonalojistik.html"],
+      ["fa-taxi", "Taksi Bağlantısı", "Sürücü ve rota fırsatları", "/pages/ecosystem/allonataksi.html"],
       ["fa-file-lines", "Akıllı CV", "Ulaşım sektörü CV'si", "cv"]
     ],
     general: [
-      ["fa-user", "Profil", "Dijital kimliğini tamamla", "profil.html"],
-      ["fa-ticket", "Kuponlar", "HP ve kupon avantajları", "kuponlar.html"],
+      ["fa-user", "Profil", "Dijital kimliğini tamamla", "/pages/account/profil.html"],
+      ["fa-ticket", "Kuponlar", "HP ve kupon avantajları", "/pages/commerce/kuponlar.html"],
       ["fa-file-lines", "Akıllı CV", "Mesleğine uygun CV oluştur", "cv"]
     ]
   };
@@ -124,7 +124,7 @@
 
   async function claimDailyLoginReward() {
     if (!client || !sync || !sync.updateEconomy || !currentUser) {
-      goTo("gorevler.html");
+      goTo("/pages/account/gorevler.html");
       return;
     }
 
@@ -314,7 +314,7 @@
     try {
       const loaded = await sync.load(client);
       if (!loaded || !loaded.user) {
-        window.location.href = "user.html";
+        window.location.href = "/pages/account/user.html";
         return;
       }
       currentUser = loaded.user;
@@ -332,11 +332,11 @@
     const q = (input?.value || "").toLocaleLowerCase("tr-TR").trim();
     if (!q) return;
     if (/cv|özgeçmiş|kariyer/.test(q)) return goTo("cv");
-    if (/hp|kupon|puan|cash|bakiye/.test(q)) return goTo("kuponlar.html");
-    if (/profil|hesap|foto/.test(q)) return goTo("profil.html");
-    if (/belge|sertifika/.test(q)) return goTo("belgeler.html");
-    if (/premium|seviye|level/.test(q)) return goTo("premium.html");
-    window.location.href = `arama.html?q=${encodeURIComponent(q)}`;
+    if (/hp|kupon|puan|cash|bakiye/.test(q)) return goTo("/pages/commerce/kuponlar.html");
+    if (/profil|hesap|foto/.test(q)) return goTo("/pages/account/profil.html");
+    if (/belge|sertifika/.test(q)) return goTo("/pages/account/belgeler.html");
+    if (/premium|seviye|level/.test(q)) return goTo("/pages/account/premium.html");
+    window.location.href = `/pages/search/arama.html?q=${encodeURIComponent(q)}`;
   };
 
   window.copyUserId = async function copyUserId() {
@@ -352,7 +352,7 @@
   window.logoutUser = async function logoutUser() {
     if (client) await client.auth.signOut();
     localStorage.removeItem(sync.STORAGE_KEY);
-    window.location.href = "user.html";
+    window.location.href = "/pages/account/user.html";
   };
 
   document.addEventListener("DOMContentLoaded", initPanel);

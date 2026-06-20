@@ -8,7 +8,7 @@
     const image = core.sanitizeUrl(product.image_url);
     root.innerHTML = `
       <div class="product-detail__media panel">
-        <img src="${core.escapeHTML(image)}" alt="${core.escapeHTML(product.name)}" loading="eager" onerror="this.src='${core.url("images/product-fallback.svg")}'">
+        <img src="${core.escapeHTML(image)}" alt="${core.escapeHTML(product.name)}" loading="eager" onerror="this.src='${core.url("/images/product-fallback.svg")}'">
       </div>
       <section class="product-detail__info panel">
         <p class="eyebrow">${core.escapeHTML(product.category)}</p>

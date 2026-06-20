@@ -30,14 +30,14 @@ Candidate rollback commands:
   cd $APP_DIR
   git fetch origin main
   git checkout $PREVIOUS
-  docker compose -f docker-compose.hetzner-traefik.yml up -d --build allonahub-api
+  docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml up -d --build allonahub-api
   curl -fsS https://api.allonahub.com/health
 
 Return to main after fix:
   cd $APP_DIR
   git checkout main
   git pull --ff-only origin main
-  docker compose -f docker-compose.hetzner-traefik.yml up -d --build allonahub-api
+  docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml up -d --build allonahub-api
 EOF
 
 echo "$REPORT"

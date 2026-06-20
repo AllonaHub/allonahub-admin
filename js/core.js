@@ -1,15 +1,133 @@
 (function () {
   const App = window.Allona = window.Allona || {};
 
-  function isNestedPage() {
-    return /\/(admin|partner)\//.test(window.location.pathname);
+  const legacyRoutes = {
+    "index.html": "/index.html",
+    "addresses.html": "/pages/account/addresses.html",
+    "belgeler.html": "/pages/account/belgeler.html",
+    "bildirimler.html": "/pages/account/bildirimler.html",
+    "favorites.html": "/pages/account/favorites.html",
+    "forgot-password.html": "/pages/account/forgot-password.html",
+    "gorevler.html": "/pages/account/gorevler.html",
+    "login.html": "/pages/account/login.html",
+    "orders.html": "/pages/account/orders.html",
+    "premium.html": "/pages/account/premium.html",
+    "profil.html": "/pages/account/profil.html",
+    "profile.html": "/pages/account/profile.html",
+    "register.html": "/pages/account/register.html",
+    "reset-password.html": "/pages/account/reset-password.html",
+    "user-panel.html": "/pages/account/user-panel.html",
+    "user.html": "/pages/account/user.html",
+    "admin-orders.html": "/admin/orders.html",
+    "allonakariyer.html": "/pages/career/allonakariyer.html",
+    "career-cv-form.html": "/pages/career/career-cv-form.html",
+    "cv-form.html": "/pages/career/cv-form.html",
+    "cv-payment.html": "/pages/career/cv-payment.html",
+    "kariyer.html": "/pages/career/kariyer.html",
+    "maritime-cv.html": "/pages/career/maritime-cv.html",
+    "allonamarket.html": "/pages/commerce/allonamarket.html",
+    "allonashop.html": "/pages/commerce/allonashop.html",
+    "allonayemek.html": "/pages/commerce/allonayemek.html",
+    "cart.html": "/pages/commerce/cart.html",
+    "checkout.html": "/pages/commerce/checkout.html",
+    "kopunlar.html": "/pages/commerce/kopunlar.html",
+    "kuponlar.html": "/pages/commerce/kuponlar.html",
+    "ode.html": "/pages/commerce/ode.html",
+    "odeme.html": "/pages/commerce/odeme.html",
+    "order-success.html": "/pages/commerce/order-success.html",
+    "product.html": "/pages/commerce/product.html",
+    "shop.html": "/pages/commerce/shop.html",
+    "destek.html": "/pages/company/destek.html",
+    "hakkimizda.html": "/pages/company/hakkimizda.html",
+    "iletisim.html": "/pages/company/iletisim.html",
+    "arama.html": "/pages/search/arama.html",
+    "ecosystem.html": "/pages/ecosystem/ecosystem.html",
+    "allonadanismanlik.html": "/pages/ecosystem/allonadanismanlik.html",
+    "allonadenizcilik.html": "/pages/ecosystem/allonadenizcilik.html",
+    "allonaegitim.html": "/pages/ecosystem/allonaegitim.html",
+    "allonaeglence.html": "/pages/ecosystem/allonaeglence.html",
+    "allonaevcilhayvan.html": "/pages/ecosystem/allonaevcilhayvan.html",
+    "allonaevhizmetleri.html": "/pages/ecosystem/allonaevhizmetleri.html",
+    "allonafinans.html": "/pages/ecosystem/allonafinans.html",
+    "allonagayrimenkul.html": "/pages/ecosystem/allonagayrimenkul.html",
+    "allonaguzellik.html": "/pages/ecosystem/allonaguzellik.html",
+    "allonahukuk.html": "/pages/ecosystem/allonahukuk.html",
+    "allonainsaat.html": "/pages/ecosystem/allonainsaat.html",
+    "allonakurye.html": "/pages/ecosystem/allonakurye.html",
+    "allonalojistik.html": "/pages/ecosystem/allonalojistik.html",
+    "allonamuhendislik.html": "/pages/ecosystem/allonamuhendislik.html",
+    "allonanakliye.html": "/pages/ecosystem/allonanakliye.html",
+    "allonaorganizasyon.html": "/pages/ecosystem/allonaorganizasyon.html",
+    "allonaotomotiv.html": "/pages/ecosystem/allonaotomotiv.html",
+    "allonapet.html": "/pages/ecosystem/allonapet.html",
+    "allonasaglik.html": "/pages/ecosystem/allonasaglik.html",
+    "allonaseyahat.html": "/pages/ecosystem/allonaseyahat.html",
+    "allonasigorta.html": "/pages/ecosystem/allonasigorta.html",
+    "allonasporfitness.html": "/pages/ecosystem/allonasporfitness.html",
+    "allonataksi.html": "/pages/ecosystem/allonataksi.html",
+    "allonatarim.html": "/pages/ecosystem/allonatarim.html",
+    "allonateknoloji.html": "/pages/ecosystem/allonateknoloji.html",
+    "allonatrade.html": "/pages/ecosystem/allonatrade.html",
+    "ayakında.html": "/pages/ecosystem/ayakında.html",
+    "danismanlik.html": "/pages/ecosystem/danismanlik.html",
+    "denizcilik.html": "/pages/ecosystem/denizcilik.html",
+    "eglence.html": "/pages/ecosystem/eglence.html",
+    "evhizmetleri.html": "/pages/ecosystem/evhizmetleri.html",
+    "finans.html": "/pages/ecosystem/finans.html",
+    "gayrimenkul.html": "/pages/ecosystem/gayrimenkul.html",
+    "guzellik.html": "/pages/ecosystem/guzellik.html",
+    "hukuk.html": "/pages/ecosystem/hukuk.html",
+    "insaat.html": "/pages/ecosystem/insaat.html",
+    "kargolojistik.html": "/pages/ecosystem/kargolojistik.html",
+    "kurye.html": "/pages/ecosystem/kurye.html",
+    "maritime.html": "/pages/ecosystem/maritime.html",
+    "nakliye.html": "/pages/ecosystem/nakliye.html",
+    "organizasyondugun.html": "/pages/ecosystem/organizasyondugun.html",
+    "otomotiv.html": "/pages/ecosystem/otomotiv.html",
+    "sigorta.html": "/pages/ecosystem/sigorta.html",
+    "sportiv.html": "/pages/ecosystem/sportiv.html",
+    "tarim.html": "/pages/ecosystem/tarim.html",
+    "teknoloji.html": "/pages/ecosystem/teknoloji.html",
+    "yakında.html": "/pages/ecosystem/yakında.html",
+    "partner.html": "/pages/partner/partner.html",
+    "partner-cargo-settings.html": "/pages/partner/partner-cargo-settings.html",
+    "partner-orders.html": "/pages/partner/partner-orders.html",
+    "partner-panel.html": "/pages/partner/partner-panel.html",
+    "partner-uyelik.html": "/pages/partner/partner-uyelik.html",
+    "pazaryeri-satis.html": "/pages/partner/pazaryeri-satis.html",
+    "cerez-politikasi.html": "/pages/legal/cerez-politikasi.html",
+    "cerez.html": "/pages/legal/cerez.html",
+    "gizlilik.html": "/pages/legal/gizlilik.html",
+    "guvenlik-politikasi.html": "/pages/legal/guvenlik-politikasi.html",
+    "iade-politikasi.html": "/pages/legal/iade-politikasi.html",
+    "iptal-iade.html": "/pages/legal/iptal-iade.html",
+    "kullanim-sartlari.html": "/pages/legal/kullanim-sartlari.html",
+    "kullanım-sartları.html": "/pages/legal/kullanım-sartları.html",
+    "kvkk.html": "/pages/legal/kvkk.html",
+    "mesafeli-satis-sozlesmesi.html": "/pages/legal/mesafeli-satis-sozlesmesi.html",
+    "mesafeli-satis.html": "/pages/legal/mesafeli-satis.html",
+    "on-bilgilendirme.html": "/pages/legal/on-bilgilendirme.html",
+    "teslimat-kargo.html": "/pages/legal/teslimat-kargo.html",
+    "hp-nedir.html": "/pages/wallet/hp-nedir.html",
+    "hp-wallet-kurallari.html": "/pages/wallet/hp-wallet-kurallari.html",
+    "hubwallet.html": "/pages/wallet/hubwallet.html",
+    "allona.logo.png": "/images/brand/allona.logo.png"
+  };
+
+  function mapLegacyPath(path) {
+    const raw = String(path || "");
+    const match = raw.match(/^([^?#]+)([?#].*)?$/);
+    if (!match) return raw;
+    const target = legacyRoutes[match[1]];
+    return target ? `${target}${match[2] || ""}` : raw;
   }
 
   function url(path) {
-    if (/^(https?:)?\/\//.test(path) || path.startsWith("mailto:") || path.startsWith("tel:")) {
-      return path;
+    const mapped = mapLegacyPath(path);
+    if (/^(https?:)?\/\//.test(mapped) || mapped.startsWith("mailto:") || mapped.startsWith("tel:") || mapped.startsWith("#") || mapped.startsWith("/")) {
+      return mapped;
     }
-    return `${isNestedPage() ? "../" : ""}${path}`;
+    return mapped;
   }
 
   function escapeHTML(value) {
@@ -22,7 +140,7 @@
   }
 
   function sanitizeUrl(value, fallbackPath) {
-    const fallback = url(fallbackPath || "images/product-fallback.svg");
+    const fallback = url(fallbackPath || "/images/product-fallback.svg");
     const raw = String(value || "").trim();
     if (!raw) return fallback;
     try {
@@ -85,7 +203,7 @@
     const params = new URLSearchParams();
     if (item.id) params.set("id", item.id);
     if (item.slug) params.set("slug", item.slug);
-    return url(`product.html?${params.toString()}`);
+    return url(`/pages/commerce/product.html?${params.toString()}`);
   }
 
   function truncate(value, limit) {
@@ -104,7 +222,7 @@
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
         <a class="product-card__media" href="${escapeHTML(productUrl(product))}" aria-label="${escapeHTML(product.name)}">
-          <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("images/product-fallback.svg")}'">
+          <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
         <div class="product-card__body">

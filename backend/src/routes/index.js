@@ -335,7 +335,7 @@ export function registerRoutes(app) {
         }
       }
 
-      return redirect(reply, `${config.siteUrl}/career-cv-form.html?payment=${paymentStatus}`);
+      return redirect(reply, `${config.siteUrl}/pages/career/career-cv-form.html?payment=${paymentStatus}`);
     }
 
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
@@ -345,7 +345,7 @@ export function registerRoutes(app) {
       .eq("id", orderId);
     if (error) throw error;
 
-    return redirect(reply, `${config.siteUrl}/orders.html?payment=${paymentStatus}`);
+    return redirect(reply, `${config.siteUrl}/pages/account/orders.html?payment=${paymentStatus}`);
   });
 
   app.post("/v1/cv/checkout", async (request) => {

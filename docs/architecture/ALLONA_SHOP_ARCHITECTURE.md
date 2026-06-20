@@ -4,7 +4,7 @@
 
 The current homepage source of truth is:
 
-- `index.html`
+- `/index.html`
 - `docs/architecture/allonahub-superapp-homepage-canonical.html`
 - `docs/architecture/allona-shop-homepage-canonical.html` remains as a compatibility copy for the earlier architecture path.
 
@@ -23,16 +23,16 @@ AllonaHub is the public super-app ecosystem homepage. The homepage presents:
 
 ## File Organization
 
-- `index.html`: exact provided AllonaHub super-app homepage.
-- `css/allonahub-home.css`: extracted homepage styles.
-- `js/allonahub-home.js`: extracted homepage behavior, search, clock, location, and stat scripts.
+- `/index.html`: exact provided AllonaHub super-app homepage.
+- `/css/allonahub-home.css`: extracted homepage styles.
+- `/js/allonahub-home.js`: extracted homepage behavior, search, clock, location, and stat scripts.
 - `docs/architecture/allonahub-superapp-homepage-canonical.html`: canonical copy of the current modular homepage HTML.
 - `docs/archive/index-before-allona-shop-homepage.html`: previous homepage preserved for reference.
 - `docs/archive/index-before-super-app-homepage-*.html`: prior canonical homepage versions preserved before replacement.
 - `docs/archive/index-inline-super-app-homepage-*.html`: original inline CSS/JS homepage preserved before modularization.
-- `odeme.html`: compatibility copy of the existing `ode.html` payment page.
-- `kuponlar.html`, `kullanım-sartları.html`, `ayakında.html`, `premium.html`, `arama.html`: compatibility routes used by the provided homepage.
-- `muhendislik.png`, `trade.png`, `wallet.png`: compatibility visual assets used by the provided homepage.
+- `/pages/commerce/odeme.html`: compatibility copy of the existing `/pages/commerce/ode.html` payment page.
+- `/pages/commerce/kuponlar.html`, `/pages/legal/kullanım-sartları.html`, `/pages/ecosystem/ayakında.html`, `/pages/account/premium.html`, `/pages/search/arama.html`: compatibility routes used by the provided homepage.
+- `/images/modules/muhendislik.png`, `/images/modules/trade.png`, `/images/modules/wallet.png`: compatibility visual assets used by the provided homepage.
 
 ## Development Rules
 

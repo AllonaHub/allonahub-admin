@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ödeme | AllonaHub</title>
+  <meta name="description" content="AllonaHub teslimat, fatura ve kartlı ödeme hazırlığı.">
+  <link rel="stylesheet" href="/css/styles.v2.css?v=20260619-paylogo3">
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+<body>
+  <div class="site-shell" data-page="checkout">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Ödeme</p>
+          <h1>Güvenli Ödeme</h1>
+          <p>Teslimat, fatura ve kart bilgileri güvenli ödeme akışı için hazırlanır.</p>
+        </div>
+      </section>
+
+      <section class="container checkout-grid">
+        <form class="panel" data-checkout-form>
+          <input type="hidden" name="user_id">
+          <div data-checkout-status></div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="full-name">Ad Soyad</label>
+              <input id="full-name" name="full_name" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="phone">Telefon</label>
+              <input id="phone" name="phone" required autocomplete="tel">
+            </div>
+            <div class="field">
+              <label for="email">E-posta</label>
+              <input id="email" type="email" name="email" required autocomplete="email">
+            </div>
+            <div class="field field--full">
+              <label for="shipping-address">Teslimat Adresi</label>
+              <textarea id="shipping-address" name="shipping_address" required autocomplete="shipping street-address"></textarea>
+            </div>
+            <div class="field">
+              <label for="shipping-district">İlçe</label>
+              <input id="shipping-district" name="shipping_district" required>
+            </div>
+            <div class="field">
+              <label for="shipping-city">İl</label>
+              <input id="shipping-city" name="shipping_city" required autocomplete="shipping address-level1">
+            </div>
+            <div class="field">
+              <label for="shipping-zip">Posta kodu</label>
+              <input id="shipping-zip" name="shipping_zip" autocomplete="shipping postal-code">
+            </div>
+            <div class="field">
+              <label for="coupon-code">Kupon</label>
+              <input id="coupon-code" name="coupon_code" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="invoice-type">Fatura türü</label>
+              <select id="invoice-type" name="invoice_type">
+                <option value="individual">Bireysel</option>
+                <option value="company">Kurumsal</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="tax-office">Vergi dairesi</label>
+              <input id="tax-office" name="tax_office">
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="billing_same" checked> Fatura adresi teslimat adresiyle aynı</label>
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="pre_info_accepted" required> <a href="/pages/legal/on-bilgilendirme.html" target="_blank" rel="noopener">Ön Bilgilendirme Formu</a>'nu okudum ve onaylıyorum.</label>
+            </div>
+            <div class="field field--full">
+              <label><input type="checkbox" name="distance_sales_accepted" required> <a href="/pages/legal/mesafeli-satis.html" target="_blank" rel="noopener">Mesafeli Satış Sözleşmesi</a>'ni okudum ve onaylıyorum.</label>
+            </div>
+            <div class="field field--full hidden" data-billing-extra>
+              <label for="billing-address">Fatura Adresi</label>
+              <textarea id="billing-address" name="billing_address"></textarea>
+            </div>
+            <div class="field hidden" data-billing-extra>
+              <label for="billing-city">Fatura ili</label>
+              <input id="billing-city" name="billing_city">
+            </div>
+
+            <div class="payment-card-panel">
+              <div class="payment-card-panel__head">
+                <strong>Kart Bilgileri</strong>
+                <span>Güvenli ödeme</span>
+              </div>
+              <div class="payment-card-grid">
+                <div class="field field--full">
+                  <label for="card-holder">Kart Üzerindeki İsim</label>
+                  <input id="card-holder" name="card_holder" autocomplete="cc-name" placeholder="Ad Soyad" required>
+                </div>
+                <div class="field field--full">
+                  <label for="card-number">Kart Numarası</label>
+                  <input id="card-number" name="card_number" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
+                </div>
+                <div class="field">
+                  <label for="card-expiry">Son Kullanma Tarihi</label>
+                  <input id="card-expiry" name="card_expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
+                </div>
+                <div class="field">
+                  <label for="card-cvc">CVC</label>
+                  <input id="card-cvc" name="card_cvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Ödeme Yap</button>
+            <a class="btn btn--light" href="/pages/commerce/cart.html">Sepete Dön</a>
+            <div class="payment-methods" aria-label="Desteklenen ödeme yöntemleri">
+              <span class="payment-methods__title">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</span>
+              <div class="payment-logos" aria-hidden="true">
+                <span class="payment-logo payment-logo--iyzico">
+                  <img class="iyzico-logo iyzico-logo--colored" src="/images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
+                  <img class="iyzico-logo iyzico-logo--white" src="/images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
+                </span>
+                <span class="payment-logo payment-logo--visa">VISA</span>
+                <span class="payment-logo payment-logo--mastercard" aria-label="Mastercard"></span>
+                <span class="payment-logo payment-logo--amex">AMEX</span>
+              </div>
+            </div>
+          </div>
+        </form>
+        <aside class="summary-card" data-checkout-summary></aside>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/js/config.js?v=20260619-live5" defer></script>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/supabase-client.js?v=20260620-auth2" defer></script>
+  <script src="/js/auth.js?v=20260620-auth2" defer></script>
+  <script src="/js/cart.js?v=20260619-live9" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/checkout-page.js?v=20260619-sec1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

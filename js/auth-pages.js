@@ -8,7 +8,7 @@
   }
 
   function safeReturnTo(value) {
-    const fallback = core.url("user-panel.html");
+    const fallback = core.url("/pages/account/user-panel.html");
     const raw = String(value || "").trim();
     if (!raw) return fallback;
 
@@ -50,7 +50,7 @@
   function initGoogleLogin() {
     document.querySelectorAll("[data-google-login]").forEach((button) => {
       button.addEventListener("click", async () => {
-        const returnTo = core.getParam("returnTo") || button.getAttribute("data-return-to") || "user-panel.html";
+        const returnTo = core.getParam("returnTo") || button.getAttribute("data-return-to") || "/pages/account/user-panel.html";
         const originalText = button.textContent;
         button.disabled = true;
         button.textContent = "Google'a yönlendiriliyor...";
@@ -134,7 +134,7 @@
           await App.cvAccess.ensureAccess("signup");
         }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
-        window.location.href = core.url("user-panel.html");
+        window.location.href = core.url("/pages/account/user-panel.html");
       } catch (error) {
         const message = /çok fazla|kontrol edin|geçerli|şifre/i.test(error.message || "") ? error.message : authError(error, "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
         core.toast(message, "error");

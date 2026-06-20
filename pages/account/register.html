@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kayıt Ol | AllonaHub</title>
+  <meta name="description" content="AllonaHub hesabı oluşturun.">
+  <link rel="stylesheet" href="/css/styles.v2.css?v=20260619-live5">
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main auth-layout">
+      <section class="auth-card">
+        <div>
+          <p class="eyebrow">Yeni hesap</p>
+          <h1>Kayıt Ol</h1>
+        </div>
+        <form data-register-form>
+          <div class="field">
+            <label for="register-name">Ad Soyad</label>
+            <input id="register-name" name="full_name" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="register-phone">Telefon</label>
+            <input id="register-phone" name="phone" autocomplete="tel">
+          </div>
+          <div class="field">
+            <label for="register-email">E-posta</label>
+            <input id="register-email" type="email" name="email" required autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="register-password">Şifre</label>
+            <input id="register-password" type="password" name="password" required minlength="8" autocomplete="new-password">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--full" type="submit">Kayıt Ol</button>
+          </div>
+        </form>
+        <div class="auth-divider"><span>veya</span></div>
+        <button class="btn btn--light btn--full auth-google" type="button" data-google-login data-return-to="/pages/account/user-panel.html">
+          <span aria-hidden="true">G</span>
+          Google ile Devam Et
+        </button>
+        <div data-auth-status></div>
+        <p class="auth-switch">Hesabınız var mı? <a href="/pages/account/login.html">Giriş yapın</a></p>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/js/config.js?v=20260619-cvpay2" defer></script>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/supabase-client.js?v=20260620-auth2" defer></script>
+  <script src="/js/auth.js?v=20260620-auth2" defer></script>
+  <script src="/js/cv-access.js?v=20260619-payform1" defer></script>
+  <script src="/js/cart.js?v=20260619-live9" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/auth-pages.js?v=20260620-auth2" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

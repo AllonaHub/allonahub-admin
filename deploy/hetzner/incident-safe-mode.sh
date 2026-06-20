@@ -3,7 +3,7 @@ set -eu
 
 APP_DIR="${APP_DIR:-/opt/allonahub}"
 ENV_FILE="$APP_DIR/deploy/hetzner/.env.production"
-COMPOSE_FILE="$APP_DIR/docker-compose.hetzner-traefik.yml"
+COMPOSE_FILE="$APP_DIR/deploy/compose/docker-compose.hetzner-traefik.yml"
 
 usage() {
   cat <<'USAGE'

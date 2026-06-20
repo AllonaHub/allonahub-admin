@@ -372,10 +372,10 @@
   }
 
   function ensurePlatformCss() {
-    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => (link.getAttribute("href") || "").includes("css/platform.css"))) return;
+    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => (link.getAttribute("href") || "").includes("/css/platform.css"))) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = assetUrl(`css/platform.css?v=${ASSET_VERSION}`);
+    link.href = assetUrl(`/css/platform.css?v=${ASSET_VERSION}`);
     document.head.appendChild(link);
   }
 
@@ -401,7 +401,7 @@
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     if (state.packs[selected]) return state.packs[selected];
     try {
-      const response = await fetch(assetUrl(`i18n/${selected}.json?v=${ASSET_VERSION}`), { cache: "no-cache" });
+      const response = await fetch(assetUrl(`/i18n/${selected}.json?v=${ASSET_VERSION}`), { cache: "no-cache" });
       if (!response.ok) throw new Error(`i18n ${selected} ${response.status}`);
       const remotePack = await response.json();
       const embeddedPack = embeddedLanguagePacks[selected] || {};
@@ -687,7 +687,7 @@
 
   function brandMarkup() {
     return `
-      <img src="${assetUrl("allona.logo.png")}" alt="AllonaHub Logo">
+      <img src="${assetUrl("/images/brand/allona.logo.png")}" alt="AllonaHub Logo">
       <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
     `;
   }
@@ -701,12 +701,12 @@
       node.setAttribute("role", "link");
       node.setAttribute("tabindex", "0");
       node.addEventListener("click", () => {
-        window.location.href = assetUrl("index.html");
+        window.location.href = assetUrl("/index.html");
       });
       node.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          window.location.href = assetUrl("index.html");
+          window.location.href = assetUrl("/index.html");
         }
       });
     }
@@ -730,8 +730,8 @@
     const selectors = [
       "[data-account-link]",
       "a.login",
-      "a[href$='user.html']",
-      "a[href$='login.html']"
+      "a[href$='/pages/account/user.html']",
+      "a[href$='/pages/account/login.html']"
     ];
     return [...document.querySelectorAll(selectors.join(","))].filter((link) => {
       const text = (link.textContent || "").trim().toLocaleLowerCase("tr-TR");
@@ -767,7 +767,7 @@
     const loggedIn = await hasAuthenticatedUser();
     if (!loggedIn) {
       links.forEach((link) => {
-        link.href = assetUrl("login.html");
+        link.href = assetUrl("/pages/account/login.html");
         link.textContent = localizedText("Giriş Yap");
         link.setAttribute("aria-label", localizedText("Giriş Yap"));
         link.setAttribute("data-account-link", "");
@@ -775,7 +775,7 @@
       return;
     }
     links.forEach((link) => {
-      link.href = assetUrl("user-panel.html");
+      link.href = assetUrl("/pages/account/user-panel.html");
       link.textContent = localizedText("Hesabım");
       link.setAttribute("aria-label", localizedText("Hesabım"));
       link.setAttribute("data-account-link", "");
@@ -815,31 +815,31 @@
   function inferRoute(label) {
     const text = String(label || "").toLocaleLowerCase("tr-TR").trim();
     const rules = [
-      [/sepet|ödeme|sipariş/i, "cart.html"],
-      [/favori/i, "favorites.html"],
-      [/adres/i, "addresses.html"],
-      [/hesab|panel|kullanıcı paneli/i, "user-panel.html"],
-      [/profil|foto|kimlik/i, "profil.html"],
-      [/partner|başvuru|restoran partneri|hizmet veren/i, "partner.html"],
-      [/destek|yardım|sss|sıkça/i, "destek.html"],
-      [/kampanya|kupon/i, "kuponlar.html"],
-      [/hp|wallet|kupon|puan/i, "hubwallet.html"],
-      [/gizlilik/i, "gizlilik.html"],
-      [/çerez/i, "cerez.html"],
-      [/kvkk/i, "kvkk.html"],
-      [/kullanım|şart/i, "kullanim-sartlari.html"],
-      [/mesafeli|sözleşme/i, "mesafeli-satis.html"],
-      [/iletişim|bize/i, "iletisim.html"],
-      [/modül|hizmet/i, "ecosystem.html#modules"],
-      [/kariyer|iş/i, "allonakariyer.html"],
-      [/allona shop|ürün|mağaza/i, "allonashop.html"],
-      [/yemek|restoran/i, "allonayemek.html"],
-      [/market/i, "allonamarket.html"],
-      [/taksi|taxi/i, "allonataksi.html"]
+      [/sepet|ödeme|sipariş/i, "/pages/commerce/cart.html"],
+      [/favori/i, "/pages/account/favorites.html"],
+      [/adres/i, "/pages/account/addresses.html"],
+      [/hesab|panel|kullanıcı paneli/i, "/pages/account/user-panel.html"],
+      [/profil|foto|kimlik/i, "/pages/account/profil.html"],
+      [/partner|başvuru|restoran partneri|hizmet veren/i, "/pages/partner/partner.html"],
+      [/destek|yardım|sss|sıkça/i, "/pages/company/destek.html"],
+      [/kampanya|kupon/i, "/pages/commerce/kuponlar.html"],
+      [/hp|wallet|kupon|puan/i, "/pages/wallet/hubwallet.html"],
+      [/gizlilik/i, "/pages/legal/gizlilik.html"],
+      [/çerez/i, "/pages/legal/cerez.html"],
+      [/kvkk/i, "/pages/legal/kvkk.html"],
+      [/kullanım|şart/i, "/pages/legal/kullanim-sartlari.html"],
+      [/mesafeli|sözleşme/i, "/pages/legal/mesafeli-satis.html"],
+      [/iletişim|bize/i, "/pages/company/iletisim.html"],
+      [/modül|hizmet/i, "/pages/ecosystem/ecosystem.html#modules"],
+      [/kariyer|iş/i, "/pages/career/allonakariyer.html"],
+      [/allona shop|ürün|mağaza/i, "/pages/commerce/allonashop.html"],
+      [/yemek|restoran/i, "/pages/commerce/allonayemek.html"],
+      [/market/i, "/pages/commerce/allonamarket.html"],
+      [/taksi|taxi/i, "/pages/ecosystem/allonataksi.html"]
     ];
     const found = rules.find(([rule]) => rule.test(text));
     if (found) return found[1];
-    return `arama.html?q=${encodeURIComponent(label || "AllonaHub")}`;
+    return `/pages/search/arama.html?q=${encodeURIComponent(label || "AllonaHub")}`;
   }
 
   function repairEmptyLinks() {

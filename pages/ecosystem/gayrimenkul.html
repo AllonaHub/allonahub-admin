@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Gayrimenkul | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+.page{width:1320px;margin:auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.25);border-radius:26px;box-shadow:0 0 25px rgba(0,229,255,.12)}
+
+.header{display:grid;grid-template-columns:300px 1fr 350px;gap:18px;margin-bottom:18px}
+.brand,.search,.actions{height:80px;display:flex;align-items:center}
+.brand{padding:0 20px}
+.brand b{font-size:30px;color:#ffd700}
+.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+
+.search{padding:0 25px}
+.search input{width:100%;background:none;border:none;color:white;font-size:16px;outline:none}
+
+.actions{justify-content:space-around}
+.actions a{text-decoration:none;color:white;font-weight:800}
+
+.hero{
+display:grid;
+grid-template-columns:1.1fr 1.3fr;
+gap:18px;
+margin-bottom:20px;
+}
+
+.hero-left{
+padding:30px;
+min-height:420px;
+}
+
+.hero-left h1{
+font-size:52px;
+color:#ffd700;
+margin-bottom:15px;
+}
+
+.hero-left p{
+opacity:.85;
+line-height:1.6;
+margin-bottom:18px;
+}
+
+.filter-box{
+display:grid;
+gap:12px;
+margin-top:20px;
+}
+
+.input{
+height:55px;
+display:flex;
+align-items:center;
+padding:0 18px;
+border-radius:16px;
+background:rgba(255,255,255,.05);
+}
+
+.search-btn{
+height:55px;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#ffd700,#c79200);
+border-radius:999px;
+color:#02101d;
+font-weight:900;
+text-decoration:none;
+}
+
+.map{
+padding:15px;
+min-height:420px;
+}
+
+.fake-map{
+height:100%;
+border-radius:22px;
+background:
+linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px),
+linear-gradient(135deg,#04182f,#083d6e,#02111f);
+background-size:60px 60px;
+position:relative;
+overflow:hidden;
+}
+
+.pin{
+position:absolute;
+width:24px;
+height:24px;
+border-radius:50%;
+background:#ffd700;
+box-shadow:0 0 20px #ffd700;
+}
+
+.pin:nth-child(1){top:25%;left:20%}
+.pin:nth-child(2){top:50%;left:60%}
+.pin:nth-child(3){top:65%;left:40%}
+.pin:nth-child(4){top:35%;left:75%}
+
+.section-title{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin:28px 0 14px;
+}
+
+.section-title h2{
+font-size:30px;
+color:#ffd700;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:16px;
+}
+
+.card{
+padding:16px;
+min-height:300px;
+text-decoration:none;
+color:white;
+}
+
+.card-img{
+height:160px;
+border-radius:18px;
+background:linear-gradient(135deg,#0a3d75,#061220);
+margin-bottom:14px;
+}
+
+.card b{
+color:#ffd700;
+font-size:18px;
+}
+
+.price{
+color:#00e5ff;
+font-size:24px;
+font-weight:900;
+margin-top:10px;
+}
+
+.meta{
+display:flex;
+justify-content:space-between;
+margin-top:10px;
+font-size:13px;
+color:#00e5ff;
+}
+
+.service-grid{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:16px;
+}
+
+.service{
+padding:22px;
+min-height:140px;
+}
+
+.service h3{
+color:#ffd700;
+margin-bottom:10px;
+}
+
+.partner{
+margin-top:30px;
+padding:30px;
+display:grid;
+grid-template-columns:1.4fr 1fr;
+gap:20px;
+}
+
+.partner h2{
+color:#ffd700;
+font-size:34px;
+margin-bottom:12px;
+}
+
+.partner-list{
+display:grid;
+gap:10px;
+}
+
+.partner-list div{
+padding:12px;
+border-radius:16px;
+background:rgba(255,255,255,.05);
+}
+
+.btn{
+display:inline-block;
+margin-top:18px;
+padding:14px 28px;
+border-radius:999px;
+background:linear-gradient(135deg,#ffd700,#c79200);
+color:#02111f;
+font-weight:900;
+text-decoration:none;
+}
+
+.info{
+padding:30px;
+margin-top:25px;
+}
+
+.info h2{
+color:#ffd700;
+margin-bottom:15px;
+font-size:32px;
+}
+
+.info h3{
+color:#00e5ff;
+margin-top:20px;
+margin-bottom:8px;
+}
+
+.info p{
+line-height:1.7;
+opacity:.85;
+}
+
+.footer{
+margin-top:25px;
+padding:25px;
+text-align:center;
+opacity:.7;
+}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+
+<div class="page">
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><input placeholder="Şehir, ilçe, proje veya ilan ara..."></div>
+<div class="actions glass">
+<a href="/pages/account/login.html">Giriş Yap</a>
+<a href="#">Favorilerim</a>
+<a href="#">İlanlarım</a>
+</div>
+</div>
+
+<section class="hero">
+
+<div class="hero-left glass">
+<h1>Allona Gayrimenkul</h1>
+<p>
+Satılık, kiralık, günlük kiralık, arsa, villa, rezidans ve ticari gayrimenkulleri
+harita destekli şekilde keşfet.
+</p>
+
+<div class="filter-box">
+<div class="input">İl / İlçe Seç</div>
+<div class="input">Konut • Arsa • Villa • İşyeri</div>
+<div class="input">Fiyat Aralığı</div>
+<a class="search-btn" href="#">İlan Ara</a>
+</div>
+</div>
+
+<div class="map glass">
+<div class="fake-map">
+<div class="pin"></div>
+<div class="pin"></div>
+<div class="pin"></div>
+<div class="pin"></div>
+</div>
+</div>
+
+</section>
+
+<div class="section-title">
+<h2>Öne Çıkan İlanlar</h2>
+</div>
+
+<div class="cards">
+
+<div class="card glass">
+<div class="card-img"></div>
+<b>Deniz Manzaralı Rezidans</b>
+<div class="price">8.500.000 ₺</div>
+<div class="meta"><span>3+1</span><span>145m²</span></div>
+</div>
+
+<div class="card glass">
+<div class="card-img"></div>
+<b>Premium Villa</b>
+<div class="price">22.900.000 ₺</div>
+<div class="meta"><span>6+2</span><span>420m²</span></div>
+</div>
+
+<div class="card glass">
+<div class="card-img"></div>
+<b>Ticari Plaza Katı</b>
+<div class="price">14.500.000 ₺</div>
+<div class="meta"><span>Ofis</span><span>310m²</span></div>
+</div>
+
+<div class="card glass">
+<div class="card-img"></div>
+<b>Yatırımlık Arsa</b>
+<div class="price">5.900.000 ₺</div>
+<div class="meta"><span>Arsa</span><span>1.250m²</span></div>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Hizmetler</h2>
+</div>
+
+<div class="service-grid">
+
+<div class="service glass">
+<h3>Ekspertiz</h3>
+Gayrimenkul değerleme hizmeti.
+</div>
+
+<div class="service glass">
+<h3>Finansman</h3>
+Allona Finans bağlantısı.
+</div>
+
+<div class="service glass">
+<h3>Hukuki Kontrol</h3>
+Tapu ve sözleşme incelemesi.
+</div>
+
+<div class="service glass">
+<h3>Randevu</h3>
+İlanı yerinde görme planı.
+</div>
+
+<div class="service glass">
+<h3>HP Kazan</h3>
+Danışmanlık işlemlerinden HP kazan.
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Akıllı Süreç</h2>
+</div>
+
+<div class="service-grid">
+
+<div class="service glass">
+<h3>1. İlan</h3>
+İlan sisteme yüklenir.
+</div>
+
+<div class="service glass">
+<h3>2. Onay</h3>
+Partner ofis doğrular.
+</div>
+
+<div class="service glass">
+<h3>3. Randevu</h3>
+Müşteri talep oluşturur.
+</div>
+
+<div class="service glass">
+<h3>4. Finans</h3>
+Kredi ve ödeme seçenekleri.
+</div>
+
+<div class="service glass">
+<h3>5. Satış</h3>
+Tapu ve sözleşme süreci.
+</div>
+
+</div>
+
+<section class="partner glass">
+
+<div>
+<h2>Emlak Ofisi Partneri Ol</h2>
+<p>
+Allona Gayrimenkul partner paneli sayesinde ilan yükleme,
+müşteri yönetimi, ekspertiz, danışmanlık, finansman ve hukuk süreçleri
+tek panelden yönetilebilir.
+</p>
+
+<a class="btn" href="#">Partner Başvurusu</a>
+</div>
+
+<div class="partner-list">
+<div>İlan Yönetimi</div>
+<div>Müşteri Takibi</div>
+<div>Ekspertiz Yönetimi</div>
+<div>Finans ve Hukuk Bağlantısı</div>
+<div>HP Kampanyaları</div>
+</div>
+
+</section>
+
+<section class="info glass">
+
+<h2>Allona Gayrimenkul</h2>
+
+<p>
+Allona Gayrimenkul; konut, villa, rezidans, arsa ve ticari gayrimenkulleri
+tek ekosistemde buluşturan premium emlak platformudur.
+</p>
+
+<h3>Finans ve Hukuk Entegrasyonu</h3>
+<p>
+Kullanıcılar satın alma sürecinde Allona Finans üzerinden kredi seçeneklerini,
+Allona Hukuk üzerinden sözleşme ve danışmanlık hizmetlerini görüntüleyebilir.
+</p>
+
+<h3>Yerinde Görme ve Ulaşım</h3>
+<p>
+İlan randevusu oluşturulduğunda kullanıcı isterse Allona Taksi üzerinden
+doğrudan konuma ulaşım planlayabilir.
+</p>
+
+<h3>HP Destekli Danışmanlık</h3>
+<p>
+Ekspertiz, danışmanlık ve partner kampanyaları sonucunda kullanıcılar
+HP kazanabilir ve bunları ekosistemin diğer modüllerinde kullanabilir.
+</p>
+
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

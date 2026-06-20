@@ -234,7 +234,7 @@ begin
     return jsonb_build_object(
       'allowed', false,
       'payment_required', true,
-      'payment_url', 'cv-payment.html?reason=limit',
+      'payment_url', '/pages/career/cv-payment.html?reason=limit',
       'remaining_free', 0,
       'paid_credits', v_access.paid_credits,
       'is_risky', v_access.is_risky

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Spor & Fitness | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:310px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:310px}
+.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}
+.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:145px}
+.card h3{color:#ffd700;margin-bottom:8px}
+.card p{font-size:13px;opacity:.75;line-height:1.45}
+.product{padding:16px;min-height:285px;text-decoration:none;color:white}
+.product-img{height:145px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.product-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.product b{color:#ffd700;font-size:18px}.product p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:22px;font-weight:900;margin-top:8px}
+.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.member-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.member-main{padding:28px;min-height:270px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.member-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}
+.member-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Üyeliklerim</a><a href="#">Antrenman Planım</a><a href="#">Spor Partneri Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Spor salonu, fitness ürünü, supplement, antrenör veya kampanya ara..."></div>
+<div class="actions glass"><a href="/pages/account/login.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Sepetim</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Spor & Fitness</div>
+<a href="#">Spor Salonu</a><a href="#">Antrenör</a><a href="#">Supplement</a><a href="#">Fitness Ekipmanı</a><a href="#">Outdoor</a><a href="#">Pilates</a><a href="#">Yoga</a><a href="#">Diyetisyen</a><a href="#">HP Kazandıran</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Spor & Fitness<br>Aktif Yaşam Ekosistemi</h1>
+<p>Spor salonları, kişisel antrenörler, supplement ürünleri, fitness ekipmanları, outdoor aktiviteler, diyetisyen desteği ve HP kazandıran üyelikler tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>Salon Üyeliği & Check-in</h3>
+<p>Partner spor salonuna üyelik al, girişlerini takip et, streak oluştur ve düzenli kullanımda HP kazan.</p>
+<div class="flow"><div>Salon seç</div><div>Üyelik al</div><div>Check-in + HP</div></div>
+</div>
+<div class="hero-card glass">
+<h3>AllonaHub Eşleşmesi</h3>
+<p>Supplement ve spor ürünleri AllonaHub ile eşleşir. Tek ürün, tek stok, iki modülde görünür.</p>
+<div class="flow"><div>Ürün yükle</div><div>Etiketle</div><div>Shop + Spor</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Spor & Fitness Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Spor Salonları</h3><p>Yakındaki partner salonlar ve üyelik paketleri.</p></div>
+<div class="card glass"><h3>Kişisel Antrenör</h3><p>Kas geliştirme, yağ yakımı, kondisyon ve özel planlar.</p></div>
+<div class="card glass"><h3>Supplement</h3><p>Protein, kreatin, amino asit, vitamin ve shaker ürünleri.</p></div>
+<div class="card glass"><h3>Fitness Ekipmanı</h3><p>Dambıl, mat, barfiks, bant, eldiven ve ev spor ürünleri.</p></div>
+<div class="card glass"><h3>Outdoor</h3><p>Kamp, koşu, bisiklet, trekking ve outdoor malzemeleri.</p></div>
+<div class="card glass"><h3>Pilates & Yoga</h3><p>Mat, reformer, yoga dersleri ve stüdyo üyelikleri.</p></div>
+<div class="card glass"><h3>Diyetisyen</h3><p>Beslenme planı, ölçüm ve takip hizmetleri.</p></div>
+<div class="card glass"><h3>Spor Giyim</h3><p>Tayt, tişört, eşofman, spor ayakkabı ve aksesuar.</p></div>
+<div class="card glass"><h3>Etkinlikler</h3><p>Turnuva, maraton, fitness challenge ve spor etkinlikleri.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Üyelik, alışveriş ve check-in işlemlerinden HP kazan.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Spor Ürünleri</h2><a href="/pages/commerce/allonashop.html">AllonaHub’a Git</a></div>
+<div class="grid-4">
+<a class="product glass" data-module-tags="sport,shop,fitness,hp"><div class="product-img"></div><b>Whey Protein Paketi</b><p>AllonaHub + Spor eşleşmeli</p><div class="price">1.299,99 ₺</div><div class="meta"><span>+90 HP</span><span>Supplement</span></div></a>
+<a class="product glass" data-module-tags="sport,shop,fitness,hp"><div class="product-img"></div><b>Premium Yoga Matı</b><p>Pilates ve yoga ekipmanı</p><div class="price">499,99 ₺</div><div class="meta"><span>+25 HP</span><span>Yoga</span></div></a>
+<a class="product glass" data-module-tags="sport,shop,outdoor,hp"><div class="product-img"></div><b>Outdoor Termos Seti</b><p>Kamp ve yürüyüş ürünü</p><div class="price">399,99 ₺</div><div class="meta"><span>+20 HP</span><span>Outdoor</span></div></a>
+<a class="product glass" data-module-tags="sport,shop,fitness,hp"><div class="product-img"></div><b>Dambıl Seti</b><p>Evde spor ekipmanı</p><div class="price">899,99 ₺</div><div class="meta"><span>+45 HP</span><span>Fitness</span></div></a>
+</div>
+
+<div class="section-title"><h2>Spor Salonu Üyelikleri</h2><a href="#">Yakınımdaki Salonlar</a></div>
+<section class="member-box">
+<div class="member-main glass">
+<h2>Partner Salon Üyeliği ve HP Check-in</h2>
+<p>Kullanıcı partner spor salonunu seçer, üyelik paketi alır ve salona giriş yaptıkça check-in sistemi üzerinden streak ve HP kazanır. Premium üyeler özel kampanyalar ve antrenör avantajlarına erişir.</p>
+<div class="input-box">Salon seç: Yakındaki partner salonlar</div>
+<div class="input-box">Paket seç: Günlük / aylık / yıllık</div>
+<div class="input-box">Check-in: QR veya üye numarası ile giriş</div>
+<a class="btn" href="#">Salon Üyeliği Başlat</a>
+</div>
+<div class="member-main glass">
+<h2>Antrenman Planı</h2>
+<p>Hedefe göre kas geliştirme, kilo verme, kondisyon veya esneklik planı oluşturulabilir. Eğitim ve sağlık modülüyle desteklenebilir.</p>
+<div class="input-box">Hedef: Kas / yağ yakımı / kondisyon</div>
+<div class="input-box">Seviye: Başlangıç / orta / ileri</div>
+<div class="input-box">Haftalık plan ve takip</div>
+<a class="btn" href="#">Plan Oluştur</a>
+</div>
+</section>
+
+<div class="section-title"><h2>HP Kazandıran Spor Avantajları</h2><a href="/pages/account/user.html">HP Dünyası</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Salon Check-in</h3><p>Düzenli girişlerde streak ve HP kazan.</p></div>
+<div class="card glass"><h3>Supplement Sepeti</h3><p>Seçili ürünlerde ekstra HP ve kupon.</p></div>
+<div class="card glass"><h3>Antrenör Paketi</h3><p>Özel derslerde HP kazanımı.</p></div>
+<div class="card glass"><h3>Challenge</h3><p>Haftalık görev ve spor meydan okumaları.</p></div>
+<div class="card glass"><h3>Premium Spor</h3><p>Gold ve Elite üyeler için özel salon avantajı.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Spor Salonu, Antrenör veya Supplement Markası Partneri Ol</h2>
+<p>Allona Spor & Fitness partner paneliyle üyelik, check-in, ürün, stok, randevu, antrenör paketi, kampanya ve HP avantajları tek sistemden yönetilir. Spor ürünleri AllonaHub ile otomatik eşleşebilir.</p>
+<a class="btn" href="/pages/partner/partner.html">Spor Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Salon üyelik yönetimi</div>
+<div>QR / üye numarası check-in</div>
+<div>Antrenör randevu paneli</div>
+<div>Supplement ürün eşleşmesi</div>
+<div>AllonaHub + Spor ürün görünürlüğü</div>
+<div>HP ve kupon kampanyaları</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Spor & Fitness: Aktif Yaşamı Ödüllendiren Ekosistem</h2>
+<p>Allona Spor & Fitness; spor salonları, antrenörler, supplement markaları, spor giyim ve ekipman ürünlerini AllonaHub ekosistemi içinde birleştiren premium aktif yaşam modülüdür.</p>
+<h3>AllonaHub ile Çift Yönlü Ürün Görünürlüğü</h3>
+<p>Supplement, spor giyim, outdoor ve fitness ekipmanları tek master ürün havuzuna yüklenir. Ürün uygun etiketlere sahipse hem AllonaHub’ta hem Allona Spor & Fitness modülünde görünür.</p>
+<h3>Salon Check-in ve HP Sadakati</h3>
+<p>Partner spor salonlarında QR veya üye numarası ile check-in yapılabilir. Düzenli kullanım streak, seviye ve HP kazanımıyla kullanıcıyı platformda tutan güçlü bir bağlılık mekanizmasına dönüşür.</p>
+</section>
+</div>
+
+<script>
+/*
+Ürün eşleşme mantığı:
+moduleTags içinde "sport" varsa Allona Spor & Fitness'ta görünür.
+moduleTags içinde "shop" varsa AllonaHub'ta görünür.
+Aynı ürün tek SKU ve tek stokla çoklu modülde listelenir.
+*/
+</script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

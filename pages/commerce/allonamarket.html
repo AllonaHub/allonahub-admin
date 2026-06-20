@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1320, initial-scale=0.35, maximum-scale=1.0, user-scalable=yes">
+<title>Allona Market | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 360px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}
+.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:23px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.45fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:260px;padding:30px;background:radial-gradient(circle at right,#00e5ff33,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.5;max-width:620px}
+.hero-card{padding:24px;min-height:260px}
+.hero-card h3{color:#ffd700;font-size:28px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}
+.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+
+.category-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:14px}
+.market-cat{min-height:100px;text-align:center;padding:17px;text-decoration:none;color:white}
+.market-icon{width:38px;height:38px;margin:0 auto 11px;border-radius:14px;background:linear-gradient(135deg,#ffd700,#00e5ff);box-shadow:0 0 20px rgba(0,229,255,.28)}
+.market-cat b{font-size:14px}
+
+.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.promo{padding:22px;min-height:135px}
+.promo h3{color:#ffd700;margin-bottom:8px}
+.promo p{opacity:.75;line-height:1.45}
+
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.product{min-height:235px;padding:16px;text-decoration:none;color:white}
+.product-img{height:120px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:13px;position:relative;overflow:hidden}
+.product-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.product b{color:#ffd700}
+.product p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:20px;font-weight:900}
+.meta{display:flex;justify-content:space-between;margin-top:10px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.delivery-zone{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:16px}
+.delivery-card{padding:24px;min-height:165px}
+.delivery-card h3{color:#ffd700;font-size:25px;margin-bottom:9px}
+.delivery-card p{opacity:.78;line-height:1.45}
+
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
+.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
+.partner-cta p{opacity:.82;line-height:1.6}
+.btn{display:inline-block;margin-top:18px;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
+.panel-list{display:grid;gap:10px}
+.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+
+.info{padding:30px;margin-top:28px}
+.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
+.info h3{color:#00e5ff;margin:22px 0 8px}
+.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+  <a href="#">Market Kuponlarım</a>
+  <a href="#">Market Partneri Ol</a>
+  <a href="#">Hızlı Teslimat</a>
+  <a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+  <div class="brand glass"><b>Allona</b><span>Hub</span></div>
+  <div class="search glass"><div class="search-mark"></div><input placeholder="Market ürünü, marka, kategori veya kampanya ara..."></div>
+  <div class="actions glass"><a href="/pages/account/login.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Sepetim</a></div>
+</div>
+
+<div class="catbar glass">
+  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Kategoriler</div>
+  <a href="#">Ev & Temizlik</a><a href="#">Gıda</a><a href="#">İçecek</a><a href="#">Atıştırmalık</a><a href="#">Kişisel Bakım</a><a href="#">Bebek</a><a href="#">Petshop</a><a href="#">Hızlı Teslimat</a><a href="#">Çok Satanlar</a>
+</div>
+
+<section class="hero">
+  <div class="hero-main glass">
+    <h1>Allona Market<br>Günlük İhtiyaç Ekosistemi</h1>
+    <p>Temel gıda, temizlik, kişisel bakım, bebek ve petshop ürünleri; HP kazandıran sepetler ve hızlı teslimat ağıyla tek ekranda.</p>
+  </div>
+  <div class="hero-card glass">
+    <h3>HP Kazandıran Sepet</h3>
+    <p>Market alışverişi yaptıkça HP kazan, kupon oluştur ve sonraki alışverişlerinde avantaj sağla.</p>
+    <div class="flow"><div>Sepet oluştur</div><div>Market hazırlar</div><div>Kurye teslim eder</div></div>
+  </div>
+  <div class="hero-card glass">
+    <h3>Hızlı Teslimat</h3>
+    <p>Yakındaki partner marketlerden hızlı hazırlık ve Allona Kurye bağlantılı teslimat akışı.</p>
+    <div class="flow"><div>Yakındaki marketler</div><div>Canlı sepet takibi</div><div>Teslimat + HP</div></div>
+  </div>
+</section>
+
+<div class="section-title"><h2>Market Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="category-grid">
+  <a class="market-cat glass"><div class="market-icon"></div><b>Ev & Temizlik</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Gıda</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>İçecek</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Atıştırmalık</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Kişisel Bakım</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Bebek Bakım</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Petshop</b></a>
+  <a class="market-cat glass"><div class="market-icon"></div><b>Organik</b></a>
+</div>
+
+<div class="section-title"><h2>Market Kampanyaları</h2><a href="#">Tüm Kampanyalar</a></div>
+<div class="promo-grid">
+  <div class="promo glass"><h3>İlk Sepete HP</h3><p>İlk market alışverişinde ekstra HP kazan.</p></div>
+  <div class="promo glass"><h3>%20 Temizlik Fırsatı</h3><p>Seçili temizlik ürünlerinde avantajlı fiyatlar.</p></div>
+  <div class="promo glass"><h3>Bebek Bakım Paketi</h3><p>Bebek ihtiyaçlarında sepet kampanyaları.</p></div>
+  <div class="promo glass"><h3>HP ile Kupon Oluştur</h3><p>HP’lerini market kuponuna çevir.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Market Ürünleri</h2><a href="#">Yakınımdakiler</a></div>
+<div class="product-grid">
+  <a class="product glass" data-module-tags="market,shop,hp"><div class="product-img"></div><b>Temizlik Ekonomi Seti</b><p>Deterjan, mop, yüzey temizleyici</p><div class="price">449,99 ₺</div><div class="meta"><span>45 dk</span><span>+35 HP</span></div></a>
+  <a class="product glass" data-module-tags="market,food,hp"><div class="product-img"></div><b>Kahvaltılık Paket</b><p>Çay, peynir, zeytin, reçel</p><div class="price">399,99 ₺</div><div class="meta"><span>35 dk</span><span>+25 HP</span></div></a>
+  <a class="product glass" data-module-tags="market,bebek,hp"><div class="product-img"></div><b>Bebek Bakım Seti</b><p>Bebek bezi, ıslak mendil</p><div class="price">599,99 ₺</div><div class="meta"><span>40 dk</span><span>+40 HP</span></div></a>
+  <a class="product glass" data-module-tags="market,pet,hp"><div class="product-img"></div><b>Petshop Paketi</b><p>Kedi maması, kum, ödül mama</p><div class="price">699,99 ₺</div><div class="meta"><span>50 dk</span><span>+45 HP</span></div></a>
+  <a class="product glass" data-module-tags="market,kozmetik,hp"><div class="product-img"></div><b>Kişisel Bakım Seti</b><p>Şampuan, duş jeli, deodorant</p><div class="price">299,99 ₺</div><div class="meta"><span>30 dk</span><span>+20 HP</span></div></a>
+</div>
+
+<div class="section-title"><h2>HP Kazandıran Sepetler</h2><a href="#">HP Dünyası</a></div>
+<div class="product-grid">
+  <a class="product glass"><div class="product-img"></div><b>Aylık Temel İhtiyaç Sepeti</b><p>Yüksek HP kazandırır</p><div class="price">1.499,99 ₺</div></a>
+  <a class="product glass"><div class="product-img"></div><b>Öğrenci Market Paketi</b><p>Ekonomik sepet</p><div class="price">799,99 ₺</div></a>
+  <a class="product glass"><div class="product-img"></div><b>Sağlıklı Atıştırmalık</b><p>Protein bar, kuruyemiş</p><div class="price">349,99 ₺</div></a>
+  <a class="product glass"><div class="product-img"></div><b>Ev Temizlik Paketi</b><p>Temizlik ürünleri</p><div class="price">599,99 ₺</div></a>
+  <a class="product glass"><div class="product-img"></div><b>Pet Aylık Paket</b><p>Mama ve bakım</p><div class="price">899,99 ₺</div></a>
+</div>
+
+<div class="section-title"><h2>Hızlı Teslimat & Allona Kurye</h2><a href="#">Kurye Paneli</a></div>
+<div class="delivery-zone">
+  <div class="delivery-card glass"><h3>Market Hazırlık Akışı</h3><p>Partner market siparişi hazırlar, sistem teslimat için otomatik görev oluşturur.</p></div>
+  <div class="delivery-card glass"><h3>Yakındaki Kurye</h3><p>En yakın müsait kurye siparişe atanır ve kullanıcı canlı takip eder.</p></div>
+  <div class="delivery-card glass"><h3>Sepet + HP</h3><p>Teslimat tamamlanınca kazanılan HP Kupon’a işlenir.</p></div>
+</div>
+
+<section class="partner-cta glass">
+  <div>
+    <h2>Marketini Allona Market’e Taşı</h2>
+    <p>AllonaHub partner paneliyle stok, fiyat, sipariş, kampanya, HP avantajları ve kurye bağlantısı tek sistemde çalışır.</p>
+    <a class="btn" href="/pages/partner/partner.html">Market Partneri Ol</a>
+  </div>
+  <div class="panel-list">
+    <div>Ürün ve stok yönetimi</div>
+    <div>Sipariş hazırlama akışı</div>
+    <div>Kurye sistemine otomatik bildirim</div>
+    <div>HP ve kupon kampanyaları</div>
+  </div>
+</section>
+
+<section class="info glass">
+  <h2>Allona Market: Günlük İhtiyaçları Ekosistem Avantajına Dönüştürür</h2>
+  <p>Allona Market; temel gıda, temizlik, kişisel bakım, bebek bakım ve petshop ürünlerini AllonaHub ekosistemi içinde bir araya getirir. Kullanıcı market alışverişinde HP kazanır, sepet kampanyalarından yararlanır ve teslimat sürecini tek panelden takip eder.</p>
+  <h3>Market, Kurye ve Kupon Bağlantısı</h3>
+  <p>Sipariş partner markete düşer, hazırlık tamamlandığında kurye modülü tetiklenir ve teslimat sonrası HP ödülü Kupona işlenir. Böylece market alışverişi yalnızca satın alma değil, platform bağlılığı sağlayan bir deneyime dönüşür.</p>
+  <h3>Partner Marketler İçin Güvenli Panel</h3>
+  <p>Market partnerleri sadece yetkili oldukları market modülüne erişir. Ürün, stok, fiyat, kampanya ve teslimat süreçlerini yönetir; diğer modüllerle veri karışıklığı yaşamaz.</p>
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

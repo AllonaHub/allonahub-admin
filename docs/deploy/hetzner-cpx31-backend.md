@@ -47,15 +47,15 @@ Sunucuda Coolify varsa önerilen ayar:
 - Healthcheck path: `/health`
 - Environment variables: `.env.production.example` listesindeki gerçek değerler
 
-Coolify yoksa veya sade yapı tercih edilirse `docker-compose.prod.yml + Nginx` kullanılır.
+Coolify yoksa veya sade yapı tercih edilirse `deploy/compose/docker-compose.prod.yml + Nginx` kullanılır.
 
 Mevcut sunucuda Coolify proxy zaten 80/443 portlarını yönetiyorsa Nginx kurmayın.
 Bu durumda backend API ayrı container olarak Traefik'e bağlanır:
 
 ```bash
 cd /opt/allonahub
-docker compose -f docker-compose.hetzner-traefik.yml up -d --build
-docker compose -f docker-compose.hetzner-traefik.yml ps
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml up -d --build
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml ps
 curl https://api.allonahub.com/health
 ```
 
@@ -116,16 +116,16 @@ CRON_SECRET
 Container:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml logs -f --tail=100
+docker compose -f deploy/compose/docker-compose.prod.yml up -d --build
+docker compose -f deploy/compose/docker-compose.prod.yml logs -f --tail=100
 curl http://127.0.0.1:3000/health
 ```
 
 Coolify/Traefik olan sunucuda:
 
 ```bash
-docker compose -f docker-compose.hetzner-traefik.yml up -d --build
-docker compose -f docker-compose.hetzner-traefik.yml logs -f --tail=100
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml up -d --build
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml logs -f --tail=100
 curl https://api.allonahub.com/health
 ```
 
@@ -191,7 +191,7 @@ curl https://api.allonahub.com/health
 ```bash
 cd /opt/allonahub
 git pull
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f deploy/compose/docker-compose.prod.yml up -d --build
 docker image prune -f
 curl https://api.allonahub.com/health
 ```

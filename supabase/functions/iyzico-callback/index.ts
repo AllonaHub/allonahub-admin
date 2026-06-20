@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const target = `${siteUrl.replace(/\/$/, "")}/career-cv-form.html?payment=${paymentStatus}`;
+      const target = `${siteUrl.replace(/\/$/, "")}/pages/career/career-cv-form.html?payment=${paymentStatus}`;
       return Response.redirect(target, 303);
     }
 
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
     const { error } = await query;
     if (error) throw error;
 
-    const target = `${siteUrl.replace(/\/$/, "")}/orders.html?payment=${paymentStatus}`;
+    const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=${paymentStatus}`;
     return Response.redirect(target, 303);
   } catch (error) {
     console.error("iyzico-callback failed", error);

@@ -160,7 +160,7 @@ Komut:
 ```bash
 cd /opt/allonahub
 nano deploy/hetzner/.env.production
-docker compose -f docker-compose.hetzner-traefik.yml up -d --build
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml up -d --build
 ```
 
 Etkiler:
@@ -187,8 +187,8 @@ node --check backend/src/config.js
 node --check backend/src/lib/iyzico.js
 node --check backend/src/lib/supabase.js
 node --check backend/src/routes/index.js
-docker compose -f docker-compose.hetzner-traefik.yml config --quiet
-docker compose -f docker-compose.hetzner-traefik.yml build allonahub-api
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml config --quiet
+docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml build allonahub-api
 ```
 
 Server build `npm ci --omit=dev` kullanır ve lockfile ile sabitlenir. Son buildde audit sonucu `0 vulnerabilities` olmalıdır.

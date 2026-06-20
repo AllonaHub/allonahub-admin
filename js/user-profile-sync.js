@@ -173,7 +173,7 @@
   }
 
   function cvTarget(profile) {
-    return isMaritimeProfile(profile) ? "cv-form.html?v=20260619-cv2" : "career-cv-form.html";
+    return isMaritimeProfile(profile) ? "/pages/career/cv-form.html?v=20260619-cv2" : "/pages/career/career-cv-form.html";
   }
 
   function normalizeProfile(session, dbProfile) {

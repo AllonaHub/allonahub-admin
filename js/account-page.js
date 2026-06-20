@@ -26,7 +26,7 @@
   }
 
   function addressFallbackMessage() {
-    return "Adres tablosu Supabase'de henüz aktif görünmüyor. Adresler bu cihazda geçici olarak saklanıyor; kalıcı kayıt için DATABASE.md içindeki addresses SQL'i Supabase SQL Editor'da çalıştırılmalı.";
+    return "Adres tablosu Supabase'de henüz aktif görünmüyor. Adresler bu cihazda geçici olarak saklanıyor; kalıcı kayıt için docs/reference/DATABASE.md içindeki addresses SQL'i Supabase SQL Editor'da çalıştırılmalı.";
   }
 
   function normalizeAddress(raw) {
@@ -99,7 +99,7 @@
     try {
       const orders = await App.db.orders.list({ userId: user.id });
       if (!orders.length) {
-        list.innerHTML = `<div class="empty-state">Henüz siparişiniz yok. <a href="${core.url("shop.html")}">Mağazaya gidin</a>.</div>`;
+        list.innerHTML = `<div class="empty-state">Henüz siparişiniz yok. <a href="${core.url("/pages/commerce/shop.html")}">Mağazaya gidin</a>.</div>`;
         return;
       }
       list.innerHTML = `
@@ -135,7 +135,7 @@
     try {
       const products = await App.favorites.hydrate();
       if (!products.length) {
-        grid.innerHTML = `<div class="empty-state">Favori ürün bulunmuyor. <a href="${core.url("shop.html")}">Ürünleri keşfedin</a>.</div>`;
+        grid.innerHTML = `<div class="empty-state">Favori ürün bulunmuyor. <a href="${core.url("/pages/commerce/shop.html")}">Ürünleri keşfedin</a>.</div>`;
         return;
       }
       grid.innerHTML = products.map(core.productCard).join("");

@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AllonaHub Kullanıcı Girişi</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+:root{
+  --blue:#0077ff;
+  --neon:#00d5ff;
+  --deep:#0a2540;
+  --soft:#f4fbff;
+  --card:#ffffff;
+  --text:#102033;
+  --muted:#6b7b8f;
+  --line:rgba(0,150,255,.22);
+  --gold:#f5b942;
+}
+
+body{
+  background:
+    radial-gradient(circle at top left,rgba(0,213,255,.20),transparent 32%),
+    radial-gradient(circle at bottom right,rgba(0,119,255,.14),transparent 30%),
+    linear-gradient(135deg,#ffffff,#f4fbff,#ffffff);
+  color:var(--text);
+  overflow-x:auto;
+}
+
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  background:
+    linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
+  animation:wave 9s infinite linear;
+}
+
+@keyframes wave{
+  0%{transform:translateX(-40%)}
+  100%{transform:translateX(40%)}
+}
+
+a{
+  text-decoration:none;
+  color:inherit;
+}
+
+.page{
+  width:min(1320px,100%);
+  margin:0 auto;
+  padding:18px 22px 50px;
+}
+
+.glass{
+  background:rgba(255,255,255,.86);
+  border:1px solid var(--line);
+  box-shadow:
+    0 0 28px rgba(0,213,255,.13),
+    inset 0 0 22px rgba(255,255,255,.65);
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(14px);
+}
+
+.glass:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(120deg,transparent,rgba(0,213,255,.10),transparent);
+  pointer-events:none;
+}
+
+/* HEADER */
+
+.header{
+  height:82px;
+  display:grid;
+  grid-template-columns:310px 1fr 360px;
+  gap:18px;
+  align-items:center;
+  margin-bottom:24px;
+}
+
+.brand{
+  height:82px;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:0 20px;
+}
+
+.brand img{
+  width:52px;
+  height:52px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 12px rgba(0,213,255,.45));
+}
+
+.brand b{
+  font-size:30px;
+  color:var(--deep);
+}
+
+.brand span{
+  font-size:30px;
+  color:var(--blue);
+  font-weight:900;
+  text-shadow:0 0 12px rgba(0,213,255,.45);
+}
+
+.search{
+  height:60px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 14px 0 22px;
+}
+
+.search span{
+  color:var(--blue);
+}
+
+.search input{
+  flex:1;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:var(--text);
+  font-size:15px;
+}
+
+.search input::placeholder{
+  color:#8293a7;
+}
+
+.search button{
+  height:42px;
+  padding:0 20px;
+  border:0;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 0 18px rgba(0,213,255,.35);
+}
+
+.actions{
+  min-height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:8px 12px;
+}
+
+.actions a{
+  font-weight:800;
+  color:var(--deep);
+}
+
+.actions .platform-controls-slot{
+  display:inline-flex;
+}
+
+.actions .platform-controls{
+  width:auto;
+  justify-content:flex-end;
+}
+
+.actions a:hover{
+  color:var(--blue);
+}
+
+/* HERO LOGIN */
+
+.hero{
+  display:flex;
+  justify-content:center;
+  margin-bottom:26px;
+}
+
+.login-box{
+  width:790px;
+  padding:38px;
+  min-height:680px;
+}
+
+.login-box h1{
+  font-size:46px;
+  color:var(--deep);
+  margin-bottom:10px;
+  text-align:center;
+}
+
+.login-box h1 span{
+  color:var(--blue);
+  text-shadow:0 0 14px rgba(0,213,255,.36);
+}
+
+.login-box p{
+  color:var(--muted);
+  line-height:1.55;
+  margin-bottom:26px;
+  text-align:center;
+}
+
+.tabs{
+  display:flex;
+  background:#eef8ff;
+  border:1px solid rgba(0,150,255,.16);
+  border-radius:18px;
+  padding:6px;
+  margin-bottom:24px;
+}
+
+.tab{
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--deep);
+  padding:14px;
+  border-radius:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.tab.active{
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  box-shadow:0 0 20px rgba(0,213,255,.32);
+}
+
+.form{
+  display:none;
+}
+
+.form.active{
+  display:block;
+}
+
+.input,
+.select-box{
+  height:56px;
+  border-radius:17px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.22);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  margin-bottom:14px;
+  box-shadow:inset 0 0 14px rgba(0,213,255,.05);
+}
+
+.input input,
+.select-box select{
+  width:100%;
+  height:100%;
+  background:transparent;
+  border:0;
+  outline:0;
+  color:var(--text);
+  font-size:15px;
+}
+
+.input input::placeholder{
+  color:#8ca0b5;
+}
+
+.select-box select{
+  cursor:pointer;
+  font-weight:800;
+}
+
+.form-note{
+  font-size:12px;
+  color:#6f8094;
+  margin:-6px 0 14px;
+  line-height:1.45;
+}
+
+.phone-row{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:12px;
+}
+
+.country-picker{
+  position:relative;
+  margin-bottom:14px;
+}
+
+.country-selected{
+  height:56px;
+  border-radius:17px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.22);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  cursor:pointer;
+  color:var(--text);
+}
+
+.country-dropdown{
+  display:none;
+  position:absolute;
+  top:64px;
+  left:0;
+  width:100%;
+  max-height:270px;
+  overflow:auto;
+  background:white;
+  border:1px solid rgba(0,150,255,.35);
+  border-radius:18px;
+  z-index:99;
+  box-shadow:0 0 28px rgba(0,213,255,.20);
+}
+
+.country-dropdown.active{
+  display:block;
+}
+
+.country-search{
+  height:46px;
+  width:calc(100% - 20px);
+  margin:10px;
+  background:#f7fcff;
+  border:1px solid rgba(0,150,255,.22);
+  border-radius:14px;
+  color:var(--text);
+  padding:0 12px;
+  outline:0;
+}
+
+.country-item{
+  padding:12px 14px;
+  cursor:pointer;
+  font-size:14px;
+  color:var(--text);
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+
+.country-item:hover{
+  background:#eef8ff;
+}
+
+.country-code-tag{
+  color:var(--blue);
+  font-weight:900;
+}
+
+.warning-text{
+  display:none;
+  color:#ff375f;
+  font-size:13px;
+  font-weight:800;
+  margin:-4px 0 12px;
+}
+
+.warning-text.show{
+  display:block;
+}
+
+.btn{
+  width:100%;
+  height:56px;
+  border:0;
+  border-radius:17px;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  color:white;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  margin-top:6px;
+  box-shadow:0 0 24px rgba(0,213,255,.36);
+  transition:.3s;
+}
+
+.btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 32px rgba(0,213,255,.48);
+}
+
+.btn.error{
+  background:linear-gradient(135deg,#ff375f,#8b001d)!important;
+  color:white!important;
+}
+
+.social-btn{
+  background:white;
+  color:var(--deep);
+  border:1px solid rgba(0,150,255,.22);
+}
+
+.icloud-btn{
+  background:linear-gradient(135deg,#ffffff,#eef8ff);
+  color:var(--deep);
+  border:1px solid rgba(0,150,255,.24);
+}
+
+.link-row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:14px;
+  font-size:13px;
+  color:var(--blue);
+  font-weight:800;
+}
+  /* QUICK CARDS */
+
+.quick-section{
+  margin-top:26px;
+}
+
+.quick-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:13px;
+}
+
+.quick-title h2{
+  color:var(--deep);
+  font-size:30px;
+}
+
+.quick-title a{
+  color:var(--blue);
+  font-weight:900;
+}
+
+.quick-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.quick-card{
+  min-height:145px;
+  padding:20px;
+  border-radius:22px;
+  background:white;
+  border:1px solid rgba(0,150,255,.18);
+  box-shadow:0 0 24px rgba(0,213,255,.10);
+  transition:.3s;
+}
+
+.quick-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 0 32px rgba(0,213,255,.22);
+}
+
+.quick-card h3{
+  color:var(--blue);
+  margin-bottom:8px;
+}
+
+.quick-card p{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.45;
+}
+
+/* FOOTER */
+
+.footer-main{
+  margin-top:34px;
+  padding:30px;
+  border-top:1px solid rgba(0,150,255,.14);
+}
+
+.footer-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:22px;
+}
+
+.footer-col h3{
+  color:var(--deep);
+  margin-bottom:12px;
+}
+
+.footer-col a,
+.footer-col p{
+  display:block;
+  color:#60758c;
+  font-size:13px;
+  line-height:1.8;
+}
+
+.footer-col a:hover{
+  color:var(--blue);
+}
+
+.social-icons{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:24px;
+  margin-top:25px;
+}
+
+.social-icons a{
+  width:60px;
+  height:60px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border-radius:50%;
+  background:white;
+  border:1px solid rgba(0,150,255,.18);
+  box-shadow:0 0 18px rgba(0,213,255,.16);
+  transition:.35s;
+  font-size:22px;
+}
+
+.social-icons a:hover{
+  transform:translateY(-5px) scale(1.08);
+}
+
+.social-icons span{
+  font-size:11px;
+  font-weight:700;
+  color:var(--deep);
+}
+
+.social-icons .wa{color:#25D366}
+.social-icons .ig{
+  background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);
+  color:white;
+}
+.social-icons .x{color:#111}
+.social-icons .fb{color:#1877F2}
+.social-icons .yt{color:#FF0000}
+.social-icons .li{color:#0A66C2}
+.social-icons .tg{color:#229ED9}
+.social-icons .tk{color:#111}
+.social-icons .mail{color:var(--blue)}
+
+.store-buttons{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:35px;
+}
+
+.store-btn{
+  padding:14px 24px;
+  border-radius:16px;
+  font-weight:800;
+  color:var(--deep);
+  background:white;
+  border:1px solid rgba(0,150,255,.22);
+  box-shadow:0 0 18px rgba(0,213,255,.14);
+}
+
+.footer-bottom{
+  text-align:center;
+  margin-top:30px;
+  padding-top:20px;
+  color:#60758c;
+  line-height:1.8;
+}
+
+/* PROFESSION SELECTOR */
+
+.profession-wrap{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.profession-box{
+  position:relative;
+}
+
+.profession-results{
+  display:none;
+  position:absolute;
+  top:64px;
+  left:0;
+  right:0;
+  max-height:260px;
+  overflow:auto;
+  background:white;
+  border:1px solid rgba(0,150,255,.28);
+  border-radius:18px;
+  box-shadow:0 0 28px rgba(0,213,255,.18);
+  z-index:120;
+}
+
+.profession-results.active{
+  display:block;
+}
+
+.profession-item{
+  padding:12px 14px;
+  border-bottom:1px solid rgba(0,0,0,.05);
+  cursor:pointer;
+  color:var(--text);
+}
+
+.profession-item:hover{
+  background:#eef8ff;
+}
+
+.required-dot{
+  color:#ff375f;
+  font-weight:900;
+}
+
+@media(max-width:900px){
+  .page{
+    width:100%;
+    padding:14px 12px 38px;
+  }
+
+  .header{
+    height:auto;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-bottom:16px;
+  }
+
+  .brand,
+  .search,
+  .actions{
+    width:100%;
+    min-height:58px;
+  }
+
+  .search{
+    padding:10px 12px;
+  }
+
+  .search input{
+    min-width:0;
+  }
+
+  .actions{
+    justify-content:flex-start;
+  }
+
+  .hero{
+    justify-content:stretch;
+  }
+
+  .login-box{
+    width:100%;
+    min-height:auto;
+    padding:24px;
+    border-radius:22px;
+  }
+
+  .profession-wrap{
+    grid-template-columns:1fr;
+  }
+
+  .phone-row,
+  .quick-grid,
+  .footer-grid{
+    grid-template-columns:1fr;
+  }
+
+  .tabs{
+    flex-wrap:wrap;
+  }
+
+  .tab{
+    flex:1 1 140px;
+  }
+
+  .quick-title{
+    align-items:flex-start;
+    gap:10px;
+    flex-direction:column;
+  }
+}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+<div class="page">
+
+<div class="header">
+  <a class="brand glass" href="/index.html">
+    <div><b>Allona</b><span>Hub</span></div>
+  </a>
+
+  <div class="search glass">
+    <span><i class="fa-solid fa-magnifying-glass"></i></span>
+    <input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+    <button onclick="userSearch()">Ara</button>
+  </div>
+
+  <div class="actions glass">
+    <a href="/index.html">Ana Sayfa</a>
+    <a href="/pages/wallet/hubwallet.html">Kupon</a>
+    <a href="/pages/account/premium.html">Premium</a>
+    <span class="platform-controls-slot" data-platform-controls-slot></span>
+  </div>
+</div>
+<section class="hero">
+  <div class="login-box glass">
+
+    <h1>Allona<span>Hub</span>’a Giriş Yap</h1>
+    <p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
+      <button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
+      <button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login" class="form active">
+      <div class="phone-row">
+        <div id="loginPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="loginEmail" placeholder="E-posta">
+        </div>
+      </div>
+
+      <div class="input">
+        <input id="loginPassword" type="password" placeholder="Şifre">
+      </div>
+
+      <button class="btn" onclick="loginUser()">Giriş Yap</button>
+      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
+      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+
+      <div class="link-row">
+        <a href="#">Telefon ile giriş</a>
+        <a href="/pages/company/destek.html">Güvenlik merkezi</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register" class="form">
+
+      <div class="input">
+        <input id="fullName" placeholder="Ad Soyad">
+      </div>
+
+      <div class="input">
+        <input id="registerEmail" placeholder="E-posta">
+      </div>
+
+      <div class="phone-row">
+        <div id="registerPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="registerPhone" placeholder="Telefon numarası">
+        </div>
+      </div>
+
+      <div class="profession-wrap">
+
+        <div class="select-box">
+          <select id="sectorSelect" onchange="onSectorChange()">
+            <option value="">Sektör Seçiniz *</option>
+          </select>
+        </div>
+
+        <div class="profession-box">
+          <div class="input">
+            <input id="professionSearch" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
+          </div>
+          <div id="professionResults" class="profession-results"></div>
+        </div>
+
+      </div>
+
+      <p class="form-note">
+        Meslek seçimi zorunludur. AllonaHub karşılama, panel önerileri, iş ilanları ve bildirimleri seçilen mesleğe göre kişiselleştirir.
+      </p>
+
+      <input type="hidden" id="selectedProfessionKey">
+      <input type="hidden" id="selectedProfessionName">
+      <input type="hidden" id="selectedProfessionTitle">
+
+      <div class="input">
+        <input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()">
+      </div>
+
+      <div class="input">
+        <input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()">
+      </div>
+
+      <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
+
+      <button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
+      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Kayıt Ol</button>
+      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Kayıt Ol</button>
+    </div>
+
+    <!-- FORGOT -->
+    <div id="forgot" class="form">
+      <div class="phone-row">
+        <div id="forgotPicker" class="country-picker"></div>
+        <div class="input">
+          <input id="forgotEmail" placeholder="E-posta">
+        </div>
+      </div>
+
+      <button class="btn" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
+
+      <p style="margin-top:16px;font-size:13px;color:#6f8094;text-align:center">
+        Güvenlik nedeniyle doğrulama linki e-posta ile gönderilecektir.
+      </p>
+    </div>
+
+  </div>
+</section>
+<section class="quick-section">
+  <div class="quick-title">
+    <h2>AllonaHub Avantajları</h2>
+    <a href="/pages/account/premium.html">Tümünü Gör</a>
+  </div>
+
+  <div class="quick-grid">
+    <div class="quick-card">
+      <h3>HP Dünyası</h3>
+      <p>Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Mesleğe Özel Panel</h3>
+      <p>Denizci, doktor, çiftçi, avukat veya farklı meslek grupları için kişiselleştirilmiş deneyim.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Akıllı Bildirimler</h3>
+      <p>İş ilanları, kampanyalar ve partner fırsatları mesleğine göre sana özel gösterilir.</p>
+    </div>
+
+    <div class="quick-card">
+      <h3>Premium Avantajlar</h3>
+      <p>A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true
+  }
+});
+
+function pageUrl(path){
+  return new URL(path, window.location.href).href;
+}
+
+const SITE_URL=pageUrl("/pages/account/user-panel.html");
+const RESET_URL=pageUrl("/pages/account/reset-password.html");
+
+function normalizeEmail(value){
+  return String(value || "").trim().toLowerCase().slice(0,180);
+}
+
+function isEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || ""));
+}
+
+function strongEnoughPassword(value){
+  return String(value || "").length >= 8;
+}
+
+function clearAuthArtifacts(){
+  [
+    "allonahub_user_profile",
+    "allonahub_auth_verified_at",
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType"
+  ].forEach(key=>localStorage.removeItem(key));
+
+  for(let i=localStorage.length-1;i>=0;i-=1){
+    const key=localStorage.key(i) || "";
+    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
+      localStorage.removeItem(key);
+    }
+  }
+}
+
+function rateLimitAction(key, limit, windowMs){
+  const storageKey="allona_rate:"+key;
+  const now=Date.now();
+  let hits=[];
+  try{hits=JSON.parse(localStorage.getItem(storageKey) || "[]")}catch(error){hits=[]}
+  hits=hits.filter(time=>now-Number(time)<windowMs);
+  if(hits.length>=limit){
+    return {allowed:false,retryAfter:Math.ceil((windowMs-(now-Number(hits[0])))/1000)};
+  }
+  hits.push(now);
+  localStorage.setItem(storageKey,JSON.stringify(hits));
+  return {allowed:true,retryAfter:0};
+}
+
+function secureAuthAlert(message){
+  alert(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
+}
+
+const countries=[
+{n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
+{n:"Amerika Birleşik Devletleri",c:"+1",f:"🇺🇸",iso:"US"},{n:"Kanada",c:"+1",f:"🇨🇦",iso:"CA"},
+{n:"Birleşik Krallık",c:"+44",f:"🇬🇧",iso:"GB"},{n:"Almanya",c:"+49",f:"🇩🇪",iso:"DE"},
+{n:"Fransa",c:"+33",f:"🇫🇷",iso:"FR"},{n:"İtalya",c:"+39",f:"🇮🇹",iso:"IT"},
+{n:"İspanya",c:"+34",f:"🇪🇸",iso:"ES"},{n:"Hollanda",c:"+31",f:"🇳🇱",iso:"NL"},
+{n:"Belçika",c:"+32",f:"🇧🇪",iso:"BE"},{n:"İsviçre",c:"+41",f:"🇨🇭",iso:"CH"},
+{n:"Avusturya",c:"+43",f:"🇦🇹",iso:"AT"},{n:"İsveç",c:"+46",f:"🇸🇪",iso:"SE"},
+{n:"Norveç",c:"+47",f:"🇳🇴",iso:"NO"},{n:"Danimarka",c:"+45",f:"🇩🇰",iso:"DK"},
+{n:"Finlandiya",c:"+358",f:"🇫🇮",iso:"FI"},{n:"Polonya",c:"+48",f:"🇵🇱",iso:"PL"},
+{n:"Rusya",c:"+7",f:"🇷🇺",iso:"RU"},{n:"Ukrayna",c:"+380",f:"🇺🇦",iso:"UA"},
+{n:"Gürcistan",c:"+995",f:"🇬🇪",iso:"GE"},{n:"Kazakistan",c:"+7",f:"🇰🇿",iso:"KZ"},
+{n:"Özbekistan",c:"+998",f:"🇺🇿",iso:"UZ"},{n:"Türkmenistan",c:"+993",f:"🇹🇲",iso:"TM"},
+{n:"Kırgızistan",c:"+996",f:"🇰🇬",iso:"KG"},{n:"İran",c:"+98",f:"🇮🇷",iso:"IR"},
+{n:"Irak",c:"+964",f:"🇮🇶",iso:"IQ"},{n:"Suriye",c:"+963",f:"🇸🇾",iso:"SY"},
+{n:"Suudi Arabistan",c:"+966",f:"🇸🇦",iso:"SA"},{n:"Birleşik Arap Emirlikleri",c:"+971",f:"🇦🇪",iso:"AE"},
+{n:"Katar",c:"+974",f:"🇶🇦",iso:"QA"},{n:"Kuveyt",c:"+965",f:"🇰🇼",iso:"KW"},
+{n:"Bahreyn",c:"+973",f:"🇧🇭",iso:"BH"},{n:"Umman",c:"+968",f:"🇴🇲",iso:"OM"},
+{n:"Mısır",c:"+20",f:"🇪🇬",iso:"EG"},{n:"Fas",c:"+212",f:"🇲🇦",iso:"MA"},
+{n:"Tunus",c:"+216",f:"🇹🇳",iso:"TN"},{n:"Cezayir",c:"+213",f:"🇩🇿",iso:"DZ"},
+{n:"Libya",c:"+218",f:"🇱🇾",iso:"LY"},{n:"Güney Afrika",c:"+27",f:"🇿🇦",iso:"ZA"},
+{n:"Nijerya",c:"+234",f:"🇳🇬",iso:"NG"},{n:"Kenya",c:"+254",f:"🇰🇪",iso:"KE"},
+{n:"Hindistan",c:"+91",f:"🇮🇳",iso:"IN"},{n:"Pakistan",c:"+92",f:"🇵🇰",iso:"PK"},
+{n:"Bangladeş",c:"+880",f:"🇧🇩",iso:"BD"},{n:"Çin",c:"+86",f:"🇨🇳",iso:"CN"},
+{n:"Japonya",c:"+81",f:"🇯🇵",iso:"JP"},{n:"Güney Kore",c:"+82",f:"🇰🇷",iso:"KR"},
+{n:"Endonezya",c:"+62",f:"🇮🇩",iso:"ID"},{n:"Malezya",c:"+60",f:"🇲🇾",iso:"MY"},
+{n:"Singapur",c:"+65",f:"🇸🇬",iso:"SG"},{n:"Tayland",c:"+66",f:"🇹🇭",iso:"TH"},
+{n:"Vietnam",c:"+84",f:"🇻🇳",iso:"VN"},{n:"Filipinler",c:"+63",f:"🇵🇭",iso:"PH"},
+{n:"Avustralya",c:"+61",f:"🇦🇺",iso:"AU"},{n:"Yeni Zelanda",c:"+64",f:"🇳🇿",iso:"NZ"},
+{n:"Brezilya",c:"+55",f:"🇧🇷",iso:"BR"},{n:"Arjantin",c:"+54",f:"🇦🇷",iso:"AR"},
+{n:"Meksika",c:"+52",f:"🇲🇽",iso:"MX"},{n:"Kolombiya",c:"+57",f:"🇨🇴",iso:"CO"},
+{n:"Şili",c:"+56",f:"🇨🇱",iso:"CL"},{n:"Peru",c:"+51",f:"🇵🇪",iso:"PE"}
+];
+
+let selectedCountries={
+  loginPicker:countries[0],
+  registerPicker:countries[0],
+  forgotPicker:countries[0]
+};
+  const sectors=[
+  {
+    key:"maritime",
+    name:"Denizcilik",
+    title:"Denizci",
+    module:"maritime",
+    professions:[
+      {key:"master",name:"Kaptan / Master",title:"Kaptan"},
+      {key:"chief_officer",name:"Chief Officer / 1. Zabit",title:"Chief Officer"},
+      {key:"second_officer",name:"Second Officer / 2. Zabit",title:"2. Zabit"},
+      {key:"third_officer",name:"Third Officer / 3. Zabit",title:"3. Zabit"},
+      {key:"deck_cadet",name:"Deck Cadet / Güverte Stajyeri",title:"Denizci"},
+      {key:"chief_engineer",name:"Chief Engineer / Başmühendis",title:"Başmühendis"},
+      {key:"second_engineer",name:"Second Engineer / 2. Mühendis",title:"2. Mühendis"},
+      {key:"third_engineer",name:"Third Engineer / 3. Mühendis",title:"3. Mühendis"},
+      {key:"fourth_engineer",name:"Fourth Engineer / 4. Mühendis",title:"4. Mühendis"},
+      {key:"eto",name:"ETO / Elektrik Zabiti",title:"ETO"},
+      {key:"electrician",name:"Electrician / Elektrikçi",title:"Elektrikçi"},
+      {key:"bosun",name:"Bosun / Reis",title:"Reis"},
+      {key:"able_seaman",name:"Able Seaman / Usta Gemici",title:"Denizci"},
+      {key:"ordinary_seaman",name:"Ordinary Seaman / Gemici",title:"Denizci"},
+      {key:"oiler",name:"Oiler / Yağcı",title:"Denizci"},
+      {key:"motorman",name:"Motorman / Motorcu",title:"Denizci"},
+      {key:"wiper",name:"Wiper / Silici",title:"Denizci"},
+      {key:"fitter",name:"Fitter / Tornacı",title:"Fitter"},
+      {key:"welder",name:"Welder / Kaynakçı",title:"Kaynakçı"},
+      {key:"pumpman",name:"Pumpman / Pompacı",title:"Pompacı"},
+      {key:"cook",name:"Cook / Aşçı",title:"Aşçı"},
+      {key:"chief_cook",name:"Chief Cook / Baş Aşçı",title:"Baş Aşçı"},
+      {key:"steward",name:"Steward / Kamarot",title:"Kamarot"},
+      {key:"crane_operator",name:"Crane Operator / Vinç Operatörü",title:"Vinç Operatörü"},
+      {key:"dpo",name:"DPO / Dynamic Positioning Operator",title:"DPO"},
+      {key:"marine_surveyor",name:"Marine Surveyor / Deniz Sörveyörü",title:"Sörveyör"},
+      {key:"crewing_manager",name:"Crewing Manager / Personel Müdürü",title:"Crewing Manager"}
+    ]
+  },
+  {
+    key:"health",
+    name:"Sağlık",
+    title:"Sağlık Profesyoneli",
+    module:"health",
+    professions:[
+      {key:"doctor",name:"Doktor",title:"Dr."},
+      {key:"dentist",name:"Diş Hekimi",title:"Dt."},
+      {key:"pharmacist",name:"Eczacı",title:"Ecz."},
+      {key:"nurse",name:"Hemşire",title:"Hemşire"},
+      {key:"midwife",name:"Ebe",title:"Ebe"},
+      {key:"paramedic",name:"Paramedik",title:"Paramedik"},
+      {key:"psychologist",name:"Psikolog",title:"Psikolog"},
+      {key:"psychiatrist",name:"Psikiyatrist",title:"Dr."},
+      {key:"dietitian",name:"Diyetisyen",title:"Diyetisyen"},
+      {key:"physiotherapist",name:"Fizyoterapist",title:"Fizyoterapist"},
+      {key:"veterinarian",name:"Veteriner",title:"Veteriner"},
+      {key:"lab_technician",name:"Laboratuvar Teknikeri",title:"Tekniker"},
+      {key:"radiology_technician",name:"Radyoloji Teknikeri",title:"Tekniker"},
+      {key:"surgeon",name:"Cerrah",title:"Dr."},
+      {key:"cardiologist",name:"Kardiyolog",title:"Dr."},
+      {key:"orthopedist",name:"Ortopedi Uzmanı",title:"Dr."},
+      {key:"pediatrician",name:"Çocuk Doktoru",title:"Dr."},
+      {key:"family_physician",name:"Aile Hekimi",title:"Dr."}
+    ]
+  },
+  {
+    key:"law",
+    name:"Hukuk",
+    title:"Hukukçu",
+    module:"legal",
+    professions:[
+      {key:"lawyer",name:"Avukat",title:"Av."},
+      {key:"judge",name:"Hakim",title:"Hakim"},
+      {key:"prosecutor",name:"Savcı",title:"Savcı"},
+      {key:"notary",name:"Noter",title:"Noter"},
+      {key:"legal_consultant",name:"Hukuk Danışmanı",title:"Danışman"},
+      {key:"paralegal",name:"Hukuk Asistanı",title:"Hukuk Asistanı"}
+    ]
+  },
+  {
+    key:"agriculture",
+    name:"Tarım & Hayvancılık",
+    title:"Çiftçi",
+    module:"agriculture",
+    professions:[
+      {key:"farmer",name:"Çiftçi",title:"Çiftçi"},
+      {key:"agricultural_engineer",name:"Ziraat Mühendisi",title:"Ziraat Mühendisi"},
+      {key:"livestock_breeder",name:"Hayvancılık Üreticisi",title:"Üretici"},
+      {key:"beekeeper",name:"Arıcı",title:"Arıcı"},
+      {key:"fisherman",name:"Balıkçı",title:"Balıkçı"},
+      {key:"greenhouse_grower",name:"Seracı",title:"Seracı"},
+      {key:"tractor_operator",name:"Traktör Operatörü",title:"Operatör"},
+      {key:"food_producer",name:"Gıda Üreticisi",title:"Üretici"}
+    ]
+  },
+  {
+    key:"education",
+    name:"Eğitim",
+    title:"Eğitimci",
+    module:"education",
+    professions:[
+      {key:"teacher",name:"Öğretmen",title:"Öğretmen"},
+      {key:"academic",name:"Akademisyen",title:"Akademisyen"},
+      {key:"instructor",name:"Eğitmen",title:"Eğitmen"},
+      {key:"student",name:"Öğrenci",title:"Öğrenci"},
+      {key:"principal",name:"Okul Müdürü",title:"Müdür"},
+      {key:"language_teacher",name:"Dil Öğretmeni",title:"Öğretmen"}
+    ]
+  },
+  {
+    key:"technology",
+    name:"Teknoloji & Bilişim",
+    title:"Teknoloji Uzmanı",
+    module:"technology",
+    professions:[
+      {key:"software_developer",name:"Yazılımcı",title:"Yazılımcı"},
+      {key:"frontend_developer",name:"Frontend Developer",title:"Developer"},
+      {key:"backend_developer",name:"Backend Developer",title:"Developer"},
+      {key:"fullstack_developer",name:"Full Stack Developer",title:"Developer"},
+      {key:"mobile_developer",name:"Mobil Uygulama Geliştirici",title:"Developer"},
+      {key:"data_analyst",name:"Veri Analisti",title:"Analist"},
+      {key:"data_scientist",name:"Veri Bilimci",title:"Veri Bilimci"},
+      {key:"ai_engineer",name:"Yapay Zeka Mühendisi",title:"AI Engineer"},
+      {key:"cyber_security",name:"Siber Güvenlik Uzmanı",title:"Güvenlik Uzmanı"},
+      {key:"it_specialist",name:"IT Uzmanı",title:"IT Uzmanı"},
+      {key:"ui_ux_designer",name:"UI/UX Tasarımcı",title:"Tasarımcı"}
+    ]
+  },
+  {
+    key:"business",
+    name:"İş & Ticaret",
+    title:"İş Profesyoneli",
+    module:"business",
+    professions:[
+      {key:"business_owner",name:"İşletme Sahibi",title:"İşletmeci"},
+      {key:"entrepreneur",name:"Girişimci",title:"Girişimci"},
+      {key:"manager",name:"Yönetici",title:"Yönetici"},
+      {key:"sales_specialist",name:"Satış Uzmanı",title:"Satış Uzmanı"},
+      {key:"marketing_specialist",name:"Pazarlama Uzmanı",title:"Pazarlama Uzmanı"},
+      {key:"accountant",name:"Muhasebeci",title:"Muhasebeci"},
+      {key:"finance_specialist",name:"Finans Uzmanı",title:"Finans Uzmanı"},
+      {key:"banker",name:"Bankacı",title:"Bankacı"},
+      {key:"insurance_specialist",name:"Sigortacı",title:"Sigortacı"},
+      {key:"real_estate_agent",name:"Emlak Danışmanı",title:"Emlakçı"}
+    ]
+  },
+  {
+    key:"food",
+    name:"Restoran & Gıda",
+    title:"Gıda Profesyoneli",
+    module:"food",
+    professions:[
+      {key:"restaurant_owner",name:"Restoran Sahibi",title:"Restoran Sahibi"},
+      {key:"chef",name:"Şef",title:"Şef"},
+      {key:"cook_food",name:"Aşçı",title:"Aşçı"},
+      {key:"barista",name:"Barista",title:"Barista"},
+      {key:"waiter",name:"Garson",title:"Garson"},
+      {key:"baker",name:"Fırıncı",title:"Fırıncı"},
+      {key:"pastry_chef",name:"Pastacı",title:"Pastacı"},
+      {key:"caterer",name:"Catering İşletmecisi",title:"Catering"}
+    ]
+  },
+  {
+    key:"transport",
+    name:"Ulaşım & Lojistik",
+    title:"Lojistik Profesyoneli",
+    module:"transport",
+    professions:[
+      {key:"driver",name:"Şoför",title:"Şoför"},
+      {key:"courier",name:"Kurye",title:"Kurye"},
+      {key:"taxi_driver",name:"Taksi Şoförü",title:"Taksici"},
+      {key:"truck_driver",name:"Tır Şoförü",title:"Tır Şoförü"},
+      {key:"logistics_manager",name:"Lojistik Müdürü",title:"Lojistikçi"},
+      {key:"warehouse_worker",name:"Depo Personeli",title:"Depo Personeli"},
+      {key:"pilot",name:"Pilot",title:"Pilot"},
+      {key:"flight_attendant",name:"Kabin Memuru",title:"Kabin Memuru"}
+    ]
+  },
+  {
+    key:"other",
+    name:"Diğer",
+    title:"AllonaHub Üyesi",
+    module:"general",
+    professions:[
+      {key:"freelancer",name:"Freelancer",title:"Freelancer"},
+      {key:"retired",name:"Emekli",title:"Emekli"},
+      {key:"job_seeker",name:"İş Arıyorum",title:"Aday"},
+      {key:"other_profession",name:"Diğer Meslek",title:"Üye"}
+    ]
+  }
+];
+
+let selectedProfession=null;
+  function populateSectors(){
+  const select=document.getElementById("sectorSelect");
+  if(!select)return;
+
+  select.innerHTML=`<option value="">Sektör Seçiniz *</option>`+
+    sectors.map(s=>`<option value="${s.key}">${s.name}</option>`).join("");
+}
+
+function getSelectedSector(){
+  const key=document.getElementById("sectorSelect")?.value;
+  return sectors.find(s=>s.key===key)||null;
+}
+
+function onSectorChange(){
+  selectedProfession=null;
+
+  document.getElementById("professionSearch").value="";
+  document.getElementById("selectedProfessionKey").value="";
+  document.getElementById("selectedProfessionName").value="";
+  document.getElementById("selectedProfessionTitle").value="";
+
+  renderProfessionResults([]);
+}
+
+function filterProfessions(){
+  const sector=getSelectedSector();
+  const box=document.getElementById("professionResults");
+  const q=document.getElementById("professionSearch").value.toLowerCase().trim();
+
+  if(!sector){
+    box.innerHTML=`<div class="profession-item">Önce sektör seçiniz</div>`;
+    box.classList.add("active");
+    return;
+  }
+
+  let list=sector.professions;
+
+  if(q){
+    list=list.filter(p=>
+      p.name.toLowerCase().includes(q) ||
+      p.title.toLowerCase().includes(q) ||
+      p.key.toLowerCase().includes(q)
+    );
+  }
+
+  renderProfessionResults(list);
+}
+
+function renderProfessionResults(list){
+  const box=document.getElementById("professionResults");
+  if(!box)return;
+
+  if(!list.length){
+    box.innerHTML="";
+    box.classList.remove("active");
+    return;
+  }
+
+  box.innerHTML=list.map(p=>`
+    <div class="profession-item" onclick="selectProfession('${p.key}')">
+      <b>${p.name}</b><br>
+      <small>${p.title} olarak karşılanır</small>
+    </div>
+  `).join("");
+
+  box.classList.add("active");
+}
+
+function selectProfession(key){
+  const sector=getSelectedSector();
+  if(!sector)return;
+
+  const profession=sector.professions.find(p=>p.key===key);
+  if(!profession)return;
+
+  selectedProfession={
+    sectorKey:sector.key,
+    sectorName:sector.name,
+    module:sector.module,
+    key:profession.key,
+    name:profession.name,
+    title:profession.title
+  };
+
+  document.getElementById("professionSearch").value=profession.name;
+  document.getElementById("selectedProfessionKey").value=profession.key;
+  document.getElementById("selectedProfessionName").value=profession.name;
+  document.getElementById("selectedProfessionTitle").value=profession.title;
+
+  document.getElementById("professionResults").classList.remove("active");
+}
+
+function getGreetingPreview(fullName){
+  const firstName=(fullName||"").trim().split(" ")[0]||"";
+  const title=selectedProfession?.title||"";
+  if(!firstName)return "";
+  return `${title} ${firstName}, hoş geldin`;
+}
+  function createCountryPicker(id){
+  const box=document.getElementById(id);
+  if(!box)return;
+
+  box.innerHTML=`
+    <div class="country-selected" onclick="toggleCountryDropdown('${id}')">
+      <span id="${id}Text">
+        ${selectedCountries[id].f} ${selectedCountries[id].n}
+        <span class="country-code-tag">${selectedCountries[id].c}</span>
+      </span>
+      <span>⌄</span>
+    </div>
+
+    <div id="${id}Dropdown" class="country-dropdown">
+      <input class="country-search" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
+      <div id="${id}List"></div>
+    </div>
+  `;
+
+  renderCountryList(id,countries);
+}
+
+function toggleCountryDropdown(id){
+  document.querySelectorAll(".country-dropdown").forEach(el=>{
+    if(el.id!==id+"Dropdown")el.classList.remove("active");
+  });
+
+  document.getElementById(id+"Dropdown").classList.toggle("active");
+}
+
+function renderCountryList(id,list){
+  const listBox=document.getElementById(id+"List");
+  if(!listBox)return;
+
+  listBox.innerHTML=list.map(item=>`
+    <div class="country-item" onclick="selectCountry('${id}','${item.iso}')">
+      ${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>
+    </div>
+  `).join("");
+}
+
+function filterCountries(id,q){
+  q=q.toLowerCase().trim();
+
+  const list=countries.filter(x=>
+    x.n.toLowerCase().includes(q) ||
+    x.c.includes(q) ||
+    x.iso.toLowerCase().includes(q)
+  );
+
+  renderCountryList(id,list);
+}
+
+function selectCountry(id,iso){
+  const item=countries.find(x=>x.iso===iso)||countries[0];
+  selectedCountries[id]=item;
+
+  const text=document.getElementById(id+"Text");
+  const dropdown=document.getElementById(id+"Dropdown");
+
+  if(text){
+    text.innerHTML=`${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>`;
+  }
+
+  if(dropdown){
+    dropdown.classList.remove("active");
+  }
+}
+
+function setCountryByLocale(){
+  const lang=(navigator.language||"tr-TR").toUpperCase();
+  let iso="TR";
+
+  if(lang.includes("AZ"))iso="AZ";
+  else if(lang.includes("US"))iso="US";
+  else if(lang.includes("GB"))iso="GB";
+  else if(lang.includes("DE"))iso="DE";
+  else if(lang.includes("FR"))iso="FR";
+  else if(lang.includes("RU"))iso="RU";
+  else if(lang.includes("AE"))iso="AE";
+
+  ["loginPicker","registerPicker","forgotPicker"].forEach(id=>selectCountry(id,iso));
+}
+
+function openTab(tabId,event){
+  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+
+  document.getElementById(tabId).classList.add("active");
+
+  if(event && event.target){
+    event.target.classList.add("active");
+  }
+}
+
+function checkPasswords(){
+  const p1=document.getElementById("password1").value;
+  const p2=document.getElementById("password2").value;
+  const warning=document.getElementById("passwordWarning");
+  const btn=document.getElementById("registerBtn");
+
+  if(!p1&&!p2){
+    warning.classList.remove("show");
+    btn.classList.remove("error");
+    btn.textContent="Ücretsiz Hesap Oluştur";
+    return;
+  }
+
+  if(p2&&p1!==p2){
+    warning.classList.add("show");
+    btn.classList.add("error");
+    btn.textContent="Şifreler Aynı Değil";
+  }else{
+    warning.classList.remove("show");
+    btn.classList.remove("error");
+    btn.textContent="Ücretsiz Hesap Oluştur";
+  }
+}
+async function registerUser(){
+  const email=normalizeEmail(document.getElementById("registerEmail").value);
+  const password=document.getElementById("password1").value;
+  const password2=document.getElementById("password2").value;
+  const fullName=document.getElementById("fullName").value.trim();
+  const phone=document.getElementById("registerPhone").value.trim();
+  const country=selectedCountries.registerPicker;
+  const limit=rateLimitAction("register",5,60*60*1000);
+
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla kayıt denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!fullName){
+    alert("Ad Soyad zorunludur.");
+    return;
+  }
+
+  if(!isEmail(email)){
+    alert("Geçerli bir e-posta adresi giriniz.");
+    return;
+  }
+
+  if(!strongEnoughPassword(password)){
+    alert("Şifre en az 8 karakter olmalıdır.");
+    return;
+  }
+
+  if(password !== password2){
+    checkPasswords();
+    return;
+  }
+
+  if(!selectedProfession){
+    alert("Lütfen sektör ve meslek seçiniz.");
+    return;
+  }
+
+  const greeting=getGreetingPreview(fullName);
+
+  try{
+    const { error }=await supabaseClient.auth.signUp({
+      email:email,
+      password:password,
+      options:{
+        emailRedirectTo:SITE_URL,
+        data:{
+          full_name:fullName,
+          phone:country.c+" "+phone,
+          country:country.n,
+
+          sector_key:selectedProfession.sectorKey,
+          sector_name:selectedProfession.sectorName,
+          profession_key:selectedProfession.key,
+          profession_name:selectedProfession.name,
+          profession_title:selectedProfession.title,
+          module:selectedProfession.module,
+          greeting:greeting
+        }
+      }
+    });
+
+    if(error){
+      secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
+      return;
+    }
+
+    localStorage.setItem("allonahub_user_profile",JSON.stringify({
+      full_name:fullName,
+      phone:country.c+" "+phone,
+      country:country.n,
+      sector_key:selectedProfession.sectorKey,
+      sector_name:selectedProfession.sectorName,
+      profession_key:selectedProfession.key,
+      profession_name:selectedProfession.name,
+      profession_title:selectedProfession.title,
+      module:selectedProfession.module,
+      greeting:greeting
+    }));
+
+    alert("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
+  }catch(error){
+    secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
+  }
+}
+
+async function loginUser(){
+  const email=normalizeEmail(document.getElementById("loginEmail").value);
+  const password=document.getElementById("loginPassword").value;
+  const limit=rateLimitAction("login",8,15*60*1000);
+
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!isEmail(email) || !password){
+    secureAuthAlert("E-posta ve şifrenizi kontrol edin.");
+    return;
+  }
+
+  try{
+    clearAuthArtifacts();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if(error || !data || !data.user){
+      secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+      return;
+    }
+
+    const { data:verified, error:verifyError } = await supabaseClient.auth.getUser();
+    if(verifyError || !verified || !verified.user || verified.user.id !== data.user.id){
+      clearAuthArtifacts();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      secureAuthAlert("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+      return;
+    }
+
+    localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+    window.location.href = "/pages/account/user-panel.html";
+  }catch(error){
+    secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+  }
+}
+
+async function loginWithGoogle(){
+  const redirectUrl=new URL("/pages/account/login.html", window.location.href);
+  redirectUrl.searchParams.set("returnTo","/pages/account/user-panel.html");
+
+  const { error }=await supabaseClient.auth.signInWithOAuth({
+    provider:"google",
+    options:{
+      redirectTo:redirectUrl.href,
+      queryParams:{
+        access_type:"offline",
+        prompt:"select_account"
+      }
+    }
+  });
+
+  if(error){
+    alert("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }
+}
+
+async function resetPassword(){
+  const email=normalizeEmail(document.getElementById("forgotEmail").value);
+  const limit=rateLimitAction("forgot-password",4,30*60*1000);
+
+  if(!limit.allowed){
+    secureAuthAlert("Çok fazla deneme. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!isEmail(email)){
+    secureAuthAlert("Geçerli bir e-posta adresi giriniz.");
+    return;
+  }
+
+  try{
+    await supabaseClient.auth.resetPasswordForEmail(email,{
+      redirectTo:RESET_URL
+    });
+  }catch(error){}
+
+  alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+}
+
+function icloudInfo(){
+  alert("Giriş İçin Başka Bir Yöntem deneyiniz.");
+}
+  function userSearch(){
+  const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
+
+  if(!q)return;
+
+  if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
+    window.location.href="/pages/wallet/hubwallet.html";
+  }
+  else if(q.includes("kupon")){
+    window.location.href="/pages/commerce/kuponlar.html";
+  }
+  else if(q.includes("premium") || q.includes("üyelik")){
+    window.location.href="/pages/account/premium.html";
+  }
+  else if(q.includes("destek") || q.includes("yardım") || q.includes("güvenlik")){
+    window.location.href="/pages/company/destek.html";
+  }
+  else if(q.includes("deniz") || q.includes("maritime") || q.includes("gemi")){
+    window.location.href="/pages/ecosystem/maritime.html";
+  }
+  else if(q.includes("cv")){
+    window.location.href="/pages/career/cv-form.html?v=20260619-cv2";
+  }
+  else{
+    window.location.href="/pages/search/arama.html?q="+encodeURIComponent(q);
+  }
+}
+
+document.addEventListener("DOMContentLoaded",function(){
+  ["loginPicker","registerPicker","forgotPicker"].forEach(createCountryPicker);
+
+  populateSectors();
+  setCountryByLocale();
+
+  const search=document.getElementById("userSearchInput");
+
+  if(search){
+    search.addEventListener("keydown",function(e){
+      if(e.key==="Enter")userSearch();
+    });
+  }
+
+  const professionSearch=document.getElementById("professionSearch");
+
+  if(professionSearch){
+    professionSearch.addEventListener("focus",function(){
+      filterProfessions();
+    });
+  }
+});
+
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".country-picker")){
+    document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
+  }
+
+  if(!e.target.closest(".profession-box")){
+    const box=document.getElementById("professionResults");
+    if(box)box.classList.remove("active");
+  }
+});
+</script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

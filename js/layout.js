@@ -3,8 +3,9 @@
   const core = App.core;
 
   function active(path) {
-    const current = window.location.pathname.split("/").pop() || "index.html";
-    return current === path ? 'aria-current="page"' : "";
+    const current = window.location.pathname.endsWith("/") ? `${window.location.pathname}index.html` : window.location.pathname;
+    const target = core.url(path).split(/[?#]/)[0];
+    return current === target || current.split("/").pop() === target.split("/").pop() ? 'aria-current="page"' : "";
   }
 
   function headerMarkup() {
@@ -13,15 +14,15 @@
         <div class="container top-bar__inner">
           <span>AllonaHub güvenli alışveriş deneyimi</span>
           <nav class="top-bar__links" aria-label="Üst bağlantılar">
-            <a href="${core.url("orders.html")}">Siparişlerim</a>
-            <a href="${core.url("addresses.html")}">Adreslerim</a>
-            <a href="${core.url("favorites.html")}">Favorilerim</a>
+            <a href="${core.url("/pages/account/orders.html")}">Siparişlerim</a>
+            <a href="${core.url("/pages/account/addresses.html")}">Adreslerim</a>
+            <a href="${core.url("/pages/account/favorites.html")}">Favorilerim</a>
           </nav>
         </div>
       </div>
       <header class="site-header">
         <div class="container header-main">
-          <a class="brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
+          <a class="brand" href="${core.url("/index.html")}" aria-label="AllonaHub ana sayfa">
             <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
           </a>
           <form class="search-form" data-site-search>
@@ -29,25 +30,25 @@
             <button class="btn" type="submit">Ara</button>
           </form>
           <div class="header-actions">
-            <a class="icon-btn" href="${core.url("favorites.html")}" aria-label="Favoriler">
+            <a class="icon-btn" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               ♡ <span class="badge" data-fav-count>0</span>
             </a>
-            <a class="icon-btn" href="${core.url("cart.html")}" aria-label="Sepet">
+            <a class="icon-btn" href="${core.url("/pages/commerce/cart.html")}" aria-label="Sepet">
               🛒 <span class="badge" data-cart-count>0</span>
             </a>
-            <a class="link-btn icon-btn--wide" href="${core.url("login.html")}" data-account-link>Giriş Yap</a>
+            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/login.html")}" data-account-link>Giriş Yap</a>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
           </div>
         </div>
         <div class="nav-row">
           <div class="container nav-row__inner">
             <nav class="nav-links" data-nav-links aria-label="Ana menü">
-              <a href="${core.url("index.html")}" ${active("index.html")}>Vitrin</a>
-              <a href="${core.url("ecosystem.html")}" ${active("ecosystem.html")}>Ekosistem</a>
-              <a href="${core.url("shop.html")}" ${active("shop.html")}>Mağaza</a>
-              <a href="${core.url("cart.html")}" ${active("cart.html")}>Sepet</a>
-              <a href="${core.url("checkout.html")}" ${active("checkout.html")}>Ödeme</a>
-              <a href="${core.url("user-panel.html")}" ${active("user-panel.html")}>Hesabım</a>
+              <a href="${core.url("/index.html")}" ${active("/index.html")}>Vitrin</a>
+              <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
+              <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
+              <a href="${core.url("/pages/commerce/checkout.html")}" ${active("/pages/commerce/checkout.html")}>Ödeme</a>
+              <a href="${core.url("/pages/account/user-panel.html")}" ${active("/pages/account/user-panel.html")}>Hesabım</a>
             </nav>
           </div>
         </div>
@@ -70,7 +71,7 @@
       <footer class="site-footer">
         <div class="container footer-grid">
           <div class="footer-col">
-            <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
+            <a class="footer-brand" href="${core.url("/index.html")}" aria-label="AllonaHub ana sayfa">
               <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
             </a>
             <p>Allworksin Business Danışmanlık Tic. Ltd. Şti.</p>
@@ -79,25 +80,25 @@
           </div>
           <div class="footer-col">
             <h3>Mağaza</h3>
-            <a href="${core.url("shop.html")}">Ürünler</a>
-            <a href="${core.url("favorites.html")}">Favorilerim</a>
-            <a href="${core.url("orders.html")}">Siparişlerim</a>
+            <a href="${core.url("/pages/commerce/shop.html")}">Ürünler</a>
+            <a href="${core.url("/pages/account/favorites.html")}">Favorilerim</a>
+            <a href="${core.url("/pages/account/orders.html")}">Siparişlerim</a>
           </div>
           <div class="footer-col">
             <h3>Müşteri</h3>
-            <a href="${core.url("hakkimizda.html")}">Hakkımızda</a>
-            <a href="${core.url("iletisim.html")}">İletişim</a>
-            <a href="${core.url("teslimat-kargo.html")}">Teslimat ve Kargo</a>
-            <a href="${core.url("iade-politikasi.html")}">İade ve Cayma Hakkı</a>
+            <a href="${core.url("/pages/company/hakkimizda.html")}">Hakkımızda</a>
+            <a href="${core.url("/pages/company/iletisim.html")}">İletişim</a>
+            <a href="${core.url("/pages/legal/teslimat-kargo.html")}">Teslimat ve Kargo</a>
+            <a href="${core.url("/pages/legal/iade-politikasi.html")}">İade ve Cayma Hakkı</a>
           </div>
           <div class="footer-col">
             <h3>Yasal</h3>
-            <a href="${core.url("mesafeli-satis.html")}">Mesafeli Satış Sözleşmesi</a>
-            <a href="${core.url("on-bilgilendirme.html")}">Ön Bilgilendirme Formu</a>
-            <a href="${core.url("gizlilik.html")}">Gizlilik Politikası</a>
-            <a href="${core.url("kvkk.html")}">KVKK Aydınlatma Metni</a>
-            <a href="${core.url("cerez.html")}">Çerez Politikası</a>
-            <a href="${core.url("kullanim-sartlari.html")}">Kullanım Şartları</a>
+            <a href="${core.url("/pages/legal/mesafeli-satis.html")}">Mesafeli Satış Sözleşmesi</a>
+            <a href="${core.url("/pages/legal/on-bilgilendirme.html")}">Ön Bilgilendirme Formu</a>
+            <a href="${core.url("/pages/legal/gizlilik.html")}">Gizlilik Politikası</a>
+            <a href="${core.url("/pages/legal/kvkk.html")}">KVKK Aydınlatma Metni</a>
+            <a href="${core.url("/pages/legal/cerez.html")}">Çerez Politikası</a>
+            <a href="${core.url("/pages/legal/kullanim-sartlari.html")}">Kullanım Şartları</a>
           </div>
         </div>
         <div class="container footer-social" aria-label="AllonaHub sosyal medya bağlantıları">
@@ -118,7 +119,7 @@
     if (!link || !App.auth) return;
     const user = await App.auth.getUser();
     if (user) {
-      link.href = core.url("user-panel.html");
+      link.href = core.url("/pages/account/user-panel.html");
       link.textContent = "Hesabım";
     }
   }
@@ -148,7 +149,7 @@
       if (!form) return;
       event.preventDefault();
       const q = new FormData(form).get("q") || "";
-      window.location.href = core.url(`shop.html?q=${encodeURIComponent(q)}`);
+      window.location.href = core.url(`/pages/commerce/shop.html?q=${encodeURIComponent(q)}`);
     });
 
     document.addEventListener("click", (event) => {

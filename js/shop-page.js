@@ -14,7 +14,7 @@
       sold_count: 186,
       rating: 4.8,
       discount: "%18",
-      image_url: "teknoloji.png",
+      image_url: "/images/modules/teknoloji.png",
       created_at: "2026-06-15T09:00:00Z"
     },
     {
@@ -28,7 +28,7 @@
       sold_count: 244,
       rating: 4.7,
       discount: "%12",
-      image_url: "market.png",
+      image_url: "/images/modules/market.png",
       created_at: "2026-06-14T09:00:00Z"
     },
     {
@@ -42,7 +42,7 @@
       sold_count: 391,
       rating: 4.9,
       discount: "HP+",
-      image_url: "wallet.png",
+      image_url: "/images/modules/wallet.png",
       created_at: "2026-06-13T09:00:00Z"
     },
     {
@@ -56,7 +56,7 @@
       sold_count: 128,
       rating: 4.6,
       discount: "%22",
-      image_url: "evhizmetleri.png",
+      image_url: "/images/modules/evhizmetleri.png",
       created_at: "2026-06-12T09:00:00Z"
     },
     {
@@ -70,7 +70,7 @@
       sold_count: 96,
       rating: 4.5,
       discount: "Yeni",
-      image_url: "sporfitnes.png",
+      image_url: "/images/modules/sporfitnes.png",
       created_at: "2026-06-11T09:00:00Z"
     },
     {
@@ -84,7 +84,7 @@
       sold_count: 318,
       rating: 4.8,
       discount: "%15",
-      image_url: "yemek.png",
+      image_url: "/images/modules/yemek.png",
       created_at: "2026-06-10T09:00:00Z"
     },
     {
@@ -98,7 +98,7 @@
       sold_count: 112,
       rating: 4.7,
       discount: "%10",
-      image_url: "evcilhayvan.png",
+      image_url: "/images/modules/evcilhayvan.png",
       created_at: "2026-06-09T09:00:00Z"
     },
     {
@@ -112,7 +112,7 @@
       sold_count: 74,
       rating: 4.6,
       discount: "HP x2",
-      image_url: "seyahat.png",
+      image_url: "/images/modules/seyahat.png",
       created_at: "2026-06-08T09:00:00Z"
     }
   ].map(core.normalizeProduct);
@@ -122,7 +122,7 @@
       subtitle: "Allona Shop",
       campaign_text: "Yeni üyelere özel alışveriş fırsatları",
       description: "Seçili ürünleri güvenli ödeme, hızlı sepet ve HP avantajlarıyla keşfedin.",
-      image_url: "allona-shop.png",
+      image_url: "/images/modules/allona-shop.png",
       cta_label: "Alışverişe Başla",
       link_url: "#featured-products"
     },
@@ -131,36 +131,36 @@
       subtitle: "Kategori Fırsatları",
       campaign_text: "Güncel stok ve fiyat altyapısı hazır",
       description: "Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek vitrinde.",
-      image_url: "shop.png",
+      image_url: "/images/modules/shop.png",
       cta_label: "Kataloğu Aç",
-      link_url: "shop.html"
+      link_url: "/pages/commerce/shop.html"
     },
     {
       title: "Yeni gelen ürünleri yakalayın.",
       subtitle: "Teknoloji",
       campaign_text: "Favori, puanlama ve hızlı sepete ekle",
       description: "Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı vitrin yapısı.",
-      image_url: "teknoloji.png",
+      image_url: "/images/modules/teknoloji.png",
       cta_label: "Teknolojiyi İncele",
-      link_url: "shop.html?category=Teknoloji"
+      link_url: "/pages/commerce/shop.html?category=Teknoloji"
     },
     {
       title: "Market, bakım ve ev ihtiyaçları.",
       subtitle: "Günlük Alışveriş",
       campaign_text: "Mobilde yatay kaydırmalı kategori deneyimi",
       description: "Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.",
-      image_url: "market.png",
+      image_url: "/images/modules/market.png",
       cta_label: "Market Ürünleri",
-      link_url: "shop.html?category=Market"
+      link_url: "/pages/commerce/shop.html?category=Market"
     },
     {
       title: "HP, kupon ve premium avantaj.",
       subtitle: "Kupon",
       campaign_text: "Premium üyeliklerle daha fazla kazanım",
       description: "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.",
-      image_url: "wallet.png",
+      image_url: "/images/modules/wallet.png",
       cta_label: "Kupona Git",
-      link_url: "hubwallet.html"
+      link_url: "/pages/wallet/hubwallet.html"
     }
   ];
 
@@ -268,9 +268,9 @@
       subtitle: ad.subtitle || product?.brand || product?.category || "Günlük Partner Reklamı",
       campaign_text: ad.campaign_text || product?.discount || product?.discount_label || "Bugüne özel görünürlük",
       description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst vitrinde keşfedin.",
-      image_url: ad.image_url || product?.image_url || "allona-shop.png",
+      image_url: ad.image_url || product?.image_url || "/images/modules/allona-shop.png",
       cta_label: ad.cta_label || "İncele",
-      link_url: ad.link_url || (product ? core.productUrl(product) : "shop.html"),
+      link_url: ad.link_url || (product ? core.productUrl(product) : "/pages/commerce/shop.html"),
       source_id: ad.id || product?.id
     };
   }
@@ -312,13 +312,13 @@
     if (!slider || !track || !ads.length) return;
     track.innerHTML = ads.map((ad, index) => `
       <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide>
-        <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "allona-shop.png"))}" alt="${core.escapeHTML(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
+        <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"))}" alt="${core.escapeHTML(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
         <div class="shop-promo-content">
           <p class="eyebrow">${core.escapeHTML(ad.subtitle)}</p>
           <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${core.escapeHTML(ad.title)}</h${index === 0 ? "1" : "2"}>
           <p>${core.escapeHTML(ad.description)}</p>
           <strong>${core.escapeHTML(ad.campaign_text)}</strong>
-          <a class="btn" href="${core.escapeHTML(ad.link_url || "shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
+          <a class="btn" href="${core.escapeHTML(ad.link_url || "/pages/commerce/shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
         </div>
       </article>
     `).join("");

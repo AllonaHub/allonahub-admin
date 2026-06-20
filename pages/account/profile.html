@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil | AllonaHub</title>
+  <meta name="description" content="AllonaHub profil güncelleme.">
+  <meta http-equiv="refresh" content="0; url=/pages/account/user-panel.html">
+  <link rel="stylesheet" href="/css/styles.v2.css?v=20260619-live5">
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+  <script>
+    window.location.replace("/pages/account/user-panel.html");
+  </script>
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Profil</h1>
+        </div>
+      </section>
+      <section class="container account-grid">
+        <nav class="side-menu" aria-label="Hesap menüsü">
+          <a href="/pages/account/user-panel.html" aria-current="page">Panel</a>
+          <a href="/pages/account/addresses.html">Adreslerim</a>
+          <a href="/pages/account/orders.html">Siparişlerim</a>
+          <a href="/pages/account/favorites.html">Favorilerim</a>
+          <button type="button" data-sign-out>Çıkış Yap</button>
+        </nav>
+        <form class="panel" data-profile-form>
+          <div data-profile-status></div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="profile-email">E-posta</label>
+              <input id="profile-email" type="email" name="email" disabled>
+            </div>
+            <div class="field">
+              <label for="profile-role">Rol</label>
+              <input id="profile-role" name="role" readonly>
+            </div>
+            <div class="field">
+              <label for="profile-name">Ad Soyad</label>
+              <input id="profile-name" name="full_name" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="profile-phone">Telefon</label>
+              <input id="profile-phone" name="phone" autocomplete="tel">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Profili Güncelle</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="/js/config.js?v=20260619-live5" defer></script>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/supabase-client.js?v=20260620-auth2" defer></script>
+  <script src="/js/auth.js?v=20260620-auth2" defer></script>
+  <script src="/js/cart.js?v=20260619-live9" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/account-page.v4.js?v=20260619-sec1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>

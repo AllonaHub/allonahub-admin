@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AllonaHub Partner Girişi</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+html{scroll-behavior:smooth}
+body{background:#020814;color:white;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:0}
+
+.page{width:min(1320px,100%);margin:0 auto;padding:18px 22px 55px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:28px;position:relative;overflow:hidden}
+
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 380px;gap:18px;align-items:center;margin-bottom:24px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:48px;height:48px;object-fit:contain}
+.brand b{font-size:30px;color:#ffd700}
+.brand span{font-size:30px;color:#00e5ff;font-weight:900}
+
+.search{height:60px;display:flex;align-items:center;gap:12px;padding:0 14px 0 22px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search button{height:42px;padding:0 20px;border-radius:14px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
+.actions{min-height:60px;display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;padding:8px 12px}
+.actions a{font-weight:800;color:white}
+.actions a:hover{color:#00e5ff}
+.actions .platform-controls-slot{display:inline-flex}
+.actions .platform-controls{width:auto;justify-content:flex-end}
+
+.hero{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:28px}
+.hero-main{padding:36px;text-align:center;margin-bottom:20px}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.08;margin-bottom:14px}
+.hero-main p{font-size:17px;opacity:.82;line-height:1.6;max-width:850px;margin:0 auto}
+.hero-badges{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:26px auto 0;max-width:650px}
+.badge{padding:16px;border-radius:18px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);text-align:center}
+.badge b{display:block;color:#ffd700;font-size:24px;margin-bottom:4px}
+.badge small{opacity:.75}
+
+.partner-login{padding:34px;min-height:520px;width:720px;margin:0 auto 34px}
+.partner-login h2{font-size:36px;color:#ffd700;margin-bottom:8px;text-align:center}
+.partner-login p{text-align:center;opacity:.75;line-height:1.45;margin-bottom:22px}
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:18px;padding:6px;margin-bottom:22px}
+.tab{flex:1;background:transparent;color:white;padding:13px;border-radius:14px;font-weight:900}
+.tab.active{background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,229,255,.3)}
+.form{display:none}
+.form.active{display:block}
+.input{height:54px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 16px;margin-bottom:13px}
+.input input,.input select,.input textarea{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.input select option{background:#061b33;color:white}
+.textarea{height:96px;padding:12px 16px}
+.textarea textarea{resize:none}
+.btn{width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:16px;font-weight:900;margin-top:6px;box-shadow:0 0 22px rgba(255,215,0,.22)}
+.secondary-btn{background:rgba(255,255,255,.08);color:white;border:1px solid rgba(255,255,255,.16);margin-top:12px}
+.form-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:36px 0 16px}
+.section-title h2{font-size:34px;color:#ffd700}
+.section-title a{color:#00e5ff;font-weight:900}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:22px;min-height:155px}
+.card h3{color:#ffd700;margin-bottom:9px}
+.card p{font-size:13px;opacity:.76;line-height:1.45}
+
+.notice{position:fixed;right:26px;bottom:26px;z-index:99;max-width:430px;padding:17px 20px;border-radius:20px;background:#031326;border:1px solid #00e5ff88;box-shadow:0 0 30px #00e5ff44;display:none;line-height:1.45}
+.notice b{color:#ffd700}
+
+.footer-main{margin-top:38px;padding:30px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:12px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;margin-top:30px;padding-top:20px;opacity:.85;line-height:1.8}
+.social-icons{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:24px;margin-top:25px}
+.social-icons a{width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 18px rgba(0,229,255,.20);transition:.35s;font-size:22px}
+.social-icons span{font-size:11px;font-weight:600;color:#fff;opacity:.9}
+.social-icons .wa{color:#25D366}.social-icons .ig{background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);color:white}.social-icons .x{color:white}.social-icons .fb{color:#1877F2}.social-icons .yt{color:#FF0000}.social-icons .li{color:#0A66C2}.social-icons .tg{color:#229ED9}.social-icons .tk{color:white}.social-icons .mail{color:#ffd700}
+@media(max-width:900px){
+body{overflow-x:hidden}
+.page{width:100%;padding:14px 12px 38px}
+.header{height:auto;grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+.brand,.search,.actions{width:100%;min-height:58px}
+.search{padding:10px 12px}
+.search input{min-width:0}
+.actions{justify-content:flex-start}
+.hero-main{padding:24px;border-radius:22px}
+.hero-main h1{font-size:clamp(2rem,10vw,3rem)}
+.hero-badges,.grid-4,.footer-grid,.form-actions{grid-template-columns:1fr}
+.partner-login{width:100%;min-height:auto;padding:24px;border-radius:22px}
+.tabs{flex-wrap:wrap}
+.tab{flex:1 1 140px}
+.section-title{align-items:flex-start;gap:10px;flex-direction:column}
+}
+</style>
+  <link rel="stylesheet" href="/css/platform.css?v=20260620-mobile1">
+</head>
+
+<body>
+<div class="page">
+
+<div class="header">
+<a class="brand glass" href="/index.html">
+<div><b>Allona</b><span>Hub</span></div>
+</a>
+
+<div class="search glass">
+<span>🔍</span>
+<input id="partnerSearchInput" placeholder="Partner, ödeme, kampanya, mağaza, QR veya sektör ara...">
+<button onclick="partnerSearch()">Ara</button>
+</div>
+
+<div class="actions glass">
+<a href="/index.html">Ana Sayfa</a>
+<a href="/pages/account/login.html">Kullanıcı Girişi</a>
+<a href="/pages/wallet/hubwallet.html">Kupon</a>
+<span class="platform-controls-slot" data-platform-controls-slot></span>
+</div>
+</div>
+
+<section class="hero">
+
+<div class="hero-main glass">
+<h1>AllonaHub Partner Ekosistemine Katıl</h1>
+<p>İşletmeni AllonaHub ekosistemine taşı. Başvurunu gönder, onay sürecinden sonra partner panelinden ürün, hizmet, kampanya ve ödeme süreçlerini yönet.</p>
+
+<div class="hero-badges">
+<div class="badge"><b>QR</b><small>Ödeme Al</small></div>
+<div class="badge"><b>HP</b><small>Kampanya Yönet</small></div>
+<div class="badge"><b>24/7</b><small>Panel Erişimi</small></div>
+</div>
+</div>
+
+<div class="partner-login glass">
+<h2>Partner Girişi</h2>
+<p>Mevcut partnerler giriş yapabilir, yeni işletmeler başvuru oluşturabilir.</p>
+
+<div class="tabs">
+<button class="tab active" onclick="openPartnerTab('login', event)">Giriş</button>
+<button class="tab" onclick="openPartnerTab('apply', event)">Başvuru</button>
+</div>
+
+<div id="login" class="form active">
+<div class="input"><input id="loginEmail" placeholder="E-posta"></div>
+<div class="input"><input id="loginPassword" type="password" placeholder="Şifre"></div>
+<button class="btn" onclick="partnerLogin()">Partner Paneline Giriş</button>
+<button class="btn secondary-btn" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
+</div>
+
+<div id="apply" class="form">
+<div class="input"><input id="partner_name" placeholder="Firma / İşletme Adı"></div>
+<div class="input"><input id="contact_name" placeholder="Yetkili Ad Soyad"></div>
+<div class="input"><input id="email" placeholder="E-posta"></div>
+
+<div class="input">
+<select id="countryCode" style="width:260px;border-right:1px solid rgba(255,255,255,.15);margin-right:10px;">
+<option value="+90">🇹🇷 Türkiye +90</option>
+<option value="+994">🇦🇿 Azerbaycan +994</option>
+<option value="+1">🇺🇸 ABD / Kanada +1</option>
+<option value="+44">🇬🇧 İngiltere +44</option>
+<option value="+49">🇩🇪 Almanya +49</option>
+<option value="+33">🇫🇷 Fransa +33</option>
+<option value="+39">🇮🇹 İtalya +39</option>
+<option value="+34">🇪🇸 İspanya +34</option>
+<option value="+31">🇳🇱 Hollanda +31</option>
+<option value="+32">🇧🇪 Belçika +32</option>
+<option value="+41">🇨🇭 İsviçre +41</option>
+<option value="+43">🇦🇹 Avusturya +43</option>
+<option value="+7">🇷🇺 Rusya / Kazakistan +7</option>
+<option value="+380">🇺🇦 Ukrayna +380</option>
+<option value="+971">🇦🇪 BAE +971</option>
+<option value="+966">🇸🇦 Suudi Arabistan +966</option>
+<option value="+974">🇶🇦 Katar +974</option>
+<option value="+965">🇰🇼 Kuveyt +965</option>
+<option value="+973">🇧🇭 Bahreyn +973</option>
+<option value="+968">🇴🇲 Umman +968</option>
+<option value="+20">🇪🇬 Mısır +20</option>
+<option value="+212">🇲🇦 Fas +212</option>
+<option value="+216">🇹🇳 Tunus +216</option>
+<option value="+213">🇩🇿 Cezayir +213</option>
+<option value="+86">🇨🇳 Çin +86</option>
+<option value="+81">🇯🇵 Japonya +81</option>
+<option value="+82">🇰🇷 Güney Kore +82</option>
+<option value="+91">🇮🇳 Hindistan +91</option>
+<option value="+62">🇮🇩 Endonezya +62</option>
+<option value="+60">🇲🇾 Malezya +60</option>
+<option value="+65">🇸🇬 Singapur +65</option>
+<option value="+61">🇦🇺 Avustralya +61</option>
+<option value="+64">🇳🇿 Yeni Zelanda +64</option>
+<option value="+55">🇧🇷 Brezilya +55</option>
+<option value="+52">🇲🇽 Meksika +52</option>
+<option value="+27">🇿🇦 Güney Afrika +27</option>
+</select>
+<input id="phone" inputmode="numeric" placeholder="Telefon numarası">
+</div>
+
+<div class="input"><input id="tax_number" placeholder="Vergi Numarası"></div>
+<div class="input"><input id="tax_office" placeholder="Vergi Dairesi"></div>
+
+<div class="input">
+<select id="company_type">
+<option value="">Şirket Türü Seç</option>
+<option>Şahıs Şirketi</option>
+<option>Limited Şirket</option>
+<option>Anonim Şirket</option>
+<option>Kooperatif</option>
+<option>Dernek / Vakıf</option>
+<option>Bireysel Hizmet Sağlayıcı</option>
+</select>
+</div>
+
+<div class="input"><input id="website" placeholder="Web Sitesi (opsiyonel)"></div>
+<div class="input"><input id="city" placeholder="İl / Şehir"></div>
+<div class="input"><input id="country" placeholder="Ülke"></div>
+
+<div class="input">
+<select id="category">
+<option value="">Sektör Seç</option>
+<option>AllonaHub / E-Ticaret</option>
+<option>Restoran & Yemek</option>
+<option>Market</option>
+<option>Kurye & Lojistik</option>
+<option>Taksi & Ulaşım</option>
+<option>Sağlık & Klinik</option>
+<option>Eczane</option>
+<option>Güzellik & Kozmetik</option>
+<option>Spor & Fitness</option>
+<option>Hukuk & Danışmanlık</option>
+<option>İK & Kariyer</option>
+<option>Denizcilik / Maritime</option>
+<option>Eğitim</option>
+<option>Finans</option>
+<option>Seyahat & Turizm</option>
+<option>Otel & Konaklama</option>
+<option>Gayrimenkul</option>
+<option>Otomotiv</option>
+<option>Etkinlik & Eğlence</option>
+<option>Ev Hizmetleri</option>
+<option>Petshop & Evcil Hayvan</option>
+<option>Mobilya & Dekorasyon</option>
+<option>Teknoloji & Elektronik</option>
+<option>Moda & Giyim</option>
+<option>Takı & Aksesuar</option>
+<option>Anne & Çocuk</option>
+<option>Kitap & Kırtasiye</option>
+<option>Sanat & Tasarım</option>
+<option>Yapı Market & Tadilat</option>
+<option>Diğer Hizmetler</option>
+</select>
+</div>
+
+<div class="input textarea"><textarea id="message" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
+
+<div class="form-actions">
+<button class="btn" onclick="sendPartnerApplication()">Başvuruyu Gönder</button>
+<button class="btn secondary-btn" onclick="clearApplyForm()">Tümünü Temizle</button>
+</div>
+</div>
+</div>
+</section>
+<div class="section-title">
+<h2>Partner Avantajları</h2>
+<a href="#apply" onclick="openPartnerTab('apply', event)">Başvuru Yap</a>
+</div>
+
+<div class="grid-4">
+<div class="card glass"><h3>Daha Fazla Görünürlük</h3><p>İşletmen AllonaHub modüllerinde doğru müşteriye görünür.</p></div>
+<div class="card glass"><h3>HP Ekonomisi</h3><p>Kullanıcılar HP ve kupon avantajı ile partnerlere daha sık döner.</p></div>
+<div class="card glass"><h3>Güvenli Ödeme</h3><p>Ödeme talepleri, kuponlar ve işlem geçmişi kayıt altında tutulur.</p></div>
+<div class="card glass"><h3>Tek Panel</h3><p>Ürün, hizmet, kampanya, ödeme ve raporlar tek merkezden yönetilir.</p></div>
+</div>
+
+<div class="section-title">
+<h2>Başvuru Süreci</h2>
+<a href="#apply" onclick="openPartnerTab('apply', event)">Hemen Başvur</a>
+</div>
+
+<div class="grid-4">
+<div class="card glass"><h3>1. Başvuru</h3><p>İşletme bilgilerini gir ve partner başvurunu gönder.</p></div>
+<div class="card glass"><h3>2. Kontrol</h3><p>AllonaHub ekibi sektör, belge ve uygunluk kontrolü yapar.</p></div>
+<div class="card glass"><h3>3. Panel Açılışı</h3><p>Onaylanan partner için panel erişimi aktif edilir.</p></div>
+<div class="card glass"><h3>4. Satış & Ödeme</h3><p>Ürün, hizmet, kampanya ve QR ödeme akışları başlatılır.</p></div>
+</div>
+
+<div id="notice" class="notice"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
+
+const EMAILJS_SERVICE_ID = "service_s9myas7";
+const EMAILJS_TEMPLATE_ID = "template_i7xzsya";
+const EMAILJS_PUBLIC_KEY = "j_8unIhsqi5PEVebP";
+emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+
+function showNotice(message){
+  const n=document.getElementById("notice");
+  n.textContent=String(message || "");
+  n.style.display="block";
+  setTimeout(()=>{n.style.display="none"},4500);
+}
+
+async function partnerLoginWithGoogle(){
+  const redirectUrl=new URL("/pages/partner/partner.html", window.location.href);
+  redirectUrl.searchParams.set("partnerOAuth","google");
+
+  try{
+    const { error }=await supabaseClient.auth.signInWithOAuth({
+      provider:"google",
+      options:{
+        redirectTo:redirectUrl.href,
+        queryParams:{
+          access_type:"offline",
+          prompt:"select_account"
+        }
+      }
+    });
+
+    if(error)throw error;
+  }catch(err){
+    showNotice("Google ile partner girişi başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }
+}
+
+async function completePartnerGoogleLogin(session){
+  const email=session?.user?.email ? String(session.user.email).trim().toLowerCase() : "";
+
+  if(!email){
+    showNotice("Google hesabından e-posta bilgisi alınamadı.");
+    return;
+  }
+
+  const {data:verified,error:verifyError}=await supabaseClient.auth.getUser();
+  if(verifyError || !verified || !verified.user || verified.user.id !== session.user.id){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+    showNotice("Google oturumu güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+    return;
+  }
+
+  const { data, error }=await supabaseClient
+    .from("partners")
+    .select("*")
+    .eq("email",email)
+    .eq("status","active")
+    .maybeSingle();
+
+  if(error){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(authError){}
+    console.error("Google partner kaydı okunamadı", error);
+    showNotice("Partner kaydı şu anda kontrol edilemedi.");
+    return;
+  }
+
+  if(!data){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+    showNotice("Bu Google hesabı için aktif partner kaydı bulunamadı.");
+    return;
+  }
+
+  localStorage.setItem("allonaPartnerLoggedIn","true");
+  localStorage.setItem("allonaPartnerEmail",email);
+  localStorage.setItem("allonaPartnerUserId",session.user.id);
+  localStorage.setItem("allonaPartnerProfile",JSON.stringify(data));
+  localStorage.setItem("allonaPartnerId",data.partner_id || "");
+  localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
+  localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+
+  window.location.href="/pages/partner/partner-panel.html";
+}
+
+function initPartnerGoogleCallback(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("partnerOAuth")!=="google")return;
+
+  showNotice("Google oturumu kontrol ediliyor...");
+
+  let handled=false;
+  const resolveOnce=async(session)=>{
+    if(handled || !session)return;
+    handled=true;
+    await completePartnerGoogleLogin(session);
+  };
+
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(session && (event==="INITIAL_SESSION" || event==="SIGNED_IN")){
+      resolveOnce(session);
+    }
+  });
+
+  setTimeout(async()=>{
+    const { data }=await supabaseClient.auth.getSession();
+    if(data.session){
+      resolveOnce(data.session);
+      return;
+    }
+    if(!handled){
+      showNotice("Google oturumu tamamlanamadı. Lütfen tekrar deneyin.");
+    }
+  },700);
+}
+
+function partnerRateLimit(key,limit,windowMs){
+  const storageKey="allona_rate:"+key;
+  const now=Date.now();
+  let hits=[];
+  try{hits=JSON.parse(localStorage.getItem(storageKey)||"[]")}catch(err){hits=[]}
+  hits=hits.filter(time=>now-Number(time)<windowMs);
+  if(hits.length>=limit)return false;
+  hits.push(now);
+  localStorage.setItem(storageKey,JSON.stringify(hits));
+  return true;
+}
+
+function normalizePartnerEmail(value){
+  return String(value || "").trim().toLowerCase().slice(0,180);
+}
+
+function validPartnerEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || ""));
+}
+
+function clearPartnerAuth(){
+  [
+    "allonaPartnerLoggedIn",
+    "allonaPartnerEmail",
+    "allonaPartnerUserId",
+    "allonaPartnerProfile",
+    "allonaPartnerId",
+    "allonaPartnerType",
+    "allonahub_auth_verified_at"
+  ].forEach(key=>localStorage.removeItem(key));
+}
+
+function openPartnerTab(tabId,event){
+  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+  document.getElementById(tabId).classList.add("active");
+
+  if(event && event.target && event.target.classList.contains("tab")){
+    event.target.classList.add("active");
+  }else{
+    document.querySelectorAll(".tab").forEach(btn=>{
+      const text=btn.textContent.toLowerCase();
+      if((tabId==="apply" && text.includes("başvuru")) || (tabId==="login" && text.includes("giriş"))){
+        btn.classList.add("active");
+      }
+    });
+    document.querySelector(".partner-login").scrollIntoView({behavior:"smooth"});
+  }
+}
+
+async function partnerLogin(){
+  const email=normalizePartnerEmail(document.getElementById("loginEmail").value);
+  const password=document.getElementById("loginPassword").value;
+
+  if(!partnerRateLimit("partner-login",8,15*60*1000)){
+    showNotice("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!validPartnerEmail(email) || !password){
+    showNotice("E-posta ve şifrenizi kontrol edin.");
+    return;
+  }
+
+  const btn=document.querySelector("#login .btn");
+  btn.disabled=true;
+  btn.textContent="Giriş yapılıyor...";
+
+  try{
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+
+    if(error || !data || !data.user){
+      showNotice("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
+      return;
+    }
+
+    const {data:verified,error:verifyError}=await supabaseClient.auth.getUser();
+    if(verifyError || !verified || !verified.user || verified.user.id !== data.user.id){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+      return;
+    }
+
+    const {data:partner,error:partnerError}=await supabaseClient
+      .from("partners")
+      .select("*")
+      .eq("email",email)
+      .limit(1)
+      .maybeSingle();
+
+    if(partnerError){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Partner kaydı şu anda okunamadı.");
+      return;
+    }
+
+    if(!partner){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Bu e-posta için partner kaydı bulunamadı.");
+      return;
+    }
+
+    if(partner.status && partner.status !== "active"){
+      clearPartnerAuth();
+      try{
+        await supabaseClient.auth.signOut({scope:"local"});
+      }catch(error){}
+      showNotice("Partner hesabınız henüz aktif değil.");
+      return;
+    }
+
+    localStorage.setItem("allonaPartnerLoggedIn","true");
+    localStorage.setItem("allonaPartnerEmail",email);
+    localStorage.setItem("allonaPartnerUserId",data.user.id);
+    localStorage.setItem("allonaPartnerProfile",JSON.stringify(partner));
+    localStorage.setItem("allonaPartnerId",partner.partner_id || "");
+    localStorage.setItem("allonaPartnerType",partner.partner_type || "shop");
+    localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+
+    window.location.href="/pages/partner/partner-panel.html";
+
+  }catch(err){
+    showNotice("Giriş sırasında hata oluştu. Lütfen tekrar deneyin.");
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Partner Paneline Giriş";
+  }
+}
+
+function getApplyData(){
+  const partnerName=document.getElementById("partner_name").value.trim();
+  return{
+    partner_name:partnerName,
+    company_name:partnerName,
+    contact_name:document.getElementById("contact_name").value.trim(),
+    email:document.getElementById("email").value.trim().toLowerCase(),
+    phone:document.getElementById("countryCode").value+" "+document.getElementById("phone").value.trim(),
+    tax_number:document.getElementById("tax_number").value.trim(),
+    tax_office:document.getElementById("tax_office").value.trim(),
+    company_type:document.getElementById("company_type").value.trim(),
+    website:document.getElementById("website").value.trim(),
+    city:document.getElementById("city").value.trim(),
+    country:document.getElementById("country").value.trim(),
+    category:document.getElementById("category").value.trim(),
+    message:document.getElementById("message").value.trim(),
+    date:new Date().toLocaleString("tr-TR"),
+    status:"pending"
+  };
+}
+
+function validateApply(data){
+  if(!data.partner_name)return "Firma / İşletme adı zorunlu.";
+  if(!data.contact_name)return "Yetkili ad soyad zorunlu.";
+  if(!data.email || !data.email.includes("@"))return "Geçerli bir e-posta gir.";
+  if(data.website){
+    try{
+      const parsed=new URL(data.website);
+      if(!["http:","https:"].includes(parsed.protocol))return "Web sitesi adresini kontrol et.";
+    }catch(err){
+      return "Web sitesi adresini kontrol et.";
+    }
+  }
+
+  const rawPhone=document.getElementById("phone").value.replace(/\D/g,"");
+  if(!rawPhone)return "Telefon numarası zorunlu.";
+  if(rawPhone.length<7)return "Telefon numarası çok kısa görünüyor.";
+  if(rawPhone.length>15)return "Telefon numarası çok uzun görünüyor.";
+
+  if(!data.tax_number)return "Vergi numarası zorunlu.";
+  if(!data.company_type)return "Şirket türü seçiniz.";
+  if(!data.city)return "Şehir bilgisi zorunlu.";
+  if(!data.country)return "Ülke bilgisi zorunlu.";
+  if(!data.category)return "Sektör seçmelisin.";
+
+  return "";
+}
+
+async function sendPartnerApplication(){
+  if(!partnerRateLimit("partner-application",3,60*60*1000)){
+    showNotice("Çok sık başvuru denemesi yapıldı. Lütfen biraz bekleyin.");
+    return;
+  }
+
+  const data=getApplyData();
+  const error=validateApply(data);
+
+  if(error){
+    showNotice(error);
+    return;
+  }
+
+  const sendBtn=document.querySelector(".form-actions .btn");
+  sendBtn.disabled=true;
+  sendBtn.textContent="Gönderiliyor...";
+
+  try{
+    const {error:supabaseError}=await supabaseClient
+      .from("partner_applications")
+      .insert([data]);
+
+    if(supabaseError){
+      console.error("Partner başvurusu kaydedilemedi", supabaseError);
+      showNotice("Başvuru şu anda kaydedilemedi. Lütfen daha sonra tekrar deneyin.");
+      return;
+    }
+
+    await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
+
+    localStorage.setItem("lastPartnerApplication",JSON.stringify(data));
+    showNotice("Başvurunuz alındı. Başvuru kaydedildi ve mail gönderildi.");
+    clearApplyForm(false);
+
+  }catch(err){
+    console.error("Partner başvurusu gönderilemedi", err);
+    showNotice("Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
+  }finally{
+    sendBtn.disabled=false;
+    sendBtn.textContent="Başvuruyu Gönder";
+  }
+}
+
+function clearApplyForm(showMsg=true){
+  ["partner_name","contact_name","email","phone","tax_number","tax_office","website","city","country","message"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value="";
+  });
+
+  document.getElementById("company_type").value="";
+  document.getElementById("category").value="";
+
+  if(showMsg){
+    showNotice("Başvuru formu temizlendi.");
+  }
+}
+
+function partnerSearch(){
+  const q=document.getElementById("partnerSearchInput").value.toLowerCase().trim();
+
+  if(!q){
+    showNotice("Arama yapmak için kelime yaz.");
+    return;
+  }
+
+  if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="/pages/wallet/hubwallet.html";
+  else if(q.includes("kampanya")||q.includes("hp"))window.location.href="/pages/wallet/hp-wallet-kurallari.html";
+  else if(q.includes("yemek")||q.includes("restoran"))window.location.href="/pages/commerce/allonayemek.html";
+  else if(q.includes("market"))window.location.href="/pages/commerce/allonamarket.html";
+  else if(q.includes("shop")||q.includes("mağaza"))window.location.href="/pages/commerce/allonashop.html";
+  else if(q.includes("kurye"))window.location.href="/pages/ecosystem/allonakurye.html";
+  else window.location.href="/pages/search/arama.html?q="+encodeURIComponent(q);
+}
+
+document.getElementById("partnerSearchInput").addEventListener("keydown",function(e){
+  if(e.key==="Enter")partnerSearch();
+});
+
+document.getElementById("phone").addEventListener("input",function(){
+  this.value=this.value.replace(/[^\d\s]/g,"").replace(/\s+/g," ");
+});
+
+initPartnerGoogleCallback();
+</script>
+  <div data-layout="footer"></div>
+  <script src="/js/core.js?v=20260619-sec1" defer></script>
+  <script src="/js/layout.v3.js?v=20260620-account1" defer></script>
+  <script src="/js/platform.js?v=20260620-auth2" defer></script>
+</body>
+</html>
