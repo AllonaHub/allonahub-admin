@@ -1,5 +1,6 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{background:#020814;color:white;overflow-x:hidden}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:#020814;color:white;overflow-x:hidden;min-width:0}
 body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
 body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
@@ -16,7 +17,7 @@ header{height:92px!important;padding:0 7%!important;display:flex!important;align
 .logo-title .gold{color:#ffd700!important}.logo-title .blue{color:#00e5ff!important}
 
 .nav-search{flex:1!important;max-width:560px!important;height:48px!important;padding:0 8px 0 18px!important;border-radius:999px!important;border:1px solid rgba(0,225,255,.75)!important;background:rgba(0,18,40,.86)!important;box-shadow:0 0 22px rgba(0,180,255,.22)!important;display:flex!important;align-items:center!important;gap:10px!important}
-.nav-search input{flex:1;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.nav-search input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
 .nav-search input::placeholder{color:rgba(255,255,255,.62)}
 .search-btn{height:36px;padding:0 18px;border:0;border-radius:999px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,225,255,.35)}
 
@@ -567,5 +568,191 @@ nav a:hover{color:#00e5ff!important}
   .hero-clock{
     font-size:28px;
     letter-spacing:4px;
+  }
+}
+
+@media(max-width:980px){
+  .live-ads-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px){
+  .top-mini-nav{
+    flex-wrap:wrap;
+    justify-content:center;
+    overflow:visible;
+    white-space:normal;
+  }
+
+  .top-mini-nav a{
+    min-height:30px;
+    display:inline-flex;
+    align-items:center;
+  }
+
+  header{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    align-items:stretch!important;
+    padding:12px!important;
+  }
+
+  .logo{
+    justify-content:center!important;
+  }
+
+  .nav-search{
+    width:100%!important;
+    min-width:0!important;
+    padding:0 6px 0 12px!important;
+  }
+
+  .search-btn{
+    min-width:62px;
+    height:34px;
+  }
+
+  header nav{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+    overflow:visible;
+    padding-bottom:0;
+  }
+
+  header nav a,
+  .login{
+    min-height:42px;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    border:1px solid rgba(0,229,255,.24)!important;
+    border-radius:14px!important;
+    background:rgba(0,18,40,.72)!important;
+    padding:0 10px!important;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,180,255,.10)!important;
+  }
+
+  .platform-controls-slot{
+    grid-column:1 / -1;
+    order:0;
+    width:100%;
+  }
+
+  .platform-controls-slot .platform-controls{
+    width:100%;
+    justify-content:stretch;
+  }
+
+  .platform-controls-slot .platform-control{
+    flex:1 1 0;
+  }
+
+  .platform-controls-slot .platform-control-btn{
+    width:100%;
+  }
+
+  .hero-main-card{
+    min-height:250px;
+  }
+
+  .hero-main-card h1{
+    font-size:38px;
+    line-height:1.1;
+  }
+
+  .section-head h2,
+  .section-title{
+    font-size:31px;
+    line-height:1.14;
+  }
+
+  .modules-grid.large-grid .module-card h3{
+    font-size:19px!important;
+  }
+
+  .tier{
+    border-radius:22px;
+    padding:22px;
+  }
+
+  .btn{
+    width:100%;
+    text-align:center;
+  }
+}
+
+@media(max-width:430px){
+  .top-mini-nav{
+    gap:10px;
+    padding-inline:10px;
+  }
+
+  header{
+    padding:10px!important;
+  }
+
+  header nav{
+    grid-template-columns:1fr!important;
+  }
+
+  .logo-title{
+    font-size:22px!important;
+  }
+
+  .nav-search{
+    border-radius:16px!important;
+  }
+
+  .nav-search span{
+    display:none;
+  }
+
+  .nav-search input{
+    font-size:13px;
+  }
+
+  .premium-hero,
+  .live-stats-section,
+  .live-ads-section,
+  .section{
+    padding-inline:10px;
+  }
+
+  .hero-main-card,
+  .hero-time-card,
+  .hero-reward-card,
+  .partner{
+    border-radius:20px;
+    padding:20px;
+  }
+
+  .hero-main-card h1{
+    font-size:31px;
+  }
+
+  .hero-greeting{
+    font-size:28px;
+  }
+
+  .hero-clock{
+    font-size:26px;
+    letter-spacing:3px;
+  }
+
+  .live-ads-grid{
+    grid-template-columns:1fr;
+  }
+
+  .modules-grid.large-grid .module-card{
+    height:178px!important;
+    border-radius:20px!important;
+  }
+
+  .section-head p,
+  .partner p{
+    font-size:15px;
   }
 }
