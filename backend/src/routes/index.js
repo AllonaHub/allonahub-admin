@@ -163,6 +163,46 @@ const partnerOrderStatusSchema = z.object({
   tracking_number: z.string().trim().max(120).optional().nullable()
 });
 
+const adminListQuerySchema = z.object({
+  search: z.string().trim().max(120).optional().default(""),
+  status: z.string().trim().max(80).optional().default(""),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(80)
+});
+
+const adminNoteSchema = z.object({
+  body: z.string().trim().min(3).max(1600),
+  note_type: z.enum(["general", "risk", "review", "support", "callback"]).optional().default("general")
+});
+
+const adminFlagSchema = z.object({
+  reason: z.string().trim().min(3).max(1200),
+  severity: z.enum(["info", "warning", "critical"]).optional().default("warning")
+});
+
+const partnerApplicationActionSchema = z.object({
+  action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
+  reason: z.string().trim().min(3).max(1200),
+  risk_level: z.enum(["info", "warning", "critical"]).optional().default("info")
+});
+
+const supportStatusSchema = z.object({
+  source: z.enum(["user", "partner"]),
+  status: z.enum(["open", "in_progress", "resolved"]),
+  note: z.string().trim().max(1200).optional().default("")
+});
+
+const contentProposalSchema = z.object({
+  content_scope: z.enum(["home_module", "banner", "campaign", "page", "legal"]),
+  title: z.string().trim().min(3).max(180),
+  summary: z.string().trim().min(3).max(1600),
+  payload: z.record(z.unknown()).optional().default({})
+});
+
+const adminAuditLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(100),
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional()
+});
+
 const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
 
 const superAdminUserUpdateSchema = z.object({
@@ -444,6 +484,228 @@ async function countAdminRows(label, table, configure) {
   return { count: result.count || 0, warning: result.warning };
 }
 
+async function requireOpsAdmin(request, action) {
+  const ctx = await requireAuth(request, {
+    roles: ["admin"],
+    mfa: true,
+    adminBoundary: true,
+    action
+  });
+
+  const { data, error } = await ctx.db.rpc("is_ops_admin");
+  if (error || data !== true) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.ops.boundary_denied",
+      resourceType: "admin_ops",
+      severity: "critical",
+      source: "admin",
+      purpose: "admin_operations",
+      metadata: {
+        requested_action: action,
+        db_role_check_error: error?.message || null
+      }
+    });
+    throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
+  }
+
+  return ctx;
+}
+
+async function auditedOpsEvent({ request, ctx, action, resourceType = null, resourceId = null, severity = "info", metadata = {} }) {
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action,
+    resourceType,
+    resourceId,
+    severity,
+    source: "admin",
+    purpose: "admin_operations",
+    evidenceTags: ["admin_ops", resourceType || "operation"],
+    metadata
+  });
+}
+
+function startOfTodayIso() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+}
+
+function cleanSearch(value) {
+  return String(value || "")
+    .replace(/[,%]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
+function textSearchFilter(columns, value) {
+  const term = cleanSearch(value);
+  if (!term) return "";
+  return columns.map((column) => `${column}.ilike.%${term}%`).join(",");
+}
+
+function normalizePartnerSupportStatus(status) {
+  if (status === "waiting") return "in_progress";
+  if (status === "closed") return "resolved";
+  return ["open", "in_progress", "resolved"].includes(status) ? status : "open";
+}
+
+function toPartnerSupportStatus(status) {
+  if (status === "in_progress") return "waiting";
+  return status;
+}
+
+async function optionalQuery(query, fallback, warnings, label) {
+  const { data, error, count } = await query;
+  if (!error) {
+    if (count !== null && count !== undefined) return { data: data || fallback, count };
+    return data || fallback;
+  }
+  if (!looksLikeMissingSchema(error)) throw error;
+  warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
+  if (count !== null && count !== undefined) return { data: fallback, count: 0 };
+  return fallback;
+}
+
+async function optionalMutation(query, warnings, label) {
+  const { data, error } = await query;
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+  warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
+  throw httpError(`${label} icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.`, 409);
+}
+
+async function loadAdminDashboardData(warnings) {
+  const today = startOfTodayIso();
+  const [
+    usersToday,
+    applicationsToday,
+    pendingApplications,
+    recentOrders,
+    userTickets,
+    partnerTickets,
+    notifications,
+    securityEvents,
+    flags
+  ] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", today),
+      [],
+      warnings,
+      "profiles"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_applications").select("id", { count: "exact", head: true }).gte("created_at", today),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_applications").select("id", { count: "exact", head: true }).in("status", ["pending", "review"]),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, customer_name, customer_email, total, order_status, payment_status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "orders"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("support_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_support_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting"]),
+      [],
+      warnings,
+      "partner_support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_notifications")
+        .select("id, kind, severity, title, message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "admin_notifications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("id, action, severity, resource_type, resource_id, created_at")
+        .in("severity", ["warning", "critical"])
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "security_audit_events"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .select("id, target_type, target_id, flag_type, severity, reason, status, created_at")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "admin_operation_flags"
+    )
+  ]);
+
+  return {
+    metrics: {
+      daily_users: Number(usersToday.count || 0),
+      daily_partner_applications: Number(applicationsToday.count || 0),
+      pending_applications: Number(pendingApplications.count || 0),
+      recent_orders: recentOrders.length,
+      open_support_tickets: Number(userTickets.count || 0) + Number(partnerTickets.count || 0),
+      system_alerts: notifications.length + securityEvents.length + flags.length
+    },
+    recentOrders,
+    alerts: [
+      ...flags.map((item) => ({
+        id: item.id,
+        type: "flag",
+        severity: item.severity,
+        title: item.flag_type,
+        message: item.reason,
+        created_at: item.created_at
+      })),
+      ...securityEvents.map((item) => ({
+        id: item.id,
+        type: "security",
+        severity: item.severity,
+        title: item.action,
+        message: `${item.resource_type || "system"} ${item.resource_id || ""}`.trim(),
+        created_at: item.created_at
+      })),
+      ...notifications.map((item) => ({
+        id: item.id,
+        type: item.kind,
+        severity: item.severity,
+        title: item.title,
+        message: item.message,
+        created_at: item.created_at
+      }))
+    ].slice(0, 12)
+  };
+}
+
 function publicProfile(profile) {
   return {
     id: profile.id,
@@ -689,6 +951,25 @@ function partnerRecommendations(metrics, devices) {
     });
   }
   return tips.slice(0, 4);
+}
+
+async function updateOrderPaymentFields(orderId, payload) {
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update(payload)
+    .eq("id", orderId);
+  if (!error) return;
+
+  if (!looksLikeMissingSchema(error)) throw error;
+  const legacyPayload = { ...payload };
+  delete legacyPayload.iyzico_token;
+  delete legacyPayload.payment_provider_reference;
+  delete legacyPayload.paid_at;
+  const { error: legacyError } = await supabaseAdmin
+    .from("orders")
+    .update(legacyPayload)
+    .eq("id", orderId);
+  if (legacyError) throw legacyError;
 }
 
 export function registerRoutes(app) {
@@ -947,7 +1228,7 @@ export function registerRoutes(app) {
       if (intentError) throw intentError;
       if (!intent) return reply.code(404).send({ ok: false, message: "Partner ödeme isteği bulunamadı." });
 
-      const { error: updateIntentError } = await supabaseAdmin
+      const { data: updatedIntent, error: updateIntentError } = await supabaseAdmin
         .from("partner_payment_intents")
         .update({
           status: paymentStatus,
@@ -955,10 +1236,13 @@ export function registerRoutes(app) {
           provider_reference: result.paymentId || token,
           paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
         })
-        .eq("id", partnerPaymentIntentId);
+        .eq("id", partnerPaymentIntentId)
+        .neq("status", "paid")
+        .select("id")
+        .maybeSingle();
       if (updateIntentError) throw updateIntentError;
 
-      if (paymentStatus === "paid") {
+      if (paymentStatus === "paid" && updatedIntent) {
         const commissionRate = Number(intent.partner?.default_commission_rate || 0.12);
         const gross = Number(intent.amount || 0);
         const commissionAmount = Number((gross * commissionRate).toFixed(2));
@@ -980,18 +1264,19 @@ export function registerRoutes(app) {
             provider_reference: result.paymentId || token,
             metadata: { callback: "iyzico", conversation_id: result.conversationId || intent.id }
           });
-        if (transactionError) throw transactionError;
+        if (transactionError && transactionError.code !== "23505") throw transactionError;
       }
 
       return redirect(reply, `${config.siteUrl}/pages/partner/pay.html?intent=${partnerPaymentIntentId}&payment=${paymentStatus}`);
     }
 
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
-    const { error } = await supabaseAdmin
-      .from("orders")
-      .update({ payment_status: paymentStatus, order_status: orderStatus })
-      .eq("id", orderId);
-    if (error) throw error;
+    await updateOrderPaymentFields(orderId, {
+      payment_status: paymentStatus,
+      order_status: orderStatus,
+      payment_provider_reference: result.paymentId || token,
+      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
+    });
 
     return redirect(reply, `${config.siteUrl}/pages/account/orders.html?payment=${paymentStatus}`);
   });
@@ -2039,6 +2324,861 @@ export function registerRoutes(app) {
       events: result.data || [],
       schema_warnings: result.warning ? [result.warning] : []
     };
+  });
+
+  app.get("/v1/admin/ops/bootstrap", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.bootstrap");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.bootstrap_viewed",
+      resourceType: "admin_ops",
+      metadata: { warning_count: warnings.length }
+    });
+
+    return {
+      ok: true,
+      profile: {
+        id: ctx.user.id,
+        full_name: ctx.profile.full_name || ctx.user.email || "Admin",
+        role: ctx.profile.role
+      },
+      capabilities: {
+        can_delete_users: false,
+        can_change_commission: false,
+        can_change_finance_settings: false,
+        can_create_super_admin: false,
+        can_change_system_settings: false,
+        can_create_operational_notes: true,
+        can_create_review_flags: true,
+        can_request_super_admin_approval: true
+      },
+      dashboard,
+      warnings
+    };
+  });
+
+  app.get("/v1/admin/ops/dashboard", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.dashboard");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.dashboard_viewed",
+      resourceType: "dashboard",
+      metadata: { warning_count: warnings.length }
+    });
+
+    return { ok: true, dashboard, warnings };
+  });
+
+  app.get("/v1/admin/ops/users", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, phone, country, city, role, profile_visible, contact_locked, premium_level, hp, xp, created_at, updated_at")
+      .neq("role", "super_admin")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["full_name", "email", "phone", "city"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status === "hidden") dbQuery = dbQuery.eq("profile_visible", false);
+    const users = await optionalQuery(dbQuery, [], warnings, "profiles");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.users_list_viewed",
+      resourceType: "profile",
+      metadata: { search: query.search || null, status: query.status || null, limit: query.limit, count: users.length }
+    });
+
+    return { ok: true, users, warnings };
+  });
+
+  app.get("/v1/admin/ops/users/:userId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.detail");
+    const userId = uuidSchema.parse(request.params.userId);
+    const warnings = [];
+    const profile = await optionalQuery(
+      supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email, phone, country, city, role, profile_visible, contact_locked, premium_level, hp, xp, created_at, updated_at")
+        .eq("id", userId)
+        .neq("role", "super_admin")
+        .maybeSingle(),
+      null,
+      warnings,
+      "profiles"
+    );
+    if (!profile) throw httpError("Kullanıcı bulunamadı veya görüntüleme yetkiniz yok.", 404);
+
+    const [orders, notes, flags] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("id, order_no, total, order_status, payment_status, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "user")
+          .eq("target_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, created_at")
+          .eq("target_type", "user")
+          .eq("target_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_detail_viewed",
+      resourceType: "profile",
+      resourceId: userId,
+      metadata: { order_count: orders.length, note_count: notes.length, flag_count: flags.length }
+    });
+
+    return { ok: true, profile, orders, notes, flags, warnings };
+  });
+
+  app.post("/v1/admin/ops/users/:userId/notes", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.note");
+    const userId = uuidSchema.parse(request.params.userId);
+    const payload = adminNoteSchema.parse(request.body || {});
+    const warnings = [];
+    const note = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "user",
+          target_id: userId,
+          note_type: payload.note_type,
+          body: payload.body
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_note_created",
+      resourceType: "profile",
+      resourceId: userId,
+      metadata: { note_type: payload.note_type }
+    });
+    return reply.code(201).send({ ok: true, note, warnings });
+  });
+
+  app.post("/v1/admin/ops/users/:userId/flag", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.flag");
+    const userId = uuidSchema.parse(request.params.userId);
+    const payload = adminFlagSchema.parse(request.body || {});
+    const warnings = [];
+    const flag = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "user",
+          target_id: userId,
+          flag_type: "suspicious_user",
+          severity: payload.severity,
+          reason: payload.reason,
+          status: "open"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_flagged",
+      resourceType: "profile",
+      resourceId: userId,
+      severity: payload.severity,
+      metadata: { flag_type: "suspicious_user" }
+    });
+    return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  app.get("/v1/admin/ops/partner-applications", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("partner_applications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["company_name", "contact_name", "email", "phone", "tax_number"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+    const applications = await optionalQuery(dbQuery, [], warnings, "partner_applications");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partner_applications_viewed",
+      resourceType: "partner_application",
+      metadata: { search: query.search || null, status: query.status || null, count: applications.length }
+    });
+
+    return { ok: true, applications, warnings };
+  });
+
+  app.get("/v1/admin/ops/partner-applications/:applicationId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.detail");
+    const applicationId = uuidSchema.parse(request.params.applicationId);
+    const warnings = [];
+    const [application, notes, requests] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin.from("partner_applications").select("*").eq("id", applicationId).maybeSingle(),
+        null,
+        warnings,
+        "partner_applications"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "partner_application")
+          .eq("target_id", applicationId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .select("*")
+          .eq("target_type", "partner_application")
+          .eq("target_id", applicationId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_approval_requests"
+      )
+    ]);
+    if (!application) throw httpError("Partner başvurusu bulunamadı.", 404);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partner_application_detail_viewed",
+      resourceType: "partner_application",
+      resourceId: applicationId,
+      metadata: { note_count: notes.length, approval_request_count: requests.length }
+    });
+
+    return { ok: true, application, notes, approvalRequests: requests, warnings };
+  });
+
+  app.patch("/v1/admin/ops/partner-applications/:applicationId/review", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
+    const applicationId = uuidSchema.parse(request.params.applicationId);
+    const payload = partnerApplicationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const nowIso = new Date().toISOString();
+    const recommendation = payload.action === "recommend_approve"
+      ? "approve"
+      : payload.action === "recommend_reject"
+      ? "reject"
+      : payload.action === "send_super_admin"
+      ? "needs_super_admin"
+      : null;
+    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+
+    const application = await optionalMutation(
+      supabaseAdmin
+        .from("partner_applications")
+        .update({
+          status: "review",
+          review_stage: reviewStage,
+          admin_recommendation: recommendation,
+          risk_level: payload.risk_level,
+          reviewed_by: ctx.user.id,
+          reviewed_at: nowIso,
+          metadata: {
+            last_admin_action: payload.action,
+            last_admin_reason: payload.reason,
+            last_admin_action_at: nowIso
+          }
+        })
+        .eq("id", applicationId)
+        .select("*")
+        .single(),
+      warnings,
+      "partner_applications"
+    );
+
+    await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "partner_application",
+          target_id: applicationId,
+          note_type: "review",
+          body: payload.reason
+        }),
+      warnings,
+      "admin_operation_notes"
+    );
+
+    let approvalRequest = null;
+    if (payload.action !== "start_review") {
+      approvalRequest = await optionalMutation(
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .insert({
+            requested_by: ctx.user.id,
+            target_type: "partner_application",
+            target_id: applicationId,
+            request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
+            status: "pending_super_admin",
+            summary: payload.reason,
+            proposed_action: {
+              action: payload.action,
+              recommendation,
+              risk_level: payload.risk_level
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_approval_requests"
+      );
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: `admin.ops.partner_application_${payload.action}`,
+      resourceType: "partner_application",
+      resourceId: applicationId,
+      severity: payload.risk_level,
+      metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
+    });
+
+    return { ok: true, application, approvalRequest, warnings };
+  });
+
+  app.get("/v1/admin/ops/partners", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partners.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("partner_businesses")
+      .select("id, owner_id, partner_code, display_name, legal_name, partner_type, email, phone, city, country, status, verification_status, trust_score, level, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["display_name", "legal_name", "email", "phone", "city", "partner_code"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+    const partners = await optionalQuery(dbQuery, [], warnings, "partner_businesses");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partners_viewed",
+      resourceType: "partner_business",
+      metadata: { search: query.search || null, status: query.status || null, count: partners.length }
+    });
+
+    return { ok: true, partners, warnings };
+  });
+
+  app.get("/v1/admin/ops/orders", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, user_id, customer_name, customer_email, customer_phone, city, total, subtotal, shipping, discount, order_status, payment_status, tracking_number, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["order_no", "customer_name", "customer_email", "customer_phone", "city"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("order_status", query.status);
+    const orders = await optionalQuery(dbQuery, [], warnings, "orders");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.orders_viewed",
+      resourceType: "order",
+      metadata: { search: query.search || null, status: query.status || null, count: orders.length }
+    });
+
+    return { ok: true, orders, warnings };
+  });
+
+  app.get("/v1/admin/ops/orders/:orderId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.detail");
+    const orderId = uuidSchema.parse(request.params.orderId);
+    const warnings = [];
+    const [order, notes, flags] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("*, order_items(*, product:products(id, name, category, partner_id))")
+          .eq("id", orderId)
+          .maybeSingle(),
+        null,
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, created_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.order_detail_viewed",
+      resourceType: "order",
+      resourceId: orderId,
+      metadata: { item_count: order.order_items?.length || 0, note_count: notes.length, flag_count: flags.length }
+    });
+
+    return { ok: true, order, notes, flags, warnings };
+  });
+
+  app.post("/v1/admin/ops/orders/:orderId/risk-flag", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
+    const orderId = uuidSchema.parse(request.params.orderId);
+    const payload = adminFlagSchema.parse(request.body || {});
+    const warnings = [];
+    const flag = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          flag_type: "risky_order",
+          severity: payload.severity,
+          reason: payload.reason,
+          status: "open"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.order_risk_flagged",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: payload.severity,
+      metadata: { flag_type: "risky_order" }
+    });
+    return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  app.get("/v1/admin/ops/support-tickets", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let userTicketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("*, profile:profiles(id, full_name, email, phone)")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) userTicketQuery = userTicketQuery.eq("status", query.status);
+    let partnerTicketQuery = supabaseAdmin
+      .from("partner_support_tickets")
+      .select("*, partner:partner_businesses(id, display_name, partner_code)")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) partnerTicketQuery = partnerTicketQuery.eq("status", toPartnerSupportStatus(query.status));
+
+    const [userTickets, partnerTickets] = await Promise.all([
+      optionalQuery(userTicketQuery, [], warnings, "support_tickets"),
+      optionalQuery(partnerTicketQuery, [], warnings, "partner_support_tickets")
+    ]);
+
+    const search = cleanSearch(query.search).toLocaleLowerCase("tr-TR");
+    const tickets = [
+      ...userTickets.map((ticket) => ({ ...ticket, source: "user", requester_label: ticket.profile?.full_name || ticket.profile?.email || ticket.user_id || "Kullanıcı" })),
+      ...partnerTickets.map((ticket) => ({
+        ...ticket,
+        source: "partner",
+        requester_label: ticket.partner?.display_name || ticket.partner_id || "Partner",
+        status: normalizePartnerSupportStatus(ticket.status)
+      }))
+    ]
+      .filter((ticket) => {
+        if (!search) return true;
+        return `${ticket.title || ""} ${ticket.message || ""} ${ticket.requester_label || ""} ${ticket.category || ""}`
+          .toLocaleLowerCase("tr-TR")
+          .includes(search);
+      })
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .slice(0, query.limit);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_tickets_viewed",
+      resourceType: "support_ticket",
+      metadata: { search: query.search || null, status: query.status || null, count: tickets.length }
+    });
+
+    return { ok: true, tickets, warnings };
+  });
+
+  app.patch("/v1/admin/ops/support-tickets/:ticketId/status", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.status");
+    const ticketId = uuidSchema.parse(request.params.ticketId);
+    const payload = supportStatusSchema.parse(request.body || {});
+    const warnings = [];
+    const table = payload.source === "partner" ? "partner_support_tickets" : "support_tickets";
+    const status = payload.source === "partner" ? toPartnerSupportStatus(payload.status) : payload.status;
+    const ticket = await optionalMutation(
+      supabaseAdmin
+        .from(table)
+        .update({ status })
+        .eq("id", ticketId)
+        .select("*")
+        .single(),
+      warnings,
+      table
+    );
+    if (payload.note) {
+      await optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: payload.source === "partner" ? "partner_support_ticket" : "support_ticket",
+            target_id: ticketId,
+            note_type: "support",
+            body: payload.note
+          }),
+        warnings,
+        "admin_operation_notes"
+      );
+      if (payload.source === "user") {
+        await optionalMutation(
+          supabaseAdmin
+            .from("support_ticket_notes")
+            .insert({
+              ticket_id: ticketId,
+              author_id: ctx.user.id,
+              note_type: "internal",
+              body: payload.note
+            }),
+          warnings,
+          "support_ticket_notes"
+        );
+      }
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_ticket_status_updated",
+      resourceType: payload.source === "partner" ? "partner_support_ticket" : "support_ticket",
+      resourceId: ticketId,
+      metadata: { status: payload.status, source: payload.source, has_note: Boolean(payload.note) }
+    });
+
+    return { ok: true, ticket, warnings };
+  });
+
+  app.post("/v1/admin/ops/support-tickets/:ticketId/notes", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.note");
+    const ticketId = uuidSchema.parse(request.params.ticketId);
+    const source = z.enum(["user", "partner"]).parse(request.query?.source || "user");
+    const payload = adminNoteSchema.parse(request.body || {});
+    const warnings = [];
+    const note = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: source === "partner" ? "partner_support_ticket" : "support_ticket",
+          target_id: ticketId,
+          note_type: "support",
+          body: payload.body
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_ticket_note_created",
+      resourceType: source === "partner" ? "partner_support_ticket" : "support_ticket",
+      resourceId: ticketId,
+      metadata: { source }
+    });
+    return reply.code(201).send({ ok: true, note, warnings });
+  });
+
+  app.get("/v1/admin/ops/content-proposals", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.content.list");
+    const warnings = [];
+    const proposals = await optionalQuery(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*, proposer:profiles(id, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "content_change_proposals"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.content_proposals_viewed",
+      resourceType: "content_change_proposal",
+      metadata: { count: proposals.length }
+    });
+    return { ok: true, proposals, warnings };
+  });
+
+  app.post("/v1/admin/ops/content-proposals", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.content.propose");
+    const payload = contentProposalSchema.parse(request.body || {});
+    const warnings = [];
+    const proposal = await optionalMutation(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .insert({
+          proposed_by: ctx.user.id,
+          content_scope: payload.content_scope,
+          title: payload.title,
+          summary: payload.summary,
+          payload: payload.payload,
+          status: "pending_super_admin"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "content_change_proposals"
+    );
+    await optionalMutation(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .insert({
+          requested_by: ctx.user.id,
+          target_type: "content_module",
+          target_id: proposal.id,
+          request_type: payload.content_scope === "banner" || payload.content_scope === "campaign" ? "banner_campaign" : "content_visibility",
+          status: "pending_super_admin",
+          summary: payload.summary,
+          proposed_action: {
+            content_scope: payload.content_scope,
+            title: payload.title,
+            payload: payload.payload
+          }
+        }),
+      warnings,
+      "admin_approval_requests"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.content_proposal_created",
+      resourceType: "content_change_proposal",
+      resourceId: proposal.id,
+      metadata: { content_scope: payload.content_scope }
+    });
+    return reply.code(201).send({ ok: true, proposal, warnings });
+  });
+
+  app.get("/v1/admin/ops/security-monitoring", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.security_monitoring");
+    const warnings = [];
+    const [events, flags, notifications] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .or("severity.eq.warning,severity.eq.critical,action.ilike.%auth.denied%,action.ilike.%authz.denied%")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "security_audit_events"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("*")
+          .eq("status", "open")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_notifications")
+          .select("id, user_id, kind, severity, title, message, metadata, created_at")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "admin_notifications"
+      )
+    ]);
+    const autoDefense = autoDefenseStatus();
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.security_monitoring_viewed",
+      resourceType: "security_monitoring",
+      metadata: { event_count: events.length, flag_count: flags.length, notification_count: notifications.length }
+    });
+    return { ok: true, events, flags, notifications, autoDefense, warnings };
+  });
+
+  app.get("/v1/admin/ops/reports", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.reports");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+    const [ordersToday, riskyOrders, supportResolved] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).gte("created_at", startOfTodayIso()),
+        [],
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin.from("admin_operation_flags").select("id", { count: "exact", head: true }).eq("target_type", "order").eq("status", "open"),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      optionalQuery(
+        supabaseAdmin.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "resolved").gte("updated_at", startOfTodayIso()),
+        [],
+        warnings,
+        "support_tickets"
+      )
+    ]);
+
+    const reports = {
+      daily_operations: dashboard.metrics,
+      partner_application_report: {
+        daily_new: dashboard.metrics.daily_partner_applications,
+        pending: dashboard.metrics.pending_applications
+      },
+      order_report: {
+        daily_orders: Number(ordersToday.count || 0),
+        risky_open: Number(riskyOrders.count || 0)
+      },
+      user_activity_report: {
+        daily_new_users: dashboard.metrics.daily_users
+      },
+      support_report: {
+        open: dashboard.metrics.open_support_tickets,
+        resolved_today: Number(supportResolved.count || 0)
+      }
+    };
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.reports_viewed",
+      resourceType: "admin_report",
+      metadata: reports
+    });
+
+    return { ok: true, reports, warnings };
+  });
+
+  app.get("/v1/admin/ops/audit-log", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.audit_log");
+    const query = adminAuditLogQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("security_audit_events")
+      .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, request_id, metadata, created_at")
+      .eq("source", "admin")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.severity) dbQuery = dbQuery.eq("severity", query.severity);
+    const events = await optionalQuery(dbQuery, [], warnings, "security_audit_events");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.audit_log_viewed",
+      resourceType: "security_audit_events",
+      metadata: { limit: query.limit, severity: query.severity || "all", count: events.length }
+    });
+
+    return { ok: true, events, warnings };
   });
 
   app.post("/v1/hp-wallet/ledger", async (request) => {
