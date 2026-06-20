@@ -32,11 +32,11 @@
             <button class="btn" type="submit">Ara</button>
           </form>
           <div class="header-actions">
-            <a class="icon-btn" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler">
-              🔔
+            <a class="icon-btn icon-btn--count" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler">
+              🔔 <span class="badge" data-notification-count>0</span>
             </a>
-            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/wallet/hubwallet.html")}" aria-label="Kupon">
-              Kupon
+            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/wallet/hubwallet.html")}" aria-label="Hub Wallet">
+              Wallet
             </a>
             <a class="icon-btn icon-btn--count icon-btn--favorite" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               <span class="header-action-icon header-action-icon--heart" aria-hidden="true">♥</span>
@@ -54,7 +54,6 @@
         <div class="nav-row">
           <div class="container nav-row__inner">
             <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
-              <a href="${core.url("/index.html")}" ${active("/index.html")}>Vitrin</a>
               <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>

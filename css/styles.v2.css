@@ -181,6 +181,8 @@ img {
 .header-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -216,6 +218,10 @@ img {
 }
 
 .mobile-nav-toggle {
+  display: none;
+}
+
+.header-actions .mobile-nav-toggle {
   display: none;
 }
 
@@ -477,14 +483,31 @@ img {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 0.7fr) minmax(120px, 0.5fr) minmax(120px, 0.5fr) minmax(170px, 0.75fr);
+  grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 0.7fr) minmax(120px, 0.5fr) minmax(120px, 0.5fr) minmax(170px, 0.75fr) minmax(116px, 0.45fr);
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .field {
   display: grid;
   gap: 6px;
+}
+
+.field--actions {
+  align-self: end;
+}
+
+.field--actions .btn {
+  min-height: 44px;
+  width: 100%;
+}
+
+.catalog-feedback {
+  min-height: 24px;
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .field label {
@@ -1342,6 +1365,10 @@ body[data-theme="white"] .payment-logo--iyzico .iyzico-logo--white {
   }
 
   .mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  .header-actions .mobile-nav-toggle {
     display: inline-flex;
   }
 

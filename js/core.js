@@ -229,6 +229,11 @@
       image_url: product.image_url || product.image || "",
       created_at: product.created_at || "",
       sold_count: Number(product.sold_count || 0),
+      compare_at_price: Number(product.compare_at_price || product.original_price || product.old_price || 0),
+      discount_percent: Number(product.discount_percent || product.discount_rate || 0),
+      discount_label: product.discount_label || product.discount || "",
+      rating: Number(product.rating || product.average_rating || 0),
+      review_count: Number(product.review_count || product.reviews_count || product.rating_count || 0),
       meta_title: product.meta_title || name,
       meta_description: product.meta_description || description
     };
@@ -252,8 +257,11 @@
     const product = normalizeProduct(raw);
     const disabled = product.stock <= 0;
     const image = sanitizeUrl(product.image_url);
-    const rating = Number(product.rating || product.average_rating || 4.8).toFixed(1);
-    const discount = product.discount_label || product.discount || (product.compare_at_price > product.price ? "İndirim" : "Fırsat");
+    const compareAt = product.compare_at_price > product.price ? product.compare_at_price : 0;
+    const discountPercent = product.discount_percent || (compareAt ? Math.round(((compareAt - product.price) / compareAt) * 100) : 0);
+    const discount = product.discount_label || (discountPercent > 0 ? `%${Math.min(95, discountPercent)} indirim` : "Fırsat");
+    const rating = Math.max(0, Math.min(5, Number(product.rating || product.average_rating || 4.8))).toFixed(1);
+    const ratingLabel = product.review_count ? `${rating} (${product.review_count})` : rating;
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
@@ -269,13 +277,18 @@
           </div>
           <h3><a href="${escapeHTML(productUrl(product))}">${escapeHTML(product.name)}</a></h3>
           <p class="product-card__description">${escapeHTML(truncate(product.description, 92))}</p>
-          <div class="product-rating">★ ${escapeHTML(rating)}</div>
+          <div class="product-card__signals">
+            <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
+          </div>
           <div class="price-row">
-            <span class="price">${money(product.price)}</span>
+            <span class="price-stack">
+              <span class="price">${money(product.price)}</span>
+              ${compareAt ? `<span class="compare-price">${money(compareAt)}</span>` : ""}
+            </span>
             <span class="pill pill--gold">Allona</span>
           </div>
           <div class="product-card__actions">
-            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Hemen Al</button>
+            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
           </div>
         </div>
       </article>
