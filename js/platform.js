@@ -715,12 +715,16 @@
   function normalizePlatformBrand() {
     const selectors = [
       "header .logo",
+      "header .brand",
       ".header > .logo",
       ".topbar > .logo",
       ".site-header .brand",
       ".page > .header .brand",
       ".header > .brand",
+      ".header .brand",
       ".topbar > .brand",
+      ".premium-brand",
+      ".premium-topbar .premium-brand",
       ".footer-brand"
     ];
     document.querySelectorAll(selectors.join(",")).forEach(normalizeBrandNode);
