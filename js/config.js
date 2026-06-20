@@ -8,6 +8,7 @@
     currency: "TRY",
     defaultShipping: 89.9,
     freeShippingThreshold: 1500,
+    apiBaseUrl: "https://api.allonahub.com",
     iyzicoFunctionName: "create-iyzico-checkout",
     cvCheckoutFunctionName: "create-cv-checkout",
     cvPrice: 149.99,

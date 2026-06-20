@@ -96,6 +96,7 @@
     "partner-cargo-settings.html": "/pages/partner/partner-cargo-settings.html",
     "partner-orders.html": "/pages/partner/partner-orders.html",
     "partner-panel.html": "/pages/partner/partner-panel.html",
+    "partner-pay.html": "/pages/partner/pay.html",
     "partner-uyelik.html": "/pages/partner/partner-uyelik.html",
     "pazaryeri-satis.html": "/pages/partner/pazaryeri-satis.html",
     "cerez-politikasi.html": "/pages/legal/cerez-politikasi.html",
