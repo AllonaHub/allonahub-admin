@@ -986,37 +986,30 @@ body[data-theme] .platform-action {
 }
 
 .header-action-icon--cart {
-  position: relative;
-  width: 22px;
-  height: 18px;
-  border: 2px solid currentColor;
-  border-top: 0;
-  border-radius: 3px 3px 6px 6px;
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
   color: var(--ah-primary);
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--ah-primary) 24%, transparent));
+  transition: transform 180ms ease, color 180ms ease, filter 180ms ease;
 }
 
-.header-action-icon--cart::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: -6px;
-  width: 15px;
-  height: 8px;
-  border: 2px solid currentColor;
-  border-bottom: 0;
-  border-radius: 10px 10px 0 0;
+.header-action-icon--cart svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
 }
 
-.header-action-icon--cart::after {
-  content: "";
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: -6px;
-  height: 4px;
-  background:
-    radial-gradient(circle, currentColor 0 2px, transparent 2.5px) left center / 8px 4px no-repeat,
-    radial-gradient(circle, currentColor 0 2px, transparent 2.5px) right center / 8px 4px no-repeat;
+.icon-btn--cart:hover .header-action-icon--cart,
+.icon-btn--cart:focus-visible .header-action-icon--cart {
+  color: color-mix(in srgb, var(--ah-primary) 82%, #ffffff);
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--ah-primary) 34%, transparent));
+  transform: translateY(-1px) scale(1.04);
 }
 
 .header-actions .icon-btn--count .badge {
