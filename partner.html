@@ -345,6 +345,16 @@ async function completePartnerGoogleLogin(session){
     return;
   }
 
+  const {data:verified,error:verifyError}=await supabaseClient.auth.getUser();
+  if(verifyError || !verified || !verified.user || verified.user.id !== session.user.id){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
+    showNotice("Google oturumu güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
+    return;
+  }
+
   const { data, error }=await supabaseClient
     .from("partners")
     .select("*")
@@ -353,12 +363,20 @@ async function completePartnerGoogleLogin(session){
     .maybeSingle();
 
   if(error){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(authError){}
     console.error("Google partner kaydı okunamadı", error);
     showNotice("Partner kaydı şu anda kontrol edilemedi.");
     return;
   }
 
   if(!data){
+    clearPartnerAuth();
+    try{
+      await supabaseClient.auth.signOut({scope:"local"});
+    }catch(error){}
     showNotice("Bu Google hesabı için aktif partner kaydı bulunamadı.");
     return;
   }
@@ -369,6 +387,7 @@ async function completePartnerGoogleLogin(session){
   localStorage.setItem("allonaPartnerProfile",JSON.stringify(data));
   localStorage.setItem("allonaPartnerId",data.partner_id || "");
   localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
+  localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
   window.location.href="partner-panel.html";
 }
