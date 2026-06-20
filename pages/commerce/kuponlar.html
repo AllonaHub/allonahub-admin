@@ -177,6 +177,67 @@ color:#fff;
 color:#9edff2;
 }
 
+.point-shop{
+margin-top:30px;
+}
+
+.point-shop-grid{
+display:grid;
+grid-template-columns:repeat(3,minmax(0,1fr));
+gap:14px;
+margin:18px 0;
+}
+
+.point-shop-stat{
+padding:16px;
+border-radius:18px;
+background:rgba(255,255,255,.07);
+border:1px solid rgba(255,255,255,.12);
+}
+
+.point-shop-stat span{
+display:block;
+color:#a8dff0;
+font-size:13px;
+font-weight:bold;
+text-transform:uppercase;
+margin-bottom:8px;
+}
+
+.point-shop-stat strong{
+display:block;
+color:#fff;
+font-size:24px;
+}
+
+.point-shop-offer{
+display:grid;
+grid-template-columns:minmax(0,1fr) auto;
+gap:14px;
+align-items:center;
+padding:18px;
+border-radius:20px;
+background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(255,217,121,.12));
+border:1px solid rgba(255,217,121,.24);
+}
+
+.point-shop-offer h3{
+margin:0 0 6px;
+color:#ffd979;
+}
+
+.point-shop-offer p{
+margin:0;
+color:#dff8ff;
+line-height:1.5;
+}
+
+.point-shop-note{
+margin:12px 0 0;
+color:#bfeaf6;
+line-height:1.6;
+}
+
 .notice{
 margin-top:40px;
 padding:20px;
@@ -187,7 +248,14 @@ line-height:1.7;
 color:#dff8ff;
 }
 
-</style>
+@media (max-width:720px){
+.point-shop-grid,
+.point-shop-offer{
+grid-template-columns:1fr;
+}
+}
+
+	</style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260620-brand1">
 </head>
 
@@ -216,7 +284,7 @@ Yeni üyelere özel ilk alışveriş indirimi.
 <div class="code">WELCOME10</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="WELCOME10">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="WELCOME10">HP Kupona Çevir</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="WELCOME10">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
@@ -229,7 +297,7 @@ Seçili partner mağazalarda geçerlidir.
 <div class="code">PARTNER15</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="PARTNER15">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="PARTNER15">HP Kupona Çevir</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="PARTNER15">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
@@ -242,13 +310,31 @@ Sadakat programı kullanıcılarına özel avantaj.
 <div class="code">HP20</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="HP20">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="HP20">HP Kupona Çevir</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="HP20">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
 </div>
 
 <div data-coupon-status></div>
+
+<section class="coupon-wallet point-shop" id="puan-dukkani" aria-label="Puan dükkanı">
+<h2>Puan Dükkanı</h2>
+<p>HP bakiyeni alışveriş kuponuna dönüştür. Günlük görev HP'si tek başına kupona çevrilemez; alışverişten kazanılan HP ile birlikte kullanılabilir.</p>
+<div class="point-shop-grid">
+<div class="point-shop-stat"><span>Toplam HP</span><strong data-point-total>0 HP</strong></div>
+<div class="point-shop-stat"><span>Günlük Görev HP</span><strong data-point-daily>0 HP</strong></div>
+<div class="point-shop-stat"><span>Alışveriş HP</span><strong data-point-shopping>0 HP</strong></div>
+</div>
+<div class="point-shop-offer">
+<div>
+<h3>1000 HP = 125 TL Kupon</h3>
+<p>Alışverişte kullanabileceğin sabit tutarlı HP kuponu oluştur.</p>
+</div>
+<button type="button" class="btn" data-point-convert data-required-hp="1000" data-coupon-value="125">125 TL Kupon Oluştur</button>
+</div>
+<p class="point-shop-note" data-point-note>Bakiyen yükleniyor.</p>
+</section>
 
 <section class="coupon-wallet" aria-label="Hesabımdaki kuponlar">
 <h2>Hesabımdaki Kuponlar</h2>
@@ -278,8 +364,9 @@ Kupon kullanım koşulları ilgili kampanya şartlarına tabidir.
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
   <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-account2" defer></script>
   <script src="../../js/platform.js?v=20260620-brand2" defer></script>
-  <script src="../../js/coupon-page.js?v=20260620-coupon2" defer></script>
+  <script src="../../js/coupon-page.js?v=20260621-hp1" defer></script>
 </body>
 </html>

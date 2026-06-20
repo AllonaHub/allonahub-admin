@@ -2,6 +2,7 @@
   const STORAGE_KEY = "allonahub_user_profile";
   const PROFILE_EVENT = "allonahub:profile-updated";
   const PROFILE_CHANNEL = "allonahub-profile-sync";
+  const HP_LEDGER_KEY = "allonahub_hp_ledger_v1";
   const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
 
@@ -42,6 +43,57 @@
   function asNumber(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) ? number : fallback;
+  }
+
+  function userKey(userOrId) {
+    if (typeof userOrId === "string") return userOrId ? `user:${userOrId}` : "guest";
+    const id = userOrId?.id || userOrId?.user_id || "";
+    return id ? `user:${id}` : "guest";
+  }
+
+  function hpLedgerStore() {
+    return safeParse(localStorage.getItem(HP_LEDGER_KEY) || "{}", {});
+  }
+
+  function getHpLedger(userOrId) {
+    const entries = hpLedgerStore()[userKey(userOrId)];
+    return Array.isArray(entries) ? entries : [];
+  }
+
+  function writeHpLedger(userOrId, entries) {
+    try {
+      const store = hpLedgerStore();
+      store[userKey(userOrId)] = (Array.isArray(entries) ? entries : []).slice(0, 120);
+      localStorage.setItem(HP_LEDGER_KEY, JSON.stringify(store));
+    } catch (error) {
+      // Profile numbers still persist through Supabase/auth metadata when ledger storage is unavailable.
+    }
+  }
+
+  function hasHpLedgerEntry(userOrId, id) {
+    if (!id) return false;
+    return getHpLedger(userOrId).some((entry) => entry && entry.id === id);
+  }
+
+  function recordHpLedger(userOrId, entry) {
+    if (!entry) return null;
+    const amount = asNumber(entry.amount, 0);
+    const id = entry.id || `${entry.bucket || "hp"}:${entry.source || "manual"}:${Date.now()}`;
+    const nextEntry = {
+      id,
+      bucket: entry.bucket || "other",
+      title: entry.title || "HP Hareketi",
+      source: entry.source || "AllonaHub",
+      amount,
+      note: entry.note || "",
+      created_at: entry.created_at || new Date().toISOString()
+    };
+    const next = [
+      nextEntry,
+      ...getHpLedger(userOrId).filter((item) => item && item.id !== id)
+    ];
+    writeHpLedger(userOrId, next);
+    return nextEntry;
   }
 
   function firstDefined() {
@@ -404,6 +456,7 @@
     STORAGE_KEY,
     PROFILE_EVENT,
     PROFILE_CHANNEL,
+    HP_LEDGER_KEY,
     LEVELS,
     SUPABASE_URL,
     SUPABASE_KEY,
@@ -417,6 +470,9 @@
     makeUserId,
     initials,
     safeAvatarUrl,
+    getHpLedger,
+    hasHpLedgerEntry,
+    recordHpLedger,
     notifyProfileChange,
     load,
     save,

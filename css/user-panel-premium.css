@@ -462,6 +462,26 @@ a {
   font-weight: 900;
 }
 
+.metric-help {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .08);
+  color: #eaf8ff;
+  cursor: pointer;
+}
+
+.metric-help:hover,
+.metric-help:focus-visible {
+  background: color-mix(in srgb, var(--panel-accent) 24%, rgba(255, 255, 255, .12));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--panel-accent) 38%, transparent);
+  outline: none;
+}
+
 .metric-card .metric-value {
   position: relative;
   z-index: 1;
@@ -529,6 +549,109 @@ a {
   border-radius: 50%;
   background: rgba(255, 255, 255, .08);
   color: #fff;
+}
+
+.hp-info-modal[hidden] {
+  display: none;
+}
+
+.hp-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.hp-info-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 5, 14, .72);
+  backdrop-filter: blur(12px);
+}
+
+.hp-info-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: min(82vh, 720px);
+  overflow: auto;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.hp-info-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+  cursor: pointer;
+}
+
+.hp-info-eyebrow {
+  margin: 0 0 8px;
+  color: color-mix(in srgb, var(--panel-accent) 82%, #fff);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.hp-info-dialog h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.hp-info-dialog p {
+  margin: 10px 0 18px;
+  color: #dbeafe;
+  line-height: 1.6;
+}
+
+.hp-info-table-wrap {
+  overflow-x: auto;
+}
+
+.hp-source-table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+  color: #eef8ff;
+}
+
+.hp-source-table th,
+.hp-source-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  text-align: left;
+  vertical-align: top;
+}
+
+.hp-source-table th {
+  color: #fff;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.hp-source-table td:last-child,
+.hp-source-table tfoot td {
+  text-align: right;
+  color: color-mix(in srgb, var(--panel-accent) 84%, #fff);
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.hp-source-table tfoot th,
+.hp-source-table tfoot td {
+  border-bottom: 0;
+  font-size: 15px;
 }
 
 .xp-card {

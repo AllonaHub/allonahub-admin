@@ -7,7 +7,7 @@
   <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260620-brand1">
-  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260620-panel1">
+  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260621-hp1">
 </head>
 <body class="user-panel-page" data-level-theme="new-member">
   <div class="premium-shell">
@@ -79,7 +79,9 @@
         <article class="metric-card premium-glass">
           <div class="metric-top">
             <span>TOPLAM HP</span>
-            <i class="fa-regular fa-circle-question"></i>
+            <button class="metric-help" type="button" data-hp-breakdown="total" aria-label="Toplam HP kaynaklarını göster">
+              <i class="fa-regular fa-circle-question"></i>
+            </button>
           </div>
           <div class="metric-value"><span id="hpValue">250</span> <small>HP</small></div>
           <div class="metric-visual">
@@ -92,13 +94,15 @@
 
         <article class="metric-card premium-glass">
           <div class="metric-top">
-            <span>CASHOUT BAKİYE</span>
-            <i class="fa-regular fa-circle-question"></i>
+            <span>GÜNLÜK GÖREV HP</span>
+            <button class="metric-help" type="button" data-hp-breakdown="daily" aria-label="Günlük görev HP kaynaklarını göster">
+              <i class="fa-regular fa-circle-question"></i>
+            </button>
           </div>
-          <div class="metric-value" id="cashoutValue">0,00 ₺</div>
+          <div class="metric-value"><span id="cashoutValue">0</span> <small>HP</small></div>
           <div class="metric-visual">
             <span class="wallet-visual" aria-hidden="true"></span>
-            <a class="metric-arrow" href="../commerce/kuponlar.html" aria-label="Cashout alanına git">
+            <a class="metric-arrow" href="gorevler.html" aria-label="Günlük görevler alanına git">
               <i class="fa-solid fa-chevron-right"></i>
             </a>
           </div>
@@ -106,13 +110,15 @@
 
         <article class="metric-card premium-glass">
           <div class="metric-top">
-            <span>HUB CASH</span>
-            <i class="fa-regular fa-circle-question"></i>
+            <span>ALIŞVERİŞTEN KAZANILAN HP</span>
+            <button class="metric-help" type="button" data-hp-breakdown="shopping" aria-label="Alışverişten kazanılan HP kaynaklarını göster">
+              <i class="fa-regular fa-circle-question"></i>
+            </button>
           </div>
-          <div class="metric-value" id="hubCashValue">0,00 ₺</div>
+          <div class="metric-value"><span id="hubCashValue">0</span> <small>HP</small></div>
           <div class="metric-visual">
             <span class="card-visual" aria-hidden="true"></span>
-            <a class="metric-arrow" href="../commerce/kuponlar.html" aria-label="Hub Cash alanına git">
+            <a class="metric-arrow" href="../commerce/kuponlar.html" aria-label="Alışveriş HP alanına git">
               <i class="fa-solid fa-chevron-right"></i>
             </a>
           </div>
@@ -155,7 +161,7 @@
           <span class="action-icon"><i class="fa-solid fa-ticket"></i><span class="action-badge">2</span></span>
           <b>Kuponlarım</b>
         </button>
-        <button class="action-tile premium-glass" type="button" data-go="premium.html">
+        <button class="action-tile premium-glass" type="button" data-go="../commerce/kuponlar.html#puan-dukkani">
           <span class="action-icon"><i class="fa-solid fa-star"></i></span>
           <b>Puan Dükkanı</b>
         </button>
@@ -283,9 +289,39 @@
   </nav>
 
   <div class="panel-status" id="panelStatus" role="status" aria-live="polite"></div>
+  <div class="hp-info-modal" id="hpInfoModal" hidden>
+    <div class="hp-info-backdrop" data-hp-info-close></div>
+    <section class="hp-info-dialog premium-glass" role="dialog" aria-modal="true" aria-labelledby="hpInfoTitle">
+      <button class="hp-info-close" type="button" data-hp-info-close aria-label="HP bilgi penceresini kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <p class="hp-info-eyebrow">HP Kaynak Tablosu</p>
+      <h2 id="hpInfoTitle">Toplam HP</h2>
+      <p id="hpInfoText">HP kaynakların hazırlanıyor.</p>
+      <div class="hp-info-table-wrap">
+        <table class="hp-source-table">
+          <thead>
+            <tr>
+              <th>Kaynak</th>
+              <th>Tür</th>
+              <th>Detay</th>
+              <th>HP</th>
+            </tr>
+          </thead>
+          <tbody id="hpInfoRows"></tbody>
+          <tfoot>
+            <tr>
+              <th colspan="3">Toplam</th>
+              <td id="hpInfoTotal">0 HP</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260620-mobile1" defer></script>
-  <script src="../../js/user-panel-premium.js?v=20260620-mobile1" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
+  <script src="../../js/user-panel-premium.js?v=20260621-hp1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
