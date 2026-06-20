@@ -7,6 +7,73 @@
     return security ? security.publicErrorMessage(error, fallback) : (fallback || "İşlem tamamlanamadı.");
   }
 
+  function safeReturnTo(value) {
+    const fallback = core.url("user-panel.html");
+    const raw = String(value || "").trim();
+    if (!raw) return fallback;
+
+    try {
+      const decoded = decodeURIComponent(raw);
+      const target = new URL(decoded, window.location.href);
+      if (target.origin !== window.location.origin) return fallback;
+      return `${target.pathname}${target.search}${target.hash}` || fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function isAuthLandingPage() {
+    return Boolean(document.querySelector("[data-login-form]") || document.querySelector("[data-register-form]"));
+  }
+
+  async function redirectAuthenticatedUser(session) {
+    if (!isAuthLandingPage()) return;
+    const currentSession = session || await App.auth.getSession();
+    if (!currentSession) return;
+
+    const returnTo = safeReturnTo(core.getParam("returnTo"));
+    window.location.replace(returnTo);
+  }
+
+  function initOAuthRedirect() {
+    if (!isAuthLandingPage() || !App.supabase) return;
+
+    App.supabase.auth.onAuthStateChange((event, session) => {
+      if (session && ["INITIAL_SESSION", "SIGNED_IN"].includes(event)) {
+        redirectAuthenticatedUser(session);
+      }
+    });
+
+    redirectAuthenticatedUser();
+  }
+
+  function initGoogleLogin() {
+    document.querySelectorAll("[data-google-login]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const returnTo = core.getParam("returnTo") || button.getAttribute("data-return-to") || "user-panel.html";
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Google'a yönlendiriliyor...";
+
+        try {
+          const limit = security && security.rateLimit("google-login", { limit: 10, windowMs: 15 * 60 * 1000 });
+          if (limit && !limit.allowed) {
+            throw new Error(`Çok fazla Google giriş denemesi. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
+          }
+          await App.auth.signInWithGoogle(returnTo);
+        } catch (error) {
+          const message = /Çok fazla/i.test(error.message || "")
+            ? error.message
+            : authError(error, "Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+          core.toast(message, "error");
+          core.renderStatus("[data-auth-status]", message, "error");
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
+    });
+  }
+
   async function initLogin() {
     const form = document.querySelector("[data-login-form]");
     if (!form) return;
@@ -27,11 +94,7 @@
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("login");
         }
-        const returnTo = core.getParam("returnTo");
-        const decodedReturnTo = returnTo ? decodeURIComponent(returnTo) : "";
-        window.location.href = decodedReturnTo && decodedReturnTo.startsWith("/") && !decodedReturnTo.startsWith("//")
-          ? decodedReturnTo
-          : core.url("user-panel.html");
+        window.location.href = safeReturnTo(core.getParam("returnTo"));
       } catch (error) {
         const message = /Çok fazla|e-posta/i.test(error.message || "") ? error.message : authError(error, "Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
         core.toast(message, "error");
@@ -109,8 +172,10 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    initOAuthRedirect();
     initLogin();
     initRegister();
     initForgot();
+    initGoogleLogin();
   });
 })();

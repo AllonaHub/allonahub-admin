@@ -866,9 +866,19 @@ a{
 <script>
 const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
+  auth:{
+    persistSession:true,
+    autoRefreshToken:true,
+    detectSessionInUrl:true
+  }
+});
 
-const SITE_URL="https://allonahub.github.io/allonahub-admin/user-panel.html";
+function pageUrl(path){
+  return new URL(path, window.location.href).href;
+}
+
+const SITE_URL=pageUrl("user-panel.html");
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1410,6 +1420,27 @@ async function loginUser(){
 
   window.location.href = "user-panel.html";
 }
+
+async function loginWithGoogle(){
+  const redirectUrl=new URL("login.html", window.location.href);
+  redirectUrl.searchParams.set("returnTo","user-panel.html");
+
+  const { error }=await supabaseClient.auth.signInWithOAuth({
+    provider:"google",
+    options:{
+      redirectTo:redirectUrl.href,
+      queryParams:{
+        access_type:"offline",
+        prompt:"select_account"
+      }
+    }
+  });
+
+  if(error){
+    alert("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }
+}
+
 async function resetPassword(){
   const email=document.getElementById("forgotEmail").value.trim();
 
@@ -1419,7 +1450,7 @@ async function resetPassword(){
   }
 
   const { error }=await supabaseClient.auth.resetPasswordForEmail(email,{
-    redirectTo:"https://allonahub.github.io/allonahub-admin/reset-password.html"
+    redirectTo:pageUrl("reset-password.html")
   });
 
   if(error){

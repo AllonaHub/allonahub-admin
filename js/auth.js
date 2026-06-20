@@ -21,6 +21,43 @@
     return data;
   }
 
+  function safeReturnPath(value, fallback) {
+    const fallbackPath = fallback || App.core.url("user-panel.html");
+    const raw = String(value || "").trim();
+    if (!raw) return fallbackPath;
+
+    try {
+      const decoded = decodeURIComponent(raw);
+      const target = new URL(decoded, window.location.href);
+      if (target.origin !== window.location.origin) return fallbackPath;
+      return `${target.pathname}${target.search}${target.hash}` || fallbackPath;
+    } catch (error) {
+      return fallbackPath;
+    }
+  }
+
+  async function signInWithGoogle(returnTo) {
+    if (!App.supabase) throw new Error("Supabase istemcisi yüklenemedi.");
+
+    const destination = safeReturnPath(returnTo, App.core.url("user-panel.html"));
+    const redirectUrl = new URL(App.core.url("login.html"), window.location.href);
+    redirectUrl.searchParams.set("returnTo", destination);
+
+    const { data, error } = await App.supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectUrl.href,
+        queryParams: {
+          access_type: "offline",
+          prompt: "select_account"
+        }
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
   async function signUp({ email, password, full_name, phone }) {
     const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
     const cleanName = security ? security.normalizeText(full_name, { max: 120 }) : String(full_name || "").trim();
@@ -127,6 +164,7 @@
     getProfile,
     upsertProfile,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     resetPassword,

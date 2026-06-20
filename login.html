@@ -30,6 +30,12 @@
             <button class="btn btn--full" type="submit">Giriş Yap</button>
           </div>
         </form>
+        <div class="auth-divider"><span>veya</span></div>
+        <button class="btn btn--light btn--full auth-google" type="button" data-google-login data-return-to="user-panel.html">
+          <span aria-hidden="true">G</span>
+          Google ile Giriş Yap
+        </button>
+        <div data-auth-status></div>
         <p class="auth-switch"><a href="forgot-password.html">Şifremi unuttum</a> · <a href="register.html">Kayıt ol</a></p>
       </section>
     </main>
@@ -40,11 +46,11 @@
   <script src="js/config.js?v=20260619-cvpay2" defer></script>
   <script src="js/core.js?v=20260619-sec1" defer></script>
   <script src="js/supabase-client.js?v=20260619-sec1" defer></script>
-  <script src="js/auth.js?v=20260620-account1" defer></script>
+  <script src="js/auth.js?v=20260620-google1" defer></script>
   <script src="js/cv-access.js?v=20260619-payform1" defer></script>
   <script src="js/cart.js?v=20260619-live9" defer></script>
   <script src="js/layout.v3.js?v=20260620-account1" defer></script>
-  <script src="js/auth-pages.js?v=20260620-account1" defer></script>
+  <script src="js/auth-pages.js?v=20260620-google1" defer></script>
   <script src="js/platform.js?v=20260620-mobile1" defer></script>
 </body>
 </html>

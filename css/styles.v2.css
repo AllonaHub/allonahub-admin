@@ -978,6 +978,40 @@ body[data-theme="white"] .payment-logo--iyzico .iyzico-logo--white {
   gap: 16px;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--line);
+}
+
+.auth-google {
+  justify-content: center;
+  gap: 10px;
+}
+
+.auth-google span {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ffffff, #eef8fb);
+  border: 1px solid var(--line);
+  color: var(--sea);
+  font-weight: 900;
+}
+
 .auth-switch {
   color: var(--muted);
   text-align: center;

@@ -151,7 +151,7 @@ body{overflow-x:hidden}
 <div class="input"><input id="loginEmail" placeholder="E-posta"></div>
 <div class="input"><input id="loginPassword" type="password" placeholder="Şifre"></div>
 <button class="btn" onclick="partnerLogin()">Partner Paneline Giriş</button>
-<button class="btn secondary-btn" onclick="showNotice('Google ile giriş daha sonra aktif edilecek.')">Google ile Giriş</button>
+<button class="btn secondary-btn" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
 </div>
 
 <div id="apply" class="form">
@@ -295,7 +295,13 @@ body{overflow-x:hidden}
 <script>
 const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 const EMAILJS_SERVICE_ID = "service_s9myas7";
 const EMAILJS_TEMPLATE_ID = "template_i7xzsya";
@@ -307,6 +313,95 @@ function showNotice(message){
   n.textContent=String(message || "");
   n.style.display="block";
   setTimeout(()=>{n.style.display="none"},4500);
+}
+
+async function partnerLoginWithGoogle(){
+  const redirectUrl=new URL("partner.html", window.location.href);
+  redirectUrl.searchParams.set("partnerOAuth","google");
+
+  try{
+    const { error }=await supabaseClient.auth.signInWithOAuth({
+      provider:"google",
+      options:{
+        redirectTo:redirectUrl.href,
+        queryParams:{
+          access_type:"offline",
+          prompt:"select_account"
+        }
+      }
+    });
+
+    if(error)throw error;
+  }catch(err){
+    showNotice("Google ile partner girişi başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }
+}
+
+async function completePartnerGoogleLogin(session){
+  const email=session?.user?.email ? String(session.user.email).trim().toLowerCase() : "";
+
+  if(!email){
+    showNotice("Google hesabından e-posta bilgisi alınamadı.");
+    return;
+  }
+
+  const { data, error }=await supabaseClient
+    .from("partners")
+    .select("*")
+    .eq("email",email)
+    .eq("status","active")
+    .maybeSingle();
+
+  if(error){
+    console.error("Google partner kaydı okunamadı", error);
+    showNotice("Partner kaydı şu anda kontrol edilemedi.");
+    return;
+  }
+
+  if(!data){
+    showNotice("Bu Google hesabı için aktif partner kaydı bulunamadı.");
+    return;
+  }
+
+  localStorage.setItem("allonaPartnerLoggedIn","true");
+  localStorage.setItem("allonaPartnerEmail",email);
+  localStorage.setItem("allonaPartnerUserId",session.user.id);
+  localStorage.setItem("allonaPartnerProfile",JSON.stringify(data));
+  localStorage.setItem("allonaPartnerId",data.partner_id || "");
+  localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
+
+  window.location.href="partner-panel.html";
+}
+
+function initPartnerGoogleCallback(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("partnerOAuth")!=="google")return;
+
+  showNotice("Google oturumu kontrol ediliyor...");
+
+  let handled=false;
+  const resolveOnce=async(session)=>{
+    if(handled || !session)return;
+    handled=true;
+    await completePartnerGoogleLogin(session);
+  };
+
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(session && (event==="INITIAL_SESSION" || event==="SIGNED_IN")){
+      resolveOnce(session);
+    }
+  });
+
+  setTimeout(async()=>{
+    const { data }=await supabaseClient.auth.getSession();
+    if(data.session){
+      resolveOnce(data.session);
+      return;
+    }
+    if(!handled){
+      showNotice("Google oturumu tamamlanamadı. Lütfen tekrar deneyin.");
+    }
+  },700);
 }
 
 function partnerRateLimit(key,limit,windowMs){
@@ -527,6 +622,8 @@ document.getElementById("partnerSearchInput").addEventListener("keydown",functio
 document.getElementById("phone").addEventListener("input",function(){
   this.value=this.value.replace(/[^\d\s]/g,"").replace(/\s+/g," ");
 });
+
+initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
   <script src="js/core.js?v=20260619-sec1" defer></script>
