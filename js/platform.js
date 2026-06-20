@@ -767,7 +767,7 @@
     const loggedIn = await hasAuthenticatedUser();
     if (!loggedIn) {
       links.forEach((link) => {
-        link.href = assetUrl("/pages/account/login.html");
+        link.href = assetUrl("/pages/account/register.html");
         link.textContent = localizedText("Giriş Yap");
         link.setAttribute("aria-label", localizedText("Giriş Yap"));
         link.setAttribute("data-account-link", "");

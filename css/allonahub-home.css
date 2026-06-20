@@ -91,6 +91,7 @@ nav a:hover{color:#00e5ff!important}
 .module-card--market{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/market.png')!important}
 .module-card--taksi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/taksi.png')!important}
 .module-card--saglik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/saglik.png')!important}
+.module-card--avm-dunyasi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/avm-dunyasi.png')!important}
 .module-card--seyahat{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/seyahat.png')!important}
 .module-card--gayrimenkul{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/gayrimenkul.png')!important}
 .module-card--denizcilik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/denizcilik.png')!important}
@@ -113,8 +114,9 @@ nav a:hover{color:#00e5ff!important}
 .module-card--organizasyon{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/organizasyon.png')!important}
 .module-card--tarim{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/tarim.png')!important}
 .module-card--insaatyapi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/insaatyapi.png')!important}
-.module-card--muhendislik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/muhendislik.png')!important}
-.module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/trade.png')!important}
+.module-card--muhendislik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/muhendislik-v2.png')!important}
+.module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/trade-v2.png')!important}
+.module-card--otelcilik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/otelcilik.png')!important}
 .module-card--wallet{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/wallet.png')!important}
 
 .section{max-width:1320px;margin:55px auto;padding:0 20px}

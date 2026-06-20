@@ -43,6 +43,7 @@
     "arama.html": "/pages/search/arama.html",
     "ecosystem.html": "/pages/ecosystem/ecosystem.html",
     "taxi.html": "/pages/ecosystem/allonataksi.html",
+    "allonaavm.html": "/pages/ecosystem/allonaavm.html",
     "allonadanismanlik.html": "/pages/ecosystem/allonadanismanlik.html",
     "allonadenizcilik.html": "/pages/ecosystem/allonadenizcilik.html",
     "allonaegitim.html": "/pages/ecosystem/allonaegitim.html",
@@ -66,6 +67,7 @@
     "allonasigorta.html": "/pages/ecosystem/allonasigorta.html",
     "allonasporfitness.html": "/pages/ecosystem/allonasporfitness.html",
     "allonataksi.html": "/pages/ecosystem/allonataksi.html",
+    "allonaotelcilik.html": "/pages/ecosystem/allonaotelcilik.html",
     "allonatarim.html": "/pages/ecosystem/allonatarim.html",
     "allonateknoloji.html": "/pages/ecosystem/allonateknoloji.html",
     "allonatrade.html": "/pages/ecosystem/allonatrade.html",
@@ -112,7 +114,11 @@
     "hp-nedir.html": "/pages/wallet/hp-nedir.html",
     "hp-wallet-kurallari.html": "/pages/wallet/hp-wallet-kurallari.html",
     "hubwallet.html": "/pages/wallet/hubwallet.html",
-    "allona.logo.png": "/images/brand/allona.logo.png"
+    "allona.logo.png": "/images/brand/allona.logo.png",
+    "avm-dunyasi.png": "/images/modules/avm-dunyasi.png",
+    "muhendislik-v2.png": "/images/modules/muhendislik-v2.png",
+    "otelcilik.png": "/images/modules/otelcilik.png",
+    "trade-v2.png": "/images/modules/trade-v2.png"
   };
 
   function mapLegacyPath(path) {
