@@ -306,7 +306,7 @@
         "Sana Özel Öneriler": "Sənin üçün tövsiyələr",
         "Profilimi Güncelle": "Profilimi yenilə",
         "Favoriye ekle": "Sevimlilərə əlavə et",
-        "Hemen Al": "İndi al",
+        "Sepete Ekle": "Səbətə əlavə et",
         "Stok yok": "Stok yoxdur",
         "stok": "stok",
         "İndirim": "Endirim",
