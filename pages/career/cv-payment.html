@@ -114,6 +114,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
 }
 .cardFields__head strong{color:#fff;font-size:15px}
 .cardFields__head span{color:#9edff2;font-size:12px;font-weight:800;text-align:right}
+.cardFields--handoff p{margin:10px 0 0;color:#dff8ff;line-height:1.65;font-size:14px}
 .cardRow{display:grid;grid-template-columns:1fr 120px;gap:12px}
 .payBtn{
   width:100%;
@@ -255,7 +256,7 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
       <p>Her hesap için 2 ücretsiz CV/PDF üretim hakkı bulunur. Haklar bittikten sonra her yeni CV üretimi için tek kullanımlık ücretli kredi alınır.</p>
       <div class="features">
         <div class="feature"><strong>Tek kullanımlık kredi</strong><p>Ödeme sonrası hesabına 1 CV üretim kredisi tanımlanır.</p></div>
-        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.</p></div>
+        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde toplanmaz veya saklanmaz; ödeme iyzico CheckoutForm ekranında tamamlanır.</p></div>
         <div class="feature"><strong>Kısıtlama yok</strong><p>Bu ödeme kuralı dışında kullanıcıya farklı bir kullanım kısıtı uygulanmaz.</p></div>
       </div>
     </article>
@@ -272,25 +273,12 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
         <label for="buyerPhone">Telefon</label>
         <input id="buyerPhone" name="buyerPhone" inputmode="tel" placeholder="+90 5xx xxx xx xx" autocomplete="tel" required>
 
-        <div class="cardFields">
+        <div class="cardFields cardFields--handoff">
           <div class="cardFields__head">
-            <strong>Kart Bilgileri</strong>
-            <span>Güvenli ödeme</span>
+            <strong>iyzico Güvenli Ödeme</strong>
+            <span>PCI uyumlu yönlendirme</span>
           </div>
-          <label for="cardHolder">Kart Üzerindeki İsim</label>
-          <input id="cardHolder" name="cardHolder" autocomplete="cc-name" placeholder="Ad Soyad" required>
-          <label for="cardNumber">Kart Numarası</label>
-          <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
-          <div class="cardRow">
-            <div>
-              <label for="cardExpiry">Son Kullanma Tarihi</label>
-              <input id="cardExpiry" name="cardExpiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
-            </div>
-            <div>
-              <label for="cardCvc">CVC</label>
-              <input id="cardCvc" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
-            </div>
-          </div>
+          <p>Ödeme başlatıldığında iyzico ödeme sayfası açılır. Kart üzerindeki isim, kart numarası, son kullanma tarihi ve CVC yalnızca iyzico ekranında girilir.</p>
         </div>
 
         <button class="payBtn" type="submit">Ödeme Yap</button>
@@ -303,7 +291,7 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
           <span class="brandBadge brandBadge--mastercard" aria-label="Mastercard"></span>
           <span class="brandBadge brandBadge--amex">AMEX</span>
         </div>
-        <div class="secureLine">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</div>
+        <div class="secureLine">Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz.</div>
       </form>
 
       <div class="status" data-cv-access-status>CV hak durumu kontrol ediliyor...</div>
@@ -335,27 +323,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const form = document.getElementById("cvPaymentForm");
   const status = document.getElementById("cvPaymentStatus");
-  const cardNumber = document.getElementById("cardNumber");
-  const cardExpiry = document.getElementById("cardExpiry");
-  const cardCvc = document.getElementById("cardCvc");
-
   try{
     const user = App.auth && App.auth.getUser ? await App.auth.getUser() : null;
     if(user && user.email && !form.buyerEmail.value){
       form.buyerEmail.value = user.email;
     }
   }catch(error){}
-
-  cardNumber.addEventListener("input", () => {
-    cardNumber.value = cardNumber.value.replace(/\D/g,"").slice(0,16).replace(/(\d{4})(?=\d)/g,"$1 ");
-  });
-  cardExpiry.addEventListener("input", () => {
-    const value = cardExpiry.value.replace(/\D/g,"").slice(0,4);
-    cardExpiry.value = value.length > 2 ? `${value.slice(0,2)}/${value.slice(2)}` : value;
-  });
-  cardCvc.addEventListener("input", () => {
-    cardCvc.value = cardCvc.value.replace(/\D/g,"").slice(0,4);
-  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();

@@ -5,14 +5,15 @@
 1. Supabase projesinde SQL Editor aç.
 2. `supabase/schema.sql` içeriğini çalıştır.
 3. Ardından `supabase/migrations/20260619110000_security_hardening.sql` migration'ını çalıştır.
-4. Admin, partner, kurye ve finans rolleri için Supabase MFA ayarlarını etkinleştir.
-5. MFA aktif olduktan sonra `supabase/migrations/20260619193000_enterprise_security_controls.sql` migration'ını çalıştır.
-6. Auth URL ayarlarına canlı domaini ekle.
-7. Storage bucketlarını oluştur:
+4. `supabase/migrations/20260620223000_harden_checkout_iyzico_alignment.sql` migration'ını çalıştır.
+5. Admin, partner, kurye ve finans rolleri için Supabase MFA ayarlarını etkinleştir.
+6. MFA aktif olduktan sonra `supabase/migrations/20260619193000_enterprise_security_controls.sql` migration'ını çalıştır.
+7. Auth URL ayarlarına canlı domaini ekle.
+8. Storage bucketlarını oluştur:
    - `product-images`
    - `brand-assets`
    - `partner-documents`
-6. Edge Function secretlarını ekle:
+9. Edge Function secretlarını ekle:
 
 ```bash
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
@@ -36,7 +37,7 @@ supabase functions deploy iyzico-callback
 
 CV ödeme akışı için `iyzico-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
 
-Kartlı ödeme formları e-posta, telefon ve kart bilgisi alanlarıyla iyzico onayı sonrası doğrudan kartlı ödeme entegrasyonuna hazırdır. Kart verisi AllonaHub veritabanında saklanmamalı; canlı entegrasyonda iyzico'nun PCI uyumlu tokenizasyon/ödeme API akışına bağlanmalıdır.
+AllonaHub kart numarası, son kullanma tarihi veya CVC alanı toplamaz. Checkout ve CV ödeme ekranları e-posta/telefon ile iyzico CheckoutForm oturumu başlatır; müşteri kart bilgisini yalnızca iyzico ödeme sayfasında girer. Kart verisi AllonaHub frontendinde, Supabase veritabanında veya backend loglarında tutulmamalıdır.
 
 ## 3. GitHub
 

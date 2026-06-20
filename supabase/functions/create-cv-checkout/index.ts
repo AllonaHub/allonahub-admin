@@ -46,6 +46,14 @@ function splitName(fullName: string) {
   return { name, surname };
 }
 
+function clientIp(req: Request) {
+  return String(
+    req.headers.get("cf-connecting-ip")
+      || (req.headers.get("x-forwarded-for") || "").split(",")[0].trim()
+      || "0.0.0.0"
+  ).slice(0, 64);
+}
+
 async function hmacSha256Hex(payload: string, secret: string) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -161,7 +169,7 @@ Deno.serve(async (req) => {
         city: "İstanbul",
         country: "Turkey",
         zipCode: "34000",
-        ip: req.headers.get("x-forwarded-for") || "0.0.0.0"
+        ip: clientIp(req)
       },
       shippingAddress: {
         address: "AllonaHub Dijital CV",

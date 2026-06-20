@@ -128,7 +128,10 @@ Sipariş ve sipariş kalemleri. Mevcut üretim modeli `addresses` tablosuna bağ
 - `orders.total`
 - `order_status`: `pending`, `confirmed`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
 - `payment_status`: `pending`, `awaiting_payment`, `paid`, `failed`, `refunded`
+- `partner_status`: `new`, `approved`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
 - `tracking_number`
+- `cargo_company`
+- `approved_at`
 
 `order_items` temel alanları:
 
@@ -181,7 +184,10 @@ alter table public.orders
   add column if not exists total numeric(12,2) default 0,
   add column if not exists order_status text default 'pending',
   add column if not exists payment_status text default 'pending',
+  add column if not exists partner_status text default 'new',
   add column if not exists tracking_number text,
+  add column if not exists cargo_company text default '',
+  add column if not exists approved_at timestamptz,
   add column if not exists created_at timestamptz default now();
 
 alter table public.orders
@@ -192,7 +198,33 @@ alter table public.orders
   alter column total set default 0,
   alter column order_status set default 'pending',
   alter column payment_status set default 'pending',
+  alter column partner_status set default 'new',
+  alter column cargo_company set default '',
   alter column created_at set default now();
+
+update public.orders
+set partner_status = case
+  when partner_status in ('new', 'approved', 'preparing', 'shipped', 'delivered', 'cancelled', 'refunded') then partner_status
+  when partner_status in ('pending', '') or partner_status is null then 'new'
+  else 'new'
+end;
+
+alter table public.orders
+  alter column partner_status set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'orders_partner_status_allowed'
+  ) then
+    alter table public.orders
+      add constraint orders_partner_status_allowed
+      check (partner_status in ('new', 'approved', 'preparing', 'shipped', 'delivered', 'cancelled', 'refunded'))
+      not valid;
+  end if;
+end $$;
 
 update public.orders
 set order_no = 'ALN-' || to_char(coalesce(created_at, now()), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))
@@ -200,6 +232,7 @@ where order_no is null or order_no = '';
 
 create unique index if not exists orders_order_no_key on public.orders(order_no);
 create index if not exists orders_status_idx on public.orders(order_status, payment_status);
+create index if not exists orders_partner_status_idx on public.orders(partner_status, created_at desc);
 
 alter table public.order_items
   add column if not exists order_id uuid references public.orders(id) on delete cascade,

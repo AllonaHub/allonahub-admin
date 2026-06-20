@@ -120,7 +120,8 @@ async function loadOrders(){
 
   document.getElementById("orders").innerHTML=partnerOrders.map(order=>{
     const orderItems=items.filter(i=>i.order_id===order.id);
-    const isNew=(order.partner_status||order.order_status)==="new";
+    const partnerState=order.partner_status || (order.order_status === "pending" ? "new" : order.order_status);
+    const isNew=partnerState==="new" || partnerState==="pending";
 
     return `
       <div class="card">
@@ -129,7 +130,7 @@ async function loadOrders(){
             <div class="order-no">${safe(order.order_no)}</div>
             <div>${safe(order.customer_name)} • ${safe(order.customer_phone)}</div>
           </div>
-          <div class="status">${safe(statusText(order.partner_status || order.order_status))}</div>
+          <div class="status">${safe(statusText(partnerState))}</div>
         </div>
 
         <div class="grid">
@@ -164,7 +165,9 @@ async function loadOrders(){
 function statusText(status){
   const map={
     new:"Yeni Sipariş",
+    pending:"Yeni Sipariş",
     approved:"Hazırlanıyor",
+    preparing:"Hazırlanıyor",
     shipped:"Kargoya Verildi",
     delivered:"Teslim Edildi",
     cancelled:"İptal"

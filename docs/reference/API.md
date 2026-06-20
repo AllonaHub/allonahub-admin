@@ -35,11 +35,13 @@ Konum: `supabase/functions/create-iyzico-checkout/index.ts`
 {
   "orderId": "uuid",
   "buyer": {
-    "identityNumber": "11111111111",
-    "ip": "127.0.0.1"
+    "email": "musteri@ornek.com",
+    "phone": "+905300000000"
   }
 }
 ```
+
+Frontend kart numarası, son kullanma tarihi, CVC veya service-role/iyzico secret göndermez. Edge Function gerçek istemci IP bilgisini Cloudflare/Supabase request headerlarından alır; iyzico zorunlu CheckoutForm alanları sunucu tarafında hazırlanır.
 
 Yanıt:
 

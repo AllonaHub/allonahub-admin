@@ -247,7 +247,7 @@ export function registerRoutes(app) {
 
   app.post("/v1/payments/iyzico/checkout", async (request) => {
     assertPaymentsEnabled();
-    const ctx = await requireAuth(request, { action: "payment.checkout", mfa: true });
+    const ctx = await requireAuth(request, { action: "payment.checkout" });
     const payload = orderCheckoutSchema.parse(request.body || {});
     const order = await getOrderForPayment(payload.orderId, ctx);
     const checkout = await initializeIyzicoCheckout({ order, ctx, request });

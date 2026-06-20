@@ -36,6 +36,8 @@
 - [x] Kullanıcı adres yönetimini Supabase `addresses` tablosuna bağla.
 - [x] Checkout akışını iyzico CheckoutForm Edge Function sözleşmesine bağla.
 - [x] Checkout yasal onaylarını ve iyzico yönlendirme mantığını kart bilgisi toplamadan hazırla.
+- [x] Eski ödeme/CV ödeme ekranlarındaki kart alanlarını iyzico CheckoutForm yönlendirmesine çevir.
+- [x] `orders.partner_status`, `orders.cargo_company` ve `orders.approved_at` şemasını checkout/partner paneliyle hizala.
 - [x] Footer yasal linklerini ve şirket bilgilerini AllonaHub odağıyla düzenle.
 - [x] Footer, dil ve tema altyapısını platform geneline bağla.
 - [x] Supabase SQL şemasını ve RLS politikalarını dokümante et.

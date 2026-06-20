@@ -25,10 +25,10 @@
 /allonayemek.html /pages/commerce/allonayemek.html 301
 /cart.html /pages/commerce/cart.html 301
 /checkout.html /pages/commerce/checkout.html 301
-/kopunlar.html /pages/commerce/kopunlar.html 301
+/kopunlar.html /pages/commerce/kuponlar.html 301
 /kuponlar.html /pages/commerce/kuponlar.html 301
-/ode.html /pages/commerce/ode.html 301
-/odeme.html /pages/commerce/odeme.html 301
+/ode.html /pages/commerce/checkout.html 301
+/odeme.html /pages/commerce/checkout.html 301
 /order-success.html /pages/commerce/order-success.html 301
 /product.html /pages/commerce/product.html 301
 /shop.html /pages/commerce/shop.html 301
@@ -105,7 +105,7 @@
 /iade-politikasi.html /pages/legal/iade-politikasi.html 301
 /iptal-iade.html /pages/legal/iptal-iade.html 301
 /kullanim-sartlari.html /pages/legal/kullanim-sartlari.html 301
-/kullanım-sartları.html /pages/legal/kullanım-sartları.html 301
+/kullanım-sartları.html /pages/legal/kullanim-sartlari.html 301
 /kvkk.html /pages/legal/kvkk.html 301
 /mesafeli-satis-sozlesmesi.html /pages/legal/mesafeli-satis-sozlesmesi.html 301
 /mesafeli-satis.html /pages/legal/mesafeli-satis.html 301

@@ -308,13 +308,17 @@ create table if not exists public.orders (
   total numeric(12,2) not null default 0,
   order_status public.order_status not null default 'pending',
   payment_status public.payment_status not null default 'pending',
+  partner_status text not null default 'new' check (partner_status in ('new', 'approved', 'preparing', 'shipped', 'delivered', 'cancelled', 'refunded')),
   tracking_number text,
+  cargo_company text,
+  approved_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists orders_user_idx on public.orders(user_id, created_at desc);
 create index if not exists orders_status_idx on public.orders(order_status, payment_status);
+create index if not exists orders_partner_status_idx on public.orders(partner_status, created_at desc);
 
 drop trigger if exists orders_set_updated_at on public.orders;
 create trigger orders_set_updated_at

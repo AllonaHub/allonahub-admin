@@ -244,25 +244,9 @@
       return data;
     } catch (error) {
       if (!missingBackend(error)) throw error;
-      console.warn("Güvenli sipariş RPC henüz aktif değil; RLS korumalı klasik akış kullanılıyor.", error);
+      console.warn("Güvenli sipariş RPC aktif değil; üretim akışı doğrudan frontend insert yapmadan durduruldu.", error);
+      throw new Error("Güvenli sipariş servisi şu anda aktif değil. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.");
     }
-
-    const fallbackOrder = { ...order };
-    delete fallbackOrder.coupon_code;
-    const { data: created, error } = await client().from("orders").insert(fallbackOrder).select("*").single();
-    if (error) throw error;
-
-    const rows = items.map((item) => ({
-      order_id: created.id,
-      product_id: item.product.id,
-      product_name: item.product.name,
-      quantity: item.qty,
-      price: item.product.price
-    }));
-
-    const { error: itemError } = await client().from("order_items").insert(rows);
-    if (itemError) throw itemError;
-    return created;
   }
 
   async function invokeIyzicoCheckout(orderId, buyer) {
