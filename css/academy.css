@@ -7,9 +7,9 @@
 }
 
 .academy-page main {
-  width: min(1320px, 100%);
+  width: min(100% - 32px, 1720px);
   margin: 0 auto;
-  padding: 24px 20px 64px;
+  padding: 24px 0 64px;
 }
 
 .academy-page .top-mini-nav a[aria-current="page"] {
@@ -199,7 +199,7 @@
 
 .academy-category-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px;
 }
 
@@ -231,7 +231,7 @@
 
 .academy-article-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
 }
 

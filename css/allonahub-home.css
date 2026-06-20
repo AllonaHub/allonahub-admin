@@ -6,7 +6,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 @keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
 a{text-decoration:none}
 
-.top-mini-nav{max-width:1320px;margin:10px auto 0;padding:0 20px;display:flex;justify-content:flex-end;gap:18px;font-size:12px}
+.top-mini-nav{max-width:1720px;margin:10px auto 0;padding:0 20px;display:flex;justify-content:flex-end;gap:18px;font-size:12px}
 .top-mini-nav a{color:rgba(255,255,255,.72)}
 .top-mini-nav a:hover{color:#00e5ff}
 
@@ -26,7 +26,7 @@ nav a{color:white!important;font-size:15px!important;font-weight:700!important}
 nav a:hover{color:#00e5ff!important}
 .login{background:#00d5e8!important;color:white!important;padding:13px 24px!important;border-radius:999px!important;box-shadow:0 0 20px rgba(0,225,255,.35)!important}
 
-.premium-hero{width:100%;max-width:1320px;margin:25px auto 25px;padding:0 20px;display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:22px;align-items:stretch}
+.premium-hero{width:100%;max-width:1720px;margin:25px auto 25px;padding:0 20px;display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:22px;align-items:stretch}
 .hero-time-card,.hero-main-card,.hero-reward-card{position:relative;overflow:hidden;border-radius:30px;padding:28px;min-height:220px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 35px rgba(0,229,255,.14),inset 0 0 24px rgba(255,255,255,.04)}
 .hero-main-card{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:330px}
 .hero-main-card h1{font-size:52px;line-height:1.08;margin:0 0 18px;color:white;text-shadow:0 0 24px rgba(0,229,255,.25)}
@@ -53,7 +53,7 @@ nav a:hover{color:#00e5ff!important}
 @keyframes orbMove{from{transform:translate(0,0) scale(1)}to{transform:translate(-25px,25px) scale(1.25)}}
 @keyframes diamondGlow{from{transform:scale(1) rotate(0deg);filter:brightness(1)}to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}}
 
-.live-stats-section{max-width:1320px;margin:20px auto 25px;padding:0 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.live-stats-section{max-width:1720px;margin:20px auto 25px;padding:0 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
 .stat-live-card{position:relative;background:rgba(0,20,45,.75);border:1px solid rgba(0,225,255,.25);border-radius:18px;padding:18px;text-align:center;overflow:hidden}
 .stat-live-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(0,255,255,.22),transparent 60%)}
 .stat-live-card p{color:#9adfff;font-size:13px;margin:0 0 8px}
@@ -61,7 +61,7 @@ nav a:hover{color:#00e5ff!important}
 .stat-dot{width:10px;height:10px;background:#00ff66;border-radius:50%;display:inline-block;margin-bottom:10px;box-shadow:0 0 12px #00ff66;animation:pulseLive 1.5s infinite}
 @keyframes pulseLive{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
 
-.live-ads-section{max-width:1320px;margin:35px auto;padding:0 20px}
+.live-ads-section{max-width:1720px;margin:35px auto;padding:0 20px}
 .live-ads-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
 .live-ads-head h2{color:#ffd700;font-size:32px;margin:0}
 .live-ads-head p{color:rgba(255,255,255,.7);margin:6px 0 0}
@@ -76,12 +76,12 @@ nav a:hover{color:#00e5ff!important}
 .ad-meta{margin-top:12px;font-size:12px;color:rgba(255,255,255,.65)}
 @keyframes adPulse{from{transform:scale(1);opacity:.25}to{transform:scale(1.35);opacity:.55}}
 
-.modules-section{width:100%;max-width:1320px;margin:0 auto;padding:28px 10px;background:linear-gradient(180deg,#061b33,#020814)}
+.modules-section{width:100%;max-width:1720px;margin:0 auto;padding:28px 20px;background:linear-gradient(180deg,#061b33,#020814)}
 .section-head{text-align:center;max-width:760px;margin:0 auto 35px}
 .section-head span{color:#ffd700;font-weight:900;letter-spacing:1px}
 .section-head h2{font-size:42px;margin:14px 0;color:white}
 .section-head p{color:rgba(255,255,255,.75);font-size:17px}
-.modules-grid.large-grid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:18px!important}
+.modules-grid.large-grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:18px!important}
 .modules-grid.large-grid .module-card{height:230px!important;border-radius:24px!important;overflow:hidden!important;padding:18px!important;display:flex!important;align-items:flex-end!important;text-decoration:none!important;background-size:cover!important;background-position:center!important;border:1px solid rgba(0,225,255,.45)!important;box-shadow:0 0 22px rgba(0,180,255,.18)!important;transition:.3s ease!important}
 .modules-grid.large-grid .module-card:hover{transform:translateY(-7px) scale(1.02)!important;box-shadow:0 0 34px rgba(0,225,255,.45)!important;border-color:#00e5ff!important}
 .modules-grid.large-grid .module-card h3{color:#ffd700!important;font-size:21px!important;margin:0 0 6px!important;text-shadow:0 0 12px rgba(0,0,0,.8)!important}
@@ -117,7 +117,7 @@ nav a:hover{color:#00e5ff!important}
 .module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/trade.png')!important}
 .module-card--wallet{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/wallet.png')!important}
 
-.section{max-width:1320px;margin:55px auto;padding:0 20px}
+.section{max-width:1720px;margin:55px auto;padding:0 20px}
 .section-title{color:#ffd700;font-size:38px;text-align:center;margin-bottom:12px}
 .section-sub{text-align:center;color:rgba(255,255,255,.72);margin-bottom:28px}
 .tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;align-items:start}
@@ -136,7 +136,7 @@ nav a:hover{color:#00e5ff!important}
 .partner p{opacity:.82;margin-bottom:28px;line-height:1.6}
 .btn{display:inline-block;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-weight:900;box-shadow:0 0 22px rgba(255,215,0,.28)}
 
-.footer-main{max-width:1320px;margin:45px auto 0;padding:35px 20px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-main{max-width:1720px;margin:45px auto 0;padding:35px 20px;border-top:1px solid rgba(255,255,255,.10)}
 .footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
 .footer-col h3{color:#ffd700;margin-bottom:14px}
 .footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}

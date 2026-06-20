@@ -63,3 +63,7 @@ Kisa route yonlendirmeleri:
 - `/akademi`
 - `/akademi/`
 - `/academy`
+
+## Layout Kurali
+
+AllonaHub sayfalari ve modul/kart gridleri masaustu ekranda dar kutu gibi kalmamalidir. Platform yuzeylerinde 1720px civari genis container tercih edilir; moduller, kategori kartlari ve dashboard panelleri ekran genisligini verimli kullanacak sekilde yayilir. Sadece uzun metin okuma bloklari okunabilir satir uzunlugu icin daha dar tutulabilir.
