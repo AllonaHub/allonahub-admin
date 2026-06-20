@@ -35,8 +35,8 @@
             <a class="icon-btn icon-btn--count" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler">
               🔔 <span class="badge" data-notification-count>0</span>
             </a>
-            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/wallet/hubwallet.html")}" aria-label="Hub Wallet">
-              Wallet
+            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/commerce/kuponlar.html")}" aria-label="Kuponlar">
+              Kupon
             </a>
             <a class="icon-btn icon-btn--count icon-btn--favorite" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               <span class="header-action-icon header-action-icon--heart" aria-hidden="true">♥</span>
@@ -63,6 +63,7 @@
           <div class="container nav-row__inner">
             <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
               <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/allonahub-akademi.html")}" ${active("/allonahub-akademi.html")}>Akademi</a>
               <a href="${core.url("/pages/ecosystem/allonataksi.html")}" ${active("/pages/ecosystem/allonataksi.html")}>Taksi</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
@@ -116,6 +117,7 @@
             <a href="${core.url("/pages/company/hakkimizda.html")}">Hakkımızda</a>
             <a href="${core.url("/pages/company/iletisim.html")}">İletişim</a>
             <a href="${core.url("/pages/company/destek.html")}">Destek Merkezi</a>
+            <a href="${core.url("/allonahub-akademi.html")}">AllonaHub Akademi</a>
             <a href="${core.url("/pages/account/belgeler.html")}">Belgelerim</a>
             <a href="${core.url("/pages/account/bildirimler.html")}">Bildirimler</a>
             <a href="${core.url("/pages/legal/teslimat-kargo.html")}">Teslimat ve Kargo</a>
@@ -125,7 +127,7 @@
             <h3>Ekosistem</h3>
             <a href="${core.url("/pages/ecosystem/ecosystem.html#modules")}">Tüm Modüller</a>
             <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
-            <a href="${core.url("/pages/wallet/hubwallet.html")}">Kupon</a>
+            <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
             <a href="${core.url("/pages/account/premium.html")}">Premium</a>
             <a href="${core.url("/pages/career/allonakariyer.html")}">Kariyer</a>
             <a href="${core.url("/pages/partner/partner-uyelik.html")}">Partner Üyelik</a>

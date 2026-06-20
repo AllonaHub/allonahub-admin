@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /pages/partner/partner-panel.html
+
+Sitemap: https://allonahub.com/sitemap.xml
