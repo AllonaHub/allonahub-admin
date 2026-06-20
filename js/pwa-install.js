@@ -31,14 +31,21 @@
     if(copy){copy.textContent = message}
   };
 
+  const setButtonLabel = label => {
+    if(button){button.textContent = label}
+  };
+
   const showCard = reason => {
     if(!card || isStandalone() || isDismissed()){return}
     if(reason === "ios"){
-      setMessage("Paylaş menüsünden Ana Ekrana Ekle seçeneğini kullanarak AllonaHub'u tam ekran aç.");
+      setButtonLabel("Adımları Göster");
+      setMessage("iPhone'da Safari Paylaş menüsünden Ana Ekrana Ekle seçeneğini kullan.");
     }else if(reason === "prompt"){
+      setButtonLabel("Ana Ekrana Ekle");
       setMessage("Tek dokunuşla ana ekrana ekle, AllonaHub'u tam ekran uygulama gibi kullan.");
     }else{
-      setMessage("Tarayıcı menüsünden Ana Ekrana Ekle seçeneğiyle AllonaHub'u tam ekran kullan.");
+      setButtonLabel("Ana Ekrana Ekle");
+      setMessage("Android'de butona bas; iPhone'da Safari Paylaş menüsünden Ana Ekrana Ekle'yi seç.");
     }
     card.hidden = false;
   };
@@ -74,10 +81,10 @@
         return;
       }
       if(isIos()){
-        setMessage("Safari'de Paylaş butonuna bas, ardından Ana Ekrana Ekle seçeneğini seç.");
+        setMessage("Safari'de Paylaş butonuna bas, ekrandaki listeden Ana Ekrana Ekle seçeneğini seç.");
         return;
       }
-      setMessage("Tarayıcının menüsünden Ana Ekrana Ekle veya Uygulamayı Yükle seçeneğini kullanabilirsin.");
+      setMessage("Chrome menüsünden Ana ekrana ekle veya Uygulamayı yükle seçeneğini kullan; görünmezse sayfayı bir kez yenile.");
     });
   }
 
@@ -101,7 +108,9 @@
 
   if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js", {scope: "./"}).catch(() => undefined);
+      navigator.serviceWorker.register("sw.js?v=20260621-pwa2", {scope: "./"})
+        .then(registration => registration.update())
+        .catch(() => undefined);
     });
   }
 })();

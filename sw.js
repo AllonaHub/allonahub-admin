@@ -1,7 +1,8 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260621-1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260621-2";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./manifest.json",
   "./manifest.webmanifest",
   "./css/allonahub-home.css?v=20260621-pwa1",
   "./css/platform.css?v=20260621-mobile1",
@@ -9,7 +10,7 @@ const APP_SHELL = [
   "./js/layout.v3.js?v=20260620-account2",
   "./js/platform.js?v=20260620-brand2",
   "./js/allonahub-home.js?v=20260620-services2",
-  "./js/pwa-install.js?v=20260621-pwa1",
+  "./js/pwa-install.js?v=20260621-pwa2",
   "./images/brand/allonahub-icon-180.png",
   "./images/brand/allonahub-icon-192.png",
   "./images/brand/allonahub-icon-512.png",
