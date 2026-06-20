@@ -42,6 +42,7 @@
     "iletisim.html": "/pages/company/iletisim.html",
     "arama.html": "/pages/search/arama.html",
     "ecosystem.html": "/pages/ecosystem/ecosystem.html",
+    "taxi.html": "/pages/ecosystem/allonataksi.html",
     "allonadanismanlik.html": "/pages/ecosystem/allonadanismanlik.html",
     "allonadenizcilik.html": "/pages/ecosystem/allonadenizcilik.html",
     "allonaegitim.html": "/pages/ecosystem/allonaegitim.html",
