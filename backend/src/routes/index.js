@@ -11,7 +11,7 @@ import {
   mfaRequiredForRole,
   supabaseAdmin
 } from "../lib/supabase.js";
-import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload } from "../lib/iyzico.js";
+import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
 
 const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email().max(180);
@@ -35,6 +35,13 @@ const orderCheckoutSchema = z.object({
   orderId: uuidSchema
 });
 
+const publicPartnerIntentCheckoutSchema = z.object({
+  intentId: uuidSchema,
+  customer_name: z.string().trim().min(2).max(160),
+  customer_email: emailSchema,
+  customer_phone: phoneSchema
+});
+
 const cvCheckoutSchema = z.object({
   buyerEmail: emailSchema.optional(),
   buyerPhone: phoneSchema
@@ -43,6 +50,55 @@ const cvCheckoutSchema = z.object({
 const auditQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   severity: z.enum(["debug", "info", "warning", "critical"]).optional()
+});
+
+const partnerPaymentIntentSchema = z.object({
+  channel: z.enum(["qr", "nfc", "payment_link", "web_pos", "physical_pos", "cash", "wallet"]).default("qr"),
+  provider: z.enum([
+    "allonapay",
+    "iyzico_checkout",
+    "iyzico_link",
+    "iyzico_cep_pos",
+    "visa_tap_to_phone",
+    "mastercard_tap_on_phone",
+    "bank_pos",
+    "manual"
+  ]).optional(),
+  amount: z.coerce.number().min(1).max(250000),
+  currency: z.string().trim().length(3).optional().default("TRY"),
+  description: z.string().trim().max(240).optional().default(""),
+  customer_name: z.string().trim().max(160).optional().default(""),
+  customer_phone: z.string().trim().max(40).optional().default(""),
+  customer_email: emailSchema.optional().or(z.literal("")).default(""),
+  location_id: uuidSchema.optional(),
+  device_id: uuidSchema.optional(),
+  order_id: uuidSchema.optional(),
+  expires_in_minutes: z.coerce.number().int().min(3).max(1440).optional().default(20)
+});
+
+const partnerSupportTicketSchema = z.object({
+  category: z.enum(["general", "product", "order", "payment", "qr_nfc", "cargo", "payout", "technical"]).default("general"),
+  priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+  title: z.string().trim().min(3).max(160),
+  message: z.string().trim().min(10).max(2000)
+});
+
+const partnerProfileUpdateSchema = z.object({
+  display_name: z.string().trim().min(2).max(160).optional(),
+  legal_name: z.string().trim().max(180).optional().nullable(),
+  phone: z.string().trim().max(40).optional().nullable(),
+  city: z.string().trim().max(90).optional().nullable(),
+  country: z.string().trim().max(90).optional().nullable(),
+  description: z.string().trim().max(1200).optional().nullable(),
+  logo_url: z.string().trim().max(700).optional().nullable(),
+  preferred_cargo_company: z.string().trim().max(120).optional().nullable(),
+  payout_schedule: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional()
+});
+
+const partnerOrderStatusSchema = z.object({
+  orderId: uuidSchema,
+  order_status: z.enum(["confirmed", "preparing", "shipped", "delivered", "cancelled"]).optional(),
+  tracking_number: z.string().trim().max(120).optional().nullable()
 });
 
 function clientIp(request) {
@@ -205,6 +261,157 @@ async function bodyOrQuery(request) {
   };
 }
 
+function publicPaymentBaseUrl(request) {
+  const fromConfig = config.siteUrl || `${request.protocol || "https"}://${request.headers.host || "allonahub.com"}`;
+  return String(fromConfig).replace(/\/$/, "");
+}
+
+function partnerProviderForChannel(channel, provider) {
+  if (provider) return provider;
+  if (channel === "nfc") return "iyzico_cep_pos";
+  if (channel === "payment_link") return "iyzico_link";
+  if (channel === "physical_pos") return "bank_pos";
+  if (channel === "cash") return "manual";
+  return "iyzico_checkout";
+}
+
+function partnerPaymentStatusLabel(status) {
+  const labels = {
+    created: "Oluşturuldu",
+    awaiting_payment: "Ödeme bekliyor",
+    provider_pending: "Sağlayıcı bekliyor",
+    paid: "Ödendi",
+    failed: "Başarısız",
+    cancelled: "İptal",
+    expired: "Süresi doldu",
+    refunded: "İade"
+  };
+  return labels[status] || "Oluşturuldu";
+}
+
+async function ensurePartnerBusiness(ctx, request) {
+  const { data: existing, error } = await supabaseAdmin
+    .from("partner_businesses")
+    .select("*")
+    .eq("owner_id", ctx.user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  if (existing) return existing;
+
+  const displayName = String(ctx.profile.full_name || ctx.user.user_metadata?.full_name || ctx.user.email || "Allona Partner").slice(0, 160);
+  const { data: created, error: createError } = await supabaseAdmin
+    .from("partner_businesses")
+    .insert({
+      owner_id: ctx.user.id,
+      display_name: displayName,
+      legal_name: displayName,
+      email: ctx.user.email || null,
+      phone: ctx.profile.phone || null,
+      status: "active",
+      verification_status: "pending",
+      metadata: {
+        created_from: "partner_os_auto_bootstrap"
+      }
+    })
+    .select("*")
+    .single();
+  if (createError) throw createError;
+
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "partner.business_auto_created",
+    resourceType: "partner_business",
+    resourceId: created.id,
+    metadata: { display_name: displayName }
+  });
+  return created;
+}
+
+function summarizePartnerOrders(orders, ownerId, isAdminUser) {
+  return (orders || [])
+    .map((order) => {
+      const partnerItems = (order.order_items || []).filter((item) => {
+        const product = item.product || item.products || {};
+        return isAdminUser || product.partner_id === ownerId;
+      });
+      if (!partnerItems.length) return null;
+      const partnerTotal = partnerItems.reduce((sum, item) => sum + Number(item.price || item.unit_price || 0) * Number(item.quantity || 1), 0);
+      return {
+        ...order,
+        partner_items: partnerItems,
+        partner_total: Number(partnerTotal.toFixed(2))
+      };
+    })
+    .filter(Boolean);
+}
+
+function partnerMetrics({ business, products, orders, paymentIntents, transactions, payouts, tickets }) {
+  const paidIntents = paymentIntents.filter((intent) => intent.status === "paid");
+  const openTickets = tickets.filter((ticket) => ["open", "waiting"].includes(ticket.status));
+  const gross = transactions.reduce((sum, item) => sum + Number(item.gross_amount || 0), 0);
+  const net = transactions.reduce((sum, item) => sum + Number(item.net_amount || 0), 0);
+  const awaitingPayments = paymentIntents.filter((intent) => ["created", "awaiting_payment", "provider_pending"].includes(intent.status)).length;
+  const paidToday = paidIntents
+    .filter((intent) => new Date(intent.paid_at || intent.updated_at || intent.created_at).toDateString() === new Date().toDateString())
+    .reduce((sum, intent) => sum + Number(intent.amount || 0), 0);
+  const payoutPending = payouts
+    .filter((payout) => ["scheduled", "review", "approved"].includes(payout.status))
+    .reduce((sum, payout) => sum + Number(payout.net_amount || 0), 0);
+
+  return {
+    product_count: products.length,
+    active_product_count: products.filter((product) => product.status === "active").length,
+    low_stock_count: products.filter((product) => Number(product.stock || 0) <= 5).length,
+    order_count: orders.length,
+    open_order_count: orders.filter((order) => ["pending", "confirmed", "preparing"].includes(order.order_status || order.status)).length,
+    awaiting_payment_count: awaitingPayments,
+    paid_today: Number(paidToday.toFixed(2)),
+    gross_volume: Number(gross.toFixed(2)),
+    net_volume: Number(net.toFixed(2)),
+    payout_pending: Number(payoutPending.toFixed(2)),
+    open_ticket_count: openTickets.length,
+    trust_score: Number(business.trust_score || 70),
+    level: Number(business.level || 1)
+  };
+}
+
+function partnerRecommendations(metrics, devices) {
+  const tips = [];
+  if (!devices.some((device) => device.status === "active" && device.device_type === "android_softpos")) {
+    tips.push({
+      title: "NFC SoftPOS cihazı bağla",
+      body: "Taksi, kurye veya saha satışı yapan ekipler Android NFC cihazla kart kabul etmeye hazır hale gelir.",
+      action: "NFC kurulumunu planla"
+    });
+  }
+  if (metrics.low_stock_count > 0) {
+    tips.push({
+      title: "Stok riski var",
+      body: `${metrics.low_stock_count} ürün kritik stok seviyesinde. Satış kaybetmeden stokları güncelle.`,
+      action: "Stokları kontrol et"
+    });
+  }
+  if (metrics.awaiting_payment_count > 0) {
+    tips.push({
+      title: "Ödeme bekleyen linkler",
+      body: "Açık ödeme isteklerini müşteriye tekrar göndererek tahsilat hızını artırabilirsin.",
+      action: "Ödemeleri aç"
+    });
+  }
+  if (!tips.length) {
+    tips.push({
+      title: "Panel sağlıklı görünüyor",
+      body: "Ürün, ödeme ve hakediş akışları düzenli. Yeni kampanya veya QR vitrin açmak için iyi zaman.",
+      action: "Kampanya oluştur"
+    });
+  }
+  return tips.slice(0, 4);
+}
+
 export function registerRoutes(app) {
   app.get("/health", async () => ({
     ok: true,
@@ -263,30 +470,111 @@ export function registerRoutes(app) {
     return { ok: true, ...checkout };
   });
 
+  app.post("/v1/public/partner-payment-intents/checkout", async (request) => {
+    assertPaymentsEnabled();
+    const payload = publicPartnerIntentCheckoutSchema.parse(request.body || {});
+    const { data: intent, error: intentError } = await supabaseAdmin
+      .from("partner_payment_intents")
+      .select("*, partner:partner_businesses(*)")
+      .eq("id", payload.intentId)
+      .maybeSingle();
+    if (intentError) throw intentError;
+    if (!intent) throw httpError("Ödeme isteği bulunamadı.", 404);
+    if (!["created", "awaiting_payment", "provider_pending"].includes(intent.status)) {
+      throw httpError("Bu ödeme isteği artık tahsilata açık değil.", 409);
+    }
+    if (intent.expires_at && new Date(intent.expires_at).getTime() < Date.now()) {
+      await supabaseAdmin
+        .from("partner_payment_intents")
+        .update({ status: "expired" })
+        .eq("id", intent.id);
+      throw httpError("Ödeme isteğinin süresi doldu.", 410);
+    }
+    if (intent.channel === "nfc") {
+      throw httpError("NFC ödeme sertifikalı SoftPOS cihazında tamamlanmalıdır.", 409);
+    }
+
+    const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
+    const callbackUrl = `${config.apiUrl}/v1/payments/iyzico/callback?partnerPaymentIntentId=${encodeURIComponent(intent.id)}`;
+    const checkoutPayload = partnerPaymentIntentCheckoutPayload({
+      intent,
+      business: intent.partner,
+      buyer: payload,
+      callbackUrl,
+      ip: clientIp(request)
+    });
+    const { ok, result } = await iyzicoPost(uriPath, checkoutPayload);
+    if (!ok || result.status !== "success") {
+      await supabaseAdmin
+        .from("partner_payment_intents")
+        .update({ status: "failed", provider_status: result.status || "failed" })
+        .eq("id", intent.id);
+      await auditEvent({
+        request,
+        action: "partner.public_checkout_failed",
+        resourceType: "partner_payment_intent",
+        resourceId: intent.id,
+        severity: "warning",
+        metadata: { provider: "iyzico", provider_status: result.status || "unknown" }
+      });
+      throw httpError("Ödeme sayfası başlatılamadı.", 400);
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from("partner_payment_intents")
+      .update({
+        status: "awaiting_payment",
+        provider: "iyzico_checkout",
+        provider_reference: result.token || null,
+        provider_status: result.status || "initialized",
+        payment_url: result.paymentPageUrl || intent.payment_url,
+        customer_name: payload.customer_name,
+        customer_email: payload.customer_email,
+        customer_phone: payload.customer_phone || intent.customer_phone || null
+      })
+      .eq("id", intent.id);
+    if (updateError) throw updateError;
+
+    await auditEvent({
+      request,
+      action: "partner.public_checkout_initialized",
+      resourceType: "partner_payment_intent",
+      resourceId: intent.id,
+      metadata: { provider: "iyzico", amount: Number(intent.amount || 0), channel: intent.channel }
+    });
+    return { ok: true, paymentPageUrl: result.paymentPageUrl, token: result.token };
+  });
+
   app.all("/v1/payments/iyzico/callback", async (request, reply) => {
     assertPaymentsEnabled();
     const payload = await bodyOrQuery(request);
     const token = String(payload.token || "").trim();
     const orderId = payload.orderId ? uuidSchema.parse(payload.orderId) : "";
     const cvPaymentId = payload.cvPaymentId ? uuidSchema.parse(payload.cvPaymentId) : "";
+    const partnerPaymentIntentId = payload.partnerPaymentIntentId ? uuidSchema.parse(payload.partnerPaymentIntentId) : "";
 
-    if (!token || token.length > 500 || (!orderId && !cvPaymentId)) {
+    if (!token || token.length > 500 || (!orderId && !cvPaymentId && !partnerPaymentIntentId)) {
       await auditEvent({
         request,
         action: "payment.callback_invalid",
         severity: "critical",
-        metadata: { provider: "iyzico", has_order_id: Boolean(orderId), has_cv_payment_id: Boolean(cvPaymentId) }
+        metadata: {
+          provider: "iyzico",
+          has_order_id: Boolean(orderId),
+          has_cv_payment_id: Boolean(cvPaymentId),
+          has_partner_payment_intent_id: Boolean(partnerPaymentIntentId)
+        }
       });
       return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
     }
 
-    const { ok, result } = await queryIyzicoCheckoutDetail(token, cvPaymentId || orderId || token);
+    const { ok, result } = await queryIyzicoCheckoutDetail(token, partnerPaymentIntentId || cvPaymentId || orderId || token);
     const paymentStatus = ok && result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
     await auditEvent({
       request,
       action: "payment.callback_verified",
-      resourceType: cvPaymentId ? "cv_payment" : "order",
-      resourceId: cvPaymentId || orderId,
+      resourceType: partnerPaymentIntentId ? "partner_payment_intent" : cvPaymentId ? "cv_payment" : "order",
+      resourceId: partnerPaymentIntentId || cvPaymentId || orderId,
       severity: paymentStatus === "paid" ? "info" : "warning",
       metadata: {
         provider: "iyzico",
@@ -336,6 +624,54 @@ export function registerRoutes(app) {
       }
 
       return redirect(reply, `${config.siteUrl}/pages/career/career-cv-form.html?payment=${paymentStatus}`);
+    }
+
+    if (partnerPaymentIntentId) {
+      const { data: intent, error: intentError } = await supabaseAdmin
+        .from("partner_payment_intents")
+        .select("*, partner:partner_businesses(*)")
+        .eq("id", partnerPaymentIntentId)
+        .maybeSingle();
+      if (intentError) throw intentError;
+      if (!intent) return reply.code(404).send({ ok: false, message: "Partner ödeme isteği bulunamadı." });
+
+      const { error: updateIntentError } = await supabaseAdmin
+        .from("partner_payment_intents")
+        .update({
+          status: paymentStatus,
+          provider_status: result.paymentStatus || result.status || paymentStatus,
+          provider_reference: result.paymentId || token,
+          paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
+        })
+        .eq("id", partnerPaymentIntentId);
+      if (updateIntentError) throw updateIntentError;
+
+      if (paymentStatus === "paid") {
+        const commissionRate = Number(intent.partner?.default_commission_rate || 0.12);
+        const gross = Number(intent.amount || 0);
+        const commissionAmount = Number((gross * commissionRate).toFixed(2));
+        const { error: transactionError } = await supabaseAdmin
+          .from("partner_transactions")
+          .insert({
+            partner_id: intent.partner_id,
+            payment_intent_id: intent.id,
+            order_id: intent.order_id || null,
+            transaction_type: "payment",
+            channel: intent.channel || "qr",
+            provider: "iyzico_checkout",
+            gross_amount: gross,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            net_amount: Number((gross - commissionAmount).toFixed(2)),
+            currency: intent.currency || "TRY",
+            status: "paid",
+            provider_reference: result.paymentId || token,
+            metadata: { callback: "iyzico", conversation_id: result.conversationId || intent.id }
+          });
+        if (transactionError) throw transactionError;
+      }
+
+      return redirect(reply, `${config.siteUrl}/pages/partner/pay.html?intent=${partnerPaymentIntentId}&payment=${paymentStatus}`);
     }
 
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
@@ -450,6 +786,318 @@ export function registerRoutes(app) {
       partnerNet: Number((gross * (1 - commissionRate)).toFixed(2)),
       itemCount: rows.length
     };
+  });
+
+  app.get("/v1/partner/os", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.os.overview"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const isAdminUser = isAdmin(ctx.profile);
+
+    const [
+      productsResult,
+      ordersResult,
+      locationsResult,
+      devicesResult,
+      qrCodesResult,
+      intentsResult,
+      transactionsResult,
+      payoutsResult,
+      ticketsResult
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("products")
+        .select("*")
+        .eq("partner_id", ownerId)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .order("created_at", { ascending: false })
+        .limit(120),
+      supabaseAdmin
+        .from("partner_locations")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("partner_devices")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("partner_qr_codes")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("partner_payment_intents")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("created_at", { ascending: false })
+        .limit(120),
+      supabaseAdmin
+        .from("partner_transactions")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("occurred_at", { ascending: false })
+        .limit(120),
+      supabaseAdmin
+        .from("partner_payouts")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("period_end", { ascending: false })
+        .limit(24),
+      supabaseAdmin
+        .from("partner_support_tickets")
+        .select("*")
+        .eq("partner_id", business.id)
+        .order("created_at", { ascending: false })
+        .limit(80)
+    ]);
+
+    const results = [productsResult, ordersResult, locationsResult, devicesResult, qrCodesResult, intentsResult, transactionsResult, payoutsResult, ticketsResult];
+    const firstError = results.find((result) => result.error)?.error;
+    if (firstError) throw firstError;
+
+    const orders = summarizePartnerOrders(ordersResult.data || [], ownerId, isAdminUser);
+    const metrics = partnerMetrics({
+      business,
+      products: productsResult.data || [],
+      orders,
+      paymentIntents: intentsResult.data || [],
+      transactions: transactionsResult.data || [],
+      payouts: payoutsResult.data || [],
+      tickets: ticketsResult.data || []
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.os_viewed",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: { product_count: metrics.product_count, order_count: metrics.order_count }
+    });
+
+    return {
+      ok: true,
+      business,
+      products: productsResult.data || [],
+      orders,
+      locations: locationsResult.data || [],
+      devices: devicesResult.data || [],
+      qrCodes: qrCodesResult.data || [],
+      paymentIntents: intentsResult.data || [],
+      transactions: transactionsResult.data || [],
+      payouts: payoutsResult.data || [],
+      tickets: ticketsResult.data || [],
+      metrics,
+      recommendations: partnerRecommendations(metrics, devicesResult.data || [])
+    };
+  });
+
+  app.patch("/v1/partner/profile", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.profile.update"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const payload = partnerProfileUpdateSchema.parse(request.body || {});
+    const { data, error } = await supabaseAdmin
+      .from("partner_businesses")
+      .update(payload)
+      .eq("id", business.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.profile_updated",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: { updated_fields: Object.keys(payload) }
+    });
+    return { ok: true, business: data };
+  });
+
+  app.post("/v1/partner/payment-intents", async (request, reply) => {
+    assertPaymentsEnabled();
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.payment_intent.create"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const payload = partnerPaymentIntentSchema.parse(request.body || {});
+    const provider = partnerProviderForChannel(payload.channel, payload.provider);
+    const status = payload.channel === "cash" ? "paid" : payload.channel === "nfc" ? "provider_pending" : "awaiting_payment";
+    const expiresAt = new Date(Date.now() + payload.expires_in_minutes * 60 * 1000).toISOString();
+
+    const { data: intent, error } = await supabaseAdmin
+      .from("partner_payment_intents")
+      .insert({
+        partner_id: business.id,
+        location_id: payload.location_id || null,
+        device_id: payload.device_id || null,
+        order_id: payload.order_id || null,
+        created_by: ctx.user.id,
+        channel: payload.channel,
+        provider,
+        amount: Number(payload.amount.toFixed(2)),
+        currency: payload.currency.toUpperCase(),
+        description: payload.description || `${business.display_name} ödeme isteği`,
+        customer_name: payload.customer_name || null,
+        customer_phone: payload.customer_phone || null,
+        customer_email: payload.customer_email || null,
+        status,
+        expires_at: expiresAt,
+        metadata: {
+          source: "partner_os",
+          public_status_label: partnerPaymentStatusLabel(status),
+          nfc_note: payload.channel === "nfc"
+            ? "NFC tahsilat sertifikalı SoftPOS sağlayıcısı üzerinden tamamlanır."
+            : null
+        }
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    const publicParams = new URLSearchParams({
+      intent: intent.id,
+      amount: String(intent.amount),
+      channel: intent.channel,
+      partner: business.display_name || business.legal_name || "AllonaHub Partner"
+    });
+    const publicUrl = `${publicPaymentBaseUrl(request)}/pages/partner/pay.html?${publicParams.toString()}`;
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("partner_payment_intents")
+      .update({
+        payment_url: publicUrl,
+        qr_payload: publicUrl,
+        paid_at: payload.channel === "cash" ? new Date().toISOString() : null
+      })
+      .eq("id", intent.id)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+
+    if (payload.channel === "cash") {
+      const commissionRate = Number(business.default_commission_rate || 0.12);
+      const gross = Number(payload.amount.toFixed(2));
+      const commissionAmount = Number((gross * commissionRate).toFixed(2));
+      const { error: transactionError } = await supabaseAdmin
+        .from("partner_transactions")
+        .insert({
+          partner_id: business.id,
+          payment_intent_id: intent.id,
+          order_id: payload.order_id || null,
+          transaction_type: "payment",
+          channel: payload.channel,
+          provider,
+          gross_amount: gross,
+          commission_rate: commissionRate,
+          commission_amount: commissionAmount,
+          net_amount: Number((gross - commissionAmount).toFixed(2)),
+          currency: payload.currency.toUpperCase(),
+          status: "paid",
+          metadata: { source: "partner_os_cash_record" }
+        });
+      if (transactionError) throw transactionError;
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.payment_intent_created",
+      resourceType: "partner_payment_intent",
+      resourceId: updated.id,
+      metadata: { channel: payload.channel, provider, amount: payload.amount }
+    });
+
+    return reply.code(201).send({ ok: true, paymentIntent: updated });
+  });
+
+  app.post("/v1/partner/support-tickets", async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.support_ticket.create"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const payload = partnerSupportTicketSchema.parse(request.body || {});
+    const { data, error } = await supabaseAdmin
+      .from("partner_support_tickets")
+      .insert({
+        partner_id: business.id,
+        created_by: ctx.user.id,
+        category: payload.category,
+        priority: payload.priority,
+        title: payload.title,
+        message: payload.message
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.support_ticket_created",
+      resourceType: "partner_support_ticket",
+      resourceId: data.id,
+      metadata: { category: payload.category, priority: payload.priority }
+    });
+    return reply.code(201).send({ ok: true, ticket: data });
+  });
+
+  app.patch("/v1/partner/orders/status", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.order.status_update"
+    });
+    const payload = partnerOrderStatusSchema.parse(request.body || {});
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("id, order_status, tracking_number, order_items(product:products(id, partner_id))")
+      .eq("id", payload.orderId)
+      .maybeSingle();
+    if (orderError) throw orderError;
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+    const canUpdate = isAdmin(ctx.profile) || (order.order_items || []).some((item) => item.product?.partner_id === ctx.user.id);
+    if (!canUpdate) throw httpError("Bu siparişi güncelleme yetkiniz yok.", 403);
+
+    const updatePayload = {};
+    if (payload.order_status) updatePayload.order_status = payload.order_status;
+    if (Object.prototype.hasOwnProperty.call(payload, "tracking_number")) updatePayload.tracking_number = payload.tracking_number || null;
+    const { data: updated, error } = await supabaseAdmin
+      .from("orders")
+      .update(updatePayload)
+      .eq("id", payload.orderId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.order_status_updated",
+      resourceType: "order",
+      resourceId: payload.orderId,
+      metadata: updatePayload
+    });
+    return { ok: true, order: updated };
   });
 
   app.post("/v1/hp-wallet/ledger", async (request) => {

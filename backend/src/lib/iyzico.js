@@ -146,3 +146,57 @@ export function cvCheckoutPayload({ payment, profile, user, callbackUrl, ip }) {
     ]
   };
 }
+
+export function partnerPaymentIntentCheckoutPayload({ intent, business, buyer, callbackUrl, ip }) {
+  const { name, surname } = splitName(buyer?.customer_name || intent.customer_name || "Allona Müşteri");
+  const amountValue = amount(intent.amount);
+  const partnerName = business?.display_name || business?.legal_name || "AllonaHub Partner";
+
+  return {
+    locale: "tr",
+    conversationId: intent.id,
+    price: amountValue,
+    paidPrice: amountValue,
+    currency: intent.currency || "TRY",
+    basketId: `PARTNER-${intent.id}`,
+    paymentGroup: "PRODUCT",
+    callbackUrl,
+    enabledInstallments: [1, 2, 3, 6, 9],
+    buyer: {
+      id: String(buyer?.customer_email || intent.customer_email || intent.id).slice(0, 255),
+      name,
+      surname,
+      identityNumber: "11111111111",
+      email: buyer?.customer_email || intent.customer_email,
+      gsmNumber: buyer?.customer_phone || intent.customer_phone || "",
+      registrationAddress: business?.city || "AllonaHub Partner Ödeme",
+      city: business?.city || "İstanbul",
+      country: business?.country || "Turkey",
+      zipCode: "34000",
+      ip: ip || "0.0.0.0"
+    },
+    shippingAddress: {
+      address: business?.city || "AllonaHub Partner Ödeme",
+      zipCode: "34000",
+      contactName: `${name} ${surname}`,
+      city: business?.city || "İstanbul",
+      country: business?.country || "Turkey"
+    },
+    billingAddress: {
+      address: business?.city || "AllonaHub Partner Ödeme",
+      zipCode: "34000",
+      contactName: `${name} ${surname}`,
+      city: business?.city || "İstanbul",
+      country: business?.country || "Turkey"
+    },
+    basketItems: [
+      {
+        id: `partner-payment-${intent.id}`,
+        price: amountValue,
+        name: String(intent.description || `${partnerName} ödeme`).slice(0, 255),
+        category1: "AllonaHub Partner",
+        itemType: "VIRTUAL"
+      }
+    ]
+  };
+}

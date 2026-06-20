@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaPay Ödeme | AllonaHub</title>
+  <meta name="description" content="AllonaHub partner QR ve ödeme linki tahsilat sayfası.">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260620-brand1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260620-pos1">
+</head>
+<body>
+  <div class="site-shell partner-pay-shell" data-page="partner-pay">
+    <div data-layout="header"></div>
+    <main class="partner-pay">
+      <section class="partner-pay-card">
+        <p class="partner-os-eyebrow">AllonaPay Güvenli Ödeme</p>
+        <h1 data-pay-title>Ödeme hazırlanıyor</h1>
+        <p data-pay-description>Partner ödeme isteği kontrol ediliyor.</p>
+
+        <div class="partner-pay-summary">
+          <div><span>Partner</span><strong data-pay-partner>-</strong></div>
+          <div><span>Tutar</span><strong data-pay-amount>-</strong></div>
+          <div><span>Yöntem</span><strong data-pay-channel>-</strong></div>
+        </div>
+
+        <form class="partner-pay-form" data-partner-pay-form>
+          <label><span>Ad Soyad</span><input name="customer_name" required autocomplete="name"></label>
+          <label><span>E-posta</span><input name="customer_email" type="email" required autocomplete="email"></label>
+          <label><span>Telefon</span><input name="customer_phone" autocomplete="tel"></label>
+          <button type="submit">Güvenli Ödeme Sayfasına Devam Et</button>
+        </form>
+
+        <div class="partner-pay-status" data-partner-pay-status></div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="../../js/config.js?v=20260620-partneros1" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/partner-pay.js?v=20260620-pos1" defer></script>
+  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+</body>
+</html>

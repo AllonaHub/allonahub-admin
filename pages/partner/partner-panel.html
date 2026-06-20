@@ -1,1256 +1,421 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AllonaHub Partner Panel</title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-html{scroll-behavior:smooth}
-body{min-width:0;background:#020814;color:white;overflow-x:hidden}
-body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
-body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
-@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
-a{text-decoration:none;color:inherit}
-button{border:0;cursor:pointer}
-.page{width:min(1320px,100%);margin:0 auto;padding:18px 22px 45px}
-.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 30px rgba(0,229,255,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
-.topbar{height:84px;display:grid;grid-template-columns:285px 1fr 430px;gap:18px;margin-bottom:18px;align-items:center}
-.brand{height:84px;display:flex;align-items:center;gap:13px;padding:0 20px}
-.brand img{width:48px;height:48px;object-fit:contain}
-.brand b{font-size:29px;color:#ffd700}
-.brand span{font-size:29px;color:#00e5ff;font-weight:900}
-.panel-title{height:84px;padding:18px 24px;display:flex;flex-direction:column;justify-content:center}
-.panel-title h1{color:#ffd700;font-size:27px;margin-bottom:6px}
-.panel-title p{opacity:.74;font-size:13px}
-.top-actions{height:84px;display:flex;align-items:center;justify-content:space-around;padding:0 14px;overflow:visible}
-.top-actions button,.top-actions a{background:rgba(255,255,255,.06);border:1px solid rgba(0,229,255,.20);color:white;border-radius:16px;padding:12px 14px;font-weight:900}
-.top-actions button:hover,.top-actions a:hover{color:#ffd700;border-color:#ffd70066}
-.partner-profile{position:relative}
-.profile-drop{display:none;position:absolute;right:0;top:56px;width:330px;background:#031326;border:1px solid #00e5ff66;border-radius:24px;padding:18px;box-shadow:0 0 35px #00e5ff44;z-index:80}
-.partner-profile:hover .profile-drop{display:block}
-.profile-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}
-.avatar{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle,#00e5ff,#061b33);border:2px solid #ffd700;display:flex;align-items:center;justify-content:center;font-weight:900;color:#020814;overflow:hidden}
-.avatar img{width:100%;height:100%;object-fit:cover}
-.profile-head h3{color:#ffd700;font-size:17px}
-.profile-head p{font-size:12px;opacity:.75}
-.score{display:flex;align-items:center;gap:10px;margin:12px 0}
-.score b{background:#00c56a;color:white;padding:6px 12px;border-radius:10px}
-.level-box{margin:14px 0;padding:12px;border-radius:16px;background:rgba(255,255,255,.06)}
-.level-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
-.level-bar{height:10px;border-radius:20px;background:rgba(255,255,255,.10);overflow:hidden}
-.level-fill{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#ffd700);box-shadow:0 0 15px #00e5ff}
-.profile-menu a,.profile-menu button{display:block;width:100%;text-align:left;background:transparent;color:white;padding:11px;border-radius:12px;font-weight:800}
-.profile-menu a:hover,.profile-menu button:hover{background:#00e5ff18;color:#ffd700}
-
-.layout{display:grid;grid-template-columns:285px 1fr;gap:18px}
-.sidebar{min-height:860px;padding:18px}
-.side-partner{padding:16px;border-radius:22px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);margin-bottom:16px}
-.side-partner h2{color:#ffd700;font-size:20px;margin-bottom:5px}
-.side-partner p{font-size:12px;opacity:.75;line-height:1.45}
-.side-status{margin-top:10px;display:flex;gap:8px;align-items:center;font-size:12px}
-.dot{width:9px;height:9px;border-radius:50%;background:#00ff90;box-shadow:0 0 12px #00ff90}
-.menu-group-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin:18px 8px 8px}
-.menu-btn{width:100%;height:46px;margin:6px 0;border-radius:15px;background:transparent;color:white;display:flex;align-items:center;gap:11px;padding:0 14px;font-weight:900;text-align:left}
-.menu-btn i{width:20px;color:#00e5ff}
-.menu-btn:hover,.menu-btn.active{background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(255,215,0,.10));color:#ffd700;border:1px solid rgba(0,229,255,.22)}
-.content{min-height:860px;padding:24px}
-.section-box{display:none}
-.section-box.active{display:block}
-.hero-dashboard{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:18px}
-.welcome{padding:25px;min-height:190px}
-.welcome h2{font-size:34px;color:#ffd700;margin-bottom:9px}
-.welcome p{opacity:.78;line-height:1.55}
-.quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
-.quick-actions button{height:48px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900}
-.quick-actions button:nth-child(2){background:linear-gradient(135deg,#ffd700,#b88700);color:#020814}
-.status-card{padding:22px}
-.status-card h3{color:#ffd700;margin-bottom:14px}
-.status-list{display:grid;gap:10px}
-.status-line{display:flex;justify-content:space-between;padding:11px 13px;border-radius:14px;background:rgba(255,255,255,.06)}
-.status-line b{color:#00e5ff}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.kpi{padding:20px;min-height:118px}
-.kpi small{opacity:.65;font-weight:800}
-.kpi h3{font-size:30px;color:#ffd700;margin:8px 0}
-.kpi p{font-size:12px;opacity:.72}
-.kpi.warning h3{color:#ff5b5b}
-.kpi.success h3{color:#00ff90}
-.section-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 16px}
-.section-head h2{color:#ffd700;font-size:30px}
-.section-head p{opacity:.65;font-size:13px}
-.panel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.panel-card{padding:20px;min-height:150px}
-.panel-card h3{color:#ffd700;margin-bottom:8px}
-.panel-card p{opacity:.72;font-size:13px;line-height:1.45}
-.panel-card button{margin-top:14px;padding:11px 15px;border-radius:14px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44}
-.table-box{padding:18px;margin-top:16px}
-.table-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px}
-.table-top input,.table-top select{height:42px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);color:white;padding:0 12px;outline:0}
-.table-top select option{background:#061b33;color:white}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:13px;border-bottom:1px solid rgba(255,255,255,.10);text-align:left;vertical-align:middle}
-th{color:#ffd700}
-td{opacity:.9}
-.product-thumb{width:54px;height:54px;border-radius:12px;object-fit:cover;border:1px solid rgba(0,229,255,.25);background:#061b33}
-.badge-pill{padding:6px 10px;border-radius:10px;background:#00e5ff18;color:#00e5ff;font-weight:900;font-size:12px}
-.badge-red{background:#ff3b3b18;color:#ff6b6b}
-.badge-green{background:#00ff9018;color:#00ff90}
-.badge-gold{background:#ffd70022;color:#ffd700}
-.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.input{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.20);display:flex;align-items:center;padding:0 15px}
-.input input,.input select,.input textarea{width:100%;height:100%;background:transparent;border:0;outline:0;color:white;font-size:14px}
-.input select option{background:#061b33;color:white}
-.textarea{height:105px;padding:12px 15px;grid-column:span 2}
-.textarea textarea{resize:none}
-.primary-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-size:15px;font-weight:900}
-.blue-btn{height:50px;border-radius:16px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-size:15px;font-weight:900}
-.red-btn{height:38px;border-radius:12px;background:#ff3b3b22;color:#ff6b6b;font-weight:900;border:1px solid #ff3b3b44;padding:0 12px}
-.small-btn{height:38px;border-radius:12px;background:#00e5ff22;color:#00e5ff;font-weight:900;border:1px solid #00e5ff44;padding:0 12px}
-.notice{position:fixed;right:28px;bottom:28px;z-index:200;background:#031326;border:1px solid #00e5ff88;border-radius:20px;padding:16px 20px;box-shadow:0 0 30px #00e5ff44;display:none;max-width:430px;line-height:1.45}
-.notice b{color:#ffd700}
-@media(max-width:980px){
-  body{overflow-x:hidden}
-  .page{width:100%;padding:14px 12px 34px}
-  .topbar{height:auto;grid-template-columns:1fr;gap:12px}
-  .brand,.panel-title,.top-actions{height:auto;min-height:64px;width:100%}
-  .top-actions{justify-content:flex-start;gap:10px;flex-wrap:wrap;padding:12px}
-  .layout{grid-template-columns:1fr}
-  .sidebar{min-height:auto}
-  .content{min-height:auto;padding:16px}
-  .hero-dashboard,.kpi-grid,.panel-grid,.form-grid{grid-template-columns:1fr}
-  .textarea{grid-column:auto}
-  .quick-actions{grid-template-columns:1fr}
-  .table-box{overflow-x:auto}
-  table{min-width:720px}
-  .profile-drop{left:0;right:auto;width:min(330px,calc(100vw - 32px))}
-  .notice{left:14px;right:14px;bottom:14px;max-width:none}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaHub Partner OS</title>
+  <meta name="description" content="AllonaHub Partner OS: QR, NFC, ödeme, ürün, sipariş, hakediş ve operasyon yönetimi.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260620-brand1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260620-pos1">
 </head>
-
 <body>
-<div class="page">
-
-<header class="topbar">
-<a class="brand glass" href="../../index.html">
-<div><b>Allona</b><span>Hub</span></div>
-</a>
-
-<div class="panel-title glass">
-<h1>Partner Yönetim Merkezi</h1>
-<p>Gerçek Supabase bağlantılı partner paneli.</p>
-</div>
-
-<div class="top-actions glass">
-<a href="../commerce/allonashop.html">Mağazaya Git</a>
-<button onclick="openSection('notifications')">Duyurularım</button>
-
-<div class="partner-profile">
-<button><i class="fa-solid fa-user-shield"></i> <span id="topPartnerName">Partner</span> ▾</button>
-<div class="profile-drop">
-<div class="profile-head">
-<div class="avatar" id="profileAvatar">P</div>
-<div>
-<h3 id="profileName">Partner</h3>
-<p>Partner ID: <span id="profileId">-</span></p>
-</div>
-</div>
-<div class="score"><b id="profileScore">0 / 10</b><span>Partner Puanı</span></div>
-<div class="level-box">
-<div class="level-row"><span id="profileLevel">Level 1</span><span id="profileXpText">0 XP</span></div>
-<div class="level-bar"><div class="level-fill" id="levelFill"></div></div>
-</div>
-<div class="profile-menu">
-<a href="#" onclick="openSection('settings')">Hesap Bilgileri</a>
-<a href="#" onclick="openSection('products')">Ürünler</a>
-<a href="#" onclick="openSection('addProduct')">Ürün Ekle</a>
-<a href="#" onclick="openSection('support')">Destek Talepleri</a>
-<button onclick="logoutPartner()">Çıkış Yap</button>
-</div>
-</div>
-</div>
-</div>
-</header>
-
-<div class="layout">
-<aside class="sidebar glass">
-<div class="side-partner">
-<h2 id="sidePartnerName">Partner</h2>
-<p id="sidePartnerInfo">Partner paneli yükleniyor...</p>
-<div class="side-status"><span class="dot"></span><span id="sideStatusText">Aktif Partner</span></div>
-</div>
-<div id="dynamicMenu"></div>
-</aside>
-
-<main class="content glass">
-<section id="dashboard" class="section-box active">
-<div class="hero-dashboard">
-<div class="welcome glass">
-<h2 id="welcomeTitle">Hoş geldiniz</h2>
-<p id="welcomeDesc">Panel yükleniyor...</p>
-<div class="quick-actions">
-<button onclick="openSection('addProduct')">Ürün Ekle</button>
-<button onclick="openSection('products')">Ürünleri Aç</button>
-<button onclick="openSection('orders')">Siparişleri Aç</button>
-<button onclick="openSection('ads')">Reklam Yönet</button>
-</div>
-</div>
-
-<div class="status-card glass">
-<h3>Partner Durumu</h3>
-<div class="status-list">
-<div class="status-line"><span>Durum</span><b id="partnerStatusText">-</b></div>
-<div class="status-line"><span>Partner Tipi</span><b id="partnerTypeText">-</b></div>
-<div class="status-line"><span>Güven Skoru</span><b id="partnerScoreText">-</b></div>
-<div class="status-line"><span>Seviye</span><b id="partnerLevelText">-</b></div>
-</div>
-</div>
-</div>
-
-<div class="kpi-grid" id="kpiGrid"></div>
-
-<div class="table-box glass">
-<div class="section-head">
-<div>
-<h2>Son Ürünler</h2>
-<p>Supabase products tablosundan gelen son kayıtlar.</p>
-</div>
-<button class="blue-btn" onclick="loadProducts()">Yenile</button>
-</div>
-<table>
-<thead>
-<tr><th>Görsel</th><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th></tr>
-</thead>
-<tbody id="dashboardProductsTable"></tbody>
-</table>
-</div>
-</section>
-<section id="products" class="section-box">
-<div class="section-head">
-<div>
-<h2>Ürünler</h2>
-<p>Bu bölümde partner tarafından Supabase’e kaydedilen ürünler listelenir.</p>
-</div>
-<button class="blue-btn" onclick="openSection('addProduct')">Yeni Ürün Ekle</button>
-</div>
-
-<div class="table-box glass">
-<div class="table-top">
-<input id="productSearchInput" placeholder="Ürün adı / kategori / marka ara" oninput="filterProducts()">
-<select id="productStatusFilter" onchange="filterProducts()">
-<option value="">Tüm Durumlar</option>
-<option value="pending">İncelemede</option>
-<option value="draft">Taslak</option>
-<option value="active">Yayında</option>
-<option value="rejected">Reddedildi</option>
-</select>
-<select id="productDateFilter" onchange="filterProducts()">
-<option value="">Tüm Zamanlar</option>
-<option value="today">Bugün</option>
-<option value="week">Son 7 Gün</option>
-<option value="month">Bu Ay</option>
-</select>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Görsel</th>
-<th>Ürün</th>
-<th>Kategori</th>
-<th>Marka</th>
-<th>Fiyat</th>
-<th>Stok</th>
-<th>Durum</th>
-<th>İşlem</th>
-</tr>
-</thead>
-<tbody id="productsTable"></tbody>
-</table>
-</div>
-</section>
-
-<section id="addProduct" class="section-box">
-<div class="section-head">
-<div>
-<h2>Ürün Ekle</h2>
-<p>Ürün görseli Supabase Storage’a, ürün bilgisi products tablosuna kaydedilir.</p>
-</div>
-<button class="blue-btn" onclick="showNotice('Toplu yükleme için sonraki aşamada CSV/Excel import modülü bağlanacak.')">Toplu Yükleme</button>
-</div>
-
-<div class="form-grid">
-<div class="input"><input id="productName" placeholder="Ürün / Hizmet Adı"></div>
-<div class="input"><input id="productBrand" placeholder="Marka / Firma"></div>
-
-<div class="input">
-<select id="productCategory">
-<option value="">Kategori Seç</option>
-<option>Kadın</option>
-<option>Erkek</option>
-<option>Ev & Yaşam</option>
-<option>Anne & Çocuk</option>
-<option>Kozmetik</option>
-<option>Ayakkabı & Çanta</option>
-<option>Spor & Outdoor</option>
-<option>Takı & Aksesuar</option>
-<option>AllonaMarket</option>
-<option>Hukuk Hizmeti</option>
-<option>Denizcilik</option>
-<option>Restoran Menü</option>
-<option>Sağlık Hizmeti</option>
-<option>Güzellik Hizmeti</option>
-</select>
-</div>
-
-<div class="input"><input id="productPrice" type="number" step="0.01" placeholder="Satış Fiyatı"></div>
-<div class="input"><input id="productOldPrice" type="number" step="0.01" placeholder="Eski Fiyat / Piyasa Fiyatı"></div>
-<div class="input"><input id="productStock" type="number" placeholder="Stok / Kontenjan"></div>
-<div class="input"><input id="productSku" placeholder="Stok Kodu / SKU"></div>
-<div class="input"><input id="productBarcode" placeholder="Barkod"></div>
-
-<div class="input">
-<select id="productStatus">
-<option value="pending">İncelemeye Gönder</option>
-<option value="draft">Taslak Kaydet</option>
-<option value="active">Yayına Hazır</option>
-</select>
-</div>
-
-<div class="input">
-<select id="productCoupon">
-<option value="false">Kupon Yok</option>
-<option value="true">Kuponlu Ürün</option>
-</select>
-</div>
-
-<div class="input">
-<select id="productHp">
-<option value="false">HP Kazandırmaz</option>
-<option value="true">HP Kazandırır</option>
-</select>
-</div>
-
-<div class="input"><input id="productImageFile" type="file" accept="image/*"></div>
-
-<div class="input textarea">
-<textarea id="productDesc" placeholder="Ürün / hizmet açıklaması"></textarea>
-</div>
-
-<button class="primary-btn" id="saveProductBtn" onclick="saveProduct()">Ürünü Kaydet</button>
-<button class="blue-btn" onclick="clearProductForm()">Formu Temizle</button>
-</div>
-</section>
-
-<section id="orders" class="section-box">
-<div class="section-head">
-<div>
-<h2>Sipariş & Kargo</h2>
-<p>Sipariş modülü için altyapı hazır. Sipariş tablosu bağlandığında canlı çalışacak.</p>
-</div>
-</div>
-<div class="panel-grid">
-<div class="panel-card glass"><h3>Yeni Siparişler</h3><p>products ve orders altyapısı sonrası siparişler burada listelenecek.</p><button onclick="showNotice('orders tablosu sonraki aşamada bağlanacak.')">Aç</button></div>
-<div class="panel-card glass"><h3>Kargo İşlemleri</h3><p>Kargo etiketi, paket durumu ve takip numarası alanları hazırlanacak.</p><button onclick="showNotice('Kargo entegrasyonu sonraki aşamada bağlanacak.')">Aç</button></div>
-<div class="panel-card glass"><h3>İade Talepleri</h3><p>İade ve iptal süreçleri ayrı tabloya bağlanacak.</p><button onclick="showNotice('İade modülü sonraki aşamada bağlanacak.')">Aç</button></div>
-</div>
-</section>
-
-<section id="finance" class="section-box">
-<div class="section-head"><div><h2>Finans</h2><p>Hakediş, ödeme ve komisyon alanı.</p></div></div>
-<div class="panel-grid">
-<div class="panel-card glass"><h3>Hakediş</h3><p>Ödeme sağlayıcı entegrasyonu sonrası canlı hesaplanacak.</p></div>
-<div class="panel-card glass"><h3>Komisyon</h3><p>Modül bazlı komisyon kuralları burada gösterilecek.</p></div>
-<div class="panel-card glass"><h3>Fatura</h3><p>Fatura bekleyen işlemler burada listelenecek.</p></div>
-</div>
-</section>
-
-<section id="ads" class="section-box">
-<div class="section-head"><div><h2>Reklam</h2><p>Partner reklam ve görünürlük kampanyaları.</p></div></div>
-<div class="panel-grid">
-<div class="panel-card glass"><h3>Ürün Reklamı</h3><p>Ürün bazlı reklam verme altyapısı hazırlanacak.</p></div>
-<div class="panel-card glass"><h3>Mağaza Reklamı</h3><p>Partner mağazası öne çıkarma alanı.</p></div>
-<div class="panel-card glass"><h3>Influencer Reklamları</h3><p>Influencer kampanya teklifleri burada yönetilecek.</p></div>
-</div>
-</section>
-
-<section id="notifications" class="section-box">
-<div class="section-head"><div><h2>Duyurularım</h2><p>AllonaHub sistem bildirimleri.</p></div></div>
-<div class="panel-grid">
-<div class="panel-card glass"><h3>Sistem Hazır</h3><p>Partner girişi, products tablosu ve Storage altyapısı bağlandı.</p></div>
-<div class="panel-card glass"><h3>Ürün Yükleme</h3><p>Ürün ekleme modülü Supabase’e kayıt yapacak şekilde hazırlanıyor.</p></div>
-<div class="panel-card glass"><h3>Toplu Yükleme</h3><p>CSV/Excel toplu ürün yükleme sonraki aşamada bağlanacak.</p></div>
-</div>
-</section>
-
-<section id="settings" class="section-box">
-<div class="section-head">
-<div>
-<h2>Hesap Bilgileri</h2>
-<p>Partner firma bilgileri Supabase partners tablosundan gelir.</p>
-</div>
-<button class="blue-btn" onclick="loadPartnerProfile()">Bilgileri Yenile</button>
-</div>
-
-<div class="form-grid">
-<div class="input"><input id="editPartnerName" placeholder="Firma Adı"></div>
-<div class="input"><input id="editPartnerId" placeholder="Partner ID" disabled></div>
-<div class="input"><input id="editPartnerEmail" placeholder="E-posta" disabled></div>
-<div class="input"><input id="editPartnerType" placeholder="Partner Tipi" disabled></div>
-<div class="input"><input id="editScore" placeholder="Partner Puanı"></div>
-<div class="input"><input id="editLevel" placeholder="Seviye"></div>
-<div class="input"><input id="editLogo" placeholder="Profil Logo URL"></div>
-<div class="input"><input id="editCity" placeholder="Şehir"></div>
-<div class="input textarea"><textarea id="editDesc" placeholder="Firma açıklaması"></textarea></div>
-<button class="primary-btn" onclick="savePartnerProfile()">Bilgileri Kaydet</button>
-<button class="blue-btn" onclick="showNotice('Profil resmi yükleme sonraki aşamada product-images dışında ayrı partner-logos bucket ile bağlanacak.')">Profil Resmi Düzenle</button>
-</div>
-</section>
-
-<section id="support" class="section-box">
-<div class="section-head"><div><h2>Destek Talepleri</h2><p>Destek talebi altyapısı sonraki tabloda canlıya alınacak.</p></div></div>
-<div class="form-grid">
-<div class="input"><select><option>Konu Seç</option><option>Ürün</option><option>Ödeme</option><option>Kargo</option><option>Teknik Destek</option></select></div>
-<div class="input"><input placeholder="Başlık"></div>
-<div class="input textarea"><textarea placeholder="Mesajınızı yazın"></textarea></div>
-<button class="primary-btn" onclick="showNotice('Destek talebi için support_tickets tablosu sonraki aşamada bağlanacak.')">Destek Talebi Oluştur</button>
-</div>
-</section>
-
-<section id="dynamicSection" class="section-box"></section>
-</main>
-</div>
-
-<div id="notice" class="notice"></div>
-
-</div>
-<script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY,{
-  auth:{
-    persistSession:true,
-    autoRefreshToken:true,
-    detectSessionInUrl:true
-  }
-});
-
-let currentPartner = null;
-let currentAuthUser = null;
-let allProducts = [];
-
-function clearPartnerAuth(){
-  [
-    "allonaPartnerLoggedIn",
-    "allonaPartnerEmail",
-    "allonaPartnerUserId",
-    "allonaPartnerProfile",
-    "allonaPartnerId",
-    "allonaPartnerType",
-    "allonahub_auth_verified_at"
-  ].forEach(key=>localStorage.removeItem(key));
-}
-
-const menuByType = {
-  shop: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-box","Ürünler"],
-    ["addProduct","fa-plus","Ürün Ekle"],
-    ["orders","fa-truck","Sipariş & Kargo"],
-    ["finance","fa-wallet","Finans"],
-    ["ads","fa-bullhorn","Reklam"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  food: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-utensils","Menü Ürünleri"],
-    ["addProduct","fa-plus","Menü Ekle"],
-    ["orders","fa-bag-shopping","Siparişler"],
-    ["finance","fa-wallet","Finans"],
-    ["ads","fa-bullhorn","Kampanyalar"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  maritime: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-ship","Crew / Hizmetler"],
-    ["addProduct","fa-plus","Hizmet Ekle"],
-    ["orders","fa-anchor","Talepler"],
-    ["finance","fa-wallet","Maritime Finans"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  legal: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-scale-balanced","Hizmetler"],
-    ["addProduct","fa-plus","Hizmet Ekle"],
-    ["orders","fa-folder-open","Dosyalar"],
-    ["finance","fa-wallet","Hakediş"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ],
-  default: [
-    ["dashboard","fa-chart-line","Dashboard"],
-    ["products","fa-box","Ürün / Hizmetler"],
-    ["addProduct","fa-plus","Ürün / Hizmet Ekle"],
-    ["orders","fa-list","Talepler"],
-    ["finance","fa-wallet","Finans"],
-    ["settings","fa-gear","Ayarlar"],
-    ["support","fa-headset","Destek"]
-  ]
-};
-
-function normalizeType(type){
-  return String(type || "shop").toLowerCase().trim();
-}
-
-function getMenuForPartner(){
-  const type = normalizeType(currentPartner?.partner_type);
-  return menuByType[type] || menuByType.default;
-}
-
-function money(value){
-  const n = Number(value || 0);
-  return n.toLocaleString("tr-TR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " ₺";
-}
-
-function safeText(value, fallback=""){
-  return value === null || value === undefined || value === "" ? fallback : String(value);
-}
-
-function showNotice(message){
-  const n = document.getElementById("notice");
-  n.textContent = String(message || "");
-  n.style.display = "block";
-  setTimeout(() => { n.style.display = "none"; }, 4300);
-}
-
-function openSection(id){
-  document.querySelectorAll(".section-box").forEach(s => s.classList.remove("active"));
-
-  const target = document.getElementById(id);
-  if(target){
-    target.classList.add("active");
-  }else{
-    renderDynamicSection(id);
-    document.getElementById("dynamicSection").classList.add("active");
-  }
-
-  document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("active"));
-  const activeBtn = document.querySelector(`.menu-btn[data-section="${id}"]`);
-  if(activeBtn) activeBtn.classList.add("active");
-
-  if(id === "products") loadProducts();
-  if(id === "addProduct") clearProductForm(false);
-}
-
-function renderDynamicSection(id){
-  document.getElementById("dynamicSection").innerHTML = `
-    <div class="section-head">
-      <div>
-        <h2>${id}</h2>
-        <p>Bu modül için altyapı hazır. İlgili tablo ve API bağlandığında canlı çalışacak.</p>
-      </div>
-    </div>
-    <div class="panel-grid">
-      <div class="panel-card glass"><h3>Altyapı Hazır</h3><p>Bu alan modüler yapı için ayrıldı.</p></div>
-      <div class="panel-card glass"><h3>Supabase Bağlantısı</h3><p>İlgili tablo oluşturulduğunda buraya canlı veri çekilecek.</p></div>
-      <div class="panel-card glass"><h3>Yetki Kontrolü</h3><p>Partner tipine göre erişim kontrolü uygulanacak.</p></div>
-    </div>
-  `;
-}
-
-function renderMenu(){
-  const menu = getMenuForPartner();
-
-  document.getElementById("dynamicMenu").innerHTML = `
-    <div class="menu-group-title">Panel Menüsü</div>
-    ${menu.map(item => `
-      <button class="menu-btn ${item[0] === "dashboard" ? "active" : ""}" data-section="${item[0]}" onclick="openSection('${item[0]}')">
-        <i class="fa-solid ${item[1]}"></i>${item[2]}
-      </button>
-    `).join("")}
-  `;
-}
-
-function getPartnerInitials(name){
-  return safeText(name,"P")
-    .split(" ")
-    .filter(Boolean)
-    .map(x => x[0])
-    .join("")
-    .slice(0,2)
-    .toUpperCase();
-}
-
-function renderPartnerProfile(){
-  const p = currentPartner || {};
-  const name = safeText(p.partner_name, "Allona Partner");
-  const partnerId = safeText(p.partner_id, "-");
-  const type = safeText(p.partner_type, "shop");
-  const status = safeText(p.status, "active");
-  const score = safeText(p.score, "0");
-  const level = safeText(p.level, "1");
-  const xp = Number(p.xp || 0);
-  const xpPercent = Math.min(100, Math.max(0, xp % 100));
-
-  document.getElementById("topPartnerName").textContent = name;
-  document.getElementById("profileName").textContent = name;
-  document.getElementById("profileId").textContent = partnerId;
-  document.getElementById("profileScore").textContent = score + " / 10";
-  document.getElementById("profileLevel").textContent = "Level " + level;
-  document.getElementById("profileXpText").textContent = xp + " XP";
-  document.getElementById("levelFill").style.width = xpPercent + "%";
-
-  document.getElementById("sidePartnerName").textContent = name;
-  document.getElementById("sidePartnerInfo").textContent = type + " partner paneli";
-  document.getElementById("sideStatusText").textContent = status === "active" ? "Aktif Partner" : status;
-
-  document.getElementById("welcomeTitle").textContent = "Hoş geldiniz, " + name;
-  document.getElementById("welcomeDesc").textContent = "Ürün, hizmet, sipariş, finans ve operasyon süreçlerinizi buradan yönetin.";
-
-  document.getElementById("partnerStatusText").textContent = status;
-  document.getElementById("partnerTypeText").textContent = type;
-  document.getElementById("partnerScoreText").textContent = score + " / 10";
-  document.getElementById("partnerLevelText").textContent = "Level " + level;
-
-  const avatar = document.getElementById("profileAvatar");
-  if(p.logo_url){
-    avatar.innerHTML = `<img src="${p.logo_url}" alt="Partner Logo">`;
-  }else{
-    avatar.textContent = getPartnerInitials(name);
-  }
-
-  document.getElementById("editPartnerName").value = name;
-  document.getElementById("editPartnerId").value = partnerId;
-  document.getElementById("editPartnerEmail").value = safeText(p.email,"");
-  document.getElementById("editPartnerType").value = type;
-  document.getElementById("editScore").value = score;
-  document.getElementById("editLevel").value = level;
-  document.getElementById("editLogo").value = safeText(p.logo_url,"");
-  document.getElementById("editCity").value = safeText(p.city,"");
-  document.getElementById("editDesc").value = safeText(p.description,"");
-
-  renderMenu();
-}
-
-async function loadPartnerProfile(){
-  const localProfile = JSON.parse(localStorage.getItem("allonaPartnerProfile") || "null");
-  const email = (currentAuthUser && currentAuthUser.email || localProfile?.email || localStorage.getItem("allonaPartnerEmail") || "").trim().toLowerCase();
-
-  if(!email){
-    showNotice("Partner oturumu bulunamadı. Giriş sayfasına yönlendiriliyorsun.");
-    setTimeout(() => window.location.href = "partner.html", 1200);
-    return;
-  }
-
-  const { data, error } = await supabaseClient
-    .from("partners")
-    .select("*")
-    .eq("email", email)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if(error){
-    console.error("Partner bilgisi alınamadı", error);
-    showNotice("Partner bilgisi şu anda alınamadı.");
-    return;
-  }
-
-  if(!data){
-    clearPartnerAuth();
-    try{
-      await supabaseClient.auth.signOut({scope:"local"});
-    }catch(error){}
-    showNotice("Aktif partner kaydı bulunamadı.");
-    setTimeout(() => window.location.href = "partner.html", 1400);
-    return;
-  }
-
-  currentPartner = data;
-  localStorage.setItem("allonaPartnerProfile", JSON.stringify(data));
-  localStorage.setItem("allonaPartnerEmail", data.email || email);
-  localStorage.setItem("allonaPartnerUserId", currentAuthUser?.id || localStorage.getItem("allonaPartnerUserId") || "");
-  localStorage.setItem("allonaPartnerId", data.partner_id || "");
-  localStorage.setItem("allonaPartnerType", data.partner_type || "shop");
-  localStorage.setItem("allonaPartnerLoggedIn", "true");
-  localStorage.setItem("allonahub_auth_verified_at", new Date().toISOString());
-
-  renderPartnerProfile();
-  await loadProducts();
-}
-
-async function savePartnerProfile(){
-  if(!currentPartner?.id){
-    showNotice("Partner kaydı bulunamadı.");
-    return;
-  }
-
-  const updateData = {
-    partner_name: document.getElementById("editPartnerName").value.trim(),
-    score: Number(document.getElementById("editScore").value || 0),
-    level: Number(document.getElementById("editLevel").value || 1),
-    logo_url: document.getElementById("editLogo").value.trim() || null,
-    city: document.getElementById("editCity").value.trim() || null,
-    description: document.getElementById("editDesc").value.trim() || null
-  };
-
-  const { data, error } = await supabaseClient
-    .from("partners")
-    .update(updateData)
-    .eq("id", currentPartner.id)
-    .select("*")
-    .single();
-
-  if(error){
-    console.error("Partner bilgileri güncellenemedi", error);
-    showNotice("Partner bilgileri güncellenemedi.");
-    return;
-  }
-
-  currentPartner = data;
-  localStorage.setItem("allonaPartnerProfile", JSON.stringify(data));
-  renderPartnerProfile();
-  showNotice("<b>Partner bilgileri güncellendi ✅</b>");
-}
-  async function uploadProductImage(){
-  const fileInput = document.getElementById("productImageFile");
-
-  if(!fileInput || !fileInput.files || !fileInput.files[0]){
-    return "";
-  }
-
-  const file = fileInput.files[0];
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  const fileExt = String(file.name.split(".").pop() || "").toLowerCase();
-  if(!allowedTypes.includes(file.type) || !["jpg","jpeg","png","webp"].includes(fileExt)){
-    throw new Error("Sadece JPG, PNG veya WEBP görsel yüklenebilir.");
-  }
-  if(file.size > 5 * 1024 * 1024){
-    throw new Error("Ürün görseli en fazla 5 MB olabilir.");
-  }
-  const fileName = `products/${currentPartner.partner_id || "partner"}-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-
-  const { error: uploadError } = await supabaseClient.storage
-    .from("product-images")
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false
-    });
-
-  if(uploadError){
-    throw uploadError;
-  }
-
-  const { data } = supabaseClient.storage
-    .from("product-images")
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
-}
-
-function getProductFormData(){
-  return {
-    partner_id: currentPartner?.partner_id || "",
-    partner_email: currentPartner?.email || "",
-    product_name: document.getElementById("productName").value.trim(),
-    brand: document.getElementById("productBrand").value.trim(),
-    category: document.getElementById("productCategory").value.trim(),
-    price: document.getElementById("productPrice").value ? Number(document.getElementById("productPrice").value) : null,
-    old_price: document.getElementById("productOldPrice").value ? Number(document.getElementById("productOldPrice").value) : null,
-    stock: document.getElementById("productStock").value ? Number(document.getElementById("productStock").value) : 0,
-    sku: document.getElementById("productSku").value.trim(),
-    barcode: document.getElementById("productBarcode").value.trim(),
-    coupon_status: document.getElementById("productCoupon").value,
-    hp_status: document.getElementById("productHp").value,
-    description: document.getElementById("productDesc").value.trim(),
-    status: document.getElementById("productStatus").value || "pending"
-  };
-}
-
-function validateProduct(data){
-  if(!currentPartner?.partner_id) return "Partner bilgisi bulunamadı. Çıkış yapıp tekrar giriş yap.";
-  if(!data.product_name) return "Ürün / hizmet adı zorunlu.";
-  if(!data.category) return "Kategori seçmelisin.";
-  if(!data.price) return "Satış fiyatı zorunlu.";
-  if(data.price <= 0) return "Satış fiyatı 0'dan büyük olmalı.";
-  return "";
-}
-
-async function saveProduct(){
-  const btn = document.getElementById("saveProductBtn");
-  const productData = getProductFormData();
-  const errorText = validateProduct(productData);
-
-  if(errorText){
-    showNotice(errorText);
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Kaydediliyor...";
-
-  try{
-    const imageUrl = await uploadProductImage();
-
-    const insertData = {
-      partner_id: productData.partner_id,
-      partner_email: productData.partner_email,
-      product_name: productData.product_name,
-      category: productData.category,
-      brand: productData.brand,
-      old_price: productData.old_price,
-      price: productData.price,
-      stock: productData.stock,
-      image_url: imageUrl,
-      coupon_status: productData.coupon_status,
-      hp_status: productData.hp_status,
-      description: productData.description,
-      status: productData.status
-    };
-
-    if(productData.sku) insertData.sku = productData.sku;
-    if(productData.barcode) insertData.barcode = productData.barcode;
-
-    const { error } = await supabaseClient
-      .from("products")
-      .insert([insertData]);
-
-    if(error){
-      console.error("Ürün kaydedilemedi", error);
-      showNotice("Ürün kaydedilemedi.");
-      return;
-    }
-
-    showNotice("<b>Ürün kaydedildi ✅</b><br>Ürün Supabase products tablosuna eklendi.");
-    clearProductForm();
-    await loadProducts();
-    openSection("products");
-
-  }catch(err){
-    console.error("Ürün kaydedilemedi", err);
-    showNotice("Ürün kaydedilemedi.");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "Ürünü Kaydet";
-  }
-}
-
-function clearProductForm(showMsg=true){
-  const ids = [
-    "productName",
-    "productBrand",
-    "productPrice",
-    "productOldPrice",
-    "productStock",
-    "productSku",
-    "productBarcode",
-    "productDesc"
-  ];
-
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = "";
-  });
-
-  if(document.getElementById("productCategory")) document.getElementById("productCategory").value = "";
-  if(document.getElementById("productStatus")) document.getElementById("productStatus").value = "pending";
-  if(document.getElementById("productCoupon")) document.getElementById("productCoupon").value = "false";
-  if(document.getElementById("productHp")) document.getElementById("productHp").value = "false";
-  if(document.getElementById("productImageFile")) document.getElementById("productImageFile").value = "";
-
-  if(showMsg) showNotice("Ürün formu temizlendi.");
-}
-
-async function loadProducts(){
-  if(!currentPartner?.partner_id){
-    return;
-  }
-
-  const { data, error } = await supabaseClient
-    .from("products")
-    .select("*")
-    .eq("partner_id", currentPartner.partner_id)
-    .order("created_at", { ascending:false });
-
-  if(error){
-    console.error("Ürünler alınamadı", error);
-    showNotice("Ürünler şu anda alınamadı.");
-    return;
-  }
-
-  allProducts = data || [];
-  renderProductsTable(allProducts);
-  renderDashboardProducts(allProducts.slice(0,5));
-  renderKpis();
-}
-
-function filterProducts(){
-  const q = document.getElementById("productSearchInput")?.value.toLowerCase().trim() || "";
-  const status = document.getElementById("productStatusFilter")?.value || "";
-  const dateFilter = document.getElementById("productDateFilter")?.value || "";
-
-  let list = [...allProducts];
-
-  if(q){
-    list = list.filter(p =>
-      String(p.product_name || "").toLowerCase().includes(q) ||
-      String(p.category || "").toLowerCase().includes(q) ||
-      String(p.brand || "").toLowerCase().includes(q)
-    );
-  }
-
-  if(status){
-    list = list.filter(p => p.status === status);
-  }
-
-  if(dateFilter){
-    const now = new Date();
-    list = list.filter(p => {
-      const d = new Date(p.created_at);
-      const diffDays = (now - d) / (1000 * 60 * 60 * 24);
-
-      if(dateFilter === "today") return diffDays < 1;
-      if(dateFilter === "week") return diffDays <= 7;
-      if(dateFilter === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-
-      return true;
-    });
-  }
-
-  renderProductsTable(list);
-}
-  function statusBadge(status){
-  const s = String(status || "pending");
-
-  if(s === "active") return `<span class="badge-pill badge-green">Yayında</span>`;
-  if(s === "draft") return `<span class="badge-pill badge-gold">Taslak</span>`;
-  if(s === "rejected") return `<span class="badge-pill badge-red">Reddedildi</span>`;
-
-  return `<span class="badge-pill">İncelemede</span>`;
-}
-
-function renderProductImage(url){
-  if(url){
-    return `<img class="product-thumb" src="${url}" alt="Ürün Görseli">`;
-  }
-
-  return `<div class="product-thumb" style="display:flex;align-items:center;justify-content:center;color:#00e5ff;font-weight:900">IMG</div>`;
-}
-
-function renderProductsTable(list){
-  const table = document.getElementById("productsTable");
-  if(!table) return;
-
-  if(!list.length){
-    table.innerHTML = `<tr><td colspan="8">Henüz ürün eklenmedi.</td></tr>`;
-    return;
-  }
-
-  table.innerHTML = list.map(p => `
-    <tr>
-      <td>${renderProductImage(p.image_url)}</td>
-      <td>${safeText(p.product_name,"-")}</td>
-      <td>${safeText(p.category,"-")}</td>
-      <td>${safeText(p.brand,"-")}</td>
-      <td>${money(p.price)}</td>
-      <td>${safeText(p.stock,"0")}</td>
-      <td>${statusBadge(p.status)}</td>
-      <td>
-        <button class="small-btn" onclick="editProduct('${p.id}')">Düzenle</button>
-        <button class="red-btn" onclick="deleteProduct('${p.id}')">Sil</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-function renderDashboardProducts(list){
-  const table = document.getElementById("dashboardProductsTable");
-  if(!table) return;
-
-  if(!list.length){
-    table.innerHTML = `<tr><td colspan="6">Henüz ürün eklenmedi.</td></tr>`;
-    return;
-  }
-
-  table.innerHTML = list.map(p => `
-    <tr>
-      <td>${renderProductImage(p.image_url)}</td>
-      <td>${safeText(p.product_name,"-")}</td>
-      <td>${safeText(p.category,"-")}</td>
-      <td>${money(p.price)}</td>
-      <td>${safeText(p.stock,"0")}</td>
-      <td>${statusBadge(p.status)}</td>
-    </tr>
-  `).join("");
-}
-
-function renderKpis(){
-  const total = allProducts.length;
-  const pending = allProducts.filter(p => p.status === "pending").length;
-  const active = allProducts.filter(p => p.status === "active").length;
-  const draft = allProducts.filter(p => p.status === "draft").length;
-  const stockTotal = allProducts.reduce((sum,p) => sum + Number(p.stock || 0), 0);
-  const coupon = allProducts.filter(p => p.coupon_status === "true").length;
-  const hp = allProducts.filter(p => p.hp_status === "true").length;
-  const noImage = allProducts.filter(p => !p.image_url).length;
-
-  const kpis = [
-    ["Toplam Ürün", total, "Supabase products tablosundaki kayıt", "success"],
-    ["İncelemede", pending, "Onay bekleyen ürün", pending ? "warning" : "success"],
-    ["Yayında", active, "Aktif ürün", "success"],
-    ["Taslak", draft, "Taslak kayıt", ""],
-    ["Toplam Stok", stockTotal, "Tüm ürün stok toplamı", ""],
-    ["Kuponlu", coupon, "Kupon kullanılan ürün", ""],
-    ["HP Kazandıran", hp, "HP avantajlı ürün", ""],
-    ["Görselsiz", noImage, "Görseli olmayan ürün", noImage ? "warning" : "success"]
-  ];
-
-  document.getElementById("kpiGrid").innerHTML = kpis.map(k => `
-    <div class="kpi glass ${k[3] || ""}">
-      <small>${k[0]}</small>
-      <h3>${k[1]}</h3>
-      <p>${k[2]}</p>
-    </div>
-  `).join("");
-}
-
-async function deleteProduct(id){
-  const ok = confirm("Bu ürünü silmek istediğine emin misin?");
-  if(!ok) return;
-
-  const { error } = await supabaseClient
-    .from("products")
-    .delete()
-    .eq("id", id)
-    .eq("partner_id", currentPartner.partner_id);
-
-  if(error){
-    console.error("Ürün silinemedi", error);
-    showNotice("Ürün silinemedi.");
-    return;
-  }
-
-  showNotice("Ürün silindi.");
-  await loadProducts();
-}
-
-function editProduct(id){
-  const product = allProducts.find(p => p.id === id);
-
-  if(!product){
-    showNotice("Ürün bulunamadı.");
-    return;
-  }
-
-  openSection("addProduct");
-
-  setTimeout(() => {
-    document.getElementById("productName").value = product.product_name || "";
-    document.getElementById("productBrand").value = product.brand || "";
-    document.getElementById("productCategory").value = product.category || "";
-    document.getElementById("productPrice").value = product.price || "";
-    document.getElementById("productOldPrice").value = product.old_price || "";
-    document.getElementById("productStock").value = product.stock || "";
-    document.getElementById("productSku").value = product.sku || "";
-    document.getElementById("productBarcode").value = product.barcode || "";
-    document.getElementById("productCoupon").value = product.coupon_status || "false";
-    document.getElementById("productHp").value = product.hp_status || "false";
-    document.getElementById("productStatus").value = product.status || "pending";
-    document.getElementById("productDesc").value = product.description || "";
-
-    const btn = document.getElementById("saveProductBtn");
-    btn.textContent = "Ürünü Güncelle";
-    btn.onclick = () => updateProduct(id);
-  }, 100);
-}
-
-async function updateProduct(id){
-  const btn = document.getElementById("saveProductBtn");
-  const productData = getProductFormData();
-  const errorText = validateProduct(productData);
-
-  if(errorText){
-    showNotice(errorText);
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Güncelleniyor...";
-
-  try{
-    let imageUrl = null;
-    const fileInput = document.getElementById("productImageFile");
-
-    if(fileInput && fileInput.files && fileInput.files[0]){
-      imageUrl = await uploadProductImage();
-    }
-
-    const updateData = {
-      product_name: productData.product_name,
-      category: productData.category,
-      brand: productData.brand,
-      old_price: productData.old_price,
-      price: productData.price,
-      stock: productData.stock,
-      coupon_status: productData.coupon_status,
-      hp_status: productData.hp_status,
-      description: productData.description,
-      status: productData.status
-    };
-
-    if(productData.sku) updateData.sku = productData.sku;
-    if(productData.barcode) updateData.barcode = productData.barcode;
-    if(imageUrl) updateData.image_url = imageUrl;
-
-    const { error } = await supabaseClient
-      .from("products")
-      .update(updateData)
-      .eq("id", id)
-      .eq("partner_id", currentPartner.partner_id);
-
-    if(error){
-      console.error("Ürün güncellenemedi", error);
-      showNotice("Ürün güncellenemedi.");
-      return;
-    }
-
-    showNotice("<b>Ürün güncellendi ✅</b>");
-    clearProductForm(false);
-
-    const saveBtn = document.getElementById("saveProductBtn");
-    saveBtn.textContent = "Ürünü Kaydet";
-    saveBtn.onclick = saveProduct;
-
-    await loadProducts();
-    openSection("products");
-
-  }catch(err){
-    console.error("Ürün güncellenemedi", err);
-    showNotice("Ürün güncellenemedi.");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = "Ürünü Kaydet";
-  }
-}
-async function logoutPartner(){
-  clearPartnerAuth();
-  try{
-    await supabaseClient.auth.signOut({scope:"local"});
-  }catch(error){}
-  window.location.href = "partner.html";
-}
-
-async function checkPartnerSession(){
-  const profile = JSON.parse(
-    localStorage.getItem("allonaPartnerProfile") || "null"
-  );
-  const localUserId = localStorage.getItem("allonaPartnerUserId") || "";
-
-  try{
-    const {data,error}=await supabaseClient.auth.getUser();
-    if(error || !data || !data.user){
-      clearPartnerAuth();
-      showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
-      setTimeout(()=>{
-        window.location.href="partner.html";
-      },1200);
-      return false;
-    }
-    if(localUserId && localUserId !== data.user.id){
-      clearPartnerAuth();
-      try{
-        await supabaseClient.auth.signOut({scope:"local"});
-      }catch(error){}
-      showNotice("Oturum bilgisi cihazda uyuşmuyor. Tekrar giriş yapmalısınız.");
-      setTimeout(()=>{
-        window.location.href="partner.html";
-      },1200);
-      return false;
-    }
-    currentAuthUser=data.user;
-  }catch(error){
-    clearPartnerAuth();
-    showNotice("Güvenli oturum doğrulanamadı. Tekrar giriş yapmalısınız.");
-    setTimeout(()=>{
-      window.location.href="partner.html";
-    },1200);
-    return false;
-  }
-
-  if(!profile && !currentAuthUser?.email){
-    showNotice("Partner oturumu bulunamadı.");
-    setTimeout(()=>{
-      window.location.href="partner.html";
-    },1200);
-    return false;
-  }
-
-  return true;
-}
-
-document.addEventListener("DOMContentLoaded", async ()=>{
-
-  const hasSession = await checkPartnerSession();
-
-  if(!hasSession) return;
-
-  await loadPartnerProfile();
-
-});
-
-window.addEventListener("storage", async function(e){
-
-  if(e.key==="allonaPartnerProfile"){
-
-    try{
-
-      currentPartner = JSON.parse(
-        localStorage.getItem("allonaPartnerProfile") || "null"
-      );
-
-      if(currentPartner){
-        renderPartnerProfile();
-        await loadProducts();
-      }
-
-    }catch(err){
-      console.error(err);
-    }
-
-  }
-
-});
-
-async function refreshDashboard(){
-
-  await loadPartnerProfile();
-  await loadProducts();
-
-}
-
-setInterval(async ()=>{
-
-  if(currentPartner?.partner_id){
-
-    await loadProducts();
-
-  }
-
-},60000);
-
-console.log("✅ AllonaHub Partner Panel Loaded");
-</script>
-  <div data-layout="footer"></div>
+  <div class="site-shell partner-os-shell" data-page="partner-os">
+    <div data-layout="header"></div>
+
+    <main class="partner-os" data-partner-os-shell>
+      <aside class="partner-os-sidebar" aria-label="Partner menüsü">
+        <a class="partner-os-brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
+          <span>Allona</span><strong>Partner OS</strong>
+        </a>
+
+        <div class="partner-os-profile">
+          <div class="partner-os-avatar" data-partner-avatar>AP</div>
+          <div>
+            <strong data-partner-name>Partner yükleniyor</strong>
+            <span data-partner-code>Güvenli oturum kontrol ediliyor</span>
+          </div>
+        </div>
+
+        <nav class="partner-os-menu">
+          <button class="is-active" type="button" data-panel-target="dashboard"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></button>
+          <button type="button" data-panel-target="payments"><i class="fa-solid fa-tower-broadcast"></i><span>QR & NFC POS</span></button>
+          <button type="button" data-panel-target="products"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
+          <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
+          <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
+          <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
+          <button type="button" data-panel-target="operations"><i class="fa-solid fa-store"></i><span>Şube & Cihaz</span></button>
+          <button type="button" data-panel-target="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
+          <button type="button" data-panel-target="settings"><i class="fa-solid fa-shield-halved"></i><span>Ayarlar</span></button>
+        </nav>
+
+        <div class="partner-os-sidebar-note">
+          <strong>AllonaPay Terminal</strong>
+          <span>QR, NFC SoftPOS, ödeme linki ve hakediş tek merkezde.</span>
+        </div>
+      </aside>
+
+      <section class="partner-os-main">
+        <header class="partner-os-topbar">
+          <div>
+            <p class="partner-os-eyebrow">Premium Partner Platformu</p>
+            <h1>Partner Yönetim Merkezi</h1>
+            <p data-partner-summary>Ürün, sipariş, QR, NFC, hakediş ve kampanya akışları hazırlanıyor.</p>
+          </div>
+          <div class="partner-os-actions">
+            <a href="../commerce/allonashop.html"><i class="fa-solid fa-store"></i><span>Mağazaya Git</span></a>
+            <button type="button" data-refresh-partner><i class="fa-solid fa-rotate"></i><span>Yenile</span></button>
+            <button type="button" data-partner-logout><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Çıkış</span></button>
+          </div>
+        </header>
+
+        <div class="partner-os-alert" data-partner-alert hidden></div>
+
+        <section class="partner-os-section is-active" id="dashboard" data-panel-section>
+          <div class="partner-os-hero">
+            <div class="partner-os-hero-copy">
+              <p>AllonaHub Partner OS</p>
+              <h2 data-dashboard-title>İşletmeni tek panelden büyüt</h2>
+              <span data-dashboard-subtitle>Canlı performans, ödeme, kampanya ve operasyon verileri burada birleşir.</span>
+              <div class="partner-os-hero-actions">
+                <button type="button" data-panel-jump="payments"><i class="fa-solid fa-qrcode"></i><span>Ödeme Al</span></button>
+                <button type="button" data-panel-jump="products"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
+                <button type="button" data-panel-jump="finance"><i class="fa-solid fa-file-invoice-dollar"></i><span>Hakediş</span></button>
+              </div>
+            </div>
+            <div class="partner-os-trust">
+              <span>Partner Güven Skoru</span>
+              <strong data-trust-score>--</strong>
+              <div class="partner-os-progress"><span data-trust-progress></span></div>
+              <small data-trust-label>Doğrulama ve performans puanı hesaplanıyor.</small>
+            </div>
+          </div>
+
+          <div class="partner-os-kpis" data-partner-kpis></div>
+
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Akıllı Öneriler</p>
+                  <h2>Bugün Ne Yapmalı?</h2>
+                </div>
+              </div>
+              <div class="partner-os-recommendations" data-partner-recommendations></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Son Ödemeler</p>
+                  <h2>QR/NFC Tahsilat</h2>
+                </div>
+                <button type="button" data-panel-jump="payments">Aç</button>
+              </div>
+              <div class="partner-os-mini-list" data-recent-payments></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="payments" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>AllonaPay Terminal</p>
+                <h2>QR, NFC, Link ve POS ile Ödeme Al</h2>
+              </div>
+              <span class="partner-os-live">SoftPOS hazır altyapı</span>
+            </div>
+
+            <div class="partner-os-grid partner-os-grid--terminal">
+              <form class="partner-os-terminal" data-payment-form>
+                <label>
+                  <span>Ödeme yöntemi</span>
+                  <select name="channel">
+                    <option value="qr">QR ile ödeme</option>
+                    <option value="nfc">NFC SoftPOS</option>
+                    <option value="payment_link">Ödeme linki</option>
+                    <option value="web_pos">Web POS</option>
+                    <option value="physical_pos">Fiziksel POS</option>
+                    <option value="cash">Nakit kaydı</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Tutar</span>
+                  <input name="amount" type="number" min="1" step="0.01" placeholder="0.00" required>
+                </label>
+                <label>
+                  <span>Açıklama</span>
+                  <input name="description" placeholder="Taksi yolculuğu, masa 4, ürün satışı...">
+                </label>
+                <label>
+                  <span>Müşteri telefonu</span>
+                  <input name="customer_phone" inputmode="tel" placeholder="+90 5xx xxx xx xx">
+                </label>
+                <button type="submit"><i class="fa-solid fa-bolt"></i><span>Ödeme İsteği Oluştur</span></button>
+              </form>
+
+              <div class="partner-os-payment-preview" data-payment-preview>
+                <div class="partner-os-terminal-empty">
+                  <i class="fa-solid fa-qrcode"></i>
+                  <strong>QR veya NFC isteği oluştur</strong>
+                  <span>Partner ödeme linki, QR görseli ve sağlayıcı durumu burada görünecek.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+              <h3>NFC SoftPOS</h3>
+              <p>Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.</p>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-qrcode"></i>
+              <h3>Dinamik QR</h3>
+              <p>Tek kullanımlık, masa, araç, şube ve ürün bazlı QR tahsilat istekleri.</p>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-link"></i>
+              <h3>Ödeme Linki</h3>
+              <p>WhatsApp, SMS veya e-posta ile güvenli ödeme bağlantısı paylaşımı.</p>
+            </article>
+          </div>
+
+          <section class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>İşlem Geçmişi</p>
+                <h2>Ödeme İstekleri</h2>
+              </div>
+            </div>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Yöntem</th><th>Tutar</th><th>Durum</th><th>Sağlayıcı</th><th>Tarih</th></tr>
+                </thead>
+                <tbody data-payment-rows></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="partner-os-section" id="products" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Katalog</p>
+                <h2>Ürün ve Hizmetler</h2>
+              </div>
+              <button type="button" data-product-demo>Yeni ürün akışı</button>
+            </div>
+            <form class="partner-os-product-form" data-product-form>
+              <label><span>Ürün / hizmet adı</span><input name="name" required placeholder="Örn. Şehir içi taksi transferi"></label>
+              <label><span>Kategori</span><input name="category" required placeholder="Taksi, restoran, market..."></label>
+              <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required placeholder="0.00"></label>
+              <label><span>Stok / kontenjan</span><input name="stock" type="number" min="0" step="1" value="1"></label>
+              <label class="partner-os-span-2"><span>Açıklama</span><input name="description" placeholder="Müşteriye görünen kısa açıklama"></label>
+              <button type="submit"><i class="fa-solid fa-plus"></i><span>Kataloğa Ekle</span></button>
+            </form>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>Sinyal</th></tr>
+                </thead>
+                <tbody data-product-rows></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="orders" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Operasyon</p>
+                <h2>Sipariş & Kargo</h2>
+              </div>
+            </div>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Sipariş</th><th>Ürünler</th><th>Tutar</th><th>Sipariş</th><th>Ödeme</th><th>Kargo</th></tr>
+                </thead>
+                <tbody data-order-rows></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="finance" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Hakediş</p>
+                  <h2>Finans Özeti</h2>
+                </div>
+              </div>
+              <div class="partner-os-finance" data-finance-summary></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Komisyon</p>
+                  <h2>AllonaHub Modeli</h2>
+                </div>
+              </div>
+              <div class="partner-os-commission">
+                <strong data-commission-rate>%12</strong>
+                <span>Varsayılan platform komisyonu. Kategori, kampanya ve partner seviyesine göre özelleştirilebilir.</span>
+              </div>
+            </section>
+          </div>
+
+          <section class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Ödeme Takvimi</p>
+                <h2>Hakedişler</h2>
+              </div>
+            </div>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Dönem</th><th>Brüt</th><th>Komisyon</th><th>Net</th><th>Durum</th></tr>
+                </thead>
+                <tbody data-payout-rows></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="partner-os-section" id="growth" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Kupon & HP</h3>
+              <p>Partner özel kuponları, HP kazandırma ve premium kullanıcı kampanyaları.</p>
+              <button type="button" data-growth-action="coupon">Planla</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-ranking-star"></i>
+              <h3>Vitrin Reklamı</h3>
+              <p>AllonaShop hero, kategori vitrinleri ve bölgesel sponsorlu görünürlük.</p>
+              <button type="button" data-growth-action="ads">Planla</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-users-viewfinder"></i>
+              <h3>Tekrar Müşteri</h3>
+              <p>Sadakat, favori partner ve müşteri segmentasyonu ile tekrar satış.</p>
+              <button type="button" data-growth-action="loyalty">Planla</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="operations" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Şubeler</p>
+                  <h2>Lokasyonlar</h2>
+                </div>
+              </div>
+              <div class="partner-os-mini-list" data-location-list></div>
+            </section>
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Cihazlar</p>
+                  <h2>NFC, POS ve QR Standları</h2>
+                </div>
+              </div>
+              <div class="partner-os-mini-list" data-device-list></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="support" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <form class="partner-os-panel partner-os-support-form" data-support-form>
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Destek</p>
+                  <h2>Talep Oluştur</h2>
+                </div>
+              </div>
+              <label>
+                <span>Kategori</span>
+                <select name="category">
+                  <option value="payment">Ödeme</option>
+                  <option value="qr_nfc">QR / NFC</option>
+                  <option value="order">Sipariş</option>
+                  <option value="cargo">Kargo</option>
+                  <option value="payout">Hakediş</option>
+                  <option value="technical">Teknik</option>
+                </select>
+              </label>
+              <label>
+                <span>Öncelik</span>
+                <select name="priority">
+                  <option value="normal">Normal</option>
+                  <option value="high">Yüksek</option>
+                  <option value="urgent">Acil</option>
+                </select>
+              </label>
+              <label>
+                <span>Başlık</span>
+                <input name="title" required placeholder="Kısa başlık">
+              </label>
+              <label>
+                <span>Mesaj</span>
+                <textarea name="message" required placeholder="Ekibimize detay verin"></textarea>
+              </label>
+              <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Talep Gönder</span></button>
+            </form>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Açık Talepler</p>
+                  <h2>Destek Geçmişi</h2>
+                </div>
+              </div>
+              <div class="partner-os-mini-list" data-ticket-list></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="settings" data-panel-section>
+          <form class="partner-os-panel partner-os-settings" data-profile-form>
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Hesap</p>
+                <h2>Partner Bilgileri</h2>
+              </div>
+            </div>
+            <div class="partner-os-form-grid">
+              <label><span>Görünen ad</span><input name="display_name"></label>
+              <label><span>Yasal unvan</span><input name="legal_name"></label>
+              <label><span>Telefon</span><input name="phone"></label>
+              <label><span>Şehir</span><input name="city"></label>
+              <label><span>Ülke</span><input name="country"></label>
+              <label><span>Kargo firması</span><input name="preferred_cargo_company" placeholder="MNG, Yurtiçi, Aras..."></label>
+              <label><span>Ödeme takvimi</span><select name="payout_schedule"><option value="weekly">Haftalık</option><option value="daily">Günlük</option><option value="biweekly">İki haftalık</option><option value="monthly">Aylık</option></select></label>
+              <label><span>Logo URL</span><input name="logo_url"></label>
+              <label class="partner-os-span-2"><span>Açıklama</span><textarea name="description"></textarea></label>
+            </div>
+            <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Bilgileri Kaydet</span></button>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260620-partneros1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260619-sec1" defer></script>
+  <script src="../../js/auth.js?v=20260620-account1" defer></script>
+  <script src="../../js/cart.js?v=20260619-live9" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/partner-os.js?v=20260620-pos1" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
 </html>

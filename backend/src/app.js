@@ -85,7 +85,7 @@ export async function buildApp() {
       callback(null, config.allowedOrigins.includes(normalized));
     },
     credentials: true,
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"]
   });
 
