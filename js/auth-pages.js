@@ -134,7 +134,7 @@
           await App.cvAccess.ensureAccess("signup");
         }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
-        window.location.href = core.url("/pages/account/user-panel.html");
+        window.location.href = safeReturnTo(core.getParam("returnTo"));
       } catch (error) {
         const message = /çok fazla|kontrol edin|geçerli|şifre/i.test(error.message || "") ? error.message : authError(error, "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
         core.toast(message, "error");

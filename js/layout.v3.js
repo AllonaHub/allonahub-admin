@@ -54,7 +54,7 @@
               </span>
               <span class="badge" data-cart-count>0</span>
             </a>
-            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/login.html")}" data-account-link>Giriş Yap</a>
+            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/register.html")}" data-account-link>Giriş Yap</a>
             <span class="platform-controls-slot" data-platform-controls-slot></span>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
           </div>

@@ -102,8 +102,9 @@ const searchRoutes=[
 {keys:["yemek","restoran","burger","pizza"],url:"/pages/commerce/allonayemek.html"},
 {keys:["market","süpermarket","gıda"],url:"/pages/commerce/allonamarket.html"},
 {keys:["taksi","ulaşım"],url:"/pages/ecosystem/allonataksi.html"},
+{keys:["avm","alışveriş merkezi","mall"],url:"/pages/ecosystem/allonaavm.html"},
 {keys:["sağlık","doktor","eczane"],url:"/pages/ecosystem/allonasaglik.html"},
-{keys:["seyahat","otel","turizm","bilet"],url:"/pages/ecosystem/allonaseyahat.html"},
+{keys:["seyahat","turizm","bilet"],url:"/pages/ecosystem/allonaseyahat.html"},
 {keys:["gayrimenkul","ev","arsa","kiralık","satılık"],url:"/pages/ecosystem/allonagayrimenkul.html"},
 {keys:["denizcilik","gemi","crew","maritime"],url:"/pages/ecosystem/allonadenizcilik.html"},
 {keys:["hukuk","avukat"],url:"/pages/ecosystem/allonahukuk.html"},
@@ -127,7 +128,9 @@ const searchRoutes=[
 {keys:["inşaat","yapı","müteahhit"],url:"/pages/ecosystem/allonainsaat.html"},
 {keys:["mühendislik","mühendis"],url:"/pages/ecosystem/allonamuhendislik.html"},
 {keys:["trade","ithalat","ihracat"],url:"/pages/ecosystem/allonatrade.html"},
-{keys:["kupon","hp","kampanya","indirim"],url:"/pages/commerce/kuponlar.html"}
+{keys:["otelcilik","otel","konaklama"],url:"/pages/ecosystem/allonaotelcilik.html"},
+{keys:["kupon","hp","kampanya","indirim"],url:"/pages/commerce/kuponlar.html"},
+{keys:["wallet","pay"],url:"/pages/wallet/hubwallet.html"}
 ];
 
 function globalSearch(){
