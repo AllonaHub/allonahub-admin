@@ -610,6 +610,22 @@
       renderPaymentRows();
       renderRecentPayments();
       renderKpis();
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "payment_intent_created",
+          severity: "info",
+          resourceType: "partner_payment_intent",
+          resourceId: intent.id,
+          evidenceTags: ["partner_os", "payment"],
+          metadata: {
+            channel: intent.channel,
+            provider: intent.provider,
+            amount: Number(intent.amount || 0),
+            local_preview: String(intent.id || "").startsWith("local-")
+          }
+        });
+      }
       form.reset();
       toast(`${channelLabel(intent.channel)} ödeme isteği hazır.`);
     } catch (error) {
@@ -650,6 +666,21 @@
       state.metrics.low_stock_count = state.products.filter((item) => Number(item.stock || 0) <= 5).length;
       renderProducts();
       renderKpis();
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "product_draft_created",
+          severity: "info",
+          resourceType: "product",
+          resourceId: created.id,
+          evidenceTags: ["partner_os", "catalog"],
+          metadata: {
+            category: created.category || payload.category,
+            price: Number(created.price || payload.price || 0),
+            status: created.status || "draft"
+          }
+        });
+      }
       form.reset();
       toast("Ürün taslak olarak kataloğa eklendi.");
     } catch (error) {
@@ -668,6 +699,17 @@
       });
       state.business = payload.business;
       applyBusinessProfile();
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "profile_updated",
+          severity: "info",
+          resourceType: "partner_business",
+          resourceId: state.business && state.business.id,
+          evidenceTags: ["partner_os", "profile"],
+          metadata: { updated_fields: Object.keys(data) }
+        });
+      }
       toast("Partner bilgileri kaydedildi.");
     } catch (error) {
       toast(error.message || "Profil kaydedilemedi.", "error");
@@ -700,6 +742,21 @@
       state.metrics.open_ticket_count = state.tickets.filter((item) => ["open", "waiting"].includes(item.status)).length;
       renderTickets();
       renderKpis();
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "support",
+          action: "partner_support_ticket_created",
+          severity: data.priority === "urgent" ? "warning" : "info",
+          resourceType: "partner_support_ticket",
+          resourceId: ticket.id,
+          evidenceTags: ["partner_os", "support"],
+          metadata: {
+            category: data.category,
+            priority: data.priority,
+            local_preview: String(ticket.id || "").startsWith("local-")
+          }
+        });
+      }
       form.reset();
       toast("Destek talebi oluşturuldu.");
     } catch (error) {
@@ -713,6 +770,19 @@
         method: "PATCH",
         body: JSON.stringify({ orderId, ...payload })
       });
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "order_status_updated",
+          severity: "info",
+          resourceType: "order",
+          resourceId: orderId,
+          evidenceTags: ["partner_os", "order"],
+          metadata: {
+            changed_fields: Object.keys(payload)
+          }
+        });
+      }
       toast("Sipariş güncellendi.");
     } catch (error) {
       toast(error.message || "Sipariş güncellenemedi.", "error");

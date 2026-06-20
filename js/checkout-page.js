@@ -218,6 +218,24 @@
         }
         const orderPayload = calculateOrderPayload(form);
         const order = await App.db.orders.create(orderPayload, lines);
+        if (App.complianceAudit) {
+          await App.complianceAudit.record({
+            category: "order",
+            action: "checkout_order_created",
+            severity: "info",
+            resourceType: "order",
+            resourceId: order && order.id,
+            evidenceTags: ["checkout", "order"],
+            metadata: {
+              item_count: lines.length,
+              city: orderPayload.city,
+              legal_acceptance: {
+                pre_info: Boolean(form.pre_info_accepted.checked),
+                distance_sales: Boolean(form.distance_sales_accepted.checked)
+              }
+            }
+          });
+        }
         const buyer = {
           email: form.email.value,
           phone: form.phone.value,
@@ -231,6 +249,17 @@
           return;
         }
         if (payment && payment.paymentPageUrl) {
+          if (App.complianceAudit) {
+            await App.complianceAudit.record({
+              category: "payment",
+              action: "iyzico_checkout_redirect",
+              severity: "info",
+              resourceType: "order",
+              resourceId: order && order.id,
+              evidenceTags: ["checkout", "payment_provider"],
+              metadata: { provider: "iyzico" }
+            });
+          }
           window.location.href = payment.paymentPageUrl;
           return;
         }

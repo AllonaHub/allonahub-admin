@@ -111,7 +111,45 @@ GET /v1/admin/security/audit-events
 
 Bu endpoint admin/super_admin + MFA + admin host boundary gerektirir.
 
-## 8. Monitoring & Alert
+## 8. Legal Evidence & Public Authority
+
+AllonaHub güvenlik kayıtları; resmi makam talebi, ödeme uyuşmazlığı, partner ihtilafı ve şüpheli işlem incelemelerinde delil bütünlüğü sağlayacak şekilde genişletilir.
+
+Ek migration:
+
+```text
+supabase/migrations/20260621103000_create_legal_evidence_controls.sql
+```
+
+Ek tablolar:
+
+```text
+public.authority_disclosure_requests
+public.authority_disclosure_exports
+```
+
+Admin API:
+
+```http
+POST /v1/admin/legal/authority-requests
+POST /v1/admin/legal/evidence-report
+```
+
+Kurallar:
+
+- Resmi makam paylaşımı yalnızca hukuki gerekçe, referans no ve sınırlı kapsamla yapılır.
+- Raporlar tarih aralığı, actor/resource/action filtreleri ve SHA-256 `export_hash` ile üretilir.
+- Audit kayıtları `previous_hash` / `event_hash` zinciriyle append-only tasarlanır.
+- Konum verisi gizli takip için kullanılmaz; sadece açık izinli veya işlem/hukuki gereklilik kapsamındaki kayıtlar raporlanır.
+- Şifre, kart numarası, CVC/CVV, token, secret ve cookie audit metadata içine yazılmaz.
+
+Detaylı mimari:
+
+```text
+docs/security/legal-evidence-architecture.md
+```
+
+## 9. Monitoring & Alert
 
 İlk alarm kuralları:
 
@@ -123,7 +161,7 @@ Bu endpoint admin/super_admin + MFA + admin host boundary gerektirir.
 
 Coolify/Traefik logları, backend JSON logları ve Supabase audit tablosu birlikte izlenmelidir.
 
-## 9. Backup & Disaster Recovery
+## 10. Backup & Disaster Recovery
 
 Günlük:
 
@@ -145,7 +183,7 @@ Kurtarma önceliği:
 4. Backend yeni secretlarla redeploy edilir.
 5. Audit log üzerinden hasar analizi yapılır.
 
-## 10. Incident Response
+## 11. Incident Response
 
 Acil environment switchleri:
 
@@ -175,7 +213,7 @@ Otomatik saldırı algılama, geçici IP bloklama, admin kilidi, strict mode, Te
 docs/security/incident-response-auto-defense.md
 ```
 
-## 11. Secure Deployment
+## 12. Secure Deployment
 
 Her deploy öncesi:
 
@@ -193,7 +231,7 @@ docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml build allona
 
 Server build `npm ci --omit=dev` kullanır ve lockfile ile sabitlenir. Son buildde audit sonucu `0 vulnerabilities` olmalıdır.
 
-## 12. Cloudflare Checklist
+## 13. Cloudflare Checklist
 
 - SSL/TLS: Full Strict.
 - WAF managed rules: on.
@@ -211,7 +249,7 @@ Server build `npm ci --omit=dev` kullanır ve lockfile ile sabitlenir. Son build
 - Minimum TLS: 1.2.
 - Security headers: enabled at backend and proxy.
 
-## 13. Secret Management
+## 14. Secret Management
 
 Kod içine yazılmayacak:
 
@@ -233,7 +271,7 @@ Dosya izni:
 chmod 600 /opt/allonahub/deploy/hetzner/.env.production
 ```
 
-## 14. Network Segmentation
+## 15. Network Segmentation
 
 Mantıksal ayrım:
 
@@ -243,7 +281,7 @@ Mantıksal ayrım:
 - Coolify: Cloudflare Access arkasında.
 - Payment callback: backend üzerinde, frontendden bağımsız.
 
-## 15. Production Gate
+## 16. Production Gate
 
 Production'a alınmadan önce zorunlu geçiş kriterleri:
 

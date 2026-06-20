@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
@@ -49,7 +50,67 @@ const cvCheckoutSchema = z.object({
 
 const auditQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
-  severity: z.enum(["debug", "info", "warning", "critical"]).optional()
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional(),
+  actorId: uuidSchema.optional(),
+  action: z.string().trim().max(140).optional(),
+  resourceType: z.string().trim().max(120).optional(),
+  resourceId: z.string().trim().max(180).optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional()
+});
+
+const clientLocationSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  accuracy_m: z.coerce.number().min(0).max(100000).optional(),
+  city: z.string().trim().max(120).optional(),
+  region: z.string().trim().max(80).optional(),
+  country: z.string().trim().max(80).optional()
+}).refine((value) => {
+  const hasLatitude = value.latitude !== undefined;
+  const hasLongitude = value.longitude !== undefined;
+  return hasLatitude === hasLongitude || (!hasLatitude && !hasLongitude);
+}, "Konum enlem ve boylam birlikte gönderilmelidir.");
+
+const clientSecurityEventSchema = z.object({
+  category: z.enum(["account", "profile", "order", "payment", "partner", "support", "legal_notice", "fraud_signal", "location_consent"]).default("fraud_signal"),
+  action: z.string().trim().min(3).max(90).regex(/^[a-z0-9_.:-]+$/i),
+  resource_type: z.string().trim().max(90).optional(),
+  resource_id: z.string().trim().max(180).optional(),
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional().default("info"),
+  page: z.string().trim().max(220).optional(),
+  location_consent: z.boolean().optional().default(false),
+  location: clientLocationSchema.optional(),
+  evidence_tags: z.array(z.string().trim().max(60)).max(12).optional().default([]),
+  metadata: z.record(z.unknown()).optional().default({})
+});
+
+const authorityRequestSchema = z.object({
+  authority_type: z.enum(["police", "prosecutor", "court", "regulator", "other_public_authority"]),
+  reference_no: z.string().trim().min(2).max(140),
+  requester_name: z.string().trim().max(160).optional().default(""),
+  requester_title: z.string().trim().max(160).optional().default(""),
+  contact_channel: z.string().trim().max(240).optional().default(""),
+  legal_basis: z.string().trim().min(8).max(1200),
+  scope_summary: z.string().trim().min(8).max(1600),
+  due_at: z.string().datetime().optional(),
+  metadata: z.record(z.unknown()).optional().default({})
+});
+
+const evidenceReportSchema = z.object({
+  request_id: uuidSchema.optional(),
+  case_reference: z.string().trim().min(2).max(140),
+  legal_basis: z.string().trim().min(8).max(1200),
+  purpose: z.string().trim().min(8).max(240).default("Yetkili makam talebi ve hukuki uyuşmazlık incelemesi"),
+  actor_id: uuidSchema.optional(),
+  resource_type: z.string().trim().max(120).optional(),
+  resource_id: z.string().trim().max(180).optional(),
+  action: z.string().trim().max(140).optional(),
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional(),
+  request_id_filter: z.string().trim().max(120).optional(),
+  from: z.string().datetime(),
+  to: z.string().datetime(),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500)
 });
 
 const partnerPaymentIntentSchema = z.object({
@@ -113,6 +174,82 @@ function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function sha256Json(value) {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function assertEvidenceWindow(from, to) {
+  const fromMs = new Date(from).getTime();
+  const toMs = new Date(to).getTime();
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
+    throw httpError("Delil raporu tarih aralığı geçersiz.", 400);
+  }
+  const maxWindowMs = 366 * 24 * 60 * 60 * 1000;
+  if (toMs - fromMs > maxWindowMs) {
+    throw httpError("Delil raporu aralığı en fazla 366 gün olabilir.", 400);
+  }
+}
+
+function evidenceFilters(payload) {
+  return {
+    actor_id: payload.actor_id || null,
+    resource_type: payload.resource_type || null,
+    resource_id: payload.resource_id || null,
+    action: payload.action || null,
+    severity: payload.severity || null,
+    request_id: payload.request_id_filter || null,
+    from: payload.from,
+    to: payload.to,
+    limit: payload.limit
+  };
+}
+
+async function queryEvidenceEvents(payload) {
+  let dbQuery = supabaseAdmin
+    .from("security_audit_events")
+    .select([
+      "id",
+      "actor_id",
+      "actor_role",
+      "action",
+      "resource_type",
+      "resource_id",
+      "severity",
+      "ip_address",
+      "user_agent",
+      "request_id",
+      "source",
+      "purpose",
+      "location_basis",
+      "geo_country",
+      "geo_region",
+      "geo_city",
+      "geo_latitude",
+      "geo_longitude",
+      "geo_accuracy_m",
+      "previous_hash",
+      "event_hash",
+      "evidence_tags",
+      "metadata",
+      "created_at"
+    ].join(", "))
+    .gte("created_at", payload.from)
+    .lte("created_at", payload.to)
+    .order("created_at", { ascending: true })
+    .limit(payload.limit);
+
+  if (payload.actor_id) dbQuery = dbQuery.eq("actor_id", payload.actor_id);
+  if (payload.resource_type) dbQuery = dbQuery.eq("resource_type", payload.resource_type);
+  if (payload.resource_id) dbQuery = dbQuery.eq("resource_id", payload.resource_id);
+  if (payload.action) dbQuery = dbQuery.eq("action", payload.action);
+  if (payload.severity) dbQuery = dbQuery.eq("severity", payload.severity);
+  if (payload.request_id_filter) dbQuery = dbQuery.eq("request_id", payload.request_id_filter);
+
+  const { data, error } = await dbQuery;
+  if (error) throw error;
+  return data || [];
 }
 
 function assertPaymentsEnabled() {
@@ -425,6 +562,39 @@ export function registerRoutes(app) {
       return reply.code(503).send({ ok: false, message: "Supabase bağlantısı hazır değil." });
     }
     return { ok: true };
+  });
+
+  app.post("/v1/security/events", async (request, reply) => {
+    const ctx = await requireAuth(request, { action: "security.client_event" });
+    const payload = clientSecurityEventSchema.parse(request.body || {});
+    const location = payload.location_consent ? payload.location || {} : {};
+    const evidenceTags = [
+      "client_event",
+      payload.category,
+      ...payload.evidence_tags
+    ];
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `client.${payload.category}.${payload.action}`.slice(0, 140),
+      resourceType: payload.resource_type || "client_event",
+      resourceId: payload.resource_id || null,
+      severity: payload.severity,
+      source: "client",
+      purpose: "security_fraud_prevention",
+      locationBasis: payload.location_consent ? "explicit_user_permission" : "none",
+      location,
+      evidenceTags,
+      metadata: {
+        page: payload.page || String(request.headers.referer || "").slice(0, 220),
+        location_consent: payload.location_consent,
+        client_metadata: payload.metadata
+      }
+    });
+
+    return reply.code(202).send({ ok: true });
   });
 
   app.post("/v1/orders", async (request, reply) => {
@@ -1171,6 +1341,153 @@ export function registerRoutes(app) {
     };
   });
 
+  app.post("/v1/admin/legal/authority-requests", async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "admin.legal.authority_request.create"
+    });
+    const payload = authorityRequestSchema.parse(request.body || {});
+    const { data, error } = await supabaseAdmin
+      .from("authority_disclosure_requests")
+      .insert({
+        authority_type: payload.authority_type,
+        reference_no: payload.reference_no,
+        requester_name: payload.requester_name || null,
+        requester_title: payload.requester_title || null,
+        contact_channel: payload.contact_channel || null,
+        legal_basis: payload.legal_basis,
+        scope_summary: payload.scope_summary,
+        due_at: payload.due_at || null,
+        opened_by: ctx.user.id,
+        metadata: payload.metadata
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.legal.authority_request_registered",
+      resourceType: "authority_disclosure_request",
+      resourceId: data.id,
+      severity: "warning",
+      source: "admin",
+      purpose: "public_authority_request_management",
+      evidenceTags: ["legal_request", payload.authority_type],
+      metadata: {
+        authority_type: payload.authority_type,
+        reference_no: payload.reference_no,
+        scope_summary: payload.scope_summary
+      }
+    });
+
+    return reply.code(201).send({ ok: true, authorityRequest: data });
+  });
+
+  app.post("/v1/admin/legal/evidence-report", async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "admin.legal.evidence_report.generate"
+    });
+    const payload = evidenceReportSchema.parse(request.body || {});
+    assertEvidenceWindow(payload.from, payload.to);
+
+    if (payload.request_id) {
+      const { data: authorityRequest, error: requestError } = await supabaseAdmin
+        .from("authority_disclosure_requests")
+        .select("id, status")
+        .eq("id", payload.request_id)
+        .maybeSingle();
+      if (requestError) throw requestError;
+      if (!authorityRequest) throw httpError("Resmi makam talep kaydı bulunamadı.", 404);
+    }
+
+    const events = await queryEvidenceEvents(payload);
+    const filters = evidenceFilters(payload);
+    const firstEvent = events[0] || null;
+    const lastEvent = events[events.length - 1] || null;
+    const generatedAt = new Date().toISOString();
+    const exportPayload = {
+      generated_at: generatedAt,
+      generated_by: ctx.user.id,
+      case_reference: payload.case_reference,
+      legal_basis: payload.legal_basis,
+      purpose: payload.purpose,
+      request_id: payload.request_id || null,
+      filters,
+      events
+    };
+    const exportHash = sha256Json(exportPayload);
+
+    const { data: exportRow, error: exportError } = await supabaseAdmin
+      .from("authority_disclosure_exports")
+      .insert({
+        request_id: payload.request_id || null,
+        case_reference: payload.case_reference,
+        legal_basis: payload.legal_basis,
+        purpose: payload.purpose,
+        filters,
+        event_count: events.length,
+        first_event_at: firstEvent?.created_at || null,
+        last_event_at: lastEvent?.created_at || null,
+        first_event_hash: firstEvent?.event_hash || null,
+        last_event_hash: lastEvent?.event_hash || null,
+        export_hash: exportHash,
+        generated_by: ctx.user.id,
+        metadata: {
+          generated_at: generatedAt,
+          request_id: payload.request_id || null
+        }
+      })
+      .select("*")
+      .single();
+    if (exportError) throw exportError;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.legal.evidence_report_generated",
+      resourceType: "authority_disclosure_export",
+      resourceId: exportRow.id,
+      severity: "warning",
+      source: "admin",
+      purpose: "public_authority_disclosure",
+      evidenceTags: ["legal_export", "chain_of_custody"],
+      metadata: {
+        case_reference: payload.case_reference,
+        request_id: payload.request_id || null,
+        event_count: events.length,
+        export_hash: exportHash,
+        filters
+      }
+    });
+
+    return reply.code(201).send({
+      ok: true,
+      report: {
+        ...exportPayload,
+        chain_of_custody: {
+          export_id: exportRow.id,
+          export_hash: exportHash,
+          event_count: events.length,
+          first_event_id: firstEvent?.id || null,
+          last_event_id: lastEvent?.id || null,
+          first_event_hash: firstEvent?.event_hash || null,
+          last_event_hash: lastEvent?.event_hash || null,
+          hash_algorithm: "sha256",
+          note: "event_hash alanları veritabanındaki append-only audit zincirinden gelir; export_hash bu rapor gövdesinin SHA-256 özetidir."
+        }
+      }
+    });
+  });
+
   app.get("/v1/admin/security/audit-events", async (request) => {
     const ctx = await requireAuth(request, {
       roles: ["admin", "super_admin"],
@@ -1181,10 +1498,41 @@ export function registerRoutes(app) {
     const query = auditQuerySchema.parse(request.query || {});
     let dbQuery = supabaseAdmin
       .from("security_audit_events")
-      .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, request_id, metadata, created_at")
+      .select([
+        "id",
+        "actor_id",
+        "actor_role",
+        "action",
+        "resource_type",
+        "resource_id",
+        "severity",
+        "ip_address",
+        "user_agent",
+        "request_id",
+        "source",
+        "purpose",
+        "location_basis",
+        "geo_country",
+        "geo_region",
+        "geo_city",
+        "geo_latitude",
+        "geo_longitude",
+        "geo_accuracy_m",
+        "previous_hash",
+        "event_hash",
+        "evidence_tags",
+        "metadata",
+        "created_at"
+      ].join(", "))
       .order("created_at", { ascending: false })
       .limit(query.limit);
     if (query.severity) dbQuery = dbQuery.eq("severity", query.severity);
+    if (query.actorId) dbQuery = dbQuery.eq("actor_id", query.actorId);
+    if (query.action) dbQuery = dbQuery.eq("action", query.action);
+    if (query.resourceType) dbQuery = dbQuery.eq("resource_type", query.resourceType);
+    if (query.resourceId) dbQuery = dbQuery.eq("resource_id", query.resourceId);
+    if (query.from) dbQuery = dbQuery.gte("created_at", query.from);
+    if (query.to) dbQuery = dbQuery.lte("created_at", query.to);
 
     const { data, error } = await dbQuery;
     if (error) throw error;
@@ -1194,7 +1542,17 @@ export function registerRoutes(app) {
       actorRole: ctx.profile.role,
       action: "admin.security.audit_events_viewed",
       resourceType: "security_audit_events",
-      metadata: { limit: query.limit, severity: query.severity || "all" }
+      evidenceTags: ["admin_review", "audit_view"],
+      metadata: {
+        limit: query.limit,
+        severity: query.severity || "all",
+        actor_id: query.actorId || null,
+        action: query.action || null,
+        resource_type: query.resourceType || null,
+        resource_id: query.resourceId || null,
+        from: query.from || null,
+        to: query.to || null
+      }
     });
     return { ok: true, events: data || [] };
   });

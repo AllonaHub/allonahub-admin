@@ -89,9 +89,13 @@ Admin API:
 ```http
 GET /v1/admin/security/auto-defense
 GET /v1/admin/security/audit-events
+POST /v1/admin/legal/authority-requests
+POST /v1/admin/legal/evidence-report
 ```
 
-İki endpoint de admin/super_admin + MFA + admin host boundary gerektirir.
+Bu endpointler admin/super_admin + MFA + admin host boundary gerektirir.
+
+Legal endpointleri de aynı şekilde admin/super_admin + MFA + admin host boundary gerektirir. Şüpheli işlem, kullanıcı şikayeti veya resmi makam talebi olduğunda önce talep kaydı oluşturulur, sonra tarih/actor/resource/action filtresiyle hash özetli delil raporu üretilir.
 
 ## Saldırı Tiplerine Göre Müdahale
 

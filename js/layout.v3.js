@@ -205,6 +205,15 @@
     }
   }
 
+  function loadComplianceAudit() {
+    if (App.complianceAudit || document.querySelector("script[data-compliance-audit]")) return;
+    const script = document.createElement("script");
+    script.src = core.url("/js/compliance-audit.js?v=20260621-legal1");
+    script.defer = true;
+    script.dataset.complianceAudit = "true";
+    document.head.appendChild(script);
+  }
+
   function setMobileNav(open) {
     const nav = document.querySelector("[data-nav-links]");
     const toggle = document.querySelector("[data-nav-toggle]");
@@ -256,6 +265,7 @@
     if (App.cart) App.cart.updateBadges();
     updateAccountLink();
     updateRemoteFavoriteCount();
+    loadComplianceAudit();
     document.dispatchEvent(new CustomEvent("allona:layout-ready"));
   }
 

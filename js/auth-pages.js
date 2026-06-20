@@ -32,6 +32,17 @@
     if (!user) return;
 
     const returnTo = safeReturnTo(core.getParam("returnTo"));
+    if (App.complianceAudit && session) {
+      await App.complianceAudit.record({
+        category: "account",
+        action: "oauth_session_verified",
+        severity: "info",
+        resourceType: "user",
+        resourceId: user.id,
+        evidenceTags: ["auth", "oauth"],
+        metadata: { return_to: returnTo }
+      });
+    }
     window.location.replace(returnTo);
   }
 
@@ -94,6 +105,18 @@
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("login");
         }
+        if (App.complianceAudit) {
+          const user = await App.auth.getUser();
+          await App.complianceAudit.record({
+            category: "account",
+            action: "login_success",
+            severity: "info",
+            resourceType: "user",
+            resourceId: user && user.id,
+            evidenceTags: ["auth", "login"],
+            metadata: { return_to: safeReturnTo(core.getParam("returnTo")) }
+          });
+        }
         window.location.href = safeReturnTo(core.getParam("returnTo"));
       } catch (error) {
         const message = /Çok fazla|e-posta/i.test(error.message || "") ? error.message : authError(error, "Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
@@ -132,6 +155,18 @@
         await App.auth.signUp(data);
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("signup");
+        }
+        if (App.complianceAudit) {
+          const user = await App.auth.getUser();
+          await App.complianceAudit.record({
+            category: "account",
+            action: "registration_success",
+            severity: "info",
+            resourceType: "user",
+            resourceId: user && user.id,
+            evidenceTags: ["auth", "registration"],
+            metadata: { phone_supplied: Boolean(data.phone) }
+          });
         }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
         window.location.href = safeReturnTo(core.getParam("returnTo"));
