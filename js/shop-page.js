@@ -130,7 +130,7 @@
       title: "Elektronikten ev yaşamına hızlı keşif.",
       subtitle: "Kategori Fırsatları",
       campaign_text: "Güncel stok ve fiyat altyapısı hazır",
-      description: "Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek vitrinde.",
+      description: "Popüler kategoriler, kampanyalar ve güven veren ürün kartları tek katalogda.",
       image_url: "/images/modules/shop.png",
       cta_label: "Kataloğu Aç",
       link_url: "/pages/commerce/shop.html"
@@ -139,7 +139,7 @@
       title: "Yeni gelen ürünleri yakalayın.",
       subtitle: "Teknoloji",
       campaign_text: "Favori, puanlama ve hızlı sepete ekle",
-      description: "Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı vitrin yapısı.",
+      description: "Elektronik, aksesuar ve dijital ürünler için dönüşüm odaklı katalog yapısı.",
       image_url: "/images/modules/teknoloji.png",
       cta_label: "Teknolojiyi İncele",
       link_url: "/pages/commerce/shop.html?category=Teknoloji"
@@ -219,6 +219,16 @@
     node.innerHTML = visibleItems.map(core.productCard).join("");
   }
 
+  function renderProductCount(items) {
+    const node = document.querySelector("[data-product-count]");
+    if (!node) return;
+    const total = products.length;
+    const count = items.length;
+    node.textContent = total === count
+      ? `${count} aktif ürün gösteriliyor.`
+      : `${total} aktif ürün içinde ${count} sonuç gösteriliyor.`;
+  }
+
   function renderCategoryOptions() {
     const select = document.querySelector("[data-filter-category]");
     if (!select) return;
@@ -240,7 +250,9 @@
   }
 
   function renderHomeSections() {
-    renderGrid("[data-products-grid]", applyLocalFilters());
+    const filteredProducts = applyLocalFilters();
+    renderProductCount(filteredProducts);
+    renderGrid("[data-products-grid]", filteredProducts);
     renderGrid("[data-new-grid]", products.slice(0, 4));
     renderGrid("[data-best-grid]", [...products].sort((a, b) => b.sold_count - a.sold_count).slice(0, 4));
     renderGrid("[data-featured-grid]", products.filter((item) => item.stock > 0).slice(0, 4));
@@ -253,7 +265,7 @@
       title: item.name,
       subtitle: item.brand || item.category || "Partner Ürünü",
       campaign_text: item.discount || item.discount_label || `${core.money(item.price)} / hızlı sepet`,
-      description: item.description || "Partner ürününü AllonaShop vitrininde güvenli ödeme ve HP avantajıyla inceleyin.",
+      description: item.description || "Partner ürününü AllonaShop kataloğunda güvenli ödeme ve HP avantajıyla inceleyin.",
       image_url: item.image_url,
       cta_label: "Ürünü İncele",
       link_url: core.productUrl(item),
@@ -267,7 +279,7 @@
       title: ad.title || product?.name || "Partner reklamı",
       subtitle: ad.subtitle || product?.brand || product?.category || "Günlük Partner Reklamı",
       campaign_text: ad.campaign_text || product?.discount || product?.discount_label || "Bugüne özel görünürlük",
-      description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst vitrinde keşfedin.",
+      description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst kataloğunda keşfedin.",
       image_url: ad.image_url || product?.image_url || "/images/modules/allona-shop.png",
       cta_label: ad.cta_label || "İncele",
       link_url: ad.link_url || (product ? core.productUrl(product) : "/pages/commerce/shop.html"),
@@ -291,7 +303,7 @@
       try {
         remoteAds = await withTimeout(App.db?.ads?.shopHero(5) || Promise.resolve([]), 3000);
       } catch (error) {
-        console.warn("Partner günlük reklamları yüklenemedi, ürün/fallback vitrini kullanılacak:", error.message || error);
+        console.warn("Partner günlük reklamları yüklenemedi, ürün/fallback kataloğu kullanılacak:", error.message || error);
       }
     }
 
@@ -337,14 +349,14 @@
       const liveProducts = await withTimeout(App.db?.products?.listActive({ sort: "newest" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500);
       products = liveProducts.length ? liveProducts : fallbackProducts;
       if (!liveProducts.length) {
-        console.warn("Supabase products boş döndü, mağaza vitrin fallback ürünleri gösteriliyor.");
+        console.warn("Supabase products boş döndü, mağaza katalog fallback ürünleri gösteriliyor.");
       }
       renderCategoryOptions();
       syncFiltersFromParams();
       renderHomeSections();
       await refreshHeroAds();
     } catch (error) {
-      console.warn("Supabase products yüklenemedi, mağaza vitrin fallback ürünleri gösteriliyor:", error.message || error);
+      console.warn("Supabase products yüklenemedi, mağaza katalog fallback ürünleri gösteriliyor:", error.message || error);
       products = fallbackProducts;
       renderCategoryOptions();
       syncFiltersFromParams();
@@ -366,6 +378,9 @@
     if (reset) {
       reset.addEventListener("click", () => {
         form.reset();
+        if (window.history && window.location.search) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
         renderHomeSections();
       });
     }

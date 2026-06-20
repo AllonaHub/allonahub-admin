@@ -1437,9 +1437,37 @@ body[data-theme] .pill--deal {
 }
 
 .product-rating {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  border: 1px solid color-mix(in srgb, #f59e0b 34%, transparent);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: color-mix(in srgb, #f59e0b 12%, #ffffff);
   color: #f59e0b;
   font-size: 0.86rem;
   font-weight: 900;
+}
+
+.product-card__signals {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.price-stack {
+  display: grid;
+  gap: 2px;
+}
+
+.compare-price {
+  color: var(--ah-muted, #667782);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-decoration: line-through;
 }
 
 body[data-theme] .price {
