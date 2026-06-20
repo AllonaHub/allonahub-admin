@@ -2,11 +2,18 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="p:domain_verify" content="eb2564672dbda5f870d0ea82ec84a8e6" />
+<meta name="theme-color" content="#061b33">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AllonaHub">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AllonaHub | Yeni Nesil Süper Uygulama</title>
 
-<link rel="stylesheet" href="css/allonahub-home.css?v=20260621-mobile1">
+<link rel="manifest" href="manifest.webmanifest?v=20260621-pwa1">
+<link rel="apple-touch-icon" href="images/brand/allonahub-icon-180.png">
+<link rel="stylesheet" href="css/allonahub-home.css?v=20260621-pwa1">
 <link rel="stylesheet" href="css/platform.css?v=20260621-mobile1">
 </head>
 
@@ -42,6 +49,18 @@
 <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
 </nav>
 </header>
+
+<section class="pwa-install-card" data-pwa-install-card hidden>
+<div class="pwa-install-copy">
+<span>AllonaHub Mobil</span>
+<strong>Ana ekrana ekle</strong>
+<p data-pwa-install-copy>Tek dokunuşla ana ekrana ekle, AllonaHub'u tam ekran uygulama gibi kullan.</p>
+</div>
+<div class="pwa-install-actions">
+<button class="pwa-install-button" type="button" data-pwa-install>Ana Ekrana Ekle</button>
+<button class="pwa-install-dismiss" type="button" data-pwa-dismiss aria-label="Kapat">×</button>
+</div>
+</section>
 
 <section class="premium-hero">
 <div class="hero-time-card">
@@ -221,5 +240,6 @@
 <script src="js/layout.v3.js?v=20260620-account2" defer></script>
 <script src="js/platform.js?v=20260620-brand2" defer></script>
 <script src="js/allonahub-home.js?v=20260620-services2" defer></script>
+<script src="js/pwa-install.js?v=20260621-pwa1" defer></script>
 </body>
 </html>

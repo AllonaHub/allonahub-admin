@@ -26,6 +26,23 @@ nav a{color:white!important;font-size:15px!important;font-weight:700!important}
 nav a:hover{color:#00e5ff!important}
 .login{background:#00d5e8!important;color:white!important;padding:13px 24px!important;border-radius:999px!important;box-shadow:0 0 20px rgba(0,225,255,.35)!important}
 
+.pwa-install-card[hidden]{display:none!important}
+.pwa-install-card{width:calc(100% - 40px);max-width:1720px;margin:14px auto 0;padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(0,213,255,.18),rgba(255,215,0,.10)),rgba(3,13,28,.94);border:1px solid rgba(0,229,255,.34);box-shadow:0 18px 44px rgba(0,0,0,.22),0 0 24px rgba(0,213,255,.15);display:flex;align-items:center;justify-content:space-between;gap:18px}
+.pwa-install-copy{min-width:0;display:grid;gap:4px}
+.pwa-install-copy span{color:#9adfff;font-size:12px;font-weight:900;text-transform:uppercase}
+.pwa-install-copy strong{color:#fff;font-size:21px;line-height:1.15}
+.pwa-install-copy p{color:rgba(255,255,255,.78);font-size:14px;line-height:1.45;margin:0}
+.pwa-install-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.pwa-install-button,.pwa-install-dismiss{border:0;cursor:pointer;font-weight:900;color:white}
+.pwa-install-button{min-height:42px;padding:0 18px;border-radius:999px;background:linear-gradient(135deg,#00e5ff,#0077ff);box-shadow:0 0 18px rgba(0,225,255,.30);white-space:nowrap}
+.pwa-install-dismiss{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.10);font-size:22px;line-height:1}
+.pwa-install-button:focus-visible,.pwa-install-dismiss:focus-visible{outline:2px solid #ffd700;outline-offset:3px}
+html.is-standalone body{min-height:100svh}
+@supports(padding:max(0px)){
+  html.is-standalone .top-mini-nav{margin-top:max(10px,env(safe-area-inset-top))}
+  html.is-standalone body{padding-bottom:max(0px,env(safe-area-inset-bottom))}
+}
+
 .premium-hero{width:100%;max-width:1720px;margin:25px auto 25px;padding:0 20px;display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:22px;align-items:stretch}
 .hero-time-card,.hero-main-card,.hero-reward-card{position:relative;overflow:hidden;border-radius:30px;padding:28px;min-height:220px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 35px rgba(0,229,255,.14),inset 0 0 24px rgba(255,255,255,.04)}
 .hero-main-card{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:330px}
@@ -875,6 +892,50 @@ nav a:hover{color:#00e5ff!important}
   body > header .platform-controls-slot .platform-controls{
     width:auto!important;
     flex-wrap:nowrap!important;
+  }
+
+  .pwa-install-card{
+    width:calc(100% - 24px)!important;
+    margin:10px auto 0!important;
+    padding:12px!important;
+    border-radius:18px!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+
+  .pwa-install-copy{
+    gap:3px!important;
+  }
+
+  .pwa-install-copy span{
+    font-size:11px!important;
+  }
+
+  .pwa-install-copy strong{
+    font-size:20px!important;
+  }
+
+  .pwa-install-copy p{
+    font-size:13px!important;
+    line-height:1.4!important;
+  }
+
+  .pwa-install-actions{
+    width:100%!important;
+    gap:8px!important;
+  }
+
+  .pwa-install-button{
+    flex:1 1 auto!important;
+    min-width:0!important;
+    min-height:40px!important;
+    padding:0 12px!important;
+    font-size:13px!important;
+  }
+
+  .pwa-install-dismiss{
+    flex:0 0 40px!important;
   }
 
   .premium-hero{
