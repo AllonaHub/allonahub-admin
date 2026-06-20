@@ -15,6 +15,7 @@ Platform genelinde ortak footer `/js/layout.v3.js` tarafından üretilir ve sayf
 - Database: PostgreSQL (Supabase)
 - Storage: Supabase Storage
 - Payment: iyzico CheckoutForm
+- Maps: Leaflet + OpenStreetMap
 - Hosting: GitHub, Cloudflare, özel domain
 
 ## Yapı

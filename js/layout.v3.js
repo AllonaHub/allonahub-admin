@@ -55,6 +55,7 @@
           <div class="container nav-row__inner">
             <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
               <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/pages/ecosystem/allonataksi.html")}" ${active("/pages/ecosystem/allonataksi.html")}>Taksi</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
               <a href="${core.url("/pages/commerce/checkout.html")}" ${active("/pages/commerce/checkout.html")}>Ödeme</a>
