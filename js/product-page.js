@@ -53,7 +53,7 @@
       }
     });
 
-    root.addEventListener("click", (event) => {
+    root.addEventListener("click", async (event) => {
       const qtyInput = root.querySelector("[data-product-qty]");
       const qty = Math.max(1, Number(qtyInput.value || 1));
 
@@ -64,7 +64,15 @@
         qtyInput.value = Math.min(Math.max(product.stock, 1), qty + 1);
       }
       if (event.target.closest("[data-detail-add]")) {
-        App.cart.add(product.id, qty);
+        const button = event.target.closest("[data-detail-add]");
+        try {
+          button.disabled = true;
+          await App.cart.add(product.id, qty);
+        } catch (error) {
+          core.toast(error.message || "Ürün sepete eklenemedi.", "error");
+        } finally {
+          button.disabled = product.stock <= 0;
+        }
       }
     });
   }

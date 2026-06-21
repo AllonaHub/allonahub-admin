@@ -162,7 +162,8 @@ curl https://api.allonahub.com/health
 - `GET|POST /v1/payments/iyzico/callback`
 - `POST /v1/cv/checkout`
 - `GET /v1/partner/commission/preview`
-- `POST /v1/hp-wallet/ledger`
+- `POST /v1/rewards/ledger`
+- `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
 
 ## Cron

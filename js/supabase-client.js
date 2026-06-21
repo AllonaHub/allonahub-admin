@@ -220,6 +220,43 @@
     return data;
   }
 
+  function parseRpcPayload(data) {
+    if (typeof data === "string") return JSON.parse(data);
+    return data;
+  }
+
+  async function getActiveCart() {
+    const { data, error } = await client().rpc("get_active_cart");
+    if (error) throw error;
+    return parseRpcPayload(data) || { items: [] };
+  }
+
+  async function addCartItem(productId, quantity) {
+    if (security && !security.isUuid(productId)) throw new Error("Ürün kimliği geçersiz.");
+    const { data, error } = await client().rpc("add_cart_item", {
+      p_product_id: productId,
+      p_quantity: Math.max(1, Math.min(99, Number(quantity || 1)))
+    });
+    if (error) throw error;
+    return parseRpcPayload(data) || { items: [] };
+  }
+
+  async function setCartItemQuantity(productId, quantity) {
+    if (security && !security.isUuid(productId)) throw new Error("Ürün kimliği geçersiz.");
+    const { data, error } = await client().rpc("set_cart_item_quantity", {
+      p_product_id: productId,
+      p_quantity: Math.max(0, Math.min(99, Number(quantity || 0)))
+    });
+    if (error) throw error;
+    return parseRpcPayload(data) || { items: [] };
+  }
+
+  async function clearActiveCart() {
+    const { data, error } = await client().rpc("clear_active_cart");
+    if (error) throw error;
+    return parseRpcPayload(data) || { items: [] };
+  }
+
   async function createOrder(order, items) {
     const lines = (items || [])
       .map((item) => ({
@@ -230,39 +267,18 @@
     if (!lines.length) throw new Error("Sipariş için geçerli ürün bulunamadı.");
 
     try {
-      const { data, error } = await client().rpc("create_secure_order", {
-        p_customer_name: order.customer_name,
-        p_customer_email: order.customer_email,
-        p_customer_phone: order.customer_phone,
-        p_city: order.city,
-        p_address: order.address,
-        p_items: lines,
-        p_coupon_code: order.coupon_code || null
+      const { data, error } = await client().rpc("create_transaction_order", {
+        p_address_id: order.address_id || null,
+        p_coupon_code: order.coupon_code || null,
+        p_hp_to_use: Math.max(0, Math.min(100, Number(order.hp_to_use || 0)))
       });
       if (error) throw error;
-      if (typeof data === "string") return JSON.parse(data);
-      return data;
+      return parseRpcPayload(data);
     } catch (error) {
       if (!missingBackend(error)) throw error;
-      console.warn("Güvenli sipariş RPC henüz aktif değil; RLS korumalı klasik akış kullanılıyor.", error);
+      console.warn("Transaction Core RPC aktif değil; frontend insert kapalı tutuldu.", error);
+      throw new Error("Sipariş altyapısı güncelleniyor. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.");
     }
-
-    const fallbackOrder = { ...order };
-    delete fallbackOrder.coupon_code;
-    const { data: created, error } = await client().from("orders").insert(fallbackOrder).select("*").single();
-    if (error) throw error;
-
-    const rows = items.map((item) => ({
-      order_id: created.id,
-      product_id: item.product.id,
-      product_name: item.product.name,
-      quantity: item.qty,
-      price: item.product.price
-    }));
-
-    const { error: itemError } = await client().from("order_items").insert(rows);
-    if (itemError) throw itemError;
-    return created;
   }
 
   async function invokeIyzicoCheckout(orderId, buyer) {
@@ -291,6 +307,12 @@
       list: listOrders,
       update: updateOrder,
       create: createOrder
+    },
+    cart: {
+      get: getActiveCart,
+      add: addCartItem,
+      setQuantity: setCartItemQuantity,
+      clear: clearActiveCart
     },
     payments: {
       createIyzicoCheckout: invokeIyzicoCheckout

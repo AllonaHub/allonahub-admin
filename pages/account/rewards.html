@@ -3,62 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Profil | AllonaHub</title>
-  <meta name="description" content="AllonaHub profil güncelleme.">
-  <meta http-equiv="refresh" content="0; url=user-panel.html">
+  <title>Kupon Merkezi | AllonaHub</title>
+  <meta name="description" content="AllonaHub HP/XP ve kupon avantajları.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
-  <script>
-    window.location.replace("user-panel.html");
-  </script>
 </head>
 <body>
-  <div class="site-shell">
+  <div class="site-shell" data-page="rewards">
     <div data-layout="header"></div>
     <main class="site-main">
       <section class="container page-heading">
         <div>
           <p class="eyebrow">Hesabım</p>
-          <h1>Profil</h1>
+          <h1>Kupon Merkezi</h1>
+          <p>HP gerçek para bakiyesi değildir; yalnızca indirim, kupon ve kampanya hakkı olarak kullanılabilir.</p>
         </div>
       </section>
       <section class="container account-grid">
         <nav class="side-menu" aria-label="Hesap menüsü">
-          <a href="user-panel.html" aria-current="page">Panel</a>
+          <a href="user-panel.html">Panel</a>
           <a href="addresses.html">Adreslerim</a>
           <a href="orders.html">Siparişlerim</a>
           <a href="favorites.html">Favorilerim</a>
-          <a href="rewards.html">Kupon Merkezi</a>
+          <a href="rewards.html" aria-current="page">Kupon Merkezi</a>
           <button type="button" data-sign-out>Çıkış Yap</button>
         </nav>
-        <form class="panel" data-profile-form>
-          <div data-profile-status></div>
-          <div class="form-grid">
-            <div class="field">
-              <label for="profile-email">E-posta</label>
-              <input id="profile-email" type="email" name="email" disabled>
+        <div>
+          <div data-rewards-status></div>
+          <section class="stats-grid" data-rewards-summary></section>
+          <section class="section">
+            <div class="section-header">
+              <div><p class="eyebrow">Kampanyalar</p><h2>Aktif Kuponlar</h2></div>
+              <a class="btn btn--light" href="../commerce/checkout.html">Checkout</a>
             </div>
-            <div class="field">
-              <label for="profile-role">Rol</label>
-              <input id="profile-role" name="role" readonly>
+            <div class="coupon-grid" data-coupon-center-list></div>
+          </section>
+          <section class="section">
+            <div class="section-header">
+              <div><p class="eyebrow">HP Hareketleri</p><h2>Son İşlemler</h2></div>
             </div>
-            <div class="field">
-              <label for="profile-name">Ad Soyad</label>
-              <input id="profile-name" name="full_name" required autocomplete="name">
-            </div>
-            <div class="field">
-              <label for="profile-phone">Telefon</label>
-              <input id="profile-phone" name="phone" autocomplete="tel">
-            </div>
-          </div>
-          <div class="form-actions">
-            <button class="btn" type="submit">Profili Güncelle</button>
-          </div>
-        </form>
+            <div class="table-wrap" data-hp-ledger-list></div>
+          </section>
+        </div>
       </section>
     </main>
+    <div data-layout="footer"></div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-live5" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
@@ -66,7 +56,7 @@
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
   <script src="../../js/cart.js?v=20260621-tx1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/account-page.v4.js?v=20260621-tx1" defer></script>
+  <script src="../../js/rewards-page.js?v=20260621-tx1" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
 </html>

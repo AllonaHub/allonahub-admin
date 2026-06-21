@@ -39,6 +39,27 @@ function amount(value: unknown) {
   return Number(Number(value || 0).toFixed(2));
 }
 
+function legacyOrderPayload(payload: Record<string, unknown>) {
+  const next = { ...payload };
+  delete next.status;
+  if (next.order_status === "awaiting_payment") next.order_status = "pending";
+  if (next.order_status === "paid") next.order_status = "confirmed";
+  return next;
+}
+
+function shouldRetryLegacyOrderUpdate(error: unknown) {
+  const message = String((error as { message?: string })?.message || error || "");
+  return /status|order_status|schema cache|invalid input value/i.test(message);
+}
+
+async function updateOrder(admin: ReturnType<typeof createClient>, orderId: string, payload: Record<string, unknown>) {
+  const { error } = await admin.from("orders").update(payload).eq("id", orderId);
+  if (!error) return;
+  if (!shouldRetryLegacyOrderUpdate(error)) throw error;
+  const retry = await admin.from("orders").update(legacyOrderPayload(payload)).eq("id", orderId);
+  if (retry.error) throw retry.error;
+}
+
 function splitName(fullName: string) {
   const parts = String(fullName || "Allona Müşteri").trim().split(/\s+/);
   const name = parts.shift() || "Allona";
@@ -194,17 +215,20 @@ Deno.serve(async (req) => {
 
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
-      await admin.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
+      await updateOrder(admin, order.id, {
+        payment_status: "failed",
+        status: "pending",
+        order_status: "pending"
+      });
       console.error("iyzico checkout failed", { orderId: order.id, result });
       return json(req, { error: "Ödeme oturumu başlatılamadı." }, 400);
     }
 
-    await admin
-      .from("orders")
-      .update({
-        payment_status: "awaiting_payment"
-      })
-      .eq("id", order.id);
+    await updateOrder(admin, order.id, {
+      payment_status: "awaiting_payment",
+      status: "awaiting_payment",
+      order_status: "awaiting_payment"
+    });
 
     return json(req, {
       paymentPageUrl: result.paymentPageUrl,

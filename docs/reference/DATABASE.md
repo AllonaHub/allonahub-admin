@@ -43,9 +43,9 @@ Supabase Auth kullanıcılarının halka açık olmayan profil verilerini tutar.
 
 ### addresses
 
-Kullanıcının teslimat ve fatura adresleri.
+Kullanıcının teslimat ve fatura adresleri. MVP Transaction Core modelinde checkout, seçili veya varsayılan adresi `orders.address_id` ile ilişkilendirir ve teslimat özetini ayrıca `orders.address` alanına yazar.
 
-Canlı sitede `Could not find the table 'public.addresses' in the schema cache` hatası görülürse Supabase SQL Editor'da aşağıdaki SQL çalıştırılmalıdır. Frontend bu tablo hazır olana kadar adresleri kullanıcı cihazında geçici olarak saklar; tablo oluşturulduktan sonra kayıtlar Supabase'e kalıcı yazılır.
+Canlı sitede `Could not find the table 'public.addresses' in the schema cache` hatası görülürse Supabase SQL Editor'da `supabase/migrations/20260621015000_transaction_core_mvp.sql` dosyasının tamamı çalıştırılmalıdır. Frontend bu tablo hazır olana kadar adresleri kullanıcı cihazında geçici olarak saklar; tablo oluşturulduktan sonra kayıtlar Supabase'e kalıcı yazılır.
 
 ```sql
 create extension if not exists pgcrypto;
@@ -105,18 +105,37 @@ create policy "addresses_delete_own"
 
 create index if not exists addresses_user_created_idx
   on public.addresses(user_id, created_at desc);
+
+create unique index if not exists addresses_one_default_per_user
+  on public.addresses(user_id)
+  where is_default;
 ```
 
 ### favorites
 
 Giriş yapan kullanıcıların favorileri Supabase'de saklanır. Misafir favorileri tarayıcı localStorage'da geçici tutulur.
 
+### carts / cart_items
+
+Gerçek sepet sistemi. Giriş yapan kullanıcının tek aktif sepeti vardır. Aynı ürün tekrar eklenirse quantity artar; quantity `1` altına düşerse ürün sepetten çıkarılır. Ürün pasifse veya stok yetmiyorsa sepet RPC'si hata verir.
+
+RPC'ler:
+
+- `get_or_create_active_cart()`
+- `get_active_cart()`
+- `add_cart_item(p_product_id uuid, p_quantity integer)`
+- `set_cart_item_quantity(p_product_id uuid, p_quantity integer)`
+- `clear_active_cart()`
+
 ### orders / order_items
 
-Sipariş ve sipariş kalemleri. Mevcut üretim modeli `addresses` tablosuna bağlı checkout kullanmaz; teslimat ve fatura detayları doğrudan sipariş kaydındaki `city` ve `address` alanlarında saklanır. Bu nedenle frontend `orders.address_id` göndermez.
+Sipariş ve sipariş kalemleri Transaction Core RPC ile oluşturulur. Frontend doğrudan `orders.insert` yapmaz; fiyat, stok, kupon, HP ve kargo hesapları server-side doğrulanır. Checkout seçili veya varsayılan adresi `orders.address_id` ile ilişkilendirir ve teslimat özetini `orders.address` alanına da yazar.
 
 - `orders.id`
 - `orders.order_no`
+- `orders.order_number`
+- `orders.user_id`
+- `orders.address_id`
 - `orders.customer_name`
 - `orders.customer_email`
 - `orders.customer_phone`
@@ -126,22 +145,56 @@ Sipariş ve sipariş kalemleri. Mevcut üretim modeli `addresses` tablosuna bağ
 - `orders.shipping`
 - `orders.discount`
 - `orders.total`
-- `order_status`: `pending`, `confirmed`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
-- `payment_status`: `pending`, `awaiting_payment`, `paid`, `failed`, `refunded`
+- `orders.discount_total`
+- `orders.hp_discount`
+- `orders.coupon_discount`
+- `orders.shipping_total`
+- `orders.grand_total`
+- `orders.status`: `pending`, `awaiting_payment`, `paid`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
+- `orders.order_status`: `pending`, `awaiting_payment`, `paid`, `preparing`, `shipped`, `delivered`, `cancelled`, `refunded`
+- `orders.payment_status`: `unpaid`, `pending`, `awaiting_payment`, `paid`, `failed`, `refunded`
+- `orders.fraud_status`: `normal`, `review`, `blocked`
+- `orders.partner_status`: `new`, `preparing`, `shipped`, `delivered`
 - `tracking_number`
+- `cargo_company`
+- `admin_note`
 
 `order_items` temel alanları:
 
 - `id`
 - `order_id`
 - `product_id`
+- `partner_id`
 - `product_name`
 - `quantity`
 - `price`
+- `unit_price`
+- `total_price`
+- `partner_commission_rate`
+- `platform_commission`
+- `partner_net_earning`
 
 ### coupons
 
 Checkout sırasında uygulanacak kampanya kodları.
+
+### HP/XP ve Kupon Merkezi
+
+MVP'de gerçek para cüzdanı yoktur. HP yalnızca indirim hakkı, kupon avantajı ve kampanya hakkı olarak çalışır; nakit çekim ve gerçek para bakiyesi gösterimi kapalıdır.
+
+Tablolar:
+
+- `hp_ledger`
+- `user_rewards`
+- `coupons`
+- `coupon_redemptions`
+
+Kurallar:
+
+- Kupon süresi, kullanım limiti, minimum sepet tutarı ve tekil kullanıcı kullanımı server-side kontrol edilir.
+- HP kullanımı günlük ve sipariş başı limitlidir.
+- Kupon + HP indirimi sipariş toplamını sıfırın altına düşüremez.
+- Nakit çekim MVP'de kapalıdır.
 
 ### CV hak, ödeme ve risk tabloları
 
@@ -163,58 +216,30 @@ Akıllı CV üretiminde kullanıcı formu doldurabilir; kısıtlama sadece CV/PD
 
 ## SQL
 
-Canlı Supabase projesi için checkout ile uyumlu doğrudan adres modeli aşağıdaki SQL'dir. Bu SQL `orders.address_id` eklemez; checkout teslimat bilgisini `orders.city` ve `orders.address` alanlarına yazar.
+Canlı Supabase projesi için Transaction Core MVP'nin exact SQL kaynağı:
+
+```text
+supabase/migrations/20260621015000_transaction_core_mvp.sql
+```
+
+Supabase SQL Editor'da bu dosyanın içeriği eksiksiz çalıştırılmalıdır. Bu migration aşağıdakileri tek seferde hazırlar:
+
+- `addresses` default adres kuralları ve RLS
+- `carts` / `cart_items` tabloları, RLS ve sepet RPC'leri
+- `orders` / `order_items` Transaction Core alanları
+- `create_transaction_order(...)` RPC'si
+- `hp_ledger`, `user_rewards`, `coupon_redemptions`
+- kupon alanları ve RLS
+- partner/admin sipariş görünürlüğü ve sınırlı durum güncelleme güvenliği
+
+Önceki doğrudan `orders.insert` SQL'i kullanılmamalıdır. MVP checkout, yalnızca `create_transaction_order(...)` RPC'siyle sipariş oluşturur.
 
 ```sql
-create extension if not exists pgcrypto;
-
-alter table public.orders
-  add column if not exists order_no text,
-  add column if not exists customer_name text,
-  add column if not exists customer_email text,
-  add column if not exists customer_phone text,
-  add column if not exists city text,
-  add column if not exists address text,
-  add column if not exists subtotal numeric(12,2) default 0,
-  add column if not exists shipping numeric(12,2) default 0,
-  add column if not exists discount numeric(12,2) default 0,
-  add column if not exists total numeric(12,2) default 0,
-  add column if not exists order_status text default 'pending',
-  add column if not exists payment_status text default 'pending',
-  add column if not exists tracking_number text,
-  add column if not exists created_at timestamptz default now();
-
-alter table public.orders
-  alter column order_no set default ('ALN-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))),
-  alter column subtotal set default 0,
-  alter column shipping set default 0,
-  alter column discount set default 0,
-  alter column total set default 0,
-  alter column order_status set default 'pending',
-  alter column payment_status set default 'pending',
-  alter column created_at set default now();
-
-update public.orders
-set order_no = 'ALN-' || to_char(coalesce(created_at, now()), 'YYYYMMDD') || '-' || upper(substr(gen_random_uuid()::text, 1, 8))
-where order_no is null or order_no = '';
-
-create unique index if not exists orders_order_no_key on public.orders(order_no);
-create index if not exists orders_status_idx on public.orders(order_status, payment_status);
-
-alter table public.order_items
-  add column if not exists order_id uuid references public.orders(id) on delete cascade,
-  add column if not exists product_id uuid references public.products(id) on delete set null,
-  add column if not exists product_name text,
-  add column if not exists quantity integer default 1,
-  add column if not exists price numeric(12,2) default 0,
-  add column if not exists created_at timestamptz default now();
-
-alter table public.order_items
-  alter column quantity set default 1,
-  alter column price set default 0,
-  alter column created_at set default now();
-
-create index if not exists order_items_order_idx on public.order_items(order_id);
+-- Supabase SQL Editor:
+-- 1. supabase/migrations/20260621015000_transaction_core_mvp.sql dosyasını aç.
+-- 2. İçeriğin tamamını kopyala.
+-- 3. Tek parça olarak çalıştır.
+-- 4. Ardından Edge Functions secrets ve deploy adımlarını DEPLOY.md üzerinden tamamla.
 ```
 
 Yeni kurulumlar için tam şema `supabase/schema.sql` dosyasındadır. SQL çalıştırıldıktan sonra Auth, Storage ve Edge Function ayarları `docs/reference/DEPLOY.md` sırasıyla tamamlanmalıdır.

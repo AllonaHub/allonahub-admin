@@ -159,8 +159,15 @@ const partnerProfileUpdateSchema = z.object({
 
 const partnerOrderStatusSchema = z.object({
   orderId: uuidSchema,
-  order_status: z.enum(["confirmed", "preparing", "shipped", "delivered", "cancelled"]).optional(),
+  order_status: z.enum(["preparing", "shipped", "delivered"]).optional(),
   tracking_number: z.string().trim().max(120).optional().nullable()
+});
+
+const rewardsLedgerSchema = z.object({
+  userId: uuidSchema.optional(),
+  amount: z.coerce.number().min(-100000).max(100000),
+  reason: z.string().trim().min(2).max(180),
+  reference: z.string().trim().max(120).optional()
 });
 
 const adminListQuerySchema = z.object({
@@ -1666,16 +1673,20 @@ export function registerRoutes(app) {
     const payload = partnerOrderStatusSchema.parse(request.body || {});
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select("id, order_status, tracking_number, order_items(product:products(id, partner_id))")
+      .select("id, order_status, tracking_number, order_items(partner_id, product:products(id, partner_id))")
       .eq("id", payload.orderId)
       .maybeSingle();
     if (orderError) throw orderError;
     if (!order) throw httpError("Sipariş bulunamadı.", 404);
-    const canUpdate = isAdmin(ctx.profile) || (order.order_items || []).some((item) => item.product?.partner_id === ctx.user.id);
+    const canUpdate = isAdmin(ctx.profile) || (order.order_items || []).some((item) => item.partner_id === ctx.user.id || item.product?.partner_id === ctx.user.id);
     if (!canUpdate) throw httpError("Bu siparişi güncelleme yetkiniz yok.", 403);
 
     const updatePayload = {};
-    if (payload.order_status) updatePayload.order_status = payload.order_status;
+    if (payload.order_status) {
+      updatePayload.order_status = payload.order_status;
+      updatePayload.status = payload.order_status;
+      updatePayload.partner_status = payload.order_status;
+    }
     if (Object.prototype.hasOwnProperty.call(payload, "tracking_number")) updatePayload.tracking_number = payload.tracking_number || null;
     const { data: updated, error } = await supabaseAdmin
       .from("orders")
@@ -3181,33 +3192,29 @@ export function registerRoutes(app) {
     return { ok: true, events, warnings };
   });
 
-  app.post("/v1/hp-wallet/ledger", async (request) => {
+  async function recordRewardsLedger(request, legacyAlias = false) {
     const ctx = await requireAuth(request, {
       roles: ["admin", "super_admin"],
       mfa: true,
       adminBoundary: true,
-      action: "hp_wallet.ledger"
+      action: legacyAlias ? "rewards.ledger_legacy_alias" : "rewards.ledger"
     });
-    const body = z.object({
-      userId: uuidSchema.optional(),
-      amount: z.coerce.number().min(-100000).max(100000),
-      reason: z.string().trim().min(2).max(180),
-      reference: z.string().trim().max(120).optional()
-    }).parse(request.body || {});
+    const body = rewardsLedgerSchema.parse(request.body || {});
 
     const targetUserId = body.userId || ctx.user.id;
     const { error } = await supabaseAdmin
       .from("admin_notifications")
       .insert({
         user_id: targetUserId,
-        kind: "hp_wallet_ledger",
+        kind: "rewards_ledger",
         severity: "info",
-        title: "HP Wallet işlem kaydı",
+        title: "HP/Kupon işlem kaydı",
         message: body.reason,
         metadata: {
           amount: body.amount,
           reference: body.reference || "",
-          requested_by: ctx.user.id
+          requested_by: ctx.user.id,
+          legacy_alias: legacyAlias
         }
       });
     if (error) throw error;
@@ -3215,13 +3222,21 @@ export function registerRoutes(app) {
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "hp_wallet.ledger_recorded",
+      action: legacyAlias ? "rewards.ledger_recorded_legacy_alias" : "rewards.ledger_recorded",
       resourceType: "user",
       resourceId: targetUserId,
       severity: "warning",
-      metadata: { amount: body.amount, reference: body.reference || "" }
+      metadata: { amount: body.amount, reference: body.reference || "", legacy_alias: legacyAlias }
     });
     return { ok: true };
+  }
+
+  app.post("/v1/rewards/ledger", async (request) => {
+    return recordRewardsLedger(request, false);
+  });
+
+  app.post("/v1/hp-wallet/ledger", async (request) => {
+    return recordRewardsLedger(request, true);
   });
 
   app.post("/v1/cron/reconcile-payments", async (request) => {

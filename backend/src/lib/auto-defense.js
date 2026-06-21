@@ -6,7 +6,7 @@ const SQLI_PATTERN = /\b(union\s+select|information_schema|pg_sleep|benchmark\s*
 const XSS_PATTERN = /(<script|javascript:|onerror\s*=|onload\s*=|<iframe|data:text\/html)/i;
 const TRAVERSAL_PATTERN = /(\.\.\/|\.\.\\|%2e%2e|%252e%252e|\/etc\/passwd|\\windows\\win\.ini)/i;
 const PROBE_PATTERN = /(\/wp-admin|\/wp-login|\/wordpress|\/xmlrpc\.php|\/phpmyadmin|\/\.env|\/vendor\/phpunit|\/cgi-bin|\/adminer)/i;
-const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|payments|cv|orders|partner|hp-wallet|cron)\b/i;
+const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|payments|cv|orders|partner|rewards|hp-wallet|cron)\b/i;
 const ADMIN_PATH_PATTERN = /^\/v1\/admin\b/i;
 
 const state = {
@@ -80,7 +80,7 @@ function routeLimitFor(pathname) {
   const strict = state.strictModeUntil > now();
   if (ADMIN_PATH_PATTERN.test(pathname)) return strict ? 8 : 16;
   if (/^\/v1\/payments\b/i.test(pathname)) return strict ? 10 : 24;
-  if (/^\/v1\/(orders|cv|partner|hp-wallet)\b/i.test(pathname)) return strict ? 18 : 36;
+  if (/^\/v1\/(orders|cv|partner|rewards|hp-wallet)\b/i.test(pathname)) return strict ? 18 : 36;
   return strict ? 60 : 120;
 }
 

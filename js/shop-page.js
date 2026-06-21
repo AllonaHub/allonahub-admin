@@ -160,7 +160,7 @@
       description: "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.",
       image_url: "/images/modules/wallet.png",
       cta_label: "Kupona Git",
-      link_url: "/pages/wallet/hubwallet.html"
+      link_url: "/pages/account/rewards.html"
     }
   ];
 
