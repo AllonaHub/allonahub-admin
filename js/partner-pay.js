@@ -78,6 +78,9 @@
     button.disabled = true;
     button.textContent = "Ödeme sayfası açılıyor...";
     try {
+      if (App.securityChallenge && App.securityChallenge.enabled()) {
+        payload.turnstileToken = await App.securityChallenge.tokenFor("partner_payment_checkout");
+      }
       const response = await fetch(`${apiBaseUrl()}/v1/public/partner-payment-intents/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

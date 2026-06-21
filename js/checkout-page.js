@@ -85,11 +85,7 @@
       invoice_type: data.invoice_type === "company" ? "company" : "individual",
       tax_office: security ? security.normalizeText(data.tax_office, { max: 90 }) : String(data.tax_office || "").trim(),
       coupon_code: security ? security.normalizeText(data.coupon_code, { max: 40 }).toUpperCase() : String(data.coupon_code || "").trim().toUpperCase(),
-      billing_same: data.billing_same,
-      card_holder: data.card_holder,
-      card_number: data.card_number,
-      card_expiry: data.card_expiry,
-      card_cvc: data.card_cvc
+      billing_same: data.billing_same
     };
     validateCheckoutData(clean);
     const totals = App.cart.totals(lines, appliedCoupon);
@@ -134,34 +130,11 @@
     if (security && !security.isEmail(data.email)) throw new Error("E-posta adresini kontrol edin.");
     if (!data.shipping_city || data.shipping_city.length < 2) throw new Error("İl bilgisini kontrol edin.");
     if (!data.shipping_address || data.shipping_address.length < 10) throw new Error("Teslimat adresini kontrol edin.");
-    const cardError = security ? security.validateCardFields(data) : "";
-    if (cardError) throw new Error(cardError);
-  }
-
-  function formatCardInputs(form) {
-    if (!form.card_number || !form.card_expiry || !form.card_cvc) return;
-
-    form.card_number.addEventListener("input", () => {
-      form.card_number.value = form.card_number.value
-        .replace(/\D/g, "")
-        .slice(0, 16)
-        .replace(/(\d{4})(?=\d)/g, "$1 ");
-    });
-
-    form.card_expiry.addEventListener("input", () => {
-      const value = form.card_expiry.value.replace(/\D/g, "").slice(0, 4);
-      form.card_expiry.value = value.length > 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
-    });
-
-    form.card_cvc.addEventListener("input", () => {
-      form.card_cvc.value = form.card_cvc.value.replace(/\D/g, "").slice(0, 4);
-    });
   }
 
   function bindCheckout() {
     const form = document.querySelector("[data-checkout-form]");
     if (!form) return;
-    formatCardInputs(form);
 
     async function applyCoupon() {
       const code = String(form.coupon_code.value || "").trim().toUpperCase();
@@ -216,6 +189,9 @@
           core.renderStatus("[data-checkout-status]", "Ödeme öncesi yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
           return;
         }
+        const turnstileToken = App.securityChallenge && App.securityChallenge.enabled()
+          ? await App.securityChallenge.tokenFor("order_checkout")
+          : "";
         const orderPayload = calculateOrderPayload(form);
         const order = await App.db.orders.create(orderPayload, lines);
         if (App.complianceAudit) {
@@ -239,7 +215,8 @@
         const buyer = {
           email: form.email.value,
           phone: form.phone.value,
-          ip: "0.0.0.0"
+          ip: "0.0.0.0",
+          turnstileToken
         };
         let payment;
         try {
@@ -265,7 +242,7 @@
         }
         core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
       } catch (error) {
-        const message = /kontrol edin|Sepetinizde|bekleyin|Kart|CVC/i.test(error.message || "")
+        const message = /kontrol edin|Sepetinizde|bekleyin|Robot/i.test(error.message || "")
           ? error.message
           : friendlyCheckoutError(error);
         core.renderStatus("[data-checkout-status]", message, "error");

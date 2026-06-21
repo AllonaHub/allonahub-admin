@@ -244,28 +244,36 @@
       return data;
     } catch (error) {
       if (!missingBackend(error)) throw error;
-      console.warn("Güvenli sipariş RPC henüz aktif değil; RLS korumalı klasik akış kullanılıyor.", error);
+      throw new Error("Güvenli sipariş altyapısı henüz aktif değil. Lütfen Supabase migrationlarını uygulayın.");
     }
-
-    const fallbackOrder = { ...order };
-    delete fallbackOrder.coupon_code;
-    const { data: created, error } = await client().from("orders").insert(fallbackOrder).select("*").single();
-    if (error) throw error;
-
-    const rows = items.map((item) => ({
-      order_id: created.id,
-      product_id: item.product.id,
-      product_name: item.product.name,
-      quantity: item.qty,
-      price: item.product.price
-    }));
-
-    const { error: itemError } = await client().from("order_items").insert(rows);
-    if (itemError) throw itemError;
-    return created;
   }
 
   async function invokeIyzicoCheckout(orderId, buyer) {
+    const configuredApi = String(config.apiBaseUrl || "").replace(/\/$/, "");
+    const apiBaseUrl = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)
+      ? "http://localhost:3000"
+      : configuredApi;
+    if (apiBaseUrl && App.auth && App.auth.getSession) {
+      const session = await App.auth.getSession();
+      if (!session || !session.access_token) throw new Error("Ödeme için oturum doğrulanamadı.");
+      const response = await fetch(`${apiBaseUrl}/v1/payments/iyzico/checkout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          orderId,
+          turnstileToken: buyer && buyer.turnstileToken || ""
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "Ödeme oturumu başlatılamadı.");
+      }
+      return data;
+    }
+
     const { data, error } = await client().functions.invoke(config.iyzicoFunctionName, {
       body: { orderId, buyer }
     });

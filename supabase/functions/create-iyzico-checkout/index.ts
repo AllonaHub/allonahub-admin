@@ -1,6 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const encoder = new TextEncoder();
+const SECRET_ENV_NAMES = new Set([
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "IYZICO_API_KEY",
+  "IYZICO_SECRET_KEY"
+]);
 
 function allowedOrigin(req: Request) {
   const origin = req.headers.get("Origin") || "";
@@ -31,8 +36,26 @@ function json(req: Request, body: unknown, status = 200) {
 
 function env(name: string) {
   const value = Deno.env.get(name);
-  if (!value) throw new Error(`${name} secret is not configured.`);
+  if (!value) {
+    throw new Error(SECRET_ENV_NAMES.has(name) ? "Required server secret is missing" : `${name} is not configured.`);
+  }
   return value;
+}
+
+function safeError(error: unknown) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: "Error", message: "Unknown error" };
+}
+
+function safeIyzicoResult(result: Record<string, unknown>) {
+  return {
+    status: result.status,
+    errorCode: result.errorCode,
+    errorMessage: result.errorMessage,
+    paymentStatus: result.paymentStatus
+  };
 }
 
 function amount(value: unknown) {
@@ -195,14 +218,15 @@ Deno.serve(async (req) => {
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
       await admin.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
-      console.error("iyzico checkout failed", { orderId: order.id, result });
+      console.error("iyzico checkout failed", { orderId: order.id, result: safeIyzicoResult(result) });
       return json(req, { error: "Ödeme oturumu başlatılamadı." }, 400);
     }
 
     await admin
       .from("orders")
       .update({
-        payment_status: "awaiting_payment"
+        payment_status: "awaiting_payment",
+        iyzico_token: result.token || null
       })
       .eq("id", order.id);
 
@@ -211,7 +235,7 @@ Deno.serve(async (req) => {
       token: result.token
     });
   } catch (error) {
-    console.error("create-iyzico-checkout failed", error);
+    console.error("create-iyzico-checkout failed", safeError(error));
     return json(req, { error: "Ödeme işlemi şu anda başlatılamadı." }, 500);
   }
 });

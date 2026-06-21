@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ödeme | AllonaHub</title>
-  <meta name="description" content="AllonaHub teslimat, fatura ve kartlı ödeme hazırlığı.">
+  <meta name="description" content="AllonaHub teslimat, fatura ve iyzico güvenli ödeme yönlendirmesi.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
 </head>
@@ -16,7 +16,7 @@
         <div>
           <p class="eyebrow">Ödeme</p>
           <h1>Güvenli Ödeme</h1>
-          <p>Teslimat, fatura ve kart bilgileri güvenli ödeme akışı için hazırlanır.</p>
+          <p>Teslimat ve fatura bilgileri alınır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.</p>
         </div>
       </section>
 
@@ -85,34 +85,16 @@
               <label for="billing-city">Fatura ili</label>
               <input id="billing-city" name="billing_city">
             </div>
-
-            <div class="payment-card-panel">
+            <div class="payment-card-panel" aria-label="Güvenli ödeme yönlendirmesi">
               <div class="payment-card-panel__head">
-                <strong>Kart Bilgileri</strong>
-                <span>Güvenli ödeme</span>
+                <strong>iyzico Güvenli Ödeme</strong>
+                <span>Kart verisi AllonaHub'a girilmez</span>
               </div>
-              <div class="payment-card-grid">
-                <div class="field field--full">
-                  <label for="card-holder">Kart Üzerindeki İsim</label>
-                  <input id="card-holder" name="card_holder" autocomplete="cc-name" placeholder="Ad Soyad" required>
-                </div>
-                <div class="field field--full">
-                  <label for="card-number">Kart Numarası</label>
-                  <input id="card-number" name="card_number" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
-                </div>
-                <div class="field">
-                  <label for="card-expiry">Son Kullanma Tarihi</label>
-                  <input id="card-expiry" name="card_expiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
-                </div>
-                <div class="field">
-                  <label for="card-cvc">CVC</label>
-                  <input id="card-cvc" name="card_cvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
-                </div>
-              </div>
+              <p class="muted">Sipariş kaydı oluşturulduktan sonra kart bilgileri PCI uyumlu iyzico ödeme ekranında alınır.</p>
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn" type="submit">Ödeme Yap</button>
+            <button class="btn" type="submit">iyzico ile Güvenli Ödemeye Devam Et</button>
             <a class="btn btn--light" href="cart.html">Sepete Dön</a>
             <div class="payment-methods" aria-label="Desteklenen ödeme yöntemleri">
               <span class="payment-methods__title">Kart bilgileriniz AllonaHub üzerinde saklanmaz.</span>
@@ -135,13 +117,14 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="../../js/config.js?v=20260619-live5" defer></script>
+  <script src="../../js/config.js?v=20260621-sec1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260621-sec1" defer></script>
   <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
   <script src="../../js/cart.js?v=20260619-live9" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/checkout-page.js?v=20260619-sec1" defer></script>
+  <script src="../../js/checkout-page.js?v=20260621-sec1" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
 </html>

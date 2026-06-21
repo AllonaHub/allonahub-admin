@@ -146,9 +146,14 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 
 <script>
 function toggleCV(){document.getElementById("cvPanel").classList.toggle("active")}
+function escapeHTML(value){
+return String(value||"").replace(/[&<>"']/g,function(ch){
+return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];
+});
+}
 function generateCV(){
 const p=document.getElementById("profession").value,n=document.getElementById("name").value||"Ad Soyad",c=document.getElementById("city").value||"Şehir",ph=document.getElementById("phone").value||"Telefon",e=document.getElementById("email").value||"E-posta",s=document.getElementById("summary").value||"Kısa profesyonel özet buraya gelecek.",sk=document.getElementById("skills").value||"Yetenekler buraya gelecek.",ex=document.getElementById("experience").value||"İş deneyimi buraya gelecek.",ed=document.getElementById("education").value||"Eğitim ve sertifikalar buraya gelecek.";
-document.getElementById("cvPreview").innerHTML=`<h2>${n}</h2><p>${p} • ${c}</p><p>${ph} • ${e}</p><h3>Profil Özeti</h3><p>${s}</p><h3>Yetenekler</h3><p>${sk}</p><h3>İş Deneyimi</h3><p>${ex}</p><h3>Eğitim ve Sertifikalar</h3><p>${ed}</p>`;
+document.getElementById("cvPreview").innerHTML=`<h2>${escapeHTML(n)}</h2><p>${escapeHTML(p)} • ${escapeHTML(c)}</p><p>${escapeHTML(ph)} • ${escapeHTML(e)}</p><h3>Profil Özeti</h3><p>${escapeHTML(s)}</p><h3>Yetenekler</h3><p>${escapeHTML(sk)}</p><h3>İş Deneyimi</h3><p>${escapeHTML(ex)}</p><h3>Eğitim ve Sertifikalar</h3><p>${escapeHTML(ed)}</p>`;
 }
 function downloadCV(){
 generateCV();

@@ -445,7 +445,7 @@ body.career-cv-page.pdf-capture .cvPage{width:900px!important;min-height:1270px!
         <input id="links" oninput="syncCV(); autoSaveCV();">
         <label for="photoInput">Fotoğraf</label>
         <div class="photoUpload">
-          <input type="file" id="photoInput" accept="image/*">
+          <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp">
           <div class="photoPreview"><img id="photoPreviewImg" alt="CV fotoğraf önizleme"><span id="photoPreviewText">Fotoğraf seç</span></div>
         </div>
       </div>
@@ -887,6 +887,16 @@ function setPhoto(dataUrl){
 }
 function resizePhoto(file){
   return new Promise((resolve, reject) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 2 * 1024 * 1024;
+    if(!allowedTypes.includes(file.type)){
+      reject(new Error("UNSUPPORTED_FILE_TYPE"));
+      return;
+    }
+    if(file.size > maxSize){
+      reject(new Error("FILE_TOO_LARGE"));
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();

@@ -11,8 +11,10 @@ import {
   isSuperAdmin,
   isPartner,
   mfaRequiredForRole,
-  supabaseAdmin
+  supabaseAdmin,
+  supabaseAuth
 } from "../lib/supabase.js";
+import { verifyTurnstileToken } from "../lib/turnstile.js";
 import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
 
 const uuidSchema = z.string().uuid();
@@ -34,19 +36,82 @@ const createOrderSchema = z.object({
 });
 
 const orderCheckoutSchema = z.object({
-  orderId: uuidSchema
+  orderId: uuidSchema,
+  turnstileToken: z.string().trim().max(2048).optional().default("")
 });
 
 const publicPartnerIntentCheckoutSchema = z.object({
   intentId: uuidSchema,
   customer_name: z.string().trim().min(2).max(160),
   customer_email: emailSchema,
-  customer_phone: phoneSchema
+  customer_phone: phoneSchema,
+  turnstileToken: z.string().trim().max(2048).optional().default("")
 });
 
 const cvCheckoutSchema = z.object({
   buyerEmail: emailSchema.optional(),
-  buyerPhone: phoneSchema
+  buyerPhone: phoneSchema,
+  turnstileToken: z.string().trim().max(2048).optional().default("")
+});
+
+const authLoginSchema = z.object({
+  email: emailSchema.transform((value) => value.toLowerCase()),
+  password: z.string().min(1).max(256),
+  turnstileToken: z.string().trim().max(2048).optional().default("")
+});
+
+const authRegisterProfileSchema = z.object({
+  country: z.string().trim().max(90).optional(),
+  sector_key: z.string().trim().max(80).optional(),
+  sector_name: z.string().trim().max(120).optional(),
+  profession_key: z.string().trim().max(100).optional(),
+  profession_name: z.string().trim().max(140).optional(),
+  profession_title: z.string().trim().max(160).optional(),
+  module: z.string().trim().max(80).optional(),
+  greeting: z.string().trim().max(220).optional()
+}).optional().default({});
+
+const authRegisterSchema = z.object({
+  full_name: z.string().trim().min(2).max(120),
+  phone: phoneSchema,
+  email: emailSchema.transform((value) => value.toLowerCase()),
+  password: z.string().min(8).max(256),
+  profile: authRegisterProfileSchema,
+  turnstileToken: z.string().trim().max(2048).optional().default("")
+});
+
+const authForgotPasswordSchema = z.object({
+  email: emailSchema.transform((value) => value.toLowerCase()),
+  turnstileToken: z.string().trim().max(2048).optional().default("")
+});
+
+const authTurnstileSchema = z.object({
+  action: z.enum(["login", "register", "forgot_password", "partner_application", "order_checkout", "partner_payment_checkout", "cv_checkout"]).default("login"),
+  turnstileToken: z.string().trim().max(2048).optional().default("")
+});
+
+const publicPartnerApplicationSchema = z.object({
+  partner_name: z.string().trim().min(2).max(160),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema.transform((value) => value.toLowerCase()),
+  phone: z.string().trim().min(7).max(40),
+  tax_number: z.string().trim().min(3).max(60),
+  tax_office: z.string().trim().max(120).optional().default(""),
+  company_type: z.string().trim().min(2).max(80),
+  website: z.string().trim().max(300).optional().default("").refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return ["http:", "https:"].includes(url.protocol);
+    } catch (error) {
+      return false;
+    }
+  }, "Web sitesi adresi geçersiz."),
+  city: z.string().trim().min(2).max(90),
+  country: z.string().trim().min(2).max(90),
+  category: z.string().trim().min(2).max(120),
+  message: z.string().trim().max(1600).optional().default(""),
+  turnstileToken: z.string().trim().max(2048).optional().default("")
 });
 
 const auditQuerySchema = z.object({
@@ -261,6 +326,14 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
 ];
 
+const routeRateLimit = {
+  login: { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
+  register: { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
+  forgotPassword: { config: { rateLimit: { max: 4, timeWindow: "30 minutes" } } },
+  partnerApplication: { config: { rateLimit: { max: 6, timeWindow: "1 hour" } } },
+  checkout: { config: { rateLimit: { max: 10, timeWindow: "10 minutes" } } }
+};
+
 function clientIp(request) {
   return String(request.headers["cf-connecting-ip"] || request.ip || "0.0.0.0").split(",")[0].trim();
 }
@@ -273,6 +346,40 @@ function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function sha256Text(value) {
+  return createHash("sha256").update(String(value || "")).digest("hex");
+}
+
+function publicAuthUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email || "",
+    created_at: user.created_at || null,
+    updated_at: user.updated_at || null,
+    email_confirmed_at: user.email_confirmed_at || null
+  };
+}
+
+function publicAuthSession(session) {
+  if (!session) return null;
+  return {
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: session.expires_at || null,
+    expires_in: session.expires_in || null,
+    token_type: session.token_type || "bearer",
+    user: publicAuthUser(session.user)
+  };
+}
+
+function publicAuthResponse(data) {
+  return {
+    user: publicAuthUser(data?.user || data?.session?.user),
+    session: publicAuthSession(data?.session)
+  };
 }
 
 function sha256Json(value) {
@@ -428,6 +535,32 @@ async function requireAuth(request, options = {}) {
   }
 
   return ctx;
+}
+
+async function assertHumanChallenge(request, token, action) {
+  const result = await verifyTurnstileToken({
+    token,
+    ip: clientIp(request),
+    action,
+    request
+  });
+
+  if (result.ok) return result;
+
+  await auditEvent({
+    request,
+    action: "turnstile.denied",
+    severity: "warning",
+    source: "security",
+    purpose: "bot_abuse_prevention",
+    evidenceTags: ["turnstile", action],
+    metadata: {
+      challenge_action: action,
+      error: result.error || "TURNSTILE_FAILED"
+    }
+  });
+
+  throw httpError(result.message || "Robot doğrulaması tamamlanamadı.", 403);
 }
 
 async function requireSuperAdmin(request, action) {
@@ -774,10 +907,10 @@ async function initializeIyzicoCheckout({ order, ctx, request }) {
     throw error;
   }
 
-  await supabaseAdmin
-    .from("orders")
-    .update({ payment_status: "awaiting_payment" })
-    .eq("id", order.id);
+  await updateOrderPaymentFields(order.id, {
+    payment_status: "awaiting_payment",
+    iyzico_token: result.token || null
+  });
 
   return {
     paymentPageUrl: result.paymentPageUrl,
@@ -972,6 +1105,61 @@ async function updateOrderPaymentFields(orderId, payload) {
   if (legacyError) throw legacyError;
 }
 
+async function loadOrderPaymentState(orderId) {
+  const { data, error } = await supabaseAdmin
+    .from("orders")
+    .select("id, payment_status, iyzico_token")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+
+  const { data: legacyData, error: legacyError } = await supabaseAdmin
+    .from("orders")
+    .select("id, payment_status")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (legacyError) throw legacyError;
+  return legacyData;
+}
+
+function missingColumn(error, columnName) {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`;
+  return new RegExp(columnName, "i").test(message);
+}
+
+function supabaseServiceKeyStatus() {
+  const key = String(config.supabase.serviceRoleKey || "").trim();
+  if (!key) {
+    return { ok: false, code: "SERVICE_ROLE_KEY_MISSING" };
+  }
+  if (key.startsWith("sb_secret_")) {
+    return { ok: true, type: "secret" };
+  }
+  if (key.startsWith("eyJ")) {
+    const parts = key.split(".").length;
+    if (parts === 3) return { ok: true, type: "jwt" };
+    return { ok: false, code: "SERVICE_ROLE_KEY_INVALID_JWT_SHAPE", jwt_parts: parts };
+  }
+  return { ok: false, code: "SERVICE_ROLE_KEY_UNSUPPORTED_FORMAT" };
+}
+
+function safeSupabaseReadyError(error, status, statusText) {
+  const message = String(error?.message || "");
+  const code = error?.code || (status === 401 ? "SUPABASE_AUTH_FAILED" : "SUPABASE_QUERY_FAILED");
+  return {
+    ok: false,
+    table: "profiles",
+    operation: "head_select_id_count_exact",
+    status: status || error?.status || null,
+    statusText: statusText || null,
+    code,
+    reason: /invalid api key/i.test(message) || status === 401
+      ? "Supabase backend API key doğrulanamadı."
+      : "Supabase readiness sorgusu tamamlanamadı."
+  };
+}
+
 export function registerRoutes(app) {
   app.get("/health", async () => ({
     ok: true,
@@ -980,11 +1168,240 @@ export function registerRoutes(app) {
   }));
 
   app.get("/ready", async (_request, reply) => {
-    const { error } = await supabaseAdmin.from("profiles").select("id", { count: "exact", head: true });
-    if (error) {
-      return reply.code(503).send({ ok: false, message: "Supabase bağlantısı hazır değil." });
+    const keyStatus = supabaseServiceKeyStatus();
+    if (!keyStatus.ok) {
+      return reply.code(503).send({
+        ok: false,
+        message: "Supabase bağlantısı hazır değil.",
+        checks: {
+          supabase: {
+            ok: false,
+            table: "profiles",
+            operation: "head_select_id_count_exact",
+            code: keyStatus.code,
+            jwt_parts: keyStatus.jwt_parts || null
+          }
+        }
+      });
     }
+
+    const { error, status, statusText } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+    if (error) {
+      return reply.code(503).send({
+        ok: false,
+        message: "Supabase bağlantısı hazır değil.",
+        checks: {
+          supabase: safeSupabaseReadyError(error, status, statusText)
+        }
+      });
+    }
+    return {
+      ok: true,
+      checks: {
+        supabase: {
+          ok: true,
+          table: "profiles",
+          operation: "head_select_id_count_exact"
+        }
+      }
+    };
+  });
+
+  app.post("/v1/auth/login", routeRateLimit.login, async (request) => {
+    const payload = authLoginSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "login");
+
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({
+      email: payload.email,
+      password: payload.password
+    });
+
+    if (error || !data?.user) {
+      await auditEvent({
+        request,
+        action: "auth.login_failed",
+        severity: "warning",
+        source: "auth",
+        purpose: "account_access",
+        evidenceTags: ["auth", "login", "rate_limited", "turnstile"],
+        metadata: { email_hash: sha256Text(payload.email), reason: error?.name || "auth_failed" }
+      });
+      throw httpError("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.", 401);
+    }
+
+    await auditEvent({
+      request,
+      actorId: data.user.id,
+      action: "auth.login_success",
+      source: "auth",
+      purpose: "account_access",
+      evidenceTags: ["auth", "login", "turnstile"],
+      metadata: { email_hash: sha256Text(payload.email) }
+    });
+
+    return { ok: true, ...publicAuthResponse(data) };
+  });
+
+  app.post("/v1/auth/turnstile", routeRateLimit.login, async (request) => {
+    const payload = authTurnstileSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, payload.action);
+
+    await auditEvent({
+      request,
+      action: "auth.turnstile_verified",
+      source: "auth",
+      purpose: "bot_abuse_prevention",
+      evidenceTags: ["auth", "turnstile", payload.action],
+      metadata: { challenge_action: payload.action }
+    });
+
     return { ok: true };
+  });
+
+  app.post("/v1/auth/register", routeRateLimit.register, async (request, reply) => {
+    const payload = authRegisterSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "register");
+
+    const { data, error } = await supabaseAuth.auth.signUp({
+      email: payload.email,
+      password: payload.password,
+      options: {
+        data: {
+          full_name: payload.full_name,
+          phone: payload.phone,
+          ...payload.profile
+        }
+      }
+    });
+
+    if (error || !data?.user) {
+      await auditEvent({
+        request,
+        action: "auth.registration_failed",
+        severity: "warning",
+        source: "auth",
+        purpose: "account_registration",
+        evidenceTags: ["auth", "registration", "rate_limited", "turnstile"],
+        metadata: { email_hash: sha256Text(payload.email), reason: error?.name || "registration_failed" }
+      });
+      throw httpError("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.", 400);
+    }
+
+    await auditEvent({
+      request,
+      actorId: data.user.id,
+      action: "auth.registration_success",
+      source: "auth",
+      purpose: "account_registration",
+      evidenceTags: ["auth", "registration", "turnstile"],
+      metadata: { email_hash: sha256Text(payload.email), phone_supplied: Boolean(payload.phone) }
+    });
+
+    return reply.code(201).send({ ok: true, ...publicAuthResponse(data) });
+  });
+
+  app.post("/v1/auth/forgot-password", routeRateLimit.forgotPassword, async (request) => {
+    const payload = authForgotPasswordSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "forgot_password");
+
+    const redirectTo = `${config.siteUrl}/pages/account/reset-password.html`;
+    const { error } = await supabaseAuth.auth.resetPasswordForEmail(payload.email, { redirectTo });
+
+    await auditEvent({
+      request,
+      action: error ? "auth.password_reset_failed" : "auth.password_reset_requested",
+      severity: error ? "warning" : "info",
+      source: "auth",
+      purpose: "account_recovery",
+      evidenceTags: ["auth", "forgot_password", "turnstile"],
+      metadata: { email_hash: sha256Text(payload.email), reason: error?.name || null }
+    });
+
+    if (error) {
+      throw httpError("Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.", 400);
+    }
+
+    return { ok: true };
+  });
+
+  app.post("/v1/public/partner-applications", routeRateLimit.partnerApplication, async (request, reply) => {
+    const payload = publicPartnerApplicationSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "partner_application");
+
+    const { data: canSubmit, error: rateError } = await supabaseAdmin.rpc("can_submit_partner_application", {
+      p_email: payload.email,
+      p_phone: payload.phone
+    });
+    if (rateError && !looksLikeMissingSchema(rateError)) throw rateError;
+
+    if (rateError && looksLikeMissingSchema(rateError)) {
+      const { count, error: fallbackRateError } = await supabaseAdmin
+        .from("partner_applications")
+        .select("id", { count: "exact", head: true })
+        .eq("email", payload.email)
+        .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      if (fallbackRateError) throw fallbackRateError;
+      if (Number(count || 0) >= 2) {
+        throw httpError("Çok sık partner başvurusu gönderildi. Lütfen daha sonra tekrar deneyin.", 429);
+      }
+    } else if (canSubmit !== true) {
+      throw httpError("Çok sık partner başvurusu gönderildi. Lütfen daha sonra tekrar deneyin.", 429);
+    }
+
+    const baseApplication = {
+      company_name: payload.partner_name,
+      contact_name: payload.contact_name,
+      email: payload.email,
+      phone: payload.phone,
+      tax_number: payload.tax_number,
+      status: "pending"
+    };
+    const metadata = {
+      tax_office: payload.tax_office,
+      company_type: payload.company_type,
+      website: payload.website,
+      city: payload.city,
+      country: payload.country,
+      category: payload.category,
+      message: payload.message,
+      source: "public_partner_page"
+    };
+
+    let insert = await supabaseAdmin
+      .from("partner_applications")
+      .insert({ ...baseApplication, metadata })
+      .select("id")
+      .single();
+
+    if (insert.error && looksLikeMissingSchema(insert.error) && missingColumn(insert.error, "metadata")) {
+      insert = await supabaseAdmin
+        .from("partner_applications")
+        .insert(baseApplication)
+        .select("id")
+        .single();
+    }
+    if (insert.error) throw insert.error;
+
+    await auditEvent({
+      request,
+      action: "partner.application_submitted",
+      resourceType: "partner_application",
+      resourceId: insert.data?.id || null,
+      source: "public",
+      purpose: "partner_onboarding",
+      evidenceTags: ["partner_application", "turnstile"],
+      metadata: {
+        city: payload.city,
+        country: payload.country,
+        category: payload.category,
+        company_type: payload.company_type,
+        has_website: Boolean(payload.website)
+      }
+    });
+
+    return reply.code(201).send({ ok: true, applicationId: insert.data?.id || null });
   });
 
   app.post("/v1/security/events", async (request, reply) => {
@@ -1045,10 +1462,11 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, order: data });
   });
 
-  app.post("/v1/payments/iyzico/checkout", async (request) => {
+  app.post("/v1/payments/iyzico/checkout", routeRateLimit.checkout, async (request) => {
     assertPaymentsEnabled();
-    const ctx = await requireAuth(request, { action: "payment.checkout", mfa: true });
     const payload = orderCheckoutSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "order_checkout");
+    const ctx = await requireAuth(request, { action: "payment.checkout", mfa: true });
     const order = await getOrderForPayment(payload.orderId, ctx);
     const checkout = await initializeIyzicoCheckout({ order, ctx, request });
     await auditEvent({
@@ -1063,9 +1481,10 @@ export function registerRoutes(app) {
     return { ok: true, ...checkout };
   });
 
-  app.post("/v1/public/partner-payment-intents/checkout", async (request) => {
+  app.post("/v1/public/partner-payment-intents/checkout", routeRateLimit.checkout, async (request) => {
     assertPaymentsEnabled();
     const payload = publicPartnerIntentCheckoutSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "partner_payment_checkout");
     const { data: intent, error: intentError } = await supabaseAdmin
       .from("partner_payment_intents")
       .select("*, partner:partner_businesses(*)")
@@ -1184,6 +1603,20 @@ export function registerRoutes(app) {
         .maybeSingle();
       if (paymentError) throw paymentError;
       if (!payment) return reply.code(404).send({ ok: false, message: "CV ödeme kaydı bulunamadı." });
+      if (payment.status === "paid") {
+        return redirect(reply, `${config.siteUrl}/pages/career/career-cv-form.html?payment=paid`);
+      }
+      if (payment.iyzico_token && payment.iyzico_token !== token) {
+        await auditEvent({
+          request,
+          action: "payment.callback_token_mismatch",
+          resourceType: "cv_payment",
+          resourceId: cvPaymentId,
+          severity: "critical",
+          metadata: { provider: "iyzico" }
+        });
+        return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
+      }
 
       const { data: updatedPayment, error: updatePaymentError } = await supabaseAdmin
         .from("cv_payments")
@@ -1227,6 +1660,20 @@ export function registerRoutes(app) {
         .maybeSingle();
       if (intentError) throw intentError;
       if (!intent) return reply.code(404).send({ ok: false, message: "Partner ödeme isteği bulunamadı." });
+      if (intent.status === "paid") {
+        return redirect(reply, `${config.siteUrl}/pages/partner/pay.html?intent=${partnerPaymentIntentId}&payment=paid`);
+      }
+      if (intent.provider_reference && intent.provider_reference !== token) {
+        await auditEvent({
+          request,
+          action: "payment.callback_token_mismatch",
+          resourceType: "partner_payment_intent",
+          resourceId: partnerPaymentIntentId,
+          severity: "critical",
+          metadata: { provider: "iyzico" }
+        });
+        return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
+      }
 
       const { data: updatedIntent, error: updateIntentError } = await supabaseAdmin
         .from("partner_payment_intents")
@@ -1270,6 +1717,23 @@ export function registerRoutes(app) {
       return redirect(reply, `${config.siteUrl}/pages/partner/pay.html?intent=${partnerPaymentIntentId}&payment=${paymentStatus}`);
     }
 
+    const orderPaymentState = await loadOrderPaymentState(orderId);
+    if (!orderPaymentState) return reply.code(404).send({ ok: false, message: "Sipariş bulunamadı." });
+    if (orderPaymentState.payment_status === "paid") {
+      return redirect(reply, `${config.siteUrl}/pages/account/orders.html?payment=paid`);
+    }
+    if (orderPaymentState.iyzico_token && orderPaymentState.iyzico_token !== token) {
+      await auditEvent({
+        request,
+        action: "payment.callback_token_mismatch",
+        resourceType: "order",
+        resourceId: orderId,
+        severity: "critical",
+        metadata: { provider: "iyzico" }
+      });
+      return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
+    }
+
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
     await updateOrderPaymentFields(orderId, {
       payment_status: paymentStatus,
@@ -1281,10 +1745,11 @@ export function registerRoutes(app) {
     return redirect(reply, `${config.siteUrl}/pages/account/orders.html?payment=${paymentStatus}`);
   });
 
-  app.post("/v1/cv/checkout", async (request) => {
+  app.post("/v1/cv/checkout", routeRateLimit.checkout, async (request) => {
     assertPaymentsEnabled();
-    const ctx = await requireAuth(request, { action: "cv.checkout", mfa: true });
     const payload = cvCheckoutSchema.parse(request.body || {});
+    await assertHumanChallenge(request, payload.turnstileToken, "cv_checkout");
+    const ctx = await requireAuth(request, { action: "cv.checkout", mfa: true });
 
     const { count: recentCount, error: recentError } = await supabaseAdmin
       .from("cv_payments")

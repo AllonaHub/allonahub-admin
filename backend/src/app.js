@@ -23,10 +23,26 @@ export async function buildApp() {
       level: config.logLevel,
       redact: [
         "req.headers.authorization",
+        "req.headers.x-cron-secret",
         "headers.authorization",
+        "headers.x-cron-secret",
+        "SUPABASE_SECRET_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",
+        "TURNSTILE_SECRET_KEY",
         "IYZICO_SECRET_KEY",
-        "IYZICO_API_KEY"
+        "IYZICO_API_KEY",
+        "CRON_SECRET",
+        "config.supabase.serviceRoleKey",
+        "config.supabase.secretKey",
+        "config.turnstile.secretKey",
+        "config.iyzico.secretKey",
+        "config.iyzico.apiKey",
+        "config.cronSecret",
+        "supabase.serviceRoleKey",
+        "turnstile.secretKey",
+        "iyzico.secretKey",
+        "iyzico.apiKey",
+        "cronSecret"
       ]
     },
     genReqId: requestId,

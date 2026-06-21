@@ -1,6 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const encoder = new TextEncoder();
+const SECRET_ENV_NAMES = new Set([
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "IYZICO_API_KEY",
+  "IYZICO_SECRET_KEY"
+]);
 
 function allowedOrigin(req: Request) {
   const origin = req.headers.get("Origin") || "";
@@ -31,8 +36,17 @@ function response(req: Request, body: string, status = 200, contentType = "text/
 
 function env(name: string) {
   const value = Deno.env.get(name);
-  if (!value) throw new Error(`${name} secret is not configured.`);
+  if (!value) {
+    throw new Error(SECRET_ENV_NAMES.has(name) ? "Required server secret is missing" : `${name} is not configured.`);
+  }
   return value;
+}
+
+function safeError(error: unknown) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: "Error", message: "Unknown error" };
 }
 
 async function hmacSha256Hex(payload: string, secret: string) {
@@ -98,6 +112,40 @@ Deno.serve(async (req) => {
     if (orderId && !/^[0-9a-f-]{36}$/i.test(orderId)) return response(req, "Invalid payment reference", 400);
     if (cvPaymentId && !/^[0-9a-f-]{36}$/i.test(cvPaymentId)) return response(req, "Invalid payment reference", 400);
     if (!token || token.length > 500) return response(req, "Missing token", 400);
+
+    if (cvPaymentId) {
+      const { data: cvPayment, error: cvPaymentError } = await admin
+        .from("cv_payments")
+        .select("id, status, iyzico_token")
+        .eq("id", cvPaymentId)
+        .maybeSingle();
+      if (cvPaymentError) throw cvPaymentError;
+      if (!cvPayment) return response(req, "CV payment not found", 404);
+      if (cvPayment.status === "paid") {
+        const target = `${siteUrl.replace(/\/$/, "")}/pages/career/career-cv-form.html?payment=paid`;
+        return Response.redirect(target, 303);
+      }
+      if (cvPayment.iyzico_token && cvPayment.iyzico_token !== token) {
+        return response(req, "Invalid payment token", 400);
+      }
+    }
+
+    if (orderId) {
+      const { data: order, error: orderError } = await admin
+        .from("orders")
+        .select("id, payment_status, iyzico_token")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (orderError) throw orderError;
+      if (!order) return response(req, "Order not found", 404);
+      if (order.payment_status === "paid") {
+        const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=paid`;
+        return Response.redirect(target, 303);
+      }
+      if (order.iyzico_token && order.iyzico_token !== token) {
+        return response(req, "Invalid payment token", 400);
+      }
+    }
 
     const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
     const payload = {
@@ -193,16 +241,19 @@ Deno.serve(async (req) => {
       .from("orders")
       .update({
         payment_status: paymentStatus,
-        order_status: orderStatus
+        order_status: orderStatus,
+        payment_provider_reference: result.paymentId || token,
+        paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
       })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .neq("payment_status", "paid");
     const { error } = await query;
     if (error) throw error;
 
     const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=${paymentStatus}`;
     return Response.redirect(target, 303);
   } catch (error) {
-    console.error("iyzico-callback failed", error);
+    console.error("iyzico-callback failed", safeError(error));
     return response(req, "Payment callback could not be completed", 500);
   }
 });

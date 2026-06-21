@@ -206,6 +206,33 @@
   async function createCVCheckout(payload) {
     const user = await requireUserForCV();
     if (!user) return null;
+    const configuredApi = String(App.config && App.config.apiBaseUrl || "").replace(/\/$/, "");
+    const apiBaseUrl = /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)
+      ? "http://localhost:3000"
+      : configuredApi;
+
+    if (apiBaseUrl && App.auth && App.auth.getSession) {
+      const session = await App.auth.getSession();
+      if (!session || !session.access_token) throw new Error("CV ödeme için oturum doğrulanamadı.");
+      const response = await fetch(`${apiBaseUrl}/v1/cv/checkout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          buyerEmail: payload && payload.buyerEmail || "",
+          buyerPhone: payload && payload.buyerPhone || "",
+          turnstileToken: payload && payload.turnstileToken || ""
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.message || "CV ödeme oturumu başlatılamadı.");
+      }
+      return data;
+    }
+
     const functionName = App.config.cvCheckoutFunctionName || "create-cv-checkout";
     const { data, error } = await App.db.client().functions.invoke(functionName, {
       body: {

@@ -71,6 +71,10 @@
           if (limit && !limit.allowed) {
             throw new Error(`Çok fazla Google giriş denemesi. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
           }
+          const turnstileToken = App.securityChallenge && App.securityChallenge.enabled()
+            ? await App.securityChallenge.tokenFor("login")
+            : "";
+          await App.auth.verifyHuman("login", turnstileToken);
           await App.auth.signInWithGoogle(returnTo);
         } catch (error) {
           const message = /Çok fazla/i.test(error.message || "")
@@ -94,14 +98,17 @@
       const data = core.parseForm(form);
       button.disabled = true;
       try {
-        const limit = security && security.rateLimit("login", { limit: 8, windowMs: 15 * 60 * 1000 });
+          const limit = security && security.rateLimit("login", { limit: 10, windowMs: 15 * 60 * 1000 });
         if (limit && !limit.allowed) {
           throw new Error(`Çok fazla giriş denemesi. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
         }
         if (security && !security.isEmail(data.email)) {
           throw new Error("Geçerli bir e-posta adresi girin.");
         }
-        await App.auth.signIn(data.email, data.password);
+        const turnstileToken = App.securityChallenge && App.securityChallenge.enabled()
+          ? await App.securityChallenge.tokenFor("login")
+          : "";
+        await App.auth.signIn(data.email, data.password, { turnstileToken });
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("login");
         }
@@ -149,6 +156,9 @@
           if (data.phone && !security.isPhone(data.phone)) throw new Error("Telefon numarasını kontrol edin.");
           if (String(data.password || "").length < 8) throw new Error("Şifre en az 8 karakter olmalıdır.");
         }
+        data.turnstileToken = App.securityChallenge && App.securityChallenge.enabled()
+          ? await App.securityChallenge.tokenFor("register")
+          : "";
         if (App.cvAccess && App.cvAccess.reportSignupAttempt) {
           await App.cvAccess.reportSignupAttempt(data.email, "register_submit");
         }
@@ -195,7 +205,10 @@
         if (security && !security.isEmail(data.email)) {
           throw new Error("Geçerli bir e-posta adresi girin.");
         }
-        await App.auth.resetPassword(data.email);
+        const turnstileToken = App.securityChallenge && App.securityChallenge.enabled()
+          ? await App.securityChallenge.tokenFor("forgot_password")
+          : "";
+        await App.auth.resetPassword(data.email, { turnstileToken });
         core.renderStatus("[data-auth-status]", "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
       } catch (error) {
         const message = /çok fazla|geçerli/i.test(error.message || "") ? error.message : authError(error, "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");

@@ -1,9 +1,31 @@
+const SECRET_ENV_NAMES = new Set([
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "TURNSTILE_SECRET_KEY",
+  "IYZICO_API_KEY",
+  "IYZICO_SECRET_KEY",
+  "CRON_SECRET",
+  "TELEGRAM_BOT_TOKEN",
+  "SECURITY_ALERT_EMAIL_WEBHOOK_SECRET"
+]);
+
 function readEnv(name, options = {}) {
   const value = process.env[name];
   if ((value === undefined || value === "") && options.required !== false) {
+    if (SECRET_ENV_NAMES.has(name)) {
+      throw new Error("Required server secret is missing");
+    }
     throw new Error(`${name} is required`);
   }
   return value || options.defaultValue || "";
+}
+
+function readSecretFallback(primaryName, fallbackName) {
+  const value = process.env[primaryName] || process.env[fallbackName];
+  if (!value) {
+    throw new Error("Required server secret is missing");
+  }
+  return value;
 }
 
 function readNumber(name, defaultValue) {
@@ -26,6 +48,7 @@ function csv(value) {
 }
 
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
+const supabaseServiceKey = readSecretFallback("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 export const config = {
   env: readEnv("NODE_ENV", { required: false, defaultValue: "production" }),
@@ -43,6 +66,12 @@ export const config = {
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),
   paymentsDisabled: readBool("PAYMENTS_DISABLED", false),
   auditEnabled: readBool("AUDIT_LOG_ENABLED", true),
+  turnstile: {
+    siteKey: readEnv("TURNSTILE_SITE_KEY", { required: false, defaultValue: "" }),
+    secretKey: readEnv("TURNSTILE_SECRET_KEY", { required: false, defaultValue: "" }),
+    requiredInProduction: readBool("TURNSTILE_REQUIRED_IN_PRODUCTION", true),
+    bypassInDevelopment: readBool("TURNSTILE_BYPASS_IN_DEVELOPMENT", true)
+  },
   autoDefense: {
     enabled: readBool("AUTO_DEFENSE_ENABLED", true),
     scoreThreshold: readNumber("AUTO_DEFENSE_SCORE_THRESHOLD", 12),
@@ -68,7 +97,7 @@ export const config = {
   supabase: {
     url: readEnv("SUPABASE_URL"),
     anonKey: supabaseAnonKey,
-    serviceRoleKey: readEnv("SUPABASE_SERVICE_ROLE_KEY")
+    serviceRoleKey: supabaseServiceKey
   },
   iyzico: {
     apiKey: readEnv("IYZICO_API_KEY"),

@@ -150,6 +150,7 @@ body{overflow-x:hidden}
 <div id="login" class="form active">
 <div class="input"><input id="loginEmail" placeholder="E-posta"></div>
 <div class="input"><input id="loginPassword" type="password" placeholder="Şifre"></div>
+<div class="security-challenge" data-security-challenge="login"></div>
 <button class="btn" onclick="partnerLogin()">Partner Paneline Giriş</button>
 <button class="btn secondary-btn" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
 </div>
@@ -258,6 +259,7 @@ body{overflow-x:hidden}
 
 <div class="input textarea"><textarea id="message" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
 
+<div class="security-challenge" data-security-challenge="partner_application"></div>
 <div class="form-actions">
 <button class="btn" onclick="sendPartnerApplication()">Başvuruyu Gönder</button>
 <button class="btn secondary-btn" onclick="clearApplyForm()">Tümünü Temizle</button>
@@ -320,6 +322,9 @@ async function partnerLoginWithGoogle(){
   redirectUrl.searchParams.set("partnerOAuth","google");
 
   try{
+    const turnstileToken=await requireSecurityChallenge("login");
+    await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
+
     const { error }=await supabaseClient.auth.signInWithOAuth({
       provider:"google",
       options:{
@@ -440,6 +445,43 @@ function clearPartnerAuth(){
   ].forEach(key=>localStorage.removeItem(key));
 }
 
+function apiBaseUrl(){
+  const app=window.Allona || {};
+  const configured=String(app.config && app.config.apiBaseUrl || "").replace(/\/$/,"");
+  if(/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname))return "http://localhost:3000";
+  return configured || "https://api.allonahub.com";
+}
+
+async function securityChallengeToken(action){
+  if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.enabled()){
+    return window.Allona.securityChallenge.tokenFor(action);
+  }
+  return "";
+}
+
+async function authApi(path,payload){
+  const response=await fetch(apiBaseUrl()+path,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload || {})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok || result.ok===false){
+    throw new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+  }
+  return result;
+}
+
+async function applyBackendSession(session){
+  if(!session || !session.access_token || !session.refresh_token)return null;
+  const {data,error}=await supabaseClient.auth.setSession({
+    access_token:session.access_token,
+    refresh_token:session.refresh_token
+  });
+  if(error)throw new Error("Oturum güvenli şekilde başlatılamadı.");
+  return data.session || null;
+}
+
 async function resolvePartnerRecord(user,email){
   const cleanEmail=normalizePartnerEmail(email || user?.email || "");
   try{
@@ -501,7 +543,7 @@ async function partnerLogin(){
   const email=normalizePartnerEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
 
-  if(!partnerRateLimit("partner-login",8,15*60*1000)){
+  if(!partnerRateLimit("partner-login",10,15*60*1000)){
     showNotice("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
     return;
   }
@@ -521,9 +563,14 @@ async function partnerLogin(){
       await supabaseClient.auth.signOut({scope:"local"});
     }catch(error){}
 
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+    const data=await authApi("/v1/auth/login",{
+      email,
+      password,
+      turnstileToken:await securityChallengeToken("login")
+    });
+    await applyBackendSession(data.session);
 
-    if(error || !data || !data.user){
+    if(!data || !data.user){
       showNotice("Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
       return;
     }
@@ -643,25 +690,33 @@ async function sendPartnerApplication(){
   sendBtn.textContent="Gönderiliyor...";
 
   try{
-    const {error:supabaseError}=await supabaseClient
-      .from("partner_applications")
-      .insert([data]);
-
-    if(supabaseError){
-      console.error("Partner başvurusu kaydedilemedi", supabaseError);
-      showNotice("Başvuru şu anda kaydedilemedi. Lütfen daha sonra tekrar deneyin.");
-      return;
+    if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.enabled()){
+      data.turnstileToken=await window.Allona.securityChallenge.tokenFor("partner_application");
     }
 
-    await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
+    const response=await fetch(`${apiBaseUrl()}/v1/public/partner-applications`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(data)
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok || result.ok===false){
+      throw new Error(result.message || "Başvuru şu anda kaydedilemedi.");
+    }
+
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
+    }catch(mailError){
+      console.warn("Partner başvuru mail bildirimi gönderilemedi", mailError);
+    }
 
     localStorage.setItem("lastPartnerApplication",JSON.stringify(data));
-    showNotice("Başvurunuz alındı. Başvuru kaydedildi ve mail gönderildi.");
+    showNotice("Başvurunuz güvenli şekilde kaydedildi. İnceleme süreci başlatıldı.");
     clearApplyForm(false);
 
   }catch(err){
     console.error("Partner başvurusu gönderilemedi", err);
-    showNotice("Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
+    showNotice(err.message || "Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
   }finally{
     sendBtn.disabled=false;
     sendBtn.textContent="Başvuruyu Gönder";
@@ -710,7 +765,9 @@ document.getElementById("phone").addEventListener("input",function(){
 initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
+  <script src="../../js/config.js?v=20260621-sec1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260621-sec1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>

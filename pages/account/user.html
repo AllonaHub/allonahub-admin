@@ -746,6 +746,7 @@ a{
         <input id="loginPassword" type="password" placeholder="Şifre">
       </div>
 
+      <div class="security-challenge" data-security-challenge="login"></div>
       <button class="btn" onclick="loginUser()">Giriş Yap</button>
       <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
       <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
@@ -809,6 +810,7 @@ a{
 
       <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
 
+      <div class="security-challenge" data-security-challenge="register"></div>
       <button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
       <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Kayıt Ol</button>
       <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Kayıt Ol</button>
@@ -823,6 +825,7 @@ a{
         </div>
       </div>
 
+      <div class="security-challenge" data-security-challenge="forgot_password"></div>
       <button class="btn" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
 
       <p style="margin-top:16px;font-size:13px;color:#6f8094;text-align:center">
@@ -880,6 +883,43 @@ function pageUrl(path){
 
 const SITE_URL=pageUrl("user-panel.html");
 const RESET_URL=pageUrl("reset-password.html");
+
+function apiBaseUrl(){
+  const app=window.Allona || {};
+  const configured=String(app.config && app.config.apiBaseUrl || "").replace(/\/$/,"");
+  if(/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname))return "http://localhost:3000";
+  return configured || "https://api.allonahub.com";
+}
+
+async function securityChallengeToken(action){
+  if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.enabled()){
+    return window.Allona.securityChallenge.tokenFor(action);
+  }
+  return "";
+}
+
+async function authApi(path,payload){
+  const response=await fetch(apiBaseUrl()+path,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload || {})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok || result.ok===false){
+    throw new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+  }
+  return result;
+}
+
+async function applyBackendSession(session){
+  if(!session || !session.access_token || !session.refresh_token)return null;
+  const {data,error}=await supabaseClient.auth.setSession({
+    access_token:session.access_token,
+    refresh_token:session.refresh_token
+  });
+  if(error)throw new Error("Oturum güvenli şekilde başlatılamadı.");
+  return data.session || null;
+}
 
 function normalizeEmail(value){
   return String(value || "").trim().toLowerCase().slice(0,180);
@@ -1418,31 +1458,25 @@ async function registerUser(){
   const greeting=getGreetingPreview(fullName);
 
   try{
-    const { error }=await supabaseClient.auth.signUp({
+    const result=await authApi("/v1/auth/register",{
       email:email,
       password:password,
-      options:{
-        emailRedirectTo:SITE_URL,
-        data:{
-          full_name:fullName,
-          phone:country.c+" "+phone,
-          country:country.n,
-
-          sector_key:selectedProfession.sectorKey,
-          sector_name:selectedProfession.sectorName,
-          profession_key:selectedProfession.key,
-          profession_name:selectedProfession.name,
-          profession_title:selectedProfession.title,
-          module:selectedProfession.module,
-          greeting:greeting
-        }
-      }
+      full_name:fullName,
+      phone:country.c+" "+phone,
+      profile:{
+        country:country.n,
+        sector_key:selectedProfession.sectorKey,
+        sector_name:selectedProfession.sectorName,
+        profession_key:selectedProfession.key,
+        profession_name:selectedProfession.name,
+        profession_title:selectedProfession.title,
+        module:selectedProfession.module,
+        greeting:greeting
+      },
+      turnstileToken:await securityChallengeToken("register")
     });
 
-    if(error){
-      secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
-      return;
-    }
+    await applyBackendSession(result.session);
 
     localStorage.setItem("allonahub_user_profile",JSON.stringify({
       full_name:fullName,
@@ -1466,7 +1500,7 @@ async function registerUser(){
 async function loginUser(){
   const email=normalizeEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
-  const limit=rateLimitAction("login",8,15*60*1000);
+  const limit=rateLimitAction("login",10,15*60*1000);
 
   if(!limit.allowed){
     secureAuthAlert("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
@@ -1484,12 +1518,14 @@ async function loginUser(){
       await supabaseClient.auth.signOut({scope:"local"});
     }catch(error){}
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
+    const data = await authApi("/v1/auth/login",{
+      email:email,
+      password:password,
+      turnstileToken:await securityChallengeToken("login")
     });
+    await applyBackendSession(data.session);
 
-    if(error || !data || !data.user){
+    if(!data || !data.user){
       secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
       return;
     }
@@ -1515,18 +1551,23 @@ async function loginWithGoogle(){
   const redirectUrl=new URL("login.html", window.location.href);
   redirectUrl.searchParams.set("returnTo","user-panel.html");
 
-  const { error }=await supabaseClient.auth.signInWithOAuth({
-    provider:"google",
-    options:{
-      redirectTo:redirectUrl.href,
-      queryParams:{
-        access_type:"offline",
-        prompt:"select_account"
-      }
-    }
-  });
+  try{
+    const turnstileToken=await requireSecurityChallenge("login");
+    await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
 
-  if(error){
+    const { error }=await supabaseClient.auth.signInWithOAuth({
+      provider:"google",
+      options:{
+        redirectTo:redirectUrl.href,
+        queryParams:{
+          access_type:"offline",
+          prompt:"select_account"
+        }
+      }
+    });
+
+    if(error)throw error;
+  }catch(error){
     alert("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
   }
 }
@@ -1546,12 +1587,14 @@ async function resetPassword(){
   }
 
   try{
-    await supabaseClient.auth.resetPasswordForEmail(email,{
-      redirectTo:RESET_URL
+    await authApi("/v1/auth/forgot-password",{
+      email:email,
+      turnstileToken:await securityChallengeToken("forgot_password")
     });
-  }catch(error){}
-
-  alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+    alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+  }catch(error){
+    secureAuthAlert(error.message || "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }
 }
 
 function icloudInfo(){
@@ -1620,7 +1663,9 @@ document.addEventListener("click",function(e){
 });
 </script>
   <div data-layout="footer"></div>
+  <script src="../../js/config.js?v=20260621-sec1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260621-sec1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
