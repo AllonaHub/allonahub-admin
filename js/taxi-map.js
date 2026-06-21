@@ -4,12 +4,125 @@
   const fallbackCenter = [41.0082, 28.9784];
   const updateIntervalMs = 2800;
 
+  const serviceConfig = {
+    ekonomik: { label: "Ekonomik", base: 72, perKm: 21, multiplier: 1, hpRate: 18 },
+    konfor: { label: "Konfor", base: 95, perKm: 27, multiplier: 1.18, hpRate: 16 },
+    vip: { label: "VIP", base: 170, perKm: 42, multiplier: 1.55, hpRate: 12 },
+    aile: { label: "Aile", base: 110, perKm: 29, multiplier: 1.24, hpRate: 15 }
+  };
+
+  const paymentLabels = {
+    "allona-cash": "Allona Cash",
+    card: "Kayıtlı Kart",
+    cash: "Nakit",
+    coupon: "Kupon + Kart"
+  };
+
+  const profileLabels = {
+    personal: "Kişisel",
+    business: "Kurumsal",
+    airport: "Havalimanı"
+  };
+
+  const phaseOrder = ["plan", "option", "match", "route", "complete"];
+
   const drivers = [
-    { id: "AT-104", name: "Ahmet K.", type: "Ekonomik", lat: 41.0146, lng: 28.9767, rating: 4.9, hp: 20 },
-    { id: "AT-218", name: "Mehmet A.", type: "Konfor", lat: 41.0048, lng: 28.9896, rating: 4.8, hp: 25 },
-    { id: "AT-331", name: "Selin T.", type: "Kadın Sürücü", lat: 41.0182, lng: 28.9660, rating: 5.0, hp: 30 },
-    { id: "AT-442", name: "VIP Transfer", type: "VIP", lat: 41.0328, lng: 28.9839, rating: 5.0, hp: 50 },
-    { id: "AT-509", name: "Allona 509", type: "Aile", lat: 40.9987, lng: 28.9728, rating: 4.8, hp: 24 }
+    {
+      id: "AT-104",
+      name: "Ahmet K.",
+      type: "Ekonomik",
+      services: ["ekonomik", "aile"],
+      lat: 41.0146,
+      lng: 28.9767,
+      rating: 4.9,
+      hp: 20,
+      vehicle: "Toyota Corolla Hybrid",
+      plate: "34 AT 104",
+      color: "Beyaz",
+      verified: true,
+      female: false,
+      airportPermit: true
+    },
+    {
+      id: "AT-218",
+      name: "Mehmet A.",
+      type: "Konfor",
+      services: ["konfor", "aile"],
+      lat: 41.0048,
+      lng: 28.9896,
+      rating: 4.8,
+      hp: 25,
+      vehicle: "Skoda Superb",
+      plate: "34 AH 218",
+      color: "Siyah",
+      verified: true,
+      female: false,
+      airportPermit: true
+    },
+    {
+      id: "AT-331",
+      name: "Selin T.",
+      type: "Kadın Sürücü",
+      services: ["ekonomik", "konfor"],
+      lat: 41.0182,
+      lng: 28.9660,
+      rating: 5.0,
+      hp: 30,
+      vehicle: "Hyundai Ioniq",
+      plate: "34 AL 331",
+      color: "Mavi",
+      verified: true,
+      female: true,
+      airportPermit: false
+    },
+    {
+      id: "AT-442",
+      name: "VIP Transfer",
+      type: "VIP",
+      services: ["vip"],
+      lat: 41.0328,
+      lng: 28.9839,
+      rating: 5.0,
+      hp: 50,
+      vehicle: "Mercedes Vito",
+      plate: "34 VIP 442",
+      color: "Siyah",
+      verified: true,
+      female: false,
+      airportPermit: true
+    },
+    {
+      id: "AT-509",
+      name: "Allona 509",
+      type: "Aile",
+      services: ["aile", "konfor"],
+      lat: 40.9987,
+      lng: 28.9728,
+      rating: 4.8,
+      hp: 24,
+      vehicle: "Volkswagen Caddy",
+      plate: "34 AIL 509",
+      color: "Gri",
+      verified: true,
+      female: false,
+      airportPermit: false
+    },
+    {
+      id: "AT-612",
+      name: "Derya M.",
+      type: "Kadın Konfor",
+      services: ["konfor", "vip"],
+      lat: 41.0112,
+      lng: 28.9546,
+      rating: 4.9,
+      hp: 34,
+      vehicle: "BMW iX1",
+      plate: "34 DRY 612",
+      color: "Lacivert",
+      verified: true,
+      female: true,
+      airportPermit: true
+    }
   ];
 
   const state = {
@@ -23,11 +136,29 @@
     destination: null,
     selectedDriverId: "",
     intervalId: null,
-    watchId: null
+    watchId: null,
+    service: "ekonomik",
+    payment: "allona-cash",
+    profile: "personal",
+    reserveMode: "now",
+    reserveTime: "",
+    preferWomanDriver: false,
+    safety: {
+      pin: true,
+      share: true,
+      ridecheck: true
+    },
+    pin: "4826",
+    phase: "plan",
+    lastNotice: ""
   };
 
   function $(selector) {
     return document.querySelector(selector);
+  }
+
+  function $all(selector) {
+    return Array.from(document.querySelectorAll(selector));
   }
 
   function escapeHTML(value) {
@@ -35,17 +166,21 @@
   }
 
   function setText(selector, value) {
-    const node = $(selector);
-    if (node) node.textContent = value;
+    $all(selector).forEach((node) => {
+      node.textContent = value;
+    });
   }
 
   function setInput(selector, value) {
-    const node = $(selector);
-    if (node) node.value = value;
+    $all(selector).forEach((node) => {
+      node.value = value;
+    });
   }
 
   function toast(message, type) {
-    if (core.toast) core.toast(message, type);
+    if (core.toast) {
+      core.toast(message, type);
+    }
   }
 
   function icon(className, label) {
@@ -58,7 +193,9 @@
   }
 
   function driverIcon(driver) {
-    return icon(`taxi-driver-marker${driver.id === state.selectedDriverId ? " is-selected" : ""}`, "T");
+    const isSelected = driver.id === state.selectedDriverId;
+    const label = driver.services.includes("vip") ? "V" : (driver.female ? "K" : "T");
+    return icon(`taxi-driver-marker${isSelected ? " is-selected" : ""}`, label);
   }
 
   function pointIcon(label) {
@@ -86,11 +223,86 @@
 
   function etaFor(driver) {
     const km = distanceKm(driver, state.pickup);
-    return Math.max(2, Math.round(km * 4 + 2));
+    const serviceFactor = state.service === "vip" ? 3 : 2;
+    return Math.max(2, Math.round(km * 4 + serviceFactor));
+  }
+
+  function driveMinutes() {
+    const km = tripDistance();
+    return Math.max(8, Math.round(km * 4.8 + 6));
+  }
+
+  function tripDistance() {
+    if (!state.destination) return 5.8;
+    return Math.max(1.2, distanceKm(state.pickup, state.destination));
+  }
+
+  function normalizedService(value) {
+    return serviceConfig[value] ? value : "ekonomik";
+  }
+
+  function availableDrivers() {
+    let filtered = drivers.filter((driver) => driver.services.includes(state.service));
+    if (state.preferWomanDriver) {
+      filtered = filtered.filter((driver) => driver.female);
+    }
+    if (state.profile === "airport") {
+      filtered = filtered.filter((driver) => driver.airportPermit);
+    }
+    return filtered.length ? filtered : drivers.filter((driver) => driver.services.includes(state.service));
   }
 
   function sortedDrivers() {
-    return [...drivers].sort((a, b) => etaFor(a) - etaFor(b));
+    return [...availableDrivers()].sort((a, b) => etaFor(a) - etaFor(b));
+  }
+
+  function selectedDriver() {
+    return drivers.find((driver) => driver.id === state.selectedDriverId) || sortedDrivers()[0] || null;
+  }
+
+  function estimateFare() {
+    const service = serviceConfig[state.service];
+    const km = tripDistance();
+    const minutes = driveMinutes();
+    const reserveFee = state.reserveMode === "reserve" ? 45 : 0;
+    const airportFee = state.profile === "airport" ? 80 : 0;
+    const profileDiscount = state.profile === "business" ? 0.96 : 1;
+    const couponDiscount = state.payment === "coupon" ? 0.9 : 1;
+    const amount = ((service.base + km * service.perKm + minutes * 2.9 + reserveFee + airportFee) * service.multiplier) * profileDiscount * couponDiscount;
+    const low = Math.max(service.base, Math.round(amount * 0.93));
+    const high = Math.round(amount * 1.08);
+    const hp = Math.max(12, Math.round(high / service.hpRate) + (selectedDriver()?.hp || 0));
+    return { low, high, hp, km, minutes };
+  }
+
+  function money(value) {
+    return `₺${Math.round(value).toLocaleString("tr-TR")}`;
+  }
+
+  function formattedReserveTime() {
+    if (state.reserveMode === "now") return "Şimdi";
+    if (!state.reserveTime) return "Saat seç";
+    const date = new Date(state.reserveTime);
+    if (Number.isNaN(date.getTime())) return "Saat seç";
+    return date.toLocaleString("tr-TR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function toLocalInputValue(date) {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  }
+
+  function safetySummary() {
+    const active = [];
+    if (state.safety.pin) active.push("PIN");
+    if (state.safety.share) active.push("Paylaşım");
+    if (state.safety.ridecheck) active.push("RideCheck");
+    return active.length ? active.join(" + ") : "Standart takip";
   }
 
   function setLiveLabel(message) {
@@ -98,7 +310,94 @@
   }
 
   function setStatus(message) {
+    state.lastNotice = message;
     setText("[data-taxi-map-status]", message);
+    setText("[data-taxi-command-status]", message);
+  }
+
+  function setPhase(phase) {
+    if (!phaseOrder.includes(phase)) return;
+    state.phase = phase;
+    updateTimeline();
+  }
+
+  function updateTimeline() {
+    const activeIndex = phaseOrder.indexOf(state.phase);
+    $all("[data-taxi-phase]").forEach((node) => {
+      const index = phaseOrder.indexOf(node.dataset.taxiPhase);
+      node.classList.toggle("is-active", index === activeIndex);
+      node.classList.toggle("is-complete", index > -1 && index < activeIndex);
+    });
+  }
+
+  function updateControls() {
+    const serviceNode = $("[data-taxi-service]");
+    if (serviceNode && serviceNode.value !== state.service) {
+      serviceNode.value = state.service;
+    }
+
+    $all("[data-taxi-option]").forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.taxiOption === state.service);
+    });
+
+    $all("[data-taxi-reserve-mode]").forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.taxiReserveMode === state.reserveMode);
+    });
+
+    $all("[data-taxi-safety]").forEach((node) => {
+      const key = node.dataset.taxiSafety;
+      if (key && Object.prototype.hasOwnProperty.call(state.safety, key)) {
+        node.classList.toggle("is-active", Boolean(state.safety[key]));
+      }
+    });
+
+    $all("[data-taxi-woman-driver]").forEach((node) => {
+      node.classList.toggle("is-active", state.preferWomanDriver);
+    });
+
+    setText("[data-taxi-payment-summary]", paymentLabels[state.payment] || paymentLabels["allona-cash"]);
+    setText("[data-taxi-reserve-summary]", formattedReserveTime());
+  }
+
+  function updateSummary() {
+    const nearest = sortedDrivers()[0];
+    const fare = estimateFare();
+    const serviceLabel = serviceConfig[state.service].label;
+    const eta = nearest ? etaFor(nearest) : "-";
+    const driverCount = availableDrivers().length;
+    const driver = selectedDriver();
+
+    setText("[data-taxi-map-title]", `Yakında ${driverCount} uygun sürücü`);
+    setText("[data-taxi-fare]", `${money(fare.low)} - ${money(fare.high)}`);
+    setText("[data-taxi-eta]", `${eta} dk`);
+    setText("[data-taxi-distance]", `${fare.km.toFixed(1)} km`);
+    setText("[data-taxi-hp]", `+${fare.hp} HP`);
+    setText("[data-taxi-pin]", state.safety.pin ? state.pin : "Kapalı");
+    setText("[data-taxi-security-summary]", safetySummary());
+
+    if (driver) {
+      setText("[data-taxi-driver-name]", driver.name);
+      setText("[data-taxi-driver-vehicle]", `${driver.vehicle} ${driver.color}`);
+      setText("[data-taxi-driver-plate]", driver.plate);
+      renderDriverProfile(driver, fare, eta);
+    }
+
+    if (!state.lastNotice) {
+      setStatus(`${serviceLabel} yolculuk için ${driver ? driver.name : "uygun sürücü"} öneriliyor. Tahmini geliş ${eta} dk.`);
+    }
+  }
+
+  function renderDriverProfile(driver, fare, eta) {
+    const profile = $("[data-taxi-driver-profile]");
+    if (!profile) return;
+    const verification = driver.verified ? "Doğrulanmış sürücü" : "Doğrulama bekleniyor";
+    const womanPreference = driver.female ? "Kadın sürücü tercihi uygun" : "Standart sürücü";
+    profile.innerHTML = `
+      <small>${escapeHTML(verification)} · ${escapeHTML(womanPreference)}</small>
+      <h3>${escapeHTML(driver.name)} · ${driver.rating.toFixed(1)} puan</h3>
+      <p>${escapeHTML(driver.vehicle)} · ${escapeHTML(driver.color)} · Plaka ${escapeHTML(driver.plate)}</p>
+      <p>PIN: <strong>${escapeHTML(state.safety.pin ? state.pin : "Kapalı")}</strong> · ETA ${escapeHTML(String(eta))} dk · ${escapeHTML(money(fare.low))}-${escapeHTML(money(fare.high))}</p>
+    `;
   }
 
   function setPickup(lat, lng, label) {
@@ -128,12 +427,19 @@
 
     state.destinationMarker.bindPopup("Varış noktası");
     updateRoute();
+    setPhase("option");
+    renderDrivers();
   }
 
   function updateRoute() {
     if (!state.map || !state.pickup || !state.destination) return;
+    const midpoint = {
+      lat: (state.pickup.lat + state.destination.lat) / 2 + 0.007,
+      lng: (state.pickup.lng + state.destination.lng) / 2 - 0.004
+    };
     const points = [
       [state.pickup.lat, state.pickup.lng],
+      [midpoint.lat, midpoint.lng],
       [state.destination.lat, state.destination.lng]
     ];
 
@@ -151,8 +457,18 @@
 
   function renderDrivers() {
     if (!state.map) return;
-    sortedDrivers().forEach((driver) => {
-      const popup = `<strong>${escapeHTML(driver.name)}</strong><br>${escapeHTML(driver.type)} - ${etaFor(driver)} dk`;
+    const visibleDrivers = sortedDrivers();
+    const visibleIds = new Set(visibleDrivers.map((driver) => driver.id));
+
+    state.markers.forEach((marker, driverId) => {
+      if (!visibleIds.has(driverId)) {
+        marker.remove();
+        state.markers.delete(driverId);
+      }
+    });
+
+    visibleDrivers.forEach((driver) => {
+      const popup = `<strong>${escapeHTML(driver.name)}</strong><br>${escapeHTML(driver.type)} · ${escapeHTML(driver.plate)}<br>${etaFor(driver)} dk · ${driver.rating.toFixed(1)} puan`;
       const marker = state.markers.get(driver.id);
 
       if (marker) {
@@ -167,7 +483,12 @@
       }
     });
 
+    if (!visibleIds.has(state.selectedDriverId)) {
+      state.selectedDriverId = visibleDrivers[0]?.id || "";
+    }
+
     renderDriverList();
+    updateControls();
     updateSummary();
   }
 
@@ -175,21 +496,23 @@
     const list = $("[data-taxi-driver-list]");
     if (!list) return;
 
-    list.innerHTML = sortedDrivers().slice(0, 4).map((driver) => `
-      <button class="driver glass${driver.id === state.selectedDriverId ? " is-selected" : ""}" type="button" data-taxi-driver="${escapeHTML(driver.id)}">
-        <div class="driver-img"></div>
-        <b>${escapeHTML(driver.name)}</b>
-        <p>${escapeHTML(driver.type)} - ${etaFor(driver)} dk uzaklıkta</p>
-        <div class="meta"><span>${driver.rating.toFixed(1)} Puan</span><span>+${driver.hp} HP</span></div>
-      </button>
-    `).join("");
-  }
+    list.innerHTML = sortedDrivers().slice(0, 4).map((driver) => {
+      const badges = [
+        driver.verified ? "Doğrulanmış" : "Kontrol",
+        driver.female ? "Kadın sürücü" : serviceConfig[state.service].label,
+        driver.airportPermit ? "Havalimanı" : "Şehir içi"
+      ].join(" · ");
 
-  function updateSummary() {
-    const nearest = sortedDrivers()[0];
-    const eta = nearest ? etaFor(nearest) : "-";
-    setText("[data-taxi-map-title]", `Yakında ${drivers.length} sürücü`);
-    setStatus(`En yakın sürücü: ${nearest ? nearest.name : "-"} - tahmini varış ${eta} dk.`);
+      return `
+        <button class="driver glass${driver.id === state.selectedDriverId ? " is-selected" : ""}" type="button" data-taxi-driver="${escapeHTML(driver.id)}">
+          <div class="driver-img"></div>
+          <b>${escapeHTML(driver.name)}</b>
+          <p>${escapeHTML(driver.vehicle)} · ${escapeHTML(driver.plate)}</p>
+          <p>${escapeHTML(badges)} · ${etaFor(driver)} dk uzaklıkta</p>
+          <div class="meta"><span>${driver.rating.toFixed(1)} Puan</span><span>+${driver.hp} HP</span></div>
+        </button>
+      `;
+    }).join("");
   }
 
   function moveDrivers() {
@@ -205,21 +528,28 @@
   function selectDriver(driverId) {
     state.selectedDriverId = driverId;
     const driver = drivers.find((item) => item.id === driverId);
-    if (!driver) return;
+    if (!driver || !state.map) return;
     state.map.panTo([driver.lat, driver.lng]);
     const marker = state.markers.get(driver.id);
     if (marker) marker.openPopup();
+    setPhase("match");
     renderDrivers();
-    toast(`${driver.name} seçildi. Tahmini geliş ${etaFor(driver)} dk.`);
+    setStatus(`${driver.name} eşleşti. ${driver.plate} plakalı ${driver.vehicle} tahmini ${etaFor(driver)} dk içinde alış noktasında.`);
+    toast(`${driver.name} seçildi. Güvenlik PIN: ${state.safety.pin ? state.pin : "kapalı"}.`, "success");
   }
 
   function findNearestDriver() {
     if (!state.pickup) setPickup(fallbackCenter[0], fallbackCenter[1], "Alış noktası: İstanbul merkez");
     const nearest = sortedDrivers()[0];
-    if (!nearest) return;
+    if (!nearest) {
+      setStatus("Seçilen filtrelere uygun sürücü bulunamadı. Tercihleri güncelleyebilirsin.");
+      return;
+    }
     selectDriver(nearest.id);
-    const service = $("[data-taxi-service]")?.selectedOptions?.[0]?.textContent || "Ekonomik";
-    setStatus(`${nearest.name} ${service} yolculuk için yönlendiriliyor. Tahmini geliş ${etaFor(nearest)} dk.`);
+    setPhase("route");
+    const service = serviceConfig[state.service].label;
+    const reservation = formattedReserveTime();
+    setStatus(`${nearest.name} ${service} yolculuk için yönlendiriliyor. ${reservation} · ${paymentLabels[state.payment]} · ${safetySummary()}.`);
   }
 
   function setUserPosition(lat, lng) {
@@ -274,13 +604,140 @@
     });
   }
 
+  function setService(service) {
+    state.service = normalizedService(service);
+    state.lastNotice = "";
+    setPhase(state.destination ? "option" : "plan");
+    renderDrivers();
+    setStatus(`${serviceConfig[state.service].label} seçildi. Uygun sürücüler, ücret ve ETA yeniden hesaplandı.`);
+  }
+
+  function setReserveMode(mode) {
+    state.reserveMode = mode === "reserve" ? "reserve" : "now";
+    if (state.reserveMode === "reserve" && !state.reserveTime) {
+      const next = new Date(Date.now() + 45 * 60 * 1000);
+      next.setMinutes(Math.ceil(next.getMinutes() / 5) * 5, 0, 0);
+      state.reserveTime = toLocalInputValue(next);
+      setInput("[data-taxi-reserve-time]", state.reserveTime);
+    }
+    state.lastNotice = "";
+    updateControls();
+    updateSummary();
+    setStatus(state.reserveMode === "reserve" ? `Planlı yolculuk aktif: ${formattedReserveTime()}.` : "Anlık yolculuk modu aktif.");
+  }
+
+  function toggleSafety(key) {
+    if (!Object.prototype.hasOwnProperty.call(state.safety, key)) return;
+    state.safety[key] = !state.safety[key];
+    state.lastNotice = "";
+    updateControls();
+    updateSummary();
+    setStatus(`${safetySummary()} güvenlik paketi güncellendi.`);
+  }
+
+  function toggleWomanDriver() {
+    state.preferWomanDriver = !state.preferWomanDriver;
+    state.selectedDriverId = "";
+    state.lastNotice = "";
+    renderDrivers();
+    setStatus(state.preferWomanDriver ? "Kadın sürücü tercihi aktif. Uygun filo filtrelendi." : "Kadın sürücü tercihi kapatıldı. Tüm uygun sürücüler listeleniyor.");
+  }
+
+  function shareText() {
+    const driver = selectedDriver();
+    const fare = estimateFare();
+    const destination = $("[data-taxi-dropoff]")?.value || "Varış seçilmedi";
+    const pickup = $("[data-taxi-pickup]")?.value || "Alış noktası";
+    return [
+      "Allona Taksi yolculuğum",
+      `Alış: ${pickup}`,
+      `Varış: ${destination}`,
+      `Sürücü: ${driver ? `${driver.name} (${driver.plate})` : "Henüz atanmadı"}`,
+      `Araç: ${driver ? driver.vehicle : "-"}`,
+      `ETA: ${driver ? `${etaFor(driver)} dk` : "-"}`,
+      `Ücret: ${money(fare.low)} - ${money(fare.high)}`,
+      `Güvenlik: ${safetySummary()} · PIN ${state.safety.pin ? state.pin : "kapalı"}`
+    ].join("\n");
+  }
+
+  async function shareTrip() {
+    const text = shareText();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Allona Taksi", text });
+        setStatus("Yolculuk paylaşımı gönderildi.");
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        toast("Yolculuk paylaşım metni kopyalandı.", "success");
+        setStatus("Yolculuk paylaşım metni panoya kopyalandı.");
+        return;
+      }
+    } catch (error) {
+      console.warn("Allona Taxi share failed", error);
+    }
+    window.location.href = `mailto:?subject=${encodeURIComponent("Allona Taksi yolculuğum")}&body=${encodeURIComponent(text)}`;
+  }
+
+  function runRideCheck() {
+    setStatus("RideCheck aktif: rota, bekleme süresi ve paylaşım durumu kontrol edildi. Olağan dışı durum yok.");
+    toast("RideCheck kontrolü tamamlandı.", "success");
+  }
+
+  function syncInitialInputs() {
+    const payment = $("[data-taxi-payment]");
+    if (payment) state.payment = payment.value || state.payment;
+    const profile = $("[data-taxi-profile]");
+    if (profile) state.profile = profile.value || state.profile;
+    const reserveTime = $("[data-taxi-reserve-time]");
+    if (reserveTime) {
+      const next = new Date(Date.now() + 30 * 60 * 1000);
+      reserveTime.min = toLocalInputValue(next);
+    }
+  }
+
   function bindEvents() {
     $("[data-taxi-find]")?.addEventListener("click", findNearestDriver);
     $("[data-taxi-locate]")?.addEventListener("click", locateUser);
 
+    $("[data-taxi-service]")?.addEventListener("change", (event) => {
+      setService(event.target.value);
+    });
+
+    $("[data-taxi-payment]")?.addEventListener("change", (event) => {
+      state.payment = event.target.value;
+      state.lastNotice = "";
+      updateControls();
+      updateSummary();
+      setStatus(`${paymentLabels[state.payment] || "Ödeme"} seçildi. Ücret ve kupon etkisi güncellendi.`);
+    });
+
+    $("[data-taxi-profile]")?.addEventListener("change", (event) => {
+      state.profile = event.target.value;
+      state.selectedDriverId = "";
+      state.lastNotice = "";
+      renderDrivers();
+      setStatus(`${profileLabels[state.profile] || "Yolculuk"} profili aktif. Filo ve ücret yeniden hesaplandı.`);
+    });
+
+    $("[data-taxi-reserve-time]")?.addEventListener("change", (event) => {
+      state.reserveTime = event.target.value;
+      state.reserveMode = event.target.value ? "reserve" : state.reserveMode;
+      updateControls();
+      updateSummary();
+      setStatus(`Planlanan saat güncellendi: ${formattedReserveTime()}.`);
+    });
+
     document.addEventListener("click", (event) => {
       const destination = event.target.closest("[data-taxi-destination]");
       const driver = event.target.closest("[data-taxi-driver]");
+      const option = event.target.closest("[data-taxi-option]");
+      const reserveMode = event.target.closest("[data-taxi-reserve-mode]");
+      const safety = event.target.closest("[data-taxi-safety]");
+      const womanDriver = event.target.closest("[data-taxi-woman-driver]");
+      const share = event.target.closest("[data-taxi-share]");
+      const rideCheck = event.target.closest("[data-taxi-sos]");
 
       if (destination) {
         const lat = Number(destination.dataset.lat);
@@ -288,17 +745,41 @@
         const label = destination.dataset.taxiDestination || destination.textContent.trim();
         setDestination(lat, lng, label);
         state.map.panTo([lat, lng]);
-        setStatus(`${label} varış noktası olarak seçildi.`);
+        setStatus(`${label} varış noktası olarak seçildi. Ücret ve ETA canlı hesaplandı.`);
       }
 
       if (driver) {
         selectDriver(driver.dataset.taxiDriver);
       }
+
+      if (option) {
+        setService(option.dataset.taxiOption);
+      }
+
+      if (reserveMode) {
+        setReserveMode(reserveMode.dataset.taxiReserveMode);
+      }
+
+      if (safety) {
+        toggleSafety(safety.dataset.taxiSafety);
+      }
+
+      if (womanDriver) {
+        toggleWomanDriver();
+      }
+
+      if (share) {
+        shareTrip();
+      }
+
+      if (rideCheck) {
+        runRideCheck();
+      }
     });
 
     state.map.on("click", (event) => {
       setPickup(event.latlng.lat, event.latlng.lng, "Alış noktası: Haritadan seçildi");
-      setStatus("Alış noktası haritadan güncellendi.");
+      setStatus("Alış noktası haritadan güncellendi. Sürücü ETA bilgileri yeniden hesaplandı.");
     });
 
     window.addEventListener("beforeunload", () => {
@@ -316,6 +797,7 @@
       return;
     }
 
+    syncInitialInputs();
     state.map = L.map(mapNode, {
       zoomControl: true,
       scrollWheelZoom: true
@@ -328,8 +810,9 @@
 
     L.control.scale({ metric: true, imperial: false }).addTo(state.map);
     setPickup(fallbackCenter[0], fallbackCenter[1], "Alış noktası: İstanbul merkez");
-    renderDrivers();
     bindEvents();
+    renderDrivers();
+    updateTimeline();
     state.intervalId = window.setInterval(moveDrivers, updateIntervalMs);
     setLiveLabel("Canlı harita aktif");
   }
