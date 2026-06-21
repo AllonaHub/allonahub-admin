@@ -1,0 +1,1902 @@
+{
+  "sourceLanguage": "tr",
+  "dirs": {
+    "tr": "ltr",
+    "az": "ltr",
+    "en": "ltr",
+    "de": "ltr",
+    "ru": "ltr",
+    "ar": "rtl"
+  },
+  "keys": {
+    "tr": {
+      "languageLabel": "Dil seçimi"
+    },
+    "az": {
+      "languageLabel": "Dil seçimi"
+    },
+    "en": {
+      "languageLabel": "Language"
+    },
+    "de": {
+      "languageLabel": "Sprache"
+    },
+    "ru": {
+      "languageLabel": "Язык"
+    },
+    "ar": {
+      "languageLabel": "اللغة"
+    }
+  },
+  "phrases": {
+    "Dil seçimi": {
+      "az": "Dil seçimi",
+      "en": "Language selection",
+      "de": "Sprachauswahl",
+      "ru": "Выбор языка",
+      "ar": "اختيار اللغة"
+    },
+    "Tema seçimi": {
+      "az": "Tema seçimi",
+      "en": "Theme selection",
+      "de": "Themenauswahl",
+      "ru": "Выбор темы",
+      "ar": "اختيار المظهر"
+    },
+    "Deniz": {
+      "az": "Dəniz",
+      "en": "Ocean",
+      "de": "Ozean",
+      "ru": "Океан",
+      "ar": "المحيط"
+    },
+    "Gün Batımı": {
+      "az": "Gün batımı",
+      "en": "Sunset",
+      "de": "Sonnenuntergang",
+      "ru": "Закат",
+      "ar": "الغروب"
+    },
+    "Yeşil": {
+      "az": "Yaşıl",
+      "en": "Green",
+      "de": "Grün",
+      "ru": "Зеленый",
+      "ar": "أخضر"
+    },
+    "Turkuaz": {
+      "az": "Firuzəyi",
+      "en": "Turquoise",
+      "de": "Türkis",
+      "ru": "Бирюзовый",
+      "ar": "فيروزي"
+    },
+    "Beyaz": {
+      "az": "Ağ",
+      "en": "White",
+      "de": "Weiß",
+      "ru": "Белый",
+      "ar": "أبيض"
+    },
+    "AllonaHub güvenli alışveriş ve hizmet ekosistemi": {
+      "az": "AllonaHub təhlükəsiz alış-veriş və xidmət ekosistemi",
+      "en": "AllonaHub secure shopping and services ecosystem",
+      "de": "AllonaHub Ökosystem für sicheres Einkaufen und Services",
+      "ru": "AllonaHub: безопасная экосистема покупок и услуг",
+      "ar": "AllonaHub منظومة آمنة للتسوق والخدمات"
+    },
+    "Üst bağlantılar": {
+      "az": "Üst bağlantılar",
+      "en": "Top links",
+      "de": "Obere Links",
+      "ru": "Верхние ссылки",
+      "ar": "الروابط العلوية"
+    },
+    "Ana menü": {
+      "az": "Əsas menyu",
+      "en": "Main menu",
+      "de": "Hauptmenü",
+      "ru": "Главное меню",
+      "ar": "القائمة الرئيسية"
+    },
+    "Menüyü aç": {
+      "az": "Menyunu aç",
+      "en": "Open menu",
+      "de": "Menü öffnen",
+      "ru": "Открыть меню",
+      "ar": "فتح القائمة"
+    },
+    "Menüyü kapat": {
+      "az": "Menyunu bağla",
+      "en": "Close menu",
+      "de": "Menü schließen",
+      "ru": "Закрыть меню",
+      "ar": "إغلاق القائمة"
+    },
+    "AllonaHub ana sayfa": {
+      "az": "AllonaHub ana səhifə",
+      "en": "AllonaHub home page",
+      "de": "AllonaHub Startseite",
+      "ru": "Главная страница AllonaHub",
+      "ar": "الصفحة الرئيسية لـ AllonaHub"
+    },
+    "Ürün, kategori, hizmet veya marka ara": {
+      "az": "Məhsul, kateqoriya, xidmət və ya brend axtar",
+      "en": "Search products, categories, services, or brands",
+      "de": "Produkte, Kategorien, Services oder Marken suchen",
+      "ru": "Поиск товаров, категорий, услуг или брендов",
+      "ar": "ابحث عن منتجات أو فئات أو خدمات أو علامات تجارية"
+    },
+    "Aradığınız hizmet, kategori veya özelliği yazın...": {
+      "az": "Axtardığınız xidmət, kateqoriya və ya xüsusiyyəti yazın...",
+      "en": "Type the service, category, or feature you are looking for...",
+      "de": "Geben Sie den gesuchten Service, die Kategorie oder Funktion ein...",
+      "ru": "Введите нужную услугу, категорию или функцию...",
+      "ar": "اكتب الخدمة أو الفئة أو الميزة التي تبحث عنها..."
+    },
+    "Ara": {
+      "az": "Axtar",
+      "en": "Search",
+      "de": "Suchen",
+      "ru": "Поиск",
+      "ar": "بحث"
+    },
+    "Giriş Yap": {
+      "az": "Daxil ol",
+      "en": "Sign In",
+      "de": "Einloggen",
+      "ru": "Войти",
+      "ar": "تسجيل الدخول"
+    },
+    "Hesabım": {
+      "az": "Hesabım",
+      "en": "My Account",
+      "de": "Mein Konto",
+      "ru": "Мой аккаунт",
+      "ar": "حسابي"
+    },
+    "Bildirimler": {
+      "az": "Bildirişlər",
+      "en": "Notifications",
+      "de": "Benachrichtigungen",
+      "ru": "Уведомления",
+      "ar": "الإشعارات"
+    },
+    "Siparişlerim": {
+      "az": "Sifarişlərim",
+      "en": "My Orders",
+      "de": "Meine Bestellungen",
+      "ru": "Мои заказы",
+      "ar": "طلباتي"
+    },
+    "Adreslerim": {
+      "az": "Ünvanlarım",
+      "en": "My Addresses",
+      "de": "Meine Adressen",
+      "ru": "Мои адреса",
+      "ar": "عناويني"
+    },
+    "Favorilerim": {
+      "az": "Sevimlilərim",
+      "en": "My Favorites",
+      "de": "Meine Favoriten",
+      "ru": "Избранное",
+      "ar": "المفضلة"
+    },
+    "Sepet": {
+      "az": "Səbət",
+      "en": "Cart",
+      "de": "Warenkorb",
+      "ru": "Корзина",
+      "ar": "السلة"
+    },
+    "Sepetim": {
+      "az": "Səbətim",
+      "en": "My Cart",
+      "de": "Mein Warenkorb",
+      "ru": "Моя корзина",
+      "ar": "سلتي"
+    },
+    "Ödeme": {
+      "az": "Ödəniş",
+      "en": "Payment",
+      "de": "Zahlung",
+      "ru": "Оплата",
+      "ar": "الدفع"
+    },
+    "Güvenli Ödeme": {
+      "az": "Təhlükəsiz ödəniş",
+      "en": "Secure Payment",
+      "de": "Sichere Zahlung",
+      "ru": "Безопасная оплата",
+      "ar": "دفع آمن"
+    },
+    "Ürünler": {
+      "az": "Məhsullar",
+      "en": "Products",
+      "de": "Produkte",
+      "ru": "Товары",
+      "ar": "المنتجات"
+    },
+    "Mağaza": {
+      "az": "Mağaza",
+      "en": "Store",
+      "de": "Shop",
+      "ru": "Магазин",
+      "ar": "المتجر"
+    },
+    "Kupon": {
+      "az": "Kupon",
+      "en": "Coupon",
+      "de": "Gutschein",
+      "ru": "Купон",
+      "ar": "كوبون"
+    },
+    "Kuponlar": {
+      "az": "Kuponlar",
+      "en": "Coupons",
+      "de": "Gutscheine",
+      "ru": "Купоны",
+      "ar": "الكوبونات"
+    },
+    "Kupon Merkezi": {
+      "az": "Kupon Mərkəzi",
+      "en": "Coupon Center",
+      "de": "Gutscheinzentrum",
+      "ru": "Центр купонов",
+      "ar": "مركز الكوبونات"
+    },
+    "HP gerçek para bakiyesi değildir; yalnızca indirim, kupon ve kampanya hakkı olarak kullanılabilir.": {
+      "az": "HP real pul balansı deyil; yalnız endirim, kupon və kampaniya haqqı kimi istifadə oluna bilər.",
+      "en": "HP is not a real-money balance; it can only be used for discounts, coupons, and campaign benefits.",
+      "de": "HP ist kein Echtgeldguthaben; es kann nur für Rabatte, Gutscheine und Kampagnenvorteile genutzt werden.",
+      "ru": "HP не является денежным балансом; его можно использовать только для скидок, купонов и акционных преимуществ.",
+      "ar": "HP ليس رصيداً نقدياً حقيقياً؛ يمكن استخدامه فقط للخصومات والكوبونات ومزايا الحملات."
+    },
+    "Kampanyalar": {
+      "az": "Kampaniyalar",
+      "en": "Campaigns",
+      "de": "Kampagnen",
+      "ru": "Акции",
+      "ar": "الحملات"
+    },
+    "Aktif Kuponlar": {
+      "az": "Aktiv kuponlar",
+      "en": "Active Coupons",
+      "de": "Aktive Gutscheine",
+      "ru": "Активные купоны",
+      "ar": "الكوبونات النشطة"
+    },
+    "HP Hareketleri": {
+      "az": "HP əməliyyatları",
+      "en": "HP Activity",
+      "de": "HP-Bewegungen",
+      "ru": "Операции HP",
+      "ar": "حركات HP"
+    },
+    "Son İşlemler": {
+      "az": "Son əməliyyatlar",
+      "en": "Recent Activity",
+      "de": "Letzte Aktivitäten",
+      "ru": "Последние операции",
+      "ar": "آخر العمليات"
+    },
+    "Adetleri güncelleyin, toplamı kontrol edin ve checkout adımına geçin.": {
+      "az": "Miqdarları yeniləyin, cəmi yoxlayın və checkout addımına keçin.",
+      "en": "Update quantities, review the total, and continue to checkout.",
+      "de": "Aktualisieren Sie die Mengen, prüfen Sie die Summe und fahren Sie mit dem Checkout fort.",
+      "ru": "Обновите количество, проверьте итог и перейдите к оформлению заказа.",
+      "ar": "حدّث الكميات، راجع الإجمالي، ثم انتقل إلى إتمام الطلب."
+    },
+    "Teslimat, fatura ve yasal onaylar tamamlanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.": {
+      "az": "Çatdırılma, faktura və hüquqi təsdiqlər tamamlanır; kart məlumatları yalnız iyzico təhlükəsiz ödəniş ekranında daxil edilir.",
+      "en": "Delivery, invoice, and legal approvals are completed here; card details are entered only on iyzico's secure payment screen.",
+      "de": "Lieferung, Rechnung und rechtliche Bestätigungen werden hier abgeschlossen; Kartendaten werden nur auf der sicheren iyzico-Zahlungsseite eingegeben.",
+      "ru": "Доставка, счет и юридические подтверждения оформляются здесь; данные карты вводятся только на защищенной странице оплаты iyzico.",
+      "ar": "يتم إكمال التسليم والفاتورة والموافقات القانونية هنا؛ وتُدخل بيانات البطاقة فقط في شاشة الدفع الآمنة من iyzico."
+    },
+    "Ön Bilgilendirme Formu": {
+      "az": "İlkin məlumat formu",
+      "en": "Preliminary Information Form",
+      "de": "Vorab-Informationsformular",
+      "ru": "Форма предварительной информации",
+      "ar": "نموذج المعلومات الأولية"
+    },
+    "Mesafeli Satış Sözleşmesi": {
+      "az": "Məsafəli satış müqaviləsi",
+      "en": "Distance Sales Agreement",
+      "de": "Fernabsatzvertrag",
+      "ru": "Договор дистанционной продажи",
+      "ar": "عقد البيع عن بُعد"
+    },
+    "Ön Bilgilendirme Formu'nu okudum ve onaylıyorum.": {
+      "az": "İlkin məlumat formasını oxudum və təsdiqləyirəm.",
+      "en": "I have read and approve the Preliminary Information Form.",
+      "de": "Ich habe das Vorab-Informationsformular gelesen und bestätige es.",
+      "ru": "Я прочитал(а) и подтверждаю форму предварительной информации.",
+      "ar": "قرأت نموذج المعلومات الأولية وأوافق عليه."
+    },
+    "Mesafeli Satış Sözleşmesi'ni okudum ve onaylıyorum.": {
+      "az": "Məsafəli satış müqaviləsini oxudum və təsdiqləyirəm.",
+      "en": "I have read and approve the Distance Sales Agreement.",
+      "de": "Ich habe den Fernabsatzvertrag gelesen und bestätige ihn.",
+      "ru": "Я прочитал(а) и подтверждаю договор дистанционной продажи.",
+      "ar": "قرأت عقد البيع عن بُعد وأوافق عليه."
+    },
+    "Kart bilgileri yalnızca iyzico ödeme sayfasında girilir.": {
+      "az": "Kart məlumatları yalnız iyzico ödəniş səhifəsində daxil edilir.",
+      "en": "Card details are entered only on the iyzico payment page.",
+      "de": "Kartendaten werden nur auf der iyzico-Zahlungsseite eingegeben.",
+      "ru": "Данные карты вводятся только на странице оплаты iyzico.",
+      "ar": "تُدخل بيانات البطاقة فقط في صفحة الدفع الخاصة بـ iyzico."
+    },
+    "Ödeme sonucu iyzico token dönüşüyle doğrulanır.": {
+      "az": "Ödəniş nəticəsi iyzico token cavabı ilə təsdiqlənir.",
+      "en": "The payment result is verified through the iyzico token callback.",
+      "de": "Das Zahlungsergebnis wird über den iyzico-Token-Rückruf verifiziert.",
+      "ru": "Результат оплаты проверяется через token-ответ iyzico.",
+      "ar": "يتم التحقق من نتيجة الدفع عبر عودة رمز iyzico."
+    },
+    "Başarılı ödeme sonrası sipariş durumunuz otomatik güncellenir.": {
+      "az": "Uğurlu ödənişdən sonra sifariş statusunuz avtomatik yenilənir.",
+      "en": "After a successful payment, your order status is updated automatically.",
+      "de": "Nach erfolgreicher Zahlung wird Ihr Bestellstatus automatisch aktualisiert.",
+      "ru": "После успешной оплаты статус заказа обновляется автоматически.",
+      "ar": "بعد الدفع الناجح يتم تحديث حالة طلبك تلقائياً."
+    },
+    "iyzico ile Güvenli Ödemeye Geç": {
+      "az": "iyzico ilə təhlükəsiz ödənişə keç",
+      "en": "Continue to Secure Payment with iyzico",
+      "de": "Mit iyzico sicher bezahlen",
+      "ru": "Перейти к безопасной оплате через iyzico",
+      "ar": "المتابعة إلى الدفع الآمن عبر iyzico"
+    },
+    "Sepete Dön": {
+      "az": "Səbətə qayıt",
+      "en": "Back to Cart",
+      "de": "Zurück zum Warenkorb",
+      "ru": "Вернуться в корзину",
+      "ar": "العودة إلى السلة"
+    },
+    "Desteklenen ödeme yöntemleri": {
+      "az": "Dəstəklənən ödəniş üsulları",
+      "en": "Supported payment methods",
+      "de": "Unterstützte Zahlungsmethoden",
+      "ru": "Поддерживаемые способы оплаты",
+      "ar": "طرق الدفع المدعومة"
+    },
+    "Sipariş Sonucu": {
+      "az": "Sifariş nəticəsi",
+      "en": "Order Result",
+      "de": "Bestellergebnis",
+      "ru": "Результат заказа",
+      "ar": "نتيجة الطلب"
+    },
+    "Ödeme sonucunuz kontrol ediliyor.": {
+      "az": "Ödəniş nəticəniz yoxlanılır.",
+      "en": "Your payment result is being checked.",
+      "de": "Ihr Zahlungsergebnis wird geprüft.",
+      "ru": "Результат вашей оплаты проверяется.",
+      "ar": "يتم التحقق من نتيجة الدفع الخاصة بك."
+    },
+    "İşlem durumu": {
+      "az": "Əməliyyat statusu",
+      "en": "Transaction Status",
+      "de": "Transaktionsstatus",
+      "ru": "Статус операции",
+      "ar": "حالة العملية"
+    },
+    "iyzico dönüşüyle sipariş durumunuz güncellendi.": {
+      "az": "iyzico cavabı ilə sifariş statusunuz yeniləndi.",
+      "en": "Your order status has been updated through the iyzico callback.",
+      "de": "Ihr Bestellstatus wurde durch den iyzico-Rückruf aktualisiert.",
+      "ru": "Статус заказа обновлен через ответ iyzico.",
+      "ar": "تم تحديث حالة طلبك من خلال رد iyzico."
+    },
+    "Siparişlerime Git": {
+      "az": "Sifarişlərimə keç",
+      "en": "Go to My Orders",
+      "de": "Zu meinen Bestellungen",
+      "ru": "Перейти к моим заказам",
+      "ar": "الذهاب إلى طلباتي"
+    },
+    "Mağazaya Dön": {
+      "az": "Mağazaya qayıt",
+      "en": "Back to Store",
+      "de": "Zurück zum Shop",
+      "ru": "Вернуться в магазин",
+      "ar": "العودة إلى المتجر"
+    },
+    "Ödemeyi Tekrar Dene": {
+      "az": "Ödənişi yenidən sına",
+      "en": "Try Payment Again",
+      "de": "Zahlung erneut versuchen",
+      "ru": "Повторить оплату",
+      "ar": "إعادة محاولة الدفع"
+    },
+    "Ödeme Güvencesi": {
+      "az": "Ödəniş zəmanəti",
+      "en": "Payment Assurance",
+      "de": "Zahlungssicherheit",
+      "ru": "Гарантия оплаты",
+      "ar": "ضمان الدفع"
+    },
+    "iyzico Sayfasına Aktarılıyorsunuz": {
+      "az": "iyzico səhifəsinə yönləndirilirsiniz",
+      "en": "Redirecting to the iyzico Page",
+      "de": "Weiterleitung zur iyzico-Seite",
+      "ru": "Перенаправление на страницу iyzico",
+      "ar": "يتم تحويلك إلى صفحة iyzico"
+    },
+    "Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz. Ödeme formu yalnızca iyzico güvenli ödeme ekranında açılır.": {
+      "az": "Kart məlumatlarınız AllonaHub üzərində toplanmır və saxlanmır. Ödəniş formu yalnız iyzico təhlükəsiz ödəniş ekranında açılır.",
+      "en": "Your card details are not collected or stored by AllonaHub. The payment form opens only on iyzico's secure payment screen.",
+      "de": "Ihre Kartendaten werden von AllonaHub nicht erfasst oder gespeichert. Das Zahlungsformular öffnet sich nur auf der sicheren iyzico-Zahlungsseite.",
+      "ru": "Данные вашей карты не собираются и не хранятся в AllonaHub. Платежная форма открывается только на защищенной странице iyzico.",
+      "ar": "لا تجمع AllonaHub بيانات بطاقتك ولا تخزنها. يفتح نموذج الدفع فقط في شاشة الدفع الآمنة من iyzico."
+    },
+    "Ödeme oturumu hazırlanıyor": {
+      "az": "Ödəniş sessiyası hazırlanır",
+      "en": "Preparing payment session",
+      "de": "Zahlungssitzung wird vorbereitet",
+      "ru": "Подготовка платежной сессии",
+      "ar": "يتم تجهيز جلسة الدفع"
+    },
+    "iyzico güvenli ödeme sayfasına yönlendirileceksiniz.": {
+      "az": "iyzico təhlükəsiz ödəniş səhifəsinə yönləndiriləcəksiniz.",
+      "en": "You will be redirected to iyzico's secure payment page.",
+      "de": "Sie werden zur sicheren Zahlungsseite von iyzico weitergeleitet.",
+      "ru": "Вы будете перенаправлены на защищенную страницу оплаты iyzico.",
+      "ar": "سيتم تحويلك إلى صفحة الدفع الآمنة من iyzico."
+    },
+    "iyzico ile Ödemeye Devam Et": {
+      "az": "iyzico ilə ödənişə davam et",
+      "en": "Continue Payment with iyzico",
+      "de": "Zahlung mit iyzico fortsetzen",
+      "ru": "Продолжить оплату через iyzico",
+      "ar": "متابعة الدفع عبر iyzico"
+    },
+    "Checkout'a Dön": {
+      "az": "Checkout-a qayıt",
+      "en": "Back to Checkout",
+      "de": "Zurück zum Checkout",
+      "ru": "Вернуться к оформлению",
+      "ar": "العودة إلى إتمام الطلب"
+    },
+    "Güvenlik Notu": {
+      "az": "Təhlükəsizlik qeydi",
+      "en": "Security Note",
+      "de": "Sicherheitshinweis",
+      "ru": "Примечание по безопасности",
+      "ar": "ملاحظة أمنية"
+    },
+    "Ödeme tamamlandığında iyzico, sonucu AllonaHub callback adresine iletir. Sipariş durumunuz bu token doğrulamasıyla güncellenir.": {
+      "az": "Ödəniş tamamlandıqda iyzico nəticəni AllonaHub callback ünvanına göndərir. Sifariş statusunuz bu token təsdiqi ilə yenilənir.",
+      "en": "When payment is completed, iyzico sends the result to the AllonaHub callback URL. Your order status is updated through this token verification.",
+      "de": "Nach Abschluss der Zahlung sendet iyzico das Ergebnis an die AllonaHub-Callback-Adresse. Ihr Bestellstatus wird über diese Token-Verifizierung aktualisiert.",
+      "ru": "После завершения оплаты iyzico отправляет результат на callback-адрес AllonaHub. Статус заказа обновляется через эту проверку токена.",
+      "ar": "عند اكتمال الدفع، ترسل iyzico النتيجة إلى عنوان callback الخاص بـ AllonaHub. يتم تحديث حالة طلبك عبر هذا التحقق بالرمز."
+    },
+    "Hesabım": {
+      "az": "Hesabım",
+      "en": "My Account",
+      "de": "Mein Konto",
+      "ru": "Мой аккаунт",
+      "ar": "حسابي"
+    },
+    "Hesap menüsü": {
+      "az": "Hesab menyusu",
+      "en": "Account menu",
+      "de": "Kontomenü",
+      "ru": "Меню аккаунта",
+      "ar": "قائمة الحساب"
+    },
+    "Panel": {
+      "az": "Panel",
+      "en": "Panel",
+      "de": "Panel",
+      "ru": "Панель",
+      "ar": "اللوحة"
+    },
+    "Çıkış Yap": {
+      "az": "Çıxış et",
+      "en": "Sign Out",
+      "de": "Abmelden",
+      "ru": "Выйти",
+      "ar": "تسجيل الخروج"
+    },
+    "Adresi Kaydet": {
+      "az": "Ünvanı saxla",
+      "en": "Save Address",
+      "de": "Adresse speichern",
+      "ru": "Сохранить адрес",
+      "ar": "حفظ العنوان"
+    },
+    "Adres kaydedilemedi. Lütfen bilgileri kontrol edip tekrar deneyin.": {
+      "az": "Ünvan saxlanıla bilmədi. Məlumatları yoxlayıb yenidən cəhd edin.",
+      "en": "Address could not be saved. Please check the details and try again.",
+      "de": "Die Adresse konnte nicht gespeichert werden. Bitte prüfen Sie die Angaben und versuchen Sie es erneut.",
+      "ru": "Не удалось сохранить адрес. Проверьте данные и попробуйте снова.",
+      "ar": "تعذر حفظ العنوان. يرجى التحقق من البيانات والمحاولة مرة أخرى."
+    },
+    "Profil": {
+      "az": "Profil",
+      "en": "Profile",
+      "de": "Profil",
+      "ru": "Профиль",
+      "ar": "الملف الشخصي"
+    },
+    "Şifre Yenile": {
+      "az": "Şifrəni yenilə",
+      "en": "Reset Password",
+      "de": "Passwort erneuern",
+      "ru": "Обновить пароль",
+      "ar": "تحديث كلمة المرور"
+    },
+    "Yeni şifreni oluştur. Şifre en az 8 karakter olmalıdır.": {
+      "az": "Yeni şifrənizi yaradın. Şifrə ən az 8 simvol olmalıdır.",
+      "en": "Create your new password. It must be at least 8 characters long.",
+      "de": "Erstellen Sie Ihr neues Passwort. Es muss mindestens 8 Zeichen lang sein.",
+      "ru": "Создайте новый пароль. Пароль должен содержать минимум 8 символов.",
+      "ar": "أنشئ كلمة مرور جديدة. يجب أن تتكون من 8 أحرف على الأقل."
+    },
+    "Yeni şifre": {
+      "az": "Yeni şifrə",
+      "en": "New password",
+      "de": "Neues Passwort",
+      "ru": "Новый пароль",
+      "ar": "كلمة مرور جديدة"
+    },
+    "Yeni şifre tekrar": {
+      "az": "Yeni şifrə təkrar",
+      "en": "Repeat new password",
+      "de": "Neues Passwort wiederholen",
+      "ru": "Повторите новый пароль",
+      "ar": "تأكيد كلمة المرور الجديدة"
+    },
+    "Şifreyi Güncelle": {
+      "az": "Şifrəni yenilə",
+      "en": "Update Password",
+      "de": "Passwort aktualisieren",
+      "ru": "Обновить пароль",
+      "ar": "تحديث كلمة المرور"
+    },
+    "Giriş Sayfasına Dön": {
+      "az": "Giriş səhifəsinə qayıt",
+      "en": "Back to Sign In",
+      "de": "Zurück zur Anmeldung",
+      "ru": "Вернуться на страницу входа",
+      "ar": "العودة إلى صفحة تسجيل الدخول"
+    },
+    "Bildirim Kanalları": {
+      "az": "Bildiriş kanalları",
+      "en": "Notification Channels",
+      "de": "Benachrichtigungskanäle",
+      "ru": "Каналы уведомлений",
+      "ar": "قنوات الإشعارات"
+    },
+    "Siparişler, kampanyalar, partner mesajları, görevler ve hesap güvenliği bildirimleri tek merkezde toplanır.": {
+      "az": "Sifarişlər, kampaniyalar, partner mesajları, tapşırıqlar və hesab təhlükəsizliyi bildirişləri tək mərkəzdə toplanır.",
+      "en": "Orders, campaigns, partner messages, tasks, and account security alerts are collected in one place.",
+      "de": "Bestellungen, Kampagnen, Partnernachrichten, Aufgaben und Sicherheitsmeldungen werden an einem zentralen Ort gebündelt.",
+      "ru": "Заказы, акции, сообщения партнеров, задачи и уведомления безопасности аккаунта собраны в одном центре.",
+      "ar": "تُجمع الطلبات والحملات ورسائل الشركاء والمهام وتنبيهات أمان الحساب في مركز واحد."
+    },
+    "Kullanıcı Paneli": {
+      "az": "İstifadəçi paneli",
+      "en": "User Panel",
+      "de": "Nutzerbereich",
+      "ru": "Панель пользователя",
+      "ar": "لوحة المستخدم"
+    },
+    "Destek Al": {
+      "az": "Dəstək al",
+      "en": "Get Support",
+      "de": "Support erhalten",
+      "ru": "Получить поддержку",
+      "ar": "احصل على الدعم"
+    },
+    "Belgelerim": {
+      "az": "Sənədlərim",
+      "en": "My Documents",
+      "de": "Meine Dokumente",
+      "ru": "Мои документы",
+      "ar": "مستنداتي"
+    },
+    "CV, başvuru, sözleşme, hizmet ve partner belgeleri için merkezi kullanıcı alanı.": {
+      "az": "CV, müraciət, müqavilə, xidmət və partner sənədləri üçün mərkəzi istifadəçi sahəsi.",
+      "en": "A central user area for CVs, applications, agreements, service documents, and partner documents.",
+      "de": "Ein zentraler Nutzerbereich für CVs, Bewerbungen, Verträge, Service- und Partnerdokumente.",
+      "ru": "Центральный раздел пользователя для CV, заявок, договоров, сервисных и партнерских документов.",
+      "ar": "مساحة مستخدم مركزية للسير الذاتية والطلبات والعقود ووثائق الخدمات والشركاء."
+    },
+    "Belge Alanları": {
+      "az": "Sənəd sahələri",
+      "en": "Document Areas",
+      "de": "Dokumentbereiche",
+      "ru": "Разделы документов",
+      "ar": "مجالات المستندات"
+    },
+    "Kimlik ve Profil": {
+      "az": "Şəxsiyyət və profil",
+      "en": "Identity and Profile",
+      "de": "Identität und Profil",
+      "ru": "Личность и профиль",
+      "ar": "الهوية والملف الشخصي"
+    },
+    "Başvurular": {
+      "az": "Müraciətlər",
+      "en": "Applications",
+      "de": "Anträge",
+      "ru": "Заявки",
+      "ar": "الطلبات"
+    },
+    "Sözleşmeler": {
+      "az": "Müqavilələr",
+      "en": "Agreements",
+      "de": "Verträge",
+      "ru": "Договоры",
+      "ar": "العقود"
+    },
+    "Panele Dön": {
+      "az": "Panelə qayıt",
+      "en": "Back to Panel",
+      "de": "Zurück zum Panel",
+      "ru": "Вернуться в панель",
+      "ar": "العودة إلى اللوحة"
+    },
+    "Görevler": {
+      "az": "Tapşırıqlar",
+      "en": "Tasks",
+      "de": "Aufgaben",
+      "ru": "Задачи",
+      "ar": "المهام"
+    },
+    "Profil tamamlama, alışveriş, partner keşfi ve kampanya görevleriyle AllonaHub içinde sadakat avantajları kazan.": {
+      "az": "Profil tamamlama, alış-veriş, partner kəşfi və kampaniya tapşırıqları ilə AllonaHub daxilində loyallıq üstünlükləri qazanın.",
+      "en": "Earn loyalty benefits in AllonaHub through profile completion, shopping, partner discovery, and campaign tasks.",
+      "de": "Sammeln Sie AllonaHub-Treuevorteile durch Profilvervollständigung, Einkäufe, Partnerentdeckung und Kampagnenaufgaben.",
+      "ru": "Получайте преимущества лояльности в AllonaHub за заполнение профиля, покупки, поиск партнеров и участие в акциях.",
+      "ar": "اكسب مزايا الولاء داخل AllonaHub من خلال إكمال الملف الشخصي والتسوق واكتشاف الشركاء ومهام الحملات."
+    },
+    "Görev Tipleri": {
+      "az": "Tapşırıq növləri",
+      "en": "Task Types",
+      "de": "Aufgabentypen",
+      "ru": "Типы задач",
+      "ar": "أنواع المهام"
+    },
+    "Keşif": {
+      "az": "Kəşf",
+      "en": "Discovery",
+      "de": "Entdeckung",
+      "ru": "Обзор",
+      "ar": "الاكتشاف"
+    },
+    "Alışveriş": {
+      "az": "Alış-veriş",
+      "en": "Shopping",
+      "de": "Einkaufen",
+      "ru": "Покупки",
+      "ar": "التسوق"
+    },
+    "Kupon Merkezine Git": {
+      "az": "Kupon Mərkəzinə keç",
+      "en": "Go to Coupon Center",
+      "de": "Zum Gutscheinzentrum",
+      "ru": "Перейти в центр купонов",
+      "ar": "الذهاب إلى مركز الكوبونات"
+    },
+    "Yardım ve Destek": {
+      "az": "Yardım və dəstək",
+      "en": "Help and Support",
+      "de": "Hilfe und Support",
+      "ru": "Помощь и поддержка",
+      "ar": "المساعدة والدعم"
+    },
+    "İletişim Bilgileri": {
+      "az": "Əlaqə məlumatları",
+      "en": "Contact Information",
+      "de": "Kontaktinformationen",
+      "ru": "Контактная информация",
+      "ar": "معلومات الاتصال"
+    },
+    "WhatsApp üzerinden yazın": {
+      "az": "WhatsApp üzərindən yazın",
+      "en": "Message us on WhatsApp",
+      "de": "Schreiben Sie uns über WhatsApp",
+      "ru": "Напишите нам в WhatsApp",
+      "ar": "راسلنا عبر WhatsApp"
+    },
+    "Ana Sayfaya Dön": {
+      "az": "Ana səhifəyə qayıt",
+      "en": "Back to Home",
+      "de": "Zurück zur Startseite",
+      "ru": "Вернуться на главную",
+      "ar": "العودة إلى الصفحة الرئيسية"
+    },
+    "Hızlı İletişim": {
+      "az": "Sürətli əlaqə",
+      "en": "Quick Contact",
+      "de": "Schnellkontakt",
+      "ru": "Быстрая связь",
+      "ar": "تواصل سريع"
+    },
+    "Ad Soyad": {
+      "az": "Ad soyad",
+      "en": "Full Name",
+      "de": "Vor- und Nachname",
+      "ru": "Имя и фамилия",
+      "ar": "الاسم الكامل"
+    },
+    "Telefon Numaranız": {
+      "az": "Telefon nömrəniz",
+      "en": "Your phone number",
+      "de": "Ihre Telefonnummer",
+      "ru": "Ваш номер телефона",
+      "ar": "رقم هاتفك"
+    },
+    "E-posta Adresiniz": {
+      "az": "E-poçt ünvanınız",
+      "en": "Your email address",
+      "de": "Ihre E-Mail-Adresse",
+      "ru": "Ваш адрес электронной почты",
+      "ar": "عنوان بريدك الإلكتروني"
+    },
+    "Mesajınızı yazın...": {
+      "az": "Mesajınızı yazın...",
+      "en": "Write your message...",
+      "de": "Schreiben Sie Ihre Nachricht...",
+      "ru": "Напишите ваше сообщение...",
+      "ar": "اكتب رسالتك..."
+    },
+    "Başvuruyu Gönder": {
+      "az": "Müraciəti göndər",
+      "en": "Submit Application",
+      "de": "Antrag senden",
+      "ru": "Отправить заявку",
+      "ar": "إرسال الطلب"
+    },
+    "Gönder": {
+      "az": "Göndər",
+      "en": "Send",
+      "de": "Senden",
+      "ru": "Отправить",
+      "ar": "إرسال"
+    },
+    "Hakkımızda": {
+      "az": "Haqqımızda",
+      "en": "About Us",
+      "de": "Über uns",
+      "ru": "О нас",
+      "ar": "من نحن"
+    },
+    "Dijital hizmetleri tek ekosistemde buluşturuyoruz.": {
+      "az": "Rəqəmsal xidmətləri tək ekosistemdə birləşdiririk.",
+      "en": "We bring digital services together in one ecosystem.",
+      "de": "Wir bündeln digitale Services in einem Ökosystem.",
+      "ru": "Мы объединяем цифровые сервисы в одной экосистеме.",
+      "ar": "نحن نجمع الخدمات الرقمية في منظومة واحدة."
+    },
+    "Biz Kimiz?": {
+      "az": "Biz kimik?",
+      "en": "Who Are We?",
+      "de": "Wer sind wir?",
+      "ru": "Кто мы?",
+      "ar": "من نحن؟"
+    },
+    "Vizyonumuz": {
+      "az": "Vizyonumuz",
+      "en": "Our Vision",
+      "de": "Unsere Vision",
+      "ru": "Наше видение",
+      "ar": "رؤيتنا"
+    },
+    "Misyonumuz": {
+      "az": "Missiyamız",
+      "en": "Our Mission",
+      "de": "Unsere Mission",
+      "ru": "Наша миссия",
+      "ar": "مهمتنا"
+    },
+    "Ne Sunuyoruz?": {
+      "az": "Nə təklif edirik?",
+      "en": "What Do We Offer?",
+      "de": "Was bieten wir?",
+      "ru": "Что мы предлагаем?",
+      "ar": "ماذا نقدم؟"
+    },
+    "Güven ve Şeffaflık": {
+      "az": "Etibar və şəffaflıq",
+      "en": "Trust and Transparency",
+      "de": "Vertrauen und Transparenz",
+      "ru": "Доверие и прозрачность",
+      "ar": "الثقة والشفافية"
+    },
+    "Sürekli Gelişim": {
+      "az": "Davamlı inkişaf",
+      "en": "Continuous Improvement",
+      "de": "Kontinuierliche Weiterentwicklung",
+      "ru": "Постоянное развитие",
+      "ar": "التطوير المستمر"
+    },
+    "Tek Platform. Birçok Çözüm.": {
+      "az": "Tək platforma. Bir çox həll.",
+      "en": "One Platform. Many Solutions.",
+      "de": "Eine Plattform. Viele Lösungen.",
+      "ru": "Одна платформа. Много решений.",
+      "ar": "منصة واحدة. حلول كثيرة."
+    },
+    "Yasal Bilgilendirme": {
+      "az": "Hüquqi məlumatlandırma",
+      "en": "Legal Information",
+      "de": "Rechtliche Informationen",
+      "ru": "Правовая информация",
+      "ar": "معلومات قانونية"
+    },
+    "Yasal": {
+      "az": "Hüquqi",
+      "en": "Legal",
+      "de": "Rechtliches",
+      "ru": "Правовая информация",
+      "ar": "قانوني"
+    },
+    "Gizlilik Politikası": {
+      "az": "Məxfilik siyasəti",
+      "en": "Privacy Policy",
+      "de": "Datenschutzerklärung",
+      "ru": "Политика конфиденциальности",
+      "ar": "سياسة الخصوصية"
+    },
+    "KVKK Aydınlatma Metni": {
+      "az": "KVKK məlumatlandırma mətni",
+      "en": "KVKK Privacy Notice",
+      "de": "KVKK Datenschutzhinweis",
+      "ru": "Уведомление KVKK",
+      "ar": "إشعار KVKK"
+    },
+    "Çerez Politikası": {
+      "az": "Çərəz siyasəti",
+      "en": "Cookie Policy",
+      "de": "Cookie-Richtlinie",
+      "ru": "Политика cookies",
+      "ar": "سياسة ملفات تعريف الارتباط"
+    },
+    "Kullanım Şartları": {
+      "az": "İstifadə şərtləri",
+      "en": "Terms of Use",
+      "de": "Nutzungsbedingungen",
+      "ru": "Условия использования",
+      "ar": "شروط الاستخدام"
+    },
+    "Güvenlik Politikası": {
+      "az": "Təhlükəsizlik siyasəti",
+      "en": "Security Policy",
+      "de": "Sicherheitsrichtlinie",
+      "ru": "Политика безопасности",
+      "ar": "سياسة الأمان"
+    },
+    "Teslimat ve Kargo": {
+      "az": "Çatdırılma və karqo",
+      "en": "Delivery and Shipping",
+      "de": "Lieferung und Versand",
+      "ru": "Доставка и грузоперевозка",
+      "ar": "التسليم والشحن"
+    },
+    "İade ve Cayma Hakkı": {
+      "az": "Qaytarma və imtina hüququ",
+      "en": "Returns and Right of Withdrawal",
+      "de": "Rückgabe und Widerrufsrecht",
+      "ru": "Возврат и право отказа",
+      "ar": "الإرجاع وحق الانسحاب"
+    },
+    "İade ve İptal Politikası": {
+      "az": "Qaytarma və ləğv siyasəti",
+      "en": "Return and Cancellation Policy",
+      "de": "Rückgabe- und Stornierungsrichtlinie",
+      "ru": "Политика возврата и отмены",
+      "ar": "سياسة الإرجاع والإلغاء"
+    },
+    "Hizmet Kapsamı": {
+      "az": "Xidmət əhatəsi",
+      "en": "Service Scope",
+      "de": "Leistungsumfang",
+      "ru": "Объем услуг",
+      "ar": "نطاق الخدمة"
+    },
+    "Üyelik": {
+      "az": "Üzvlük",
+      "en": "Membership",
+      "de": "Mitgliedschaft",
+      "ru": "Членство",
+      "ar": "العضوية"
+    },
+    "Sipariş ve Ödeme": {
+      "az": "Sifariş və ödəniş",
+      "en": "Orders and Payment",
+      "de": "Bestellung und Zahlung",
+      "ru": "Заказ и оплата",
+      "ar": "الطلب والدفع"
+    },
+    "Yasaklı Kullanım": {
+      "az": "Qadağan olunmuş istifadə",
+      "en": "Prohibited Use",
+      "de": "Unzulässige Nutzung",
+      "ru": "Запрещенное использование",
+      "ar": "الاستخدام المحظور"
+    },
+    "Çerez Kategorileri": {
+      "az": "Çərəz kateqoriyaları",
+      "en": "Cookie Categories",
+      "de": "Cookie-Kategorien",
+      "ru": "Категории cookies",
+      "ar": "فئات ملفات تعريف الارتباط"
+    },
+    "Zorunlu": {
+      "az": "Məcburi",
+      "en": "Strictly Necessary",
+      "de": "Erforderlich",
+      "ru": "Обязательные",
+      "ar": "ضرورية"
+    },
+    "Tercih": {
+      "az": "Tərcih",
+      "en": "Preferences",
+      "de": "Präferenzen",
+      "ru": "Предпочтения",
+      "ar": "التفضيلات"
+    },
+    "Analitik": {
+      "az": "Analitika",
+      "en": "Analytics",
+      "de": "Analytik",
+      "ru": "Аналитика",
+      "ar": "التحليلات"
+    },
+    "Detaylı Çerez Sayfası": {
+      "az": "Ətraflı çərəz səhifəsi",
+      "en": "Detailed Cookie Page",
+      "de": "Detaillierte Cookie-Seite",
+      "ru": "Подробная страница cookies",
+      "ar": "صفحة ملفات تعريف الارتباط التفصيلية"
+    },
+    "Güvenli Ekosistem": {
+      "az": "Təhlükəsiz ekosistem",
+      "en": "Secure Ecosystem",
+      "de": "Sicheres Ökosystem",
+      "ru": "Безопасная экосистема",
+      "ar": "منظومة آمنة"
+    },
+    "Koruma Başlıkları": {
+      "az": "Qoruma başlıqları",
+      "en": "Protection Areas",
+      "de": "Schutzbereiche",
+      "ru": "Направления защиты",
+      "ar": "مجالات الحماية"
+    },
+    "Hesap Güvenliği": {
+      "az": "Hesab təhlükəsizliyi",
+      "en": "Account Security",
+      "de": "Kontosicherheit",
+      "ru": "Безопасность аккаунта",
+      "ar": "أمان الحساب"
+    },
+    "Ödeme Güvenliği": {
+      "az": "Ödəniş təhlükəsizliyi",
+      "en": "Payment Security",
+      "de": "Zahlungssicherheit",
+      "ru": "Безопасность оплаты",
+      "ar": "أمان الدفع"
+    },
+    "Veri Erişimi": {
+      "az": "Məlumatlara giriş",
+      "en": "Data Access",
+      "de": "Datenzugriff",
+      "ru": "Доступ к данным",
+      "ar": "الوصول إلى البيانات"
+    },
+    "Denetim Kaydı": {
+      "az": "Audit qeydi",
+      "en": "Audit Log",
+      "de": "Audit-Protokoll",
+      "ru": "Журнал аудита",
+      "ar": "سجل التدقيق"
+    },
+    "Delil Bütünlüğü": {
+      "az": "Sübut bütövlüyü",
+      "en": "Evidence Integrity",
+      "de": "Integrität der Nachweise",
+      "ru": "Целостность доказательств",
+      "ar": "سلامة الأدلة"
+    },
+    "Konum İlkesi": {
+      "az": "Məkan prinsipi",
+      "en": "Location Policy",
+      "de": "Standortrichtlinie",
+      "ru": "Политика местоположения",
+      "ar": "سياسة الموقع"
+    },
+    "Resmi Makam ve Uyuşmazlık Süreci": {
+      "az": "Rəsmi qurum və mübahisə prosesi",
+      "en": "Official Authority and Dispute Process",
+      "de": "Behörden- und Streitfallprozess",
+      "ru": "Официальные органы и процесс споров",
+      "ar": "الجهات الرسمية وإجراءات النزاعات"
+    },
+    "Güvenlik Desteği": {
+      "az": "Təhlükəsizlik dəstəyi",
+      "en": "Security Support",
+      "de": "Sicherheits-Support",
+      "ru": "Поддержка безопасности",
+      "ar": "دعم الأمان"
+    },
+    "Alışveriş": {
+      "az": "Alış-veriş",
+      "en": "Shopping",
+      "de": "Einkaufen",
+      "ru": "Покупки",
+      "ar": "التسوق"
+    },
+    "Müşteri": {
+      "az": "Müştəri",
+      "en": "Customer",
+      "de": "Kunde",
+      "ru": "Клиент",
+      "ar": "العميل"
+    },
+    "Ekosistem": {
+      "az": "Ekosistem",
+      "en": "Ecosystem",
+      "de": "Ökosystem",
+      "ru": "Экосистема",
+      "ar": "المنظومة"
+    },
+    "Tüm Modüller": {
+      "az": "Bütün modullar",
+      "en": "All Modules",
+      "de": "Alle Module",
+      "ru": "Все модули",
+      "ar": "كل الوحدات"
+    },
+    "Partner Başvurusu": {
+      "az": "Partner müraciəti",
+      "en": "Partner Application",
+      "de": "Partnerantrag",
+      "ru": "Заявка партнера",
+      "ar": "طلب شراكة"
+    },
+    "Partner Üyelik": {
+      "az": "Partner üzvlüyü",
+      "en": "Partner Membership",
+      "de": "Partner-Mitgliedschaft",
+      "ru": "Партнерское членство",
+      "ar": "عضوية الشريك"
+    },
+    "AllonaHub Akademi": {
+      "az": "AllonaHub Akademiyası",
+      "en": "AllonaHub Academy",
+      "de": "AllonaHub Akademie",
+      "ru": "Академия AllonaHub",
+      "ar": "أكاديمية AllonaHub"
+    },
+    "Tek hesapla alışveriş, hizmet, partner, ödeme ve dijital çözümler.": {
+      "az": "Tək hesabla alış-veriş, xidmət, partner, ödəniş və rəqəmsal həllər.",
+      "en": "One account for shopping, services, partners, payments, and digital solutions.",
+      "de": "Ein Konto für Einkaufen, Services, Partner, Zahlungen und digitale Lösungen.",
+      "ru": "Один аккаунт для покупок, услуг, партнеров, платежей и цифровых решений.",
+      "ar": "حساب واحد للتسوق والخدمات والشركاء والمدفوعات والحلول الرقمية."
+    },
+    "Allworksin Business Danışmanlık Tic. Ltd. Şti.": {
+      "az": "Allworksin Business Danışmanlık Tic. Ltd. Şti.",
+      "en": "Allworksin Business Consultancy Ltd.",
+      "de": "Allworksin Business Consultancy Ltd.",
+      "ru": "Allworksin Business Consultancy Ltd.",
+      "ar": "Allworksin Business Consultancy Ltd."
+    },
+    "İstanbul / Türkiye": {
+      "az": "İstanbul / Türkiyə",
+      "en": "Istanbul / Turkey",
+      "de": "Istanbul / Türkei",
+      "ru": "Стамбул / Турция",
+      "ar": "إسطنبول / تركيا"
+    },
+    "AllonaHub sosyal medya bağlantıları": {
+      "az": "AllonaHub sosial media bağlantıları",
+      "en": "AllonaHub social media links",
+      "de": "AllonaHub Social-Media-Links",
+      "ru": "Ссылки AllonaHub в соцсетях",
+      "ar": "روابط AllonaHub على وسائل التواصل"
+    },
+    "AllonaHub mobil uygulama bağlantıları": {
+      "az": "AllonaHub mobil tətbiq bağlantıları",
+      "en": "AllonaHub mobile app links",
+      "de": "AllonaHub Mobile-App-Links",
+      "ru": "Ссылки на мобильное приложение AllonaHub",
+      "ar": "روابط تطبيق AllonaHub للجوال"
+    },
+    "Güvenli ödeme altyapısı": {
+      "az": "Təhlükəsiz ödəniş infrastrukturu",
+      "en": "Secure payment infrastructure",
+      "de": "Sichere Zahlungsinfrastruktur",
+      "ru": "Безопасная платежная инфраструктура",
+      "ar": "بنية دفع آمنة"
+    },
+    "iyzico ile öde": {
+      "az": "iyzico ilə ödə",
+      "en": "Pay with iyzico",
+      "de": "Mit iyzico bezahlen",
+      "ru": "Оплатить через iyzico",
+      "ar": "ادفع عبر iyzico"
+    },
+    "Tüm hakları saklıdır.": {
+      "az": "Bütün hüquqlar qorunur.",
+      "en": "All rights reserved.",
+      "de": "Alle Rechte vorbehalten.",
+      "ru": "Все права защищены.",
+      "ar": "جميع الحقوق محفوظة."
+    },
+    "App Store'dan indir": {
+      "az": "App Store-dan endir",
+      "en": "Download on the App Store",
+      "de": "Im App Store laden",
+      "ru": "Скачать в App Store",
+      "ar": "حمّل من App Store"
+    },
+    "Google Play'den indir": {
+      "az": "Google Play-dən endir",
+      "en": "Get it on Google Play",
+      "de": "Bei Google Play herunterladen",
+      "ru": "Скачать в Google Play",
+      "ar": "احصل عليه من Google Play"
+    },
+    "Tümünü Gör": {
+      "az": "Hamısını gör",
+      "en": "View All",
+      "de": "Alle anzeigen",
+      "ru": "Показать все",
+      "ar": "عرض الكل"
+    },
+    "HP Kazan": {
+      "az": "HP qazan",
+      "en": "Earn HP",
+      "de": "HP verdienen",
+      "ru": "Заработать HP",
+      "ar": "اكسب HP"
+    },
+    "HP ve kupon kampanyaları": {
+      "az": "HP və kupon kampaniyaları",
+      "en": "HP and coupon campaigns",
+      "de": "HP- und Gutschein-Kampagnen",
+      "ru": "Кампании HP и купонов",
+      "ar": "حملات HP والكوبونات"
+    },
+    "Telefon": {
+      "az": "Telefon",
+      "en": "Phone",
+      "de": "Telefon",
+      "ru": "Телефон",
+      "ar": "الهاتف"
+    },
+    "E-posta": {
+      "az": "E-poçt",
+      "en": "Email",
+      "de": "E-Mail",
+      "ru": "Эл. почта",
+      "ar": "البريد الإلكتروني"
+    },
+    "Şehir": {
+      "az": "Şəhər",
+      "en": "City",
+      "de": "Stadt",
+      "ru": "Город",
+      "ar": "المدينة"
+    },
+    "Açıklama": {
+      "az": "Açıqlama",
+      "en": "Description",
+      "de": "Beschreibung",
+      "ru": "Описание",
+      "ar": "الوصف"
+    },
+    "Başvuru": {
+      "az": "Müraciət",
+      "en": "Application",
+      "de": "Antrag",
+      "ru": "Заявка",
+      "ar": "طلب"
+    },
+    "Başvurularım": {
+      "az": "Müraciətlərim",
+      "en": "My Applications",
+      "de": "Meine Anträge",
+      "ru": "Мои заявки",
+      "ar": "طلباتي"
+    },
+    "Taleplerim": {
+      "az": "Tələblərim",
+      "en": "My Requests",
+      "de": "Meine Anfragen",
+      "ru": "Мои запросы",
+      "ar": "طلباتي"
+    },
+    "Talep Oluştur": {
+      "az": "Tələb yarat",
+      "en": "Create Request",
+      "de": "Anfrage erstellen",
+      "ru": "Создать запрос",
+      "ar": "إنشاء طلب"
+    },
+    "Teklif Al": {
+      "az": "Təklif al",
+      "en": "Get an Offer",
+      "de": "Angebot erhalten",
+      "ru": "Получить предложение",
+      "ar": "احصل على عرض"
+    },
+    "Teklif al": {
+      "az": "Təklif al",
+      "en": "Get an offer",
+      "de": "Angebot erhalten",
+      "ru": "Получить предложение",
+      "ar": "احصل على عرض"
+    },
+    "Tekliflerim": {
+      "az": "Təkliflərim",
+      "en": "My Offers",
+      "de": "Meine Angebote",
+      "ru": "Мои предложения",
+      "ar": "عروضي"
+    },
+    "Teklif Talebi Oluştur": {
+      "az": "Təklif tələbi yarat",
+      "en": "Create Offer Request",
+      "de": "Angebotsanfrage erstellen",
+      "ru": "Создать запрос предложения",
+      "ar": "إنشاء طلب عرض"
+    },
+    "Süreç Takibi": {
+      "az": "Proses izləmə",
+      "en": "Process Tracking",
+      "de": "Prozessverfolgung",
+      "ru": "Отслеживание процесса",
+      "ar": "تتبع العملية"
+    },
+    "Randevu": {
+      "az": "Görüş",
+      "en": "Appointment",
+      "de": "Termin",
+      "ru": "Запись",
+      "ar": "موعد"
+    },
+    "Randevularım": {
+      "az": "Görüşlərim",
+      "en": "My Appointments",
+      "de": "Meine Termine",
+      "ru": "Мои записи",
+      "ar": "مواعيدي"
+    },
+    "Acil": {
+      "az": "Təcili",
+      "en": "Urgent",
+      "de": "Dringend",
+      "ru": "Срочно",
+      "ar": "عاجل"
+    },
+    "Online": {
+      "az": "Onlayn",
+      "en": "Online",
+      "de": "Online",
+      "ru": "Онлайн",
+      "ar": "عبر الإنترنت"
+    },
+    "İşletme": {
+      "az": "Biznes",
+      "en": "Business",
+      "de": "Betrieb",
+      "ru": "Бизнес",
+      "ar": "الأعمال"
+    },
+    "Market": {
+      "az": "Market",
+      "en": "Market",
+      "de": "Markt",
+      "ru": "Маркет",
+      "ar": "السوق"
+    },
+    "Sağlık": {
+      "az": "Sağlamlıq",
+      "en": "Health",
+      "de": "Gesundheit",
+      "ru": "Здоровье",
+      "ar": "الصحة"
+    },
+    "Partner": {
+      "az": "Partner",
+      "en": "Partner",
+      "de": "Partner",
+      "ru": "Партнер",
+      "ar": "الشريك"
+    },
+    "Doğrulama": {
+      "az": "Təsdiqləmə",
+      "en": "Verification",
+      "de": "Verifizierung",
+      "ru": "Проверка",
+      "ar": "التحقق"
+    },
+    "Toplam": {
+      "az": "Cəmi",
+      "en": "Total",
+      "de": "Summe",
+      "ru": "Итого",
+      "ar": "الإجمالي"
+    },
+    "Kategoriler": {
+      "az": "Kateqoriyalar",
+      "en": "Categories",
+      "de": "Kategorien",
+      "ru": "Категории",
+      "ar": "الفئات"
+    },
+    "Hızlı Teslimat": {
+      "az": "Sürətli çatdırılma",
+      "en": "Fast Delivery",
+      "de": "Schnelle Lieferung",
+      "ru": "Быстрая доставка",
+      "ar": "توصيل سريع"
+    },
+    "Güvenli Ödeme": {
+      "az": "Təhlükəsiz ödəniş",
+      "en": "Secure Payment",
+      "de": "Sichere Zahlung",
+      "ru": "Безопасная оплата",
+      "ar": "دفع آمن"
+    },
+    "Tüm Ürünler": {
+      "az": "Bütün məhsullar",
+      "en": "All Products",
+      "de": "Alle Produkte",
+      "ru": "Все товары",
+      "ar": "كل المنتجات"
+    },
+    "Ürün yükle": {
+      "az": "Məhsul yüklə",
+      "en": "Upload Product",
+      "de": "Produkt hochladen",
+      "ru": "Загрузить товар",
+      "ar": "رفع منتج"
+    },
+    "Kaldır": {
+      "az": "Sil",
+      "en": "Remove",
+      "de": "Entfernen",
+      "ru": "Удалить",
+      "ar": "إزالة"
+    },
+    "Çıkış": {
+      "az": "Çıxış",
+      "en": "Exit",
+      "de": "Ausgang",
+      "ru": "Выход",
+      "ar": "خروج"
+    },
+    "Ana Sayfa": {
+      "az": "Ana səhifə",
+      "en": "Home",
+      "de": "Startseite",
+      "ru": "Главная",
+      "ar": "الرئيسية"
+    },
+    "Hesabıma Dön": {
+      "az": "Hesabıma qayıt",
+      "en": "Back to My Account",
+      "de": "Zurück zu meinem Konto",
+      "ru": "Вернуться в аккаунт",
+      "ar": "العودة إلى حسابي"
+    },
+    "Önemli Not:": {
+      "az": "Vacib qeyd:",
+      "en": "Important Note:",
+      "de": "Wichtiger Hinweis:",
+      "ru": "Важное примечание:",
+      "ar": "ملاحظة مهمة:"
+    },
+    "Allona Denizcilik": {
+      "az": "Allona Dənizçilik",
+      "en": "Allona Maritime",
+      "de": "Allona Maritime",
+      "ru": "Allona Морские услуги",
+      "ar": "Allona للخدمات البحرية"
+    },
+    "Allona Finans": {
+      "az": "Allona Maliyyə",
+      "en": "Allona Finance",
+      "de": "Allona Finanzen",
+      "ru": "Allona Финансы",
+      "ar": "Allona للتمويل"
+    },
+    "Allona Kurye": {
+      "az": "Allona Kuryer",
+      "en": "Allona Courier",
+      "de": "Allona Kurier",
+      "ru": "Allona Курьер",
+      "ar": "Allona للتوصيل"
+    },
+    "Allona Otomotiv": {
+      "az": "Allona Avtomobil",
+      "en": "Allona Automotive",
+      "de": "Allona Automotive",
+      "ru": "Allona Авто",
+      "ar": "Allona للسيارات"
+    },
+    "Allona Gayrimenkul": {
+      "az": "Allona Daşınmaz Əmlak",
+      "en": "Allona Real Estate",
+      "de": "Allona Immobilien",
+      "ru": "Allona Недвижимость",
+      "ar": "Allona للعقارات"
+    },
+    "Allona Sigorta": {
+      "az": "Allona Sığorta",
+      "en": "Allona Insurance",
+      "de": "Allona Versicherung",
+      "ru": "Allona Страхование",
+      "ar": "Allona للتأمين"
+    },
+    "Allona Seyahat": {
+      "az": "Allona Səyahət",
+      "en": "Allona Travel",
+      "de": "Allona Reisen",
+      "ru": "Allona Путешествия",
+      "ar": "Allona للسفر"
+    },
+    "Allona Eğlence": {
+      "az": "Allona Əyləncə",
+      "en": "Allona Entertainment",
+      "de": "Allona Unterhaltung",
+      "ru": "Allona Развлечения",
+      "ar": "Allona للترفيه"
+    },
+    "Allona Ev Hizmetleri": {
+      "az": "Allona Ev Xidmətləri",
+      "en": "Allona Home Services",
+      "de": "Allona Haushaltsservices",
+      "ru": "Allona Домашние услуги",
+      "ar": "Allona للخدمات المنزلية"
+    },
+    "Allona Kargo & Lojistik": {
+      "az": "Allona Karqo və Logistika",
+      "en": "Allona Cargo & Logistics",
+      "de": "Allona Fracht & Logistik",
+      "ru": "Allona Груз и логистика",
+      "ar": "Allona للشحن واللوجستيات"
+    },
+    "AllonaHub Eşleşmesi": {
+      "az": "AllonaHub uyğunluğu",
+      "en": "AllonaHub Match",
+      "de": "AllonaHub Abgleich",
+      "ru": "Совпадение AllonaHub",
+      "ar": "مطابقة AllonaHub"
+    },
+    "AllonaHub ile Çift Yönlü Ürün Görünürlüğü": {
+      "az": "AllonaHub ilə ikitərəfli məhsul görünürlüğü",
+      "en": "Two-way product visibility with AllonaHub",
+      "de": "Zweiseitige Produktsichtbarkeit mit AllonaHub",
+      "ru": "Двусторонняя видимость товаров с AllonaHub",
+      "ar": "ظهور المنتجات باتجاهين مع AllonaHub"
+    },
+    "AllonaHub’a Git": {
+      "az": "AllonaHub-a keç",
+      "en": "Go to AllonaHub",
+      "de": "Zu AllonaHub",
+      "ru": "Перейти в AllonaHub",
+      "ar": "الذهاب إلى AllonaHub"
+    },
+    "HP Kazandıran": {
+      "az": "HP qazandıran",
+      "en": "Earns HP",
+      "de": "Bringt HP",
+      "ru": "Начисляет HP",
+      "ar": "يكسب HP"
+    },
+    "HP kazan": {
+      "az": "HP qazan",
+      "en": "Earn HP",
+      "de": "HP verdienen",
+      "ru": "Заработать HP",
+      "ar": "اكسب HP"
+    },
+    "1. Talep": {
+      "az": "1. Tələb",
+      "en": "1. Request",
+      "de": "1. Anfrage",
+      "ru": "1. Запрос",
+      "ar": "1. الطلب"
+    },
+    "2. Teklif": {
+      "az": "2. Təklif",
+      "en": "2. Offer",
+      "de": "2. Angebot",
+      "ru": "2. Предложение",
+      "ar": "2. العرض"
+    },
+    "3. Onay": {
+      "az": "3. Təsdiq",
+      "en": "3. Approval",
+      "de": "3. Bestätigung",
+      "ru": "3. Подтверждение",
+      "ar": "3. الموافقة"
+    },
+    "3. Randevu": {
+      "az": "3. Görüş",
+      "en": "3. Appointment",
+      "de": "3. Termin",
+      "ru": "3. Запись",
+      "ar": "3. الموعد"
+    },
+    "4. Teklif": {
+      "az": "4. Təklif",
+      "en": "4. Offer",
+      "de": "4. Angebot",
+      "ru": "4. Предложение",
+      "ar": "4. العرض"
+    },
+    "5. Takip": {
+      "az": "5. İzləmə",
+      "en": "5. Tracking",
+      "de": "5. Nachverfolgung",
+      "ru": "5. Отслеживание",
+      "ar": "5. المتابعة"
+    },
+    "6. Teslim": {
+      "az": "6. Təhvil",
+      "en": "6. Delivery",
+      "de": "6. Lieferung",
+      "ru": "6. Доставка",
+      "ar": "6. التسليم"
+    },
+    "Ekosistem Bağlantıları": {
+      "az": "Ekosistem bağlantıları",
+      "en": "Ecosystem Links",
+      "de": "Ökosystem-Links",
+      "ru": "Ссылки экосистемы",
+      "ar": "روابط المنظومة"
+    },
+    "Ekosistem Bağlantısı": {
+      "az": "Ekosistem bağlantısı",
+      "en": "Ecosystem Link",
+      "de": "Ökosystem-Link",
+      "ru": "Ссылка экосистемы",
+      "ar": "رابط المنظومة"
+    },
+    "İlanlarım": {
+      "az": "Elanlarım",
+      "en": "My Listings",
+      "de": "Meine Anzeigen",
+      "ru": "Мои объявления",
+      "ar": "إعلاناتي"
+    },
+    "Gönderilerim": {
+      "az": "Göndərilərim",
+      "en": "My Shipments",
+      "de": "Meine Sendungen",
+      "ru": "Мои отправления",
+      "ar": "شحناتي"
+    },
+    "Canlı Panel": {
+      "az": "Canlı panel",
+      "en": "Live Panel",
+      "de": "Live-Panel",
+      "ru": "Живая панель",
+      "ar": "لوحة مباشرة"
+    },
+    "Modül Bağlantıları": {
+      "az": "Modul bağlantıları",
+      "en": "Module Links",
+      "de": "Modul-Links",
+      "ru": "Ссылки модуля",
+      "ar": "روابط الوحدة"
+    },
+    "Performans ve güven skoru": {
+      "az": "Performans və etibar skoru",
+      "en": "Performance and trust score",
+      "de": "Performance- und Vertrauenswert",
+      "ru": "Оценка производительности и доверия",
+      "ar": "درجة الأداء والثقة"
+    },
+    "Belge Yükleme": {
+      "az": "Sənəd yükləmə",
+      "en": "Document Upload",
+      "de": "Dokumentenupload",
+      "ru": "Загрузка документов",
+      "ar": "رفع المستندات"
+    },
+    "Detaylar": {
+      "az": "Detallar",
+      "en": "Details",
+      "de": "Details",
+      "ru": "Детали",
+      "ar": "التفاصيل"
+    },
+    "Kategori": {
+      "az": "Kateqoriya",
+      "en": "Category",
+      "de": "Kategorie",
+      "ru": "Категория",
+      "ar": "الفئة"
+    },
+    "Etkinlikler": {
+      "az": "Tədbirlər",
+      "en": "Events",
+      "de": "Events",
+      "ru": "События",
+      "ar": "الفعاليات"
+    },
+    "E-Ticaret": {
+      "az": "E-ticarət",
+      "en": "E-Commerce",
+      "de": "E-Commerce",
+      "ru": "Электронная коммерция",
+      "ar": "التجارة الإلكترونية"
+    },
+    "Sipariş": {
+      "az": "Sifariş",
+      "en": "Order",
+      "de": "Bestellung",
+      "ru": "Заказ",
+      "ar": "الطلب"
+    },
+    "Sayfa Başlığı": {
+      "az": "Səhifə başlığı",
+      "en": "Page Title",
+      "de": "Seitentitel",
+      "ru": "Заголовок страницы",
+      "ar": "عنوان الصفحة"
+    },
+    "Premium ekosistem hazırlanıyor": {
+      "az": "Premium ekosistem hazırlanır",
+      "en": "Premium ecosystem is being prepared",
+      "de": "Das Premium-Ökosystem wird vorbereitet",
+      "ru": "Премиальная экосистема готовится",
+      "ar": "يتم تجهيز المنظومة المميزة"
+    },
+    "Bu modül şu anda AllonaHub premium hizmet ağına hazırlanıyor. AllonaHub aktif olarak geliştirilmeye devam ediyor. Diğer hizmetler adım adım yayına alınacaktır.": {
+      "az": "Bu modul hazırda AllonaHub premium xidmət şəbəkəsinə hazırlanır. AllonaHub aktiv şəkildə inkişaf etdirilir. Digər xidmətlər mərhələli şəkildə yayıma alınacaq.",
+      "en": "This module is currently being prepared for the AllonaHub premium service network. AllonaHub is actively being developed, and other services will be launched step by step.",
+      "de": "Dieses Modul wird derzeit für das Premium-Service-Netzwerk von AllonaHub vorbereitet. AllonaHub wird aktiv weiterentwickelt; weitere Services werden schrittweise veröffentlicht.",
+      "ru": "Этот модуль сейчас готовится для премиальной сервисной сети AllonaHub. AllonaHub активно развивается, а другие услуги будут запускаться поэтапно.",
+      "ar": "يتم حالياً تجهيز هذه الوحدة لشبكة خدمات AllonaHub المميزة. يستمر تطوير AllonaHub بنشاط، وسيتم إطلاق الخدمات الأخرى تدريجياً."
+    },
+    "Yakında Hizmetinizde": {
+      "az": "Tezliklə xidmətinizdə",
+      "en": "Coming Soon",
+      "de": "Demnächst verfügbar",
+      "ru": "Скоро доступно",
+      "ar": "قريباً في خدمتكم"
+    },
+    "AllonaHub Entegrasyonları": {
+      "az": "AllonaHub inteqrasiyaları",
+      "en": "AllonaHub Integrations",
+      "de": "AllonaHub Integrationen",
+      "ru": "Интеграции AllonaHub",
+      "ar": "تكاملات AllonaHub"
+    },
+    "AllonaHub | Yakında Hizmetinizde": {
+      "az": "AllonaHub | Tezliklə xidmətinizdə",
+      "en": "AllonaHub | Coming Soon",
+      "de": "AllonaHub | Demnächst verfügbar",
+      "ru": "AllonaHub | Скоро доступно",
+      "ar": "AllonaHub | قريباً في خدمتكم"
+    },
+    "Allona Güzellik": {
+      "az": "Allona Gözəllik",
+      "en": "Allona Beauty",
+      "de": "Allona Beauty",
+      "ru": "Allona Красота",
+      "ar": "Allona للجمال"
+    },
+    "Allona Evcil Hayvan": {
+      "az": "Allona Ev Heyvanları",
+      "en": "Allona Pets",
+      "de": "Allona Haustiere",
+      "ru": "Allona Питомцы",
+      "ar": "Allona للحيوانات الأليفة"
+    },
+    "Allona Hukuk": {
+      "az": "Allona Hüquq",
+      "en": "Allona Legal",
+      "de": "Allona Recht",
+      "ru": "Allona Право",
+      "ar": "Allona للقانون"
+    },
+    "Başvur": {
+      "az": "Müraciət et",
+      "en": "Apply",
+      "de": "Bewerben",
+      "ru": "Подать заявку",
+      "ar": "قدّم طلباً"
+    },
+    "Boya": {
+      "az": "Boya",
+      "en": "Paint",
+      "de": "Farbe",
+      "ru": "Краска",
+      "ar": "الطلاء"
+    },
+    "Depolama": {
+      "az": "Anbarlama",
+      "en": "Storage",
+      "de": "Lagerung",
+      "ru": "Хранение",
+      "ar": "التخزين"
+    },
+    "Ekspertiz": {
+      "az": "Ekspertiza",
+      "en": "Appraisal",
+      "de": "Gutachten",
+      "ru": "Экспертиза",
+      "ar": "التقييم"
+    },
+    "Elektrik": {
+      "az": "Elektrik",
+      "en": "Electrical",
+      "de": "Elektro",
+      "ru": "Электрика",
+      "ar": "الكهرباء"
+    },
+    "Etiket kontrol": {
+      "az": "Etiket yoxlaması",
+      "en": "Label check",
+      "de": "Labelprüfung",
+      "ru": "Проверка этикетки",
+      "ar": "فحص الملصق"
+    },
+    "Finansman": {
+      "az": "Maliyyələşdirmə",
+      "en": "Financing",
+      "de": "Finanzierung",
+      "ru": "Финансирование",
+      "ar": "التمويل"
+    },
+    "İlan oluştur": {
+      "az": "Elan yarat",
+      "en": "Create Listing",
+      "de": "Anzeige erstellen",
+      "ru": "Создать объявление",
+      "ar": "إنشاء إعلان"
+    },
+    "Kasko": {
+      "az": "Kasko",
+      "en": "Comprehensive Insurance",
+      "de": "Vollkasko",
+      "ru": "КАСКО",
+      "ar": "تأمين شامل"
+    },
+    "Kiralık": {
+      "az": "Kirayə",
+      "en": "For Rent",
+      "de": "Zur Miete",
+      "ru": "В аренду",
+      "ar": "للإيجار"
+    },
+    "Kişisel Bakım": {
+      "az": "Şəxsi baxım",
+      "en": "Personal Care",
+      "de": "Körperpflege",
+      "ru": "Личный уход",
+      "ar": "العناية الشخصية"
+    },
+    "Konut": {
+      "az": "Mənzil",
+      "en": "Housing",
+      "de": "Wohnen",
+      "ru": "Жилье",
+      "ar": "السكن"
+    },
+    "Kurye": {
+      "az": "Kuryer",
+      "en": "Courier",
+      "de": "Kurier",
+      "ru": "Курьер",
+      "ar": "مندوب توصيل"
+    },
+    "Organizatör Partneri Ol": {
+      "az": "Təşkilatçı partner ol",
+      "en": "Become an Organizer Partner",
+      "de": "Organisator-Partner werden",
+      "ru": "Стать партнером-организатором",
+      "ar": "كن شريك تنظيم"
+    },
+    "Petshop": {
+      "az": "Petshop",
+      "en": "Pet Shop",
+      "de": "Zoohandlung",
+      "ru": "Зоомагазин",
+      "ar": "متجر الحيوانات الأليفة"
+    },
+    "Rezervasyon": {
+      "az": "Rezervasiya",
+      "en": "Reservation",
+      "de": "Reservierung",
+      "ru": "Бронирование",
+      "ar": "الحجز"
+    },
+    "Servis": {
+      "az": "Servis",
+      "en": "Service",
+      "de": "Service",
+      "ru": "Сервис",
+      "ar": "الخدمة"
+    },
+    "Şifre": {
+      "az": "Şifrə",
+      "en": "Password",
+      "de": "Passwort",
+      "ru": "Пароль",
+      "ar": "كلمة المرور"
+    },
+    "Tadilat": {
+      "az": "Təmir",
+      "en": "Renovation",
+      "de": "Renovierung",
+      "ru": "Ремонт",
+      "ar": "الترميم"
+    },
+    "Teklif": {
+      "az": "Təklif",
+      "en": "Offer",
+      "de": "Angebot",
+      "ru": "Предложение",
+      "ar": "عرض"
+    },
+    "Teknik Servis": {
+      "az": "Texniki servis",
+      "en": "Technical Service",
+      "de": "Technischer Service",
+      "ru": "Технический сервис",
+      "ar": "الخدمة الفنية"
+    },
+    "Temizle": {
+      "az": "Təmizlə",
+      "en": "Clear",
+      "de": "Löschen",
+      "ru": "Очистить",
+      "ar": "مسح"
+    },
+    "Tesisat": {
+      "az": "Santexnika",
+      "en": "Plumbing",
+      "de": "Installation",
+      "ru": "Сантехника",
+      "ar": "التمديدات"
+    },
+    "Teslimat": {
+      "az": "Çatdırılma",
+      "en": "Delivery",
+      "de": "Lieferung",
+      "ru": "Доставка",
+      "ar": "التسليم"
+    },
+    "Tüm İlanlar": {
+      "az": "Bütün elanlar",
+      "en": "All Listings",
+      "de": "Alle Anzeigen",
+      "ru": "Все объявления",
+      "ar": "كل الإعلانات"
+    },
+    "Tüm Paketler": {
+      "az": "Bütün paketlər",
+      "en": "All Packages",
+      "de": "Alle Pakete",
+      "ru": "Все пакеты",
+      "ar": "كل الباقات"
+    },
+    "Yedek Parça": {
+      "az": "Ehtiyat hissələri",
+      "en": "Spare Parts",
+      "de": "Ersatzteile",
+      "ru": "Запчасти",
+      "ar": "قطع الغيار"
+    }
+  }
+}

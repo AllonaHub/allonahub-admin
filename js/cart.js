@@ -30,6 +30,17 @@
     return /function|schema cache|could not find|does not exist|not found/i.test(message);
   }
 
+  function normalizeProductSnapshot(value) {
+    if (!value) return null;
+    try {
+      const raw = typeof value === "string" ? JSON.parse(decodeURIComponent(value)) : value;
+      const product = core.normalizeProduct(raw);
+      return product.id ? product : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   function remoteCartLines(cart) {
     return ((cart && cart.items) || [])
       .map((item) => {
@@ -95,24 +106,26 @@
     }
   }
 
-  function addLocal(productId, qty) {
+  function addLocal(productId, qty, productSnapshot) {
     const id = String(productId);
     const amount = Math.max(1, Number(qty || 1));
+    const product = normalizeProductSnapshot(productSnapshot);
     const items = getItems();
     const found = items.find((item) => String(item.id) === id);
     if (found) {
       found.qty += amount;
+      if (product && !found.product) found.product = product;
     } else {
-      items.push({ id, qty: amount, added_at: new Date().toISOString() });
+      items.push({ id, qty: amount, product, added_at: new Date().toISOString() });
     }
     setItems(items);
     core.toast("Ürün sepete eklendi.");
   }
 
-  async function add(productId, qty) {
+  async function add(productId, qty, productSnapshot) {
     const user = await currentUser();
     if (!user || !App.db || !App.db.cart) {
-      addLocal(productId, qty);
+      addLocal(productId, qty, productSnapshot);
       return;
     }
     try {
@@ -122,7 +135,7 @@
       core.toast("Ürün sepete eklendi.");
     } catch (error) {
       if (!backendMissing(error)) throw error;
-      addLocal(productId, qty);
+      addLocal(productId, qty, productSnapshot);
     }
   }
 
@@ -198,13 +211,20 @@
 
   async function hydrateLocal() {
     const cartItems = getItems();
-    const products = await App.db.products.byIds(cartItems.map((item) => item.id));
+    let products = [];
+    try {
+      products = App.db && App.db.products
+        ? await App.db.products.byIds(cartItems.map((item) => item.id))
+        : [];
+    } catch (error) {
+      products = [];
+    }
     const byId = new Map(products.map((product) => [String(product.id), product]));
     return cartItems
       .map((item) => ({
         ...item,
         qty: Math.max(1, Number(item.qty || 1)),
-        product: byId.get(String(item.id))
+        product: byId.get(String(item.id)) || normalizeProductSnapshot(item.product)
       }))
       .filter((item) => item.product);
   }
@@ -381,7 +401,7 @@
     if (addButton) {
       try {
         addButton.disabled = true;
-        await App.cart.add(addButton.dataset.addProduct);
+        await App.cart.add(addButton.dataset.addProduct, 1, addButton.dataset.productSnapshot);
       } catch (error) {
         core.toast(error.message || "Ürün sepete eklenemedi.", "error");
       } finally {

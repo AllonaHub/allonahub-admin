@@ -12,8 +12,10 @@
       <div class="summary-line"><span>Ara toplam</span><strong>${core.money(totals.subtotal)}</strong></div>
       <div class="summary-line"><span>Kargo</span><strong>${totals.shipping ? core.money(totals.shipping) : "Ücretsiz"}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
-      <a class="btn btn--full" href="${core.url("/pages/commerce/checkout.html")}" ${lines.length ? "" : "aria-disabled='true'"}>Ödemeye Geç</a>
-      <button class="btn btn--light btn--full" type="button" data-clear-cart>Sepeti Temizle</button>
+      ${lines.length
+        ? `<a class="btn btn--full" href="${core.url("/pages/commerce/checkout.html")}">Ödemeye Geç</a>`
+        : `<button class="btn btn--full" type="button" disabled>Ödemeye Geç</button>`}
+      <button class="btn btn--light btn--full" type="button" data-clear-cart ${lines.length ? "" : "disabled"}>Sepeti Temizle</button>
     `;
   }
 

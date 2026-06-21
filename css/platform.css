@@ -767,6 +767,36 @@ body[data-theme] .field textarea::placeholder {
   color: color-mix(in srgb, var(--ah-ink) 54%, transparent) !important;
 }
 
+body[data-theme] .panel-step,
+body[data-theme] .panel-step strong {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .payment-card-panel,
+body[data-theme] .payment-methods {
+  --payment-surface-ink: #10232f;
+  --payment-surface-muted: #405664;
+  --payment-surface-accent: #007c91;
+  color: var(--payment-surface-ink) !important;
+}
+
+body[data-theme] .payment-card-panel .panel-step,
+body[data-theme] .payment-card-panel .panel-step strong,
+body[data-theme] .payment-card-panel__head strong {
+  color: var(--payment-surface-ink) !important;
+}
+
+body[data-theme] .payment-card-panel__copy,
+body[data-theme] .payment-card-panel__list,
+body[data-theme] .payment-card-panel__list li,
+body[data-theme] .payment-methods__title {
+  color: var(--payment-surface-muted) !important;
+}
+
+body[data-theme] .payment-card-panel__head span {
+  color: var(--payment-surface-accent) !important;
+}
+
 body[data-theme]:has(.premium-hero) header {
   background: color-mix(in srgb, var(--ah-bg-strong) 88%, transparent) !important;
   border-bottom-color: var(--ah-line) !important;

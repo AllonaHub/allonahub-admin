@@ -87,6 +87,7 @@
     }
 
     .pay-btn{
+      display:block;
       width:100%;
       margin-top:20px;
       border:none;
@@ -96,6 +97,8 @@
       color:#06131a;
       font-size:17px;
       font-weight:bold;
+      text-align:center;
+      text-decoration:none;
       cursor:pointer;
       box-shadow:0 0 30px rgba(0,180,216,.25);
     }
@@ -235,33 +238,20 @@
 
       <div class="card">
         <div class="badge">Güvenli Ödeme</div>
-        <h1>Kart ile Öde</h1>
+        <h1>Güvenli Ödeme Yönlendirmesi</h1>
 
         <form id="paymentForm">
-          <label>Kart Üzerindeki İsim</label>
-          <input type="text" placeholder="Ad Soyad" autocomplete="cc-name" required>
-
-          <label>Kart Numarası</label>
-          <input type="text" placeholder="•••• •••• •••• ••••" inputmode="numeric" maxlength="19" autocomplete="cc-number" required>
-
-          <div class="row">
-            <div>
-              <label>Son Kullanma Tarihi</label>
-              <input type="text" placeholder="AA / YY" maxlength="7" autocomplete="cc-exp" required>
-            </div>
-
-            <div>
-              <label>CVV</label>
-              <input type="password" placeholder="•••" maxlength="4" inputmode="numeric" autocomplete="cc-csc" required>
-            </div>
+          <div class="info-box">
+            Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz.
+            Sipariş veya paket seçiminiz checkout adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.
           </div>
 
-          <button type="button" class="pay-btn">
-            Ödeme Yap
-          </button>
+          <a href="checkout.html" class="pay-btn">
+            Güvenli Checkout'a Devam Et
+          </a>
 
           <div class="secure-note">
-            Ödeme işlemleri iyzico güvenli ödeme altyapısı üzerinden gerçekleştirilecektir.
+            Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.
           </div>
 
           <div class="logos">
@@ -275,7 +265,7 @@
           </div>
         </form>
 
-        <a href="../../index.html" class="back">← Ana Sayfaya Dön</a>
+        <a href="cart.html" class="back">← Sepete Dön</a>
       </div>
 
       <aside class="card">
@@ -302,22 +292,17 @@
         </div>
 
         <div class="info-box">
-          Bu sayfa ödeme ekranı tasarım önizlemesidir. Gerçek ödeme sürecinde kart bilgileri
-          AllonaHub tarafından saklanmaz; işlem iyzico güvenli ödeme altyapısı üzerinden tamamlanır.
+          Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek ödeme checkout
+          ve iyzico güvenli ödeme sayfasında tamamlanır.
         </div>
       </aside>
 
     </section>
   </main>
 
-  <script>
-    document.querySelector(".pay-btn").addEventListener("click", function () {
-      alert("İyzico güvenli ödeme altyapısı onay sonrası bu alana bağlanacaktır.");
-    });
-  </script>
   <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/core.js?v=20260621-cart-snapshot1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+  <script src="../../js/platform.js?v=20260621-checkout-contrast1" defer></script>
 </body>
 </html>

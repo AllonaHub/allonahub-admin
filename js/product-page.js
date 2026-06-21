@@ -175,6 +175,10 @@
     return fallbackProducts.find((product) => String(product.id) === String(id) || product.slug === slug);
   }
 
+  function canQueryRemoteProduct(id) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""));
+  }
+
   function compactCount(value) {
     const count = Math.max(0, Number(value || 0));
     if (!count) return "";
@@ -293,7 +297,7 @@
         const button = event.target.closest("[data-detail-add]");
         try {
           button.disabled = true;
-          await App.cart.add(product.id, qty);
+          await App.cart.add(product.id, qty, product);
         } catch (error) {
           core.toast(error.message || "Ürün sepete eklenemedi.", "error");
         } finally {
@@ -315,14 +319,15 @@
     core.renderStatus(root, "Ürün yükleniyor...");
     try {
       const slug = core.getParam("slug");
-      let product = null;
-      try {
-        product = await App.db.products.byId(id);
-      } catch (error) {
-        product = findFallbackProduct(id, slug);
-        if (!product) throw error;
+      let product = findFallbackProduct(id, slug);
+      if (!product && canQueryRemoteProduct(id)) {
+        try {
+          product = await App.db.products.byId(id);
+        } catch (error) {
+          product = findFallbackProduct(id, slug);
+          if (!product) throw error;
+        }
       }
-      product = product || findFallbackProduct(id, slug);
       if (!product) {
         core.renderStatus(root, "Ürün bulunamadı veya aktif değil.", "error");
         return;
