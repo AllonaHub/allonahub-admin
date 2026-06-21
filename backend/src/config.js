@@ -107,7 +107,7 @@ export const config = {
   },
   assistant: {
     enabled: readBool("ASSISTANT_ENABLED", true),
-    aiProvider: readEnv("ASSISTANT_AI_PROVIDER", { required: false, defaultValue: "openai" }),
+    aiProvider: readEnv("ASSISTANT_AI_PROVIDER", { required: false, defaultValue: "rules" }),
     aiApiKey: readOptionalSecret("ASSISTANT_AI_API_KEY", "OPENAI_API_KEY"),
     aiBaseUrl: readEnv("ASSISTANT_AI_BASE_URL", { required: false, defaultValue: "https://api.openai.com/v1/responses" }).replace(/\/$/, ""),
     aiModel: readEnv("ASSISTANT_AI_MODEL", { required: false, defaultValue: "gpt-4o-mini" }),

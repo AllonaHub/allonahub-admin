@@ -261,6 +261,7 @@ function extractTextFromChatCompletions(data) {
 
 async function callAiProvider({ message, channel, intent, context, metadata }) {
   if (!config.assistant.enabled || !config.assistant.aiApiKey) return "";
+  if (["rules", "fallback", "none", "off"].includes(String(config.assistant.aiProvider || "").toLowerCase())) return "";
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), clamp(config.assistant.aiTimeoutMs, 3000, 30000));
@@ -372,4 +373,3 @@ export function publicAssistantErrorMessage(error) {
   if (/auth|jwt|forbidden|permission/i.test(message)) return "Bu kanal için oturum yetkisi doğrulanamadı.";
   return "Asistan şu anda yanıtı tamamlayamadı. Lütfen biraz sonra tekrar deneyin.";
 }
-

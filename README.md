@@ -67,6 +67,6 @@ Backend içinde kanal bağımsız assistant servisi hazırlanmıştır:
 - `conversation_logs`: kullanıcı ve asistan mesajlarını `channel`, `sender_type`, `metadata` ve `created_at` alanlarıyla saklar.
 - `js/assistant-widget.js`: web sitesine gömülebilecek canlı destek widget altyapısıdır.
 
-AI sağlayıcı anahtarı, Telegram bot tokenı ve webhook secret değerleri kesinlikle frontend'e yazılmaz. Üretimde `ASSISTANT_AI_API_KEY` veya `OPENAI_API_KEY`, `ASSISTANT_TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` ve ilgili rate limit ayarları environment variable olarak tanımlanmalıdır. AI anahtarı yoksa servis güvenli hazır cevap modunda çalışır.
+AI sağlayıcı anahtarı, Telegram bot tokenı ve webhook secret değerleri kesinlikle frontend'e yazılmaz. İkinci aşama üretim modu ücretsiz ve kural tabanlıdır: `ASSISTANT_AI_PROVIDER=rules`, `ASSISTANT_AI_API_KEY=` ve `OPENAI_API_KEY=` boş kalmalıdır. Telegram için `ASSISTANT_TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` ve ilgili rate limit ayarları environment variable olarak tanımlanmalıdır.
 
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `docs/security/enterprise-security-program.md`, `docs/security/incident-response-auto-defense.md`, `docs/reference/TASKS.md`, `docs/reference/DATABASE.md`, `docs/reference/API.md`, `docs/reference/DEPLOY.md` ve `docs/reference/STYLE_GUIDE.md` dosyalarını kullan.
