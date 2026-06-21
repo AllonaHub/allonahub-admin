@@ -1,10 +1,10 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260621-homeauth1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260621-modimg1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
   "./manifest.webmanifest",
-  "./css/allonahub-home.css?v=20260621-pwa1",
+  "./css/allonahub-home.css?v=20260621-modimg1",
   "./css/platform.css?v=20260621-mobile1",
   "./js/config.js?v=20260621-homeauth1",
   "./js/core.js?v=20260619-sec1",
@@ -13,7 +13,7 @@ const APP_SHELL = [
   "./js/layout.v3.js?v=20260620-account2",
   "./js/platform.js?v=20260621-homeauth1",
   "./js/allonahub-home.js?v=20260621-homeauth1",
-  "./js/pwa-install.js?v=20260621-homeauth1",
+  "./js/pwa-install.js?v=20260621-modimg1",
   "./images/brand/allonahub-icon-180.png",
   "./images/brand/allonahub-icon-192.png",
   "./images/brand/allonahub-icon-512.png",
