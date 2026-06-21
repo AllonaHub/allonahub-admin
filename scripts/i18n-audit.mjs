@@ -38,7 +38,18 @@ function shouldSkip(value) {
   const text = normalize(value);
   if (!text || text.length < 2 || text.length > 220) return true;
   if (/^(Allona|Hub|AllonaHub|AllonaHub Logo|HP|VIP|AMEX|Visa|Mastercard|App Store|Google Play)$/i.test(text)) return true;
+  if (/^(Elite|Elite Black|Kadıköy)$/i.test(text)) return true;
+  if (text === "'da.") return true;
+  if (/^(WhatsApp|Instagram|Facebook|YouTube|LinkedIn|Telegram|TikTok|Nsosyal|E-Mail|X|𝕏|in)$/i.test(text)) return true;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) return true;
+  if (/^(www\.)?[a-z0-9.-]+\.[a-z]{2,}$/i.test(text)) return true;
   if (/^\+?\d+\s*HP$/i.test(text)) return true;
+  if (/^\+?\d[\d\s().-]{5,}$/.test(text)) return true;
+  if (/^\+90\s*5x{2}/i.test(text)) return true;
+  if (/^[\p{Emoji_Presentation}\p{Extended_Pictographic}\uFE0F\u200D\s]+$/u.test(text)) return true;
+  if (/^\d[\d.,]*\s*(m²|m2|m|km|kg|gr|DWT)$/i.test(text)) return true;
+  if (/\d/.test(text) && /\b(dk|m²|m2|m|km|kg|gr|DWT|HP|₺|TL|EUR|USD|build|charter)\b|[%₺€$↑•]/i.test(text)) return true;
+  if (/^\d+\.\s+[A-ZÇĞİÖŞÜa-zçğıöşü ]{2,24}$/.test(text)) return true;
   if (/^[a-f0-9]{20,}$/i.test(text)) return true;
   if (/^(width=|initial-scale=|minimum-scale=|maximum-scale=|user-scalable=)/i.test(text)) return true;
   if (/[`${}]/.test(text)) return true;

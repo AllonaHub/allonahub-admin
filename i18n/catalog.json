@@ -1897,6 +1897,2407 @@
       "de": "Ersatzteile",
       "ru": "Запчасти",
       "ar": "قطع الغيار"
+    },
+    "Açık": {
+      "az": "Açıq",
+      "en": "Open",
+      "de": "Offen",
+      "ru": "Открыто",
+      "ar": "مفتوح"
+    },
+    "Aile": {
+      "az": "Ailə",
+      "en": "Family",
+      "de": "Familie",
+      "ru": "Семья",
+      "ar": "العائلة"
+    },
+    "Akıllı CV Oluştur": {
+      "az": "Ağıllı CV yarat",
+      "en": "Create Smart CV",
+      "de": "Smart-CV erstellen",
+      "ru": "Создать умное CV",
+      "ar": "إنشاء سيرة ذاتية ذكية"
+    },
+    "Akıllı Saat": {
+      "az": "Ağıllı saat",
+      "en": "Smart Watch",
+      "de": "Smartwatch",
+      "ru": "Умные часы",
+      "ar": "ساعة ذكية"
+    },
+    "Aksesuar": {
+      "az": "Aksesuar",
+      "en": "Accessory",
+      "de": "Zubehör",
+      "ru": "Аксессуар",
+      "ar": "إكسسوار"
+    },
+    "Bahçe": {
+      "az": "Bağça",
+      "en": "Garden",
+      "de": "Garten",
+      "ru": "Сад",
+      "ar": "الحديقة"
+    },
+    "Bakım": {
+      "az": "Baxım",
+      "en": "Care",
+      "de": "Pflege",
+      "ru": "Уход",
+      "ar": "العناية"
+    },
+    "Başlangıç": {
+      "az": "Başlanğıc",
+      "en": "Beginner",
+      "de": "Einstieg",
+      "ru": "Начальный уровень",
+      "ar": "البداية"
+    },
+    "Bilgilendirme:": {
+      "az": "Məlumat:",
+      "en": "Information:",
+      "de": "Information:",
+      "ru": "Информация:",
+      "ar": "معلومات:"
+    },
+    "Bilgisayar": {
+      "az": "Kompüter",
+      "en": "Computer",
+      "de": "Computer",
+      "ru": "Компьютер",
+      "ar": "حاسوب"
+    },
+    "Cilt Bakımı": {
+      "az": "Dəri baxımı",
+      "en": "Skin Care",
+      "de": "Hautpflege",
+      "ru": "Уход за кожей",
+      "ar": "العناية بالبشرة"
+    },
+    "CV Oluştur": {
+      "az": "CV yarat",
+      "en": "Create CV",
+      "de": "CV erstellen",
+      "ru": "Создать CV",
+      "ar": "إنشاء سيرة ذاتية"
+    },
+    "Çocuk": {
+      "az": "Uşaq",
+      "en": "Child",
+      "de": "Kind",
+      "ru": "Ребенок",
+      "ar": "طفل"
+    },
+    "Çok Satanlar": {
+      "az": "Ən çox satılanlar",
+      "en": "Best Sellers",
+      "de": "Bestseller",
+      "ru": "Хиты продаж",
+      "ar": "الأكثر مبيعاً"
+    },
+    "Ekonomik": {
+      "az": "Ekonomik",
+      "en": "Economy",
+      "de": "Sparsam",
+      "ru": "Экономичный",
+      "ar": "اقتصادي"
+    },
+    "Ev": {
+      "az": "Ev",
+      "en": "Home",
+      "de": "Haus",
+      "ru": "Дом",
+      "ar": "المنزل"
+    },
+    "Fotoğraf": {
+      "az": "Fotoşəkil",
+      "en": "Photo",
+      "de": "Foto",
+      "ru": "Фотография",
+      "ar": "صورة"
+    },
+    "Haritada Gör": {
+      "az": "Xəritədə gör",
+      "en": "View on Map",
+      "de": "Auf Karte anzeigen",
+      "ru": "Показать на карте",
+      "ar": "عرض على الخريطة"
+    },
+    "Hesap": {
+      "az": "Hesab",
+      "en": "Account",
+      "de": "Konto",
+      "ru": "Аккаунт",
+      "ar": "الحساب"
+    },
+    "HP Ekonomisi": {
+      "az": "HP iqtisadiyyatı",
+      "en": "HP Economy",
+      "de": "HP-Ökonomie",
+      "ru": "Экономика HP",
+      "ar": "اقتصاد HP"
+    },
+    "Kampanya": {
+      "az": "Kampaniya",
+      "en": "Campaign",
+      "de": "Kampagne",
+      "ru": "Акция",
+      "ar": "حملة"
+    },
+    "Kargo": {
+      "az": "Karqo",
+      "en": "Shipping",
+      "de": "Versand",
+      "ru": "Доставка",
+      "ar": "الشحن"
+    },
+    "Kısa profesyonel özet": {
+      "az": "Qısa peşəkar xülasə",
+      "en": "Short professional summary",
+      "de": "Kurze berufliche Zusammenfassung",
+      "ru": "Краткое профессиональное резюме",
+      "ar": "ملخص مهني قصير"
+    },
+    "Kişisel": {
+      "az": "Şəxsi",
+      "en": "Personal",
+      "de": "Persönlich",
+      "ru": "Личное",
+      "ar": "شخصي"
+    },
+    "Makyaj": {
+      "az": "Makiyaj",
+      "en": "Makeup",
+      "de": "Make-up",
+      "ru": "Макияж",
+      "ar": "المكياج"
+    },
+    "Mama": {
+      "az": "Yem",
+      "en": "Pet Food",
+      "de": "Tierfutter",
+      "ru": "Корм",
+      "ar": "طعام الحيوانات"
+    },
+    "Onaylı": {
+      "az": "Təsdiqlənmiş",
+      "en": "Verified",
+      "de": "Bestätigt",
+      "ru": "Подтверждено",
+      "ar": "موثق"
+    },
+    "Oyuncak": {
+      "az": "Oyuncaq",
+      "en": "Toy",
+      "de": "Spielzeug",
+      "ru": "Игрушка",
+      "ar": "لعبة"
+    },
+    "Parfüm": {
+      "az": "Ətir",
+      "en": "Perfume",
+      "de": "Parfum",
+      "ru": "Парфюм",
+      "ar": "عطر"
+    },
+    "Partner Paneli": {
+      "az": "Partner paneli",
+      "en": "Partner Panel",
+      "de": "Partner-Panel",
+      "ru": "Панель партнера",
+      "ar": "لوحة الشريك"
+    },
+    "Satış": {
+      "az": "Satış",
+      "en": "Sales",
+      "de": "Vertrieb",
+      "ru": "Продажи",
+      "ar": "المبيعات"
+    },
+    "Sertifika": {
+      "az": "Sertifikat",
+      "en": "Certificate",
+      "de": "Zertifikat",
+      "ru": "Сертификат",
+      "ar": "شهادة"
+    },
+    "Sertifikalar": {
+      "az": "Sertifikatlar",
+      "en": "Certificates",
+      "de": "Zertifikate",
+      "ru": "Сертификаты",
+      "ar": "الشهادات"
+    },
+    "Sertifikalarım": {
+      "az": "Sertifikatlarım",
+      "en": "My Certificates",
+      "de": "Meine Zertifikate",
+      "ru": "Мои сертификаты",
+      "ar": "شهاداتي"
+    },
+    "Seyahat": {
+      "az": "Səyahət",
+      "en": "Travel",
+      "de": "Reisen",
+      "ru": "Путешествия",
+      "ar": "السفر"
+    },
+    "Sıralama": {
+      "az": "Sıralama",
+      "en": "Sorting",
+      "de": "Sortierung",
+      "ru": "Сортировка",
+      "ar": "الترتيب"
+    },
+    "Spor Giyim": {
+      "az": "İdman geyimi",
+      "en": "Sportswear",
+      "de": "Sportbekleidung",
+      "ru": "Спортивная одежда",
+      "ar": "ملابس رياضية"
+    },
+    "Şirket": {
+      "az": "Şirkət",
+      "en": "Company",
+      "de": "Unternehmen",
+      "ru": "Компания",
+      "ar": "الشركة"
+    },
+    "Takip": {
+      "az": "İzləmə",
+      "en": "Tracking",
+      "de": "Nachverfolgung",
+      "ru": "Отслеживание",
+      "ar": "المتابعة"
+    },
+    "Tarih": {
+      "az": "Tarix",
+      "en": "Date",
+      "de": "Datum",
+      "ru": "Дата",
+      "ar": "التاريخ"
+    },
+    "Temizlik": {
+      "az": "Təmizlik",
+      "en": "Cleaning",
+      "de": "Reinigung",
+      "ru": "Уборка",
+      "ar": "التنظيف"
+    },
+    "Ücretsiz Kargo": {
+      "az": "Pulsuz karqo",
+      "en": "Free Shipping",
+      "de": "Kostenloser Versand",
+      "ru": "Бесплатная доставка",
+      "ar": "شحن مجاني"
+    },
+    "Ülke": {
+      "az": "Ölkə",
+      "en": "Country",
+      "de": "Land",
+      "ru": "Страна",
+      "ar": "البلد"
+    },
+    "Vize": {
+      "az": "Viza",
+      "en": "Visa",
+      "de": "Visum",
+      "ru": "Виза",
+      "ar": "تأشيرة"
+    },
+    "Yakında": {
+      "az": "Tezliklə",
+      "en": "Coming Soon",
+      "de": "Bald verfügbar",
+      "ru": "Скоро",
+      "ar": "قريباً"
+    },
+    "Yakınımdakiler": {
+      "az": "Yaxınımdakılar",
+      "en": "Nearby",
+      "de": "In meiner Nähe",
+      "ru": "Рядом со мной",
+      "ar": "بالقرب مني"
+    },
+    "Yazılım": {
+      "az": "Proqram təminatı",
+      "en": "Software",
+      "de": "Software",
+      "ru": "Программное обеспечение",
+      "ar": "البرمجيات"
+    },
+    "Yemek": {
+      "az": "Yemək",
+      "en": "Food",
+      "de": "Essen",
+      "ru": "Еда",
+      "ar": "الطعام"
+    },
+    "Yenile": {
+      "az": "Yenilə",
+      "en": "Refresh",
+      "de": "Aktualisieren",
+      "ru": "Обновить",
+      "ar": "تحديث"
+    },
+    "Yoga": {
+      "az": "Yoqa",
+      "en": "Yoga",
+      "de": "Yoga",
+      "ru": "Йога",
+      "ar": "يوغا"
+    },
+    "Baro": {
+      "az": "Vəkillər kollegiyası",
+      "en": "Bar Association",
+      "de": "Anwaltskammer",
+      "ru": "Адвокатская палата",
+      "ar": "نقابة المحامين"
+    },
+    "kurum doğrulaması": {
+      "az": "qurum təsdiqi",
+      "en": "institution verification",
+      "de": "Institutionsprüfung",
+      "ru": "проверка учреждения",
+      "ar": "التحقق من المؤسسة"
+    },
+    "Etkinlik Seç": {
+      "az": "Tədbir seç",
+      "en": "Select Event",
+      "de": "Event auswählen",
+      "ru": "Выбрать событие",
+      "ar": "اختر الفعالية"
+    },
+    "İlan": {
+      "az": "Elan",
+      "en": "Listing",
+      "de": "Anzeige",
+      "ru": "Объявление",
+      "ar": "إعلان"
+    },
+    "Plan": {
+      "az": "Plan",
+      "en": "Plan",
+      "de": "Plan",
+      "ru": "План",
+      "ar": "خطة"
+    },
+    "Ürün partner panelinden yüklenir": {
+      "az": "Məhsul partner panelindən yüklənir",
+      "en": "The product is uploaded from the partner panel",
+      "de": "Das Produkt wird über das Partner-Panel hochgeladen",
+      "ru": "Товар загружается из панели партнера",
+      "ar": "يتم رفع المنتج من لوحة الشريك"
+    },
+    "Yük türü": {
+      "az": "Yük növü",
+      "en": "Cargo type",
+      "de": "Frachtart",
+      "ru": "Тип груза",
+      "ar": "نوع الشحنة"
+    },
+    "Yükleme limanı": {
+      "az": "Yükləmə limanı",
+      "en": "Loading port",
+      "de": "Ladehafen",
+      "ru": "Порт погрузки",
+      "ar": "ميناء التحميل"
+    },
+    "Tahliye limanı": {
+      "az": "Boşaltma limanı",
+      "en": "Discharge port",
+      "de": "Entladehafen",
+      "ru": "Порт выгрузки",
+      "ar": "ميناء التفريغ"
+    },
+    "Belge": {
+      "az": "Sənəd",
+      "en": "Document",
+      "de": "Dokument",
+      "ru": "Документ",
+      "ar": "مستند"
+    },
+    "Hazırlık": {
+      "az": "Hazırlıq",
+      "en": "Preparation",
+      "de": "Vorbereitung",
+      "ru": "Подготовка",
+      "ar": "التحضير"
+    },
+    "Koltuk / Alan": {
+      "az": "Oturacaq / Sahə",
+      "en": "Seat / Area",
+      "de": "Sitz / Bereich",
+      "ru": "Место / Зона",
+      "ar": "مقعد / منطقة"
+    },
+    "Paket": {
+      "az": "Paket",
+      "en": "Package",
+      "de": "Paket",
+      "ru": "Пакет",
+      "ar": "باقة"
+    },
+    "Rota": {
+      "az": "Marşrut",
+      "en": "Route",
+      "de": "Route",
+      "ru": "Маршрут",
+      "ar": "المسار"
+    },
+    "Uzman": {
+      "az": "Mütəxəssis",
+      "en": "Expert",
+      "de": "Experte",
+      "ru": "Эксперт",
+      "ar": "خبير"
+    },
+    "Uzmanlık alanı ve yönlendirme kategorileri": {
+      "az": "İxtisas sahəsi və yönləndirmə kateqoriyaları",
+      "en": "Expertise area and routing categories",
+      "de": "Fachgebiet und Routing-Kategorien",
+      "ru": "Область экспертизы и категории маршрутизации",
+      "ar": "مجال الخبرة وفئات التوجيه"
+    },
+    "Talep havuzu ve belge kontrol ekranı": {
+      "az": "Tələb hovuzu və sənəd yoxlama ekranı",
+      "en": "Request pool and document review screen",
+      "de": "Anfragepool und Dokumentenprüfungsbildschirm",
+      "ru": "Пул запросов и экран проверки документов",
+      "ar": "مجموعة الطلبات وشاشة فحص المستندات"
+    },
+    "Eşleşme": {
+      "az": "Uyğunluq",
+      "en": "Matching",
+      "de": "Abgleich",
+      "ru": "Сопоставление",
+      "ar": "المطابقة"
+    },
+    "İlgili modüllerde yayınlanır": {
+      "az": "Müvafiq modullarda yayımlanır",
+      "en": "Published in relevant modules",
+      "de": "In relevanten Modulen veröffentlicht",
+      "ru": "Публикуется в соответствующих модулях",
+      "ar": "يُنشر في الوحدات ذات الصلة"
+    },
+    "Tonaj, laycan, incoterms ve özel şartlar": {
+      "az": "Tonaj, laycan, incoterms və xüsusi şərtlər",
+      "en": "Tonnage, laycan, Incoterms, and special conditions",
+      "de": "Tonnage, Laycan, Incoterms und Sonderbedingungen",
+      "ru": "Тоннаж, laycan, Incoterms и специальные условия",
+      "ar": "الحمولة وlaycan وIncoterms والشروط الخاصة"
+    },
+    "Yönlendirme": {
+      "az": "Yönləndirmə",
+      "en": "Routing",
+      "de": "Weiterleitung",
+      "ru": "Маршрутизация",
+      "ar": "التوجيه"
+    },
+    "Alım": {
+      "az": "Götürmə",
+      "en": "Pickup",
+      "de": "Abholung",
+      "ru": "Получение",
+      "ar": "الاستلام"
+    },
+    "Atama": {
+      "az": "Təyinat",
+      "en": "Assignment",
+      "de": "Zuweisung",
+      "ru": "Назначение",
+      "ar": "التعيين"
+    },
+    "Broker ve gemi şirketlerinden teklif akışı": {
+      "az": "Broker və gəmi şirkətlərindən təklif axını",
+      "en": "Offer flow from brokers and shipping companies",
+      "de": "Angebotsfluss von Brokern und Reedereien",
+      "ru": "Поток предложений от брокеров и судоходных компаний",
+      "ar": "تدفق العروض من الوسطاء وشركات الشحن"
+    },
+    "Hizmet": {
+      "az": "Xidmət",
+      "en": "Service",
+      "de": "Service",
+      "ru": "Услуга",
+      "ar": "خدمة"
+    },
+    "Paketleme": {
+      "az": "Qablaşdırma",
+      "en": "Packing",
+      "de": "Verpackung",
+      "ru": "Упаковка",
+      "ar": "التغليف"
+    },
+    "QR Bilet": {
+      "az": "QR bilet",
+      "en": "QR Ticket",
+      "de": "QR-Ticket",
+      "ru": "QR-билет",
+      "ar": "تذكرة QR"
+    },
+    "Puan": {
+      "az": "Bal",
+      "en": "Score",
+      "de": "Punktzahl",
+      "ru": "Оценка",
+      "ar": "نقاط"
+    },
+    "kişi": {
+      "az": "nəfər",
+      "en": "people",
+      "de": "Personen",
+      "ru": "человек",
+      "ar": "أشخاص"
+    },
+    "saatlik profesyonel temizlik paketi": {
+      "az": "saatlıq peşəkar təmizlik paketi",
+      "en": "hour professional cleaning package",
+      "de": "Stunden professionelles Reinigungspaket",
+      "ru": "часовой профессиональный пакет уборки",
+      "ar": "باقة تنظيف احترافية بالساعة"
+    },
+    "Sözleşme": {
+      "az": "Müqavilə",
+      "en": "Agreement",
+      "de": "Vertrag",
+      "ru": "Договор",
+      "ar": "عقد"
+    },
+    "Giriş Kontrol": {
+      "az": "Giriş nəzarəti",
+      "en": "Entry Control",
+      "de": "Einlasskontrolle",
+      "ru": "Контроль входа",
+      "ar": "فحص الدخول"
+    },
+    "Sonuç": {
+      "az": "Nəticə",
+      "en": "Result",
+      "de": "Ergebnis",
+      "ru": "Результат",
+      "ar": "النتيجة"
+    },
+    "Taşıma": {
+      "az": "Daşıma",
+      "en": "Transport",
+      "de": "Transport",
+      "ru": "Перевозка",
+      "ar": "النقل"
+    },
+    "Etkinlik": {
+      "az": "Tədbir",
+      "en": "Event",
+      "de": "Event",
+      "ru": "Мероприятие",
+      "ar": "فعالية"
+    },
+    "İthalat & İhracat": {
+      "az": "İdxal və ixrac",
+      "en": "Import & Export",
+      "de": "Import & Export",
+      "ru": "Импорт и экспорт",
+      "ar": "الاستيراد والتصدير"
+    },
+    "Acente": {
+      "az": "Agentlik",
+      "en": "Agency",
+      "de": "Agentur",
+      "ru": "Агентство",
+      "ar": "وكالة"
+    },
+    "Acente ve liman hizmetleri": {
+      "az": "Agentlik və liman xidmətləri",
+      "en": "Agency and port services",
+      "de": "Agentur- und Hafendienstleistungen",
+      "ru": "Агентские и портовые услуги",
+      "ar": "خدمات الوكالة والميناء"
+    },
+    "Aday Avantajları": {
+      "az": "Namizəd üstünlükləri",
+      "en": "Candidate Benefits",
+      "de": "Vorteile für Kandidaten",
+      "ru": "Преимущества кандидата",
+      "ar": "مزايا المرشح"
+    },
+    "Aday eşleşmesi": {
+      "az": "Namizəd uyğunluğu",
+      "en": "Candidate matching",
+      "de": "Kandidatenabgleich",
+      "ru": "Сопоставление кандидатов",
+      "ar": "مطابقة المرشحين"
+    },
+    "Açılış, lansman, gala, bayi toplantısı ve şirket etkinlikleri.": {
+      "az": "Açılış, təqdimat, qala, diler toplantısı və şirkət tədbirləri.",
+      "en": "Openings, launches, galas, dealer meetings, and corporate events.",
+      "de": "Eröffnungen, Launches, Galas, Händlertreffen und Firmenveranstaltungen.",
+      "ru": "Открытия, запуски, гала, дилерские встречи и корпоративные мероприятия.",
+      "ar": "افتتاحات وإطلاقات وحفلات واجتماعات موزعين وفعاليات شركات."
+    },
+    "Adaptör, batarya, ekran, kablo ve aksesuar talepleri.": {
+      "az": "Adapter, batareya, ekran, kabel və aksesuar tələbləri.",
+      "en": "Adapter, battery, screen, cable, and accessory requests.",
+      "de": "Anfragen zu Adapter, Akku, Bildschirm, Kabel und Zubehör.",
+      "ru": "Запросы на адаптеры, батареи, экраны, кабели и аксессуары.",
+      "ar": "طلبات المحولات والبطاريات والشاشات والكابلات والإكسسوارات."
+    },
+    "Otomatik": {
+      "az": "Avtomatik",
+      "en": "Automatic",
+      "de": "Automatik",
+      "ru": "Автомат",
+      "ar": "أوتوماتيك"
+    },
+    "Benzin": {
+      "az": "Benzin",
+      "en": "Gasoline",
+      "de": "Benzin",
+      "ru": "Бензин",
+      "ar": "بنزين"
+    },
+    "ay deneyim": {
+      "az": "ay təcrübə",
+      "en": "months of experience",
+      "de": "Monate Erfahrung",
+      "ru": "месяцев опыта",
+      "ar": "شهر خبرة"
+    },
+    "AllonaHub kullanım şartları.": {
+      "az": "AllonaHub istifadə şərtləri.",
+      "en": "AllonaHub terms of use.",
+      "de": "AllonaHub Nutzungsbedingungen.",
+      "ru": "Условия использования AllonaHub.",
+      "ar": "شروط استخدام AllonaHub."
+    },
+    "AllonaHub web sitesi ve alışveriş hizmetlerini kullanırken geçerli temel şartlar.": {
+      "az": "AllonaHub veb-saytı və alış-veriş xidmətlərindən istifadə zamanı qüvvədə olan əsas şərtlər.",
+      "en": "The basic terms that apply when using the AllonaHub website and shopping services.",
+      "de": "Die grundlegenden Bedingungen, die bei der Nutzung der AllonaHub Website und Einkaufsdienste gelten.",
+      "ru": "Основные условия, действующие при использовании сайта AllonaHub и сервисов покупок.",
+      "ar": "الشروط الأساسية السارية عند استخدام موقع AllonaHub وخدمات التسوق."
+    },
+    "AllonaHub, AllonaHub ekosisteminin e-ticaret modülüdür. Site üzerinden ürün inceleme, sepet oluşturma, sipariş verme, üyelik ve müşteri hesabı işlemleri yapılabilir.": {
+      "az": "AllonaHub, AllonaHub ekosisteminin e-ticarət moduludur. Sayt üzərindən məhsulları nəzərdən keçirmək, səbət yaratmaq, sifariş vermək, üzvlük və müştəri hesabı əməliyyatlarını aparmaq mümkündür.",
+      "en": "AllonaHub is the e-commerce module of the AllonaHub ecosystem. Users can review products, create a cart, place orders, manage membership, and perform customer account actions through the site.",
+      "de": "AllonaHub ist das E-Commerce-Modul des AllonaHub Ökosystems. Über die Website können Produkte angesehen, Warenkörbe erstellt, Bestellungen aufgegeben sowie Mitgliedschafts- und Kundenkontoaktionen durchgeführt werden.",
+      "ru": "AllonaHub является модулем электронной коммерции экосистемы AllonaHub. На сайте можно просматривать товары, формировать корзину, оформлять заказы, управлять регистрацией и действиями клиентского аккаунта.",
+      "ar": "AllonaHub هو وحدة التجارة الإلكترونية ضمن منظومة AllonaHub. يمكن عبر الموقع استعراض المنتجات وإنشاء السلة وتقديم الطلبات وإدارة العضوية وحساب العميل."
+    },
+    "Platform güvenliğini veya veri bütünlüğünü bozacak girişimlerde bulunmak.": {
+      "az": "Platform təhlükəsizliyini və ya məlumat bütövlüyünü pozacaq cəhdlər etmək.",
+      "en": "Attempting actions that would compromise platform security or data integrity.",
+      "de": "Handlungen zu versuchen, die die Plattformsicherheit oder Datenintegrität beeinträchtigen würden.",
+      "ru": "Предпринимать попытки, которые могут нарушить безопасность платформы или целостность данных.",
+      "ar": "القيام بمحاولات قد تخل بأمن المنصة أو سلامة البيانات."
+    },
+    "Yetkisiz admin, partner veya kullanıcı verisine erişmeye çalışmak.": {
+      "az": "İcazəsiz admin, partner və ya istifadəçi məlumatlarına daxil olmağa çalışmaq.",
+      "en": "Attempting to access unauthorized admin, partner, or user data.",
+      "de": "Der Versuch, unbefugt auf Admin-, Partner- oder Nutzerdaten zuzugreifen.",
+      "ru": "Пытаться получить несанкционированный доступ к данным администратора, партнера или пользователя.",
+      "ar": "محاولة الوصول غير المصرح به إلى بيانات المشرف أو الشريك أو المستخدم."
+    },
+    ", bireysel kullanıcılar ile işletmeleri güvenilir, kolay ve modern bir dijital platformda bir araya getirmek amacıyla geliştirilen çok modüllü bir teknoloji platformudur.": {
+      "az": ", fərdi istifadəçiləri və müəssisələri etibarlı, rahat və müasir rəqəmsal platformada bir araya gətirmək məqsədilə hazırlanmış çox modullu texnologiya platformasıdır.",
+      "en": ", is a multi-module technology platform built to bring individual users and businesses together on a reliable, simple, and modern digital platform.",
+      "de": ", ist eine modulare Technologieplattform, die Einzelpersonen und Unternehmen auf einer verlässlichen, einfachen und modernen digitalen Plattform zusammenbringt.",
+      "ru": ", это многомодульная технологическая платформа, созданная для объединения частных пользователей и компаний в надежной, удобной и современной цифровой среде.",
+      "ar": "، منصة تقنية متعددة الوحدات طُورت لجمع المستخدمين الأفراد والشركات ضمن منصة رقمية موثوقة وسهلة وحديثة."
+    },
+    ", kullanıcıları ve işletmeleri dijital dünyada güvenle buluşturmak için geliştirilen modern bir teknoloji platformudur.": {
+      "az": ", istifadəçiləri və müəssisələri rəqəmsal dünyada etibarlı şəkildə bir araya gətirmək üçün hazırlanmış müasir texnologiya platformasıdır.",
+      "en": ", is a modern technology platform developed to connect users and businesses safely in the digital world.",
+      "de": ", ist eine moderne Technologieplattform, die Nutzer und Unternehmen in der digitalen Welt sicher zusammenführt.",
+      "ru": ", это современная технологическая платформа, разработанная для безопасного соединения пользователей и компаний в цифровой среде.",
+      "ar": "، منصة تقنية حديثة طُورت لربط المستخدمين والشركات بأمان في العالم الرقمي."
+    },
+    "AllonaHub, kullanıcı ve iş ortaklarından gelen geri bildirimlerle gelişmeye devam eden bir platformdur. Amacımız; sade, güvenilir, modern ve sürdürülebilir bir dijital deneyim sunmaktır.": {
+      "az": "AllonaHub istifadəçilərdən və iş ortaqlarından gələn rəylərlə inkişaf etməyə davam edən platformadır. Məqsədimiz sadə, etibarlı, müasir və dayanıqlı rəqəmsal təcrübə təqdim etməkdir.",
+      "en": "AllonaHub is a platform that continues to improve with feedback from users and business partners. Our goal is to deliver a simple, reliable, modern, and sustainable digital experience.",
+      "de": "AllonaHub ist eine Plattform, die sich durch Feedback von Nutzern und Geschäftspartnern kontinuierlich weiterentwickelt. Unser Ziel ist ein einfaches, verlässliches, modernes und nachhaltiges digitales Erlebnis.",
+      "ru": "AllonaHub продолжает развиваться благодаря отзывам пользователей и деловых партнеров. Наша цель - предоставить простой, надежный, современный и устойчивый цифровой опыт.",
+      "ar": "AllonaHub منصة تواصل التطور بناء على آراء المستخدمين وشركاء الأعمال. هدفنا تقديم تجربة رقمية بسيطة وموثوقة وحديثة ومستدامة."
+    },
+    "AllonaHub; alışveriş, hizmet, iş ortaklığı, kampanya ve dijital çözümleri tek bir yapı altında sunmayı hedefleyen yeni nesil bir platformdur. Amacımız, kullanıcıların farklı ihtiyaçlarına tek hesap üzerinden kolayca ulaşabilmesini sağlamak ve işletmelerin dijital dünyada daha verimli şekilde yer almasına destek olmaktır.": {
+      "az": "AllonaHub alış-veriş, xidmət, iş ortaqlığı, kampaniya və rəqəmsal həlləri vahid struktur altında təqdim etməyi hədəfləyən yeni nəsil platformadır. Məqsədimiz istifadəçilərin fərqli ehtiyaclarına tək hesabla asan çıxışını təmin etmək və müəssisələrin rəqəmsal dünyada daha səmərəli iştirakına dəstək olmaqdır.",
+      "en": "AllonaHub is a next-generation platform that aims to bring shopping, services, partnerships, campaigns, and digital solutions under one structure. Our goal is to help users easily access different needs through a single account and support businesses in taking part in the digital world more efficiently.",
+      "de": "AllonaHub ist eine Plattform der neuen Generation, die Shopping, Services, Partnerschaften, Kampagnen und digitale Lösungen unter einer Struktur bündeln möchte. Unser Ziel ist es, Nutzern den einfachen Zugriff auf unterschiedliche Bedürfnisse über ein Konto zu ermöglichen und Unternehmen bei einer effizienteren digitalen Präsenz zu unterstützen.",
+      "ru": "AllonaHub - платформа нового поколения, которая объединяет покупки, услуги, партнерства, кампании и цифровые решения в единой структуре. Наша цель - дать пользователям удобный доступ к разным потребностям через один аккаунт и помочь компаниям эффективнее работать в цифровой среде.",
+      "ar": "AllonaHub منصة من الجيل الجديد تهدف إلى جمع التسوق والخدمات والشراكات والحملات والحلول الرقمية ضمن بنية واحدة. هدفنا تمكين المستخدمين من الوصول بسهولة إلى احتياجات مختلفة عبر حساب واحد ودعم الشركات في الحضور الرقمي بكفاءة أعلى."
+    },
+    "AllonaHub; e-ticaret, partner yönetimi, kampanya sistemleri, kullanıcı paneli, sipariş süreçleri ve farklı hizmet modüllerini aşamalı olarak geliştiren modüler bir dijital platformdur. Platform yapısı, kullanıcı deneyimini sade, hızlı ve anlaşılır hale getirecek şekilde tasarlanmaktadır.": {
+      "az": "AllonaHub e-ticarət, partner idarəetməsi, kampaniya sistemləri, istifadəçi paneli, sifariş prosesləri və müxtəlif xidmət modullarını mərhələli şəkildə inkişaf etdirən modulyar rəqəmsal platformadır. Platforma quruluşu istifadəçi təcrübəsini sadə, sürətli və anlaşılan etmək üçün hazırlanır.",
+      "en": "AllonaHub is a modular digital platform that gradually develops e-commerce, partner management, campaign systems, user panels, order processes, and different service modules. The platform structure is designed to make the user experience simple, fast, and clear.",
+      "de": "AllonaHub ist eine modulare digitale Plattform, die E-Commerce, Partnermanagement, Kampagnensysteme, Nutzerbereiche, Bestellprozesse und verschiedene Servicemodule schrittweise entwickelt. Die Plattformstruktur ist darauf ausgelegt, die Nutzererfahrung einfach, schnell und verständlich zu machen.",
+      "ru": "AllonaHub - модульная цифровая платформа, которая поэтапно развивает электронную коммерцию, управление партнерами, системы кампаний, пользовательский кабинет, процессы заказов и различные сервисные модули. Структура платформы создана для простого, быстрого и понятного пользовательского опыта.",
+      "ar": "AllonaHub منصة رقمية معيارية تطور تدريجيا التجارة الإلكترونية وإدارة الشركاء وأنظمة الحملات ولوحة المستخدم وعمليات الطلبات ووحدات خدمات مختلفة. صُممت بنية المنصة لجعل تجربة المستخدم بسيطة وسريعة وواضحة."
+    },
+    "AllonaHub çerez kullanımı ve kullanıcı tercihleri.": {
+      "az": "AllonaHub çərəz istifadəsi və istifadəçi seçimləri.",
+      "en": "AllonaHub cookie use and user preferences.",
+      "de": "AllonaHub Cookie-Nutzung und Nutzerpräferenzen.",
+      "ru": "Использование cookie AllonaHub и пользовательские предпочтения.",
+      "ar": "استخدام ملفات تعريف الارتباط في AllonaHub وتفضيلات المستخدم."
+    },
+    "AllonaHub Destek Merkezi": {
+      "az": "AllonaHub Dəstək Mərkəzi",
+      "en": "AllonaHub Support Center",
+      "de": "AllonaHub Support-Center",
+      "ru": "Центр поддержки AllonaHub",
+      "ar": "مركز دعم AllonaHub"
+    },
+    "AllonaHub güvenlik yaklaşımı, hesap koruması, denetim kayıtları, resmi makam süreçleri ve ödeme güvenliği.": {
+      "az": "AllonaHub təhlükəsizlik yanaşması, hesab qorunması, audit qeydləri, rəsmi qurum prosesləri və ödəniş təhlükəsizliyi.",
+      "en": "AllonaHub security approach, account protection, audit records, official authority processes, and payment security.",
+      "de": "AllonaHub Sicherheitsansatz, Kontoschutz, Prüfprotokolle, behördliche Prozesse und Zahlungssicherheit.",
+      "ru": "Подход AllonaHub к безопасности, защите аккаунта, журналам аудита, процедурам официальных органов и платежной безопасности.",
+      "ar": "نهج AllonaHub للأمان وحماية الحساب وسجلات التدقيق وإجراءات الجهات الرسمية وأمان الدفع."
+    },
+    "AllonaHub Hakkında": {
+      "az": "AllonaHub Haqqında",
+      "en": "About AllonaHub",
+      "de": "Über AllonaHub",
+      "ru": "Об AllonaHub",
+      "ar": "حول AllonaHub"
+    },
+    "AllonaHub hakkında destek almak, partnerlik başvurusu yapmak veya bizimle hızlıca iletişime geçmek için aşağıdaki formu kullanabilirsiniz.": {
+      "az": "AllonaHub haqqında dəstək almaq, partnerlik müraciəti etmək və ya bizimlə tez əlaqə saxlamaq üçün aşağıdakı formadan istifadə edə bilərsiniz.",
+      "en": "You can use the form below to get support about AllonaHub, apply for partnership, or contact us quickly.",
+      "de": "Sie können das folgende Formular nutzen, um Support zu AllonaHub zu erhalten, eine Partnerbewerbung zu senden oder uns schnell zu kontaktieren.",
+      "ru": "Вы можете использовать форму ниже, чтобы получить поддержку по AllonaHub, подать заявку на партнерство или быстро связаться с нами.",
+      "ar": "يمكنك استخدام النموذج أدناه للحصول على دعم حول AllonaHub أو تقديم طلب شراكة أو التواصل معنا بسرعة."
+    },
+    "AllonaHub iptal, iade ve cayma hakkı süreçleri.": {
+      "az": "AllonaHub ləğv, qaytarma və imtina hüququ prosesləri.",
+      "en": "AllonaHub cancellation, return, and withdrawal right processes.",
+      "de": "AllonaHub Prozesse für Stornierung, Rückgabe und Widerrufsrecht.",
+      "ru": "Процессы AllonaHub по отмене, возврату и праву отказа.",
+      "ar": "عمليات الإلغاء والاسترداد وحق العدول في AllonaHub."
+    },
+    "AllonaHub kullanıcı belge merkezi.": {
+      "az": "AllonaHub istifadəçi sənəd mərkəzi.",
+      "en": "AllonaHub user document center.",
+      "de": "AllonaHub Dokumentencenter für Nutzer.",
+      "ru": "Центр пользовательских документов AllonaHub.",
+      "ar": "مركز مستندات مستخدمي AllonaHub."
+    },
+    "AllonaHub teslimat ve kargo koşulları.": {
+      "az": "AllonaHub çatdırılma və kargo şərtləri.",
+      "en": "AllonaHub delivery and shipping terms.",
+      "de": "AllonaHub Liefer- und Versandbedingungen.",
+      "ru": "Условия доставки и отправки AllonaHub.",
+      "ar": "شروط التوصيل والشحن في AllonaHub."
+    },
+    "AllonaHub üzerinden verilen siparişlerin teslimat süreci ve kargo bilgilendirmeleri.": {
+      "az": "AllonaHub üzərindən verilən sifarişlərin çatdırılma prosesi və kargo məlumatları.",
+      "en": "Delivery process and shipping information for orders placed through AllonaHub.",
+      "de": "Lieferprozess und Versandinformationen für Bestellungen über AllonaHub.",
+      "ru": "Процесс доставки и информация об отправке заказов, оформленных через AllonaHub.",
+      "ar": "عملية التوصيل ومعلومات الشحن للطلبات المقدمة عبر AllonaHub."
+    },
+    "AllonaHub; hesap, ödeme, partner, müşteri verisi ve hukuki uyuşmazlık süreçlerini güvenli akışlarla korumayı hedefleyen çok modüllü bir platform mimarisi kullanır.": {
+      "az": "AllonaHub hesab, ödəniş, partner, müştəri məlumatları və hüquqi mübahisə proseslərini təhlükəsiz axınlarla qorumağı hədəfləyən çox modullu platforma arxitekturasından istifadə edir.",
+      "en": "AllonaHub uses a multi-module platform architecture designed to protect account, payment, partner, customer data, and legal dispute processes through secure flows.",
+      "de": "AllonaHub nutzt eine modulare Plattformarchitektur, die Konto-, Zahlungs-, Partner-, Kundendaten- und Rechtsstreitprozesse durch sichere Abläufe schützen soll.",
+      "ru": "AllonaHub использует многомодульную архитектуру платформы, нацеленную на защиту процессов аккаунта, платежей, партнеров, клиентских данных и юридических споров через безопасные сценарии.",
+      "ar": "تستخدم AllonaHub بنية منصة متعددة الوحدات تهدف إلى حماية الحسابات والمدفوعات والشركاء وبيانات العملاء وعمليات النزاعات القانونية عبر مسارات آمنة."
+    },
+    "CV Formu": {
+      "az": "CV Forması",
+      "en": "CV Form",
+      "de": "Lebenslauf-Formular",
+      "ru": "Форма резюме",
+      "ar": "نموذج السيرة الذاتية"
+    },
+    "Dil, tema, bölge ve kullanıcı arayüzü tercihlerini hatırlamak için kullanılır.": {
+      "az": "Dil, tema, bölgə və istifadəçi interfeysi seçimlərini xatırlamaq üçün istifadə olunur.",
+      "en": "Used to remember language, theme, region, and user interface preferences.",
+      "de": "Wird verwendet, um Sprache, Design, Region und Benutzeroberflächenpräferenzen zu speichern.",
+      "ru": "Используется для запоминания языка, темы, региона и настроек интерфейса пользователя.",
+      "ar": "تُستخدم لتذكر تفضيلات اللغة والمظهر والمنطقة وواجهة المستخدم."
+    },
+    "E-Posta Adresi": {
+      "az": "E-poçt ünvanı",
+      "en": "Email Address",
+      "de": "E-Mail-Adresse",
+      "ru": "Адрес электронной почты",
+      "ar": "عنوان البريد الإلكتروني"
+    },
+    "Genel Destek": {
+      "az": "Ümumi Dəstək",
+      "en": "General Support",
+      "de": "Allgemeiner Support",
+      "ru": "Общая поддержка",
+      "ar": "الدعم العام"
+    },
+    "Giriş, oturum, şifre sıfırlama ve hesap doğrulama süreçleri merkezi auth akışıyla yönetilir.": {
+      "az": "Giriş, sessiya, şifrə sıfırlama və hesab doğrulama prosesləri mərkəzi auth axını ilə idarə olunur.",
+      "en": "Login, session, password reset, and account verification processes are managed through a central auth flow.",
+      "de": "Login, Sitzung, Passwortzurücksetzung und Kontoverifizierung werden über einen zentralen Authentifizierungsablauf verwaltet.",
+      "ru": "Вход, сессии, сброс пароля и подтверждение аккаунта управляются через централизованный поток авторизации.",
+      "ar": "تُدار عمليات تسجيل الدخول والجلسات وإعادة تعيين كلمة المرور والتحقق من الحساب عبر مسار مصادقة مركزي."
+    },
+    "Güvenlik kayıtları append-only ve hash zinciri prensibiyle saklanacak şekilde tasarlanır.": {
+      "az": "Təhlükəsizlik qeydləri yalnız əlavə edilən və hash zənciri prinsipi ilə saxlanacaq şəkildə hazırlanır.",
+      "en": "Security records are designed to be stored using an append-only and hash-chain principle.",
+      "de": "Sicherheitsprotokolle sind so konzipiert, dass sie nach dem Append-only- und Hashketten-Prinzip gespeichert werden.",
+      "ru": "Журналы безопасности проектируются для хранения по принципу только добавления и цепочки хэшей.",
+      "ar": "صُممت سجلات الأمان لتُحفظ وفق مبدأ الإضافة فقط وسلسلة التجزئة."
+    },
+    "İade Politikası": {
+      "az": "Qaytarma Siyasəti",
+      "en": "Return Policy",
+      "de": "Rückgabebedingungen",
+      "ru": "Политика возврата",
+      "ar": "سياسة الاسترداد"
+    },
+    "İade ve İptal İşlemleri": {
+      "az": "Qaytarma və ləğv əməliyyatları",
+      "en": "Return and Cancellation Procedures",
+      "de": "Rückgabe- und Stornierungsprozesse",
+      "ru": "Операции возврата и отмены",
+      "ar": "إجراءات الاسترداد والإلغاء"
+    },
+    "İptal ve İade": {
+      "az": "Ləğv və qaytarma",
+      "en": "Cancellation and Return",
+      "de": "Stornierung und Rückgabe",
+      "ru": "Отмена и возврат",
+      "ar": "الإلغاء والاسترداد"
+    },
+    "İptal ve İade | AllonaHub": {
+      "az": "Ləğv və qaytarma | AllonaHub",
+      "en": "Cancellation and Return | AllonaHub",
+      "de": "Stornierung und Rückgabe | AllonaHub",
+      "ru": "Отмена и возврат | AllonaHub",
+      "ar": "الإلغاء والاسترداد | AllonaHub"
+    },
+    "İşlem geçmişi; kullanıcı, partner, ödeme sağlayıcı ve platform sorumluluk alanlarının doğru ayrıştırılmasına yardımcı olur.": {
+      "az": "Əməliyyat tarixçəsi istifadəçi, partner, ödəniş təminatçısı və platforma məsuliyyət sahələrinin düzgün ayrılmasına kömək edir.",
+      "en": "Transaction history helps correctly separate the responsibilities of the user, partner, payment provider, and platform.",
+      "de": "Der Transaktionsverlauf hilft, die Verantwortungsbereiche von Nutzer, Partner, Zahlungsanbieter und Plattform korrekt zu trennen.",
+      "ru": "История операций помогает корректно разделять зоны ответственности пользователя, партнера, платежного провайдера и платформы.",
+      "ar": "يساعد سجل المعاملات على الفصل الصحيح بين مسؤوليات المستخدم والشريك ومزود الدفع والمنصة."
+    },
+    "Kontrol": {
+      "az": "Nəzarət",
+      "en": "Review",
+      "de": "Prüfung",
+      "ru": "Проверка",
+      "ar": "المراجعة"
+    },
+    "Konu": {
+      "az": "Mövzu",
+      "en": "Subject",
+      "de": "Betreff",
+      "ru": "Тема",
+      "ar": "الموضوع"
+    },
+    "Konu Seçiniz": {
+      "az": "Mövzu seçin",
+      "en": "Select a Subject",
+      "de": "Betreff auswählen",
+      "ru": "Выберите тему",
+      "ar": "اختر الموضوع"
+    },
+    "Kritik hesap, sipariş, ödeme, partner, destek ve admin olayları zaman, IP, cihaz ve işlem özetiyle kaydedilebilir.": {
+      "az": "Kritik hesab, sifariş, ödəniş, partner, dəstək və admin hadisələri zaman, IP, cihaz və əməliyyat xülasəsi ilə qeydə alına bilər.",
+      "en": "Critical account, order, payment, partner, support, and admin events may be recorded with time, IP, device, and action summary.",
+      "de": "Kritische Konto-, Bestell-, Zahlungs-, Partner-, Support- und Admin-Ereignisse können mit Zeit, IP, Gerät und Vorgangszusammenfassung protokolliert werden.",
+      "ru": "Критические события аккаунта, заказа, платежа, партнера, поддержки и администрирования могут фиксироваться с временем, IP, устройством и кратким описанием действия.",
+      "ar": "قد تُسجل أحداث الحساب والطلب والدفع والشريك والدعم والإدارة المهمة مع الوقت وعنوان IP والجهاز وملخص الإجراء."
+    },
+    "Kullanıcı hesabından sipariş veya işlem seçilerek destek talebi başlatılır.": {
+      "az": "İstifadəçi hesabından sifariş və ya əməliyyat seçilərək dəstək sorğusu başlanır.",
+      "en": "A support request is started by selecting an order or transaction from the user account.",
+      "de": "Eine Supportanfrage wird gestartet, indem im Nutzerkonto eine Bestellung oder Transaktion ausgewählt wird.",
+      "ru": "Запрос в поддержку начинается выбором заказа или операции в аккаунте пользователя.",
+      "ar": "يبدأ طلب الدعم باختيار طلب أو معاملة من حساب المستخدم."
+    },
+    "Kullanıcı ve partner verileri rol, yetki ve minimum veri erişimi prensibiyle ele alınır.": {
+      "az": "İstifadəçi və partner məlumatları rol, səlahiyyət və minimum məlumat çıxışı prinsipi ilə idarə olunur.",
+      "en": "User and partner data is handled according to role, authorization, and minimum data access principles.",
+      "de": "Nutzer- und Partnerdaten werden nach den Grundsätzen von Rolle, Berechtigung und minimalem Datenzugriff behandelt.",
+      "ru": "Данные пользователей и партнеров обрабатываются по принципам роли, полномочий и минимального доступа к данным.",
+      "ar": "تُعامل بيانات المستخدمين والشركاء وفق مبادئ الدور والصلاحية والحد الأدنى من الوصول إلى البيانات."
+    },
+    "Kullanıcıların ihtiyaç duyduğu ürün ve hizmetlere daha kolay erişebilmesini sağlamak, iş ortaklarımızın dijital dönüşüm süreçlerini desteklemek ve güvenilir bir platform deneyimi sunmak.": {
+      "az": "İstifadəçilərin ehtiyac duyduğu məhsul və xidmətlərə daha asan çıxışını təmin etmək, iş ortaqlarımızın rəqəmsal transformasiya proseslərini dəstəkləmək və etibarlı platforma təcrübəsi təqdim etmək.",
+      "en": "To help users access the products and services they need more easily, support our business partners' digital transformation processes, and provide a reliable platform experience.",
+      "de": "Nutzern den Zugang zu benötigten Produkten und Dienstleistungen zu erleichtern, die digitale Transformation unserer Geschäftspartner zu unterstützen und ein verlässliches Plattformerlebnis zu bieten.",
+      "ru": "Обеспечивать пользователям более простой доступ к нужным товарам и услугам, поддерживать цифровую трансформацию наших партнеров и предоставлять надежный опыт работы с платформой.",
+      "ar": "تمكين المستخدمين من الوصول بسهولة أكبر إلى المنتجات والخدمات التي يحتاجونها، ودعم التحول الرقمي لشركائنا، وتقديم تجربة منصة موثوقة."
+    },
+    "Mesajınız": {
+      "az": "Mesajınız",
+      "en": "Your Message",
+      "de": "Ihre Nachricht",
+      "ru": "Ваше сообщение",
+      "ar": "رسالتك"
+    },
+    "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.": {
+      "az": "Mesajınız uğurla göndərildi. Ən qısa zamanda sizinlə əlaqə saxlayacağıq.",
+      "en": "Your message has been sent successfully. We will contact you as soon as possible.",
+      "de": "Ihre Nachricht wurde erfolgreich gesendet. Wir werden uns schnellstmöglich mit Ihnen in Verbindung setzen.",
+      "ru": "Ваше сообщение успешно отправлено. Мы свяжемся с вами в ближайшее время.",
+      "ar": "تم إرسال رسالتك بنجاح. سنتواصل معك في أقرب وقت ممكن."
+    },
+    "Onaylanan talepler yasal süreler ve ödeme sağlayıcı süreçlerine göre tamamlanır.": {
+      "az": "Təsdiqlənən sorğular qanuni müddətlər və ödəniş təminatçısı proseslərinə uyğun tamamlanır.",
+      "en": "Approved requests are completed according to legal timelines and payment provider processes.",
+      "de": "Genehmigte Anfragen werden gemäß gesetzlichen Fristen und Prozessen des Zahlungsanbieters abgeschlossen.",
+      "ru": "Одобренные запросы выполняются в соответствии с законными сроками и процессами платежного провайдера.",
+      "ar": "تُستكمل الطلبات المعتمدة وفق المدد القانونية وإجراءات مزود الدفع."
+    },
+    "Oturum, güvenlik, sepet ve temel platform akışlarının çalışması için gereklidir.": {
+      "az": "Sessiya, təhlükəsizlik, səbət və əsas platforma axınlarının işləməsi üçün zəruridir.",
+      "en": "Required for session, security, cart, and core platform flows to function.",
+      "de": "Erforderlich, damit Sitzung, Sicherheit, Warenkorb und zentrale Plattformabläufe funktionieren.",
+      "ru": "Необходимо для работы сессий, безопасности, корзины и основных потоков платформы.",
+      "ar": "ضرورية لعمل الجلسات والأمان والسلة والمسارات الأساسية للمنصة."
+    },
+    "Platform performansını ve kullanıcı deneyimini iyileştirmek için anonim ölçüm sağlar.": {
+      "az": "Platform performansını və istifadəçi təcrübəsini yaxşılaşdırmaq üçün anonim ölçmə təmin edir.",
+      "en": "Provides anonymous measurement to improve platform performance and user experience.",
+      "de": "Ermöglicht anonyme Messungen zur Verbesserung der Plattformleistung und Nutzererfahrung.",
+      "ru": "Обеспечивает анонимные измерения для улучшения производительности платформы и пользовательского опыта.",
+      "ar": "توفر قياسا مجهول الهوية لتحسين أداء المنصة وتجربة المستخدم."
+    },
+    "Polis, savcılık, mahkeme veya düzenleyici kurum talepleri referans numarası, hukuki gerekçe ve kapsam bilgisiyle kayıt altına alınır.": {
+      "az": "Polis, prokurorluq, məhkəmə və ya tənzimləyici qurum sorğuları istinad nömrəsi, hüquqi əsas və əhatə məlumatı ilə qeydə alınır.",
+      "en": "Requests from police, prosecutors, courts, or regulators are recorded with reference number, legal basis, and scope information.",
+      "de": "Anfragen von Polizei, Staatsanwaltschaft, Gericht oder Aufsichtsbehörden werden mit Referenznummer, Rechtsgrundlage und Umfang dokumentiert.",
+      "ru": "Запросы полиции, прокуратуры, суда или регулирующих органов фиксируются с номером ссылки, правовым основанием и объемом запроса.",
+      "ar": "تُسجل طلبات الشرطة أو النيابة أو المحكمة أو الجهات التنظيمية مع رقم مرجعي وأساس قانوني ونطاق الطلب."
+    },
+    "Satıcı ve Platform": {
+      "az": "Satıcı və Platforma",
+      "en": "Seller and Platform",
+      "de": "Verkäufer und Plattform",
+      "ru": "Продавец и платформа",
+      "ar": "البائع والمنصة"
+    },
+    "Seçiniz": {
+      "az": "Seçin",
+      "en": "Select",
+      "de": "Auswählen",
+      "ru": "Выберите",
+      "ar": "اختر"
+    },
+    "Sınırlı Rapor": {
+      "az": "Məhdud Hesabat",
+      "en": "Limited Report",
+      "de": "Begrenzter Bericht",
+      "ru": "Ограниченный отчет",
+      "ar": "تقرير محدود"
+    },
+    "Stokta bulunan ürünler ödeme onayı sonrası mümkün olan en kısa sürede hazırlanır. Tahmini teslimat süresi ürün, adres, partner hazırlık süresi ve kargo yoğunluğuna göre değişebilir.": {
+      "az": "Stokda olan məhsullar ödəniş təsdiqindən sonra mümkün olan ən qısa müddətdə hazırlanır. Təxmini çatdırılma müddəti məhsul, ünvan, partner hazırlıq müddəti və kargo sıxlığına görə dəyişə bilər.",
+      "en": "In-stock products are prepared as soon as possible after payment approval. Estimated delivery time may vary depending on the product, address, partner preparation time, and shipping volume.",
+      "de": "Vorrätige Produkte werden nach Zahlungsbestätigung schnellstmöglich vorbereitet. Die geschätzte Lieferzeit kann je nach Produkt, Adresse, Vorbereitungszeit des Partners und Versandaufkommen variieren.",
+      "ru": "Товары в наличии подготавливаются в кратчайшие сроки после подтверждения оплаты. Ориентировочный срок доставки может зависеть от товара, адреса, времени подготовки партнером и загрузки службы доставки.",
+      "ar": "تُجهز المنتجات المتوفرة في المخزون في أقرب وقت ممكن بعد تأكيد الدفع. قد يختلف وقت التوصيل المتوقع حسب المنتج والعنوان ومدة تجهيز الشريك وكثافة الشحن."
+    },
+    "Süreç Nasıl Çalışır?": {
+      "az": "Proses necə işləyir?",
+      "en": "How Does the Process Work?",
+      "de": "Wie funktioniert der Prozess?",
+      "ru": "Как работает процесс?",
+      "ar": "كيف تعمل العملية؟"
+    },
+    "Talep Kaydı": {
+      "az": "Sorğu Qeydi",
+      "en": "Request Record",
+      "de": "Anfragedatensatz",
+      "ru": "Запись запроса",
+      "ar": "سجل الطلب"
+    },
+    "Teknik Destek": {
+      "az": "Texniki Dəstək",
+      "en": "Technical Support",
+      "de": "Technischer Support",
+      "ru": "Техническая поддержка",
+      "ar": "الدعم الفني"
+    },
+    "Teknik Destek Talepleri": {
+      "az": "Texniki dəstək sorğuları",
+      "en": "Technical Support Requests",
+      "de": "Technische Supportanfragen",
+      "ru": "Запросы в техническую поддержку",
+      "ar": "طلبات الدعم الفني"
+    },
+    "Ürün, hizmet, teslimat ve ödeme durumu kontrol edilerek uygun süreç belirlenir.": {
+      "az": "Məhsul, xidmət, çatdırılma və ödəniş statusu yoxlanılaraq uyğun proses müəyyən edilir.",
+      "en": "The appropriate process is determined by checking the product, service, delivery, and payment status.",
+      "de": "Der passende Prozess wird durch Prüfung von Produkt, Dienstleistung, Lieferung und Zahlungsstatus bestimmt.",
+      "ru": "Подходящий процесс определяется после проверки товара, услуги, доставки и статуса оплаты.",
+      "ar": "تُحدد العملية المناسبة بعد التحقق من حالة المنتج والخدمة والتوصيل والدفع."
+    },
+    "İletişim": {
+      "az": "Əlaqə",
+      "en": "Contact",
+      "de": "Kontakt",
+      "ru": "Контакты",
+      "ar": "اتصال"
+    },
+    "AllonaHub İletişim": {
+      "az": "AllonaHub Əlaqə",
+      "en": "AllonaHub Contact",
+      "de": "AllonaHub Kontakt",
+      "ru": "Контакты AllonaHub",
+      "ar": "اتصال AllonaHub"
+    },
+    "Mesafeli Satış": {
+      "az": "Məsafəli Satış",
+      "en": "Distance Selling",
+      "de": "Fernabsatz",
+      "ru": "Дистанционная продажа",
+      "ar": "البيع عن بعد"
+    },
+    "Profil doğrulama ve kullanıcı bilgilerine bağlı belge özetleri.": {
+      "az": "Profil doğrulaması və istifadəçi məlumatlarına bağlı sənəd xülasələri.",
+      "en": "Document summaries linked to profile verification and user information.",
+      "de": "Dokumentenzusammenfassungen im Zusammenhang mit Profilverifizierung und Nutzerinformationen.",
+      "ru": "Сводки документов, связанные с проверкой профиля и данными пользователя.",
+      "ar": "ملخصات مستندات مرتبطة بتوثيق الملف الشخصي ومعلومات المستخدم."
+    },
+    "Sorumluluk Ayrımı": {
+      "az": "Məsuliyyət bölgüsü",
+      "en": "Separation of Responsibilities",
+      "de": "Trennung der Verantwortlichkeiten",
+      "ru": "Разделение ответственности",
+      "ar": "فصل المسؤوليات"
+    },
+    "Telefon Numarası": {
+      "az": "Telefon nömrəsi",
+      "en": "Phone Number",
+      "de": "Telefonnummer",
+      "ru": "Номер телефона",
+      "ar": "رقم الهاتف"
+    },
+    "allonahub@gmail.com": {
+      "az": "allonahub@gmail.com",
+      "en": "allonahub@gmail.com",
+      "de": "allonahub@gmail.com",
+      "ru": "allonahub@gmail.com",
+      "ar": "allonahub@gmail.com"
+    },
+    "info@allonahub.com": {
+      "az": "info@allonahub.com",
+      "en": "info@allonahub.com",
+      "de": "info@allonahub.com",
+      "ru": "info@allonahub.com",
+      "ar": "info@allonahub.com"
+    },
+    "legal@allonahub.com": {
+      "az": "legal@allonahub.com",
+      "en": "legal@allonahub.com",
+      "de": "legal@allonahub.com",
+      "ru": "legal@allonahub.com",
+      "ar": "legal@allonahub.com"
+    },
+    "www.allonahub.com": {
+      "az": "www.allonahub.com",
+      "en": "www.allonahub.com",
+      "de": "www.allonahub.com",
+      "ru": "www.allonahub.com",
+      "ar": "www.allonahub.com"
+    },
+    "WhatsApp": {
+      "az": "WhatsApp",
+      "en": "WhatsApp",
+      "de": "WhatsApp",
+      "ru": "WhatsApp",
+      "ar": "WhatsApp"
+    },
+    "Instagram": {
+      "az": "Instagram",
+      "en": "Instagram",
+      "de": "Instagram",
+      "ru": "Instagram",
+      "ar": "Instagram"
+    },
+    "X": {
+      "az": "X",
+      "en": "X",
+      "de": "X",
+      "ru": "X",
+      "ar": "X"
+    },
+    "𝕏": {
+      "az": "𝕏",
+      "en": "𝕏",
+      "de": "𝕏",
+      "ru": "𝕏",
+      "ar": "𝕏"
+    },
+    "Facebook": {
+      "az": "Facebook",
+      "en": "Facebook",
+      "de": "Facebook",
+      "ru": "Facebook",
+      "ar": "Facebook"
+    },
+    "YouTube": {
+      "az": "YouTube",
+      "en": "YouTube",
+      "de": "YouTube",
+      "ru": "YouTube",
+      "ar": "YouTube"
+    },
+    "LinkedIn": {
+      "az": "LinkedIn",
+      "en": "LinkedIn",
+      "de": "LinkedIn",
+      "ru": "LinkedIn",
+      "ar": "LinkedIn"
+    },
+    "in": {
+      "az": "in",
+      "en": "in",
+      "de": "in",
+      "ru": "in",
+      "ar": "in"
+    },
+    "Telegram": {
+      "az": "Telegram",
+      "en": "Telegram",
+      "de": "Telegram",
+      "ru": "Telegram",
+      "ar": "Telegram"
+    },
+    "TikTok": {
+      "az": "TikTok",
+      "en": "TikTok",
+      "de": "TikTok",
+      "ru": "TikTok",
+      "ar": "TikTok"
+    },
+    "Nsosyal": {
+      "az": "Nsosyal",
+      "en": "Nsosyal",
+      "de": "Nsosyal",
+      "ru": "Nsosyal",
+      "ar": "Nsosyal"
+    },
+    "E-Mail": {
+      "az": "E-Mail",
+      "en": "E-Mail",
+      "de": "E-Mail",
+      "ru": "E-Mail",
+      "ar": "E-Mail"
+    },
+    "Admin": {
+      "az": "Admin",
+      "en": "Admin",
+      "de": "Admin",
+      "ru": "Админ",
+      "ar": "المشرف"
+    },
+    "Broker": {
+      "az": "Broker",
+      "en": "Broker",
+      "de": "Makler",
+      "ru": "Брокер",
+      "ar": "وسيط"
+    },
+    "Shop": {
+      "az": "Mağaza",
+      "en": "Shop",
+      "de": "Shop",
+      "ru": "Магазин",
+      "ar": "المتجر"
+    },
+    "Fitness": {
+      "az": "Fitness",
+      "en": "Fitness",
+      "de": "Fitness",
+      "ru": "Фитнес",
+      "ar": "اللياقة"
+    },
+    "Maritime": {
+      "az": "Dənizçilik",
+      "en": "Maritime",
+      "de": "Schifffahrt",
+      "ru": "Морская отрасль",
+      "ar": "البحري"
+    },
+    "Navlun": {
+      "az": "Fraxt",
+      "en": "Freight",
+      "de": "Fracht",
+      "ru": "Фрахт",
+      "ar": "الشحن"
+    },
+    "Outdoor": {
+      "az": "Outdoor",
+      "en": "Outdoor",
+      "de": "Outdoor",
+      "ru": "Товары для активного отдыха",
+      "ar": "الأنشطة الخارجية"
+    },
+    "Tanker": {
+      "az": "Tanker",
+      "en": "Tanker",
+      "de": "Tanker",
+      "ru": "Танкер",
+      "ar": "ناقلة"
+    },
+    "Pazaryeri, SKU, ürün yönetimi": {
+      "az": "Marketpleys, SKU və məhsul idarəetməsi",
+      "en": "Marketplace, SKU, product management",
+      "de": "Marktplatz, SKU, Produktmanagement",
+      "ru": "Маркетплейс, SKU, управление товарами",
+      "ar": "السوق، SKU، إدارة المنتجات"
+    },
+    "Aday ve CV havuzu": {
+      "az": "Namizəd və CV hovuzu",
+      "en": "Candidate and CV pool",
+      "de": "Kandidaten- und Lebenslaufpool",
+      "ru": "Пул кандидатов и резюме",
+      "ar": "مجموعة المرشحين والسير الذاتية"
+    },
+    "Adres bilgisi": {
+      "az": "Ünvan məlumatı",
+      "en": "Address information",
+      "de": "Adressinformationen",
+      "ru": "Адресная информация",
+      "ar": "معلومات العنوان"
+    },
+    "Ağır Yük": {
+      "az": "Ağır yük",
+      "en": "Heavy Cargo",
+      "de": "Schwerlast",
+      "ru": "Тяжелый груз",
+      "ar": "حمولة ثقيلة"
+    },
+    "Ağırlık / desi / hacim / teslim süresi": {
+      "az": "Çəki / desi / həcm / çatdırılma müddəti",
+      "en": "Weight / dimensional weight / volume / delivery time",
+      "de": "Gewicht / Volumengewicht / Volumen / Lieferzeit",
+      "ru": "Вес / объемный вес / объем / срок доставки",
+      "ar": "الوزن / الوزن الحجمي / الحجم / مدة التسليم"
+    },
+    "Ağız bakım, vücut bakım, hijyen ve deodorant ürünleri.": {
+      "az": "Ağız baxımı, bədən baxımı, gigiyena və dezodorant məhsulları.",
+      "en": "Oral care, body care, hygiene, and deodorant products.",
+      "de": "Mundpflege-, Körperpflege-, Hygiene- und Deodorantprodukte.",
+      "ru": "Средства для ухода за полостью рта, телом, гигиены и дезодоранты.",
+      "ar": "منتجات العناية بالفم والجسم والنظافة ومزيلات العرق."
+    },
+    "Ahşap ev, tiny house, A-frame ve mobil yaşam çözümleri.": {
+      "az": "Taxta ev, tiny house, A-frame və mobil yaşayış həlləri.",
+      "en": "Wooden homes, tiny houses, A-frame, and mobile living solutions.",
+      "de": "Holzhäuser, Tiny Houses, A-Frames und mobile Wohnlösungen.",
+      "ru": "Деревянные дома, tiny house, A-frame и мобильные жилые решения.",
+      "ar": "منازل خشبية وبيوت صغيرة وA-frame وحلول سكن متنقلة."
+    },
+    "AI Analizi Başlat": {
+      "az": "AI analizini başlat",
+      "en": "Start AI Analysis",
+      "de": "KI-Analyse starten",
+      "ru": "Запустить AI-анализ",
+      "ar": "ابدأ تحليل الذكاء الاصطناعي"
+    },
+    "AI Organizasyon Asistanı": {
+      "az": "AI təşkilat köməkçisi",
+      "en": "AI Organization Assistant",
+      "de": "KI-Organisationsassistent",
+      "ru": "AI-ассистент организации",
+      "ar": "مساعد تنظيم بالذكاء الاصطناعي"
+    },
+    "AI Yapı Danışmanı": {
+      "az": "AI tikinti məsləhətçisi",
+      "en": "AI Construction Advisor",
+      "de": "KI-Bauberater",
+      "ru": "AI-консультант по строительству",
+      "ar": "مستشار بناء بالذكاء الاصطناعي"
+    },
+    "Akıllı Proje Oluşturucu": {
+      "az": "Ağıllı layihə yaradıcısı",
+      "en": "Smart Project Builder",
+      "de": "Intelligenter Projektgenerator",
+      "ru": "Умный конструктор проектов",
+      "ar": "منشئ مشاريع ذكي"
+    },
+    "Akıllı saat, bileklik ve giyilebilir teknolojiler.": {
+      "az": "Ağıllı saat, qolbaq və geyilə bilən texnologiyalar.",
+      "en": "Smart watches, wristbands, and wearable technologies.",
+      "de": "Smartwatches, Armbänder und tragbare Technologien.",
+      "ru": "Смарт-часы, браслеты и носимые технологии.",
+      "ar": "ساعات ذكية وأساور وتقنيات قابلة للارتداء."
+    },
+    "Akıllı Süreç": {
+      "az": "Ağıllı proses",
+      "en": "Smart Process",
+      "de": "Intelligenter Prozess",
+      "ru": "Умный процесс",
+      "ar": "عملية ذكية"
+    },
+    "Aktif": {
+      "az": "Aktiv",
+      "en": "Active",
+      "de": "Aktiv",
+      "ru": "Активно",
+      "ar": "نشط"
+    },
+    "Aktif Lojistik Akışları": {
+      "az": "Aktiv logistika axınları",
+      "en": "Active Logistics Flows",
+      "de": "Aktive Logistikabläufe",
+      "ru": "Активные логистические потоки",
+      "ar": "مسارات لوجستية نشطة"
+    },
+    "Alacak takibi, ödeme planı, icra işlemleri ve hukuki bilgilendirme.": {
+      "az": "Debitor borcların izlənməsi, ödəniş planı, icra əməliyyatları və hüquqi məlumatlandırma.",
+      "en": "Receivables tracking, payment plans, enforcement procedures, and legal information.",
+      "de": "Forderungsverfolgung, Zahlungsplan, Vollstreckungsverfahren und rechtliche Informationen.",
+      "ru": "Контроль задолженности, план платежей, исполнительные процедуры и юридическая информация.",
+      "ar": "متابعة المستحقات وخطط الدفع وإجراءات التنفيذ والمعلومات القانونية."
+    },
+    "Alış noktası: Restoran / market / mağaza / eczane": {
+      "az": "Götürmə nöqtəsi: restoran / market / mağaza / aptek",
+      "en": "Pickup point: restaurant / market / shop / pharmacy",
+      "de": "Abholpunkt: Restaurant / Markt / Shop / Apotheke",
+      "ru": "Точка получения: ресторан / маркет / магазин / аптека",
+      "ar": "نقطة الاستلام: مطعم / سوق / متجر / صيدلية"
+    },
+    "AllonaHub kampanyaları ve sadakat avantajlarından yararlanın.": {
+      "az": "AllonaHub kampaniyaları və sadiqlik üstünlüklərindən yararlanın.",
+      "en": "Benefit from AllonaHub campaigns and loyalty advantages.",
+      "de": "Profitieren Sie von AllonaHub Kampagnen und Treuevorteilen.",
+      "ru": "Пользуйтесь кампаниями AllonaHub и преимуществами лояльности.",
+      "ar": "استفد من حملات AllonaHub ومزايا الولاء."
+    },
+    "AllonaHub siparişleri merkezi kargo havuzuna düşer, en uygun kargo/kurye partneri seçilir, takip numarası kullanıcı paneline işlenir.": {
+      "az": "AllonaHub sifarişləri mərkəzi kargo hovuzuna düşür, ən uyğun kargo/kuryer partneri seçilir və izləmə nömrəsi istifadəçi panelinə əlavə olunur.",
+      "en": "AllonaHub orders enter the central shipping pool, the most suitable courier/shipping partner is selected, and the tracking number is added to the user panel.",
+      "de": "AllonaHub Bestellungen gehen in den zentralen Versandpool, der passendste Versand- oder Kurierpartner wird ausgewählt und die Sendungsnummer im Nutzerbereich hinterlegt.",
+      "ru": "Заказы AllonaHub поступают в центральный пул доставки, выбирается подходящий партнер доставки/курьера, а номер отслеживания добавляется в кабинет пользователя.",
+      "ar": "تدخل طلبات AllonaHub إلى مجمع الشحن المركزي، ويتم اختيار أنسب شريك شحن/توصيل، ثم يُضاف رقم التتبع إلى لوحة المستخدم."
+    },
+    "AllonaHub Üyesi": {
+      "az": "AllonaHub üzvü",
+      "en": "AllonaHub Member",
+      "de": "AllonaHub Mitglied",
+      "ru": "Участник AllonaHub",
+      "ar": "عضو AllonaHub"
+    },
+    "Alternatif uyuşmazlık çözümü ve anlaşma süreçleri.": {
+      "az": "Alternativ mübahisə həlli və razılaşma prosesləri.",
+      "en": "Alternative dispute resolution and settlement processes.",
+      "de": "Alternative Streitbeilegung und Einigungsprozesse.",
+      "ru": "Альтернативное разрешение споров и процессы урегулирования.",
+      "ar": "حل النزاعات البديل وعمليات التسوية."
+    },
+    "Antrenör": {
+      "az": "Məşqçi",
+      "en": "Coach",
+      "de": "Trainer",
+      "ru": "Тренер",
+      "ar": "مدرب"
+    },
+    "Antrenör randevu paneli": {
+      "az": "Məşqçi görüş paneli",
+      "en": "Coach appointment panel",
+      "de": "Trainer-Terminpanel",
+      "ru": "Панель записи к тренеру",
+      "ar": "لوحة مواعيد المدرب"
+    },
+    "Arsa Bilgileri": {
+      "az": "Torpaq məlumatları",
+      "en": "Land Information",
+      "de": "Grundstücksinformationen",
+      "ru": "Информация о земельном участке",
+      "ar": "معلومات الأرض"
+    },
+    "Asansörlü": {
+      "az": "Liftli",
+      "en": "With elevator",
+      "de": "Mit Aufzug",
+      "ru": "С лифтом",
+      "ar": "مع مصعد"
+    },
+    "Aşı & Mikroçip Takibi": {
+      "az": "Peyvənd və mikroçip izləmə",
+      "en": "Vaccination & Microchip Tracking",
+      "de": "Impf- und Mikrochipverfolgung",
+      "ru": "Отслеживание вакцинации и микрочипа",
+      "ar": "متابعة اللقاحات والرقاقة"
+    },
+    "Aşı Takibi": {
+      "az": "Peyvənd izləmə",
+      "en": "Vaccination Tracking",
+      "de": "Impfverfolgung",
+      "ru": "Отслеживание вакцинации",
+      "ar": "متابعة اللقاحات"
+    },
+    "Aşı takibi": {
+      "az": "Peyvənd izləmə",
+      "en": "Vaccination tracking",
+      "de": "Impfverfolgung",
+      "ru": "Отслеживание вакцинации",
+      "ar": "متابعة اللقاحات"
+    },
+    "Aşı ve mikroçip takip paneli": {
+      "az": "Peyvənd və mikroçip izləmə paneli",
+      "en": "Vaccination and microchip tracking panel",
+      "de": "Panel für Impf- und Mikrochipverfolgung",
+      "ru": "Панель отслеживания вакцинации и микрочипа",
+      "ar": "لوحة متابعة اللقاحات والرقاقة"
+    },
+    "Atıştırmalık": {
+      "az": "Qəlyanaltı",
+      "en": "Snacks",
+      "de": "Snacks",
+      "ru": "Перекусы",
+      "ar": "وجبات خفيفة"
+    },
+    "Az eşya, tek ürün, mobilya veya küçük taşıma işleri.": {
+      "az": "Az əşya, tək məhsul, mebel və ya kiçik daşıma işləri.",
+      "en": "Small moves, single items, furniture, or light transport jobs.",
+      "de": "Kleine Umzüge, Einzelstücke, Möbel oder leichte Transportaufträge.",
+      "ru": "Небольшие перевозки, отдельные вещи, мебель или малые транспортные работы.",
+      "ar": "نقل بسيط أو منتج واحد أو أثاث أو مهام نقل صغيرة."
+    },
+    "Balayı": {
+      "az": "Bal ayı",
+      "en": "Honeymoon",
+      "de": "Flitterwochen",
+      "ru": "Медовый месяц",
+      "ar": "شهر العسل"
+    },
+    "Banyo, mutfak, zemin, çatı, boya ve genel yenileme işleri.": {
+      "az": "Hamam, mətbəx, döşəmə, dam, boya və ümumi yeniləmə işləri.",
+      "en": "Bathroom, kitchen, flooring, roof, painting, and general renovation work.",
+      "de": "Bad, Küche, Boden, Dach, Malerarbeiten und allgemeine Renovierung.",
+      "ru": "Ванная, кухня, полы, крыша, покраска и общие ремонтные работы.",
+      "ar": "أعمال الحمام والمطبخ والأرضيات والسقف والطلاء والتجديد العام."
+    },
+    "Başlık": {
+      "az": "Başlıq",
+      "en": "Title",
+      "de": "Titel",
+      "ru": "Заголовок",
+      "ar": "العنوان"
+    },
+    "Bebek": {
+      "az": "Körpə",
+      "en": "Baby",
+      "de": "Baby",
+      "ru": "Для малыша",
+      "ar": "الرضع"
+    },
+    "Belirli saat aralığında teslimat planlama.": {
+      "az": "Müəyyən saat aralığında çatdırılma planlama.",
+      "en": "Delivery planning within a specific time slot.",
+      "de": "Lieferplanung innerhalb eines bestimmten Zeitfensters.",
+      "ru": "Планирование доставки в определенный временной интервал.",
+      "ar": "تخطيط التوصيل ضمن فترة زمنية محددة."
+    },
+    "BES & Emeklilik": {
+      "az": "Fərdi pensiya və təqaüd",
+      "en": "Private Pension & Retirement",
+      "de": "Private Vorsorge & Rente",
+      "ru": "Пенсионные накопления и выход на пенсию",
+      "ar": "التقاعد والادخار التقاعدي"
+    },
+    "Beslenme planı, ölçüm ve takip hizmetleri.": {
+      "az": "Qidalanma planı, ölçüm və izləmə xidmətləri.",
+      "en": "Nutrition plan, measurement, and tracking services.",
+      "de": "Ernährungsplan, Messung und Tracking-Services.",
+      "ru": "План питания, измерения и услуги отслеживания.",
+      "ar": "خطة تغذية وخدمات قياس ومتابعة."
+    },
+    "Bildirim yayını": {
+      "az": "Bildiriş yayımı",
+      "en": "Notification broadcast",
+      "de": "Benachrichtigungsversand",
+      "ru": "Рассылка уведомлений",
+      "ar": "بث الإشعارات"
+    },
+    "Bilet seç": {
+      "az": "Bilet seç",
+      "en": "Select ticket",
+      "de": "Ticket auswählen",
+      "ru": "Выбрать билет",
+      "ar": "اختر التذكرة"
+    },
+    "Bilgileri doldurup “CV’yi Oluştur” butonuna bas.": {
+      "az": "Məlumatları doldurun və “CV yarat” düyməsini basın.",
+      "en": "Fill in the information and press the “Create CV” button.",
+      "de": "Füllen Sie die Informationen aus und klicken Sie auf „Lebenslauf erstellen“.",
+      "ru": "Заполните данные и нажмите кнопку «Создать резюме».",
+      "ar": "املأ المعلومات واضغط على زر «إنشاء السيرة الذاتية»."
+    },
+    "Bütçe": {
+      "az": "Büdcə",
+      "en": "Budget",
+      "de": "Budget",
+      "ru": "Бюджет",
+      "ar": "الميزانية"
+    },
+    "Bütçe Gir": {
+      "az": "Büdcə daxil et",
+      "en": "Enter Budget",
+      "de": "Budget eingeben",
+      "ru": "Введите бюджет",
+      "ar": "أدخل الميزانية"
+    },
+    "Canlı": {
+      "az": "Canlı",
+      "en": "Live",
+      "de": "Live",
+      "ru": "В прямом эфире",
+      "ar": "مباشر"
+    },
+    "Canlı görev ve rota paneli": {
+      "az": "Canlı tapşırıq və marşrut paneli",
+      "en": "Live task and route panel",
+      "de": "Live-Aufgaben- und Routenpanel",
+      "ru": "Панель задач и маршрутов в реальном времени",
+      "ar": "لوحة المهام والمسارات المباشرة"
+    },
+    "Canlı Hayvan": {
+      "az": "Canlı heyvan",
+      "en": "Livestock",
+      "de": "Nutztiere",
+      "ru": "Живой скот",
+      "ar": "ماشية"
+    },
+    "Canlı raporlama paneli": {
+      "az": "Canlı hesabat paneli",
+      "en": "Live reporting panel",
+      "de": "Live-Berichtspanel",
+      "ru": "Панель отчетности в реальном времени",
+      "ar": "لوحة تقارير مباشرة"
+    },
+    "Catering, ikram, kokteyl ve yemek servisi bağlantısı.": {
+      "az": "Keyterinq, ikram, kokteyl və yemək xidməti bağlantısı.",
+      "en": "Connection for catering, refreshments, cocktails, and meal service.",
+      "de": "Anbindung für Catering, Bewirtung, Cocktails und Speiseservice.",
+      "ru": "Подключение кейтеринга, угощений, коктейлей и сервиса питания.",
+      "ar": "ربط خدمات الكيترينغ والضيافة والكوكتيل وتقديم الطعام."
+    },
+    "Cilt tipi seç": {
+      "az": "Dəri tipini seç",
+      "en": "Select skin type",
+      "de": "Hauttyp auswählen",
+      "ru": "Выберите тип кожи",
+      "ar": "اختر نوع البشرة"
+    },
+    "CV eksiklerini sistem önerileriyle tamamla.": {
+      "az": "CV çatışmazlıqlarını sistem tövsiyələri ilə tamamlayın.",
+      "en": "Complete CV gaps with system suggestions.",
+      "de": "Vervollständigen Sie Lebenslauflücken mit Systemvorschlägen.",
+      "ru": "Заполните недостающие части резюме с помощью рекомендаций системы.",
+      "ar": "أكمل نواقص السيرة الذاتية باقتراحات النظام."
+    },
+    "CV oluştur": {
+      "az": "CV yarat",
+      "en": "Create CV",
+      "de": "Lebenslauf erstellen",
+      "ru": "Создать резюме",
+      "ar": "إنشاء سيرة ذاتية"
+    },
+    "CV Önizle ve PDF İndir": {
+      "az": "CV-ni önizlə və PDF yüklə",
+      "en": "Preview CV and Download PDF",
+      "de": "Lebenslauf ansehen und PDF herunterladen",
+      "ru": "Предпросмотр резюме и скачивание PDF",
+      "ar": "معاينة السيرة الذاتية وتنزيل PDF"
+    },
+    "CV Önizleme": {
+      "az": "CV önizləmə",
+      "en": "CV Preview",
+      "de": "Lebenslauf-Vorschau",
+      "ru": "Предпросмотр резюме",
+      "ar": "معاينة السيرة الذاتية"
+    },
+    "Çalışma İzni": {
+      "az": "İş icazəsi",
+      "en": "Work Permit",
+      "de": "Arbeitserlaubnis",
+      "ru": "Разрешение на работу",
+      "ar": "تصريح عمل"
+    },
+    "Çiftçi & Üretici": {
+      "az": "Fermer və istehsalçı",
+      "en": "Farmer & Producer",
+      "de": "Landwirt & Erzeuger",
+      "ru": "Фермер и производитель",
+      "ar": "مزارع ومنتج"
+    },
+    "Çimento": {
+      "az": "Sement",
+      "en": "Cement",
+      "de": "Zement",
+      "ru": "Цемент",
+      "ar": "أسمنت"
+    },
+    "Danışan Yönetimi": {
+      "az": "Müştəri idarəetməsi",
+      "en": "Client Management",
+      "de": "Klientenverwaltung",
+      "ru": "Управление клиентами",
+      "ar": "إدارة العملاء"
+    },
+    "Depo ve fulfillment akışı": {
+      "az": "Anbar və fulfillment axını",
+      "en": "Warehouse and fulfillment flow",
+      "de": "Lager- und Fulfillment-Ablauf",
+      "ru": "Складской и fulfillment-процесс",
+      "ar": "مسار المستودع والتنفيذ"
+    },
+    "Depodan çıkış bekliyor.": {
+      "az": "Anbardan çıxış gözlənilir.",
+      "en": "Waiting to leave the warehouse.",
+      "de": "Wartet auf den Ausgang aus dem Lager.",
+      "ru": "Ожидает выхода со склада.",
+      "ar": "بانتظار الخروج من المستودع."
+    },
+    "Derbi Maç Bileti": {
+      "az": "Derbi matçı bileti",
+      "en": "Derby Match Ticket",
+      "de": "Derby-Spielkarte",
+      "ru": "Билет на дерби",
+      "ar": "تذكرة مباراة ديربي"
+    },
+    "Destek": {
+      "az": "Dəstək",
+      "en": "Support",
+      "de": "Support",
+      "ru": "Поддержка",
+      "ar": "الدعم"
+    },
+    "Doğrulanmış": {
+      "az": "Doğrulanmış",
+      "en": "Verified",
+      "de": "Verifiziert",
+      "ru": "Подтверждено",
+      "ar": "موثق"
+    },
+    "Düğün": {
+      "az": "Toy",
+      "en": "Wedding",
+      "de": "Hochzeit",
+      "ru": "Свадьба",
+      "ar": "زفاف"
+    },
+    "Düğün Salonları": {
+      "az": "Toy salonları",
+      "en": "Wedding Venues",
+      "de": "Hochzeitssäle",
+      "ru": "Свадебные залы",
+      "ar": "قاعات الزفاف"
+    },
+    "E-ticaret siparişleri, kargo ve fulfillment akışı.": {
+      "az": "E-ticarət sifarişləri, kargo və fulfillment axını.",
+      "en": "E-commerce orders, shipping, and fulfillment flow.",
+      "de": "E-Commerce-Bestellungen, Versand und Fulfillment-Ablauf.",
+      "ru": "Заказы электронной коммерции, доставка и fulfillment-процесс.",
+      "ar": "طلبات التجارة الإلكترونية والشحن ومسار التنفيذ."
+    },
+    "En çok satan": {
+      "az": "Ən çox satılan",
+      "en": "Best-selling",
+      "de": "Bestseller",
+      "ru": "Самые продаваемые",
+      "ar": "الأكثر مبيعا"
+    },
+    "En yüksek indirim": {
+      "az": "Ən yüksək endirim",
+      "en": "Highest discount",
+      "de": "Höchster Rabatt",
+      "ru": "Самая высокая скидка",
+      "ar": "أعلى خصم"
+    },
+    "En yüksek puan": {
+      "az": "Ən yüksək xal",
+      "en": "Highest rating",
+      "de": "Höchste Bewertung",
+      "ru": "Самый высокий рейтинг",
+      "ar": "أعلى تقييم"
+    },
+    "Eşya listesi": {
+      "az": "Əşya siyahısı",
+      "en": "Item list",
+      "de": "Gegenstandsliste",
+      "ru": "Список вещей",
+      "ar": "قائمة الأغراض"
+    },
+    "Eşya listesi oluştur": {
+      "az": "Əşya siyahısı yarat",
+      "en": "Create item list",
+      "de": "Gegenstandsliste erstellen",
+      "ru": "Создать список вещей",
+      "ar": "إنشاء قائمة الأغراض"
+    },
+    "Eşya listesi ve paketleme kontrolü": {
+      "az": "Əşya siyahısı və qablaşdırma yoxlaması",
+      "en": "Item list and packing check",
+      "de": "Gegenstandsliste und Verpackungsprüfung",
+      "ru": "Список вещей и контроль упаковки",
+      "ar": "قائمة الأغراض وفحص التغليف"
+    },
+    "Etkinliğe katıl": {
+      "az": "Tədbirə qatıl",
+      "en": "Join event",
+      "de": "An Veranstaltung teilnehmen",
+      "ru": "Присоединиться к мероприятию",
+      "ar": "انضم إلى الفعالية"
+    },
+    "Filo Yönetimi": {
+      "az": "Avtopark idarəetməsi",
+      "en": "Fleet Management",
+      "de": "Flottenmanagement",
+      "ru": "Управление автопарком",
+      "ar": "إدارة الأسطول"
+    },
+    "Fitness Ekipmanı": {
+      "az": "Fitness avadanlığı",
+      "en": "Fitness Equipment",
+      "de": "Fitnessgeräte",
+      "ru": "Фитнес-оборудование",
+      "ar": "معدات اللياقة"
+    },
+    "Fiyat / stok tek merkez kontrolü": {
+      "az": "Qiymət / stok üçün vahid mərkəz nəzarəti",
+      "en": "Single-center price / stock control",
+      "de": "Zentrale Preis- und Bestandskontrolle",
+      "ru": "Единый контроль цен и запасов",
+      "ar": "تحكم مركزي في السعر والمخزون"
+    },
+    "Fiyat aralığı": {
+      "az": "Qiymət aralığı",
+      "en": "Price range",
+      "de": "Preisspanne",
+      "ru": "Диапазон цен",
+      "ar": "نطاق السعر"
+    },
+    "Gıda": {
+      "az": "Qida",
+      "en": "Food",
+      "de": "Lebensmittel",
+      "ru": "Продукты",
+      "ar": "أغذية"
+    },
+    "Giriş doğrula": {
+      "az": "Girişi doğrula",
+      "en": "Verify entry",
+      "de": "Eintritt prüfen",
+      "ru": "Подтвердить вход",
+      "ar": "تحقق من الدخول"
+    },
+    "Görev en yakın uygun kuryelere düşer.": {
+      "az": "Tapşırıq ən yaxın uyğun kuryerlərə yönləndirilir.",
+      "en": "The task is assigned to the nearest suitable couriers.",
+      "de": "Der Auftrag wird den nächstgelegenen geeigneten Kurieren zugewiesen.",
+      "ru": "Задача назначается ближайшим подходящим курьерам.",
+      "ar": "تُسند المهمة إلى أقرب مندوبي توصيل مناسبين."
+    },
+    "Gübre & İlaç": {
+      "az": "Gübrə və dərman",
+      "en": "Fertilizer & Pesticide",
+      "de": "Dünger & Pflanzenschutz",
+      "ru": "Удобрения и средства защиты",
+      "ar": "أسمدة ومبيدات"
+    },
+    "Gümrük": {
+      "az": "Gömrük",
+      "en": "Customs",
+      "de": "Zoll",
+      "ru": "Таможня",
+      "ar": "الجمارك"
+    },
+    "Gümrük evrak kontrolü": {
+      "az": "Gömrük sənəd yoxlaması",
+      "en": "Customs document check",
+      "de": "Zolldokumentenprüfung",
+      "ru": "Проверка таможенных документов",
+      "ar": "فحص مستندات الجمارك"
+    },
+    "Gümrük evrakları kontrol ediliyor.": {
+      "az": "Gömrük sənədləri yoxlanılır.",
+      "en": "Customs documents are being checked.",
+      "de": "Zolldokumente werden geprüft.",
+      "ru": "Таможенные документы проверяются.",
+      "ar": "يتم فحص مستندات الجمارك."
+    },
+    "81 İlde": {
+      "az": "81 vilayətdə",
+      "en": "In 81 Provinces",
+      "de": "In 81 Provinzen",
+      "ru": "В 81 провинции",
+      "ar": "في 81 ولاية"
+    },
+    "Allona Organizasyon": {
+      "az": "Allona Organizasiya",
+      "en": "Allona Organization",
+      "de": "Allona Organisation",
+      "ru": "Allona Организация",
+      "ar": "Allona تنظيم"
+    },
+    "Allona Organizasyon partner paneliyle paket, takvim, teklif, sözleşme, ödeme, fotoğraf, catering, müzik, süsleme, salon yönetimi ve HP kampanyaları tek sistemden yönetilir.": {
+      "az": "Allona Organizasiya partner paneli ilə paket, təqvim, təklif, müqavilə, ödəniş, foto, keyterinq, musiqi, dekorasiya, salon idarəetməsi və HP kampaniyaları vahid sistemdən idarə olunur.",
+      "en": "With the Allona Organization partner panel, packages, calendar, offers, contracts, payments, photography, catering, music, decoration, venue management, and HP campaigns are managed from one system.",
+      "de": "Mit dem Allona Organisation Partnerpanel werden Pakete, Kalender, Angebote, Verträge, Zahlungen, Fotografie, Catering, Musik, Dekoration, Saalverwaltung und HP-Kampagnen in einem System verwaltet.",
+      "ru": "Через партнерскую панель Allona Организация пакеты, календарь, предложения, договоры, платежи, фото, кейтеринг, музыка, оформление, управление залом и HP-кампании управляются в одной системе.",
+      "ar": "من خلال لوحة شركاء Allona تنظيم تتم إدارة الباقات والتقويم والعروض والعقود والمدفوعات والتصوير والكيترينغ والموسيقى والديكور وإدارة القاعات وحملات HP من نظام واحد."
+    },
+    "AllonaHub + Güzellik eşleşmeli": {
+      "az": "AllonaHub + Gözəllik uyğunluğu",
+      "en": "AllonaHub + Beauty matched",
+      "de": "AllonaHub + Beauty abgestimmt",
+      "ru": "AllonaHub + подбор Beauty",
+      "ar": "AllonaHub + مطابقة الجمال"
+    },
+    "AllonaHub + Güzellik eşleşmesi": {
+      "az": "AllonaHub + Gözəllik uyğunluğu",
+      "en": "AllonaHub + Beauty matching",
+      "de": "AllonaHub + Beauty-Matching",
+      "ru": "AllonaHub + подбор Beauty",
+      "ar": "مطابقة AllonaHub + الجمال"
+    },
+    "AllonaHub + Spor eşleşmeli": {
+      "az": "AllonaHub + İdman uyğunluğu",
+      "en": "AllonaHub + Sports matched",
+      "de": "AllonaHub + Sport abgestimmt",
+      "ru": "AllonaHub + подбор спорта",
+      "ar": "AllonaHub + مطابقة الرياضة"
+    },
+    "AllonaHub + Spor ürün görünürlüğü": {
+      "az": "AllonaHub + idman məhsulu görünürlüğü",
+      "en": "AllonaHub + sports product visibility",
+      "de": "AllonaHub + Sichtbarkeit für Sportprodukte",
+      "ru": "AllonaHub + видимость спортивных товаров",
+      "ar": "AllonaHub + ظهور منتجات الرياضة"
+    },
+    "AllonaHub | Yeni Nesil Süper Uygulama": {
+      "az": "AllonaHub | Yeni nəsil super tətbiq",
+      "en": "AllonaHub | Next-Generation Super App",
+      "de": "AllonaHub | Super-App der nächsten Generation",
+      "ru": "AllonaHub | Суперприложение нового поколения",
+      "ar": "AllonaHub | تطبيق فائق من الجيل الجديد"
+    },
+    "AllonaHub Bağlantıları": {
+      "az": "AllonaHub bağlantıları",
+      "en": "AllonaHub Connections",
+      "de": "AllonaHub Verbindungen",
+      "ru": "Связи AllonaHub",
+      "ar": "روابط AllonaHub"
+    },
+    "ALLONAHUB EKOSISTEMI": {
+      "az": "ALLONAHUB EKOSİSTEMİ",
+      "en": "ALLONAHUB ECOSYSTEM",
+      "de": "ALLONAHUB ÖKOSYSTEM",
+      "ru": "ЭКОСИСТЕМА ALLONAHUB",
+      "ar": "منظومة ALLONAHUB"
+    },
+    "AllonaHub Entegrasyonu": {
+      "az": "AllonaHub inteqrasiyası",
+      "en": "AllonaHub Integration",
+      "de": "AllonaHub Integration",
+      "ru": "Интеграция AllonaHub",
+      "ar": "تكامل AllonaHub"
+    },
+    "Arpa / Ton": {
+      "az": "Arpa / Ton",
+      "en": "Barley / Ton",
+      "de": "Gerste / Tonne",
+      "ru": "Ячмень / тонна",
+      "ar": "شعير / طن"
+    },
+    "Arpa Tohumu": {
+      "az": "Arpa toxumu",
+      "en": "Barley Seed",
+      "de": "Gerstensaat",
+      "ru": "Семена ячменя",
+      "ar": "بذور الشعير"
+    },
+    "Arsa": {
+      "az": "Torpaq sahəsi",
+      "en": "Land",
+      "de": "Grundstück",
+      "ru": "Земельный участок",
+      "ar": "أرض"
+    },
+    "Arsa geliştirme, konut projeleri, müteahhitlik, mimarlık, mühendislik, yapı malzemeleri, tadilat, prefabrik ev, tiny house ve büyük ölçekli yapı süreçleri AllonaHub içinde tek premium platformda birleşir.": {
+      "az": "Torpaq inkişafı, yaşayış layihələri, podratçılıq, memarlıq, mühəndislik, tikinti materialları, təmir, prefabrik ev, tiny house və böyük miqyaslı tikinti prosesləri AllonaHub daxilində vahid premium platformada birləşir.",
+      "en": "Land development, housing projects, contracting, architecture, engineering, building materials, renovation, prefabricated homes, tiny houses, and large-scale construction processes come together in one premium platform within AllonaHub.",
+      "de": "Grundstücksentwicklung, Wohnprojekte, Bauunternehmen, Architektur, Ingenieurwesen, Baustoffe, Renovierung, Fertighäuser, Tiny Houses und große Bauprozesse werden in AllonaHub auf einer Premium-Plattform vereint.",
+      "ru": "Развитие земельных участков, жилые проекты, подрядчики, архитектура, инженерия, стройматериалы, ремонт, сборные дома, tiny house и крупные строительные процессы объединяются в AllonaHub на единой премиальной платформе.",
+      "ar": "تجتمع عمليات تطوير الأراضي والمشاريع السكنية والمقاولات والهندسة المعمارية والهندسة ومواد البناء والتجديد والمنازل الجاهزة والبيوت الصغيرة والمشاريع الإنشائية الكبرى ضمن منصة مميزة واحدة داخل AllonaHub."
+    },
+    "Arsa, villa, daire, işyeri, depo veya fabrika projesi oluştur. Sistem uygun müteahhitleri, mimarları, mühendisleri ve tedarikçileri otomatik eşleştirsin.": {
+      "az": "Torpaq, villa, mənzil, iş yeri, anbar və ya fabrik layihəsi yaradın. Sistem uyğun podratçıları, memarları, mühəndisləri və təchizatçıları avtomatik uyğunlaşdırsın.",
+      "en": "Create a land, villa, apartment, workplace, warehouse, or factory project. Let the system automatically match suitable contractors, architects, engineers, and suppliers.",
+      "de": "Erstellen Sie ein Grundstücks-, Villen-, Wohnungs-, Gewerbe-, Lager- oder Fabrikprojekt. Das System gleicht passende Bauunternehmen, Architekten, Ingenieure und Lieferanten automatisch ab.",
+      "ru": "Создайте проект участка, виллы, квартиры, офиса, склада или фабрики. Система автоматически подберет подходящих подрядчиков, архитекторов, инженеров и поставщиков.",
+      "ar": "أنشئ مشروع أرض أو فيلا أو شقة أو مكان عمل أو مستودع أو مصنع، ودع النظام يطابق تلقائيا المقاولين والمهندسين المعماريين والمهندسين والموردين المناسبين."
+    },
+    "Aşı tarihleri, ilaç kullanımı, mikroçip numarası ve bakım notları pet profilinde saklanabilir.": {
+      "az": "Peyvənd tarixləri, dərman istifadəsi, mikroçip nömrəsi və baxım qeydləri pet profilində saxlanıla bilər.",
+      "en": "Vaccination dates, medication use, microchip number, and care notes can be stored in the pet profile.",
+      "de": "Impftermine, Medikamentennutzung, Mikrochipnummer und Pflegenotizen können im Haustierprofil gespeichert werden.",
+      "ru": "Даты вакцинации, прием лекарств, номер микрочипа и заметки по уходу можно хранить в профиле питомца.",
+      "ar": "يمكن حفظ تواريخ اللقاحات واستخدام الأدوية ورقم الرقاقة وملاحظات الرعاية في ملف الحيوان الأليف."
+    },
+    "Bağcılık, meyvecilik ve bahçe ürünleri.": {
+      "az": "Üzümçülük, meyvəçilik və bağ məhsulları.",
+      "en": "Viticulture, fruit growing, and garden products.",
+      "de": "Weinbau, Obstbau und Gartenprodukte.",
+      "ru": "Виноградарство, садоводство и товары для сада.",
+      "ar": "منتجات الكروم وزراعة الفاكهة والحدائق."
+    },
+    "Bilet adedi ve kullanıcı bilgisi": {
+      "az": "Bilet sayı və istifadəçi məlumatı",
+      "en": "Ticket quantity and user information",
+      "de": "Ticketanzahl und Nutzerinformationen",
+      "ru": "Количество билетов и данные пользователя",
+      "ar": "عدد التذاكر ومعلومات المستخدم"
+    },
+    "Bilet al": {
+      "az": "Bilet al",
+      "en": "Buy ticket",
+      "de": "Ticket kaufen",
+      "ru": "Купить билет",
+      "ar": "اشتر تذكرة"
+    },
+    "Biletlerim": {
+      "az": "Biletlərim",
+      "en": "My Tickets",
+      "de": "Meine Tickets",
+      "ru": "Мои билеты",
+      "ar": "تذاكري"
+    },
+    "Bilgi gir": {
+      "az": "Məlumat daxil et",
+      "en": "Enter information",
+      "de": "Informationen eingeben",
+      "ru": "Введите информацию",
+      "ar": "أدخل المعلومات"
+    },
+    "Bireysel emeklilik, çocuk BES ve uzun vadeli birikim bağlantısı.": {
+      "az": "Fərdi pensiya, uşaq pensiya planı və uzunmüddətli yığım bağlantısı.",
+      "en": "Connection for private pension, child pension plans, and long-term savings.",
+      "de": "Anbindung für private Vorsorge, Kinder-Vorsorge und langfristige Sparpläne.",
+      "ru": "Подключение индивидуальных пенсионных планов, детских накоплений и долгосрочных сбережений.",
+      "ar": "ربط التقاعد الفردي وخطط الأطفال والادخار طويل الأجل."
+    },
+    "Bitki koruma, besleme ve verim ürünleri.": {
+      "az": "Bitki qoruma, qidalandırma və məhsuldarlıq məhsulları.",
+      "en": "Plant protection, nutrition, and yield products.",
+      "de": "Produkte für Pflanzenschutz, Ernährung und Ertrag.",
+      "ru": "Средства защиты растений, питания и повышения урожайности.",
+      "ar": "منتجات حماية النبات والتغذية والإنتاجية."
+    },
+    "Boşanma, nafaka, velayet ve aile hukuku danışmanlığı.": {
+      "az": "Boşanma, aliment, qəyyumluq və ailə hüququ məsləhəti.",
+      "en": "Divorce, alimony, custody, and family law consultancy.",
+      "de": "Beratung zu Scheidung, Unterhalt, Sorgerecht und Familienrecht.",
+      "ru": "Консультации по разводу, алиментам, опеке и семейному праву.",
+      "ar": "استشارات الطلاق والنفقة والحضانة وقانون الأسرة."
+    },
+    "Bölge ve müsaitlik ayarı": {
+      "az": "Region və uyğunluq ayarı",
+      "en": "Region and availability settings",
+      "de": "Region- und Verfügbarkeitseinstellungen",
+      "ru": "Настройки региона и доступности",
+      "ar": "إعدادات المنطقة والتوفر"
+    },
+    "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek ödeme checkout ve iyzico güvenli ödeme sayfasında tamamlanır.": {
+      "az": "Bu səhifə köhnə paket bağlantıları üçün uyğunluq yönləndirməsidir. Real ödəniş checkout və iyzico təhlükəsiz ödəniş səhifəsində tamamlanır.",
+      "en": "This page is a compatibility redirect for old package links. Real payment is completed on the checkout and iyzico secure payment page.",
+      "de": "Diese Seite ist eine Kompatibilitätsweiterleitung für alte Paketlinks. Die echte Zahlung wird im Checkout und auf der sicheren iyzico-Zahlungsseite abgeschlossen.",
+      "ru": "Эта страница является совместимой переадресацией для старых ссылок пакетов. Реальная оплата завершается на checkout и безопасной странице оплаты iyzico.",
+      "ar": "هذه الصفحة تحويل توافق لروابط الباقات القديمة. يتم إكمال الدفع الحقيقي في صفحة checkout وصفحة الدفع الآمنة من iyzico."
+    },
+    "Bu sayfa platform tasarımıdır. Kredi, sigorta, yatırım ve finansal ürünlerde nihai karar ve yasal sorumluluk yetkili banka, finans kuruluşu, sigorta şirketi veya lisanslı kurumlara aittir.": {
+      "az": "Bu səhifə platform dizaynıdır. Kredit, sığorta, investisiya və maliyyə məhsullarında son qərar və hüquqi məsuliyyət səlahiyyətli banka, maliyyə qurumu, sığorta şirkəti və ya lisenziyalı qurumlara aiddir.",
+      "en": "This page is a platform design. For credit, insurance, investment, and financial products, the final decision and legal responsibility belong to the authorized bank, financial institution, insurance company, or licensed institution.",
+      "de": "Diese Seite ist ein Plattformdesign. Bei Kredit-, Versicherungs-, Investment- und Finanzprodukten liegen endgültige Entscheidung und rechtliche Verantwortung bei der autorisierten Bank, dem Finanzinstitut, der Versicherungsgesellschaft oder der lizenzierten Institution.",
+      "ru": "Эта страница является дизайном платформы. По кредитам, страхованию, инвестициям и финансовым продуктам окончательное решение и юридическая ответственность принадлежат уполномоченному банку, финансовой организации, страховой компании или лицензированному учреждению.",
+      "ar": "هذه الصفحة تصميم للمنصة. في منتجات الائتمان والتأمين والاستثمار والمنتجات المالية، يعود القرار النهائي والمسؤولية القانونية إلى البنك أو المؤسسة المالية أو شركة التأمين أو الجهة المرخصة المختصة."
+    },
+    "Buzdolabı, çamaşır, bulaşık, kurutma ve ankastre ürünler.": {
+      "az": "Soyuducu, paltaryuyan, qabyuyan, quruducu və ankastre məhsullar.",
+      "en": "Refrigerators, washing machines, dishwashers, dryers, and built-in appliances.",
+      "de": "Kühlschränke, Waschmaschinen, Geschirrspüler, Trockner und Einbaugeräte.",
+      "ru": "Холодильники, стиральные машины, посудомоечные машины, сушилки и встроенная техника.",
+      "ar": "ثلاجات وغسالات وغسالات صحون ومجففات وأجهزة مدمجة."
+    },
+    "Büyük paket, market ve toplu gönderiler.": {
+      "az": "Böyük paket, market və toplu göndərişlər.",
+      "en": "Large packages, market orders, and bulk shipments.",
+      "de": "Große Pakete, Marktbestellungen und Sammelsendungen.",
+      "ru": "Крупные посылки, заказы из маркета и массовые отправления.",
+      "ar": "طرود كبيرة وطلبات سوق وشحنات جماعية."
+    },
+    "Cilt bakım, lazer epilasyon, kaş-kirpik ve estetik hizmetler.": {
+      "az": "Dəri baxımı, lazer epilyasiya, qaş-kirpik və estetik xidmətlər.",
+      "en": "Skin care, laser hair removal, brow-lash, and aesthetic services.",
+      "de": "Hautpflege, Laser-Haarentfernung, Augenbrauen- und Wimpernservices sowie Ästhetikleistungen.",
+      "ru": "Уход за кожей, лазерная эпиляция, услуги для бровей и ресниц, эстетические услуги.",
+      "ar": "العناية بالبشرة وإزالة الشعر بالليزر وخدمات الحواجب والرموش والتجميل."
+    },
+    "CV Analizi": {
+      "az": "CV analizi",
+      "en": "CV Analysis",
+      "de": "Lebenslaufanalyse",
+      "ru": "Анализ резюме",
+      "ar": "تحليل السيرة الذاتية"
+    },
+    "CV Bilgileri": {
+      "az": "CV məlumatları",
+      "en": "CV Information",
+      "de": "Lebenslaufinformationen",
+      "ru": "Данные резюме",
+      "ar": "معلومات السيرة الذاتية"
+    },
+    "CV gerekli": {
+      "az": "CV tələb olunur",
+      "en": "CV required",
+      "de": "Lebenslauf erforderlich",
+      "ru": "Требуется резюме",
+      "ar": "السيرة الذاتية مطلوبة"
+    },
+    "CV kontrol": {
+      "az": "CV yoxlaması",
+      "en": "CV check",
+      "de": "Lebenslaufprüfung",
+      "ru": "Проверка резюме",
+      "ar": "فحص السيرة الذاتية"
+    },
+    "Çoklu bilet ve arkadaş daveti kampanyası.": {
+      "az": "Çoxlu bilet və dost dəvəti kampaniyası.",
+      "en": "Multi-ticket and friend invitation campaign.",
+      "de": "Kampagne für Mehrfachtickets und Freundeseinladungen.",
+      "ru": "Кампания с несколькими билетами и приглашением друзей.",
+      "ar": "حملة تذاكر متعددة ودعوة الأصدقاء."
+    },
+    "Dambıl Seti": {
+      "az": "Dambıl dəsti",
+      "en": "Dumbbell Set",
+      "de": "Hantelset",
+      "ru": "Набор гантелей",
+      "ar": "مجموعة دمبل"
+    },
+    "Damlama, yağmurlama ve tarla sulama.": {
+      "az": "Damcı, yağmurlama və tarla suvarması.",
+      "en": "Drip, sprinkler, and field irrigation.",
+      "de": "Tropf-, Beregnungs- und Feldbewässerung.",
+      "ru": "Капельное, дождевальное и полевое орошение.",
+      "ar": "ري بالتنقيط والرش وري الحقول."
+    },
+    "Dashboard": {
+      "az": "İdarə paneli",
+      "en": "Dashboard",
+      "de": "Dashboard",
+      "ru": "Панель управления",
+      "ar": "لوحة التحكم"
+    },
+    "Deneyimli": {
+      "az": "Təcrübəli",
+      "en": "Experienced",
+      "de": "Erfahren",
+      "ru": "Опытный",
+      "ar": "ذو خبرة"
+    },
+    "Depo": {
+      "az": "Anbar",
+      "en": "Warehouse",
+      "de": "Lager",
+      "ru": "Склад",
+      "ar": "مستودع"
+    },
+    "Detay": {
+      "az": "Detal",
+      "en": "Detail",
+      "de": "Detail",
+      "ru": "Детали",
+      "ar": "تفاصيل"
+    },
+    "Dijital Kod": {
+      "az": "Rəqəmsal kod",
+      "en": "Digital Code",
+      "de": "Digitaler Code",
+      "ru": "Цифровой код",
+      "ar": "رمز رقمي"
+    },
+    "Buğday / Ton": {
+      "az": "Buğda / Ton",
+      "en": "Wheat / Ton",
+      "de": "Weizen / Tonne",
+      "ru": "Пшеница / тонна",
+      "ar": "قمح / طن"
+    },
+    "Bulunan hayvan bildirimi ve sahip arama.": {
+      "az": "Tapılan heyvan bildirişi və sahib axtarışı.",
+      "en": "Found animal notice and owner search.",
+      "de": "Meldung gefundener Tiere und Besitzersuche.",
+      "ru": "Уведомление о найденном животном и поиск владельца.",
+      "ar": "إبلاغ عن حيوان تم العثور عليه والبحث عن المالك."
+    },
+    "Bulunan Köpek": {
+      "az": "Tapılan it",
+      "en": "Found Dog",
+      "de": "Gefundener Hund",
+      "ru": "Найдена собака",
+      "ar": "كلب تم العثور عليه"
+    },
+    "Bulundu": {
+      "az": "Tapıldı",
+      "en": "Found",
+      "de": "Gefunden",
+      "ru": "Найдено",
+      "ar": "تم العثور عليه"
+    },
+    "Butik": {
+      "az": "Butik",
+      "en": "Boutique",
+      "de": "Boutique",
+      "ru": "Бутик",
+      "ar": "بوتيك"
+    },
+    "Catering": {
+      "az": "Keyterinq",
+      "en": "Catering",
+      "de": "Catering",
+      "ru": "Кейтеринг",
+      "ar": "كيترينغ"
+    },
+    "Ceza": {
+      "az": "Cinayət hüququ",
+      "en": "Criminal Law",
+      "de": "Strafrecht",
+      "ru": "Уголовное право",
+      "ar": "القانون الجنائي"
+    },
+    "Check-in + HP": {
+      "az": "Check-in + HP",
+      "en": "Check-in + HP",
+      "de": "Check-in + HP",
+      "ru": "Check-in + HP",
+      "ar": "تسجيل دخول + HP"
+    },
+    "Check-in: QR veya üye numarası ile giriş": {
+      "az": "Check-in: QR və ya üzv nömrəsi ilə giriş",
+      "en": "Check-in: entry with QR or member number",
+      "de": "Check-in: Eintritt mit QR oder Mitgliedsnummer",
+      "ru": "Check-in: вход по QR или номеру участника",
+      "ar": "تسجيل الدخول: الدخول عبر QR أو رقم العضو"
+    },
+    "CV hak durumu kontrol ediliyor...": {
+      "az": "CV haqq statusu yoxlanılır...",
+      "en": "Checking CV entitlement status...",
+      "de": "CV-Berechtigungsstatus wird geprüft...",
+      "ru": "Проверяется статус права на резюме...",
+      "ar": "جار التحقق من حالة أهلية السيرة الذاتية..."
+    },
+    "Dambıl, mat, barfiks, bant, eldiven ve ev spor ürünleri.": {
+      "az": "Dambıl, mat, turnik, bant, əlcək və ev idman məhsulları.",
+      "en": "Dumbbells, mats, pull-up bars, bands, gloves, and home fitness products.",
+      "de": "Hanteln, Matten, Klimmzugstangen, Bänder, Handschuhe und Heimfitnessprodukte.",
+      "ru": "Гантели, коврики, турники, ленты, перчатки и товары для домашнего спорта.",
+      "ar": "دمبل وحصائر وعقلة وأشرطة وقفازات ومنتجات رياضية منزلية."
+    },
+    "Damla Sulama Seti": {
+      "az": "Damcı suvarma dəsti",
+      "en": "Drip Irrigation Set",
+      "de": "Tropfbewässerungsset",
+      "ru": "Комплект капельного полива",
+      "ar": "طقم ري بالتنقيط"
+    },
+    "DASK, konut ve kira güvence sigortaları.": {
+      "az": "DASK, mənzil və kirayə təminatı sığortaları.",
+      "en": "Compulsory earthquake, home, and rent guarantee insurance.",
+      "de": "Erdbebenpflicht-, Wohnungs- und Mietgarantieversicherungen.",
+      "ru": "Страхование DASK, жилья и гарантий аренды.",
+      "ar": "تأمين الزلازل الإجباري والسكن وضمان الإيجار."
+    },
+    "Dekorasyon, mobilya, aydınlatma ve premium iç mekan tasarımı.": {
+      "az": "Dekorasiya, mebel, işıqlandırma və premium interyer dizaynı.",
+      "en": "Decoration, furniture, lighting, and premium interior design.",
+      "de": "Dekoration, Möbel, Beleuchtung und Premium-Innenarchitektur.",
+      "ru": "Декор, мебель, освещение и премиальный дизайн интерьера.",
+      "ar": "ديكور وأثاث وإضاءة وتصميم داخلي فاخر."
+    },
+    "Dış çekim, drone çekimi, video kurgu ve canlı yayın.": {
+      "az": "Açıq məkan çəkilişi, drone çəkilişi, video montaj və canlı yayım.",
+      "en": "Outdoor shooting, drone filming, video editing, and live streaming.",
+      "de": "Außenaufnahmen, Drohnenaufnahmen, Videoschnitt und Livestreaming.",
+      "ru": "Выездная съемка, съемка с дрона, видеомонтаж и прямые трансляции.",
+      "ar": "تصوير خارجي وتصوير بالطائرة المسيرة ومونتاج فيديو وبث مباشر."
+    },
+    "Diyetisyen": {
+      "az": "Diyetoloq",
+      "en": "Dietitian",
+      "de": "Ernährungsberater",
+      "ru": "Диетолог",
+      "ar": "أخصائي تغذية"
+    },
+    "DJ, canlı müzik, sahne ve özel gösteri bağlantısı.": {
+      "az": "DJ, canlı musiqi, səhnə və xüsusi şou bağlantısı.",
+      "en": "Connection for DJ, live music, stage, and special shows.",
+      "de": "Anbindung für DJ, Live-Musik, Bühne und besondere Shows.",
+      "ru": "Подключение DJ, живой музыки, сцены и специальных шоу.",
+      "ar": "ربط خدمات DJ والموسيقى الحية والمسرح والعروض الخاصة."
+    },
+    "DJ, orkestra, fasıl, canlı müzik ve sahne gösterileri.": {
+      "az": "DJ, orkestr, fasıl, canlı musiqi və səhnə şouları.",
+      "en": "DJ, orchestra, traditional music, live music, and stage shows.",
+      "de": "DJ, Orchester, traditionelle Musik, Live-Musik und Bühnenshows.",
+      "ru": "DJ, оркестр, традиционная музыка, живая музыка и сценические шоу.",
+      "ar": "DJ وأوركسترا وموسيقى تقليدية وموسيقى حية وعروض مسرحية."
+    },
+    "Doğa yaşamı ve turizm yatırımları için özel tasarım.": {
+      "az": "Təbiət həyatı və turizm investisiyaları üçün xüsusi dizayn.",
+      "en": "Custom design for nature living and tourism investments.",
+      "de": "Sonderdesign für naturnahes Wohnen und Tourismusinvestitionen.",
+      "ru": "Индивидуальный дизайн для жизни на природе и туристических инвестиций.",
+      "ar": "تصميم خاص للحياة الطبيعية والاستثمارات السياحية."
+    },
+    "Doğum Günü": {
+      "az": "Ad günü",
+      "en": "Birthday",
+      "de": "Geburtstag",
+      "ru": "День рождения",
+      "ar": "عيد ميلاد"
+    },
+    "Doktor, avukat, danışman, mühendis ve meslek grupları için.": {
+      "az": "Həkim, vəkil, məsləhətçi, mühəndis və peşə qrupları üçün.",
+      "en": "For doctors, lawyers, consultants, engineers, and professional groups.",
+      "de": "Für Ärzte, Anwälte, Berater, Ingenieure und Berufsgruppen.",
+      "ru": "Для врачей, юристов, консультантов, инженеров и профессиональных групп.",
+      "ar": "للأطباء والمحامين والمستشارين والمهندسين والفئات المهنية."
+    },
+    "Dosya durumu panelden takip edilir.": {
+      "az": "Fayl statusu paneldən izlənilir.",
+      "en": "File status is tracked from the panel.",
+      "de": "Der Aktenstatus wird über das Panel verfolgt.",
+      "ru": "Статус дела отслеживается через панель.",
+      "ar": "تتم متابعة حالة الملف من اللوحة."
+    },
+    "Dosya, karar, sözleşme veya yazışmalar güvenli belge alanına eklenir.": {
+      "az": "Fayl, qərar, müqavilə və ya yazışmalar təhlükəsiz sənəd sahəsinə əlavə olunur.",
+      "en": "Files, decisions, contracts, or correspondence are added to the secure document area.",
+      "de": "Akten, Entscheidungen, Verträge oder Korrespondenz werden dem sicheren Dokumentenbereich hinzugefügt.",
+      "ru": "Файлы, решения, договоры или переписка добавляются в безопасную область документов.",
+      "ar": "تُضاف الملفات أو القرارات أو العقود أو المراسلات إلى منطقة المستندات الآمنة."
+    },
+    "Eczane": {
+      "az": "Aptek",
+      "en": "Pharmacy",
+      "de": "Apotheke",
+      "ru": "Аптека",
+      "ar": "صيدلية"
+    },
+    "Eksper Süreci": {
+      "az": "Ekspert prosesi",
+      "en": "Expert Process",
+      "de": "Gutachterprozess",
+      "ru": "Экспертный процесс",
+      "ar": "عملية الخبير"
+    },
+    "Eksper ve belge yönetimi": {
+      "az": "Ekspert və sənəd idarəetməsi",
+      "en": "Expert and document management",
+      "de": "Gutachter- und Dokumentenverwaltung",
+      "ru": "Управление экспертами и документами",
+      "ar": "إدارة الخبير والمستندات"
+    },
+    "En yeni": {
+      "az": "Ən yeni",
+      "en": "Newest",
+      "de": "Neueste",
+      "ru": "Новинки",
+      "ar": "الأحدث"
+    },
+    "Favoriler": {
+      "az": "Favoritlər",
+      "en": "Favorites",
+      "de": "Favoriten",
+      "ru": "Избранное",
+      "ar": "المفضلة"
+    },
+    "Fatura & Tahsilat": {
+      "az": "Faktura və tahsilat",
+      "en": "Invoice & Collection",
+      "de": "Rechnung & Inkasso",
+      "ru": "Счет и взыскание",
+      "ar": "الفاتورة والتحصيل"
+    },
+    "Fiyat artan": {
+      "az": "Qiymət artan",
+      "en": "Price ascending",
+      "de": "Preis aufsteigend",
+      "ru": "Цена по возрастанию",
+      "ar": "السعر تصاعديا"
+    },
+    "Fiyat azalan": {
+      "az": "Qiymət azalan",
+      "en": "Price descending",
+      "de": "Preis absteigend",
+      "ru": "Цена по убыванию",
+      "ar": "السعر تنازليا"
+    },
+    "Foto & Kamera": {
+      "az": "Foto və kamera",
+      "en": "Photo & Camera",
+      "de": "Foto & Kamera",
+      "ru": "Фото и камера",
+      "ar": "صور وكاميرا"
+    },
+    "Festival": {
+      "az": "Festival",
+      "en": "Festival",
+      "de": "Festival",
+      "ru": "Фестиваль",
+      "ar": "مهرجان"
+    },
+    "Gaming Kulaklık": {
+      "az": "Gaming qulaqlıq",
+      "en": "Gaming Headset",
+      "de": "Gaming-Headset",
+      "ru": "Игровая гарнитура",
+      "ar": "سماعة ألعاب"
+    },
+    "Garanti": {
+      "az": "Zəmanət",
+      "en": "Warranty",
+      "de": "Garantie",
+      "ru": "Гарантия",
+      "ar": "الضمان"
+    },
+    "Garanti Takibi": {
+      "az": "Zəmanət izləmə",
+      "en": "Warranty Tracking",
+      "de": "Garantieverfolgung",
+      "ru": "Отслеживание гарантии",
+      "ar": "متابعة الضمان"
+    },
+    "Garanti ve servis paneli": {
+      "az": "Zəmanət və servis paneli",
+      "en": "Warranty and service panel",
+      "de": "Garantie- und Servicepanel",
+      "ru": "Панель гарантии и сервиса",
+      "ar": "لوحة الضمان والخدمة"
+    },
+    "Gece Hayatı": {
+      "az": "Gecə həyatı",
+      "en": "Nightlife",
+      "de": "Nachtleben",
+      "ru": "Ночная жизнь",
+      "ar": "الحياة الليلية"
+    },
+    "gün": {
+      "az": "gün",
+      "en": "day",
+      "de": "Tag",
+      "ru": "день",
+      "ar": "يوم"
     }
   }
 }
