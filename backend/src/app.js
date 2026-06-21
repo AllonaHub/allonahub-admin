@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
+import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerRoutes } from "./routes/index.js";
 
 function requestId() {
@@ -26,7 +27,25 @@ export async function buildApp() {
         "headers.authorization",
         "SUPABASE_SERVICE_ROLE_KEY",
         "IYZICO_SECRET_KEY",
-        "IYZICO_API_KEY"
+        "IYZICO_API_KEY",
+        "ASSISTANT_AI_API_KEY",
+        "OPENAI_API_KEY",
+        "ASSISTANT_TELEGRAM_BOT_TOKEN",
+        "CRON_SECRET",
+        "config.supabase.serviceRoleKey",
+        "config.iyzico.secretKey",
+        "config.iyzico.apiKey",
+        "config.assistant.aiApiKey",
+        "config.assistant.telegramBotToken",
+        "config.assistant.telegramWebhookSecret",
+        "config.cronSecret",
+        "supabase.serviceRoleKey",
+        "iyzico.secretKey",
+        "iyzico.apiKey",
+        "assistant.aiApiKey",
+        "assistant.telegramBotToken",
+        "assistant.telegramWebhookSecret",
+        "cronSecret"
       ]
     },
     genReqId: requestId,
@@ -119,5 +138,6 @@ export async function buildApp() {
   });
 
   registerRoutes(app);
+  registerAssistantRoutes(app);
   return app;
 }

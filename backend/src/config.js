@@ -18,6 +18,14 @@ function readBool(name, defaultValue = false) {
   return ["1", "true", "yes", "on"].includes(String(value).trim().toLowerCase());
 }
 
+function readOptionalSecret(...names) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return "";
+}
+
 function csv(value) {
   return String(value || "")
     .split(",")
@@ -63,6 +71,20 @@ export const config = {
     emailWebhookSecret: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     alertFrom: readEnv("SECURITY_ALERT_FROM", { required: false, defaultValue: "security@allonahub.com" }),
     alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" })
+  },
+  assistant: {
+    enabled: readBool("ASSISTANT_ENABLED", true),
+    aiProvider: readEnv("ASSISTANT_AI_PROVIDER", { required: false, defaultValue: "rules" }),
+    aiApiKey: readOptionalSecret("ASSISTANT_AI_API_KEY", "OPENAI_API_KEY"),
+    aiBaseUrl: readEnv("ASSISTANT_AI_BASE_URL", { required: false, defaultValue: "https://api.openai.com/v1/responses" }).replace(/\/$/, ""),
+    aiModel: readEnv("ASSISTANT_AI_MODEL", { required: false, defaultValue: "gpt-4o-mini" }),
+    aiTemperature: readNumber("ASSISTANT_AI_TEMPERATURE", 0.2),
+    aiTimeoutMs: readNumber("ASSISTANT_AI_TIMEOUT_MS", 12000),
+    maxMessageChars: readNumber("ASSISTANT_MAX_MESSAGE_CHARS", 1600),
+    maxReplyChars: readNumber("ASSISTANT_MAX_REPLY_CHARS", 700),
+    rateLimitMax: readNumber("ASSISTANT_RATE_LIMIT_MAX", 20),
+    telegramBotToken: readOptionalSecret("ASSISTANT_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"),
+    telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" })
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {

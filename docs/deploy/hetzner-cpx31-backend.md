@@ -106,6 +106,10 @@ SUPABASE_SERVICE_ROLE_KEY
 IYZICO_API_KEY
 IYZICO_SECRET_KEY
 IYZICO_BASE_URL
+ASSISTANT_ENABLED
+ASSISTANT_AI_PROVIDER
+ASSISTANT_TELEGRAM_BOT_TOKEN
+TELEGRAM_WEBHOOK_SECRET
 SITE_URL
 API_URL
 ALLOWED_ORIGINS
@@ -162,9 +166,28 @@ curl https://api.allonahub.com/health
 - `GET|POST /v1/payments/iyzico/callback`
 - `POST /v1/cv/checkout`
 - `GET /v1/partner/commission/preview`
+- `POST /v1/assistant/messages`
+- `POST /v1/telegram/webhook`
 - `POST /v1/rewards/ledger`
 - `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
+
+Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
+
+```text
+ASSISTANT_ENABLED=true
+ASSISTANT_AI_PROVIDER=rules
+ASSISTANT_AI_API_KEY=
+OPENAI_API_KEY=
+```
+
+Migration ve Telegram webhook hazırlığı:
+
+```bash
+SUPABASE_DB_URL="postgresql://..." ./deploy/assistant/apply-assistant-migration.sh
+ASSISTANT_TELEGRAM_BOT_TOKEN="..." TELEGRAM_WEBHOOK_SECRET="..." ./deploy/assistant/register-telegram-webhook.sh
+API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
+```
 
 ## Cron
 

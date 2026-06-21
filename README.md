@@ -58,4 +58,15 @@ Kökte yalnızca yayın için gerekli ana dosyalar tutulur: `index.html`, `favic
 - Footer, dil seçici ve tema seçici bütün mevcut ve yeni modüllerde ortak platform davranışı olarak korunur.
 - İç linkler 404 üretmemeli; yeni aksiyonlar gerçek sayfaya, ilgili modüle veya arama/destek akışına yönlenmelidir.
 
+## Merkezi AI Destek Asistanı
+
+Backend içinde kanal bağımsız assistant servisi hazırlanmıştır:
+
+- `POST /v1/assistant/messages`: webchat, partner panel, admin panel ve ileride WhatsApp/Instagram gibi kanallardan mesaj alır.
+- `POST /v1/telegram/webhook`: Telegram webhook güncellemelerini alır, yanıt üretir ve bot token tanımlıysa Telegram'a cevap gönderir.
+- `conversation_logs`: kullanıcı ve asistan mesajlarını `channel`, `sender_type`, `metadata` ve `created_at` alanlarıyla saklar.
+- `js/assistant-widget.js`: web sitesine gömülebilecek canlı destek widget altyapısıdır.
+
+AI sağlayıcı anahtarı, Telegram bot tokenı ve webhook secret değerleri kesinlikle frontend'e yazılmaz. İkinci aşama üretim modu ücretsiz ve kural tabanlıdır: `ASSISTANT_AI_PROVIDER=rules`, `ASSISTANT_AI_API_KEY=` ve `OPENAI_API_KEY=` boş kalmalıdır. Telegram için `ASSISTANT_TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` ve ilgili rate limit ayarları environment variable olarak tanımlanmalıdır.
+
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `docs/security/enterprise-security-program.md`, `docs/security/incident-response-auto-defense.md`, `docs/reference/TASKS.md`, `docs/reference/DATABASE.md`, `docs/reference/API.md`, `docs/reference/DEPLOY.md` ve `docs/reference/STYLE_GUIDE.md` dosyalarını kullan.
