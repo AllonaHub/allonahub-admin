@@ -36,6 +36,7 @@
     "allonayemek.html": "/pages/commerce/allonayemek.html",
     "cart.html": "/pages/commerce/cart.html",
     "checkout.html": "/pages/commerce/checkout.html",
+    "iyzico-pay.html": "/pages/commerce/iyzico-pay.html",
     "kopunlar.html": "/pages/commerce/kopunlar.html",
     "kuponlar.html": "/pages/commerce/kuponlar.html",
     "ode.html": "/pages/commerce/ode.html",

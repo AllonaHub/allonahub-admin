@@ -31,7 +31,7 @@ Resmi dokümanlar:
 
 Konum: `supabase/functions/create-iyzico-checkout/index.ts`
 
-Bu fonksiyon ödeme oturumu başladığında `orders.payment_status = awaiting_payment` ve yeni Transaction Core alanı `orders.status = awaiting_payment` yazar. Kart bilgisi AllonaHub tarafında toplanmaz.
+Bu fonksiyon ödeme oturumu başladığında `orders.payment_status = awaiting_payment` ve yeni Transaction Core alanı `orders.status = awaiting_payment` yazar. Kart bilgisi AllonaHub tarafında toplanmaz; frontend yalnızca güvenilir `iyzipay.com` alan adına ait `paymentPageUrl` değerine yönlendirir.
 
 İstek:
 
@@ -50,15 +50,19 @@ Yanıt:
 ```json
 {
   "paymentPageUrl": "https://sandbox-cpp.iyzipay.com?token=...",
-  "token": "checkout-token"
+  "checkoutFormContent": "<script>...</script>",
+  "token": "checkout-token",
+  "provider": "iyzico"
 }
 ```
+
+Frontend checkout başarılı yanıtı `sessionStorage` içinde kısa süreli ödeme handoff kaydı olarak saklar, `/pages/commerce/iyzico-pay.html` ara sayfasını açar ve müşteri kart bilgisini sadece iyzico CheckoutForm ekranında girer.
 
 ### iyzico-callback
 
 Konum: `supabase/functions/iyzico-callback/index.ts`
 
-iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status`, `orders.order_status`, `orders.status` alanlarını günceller. Ödeme başarılıysa sipariş `paid`, başarısızsa `failed/pending` durumuna alınır.
+iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status`, `orders.order_status`, `orders.status` alanlarını günceller. Ödeme başarılıysa sipariş `paid`, başarısızsa `failed/pending` durumuna alınır. Ürün siparişi dönüşü kullanıcıyı `/pages/commerce/order-success.html?payment=...&id=...` sonucuna yönlendirir.
 
 ## Transaction Core RPC
 

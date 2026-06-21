@@ -8,7 +8,7 @@ function allowedOrigin(req: Request) {
     .split(",")
     .map((item) => item.trim().replace(/\/$/, ""))
     .filter(Boolean);
-  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5176", "http://127.0.0.1:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5176"];
   const allowList = [...configured, ...local];
   return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
 }
@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
       status: orderStatus
     });
 
-    const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=${paymentStatus}`;
+    const target = `${siteUrl.replace(/\/$/, "")}/pages/commerce/order-success.html?payment=${paymentStatus}&id=${encodeURIComponent(orderId || "")}`;
     return Response.redirect(target, 303);
   } catch (error) {
     console.error("iyzico-callback failed", error);

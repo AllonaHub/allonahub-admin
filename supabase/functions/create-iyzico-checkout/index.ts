@@ -8,7 +8,7 @@ function allowedOrigin(req: Request) {
     .split(",")
     .map((item) => item.trim().replace(/\/$/, ""))
     .filter(Boolean);
-  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5176", "http://127.0.0.1:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5176"];
   const allowList = [...configured, ...local];
   return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
 }
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       locale: "tr",
       conversationId: order.id,
       price: amount(order.subtotal),
-      paidPrice: amount(order.total_amount ?? order.total),
+      paidPrice: amount(order.grand_total ?? order.total_amount ?? order.total),
       currency: "TRY",
       basketId: order.order_no || order.order_number || order.id,
       paymentGroup: "PRODUCT",
@@ -232,7 +232,9 @@ Deno.serve(async (req) => {
 
     return json(req, {
       paymentPageUrl: result.paymentPageUrl,
-      token: result.token
+      checkoutFormContent: result.checkoutFormContent || null,
+      token: result.token,
+      provider: "iyzico"
     });
   } catch (error) {
     console.error("create-iyzico-checkout failed", error);

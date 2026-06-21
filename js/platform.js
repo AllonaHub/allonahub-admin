@@ -103,7 +103,7 @@
         "Sonraki kampanya": "Növbəti kampaniya",
         "Kampanya seçimi": "Kampaniya seçimi",
         "AllonaShop kategorileri": "AllonaShop kateqoriyaları",
-        "Trendyol tarzı kategori menüsü": "Trendyol tipli kateqoriya menyusu",
+        "Allona Shop kategori menüsü": "Allona Shop kateqoriya menyusu",
         "Katalog": "Kataloq",
         "Kadın": "Qadın",
         "Erkek": "Kişi",

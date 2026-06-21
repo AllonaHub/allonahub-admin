@@ -5,6 +5,7 @@
   let lines = [];
   let appliedCoupon = null;
   let savedAddresses = [];
+  const PAYMENT_HANDOFF_KEY = "allona_iyzico_checkout";
 
   function renderSummary() {
     const node = document.querySelector("[data-checkout-summary]");
@@ -114,6 +115,39 @@
       return "Ödeme sayfasına yönlendirilirken bağlantı sorunu oluştu. Lütfen tekrar deneyin.";
     }
     return "Sipariş oluşturulamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin.";
+  }
+
+  function isTrustedIyzicoUrl(value) {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && (url.hostname === "iyzipay.com" || url.hostname.endsWith(".iyzipay.com"));
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function storePaymentHandoff(payment, order) {
+    const paymentPageUrl = payment && payment.paymentPageUrl;
+    if (!paymentPageUrl || !isTrustedIyzicoUrl(paymentPageUrl)) {
+      throw new Error("iyzico güvenli ödeme bağlantısı doğrulanamadı.");
+    }
+
+    const payload = {
+      provider: "iyzico",
+      orderId: order && order.id,
+      orderNo: order && (order.order_number || order.order_no || order.id),
+      paymentPageUrl,
+      token: payment.token || "",
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (15 * 60 * 1000)
+    };
+
+    try {
+      sessionStorage.setItem(PAYMENT_HANDOFF_KEY, JSON.stringify(payload));
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   function calculateOrderPayload(form) {
@@ -274,7 +308,6 @@
         const orderPayload = calculateOrderPayload(form);
         orderPayload.address_id = await ensureCheckoutAddress(form, user, orderPayload);
         const order = await App.db.orders.create(orderPayload, lines);
-        App.cart.setItems([]);
         if (App.complianceAudit) {
           await App.complianceAudit.record({
             category: "order",
@@ -306,6 +339,7 @@
           return;
         }
         if (payment && payment.paymentPageUrl) {
+          const handoffStored = storePaymentHandoff(payment, order);
           if (App.complianceAudit) {
             await App.complianceAudit.record({
               category: "payment",
@@ -317,7 +351,12 @@
               metadata: { provider: "iyzico" }
             });
           }
-          window.location.href = payment.paymentPageUrl;
+          App.cart.setItems([]);
+          if (handoffStored) {
+            window.location.href = core.url("/pages/commerce/iyzico-pay.html");
+          } else {
+            window.location.href = payment.paymentPageUrl;
+          }
           return;
         }
         core.renderStatus("[data-checkout-status]", "Sipariş oluşturuldu ancak güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin.", "error");
