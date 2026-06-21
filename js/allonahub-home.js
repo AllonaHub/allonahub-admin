@@ -22,6 +22,11 @@ async function setLocationByBrowser(){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
 if(!navigator.geolocation){return}
+if(!navigator.permissions||!navigator.permissions.query){return}
+try{
+const permission=await navigator.permissions.query({name:"geolocation"});
+if(permission.state!=="granted"){return}
+}catch(e){return}
 navigator.geolocation.getCurrentPosition(async function(pos){
 const lat=pos.coords.latitude;
 const lon=pos.coords.longitude;
@@ -38,6 +43,10 @@ countryEl.textContent="Türkiye";
 },function(){
 cityEl.textContent="İstanbul";
 countryEl.textContent="Türkiye";
+},{
+enableHighAccuracy:false,
+maximumAge:600000,
+timeout:4000
 });
 }
 setLocationByBrowser();
@@ -133,12 +142,21 @@ const searchRoutes=[
 {keys:["wallet","pay"],url:"/pages/account/rewards.html"}
 ];
 
+function appUrl(path){
+return window.Allona&&window.Allona.core?window.Allona.core.url(path):path;
+}
+
+function cleanSearchText(value){
+return String(value||"").replace(/\s+/g," ").trim().slice(0,120);
+}
+
 function globalSearch(){
-const q=document.getElementById("globalSearchInput").value.toLowerCase().trim();
+const input=document.getElementById("globalSearchInput");
+const q=cleanSearchText(input&&input.value).toLocaleLowerCase("tr-TR");
 if(!q){return}
 const found=searchRoutes.find(item=>item.keys.some(k=>q.includes(k)));
-if(found){window.location.href=found.url}
-else{window.location.href=["arama","html"].join(".")+"?q="+encodeURIComponent(q)}
+if(found){window.location.href=appUrl(found.url)}
+else{window.location.href=appUrl(`/pages/search/arama.html?q=${encodeURIComponent(q)}`)}
 }
 
 window.globalSearch=globalSearch;

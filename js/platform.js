@@ -37,6 +37,7 @@
     theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
     packs: {}
   };
+  let accountAuthListenerBound = false;
   const embeddedLanguagePacks = {
     az: {
       dir: "ltr",
@@ -786,6 +787,16 @@
     });
   }
 
+  function bindAccountAuthListener() {
+    if (accountAuthListenerBound) return;
+    const auth = App.supabase && App.supabase.auth;
+    if (!auth || !auth.onAuthStateChange) return;
+    accountAuthListenerBound = true;
+    auth.onAuthStateChange(() => {
+      updateAccountLinks();
+    });
+  }
+
   function mountControls() {
     if (document.querySelector("[data-platform-controls]")) return;
     const slot = document.querySelector("[data-platform-controls-slot]");
@@ -900,6 +911,7 @@
     document.addEventListener("allona:layout-ready", () => {
       normalizePlatformBrand();
       mountControls();
+      bindAccountAuthListener();
       applyTheme(state.theme);
       startTranslationObserver();
       applyLanguage(state.language).then(updateAccountLinks);
@@ -922,6 +934,7 @@
     normalizePlatformBrand();
     applyTheme(state.theme);
     mountControls();
+    bindAccountAuthListener();
     repairEmptyLinks();
     startTranslationObserver();
     await applyLanguage(state.language);
