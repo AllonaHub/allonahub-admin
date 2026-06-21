@@ -1,0 +1,646 @@
+(function () {
+  const App = window.Allona = window.Allona || {};
+  const core = App.core;
+  const security = App.security;
+  const config = App.config || {};
+
+  const state = {
+    access: null,
+    users: [],
+    applications: [],
+    businesses: [],
+    settings: [],
+    modules: []
+  };
+
+  const viewLoaders = {
+    dashboard: loadDashboard,
+    users: loadUsers,
+    partners: loadPartners,
+    security: loadSecurity,
+    settings: loadSettings,
+    modules: loadModules,
+    audit: loadAuditLog
+  };
+
+  function $(selector, root) {
+    return (root || document).querySelector(selector);
+  }
+
+  function escape(value) {
+    return core.escapeHTML(value);
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && CSS.escape) return CSS.escape(value);
+    return String(value || "").replace(/["\\]/g, "\\$&");
+  }
+
+  function formatDate(value) {
+    if (!value) return "-";
+    return new Date(value).toLocaleString("tr-TR");
+  }
+
+  function formatNumber(value) {
+    return Number(value || 0).toLocaleString("tr-TR");
+  }
+
+  function money(value) {
+    return core.money(Number(value || 0));
+  }
+
+  function normalizeRisk(value) {
+    return String(value || "low").toLowerCase();
+  }
+
+  function riskLabel(value) {
+    const risk = normalizeRisk(value);
+    const labels = { critical: "Critical", high: "High", medium: "Medium", low: "Low" };
+    return `<span class="sa-risk-${escape(risk)}">${escape(labels[risk] || value || "Low")}</span>`;
+  }
+
+  function statusLabel(value) {
+    const status = String(value || "-").toLowerCase();
+    const map = {
+      active: "Aktif",
+      passive: "Pasif",
+      suspended: "Askıda",
+      paid: "Ödendi",
+      warning: "Uyarı"
+    };
+    const className = ["active", "passive", "suspended", "paid"].includes(status) ? status : "passive";
+    return `<span class="sa-status-${escape(className)}">${escape(map[status] || value || "-")}</span>`;
+  }
+
+  function setAlert(message, tone) {
+    const target = $("[data-sa-alert]");
+    if (!target) return;
+    if (!message) {
+      target.hidden = true;
+      target.textContent = "";
+      return;
+    }
+    target.hidden = false;
+    target.textContent = message;
+    target.style.borderColor = tone === "ok" ? "rgba(56, 217, 150, 0.36)" : "rgba(255, 77, 109, 0.36)";
+    target.style.background = tone === "ok" ? "rgba(56, 217, 150, 0.10)" : "rgba(255, 77, 109, 0.10)";
+  }
+
+  function publicError(error, fallback) {
+    return security && security.publicErrorMessage
+      ? security.publicErrorMessage(error, fallback)
+      : (error && error.message) || fallback;
+  }
+
+  async function sessionToken() {
+    const session = await App.auth.getSession();
+    if (!session || !session.access_token) {
+      throw new Error("Oturum doğrulanamadı.");
+    }
+    return session.access_token;
+  }
+
+  async function api(path, options) {
+    const token = await sessionToken();
+    const response = await fetch(`${config.apiBaseUrl}${path}`, {
+      method: options && options.method || "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: options && options.body ? JSON.stringify(options.body) : undefined
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.message || payload.error || "İşlem tamamlanamadı.");
+    }
+    return payload;
+  }
+
+  function renderEmpty(target, message) {
+    target.innerHTML = `<div class="sa-empty">${escape(message || "Kayıt bulunamadı.")}</div>`;
+  }
+
+  function renderWarnings(warnings) {
+    const target = $("[data-schema-warnings]");
+    if (!target) return;
+    const rows = warnings || [];
+    if (!rows.length) {
+      target.innerHTML = `<div class="sa-list-item"><strong>Hazır</strong><span>Migration uyumlu</span></div>`;
+      return;
+    }
+    target.innerHTML = rows.map((warning) => `
+      <div class="sa-list-item">
+        <strong>${escape(warning.label || "Şema")}</strong>
+        <span>${escape(warning.message || "Eksik migration")}</span>
+      </div>
+    `).join("");
+  }
+
+  function metricCard(label, value, sub) {
+    return `
+      <article class="sa-stat">
+        <span>${escape(label)}</span>
+        <strong>${escape(value)}</strong>
+        <em>${escape(sub || "")}</em>
+      </article>
+    `;
+  }
+
+  async function loadDashboard() {
+    const target = $("[data-dashboard-metrics]");
+    const health = $("[data-system-health]");
+    if (!target || !health) return;
+    target.innerHTML = metricCard("Yükleniyor", "...", "Dashboard");
+    const payload = await api("/v1/super-admin/dashboard");
+    const dashboard = payload.dashboard || {};
+    const metrics = dashboard.metrics || {};
+    target.innerHTML = [
+      metricCard("Toplam Kullanıcı", formatNumber(metrics.total_users), "Profil"),
+      metricCard("Toplam Partner", formatNumber(metrics.total_partners), "Mağaza"),
+      metricCard("Toplam Sipariş", formatNumber(metrics.total_orders), "Tüm zamanlar"),
+      metricCard("Günlük Ciro", money(metrics.daily_revenue), "Ödenen sipariş"),
+      metricCard("Bekleyen Başvuru", formatNumber(metrics.pending_applications), "Partner"),
+      metricCard("Güvenlik Uyarısı", formatNumber(metrics.security_alerts), "Son 24 saat"),
+      metricCard("Sistem", dashboard.system_health && dashboard.system_health.database === "online" ? "Online" : "Uyarı", "API")
+    ].join("");
+
+    const system = dashboard.system_health || {};
+    $("[data-system-health-badge]").textContent = system.database === "online" ? "Online" : "Uyarı";
+    health.innerHTML = [
+      ["API", system.api || "-"],
+      ["Database", system.database || "-"],
+      ["Bakım modu", system.maintenance_mode ? "Açık" : "Kapalı"],
+      ["Ödeme durumu", system.payments_disabled ? "Durduruldu" : "Aktif"],
+      ["Auto Defense", `${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`]
+    ].map(([key, value]) => `
+      <div class="sa-health-item"><strong>${escape(key)}</strong><span>${escape(value)}</span></div>
+    `).join("");
+    renderWarnings(dashboard.schema_warnings || []);
+  }
+
+  async function loadUsers(params) {
+    const query = new URLSearchParams(params || {});
+    const payload = await api(`/v1/super-admin/users?${query.toString()}`);
+    state.users = payload.users || [];
+    const target = $("[data-users-table]");
+    if (!target) return;
+    $("[data-users-count]").textContent = `${formatNumber(payload.count || state.users.length)} kayıt`;
+    if (!state.users.length) {
+      renderEmpty(target, "Kullanıcı kaydı bulunamadı.");
+      return;
+    }
+
+    target.innerHTML = `
+      <table class="sa-table">
+        <thead>
+          <tr><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>Risk</th><th>Tarih</th><th>İşlem</th></tr>
+        </thead>
+        <tbody>
+          ${state.users.map((user) => `
+            <tr>
+              <td>
+                <strong>${escape(user.full_name || "-")}</strong><br>
+                <small>${escape(user.email || user.phone || user.id)}</small>
+              </td>
+              <td>${escape(user.role)}</td>
+              <td>${statusLabel(user.account_status)}${user.flagged_suspicious ? ` <span class="sa-status-warning">Şüpheli</span>` : ""}</td>
+              <td>${riskLabel(user.risk_level)}</td>
+              <td>${formatDate(user.created_at)}</td>
+              <td>
+                <div class="sa-row-actions">
+                  <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-user-action="active" data-user-id="${escape(user.id)}">Aktif</button>
+                  <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-user-action="passive" data-user-id="${escape(user.id)}">Pasif</button>
+                  <button class="sa-btn sa-btn-danger sa-mini" type="button" data-user-action="suspended" data-user-id="${escape(user.id)}">Askıya al</button>
+                  <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-user-action="suspicious" data-user-id="${escape(user.id)}">Şüpheli</button>
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function loadPartners() {
+    const payload = await api("/v1/super-admin/partners");
+    state.applications = payload.applications || [];
+    state.businesses = payload.businesses || [];
+    const applicationsTarget = $("[data-partner-applications]");
+    const businessesTarget = $("[data-partner-businesses]");
+    $("[data-partner-app-count]").textContent = `${formatNumber(state.applications.length)} kayıt`;
+    $("[data-partner-business-count]").textContent = `${formatNumber(state.businesses.length)} kayıt`;
+
+    if (applicationsTarget) {
+      if (!state.applications.length) {
+        renderEmpty(applicationsTarget, "Başvuru bulunamadı.");
+      } else {
+        applicationsTarget.innerHTML = `
+          <table class="sa-table">
+            <thead><tr><th>Firma</th><th>İletişim</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+            <tbody>
+              ${state.applications.map((item) => `
+                <tr>
+                  <td><strong>${escape(item.company_name)}</strong><br><small>${escape(item.tax_number || "-")}</small></td>
+                  <td>${escape(item.contact_name || "-")}<br><small>${escape(item.email || item.phone || "-")}</small></td>
+                  <td>${statusLabel(item.status)}</td>
+                  <td>${formatDate(item.created_at)}</td>
+                  <td>
+                    <div class="sa-row-actions">
+                      <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İnceleme</button>
+                      <button class="sa-btn sa-mini" type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla</button>
+                      <button class="sa-btn sa-btn-danger sa-mini" type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    if (businessesTarget) {
+      if (!state.businesses.length) {
+        renderEmpty(businessesTarget, "Partner mağazası bulunamadı.");
+      } else {
+        businessesTarget.innerHTML = `
+          <table class="sa-table">
+            <thead><tr><th>Mağaza</th><th>Tip</th><th>Komisyon</th><th>Doğrulama</th><th>Durum</th></tr></thead>
+            <tbody>
+              ${state.businesses.map((item) => `
+                <tr>
+                  <td><strong>${escape(item.display_name || item.legal_name || "-")}</strong><br><small>${escape(item.partner_code || item.id)}</small></td>
+                  <td>${escape(item.partner_type || "-")}</td>
+                  <td>${formatNumber(Number(item.default_commission_rate || 0) * 100)}%</td>
+                  <td>${escape(item.verification_status || "-")}</td>
+                  <td>${statusLabel(item.status)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+  }
+
+  async function loadSecurity() {
+    const payload = await api("/v1/super-admin/security");
+    const securityData = payload.security || {};
+    const metrics = securityData.metrics || {};
+    const metricTarget = $("[data-security-metrics]");
+    if (metricTarget) {
+      metricTarget.innerHTML = [
+        metricCard("Başarısız Giriş", formatNumber(metrics.failed_auth_24h), "Son 24 saat"),
+        metricCard("Critical Olay", formatNumber(metrics.critical_events_sample), "Son kayıtlar"),
+        metricCard("Şüpheli IP", formatNumber(metrics.suspicious_ip_count), "Riskli kaynak"),
+        metricCard("Bloklu IP", formatNumber(metrics.blocked_ip_count), "Auto Defense")
+      ].join("");
+    }
+
+    const ipTarget = $("[data-suspicious-ips]");
+    const ips = securityData.suspicious_ips || [];
+    if (ipTarget) {
+      ipTarget.innerHTML = ips.length ? ips.map((item) => `
+        <div class="sa-list-item"><strong>${escape(item.ip)}</strong><span>${formatNumber(item.count)} olay</span></div>
+      `).join("") : `<div class="sa-empty">Şüpheli IP yok.</div>`;
+    }
+
+    renderEventsTable($("[data-security-events]"), securityData.recent_events || []);
+  }
+
+  async function loadSettings() {
+    const payload = await api("/v1/super-admin/settings");
+    state.settings = payload.settings || [];
+    const target = $("[data-settings-list]");
+    const env = payload.env_flags || {};
+    const envTarget = $("[data-settings-env]");
+    if (envTarget) {
+      envTarget.textContent = `ENV: bakım ${env.maintenance_mode ? "açık" : "kapalı"} / ödeme ${env.payments_disabled ? "kapalı" : "aktif"}`;
+    }
+    if (!target) return;
+    target.innerHTML = state.settings.map((setting) => {
+      const value = setting.setting_value;
+      const isBoolean = setting.value_type === "boolean" || typeof value === "boolean";
+      const control = isBoolean
+        ? `<button class="sa-toggle" type="button" aria-pressed="${value === true}" data-setting-toggle="${escape(setting.setting_key)}"></button>`
+        : `<input type="number" step="0.01" value="${escape(value)}" data-setting-input="${escape(setting.setting_key)}">`;
+      return `
+        <div class="sa-setting">
+          <div>
+            <h3>${escape(setting.label || setting.setting_key)}</h3>
+            <span>${escape(setting.category || "system")} / ${escape(setting.risk_level || "medium")}</span>
+          </div>
+          <div class="sa-setting-control">
+            ${control}
+            <button class="sa-btn sa-mini" type="button" data-setting-save="${escape(setting.setting_key)}">Kaydet</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function loadModules() {
+    const payload = await api("/v1/super-admin/modules");
+    state.modules = payload.modules || [];
+    const target = $("[data-modules-list]");
+    if (!target) return;
+    target.innerHTML = state.modules.map((item) => `
+      <article class="sa-module">
+        <div>
+          <h3>${escape(item.name || item.module_key)}</h3>
+          <span>${escape(item.category || "services")}</span>
+        </div>
+        <div class="sa-module-row">
+          <span>Aktif</span>
+          <button class="sa-toggle" type="button" aria-pressed="${item.is_active === true}" data-module-toggle="is_active" data-module-key="${escape(item.module_key)}"></button>
+        </div>
+        <div class="sa-module-row">
+          <span>Görünürlük</span>
+          <button class="sa-toggle" type="button" aria-pressed="${item.is_visible === true}" data-module-toggle="is_visible" data-module-key="${escape(item.module_key)}"></button>
+        </div>
+        <label class="sa-module-row">
+          <span>Komisyon</span>
+          <input type="number" min="0" max="90" step="0.1" value="${escape(Number(item.commission_rate || 0) * 100)}" data-module-commission="${escape(item.module_key)}">
+        </label>
+        <label class="sa-module-row">
+          <span>Başvuru</span>
+          <select data-module-application="${escape(item.module_key)}">
+            ${["open", "review_only", "closed"].map((status) => `<option value="${status}" ${item.application_status === status ? "selected" : ""}>${escape(status)}</option>`).join("")}
+          </select>
+        </label>
+        <button class="sa-btn sa-mini" type="button" data-module-save="${escape(item.module_key)}">Kaydet</button>
+      </article>
+    `).join("");
+  }
+
+  async function loadAuditLog() {
+    const payload = await api("/v1/super-admin/audit-log?limit=80");
+    renderEventsTable($("[data-audit-log]"), payload.events || []);
+  }
+
+  function renderEventsTable(target, events) {
+    if (!target) return;
+    if (!events.length) {
+      renderEmpty(target, "Kayıt bulunamadı.");
+      return;
+    }
+    target.innerHTML = `
+      <table class="sa-table">
+        <thead><tr><th>Tarih</th><th>Risk</th><th>İşlem</th><th>Kayıt</th><th>IP</th></tr></thead>
+        <tbody>
+          ${events.map((event) => `
+            <tr>
+              <td>${formatDate(event.created_at)}</td>
+              <td>${riskLabel(event.severity)}</td>
+              <td><strong>${escape(event.action || "-")}</strong><br><small>${escape(event.actor_role || "-")}</small></td>
+              <td>${escape(event.resource_type || "-")}<br><small>${escape(event.resource_id || "-")}</small></td>
+              <td>${escape(event.ip_address || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function confirmAction(message, options) {
+    const modal = $("[data-confirm-modal]");
+    const messageTarget = $("[data-confirm-message]");
+    const reasonInput = $("[data-confirm-reason]");
+    const cancelButton = $("[data-confirm-cancel]");
+    const acceptButton = $("[data-confirm-accept]");
+    if (!modal || !messageTarget || !reasonInput || !cancelButton || !acceptButton) {
+      return Promise.resolve({ confirmed: window.confirm(message), reason: "" });
+    }
+    messageTarget.textContent = message;
+    reasonInput.value = "";
+    modal.hidden = false;
+    reasonInput.focus();
+
+    return new Promise((resolve) => {
+      function cleanup(result) {
+        modal.hidden = true;
+        cancelButton.removeEventListener("click", onCancel);
+        acceptButton.removeEventListener("click", onAccept);
+        resolve(result);
+      }
+      function onCancel() {
+        cleanup({ confirmed: false, reason: "" });
+      }
+      function onAccept() {
+        const reason = reasonInput.value.trim();
+        if (options && options.requireReason && reason.length < 6) {
+          reasonInput.focus();
+          return;
+        }
+        cleanup({ confirmed: true, reason });
+      }
+      cancelButton.addEventListener("click", onCancel);
+      acceptButton.addEventListener("click", onAccept);
+    });
+  }
+
+  async function runConfirmed(message, callback, options) {
+    const confirmed = await confirmAction(message, options);
+    if (!confirmed.confirmed) return;
+    try {
+      await callback(confirmed.reason);
+      setAlert("İşlem tamamlandı.", "ok");
+      await reloadActiveView();
+    } catch (error) {
+      setAlert(publicError(error, "İşlem tamamlanamadı."));
+    }
+  }
+
+  async function updateUserAction(button) {
+    const userId = button.dataset.userId;
+    const action = button.dataset.userAction;
+    const payload = {};
+    let message = "Kullanıcı durumu güncellenecek.";
+    if (action === "suspicious") {
+      payload.flagged_suspicious = true;
+      payload.risk_level = "high";
+      message = "Kullanıcı şüpheli olarak işaretlenecek.";
+    } else {
+      payload.account_status = action;
+      if (action === "active") payload.risk_level = "low";
+      if (action === "suspended") {
+        payload.flagged_suspicious = true;
+        payload.risk_level = "critical";
+        message = "Kullanıcı hesabı askıya alınacak.";
+      }
+    }
+
+    await runConfirmed(message, async (reason) => {
+      payload.note = reason || message;
+      await api(`/v1/super-admin/users/${encodeURIComponent(userId)}`, {
+        method: "PATCH",
+        body: payload
+      });
+    }, { requireReason: action === "suspended" || action === "suspicious" });
+  }
+
+  async function decidePartner(button) {
+    const applicationId = button.dataset.applicationId;
+    const decision = button.dataset.partnerDecision;
+    const messages = {
+      review: "Başvuru incelemeye alınacak.",
+      approved: "Partner başvurusu onaylanacak ve uygun kullanıcı için mağaza kaydı hazırlanacak.",
+      rejected: "Partner başvurusu reddedilecek."
+    };
+    await runConfirmed(messages[decision] || "Partner başvurusu güncellenecek.", async (reason) => {
+      await api(`/v1/super-admin/partner-applications/${encodeURIComponent(applicationId)}`, {
+        method: "PATCH",
+        body: {
+          decision,
+          reason,
+          commission_rate: 0.12,
+          store_status: decision === "approved" ? "active" : "review"
+        }
+      });
+    }, { requireReason: decision !== "review" });
+  }
+
+  async function saveSetting(button) {
+    const key = button.dataset.settingSave;
+    const setting = state.settings.find((item) => item.setting_key === key);
+    if (!setting) return;
+    const safeKey = cssEscape(key);
+    const toggle = $(`[data-setting-toggle="${safeKey}"]`);
+    const input = $(`[data-setting-input="${safeKey}"]`);
+    const value = toggle ? toggle.getAttribute("aria-pressed") === "true" : Number(input && input.value || 0);
+    await runConfirmed(`${setting.label || key} ayarı güncellenecek.`, async (reason) => {
+      await api(`/v1/super-admin/settings/${encodeURIComponent(key)}`, {
+        method: "PATCH",
+        body: { value, reason }
+      });
+    }, { requireReason: ["critical", "high"].includes(setting.risk_level) && value === true });
+  }
+
+  async function saveModule(button) {
+    const key = button.dataset.moduleSave;
+    const safeKey = cssEscape(key);
+    const active = $(`[data-module-toggle="is_active"][data-module-key="${safeKey}"]`);
+    const visible = $(`[data-module-toggle="is_visible"][data-module-key="${safeKey}"]`);
+    const commission = $(`[data-module-commission="${safeKey}"]`);
+    const application = $(`[data-module-application="${safeKey}"]`);
+    await runConfirmed("Modül kontrol ayarı güncellenecek.", async (reason) => {
+      await api(`/v1/super-admin/modules/${encodeURIComponent(key)}`, {
+        method: "PATCH",
+        body: {
+          is_active: active ? active.getAttribute("aria-pressed") === "true" : undefined,
+          is_visible: visible ? visible.getAttribute("aria-pressed") === "true" : undefined,
+          commission_rate: Number(commission && commission.value || 0) / 100,
+          application_status: application && application.value,
+          content_config: { last_reason: reason || "" }
+        }
+      });
+    }, { requireReason: false });
+  }
+
+  function bindInteractions() {
+    const nav = $("[data-sa-nav]");
+    if (nav) {
+      nav.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-view-target]");
+        if (!button) return;
+        document.querySelectorAll("[data-view-target]").forEach((item) => item.classList.toggle("is-active", item === button));
+        document.querySelectorAll("[data-view]").forEach((view) => view.classList.toggle("is-active", view.dataset.view === button.dataset.viewTarget));
+        await reloadActiveView();
+      });
+    }
+
+    const filters = $("[data-users-filter]");
+    if (filters) {
+      filters.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = new FormData(filters);
+        const params = {};
+        ["search", "role", "account_status"].forEach((key) => {
+          const value = String(form.get(key) || "").trim();
+          if (value) params[key] = value;
+        });
+        try {
+          await loadUsers(params);
+        } catch (error) {
+          setAlert(publicError(error, "Kullanıcılar yüklenemedi."));
+        }
+      });
+    }
+
+    document.addEventListener("click", async (event) => {
+      const toggle = event.target.closest(".sa-toggle");
+      if (toggle) {
+        toggle.setAttribute("aria-pressed", toggle.getAttribute("aria-pressed") !== "true");
+      }
+
+      const userAction = event.target.closest("[data-user-action]");
+      if (userAction) await updateUserAction(userAction);
+
+      const partnerDecision = event.target.closest("[data-partner-decision]");
+      if (partnerDecision) await decidePartner(partnerDecision);
+
+      const settingSave = event.target.closest("[data-setting-save]");
+      if (settingSave) await saveSetting(settingSave);
+
+      const moduleSave = event.target.closest("[data-module-save]");
+      if (moduleSave) await saveModule(moduleSave);
+    });
+
+    const refresh = $("[data-sa-refresh]");
+    if (refresh) refresh.addEventListener("click", reloadAll);
+
+    const signOut = $("[data-sa-signout]");
+    if (signOut) {
+      signOut.addEventListener("click", () => {
+        App.auth.signOut({ scope: "local" });
+      });
+    }
+  }
+
+  function activeView() {
+    const view = $(".sa-view.is-active");
+    return view ? view.dataset.view : "dashboard";
+  }
+
+  async function reloadActiveView() {
+    setAlert("");
+    const loader = viewLoaders[activeView()];
+    if (!loader) return;
+    try {
+      await loader();
+    } catch (error) {
+      setAlert(publicError(error, "Panel verisi yüklenemedi."));
+    }
+  }
+
+  async function reloadAll() {
+    setAlert("");
+    for (const loader of [loadDashboard, loadUsers, loadPartners, loadSecurity, loadSettings, loadModules, loadAuditLog]) {
+      try {
+        await loader();
+      } catch (error) {
+        setAlert(publicError(error, "Bazı panel verileri yüklenemedi."));
+      }
+    }
+  }
+
+  async function init() {
+    if (!document.querySelector("[data-page='super-admin']")) return;
+    try {
+      state.access = await App.auth.requireRole(["super_admin"]);
+      if (!state.access) return;
+      const roleTarget = $("[data-sa-role]");
+      if (roleTarget) roleTarget.textContent = state.access.profile.role;
+      bindInteractions();
+      await reloadAll();
+    } catch (error) {
+      const shell = $("[data-super-admin-shell]");
+      if (shell) {
+        shell.innerHTML = `<main class="sa-main"><div class="sa-alert">${escape(publicError(error, "Bu panele sadece Super Admin erişebilir."))}</div></main>`;
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();

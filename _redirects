@@ -19,6 +19,8 @@
 /admin-order-detail.html /admin/order-detail.html 301
 /admin-coupons.html /admin/coupons.html 301
 /admin-rewards.html /admin/rewards.html 301
+/super-admin.html /admin/super-admin.html 301
+/super-admin /admin/super-admin.html 301
 /allonakariyer.html /pages/career/allonakariyer.html 301
 /career-cv-form.html /pages/career/career-cv-form.html 301
 /cv-form.html /pages/career/cv-form.html 301

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AllonaHub | Yeni Nesil Süper Uygulama</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#020814;color:white;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+a{text-decoration:none}
+
+.top-mini-nav{max-width:1320px;margin:10px auto 0;padding:0 20px;display:flex;justify-content:flex-end;gap:18px;font-size:12px}
+.top-mini-nav a{color:rgba(255,255,255,.72)}
+.top-mini-nav a:hover{color:#00e5ff}
+
+header{height:92px!important;padding:0 7%!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:28px!important;background:rgba(2,8,20,.88)!important;border-bottom:1px solid rgba(0,225,255,.18)!important;position:sticky;top:0;z-index:50;backdrop-filter:blur(18px)}
+.logo{display:flex!important;align-items:center!important;gap:12px!important;flex-shrink:0!important}
+.logo img{width:55px!important;height:55px!important;object-fit:contain!important}
+.logo-title{font-size:30px!important;font-weight:900!important;white-space:nowrap!important}
+.logo-title .gold{color:#ffd700!important}.logo-title .blue{color:#00e5ff!important}
+
+.nav-search{flex:1!important;max-width:560px!important;height:48px!important;padding:0 8px 0 18px!important;border-radius:999px!important;border:1px solid rgba(0,225,255,.75)!important;background:rgba(0,18,40,.86)!important;box-shadow:0 0 22px rgba(0,180,255,.22)!important;display:flex!important;align-items:center!important;gap:10px!important}
+.nav-search input{flex:1;height:100%;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.nav-search input::placeholder{color:rgba(255,255,255,.62)}
+.search-btn{height:36px;padding:0 18px;border:0;border-radius:999px;background:linear-gradient(135deg,#00e5ff,#0077ff);color:white;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,225,255,.35)}
+
+nav{display:flex!important;align-items:center!important;gap:22px!important;flex-shrink:0!important}
+nav a{color:white!important;font-size:15px!important;font-weight:700!important}
+nav a:hover{color:#00e5ff!important}
+.login{background:#00d5e8!important;color:white!important;padding:13px 24px!important;border-radius:999px!important;box-shadow:0 0 20px rgba(0,225,255,.35)!important}
+
+.premium-hero{width:100%;max-width:1320px;margin:25px auto 25px;padding:0 20px;display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:22px;align-items:stretch}
+.hero-time-card,.hero-main-card,.hero-reward-card{position:relative;overflow:hidden;border-radius:30px;padding:28px;min-height:220px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.28);box-shadow:0 0 35px rgba(0,229,255,.14),inset 0 0 24px rgba(255,255,255,.04)}
+.hero-main-card{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:330px}
+.hero-main-card h1{font-size:52px;line-height:1.08;margin:0 0 18px;color:white;text-shadow:0 0 24px rgba(0,229,255,.25)}
+.hero-main-card p{font-size:19px;line-height:1.5;color:rgba(255,255,255,.82);max-width:620px;margin:0 auto}
+.hero-greeting{font-size:34px;font-weight:800;margin-top:18px}
+.hero-clock{margin:18px 0 25px;font-size:36px;letter-spacing:7px;color:#00e5ff;text-shadow:0 0 18px #00e5ff}
+.hero-location{display:flex;gap:14px;align-items:center;font-size:18px;color:white}
+.hero-location p{margin:4px 0 0;color:rgba(255,255,255,.7)}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f}
+.time-visual{width:88px;height:88px;border-radius:50%;position:relative;filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));animation:floatPulse 3s ease-in-out infinite}
+.sun-visual{--time-glow:#ffd700;background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%)}
+.day-visual{--time-glow:#00e5ff;background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%)}
+.evening-visual{--time-glow:#b245ff;background:radial-gradient(circle,#fff 0%,#b245ff 35%,#ff9f1c 80%)}
+.night-visual{--time-glow:#7df9ff;background:radial-gradient(circle at 35% 35%,#fff 0%,#b8f7ff 18%,#274bff 45%,#080b28 80%)}
+.time-visual::before,.time-visual::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:1px solid rgba(255,255,255,.35);animation:spinGlow 6s linear infinite}
+.time-visual::after{inset:-26px;border-color:rgba(0,229,255,.22);animation-duration:10s}
+.hero-orb{width:180px;height:180px;position:absolute;right:-45px;top:-45px;border-radius:50%;background:radial-gradient(circle,#00e5ff,transparent 65%);opacity:.28;animation:orbMove 5s ease-in-out infinite alternate}
+.diamond-visual{width:90px;height:90px;margin:0 auto 18px;background:linear-gradient(135deg,#bffcff,#007cff,#001c80);clip-path:polygon(50% 0%,100% 35%,75% 100%,25% 100%,0% 35%);box-shadow:0 0 25px #00e5ff;animation:diamondGlow 2.4s ease-in-out infinite alternate}
+.hero-reward-card{text-align:center;display:flex;flex-direction:column;justify-content:center}
+.hero-reward-card h3{font-size:30px;color:#ffd700;margin:0 0 12px}
+.hero-reward-card p{font-size:16px;color:rgba(255,255,255,.78)}
+@keyframes floatPulse{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.07)}}
+@keyframes spinGlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes orbMove{from{transform:translate(0,0) scale(1)}to{transform:translate(-25px,25px) scale(1.25)}}
+@keyframes diamondGlow{from{transform:scale(1) rotate(0deg);filter:brightness(1)}to{transform:scale(1.12) rotate(4deg);filter:brightness(1.4)}}
+
+.live-stats-section{max-width:1320px;margin:20px auto 25px;padding:0 20px;display:grid;grid-template-columns:repeat(5,1fr);gap:15px}
+.stat-live-card{position:relative;background:rgba(0,20,45,.75);border:1px solid rgba(0,225,255,.25);border-radius:18px;padding:18px;text-align:center;overflow:hidden}
+.stat-live-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(0,255,255,.22),transparent 60%)}
+.stat-live-card p{color:#9adfff;font-size:13px;margin:0 0 8px}
+.stat-live-card h3{color:#fff;font-size:26px;margin:0}
+.stat-dot{width:10px;height:10px;background:#00ff66;border-radius:50%;display:inline-block;margin-bottom:10px;box-shadow:0 0 12px #00ff66;animation:pulseLive 1.5s infinite}
+@keyframes pulseLive{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+
+.live-ads-section{max-width:1320px;margin:35px auto;padding:0 20px}
+.live-ads-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.live-ads-head h2{color:#ffd700;font-size:32px;margin:0}
+.live-ads-head p{color:rgba(255,255,255,.7);margin:6px 0 0}
+.live-ads-head a{color:#00e5ff;font-weight:800}
+.live-ads-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.live-ad-card{position:relative;overflow:hidden;min-height:150px;border-radius:22px;padding:18px;background:linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));border:1px solid rgba(0,229,255,.25);box-shadow:0 0 22px rgba(0,229,255,.12);transition:.4s}
+.live-ad-card:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 0 35px rgba(0,229,255,.28)}
+.ad-glow{position:absolute;width:90px;height:90px;right:-25px;top:-25px;border-radius:50%;background:radial-gradient(circle,#00e5ff,transparent 70%);opacity:.35;animation:adPulse 3s infinite alternate}
+.ad-label{display:inline-block;font-size:12px;color:#00e5ff;margin-bottom:14px;font-weight:900}
+.ad-title{color:#ffd700;font-size:19px;margin:0 0 8px}
+.ad-desc{font-size:13px;color:rgba(255,255,255,.78);line-height:1.35}
+.ad-meta{margin-top:12px;font-size:12px;color:rgba(255,255,255,.65)}
+@keyframes adPulse{from{transform:scale(1);opacity:.25}to{transform:scale(1.35);opacity:.55}}
+
+.modules-section{width:100%;max-width:1320px;margin:0 auto;padding:28px 10px;background:linear-gradient(180deg,#061b33,#020814)}
+.section-head{text-align:center;max-width:760px;margin:0 auto 35px}
+.section-head span{color:#ffd700;font-weight:900;letter-spacing:1px}
+.section-head h2{font-size:42px;margin:14px 0;color:white}
+.section-head p{color:rgba(255,255,255,.75);font-size:17px}
+.modules-grid.large-grid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:18px!important}
+.modules-grid.large-grid .module-card{height:230px!important;border-radius:24px!important;overflow:hidden!important;padding:18px!important;display:flex!important;align-items:flex-end!important;text-decoration:none!important;background-size:cover!important;background-position:center!important;border:1px solid rgba(0,225,255,.45)!important;box-shadow:0 0 22px rgba(0,180,255,.18)!important;transition:.3s ease!important}
+.modules-grid.large-grid .module-card:hover{transform:translateY(-7px) scale(1.02)!important;box-shadow:0 0 34px rgba(0,225,255,.45)!important;border-color:#00e5ff!important}
+.modules-grid.large-grid .module-card h3{color:#ffd700!important;font-size:21px!important;margin:0 0 6px!important;text-shadow:0 0 12px rgba(0,0,0,.8)!important}
+.modules-grid.large-grid .module-card p{color:white!important;font-size:13px!important;margin:0!important;text-shadow:0 0 10px rgba(0,0,0,.9)!important}
+
+.section{max-width:1320px;margin:55px auto;padding:0 20px}
+.section-title{color:#ffd700;font-size:38px;text-align:center;margin-bottom:12px}
+.section-sub{text-align:center;color:rgba(255,255,255,.72);margin-bottom:28px}
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;align-items:start}
+.tier{padding:26px;border-radius:28px;background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.24);box-shadow:0 0 28px rgba(0,229,255,.10),inset 0 0 22px rgba(255,255,255,.04);min-height:auto}
+.tier.featured{border-color:#ffd700;box-shadow:0 0 45px rgba(255,215,0,.18)}
+.tier.legend{border-color:#00e5ff;box-shadow:0 0 48px rgba(0,229,255,.20)}
+.tier h3{font-size:30px;color:#ffd700;margin-bottom:10px}
+.tier p{opacity:.82;line-height:1.45;margin-bottom:14px}
+.tier ul{list-style:none;margin-top:18px}
+.tier li{margin:10px 0;opacity:.9;font-size:14px}
+.tier-price{display:inline-block;margin-top:14px;padding:11px 18px;border-radius:15px;text-align:center;background:linear-gradient(135deg,rgba(255,215,0,.95),rgba(0,229,255,.35));border:1px solid rgba(255,215,0,.45);color:#fff700;font-size:22px;font-weight:900;text-decoration:none;cursor:pointer;transition:.3s;box-shadow:0 0 14px rgba(0,229,255,.22)}
+.tier-price:hover{transform:scale(1.05);box-shadow:0 0 25px rgba(255,215,0,.35)}
+
+.partner{text-align:center;padding:55px;border-radius:35px;background:radial-gradient(circle at top,#00e5ff22,transparent 34%),linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));border:1px solid rgba(0,229,255,.32);box-shadow:0 0 40px rgba(0,229,255,.14),inset 0 0 22px rgba(255,255,255,.04)}
+.partner h2{font-size:42px;margin-bottom:15px;color:#ffd700}
+.partner p{opacity:.82;margin-bottom:28px;line-height:1.6}
+.btn{display:inline-block;padding:14px 28px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;font-weight:900;box-shadow:0 0 22px rgba(255,215,0,.28)}
+
+.footer-main{max-width:1320px;margin:45px auto 0;padding:35px 20px;border-top:1px solid rgba(255,255,255,.10)}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.footer-col h3{color:#ffd700;margin-bottom:14px}
+.footer-col a,.footer-col p{display:block;color:rgba(255,255,255,.72);font-size:13px;line-height:1.8}
+.footer-bottom{text-align:center;padding:25px;opacity:.65}
+</style>
+  <link rel="stylesheet" href="../css/platform.css?v=20260621-mobile1">
+</head>
+
+<body>
+
+<div class="top-mini-nav">
+<a href="../pages/wallet/hp-nedir.html">HP nedir?</a>
+<a href="../pages/commerce/kuponlar.html">İndirim Kuponu</a>
+<a href="../pages/partner/partner.html">Ekosisteme Katıl</a>
+<a href="../pages/company/hakkimizda.html">Hakkımızda</a>
+<a href="../pages/company/destek.html">Yardım ve Destek</a>
+</div>
+
+<header>
+<a class="logo" href="../index.html">
+<img src="../images/brand/allona.logo.png" alt="AllonaHub Logo">
+<div class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></div>
+</a>
+
+<div class="nav-search">
+<span>🔍</span>
+<input id="globalSearchInput" placeholder="Aradığınız hizmet, kategori veya özelliği yazın...">
+<button class="search-btn" onclick="globalSearch()">Ara</button>
+</div>
+
+<nav>
+<a href="#modules">Hizmetlerimiz</a>
+<a href="../pages/wallet/hubwallet.html">Kupon</a>
+<a href="../pages/account/premium.html">Premium</a>
+<a href="../pages/partner/partner.html">Partner Ol</a>
+<a class="login" href="../pages/account/login.html">Giriş Yap</a>
+</nav>
+</header>
+
+<section class="premium-hero">
+<div class="hero-time-card">
+<div id="timeVisual" class="time-visual sun-visual"></div>
+<div id="heroGreeting" class="hero-greeting">Günaydın</div>
+<div id="heroClock" class="hero-clock">00:00:00</div>
+<div class="hero-location">
+<span class="pin-dot"></span>
+<div>
+<strong id="heroCity">İstanbul</strong>
+<p id="heroCountry">Türkiye</p>
+</div>
+</div>
+</div>
+
+<div class="hero-main-card">
+<div class="hero-orb"></div>
+<h1>Global Süper<br>Ekosisteme Hoş Geldiniz</h1>
+<p>Alışveriş, kampanyalar ve partner hizmetleri için yeni nesil dijital ekosistem</p>
+</div>
+
+<div class="hero-reward-card">
+<div class="diamond-visual"></div>
+<h3>HP Dünyası</h3>
+<p>Ödüller, kampanyalar ve sadakat avantajlarını keşfet.</p>
+</div>
+</section>
+
+<section class="live-stats-section">
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Kullanıcı</p><h3 id="activeUsers">12.481</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Partner</p><h3 id="activeAds">1.942</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Yeni Üyeler</p><h3 id="jobAds">326</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Crew</p><h3 id="crewApps">89</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Sadakat Puanı</p><h3 id="dailyHP">245.800</h3></div>
+</section>
+
+
+<section id="modules" class="modules-section">
+<div class="section-head">
+<span>ALLONAHUB EKOSİSTEMİ</span>
+<h2>Hizmetlerimiz</h2>
+<p>Tek hesapla alışverişten sağlığa, tarımdan lojistiğe, eğitimden kariyere kadar tüm hizmetlere ulaş.</p>
+</div>
+
+<div class="modules-grid large-grid">
+
+<a class="module-card" href="../pages/commerce/allonashop.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/shop.png');"><div><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></div></a>
+<a class="module-card" href="../pages/commerce/allonayemek.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/yemek.png');"><div><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></div></a>
+<a class="module-card" href="../pages/commerce/allonamarket.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/market.png');"><div><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonataksi.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/taksi.png');"><div><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonasaglik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/saglik.png');"><div><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p></div></a>
+
+<a class="module-card" href="../pages/ecosystem/allonaseyahat.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/seyahat.png');"><div><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonagayrimenkul.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/gayrimenkul.png');"><div><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p></div></a>
+<a class="module-card" href="../pages/ecosystem/denizcilik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/denizcilik.png');"><div><h3>Denizcilik</h3><p>Gemi ve crew hizmetleri</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonahukuk.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/hukuk.png');"><div><h3>Hukuk</h3><p>Avukat ve danışmanlık</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonadanismanlik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/danismanlik.png');"><div><h3>Danışmanlık</h3><p>Profesyonel destek</p></div></a>
+
+<a class="module-card" href="../pages/ecosystem/allonaegitim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/egitim.png');"><div><h3>Eğitim</h3><p>Kurslar ve öğrenim</p></div></a>
+<a class="module-card" href="../pages/career/allonakariyer.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/kariyer.png');"><div><h3>Kariyer</h3><p>İş ve kariyer fırsatları</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonafinans.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/finans.png');"><div><h3>Finans</h3><p>Ödeme ve finansal hizmetler</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonaotomotiv.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/otomotiv.png');"><div><h3>Otomotiv</h3><p>Araç ve ulaşım çözümleri</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonaeglence.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/eglence.png');"><div><h3>Eğlence & Etkinlik</h3><p>Festival, konser ve etkinlikler</p></div></a>
+
+<a class="module-card" href="../pages/ecosystem/allonaevcilhayvan.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/evcilhayvan.png');"><div><h3>Evcil Hayvan</h3><p>Veteriner, bakım ve ürünler</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonateknoloji.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/teknoloji.png');"><div><h3>Teknoloji</h3><p>Elektronik ve dijital çözümler</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonasporfitness.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/sporfitnes.png');"><div><h3>Spor & Fitness</h3><p>Spor salonu ve sağlıklı yaşam</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonaguzellik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/guzellik.png');"><div><h3>Güzellik & Kozmetik</h3><p>Bakım, kozmetik ve güzellik</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonasigorta.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/sigorta.png');"><div><h3>Sigorta</h3><p>Araç, konut ve sağlık sigortası</p></div></a>
+
+<a class="module-card" href="../pages/ecosystem/allonakurye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/kurye.png');"><div><h3>Kurye & Teslimat</h3><p>Hızlı kurye ve teslimat</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonaevhizmetleri.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/evhizmetleri.png');"><div><h3>Ev Hizmetleri</h3><p>Temizlik, elektrik ve tadilat</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonalojistik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/lojistik.png');"><div><h3>Kargo & Lojistik</h3><p>Depo, taşıma ve lojistik</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonanakliye.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/nakliye.png');"><div><h3>Nakliye</h3><p>Ev, ofis, parça eşya ve asansörlü nakliye</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonaorganizasyon.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/organizasyon.png');"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p></div></a>
+
+<a class="module-card" href="../pages/ecosystem/allonatarim.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/tarim.png');"><div><h3>Allona Tarım</h3><p>Çiftçilik, gübre, tohum ve TARSİM</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonainsaat.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/insaatyapi.png');"><div><h3>İnşaat & Yapı</h3><p>Müteahhit, yapı, proje ve mühendislik</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonamuhendislik.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/muhendislik.png');"><div><h3>Mühendislik</h3><p>Teknik proje, çizim ve mühendislik</p></div></a>
+<a class="module-card" href="../pages/ecosystem/allonatrade.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/trade.png');"><div><h3>Trade</h3><p>İthalat, ihracat ve global ticaret</p></div></a>
+<a class="module-card" href="../pages/wallet/hubwallet.html" style="background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/wallet.png');"><div><h3>Otelcilik</h3><p>Otel kiralama,konaklama</p></div></a>
+
+</div>
+</section>
+
+<section class="section" id="premium">
+<h2 class="section-title">Premium Üyelikler</h2>
+<p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
+
+<div class="tiers">
+
+<div class="tier">
+<h3>A+</h3>
+<p>Premium Başlangıç Paketi</p>
+<ul>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+</ul>
+<a href="../pages/commerce/odeme.html?paket=aplus" class="tier-price">109,99 ₺ / Ay</a>
+</div>
+
+<div class="tier featured">
+<h3>Gold</h3>
+<p>En dengeli paket</p>
+<ul>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+</ul>
+<a href="../pages/commerce/odeme.html?paket=gold" class="tier-price">229,99 ₺ / Ay</a>
+</div>
+
+<div class="tier">
+<h3>Elite Black</h3>
+<p>Prestij ve özel erişim</p>
+<ul>
+<li>✔️ VIP rozet</li>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+<li>✔️ Elite kampanyalar</li>
+<li>✔️ Özel partner ayrıcalığı</li>
+</ul>
+<a href="../pages/commerce/odeme.html?paket=eliteblack" class="tier-price">1499,99 ₺ / Ay</a>
+</div>
+
+<div class="tier legend">
+<h3>LEGEND</h3>
+<p>Yılda ortalama üyelik ücretinin 5-10 katı kadar avantaj</p>
+<ul>
+<li>✔️ VIP rozet</li>
+<li>✔️ Özel tasarımlı profil</li>
+<li>✔️ Bütün alışverişlerde %5 indirim</li>
+<li>✔️ HP bonusları</li>
+<li>✔️ Özel kampanyalar</li>
+<li>✔️ Seviye koruma</li>
+<li>✔️ Hızlı seviye yükseltme (x2)</li>
+<li>✔️ Daha fazla HP kazan</li>
+<li>✔️ Partner indirimleri</li>
+<li>✔️ Öncelikli kampanyalar</li>
+<li>✔️ Elite kampanyalar açık</li>
+<li>✔️ Özel partner ayrıcalığı</li>
+<li>✔️ Ücretsiz kargo</li>
+<li>✔️ Doğum günü hediyesi</li>
+<li>✔️ Bütün işlemlerde HP avantajı (x2)</li>
+<li>✔️ AllonaHub kart ücretsiz</li>
+<li>✔️ Öncelikli müşteri desteği</li>
+</ul>
+<a href="../pages/commerce/odeme.html?paket=legend" class="tier-price">1999,99 ₺ / Ay</a>
+</div>
+
+</div>
+</section>
+
+<section class="section" id="partner">
+<div class="partner">
+<h2>AllonaHub Partner Ekosistemine Katıl</h2>
+<p>Restoran, mağaza, ulaşım, kariyer, denizcilik, sağlık, finans, lojistik ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
+<a class="btn" href="../pages/partner/partner.html">Partner Başvurusu Yap</a>
+</div>
+</section>
+<style>
+.ah-footer{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(63,115,255,.18), transparent 32%),
+    radial-gradient(circle at 90% 20%, rgba(0,210,255,.12), transparent 28%),
+    linear-gradient(180deg,#071525 0%,#030912 100%);
+  color:#eaf2ff;
+  padding:70px 64px 34px;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-family:Inter,Arial,sans-serif;
+}
+
+.ah-footer-glow{
+  position:absolute;
+  inset:auto 0 0 0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,#3fa9ff,#8b5cff,transparent);
+}
+
+.ah-footer-main{
+  display:grid;
+  grid-template-columns:1.7fr repeat(4,1fr) 1.35fr;
+  gap:44px;
+  position:relative;
+  z-index:2;
+}
+
+.ah-logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:30px;
+  font-weight:800;
+  margin-bottom:22px;
+}
+
+.ah-logo span span{color:#6d7cff;}
+
+.ah-logo-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:linear-gradient(135deg,#00c8ff,#775cff);
+  color:#fff;
+  font-weight:900;
+  box-shadow:0 0 30px rgba(70,120,255,.45);
+}
+
+.ah-footer p{
+  color:#aeb9ca;
+  line-height:1.8;
+  font-size:14px;
+}
+
+.ah-trust{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  margin:28px 0 36px;
+}
+
+.ah-trust div{
+  color:#aeb9ca;
+  font-size:13px;
+}
+
+.ah-newsletter h4,
+.ah-footer-col h4,
+.ah-footer-contact h4{
+  font-size:15px;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  margin-bottom:24px;
+  color:#fff;
+}
+
+.ah-footer-col h4::after,
+.ah-footer-contact h4::after{
+  content:"";
+  display:block;
+  width:28px;
+  height:2px;
+  margin-top:12px;
+  background:linear-gradient(90deg,#00c8ff,#8b5cff);
+  border-radius:50px;
+}
+
+.ah-footer-col a,
+.ah-bottom-links a{
+  display:block;
+  color:#c2cad8;
+  text-decoration:none;
+  margin:0 0 17px;
+  font-size:14px;
+  transition:.25s ease;
+}
+
+.ah-footer-col a:hover,
+.ah-bottom-links a:hover{
+  color:#5fd7ff;
+  transform:translateX(4px);
+}
+
+.ah-newsletter form{
+  display:flex;
+  gap:12px;
+  margin-top:18px;
+}
+
+.ah-newsletter input{
+  width:100%;
+  height:52px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.07);
+  border-radius:8px;
+  padding:0 16px;
+  color:#fff;
+  outline:none;
+}
+
+.ah-newsletter button{
+  width:54px;
+  height:52px;
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+  background:linear-gradient(135deg,#00c8ff,#8b5cff);
+  box-shadow:0 0 25px rgba(91,119,255,.45);
+}
+
+.ah-footer-contact p{
+  margin:0 0 17px;
+  color:#c2cad8;
+  font-size:14px;
+}
+
+.ah-footer-bottom{
+  margin-top:64px;
+  padding-top:34px;
+  border-top:1px solid rgba(255,255,255,.1);
+  display:flex;
+  justify-content:space-between;
+  gap:30px;
+  align-items:center;
+  color:#aeb9ca;
+  font-size:14px;
+}
+
+.ah-footer-bottom strong{color:#6d7cff;}
+
+.ah-bottom-links{
+  display:flex;
+  gap:20px;
+  margin-top:22px;
+}
+
+.ah-social,
+.ah-payments{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.ah-social div,
+.ah-payments div{
+  display:flex;
+}
+
+.ah-social a{
+  width:38px;
+  height:38px;
+  display:inline-grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:50%;
+  color:#fff;
+  text-decoration:none;
+  margin-right:8px;
+  background:rgba(255,255,255,.04);
+}
+
+.ah-payments div{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.ah-payments b{
+  padding:12px 14px;
+  border-radius:7px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  font-size:13px;
+}
+
+@media(max-width:1100px){
+  .ah-footer-main{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:700px){
+  .ah-footer{
+    padding:48px 22px 28px;
+  }
+
+  .ah-footer-main{
+    grid-template-columns:1fr;
+  }
+
+  .ah-footer-bottom{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .ah-bottom-links{
+    flex-direction:column;
+    gap:8px;
+  }
+}
+</style>
+
+<script>
+function updateHeroTime(){
+const now=new Date();
+const h=now.getHours();
+const m=now.getMinutes();
+const s=now.getSeconds();
+const clock=document.getElementById("heroClock");
+const greeting=document.getElementById("heroGreeting");
+const visual=document.getElementById("timeVisual");
+const pad=n=>String(n).padStart(2,"0");
+clock.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+const total=h*60+m;
+visual.className="time-visual";
+if(total>=300&&total<=720){greeting.textContent="Günaydın";visual.classList.add("sun-visual")}
+else if(total>=721&&total<=1140){greeting.textContent="Merhaba";visual.classList.add("day-visual")}
+else if(total>=1141&&total<=1380){greeting.textContent="İyi Akşamlar";visual.classList.add("evening-visual")}
+else{greeting.textContent="İyi Geceler";visual.classList.add("night-visual")}
+}
+updateHeroTime();
+setInterval(updateHeroTime,1000);
+</script>
+
+<script>
+async function setLocationByBrowser(){
+const cityEl=document.getElementById("heroCity");
+const countryEl=document.getElementById("heroCountry");
+if(!navigator.geolocation){return}
+navigator.geolocation.getCurrentPosition(async function(pos){
+const lat=pos.coords.latitude;
+const lon=pos.coords.longitude;
+try{
+const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=tr`);
+const data=await res.json();
+const address=data.address||{};
+cityEl.textContent=address.city||address.town||address.district||address.county||address.state||"Konum";
+countryEl.textContent=address.country||"Türkiye";
+}catch(e){
+cityEl.textContent="İstanbul";
+countryEl.textContent="Türkiye";
+}
+},function(){
+cityEl.textContent="İstanbul";
+countryEl.textContent="Türkiye";
+});
+}
+setLocationByBrowser();
+</script>
+
+<script>
+const approvedAds={
+pet:[
+{title:"Kayıp Kedi Aranıyor",desc:"Beyaz-gri British, son görüldüğü yer Kadıköy.",meta:"Kayıp • Kadıköy • 2 saat önce"},
+{title:"Golden Sahiplendirme",desc:"Aşıları tam, aile ortamına uygun.",meta:"Sahiplendirme • Ataşehir"},
+{title:"Bulunan Köpek",desc:"Tasmali erkek köpek bulundu.",meta:"Bulundu • Beşiktaş"}
+],
+job:[
+{title:"Muhasebe Personeli",desc:"Tam zamanlı ofis pozisyonu.",meta:"İş İlanı • İstanbul"},
+{title:"E-Ticaret Uzmanı",desc:"Pazaryeri ürün yönetimi bilen ekip arkadaşı.",meta:"Aranıyor • Hibrit"},
+{title:"Satış Danışmanı",desc:"Mağaza satış deneyimi olan.",meta:"Aranıyor • Avrupa Yakası"}
+],
+maritime:[
+{title:"2nd Engineer Aranıyor",desc:"Bulk carrier için deneyimli personel.",meta:"Denizcilik • Acil"},
+{title:"AB Aranıyor",desc:"24 ay deneyimli güverte personeli.",meta:"Crew • İstanbul"},
+{title:"Chief Officer",desc:"Kuru yük gemisi için aday aranıyor.",meta:"Maritime • Başvuru açık"}
+],
+realestate:[
+{title:"2+1 Kiralık Daire",desc:"Site içinde, ulaşımı kolay.",meta:"Kiralık • Beylikdüzü"},
+{title:"Satılık Villa",desc:"Bahçeli, güvenlikli lüks yaşam alanı.",meta:"Satılık • Büyükçekmece"},
+{title:"Ofis Kiralık",desc:"Merkezi konum, hazır kullanıma uygun.",meta:"Kiralık • Şişli"}
+],
+service:[
+{title:"Acil Tesisatçı Aranıyor",desc:"Su kaçağı için yakındaki ustalar.",meta:"Hizmet Talebi • Acil"},
+{title:"Ev Temizliği",desc:"Haftalık temizlik hizmeti aranıyor.",meta:"Aranıyor • Kadıköy"},
+{title:"Boyacı Usta",desc:"2+1 daire boya işi için teklif bekleniyor.",meta:"Teklif • İstanbul"}
+]
+};
+
+let adIndex={};
+function rotateAds(){
+document.querySelectorAll(".live-ad-card").forEach(card=>{
+const type=card.dataset.type;
+const ads=approvedAds[type];
+adIndex[type]=(adIndex[type]||0)%ads.length;
+const ad=ads[adIndex[type]];
+card.querySelector(".ad-title").textContent=ad.title;
+card.querySelector(".ad-desc").textContent=ad.desc;
+card.querySelector(".ad-meta").textContent=ad.meta;
+adIndex[type]++;
+});
+}
+rotateAds();
+setInterval(rotateAds,6000);
+</script>
+
+<script>
+const demoStats={activeUsers:12481,activeAds:1942,jobAds:326,crewApps:89,dailyHP:245800};
+function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
+function updateLiveStats(data){
+document.getElementById("activeUsers").textContent=formatNumber(data.activeUsers);
+document.getElementById("activeAds").textContent=formatNumber(data.activeAds);
+document.getElementById("jobAds").textContent=formatNumber(data.jobAds);
+document.getElementById("crewApps").textContent=formatNumber(data.crewApps);
+document.getElementById("dailyHP").textContent=formatNumber(data.dailyHP);
+}
+updateLiveStats(demoStats);
+</script>
+
+<script>
+const searchRoutes=[
+{keys:["shop","alışveriş","pazaryeri","ürün"],url:"../pages/commerce/allonashop.html"},
+{keys:["yemek","restoran","burger","pizza"],url:"../pages/commerce/allonayemek.html"},
+{keys:["market","süpermarket","gıda"],url:"../pages/commerce/allonamarket.html"},
+{keys:["taksi","ulaşım"],url:"../pages/ecosystem/allonataksi.html"},
+{keys:["sağlık","doktor","eczane"],url:"../pages/ecosystem/allonasaglik.html"},
+{keys:["seyahat","otel","turizm","bilet"],url:"../pages/ecosystem/allonaseyahat.html"},
+{keys:["gayrimenkul","ev","arsa","kiralık","satılık"],url:"../pages/ecosystem/allonagayrimenkul.html"},
+{keys:["denizcilik","gemi","crew","maritime"],url:"../pages/ecosystem/allonadenizcilik.html"},
+{keys:["hukuk","avukat"],url:"../pages/ecosystem/allonahukuk.html"},
+{keys:["danışmanlık","vize","ikamet"],url:"../pages/ecosystem/allonadanismanlik.html"},
+{keys:["eğitim","kurs"],url:"../pages/ecosystem/allonaegitim.html"},
+{keys:["kariyer","iş","cv"],url:"../pages/career/allonakariyer.html"},
+{keys:["finans","kredi"],url:"../pages/ecosystem/allonafinans.html"},
+{keys:["otomotiv","araç","araba"],url:"../pages/ecosystem/allonaotomotiv.html"},
+{keys:["eğlence","etkinlik","konser","maç"],url:"../pages/ecosystem/allonaeglence.html"},
+{keys:["evcil","pet","veteriner"],url:"../pages/ecosystem/allonaevcilhayvan.html"},
+{keys:["teknoloji","telefon","bilgisayar"],url:"../pages/ecosystem/allonateknoloji.html"},
+{keys:["spor","fitness"],url:"../pages/ecosystem/allonasporfitness.html"},
+{keys:["güzellik","kozmetik"],url:"../pages/ecosystem/allonaguzellik.html"},
+{keys:["sigorta","kasko","dask"],url:"../pages/ecosystem/allonasigorta.html"},
+{keys:["kurye","teslimat"],url:"../pages/ecosystem/allonakurye.html"},
+{keys:["ev hizmetleri","temizlik","usta"],url:"../pages/ecosystem/allonaevhizmetleri.html"},
+{keys:["kargo","lojistik"],url:"../pages/ecosystem/allonalojistik.html"},
+{keys:["nakliye","taşıma"],url:"../pages/ecosystem/allonanakliye.html"},
+{keys:["organizasyon","düğün","nişan"],url:"../pages/ecosystem/allonaorganizasyon.html"},
+{keys:["tarım","çiftçi","gübre","tohum"],url:"../pages/ecosystem/allonatarim.html"},
+{keys:["inşaat","yapı","müteahhit"],url:"../pages/ecosystem/allonainsaat.html"},
+{keys:["mühendislik","mühendis"],url:"../pages/ecosystem/allonamuhendislik.html"},
+{keys:["trade","ithalat","ihracat"],url:"../pages/ecosystem/allonatrade.html"},
+{keys:["wallet","kupon","hp","pay"],url:"../pages/wallet/hubwallet.html"}
+];
+
+function globalSearch(){
+const q=document.getElementById("globalSearchInput").value.toLowerCase().trim();
+if(!q){return}
+const found=searchRoutes.find(item=>item.keys.some(k=>q.includes(k)));
+if(found){window.location.href=found.url}
+else{window.location.href="../pages/search/arama.html?q="+encodeURIComponent(q)}
+}
+
+document.getElementById("globalSearchInput").addEventListener("keydown",function(e){
+if(e.key==="Enter"){globalSearch()}
+});
+</script>
+  <div data-layout="footer"></div>
+  <script src="../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../js/platform.js?v=20260620-brand1" defer></script>
+</body>
+</html>

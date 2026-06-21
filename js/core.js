@@ -24,6 +24,7 @@
     "admin-order-detail.html": "/admin/order-detail.html",
     "admin-coupons.html": "/admin/coupons.html",
     "admin-rewards.html": "/admin/rewards.html",
+    "super-admin.html": "/admin/super-admin.html",
     "allonakariyer.html": "/pages/career/allonakariyer.html",
     "career-cv-form.html": "/pages/career/career-cv-form.html",
     "cv-form.html": "/pages/career/cv-form.html",

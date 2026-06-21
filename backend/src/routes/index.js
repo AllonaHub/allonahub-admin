@@ -8,6 +8,7 @@ import {
   hasMfa,
   hasRole,
   isAdmin,
+  isSuperAdmin,
   isPartner,
   mfaRequiredForRole,
   supabaseAdmin
@@ -168,6 +169,104 @@ const rewardsLedgerSchema = z.object({
   reason: z.string().trim().min(2).max(180),
   reference: z.string().trim().max(120).optional()
 });
+
+const adminListQuerySchema = z.object({
+  search: z.string().trim().max(120).optional().default(""),
+  status: z.string().trim().max(80).optional().default(""),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(80)
+});
+
+const adminNoteSchema = z.object({
+  body: z.string().trim().min(3).max(1600),
+  note_type: z.enum(["general", "risk", "review", "support", "callback"]).optional().default("general")
+});
+
+const adminFlagSchema = z.object({
+  reason: z.string().trim().min(3).max(1200),
+  severity: z.enum(["info", "warning", "critical"]).optional().default("warning")
+});
+
+const partnerApplicationActionSchema = z.object({
+  action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
+  reason: z.string().trim().min(3).max(1200),
+  risk_level: z.enum(["info", "warning", "critical"]).optional().default("info")
+});
+
+const supportStatusSchema = z.object({
+  source: z.enum(["user", "partner"]),
+  status: z.enum(["open", "in_progress", "resolved"]),
+  note: z.string().trim().max(1200).optional().default("")
+});
+
+const contentProposalSchema = z.object({
+  content_scope: z.enum(["home_module", "banner", "campaign", "page", "legal"]),
+  title: z.string().trim().min(3).max(180),
+  summary: z.string().trim().min(3).max(1600),
+  payload: z.record(z.unknown()).optional().default({})
+});
+
+const adminAuditLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(100),
+  severity: z.enum(["debug", "info", "warning", "critical"]).optional()
+});
+
+const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
+
+const superAdminUserUpdateSchema = z.object({
+  account_status: z.enum(["active", "passive", "suspended"]).optional(),
+  flagged_suspicious: z.boolean().optional(),
+  risk_level: riskLevelSchema.optional(),
+  note: z.string().trim().max(800).optional().default("")
+}).refine((value) => (
+  value.account_status !== undefined ||
+  value.flagged_suspicious !== undefined ||
+  value.risk_level !== undefined ||
+  Boolean(value.note)
+), "En az bir kullanıcı alanı güncellenmelidir.");
+
+const partnerApplicationDecisionSchema = z.object({
+  decision: z.enum(["review", "approved", "rejected"]),
+  reason: z.string().trim().max(800).optional().default(""),
+  commission_rate: z.coerce.number().min(0).max(0.9).optional(),
+  store_status: z.enum(["review", "active", "paused", "suspended"]).optional()
+});
+
+const superAdminSettingUpdateSchema = z.object({
+  value: z.unknown(),
+  reason: z.string().trim().max(900).optional().default("")
+});
+
+const superAdminModuleUpdateSchema = z.object({
+  is_active: z.boolean().optional(),
+  is_visible: z.boolean().optional(),
+  commission_rate: z.coerce.number().min(0).max(0.9).optional(),
+  application_status: z.enum(["open", "review_only", "closed"]).optional(),
+  content_config: z.record(z.unknown()).optional()
+}).refine((value) => Object.keys(value).length > 0, "En az bir modül alanı güncellenmelidir.");
+
+const DEFAULT_SUPER_ADMIN_SETTINGS = [
+  { key: "maintenance_mode", label: "Bakım modu", value: false, value_type: "boolean", risk_level: "critical", category: "system" },
+  { key: "orders_paused", label: "Siparişleri geçici durdur", value: false, value_type: "boolean", risk_level: "high", category: "commerce" },
+  { key: "payments_paused", label: "Ödemeleri geçici durdur", value: false, value_type: "boolean", risk_level: "critical", category: "finance" },
+  { key: "partner_applications_paused", label: "Yeni partner başvurularını durdur", value: false, value_type: "boolean", risk_level: "high", category: "partner" },
+  { key: "default_commission_rate", label: "Varsayılan komisyon oranı", value: 0.12, value_type: "number", risk_level: "medium", category: "finance" },
+  { key: "minimum_payout_amount", label: "Minimum ödeme tutarı", value: 500, value_type: "number", risk_level: "medium", category: "finance" }
+];
+
+const DEFAULT_PLATFORM_MODULES = [
+  { module_key: "shop", name: "Shop", category: "commerce" },
+  { module_key: "food", name: "Yemek", category: "commerce" },
+  { module_key: "market", name: "Market", category: "commerce" },
+  { module_key: "taxi", name: "Taksi", category: "transport" },
+  { module_key: "health", name: "Sağlık", category: "services" },
+  { module_key: "maritime", name: "Denizcilik", category: "services" },
+  { module_key: "legal", name: "Hukuk", category: "services" },
+  { module_key: "consulting", name: "Danışmanlık", category: "services" },
+  { module_key: "real_estate", name: "Gayrimenkul", category: "marketplace" },
+  { module_key: "automotive", name: "Otomotiv", category: "marketplace" },
+  { module_key: "education", name: "Eğitim", category: "services" },
+  { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
+];
 
 function clientIp(request) {
   return String(request.headers["cf-connecting-ip"] || request.ip || "0.0.0.0").split(",")[0].trim();
@@ -336,6 +435,311 @@ async function requireAuth(request, options = {}) {
   }
 
   return ctx;
+}
+
+async function requireSuperAdmin(request, action) {
+  const ctx = await requireAuth(request, {
+    roles: ["super_admin"],
+    mfa: true,
+    adminBoundary: true,
+    action
+  });
+
+  if (!isSuperAdmin(ctx.profile)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.role_denied",
+      severity: "critical",
+      metadata: { requested_action: action }
+    });
+    throw httpError("Bu işlem için Super Admin yetkisi gerekli.", 403);
+  }
+
+  return ctx;
+}
+
+function looksLikeMissingSchema(error) {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`;
+  return /does not exist|schema cache|PGRST20|PGRST30|42P01|42703|relation .* not found|column .* not found/i.test(message);
+}
+
+function schemaWarning(label, error) {
+  return {
+    label,
+    code: error?.code || "SCHEMA_WARNING",
+    message: error?.message || "Supabase şeması bu sorgu için hazır değil."
+  };
+}
+
+async function runAdminQuery(label, query, fallback) {
+  const { data, error, count } = await query;
+  if (error) {
+    if (looksLikeMissingSchema(error)) {
+      return { data: fallback, count: 0, warning: schemaWarning(label, error) };
+    }
+    throw error;
+  }
+  return { data: data ?? fallback, count: count ?? (Array.isArray(data) ? data.length : 0), warning: null };
+}
+
+async function countAdminRows(label, table, configure) {
+  let query = supabaseAdmin.from(table).select("id", { count: "exact", head: true });
+  if (configure) query = configure(query);
+  const result = await runAdminQuery(label, query, null);
+  return { count: result.count || 0, warning: result.warning };
+}
+
+async function requireOpsAdmin(request, action) {
+  const ctx = await requireAuth(request, {
+    roles: ["admin"],
+    mfa: true,
+    adminBoundary: true,
+    action
+  });
+
+  const { data, error } = await ctx.db.rpc("is_ops_admin");
+  if (error || data !== true) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.ops.boundary_denied",
+      resourceType: "admin_ops",
+      severity: "critical",
+      source: "admin",
+      purpose: "admin_operations",
+      metadata: {
+        requested_action: action,
+        db_role_check_error: error?.message || null
+      }
+    });
+    throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
+  }
+
+  return ctx;
+}
+
+async function auditedOpsEvent({ request, ctx, action, resourceType = null, resourceId = null, severity = "info", metadata = {} }) {
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action,
+    resourceType,
+    resourceId,
+    severity,
+    source: "admin",
+    purpose: "admin_operations",
+    evidenceTags: ["admin_ops", resourceType || "operation"],
+    metadata
+  });
+}
+
+function startOfTodayIso() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+}
+
+function cleanSearch(value) {
+  return String(value || "")
+    .replace(/[,%]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
+function textSearchFilter(columns, value) {
+  const term = cleanSearch(value);
+  if (!term) return "";
+  return columns.map((column) => `${column}.ilike.%${term}%`).join(",");
+}
+
+function normalizePartnerSupportStatus(status) {
+  if (status === "waiting") return "in_progress";
+  if (status === "closed") return "resolved";
+  return ["open", "in_progress", "resolved"].includes(status) ? status : "open";
+}
+
+function toPartnerSupportStatus(status) {
+  if (status === "in_progress") return "waiting";
+  return status;
+}
+
+async function optionalQuery(query, fallback, warnings, label) {
+  const { data, error, count } = await query;
+  if (!error) {
+    if (count !== null && count !== undefined) return { data: data || fallback, count };
+    return data || fallback;
+  }
+  if (!looksLikeMissingSchema(error)) throw error;
+  warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
+  if (count !== null && count !== undefined) return { data: fallback, count: 0 };
+  return fallback;
+}
+
+async function optionalMutation(query, warnings, label) {
+  const { data, error } = await query;
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+  warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
+  throw httpError(`${label} icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.`, 409);
+}
+
+async function loadAdminDashboardData(warnings) {
+  const today = startOfTodayIso();
+  const [
+    usersToday,
+    applicationsToday,
+    pendingApplications,
+    recentOrders,
+    userTickets,
+    partnerTickets,
+    notifications,
+    securityEvents,
+    flags
+  ] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", today),
+      [],
+      warnings,
+      "profiles"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_applications").select("id", { count: "exact", head: true }).gte("created_at", today),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_applications").select("id", { count: "exact", head: true }).in("status", ["pending", "review"]),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, customer_name, customer_email, total, order_status, payment_status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "orders"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("support_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin.from("partner_support_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting"]),
+      [],
+      warnings,
+      "partner_support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_notifications")
+        .select("id, kind, severity, title, message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "admin_notifications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("id, action, severity, resource_type, resource_id, created_at")
+        .in("severity", ["warning", "critical"])
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "security_audit_events"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .select("id, target_type, target_id, flag_type, severity, reason, status, created_at")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      [],
+      warnings,
+      "admin_operation_flags"
+    )
+  ]);
+
+  return {
+    metrics: {
+      daily_users: Number(usersToday.count || 0),
+      daily_partner_applications: Number(applicationsToday.count || 0),
+      pending_applications: Number(pendingApplications.count || 0),
+      recent_orders: recentOrders.length,
+      open_support_tickets: Number(userTickets.count || 0) + Number(partnerTickets.count || 0),
+      system_alerts: notifications.length + securityEvents.length + flags.length
+    },
+    recentOrders,
+    alerts: [
+      ...flags.map((item) => ({
+        id: item.id,
+        type: "flag",
+        severity: item.severity,
+        title: item.flag_type,
+        message: item.reason,
+        created_at: item.created_at
+      })),
+      ...securityEvents.map((item) => ({
+        id: item.id,
+        type: "security",
+        severity: item.severity,
+        title: item.action,
+        message: `${item.resource_type || "system"} ${item.resource_id || ""}`.trim(),
+        created_at: item.created_at
+      })),
+      ...notifications.map((item) => ({
+        id: item.id,
+        type: item.kind,
+        severity: item.severity,
+        title: item.title,
+        message: item.message,
+        created_at: item.created_at
+      }))
+    ].slice(0, 12)
+  };
+}
+
+function publicProfile(profile) {
+  return {
+    id: profile.id,
+    full_name: profile.full_name || "",
+    email: profile.email || "",
+    phone: profile.phone || "",
+    role: profile.role || "customer",
+    account_status: profile.account_status || "active",
+    flagged_suspicious: Boolean(profile.flagged_suspicious),
+    risk_level: profile.risk_level || "low",
+    suspended_until: profile.suspended_until || null,
+    last_admin_note: profile.last_admin_note || "",
+    created_at: profile.created_at || null,
+    updated_at: profile.updated_at || null
+  };
+}
+
+function criticalSettingNeedsReason(settingKey, value, reason) {
+  const criticalKeys = new Set(["maintenance_mode", "orders_paused", "payments_paused", "partner_applications_paused"]);
+  if (!criticalKeys.has(settingKey)) return false;
+  if (value !== true) return false;
+  return String(reason || "").trim().length < 6;
+}
+
+function normalizeJsonValue(value) {
+  if (value === undefined) return null;
+  return JSON.parse(JSON.stringify(value));
 }
 
 async function getOrderForPayment(orderId, ctx) {
@@ -554,6 +958,25 @@ function partnerRecommendations(metrics, devices) {
     });
   }
   return tips.slice(0, 4);
+}
+
+async function updateOrderPaymentFields(orderId, payload) {
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update(payload)
+    .eq("id", orderId);
+  if (!error) return;
+
+  if (!looksLikeMissingSchema(error)) throw error;
+  const legacyPayload = { ...payload };
+  delete legacyPayload.iyzico_token;
+  delete legacyPayload.payment_provider_reference;
+  delete legacyPayload.paid_at;
+  const { error: legacyError } = await supabaseAdmin
+    .from("orders")
+    .update(legacyPayload)
+    .eq("id", orderId);
+  if (legacyError) throw legacyError;
 }
 
 export function registerRoutes(app) {
@@ -812,7 +1235,7 @@ export function registerRoutes(app) {
       if (intentError) throw intentError;
       if (!intent) return reply.code(404).send({ ok: false, message: "Partner ödeme isteği bulunamadı." });
 
-      const { error: updateIntentError } = await supabaseAdmin
+      const { data: updatedIntent, error: updateIntentError } = await supabaseAdmin
         .from("partner_payment_intents")
         .update({
           status: paymentStatus,
@@ -820,10 +1243,13 @@ export function registerRoutes(app) {
           provider_reference: result.paymentId || token,
           paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
         })
-        .eq("id", partnerPaymentIntentId);
+        .eq("id", partnerPaymentIntentId)
+        .neq("status", "paid")
+        .select("id")
+        .maybeSingle();
       if (updateIntentError) throw updateIntentError;
 
-      if (paymentStatus === "paid") {
+      if (paymentStatus === "paid" && updatedIntent) {
         const commissionRate = Number(intent.partner?.default_commission_rate || 0.12);
         const gross = Number(intent.amount || 0);
         const commissionAmount = Number((gross * commissionRate).toFixed(2));
@@ -845,18 +1271,19 @@ export function registerRoutes(app) {
             provider_reference: result.paymentId || token,
             metadata: { callback: "iyzico", conversation_id: result.conversationId || intent.id }
           });
-        if (transactionError) throw transactionError;
+        if (transactionError && transactionError.code !== "23505") throw transactionError;
       }
 
       return redirect(reply, `${config.siteUrl}/pages/partner/pay.html?intent=${partnerPaymentIntentId}&payment=${paymentStatus}`);
     }
 
     const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
-    const { error } = await supabaseAdmin
-      .from("orders")
-      .update({ payment_status: paymentStatus, order_status: orderStatus })
-      .eq("id", orderId);
-    if (error) throw error;
+    await updateOrderPaymentFields(orderId, {
+      payment_status: paymentStatus,
+      order_status: orderStatus,
+      payment_provider_reference: result.paymentId || token,
+      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
+    });
 
     return redirect(reply, `${config.siteUrl}/pages/account/orders.html?payment=${paymentStatus}`);
   });
@@ -1279,6 +1706,1490 @@ export function registerRoutes(app) {
       metadata: updatePayload
     });
     return { ok: true, order: updated };
+  });
+
+  app.get("/v1/super-admin/dashboard", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.dashboard.view");
+    const warnings = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      users,
+      partners,
+      orders,
+      pendingApplications,
+      securityAlerts,
+      revenueRows,
+      readyCheck
+    ] = await Promise.all([
+      countAdminRows("profiles_total", "profiles"),
+      countAdminRows("partner_businesses_total", "partner_businesses"),
+      countAdminRows("orders_total", "orders"),
+      countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
+      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "orders_daily_revenue",
+        supabaseAdmin
+          .from("orders")
+          .select("total")
+          .eq("payment_status", "paid")
+          .gte("created_at", today.toISOString()),
+        []
+      ),
+      runAdminQuery("database_ready", supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }), null)
+    ]);
+
+    [users, partners, orders, pendingApplications, securityAlerts, revenueRows, readyCheck]
+      .filter((item) => item.warning)
+      .forEach((item) => warnings.push(item.warning));
+
+    if (partners.warning) {
+      const partnerProfiles = await countAdminRows("partner_profiles_total", "profiles", (query) => query.eq("role", "partner"));
+      if (partnerProfiles.warning) warnings.push(partnerProfiles.warning);
+      partners.count = partnerProfiles.count;
+    }
+
+    const dailyRevenue = (revenueRows.data || [])
+      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const autoDefense = autoDefenseStatus();
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.dashboard_viewed",
+      source: "admin",
+      resourceType: "super_admin_dashboard",
+      metadata: {
+        warning_count: warnings.length,
+        security_alerts_24h: securityAlerts.count
+      }
+    });
+
+    return {
+      ok: true,
+      dashboard: {
+        metrics: {
+          total_users: users.count,
+          total_partners: partners.count,
+          total_orders: orders.count,
+          daily_revenue: Number(dailyRevenue.toFixed(2)),
+          pending_applications: pendingApplications.count,
+          security_alerts: securityAlerts.count
+        },
+        system_health: {
+          api: "online",
+          database: readyCheck.warning ? "warning" : "online",
+          maintenance_mode: config.maintenanceMode,
+          payments_disabled: config.paymentsDisabled,
+          emergency_api_disabled: config.emergencyApiDisabled,
+          auto_defense: {
+            blocked_ip_count: autoDefense.blockedIpCount,
+            strict_mode_until: autoDefense.strictModeUntil,
+            recent_incident_count: autoDefense.recentIncidents.length
+          }
+        },
+        schema_warnings: warnings
+      }
+    };
+  });
+
+  app.get("/v1/super-admin/users", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.users.list");
+    const queryParams = z.object({
+      limit: z.coerce.number().int().min(1).max(200).optional().default(80),
+      role: z.enum(["customer", "partner", "courier", "admin", "super_admin"]).optional(),
+      account_status: z.enum(["active", "passive", "suspended"]).optional(),
+      search: z.string().trim().max(80).optional().default("")
+    }).parse(request.query || {});
+
+    let query = supabaseAdmin
+      .from("profiles")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+
+    if (queryParams.role) query = query.eq("role", queryParams.role);
+    if (queryParams.account_status) query = query.eq("account_status", queryParams.account_status);
+    if (queryParams.search) {
+      const cleanSearch = queryParams.search.replace(/[%_,]/g, " ").trim();
+      if (cleanSearch) {
+        const like = `%${cleanSearch}%`;
+        query = query.or(`full_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`);
+      }
+    }
+
+    const result = await runAdminQuery("profiles_super_admin_list", query, []);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.users_viewed",
+      source: "admin",
+      resourceType: "profiles",
+      metadata: {
+        limit: queryParams.limit,
+        role: queryParams.role || "all",
+        account_status: queryParams.account_status || "all",
+        search: Boolean(queryParams.search)
+      }
+    });
+
+    return {
+      ok: true,
+      users: (result.data || []).map(publicProfile),
+      count: result.count,
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.patch("/v1/super-admin/users/:userId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.users.update");
+    const { userId } = z.object({ userId: uuidSchema }).parse(request.params || {});
+    const body = superAdminUserUpdateSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Kullanıcı bulunamadı.", 404);
+
+    const payload = {};
+    if (body.account_status !== undefined) payload.account_status = body.account_status;
+    if (body.flagged_suspicious !== undefined) payload.flagged_suspicious = body.flagged_suspicious;
+    if (body.risk_level !== undefined) payload.risk_level = body.risk_level;
+    if (body.note) payload.last_admin_note = body.note;
+    payload.updated_at = new Date().toISOString();
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("profiles")
+      .update(payload)
+      .eq("id", userId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.user_updated",
+      resourceType: "profile",
+      resourceId: userId,
+      severity: body.account_status === "suspended" || body.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "user_management"],
+      metadata: {
+        old_value: {
+          account_status: before.account_status || "active",
+          flagged_suspicious: Boolean(before.flagged_suspicious),
+          risk_level: before.risk_level || "low",
+          last_admin_note: before.last_admin_note || ""
+        },
+        new_value: {
+          account_status: updated.account_status || "active",
+          flagged_suspicious: Boolean(updated.flagged_suspicious),
+          risk_level: updated.risk_level || "low",
+          last_admin_note: updated.last_admin_note || ""
+        }
+      }
+    });
+
+    return { ok: true, user: publicProfile(updated) };
+  });
+
+  app.get("/v1/super-admin/partners", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.partners.list");
+    const warnings = [];
+    const applications = await runAdminQuery(
+      "partner_applications_super_admin",
+      supabaseAdmin
+        .from("partner_applications")
+        .select("*, profile:profiles(id, full_name, email, phone)", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .limit(80),
+      []
+    );
+    if (applications.warning) warnings.push(applications.warning);
+
+    const businesses = await runAdminQuery(
+      "partner_businesses_super_admin",
+      supabaseAdmin
+        .from("partner_businesses")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .limit(80),
+      []
+    );
+    if (businesses.warning) warnings.push(businesses.warning);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.partners_viewed",
+      source: "admin",
+      resourceType: "partner_management",
+      metadata: {
+        application_count: applications.count,
+        business_count: businesses.count
+      }
+    });
+
+    return {
+      ok: true,
+      applications: applications.data || [],
+      businesses: businesses.data || [],
+      schema_warnings: warnings
+    };
+  });
+
+  app.patch("/v1/super-admin/partner-applications/:applicationId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
+    const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
+    const body = partnerApplicationDecisionSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("partner_applications")
+      .select("*")
+      .eq("id", applicationId)
+      .maybeSingle();
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
+
+    const applicationPayload = {
+      status: body.decision,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: application, error: updateError } = await supabaseAdmin
+      .from("partner_applications")
+      .update(applicationPayload)
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+
+    let partnerBusiness = null;
+    if (body.decision === "approved" && before.user_id) {
+      const { data: existingBusiness, error: existingBusinessError } = await supabaseAdmin
+        .from("partner_businesses")
+        .select("*")
+        .eq("owner_id", before.user_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (existingBusinessError && !looksLikeMissingSchema(existingBusinessError)) throw existingBusinessError;
+
+      if (!existingBusinessError) {
+        const businessPayload = {
+          owner_id: before.user_id,
+          display_name: before.company_name,
+          legal_name: before.company_name,
+          email: before.email,
+          phone: before.phone,
+          status: body.store_status || "active",
+          verification_status: "verified",
+          default_commission_rate: body.commission_rate ?? 0.12,
+          metadata: {
+            approved_from_application_id: applicationId,
+            approved_by: ctx.user.id,
+            approval_reason: body.reason || ""
+          }
+        };
+
+        const businessQuery = existingBusiness
+          ? supabaseAdmin.from("partner_businesses").update(businessPayload).eq("id", existingBusiness.id).select("*").single()
+          : supabaseAdmin.from("partner_businesses").insert(businessPayload).select("*").single();
+        const { data: businessRow, error: businessError } = await businessQuery;
+        if (businessError) throw businessError;
+        partnerBusiness = businessRow;
+      }
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.partner_application_decided",
+      resourceType: "partner_application",
+      resourceId: applicationId,
+      severity: body.decision === "approved" ? "warning" : "info",
+      source: "admin",
+      evidenceTags: ["super_admin", "partner_application"],
+      metadata: {
+        old_value: { status: before.status },
+        new_value: {
+          status: application.status,
+          commission_rate: body.commission_rate ?? null,
+          store_status: body.store_status || null,
+          partner_business_id: partnerBusiness?.id || null
+        },
+        reason: body.reason || ""
+      }
+    });
+
+    return { ok: true, application, partner_business: partnerBusiness };
+  });
+
+  app.get("/v1/super-admin/security", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.security.view");
+    const warnings = [];
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const events = await runAdminQuery(
+      "super_admin_security_events",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(120),
+      []
+    );
+    if (events.warning) warnings.push(events.warning);
+
+    const failedAuth = await countAdminRows("super_admin_failed_auth_24h", "security_audit_events", (query) => (
+      query.in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"]).gte("created_at", since24h)
+    ));
+    if (failedAuth.warning) warnings.push(failedAuth.warning);
+
+    const criticalEvents = (events.data || []).filter((event) => event.severity === "critical").length;
+    const suspiciousIps = Object.entries((events.data || [])
+      .filter((event) => event.ip_address && ["warning", "critical"].includes(event.severity))
+      .reduce((acc, event) => {
+        acc[event.ip_address] = (acc[event.ip_address] || 0) + 1;
+        return acc;
+      }, {}))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([ip, count]) => ({ ip, count }));
+
+    const autoDefense = autoDefenseStatus();
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.security_viewed",
+      source: "admin",
+      resourceType: "security_center",
+      metadata: {
+        failed_auth_24h: failedAuth.count,
+        critical_event_sample_count: criticalEvents
+      }
+    });
+
+    return {
+      ok: true,
+      security: {
+        metrics: {
+          failed_auth_24h: failedAuth.count,
+          critical_events_sample: criticalEvents,
+          suspicious_ip_count: suspiciousIps.length,
+          blocked_ip_count: autoDefense.blockedIpCount
+        },
+        suspicious_ips: suspiciousIps,
+        recent_events: events.data || [],
+        auto_defense: autoDefense
+      },
+      schema_warnings: warnings
+    };
+  });
+
+  app.get("/v1/super-admin/settings", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.settings.list");
+    const result = await runAdminQuery(
+      "super_admin_settings",
+      supabaseAdmin
+        .from("super_admin_settings")
+        .select("*")
+        .order("category", { ascending: true })
+        .order("setting_key", { ascending: true }),
+      []
+    );
+    const settings = result.warning
+      ? DEFAULT_SUPER_ADMIN_SETTINGS.map((item) => ({
+          setting_key: item.key,
+          label: item.label,
+          setting_value: item.value,
+          value_type: item.value_type,
+          risk_level: item.risk_level,
+          category: item.category,
+          source: "default"
+        }))
+      : result.data;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.settings_viewed",
+      source: "admin",
+      resourceType: "super_admin_settings",
+      metadata: { warning: Boolean(result.warning) }
+    });
+
+    return {
+      ok: true,
+      settings,
+      env_flags: {
+        maintenance_mode: config.maintenanceMode,
+        emergency_api_disabled: config.emergencyApiDisabled,
+        payments_disabled: config.paymentsDisabled
+      },
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.patch("/v1/super-admin/settings/:settingKey", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.settings.update");
+    const { settingKey } = z.object({
+      settingKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
+    }).parse(request.params || {});
+    const body = superAdminSettingUpdateSchema.parse(request.body || {});
+    const cleanValue = normalizeJsonValue(body.value);
+
+    if (criticalSettingNeedsReason(settingKey, cleanValue, body.reason)) {
+      throw httpError("Kritik sistem ayarları için işlem nedeni zorunludur.", 400);
+    }
+
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_settings")
+      .select("*")
+      .eq("setting_key", settingKey)
+      .maybeSingle();
+    if (beforeError && !looksLikeMissingSchema(beforeError)) throw beforeError;
+    if (beforeError && looksLikeMissingSchema(beforeError)) {
+      throw httpError("super_admin_settings migration henüz uygulanmamış.", 503);
+    }
+
+    const definition = DEFAULT_SUPER_ADMIN_SETTINGS.find((item) => item.key === settingKey);
+    const row = {
+      setting_key: settingKey,
+      label: before?.label || definition?.label || settingKey,
+      setting_value: cleanValue,
+      value_type: before?.value_type || definition?.value_type || typeof cleanValue,
+      risk_level: before?.risk_level || definition?.risk_level || "medium",
+      category: before?.category || definition?.category || "system",
+      updated_by: ctx.user.id,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("super_admin_settings")
+      .upsert(row, { onConflict: "setting_key" })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.setting_updated",
+      resourceType: "super_admin_setting",
+      resourceId: settingKey,
+      severity: updated.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "system_settings"],
+      metadata: {
+        old_value: before?.setting_value ?? null,
+        new_value: updated.setting_value,
+        reason: body.reason || ""
+      }
+    });
+
+    return { ok: true, setting: updated };
+  });
+
+  app.get("/v1/super-admin/modules", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.modules.list");
+    const result = await runAdminQuery(
+      "platform_modules",
+      supabaseAdmin
+        .from("platform_modules")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+      []
+    );
+    const modules = result.warning
+      ? DEFAULT_PLATFORM_MODULES.map((item, index) => ({
+          ...item,
+          is_active: true,
+          is_visible: true,
+          commission_rate: 0.12,
+          application_status: "open",
+          content_config: {},
+          sort_order: index + 1,
+          source: "default"
+        }))
+      : result.data;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.modules_viewed",
+      source: "admin",
+      resourceType: "platform_modules",
+      metadata: { warning: Boolean(result.warning) }
+    });
+
+    return {
+      ok: true,
+      modules,
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.patch("/v1/super-admin/modules/:moduleKey", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.modules.update");
+    const { moduleKey } = z.object({
+      moduleKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
+    }).parse(request.params || {});
+    const body = superAdminModuleUpdateSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("platform_modules")
+      .select("*")
+      .eq("module_key", moduleKey)
+      .maybeSingle();
+    if (beforeError && !looksLikeMissingSchema(beforeError)) throw beforeError;
+    if (beforeError && looksLikeMissingSchema(beforeError)) {
+      throw httpError("platform_modules migration henüz uygulanmamış.", 503);
+    }
+
+    const definition = DEFAULT_PLATFORM_MODULES.find((item) => item.module_key === moduleKey);
+    const row = {
+      module_key: moduleKey,
+      name: before?.name || definition?.name || moduleKey,
+      category: before?.category || definition?.category || "services",
+      is_active: body.is_active ?? before?.is_active ?? true,
+      is_visible: body.is_visible ?? before?.is_visible ?? true,
+      commission_rate: body.commission_rate ?? before?.commission_rate ?? 0.12,
+      application_status: body.application_status || before?.application_status || "open",
+      content_config: normalizeJsonValue(body.content_config ?? before?.content_config ?? {}),
+      updated_by: ctx.user.id,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("platform_modules")
+      .upsert(row, { onConflict: "module_key" })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.module_updated",
+      resourceType: "platform_module",
+      resourceId: moduleKey,
+      severity: "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "module_management"],
+      metadata: {
+        old_value: before,
+        new_value: updated
+      }
+    });
+
+    return { ok: true, module: updated };
+  });
+
+  app.get("/v1/super-admin/audit-log", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.audit_log.view");
+    const query = auditQuerySchema.parse(request.query || {});
+    let dbQuery = supabaseAdmin
+      .from("security_audit_events")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.severity) dbQuery = dbQuery.eq("severity", query.severity);
+    if (query.actorId) dbQuery = dbQuery.eq("actor_id", query.actorId);
+    if (query.action) dbQuery = dbQuery.eq("action", query.action);
+    if (query.resourceType) dbQuery = dbQuery.eq("resource_type", query.resourceType);
+    if (query.resourceId) dbQuery = dbQuery.eq("resource_id", query.resourceId);
+    if (query.from) dbQuery = dbQuery.gte("created_at", query.from);
+    if (query.to) dbQuery = dbQuery.lte("created_at", query.to);
+
+    const result = await runAdminQuery("super_admin_audit_log", dbQuery, []);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.audit_log_viewed",
+      source: "admin",
+      resourceType: "security_audit_events",
+      metadata: {
+        limit: query.limit,
+        severity: query.severity || "all",
+        warning: Boolean(result.warning)
+      }
+    });
+
+    return {
+      ok: true,
+      events: result.data || [],
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.get("/v1/admin/ops/bootstrap", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.bootstrap");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.bootstrap_viewed",
+      resourceType: "admin_ops",
+      metadata: { warning_count: warnings.length }
+    });
+
+    return {
+      ok: true,
+      profile: {
+        id: ctx.user.id,
+        full_name: ctx.profile.full_name || ctx.user.email || "Admin",
+        role: ctx.profile.role
+      },
+      capabilities: {
+        can_delete_users: false,
+        can_change_commission: false,
+        can_change_finance_settings: false,
+        can_create_super_admin: false,
+        can_change_system_settings: false,
+        can_create_operational_notes: true,
+        can_create_review_flags: true,
+        can_request_super_admin_approval: true
+      },
+      dashboard,
+      warnings
+    };
+  });
+
+  app.get("/v1/admin/ops/dashboard", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.dashboard");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.dashboard_viewed",
+      resourceType: "dashboard",
+      metadata: { warning_count: warnings.length }
+    });
+
+    return { ok: true, dashboard, warnings };
+  });
+
+  app.get("/v1/admin/ops/users", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email, phone, country, city, role, profile_visible, contact_locked, premium_level, hp, xp, created_at, updated_at")
+      .neq("role", "super_admin")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["full_name", "email", "phone", "city"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status === "hidden") dbQuery = dbQuery.eq("profile_visible", false);
+    const users = await optionalQuery(dbQuery, [], warnings, "profiles");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.users_list_viewed",
+      resourceType: "profile",
+      metadata: { search: query.search || null, status: query.status || null, limit: query.limit, count: users.length }
+    });
+
+    return { ok: true, users, warnings };
+  });
+
+  app.get("/v1/admin/ops/users/:userId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.detail");
+    const userId = uuidSchema.parse(request.params.userId);
+    const warnings = [];
+    const profile = await optionalQuery(
+      supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email, phone, country, city, role, profile_visible, contact_locked, premium_level, hp, xp, created_at, updated_at")
+        .eq("id", userId)
+        .neq("role", "super_admin")
+        .maybeSingle(),
+      null,
+      warnings,
+      "profiles"
+    );
+    if (!profile) throw httpError("Kullanıcı bulunamadı veya görüntüleme yetkiniz yok.", 404);
+
+    const [orders, notes, flags] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("id, order_no, total, order_status, payment_status, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "user")
+          .eq("target_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, created_at")
+          .eq("target_type", "user")
+          .eq("target_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_detail_viewed",
+      resourceType: "profile",
+      resourceId: userId,
+      metadata: { order_count: orders.length, note_count: notes.length, flag_count: flags.length }
+    });
+
+    return { ok: true, profile, orders, notes, flags, warnings };
+  });
+
+  app.post("/v1/admin/ops/users/:userId/notes", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.note");
+    const userId = uuidSchema.parse(request.params.userId);
+    const payload = adminNoteSchema.parse(request.body || {});
+    const warnings = [];
+    const note = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "user",
+          target_id: userId,
+          note_type: payload.note_type,
+          body: payload.body
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_note_created",
+      resourceType: "profile",
+      resourceId: userId,
+      metadata: { note_type: payload.note_type }
+    });
+    return reply.code(201).send({ ok: true, note, warnings });
+  });
+
+  app.post("/v1/admin/ops/users/:userId/flag", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.users.flag");
+    const userId = uuidSchema.parse(request.params.userId);
+    const payload = adminFlagSchema.parse(request.body || {});
+    const warnings = [];
+    const flag = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "user",
+          target_id: userId,
+          flag_type: "suspicious_user",
+          severity: payload.severity,
+          reason: payload.reason,
+          status: "open"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.user_flagged",
+      resourceType: "profile",
+      resourceId: userId,
+      severity: payload.severity,
+      metadata: { flag_type: "suspicious_user" }
+    });
+    return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  app.get("/v1/admin/ops/partner-applications", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("partner_applications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["company_name", "contact_name", "email", "phone", "tax_number"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+    const applications = await optionalQuery(dbQuery, [], warnings, "partner_applications");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partner_applications_viewed",
+      resourceType: "partner_application",
+      metadata: { search: query.search || null, status: query.status || null, count: applications.length }
+    });
+
+    return { ok: true, applications, warnings };
+  });
+
+  app.get("/v1/admin/ops/partner-applications/:applicationId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.detail");
+    const applicationId = uuidSchema.parse(request.params.applicationId);
+    const warnings = [];
+    const [application, notes, requests] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin.from("partner_applications").select("*").eq("id", applicationId).maybeSingle(),
+        null,
+        warnings,
+        "partner_applications"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "partner_application")
+          .eq("target_id", applicationId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .select("*")
+          .eq("target_type", "partner_application")
+          .eq("target_id", applicationId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_approval_requests"
+      )
+    ]);
+    if (!application) throw httpError("Partner başvurusu bulunamadı.", 404);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partner_application_detail_viewed",
+      resourceType: "partner_application",
+      resourceId: applicationId,
+      metadata: { note_count: notes.length, approval_request_count: requests.length }
+    });
+
+    return { ok: true, application, notes, approvalRequests: requests, warnings };
+  });
+
+  app.patch("/v1/admin/ops/partner-applications/:applicationId/review", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
+    const applicationId = uuidSchema.parse(request.params.applicationId);
+    const payload = partnerApplicationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const nowIso = new Date().toISOString();
+    const recommendation = payload.action === "recommend_approve"
+      ? "approve"
+      : payload.action === "recommend_reject"
+      ? "reject"
+      : payload.action === "send_super_admin"
+      ? "needs_super_admin"
+      : null;
+    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+
+    const application = await optionalMutation(
+      supabaseAdmin
+        .from("partner_applications")
+        .update({
+          status: "review",
+          review_stage: reviewStage,
+          admin_recommendation: recommendation,
+          risk_level: payload.risk_level,
+          reviewed_by: ctx.user.id,
+          reviewed_at: nowIso,
+          metadata: {
+            last_admin_action: payload.action,
+            last_admin_reason: payload.reason,
+            last_admin_action_at: nowIso
+          }
+        })
+        .eq("id", applicationId)
+        .select("*")
+        .single(),
+      warnings,
+      "partner_applications"
+    );
+
+    await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "partner_application",
+          target_id: applicationId,
+          note_type: "review",
+          body: payload.reason
+        }),
+      warnings,
+      "admin_operation_notes"
+    );
+
+    let approvalRequest = null;
+    if (payload.action !== "start_review") {
+      approvalRequest = await optionalMutation(
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .insert({
+            requested_by: ctx.user.id,
+            target_type: "partner_application",
+            target_id: applicationId,
+            request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
+            status: "pending_super_admin",
+            summary: payload.reason,
+            proposed_action: {
+              action: payload.action,
+              recommendation,
+              risk_level: payload.risk_level
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_approval_requests"
+      );
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: `admin.ops.partner_application_${payload.action}`,
+      resourceType: "partner_application",
+      resourceId: applicationId,
+      severity: payload.risk_level,
+      metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
+    });
+
+    return { ok: true, application, approvalRequest, warnings };
+  });
+
+  app.get("/v1/admin/ops/partners", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partners.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("partner_businesses")
+      .select("id, owner_id, partner_code, display_name, legal_name, partner_type, email, phone, city, country, status, verification_status, trust_score, level, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["display_name", "legal_name", "email", "phone", "city", "partner_code"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+    const partners = await optionalQuery(dbQuery, [], warnings, "partner_businesses");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.partners_viewed",
+      resourceType: "partner_business",
+      metadata: { search: query.search || null, status: query.status || null, count: partners.length }
+    });
+
+    return { ok: true, partners, warnings };
+  });
+
+  app.get("/v1/admin/ops/orders", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, user_id, customer_name, customer_email, customer_phone, city, total, subtotal, shipping, discount, order_status, payment_status, tracking_number, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["order_no", "customer_name", "customer_email", "customer_phone", "city"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+    if (query.status) dbQuery = dbQuery.eq("order_status", query.status);
+    const orders = await optionalQuery(dbQuery, [], warnings, "orders");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.orders_viewed",
+      resourceType: "order",
+      metadata: { search: query.search || null, status: query.status || null, count: orders.length }
+    });
+
+    return { ok: true, orders, warnings };
+  });
+
+  app.get("/v1/admin/ops/orders/:orderId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.detail");
+    const orderId = uuidSchema.parse(request.params.orderId);
+    const warnings = [];
+    const [order, notes, flags] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("*, order_items(*, product:products(id, name, category, partner_id))")
+          .eq("id", orderId)
+          .maybeSingle(),
+        null,
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, created_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        [],
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.order_detail_viewed",
+      resourceType: "order",
+      resourceId: orderId,
+      metadata: { item_count: order.order_items?.length || 0, note_count: notes.length, flag_count: flags.length }
+    });
+
+    return { ok: true, order, notes, flags, warnings };
+  });
+
+  app.post("/v1/admin/ops/orders/:orderId/risk-flag", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
+    const orderId = uuidSchema.parse(request.params.orderId);
+    const payload = adminFlagSchema.parse(request.body || {});
+    const warnings = [];
+    const flag = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          flag_type: "risky_order",
+          severity: payload.severity,
+          reason: payload.reason,
+          status: "open"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.order_risk_flagged",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: payload.severity,
+      metadata: { flag_type: "risky_order" }
+    });
+    return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  app.get("/v1/admin/ops/support-tickets", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let userTicketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("*, profile:profiles(id, full_name, email, phone)")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) userTicketQuery = userTicketQuery.eq("status", query.status);
+    let partnerTicketQuery = supabaseAdmin
+      .from("partner_support_tickets")
+      .select("*, partner:partner_businesses(id, display_name, partner_code)")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) partnerTicketQuery = partnerTicketQuery.eq("status", toPartnerSupportStatus(query.status));
+
+    const [userTickets, partnerTickets] = await Promise.all([
+      optionalQuery(userTicketQuery, [], warnings, "support_tickets"),
+      optionalQuery(partnerTicketQuery, [], warnings, "partner_support_tickets")
+    ]);
+
+    const search = cleanSearch(query.search).toLocaleLowerCase("tr-TR");
+    const tickets = [
+      ...userTickets.map((ticket) => ({ ...ticket, source: "user", requester_label: ticket.profile?.full_name || ticket.profile?.email || ticket.user_id || "Kullanıcı" })),
+      ...partnerTickets.map((ticket) => ({
+        ...ticket,
+        source: "partner",
+        requester_label: ticket.partner?.display_name || ticket.partner_id || "Partner",
+        status: normalizePartnerSupportStatus(ticket.status)
+      }))
+    ]
+      .filter((ticket) => {
+        if (!search) return true;
+        return `${ticket.title || ""} ${ticket.message || ""} ${ticket.requester_label || ""} ${ticket.category || ""}`
+          .toLocaleLowerCase("tr-TR")
+          .includes(search);
+      })
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .slice(0, query.limit);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_tickets_viewed",
+      resourceType: "support_ticket",
+      metadata: { search: query.search || null, status: query.status || null, count: tickets.length }
+    });
+
+    return { ok: true, tickets, warnings };
+  });
+
+  app.patch("/v1/admin/ops/support-tickets/:ticketId/status", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.status");
+    const ticketId = uuidSchema.parse(request.params.ticketId);
+    const payload = supportStatusSchema.parse(request.body || {});
+    const warnings = [];
+    const table = payload.source === "partner" ? "partner_support_tickets" : "support_tickets";
+    const status = payload.source === "partner" ? toPartnerSupportStatus(payload.status) : payload.status;
+    const ticket = await optionalMutation(
+      supabaseAdmin
+        .from(table)
+        .update({ status })
+        .eq("id", ticketId)
+        .select("*")
+        .single(),
+      warnings,
+      table
+    );
+    if (payload.note) {
+      await optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: payload.source === "partner" ? "partner_support_ticket" : "support_ticket",
+            target_id: ticketId,
+            note_type: "support",
+            body: payload.note
+          }),
+        warnings,
+        "admin_operation_notes"
+      );
+      if (payload.source === "user") {
+        await optionalMutation(
+          supabaseAdmin
+            .from("support_ticket_notes")
+            .insert({
+              ticket_id: ticketId,
+              author_id: ctx.user.id,
+              note_type: "internal",
+              body: payload.note
+            }),
+          warnings,
+          "support_ticket_notes"
+        );
+      }
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_ticket_status_updated",
+      resourceType: payload.source === "partner" ? "partner_support_ticket" : "support_ticket",
+      resourceId: ticketId,
+      metadata: { status: payload.status, source: payload.source, has_note: Boolean(payload.note) }
+    });
+
+    return { ok: true, ticket, warnings };
+  });
+
+  app.post("/v1/admin/ops/support-tickets/:ticketId/notes", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.support.note");
+    const ticketId = uuidSchema.parse(request.params.ticketId);
+    const source = z.enum(["user", "partner"]).parse(request.query?.source || "user");
+    const payload = adminNoteSchema.parse(request.body || {});
+    const warnings = [];
+    const note = await optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: source === "partner" ? "partner_support_ticket" : "support_ticket",
+          target_id: ticketId,
+          note_type: "support",
+          body: payload.body
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.support_ticket_note_created",
+      resourceType: source === "partner" ? "partner_support_ticket" : "support_ticket",
+      resourceId: ticketId,
+      metadata: { source }
+    });
+    return reply.code(201).send({ ok: true, note, warnings });
+  });
+
+  app.get("/v1/admin/ops/content-proposals", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.content.list");
+    const warnings = [];
+    const proposals = await optionalQuery(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*, proposer:profiles(id, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "content_change_proposals"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.content_proposals_viewed",
+      resourceType: "content_change_proposal",
+      metadata: { count: proposals.length }
+    });
+    return { ok: true, proposals, warnings };
+  });
+
+  app.post("/v1/admin/ops/content-proposals", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.content.propose");
+    const payload = contentProposalSchema.parse(request.body || {});
+    const warnings = [];
+    const proposal = await optionalMutation(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .insert({
+          proposed_by: ctx.user.id,
+          content_scope: payload.content_scope,
+          title: payload.title,
+          summary: payload.summary,
+          payload: payload.payload,
+          status: "pending_super_admin"
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "content_change_proposals"
+    );
+    await optionalMutation(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .insert({
+          requested_by: ctx.user.id,
+          target_type: "content_module",
+          target_id: proposal.id,
+          request_type: payload.content_scope === "banner" || payload.content_scope === "campaign" ? "banner_campaign" : "content_visibility",
+          status: "pending_super_admin",
+          summary: payload.summary,
+          proposed_action: {
+            content_scope: payload.content_scope,
+            title: payload.title,
+            payload: payload.payload
+          }
+        }),
+      warnings,
+      "admin_approval_requests"
+    );
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.content_proposal_created",
+      resourceType: "content_change_proposal",
+      resourceId: proposal.id,
+      metadata: { content_scope: payload.content_scope }
+    });
+    return reply.code(201).send({ ok: true, proposal, warnings });
+  });
+
+  app.get("/v1/admin/ops/security-monitoring", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.security_monitoring");
+    const warnings = [];
+    const [events, flags, notifications] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .or("severity.eq.warning,severity.eq.critical,action.ilike.%auth.denied%,action.ilike.%authz.denied%")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "security_audit_events"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("*")
+          .eq("status", "open")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_notifications")
+          .select("id, user_id, kind, severity, title, message, metadata, created_at")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "admin_notifications"
+      )
+    ]);
+    const autoDefense = autoDefenseStatus();
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.security_monitoring_viewed",
+      resourceType: "security_monitoring",
+      metadata: { event_count: events.length, flag_count: flags.length, notification_count: notifications.length }
+    });
+    return { ok: true, events, flags, notifications, autoDefense, warnings };
+  });
+
+  app.get("/v1/admin/ops/reports", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.reports");
+    const warnings = [];
+    const dashboard = await loadAdminDashboardData(warnings);
+    const [ordersToday, riskyOrders, supportResolved] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).gte("created_at", startOfTodayIso()),
+        [],
+        warnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin.from("admin_operation_flags").select("id", { count: "exact", head: true }).eq("target_type", "order").eq("status", "open"),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      optionalQuery(
+        supabaseAdmin.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "resolved").gte("updated_at", startOfTodayIso()),
+        [],
+        warnings,
+        "support_tickets"
+      )
+    ]);
+
+    const reports = {
+      daily_operations: dashboard.metrics,
+      partner_application_report: {
+        daily_new: dashboard.metrics.daily_partner_applications,
+        pending: dashboard.metrics.pending_applications
+      },
+      order_report: {
+        daily_orders: Number(ordersToday.count || 0),
+        risky_open: Number(riskyOrders.count || 0)
+      },
+      user_activity_report: {
+        daily_new_users: dashboard.metrics.daily_users
+      },
+      support_report: {
+        open: dashboard.metrics.open_support_tickets,
+        resolved_today: Number(supportResolved.count || 0)
+      }
+    };
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.reports_viewed",
+      resourceType: "admin_report",
+      metadata: reports
+    });
+
+    return { ok: true, reports, warnings };
+  });
+
+  app.get("/v1/admin/ops/audit-log", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.audit_log");
+    const query = adminAuditLogQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("security_audit_events")
+      .select("id, actor_id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, request_id, metadata, created_at")
+      .eq("source", "admin")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.severity) dbQuery = dbQuery.eq("severity", query.severity);
+    const events = await optionalQuery(dbQuery, [], warnings, "security_audit_events");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.audit_log_viewed",
+      resourceType: "security_audit_events",
+      metadata: { limit: query.limit, severity: query.severity || "all", count: events.length }
+    });
+
+    return { ok: true, events, warnings };
   });
 
   async function recordRewardsLedger(request, legacyAlias = false) {
