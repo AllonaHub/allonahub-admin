@@ -249,6 +249,13 @@
       discount_label: product.discount_label || product.discount || "",
       rating: Number(product.rating || product.average_rating || 0),
       review_count: Number(product.review_count || product.reviews_count || product.rating_count || 0),
+      favorite_count: Number(product.favorite_count || product.favorites_count || product.favorite_total || 0),
+      view_count: Number(product.view_count || product.views_24h || product.view_count_24h || 0),
+      cart_count: Number(product.cart_count || product.in_cart_count || product.cart_add_count || 0),
+      coupon_label: product.coupon_label || product.coupon_text || (typeof product.coupon === "string" ? product.coupon : ""),
+      delivery_label: product.delivery_label || product.shipping_label || product.fulfillment_label || "",
+      seller_name: product.seller_name || product.partner_name || product.store_name || product.brand || "Allona Partner",
+      seller_score: Number(product.seller_score || product.store_score || product.partner_score || 0),
       meta_title: product.meta_title || name,
       meta_description: product.meta_description || description
     };
@@ -268,6 +275,14 @@
     return `${text.slice(0, Math.max(0, limit - 1)).trim()}…`;
   }
 
+  function compactCount(value) {
+    const count = Math.max(0, Number(value || 0));
+    if (!count) return "";
+    if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1).replace(".", ",")}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(".", ",")}K`;
+    return String(count);
+  }
+
   function productCard(raw) {
     const product = normalizeProduct(raw);
     const disabled = product.stock <= 0;
@@ -277,10 +292,24 @@
     const discount = product.discount_label || (discountPercent > 0 ? `%${Math.min(95, discountPercent)} indirim` : "Fırsat");
     const rating = Math.max(0, Math.min(5, Number(product.rating || product.average_rating || 4.8))).toFixed(1);
     const ratingLabel = product.review_count ? `${rating} (${product.review_count})` : rating;
+    const freeShipping = product.price >= Number(App.config?.freeShippingThreshold || 1500);
+    const couponLabel = product.coupon_label || (discountPercent >= 10 ? "Kuponlu" : "");
+    const deliveryLabel = product.delivery_label || (freeShipping ? "Ücretsiz kargo" : "Hızlı teslimat");
+    const valueLabel = product.value_label || product.good_price_label || (discountPercent >= 20 ? "İyi fiyat" : product.sold_count >= 150 ? "Çok satan" : "");
+    const socialSignals = [
+      product.sold_count ? `${compactCount(product.sold_count)} satış` : "",
+      product.favorite_count ? `${compactCount(product.favorite_count)} favori` : "",
+      product.cart_count ? `${compactCount(product.cart_count)} sepette` : "",
+      product.view_count ? `${compactCount(product.view_count)} görüntüleme` : ""
+    ].filter(Boolean);
+    const socialProof = socialSignals.length
+      ? socialSignals.slice(0, 2).join(" · ")
+      : (product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : `${product.seller_name || product.brand || "Allona"} güvencesi`);
+    const productHref = productUrl(product);
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
-        <a class="product-card__media" href="${escapeHTML(productUrl(product))}" aria-label="${escapeHTML(product.name)}">
+        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
@@ -290,10 +319,16 @@
             <span class="pill pill--deal">${escapeHTML(discount)}</span>
             <span class="${disabled ? "stock stock--out" : "stock"}">${disabled ? "Stok yok" : `${product.stock} stok`}</span>
           </div>
-          <h3><a href="${escapeHTML(productUrl(product))}">${escapeHTML(product.name)}</a></h3>
+          <div class="product-card__deal-row">
+            ${valueLabel ? `<span class="market-signal market-signal--value">${escapeHTML(valueLabel)}</span>` : ""}
+            ${couponLabel ? `<span class="market-signal market-signal--coupon">${escapeHTML(couponLabel)}</span>` : ""}
+            <span class="market-signal market-signal--delivery">${escapeHTML(deliveryLabel)}</span>
+          </div>
+          <h3><a href="${escapeHTML(productHref)}">${escapeHTML(product.name)}</a></h3>
           <p class="product-card__description">${escapeHTML(truncate(product.description, 92))}</p>
           <div class="product-card__signals">
             <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
+            <span class="product-social-proof">${escapeHTML(socialProof)}</span>
           </div>
           <div class="price-row">
             <span class="price-stack">
@@ -304,6 +339,7 @@
           </div>
           <div class="product-card__actions">
             <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
+            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}">İncele</a>
           </div>
         </div>
       </article>

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mağaza | AllonaHub</title>
   <meta name="description" content="AllonaHub aktif ürün kataloğu, kategori ve fiyat filtreleri.">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260621-shop-pro1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260621-shop-pro1">
 </head>
 <body>
   <div class="site-shell" data-page="shop">
@@ -21,8 +21,28 @@
         </div>
       </section>
 
+      <section class="container marketplace-trust-strip" aria-label="Allona Shop alışveriş avantajları">
+        <a class="marketplace-trust-item" href="kuponlar.html">
+          <strong>Kupon & HP</strong>
+          <span>Sepette indirim ve puan avantajları</span>
+        </a>
+        <a class="marketplace-trust-item" href="cart.html">
+          <strong>Güvenli Sepet</strong>
+          <span>Stok, kargo ve toplam tutar kontrolü</span>
+        </a>
+        <a class="marketplace-trust-item" href="../legal/teslimat-kargo.html">
+          <strong>Hızlı Teslimat</strong>
+          <span>Uygun ürünlerde hızlı kargo sinyali</span>
+        </a>
+        <a class="marketplace-trust-item" href="../company/destek.html">
+          <strong>Canlı Destek</strong>
+          <span>Sipariş ve iade süreçlerinde destek</span>
+        </a>
+      </section>
+
       <section class="container">
         <form class="filters" data-product-filters>
+          <input type="hidden" data-filter-quick value="">
           <div class="field">
             <label for="catalog-search">Arama</label>
             <input id="catalog-search" type="search" data-filter-search placeholder="Ürün, kategori veya marka">
@@ -30,6 +50,10 @@
           <div class="field">
             <label for="catalog-category">Kategori</label>
             <select id="catalog-category" data-filter-category><option value="">Tüm kategoriler</option></select>
+          </div>
+          <div class="field">
+            <label for="catalog-brand">Marka</label>
+            <select id="catalog-brand" data-filter-brand><option value="">Tüm markalar</option></select>
           </div>
           <div class="field">
             <label for="catalog-min">Min fiyat</label>
@@ -46,11 +70,20 @@
               <option value="best_selling">En çok satan</option>
               <option value="price_asc">Fiyat artan</option>
               <option value="price_desc">Fiyat azalan</option>
+              <option value="rating_desc">En yüksek puan</option>
+              <option value="discount_desc">En yüksek indirim</option>
             </select>
           </div>
           <div class="field field--actions">
             <label aria-hidden="true">&nbsp;</label>
             <button class="btn btn--light" type="button" data-filter-reset>Temizle</button>
+          </div>
+          <div class="catalog-chip-row" aria-label="Hızlı filtreler">
+            <button class="catalog-chip" type="button" data-quick-filter="deals" aria-pressed="false">İyi Fiyat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="coupon" aria-pressed="false">Kuponlu</button>
+            <button class="catalog-chip" type="button" data-quick-filter="fast" aria-pressed="false">Hızlı Teslimat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="free_shipping" aria-pressed="false">Ücretsiz Kargo</button>
+            <button class="catalog-chip" type="button" data-quick-filter="top" aria-pressed="false">Çok Satanlar</button>
           </div>
         </form>
         <div class="catalog-feedback" aria-live="polite" data-product-count></div>
@@ -107,12 +140,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-live5" defer></script>
-  <script src="../../js/core.js?v=20260620-shop-controls" defer></script>
+  <script src="../../js/core.js?v=20260621-shop-pro1" defer></script>
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
   <script src="../../js/cart.js?v=20260621-tx1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-cart-icon" defer></script>
-  <script src="../../js/shop-page.js?v=20260620-shop-controls" defer></script>
+  <script src="../../js/shop-page.js?v=20260621-shop-pro1" defer></script>
   <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
 </html>

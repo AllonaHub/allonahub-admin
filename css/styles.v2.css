@@ -456,6 +456,34 @@ img {
   font-size: 0.9rem;
 }
 
+.marketplace-trust-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: -4px auto 22px;
+}
+
+.marketplace-trust-item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: var(--shadow-soft);
+}
+
+.marketplace-trust-item strong {
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.marketplace-trust-item span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
 .section {
   margin-top: 42px;
 }
@@ -483,9 +511,42 @@ img {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 0.7fr) minmax(120px, 0.5fr) minmax(120px, 0.5fr) minmax(170px, 0.75fr) minmax(116px, 0.45fr);
+  grid-template-columns: minmax(220px, 1.4fr) repeat(6, minmax(128px, 0.72fr));
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.filters > input[type="hidden"] {
+  display: none;
+}
+
+.catalog-chip-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.catalog-chip {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--ink);
+  padding: 7px 12px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.catalog-chip:hover,
+.catalog-chip:focus-visible,
+.catalog-chip.is-active {
+  border-color: var(--sea-2);
+  background: var(--sea-2);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .field {
@@ -595,10 +656,52 @@ img {
 .product-card__meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 8px;
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.product-card__deal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+}
+
+.market-signal {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.market-signal--value {
+  border-color: rgba(245, 158, 11, 0.32);
+  background: #fff7e6;
+  color: #b45309;
+}
+
+.market-signal--coupon {
+  border-color: rgba(0, 124, 145, 0.28);
+  background: #e8fbff;
+  color: var(--sea-dark);
+}
+
+.market-signal--delivery {
+  border-color: rgba(22, 163, 74, 0.28);
+  background: #ebfdf2;
+  color: #15803d;
 }
 
 .product-card h3 {
@@ -643,8 +746,15 @@ img {
 
 .product-card__actions {
   display: grid;
-  grid-template-columns: 1fr 42px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  align-items: center;
+}
+
+.product-card__detail-link {
+  min-height: 42px;
+  padding-inline: 12px;
+  white-space: nowrap;
 }
 
 .pill {
@@ -730,6 +840,49 @@ img {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.08;
+}
+
+.product-detail__topline,
+.product-detail__signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.product-social-proof {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.product-detail__assurance {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+
+.product-detail__assurance span,
+.product-detail__seller {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.product-detail__assurance strong,
+.product-detail__seller strong {
+  color: var(--ink);
+}
+
+.product-detail__seller {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
 }
 
 .quantity-control {
@@ -1314,6 +1467,7 @@ body[data-theme="white"] .payment-logo--iyzico .iyzico-logo--white {
   }
 
   .trust-strip,
+  .marketplace-trust-strip,
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1586,6 +1740,19 @@ body[data-theme="white"] .payment-logo--iyzico .iyzico-logo--white {
 
   .trust-item {
     padding: 14px;
+  }
+
+  .marketplace-trust-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-chip-row {
+    gap: 6px;
+  }
+
+  .catalog-chip {
+    flex: 1 1 calc(50% - 6px);
+    padding-inline: 10px;
   }
 
   .product-card__actions {

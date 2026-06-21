@@ -675,6 +675,7 @@ body[data-theme] .partner-cta,
 body[data-theme] .info,
 body[data-theme] .sticky-cart,
 body[data-theme] .product-card,
+body[data-theme] .marketplace-trust-item,
 body[data-theme] .summary-card,
 body[data-theme] .auth-card,
 body[data-theme] .data-card,
@@ -731,6 +732,10 @@ body[data-theme] .trust-item span,
 body[data-theme] .field label,
 body[data-theme] .product-card__meta,
 body[data-theme] .product-card__description,
+body[data-theme] .product-social-proof,
+body[data-theme] .marketplace-trust-item span,
+body[data-theme] .product-detail__assurance span,
+body[data-theme] .product-detail__seller,
 body[data-theme] .stock,
 body[data-theme] .promo p,
 body[data-theme] .restaurant p,
@@ -1496,6 +1501,56 @@ body[data-theme] .pill--deal {
   color: var(--ah-bg);
   border-color: color-mix(in srgb, var(--ah-accent-soft) 42%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-accent-soft) 88%, #ffffff);
+}
+
+body[data-theme] .marketplace-trust-item strong,
+body[data-theme] .product-detail__assurance strong,
+body[data-theme] .product-detail__seller strong {
+  color: var(--ah-ink);
+}
+
+body[data-theme] .catalog-chip {
+  border-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-bg-strong) 92%, transparent);
+  color: var(--ah-ink);
+}
+
+body[data-theme] .catalog-chip:hover,
+body[data-theme] .catalog-chip:focus-visible,
+body[data-theme] .catalog-chip.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 72%, var(--ah-line));
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
+  color: var(--ah-bg);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--ah-primary) 22%, transparent);
+}
+
+body[data-theme] .market-signal {
+  border-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 10%, transparent);
+  color: var(--ah-primary);
+}
+
+body[data-theme] .market-signal--value {
+  border-color: color-mix(in srgb, #f59e0b 38%, var(--ah-line));
+  background: color-mix(in srgb, #f59e0b 15%, var(--ah-card));
+  color: #fbbf24;
+}
+
+body[data-theme] .market-signal--coupon {
+  border-color: color-mix(in srgb, var(--ah-primary) 32%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 15%, var(--ah-card));
+  color: var(--ah-primary);
+}
+
+body[data-theme] .market-signal--delivery {
+  border-color: color-mix(in srgb, #22c55e 34%, var(--ah-line));
+  background: color-mix(in srgb, #22c55e 14%, var(--ah-card));
+  color: #34d399;
+}
+
+body[data-theme] .product-detail__assurance,
+body[data-theme] .product-detail__seller {
+  border-color: var(--ah-line);
 }
 
 .product-rating {
