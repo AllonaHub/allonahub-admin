@@ -52,7 +52,8 @@ html.is-standalone body{min-height:100svh}
 .hero-clock{margin:18px 0 25px;font-size:36px;letter-spacing:7px;color:#00e5ff;text-shadow:0 0 18px #00e5ff}
 .hero-location{display:flex;gap:14px;align-items:center;font-size:18px;color:white}
 .hero-location p{margin:4px 0 0;color:rgba(255,255,255,.7)}
-.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f;transition:background .25s ease,box-shadow .25s ease}
+.pin-dot.is-location-active{background:#00ff66;box-shadow:0 0 18px #00ff66,0 0 34px rgba(0,255,102,.45)}
 .time-visual{width:88px;height:88px;border-radius:50%;position:relative;filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));animation:floatPulse 3s ease-in-out infinite}
 .sun-visual{--time-glow:#ffd700;background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%)}
 .day-visual{--time-glow:#00e5ff;background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%)}

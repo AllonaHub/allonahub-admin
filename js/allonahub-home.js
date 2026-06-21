@@ -18,31 +18,50 @@ else{greeting.textContent="İyi Geceler";visual.classList.add("night-visual")}
 updateHeroTime();
 setInterval(updateHeroTime,1000);
 
-async function setLocationByBrowser(){
+function updateLocationStatus(active,city,country){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
+const pinEl=document.getElementById("heroLocationStatus")||document.querySelector(".pin-dot");
+if(cityEl){cityEl.textContent=city||"Konum belirlenemedi"}
+if(countryEl){countryEl.textContent=country||"İzin verilmedi"}
+if(pinEl){
+pinEl.classList.toggle("is-location-active",Boolean(active));
+const label=active?"Konum izni açık":"Konum izni kapalı";
+pinEl["__allonaSource_aria-label"]=label;
+pinEl.__allonaSource_title=label;
+pinEl.setAttribute("aria-label",label);
+pinEl.setAttribute("title",label);
+}
+}
+
+async function setLocationByBrowser(){
+updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
 if(!navigator.geolocation){return}
 if(!navigator.permissions||!navigator.permissions.query){return}
+let permission;
 try{
-const permission=await navigator.permissions.query({name:"geolocation"});
-if(permission.state!=="granted"){return}
+permission=await navigator.permissions.query({name:"geolocation"});
 }catch(e){return}
+if(permission&&"onchange" in permission){
+permission.onchange=function(){setLocationByBrowser()};
+}
+if(permission.state!=="granted"){return}
 navigator.geolocation.getCurrentPosition(async function(pos){
 const lat=pos.coords.latitude;
 const lon=pos.coords.longitude;
+let city="Konum bulundu";
+let country="Konum izni açık";
 try{
 const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=tr`);
 const data=await res.json();
 const address=data.address||{};
-cityEl.textContent=address.city||address.town||address.district||address.county||address.state||"Konum";
-countryEl.textContent=address.country||"Türkiye";
+city=address.city||address.town||address.district||address.county||address.state||city;
+country=address.country||country;
 }catch(e){
-cityEl.textContent="İstanbul";
-countryEl.textContent="Türkiye";
 }
+updateLocationStatus(true,city,country);
 },function(){
-cityEl.textContent="İstanbul";
-countryEl.textContent="Türkiye";
+updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
 },{
 enableHighAccuracy:false,
 maximumAge:600000,

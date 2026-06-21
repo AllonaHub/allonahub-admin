@@ -13,7 +13,7 @@
 
 <link rel="manifest" href="manifest.json?v=20260621-pwa2">
 <link rel="apple-touch-icon" href="images/brand/allonahub-icon-180.png">
-<link rel="stylesheet" href="css/allonahub-home.css?v=20260621-modimg1">
+<link rel="stylesheet" href="css/allonahub-home.css?v=20260621-location1">
 <link rel="stylesheet" href="css/platform.css?v=20260621-mobile1">
 </head>
 
@@ -68,10 +68,10 @@
 <div id="heroGreeting" class="hero-greeting">Günaydın</div>
 <div id="heroClock" class="hero-clock">00:00:00</div>
 <div class="hero-location">
-<span class="pin-dot"></span>
+<span class="pin-dot" id="heroLocationStatus" aria-label="Konum izni kapalı" title="Konum izni kapalı" data-no-translate></span>
 <div>
-<strong id="heroCity">İstanbul</strong>
-<p id="heroCountry">Türkiye</p>
+<strong id="heroCity">Konum belirlenemedi</strong>
+<p id="heroCountry">İzin verilmedi</p>
 </div>
 </div>
 </div>
@@ -243,8 +243,8 @@
 <script src="js/auth.js?v=20260621-homeauth1" defer></script>
 <script src="js/layout.v3.js?v=20260620-account2" defer></script>
 <script src="js/platform.js?v=20260621-homeauth1" defer></script>
-<script src="js/allonahub-home.js?v=20260621-homeauth1" defer></script>
-<script src="js/pwa-install.js?v=20260621-modimg1" defer></script>
+<script src="js/allonahub-home.js?v=20260621-location1" defer></script>
+<script src="js/pwa-install.js?v=20260621-location1" defer></script>
 <script src="js/assistant-widget.js?v=20260621-rules1" defer data-channel="webchat"></script>
 </body>
 </html>
