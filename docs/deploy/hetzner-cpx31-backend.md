@@ -210,6 +210,24 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 - Cache: `api.allonahub.com` için bypass
 - Minimum TLS: 1.2
 
+## Kurumsal E-posta Yönlendirme
+
+`allonahub.com` alan adındaki kurumsal e-posta adreslerini Hetzner sunucusunda almak ve `allonahub@gmail.com` adresine yönlendirmek için ayrı Postfix/PostSRSd kurulum paketi vardır:
+
+```bash
+cd /opt/allonahub
+git pull --ff-only origin main
+sudo bash deploy/hetzner/setup-mail-forwarding.sh
+bash deploy/hetzner/check-mail-forwarding.sh
+```
+
+Detaylı DNS, port ve doğrulama adımları:
+
+```text
+docs/deploy/hetzner-email-forwarding.md
+deploy/hetzner/mail-forwarding/dns-records.txt
+```
+
 ## Güncelleme
 
 ```bash

@@ -72,6 +72,28 @@ nginx -t
 systemctl reload nginx
 ```
 
+## 3.2 Hetzner Kurumsal E-posta Yönlendirme
+
+`allonahub.com` için kurumsal inbound e-posta adresleri Hetzner sunucusunda Postfix virtual alias forwarding ile hazırlanır. Tüm gelen postalar `allonahub@gmail.com` adresine yönlendirilir.
+
+Detaylı kurulum ve DNS kayıtları:
+
+```text
+docs/deploy/hetzner-email-forwarding.md
+deploy/hetzner/mail-forwarding/dns-records.txt
+```
+
+Ana kurulum komutları:
+
+```bash
+cd /opt/allonahub
+git pull --ff-only origin main
+sudo bash deploy/hetzner/setup-mail-forwarding.sh
+bash deploy/hetzner/check-mail-forwarding.sh
+```
+
+Cloudflare/Domain DNS tarafında `mail.allonahub.com` A kaydı ve `allonahub.com` MX kaydı tanımlanmadan canlı teslimat tamamlanmış sayılmaz. Hetzner Cloud tarafında outbound TCP 25 kapalıysa Gmail'e forward teslimatı için Hetzner port açma talebi veya harici SMTP/mail relay gerekir.
+
 ## 4. Cloudflare
 
 - SSL: Full Strict
