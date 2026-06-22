@@ -96,6 +96,11 @@
     if (core.toast) core.toast(message, type);
   }
 
+  function priceLabel(value) {
+    const amount = Number(value || 0);
+    return Number.isFinite(amount) && amount > 0 ? money.format(amount) : "";
+  }
+
   function setStatus(message, type) {
     if (!statusNode) return;
     statusNode.textContent = message || "";
@@ -197,6 +202,8 @@
         eta: product.eta,
         hp: product.hp,
         min: product.min,
+        price: Number(product.price || 0),
+        description: product.description || `${product.cuisine} kategorisinde öne çıkan partner menüsü.`,
         deal: product.deal,
         free: Number(product.price || 0) >= 350,
         open: true,
@@ -208,6 +215,8 @@
       current.eta = Math.min(current.eta, product.eta);
       current.hp = Math.max(current.hp, product.hp);
       current.min = Math.min(current.min, product.min);
+      current.price = current.price ? Math.min(current.price, Number(product.price || current.price)) : Number(product.price || 0);
+      if (!current.description && product.description) current.description = product.description;
       groups.set(key, current);
     });
     return Array.from(groups.values());
@@ -220,6 +229,7 @@
       subtitle: product.seller_name || product.category || "Allona Yemek Partneri",
       campaign_text: product.deal || `${money.format(product.price)} / hızlı sepet`,
       description: product.description || "Partner restoran kampanyasını Allona Yemek içinde keşfet.",
+      price_label: priceLabel(product.price),
       image_url: product.image_url,
       cta_label: "Menüyü İncele",
       link_url: "#food-restaurants",
@@ -234,6 +244,7 @@
       subtitle: ad.subtitle || product?.seller_name || product?.category || "Günlük Partner Reklamı",
       campaign_text: ad.campaign_text || product?.deal || "Bugüne özel görünürlük",
       description: ad.description || product?.description || "Partner kampanyasını Allona Yemek üst alanında keşfedin.",
+      price_label: ad.price_label || priceLabel(ad.price || product?.price),
       image_url: ad.image_url || product?.image_url || "../../images/modules/yemek-light-v5.jpg",
       cta_label: ad.cta_label || "İncele",
       link_url: ad.link_url || "#food-restaurants",
@@ -313,7 +324,10 @@
           <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${escape(ad.subtitle)}</p>
           <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${escape(ad.title)}</h${index === 0 ? "1" : "2"}>
           <p>${escape(ad.description)}</p>
-          <strong>${escape(ad.campaign_text)}</strong>
+          <div class="food-promo-details">
+            ${ad.price_label ? `<span class="food-promo-price">${escape(ad.price_label)}</span>` : ""}
+            <span>${escape(ad.campaign_text)}</span>
+          </div>
           <a class="food-promo-btn" href="${escape(safeHref(ad.link_url))}">${escape(ad.cta_label || "İncele")}</a>
         </div>
       </article>
@@ -340,7 +354,7 @@
 
     function restart() {
       window.clearInterval(slider.__foodHeroTimer);
-      slider.__foodHeroTimer = window.setInterval(() => show(index + 1), 3600);
+      slider.__foodHeroTimer = window.setInterval(() => show(index + 1), 3000);
     }
 
     dotsWrap.innerHTML = "";
@@ -396,7 +410,8 @@
         </div>
         <div>
           <h3>${escape(item.name)}</h3>
-          <p>${escape((item.tags || []).join(" • "))}</p>
+          <p class="food-card-desc">${escape(item.description || (item.tags || []).join(" • "))}</p>
+          <small class="food-card-tags">${escape((item.tags || []).join(" • "))}</small>
         </div>
         <div class="food-meta">
           <span><i class="fa-solid fa-clock" aria-hidden="true"></i>${escape(item.eta)} dk</span>
@@ -404,7 +419,7 @@
           <span><i class="fa-solid fa-coins" aria-hidden="true"></i>+${escape(item.hp)} HP</span>
         </div>
         <div class="food-card-footer">
-          <strong>${escape(state.mode === "pickup" ? "Gel-Al hazır" : "Teslimat açık")}</strong>
+          <strong>${escape(item.price ? `${money.format(item.price)} başlangıç` : (state.mode === "pickup" ? "Gel-Al hazır" : "Teslimat açık"))}</strong>
           <button class="food-add" type="button" data-add-suggested="${escape(item.id)}"><i class="fa-solid fa-plus" aria-hidden="true"></i>Menü Ekle</button>
         </div>
       </article>
