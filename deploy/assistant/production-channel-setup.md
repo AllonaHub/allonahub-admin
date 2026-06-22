@@ -43,6 +43,15 @@ Check production status:
 bash deploy/assistant/assistant-production-status.sh
 ```
 
+Run Telegram-specific diagnostics:
+
+```bash
+bash deploy/assistant/telegram-diagnostics.sh
+```
+
+The diagnostics command prints the real bot link. Send the test message to that
+bot, not to BotFather.
+
 ## Meta Dashboard Values
 
 Use this callback URL:
