@@ -576,6 +576,15 @@ function instagramIncomingText(item) {
     || "";
 }
 
+function messengerIncomingText(item) {
+  if (item.message?.is_echo) return "";
+  return item.message?.text
+    || item.postback?.payload
+    || item.postback?.title
+    || item.message?.quick_reply?.payload
+    || "";
+}
+
 function parseInstagramEvents(payload) {
   const events = [];
   for (const entry of payload.entry || []) {
@@ -604,10 +613,41 @@ function parseInstagramEvents(payload) {
   return events;
 }
 
+function parseFacebookEvents(payload) {
+  const events = [];
+  for (const entry of payload.entry || []) {
+    const pageId = String(entry.id || config.assistant.metaFacebookPageId || "");
+    for (const item of entry.messaging || []) {
+      const senderId = String(item.sender?.id || "");
+      const text = cleanAssistantText(messengerIncomingText(item), config.assistant.maxMessageChars);
+      if (!senderId || !text) continue;
+
+      events.push({
+        channel: "facebook",
+        text,
+        conversationId: `fb-${pageId || "page"}-${senderId}`,
+        replyTo: senderId,
+        pageId,
+        metadata: {
+          meta_object: payload.object || "",
+          entry_id: entry.id || null,
+          facebook_sender_id: senderId,
+          facebook_recipient_id: item.recipient?.id || null,
+          message_id: item.message?.mid || null,
+          timestamp: item.timestamp || entry.time || null,
+          postback_payload: item.postback?.payload || null
+        }
+      });
+    }
+  }
+  return events;
+}
+
 function metaEvents(payload) {
   if (payload.object === "whatsapp_business_account") return parseWhatsappEvents(payload);
   if (payload.object === "instagram") return parseInstagramEvents(payload);
-  return [...parseWhatsappEvents(payload), ...parseInstagramEvents(payload)];
+  if (payload.object === "page") return parseFacebookEvents(payload);
+  return [...parseWhatsappEvents(payload), ...parseInstagramEvents(payload), ...parseFacebookEvents(payload)];
 }
 
 function actionLinks(actions = []) {
@@ -665,6 +705,27 @@ async function sendInstagramReply(event, text, request, actions = []) {
       },
       message: {
         text: replyTextWithActionLinks(text, actions, 1000)
+      }
+    }
+  });
+}
+
+async function sendFacebookReply(event, text, request, actions = []) {
+  if (!event.replyTo) return false;
+  const endpointId = event.pageId || config.assistant.metaFacebookPageId || "me";
+
+  return postMetaGraph({
+    endpoint: `${endpointId}/messages`,
+    token: config.assistant.metaFacebookPageAccessToken,
+    platform: "facebook",
+    request,
+    body: {
+      recipient: {
+        id: event.replyTo
+      },
+      messaging_type: "RESPONSE",
+      message: {
+        text: replyTextWithActionLinks(text, actions, 2000)
       }
     }
   });
@@ -1035,11 +1096,16 @@ export function registerAssistantRoutes(app) {
             }
           });
 
-          const delivered = result.suppressReply
-            ? false
-            : event.channel === "whatsapp"
-              ? await sendWhatsappReply(event, result.message, request, result.actions)
-              : await sendInstagramReply(event, result.message, request, result.actions);
+          let delivered = false;
+          if (!result.suppressReply) {
+            if (event.channel === "whatsapp") {
+              delivered = await sendWhatsappReply(event, result.message, request, result.actions);
+            } else if (event.channel === "instagram") {
+              delivered = await sendInstagramReply(event, result.message, request, result.actions);
+            } else if (event.channel === "facebook") {
+              delivered = await sendFacebookReply(event, result.message, request, result.actions);
+            }
+          }
 
           results.push({
             ok: true,

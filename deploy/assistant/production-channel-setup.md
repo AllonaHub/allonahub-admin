@@ -92,12 +92,17 @@ Instagram requires:
 - `ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN`
 - `ASSISTANT_META_INSTAGRAM_GRAPH_ID`
 
+Facebook Messenger requires:
+
+- `ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN`
+- `ASSISTANT_META_FACEBOOK_PAGE_ID`
+
 ## Supabase Log Check
 
 ```sql
 select id, channel, sender_type, message, metadata, created_at
 from public.conversation_logs
-where channel in ('webchat', 'telegram', 'whatsapp', 'instagram')
+where channel in ('webchat', 'telegram', 'whatsapp', 'instagram', 'facebook')
 order by created_at desc
 limit 30;
 ```

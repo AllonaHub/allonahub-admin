@@ -103,6 +103,13 @@ export const config = {
       "META_ACCESS_TOKEN"
     ),
     metaInstagramGraphId: readEnv("ASSISTANT_META_INSTAGRAM_GRAPH_ID", { required: false, defaultValue: "me" }),
+    metaFacebookPageAccessToken: readOptionalSecret(
+      "ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN",
+      "FACEBOOK_PAGE_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaFacebookPageId: readEnv("ASSISTANT_META_FACEBOOK_PAGE_ID", { required: false, defaultValue: "me" }),
     metaGraphBaseUrl: readEnv("ASSISTANT_META_GRAPH_BASE_URL", { required: false, defaultValue: "https://graph.facebook.com" }).replace(/\/$/, ""),
     metaGraphVersion: readEnv("ASSISTANT_META_GRAPH_VERSION", { required: false, defaultValue: "v23.0" }).replace(/^\/+|\/+$/g, ""),
     metaSendTimeoutMs: readNumber("ASSISTANT_META_SEND_TIMEOUT_MS", 10000)

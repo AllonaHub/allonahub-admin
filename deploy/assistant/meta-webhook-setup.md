@@ -34,6 +34,15 @@ ASSISTANT_META_INSTAGRAM_GRAPH_ID=me
 
 Connect an Instagram Professional account to a Facebook Page, install the app for the account, and subscribe the webhook to Instagram messaging events.
 
+## Facebook Messenger
+
+```env
+ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN=replace-with-facebook-page-access-token
+ASSISTANT_META_FACEBOOK_PAGE_ID=me
+```
+
+Connect the Facebook Page to the Meta Developer App, add the Messenger product, and subscribe the webhook to page messaging events.
+
 ## Smoke Test
 
 Webhook verification:
@@ -50,4 +59,12 @@ cd /opt/allonahub
 META_WEBHOOK_POST_TEST=true API_URL=https://api.allonahub.com sh deploy/assistant/smoke-test-meta-webhook.sh
 ```
 
-The signed POST test sends a synthetic WhatsApp text event into the assistant pipeline. If no WhatsApp access token is configured, the webhook still processes and logs the assistant response, but `delivered` remains false.
+The signed POST test sends a synthetic WhatsApp text event into the assistant pipeline by default. To test other Meta channels:
+
+```bash
+cd /opt/allonahub
+META_WEBHOOK_POST_TEST=true META_WEBHOOK_TEST_CHANNEL=instagram API_URL=https://api.allonahub.com sh deploy/assistant/smoke-test-meta-webhook.sh
+META_WEBHOOK_POST_TEST=true META_WEBHOOK_TEST_CHANNEL=facebook API_URL=https://api.allonahub.com sh deploy/assistant/smoke-test-meta-webhook.sh
+```
+
+If the relevant access token is not configured, the webhook still processes and logs the assistant response, but `delivered` remains false.

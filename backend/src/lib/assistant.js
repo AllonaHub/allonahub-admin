@@ -7,7 +7,8 @@ export const ASSISTANT_CHANNELS = [
   "partner_panel",
   "admin_panel",
   "whatsapp",
-  "instagram"
+  "instagram",
+  "facebook"
 ];
 
 export const ASSISTANT_SENDER_TYPES = [

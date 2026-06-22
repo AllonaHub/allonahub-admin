@@ -34,6 +34,7 @@ export async function buildApp() {
         "ASSISTANT_META_ACCESS_TOKEN",
         "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
         "ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN",
+        "ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN",
         "ASSISTANT_META_APP_SECRET",
         "ASSISTANT_META_VERIFY_TOKEN",
         "CRON_SECRET",
@@ -46,6 +47,7 @@ export async function buildApp() {
         "config.assistant.metaAccessToken",
         "config.assistant.metaWhatsappAccessToken",
         "config.assistant.metaInstagramAccessToken",
+        "config.assistant.metaFacebookPageAccessToken",
         "config.assistant.metaAppSecret",
         "config.assistant.metaVerifyToken",
         "config.cronSecret",
@@ -58,6 +60,7 @@ export async function buildApp() {
         "assistant.metaAccessToken",
         "assistant.metaWhatsappAccessToken",
         "assistant.metaInstagramAccessToken",
+        "assistant.metaFacebookPageAccessToken",
         "assistant.metaAppSecret",
         "assistant.metaVerifyToken",
         "cronSecret"

@@ -135,11 +135,19 @@ read_value ASSISTANT_META_APP_SECRET "Meta app secret"
 read_value ASSISTANT_META_WHATSAPP_ACCESS_TOKEN "WhatsApp Cloud API access token"
 read_value ASSISTANT_META_WHATSAPP_PHONE_NUMBER_ID "WhatsApp phone number id"
 read_value ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN "Instagram messaging access token"
+read_value ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN "Facebook Messenger page access token"
 
 current_instagram_graph_id="$(get_env_value ASSISTANT_META_INSTAGRAM_GRAPH_ID)"
 if is_placeholder "$current_instagram_graph_id"; then
   set_env_value ASSISTANT_META_INSTAGRAM_GRAPH_ID me
 fi
+
+current_facebook_page_id="$(get_env_value ASSISTANT_META_FACEBOOK_PAGE_ID)"
+if is_placeholder "$current_facebook_page_id"; then
+  set_env_value ASSISTANT_META_FACEBOOK_PAGE_ID me
+fi
+
+read_value ASSISTANT_META_FACEBOOK_PAGE_ID "Facebook Page id or me"
 
 echo
 echo "Assistant channel environment is ready at:"
