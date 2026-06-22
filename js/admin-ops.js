@@ -436,6 +436,8 @@
     const attempts = social.attempts || [];
     const rules = social.rules || [];
     const plans = social.plans || [];
+    const connections = social.connections || {};
+    const vault = social.vault || {};
     const dispatch = social.dispatch || {};
     const postsByDraft = posts.reduce((acc, post) => {
       acc[post.draft_id] = acc[post.draft_id] || [];
@@ -452,7 +454,8 @@
       ["Planlı post", posts.filter((item) => ["approved", "scheduled", "queued"].includes(item.status)).length],
       ["Yayınlanan", posts.filter((item) => item.status === "published").length],
       ["Dry run", dispatch.dry_run ? "Açık" : "Kapalı"],
-      ["Webhook", dispatch.webhook_configured ? "Hazır" : "Bekliyor"]
+      ["Webhook", dispatch.webhook_configured ? "Hazır" : "Bekliyor"],
+      ["Vault", vault.enabled ? "Aktif" : "Key bekliyor"]
     ];
     const metricGrid = `<div class="admin-metrics">${metrics.map(([label, value]) => `
       <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>
@@ -473,6 +476,19 @@
         <td>${escape(rule.enforcement_layer || "-")}</td>
       </tr>
     `);
+    const connectionRows = Object.values(connections).map((connection) => {
+      const missing = connection.missing_required || [];
+      const secretText = (connection.secrets || []).map((secret) => (
+        `${secret.present ? "OK" : "Eksik"} ${secret.key}${secret.required ? "" : " (opsiyonel)"}`
+      )).join(" / ");
+      return `
+        <tr>
+          <td>${titleCell(connection.platform, secretText)}</td>
+          <td>${badge(connection.ready ? "ready" : "missing", connection.ready ? "green" : "orange")}</td>
+          <td>${escape(missing.length ? missing.join(", ") : "-")}</td>
+        </tr>
+      `;
+    });
     const draftRows = drafts.map((draft) => {
       const draftPosts = postsByDraft[draft.id] || [];
       const platformText = draftPosts.map((post) => post.platform).join(", ") || "-";
@@ -623,6 +639,27 @@
         </div>
       </form>
     `;
+    const secretForm = `
+      <form data-social-secret-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialSecretPlatform">Platform</label>
+            <select id="socialSecretPlatform" name="platform">${Object.keys(connections).map((item) => `<option value="${escape(item)}">${escape(item)}</option>`).join("")}</select>
+          </div>
+          <div class="admin-field">
+            <label for="socialSecretKey">Secret anahtarı</label>
+            <input id="socialSecretKey" name="secret_key" maxlength="90" placeholder="ACCESS_TOKEN" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialSecretValue">Secret değeri</label>
+            <input id="socialSecretValue" name="secret_value" type="password" maxlength="16000" autocomplete="off" required>
+          </div>
+        </div>
+        <div class="admin-form-actions">
+          <button class="admin-btn admin-btn--gold" type="submit" ${vault.enabled ? "" : "disabled"}>Secret Kaydet / Döndür</button>
+        </div>
+      </form>
+    `;
     const planForm = `
       <form data-social-plan-form>
         <div class="admin-grid-3">
@@ -655,8 +692,9 @@
       </div>`,
       `<div class="admin-split">
         ${section("Hesap Envanteri", "", accountForm + table(["Hesap", "Platform", "Connector", "Bağlantı", "URL"], accountRows, "Hesap bulunamadı."))}
-        ${section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı."))}
+        ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu"], connectionRows, "Bağlantı tanımı bulunamadı."))}
       </div>`,
+      section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı.")),
       section("Taslaklar", "", table(["İçerik", "Durum", "Platform", "Tarih", "İşlem"], draftRows, "Taslak bulunamadı.")),
       section("Platform Kuyruğu", "", table(["Platform", "Caption", "Durum", "Plan", "Son Deneme", "İşlem"], postRows, "Platform postu bulunamadı.")),
       section("Günlük Planlar", "", table(["Tarih", "Hedef", "Durum", "Platform"], planRows, "Günlük plan bulunamadı."))
@@ -1129,6 +1167,21 @@
     await loadSocialMedia();
   }
 
+  async function saveSocialSecret(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    await api("/v1/admin/ops/social-media/secrets", {
+      method: "POST",
+      body: {
+        platform: raw.platform,
+        secret_key: String(raw.secret_key || "").trim().toUpperCase(),
+        secret_value: raw.secret_value
+      }
+    });
+    showToast("Secret güvenli şekilde kaydedildi.");
+    form.reset();
+    await loadSocialMedia();
+  }
+
   async function submitSocialDraft(draftId) {
     await api(`/v1/admin/ops/social-media/drafts/${encodeURIComponent(draftId)}/submit`, { method: "POST" });
     showToast("Taslak onaya gönderildi.");
@@ -1284,6 +1337,11 @@
       if (socialPlanForm) {
         event.preventDefault();
         await saveSocialPlan(socialPlanForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialSecretForm = event.target.closest("[data-social-secret-form]");
+      if (socialSecretForm) {
+        event.preventDefault();
+        await saveSocialSecret(socialSecretForm).catch((error) => showToast(error.message, "error"));
       }
     });
 

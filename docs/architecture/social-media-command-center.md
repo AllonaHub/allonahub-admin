@@ -37,12 +37,15 @@ SOCIAL_MEDIA_DISPATCH_ENABLED=false
 SOCIAL_MEDIA_DRY_RUN=true
 SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL=
 SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET=
+SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY=
 SOCIAL_MEDIA_SEND_TIMEOUT_MS=12000
 SOCIAL_MEDIA_MAX_DISPATCH_BATCH=20
 SOCIAL_MEDIA_DEFAULT_TIMEZONE=Europe/Istanbul
 ```
 
-Gercek yayin icin once sosyal platform OAuth/token islemleri server veya vault tarafinda tamamlanir. Sonra:
+`SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY` Admin Panel uzerinden girilen platform secretlerini server-side AES-256-GCM ile sifrelemek icindir. Bu deger frontend'e yazilmaz ve panelde geri gosterilmez.
+
+Gercek yayin icin once sosyal platform OAuth/token islemleri Admin Panel > Sosyal Medya > Baglanti Secretleri alanindan veya server/vault tarafindan tamamlanir. Sonra:
 
 ```bash
 SOCIAL_MEDIA_DISPATCH_ENABLED=true
@@ -102,3 +105,41 @@ curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-dispatch \
 ```
 
 Baslangicta `SOCIAL_MEDIA_DRY_RUN=true` kalmali. Platform hesaplari ve dispatcher canli dogrulandiktan sonra dry-run kapatilmalidir.
+
+## Self-Service Secret Girisi
+
+Bu modelde gelistiriciye sunucu, IP, token veya sifre verilmez.
+
+1. Kod GitHub'a pushlanir ve hosting/Coolify/Hetzner tarafinda deploy edilir.
+2. Ortam degiskenlerine sadece `SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY` ve gerekiyorsa `CRON_SECRET` girilir.
+3. Admin Panel > Sosyal Medya ekraninda `Baglanti Secretleri` tablosu eksik anahtarlari gosterir.
+4. Yetkili admin platformu, secret anahtarini ve degeri girer.
+5. Backend secreti sifreler, `social_media_connector_secrets` tablosuna kaydeder ve degeri response'ta dondurmez.
+6. Panel bundan sonra yalniz `ready`, `missing`, `active` gibi durumlari gosterir.
+
+Zorunlu secret anahtarlari panelde listelenir. Ornekler:
+
+- Instagram: `IG_USER_ID`, `ACCESS_TOKEN`
+- Facebook: `PAGE_ID`, `PAGE_ACCESS_TOKEN`
+- Threads: `THREADS_USER_ID`, `ACCESS_TOKEN`
+- X: `ACCESS_TOKEN`
+- LinkedIn: `ORGANIZATION_URN`, `ACCESS_TOKEN`
+- TikTok: `OPEN_ID`, `ACCESS_TOKEN`
+- YouTube: `CHANNEL_ID`, `CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`
+- Pinterest: `BOARD_ID`, `ACCESS_TOKEN`
+
+## Native Publish Kapsami
+
+Backend `connector_mode = native_api` olan hesaplarda server-side secret vault'tan gerekli degerleri okur ve yayin denemesi yapar.
+
+- X: text post desteklenir.
+- Facebook Page: feed post ve opsiyonel link desteklenir.
+- Threads: text container + publish akisi desteklenir.
+- Instagram: `platform_payload.image_url` varsa image publish desteklenir.
+- LinkedIn: organization post desteklenir.
+- Pinterest: `platform_payload.image_url` varsa pin desteklenir.
+- Telegram: channel/chat mesaj gonderimi desteklenir.
+- TikTok ve YouTube: video upload/creator audit akislari gerektirdigi icin dedicated adapter ile baglanmalidir.
+- WhatsApp Business ve Google Business: platform policy ve template/location akislari nedeniyle dedicated adapter ile baglanmalidir.
+
+Dedicated adapter gereken platformlarda Admin Panel taslak/onay/kuyruk ayni kalir; sadece dispatcher tarafinda ilgili platform adapter'i canliya alinir.

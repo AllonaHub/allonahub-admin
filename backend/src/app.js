@@ -24,7 +24,9 @@ export async function buildApp() {
       level: config.logLevel,
       redact: [
         "req.headers.authorization",
+        "req.body.secret_value",
         "headers.authorization",
+        "body.secret_value",
         "SUPABASE_SERVICE_ROLE_KEY",
         "IYZICO_SECRET_KEY",
         "IYZICO_API_KEY",
@@ -38,6 +40,7 @@ export async function buildApp() {
         "ASSISTANT_META_APP_SECRET",
         "ASSISTANT_META_VERIFY_TOKEN",
         "SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET",
+        "SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.iyzico.secretKey",
@@ -52,6 +55,7 @@ export async function buildApp() {
         "config.assistant.metaAppSecret",
         "config.assistant.metaVerifyToken",
         "config.socialMedia.dispatchWebhookSecret",
+        "config.socialMedia.secretEncryptionKey",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "iyzico.secretKey",
@@ -66,6 +70,7 @@ export async function buildApp() {
         "assistant.metaAppSecret",
         "assistant.metaVerifyToken",
         "socialMedia.dispatchWebhookSecret",
+        "socialMedia.secretEncryptionKey",
         "cronSecret"
       ]
     },

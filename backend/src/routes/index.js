@@ -3,6 +3,7 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus } from "../lib/social-media-dispatch.js";
+import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
   authContext,
@@ -295,6 +296,14 @@ const socialMediaDailyPlanSchema = z.object({
   target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest"]),
   draft_ids: z.array(uuidSchema).max(40).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({})
+});
+
+const socialMediaSecretSchema = z.object({
+  account_id: uuidSchema.optional().nullable(),
+  platform: socialMediaPlatformSchema,
+  secret_key: z.string().trim().min(2).max(90).regex(/^[A-Z0-9_:-]+$/),
+  secret_value: z.string().min(6).max(16000),
+  expires_at: z.string().datetime().optional().nullable()
 });
 
 const adminAuditLogQuerySchema = z.object({
@@ -739,6 +748,129 @@ function normalizeHashtags(tags) {
   return [...new Set((tags || []).map((tag) => String(tag || "").trim()).filter(Boolean))].slice(0, 20);
 }
 
+const SOCIAL_CONNECTOR_SECRET_DEFINITIONS = Object.freeze({
+  instagram: [
+    { key: "IG_USER_ID", label: "Instagram Business/Creator ID", required: true },
+    { key: "ACCESS_TOKEN", label: "Instagram content publishing access token", required: true }
+  ],
+  facebook: [
+    { key: "PAGE_ID", label: "Facebook Page ID", required: true },
+    { key: "PAGE_ACCESS_TOKEN", label: "Facebook Page access token", required: true }
+  ],
+  threads: [
+    { key: "THREADS_USER_ID", label: "Threads user ID", required: true },
+    { key: "ACCESS_TOKEN", label: "Threads publishing access token", required: true }
+  ],
+  x: [
+    { key: "ACCESS_TOKEN", label: "X OAuth user access token", required: true },
+    { key: "REFRESH_TOKEN", label: "X OAuth refresh token", required: false },
+    { key: "CLIENT_ID", label: "X OAuth client ID", required: false },
+    { key: "CLIENT_SECRET", label: "X OAuth client secret", required: false }
+  ],
+  linkedin: [
+    { key: "ORGANIZATION_URN", label: "LinkedIn organization URN", required: true },
+    { key: "ACCESS_TOKEN", label: "LinkedIn posting access token", required: true }
+  ],
+  tiktok: [
+    { key: "OPEN_ID", label: "TikTok creator open ID", required: true },
+    { key: "ACCESS_TOKEN", label: "TikTok Content Posting access token", required: true },
+    { key: "REFRESH_TOKEN", label: "TikTok refresh token", required: false }
+  ],
+  youtube: [
+    { key: "CHANNEL_ID", label: "YouTube channel ID", required: true },
+    { key: "CLIENT_ID", label: "Google OAuth client ID", required: true },
+    { key: "CLIENT_SECRET", label: "Google OAuth client secret", required: true },
+    { key: "REFRESH_TOKEN", label: "YouTube OAuth refresh token", required: true }
+  ],
+  pinterest: [
+    { key: "BOARD_ID", label: "Pinterest board ID", required: true },
+    { key: "ACCESS_TOKEN", label: "Pinterest pins access token", required: true }
+  ],
+  nsosyal: [
+    { key: "DISPATCH_WEBHOOK_URL", label: "Nsosyal manual/dispatcher webhook URL", required: false },
+    { key: "DISPATCH_WEBHOOK_SECRET", label: "Nsosyal dispatcher secret", required: false }
+  ],
+  telegram: [
+    { key: "BOT_TOKEN", label: "Telegram bot token", required: true },
+    { key: "CHANNEL_ID", label: "Telegram channel or chat ID", required: true }
+  ],
+  whatsapp: [
+    { key: "PHONE_NUMBER_ID", label: "WhatsApp Business phone number ID", required: true },
+    { key: "ACCESS_TOKEN", label: "WhatsApp Business access token", required: true }
+  ],
+  google_business: [
+    { key: "LOCATION_ID", label: "Google Business Profile location ID", required: true },
+    { key: "ACCESS_TOKEN", label: "Google Business access token", required: true },
+    { key: "REFRESH_TOKEN", label: "Google Business refresh token", required: false }
+  ]
+});
+
+function secretContext({ platform, accountId, secretKey }) {
+  return `${platform}:${accountId || "global"}:${secretKey}`;
+}
+
+function secretDefinitionsFor(platform) {
+  return SOCIAL_CONNECTOR_SECRET_DEFINITIONS[platform] || [];
+}
+
+function findSecretDefinition(platform, secretKey) {
+  return secretDefinitionsFor(platform).find((item) => item.key === secretKey);
+}
+
+function connectionSecretStatuses(secretRows) {
+  const rows = secretRows || [];
+  return Object.fromEntries(Object.entries(SOCIAL_CONNECTOR_SECRET_DEFINITIONS).map(([platform, definitions]) => {
+    const platformRows = rows.filter((row) => row.platform === platform && row.status !== "disabled");
+    const secrets = definitions.map((definition) => {
+      const row = platformRows.find((item) => item.secret_key === definition.key);
+      return {
+        ...definition,
+        present: Boolean(row),
+        status: row?.status || "missing",
+        updated_at: row?.updated_at || null,
+        expires_at: row?.expires_at || null,
+        last_verified_at: row?.last_verified_at || null
+      };
+    });
+    const required = secrets.filter((item) => item.required);
+    const ready = required.length > 0 && required.every((item) => item.present && item.status === "active");
+    return [platform, {
+      platform,
+      ready,
+      missing_required: required.filter((item) => !item.present).map((item) => item.key),
+      secrets
+    }];
+  }));
+}
+
+async function loadConnectorSecrets({ platform, accountId, warnings }) {
+  let query = supabaseAdmin
+    .from("social_media_connector_secrets")
+    .select("id, account_id, platform, secret_key, encrypted_value, status")
+    .eq("platform", platform)
+    .eq("status", "active");
+  if (accountId) {
+    query = query.or(`account_id.eq.${accountId},account_id.is.null`);
+  } else {
+    query = query.is("account_id", null);
+  }
+
+  const rows = await optionalQuery(query, [], warnings, "social_media_connector_secrets");
+  const result = {};
+  for (const row of rows) {
+    try {
+      result[row.secret_key] = decryptSecretValue(row.encrypted_value, secretContext({
+        platform: row.platform,
+        accountId: row.account_id || null,
+        secretKey: row.secret_key
+      }));
+    } catch (error) {
+      warnings.push(`${platform}/${row.secret_key}: Secret cozulemedi veya encryption key degisti.`);
+    }
+  }
+  return result;
+}
+
 async function findSocialDuplicate({ contentHash, semanticHash, visualHash, excludeId = null }) {
   const filters = [
     `content_hash.eq.${contentHash}`,
@@ -763,7 +895,7 @@ async function findSocialDuplicate({ contentHash, semanticHash, visualHash, excl
 }
 
 async function loadSocialMediaCenterData(warnings, query = {}) {
-  const [accounts, campaigns, drafts, posts, attempts, plans, rules] = await Promise.all([
+  const [accounts, campaigns, drafts, posts, attempts, plans, rules, secretRows] = await Promise.all([
     optionalQuery(
       supabaseAdmin
         .from("social_media_accounts")
@@ -831,6 +963,16 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
       [],
       warnings,
       "social_media_rules"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("social_media_connector_secrets")
+        .select("id, account_id, platform, secret_key, secret_label, status, expires_at, last_verified_at, updated_at")
+        .order("platform", { ascending: true })
+        .order("secret_key", { ascending: true }),
+      [],
+      warnings,
+      "social_media_connector_secrets"
     )
   ]);
 
@@ -850,6 +992,8 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
     attempts,
     plans,
     rules,
+    connections: connectionSecretStatuses(secretRows),
+    vault: secretVaultStatus(),
     dispatch: socialMediaDispatchStatus()
   };
 }
@@ -908,11 +1052,16 @@ async function dispatchDueSocialMediaPosts({ request, ctx = null, limit = config
       .update({ status: "publishing", last_error: "" })
       .eq("id", post.id);
 
+    const connectorSecrets = post.account?.connector_mode === "native_api"
+      ? await loadConnectorSecrets({ platform: post.platform, accountId: post.account_id, warnings })
+      : {};
+
     const result = await dispatchSocialMediaPost({
       post,
       draft: post.draft,
       account: post.account,
-      requestId: request?.id || ""
+      requestId: request?.id || "",
+      connectorSecrets
     });
 
     await supabaseAdmin
@@ -3519,6 +3668,90 @@ export function registerRoutes(app) {
     });
 
     return reply.code(201).send({ ok: true, account, warnings });
+  });
+
+  app.post("/v1/admin/ops/social-media/secrets", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.secret_upsert");
+    const payload = socialMediaSecretSchema.parse(request.body || {});
+    const definition = findSecretDefinition(payload.platform, payload.secret_key);
+    if (!definition) {
+      throw httpError("Bu platform icin tanimli olmayan secret anahtari.", 400);
+    }
+
+    const warnings = [];
+    const accountId = payload.account_id || null;
+    const encryptedValue = encryptSecretValue(payload.secret_value, secretContext({
+      platform: payload.platform,
+      accountId,
+      secretKey: payload.secret_key
+    }));
+
+    let existingQuery = supabaseAdmin
+      .from("social_media_connector_secrets")
+      .select("id")
+      .eq("platform", payload.platform)
+      .eq("secret_key", payload.secret_key);
+    existingQuery = accountId ? existingQuery.eq("account_id", accountId) : existingQuery.is("account_id", null);
+    const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+    if (existingError) {
+      if (looksLikeMissingSchema(existingError)) {
+        throw httpError("social_media_connector_secrets migration uygulanmali.", 409);
+      }
+      throw existingError;
+    }
+
+    const row = {
+      account_id: accountId,
+      platform: payload.platform,
+      secret_key: payload.secret_key,
+      secret_label: definition.label,
+      encrypted_value: encryptedValue,
+      status: "active",
+      expires_at: payload.expires_at || null,
+      updated_by: ctx.user.id
+    };
+
+    const secret = existing
+      ? await optionalMutation(
+          supabaseAdmin
+            .from("social_media_connector_secrets")
+            .update(row)
+            .eq("id", existing.id)
+            .select("id, account_id, platform, secret_key, secret_label, status, expires_at, last_verified_at, updated_at")
+            .single(),
+          warnings,
+          "social_media_connector_secrets"
+        )
+      : await optionalMutation(
+          supabaseAdmin
+            .from("social_media_connector_secrets")
+            .insert({
+              ...row,
+              created_by: ctx.user.id
+            })
+            .select("id, account_id, platform, secret_key, secret_label, status, expires_at, last_verified_at, updated_at")
+            .single(),
+          warnings,
+          "social_media_connector_secrets"
+        );
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.social_media_secret_upserted",
+      resourceType: "social_media_connector_secret",
+      resourceId: secret.id,
+      severity: "critical",
+      metadata: {
+        platform: payload.platform,
+        secret_key: payload.secret_key,
+        account_id: accountId,
+        rotated: Boolean(existing),
+        value_length: payload.secret_value.length
+      }
+    });
+
+    return reply.code(existing ? 200 : 201).send({ ok: true, secret, warnings });
   });
 
   app.post("/v1/admin/ops/social-media/campaigns", async (request, reply) => {
