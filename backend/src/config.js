@@ -114,6 +114,15 @@ export const config = {
     metaGraphVersion: readEnv("ASSISTANT_META_GRAPH_VERSION", { required: false, defaultValue: "v23.0" }).replace(/^\/+|\/+$/g, ""),
     metaSendTimeoutMs: readNumber("ASSISTANT_META_SEND_TIMEOUT_MS", 10000)
   },
+  socialMedia: {
+    dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),
+    dryRun: readBool("SOCIAL_MEDIA_DRY_RUN", true),
+    dispatchWebhookUrl: readEnv("SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    dispatchWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET"),
+    sendTimeoutMs: readNumber("SOCIAL_MEDIA_SEND_TIMEOUT_MS", 12000),
+    maxDispatchBatch: readNumber("SOCIAL_MEDIA_MAX_DISPATCH_BATCH", 20),
+    defaultTimezone: readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
+  },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
     url: readEnv("SUPABASE_URL"),

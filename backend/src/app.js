@@ -37,6 +37,7 @@ export async function buildApp() {
         "ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN",
         "ASSISTANT_META_APP_SECRET",
         "ASSISTANT_META_VERIFY_TOKEN",
+        "SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.iyzico.secretKey",
@@ -50,6 +51,7 @@ export async function buildApp() {
         "config.assistant.metaFacebookPageAccessToken",
         "config.assistant.metaAppSecret",
         "config.assistant.metaVerifyToken",
+        "config.socialMedia.dispatchWebhookSecret",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "iyzico.secretKey",
@@ -63,6 +65,7 @@ export async function buildApp() {
         "assistant.metaFacebookPageAccessToken",
         "assistant.metaAppSecret",
         "assistant.metaVerifyToken",
+        "socialMedia.dispatchWebhookSecret",
         "cronSecret"
       ]
     },

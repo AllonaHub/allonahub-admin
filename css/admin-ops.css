@@ -182,6 +182,16 @@ button {
   cursor: not-allowed;
 }
 
+.admin-link {
+  color: var(--admin-sea);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
+}
+
 .admin-userbox {
   display: flex;
   align-items: center;
@@ -379,6 +389,10 @@ button {
 .admin-row-sub {
   color: var(--admin-muted);
   font-size: 12px;
+  display: block;
+  max-width: 560px;
+  max-height: 3.8em;
+  overflow: hidden;
 }
 
 .admin-badge {
@@ -460,6 +474,31 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.admin-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+.admin-check {
+  min-height: 42px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(255, 255, 255, 0.055);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  color: var(--admin-text);
+  font-weight: 800;
+}
+
+.admin-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-sea);
 }
 
 .admin-field {
