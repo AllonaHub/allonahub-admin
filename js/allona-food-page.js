@@ -42,7 +42,8 @@
     discount: 0,
     trackStep: 1,
     locationIndex: 0,
-    dataSource: "fallback"
+    dataSource: "fallback",
+    detailItem: null
   };
 
   const money = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
@@ -99,6 +100,16 @@
   function priceLabel(value) {
     const amount = Number(value || 0);
     return Number.isFinite(amount) && amount > 0 ? money.format(amount) : "";
+  }
+
+  function hashText(value) {
+    const text = String(value || "");
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      hash = ((hash << 5) - hash) + text.charCodeAt(index);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
   }
 
   function setStatus(message, type) {
@@ -186,6 +197,108 @@
       image: product.image_url,
       product
     };
+  }
+
+  function menuProfile(item) {
+    const text = [item.name, item.desc, item.restaurant, item.product?.category, item.product?.description].filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
+    const base = {
+      contains: ["Günlük hazırlanan ana ürün", "Partner restoran porsiyonu", "Paket servis seti"],
+      options: [
+        { id: "onion", label: "Soğan", defaultIncluded: true },
+        { id: "pickle", label: "Turşu", defaultIncluded: true },
+        { id: "tomato", label: "Domates", defaultIncluded: true },
+        { id: "sauce-extra", label: "Sos ekstra", defaultIncluded: false }
+      ],
+      sauces: ["Şef sosu", "Sossuz", "Sos ayrı gelsin", "Acı sos"],
+      spices: ["Baharat yok", "Az baharat", "Orta baharat", "Bol baharat"],
+      notePlaceholder: "Örn: ekmek iyi kızarsın, sos ayrı gelsin"
+    };
+
+    if (/burger/.test(text)) {
+      return {
+        contains: ["Burger ekmeği", "Köfte veya tavuk", "Cheddar", "Marul", "Domates", "Patates", "İçecek"],
+        options: [
+          { id: "onion", label: "Soğan", defaultIncluded: true },
+          { id: "pickle", label: "Turşu", defaultIncluded: true },
+          { id: "mayo", label: "Mayonez", defaultIncluded: true },
+          { id: "ketchup", label: "Ketçap", defaultIncluded: true },
+          { id: "hot-sauce", label: "Acı sos", defaultIncluded: false }
+        ],
+        sauces: ["Burger sosu", "Sossuz", "Sos ayrı gelsin", "Acı sos"],
+        spices: ["Baharat yok", "Az baharat", "Orta baharat", "Bol baharat"],
+        notePlaceholder: "Örn: soğansız, turşu fazla, sos ayrı"
+      };
+    }
+
+    if (/pizza/.test(text)) {
+      return {
+        contains: ["Pizza hamuru", "Domates sos", "Mozzarella", "Günlük pizza malzemeleri", "İçecek veya kampanya içeriği"],
+        options: [
+          { id: "olive", label: "Zeytin", defaultIncluded: true },
+          { id: "corn", label: "Mısır", defaultIncluded: true },
+          { id: "mushroom", label: "Mantar", defaultIncluded: true },
+          { id: "extra-cheese", label: "Ekstra peynir", defaultIncluded: false },
+          { id: "hot-pepper", label: "Acı biber", defaultIncluded: false }
+        ],
+        sauces: ["Domates sos", "Sos az", "Sossuz kenar", "Sarımsak sos yanında"],
+        spices: ["Baharat yok", "Kekik az", "Kekik normal", "Acılı baharat"],
+        notePlaceholder: "Örn: mantarsız, acı biber yanında"
+      };
+    }
+
+    if (/kebap|döner|doner|dürüm|durum|lahmacun|pide|ızgara|izgara/.test(text)) {
+      return {
+        contains: ["Lavaş veya pide", "Et veya tavuk", "Yeşillik", "Domates", "Turşu", "Ayran veya içecek"],
+        options: [
+          { id: "onion", label: "Soğan", defaultIncluded: true },
+          { id: "pickle", label: "Turşu", defaultIncluded: true },
+          { id: "greens", label: "Yeşillik", defaultIncluded: true },
+          { id: "sumac", label: "Sumak", defaultIncluded: true },
+          { id: "mayo", label: "Mayonez", defaultIncluded: false },
+          { id: "hot-sauce", label: "Acı sos", defaultIncluded: false }
+        ],
+        sauces: ["Soslu", "Sossuz", "Sos ayrı gelsin", "Yoğurtlu sos"],
+        spices: ["Baharat yok", "Az baharat", "Orta baharat", "Bol baharat"],
+        notePlaceholder: "Örn: soğansız dürüm, turşu olmasın, acılı olsun"
+      };
+    }
+
+    if (/fit|sağlıklı|saglikli|salata|bowl|vegan/.test(text)) {
+      return {
+        contains: ["Protein", "Yeşillik", "Tahıl", "Günlük sebze", "Özel sos"],
+        options: [
+          { id: "greens", label: "Yeşillik", defaultIncluded: true },
+          { id: "grain", label: "Tahıl", defaultIncluded: true },
+          { id: "tomato", label: "Domates", defaultIncluded: true },
+          { id: "onion", label: "Soğan", defaultIncluded: false },
+          { id: "sauce-side", label: "Sos ayrı", defaultIncluded: true }
+        ],
+        sauces: ["Zeytinyağlı sos", "Sossuz", "Sos ayrı gelsin", "Acı sos"],
+        spices: ["Baharat yok", "Az baharat", "Orta baharat", "Bol baharat"],
+        notePlaceholder: "Örn: sos ayrı, soğansız, tahıl az"
+      };
+    }
+
+    if (/tatlı|tatli|kahve|pasta|dondurma/.test(text)) {
+      return {
+        contains: ["Günlük tatlı", "Kahve veya içecek", "Paket servis seti"],
+        options: [
+          { id: "sugar", label: "Şeker", defaultIncluded: true },
+          { id: "milk", label: "Süt", defaultIncluded: true },
+          { id: "cream", label: "Krema", defaultIncluded: false },
+          { id: "ice", label: "Buz", defaultIncluded: false }
+        ],
+        sauces: ["Standart", "Şekersiz", "Az şekerli", "Süt ayrı gelsin"],
+        spices: ["Sade", "Tarçın az", "Tarçın normal", "Ekstra aroma"],
+        notePlaceholder: "Örn: şekersiz kahve, süt ayrı, buzsuz"
+      };
+    }
+
+    return base;
+  }
+
+  function sourceForDetail(id) {
+    return state.menuItems.find((item) => String(item.id) === String(id)) || suggestedItemForRestaurant(id);
   }
 
   function productsToRestaurants(products) {
@@ -376,6 +489,178 @@
     restart();
   }
 
+  function ensureDetailModal() {
+    let modal = qs("[data-food-detail-modal]");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.className = "food-detail-modal";
+    modal.hidden = true;
+    modal.dataset.foodDetailModal = "";
+    modal.innerHTML = `<div class="food-detail-backdrop" data-food-detail-close></div><div class="food-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="food-detail-title" data-food-detail-dialog></div>`;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function closeDetailModal() {
+    const modal = qs("[data-food-detail-modal]");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("food-detail-open");
+    state.detailItem = null;
+  }
+
+  function renderDetailOptions(profile) {
+    return profile.options.map((option) => `
+      <label class="food-option">
+        <input type="checkbox" data-detail-option value="${escape(option.id)}" data-label="${escape(option.label)}" data-default="${option.defaultIncluded ? "1" : "0"}" ${option.defaultIncluded ? "checked" : ""}>
+        <span>${escape(option.label)}</span>
+      </label>
+    `).join("");
+  }
+
+  function renderChoiceGroup(name, title, values, icon) {
+    return `
+      <div class="food-choice-group">
+        <h4><i class="fa-solid ${escape(icon)}" aria-hidden="true"></i>${escape(title)}</h4>
+        <div class="food-choice-row">
+          ${values.map((value, index) => `
+            <label class="food-choice">
+              <input type="radio" name="${escape(name)}" data-detail-choice data-label="${escape(value)}" value="${escape(value)}" ${index === 0 ? "checked" : ""}>
+              <span>${escape(value)}</span>
+            </label>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function openDetailModal(id) {
+    const item = sourceForDetail(id);
+    if (!item) return;
+    state.detailItem = item;
+    const modal = ensureDetailModal();
+    const dialog = qs("[data-food-detail-dialog]", modal);
+    const profile = menuProfile(item);
+    const restaurant = state.restaurants.find((entry) => entry.name === item.restaurant || String(entry.productId) === String(item.id));
+    const location = qs("[data-food-location-label]")?.textContent?.trim() || locations[state.locationIndex];
+    dialog.innerHTML = `
+      <button class="food-detail-close" type="button" data-food-detail-close aria-label="Menü detayını kapat"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <div class="food-detail-media">
+        <img src="${escape(mediaUrl(item.image))}" alt="${escape(item.name)}">
+      </div>
+      <form class="food-detail-body" data-food-detail-form>
+        <div class="food-detail-head">
+          <div>
+            <p class="food-eyebrow"><i class="fa-solid ${escape(item.icon || "fa-utensils")}" aria-hidden="true"></i>${escape(item.restaurant)}</p>
+            <h2 id="food-detail-title">${escape(item.name)}</h2>
+            <p>${escape(item.desc || "Menü içeriği partner restoran tarafından hazırlanır.")}</p>
+          </div>
+          <strong>${money.format(item.price)}</strong>
+        </div>
+
+        <div class="food-detail-origin">
+          <span><i class="fa-solid fa-store" aria-hidden="true"></i>${escape(item.restaurant)}</span>
+          <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${escape(location)}</span>
+          <span><i class="fa-solid fa-clock" aria-hidden="true"></i>${escape(restaurant?.eta || 25)} dk</span>
+          <span><i class="fa-solid fa-database" aria-hidden="true"></i>${escape(state.dataSource === "supabase" ? "Supabase canlı katalog" : "Demo katalog")}</span>
+        </div>
+
+        <section class="food-detail-section">
+          <h3>Menü İçeriği</h3>
+          <div class="food-ingredient-list">
+            ${profile.contains.map((value) => `<span>${escape(value)}</span>`).join("")}
+          </div>
+        </section>
+
+        <section class="food-detail-section">
+          <h3>İçinde Olsun mu?</h3>
+          <div class="food-option-grid">
+            ${renderDetailOptions(profile)}
+          </div>
+        </section>
+
+        ${renderChoiceGroup("food_sauce", "Sos Seçimi", profile.sauces, "fa-bottle-droplet")}
+        ${renderChoiceGroup("food_spice", "Baharat Seçimi", profile.spices, "fa-pepper-hot")}
+
+        <label class="food-note-field">
+          <span>Restorana Not</span>
+          <textarea data-detail-note rows="3" maxlength="180" placeholder="${escape(profile.notePlaceholder)}"></textarea>
+        </label>
+
+        <div class="food-detail-actions">
+          <div class="food-qty-stepper" aria-label="Adet">
+            <button type="button" data-detail-qty="-1" aria-label="Adedi azalt"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+            <output data-detail-qty-value>1</output>
+            <button type="button" data-detail-qty="1" aria-label="Adedi artır"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <button class="food-detail-submit" type="submit"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>Seçimleri Sepete Ekle</button>
+        </div>
+      </form>
+    `;
+    modal.hidden = false;
+    document.body.classList.add("food-detail-open");
+    qs("[data-food-detail-close]", dialog)?.focus();
+  }
+
+  function detailSelections(form) {
+    const optionInputs = qsa("[data-detail-option]", form);
+    const removed = [];
+    const added = [];
+    const included = [];
+    optionInputs.forEach((input) => {
+      const label = input.dataset.label || input.value;
+      const defaultIncluded = input.dataset.default === "1";
+      if (input.checked) included.push(label);
+      if (defaultIncluded && !input.checked) removed.push(label);
+      if (!defaultIncluded && input.checked) added.push(label);
+    });
+    const choices = qsa("[data-detail-choice]:checked", form).map((input) => input.dataset.label || input.value).filter(Boolean);
+    const note = String(qs("[data-detail-note]", form)?.value || "").trim().slice(0, 180);
+    const qty = Math.max(1, Math.min(12, Number(qs("[data-detail-qty-value]", form)?.textContent || 1)));
+    const summaryParts = [
+      removed.length ? `Çıkarılacak: ${removed.join(", ")}` : "",
+      added.length ? `Eklenecek: ${added.join(", ")}` : "",
+      choices.length ? `Seçimler: ${choices.join(", ")}` : "",
+      note ? `Not: ${note}` : ""
+    ].filter(Boolean);
+    return {
+      qty,
+      included,
+      removed,
+      added,
+      choices,
+      note,
+      summary: summaryParts.length ? summaryParts.join(" • ") : "Standart içerik"
+    };
+  }
+
+  async function addCustomizedItem(source, selections) {
+    const baseId = source.product?.id || source.baseId || source.id;
+    const fingerprint = hashText(`${source.id}|${selections.summary}`);
+    const lineId = `${baseId}::${fingerprint}`;
+    const existing = state.cart.find((item) => String(item.id) === lineId);
+    if (existing) existing.qty += selections.qty;
+    else {
+      state.cart.push({
+        ...source,
+        id: lineId,
+        baseId,
+        qty: selections.qty,
+        customizations: selections,
+        customizationSummary: selections.summary
+      });
+    }
+    renderCart();
+    await mirrorSharedCart({
+      ...source,
+      id: lineId,
+      baseId,
+      customizations: selections,
+      customizationSummary: selections.summary
+    }, selections.qty);
+    closeDetailModal();
+  }
+
   function restaurantMatches(item) {
     const query = state.query.trim().toLocaleLowerCase("tr-TR");
     const text = [item.name, item.cuisine, item.deal, ...(item.tags || [])].join(" ").toLocaleLowerCase("tr-TR");
@@ -400,7 +685,7 @@
     const list = sortedRestaurants();
     if (!restaurantGrid || !emptyState || !visibleCount || !summary) return;
     restaurantGrid.innerHTML = list.map((item) => `
-      <article class="food-card">
+      <article class="food-card" data-food-detail="${escape(item.id)}" tabindex="0" role="button" aria-label="${escape(item.name)} menü detayını aç">
         <div class="food-card-media">
           <img src="${escape(mediaUrl(item.image))}" alt="${escape(item.name)}" loading="lazy">
           <div class="food-badge-row">
@@ -420,7 +705,7 @@
         </div>
         <div class="food-card-footer">
           <strong>${escape(item.price ? `${money.format(item.price)} başlangıç` : (state.mode === "pickup" ? "Gel-Al hazır" : "Teslimat açık"))}</strong>
-          <button class="food-add" type="button" data-add-suggested="${escape(item.id)}"><i class="fa-solid fa-plus" aria-hidden="true"></i>Menü Ekle</button>
+          <button class="food-add" type="button" data-add-suggested="${escape(item.id)}"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Seç</button>
         </div>
       </article>
     `).join("");
@@ -432,7 +717,7 @@
   function renderMenu() {
     if (!menuGrid) return;
     menuGrid.innerHTML = state.menuItems.map((item) => `
-      <article class="food-menu-item">
+      <article class="food-menu-item" data-food-detail="${escape(item.id)}" tabindex="0" role="button" aria-label="${escape(item.name)} menü detayını aç">
         <div class="food-menu-top">
           <div>
             <h3>${escape(item.name)}</h3>
@@ -444,18 +729,28 @@
         <small>+${escape(item.hp)} HP kazandırır</small>
         <div class="food-price-line">
           <strong>${money.format(item.price)}</strong>
-          <button class="food-add" type="button" data-add-item="${escape(item.id)}"><i class="fa-solid fa-plus" aria-hidden="true"></i>Ekle</button>
+          <button class="food-add" type="button" data-add-item="${escape(item.id)}"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Seç</button>
         </div>
       </article>
     `).join("");
   }
 
   function itemProductSnapshot(item) {
-    if (item.product) return item.product;
+    const summary = item.customizationSummary || item.customizations?.summary || "";
+    if (item.product) {
+      return {
+        ...item.product,
+        id: summary ? item.id : item.product.id,
+        original_product_id: item.baseId || item.product.id,
+        description: summary ? `${item.product.description || item.desc || ""}\nTercihler: ${summary}`.trim() : item.product.description,
+        food_customizations: item.customizations || null
+      };
+    }
     return {
       id: item.id,
+      original_product_id: item.baseId || item.id,
       name: item.name,
-      description: item.desc,
+      description: summary ? `${item.desc || ""}\nTercihler: ${summary}`.trim() : item.desc,
       category: "Yemek",
       brand: item.restaurant,
       seller_name: item.restaurant,
@@ -463,31 +758,33 @@
       stock: 99,
       image_url: mediaUrl(item.image),
       delivery_label: state.mode === "pickup" ? "Gel-Al" : "Bugün teslim",
-      coupon_label: item.hp ? `+${item.hp} HP` : ""
+      coupon_label: item.hp ? `+${item.hp} HP` : "",
+      food_customizations: item.customizations || null
     };
   }
 
-  function addLocalSharedCart(product) {
+  function addLocalSharedCart(product, qty = 1) {
     if (!App.cart?.getItems || !App.cart?.setItems) return;
+    const amount = Math.max(1, Number(qty || 1));
     const items = App.cart.getItems();
     const found = items.find((item) => String(item.id) === String(product.id));
     if (found) {
-      found.qty = Number(found.qty || 1) + 1;
+      found.qty = Number(found.qty || 1) + amount;
       found.product = found.product || product;
     } else {
-      items.push({ id: product.id, qty: 1, product, added_at: new Date().toISOString() });
+      items.push({ id: product.id, qty: amount, product, added_at: new Date().toISOString() });
     }
     App.cart.setItems(items);
     toast("Menü sepete eklendi.");
   }
 
-  async function mirrorSharedCart(item) {
+  async function mirrorSharedCart(item, qty = 1) {
     const product = itemProductSnapshot(item);
     if (!product || !product.id || !App.cart) return;
     try {
-      await App.cart.add(product.id, 1, product);
+      await App.cart.add(product.id, qty, product);
     } catch (error) {
-      addLocalSharedCart(product);
+      addLocalSharedCart(product, qty);
     }
   }
 
@@ -531,7 +828,11 @@
     } else {
       cartItems.innerHTML = state.cart.map((item) => `
         <div class="food-cart-item">
-          <div><b>${escape(item.name)} x${escape(item.qty)}</b><span>${escape(item.restaurant)} • ${money.format(item.price * item.qty)}</span></div>
+          <div>
+            <b>${escape(item.name)} x${escape(item.qty)}</b>
+            <span>${escape(item.restaurant)} • ${money.format(item.price * item.qty)}</span>
+            ${item.customizationSummary ? `<small class="food-cart-note">${escape(item.customizationSummary)}</small>` : ""}
+          </div>
           <button type="button" data-remove-item="${escape(item.id)}" aria-label="${escape(item.name)} ürünü çıkar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
       `).join("");
@@ -630,16 +931,50 @@
     document.addEventListener("click", async (event) => {
       const add = event.target.closest("[data-add-item], [data-add-suggested]");
       if (add) {
-        add.disabled = true;
-        try {
-          await addItem(add.dataset.addItem || add.dataset.addSuggested);
-        } finally {
-          add.disabled = false;
+        openDetailModal(add.dataset.addItem || add.dataset.addSuggested);
+        return;
+      }
+      const detailCard = event.target.closest("[data-food-detail]");
+      if (detailCard && !event.target.closest("a, button, input, textarea, select, label")) {
+        openDetailModal(detailCard.dataset.foodDetail);
+        return;
+      }
+      const close = event.target.closest("[data-food-detail-close]");
+      if (close) {
+        closeDetailModal();
+        return;
+      }
+      const qtyButton = event.target.closest("[data-detail-qty]");
+      if (qtyButton) {
+        const output = qs("[data-detail-qty-value]");
+        if (output) {
+          const next = Math.max(1, Math.min(12, Number(output.textContent || 1) + Number(qtyButton.dataset.detailQty || 0)));
+          output.textContent = next;
         }
         return;
       }
       const remove = event.target.closest("[data-remove-item]");
       if (remove) removeItem(remove.dataset.removeItem);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeDetailModal();
+      const card = event.target.closest("[data-food-detail]");
+      if (card && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        openDetailModal(card.dataset.foodDetail);
+      }
+    });
+    document.addEventListener("submit", async (event) => {
+      const form = event.target.closest("[data-food-detail-form]");
+      if (!form || !state.detailItem) return;
+      event.preventDefault();
+      const submit = form.querySelector("button[type='submit']");
+      if (submit) submit.disabled = true;
+      try {
+        await addCustomizedItem(state.detailItem, detailSelections(form));
+      } finally {
+        if (submit) submit.disabled = false;
+      }
     });
     qs("[data-coupon-form]")?.addEventListener("submit", (event) => {
       event.preventDefault();
