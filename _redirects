@@ -31,7 +31,8 @@
 /allonashop.html /pages/commerce/allonashop.html 301
 /allonayemek.html /pages/commerce/allonayemek.html 301
 /cart.html /pages/commerce/cart.html 301
-/checkout.html /pages/commerce/checkout.html 301
+/checkout.html /pages/commerce/guvenli-odeme.html 301
+/pages/commerce/checkout.html /pages/commerce/guvenli-odeme.html 301
 /kopunlar.html /pages/commerce/kuponlar.html 301
 /kuponlar.html /pages/commerce/kuponlar.html 301
 /ode.html /pages/commerce/odeme.html 301

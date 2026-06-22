@@ -111,7 +111,7 @@ const PLATFORM_LINKS = Object.freeze({
   shop: "/pages/commerce/allonashop.html",
   marketplace: "/pages/commerce/shop.html",
   cart: "/pages/commerce/cart.html",
-  checkout: "/pages/commerce/checkout.html",
+  checkout: "/pages/commerce/guvenli-odeme.html",
   payment: "/pages/commerce/odeme.html",
   food: "/pages/commerce/allonayemek.html",
   market: "/pages/commerce/allonamarket.html",

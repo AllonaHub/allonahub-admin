@@ -79,7 +79,7 @@
       await App.cart.syncLocalToRemote();
       lines = await App.cart.hydrate();
       if (!lines.length) {
-        core.renderStatus("[data-checkout-status]", "Checkout için sepetinizde ürün olmalı.", "error");
+        core.renderStatus("[data-checkout-status]", "Güvenli ödeme için sepetinizde ürün olmalı.", "error");
         form.classList.add("hidden");
         return;
       }
@@ -92,7 +92,7 @@
       await loadSavedAddresses(user, form);
       renderSummary();
     } catch (error) {
-      core.renderStatus("[data-checkout-status]", error.message || "Checkout yüklenemedi.", "error");
+      core.renderStatus("[data-checkout-status]", error.message || "Güvenli ödeme adımı yüklenemedi.", "error");
     }
   }
 
@@ -221,7 +221,7 @@
 
     const payload = {
       user_id: user.id,
-      title: "Checkout Teslimat",
+      title: "Güvenli Ödeme Teslimat",
       full_name: orderPayload.customer_name,
       phone: orderPayload.customer_phone,
       address: form.shipping_address.value,

@@ -13,7 +13,7 @@
       <div class="summary-line"><span>Kargo</span><strong>${totals.shipping ? core.money(totals.shipping) : "Ücretsiz"}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
       ${lines.length
-        ? `<a class="btn btn--full" href="${core.url("/pages/commerce/checkout.html")}">Ödemeye Geç</a>`
+        ? `<a class="btn btn--full" href="${core.url("/pages/commerce/guvenli-odeme.html")}">Ödemeye Geç</a>`
         : `<button class="btn btn--full" type="button" disabled>Ödemeye Geç</button>`}
       <button class="btn btn--light btn--full" type="button" data-clear-cart ${lines.length ? "" : "disabled"}>Sepeti Temizle</button>
     `;
