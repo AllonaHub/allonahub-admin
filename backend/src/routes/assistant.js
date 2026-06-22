@@ -40,6 +40,10 @@ const telegramWebhookSchema = z.object({
   update_id: z.number().optional(),
   message: z.record(z.unknown()).optional(),
   edited_message: z.record(z.unknown()).optional(),
+  business_connection: z.record(z.unknown()).optional(),
+  business_message: z.record(z.unknown()).optional(),
+  edited_business_message: z.record(z.unknown()).optional(),
+  deleted_business_messages: z.record(z.unknown()).optional(),
   callback_query: z.record(z.unknown()).optional()
 }).passthrough();
 
@@ -326,26 +330,50 @@ async function createSupportTicket({ ctx, channel, payload, message, intent, req
 }
 
 function telegramMessage(update) {
-  const message = update.message || update.edited_message || update.callback_query?.message || {};
-  const text = cleanAssistantText(update.message?.text || update.edited_message?.text || update.callback_query?.data || "", config.assistant.maxMessageChars);
+  const source =
+    update.message ? "message" :
+      update.edited_message ? "edited_message" :
+        update.business_message ? "business_message" :
+          update.edited_business_message ? "edited_business_message" :
+            update.callback_query ? "callback_query" :
+              "";
+  const message = update.message || update.edited_message || update.business_message || update.edited_business_message || update.callback_query?.message || {};
+  const text = cleanAssistantText(
+    update.message?.text ||
+      update.edited_message?.text ||
+      update.business_message?.text ||
+      update.edited_business_message?.text ||
+      update.callback_query?.data ||
+      "",
+    config.assistant.maxMessageChars
+  );
   const chat = message.chat || {};
-  const from = update.message?.from || update.edited_message?.from || update.callback_query?.from || {};
+  const from = update.message?.from ||
+    update.edited_message?.from ||
+    update.business_message?.from ||
+    update.edited_business_message?.from ||
+    update.callback_query?.from ||
+    {};
+  const businessConnectionId = message.business_connection_id || update.business_connection?.id || "";
   return {
     text,
     chatId: chat.id ? String(chat.id) : "",
     userId: from.id ? String(from.id) : "",
     username: from.username || "",
     languageCode: from.language_code || "",
-    messageId: message.message_id || null
+    messageId: message.message_id || null,
+    source,
+    businessConnectionId: businessConnectionId ? String(businessConnectionId) : ""
   };
 }
 
-async function sendTelegramReply(chatId, text) {
+async function sendTelegramReply(chatId, text, options = {}) {
   if (!config.assistant.telegramBotToken || !chatId) return false;
   const response = await fetch(`https://api.telegram.org/bot${config.assistant.telegramBotToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      ...(options.businessConnectionId ? { business_connection_id: options.businessConnectionId } : {}),
       chat_id: chatId,
       text: cleanAssistantText(text, 3900),
       disable_web_page_preview: true
@@ -786,6 +814,8 @@ export function registerAssistantRoutes(app) {
           username: telegram.username,
           language_code: telegram.languageCode,
           message_id: telegram.messageId,
+          update_type: telegram.source,
+          business_connection_id: telegram.businessConnectionId || null,
           update_id: update.update_id || null
         }
       }
@@ -793,7 +823,9 @@ export function registerAssistantRoutes(app) {
 
     let delivered = false;
     try {
-      delivered = await sendTelegramReply(telegram.chatId, result.message);
+      delivered = await sendTelegramReply(telegram.chatId, result.message, {
+        businessConnectionId: telegram.businessConnectionId
+      });
     } catch (error) {
       request.log.warn({ error: error.message }, "Telegram assistant reply could not be delivered");
     }
