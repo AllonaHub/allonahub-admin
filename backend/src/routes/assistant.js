@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { config } from "../config.js";
 import {
@@ -56,6 +56,15 @@ const telegramRateLimit = {
   config: {
     rateLimit: {
       max: Math.max(30, config.assistant.rateLimitMax * 2),
+      timeWindow: "1 minute"
+    }
+  }
+};
+
+const metaRateLimit = {
+  config: {
+    rateLimit: {
+      max: Math.max(60, config.assistant.rateLimitMax * 3),
       timeWindow: "1 minute"
     }
   }
@@ -345,6 +354,207 @@ async function sendTelegramReply(chatId, text) {
   return response.ok;
 }
 
+function rawRequestBody(request) {
+  if (Buffer.isBuffer(request.rawBody)) return request.rawBody;
+  return Buffer.from(JSON.stringify(request.body || {}), "utf8");
+}
+
+function safeEqual(value, expected) {
+  const left = Buffer.from(String(value || ""), "utf8");
+  const right = Buffer.from(String(expected || ""), "utf8");
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+function verifyMetaSignature(request) {
+  if (!config.assistant.metaAppSecret) return;
+
+  const received = String(request.headers["x-hub-signature-256"] || "").trim();
+  if (!received.startsWith("sha256=")) {
+    throw httpError("Meta webhook imzası eksik.", 401);
+  }
+
+  const expected = `sha256=${createHmac("sha256", config.assistant.metaAppSecret)
+    .update(rawRequestBody(request))
+    .digest("hex")}`;
+
+  if (!safeEqual(received, expected)) {
+    throw httpError("Meta webhook imzası doğrulanamadı.", 401);
+  }
+}
+
+function metaGraphUrl(endpoint) {
+  const cleanEndpoint = String(endpoint || "").replace(/^\/+/, "");
+  return `${config.assistant.metaGraphBaseUrl}/${config.assistant.metaGraphVersion}/${cleanEndpoint}`;
+}
+
+async function postMetaGraph({ endpoint, token, body, request, platform }) {
+  if (!token) {
+    request.log.warn({ platform }, "Meta assistant reply skipped because access token is missing");
+    return false;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(3000, config.assistant.metaSendTimeoutMs));
+
+  try {
+    const response = await fetch(metaGraphUrl(endpoint), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const errorText = cleanAssistantText(await response.text().catch(() => ""), 300);
+      request.log.warn({ platform, statusCode: response.status, error: errorText }, "Meta assistant reply failed");
+      return false;
+    }
+    return true;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function whatsappIncomingText(message) {
+  if (message?.type === "text") return message.text?.body || "";
+  if (message?.type === "button") return message.button?.text || message.button?.payload || "";
+  if (message?.type === "interactive") {
+    return message.interactive?.button_reply?.title
+      || message.interactive?.button_reply?.id
+      || message.interactive?.list_reply?.title
+      || message.interactive?.list_reply?.id
+      || "";
+  }
+  return "";
+}
+
+function parseWhatsappEvents(payload) {
+  const events = [];
+  for (const entry of payload.entry || []) {
+    for (const change of entry.changes || []) {
+      const value = change.value || {};
+      const metadata = value.metadata || {};
+      const phoneNumberId = metadata.phone_number_id || config.assistant.metaWhatsappPhoneNumberId;
+      const contactById = new Map((value.contacts || []).map((contact) => [String(contact.wa_id || ""), contact]));
+
+      for (const message of value.messages || []) {
+        const text = cleanAssistantText(whatsappIncomingText(message), config.assistant.maxMessageChars);
+        if (!text) continue;
+
+        const from = String(message.from || "");
+        const contact = contactById.get(from) || {};
+        events.push({
+          channel: "whatsapp",
+          text,
+          conversationId: `wa-${phoneNumberId || "default"}-${from}`,
+          replyTo: from,
+          phoneNumberId,
+          metadata: {
+            meta_object: payload.object || "",
+            entry_id: entry.id || null,
+            change_field: change.field || null,
+            phone_number_id: phoneNumberId || null,
+            display_phone_number: metadata.display_phone_number || null,
+            whatsapp_user_id: from,
+            profile_name: contact.profile?.name || null,
+            message_id: message.id || null,
+            message_type: message.type || null,
+            timestamp: message.timestamp || null
+          }
+        });
+      }
+    }
+  }
+  return events;
+}
+
+function instagramIncomingText(item) {
+  if (item.message?.is_echo) return "";
+  return item.message?.text
+    || item.postback?.payload
+    || item.postback?.title
+    || item.message?.quick_reply?.payload
+    || "";
+}
+
+function parseInstagramEvents(payload) {
+  const events = [];
+  for (const entry of payload.entry || []) {
+    for (const item of entry.messaging || []) {
+      const senderId = String(item.sender?.id || "");
+      const text = cleanAssistantText(instagramIncomingText(item), config.assistant.maxMessageChars);
+      if (!senderId || !text) continue;
+
+      events.push({
+        channel: "instagram",
+        text,
+        conversationId: `ig-${senderId}`,
+        replyTo: senderId,
+        metadata: {
+          meta_object: payload.object || "",
+          entry_id: entry.id || null,
+          instagram_sender_id: senderId,
+          instagram_recipient_id: item.recipient?.id || null,
+          message_id: item.message?.mid || null,
+          timestamp: item.timestamp || entry.time || null,
+          postback_payload: item.postback?.payload || null
+        }
+      });
+    }
+  }
+  return events;
+}
+
+function metaEvents(payload) {
+  if (payload.object === "whatsapp_business_account") return parseWhatsappEvents(payload);
+  if (payload.object === "instagram") return parseInstagramEvents(payload);
+  return [...parseWhatsappEvents(payload), ...parseInstagramEvents(payload)];
+}
+
+async function sendWhatsappReply(event, text, request) {
+  const phoneNumberId = event.phoneNumberId || config.assistant.metaWhatsappPhoneNumberId;
+  if (!phoneNumberId || !event.replyTo) return false;
+
+  return postMetaGraph({
+    endpoint: `${phoneNumberId}/messages`,
+    token: config.assistant.metaWhatsappAccessToken,
+    platform: "whatsapp",
+    request,
+    body: {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: event.replyTo,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: cleanAssistantText(text, 4096)
+      }
+    }
+  });
+}
+
+async function sendInstagramReply(event, text, request) {
+  if (!event.replyTo) return false;
+
+  return postMetaGraph({
+    endpoint: `${config.assistant.metaInstagramGraphId || "me"}/messages`,
+    token: config.assistant.metaInstagramAccessToken,
+    platform: "instagram",
+    request,
+    body: {
+      recipient: {
+        id: event.replyTo
+      },
+      message: {
+        text: cleanAssistantText(text, 1000)
+      }
+    }
+  });
+}
+
 async function handleAssistantMessage({ request, payload, channel }) {
   const ctx = await channelAuthContext(request, channel);
   const cleanMessage = cleanAssistantText(payload.message, config.assistant.maxMessageChars);
@@ -450,6 +660,93 @@ function verifyTelegramSecret(request) {
 }
 
 export function registerAssistantRoutes(app) {
+  app.get("/v1/meta/webhook", async (request, reply) => {
+    const query = request.query || {};
+    const mode = String(query["hub.mode"] || "");
+    const token = String(query["hub.verify_token"] || "");
+    const challenge = String(query["hub.challenge"] || "");
+
+    if (!config.assistant.metaVerifyToken) {
+      return reply.code(503).send({
+        ok: false,
+        error: "META_VERIFY_TOKEN_MISSING",
+        message: "Meta webhook doğrulama anahtarı production ortamında tanımlı değil."
+      });
+    }
+
+    if (mode === "subscribe" && safeEqual(token, config.assistant.metaVerifyToken)) {
+      return reply.code(200).type("text/plain").send(challenge);
+    }
+
+    return reply.code(403).send({
+      ok: false,
+      error: "META_WEBHOOK_DENIED",
+      message: "Meta webhook doğrulanamadı."
+    });
+  });
+
+  app.post("/v1/meta/webhook", metaRateLimit, async (request, reply) => {
+    try {
+      verifyMetaSignature(request);
+      const events = metaEvents(request.body || {}).slice(0, 20);
+
+      if (!events.length) {
+        return reply.code(200).send({ ok: true, ignored: true, processed: 0, delivered: 0 });
+      }
+
+      const results = [];
+      for (const event of events) {
+        try {
+          const result = await handleAssistantMessage({
+            request,
+            channel: event.channel,
+            payload: {
+              message: event.text,
+              channel: event.channel,
+              conversationId: event.conversationId,
+              metadata: {
+                ...event.metadata,
+                source: "meta_webhook"
+              }
+            }
+          });
+
+          const delivered = event.channel === "whatsapp"
+            ? await sendWhatsappReply(event, result.message, request)
+            : await sendInstagramReply(event, result.message, request);
+
+          results.push({
+            ok: true,
+            channel: event.channel,
+            delivered,
+            conversationId: result.conversationId
+          });
+        } catch (error) {
+          request.log.warn({ channel: event.channel, error: error.message }, "Meta assistant event failed");
+          results.push({
+            ok: false,
+            channel: event.channel,
+            delivered: false
+          });
+        }
+      }
+
+      return reply.code(200).send({
+        ok: true,
+        processed: results.length,
+        delivered: results.filter((result) => result.delivered).length,
+        results
+      });
+    } catch (error) {
+      request.log.warn({ statusCode: error.statusCode || 500 }, "Meta assistant webhook failed");
+      return reply.code(error.statusCode || 500).send({
+        ok: false,
+        error: error.statusCode === 429 ? "RATE_LIMITED" : "META_WEBHOOK_ERROR",
+        message: publicAssistantErrorMessage(error)
+      });
+    }
+  });
+
   app.post("/v1/assistant/messages", assistantRateLimit, async (request, reply) => {
     try {
       const payload = assistantMessageSchema.parse(request.body || {});

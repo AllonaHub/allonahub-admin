@@ -31,6 +31,11 @@ export async function buildApp() {
         "ASSISTANT_AI_API_KEY",
         "OPENAI_API_KEY",
         "ASSISTANT_TELEGRAM_BOT_TOKEN",
+        "ASSISTANT_META_ACCESS_TOKEN",
+        "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
+        "ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN",
+        "ASSISTANT_META_APP_SECRET",
+        "ASSISTANT_META_VERIFY_TOKEN",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.iyzico.secretKey",
@@ -38,6 +43,11 @@ export async function buildApp() {
         "config.assistant.aiApiKey",
         "config.assistant.telegramBotToken",
         "config.assistant.telegramWebhookSecret",
+        "config.assistant.metaAccessToken",
+        "config.assistant.metaWhatsappAccessToken",
+        "config.assistant.metaInstagramAccessToken",
+        "config.assistant.metaAppSecret",
+        "config.assistant.metaVerifyToken",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "iyzico.secretKey",
@@ -45,12 +55,29 @@ export async function buildApp() {
         "assistant.aiApiKey",
         "assistant.telegramBotToken",
         "assistant.telegramWebhookSecret",
+        "assistant.metaAccessToken",
+        "assistant.metaWhatsappAccessToken",
+        "assistant.metaInstagramAccessToken",
+        "assistant.metaAppSecret",
+        "assistant.metaVerifyToken",
         "cronSecret"
       ]
     },
     genReqId: requestId,
     trustProxy: true,
     bodyLimit: 1024 * 1024
+  });
+
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser("application/json", { parseAs: "buffer" }, (request, body, done) => {
+    request.rawBody = body;
+    try {
+      const text = body.toString("utf8").trim();
+      done(null, text ? JSON.parse(text) : {});
+    } catch (error) {
+      error.statusCode = 400;
+      done(error);
+    }
   });
 
   await app.register(helmet, {

@@ -84,7 +84,27 @@ export const config = {
     maxReplyChars: readNumber("ASSISTANT_MAX_REPLY_CHARS", 700),
     rateLimitMax: readNumber("ASSISTANT_RATE_LIMIT_MAX", 20),
     telegramBotToken: readOptionalSecret("ASSISTANT_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"),
-    telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" })
+    telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
+    metaVerifyToken: readOptionalSecret("ASSISTANT_META_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
+    metaAppSecret: readOptionalSecret("ASSISTANT_META_APP_SECRET", "META_APP_SECRET"),
+    metaAccessToken: readOptionalSecret("ASSISTANT_META_ACCESS_TOKEN", "META_ACCESS_TOKEN"),
+    metaWhatsappAccessToken: readOptionalSecret(
+      "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
+      "WHATSAPP_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaWhatsappPhoneNumberId: readEnv("ASSISTANT_META_WHATSAPP_PHONE_NUMBER_ID", { required: false, defaultValue: "" }),
+    metaInstagramAccessToken: readOptionalSecret(
+      "ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN",
+      "INSTAGRAM_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaInstagramGraphId: readEnv("ASSISTANT_META_INSTAGRAM_GRAPH_ID", { required: false, defaultValue: "me" }),
+    metaGraphBaseUrl: readEnv("ASSISTANT_META_GRAPH_BASE_URL", { required: false, defaultValue: "https://graph.facebook.com" }).replace(/\/$/, ""),
+    metaGraphVersion: readEnv("ASSISTANT_META_GRAPH_VERSION", { required: false, defaultValue: "v23.0" }).replace(/^\/+|\/+$/g, ""),
+    metaSendTimeoutMs: readNumber("ASSISTANT_META_SEND_TIMEOUT_MS", 10000)
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
