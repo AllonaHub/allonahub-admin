@@ -22,7 +22,8 @@ export const ASSISTANT_SENDER_TYPES = [
 const SECRET_KEY_PATTERN = /(api[_-]?key|service[_-]?role|secret|token|authorization|password|refresh[_-]?token|access[_-]?token)/i;
 const CARD_PATTERN = /\b(?:\d[ -]*?){13,19}\b/;
 const PROMPT_INJECTION_PATTERN = /(ignore previous|system prompt|developer message|jailbreak|talimatlari yok say|onceki talimatlari|sistem komutu)/i;
-const SUPPORT_TICKET_PATTERN = /(canli destek|canlı destek|canliya bagla|canlıya bağla|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın)/i;
+const SUPPORT_TICKET_PATTERN = /(^|\s)(canli|canlı|destek|yardim|yardım)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
+const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayın; en kısa sürede temsilcilerimiz sizinle buradan iletişime geçecektir.";
 
 function clamp(value, min, max) {
   const number = Number(value);
@@ -539,14 +540,14 @@ function fallbackByIntent(intent, context = {}) {
 
   if (supportTicket?.id) {
     return {
-      text: `Teşekkür ederim, sizi canlı desteğe yönlendiriyorum. Talep numaranız: ${supportTicket.id}. Lütfen bu sohbetten ayrılmayın; ekibimiz uygun olduğunda buradan yanıt verecek.`,
+      text: `${LIVE_SUPPORT_REDIRECT_MESSAGE} Talep numaranız: ${supportTicket.id}.`,
       actions: [{ type: "support_ticket", id: supportTicket.id }]
     };
   }
 
   if (intent.key === "support_ticket") {
     return {
-      text: "Teşekkür ederim, sizi canlı desteğe yönlendiriyorum. Lütfen bu sohbetten ayrılmayın; ekibimiz uygun olduğunda buradan yanıt verecek. Bu sırada sipariş numarası veya konu detayını yazarsanız inceleme daha hızlı ilerler.",
+      text: `${LIVE_SUPPORT_REDIRECT_MESSAGE} Bu sırada sipariş numarası veya konu detayını yazarsanız inceleme daha hızlı ilerler.`,
       actions: [{ type: "open_url", label: "Destek", url: links.support }]
     };
   }
