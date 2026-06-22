@@ -609,7 +609,26 @@ function metaEvents(payload) {
   return [...parseWhatsappEvents(payload), ...parseInstagramEvents(payload)];
 }
 
-async function sendWhatsappReply(event, text, request) {
+function actionLinks(actions = []) {
+  return (Array.isArray(actions) ? actions : [])
+    .filter((action) => action?.type === "open_url" && /^https?:\/\//i.test(String(action.url || "")))
+    .slice(0, 5)
+    .map((action) => ({
+      label: cleanAssistantText(action.label || "Aç", 42) || "Aç",
+      url: String(action.url)
+    }));
+}
+
+function replyTextWithActionLinks(text, actions = [], maxLength = 4096) {
+  const links = actionLinks(actions);
+  const body = cleanAssistantText(text, maxLength);
+  if (!links.length) return body;
+
+  const suffix = links.map((link, index) => `${index + 1}. ${link.label}: ${link.url}`).join("\n");
+  return cleanAssistantText(`${body}\n\nHızlı bağlantılar:\n${suffix}`, maxLength);
+}
+
+async function sendWhatsappReply(event, text, request, actions = []) {
   const phoneNumberId = event.phoneNumberId || config.assistant.metaWhatsappPhoneNumberId;
   if (!phoneNumberId || !event.replyTo) return false;
 
@@ -625,13 +644,13 @@ async function sendWhatsappReply(event, text, request) {
       type: "text",
       text: {
         preview_url: false,
-        body: cleanAssistantText(text, 4096)
+        body: replyTextWithActionLinks(text, actions, 4096)
       }
     }
   });
 }
 
-async function sendInstagramReply(event, text, request) {
+async function sendInstagramReply(event, text, request, actions = []) {
   if (!event.replyTo) return false;
 
   return postMetaGraph({
@@ -644,7 +663,7 @@ async function sendInstagramReply(event, text, request) {
         id: event.replyTo
       },
       message: {
-        text: cleanAssistantText(text, 1000)
+        text: replyTextWithActionLinks(text, actions, 1000)
       }
     }
   });
@@ -909,8 +928,8 @@ export function registerAssistantRoutes(app) {
           const delivered = result.suppressReply
             ? false
             : event.channel === "whatsapp"
-              ? await sendWhatsappReply(event, result.message, request)
-              : await sendInstagramReply(event, result.message, request);
+              ? await sendWhatsappReply(event, result.message, request, result.actions)
+              : await sendInstagramReply(event, result.message, request, result.actions);
 
           results.push({
             ok: true,
