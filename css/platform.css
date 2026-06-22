@@ -1185,6 +1185,124 @@ body[data-theme] .platform-card:hover {
   box-shadow: var(--ah-shadow);
 }
 
+/* Shared account surface rule: account navigation and data panels must stay readable in every theme. */
+body[data-theme] .account-grid {
+  align-items: start;
+}
+
+body[data-theme] .side-menu {
+  padding: 10px;
+  border: 1px solid var(--ah-line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ah-surface) 88%, transparent);
+  box-shadow: var(--ah-shadow-soft);
+}
+
+body[data-theme] .side-menu a,
+body[data-theme] .side-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-strong) 72%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  box-shadow: none;
+  opacity: 1;
+  text-shadow: none;
+}
+
+body[data-theme] .side-menu a:hover,
+body[data-theme] .side-menu a:focus-visible,
+body[data-theme] .side-menu button:hover,
+body[data-theme] .side-menu button:focus-visible {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 14%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  transform: none;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ah-primary) 14%, transparent);
+}
+
+body[data-theme] .side-menu a[aria-current="page"] {
+  border-color: color-mix(in srgb, var(--ah-primary) 76%, var(--ah-line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ah-primary) 20%, var(--ah-surface)), color-mix(in srgb, var(--ah-accent) 12%, var(--ah-bg-strong)));
+  background-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  box-shadow: inset 3px 0 0 var(--ah-accent), 0 10px 28px color-mix(in srgb, var(--ah-primary) 16%, transparent);
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) {
+  background: var(--ah-card);
+  border-color: var(--ah-line);
+  color: var(--ah-ink) !important;
+  box-shadow: var(--ah-shadow-soft);
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) :where(h1, h2, h3, h4, b, strong, a) {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) :where(p, span, small, label, li, td) {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme] .account-grid .data-table {
+  color: var(--ah-ink);
+}
+
+body[data-theme] .account-grid .data-table th,
+body[data-theme] .account-grid .data-table td {
+  border-color: var(--ah-line);
+}
+
+body[data-theme] .account-grid .data-table th {
+  color: color-mix(in srgb, var(--ah-ink) 72%, transparent) !important;
+}
+
+body[data-theme] .account-grid .data-table td a,
+body[data-theme] .account-grid .empty-state a {
+  color: var(--ah-primary) !important;
+  font-weight: 800;
+}
+
+body[data-theme] .account-grid .status-pill {
+  color: color-mix(in srgb, var(--ah-accent) 88%, var(--ah-ink)) !important;
+  background: color-mix(in srgb, var(--ah-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ah-accent) 38%, var(--ah-line));
+}
+
+body[data-theme] .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+body[data-theme] .stat-card {
+  min-height: 118px;
+  padding: 18px;
+  border: 1px solid var(--ah-line);
+  border-radius: 12px;
+}
+
+body[data-theme] .stat-card span {
+  display: block;
+  margin-bottom: 10px;
+}
+
+body[data-theme] .stat-card strong {
+  display: block;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+}
+
+body[data-theme="white"] .side-menu,
+body[data-theme="white"] .side-menu a,
+body[data-theme="white"] .side-menu button,
+body[data-theme="white"] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) {
+  color: var(--ah-ink) !important;
+}
+
 body[data-theme] .product-card {
   position: relative;
   overflow: hidden;
@@ -2747,6 +2865,10 @@ body[data-theme] .site-footer .social-icons span {
   .platform-card {
     min-height: auto;
     padding: 18px;
+  }
+
+  body[data-theme] .stats-grid {
+    grid-template-columns: 1fr;
   }
 
   .footer-social,
