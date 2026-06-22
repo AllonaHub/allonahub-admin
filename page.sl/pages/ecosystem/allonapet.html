@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allona Evcil Hayvan | AllonaHub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:310px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:310px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:145px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.pet-card{padding:16px;min-height:285px;text-decoration:none;color:white}
+.pet-img{height:145px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.pet-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.pet-card b{color:#ffd700;font-size:18px}.pet-card p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:22px;font-weight:900;margin-top:8px}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.service-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.service-main{padding:28px;min-height:270px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.service-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.service-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.warning{padding:20px;margin-top:18px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.08)}.warning b{color:#ffd700}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Pet Profilim</a><a href="#">Aşı Takibi</a><a href="#">Kayıp İlanlarım</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Mama, veteriner, petshop, kayıp ilanı, sahiplendirme veya bakım ara..."></div>
+<div class="actions glass"><a href="../account/login.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Sepetim</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Evcil Hayvan</div>
+<a href="#">Petshop</a><a href="#">Veteriner</a><a href="#">Mama</a><a href="#">Kayıp İlanı</a><a href="#">Sahiplendirme</a><a href="#">Pet Otel</a><a href="#">Pet Kuaför</a><a href="#">Aşı Takibi</a><a href="#">Acil Vet</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Evcil Hayvan<br>Pet Yaşam Ekosistemi</h1>
+<p>Petshop ürünleri, veteriner randevusu, mama aboneliği, kayıp hayvan ilanı, sahiplendirme, pet otel, pet kuaför ve aşı takibi tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>Veteriner & Aşı Takibi</h3>
+<p>Pet profilini oluştur, aşı tarihlerini takip et, yakındaki veterinerlerden randevu al.</p>
+<div class="flow"><div>Pet profili</div><div>Aşı takibi</div><div>Randevu</div></div>
+</div>
+<div class="hero-card glass">
+<h3>Kayıp & Sahiplendirme</h3>
+<p>Kayıp hayvan ilanı yayınla, bulunan hayvanları görüntüle veya sahiplendirme başvurusu oluştur.</p>
+<div class="flow"><div>İlan oluştur</div><div>Konum seç</div><div>Bildirim yayını</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Pet Hizmetleri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Petshop</h3><p>Mama, oyuncak, bakım ve pet aksesuar ürünleri.</p></div>
+<div class="card glass"><h3>Veteriner</h3><p>Muayene, aşı, kontrol ve acil veteriner randevuları.</p></div>
+<div class="card glass"><h3>Mama Aboneliği</h3><p>Aylık mama paketleri ve otomatik teslimat.</p></div>
+<div class="card glass"><h3>Kayıp Hayvan</h3><p>Konum bazlı kayıp ve bulunan hayvan ilanları.</p></div>
+<div class="card glass"><h3>Sahiplendirme</h3><p>Güvenli başvuru ve takip sistemi.</p></div>
+<div class="card glass"><h3>Pet Otel</h3><p>Kısa ve uzun süreli konaklama hizmetleri.</p></div>
+<div class="card glass"><h3>Pet Kuaför</h3><p>Tüy kesimi, yıkama ve bakım randevusu.</p></div>
+<div class="card glass"><h3>Mikroçip</h3><p>Kimlik ve mikroçip bilgi takip alanı.</p></div>
+<div class="card glass"><h3>Acil Veteriner</h3><p>Yakındaki açık veteriner kliniklerine erişim.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Pet alışverişi ve randevulardan HP kazan.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Petshop Ürünleri</h2><a href="#">Tüm Ürünler</a></div>
+<div class="grid-4">
+<a class="pet-card glass" data-module-tags="pet,shop,market,hp"><div class="pet-img"></div><b>Premium Kedi Maması</b><p>Yetişkin kediler için mama paketi</p><div class="price">599,99 ₺</div><div class="meta"><span>+35 HP</span><span>Petshop</span></div></a>
+<a class="pet-card glass" data-module-tags="pet,shop,market,hp"><div class="pet-img"></div><b>Köpek Bakım Seti</b><p>Şampuan, fırça ve oyuncak</p><div class="price">449,99 ₺</div><div class="meta"><span>+25 HP</span><span>Bakım</span></div></a>
+<a class="pet-card glass" data-module-tags="pet,shop,hp"><div class="pet-img"></div><b>Kedi Kumu Paketi</b><p>Ekonomik aylık paket</p><div class="price">299,99 ₺</div><div class="meta"><span>+20 HP</span><span>Market</span></div></a>
+<a class="pet-card glass" data-module-tags="pet,shop,hp"><div class="pet-img"></div><b>Pet Oyuncak Seti</b><p>Kedi ve köpek oyuncakları</p><div class="price">199,99 ₺</div><div class="meta"><span>+15 HP</span><span>Oyuncak</span></div></a>
+</div>
+
+<div class="section-title"><h2>Veteriner Randevusu</h2><a href="#">Yakınımdaki Klinikler</a></div>
+<section class="service-box">
+<div class="service-main glass">
+<h2>Pet Sağlığı ve Randevu Takibi</h2>
+<p>Pet bilgilerini ekle, türünü ve yaşını belirt, aşı takvimi oluştur ve yakındaki partner veteriner kliniklerinden randevu talebi gönder.</p>
+<div class="input-box">Pet türü: Kedi / Köpek / Kuş / Diğer</div>
+<div class="input-box">Hizmet: Muayene / Aşı / Acil / Kontrol</div>
+<div class="input-box">Konum: Yakınımdaki klinikler</div>
+<a class="btn" href="#">Veteriner Randevusu Al</a>
+</div>
+<div class="service-main glass">
+<h2>Aşı & Mikroçip Takibi</h2>
+<p>Aşı tarihleri, ilaç kullanımı, mikroçip numarası ve bakım notları pet profilinde saklanabilir.</p>
+<div class="input-box">Son aşı tarihi</div>
+<div class="input-box">Mikroçip numarası</div>
+<div class="input-box">Sonraki kontrol hatırlatması</div>
+<a class="btn" href="#">Pet Profilime Ekle</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Kayıp, Bulunan ve Sahiplendirme</h2><a href="#">İlan Oluştur</a></div>
+<div class="grid-4">
+<div class="pet-card glass"><div class="pet-img"></div><b>Kayıp Kedi İlanı</b><p>Konum bazlı bildirim ve paylaşım alanı.</p><div class="meta"><span>Kayıp</span><span>İstanbul</span></div></div>
+<div class="pet-card glass"><div class="pet-img"></div><b>Bulunan Köpek</b><p>Bulunan hayvan bildirimi ve sahip arama.</p><div class="meta"><span>Bulundu</span><span>Kadıköy</span></div></div>
+<div class="pet-card glass"><div class="pet-img"></div><b>Sahiplendirme</b><p>Kontrollü başvuru ve iletişim süreci.</p><div class="meta"><span>Başvuru</span><span>Açık</span></div></div>
+<div class="pet-card glass"><div class="pet-img"></div><b>Pet Otel İlanı</b><p>Güvenli konaklama hizmetleri.</p><div class="meta"><span>Rezervasyon</span><span>HP</span></div></div>
+</div>
+
+<div class="section-title"><h2>HP Kazandıran Pet Avantajları</h2><a href="../account/user.html">HP Dünyası</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Mama Aboneliği</h3><p>Aylık abonelikte ekstra HP kazan.</p></div>
+<div class="card glass"><h3>Veteriner Randevusu</h3><p>Randevu tamamlanınca HP işlenir.</p></div>
+<div class="card glass"><h3>Petshop Alışverişi</h3><p>Seçili ürünlerde HP ve kupon avantajı.</p></div>
+<div class="card glass"><h3>Sahiplendirme Desteği</h3><p>Kontrollü sahiplendirme akışı.</p></div>
+<div class="card glass"><h3>Premium Pet</h3><p>Elite üyeler için özel pet hizmetleri.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Veteriner, Petshop, Pet Otel veya Kuaför Partneri Ol</h2>
+<p>Allona Evcil Hayvan partner paneliyle ürün, stok, randevu, aşı takibi, kayıp ilanı, sahiplendirme, pet otel rezervasyonu ve HP kampanyaları tek sistemden yönetilir.</p>
+<a class="btn" href="../partner/partner.html">Pet Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Petshop ürün yönetimi</div>
+<div>Veteriner randevu sistemi</div>
+<div>Aşı ve mikroçip takip paneli</div>
+<div>Kayıp / bulunan ilan yönetimi</div>
+<div>Pet otel ve kuaför rezervasyonu</div>
+<div>HP ve kupon kampanyaları</div>
+</div>
+</section>
+
+<div class="warning glass">
+<b>Önemli Not:</b> Allona Evcil Hayvan acil veteriner hizmetinin yerine geçmez. Acil durumlarda en yakın veteriner kliniğine başvurulmalıdır.
+</div>
+
+<section class="info glass">
+<h2>Allona Evcil Hayvan: Pet Yaşamını Kolaylaştıran Ekosistem</h2>
+<p>Allona Evcil Hayvan; petshop ürünleri, veteriner randevusu, mama aboneliği, kayıp hayvan ilanı, sahiplendirme ve pet bakım hizmetlerini AllonaHub içinde birleştiren premium pet yaşam modülüdür.</p>
+<h3>Pet Profili ve Sağlık Takibi</h3>
+<p>Kullanıcı evcil hayvan profilini oluşturabilir, aşı tarihlerini ve mikroçip bilgilerini takip edebilir. Partner veterinerler randevu ve hizmet süreçlerini panelden yönetebilir.</p>
+<h3>Allona Market ve Shop Bağlantısı</h3>
+<p>Mama, kedi kumu, oyuncak ve bakım ürünleri uygun etiketlerle Allona Market ve AllonaHub içinde de görünebilir. Böylece pet ürünleri ekosistemin farklı satış alanlarına otomatik bağlanır.</p>
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260622-corp1" defer></script>
+</body>
+</html>

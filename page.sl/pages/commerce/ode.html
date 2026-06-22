@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ödeme | AllonaHub</title>
+
+  <style>
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:
+        radial-gradient(circle at top left,rgba(0,212,255,.25),transparent 35%),
+        radial-gradient(circle at bottom right,rgba(255,217,121,.18),transparent 35%),
+        linear-gradient(180deg,#02070c,#062536,#02070c);
+      color:#fff;
+      min-height:100vh;
+    }
+
+    .page{
+      max-width:1100px;
+      margin:auto;
+      padding:45px 20px;
+    }
+
+    .checkout{
+      display:grid;
+      grid-template-columns:1fr .85fr;
+      gap:24px;
+      align-items:start;
+    }
+
+    .card{
+      width:100%;
+      min-width:0;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(0,212,255,.18);
+      border-radius:28px;
+      padding:28px;
+      backdrop-filter:blur(18px);
+      box-shadow:0 0 35px rgba(0,180,216,.12),0 20px 70px rgba(0,0,0,.45);
+    }
+
+    h1,h2{
+      margin-top:0;
+      color:#ffd979;
+      text-shadow:0 0 22px rgba(255,217,121,.25);
+    }
+
+    .badge{
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(255,217,121,.12);
+      border:1px solid rgba(255,217,121,.25);
+      color:#ffd979;
+      font-size:13px;
+      margin-bottom:15px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      color:#bfeaf6;
+      margin:12px 0 7px;
+    }
+
+    input{
+      width:100%;
+      padding:15px 16px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      outline:none;
+      font-size:15px;
+    }
+
+    input::placeholder{color:rgba(220,245,255,.55)}
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .pay-btn{
+      display:block;
+      width:100%;
+      margin-top:20px;
+      border:none;
+      padding:16px 22px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#00b4d8,#ffd979);
+      color:#06131a;
+      font-size:17px;
+      font-weight:bold;
+      text-align:center;
+      text-decoration:none;
+      cursor:pointer;
+      box-shadow:0 0 30px rgba(0,180,216,.25);
+    }
+
+    .secure-note{
+      margin-top:14px;
+      font-size:13px;
+      color:#bfeaf6;
+      line-height:1.6;
+      text-align:center;
+    }
+
+    .logos{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:6px;
+      margin-top:18px;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+    }
+
+    .logo{
+      min-width:58px;
+      height:30px;
+      padding:0 9px;
+      border-radius:8px;
+      background:rgba(255,255,255,.92);
+      color:#06131a;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .logo.iyzico{
+      min-width:104px;
+    }
+
+    .logo.iyzico img{
+      display:block;
+      width:92px;
+      height:auto;
+    }
+
+    .iyzico-logo--white{display:none!important}
+
+    body[data-theme="ocean"] .logo.iyzico,
+    body[data-theme="sunset"] .logo.iyzico,
+    body[data-theme="forest"] .logo.iyzico,
+    body[data-theme="turquoise"] .logo.iyzico{
+      background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
+      border:1px solid rgba(0,213,255,.24);
+    }
+
+    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--colored,
+    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--colored,
+    body[data-theme="forest"] .logo.iyzico .iyzico-logo--colored,
+    body[data-theme="turquoise"] .logo.iyzico .iyzico-logo--colored{display:none!important}
+
+    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--white,
+    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--white,
+    body[data-theme="forest"] .logo.iyzico .iyzico-logo--white,
+    body[data-theme="turquoise"] .logo.iyzico .iyzico-logo--white{display:block!important}
+
+    body[data-theme="white"] .logo.iyzico .iyzico-logo--colored{display:block!important}
+    body[data-theme="white"] .logo.iyzico .iyzico-logo--white{display:none!important}
+
+    .logo--mastercard{
+      width:58px;
+      min-width:54px;
+      padding:0 6px;
+      font-size:0;
+    }
+
+    .logo--mastercard:before{
+      content:"";
+      width:28px;
+      height:18px;
+      display:inline-block;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 38% 50%,#eb001b 0 43%,transparent 45%),
+        radial-gradient(circle at 62% 50%,#f79e1b 0 43%,transparent 45%);
+    }
+
+    .summary-item{
+      display:flex;
+      justify-content:space-between;
+      gap:15px;
+      padding:14px 0;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      color:#d8eef7;
+    }
+
+    .summary-total{
+      display:flex;
+      justify-content:space-between;
+      gap:15px;
+      padding-top:20px;
+      font-size:22px;
+      font-weight:bold;
+      color:#ffd979;
+    }
+
+    .info-box{
+      margin-top:22px;
+      padding:16px;
+      border-radius:18px;
+      background:rgba(0,180,216,.09);
+      border:1px solid rgba(0,180,216,.22);
+      color:#dff8ff;
+      line-height:1.65;
+      font-size:14px;
+    }
+
+    .back{
+      display:inline-block;
+      margin-top:24px;
+      color:#ffd979;
+      text-decoration:none;
+    }
+
+    @media(max-width:850px){
+      .checkout{grid-template-columns:1fr}
+      .row{grid-template-columns:1fr}
+    }
+  </style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+  <main class="page">
+    <section class="checkout">
+
+      <div class="card">
+        <div class="badge">Güvenli Ödeme</div>
+        <h1>Güvenli Ödeme Yönlendirmesi</h1>
+
+        <form id="paymentForm">
+          <div class="info-box">
+            Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz.
+            Sipariş veya paket seçiminiz checkout adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.
+          </div>
+
+          <a href="checkout.html" class="pay-btn">
+            Güvenli Checkout'a Devam Et
+          </a>
+
+          <div class="secure-note">
+            Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.
+          </div>
+
+          <div class="logos">
+            <div class="logo iyzico">
+              <img class="iyzico-logo iyzico-logo--colored" src="../../images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
+              <img class="iyzico-logo iyzico-logo--white" src="../../images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
+            </div>
+            <div class="logo">VISA</div>
+            <div class="logo logo--mastercard" aria-label="Mastercard"></div>
+            <div class="logo">AMEX</div>
+          </div>
+        </form>
+
+        <a href="cart.html" class="back">← Sepete Dön</a>
+      </div>
+
+      <aside class="card">
+        <h2>Sipariş Özeti</h2>
+
+        <div class="summary-item">
+          <span>Ürün / Hizmet Tutarı</span>
+          <strong>₺499,99</strong>
+        </div>
+
+        <div class="summary-item">
+          <span>Kargo / Hizmet Bedeli</span>
+          <strong>₺0,00</strong>
+        </div>
+
+        <div class="summary-item">
+          <span>İndirim Kuponu</span>
+          <strong>-₺0,00</strong>
+        </div>
+
+        <div class="summary-total">
+          <span>Toplam</span>
+          <span>₺499,99</span>
+        </div>
+
+        <div class="info-box">
+          Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek ödeme checkout
+          ve iyzico güvenli ödeme sayfasında tamamlanır.
+        </div>
+      </aside>
+
+    </section>
+  </main>
+
+  <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260621-cart-snapshot1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260622-corp1" defer></script>
+</body>
+</html>

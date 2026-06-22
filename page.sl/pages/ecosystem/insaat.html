@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allona İnşaat & Yapı | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff50,transparent 32%),radial-gradient(circle at bottom right,#ffd70035,transparent 30%),linear-gradient(135deg,#020814,#07172d,#2a1a05)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#ffd70014,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(255,215,0,.28);box-shadow:0 0 30px rgba(255,215,0,.12),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}
+.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.brand small{display:block;font-size:12px;color:#ffd700;margin-top:2px}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #ffd700;border-radius:50%;position:relative;box-shadow:0 0 14px #ffd700}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#ffd700;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
+.actions a{color:white;text-decoration:none;font-weight:800}
+
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
+.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:320px;padding:32px;background:radial-gradient(circle at right,#ffd70033,transparent 34%),linear-gradient(135deg,#04152e,#10213d,#3b2607)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
+.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:680px}
+.hero-card{padding:24px;min-height:320px}
+.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}
+.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}
+.flow div{padding:10px 14px;border-radius:14px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.18);font-size:13px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
+.section-title h2{color:#ffd700;font-size:30px}
+.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:150px}
+.card h3{color:#ffd700;margin-bottom:8px}
+.card p{font-size:13px;opacity:.75;line-height:1.45}
+.project{padding:16px;min-height:270px;text-decoration:none;color:white}
+.project-img{height:130px;border-radius:18px;background:linear-gradient(135deg,#073c78,#2a1a05);margin-bottom:14px;position:relative;overflow:hidden}
+.project-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#ffd70088,transparent 65%)}
+.project b{color:#ffd700;font-size:18px}
+.project p{font-size:13px;opacity:.72;margin:6px 0}
+.price{color:#00e5ff;font-size:22px;font-weight:900;margin-top:8px}
+.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+
+.request-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.request-main{padding:28px;min-height:280px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#10213d)}
+.request-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}
+.request-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+</style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Projelerim</a>
+<a href="#">Tekliflerim</a>
+<a href="#">Yapı Partneri Ol</a>
+<a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass">
+<div><b>Allona</b><span>Hub</span><small>İnşaat & Yapı Ekosistemi</small></div>
+</div>
+
+<div class="search glass">
+<div class="search-mark"></div>
+<input placeholder="İnşaat, müteahhit, yapı malzemesi, mimarlık, prefabrik, tadilat veya proje ara...">
+</div>
+
+<div class="actions glass">
+<a href="../account/login.html">Giriş Yap</a>
+<a href="#">Projelerim</a>
+<a href="#">Teklif Al</a>
+</div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>İnşaat & Yapı</div>
+<a href="#">Müteahhit</a>
+<a href="#">Yapı Market</a>
+<a href="#">Mimarlık</a>
+<a href="#">İç Mimarlık</a>
+<a href="#">Prefabrik</a>
+<a href="#">Tiny House</a>
+<a href="#">Tadilat</a>
+<a href="#">Malzeme</a>
+<a href="#">Mühendislik</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona İnşaat & Yapı</h1>
+<p>Arsa geliştirme, konut projeleri, müteahhitlik, mimarlık, mühendislik, yapı malzemeleri, tadilat, prefabrik ev, tiny house ve büyük ölçekli yapı süreçleri AllonaHub içinde tek premium platformda birleşir.</p>
+</div>
+
+<div class="hero-card glass">
+<h3>Proje Talebi Oluştur</h3>
+<p>Kullanıcı arsa, ev, villa, tadilat veya ticari proje ihtiyacını girer; uygun müteahhit, mimar, mühendis ve tedarikçilerden teklif alır.</p>
+<div class="flow"><div>Proje türü</div><div>Konum & bütçe</div><div>Teklif al</div></div>
+</div>
+
+<div class="hero-card glass">
+<h3>Malzeme & Usta Ağı</h3>
+<p>Yapı market, çelik, beton, seramik, elektrik, tesisat, boya, çatı, kapı-pencere ve usta hizmetleri merkezi havuzda çalışır.</p>
+<div class="flow"><div>Malzeme</div><div>Usta</div><div>Teslimat</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>İnşaat & Yapı Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+
+<div class="grid-5">
+<div class="card glass"><h3>Müteahhitlik</h3><p>Konut, villa, ticari yapı ve arsa geliştirme projeleri.</p></div>
+<div class="card glass"><h3>Mimarlık</h3><p>Konsept proje, ruhsat projesi, cephe tasarımı ve çizim.</p></div>
+<div class="card glass"><h3>Mühendislik</h3><p>Statik, elektrik, mekanik, zemin ve teknik danışmanlık.</p></div>
+<div class="card glass"><h3>İç Mimarlık</h3><p>Dekorasyon, mobilya, aydınlatma ve premium iç mekan tasarımı.</p></div>
+<div class="card glass"><h3>Yapı Market</h3><p>Çimento, boya, seramik, elektrik, tesisat ve yapı malzemeleri.</p></div>
+<div class="card glass"><h3>Prefabrik Ev</h3><p>Prefabrik, konteyner, modüler yapı ve hızlı kurulum sistemleri.</p></div>
+<div class="card glass"><h3>Tiny House</h3><p>Ahşap ev, tiny house, A-frame ve mobil yaşam çözümleri.</p></div>
+<div class="card glass"><h3>Tadilat</h3><p>Banyo, mutfak, zemin, çatı, boya ve genel yenileme işleri.</p></div>
+<div class="card glass"><h3>Şantiye Hizmetleri</h3><p>İş makinesi, vinç, güvenlik, konteyner ve saha hizmetleri.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Malzeme, proje ve hizmet harcamalarından HP kazan.</p></div>
+</div>
+
+<div class="section-title">
+<h2>Öne Çıkan Yapı Projeleri</h2>
+<a href="#">Tüm Projeler</a>
+</div>
+
+<div class="grid-4">
+
+<div class="project glass">
+<div class="project-img"></div>
+<b>Modern Villa Projesi</b>
+<p>Özel havuzlu, akıllı ev sistemli premium villa.</p>
+<div class="price">4.500.000 ₺</div>
+<div class="meta">
+<span>+5000 HP</span>
+<span>350 m²</span>
+</div>
+</div>
+
+<div class="project glass">
+<div class="project-img"></div>
+<b>A-Frame Ahşap Ev</b>
+<p>Doğa yaşamı ve turizm yatırımları için özel tasarım.</p>
+<div class="price">1.250.000 ₺</div>
+<div class="meta">
+<span>+2500 HP</span>
+<span>80 m²</span>
+</div>
+</div>
+
+<div class="project glass">
+<div class="project-img"></div>
+<b>Tiny House</b>
+<p>Taşınabilir, modern ve enerji verimli yaşam alanı.</p>
+<div class="price">890.000 ₺</div>
+<div class="meta">
+<span>+1800 HP</span>
+<span>35 m²</span>
+</div>
+</div>
+
+<div class="project glass">
+<div class="project-img"></div>
+<b>Prefabrik Villa</b>
+<p>Hızlı kurulumlu lüks yaşam konsepti.</p>
+<div class="price">1.950.000 ₺</div>
+<div class="meta">
+<span>+3000 HP</span>
+<span>120 m²</span>
+</div>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Proje Talebi Oluştur</h2>
+<a href="#">Projelerim</a>
+</div>
+
+<section class="request-box">
+
+<div class="request-main glass">
+<h2>Akıllı Proje Oluşturucu</h2>
+<p>
+Arsa, villa, daire, işyeri, depo veya fabrika projesi oluştur.
+Sistem uygun müteahhitleri, mimarları, mühendisleri ve
+tedarikçileri otomatik eşleştirsin.
+</p>
+
+<div class="input-box">Proje Türü Seç</div>
+<div class="input-box">Şehir / İlçe</div>
+<div class="input-box">Bütçe Gir</div>
+
+<a class="btn" href="#">
+Teklif Al
+</a>
+
+</div>
+
+<div class="request-main glass">
+
+<h2>AI Yapı Danışmanı</h2>
+
+<p>
+"Küçükçekmece'de 300m² arsa üzerine 2 katlı villa yaptırmak istiyorum"
+yaz ve sistem otomatik maliyet, mimar ve yüklenici önerileri oluştursun.
+</p>
+
+<div class="input-box">Arsa Bilgileri</div>
+<div class="input-box">Yapı Tipi</div>
+<div class="input-box">Tahmini Bütçe</div>
+
+<a class="btn" href="#">
+AI Analizi Başlat
+</a>
+
+</div>
+
+</section>
+
+<div class="section-title">
+<h2>Yapı Market</h2>
+<a href="#">Tüm Ürünler</a>
+</div>
+
+<div class="grid-5">
+
+<div class="card glass">
+<h3>Çimento</h3>
+<p>Çimento, harç ve beton ürünleri.</p>
+</div>
+
+<div class="card glass">
+<h3>Seramik</h3>
+<p>Zemin ve duvar kaplama sistemleri.</p>
+</div>
+
+<div class="card glass">
+<h3>Boya</h3>
+<p>İç cephe, dış cephe ve dekoratif boyalar.</p>
+</div>
+
+<div class="card glass">
+<h3>Elektrik</h3>
+<p>Kablo, sigorta, pano ve aydınlatma ürünleri.</p>
+</div>
+
+<div class="card glass">
+<h3>Tesisat</h3>
+<p>Su tesisatı ve mekanik sistemler.</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>AllonaHub Entegrasyonları</h2>
+<a href="#">Detaylar</a>
+</div>
+
+<div class="grid-5">
+
+<div class="card glass">
+<h3>Gayrimenkul</h3>
+<p>Satılık arsa, konut ve ticari alan bağlantıları.</p>
+</div>
+
+<div class="card glass">
+<h3>Mühendislik</h3>
+<p>Teknik hesaplama ve proje desteği.</p>
+</div>
+
+<div class="card glass">
+<h3>Nakliye</h3>
+<p>Malzeme ve ekipman taşımacılığı.</p>
+</div>
+
+<div class="card glass">
+<h3>Sigorta</h3>
+<p>İnşaat ve şantiye sigorta çözümleri.</p>
+</div>
+
+<div class="card glass">
+<h3>Kupon</h3>
+<p>Ödeme, taksit ve HP avantajları.</p>
+</div>
+
+</div>
+
+<div class="section-title">
+<h2>Partner Ol</h2>
+<a href="#">Başvur</a>
+</div>
+
+<div class="glass" style="padding:35px">
+
+<h2 style="color:#ffd700;font-size:34px;margin-bottom:15px">
+Allona Yapı Partneri Ol
+</h2>
+
+<p style="line-height:1.8;font-size:16px;opacity:.88">
+Müteahhitler, mimarlar, mühendisler,
+yapı marketleri, prefabrik üreticileri,
+tiny house firmaları ve tadilat ekipleri
+AllonaHub üzerinden milyonlarca kullanıcıya ulaşabilir.
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:25px">
+
+<div class="glass" style="padding:18px;text-align:center">
+🏗️<br><br>Müteahhitler
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+📐<br><br>Mimarlar
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+⚙️<br><br>Mühendisler
+</div>
+
+<div class="glass" style="padding:18px;text-align:center">
+🧱<br><br>Yapı Marketler
+</div>
+
+</div>
+
+<a class="btn" href="../partner/partner.html">
+Partner Başvurusu Yap
+</a>
+
+</div>
+
+<div class="glass" style="padding:35px;margin-top:25px">
+
+<h2 style="color:#ffd700;margin-bottom:15px">
+Allona İnşaat & Yapı Nedir?
+</h2>
+
+<p style="line-height:1.9;opacity:.85">
+Allona İnşaat & Yapı; arsa geliştirmeden anahtar teslim projelere,
+mimarlıktan mühendisliğe, yapı marketten tadilat hizmetlerine kadar
+tüm yapı sektörünü dijital ortamda bir araya getiren premium ekosistemdir.
+</p>
+
+<br>
+
+<p style="line-height:1.9;opacity:.85">
+Kullanıcılar proje oluşturabilir, teklif alabilir,
+malzeme satın alabilir, müteahhitlerle çalışabilir,
+ödemelerini Kupon üzerinden gerçekleştirebilir
+ve HP kazanabilir.
+</p>
+
+</div>
+
+<div style="height:40px"></div>
+
+</div>
+  <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260622-corp1" defer></script>
+</body>
+</html>

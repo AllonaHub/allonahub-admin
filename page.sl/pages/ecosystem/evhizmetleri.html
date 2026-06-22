@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allona Ev Hizmetleri | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:310px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:310px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:150px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.service{padding:16px;min-height:265px;text-decoration:none;color:white}.service-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.service-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.service b{color:#ffd700;font-size:18px}.service p{font-size:13px;opacity:.72;margin:6px 0}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.request-box{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.request-main{padding:28px;min-height:270px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.request-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.request-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Taleplerim</a><a href="#">Randevularım</a><a href="#">Hizmet Veren Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Temizlik, tesisat, boya, nakliye, tamir, bakım veya usta ara..."></div>
+<div class="actions glass"><a href="../account/login.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Talep Oluştur</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Ev Hizmetleri</div>
+<a href="#">Temizlik</a><a href="#">Tesisat</a><a href="#">Elektrik</a><a href="#">Boya</a><a href="#">Nakliye</a><a href="#">Montaj</a><a href="#">Tamir</a><a href="#">Bahçe</a><a href="#">HP Kazandıran</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Ev Hizmetleri<br>Akıllı Usta & Hizmet Ekosistemi</h1>
+<p>Ev temizliği, tesisat, elektrik, boya, montaj, nakliye, klima servisi, bahçe bakımı, tadilat ve acil usta hizmetleri tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>Hızlı Hizmet Talebi</h3>
+<p>Kullanıcı ihtiyacını seçer, konum ve tarih belirler, uygun partner hizmet verenlere talep gönderilir.</p>
+<div class="flow"><div>Hizmet seç</div><div>Tarih belirle</div><div>Teklif al</div></div>
+</div>
+<div class="hero-card glass">
+<h3>Güvenli Partner Sistemi</h3>
+<p>Hizmet verenler doğrulama, puan, randevu, ödeme ve performans sistemiyle yönetilir.</p>
+<div class="flow"><div>Doğrulama</div><div>Randevu</div><div>HP + ödeme</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Ev Hizmeti Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Ev Temizliği</h3><p>Günlük, haftalık, derin temizlik ve taşınma temizliği.</p></div>
+<div class="card glass"><h3>Tesisat</h3><p>Su kaçağı, musluk, lavabo, petek ve kombi bağlantıları.</p></div>
+<div class="card glass"><h3>Elektrik</h3><p>Priz, sigorta, aydınlatma, arıza ve kurulum işleri.</p></div>
+<div class="card glass"><h3>Boya & Badana</h3><p>Oda, ev, ofis ve dekoratif boya hizmetleri.</p></div>
+<div class="card glass"><h3>Nakliye</h3><p>Evden eve, parça eşya, ofis ve şehir içi taşıma.</p></div>
+<div class="card glass"><h3>Mobilya Montaj</h3><p>Dolap, masa, yatak, raf ve hazır mobilya kurulumu.</p></div>
+<div class="card glass"><h3>Klima Servisi</h3><p>Klima montaj, bakım, temizlik ve arıza hizmetleri.</p></div>
+<div class="card glass"><h3>Tadilat</h3><p>Mutfak, banyo, zemin, alçıpan ve küçük tadilat işleri.</p></div>
+<div class="card glass"><h3>Bahçe & Balkon</h3><p>Bahçe bakımı, peyzaj, balkon düzenleme ve bitki bakımı.</p></div>
+<div class="card glass"><h3>Acil Usta</h3><p>Acil tesisat, elektrik ve kapı-kilit hizmetleri.</p></div>
+</div>
+
+<div class="section-title"><h2>Popüler Hizmetler</h2><a href="#">Yakınımdakiler</a></div>
+<div class="grid-4">
+<a class="service glass" data-module-tags="home,cleaning,hp"><div class="service-img"></div><b>Derin Ev Temizliği</b><p>4 saatlik profesyonel temizlik paketi</p><div class="meta"><span>+60 HP</span><span>Randevu</span></div></a>
+<a class="service glass" data-module-tags="home,repair,hp"><div class="service-img"></div><b>Tesisat Ustası</b><p>Su kaçağı ve arıza kontrolü</p><div class="meta"><span>+40 HP</span><span>Acil</span></div></a>
+<a class="service glass" data-module-tags="home,moving,hp"><div class="service-img"></div><b>Parça Eşya Nakliye</b><p>Şehir içi hızlı taşıma</p><div class="meta"><span>+50 HP</span><span>Nakliye</span></div></a>
+<a class="service glass" data-module-tags="home,paint,hp"><div class="service-img"></div><b>Oda Boyama</b><p>Malzemeli / malzemesiz teklif</p><div class="meta"><span>+45 HP</span><span>Boya</span></div></a>
+</div>
+
+<div class="section-title"><h2>Hizmet Talebi Oluştur</h2><a href="#">Taleplerim</a></div>
+<section class="request-box">
+<div class="request-main glass">
+<h2>İhtiyacını Yaz, Uygun Ustalardan Teklif Al</h2>
+<p>Hizmet türünü, adres bölgesini, tarih-saat tercihini ve açıklamanı gir. Sistem uygun partner hizmet verenleri listeler, teklif ve randevu akışı başlar.</p>
+<div class="input-box">Hizmet türü: Temizlik / Tesisat / Elektrik / Boya / Nakliye</div>
+<div class="input-box">Konum: İl / ilçe / mahalle</div>
+<div class="input-box">Tarih ve saat tercihi</div>
+<a class="btn" href="#">Talep Oluştur</a>
+</div>
+<div class="request-main glass">
+<h2>Güvenli Ödeme & HP</h2>
+<p>Hizmet tamamlandığında kullanıcı onayıyla ödeme ve HP kaydı işlenir. Partner performansı puan, iptal oranı ve teslim kalitesine göre takip edilir.</p>
+<div class="input-box">Hizmet durumu: Talep / teklif / randevu / tamamlandı</div>
+<div class="input-box">Ödeme: Kupon / kart / HP kupon</div>
+<div class="input-box">Tamamlandıktan sonra değerlendirme</div>
+<a class="btn" href="../account/user.html">HP Dünyasına Git</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Hizmet Süreci</h2><a href="#">Süreç Takibi</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>1. Talep</h3><p>Kullanıcı hizmet türünü ve konumu seçer.</p></div>
+<div class="card glass"><h3>2. Teklif</h3><p>Partner hizmet verenler teklif gönderir.</p></div>
+<div class="card glass"><h3>3. Randevu</h3><p>Tarih ve saat kesinleştirilir.</p></div>
+<div class="card glass"><h3>4. Hizmet</h3><p>Usta veya ekip adrese gider.</p></div>
+<div class="card glass"><h3>5. Onay</h3><p>Kullanıcı tamamlandı onayı verir, HP işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>Modül Bağlantıları</h2><a href="../../index.html#modules">Tüm Modüller</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>AllonaHub</h3><p>Temizlik, tamir ve ev ürünleriyle alışveriş bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Market</h3><p>Temizlik malzemesi ve sarf ürünleri bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Gayrimenkul</h3><p>Yeni ev, taşınma, tadilat ve ekspertiz sonrası hizmetler.</p></div>
+<div class="card glass"><h3>Allona Kurye</h3><p>Malzeme, parça ve ekipman teslimatı.</p></div>
+<div class="card glass"><h3>Allona Sigorta</h3><p>Konut hasarı, tesisat, yangın ve eşya sigortası bağlantısı.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Usta, Temizlik Ekibi, Nakliye veya Servis Partneri Ol</h2>
+<p>Allona Ev Hizmetleri partner paneliyle hizmet tanımlama, bölge seçimi, randevu, teklif, ödeme, performans, belge doğrulama ve HP kampanyaları tek sistemden yönetilir.</p>
+<a class="btn" href="../partner/partner.html">Hizmet Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Hizmet ve fiyat yönetimi</div>
+<div>Bölge ve müsaitlik ayarı</div>
+<div>Teklif ve randevu paneli</div>
+<div>Belge / kimlik doğrulama</div>
+<div>Performans ve güven skoru</div>
+<div>HP ve kupon kampanyaları</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Ev Hizmetleri: Evin İçin Güvenli Hizmet Ağı</h2>
+<p>Allona Ev Hizmetleri; temizlik, tesisat, elektrik, boya, nakliye, montaj, klima servisi, tadilat ve acil usta hizmetlerini AllonaHub ekosistemi içinde birleştiren premium hizmet modülüdür.</p>
+<h3>Güvenli Partner ve Randevu Akışı</h3>
+<p>Hizmet verenler belge, kimlik, hizmet alanı, bölge ve performans kriterlerine göre yönetilir. Kullanıcı randevu oluşturur, teklif alır, hizmeti takip eder ve tamamlandıktan sonra değerlendirme yapar.</p>
+<h3>Ekosistem Bağlantısı</h3>
+<p>Yeni taşınan kullanıcı Allona Gayrimenkul’den ev bulduktan sonra temizlik, nakliye, boya, tadilat ve market ihtiyaçlarını aynı AllonaHub hesabıyla yönetebilir.</p>
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260622-corp1" defer></script>
+</body>
+</html>

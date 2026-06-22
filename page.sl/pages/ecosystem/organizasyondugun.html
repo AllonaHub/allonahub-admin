@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allona Organizasyon & Düğün | AllonaHub</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
+@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
+.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
+.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
+.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
+.top-links a{color:white;text-decoration:none}
+.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
+.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
+.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:29px;color:#ffd700}.brand span{font-size:29px;color:#00e5ff;font-weight:900}
+.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
+.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
+.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
+.actions{height:60px;display:flex;align-items:center;justify-content:space-around}.actions a{color:white;text-decoration:none;font-weight:800}
+.catbar{height:64px;display:flex;align-items:center;gap:20px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
+.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
+.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
+.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
+.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.hero-main{min-height:320px;padding:30px;background:radial-gradient(circle at right,#ffd70033,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
+.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
+.hero-card{padding:24px;min-height:320px}.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}.hero-card p{opacity:.78;line-height:1.45}
+.flow{margin-top:18px;display:grid;gap:10px}.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}.section-title h2{color:#ffd700;font-size:30px}.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{padding:20px;min-height:150px}.card h3{color:#ffd700;margin-bottom:8px}.card p{font-size:13px;opacity:.75;line-height:1.45}
+.package{padding:16px;min-height:265px;text-decoration:none;color:white}.package-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
+.package-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#ffd70088,transparent 65%)}
+.package b{color:#ffd700;font-size:18px}.package p{font-size:13px;opacity:.72;margin:6px 0}.price{color:#00e5ff;font-size:22px;font-weight:900;margin-top:8px}.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
+.planner{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.planner-main{padding:28px;min-height:280px;background:radial-gradient(circle at right,#00e5ff33,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
+.planner-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}.planner-main p{opacity:.82;line-height:1.6}
+.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
+.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900;border:0}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.step{padding:18px;min-height:125px}.step h3{color:#ffd700;margin-bottom:8px}.step p{font-size:13px;opacity:.75;line-height:1.45}
+.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}.partner-cta p{opacity:.82;line-height:1.6}
+.panel-list{display:grid;gap:10px}.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
+.info{padding:30px;margin-top:28px}.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}.info h3{color:#00e5ff;margin:22px 0 8px}.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
+.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+</style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+<div class="page">
+
+<div class="top-links">
+<a href="#">Planlarım</a><a href="#">Tekliflerim</a><a href="#">Organizatör Partneri Ol</a><a href="#">Yardım ve Destek</a>
+</div>
+
+<div class="header">
+<div class="brand glass"><b>Allona</b><span>Hub</span></div>
+<div class="search glass"><div class="search-mark"></div><input placeholder="Düğün salonu, organizasyon, fotoğrafçı, DJ, gelinlik, catering veya balayı ara..."></div>
+<div class="actions glass"><a href="../account/login.html">Giriş Yap</a><a href="#">Favorilerim</a><a href="#">Teklif Al</a></div>
+</div>
+
+<div class="catbar glass">
+<div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Organizasyon</div>
+<a href="#">Düğün</a><a href="#">Nişan</a><a href="#">Kına</a><a href="#">Doğum Günü</a><a href="#">Kurumsal</a><a href="#">Fotoğraf</a><a href="#">Catering</a><a href="#">Balayı</a><a href="#">VIP</a>
+</div>
+
+<section class="hero">
+<div class="hero-main glass">
+<h1>Allona Organizasyon<br>& Düğün Ekosistemi</h1>
+<p>Düğün salonları, kır düğünü, nişan, kına, doğum günü, kurumsal etkinlik, fotoğraf-video, DJ, catering, gelinlik, kuaför, gelin arabası ve balayı planlaması tek premium platformda birleşir.</p>
+</div>
+<div class="hero-card glass">
+<h3>Düğün Planlayıcım</h3>
+<p>Düğün tarihi, şehir, bütçe ve kişi sayısını gir; sistem salon, fotoğrafçı, DJ, çiçekçi, catering ve balayı önerileri oluştursun.</p>
+<div class="flow"><div>Tarih</div><div>Bütçe</div><div>Paket önerisi</div></div>
+</div>
+<div class="hero-card glass">
+<h3>AI Organizasyon Asistanı</h3>
+<p>“300 kişilik, kişi başı 1000 TL bütçeli düğün planla” yaz; sistem otomatik paket ve tedarikçi akışı oluştursun.</p>
+<div class="flow"><div>İstek yaz</div><div>Paket oluştur</div><div>Teklif al</div></div>
+</div>
+</section>
+
+<div class="section-title"><h2>Organizasyon Kategorileri</h2><a href="#">Tümünü Gör</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Düğün Salonları</h3><p>Otel düğünü, kır düğünü, sahil düğünü ve nikah salonları.</p></div>
+<div class="card glass"><h3>Söz & Nişan</h3><p>Ev, salon veya butik mekan organizasyon paketleri.</p></div>
+<div class="card glass"><h3>Kına Gecesi</h3><p>Kına tahtı, kostüm, müzik, ikram ve konsept paketleri.</p></div>
+<div class="card glass"><h3>Doğum Günü</h3><p>Yetişkin, çocuk, baby shower ve özel kutlama paketleri.</p></div>
+<div class="card glass"><h3>Kurumsal Etkinlik</h3><p>Açılış, lansman, gala, bayi toplantısı ve şirket etkinlikleri.</p></div>
+<div class="card glass"><h3>Gelinlik & Damatlık</h3><p>Gelinlik, damatlık, nişanlık, abiye, ayakkabı ve aksesuar.</p></div>
+<div class="card glass"><h3>Kuaför & Makyaj</h3><p>Gelin saçı, makyaj, prova ve özel gün bakım paketleri.</p></div>
+<div class="card glass"><h3>Fotoğraf & Video</h3><p>Dış çekim, drone çekimi, video kurgu ve canlı yayın.</p></div>
+<div class="card glass"><h3>DJ & Canlı Müzik</h3><p>DJ, orkestra, fasıl, canlı müzik ve sahne gösterileri.</p></div>
+<div class="card glass"><h3>Süsleme & Çiçek</h3><p>Masa süsleme, sahne tasarımı, ışık, çiçek ve balon organizasyonu.</p></div>
+<div class="card glass"><h3>Catering</h3><p>Yemek servisi, kokteyl, tatlı büfesi, kahve standı ve içecek hizmetleri.</p></div>
+<div class="card glass"><h3>Gelin Arabası</h3><p>VIP araç, klasik araç, süsleme ve transfer hizmetleri.</p></div>
+<div class="card glass"><h3>Balayı</h3><p>Balayı otelleri, yurtiçi turlar, yurtdışı turlar ve transfer.</p></div>
+<div class="card glass"><h3>Takı & Hediye</h3><p>Takı setleri, davetiye, nikah şekeri, özel hediye ve kutular.</p></div>
+<div class="card glass"><h3>HP Kazan</h3><p>Organizasyon harcamalarından HP ve kupon avantajı kazan.</p></div>
+</div>
+
+<div class="section-title"><h2>Düğün Planlayıcım</h2><a href="#">Planlarım</a></div>
+<section class="planner">
+<div class="planner-main glass">
+<h2>AI Destekli Düğün Paketi Oluştur</h2>
+<p>Düğün tarihi, bütçe, şehir ve kişi sayısı bilgilerini gir. Sistem salon, catering, fotoğrafçı, DJ, çiçekçi, gelin arabası, kuaför ve balayı için otomatik paket önerisi oluştursun.</p>
+<div class="input-box">Düğün tarihi seç</div>
+<div class="input-box">Şehir / ilçe seç</div>
+<div class="input-box">Kişi sayısı ve toplam bütçe gir</div>
+<a class="btn" href="#">Paketimi Oluştur</a>
+</div>
+<div class="planner-main glass">
+<h2>Örnek AI Komut</h2>
+<p>Kullanıcı şöyle yazabilir: “İstanbul’da 300 kişilik, kişi başı 1000 TL bütçeli, kır düğünü konseptli premium düğün planla.”</p>
+<div class="input-box">Konsept: Kır / otel / sahil / salon</div>
+<div class="input-box">Paket: Ekonomik / Premium / Elite</div>
+<div class="input-box">HP kupon ve taksit seçenekleri</div>
+<a class="btn" href="../account/user.html">Kupon’a Git</a>
+</div>
+</section>
+
+<div class="section-title"><h2>Öne Çıkan Paketler</h2><a href="#">Tüm Paketler</a></div>
+<div class="grid-4">
+<div class="package glass"><div class="package-img"></div><b>Premium Kır Düğünü</b><p>Salon + catering + DJ + süsleme</p><div class="price">299.000 ₺</div><div class="meta"><span>+1500 HP</span><span>300 kişi</span></div></div>
+<div class="package glass"><div class="package-img"></div><b>Nişan & Söz Paketi</b><p>Konsept masa, çiçek, fotoğraf ve ikram</p><div class="price">49.900 ₺</div><div class="meta"><span>+400 HP</span><span>Butik</span></div></div>
+<div class="package glass"><div class="package-img"></div><b>Kına Gecesi Elite</b><p>Kına tahtı, müzik, kostüm ve organizasyon</p><div class="price">89.900 ₺</div><div class="meta"><span>+650 HP</span><span>Elite</span></div></div>
+<div class="package glass"><div class="package-img"></div><b>Kurumsal Lansman</b><p>Sahne, ışık, catering, video ve davet akışı</p><div class="price">149.000 ₺</div><div class="meta"><span>+900 HP</span><span>Kurumsal</span></div></div>
+</div>
+
+<div class="section-title"><h2>Organizasyon Süreci</h2><a href="#">Süreç Takibi</a></div>
+<div class="timeline">
+<div class="step glass"><h3>1. Plan</h3><p>Tarih, şehir, bütçe ve kişi sayısı belirlenir.</p></div>
+<div class="step glass"><h3>2. Paket</h3><p>Salon, catering, müzik ve hizmetler seçilir.</p></div>
+<div class="step glass"><h3>3. Teklif</h3><p>Partnerlerden fiyat ve müsaitlik alınır.</p></div>
+<div class="step glass"><h3>4. Sözleşme</h3><p>Hukuk ve ödeme akışıyla sözleşme yapılır.</p></div>
+<div class="step glass"><h3>5. Hazırlık</h3><p>Prova, çekim, süsleme ve görevler takip edilir.</p></div>
+<div class="step glass"><h3>6. Etkinlik</h3><p>Organizasyon tamamlanır, HP ve yorum işlenir.</p></div>
+</div>
+
+<div class="section-title"><h2>AllonaHub Bağlantıları</h2><a href="../../index.html#modules">Tüm Modüller</a></div>
+<div class="grid-5">
+<div class="card glass"><h3>Allona Yemek</h3><p>Catering, ikram, kokteyl ve yemek servisi bağlantısı.</p></div>
+<div class="card glass"><h3>Allona Seyahat</h3><p>Balayı otelleri, yurtiçi/yurtdışı turlar ve transfer.</p></div>
+<div class="card glass"><h3>Allona Otomotiv</h3><p>Gelin arabası, VIP araç, klasik araç ve konvoy hizmetleri.</p></div>
+<div class="card glass"><h3>AllonaHub</h3><p>Takı, hediye, davetiye, aksesuar ve özel kutular.</p></div>
+<div class="card glass"><h3>Allona Hukuk</h3><p>Salon, organizasyon ve hizmet sözleşmesi kontrolü.</p></div>
+<div class="card glass"><h3>Kupon</h3><p>Ödeme, taksit, HP kupon ve partner tahsilat akışı.</p></div>
+<div class="card glass"><h3>Allona Sigorta</h3><p>Etkinlik iptal, sorumluluk ve organizasyon sigortası.</p></div>
+<div class="card glass"><h3>Allona Güzellik</h3><p>Gelin makyajı, saç, cilt bakım ve kuaför randevusu.</p></div>
+<div class="card glass"><h3>Allona Taksi</h3><p>Misafir, VIP ve çift transferi için araç çağırma.</p></div>
+<div class="card glass"><h3>Allona Eğlence</h3><p>DJ, canlı müzik, sahne ve özel gösteri bağlantısı.</p></div>
+</div>
+
+<section class="partner-cta glass">
+<div>
+<h2>Organizasyon Firması, Düğün Salonu veya Hizmet Partneri Ol</h2>
+<p>Allona Organizasyon partner paneliyle paket, takvim, teklif, sözleşme, ödeme, fotoğraf, catering, müzik, süsleme, salon yönetimi ve HP kampanyaları tek sistemden yönetilir.</p>
+<a class="btn" href="../partner/partner.html">Organizasyon Partneri Ol</a>
+</div>
+<div class="panel-list">
+<div>Düğün salonu ve tarih yönetimi</div>
+<div>Paket ve hizmet fiyatlandırma</div>
+<div>Fotoğrafçı, DJ, catering eşleşmesi</div>
+<div>Sözleşme ve ödeme takibi</div>
+<div>Gelinlik, kuaför, araç ve balayı bağlantısı</div>
+<div>HP ve kupon kampanyaları</div>
+</div>
+</section>
+
+<section class="info glass">
+<h2>Allona Organizasyon & Düğün: Hayalden Etkinliğe Tek Platform</h2>
+<p>Allona Organizasyon & Düğün; düğün, nişan, kına, doğum günü, kurumsal etkinlik, fotoğraf-video, catering, müzik, süsleme, gelinlik, kuaför, gelin arabası ve balayı hizmetlerini AllonaHub ekosistemi içinde birleştiren premium organizasyon modülüdür.</p>
+<h3>Düğün Planlayıcım ve AI Asistan</h3>
+<p>Kullanıcı bütçe, şehir, tarih ve kişi sayısını girerek otomatik paket önerisi alabilir. Sistem salon, catering, fotoğrafçı, DJ, çiçekçi, araç, kuaför ve balayı seçeneklerini tek akışta birleştirir.</p>
+<h3>Ekosistem Gücü</h3>
+<p>Bir düğün müşterisi AllonaHub’tan takı alabilir, Allona Güzellik’ten kuaför randevusu oluşturabilir, Allona Seyahat’ten balayı planlayabilir, Kupon ile ödeme yapabilir ve Allona Sigorta ile etkinlik güvencesi ekleyebilir.</p>
+</section>
+</div>
+  <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/platform.js?v=20260622-corp1" defer></script>
+</body>
+</html>
