@@ -85,6 +85,7 @@ export const config = {
     rateLimitMax: readNumber("ASSISTANT_RATE_LIMIT_MAX", 20),
     telegramBotToken: readOptionalSecret("ASSISTANT_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"),
     telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
+    telegramBusinessOwnerId: readOptionalSecret("ASSISTANT_TELEGRAM_BUSINESS_OWNER_ID", "TELEGRAM_BUSINESS_OWNER_ID"),
     metaVerifyToken: readOptionalSecret("ASSISTANT_META_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
     metaAppSecret: readOptionalSecret("ASSISTANT_META_APP_SECRET", "META_APP_SECRET"),
     metaAccessToken: readOptionalSecret("ASSISTANT_META_ACCESS_TOKEN", "META_ACCESS_TOKEN"),

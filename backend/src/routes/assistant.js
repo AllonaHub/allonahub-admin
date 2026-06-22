@@ -74,6 +74,10 @@ const metaRateLimit = {
   }
 };
 
+const LIVE_SUPPORT_HANDOFF_WINDOW_MS = 12 * 60 * 60 * 1000;
+const TELEGRAM_BUSINESS_CONNECTION_CACHE_MS = 10 * 60 * 1000;
+const telegramBusinessConnectionCache = new Map();
+
 function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -355,16 +359,60 @@ function telegramMessage(update) {
     update.callback_query?.from ||
     {};
   const businessConnectionId = message.business_connection_id || update.business_connection?.id || "";
+  const businessUserId = update.business_connection?.user?.id ? String(update.business_connection.user.id) : "";
   return {
     text,
     chatId: chat.id ? String(chat.id) : "",
     userId: from.id ? String(from.id) : "",
     username: from.username || "",
+    fromIsBot: from.is_bot === true,
     languageCode: from.language_code || "",
     messageId: message.message_id || null,
     source,
-    businessConnectionId: businessConnectionId ? String(businessConnectionId) : ""
+    businessConnectionId: businessConnectionId ? String(businessConnectionId) : "",
+    businessUserId
   };
+}
+
+async function telegramBusinessOwnerId(businessConnectionId, request) {
+  if (!config.assistant.telegramBotToken || !businessConnectionId) return "";
+
+  const cached = telegramBusinessConnectionCache.get(businessConnectionId);
+  if (cached && cached.expiresAt > Date.now()) return cached.userId;
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${config.assistant.telegramBotToken}/getBusinessConnection`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ business_connection_id: businessConnectionId })
+    });
+    const data = await response.json().catch(() => ({}));
+    const userId = data?.ok && data?.result?.is_enabled !== false && data?.result?.user?.id
+      ? String(data.result.user.id)
+      : "";
+    telegramBusinessConnectionCache.set(businessConnectionId, {
+      userId,
+      expiresAt: Date.now() + TELEGRAM_BUSINESS_CONNECTION_CACHE_MS
+    });
+    return userId;
+  } catch (error) {
+    request.log.warn({ error: error.message }, "Telegram business connection lookup failed");
+    return "";
+  }
+}
+
+async function shouldIgnoreTelegramUpdate(telegram, request) {
+  if (telegram.fromIsBot) return "bot_message";
+  if (!telegram.businessConnectionId) return "";
+
+  const businessOwnerId = config.assistant.telegramBusinessOwnerId
+    || telegram.businessUserId
+    || await telegramBusinessOwnerId(telegram.businessConnectionId, request);
+  if (businessOwnerId && telegram.userId === businessOwnerId) {
+    return "business_owner_message";
+  }
+
+  return "";
 }
 
 async function sendTelegramReply(chatId, text, options = {}) {
@@ -591,6 +639,43 @@ async function handleAssistantMessage({ request, payload, channel }) {
   const intent = detectAssistantIntent(cleanMessage, cleanMetadata);
   const context = {};
 
+  const liveSupportActive = intent.key !== "support_ticket"
+    ? await activeLiveSupportHandoff({ channel, conversationId: cid, request })
+    : null;
+
+  if (liveSupportActive) {
+    const userLogId = await saveConversationLog({
+      userId: ctx?.user?.id || null,
+      channel,
+      senderType: "user",
+      message: cleanMessage,
+      metadata: {
+        ...cleanMetadata,
+        conversation_id: cid,
+        intent: intent.key,
+        request_id: request.id || null,
+        live_handoff_active: true,
+        assistant_suppressed: true
+      },
+      request
+    });
+
+    return {
+      ok: true,
+      conversationId: cid,
+      message: "",
+      intent: intent.key,
+      actions: [],
+      supportTicket: null,
+      suppressReply: true,
+      liveSupportActive: true,
+      logs: {
+        user: userLogId,
+        assistant: null
+      }
+    };
+  }
+
   if (intent.key === "order_status" || payload.orderId || payload.orderReference) {
     Object.assign(context, await loadOrderContext({ payload, ctx, request }));
   }
@@ -641,6 +726,8 @@ async function handleAssistantMessage({ request, payload, channel }) {
       provider: assistant.provider,
       user_log_id: userLogId,
       support_ticket: context.supportTicket || null,
+      live_handoff: intent.key === "support_ticket",
+      live_handoff_until: intent.key === "support_ticket" ? new Date(Date.now() + LIVE_SUPPORT_HANDOFF_WINDOW_MS).toISOString() : null,
       order_context_used: Boolean(context.order)
     },
     request
@@ -672,11 +759,35 @@ async function handleAssistantMessage({ request, payload, channel }) {
     intent: assistant.intent,
     actions: assistant.actions,
     supportTicket: context.supportTicket || null,
+    liveSupportActive: intent.key === "support_ticket",
     logs: {
       user: userLogId,
       assistant: assistantLogId
     }
   };
+}
+
+async function activeLiveSupportHandoff({ channel, conversationId, request }) {
+  const since = new Date(Date.now() - LIVE_SUPPORT_HANDOFF_WINDOW_MS).toISOString();
+  const { data, error } = await supabaseAdmin
+    .from("conversation_logs")
+    .select("id, created_at")
+    .eq("channel", channel)
+    .eq("sender_type", "assistant")
+    .eq("metadata->>conversation_id", conversationId)
+    .eq("metadata->>live_handoff", "true")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (looksLikeMissingSchema(error)) return null;
+    request.log.warn({ error: error.message }, "Assistant live handoff lookup failed");
+    return null;
+  }
+
+  return data || null;
 }
 
 function verifyTelegramSecret(request) {
@@ -739,14 +850,17 @@ export function registerAssistantRoutes(app) {
             }
           });
 
-          const delivered = event.channel === "whatsapp"
-            ? await sendWhatsappReply(event, result.message, request)
-            : await sendInstagramReply(event, result.message, request);
+          const delivered = result.suppressReply
+            ? false
+            : event.channel === "whatsapp"
+              ? await sendWhatsappReply(event, result.message, request)
+              : await sendInstagramReply(event, result.message, request);
 
           results.push({
             ok: true,
             channel: event.channel,
             delivered,
+            suppressed: result.suppressReply === true,
             conversationId: result.conversationId
           });
         } catch (error) {
@@ -801,6 +915,11 @@ export function registerAssistantRoutes(app) {
       return reply.code(202).send({ ok: true, ignored: true });
     }
 
+    const ignoreReason = await shouldIgnoreTelegramUpdate(telegram, request);
+    if (ignoreReason) {
+      return reply.code(200).send({ ok: true, ignored: true, reason: ignoreReason });
+    }
+
     const result = await handleAssistantMessage({
       request,
       channel: "telegram",
@@ -823,9 +942,11 @@ export function registerAssistantRoutes(app) {
 
     let delivered = false;
     try {
-      delivered = await sendTelegramReply(telegram.chatId, result.message, {
-        businessConnectionId: telegram.businessConnectionId
-      });
+      delivered = result.suppressReply
+        ? false
+        : await sendTelegramReply(telegram.chatId, result.message, {
+            businessConnectionId: telegram.businessConnectionId
+          });
     } catch (error) {
       request.log.warn({ error: error.message }, "Telegram assistant reply could not be delivered");
     }
@@ -833,6 +954,7 @@ export function registerAssistantRoutes(app) {
     return reply.code(200).send({
       ok: true,
       delivered,
+      suppressed: result.suppressReply === true,
       conversationId: result.conversationId,
       message: result.message
     });
