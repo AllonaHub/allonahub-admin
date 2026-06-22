@@ -76,6 +76,13 @@
     return core.sanitizeUrl ? core.sanitizeUrl(value, fallback) : (value || fallback);
   }
 
+  function mediaUrl(value, fallback = "/images/modules/yemek-light-v5.jpg") {
+    const raw = String(value || "").trim();
+    if (!raw) return url(fallback);
+    if (/^\/?images\//i.test(raw)) return url(raw.startsWith("/") ? raw : `/${raw}`);
+    return sanitizeUrl(raw, fallback);
+  }
+
   function safeHref(value, fallback = "#food-restaurants") {
     const raw = String(value || "").trim();
     if (!raw) return fallback;
@@ -301,7 +308,7 @@
     if (!slider || !track || !state.heroAds.length) return;
     track.innerHTML = state.heroAds.map((ad, index) => `
       <article class="food-promo-slide ${index === 0 ? "is-active" : ""}" data-food-hero-slide>
-        <img src="${escape(sanitizeUrl(ad.image_url, "/images/modules/yemek-light-v5.jpg"))}" alt="${escape(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
+        <img src="${escape(mediaUrl(ad.image_url))}" alt="${escape(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
         <div class="food-promo-content">
           <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${escape(ad.subtitle)}</p>
           <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${escape(ad.title)}</h${index === 0 ? "1" : "2"}>
@@ -381,7 +388,7 @@
     restaurantGrid.innerHTML = list.map((item) => `
       <article class="food-card">
         <div class="food-card-media">
-          <img src="${escape(sanitizeUrl(item.image, "/images/modules/yemek-light-v5.jpg"))}" alt="${escape(item.name)}" loading="lazy">
+          <img src="${escape(mediaUrl(item.image))}" alt="${escape(item.name)}" loading="lazy">
           <div class="food-badge-row">
             <span class="food-badge"><i class="fa-solid fa-star" aria-hidden="true"></i>${escape(Number(item.rating || 4.7).toFixed(1))}</span>
             <span class="food-badge food-badge--green">${escape(item.free ? "Teslimat ücretsiz" : `${item.min} TL min.`)}</span>
@@ -439,7 +446,7 @@
       seller_name: item.restaurant,
       price: item.price,
       stock: 99,
-      image_url: item.image || "/images/modules/yemek-light-v5.jpg",
+      image_url: mediaUrl(item.image),
       delivery_label: state.mode === "pickup" ? "Gel-Al" : "Bugün teslim",
       coupon_label: item.hp ? `+${item.hp} HP` : ""
     };
