@@ -7,6 +7,7 @@ import {
   cleanAssistantText,
   detectAssistantIntent,
   generateAssistantReply,
+  LIVE_SUPPORT_CLOSED_MESSAGE,
   normalizeAssistantChannel,
   publicAssistantErrorMessage,
   saveConversationLog,
@@ -74,7 +75,7 @@ const metaRateLimit = {
   }
 };
 
-const LIVE_SUPPORT_HANDOFF_WINDOW_MS = 12 * 60 * 60 * 1000;
+const LIVE_SUPPORT_HANDOFF_WINDOW_MS = 10 * 60 * 1000;
 const TELEGRAM_BUSINESS_CONNECTION_CACHE_MS = 10 * 60 * 1000;
 const telegramBusinessConnectionCache = new Map();
 
@@ -717,6 +718,74 @@ async function handleAssistantMessage({ request, payload, channel }) {
     };
   }
 
+  if (intent.key !== "support_ticket" && liveSupportHandoffExpired(context.conversation)) {
+    const userLogId = await saveConversationLog({
+      userId: ctx?.user?.id || null,
+      channel,
+      senderType: "user",
+      message: cleanMessage,
+      metadata: {
+        ...cleanMetadata,
+        conversation_id: cid,
+        intent: intent.key,
+        request_id: request.id || null,
+        conversation_previous_assistant_messages: context.conversation.previousAssistantMessages,
+        live_handoff_expired: true,
+        expired_handoff_at: context.conversation.lastLiveHandoffAt
+      },
+      request
+    });
+
+    const assistantLogId = await saveConversationLog({
+      userId: ctx?.user?.id || null,
+      channel,
+      senderType: "assistant",
+      message: LIVE_SUPPORT_CLOSED_MESSAGE,
+      metadata: {
+        conversation_id: cid,
+        intent: "live_support_closed",
+        provider: "rules",
+        user_log_id: userLogId,
+        live_handoff_closed: true,
+        closed_handoff_at: context.conversation.lastLiveHandoffAt,
+        conversation_previous_assistant_messages: context.conversation.previousAssistantMessages,
+        conversation_recent_intent: context.conversation.recentIntent
+      },
+      request
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx?.user?.id || null,
+      actorRole: ctx?.profile?.role || null,
+      action: "assistant.live_handoff_closed",
+      resourceType: "assistant_conversation",
+      resourceId: assistantLogId || userLogId || cid,
+      source: "assistant",
+      purpose: "customer_support",
+      evidenceTags: ["assistant", channel, "live_support_closed"],
+      metadata: {
+        channel,
+        conversation_id: cid,
+        closed_handoff_at: context.conversation.lastLiveHandoffAt
+      }
+    });
+
+    return {
+      ok: true,
+      conversationId: cid,
+      message: LIVE_SUPPORT_CLOSED_MESSAGE,
+      intent: "live_support_closed",
+      actions: [],
+      supportTicket: null,
+      liveSupportActive: false,
+      logs: {
+        user: userLogId,
+        assistant: assistantLogId
+      }
+    };
+  }
+
   if (intent.key === "order_status" || payload.orderId || payload.orderReference) {
     Object.assign(context, await loadOrderContext({ payload, ctx, request }));
   }
@@ -757,6 +826,24 @@ async function handleAssistantMessage({ request, payload, channel }) {
     request
   });
 
+  if (!context.supportTicket && assistant.createTicketSuggested === true) {
+    context.supportTicket = await createSupportTicket({
+      ctx,
+      channel,
+      payload,
+      message: cleanMessage,
+      intent: {
+        ...intent,
+        key: assistant.intent,
+        createTicketSuggested: true
+      },
+      request,
+      conversationId: cid
+    });
+  }
+
+  const startsLiveHandoff = intent.key === "support_ticket" || assistant.intent === "support_ticket" || assistant.createTicketSuggested === true;
+
   const assistantLogId = await saveConversationLog({
     userId: ctx?.user?.id || null,
     channel,
@@ -768,8 +855,8 @@ async function handleAssistantMessage({ request, payload, channel }) {
       provider: assistant.provider,
       user_log_id: userLogId,
       support_ticket: context.supportTicket || null,
-      live_handoff: intent.key === "support_ticket",
-      live_handoff_until: intent.key === "support_ticket" ? new Date(Date.now() + LIVE_SUPPORT_HANDOFF_WINDOW_MS).toISOString() : null,
+      live_handoff: startsLiveHandoff,
+      live_handoff_until: startsLiveHandoff ? new Date(Date.now() + LIVE_SUPPORT_HANDOFF_WINDOW_MS).toISOString() : null,
       order_context_used: Boolean(context.order),
       conversation_previous_assistant_messages: context.conversation.previousAssistantMessages,
       conversation_recent_intent: context.conversation.recentIntent
@@ -803,7 +890,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
     intent: assistant.intent,
     actions: assistant.actions,
     supportTicket: context.supportTicket || null,
-    liveSupportActive: intent.key === "support_ticket",
+    liveSupportActive: startsLiveHandoff,
     logs: {
       user: userLogId,
       assistant: assistantLogId
@@ -834,17 +921,34 @@ async function activeLiveSupportHandoff({ channel, conversationId, request }) {
   return data || null;
 }
 
+function metadataFlag(value) {
+  return value === true || String(value || "").toLowerCase() === "true";
+}
+
+function liveSupportHandoffExpired(conversation = {}) {
+  const handoffAt = Date.parse(conversation.lastLiveHandoffAt || "");
+  if (!Number.isFinite(handoffAt)) return false;
+
+  const closedAt = Date.parse(conversation.lastLiveHandoffClosedAt || "");
+  if (Number.isFinite(closedAt) && closedAt >= handoffAt) return false;
+
+  return Date.now() - handoffAt > LIVE_SUPPORT_HANDOFF_WINDOW_MS;
+}
+
 async function loadConversationContext({ channel, conversationId, request }) {
   const empty = {
     previousAssistantMessages: 0,
     previousUserMessages: 0,
-    recentIntent: null
+    recentIntent: null,
+    lastAssistantMessage: "",
+    lastLiveHandoffAt: null,
+    lastLiveHandoffClosedAt: null
   };
   if (!conversationId) return empty;
 
   const { data, error } = await supabaseAdmin
     .from("conversation_logs")
-    .select("sender_type, metadata, created_at")
+    .select("sender_type, message, metadata, created_at")
     .eq("channel", channel)
     .eq("metadata->>conversation_id", conversationId)
     .order("created_at", { ascending: false })
@@ -858,10 +962,16 @@ async function loadConversationContext({ channel, conversationId, request }) {
 
   const rows = Array.isArray(data) ? data : [];
   const recentIntent = rows.find((item) => item.metadata?.intent)?.metadata?.intent || null;
+  const lastAssistant = rows.find((item) => item.sender_type === "assistant");
+  const lastLiveHandoff = rows.find((item) => item.sender_type === "assistant" && metadataFlag(item.metadata?.live_handoff));
+  const lastLiveHandoffClosed = rows.find((item) => item.sender_type === "assistant" && metadataFlag(item.metadata?.live_handoff_closed));
   return {
     previousAssistantMessages: rows.filter((item) => item.sender_type === "assistant").length,
     previousUserMessages: rows.filter((item) => item.sender_type === "user").length,
-    recentIntent
+    recentIntent,
+    lastAssistantMessage: lastAssistant?.message || "",
+    lastLiveHandoffAt: lastLiveHandoff?.created_at || null,
+    lastLiveHandoffClosedAt: lastLiveHandoffClosed?.created_at || null
   };
 }
 

@@ -23,7 +23,8 @@ const SECRET_KEY_PATTERN = /(api[_-]?key|service[_-]?role|secret|token|authoriza
 const CARD_PATTERN = /\b(?:\d[ -]*?){13,19}\b/;
 const PROMPT_INJECTION_PATTERN = /(ignore previous|system prompt|developer message|jailbreak|talimatlari yok say|onceki talimatlari|sistem komutu)/i;
 const SUPPORT_TICKET_PATTERN = /(^|\s)(canli|canlı|destek|yardim|yardım)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
-const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayın; en kısa sürede temsilcilerimiz sizinle buradan iletişime geçecektir.";
+export const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayınız. En kısa sürede temsilcimiz sizinle buradan iletişime geçecektir.";
+export const LIVE_SUPPORT_CLOSED_MESSAGE = "Uzun süredir cevap vermediğiniz için müşteri temsilcimizle konuşmanız otomatik olarak sonlandırılmıştır. Dilerseniz tekrardan canlıya bağlanabilirsiniz.";
 
 function clamp(value, min, max) {
   const number = Number(value);
@@ -183,6 +184,21 @@ function stripRepeatedGreeting(value, context = {}) {
     .replace(/^(merhabalar|merhaba|selamlar|selam|iyi günler|iyi akşamlar|iyi geceler)[,!.:\s]+/iu, "")
     .trimStart();
   return stripped || text;
+}
+
+function replyFingerprint(value) {
+  return cleanAssistantText(value, config.assistant.maxReplyChars)
+    .toLocaleLowerCase("tr-TR")
+    .replace(/^(merhabalar|merhaba|selamlar|selam|iyi günler|iyi akşamlar|iyi geceler)[,!.:\s]+/iu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function repeatsPreviousAssistantReply(value, context = {}) {
+  const previous = context?.conversation?.lastAssistantMessage || "";
+  const currentFingerprint = replyFingerprint(value);
+  const previousFingerprint = replyFingerprint(previous);
+  return Boolean(currentFingerprint && previousFingerprint && currentFingerprint === previousFingerprint);
 }
 
 function topicResponse(topic, context = {}) {
@@ -510,6 +526,7 @@ export function detectAssistantIntent(message, metadata = {}) {
 export function shouldCreateSupportTicket(message, payload = {}, intent = null) {
   if (payload.createSupportTicket === true) return true;
   if (intent?.createTicketSuggested) return true;
+  if (intent?.key === "general_support") return true;
   return SUPPORT_TICKET_PATTERN.test(String(message || ""));
 }
 
@@ -547,7 +564,14 @@ function fallbackByIntent(intent, context = {}) {
 
   if (intent.key === "support_ticket") {
     return {
-      text: `${LIVE_SUPPORT_REDIRECT_MESSAGE} Bu sırada sipariş numarası veya konu detayını yazarsanız inceleme daha hızlı ilerler.`,
+      text: LIVE_SUPPORT_REDIRECT_MESSAGE,
+      actions: [{ type: "open_url", label: "Destek", url: links.support }]
+    };
+  }
+
+  if (intent.key === "general_support") {
+    return {
+      text: LIVE_SUPPORT_REDIRECT_MESSAGE,
       actions: [{ type: "open_url", label: "Destek", url: links.support }]
     };
   }
@@ -569,13 +593,8 @@ function fallbackByIntent(intent, context = {}) {
   if (topic) return topicResponse(topic, context);
 
   return {
-    text: stripRepeatedGreeting(`Merhabalar, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, ödeme, iade, HP/kupon, partnerlik, CV-kariyer, akademi ve tüm hizmet modülleri hakkında yardımcı olabilirim. Konuyu bir cümleyle yazmanız yeterli; isterseniz tüm hizmetleri buradan inceleyebilirsiniz: ${siteLink("/index.html#modules")}`, context),
-    actions: [
-      { type: "open_url", label: "Hizmetler", url: siteLink("/index.html#modules") },
-      { type: "open_url", label: "CV Oluştur", url: platformUrl("smartCv") },
-      { type: "open_url", label: "Partner Ol", url: platformUrl("partner") },
-      { type: "open_url", label: "Destek", url: links.support }
-    ]
+    text: LIVE_SUPPORT_REDIRECT_MESSAGE,
+    actions: [{ type: "open_url", label: "Destek", url: links.support }]
   };
 }
 
@@ -703,12 +722,27 @@ export async function generateAssistantReply({ message, channel, intent, context
     request?.log?.warn({ statusCode: error.statusCode || null, channel, intent: intent.key }, "Assistant AI fallback used");
   }
 
+  const messageText = safeReplyText(stripRepeatedGreeting(text, context), stripRepeatedGreeting(fallback.text, context));
+  const shouldEscalateToLive = intent.key === "general_support" || repeatsPreviousAssistantReply(messageText, context);
+
+  if (shouldEscalateToLive) {
+    return {
+      message: LIVE_SUPPORT_REDIRECT_MESSAGE,
+      intent: "support_ticket",
+      provider,
+      actions: fallback.actions || [],
+      usedAi: provider !== "fallback",
+      createTicketSuggested: true
+    };
+  }
+
   return {
-    message: safeReplyText(stripRepeatedGreeting(text, context), stripRepeatedGreeting(fallback.text, context)),
+    message: messageText,
     intent: intent.key,
     provider,
     actions: fallback.actions || [],
-    usedAi: provider !== "fallback"
+    usedAi: provider !== "fallback",
+    createTicketSuggested: false
   };
 }
 
