@@ -2005,6 +2005,46 @@ body[data-theme="white"] .site-footer .store-btn__kicker {
   color: #aeb9ca !important;
 }
 
+.site-footer,
+.site-footer .footer-col h2,
+.site-footer .footer-col h3,
+.site-footer .footer-col a:not(.footer-brand),
+.site-footer .footer-col p,
+.site-footer .footer-bottom,
+.site-footer .footer-bottom a,
+.site-footer .footer-payment-strip,
+.site-footer .store-btn,
+.site-footer .store-btn--app strong,
+.site-footer .store-btn__kicker,
+.site-footer .social-icons span {
+  color: #ffffff !important;
+}
+
+.site-footer .footer-col a:not(.footer-brand):hover,
+.site-footer .footer-bottom a:hover {
+  color: #bfeaff !important;
+}
+
+.site-footer .footer-iyzico-badge,
+.site-footer .footer-iyzico-badge * {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel),
+body[data-theme="corporate"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel, .hero-time-card, .hero-main-card, .hero-reward-card, .stat-live-card, .live-ad-card, .tier, .partner) {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel) :where(h1,h2,h3,h4,p,a,span,strong,small,li,label,input,textarea,button),
+body[data-theme="corporate"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel, .hero-time-card, .hero-main-card, .hero-reward-card, .stat-live-card, .live-ad-card, .tier, .partner) :where(h1,h2,h3,h4,p,a,span,strong,small,li,label,input,textarea,button) {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.search-btn, .login, .btn, .buy-btn, .cart-btn, .platform-theme-btn),
+body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-btn, .platform-theme-btn, .platform-action) {
+  color: #ffffff !important;
+}
+
 .platform-page {
   display: grid;
   gap: 26px;
@@ -2318,8 +2358,24 @@ body[data-theme="corporate"] .hero-main-card,
 body[data-theme="corporate"] .hero-reward-card,
 body[data-theme="corporate"] .tier,
 body[data-theme="corporate"] .partner {
-  border-color: rgba(0, 77, 141, 0.14) !important;
-  box-shadow: 0 10px 26px rgba(19, 40, 58, 0.08) !important;
+  border-color: rgba(19, 40, 58, 0.12) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body[data-theme] .site-footer,
+body[data-theme] .site-footer .footer-col h2,
+body[data-theme] .site-footer .footer-col h3,
+body[data-theme] .site-footer .footer-col a:not(.footer-brand),
+body[data-theme] .site-footer .footer-col p,
+body[data-theme] .site-footer .footer-bottom,
+body[data-theme] .site-footer .footer-bottom a,
+body[data-theme] .site-footer .footer-payment-strip,
+body[data-theme] .site-footer .store-btn,
+body[data-theme] .site-footer .store-btn--app strong,
+body[data-theme] .site-footer .store-btn__kicker,
+body[data-theme] .site-footer .social-icons span {
+  color: #ffffff !important;
 }
 
 @media (max-width: 980px) {
@@ -3126,4 +3182,55 @@ html {
     min-width: 0 !important;
     overflow-x: clip !important;
   }
+}
+
+/* Site-wide footer contrast: dark footers keep readable white text in every theme. */
+body[data-theme] .site-footer,
+body[data-theme] .site-footer .footer-col h2,
+body[data-theme] .site-footer .footer-col h3,
+body[data-theme] .site-footer .footer-col a:not(.footer-brand),
+body[data-theme] .site-footer .footer-col p,
+body[data-theme] .site-footer .footer-bottom,
+body[data-theme] .site-footer .footer-bottom a,
+body[data-theme] .site-footer .footer-payment-strip,
+body[data-theme] .site-footer .store-btn,
+body[data-theme] .site-footer .store-btn--app strong,
+body[data-theme] .site-footer .store-btn__kicker,
+body[data-theme] .site-footer .social-icons span{
+  color:#fff!important;
+}
+
+body[data-theme] .site-footer .footer-col a:not(.footer-brand):hover,
+body[data-theme] .site-footer .footer-bottom a:hover{
+  color:#bfeaff!important;
+}
+
+body[data-theme] .site-footer .footer-iyzico-badge,
+body[data-theme] .site-footer .footer-iyzico-badge *{
+  color:#111827!important;
+}
+
+body[data-theme="corporate"] .hero-time-card,
+body[data-theme="corporate"] .hero-main-card,
+body[data-theme="corporate"] .hero-reward-card,
+body[data-theme="corporate"] .stat-live-card,
+body[data-theme="corporate"] .live-ad-card,
+body[data-theme="corporate"] .tier,
+body[data-theme="corporate"] .partner,
+body[data-theme="corporate"] .modules-grid.large-grid .module-card{
+  border-radius:8px!important;
+  box-shadow:none!important;
+}
+
+body[data-theme="corporate"]:has(.premium-hero) .nav-search,
+body[data-theme="corporate"]:has(.premium-hero) .hero-time-card,
+body[data-theme="corporate"]:has(.premium-hero) .hero-main-card,
+body[data-theme="corporate"]:has(.premium-hero) .hero-reward-card,
+body[data-theme="corporate"]:has(.premium-hero) .stat-live-card,
+body[data-theme="corporate"]:has(.premium-hero) .tier,
+body[data-theme="corporate"]:has(.premium-hero) .partner{
+  background:#fff!important;
+  border-color:rgba(19,40,58,.12)!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
 }
