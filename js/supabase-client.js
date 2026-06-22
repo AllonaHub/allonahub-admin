@@ -142,29 +142,68 @@
   }
 
   async function upsertProduct(payload) {
-    const cleanName = security ? security.normalizeText(payload.name, { max: 180 }) : String(payload.name || "").trim();
+    const cleanName = security ? security.normalizeText(payload.name || payload.product_name, { max: 180 }) : String(payload.name || payload.product_name || "").trim();
     if (!cleanName) throw new Error("Ürün adı zorunludur.");
     if (payload.id && security && !security.isUuid(payload.id)) throw new Error("Ürün kimliği geçersiz.");
-    const product = {
+    const status = ["active", "draft", "archived"].includes(payload.status) ? payload.status : "active";
+    const description = security ? security.normalizeMultiline(payload.description, { max: 1800 }) : payload.description || "";
+    const category = security ? security.normalizeText(payload.category || "Genel", { max: 90 }) : payload.category || "Genel";
+    const brand = security ? security.normalizeText(payload.brand || payload.seller_name || "", { max: 120 }) : payload.brand || payload.seller_name || "";
+    const rawImageUrl = String(payload.image_url || "").trim();
+    const imageUrl = security
+      ? (security.sanitizePublicUrl(rawImageUrl) || (/^(\/?images\/|\.{1,2}\/images\/)/i.test(rawImageUrl) ? rawImageUrl : ""))
+      : rawImageUrl;
+    const price = Number(payload.price || 0);
+    const stock = Number(payload.stock || 0);
+    const modernProduct = {
       name: cleanName,
-      description: security ? security.normalizeMultiline(payload.description, { max: 1800 }) : payload.description || "",
-      price: Number(payload.price || 0),
-      stock: Number(payload.stock || 0),
-      image_url: security ? security.sanitizePublicUrl(payload.image_url) : payload.image_url || "",
-      category: security ? security.normalizeText(payload.category || "Genel", { max: 90 }) : payload.category || "Genel",
-      status: ["active", "draft", "archived"].includes(payload.status) ? payload.status : "active",
+      description,
+      price,
+      stock,
+      image_url: imageUrl,
+      category,
+      status,
       slug: payload.slug ? core.slugify(payload.slug) : core.slugify(cleanName),
       meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
-      meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || ""
+      meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || "",
+      brand,
+      partner_id: payload.partner_id || undefined
     };
 
-    const query = payload.id
-      ? client().from("products").update(product).eq("id", payload.id).select("*").single()
-      : client().from("products").insert(product).select("*").single();
+    const legacyProduct = {
+      product_name: cleanName,
+      description,
+      price,
+      old_price: Number(payload.old_price || payload.compare_at_price || price || 0),
+      stock,
+      image_url: imageUrl,
+      category,
+      status,
+      brand,
+      partner_id: String(payload.partner_code || payload.partner_id || "ALP-FOOD"),
+      partner_email: payload.partner_email || "",
+      coupon_status: payload.coupon_status || payload.coupon_label || "Aktif",
+      hp_status: payload.hp_status || payload.hp_label || "Aktif",
+      sku: payload.sku || core.slugify(`${cleanName}-${payload.partner_id || "food"}`).toUpperCase().slice(0, 48),
+      barcode: payload.barcode || ""
+    };
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return core.normalizeProduct(data);
+    async function runWrite(product) {
+      const query = payload.id
+        ? client().from("products").update(product).eq("id", payload.id).select("*").single()
+        : client().from("products").insert(product).select("*").single();
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    }
+
+    try {
+      return core.normalizeProduct(await runWrite(modernProduct));
+    } catch (error) {
+      const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+      if (!/column|schema cache|could not find|does not exist|invalid input syntax for type uuid/i.test(message)) throw error;
+      return core.normalizeProduct(await runWrite(legacyProduct));
+    }
   }
 
   async function deleteProduct(id) {
@@ -184,12 +223,13 @@
     return core.normalizeProduct(data);
   }
 
-  async function listShopPartnerAds(limit) {
+  async function listPartnerAds(placements, limit) {
+    const targetPlacements = placements && placements.length ? placements : ["allonashop_hero", "shop_hero"];
     const { data, error } = await client()
       .from("partner_ads")
       .select("*, product:products(*)")
       .eq("status", "active")
-      .in("placement", ["allonashop_hero", "shop_hero"])
+      .in("placement", targetPlacements)
       .order("priority", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(20);
@@ -203,6 +243,14 @@
         return startsOk && endsOk;
       })
       .slice(0, limit || 5);
+  }
+
+  async function listShopPartnerAds(limit) {
+    return listPartnerAds(["allonashop_hero", "shop_hero"], limit);
+  }
+
+  async function listFoodPartnerAds(limit) {
+    return listPartnerAds(["allonayemek_hero", "allona_yemek_hero", "food_hero", "yemek_hero"], limit);
   }
 
   async function listOrders(scope) {
@@ -301,7 +349,9 @@
       delete: deleteProduct
     },
     ads: {
-      shopHero: listShopPartnerAds
+      shopHero: listShopPartnerAds,
+      foodHero: listFoodPartnerAds,
+      list: listPartnerAds
     },
     orders: {
       list: listOrders,

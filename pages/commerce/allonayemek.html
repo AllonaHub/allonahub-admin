@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
   <link rel="stylesheet" href="../../css/allona-food.css?v=20260622-order1">
 </head>
-<body class="food-module-page">
+<body class="food-module-page" data-page="allona-food">
   <div class="top-mini-nav">
     <a href="../../pages/wallet/hp-nedir.html">HP nedir?</a>
     <a href="../../pages/commerce/kuponlar.html">İndirim Kuponu</a>
@@ -43,41 +43,45 @@
   </header>
 
   <main class="food-page">
-    <section class="food-hero-shell" aria-label="Allona Yemek ana ekran">
-      <div class="food-hero-copy">
-        <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Restoran, kurye, sepet ve HP aynı akışta</p>
-        <h1>Allona Yemek</h1>
-        <p>Restoran keşfi, gel-al seçeneği, kupon/HP avantajı, kurye bağlantısı ve destek akışı tek düzenli yemek modülünde buluşur.</p>
-        <div class="food-hero-metrics" aria-label="Allona Yemek metrikleri">
-          <div><b>50+</b><span>pilot restoran kategorisi</span></div>
-          <div><b>12</b><span>operasyon kontrol noktası</span></div>
-          <div><b>3 kanal</b><span>müşteri, restoran, kurye</span></div>
-        </div>
+    <section class="food-promo-slider" data-food-hero-slider aria-label="Allona Yemek reklam alanı">
+      <button class="food-promo-control food-promo-control--prev" type="button" data-food-hero-prev aria-label="Önceki reklam">‹</button>
+      <div class="food-promo-track" data-food-hero-track>
+        <article class="food-promo-slide is-active" data-food-hero-slide>
+          <img src="../../images/modules/yemek-light-v5.jpg" alt="Allona Yemek kampanya görseli" loading="eager">
+          <div class="food-promo-content">
+            <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Allona Yemek</p>
+            <h1 id="hero-title">Günlük restoran kampanyaları.</h1>
+            <p>Partner menüleri, çok satan siparişler ve sponsorlu fırsatlar canlı katalogdan burada döner.</p>
+            <strong>Canlı ürünler yükleniyor</strong>
+            <a class="food-promo-btn" href="#food-restaurants">Restoranları Gör</a>
+          </div>
+        </article>
       </div>
+      <button class="food-promo-control food-promo-control--next" type="button" data-food-hero-next aria-label="Sonraki reklam">›</button>
+      <div class="food-promo-dots" data-food-hero-dots aria-label="Reklam seçimi"></div>
+    </section>
 
-      <aside class="food-live food-card" aria-label="Canlı sipariş akışı">
-        <h2>Canlı Sipariş Akışı</h2>
-        <div class="food-live-row">
-          <span class="food-live-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
-          <div><b>Sipariş Onayı</b><span>Restoran hazırlık süresi hesaplanır</span></div>
-          <em>2 dk</em>
-        </div>
-        <div class="food-live-row">
-          <span class="food-live-icon"><i class="fa-solid fa-kitchen-set" aria-hidden="true"></i></span>
-          <div><b>Mutfak Hazırlığı</b><span>Notlar, yoğunluk ve ürün uygunluğu izlenir</span></div>
-          <em>18 dk</em>
-        </div>
-        <div class="food-live-row">
-          <span class="food-live-icon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
-          <div><b>Kurye Ataması</b><span>Allona Kurye ağına görev düşer</span></div>
-          <em>Canlı</em>
-        </div>
-        <div class="food-live-row">
-          <span class="food-live-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
-          <div><b>Destek</b><span>Eksik ürün, iptal ve iade kayıtları tutulur</span></div>
-          <em>7/24</em>
-        </div>
-      </aside>
+    <section class="food-live-band food-card" aria-label="Canlı sipariş akışı">
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
+        <div><b>Sipariş Onayı</b><span>Restoran hazırlık süresi hesaplanır</span></div>
+        <em>2 dk</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-kitchen-set" aria-hidden="true"></i></span>
+        <div><b>Mutfak Hazırlığı</b><span>Notlar, yoğunluk ve ürün uygunluğu izlenir</span></div>
+        <em>18 dk</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
+        <div><b>Kurye Ataması</b><span>Allona Kurye ağına görev düşer</span></div>
+        <em>Canlı</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
+        <div><b>Destek</b><span>Eksik ürün, iptal ve iade kayıtları tutulur</span></div>
+        <em>7/24</em>
+      </div>
     </section>
 
     <section class="food-app-shell" aria-label="Allona Yemek sipariş ekranı">
@@ -88,8 +92,8 @@
         </div>
 
         <div class="food-location">
-          <button type="button" data-location-action><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>İstanbul, Beşiktaş</span></button>
-          <button type="button" aria-label="Adresi değiştir"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+          <button type="button" data-location-action><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span data-food-location-label>İstanbul, Beşiktaş</span></button>
+          <button type="button" data-address-edit aria-label="Adresi değiştir"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
         </div>
 
         <form class="food-search" data-food-search-form>
@@ -153,6 +157,7 @@
             <a class="food-action" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i><span>Sepet</span><strong data-cart-count>0</strong></a>
           </div>
         </header>
+        <div class="food-status" data-food-status>Canlı restoran kataloğu hazırlanıyor.</div>
 
         <section class="food-section" aria-label="Yemek kategorileri">
           <div class="food-section-head">
@@ -173,7 +178,7 @@
           </div>
         </section>
 
-        <section class="food-section" aria-label="Restoran listesi">
+        <section class="food-section" id="food-restaurants" aria-label="Restoran listesi">
           <div class="food-section-head">
             <div>
               <h2>Restoranlar</h2>
@@ -267,7 +272,7 @@
           <div class="food-total-row"><span>Kazanılacak HP</span><b data-hp-earned>0 HP</b></div>
           <div class="food-total-row"><span>Toplam</span><strong data-total>0,00 TL</strong></div>
         </div>
-        <a class="food-checkout" href="../commerce/guvenli-odeme.html"><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
+        <a class="food-checkout" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
 
         <div class="food-track-card">
           <div class="food-cart-head">
@@ -288,9 +293,14 @@
   </main>
 
   <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260622-food1" defer></script>
+  <script src="../../js/core.js?v=20260621-cart-snapshot1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260622-food1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260622-corp1" defer></script>
-  <script src="../../js/allona-food-page.js?v=20260621-food1" defer></script>
+  <script src="../../js/allona-food-page.js?v=20260622-food-live1" defer></script>
 </body>
 </html>
