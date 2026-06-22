@@ -24,6 +24,15 @@
       .slice(0, max || 1600);
   }
 
+  function safeActionUrl(value) {
+    try {
+      const url = new URL(String(value || ""), window.location.href);
+      return /^https?:$/i.test(url.protocol) ? url.href : "";
+    } catch (error) {
+      return "";
+    }
+  }
+
   function apiBaseUrl() {
     const configured = String(App.config && App.config.apiBaseUrl || "").replace(/\/$/, "");
     if (/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)) return "http://localhost:3000";
@@ -106,6 +115,10 @@
       .ah-assistant__msg--assistant{align-self:flex-start;background:#fff;border:1px solid rgba(16,32,51,.08)}
       .ah-assistant__msg--user{align-self:flex-end;background:#0b72ff;color:#fff}
       .ah-assistant__msg--status{align-self:center;background:transparent;color:#5d6b7a;font-size:12px;padding:2px}
+      .ah-assistant__msg-text{white-space:pre-wrap}
+      .ah-assistant__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+      .ah-assistant__action{display:flex;align-items:center;justify-content:center;min-height:36px;padding:8px 9px;border:1px solid rgba(11,114,255,.22);border-radius:7px;background:#eef6ff;color:#0b3f8c;text-decoration:none;font-size:12px;font-weight:800;line-height:1.2;text-align:center;overflow-wrap:anywhere}
+      .ah-assistant__action:hover{background:#ddecff;border-color:rgba(11,114,255,.42)}
       .ah-assistant__quick{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid rgba(16,32,51,.08);background:#fff}
       .ah-assistant__quick button{border:1px solid rgba(11,114,255,.22);background:#eef6ff;color:#0b3f8c;border-radius:6px;padding:7px 9px;font-size:12px;font-weight:700;cursor:pointer}
       .ah-assistant__form{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px;border-top:1px solid rgba(16,32,51,.1);background:#fff}
@@ -113,15 +126,42 @@
       .ah-assistant__input:focus{border-color:#0b72ff;box-shadow:0 0 0 3px rgba(11,114,255,.12)}
       .ah-assistant__send{width:46px;height:42px;border:0;border-radius:6px;background:#f4b000;color:#102033;font-weight:900;cursor:pointer}
       .ah-assistant__send[disabled]{opacity:.56;cursor:not-allowed}
-      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant__button{width:54px;height:54px}}
+      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant__button{width:54px;height:54px}.ah-assistant__actions{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
 
-  function appendMessage(messages, role, text) {
+  function appendActions(item, actions) {
+    const cleanActions = (Array.isArray(actions) ? actions : [])
+      .filter((action) => action && action.type === "open_url" && action.label && action.url)
+      .slice(0, 6);
+    if (!cleanActions.length) return;
+
+    const grid = document.createElement("div");
+    grid.className = "ah-assistant__actions";
+    cleanActions.forEach((action) => {
+      const href = safeActionUrl(action.url);
+      if (!href) return;
+      const link = document.createElement("a");
+      link.className = "ah-assistant__action";
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = normalizeText(action.label, 44);
+      grid.appendChild(link);
+    });
+
+    if (grid.children.length) item.appendChild(grid);
+  }
+
+  function appendMessage(messages, role, text, actions) {
     const item = document.createElement("div");
     item.className = `ah-assistant__msg ah-assistant__msg--${role}`;
-    item.textContent = text;
+    const textNode = document.createElement("div");
+    textNode.className = "ah-assistant__msg-text";
+    textNode.textContent = text;
+    item.appendChild(textNode);
+    if (role === "assistant") appendActions(item, actions);
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
     return item;
@@ -145,6 +185,8 @@
           <div class="ah-assistant__quick">
             <button type="button" data-assistant-quick="Siparişimi sorgulamak istiyorum">Sipariş</button>
             <button type="button" data-assistant-quick="Partner başvurusu yapmak istiyorum">Partner</button>
+            <button type="button" data-assistant-quick="CV oluşturmak istiyorum">CV Oluştur</button>
+            <button type="button" data-assistant-quick="Denizcilik iş ilanları hakkında bilgi almak istiyorum">Denizcilik</button>
             <button type="button" data-assistant-quick="AllonaHub Akademi hakkında bilgi almak istiyorum">Akademi</button>
             <button type="button" data-assistant-ticket="Destek talebi oluşturmak istiyorum">Destek Talebi</button>
           </div>
@@ -233,7 +275,7 @@
           createSupportTicket: extra && extra.createSupportTicket
         });
         status.remove();
-        appendMessage(messages, "assistant", result.message || "Yanıt hazır.");
+        appendMessage(messages, "assistant", result.message || "Yanıt hazır.", result.actions || []);
       } catch (error) {
         status.remove();
         appendMessage(messages, "assistant", error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.");

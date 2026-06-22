@@ -415,8 +415,26 @@ async function shouldIgnoreTelegramUpdate(telegram, request) {
   return "";
 }
 
+function telegramInlineKeyboard(actions = []) {
+  const buttons = (Array.isArray(actions) ? actions : [])
+    .filter((action) => action?.type === "open_url" && /^https?:\/\//i.test(String(action.url || "")))
+    .slice(0, 6)
+    .map((action) => ({
+      text: cleanAssistantText(action.label || "Aç", 40) || "Aç",
+      url: String(action.url)
+    }));
+
+  if (!buttons.length) return undefined;
+  const rows = [];
+  for (let index = 0; index < buttons.length; index += 2) {
+    rows.push(buttons.slice(index, index + 2));
+  }
+  return { inline_keyboard: rows };
+}
+
 async function sendTelegramReply(chatId, text, options = {}) {
   if (!config.assistant.telegramBotToken || !chatId) return false;
+  const replyMarkup = telegramInlineKeyboard(options.actions);
   const response = await fetch(`https://api.telegram.org/bot${config.assistant.telegramBotToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -424,7 +442,8 @@ async function sendTelegramReply(chatId, text, options = {}) {
       ...(options.businessConnectionId ? { business_connection_id: options.businessConnectionId } : {}),
       chat_id: chatId,
       text: cleanAssistantText(text, 3900),
-      disable_web_page_preview: true
+      disable_web_page_preview: true,
+      ...(replyMarkup ? { reply_markup: replyMarkup } : {})
     })
   });
   return response.ok;
@@ -637,7 +656,9 @@ async function handleAssistantMessage({ request, payload, channel }) {
   const cleanMetadata = cleanAssistantMetadata(payload.metadata || {});
   const cid = conversationId(payload);
   const intent = detectAssistantIntent(cleanMessage, cleanMetadata);
-  const context = {};
+  const context = {
+    conversation: await loadConversationContext({ channel, conversationId: cid, request })
+  };
 
   const liveSupportActive = intent.key !== "support_ticket"
     ? await activeLiveSupportHandoff({ channel, conversationId: cid, request })
@@ -654,6 +675,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
         conversation_id: cid,
         intent: intent.key,
         request_id: request.id || null,
+        conversation_previous_assistant_messages: context.conversation.previousAssistantMessages,
         live_handoff_active: true,
         assistant_suppressed: true
       },
@@ -701,7 +723,8 @@ async function handleAssistantMessage({ request, payload, channel }) {
       ...cleanMetadata,
       conversation_id: cid,
       intent: intent.key,
-      request_id: request.id || null
+      request_id: request.id || null,
+      conversation_previous_assistant_messages: context.conversation.previousAssistantMessages
     },
     request
   });
@@ -728,7 +751,9 @@ async function handleAssistantMessage({ request, payload, channel }) {
       support_ticket: context.supportTicket || null,
       live_handoff: intent.key === "support_ticket",
       live_handoff_until: intent.key === "support_ticket" ? new Date(Date.now() + LIVE_SUPPORT_HANDOFF_WINDOW_MS).toISOString() : null,
-      order_context_used: Boolean(context.order)
+      order_context_used: Boolean(context.order),
+      conversation_previous_assistant_messages: context.conversation.previousAssistantMessages,
+      conversation_recent_intent: context.conversation.recentIntent
     },
     request
   });
@@ -788,6 +813,37 @@ async function activeLiveSupportHandoff({ channel, conversationId, request }) {
   }
 
   return data || null;
+}
+
+async function loadConversationContext({ channel, conversationId, request }) {
+  const empty = {
+    previousAssistantMessages: 0,
+    previousUserMessages: 0,
+    recentIntent: null
+  };
+  if (!conversationId) return empty;
+
+  const { data, error } = await supabaseAdmin
+    .from("conversation_logs")
+    .select("sender_type, metadata, created_at")
+    .eq("channel", channel)
+    .eq("metadata->>conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(24);
+
+  if (error) {
+    if (looksLikeMissingSchema(error)) return empty;
+    request.log.warn({ error: error.message }, "Assistant conversation context lookup failed");
+    return empty;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  const recentIntent = rows.find((item) => item.metadata?.intent)?.metadata?.intent || null;
+  return {
+    previousAssistantMessages: rows.filter((item) => item.sender_type === "assistant").length,
+    previousUserMessages: rows.filter((item) => item.sender_type === "user").length,
+    recentIntent
+  };
 }
 
 function verifyTelegramSecret(request) {
@@ -945,7 +1001,8 @@ export function registerAssistantRoutes(app) {
       delivered = result.suppressReply
         ? false
         : await sendTelegramReply(telegram.chatId, result.message, {
-            businessConnectionId: telegram.businessConnectionId
+            businessConnectionId: telegram.businessConnectionId,
+            actions: result.actions
           });
     } catch (error) {
       request.log.warn({ error: error.message }, "Telegram assistant reply could not be delivered");
