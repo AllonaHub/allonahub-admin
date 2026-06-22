@@ -21,6 +21,7 @@
   ];
   const themes = [
     { code: "ocean", label: "Deniz" },
+    { code: "corporate", label: "Sade Kurumsal" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
     { code: "turquoise", label: "Turkuaz" },
@@ -29,6 +30,8 @@
   const themeAliases = {
     neon: "ocean",
     allona: "ocean",
+    sade: "corporate",
+    kurumsal: "corporate",
     marketplace: "forest",
     graphite: "ocean"
   };
