@@ -830,7 +830,7 @@
       "[data-account-link]",
       "a.login",
       "a[href$='/pages/account/user.html']",
-      "a[href$='/pages/account/login.html']"
+      "a[href*='/pages/account/user.html?']"
     ];
     return [...document.querySelectorAll(selectors.join(","))].filter((link) => {
       const text = (link.textContent || "").trim().toLocaleLowerCase("tr-TR");
@@ -866,7 +866,7 @@
     const loggedIn = await hasAuthenticatedUser();
     if (!loggedIn) {
       links.forEach((link) => {
-        link.href = assetUrl("/pages/account/login.html");
+        link.href = assetUrl("/pages/account/user.html");
         link.textContent = localizedText("Giriş Yap");
         link.setAttribute("aria-label", localizedText("Giriş Yap"));
         link.setAttribute("data-account-link", "");

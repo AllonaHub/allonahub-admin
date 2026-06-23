@@ -96,8 +96,8 @@ const PLATFORM_LINKS = Object.freeze({
   contact: "/pages/company/iletisim.html",
   about: "/pages/company/hakkimizda.html",
   academy: "/allonahub-akademi.html",
-  login: "/pages/account/login.html",
-  register: "/pages/account/register.html",
+  login: "/pages/account/user.html",
+  register: "/pages/account/user.html?tab=register",
   account: "/pages/account/user-panel.html",
   profile: "/pages/account/profil.html",
   addresses: "/pages/account/addresses.html",
@@ -571,7 +571,7 @@ function fallbackByIntent(intent, context = {}, channel = "webchat") {
     partner: siteLink("/pages/partner/partner.html"),
     academy: siteLink("/allonahub-akademi.html"),
     orders: siteLink("/pages/account/orders.html"),
-    login: siteLink("/pages/account/login.html")
+    login: siteLink("/pages/account/user.html")
   };
 
   if (webchat && (intent.key === "support_ticket" || intent.key === "general_support")) {

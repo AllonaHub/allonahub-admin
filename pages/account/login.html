@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Giriş Yap | AllonaHub</title>
+  <link rel="canonical" href="user.html">
+  <meta http-equiv="refresh" content="0; url=user.html">
+  <script>
+    (function(){
+      const target=new URL("user.html", window.location.href);
+      new URLSearchParams(window.location.search).forEach((value,key)=>target.searchParams.set(key,value));
+      target.searchParams.set("tab","login");
+      window.location.replace(target.href+window.location.hash);
+    })();
+  </script>
   <meta name="description" content="AllonaHub hesabınıza giriş yapın.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
@@ -36,7 +46,7 @@
           Google ile Giriş Yap
         </button>
         <div data-auth-status></div>
-        <p class="auth-switch"><a href="forgot-password.html">Şifremi unuttum</a> · <a href="register.html">Kayıt ol</a></p>
+        <p class="auth-switch"><a href="user.html?tab=forgot">Şifremi unuttum</a> · <a href="user.html?tab=register">Kayıt ol</a></p>
       </section>
     </main>
   </div>

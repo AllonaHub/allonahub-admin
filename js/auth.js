@@ -84,7 +84,7 @@
     if (!App.supabase) throw new Error("Supabase istemcisi yüklenemedi.");
 
     const destination = safeReturnPath(returnTo, App.core.url("/pages/account/user-panel.html"));
-    const redirectUrl = new URL(App.core.url("/pages/account/login.html"), window.location.href);
+    const redirectUrl = new URL(App.core.url("/pages/account/user.html"), window.location.href);
     redirectUrl.searchParams.set("returnTo", destination);
 
     const { data, error } = await App.supabase.auth.signInWithOAuth({
@@ -347,7 +347,7 @@
     const user = await getUser();
     if (user) return user;
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    window.location.href = App.core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+    window.location.href = App.core.url(`/pages/account/user.html?returnTo=${returnTo}`);
     return null;
   }
 

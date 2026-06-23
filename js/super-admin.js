@@ -88,7 +88,7 @@
 
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+    return core.url(`/pages/account/user.html?returnTo=${returnTo}`);
   }
 
   function mfaUrl() {

@@ -7,16 +7,16 @@
     "belgeler.html": "/pages/account/belgeler.html",
     "bildirimler.html": "/pages/account/bildirimler.html",
     "favorites.html": "/pages/account/favorites.html",
-    "forgot-password.html": "/pages/account/forgot-password.html",
+    "forgot-password.html": "/pages/account/user.html?tab=forgot",
     "gorevler.html": "/pages/account/gorevler.html",
-    "login.html": "/pages/account/login.html",
+    "login.html": "/pages/account/user.html",
     "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",
     "order-detail.html": "/pages/account/order-detail.html",
     "premium.html": "/pages/account/premium.html",
     "profil.html": "/pages/account/profil.html",
     "profile.html": "/pages/account/profile.html",
-    "register.html": "/pages/account/register.html",
+    "register.html": "/pages/account/user.html?tab=register",
     "reset-password.html": "/pages/account/reset-password.html",
     "rewards.html": "/pages/account/rewards.html",
     "user-panel.html": "/pages/account/user-panel.html",
@@ -137,7 +137,12 @@
     const match = raw.match(/^([^?#]+)([?#].*)?$/);
     if (!match) return raw;
     const target = legacyRoutes[match[1]];
-    return target ? `${target}${match[2] || ""}` : raw;
+    if (!target) return raw;
+    const suffix = match[2] || "";
+    if (suffix.startsWith("?") && target.includes("?")) {
+      return `${target}&${suffix.slice(1)}`;
+    }
+    return `${target}${suffix}`;
   }
 
   function detectBasePath() {

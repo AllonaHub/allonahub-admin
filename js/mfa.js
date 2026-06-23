@@ -115,7 +115,7 @@
   async function load() {
     const user = await App.auth.getUser();
     if (!user) {
-      window.location.href = core.url(`/pages/account/login.html?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
     state.status = await App.auth.mfaStatus();

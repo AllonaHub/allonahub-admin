@@ -242,7 +242,7 @@
 
   function registerReturnUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    return core.url(`/pages/account/register.html?returnTo=${returnTo}`);
+    return core.url(`/pages/account/user.html?tab=register&returnTo=${returnTo}`);
   }
 
   async function assignCoupon(code, action) {
