@@ -4,14 +4,15 @@ Bu dokuman `/admin/index.html` altindaki sinirli yetkili Admin Panel mimarisini 
 
 ## Security Boundary
 
-- Admin Panel backend route prefix: `/v1/admin/ops/*`
+- Admin Panel primary backend route prefix: `/v1/ops-console/*`
+- Legacy compatibility route prefix: `/v1/admin/ops/*`
 - Frontend route: `/admin/index.html`
 - Role boundary: exact `admin` role only.
 - Super Admin role is intentionally not accepted by `requireOpsAdmin`.
 - Backend checks:
   - Supabase JWT verification.
   - `profiles.role = admin`.
-  - MFA requirement.
+  - MFA requirement when `ADMIN_MFA_ENFORCED=true`.
   - admin host/IP boundary.
   - database RPC `public.is_ops_admin()`.
 - Frontend never receives or stores `service_role_key`.
@@ -25,6 +26,7 @@ Required migration:
 
 ```text
 supabase/migrations/20260621153000_create_admin_ops_panel.sql
+supabase/migrations/20260623124500_admin_ops_bootstrap_access.sql
 ```
 
 The migration adds:

@@ -171,7 +171,7 @@
     const health = $("[data-system-health]");
     if (!target || !health) return;
     target.innerHTML = metricCard("Yükleniyor", "...", "Dashboard");
-    const payload = await api("/v1/super-admin/dashboard");
+    const payload = await api("/v1/control-center/dashboard");
     const dashboard = payload.dashboard || {};
     const metrics = dashboard.metrics || {};
     target.innerHTML = [
@@ -200,7 +200,7 @@
 
   async function loadUsers(params) {
     const query = new URLSearchParams(params || {});
-    const payload = await api(`/v1/super-admin/users?${query.toString()}`);
+    const payload = await api(`/v1/control-center/users?${query.toString()}`);
     state.users = payload.users || [];
     const target = $("[data-users-table]");
     if (!target) return;
@@ -242,7 +242,7 @@
   }
 
   async function loadPartners() {
-    const payload = await api("/v1/super-admin/partners");
+    const payload = await api("/v1/control-center/partners");
     state.applications = payload.applications || [];
     state.businesses = payload.businesses || [];
     const applicationsTarget = $("[data-partner-applications]");
@@ -304,7 +304,7 @@
   }
 
   async function loadSecurity() {
-    const payload = await api("/v1/super-admin/security");
+    const payload = await api("/v1/control-center/security");
     const securityData = payload.security || {};
     const metrics = securityData.metrics || {};
     const metricTarget = $("[data-security-metrics]");
@@ -329,7 +329,7 @@
   }
 
   async function loadAdminOps() {
-    const payload = await api("/v1/super-admin/admin-ops");
+    const payload = await api("/v1/control-center/admin-ops");
     state.adminOps = payload.admin_ops || {};
     const data = state.adminOps;
     const admins = data.admins || [];
@@ -456,7 +456,7 @@
   }
 
   async function loadSettings() {
-    const payload = await api("/v1/super-admin/settings");
+    const payload = await api("/v1/control-center/settings");
     state.settings = payload.settings || [];
     const target = $("[data-settings-list]");
     const env = payload.env_flags || {};
@@ -487,7 +487,7 @@
   }
 
   async function loadModules() {
-    const payload = await api("/v1/super-admin/modules");
+    const payload = await api("/v1/control-center/modules");
     state.modules = payload.modules || [];
     const target = $("[data-modules-list]");
     if (!target) return;
@@ -521,7 +521,7 @@
   }
 
   async function loadAuditLog() {
-    const payload = await api("/v1/super-admin/audit-log?limit=80");
+    const payload = await api("/v1/control-center/audit-log?limit=80");
     renderEventsTable($("[data-audit-log]"), payload.events || []);
   }
 
@@ -619,7 +619,7 @@
 
     await runConfirmed(message, async (reason) => {
       payload.note = reason || message;
-      await api(`/v1/super-admin/users/${encodeURIComponent(userId)}`, {
+      await api(`/v1/control-center/users/${encodeURIComponent(userId)}`, {
         method: "PATCH",
         body: payload
       });
@@ -635,7 +635,7 @@
       rejected: "Partner başvurusu reddedilecek."
     };
     await runConfirmed(messages[decision] || "Partner başvurusu güncellenecek.", async (reason) => {
-      await api(`/v1/super-admin/partner-applications/${encodeURIComponent(applicationId)}`, {
+      await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
         method: "PATCH",
         body: {
           decision,
@@ -656,7 +656,7 @@
     const input = $(`[data-setting-input="${safeKey}"]`);
     const value = toggle ? toggle.getAttribute("aria-pressed") === "true" : Number(input && input.value || 0);
     await runConfirmed(`${setting.label || key} ayarı güncellenecek.`, async (reason) => {
-      await api(`/v1/super-admin/settings/${encodeURIComponent(key)}`, {
+      await api(`/v1/control-center/settings/${encodeURIComponent(key)}`, {
         method: "PATCH",
         body: { value, reason }
       });
@@ -671,7 +671,7 @@
     const commission = $(`[data-module-commission="${safeKey}"]`);
     const application = $(`[data-module-application="${safeKey}"]`);
     await runConfirmed("Modül kontrol ayarı güncellenecek.", async (reason) => {
-      await api(`/v1/super-admin/modules/${encodeURIComponent(key)}`, {
+      await api(`/v1/control-center/modules/${encodeURIComponent(key)}`, {
         method: "PATCH",
         body: {
           is_active: active ? active.getAttribute("aria-pressed") === "true" : undefined,
@@ -691,7 +691,7 @@
     const profileKey = select && select.value;
     if (!profileKey) return;
     await runConfirmed("Admin yetki profili güncellenecek.", async (reason) => {
-      await api("/v1/super-admin/admin-ops/assignments", {
+      await api("/v1/control-center/admin-ops/assignments", {
         method: "POST",
         body: {
           admin_user_id: adminId,
@@ -712,7 +712,7 @@
       ? "Admin onay talebi reddedilecek."
       : "Admin onay talebi iptal edilecek.";
     await runConfirmed(message, async (reason) => {
-      await api(`/v1/super-admin/admin-ops/approval-requests/${encodeURIComponent(requestId)}`, {
+      await api(`/v1/control-center/admin-ops/approval-requests/${encodeURIComponent(requestId)}`, {
         method: "PATCH",
         body: { decision, reason }
       });
@@ -728,7 +728,7 @@
       ? "Acil alarm çözüldü olarak kapatılacak."
       : "Acil alarm iptal edilecek.";
     await runConfirmed(message, async (reason) => {
-      await api(`/v1/super-admin/emergency-alerts/${encodeURIComponent(alertId)}`, {
+      await api(`/v1/control-center/emergency-alerts/${encodeURIComponent(alertId)}`, {
         method: "PATCH",
         body: { status, reason }
       });

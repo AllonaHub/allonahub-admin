@@ -6,8 +6,8 @@ const SQLI_PATTERN = /\b(union\s+select|information_schema|pg_sleep|benchmark\s*
 const XSS_PATTERN = /(<script|javascript:|onerror\s*=|onload\s*=|<iframe|data:text\/html)/i;
 const TRAVERSAL_PATTERN = /(\.\.\/|\.\.\\|%2e%2e|%252e%252e|\/etc\/passwd|\\windows\\win\.ini)/i;
 const PROBE_PATTERN = /(\/wp-admin|\/wp-login|\/wordpress|\/xmlrpc\.php|\/phpmyadmin|\/\.env|\/vendor\/phpunit|\/cgi-bin|\/adminer)/i;
-const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|payments|cv|orders|partner|hp-wallet|cron)\b/i;
-const ADMIN_PATH_PATTERN = /^\/v1\/admin\b/i;
+const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|platform-alerts|payments|cv|orders|partner|hp-wallet|cron)\b/i;
+const ADMIN_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|platform-alerts)\b/i;
 
 const state = {
   ipScores: new Map(),

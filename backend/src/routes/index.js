@@ -659,7 +659,7 @@ async function assertHumanChallenge(request, token, action) {
 async function requireSuperAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["super_admin"],
-    mfa: true,
+    mfa: config.superAdminMfaEnforced,
     adminBoundary: true,
     action
   });
@@ -713,7 +713,7 @@ async function countAdminRows(label, table, configure) {
 async function requireOpsAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["admin"],
-    mfa: true,
+    mfa: config.adminMfaEnforced,
     adminBoundary: true,
     action
   });
@@ -1433,6 +1433,19 @@ function safeSupabaseReadyError(error, status, statusText) {
 }
 
 export function registerRoutes(app) {
+  const aliasRoute = (method, paths, handler) => {
+    for (const path of paths) {
+      app[method](path, handler);
+    }
+  };
+  const adminAlertGet = (handler) => aliasRoute("get", ["/v1/admin/platform-alerts", "/v1/platform-alerts"], handler);
+  const opsGet = (suffix, handler) => aliasRoute("get", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const opsPost = (suffix, handler) => aliasRoute("post", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const opsPatch = (suffix, handler) => aliasRoute("patch", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const superGet = (suffix, handler) => aliasRoute("get", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+  const superPost = (suffix, handler) => aliasRoute("post", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+  const superPatch = (suffix, handler) => aliasRoute("patch", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+
   app.get("/health", async () => ({
     ok: true,
     service: "allonahub-backend",
@@ -1709,10 +1722,10 @@ export function registerRoutes(app) {
     return reply.code(202).send({ ok: true });
   });
 
-  app.get("/v1/admin/platform-alerts", async (request) => {
+  adminAlertGet(async (request) => {
     const ctx = await requireAuth(request, {
       roles: ["admin", "super_admin"],
-      mfa: true,
+      mfa: config.adminMfaEnforced || config.superAdminMfaEnforced,
       adminBoundary: true,
       action: "admin.platform_alerts.view"
     });
@@ -2542,7 +2555,7 @@ export function registerRoutes(app) {
     return { ok: true, order: updated };
   });
 
-  app.get("/v1/super-admin/dashboard", async (request) => {
+  superGet("/dashboard", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.dashboard.view");
     const warnings = [];
     const today = new Date();
@@ -2630,7 +2643,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/admin-ops", async (request) => {
+  superGet("/admin-ops", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.view");
     const [admins, permissionProfiles, assignments, approvalRequests, emergencyAlerts, interventions] = await Promise.all([
       runAdminQuery(
@@ -2724,7 +2737,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.post("/v1/super-admin/admin-ops/assignments", async (request, reply) => {
+  superPost("/admin-ops/assignments", async (request, reply) => {
     const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.assignment");
     const body = superAdminOpsAssignmentSchema.parse(request.body || {});
     const { data: adminUser, error: adminError } = await supabaseAdmin
@@ -2804,7 +2817,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, assignment });
   });
 
-  app.patch("/v1/super-admin/admin-ops/approval-requests/:requestId", async (request) => {
+  superPatch("/admin-ops/approval-requests/:requestId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.approval_decision");
     const requestId = uuidSchema.parse(request.params.requestId);
     const body = superAdminApprovalDecisionSchema.parse(request.body || {});
@@ -2898,7 +2911,7 @@ export function registerRoutes(app) {
     return { ok: true, approval_request: updated, emergency_alert: emergencyAlert };
   });
 
-  app.post("/v1/super-admin/emergency-alerts", async (request, reply) => {
+  superPost("/emergency-alerts", async (request, reply) => {
     const ctx = await requireSuperAdmin(request, "super_admin.emergency_alert.create");
     const body = superAdminEmergencyAlertSchema.parse(request.body || {});
     const { data: alert, error } = await supabaseAdmin
@@ -2961,7 +2974,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, alert });
   });
 
-  app.patch("/v1/super-admin/emergency-alerts/:alertId", async (request) => {
+  superPatch("/emergency-alerts/:alertId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.emergency_alert.update");
     const alertId = uuidSchema.parse(request.params.alertId);
     const body = superAdminEmergencyAlertStatusSchema.parse(request.body || {});
@@ -3009,7 +3022,7 @@ export function registerRoutes(app) {
     return { ok: true, alert };
   });
 
-  app.get("/v1/super-admin/users", async (request) => {
+  superGet("/users", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.users.list");
     const queryParams = z.object({
       limit: z.coerce.number().int().min(1).max(200).optional().default(80),
@@ -3058,7 +3071,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/users/:userId", async (request) => {
+  superPatch("/users/:userId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.users.update");
     const { userId } = z.object({ userId: uuidSchema }).parse(request.params || {});
     const body = superAdminUserUpdateSchema.parse(request.body || {});
@@ -3114,7 +3127,7 @@ export function registerRoutes(app) {
     return { ok: true, user: publicProfile(updated) };
   });
 
-  app.get("/v1/super-admin/partners", async (request) => {
+  superGet("/partners", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.partners.list");
     const warnings = [];
     const applications = await runAdminQuery(
@@ -3160,7 +3173,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/partner-applications/:applicationId", async (request) => {
+  superPatch("/partner-applications/:applicationId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
     const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
     const body = partnerApplicationDecisionSchema.parse(request.body || {});
@@ -3247,7 +3260,7 @@ export function registerRoutes(app) {
     return { ok: true, application, partner_business: partnerBusiness };
   });
 
-  app.get("/v1/super-admin/security", async (request) => {
+  superGet("/security", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.security.view");
     const warnings = [];
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -3309,7 +3322,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/settings", async (request) => {
+  superGet("/settings", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.settings.list");
     const result = await runAdminQuery(
       "super_admin_settings",
@@ -3354,7 +3367,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/settings/:settingKey", async (request) => {
+  superPatch("/settings/:settingKey", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.settings.update");
     const { settingKey } = z.object({
       settingKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
@@ -3415,7 +3428,7 @@ export function registerRoutes(app) {
     return { ok: true, setting: updated };
   });
 
-  app.get("/v1/super-admin/modules", async (request) => {
+  superGet("/modules", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.modules.list");
     const result = await runAdminQuery(
       "platform_modules",
@@ -3456,7 +3469,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/modules/:moduleKey", async (request) => {
+  superPatch("/modules/:moduleKey", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.modules.update");
     const { moduleKey } = z.object({
       moduleKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
@@ -3512,7 +3525,7 @@ export function registerRoutes(app) {
     return { ok: true, module: updated };
   });
 
-  app.get("/v1/super-admin/audit-log", async (request) => {
+  superGet("/audit-log", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.audit_log.view");
     const query = auditQuerySchema.parse(request.query || {});
     let dbQuery = supabaseAdmin
@@ -3550,7 +3563,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/admin/ops/bootstrap", async (request) => {
+  opsGet("/bootstrap", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.bootstrap");
     const warnings = [];
     const access = await loadAdminAccessProfile(ctx, warnings);
@@ -3596,7 +3609,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/admin/ops/dashboard", async (request) => {
+  opsGet("/dashboard", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.dashboard");
     await requireOpsPermission(request, ctx, "dashboard.view");
     const warnings = [];
@@ -3613,7 +3626,7 @@ export function registerRoutes(app) {
     return { ok: true, dashboard, warnings };
   });
 
-  app.get("/v1/admin/ops/users", async (request) => {
+  opsGet("/users", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.list");
     await requireOpsPermission(request, ctx, "users.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -3640,7 +3653,7 @@ export function registerRoutes(app) {
     return { ok: true, users, warnings };
   });
 
-  app.get("/v1/admin/ops/users/:userId", async (request) => {
+  opsGet("/users/:userId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.detail");
     await requireOpsPermission(request, ctx, "users.view");
     const userId = uuidSchema.parse(request.params.userId);
@@ -3708,7 +3721,7 @@ export function registerRoutes(app) {
     return { ok: true, profile, orders, notes, flags, warnings };
   });
 
-  app.post("/v1/admin/ops/users/:userId/notes", async (request, reply) => {
+  opsPost("/users/:userId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.note");
     await requireOpsPermission(request, ctx, "users.note");
     const userId = uuidSchema.parse(request.params.userId);
@@ -3740,7 +3753,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, note, warnings });
   });
 
-  app.post("/v1/admin/ops/users/:userId/flag", async (request, reply) => {
+  opsPost("/users/:userId/flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.flag");
     await requireOpsPermission(request, ctx, "users.flag");
     const userId = uuidSchema.parse(request.params.userId);
@@ -3775,7 +3788,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, flag, warnings });
   });
 
-  app.get("/v1/admin/ops/partner-applications", async (request) => {
+  opsGet("/partner-applications", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
     await requireOpsPermission(request, ctx, "applications.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -3801,7 +3814,7 @@ export function registerRoutes(app) {
     return { ok: true, applications, warnings };
   });
 
-  app.get("/v1/admin/ops/partner-applications/:applicationId", async (request) => {
+  opsGet("/partner-applications/:applicationId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.detail");
     await requireOpsPermission(request, ctx, "applications.view");
     const applicationId = uuidSchema.parse(request.params.applicationId);
@@ -3852,7 +3865,7 @@ export function registerRoutes(app) {
     return { ok: true, application, notes, approvalRequests: requests, warnings };
   });
 
-  app.patch("/v1/admin/ops/partner-applications/:applicationId/review", async (request) => {
+  opsPatch("/partner-applications/:applicationId/review", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
     await requireOpsPermission(request, ctx, "applications.review");
     const applicationId = uuidSchema.parse(request.params.applicationId);
@@ -3946,7 +3959,7 @@ export function registerRoutes(app) {
     return { ok: true, application, approvalRequest, warnings };
   });
 
-  app.get("/v1/admin/ops/partners", async (request) => {
+  opsGet("/partners", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partners.list");
     await requireOpsPermission(request, ctx, "partners.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -3972,7 +3985,7 @@ export function registerRoutes(app) {
     return { ok: true, partners, warnings };
   });
 
-  app.get("/v1/admin/ops/orders", async (request) => {
+  opsGet("/orders", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.list");
     await requireOpsPermission(request, ctx, "orders.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -3998,7 +4011,7 @@ export function registerRoutes(app) {
     return { ok: true, orders, warnings };
   });
 
-  app.get("/v1/admin/ops/orders/:orderId", async (request) => {
+  opsGet("/orders/:orderId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.detail");
     await requireOpsPermission(request, ctx, "orders.view");
     const orderId = uuidSchema.parse(request.params.orderId);
@@ -4053,7 +4066,7 @@ export function registerRoutes(app) {
     return { ok: true, order, notes, flags, warnings };
   });
 
-  app.post("/v1/admin/ops/orders/:orderId/risk-flag", async (request, reply) => {
+  opsPost("/orders/:orderId/risk-flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
     await requireOpsPermission(request, ctx, "orders.flag");
     const orderId = uuidSchema.parse(request.params.orderId);
@@ -4088,7 +4101,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, flag, warnings });
   });
 
-  app.get("/v1/admin/ops/support-tickets", async (request) => {
+  opsGet("/support-tickets", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.list");
     await requireOpsPermission(request, ctx, "support.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -4141,7 +4154,7 @@ export function registerRoutes(app) {
     return { ok: true, tickets, warnings };
   });
 
-  app.patch("/v1/admin/ops/support-tickets/:ticketId/status", async (request) => {
+  opsPatch("/support-tickets/:ticketId/status", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.status");
     await requireOpsPermission(request, ctx, "support.update");
     const ticketId = uuidSchema.parse(request.params.ticketId);
@@ -4201,7 +4214,7 @@ export function registerRoutes(app) {
     return { ok: true, ticket, warnings };
   });
 
-  app.post("/v1/admin/ops/support-tickets/:ticketId/notes", async (request, reply) => {
+  opsPost("/support-tickets/:ticketId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.note");
     await requireOpsPermission(request, ctx, "support.update");
     const ticketId = uuidSchema.parse(request.params.ticketId);
@@ -4234,7 +4247,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, note, warnings });
   });
 
-  app.get("/v1/admin/ops/content-proposals", async (request) => {
+  opsGet("/content-proposals", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.list");
     await requireOpsPermission(request, ctx, "content.view");
     const warnings = [];
@@ -4258,7 +4271,7 @@ export function registerRoutes(app) {
     return { ok: true, proposals, warnings };
   });
 
-  app.post("/v1/admin/ops/content-proposals", async (request, reply) => {
+  opsPost("/content-proposals", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.propose");
     await requireOpsPermission(request, ctx, "content.propose");
     await requireOpsPermission(request, ctx, "approvals.request");
@@ -4310,7 +4323,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, proposal, warnings });
   });
 
-  app.get("/v1/admin/ops/permissions", async (request) => {
+  opsGet("/permissions", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.permissions.view");
     await requireOpsPermission(request, ctx, "permissions.view");
     const warnings = [];
@@ -4349,7 +4362,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/admin/ops/approval-requests", async (request) => {
+  opsGet("/approval-requests", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.approvals.list");
     await requireOpsPermission(request, ctx, "approvals.view");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -4373,7 +4386,7 @@ export function registerRoutes(app) {
     return { ok: true, requests, warnings };
   });
 
-  app.get("/v1/admin/ops/emergency-alerts", async (request) => {
+  opsGet("/emergency-alerts", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.emergency_alerts.list");
     await requireOpsPermission(request, ctx, "emergency.view");
     const warnings = [];
@@ -4412,7 +4425,7 @@ export function registerRoutes(app) {
     return { ok: true, alerts, requests, warnings };
   });
 
-  app.post("/v1/admin/ops/emergency-alerts", async (request, reply) => {
+  opsPost("/emergency-alerts", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.emergency_alerts.request");
     await requireOpsPermission(request, ctx, "emergency.request");
     await requireOpsPermission(request, ctx, "approvals.request");
@@ -4502,7 +4515,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, alert, approvalRequest, warnings });
   });
 
-  app.get("/v1/admin/ops/security-monitoring", async (request) => {
+  opsGet("/security-monitoring", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.security_monitoring");
     await requireOpsPermission(request, ctx, "security.view");
     const warnings = [];
@@ -4551,7 +4564,7 @@ export function registerRoutes(app) {
     return { ok: true, events, flags, notifications, autoDefense, warnings };
   });
 
-  app.get("/v1/admin/ops/reports", async (request) => {
+  opsGet("/reports", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.reports");
     await requireOpsPermission(request, ctx, "reports.view");
     const warnings = [];
@@ -4607,7 +4620,7 @@ export function registerRoutes(app) {
     return { ok: true, reports, warnings };
   });
 
-  app.get("/v1/admin/ops/audit-log", async (request) => {
+  opsGet("/audit-log", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.audit_log");
     await requireOpsPermission(request, ctx, "audit.view");
     const query = adminAuditLogQuerySchema.parse(request.query || {});

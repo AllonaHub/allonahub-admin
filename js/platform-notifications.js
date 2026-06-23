@@ -131,7 +131,7 @@
     const token = await adminSessionToken();
     if (!token) return;
     try {
-      const response = await fetch(`${base}/v1/admin/platform-alerts`, {
+      const response = await fetch(`${base}/v1/platform-alerts`, {
         credentials: "omit",
         headers: { Authorization: `Bearer ${token}` }
       });
