@@ -13,6 +13,7 @@
     iyzicoFunctionName: "create-iyzico-checkout",
     cvCheckoutFunctionName: "create-cv-checkout",
     cvPrice: 149.99,
+    securityMode: "build",
     translationEndpoint: "",
     partnerAdsEnabled: false,
     storageKeys: {

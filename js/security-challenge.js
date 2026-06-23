@@ -7,6 +7,10 @@
     return String(App.config && App.config.turnstileSiteKey || "").trim();
   }
 
+  function buildMode() {
+    return String(App.config && App.config.securityMode || "production").trim().toLowerCase() === "build";
+  }
+
   function loadTurnstile() {
     if (!siteKey()) return Promise.resolve(false);
     if (window.turnstile) return Promise.resolve(true);
@@ -115,6 +119,13 @@
   }
 
   async function hydrateVisibleChallenges() {
+    if (buildMode()) {
+      document.querySelectorAll("[data-security-challenge]").forEach((container) => {
+        container.hidden = true;
+        container.dataset.turnstileRendered = "build-mode-skipped";
+      });
+      return;
+    }
     if (!siteKey()) return;
     const containers = Array.from(document.querySelectorAll("[data-security-challenge]"));
     if (!containers.length) return;
@@ -127,6 +138,7 @@
   }
 
   async function execute(action) {
+    if (buildMode()) return "";
     if (!siteKey()) return "";
     await loadTurnstile();
     if (!window.turnstile) throw new Error("Robot doğrulaması başlatılamadı.");
@@ -195,7 +207,7 @@
   App.securityChallenge = {
     tokenFor,
     hydrate: hydrateVisibleChallenges,
-    enabled: () => Boolean(siteKey())
+    enabled: () => !buildMode() && Boolean(siteKey())
   };
 
   if (document.readyState === "loading") {

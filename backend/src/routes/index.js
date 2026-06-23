@@ -419,13 +419,23 @@ const DEFAULT_ADMIN_APPROVAL_RULES = {
   finance_or_commission_change: "blocked"
 };
 
-const routeRateLimit = {
+const productionRouteRateLimit = {
   login: { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
   register: { config: { rateLimit: { max: 5, timeWindow: "1 hour" } } },
   forgotPassword: { config: { rateLimit: { max: 4, timeWindow: "30 minutes" } } },
   partnerApplication: { config: { rateLimit: { max: 6, timeWindow: "1 hour" } } },
   checkout: { config: { rateLimit: { max: 10, timeWindow: "10 minutes" } } }
 };
+
+const buildRouteRateLimit = {
+  login: { config: { rateLimit: { max: 300, timeWindow: "15 minutes" } } },
+  register: { config: { rateLimit: { max: 120, timeWindow: "1 hour" } } },
+  forgotPassword: { config: { rateLimit: { max: 120, timeWindow: "30 minutes" } } },
+  partnerApplication: { config: { rateLimit: { max: 120, timeWindow: "1 hour" } } },
+  checkout: { config: { rateLimit: { max: 120, timeWindow: "10 minutes" } } }
+};
+
+const routeRateLimit = config.security.buildMode ? buildRouteRateLimit : productionRouteRateLimit;
 
 function clientIp(request) {
   return String(request.headers["cf-connecting-ip"] || request.ip || "0.0.0.0").split(",")[0].trim();
@@ -611,7 +621,7 @@ async function requireAuth(request, options = {}) {
     throw httpError("Bu işlem için iki aşamalı doğrulama gerekli.", 403);
   }
 
-  if (options.adminBoundary) {
+  if (options.adminBoundary && !config.security.buildMode) {
     try {
       assertAdminBoundary(request);
     } catch (error) {
@@ -793,6 +803,26 @@ function adminCapabilitiesFromPermissions(permissions) {
 
 async function loadAdminAccessProfile(ctx, warnings = []) {
   const nowIso = new Date().toISOString();
+  if (config.security.buildMode) {
+    warnings.push("APP_SECURITY_MODE=build aktif. Admin yetki profili geliştirme için ops_default olarak gevşetildi.");
+    return {
+      source: "build_mode",
+      assignment: null,
+      profile: {
+        profile_key: "ops_default",
+        label: "Build Mode Operasyon Admin",
+        description: "Geliştirme sürecinde geçici ops_default yetki profili.",
+        approval_rules: DEFAULT_ADMIN_APPROVAL_RULES
+      },
+      permissions: normalizePermissions(OPS_DEFAULT_PERMISSION_MAP, OPS_DEFAULT_PERMISSION_MAP),
+      approval_rules: DEFAULT_ADMIN_APPROVAL_RULES,
+      restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+      definitions: ADMIN_PERMISSION_DEFINITIONS,
+      capabilities: adminCapabilitiesFromPermissions(OPS_DEFAULT_PERMISSION_MAP),
+      now: nowIso
+    };
+  }
+
   const assignmentResult = await runAdminQuery(
     "admin_permission_assignments_current",
     supabaseAdmin

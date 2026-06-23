@@ -116,7 +116,7 @@ export async function buildApp() {
   });
 
   await app.register(rateLimit, {
-    max: 120,
+    max: config.security.buildMode ? 2000 : 120,
     timeWindow: "1 minute",
     hook: "onRequest",
     errorResponseBuilder() {

@@ -1,6 +1,7 @@
 import { config } from "../config.js";
 
 function shouldBypass() {
+  if (config.security?.buildMode) return true;
   return config.env !== "production" && config.turnstile.bypassInDevelopment;
 }
 

@@ -59,11 +59,19 @@ function csv(value) {
     .filter(Boolean);
 }
 
+const rawSecurityMode = String(process.env.APP_SECURITY_MODE || "production").trim().toLowerCase();
+const securityMode = ["production", "build"].includes(rawSecurityMode) ? rawSecurityMode : "production";
+const buildMode = securityMode === "build";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
 const supabaseServiceKey = readSecretFallback("SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 export const config = {
   env: readEnv("NODE_ENV", { required: false, defaultValue: "production" }),
+  securityMode,
+  security: {
+    mode: securityMode,
+    buildMode
+  },
   port: readNumber("PORT", 3000),
   logLevel: readEnv("LOG_LEVEL", { required: false, defaultValue: "info" }),
   siteUrl: readEnv("SITE_URL", { required: false, defaultValue: "https://allonahub.com" }).replace(/\/$/, ""),
@@ -72,9 +80,9 @@ export const config = {
   allowedHosts: csv(readEnv("ALLOWED_HOSTS", { required: false, defaultValue: "api.allonahub.com,admin.allonahub.com,localhost,127.0.0.1" })),
   adminHosts: csv(readEnv("ADMIN_HOSTS", { required: false, defaultValue: "admin.allonahub.com,api.allonahub.com" })),
   adminIpAllowlist: csv(readEnv("ADMIN_IP_ALLOWLIST", { required: false, defaultValue: "" })),
-  mfaRequiredRoles: csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),
-  adminMfaEnforced: readBool("ADMIN_MFA_ENFORCED", true),
-  superAdminMfaEnforced: readBool("SUPER_ADMIN_MFA_ENFORCED", true),
+  mfaRequiredRoles: buildMode ? [] : csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),
+  adminMfaEnforced: !buildMode && readBool("ADMIN_MFA_ENFORCED", true),
+  superAdminMfaEnforced: !buildMode && readBool("SUPER_ADMIN_MFA_ENFORCED", true),
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
   maintenanceMode: readBool("MAINTENANCE_MODE", false),
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),
@@ -83,11 +91,11 @@ export const config = {
   turnstile: {
     siteKey: readEnv("TURNSTILE_SITE_KEY", { required: false, defaultValue: "" }),
     secretKey: readEnv("TURNSTILE_SECRET_KEY", { required: false, defaultValue: "" }),
-    requiredInProduction: readBool("TURNSTILE_REQUIRED_IN_PRODUCTION", true),
+    requiredInProduction: !buildMode && readBool("TURNSTILE_REQUIRED_IN_PRODUCTION", true),
     bypassInDevelopment: readBool("TURNSTILE_BYPASS_IN_DEVELOPMENT", true)
   },
   autoDefense: {
-    enabled: readBool("AUTO_DEFENSE_ENABLED", true),
+    enabled: !buildMode && readBool("AUTO_DEFENSE_ENABLED", true),
     scoreThreshold: readNumber("AUTO_DEFENSE_SCORE_THRESHOLD", 12),
     windowMinutes: readNumber("AUTO_DEFENSE_WINDOW_MINUTES", 10),
     ipBlockMinutes: readNumber("AUTO_DEFENSE_IP_BLOCK_MINUTES", 15),
