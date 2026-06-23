@@ -25,10 +25,10 @@
     },
     {
       id: "demo-shop-02",
-      name: "Akıllı Market Sepeti",
-      description: "Market alışverişi ve günlük ihtiyaçlar için avantajlı başlangıç paketi.",
-      category: "Market",
-      brand: "Allona Market",
+      name: "Akıllı Ev Düzenleyici Set",
+      description: "Ev ve çalışma alanı için kablo, masa ve küçük aksesuar düzenleme seti.",
+      category: "Ev Yaşam",
+      brand: "Allona Shop",
       price: 849,
       stock: 42,
       sold_count: 244,
@@ -40,7 +40,7 @@
       coupon_label: "Kuponlu",
       delivery_label: "Bugün teslim",
       seller_score: 9.2,
-      image_url: "/images/modules/market.png",
+      image_url: "/images/modules/shop-light-v5.jpg",
       created_at: "2026-06-14T09:00:00Z"
     },
     {
@@ -193,13 +193,13 @@
       link_url: "/pages/commerce/shop.html?category=Teknoloji"
     },
     {
-      title: "Market, bakım ve ev ihtiyaçları.",
-      subtitle: "Günlük Alışveriş",
+      title: "Ev, yaşam ve aksesuar seçkisi.",
+      subtitle: "Shop Vitrini",
       campaign_text: "Mobilde yatay kaydırmalı kategori deneyimi",
       description: "Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.",
-      image_url: "/images/modules/market.png",
-      cta_label: "Market Ürünleri",
-      link_url: "/pages/commerce/shop.html?category=Market"
+      image_url: "/images/modules/shop-light-v5.jpg",
+      cta_label: "Shop Ürünleri",
+      link_url: "/pages/commerce/shop.html?category=Ev%20Ya%C5%9Fam"
     },
     {
       title: "HP, kupon ve premium avantaj.",
