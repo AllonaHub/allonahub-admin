@@ -379,6 +379,10 @@ async function completePartnerGoogleLogin(session){
   localStorage.setItem("allonaPartnerType",data.partner_type || "shop");
   localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
+  if(await needsMfaVerification()){
+    redirectMfa("../partner/partner-panel.html");
+    return;
+  }
   window.location.href="partner-panel.html";
 }
 
@@ -480,6 +484,17 @@ async function applyBackendSession(session){
   });
   if(error)throw new Error("Oturum güvenli şekilde başlatılamadı.");
   return data.session || null;
+}
+
+async function needsMfaVerification(){
+  if(!supabaseClient.auth || !supabaseClient.auth.mfa)return false;
+  const {data,error}=await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(error)return false;
+  return data && data.nextLevel==="aal2" && data.currentLevel!=="aal2";
+}
+
+function redirectMfa(returnTo){
+  window.location.href="../account/mfa.html?returnTo="+encodeURIComponent(returnTo || "../partner/partner-panel.html");
 }
 
 async function resolvePartnerRecord(user,email){
@@ -613,6 +628,10 @@ async function partnerLogin(){
     localStorage.setItem("allonaPartnerType",partner.partner_type || "shop");
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
+    if(await needsMfaVerification()){
+      redirectMfa("../partner/partner-panel.html");
+      return;
+    }
     window.location.href="partner-panel.html";
 
   }catch(err){

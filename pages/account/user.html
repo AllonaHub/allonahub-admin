@@ -921,6 +921,17 @@ async function applyBackendSession(session){
   return data.session || null;
 }
 
+async function needsMfaVerification(){
+  if(!supabaseClient.auth || !supabaseClient.auth.mfa)return false;
+  const {data,error}=await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  if(error)return false;
+  return data && data.nextLevel==="aal2" && data.currentLevel!=="aal2";
+}
+
+function redirectMfa(returnTo){
+  window.location.href="mfa.html?returnTo="+encodeURIComponent(returnTo || "user-panel.html");
+}
+
 function normalizeEmail(value){
   return String(value || "").trim().toLowerCase().slice(0,180);
 }
@@ -1541,6 +1552,10 @@ async function loginUser(){
     }
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+    if(await needsMfaVerification()){
+      redirectMfa("user-panel.html");
+      return;
+    }
     window.location.href = "user-panel.html";
   }catch(error){
     secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");

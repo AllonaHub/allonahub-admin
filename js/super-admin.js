@@ -93,6 +93,11 @@
     return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
   }
 
+  function mfaUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/mfa.html?returnTo=${returnTo}`);
+  }
+
   function loginFallback(message) {
     return `
       <main class="sa-main">
@@ -131,7 +136,12 @@
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.message || payload.error || "İşlem tamamlanamadı.");
+      const message = payload.message || payload.error || "İşlem tamamlanamadı.";
+      if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
+        window.location.href = mfaUrl();
+        throw new Error("İki aşamalı doğrulama gerekli.");
+      }
+      throw new Error(message);
     }
     return payload;
   }

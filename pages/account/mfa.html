@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İki Aşamalı Doğrulama | AllonaHub</title>
+  <meta name="description" content="AllonaHub hesabı için iki aşamalı doğrulama.">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <style>
+    .mfa-status{margin:14px 0;padding:12px;border:1px solid rgba(255,255,255,.18);border-radius:8px}
+    .mfa-status[data-tone="success"]{border-color:rgba(56,217,150,.38);background:rgba(56,217,150,.1)}
+    .mfa-status[data-tone="warning"]{border-color:rgba(255,194,87,.42);background:rgba(255,194,87,.1)}
+    .mfa-status[data-tone="error"]{border-color:rgba(255,77,109,.42);background:rgba(255,77,109,.1)}
+    .mfa-levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+    .mfa-levels span,.mfa-factor{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:8px}
+    .mfa-qr{display:block;width:min(260px,100%);margin:14px auto;padding:10px;background:#fff;border-radius:8px}
+    .mfa-factor{margin-top:10px}
+    .mfa-factor span,.mfa-empty{opacity:.72;font-size:13px}
+    .mfa-stack{display:grid;gap:14px}
+    .mfa-stack[hidden],.mfa-qr[hidden]{display:none}
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main auth-layout">
+      <section class="auth-card">
+        <div>
+          <p class="eyebrow">Güvenlik</p>
+          <h1>İki Aşamalı Doğrulama</h1>
+        </div>
+
+        <div class="mfa-levels" aria-label="Oturum güvence seviyesi">
+          <span>Mevcut <strong data-mfa-current>aal1</strong></span>
+          <span>Hedef <strong data-mfa-next>aal1</strong></span>
+        </div>
+
+        <div class="mfa-status" data-mfa-status hidden></div>
+
+        <div class="mfa-stack" data-mfa-verify-panel hidden>
+          <form data-mfa-verify-form>
+            <div class="field">
+              <label for="mfa-factor">MFA cihazı</label>
+              <select id="mfa-factor" name="factorId" data-mfa-factor-select required></select>
+            </div>
+            <div class="field">
+              <label for="mfa-code">6 haneli kod</label>
+              <input id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn--full" type="submit">Doğrula</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="mfa-stack" data-mfa-enroll-panel hidden>
+          <div class="field">
+            <label for="mfa-name">Cihaz adı</label>
+            <input id="mfa-name" data-mfa-friendly-name maxlength="80" value="AllonaHub Authenticator">
+          </div>
+          <button class="btn btn--full" type="button" data-mfa-enroll-start>MFA Kur</button>
+          <img class="mfa-qr" data-mfa-qr alt="MFA QR kodu" hidden>
+          <form data-mfa-enroll-form data-mfa-enroll-verify hidden>
+            <div class="field">
+              <label for="mfa-enroll-code">6 haneli kod</label>
+              <input id="mfa-enroll-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn--full" type="submit">Etkinleştir</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="mfa-stack" data-mfa-manage-panel hidden>
+          <div data-mfa-factors></div>
+          <a class="btn btn--light btn--full" href="user-panel.html">Panele Dön</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260621-sec1" defer></script>
+  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
+  <script src="../../js/auth.js?v=20260623-mfa1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
+  <script src="../../js/mfa.js?v=20260623-mfa1" defer></script>
+  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+</body>
+</html>

@@ -39,6 +39,12 @@
     return data.session || null;
   }
 
+  async function applyMfaSession(data) {
+    const session = data && (data.session || (data.access_token ? data : null));
+    if (!session || !session.access_token || !session.refresh_token) return null;
+    return applyBackendSession(session);
+  }
+
   function passwordLooksSafe(password) {
     const value = String(password || "");
     return value.length >= 8;
@@ -178,6 +184,144 @@
     });
   }
 
+  function sanitizeMfaFactor(factor) {
+    if (!factor) return null;
+    return {
+      id: factor.id,
+      type: factor.factor_type || factor.type || "totp",
+      status: factor.status || "",
+      friendly_name: factor.friendly_name || factor.friendlyName || "",
+      created_at: factor.created_at || null,
+      updated_at: factor.updated_at || null
+    };
+  }
+
+  function normalizeMfaFactors(data) {
+    const source = data || {};
+    const all = Array.isArray(source.all)
+      ? source.all
+      : [...(source.totp || []), ...(source.phone || [])];
+    return {
+      all: all.map(sanitizeMfaFactor).filter(Boolean),
+      totp: (source.totp || []).map(sanitizeMfaFactor).filter(Boolean),
+      phone: (source.phone || []).map(sanitizeMfaFactor).filter(Boolean)
+    };
+  }
+
+  function publicMfaError(error, fallback) {
+    const message = String(error && error.message || "");
+    if (/invalid|code|otp|factor|challenge|expired|verified/i.test(message)) {
+      return authSafeError("İki aşamalı doğrulama kodu doğrulanamadı.");
+    }
+    return authSafeError(fallback || "İki aşamalı doğrulama tamamlanamadı.");
+  }
+
+  async function mfaStatus() {
+    if (!App.supabase?.auth?.mfa) throw authSafeError("MFA altyapısı yüklenemedi.");
+    const user = await getUser();
+    if (!user) return {
+      authenticated: false,
+      currentLevel: "aal1",
+      nextLevel: "aal1",
+      needsVerification: false,
+      factors: { all: [], totp: [], phone: [] }
+    };
+
+    const [assurance, factorsResult] = await Promise.all([
+      App.supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+      App.supabase.auth.mfa.listFactors()
+    ]);
+    if (assurance.error) throw publicMfaError(assurance.error);
+    if (factorsResult.error) throw publicMfaError(factorsResult.error);
+
+    const factors = normalizeMfaFactors(factorsResult.data);
+    const currentLevel = assurance.data?.currentLevel || "aal1";
+    const nextLevel = assurance.data?.nextLevel || (factors.all.some((factor) => factor.status === "verified") ? "aal2" : currentLevel);
+    return {
+      authenticated: true,
+      currentLevel,
+      nextLevel,
+      mfaVerified: currentLevel === "aal2",
+      needsVerification: currentLevel !== "aal2" && nextLevel === "aal2",
+      factors
+    };
+  }
+
+  async function mfaEnroll(options) {
+    if (!App.supabase?.auth?.mfa) throw authSafeError("MFA altyapısı yüklenemedi.");
+    const friendlyName = security
+      ? security.normalizeText(options?.friendlyName || "AllonaHub Authenticator", { max: 80 })
+      : String(options?.friendlyName || "AllonaHub Authenticator").trim().slice(0, 80);
+    const { data, error } = await App.supabase.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: friendlyName || "AllonaHub Authenticator"
+    });
+    if (error) throw publicMfaError(error, "MFA kurulumu başlatılamadı.");
+    return {
+      factorId: data.id,
+      factor: sanitizeMfaFactor(data),
+      totp: {
+        qrCode: data.totp?.qr_code || data.totp?.qrCode || "",
+        uri: data.totp?.uri || ""
+      }
+    };
+  }
+
+  async function mfaChallenge(factorId) {
+    if (!App.supabase?.auth?.mfa) throw authSafeError("MFA altyapısı yüklenemedi.");
+    const { data, error } = await App.supabase.auth.mfa.challenge({ factorId });
+    if (error) throw publicMfaError(error, "MFA doğrulaması başlatılamadı.");
+    return {
+      challengeId: data.id,
+      expiresAt: data.expires_at || data.expiresAt || null
+    };
+  }
+
+  async function mfaVerify({ factorId, challengeId, code }) {
+    if (!App.supabase?.auth?.mfa) throw authSafeError("MFA altyapısı yüklenemedi.");
+    const cleanCode = String(code || "").replace(/\D/g, "").slice(0, 6);
+    if (!/^\d{6}$/.test(cleanCode)) throw authSafeError("6 haneli doğrulama kodunu girin.");
+    const activeChallengeId = challengeId || (await mfaChallenge(factorId)).challengeId;
+    const { data, error } = await App.supabase.auth.mfa.verify({
+      factorId,
+      challengeId: activeChallengeId,
+      code: cleanCode
+    });
+    if (error) throw publicMfaError(error);
+    await applyMfaSession(data);
+    localStorage.setItem("allonahub_mfa_verified_at", new Date().toISOString());
+    return data || {};
+  }
+
+  async function mfaChallengeAndVerify(factorId, code) {
+    const challenge = await mfaChallenge(factorId);
+    return mfaVerify({ factorId, challengeId: challenge.challengeId, code });
+  }
+
+  async function mfaUnenroll(factorId) {
+    if (!App.supabase?.auth?.mfa) throw authSafeError("MFA altyapısı yüklenemedi.");
+    const status = await mfaStatus();
+    if (!status.mfaVerified) throw authSafeError("MFA cihazını kaldırmak için önce doğrulama yapın.");
+    const { data, error } = await App.supabase.auth.mfa.unenroll({ factorId });
+    if (error) throw publicMfaError(error, "MFA cihazı kaldırılamadı.");
+    return data || {};
+  }
+
+  function mfaUrl(returnTo) {
+    const fallback = App.core?.url ? App.core.url("/pages/account/user-panel.html") : "/pages/account/user-panel.html";
+    const target = safeReturnPath(returnTo, fallback);
+    return App.core.url(`/pages/account/mfa.html?returnTo=${encodeURIComponent(target)}`);
+  }
+
+  async function redirectToMfaIfNeeded(returnTo) {
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (/\/pages\/account\/mfa\.html/i.test(window.location.pathname)) return false;
+    const status = await mfaStatus();
+    if (!status.needsVerification) return false;
+    window.location.href = mfaUrl(returnTo || currentPath);
+    return true;
+  }
+
   async function getProfile(userId) {
     const user = userId ? { id: userId } : await getUser();
     if (!user) return null;
@@ -259,6 +403,14 @@
     signUp,
     signOut,
     resetPassword,
+    mfaStatus,
+    mfaEnroll,
+    mfaChallenge,
+    mfaVerify,
+    mfaChallengeAndVerify,
+    mfaUnenroll,
+    mfaUrl,
+    redirectToMfaIfNeeded,
     requireAuth,
     requireRole,
     clearLocalAuthState

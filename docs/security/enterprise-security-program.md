@@ -41,9 +41,11 @@ Zorunlu roller:
 
 ```text
 MFA_REQUIRED_ROLES=partner,courier,admin,super_admin
+ADMIN_MFA_ENFORCED=true
+SUPER_ADMIN_MFA_ENFORCED=true
 ```
 
-Admin, finans, partner ve kritik paneller için Supabase MFA etkinleştirilmeden enterprise migration production'a uygulanmamalıdır. Migration uygulandıktan sonra JWT `aal=aal2` olmayan admin/partner/kurye işlemleri reddedilir.
+Admin, Super Admin, finans, partner ve kritik paneller için Supabase MFA etkinleştirilmeden enterprise migration production'a uygulanmamalıdır. Migration uygulandıktan sonra JWT `aal=aal2` olmayan admin/partner/kurye işlemleri reddedilir. Backend production default'u admin ve Super Admin için MFA enforcement'i açık kabul eder; kapatmak yalnızca kontrollü bakım senaryolarında geçici olarak yapılmalıdır.
 
 ## 5. Admin Hardening
 
