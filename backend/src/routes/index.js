@@ -765,23 +765,11 @@ async function requireAuth(request, options = {}) {
 
 async function requireSuperAdmin(request, action) {
   const ctx = await requireAuth(request, {
-    roles: ["super_admin"],
+    roles: ["admin", "super_admin"],
     mfa: true,
     adminBoundary: true,
     action
   });
-
-  if (!isSuperAdmin(ctx.profile)) {
-    await auditEvent({
-      request,
-      actorId: ctx.user.id,
-      actorRole: ctx.profile.role,
-      action: "super_admin.role_denied",
-      severity: "critical",
-      metadata: { requested_action: action }
-    });
-    throw httpError("Bu işlem için Super Admin yetkisi gerekli.", 403);
-  }
 
   const owner = await resolveSuperAdminOwner(ctx);
   if (!owner.configured) {
@@ -822,6 +810,37 @@ async function requireSuperAdmin(request, action) {
       }
     });
     throw httpError("Bu panele sadece kayıtlı Super Admin sahibi erişebilir.", 403);
+  }
+
+  if (!isSuperAdmin(ctx.profile)) {
+    if (!hasRole(ctx.profile, "admin")) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "super_admin.role_denied",
+        severity: "critical",
+        metadata: { requested_action: action }
+      });
+      throw httpError("Bu işlem için Super Admin yetkisi gerekli.", 403);
+    }
+
+    ctx.superAdminOwnerBootstrap = true;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_bootstrap_access",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_bootstrap",
+      evidenceTags: ["super_admin", "owner_lock", "bootstrap"],
+      metadata: {
+        requested_action: action,
+        owner_source: owner.source || "unknown",
+        role: ctx.profile.role
+      }
+    });
   }
 
   ctx.superAdminOwner = owner;
@@ -919,6 +938,61 @@ function permissionChangePublic(row) {
     metadata: row.metadata || {},
     created_at: row.created_at
   };
+}
+
+async function bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx }) {
+  if (before.id !== ctx.user.id || body.role !== "super_admin") {
+    throw httpError("Owner bootstrap sadece kendi hesabını Super Admin yapmak için kullanılabilir.", 403);
+  }
+
+  const updatePayload = {
+    role: "super_admin",
+    account_status: body.account_status || "active",
+    risk_level: body.risk_level || before.risk_level || "low",
+    flagged_suspicious: body.flagged_suspicious ?? before.flagged_suspicious ?? false,
+    last_admin_note: body.reason,
+    updated_at: new Date().toISOString()
+  };
+
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update(updatePayload)
+    .eq("id", before.id)
+    .select("*")
+    .single();
+  if (updateError) throw updateError;
+
+  const changeRisk = "critical";
+  const { data: change, error: changeError } = await supabaseAdmin
+    .from("super_admin_permission_changes")
+    .insert({
+      target_user_id: before.id,
+      actor_id: ctx.user.id,
+      action: "owner_bootstrap_super_admin",
+      old_role: before.role || "admin",
+      new_role: updated.role || "super_admin",
+      old_account_status: before.account_status || "active",
+      new_account_status: updated.account_status || "active",
+      old_risk_level: before.risk_level || "low",
+      new_risk_level: updated.risk_level || "low",
+      reason: body.reason,
+      risk_level: changeRisk,
+      metadata: {
+        target_email: updated.email || before.email || null,
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        bootstrap: true
+      }
+    })
+    .select("*")
+    .single();
+  if (changeError) {
+    if (looksLikeMissingSchema(changeError)) {
+      throw httpError("super_admin_permission_changes migration henüz uygulanmamış.", 503);
+    }
+    throw changeError;
+  }
+
+  return { profile: updated, change };
 }
 
 async function isRegisteredSuperAdminOwnerCandidate(userId, email) {
@@ -2725,7 +2799,8 @@ export function registerRoutes(app) {
         role: ctx.profile.role,
         source: ctx.superAdminOwner?.source || "unknown",
         mfa_verified: ctx.mfaVerified === true,
-        owner_locked: true
+        owner_locked: true,
+        bootstrap_required: ctx.superAdminOwnerBootstrap === true
       },
       gitops: {
         enabled: config.superAdmin.gitOpsEnabled,
@@ -2881,7 +2956,9 @@ export function registerRoutes(app) {
         user_id: ctx.user.id,
         email: superAdminOwnerEmail(ctx),
         source: ctx.superAdminOwner?.source || "unknown",
-        owner_locked: true
+        owner_locked: true,
+        role: ctx.profile.role,
+        bootstrap_required: ctx.superAdminOwnerBootstrap === true
       },
       summary: {
         total_users: users.count,
@@ -3185,19 +3262,25 @@ export function registerRoutes(app) {
       }
     }
 
-    const { data: permissionResult, error } = await ctx.db.rpc("super_admin_update_profile_permission", {
-      p_target_user_id: userId,
-      p_role: body.role ?? null,
-      p_account_status: body.account_status ?? null,
-      p_risk_level: body.risk_level ?? null,
-      p_flagged_suspicious: body.flagged_suspicious ?? null,
-      p_reason: body.reason
-    });
-    if (error) {
-      if (looksLikeMissingSchema(error)) {
-        throw httpError("super_admin_update_profile_permission migration henüz uygulanmamış.", 503);
+    let permissionResult;
+    if (ctx.superAdminOwnerBootstrap) {
+      permissionResult = await bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx });
+    } else {
+      const { data, error } = await ctx.db.rpc("super_admin_update_profile_permission", {
+        p_target_user_id: userId,
+        p_role: body.role ?? null,
+        p_account_status: body.account_status ?? null,
+        p_risk_level: body.risk_level ?? null,
+        p_flagged_suspicious: body.flagged_suspicious ?? null,
+        p_reason: body.reason
+      });
+      if (error) {
+        if (looksLikeMissingSchema(error)) {
+          throw httpError("super_admin_update_profile_permission migration henüz uygulanmamış.", 503);
+        }
+        throw error;
       }
-      throw error;
+      permissionResult = data;
     }
 
     const updated = permissionResult?.profile;

@@ -676,8 +676,10 @@
     const summary = payload.summary || {};
     const system = payload.system_health || {};
     const gitops = payload.gitops || {};
+    const owner = payload.owner || {};
     ownerSetOutput([
-      ownerLine("Owner kilidi", `Sadece kayıtlı sahip: ${escape((payload.owner && (payload.owner.email || payload.owner.user_id)) || "doğrulandı")}`, "<button type=\"button\" data-view-jump=\"access\">Detay</button>", "critical"),
+      ownerLine("Owner kilidi", `Sadece kayıtlı sahip: ${escape((owner.email || owner.user_id) || "doğrulandı")}`, "<button type=\"button\" data-view-jump=\"access\">Detay</button>", "critical"),
+      owner.bootstrap_required ? ownerLine("Kalıcı Super Admin", "Owner doğrulandı; profil rolünü Super Admin yaparak kalıcı erişimi tamamla.", "<button type=\"button\" data-view-jump=\"permissions\">Yetki Merkezi</button>", "critical") : "",
       ownerLine("Toplam kullanıcı", formatNumber(summary.total_users), "<button type=\"button\" data-view-jump=\"users\">Yönet</button>", "medium"),
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner-only backend RPC ile çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
@@ -727,6 +729,7 @@
       ownerLine("Owner doğrulaması", owner.owner_locked ? "Aktif ve backend tarafından doğrulandı." : "Doğrulanamadı.", "", owner.owner_locked ? "low" : "critical"),
       ownerLine("Kullanıcı", `${escape(owner.email || "-")} / ${escape(owner.user_id || "-")}`, "", "critical"),
       ownerLine("Rol + MFA", `${escape(owner.role || "-")} / MFA ${owner.mfa_verified ? "doğrulandı" : "eksik"}`, "", owner.mfa_verified ? "low" : "critical"),
+      owner.bootstrap_required ? ownerLine("Bootstrap", "Kalıcı Super Admin rolü henüz tamamlanmamış. Yetki Merkezi'nden kendi hesabını Super Admin yap.", "<button type=\"button\" data-view-jump=\"permissions\">Tamamla</button>", "critical") : "",
       ownerLine("Kaynak", escape(owner.source || "unknown"), "", "medium"),
       ownerLine("GitOps", gitops.enabled ? "Açık" : "Kapalı", gitops.release_webhook_configured ? "Webhook hazır" : "Webhook yok", gitops.enabled && gitops.release_webhook_configured ? "high" : "medium"),
       ownerLine("Güvenlik sınırı", "Server-only gizli anahtarlar frontend içinde kullanılmaz; tüm yazma işlemleri backend + audit üzerinden yürür.", "", "critical")

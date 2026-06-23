@@ -3,7 +3,7 @@
 AllonaHub Super Admin is intentionally fail-closed. A user must pass all layers below:
 
 1. Supabase authenticated session
-2. `super_admin` role
+2. `super_admin` role, or temporary owner bootstrap from an existing `admin` profile
 3. MFA/AAL2 verification
 4. admin host/IP boundary
 5. owner allowlist verification
@@ -28,6 +28,8 @@ on conflict do nothing;
 Use lowercase email values. If no env allowlist and no active `super_admin_owner_access` row exists, `/v1/control-center/*` returns a fail-closed error. `/v1/super-admin/*` remains as a legacy compatibility alias.
 
 For strict Supabase RLS and role-grant workflows, the `super_admin_owner_access` row is mandatory. The backend env allowlist protects API access; the DB owner row lets `public.is_super_admin()` and `public.super_admin_update_profile_permission(...)` verify the owner inside Supabase.
+
+If the founder account is still `admin`, the backend can let only the configured owner through after MFA and admin-boundary checks. That temporary bootstrap path only allows the owner to promote their own profile to `super_admin`; other admin users cannot use it.
 
 ## Permission Grants
 
