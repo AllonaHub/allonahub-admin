@@ -312,6 +312,14 @@ const adminAuditLogQuerySchema = z.object({
 });
 
 const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
+const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
+  "publish_static",
+  "deploy_backend",
+  "apply_supabase_migration",
+  "main_commit_push",
+  "panel_change",
+  "risk_override"
+];
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -345,6 +353,14 @@ const superAdminModuleUpdateSchema = z.object({
   content_config: z.record(z.unknown()).optional()
 }).refine((value) => Object.keys(value).length > 0, "En az bir modül alanı güncellenmelidir.");
 
+const superAdminReleaseApprovalSchema = z.object({
+  approval_type: z.enum(SUPER_ADMIN_RELEASE_APPROVAL_TYPES),
+  target_ref: z.string().trim().min(1).max(180).optional().default("main"),
+  target_summary: z.string().trim().min(6).max(1200),
+  risk_level: riskLevelSchema.optional().default("critical"),
+  metadata: z.record(z.unknown()).optional().default({})
+});
+
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
   { key: "maintenance_mode", label: "Bakım modu", value: false, value_type: "boolean", risk_level: "critical", category: "system" },
   { key: "orders_paused", label: "Siparişleri geçici durdur", value: false, value_type: "boolean", risk_level: "high", category: "commerce" },
@@ -367,6 +383,21 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "automotive", name: "Otomotiv", category: "marketplace" },
   { module_key: "education", name: "Eğitim", category: "services" },
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
+];
+
+const SUPER_ADMIN_CONTROL_LINKS = [
+  { key: "admin_panel", label: "Admin Panel", href: "./index.html", target: "redirect", risk_level: "high" },
+  { key: "orders", label: "Sipariş Merkezi", href: "./orders.html", target: "redirect", risk_level: "high" },
+  { key: "coupons", label: "Kupon Merkezi", href: "./coupons.html", target: "redirect", risk_level: "medium" },
+  { key: "hp_rewards", label: "HP / Cüzdan", href: "./rewards.html", target: "redirect", risk_level: "medium" },
+  { key: "user_panel", label: "User Panel", href: "../pages/account/user-panel.html", target: "redirect", risk_level: "medium" },
+  { key: "partner_panel", label: "Partner Panel", href: "../pages/partner/partner-panel.html", target: "redirect", risk_level: "high" },
+  { key: "partner_orders", label: "Partner Siparişleri", href: "../pages/partner/partner-orders.html", target: "redirect", risk_level: "high" },
+  { key: "shop", label: "AllonaShop", href: "../pages/commerce/allonashop.html", target: "redirect", risk_level: "medium" },
+  { key: "market", label: "Allona Market", href: "../pages/commerce/allonamarket.html", target: "redirect", risk_level: "medium" },
+  { key: "food", label: "Allona Yemek", href: "../pages/commerce/allonayemek.html", target: "redirect", risk_level: "medium" },
+  { key: "taxi", label: "Allona Taksi", href: "../pages/ecosystem/allonataksi.html", target: "redirect", risk_level: "medium" },
+  { key: "security_policy", label: "Güvenlik Politikası", href: "../pages/legal/guvenlik-politikasi.html", target: "redirect", risk_level: "low" }
 ];
 
 function clientIp(request) {
@@ -481,6 +512,103 @@ function assertAdminBoundary(request) {
   }
 }
 
+function superAdminOwnerEmail(ctx) {
+  return String(ctx?.user?.email || ctx?.profile?.email || "").trim().toLowerCase();
+}
+
+function envOwnerMatch(ctx) {
+  const email = superAdminOwnerEmail(ctx);
+  return {
+    configured: Boolean(config.superAdmin.ownerUserIds.length || config.superAdmin.ownerEmails.length),
+    matchedByUserId: Boolean(ctx?.user?.id && config.superAdmin.ownerUserIds.includes(ctx.user.id)),
+    matchedByEmail: Boolean(email && config.superAdmin.ownerEmails.includes(email)),
+    email
+  };
+}
+
+async function querySuperAdminOwnerAccess(ctx) {
+  const email = superAdminOwnerEmail(ctx);
+  const status = {
+    configured: false,
+    matched: false,
+    source: "",
+    warning: null
+  };
+
+  const activeCount = await supabaseAdmin
+    .from("super_admin_owner_access")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active");
+
+  if (activeCount.error) {
+    if (looksLikeMissingSchema(activeCount.error)) {
+      status.warning = schemaWarning("super_admin_owner_access", activeCount.error);
+      return status;
+    }
+    throw activeCount.error;
+  }
+
+  status.configured = Number(activeCount.count || 0) > 0;
+  if (!status.configured) return status;
+
+  if (ctx?.user?.id) {
+    const byUserId = await supabaseAdmin
+      .from("super_admin_owner_access")
+      .select("id")
+      .eq("status", "active")
+      .eq("user_id", ctx.user.id)
+      .limit(1)
+      .maybeSingle();
+    if (byUserId.error && !looksLikeMissingSchema(byUserId.error)) throw byUserId.error;
+    if (byUserId.data) {
+      status.matched = true;
+      status.source = "database_user_id";
+      return status;
+    }
+  }
+
+  if (email) {
+    const byEmail = await supabaseAdmin
+      .from("super_admin_owner_access")
+      .select("id")
+      .eq("status", "active")
+      .eq("email", email)
+      .limit(1)
+      .maybeSingle();
+    if (byEmail.error && !looksLikeMissingSchema(byEmail.error)) throw byEmail.error;
+    if (byEmail.data) {
+      status.matched = true;
+      status.source = "database_email";
+    }
+  }
+
+  return status;
+}
+
+async function resolveSuperAdminOwner(ctx) {
+  const env = envOwnerMatch(ctx);
+  if (env.matchedByUserId || env.matchedByEmail) {
+    return {
+      configured: true,
+      matched: true,
+      source: env.matchedByUserId ? "env_user_id" : "env_email",
+      user_id: ctx.user.id,
+      email: env.email,
+      warning: null
+    };
+  }
+
+  const db = await querySuperAdminOwnerAccess(ctx);
+  return {
+    configured: env.configured || db.configured,
+    matched: db.matched,
+    source: db.source || "",
+    user_id: ctx.user.id,
+    email: env.email,
+    warning: db.warning
+  };
+}
+
 async function requireAuth(request, options = {}) {
   const ctx = await authContext(request);
   const action = options.action || "auth.required";
@@ -558,6 +686,48 @@ async function requireSuperAdmin(request, action) {
     throw httpError("Bu işlem için Super Admin yetkisi gerekli.", 403);
   }
 
+  const owner = await resolveSuperAdminOwner(ctx);
+  if (!owner.configured) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_config_missing",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_lock",
+      evidenceTags: ["super_admin", "owner_lock", "fail_closed"],
+      metadata: {
+        requested_action: action,
+        owner_user_id: owner.user_id,
+        owner_email_presented: owner.email || null,
+        warning: owner.warning?.message || null
+      }
+    });
+    throw httpError("Süper Admin owner kilidi yapılandırılmadı. SUPER_ADMIN_OWNER_USER_IDS veya SUPER_ADMIN_OWNER_EMAILS zorunlu.", 503);
+  }
+
+  if (!owner.matched) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_denied",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_lock",
+      evidenceTags: ["super_admin", "owner_lock", "access_denied"],
+      metadata: {
+        requested_action: action,
+        user_id: owner.user_id,
+        email: owner.email || null,
+        configured_by_env: Boolean(config.superAdmin.ownerUserIds.length || config.superAdmin.ownerEmails.length)
+      }
+    });
+    throw httpError("Bu panele sadece kayıtlı Super Admin sahibi erişebilir.", 403);
+  }
+
+  ctx.superAdminOwner = owner;
   return ctx;
 }
 
@@ -590,6 +760,102 @@ async function countAdminRows(label, table, configure) {
   if (configure) query = configure(query);
   const result = await runAdminQuery(label, query, null);
   return { count: result.count || 0, warning: result.warning };
+}
+
+function superAdminAuditSeverity(riskLevel) {
+  if (riskLevel === "critical") return "critical";
+  if (riskLevel === "high") return "warning";
+  return "info";
+}
+
+function releaseApprovalPublic(row) {
+  return {
+    id: row.id,
+    approval_type: row.approval_type,
+    target_ref: row.target_ref,
+    target_summary: row.target_summary,
+    status: row.status,
+    risk_level: row.risk_level,
+    requested_by: row.requested_by,
+    approved_by: row.approved_by,
+    approved_at: row.approved_at,
+    dispatched_at: row.dispatched_at,
+    webhook_status: row.webhook_status,
+    webhook_response: row.webhook_response || {},
+    metadata: row.metadata || {},
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+async function dispatchSuperAdminReleaseApproval(approval, request) {
+  if (!config.superAdmin.gitOpsEnabled) {
+    return {
+      status: "approved",
+      dispatched: false,
+      webhook_status: null,
+      webhook_response: {
+        code: "GITOPS_DISABLED",
+        message: "Güvenli yayın webhook'u kapalı; onay kaydı audit altında bekliyor."
+      }
+    };
+  }
+
+  if (!config.superAdmin.releaseWebhookUrl || !config.superAdmin.releaseWebhookSecret) {
+    return {
+      status: "failed",
+      dispatched: false,
+      webhook_status: null,
+      webhook_response: {
+        code: "GITOPS_NOT_CONFIGURED",
+        message: "SUPER_ADMIN_RELEASE_WEBHOOK_URL ve SUPER_ADMIN_RELEASE_WEBHOOK_SECRET server tarafında zorunlu."
+      }
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), config.superAdmin.releaseWebhookTimeoutMs);
+  try {
+    const response = await fetch(config.superAdmin.releaseWebhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Allona-Super-Admin-Secret": config.superAdmin.releaseWebhookSecret
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        approval_id: approval.id,
+        approval_type: approval.approval_type,
+        target_ref: approval.target_ref,
+        target_summary: approval.target_summary,
+        risk_level: approval.risk_level,
+        metadata: approval.metadata || {}
+      })
+    });
+    const text = await response.text().catch(() => "");
+    return {
+      status: response.ok ? "dispatched" : "failed",
+      dispatched: response.ok,
+      webhook_status: response.status,
+      webhook_response: {
+        ok: response.ok,
+        body: text.slice(0, 1800)
+      }
+    };
+  } catch (error) {
+    request.log.warn({ error: error.message, approvalId: approval.id }, "Super Admin release webhook failed");
+    return {
+      status: "failed",
+      dispatched: false,
+      webhook_status: null,
+      webhook_response: {
+        code: "WEBHOOK_ERROR",
+        message: error.name === "AbortError" ? "Yayın webhook zaman aşımına uğradı." : error.message
+      }
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function requireOpsAdmin(request, action) {
@@ -2258,6 +2524,322 @@ export function registerRoutes(app) {
       metadata: updatePayload
     });
     return { ok: true, order: updated };
+  });
+
+  app.get("/v1/super-admin/owner-session", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.owner_session.view");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_session_viewed",
+      source: "admin",
+      resourceType: "super_admin_owner_session",
+      metadata: {
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        gitops_enabled: config.superAdmin.gitOpsEnabled
+      }
+    });
+
+    return {
+      ok: true,
+      owner: {
+        user_id: ctx.user.id,
+        email: superAdminOwnerEmail(ctx),
+        role: ctx.profile.role,
+        source: ctx.superAdminOwner?.source || "unknown",
+        mfa_verified: ctx.mfaVerified === true,
+        owner_locked: true
+      },
+      gitops: {
+        enabled: config.superAdmin.gitOpsEnabled,
+        release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret)
+      },
+      control_links: SUPER_ADMIN_CONTROL_LINKS
+    };
+  });
+
+  app.get("/v1/super-admin/command-center", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.command_center.view");
+    const warnings = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      users,
+      partners,
+      orders,
+      pendingApplications,
+      securityAlerts,
+      revenueRows,
+      readyCheck,
+      releaseRows,
+      recentSecurity
+    ] = await Promise.all([
+      countAdminRows("profiles_total", "profiles"),
+      countAdminRows("partner_businesses_total", "partner_businesses"),
+      countAdminRows("orders_total", "orders"),
+      countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
+      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "orders_daily_revenue",
+        supabaseAdmin
+          .from("orders")
+          .select("total")
+          .eq("payment_status", "paid")
+          .gte("created_at", today.toISOString()),
+        []
+      ),
+      runAdminQuery("database_ready", supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }), null),
+      runAdminQuery(
+        "super_admin_release_approvals",
+        supabaseAdmin
+          .from("super_admin_release_approvals")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(20),
+        []
+      ),
+      runAdminQuery(
+        "super_admin_recent_security",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(30),
+        []
+      )
+    ]);
+
+    [users, partners, orders, pendingApplications, securityAlerts, revenueRows, readyCheck, releaseRows, recentSecurity]
+      .filter((item) => item.warning)
+      .forEach((item) => warnings.push(item.warning));
+
+    if (partners.warning) {
+      const partnerProfiles = await countAdminRows("partner_profiles_total", "profiles", (query) => query.eq("role", "partner"));
+      if (partnerProfiles.warning) warnings.push(partnerProfiles.warning);
+      partners.count = partnerProfiles.count;
+    }
+
+    const dailyRevenue = (revenueRows.data || [])
+      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const autoDefense = autoDefenseStatus();
+    const releaseApprovals = (releaseRows.data || []).map(releaseApprovalPublic);
+    const recentEvents = recentSecurity.data || [];
+    const criticalEvents = recentEvents.filter((event) => event.severity === "critical");
+    const unresolvedApprovals = releaseApprovals.filter((item) => ["approved", "failed", "pending"].includes(item.status));
+
+    const risks = [
+      config.emergencyApiDisabled ? {
+        severity: "critical",
+        title: "Acil API koruması aktif",
+        message: "EMERGENCY_API_DISABLED true; canlı işlem akışı kapalı."
+      } : null,
+      config.maintenanceMode ? {
+        severity: "high",
+        title: "Bakım modu açık",
+        message: "Platform bakım modunda çalışıyor."
+      } : null,
+      config.paymentsDisabled ? {
+        severity: "critical",
+        title: "Ödemeler durduruldu",
+        message: "PAYMENTS_DISABLED true; ödeme akışı kapalı."
+      } : null,
+      securityAlerts.count > 0 ? {
+        severity: "high",
+        title: "Güvenlik uyarısı",
+        message: `${securityAlerts.count} uyarı son 24 saatte audit akışına düştü.`
+      } : null,
+      pendingApplications.count > 0 ? {
+        severity: "medium",
+        title: "Bekleyen partner başvurusu",
+        message: `${pendingApplications.count} başvuru karar bekliyor.`
+      } : null,
+      unresolvedApprovals.length > 0 ? {
+        severity: "high",
+        title: "Yayın onayı takibi",
+        message: `${unresolvedApprovals.length} yayın/onay kaydı takip istiyor.`
+      } : null,
+      ...warnings.map((warning) => ({
+        severity: "medium",
+        title: warning.label || "Supabase şema uyarısı",
+        message: warning.message || "Migration kontrol edilmeli."
+      }))
+    ].filter(Boolean);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.command_center_viewed",
+      source: "admin",
+      resourceType: "super_admin_command_center",
+      metadata: {
+        risk_count: risks.length,
+        warning_count: warnings.length,
+        release_approval_count: releaseApprovals.length
+      }
+    });
+
+    return {
+      ok: true,
+      owner: {
+        user_id: ctx.user.id,
+        email: superAdminOwnerEmail(ctx),
+        source: ctx.superAdminOwner?.source || "unknown",
+        owner_locked: true
+      },
+      summary: {
+        total_users: users.count,
+        total_partners: partners.count,
+        total_orders: orders.count,
+        daily_revenue: Number(dailyRevenue.toFixed(2)),
+        pending_applications: pendingApplications.count,
+        security_alerts_24h: securityAlerts.count,
+        critical_events_sample: criticalEvents.length,
+        release_approvals: releaseApprovals.length
+      },
+      system_health: {
+        api: "online",
+        database: readyCheck.warning ? "warning" : "online",
+        maintenance_mode: config.maintenanceMode,
+        payments_disabled: config.paymentsDisabled,
+        emergency_api_disabled: config.emergencyApiDisabled,
+        auto_defense: {
+          blocked_ip_count: autoDefense.blockedIpCount,
+          strict_mode_until: autoDefense.strictModeUntil,
+          recent_incident_count: autoDefense.recentIncidents.length
+        }
+      },
+      risks,
+      recent_security_events: recentEvents,
+      release_approvals: releaseApprovals,
+      control_links: SUPER_ADMIN_CONTROL_LINKS,
+      gitops: {
+        enabled: config.superAdmin.gitOpsEnabled,
+        release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret)
+      },
+      schema_warnings: warnings
+    };
+  });
+
+  app.get("/v1/super-admin/release-approvals", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.list");
+    const queryParams = z.object({
+      limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+      status: z.enum(["pending", "approved", "dispatched", "failed", "cancelled"]).optional(),
+      approval_type: z.enum(SUPER_ADMIN_RELEASE_APPROVAL_TYPES).optional()
+    }).parse(request.query || {});
+
+    let query = supabaseAdmin
+      .from("super_admin_release_approvals")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status) query = query.eq("status", queryParams.status);
+    if (queryParams.approval_type) query = query.eq("approval_type", queryParams.approval_type);
+
+    const result = await runAdminQuery("super_admin_release_approvals", query, []);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.release_approvals_viewed",
+      source: "admin",
+      resourceType: "super_admin_release_approvals",
+      metadata: {
+        limit: queryParams.limit,
+        status: queryParams.status || "all",
+        approval_type: queryParams.approval_type || "all",
+        warning: Boolean(result.warning)
+      }
+    });
+
+    return {
+      ok: true,
+      approvals: (result.data || []).map(releaseApprovalPublic),
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.post("/v1/super-admin/release-approvals", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.create");
+    const body = superAdminReleaseApprovalSchema.parse(request.body || {});
+    const now = new Date().toISOString();
+    const insertPayload = {
+      approval_type: body.approval_type,
+      target_ref: body.target_ref,
+      target_summary: body.target_summary,
+      status: "approved",
+      risk_level: body.risk_level,
+      requested_by: ctx.user.id,
+      approved_by: ctx.user.id,
+      approved_at: now,
+      metadata: normalizeJsonValue({
+        ...body.metadata,
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        request_host: requestHostname(request),
+        request_ip: clientIp(request)
+      })
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .insert(insertPayload)
+      .select("*")
+      .single();
+    if (error) {
+      if (looksLikeMissingSchema(error)) {
+        throw httpError("super_admin_release_approvals migration henüz uygulanmamış.", 503);
+      }
+      throw error;
+    }
+
+    const dispatch = await dispatchSuperAdminReleaseApproval(data, request);
+    let approval = data;
+    const updatePayload = {
+      status: dispatch.status,
+      webhook_status: dispatch.webhook_status,
+      webhook_response: normalizeJsonValue(dispatch.webhook_response || {}),
+      dispatched_at: dispatch.dispatched ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    };
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .update(updatePayload)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+    approval = updated;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.release_approval_created",
+      resourceType: "super_admin_release_approval",
+      resourceId: approval.id,
+      severity: superAdminAuditSeverity(body.risk_level),
+      source: "admin",
+      purpose: "release_control",
+      evidenceTags: ["super_admin", "release_approval", body.approval_type],
+      metadata: {
+        approval_type: body.approval_type,
+        target_ref: body.target_ref,
+        status: approval.status,
+        dispatched: dispatch.dispatched,
+        webhook_status: dispatch.webhook_status,
+        gitops_enabled: config.superAdmin.gitOpsEnabled
+      }
+    });
+
+    return {
+      ok: true,
+      approval: releaseApprovalPublic(approval),
+      dispatch
+    };
   });
 
   app.get("/v1/super-admin/dashboard", async (request) => {

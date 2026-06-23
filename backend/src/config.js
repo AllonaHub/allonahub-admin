@@ -51,6 +51,15 @@ export const config = {
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),
   paymentsDisabled: readBool("PAYMENTS_DISABLED", false),
   auditEnabled: readBool("AUDIT_LOG_ENABLED", true),
+  superAdmin: {
+    ownerUserIds: csv(readEnv("SUPER_ADMIN_OWNER_USER_IDS", { required: false, defaultValue: "" })),
+    ownerEmails: csv(readEnv("SUPER_ADMIN_OWNER_EMAILS", { required: false, defaultValue: "" }))
+      .map((item) => item.toLowerCase()),
+    gitOpsEnabled: readBool("SUPER_ADMIN_GITOPS_ENABLED", false),
+    releaseWebhookUrl: readEnv("SUPER_ADMIN_RELEASE_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    releaseWebhookSecret: readOptionalSecret("SUPER_ADMIN_RELEASE_WEBHOOK_SECRET"),
+    releaseWebhookTimeoutMs: readNumber("SUPER_ADMIN_RELEASE_WEBHOOK_TIMEOUT_MS", 12000)
+  },
   autoDefense: {
     enabled: readBool("AUTO_DEFENSE_ENABLED", true),
     scoreThreshold: readNumber("AUTO_DEFENSE_SCORE_THRESHOLD", 12),
