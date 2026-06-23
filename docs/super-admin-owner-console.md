@@ -25,7 +25,7 @@ values ('00000000-0000-0000-0000-000000000000', 'owner@example.com', 'AllonaHub 
 on conflict do nothing;
 ```
 
-Use lowercase email values. If no env allowlist and no active `super_admin_owner_access` row exists, `/v1/super-admin/*` returns a fail-closed error.
+Use lowercase email values. If no env allowlist and no active `super_admin_owner_access` row exists, `/v1/control-center/*` returns a fail-closed error. `/v1/super-admin/*` remains as a legacy compatibility alias.
 
 For strict Supabase RLS and role-grant workflows, the `super_admin_owner_access` row is mandatory. The backend env allowlist protects API access; the DB owner row lets `public.is_super_admin()` and `public.super_admin_update_profile_permission(...)` verify the owner inside Supabase.
 
@@ -34,7 +34,7 @@ For strict Supabase RLS and role-grant workflows, the `super_admin_owner_access`
 Role, account status and risk changes must go through:
 
 ```http
-PATCH /v1/super-admin/permissions/:userId
+PATCH /v1/control-center/permissions/:userId
 ```
 
 The backend requires a reason and calls the security-definer RPC:
@@ -51,7 +51,7 @@ Guardrails:
 
 ## Module Operation Map
 
-`/v1/super-admin/module-map` mirrors the current homepage module set and overlays database state from `platform_modules`.
+`/v1/control-center/module-map` mirrors the current homepage module set and overlays database state from `platform_modules`.
 
 The map includes commerce, transport, finance, legal, health, real estate, automotive, education, career, logistics, hospitality, trade and other current/future ecosystem modules. Critical module releases should still be approved through Release Approval / GitOps.
 

@@ -898,77 +898,77 @@
   }
 
   async function loadDashboard() {
-    const data = await api("/v1/admin/ops/dashboard");
+    const data = await api("/v1/ops-console/dashboard");
     state.dashboard = data.dashboard;
     state.warnings = data.warnings || [];
     renderDashboard(data.dashboard);
   }
 
   async function loadUsers() {
-    const data = await api(`/v1/admin/ops/users?${queryParams()}`);
+    const data = await api(`/v1/ops-console/users?${queryParams()}`);
     state.cache.users = data.users || [];
     state.warnings = data.warnings || [];
     renderUsers(state.cache.users);
   }
 
   async function loadApplications() {
-    const data = await api(`/v1/admin/ops/partner-applications?${queryParams()}`);
+    const data = await api(`/v1/ops-console/partner-applications?${queryParams()}`);
     state.cache.applications = data.applications || [];
     state.warnings = data.warnings || [];
     renderApplications(state.cache.applications);
   }
 
   async function loadPartners() {
-    const data = await api(`/v1/admin/ops/partners?${queryParams()}`);
+    const data = await api(`/v1/ops-console/partners?${queryParams()}`);
     state.cache.partners = data.partners || [];
     state.warnings = data.warnings || [];
     renderPartners(state.cache.partners);
   }
 
   async function loadOrders() {
-    const data = await api(`/v1/admin/ops/orders?${queryParams()}`);
+    const data = await api(`/v1/ops-console/orders?${queryParams()}`);
     state.cache.orders = data.orders || [];
     state.warnings = data.warnings || [];
     renderOrders(state.cache.orders);
   }
 
   async function loadSupport() {
-    const data = await api(`/v1/admin/ops/support-tickets?${queryParams()}`);
+    const data = await api(`/v1/ops-console/support-tickets?${queryParams()}`);
     state.cache.tickets = data.tickets || [];
     state.warnings = data.warnings || [];
     renderSupport(state.cache.tickets);
   }
 
   async function loadContent() {
-    const data = await api("/v1/admin/ops/content-proposals");
+    const data = await api("/v1/ops-console/content-proposals");
     state.cache.proposals = data.proposals || [];
     state.warnings = data.warnings || [];
     renderContent(state.cache.proposals);
   }
 
   async function loadSocialMedia() {
-    const data = await api(`/v1/admin/ops/social-media?${queryParams()}`);
+    const data = await api(`/v1/ops-console/social-media?${queryParams()}`);
     state.cache.social = data.social || {};
     state.warnings = data.warnings || [];
     renderSocialMedia(state.cache.social);
   }
 
   async function loadSecurity() {
-    const data = await api("/v1/admin/ops/security-monitoring");
+    const data = await api("/v1/ops-console/security-monitoring");
     state.cache.security = data;
     state.warnings = data.warnings || [];
     renderSecurity(data);
   }
 
   async function loadReports() {
-    const data = await api("/v1/admin/ops/reports");
+    const data = await api("/v1/ops-console/reports");
     state.cache.reports = data.reports || {};
     state.warnings = data.warnings || [];
     renderReports(state.cache.reports);
   }
 
   async function loadAudit() {
-    const data = await api("/v1/admin/ops/audit-log");
+    const data = await api("/v1/ops-console/audit-log");
     state.cache.audit = data.events || [];
     state.warnings = data.warnings || [];
     renderAudit(state.cache.audit);
@@ -998,13 +998,13 @@
   async function showDetail(type, id, source) {
     try {
       if (type === "user") {
-        const data = await api(`/v1/admin/ops/users/${encodeURIComponent(id)}`);
+        const data = await api(`/v1/ops-console/users/${encodeURIComponent(id)}`);
         renderObjectDetails("Kullanıcı Detayı", data.profile);
       } else if (type === "application") {
-        const data = await api(`/v1/admin/ops/partner-applications/${encodeURIComponent(id)}`);
+        const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
         renderObjectDetails("Başvuru Detayı", data.application);
       } else if (type === "order") {
-        const data = await api(`/v1/admin/ops/orders/${encodeURIComponent(id)}`);
+        const data = await api(`/v1/ops-console/orders/${encodeURIComponent(id)}`);
         renderObjectDetails("Sipariş Detayı", data.order);
       } else if (type === "partner") {
         const item = state.cache.partners.find((partner) => partner.id === id);
@@ -1033,7 +1033,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/users/${encodeURIComponent(userId)}/notes`, { method: "POST", body: data });
+    await api(`/v1/ops-console/users/${encodeURIComponent(userId)}/notes`, { method: "POST", body: data });
     showToast("Kullanıcı notu eklendi.");
     await loadUsers();
   }
@@ -1054,7 +1054,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/users/${encodeURIComponent(userId)}/flag`, { method: "POST", body: data });
+    await api(`/v1/ops-console/users/${encodeURIComponent(userId)}/flag`, { method: "POST", body: data });
     showToast("Şüpheli kullanıcı işareti oluşturuldu.");
     await loadUsers();
   }
@@ -1081,7 +1081,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/partner-applications/${encodeURIComponent(applicationId)}/review`, {
+    await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
       method: "PATCH",
       body: { action, risk_level: data.risk_level, reason: data.reason }
     });
@@ -1105,7 +1105,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/orders/${encodeURIComponent(orderId)}/risk-flag`, { method: "POST", body: data });
+    await api(`/v1/ops-console/orders/${encodeURIComponent(orderId)}/risk-flag`, { method: "POST", body: data });
     showToast("Sipariş risk işareti oluşturuldu.");
     await loadOrders();
   }
@@ -1120,7 +1120,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/support-tickets/${encodeURIComponent(ticketId)}/status`, {
+    await api(`/v1/ops-console/support-tickets/${encodeURIComponent(ticketId)}/status`, {
       method: "PATCH",
       body: { source, status, note: data.note || "" }
     });
@@ -1139,7 +1139,7 @@
       ]
     });
     if (!data) return;
-    await api("/v1/admin/ops/content-proposals", {
+    await api("/v1/ops-console/content-proposals", {
       method: "POST",
       body: {
         content_scope: raw.content_scope,
@@ -1171,7 +1171,7 @@
       to: raw.whatsapp_to || "",
       ...extraPayload
     };
-    await api("/v1/admin/ops/social-media/drafts", {
+    await api("/v1/ops-console/social-media/drafts", {
       method: "POST",
       body: {
         title: raw.title,
@@ -1196,7 +1196,7 @@
 
   async function saveSocialAccount(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
-    await api("/v1/admin/ops/social-media/accounts", {
+    await api("/v1/ops-console/social-media/accounts", {
       method: "POST",
       body: {
         platform: raw.platform,
@@ -1215,7 +1215,7 @@
   async function saveSocialPlan(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     const targetPlatforms = checkedValues(form, "target_platforms");
-    await api("/v1/admin/ops/social-media/daily-plans", {
+    await api("/v1/ops-console/social-media/daily-plans", {
       method: "POST",
       body: {
         plan_date: raw.plan_date,
@@ -1230,7 +1230,7 @@
 
   async function saveSocialSecret(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
-    await api("/v1/admin/ops/social-media/secrets", {
+    await api("/v1/ops-console/social-media/secrets", {
       method: "POST",
       body: {
         platform: raw.platform,
@@ -1244,7 +1244,7 @@
   }
 
   async function testSocialConnection(platform) {
-    const data = await api("/v1/admin/ops/social-media/connections/test", {
+    const data = await api("/v1/ops-console/social-media/connections/test", {
       method: "POST",
       body: { platform }
     });
@@ -1255,7 +1255,7 @@
   }
 
   async function submitSocialDraft(draftId) {
-    await api(`/v1/admin/ops/social-media/drafts/${encodeURIComponent(draftId)}/submit`, { method: "POST" });
+    await api(`/v1/ops-console/social-media/drafts/${encodeURIComponent(draftId)}/submit`, { method: "POST" });
     showToast("Taslak onaya gönderildi.");
     await loadSocialMedia();
   }
@@ -1271,7 +1271,7 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/admin/ops/social-media/drafts/${encodeURIComponent(draftId)}/approve`, {
+    await api(`/v1/ops-console/social-media/drafts/${encodeURIComponent(draftId)}/approve`, {
       method: "POST",
       body: {
         publish_now: Boolean(publishNow),
@@ -1284,20 +1284,20 @@
   }
 
   async function dispatchSocialPost(postId) {
-    await api(`/v1/admin/ops/social-media/posts/${encodeURIComponent(postId)}/dispatch`, { method: "POST" });
+    await api(`/v1/ops-console/social-media/posts/${encodeURIComponent(postId)}/dispatch`, { method: "POST" });
     showToast("Dispatch isteği kaydedildi.");
     await loadSocialMedia();
   }
 
   async function dispatchDueSocialPosts() {
-    await api("/v1/admin/ops/social-media/dispatch-due", { method: "POST" });
+    await api("/v1/ops-console/social-media/dispatch-due", { method: "POST" });
     showToast("Planlı sosyal medya kuyruğu çalıştırıldı.");
     await loadSocialMedia();
   }
 
   async function bootstrap() {
     try {
-      const data = await api("/v1/admin/ops/bootstrap");
+      const data = await api("/v1/ops-console/bootstrap");
       state.profile = data.profile;
       state.capabilities = data.capabilities || {};
       state.dashboard = data.dashboard;

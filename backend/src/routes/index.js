@@ -766,7 +766,7 @@ async function requireAuth(request, options = {}) {
 async function requireSuperAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["super_admin"],
-    mfa: true,
+    mfa: config.superAdminMfaEnforced,
     adminBoundary: true,
     action
   });
@@ -1014,7 +1014,7 @@ async function dispatchSuperAdminReleaseApproval(approval, request) {
 async function requireOpsAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["admin"],
-    mfa: true,
+    mfa: config.adminMfaEnforced,
     adminBoundary: true,
     action
   });
@@ -1962,6 +1962,18 @@ async function updateOrderPaymentFields(orderId, payload) {
 }
 
 export function registerRoutes(app) {
+  const aliasRoute = (method, paths, handler) => {
+    for (const path of paths) {
+      app[method](path, handler);
+    }
+  };
+  const opsGet = (suffix, handler) => aliasRoute("get", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const opsPost = (suffix, handler) => aliasRoute("post", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const opsPatch = (suffix, handler) => aliasRoute("patch", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
+  const superGet = (suffix, handler) => aliasRoute("get", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+  const superPost = (suffix, handler) => aliasRoute("post", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+  const superPatch = (suffix, handler) => aliasRoute("patch", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+
   app.get("/health", async () => ({
     ok: true,
     service: "allonahub-backend",
@@ -2690,7 +2702,7 @@ export function registerRoutes(app) {
     return { ok: true, order: updated };
   });
 
-  app.get("/v1/super-admin/owner-session", async (request) => {
+  superGet("/owner-session", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.owner_session.view");
     await auditEvent({
       request,
@@ -2723,7 +2735,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/command-center", async (request) => {
+  superGet("/command-center", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.command_center.view");
     const warnings = [];
     const today = new Date();
@@ -2912,7 +2924,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/release-approvals", async (request) => {
+  superGet("/release-approvals", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.list");
     const queryParams = z.object({
       limit: z.coerce.number().int().min(1).max(100).optional().default(50),
@@ -2951,7 +2963,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.post("/v1/super-admin/release-approvals", async (request) => {
+  superPost("/release-approvals", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.create");
     const body = superAdminReleaseApprovalSchema.parse(request.body || {});
     const now = new Date().toISOString();
@@ -3030,7 +3042,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/module-map", async (request) => {
+  superGet("/module-map", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.module_map.view");
     const result = await runAdminQuery(
       "platform_modules_module_map",
@@ -3062,7 +3074,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/permissions", async (request) => {
+  superGet("/permissions", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.permissions.list");
     const queryParams = z.object({
       limit: z.coerce.number().int().min(1).max(200).optional().default(120),
@@ -3129,7 +3141,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/permissions/:userId", async (request) => {
+  superPatch("/permissions/:userId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.permissions.update");
     const { userId } = z.object({ userId: uuidSchema }).parse(request.params || {});
     const body = superAdminPermissionUpdateSchema.parse(request.body || {});
@@ -3230,7 +3242,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/dashboard", async (request) => {
+  superGet("/dashboard", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.dashboard.view");
     const warnings = [];
     const today = new Date();
@@ -3318,7 +3330,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/users", async (request) => {
+  superGet("/users", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.users.list");
     const queryParams = z.object({
       limit: z.coerce.number().int().min(1).max(200).optional().default(80),
@@ -3367,7 +3379,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/users/:userId", async (request) => {
+  superPatch("/users/:userId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.users.update");
     const { userId } = z.object({ userId: uuidSchema }).parse(request.params || {});
     const body = superAdminUserUpdateSchema.parse(request.body || {});
@@ -3423,7 +3435,7 @@ export function registerRoutes(app) {
     return { ok: true, user: publicProfile(updated) };
   });
 
-  app.get("/v1/super-admin/partners", async (request) => {
+  superGet("/partners", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.partners.list");
     const warnings = [];
     const applications = await runAdminQuery(
@@ -3469,7 +3481,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/partner-applications/:applicationId", async (request) => {
+  superPatch("/partner-applications/:applicationId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
     const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
     const body = partnerApplicationDecisionSchema.parse(request.body || {});
@@ -3556,7 +3568,7 @@ export function registerRoutes(app) {
     return { ok: true, application, partner_business: partnerBusiness };
   });
 
-  app.get("/v1/super-admin/security", async (request) => {
+  superGet("/security", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.security.view");
     const warnings = [];
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -3618,7 +3630,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/super-admin/settings", async (request) => {
+  superGet("/settings", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.settings.list");
     const result = await runAdminQuery(
       "super_admin_settings",
@@ -3663,7 +3675,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/settings/:settingKey", async (request) => {
+  superPatch("/settings/:settingKey", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.settings.update");
     const { settingKey } = z.object({
       settingKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
@@ -3724,7 +3736,7 @@ export function registerRoutes(app) {
     return { ok: true, setting: updated };
   });
 
-  app.get("/v1/super-admin/modules", async (request) => {
+  superGet("/modules", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.modules.list");
     const result = await runAdminQuery(
       "platform_modules",
@@ -3765,7 +3777,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.patch("/v1/super-admin/modules/:moduleKey", async (request) => {
+  superPatch("/modules/:moduleKey", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.modules.update");
     const { moduleKey } = z.object({
       moduleKey: z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i)
@@ -3821,7 +3833,7 @@ export function registerRoutes(app) {
     return { ok: true, module: updated };
   });
 
-  app.get("/v1/super-admin/audit-log", async (request) => {
+  superGet("/audit-log", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.audit_log.view");
     const query = auditQuerySchema.parse(request.query || {});
     let dbQuery = supabaseAdmin
@@ -3859,7 +3871,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/admin/ops/bootstrap", async (request) => {
+  opsGet("/bootstrap", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.bootstrap");
     const warnings = [];
     const dashboard = await loadAdminDashboardData(warnings);
@@ -3895,7 +3907,7 @@ export function registerRoutes(app) {
     };
   });
 
-  app.get("/v1/admin/ops/dashboard", async (request) => {
+  opsGet("/dashboard", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.dashboard");
     const warnings = [];
     const dashboard = await loadAdminDashboardData(warnings);
@@ -3911,7 +3923,7 @@ export function registerRoutes(app) {
     return { ok: true, dashboard, warnings };
   });
 
-  app.get("/v1/admin/ops/users", async (request) => {
+  opsGet("/users", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -3937,7 +3949,7 @@ export function registerRoutes(app) {
     return { ok: true, users, warnings };
   });
 
-  app.get("/v1/admin/ops/users/:userId", async (request) => {
+  opsGet("/users/:userId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.detail");
     const userId = uuidSchema.parse(request.params.userId);
     const warnings = [];
@@ -4004,7 +4016,7 @@ export function registerRoutes(app) {
     return { ok: true, profile, orders, notes, flags, warnings };
   });
 
-  app.post("/v1/admin/ops/users/:userId/notes", async (request, reply) => {
+  opsPost("/users/:userId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.note");
     const userId = uuidSchema.parse(request.params.userId);
     const payload = adminNoteSchema.parse(request.body || {});
@@ -4035,7 +4047,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, note, warnings });
   });
 
-  app.post("/v1/admin/ops/users/:userId/flag", async (request, reply) => {
+  opsPost("/users/:userId/flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.flag");
     const userId = uuidSchema.parse(request.params.userId);
     const payload = adminFlagSchema.parse(request.body || {});
@@ -4069,7 +4081,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, flag, warnings });
   });
 
-  app.get("/v1/admin/ops/partner-applications", async (request) => {
+  opsGet("/partner-applications", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -4094,7 +4106,7 @@ export function registerRoutes(app) {
     return { ok: true, applications, warnings };
   });
 
-  app.get("/v1/admin/ops/partner-applications/:applicationId", async (request) => {
+  opsGet("/partner-applications/:applicationId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.detail");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const warnings = [];
@@ -4144,7 +4156,7 @@ export function registerRoutes(app) {
     return { ok: true, application, notes, approvalRequests: requests, warnings };
   });
 
-  app.patch("/v1/admin/ops/partner-applications/:applicationId/review", async (request) => {
+  opsPatch("/partner-applications/:applicationId/review", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const payload = partnerApplicationActionSchema.parse(request.body || {});
@@ -4234,7 +4246,7 @@ export function registerRoutes(app) {
     return { ok: true, application, approvalRequest, warnings };
   });
 
-  app.get("/v1/admin/ops/partners", async (request) => {
+  opsGet("/partners", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partners.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -4259,7 +4271,7 @@ export function registerRoutes(app) {
     return { ok: true, partners, warnings };
   });
 
-  app.get("/v1/admin/ops/orders", async (request) => {
+  opsGet("/orders", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -4284,7 +4296,7 @@ export function registerRoutes(app) {
     return { ok: true, orders, warnings };
   });
 
-  app.get("/v1/admin/ops/orders/:orderId", async (request) => {
+  opsGet("/orders/:orderId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.detail");
     const orderId = uuidSchema.parse(request.params.orderId);
     const warnings = [];
@@ -4338,7 +4350,7 @@ export function registerRoutes(app) {
     return { ok: true, order, notes, flags, warnings };
   });
 
-  app.post("/v1/admin/ops/orders/:orderId/risk-flag", async (request, reply) => {
+  opsPost("/orders/:orderId/risk-flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
     const orderId = uuidSchema.parse(request.params.orderId);
     const payload = adminFlagSchema.parse(request.body || {});
@@ -4372,7 +4384,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, flag, warnings });
   });
 
-  app.get("/v1/admin/ops/support-tickets", async (request) => {
+  opsGet("/support-tickets", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -4424,7 +4436,7 @@ export function registerRoutes(app) {
     return { ok: true, tickets, warnings };
   });
 
-  app.patch("/v1/admin/ops/support-tickets/:ticketId/status", async (request) => {
+  opsPatch("/support-tickets/:ticketId/status", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.status");
     const ticketId = uuidSchema.parse(request.params.ticketId);
     const payload = supportStatusSchema.parse(request.body || {});
@@ -4483,7 +4495,7 @@ export function registerRoutes(app) {
     return { ok: true, ticket, warnings };
   });
 
-  app.post("/v1/admin/ops/support-tickets/:ticketId/notes", async (request, reply) => {
+  opsPost("/support-tickets/:ticketId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.note");
     const ticketId = uuidSchema.parse(request.params.ticketId);
     const source = z.enum(["user", "partner"]).parse(request.query?.source || "user");
@@ -4515,7 +4527,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, note, warnings });
   });
 
-  app.get("/v1/admin/ops/content-proposals", async (request) => {
+  opsGet("/content-proposals", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.list");
     const warnings = [];
     const proposals = await optionalQuery(
@@ -4538,7 +4550,7 @@ export function registerRoutes(app) {
     return { ok: true, proposals, warnings };
   });
 
-  app.post("/v1/admin/ops/content-proposals", async (request, reply) => {
+  opsPost("/content-proposals", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.propose");
     const payload = contentProposalSchema.parse(request.body || {});
     const warnings = [];
@@ -4588,7 +4600,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, proposal, warnings });
   });
 
-  app.get("/v1/admin/ops/social-media", async (request) => {
+  opsGet("/social-media", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
@@ -4611,7 +4623,7 @@ export function registerRoutes(app) {
     return { ok: true, social, warnings };
   });
 
-  app.post("/v1/admin/ops/social-media/accounts", async (request, reply) => {
+  opsPost("/social-media/accounts", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.account_upsert");
     const payload = socialMediaAccountSchema.parse(request.body || {});
     const warnings = [];
@@ -4640,7 +4652,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, account, warnings });
   });
 
-  app.post("/v1/admin/ops/social-media/secrets", async (request, reply) => {
+  opsPost("/social-media/secrets", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.secret_upsert");
     const payload = socialMediaSecretSchema.parse(request.body || {});
     const definition = findSecretDefinition(payload.platform, payload.secret_key);
@@ -4724,7 +4736,7 @@ export function registerRoutes(app) {
     return reply.code(existing ? 200 : 201).send({ ok: true, secret, warnings });
   });
 
-  app.post("/v1/admin/ops/social-media/connections/test", async (request, reply) => {
+  opsPost("/social-media/connections/test", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.connection_test");
     const payload = socialMediaConnectionTestSchema.parse(request.body || {});
     const warnings = [];
@@ -4823,7 +4835,7 @@ export function registerRoutes(app) {
     return reply.code(200).send({ ok: verified, result, warnings });
   });
 
-  app.post("/v1/admin/ops/social-media/campaigns", async (request, reply) => {
+  opsPost("/social-media/campaigns", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.campaign_create");
     const payload = socialMediaCampaignSchema.parse(request.body || {});
     const warnings = [];
@@ -4852,7 +4864,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, campaign, warnings });
   });
 
-  app.post("/v1/admin/ops/social-media/drafts", async (request, reply) => {
+  opsPost("/social-media/drafts", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.draft_create");
     const payload = socialMediaDraftSchema.parse(request.body || {});
     const warnings = [];
@@ -4946,7 +4958,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, draft, posts, warnings });
   });
 
-  app.post("/v1/admin/ops/social-media/drafts/:draftId/submit", async (request) => {
+  opsPost("/social-media/drafts/:draftId/submit", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.draft_submit");
     const draftId = uuidSchema.parse(request.params.draftId);
     const warnings = [];
@@ -4989,7 +5001,7 @@ export function registerRoutes(app) {
     return { ok: true, draft, warnings };
   });
 
-  app.post("/v1/admin/ops/social-media/drafts/:draftId/approve", async (request) => {
+  opsPost("/social-media/drafts/:draftId/approve", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.draft_approve");
     const draftId = uuidSchema.parse(request.params.draftId);
     const payload = socialMediaDraftApprovalSchema.parse(request.body || {});
@@ -5078,7 +5090,7 @@ export function registerRoutes(app) {
     return { ok: true, draft, dispatch, warnings };
   });
 
-  app.post("/v1/admin/ops/social-media/posts/:postId/dispatch", async (request) => {
+  opsPost("/social-media/posts/:postId/dispatch", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.post_dispatch");
     const postId = uuidSchema.parse(request.params.postId);
     const warnings = [];
@@ -5112,7 +5124,7 @@ export function registerRoutes(app) {
     return { ok: true, dispatch, warnings };
   });
 
-  app.post("/v1/admin/ops/social-media/dispatch-due", async (request) => {
+  opsPost("/social-media/dispatch-due", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.dispatch_due");
     const dispatch = await dispatchDueSocialMediaPosts({ request, ctx, limit: config.socialMedia.maxDispatchBatch });
 
@@ -5128,7 +5140,7 @@ export function registerRoutes(app) {
     return { ok: true, dispatch };
   });
 
-  app.post("/v1/admin/ops/social-media/daily-plans", async (request, reply) => {
+  opsPost("/social-media/daily-plans", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.social_media.daily_plan_create");
     const payload = socialMediaDailyPlanSchema.parse(request.body || {});
     const warnings = [];
@@ -5163,7 +5175,7 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, plan, warnings });
   });
 
-  app.get("/v1/admin/ops/security-monitoring", async (request) => {
+  opsGet("/security-monitoring", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.security_monitoring");
     const warnings = [];
     const [events, flags, notifications] = await Promise.all([
@@ -5211,7 +5223,7 @@ export function registerRoutes(app) {
     return { ok: true, events, flags, notifications, autoDefense, warnings };
   });
 
-  app.get("/v1/admin/ops/reports", async (request) => {
+  opsGet("/reports", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.reports");
     const warnings = [];
     const dashboard = await loadAdminDashboardData(warnings);
@@ -5266,7 +5278,7 @@ export function registerRoutes(app) {
     return { ok: true, reports, warnings };
   });
 
-  app.get("/v1/admin/ops/audit-log", async (request) => {
+  opsGet("/audit-log", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.audit_log");
     const query = adminAuditLogQuerySchema.parse(request.query || {});
     const warnings = [];

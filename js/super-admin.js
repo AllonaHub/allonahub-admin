@@ -152,7 +152,7 @@
     const health = $("[data-system-health]");
     if (!target || !health) return;
     target.innerHTML = metricCard("Yükleniyor", "...", "Dashboard");
-    const payload = await api("/v1/super-admin/dashboard");
+    const payload = await api("/v1/control-center/dashboard");
     const dashboard = payload.dashboard || {};
     const metrics = dashboard.metrics || {};
     target.innerHTML = [
@@ -181,7 +181,7 @@
 
   async function loadUsers(params) {
     const query = new URLSearchParams(params || {});
-    const payload = await api(`/v1/super-admin/users?${query.toString()}`);
+    const payload = await api(`/v1/control-center/users?${query.toString()}`);
     state.users = payload.users || [];
     const target = $("[data-users-table]");
     if (!target) return;
@@ -223,7 +223,7 @@
   }
 
   async function loadPartners() {
-    const payload = await api("/v1/super-admin/partners");
+    const payload = await api("/v1/control-center/partners");
     state.applications = payload.applications || [];
     state.businesses = payload.businesses || [];
     const applicationsTarget = $("[data-partner-applications]");
@@ -285,7 +285,7 @@
   }
 
   async function loadSecurity() {
-    const payload = await api("/v1/super-admin/security");
+    const payload = await api("/v1/control-center/security");
     const securityData = payload.security || {};
     const metrics = securityData.metrics || {};
     const metricTarget = $("[data-security-metrics]");
@@ -310,7 +310,7 @@
   }
 
   async function loadSettings() {
-    const payload = await api("/v1/super-admin/settings");
+    const payload = await api("/v1/control-center/settings");
     state.settings = payload.settings || [];
     const target = $("[data-settings-list]");
     const env = payload.env_flags || {};
@@ -341,7 +341,7 @@
   }
 
   async function loadModules() {
-    const payload = await api("/v1/super-admin/modules");
+    const payload = await api("/v1/control-center/modules");
     state.modules = payload.modules || [];
     const target = $("[data-modules-list]");
     if (!target) return;
@@ -375,7 +375,7 @@
   }
 
   async function loadAuditLog() {
-    const payload = await api("/v1/super-admin/audit-log?limit=80");
+    const payload = await api("/v1/control-center/audit-log?limit=80");
     renderEventsTable($("[data-audit-log]"), payload.events || []);
   }
 
@@ -477,7 +477,7 @@
 
     await runConfirmed(message, async (reason) => {
       payload.note = reason || message;
-      await api(`/v1/super-admin/users/${encodeURIComponent(userId)}`, {
+      await api(`/v1/control-center/users/${encodeURIComponent(userId)}`, {
         method: "PATCH",
         body: payload
       });
@@ -493,7 +493,7 @@
       rejected: "Partner başvurusu reddedilecek."
     };
     await runConfirmed(messages[decision] || "Partner başvurusu güncellenecek.", async (reason) => {
-      await api(`/v1/super-admin/partner-applications/${encodeURIComponent(applicationId)}`, {
+      await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
         method: "PATCH",
         body: {
           decision,
@@ -514,7 +514,7 @@
     const input = $(`[data-setting-input="${safeKey}"]`);
     const value = toggle ? toggle.getAttribute("aria-pressed") === "true" : Number(input && input.value || 0);
     await runConfirmed(`${setting.label || key} ayarı güncellenecek.`, async (reason) => {
-      await api(`/v1/super-admin/settings/${encodeURIComponent(key)}`, {
+      await api(`/v1/control-center/settings/${encodeURIComponent(key)}`, {
         method: "PATCH",
         body: { value, reason }
       });
@@ -529,7 +529,7 @@
     const commission = $(`[data-module-commission="${safeKey}"]`);
     const application = $(`[data-module-application="${safeKey}"]`);
     await runConfirmed("Modül kontrol ayarı güncellenecek.", async (reason) => {
-      await api(`/v1/super-admin/modules/${encodeURIComponent(key)}`, {
+      await api(`/v1/control-center/modules/${encodeURIComponent(key)}`, {
         method: "PATCH",
         body: {
           is_active: active ? active.getAttribute("aria-pressed") === "true" : undefined,
@@ -627,13 +627,13 @@
   }
 
   async function loadCommandCenter() {
-    const payload = await api("/v1/super-admin/command-center");
+    const payload = await api("/v1/control-center/command-center");
     state.commandCenter = payload;
     return payload;
   }
 
   async function loadOwnerSession() {
-    const payload = await api("/v1/super-admin/owner-session");
+    const payload = await api("/v1/control-center/owner-session");
     state.ownerSession = payload;
     const roleTarget = $("[data-sa-role]");
     if (roleTarget) {
@@ -679,7 +679,7 @@
 
   async function loadOwnerApprovals() {
     ownerLoading("Yayın Onayları");
-    const payload = await api("/v1/super-admin/release-approvals?limit=80");
+    const payload = await api("/v1/control-center/release-approvals?limit=80");
     state.approvals = payload.approvals || [];
     const header = ownerLine("Yeni onay", "Main commit/push, deploy veya migration için owner onayı oluştur.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical");
     const rows = state.approvals.map((item) => ownerLine(
@@ -723,7 +723,7 @@
   async function loadOwnerPermissions(params) {
     ownerLoading("Yetki Merkezi");
     const query = new URLSearchParams(params || {});
-    const payload = await api(`/v1/super-admin/permissions?${query.toString()}`);
+    const payload = await api(`/v1/control-center/permissions?${query.toString()}`);
     state.permissionUsers = payload.users || [];
     state.permissionChanges = payload.recent_changes || [];
     const guardrails = payload.guardrails || {};
@@ -774,7 +774,7 @@
     const user = (state.permissionUsers || []).find((item) => item.id === userId);
     const message = `${user?.full_name || user?.email || "Kullanıcı"} için rol/durum/risk yetkisi güncellenecek.`;
     await runConfirmed(message, async (reason) => {
-      await api(`/v1/super-admin/permissions/${encodeURIComponent(userId)}`, {
+      await api(`/v1/control-center/permissions/${encodeURIComponent(userId)}`, {
         method: "PATCH",
         body: {
           role: role && role.value,
@@ -789,7 +789,7 @@
 
   async function loadOwnerModuleMap() {
     ownerLoading("Modül Haritası");
-    const payload = await api("/v1/super-admin/module-map");
+    const payload = await api("/v1/control-center/module-map");
     state.moduleMap = payload.modules || [];
     state.futureOperations = payload.future_operations || [];
     const rows = state.moduleMap.map((item) => ownerLine(
@@ -845,7 +845,7 @@
   async function loadOwnerUsers(params) {
     ownerLoading("Kullanıcı Yönetimi");
     const query = new URLSearchParams(params || {});
-    const payload = await api(`/v1/super-admin/users?${query.toString()}`);
+    const payload = await api(`/v1/control-center/users?${query.toString()}`);
     state.users = payload.users || [];
     const rows = state.users.map((user) => ownerLine(
       user.full_name || user.email || user.id,
@@ -863,7 +863,7 @@
 
   async function loadOwnerPartners() {
     ownerLoading("Partner Başvuruları");
-    const payload = await api("/v1/super-admin/partners");
+    const payload = await api("/v1/control-center/partners");
     state.applications = payload.applications || [];
     state.businesses = payload.businesses || [];
     const applicationRows = state.applications.map((item) => ownerLine(
@@ -892,7 +892,7 @@
 
   async function loadOwnerSecurity() {
     ownerLoading("Güvenlik Merkezi");
-    const payload = await api("/v1/super-admin/security");
+    const payload = await api("/v1/control-center/security");
     const securityData = payload.security || {};
     const metrics = securityData.metrics || {};
     const ipRows = (securityData.suspicious_ips || []).map((item) => ownerLine(
@@ -920,7 +920,7 @@
 
   async function loadOwnerSystem() {
     ownerLoading("Sistem Ayarları");
-    const payload = await api("/v1/super-admin/settings");
+    const payload = await api("/v1/control-center/settings");
     state.settings = payload.settings || [];
     const rows = state.settings.map((setting) => {
       const value = setting.setting_value;
@@ -944,7 +944,7 @@
 
   async function loadOwnerModules() {
     ownerLoading("Modül Yönetimi");
-    const payload = await api("/v1/super-admin/modules");
+    const payload = await api("/v1/control-center/modules");
     state.modules = payload.modules || [];
     const rows = state.modules.map((item) => ownerLine(
       item.name || item.module_key,
@@ -963,7 +963,7 @@
 
   async function loadOwnerAudit() {
     ownerLoading("Audit Log");
-    const payload = await api("/v1/super-admin/audit-log?limit=120");
+    const payload = await api("/v1/control-center/audit-log?limit=120");
     state.auditEvents = payload.events || [];
     const rows = state.auditEvents.map((event) => ownerLine(
       event.action || "audit",
@@ -1031,7 +1031,7 @@
     if (!confirmed.confirmed) return;
     payload.metadata.reason = confirmed.reason;
     try {
-      const result = await api("/v1/super-admin/release-approvals", {
+      const result = await api("/v1/control-center/release-approvals", {
         method: "POST",
         body: payload
       });
