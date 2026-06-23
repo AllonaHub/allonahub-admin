@@ -7,6 +7,16 @@
     return String(App.config && App.config.turnstileSiteKey || "").trim();
   }
 
+  function normalizeAction(action) {
+    return String(action || "form_submit").trim().slice(0, 32) || "form_submit";
+  }
+
+  function isActiveChallenge(container) {
+    const form = container && container.closest && container.closest(".form");
+    if (form && !form.classList.contains("active")) return false;
+    return true;
+  }
+
   function loadTurnstile() {
     if (!siteKey()) return Promise.resolve(false);
     if (window.turnstile) return Promise.resolve(true);
@@ -68,7 +78,7 @@
   }
 
   function consumeVisibleToken(action) {
-    const state = visibleWidgets.get(String(action || ""));
+    const state = visibleWidgets.get(normalizeAction(action));
     if (!state) return "";
     const token = state.token || "";
     if (token) {
@@ -79,7 +89,7 @@
 
   function renderVisibleWidget(container, action) {
     if (!container || container.dataset.turnstileRendered === "true" || !window.turnstile) return;
-    const normalizedAction = String(action || "form_submit").slice(0, 32);
+    const normalizedAction = normalizeAction(action);
     container.dataset.turnstileRendered = "true";
     container.dataset.verified = "false";
     container.classList.add("allonahub-turnstile");
@@ -116,10 +126,19 @@
 
   async function hydrateVisibleChallenges() {
     if (!siteKey()) return;
-    const containers = Array.from(document.querySelectorAll("[data-security-challenge]"));
+    const containers = Array.from(document.querySelectorAll("[data-security-challenge]")).filter(isActiveChallenge);
     if (!containers.length) return;
     injectStyle();
-    await loadTurnstile();
+    try {
+      await loadTurnstile();
+    } catch (error) {
+      containers.forEach((container) => {
+        container.classList.add("allonahub-turnstile");
+        container.dataset.verified = "false";
+        container.innerHTML = `<div class="allonahub-turnstile__label">${error.message || "Robot doğrulaması yüklenemedi."}</div>`;
+      });
+      return;
+    }
     if (!window.turnstile) return;
     containers.forEach((container) => {
       renderVisibleWidget(container, container.getAttribute("data-security-challenge"));
@@ -154,7 +173,7 @@
         sitekey: siteKey(),
         size: "invisible",
         execution: "execute",
-        action: String(action || "form_submit").slice(0, 32),
+        action: normalizeAction(action),
         callback(token) {
           clearTimeout(timeout);
           cleanup();
@@ -178,12 +197,13 @@
 
   async function tokenFor(action) {
     try {
+      const normalizedAction = normalizeAction(action);
       const visibleToken = consumeVisibleToken(action);
-      if (visibleWidgets.has(String(action || ""))) {
-        if (!visibleToken) throw new Error("Robot olmadığınızı onaylayın.");
+      if (visibleWidgets.has(normalizedAction)) {
+        if (!visibleToken) return await execute(normalizedAction);
         return visibleToken;
       }
-      return await execute(action);
+      return await execute(normalizedAction);
     } catch (error) {
       if (App.core && App.core.toast) {
         App.core.toast(error.message || "Robot doğrulaması tamamlanamadı.", "error");

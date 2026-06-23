@@ -1456,6 +1456,12 @@ function openTab(tabId,event){
   if(event && event.target){
     event.target.classList.add("active");
   }
+
+  setTimeout(()=>{
+    if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.hydrate){
+      window.Allona.securityChallenge.hydrate();
+    }
+  },0);
 }
 
 function checkPasswords(){
@@ -1766,7 +1772,7 @@ document.addEventListener("click",function(e){
   <div data-layout="footer"></div>
   <script src="../../js/config.js?v=20260623-authunify1" defer></script>
   <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/security-challenge.js?v=20260623-authunify1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260623-cffix1" defer></script>
   <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
   <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
 </body>
