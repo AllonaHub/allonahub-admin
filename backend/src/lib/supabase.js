@@ -12,6 +12,16 @@ export const supabaseAdmin = createClient(config.supabase.url, config.supabase.s
   }
 });
 
+export const supabasePublic = createClient(config.supabase.url, config.supabase.anonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  },
+  realtime: {
+    transport: WebSocket
+  }
+});
+
 export function supabaseForUser(jwt) {
   return createClient(config.supabase.url, config.supabase.anonKey, {
     global: {

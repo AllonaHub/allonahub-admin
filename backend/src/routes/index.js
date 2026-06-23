@@ -13,7 +13,8 @@ import {
   isSuperAdmin,
   isPartner,
   mfaRequiredForRole,
-  supabaseAdmin
+  supabaseAdmin,
+  supabasePublic
 } from "../lib/supabase.js";
 import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
 
@@ -49,6 +50,42 @@ const publicPartnerIntentCheckoutSchema = z.object({
 const cvCheckoutSchema = z.object({
   buyerEmail: emailSchema.optional(),
   buyerPhone: phoneSchema
+});
+
+const authTurnstileSchema = z.object({
+  action: z.string().trim().min(2).max(32).regex(/^[a-z0-9_-]+$/i).optional().default("form_submit"),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
+const authLoginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(8).max(512),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
+const authProfileSchema = z.object({
+  country: z.string().trim().max(90).optional().default(""),
+  sector_key: z.string().trim().max(90).optional().default(""),
+  sector_name: z.string().trim().max(140).optional().default(""),
+  profession_key: z.string().trim().max(90).optional().default(""),
+  profession_name: z.string().trim().max(140).optional().default(""),
+  profession_title: z.string().trim().max(180).optional().default(""),
+  module: z.string().trim().max(90).optional().default(""),
+  greeting: z.string().trim().max(180).optional().default("")
+}).optional().default({});
+
+const authRegisterSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(8).max(512),
+  full_name: z.string().trim().min(2).max(160),
+  phone: phoneSchema,
+  profile: authProfileSchema,
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
+const authForgotPasswordSchema = z.object({
+  email: emailSchema,
+  turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
 const auditQuerySchema = z.object({
@@ -595,6 +632,176 @@ function assertPaymentsEnabled() {
 
 function redirect(reply, target) {
   return reply.code(303).header("Location", target).send();
+}
+
+function parseAuthPayload(schema, body) {
+  const parsed = schema.safeParse(body || {});
+  if (!parsed.success) throw httpError("İstek doğrulanamadı.", 400);
+  return parsed.data;
+}
+
+function authEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function authEmailHash(value) {
+  return createHash("sha256").update(authEmail(value)).digest("hex");
+}
+
+function authEmailDomain(value) {
+  return authEmail(value).split("@")[1] || "";
+}
+
+function resetPasswordRedirectUrl() {
+  return new URL("/pages/account/reset-password.html", `${config.siteUrl}/`).href;
+}
+
+function publicAuthUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email || "",
+    email_confirmed_at: user.email_confirmed_at || null,
+    created_at: user.created_at || null,
+    user_metadata: {
+      full_name: user.user_metadata?.full_name || "",
+      phone: user.user_metadata?.phone || "",
+      country: user.user_metadata?.country || "",
+      sector_key: user.user_metadata?.sector_key || "",
+      sector_name: user.user_metadata?.sector_name || "",
+      profession_key: user.user_metadata?.profession_key || "",
+      profession_name: user.user_metadata?.profession_name || "",
+      profession_title: user.user_metadata?.profession_title || "",
+      module: user.user_metadata?.module || ""
+    }
+  };
+}
+
+function compactRow(row) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([, value]) => value !== undefined && value !== null && value !== "")
+  );
+}
+
+function authUserMetadata(payload) {
+  const profile = payload.profile || {};
+  return compactRow({
+    full_name: payload.full_name,
+    phone: payload.phone,
+    country: profile.country,
+    sector_key: profile.sector_key,
+    sector_name: profile.sector_name,
+    profession_key: profile.profession_key,
+    profession_name: profile.profession_name,
+    profession_title: profile.profession_title,
+    module: profile.module,
+    greeting: profile.greeting
+  });
+}
+
+async function upsertAuthProfile(user, payload, request) {
+  if (!user?.id) return;
+  const profile = payload.profile || {};
+  const row = compactRow({
+    id: user.id,
+    email: user.email || payload.email,
+    full_name: payload.full_name,
+    phone: payload.phone,
+    country: profile.country,
+    sector_key: profile.sector_key,
+    sector_name: profile.sector_name,
+    profession_key: profile.profession_key,
+    profession_name: profile.profession_name,
+    profession_title: profile.profession_title,
+    module: profile.module
+  });
+
+  if (Object.keys(row).length <= 1) return;
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .upsert(row, { onConflict: "id" });
+
+  if (!error) return;
+
+  request?.log?.warn({ error: error.message, userId: user.id }, "Auth profile sync failed");
+  await auditEvent({
+    request,
+    actorId: user.id,
+    actorRole: "customer",
+    action: "auth.profile_sync_failed",
+    severity: looksLikeMissingSchema(error) ? "warning" : "critical",
+    metadata: {
+      code: error.code || null,
+      message: error.message || null
+    },
+    evidenceTags: ["auth", "profile_sync"]
+  });
+}
+
+async function verifyTurnstile(request, action, token) {
+  const expectedAction = String(action || "form_submit").trim().slice(0, 32) || "form_submit";
+
+  if (!config.turnstile.secretKey) {
+    if (config.turnstile.strict) {
+      throw httpError("Robot doğrulaması sunucuda yapılandırılmadı.", 503);
+    }
+    return { ok: true, skipped: true, action: expectedAction };
+  }
+
+  if (!token) {
+    await auditEvent({
+      request,
+      action: "auth.turnstile_missing",
+      severity: "warning",
+      metadata: { action: expectedAction },
+      evidenceTags: ["auth", "turnstile"]
+    });
+    throw httpError("Robot doğrulaması gerekli.", 400);
+  }
+
+  const body = new URLSearchParams();
+  body.set("secret", config.turnstile.secretKey);
+  body.set("response", token);
+  const ip = clientIp(request);
+  if (ip) body.set("remoteip", ip);
+
+  let response;
+  try {
+    response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+  } catch (error) {
+    request?.log?.warn({ error: error.message, action: expectedAction }, "Turnstile verification request failed");
+    throw httpError("Robot doğrulaması şu an tamamlanamıyor.", 503);
+  }
+
+  const result = await response.json().catch(() => ({}));
+  const tokenAction = String(result.action || "").trim();
+  const actionMismatch = tokenAction && tokenAction !== expectedAction;
+
+  if (!response.ok || !result.success || actionMismatch) {
+    await auditEvent({
+      request,
+      action: "auth.turnstile_failed",
+      severity: "warning",
+      metadata: {
+        action: expectedAction,
+        token_action: tokenAction || null,
+        errors: Array.isArray(result["error-codes"]) ? result["error-codes"].slice(0, 8) : []
+      },
+      evidenceTags: ["auth", "turnstile"]
+    });
+    throw httpError("Robot doğrulaması başarısız oldu.", 403);
+  }
+
+  return {
+    ok: true,
+    skipped: false,
+    action: tokenAction || expectedAction
+  };
 }
 
 function assertAdminBoundary(request) {
@@ -2060,6 +2267,147 @@ export function registerRoutes(app) {
       return reply.code(503).send({ ok: false, message: "Supabase bağlantısı hazır değil." });
     }
     return { ok: true };
+  });
+
+  app.post("/v1/auth/turnstile", async (request) => {
+    const payload = parseAuthPayload(authTurnstileSchema, request.body);
+    const challenge = await verifyTurnstile(request, payload.action, payload.turnstileToken);
+    await auditEvent({
+      request,
+      action: "auth.turnstile_verified",
+      severity: "info",
+      metadata: {
+        action: payload.action,
+        skipped: challenge.skipped
+      },
+      evidenceTags: ["auth", "turnstile"]
+    });
+    return { ok: true, skipped: challenge.skipped };
+  });
+
+  app.post("/v1/auth/login", async (request, reply) => {
+    const payload = parseAuthPayload(authLoginSchema, request.body);
+    const email = authEmail(payload.email);
+    await verifyTurnstile(request, "login", payload.turnstileToken);
+
+    const { data, error } = await supabasePublic.auth.signInWithPassword({
+      email,
+      password: payload.password
+    });
+
+    if (error || !data?.session || !data?.user) {
+      await auditEvent({
+        request,
+        action: "auth.login_failed",
+        severity: "warning",
+        metadata: {
+          email_hash: authEmailHash(email),
+          email_domain: authEmailDomain(email),
+          code: error?.code || null
+        },
+        evidenceTags: ["auth", "login", "failed"]
+      });
+      return reply.code(401).send({ ok: false, message: "E-posta veya şifre doğru değil." });
+    }
+
+    await auditEvent({
+      request,
+      actorId: data.user.id,
+      actorRole: "customer",
+      action: "auth.login_success",
+      severity: "info",
+      metadata: {
+        email_domain: authEmailDomain(email),
+        aal: data.session?.user?.aal || "aal1"
+      },
+      evidenceTags: ["auth", "login"]
+    });
+
+    return {
+      ok: true,
+      user: publicAuthUser(data.user),
+      session: data.session
+    };
+  });
+
+  app.post("/v1/auth/register", async (request, reply) => {
+    const payload = parseAuthPayload(authRegisterSchema, request.body);
+    const email = authEmail(payload.email);
+    await verifyTurnstile(request, "register", payload.turnstileToken);
+
+    const { data, error } = await supabasePublic.auth.signUp({
+      email,
+      password: payload.password,
+      options: {
+        data: authUserMetadata(payload),
+        emailRedirectTo: new URL("/pages/account/user.html?tab=login", `${config.siteUrl}/`).href
+      }
+    });
+
+    if (error || !data?.user) {
+      await auditEvent({
+        request,
+        action: "auth.register_failed",
+        severity: "warning",
+        metadata: {
+          email_hash: authEmailHash(email),
+          email_domain: authEmailDomain(email),
+          code: error?.code || null
+        },
+        evidenceTags: ["auth", "register", "failed"]
+      });
+      return reply.code(400).send({ ok: false, message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
+    }
+
+    await upsertAuthProfile(data.user, { ...payload, email }, request);
+
+    await auditEvent({
+      request,
+      actorId: data.user.id,
+      actorRole: "customer",
+      action: "auth.register_success",
+      severity: "info",
+      metadata: {
+        email_domain: authEmailDomain(email),
+        session_created: Boolean(data.session)
+      },
+      evidenceTags: ["auth", "register"]
+    });
+
+    return reply.code(201).send({
+      ok: true,
+      user: publicAuthUser(data.user),
+      session: data.session || null
+    });
+  });
+
+  app.post("/v1/auth/forgot-password", async (request, reply) => {
+    const payload = parseAuthPayload(authForgotPasswordSchema, request.body);
+    const email = authEmail(payload.email);
+    await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+
+    const { error } = await supabasePublic.auth.resetPasswordForEmail(email, {
+      redirectTo: resetPasswordRedirectUrl()
+    });
+
+    await auditEvent({
+      request,
+      action: error ? "auth.password_reset_delivery_failed" : "auth.password_reset_requested",
+      severity: error ? "warning" : "info",
+      metadata: {
+        email_hash: authEmailHash(email),
+        email_domain: authEmailDomain(email),
+        redirect_to: resetPasswordRedirectUrl(),
+        code: error?.code || null
+      },
+      evidenceTags: ["auth", "password_reset"]
+    });
+
+    if (error) {
+      request.log.warn({ error: error.message, emailDomain: authEmailDomain(email) }, "Password reset email could not be requested");
+    }
+
+    return reply.code(202).send({ ok: true });
   });
 
   app.post("/v1/security/events", async (request, reply) => {

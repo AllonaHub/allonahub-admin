@@ -4,6 +4,41 @@
   const config = App.config;
   const security = App.security;
 
+  function hasPasswordRecoveryParams() {
+    const sources = [
+      new URLSearchParams(window.location.search || ""),
+      new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""))
+    ];
+
+    return sources.some((params) => {
+      const type = String(params.get("type") || "").toLowerCase();
+      return type === "recovery" ||
+        params.has("access_token") ||
+        params.has("refresh_token") ||
+        params.has("error_code");
+    });
+  }
+
+  function passwordResetUrl(preserveCurrentUrl) {
+    const resetPath = core && core.url ? core.url("/pages/account/reset-password.html") : "/pages/account/reset-password.html";
+    const target = new URL(resetPath, window.location.origin);
+    if (preserveCurrentUrl) {
+      target.search = window.location.search || "";
+      target.hash = window.location.hash || "";
+    }
+    return target;
+  }
+
+  function redirectPasswordRecovery() {
+    if (!hasPasswordRecoveryParams()) return false;
+    if (/\/pages\/account\/reset-password\.html$/i.test(window.location.pathname)) return false;
+
+    window.location.replace(passwordResetUrl(true).href);
+    return true;
+  }
+
+  if (redirectPasswordRecovery()) return;
+
   if (window.supabase && config.supabaseUrl && config.supabaseAnonKey) {
     App.supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
       auth: {
@@ -50,6 +85,10 @@
 
   if (App.supabase && App.supabase.auth && App.supabase.auth.onAuthStateChange) {
     App.supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY" && !/\/pages\/account\/reset-password\.html$/i.test(window.location.pathname)) {
+        window.location.replace(passwordResetUrl(false).href);
+        return;
+      }
       if (event === "SIGNED_OUT" || event === "USER_DELETED") {
         clearAuthArtifacts();
       }

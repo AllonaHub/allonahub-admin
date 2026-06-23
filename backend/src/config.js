@@ -46,6 +46,10 @@ export const config = {
   adminHosts: csv(readEnv("ADMIN_HOSTS", { required: false, defaultValue: "admin.allonahub.com,api.allonahub.com" })),
   adminIpAllowlist: csv(readEnv("ADMIN_IP_ALLOWLIST", { required: false, defaultValue: "" })),
   mfaRequiredRoles: csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),
+  turnstile: {
+    secretKey: readOptionalSecret("TURNSTILE_SECRET_KEY", "CF_TURNSTILE_SECRET_KEY", "CLOUDFLARE_TURNSTILE_SECRET_KEY"),
+    strict: readBool("TURNSTILE_STRICT", false)
+  },
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
   maintenanceMode: readBool("MAINTENANCE_MODE", false),
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),

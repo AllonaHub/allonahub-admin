@@ -869,11 +869,28 @@ a{
 <script>
 const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+function hasPasswordRecoveryParams(){
+  const sources=[
+    new URLSearchParams(window.location.search || ""),
+    new URLSearchParams(String(window.location.hash || "").replace(/^#/,""))
+  ];
+  return sources.some(function(params){
+    const type=String(params.get("type") || "").toLowerCase();
+    return type==="recovery" || params.has("access_token") || params.has("refresh_token") || params.has("error_code");
+  });
+}
+const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
+if(IS_PASSWORD_RECOVERY_REDIRECT){
+  const target=new URL("reset-password.html", window.location.href);
+  target.search=window.location.search || "";
+  target.hash=window.location.hash || "";
+  window.location.replace(target.href);
+}
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
   auth:{
     persistSession:true,
     autoRefreshToken:true,
-    detectSessionInUrl:true
+    detectSessionInUrl:!IS_PASSWORD_RECOVERY_REDIRECT
   }
 });
 
@@ -913,14 +930,23 @@ async function securityChallengeToken(action){
 }
 
 async function authApi(path,payload){
-  const response=await fetch(apiBaseUrl()+path,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload || {})
-  });
+  let response;
+  try{
+    response=await fetch(apiBaseUrl()+path,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload || {})
+    });
+  }catch(error){
+    error.status=0;
+    throw error;
+  }
   const result=await response.json().catch(()=>({}));
   if(!response.ok || result.ok===false){
-    throw new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+    const error=new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+    error.status=response.status;
+    error.payload=result;
+    throw error;
   }
   return result;
 }
@@ -1637,10 +1663,17 @@ async function resetPassword(){
   }
 
   try{
-    await authApi("/v1/auth/forgot-password",{
-      email:email,
-      turnstileToken:await securityChallengeToken("forgot_password")
-    });
+    try{
+      await authApi("/v1/auth/forgot-password",{
+        email:email,
+        turnstileToken:await securityChallengeToken("forgot_password")
+      });
+    }catch(error){
+      const backendUnavailable=error.status===0 || [404,405,501,502,503,504].includes(Number(error.status));
+      if(!backendUnavailable)throw error;
+      const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
+      if(resetError)throw resetError;
+    }
     alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
   }catch(error){
     secureAuthAlert(error.message || "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
@@ -1685,6 +1718,10 @@ document.addEventListener("DOMContentLoaded",function(){
   setCountryByLocale();
   openInitialAuthTab();
   supabaseClient.auth.onAuthStateChange(function(event){
+    if(event==="PASSWORD_RECOVERY"){
+      window.location.replace("reset-password.html");
+      return;
+    }
     if(event==="SIGNED_IN" || event==="INITIAL_SESSION"){
       redirectAuthenticatedUser();
     }

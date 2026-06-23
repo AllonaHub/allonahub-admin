@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260623-visualfix1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260623-reset1";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,12 +8,12 @@ const APP_SHELL = [
   "./css/platform.css?v=20260623-visualfix1",
   "./js/config.js?v=20260621-homeauth1",
   "./js/core.js?v=20260623-mfa2",
-  "./js/supabase-client.js?v=20260621-homeauth1",
+  "./js/supabase-client.js?v=20260623-reset1",
   "./js/auth.js?v=20260623-mfa2",
   "./js/layout.v3.js?v=20260623-visualfix1",
   "./js/platform.js?v=20260623-visualfix1",
   "./js/allonahub-home.js?v=20260623-visualfix1",
-  "./js/pwa-install.js?v=20260623-visualfix1",
+  "./js/pwa-install.js?v=20260623-reset1",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-192.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-512.png?v=20260622-icon1",
