@@ -2290,9 +2290,10 @@ export function registerRoutes(app) {
   const opsGet = (suffix, handler) => aliasRoute("get", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
   const opsPost = (suffix, handler) => aliasRoute("post", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
   const opsPatch = (suffix, handler) => aliasRoute("patch", [`/v1/admin/ops${suffix}`, `/v1/ops-console${suffix}`], handler);
-  const superGet = (suffix, handler) => aliasRoute("get", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
-  const superPost = (suffix, handler) => aliasRoute("post", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
-  const superPatch = (suffix, handler) => aliasRoute("patch", [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`], handler);
+  const superPaths = (suffix) => [`/v1/super-admin${suffix}`, `/v1/control-center${suffix}`, `/v1/owner-console${suffix}`];
+  const superGet = (suffix, handler) => aliasRoute("get", superPaths(suffix), handler);
+  const superPost = (suffix, handler) => aliasRoute("post", superPaths(suffix), handler);
+  const superPatch = (suffix, handler) => aliasRoute("patch", superPaths(suffix), handler);
 
   app.get("/health", async () => ({
     ok: true,

@@ -389,18 +389,38 @@
     return session.access_token;
   }
 
+  function controlCenterPathCandidates(path) {
+    const normalized = String(path || "");
+    if (!normalized.startsWith("/v1/control-center")) return [normalized];
+    return [
+      normalized,
+      normalized.replace(/^\/v1\/control-center/, "/v1/owner-console")
+    ];
+  }
+
+  function shouldTryNextApiAlias(response, payload) {
+    if (!response) return false;
+    if (response.status === 404) return true;
+    const message = String(payload && (payload.message || payload.error) || "");
+    return response.status === 403 && /route|not found|challenge/i.test(message);
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
-    const response = await fetch(`${config.apiBaseUrl}${path}`, {
+    const paths = controlCenterPathCandidates(path);
+    let lastError = null;
+
+    for (const candidatePath of paths) {
+      const response = await fetch(`${config.apiBaseUrl}${candidatePath}`, {
       method: options && options.method || "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json"
       },
       body: options && options.body ? JSON.stringify(options.body) : undefined
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok) return payload;
       const message = payload.message || payload.error || "İşlem tamamlanamadı.";
       if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
         window.location.href = mfaUrl();
@@ -409,9 +429,14 @@
       const error = new Error(message);
       error.status = response.status;
       error.payload = payload;
+      lastError = error;
+      if (paths.indexOf(candidatePath) < paths.length - 1 && shouldTryNextApiAlias(response, payload)) {
+        continue;
+      }
       throw error;
     }
-    return payload;
+
+    throw lastError || new Error("İşlem tamamlanamadı.");
   }
 
   function renderEmpty(target, message) {
