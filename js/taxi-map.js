@@ -4,11 +4,11 @@
   const fallbackCenter = [41.0082, 28.9784];
   const updateIntervalMs = 2800;
 
-  const serviceConfig = {
-    ekonomik: { label: "Ekonomik", base: 72, perKm: 21, multiplier: 1, hpRate: 18 },
-    konfor: { label: "Konfor", base: 95, perKm: 27, multiplier: 1.18, hpRate: 16 },
-    vip: { label: "VIP", base: 170, perKm: 42, multiplier: 1.55, hpRate: 12 },
-    aile: { label: "Aile", base: 110, perKm: 29, multiplier: 1.24, hpRate: 15 }
+  let serviceConfig = {
+    ekonomik: { label: "Ekonomik", description: "Uygun fiyat", base: 72, perKm: 21, perMin: 2.9, reserveFee: 45, airportFee: 0, multiplier: 1, hpRate: 18 },
+    konfor: { label: "Konfor", description: "Daha geniş araç", base: 95, perKm: 27, perMin: 3.4, reserveFee: 55, airportFee: 0, multiplier: 1.18, hpRate: 16 },
+    vip: { label: "VIP", description: "Premium sürüş", base: 170, perKm: 42, perMin: 5.2, reserveFee: 85, airportFee: 80, multiplier: 1.55, hpRate: 12 },
+    aile: { label: "Aile", description: "Bagaj ve aile aracı", base: 110, perKm: 29, perMin: 3.7, reserveFee: 60, airportFee: 0, multiplier: 1.24, hpRate: 15 }
   };
 
   const paymentLabels = {
@@ -26,7 +26,7 @@
 
   const phaseOrder = ["plan", "option", "match", "route", "complete"];
 
-  const drivers = [
+  let drivers = [
     {
       id: "AT-104",
       name: "Ahmet K.",
@@ -150,7 +150,11 @@
     },
     pin: "4826",
     phase: "plan",
-    lastNotice: ""
+    lastNotice: "",
+    dataSource: "Demo filo",
+    syncState: "Supabase bağlanıyor",
+    rideRequestId: "",
+    supabaseReady: false
   };
 
   function $(selector) {
@@ -181,6 +185,81 @@
     if (core.toast) {
       core.toast(message, type);
     }
+  }
+
+  function dataApi() {
+    return App.db && App.db.taxi ? App.db.taxi : null;
+  }
+
+  function setDataSource(source, syncState) {
+    state.dataSource = source;
+    state.syncState = syncState;
+    setText("[data-taxi-data-source]", source);
+    setText("[data-taxi-sync-state]", syncState);
+  }
+
+  function requestStatus(message) {
+    setText("[data-taxi-request-status]", message);
+  }
+
+  function clearDriverMarkers() {
+    state.markers.forEach((marker) => marker.remove());
+    state.markers.clear();
+  }
+
+  function renderServiceControls() {
+    const entries = Object.entries(serviceConfig)
+      .sort(([, a], [, b]) => Number(a.sortOrder || 100) - Number(b.sortOrder || 100));
+    const select = $("[data-taxi-service]");
+    const optionList = $("[data-taxi-service-options]");
+
+    if (select) {
+      select.innerHTML = entries.map(([key, config]) => `<option value="${escapeHTML(key)}">${escapeHTML(config.label)}</option>`).join("");
+      select.value = serviceConfig[state.service] ? state.service : entries[0]?.[0] || "ekonomik";
+      state.service = select.value;
+    }
+
+    if (optionList) {
+      optionList.innerHTML = entries.map(([key, config]) => `
+        <button class="ride${key === state.service ? " is-active" : ""}" type="button" data-taxi-option="${escapeHTML(key)}">
+          <b>${escapeHTML(config.label)}</b>
+          <p>${escapeHTML(config.description || "Yolculuk")}</p>
+        </button>
+      `).join("");
+    }
+  }
+
+  function renderQuickDestinations(destinations) {
+    const list = $("[data-taxi-destination-list]");
+    if (!list || !destinations || !destinations.length) return;
+    list.innerHTML = destinations.map((destination) => `
+      <button type="button" data-taxi-destination="${escapeHTML(destination.label)}" data-lat="${Number(destination.lat)}" data-lng="${Number(destination.lng)}">
+        ${escapeHTML(destination.shortLabel || destination.label)}
+      </button>
+    `).join("");
+  }
+
+  function normalizeRemoteServiceConfig(items) {
+    if (!items || !items.length) return;
+    serviceConfig = items.reduce((next, item) => {
+      next[item.key] = {
+        label: item.label,
+        description: item.description,
+        base: item.base,
+        perKm: item.perKm,
+        perMin: item.perMin,
+        reserveFee: item.reserveFee,
+        airportFee: item.airportFee,
+        multiplier: item.multiplier || 1,
+        hpRate: item.hpRate || 18,
+        sortOrder: item.sortOrder || 100
+      };
+      return next;
+    }, {});
+    if (!serviceConfig[state.service]) {
+      state.service = Object.keys(serviceConfig)[0] || "ekonomik";
+    }
+    renderServiceControls();
   }
 
   function icon(className, label) {
@@ -264,12 +343,12 @@
     const service = serviceConfig[state.service];
     const km = tripDistance();
     const minutes = driveMinutes();
-    const reserveFee = state.reserveMode === "reserve" ? 45 : 0;
-    const airportFee = state.profile === "airport" ? 80 : 0;
+    const reserveFee = state.reserveMode === "reserve" ? Number(service.reserveFee || 45) : 0;
+    const airportFee = state.profile === "airport" ? Number(service.airportFee || 80) : 0;
     const profileDiscount = state.profile === "business" ? 0.96 : 1;
     const couponDiscount = state.payment === "coupon" ? 0.9 : 1;
-    const amount = ((service.base + km * service.perKm + minutes * 2.9 + reserveFee + airportFee) * service.multiplier) * profileDiscount * couponDiscount;
-    const low = Math.max(service.base, Math.round(amount * 0.93));
+    const amount = ((service.base + km * service.perKm + minutes * Number(service.perMin || 2.9) + reserveFee + airportFee) * service.multiplier) * profileDiscount * couponDiscount;
+    const low = Math.max(Number(service.minimumFare || service.base), Math.round(amount * 0.93));
     const high = Math.round(amount * 1.08);
     const hp = Math.max(12, Math.round(high / service.hpRate) + (selectedDriver()?.hp || 0));
     return { low, high, hp, km, minutes };
@@ -374,6 +453,8 @@
     setText("[data-taxi-hp]", `+${fare.hp} HP`);
     setText("[data-taxi-pin]", state.safety.pin ? state.pin : "Kapalı");
     setText("[data-taxi-security-summary]", safetySummary());
+    setText("[data-taxi-data-source]", state.dataSource);
+    setText("[data-taxi-sync-state]", state.syncState);
 
     if (driver) {
       setText("[data-taxi-driver-name]", driver.name);
@@ -509,10 +590,105 @@
           <b>${escapeHTML(driver.name)}</b>
           <p>${escapeHTML(driver.vehicle)} · ${escapeHTML(driver.plate)}</p>
           <p>${escapeHTML(badges)} · ${etaFor(driver)} dk uzaklıkta</p>
-          <div class="meta"><span>${driver.rating.toFixed(1)} Puan</span><span>+${driver.hp} HP</span></div>
+          <div class="meta"><span>${driver.rating.toFixed(1)} Puan</span><span>${driver.completedTrips ? `${driver.completedTrips}+ sürüş` : `+${driver.hp} HP`}</span></div>
         </button>
       `;
     }).join("");
+  }
+
+  async function loadSupabaseTaxiData() {
+    const api = dataApi();
+    if (!api) {
+      setDataSource("Demo filo", "Supabase client yok");
+      requestStatus("Supabase client yüklenmedi; demo filo ile çalışıyor.");
+      return;
+    }
+
+    setDataSource("Supabase aranıyor", "Canlı tablo kontrolü");
+    try {
+      const [classes, remoteDrivers, destinations] = await Promise.all([
+        api.vehicleClasses(),
+        api.drivers(),
+        api.destinations()
+      ]);
+
+      normalizeRemoteServiceConfig(classes);
+      if (destinations && destinations.length) renderQuickDestinations(destinations);
+      if (remoteDrivers && remoteDrivers.length) {
+        drivers = remoteDrivers;
+        state.selectedDriverId = "";
+        clearDriverMarkers();
+      }
+
+      state.supabaseReady = Boolean(remoteDrivers && remoteDrivers.length);
+      setDataSource(state.supabaseReady ? "Supabase canlı filo" : "Demo filo", state.supabaseReady ? `${remoteDrivers.length} taksici kaydı` : "Kayıt yok, demo aktif");
+      requestStatus(state.supabaseReady ? "Canlı sürücü kayıtları Supabase'ten okundu." : "Supabase boş döndü; demo filo korunuyor.");
+      state.lastNotice = "";
+      renderDrivers();
+      setLiveLabel(state.supabaseReady ? "Supabase canlı filo" : "Demo filo canlı");
+    } catch (error) {
+      console.warn("Allona Taxi Supabase data fallback", error);
+      state.supabaseReady = false;
+      setDataSource("Demo filo", "Supabase migration bekliyor");
+      requestStatus("Taksi tabloları canlı DB'de yoksa demo filo devrede kalır.");
+      setLiveLabel("Demo filo canlı");
+      renderServiceControls();
+      renderDrivers();
+    }
+  }
+
+  function rideRequestPayload(driver, fare) {
+    const dropoff = $("[data-taxi-dropoff]")?.value || "Varış seçilmedi";
+    const pickup = $("[data-taxi-pickup]")?.value || "Alış noktası";
+    return {
+      pickup_label: pickup,
+      pickup_lat: state.pickup.lat,
+      pickup_lng: state.pickup.lng,
+      dropoff_label: dropoff,
+      dropoff_lat: state.destination?.lat || state.pickup.lat,
+      dropoff_lng: state.destination?.lng || state.pickup.lng,
+      service_key: state.service,
+      payment_method: state.payment,
+      profile_type: state.profile,
+      reserve_at: state.reserveMode === "reserve" && state.reserveTime ? new Date(state.reserveTime).toISOString() : null,
+      prefer_female_driver: state.preferWomanDriver,
+      matched_driver_id: driver && /^[0-9a-f-]{36}$/i.test(String(driver.id)) ? driver.id : null,
+      estimated_distance_km: fare.km,
+      estimated_minutes: fare.minutes,
+      fare_min: fare.low,
+      fare_max: fare.high,
+      hp_reward: fare.hp,
+      safety_features: {
+        pin: state.safety.pin,
+        share: state.safety.share,
+        ridecheck: state.safety.ridecheck
+      }
+    };
+  }
+
+  async function persistRideRequest(driver) {
+    const api = dataApi();
+    if (!api || !state.destination) {
+      requestStatus("Misafir demo eşleşme: varış seçildiğinde kayıtlı kullanıcı için Supabase isteği açılır.");
+      return;
+    }
+
+    const fare = estimateFare();
+    try {
+      requestStatus("Supabase yolculuk isteği oluşturuluyor...");
+      const created = await api.createRideRequest(rideRequestPayload(driver, fare));
+      state.rideRequestId = created && created.id ? created.id : "";
+      if (created && created.safety_pin) state.pin = created.safety_pin;
+      requestStatus(state.rideRequestId ? `Supabase ride request: ${state.rideRequestId.slice(0, 8)} · ${created.status}` : "Supabase ride request oluşturuldu.");
+      updateSummary();
+    } catch (error) {
+      if (error && error.code === "AUTH_REQUIRED") {
+        requestStatus("Üye girişi yok: canlı filo demo eşleşme gösterir, gerçek ride request giriş sonrası açılır.");
+        return;
+      }
+      console.warn("Allona Taxi ride request fallback", error);
+      requestStatus("Ride request kaydı için Supabase migration/deploy bekleniyor; demo eşleşme aktif.");
+    }
   }
 
   function moveDrivers() {
@@ -538,7 +714,7 @@
     toast(`${driver.name} seçildi. Güvenlik PIN: ${state.safety.pin ? state.pin : "kapalı"}.`, "success");
   }
 
-  function findNearestDriver() {
+  async function findNearestDriver() {
     if (!state.pickup) setPickup(fallbackCenter[0], fallbackCenter[1], "Alış noktası: İstanbul merkez");
     const nearest = sortedDrivers()[0];
     if (!nearest) {
@@ -550,6 +726,7 @@
     const service = serviceConfig[state.service].label;
     const reservation = formattedReserveTime();
     setStatus(`${nearest.name} ${service} yolculuk için yönlendiriliyor. ${reservation} · ${paymentLabels[state.payment]} · ${safetySummary()}.`);
+    await persistRideRequest(nearest);
   }
 
   function setUserPosition(lat, lng) {
@@ -798,6 +975,7 @@
     }
 
     syncInitialInputs();
+    renderServiceControls();
     state.map = L.map(mapNode, {
       zoomControl: true,
       scrollWheelZoom: true
@@ -813,6 +991,7 @@
     bindEvents();
     renderDrivers();
     updateTimeline();
+    loadSupabaseTaxiData();
     state.intervalId = window.setInterval(moveDrivers, updateIntervalMs);
     setLiveLabel("Canlı harita aktif");
   }

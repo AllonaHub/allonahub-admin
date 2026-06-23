@@ -415,6 +415,138 @@
     return data;
   }
 
+  function normalizeTaxiVehicleClass(row) {
+    return {
+      key: String(row.service_key || "").trim(),
+      label: String(row.label || row.service_key || "").trim(),
+      description: String(row.short_description || "").trim(),
+      base: Number(row.base_fare || 0),
+      perKm: Number(row.per_km_fare || 0),
+      perMin: Number(row.per_min_fare || 0),
+      minimumFare: Number(row.minimum_fare || 0),
+      reserveFee: Number(row.reserve_fee || 0),
+      airportFee: Number(row.airport_fee || 0),
+      multiplier: Number(row.surge_multiplier || 1),
+      hpRate: Number(row.hp_rate || 18),
+      sortOrder: Number(row.sort_order || 100)
+    };
+  }
+
+  function normalizeTaxiDriver(row) {
+    const make = String(row.vehicle_make || "").trim();
+    const model = String(row.vehicle_model || "").trim();
+    return {
+      id: String(row.id || row.public_code || ""),
+      publicId: String(row.public_code || row.id || ""),
+      name: String(row.display_name || "Allona Taksi").trim(),
+      type: String(row.service_label || "Ekonomik").trim(),
+      services: Array.isArray(row.service_keys) && row.service_keys.length ? row.service_keys : ["ekonomik"],
+      lat: Number(row.current_lat || 0),
+      lng: Number(row.current_lng || 0),
+      rating: Number(row.rating || 4.8),
+      hp: Number(row.hp_reward || 20),
+      vehicle: [make, model].filter(Boolean).join(" ") || String(row.vehicle_model || "Allona Taksi").trim(),
+      plate: String(row.vehicle_plate || "").trim(),
+      color: String(row.vehicle_color || "").trim(),
+      verified: Boolean(row.is_verified),
+      female: Boolean(row.is_female_driver),
+      airportPermit: Boolean(row.airport_permit),
+      availability: String(row.availability_status || "online"),
+      completedTrips: Number(row.completed_trips || 0),
+      acceptsCash: row.accepts_cash !== false,
+      acceptsCard: row.accepts_card !== false,
+      acceptsCoupon: row.accepts_coupon !== false,
+      lastSeenAt: row.last_seen_at || row.updated_at || row.created_at || ""
+    };
+  }
+
+  function normalizeTaxiDestination(row) {
+    return {
+      id: String(row.id || row.label || ""),
+      label: String(row.label || "").trim(),
+      shortLabel: String(row.short_label || row.label || "").trim(),
+      category: String(row.category || "city").trim(),
+      lat: Number(row.lat || 0),
+      lng: Number(row.lng || 0),
+      priority: Number(row.priority || 100)
+    };
+  }
+
+  async function listTaxiVehicleClasses() {
+    const { data, error } = await client()
+      .from("taxi_vehicle_classes")
+      .select("service_key,label,short_description,base_fare,per_km_fare,per_min_fare,minimum_fare,reserve_fee,airport_fee,surge_multiplier,hp_rate,sort_order")
+      .eq("module_scope", "allona_taksi")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map(normalizeTaxiVehicleClass).filter((item) => item.key);
+  }
+
+  async function listTaxiDrivers() {
+    const { data, error } = await client()
+      .from("taxi_drivers")
+      .select("id,public_code,display_name,service_keys,service_label,vehicle_make,vehicle_model,vehicle_color,vehicle_plate,rating,completed_trips,hp_reward,is_verified,is_female_driver,airport_permit,accepts_cash,accepts_card,accepts_coupon,availability_status,current_lat,current_lng,last_seen_at,created_at,updated_at")
+      .eq("module_scope", "allona_taksi")
+      .eq("is_public", true)
+      .in("availability_status", ["online", "busy"])
+      .order("last_seen_at", { ascending: false });
+
+    if (error) throw error;
+    return (data || [])
+      .map(normalizeTaxiDriver)
+      .filter((driver) => driver.id && Number.isFinite(driver.lat) && Number.isFinite(driver.lng));
+  }
+
+  async function listTaxiDestinations() {
+    const { data, error } = await client()
+      .from("taxi_destinations")
+      .select("id,label,short_label,category,lat,lng,priority")
+      .eq("module_scope", "allona_taksi")
+      .eq("is_active", true)
+      .order("priority", { ascending: true });
+
+    if (error) throw error;
+    return (data || [])
+      .map(normalizeTaxiDestination)
+      .filter((destination) => destination.label && Number.isFinite(destination.lat) && Number.isFinite(destination.lng));
+  }
+
+  async function createTaxiRideRequest(payload) {
+    const { data: authData, error: authError } = await client().auth.getUser();
+    if (authError) throw authError;
+    if (!authData || !authData.user) {
+      const error = new Error("Taksi kaydı oluşturmak için üye girişi gerekir.");
+      error.code = "AUTH_REQUIRED";
+      throw error;
+    }
+
+    const { data, error } = await client().rpc("create_taxi_ride_request", {
+      p_pickup_label: String(payload.pickup_label || "").slice(0, 240),
+      p_pickup_lat: Number(payload.pickup_lat || 0),
+      p_pickup_lng: Number(payload.pickup_lng || 0),
+      p_dropoff_label: String(payload.dropoff_label || "").slice(0, 240),
+      p_dropoff_lat: Number(payload.dropoff_lat || 0),
+      p_dropoff_lng: Number(payload.dropoff_lng || 0),
+      p_service_key: String(payload.service_key || "ekonomik"),
+      p_payment_method: String(payload.payment_method || "allona-cash"),
+      p_profile_type: String(payload.profile_type || "personal"),
+      p_reserve_at: payload.reserve_at || null,
+      p_prefer_female_driver: Boolean(payload.prefer_female_driver),
+      p_matched_driver_id: payload.matched_driver_id || null,
+      p_estimated_distance_km: Number(payload.estimated_distance_km || 0),
+      p_estimated_minutes: Number(payload.estimated_minutes || 0),
+      p_fare_min: Number(payload.fare_min || 0),
+      p_fare_max: Number(payload.fare_max || 0),
+      p_hp_reward: Number(payload.hp_reward || 0),
+      p_safety_features: payload.safety_features || {}
+    });
+
+    if (error) throw error;
+    return parseRpcPayload(data);
+  }
+
   App.db = {
     client,
     products: {
@@ -444,6 +576,12 @@
     },
     payments: {
       createIyzicoCheckout: invokeIyzicoCheckout
+    },
+    taxi: {
+      vehicleClasses: listTaxiVehicleClasses,
+      drivers: listTaxiDrivers,
+      destinations: listTaxiDestinations,
+      createRideRequest: createTaxiRideRequest
     }
   };
 

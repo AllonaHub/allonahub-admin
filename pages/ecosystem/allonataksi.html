@@ -76,6 +76,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 .driver-profile h3{color:#ffd700;font-size:20px;margin-bottom:8px}
 .driver-profile p{font-size:13px;margin:5px 0;opacity:.78}
 .action-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;align-items:stretch}
+.ride-request-note{margin:10px 0 0!important;padding:11px 13px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);color:#dffbff;font-size:12px!important;font-weight:850;line-height:1.45!important}
 .quick-destination-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
 .quick-destination-grid button{min-height:42px;border:1px solid rgba(0,229,255,.22);border-radius:14px;background:rgba(0,229,255,.08);color:white;font-weight:900;cursor:pointer}
 .quick-destination-grid button:hover{border-color:#00e5ff;color:#ffd700}
@@ -119,6 +120,9 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 .insight{padding:14px;border-radius:17px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
 .insight span{display:block;color:#8defff;font-size:11px;font-weight:950;margin-bottom:7px}
 .insight b{display:block;color:white;font-size:15px}
+.ops-strip{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ops-strip span{padding:11px 13px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);color:#8defff;font-size:12px;font-weight:950}
+.ops-strip b{display:block;color:#ffffff;margin-top:4px;font-size:13px}
 .safety-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .safety-card{padding:20px;min-height:160px}
 .safety-card h3{color:#ffd700;margin-bottom:8px}
@@ -177,12 +181,48 @@ body{min-width:0;overflow-x:hidden}
 @media(max-width:620px){
 .booking{padding:20px}
 .booking h1{font-size:36px}
-.ride-options,.quick-destination-grid,.grid-4,.driver-grid,.flow-zone,.booking-grid,.summary-grid,.insight-grid,.safety-grid,.action-grid{grid-template-columns:1fr}
+.booking p{font-size:14px}
+.input-box{height:50px;border-radius:15px}
+.service-select{height:46px}
+.ride-options,.quick-destination-grid,.driver-grid,.flow-zone,.safety-grid{display:flex!important;grid-template-columns:none!important;overflow-x:auto;overflow-y:hidden;gap:10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;padding:0 2px 8px}
+.ride-options>*{flex:0 0 150px;scroll-snap-align:start}
+.quick-destination-grid>*{flex:0 0 142px;scroll-snap-align:start}
+.driver-grid>*{flex:0 0 250px;scroll-snap-align:start}
+.flow-zone>*{flex:0 0 230px;scroll-snap-align:start}
+.safety-grid>*{flex:0 0 255px;scroll-snap-align:start}
+.grid-4,.booking-grid,.summary-grid,.insight-grid,.action-grid{grid-template-columns:1fr}
+.ops-strip{grid-template-columns:1fr}
 .toggle-grid{grid-template-columns:1fr 1fr}
-.map{padding:10px;min-height:420px}
-.live-map-shell,.taxi-live-map{min-height:400px}
+.map{padding:10px;min-height:310px}
+.live-map-shell,.taxi-live-map{min-height:255px}
 .map-toolbar{align-items:flex-start;flex-direction:column}
-.map-card{position:relative;left:auto;right:auto;bottom:auto;width:auto;margin:10px;z-index:6}
+.map-card{position:relative;left:auto;right:auto;bottom:auto;width:auto;margin:8px;z-index:6;padding:13px;border-radius:16px}
+.map-card h3{font-size:17px}
+.map-card p{font-size:12px}
+.map-metrics b{font-size:12px}
+.section-title h2{font-size:23px}
+.card{min-height:112px;padding:17px}
+.partner-cta{padding:20px}
+.partner-cta h2,.info h2{font-size:25px}
+.info{padding:20px}
+body.taxi-module-page .site-footer{padding:30px 0 18px!important}
+body.taxi-module-page .site-footer .container{width:min(100% - 20px,680px)!important;padding-inline:6px!important}
+body.taxi-module-page .footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;padding-bottom:18px!important}
+body.taxi-module-page .footer-grid .footer-col:first-child{grid-column:1/-1!important}
+body.taxi-module-page .footer-brand{font-size:1.05rem!important;margin-bottom:7px!important}
+body.taxi-module-page .footer-col h2,body.taxi-module-page .footer-col h3{font-size:11px!important;margin-bottom:7px!important;letter-spacing:0!important}
+body.taxi-module-page .footer-col a,body.taxi-module-page .footer-col p{font-size:11px!important;line-height:1.45!important;overflow-wrap:anywhere}
+body.taxi-module-page .social-icons{gap:8px!important;padding:16px 0 8px!important}
+body.taxi-module-page .social-icons a{width:42px!important;height:42px!important;font-size:.78rem!important}
+body.taxi-module-page .social-icons span{display:none!important}
+body.taxi-module-page .store-buttons{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+body.taxi-module-page .store-btn{width:100%!important;min-width:0!important;max-width:none!important;min-height:44px!important;padding:7px 8px!important}
+body.taxi-module-page .store-btn--app::before{width:24px!important;height:24px!important}
+body.taxi-module-page .store-btn__kicker{font-size:9px!important;letter-spacing:0!important}
+body.taxi-module-page .store-btn--app strong{font-size:13px!important}
+body.taxi-module-page .footer-payment-strip{font-size:11px!important;padding:10px 0 12px!important}
+body.taxi-module-page .footer-bottom{font-size:11px!important;gap:8px!important;padding-top:14px!important}
+body.taxi-module-page .footer-bottom__links{gap:8px!important}
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
@@ -255,12 +295,13 @@ body{min-width:0;overflow-x:hidden}
       </div>
     </div>
 
-    <div class="ride-options" id="ride-options">
+    <div class="ride-options" id="ride-options" data-taxi-service-options>
       <button class="ride is-active" type="button" data-taxi-option="ekonomik"><b>Ekonomik</b><p>Uygun fiyat</p></button>
       <button class="ride" type="button" data-taxi-option="konfor"><b>Konfor</b><p>Daha geniş araç</p></button>
       <button class="ride" type="button" data-taxi-option="vip"><b>VIP</b><p>Premium sürüş</p></button>
+      <button class="ride" type="button" data-taxi-option="aile"><b>Aile</b><p>Bagaj ve aile aracı</p></button>
     </div>
-    <div class="quick-destination-grid" aria-label="Hızlı varış noktaları">
+    <div class="quick-destination-grid" aria-label="Hızlı varış noktaları" data-taxi-destination-list>
       <button type="button" data-taxi-destination="Taksim Meydanı" data-lat="41.0369" data-lng="28.9850">Taksim</button>
       <button type="button" data-taxi-destination="Kadıköy İskele" data-lat="40.9903" data-lng="29.0220">Kadıköy</button>
       <button type="button" data-taxi-destination="Zorlu Center" data-lat="41.0677" data-lng="29.0173">Zorlu</button>
@@ -284,6 +325,7 @@ body{min-width:0;overflow-x:hidden}
       <button class="call-btn" type="button" data-taxi-find>Taksi Çağır</button>
       <button class="secondary-btn" type="button" data-taxi-share>Yolculuğu Paylaş</button>
     </div>
+    <p class="ride-request-note" data-taxi-request-status>Supabase canlı kayıt kontrolü başlıyor; misafir kullanıcıda demo eşleşme korunur.</p>
   </div>
 
   <div class="map glass">
@@ -322,6 +364,11 @@ body{min-width:0;overflow-x:hidden}
     <div class="insight"><span>Araç</span><b data-taxi-driver-vehicle>-</b></div>
     <div class="insight"><span>Ödeme</span><b data-taxi-payment-summary>Allona Cash</b></div>
     <div class="insight"><span>Rezervasyon</span><b data-taxi-reserve-summary>Şimdi</b></div>
+  </div>
+  <div class="ops-strip" aria-label="Allona Taksi canlı veri durumu">
+    <span>Veri Kaynağı <b data-taxi-data-source>Demo filo</b></span>
+    <span>Supabase <b data-taxi-sync-state>Bağlanıyor</b></span>
+    <span>İstek Kaydı <b data-taxi-request-status>Hazırlanıyor</b></span>
   </div>
 </section>
 
@@ -376,16 +423,21 @@ body{min-width:0;overflow-x:hidden}
   <h2>Allona Taksi: Haritalı, Güvenli ve HP Kazandıran Ulaşım</h2>
   <p>Allona Taksi; kullanıcı, sürücü ve ödeme süreçlerini AllonaHub ekosistemi içinde birleştiren akıllı ulaşım modülüdür. Kullanıcılar yolculuk yaparken canlı harita üzerinden sürücüyü takip edebilir, güvenli ödeme yapabilir ve her tamamlanan yolculuktan HP kazanabilir.</p>
   <h3>Harita ve Sürücü Atama Mantığı</h3>
-  <p>Harita alanı Leaflet ve OpenStreetMap üzerinde canlı çalışır. Kullanıcı konum izni verirse alım noktası gerçek konuma taşınır; izin verilmezse İstanbul merkezli demo filo hareketiyle yakındaki sürücüler ve tahmini varış süreleri güncellenir.</p>
+  <p>Harita alanı Leaflet ve OpenStreetMap üzerinde canlı çalışır. Kullanıcı konum izni verirse alım noktası gerçek konuma taşınır; izin verilmezse İstanbul merkezli filo hareketiyle yakındaki sürücüler ve tahmini varış süreleri güncellenir.</p>
+  <h3>Supabase Canlı Filo Yapısı</h3>
+  <p>Allona Taksi verileri ayrı <strong>taxi_*</strong> tablolarından okunacak şekilde tasarlanmıştır. Araç sınıfları, taksici kayıtları, hızlı varış noktaları ve üye yolculuk istekleri Yemek, Market ve Shop verileriyle karışmadan kendi modül alanında çalışır.</p>
   <h3>AllonaHub Kupon Bağlantısı</h3>
   <p>Yolculuk tamamlandığında ödeme kaydı, sürücü hak edişi, platform komisyonu ve kullanıcı HP ödülü sistem içinde işlenir. Böylece taksi deneyimi yalnızca ulaşım değil, ekosistem bağlılığı sağlayan bir hizmete dönüşür.</p>
 </section>
 </div>
   <div data-layout="footer"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260623-taxi-data1" defer></script>
   <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-taxi-data1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260622-corp1" defer></script>
-  <script src="../../js/taxi-map.js?v=20260621-taxi-pro1" defer></script>
+  <script src="../../js/taxi-map.js?v=20260623-taxi-data1" defer></script>
 </body>
 </html>
