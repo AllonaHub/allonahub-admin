@@ -766,7 +766,7 @@ async function requireAuth(request, options = {}) {
 async function requireSuperAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["super_admin"],
-    mfa: config.superAdminMfaEnforced,
+    mfa: true,
     adminBoundary: true,
     action
   });
@@ -1014,7 +1014,7 @@ async function dispatchSuperAdminReleaseApproval(approval, request) {
 async function requireOpsAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["admin"],
-    mfa: config.adminMfaEnforced,
+    mfa: true,
     adminBoundary: true,
     action
   });
