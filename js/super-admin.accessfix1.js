@@ -120,15 +120,128 @@
     `;
   }
 
+  function rawErrorMessage(error) {
+    return String([
+      error && error.message,
+      error && error.details,
+      error && error.hint,
+      error && error.payload && error.payload.message,
+      error && error.payload && error.payload.error
+    ].filter(Boolean).join(" ")).trim();
+  }
+
+  function superAdminAccessDiagnosis(error, fallback) {
+    const raw = rawErrorMessage(error);
+    const base = {
+      mode: "locked",
+      message: publicError(error, fallback || "Super Admin erişimi doğrulanamadı."),
+      helper: "Oturum doğrulandı ancak owner kilidi veya Super Admin API yetkisi tamamlanmadı.",
+      steps: [
+        "MFA2 doğrulamasını tamamla.",
+        "Backend owner allowlist ve Supabase owner kaydını kontrol et.",
+        "ADMIN_IP_ALLOWLIST tanımlıysa mevcut public IP adresini ekle."
+      ]
+    };
+
+    if (/oturum|session|jwt|token|giriş|login/i.test(raw)) {
+      return {
+        ...base,
+        mode: "login",
+        message: "Süper Admin için önce owner hesabıyla giriş yapılmalı.",
+        helper: "Oturum doğrulanamadı veya süresi doldu.",
+        steps: ["Owner hesabıyla tekrar giriş yap.", "Girişten sonra Super Admin sayfasına geri dön."]
+      };
+    }
+
+    if (/mfa|iki aşamalı|2fa|aal2/i.test(raw)) {
+      return {
+        ...base,
+        mode: "mfa",
+        message: "Super Admin paneli için MFA2 doğrulaması gerekiyor.",
+        helper: "Owner oturumu açık, ancak Supabase AAL2/MFA doğrulaması tamamlanmadı.",
+        steps: ["MFA2 sayfasına git.", "6 haneli doğrulama kodunu tamamla.", "Sonra Super Admin paneline geri dön."]
+      };
+    }
+
+    if (/owner kilidi yapılandırılmadı|SUPER_ADMIN_OWNER_USER_IDS|SUPER_ADMIN_OWNER_EMAILS/i.test(raw)) {
+      return {
+        ...base,
+        message: "Owner kilidi henüz backend tarafında tanımlı değil.",
+        helper: "API fail-closed çalışıyor: en az bir owner e-posta/id allowlist değeri zorunlu.",
+        steps: [
+          "Hetzner/API env içine SUPER_ADMIN_OWNER_EMAILS veya SUPER_ADMIN_OWNER_USER_IDS ekle.",
+          "Supabase'de public.super_admin_owner_access tablosuna active owner satırı ekle.",
+          "Backend API servisini yeniden başlat."
+        ]
+      };
+    }
+
+    if (/sadece kayıtlı super admin sahibi|owner_denied|owner.*denied/i.test(raw)) {
+      return {
+        ...base,
+        message: "Bu hesap owner allowlist ile eşleşmedi.",
+        helper: "Giriş yapılan e-posta veya Supabase user id owner kaydında active değil.",
+        steps: [
+          "Giriş yaptığın e-postayı SUPER_ADMIN_OWNER_EMAILS içine küçük harfle ekle.",
+          "Aynı hesabı public.super_admin_owner_access tablosunda active yap.",
+          "Hesap rolün admin ise panel içinden kendini kalıcı super_admin rolüne yükselt."
+        ]
+      };
+    }
+
+    if (/admin ip|ip doğrulaması|ip allow/i.test(raw)) {
+      return {
+        ...base,
+        message: "Super Admin IP allowlist bu bağlantıyı kabul etmiyor.",
+        helper: "ADMIN_IP_ALLOWLIST doluysa sadece listedeki public IP adresleri geçebilir.",
+        steps: [
+          "Sabit IP kullanmıyorsan ADMIN_IP_ALLOWLIST değerini boş bırak.",
+          "Sabit IP kullanıyorsan mevcut public IP adresini virgülle ayrılmış listeye ekle.",
+          "Backend API servisini yeniden başlat."
+        ]
+      };
+    }
+
+    if (/admin ağı|admin host|host/i.test(raw)) {
+      return {
+        ...base,
+        message: "Admin host sınırı bu isteği kabul etmedi.",
+        helper: "API isteği ADMIN_HOSTS içinde izinli hosttan gelmeli.",
+        steps: [
+          "ADMIN_HOSTS içinde api.allonahub.com bulunduğunu kontrol et.",
+          "Admin alan adı kullanılıyorsa admin.allonahub.com değerini koru.",
+          "Backend API servisini yeniden başlat."
+        ]
+      };
+    }
+
+    if (/super admin yetkisi|super_admin|role|rol/i.test(raw)) {
+      return {
+        ...base,
+        message: "Owner doğrulandı ama kalıcı Super Admin rolü tamamlanmamış olabilir.",
+        helper: "Owner bootstrap ile giriş yaptıktan sonra Yetki Merkezi'nden kendi hesabını super_admin yapmalısın.",
+        steps: [
+          "Erişim Kilidi sayfasında bootstrap_required durumunu kontrol et.",
+          "Yetki Merkezi'nden kendi hesabına super_admin rolü ver.",
+          "İşlem için gerekçe gir; audit log'a yazılır."
+        ]
+      };
+    }
+
+    return base;
+  }
+
   function accessFallback(message, options) {
     const mode = options && options.mode || "login";
+    const diagnosis = options && options.diagnosis || {};
     const primaryHref = mode === "mfa" ? mfaUrl() : loginUrl();
     const primaryLabel = mode === "mfa" ? "MFA2 Doğrulamasına Git" : "Süper Admin Olarak Giriş Yap";
     const helper = mode === "mfa"
       ? "Oturum açık görünüyor; Super Admin için MFA2 doğrulaması tamamlanmalı."
       : mode === "locked"
-        ? "Oturum doğrulandı ancak owner kilidi veya Super Admin API yetkisi tamamlanmadı."
+        ? diagnosis.helper || "Oturum doğrulandı ancak owner kilidi veya Super Admin API yetkisi tamamlanmadı."
         : "Bu alana erişmek için süper admin hesabınızla giriş yapmalısınız.";
+    const steps = Array.isArray(diagnosis.steps) ? diagnosis.steps : [];
 
     return `
       <main class="sa-main">
@@ -136,6 +249,11 @@
           <h1>Süper Admin Girişi</h1>
           <p>${escape(message || helper)}</p>
           <p>${escape(helper)}</p>
+          ${steps.length ? `
+            <div class="sa-empty">
+              ${steps.map((step) => `<div>${escape(step)}</div>`).join("")}
+            </div>
+          ` : ""}
           <a class="sa-btn" href="${escape(primaryHref)}">${escape(primaryLabel)}</a>
           ${mode !== "mfa" ? `<a class="sa-btn sa-btn-ghost" href="${escape(mfaUrl())}">MFA2 Sayfasına Git</a>` : ""}
           <a class="sa-btn sa-btn-ghost" href="${escape(core.url("/admin/index.html"))}">Admin Panele Dön</a>
@@ -146,31 +264,42 @@
 
   async function renderAccessFallback(shell, error, fallback) {
     if (!shell) return;
-    const message = publicError(error, fallback);
+    const diagnosis = superAdminAccessDiagnosis(error, fallback);
+    const message = diagnosis.message;
     try {
       const user = App.auth && App.auth.getUser ? await App.auth.getUser() : null;
       if (!user) {
-        shell.innerHTML = accessFallback(message, { mode: "login" });
+        shell.innerHTML = accessFallback(message, { mode: "login", diagnosis });
         return;
       }
 
       const profile = App.auth && App.auth.getProfile ? await App.auth.getProfile(user.id) : null;
       if (!profile || !SUPER_ADMIN_ENTRY_ROLES.includes(profile.role)) {
-        shell.innerHTML = accessFallback(message, { mode: "locked" });
+        shell.innerHTML = accessFallback("Bu hesap admin veya super_admin rolünde değil.", {
+          mode: "locked",
+          diagnosis: {
+            ...diagnosis,
+            helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
+            steps: ["Önce normal Admin Panel yetkisini tamamla.", "Ardından owner allowlist ve MFA2 adımlarını tamamla."]
+          }
+        });
         return;
       }
 
       if (App.auth && App.auth.mfaStatus) {
         const status = await App.auth.mfaStatus();
         if (status && !status.mfaVerified) {
-          shell.innerHTML = accessFallback("Super Admin paneli için MFA2 doğrulaması gerekiyor.", { mode: "mfa" });
+          shell.innerHTML = accessFallback("Super Admin paneli için MFA2 doğrulaması gerekiyor.", {
+            mode: "mfa",
+            diagnosis: superAdminAccessDiagnosis(new Error("mfa.required"), fallback)
+          });
           return;
         }
       }
 
-      shell.innerHTML = accessFallback(message, { mode: "locked" });
+      shell.innerHTML = accessFallback(message, { mode: diagnosis.mode || "locked", diagnosis });
     } catch (fallbackError) {
-      shell.innerHTML = accessFallback(message, { mode: "login" });
+      shell.innerHTML = accessFallback(message, { mode: "login", diagnosis });
     }
   }
 
@@ -205,7 +334,10 @@
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
       }
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
     }
     return payload;
   }
