@@ -33,10 +33,18 @@ function csv(value) {
     .filter(Boolean);
 }
 
+const rawSecurityMode = String(process.env.APP_SECURITY_MODE || "production").trim().toLowerCase();
+const securityMode = ["production", "build"].includes(rawSecurityMode) ? rawSecurityMode : "production";
+const buildMode = securityMode === "build";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
 
 export const config = {
   env: readEnv("NODE_ENV", { required: false, defaultValue: "production" }),
+  securityMode,
+  security: {
+    mode: securityMode,
+    buildMode
+  },
   port: readNumber("PORT", 3000),
   logLevel: readEnv("LOG_LEVEL", { required: false, defaultValue: "info" }),
   siteUrl: readEnv("SITE_URL", { required: false, defaultValue: "https://allonahub.com" }).replace(/\/$/, ""),
@@ -45,10 +53,10 @@ export const config = {
   allowedHosts: csv(readEnv("ALLOWED_HOSTS", { required: false, defaultValue: "api.allonahub.com,admin.allonahub.com,localhost,127.0.0.1" })),
   adminHosts: csv(readEnv("ADMIN_HOSTS", { required: false, defaultValue: "admin.allonahub.com,api.allonahub.com" })),
   adminIpAllowlist: csv(readEnv("ADMIN_IP_ALLOWLIST", { required: false, defaultValue: "" })),
-  mfaRequiredRoles: csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),
+  mfaRequiredRoles: buildMode ? [] : csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),
   turnstile: {
     secretKey: readOptionalSecret("TURNSTILE_SECRET_KEY", "CF_TURNSTILE_SECRET_KEY", "CLOUDFLARE_TURNSTILE_SECRET_KEY"),
-    strict: readBool("TURNSTILE_STRICT", false)
+    strict: !buildMode && readBool("TURNSTILE_STRICT", false)
   },
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
   maintenanceMode: readBool("MAINTENANCE_MODE", false),
@@ -65,7 +73,7 @@ export const config = {
     releaseWebhookTimeoutMs: readNumber("SUPER_ADMIN_RELEASE_WEBHOOK_TIMEOUT_MS", 12000)
   },
   autoDefense: {
-    enabled: readBool("AUTO_DEFENSE_ENABLED", true),
+    enabled: !buildMode && readBool("AUTO_DEFENSE_ENABLED", true),
     scoreThreshold: readNumber("AUTO_DEFENSE_SCORE_THRESHOLD", 12),
     windowMinutes: readNumber("AUTO_DEFENSE_WINDOW_MINUTES", 10),
     ipBlockMinutes: readNumber("AUTO_DEFENSE_IP_BLOCK_MINUTES", 15),

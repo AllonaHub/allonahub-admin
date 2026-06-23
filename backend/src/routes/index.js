@@ -742,6 +742,10 @@ async function upsertAuthProfile(user, payload, request) {
 async function verifyTurnstile(request, action, token) {
   const expectedAction = String(action || "form_submit").trim().slice(0, 32) || "form_submit";
 
+  if (config.security.buildMode) {
+    return { ok: true, skipped: true, buildMode: true, action: expectedAction };
+  }
+
   if (!config.turnstile.secretKey) {
     if (config.turnstile.strict) {
       throw httpError("Robot doğrulaması sunucuda yapılandırılmadı.", 503);
@@ -990,7 +994,7 @@ async function requireAuth(request, options = {}) {
     throw httpError("Bu işlem için iki aşamalı doğrulama gerekli.", 403);
   }
 
-  if (options.adminBoundary) {
+  if (options.adminBoundary && !config.security.buildMode) {
     try {
       assertAdminBoundary(request);
     } catch (error) {
@@ -1016,6 +1020,23 @@ async function requireSuperAdmin(request, action) {
     adminBoundary: true,
     action
   });
+
+  if (config.security.buildMode) {
+    ctx.superAdminOwner = {
+      configured: true,
+      matched: true,
+      source: "build_mode",
+      user_id: ctx.user.id,
+      email: superAdminOwnerEmail(ctx),
+      warning: {
+        label: "APP_SECURITY_MODE",
+        code: "BUILD_MODE",
+        message: "APP_SECURITY_MODE=build aktif; Super Admin owner kilidi geliştirme için geçici gevşetildi."
+      }
+    };
+    ctx.superAdminOwnerBootstrap = !isSuperAdmin(ctx.profile);
+    return ctx;
+  }
 
   const owner = await resolveSuperAdminOwner(ctx);
   if (!owner.configured) {

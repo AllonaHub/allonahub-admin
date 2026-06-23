@@ -28,6 +28,9 @@ export async function buildApp() {
         "headers.authorization",
         "body.secret_value",
         "SUPABASE_SERVICE_ROLE_KEY",
+        "TURNSTILE_SECRET_KEY",
+        "CF_TURNSTILE_SECRET_KEY",
+        "CLOUDFLARE_TURNSTILE_SECRET_KEY",
         "IYZICO_SECRET_KEY",
         "IYZICO_API_KEY",
         "ASSISTANT_AI_API_KEY",
@@ -43,6 +46,7 @@ export async function buildApp() {
         "SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
+        "config.turnstile.secretKey",
         "config.iyzico.secretKey",
         "config.iyzico.apiKey",
         "config.assistant.aiApiKey",
@@ -58,6 +62,7 @@ export async function buildApp() {
         "config.socialMedia.secretEncryptionKey",
         "config.cronSecret",
         "supabase.serviceRoleKey",
+        "turnstile.secretKey",
         "iyzico.secretKey",
         "iyzico.apiKey",
         "assistant.aiApiKey",
@@ -147,7 +152,7 @@ export async function buildApp() {
   });
 
   await app.register(rateLimit, {
-    max: 120,
+    max: config.security.buildMode ? 2000 : 120,
     timeWindow: "1 minute",
     hook: "onRequest",
     errorResponseBuilder() {
