@@ -105,22 +105,22 @@
     },
     {
       id: "demo-shop-06",
-      name: "Allona Yemek Menü Fırsatı",
-      description: "Restoran kampanyaları için avantajlı menü ve kupon paketi.",
-      category: "Yemek",
-      brand: "Allona Yemek",
-      price: 289,
-      stock: 60,
-      sold_count: 318,
+      name: "Akıllı Ev Aksesuar Seti",
+      description: "Allona Shop seçkisiyle ev ve çalışma alanı için pratik aksesuar paketi.",
+      category: "Ev Yaşam",
+      brand: "Allona Shop",
+      price: 489,
+      stock: 36,
+      sold_count: 154,
       rating: 4.8,
       discount: "%15",
-      favorite_count: 1340,
-      view_count: 291,
-      cart_count: 96,
-      coupon_label: "Menü kuponu",
-      delivery_label: "Hızlı teslimat",
+      favorite_count: 820,
+      view_count: 238,
+      cart_count: 54,
+      coupon_label: "Shop kuponu",
+      delivery_label: "Ücretsiz kargo",
       seller_score: 9.3,
-      image_url: "/images/modules/yemek.png",
+      image_url: "/images/modules/shop-light-v5.jpg",
       created_at: "2026-06-10T09:00:00Z"
     },
     {
@@ -219,6 +219,14 @@
         window.setTimeout(() => reject(new Error("Ürün sorgusu zaman aşımına uğradı.")), timeoutMs);
       })
     ]);
+  }
+
+  function isShopCatalogProduct(product) {
+    return App.catalog?.isShopProduct ? App.catalog.isShopProduct(product) : true;
+  }
+
+  function shopProductsOnly(productList) {
+    return (productList || []).filter(isShopCatalogProduct);
   }
 
   function filtersFromDom() {
@@ -396,10 +404,11 @@
       }
     }
 
-    const partnerProducts = productList.filter((item) => item.partner_id).map(heroAdFromProduct);
+    const scopedRemoteAds = remoteAds.filter((ad) => !ad.product || isShopCatalogProduct(ad.product));
+    const partnerProducts = productList.filter((item) => item.partner_id && isShopCatalogProduct(item)).map(heroAdFromProduct);
     const popularProducts = [...productList].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
     const ads = uniqueAds([
-      ...remoteAds.map(heroAdFromRecord),
+      ...scopedRemoteAds.map(heroAdFromRecord),
       ...partnerProducts,
       ...popularProducts,
       ...fallbackHeroAds
@@ -435,8 +444,8 @@
     loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
 
     try {
-      const liveProducts = await withTimeout(App.db?.products?.listActive({ sort: "newest" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500);
-      products = liveProducts.length ? liveProducts : fallbackProducts;
+      const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500));
+      products = liveProducts.length ? liveProducts : shopProductsOnly(fallbackProducts);
       if (!liveProducts.length) {
         console.warn("Supabase products boş döndü, mağaza katalog fallback ürünleri gösteriliyor.");
       }
@@ -447,7 +456,7 @@
       await refreshHeroAds();
     } catch (error) {
       console.warn("Supabase products yüklenemedi, mağaza katalog fallback ürünleri gösteriliyor:", error.message || error);
-      products = fallbackProducts;
+      products = shopProductsOnly(fallbackProducts);
       renderCategoryOptions();
       renderBrandOptions();
       syncFiltersFromParams();

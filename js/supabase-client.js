@@ -71,6 +71,83 @@
     return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   }
 
+  function normalizedScope(value) {
+    const scope = String(value || "")
+      .trim()
+      .toLocaleLowerCase("tr-TR")
+      .replace(/[\s-]+/g, "_");
+    if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
+    if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
+    return "";
+  }
+
+  function explicitCatalogScope(item) {
+    const candidates = [
+      item.catalog_scope,
+      item.catalogScope,
+      item.module_scope,
+      item.moduleScope,
+      item.commerce_scope,
+      item.commerceScope,
+      item.product_scope,
+      item.productScope
+    ];
+    for (const candidate of candidates) {
+      const scope = normalizedScope(candidate);
+      if (scope) return scope;
+    }
+
+    const sku = String(item.sku || item.product_sku || "").trim().toLocaleUpperCase("tr-TR");
+    if (/^ALY[-_]/.test(sku)) return "food";
+    if (/^(ALS|ASHOP|ALSHOP|SHOP)[-_]/.test(sku)) return "shop";
+    return "";
+  }
+
+  function productCatalogText(item) {
+    return [
+      item.name,
+      item.product_name,
+      item.description,
+      item.category,
+      item.brand,
+      item.seller_name,
+      item.partner_name,
+      item.store_name,
+      item.coupon_label,
+      item.delivery_label
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+  }
+
+  function isFoodCatalogProduct(raw) {
+    const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
+    const explicit = explicitCatalogScope(item);
+    if (explicit) return explicit === "food";
+
+    const category = String(item.category || "").toLocaleLowerCase("tr-TR");
+    const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+    if (/yemek|restoran|restaurant|lokanta|pizzacı|pizzaci|kebapçı|kebapci|dönerci|donerci/.test(`${category} ${merchant}`)) {
+      return true;
+    }
+
+    const text = productCatalogText(item);
+    const foodSignal = /burger|pizza|kebap|döner|doner|dürüm|durum|tatlı|tatli|kahve|pide|lahmacun|bowl|salata|fast food/.test(text);
+    const serviceSignal = /menü|menu|sipariş|siparis|restoran|restaurant|teslimat|kurye|soğan|sogan|soslu|sossuz/.test(text);
+    return foodSignal && serviceSignal;
+  }
+
+  function matchesCatalogScope(item, scope) {
+    const target = normalizedScope(scope);
+    if (target === "food") return isFoodCatalogProduct(item);
+    if (target === "shop") return !isFoodCatalogProduct(item);
+    return true;
+  }
+
   function filterProducts(items, filters) {
     const options = filters || {};
     const q = String(options.search || "").trim().toLocaleLowerCase("tr-TR");
@@ -79,6 +156,7 @@
     const max = Number(options.maxPrice || 0);
 
     return items.filter((item) => {
+      if (!matchesCatalogScope(item, options.scope)) return false;
       const text = `${item.name} ${item.description} ${item.category} ${item.brand || ""}`.toLocaleLowerCase("tr-TR");
       const categoryMatch = !category || item.category.toLocaleLowerCase("tr-TR") === category;
       const searchMatch = !q || text.includes(q);
@@ -367,5 +445,11 @@
     payments: {
       createIyzicoCheckout: invokeIyzicoCheckout
     }
+  };
+
+  App.catalog = {
+    isFoodProduct: isFoodCatalogProduct,
+    isShopProduct: (item) => !isFoodCatalogProduct(item),
+    matchesScope: matchesCatalogScope
   };
 })();

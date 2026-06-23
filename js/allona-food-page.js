@@ -160,12 +160,23 @@
   }
 
   function isFoodProduct(raw) {
+    if (App.catalog?.isFoodProduct) return App.catalog.isFoodProduct(raw);
     const product = core.normalizeProduct ? core.normalizeProduct(raw) : raw;
+    const sku = String(product.sku || product.product_sku || "").toLocaleUpperCase("tr-TR");
+    if (/^ALY[-_]/.test(sku)) return true;
+    const category = String(product.category || "").toLocaleLowerCase("tr-TR");
+    const merchant = [product.brand, product.seller_name, product.partner_name, product.store_name]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+    if (/yemek|restoran|restaurant|lokanta|pizzacı|pizzaci|kebapçı|kebapci|dönerci|donerci/.test(`${category} ${merchant}`)) return true;
     const text = [product.name, product.product_name, product.description, product.category, product.brand, product.seller_name, product.store_name, product.coupon_label, product.delivery_label]
       .filter(Boolean)
       .join(" ")
       .toLocaleLowerCase("tr-TR");
-    return /yemek|restoran|restaurant|menü|menu|burger|pizza|kebap|döner|doner|tatlı|kahve|pide|lahmacun|bowl|salata|fast food/.test(text);
+    const foodSignal = /burger|pizza|kebap|döner|doner|dürüm|durum|tatlı|tatli|kahve|pide|lahmacun|bowl|salata|fast food/.test(text);
+    const serviceSignal = /menü|menu|sipariş|siparis|restoran|restaurant|teslimat|kurye|soğan|sogan|soslu|sossuz/.test(text);
+    return foodSignal && serviceSignal;
   }
 
   function normalizeProduct(raw) {
@@ -377,7 +388,7 @@
 
   async function fetchFoodProducts() {
     if (!App.db?.products?.listActive) return [];
-    const products = await withTimeout(App.db.products.listActive({ sort: "newest" }), 4500);
+    const products = await withTimeout(App.db.products.listActive({ sort: "newest", scope: "food" }), 4500);
     return (products || []).filter(isFoodProduct).map(normalizeProduct);
   }
 
@@ -408,8 +419,10 @@
         state.dataSource = "supabase";
       }
 
+      const scopedAds = ads.filter((ad) => !ad.product || isFoodProduct(ad.product));
+
       state.heroAds = uniqueAds([
-        ...ads.map(heroAdFromRecord),
+        ...scopedAds.map(heroAdFromRecord),
         ...products.map(productToHeroAd),
         ...fallbackHeroAds
       ]).slice(0, 7);
