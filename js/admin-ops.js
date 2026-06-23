@@ -119,6 +119,16 @@
     return `<div class="admin-status ${type === "error" ? "admin-status--error" : ""}">${escape(message)}</div>`;
   }
 
+  function loginUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+  }
+
+  function mfaUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/mfa.html?returnTo=${returnTo}`);
+  }
+
   function showToast(message, type) {
     let wrap = $(".admin-toast");
     if (!wrap) {
@@ -143,8 +153,7 @@
     if (!App.auth || !App.auth.getSession) throw new Error("Oturum sistemi yüklenemedi.");
     const session = await App.auth.getSession();
     if (!session?.access_token) {
-      const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-      window.location.href = core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+      window.location.href = loginUrl();
       return "";
     }
     return session.access_token;
@@ -165,6 +174,10 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = payload.message || payload.error || "İşlem tamamlanamadı.";
+      if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
+        window.location.href = mfaUrl();
+        throw new Error("İki aşamalı doğrulama gerekli.");
+      }
       throw new Error(message);
     }
     return payload;

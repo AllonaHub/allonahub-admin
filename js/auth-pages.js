@@ -32,6 +32,7 @@
     if (!user) return;
 
     const returnTo = safeReturnTo(core.getParam("returnTo"));
+    if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded(returnTo)) return;
     if (App.complianceAudit && session) {
       await App.complianceAudit.record({
         category: "account",
@@ -105,6 +106,8 @@
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("login");
         }
+        const returnTo = safeReturnTo(core.getParam("returnTo"));
+        if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded(returnTo)) return;
         if (App.complianceAudit) {
           const user = await App.auth.getUser();
           await App.complianceAudit.record({
@@ -114,10 +117,10 @@
             resourceType: "user",
             resourceId: user && user.id,
             evidenceTags: ["auth", "login"],
-            metadata: { return_to: safeReturnTo(core.getParam("returnTo")) }
+            metadata: { return_to: returnTo }
           });
         }
-        window.location.href = safeReturnTo(core.getParam("returnTo"));
+        window.location.href = returnTo;
       } catch (error) {
         const message = /Çok fazla|e-posta/i.test(error.message || "") ? error.message : authError(error, "Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
         core.toast(message, "error");

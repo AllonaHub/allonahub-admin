@@ -86,6 +86,28 @@
     target.style.background = tone === "ok" ? "rgba(56, 217, 150, 0.10)" : "rgba(255, 77, 109, 0.10)";
   }
 
+  function loginUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+  }
+
+  function mfaUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/mfa.html?returnTo=${returnTo}`);
+  }
+
+  function loginFallback(message) {
+    return `
+      <main class="sa-main">
+        <div class="sa-login-panel">
+          <h1>Süper Admin Girişi</h1>
+          <p>${escape(message || "Bu alana erişmek için süper admin hesabınızla giriş yapmalısınız.")}</p>
+          <a class="sa-btn" href="${escape(loginUrl())}">Süper Admin Olarak Giriş Yap</a>
+        </div>
+      </main>
+    `;
+  }
+
   function publicError(error, fallback) {
     return security && security.publicErrorMessage
       ? security.publicErrorMessage(error, fallback)
@@ -112,7 +134,12 @@
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.message || payload.error || "İşlem tamamlanamadı.");
+      const message = payload.message || payload.error || "İşlem tamamlanamadı.";
+      if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
+        window.location.href = mfaUrl();
+        throw new Error("İki aşamalı doğrulama gerekli.");
+      }
+      throw new Error(message);
     }
     return payload;
   }
@@ -1274,7 +1301,7 @@
       } catch (error) {
         const shell = $("[data-super-admin-shell]");
         if (shell) {
-          shell.innerHTML = `<main class="sa-main"><div class="sa-alert">${escape(publicError(error, "Bu panele sadece kayıtlı Super Admin sahibi erişebilir."))}</div></main>`;
+          shell.innerHTML = loginFallback(publicError(error, "Bu panele sadece kayıtlı Super Admin sahibi erişebilir."));
         }
       }
       return;
@@ -1289,7 +1316,7 @@
     } catch (error) {
       const shell = $("[data-super-admin-shell]");
       if (shell) {
-        shell.innerHTML = `<main class="sa-main"><div class="sa-alert">${escape(publicError(error, "Bu panele sadece Super Admin erişebilir."))}</div></main>`;
+        shell.innerHTML = loginFallback(publicError(error, "Bu panele sadece Super Admin erişebilir."));
       }
     }
   }

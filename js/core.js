@@ -10,6 +10,7 @@
     "forgot-password.html": "/pages/account/forgot-password.html",
     "gorevler.html": "/pages/account/gorevler.html",
     "login.html": "/pages/account/login.html",
+    "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",
     "order-detail.html": "/pages/account/order-detail.html",
     "premium.html": "/pages/account/premium.html",
