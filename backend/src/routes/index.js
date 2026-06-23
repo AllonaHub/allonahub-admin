@@ -913,6 +913,45 @@ async function resolveSuperAdminOwner(ctx) {
   };
 }
 
+function ownerPreflightNextStep(owner) {
+  if (owner.warning) {
+    return "super_admin_owner_access migration üretim Supabase projesine uygulanmalı.";
+  }
+  if (!owner.configured) {
+    return "Owner kilidi için active super_admin_owner_access satırı veya server env allowlist eklenmeli.";
+  }
+  if (!owner.matched) {
+    return "Giriş yapılan owner e-postası veya Supabase user id active owner kaydıyla eşleşmeli.";
+  }
+  return "Owner kilidi doğrulandı; MFA ve rol adımlarını tamamlayıp paneli yeniden aç.";
+}
+
+async function superAdminOwnerPreflight(ctx) {
+  const env = envOwnerMatch(ctx);
+  const db = await querySuperAdminOwnerAccess(ctx);
+  const matchedByEnv = env.matchedByUserId || env.matchedByEmail;
+  const owner = {
+    configured: env.configured || db.configured,
+    matched: matchedByEnv || db.matched,
+    source: matchedByEnv ? (env.matchedByUserId ? "env_user_id" : "env_email") : (db.source || ""),
+    email: env.email || "",
+    env: {
+      configured: env.configured,
+      matched_by_user_id: env.matchedByUserId,
+      matched_by_email: env.matchedByEmail
+    },
+    database: {
+      configured: db.configured,
+      matched: db.matched,
+      source: db.source || "",
+      warning: db.warning || null
+    },
+    warning: db.warning || null
+  };
+  owner.next_step = ownerPreflightNextStep(owner);
+  return owner;
+}
+
 async function requireAuth(request, options = {}) {
   const ctx = await authContext(request);
   const action = options.action || "auth.required";
@@ -3155,6 +3194,45 @@ export function registerRoutes(app) {
         release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret)
       },
       control_links: SUPER_ADMIN_CONTROL_LINKS
+    };
+  });
+
+  superGet("/owner-preflight", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "super_admin.owner_preflight"
+    });
+    const owner = await superAdminOwnerPreflight(ctx);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_preflight_viewed",
+      severity: owner.matched ? "warning" : "critical",
+      source: "admin",
+      purpose: "super_admin_owner_lock_diagnostics",
+      evidenceTags: ["super_admin", "owner_lock", "preflight"],
+      metadata: {
+        owner_configured: owner.configured,
+        owner_matched: owner.matched,
+        owner_source: owner.source || "none",
+        env_configured: owner.env.configured,
+        db_configured: owner.database.configured,
+        db_warning: owner.warning?.message || null
+      }
+    });
+
+    return {
+      ok: true,
+      preflight: {
+        user_id: ctx.user.id,
+        email: owner.email || superAdminOwnerEmail(ctx),
+        role: ctx.profile.role,
+        mfa_verified: ctx.mfaVerified === true,
+        owner
+      }
     };
   });
 

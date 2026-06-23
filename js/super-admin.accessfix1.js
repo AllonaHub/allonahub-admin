@@ -231,6 +231,77 @@
     return base;
   }
 
+  function yesNo(value) {
+    return value ? "evet" : "hayır";
+  }
+
+  function ownerPreflightAccessDiagnosis(payload, fallbackDiagnosis) {
+    const preflight = payload && payload.preflight || {};
+    const owner = preflight.owner || {};
+    const env = owner.env || {};
+    const database = owner.database || {};
+    const envMatched = env.matched_by_user_id || env.matched_by_email;
+    const ownerWarning = owner.warning || database.warning;
+    const steps = [
+      `API'nin gördüğü e-posta: ${preflight.email || owner.email || "-"}`,
+      `Profil rolü: ${preflight.role || "-"} / MFA2: ${yesNo(preflight.mfa_verified)}`,
+      `ENV owner allowlist: ${yesNo(env.configured)} / eşleşme: ${yesNo(envMatched)}`,
+      `Supabase owner kaydı: ${yesNo(database.configured)} / eşleşme: ${yesNo(database.matched)}`,
+      owner.next_step || "Owner kilidi tamamlanmalı."
+    ];
+
+    if (ownerWarning) {
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "API super_admin_owner_access tablosunu göremiyor.",
+        helper: ownerWarning.message || "Owner migration üretim Supabase projesinde eksik görünüyor.",
+        steps
+      };
+    }
+
+    if (!owner.configured) {
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "API owner kaydını ne ENV'de ne Supabase'de görüyor.",
+        helper: "Sorun frontend veya Coolify ekranı değil; API'nin bağlı olduğu Supabase/env owner kaydı boş.",
+        steps
+      };
+    }
+
+    if (!owner.matched) {
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "Owner kaydı var ama giriş yapan hesapla eşleşmiyor.",
+        helper: "Supabase owner satırındaki e-posta veya user_id, bu oturumdaki hesapla aynı olmalı.",
+        steps
+      };
+    }
+
+    return {
+      ...fallbackDiagnosis,
+      mode: "locked",
+      message: preflight.role === "admin"
+        ? "Owner doğrulandı; kalıcı Super Admin rolü tamamlanmalı."
+        : "Owner preflight doğrulandı; paneli yeniden yükle.",
+      helper: preflight.role === "admin"
+        ? "Admin owner bootstrap açık; Yetki Merkezi'nden kendi hesabına super_admin rolü ver."
+        : "API owner kilidini görüyor ve bu oturumla eşleştiriyor.",
+      steps
+    };
+  }
+
+  async function loadOwnerPreflightDiagnosis(fallbackDiagnosis) {
+    try {
+      const payload = await api("/v1/control-center/owner-preflight");
+      return ownerPreflightAccessDiagnosis(payload, fallbackDiagnosis);
+    } catch (error) {
+      return fallbackDiagnosis;
+    }
+  }
+
   function accessFallback(message, options) {
     const mode = options && options.mode || "login";
     const diagnosis = options && options.diagnosis || {};
@@ -297,7 +368,8 @@
         }
       }
 
-      shell.innerHTML = accessFallback(message, { mode: diagnosis.mode || "locked", diagnosis });
+      const enrichedDiagnosis = await loadOwnerPreflightDiagnosis(diagnosis);
+      shell.innerHTML = accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis });
     } catch (fallbackError) {
       shell.innerHTML = accessFallback(message, { mode: "login", diagnosis });
     }
