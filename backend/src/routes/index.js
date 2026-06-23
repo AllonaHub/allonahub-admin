@@ -1009,6 +1009,72 @@ async function requireAuth(request, options = {}) {
   return ctx;
 }
 
+async function requireOwnerCandidate(request, action) {
+  const ctx = await requireAuth(request, {
+    adminBoundary: true,
+    action
+  });
+
+  if (!hasMfa(ctx)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_mfa_required",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_bootstrap",
+      evidenceTags: ["super_admin", "owner_lock", "mfa_required"],
+      metadata: { requested_action: action, aal: ctx.authenticatorAssuranceLevel }
+    });
+    throw httpError("Bu işlem için iki aşamalı doğrulama gerekli.", 403);
+  }
+
+  const owner = await resolveSuperAdminOwner(ctx);
+  if (!owner.configured) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_config_missing",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_lock",
+      evidenceTags: ["super_admin", "owner_lock", "fail_closed"],
+      metadata: {
+        requested_action: action,
+        owner_user_id: owner.user_id,
+        owner_email_presented: owner.email || null,
+        warning: owner.warning?.message || null
+      }
+    });
+    throw httpError("Süper Admin owner kilidi yapılandırılmadı. SUPER_ADMIN_OWNER_USER_IDS veya SUPER_ADMIN_OWNER_EMAILS zorunlu.", 503);
+  }
+
+  if (!owner.matched) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_denied",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_lock",
+      evidenceTags: ["super_admin", "owner_lock", "access_denied"],
+      metadata: {
+        requested_action: action,
+        user_id: owner.user_id,
+        email: owner.email || null,
+        configured_by_env: Boolean(config.superAdmin.ownerUserIds.length || config.superAdmin.ownerEmails.length)
+      }
+    });
+    throw httpError("Bu panele sadece kayıtlı Super Admin sahibi erişebilir.", 403);
+  }
+
+  ctx.superAdminOwner = owner;
+  return ctx;
+}
+
 async function requireSuperAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["admin", "super_admin"],
@@ -1237,6 +1303,109 @@ async function bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx }) {
     }
     throw changeError;
   }
+
+  return { profile: updated, change };
+}
+
+async function ownerSelfBootstrapSuperAdmin({ ctx, request }) {
+  const reason = "Owner self bootstrap from Super Admin entry gate";
+  const { data: before, error: beforeError } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", ctx.user.id)
+    .maybeSingle();
+  if (beforeError) throw beforeError;
+
+  const nowIso = new Date().toISOString();
+  const commonPayload = compactRow({
+    email: ctx.user.email || before?.email || "",
+    full_name: before?.full_name || ctx.user.user_metadata?.full_name || "",
+    role: "super_admin",
+    account_status: "active",
+    risk_level: before?.risk_level || "low",
+    flagged_suspicious: before?.flagged_suspicious ?? false,
+    last_admin_note: reason,
+    updated_at: nowIso
+  });
+  const fallbackPayload = compactRow({
+    email: ctx.user.email || before?.email || "",
+    full_name: before?.full_name || ctx.user.user_metadata?.full_name || "",
+    role: "super_admin",
+    updated_at: nowIso
+  });
+
+  async function writeProfile(payload) {
+    if (before) {
+      return supabaseAdmin
+        .from("profiles")
+        .update(payload)
+        .eq("id", ctx.user.id)
+        .select("*")
+        .single();
+    }
+    return supabaseAdmin
+      .from("profiles")
+      .upsert({ id: ctx.user.id, ...payload }, { onConflict: "id" })
+      .select("*")
+      .single();
+  }
+
+  let { data: updated, error: updateError } = await writeProfile(commonPayload);
+  if (updateError && looksLikeMissingSchema(updateError)) {
+    const retry = await writeProfile(fallbackPayload);
+    updated = retry.data;
+    updateError = retry.error;
+  }
+  if (updateError) throw updateError;
+
+  let change = null;
+  const { data: changeRow, error: changeError } = await supabaseAdmin
+    .from("super_admin_permission_changes")
+    .insert({
+      target_user_id: ctx.user.id,
+      actor_id: ctx.user.id,
+      action: "owner_self_bootstrap_super_admin",
+      old_role: before?.role || "customer",
+      new_role: updated.role || "super_admin",
+      old_account_status: before?.account_status || "active",
+      new_account_status: updated.account_status || "active",
+      old_risk_level: before?.risk_level || "low",
+      new_risk_level: updated.risk_level || "low",
+      reason,
+      risk_level: "critical",
+      metadata: {
+        target_email: updated.email || ctx.user.email || null,
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        bootstrap: true,
+        self_service: true
+      }
+    })
+    .select("*")
+    .single();
+  if (!changeError) {
+    change = changeRow;
+  } else if (!looksLikeMissingSchema(changeError)) {
+    throw changeError;
+  }
+
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: before?.role || "customer",
+    action: "super_admin.owner_self_bootstrap_completed",
+    severity: "critical",
+    source: "admin",
+    resourceType: "profiles",
+    resourceId: ctx.user.id,
+    purpose: "super_admin_owner_bootstrap",
+    evidenceTags: ["super_admin", "owner_lock", "bootstrap", "role_change"],
+    metadata: {
+      old_role: before?.role || "customer",
+      new_role: updated.role || "super_admin",
+      owner_source: ctx.superAdminOwner?.source || "unknown",
+      permission_change_logged: Boolean(change)
+    }
+  });
 
   return { profile: updated, change };
 }
@@ -3200,11 +3369,23 @@ export function registerRoutes(app) {
 
   superGet("/owner-preflight", async (request) => {
     const ctx = await requireAuth(request, {
-      roles: ["admin", "super_admin"],
-      mfa: true,
       adminBoundary: true,
       action: "super_admin.owner_preflight"
     });
+    if (!hasMfa(ctx)) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "super_admin.owner_preflight_mfa_required",
+        severity: "warning",
+        source: "admin",
+        purpose: "super_admin_owner_lock_diagnostics",
+        evidenceTags: ["super_admin", "owner_lock", "mfa_required"],
+        metadata: { aal: ctx.authenticatorAssuranceLevel }
+      });
+      throw httpError("Bu işlem için iki aşamalı doğrulama gerekli.", 403);
+    }
     const owner = await superAdminOwnerPreflight(ctx);
     await auditEvent({
       request,
@@ -3234,6 +3415,16 @@ export function registerRoutes(app) {
         mfa_verified: ctx.mfaVerified === true,
         owner
       }
+    };
+  });
+
+  superPost("/owner-bootstrap", async (request) => {
+    const ctx = await requireOwnerCandidate(request, "super_admin.owner_bootstrap.self");
+    const result = await ownerSelfBootstrapSuperAdmin({ ctx, request });
+    return {
+      ok: true,
+      profile: publicProfile(result.profile),
+      change: result.change ? permissionChangePublic(result.change) : null
     };
   });
 

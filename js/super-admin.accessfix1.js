@@ -280,6 +280,17 @@
       };
     }
 
+    if (owner.matched && !SUPER_ADMIN_ENTRY_ROLES.includes(preflight.role)) {
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "Owner doğrulandı; Super Admin yetkisini tamamla.",
+        helper: "Bu hesap owner allowlist ile eşleşiyor fakat profil rolü henüz super_admin değil.",
+        can_bootstrap_owner: true,
+        steps
+      };
+    }
+
     return {
       ...fallbackDiagnosis,
       mode: "locked",
@@ -325,12 +336,44 @@
               ${steps.map((step) => `<div>${escape(step)}</div>`).join("")}
             </div>
           ` : ""}
+          ${diagnosis.can_bootstrap_owner ? `<button class="sa-btn" type="button" data-owner-bootstrap>Owner Yetkisini Tamamla</button>` : ""}
           <a class="sa-btn" href="${escape(primaryHref)}">${escape(primaryLabel)}</a>
           ${mode !== "mfa" ? `<a class="sa-btn sa-btn-ghost" href="${escape(mfaUrl())}">MFA2 Sayfasına Git</a>` : ""}
           <a class="sa-btn sa-btn-ghost" href="${escape(core.url("/admin/index.html"))}">Admin Panele Dön</a>
         </div>
       </main>
     `;
+  }
+
+  function setAccessFallback(shell, html) {
+    shell.innerHTML = html;
+    bindAccessFallbackActions(shell);
+  }
+
+  async function bootstrapOwnerAccess(button) {
+    const confirmed = await confirmAction("Owner hesabın doğrulandı. Bu işlem kendi hesabını super_admin rolüne yükseltecek ve audit log'a yazılacak.", { requireReason: false });
+    if (!confirmed.confirmed) return;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Yetki tamamlanıyor...";
+    }
+    try {
+      await api("/v1/control-center/owner-bootstrap", { method: "POST" });
+      window.location.reload();
+    } catch (error) {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Owner Yetkisini Tamamla";
+      }
+      alert(publicError(error, "Owner yetkisi tamamlanamadı."));
+    }
+  }
+
+  function bindAccessFallbackActions(root) {
+    const button = root && root.querySelector ? root.querySelector("[data-owner-bootstrap]") : null;
+    if (!button || button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+    button.addEventListener("click", () => bootstrapOwnerAccess(button));
   }
 
   async function renderAccessFallback(shell, error, fallback) {
@@ -340,38 +383,37 @@
     try {
       const user = App.auth && App.auth.getUser ? await App.auth.getUser() : null;
       if (!user) {
-        shell.innerHTML = accessFallback(message, { mode: "login", diagnosis });
+        setAccessFallback(shell, accessFallback(message, { mode: "login", diagnosis }));
         return;
       }
 
       const profile = App.auth && App.auth.getProfile ? await App.auth.getProfile(user.id) : null;
-      if (!profile || !SUPER_ADMIN_ENTRY_ROLES.includes(profile.role)) {
-        shell.innerHTML = accessFallback("Bu hesap admin veya super_admin rolünde değil.", {
-          mode: "locked",
-          diagnosis: {
-            ...diagnosis,
-            helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
-            steps: ["Önce normal Admin Panel yetkisini tamamla.", "Ardından owner allowlist ve MFA2 adımlarını tamamla."]
-          }
-        });
-        return;
-      }
-
       if (App.auth && App.auth.mfaStatus) {
         const status = await App.auth.mfaStatus();
         if (status && !status.mfaVerified) {
-          shell.innerHTML = accessFallback("Super Admin paneli için MFA2 doğrulaması gerekiyor.", {
+          setAccessFallback(shell, accessFallback("Super Admin paneli için MFA2 doğrulaması gerekiyor.", {
             mode: "mfa",
             diagnosis: superAdminAccessDiagnosis(new Error("mfa.required"), fallback)
-          });
+          }));
           return;
         }
       }
 
+      if (!profile || !SUPER_ADMIN_ENTRY_ROLES.includes(profile.role)) {
+        const enrichedDiagnosis = await loadOwnerPreflightDiagnosis({
+          ...diagnosis,
+          message: "Bu hesap admin veya super_admin rolünde değil.",
+          helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
+          steps: ["Owner allowlist ve MFA2 adımlarını tamamla.", "Owner doğrulanırsa kendi hesabını super_admin yap."]
+        });
+        setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
+        return;
+      }
+
       const enrichedDiagnosis = await loadOwnerPreflightDiagnosis(diagnosis);
-      shell.innerHTML = accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis });
+      setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
     } catch (fallbackError) {
-      shell.innerHTML = accessFallback(message, { mode: "login", diagnosis });
+      setAccessFallback(shell, accessFallback(message, { mode: "login", diagnosis }));
     }
   }
 
