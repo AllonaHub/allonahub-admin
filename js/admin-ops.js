@@ -103,6 +103,21 @@
     return `<div class="admin-status ${type === "error" ? "admin-status--error" : ""}">${escape(message)}</div>`;
   }
 
+  function loginUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+  }
+
+  function loginPanel(message) {
+    return `
+      <div class="admin-login-panel">
+        <h1>Admin Girişi</h1>
+        <p>${escape(message || "Admin Panel için yetkili hesabınızla giriş yapmalısınız.")}</p>
+        <a class="admin-btn admin-btn--primary" href="${escape(loginUrl())}">Admin Olarak Giriş Yap</a>
+      </div>
+    `;
+  }
+
   function showToast(message, type) {
     let wrap = $(".admin-toast");
     if (!wrap) {
@@ -127,8 +142,7 @@
     if (!App.auth || !App.auth.getSession) throw new Error("Oturum sistemi yüklenemedi.");
     const session = await App.auth.getSession();
     if (!session?.access_token) {
-      const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-      window.location.href = core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+      window.location.href = loginUrl();
       return "";
     }
     return session.access_token;
@@ -1063,6 +1077,7 @@
       state.warnings = data.warnings || [];
       $("#adminProfileName").textContent = state.profile.full_name || "Admin";
       $("#adminProfileRole").textContent = state.access?.profile?.label || state.profile.role || "admin";
+      $("#adminLoginLink")?.setAttribute("hidden", "hidden");
       renderNav();
       if (state.view === "dashboard") {
         renderDashboard(state.dashboard);
@@ -1070,7 +1085,7 @@
         await loadView(state.view);
       }
     } catch (error) {
-      $("#adminContent").innerHTML = statusBox(error.message || "Admin Panel erişimi doğrulanamadı.", "error");
+      $("#adminContent").innerHTML = loginPanel(error.message || "Admin Panel erişimi doğrulanamadı.");
     }
   }
 
@@ -1172,6 +1187,7 @@
   document.addEventListener("DOMContentLoaded", async () => {
     if (!document.querySelector("[data-page='admin-ops']")) return;
     state.view = viewFromHash();
+    $("#adminLoginLink")?.setAttribute("href", loginUrl());
     renderNav();
     bindEvents();
     await bootstrap();

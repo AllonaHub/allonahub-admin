@@ -190,6 +190,26 @@ textarea {
   font-weight: 800;
 }
 
+.sa-login-panel {
+  width: min(560px, 100%);
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: linear-gradient(180deg, rgba(15, 28, 46, 0.94), rgba(7, 14, 26, 0.96));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+  padding: 20px;
+}
+
+.sa-login-panel h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.sa-login-panel p {
+  margin: 0 0 16px;
+  color: var(--sa-muted);
+  line-height: 1.5;
+}
+
 .sa-view {
   display: none;
 }

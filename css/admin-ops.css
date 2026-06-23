@@ -542,6 +542,26 @@ button {
   line-height: 1.45;
 }
 
+.admin-login-panel {
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius);
+  background: rgba(7, 17, 29, 0.88);
+  box-shadow: var(--admin-shadow);
+  padding: 20px;
+  max-width: 560px;
+}
+
+.admin-login-panel h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+}
+
+.admin-login-panel p {
+  margin: 0 0 16px;
+  color: var(--admin-muted);
+  line-height: 1.5;
+}
+
 .admin-status {
   border: 1px solid var(--admin-line);
   border-radius: var(--admin-radius);

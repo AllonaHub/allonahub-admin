@@ -88,6 +88,23 @@
     target.style.background = tone === "ok" ? "rgba(56, 217, 150, 0.10)" : "rgba(255, 77, 109, 0.10)";
   }
 
+  function loginUrl() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+  }
+
+  function loginFallback(message) {
+    return `
+      <main class="sa-main">
+        <div class="sa-login-panel">
+          <h1>Süper Admin Girişi</h1>
+          <p>${escape(message || "Bu alana erişmek için süper admin hesabınızla giriş yapmalısınız.")}</p>
+          <a class="sa-btn" href="${escape(loginUrl())}">Süper Admin Olarak Giriş Yap</a>
+        </div>
+      </main>
+    `;
+  }
+
   function publicError(error, fallback) {
     return security && security.publicErrorMessage
       ? security.publicErrorMessage(error, fallback)
@@ -821,12 +838,17 @@
       if (!state.access) return;
       const roleTarget = $("[data-sa-role]");
       if (roleTarget) roleTarget.textContent = state.access.profile.role;
+      const loginLink = $("[data-sa-login]");
+      if (loginLink) {
+        loginLink.href = loginUrl();
+        loginLink.hidden = true;
+      }
       bindInteractions();
       await reloadAll();
     } catch (error) {
       const shell = $("[data-super-admin-shell]");
       if (shell) {
-        shell.innerHTML = `<main class="sa-main"><div class="sa-alert">${escape(publicError(error, "Bu panele sadece Super Admin erişebilir."))}</div></main>`;
+        shell.innerHTML = loginFallback(publicError(error, "Bu panele sadece Super Admin erişebilir."));
       }
     }
   }
