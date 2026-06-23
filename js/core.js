@@ -196,6 +196,7 @@
     const fallback = url(fallbackPath || "/images/product-fallback.svg");
     const raw = String(value || "").trim();
     if (!raw) return fallback;
+    if (raw.startsWith("/") && !raw.startsWith("//")) return url(raw);
     try {
       const parsed = new URL(raw, window.location.href);
       if (["http:", "https:", "file:"].includes(parsed.protocol)) return parsed.href;
