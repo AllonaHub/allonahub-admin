@@ -961,6 +961,32 @@ async function applyBackendSession(session){
   return data.session || null;
 }
 
+function loginFailureMessage(error){
+  const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
+  if(raw.includes("email not confirmed") || raw.includes("not confirmed")){
+    return "E-posta adresi henüz doğrulanmamış görünüyor. Lütfen e-posta kutundaki doğrulama bağlantısını kontrol et.";
+  }
+  if(raw.includes("too many") || raw.includes("rate") || raw.includes("lock")){
+    return "Çok fazla giriş denemesi var. Lütfen kısa süre sonra tekrar dene.";
+  }
+  if(raw.includes("invalid login") || raw.includes("invalid_credentials") || raw.includes("invalid credentials")){
+    return "E-posta veya şifre doğru değil. Şifreyi yeni güncellediysen aynı e-posta adresiyle giriş yaptığından emin ol.";
+  }
+  return "Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.";
+}
+
+async function directSupabaseLogin(email,password){
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  if(!data || !data.session || !data.user)throw new Error("Oturum güvenli şekilde başlatılamadı.");
+  return data;
+}
+
+function canUseDirectLoginFallback(error){
+  const status=Number(error && error.status || 0);
+  return status===0 || [401,404,405,500,501,502,503,504].includes(status);
+}
+
 async function needsMfaVerification(){
   if(!supabaseClient.auth || !supabaseClient.auth.mfa)return false;
   const {data,error}=await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -1593,12 +1619,18 @@ async function loginUser(){
       await supabaseClient.auth.signOut({scope:"local"});
     }catch(error){}
 
-    const data = await authApi("/v1/auth/login",{
-      email:email,
-      password:password,
-      turnstileToken:await securityChallengeToken("login")
-    });
-    await applyBackendSession(data.session);
+    let data;
+    try{
+      data = await authApi("/v1/auth/login",{
+        email:email,
+        password:password,
+        turnstileToken:await securityChallengeToken("login")
+      });
+      await applyBackendSession(data.session);
+    }catch(backendError){
+      if(!canUseDirectLoginFallback(backendError))throw backendError;
+      data = await directSupabaseLogin(email,password);
+    }
 
     if(!data || !data.user){
       secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
@@ -1623,7 +1655,7 @@ async function loginUser(){
     }
     window.location.href = returnTo;
   }catch(error){
-    secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+    secureAuthAlert(loginFailureMessage(error));
   }finally{
     manualAuthInProgress=false;
   }
