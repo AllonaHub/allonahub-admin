@@ -1584,3 +1584,189 @@ body[data-page="super-admin"] .sa-drawer-body .sa-line {
     font-size: 26px;
   }
 }
+
+/* Premium Super Admin entry screen */
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: clamp(22px, 5vw, 58px);
+  background:
+    linear-gradient(135deg, rgba(7, 17, 31, 0.96) 0%, rgba(11, 38, 50, 0.94) 48%, rgba(244, 247, 251, 0.98) 48.2%, rgba(244, 247, 251, 1) 100%);
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 14px;
+  width: min(760px, 100%);
+  min-height: 560px;
+  padding: clamp(24px, 4vw, 42px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: var(--sa-radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.98)),
+    var(--sa-panel);
+  box-shadow: 0 32px 90px rgba(5, 15, 30, 0.28);
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: linear-gradient(90deg, var(--sa-gold), var(--sa-cyan), var(--sa-green));
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel::after {
+  content: "Owner Access";
+  justify-self: center;
+  order: -1;
+  min-height: 28px;
+  padding: 6px 12px;
+  border: 1px solid rgba(185, 133, 17, 0.26);
+  border-radius: 999px;
+  background: rgba(185, 133, 17, 0.09);
+  color: #7a5609;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel h1 {
+  margin: 8px 0 0;
+  color: #081426;
+  font-size: clamp(34px, 6vw, 56px);
+  line-height: 0.98;
+  text-align: center;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel h1::after {
+  content: "AllonaHub güvenli yönetim kapısı";
+  display: block;
+  margin-top: 12px;
+  color: var(--sa-muted);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel p {
+  max-width: 620px;
+  margin: 0 auto;
+  color: #41516a;
+  font-size: 15px;
+  font-weight: 720;
+  line-height: 1.55;
+  text-align: center;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel .sa-empty {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 2px;
+  padding: 14px;
+  border: 1px solid rgba(23, 103, 232, 0.14);
+  border-radius: var(--sa-radius);
+  background: #f7fbff;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel .sa-empty div {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  color: #34465d;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel .sa-empty div::before {
+  content: "✓";
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(23, 103, 232, 0.1);
+  color: var(--sa-blue);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  width: 100%;
+  margin: 0;
+  padding: 0 16px;
+  border-radius: var(--sa-radius);
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn:first-of-type {
+  align-self: end;
+  margin-top: auto;
+  border-color: #081426;
+  background: #081426;
+  color: #ffffff;
+  box-shadow: 0 18px 34px rgba(8, 20, 38, 0.2);
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn:first-of-type:hover {
+  background: #10243d;
+}
+
+body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn:not(:first-of-type) {
+  border-color: rgba(23, 103, 232, 0.18);
+  background: #ffffff;
+  color: var(--sa-blue);
+}
+
+@media (min-width: 700px) {
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel::after,
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel h1,
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel p,
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel .sa-empty,
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn:first-of-type {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child {
+    padding: 18px 12px;
+    background:
+      linear-gradient(180deg, rgba(7, 17, 31, 0.98) 0%, rgba(11, 38, 50, 0.95) 34%, rgba(244, 247, 251, 1) 34.2%, rgba(244, 247, 251, 1) 100%);
+  }
+
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: calc(100vh - 36px);
+    padding: 24px 18px;
+  }
+
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel::after {
+    align-self: center;
+  }
+
+  body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel h1 {
+    font-size: 36px;
+  }
+}
