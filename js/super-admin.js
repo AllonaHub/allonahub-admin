@@ -547,6 +547,8 @@
     alerts: ["Uyarı / Risk Akışı", "Öncelikli güvenlik, sistem ve yayın riskleri"],
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
     access: ["Erişim Kilidi", "Owner-only oturum ve güvenli sınırlar"],
+    permissions: ["Yetki Merkezi", "Rol verme, hesap durumu ve risk seviyesi kontrolü"],
+    "module-map": ["Modül Haritası", "Ana sayfa modülleri ve gelecek operasyon hazırlığı"],
     users: ["Kullanıcı Yönetimi", "Hesap durumu, rol ve şüpheli kullanıcı kontrolü"],
     partners: ["Partner Başvuruları", "Onay, ret, inceleme ve mağaza doğrulama akışı"],
     modules: ["Modül Yönetimi", "Aktiflik, görünürlük, komisyon ve başvuru durumu"],
@@ -651,6 +653,8 @@
       ownerLine("Owner kilidi", `Sadece kayıtlı sahip: ${escape((payload.owner && (payload.owner.email || payload.owner.user_id)) || "doğrulandı")}`, "<button type=\"button\" data-view-jump=\"access\">Detay</button>", "critical"),
       ownerLine("Toplam kullanıcı", formatNumber(summary.total_users), "<button type=\"button\" data-view-jump=\"users\">Yönet</button>", "medium"),
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
+      ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner-only backend RPC ile çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
+      ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
       ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
@@ -699,6 +703,124 @@
       ownerLine("Kaynak", escape(owner.source || "unknown"), "", "medium"),
       ownerLine("GitOps", gitops.enabled ? "Açık" : "Kapalı", gitops.release_webhook_configured ? "Webhook hazır" : "Webhook yok", gitops.enabled && gitops.release_webhook_configured ? "high" : "medium"),
       ownerLine("Güvenlik sınırı", "Server-only gizli anahtarlar frontend içinde kullanılmaz; tüm yazma işlemleri backend + audit üzerinden yürür.", "", "critical")
+    ].join(""));
+  }
+
+  function permissionFilterMarkup(params) {
+    const role = params && params.role || "";
+    const search = params && params.search || "";
+    return `
+      <form class="sa-inline-form" data-owner-permissions-filter>
+        <input name="search" type="search" placeholder="Yetki verilecek kullanıcı ara" value="${escape(search)}">
+        <select name="role">
+          ${["", "customer", "partner", "courier", "admin", "super_admin"].map((item) => `<option value="${escape(item)}" ${role === item ? "selected" : ""}>${escape(item || "Tüm roller")}</option>`).join("")}
+        </select>
+        <button class="sa-btn sa-btn-ghost" type="submit">Filtrele</button>
+      </form>
+    `;
+  }
+
+  async function loadOwnerPermissions(params) {
+    ownerLoading("Yetki Merkezi");
+    const query = new URLSearchParams(params || {});
+    const payload = await api(`/v1/super-admin/permissions?${query.toString()}`);
+    state.permissionUsers = payload.users || [];
+    state.permissionChanges = payload.recent_changes || [];
+    const guardrails = payload.guardrails || {};
+    const rows = state.permissionUsers.map((user) => {
+      const safeId = escape(user.id);
+      const roleOptions = (payload.allowed_roles || ["customer", "partner", "courier", "admin", "super_admin"])
+        .map((role) => `<option value="${escape(role)}" ${user.role === role ? "selected" : ""}>${escape(role)}</option>`)
+        .join("");
+      const statusOptions = ["active", "passive", "suspended"]
+        .map((status) => `<option value="${status}" ${user.account_status === status ? "selected" : ""}>${escape(status)}</option>`)
+        .join("");
+      const riskOptions = ["low", "medium", "high", "critical"]
+        .map((risk) => `<option value="${risk}" ${user.risk_level === risk ? "selected" : ""}>${escape(risk)}</option>`)
+        .join("");
+      return ownerLine(
+        user.full_name || user.email || user.id,
+        `${escape(user.email || user.phone || "-")} / mevcut rol ${escape(user.role || "customer")} / durum ${escape(user.account_status || "active")} / risk ${escape(user.risk_level || "low")}`,
+        [
+          `<select data-permission-role="${safeId}">${roleOptions}</select>`,
+          `<select data-permission-status="${safeId}">${statusOptions}</select>`,
+          `<select data-permission-risk="${safeId}">${riskOptions}</select>`,
+          `<button type="button" data-permission-save="${safeId}">Yetki ver</button>`
+        ].join(" "),
+        user.role === "super_admin" ? "critical" : (user.role === "admin" ? "high" : user.risk_level)
+      );
+    });
+    const changes = state.permissionChanges.slice(0, 8).map((item) => ownerLine(
+      item.action || "permission",
+      `${formatDate(item.created_at)} / ${escape(item.old_role || "-")} -> ${escape(item.new_role || "-")} / ${escape(item.reason || "-")}`,
+      "",
+      item.risk_level
+    )).join("");
+    ownerSetOutput(
+      permissionFilterMarkup(params) +
+      ownerLine("Koruma kuralı", `Super Admin rolü owner_access olmadan verilemez: ${guardrails.super_admin_requires_owner ? "aktif" : "pasif"} / reason zorunlu: ${guardrails.reason_required ? "aktif" : "pasif"}`, "", "critical") +
+      (rows.length ? rows.join("") : ownerEmpty("Kullanıcı bulunamadı.")) +
+      ownerLine("Son yetki değişiklikleri", `${formatNumber(state.permissionChanges.length)} kayıt`, "", "medium") +
+      (changes || ownerEmpty("Yetki değişikliği kaydı yok."))
+    );
+  }
+
+  async function updatePermission(button) {
+    const userId = button.dataset.permissionSave;
+    const safeId = cssEscape(userId);
+    const role = $(`[data-permission-role="${safeId}"]`);
+    const status = $(`[data-permission-status="${safeId}"]`);
+    const risk = $(`[data-permission-risk="${safeId}"]`);
+    const user = (state.permissionUsers || []).find((item) => item.id === userId);
+    const message = `${user?.full_name || user?.email || "Kullanıcı"} için rol/durum/risk yetkisi güncellenecek.`;
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/super-admin/permissions/${encodeURIComponent(userId)}`, {
+        method: "PATCH",
+        body: {
+          role: role && role.value,
+          account_status: status && status.value,
+          risk_level: risk && risk.value,
+          flagged_suspicious: risk && ["high", "critical"].includes(risk.value),
+          reason
+        }
+      });
+    }, { requireReason: true });
+  }
+
+  async function loadOwnerModuleMap() {
+    ownerLoading("Modül Haritası");
+    const payload = await api("/v1/super-admin/module-map");
+    state.moduleMap = payload.modules || [];
+    state.futureOperations = payload.future_operations || [];
+    const rows = state.moduleMap.map((item) => ownerLine(
+      item.name || item.module_key,
+      `${escape(item.category || "-")} / ${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / komisyon ${formatNumber(Number(item.commission_rate || 0) * 100)}%`,
+      `<a href="${escape(item.href || "#")}">Aç</a> <button type="button" data-module-map-detail="${escape(item.module_key)}">Operasyon</button>`,
+      item.maturity === "controlled" ? "high" : (item.maturity === "transactional" || item.maturity === "operational" ? "medium" : "low")
+    ));
+    const future = state.futureOperations.map((item) => ownerLine(
+      item.label || item.key,
+      `${escape(item.status || "planned")} / risk ${escape(item.risk_level || "medium")}`,
+      "<button type=\"button\" data-release-open>Yayın planı</button>",
+      item.risk_level
+    )).join("");
+    ownerSetOutput(
+      ownerLine("Kapsam", `${formatNumber(state.moduleMap.length)} ana sayfa modülü backend kontrol haritasına bağlı.`, "", "medium") +
+      (rows.length ? rows.join("") : ownerEmpty("Modül haritası bulunamadı.")) +
+      ownerLine("Gelecek operasyonlar", `${formatNumber(state.futureOperations.length)} hazırlık başlığı`, "", "high") +
+      (future || "")
+    );
+  }
+
+  function showModuleMapDetail(moduleKey) {
+    const item = (state.moduleMap || []).find((moduleItem) => moduleItem.module_key === moduleKey);
+    if (!item) return;
+    openDrawer("Modül Operasyonu", [
+      ownerLine("Modül", `${escape(item.name || item.module_key)} / ${escape(item.module_key)}`, `<a href="${escape(item.href || "#")}">Sayfayı aç</a>`, item.maturity === "controlled" ? "high" : "medium"),
+      ownerLine("Durum", `${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / kaynak ${escape(item.source || "-")}`, "", "medium"),
+      ownerLine("Kontrol", `Aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / başvuru ${escape(item.application_status || "-")}`, "<button type=\"button\" data-view-jump=\"modules\">Ayarlar</button>", "medium"),
+      ownerLine("Operasyonlar", escape((item.operations || []).join(", ") || "-"), "", item.maturity === "controlled" ? "high" : "low"),
+      ownerLine("Yayın", "Bu modüldeki kritik içerik veya backend değişikliği Yayın Onayları üzerinden geçirilir.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical")
     ].join(""));
   }
 
@@ -860,6 +982,8 @@
       else if (view === "alerts") await loadOwnerAlerts();
       else if (view === "approvals") await loadOwnerApprovals();
       else if (view === "access") await loadOwnerAccess();
+      else if (view === "permissions") await loadOwnerPermissions(params);
+      else if (view === "module-map") await loadOwnerModuleMap();
       else if (view === "users") await loadOwnerUsers(params);
       else if (view === "partners") await loadOwnerPartners();
       else if (view === "modules") await loadOwnerModules();
@@ -973,6 +1097,19 @@
         return;
       }
 
+      const permissionsFilter = event.target.closest("[data-owner-permissions-filter]");
+      if (permissionsFilter) {
+        event.preventDefault();
+        const form = new FormData(permissionsFilter);
+        const params = {};
+        ["search", "role"].forEach((key) => {
+          const value = String(form.get(key) || "").trim();
+          if (value) params[key] = value;
+        });
+        await loadOwnerPermissions(params);
+        return;
+      }
+
       const releaseForm = event.target.closest("[data-release-form]");
       if (releaseForm) {
         event.preventDefault();
@@ -1003,6 +1140,12 @@
 
       const eventDetail = event.target.closest("[data-event-detail]");
       if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
+
+      const moduleMapDetail = event.target.closest("[data-module-map-detail]");
+      if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
+
+      const permissionSave = event.target.closest("[data-permission-save]");
+      if (permissionSave) await updatePermission(permissionSave);
 
       const userAction = event.target.closest("[data-user-action]");
       if (userAction) await updateUserAction(userAction);

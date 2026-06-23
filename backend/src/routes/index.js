@@ -320,6 +320,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "panel_change",
   "risk_override"
 ];
+const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -361,6 +362,19 @@ const superAdminReleaseApprovalSchema = z.object({
   metadata: z.record(z.unknown()).optional().default({})
 });
 
+const superAdminPermissionUpdateSchema = z.object({
+  role: z.enum(SUPER_ADMIN_GRANTABLE_ROLES).optional(),
+  account_status: z.enum(["active", "passive", "suspended"]).optional(),
+  risk_level: riskLevelSchema.optional(),
+  flagged_suspicious: z.boolean().optional(),
+  reason: z.string().trim().min(6).max(900)
+}).refine((value) => (
+  value.role !== undefined ||
+  value.account_status !== undefined ||
+  value.risk_level !== undefined ||
+  value.flagged_suspicious !== undefined
+), "En az bir yetki alanı güncellenmelidir.");
+
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
   { key: "maintenance_mode", label: "Bakım modu", value: false, value_type: "boolean", risk_level: "critical", category: "system" },
   { key: "orders_paused", label: "Siparişleri geçici durdur", value: false, value_type: "boolean", risk_level: "high", category: "commerce" },
@@ -375,6 +389,8 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "food", name: "Yemek", category: "commerce" },
   { module_key: "market", name: "Market", category: "commerce" },
   { module_key: "taxi", name: "Taksi", category: "transport" },
+  { module_key: "mall", name: "AVM Dünyası", category: "commerce" },
+  { module_key: "travel", name: "Seyahat & Turizm", category: "travel" },
   { module_key: "health", name: "Sağlık", category: "services" },
   { module_key: "maritime", name: "Denizcilik", category: "services" },
   { module_key: "legal", name: "Hukuk", category: "services" },
@@ -382,6 +398,24 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "real_estate", name: "Gayrimenkul", category: "marketplace" },
   { module_key: "automotive", name: "Otomotiv", category: "marketplace" },
   { module_key: "education", name: "Eğitim", category: "services" },
+  { module_key: "career", name: "Kariyer", category: "services" },
+  { module_key: "finance", name: "Finans", category: "finance" },
+  { module_key: "events", name: "Eğlence & Etkinlik", category: "services" },
+  { module_key: "pet", name: "Evcil Hayvan", category: "services" },
+  { module_key: "technology", name: "Teknoloji", category: "marketplace" },
+  { module_key: "sports_fitness", name: "Spor & Fitness", category: "services" },
+  { module_key: "beauty", name: "Güzellik & Kozmetik", category: "services" },
+  { module_key: "insurance", name: "Sigorta", category: "finance" },
+  { module_key: "courier", name: "Kurye & Teslimat", category: "logistics" },
+  { module_key: "home_services", name: "Ev Hizmetleri", category: "services" },
+  { module_key: "logistics", name: "Kargo & Lojistik", category: "logistics" },
+  { module_key: "moving", name: "Nakliye", category: "logistics" },
+  { module_key: "organization", name: "Organizasyon & Düğün", category: "services" },
+  { module_key: "agriculture", name: "Allona Tarım", category: "services" },
+  { module_key: "construction", name: "İnşaat & Yapı", category: "services" },
+  { module_key: "engineering", name: "Mühendislik", category: "services" },
+  { module_key: "trade", name: "Trade", category: "commerce" },
+  { module_key: "hospitality", name: "Otelcilik", category: "travel" },
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
 ];
 
@@ -398,6 +432,48 @@ const SUPER_ADMIN_CONTROL_LINKS = [
   { key: "food", label: "Allona Yemek", href: "../pages/commerce/allonayemek.html", target: "redirect", risk_level: "medium" },
   { key: "taxi", label: "Allona Taksi", href: "../pages/ecosystem/allonataksi.html", target: "redirect", risk_level: "medium" },
   { key: "security_policy", label: "Güvenlik Politikası", href: "../pages/legal/guvenlik-politikasi.html", target: "redirect", risk_level: "low" }
+];
+
+const SUPER_ADMIN_MODULE_INTELLIGENCE = [
+  { module_key: "shop", name: "Allona Shop", href: "../pages/commerce/allonashop.html", category: "commerce", phase: "live", maturity: "transactional", operations: ["catalog", "orders", "payments", "coupons", "partner_commission"] },
+  { module_key: "food", name: "Allona Yemek", href: "../pages/commerce/allonayemek.html", category: "commerce", phase: "live", maturity: "transactional", operations: ["restaurant_onboarding", "menu", "courier", "orders", "coupons"] },
+  { module_key: "market", name: "Allona Market", href: "../pages/commerce/allonamarket.html", category: "commerce", phase: "live", maturity: "transactional", operations: ["store_inventory", "orders", "delivery", "campaigns"] },
+  { module_key: "taxi", name: "Allona Taksi", href: "../pages/ecosystem/allonataksi.html", category: "transport", phase: "live", maturity: "operational", operations: ["driver_verification", "ride_dispatch", "map", "fare_controls", "incident_alerts"] },
+  { module_key: "mall", name: "AVM Dünyası", href: "../pages/ecosystem/allonaavm.html", category: "commerce", phase: "current", maturity: "content", operations: ["tenant_applications", "campaigns", "store_directory"] },
+  { module_key: "travel", name: "Seyahat & Turizm", href: "../pages/ecosystem/allonaseyahat.html", category: "travel", phase: "current", maturity: "content", operations: ["hotel_requests", "ticketing", "tour_applications"] },
+  { module_key: "real_estate", name: "Gayrimenkul", href: "../pages/ecosystem/allonagayrimenkul.html", category: "marketplace", phase: "current", maturity: "lead", operations: ["listing_review", "broker_verification", "lead_routing"] },
+  { module_key: "maritime", name: "Denizcilik", href: "../pages/ecosystem/denizcilik.html", category: "services", phase: "current", maturity: "lead", operations: ["crew_applications", "document_review", "partner_verification"] },
+  { module_key: "legal", name: "Hukuk", href: "../pages/ecosystem/allonahukuk.html", category: "services", phase: "current", maturity: "lead", operations: ["lawyer_verification", "case_intake", "document_review"] },
+  { module_key: "consulting", name: "Danışmanlık", href: "../pages/ecosystem/allonadanismanlik.html", category: "services", phase: "current", maturity: "lead", operations: ["expert_verification", "appointment", "lead_routing"] },
+  { module_key: "education", name: "Eğitim", href: "../pages/ecosystem/allonaegitim.html", category: "services", phase: "current", maturity: "lead", operations: ["course_review", "trainer_verification", "enrollment"] },
+  { module_key: "career", name: "Kariyer", href: "../pages/career/allonakariyer.html", category: "services", phase: "current", maturity: "lead", operations: ["cv_access", "employer_applications", "payment_access"] },
+  { module_key: "finance", name: "Finans", href: "../pages/ecosystem/allonafinans.html", category: "finance", phase: "current", maturity: "controlled", operations: ["payment_status", "payouts", "commission", "refunds"] },
+  { module_key: "automotive", name: "Otomotiv", href: "../pages/ecosystem/allonaotomotiv.html", category: "marketplace", phase: "current", maturity: "lead", operations: ["listing_review", "dealer_verification", "lead_routing"] },
+  { module_key: "events", name: "Eğlence & Etkinlik", href: "../pages/ecosystem/allonaeglence.html", category: "services", phase: "current", maturity: "lead", operations: ["event_listing", "vendor_review", "ticket_request"] },
+  { module_key: "pet", name: "Evcil Hayvan", href: "../pages/ecosystem/allonaevcilhayvan.html", category: "services", phase: "current", maturity: "lead", operations: ["vet_verification", "appointment", "listing_review"] },
+  { module_key: "technology", name: "Teknoloji", href: "../pages/ecosystem/allonateknoloji.html", category: "marketplace", phase: "current", maturity: "lead", operations: ["product_review", "service_partner", "support_request"] },
+  { module_key: "sports_fitness", name: "Spor & Fitness", href: "../pages/ecosystem/allonasporfitness.html", category: "services", phase: "current", maturity: "lead", operations: ["trainer_verification", "membership_request", "appointment"] },
+  { module_key: "beauty", name: "Güzellik & Kozmetik", href: "../pages/ecosystem/allonaguzellik.html", category: "services", phase: "current", maturity: "lead", operations: ["salon_verification", "appointment", "product_review"] },
+  { module_key: "insurance", name: "Sigorta", href: "../pages/ecosystem/allonasigorta.html", category: "finance", phase: "current", maturity: "controlled", operations: ["quote_request", "agent_verification", "risk_review"] },
+  { module_key: "courier", name: "Kurye & Teslimat", href: "../pages/ecosystem/allonakurye.html", category: "logistics", phase: "current", maturity: "operational", operations: ["courier_verification", "dispatch", "delivery_status"] },
+  { module_key: "home_services", name: "Ev Hizmetleri", href: "../pages/ecosystem/allonaevhizmetleri.html", category: "services", phase: "current", maturity: "lead", operations: ["provider_verification", "service_request", "appointment"] },
+  { module_key: "logistics", name: "Kargo & Lojistik", href: "../pages/ecosystem/allonalojistik.html", category: "logistics", phase: "current", maturity: "operational", operations: ["carrier_verification", "shipment_request", "warehouse"] },
+  { module_key: "moving", name: "Nakliye", href: "../pages/ecosystem/allonanakliye.html", category: "logistics", phase: "current", maturity: "lead", operations: ["quote_request", "vehicle_verification", "job_status"] },
+  { module_key: "organization", name: "Organizasyon & Düğün", href: "../pages/ecosystem/allonaorganizasyon.html", category: "services", phase: "current", maturity: "lead", operations: ["vendor_verification", "package_review", "booking_request"] },
+  { module_key: "agriculture", name: "Allona Tarım", href: "../pages/ecosystem/allonatarim.html", category: "services", phase: "current", maturity: "lead", operations: ["supplier_verification", "product_review", "insurance_request"] },
+  { module_key: "construction", name: "İnşaat & Yapı", href: "../pages/ecosystem/allonainsaat.html", category: "services", phase: "current", maturity: "lead", operations: ["contractor_verification", "project_request", "document_review"] },
+  { module_key: "engineering", name: "Mühendislik", href: "../pages/ecosystem/allonamuhendislik.html", category: "services", phase: "current", maturity: "lead", operations: ["engineer_verification", "project_request", "document_review"] },
+  { module_key: "trade", name: "Trade", href: "../pages/ecosystem/allonatrade.html", category: "commerce", phase: "current", maturity: "controlled", operations: ["import_export_request", "company_verification", "risk_review"] },
+  { module_key: "hospitality", name: "Otelcilik", href: "../pages/ecosystem/allonaotelcilik.html", category: "travel", phase: "current", maturity: "lead", operations: ["property_verification", "booking_request", "partner_review"] },
+  { module_key: "health", name: "Allona Sağlık", href: "../pages/ecosystem/allonasaglik.html", category: "services", phase: "current", maturity: "controlled", operations: ["provider_verification", "appointment", "document_review", "risk_review"] }
+];
+
+const SUPER_ADMIN_FUTURE_OPERATIONS = [
+  { key: "ai_risk_prediction", label: "AI risk tahmin hattı", risk_level: "high", status: "planned" },
+  { key: "module_content_approval", label: "Modül içerik onay yayını", risk_level: "medium", status: "ready_for_backend" },
+  { key: "partner_document_vault", label: "Partner belge kasası", risk_level: "high", status: "planned" },
+  { key: "finance_payout_gate", label: "Hakediş ve payout onay kapısı", risk_level: "critical", status: "ready_for_backend" },
+  { key: "incident_war_room", label: "Kritik olay savaş odası", risk_level: "critical", status: "planned" }
 ];
 
 function clientIp(request) {
@@ -786,6 +862,62 @@ function releaseApprovalPublic(row) {
     created_at: row.created_at,
     updated_at: row.updated_at
   };
+}
+
+function moduleOperationMapPublic(moduleRows = []) {
+  const byKey = new Map((moduleRows || []).map((item) => [item.module_key, item]));
+  return SUPER_ADMIN_MODULE_INTELLIGENCE.map((item, index) => {
+    const configured = byKey.get(item.module_key);
+    return {
+      ...item,
+      sort_order: configured?.sort_order ?? (index + 1) * 10,
+      is_active: configured?.is_active ?? true,
+      is_visible: configured?.is_visible ?? true,
+      commission_rate: configured?.commission_rate ?? 0.12,
+      application_status: configured?.application_status || "open",
+      content_config: configured?.content_config || {},
+      source: configured ? "database" : "homepage_map"
+    };
+  });
+}
+
+function permissionChangePublic(row) {
+  return {
+    id: row.id,
+    target_user_id: row.target_user_id,
+    actor_id: row.actor_id,
+    action: row.action,
+    old_role: row.old_role,
+    new_role: row.new_role,
+    old_account_status: row.old_account_status,
+    new_account_status: row.new_account_status,
+    old_risk_level: row.old_risk_level,
+    new_risk_level: row.new_risk_level,
+    reason: row.reason || "",
+    risk_level: row.risk_level,
+    metadata: row.metadata || {},
+    created_at: row.created_at
+  };
+}
+
+async function isRegisteredSuperAdminOwnerCandidate(userId, email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (userId && config.superAdmin.ownerUserIds.includes(userId)) return true;
+  if (normalizedEmail && config.superAdmin.ownerEmails.includes(normalizedEmail)) return true;
+
+  const activeCount = await supabaseAdmin
+    .from("super_admin_owner_access")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active")
+    .or([
+      userId ? `user_id.eq.${userId}` : "",
+      normalizedEmail ? `email.eq.${normalizedEmail}` : ""
+    ].filter(Boolean).join(","));
+  if (activeCount.error) {
+    if (looksLikeMissingSchema(activeCount.error)) return false;
+    throw activeCount.error;
+  }
+  return Number(activeCount.count || 0) > 0;
 }
 
 async function dispatchSuperAdminReleaseApproval(approval, request) {
@@ -2575,7 +2707,8 @@ export function registerRoutes(app) {
       revenueRows,
       readyCheck,
       releaseRows,
-      recentSecurity
+      recentSecurity,
+      moduleRows
     ] = await Promise.all([
       countAdminRows("profiles_total", "profiles"),
       countAdminRows("partner_businesses_total", "partner_businesses"),
@@ -2609,10 +2742,18 @@ export function registerRoutes(app) {
           .order("created_at", { ascending: false })
           .limit(30),
         []
+      ),
+      runAdminQuery(
+        "platform_modules_command_center",
+        supabaseAdmin
+          .from("platform_modules")
+          .select("*")
+          .order("sort_order", { ascending: true }),
+        []
       )
     ]);
 
-    [users, partners, orders, pendingApplications, securityAlerts, revenueRows, readyCheck, releaseRows, recentSecurity]
+    [users, partners, orders, pendingApplications, securityAlerts, revenueRows, readyCheck, releaseRows, recentSecurity, moduleRows]
       .filter((item) => item.warning)
       .forEach((item) => warnings.push(item.warning));
 
@@ -2627,8 +2768,10 @@ export function registerRoutes(app) {
     const autoDefense = autoDefenseStatus();
     const releaseApprovals = (releaseRows.data || []).map(releaseApprovalPublic);
     const recentEvents = recentSecurity.data || [];
+    const moduleMap = moduleOperationMapPublic(moduleRows.data || []);
     const criticalEvents = recentEvents.filter((event) => event.severity === "critical");
     const unresolvedApprovals = releaseApprovals.filter((item) => ["approved", "failed", "pending"].includes(item.status));
+    const inactiveModules = moduleMap.filter((item) => item.is_active !== true || item.is_visible !== true);
 
     const risks = [
       config.emergencyApiDisabled ? {
@@ -2661,6 +2804,11 @@ export function registerRoutes(app) {
         title: "Yayın onayı takibi",
         message: `${unresolvedApprovals.length} yayın/onay kaydı takip istiyor.`
       } : null,
+      inactiveModules.length > 0 ? {
+        severity: "medium",
+        title: "Modül görünürlük uyarısı",
+        message: `${inactiveModules.length} ana sayfa modülü pasif veya gizli görünüyor.`
+      } : null,
       ...warnings.map((warning) => ({
         severity: "medium",
         title: warning.label || "Supabase şema uyarısı",
@@ -2678,7 +2826,8 @@ export function registerRoutes(app) {
       metadata: {
         risk_count: risks.length,
         warning_count: warnings.length,
-        release_approval_count: releaseApprovals.length
+        release_approval_count: releaseApprovals.length,
+        homepage_module_count: moduleMap.length
       }
     });
 
@@ -2698,7 +2847,9 @@ export function registerRoutes(app) {
         pending_applications: pendingApplications.count,
         security_alerts_24h: securityAlerts.count,
         critical_events_sample: criticalEvents.length,
-        release_approvals: releaseApprovals.length
+        release_approvals: releaseApprovals.length,
+        homepage_modules: moduleMap.length,
+        future_operations: SUPER_ADMIN_FUTURE_OPERATIONS.length
       },
       system_health: {
         api: "online",
@@ -2715,6 +2866,11 @@ export function registerRoutes(app) {
       risks,
       recent_security_events: recentEvents,
       release_approvals: releaseApprovals,
+      module_map: {
+        modules: moduleMap,
+        future_operations: SUPER_ADMIN_FUTURE_OPERATIONS,
+        inactive_count: inactiveModules.length
+      },
       control_links: SUPER_ADMIN_CONTROL_LINKS,
       gitops: {
         enabled: config.superAdmin.gitOpsEnabled,
@@ -2839,6 +2995,206 @@ export function registerRoutes(app) {
       ok: true,
       approval: releaseApprovalPublic(approval),
       dispatch
+    };
+  });
+
+  app.get("/v1/super-admin/module-map", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.module_map.view");
+    const result = await runAdminQuery(
+      "platform_modules_module_map",
+      supabaseAdmin
+        .from("platform_modules")
+        .select("*")
+        .order("sort_order", { ascending: true }),
+      []
+    );
+    const modules = moduleOperationMapPublic(result.data || []);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.module_map_viewed",
+      source: "admin",
+      resourceType: "super_admin_module_map",
+      metadata: {
+        homepage_module_count: modules.length,
+        warning: Boolean(result.warning)
+      }
+    });
+
+    return {
+      ok: true,
+      modules,
+      future_operations: SUPER_ADMIN_FUTURE_OPERATIONS,
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.get("/v1/super-admin/permissions", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.permissions.list");
+    const queryParams = z.object({
+      limit: z.coerce.number().int().min(1).max(200).optional().default(120),
+      search: z.string().trim().max(80).optional().default(""),
+      role: z.enum(SUPER_ADMIN_GRANTABLE_ROLES).optional()
+    }).parse(request.query || {});
+    const warnings = [];
+
+    let usersQuery = supabaseAdmin
+      .from("profiles")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.role) usersQuery = usersQuery.eq("role", queryParams.role);
+    if (queryParams.search) {
+      const clean = queryParams.search.replace(/[%_,]/g, " ").trim();
+      if (clean) {
+        const like = `%${clean}%`;
+        usersQuery = usersQuery.or(`full_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`);
+      }
+    }
+
+    const [usersResult, changesResult] = await Promise.all([
+      runAdminQuery("super_admin_permission_profiles", usersQuery, []),
+      runAdminQuery(
+        "super_admin_permission_changes",
+        supabaseAdmin
+          .from("super_admin_permission_changes")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        []
+      )
+    ]);
+    [usersResult, changesResult].filter((item) => item.warning).forEach((item) => warnings.push(item.warning));
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.permissions_viewed",
+      source: "admin",
+      resourceType: "super_admin_permissions",
+      metadata: {
+        user_count: usersResult.count,
+        role: queryParams.role || "all",
+        search: Boolean(queryParams.search),
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      users: (usersResult.data || []).map(publicProfile),
+      count: usersResult.count,
+      allowed_roles: SUPER_ADMIN_GRANTABLE_ROLES,
+      guardrails: {
+        super_admin_requires_owner: true,
+        reason_required: true,
+        self_demote_blocked: true
+      },
+      recent_changes: (changesResult.data || []).map(permissionChangePublic),
+      schema_warnings: warnings
+    };
+  });
+
+  app.patch("/v1/super-admin/permissions/:userId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.permissions.update");
+    const { userId } = z.object({ userId: uuidSchema }).parse(request.params || {});
+    const body = superAdminPermissionUpdateSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .maybeSingle();
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Yetki verilecek kullanıcı bulunamadı.", 404);
+
+    if (userId === ctx.user.id) {
+      if (body.role && body.role !== "super_admin") {
+        throw httpError("Owner kendi Super Admin rolünü düşüremez.", 400);
+      }
+      if (body.account_status && body.account_status !== "active") {
+        throw httpError("Owner kendi hesabını pasif veya askıda yapamaz.", 400);
+      }
+    }
+
+    if (body.role === "super_admin") {
+      const allowedOwner = await isRegisteredSuperAdminOwnerCandidate(before.id, before.email);
+      if (!allowedOwner) {
+        await auditEvent({
+          request,
+          actorId: ctx.user.id,
+          actorRole: ctx.profile.role,
+          action: "super_admin.permission_super_admin_denied",
+          resourceType: "profile",
+          resourceId: userId,
+          severity: "critical",
+          source: "admin",
+          purpose: "permission_control",
+          evidenceTags: ["super_admin", "permission_denied", "owner_lock"],
+          metadata: {
+            target_email: before.email || null,
+            reason: body.reason
+          }
+        });
+        throw httpError("Super Admin rolü sadece owner allowlist veya owner_access kaydındaki kullanıcıya verilebilir.", 403);
+      }
+    }
+
+    const { data: permissionResult, error } = await ctx.db.rpc("super_admin_update_profile_permission", {
+      p_target_user_id: userId,
+      p_role: body.role ?? null,
+      p_account_status: body.account_status ?? null,
+      p_risk_level: body.risk_level ?? null,
+      p_flagged_suspicious: body.flagged_suspicious ?? null,
+      p_reason: body.reason
+    });
+    if (error) {
+      if (looksLikeMissingSchema(error)) {
+        throw httpError("super_admin_update_profile_permission migration henüz uygulanmamış.", 503);
+      }
+      throw error;
+    }
+
+    const updated = permissionResult?.profile;
+    const change = permissionResult?.change;
+    if (!updated) throw httpError("Yetki güncellemesi tamamlandı ancak profil cevabı alınamadı.", 502);
+    const changeRisk = change?.risk_level || (body.role === "super_admin" || body.account_status === "suspended" ? "critical" : (body.role === "admin" ? "high" : "medium"));
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.permission_updated",
+      resourceType: "profile",
+      resourceId: userId,
+      severity: changeRisk === "critical" ? "critical" : "warning",
+      source: "admin",
+      purpose: "permission_control",
+      evidenceTags: ["super_admin", "permission_update", updated.role || "customer"],
+      metadata: {
+        old_value: {
+          role: before.role || "customer",
+          account_status: before.account_status || "active",
+          risk_level: before.risk_level || "low",
+          flagged_suspicious: Boolean(before.flagged_suspicious)
+        },
+        new_value: {
+          role: updated.role || "customer",
+          account_status: updated.account_status || "active",
+          risk_level: updated.risk_level || "low",
+          flagged_suspicious: Boolean(updated.flagged_suspicious)
+        },
+        reason: body.reason,
+        change_recorded: Boolean(change)
+      }
+    });
+
+    return {
+      ok: true,
+      user: publicProfile(updated),
+      change: change ? permissionChangePublic(change) : null,
+      schema_warnings: []
     };
   });
 

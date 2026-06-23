@@ -27,6 +27,34 @@ on conflict do nothing;
 
 Use lowercase email values. If no env allowlist and no active `super_admin_owner_access` row exists, `/v1/super-admin/*` returns a fail-closed error.
 
+For strict Supabase RLS and role-grant workflows, the `super_admin_owner_access` row is mandatory. The backend env allowlist protects API access; the DB owner row lets `public.is_super_admin()` and `public.super_admin_update_profile_permission(...)` verify the owner inside Supabase.
+
+## Permission Grants
+
+Role, account status and risk changes must go through:
+
+```http
+PATCH /v1/super-admin/permissions/:userId
+```
+
+The backend requires a reason and calls the security-definer RPC:
+
+```sql
+public.super_admin_update_profile_permission(...)
+```
+
+Guardrails:
+
+- The active owner cannot demote or suspend their own Super Admin session.
+- `super_admin` can only be granted to a user already present in `super_admin_owner_access`.
+- Every successful permission change is written to `super_admin_permission_changes` and `security_audit_events`.
+
+## Module Operation Map
+
+`/v1/super-admin/module-map` mirrors the current homepage module set and overlays database state from `platform_modules`.
+
+The map includes commerce, transport, finance, legal, health, real estate, automotive, education, career, logistics, hospitality, trade and other current/future ecosystem modules. Critical module releases should still be approved through Release Approval / GitOps.
+
 ## Release Approval / GitOps
 
 The browser never receives GitHub, Supabase, server, or service-role secrets. Owner approval creates an audited row in `super_admin_release_approvals`.

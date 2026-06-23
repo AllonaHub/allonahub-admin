@@ -843,6 +843,18 @@ body[data-page="super-admin"] {
   color: var(--sa-gold);
 }
 
+.sa-line input,
+.sa-line select {
+  min-height: 34px;
+  max-width: 140px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--sa-text);
+  padding: 0 8px;
+  outline: 0;
+}
+
 .sa-risk-critical strong,
 .sa-risk-critical em {
   color: var(--sa-red);
