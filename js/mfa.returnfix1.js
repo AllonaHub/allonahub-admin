@@ -15,9 +15,11 @@
     return core.escapeHTML(value ?? "");
   }
 
-  function returnTo() {
-    const fallback = core.url("/pages/account/user-panel.html");
-    const raw = core.getParam("returnTo") || "";
+  const AUTH_RETURN_TO_KEY = "allonahub.auth.returnTo";
+
+  function normalizeReturnTo(value, fallback) {
+    const raw = String(value || "").trim();
+    if (!raw) return fallback;
     try {
       const decoded = decodeURIComponent(raw);
       const target = new URL(decoded, window.location.href);
@@ -26,6 +28,37 @@
     } catch {
       return fallback;
     }
+  }
+
+  function storedReturnTo(fallback) {
+    try {
+      const stored = sessionStorage.getItem(AUTH_RETURN_TO_KEY);
+      return normalizeReturnTo(stored, fallback);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function rememberReturnTo(target) {
+    try {
+      sessionStorage.setItem(AUTH_RETURN_TO_KEY, target);
+    } catch {}
+    return target;
+  }
+
+  function completeReturnTo() {
+    const target = returnTo();
+    try {
+      sessionStorage.removeItem(AUTH_RETURN_TO_KEY);
+    } catch {}
+    return target;
+  }
+
+  function returnTo() {
+    const fallback = core.url("/pages/account/user-panel.html");
+    const raw = core.getParam("returnTo") || "";
+    const target = raw ? normalizeReturnTo(raw, fallback) : storedReturnTo(fallback);
+    return rememberReturnTo(target);
   }
 
   function qrSrc(value) {
@@ -132,7 +165,7 @@
   async function load() {
     const user = await App.auth.getUser();
     if (!user) {
-      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(returnTo())}`);
       return;
     }
     state.status = await App.auth.mfaStatus();
@@ -174,7 +207,7 @@
       await App.auth.mfaVerify({ factorId: state.enrollment.factorId, code });
       setStatus("MFA etkinleştirildi.", "success");
       await load();
-      window.location.href = returnTo();
+      window.location.href = completeReturnTo();
     } catch (error) {
       setStatus(error.message || "Kod doğrulanamadı.", "error");
     } finally {
@@ -191,7 +224,7 @@
     try {
       await App.auth.mfaChallengeAndVerify(factorId, form.elements.code.value);
       setStatus("MFA doğrulandı.", "success");
-      window.location.href = returnTo();
+      window.location.href = completeReturnTo();
     } catch (error) {
       setStatus(error.message || "Kod doğrulanamadı.", "error");
     } finally {

@@ -900,12 +900,12 @@ function pageUrl(path){
 
 const SITE_URL=pageUrl("user-panel.html");
 const RESET_URL=pageUrl("reset-password.html");
+const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
 let manualAuthInProgress=false;
 
-function safeReturnTo(fallback){
+function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
-  const params=new URLSearchParams(window.location.search);
-  const raw=String(params.get("returnTo") || fallbackPath).trim();
+  const raw=String(value || fallbackPath).trim();
   try{
     const target=new URL(decodeURIComponent(raw), window.location.href);
     if(target.origin!==window.location.origin)return pageUrl(fallbackPath);
@@ -913,6 +913,32 @@ function safeReturnTo(fallback){
   }catch(error){
     return pageUrl(fallbackPath);
   }
+}
+
+function rememberReturnTo(value,fallback){
+  const target=normalizeReturnTo(value,fallback);
+  try{
+    sessionStorage.setItem(AUTH_RETURN_TO_KEY,target);
+  }catch(error){}
+  return target;
+}
+
+function clearStoredReturnTo(){
+  try{
+    sessionStorage.removeItem(AUTH_RETURN_TO_KEY);
+  }catch(error){}
+}
+
+function safeReturnTo(fallback){
+  const fallbackPath=fallback || "user-panel.html";
+  const params=new URLSearchParams(window.location.search);
+  const raw=String(params.get("returnTo") || "").trim();
+  if(raw)return rememberReturnTo(raw,fallbackPath);
+  try{
+    const stored=sessionStorage.getItem(AUTH_RETURN_TO_KEY);
+    if(stored)return normalizeReturnTo(stored,fallbackPath);
+  }catch(error){}
+  return pageUrl(fallbackPath);
 }
 
 function apiBaseUrl(){
@@ -995,7 +1021,8 @@ async function needsMfaVerification(){
 }
 
 function redirectMfa(returnTo){
-  window.location.href="mfa.html?returnTo="+encodeURIComponent(returnTo || safeReturnTo("user-panel.html"));
+  const target=rememberReturnTo(returnTo || safeReturnTo("user-panel.html"),"user-panel.html");
+  window.location.href="mfa.html?returnTo="+encodeURIComponent(target);
 }
 
 async function redirectAuthenticatedUser(){
@@ -1653,6 +1680,7 @@ async function loginUser(){
       redirectMfa(returnTo);
       return;
     }
+    clearStoredReturnTo();
     window.location.href = returnTo;
   }catch(error){
     secureAuthAlert(loginFailureMessage(error));
