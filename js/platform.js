@@ -939,7 +939,7 @@
       [/kullanım|şart/i, "/pages/legal/kullanim-sartlari.html"],
       [/mesafeli|sözleşme/i, "/pages/legal/mesafeli-satis.html"],
       [/iletişim|bize/i, "/pages/company/iletisim.html"],
-      [/modül|hizmet/i, "/pages/ecosystem/ecosystem.html#modules"],
+      [/modül|hizmet/i, "/index.html#modules"],
       [/kariyer|iş/i, "/pages/career/allonakariyer.html"],
       [/allona shop|ürün|mağaza/i, "/pages/commerce/allonashop.html"],
       [/yemek|restoran/i, "/pages/commerce/allonayemek.html"],

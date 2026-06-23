@@ -62,7 +62,7 @@
         <div class="nav-row">
           <div class="container nav-row__inner">
             <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
-              <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/index.html#modules")}" ${active("/index.html")}>Ekosistem</a>
               <a href="${core.url("/allonahub-akademi.html")}" ${active("/allonahub-akademi.html")}>Akademi</a>
               <a href="${core.url("/pages/ecosystem/allonataksi.html")}" ${active("/pages/ecosystem/allonataksi.html")}>Taksi</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
@@ -126,7 +126,7 @@
           </div>
           <div class="footer-col">
             <h3>Ekosistem</h3>
-            <a href="${core.url("/pages/ecosystem/ecosystem.html#modules")}">Tüm Modüller</a>
+            <a href="${core.url("/index.html#modules")}">Tüm Modüller</a>
             <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
             <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
             <a href="${core.url("/pages/account/premium.html")}">Premium</a>

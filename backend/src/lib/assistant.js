@@ -127,7 +127,7 @@ const PLATFORM_LINKS = Object.freeze({
   career: "/pages/career/allonakariyer.html",
   smartCv: "/pages/career/career-cv-form.html",
   maritimeCv: "/pages/career/cv-form.html",
-  maritime: "/pages/ecosystem/denizcilik.html",
+  maritime: "/pages/ecosystem/allonadenizcilik.html",
   taxi: "/pages/ecosystem/allonataksi.html",
   courier: "/pages/ecosystem/allonakurye.html",
   logistics: "/pages/ecosystem/allonalojistik.html",

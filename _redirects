@@ -47,7 +47,7 @@
 /akademi /allonahub-akademi.html 301
 /akademi/ /allonahub-akademi.html 301
 /academy /allonahub-akademi.html 301
-/ecosystem.html /pages/ecosystem/ecosystem.html 301
+/ecosystem.html /index.html 301
 /taxi.html /pages/ecosystem/allonataksi.html 301
 /allonaavm.html /pages/ecosystem/allonaavm.html 301
 /allonadanismanlik.html /pages/ecosystem/allonadanismanlik.html 301
@@ -79,7 +79,7 @@
 /allonatrade.html /pages/ecosystem/allonatrade.html 301
 /ayakında.html /pages/ecosystem/ayakında.html 301
 /danismanlik.html /pages/ecosystem/allonadanismanlik.html 301
-/denizcilik.html /pages/ecosystem/denizcilik.html 301
+/denizcilik.html /pages/ecosystem/allonadenizcilik.html 301
 /eglence.html /pages/ecosystem/allonaeglence.html 301
 /evhizmetleri.html /pages/ecosystem/allonaevhizmetleri.html 301
 /finans.html /pages/ecosystem/allonafinans.html 301

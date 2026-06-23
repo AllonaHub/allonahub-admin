@@ -31,42 +31,80 @@ pinEl["__allonaSource_aria-label"]=label;
 pinEl.__allonaSource_title=label;
 pinEl.setAttribute("aria-label",label);
 pinEl.setAttribute("title",label);
-}
+	}
 }
 
-async function setLocationByBrowser(){
-updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
-if(!navigator.geolocation){return}
-if(!navigator.permissions||!navigator.permissions.query){return}
-let permission;
-try{
-permission=await navigator.permissions.query({name:"geolocation"});
-}catch(e){return}
-if(permission&&"onchange" in permission){
-permission.onchange=function(){setLocationByBrowser()};
+function getLocationErrorMessage(error){
+if(error&&error.code===1){return ["Konum izni kapalı","İzin verilmedi"]}
+if(error&&error.code===2){return ["Konum alınamadı","Sinyal yok"]}
+if(error&&error.code===3){return ["Konum zaman aşımı","Tekrar deneyin"]}
+return ["Konum belirlenemedi","İzin verilmedi"]
 }
-if(permission.state!=="granted"){return}
+
+async function reverseGeocodeLocation(lat,lon){
+const providers=[
+`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=tr`,
+`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=tr`
+];
+for(const url of providers){
+try{
+const res=await fetch(url,{headers:{Accept:"application/json"}});
+if(!res.ok){continue}
+const data=await res.json();
+const address=data.address||data.localityInfo?.administrative?.reduce((acc,item)=>{
+if(item&&item.name&&!acc[item.description]){acc[item.description]=item.name}
+return acc
+},{})||{};
+const city=address.city||address.town||address.village||address.district||address.county||address.state||data.city||data.locality||data.principalSubdivision;
+const country=address.country||data.countryName;
+if(city||country){return {city,country}}
+}catch(e){
+}
+}
+return null
+}
+
+function requestBrowserLocation(){
 navigator.geolocation.getCurrentPosition(async function(pos){
 const lat=pos.coords.latitude;
 const lon=pos.coords.longitude;
 let city="Konum bulundu";
-let country="Konum izni açık";
-try{
-const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=tr`);
-const data=await res.json();
-const address=data.address||{};
-city=address.city||address.town||address.district||address.county||address.state||city;
-country=address.country||country;
-}catch(e){
+let country="Canlı konum açık";
+const place=await reverseGeocodeLocation(lat,lon);
+if(place){
+city=place.city||city;
+country=place.country||country;
 }
 updateLocationStatus(true,city,country);
-},function(){
-updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
+},function(error){
+const message=getLocationErrorMessage(error);
+updateLocationStatus(false,message[0],message[1]);
 },{
 enableHighAccuracy:false,
 maximumAge:600000,
-timeout:4000
+timeout:8000
 });
+}
+
+async function setLocationByBrowser(){
+updateLocationStatus(false,"Konum belirlenemedi","İzin bekleniyor");
+if(!navigator.geolocation){return}
+let permission;
+if(navigator.permissions&&navigator.permissions.query){
+try{
+permission=await navigator.permissions.query({name:"geolocation"});
+}catch(e){
+permission=null;
+}
+if(permission&&"onchange" in permission){
+permission.onchange=function(){setLocationByBrowser()};
+}
+}
+if(permission&&permission.state==="denied"){
+updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
+return
+}
+requestBrowserLocation();
 }
 setLocationByBrowser();
 
