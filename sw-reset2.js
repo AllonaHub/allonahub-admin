@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260623-reset1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260623-reset2";
 const APP_SHELL = [
   "./",
   "./index.html",
