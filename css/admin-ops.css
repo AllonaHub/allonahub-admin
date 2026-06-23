@@ -250,6 +250,10 @@ button {
   background: rgba(0, 213, 232, 0.1);
 }
 
+.admin-nav button.is-locked {
+  opacity: 0.58;
+}
+
 .admin-nav small {
   color: var(--admin-gold);
   font-size: 11px;
@@ -321,6 +325,35 @@ button {
 .admin-metric strong {
   font-size: 28px;
   color: var(--admin-text);
+}
+
+.admin-access-strip {
+  display: grid;
+  grid-template-columns: 1.4fr 0.55fr 0.8fr;
+  gap: 10px;
+}
+
+.admin-access-strip > div {
+  min-height: 88px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: linear-gradient(135deg, rgba(0, 213, 232, 0.08), rgba(255, 215, 106, 0.055));
+  padding: 12px;
+  display: grid;
+  align-content: space-between;
+}
+
+.admin-access-strip span,
+.admin-access-strip small {
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-access-strip strong {
+  color: var(--admin-text);
+  font-size: 20px;
+  line-height: 1.15;
 }
 
 .admin-split {
@@ -471,6 +504,25 @@ button {
   color: var(--admin-muted);
   font-size: 12px;
   font-weight: 900;
+}
+
+.admin-check {
+  min-height: 42px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--admin-text);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.admin-check input {
+  width: 16px;
+  height: 16px;
 }
 
 .admin-form-actions {
@@ -680,6 +732,10 @@ button {
 
   .admin-metrics {
     grid-template-columns: repeat(3, minmax(130px, 1fr));
+  }
+
+  .admin-access-strip {
+    grid-template-columns: 1fr;
   }
 
   .admin-split {

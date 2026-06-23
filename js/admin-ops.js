@@ -6,6 +6,7 @@
   const state = {
     view: "dashboard",
     profile: null,
+    access: null,
     capabilities: {},
     dashboard: null,
     warnings: [],
@@ -16,6 +17,9 @@
       orders: [],
       tickets: [],
       proposals: [],
+      approvals: [],
+      emergency: { alerts: [], requests: [] },
+      permissions: null,
       security: {},
       reports: {},
       audit: []
@@ -23,16 +27,19 @@
   };
 
   const views = {
-    dashboard: { label: "Dashboard", marker: "Canlı" },
-    users: { label: "Kullanıcı Takibi", marker: "" },
-    applications: { label: "Partner Başvuruları", marker: "" },
-    partners: { label: "Partner Operasyonları", marker: "" },
-    orders: { label: "Sipariş Yönetimi", marker: "" },
-    content: { label: "İçerik Yönetimi", marker: "" },
-    support: { label: "Destek Talepleri", marker: "" },
-    security: { label: "Güvenlik İzleme", marker: "" },
-    reports: { label: "Raporlama", marker: "" },
-    audit: { label: "Audit Log", marker: "" }
+    dashboard: { label: "Dashboard", marker: "Canlı", permission: "dashboard.view" },
+    users: { label: "Kullanıcı Takibi", marker: "", permission: "users.view" },
+    applications: { label: "Partner Başvuruları", marker: "", permission: "applications.view" },
+    partners: { label: "Partner Operasyonları", marker: "", permission: "partners.view" },
+    orders: { label: "Sipariş Yönetimi", marker: "", permission: "orders.view" },
+    support: { label: "Destek Talepleri", marker: "", permission: "support.view" },
+    content: { label: "İçerik Yönetimi", marker: "", permission: "content.view" },
+    security: { label: "Güvenlik İzleme", marker: "", permission: "security.view" },
+    approvals: { label: "Onay Kuyruğu", marker: "SA", permission: "approvals.view" },
+    emergency: { label: "Acil Alarmlar", marker: "Ses", permission: "emergency.view" },
+    permissions: { label: "Yetki Merkezi", marker: "RLS", permission: "permissions.view" },
+    reports: { label: "Raporlama", marker: "", permission: "reports.view" },
+    audit: { label: "Audit Log", marker: "", permission: "audit.view" }
   };
 
   function $(selector) {
@@ -68,6 +75,24 @@
       || (["warning", "review", "in_progress", "awaiting_payment", "pending_super_admin"].includes(normalized) ? "orange" : "")
       || (["critical", "rejected", "cancelled", "failed", "suspended"].includes(normalized) ? "red" : "");
     return `<span class="admin-badge ${color ? `admin-badge--${color}` : ""}">${escape(text)}</span>`;
+  }
+
+  function can(permissionKey) {
+    if (!permissionKey) return true;
+    return state.access?.permissions?.[permissionKey] === true;
+  }
+
+  function permissionAttrs(permissionKey) {
+    return can(permissionKey)
+      ? ""
+      : `disabled aria-disabled="true" title="${escape("Bu işlem için Super Admin yetkisi gerekir.")}"`;
+  }
+
+  function permissionsAttrs(permissionKeys) {
+    const keys = Array.isArray(permissionKeys) ? permissionKeys : [permissionKeys];
+    return keys.every((key) => can(key))
+      ? ""
+      : `disabled aria-disabled="true" title="${escape("Bu işlem için Super Admin yetkisi gerekir.")}"`;
   }
 
   function titleCell(title, sub) {
@@ -196,6 +221,32 @@
     `).join("")}</div>`;
   }
 
+  function accessSummary() {
+    const access = state.access;
+    if (!access) return "";
+    const enabled = Object.entries(access.permissions || {}).filter(([, value]) => value === true).length;
+    const restricted = access.restricted_permissions || [];
+    return `
+      <div class="admin-access-strip">
+        <div>
+          <span>Yetki Profili</span>
+          <strong>${escape(access.profile?.label || access.profile?.profile_key || "Admin")}</strong>
+          <small>${escape(access.profile?.description || "Super Admin onayli operasyon profili")}</small>
+        </div>
+        <div>
+          <span>Aktif izin</span>
+          <strong>${escape(enabled)}</strong>
+          <small>Backend + RLS siniri</small>
+        </div>
+        <div>
+          <span>Kapali alan</span>
+          <strong>${escape(restricted.length)}</strong>
+          <small>Finans, sistem ve Super Admin yetkileri kapali</small>
+        </div>
+      </div>
+    `;
+  }
+
   function renderDashboard(payload) {
     const dashboard = payload || state.dashboard || { metrics: {}, recentOrders: [], alerts: [] };
     const orders = dashboard.recentOrders || [];
@@ -223,6 +274,7 @@
 
     $("#adminContent").innerHTML = [
       section("Admin Dashboard", "Günlük operasyon özeti", metricsGrid(dashboard.metrics || {})),
+      accessSummary(),
       warningPanel(),
       `<div class="admin-split">
         ${section("Son Siparişler", "", table(["Sipariş", "Müşteri", "Tutar", "Sipariş", "Ödeme"], orderRows, "Sipariş kaydı bulunamadı."))}
@@ -242,8 +294,8 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="user" data-id="${escape(user.id)}">Detay</button>
-            <button class="admin-btn admin-btn--gold" type="button" data-user-note="${escape(user.id)}">Not</button>
-            <button class="admin-btn admin-btn--danger" type="button" data-user-flag="${escape(user.id)}">Şüpheli</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-user-note="${escape(user.id)}" ${permissionAttrs("users.note")}>Not</button>
+            <button class="admin-btn admin-btn--danger" type="button" data-user-flag="${escape(user.id)}" ${permissionAttrs("users.flag")}>Şüpheli</button>
           </span>
         </td>
       </tr>
@@ -267,9 +319,10 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="application" data-id="${escape(item.id)}">Detay</button>
-            <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}">İncele</button>
-            <button class="admin-btn admin-btn--gold" type="button" data-application-action="recommend_approve" data-id="${escape(item.id)}">Onay Öner</button>
-            <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}">Ret Öner</button>
+            <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}" ${permissionAttrs("applications.review")}>İncele</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-application-action="recommend_approve" data-id="${escape(item.id)}" ${permissionsAttrs(["applications.review", "approvals.request"])}>Onay Öner</button>
+            <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}" ${permissionsAttrs(["applications.review", "approvals.request"])}>Ret Öner</button>
+            <button class="admin-btn" type="button" data-application-action="send_super_admin" data-id="${escape(item.id)}" ${permissionsAttrs(["applications.review", "approvals.request"])}>SA Onayı</button>
           </span>
         </td>
       </tr>
@@ -312,7 +365,7 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="order" data-id="${escape(order.id)}">Detay</button>
-            <button class="admin-btn admin-btn--danger" type="button" data-order-risk="${escape(order.id)}">Riskli</button>
+            <button class="admin-btn admin-btn--danger" type="button" data-order-risk="${escape(order.id)}" ${permissionAttrs("orders.flag")}>Riskli</button>
           </span>
         </td>
       </tr>
@@ -336,8 +389,8 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="ticket" data-id="${escape(ticket.id)}" data-source="${escape(ticket.source)}">Detay</button>
-            <button class="admin-btn" type="button" data-support-status="in_progress" data-id="${escape(ticket.id)}" data-source="${escape(ticket.source)}">İşlemde</button>
-            <button class="admin-btn admin-btn--gold" type="button" data-support-status="resolved" data-id="${escape(ticket.id)}" data-source="${escape(ticket.source)}">Çözüldü</button>
+            <button class="admin-btn" type="button" data-support-status="in_progress" data-id="${escape(ticket.id)}" data-source="${escape(ticket.source)}" ${permissionAttrs("support.update")}>İşlemde</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-support-status="resolved" data-id="${escape(ticket.id)}" data-source="${escape(ticket.source)}" ${permissionAttrs("support.update")}>Çözüldü</button>
           </span>
         </td>
       </tr>
@@ -387,7 +440,7 @@
           <textarea id="contentSummary" name="summary" maxlength="1600" required></textarea>
         </div>
         <div class="admin-form-actions">
-          <button class="admin-btn admin-btn--primary" type="submit">Onaya Gönder</button>
+          <button class="admin-btn admin-btn--primary" type="submit" ${permissionsAttrs(["content.propose", "approvals.request"])}>Onaya Gönder</button>
         </div>
       </form>
     `;
@@ -468,6 +521,132 @@
       "Admin Panel işlemleri ve görüntüleme kayıtları",
       warningPanel() + table(["İşlem", "Rol", "Risk", "Kayıt", "IP", "Tarih"], rows, "Audit kaydı bulunamadı.")
     );
+  }
+
+  function renderPermissions(payload) {
+    const access = payload?.access || state.access || {};
+    const definitions = access.definitions || [];
+    const permissions = access.permissions || {};
+    const rows = definitions.map((item) => `
+      <tr>
+        <td>${titleCell(item.label, item.description)}</td>
+        <td>${escape(item.key)}</td>
+        <td>${badge(permissions[item.key] ? "aktif" : "kapali", permissions[item.key] ? "green" : "red")}</td>
+      </tr>
+    `);
+    const restricted = (access.restricted_permissions || []).map((item) => `
+      <div class="admin-list-item">
+        <strong>${escape(item.key)}</strong>
+        <p>${escape(item.reason)}</p>
+      </div>
+    `).join("");
+    const rules = Object.entries(access.approval_rules || {}).map(([key, value]) => `
+      <div class="admin-list-item">
+        <strong>${escape(key.replace(/_/g, " "))}</strong>
+        <p>${escape(value)}</p>
+      </div>
+    `).join("");
+
+    $("#adminContent").innerHTML = [
+      section(
+        "Yetki Merkezi",
+        "Super Admin tarafından atanmış Admin Panel sınırları",
+        warningPanel() + accessSummary() + table(["Yetki", "Anahtar", "Durum"], rows, "Yetki tanımı bulunamadı.")
+      ),
+      `<div class="admin-split">
+        ${section("Kapalı Alanlar", "", `<div class="admin-list">${restricted || statusBox("Kapalı alan tanımı yok.")}</div>`)}
+        ${section("Onay Kuralları", "", `<div class="admin-list">${rules || statusBox("Onay kuralı yok.")}</div>`)}
+      </div>`
+    ].join("");
+  }
+
+  function renderApprovals(requests) {
+    const rows = requests.map((item) => `
+      <tr>
+        <td>${titleCell(item.request_type, item.summary)}</td>
+        <td>${badge(item.target_type)}</td>
+        <td>${escape(item.target_id || "-")}</td>
+        <td>${badge(item.status)}</td>
+        <td>${dateTime(item.decided_at || item.created_at)}</td>
+      </tr>
+    `);
+    $("#adminContent").innerHTML = section(
+      "Onay Kuyruğu",
+      "Super Admin kararı bekleyen operasyon talepleri",
+      warningPanel() + table(["Talep", "Hedef", "Kayıt", "Durum", "Tarih"], rows, "Onay talebi bulunamadı.")
+    );
+  }
+
+  function renderEmergency(payload) {
+    const alerts = payload?.alerts || [];
+    const requests = payload?.requests || [];
+    const alertRows = alerts.map((item) => `
+      <tr>
+        <td>${titleCell(item.title, item.message)}</td>
+        <td>${badge(item.severity)}</td>
+        <td>${badge(item.scope)}</td>
+        <td>${badge(item.status)}</td>
+        <td>${escape((item.delivery_channels || []).join(", ") || "-")}</td>
+        <td>${item.sound_enabled ? badge("ses", "orange") : badge("sessiz")}</td>
+        <td>${dateTime(item.created_at)}</td>
+      </tr>
+    `);
+    const requestRows = requests.map((item) => `
+      <tr>
+        <td>${titleCell(item.request_type, item.summary)}</td>
+        <td>${badge(item.status)}</td>
+        <td>${escape(item.target_id || "-")}</td>
+        <td>${dateTime(item.created_at)}</td>
+      </tr>
+    `);
+    const form = `
+      <form data-emergency-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="emergencyTitle">Başlık</label>
+            <input id="emergencyTitle" name="title" maxlength="160" required>
+          </div>
+          <div class="admin-field">
+            <label for="emergencySeverity">Risk</label>
+            <select id="emergencySeverity" name="severity">
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="emergencyScope">Kapsam</label>
+            <select id="emergencyScope" name="scope">
+              <option value="admin">Admin</option>
+              <option value="platform">Platform Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-field" style="margin-top:12px">
+          <label for="emergencyMessage">Mesaj</label>
+          <textarea id="emergencyMessage" name="message" maxlength="1600" required></textarea>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <label class="admin-check"><input type="checkbox" name="delivery_channels" value="banner" checked> Banner</label>
+          <label class="admin-check"><input type="checkbox" name="delivery_channels" value="modal"> Modal</label>
+          <label class="admin-check"><input type="checkbox" name="delivery_channels" value="sound"> Ses</label>
+        </div>
+        <div class="admin-field" style="margin-top:12px">
+          <label for="emergencyReason">Gerekçe</label>
+          <textarea id="emergencyReason" name="reason" maxlength="1200" required></textarea>
+        </div>
+        <div class="admin-form-actions">
+          <button class="admin-btn" type="button" data-sound-test ${permissionAttrs("emergency.request")}>Ses Testi</button>
+          <button class="admin-btn admin-btn--danger" type="submit" ${permissionsAttrs(["emergency.request", "approvals.request"])}>Super Admin Onayına Gönder</button>
+        </div>
+      </form>
+    `;
+
+    $("#adminContent").innerHTML = [
+      section("Acil Alarm Talebi", "Sesli uyarı ve platform bildirimi için Super Admin onayı", warningPanel() + form),
+      section("Alarm Kayıtları", "", table(["Alarm", "Risk", "Kapsam", "Durum", "Kanal", "Ses", "Tarih"], alertRows, "Alarm kaydı bulunamadı.")),
+      section("Alarm Onay Talepleri", "", table(["Talep", "Durum", "Alarm", "Tarih"], requestRows, "Alarm onay talebi bulunamadı."))
+    ].join("");
   }
 
   function renderObjectDetails(title, record) {
@@ -615,6 +794,29 @@
     renderAudit(state.cache.audit);
   }
 
+  async function loadPermissions() {
+    const data = await api("/v1/admin/ops/permissions");
+    state.cache.permissions = data.access || null;
+    state.access = data.access || state.access;
+    state.capabilities = data.access?.capabilities || state.capabilities;
+    state.warnings = data.warnings || [];
+    renderPermissions(data);
+  }
+
+  async function loadApprovals() {
+    const data = await api(`/v1/admin/ops/approval-requests?${queryParams()}`);
+    state.cache.approvals = data.requests || [];
+    state.warnings = data.warnings || [];
+    renderApprovals(state.cache.approvals);
+  }
+
+  async function loadEmergency() {
+    const data = await api("/v1/admin/ops/emergency-alerts");
+    state.cache.emergency = { alerts: data.alerts || [], requests: data.requests || [] };
+    state.warnings = data.warnings || [];
+    renderEmergency(state.cache.emergency);
+  }
+
   async function loadView(view) {
     state.view = view || state.view;
     setActiveNav();
@@ -628,6 +830,9 @@
       if (state.view === "content") await loadContent();
       if (state.view === "support") await loadSupport();
       if (state.view === "security") await loadSecurity();
+      if (state.view === "approvals") await loadApprovals();
+      if (state.view === "emergency") await loadEmergency();
+      if (state.view === "permissions") await loadPermissions();
       if (state.view === "reports") await loadReports();
       if (state.view === "audit") await loadAudit();
     } catch (error) {
@@ -796,15 +1001,69 @@
     await loadContent();
   }
 
+  function playEmergencyTone() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+      showToast("Tarayıcı ses testi desteklemiyor.", "error");
+      return;
+    }
+    const audio = new AudioContext();
+    const gain = audio.createGain();
+    gain.gain.value = 0.05;
+    gain.connect(audio.destination);
+    [0, 160, 320].forEach((offset) => {
+      const oscillator = audio.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.value = offset === 160 ? 740 : 520;
+      oscillator.connect(gain);
+      oscillator.start(audio.currentTime + offset / 1000);
+      oscillator.stop(audio.currentTime + (offset + 120) / 1000);
+    });
+    setTimeout(() => audio.close().catch(() => {}), 700);
+  }
+
+  async function createEmergencyAlertRequest(form) {
+    const formData = new FormData(form);
+    const raw = Object.fromEntries(formData.entries());
+    const channels = formData.getAll("delivery_channels");
+    const data = await openModal({
+      title: "Acil Alarm Onayı",
+      message: "Talep Super Admin onay kuyruğuna gönderilecek.",
+      confirmText: "Onaya Gönder",
+      danger: raw.severity === "critical",
+      fields: [
+        { id: "confirm", label: "Onay notu", type: "textarea", value: raw.reason, required: true }
+      ]
+    });
+    if (!data) return;
+    await api("/v1/admin/ops/emergency-alerts", {
+      method: "POST",
+      body: {
+        title: raw.title,
+        message: raw.message,
+        severity: raw.severity,
+        scope: raw.scope,
+        delivery_channels: channels.length ? channels : ["banner"],
+        sound_enabled: channels.includes("sound"),
+        reason: data.confirm
+      }
+    });
+    showToast("Acil alarm talebi Super Admin onayına gönderildi.");
+    form.reset();
+    await loadEmergency();
+  }
+
   async function bootstrap() {
     try {
       const data = await api("/v1/admin/ops/bootstrap");
       state.profile = data.profile;
+      state.access = data.access || null;
       state.capabilities = data.capabilities || {};
       state.dashboard = data.dashboard;
       state.warnings = data.warnings || [];
       $("#adminProfileName").textContent = state.profile.full_name || "Admin";
-      $("#adminProfileRole").textContent = state.profile.role || "admin";
+      $("#adminProfileRole").textContent = state.access?.profile?.label || state.profile.role || "admin";
+      renderNav();
       if (state.view === "dashboard") {
         renderDashboard(state.dashboard);
       } else {
@@ -833,6 +1092,10 @@
       }
       if (event.target.closest("#adminSignOut")) {
         await App.auth.signOut();
+        return;
+      }
+      if (event.target.closest("[data-sound-test]")) {
+        playEmergencyTone();
         return;
       }
       const detail = event.target.closest("[data-detail]");
@@ -872,16 +1135,21 @@
         event.preventDefault();
         await createContentProposal(contentForm).catch((error) => showToast(error.message, "error"));
       }
+      const emergencyForm = event.target.closest("[data-emergency-form]");
+      if (emergencyForm) {
+        event.preventDefault();
+        await createEmergencyAlertRequest(emergencyForm).catch((error) => showToast(error.message, "error"));
+      }
     });
 
     $("#adminGlobalSearch")?.addEventListener("input", core.debounce(() => {
-      if (state.view !== "dashboard" && state.view !== "content" && state.view !== "security" && state.view !== "reports" && state.view !== "audit") {
+      if (!["dashboard", "content", "security", "emergency", "permissions", "reports", "audit"].includes(state.view)) {
         loadView(state.view);
       }
     }, 350));
 
     $("#adminGlobalStatus")?.addEventListener("change", () => {
-      if (state.view !== "dashboard" && state.view !== "content" && state.view !== "security" && state.view !== "reports" && state.view !== "audit") {
+      if (!["dashboard", "content", "security", "emergency", "permissions", "reports", "audit"].includes(state.view)) {
         loadView(state.view);
       }
     });
@@ -890,12 +1158,15 @@
   function renderNav() {
     const nav = $("#adminNav");
     if (!nav) return;
-    nav.innerHTML = Object.entries(views).map(([key, item]) => `
-      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""}">
+    nav.innerHTML = Object.entries(views).map(([key, item]) => {
+      const locked = state.access && !can(item.permission);
+      return `
+      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""} ${locked ? "is-locked" : ""}" ${locked ? "disabled aria-disabled=\"true\"" : ""}>
         <span>${escape(item.label)}</span>
-        ${item.marker ? `<small>${escape(item.marker)}</small>` : ""}
+        ${locked ? "<small>Kapalı</small>" : item.marker ? `<small>${escape(item.marker)}</small>` : ""}
       </button>
-    `).join("");
+    `;
+    }).join("");
   }
 
   document.addEventListener("DOMContentLoaded", async () => {

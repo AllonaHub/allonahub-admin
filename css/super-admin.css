@@ -212,6 +212,10 @@ textarea {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.sa-stack {
+  margin-top: 14px;
+}
+
 .sa-stat,
 .sa-panel,
 .sa-module {
@@ -289,6 +293,7 @@ textarea {
 .sa-setting-control select,
 .sa-module input,
 .sa-module select,
+.sa-table select,
 .sa-modal textarea {
   min-height: 38px;
   border: 1px solid var(--sa-line);
@@ -297,6 +302,11 @@ textarea {
   color: var(--sa-text);
   padding: 0 10px;
   outline: 0;
+}
+
+.sa-table select {
+  width: min(100%, 220px);
+  margin-bottom: 6px;
 }
 
 .sa-filters input {
@@ -360,6 +370,8 @@ textarea {
 .sa-risk-high,
 .sa-risk-medium,
 .sa-risk-low,
+.sa-risk-warning,
+.sa-risk-info,
 .sa-status-active,
 .sa-status-suspended,
 .sa-status-passive,
@@ -379,6 +391,7 @@ textarea {
 }
 
 .sa-risk-high,
+.sa-risk-warning,
 .sa-status-warning {
   color: #ffe3b0;
   background: rgba(245, 200, 75, 0.17);
@@ -390,6 +403,7 @@ textarea {
 }
 
 .sa-risk-low,
+.sa-risk-info,
 .sa-status-active,
 .sa-status-paid {
   color: #d7fff0;

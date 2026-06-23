@@ -10,7 +10,8 @@
     applications: [],
     businesses: [],
     settings: [],
-    modules: []
+    modules: [],
+    adminOps: null
   };
 
   const viewLoaders = {
@@ -18,6 +19,7 @@
     users: loadUsers,
     partners: loadPartners,
     security: loadSecurity,
+    adminOps: loadAdminOps,
     settings: loadSettings,
     modules: loadModules,
     audit: loadAuditLog
@@ -309,6 +311,133 @@
     renderEventsTable($("[data-security-events]"), securityData.recent_events || []);
   }
 
+  async function loadAdminOps() {
+    const payload = await api("/v1/super-admin/admin-ops");
+    state.adminOps = payload.admin_ops || {};
+    const data = state.adminOps;
+    const admins = data.admins || [];
+    const profiles = data.permission_profiles || [];
+    const assignments = data.assignments || [];
+    const approvals = data.approval_requests || [];
+    const alerts = data.emergency_alerts || [];
+    const assignmentByAdmin = new Map(assignments.map((item) => [item.admin_user_id, item]));
+
+    const adminTarget = $("[data-admin-ops-admins]");
+    const profileTarget = $("[data-admin-ops-profiles]");
+    const approvalTarget = $("[data-admin-ops-approvals]");
+    const alertTarget = $("[data-admin-ops-alerts]");
+
+    $("[data-admin-ops-admin-count]").textContent = `${formatNumber(admins.length)} kayıt`;
+    $("[data-admin-ops-approval-count]").textContent = `${formatNumber(approvals.length)} kayıt`;
+    $("[data-admin-ops-alert-count]").textContent = `${formatNumber(alerts.length)} kayıt`;
+
+    if (adminTarget) {
+      if (!admins.length) {
+        renderEmpty(adminTarget, "Admin kullanıcısı bulunamadı.");
+      } else {
+        adminTarget.innerHTML = `
+          <table class="sa-table">
+            <thead><tr><th>Admin</th><th>Durum</th><th>Yetki Profili</th><th>İşlem</th></tr></thead>
+            <tbody>
+              ${admins.map((admin) => {
+                const assignment = assignmentByAdmin.get(admin.id) || {};
+                return `
+                  <tr>
+                    <td><strong>${escape(admin.full_name || "-")}</strong><br><small>${escape(admin.email || admin.phone || admin.id)}</small></td>
+                    <td>${statusLabel(admin.account_status || "active")}<br><small>${escape(admin.risk_level || "low")}</small></td>
+                    <td>
+                      <select data-admin-profile-select="${escape(admin.id)}">
+                        ${profiles.map((profile) => `<option value="${escape(profile.profile_key)}" ${assignment.profile_key === profile.profile_key ? "selected" : ""}>${escape(profile.label || profile.profile_key)}</option>`).join("")}
+                      </select>
+                      <small>${escape(assignment.status || "atanmadı")}</small>
+                    </td>
+                    <td>
+                      <button class="sa-btn sa-mini" type="button" data-admin-profile-save="${escape(admin.id)}">Kaydet</button>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    if (profileTarget) {
+      profileTarget.innerHTML = profiles.length ? profiles.map((profile) => {
+        const permissionCount = Object.values(profile.permissions || {}).filter(Boolean).length;
+        return `
+          <div class="sa-list-item">
+            <strong>${escape(profile.label || profile.profile_key)}</strong>
+            <span>${escape(profile.profile_key)} / ${formatNumber(permissionCount)} izin</span>
+          </div>
+        `;
+      }).join("") : `<div class="sa-empty">Yetki profili bulunamadı.</div>`;
+    }
+
+    if (approvalTarget) {
+      if (!approvals.length) {
+        renderEmpty(approvalTarget, "Onay talebi bulunamadı.");
+      } else {
+        approvalTarget.innerHTML = `
+          <table class="sa-table">
+            <thead><tr><th>Talep</th><th>Hedef</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+            <tbody>
+              ${approvals.map((item) => `
+                <tr>
+                  <td><strong>${escape(item.request_type || "-")}</strong><br><small>${escape(item.summary || "-")}</small></td>
+                  <td>${escape(item.target_type || "-")}<br><small>${escape(item.target_id || "-")}</small></td>
+                  <td>${statusLabel(item.status)}</td>
+                  <td>${formatDate(item.created_at)}</td>
+                  <td>
+                    <div class="sa-row-actions">
+                      <button class="sa-btn sa-mini" type="button" data-admin-approval-decision="approved" data-request-id="${escape(item.id)}" ${item.status !== "pending_super_admin" ? "disabled" : ""}>Onayla</button>
+                      <button class="sa-btn sa-btn-danger sa-mini" type="button" data-admin-approval-decision="rejected" data-request-id="${escape(item.id)}" ${item.status !== "pending_super_admin" ? "disabled" : ""}>Reddet</button>
+                      <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-admin-approval-decision="cancelled" data-request-id="${escape(item.id)}" ${item.status !== "pending_super_admin" ? "disabled" : ""}>İptal</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    if (alertTarget) {
+      if (!alerts.length) {
+        renderEmpty(alertTarget, "Acil alarm bulunamadı.");
+      } else {
+        alertTarget.innerHTML = `
+          <table class="sa-table">
+            <thead><tr><th>Alarm</th><th>Risk</th><th>Kapsam</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody>
+              ${alerts.map((item) => `
+                <tr>
+                  <td><strong>${escape(item.title || "-")}</strong><br><small>${escape(item.message || "-")}</small></td>
+                  <td>${riskLabel(item.severity || "medium")}</td>
+                  <td>${escape(item.scope || "platform")}</td>
+                  <td>${statusLabel(item.status)}</td>
+                  <td>
+                    <div class="sa-row-actions">
+                      <button class="sa-btn sa-mini" type="button" data-emergency-status="active" data-alert-id="${escape(item.id)}" ${item.status === "active" ? "disabled" : ""}>Aktif</button>
+                      <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-emergency-status="resolved" data-alert-id="${escape(item.id)}" ${item.status === "resolved" ? "disabled" : ""}>Çözüldü</button>
+                      <button class="sa-btn sa-btn-danger sa-mini" type="button" data-emergency-status="cancelled" data-alert-id="${escape(item.id)}" ${item.status === "cancelled" ? "disabled" : ""}>İptal</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    if (payload.schema_warnings?.length) {
+      setAlert("Admin Ops migration/policy uyarısı var.");
+    }
+  }
+
   async function loadSettings() {
     const payload = await api("/v1/super-admin/settings");
     state.settings = payload.settings || [];
@@ -538,6 +667,57 @@
     }, { requireReason: false });
   }
 
+  async function saveAdminProfile(button) {
+    const adminId = button.dataset.adminProfileSave;
+    const safeId = cssEscape(adminId);
+    const select = $(`[data-admin-profile-select="${safeId}"]`);
+    const profileKey = select && select.value;
+    if (!profileKey) return;
+    await runConfirmed("Admin yetki profili güncellenecek.", async (reason) => {
+      await api("/v1/super-admin/admin-ops/assignments", {
+        method: "POST",
+        body: {
+          admin_user_id: adminId,
+          profile_key: profileKey,
+          status: "active",
+          notes: reason || `Profile ${profileKey}`
+        }
+      });
+    }, { requireReason: true });
+  }
+
+  async function decideAdminApproval(button) {
+    const requestId = button.dataset.requestId;
+    const decision = button.dataset.adminApprovalDecision;
+    const message = decision === "approved"
+      ? "Admin onay talebi kabul edilecek."
+      : decision === "rejected"
+      ? "Admin onay talebi reddedilecek."
+      : "Admin onay talebi iptal edilecek.";
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/super-admin/admin-ops/approval-requests/${encodeURIComponent(requestId)}`, {
+        method: "PATCH",
+        body: { decision, reason }
+      });
+    }, { requireReason: true });
+  }
+
+  async function updateEmergencyStatus(button) {
+    const alertId = button.dataset.alertId;
+    const status = button.dataset.emergencyStatus;
+    const message = status === "active"
+      ? "Acil alarm aktif yayına alınacak."
+      : status === "resolved"
+      ? "Acil alarm çözüldü olarak kapatılacak."
+      : "Acil alarm iptal edilecek.";
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/super-admin/emergency-alerts/${encodeURIComponent(alertId)}`, {
+        method: "PATCH",
+        body: { status, reason }
+      });
+    }, { requireReason: true });
+  }
+
   function bindInteractions() {
     const nav = $("[data-sa-nav]");
     if (nav) {
@@ -585,6 +765,15 @@
 
       const moduleSave = event.target.closest("[data-module-save]");
       if (moduleSave) await saveModule(moduleSave);
+
+      const adminProfileSave = event.target.closest("[data-admin-profile-save]");
+      if (adminProfileSave) await saveAdminProfile(adminProfileSave);
+
+      const adminApprovalDecision = event.target.closest("[data-admin-approval-decision]");
+      if (adminApprovalDecision) await decideAdminApproval(adminApprovalDecision);
+
+      const emergencyStatus = event.target.closest("[data-emergency-status]");
+      if (emergencyStatus) await updateEmergencyStatus(emergencyStatus);
     });
 
     const refresh = $("[data-sa-refresh]");
@@ -616,7 +805,7 @@
 
   async function reloadAll() {
     setAlert("");
-    for (const loader of [loadDashboard, loadUsers, loadPartners, loadSecurity, loadSettings, loadModules, loadAuditLog]) {
+    for (const loader of [loadDashboard, loadUsers, loadPartners, loadSecurity, loadAdminOps, loadSettings, loadModules, loadAuditLog]) {
       try {
         await loader();
       } catch (error) {

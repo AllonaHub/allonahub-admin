@@ -7,7 +7,7 @@
   <title>AllonaHub Admin Paneli</title>
   <link rel="icon" href="../favicon.ico">
   <link rel="stylesheet" href="../css/platform.css?v=20260621-mobile1">
-  <link rel="stylesheet" href="../css/admin-ops.css?v=20260621-adminops1">
+  <link rel="stylesheet" href="../css/admin-ops.css?v=20260623-adminops2">
 </head>
 <body class="admin-ops-page" data-page="admin-ops">
   <main class="admin-shell" data-admin-shell>
@@ -31,6 +31,10 @@
           <option value="resolved">Resolved</option>
           <option value="paid">Paid</option>
           <option value="cancelled">Cancelled</option>
+          <option value="pending_super_admin">Pending Super Admin</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="active">Active</option>
           <option value="hidden">Hidden</option>
         </select>
         <button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>
@@ -84,6 +88,7 @@
   <script src="../js/core.js?v=20260621-adminops1" defer></script>
   <script src="../js/supabase-client.js?v=20260621-adminops1" defer></script>
   <script src="../js/auth.js?v=20260621-adminops1" defer></script>
-  <script src="../js/admin-ops.js?v=20260621-adminops1" defer></script>
+  <script src="../js/platform-notifications.js?v=20260623-adminalerts2" defer></script>
+  <script src="../js/admin-ops.js?v=20260623-adminops2" defer></script>
 </body>
 </html>

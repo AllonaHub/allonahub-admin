@@ -263,10 +263,29 @@ const contentProposalSchema = z.object({
   payload: z.record(z.unknown()).optional().default({})
 });
 
+const adminEmergencyAlertSchema = z.object({
+  title: z.string().trim().min(3).max(160),
+  message: z.string().trim().min(3).max(1600),
+  severity: z.enum(["info", "warning", "critical"]).optional().default("warning"),
+  scope: z.enum(["admin", "platform"]).optional().default("admin"),
+  delivery_channels: z.array(z.enum(["banner", "modal", "sound", "desktop"])).min(1).max(4).optional().default(["banner"]),
+  sound_enabled: z.boolean().optional().default(false),
+  starts_at: z.string().datetime().optional(),
+  expires_at: z.string().datetime().optional(),
+  reason: z.string().trim().min(3).max(1200)
+});
+
 const adminAuditLogQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(100),
   severity: z.enum(["debug", "info", "warning", "critical"]).optional()
 });
+
+const notificationPreferenceSchema = z.object({
+  browser_notifications_enabled: z.boolean().optional(),
+  sound_enabled: z.boolean().optional(),
+  emergency_sound_enabled: z.boolean().optional(),
+  muted_until: z.string().datetime().nullable().optional()
+}).refine((value) => Object.keys(value).length > 0, "En az bir bildirim tercihi guncellenmelidir.");
 
 const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
 
@@ -302,6 +321,30 @@ const superAdminModuleUpdateSchema = z.object({
   content_config: z.record(z.unknown()).optional()
 }).refine((value) => Object.keys(value).length > 0, "En az bir modül alanı güncellenmelidir.");
 
+const adminPermissionProfileKeySchema = z.string().trim().min(2).max(80).regex(/^[a-z0-9_.:-]+$/i);
+
+const superAdminOpsAssignmentSchema = z.object({
+  admin_user_id: uuidSchema,
+  profile_key: adminPermissionProfileKeySchema,
+  status: z.enum(["active", "paused", "revoked"]).optional().default("active"),
+  expires_at: z.string().datetime().nullable().optional(),
+  notes: z.string().trim().max(1200).optional().default("")
+});
+
+const superAdminApprovalDecisionSchema = z.object({
+  decision: z.enum(["approved", "rejected", "cancelled"]),
+  reason: z.string().trim().min(3).max(1200)
+});
+
+const superAdminEmergencyAlertSchema = adminEmergencyAlertSchema.extend({
+  reason: z.string().trim().min(3).max(1200).optional().default("Super Admin direct emergency alert")
+});
+
+const superAdminEmergencyAlertStatusSchema = z.object({
+  status: z.enum(["active", "resolved", "expired", "cancelled"]),
+  reason: z.string().trim().min(3).max(1200)
+});
+
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
   { key: "maintenance_mode", label: "Bakım modu", value: false, value_type: "boolean", risk_level: "critical", category: "system" },
   { key: "orders_paused", label: "Siparişleri geçici durdur", value: false, value_type: "boolean", risk_level: "high", category: "commerce" },
@@ -325,6 +368,56 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "education", name: "Eğitim", category: "services" },
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
 ];
+
+const ADMIN_PERMISSION_DEFINITIONS = [
+  ["dashboard.view", "Dashboard", "Gunluk operasyon metrikleri"],
+  ["users.view", "Kullanici takibi", "Kullanici liste ve detay goruntuleme"],
+  ["users.note", "Kullanici notu", "Kullaniciya operasyon notu ekleme"],
+  ["users.flag", "Supheli kullanici", "Kullaniciyi riskli olarak isaretleme"],
+  ["applications.view", "Partner basvurulari", "Basvuru liste ve detay goruntuleme"],
+  ["applications.review", "Basvuru inceleme", "Inceleme, onay onerisi, ret onerisi ve Super Admin'e gonderme"],
+  ["partners.view", "Partner operasyonlari", "Partner durum ve performans goruntuleme"],
+  ["partners.note", "Partner notu", "Partner icin operasyonel not ekleme"],
+  ["orders.view", "Siparis yonetimi", "Siparis, odeme ve teslimat durumu goruntuleme"],
+  ["orders.flag", "Riskli siparis", "Siparisi riskli isaretleme"],
+  ["content.view", "Icerik yonetimi", "Icerik onerilerini goruntuleme"],
+  ["content.propose", "Icerik onerisi", "Banner, kampanya veya modul onerisi olusturma"],
+  ["support.view", "Destek talepleri", "Kullanici ve partner destek taleplerini goruntuleme"],
+  ["support.update", "Destek guncelleme", "Talep durumunu ve ic notu guncelleme"],
+  ["security.view", "Guvenlik izleme", "Admin yetkisi dahilindeki guvenlik uyarilari"],
+  ["reports.view", "Raporlama", "Gunluk operasyon raporlari"],
+  ["audit.view", "Audit log", "Admin islem kayitlarini goruntuleme"],
+  ["approvals.view", "Onay kuyrugu", "Super Admin onayi bekleyen talepler"],
+  ["approvals.request", "Onay talebi", "Super Admin onay talebi olusturma"],
+  ["emergency.view", "Acil alarm", "Acil bildirim ve alarm isteklerini goruntuleme"],
+  ["emergency.request", "Acil alarm talebi", "Acil alarm yayini icin Super Admin onay talebi olusturma"],
+  ["permissions.view", "Yetki merkezi", "Kendi admin yetki sinirlarini goruntuleme"]
+].map(([key, label, description]) => ({ key, label, description }));
+
+const ADMIN_RESTRICTED_PERMISSIONS = [
+  ["users.delete", "Admin kullanici verisi silemez."],
+  ["commission.change", "Admin komisyon orani degistiremez."],
+  ["finance.change", "Admin odeme ve finans ayarlarini degistiremez."],
+  ["super_admin.create", "Admin Super Admin olusturamaz."],
+  ["system_settings.change", "Admin sistem ayarlarini degistiremez."]
+].map(([key, reason]) => ({ key, reason }));
+
+const OPS_DEFAULT_PERMISSION_MAP = Object.fromEntries([
+  ...ADMIN_PERMISSION_DEFINITIONS.map((item) => [item.key, true]),
+  ...ADMIN_RESTRICTED_PERMISSIONS.map((item) => [item.key, false])
+]);
+
+const OPS_READONLY_PERMISSION_MAP = {
+  ...Object.fromEntries(ADMIN_PERMISSION_DEFINITIONS.map((item) => [item.key, item.key.endsWith(".view")])),
+  ...Object.fromEntries(ADMIN_RESTRICTED_PERMISSIONS.map((item) => [item.key, false]))
+};
+
+const DEFAULT_ADMIN_APPROVAL_RULES = {
+  partner_final_decision: "super_admin_required",
+  content_publish: "super_admin_required",
+  emergency_publish: "super_admin_required",
+  finance_or_commission_change: "blocked"
+};
 
 const routeRateLimit = {
   login: { config: { rateLimit: { max: 10, timeWindow: "15 minutes" } } },
@@ -661,6 +754,185 @@ async function auditedOpsEvent({ request, ctx, action, resourceType = null, reso
     evidenceTags: ["admin_ops", resourceType || "operation"],
     metadata
   });
+}
+
+function warningText(label, warning) {
+  if (!warning) return "";
+  return `${label}: ${warning.message || "Supabase migration veya policy production veritabaninda eksik gorunuyor."}`;
+}
+
+function normalizePermissions(rawPermissions, fallback) {
+  const permissions = { ...fallback };
+  if (rawPermissions && typeof rawPermissions === "object" && !Array.isArray(rawPermissions)) {
+    Object.entries(rawPermissions).forEach(([key, value]) => {
+      permissions[key] = value === true;
+    });
+  }
+  ADMIN_RESTRICTED_PERMISSIONS.forEach((item) => {
+    permissions[item.key] = false;
+  });
+  return permissions;
+}
+
+function adminCapabilitiesFromPermissions(permissions) {
+  return {
+    can_delete_users: Boolean(permissions["users.delete"]),
+    can_change_commission: Boolean(permissions["commission.change"]),
+    can_change_finance_settings: Boolean(permissions["finance.change"]),
+    can_create_super_admin: Boolean(permissions["super_admin.create"]),
+    can_change_system_settings: Boolean(permissions["system_settings.change"]),
+    can_create_operational_notes: Boolean(permissions["users.note"] || permissions["partners.note"]),
+    can_create_review_flags: Boolean(permissions["users.flag"] || permissions["orders.flag"]),
+    can_review_partner_applications: Boolean(permissions["applications.review"]),
+    can_update_support_tickets: Boolean(permissions["support.update"]),
+    can_create_content_proposals: Boolean(permissions["content.propose"]),
+    can_request_super_admin_approval: Boolean(permissions["approvals.request"]),
+    can_request_emergency_alerts: Boolean(permissions["emergency.request"])
+  };
+}
+
+async function loadAdminAccessProfile(ctx, warnings = []) {
+  const nowIso = new Date().toISOString();
+  const assignmentResult = await runAdminQuery(
+    "admin_permission_assignments_current",
+    supabaseAdmin
+      .from("admin_permission_assignments")
+      .select("*")
+      .eq("admin_user_id", ctx.user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    null
+  );
+
+  if (assignmentResult.warning) {
+    warnings.push(warningText("admin_permission_assignments", assignmentResult.warning));
+    return {
+      source: "migration_missing",
+      assignment: null,
+      profile: {
+        profile_key: "ops_default",
+        label: "Operasyon Admin",
+        description: "Migration eksik oldugu icin gecici ops_default fallback aktif.",
+        approval_rules: DEFAULT_ADMIN_APPROVAL_RULES
+      },
+      permissions: normalizePermissions(OPS_DEFAULT_PERMISSION_MAP, OPS_DEFAULT_PERMISSION_MAP),
+      approval_rules: DEFAULT_ADMIN_APPROVAL_RULES,
+      restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+      definitions: ADMIN_PERMISSION_DEFINITIONS,
+      capabilities: adminCapabilitiesFromPermissions(OPS_DEFAULT_PERMISSION_MAP)
+    };
+  }
+
+  const assignment = assignmentResult.data;
+  const assignmentActive = assignment
+    && (!assignment.starts_at || new Date(assignment.starts_at).getTime() <= Date.now())
+    && (!assignment.expires_at || new Date(assignment.expires_at).getTime() > Date.now());
+
+  if (!assignmentActive) {
+    warnings.push("admin_permission_assignments: Bu admin icin aktif yetki profili bulunamadi. Panel salt-okunur moda alindi.");
+    const permissions = normalizePermissions(OPS_READONLY_PERMISSION_MAP, OPS_READONLY_PERMISSION_MAP);
+    return {
+      source: "readonly_no_assignment",
+      assignment: null,
+      profile: {
+        profile_key: "readonly",
+        label: "Salt Okunur Admin",
+        description: "Super Admin tarafindan aktif operasyon yetkisi atanana kadar sadece goruntuleme.",
+        approval_rules: DEFAULT_ADMIN_APPROVAL_RULES
+      },
+      permissions,
+      approval_rules: DEFAULT_ADMIN_APPROVAL_RULES,
+      restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+      definitions: ADMIN_PERMISSION_DEFINITIONS,
+      capabilities: adminCapabilitiesFromPermissions(permissions)
+    };
+  }
+
+  const profileResult = await runAdminQuery(
+    "admin_permission_profiles_current",
+    supabaseAdmin
+      .from("admin_permission_profiles")
+      .select("*")
+      .eq("profile_key", assignment.profile_key)
+      .maybeSingle(),
+    null
+  );
+
+  if (profileResult.warning) {
+    warnings.push(warningText("admin_permission_profiles", profileResult.warning));
+  }
+
+  const profile = profileResult.data;
+  if (!profile || profile.is_active === false) {
+    warnings.push("admin_permission_profiles: Atanmis yetki profili pasif veya bulunamadi. Panel salt-okunur moda alindi.");
+    const permissions = normalizePermissions(OPS_READONLY_PERMISSION_MAP, OPS_READONLY_PERMISSION_MAP);
+    return {
+      source: "readonly_missing_profile",
+      assignment,
+      profile: {
+        profile_key: assignment.profile_key,
+        label: "Salt Okunur Admin",
+        description: "Atanmis yetki profili bulunamadi veya pasif.",
+        approval_rules: DEFAULT_ADMIN_APPROVAL_RULES
+      },
+      permissions,
+      approval_rules: DEFAULT_ADMIN_APPROVAL_RULES,
+      restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+      definitions: ADMIN_PERMISSION_DEFINITIONS,
+      capabilities: adminCapabilitiesFromPermissions(permissions)
+    };
+  }
+
+  const permissions = normalizePermissions(profile.permissions, OPS_READONLY_PERMISSION_MAP);
+  return {
+    source: "assignment",
+    assignment,
+    profile,
+    permissions,
+    approval_rules: profile.approval_rules || DEFAULT_ADMIN_APPROVAL_RULES,
+    restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+    definitions: ADMIN_PERMISSION_DEFINITIONS,
+    capabilities: adminCapabilitiesFromPermissions(permissions),
+    now: nowIso
+  };
+}
+
+async function requireOpsPermission(request, ctx, permissionKey) {
+  const warnings = [];
+  const access = await loadAdminAccessProfile(ctx, warnings);
+  if (access.permissions[permissionKey] === true) return access;
+
+  await auditedOpsEvent({
+    request,
+    ctx,
+    action: "admin.ops.permission_denied",
+    resourceType: "admin_permission",
+    resourceId: permissionKey,
+    severity: "warning",
+    metadata: {
+      permission: permissionKey,
+      access_source: access.source,
+      warning_count: warnings.length
+    }
+  });
+  throw httpError("Bu Admin Panel islemi icin Super Admin tarafindan yetki verilmemis.", 403);
+}
+
+function publicEmergencyAlert(alert) {
+  return {
+    id: alert.id,
+    title: alert.title,
+    message: alert.message,
+    severity: alert.severity || "warning",
+    scope: alert.scope || "platform",
+    delivery_channels: alert.delivery_channels || ["banner"],
+    sound_enabled: Boolean(alert.sound_enabled),
+    starts_at: alert.starts_at || null,
+    expires_at: alert.expires_at || null,
+    created_at: alert.created_at || null
+  };
 }
 
 function startOfTodayIso() {
@@ -1435,6 +1707,114 @@ export function registerRoutes(app) {
     });
 
     return reply.code(202).send({ ok: true });
+  });
+
+  app.get("/v1/admin/platform-alerts", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "admin.platform_alerts.view"
+    });
+    const nowIso = new Date().toISOString();
+    const result = await runAdminQuery(
+      "platform_emergency_alerts_admin_feed",
+      supabaseAdmin
+        .from("platform_emergency_alerts")
+        .select("id, title, message, severity, scope, delivery_channels, sound_enabled, starts_at, expires_at, created_at")
+        .eq("status", "active")
+        .lte("starts_at", nowIso)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .in("scope", ["admin", "platform"])
+        .order("severity", { ascending: true })
+        .order("created_at", { ascending: false })
+        .limit(5),
+      []
+    );
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.platform_alerts_viewed",
+      resourceType: "platform_emergency_alert",
+      source: "admin",
+      purpose: "admin_emergency_notifications",
+      metadata: { alert_count: result.data?.length || 0 }
+    });
+
+    return {
+      ok: true,
+      alerts: (result.data || []).map(publicEmergencyAlert),
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.get("/v1/notifications/preferences", async (request) => {
+    const ctx = await requireAuth(request, { action: "notifications.preferences.view" });
+    const result = await runAdminQuery(
+      "platform_notification_preferences",
+      supabaseAdmin
+        .from("platform_notification_preferences")
+        .select("*")
+        .eq("user_id", ctx.user.id)
+        .maybeSingle(),
+      null
+    );
+
+    return {
+      ok: true,
+      preferences: result.data || {
+        user_id: ctx.user.id,
+        browser_notifications_enabled: false,
+        sound_enabled: false,
+        emergency_sound_enabled: false,
+        muted_until: null
+      },
+      schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  app.patch("/v1/notifications/preferences", async (request) => {
+    const ctx = await requireAuth(request, { action: "notifications.preferences.update" });
+    const payload = notificationPreferenceSchema.parse(request.body || {});
+    const row = {
+      user_id: ctx.user.id,
+      ...payload,
+      updated_at: new Date().toISOString()
+    };
+    const { data, error } = await supabaseAdmin
+      .from("platform_notification_preferences")
+      .upsert(row, { onConflict: "user_id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "notifications.preferences_updated",
+      resourceType: "platform_notification_preferences",
+      resourceId: ctx.user.id,
+      source: "notifications",
+      purpose: "user_notification_preferences",
+      metadata: { updated_fields: Object.keys(payload) }
+    });
+
+    return { ok: true, preferences: data };
+  });
+
+  app.post("/v1/notifications/alerts/:alertId/ack", async (request, reply) => {
+    const ctx = await requireAuth(request, { action: "notifications.alert.ack" });
+    const alertId = uuidSchema.parse(request.params.alertId);
+    const { data, error } = await supabaseAdmin
+      .from("platform_alert_acknowledgements")
+      .upsert({ alert_id: alertId, user_id: ctx.user.id, acknowledged_at: new Date().toISOString() }, { onConflict: "alert_id,user_id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return reply.code(202).send({ ok: true, acknowledgement: data });
   });
 
   app.post("/v1/orders", async (request, reply) => {
@@ -2250,6 +2630,385 @@ export function registerRoutes(app) {
     };
   });
 
+  app.get("/v1/super-admin/admin-ops", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.view");
+    const [admins, permissionProfiles, assignments, approvalRequests, emergencyAlerts, interventions] = await Promise.all([
+      runAdminQuery(
+        "admin_ops_admin_profiles",
+        supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email, phone, role, account_status, risk_level, created_at")
+          .eq("role", "admin")
+          .order("created_at", { ascending: false })
+          .limit(120),
+        []
+      ),
+      runAdminQuery(
+        "admin_permission_profiles",
+        supabaseAdmin
+          .from("admin_permission_profiles")
+          .select("*")
+          .order("profile_key", { ascending: true }),
+        []
+      ),
+      runAdminQuery(
+        "admin_permission_assignments",
+        supabaseAdmin
+          .from("admin_permission_assignments")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(160),
+        []
+      ),
+      runAdminQuery(
+        "admin_approval_requests_super_admin",
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(120),
+        []
+      ),
+      runAdminQuery(
+        "platform_emergency_alerts_super_admin",
+        supabaseAdmin
+          .from("platform_emergency_alerts")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        []
+      ),
+      runAdminQuery(
+        "super_admin_admin_ops_interventions",
+        supabaseAdmin
+          .from("super_admin_admin_ops_interventions")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(60),
+        []
+      )
+    ]);
+
+    const warnings = [admins, permissionProfiles, assignments, approvalRequests, emergencyAlerts, interventions]
+      .filter((item) => item.warning)
+      .map((item) => item.warning);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.admin_ops_viewed",
+      source: "admin",
+      resourceType: "admin_ops_control",
+      metadata: {
+        admin_count: admins.count,
+        approval_request_count: approvalRequests.count,
+        emergency_alert_count: emergencyAlerts.count,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      admin_ops: {
+        admins: admins.data || [],
+        permission_profiles: permissionProfiles.data || [],
+        assignments: assignments.data || [],
+        approval_requests: approvalRequests.data || [],
+        emergency_alerts: emergencyAlerts.data || [],
+        interventions: interventions.data || [],
+        restricted_permissions: ADMIN_RESTRICTED_PERMISSIONS,
+        permission_definitions: ADMIN_PERMISSION_DEFINITIONS
+      },
+      schema_warnings: warnings
+    };
+  });
+
+  app.post("/v1/super-admin/admin-ops/assignments", async (request, reply) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.assignment");
+    const body = superAdminOpsAssignmentSchema.parse(request.body || {});
+    const { data: adminUser, error: adminError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, role, full_name, email")
+      .eq("id", body.admin_user_id)
+      .maybeSingle();
+    if (adminError) throw adminError;
+    if (!adminUser || adminUser.role !== "admin") {
+      throw httpError("Yetki profili yalnizca admin rolundeki kullaniciya atanabilir.", 400);
+    }
+
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("admin_permission_profiles")
+      .select("*")
+      .eq("profile_key", body.profile_key)
+      .maybeSingle();
+    if (profileError && looksLikeMissingSchema(profileError)) {
+      throw httpError("admin_permission_profiles migration henuz uygulanmamis.", 503);
+    }
+    if (profileError) throw profileError;
+    if (!profile || profile.is_active === false) {
+      throw httpError("Aktif admin yetki profili bulunamadi.", 404);
+    }
+
+    const { data: assignment, error } = await supabaseAdmin
+      .from("admin_permission_assignments")
+      .upsert({
+        admin_user_id: body.admin_user_id,
+        profile_key: body.profile_key,
+        granted_by: ctx.user.id,
+        status: body.status,
+        starts_at: new Date().toISOString(),
+        expires_at: body.expires_at || null,
+        notes: body.notes || "",
+        metadata: {
+          assigned_from: "super_admin_panel",
+          assigned_by: ctx.user.id
+        }
+      }, { onConflict: "admin_user_id" })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await supabaseAdmin
+      .from("super_admin_admin_ops_interventions")
+      .insert({
+        intervened_by: ctx.user.id,
+        admin_user_id: body.admin_user_id,
+        intervention_type: "permission_assignment",
+        target_type: "admin_permission_assignment",
+        target_id: assignment.id,
+        reason: body.notes || `Profile ${body.profile_key} assigned`,
+        metadata: {
+          profile_key: body.profile_key,
+          status: body.status
+        }
+      });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.admin_permission_assigned",
+      resourceType: "admin_permission_assignment",
+      resourceId: assignment.id,
+      severity: "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "admin_ops", "permission_assignment"],
+      metadata: {
+        admin_user_id: body.admin_user_id,
+        profile_key: body.profile_key,
+        status: body.status
+      }
+    });
+
+    return reply.code(201).send({ ok: true, assignment });
+  });
+
+  app.patch("/v1/super-admin/admin-ops/approval-requests/:requestId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.admin_ops.approval_decision");
+    const requestId = uuidSchema.parse(request.params.requestId);
+    const body = superAdminApprovalDecisionSchema.parse(request.body || {});
+    const { data: approvalRequest, error: requestError } = await supabaseAdmin
+      .from("admin_approval_requests")
+      .select("*")
+      .eq("id", requestId)
+      .maybeSingle();
+    if (requestError) throw requestError;
+    if (!approvalRequest) throw httpError("Admin onay talebi bulunamadi.", 404);
+
+    const nowIso = new Date().toISOString();
+    const { data: updated, error } = await supabaseAdmin
+      .from("admin_approval_requests")
+      .update({
+        status: body.decision,
+        decided_by: ctx.user.id,
+        decided_at: nowIso
+      })
+      .eq("id", requestId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    let emergencyAlert = null;
+    if (approvalRequest.target_type === "security_alert") {
+      const nextStatus = body.decision === "approved" ? "active" : "cancelled";
+      const { data: alertRow, error: alertError } = await supabaseAdmin
+        .from("platform_emergency_alerts")
+        .update({
+          status: nextStatus,
+          approved_by: body.decision === "approved" ? ctx.user.id : null,
+          source_request_id: requestId,
+          resolved_at: body.decision === "approved" ? null : nowIso,
+          metadata: {
+            ...(approvalRequest.proposed_action || {}),
+            super_admin_decision_reason: body.reason
+          }
+        })
+        .eq("id", approvalRequest.target_id)
+        .select("*")
+        .maybeSingle();
+      if (alertError && !looksLikeMissingSchema(alertError)) throw alertError;
+      emergencyAlert = alertRow || null;
+    }
+
+    if (approvalRequest.target_type === "content_module") {
+      const contentStatus = body.decision === "approved" ? "approved" : body.decision === "rejected" ? "rejected" : "cancelled";
+      const { error: contentError } = await supabaseAdmin
+        .from("content_change_proposals")
+        .update({ status: contentStatus, updated_at: nowIso })
+        .eq("id", approvalRequest.target_id);
+      if (contentError && !looksLikeMissingSchema(contentError)) throw contentError;
+    }
+
+    await supabaseAdmin
+      .from("super_admin_admin_ops_interventions")
+      .insert({
+        intervened_by: ctx.user.id,
+        admin_user_id: approvalRequest.requested_by || null,
+        intervention_type: "approval_decision",
+        target_type: approvalRequest.target_type,
+        target_id: approvalRequest.target_id,
+        reason: body.reason,
+        metadata: {
+          request_id: requestId,
+          decision: body.decision,
+          request_type: approvalRequest.request_type
+        }
+      });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.admin_approval_decided",
+      resourceType: "admin_approval_request",
+      resourceId: requestId,
+      severity: body.decision === "approved" && approvalRequest.target_type === "security_alert" ? "critical" : "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "admin_ops", "approval_decision"],
+      metadata: {
+        decision: body.decision,
+        reason: body.reason,
+        target_type: approvalRequest.target_type,
+        target_id: approvalRequest.target_id,
+        emergency_alert_id: emergencyAlert?.id || null
+      }
+    });
+
+    return { ok: true, approval_request: updated, emergency_alert: emergencyAlert };
+  });
+
+  app.post("/v1/super-admin/emergency-alerts", async (request, reply) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.emergency_alert.create");
+    const body = superAdminEmergencyAlertSchema.parse(request.body || {});
+    const { data: alert, error } = await supabaseAdmin
+      .from("platform_emergency_alerts")
+      .insert({
+        created_by: ctx.user.id,
+        approved_by: ctx.user.id,
+        title: body.title,
+        message: body.message,
+        severity: body.severity,
+        scope: body.scope,
+        delivery_channels: body.delivery_channels,
+        sound_enabled: body.sound_enabled,
+        status: "active",
+        starts_at: body.starts_at || new Date().toISOString(),
+        expires_at: body.expires_at || null,
+        metadata: {
+          created_from: "super_admin_panel",
+          reason: body.reason
+        }
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await supabaseAdmin
+      .from("super_admin_admin_ops_interventions")
+      .insert({
+        intervened_by: ctx.user.id,
+        admin_user_id: null,
+        intervention_type: "emergency_alert",
+        target_type: "platform_emergency_alert",
+        target_id: alert.id,
+        reason: body.reason,
+        metadata: {
+          severity: body.severity,
+          scope: body.scope,
+          delivery_channels: body.delivery_channels
+        }
+      });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.emergency_alert_created",
+      resourceType: "platform_emergency_alert",
+      resourceId: alert.id,
+      severity: body.severity === "critical" ? "critical" : "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "emergency_alert"],
+      metadata: {
+        scope: body.scope,
+        delivery_channels: body.delivery_channels,
+        sound_enabled: body.sound_enabled,
+        reason: body.reason
+      }
+    });
+
+    return reply.code(201).send({ ok: true, alert });
+  });
+
+  app.patch("/v1/super-admin/emergency-alerts/:alertId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.emergency_alert.update");
+    const alertId = uuidSchema.parse(request.params.alertId);
+    const body = superAdminEmergencyAlertStatusSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("platform_emergency_alerts")
+      .select("*")
+      .eq("id", alertId)
+      .maybeSingle();
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Acil alarm bulunamadi.", 404);
+
+    const { data: alert, error } = await supabaseAdmin
+      .from("platform_emergency_alerts")
+      .update({
+        status: body.status,
+        resolved_at: ["resolved", "expired", "cancelled"].includes(body.status) ? new Date().toISOString() : null,
+        metadata: {
+          ...(before.metadata || {}),
+          status_reason: body.reason,
+          status_updated_by: ctx.user.id
+        }
+      })
+      .eq("id", alertId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.emergency_alert_status_updated",
+      resourceType: "platform_emergency_alert",
+      resourceId: alertId,
+      severity: body.status === "active" || before.severity === "critical" ? "critical" : "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "emergency_alert"],
+      metadata: {
+        old_status: before.status,
+        new_status: body.status,
+        reason: body.reason
+      }
+    });
+
+    return { ok: true, alert };
+  });
+
   app.get("/v1/super-admin/users", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.users.list");
     const queryParams = z.object({
@@ -2794,6 +3553,7 @@ export function registerRoutes(app) {
   app.get("/v1/admin/ops/bootstrap", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.bootstrap");
     const warnings = [];
+    const access = await loadAdminAccessProfile(ctx, warnings);
     const dashboard = await loadAdminDashboardData(warnings);
 
     await auditedOpsEvent({
@@ -2811,15 +3571,25 @@ export function registerRoutes(app) {
         full_name: ctx.profile.full_name || ctx.user.email || "Admin",
         role: ctx.profile.role
       },
-      capabilities: {
-        can_delete_users: false,
-        can_change_commission: false,
-        can_change_finance_settings: false,
-        can_create_super_admin: false,
-        can_change_system_settings: false,
-        can_create_operational_notes: true,
-        can_create_review_flags: true,
-        can_request_super_admin_approval: true
+      capabilities: access.capabilities,
+      access: {
+        source: access.source,
+        profile: {
+          profile_key: access.profile.profile_key,
+          label: access.profile.label,
+          description: access.profile.description
+        },
+        permissions: access.permissions,
+        approval_rules: access.approval_rules,
+        restricted_permissions: access.restricted_permissions,
+        definitions: access.definitions,
+        assignment: access.assignment ? {
+          id: access.assignment.id,
+          profile_key: access.assignment.profile_key,
+          status: access.assignment.status,
+          starts_at: access.assignment.starts_at,
+          expires_at: access.assignment.expires_at
+        } : null
       },
       dashboard,
       warnings
@@ -2828,6 +3598,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/dashboard", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.dashboard");
+    await requireOpsPermission(request, ctx, "dashboard.view");
     const warnings = [];
     const dashboard = await loadAdminDashboardData(warnings);
 
@@ -2844,6 +3615,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/users", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.list");
+    await requireOpsPermission(request, ctx, "users.view");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
     let dbQuery = supabaseAdmin
@@ -2870,6 +3642,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/users/:userId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.detail");
+    await requireOpsPermission(request, ctx, "users.view");
     const userId = uuidSchema.parse(request.params.userId);
     const warnings = [];
     const profile = await optionalQuery(
@@ -2937,6 +3710,7 @@ export function registerRoutes(app) {
 
   app.post("/v1/admin/ops/users/:userId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.note");
+    await requireOpsPermission(request, ctx, "users.note");
     const userId = uuidSchema.parse(request.params.userId);
     const payload = adminNoteSchema.parse(request.body || {});
     const warnings = [];
@@ -2968,6 +3742,7 @@ export function registerRoutes(app) {
 
   app.post("/v1/admin/ops/users/:userId/flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.users.flag");
+    await requireOpsPermission(request, ctx, "users.flag");
     const userId = uuidSchema.parse(request.params.userId);
     const payload = adminFlagSchema.parse(request.body || {});
     const warnings = [];
@@ -3002,6 +3777,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/partner-applications", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
+    await requireOpsPermission(request, ctx, "applications.view");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
     let dbQuery = supabaseAdmin
@@ -3027,6 +3803,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/partner-applications/:applicationId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.detail");
+    await requireOpsPermission(request, ctx, "applications.view");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const warnings = [];
     const [application, notes, requests] = await Promise.all([
@@ -3077,8 +3854,12 @@ export function registerRoutes(app) {
 
   app.patch("/v1/admin/ops/partner-applications/:applicationId/review", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
+    await requireOpsPermission(request, ctx, "applications.review");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const payload = partnerApplicationActionSchema.parse(request.body || {});
+    if (payload.action !== "start_review") {
+      await requireOpsPermission(request, ctx, "approvals.request");
+    }
     const warnings = [];
     const nowIso = new Date().toISOString();
     const recommendation = payload.action === "recommend_approve"
@@ -3167,6 +3948,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/partners", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partners.list");
+    await requireOpsPermission(request, ctx, "partners.view");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
     let dbQuery = supabaseAdmin
@@ -3192,6 +3974,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/orders", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.list");
+    await requireOpsPermission(request, ctx, "orders.view");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
     let dbQuery = supabaseAdmin
@@ -3217,6 +4000,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/orders/:orderId", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.detail");
+    await requireOpsPermission(request, ctx, "orders.view");
     const orderId = uuidSchema.parse(request.params.orderId);
     const warnings = [];
     const [order, notes, flags] = await Promise.all([
@@ -3271,6 +4055,7 @@ export function registerRoutes(app) {
 
   app.post("/v1/admin/ops/orders/:orderId/risk-flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
+    await requireOpsPermission(request, ctx, "orders.flag");
     const orderId = uuidSchema.parse(request.params.orderId);
     const payload = adminFlagSchema.parse(request.body || {});
     const warnings = [];
@@ -3305,6 +4090,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/support-tickets", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.list");
+    await requireOpsPermission(request, ctx, "support.view");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
     let userTicketQuery = supabaseAdmin
@@ -3357,6 +4143,7 @@ export function registerRoutes(app) {
 
   app.patch("/v1/admin/ops/support-tickets/:ticketId/status", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.status");
+    await requireOpsPermission(request, ctx, "support.update");
     const ticketId = uuidSchema.parse(request.params.ticketId);
     const payload = supportStatusSchema.parse(request.body || {});
     const warnings = [];
@@ -3416,6 +4203,7 @@ export function registerRoutes(app) {
 
   app.post("/v1/admin/ops/support-tickets/:ticketId/notes", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.support.note");
+    await requireOpsPermission(request, ctx, "support.update");
     const ticketId = uuidSchema.parse(request.params.ticketId);
     const source = z.enum(["user", "partner"]).parse(request.query?.source || "user");
     const payload = adminNoteSchema.parse(request.body || {});
@@ -3448,6 +4236,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/content-proposals", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.list");
+    await requireOpsPermission(request, ctx, "content.view");
     const warnings = [];
     const proposals = await optionalQuery(
       supabaseAdmin
@@ -3471,6 +4260,8 @@ export function registerRoutes(app) {
 
   app.post("/v1/admin/ops/content-proposals", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.content.propose");
+    await requireOpsPermission(request, ctx, "content.propose");
+    await requireOpsPermission(request, ctx, "approvals.request");
     const payload = contentProposalSchema.parse(request.body || {});
     const warnings = [];
     const proposal = await optionalMutation(
@@ -3519,8 +4310,201 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, proposal, warnings });
   });
 
+  app.get("/v1/admin/ops/permissions", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.permissions.view");
+    await requireOpsPermission(request, ctx, "permissions.view");
+    const warnings = [];
+    const access = await loadAdminAccessProfile(ctx, warnings);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.permissions_viewed",
+      resourceType: "admin_permission_assignment",
+      resourceId: access.assignment?.id || null,
+      metadata: {
+        access_source: access.source,
+        profile_key: access.profile.profile_key,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      access: {
+        source: access.source,
+        profile: {
+          profile_key: access.profile.profile_key,
+          label: access.profile.label,
+          description: access.profile.description
+        },
+        assignment: access.assignment,
+        permissions: access.permissions,
+        approval_rules: access.approval_rules,
+        restricted_permissions: access.restricted_permissions,
+        definitions: access.definitions,
+        capabilities: access.capabilities
+      },
+      warnings
+    };
+  });
+
+  app.get("/v1/admin/ops/approval-requests", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.approvals.list");
+    await requireOpsPermission(request, ctx, "approvals.view");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("admin_approval_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+    const requests = await optionalQuery(dbQuery, [], warnings, "admin_approval_requests");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.approval_requests_viewed",
+      resourceType: "admin_approval_request",
+      metadata: { status: query.status || "all", count: requests.length }
+    });
+
+    return { ok: true, requests, warnings };
+  });
+
+  app.get("/v1/admin/ops/emergency-alerts", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.emergency_alerts.list");
+    await requireOpsPermission(request, ctx, "emergency.view");
+    const warnings = [];
+    const [alerts, requests] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("platform_emergency_alerts")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "platform_emergency_alerts"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_approval_requests")
+          .select("*")
+          .eq("target_type", "security_alert")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "admin_approval_requests"
+      )
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.emergency_alerts_viewed",
+      resourceType: "platform_emergency_alert",
+      metadata: { alert_count: alerts.length, request_count: requests.length }
+    });
+
+    return { ok: true, alerts, requests, warnings };
+  });
+
+  app.post("/v1/admin/ops/emergency-alerts", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.emergency_alerts.request");
+    await requireOpsPermission(request, ctx, "emergency.request");
+    await requireOpsPermission(request, ctx, "approvals.request");
+    const payload = adminEmergencyAlertSchema.parse(request.body || {});
+    const startsAt = payload.starts_at || new Date().toISOString();
+    if (payload.expires_at && new Date(payload.expires_at).getTime() <= new Date(startsAt).getTime()) {
+      throw httpError("Acil alarm bitis tarihi baslangictan sonra olmalidir.", 400);
+    }
+
+    const warnings = [];
+    const alert = await optionalMutation(
+      supabaseAdmin
+        .from("platform_emergency_alerts")
+        .insert({
+          created_by: ctx.user.id,
+          title: payload.title,
+          message: payload.message,
+          severity: payload.severity,
+          scope: payload.scope,
+          delivery_channels: payload.delivery_channels,
+          sound_enabled: payload.sound_enabled,
+          status: "pending_super_admin",
+          starts_at: startsAt,
+          expires_at: payload.expires_at || null,
+          metadata: {
+            requested_from: "admin_ops_panel",
+            reason: payload.reason
+          }
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "platform_emergency_alerts"
+    );
+
+    const approvalRequest = await optionalMutation(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .insert({
+          requested_by: ctx.user.id,
+          target_type: "security_alert",
+          target_id: alert.id,
+          request_type: "security_escalation",
+          status: "pending_super_admin",
+          summary: payload.reason,
+          proposed_action: {
+            title: payload.title,
+            message: payload.message,
+            severity: payload.severity,
+            scope: payload.scope,
+            delivery_channels: payload.delivery_channels,
+            sound_enabled: payload.sound_enabled,
+            starts_at: startsAt,
+            expires_at: payload.expires_at || null
+          }
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_approval_requests"
+    );
+
+    await optionalMutation(
+      supabaseAdmin
+        .from("platform_emergency_alerts")
+        .update({ source_request_id: approvalRequest.id })
+        .eq("id", alert.id),
+      warnings,
+      "platform_emergency_alerts"
+    );
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.emergency_alert_requested",
+      resourceType: "platform_emergency_alert",
+      resourceId: alert.id,
+      severity: payload.severity,
+      metadata: {
+        approval_request_id: approvalRequest.id,
+        scope: payload.scope,
+        delivery_channels: payload.delivery_channels,
+        sound_enabled: payload.sound_enabled
+      }
+    });
+
+    return reply.code(201).send({ ok: true, alert, approvalRequest, warnings });
+  });
+
   app.get("/v1/admin/ops/security-monitoring", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.security_monitoring");
+    await requireOpsPermission(request, ctx, "security.view");
     const warnings = [];
     const [events, flags, notifications] = await Promise.all([
       optionalQuery(
@@ -3569,6 +4553,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/reports", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.reports");
+    await requireOpsPermission(request, ctx, "reports.view");
     const warnings = [];
     const dashboard = await loadAdminDashboardData(warnings);
     const [ordersToday, riskyOrders, supportResolved] = await Promise.all([
@@ -3624,6 +4609,7 @@ export function registerRoutes(app) {
 
   app.get("/v1/admin/ops/audit-log", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.audit_log");
+    await requireOpsPermission(request, ctx, "audit.view");
     const query = adminAuditLogQuerySchema.parse(request.query || {});
     const warnings = [];
     let dbQuery = supabaseAdmin

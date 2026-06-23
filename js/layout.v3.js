@@ -214,6 +214,15 @@
     document.head.appendChild(script);
   }
 
+  function loadPlatformNotifications() {
+    if (document.querySelector("script[data-platform-notifications]")) return;
+    const script = document.createElement("script");
+    script.src = core.url("/js/platform-notifications.js?v=20260623-adminalerts1");
+    script.defer = true;
+    script.dataset.platformNotifications = "true";
+    document.head.appendChild(script);
+  }
+
   function setMobileNav(open) {
     const nav = document.querySelector("[data-nav-links]");
     const toggle = document.querySelector("[data-nav-toggle]");
@@ -266,6 +275,7 @@
     updateAccountLink();
     updateRemoteFavoriteCount();
     loadComplianceAudit();
+    loadPlatformNotifications();
     document.dispatchEvent(new CustomEvent("allona:layout-ready"));
   }
 

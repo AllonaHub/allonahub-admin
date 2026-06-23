@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AllonaHub Super Admin</title>
   <link rel="stylesheet" href="../css/platform.css?v=20260621-mobile1">
-  <link rel="stylesheet" href="../css/super-admin.css?v=20260621-super1">
+  <link rel="stylesheet" href="../css/super-admin.css?v=20260623-adminops2">
 </head>
 <body data-page="super-admin" data-theme="graphite">
   <div class="sa-shell" data-super-admin-shell>
@@ -19,6 +19,7 @@
         <button type="button" data-view-target="users">Kullanıcılar</button>
         <button type="button" data-view-target="partners">Partnerler</button>
         <button type="button" data-view-target="security">Güvenlik</button>
+        <button type="button" data-view-target="adminOps">Admin Ops</button>
         <button type="button" data-view-target="settings">Sistem</button>
         <button type="button" data-view-target="modules">Modüller</button>
         <button type="button" data-view-target="audit">Audit Log</button>
@@ -129,6 +130,41 @@
         </div>
       </section>
 
+      <section class="sa-view" data-view="adminOps">
+        <div class="sa-grid sa-grid-two">
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Admin Yetkileri</h2>
+              <span data-admin-ops-admin-count>0 kayıt</span>
+            </div>
+            <div class="sa-table-wrap" data-admin-ops-admins></div>
+          </section>
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Yetki Profilleri</h2>
+              <span>Super Admin</span>
+            </div>
+            <div class="sa-list" data-admin-ops-profiles></div>
+          </section>
+        </div>
+        <div class="sa-grid sa-grid-two sa-stack">
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Admin Onay Talepleri</h2>
+              <span data-admin-ops-approval-count>0 kayıt</span>
+            </div>
+            <div class="sa-table-wrap" data-admin-ops-approvals></div>
+          </section>
+          <section class="sa-panel">
+            <div class="sa-panel-head">
+              <h2>Acil Alarmlar</h2>
+              <span data-admin-ops-alert-count>0 kayıt</span>
+            </div>
+            <div class="sa-table-wrap" data-admin-ops-alerts></div>
+          </section>
+        </div>
+      </section>
+
       <section class="sa-view" data-view="settings">
         <div class="sa-panel">
           <div class="sa-panel-head">
@@ -181,6 +217,7 @@
   <script src="../js/core.js?v=20260621-super1"></script>
   <script src="../js/supabase-client.js?v=20260619-sec1"></script>
   <script src="../js/auth.js?v=20260620-auth2"></script>
-  <script src="../js/super-admin.js?v=20260621-super1"></script>
+  <script src="../js/platform-notifications.js?v=20260623-adminalerts2"></script>
+  <script src="../js/super-admin.js?v=20260623-adminops2"></script>
 </body>
 </html>
