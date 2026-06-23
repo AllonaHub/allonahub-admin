@@ -4,10 +4,10 @@
   const VERSION = "20260621";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
-  const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram"];
+  const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram", "facebook"];
   const CONTACT_CHANNELS = {
-    whatsapp: `https://wa.me/905427781868?text=${encodeURIComponent("Merhaba AllonaHub, destek almak istiyorum.")}`,
-    telegram: "https://t.me/allonahub"
+    whatsapp: SCRIPT && SCRIPT.dataset.whatsappUrl || `https://wa.me/905427781868?text=${encodeURIComponent("Merhaba AllonaHub, canlı destek almak istiyorum.")}`,
+    telegram: SCRIPT && SCRIPT.dataset.telegramUrl || "https://t.me/AllonaHub_Bot"
   };
 
   function escapeHTML(value) {
@@ -285,7 +285,7 @@
     const sendButton = root.querySelector(".ah-assistant__send");
     const toggleButton = root.querySelector("[data-assistant-toggle]");
 
-    appendMessage(messages, "assistant", "Merhaba, AllonaHub destek asistanıyım. Sipariş, partner başvurusu, SSS, Akademi ve destek talebi için yardımcı olurum.");
+    appendMessage(messages, "assistant", "Merhaba, AllonaHub destek asistanıyım. Sipariş, partner başvurusu, SSS, Akademi ve destek konularında yardımcı olurum. Canlı temsilciye geçmek isterseniz Telegram veya WhatsApp bağlantılarını paylaşırım.");
 
     function setActionsOpen(value) {
       root.classList.toggle("ah-assistant--actions-open", Boolean(value));
@@ -324,7 +324,7 @@
           createSupportTicket: extra && extra.createSupportTicket
         });
         status.remove();
-        appendMessage(messages, "assistant", result.message || "Yanıt hazır.", result.actions || []);
+        appendMessage(messages, "assistant", result.message || "Canlı destek için Telegram veya WhatsApp hattımızdan bize ulaşabilirsiniz.", result.actions || []);
       } catch (error) {
         status.remove();
         appendMessage(messages, "assistant", error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.");

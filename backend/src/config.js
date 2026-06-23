@@ -95,6 +95,8 @@ export const config = {
     telegramBotToken: readOptionalSecret("ASSISTANT_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"),
     telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     telegramBusinessOwnerId: readOptionalSecret("ASSISTANT_TELEGRAM_BUSINESS_OWNER_ID", "TELEGRAM_BUSINESS_OWNER_ID"),
+    webchatTelegramUrl: readEnv("ASSISTANT_WEBCHAT_TELEGRAM_URL", { required: false, defaultValue: "https://t.me/AllonaHub_Bot" }),
+    webchatWhatsappUrl: readEnv("ASSISTANT_WEBCHAT_WHATSAPP_URL", { required: false, defaultValue: "https://wa.me/905427781868?text=Merhaba%20AllonaHub%2C%20canl%C4%B1%20destek%20almak%20istiyorum." }),
     metaVerifyToken: readOptionalSecret("ASSISTANT_META_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
     metaAppSecret: readOptionalSecret("ASSISTANT_META_APP_SECRET", "META_APP_SECRET"),
     metaAccessToken: readOptionalSecret("ASSISTANT_META_ACCESS_TOKEN", "META_ACCESS_TOKEN"),

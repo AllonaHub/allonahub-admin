@@ -25,6 +25,7 @@ const CARD_PATTERN = /\b(?:\d[ -]*?){13,19}\b/;
 const PROMPT_INJECTION_PATTERN = /(ignore previous|system prompt|developer message|jailbreak|talimatlari yok say|onceki talimatlari|sistem komutu)/i;
 const SUPPORT_TICKET_PATTERN = /(^|\s)(canli|canlı|destek|yardim|yardım)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
 export const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayınız. En kısa sürede temsilcimiz sizinle buradan iletişime geçecektir.";
+export const WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, canlı destek için sizi doğru kanala yönlendireyim. Web chat şu anda AI asistan olarak çalışıyor; gerçek temsilciye ulaşmak için Telegram botumuza veya WhatsApp destek hattımıza yazabilirsiniz. Aşağıdaki bağlantılardan size uygun olanı seçebilirsiniz.";
 export const LIVE_SUPPORT_CLOSED_MESSAGE = "Uzun süredir cevap vermediğiniz için müşteri temsilcimizle konuşmanız otomatik olarak sonlandırılmıştır. Dilerseniz tekrardan canlıya bağlanabilirsiniz.";
 
 function clamp(value, min, max) {
@@ -170,12 +171,28 @@ function makeAction(label, link) {
   return { type: "open_url", label, url: platformUrl(link) };
 }
 
+function makeExternalAction(label, url) {
+  return { type: "open_url", label, url: String(url || "") };
+}
+
+function isWebchatChannel(channel) {
+  return normalizeAssistantChannel(channel) === "webchat";
+}
+
+function webchatLiveSupportActions() {
+  return [
+    makeExternalAction("Telegram Destek", config.assistant.webchatTelegramUrl || "https://t.me/AllonaHub_Bot"),
+    makeExternalAction("WhatsApp Destek", config.assistant.webchatWhatsappUrl || "https://wa.me/905427781868"),
+    makeAction("İletişim", "contact")
+  ];
+}
+
 function textHasAny(text, terms = []) {
   return terms.some((term) => text.includes(lowerText(term)));
 }
 
 function hasConversationHistory(context = {}) {
-  return Number(context?.conversation?.previousAssistantMessages || 0) > 0;
+  return Number(context?.conversation?.previousAssistantMessages || 0) > 0 || Boolean(context?.conversation?.lastAssistantMessage);
 }
 
 function stripRepeatedGreeting(value, context = {}) {
@@ -544,7 +561,8 @@ function publicOrderSummary(order) {
   };
 }
 
-function fallbackByIntent(intent, context = {}) {
+function fallbackByIntent(intent, context = {}, channel = "webchat") {
+  const webchat = isWebchatChannel(channel);
   const supportTicket = context.supportTicket || null;
   const order = context.order || null;
   const orderWarning = context.orderWarning || "";
@@ -555,6 +573,13 @@ function fallbackByIntent(intent, context = {}) {
     orders: siteLink("/pages/account/orders.html"),
     login: siteLink("/pages/account/login.html")
   };
+
+  if (webchat && (intent.key === "support_ticket" || intent.key === "general_support")) {
+    return {
+      text: WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE,
+      actions: webchatLiveSupportActions()
+    };
+  }
 
   if (supportTicket?.id) {
     return {
@@ -592,6 +617,13 @@ function fallbackByIntent(intent, context = {}) {
 
   const topic = PLATFORM_TOPICS.find((item) => item.key === intent.key);
   if (topic) return topicResponse(topic, context);
+
+  if (webchat) {
+    return {
+      text: WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE,
+      actions: webchatLiveSupportActions()
+    };
+  }
 
   return {
     text: LIVE_SUPPORT_REDIRECT_MESSAGE,
@@ -712,7 +744,7 @@ function safeReplyText(value, fallback) {
 }
 
 export async function generateAssistantReply({ message, channel, intent, context = {}, metadata = {}, request = null }) {
-  const fallback = fallbackByIntent(intent, context);
+  const fallback = fallbackByIntent(intent, context, channel);
   let text = "";
   let provider = "fallback";
 
@@ -725,15 +757,16 @@ export async function generateAssistantReply({ message, channel, intent, context
 
   const messageText = safeReplyText(stripRepeatedGreeting(text, context), stripRepeatedGreeting(fallback.text, context));
   const shouldEscalateToLive = intent.key === "general_support" || repeatsPreviousAssistantReply(messageText, context);
+  const webchat = isWebchatChannel(channel);
 
   if (shouldEscalateToLive) {
     return {
-      message: LIVE_SUPPORT_REDIRECT_MESSAGE,
-      intent: "support_ticket",
+      message: webchat ? WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE : LIVE_SUPPORT_REDIRECT_MESSAGE,
+      intent: webchat ? "webchat_support_redirect" : "support_ticket",
       provider,
-      actions: fallback.actions || [],
+      actions: webchat ? webchatLiveSupportActions() : fallback.actions || [],
       usedAi: provider !== "fallback",
-      createTicketSuggested: true
+      createTicketSuggested: !webchat
     };
   }
 

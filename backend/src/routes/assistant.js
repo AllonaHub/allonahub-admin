@@ -737,11 +737,12 @@ async function handleAssistantMessage({ request, payload, channel }) {
   const cleanMetadata = cleanAssistantMetadata(payload.metadata || {});
   const cid = conversationId(payload);
   const intent = detectAssistantIntent(cleanMessage, cleanMetadata);
+  const isWebchat = channel === "webchat";
   const context = {
     conversation: await loadConversationContext({ channel, conversationId: cid, request })
   };
 
-  const liveSupportActive = intent.key !== "support_ticket"
+  const liveSupportActive = !isWebchat && intent.key !== "support_ticket"
     ? await activeLiveSupportHandoff({ channel, conversationId: cid, request })
     : null;
 
@@ -779,7 +780,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
     };
   }
 
-  if (intent.key !== "support_ticket" && liveSupportHandoffExpired(context.conversation)) {
+  if (!isWebchat && intent.key !== "support_ticket" && liveSupportHandoffExpired(context.conversation)) {
     const userLogId = await saveConversationLog({
       userId: ctx?.user?.id || null,
       channel,
@@ -851,7 +852,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
     Object.assign(context, await loadOrderContext({ payload, ctx, request }));
   }
 
-  if (shouldCreateSupportTicket(cleanMessage, payload, intent)) {
+  if (!isWebchat && shouldCreateSupportTicket(cleanMessage, payload, intent)) {
     context.supportTicket = await createSupportTicket({
       ctx,
       channel,
@@ -887,7 +888,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
     request
   });
 
-  if (!context.supportTicket && assistant.createTicketSuggested === true) {
+  if (!isWebchat && !context.supportTicket && assistant.createTicketSuggested === true) {
     context.supportTicket = await createSupportTicket({
       ctx,
       channel,
@@ -903,7 +904,7 @@ async function handleAssistantMessage({ request, payload, channel }) {
     });
   }
 
-  const startsLiveHandoff = intent.key === "support_ticket" || assistant.intent === "support_ticket" || assistant.createTicketSuggested === true;
+  const startsLiveHandoff = !isWebchat && (intent.key === "support_ticket" || assistant.intent === "support_ticket" || assistant.createTicketSuggested === true);
 
   const assistantLogId = await saveConversationLog({
     userId: ctx?.user?.id || null,
