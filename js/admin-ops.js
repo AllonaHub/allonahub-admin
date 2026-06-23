@@ -72,7 +72,7 @@
     return `<span class="admin-badge ${color ? `admin-badge--${color}` : ""}">${escape(text)}</span>`;
   }
 
-  const socialPlatforms = ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal"];
+  const socialPlatforms = ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal", "telegram", "whatsapp", "google_business"];
 
   function socialPlatformOptions(selected) {
     const selectedSet = new Set(String(selected || socialPlatforms.join(",")).split(",").map((item) => item.trim()).filter(Boolean));
@@ -93,6 +93,16 @@
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  function jsonObject(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error("Payload JSON obje formatında olmalı.");
+    }
+    return parsed;
   }
 
   function dateTimeInputToIso(value) {
@@ -486,6 +496,7 @@
           <td>${titleCell(connection.platform, secretText)}</td>
           <td>${badge(connection.ready ? "ready" : "missing", connection.ready ? "green" : "orange")}</td>
           <td>${escape(missing.length ? missing.join(", ") : "-")}</td>
+          <td>${connection.ready ? `<button class="admin-btn" type="button" data-social-test="${escape(connection.platform)}">Test</button>` : ""}</td>
         </tr>
       `;
     });
@@ -586,6 +597,43 @@
               <option value="text">Text</option>
               <option value="carousel">Carousel</option>
             </select>
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialImageUrl">Görsel URL</label>
+            <input id="socialImageUrl" name="image_url" maxlength="900" placeholder="https://...">
+          </div>
+          <div class="admin-field">
+            <label for="socialVideoUrl">Video URL</label>
+            <input id="socialVideoUrl" name="video_url" maxlength="900" placeholder="https://...">
+          </div>
+          <div class="admin-field">
+            <label for="socialPrivacy">Video gizlilik</label>
+            <select id="socialPrivacy" name="privacy_status">
+              <option value="public">Public</option>
+              <option value="unlisted">Unlisted</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialWhatsappTo">WhatsApp hedefi</label>
+            <input id="socialWhatsappTo" name="whatsapp_to" maxlength="40" placeholder="+905...">
+          </div>
+          <div class="admin-field">
+            <label for="socialActionType">CTA tipi</label>
+            <select id="socialActionType" name="action_type">
+              <option value="LEARN_MORE">Learn more</option>
+              <option value="SIGN_UP">Sign up</option>
+              <option value="ORDER">Order</option>
+              <option value="CALL">Call</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="socialPayloadJson">Ek payload JSON</label>
+            <input id="socialPayloadJson" name="platform_payload_json" maxlength="1600" placeholder='{"topic_type":"STANDARD"}'>
           </div>
         </div>
         <div class="admin-check-grid" style="margin-top:12px">${socialPlatformOptions()}</div>
@@ -692,7 +740,7 @@
       </div>`,
       `<div class="admin-split">
         ${section("Hesap Envanteri", "", accountForm + table(["Hesap", "Platform", "Connector", "Bağlantı", "URL"], accountRows, "Hesap bulunamadı."))}
-        ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu"], connectionRows, "Bağlantı tanımı bulunamadı."))}
+        ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu", "Test"], connectionRows, "Bağlantı tanımı bulunamadı."))}
       </div>`,
       section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı.")),
       section("Taslaklar", "", table(["İçerik", "Durum", "Platform", "Tarih", "İşlem"], draftRows, "Taslak bulunamadı.")),
@@ -1111,6 +1159,18 @@
   async function createSocialDraft(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     const targetPlatforms = checkedValues(form, "target_platforms");
+    const extraPayload = jsonObject(raw.platform_payload_json);
+    const platformPayload = {
+      link: raw.landing_url || "",
+      landing_url: raw.landing_url || "",
+      image_url: raw.image_url || "",
+      video_url: raw.video_url || "",
+      privacy_status: raw.privacy_status || "public",
+      privacy_level: raw.privacy_status === "private" ? "SELF_ONLY" : "PUBLIC_TO_EVERYONE",
+      action_type: raw.action_type || "LEARN_MORE",
+      to: raw.whatsapp_to || "",
+      ...extraPayload
+    };
     await api("/v1/admin/ops/social-media/drafts", {
       method: "POST",
       body: {
@@ -1125,6 +1185,7 @@
         post_type: raw.post_type || "feed",
         hashtags: csvValues(raw.hashtags),
         visual_fingerprint: raw.visual_fingerprint || "",
+        platform_payload: platformPayload,
         metadata: { prepared_from: "admin_social_center" }
       }
     });
@@ -1179,6 +1240,17 @@
     });
     showToast("Secret güvenli şekilde kaydedildi.");
     form.reset();
+    await loadSocialMedia();
+  }
+
+  async function testSocialConnection(platform) {
+    const data = await api("/v1/admin/ops/social-media/connections/test", {
+      method: "POST",
+      body: { platform }
+    });
+    const status = data?.result?.status || "tested";
+    const message = data?.result?.errorMessage ? ` - ${data.result.errorMessage}` : "";
+    showToast(`Bağlantı testi: ${normalizeStatus(status)}${message}`, data?.ok ? "" : "error");
     await loadSocialMedia();
   }
 
@@ -1310,6 +1382,11 @@
       const socialDispatch = event.target.closest("[data-social-dispatch]");
       if (socialDispatch) {
         await dispatchSocialPost(socialDispatch.dataset.socialDispatch).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialTest = event.target.closest("[data-social-test]");
+      if (socialTest) {
+        await testSocialConnection(socialTest.dataset.socialTest).catch((error) => showToast(error.message, "error"));
         return;
       }
       if (event.target.closest("[data-social-dispatch-due]")) {

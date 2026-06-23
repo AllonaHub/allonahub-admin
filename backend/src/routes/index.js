@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
-import { dispatchSocialMediaPost, socialMediaDispatchStatus } from "../lib/social-media-dispatch.js";
+import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
@@ -223,6 +223,21 @@ const SOCIAL_MEDIA_PLATFORMS = [
   "other"
 ];
 
+const SOCIAL_MEDIA_DEFAULT_TARGET_PLATFORMS = [
+  "instagram",
+  "facebook",
+  "threads",
+  "x",
+  "linkedin",
+  "tiktok",
+  "youtube",
+  "pinterest",
+  "nsosyal",
+  "telegram",
+  "whatsapp",
+  "google_business"
+];
+
 const socialMediaPlatformSchema = z.enum(SOCIAL_MEDIA_PLATFORMS);
 const socialMediaPostTypeSchema = z.enum(["feed", "story", "reel", "short", "video", "carousel", "pin", "article", "text"]);
 
@@ -274,11 +289,12 @@ const socialMediaDraftSchema = z.object({
   landing_url: z.string().trim().max(700).optional().default(""),
   language: z.string().trim().min(2).max(12).optional().default("tr"),
   scheduled_for: z.string().datetime().optional().nullable(),
-  target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest"]),
+  target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(SOCIAL_MEDIA_DEFAULT_TARGET_PLATFORMS),
   post_type: socialMediaPostTypeSchema.optional().default("feed"),
   hashtags: z.array(socialHashtagSchema).max(20).optional().default([]),
   media_asset_ids: z.array(uuidSchema).max(20).optional().default([]),
   visual_fingerprint: z.string().trim().max(220).optional().default(""),
+  platform_payload: z.record(z.unknown()).optional().default({}),
   platform_overrides: z.record(socialMediaPlatformOverrideSchema).optional().default({}),
   metadata: z.record(z.unknown()).optional().default({})
 });
@@ -293,7 +309,7 @@ const socialMediaDailyPlanSchema = z.object({
   plan_date: z.string().date(),
   objective: z.string().trim().min(2).max(80).optional().default("growth"),
   summary: z.string().trim().max(1600).optional().default(""),
-  target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest"]),
+  target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(SOCIAL_MEDIA_DEFAULT_TARGET_PLATFORMS),
   draft_ids: z.array(uuidSchema).max(40).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({})
 });
@@ -304,6 +320,11 @@ const socialMediaSecretSchema = z.object({
   secret_key: z.string().trim().min(2).max(90).regex(/^[A-Z0-9_:-]+$/),
   secret_value: z.string().min(6).max(16000),
   expires_at: z.string().datetime().optional().nullable()
+});
+
+const socialMediaConnectionTestSchema = z.object({
+  account_id: uuidSchema.optional().nullable(),
+  platform: socialMediaPlatformSchema
 });
 
 const adminAuditLogQuerySchema = z.object({
@@ -1170,7 +1191,7 @@ const SOCIAL_CONNECTOR_SECRET_DEFINITIONS = Object.freeze({
     { key: "ACCESS_TOKEN", label: "LinkedIn posting access token", required: true }
   ],
   tiktok: [
-    { key: "OPEN_ID", label: "TikTok creator open ID", required: true },
+    { key: "OPEN_ID", label: "TikTok creator open ID", required: false },
     { key: "ACCESS_TOKEN", label: "TikTok Content Posting access token", required: true },
     { key: "REFRESH_TOKEN", label: "TikTok refresh token", required: false }
   ],
@@ -1178,14 +1199,15 @@ const SOCIAL_CONNECTOR_SECRET_DEFINITIONS = Object.freeze({
     { key: "CHANNEL_ID", label: "YouTube channel ID", required: true },
     { key: "CLIENT_ID", label: "Google OAuth client ID", required: true },
     { key: "CLIENT_SECRET", label: "Google OAuth client secret", required: true },
-    { key: "REFRESH_TOKEN", label: "YouTube OAuth refresh token", required: true }
+    { key: "REFRESH_TOKEN", label: "YouTube OAuth refresh token", required: true },
+    { key: "ACCESS_TOKEN", label: "Temporary YouTube access token", required: false }
   ],
   pinterest: [
     { key: "BOARD_ID", label: "Pinterest board ID", required: true },
     { key: "ACCESS_TOKEN", label: "Pinterest pins access token", required: true }
   ],
   nsosyal: [
-    { key: "DISPATCH_WEBHOOK_URL", label: "Nsosyal manual/dispatcher webhook URL", required: false },
+    { key: "DISPATCH_WEBHOOK_URL", label: "Nsosyal manual/dispatcher webhook URL", required: true },
     { key: "DISPATCH_WEBHOOK_SECRET", label: "Nsosyal dispatcher secret", required: false }
   ],
   telegram: [
@@ -1194,12 +1216,17 @@ const SOCIAL_CONNECTOR_SECRET_DEFINITIONS = Object.freeze({
   ],
   whatsapp: [
     { key: "PHONE_NUMBER_ID", label: "WhatsApp Business phone number ID", required: true },
-    { key: "ACCESS_TOKEN", label: "WhatsApp Business access token", required: true }
+    { key: "ACCESS_TOKEN", label: "WhatsApp Business access token", required: true },
+    { key: "DEFAULT_RECIPIENT_PHONE", label: "Default approved recipient phone", required: false },
+    { key: "DEFAULT_TEMPLATE_NAME", label: "Default WhatsApp template name", required: false }
   ],
   google_business: [
+    { key: "ACCOUNT_ID", label: "Google Business Profile account ID", required: true },
     { key: "LOCATION_ID", label: "Google Business Profile location ID", required: true },
-    { key: "ACCESS_TOKEN", label: "Google Business access token", required: true },
-    { key: "REFRESH_TOKEN", label: "Google Business refresh token", required: false }
+    { key: "CLIENT_ID", label: "Google OAuth client ID", required: true },
+    { key: "CLIENT_SECRET", label: "Google OAuth client secret", required: true },
+    { key: "REFRESH_TOKEN", label: "Google Business refresh token", required: true },
+    { key: "ACCESS_TOKEN", label: "Temporary Google Business access token", required: false }
   ]
 });
 
@@ -1255,7 +1282,8 @@ async function loadConnectorSecrets({ platform, accountId, warnings }) {
 
   const rows = await optionalQuery(query, [], warnings, "social_media_connector_secrets");
   const result = {};
-  for (const row of rows) {
+  const orderedRows = [...rows].sort((a, b) => Number(Boolean(a.account_id)) - Number(Boolean(b.account_id)));
+  for (const row of orderedRows) {
     try {
       result[row.secret_key] = decryptSecretValue(row.encrypted_value, secretContext({
         platform: row.platform,
@@ -1398,6 +1426,7 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
 
 async function createPlatformPostsForDraft({ draft, payload, accounts, warnings }) {
   const platformOverrides = payload.platform_overrides || {};
+  const basePlatformPayload = payload.platform_payload || {};
   const rows = accounts.map((account) => {
     const override = platformOverrides[account.platform] || {};
     const caption = override.caption || [payload.hook, payload.body, payload.cta].filter(Boolean).join("\n\n");
@@ -1409,7 +1438,10 @@ async function createPlatformPostsForDraft({ draft, payload, accounts, warnings 
       caption,
       hashtags: normalizeHashtags(override.hashtags || payload.hashtags || []),
       media_asset_ids: payload.media_asset_ids || [],
-      platform_payload: override.platform_payload || {},
+      platform_payload: {
+        ...basePlatformPayload,
+        ...(override.platform_payload || {})
+      },
       status: "draft",
       scheduled_for: override.scheduled_for || payload.scheduled_for || null
     };
@@ -4690,6 +4722,105 @@ export function registerRoutes(app) {
     });
 
     return reply.code(existing ? 200 : 201).send({ ok: true, secret, warnings });
+  });
+
+  app.post("/v1/admin/ops/social-media/connections/test", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.connection_test");
+    const payload = socialMediaConnectionTestSchema.parse(request.body || {});
+    const warnings = [];
+    const definitions = secretDefinitionsFor(payload.platform);
+    const accountId = payload.account_id || null;
+    const connectorSecrets = await loadConnectorSecrets({
+      platform: payload.platform,
+      accountId,
+      warnings
+    });
+    const missingRequired = definitions
+      .filter((definition) => definition.required && !connectorSecrets[definition.key])
+      .map((definition) => definition.key);
+
+    if (missingRequired.length) {
+      const result = {
+        provider: "native_api_test",
+        status: "skipped",
+        responseStatus: null,
+        responseBody: "",
+        externalPostId: "",
+        externalUrl: "",
+        errorMessage: `Eksik zorunlu secret: ${missingRequired.join(", ")}`
+      };
+
+      await auditedOpsEvent({
+        request,
+        ctx,
+        action: "admin.ops.social_media_connection_test_skipped",
+        resourceType: "social_media_connector",
+        severity: "warning",
+        metadata: {
+          platform: payload.platform,
+          account_id: accountId,
+          missing_required: missingRequired
+        }
+      });
+
+      return reply.code(200).send({ ok: false, result, missing_required: missingRequired, warnings });
+    }
+
+    let result;
+    try {
+      result = await testSocialMediaConnector({
+        platform: payload.platform,
+        secrets: connectorSecrets
+      });
+    } catch (error) {
+      result = {
+        provider: "native_api_test",
+        status: "failed",
+        responseStatus: null,
+        responseBody: "",
+        externalPostId: "",
+        externalUrl: "",
+        errorMessage: error?.name === "AbortError" ? "Connector test timed out." : (error?.message || "Connector test failed.")
+      };
+    }
+
+    const verified = result.status === "verified";
+    if (verified) {
+      let secretUpdate = supabaseAdmin
+        .from("social_media_connector_secrets")
+        .update({ last_verified_at: new Date().toISOString(), updated_by: ctx.user.id })
+        .eq("platform", payload.platform)
+        .eq("status", "active");
+      secretUpdate = accountId ? secretUpdate.or(`account_id.eq.${accountId},account_id.is.null`) : secretUpdate.is("account_id", null);
+      await optionalMutation(secretUpdate.select("id"), warnings, "social_media_connector_secrets");
+    }
+
+    let accountUpdate = supabaseAdmin
+      .from("social_media_accounts")
+      .update({
+        connection_status: verified ? "connected" : "needs_reauth",
+        updated_by: ctx.user.id
+      })
+      .eq("platform", payload.platform);
+    if (accountId) accountUpdate = accountUpdate.eq("id", accountId);
+    await optionalMutation(accountUpdate.select("id, platform, connection_status"), warnings, "social_media_accounts");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.social_media_connection_tested",
+      resourceType: "social_media_connector",
+      severity: verified ? "info" : "warning",
+      metadata: {
+        platform: payload.platform,
+        account_id: accountId,
+        status: result.status,
+        response_status: result.responseStatus,
+        error: result.errorMessage || ""
+      }
+    });
+
+    return reply.code(200).send({ ok: verified, result, warnings });
   });
 
   app.post("/v1/admin/ops/social-media/campaigns", async (request, reply) => {
