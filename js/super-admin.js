@@ -23,6 +23,8 @@
     audit: loadAuditLog
   };
 
+  const SUPER_ADMIN_ENTRY_ROLES = ["admin", "super_admin"];
+
   function $(selector, root) {
     return (root || document).querySelector(selector);
   }
@@ -1202,7 +1204,7 @@
   }
 
   async function initOwnerConsole() {
-    state.access = await App.auth.requireRole(["super_admin"]);
+    state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
     if (!state.access) return;
     bindOwnerConsole();
     await loadOwnerSession();
@@ -1310,7 +1312,7 @@
       return;
     }
     try {
-      state.access = await App.auth.requireRole(["super_admin"]);
+      state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
       if (!state.access) return;
       const roleTarget = $("[data-sa-role]");
       if (roleTarget) roleTarget.textContent = state.access.profile.role;
