@@ -135,10 +135,14 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 .card p{opacity:.75;line-height:1.45}
 
 .driver-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.driver{padding:16px;min-height:245px;border:1px solid rgba(0,229,255,.26);color:white;text-align:left;cursor:pointer}
+.driver{padding:16px;min-height:224px;border:1px solid rgba(0,229,255,.26);color:white;text-align:left;cursor:pointer;display:flex;flex-direction:column}
 .driver:hover,.driver.is-selected{border-color:#00e5ff;box-shadow:0 0 30px rgba(0,229,255,.2)}
-.driver-img{height:125px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:13px;position:relative;overflow:hidden}
-.driver-img:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
+.driver-visual{min-height:92px;border-radius:18px;background:linear-gradient(135deg,rgba(0,229,255,.2),rgba(2,8,20,.86)),repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 1px,transparent 1px 12px);margin-bottom:13px;padding:13px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;border:1px solid rgba(255,255,255,.1);overflow:hidden}
+.driver-badge{width:48px;height:48px;border-radius:15px;background:#ffd700;color:#020814;display:inline-flex;align-items:center;justify-content:center;font-weight:950;box-shadow:0 0 18px rgba(255,215,0,.18)}
+.driver-visual-text{display:grid;gap:2px;min-width:0}
+.driver-visual-text strong{color:white;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.driver-visual-text span{color:#8defff;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.driver-visual-text small{color:#ffd700;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:0}
 .driver b{color:#ffd700}
 .driver p{font-size:13px;opacity:.72;margin:6px 0}
 .meta{display:flex;justify-content:space-between;margin-top:10px;color:#00e5ff;font-weight:900;font-size:13px}
@@ -202,6 +206,9 @@ body{min-width:0;overflow-x:hidden}
 .map-metrics b{font-size:12px}
 .section-title h2{font-size:23px}
 .card{min-height:112px;padding:17px}
+.driver{min-height:198px}
+.driver-visual{min-height:78px;border-radius:16px;padding:11px}
+.driver-badge{width:42px;height:42px;border-radius:13px}
 .partner-cta{padding:20px}
 .partner-cta h2,.info h2{font-size:25px}
 .info{padding:20px}
@@ -382,10 +389,10 @@ body.taxi-module-page .footer-bottom__links{gap:8px!important}
 
 <div class="section-title" id="drivers"><h2>Yakındaki Sürücüler</h2><a href="#taxi-live-map">Haritada Gör</a></div>
 <div class="driver-grid" data-taxi-driver-list>
-  <div class="driver glass"><div class="driver-img"></div><b>Ahmet K.</b><p>Ekonomik • 4 dk uzaklıkta</p><div class="meta"><span>4.9 Puan</span><span>+20 HP</span></div></div>
-  <div class="driver glass"><div class="driver-img"></div><b>Mehmet A.</b><p>Konfor • 6 dk uzaklıkta</p><div class="meta"><span>4.8 Puan</span><span>+25 HP</span></div></div>
-  <div class="driver glass"><div class="driver-img"></div><b>Selin T.</b><p>Kadın sürücü • 8 dk uzaklıkta</p><div class="meta"><span>5.0 Puan</span><span>+30 HP</span></div></div>
-  <div class="driver glass"><div class="driver-img"></div><b>VIP Transfer</b><p>Premium araç • Rezervasyon</p><div class="meta"><span>Elite</span><span>+50 HP</span></div></div>
+  <div class="driver glass"><div class="driver-visual"><span class="driver-badge">104</span><div class="driver-visual-text"><strong>34 AT 104</strong><span>Toyota Corolla Hybrid</span><small>Ekonomik</small></div></div><b>Ahmet K.</b><p>Ekonomik • 4 dk uzaklıkta</p><div class="meta"><span>4.9 Puan</span><span>+20 HP</span></div></div>
+  <div class="driver glass"><div class="driver-visual"><span class="driver-badge">218</span><div class="driver-visual-text"><strong>34 AH 218</strong><span>Skoda Superb</span><small>Konfor</small></div></div><b>Mehmet A.</b><p>Konfor • 6 dk uzaklıkta</p><div class="meta"><span>4.8 Puan</span><span>+25 HP</span></div></div>
+  <div class="driver glass"><div class="driver-visual"><span class="driver-badge">331</span><div class="driver-visual-text"><strong>34 AL 331</strong><span>Hyundai Ioniq</span><small>Kadın sürücü</small></div></div><b>Selin T.</b><p>Kadın sürücü • 8 dk uzaklıkta</p><div class="meta"><span>5.0 Puan</span><span>+30 HP</span></div></div>
+  <div class="driver glass"><div class="driver-visual"><span class="driver-badge">VIP</span><div class="driver-visual-text"><strong>34 VIP 442</strong><span>Mercedes Vito</span><small>VIP transfer</small></div></div><b>VIP Transfer</b><p>Premium araç • Rezervasyon</p><div class="meta"><span>Elite</span><span>+50 HP</span></div></div>
 </div>
 
 <div class="section-title"><h2>Yolculuk Akışı</h2><a href="#safety-center">Güvenlik Merkezi</a></div>
@@ -438,6 +445,6 @@ body.taxi-module-page .footer-bottom__links{gap:8px!important}
   <script src="../../js/supabase-client.js?v=20260623-taxi-data1" defer></script>
   <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
   <script src="../../js/platform.js?v=20260622-corp1" defer></script>
-  <script src="../../js/taxi-map.js?v=20260623-taxi-data1" defer></script>
+  <script src="../../js/taxi-map.js?v=20260623-taxi-launch2" defer></script>
 </body>
 </html>

@@ -481,6 +481,15 @@
     `;
   }
 
+  function driverBadge(driver) {
+    const code = String(driver.publicId || driver.plate || driver.id || "AT")
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(-3)
+      .toUpperCase();
+    if (driver.services && driver.services.includes("vip")) return "VIP";
+    return code || "AT";
+  }
+
   function setPickup(lat, lng, label) {
     state.pickup = { lat, lng };
     setInput("[data-taxi-pickup]", label || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
@@ -586,7 +595,14 @@
 
       return `
         <button class="driver glass${driver.id === state.selectedDriverId ? " is-selected" : ""}" type="button" data-taxi-driver="${escapeHTML(driver.id)}">
-          <div class="driver-img"></div>
+          <div class="driver-visual">
+            <span class="driver-badge">${escapeHTML(driverBadge(driver))}</span>
+            <div class="driver-visual-text">
+              <strong>${escapeHTML(driver.plate || driver.id)}</strong>
+              <span>${escapeHTML(driver.vehicle || "Allona Taksi")}</span>
+              <small>${escapeHTML(driver.type || serviceConfig[state.service].label)}</small>
+            </div>
+          </div>
           <b>${escapeHTML(driver.name)}</b>
           <p>${escapeHTML(driver.vehicle)} · ${escapeHTML(driver.plate)}</p>
           <p>${escapeHTML(badges)} · ${etaFor(driver)} dk uzaklıkta</p>
@@ -837,6 +853,24 @@
     ].join("\n");
   }
 
+  function fallbackCopyText(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      return document.execCommand("copy");
+    } catch (error) {
+      return false;
+    } finally {
+      textarea.remove();
+    }
+  }
+
   async function shareTrip() {
     const text = shareText();
     try {
@@ -854,7 +888,12 @@
     } catch (error) {
       console.warn("Allona Taxi share failed", error);
     }
-    window.location.href = `mailto:?subject=${encodeURIComponent("Allona Taksi yolculuğum")}&body=${encodeURIComponent(text)}`;
+    if (fallbackCopyText(text)) {
+      toast("Yolculuk paylaşım metni kopyalandı.", "success");
+      setStatus("Yolculuk paylaşım metni güvenli kopyalama ile hazırlandı.");
+      return;
+    }
+    setStatus("Yolculuk paylaşım metni hazırlandı; cihaz paylaşım izni vermediği için kopyalama tamamlanamadı.");
   }
 
   function runRideCheck() {
