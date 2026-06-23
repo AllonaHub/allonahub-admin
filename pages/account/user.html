@@ -1669,7 +1669,7 @@ async function resetPassword(){
         turnstileToken:await securityChallengeToken("forgot_password")
       });
     }catch(error){
-      const backendUnavailable=error.status===0 || [404,405,501,502,503,504].includes(Number(error.status));
+      const backendUnavailable=error.status===0 || [404,405,500,501,502,503,504].includes(Number(error.status));
       if(!backendUnavailable)throw error;
       const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
       if(resetError)throw resetError;
