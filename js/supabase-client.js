@@ -77,12 +77,15 @@
       .toLocaleLowerCase("tr-TR")
       .replace(/[\s-]+/g, "_");
     if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
+    if (["market", "allona_market", "allonamarket", "supermarket", "süpermarket", "grocery"].includes(scope)) return "market";
     if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
     return "";
   }
 
   function explicitCatalogScope(item) {
     const candidates = [
+      item.module_key,
+      item.moduleKey,
       item.catalog_scope,
       item.catalogScope,
       item.module_scope,
@@ -98,6 +101,7 @@
     }
 
     const sku = String(item.sku || item.product_sku || "").trim().toLocaleUpperCase("tr-TR");
+    if (/^ALM[-_]/.test(sku)) return "market";
     if (/^ALY[-_]/.test(sku)) return "food";
     if (/^(ALS|ASHOP|ALSHOP|SHOP)[-_]/.test(sku)) return "shop";
     return "";
@@ -141,10 +145,41 @@
     return foodSignal && serviceSignal;
   }
 
+  function isMarketCatalogProduct(raw) {
+    const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
+    const explicit = explicitCatalogScope(item);
+    if (explicit) return explicit === "market";
+
+    const category = String(item.category || "").toLocaleLowerCase("tr-TR");
+    const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+    const sku = String(item.sku || "").toLocaleLowerCase("tr-TR");
+    if (/allona market|market \/|süpermarket|supermarket/.test(`${category} ${merchant}`)) return true;
+    if (/^alm[-_]/.test(sku)) return true;
+
+    const marketText = [
+      item.name,
+      item.product_name,
+      item.category,
+      item.brand,
+      item.seller_name,
+      item.partner_name,
+      item.store_name,
+      item.sku
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+    return /meyve|sebze|kahvaltı|kahvalti|süt|sut|yumurta|zeytin|zeytinyağı|zeytinyagi|makarna|temel gıda|temel gida|içecek|icecek|temizlik|deterjan|kağıt|kagit|bebek|ıslak mendil|islak mendil|atıştırmalık|atistirmalik|petshop/.test(marketText);
+  }
+
   function matchesCatalogScope(item, scope) {
     const target = normalizedScope(scope);
     if (target === "food") return isFoodCatalogProduct(item);
-    if (target === "shop") return !isFoodCatalogProduct(item);
+    if (target === "market") return isMarketCatalogProduct(item);
+    if (target === "shop") return !isFoodCatalogProduct(item) && !isMarketCatalogProduct(item);
     return true;
   }
 
@@ -329,6 +364,10 @@
 
   async function listFoodPartnerAds(limit) {
     return listPartnerAds(["allonayemek_hero", "allona_yemek_hero", "food_hero", "yemek_hero"], limit);
+  }
+
+  async function listMarketPartnerAds(limit) {
+    return listPartnerAds(["allonamarket_hero", "allona_market_hero", "market_hero", "grocery_hero"], limit);
   }
 
   async function listOrders(scope) {
@@ -561,6 +600,7 @@
     ads: {
       shopHero: listShopPartnerAds,
       foodHero: listFoodPartnerAds,
+      marketHero: listMarketPartnerAds,
       list: listPartnerAds
     },
     orders: {
@@ -587,7 +627,8 @@
 
   App.catalog = {
     isFoodProduct: isFoodCatalogProduct,
-    isShopProduct: (item) => !isFoodCatalogProduct(item),
+    isMarketProduct: isMarketCatalogProduct,
+    isShopProduct: (item) => !isFoodCatalogProduct(item) && !isMarketCatalogProduct(item),
     matchesScope: matchesCatalogScope
   };
 })();

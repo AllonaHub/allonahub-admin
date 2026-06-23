@@ -66,6 +66,7 @@
               <a href="${core.url("/allonahub-akademi.html")}" ${active("/allonahub-akademi.html")}>Akademi</a>
               <a href="${core.url("/pages/ecosystem/allonataksi.html")}" ${active("/pages/ecosystem/allonataksi.html")}>Taksi</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
+              <a href="${core.url("/pages/commerce/allonamarket.html")}" ${active("/pages/commerce/allonamarket.html")}>Market</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
               <a href="${core.url("/pages/commerce/guvenli-odeme.html")}" ${active("/pages/commerce/guvenli-odeme.html")}>Ödeme</a>
               <a href="${core.url("/pages/account/user-panel.html")}" ${active("/pages/account/user-panel.html")}>Hesabım</a>
@@ -240,7 +241,10 @@
       if (!form) return;
       event.preventDefault();
       const q = new FormData(form).get("q") || "";
-      window.location.href = core.url(`/pages/commerce/shop.html?q=${encodeURIComponent(q)}`);
+      const target = document.querySelector("[data-page='allona-market']")
+        ? "/pages/commerce/allonamarket.html"
+        : "/pages/commerce/shop.html";
+      window.location.href = core.url(`${target}?q=${encodeURIComponent(q)}`);
     });
 
     document.addEventListener("click", (event) => {

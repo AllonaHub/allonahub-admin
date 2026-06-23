@@ -173,6 +173,7 @@ create table if not exists public.products (
   stock integer not null default 0 check (stock >= 0),
   image_url text,
   category text not null default 'Genel',
+  module_key text not null default 'shop' check (module_key in ('shop', 'market', 'food', 'taxi', 'service')),
   status public.product_status not null default 'draft',
   slug text unique,
   meta_title text,
@@ -186,6 +187,7 @@ create table if not exists public.products (
 
 create index if not exists products_status_created_idx on public.products(status, created_at desc);
 create index if not exists products_category_idx on public.products(category);
+create index if not exists products_module_status_idx on public.products(module_key, status, created_at desc);
 create index if not exists products_partner_idx on public.products(partner_id);
 
 drop trigger if exists products_set_updated_at on public.products;

@@ -15,6 +15,7 @@ Zorunlu alanlar:
 - `stock`
 - `image_url`
 - `category`
+- `module_key`: `shop`, `market`, `food`, `taxi` veya `service`
 - `status`
 - `created_at`
 
@@ -28,7 +29,7 @@ Zorunlu alanlar:
 - `partner_id`
 - `updated_at`
 
-Kural: vitrinde yalnızca `status = active` ürünler gösterilir.
+Kural: vitrinde yalnızca `status = active` ürünler gösterilir. Modüllerin birbirine karışmaması için Allona Shop ürünleri `module_key = shop`, Allona Market ürünleri `module_key = market`, Allona Yemek ürünleri `module_key = food` kapsamıyla ayrılır. Eski canlı ürün tablolarında frontend `brand`, `category` ve `sku` alanlarından aynı ayrımı geriye uyumlu şekilde algılar.
 
 ### profiles
 
