@@ -530,12 +530,13 @@
 
     for (const candidatePath of paths) {
       const response = await fetch(`${config.apiBaseUrl}${candidatePath}`, {
-      method: options && options.method || "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: options && options.body ? JSON.stringify(options.body) : undefined
+        method: options && options.method || "GET",
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: options && options.body ? JSON.stringify(options.body) : undefined
       });
       const payload = await response.json().catch(() => ({}));
       if (response.ok) return payload;
@@ -1291,13 +1292,26 @@
     const payload = await api("/v1/control-center/release-approvals?limit=80");
     state.approvals = payload.approvals || [];
     const header = ownerLine("Yeni onay", "Main commit/push, deploy veya migration için owner onayı oluştur.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical");
-    const rows = state.approvals.map((item) => ownerLine(
-      `${item.approval_type} / ${item.status}`,
-      `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "-")}`,
-      `<button type="button" data-approval-detail="${escape(item.id)}">Detay</button>`,
-      item.risk_level
-    ));
+    const rows = state.approvals.map((item) => {
+      const manualPending = releaseApprovalManualPending(item);
+      const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
+      return ownerLine(
+        `${item.approval_type} / ${statusText}`,
+        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "-")}`,
+        `<button type="button" data-approval-detail="${escape(item.id)}">Detay</button>`,
+        manualPending ? "medium" : item.risk_level
+      );
+    });
     ownerSetOutput(header + (rows.length ? rows.join("") : ownerEmpty("Yayın onayı kaydı yok.")));
+  }
+
+  function releaseApprovalManualPending(approval) {
+    const response = approval && approval.webhook_response || {};
+    return approval && (
+      approval.status === "approved" ||
+      response.code === "GITOPS_NOT_CONFIGURED" ||
+      response.code === "GITOPS_DISABLED"
+    );
   }
 
   async function loadOwnerAccess() {
@@ -1384,7 +1398,7 @@
     const user = (state.permissionUsers || []).find((item) => item.id === userId);
     const message = `${user?.full_name || user?.email || "Kullanıcı"} için rol/durum/risk yetkisi güncellenecek.`;
     await runConfirmed(message, async (reason) => {
-      await api(`/v1/control-center/permissions/${encodeURIComponent(userId)}`, {
+      const result = await api(`/v1/control-center/permissions/${encodeURIComponent(userId)}`, {
         method: "PATCH",
         body: {
           role: role && role.value,
@@ -1394,6 +1408,14 @@
           reason
         }
       });
+      if (result && result.user) {
+        state.permissionUsers = (state.permissionUsers || []).map((item) => (
+          item.id === result.user.id ? result.user : item
+        ));
+        state.permissionChanges = result.change
+          ? [result.change].concat(state.permissionChanges || []).slice(0, 80)
+          : (state.permissionChanges || []);
+      }
     }, {
       trigger: button,
       defaultReason: message,
@@ -1656,11 +1678,18 @@
       const response = approval.webhook_response || {};
       const status = approval.status || "approved";
       const released = status === "dispatched";
-      setAlert(released ? "Yayın onayı deploy hattına gönderildi." : `Yayın onayı kaydedildi: ${status}`, released ? "ok" : "error");
+      const manualPending = status === "approved" || response.code === "GITOPS_NOT_CONFIGURED" || response.code === "GITOPS_DISABLED";
+      const okStatus = released || manualPending;
+      setAlert(
+        released
+          ? "Yayın onayı deploy hattına gönderildi."
+          : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`),
+        okStatus ? "ok" : "error"
+      );
       openDrawer("Yayın Onayı Sonucu", [
-        ownerLine("Durum", escape(status), released ? "yayına gönderildi" : "deploy bekliyor veya hata aldı", released ? "low" : "critical"),
-        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : "high"),
-        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : "high")
+        ownerLine("Durum", escape(status), released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı"), released ? "low" : (manualPending ? "medium" : "critical")),
+        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
+        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high"))
       ].join(""));
       await jumpOwnerView("approvals");
       form.reset();
@@ -1674,12 +1703,14 @@
   function showApprovalDetail(id) {
     const item = (state.approvals || []).find((approval) => approval.id === id);
     if (!item) return;
+    const manualPending = releaseApprovalManualPending(item);
+    const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
     openDrawer("Yayın Onayı", [
       ownerLine("Tip", escape(item.approval_type || "-"), "", item.risk_level),
-      ownerLine("Durum", escape(item.status || "-"), "", item.risk_level),
+      ownerLine("Durum", escape(statusText || "-"), manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "", manualPending ? "medium" : item.risk_level),
       ownerLine("Hedef", escape(item.target_ref || "-"), "", "medium"),
       ownerLine("Özet", escape(item.target_summary || "-"), "", "medium"),
-      ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(item.webhook_response || {}).slice(0, 500))}`, "", item.status === "failed" ? "critical" : "low"),
+      ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(item.webhook_response || {}).slice(0, 500))}`, "", item.status === "failed" && !manualPending ? "critical" : "low"),
       ownerLine("Tarih", formatDate(item.created_at), "", "low")
     ].join(""));
   }

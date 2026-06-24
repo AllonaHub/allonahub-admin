@@ -379,7 +379,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260624-actions5";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260624-actions7";
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -1683,12 +1683,12 @@ async function dispatchSuperAdminReleaseApproval(approval, request) {
 
   if (!config.superAdmin.releaseWebhookUrl || !config.superAdmin.releaseWebhookSecret) {
     return {
-      status: "failed",
+      status: "approved",
       dispatched: false,
       webhook_status: null,
       webhook_response: {
         code: "GITOPS_NOT_CONFIGURED",
-        message: "SUPER_ADMIN_RELEASE_WEBHOOK_URL ve SUPER_ADMIN_RELEASE_WEBHOOK_SECRET server tarafında zorunlu."
+        message: "Yayın onayı audit log'a kaydedildi; güvenli deploy webhook'u henüz yapılandırılmadığı için manuel deploy bekliyor."
       }
     };
   }
