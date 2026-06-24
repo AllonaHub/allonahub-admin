@@ -6,6 +6,7 @@
 
   const state = {
     access: null,
+    ownerShellMarkup: "",
     users: [],
     applications: [],
     businesses: [],
@@ -326,9 +327,12 @@
   function accessFallback(message, options) {
     const mode = options && options.mode || "login";
     const diagnosis = options && options.diagnosis || {};
+    const opensPanel = Boolean(diagnosis.can_open_panel || mode === "panel");
     const primaryHref = mode === "mfa" ? mfaUrl() : loginUrl();
     const primaryLabel = mode === "mfa" ? "MFA2 Doğrulamasına Git" : "Süper Admin Olarak Giriş Yap";
-    const helper = mode === "mfa"
+    const helper = opensPanel
+      ? diagnosis.helper || "Owner kilidi doğrulandı; Super Admin konsolu açılabilir."
+      : mode === "mfa"
       ? "Oturum açık görünüyor; Super Admin için MFA2 doğrulaması tamamlanmalı."
       : mode === "locked"
         ? diagnosis.helper || "Oturum doğrulandı ancak owner kilidi veya Super Admin API yetkisi tamamlanmadı."
@@ -348,9 +352,11 @@
           ` : ""}
           ${diagnosis.can_repair_owner ? `<button class="sa-btn sa-btn-danger" type="button" data-owner-repair>Owner Kaydını Bu Hesapla Eşleştir</button>` : ""}
           ${diagnosis.can_bootstrap_owner ? `<button class="sa-btn" type="button" data-owner-bootstrap>Owner Yetkisini Tamamla</button>` : ""}
-          <a class="sa-btn" href="${escape(primaryHref)}">${escape(primaryLabel)}</a>
-          ${mode !== "mfa" ? `<a class="sa-btn sa-btn-ghost" href="${escape(mfaUrl())}">MFA2 Sayfasına Git</a>` : ""}
-          <a class="sa-btn sa-btn-ghost" href="${escape(core.url("/admin/index.html"))}">Admin Panele Dön</a>
+          ${opensPanel
+            ? `<button class="sa-btn" type="button" data-owner-open-panel>Super Admin Konsolunu Aç</button>`
+            : `<a class="sa-btn" href="${escape(primaryHref)}">${escape(primaryLabel)}</a>
+              ${mode !== "mfa" ? `<a class="sa-btn sa-btn-ghost" href="${escape(mfaUrl())}">MFA2 Sayfasına Git</a>` : ""}
+              <a class="sa-btn sa-btn-ghost" href="${escape(core.url("/admin/index.html"))}">Admin Panele Dön</a>`}
         </div>
       </main>
     `;
@@ -405,6 +411,25 @@
   }
 
   function bindAccessFallbackActions(root) {
+    const openPanelButton = root && root.querySelector ? root.querySelector("[data-owner-open-panel]") : null;
+    if (openPanelButton && openPanelButton.dataset.bound !== "true") {
+      openPanelButton.dataset.bound = "true";
+      openPanelButton.addEventListener("click", async () => {
+        openPanelButton.disabled = true;
+        openPanelButton.textContent = "Panel açılıyor...";
+        try {
+          const payload = await api("/v1/control-center/owner-preflight");
+          if (!await openOwnerConsoleFromPreflight(payload)) {
+            throw new Error("Owner preflight panel açılışını doğrulamadı.");
+          }
+        } catch (error) {
+          openPanelButton.disabled = false;
+          openPanelButton.textContent = "Super Admin Konsolunu Aç";
+          alert(publicError(error, "Panel açılamadı."));
+        }
+      });
+    }
+
     const repairButton = root && root.querySelector ? root.querySelector("[data-owner-repair]") : null;
     if (repairButton && repairButton.dataset.bound !== "true") {
       repairButton.dataset.bound = "true";
@@ -1090,6 +1115,15 @@
     if (roleTarget) roleTarget.textContent = `Owner kilidi: ${owner.email || owner.user_id || "doğrulandı"}`;
   }
 
+  function restoreOwnerConsoleShell() {
+    const shell = $("[data-super-admin-shell]");
+    if (!shell || $("[data-command-output]", shell)) return;
+    if (state.ownerShellMarkup) {
+      shell.innerHTML = state.ownerShellMarkup;
+      state.ownerConsoleBound = false;
+    }
+  }
+
   async function recoverOwnerSessionWithPreflight(originalError) {
     const payload = await api("/v1/control-center/owner-preflight");
     if (!ownerPreflightAllowsPanel(payload)) throw originalError;
@@ -1102,11 +1136,22 @@
 
   async function openOwnerConsoleFromPreflight(payload) {
     if (!ownerPreflightAllowsPanel(payload)) return false;
+    restoreOwnerConsoleShell();
     state.ownerSession = ownerSessionFromPreflight(payload);
     bindOwnerConsole();
     applyOwnerSessionHeader(state.ownerSession);
-    await loadOwnerView("overview");
-    setAlert("Owner kilidi doğrulandı. Panel açıldı.", "ok");
+    try {
+      await loadOwnerView("overview");
+      setAlert("Owner kilidi doğrulandı. Panel açıldı.", "ok");
+    } catch (error) {
+      ownerSetOutput(ownerLine(
+        "Panel erişimi açıldı",
+        `Owner doğrulandı; özet verisi alınamadı: ${escape(publicError(error, "Kontrol merkezi yüklenemedi."))}`,
+        "<button type=\"button\" data-view-jump=\"overview\">Tekrar dene</button>",
+        "high"
+      ));
+      setAlert("Owner doğrulandı. Kontrol merkezi verisi alınamazsa panel açık kalır ve tekrar denenebilir.", "error");
+    }
     return true;
   }
 
@@ -1543,11 +1588,11 @@
   }
 
   function bindOwnerConsole() {
-    if (state.ownerConsoleBound) return;
     state.ownerConsoleBound = true;
 
     const nav = $("[data-sa-nav]");
-    if (nav) {
+    if (nav && nav.dataset.bound !== "true") {
+      nav.dataset.bound = "true";
       nav.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-view-target]");
         if (!button) return;
@@ -1556,88 +1601,96 @@
       });
     }
 
-    document.addEventListener("submit", async (event) => {
-      const usersFilter = event.target.closest("[data-owner-users-filter]");
-      if (usersFilter) {
-        event.preventDefault();
-        const form = new FormData(usersFilter);
-        const params = {};
-        ["search", "role", "account_status"].forEach((key) => {
-          const value = String(form.get(key) || "").trim();
-          if (value) params[key] = value;
-        });
-        await loadOwnerUsers(params);
-        return;
-      }
+    if (!state.ownerDocumentEventsBound) {
+      state.ownerDocumentEventsBound = true;
 
-      const permissionsFilter = event.target.closest("[data-owner-permissions-filter]");
-      if (permissionsFilter) {
-        event.preventDefault();
-        const form = new FormData(permissionsFilter);
-        const params = {};
-        ["search", "role"].forEach((key) => {
-          const value = String(form.get(key) || "").trim();
-          if (value) params[key] = value;
-        });
-        await loadOwnerPermissions(params);
-        return;
-      }
+      document.addEventListener("submit", async (event) => {
+        const usersFilter = event.target.closest("[data-owner-users-filter]");
+        if (usersFilter) {
+          event.preventDefault();
+          const form = new FormData(usersFilter);
+          const params = {};
+          ["search", "role", "account_status"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerUsers(params);
+          return;
+        }
 
-      const releaseForm = event.target.closest("[data-release-form]");
-      if (releaseForm) {
-        event.preventDefault();
-        await submitReleaseApproval(releaseForm);
-      }
-    });
+        const permissionsFilter = event.target.closest("[data-owner-permissions-filter]");
+        if (permissionsFilter) {
+          event.preventDefault();
+          const form = new FormData(permissionsFilter);
+          const params = {};
+          ["search", "role"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerPermissions(params);
+          return;
+        }
 
-    document.addEventListener("click", async (event) => {
-      const toggle = event.target.closest(".sa-toggle");
-      if (toggle) {
-        toggle.setAttribute("aria-pressed", toggle.getAttribute("aria-pressed") !== "true");
-      }
+        const releaseForm = event.target.closest("[data-release-form]");
+        if (releaseForm) {
+          event.preventDefault();
+          await submitReleaseApproval(releaseForm);
+        }
+      });
 
-      const viewJump = event.target.closest("[data-view-jump]");
-      if (viewJump) await jumpOwnerView(viewJump.dataset.viewJump);
+      document.addEventListener("click", async (event) => {
+        const toggle = event.target.closest(".sa-toggle");
+        if (toggle) {
+          toggle.setAttribute("aria-pressed", toggle.getAttribute("aria-pressed") !== "true");
+        }
 
-      if (event.target.closest("[data-release-open]")) openReleaseModal();
-      if (event.target.closest("[data-release-cancel]")) closeReleaseModal();
-      if (event.target.closest("[data-drawer-close]")) closeDrawer();
+        const viewJump = event.target.closest("[data-view-jump]");
+        if (viewJump) await jumpOwnerView(viewJump.dataset.viewJump);
 
-      if (event.target.closest("[data-open-links]")) {
-        const payload = state.commandCenter || await loadCommandCenter();
-        openDrawer("Hızlı Erişim", ownerControlLinks(payload.control_links || []));
-      }
+        if (event.target.closest("[data-release-open]")) openReleaseModal();
+        if (event.target.closest("[data-release-cancel]")) closeReleaseModal();
+        if (event.target.closest("[data-drawer-close]")) closeDrawer();
 
-      const approvalDetail = event.target.closest("[data-approval-detail]");
-      if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
+        if (event.target.closest("[data-open-links]")) {
+          const payload = state.commandCenter || await loadCommandCenter();
+          openDrawer("Hızlı Erişim", ownerControlLinks(payload.control_links || []));
+        }
 
-      const eventDetail = event.target.closest("[data-event-detail]");
-      if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
+        const approvalDetail = event.target.closest("[data-approval-detail]");
+        if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
 
-      const moduleMapDetail = event.target.closest("[data-module-map-detail]");
-      if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
+        const eventDetail = event.target.closest("[data-event-detail]");
+        if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
 
-      const permissionSave = event.target.closest("[data-permission-save]");
-      if (permissionSave) await updatePermission(permissionSave);
+        const moduleMapDetail = event.target.closest("[data-module-map-detail]");
+        if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
 
-      const userAction = event.target.closest("[data-user-action]");
-      if (userAction) await updateUserAction(userAction);
+        const permissionSave = event.target.closest("[data-permission-save]");
+        if (permissionSave) await updatePermission(permissionSave);
 
-      const partnerDecision = event.target.closest("[data-partner-decision]");
-      if (partnerDecision) await decidePartner(partnerDecision);
+        const userAction = event.target.closest("[data-user-action]");
+        if (userAction) await updateUserAction(userAction);
 
-      const settingSave = event.target.closest("[data-setting-save]");
-      if (settingSave) await saveSetting(settingSave);
+        const partnerDecision = event.target.closest("[data-partner-decision]");
+        if (partnerDecision) await decidePartner(partnerDecision);
 
-      const moduleSave = event.target.closest("[data-module-save]");
-      if (moduleSave) await saveModule(moduleSave);
-    });
+        const settingSave = event.target.closest("[data-setting-save]");
+        if (settingSave) await saveSetting(settingSave);
+
+        const moduleSave = event.target.closest("[data-module-save]");
+        if (moduleSave) await saveModule(moduleSave);
+      });
+    }
 
     const refresh = $("[data-sa-refresh]");
-    if (refresh) refresh.addEventListener("click", reloadOwnerActiveView);
+    if (refresh && refresh.dataset.bound !== "true") {
+      refresh.dataset.bound = "true";
+      refresh.addEventListener("click", reloadOwnerActiveView);
+    }
 
     const signOut = $("[data-sa-signout]");
-    if (signOut) {
+    if (signOut && signOut.dataset.bound !== "true") {
+      signOut.dataset.bound = "true";
       signOut.addEventListener("click", () => {
         App.auth.signOut({ scope: "local" });
       });
@@ -1746,6 +1799,8 @@
 
   async function init() {
     if (!document.querySelector("[data-page='super-admin']")) return;
+    const ownerShell = $("[data-super-admin-shell]");
+    if (ownerShell && !state.ownerShellMarkup) state.ownerShellMarkup = ownerShell.innerHTML;
     if ($("[data-command-output]")) {
       try {
         await initOwnerConsole();
