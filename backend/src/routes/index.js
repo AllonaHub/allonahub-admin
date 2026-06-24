@@ -4240,29 +4240,12 @@ export function registerRoutes(app) {
     if (ctx.superAdminOwnerBootstrap) {
       permissionResult = await bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx });
     } else {
-      const { data, error } = await ctx.db.rpc("super_admin_update_profile_permission", {
-        p_target_user_id: userId,
-        p_role: body.role ?? null,
-        p_account_status: body.account_status ?? null,
-        p_risk_level: body.risk_level ?? null,
-        p_flagged_suspicious: body.flagged_suspicious ?? null,
-        p_reason: body.reason
+      permissionResult = await serviceRoleUpdateProfilePermission({
+        before,
+        body,
+        ctx,
+        fallbackReason: "backend_owner_verified_service_role"
       });
-      if (error) {
-        if (looksLikeMissingSchema(error) || looksLikeSuperAdminPermissionGate(error)) {
-          permissionResult = await serviceRoleUpdateProfilePermission({
-            before,
-            body,
-            ctx,
-            fallbackReason: looksLikeMissingSchema(error)
-              ? "rpc_missing_or_schema_cache"
-              : "rpc_owner_gate_after_backend_owner_verification"
-          });
-        } else {
-          throw error;
-        }
-      }
-      if (!permissionResult) permissionResult = data;
     }
 
     const updated = permissionResult?.profile;
