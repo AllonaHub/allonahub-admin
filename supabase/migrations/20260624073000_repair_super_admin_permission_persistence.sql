@@ -63,14 +63,6 @@ create policy "super_admin_permission_changes_no_client_delete"
 revoke all on public.super_admin_permission_changes from anon;
 grant select on public.super_admin_permission_changes to authenticated;
 
-do $$
-begin
-  execute 'grant all on public.profiles to service_role';
-  execute 'grant all on public.super_admin_permission_changes to service_role';
-exception
-  when undefined_object then null;
-end $$;
-
 create or replace function public.protect_profile_security_fields()
 returns trigger
 language plpgsql
