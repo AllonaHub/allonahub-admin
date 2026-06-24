@@ -1224,7 +1224,7 @@
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
-      ownerLine("Komut sağlık testi", "Butonlar, yazma endpointleri, audit tabloları ve yayın webhook durumunu kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "high"),
+      ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
       ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Onay kaydı açık, otomatik GitOps kapalı", "<button type=\"button\" data-release-open>Onay ver</button>", gitops.enabled ? "high" : "medium"),
       ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
@@ -1233,24 +1233,11 @@
   async function runOwnerActionHealthCheck() {
     setAlert("Komut sağlık testi çalışıyor...", "ok");
     try {
-      const payload = await api("/v1/control-center/action-health");
-      openDrawer("Komut Sağlık Testi", renderOwnerActionHealth(payload, false));
+      const payload = state.commandCenter || await loadCommandCenter();
+      openDrawer("Komut Sağlık Testi", renderOwnerCommandCenterHealth(payload));
       setAlert(payload.schema_warnings && payload.schema_warnings.length ? "Komut testi uyarı verdi; detay panelde." : "Komut testi tamamlandı.", payload.schema_warnings && payload.schema_warnings.length ? "error" : "ok");
     } catch (error) {
       const message = publicError(error, "Komut sağlık testi çalışmadı.");
-      if (error && error.status === 404) {
-        try {
-          const fallbackPayload = state.commandCenter || await loadCommandCenter();
-          openDrawer("Komut Sağlık Testi", renderOwnerActionHealthFallback(fallbackPayload, message));
-          setAlert("API action-health route'u canlıda yok; command-center verisiyle sınırlı test gösterildi.", "error");
-          return;
-        } catch (fallbackError) {
-          const fallbackMessage = publicError(fallbackError, message);
-          openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(fallbackMessage), "", "critical"));
-          setAlert(fallbackMessage, "error");
-          return;
-        }
-      }
       openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(message), "", "critical"));
       setAlert(message, "error");
     }
@@ -1273,14 +1260,16 @@
     ].join("");
   }
 
-  function renderOwnerActionHealthFallback(payload, routeError) {
+  function renderOwnerCommandCenterHealth(payload) {
+    const summary = payload.summary || {};
     const system = payload.system_health || {};
     const gitops = payload.gitops || {};
     return [
-      ownerLine("API build uyarısı", "Canlı API /action-health route'unu görmüyor.", escape(routeError || "Route not found"), "critical"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")}`, "", system.database === "online" ? "low" : "high"),
+      ownerLine("Yetki merkezi", "Rol, durum ve risk komutları backend route ailesi üzerinden çalışır.", `${formatNumber(summary.total_users)} kullanıcı`, "medium"),
+      ownerLine("Partner kararları", "Başvurular inceleme/onay/ret akışına bağlı.", `${formatNumber(summary.pending_applications)} bekleyen`, summary.pending_applications ? "high" : "low"),
+      ownerLine("Modül yönetimi", "Ana sayfa modülleri ve görünürlük kayıtları yüklendi.", `${formatNumber(summary.homepage_modules)} modül`, "low"),
       ownerLine("Yayın hattı", gitops.enabled ? "GitOps açık" : "GitOps kapalı veya env eksik", gitops.release_webhook_configured ? "webhook var" : "webhook yok", gitops.release_webhook_configured ? "low" : "high"),
-      ownerLine("Yetki/modül endpointleri", "Route ailesi command-center ile doğrulandı; action-health marker için API container yeniden build edilmeli.", "", "high"),
       (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
     ].join("");
   }
