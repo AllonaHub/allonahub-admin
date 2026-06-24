@@ -271,11 +271,19 @@
     }
 
     if (!owner.matched) {
+      const canRepairOwner = Boolean(
+        database.configured &&
+        preflight.mfa_verified &&
+        SUPER_ADMIN_ENTRY_ROLES.includes(preflight.role)
+      );
       return {
         ...fallbackDiagnosis,
         mode: "locked",
         message: "Owner kaydı var ama giriş yapan hesapla eşleşmiyor.",
-        helper: "Supabase owner satırındaki e-posta veya user_id, bu oturumdaki hesapla aynı olmalı.",
+        helper: canRepairOwner
+          ? "Bu admin+MFA oturumu owner kaydını tek seferlik bu hesapla eşleştirebilir."
+          : "Supabase owner satırındaki e-posta veya user_id, bu oturumdaki hesapla aynı olmalı.",
+        can_repair_owner: canRepairOwner,
         steps
       };
     }
@@ -336,6 +344,7 @@
               ${steps.map((step) => `<div>${escape(step)}</div>`).join("")}
             </div>
           ` : ""}
+          ${diagnosis.can_repair_owner ? `<button class="sa-btn sa-btn-danger" type="button" data-owner-repair>Owner Kaydını Bu Hesapla Eşleştir</button>` : ""}
           ${diagnosis.can_bootstrap_owner ? `<button class="sa-btn" type="button" data-owner-bootstrap>Owner Yetkisini Tamamla</button>` : ""}
           <a class="sa-btn" href="${escape(primaryHref)}">${escape(primaryLabel)}</a>
           ${mode !== "mfa" ? `<a class="sa-btn sa-btn-ghost" href="${escape(mfaUrl())}">MFA2 Sayfasına Git</a>` : ""}
@@ -348,6 +357,30 @@
   function setAccessFallback(shell, html) {
     shell.innerHTML = html;
     bindAccessFallbackActions(shell);
+  }
+
+  async function repairOwnerAccess(button) {
+    const confirmed = await confirmAction("Bu tek seferlik işlem aktif owner kaydını mevcut admin+MFA oturumuyla eşleştirecek. İşlem audit log'a kritik kayıt olarak yazılacak.", { requireReason: true });
+    if (!confirmed.confirmed) return;
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Owner eşleştiriliyor...";
+    }
+    try {
+      await api("/v1/control-center/owner-access-repair", {
+        method: "POST",
+        body: {
+          reason: confirmed.reason || "Owner access mismatch repair"
+        }
+      });
+      window.location.reload();
+    } catch (error) {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Owner Kaydını Bu Hesapla Eşleştir";
+      }
+      alert(publicError(error, "Owner kaydı eşleştirilemedi."));
+    }
   }
 
   async function bootstrapOwnerAccess(button) {
@@ -370,10 +403,17 @@
   }
 
   function bindAccessFallbackActions(root) {
+    const repairButton = root && root.querySelector ? root.querySelector("[data-owner-repair]") : null;
+    if (repairButton && repairButton.dataset.bound !== "true") {
+      repairButton.dataset.bound = "true";
+      repairButton.addEventListener("click", () => repairOwnerAccess(repairButton));
+    }
+
     const button = root && root.querySelector ? root.querySelector("[data-owner-bootstrap]") : null;
-    if (!button || button.dataset.bound === "true") return;
-    button.dataset.bound = "true";
-    button.addEventListener("click", () => bootstrapOwnerAccess(button));
+    if (button && button.dataset.bound !== "true") {
+      button.dataset.bound = "true";
+      button.addEventListener("click", () => bootstrapOwnerAccess(button));
+    }
   }
 
   async function renderAccessFallback(shell, error, fallback) {

@@ -433,6 +433,10 @@ const superAdminPermissionUpdateSchema = z.object({
   value.flagged_suspicious !== undefined
 ), "En az bir yetki alanı güncellenmelidir.");
 
+const superAdminOwnerRepairSchema = z.object({
+  reason: z.string().trim().min(6).max(900).optional().default("Owner access mismatch repair")
+});
+
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
   { key: "maintenance_mode", label: "Bakım modu", value: false, value_type: "boolean", risk_level: "critical", category: "system" },
   { key: "orders_paused", label: "Siparişleri geçici durdur", value: false, value_type: "boolean", risk_level: "high", category: "commerce" },
@@ -887,6 +891,45 @@ async function querySuperAdminOwnerAccess(ctx) {
   }
 
   return status;
+}
+
+async function activeSuperAdminOwnerRows() {
+  const { data, error } = await supabaseAdmin
+    .from("super_admin_owner_access")
+    .select("id, user_id, email, status, label, metadata, created_at, updated_at")
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    if (looksLikeMissingSchema(error)) {
+      throw httpError("super_admin_owner_access migration üretim Supabase projesine uygulanmalı.", 503);
+    }
+    throw error;
+  }
+
+  return data || [];
+}
+
+async function profileForOwnerRef(row) {
+  if (row?.user_id) {
+    const { data, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, role, account_status")
+      .eq("id", row.user_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) return data;
+  }
+
+  const email = String(row?.email || "").trim().toLowerCase();
+  if (!email) return null;
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, role, account_status")
+    .eq("email", email)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
 }
 
 async function resolveSuperAdminOwner(ctx) {
@@ -1408,6 +1451,144 @@ async function ownerSelfBootstrapSuperAdmin({ ctx, request }) {
   });
 
   return { profile: updated, change };
+}
+
+async function repairOwnerAccessForCurrentAdmin({ ctx, request, reason }) {
+  const email = superAdminOwnerEmail(ctx);
+  if (!email) {
+    throw httpError("Owner eşleştirme için oturum e-postası bulunamadı.", 400);
+  }
+
+  const owner = await superAdminOwnerPreflight(ctx);
+  if (owner.warning) {
+    throw httpError(owner.warning.message || "Owner tablosu doğrulanamadı.", 503);
+  }
+  if (owner.matched) {
+    return {
+      repaired: false,
+      owner,
+      message: "Owner kaydı zaten bu oturumla eşleşiyor."
+    };
+  }
+  if (!owner.database.configured) {
+    throw httpError("Aktif Supabase owner kaydı bulunamadı; önce owner satırı oluşturulmalı.", 409);
+  }
+
+  const rows = await activeSuperAdminOwnerRows();
+  if (rows.length !== 1) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_access_repair_blocked",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_repair",
+      evidenceTags: ["super_admin", "owner_lock", "repair_blocked"],
+      metadata: {
+        reason: "active_owner_row_count",
+        active_owner_rows: rows.length
+      }
+    });
+    throw httpError("Owner eşleştirme için tam olarak bir active owner satırı olmalı. Çoklu kayıt varsa Supabase üzerinden manuel onay gerekli.", 409);
+  }
+
+  const activeRow = rows[0];
+  const existingProfile = await profileForOwnerRef(activeRow);
+  if (existingProfile && existingProfile.id !== ctx.user.id) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.owner_access_repair_blocked",
+      severity: "critical",
+      source: "admin",
+      purpose: "super_admin_owner_repair",
+      resourceType: "super_admin_owner_access",
+      resourceId: activeRow.id,
+      evidenceTags: ["super_admin", "owner_lock", "repair_blocked"],
+      metadata: {
+        reason: "owner_row_points_to_existing_profile",
+        owner_profile_id: existingProfile.id,
+        owner_profile_role: existingProfile.role || null
+      }
+    });
+    throw httpError("Aktif owner kaydı başka geçerli profile bağlı. Güvenlik için panelden otomatik devralma kapatıldı; Supabase SQL onayı gerekli.", 409);
+  }
+
+  const previousMetadata = activeRow.metadata && typeof activeRow.metadata === "object" ? activeRow.metadata : {};
+  const repairMetadata = {
+    ...previousMetadata,
+    last_owner_repair: {
+      repaired_at: new Date().toISOString(),
+      repaired_by: ctx.user.id,
+      repaired_email: email,
+      previous_user_id: activeRow.user_id || null,
+      previous_email: activeRow.email || null,
+      reason
+    }
+  };
+
+  const { data: repairedRow, error: repairError } = await supabaseAdmin
+    .from("super_admin_owner_access")
+    .update({
+      user_id: ctx.user.id,
+      email,
+      status: "active",
+      label: activeRow.label || "AllonaHub primary owner",
+      metadata: repairMetadata,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", activeRow.id)
+    .select("id, user_id, email, status, label, metadata, created_at, updated_at")
+    .single();
+
+  if (repairError) throw repairError;
+
+  ctx.superAdminOwner = {
+    configured: true,
+    matched: true,
+    source: "database_repair",
+    user_id: ctx.user.id,
+    email,
+    warning: null
+  };
+
+  let bootstrap = null;
+  try {
+    bootstrap = await ownerSelfBootstrapSuperAdmin({ ctx, request });
+  } catch (error) {
+    request?.log?.warn({ error: error.message, userId: ctx.user.id }, "Owner repair completed but self bootstrap failed");
+  }
+
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "super_admin.owner_access_repaired",
+    severity: "critical",
+    source: "admin",
+    purpose: "super_admin_owner_repair",
+    resourceType: "super_admin_owner_access",
+    resourceId: repairedRow.id,
+    evidenceTags: ["super_admin", "owner_lock", "repair", "break_glass"],
+    metadata: {
+      previous_user_id: activeRow.user_id || null,
+      previous_email: activeRow.email || null,
+      new_user_id: ctx.user.id,
+      new_email: email,
+      role_before: ctx.profile.role,
+      bootstrap_completed: Boolean(bootstrap?.profile?.role === "super_admin"),
+      reason
+    }
+  });
+
+  return {
+    repaired: true,
+    owner,
+    row: repairedRow,
+    bootstrap
+  };
 }
 
 async function isRegisteredSuperAdminOwnerCandidate(userId, email) {
@@ -3425,6 +3606,38 @@ export function registerRoutes(app) {
       ok: true,
       profile: publicProfile(result.profile),
       change: result.change ? permissionChangePublic(result.change) : null
+    };
+  });
+
+  superPost("/owner-access-repair", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      mfa: true,
+      adminBoundary: true,
+      action: "super_admin.owner_access_repair"
+    });
+    const body = superAdminOwnerRepairSchema.parse(request.body || {});
+    const result = await repairOwnerAccessForCurrentAdmin({
+      ctx,
+      request,
+      reason: body.reason
+    });
+
+    return {
+      ok: true,
+      repaired: result.repaired,
+      message: result.message || "Owner kaydı bu oturumla eşleştirildi.",
+      owner_access: result.row ? {
+        id: result.row.id,
+        user_id: result.row.user_id,
+        email: result.row.email,
+        status: result.row.status,
+        label: result.row.label,
+        updated_at: result.row.updated_at
+      } : null,
+      profile: result.bootstrap?.profile ? publicProfile(result.bootstrap.profile) : null,
+      change: result.bootstrap?.change ? permissionChangePublic(result.bootstrap.change) : null,
+      bootstrap_completed: Boolean(result.bootstrap?.profile?.role === "super_admin")
     };
   });
 
