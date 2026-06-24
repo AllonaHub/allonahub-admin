@@ -30,6 +30,13 @@
     return (root || document).querySelector(selector);
   }
 
+  function eventClosest(event, selector) {
+    const target = event && event.target;
+    if (!target) return null;
+    const element = target.closest ? target : target.parentElement;
+    return element && element.closest ? element.closest(selector) : null;
+  }
+
   function escape(value) {
     return core.escapeHTML(value);
   }
@@ -900,7 +907,11 @@
         await reloadActiveView();
       }
     } catch (error) {
-      setAlert(publicError(error, "İşlem tamamlanamadı."), "error");
+      const messageText = publicError(error, "İşlem tamamlanamadı.");
+      setAlert(messageText, "error");
+      if ($("[data-command-output]")) {
+        openDrawer("İşlem Hatası", ownerLine("Komut tamamlanamadı", escape(messageText), "<button type=\"button\" data-action-health-check>Komutları test et</button>", "critical"));
+      }
     } finally {
       if (trigger) {
         trigger.disabled = false;
@@ -1213,9 +1224,36 @@
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
+      ownerLine("Komut sağlık testi", "Butonlar, yazma endpointleri, audit tabloları ve yayın webhook durumunu kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "high"),
       ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Onay kaydı açık, otomatik GitOps kapalı", "<button type=\"button\" data-release-open>Onay ver</button>", gitops.enabled ? "high" : "medium"),
       ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
+  }
+
+  async function runOwnerActionHealthCheck() {
+    setAlert("Komut sağlık testi çalışıyor...", "ok");
+    try {
+      const payload = await api("/v1/control-center/action-health");
+      const actions = payload.actions || {};
+      const rows = Object.entries(actions).map(([key, value]) => ownerLine(
+        key,
+        `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / deploy webhook hazır değil" : ""}`,
+        value.service_role_fallback ? "service-role fallback açık" : "",
+        value.ok && value.dispatch_ready !== false ? "low" : "high"
+      ));
+      const gitops = payload.gitops || {};
+      openDrawer("Komut Sağlık Testi", [
+        ownerLine("Yayın deploy hattı", escape(gitops.message || "-"), gitops.dispatch_ready ? "deploy hazır" : "deploy webhook eksik", gitops.dispatch_ready ? "low" : "critical"),
+        ownerLine("Backend yazma fallback", "Yetki RPC eksikse owner doğrulamalı service-role fallback devreye girer.", "", "high"),
+        rows.join("") || ownerEmpty("Komut kaydı bulunamadı."),
+        (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
+      ].join(""));
+      setAlert(payload.schema_warnings && payload.schema_warnings.length ? "Komut testi uyarı verdi; detay panelde." : "Komut testi tamamlandı.", payload.schema_warnings && payload.schema_warnings.length ? "error" : "ok");
+    } catch (error) {
+      const message = publicError(error, "Komut sağlık testi çalışmadı.");
+      openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(message), "", "critical"));
+      setAlert(message, "error");
+    }
   }
 
   async function loadOwnerAlerts() {
@@ -1596,7 +1634,16 @@
         method: "POST",
         body: payload
       });
-      setAlert(`Yayın onayı kaydedildi: ${result.approval && result.approval.status || "approved"}`, "ok");
+      const approval = result.approval || {};
+      const response = approval.webhook_response || {};
+      const status = approval.status || "approved";
+      const released = status === "dispatched";
+      setAlert(released ? "Yayın onayı deploy hattına gönderildi." : `Yayın onayı kaydedildi: ${status}`, released ? "ok" : "error");
+      openDrawer("Yayın Onayı Sonucu", [
+        ownerLine("Durum", escape(status), released ? "yayına gönderildi" : "deploy bekliyor veya hata aldı", released ? "low" : "critical"),
+        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : "high"),
+        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : "high")
+      ].join(""));
       await jumpOwnerView("approvals");
       form.reset();
       const targetRef = form.querySelector("[name='target_ref']");
@@ -1640,7 +1687,7 @@
     if (nav && nav.dataset.bound !== "true") {
       nav.dataset.bound = "true";
       nav.addEventListener("click", async (event) => {
-        const button = event.target.closest("[data-view-target]");
+        const button = eventClosest(event, "[data-view-target]");
         if (!button) return;
         document.querySelectorAll("[data-view-target]").forEach((item) => item.classList.toggle("is-active", item === button));
         await loadOwnerView(button.dataset.viewTarget);
@@ -1651,7 +1698,7 @@
       state.ownerDocumentEventsBound = true;
 
       document.addEventListener("submit", async (event) => {
-        const usersFilter = event.target.closest("[data-owner-users-filter]");
+        const usersFilter = eventClosest(event, "[data-owner-users-filter]");
         if (usersFilter) {
           event.preventDefault();
           const form = new FormData(usersFilter);
@@ -1664,7 +1711,7 @@
           return;
         }
 
-        const permissionsFilter = event.target.closest("[data-owner-permissions-filter]");
+        const permissionsFilter = eventClosest(event, "[data-owner-permissions-filter]");
         if (permissionsFilter) {
           event.preventDefault();
           const form = new FormData(permissionsFilter);
@@ -1677,7 +1724,7 @@
           return;
         }
 
-        const releaseForm = event.target.closest("[data-release-form]");
+        const releaseForm = eventClosest(event, "[data-release-form]");
         if (releaseForm) {
           event.preventDefault();
           await submitReleaseApproval(releaseForm);
@@ -1685,45 +1732,47 @@
       });
 
       document.addEventListener("click", async (event) => {
-        const toggle = event.target.closest(".sa-toggle");
+        const toggle = eventClosest(event, ".sa-toggle");
         if (toggle) {
           toggle.setAttribute("aria-pressed", toggle.getAttribute("aria-pressed") !== "true");
         }
 
-        const viewJump = event.target.closest("[data-view-jump]");
+        const viewJump = eventClosest(event, "[data-view-jump]");
         if (viewJump) await jumpOwnerView(viewJump.dataset.viewJump);
 
-        if (event.target.closest("[data-release-open]")) openReleaseModal();
-        if (event.target.closest("[data-release-cancel]")) closeReleaseModal();
-        if (event.target.closest("[data-drawer-close]")) closeDrawer();
+        if (eventClosest(event, "[data-release-open]")) openReleaseModal();
+        if (eventClosest(event, "[data-release-cancel]")) closeReleaseModal();
+        if (eventClosest(event, "[data-drawer-close]")) closeDrawer();
 
-        if (event.target.closest("[data-open-links]")) {
+        if (eventClosest(event, "[data-open-links]")) {
           const payload = state.commandCenter || await loadCommandCenter();
           openDrawer("Hızlı Erişim", ownerControlLinks(payload.control_links || []));
         }
 
-        const approvalDetail = event.target.closest("[data-approval-detail]");
+        if (eventClosest(event, "[data-action-health-check]")) await runOwnerActionHealthCheck();
+
+        const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
 
-        const eventDetail = event.target.closest("[data-event-detail]");
+        const eventDetail = eventClosest(event, "[data-event-detail]");
         if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
 
-        const moduleMapDetail = event.target.closest("[data-module-map-detail]");
+        const moduleMapDetail = eventClosest(event, "[data-module-map-detail]");
         if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
 
-        const permissionSave = event.target.closest("[data-permission-save]");
+        const permissionSave = eventClosest(event, "[data-permission-save]");
         if (permissionSave) await updatePermission(permissionSave);
 
-        const userAction = event.target.closest("[data-user-action]");
+        const userAction = eventClosest(event, "[data-user-action]");
         if (userAction) await updateUserAction(userAction);
 
-        const partnerDecision = event.target.closest("[data-partner-decision]");
+        const partnerDecision = eventClosest(event, "[data-partner-decision]");
         if (partnerDecision) await decidePartner(partnerDecision);
 
-        const settingSave = event.target.closest("[data-setting-save]");
+        const settingSave = eventClosest(event, "[data-setting-save]");
         if (settingSave) await saveSetting(settingSave);
 
-        const moduleSave = event.target.closest("[data-module-save]");
+        const moduleSave = eventClosest(event, "[data-module-save]");
         if (moduleSave) await saveModule(moduleSave);
       });
     }
@@ -1760,7 +1809,7 @@
     const nav = $("[data-sa-nav]");
     if (nav) {
       nav.addEventListener("click", async (event) => {
-        const button = event.target.closest("[data-view-target]");
+        const button = eventClosest(event, "[data-view-target]");
         if (!button) return;
         document.querySelectorAll("[data-view-target]").forEach((item) => item.classList.toggle("is-active", item === button));
         document.querySelectorAll("[data-view]").forEach((view) => view.classList.toggle("is-active", view.dataset.view === button.dataset.viewTarget));
@@ -1787,21 +1836,21 @@
     }
 
     document.addEventListener("click", async (event) => {
-      const toggle = event.target.closest(".sa-toggle");
+      const toggle = eventClosest(event, ".sa-toggle");
       if (toggle) {
         toggle.setAttribute("aria-pressed", toggle.getAttribute("aria-pressed") !== "true");
       }
 
-      const userAction = event.target.closest("[data-user-action]");
+      const userAction = eventClosest(event, "[data-user-action]");
       if (userAction) await updateUserAction(userAction);
 
-      const partnerDecision = event.target.closest("[data-partner-decision]");
+      const partnerDecision = eventClosest(event, "[data-partner-decision]");
       if (partnerDecision) await decidePartner(partnerDecision);
 
-      const settingSave = event.target.closest("[data-setting-save]");
+      const settingSave = eventClosest(event, "[data-setting-save]");
       if (settingSave) await saveSetting(settingSave);
 
-      const moduleSave = event.target.closest("[data-module-save]");
+      const moduleSave = eventClosest(event, "[data-module-save]");
       if (moduleSave) await saveModule(moduleSave);
     });
 

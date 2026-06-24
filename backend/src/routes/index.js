@@ -1732,6 +1732,79 @@ async function dispatchSuperAdminReleaseApproval(approval, request) {
   }
 }
 
+async function tableHealth(label, table) {
+  const result = await runAdminQuery(
+    label,
+    supabaseAdmin.from(table).select("id", { count: "exact", head: true }),
+    null
+  );
+  return {
+    label,
+    table,
+    ok: !result.warning,
+    count: result.count || 0,
+    warning: result.warning || null
+  };
+}
+
+async function superAdminActionHealth(ctx, request) {
+  const checks = await Promise.all([
+    tableHealth("profiles_write_target", "profiles"),
+    tableHealth("partner_applications_write_target", "partner_applications"),
+    tableHealth("super_admin_settings_write_target", "super_admin_settings"),
+    tableHealth("platform_modules_write_target", "platform_modules"),
+    tableHealth("super_admin_release_approvals_write_target", "super_admin_release_approvals"),
+    tableHealth("security_audit_events_audit_target", "security_audit_events"),
+    tableHealth("super_admin_permission_changes_audit_target", "super_admin_permission_changes")
+  ]);
+  const warnings = checks.filter((item) => !item.ok).map((item) => item.warning).filter(Boolean);
+  const gitopsReady = Boolean(config.superAdmin.gitOpsEnabled && config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret);
+
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "super_admin.action_health_checked",
+    source: "admin",
+    resourceType: "super_admin_action_health",
+    severity: warnings.length || !gitopsReady ? "warning" : "info",
+    metadata: {
+      warning_count: warnings.length,
+      gitops_enabled: config.superAdmin.gitOpsEnabled,
+      release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret),
+      service_role_permission_fallback: true
+    }
+  });
+
+  return {
+    ok: true,
+    actions: {
+      navigation: { ok: true, mode: "frontend_event_delegation" },
+      users_update: { ok: checks.find((item) => item.table === "profiles")?.ok === true, endpoint: "PATCH /v1/control-center/users/:userId" },
+      permissions_update: { ok: checks.find((item) => item.table === "profiles")?.ok === true, endpoint: "PATCH /v1/control-center/permissions/:userId", service_role_fallback: true },
+      partner_decision: { ok: checks.find((item) => item.table === "partner_applications")?.ok === true, endpoint: "PATCH /v1/control-center/partner-applications/:applicationId" },
+      settings_update: { ok: checks.find((item) => item.table === "super_admin_settings")?.ok === true, endpoint: "PATCH /v1/control-center/settings/:settingKey" },
+      modules_update: { ok: checks.find((item) => item.table === "platform_modules")?.ok === true, endpoint: "PATCH /v1/control-center/modules/:moduleKey" },
+      release_approval: {
+        ok: checks.find((item) => item.table === "super_admin_release_approvals")?.ok === true,
+        endpoint: "POST /v1/control-center/release-approvals",
+        dispatch_ready: gitopsReady
+      },
+      audit_log: { ok: checks.find((item) => item.table === "security_audit_events")?.ok === true, endpoint: "GET /v1/control-center/audit-log" }
+    },
+    gitops: {
+      enabled: config.superAdmin.gitOpsEnabled,
+      release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret),
+      dispatch_ready: gitopsReady,
+      message: gitopsReady
+        ? "Yayın onayı güvenli webhook'a gönderilir."
+        : "Yayın onayı audit kaydı oluşturur; gerçek deploy için SUPER_ADMIN_GITOPS_ENABLED, SUPER_ADMIN_RELEASE_WEBHOOK_URL ve SUPER_ADMIN_RELEASE_WEBHOOK_SECRET gerekir."
+    },
+    checks,
+    schema_warnings: warnings
+  };
+}
+
 async function requireOpsAdmin(request, action) {
   const ctx = await requireAuth(request, {
     roles: ["admin"],
@@ -3881,6 +3954,11 @@ export function registerRoutes(app) {
       },
       schema_warnings: warnings
     };
+  });
+
+  superGet("/action-health", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.action_health.view");
+    return superAdminActionHealth(ctx, request);
   });
 
   superGet("/release-approvals", async (request) => {
