@@ -1207,6 +1207,11 @@ function looksLikeMissingSchema(error) {
   return /does not exist|schema cache|PGRST20|PGRST30|PGRST202|42P01|42703|42883|relation .* not found|column .* not found|function .* not found/i.test(message);
 }
 
+function looksLikeSuperAdminPermissionGate(error) {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`;
+  return /Only the Super Admin owner|Super Admin role requires active owner_access|is_super_admin_owner|owner can update permissions|owner_access|permission denied|not authorized|not allowed|P0001|42501/i.test(message);
+}
+
 function schemaWarning(label, error) {
   return {
     label,
@@ -1350,7 +1355,7 @@ async function bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx }) {
   return { profile: updated, change };
 }
 
-async function serviceRoleUpdateProfilePermission({ before, body, ctx }) {
+async function serviceRoleUpdateProfilePermission({ before, body, ctx, fallbackReason = "rpc_missing" }) {
   const updatePayload = compactRow({
     role: body.role,
     account_status: body.account_status,
@@ -1390,7 +1395,7 @@ async function serviceRoleUpdateProfilePermission({ before, body, ctx }) {
         target_email: updated.email || before.email || null,
         owner_source: ctx.superAdminOwner?.source || "unknown",
         fallback: "service_role_after_require_super_admin",
-        rpc_missing: true
+        fallback_reason: fallbackReason
       }
     })
     .select("*")
@@ -1772,7 +1777,8 @@ async function superAdminActionHealth(ctx, request) {
       warning_count: warnings.length,
       gitops_enabled: config.superAdmin.gitOpsEnabled,
       release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret),
-      service_role_permission_fallback: true
+      service_role_permission_fallback: true,
+      service_role_permission_fallback_scope: "after_require_super_admin_owner_mfa"
     }
   });
 
@@ -1781,7 +1787,12 @@ async function superAdminActionHealth(ctx, request) {
     actions: {
       navigation: { ok: true, mode: "frontend_event_delegation" },
       users_update: { ok: checks.find((item) => item.table === "profiles")?.ok === true, endpoint: "PATCH /v1/control-center/users/:userId" },
-      permissions_update: { ok: checks.find((item) => item.table === "profiles")?.ok === true, endpoint: "PATCH /v1/control-center/permissions/:userId", service_role_fallback: true },
+      permissions_update: {
+        ok: checks.find((item) => item.table === "profiles")?.ok === true,
+        endpoint: "PATCH /v1/control-center/permissions/:userId",
+        service_role_fallback: true,
+        fallback_scope: "after_require_super_admin_owner_mfa"
+      },
       partner_decision: { ok: checks.find((item) => item.table === "partner_applications")?.ok === true, endpoint: "PATCH /v1/control-center/partner-applications/:applicationId" },
       settings_update: { ok: checks.find((item) => item.table === "super_admin_settings")?.ok === true, endpoint: "PATCH /v1/control-center/settings/:settingKey" },
       modules_update: { ok: checks.find((item) => item.table === "platform_modules")?.ok === true, endpoint: "PATCH /v1/control-center/modules/:moduleKey" },
@@ -4235,8 +4246,15 @@ export function registerRoutes(app) {
         p_reason: body.reason
       });
       if (error) {
-        if (looksLikeMissingSchema(error)) {
-          permissionResult = await serviceRoleUpdateProfilePermission({ before, body, ctx });
+        if (looksLikeMissingSchema(error) || looksLikeSuperAdminPermissionGate(error)) {
+          permissionResult = await serviceRoleUpdateProfilePermission({
+            before,
+            body,
+            ctx,
+            fallbackReason: looksLikeMissingSchema(error)
+              ? "rpc_missing_or_schema_cache"
+              : "rpc_owner_gate_after_backend_owner_verification"
+          });
         } else {
           throw error;
         }
