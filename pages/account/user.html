@@ -903,6 +903,13 @@ const RESET_URL=pageUrl("reset-password.html");
 const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
 let manualAuthInProgress=false;
 
+function boolParam(name){
+  const value=String(new URLSearchParams(window.location.search).get(name) || "").trim().toLowerCase();
+  return value==="1" || value==="true" || value==="yes";
+}
+
+const FORCE_ACCOUNT_SWITCH=boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
+
 function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
   const raw=String(value || fallbackPath).trim();
@@ -1027,6 +1034,7 @@ function redirectMfa(returnTo){
 
 async function redirectAuthenticatedUser(){
   if(manualAuthInProgress)return;
+  if(FORCE_ACCOUNT_SWITCH)return;
   try{
     const {data,error}=await supabaseClient.auth.getUser();
     if(error || !data || !data.user)return;
@@ -1068,6 +1076,18 @@ function clearAuthArtifacts(){
     if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
       localStorage.removeItem(key);
     }
+  }
+}
+
+async function prepareAccountSwitch(){
+  if(!FORCE_ACCOUNT_SWITCH || IS_PASSWORD_RECOVERY_REDIRECT)return;
+  manualAuthInProgress=true;
+  clearAuthArtifacts();
+  try{
+    await supabaseClient.auth.signOut({scope:"local"});
+  }catch(error){}
+  finally{
+    manualAuthInProgress=false;
   }
 }
 
@@ -1783,6 +1803,7 @@ document.addEventListener("DOMContentLoaded",function(){
   populateSectors();
   setCountryByLocale();
   openInitialAuthTab();
+  prepareAccountSwitch();
   supabaseClient.auth.onAuthStateChange(function(event){
     if(event==="PASSWORD_RECOVERY"){
       window.location.replace("reset-password.html");
