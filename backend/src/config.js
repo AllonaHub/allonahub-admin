@@ -33,7 +33,17 @@ function csv(value) {
     .filter(Boolean);
 }
 
+function csvWithDefaults(value, defaults = []) {
+  return Array.from(new Set([...csv(value), ...defaults.map((item) => String(item).replace(/\/$/, ""))].filter(Boolean)));
+}
+
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
+const requiredAllowedOrigins = [
+  "https://allonahub.com",
+  "https://www.allonahub.com",
+  "https://admin.allonahub.com",
+  "https://allonahub.github.io"
+];
 
 export const config = {
   env: readEnv("NODE_ENV", { required: false, defaultValue: "production" }),
@@ -41,7 +51,10 @@ export const config = {
   logLevel: readEnv("LOG_LEVEL", { required: false, defaultValue: "info" }),
   siteUrl: readEnv("SITE_URL", { required: false, defaultValue: "https://allonahub.com" }).replace(/\/$/, ""),
   apiUrl: readEnv("API_URL", { required: false, defaultValue: "https://api.allonahub.com" }).replace(/\/$/, ""),
-  allowedOrigins: csv(readEnv("ALLOWED_ORIGINS", { required: false, defaultValue: "https://allonahub.com,https://www.allonahub.com,https://admin.allonahub.com,https://allonahub.github.io" })),
+  allowedOrigins: csvWithDefaults(
+    readEnv("ALLOWED_ORIGINS", { required: false, defaultValue: requiredAllowedOrigins.join(",") }),
+    requiredAllowedOrigins
+  ),
   allowedHosts: csv(readEnv("ALLOWED_HOSTS", { required: false, defaultValue: "api.allonahub.com,admin.allonahub.com,localhost,127.0.0.1" })),
   adminHosts: csv(readEnv("ADMIN_HOSTS", { required: false, defaultValue: "admin.allonahub.com,api.allonahub.com" })),
   adminIpAllowlist: csv(readEnv("ADMIN_IP_ALLOWLIST", { required: false, defaultValue: "" })),
