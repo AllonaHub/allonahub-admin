@@ -23,7 +23,7 @@ export const ASSISTANT_SENDER_TYPES = [
 const SECRET_KEY_PATTERN = /(api[_-]?key|service[_-]?role|secret|token|authorization|password|refresh[_-]?token|access[_-]?token)/i;
 const CARD_PATTERN = /\b(?:\d[ -]*?){13,19}\b/;
 const PROMPT_INJECTION_PATTERN = /(ignore previous|system prompt|developer message|jailbreak|talimatlari yok say|onceki talimatlari|sistem komutu)/i;
-const SUPPORT_TICKET_PATTERN = /(^|\s)(canli|canlı|destek|yardim|yardım)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
+const SUPPORT_TICKET_PATTERN = /^\s*(destek|yardim|yardım)\s*$|(^|\s)(canli|canlı)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|teknik destek|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
 export const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayınız. En kısa sürede temsilcimiz sizinle buradan iletişime geçecektir.";
 export const WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, canlı destek için sizi doğru kanala yönlendireyim. Web chat şu anda AI asistan olarak çalışıyor; gerçek temsilciye ulaşmak için Telegram botumuza veya WhatsApp destek hattımıza yazabilirsiniz. Aşağıdaki bağlantılardan size uygun olanı seçebilirsiniz.";
 export const LIVE_SUPPORT_CLOSED_MESSAGE = "Uzun süredir cevap vermediğiniz için müşteri temsilcimizle konuşmanız otomatik olarak sonlandırılmıştır. Dilerseniz tekrardan canlıya bağlanabilirsiniz.";
@@ -86,6 +86,26 @@ function siteLink(path) {
 
 function lowerText(value) {
   return String(value || "").toLocaleLowerCase("tr-TR");
+}
+
+function normalizeSearchText(value) {
+  return lowerText(value)
+    .replace(/ı/g, "i")
+    .replace(/İ/g, "i")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^\p{L}\p{N}\s-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const PLATFORM_LINKS = Object.freeze({
@@ -188,7 +208,33 @@ function webchatLiveSupportActions() {
 }
 
 function textHasAny(text, terms = []) {
-  return terms.some((term) => text.includes(lowerText(term)));
+  const haystack = normalizeSearchText(text);
+  return terms.some((term) => haystack.includes(normalizeSearchText(term)));
+}
+
+function scoreTopic(topic, text) {
+  const haystack = normalizeSearchText(text);
+  if (!haystack) return 0;
+
+  let score = 0;
+  for (const term of topic.terms || []) {
+    const needle = normalizeSearchText(term);
+    if (!needle || !haystack.includes(needle)) continue;
+    const wordMatch = new RegExp(`(^|\\s)${escapeRegExp(needle)}(\\s|$)`, "u").test(haystack);
+    score += needle.includes(" ") ? 3 : 1;
+    if (wordMatch) score += 0.75;
+    if (needle.length > 8) score += 0.5;
+  }
+
+  return score;
+}
+
+function pickConversationVariant(items, context = {}, key = "") {
+  const variants = Array.isArray(items) ? items.filter(Boolean) : [items].filter(Boolean);
+  if (variants.length <= 1) return variants[0] || "";
+  const previousCount = Number(context?.conversation?.previousAssistantMessages || 0);
+  const seed = previousCount + String(key || "").length;
+  return variants[seed % variants.length];
 }
 
 function hasConversationHistory(context = {}) {
@@ -222,7 +268,8 @@ function repeatsPreviousAssistantReply(value, context = {}) {
 function topicResponse(topic, context = {}) {
   const actions = (topic.actions || [{ label: topic.label, link: topic.link }]).map((action) => makeAction(action.label, action.link));
   const url = platformUrl(topic.link || "support");
-  const text = typeof topic.text === "function" ? topic.text({ url, platformUrl }) : String(topic.text || "");
+  const selectedText = pickConversationVariant(topic.text, context, topic.key);
+  const text = typeof selectedText === "function" ? selectedText({ url, platformUrl, context }) : String(selectedText || "");
   return { text: stripRepeatedGreeting(text, context), actions };
 }
 
@@ -410,6 +457,201 @@ const CORE_TOPICS = [
   }
 ];
 
+const SMART_FAQ_TOPICS = [
+  {
+    key: "pricing_commission",
+    label: "Ücret, fiyat ve komisyon",
+    confidence: 0.87,
+    terms: ["ücret", "ucret", "fiyat", "komisyon oranı", "komisyon orani", "komisyon", "abonelik", "paket fiyat", "ne kadar", "bedel", "masraf", "kesinti", "üyelik ücreti", "uyelik ucreti"],
+    link: "partner",
+    actions: [
+      { label: "Partner Ol", link: "partner" },
+      { label: "Premium", link: "premium" },
+      { label: "İletişim", link: "contact" }
+    ],
+    text: [
+      ({ platformUrl }) => `Tabii, ücret ve komisyon tarafını şöyle düşünebilirsiniz: kullanıcı tarafındaki kampanya, HP ve premium avantajları ayrı; partner tarafındaki komisyon ise kategori, hizmet türü ve anlaşma modeline göre netleşir. Partner olarak başlamak için başvuru sayfası: ${platformUrl("partner")}`,
+      ({ platformUrl }) => `Fiyat/komisyon bilgisi işlem türüne göre değişebilir; bu yüzden yanlış oran vermek istemem. Partner başvurusu yaparsanız kategori ve işletme bilgilerinize göre en doğru model değerlendirilir: ${platformUrl("partner")}`
+    ]
+  },
+  {
+    key: "mobile_app_install",
+    label: "Mobil uygulama ve ana ekrana ekleme",
+    confidence: 0.84,
+    terms: ["uygulama", "app", "mobil", "telefona indir", "indir", "ana ekrana ekle", "homescreen", "pwa", "iphone", "android"],
+    link: "home",
+    actions: [
+      { label: "Ana Sayfa", link: "home" },
+      { label: "Hizmetler", link: "services" }
+    ],
+    text: [
+      ({ platformUrl }) => `Elbette. AllonaHub web tabanlı çalışır; desteklenen cihazlarda tarayıcı menüsünden ana ekrana ekleyerek uygulama gibi kullanabilirsiniz. Başlangıç için ana sayfa: ${platformUrl("home")}`,
+      ({ platformUrl }) => `Mobil kullanım için siteyi telefonunuzda açıp ana ekrana ekleyebilirsiniz. Böylece AllonaHub’a uygulama hissiyle hızlı erişirsiniz: ${platformUrl("home")}`
+    ]
+  },
+  {
+    key: "trust_safety",
+    label: "Güven, güvenlik ve doğrulama",
+    confidence: 0.88,
+    terms: ["güvenilir mi", "guvenilir mi", "güvenli mi", "guvenli mi", "dolandırıcılık", "dolandiricilik", "sahte", "doğrulama", "dogrulama", "güven", "guven", "risk", "kart saklıyor", "kart sakliyor"],
+    link: "security",
+    actions: [
+      { label: "Güvenlik", link: "security" },
+      { label: "KVKK", link: "kvkk" },
+      { label: "Gizlilik", link: "privacy" }
+    ],
+    text: [
+      ({ platformUrl }) => `Güvenlik konusunda haklısınız, bu önemli. AllonaHub’da gizli anahtar, kart bilgisi veya hassas kişisel veri sohbet üzerinden istenmez; ödeme ve hesap işlemleri güvenli sayfalardan yürür. Güvenlik politikası: ${platformUrl("security")}`,
+      ({ platformUrl }) => `İçiniz rahat olsun; hassas bilgileri sohbetten almıyoruz ve şüpheli talepleri destek ekibine yönlendiriyoruz. Detaylı güvenlik ve KVKK bilgileri burada: ${platformUrl("security")} | ${platformUrl("kvkk")}`
+    ]
+  },
+  {
+    key: "complaint_issue",
+    label: "Şikayet ve sorun bildirimi",
+    confidence: 0.86,
+    terms: ["şikayet", "sikayet", "sorun var", "hata var", "problem", "çalışmıyor", "calismiyor", "bozuk", "yanlış işlem", "yanlis islem", "mağdur", "magdur"],
+    link: "support",
+    actions: [
+      { label: "Destek", link: "support" },
+      { label: "İletişim", link: "contact" }
+    ],
+    text: [
+      ({ platformUrl }) => `Bunu birlikte çözelim. Yaşadığınız sorunu kısaca yazın; sipariş, ödeme veya hesapla ilgiliyse mümkünse referans numarasını da ekleyin. Detaylı kayıt için destek merkezi: ${platformUrl("support")}`,
+      ({ platformUrl }) => `Üzgünüm, böyle bir sorun yaşamış olmanız iyi değil. Konuyu doğru ekibe iletebilmemiz için destek kaydı oluşturmanız en sağlıklı yol olur: ${platformUrl("support")}`
+    ]
+  },
+  {
+    key: "job_seeker",
+    label: "İş arayan ve CV",
+    confidence: 0.89,
+    terms: ["iş arıyorum", "is ariyorum", "iş bul", "is bul", "cv oluştur", "cv olustur", "özgeçmiş hazırla", "ozgecmis hazirla", "başvuru yapmak", "basvuru yapmak", "kariyer başvurusu", "kariyer basvurusu"],
+    link: "smartCv",
+    actions: [
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Kariyer Başvurusu", link: "career" },
+      { label: "Denizcilik İşleri", link: "maritime" },
+      { label: "Denizcilik CV", link: "maritimeCv" }
+    ],
+    text: [
+      ({ platformUrl }) => `Harika, kariyer tarafında sizi hızlıca yönlendireyim. Önce CV oluşturup profilinizi güçlendirebilir, sonra uygun ilan ve başvuru alanlarına geçebilirsiniz. CV oluşturma: ${platformUrl("smartCv")}`,
+      ({ platformUrl }) => `İş arayanlar için en iyi başlangıç güçlü bir CV. Allona Kariyer üzerinden CV oluşturabilir, denizcilik dahil uygun alanlara başvuru yapabilirsiniz: ${platformUrl("smartCv")}`
+    ]
+  },
+  {
+    key: "employer_hiring",
+    label: "İşveren ve ilan verme",
+    confidence: 0.87,
+    terms: ["işveren", "isveren", "eleman arıyorum", "eleman ariyorum", "personel arıyorum", "personel ariyorum", "ilan vermek", "iş ilanı yayınla", "is ilani yayinla", "çalışan arıyorum", "calisan ariyorum"],
+    link: "partner",
+    actions: [
+      { label: "Partner Ol", link: "partner" },
+      { label: "Kariyer", link: "career" },
+      { label: "İletişim", link: "contact" }
+    ],
+    text: [
+      ({ platformUrl }) => `Elbette, işveren tarafında ilan ve aday yönetimi partner/işletme akışıyla ilerler. İşletme bilgilerinizi hazırlayıp partner başvurusu oluşturabilirsiniz: ${platformUrl("partner")}`,
+      ({ platformUrl }) => `Personel arıyorsanız doğru kanal Kariyer ve partner başvuru akışıdır. Başvurudan sonra ilan, aday ve operasyon süreçleri panelden yönetilecek şekilde kurgulanır: ${platformUrl("partner")}`
+    ]
+  },
+  {
+    key: "maritime_jobs",
+    label: "Denizcilik iş ilanları",
+    confidence: 0.9,
+    terms: ["denizcilik iş", "denizcilik is", "gemi işi", "gemi isi", "gemide iş", "gemide is", "crew başvuru", "crew basvuru", "denizci cv", "vardiya zabiti", "kaptan iş", "kaptan is", "miço", "mico"],
+    link: "maritime",
+    actions: [
+      { label: "Denizcilik İşleri", link: "maritime" },
+      { label: "Denizcilik CV", link: "maritimeCv" },
+      { label: "CV Oluştur", link: "smartCv" }
+    ],
+    text: [
+      ({ platformUrl }) => `Denizcilik için doğru yerdesiniz. Gemi, crew, CV, sertifika ve denizcilik başvuruları Allona Denizcilik akışında toplanır. Denizcilik alanı: ${platformUrl("maritime")} Denizcilik CV: ${platformUrl("maritimeCv")}`,
+      ({ platformUrl }) => `Crew veya gemi işi arıyorsanız önce denizcilik CV’nizi hazırlamanızı öneririm. Sonra uygun ilan ve başvuru akışına geçebilirsiniz: ${platformUrl("maritimeCv")}`
+    ]
+  },
+  {
+    key: "driver_courier",
+    label: "Kurye ve sürücü başvurusu",
+    confidence: 0.86,
+    terms: ["kurye olmak", "motor kurye", "sürücü olmak", "surucu olmak", "taksi şoförü", "taksi soforu", "şoför başvuru", "sofor basvuru", "araçla çalışmak", "aracla calismak"],
+    link: "career",
+    actions: [
+      { label: "Kurye", link: "courier" },
+      { label: "Taksi", link: "taxi" },
+      { label: "Kariyer", link: "career" },
+      { label: "CV Oluştur", link: "smartCv" }
+    ],
+    text: [
+      ({ platformUrl }) => `Tabii, kurye veya sürücü olarak katılmak isteyenler için kariyer ve ilgili modül sayfaları doğru başlangıçtır. Kurye: ${platformUrl("courier")} Taksi: ${platformUrl("taxi")} CV/Kariyer: ${platformUrl("career")}`,
+      ({ platformUrl }) => `Kurye ya da sürücü başvurusu için bilgilerinizi kariyer akışında hazırlayıp ilgili modüle göre ilerleyebilirsiniz. Başlangıç: ${platformUrl("career")}`
+    ]
+  },
+  {
+    key: "merchant_onboarding",
+    label: "Mağaza ve işletme açılışı",
+    confidence: 0.88,
+    terms: ["mağaza açmak", "magaza acmak", "işletmemi ekle", "isletmemi ekle", "ürün satmak", "urun satmak", "restoran ekle", "market ekle", "hizmet satmak", "dükkan", "dukkan"],
+    link: "partner",
+    actions: [
+      { label: "Partner Başvurusu", link: "partner" },
+      { label: "Pazaryeri Satış", link: "marketplaceSales" },
+      { label: "Partner Paneli", link: "partnerPanel" }
+    ],
+    text: [
+      ({ platformUrl }) => `Süper, işletmenizi AllonaHub’a eklemek için partner başvurusu yapmanız gerekiyor. Ürün, restoran, market veya hizmet kategorisine göre panel akışı tanımlanır: ${platformUrl("partner")}`,
+      ({ platformUrl }) => `Mağaza, restoran, market veya hizmet sağlayıcı olarak katılım partner başvurusu ile başlar. Onay sonrası ürün/hizmet, sipariş ve ödeme süreçleri panelden yönetilir: ${platformUrl("partner")}`
+    ]
+  },
+  {
+    key: "search_navigation",
+    label: "Sayfa bulma ve yönlendirme",
+    confidence: 0.83,
+    terms: ["nereden", "nerde", "nerede", "nasıl giderim", "nasil giderim", "sayfa", "link", "bölüm", "bolum", "arama", "bulamıyorum", "bulamiyorum"],
+    link: "search",
+    actions: [
+      { label: "Arama", link: "search" },
+      { label: "Hizmetler", link: "services" },
+      { label: "Hesabım", link: "account" }
+    ],
+    text: [
+      ({ platformUrl }) => `Tabii, aradığınız bölümü birlikte bulalım. Modül, hizmet, kupon veya sayfa arıyorsanız arama alanı en hızlı yol: ${platformUrl("search")} İsterseniz bana aradığınız şeyi tek kelimeyle yazın, sizi doğrudan yönlendireyim.`,
+      ({ platformUrl }) => `Yönlendireyim. AllonaHub’daki sayfa ve modülleri arama alanından bulabilir ya da hizmetler listesinden gezebilirsiniz: ${platformUrl("search")} | ${platformUrl("services")}`
+    ]
+  },
+  {
+    key: "campaigns_rewards",
+    label: "Kampanya, indirim ve ödüller",
+    confidence: 0.86,
+    terms: ["kampanya", "indirim kodu", "indirim kuponu", "promosyon", "ödül", "odul", "bonus", "puan kazan", "hp kazan", "fırsat", "firsat"],
+    link: "coupons",
+    actions: [
+      { label: "Kuponlar", link: "coupons" },
+      { label: "HP Nedir", link: "hp" },
+      { label: "Ödüller", link: "rewards" }
+    ],
+    text: [
+      ({ platformUrl }) => `Kampanya ve indirimler için doğru yer Kupon Merkezi. HP, kupon ve görev bazlı ödül avantajlarını buradan takip edebilirsiniz: ${platformUrl("coupons")}`,
+      ({ platformUrl }) => `İndirim arıyorsanız kuponlar ve HP avantajları en hızlı başlangıç. Uygun kampanyaları buradan inceleyebilirsiniz: ${platformUrl("coupons")}`
+    ]
+  },
+  {
+    key: "order_problem",
+    label: "Sipariş sorunu",
+    confidence: 0.88,
+    terms: ["siparişim gelmedi", "siparisim gelmedi", "sipariş sorunu", "siparis sorunu", "eksik ürün", "eksik urun", "yanlış ürün", "yanlis urun", "teslim edilmedi", "kargo gelmedi"],
+    link: "orders",
+    actions: [
+      { label: "Siparişlerim", link: "orders" },
+      { label: "Teslimat ve Kargo", link: "shipping" },
+      { label: "Destek", link: "support" }
+    ],
+    text: [
+      ({ platformUrl }) => `Bunu hemen doğru akışa alalım. Sipariş detayınızı Siparişlerim alanından kontrol edin; eksik, yanlış veya geciken teslimat varsa sipariş numarasıyla destek kaydı açmanız gerekir: ${platformUrl("orders")}`,
+      ({ platformUrl }) => `Sipariş sorunu için en güvenli yol sipariş detayından ilerlemek. Takip ve durum bilgisini buradan kontrol edebilirsiniz: ${platformUrl("orders")}`
+    ]
+  }
+];
+
 const COMMERCE_TOPICS = [
   {
     key: "shop",
@@ -496,10 +738,22 @@ const ECOSYSTEM_TOPICS = [
   text: ({ url, platformUrl }) => `Merhabalar, ${topic.label} hakkında memnuniyetle yardımcı olayım. Bu modül ${topic.summary}. İlgili sayfayı buradan açabilirsiniz: ${url} Hizmet sağlayıcı veya işletme olarak katılmak isterseniz partner başvurusu: ${platformUrl("partner")}`
 }));
 
-const PLATFORM_TOPICS = [...CORE_TOPICS, ...COMMERCE_TOPICS, ...ECOSYSTEM_TOPICS];
+const PLATFORM_TOPICS = [...CORE_TOPICS, ...SMART_FAQ_TOPICS, ...COMMERCE_TOPICS, ...ECOSYSTEM_TOPICS];
 
 function detectPlatformTopic(text) {
-  return PLATFORM_TOPICS.find((topic) => textHasAny(text, topic.terms));
+  const scoredTopics = PLATFORM_TOPICS
+    .map((topic, index) => ({
+      topic,
+      index,
+      score: scoreTopic(topic, text),
+      confidence: topic.confidence || 0.78
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || b.confidence - a.confidence || a.index - b.index);
+
+  const best = scoredTopics[0];
+  if (!best) return null;
+  return { ...best.topic, matchedScore: best.score };
 }
 
 export function detectAssistantIntent(message, metadata = {}) {
@@ -514,6 +768,16 @@ export function detectAssistantIntent(message, metadata = {}) {
     };
   }
 
+  const topic = detectPlatformTopic(text);
+  if (topic?.key === "order_problem") {
+    return {
+      key: topic.key,
+      label: topic.label,
+      confidence: Math.min(0.96, (topic.confidence || 0.78) + Math.min(topic.matchedScore || 0, 5) * 0.015),
+      createTicketSuggested: false
+    };
+  }
+
   if (/(siparis|sipariş|order|takip no|tracking|sipariş takip|siparis takip|kargom|teslimatım|teslimatim)/i.test(text)) {
     return {
       key: "order_status",
@@ -523,12 +787,11 @@ export function detectAssistantIntent(message, metadata = {}) {
     };
   }
 
-  const topic = detectPlatformTopic(text);
   if (topic) {
     return {
       key: topic.key,
       label: topic.label,
-      confidence: topic.confidence || 0.78,
+      confidence: Math.min(0.96, (topic.confidence || 0.78) + Math.min(topic.matchedScore || 0, 5) * 0.015),
       createTicketSuggested: topic.createTicketSuggested === true
     };
   }
