@@ -1204,7 +1204,7 @@ async function requireSuperAdmin(request, action) {
 
 function looksLikeMissingSchema(error) {
   const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`;
-  return /does not exist|schema cache|PGRST20|PGRST30|42P01|42703|relation .* not found|column .* not found/i.test(message);
+  return /does not exist|schema cache|PGRST20|PGRST30|PGRST202|42P01|42703|42883|relation .* not found|column .* not found|function .* not found/i.test(message);
 }
 
 function schemaWarning(label, error) {
@@ -1348,6 +1348,57 @@ async function bootstrapOwnerSelfSuperAdminPermission({ before, body, ctx }) {
   }
 
   return { profile: updated, change };
+}
+
+async function serviceRoleUpdateProfilePermission({ before, body, ctx }) {
+  const updatePayload = compactRow({
+    role: body.role,
+    account_status: body.account_status,
+    risk_level: body.risk_level,
+    flagged_suspicious: body.flagged_suspicious,
+    last_admin_note: body.reason,
+    updated_at: new Date().toISOString()
+  });
+
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update(updatePayload)
+    .eq("id", before.id)
+    .select("*")
+    .single();
+  if (updateError) throw updateError;
+
+  const changeRisk = body.role === "super_admin" || body.account_status === "suspended"
+    ? "critical"
+    : (body.role === "admin" || body.risk_level === "high" || body.risk_level === "critical" ? "high" : "medium");
+
+  const { data: changeRow, error: changeError } = await supabaseAdmin
+    .from("super_admin_permission_changes")
+    .insert({
+      target_user_id: before.id,
+      actor_id: ctx.user.id,
+      action: "owner_service_role_permission_update",
+      old_role: before.role || "customer",
+      new_role: updated.role || before.role || "customer",
+      old_account_status: before.account_status || "active",
+      new_account_status: updated.account_status || before.account_status || "active",
+      old_risk_level: before.risk_level || "low",
+      new_risk_level: updated.risk_level || before.risk_level || "low",
+      reason: body.reason,
+      risk_level: changeRisk,
+      metadata: {
+        target_email: updated.email || before.email || null,
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        fallback: "service_role_after_require_super_admin",
+        rpc_missing: true
+      }
+    })
+    .select("*")
+    .single();
+
+  if (changeError && !looksLikeMissingSchema(changeError)) throw changeError;
+
+  return { profile: updated, change: changeError ? null : changeRow };
 }
 
 async function ownerSelfBootstrapSuperAdmin({ ctx, request }) {
@@ -4107,11 +4158,12 @@ export function registerRoutes(app) {
       });
       if (error) {
         if (looksLikeMissingSchema(error)) {
-          throw httpError("super_admin_update_profile_permission migration henüz uygulanmamış.", 503);
+          permissionResult = await serviceRoleUpdateProfilePermission({ before, body, ctx });
+        } else {
+          throw error;
         }
-        throw error;
       }
-      permissionResult = data;
+      if (!permissionResult) permissionResult = data;
     }
 
     const updated = permissionResult?.profile;

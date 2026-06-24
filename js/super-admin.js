@@ -845,14 +845,22 @@
     if (!modal || !messageTarget || !reasonInput || !cancelButton || !acceptButton) {
       return Promise.resolve({ confirmed: window.confirm(message), reason: "" });
     }
+    const requireReason = Boolean(options && options.requireReason);
     messageTarget.textContent = message;
-    reasonInput.value = "";
+    reasonInput.placeholder = requireReason
+      ? "Audit log için işlem gerekçesi zorunlu."
+      : "Audit log için kısa gerekçe yazabilirsin.";
+    reasonInput.value = options && options.defaultReason
+      ? options.defaultReason
+      : (requireReason ? message : "");
+    acceptButton.textContent = requireReason ? "Onayla ve Uygula" : "Onayla";
     modal.hidden = false;
-    reasonInput.focus();
+    reasonInput.select();
 
     return new Promise((resolve) => {
       function cleanup(result) {
         modal.hidden = true;
+        acceptButton.textContent = "Onayla";
         cancelButton.removeEventListener("click", onCancel);
         acceptButton.removeEventListener("click", onAccept);
         resolve(result);
@@ -862,7 +870,8 @@
       }
       function onAccept() {
         const reason = reasonInput.value.trim();
-        if (options && options.requireReason && reason.length < 6) {
+        if (requireReason && reason.length < 6) {
+          reasonInput.placeholder = "En az 6 karakterlik gerekçe gerekli.";
           reasonInput.focus();
           return;
         }
@@ -874,18 +883,29 @@
   }
 
   async function runConfirmed(message, callback, options) {
+    const trigger = options && options.trigger;
     const confirmed = await confirmAction(message, options);
     if (!confirmed.confirmed) return;
+    if (trigger) {
+      trigger.disabled = true;
+      trigger.dataset.originalText = trigger.dataset.originalText || trigger.textContent || "";
+      trigger.textContent = "Uygulanıyor...";
+    }
     try {
       await callback(confirmed.reason);
-      setAlert("İşlem tamamlandı.", "ok");
+      setAlert("İşlem tamamlandı ve audit log'a işlendi.", "ok");
       if ($("[data-command-output]")) {
         await reloadOwnerActiveView();
       } else {
         await reloadActiveView();
       }
     } catch (error) {
-      setAlert(publicError(error, "İşlem tamamlanamadı."));
+      setAlert(publicError(error, "İşlem tamamlanamadı."), "error");
+    } finally {
+      if (trigger) {
+        trigger.disabled = false;
+        trigger.textContent = trigger.dataset.originalText || "Uygula";
+      }
     }
   }
 
@@ -914,7 +934,11 @@
         method: "PATCH",
         body: payload
       });
-    }, { requireReason: action === "suspended" || action === "suspicious" });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: action === "suspended" || action === "suspicious"
+    });
   }
 
   async function decidePartner(button) {
@@ -925,17 +949,22 @@
       approved: "Partner başvurusu onaylanacak ve uygun kullanıcı için mağaza kaydı hazırlanacak.",
       rejected: "Partner başvurusu reddedilecek."
     };
-    await runConfirmed(messages[decision] || "Partner başvurusu güncellenecek.", async (reason) => {
+    const message = messages[decision] || "Partner başvurusu güncellenecek.";
+    await runConfirmed(message, async (reason) => {
       await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
         method: "PATCH",
         body: {
           decision,
-          reason,
+          reason: reason || message,
           commission_rate: 0.12,
           store_status: decision === "approved" ? "active" : "review"
         }
       });
-    }, { requireReason: decision !== "review" });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: decision !== "review"
+    });
   }
 
   async function saveSetting(button) {
@@ -946,12 +975,17 @@
     const toggle = $(`[data-setting-toggle="${safeKey}"]`);
     const input = $(`[data-setting-input="${safeKey}"]`);
     const value = toggle ? toggle.getAttribute("aria-pressed") === "true" : Number(input && input.value || 0);
-    await runConfirmed(`${setting.label || key} ayarı güncellenecek.`, async (reason) => {
+    const message = `${setting.label || key} ayarı güncellenecek.`;
+    await runConfirmed(message, async (reason) => {
       await api(`/v1/control-center/settings/${encodeURIComponent(key)}`, {
         method: "PATCH",
-        body: { value, reason }
+        body: { value, reason: reason || message }
       });
-    }, { requireReason: ["critical", "high"].includes(setting.risk_level) && value === true });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: ["critical", "high"].includes(setting.risk_level) && value === true
+    });
   }
 
   async function saveModule(button) {
@@ -961,7 +995,8 @@
     const visible = $(`[data-module-toggle="is_visible"][data-module-key="${safeKey}"]`);
     const commission = $(`[data-module-commission="${safeKey}"]`);
     const application = $(`[data-module-application="${safeKey}"]`);
-    await runConfirmed("Modül kontrol ayarı güncellenecek.", async (reason) => {
+    const message = "Modül kontrol ayarı güncellenecek.";
+    await runConfirmed(message, async (reason) => {
       await api(`/v1/control-center/modules/${encodeURIComponent(key)}`, {
         method: "PATCH",
         body: {
@@ -969,10 +1004,14 @@
           is_visible: visible ? visible.getAttribute("aria-pressed") === "true" : undefined,
           commission_rate: Number(commission && commission.value || 0) / 100,
           application_status: application && application.value,
-          content_config: { last_reason: reason || "" }
+          content_config: { last_reason: reason || message }
         }
       });
-    }, { requireReason: false });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: false
+    });
   }
 
   const ownerViewTitles = {
@@ -1299,7 +1338,11 @@
           reason
         }
       });
-    }, { requireReason: true });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   async function loadOwnerModuleMap() {
@@ -1542,7 +1585,10 @@
       }
     };
     closeReleaseModal();
-    const confirmed = await confirmAction("Bu owner onayı audit log'a yazılacak ve yapılandırılmışsa güvenli yayın webhook'u tetiklenecek.", { requireReason: true });
+    const confirmed = await confirmAction("Bu owner onayı audit log'a yazılacak ve yapılandırılmışsa güvenli yayın webhook'u tetiklenecek.", {
+      defaultReason: payload.target_summary,
+      requireReason: true
+    });
     if (!confirmed.confirmed) return;
     payload.metadata.reason = confirmed.reason;
     try {

@@ -1385,6 +1385,51 @@ body[data-page="super-admin"] .sa-line a:hover {
   background: #eef5ff;
 }
 
+body[data-page="super-admin"] .sa-line button {
+  border-color: rgba(3, 37, 70, 0.72);
+  background: #061527;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(6, 21, 39, 0.16);
+}
+
+body[data-page="super-admin"] .sa-line button:hover {
+  border-color: rgba(23, 103, 232, 0.72);
+  background: #123f75;
+}
+
+body[data-page="super-admin"] .sa-line button:disabled {
+  opacity: 0.62;
+  cursor: wait;
+}
+
+body[data-page="super-admin"] .sa-line button[data-permission-save],
+body[data-page="super-admin"] .sa-line button[data-setting-save],
+body[data-page="super-admin"] .sa-line button[data-module-save],
+body[data-page="super-admin"] .sa-line button[data-partner-decision="approved"],
+body[data-page="super-admin"] .sa-line button[data-user-action="active"] {
+  border-color: rgba(0, 118, 113, 0.62);
+  background: #007671;
+}
+
+body[data-page="super-admin"] .sa-line button[data-partner-decision="rejected"],
+body[data-page="super-admin"] .sa-line button[data-user-action="suspended"] {
+  border-color: rgba(176, 33, 58, 0.72);
+  background: #b0213a;
+}
+
+body[data-page="super-admin"] .sa-line input,
+body[data-page="super-admin"] .sa-line select {
+  min-height: 34px;
+  min-width: 132px;
+  padding: 0 10px;
+  border: 1px solid rgba(23, 103, 232, 0.22);
+  border-radius: var(--sa-radius);
+  background: #ffffff;
+  color: var(--sa-text);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 body[data-page="super-admin"] .sa-line.sa-risk-critical {
   border-left-color: var(--sa-red);
   background: #fff7f8;
