@@ -65,8 +65,8 @@ grant select on public.super_admin_permission_changes to authenticated;
 
 do $$
 begin
-  grant all on public.profiles to service_role;
-  grant all on public.super_admin_permission_changes to service_role;
+  execute 'grant all on public.profiles to service_role';
+  execute 'grant all on public.super_admin_permission_changes to service_role';
 exception
   when undefined_object then null;
 end $$;
