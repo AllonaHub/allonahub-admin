@@ -308,6 +308,8 @@
       helper: preflight.role === "admin"
         ? "Admin owner bootstrap açık; Yetki Merkezi'nden kendi hesabına super_admin rolü ver."
         : "API owner kilidini görüyor ve bu oturumla eşleştiriyor.",
+      can_open_panel: owner.matched && preflight.role === "super_admin" && preflight.mfa_verified,
+      preflight_payload: payload,
       steps
     };
   }
@@ -446,11 +448,13 @@
           helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
           steps: ["Owner allowlist ve MFA2 adımlarını tamamla.", "Owner doğrulanırsa kendi hesabını super_admin yap."]
         });
+        if (enrichedDiagnosis.can_open_panel && await openOwnerConsoleFromPreflight(enrichedDiagnosis.preflight_payload)) return;
         setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
         return;
       }
 
       const enrichedDiagnosis = await loadOwnerPreflightDiagnosis(diagnosis);
+      if (enrichedDiagnosis.can_open_panel && await openOwnerConsoleFromPreflight(enrichedDiagnosis.preflight_payload)) return;
       setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
     } catch (fallbackError) {
       setAccessFallback(shell, accessFallback(message, { mode: "login", diagnosis }));
@@ -1047,6 +1051,65 @@
     return payload;
   }
 
+  function ownerPreflightAllowsPanel(payload) {
+    const preflight = payload && payload.preflight || {};
+    const owner = preflight.owner || {};
+    return Boolean(
+      preflight.mfa_verified &&
+      preflight.role === "super_admin" &&
+      owner.configured &&
+      owner.matched
+    );
+  }
+
+  function ownerSessionFromPreflight(payload) {
+    const preflight = payload && payload.preflight || {};
+    const owner = preflight.owner || {};
+    return {
+      ok: true,
+      owner: {
+        user_id: preflight.user_id,
+        email: preflight.email,
+        role: preflight.role,
+        source: owner.source || "owner_preflight",
+        mfa_verified: true,
+        owner_locked: true,
+        bootstrap_required: false
+      },
+      gitops: {
+        enabled: false,
+        release_webhook_configured: false
+      },
+      control_links: []
+    };
+  }
+
+  function applyOwnerSessionHeader(session) {
+    const roleTarget = $("[data-sa-role]");
+    const owner = session && session.owner || {};
+    if (roleTarget) roleTarget.textContent = `Owner kilidi: ${owner.email || owner.user_id || "doğrulandı"}`;
+  }
+
+  async function recoverOwnerSessionWithPreflight(originalError) {
+    const payload = await api("/v1/control-center/owner-preflight");
+    if (!ownerPreflightAllowsPanel(payload)) throw originalError;
+
+    state.ownerSession = ownerSessionFromPreflight(payload);
+    applyOwnerSessionHeader(state.ownerSession);
+    setAlert("Owner kilidi doğrulandı. Panel açıldı; bazı özet veriler API yanıtına göre sınırlı gelebilir.", "ok");
+    return state.ownerSession;
+  }
+
+  async function openOwnerConsoleFromPreflight(payload) {
+    if (!ownerPreflightAllowsPanel(payload)) return false;
+    state.ownerSession = ownerSessionFromPreflight(payload);
+    bindOwnerConsole();
+    applyOwnerSessionHeader(state.ownerSession);
+    await loadOwnerView("overview");
+    setAlert("Owner kilidi doğrulandı. Panel açıldı.", "ok");
+    return true;
+  }
+
   async function loadOwnerOverview() {
     ownerLoading("Kontrol Merkezi");
     const payload = await loadCommandCenter();
@@ -1480,6 +1543,9 @@
   }
 
   function bindOwnerConsole() {
+    if (state.ownerConsoleBound) return;
+    state.ownerConsoleBound = true;
+
     const nav = $("[data-sa-nav]");
     if (nav) {
       nav.addEventListener("click", async (event) => {
@@ -1583,7 +1649,11 @@
     if (!state.access) return;
     if (await redirectToMfaForPrivilegedSession()) return;
     bindOwnerConsole();
-    await loadOwnerSession();
+    try {
+      await loadOwnerSession();
+    } catch (error) {
+      await recoverOwnerSessionWithPreflight(error);
+    }
     await loadOwnerView("overview");
   }
 
