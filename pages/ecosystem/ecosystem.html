@@ -653,7 +653,7 @@ setInterval(rotateAds,6000);
 </script>
 
 <script>
-const demoStats={activeUsers:12481,activeAds:1942,jobAds:326,crewApps:89,dailyHP:245800};
+const verifiedStats={activeUsers:0,activeAds:0,jobAds:0,crewApps:0,dailyHP:0};
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
 function updateLiveStats(data){
 document.getElementById("activeUsers").textContent=formatNumber(data.activeUsers);
@@ -662,7 +662,7 @@ document.getElementById("jobAds").textContent=formatNumber(data.jobAds);
 document.getElementById("crewApps").textContent=formatNumber(data.crewApps);
 document.getElementById("dailyHP").textContent=formatNumber(data.dailyHP);
 }
-updateLiveStats(demoStats);
+updateLiveStats(verifiedStats);
 </script>
 
 <script>

@@ -152,7 +152,7 @@ adIndex[type]++;
 rotateAds();
 setInterval(rotateAds,6000);
 
-const demoStats={activeUsers:12481,activeAds:1942,jobAds:326,crewApps:89,dailyHP:245800};
+const verifiedStats={activeUsers:0,activeAds:0,jobAds:0,crewApps:0,dailyHP:0};
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
 function updateLiveStats(data){
 document.getElementById("activeUsers").textContent=formatNumber(data.activeUsers);
@@ -161,7 +161,19 @@ document.getElementById("jobAds").textContent=formatNumber(data.jobAds);
 document.getElementById("crewApps").textContent=formatNumber(data.crewApps);
 document.getElementById("dailyHP").textContent=formatNumber(data.dailyHP);
 }
-updateLiveStats(demoStats);
+async function loadVerifiedStats(){
+const stats={...verifiedStats};
+try{
+if(window.Allona?.db?.products?.listActive){
+const products=await window.Allona.db.products.listActive({sort:"newest"});
+stats.activeAds=Array.isArray(products)?products.length:0;
+}
+}catch(error){
+console.warn("AllonaHub canlı istatistikleri alınamadı:",error.message||error);
+}
+updateLiveStats(stats);
+}
+loadVerifiedStats();
 
 const searchRoutes=[
 {keys:["shop","alışveriş","pazaryeri","ürün"],url:"/pages/commerce/allonashop.html"},

@@ -2,37 +2,11 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
 
-  const fallbackRestaurants = [
-    { id: "burger-house", name: "Allona Burger House", cuisine: "Burger", tags: ["Burger", "Patates", "Soğuk içecek"], rating: 4.8, eta: 24, hp: 35, min: 180, deal: "2 menüye içecek", free: true, open: true, image: "../../images/modules/allona-yemek.png" },
-    { id: "blue-pizza", name: "Blue Pizza", cuisine: "Pizza", tags: ["Pizza", "İtalyan", "Aile menüsü"], rating: 4.7, eta: 29, hp: 30, min: 220, deal: "%20 menü indirimi", free: false, open: true, image: "../../images/modules/yemek-light-v5.jpg" },
-    { id: "kebap-prestige", name: "Kebap Prestige", cuisine: "Kebap", tags: ["Kebap", "Lahmacun", "Izgara"], rating: 4.9, eta: 34, hp: 42, min: 260, deal: "Aile paketinde HP", free: true, open: true, image: "../../images/modules/allona-yemek.png" },
-    { id: "fit-bowl", name: "Fit Bowl Kitchen", cuisine: "Sağlıklı", tags: ["Salata", "Protein", "Vegan"], rating: 4.6, eta: 21, hp: 28, min: 160, deal: "Premium bowl fırsatı", free: false, open: true, image: "../../images/modules/yemek.png" },
-    { id: "tatli-kahve", name: "Tatlı & Kahve Atelier", cuisine: "Tatlı", tags: ["Tatlı", "Kahve", "Pasta"], rating: 4.5, eta: 27, hp: 24, min: 120, deal: "Kahve yanında tatlı", free: true, open: true, image: "../../images/modules/allona-yemek.png" },
-    { id: "doner-line", name: "Döner Line", cuisine: "Döner", tags: ["Döner", "Ayran", "Menü"], rating: 4.4, eta: 19, hp: 22, min: 110, deal: "Hızlı öğle menüsü", free: false, open: true, image: "../../images/modules/yemek-light-v5.jpg" }
-  ];
-
-  const fallbackMenuItems = [
-    { id: "premium-burger", restaurant: "Allona Burger House", name: "Premium Burger Menü", desc: "Burger, patates, içecek ve sos", price: 289.99, hp: 35, icon: "fa-burger", image: "../../images/modules/allona-yemek.png" },
-    { id: "pizza-duo", restaurant: "Blue Pizza", name: "Pizza Duo Menü", desc: "2 kişilik pizza ve içecek", price: 399.99, hp: 30, icon: "fa-pizza-slice", image: "../../images/modules/yemek-light-v5.jpg" },
-    { id: "fit-protein", restaurant: "Fit Bowl Kitchen", name: "Fit Protein Bowl", desc: "Tavuk, yeşillik, tahıl ve sos", price: 249.99, hp: 28, icon: "fa-seedling", image: "../../images/modules/yemek.png" },
-    { id: "kebap-family", restaurant: "Kebap Prestige", name: "Kebap Aile Menüsü", desc: "Izgara, lahmacun ve mezeler", price: 599.99, hp: 42, icon: "fa-fire-burner", image: "../../images/modules/allona-yemek.png" },
-    { id: "dessert-coffee", restaurant: "Tatlı & Kahve Atelier", name: "Tatlı & Kahve Seti", desc: "Pasta dilimi ve özel kahve", price: 179.99, hp: 24, icon: "fa-mug-hot", image: "../../images/modules/yemek-light-v5.jpg" },
-    { id: "quick-doner", restaurant: "Döner Line", name: "Hızlı Döner Menü", desc: "Döner, ayran ve patates", price: 199.99, hp: 22, icon: "fa-utensils", image: "../../images/modules/yemek.png" },
-    { id: "vegan-bowl", restaurant: "Fit Bowl Kitchen", name: "Vegan Bowl", desc: "Nohut, avokado, yeşillik ve sos", price: 229.99, hp: 26, icon: "fa-leaf", image: "../../images/modules/yemek.png" },
-    { id: "family-pizza", restaurant: "Blue Pizza", name: "Aile Pizza Paketi", desc: "Büyük pizza, tatlı ve içecek", price: 529.99, hp: 38, icon: "fa-people-group", image: "../../images/modules/yemek-light-v5.jpg" }
-  ];
-
-  const fallbackHeroAds = [
-    { title: "Allona Yemek", subtitle: "Günlük Menü", campaign_text: "Partner menüleri burada döner", description: "Restoran, menü, kurye ve HP avantajı tek yemek akışında.", image_url: "../../images/modules/yemek-light-v5.jpg", cta_label: "Restoranları Gör", link_url: "#food-restaurants", source_id: "fallback-food-hero" },
-    { title: "Premium Burger Menü", subtitle: "Allona Burger House", campaign_text: "2 menüye içecek fırsatı", description: "Çok satan menüleri hızlı sepet ve canlı teslimat akışıyla keşfet.", image_url: "../../images/modules/allona-yemek.png", cta_label: "Menüyü Ekle", link_url: "#food-restaurants", source_id: "fallback-burger-hero" },
-    { title: "Aile Pizza Paketi", subtitle: "Blue Pizza", campaign_text: "%20 menü indirimi", description: "Partner restoranların günlük kampanyaları reklam alanında sırayla görünür.", image_url: "../../images/modules/yemek.png", cta_label: "Kampanyaya Git", link_url: "#food-restaurants", source_id: "fallback-pizza-hero" }
-  ];
-
   const locations = ["İstanbul, Beşiktaş", "İstanbul, Kadıköy", "Ankara, Çankaya", "İzmir, Alsancak"];
   const state = {
-    restaurants: [...fallbackRestaurants],
-    menuItems: [...fallbackMenuItems],
-    heroAds: [...fallbackHeroAds],
+    restaurants: [],
+    menuItems: [],
+    heroAds: [],
     query: "",
     cuisine: "all",
     mode: "delivery",
@@ -42,7 +16,7 @@
     discount: 0,
     trackStep: 1,
     locationIndex: 0,
-    dataSource: "fallback",
+    dataSource: "supabase",
     detailItem: null
   };
 
@@ -423,19 +397,18 @@
 
       state.heroAds = uniqueAds([
         ...scopedAds.map(heroAdFromRecord),
-        ...products.map(productToHeroAd),
-        ...fallbackHeroAds
+        ...products.map(productToHeroAd)
       ]).slice(0, 7);
 
       renderHeroAds();
       renderRestaurants();
       renderMenu();
       renderCart();
-      setStatus(products.length ? "Canlı Supabase ürünleri gösteriliyor." : "Canlı Yemek ürünü bulunamadı; açılış demosu gösteriliyor.", products.length ? "success" : "warning");
+      setStatus(products.length ? "Canlı Supabase ürünleri gösteriliyor." : "Canlı Yemek ürünü bulunamadı.", products.length ? "success" : "warning");
     } catch (error) {
       console.warn("Allona Yemek canlı katalog hatası:", error.message || error);
       renderHeroAds();
-      setStatus("Canlı katalog şu an alınamadı; güvenli demo katalog gösteriliyor.", "warning");
+      setStatus("Canlı katalog şu an alınamadı. Lütfen kısa süre sonra tekrar deneyin.", "warning");
     }
   }
 
@@ -575,7 +548,7 @@
           <span><i class="fa-solid fa-store" aria-hidden="true"></i>${escape(item.restaurant)}</span>
           <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>${escape(location)}</span>
           <span><i class="fa-solid fa-clock" aria-hidden="true"></i>${escape(restaurant?.eta || 25)} dk</span>
-          <span><i class="fa-solid fa-database" aria-hidden="true"></i>${escape(state.dataSource === "supabase" ? "Supabase canlı katalog" : "Demo katalog")}</span>
+          <span><i class="fa-solid fa-database" aria-hidden="true"></i>${escape(state.dataSource === "supabase" ? "Supabase canlı katalog" : "Canlı katalog bekleniyor")}</span>
         </div>
 
         <section class="food-detail-section">
