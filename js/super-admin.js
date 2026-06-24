@@ -1234,26 +1234,55 @@
     setAlert("Komut sağlık testi çalışıyor...", "ok");
     try {
       const payload = await api("/v1/control-center/action-health");
-      const actions = payload.actions || {};
-      const rows = Object.entries(actions).map(([key, value]) => ownerLine(
-        key,
-        `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / deploy webhook hazır değil" : ""}`,
-        value.service_role_fallback ? "service-role fallback açık" : "",
-        value.ok && value.dispatch_ready !== false ? "low" : "high"
-      ));
-      const gitops = payload.gitops || {};
-      openDrawer("Komut Sağlık Testi", [
-        ownerLine("Yayın deploy hattı", escape(gitops.message || "-"), gitops.dispatch_ready ? "deploy hazır" : "deploy webhook eksik", gitops.dispatch_ready ? "low" : "critical"),
-        ownerLine("Backend yazma fallback", "Yetki RPC eksikse owner doğrulamalı service-role fallback devreye girer.", "", "high"),
-        rows.join("") || ownerEmpty("Komut kaydı bulunamadı."),
-        (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
-      ].join(""));
+      openDrawer("Komut Sağlık Testi", renderOwnerActionHealth(payload, false));
       setAlert(payload.schema_warnings && payload.schema_warnings.length ? "Komut testi uyarı verdi; detay panelde." : "Komut testi tamamlandı.", payload.schema_warnings && payload.schema_warnings.length ? "error" : "ok");
     } catch (error) {
       const message = publicError(error, "Komut sağlık testi çalışmadı.");
+      if (error && error.status === 404) {
+        try {
+          const fallbackPayload = state.commandCenter || await loadCommandCenter();
+          openDrawer("Komut Sağlık Testi", renderOwnerActionHealthFallback(fallbackPayload, message));
+          setAlert("API action-health route'u canlıda yok; command-center verisiyle sınırlı test gösterildi.", "error");
+          return;
+        } catch (fallbackError) {
+          const fallbackMessage = publicError(fallbackError, message);
+          openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(fallbackMessage), "", "critical"));
+          setAlert(fallbackMessage, "error");
+          return;
+        }
+      }
       openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(message), "", "critical"));
       setAlert(message, "error");
     }
+  }
+
+  function renderOwnerActionHealth(payload) {
+    const actions = payload.actions || {};
+    const rows = Object.entries(actions).map(([key, value]) => ownerLine(
+      key,
+      `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / deploy webhook hazır değil" : ""}`,
+      value.service_role_fallback ? "service-role fallback açık" : "",
+      value.ok && value.dispatch_ready !== false ? "low" : "high"
+    ));
+    const gitops = payload.gitops || {};
+    return [
+      ownerLine("Yayın deploy hattı", escape(gitops.message || "-"), gitops.dispatch_ready ? "deploy hazır" : "deploy webhook eksik", gitops.dispatch_ready ? "low" : "critical"),
+      ownerLine("Backend yazma fallback", "Yetki RPC owner bağlamını göremezse backend owner+MFA sonrası service-role fallback devreye girer.", "", "high"),
+      rows.join("") || ownerEmpty("Komut kaydı bulunamadı."),
+      (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
+    ].join("");
+  }
+
+  function renderOwnerActionHealthFallback(payload, routeError) {
+    const system = payload.system_health || {};
+    const gitops = payload.gitops || {};
+    return [
+      ownerLine("API build uyarısı", "Canlı API /action-health route'unu görmüyor.", escape(routeError || "Route not found"), "critical"),
+      ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")}`, "", system.database === "online" ? "low" : "high"),
+      ownerLine("Yayın hattı", gitops.enabled ? "GitOps açık" : "GitOps kapalı veya env eksik", gitops.release_webhook_configured ? "webhook var" : "webhook yok", gitops.release_webhook_configured ? "low" : "high"),
+      ownerLine("Yetki/modül endpointleri", "Route ailesi command-center ile doğrulandı; action-health marker için API container yeniden build edilmeli.", "", "high"),
+      (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
+    ].join("");
   }
 
   async function loadOwnerAlerts() {

@@ -379,6 +379,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260624-actions5";
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -2780,11 +2781,13 @@ export function registerRoutes(app) {
   const superPost = (suffix, handler) => aliasRoute("post", superPaths(suffix), handler);
   const superPatch = (suffix, handler) => aliasRoute("patch", superPaths(suffix), handler);
 
-  app.get("/health", async () => ({
-    ok: true,
-    service: "allonahub-backend",
-    time: new Date().toISOString()
-  }));
+	  app.get("/health", async () => ({
+	    ok: true,
+	    service: "allonahub-backend",
+	    build: BACKEND_BUILD_MARKER,
+	    super_admin_action_health_route: true,
+	    time: new Date().toISOString()
+	  }));
 
   app.get("/ready", async (_request, reply) => {
     const { error } = await supabaseAdmin.from("profiles").select("id", { count: "exact", head: true });
