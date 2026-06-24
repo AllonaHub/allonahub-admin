@@ -10,6 +10,22 @@ Bu klasor silme islemi degildir. Eski, birebir kopya veya aktif sayfalarda kulla
 - `js/partner.js`: Aktif partner paneli `js/partner-os.js` uzerinden ilerliyor.
 - `css/styles.css`: Aktif sayfalarda `css/styles.v2.css` ve `css/platform.css` kullaniliyor.
 
+## 2026-06-24 karantina paketi
+
+`quarantine/2026-06-24-cleanup/` altina aktif referansi kalmayan kopya dosyalar tasindi. Bu paketteki kod dosyalari `.inactive.txt`, gorsel dosyalari `.inactive` uzantisi ile tutulur. Boylece dogrudan tarayicida JS/CSS/HTML veya gorsel olarak calismalari engellenir.
+
+- Super Admin kopya CSS/JS dosyalari canonical `css/super-admin.css` ve `js/super-admin.js` disinda arsivlendi.
+- `js/security-challenge.cffix1.js` canonical `js/security-challenge.js` kullanildigi icin arsivlendi.
+- `js/mfa.returnfix1.js` canonical `js/mfa.js` kullanildigi icin arsivlendi.
+- `sw-reset1.js` aktif olmayan ve `sw.js` ile birebir ayni eski reset dosyasi oldugu icin arsivlendi.
+- Aktif HTML/CSS/JS ve Supabase urun gorsel akisi tarafindan kullanilmayan eski modul gorselleri arsivlendi.
+
+Bilerek tasinmayan ornekler:
+
+- `images/modules/allona-yemek.png`: Supabase aktif yemek urunleri kullaniyor.
+- `images/modules/denizcilik.png`: Aktif ekosistem sayfasi kullaniyor.
+- `sw-reset2.js`: Aktif PWA kaydi kullaniyor.
+
 ## Eski/alias HTML kopyalari
 
 Bu dosyalar birebir ayni veya typo/eski URL dosyalaridir. Eski yollarin kirilmamasi icin asil konumlarinda canonical sayfaya yonlendiren kucuk HTML dosyasi birakildi.
