@@ -901,12 +901,12 @@
     }
     try {
       await callback(confirmed.reason);
-      setAlert("İşlem tamamlandı ve audit log'a işlendi.", "ok");
       if ($("[data-command-output]")) {
         await reloadOwnerActiveView();
       } else {
         await reloadActiveView();
       }
+      setAlert("İşlem tamamlandı ve audit log'a işlendi.", "ok");
     } catch (error) {
       const messageText = publicError(error, "İşlem tamamlanamadı.");
       setAlert(messageText, "error");
@@ -1218,7 +1218,7 @@
       owner.bootstrap_required ? ownerLine("Kalıcı Super Admin", "Owner doğrulandı; profil rolünü Super Admin yaparak kalıcı erişimi tamamla.", "<button type=\"button\" data-view-jump=\"permissions\">Yetki Merkezi</button>", "critical") : "",
       ownerLine("Toplam kullanıcı", formatNumber(summary.total_users), "<button type=\"button\" data-view-jump=\"users\">Yönet</button>", "medium"),
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
-      ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner-only backend RPC ile çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
+      ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
       ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
@@ -1255,7 +1255,7 @@
     const gitops = payload.gitops || {};
     return [
       ownerLine("Yayın deploy hattı", escape(gitops.message || "-"), gitops.dispatch_ready ? "deploy hazır" : "deploy webhook eksik", gitops.dispatch_ready ? "low" : "critical"),
-      ownerLine("Backend yazma fallback", "Yetki RPC owner bağlamını göremezse backend owner+MFA sonrası service-role fallback devreye girer.", "", "high"),
+      ownerLine("Backend yazma katmanı", "Yetki değişiklikleri owner+MFA sonrası backend service-role ile yazılır ve DB'den tekrar doğrulanır.", "", "high"),
       rows.join("") || ownerEmpty("Komut kaydı bulunamadı."),
       (payload.schema_warnings || []).map((item) => ownerLine(item.label || "schema", escape(item.message || "-"), escape(item.code || ""), "critical")).join("")
     ].join("");
@@ -1267,6 +1267,7 @@
     const gitops = payload.gitops || {};
     return [
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")}`, "", system.database === "online" ? "low" : "high"),
+      ownerLine("Backend build", escape(system.build || "-"), "actions8 görünmüyorsa API redeploy eski build'de kalmıştır", system.build === "super-admin-actions-20260625-actions8" ? "low" : "high"),
       ownerLine("Yetki merkezi", "Rol, durum ve risk komutları backend route ailesi üzerinden çalışır.", `${formatNumber(summary.total_users)} kullanıcı`, "medium"),
       ownerLine("Partner kararları", "Başvurular inceleme/onay/ret akışına bağlı.", `${formatNumber(summary.pending_applications)} bekleyen`, summary.pending_applications ? "high" : "low"),
       ownerLine("Modül yönetimi", "Ana sayfa modülleri ve görünürlük kayıtları yüklendi.", `${formatNumber(summary.homepage_modules)} modül`, "low"),

@@ -379,7 +379,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260624-actions7";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260625-actions8";
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -1374,6 +1374,25 @@ async function serviceRoleUpdateProfilePermission({ before, body, ctx, fallbackR
     .single();
   if (updateError) throw updateError;
 
+  const { data: persisted, error: verifyError } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", before.id)
+    .single();
+  if (verifyError) throw verifyError;
+
+  const mismatches = Object.entries({
+    role: body.role,
+    account_status: body.account_status,
+    risk_level: body.risk_level,
+    flagged_suspicious: body.flagged_suspicious
+  }).filter(([field, expected]) => (
+    expected !== undefined && persisted && persisted[field] !== expected
+  ));
+  if (mismatches.length) {
+    throw httpError(`Yetki güncellemesi veritabanında doğrulanamadı: ${mismatches.map(([field]) => field).join(", ")}`, 502);
+  }
+
   const changeRisk = body.role === "super_admin" || body.account_status === "suspended"
     ? "critical"
     : (body.role === "admin" || body.risk_level === "high" || body.risk_level === "critical" ? "high" : "medium");
@@ -1385,15 +1404,15 @@ async function serviceRoleUpdateProfilePermission({ before, body, ctx, fallbackR
       actor_id: ctx.user.id,
       action: "owner_service_role_permission_update",
       old_role: before.role || "customer",
-      new_role: updated.role || before.role || "customer",
+      new_role: persisted.role || updated.role || before.role || "customer",
       old_account_status: before.account_status || "active",
-      new_account_status: updated.account_status || before.account_status || "active",
+      new_account_status: persisted.account_status || updated.account_status || before.account_status || "active",
       old_risk_level: before.risk_level || "low",
-      new_risk_level: updated.risk_level || before.risk_level || "low",
+      new_risk_level: persisted.risk_level || updated.risk_level || before.risk_level || "low",
       reason: body.reason,
       risk_level: changeRisk,
       metadata: {
-        target_email: updated.email || before.email || null,
+        target_email: persisted.email || updated.email || before.email || null,
         owner_source: ctx.superAdminOwner?.source || "unknown",
         fallback: "service_role_after_require_super_admin",
         fallback_reason: fallbackReason
@@ -1404,7 +1423,7 @@ async function serviceRoleUpdateProfilePermission({ before, body, ctx, fallbackR
 
   if (changeError && !looksLikeMissingSchema(changeError)) throw changeError;
 
-  return { profile: updated, change: changeError ? null : changeRow };
+  return { profile: persisted || updated, change: changeError ? null : changeRow };
 }
 
 async function ownerSelfBootstrapSuperAdmin({ ctx, request }) {
@@ -3943,6 +3962,7 @@ export function registerRoutes(app) {
       },
       system_health: {
         api: "online",
+        build: BACKEND_BUILD_MARKER,
         database: readyCheck.warning ? "warning" : "online",
         maintenance_mode: config.maintenanceMode,
         payments_disabled: config.paymentsDisabled,
