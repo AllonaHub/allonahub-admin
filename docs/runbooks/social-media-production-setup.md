@@ -41,10 +41,15 @@ SOCIAL_MEDIA_DRY_RUN=true
 SOCIAL_MEDIA_SEND_TIMEOUT_MS=12000
 SOCIAL_MEDIA_MAX_DISPATCH_BATCH=20
 SOCIAL_MEDIA_MAX_MEDIA_BYTES=157286400
+SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=false
+SOCIAL_MEDIA_ASSET_WEBHOOK_URL=
+SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET=
 SOCIAL_MEDIA_DEFAULT_TIMEZONE=Europe/Istanbul
 ```
 
 `SOCIAL_MEDIA_DRY_RUN=true` ilk testte kalmali. Platform testleri ve dry-run dispatch basarili olunca `false` yap.
+
+Gorsel/video dosyalarinin otomatik URL almasi icin `SOCIAL_MEDIA_ASSET_WEBHOOK_URL` bir asset hazirlama servisine baglanabilir. Bu webhook yoksa sistem yine taslak, caption, hashtag, saat, gorsel prompt ve asset kaydi olusturur; medya URL'si Admin Panel'deki `Medya` butonundan eklenir.
 
 ## 2. Supabase migrations
 
@@ -109,17 +114,49 @@ Secret degerleri panelde geri gosterilmez. Backend `social_media_connector_secre
 
 1. Hesap Envanteri'nde platformu `native_api` yap.
 2. Baglanti Secretleri tablosunda platform `ready` olunca `Test` butonuna bas.
-3. Yeni taslakta gerekli medya alanlarini doldur:
+3. `Otomatik Gunluk Paket` alanindan `Gunluk Paketi Olustur` butonuna bas.
+4. Sistem taslagi `ready_for_review` olarak olusturur; `Taslaklar` alaninda gorunur.
+5. Gerekirse `Platform Kuyrugu > Medya` butonuyla gerekli medya alanlarini doldur:
    - Instagram/Pinterest: `Gorsel URL`
    - TikTok/YouTube: `Video URL`
    - WhatsApp: `WhatsApp hedefi` veya `DEFAULT_RECIPIENT_PHONE`
-4. Taslagi onaya gonder.
-5. Onayla + Kuyruga Al.
-6. `SOCIAL_MEDIA_DRY_RUN=true` iken dispatch sonucu `dry_run` olmalidir.
-7. Her sey dogruysa env dosyasinda:
+6. `Planli Onayla`; saat girmezsen platform bazli paket saatleri korunur.
+7. Dispatch cron calistiginda `SOCIAL_MEDIA_DRY_RUN=true` iken sonuc `dry_run` olmalidir. Anlik test icin panelde `Simdi Kuyruga Al` kullanilabilir.
+8. Her sey dogruysa env dosyasinda:
 
 ```bash
 SOCIAL_MEDIA_DRY_RUN=false
 ```
 
 Sonra backend'i restart et ve ayni akisi gercek yayin icin calistir.
+
+## 6. Cron
+
+Gunluk taslak paketini otomatik olusturmak icin env'de:
+
+```bash
+SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=true
+```
+
+Sonra scheduler'a ekle:
+
+```bash
+curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-daily-drafts \
+  -H "content-type: application/json" \
+  -H "x-cron-secret: GERCEK_CRON_SECRET" \
+  -d '{"objective":"growth","landing_url":"https://allonahub.com/"}'
+```
+
+Planli/onayli postlari dagitmak icin:
+
+```bash
+curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-dispatch \
+  -H "x-cron-secret: GERCEK_CRON_SECRET"
+```
+
+Onerilen siralama:
+
+```text
+09:00 social-media-daily-drafts
+10:00, 12:30, 15:00, 18:30, 21:30 social-media-dispatch
+```

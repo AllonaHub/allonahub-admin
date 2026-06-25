@@ -41,10 +41,17 @@ SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY=
 SOCIAL_MEDIA_SEND_TIMEOUT_MS=12000
 SOCIAL_MEDIA_MAX_DISPATCH_BATCH=20
 SOCIAL_MEDIA_MAX_MEDIA_BYTES=157286400
+SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=false
+SOCIAL_MEDIA_ASSET_WEBHOOK_URL=
+SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET=
 SOCIAL_MEDIA_DEFAULT_TIMEZONE=Europe/Istanbul
 ```
 
 `SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY` Admin Panel uzerinden girilen platform secretlerini server-side AES-256-GCM ile sifrelemek icindir. Bu deger frontend'e yazilmaz ve panelde geri gosterilmez.
+
+`SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=true` yapilirsa `/v1/cron/social-media-daily-drafts` gunluk paketi otomatik uretir. Admin Panel'deki `Otomatik Gunluk Paket` formu bu env kapali olsa bile manuel paket olusturabilir.
+
+`SOCIAL_MEDIA_ASSET_WEBHOOK_URL` varsa sistem gorsel/video promptlarini bu servise gonderir ve donen `image_url` / `video_url` degerlerini platform payload'ina baglar. Webhook yoksa prompt ve asset kaydi olusur; medya URL'si paneldeki `Medya` butonuyla eklenir.
 
 Gercek yayin icin once sosyal platform OAuth/token islemleri Admin Panel > Sosyal Medya > Baglanti Secretleri alanindan veya server/vault tarafindan tamamlanir. Sonra:
 
@@ -101,6 +108,11 @@ Basarili dispatcher yaniti:
 Hetzner veya baska bir scheduler:
 
 ```bash
+curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-daily-drafts \
+  -H "content-type: application/json" \
+  -H "x-cron-secret: GERCEK_CRON_SECRET" \
+  -d '{"objective":"growth","landing_url":"https://allonahub.com/"}'
+
 curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-dispatch \
   -H "x-cron-secret: GERCEK_CRON_SECRET"
 ```
@@ -160,3 +172,15 @@ Backend `connector_mode = native_api` olan hesaplarda server-side secret vault't
 - Nsosyal: resmi API yerine `DISPATCH_WEBHOOK_URL` ile onayli webhook adapter desteklenir.
 
 TikTok, YouTube, WhatsApp ve Google Business tarafinda ilgili platform uygulamasi, izin/scope, policy review ve hesap uygunlugu yine platform panelinden tamamlanmalidir.
+
+## Sadece Onay Modeli
+
+Bu modelde operasyon akisi:
+
+1. Admin Panel > Sosyal Medya > `Otomatik Gunluk Paket` ile paket olusturulur veya cron gunluk paketi olusturur.
+2. Backend platform caption, hashtag, saat, landing link, gorsel/video prompt ve benzersizlik fingerprint'i uretir.
+3. Asset webhook varsa public medya URL'leri payload'a baglanir.
+4. Taslak `ready_for_review` olarak panele duser.
+5. Admin `Planli Onayla` der; platform bazli saatler korunur.
+6. Dispatch cron zamani gelen postlari platform API'lerine gonderir. `Simdi Kuyruga Al` sadece anlik test/yayin ihtiyaci icindir.
+7. Sonuc `published`, `failed`, `external_url` ve dispatch attempt kaydi olarak panelde gorunur.

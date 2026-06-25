@@ -151,6 +151,9 @@ export const config = {
     sendTimeoutMs: readNumber("SOCIAL_MEDIA_SEND_TIMEOUT_MS", 12000),
     maxDispatchBatch: readNumber("SOCIAL_MEDIA_MAX_DISPATCH_BATCH", 20),
     maxMediaBytes: readNumber("SOCIAL_MEDIA_MAX_MEDIA_BYTES", 157286400),
+    dailyDraftsEnabled: readBool("SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED", false),
+    assetWebhookUrl: readEnv("SOCIAL_MEDIA_ASSET_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    assetWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET"),
     defaultTimezone: readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),

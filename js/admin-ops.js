@@ -454,6 +454,7 @@
   function renderSocialMedia(payload) {
     const social = payload || {};
     const accounts = social.accounts || [];
+    const assets = social.assets || [];
     const drafts = social.drafts || [];
     const posts = social.posts || [];
     const attempts = social.attempts || [];
@@ -478,7 +479,9 @@
       ["Yayınlanan", posts.filter((item) => item.status === "published").length],
       ["Dry run", dispatch.dry_run ? "Açık" : "Kapalı"],
       ["Webhook", dispatch.webhook_configured ? "Hazır" : "Bekliyor"],
-      ["Vault", vault.enabled ? "Aktif" : "Key bekliyor"]
+      ["Vault", vault.enabled ? "Aktif" : "Key bekliyor"],
+      ["Günlük paket", dispatch.daily_drafts_enabled ? "Cron açık" : "Manuel"],
+      ["Asset", dispatch.asset_webhook_configured ? "Webhook hazır" : "Prompt"]
     ];
     const metricGrid = `<div class="admin-metrics">${metrics.map(([label, value]) => `
       <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>
@@ -527,8 +530,8 @@
           <td>
             <span class="admin-actions">
               ${canSubmit ? `<button class="admin-btn" type="button" data-social-submit="${escape(draft.id)}">Onaya Gönder</button>` : ""}
-              ${canApprove ? `<button class="admin-btn admin-btn--gold" type="button" data-social-approve="${escape(draft.id)}">Onayla</button>` : ""}
-              ${canApprove ? `<button class="admin-btn admin-btn--primary" type="button" data-social-publish="${escape(draft.id)}">Onayla + Kuyruğa Al</button>` : ""}
+              ${canApprove ? `<button class="admin-btn admin-btn--gold" type="button" data-social-approve="${escape(draft.id)}">Planlı Onayla</button>` : ""}
+              ${canApprove ? `<button class="admin-btn admin-btn--primary" type="button" data-social-publish="${escape(draft.id)}">Şimdi Kuyruğa Al</button>` : ""}
             </span>
           </td>
         </tr>
@@ -538,14 +541,32 @@
       const account = post.account || {};
       const attempt = latestAttempts[post.id];
       const canDispatch = ["approved", "scheduled", "queued", "failed"].includes(post.status);
+      const payload = post.platform_payload || {};
       return `
         <tr>
           <td>${titleCell(post.platform, account.display_name || account.handle)}</td>
-          <td>${escape(post.caption || "-")}</td>
+          <td>${titleCell(post.caption || "-", [payload.image_url ? "image" : "", payload.video_url ? "video" : "", payload.image_prompt ? "prompt" : ""].filter(Boolean).join(" / "))}</td>
           <td>${badge(post.status)}</td>
           <td>${dateTime(post.scheduled_for)}</td>
           <td>${attempt ? badge(attempt.status) : "-"}</td>
-          <td>${canDispatch ? `<button class="admin-btn" type="button" data-social-dispatch="${escape(post.id)}">Dispatch</button>` : ""}</td>
+          <td>
+            <span class="admin-actions">
+              <button class="admin-btn" type="button" data-social-media="${escape(post.id)}">Medya</button>
+              ${canDispatch ? `<button class="admin-btn" type="button" data-social-dispatch="${escape(post.id)}">Dispatch</button>` : ""}
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+    const assetRows = assets.slice(0, 80).map((asset) => {
+      const metadata = asset.metadata || {};
+      const assetUrl = asset.asset_url || metadata.image_url || metadata.video_url || "";
+      return `
+        <tr>
+          <td>${titleCell(asset.title, asset.prompt || asset.alt_text || "")}</td>
+          <td>${badge(metadata.status || (assetUrl ? "url_ready" : "prompt_ready"), assetUrl ? "green" : "orange")}</td>
+          <td>${escape((metadata.platforms || []).join(", ") || "-")}</td>
+          <td>${assetUrl ? `<a class="admin-link" href="${escape(assetUrl)}" target="_blank" rel="noopener">Aç</a>` : "-"}</td>
         </tr>
       `;
     });
@@ -744,17 +765,41 @@
         </div>
       </form>
     `;
+    const packageForm = `
+      <form data-social-package-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialPackageDate">Paket tarihi</label>
+            <input id="socialPackageDate" name="plan_date" type="date">
+          </div>
+          <div class="admin-field">
+            <label for="socialPackageObjective">Hedef</label>
+            <input id="socialPackageObjective" name="objective" maxlength="80" value="growth">
+          </div>
+          <div class="admin-field">
+            <label for="socialPackageLanding">Landing link</label>
+            <input id="socialPackageLanding" name="landing_url" maxlength="700" value="https://allonahub.com/">
+          </div>
+        </div>
+        <div class="admin-check-grid" style="margin-top:12px">${socialPlatformOptions("instagram,facebook,threads,x,linkedin,tiktok,youtube,pinterest,nsosyal")}</div>
+        <div class="admin-form-actions">
+          <button class="admin-btn admin-btn--primary" type="submit">Günlük Paketi Oluştur</button>
+        </div>
+      </form>
+    `;
 
     $("#adminContent").innerHTML = [
       section("Sosyal Medya Merkezi", "Taslak, onay, tekrar engeli ve çoklu platform kuyruğu", warningPanel() + metricGrid),
       `<div class="admin-split">
         ${section("Yeni Taslak", "", draftForm)}
-        ${section("Günlük Plan", "", planForm)}
+        ${section("Otomatik Günlük Paket", "", packageForm)}
       </div>`,
+      section("Günlük Plan", "", planForm),
       `<div class="admin-split">
         ${section("Hesap Envanteri", "", accountForm + table(["Hesap", "Platform", "Connector", "Bağlantı", "URL"], accountRows, "Hesap bulunamadı."))}
         ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu", "Test"], connectionRows, "Bağlantı tanımı bulunamadı."))}
       </div>`,
+      section("Görsel / Video Assetleri", "", table(["Asset", "Durum", "Platform", "URL"], assetRows, "Asset kaydı bulunamadı.")),
       section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı.")),
       section("Taslaklar", "", table(["İçerik", "Durum", "Platform", "Tarih", "İşlem"], draftRows, "Taslak bulunamadı.")),
       section("Platform Kuyruğu", "", table(["Platform", "Caption", "Durum", "Plan", "Son Deneme", "İşlem"], postRows, "Platform postu bulunamadı.")),
@@ -1241,6 +1286,24 @@
     await loadSocialMedia();
   }
 
+  async function generateSocialPackage(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    const targetPlatforms = checkedValues(form, "target_platforms");
+    const data = await api("/v1/ops-console/social-media/daily-package/generate", {
+      method: "POST",
+      body: {
+        plan_date: raw.plan_date || undefined,
+        objective: raw.objective || "growth",
+        landing_url: raw.landing_url || "https://allonahub.com/",
+        target_platforms: targetPlatforms.length ? targetPlatforms : ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal"],
+        auto_submit: true,
+        generate_assets: true
+      }
+    });
+    showToast(data?.skipped ? "Bugünün paketi zaten var." : "Günlük paket onaya hazır oluşturuldu.");
+    await loadSocialMedia();
+  }
+
   async function saveSocialSecret(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     await api("/v1/ops-console/social-media/secrets", {
@@ -1253,6 +1316,32 @@
     });
     showToast("Secret güvenli şekilde kaydedildi.");
     form.reset();
+    await loadSocialMedia();
+  }
+
+  async function updateSocialPostMedia(postId) {
+    const data = await openModal({
+      title: "Medya / Payload",
+      message: "Public HTTPS medya URL'leri platform yayınında kullanılır.",
+      confirmText: "Kaydet",
+      fields: [
+        { id: "image_url", label: "Görsel URL", required: false, max: 900 },
+        { id: "video_url", label: "Video URL", required: false, max: 900 },
+        { id: "link", label: "Landing link", required: false, max: 900 },
+        { id: "platform_payload_json", label: "Ek payload JSON", required: false, max: 1600 }
+      ]
+    });
+    if (!data) return;
+    await api(`/v1/ops-console/social-media/posts/${encodeURIComponent(postId)}/media`, {
+      method: "POST",
+      body: {
+        image_url: data.image_url || "",
+        video_url: data.video_url || "",
+        link: data.link || "",
+        platform_payload: jsonObject(data.platform_payload_json)
+      }
+    });
+    showToast("Medya bilgisi kaydedildi.");
     await loadSocialMedia();
   }
 
@@ -1275,9 +1364,9 @@
 
   async function approveSocialDraft(draftId, publishNow) {
     const data = await openModal({
-      title: publishNow ? "Onayla ve Kuyruğa Al" : "Sosyal Medya Onayı",
-      message: publishNow ? "Onaylanan postlar server dispatch kuyruğuna alınacak." : "Onaylanan postlar planlı durumuna geçecek.",
-      confirmText: publishNow ? "Onayla + Kuyruğa Al" : "Onayla",
+      title: publishNow ? "Şimdi Kuyruğa Al" : "Planlı Sosyal Medya Onayı",
+      message: publishNow ? "Onaylanan postlar hemen server dispatch kuyruğuna alınacak." : "Saat girmezsen platform bazlı paket saatleri korunur.",
+      confirmText: publishNow ? "Şimdi Kuyruğa Al" : "Planlı Onayla",
       fields: [
         { id: "scheduled_for", label: "Plan zamanı", inputType: "datetime-local", required: false },
         { id: "approval_note", label: "Onay notu", type: "textarea", required: false, max: 900 }
@@ -1292,7 +1381,7 @@
         approval_note: data.approval_note || ""
       }
     });
-    showToast(publishNow ? "Taslak onaylandı ve kuyruk çalıştırıldı." : "Taslak onaylandı.");
+    showToast(publishNow ? "Taslak onaylandı ve kuyruk çalıştırıldı." : "Taslak planlı onaylandı.");
     await loadSocialMedia();
   }
 
@@ -1397,6 +1486,11 @@
         await dispatchSocialPost(socialDispatch.dataset.socialDispatch).catch((error) => showToast(error.message, "error"));
         return;
       }
+      const socialMedia = event.target.closest("[data-social-media]");
+      if (socialMedia) {
+        await updateSocialPostMedia(socialMedia.dataset.socialMedia).catch((error) => showToast(error.message, "error"));
+        return;
+      }
       const socialTest = event.target.closest("[data-social-test]");
       if (socialTest) {
         await testSocialConnection(socialTest.dataset.socialTest).catch((error) => showToast(error.message, "error"));
@@ -1427,6 +1521,11 @@
       if (socialPlanForm) {
         event.preventDefault();
         await saveSocialPlan(socialPlanForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialPackageForm = event.target.closest("[data-social-package-form]");
+      if (socialPackageForm) {
+        event.preventDefault();
+        await generateSocialPackage(socialPackageForm).catch((error) => showToast(error.message, "error"));
       }
       const socialSecretForm = event.target.closest("[data-social-secret-form]");
       if (socialSecretForm) {

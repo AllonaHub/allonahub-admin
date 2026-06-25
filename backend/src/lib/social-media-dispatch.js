@@ -766,6 +766,8 @@ export function socialMediaDispatchStatus() {
     enabled: config.socialMedia.dispatchEnabled,
     dry_run: config.socialMedia.dryRun || !config.socialMedia.dispatchEnabled,
     webhook_configured: Boolean(config.socialMedia.dispatchWebhookUrl),
+    daily_drafts_enabled: Boolean(config.socialMedia.dailyDraftsEnabled),
+    asset_webhook_configured: Boolean(config.socialMedia.assetWebhookUrl),
     default_timezone: config.socialMedia.defaultTimezone,
     max_batch: config.socialMedia.maxDispatchBatch,
     max_media_bytes: config.socialMedia.maxMediaBytes,

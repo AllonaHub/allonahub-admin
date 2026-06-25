@@ -1,7 +1,8 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
+import { buildSocialMediaDailyPackage, SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS } from "../lib/social-media-daily-package.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
@@ -349,6 +350,28 @@ const socialMediaDailyPlanSchema = z.object({
   target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(SOCIAL_MEDIA_DEFAULT_TARGET_PLATFORMS),
   draft_ids: z.array(uuidSchema).max(40).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({})
+});
+
+const httpsUrlOptionalSchema = z.string().trim().max(1200).optional().default("").refine((value) => (
+  !value || /^https:\/\//i.test(value)
+), "URL https:// ile başlamalı.");
+
+const socialMediaDailyPackageSchema = z.object({
+  plan_date: z.string().date().optional(),
+  objective: z.string().trim().min(2).max(80).optional().default("growth"),
+  landing_url: httpsUrlOptionalSchema.default("https://allonahub.com/"),
+  target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS),
+  auto_submit: z.boolean().optional().default(true),
+  generate_assets: z.boolean().optional().default(true),
+  force_new: z.boolean().optional().default(false),
+  variant: z.coerce.number().int().min(0).max(30).optional().default(0)
+});
+
+const socialMediaPostMediaSchema = z.object({
+  image_url: httpsUrlOptionalSchema,
+  video_url: httpsUrlOptionalSchema,
+  link: httpsUrlOptionalSchema,
+  platform_payload: z.record(z.unknown()).optional().default({})
 });
 
 const socialMediaSecretSchema = z.object({
@@ -1992,6 +2015,22 @@ function normalizeHashtags(tags) {
   return [...new Set((tags || []).map((tag) => String(tag || "").trim()).filter(Boolean))].slice(0, 20);
 }
 
+function todayInSocialTimezone() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: config.socialMedia.defaultTimezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function socialWebhookSignature(secret, body) {
+  if (!secret) return "";
+  return `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+}
+
 const SOCIAL_CONNECTOR_SECRET_DEFINITIONS = Object.freeze({
   instagram: [
     { key: "IG_USER_ID", label: "Instagram Business/Creator ID", required: true },
@@ -2145,8 +2184,334 @@ async function findSocialDuplicate({ contentHash, semanticHash, visualHash, excl
   return data?.[0] || null;
 }
 
+async function requestSocialAssetFromWebhook({ request, asset, packageMeta, warnings }) {
+  if (!config.socialMedia.assetWebhookUrl) {
+    return {
+      provider: "prompt_only",
+      status: "manual_required",
+      asset_url: "",
+      image_url: "",
+      video_url: "",
+      alt_text: asset.alt_text || "",
+      metadata: {}
+    };
+  }
+
+  const body = JSON.stringify({
+    event: "allonahub.social_media.asset_prepare",
+    request_id: request?.id || "",
+    dry_run: socialMediaDispatchStatus().dry_run,
+    asset,
+    package: packageMeta
+  });
+  const headers = {
+    "Content-Type": "application/json",
+    "X-AllonaHub-Event": "social_media.asset_prepare",
+    "X-AllonaHub-Request-Id": request?.id || ""
+  };
+  const signed = socialWebhookSignature(config.socialMedia.assetWebhookSecret, body);
+  if (signed) headers["X-AllonaHub-Signature"] = signed;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(5000, config.socialMedia.sendTimeoutMs * 2));
+  try {
+    const response = await fetch(config.socialMedia.assetWebhookUrl, {
+      method: "POST",
+      headers,
+      body,
+      signal: controller.signal
+    });
+    const text = await response.text();
+    let parsed = {};
+    try {
+      parsed = text ? JSON.parse(text) : {};
+    } catch {
+      parsed = {};
+    }
+    if (!response.ok) {
+      warnings.push(`Asset webhook basarisiz: HTTP ${response.status}`);
+      return {
+        provider: "asset_webhook",
+        status: "generation_failed",
+        asset_url: "",
+        image_url: "",
+        video_url: "",
+        alt_text: asset.alt_text || "",
+        metadata: { response_status: response.status, response_body: text.slice(0, 500) }
+      };
+    }
+    return {
+      provider: "asset_webhook",
+      status: parsed.status || "url_ready",
+      asset_url: String(parsed.asset_url || parsed.image_url || parsed.video_url || ""),
+      image_url: String(parsed.image_url || parsed.asset_url || ""),
+      video_url: String(parsed.video_url || ""),
+      alt_text: String(parsed.alt_text || asset.alt_text || ""),
+      metadata: parsed.metadata || {}
+    };
+  } catch (error) {
+    warnings.push(`Asset webhook hatasi: ${error?.name === "AbortError" ? "timeout" : (error?.message || "unknown")}`);
+    return {
+      provider: "asset_webhook",
+      status: "generation_failed",
+      asset_url: "",
+      image_url: "",
+      video_url: "",
+      alt_text: asset.alt_text || "",
+      metadata: { error: error?.message || "Asset webhook failed." }
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function createSocialAssetForPackage({ request, ctx = null, generatedPackage, warnings, generateAssets = true }) {
+  const asset = generatedPackage.asset;
+  if (!asset) return null;
+
+  const existing = await optionalQuery(
+    supabaseAdmin
+      .from("social_media_assets")
+      .select("*")
+      .eq("visual_fingerprint", asset.visual_fingerprint)
+      .limit(1),
+    [],
+    warnings,
+    "social_media_assets"
+  );
+  if (existing[0]) return existing[0];
+
+  const prepared = generateAssets
+    ? await requestSocialAssetFromWebhook({
+        request,
+        asset,
+        packageMeta: {
+          plan_date: generatedPackage.plan_date,
+          objective: generatedPackage.objective,
+          target_platforms: generatedPackage.target_platforms
+        },
+        warnings
+      })
+    : {
+        provider: "prompt_only",
+        status: "manual_required",
+        asset_url: "",
+        image_url: "",
+        video_url: "",
+        alt_text: asset.alt_text || "",
+        metadata: {}
+      };
+
+  return optionalMutation(
+    supabaseAdmin
+      .from("social_media_assets")
+      .insert({
+        title: asset.title,
+        asset_type: prepared.video_url && !prepared.image_url ? "video" : asset.asset_type,
+        asset_url: prepared.asset_url || "",
+        alt_text: prepared.alt_text || asset.alt_text || "",
+        prompt: asset.prompt || "",
+        visual_fingerprint: asset.visual_fingerprint,
+        metadata: {
+          prepared_from: "daily_package_generator",
+          provider: prepared.provider,
+          status: prepared.status,
+          platforms: asset.platforms || [],
+          image_url: prepared.image_url || "",
+          video_url: prepared.video_url || "",
+          webhook_metadata: prepared.metadata || {},
+          package_date: generatedPackage.plan_date
+        },
+        created_by: ctx?.user?.id || null
+      })
+      .select("*")
+      .single(),
+    warnings,
+    "social_media_assets"
+  );
+}
+
+function attachAssetToDraftPayload(payload, asset) {
+  if (!asset) return payload;
+  const metadata = asset.metadata || {};
+  const imageUrl = String(metadata.image_url || (asset.asset_type === "image" ? asset.asset_url : "") || "");
+  const videoUrl = String(metadata.video_url || (asset.asset_type !== "image" ? asset.asset_url : "") || "");
+  const mediaAssetIds = [...new Set([...(payload.media_asset_ids || []), asset.id].filter(Boolean))];
+  const platformOverrides = Object.fromEntries(Object.entries(payload.platform_overrides || {}).map(([platform, override]) => {
+    const nextPayload = {
+      ...(override.platform_payload || {}),
+      asset_id: asset.id,
+      asset_url: asset.asset_url || "",
+      asset_status: metadata.status || "prompt_ready"
+    };
+    if (imageUrl && ["instagram", "facebook", "pinterest"].includes(platform)) nextPayload.image_url = imageUrl;
+    if (videoUrl && ["instagram", "tiktok", "youtube"].includes(platform)) nextPayload.video_url = videoUrl;
+    return [platform, {
+      ...override,
+      platform_payload: nextPayload
+    }];
+  }));
+
+  return {
+    ...payload,
+    media_asset_ids: mediaAssetIds,
+    platform_payload: {
+      ...(payload.platform_payload || {}),
+      asset_id: asset.id,
+      asset_url: asset.asset_url || "",
+      asset_status: metadata.status || "prompt_ready",
+      image_url: imageUrl || payload.platform_payload?.image_url || "",
+      video_url: videoUrl || payload.platform_payload?.video_url || ""
+    },
+    platform_overrides: platformOverrides
+  };
+}
+
+async function createSocialDraftWithPosts({
+  request,
+  ctx = null,
+  payload,
+  initialStatus = "draft",
+  postStatus = "draft",
+  auditAction = "admin.ops.social_media_draft_created",
+  auditSource = "admin"
+}) {
+  const warnings = [];
+  const contentHash = socialContentHash(payload);
+  const semanticHash = socialSemanticHash(payload);
+  const visualHash = socialVisualHash(payload);
+  const duplicate = await findSocialDuplicate({ contentHash, semanticHash, visualHash });
+
+  if (duplicate) {
+    if (ctx) {
+      await auditedOpsEvent({
+        request,
+        ctx,
+        action: "admin.ops.social_media_duplicate_blocked",
+        resourceType: "social_media_draft",
+        resourceId: duplicate.id,
+        severity: "warning",
+        metadata: {
+          requested_title: payload.title,
+          duplicate_title: duplicate.title,
+          content_hash: compactHash(contentHash),
+          semantic_hash: compactHash(semanticHash),
+          visual_hash: compactHash(visualHash)
+        }
+      });
+    } else {
+      await auditEvent({
+        request,
+        action: "cron.social_media_duplicate_blocked",
+        resourceType: "social_media_draft",
+        resourceId: duplicate.id,
+        severity: "warning",
+        source: "cron",
+        purpose: "social_media_daily_package",
+        metadata: {
+          requested_title: payload.title,
+          duplicate_title: duplicate.title,
+          content_hash: compactHash(contentHash),
+          semantic_hash: compactHash(semanticHash),
+          visual_hash: compactHash(visualHash)
+        }
+      });
+    }
+    throw httpError(`Tekrar icerik engellendi. Benzer kayit: ${duplicate.title}`, 409);
+  }
+
+  const now = new Date().toISOString();
+  const draft = await optionalMutation(
+    supabaseAdmin
+      .from("social_media_drafts")
+      .insert({
+        campaign_id: payload.campaign_id || null,
+        title: payload.title,
+        content_theme: payload.content_theme,
+        hook: payload.hook,
+        body: payload.body,
+        cta: payload.cta,
+        landing_url: payload.landing_url,
+        language: payload.language,
+        status: initialStatus,
+        uniqueness_status: "unique",
+        content_hash: contentHash,
+        semantic_hash: semanticHash,
+        visual_hash: visualHash,
+        scheduled_for: payload.scheduled_for || null,
+        prepared_by: ctx?.user?.id || null,
+        submitted_by: initialStatus === "ready_for_review" ? (ctx?.user?.id || null) : null,
+        submitted_at: initialStatus === "ready_for_review" ? now : null,
+        metadata: {
+          ...payload.metadata,
+          target_platforms: payload.target_platforms,
+          hashtags: payload.hashtags,
+          media_asset_ids: payload.media_asset_ids,
+          platform_payload: payload.platform_payload,
+          platform_overrides: payload.platform_overrides
+        }
+      })
+      .select("*")
+      .single(),
+    warnings,
+    "social_media_drafts"
+  );
+
+  const accounts = await optionalQuery(
+    supabaseAdmin
+      .from("social_media_accounts")
+      .select("*")
+      .eq("is_active", true)
+      .in("platform", payload.target_platforms),
+    [],
+    warnings,
+    "social_media_accounts"
+  );
+
+  if (!accounts.length) warnings.push("Aktif sosyal medya hesabi bulunamadi; taslak olustu ama platform varyasyonu uretilmedi.");
+  const posts = await createPlatformPostsForDraft({ draft, payload, accounts, warnings, status: postStatus });
+
+  if (ctx) {
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: auditAction,
+      resourceType: "social_media_draft",
+      resourceId: draft.id,
+      metadata: {
+        title: draft.title,
+        platforms: payload.target_platforms,
+        post_count: posts.length,
+        content_hash: compactHash(contentHash),
+        semantic_hash: compactHash(semanticHash),
+        visual_hash: compactHash(visualHash)
+      }
+    });
+  } else {
+    await auditEvent({
+      request,
+      action: auditAction,
+      resourceType: "social_media_draft",
+      resourceId: draft.id,
+      severity: "info",
+      source: auditSource,
+      purpose: "social_media_daily_package",
+      metadata: {
+        title: draft.title,
+        platforms: payload.target_platforms,
+        post_count: posts.length,
+        content_hash: compactHash(contentHash),
+        semantic_hash: compactHash(semanticHash),
+        visual_hash: compactHash(visualHash)
+      }
+    });
+  }
+
+  return { draft, posts, warnings };
+}
+
 async function loadSocialMediaCenterData(warnings, query = {}) {
-  const [accounts, campaigns, drafts, posts, attempts, plans, rules, secretRows] = await Promise.all([
+  const [accounts, campaigns, assets, drafts, posts, attempts, plans, rules, secretRows] = await Promise.all([
     optionalQuery(
       supabaseAdmin
         .from("social_media_accounts")
@@ -2165,6 +2530,16 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
       [],
       warnings,
       "social_media_campaigns"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("social_media_assets")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "social_media_assets"
     ),
     optionalQuery(
       supabaseAdmin
@@ -2238,6 +2613,7 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
   return {
     accounts,
     campaigns,
+    assets,
     drafts: filteredDrafts,
     posts,
     attempts,
@@ -2249,7 +2625,7 @@ async function loadSocialMediaCenterData(warnings, query = {}) {
   };
 }
 
-async function createPlatformPostsForDraft({ draft, payload, accounts, warnings }) {
+async function createPlatformPostsForDraft({ draft, payload, accounts, warnings, status = "draft" }) {
   const platformOverrides = payload.platform_overrides || {};
   const basePlatformPayload = payload.platform_payload || {};
   const rows = accounts.map((account) => {
@@ -2267,7 +2643,7 @@ async function createPlatformPostsForDraft({ draft, payload, accounts, warnings 
         ...basePlatformPayload,
         ...(override.platform_payload || {})
       },
-      status: "draft",
+      status,
       scheduled_for: override.scheduled_for || payload.scheduled_for || null
     };
   });
@@ -2355,6 +2731,120 @@ async function dispatchDueSocialMediaPosts({ request, ctx = null, limit = config
   }
 
   return { results, warnings };
+}
+
+async function generateSocialDailyPackageRecords({ request, ctx = null, options = {}, source = "admin" }) {
+  const warnings = [];
+  const planDate = options.plan_date || todayInSocialTimezone();
+  const objective = options.objective || "growth";
+  const targetPlatforms = options.target_platforms?.length ? options.target_platforms : SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS;
+  const landingUrl = options.landing_url || `${config.siteUrl}/`;
+
+  const existingPlans = await optionalQuery(
+    supabaseAdmin
+      .from("social_media_daily_plans")
+      .select("*")
+      .eq("plan_date", planDate)
+      .eq("objective", objective)
+      .limit(1),
+    [],
+    warnings,
+    "social_media_daily_plans"
+  );
+  const existingPlan = existingPlans[0] || null;
+  if (existingPlan && !options.force_new && Array.isArray(existingPlan.draft_ids) && existingPlan.draft_ids.length) {
+    return {
+      skipped: true,
+      reason: "daily_package_exists",
+      plan: existingPlan,
+      draft: null,
+      posts: [],
+      asset: null,
+      package: null,
+      warnings
+    };
+  }
+
+  let generatedPackage = null;
+  let draftResult = null;
+  let asset = null;
+  let lastError = null;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    generatedPackage = buildSocialMediaDailyPackage({
+      planDate,
+      objective,
+      landingUrl,
+      targetPlatforms,
+      variant: Number(options.variant || 0) + attempt
+    });
+    asset = await createSocialAssetForPackage({
+      request,
+      ctx,
+      generatedPackage,
+      warnings,
+      generateAssets: options.generate_assets !== false
+    });
+    const payload = attachAssetToDraftPayload(generatedPackage.draft, asset);
+    try {
+      draftResult = await createSocialDraftWithPosts({
+        request,
+        ctx,
+        payload,
+        initialStatus: options.auto_submit === false ? "draft" : "ready_for_review",
+        postStatus: options.auto_submit === false ? "draft" : "ready_for_review",
+        auditAction: source === "cron" ? "cron.social_media_daily_package_created" : "admin.ops.social_media_daily_package_created",
+        auditSource: source
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      if (error?.statusCode !== 409 && error?.status !== 409) throw error;
+      warnings.push(`Gunluk paket varyanti tekrar nedeniyle atlandi: ${attempt}`);
+    }
+  }
+
+  if (!draftResult) throw lastError || httpError("Gunluk sosyal medya paketi olusturulamadi.", 409);
+
+  const draftIds = [...new Set([...(existingPlan?.draft_ids || []), draftResult.draft.id])];
+  const plan = await optionalMutation(
+    supabaseAdmin
+      .from("social_media_daily_plans")
+      .upsert({
+        plan_date: planDate,
+        objective,
+        timezone: config.socialMedia.defaultTimezone,
+        status: options.auto_submit === false ? "draft" : "ready_for_review",
+        summary: generatedPackage.summary,
+        target_platforms: targetPlatforms,
+        draft_ids: draftIds,
+        prepared_by: ctx?.user?.id || existingPlan?.prepared_by || null,
+        metadata: {
+          ...(existingPlan?.metadata || {}),
+          prepared_from: "daily_package_generator",
+          source,
+          generated_at: new Date().toISOString(),
+          asset_id: asset?.id || null,
+          package_title: generatedPackage.title,
+          package_summary: generatedPackage.summary
+        }
+      }, { onConflict: "plan_date,objective" })
+      .select("*")
+      .single(),
+    warnings,
+    "social_media_daily_plans"
+  );
+
+  return {
+    skipped: false,
+    reason: "",
+    plan,
+    draft: draftResult.draft,
+    posts: draftResult.posts,
+    asset,
+    package: generatedPackage,
+    warnings: [...warnings, ...draftResult.warnings]
+  };
 }
 
 function textSearchFilter(columns, value) {
@@ -5932,98 +6422,109 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, campaign, warnings });
   });
 
-  opsPost("/social-media/drafts", async (request, reply) => {
-    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.draft_create");
-    const payload = socialMediaDraftSchema.parse(request.body || {});
-    const warnings = [];
-    const contentHash = socialContentHash(payload);
-    const semanticHash = socialSemanticHash(payload);
-    const visualHash = socialVisualHash(payload);
-    const duplicate = await findSocialDuplicate({ contentHash, semanticHash, visualHash });
-
-    if (duplicate) {
-      await auditedOpsEvent({
-        request,
-        ctx,
-        action: "admin.ops.social_media_duplicate_blocked",
-        resourceType: "social_media_draft",
-        resourceId: duplicate.id,
-        severity: "warning",
-        metadata: {
-          requested_title: payload.title,
-          duplicate_title: duplicate.title,
-          content_hash: compactHash(contentHash),
-          semantic_hash: compactHash(semanticHash),
-          visual_hash: compactHash(visualHash)
-        }
-      });
-      throw httpError(`Tekrar icerik engellendi. Benzer kayit: ${duplicate.title}`, 409);
-    }
-
-    const draft = await optionalMutation(
-      supabaseAdmin
-        .from("social_media_drafts")
-        .insert({
-          campaign_id: payload.campaign_id || null,
-          title: payload.title,
-          content_theme: payload.content_theme,
-          hook: payload.hook,
-          body: payload.body,
-          cta: payload.cta,
-          landing_url: payload.landing_url,
-          language: payload.language,
-          status: "draft",
-          uniqueness_status: "unique",
-          content_hash: contentHash,
-          semantic_hash: semanticHash,
-          visual_hash: visualHash,
-          scheduled_for: payload.scheduled_for || null,
-          prepared_by: ctx.user.id,
-          metadata: {
-            ...payload.metadata,
-            target_platforms: payload.target_platforms,
-            hashtags: payload.hashtags,
-            media_asset_ids: payload.media_asset_ids,
-            platform_overrides: payload.platform_overrides
-          }
-        })
-        .select("*")
-        .single(),
-      warnings,
-      "social_media_drafts"
-    );
-
-    const accounts = await optionalQuery(
-      supabaseAdmin
-        .from("social_media_accounts")
-        .select("*")
-        .eq("is_active", true)
-        .in("platform", payload.target_platforms),
-      [],
-      warnings,
-      "social_media_accounts"
-    );
-
-    if (!accounts.length) warnings.push("Aktif sosyal medya hesabi bulunamadi; taslak olustu ama platform varyasyonu uretilmedi.");
-    const posts = await createPlatformPostsForDraft({ draft, payload, accounts, warnings });
+  opsPost("/social-media/daily-package/generate", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.daily_package_generate");
+    const payload = socialMediaDailyPackageSchema.parse(request.body || {});
+    const result = await generateSocialDailyPackageRecords({
+      request,
+      ctx,
+      options: payload,
+      source: "admin"
+    });
 
     await auditedOpsEvent({
       request,
       ctx,
-      action: "admin.ops.social_media_draft_created",
-      resourceType: "social_media_draft",
-      resourceId: draft.id,
+      action: result.skipped ? "admin.ops.social_media_daily_package_skipped" : "admin.ops.social_media_daily_package_ready",
+      resourceType: "social_media_daily_plan",
+      resourceId: result.plan?.id || null,
+      severity: result.skipped ? "info" : "warning",
       metadata: {
-        title: draft.title,
-        platforms: payload.target_platforms,
-        post_count: posts.length,
-        content_hash: compactHash(contentHash),
-        semantic_hash: compactHash(semanticHash),
-        visual_hash: compactHash(visualHash)
+        plan_date: payload.plan_date || todayInSocialTimezone(),
+        objective: payload.objective,
+        skipped: result.skipped,
+        draft_id: result.draft?.id || null,
+        post_count: result.posts.length,
+        asset_id: result.asset?.id || null,
+        warning_count: result.warnings.length
       }
     });
 
+    return reply.code(result.skipped ? 200 : 201).send({ ok: true, ...result });
+  });
+
+  opsPost("/social-media/drafts", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.draft_create");
+    const payload = socialMediaDraftSchema.parse(request.body || {});
+    const { draft, posts, warnings } = await createSocialDraftWithPosts({
+      request,
+      ctx,
+      payload,
+      initialStatus: "draft",
+      postStatus: "draft",
+      auditAction: "admin.ops.social_media_draft_created"
+    });
     return reply.code(201).send({ ok: true, draft, posts, warnings });
+  });
+
+  opsPost("/social-media/posts/:postId/media", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.post_media_update");
+    const postId = uuidSchema.parse(request.params.postId);
+    const payload = socialMediaPostMediaSchema.parse(request.body || {});
+    const warnings = [];
+    const existingRows = await optionalQuery(
+      supabaseAdmin
+        .from("social_media_platform_posts")
+        .select("*")
+        .eq("id", postId)
+        .limit(1),
+      [],
+      warnings,
+      "social_media_platform_posts"
+    );
+    const existing = existingRows[0];
+    if (!existing) throw httpError("Platform postu bulunamadi.", 404);
+
+    const nextPayload = {
+      ...(existing.platform_payload || {}),
+      ...(payload.platform_payload || {})
+    };
+    if (payload.image_url) nextPayload.image_url = payload.image_url;
+    if (payload.video_url) nextPayload.video_url = payload.video_url;
+    if (payload.link) {
+      nextPayload.link = payload.link;
+      nextPayload.landing_url = payload.link;
+    }
+
+    const post = await optionalMutation(
+      supabaseAdmin
+        .from("social_media_platform_posts")
+        .update({
+          platform_payload: nextPayload,
+          last_error: ""
+        })
+        .eq("id", postId)
+        .select("*")
+        .single(),
+      warnings,
+      "social_media_platform_posts"
+    );
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.social_media_post_media_updated",
+      resourceType: "social_media_platform_post",
+      resourceId: post.id,
+      metadata: {
+        platform: post.platform,
+        has_image_url: Boolean(nextPayload.image_url),
+        has_video_url: Boolean(nextPayload.video_url),
+        has_link: Boolean(nextPayload.link || nextPayload.landing_url)
+      }
+    });
+
+    return { ok: true, post, warnings };
   });
 
   opsPost("/social-media/drafts/:draftId/submit", async (request) => {
@@ -6117,16 +6618,18 @@ export function registerRoutes(app) {
       "social_media_drafts"
     );
 
+    const postUpdatePayload = {
+      status: postStatus,
+      approved_by: ctx.user.id,
+      approved_at: new Date().toISOString(),
+      last_error: ""
+    };
+    if (scheduledFor) postUpdatePayload.scheduled_for = scheduledFor;
+
     await optionalMutation(
       supabaseAdmin
         .from("social_media_platform_posts")
-        .update({
-          status: postStatus,
-          scheduled_for: scheduledFor,
-          approved_by: ctx.user.id,
-          approved_at: new Date().toISOString(),
-          last_error: ""
-        })
+        .update(postUpdatePayload)
         .eq("draft_id", draftId)
         .in("status", ["draft", "ready_for_review", "approved", "scheduled", "queued"])
         .select("id"),
@@ -6443,6 +6946,59 @@ export function registerRoutes(app) {
       checked: data?.length || 0,
       staleOrders: data || []
     };
+  });
+
+  app.post("/v1/cron/social-media-daily-drafts", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.social_media_daily_drafts_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      const error = new Error("Cron yetkisi doğrulanamadı.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    if (!config.socialMedia.dailyDraftsEnabled) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=false"
+      };
+    }
+
+    const payload = socialMediaDailyPackageSchema.parse(request.body || {});
+    const result = await generateSocialDailyPackageRecords({
+      request,
+      options: {
+        ...payload,
+        auto_submit: true,
+        force_new: false
+      },
+      source: "cron"
+    });
+
+    await auditEvent({
+      request,
+      action: result.skipped ? "cron.social_media_daily_package_skipped" : "cron.social_media_daily_package_ready",
+      resourceType: "social_media_daily_plan",
+      resourceId: result.plan?.id || null,
+      severity: result.skipped ? "info" : "warning",
+      source: "cron",
+      purpose: "social_media_daily_package",
+      metadata: {
+        plan_date: payload.plan_date || todayInSocialTimezone(),
+        objective: payload.objective,
+        skipped: result.skipped,
+        draft_id: result.draft?.id || null,
+        post_count: result.posts.length,
+        warning_count: result.warnings.length
+      }
+    });
+
+    return { ok: true, ...result };
   });
 
   app.post("/v1/cron/social-media-dispatch", async (request) => {
