@@ -1865,7 +1865,7 @@ async function superAdminActionHealth(ctx, request) {
 
 async function requireOpsAdmin(request, action) {
   const ctx = await requireAuth(request, {
-    roles: ["admin"],
+    roles: ["admin", "super_admin"],
     mfa: true,
     adminBoundary: true,
     action
