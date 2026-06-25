@@ -12,7 +12,7 @@ Bu dokuman `/admin/index.html` altindaki sinirli yetkili Admin Panel mimarisini 
 - Backend checks:
   - Supabase JWT verification.
   - `profiles.role = admin`.
-  - MFA requirement when `ADMIN_MFA_ENFORCED=true`.
+  - MFA2 requirement when `ADMIN_MFA_ENFORCED=true`.
   - admin host/IP boundary.
   - database RPC `public.is_ops_admin()`.
 - Frontend never receives or stores `service_role_key`.
@@ -26,6 +26,7 @@ Required migration:
 
 ```text
 supabase/migrations/20260621153000_create_admin_ops_panel.sql
+supabase/migrations/20260623150000_restore_admin_ops_mfa.sql
 supabase/migrations/20260623124500_admin_ops_bootstrap_access.sql
 ```
 

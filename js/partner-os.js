@@ -637,15 +637,24 @@
 
   async function createProduct(form) {
     const data = Object.fromEntries(new FormData(form).entries());
+    const isFood = data.catalog_scope === "food";
+    const businessName = state.business?.display_name || state.business?.legal_name || state.access.profile?.full_name || "Allona Partner";
     const payload = {
       name: data.name,
       description: data.description || "",
-      category: data.category || "Genel",
+      category: data.category || (isFood ? "Yemek" : "Genel"),
+      brand: data.brand || businessName,
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
-      status: "draft",
+      status: ["active", "draft"].includes(data.status) ? data.status : "active",
       partner_id: state.access.user.id,
-      slug: core.slugify(`${data.name}-${Date.now()}`)
+      partner_code: state.business?.partner_code || state.business?.id || state.access.user.id,
+      partner_email: state.access.user.email || "",
+      image_url: data.image_url || (isFood ? "/images/modules/yemek-light-v5.jpg" : ""),
+      slug: core.slugify(`${data.name}-${Date.now()}`),
+      coupon_status: isFood ? "Menü kuponu" : "Aktif",
+      hp_status: isFood ? "HP kazandırır" : "Aktif",
+      sku: core.slugify(`${isFood ? "ALY" : "ALP"}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
     };
     if (!payload.name || payload.price < 0) {
       toast("Ürün adı ve fiyat alanını kontrol edin.", "error");
@@ -654,12 +663,7 @@
     const button = form.querySelector("button[type='submit']");
     button.disabled = true;
     try {
-      const { data: created, error } = await App.db.client()
-        .from("products")
-        .insert(payload)
-        .select("*")
-        .single();
-      if (error) throw error;
+      const created = await App.db.products.upsert(payload);
       state.products = [created, ...state.products];
       state.metrics.product_count = state.products.length;
       state.metrics.active_product_count = state.products.filter((item) => item.status === "active").length;
@@ -682,7 +686,7 @@
         });
       }
       form.reset();
-      toast("Ürün taslak olarak kataloğa eklendi.");
+      toast(isFood ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
     } catch (error) {
       toast(error.message || "Ürün kaydedilemedi. Partner yetkisi veya ürün şemasını kontrol edin.", "error");
     } finally {

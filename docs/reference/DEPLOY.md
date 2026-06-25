@@ -46,7 +46,8 @@ supabase functions deploy iyzico-callback
 
 CV ödeme akışı için `iyzico-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
 
-Kart bilgileri AllonaHub frontendinde alınmaz. Checkout, CV ödeme ve partner ödeme akışları sipariş/ödeme kaydını backend tarafında oluşturur ve müşteriyi iyzico'nun PCI uyumlu ödeme ekranına yönlendirir.
+Kartlı ödeme akışında AllonaHub e-posta, telefon, teslimat ve yasal onay bilgilerini toplar; kart numarası, son kullanma tarihi veya CVC alanı açmaz. Sipariş kaydı sonrası kullanıcı iyzico CheckoutForm `paymentPageUrl` adresine yönlendirilir; kart verisi yalnızca iyzico güvenli ödeme ekranında girilir ve dönüş `iyzico-callback` token sorgulamasıyla doğrulanır.
+Checkout, CV ödeme ve partner ödeme akışlarında AllonaHub e-posta, telefon, teslimat ve yasal onay bilgilerini toplar; kart numarası, son kullanma tarihi veya CVC alanı açmaz. Sipariş/ödeme kaydı backend tarafında oluşturulur, kullanıcı iyzico'nun PCI uyumlu ödeme ekranına yönlendirilir ve dönüş `iyzico-callback` token sorgulamasıyla doğrulanır.
 
 ## 3. GitHub
 
@@ -90,6 +91,28 @@ ln -sf /etc/nginx/sites-available/api.allonahub.com /etc/nginx/sites-enabled/api
 nginx -t
 systemctl reload nginx
 ```
+
+## 3.2 Hetzner Kurumsal E-posta Yönlendirme
+
+`allonahub.com` için kurumsal inbound e-posta adresleri Hetzner sunucusunda Postfix virtual alias forwarding ile hazırlanır. Tüm gelen postalar `allonahub@gmail.com` adresine yönlendirilir.
+
+Detaylı kurulum ve DNS kayıtları:
+
+```text
+docs/deploy/hetzner-email-forwarding.md
+deploy/hetzner/mail-forwarding/dns-records.txt
+```
+
+Ana kurulum komutları:
+
+```bash
+cd /opt/allonahub
+git pull --ff-only origin main
+sudo bash deploy/hetzner/setup-mail-forwarding.sh
+bash deploy/hetzner/check-mail-forwarding.sh
+```
+
+Cloudflare/Domain DNS tarafında `mail.allonahub.com` A kaydı ve `allonahub.com` MX kaydı tanımlanmadan canlı teslimat tamamlanmış sayılmaz. Hetzner Cloud tarafında outbound TCP 25 kapalıysa Gmail'e forward teslimatı için Hetzner port açma talebi veya harici SMTP/mail relay gerekir.
 
 ## 4. Cloudflare
 

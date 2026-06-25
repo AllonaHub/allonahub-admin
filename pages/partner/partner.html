@@ -100,7 +100,7 @@ body{overflow-x:hidden}
 .section-title{align-items:flex-start;gap:10px;flex-direction:column}
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
 </head>
 
 <body>
@@ -119,8 +119,8 @@ body{overflow-x:hidden}
 
 <div class="actions glass">
 <a href="../../index.html">Ana Sayfa</a>
-<a href="../account/login.html">Kullanıcı Girişi</a>
-<a href="../wallet/hubwallet.html">Kupon</a>
+<a href="../account/user.html">Kullanıcı Girişi</a>
+<a href="../account/rewards.html">Kupon</a>
 <span class="platform-controls-slot" data-platform-controls-slot></span>
 </div>
 </div>
@@ -764,7 +764,7 @@ function partnerSearch(){
     return;
   }
 
-  if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="../wallet/hubwallet.html";
+  if(q.includes("ödeme")||q.includes("qr")||q.includes("wallet"))window.location.href="../account/rewards.html";
   else if(q.includes("kampanya")||q.includes("hp"))window.location.href="../wallet/hp-wallet-kurallari.html";
   else if(q.includes("yemek")||q.includes("restoran"))window.location.href="../commerce/allonayemek.html";
   else if(q.includes("market"))window.location.href="../commerce/allonamarket.html";
@@ -784,10 +784,10 @@ document.getElementById("phone").addEventListener("input",function(){
 initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
   <script src="../../js/config.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
   <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
 </body>
 </html>

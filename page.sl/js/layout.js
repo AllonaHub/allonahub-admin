@@ -45,14 +45,14 @@
               </span>
               <span class="badge" data-cart-count>0</span>
             </a>
-            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/login.html")}" data-account-link>Giriş Yap</a>
+            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/user.html")}" data-account-link>Giriş Yap</a>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç">☰</button>
           </div>
         </div>
         <div class="nav-row">
           <div class="container nav-row__inner">
             <nav class="nav-links" data-nav-links aria-label="Ana menü">
-              <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/index.html#modules")}" ${active("/index.html")}>Ekosistem</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
               <a href="${core.url("/pages/commerce/checkout.html")}" ${active("/pages/commerce/checkout.html")}>Ödeme</a>

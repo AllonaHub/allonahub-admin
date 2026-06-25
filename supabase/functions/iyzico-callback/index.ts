@@ -1,11 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const encoder = new TextEncoder();
-const SECRET_ENV_NAMES = new Set([
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "IYZICO_API_KEY",
-  "IYZICO_SECRET_KEY"
-]);
 
 function allowedOrigin(req: Request) {
   const origin = req.headers.get("Origin") || "";
@@ -13,7 +8,7 @@ function allowedOrigin(req: Request) {
     .split(",")
     .map((item) => item.trim().replace(/\/$/, ""))
     .filter(Boolean);
-  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5176", "http://127.0.0.1:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5176"];
   const allowList = [...configured, ...local];
   return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
 }
@@ -36,17 +31,8 @@ function response(req: Request, body: string, status = 200, contentType = "text/
 
 function env(name: string) {
   const value = Deno.env.get(name);
-  if (!value) {
-    throw new Error(SECRET_ENV_NAMES.has(name) ? "Required server secret is missing" : `${name} is not configured.`);
-  }
+  if (!value) throw new Error(`${name} secret is not configured.`);
   return value;
-}
-
-function safeError(error: unknown) {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message };
-  }
-  return { name: "Error", message: "Unknown error" };
 }
 
 async function hmacSha256Hex(payload: string, secret: string) {
@@ -71,6 +57,27 @@ async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: s
     randomKey,
     authorization: `IYZWSv2 ${btoa(authorizationString)}`
   };
+}
+
+function legacyOrderPayload(payload: Record<string, unknown>) {
+  const next = { ...payload };
+  delete next.status;
+  if (next.order_status === "paid") next.order_status = "confirmed";
+  if (next.order_status === "awaiting_payment") next.order_status = "pending";
+  return next;
+}
+
+function shouldRetryLegacyOrderUpdate(error: unknown) {
+  const message = String((error as { message?: string })?.message || error || "");
+  return /status|order_status|schema cache|invalid input value/i.test(message);
+}
+
+async function updateOrder(admin: ReturnType<typeof createClient>, orderId: string, payload: Record<string, unknown>) {
+  const { error } = await admin.from("orders").update(payload).eq("id", orderId);
+  if (!error) return;
+  if (!shouldRetryLegacyOrderUpdate(error)) throw error;
+  const retry = await admin.from("orders").update(legacyOrderPayload(payload)).eq("id", orderId);
+  if (retry.error) throw retry.error;
 }
 
 async function tokenFromRequest(req: Request) {
@@ -113,40 +120,6 @@ Deno.serve(async (req) => {
     if (cvPaymentId && !/^[0-9a-f-]{36}$/i.test(cvPaymentId)) return response(req, "Invalid payment reference", 400);
     if (!token || token.length > 500) return response(req, "Missing token", 400);
 
-    if (cvPaymentId) {
-      const { data: cvPayment, error: cvPaymentError } = await admin
-        .from("cv_payments")
-        .select("id, status, iyzico_token")
-        .eq("id", cvPaymentId)
-        .maybeSingle();
-      if (cvPaymentError) throw cvPaymentError;
-      if (!cvPayment) return response(req, "CV payment not found", 404);
-      if (cvPayment.status === "paid") {
-        const target = `${siteUrl.replace(/\/$/, "")}/pages/career/career-cv-form.html?payment=paid`;
-        return Response.redirect(target, 303);
-      }
-      if (cvPayment.iyzico_token && cvPayment.iyzico_token !== token) {
-        return response(req, "Invalid payment token", 400);
-      }
-    }
-
-    if (orderId) {
-      const { data: order, error: orderError } = await admin
-        .from("orders")
-        .select("id, payment_status, iyzico_token")
-        .eq("id", orderId)
-        .maybeSingle();
-      if (orderError) throw orderError;
-      if (!order) return response(req, "Order not found", 404);
-      if (order.payment_status === "paid") {
-        const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=paid`;
-        return Response.redirect(target, 303);
-      }
-      if (order.iyzico_token && order.iyzico_token !== token) {
-        return response(req, "Invalid payment token", 400);
-      }
-    }
-
     const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
     const payload = {
       locale: "tr",
@@ -167,7 +140,7 @@ Deno.serve(async (req) => {
     const result = await iyzicoResponse.json();
 
     const paymentStatus = result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
-    const orderStatus = paymentStatus === "paid" ? "confirmed" : "pending";
+    const orderStatus = paymentStatus === "paid" ? "paid" : "pending";
 
     if (cvPaymentId) {
       const { data: cvPayment, error: cvPaymentError } = await admin
@@ -237,23 +210,16 @@ Deno.serve(async (req) => {
       return Response.redirect(target, 303);
     }
 
-    const query = admin
-      .from("orders")
-      .update({
-        payment_status: paymentStatus,
-        order_status: orderStatus,
-        payment_provider_reference: result.paymentId || token,
-        paid_at: paymentStatus === "paid" ? new Date().toISOString() : null
-      })
-      .eq("id", orderId)
-      .neq("payment_status", "paid");
-    const { error } = await query;
-    if (error) throw error;
+    await updateOrder(admin, orderId, {
+      payment_status: paymentStatus,
+      order_status: orderStatus,
+      status: orderStatus
+    });
 
-    const target = `${siteUrl.replace(/\/$/, "")}/pages/account/orders.html?payment=${paymentStatus}`;
+    const target = `${siteUrl.replace(/\/$/, "")}/pages/commerce/order-success.html?payment=${paymentStatus}&id=${encodeURIComponent(orderId || "")}`;
     return Response.redirect(target, 303);
   } catch (error) {
-    console.error("iyzico-callback failed", safeError(error));
+    console.error("iyzico-callback failed", error);
     return response(req, "Payment callback could not be completed", 500);
   }
 });

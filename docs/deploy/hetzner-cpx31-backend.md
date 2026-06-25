@@ -168,7 +168,8 @@ curl https://api.allonahub.com/health
 - `GET /v1/partner/commission/preview`
 - `POST /v1/assistant/messages`
 - `POST /v1/telegram/webhook`
-- `POST /v1/hp-wallet/ledger`
+- `POST /v1/rewards/ledger`
+- `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
 
 Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
@@ -208,6 +209,24 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
   - `/v1/cron/*`
 - Cache: `api.allonahub.com` için bypass
 - Minimum TLS: 1.2
+
+## Kurumsal E-posta Yönlendirme
+
+`allonahub.com` alan adındaki kurumsal e-posta adreslerini Hetzner sunucusunda almak ve `allonahub@gmail.com` adresine yönlendirmek için ayrı Postfix/PostSRSd kurulum paketi vardır:
+
+```bash
+cd /opt/allonahub
+git pull --ff-only origin main
+sudo bash deploy/hetzner/setup-mail-forwarding.sh
+bash deploy/hetzner/check-mail-forwarding.sh
+```
+
+Detaylı DNS, port ve doğrulama adımları:
+
+```text
+docs/deploy/hetzner-email-forwarding.md
+deploy/hetzner/mail-forwarding/dns-records.txt
+```
 
 ## Güncelleme
 

@@ -5,650 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Allona Yemek | AllonaHub</title>
   <meta name="description" content="Allona Yemek restoran, kampanya, sepet, teslimat ve partner operasyon ekranı.">
+  <link rel="icon" href="../../favicon.ico">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="../../css/allonahub-home.css?v=20260621-pwa1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
-  <style>
-    :root{
-      --food-ink:#102033;
-      --food-muted:#617086;
-      --food-line:#dde7f1;
-      --food-soft:#f4f8fb;
-      --food-card:#ffffff;
-      --food-blue:#00a9e8;
-      --food-gold:#f4b400;
-      --food-green:#11a36a;
-      --food-red:#d83b4f;
-      --food-shadow:0 18px 42px rgba(20,44,78,.10);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:#f5f8fb;color:var(--food-ink);font-family:Arial,Helvetica,sans-serif}
-    button,input,select{font:inherit}
-    button{cursor:pointer}
-    a{color:inherit}
-    .food-page{min-height:100vh;background:
-      linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,248,251,.94)),
-      url("../../images/modules/yemek.png") center top/cover fixed}
-    .food-wrap{width:min(1760px,calc(100% - 40px));margin:0 auto;padding:16px 0 58px}
-    .food-top{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:36px;color:#5d6c80;font-size:13px;font-weight:800}
-    .food-top nav{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-    .food-top a{text-decoration:none}
-    .food-shell{display:grid;grid-template-columns:minmax(260px,340px) 1fr minmax(300px,390px);gap:16px;align-items:start}
-    .food-panel,.food-card,.food-rail,.food-order,.food-module-card{background:rgba(255,255,255,.96);border:1px solid var(--food-line);border-radius:8px;box-shadow:var(--food-shadow)}
-    .food-panel{padding:18px;position:sticky;top:14px}
-    .food-brand{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-    .food-brand img{width:54px;height:54px;object-fit:contain}
-    .food-brand strong{display:block;font-size:28px;line-height:1;color:#111827}
-    .food-brand span{display:block;font-size:28px;font-weight:900;color:var(--food-blue);line-height:1}
-    .food-location{display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:14px}
-    .food-location button,.food-icon-button,.food-action,.food-checkout,.food-link-btn,.food-mode button,.food-chip,.food-select-wrap select,.food-search button,.food-add,.food-mini-action{border:1px solid var(--food-line);border-radius:8px;background:#fff;color:var(--food-ink);font-weight:900}
-    .food-location button{height:46px;padding:0 12px;display:flex;align-items:center;gap:8px;text-align:left}
-    .food-location button:first-child{justify-content:flex-start}
-    .food-location button:last-child{width:46px;justify-content:center;color:var(--food-blue)}
-    .food-search{height:52px;display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:14px}
-    .food-search input{width:100%;border:1px solid var(--food-line);border-radius:8px;background:#fff;padding:0 14px;color:var(--food-ink);outline:0}
-    .food-search input:focus{border-color:var(--food-blue);box-shadow:0 0 0 3px rgba(0,169,232,.15)}
-    .food-search button{width:52px;color:var(--food-blue)}
-    .food-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-    .food-mode button{height:42px;display:flex;align-items:center;justify-content:center;gap:8px}
-    .food-mode button.is-active{background:var(--food-ink);color:#fff;border-color:var(--food-ink)}
-    .food-filter-title{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
-    .food-filter-title h2{font-size:15px;margin:0}
-    .food-filter-title button{border:0;background:transparent;color:var(--food-blue);font-weight:900}
-    .food-chip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .food-chip{min-height:40px;padding:8px 10px;text-align:left;color:#415269;background:#fbfdff}
-    .food-chip.is-active{background:#eaf8ff;border-color:#9eddf5;color:#006e9a}
-    .food-field{display:grid;gap:8px;margin-top:12px}
-    .food-field label{font-size:12px;color:#66758a;font-weight:900}
-    .food-select-wrap select{width:100%;height:42px;padding:0 10px;background:#fff}
-    .food-side-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-    .food-side-stats div{border:1px solid var(--food-line);border-radius:8px;padding:12px;background:#fbfdff}
-    .food-side-stats b{display:block;font-size:19px;color:var(--food-ink)}
-    .food-side-stats span{font-size:12px;color:var(--food-muted);font-weight:800}
-    .food-main{display:grid;gap:16px}
-    .food-toolbar{background:#fff;border:1px solid var(--food-line);border-radius:8px;box-shadow:var(--food-shadow);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:14px;z-index:4}
-    .food-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .food-action{min-height:40px;padding:0 12px;display:flex;align-items:center;gap:8px;text-decoration:none;background:#fbfdff}
-    .food-action strong{display:inline-flex;min-width:22px;height:22px;border-radius:999px;background:var(--food-blue);color:#fff;align-items:center;justify-content:center;font-size:12px}
-    .food-toolbar-title b{display:block;font-size:18px}
-    .food-toolbar-title span{display:block;color:var(--food-muted);font-size:13px;font-weight:800;margin-top:3px}
-    .food-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
-    .food-hero-copy{min-height:330px;padding:30px;position:relative;overflow:hidden;color:#fff;background:#14253a;border-radius:8px}
-    .food-hero-copy:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,24,40,.92),rgba(10,24,40,.55)),url("../../images/modules/allona-yemek.png") right center/contain no-repeat}
-    .food-hero-copy>*{position:relative;z-index:1}
-    .food-eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.12);font-size:12px;font-weight:900;letter-spacing:0;color:#dff7ff}
-    .food-hero-copy h1{font-size:44px;line-height:1.04;margin:0 0 14px;letter-spacing:0;max-width:640px}
-    .food-hero-copy p{font-size:17px;line-height:1.55;margin:0;max-width:640px;color:#dce8f2}
-    .food-hero-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px;max-width:720px}
-    .food-hero-metrics div{padding:13px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.10)}
-    .food-hero-metrics b{display:block;font-size:21px;color:#fff}
-    .food-hero-metrics span{display:block;color:#b9c9d8;font-size:12px;font-weight:800;margin-top:4px}
-    .food-live{padding:18px;display:grid;gap:12px}
-    .food-live h2,.food-section h2,.food-rail h2{font-size:22px;margin:0;color:#111827}
-    .food-live-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;border:1px solid var(--food-line);border-radius:8px;padding:13px;background:#fbfdff}
-    .food-live-icon{width:42px;height:42px;border-radius:8px;background:#eaf8ff;color:var(--food-blue);display:flex;align-items:center;justify-content:center}
-    .food-live-row b{display:block;font-size:15px}
-    .food-live-row span{display:block;font-size:12px;color:var(--food-muted);font-weight:800;margin-top:3px}
-    .food-live-row em{font-style:normal;color:var(--food-green);font-weight:900;font-size:13px}
-    .food-section{display:grid;gap:12px}
-    .food-section-head{display:flex;align-items:end;justify-content:space-between;gap:12px}
-    .food-section-head h2{font-size:24px;margin:0}
-    .food-section-head p{margin:4px 0 0;color:var(--food-muted);font-weight:800}
-    .food-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .food-card{padding:14px;display:grid;gap:12px;min-height:248px}
-    .food-card-media{height:112px;border-radius:8px;background:linear-gradient(135deg,#eaf8ff,#fff3cc);position:relative;overflow:hidden}
-    .food-card-media img{width:100%;height:100%;object-fit:cover;display:block}
-    .food-badge-row{position:absolute;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px;align-items:start}
-    .food-badge{display:inline-flex;align-items:center;gap:6px;border-radius:8px;background:rgba(255,255,255,.92);padding:7px 9px;font-size:12px;font-weight:900;color:#24364b}
-    .food-badge--green{color:var(--food-green)}
-    .food-card h3{margin:0;font-size:18px;color:#111827}
-    .food-card p{margin:0;color:var(--food-muted);font-size:13px;line-height:1.45;font-weight:700}
-    .food-meta{display:flex;gap:8px;flex-wrap:wrap}
-    .food-meta span{display:inline-flex;align-items:center;gap:6px;border-radius:8px;background:#f1f6fb;color:#46576d;padding:7px 9px;font-size:12px;font-weight:900}
-    .food-card-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
-    .food-card-footer strong{font-size:18px;color:var(--food-blue)}
-    .food-add{min-height:38px;padding:0 12px;display:flex;align-items:center;gap:8px;color:#fff;background:var(--food-blue);border-color:var(--food-blue)}
-    .food-add:hover{filter:brightness(.96)}
-    .food-category-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
-    .food-category{border:1px solid var(--food-line);border-radius:8px;background:#fff;min-height:92px;padding:12px;text-align:left;font-weight:900;color:#24364b;box-shadow:0 12px 26px rgba(20,44,78,.06)}
-    .food-category i{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:8px;background:#eaf8ff;color:var(--food-blue);margin-bottom:10px}
-    .food-category.is-active{border-color:#9eddf5;background:#f0fbff;color:#006e9a}
-    .food-menu-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .food-menu-item{background:#fff;border:1px solid var(--food-line);border-radius:8px;box-shadow:0 12px 26px rgba(20,44,78,.06);padding:14px;display:grid;gap:10px;min-height:204px}
-    .food-menu-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .food-menu-top i{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fff6db;color:#9a6900}
-    .food-menu-item h3{font-size:17px;margin:0}
-    .food-menu-item p{margin:0;color:var(--food-muted);line-height:1.45;font-weight:700;font-size:13px}
-    .food-menu-item small{color:var(--food-green);font-weight:900}
-    .food-price-line{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto}
-    .food-price-line strong{font-size:20px;color:var(--food-ink)}
-    .food-empty{display:none;border:1px dashed #aac0d4;border-radius:8px;padding:22px;background:#fff;color:var(--food-muted);font-weight:900}
-    .food-empty.is-visible{display:block}
-    .food-rail{padding:16px;position:sticky;top:14px;display:grid;gap:14px}
-    .food-cart-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .food-cart-head h2{font-size:21px;margin:0}
-    .food-cart-head span{display:inline-flex;min-width:28px;height:28px;align-items:center;justify-content:center;border-radius:999px;background:var(--food-blue);color:#fff;font-weight:900}
-    .food-cart-items{display:grid;gap:8px;min-height:62px}
-    .food-cart-item{display:grid;grid-template-columns:1fr auto;gap:10px;border:1px solid var(--food-line);border-radius:8px;background:#fbfdff;padding:10px}
-    .food-cart-item b{display:block;font-size:14px}
-    .food-cart-item span{display:block;color:var(--food-muted);font-size:12px;font-weight:800;margin-top:3px}
-    .food-cart-item button{border:0;background:transparent;color:var(--food-red);font-weight:900}
-    .food-cart-empty{border:1px dashed #b8c8d8;border-radius:8px;padding:14px;color:var(--food-muted);font-size:13px;font-weight:800;background:#fbfdff}
-    .food-totals{display:grid;gap:8px;border-top:1px solid var(--food-line);padding-top:12px}
-    .food-total-row{display:flex;align-items:center;justify-content:space-between;color:#526276;font-weight:800}
-    .food-total-row strong{color:#111827;font-size:22px}
-    .food-coupon{display:grid;grid-template-columns:1fr auto;gap:8px}
-    .food-coupon input{border:1px solid var(--food-line);border-radius:8px;height:42px;padding:0 10px;outline:0}
-    .food-coupon button,.food-checkout,.food-mini-action{height:42px;padding:0 12px}
-    .food-coupon button{background:#fff6db;color:#8a6500;border-color:#f6d36c;font-weight:900;border-radius:8px}
-    .food-checkout{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:var(--food-green);border-color:var(--food-green);color:#fff}
-    .food-track{display:grid;gap:10px}
-    .food-track-step{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
-    .food-track-dot{width:26px;height:26px;border-radius:999px;background:#d9e4ef;color:#6a7a8e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
-    .food-track-step.is-done .food-track-dot{background:var(--food-green);color:#fff}
-    .food-track-step b{font-size:14px}
-    .food-track-step span{display:block;color:var(--food-muted);font-size:12px;font-weight:800;margin-top:3px}
-    .food-mini-action{display:flex;align-items:center;justify-content:center;gap:8px;background:#eefaff;color:#006e9a;border-color:#9eddf5}
-    .food-ops{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .food-module-card{padding:18px;display:grid;gap:12px}
-    .food-module-card i{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#eaf8ff;color:var(--food-blue)}
-    .food-module-card h3{font-size:19px;margin:0}
-    .food-module-card p{margin:0;color:var(--food-muted);line-height:1.5;font-weight:700}
-    .food-module-list{display:grid;gap:8px}
-    .food-module-list span{display:flex;align-items:center;gap:8px;color:#415269;font-weight:900;font-size:13px}
-    .food-module-list span:before{content:"";width:8px;height:8px;border-radius:999px;background:var(--food-green);flex:0 0 auto}
-    .food-partner-band{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;background:#102033;color:#fff;border-radius:8px;padding:22px;box-shadow:var(--food-shadow)}
-    .food-partner-band h2{font-size:26px;margin:0 0 6px}
-    .food-partner-band p{margin:0;color:#c7d5e2;font-weight:800;line-height:1.5}
-    .food-link-btn{min-height:44px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#fff;color:#102033}
-    .food-footer-note{text-align:center;color:#68778c;font-size:13px;font-weight:800;padding:20px 0 0}
-    @media (max-width:1280px){
-      .food-shell{grid-template-columns:1fr}
-      .food-panel,.food-toolbar,.food-rail{position:static}
-      .food-panel{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
-      .food-panel-main{grid-row:span 2}
-      .food-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .food-category-strip{grid-template-columns:repeat(4,1fr)}
-    }
-    @media (max-width:820px){
-      .food-wrap{width:min(100% - 24px,1760px);padding-top:10px}
-      .food-top{align-items:flex-start;flex-direction:column}
-      .food-panel{grid-template-columns:1fr}
-      .food-toolbar,.food-section-head,.food-partner-band{align-items:flex-start;flex-direction:column;display:flex}
-      .food-hero,.food-grid,.food-menu-grid,.food-ops{grid-template-columns:1fr}
-      .food-hero-copy{min-height:360px;padding:22px}
-      .food-hero-copy h1{font-size:34px}
-      .food-hero-metrics{grid-template-columns:1fr}
-      .food-category-strip{grid-template-columns:repeat(2,1fr)}
-      .food-actions{width:100%}
-      .food-action{flex:1;justify-content:center}
-    }
-    @media (max-width:520px){
-      .food-brand strong,.food-brand span{font-size:24px}
-      .food-chip-grid,.food-side-stats{grid-template-columns:1fr}
-      .food-location,.food-search,.food-coupon{grid-template-columns:1fr}
-      .food-location button:last-child,.food-search button{width:100%}
-    }
-
-    /* AllonaHub homepage-aligned module skin */
-    :root{
-      --food-ink:#ffffff;
-      --food-muted:rgba(255,255,255,.72);
-      --food-line:rgba(0,229,255,.26);
-      --food-soft:rgba(0,229,255,.08);
-      --food-card:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-      --food-blue:#00e5ff;
-      --food-gold:#ffd700;
-      --food-green:#00ff88;
-      --food-red:#ff5b7a;
-      --food-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-    }
-    body{background:#020814;color:white}
-    .food-page{min-height:100vh;background:linear-gradient(180deg,rgba(6,27,51,.66),rgba(2,8,20,.96))}
-    .food-wrap{width:min(1720px,calc(100% - 40px));padding:24px 0 58px}
-    .food-top{display:none}
-    .food-shell{grid-template-columns:minmax(270px,340px) minmax(0,1fr) minmax(300px,390px);gap:18px}
-    .food-panel,
-    .food-card,
-    .food-rail,
-    .food-module-card,
-    .food-menu-item{
-      background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-      border:1px solid rgba(0,229,255,.28);
-      border-radius:24px;
-      color:white;
-      box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-      position:relative;
-    }
-    .food-panel,
-    .food-rail,
-    .food-toolbar{top:110px}
-    .food-panel:before,
-    .food-card:before,
-    .food-rail:before,
-    .food-module-card:before,
-    .food-menu-item:before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:radial-gradient(circle at top right,rgba(0,229,255,.18),transparent 48%);
-      pointer-events:none;
-    }
-    .food-panel>*,
-    .food-card>*,
-    .food-rail>*,
-    .food-module-card>*,
-    .food-menu-item>*{position:relative;z-index:1}
-    .food-brand img{width:55px;height:55px}
-    .food-brand strong{font-size:30px;color:#ffd700}
-    .food-brand span{font-size:30px;color:#00e5ff}
-    .food-location button,
-    .food-icon-button,
-    .food-action,
-    .food-checkout,
-    .food-link-btn,
-    .food-mode button,
-    .food-chip,
-    .food-select-wrap select,
-    .food-search button,
-    .food-add,
-    .food-mini-action,
-    .food-coupon button{
-      border:1px solid rgba(0,229,255,.26);
-      border-radius:16px;
-      background:rgba(0,18,40,.72);
-      color:white;
-    }
-    .food-search input,
-    .food-coupon input{
-      border:1px solid rgba(0,229,255,.26);
-      border-radius:16px;
-      background:rgba(0,18,40,.72);
-      color:white;
-    }
-    .food-search input::placeholder,
-    .food-coupon input::placeholder{color:rgba(255,255,255,.58)}
-    .food-search input:focus,
-    .food-coupon input:focus{border-color:#00e5ff;box-shadow:0 0 0 3px rgba(0,229,255,.15)}
-    .food-mode button.is-active,
-    .food-checkout{
-      background:linear-gradient(135deg,#00e5ff,#0077ff);
-      border-color:rgba(0,229,255,.75);
-      color:white;
-      box-shadow:0 0 18px rgba(0,229,255,.30);
-    }
-    .food-chip{color:rgba(255,255,255,.82)}
-    .food-chip.is-active{
-      background:rgba(0,229,255,.15);
-      border-color:#00e5ff;
-      color:white;
-      box-shadow:0 0 14px rgba(0,229,255,.20);
-    }
-    .food-filter-title h2,
-    .food-section-head h2,
-    .food-live h2,
-    .food-rail h2{color:#ffd700}
-    .food-filter-title button,
-    .food-location button:last-child,
-    .food-search button,
-    .food-price-line strong,
-    .food-card-footer strong{color:#00e5ff}
-    .food-field label{color:#9adfff}
-    .food-side-stats div,
-    .food-live-row,
-    .food-cart-item,
-    .food-cart-empty{
-      border-color:rgba(0,229,255,.20);
-      background:rgba(0,18,40,.58);
-      border-radius:16px;
-    }
-    .food-side-stats b,
-    .food-card h3,
-    .food-menu-item h3,
-    .food-module-card h3,
-    .food-cart-item b,
-    .food-track-step b,
-    .food-toolbar-title b{color:white}
-    .food-side-stats span,
-    .food-toolbar-title span,
-    .food-live-row span,
-    .food-section-head p,
-    .food-card p,
-    .food-menu-item p,
-    .food-module-card p,
-    .food-cart-item span,
-    .food-cart-empty,
-    .food-track-step span,
-    .food-total-row,
-    .food-footer-note{color:rgba(255,255,255,.72)}
-    .food-toolbar{
-      background:rgba(2,8,20,.88);
-      border:1px solid rgba(0,225,255,.24);
-      border-radius:24px;
-      box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);
-      backdrop-filter:blur(16px);
-    }
-    .food-action{background:rgba(0,18,40,.66)}
-    .food-action strong,
-    .food-cart-head span{
-      background:linear-gradient(135deg,#00e5ff,#0077ff);
-      color:white;
-    }
-    .food-hero-copy{
-      min-height:360px;
-      padding:32px;
-      background:linear-gradient(145deg,rgba(5,25,50,.96),rgba(3,10,24,.98));
-      border:1px solid rgba(0,229,255,.28);
-      border-radius:30px;
-      box-shadow:0 0 35px rgba(0,229,255,.14),inset 0 0 24px rgba(255,255,255,.04);
-    }
-    .food-hero-copy:before{
-      background:linear-gradient(90deg,rgba(2,8,20,.92),rgba(2,8,20,.46)),url("../../images/modules/yemek.png") right center/cover no-repeat;
-    }
-    .food-hero-copy:after{
-      content:"";
-      position:absolute;
-      width:210px;
-      height:210px;
-      right:-52px;
-      top:-52px;
-      border-radius:50%;
-      background:radial-gradient(circle,#00e5ff,transparent 65%);
-      opacity:.24;
-      animation:orbMove 5s ease-in-out infinite alternate;
-    }
-    .food-eyebrow{
-      border-radius:999px;
-      background:rgba(0,229,255,.12);
-      border:1px solid rgba(0,229,255,.28);
-      color:#9adfff;
-    }
-    .food-hero-copy h1{
-      font-size:52px;
-      line-height:1.08;
-      max-width:700px;
-      text-shadow:0 0 24px rgba(0,229,255,.25);
-    }
-    .food-hero-copy p{max-width:700px;color:rgba(255,255,255,.82)}
-    .food-hero-metrics div{
-      border:1px solid rgba(0,229,255,.22);
-      border-radius:18px;
-      background:rgba(0,20,45,.62);
-    }
-    .food-hero-metrics b{color:#ffd700}
-    .food-live-icon,
-    .food-category i,
-    .food-module-card i{
-      border-radius:16px;
-      background:rgba(0,229,255,.12);
-      color:#00e5ff;
-      box-shadow:0 0 16px rgba(0,229,255,.16);
-    }
-    .food-live-row em,
-    .food-menu-item small{color:#00ff88}
-    .food-card-media{
-      height:138px;
-      border-radius:18px;
-      background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(255,215,0,.12));
-    }
-    .food-badge{
-      border-radius:999px;
-      background:rgba(2,8,20,.82);
-      border:1px solid rgba(0,229,255,.22);
-      color:white;
-    }
-    .food-badge--green{color:#00ff88}
-    .food-meta span{
-      border-radius:999px;
-      background:rgba(0,229,255,.09);
-      border:1px solid rgba(0,229,255,.16);
-      color:rgba(255,255,255,.82);
-    }
-    .food-add,
-    .food-coupon button,
-    .food-link-btn{
-      background:linear-gradient(135deg,#ffd700,#c89200);
-      border-color:rgba(255,215,0,.45);
-      color:#020814;
-      box-shadow:0 0 16px rgba(255,215,0,.22);
-    }
-    .food-category{
-      border:1px solid rgba(0,229,255,.24);
-      border-radius:20px;
-      background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));
-      color:white;
-      box-shadow:0 0 20px rgba(0,229,255,.10);
-    }
-    .food-category.is-active{
-      border-color:#00e5ff;
-      background:linear-gradient(145deg,rgba(0,80,120,.80),rgba(3,10,24,.96));
-      color:white;
-      box-shadow:0 0 24px rgba(0,229,255,.26);
-    }
-    .food-menu-top i{
-      border-radius:14px;
-      background:rgba(255,215,0,.12);
-      color:#ffd700;
-    }
-    .food-empty{
-      border:1px dashed rgba(0,229,255,.38);
-      border-radius:18px;
-      background:rgba(0,18,40,.62);
-      color:rgba(255,255,255,.72);
-    }
-    .food-total-row strong{color:#ffd700}
-    .food-track-dot{
-      background:rgba(0,229,255,.12);
-      border:1px solid rgba(0,229,255,.22);
-      color:#9adfff;
-    }
-    .food-track-step.is-done .food-track-dot{background:#00ff88;color:#020814}
-    .food-mini-action{
-      background:rgba(0,229,255,.10);
-      color:#00e5ff;
-      border-color:rgba(0,229,255,.26);
-    }
-    .food-module-list span{color:rgba(255,255,255,.80)}
-    .food-module-list span:before{background:#00ff88}
-    .food-partner-band{
-      background:radial-gradient(circle at top,#00e5ff22,transparent 34%),linear-gradient(145deg,rgba(5,25,50,.95),rgba(3,10,24,.98));
-      border:1px solid rgba(0,229,255,.32);
-      border-radius:30px;
-      box-shadow:0 0 40px rgba(0,229,255,.14),inset 0 0 22px rgba(255,255,255,.04);
-    }
-    .food-partner-band h2{color:#ffd700}
-    .food-partner-band p{color:rgba(255,255,255,.78)}
-
-    /* Let the shared AllonaHub theme switcher recolor this module too. */
-    body[data-theme]{
-      --food-ink:var(--ah-ink);
-      --food-muted:var(--ah-muted);
-      --food-line:var(--ah-line);
-      --food-card:var(--ah-card);
-      --food-blue:var(--ah-primary);
-      --food-gold:var(--ah-accent);
-      --food-shadow:var(--ah-shadow-soft);
-      background:var(--ah-bg);
-      color:var(--ah-ink);
-    }
-    body[data-theme] .food-page{
-      background:linear-gradient(180deg,color-mix(in srgb,var(--ah-bg-mid) 66%,transparent),color-mix(in srgb,var(--ah-bg) 96%,transparent));
-    }
-    body[data-theme] .food-panel,
-    body[data-theme] .food-card,
-    body[data-theme] .food-rail,
-    body[data-theme] .food-module-card,
-    body[data-theme] .food-menu-item,
-    body[data-theme] .food-toolbar{
-      background:var(--ah-card);
-      border-color:var(--ah-line);
-      color:var(--ah-ink);
-      box-shadow:var(--ah-shadow-soft),inset 0 0 22px rgba(255,255,255,.04);
-    }
-    body[data-theme] .food-panel:before,
-    body[data-theme] .food-card:before,
-    body[data-theme] .food-rail:before,
-    body[data-theme] .food-module-card:before,
-    body[data-theme] .food-menu-item:before{
-      background:radial-gradient(circle at top right,color-mix(in srgb,var(--ah-primary) 18%,transparent),transparent 48%);
-    }
-    body[data-theme] .food-brand strong,
-    body[data-theme] .food-filter-title h2,
-    body[data-theme] .food-section-head h2,
-    body[data-theme] .food-live h2,
-    body[data-theme] .food-rail h2,
-    body[data-theme] .food-hero-metrics b,
-    body[data-theme] .food-total-row strong,
-    body[data-theme] .food-partner-band h2{
-      color:var(--ah-accent);
-    }
-    body[data-theme] .food-brand span,
-    body[data-theme] .food-filter-title button,
-    body[data-theme] .food-location button:last-child,
-    body[data-theme] .food-search button,
-    body[data-theme] .food-price-line strong,
-    body[data-theme] .food-card-footer strong,
-    body[data-theme] .food-live-icon,
-    body[data-theme] .food-category i,
-    body[data-theme] .food-module-card i,
-    body[data-theme] .food-mini-action{
-      color:var(--ah-primary);
-    }
-    body[data-theme] .food-location button,
-    body[data-theme] .food-action,
-    body[data-theme] .food-mode button,
-    body[data-theme] .food-chip,
-    body[data-theme] .food-select-wrap select,
-    body[data-theme] .food-search button,
-    body[data-theme] .food-mini-action,
-    body[data-theme] .food-coupon button,
-    body[data-theme] .food-search input,
-    body[data-theme] .food-coupon input,
-    body[data-theme] .food-side-stats div,
-    body[data-theme] .food-live-row,
-    body[data-theme] .food-cart-item,
-    body[data-theme] .food-cart-empty{
-      border-color:var(--ah-line);
-      background:color-mix(in srgb,var(--ah-bg-strong) 72%,transparent);
-      color:var(--ah-ink);
-    }
-    body[data-theme] .food-mode button.is-active,
-    body[data-theme] .food-checkout,
-    body[data-theme] .food-action strong,
-    body[data-theme] .food-cart-head span{
-      background:linear-gradient(135deg,var(--ah-primary),var(--ah-primary-strong));
-      border-color:color-mix(in srgb,var(--ah-primary) 75%,transparent);
-      color:#fff;
-      box-shadow:0 0 18px color-mix(in srgb,var(--ah-primary) 30%,transparent);
-    }
-    body[data-theme] .food-chip.is-active,
-    body[data-theme] .food-category.is-active{
-      background:color-mix(in srgb,var(--ah-primary) 16%,var(--ah-bg-strong));
-      border-color:var(--ah-primary);
-      color:var(--ah-ink);
-      box-shadow:0 0 20px color-mix(in srgb,var(--ah-primary) 24%,transparent);
-    }
-    body[data-theme] .food-side-stats b,
-    body[data-theme] .food-card h3,
-    body[data-theme] .food-menu-item h3,
-    body[data-theme] .food-module-card h3,
-    body[data-theme] .food-cart-item b,
-    body[data-theme] .food-track-step b,
-    body[data-theme] .food-toolbar-title b{
-      color:var(--ah-ink);
-    }
-    body[data-theme] .food-side-stats span,
-    body[data-theme] .food-toolbar-title span,
-    body[data-theme] .food-live-row span,
-    body[data-theme] .food-section-head p,
-    body[data-theme] .food-card p,
-    body[data-theme] .food-menu-item p,
-    body[data-theme] .food-module-card p,
-    body[data-theme] .food-cart-item span,
-    body[data-theme] .food-cart-empty,
-    body[data-theme] .food-track-step span,
-    body[data-theme] .food-total-row,
-    body[data-theme] .food-footer-note,
-    body[data-theme] .food-partner-band p{
-      color:var(--ah-muted);
-    }
-    body[data-theme] .food-hero-copy,
-    body[data-theme] .food-partner-band{
-      background:radial-gradient(circle at top,color-mix(in srgb,var(--ah-primary) 14%,transparent),transparent 34%),var(--ah-card);
-      border-color:var(--ah-line);
-      box-shadow:var(--ah-shadow-soft),inset 0 0 24px rgba(255,255,255,.04);
-    }
-    body[data-theme] .food-hero-copy:before{
-      background:linear-gradient(90deg,color-mix(in srgb,var(--ah-bg) 92%,transparent),color-mix(in srgb,var(--ah-bg) 46%,transparent)),url("../../images/modules/yemek.png") right center/cover no-repeat;
-    }
-    body[data-theme] .food-hero-copy:after{
-      background:radial-gradient(circle,var(--ah-primary),transparent 65%);
-    }
-    body[data-theme] .food-eyebrow,
-    body[data-theme] .food-live-icon,
-    body[data-theme] .food-category i,
-    body[data-theme] .food-module-card i,
-    body[data-theme] .food-track-dot{
-      background:color-mix(in srgb,var(--ah-primary) 12%,transparent);
-      border-color:color-mix(in srgb,var(--ah-primary) 28%,transparent);
-    }
-    body[data-theme] .food-card-media{
-      background:linear-gradient(135deg,color-mix(in srgb,var(--ah-primary) 18%,transparent),color-mix(in srgb,var(--ah-accent) 12%,transparent));
-    }
-    body[data-theme] .food-badge,
-    body[data-theme] .food-meta span{
-      background:color-mix(in srgb,var(--ah-bg) 82%,transparent);
-      border-color:var(--ah-line);
-      color:var(--ah-ink);
-    }
-    body[data-theme] .food-add,
-    body[data-theme] .food-coupon button,
-    body[data-theme] .food-link-btn{
-      background:linear-gradient(135deg,var(--ah-accent),var(--ah-accent-soft));
-      border-color:color-mix(in srgb,var(--ah-accent) 45%,transparent);
-      color:var(--ah-bg);
-      box-shadow:0 0 16px color-mix(in srgb,var(--ah-accent) 22%,transparent);
-    }
-    body[data-theme] .food-category{
-      background:var(--ah-card);
-      border-color:var(--ah-line);
-      color:var(--ah-ink);
-      box-shadow:var(--ah-shadow-soft);
-    }
-    body[data-theme] .food-menu-top i{
-      background:color-mix(in srgb,var(--ah-accent) 12%,transparent);
-      color:var(--ah-accent);
-    }
-    body[data-theme] .food-empty{
-      border-color:color-mix(in srgb,var(--ah-primary) 38%,transparent);
-      background:color-mix(in srgb,var(--ah-bg-strong) 62%,transparent);
-      color:var(--ah-muted);
-    }
-    body[data-theme="white"] .food-hero-copy:before{
-      background:linear-gradient(90deg,rgba(255,255,255,.92),rgba(255,255,255,.54)),url("../../images/modules/yemek.png") right center/cover no-repeat;
-    }
-    body[data-theme="white"] .food-checkout,
-    body[data-theme="white"] .food-mode button.is-active,
-    body[data-theme="white"] .food-action strong,
-    body[data-theme="white"] .food-cart-head span{
-      color:#fff;
-    }
-    body[data-theme="white"] .food-add,
-    body[data-theme="white"] .food-coupon button,
-    body[data-theme="white"] .food-link-btn{
-      color:#10212f;
-    }
-    @media (max-width:1280px){
-      .food-shell{grid-template-columns:1fr}
-      .food-panel,.food-toolbar,.food-rail{position:static}
-    }
-    @media (max-width:820px){
-      .food-hero-copy h1{font-size:34px}
-      .food-wrap{width:min(100% - 24px,1720px)}
-    }
-  </style>
+  <link rel="stylesheet" href="../../css/allonahub-home.css?v=20260622-corp2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+  <link rel="stylesheet" href="../../css/allona-food.css?v=20260622-options1">
 </head>
-<body>
+<body class="food-module-page" data-page="allona-food">
   <div class="top-mini-nav">
     <a href="../../pages/wallet/hp-nedir.html">HP nedir?</a>
     <a href="../../pages/commerce/kuponlar.html">İndirim Kuponu</a>
@@ -661,7 +24,7 @@
   <header>
     <a class="logo" href="../../index.html">
       <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
-      <div class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></div>
+      <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
     </a>
 
     <div class="nav-search">
@@ -675,280 +38,270 @@
       <a href="../../pages/commerce/kuponlar.html">Kupon</a>
       <a href="../../pages/account/premium.html">Premium</a>
       <a href="../../pages/partner/partner.html">Partner Ol</a>
-      <a class="login" href="../../pages/account/register.html">Giriş Yap</a>
+      <a class="login" href="../../pages/account/user.html">Giriş Yap</a>
       <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
     </nav>
   </header>
 
-  <div class="food-page">
-    <div class="food-wrap">
-      <div class="food-top" aria-label="Allona Yemek üst bağlantılar">
-        <strong>AllonaHub Yemek Ekosistemi</strong>
-        <nav>
-          <a href="../commerce/kuponlar.html">Kuponlarım</a>
-          <a href="../account/orders.html">Siparişlerim</a>
-          <a href="../partner/partner.html">Restoran Partneri Ol</a>
-          <a href="../ecosystem/allonakurye.html">Kurye Ağı</a>
-          <a href="../company/destek.html">7/24 Destek</a>
-        </nav>
+  <main class="food-page">
+    <section class="food-promo-slider" data-food-hero-slider aria-label="Allona Yemek reklam alanı">
+      <button class="food-promo-control food-promo-control--prev" type="button" data-food-hero-prev aria-label="Önceki reklam">‹</button>
+      <div class="food-promo-track" data-food-hero-track>
+        <article class="food-promo-slide is-active" data-food-hero-slide>
+          <img src="../../images/modules/yemek-light-v5.jpg" alt="Allona Yemek kampanya görseli" loading="eager">
+          <div class="food-promo-content">
+            <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Allona Yemek</p>
+            <h1 id="hero-title">Günlük restoran kampanyaları.</h1>
+            <p>Partner menüleri, çok satan siparişler ve sponsorlu fırsatlar canlı katalogdan burada döner.</p>
+            <strong>Canlı ürünler yükleniyor</strong>
+            <a class="food-promo-btn" href="#food-restaurants">Restoranları Gör</a>
+          </div>
+        </article>
       </div>
+      <button class="food-promo-control food-promo-control--next" type="button" data-food-hero-next aria-label="Sonraki reklam">›</button>
+      <div class="food-promo-dots" data-food-hero-dots aria-label="Reklam seçimi"></div>
+    </section>
 
-      <div class="food-shell">
-        <aside class="food-panel" aria-label="Allona Yemek filtre paneli">
-          <div class="food-panel-main">
-            <div class="food-brand">
-              <img src="../../images/brand/allona.logo.png" alt="AllonaHub">
-              <div><strong>Allona</strong><span>Yemek</span></div>
-            </div>
+    <section class="food-live-band food-card" aria-label="Canlı sipariş akışı">
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
+        <div><b>Sipariş Onayı</b><span>Restoran hazırlık süresi hesaplanır</span></div>
+        <em>2 dk</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-kitchen-set" aria-hidden="true"></i></span>
+        <div><b>Mutfak Hazırlığı</b><span>Notlar, yoğunluk ve ürün uygunluğu izlenir</span></div>
+        <em>18 dk</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
+        <div><b>Kurye Ataması</b><span>Allona Kurye ağına görev düşer</span></div>
+        <em>Canlı</em>
+      </div>
+      <div class="food-live-row">
+        <span class="food-live-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
+        <div><b>Destek</b><span>Eksik ürün, iptal ve iade kayıtları tutulur</span></div>
+        <em>7/24</em>
+      </div>
+    </section>
 
-            <div class="food-location">
-              <button type="button" data-location-action><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>İstanbul, Beşiktaş</span></button>
-              <button type="button" aria-label="Adresi değiştir"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
-            </div>
+    <section class="food-app-shell" aria-label="Allona Yemek sipariş ekranı">
+      <aside class="food-panel" aria-label="Allona Yemek filtre paneli">
+        <div class="food-brand">
+          <img src="../../images/brand/allona.logo.png" alt="AllonaHub">
+          <div><strong>Allona</strong><span>Yemek</span></div>
+        </div>
 
-            <form class="food-search" data-food-search-form>
-              <input type="search" data-food-search placeholder="Restoran, yemek veya kampanya ara">
-              <button type="submit" aria-label="Ara"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
-            </form>
+        <div class="food-location">
+          <button type="button" data-location-action><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span data-food-location-label>İstanbul, Beşiktaş</span></button>
+          <button type="button" data-address-edit aria-label="Adresi değiştir"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+        </div>
 
-            <div class="food-mode" role="tablist" aria-label="Sipariş tipi">
-              <button class="is-active" type="button" data-mode="delivery"><i class="fa-solid fa-motorcycle" aria-hidden="true"></i><span>Teslimat</span></button>
-              <button type="button" data-mode="pickup"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Gel-Al</span></button>
-            </div>
+        <form class="food-search" data-food-search-form>
+          <input type="search" data-food-search placeholder="Restoran, yemek veya kampanya ara">
+          <button type="submit" aria-label="Ara"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        </form>
+
+        <div class="food-mode" role="tablist" aria-label="Sipariş tipi">
+          <button class="is-active" type="button" data-mode="delivery"><i class="fa-solid fa-motorcycle" aria-hidden="true"></i><span>Teslimat</span></button>
+          <button type="button" data-mode="pickup"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Gel-Al</span></button>
+        </div>
+
+        <div class="food-filter-title">
+          <h2>Mutfaklar</h2>
+          <button type="button" data-clear-filters>Temizle</button>
+        </div>
+        <div class="food-chip-grid" data-cuisine-filters>
+          <button class="food-chip is-active" type="button" data-cuisine="all">Tümü</button>
+          <button class="food-chip" type="button" data-cuisine="Burger">Burger</button>
+          <button class="food-chip" type="button" data-cuisine="Pizza">Pizza</button>
+          <button class="food-chip" type="button" data-cuisine="Kebap">Kebap</button>
+          <button class="food-chip" type="button" data-cuisine="Sağlıklı">Sağlıklı</button>
+          <button class="food-chip" type="button" data-cuisine="Tatlı">Tatlı</button>
+        </div>
+
+        <div class="food-filter-title"><h2>Hızlı Filtre</h2></div>
+        <div class="food-chip-grid" data-quick-filters>
+          <button class="food-chip" type="button" data-quick="open">Açık</button>
+          <button class="food-chip" type="button" data-quick="deal">Kampanyalı</button>
+          <button class="food-chip" type="button" data-quick="fast">30 dk altı</button>
+          <button class="food-chip" type="button" data-quick="free">Ücretsiz teslimat</button>
+        </div>
+
+        <div class="food-field">
+          <label for="food-sort">Sıralama</label>
+          <select id="food-sort" data-food-sort>
+            <option value="recommended">Önerilen</option>
+            <option value="rating">Puana göre</option>
+            <option value="fast">Teslimat hızına göre</option>
+            <option value="hp">HP kazancına göre</option>
+          </select>
+        </div>
+
+        <div class="food-side-stats">
+          <div><b data-visible-count>0</b><span>uygun restoran</span></div>
+          <div><b>+420</b><span>maks. HP fırsatı</span></div>
+          <div><b>19 dk</b><span>en hızlı süre</span></div>
+          <div><b>7/24</b><span>destek hattı</span></div>
+        </div>
+      </aside>
+
+      <div class="food-main">
+        <header class="food-toolbar">
+          <div class="food-toolbar-title">
+            <b>Yakındaki Restoranlar ve Fırsatlar</b>
+            <span data-food-summary>Adresine göre seçilmiş restoranlar listeleniyor.</span>
           </div>
-
-          <div>
-            <div class="food-filter-title">
-              <h2>Mutfaklar</h2>
-              <button type="button" data-clear-filters>Temizle</button>
-            </div>
-            <div class="food-chip-grid" data-cuisine-filters>
-              <button class="food-chip is-active" type="button" data-cuisine="all">Tümü</button>
-              <button class="food-chip" type="button" data-cuisine="Burger">Burger</button>
-              <button class="food-chip" type="button" data-cuisine="Pizza">Pizza</button>
-              <button class="food-chip" type="button" data-cuisine="Kebap">Kebap</button>
-              <button class="food-chip" type="button" data-cuisine="Sağlıklı">Sağlıklı</button>
-              <button class="food-chip" type="button" data-cuisine="Tatlı">Tatlı</button>
-            </div>
-
-            <div class="food-filter-title"><h2>Hızlı filtre</h2></div>
-            <div class="food-chip-grid" data-quick-filters>
-              <button class="food-chip" type="button" data-quick="open">Açık</button>
-              <button class="food-chip" type="button" data-quick="deal">Kampanyalı</button>
-              <button class="food-chip" type="button" data-quick="fast">30 dk altı</button>
-              <button class="food-chip" type="button" data-quick="free">Ücretsiz teslimat</button>
-            </div>
+          <div class="food-actions">
+            <a class="food-action" href="../account/favorites.html"><i class="fa-regular fa-heart" aria-hidden="true"></i><span>Favoriler</span></a>
+            <a class="food-action" href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Kupon</span><strong>4</strong></a>
+            <a class="food-action" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i><span>Sepet</span><strong data-cart-count>0</strong></a>
           </div>
+        </header>
+        <div class="food-status" data-food-status>Canlı restoran kataloğu hazırlanıyor.</div>
 
-          <div>
-            <div class="food-field">
-              <label for="food-sort">Sıralama</label>
-              <div class="food-select-wrap">
-                <select id="food-sort" data-food-sort>
-                  <option value="recommended">Önerilen</option>
-                  <option value="rating">Puana göre</option>
-                  <option value="fast">Teslimat hızına göre</option>
-                  <option value="hp">HP kazancına göre</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="food-side-stats">
-              <div><b data-visible-count>0</b><span>uygun restoran</span></div>
-              <div><b>+420</b><span>maks. HP fırsatı</span></div>
-              <div><b>19 dk</b><span>en hızlı süre</span></div>
-              <div><b>7/24</b><span>destek hattı</span></div>
-            </div>
-          </div>
-        </aside>
-
-        <main class="food-main">
-          <header class="food-toolbar">
-            <div class="food-toolbar-title">
-              <b>Yakındaki Restoranlar ve Fırsatlar</b>
-              <span data-food-summary>Adresine göre seçilmiş restoranlar listeleniyor.</span>
-            </div>
-            <div class="food-actions">
-              <a class="food-action" href="../account/favorites.html"><i class="fa-regular fa-heart" aria-hidden="true"></i><span>Favoriler</span></a>
-              <a class="food-action" href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Kupon</span><strong>4</strong></a>
-              <a class="food-action" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i><span>Sepet</span><strong data-cart-count>0</strong></a>
-            </div>
-          </header>
-
-          <section class="food-hero" aria-label="Allona Yemek ana ekran">
-            <div class="food-hero-copy">
-              <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Restoran, kurye, sepet ve HP aynı akışta</p>
-              <h1>Yemeği seç, kampanyayı uygula, teslimatı canlı izle.</h1>
-              <p>Allona Yemek; restoran keşfi, gel-al seçeneği, kupon/HP avantajı, kurye bağlantısı ve destek akışını tek profesyonel yemek modülünde toplar.</p>
-              <div class="food-hero-metrics" aria-label="Allona Yemek metrikleri">
-                <div><b>50+</b><span>pilot restoran kategorisi</span></div>
-                <div><b>12</b><span>operasyon kontrol noktası</span></div>
-                <div><b>3 kanal</b><span>müşteri, restoran, kurye</span></div>
-              </div>
-            </div>
-
-            <div class="food-live food-card">
-              <h2>Canlı Sipariş Akışı</h2>
-              <div class="food-live-row">
-                <span class="food-live-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
-                <div><b>Sipariş Onayı</b><span>Restoran hazırlık süresi otomatik hesaplanır</span></div>
-                <em>2 dk</em>
-              </div>
-              <div class="food-live-row">
-                <span class="food-live-icon"><i class="fa-solid fa-kitchen-set" aria-hidden="true"></i></span>
-                <div><b>Mutfak Hazırlığı</b><span>Menü uygunluğu, notlar ve yoğunluk izlenir</span></div>
-                <em>18 dk</em>
-              </div>
-              <div class="food-live-row">
-                <span class="food-live-icon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
-                <div><b>Kurye Ataması</b><span>Allona Kurye ağına görev düşer</span></div>
-                <em>Canlı</em>
-              </div>
-              <div class="food-live-row">
-                <span class="food-live-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
-                <div><b>Destek</b><span>Eksik ürün, iptal ve iade kayıtları tutulur</span></div>
-                <em>7/24</em>
-              </div>
-            </div>
-          </section>
-
-          <section class="food-section" aria-label="Yemek kategorileri">
-            <div class="food-section-head">
-              <div>
-                <h2>Kategoriler</h2>
-                <p>Hızlı seçim için popüler mutfaklar.</p>
-              </div>
-            </div>
-            <div class="food-category-strip" data-category-strip>
-              <button class="food-category is-active" type="button" data-cuisine="all"><i class="fa-solid fa-border-all" aria-hidden="true"></i>Tümü</button>
-              <button class="food-category" type="button" data-cuisine="Burger"><i class="fa-solid fa-burger" aria-hidden="true"></i>Burger</button>
-              <button class="food-category" type="button" data-cuisine="Pizza"><i class="fa-solid fa-pizza-slice" aria-hidden="true"></i>Pizza</button>
-              <button class="food-category" type="button" data-cuisine="Kebap"><i class="fa-solid fa-fire-burner" aria-hidden="true"></i>Kebap</button>
-              <button class="food-category" type="button" data-cuisine="Döner"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Döner</button>
-              <button class="food-category" type="button" data-cuisine="Tatlı"><i class="fa-solid fa-ice-cream" aria-hidden="true"></i>Tatlı</button>
-              <button class="food-category" type="button" data-cuisine="Kahve"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i>Kahve</button>
-              <button class="food-category" type="button" data-cuisine="Sağlıklı"><i class="fa-solid fa-seedling" aria-hidden="true"></i>Sağlıklı</button>
-            </div>
-          </section>
-
-          <section class="food-section" aria-label="Restoran listesi">
-            <div class="food-section-head">
-              <div>
-                <h2>Restoranlar</h2>
-                <p>Puan, süre, kampanya ve teslimat bilgisi aynı kartta.</p>
-              </div>
-              <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i>Restoran Ekle</a>
-            </div>
-            <div class="food-grid" data-restaurant-grid></div>
-            <div class="food-empty" data-food-empty>Bu filtrelerle restoran bulunamadı.</div>
-          </section>
-
-          <section class="food-section" aria-label="Menüler">
-            <div class="food-section-head">
-              <div>
-                <h2>Öne Çıkan Menüler</h2>
-                <p>Sepete eklenebilir örnek menü akışı.</p>
-              </div>
-              <a class="food-link-btn" href="../commerce/kuponlar.html"><i class="fa-solid fa-percent" aria-hidden="true"></i>Kampanyalar</a>
-            </div>
-            <div class="food-menu-grid" data-menu-grid></div>
-          </section>
-
-          <section class="food-section" aria-label="Operasyon modülleri">
-            <div class="food-section-head">
-              <div>
-                <h2>Operasyon Katmanı</h2>
-                <p>Allona Yemek yalnızca vitrin değil, restoran ve kurye akışıyla bağlı çalışır.</p>
-              </div>
-            </div>
-            <div class="food-ops">
-              <article class="food-module-card">
-                <i class="fa-solid fa-store" aria-hidden="true"></i>
-                <h3>Restoran Paneli</h3>
-                <p>Menü, fiyat, stok, hazırlık süresi, kampanya ve yoğunluk yönetimi partner ekranına bağlanır.</p>
-                <div class="food-module-list">
-                  <span>Menü aktif/pasif kontrolü</span>
-                  <span>Hazırlanıyor, hazır, iptal durumları</span>
-                  <span>HP ve kupon kampanyaları</span>
-                </div>
-              </article>
-              <article class="food-module-card">
-                <i class="fa-solid fa-motorcycle" aria-hidden="true"></i>
-                <h3>Kurye Havuzu</h3>
-                <p>Sipariş hazır olduğunda en uygun kurye akışına görev düşer ve kullanıcıya durum bildirilir.</p>
-                <div class="food-module-list">
-                  <span>Yakın kurye eşleştirme</span>
-                  <span>Rota ve teslimat zaman çizgisi</span>
-                  <span>Gecikme ve destek alarmı</span>
-                </div>
-              </article>
-              <article class="food-module-card">
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                <h3>Güvenli Sipariş</h3>
-                <p>Ödeme, iptal, iade, eksik ürün ve destek kayıtları AllonaHub hesap geçmişiyle uyumlu tutulur.</p>
-                <div class="food-module-list">
-                  <span>Adres ve ödeme doğrulaması</span>
-                  <span>Eksik ürün destek kaydı</span>
-                  <span>Partner performans verisi</span>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section class="food-partner-band" aria-label="Partner çağrısı">
+        <section class="food-section" aria-label="Yemek kategorileri">
+          <div class="food-section-head">
             <div>
-              <h2>Restoranını Allona Yemek'e Taşı</h2>
-              <p>AllonaHub içinde menü, sipariş, kampanya, kurye ve finans akışını tek partner panelinden yönet.</p>
+              <h2>Kategoriler</h2>
+              <p>Hızlı seçim için popüler mutfaklar.</p>
             </div>
-            <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>Partner Başvurusu</a>
-          </section>
-        </main>
-
-        <aside class="food-rail" aria-label="Sepet ve sipariş paneli">
-          <div class="food-cart-head">
-            <h2>Sepet</h2>
-            <span data-cart-count-rail>0</span>
           </div>
-          <div class="food-cart-items" data-cart-items>
-            <div class="food-cart-empty">Sepete menü eklediğinde toplam, teslimat ve HP burada görünür.</div>
+          <div class="food-category-strip" data-category-strip>
+            <button class="food-category is-active" type="button" data-cuisine="all"><i class="fa-solid fa-border-all" aria-hidden="true"></i>Tümü</button>
+            <button class="food-category" type="button" data-cuisine="Burger"><i class="fa-solid fa-burger" aria-hidden="true"></i>Burger</button>
+            <button class="food-category" type="button" data-cuisine="Pizza"><i class="fa-solid fa-pizza-slice" aria-hidden="true"></i>Pizza</button>
+            <button class="food-category" type="button" data-cuisine="Kebap"><i class="fa-solid fa-fire-burner" aria-hidden="true"></i>Kebap</button>
+            <button class="food-category" type="button" data-cuisine="Döner"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Döner</button>
+            <button class="food-category" type="button" data-cuisine="Tatlı"><i class="fa-solid fa-ice-cream" aria-hidden="true"></i>Tatlı</button>
+            <button class="food-category" type="button" data-cuisine="Kahve"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i>Kahve</button>
+            <button class="food-category" type="button" data-cuisine="Sağlıklı"><i class="fa-solid fa-seedling" aria-hidden="true"></i>Sağlıklı</button>
           </div>
+        </section>
 
-          <form class="food-coupon" data-coupon-form>
-            <input type="text" data-coupon-code placeholder="Kupon kodu">
-            <button type="submit">Uygula</button>
-          </form>
-
-          <div class="food-totals">
-            <div class="food-total-row"><span>Ara toplam</span><b data-subtotal>0,00 TL</b></div>
-            <div class="food-total-row"><span>Teslimat</span><b data-delivery-fee>0,00 TL</b></div>
-            <div class="food-total-row"><span>Kupon</span><b data-discount>0,00 TL</b></div>
-            <div class="food-total-row"><span>Kazanılacak HP</span><b data-hp-earned>0 HP</b></div>
-            <div class="food-total-row"><span>Toplam</span><strong data-total>0,00 TL</strong></div>
+        <section class="food-section" id="food-restaurants" aria-label="Restoran listesi">
+          <div class="food-section-head">
+            <div>
+              <h2>Restoranlar</h2>
+              <p>Puan, süre, kampanya ve teslimat bilgisi aynı kartta.</p>
+            </div>
+            <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i>Restoran Ekle</a>
           </div>
-          <a class="food-checkout" href="../commerce/checkout.html"><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
+          <div class="food-grid" data-restaurant-grid></div>
+          <div class="food-empty" data-food-empty>Bu filtrelerle restoran bulunamadı.</div>
+        </section>
 
+        <section class="food-section" aria-label="Menüler">
+          <div class="food-section-head">
+            <div>
+              <h2>Öne Çıkan Menüler</h2>
+              <p>Sepete eklenebilir örnek menü akışı.</p>
+            </div>
+            <a class="food-link-btn" href="../commerce/kuponlar.html"><i class="fa-solid fa-percent" aria-hidden="true"></i>Kampanyalar</a>
+          </div>
+          <div class="food-menu-grid" data-menu-grid></div>
+        </section>
+
+        <section class="food-section" aria-label="Operasyon modülleri">
+          <div class="food-section-head">
+            <div>
+              <h2>Operasyon Katmanı</h2>
+              <p>Restoran ve kurye akışı tek düzende bağlanır.</p>
+            </div>
+          </div>
+          <div class="food-ops">
+            <article class="food-module-card">
+              <i class="fa-solid fa-store" aria-hidden="true"></i>
+              <h3>Restoran Paneli</h3>
+              <p>Menü, fiyat, stok, hazırlık süresi, kampanya ve yoğunluk yönetimi partner ekranına bağlanır.</p>
+              <div class="food-module-list">
+                <span>Menü aktif/pasif kontrolü</span>
+                <span>Hazırlanıyor, hazır, iptal durumları</span>
+                <span>HP ve kupon kampanyaları</span>
+              </div>
+            </article>
+            <article class="food-module-card">
+              <i class="fa-solid fa-motorcycle" aria-hidden="true"></i>
+              <h3>Kurye Havuzu</h3>
+              <p>Sipariş hazır olduğunda en uygun kurye akışına görev düşer ve kullanıcıya durum bildirilir.</p>
+              <div class="food-module-list">
+                <span>Yakın kurye eşleştirme</span>
+                <span>Rota ve teslimat zaman çizgisi</span>
+                <span>Gecikme ve destek alarmı</span>
+              </div>
+            </article>
+            <article class="food-module-card">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <h3>Güvenli Sipariş</h3>
+              <p>Ödeme, iptal, iade, eksik ürün ve destek kayıtları AllonaHub hesap geçmişiyle uyumlu tutulur.</p>
+              <div class="food-module-list">
+                <span>Adres ve ödeme doğrulaması</span>
+                <span>Eksik ürün destek kaydı</span>
+                <span>Partner performans verisi</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="food-partner-band" aria-label="Partner çağrısı">
           <div>
-            <div class="food-cart-head">
-              <h2>Sipariş Takibi</h2>
-            </div>
-            <div class="food-track" data-order-track>
-              <div class="food-track-step is-done"><span class="food-track-dot">1</span><div><b>Sepet oluşturuldu</b><span>Kupon ve HP hesaplandı</span></div></div>
-              <div class="food-track-step"><span class="food-track-dot">2</span><div><b>Restoran onayı</b><span>Hazırlık süresi bekleniyor</span></div></div>
-              <div class="food-track-step"><span class="food-track-dot">3</span><div><b>Kurye yolda</b><span>Canlı konum bağlantısı</span></div></div>
-              <div class="food-track-step"><span class="food-track-dot">4</span><div><b>Teslim edildi</b><span>Değerlendirme ve destek</span></div></div>
-            </div>
-            <button class="food-mini-action" type="button" data-progress-order><i class="fa-solid fa-forward-step" aria-hidden="true"></i>Sipariş Durumunu İlerle</button>
+            <h2>Restoranını Allona Yemek'e Taşı</h2>
+            <p>Menü, sipariş, kampanya, kurye ve finans akışını tek partner panelinden yönet.</p>
           </div>
-        </aside>
+          <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>Partner Başvurusu</a>
+        </section>
       </div>
 
-      <p class="food-footer-note">Allona Yemek modülü, AllonaHub ortak hesap, kupon, partner ve kurye altyapısına bağlı çalışacak şekilde tasarlanmıştır.</p>
-    </div>
-  </div>
+      <aside class="food-rail" aria-label="Sepet ve sipariş paneli">
+        <div class="food-cart-head">
+          <h2>Sepet</h2>
+          <span data-cart-count-rail>0</span>
+        </div>
+        <div class="food-cart-items" data-cart-items>
+          <div class="food-cart-empty">Sepete menü eklediğinde toplam, teslimat ve HP burada görünür.</div>
+        </div>
+
+        <form class="food-coupon" data-coupon-form>
+          <input type="text" data-coupon-code placeholder="Kupon kodu">
+          <button type="submit">Uygula</button>
+        </form>
+
+        <div class="food-totals">
+          <div class="food-total-row"><span>Ara toplam</span><b data-subtotal>0,00 TL</b></div>
+          <div class="food-total-row"><span>Teslimat</span><b data-delivery-fee>0,00 TL</b></div>
+          <div class="food-total-row"><span>Kupon</span><b data-discount>0,00 TL</b></div>
+          <div class="food-total-row"><span>Kazanılacak HP</span><b data-hp-earned>0 HP</b></div>
+          <div class="food-total-row"><span>Toplam</span><strong data-total>0,00 TL</strong></div>
+        </div>
+        <a class="food-checkout" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
+
+        <div class="food-track-card">
+          <div class="food-cart-head">
+            <h2>Sipariş Takibi</h2>
+          </div>
+          <div class="food-track" data-order-track>
+            <div class="food-track-step is-done"><span class="food-track-dot">1</span><div><b>Sepet oluşturuldu</b><span>Kupon ve HP hesaplandı</span></div></div>
+            <div class="food-track-step"><span class="food-track-dot">2</span><div><b>Restoran onayı</b><span>Hazırlık süresi bekleniyor</span></div></div>
+            <div class="food-track-step"><span class="food-track-dot">3</span><div><b>Kurye yolda</b><span>Canlı konum bağlantısı</span></div></div>
+            <div class="food-track-step"><span class="food-track-dot">4</span><div><b>Teslim edildi</b><span>Değerlendirme ve destek</span></div></div>
+          </div>
+          <button class="food-mini-action" type="button" data-progress-order><i class="fa-solid fa-forward-step" aria-hidden="true"></i>Sipariş Durumunu İlerle</button>
+        </div>
+      </aside>
+    </section>
+
+    <p class="food-footer-note">Allona Yemek modülü; AllonaHub ortak hesap, kupon, partner ve kurye altyapısına bağlı çalışır.</p>
+  </main>
+
   <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
-  <script src="../../js/allona-food-page.js?v=20260621-food1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260622-food1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-catalog-scope1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/allona-food-page.js?v=20260623-catalog-scope1" defer></script>
 </body>
 </html>

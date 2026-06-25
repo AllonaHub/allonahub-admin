@@ -697,7 +697,7 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
 </head>
 
 <body>
@@ -716,7 +716,7 @@ a{
 
   <div class="actions glass">
     <a href="../../index.html">Ana Sayfa</a>
-    <a href="../wallet/hubwallet.html">Kupon</a>
+    <a href="rewards.html">Kupon</a>
     <a href="premium.html">Premium</a>
     <span class="platform-controls-slot" data-platform-controls-slot></span>
   </div>
@@ -869,11 +869,28 @@ a{
 <script>
 const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
 const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+function hasPasswordRecoveryParams(){
+  const sources=[
+    new URLSearchParams(window.location.search || ""),
+    new URLSearchParams(String(window.location.hash || "").replace(/^#/,""))
+  ];
+  return sources.some(function(params){
+    const type=String(params.get("type") || "").toLowerCase();
+    return type==="recovery" || params.has("access_token") || params.has("refresh_token") || params.has("error_code");
+  });
+}
+const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
+if(IS_PASSWORD_RECOVERY_REDIRECT){
+  const target=new URL("reset-password.html", window.location.href);
+  target.search=window.location.search || "";
+  target.hash=window.location.hash || "";
+  window.location.replace(target.href);
+}
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
   auth:{
     persistSession:true,
     autoRefreshToken:true,
-    detectSessionInUrl:true
+    detectSessionInUrl:!IS_PASSWORD_RECOVERY_REDIRECT
   }
 });
 
@@ -883,6 +900,20 @@ function pageUrl(path){
 
 const SITE_URL=pageUrl("user-panel.html");
 const RESET_URL=pageUrl("reset-password.html");
+let manualAuthInProgress=false;
+
+function safeReturnTo(fallback){
+  const fallbackPath=fallback || "user-panel.html";
+  const params=new URLSearchParams(window.location.search);
+  const raw=String(params.get("returnTo") || fallbackPath).trim();
+  try{
+    const target=new URL(decodeURIComponent(raw), window.location.href);
+    if(target.origin!==window.location.origin)return pageUrl(fallbackPath);
+    return target.href;
+  }catch(error){
+    return pageUrl(fallbackPath);
+  }
+}
 
 function apiBaseUrl(){
   const app=window.Allona || {};
@@ -899,14 +930,23 @@ async function securityChallengeToken(action){
 }
 
 async function authApi(path,payload){
-  const response=await fetch(apiBaseUrl()+path,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload || {})
-  });
+  let response;
+  try{
+    response=await fetch(apiBaseUrl()+path,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload || {})
+    });
+  }catch(error){
+    error.status=0;
+    throw error;
+  }
   const result=await response.json().catch(()=>({}));
   if(!response.ok || result.ok===false){
-    throw new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+    const error=new Error(result.message || "Kimlik doğrulama isteği tamamlanamadı.");
+    error.status=response.status;
+    error.payload=result;
+    throw error;
   }
   return result;
 }
@@ -929,7 +969,21 @@ async function needsMfaVerification(){
 }
 
 function redirectMfa(returnTo){
-  window.location.href="mfa.html?returnTo="+encodeURIComponent(returnTo || "user-panel.html");
+  window.location.href="mfa.html?returnTo="+encodeURIComponent(returnTo || safeReturnTo("user-panel.html"));
+}
+
+async function redirectAuthenticatedUser(){
+  if(manualAuthInProgress)return;
+  try{
+    const {data,error}=await supabaseClient.auth.getUser();
+    if(error || !data || !data.user)return;
+    const returnTo=safeReturnTo("user-panel.html");
+    if(await needsMfaVerification()){
+      redirectMfa(returnTo);
+      return;
+    }
+    window.location.replace(returnTo);
+  }catch(error){}
 }
 
 function normalizeEmail(value){
@@ -1402,6 +1456,12 @@ function openTab(tabId,event){
   if(event && event.target){
     event.target.classList.add("active");
   }
+
+  setTimeout(()=>{
+    if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.hydrate){
+      window.Allona.securityChallenge.hydrate();
+    }
+  },0);
 }
 
 function checkPasswords(){
@@ -1469,6 +1529,7 @@ async function registerUser(){
   const greeting=getGreetingPreview(fullName);
 
   try{
+    manualAuthInProgress=true;
     const result=await authApi("/v1/auth/register",{
       email:email,
       password:password,
@@ -1505,6 +1566,8 @@ async function registerUser(){
     alert("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
   }catch(error){
     secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
+  }finally{
+    manualAuthInProgress=false;
   }
 }
 
@@ -1524,6 +1587,7 @@ async function loginUser(){
   }
 
   try{
+    manualAuthInProgress=true;
     clearAuthArtifacts();
     try{
       await supabaseClient.auth.signOut({scope:"local"});
@@ -1552,22 +1616,25 @@ async function loginUser(){
     }
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
+    const returnTo=safeReturnTo("user-panel.html");
     if(await needsMfaVerification()){
-      redirectMfa("user-panel.html");
+      redirectMfa(returnTo);
       return;
     }
-    window.location.href = "user-panel.html";
+    window.location.href = returnTo;
   }catch(error){
     secureAuthAlert("Giriş yapılamadı. E-posta ve şifrenizi kontrol edin.");
+  }finally{
+    manualAuthInProgress=false;
   }
 }
 
 async function loginWithGoogle(){
-  const redirectUrl=new URL("login.html", window.location.href);
-  redirectUrl.searchParams.set("returnTo","user-panel.html");
+  const redirectUrl=new URL("user.html", window.location.href);
+  redirectUrl.searchParams.set("returnTo",safeReturnTo("user-panel.html"));
 
   try{
-    const turnstileToken=await requireSecurityChallenge("login");
+    const turnstileToken=await securityChallengeToken("login");
     await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
 
     const { error }=await supabaseClient.auth.signInWithOAuth({
@@ -1602,10 +1669,17 @@ async function resetPassword(){
   }
 
   try{
-    await authApi("/v1/auth/forgot-password",{
-      email:email,
-      turnstileToken:await securityChallengeToken("forgot_password")
-    });
+    try{
+      await authApi("/v1/auth/forgot-password",{
+        email:email,
+        turnstileToken:await securityChallengeToken("forgot_password")
+      });
+    }catch(error){
+      const backendUnavailable=error.status===0 || [404,405,500,501,502,503,504].includes(Number(error.status));
+      if(!backendUnavailable)throw error;
+      const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
+      if(resetError)throw resetError;
+    }
     alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
   }catch(error){
     secureAuthAlert(error.message || "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
@@ -1621,7 +1695,7 @@ function icloudInfo(){
   if(!q)return;
 
   if(q.includes("hp") || q.includes("wallet") || q.includes("kupon")){
-    window.location.href="../wallet/hubwallet.html";
+    window.location.href="rewards.html";
   }
   else if(q.includes("kupon")){
     window.location.href="../commerce/kuponlar.html";
@@ -1648,6 +1722,16 @@ document.addEventListener("DOMContentLoaded",function(){
 
   populateSectors();
   setCountryByLocale();
+  openInitialAuthTab();
+  supabaseClient.auth.onAuthStateChange(function(event){
+    if(event==="PASSWORD_RECOVERY"){
+      window.location.replace("reset-password.html");
+      return;
+    }
+    if(event==="SIGNED_IN" || event==="INITIAL_SESSION"){
+      redirectAuthenticatedUser();
+    }
+  });
 
   const search=document.getElementById("userSearchInput");
 
@@ -1666,6 +1750,14 @@ document.addEventListener("DOMContentLoaded",function(){
   }
 });
 
+function openInitialAuthTab(){
+  const params=new URLSearchParams(window.location.search);
+  const raw=(params.get("tab") || params.get("mode") || window.location.hash.replace("#","") || "login").toLowerCase();
+  const tab=raw==="register" || raw==="forgot" ? raw : "login";
+  const tabButton=[...document.querySelectorAll(".tab")].find(button=>button.getAttribute("onclick")?.includes(`'${tab}'`));
+  openTab(tab,{target:tabButton});
+}
+
 document.addEventListener("click",function(e){
   if(!e.target.closest(".country-picker")){
     document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
@@ -1679,9 +1771,9 @@ document.addEventListener("click",function(e){
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/config.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
   <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
 </body>
 </html>

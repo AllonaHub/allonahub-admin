@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kupon Merkezi | AllonaHub</title>
+  <meta name="description" content="AllonaHub HP/XP ve kupon avantajları.">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+<body>
+  <div class="site-shell" data-page="rewards">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Kupon Merkezi</h1>
+          <p>HP gerçek para bakiyesi değildir; yalnızca indirim, kupon ve kampanya hakkı olarak kullanılabilir.</p>
+        </div>
+      </section>
+      <section class="container account-grid">
+        <nav class="side-menu" aria-label="Hesap menüsü">
+          <a href="user-panel.html">Panel</a>
+          <a href="addresses.html">Adreslerim</a>
+          <a href="orders.html">Siparişlerim</a>
+          <a href="favorites.html">Favorilerim</a>
+          <a href="rewards.html" aria-current="page">Kupon Merkezi</a>
+          <button type="button" data-sign-out>Çıkış Yap</button>
+        </nav>
+        <div>
+          <div data-rewards-status></div>
+          <section class="stats-grid" data-rewards-summary></section>
+          <section class="section">
+            <div class="section-header">
+              <div><p class="eyebrow">Kampanyalar</p><h2>Aktif Kuponlar</h2></div>
+              <a class="btn btn--light" href="../commerce/guvenli-odeme.html">Güvenli Ödeme</a>
+            </div>
+            <div class="coupon-grid" data-coupon-center-list></div>
+          </section>
+          <section class="section">
+            <div class="section-header">
+              <div><p class="eyebrow">HP Hareketleri</p><h2>Son İşlemler</h2></div>
+            </div>
+            <div class="table-wrap" data-hp-ledger-list></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-live5" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/cart.js?v=20260621-tx1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/rewards-page.js?v=20260621-tx1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+</body>
+</html>

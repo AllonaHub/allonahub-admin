@@ -6,8 +6,8 @@ const SQLI_PATTERN = /\b(union\s+select|information_schema|pg_sleep|benchmark\s*
 const XSS_PATTERN = /(<script|javascript:|onerror\s*=|onload\s*=|<iframe|data:text\/html)/i;
 const TRAVERSAL_PATTERN = /(\.\.\/|\.\.\\|%2e%2e|%252e%252e|\/etc\/passwd|\\windows\\win\.ini)/i;
 const PROBE_PATTERN = /(\/wp-admin|\/wp-login|\/wordpress|\/xmlrpc\.php|\/phpmyadmin|\/\.env|\/vendor\/phpunit|\/cgi-bin|\/adminer)/i;
-const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|platform-alerts|payments|cv|orders|partner|hp-wallet|cron)\b/i;
-const ADMIN_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|platform-alerts)\b/i;
+const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console|platform-alerts|payments|cv|orders|partner|rewards|hp-wallet|cron)\b/i;
+const ADMIN_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console|platform-alerts)\b/i;
 
 const state = {
   ipScores: new Map(),
@@ -37,6 +37,14 @@ function routePath(request) {
 
 function hostName(request) {
   return String(request.headers.host || "").split(":")[0].trim().toLowerCase();
+}
+
+function hasBearerToken(request) {
+  return /^bearer\s+\S+/i.test(String(request.headers.authorization || "").trim());
+}
+
+function canPassPrivilegedAuthGate(request, pathname = routePath(request)) {
+  return ADMIN_PATH_PATTERN.test(pathname) && hasBearerToken(request);
 }
 
 function compactPath(pathname) {
@@ -76,11 +84,12 @@ function pushIncident(report) {
   }
 }
 
-function routeLimitFor(pathname) {
+function routeLimitFor(pathname, request) {
   const strict = state.strictModeUntil > now();
+  if (ADMIN_PATH_PATTERN.test(pathname) && hasBearerToken(request)) return strict ? 30 : 80;
   if (ADMIN_PATH_PATTERN.test(pathname)) return strict ? 8 : 16;
   if (/^\/v1\/payments\b/i.test(pathname)) return strict ? 10 : 24;
-  if (/^\/v1\/(orders|cv|partner|hp-wallet)\b/i.test(pathname)) return strict ? 18 : 36;
+  if (/^\/v1\/(orders|cv|partner|rewards|hp-wallet)\b/i.test(pathname)) return strict ? 18 : 36;
   return strict ? 60 : 120;
 }
 
@@ -278,7 +287,7 @@ function requestSignals(request, bodyValue = "", options = {}) {
 
   if (countRouteHit) {
     const routeCount = countRoute(ip, pathname);
-    const routeLimit = routeLimitFor(pathname);
+    const routeLimit = routeLimitFor(pathname, request);
     if (routeCount > routeLimit) {
       signals.push({
         type: SENSITIVE_PATH_PATTERN.test(pathname) ? "privileged_rate" : "rate",
@@ -300,7 +309,7 @@ function failureSignals(request, statusCode) {
   if (statusCode === 403) signals.push({ type: "authz", reason: "authorization_failure", score: 4, action: "strict_mode" });
   if (statusCode === 429) signals.push({ type: "rate", reason: "framework_rate_limited", score: 5, action: "strict_mode" });
   if (statusCode === 404 && PROBE_PATTERN.test(pathname)) signals.push({ type: "probe", reason: "probe_404", score: 5, action: "ip_block" });
-  if (ADMIN_PATH_PATTERN.test(pathname) && [401, 403, 429].includes(statusCode)) {
+  if (ADMIN_PATH_PATTERN.test(pathname) && [401, 403, 429].includes(statusCode) && !hasBearerToken(request)) {
     signals.push({ type: "admin", reason: "admin_access_failure", score: 6, action: "admin_lock" });
   }
   if (/^\/v1\/payments\b/i.test(pathname) && [400, 401, 403, 429].includes(statusCode)) {
@@ -348,7 +357,7 @@ export function registerAutoDefense(app) {
     const ip = clientIp(request);
     const pathname = routePath(request);
     const blockedUntil = state.blockedIps.get(ip) || 0;
-    if (blockedUntil > now() && pathname !== "/health") {
+    if (blockedUntil > now() && pathname !== "/health" && !canPassPrivilegedAuthGate(request, pathname)) {
       return reply.code(429).send({
         ok: false,
         error: "AUTO_DEFENSE_BLOCKED",
@@ -358,7 +367,7 @@ export function registerAutoDefense(app) {
 
     const signals = requestSignals(request);
     const blocked = await evaluate(request, signals);
-    if (blocked && routePath(request) !== "/health") {
+    if (blocked && routePath(request) !== "/health" && !canPassPrivilegedAuthGate(request)) {
       return reply.code(429).send({
         ok: false,
         error: "AUTO_DEFENSE_BLOCKED",
@@ -371,7 +380,7 @@ export function registerAutoDefense(app) {
     if (!config.autoDefense.enabled) return;
     const signals = requestSignals(request, request.body, { countRoute: false });
     const blocked = await evaluate(request, signals);
-    if (blocked && routePath(request) !== "/health") {
+    if (blocked && routePath(request) !== "/health" && !canPassPrivilegedAuthGate(request)) {
       throw blockedError();
     }
   });

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Kupon Yönetimi | AllonaHub</title>
+  <link rel="stylesheet" href="../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../css/platform.css?v=20260622-corp2">
+</head>
+<body>
+  <div class="site-shell" data-page="admin-coupons">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>Kupon Yönetimi</h1>
+          <p>Kuponlar kampanya ve indirim hakkı olarak çalışır; gerçek para cüzdanı gibi gösterilmez.</p>
+        </div>
+      </section>
+      <section class="container checkout-grid">
+        <form class="panel" data-admin-coupon-form>
+          <div data-admin-coupon-status></div>
+          <div class="form-grid">
+            <div class="field"><label for="coupon-code">Kod</label><input id="coupon-code" name="code" required autocomplete="off"></div>
+            <div class="field"><label for="coupon-title">Başlık</label><input id="coupon-title" name="title" required></div>
+            <div class="field field--full"><label for="coupon-description">Açıklama</label><textarea id="coupon-description" name="description"></textarea></div>
+            <div class="field"><label for="discount-type">İndirim tipi</label><select id="discount-type" name="discount_type"><option value="fixed">Sabit tutar</option><option value="percent">Yüzde</option></select></div>
+            <div class="field"><label for="discount-value">İndirim değeri</label><input id="discount-value" name="discount_value" type="number" min="0" step="0.01" required></div>
+            <div class="field"><label for="min-total">Minimum sepet</label><input id="min-total" name="min_order_total" type="number" min="0" step="0.01"></div>
+            <div class="field"><label for="max-discount">Maksimum indirim</label><input id="max-discount" name="max_discount" type="number" min="0" step="0.01"></div>
+            <div class="field"><label for="usage-limit">Kullanım limiti</label><input id="usage-limit" name="usage_limit" type="number" min="0" step="1"></div>
+            <div class="field"><label for="starts-at">Başlangıç</label><input id="starts-at" name="starts_at" type="datetime-local"></div>
+            <div class="field"><label for="ends-at">Bitiş</label><input id="ends-at" name="ends_at" type="datetime-local"></div>
+            <div class="field field--full"><label><input type="checkbox" name="is_active" checked> Aktif</label></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Kuponu Kaydet</button>
+            <a class="btn btn--light" href="orders.html">Sipariş Yönetimi</a>
+          </div>
+        </form>
+        <aside class="summary-card">
+          <h2>Server-side Kontrol</h2>
+          <p>Kupon süresi, kullanım limiti ve minimum sepet kontrolü `create_transaction_order` içinde tekrar doğrulanır.</p>
+        </aside>
+      </section>
+      <section class="container section"><div class="table-wrap" data-admin-coupons-list></div></section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js?v=20260619-live5" defer></script>
+  <script src="../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../js/admin-coupons-page.js?v=20260621-tx1" defer></script>
+</body>
+</html>

@@ -1,5 +1,35 @@
 # TASKS
 
+## Zorunlu Açılış Kilidi - AllonaHub MVP
+
+Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılışa izin yoktur.
+
+- [ ] Süper Admin Paneli
+- [ ] Admin Paneli
+- [ ] Kullanıcı Paneli
+- [ ] Partner Paneli
+- [ ] Sipariş Sistemi
+- [ ] iyzico Ödeme Sistemi
+- [ ] HP / Kupon Sistemi
+- [ ] Finans ve Komisyon Merkezi
+- [ ] Bildirim Sistemi
+- [ ] Hetzner Backend Geçişi
+
+## Öncelik 0 - Transaction Core MVP
+
+- [x] Kullanıcı adres kaydı için `addresses` RLS ve default adres kurallarını migration'a ekle.
+- [x] Gerçek Supabase sepeti için `carts`, `cart_items` ve sepet RPC'lerini hazırla.
+- [x] Sipariş oluşturmayı `create_transaction_order(...)` RPC'sine taşı.
+- [x] Checkout'u kart bilgisi toplamadan iyzico yönlendirmesine bağla.
+- [x] Kupon ve HP indirimini MVP seviyesinde server-side doğrula.
+- [x] Kullanıcı Kupon Merkezi sayfasını ekle.
+- [x] Admin sipariş, kupon ve HP/XP yönetim ekranlarını genişlet.
+- [x] Partner Siparişlerim ekranını partner sipariş kalemleriyle hazırla.
+- [x] iyzico Edge Function durum güncellemelerini yeni `status` alanıyla uyumlu yap.
+- [ ] Canlı Supabase projesinde `supabase/migrations/20260621015000_transaction_core_mvp.sql` migration'ını çalıştır.
+- [ ] Canlı iyzico sandbox/prod secret değerlerini Edge Functions'a gir ve ödeme turunu uçtan uca test et.
+- [ ] Partner/admin sipariş durumu güncellemesini canlı RLS altında gerçek rollerle test et.
+
 ## Öncelik 0 - Yeni Allona Shop Mimari Kararı
 
 - [x] Kullanıcı tarafından verilen tek dosyalık Allona Shop anasayfasını `/index.html` olarak birebir kaydet.

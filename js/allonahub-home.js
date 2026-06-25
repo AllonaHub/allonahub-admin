@@ -18,27 +18,93 @@ else{greeting.textContent="İyi Geceler";visual.classList.add("night-visual")}
 updateHeroTime();
 setInterval(updateHeroTime,1000);
 
-async function setLocationByBrowser(){
+function updateLocationStatus(active,city,country){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
-if(!navigator.geolocation){return}
+const pinEl=document.getElementById("heroLocationStatus")||document.querySelector(".pin-dot");
+if(cityEl){cityEl.textContent=city||"Konum belirlenemedi"}
+if(countryEl){countryEl.textContent=country||"İzin verilmedi"}
+if(pinEl){
+pinEl.classList.toggle("is-location-active",Boolean(active));
+const label=active?"Konum izni açık":"Konum izni kapalı";
+pinEl["__allonaSource_aria-label"]=label;
+pinEl.__allonaSource_title=label;
+pinEl.setAttribute("aria-label",label);
+pinEl.setAttribute("title",label);
+	}
+}
+
+function getLocationErrorMessage(error){
+if(error&&error.code===1){return ["Konum izni kapalı","İzin verilmedi"]}
+if(error&&error.code===2){return ["Konum alınamadı","Sinyal yok"]}
+if(error&&error.code===3){return ["Konum zaman aşımı","Tekrar deneyin"]}
+return ["Konum belirlenemedi","İzin verilmedi"]
+}
+
+async function reverseGeocodeLocation(lat,lon){
+const providers=[
+`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=10&addressdetails=1&accept-language=tr`,
+`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&localityLanguage=tr`
+];
+for(const url of providers){
+try{
+const res=await fetch(url,{headers:{Accept:"application/json"}});
+if(!res.ok){continue}
+const data=await res.json();
+const address=data.address||data.localityInfo?.administrative?.reduce((acc,item)=>{
+if(item&&item.name&&!acc[item.description]){acc[item.description]=item.name}
+return acc
+},{})||{};
+const city=address.city||address.town||address.village||address.district||address.county||address.state||data.city||data.locality||data.principalSubdivision;
+const country=address.country||data.countryName;
+if(city||country){return {city,country}}
+}catch(e){
+}
+}
+return null
+}
+
+function requestBrowserLocation(){
 navigator.geolocation.getCurrentPosition(async function(pos){
 const lat=pos.coords.latitude;
 const lon=pos.coords.longitude;
-try{
-const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=tr`);
-const data=await res.json();
-const address=data.address||{};
-cityEl.textContent=address.city||address.town||address.district||address.county||address.state||"Konum";
-countryEl.textContent=address.country||"Türkiye";
-}catch(e){
-cityEl.textContent="İstanbul";
-countryEl.textContent="Türkiye";
+let city="Konum bulundu";
+let country="Canlı konum açık";
+const place=await reverseGeocodeLocation(lat,lon);
+if(place){
+city=place.city||city;
+country=place.country||country;
 }
-},function(){
-cityEl.textContent="İstanbul";
-countryEl.textContent="Türkiye";
+updateLocationStatus(true,city,country);
+},function(error){
+const message=getLocationErrorMessage(error);
+updateLocationStatus(false,message[0],message[1]);
+},{
+enableHighAccuracy:false,
+maximumAge:600000,
+timeout:8000
 });
+}
+
+async function setLocationByBrowser(){
+updateLocationStatus(false,"Konum belirlenemedi","İzin bekleniyor");
+if(!navigator.geolocation){return}
+let permission;
+if(navigator.permissions&&navigator.permissions.query){
+try{
+permission=await navigator.permissions.query({name:"geolocation"});
+}catch(e){
+permission=null;
+}
+if(permission&&"onchange" in permission){
+permission.onchange=function(){setLocationByBrowser()};
+}
+}
+if(permission&&permission.state==="denied"){
+updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
+return
+}
+requestBrowserLocation();
 }
 setLocationByBrowser();
 
@@ -130,15 +196,24 @@ const searchRoutes=[
 {keys:["trade","ithalat","ihracat"],url:"/pages/ecosystem/allonatrade.html"},
 {keys:["otelcilik","otel","konaklama"],url:"/pages/ecosystem/allonaotelcilik.html"},
 {keys:["kupon","hp","kampanya","indirim"],url:"/pages/commerce/kuponlar.html"},
-{keys:["wallet","pay"],url:"/pages/wallet/hubwallet.html"}
+{keys:["wallet","pay"],url:"/pages/account/rewards.html"}
 ];
 
+function appUrl(path){
+return window.Allona&&window.Allona.core?window.Allona.core.url(path):path;
+}
+
+function cleanSearchText(value){
+return String(value||"").replace(/\s+/g," ").trim().slice(0,120);
+}
+
 function globalSearch(){
-const q=document.getElementById("globalSearchInput").value.toLowerCase().trim();
+const input=document.getElementById("globalSearchInput");
+const q=cleanSearchText(input&&input.value).toLocaleLowerCase("tr-TR");
 if(!q){return}
 const found=searchRoutes.find(item=>item.keys.some(k=>q.includes(k)));
-if(found){window.location.href=found.url}
-else{window.location.href=["arama","html"].join(".")+"?q="+encodeURIComponent(q)}
+if(found){window.location.href=appUrl(found.url)}
+else{window.location.href=appUrl(`/pages/search/arama.html?q=${encodeURIComponent(q)}`)}
 }
 
 window.globalSearch=globalSearch;

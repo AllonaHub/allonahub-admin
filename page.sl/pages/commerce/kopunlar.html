@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>İndirim Kuponları | AllonaHub</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:linear-gradient(180deg,#03131d,#071f2d,#01070c);
+color:#fff;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:40px 20px;
+}
+
+.header{
+text-align:center;
+margin-bottom:40px;
+}
+
+.header h1{
+font-size:42px;
+color:#ffd979;
+margin-bottom:10px;
+}
+
+.header p{
+color:#cfeaf4;
+}
+
+.coupon-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;
+}
+
+.coupon-card{
+background:rgba(255,255,255,0.08);
+border:1px solid rgba(255,215,121,.15);
+border-radius:24px;
+padding:24px;
+backdrop-filter:blur(12px);
+transition:.3s;
+}
+
+.coupon-card:hover{
+transform:translateY(-5px);
+}
+
+.discount{
+font-size:36px;
+font-weight:bold;
+color:#ffd979;
+margin-bottom:10px;
+}
+
+.coupon-title{
+font-size:20px;
+font-weight:bold;
+margin-bottom:10px;
+}
+
+.coupon-desc{
+color:#c9e8f3;
+line-height:1.6;
+margin-bottom:15px;
+}
+
+.code{
+background:rgba(255,255,255,.08);
+padding:12px;
+border-radius:12px;
+text-align:center;
+font-weight:bold;
+letter-spacing:2px;
+color:#00d4ff;
+margin-bottom:15px;
+}
+
+.btn{
+display:block;
+border:0;
+width:100%;
+text-align:center;
+padding:12px;
+border-radius:14px;
+background:linear-gradient(135deg,#00b4d8,#ffd979);
+color:#06131a;
+font-weight:bold;
+text-decoration:none;
+font:inherit;
+cursor:pointer;
+}
+
+.btn--ghost{
+background:rgba(255,255,255,.08);
+color:#dff8ff;
+border:1px solid rgba(0,180,216,.26);
+}
+
+.coupon-actions{
+display:grid;
+grid-template-columns:1fr;
+gap:10px;
+}
+
+.page-actions{
+display:flex;
+justify-content:center;
+gap:12px;
+flex-wrap:wrap;
+margin:24px 0 34px;
+}
+
+.page-actions .btn{
+width:auto;
+min-width:180px;
+}
+
+.coupon-status{
+margin:28px 0 0;
+padding:16px;
+border-radius:18px;
+background:rgba(0,180,216,.10);
+border:1px solid rgba(0,180,216,.26);
+color:#e7fbff;
+line-height:1.6;
+text-align:center;
+}
+
+.coupon-status--success{
+background:rgba(43,214,138,.12);
+border-color:rgba(43,214,138,.32);
+}
+
+.coupon-wallet{
+margin-top:30px;
+padding:22px;
+border-radius:22px;
+background:rgba(255,255,255,.07);
+border:1px solid rgba(255,255,255,.12);
+}
+
+.coupon-wallet h2{
+margin:0 0 14px;
+color:#ffd979;
+font-size:24px;
+}
+
+.coupon-wallet p{
+margin:0;
+color:#c9e8f3;
+}
+
+.wallet-coupon{
+display:flex;
+justify-content:space-between;
+gap:16px;
+padding:12px 0;
+border-top:1px solid rgba(255,255,255,.10);
+color:#dff8ff;
+}
+
+.wallet-coupon strong{
+color:#fff;
+}
+
+.wallet-coupon span{
+color:#9edff2;
+}
+
+.notice{
+margin-top:40px;
+padding:20px;
+border-radius:20px;
+background:rgba(0,180,216,.08);
+border:1px solid rgba(0,180,216,.2);
+line-height:1.7;
+color:#dff8ff;
+}
+
+</style>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<h1>İndirim Kuponları</h1>
+<p>AllonaHub kampanyaları ve sadakat avantajlarından yararlanın.</p>
+</div>
+
+<div class="page-actions">
+<a href="../../index.html" class="btn" data-home-link>Ana Sayfaya Dön</a>
+<a href="../account/user-panel.html" class="btn btn--ghost" data-account-return-link>Hesabıma Dön</a>
+</div>
+
+<div class="coupon-grid">
+
+<div class="coupon-card">
+<div class="discount">%10</div>
+<div class="coupon-title">Hoş Geldin Kuponu</div>
+<div class="coupon-desc">
+Yeni üyelere özel ilk alışveriş indirimi.
+</div>
+<div class="code">WELCOME10</div>
+<div class="coupon-actions">
+<button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="WELCOME10">Kuponu Kullan</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="WELCOME10">HP Kupona Çevir</button>
+</div>
+</div>
+
+<div class="coupon-card">
+<div class="discount">%15</div>
+<div class="coupon-title">Partner Kampanyası</div>
+<div class="coupon-desc">
+Seçili partner mağazalarda geçerlidir.
+</div>
+<div class="code">PARTNER15</div>
+<div class="coupon-actions">
+<button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="PARTNER15">Kuponu Kullan</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="PARTNER15">HP Kupona Çevir</button>
+</div>
+</div>
+
+<div class="coupon-card">
+<div class="discount">%20</div>
+<div class="coupon-title">HP Avantaj Kuponu</div>
+<div class="coupon-desc">
+Sadakat programı kullanıcılarına özel avantaj.
+</div>
+<div class="code">HP20</div>
+<div class="coupon-actions">
+<button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="HP20">Kuponu Kullan</button>
+<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="HP20">HP Kupona Çevir</button>
+</div>
+</div>
+
+</div>
+
+<div data-coupon-status></div>
+
+<section class="coupon-wallet" aria-label="Hesabımdaki kuponlar">
+<h2>Hesabımdaki Kuponlar</h2>
+<div data-coupon-wallet></div>
+</section>
+
+<div class="notice">
+<strong>Bilgilendirme:</strong><br><br>
+
+İndirim kuponları kampanya ve sadakat avantajı kapsamında sunulmaktadır.
+
+Kuponlar nakit para değildir, para transferi amacıyla kullanılamaz ve nakde çevrilemez.
+
+Kupon kullanım koşulları ilgili kampanya şartlarına tabidir.
+
+</div>
+
+<div class="page-actions">
+<a href="../../index.html" class="btn">Ana Sayfaya Dön</a>
+<a href="../account/user-panel.html" class="btn btn--ghost">Hesabıma Dön</a>
+</div>
+
+</div>
+  <div data-layout="footer"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-cvpay2" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/coupon-page.js?v=20260620-coupon2" defer></script>
+</body>
+</html>

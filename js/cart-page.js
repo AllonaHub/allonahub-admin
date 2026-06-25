@@ -12,8 +12,10 @@
       <div class="summary-line"><span>Ara toplam</span><strong>${core.money(totals.subtotal)}</strong></div>
       <div class="summary-line"><span>Kargo</span><strong>${totals.shipping ? core.money(totals.shipping) : "Ücretsiz"}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
-      <a class="btn btn--full" href="${core.url("/pages/commerce/checkout.html")}" ${lines.length ? "" : "aria-disabled='true'"}>Checkout</a>
-      <button class="btn btn--light btn--full" type="button" data-clear-cart>Sepeti Temizle</button>
+      ${lines.length
+        ? `<a class="btn btn--full" href="${core.url("/pages/commerce/guvenli-odeme.html")}">Ödemeye Geç</a>`
+        : `<button class="btn btn--full" type="button" disabled>Ödemeye Geç</button>`}
+      <button class="btn btn--light btn--full" type="button" data-clear-cart ${lines.length ? "" : "disabled"}>Sepeti Temizle</button>
     `;
   }
 
@@ -68,20 +70,20 @@
 
       if (inc) {
         const item = lines.find((line) => String(line.product.id) === String(inc.dataset.cartInc));
-        if (item) App.cart.setQty(item.product.id, item.qty + 1);
+        if (item) await App.cart.setQty(item.product.id, item.qty + 1);
         await loadCart();
       }
       if (dec) {
         const item = lines.find((line) => String(line.product.id) === String(dec.dataset.cartDec));
-        if (item) App.cart.setQty(item.product.id, Math.max(1, item.qty - 1));
+        if (item) await App.cart.setQty(item.product.id, item.qty - 1);
         await loadCart();
       }
       if (remove) {
-        App.cart.remove(remove.dataset.cartRemove);
+        await App.cart.remove(remove.dataset.cartRemove);
         await loadCart();
       }
       if (clear) {
-        App.cart.clear();
+        await App.cart.clear();
         await loadCart();
       }
     });

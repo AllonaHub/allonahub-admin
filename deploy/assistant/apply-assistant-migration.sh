@@ -23,4 +23,3 @@ fi
 echo "Applying assistant migration: $(basename "$MIGRATION_FILE")"
 psql "$DB_URL" -v ON_ERROR_STOP=1 -f "$MIGRATION_FILE"
 echo "Assistant migration applied."
-

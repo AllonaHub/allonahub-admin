@@ -7,34 +7,41 @@
     "belgeler.html": "/pages/account/belgeler.html",
     "bildirimler.html": "/pages/account/bildirimler.html",
     "favorites.html": "/pages/account/favorites.html",
-    "forgot-password.html": "/pages/account/forgot-password.html",
+    "forgot-password.html": "/pages/account/user.html?tab=forgot",
     "gorevler.html": "/pages/account/gorevler.html",
-    "login.html": "/pages/account/login.html",
+    "login.html": "/pages/account/user.html",
     "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",
+    "order-detail.html": "/pages/account/order-detail.html",
     "premium.html": "/pages/account/premium.html",
     "profil.html": "/pages/account/profil.html",
     "profile.html": "/pages/account/profile.html",
-    "register.html": "/pages/account/register.html",
+    "register.html": "/pages/account/user.html?tab=register",
     "reset-password.html": "/pages/account/reset-password.html",
+    "rewards.html": "/pages/account/rewards.html",
     "user-panel.html": "/pages/account/user-panel.html",
     "user.html": "/pages/account/user.html",
     "admin-orders.html": "/admin/orders.html",
+    "admin-order-detail.html": "/admin/order-detail.html",
+    "admin-coupons.html": "/admin/coupons.html",
+    "admin-rewards.html": "/admin/rewards.html",
     "super-admin.html": "/admin/super-admin.html",
     "allonakariyer.html": "/pages/career/allonakariyer.html",
     "career-cv-form.html": "/pages/career/career-cv-form.html",
     "cv-form.html": "/pages/career/cv-form.html",
     "cv-payment.html": "/pages/career/cv-payment.html",
-    "kariyer.html": "/pages/career/kariyer.html",
+    "kariyer.html": "/pages/career/allonakariyer.html",
     "maritime-cv.html": "/pages/career/maritime-cv.html",
     "allonamarket.html": "/pages/commerce/allonamarket.html",
     "allonashop.html": "/pages/commerce/allonashop.html",
     "allonayemek.html": "/pages/commerce/allonayemek.html",
     "cart.html": "/pages/commerce/cart.html",
-    "checkout.html": "/pages/commerce/checkout.html",
-    "kopunlar.html": "/pages/commerce/kopunlar.html",
+    "checkout.html": "/pages/commerce/guvenli-odeme.html",
+    "guvenli-odeme.html": "/pages/commerce/guvenli-odeme.html",
+    "iyzico-pay.html": "/pages/commerce/iyzico-pay.html",
+    "kopunlar.html": "/pages/commerce/kuponlar.html",
     "kuponlar.html": "/pages/commerce/kuponlar.html",
-    "ode.html": "/pages/commerce/ode.html",
+    "ode.html": "/pages/commerce/odeme.html",
     "odeme.html": "/pages/commerce/odeme.html",
     "order-success.html": "/pages/commerce/order-success.html",
     "product.html": "/pages/commerce/product.html",
@@ -43,7 +50,7 @@
     "hakkimizda.html": "/pages/company/hakkimizda.html",
     "iletisim.html": "/pages/company/iletisim.html",
     "arama.html": "/pages/search/arama.html",
-    "ecosystem.html": "/pages/ecosystem/ecosystem.html",
+    "ecosystem.html": "/index.html#modules",
     "taxi.html": "/pages/ecosystem/allonataksi.html",
     "allonaavm.html": "/pages/ecosystem/allonaavm.html",
     "allonadanismanlik.html": "/pages/ecosystem/allonadanismanlik.html",
@@ -63,7 +70,7 @@
     "allonanakliye.html": "/pages/ecosystem/allonanakliye.html",
     "allonaorganizasyon.html": "/pages/ecosystem/allonaorganizasyon.html",
     "allonaotomotiv.html": "/pages/ecosystem/allonaotomotiv.html",
-    "allonapet.html": "/pages/ecosystem/allonapet.html",
+    "allonapet.html": "/pages/ecosystem/allonaevcilhayvan.html",
     "allonasaglik.html": "/pages/ecosystem/allonasaglik.html",
     "allonaseyahat.html": "/pages/ecosystem/allonaseyahat.html",
     "allonasigorta.html": "/pages/ecosystem/allonasigorta.html",
@@ -74,29 +81,30 @@
     "allonateknoloji.html": "/pages/ecosystem/allonateknoloji.html",
     "allonatrade.html": "/pages/ecosystem/allonatrade.html",
     "ayakında.html": "/pages/ecosystem/ayakında.html",
-    "danismanlik.html": "/pages/ecosystem/danismanlik.html",
-    "denizcilik.html": "/pages/ecosystem/denizcilik.html",
-    "eglence.html": "/pages/ecosystem/eglence.html",
-    "evhizmetleri.html": "/pages/ecosystem/evhizmetleri.html",
-    "finans.html": "/pages/ecosystem/finans.html",
-    "gayrimenkul.html": "/pages/ecosystem/gayrimenkul.html",
-    "guzellik.html": "/pages/ecosystem/guzellik.html",
-    "hukuk.html": "/pages/ecosystem/hukuk.html",
-    "insaat.html": "/pages/ecosystem/insaat.html",
-    "kargolojistik.html": "/pages/ecosystem/kargolojistik.html",
-    "kurye.html": "/pages/ecosystem/kurye.html",
+    "danismanlik.html": "/pages/ecosystem/allonadanismanlik.html",
+    "denizcilik.html": "/pages/ecosystem/allonadenizcilik.html",
+    "eglence.html": "/pages/ecosystem/allonaeglence.html",
+    "evhizmetleri.html": "/pages/ecosystem/allonaevhizmetleri.html",
+    "finans.html": "/pages/ecosystem/allonafinans.html",
+    "gayrimenkul.html": "/pages/ecosystem/allonagayrimenkul.html",
+    "guzellik.html": "/pages/ecosystem/allonaguzellik.html",
+    "hukuk.html": "/pages/ecosystem/allonahukuk.html",
+    "insaat.html": "/pages/ecosystem/allonainsaat.html",
+    "kargolojistik.html": "/pages/ecosystem/allonalojistik.html",
+    "kurye.html": "/pages/ecosystem/allonakurye.html",
     "maritime.html": "/pages/ecosystem/maritime.html",
-    "nakliye.html": "/pages/ecosystem/nakliye.html",
-    "organizasyondugun.html": "/pages/ecosystem/organizasyondugun.html",
-    "otomotiv.html": "/pages/ecosystem/otomotiv.html",
-    "sigorta.html": "/pages/ecosystem/sigorta.html",
-    "sportiv.html": "/pages/ecosystem/sportiv.html",
-    "tarim.html": "/pages/ecosystem/tarim.html",
-    "teknoloji.html": "/pages/ecosystem/teknoloji.html",
+    "nakliye.html": "/pages/ecosystem/allonanakliye.html",
+    "organizasyondugun.html": "/pages/ecosystem/allonaorganizasyon.html",
+    "otomotiv.html": "/pages/ecosystem/allonaotomotiv.html",
+    "sigorta.html": "/pages/ecosystem/allonasigorta.html",
+    "sportiv.html": "/pages/ecosystem/allonasporfitness.html",
+    "tarim.html": "/pages/ecosystem/allonatarim.html",
+    "teknoloji.html": "/pages/ecosystem/allonateknoloji.html",
     "yakında.html": "/pages/ecosystem/yakında.html",
     "partner.html": "/pages/partner/partner.html",
     "partner-cargo-settings.html": "/pages/partner/partner-cargo-settings.html",
     "partner-orders.html": "/pages/partner/partner-orders.html",
+    "partner-order-detail.html": "/pages/partner/partner-order-detail.html",
     "partner-panel.html": "/pages/partner/partner-panel.html",
     "partner-pay.html": "/pages/partner/pay.html",
     "partner-uyelik.html": "/pages/partner/partner-uyelik.html",
@@ -110,13 +118,13 @@
     "kullanim-sartlari.html": "/pages/legal/kullanim-sartlari.html",
     "kullanım-sartları.html": "/pages/legal/kullanım-sartları.html",
     "kvkk.html": "/pages/legal/kvkk.html",
-    "mesafeli-satis-sozlesmesi.html": "/pages/legal/mesafeli-satis-sozlesmesi.html",
+    "mesafeli-satis-sozlesmesi.html": "/pages/legal/mesafeli-satis.html",
     "mesafeli-satis.html": "/pages/legal/mesafeli-satis.html",
     "on-bilgilendirme.html": "/pages/legal/on-bilgilendirme.html",
     "teslimat-kargo.html": "/pages/legal/teslimat-kargo.html",
     "hp-nedir.html": "/pages/wallet/hp-nedir.html",
     "hp-wallet-kurallari.html": "/pages/wallet/hp-wallet-kurallari.html",
-    "hubwallet.html": "/pages/wallet/hubwallet.html",
+    "hubwallet.html": "/pages/account/rewards.html",
     "allona.logo.png": "/images/brand/allona.logo.png",
     "avm-dunyasi.png": "/images/modules/avm-dunyasi.png",
     "muhendislik-v2.png": "/images/modules/muhendislik-v2.png",
@@ -129,7 +137,12 @@
     const match = raw.match(/^([^?#]+)([?#].*)?$/);
     if (!match) return raw;
     const target = legacyRoutes[match[1]];
-    return target ? `${target}${match[2] || ""}` : raw;
+    if (!target) return raw;
+    const suffix = match[2] || "";
+    if (suffix.startsWith("?") && target.includes("?")) {
+      return `${target}&${suffix.slice(1)}`;
+    }
+    return `${target}${suffix}`;
   }
 
   function detectBasePath() {
@@ -189,6 +202,7 @@
     const fallback = url(fallbackPath || "/images/product-fallback.svg");
     const raw = String(value || "").trim();
     if (!raw) return fallback;
+    if (raw.startsWith("/") && !raw.startsWith("//")) return url(raw);
     try {
       const parsed = new URL(raw, window.location.href);
       if (["http:", "https:", "file:"].includes(parsed.protocol)) return parsed.href;
@@ -237,6 +251,7 @@
       stock: Number(product.stock ?? 0),
       status: product.status || "active",
       image_url: product.image_url || product.image || "",
+      module_key: product.module_key || product.moduleKey || product.catalog_scope || product.module_scope || product.commerce_scope || "",
       created_at: product.created_at || "",
       sold_count: Number(product.sold_count || 0),
       compare_at_price: Number(product.compare_at_price || product.original_price || product.old_price || 0),
@@ -244,6 +259,13 @@
       discount_label: product.discount_label || product.discount || "",
       rating: Number(product.rating || product.average_rating || 0),
       review_count: Number(product.review_count || product.reviews_count || product.rating_count || 0),
+      favorite_count: Number(product.favorite_count || product.favorites_count || product.favorite_total || 0),
+      view_count: Number(product.view_count || product.views_24h || product.view_count_24h || 0),
+      cart_count: Number(product.cart_count || product.in_cart_count || product.cart_add_count || 0),
+      coupon_label: product.coupon_label || product.coupon_text || (typeof product.coupon === "string" ? product.coupon : ""),
+      delivery_label: product.delivery_label || product.shipping_label || product.fulfillment_label || "",
+      seller_name: product.seller_name || product.partner_name || product.store_name || product.brand || "Allona Partner",
+      seller_score: Number(product.seller_score || product.store_score || product.partner_score || 0),
       meta_title: product.meta_title || name,
       meta_description: product.meta_description || description
     };
@@ -263,6 +285,43 @@
     return `${text.slice(0, Math.max(0, limit - 1)).trim()}…`;
   }
 
+  function compactCount(value) {
+    const count = Math.max(0, Number(value || 0));
+    if (!count) return "";
+    if (count >= 1000000) return `${(count / 1000000).toFixed(count >= 10000000 ? 0 : 1).replace(".", ",")}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(".", ",")}K`;
+    return String(count);
+  }
+
+  function productSnapshotAttr(product) {
+    const snapshot = {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      brand: product.brand,
+      price: product.price,
+      stock: product.stock,
+      image_url: product.image_url,
+      slug: product.slug,
+      rating: product.rating,
+      review_count: product.review_count,
+      sold_count: product.sold_count,
+      favorite_count: product.favorite_count,
+      cart_count: product.cart_count,
+      view_count: product.view_count,
+      coupon_label: product.coupon_label,
+      delivery_label: product.delivery_label,
+      module_key: product.module_key,
+      discount_label: product.discount_label,
+      discount_percent: product.discount_percent,
+      compare_at_price: product.compare_at_price,
+      seller_name: product.seller_name,
+      seller_score: product.seller_score
+    };
+    return escapeHTML(encodeURIComponent(JSON.stringify(snapshot)));
+  }
+
   function productCard(raw) {
     const product = normalizeProduct(raw);
     const disabled = product.stock <= 0;
@@ -272,10 +331,24 @@
     const discount = product.discount_label || (discountPercent > 0 ? `%${Math.min(95, discountPercent)} indirim` : "Fırsat");
     const rating = Math.max(0, Math.min(5, Number(product.rating || product.average_rating || 4.8))).toFixed(1);
     const ratingLabel = product.review_count ? `${rating} (${product.review_count})` : rating;
+    const freeShipping = product.price >= Number(App.config?.freeShippingThreshold || 1500);
+    const couponLabel = product.coupon_label || (discountPercent >= 10 ? "Kuponlu" : "");
+    const deliveryLabel = product.delivery_label || (freeShipping ? "Ücretsiz kargo" : "Hızlı teslimat");
+    const valueLabel = product.value_label || product.good_price_label || (discountPercent >= 20 ? "İyi fiyat" : product.sold_count >= 150 ? "Çok satan" : "");
+    const socialSignals = [
+      product.sold_count ? `${compactCount(product.sold_count)} satış` : "",
+      product.favorite_count ? `${compactCount(product.favorite_count)} favori` : "",
+      product.cart_count ? `${compactCount(product.cart_count)} sepette` : "",
+      product.view_count ? `${compactCount(product.view_count)} görüntüleme` : ""
+    ].filter(Boolean);
+    const socialProof = socialSignals.length
+      ? socialSignals.slice(0, 2).join(" · ")
+      : (product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : `${product.seller_name || product.brand || "Allona"} güvencesi`);
+    const productHref = productUrl(product);
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
-        <a class="product-card__media" href="${escapeHTML(productUrl(product))}" aria-label="${escapeHTML(product.name)}">
+        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
@@ -285,10 +358,16 @@
             <span class="pill pill--deal">${escapeHTML(discount)}</span>
             <span class="${disabled ? "stock stock--out" : "stock"}">${disabled ? "Stok yok" : `${product.stock} stok`}</span>
           </div>
-          <h3><a href="${escapeHTML(productUrl(product))}">${escapeHTML(product.name)}</a></h3>
+          <div class="product-card__deal-row">
+            ${valueLabel ? `<span class="market-signal market-signal--value">${escapeHTML(valueLabel)}</span>` : ""}
+            ${couponLabel ? `<span class="market-signal market-signal--coupon">${escapeHTML(couponLabel)}</span>` : ""}
+            <span class="market-signal market-signal--delivery">${escapeHTML(deliveryLabel)}</span>
+          </div>
+          <h3><a href="${escapeHTML(productHref)}">${escapeHTML(product.name)}</a></h3>
           <p class="product-card__description">${escapeHTML(truncate(product.description, 92))}</p>
           <div class="product-card__signals">
             <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
+            <span class="product-social-proof">${escapeHTML(socialProof)}</span>
           </div>
           <div class="price-row">
             <span class="price-stack">
@@ -298,7 +377,8 @@
             <span class="pill pill--gold">Allona</span>
           </div>
           <div class="product-card__actions">
-            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
+            <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
+            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}">İncele</a>
           </div>
         </div>
       </article>

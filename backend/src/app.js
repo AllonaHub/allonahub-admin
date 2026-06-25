@@ -24,8 +24,10 @@ export async function buildApp() {
       level: config.logLevel,
       redact: [
         "req.headers.authorization",
+        "req.body.secret_value",
         "req.headers.x-cron-secret",
         "headers.authorization",
+        "body.secret_value",
         "headers.x-cron-secret",
         "SUPABASE_SECRET_KEY",
         "SUPABASE_SERVICE_ROLE_KEY",
@@ -35,6 +37,14 @@ export async function buildApp() {
         "ASSISTANT_AI_API_KEY",
         "OPENAI_API_KEY",
         "ASSISTANT_TELEGRAM_BOT_TOKEN",
+        "ASSISTANT_META_ACCESS_TOKEN",
+        "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
+        "ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN",
+        "ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN",
+        "ASSISTANT_META_APP_SECRET",
+        "ASSISTANT_META_VERIFY_TOKEN",
+        "SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET",
+        "SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.supabase.secretKey",
@@ -44,6 +54,14 @@ export async function buildApp() {
         "config.assistant.aiApiKey",
         "config.assistant.telegramBotToken",
         "config.assistant.telegramWebhookSecret",
+        "config.assistant.metaAccessToken",
+        "config.assistant.metaWhatsappAccessToken",
+        "config.assistant.metaInstagramAccessToken",
+        "config.assistant.metaFacebookPageAccessToken",
+        "config.assistant.metaAppSecret",
+        "config.assistant.metaVerifyToken",
+        "config.socialMedia.dispatchWebhookSecret",
+        "config.socialMedia.secretEncryptionKey",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "turnstile.secretKey",
@@ -52,12 +70,32 @@ export async function buildApp() {
         "assistant.aiApiKey",
         "assistant.telegramBotToken",
         "assistant.telegramWebhookSecret",
+        "assistant.metaAccessToken",
+        "assistant.metaWhatsappAccessToken",
+        "assistant.metaInstagramAccessToken",
+        "assistant.metaFacebookPageAccessToken",
+        "assistant.metaAppSecret",
+        "assistant.metaVerifyToken",
+        "socialMedia.dispatchWebhookSecret",
+        "socialMedia.secretEncryptionKey",
         "cronSecret"
       ]
     },
     genReqId: requestId,
     trustProxy: true,
     bodyLimit: 1024 * 1024
+  });
+
+  app.removeContentTypeParser("application/json");
+  app.addContentTypeParser("application/json", { parseAs: "buffer" }, (request, body, done) => {
+    request.rawBody = body;
+    try {
+      const text = body.toString("utf8").trim();
+      done(null, text ? JSON.parse(text) : {});
+    } catch (error) {
+      error.statusCode = 400;
+      done(error);
+    }
   });
 
   await app.register(helmet, {

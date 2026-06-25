@@ -27,6 +27,19 @@ else
   echo "Nginx not installed"
 fi
 
+echo "== Mail Forwarding =="
+if command -v postconf >/dev/null 2>&1; then
+  postconf -n | grep -E '^(myhostname|virtual_alias_domains|virtual_alias_maps|sender_canonical_maps|recipient_canonical_maps) =' || true
+  systemctl is-active postfix || true
+else
+  echo "Postfix not installed"
+fi
+if command -v postsrsd >/dev/null 2>&1 || systemctl list-unit-files --type=service 2>/dev/null | grep -q '^postsrsd.service'; then
+  systemctl is-active postsrsd || true
+else
+  echo "PostSRSd not installed"
+fi
+
 echo "== Coolify =="
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qi coolify; then
   docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | grep -i coolify
@@ -35,4 +48,4 @@ else
 fi
 
 echo "== Ports =="
-ss -tulpn | grep -E ':(22|80|443|3000)\b' || true
+ss -tulpn | grep -E ':(22|25|80|443|3000)\b' || true

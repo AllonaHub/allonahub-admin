@@ -30,4 +30,3 @@ if ! grep -q '"ok":true' "$TMP_FILE"; then
 fi
 
 echo "Assistant smoke test passed."
-

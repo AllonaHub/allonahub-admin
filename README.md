@@ -69,4 +69,8 @@ Backend içinde kanal bağımsız assistant servisi hazırlanmıştır:
 
 AI sağlayıcı anahtarı, Telegram bot tokenı ve webhook secret değerleri kesinlikle frontend'e yazılmaz. İkinci aşama üretim modu ücretsiz ve kural tabanlıdır: `ASSISTANT_AI_PROVIDER=rules`, `ASSISTANT_AI_API_KEY=` ve `OPENAI_API_KEY=` boş kalmalıdır. Telegram için `ASSISTANT_TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` ve ilgili rate limit ayarları environment variable olarak tanımlanmalıdır.
 
+## Kurumsal E-posta Yönlendirme
+
+`info@allonahub.com`, `legal@allonahub.com`, `destek@allonahub.com`, `iletisim@allonahub.com`, `partner.destek@allonahub.com`, `teknik.destek@allonahub.com` ve `basvuru@allonahub.com` adresleri için Hetzner Postfix forwarding paketi `deploy/hetzner/setup-mail-forwarding.sh` altında tutulur. DNS ve canlı sunucu adımları `docs/deploy/hetzner-email-forwarding.md` dosyasındadır.
+
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `docs/security/enterprise-security-program.md`, `docs/security/incident-response-auto-defense.md`, `docs/reference/TASKS.md`, `docs/reference/DATABASE.md`, `docs/reference/API.md`, `docs/reference/DEPLOY.md` ve `docs/reference/STYLE_GUIDE.md` dosyalarını kullan.

@@ -45,6 +45,66 @@ body[data-theme="graphite"] {
   --ah-brand-gap: 12px;
 }
 
+.panel-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0 12px;
+  color: #041624;
+}
+
+.panel-step span {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #00b7ff, #006f9f);
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(0, 183, 255, .22);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, .14);
+  color: #8a6500;
+  font-size: .72em;
+  font-weight: 800;
+}
+
+.coupon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.coupon-card {
+  min-height: 180px;
+  padding: 18px;
+  border: 1px solid rgba(0, 183, 255, .16);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 14px 38px rgba(6, 25, 48, .08);
+}
+
+.coupon-card h3 {
+  margin: 14px 0 8px;
+  font-size: 1.1rem;
+}
+
+.coupon-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #006f9f;
+  font-size: 1.35rem;
+}
+
 .platform-alert-stack {
   position: fixed;
   top: 88px;
@@ -234,6 +294,31 @@ body[data-theme="white"] {
   --ah-footer-line: rgba(0, 119, 255, 0.16);
   --ah-shadow: 0 18px 42px rgba(0, 119, 255, 0.14);
   --ah-shadow-soft: 0 10px 26px rgba(0, 119, 255, 0.10);
+}
+
+body[data-theme="corporate"] {
+  --ah-bg: #f6f9fc;
+  --ah-bg-mid: #ffffff;
+  --ah-bg-strong: #ffffff;
+  --ah-primary: #0067b1;
+  --ah-primary-strong: #004b8d;
+  --ah-secondary: #008fc7;
+  --ah-accent: #c79312;
+  --ah-accent-soft: #d6a21c;
+  --ah-ink: #13283a;
+  --ah-muted: rgba(19, 40, 58, 0.68);
+  --ah-line: rgba(0, 77, 141, 0.16);
+  --ah-soft: rgba(255, 255, 255, 0.94);
+  --ah-surface: #ffffff;
+  --ah-card: #ffffff;
+  --ah-page-bg:
+    linear-gradient(180deg, #ffffff 0%, #f6f9fc 42%, #eef5fb 100%);
+  --ah-page-sheen: none;
+  --ah-footer-bg: #0d273a;
+  --ah-footer-panel: #13354d;
+  --ah-footer-line: rgba(255, 255, 255, 0.14);
+  --ah-shadow: 0 16px 34px rgba(19, 40, 58, 0.10);
+  --ah-shadow-soft: 0 8px 22px rgba(19, 40, 58, 0.08);
 }
 
 body {
@@ -444,6 +529,12 @@ html[dir="rtl"] .header-actions {
 
 .platform-theme-swatch--sunset {
   background: linear-gradient(135deg, #ff3d81, #ffb347);
+}
+
+.platform-theme-swatch--corporate {
+  background: linear-gradient(135deg, #ffffff 0 42%, #0067b1 43% 72%, #d6a21c 73% 100%);
+  border: 1px solid rgba(0, 77, 141, 0.24);
+  box-shadow: 0 8px 16px rgba(0, 77, 141, 0.14);
 }
 
 .platform-theme-swatch--forest {
@@ -697,6 +788,7 @@ body[data-theme] .partner-cta,
 body[data-theme] .info,
 body[data-theme] .sticky-cart,
 body[data-theme] .product-card,
+body[data-theme] .marketplace-trust-item,
 body[data-theme] .summary-card,
 body[data-theme] .auth-card,
 body[data-theme] .data-card,
@@ -753,6 +845,10 @@ body[data-theme] .trust-item span,
 body[data-theme] .field label,
 body[data-theme] .product-card__meta,
 body[data-theme] .product-card__description,
+body[data-theme] .product-social-proof,
+body[data-theme] .marketplace-trust-item span,
+body[data-theme] .product-detail__assurance span,
+body[data-theme] .product-detail__seller,
 body[data-theme] .stock,
 body[data-theme] .promo p,
 body[data-theme] .restaurant p,
@@ -782,6 +878,36 @@ body[data-theme] .search-form input::placeholder,
 body[data-theme] .field input::placeholder,
 body[data-theme] .field textarea::placeholder {
   color: color-mix(in srgb, var(--ah-ink) 54%, transparent) !important;
+}
+
+body[data-theme] .panel-step,
+body[data-theme] .panel-step strong {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .payment-card-panel,
+body[data-theme] .payment-methods {
+  --payment-surface-ink: #10232f;
+  --payment-surface-muted: #405664;
+  --payment-surface-accent: #007c91;
+  color: var(--payment-surface-ink) !important;
+}
+
+body[data-theme] .payment-card-panel .panel-step,
+body[data-theme] .payment-card-panel .panel-step strong,
+body[data-theme] .payment-card-panel__head strong {
+  color: var(--payment-surface-ink) !important;
+}
+
+body[data-theme] .payment-card-panel__copy,
+body[data-theme] .payment-card-panel__list,
+body[data-theme] .payment-card-panel__list li,
+body[data-theme] .payment-methods__title {
+  color: var(--payment-surface-muted) !important;
+}
+
+body[data-theme] .payment-card-panel__head span {
+  color: var(--payment-surface-accent) !important;
 }
 
 body[data-theme]:has(.premium-hero) header {
@@ -1139,6 +1265,124 @@ body[data-theme] .product-card:hover,
 body[data-theme] .platform-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--ah-shadow);
+}
+
+/* Shared account surface rule: account navigation and data panels must stay readable in every theme. */
+body[data-theme] .account-grid {
+  align-items: start;
+}
+
+body[data-theme] .side-menu {
+  padding: 10px;
+  border: 1px solid var(--ah-line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ah-surface) 88%, transparent);
+  box-shadow: var(--ah-shadow-soft);
+}
+
+body[data-theme] .side-menu a,
+body[data-theme] .side-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-strong) 72%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  box-shadow: none;
+  opacity: 1;
+  text-shadow: none;
+}
+
+body[data-theme] .side-menu a:hover,
+body[data-theme] .side-menu a:focus-visible,
+body[data-theme] .side-menu button:hover,
+body[data-theme] .side-menu button:focus-visible {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 14%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  transform: none;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ah-primary) 14%, transparent);
+}
+
+body[data-theme] .side-menu a[aria-current="page"] {
+  border-color: color-mix(in srgb, var(--ah-primary) 76%, var(--ah-line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ah-primary) 20%, var(--ah-surface)), color-mix(in srgb, var(--ah-accent) 12%, var(--ah-bg-strong)));
+  background-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-surface));
+  color: var(--ah-ink) !important;
+  box-shadow: inset 3px 0 0 var(--ah-accent), 0 10px 28px color-mix(in srgb, var(--ah-primary) 16%, transparent);
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) {
+  background: var(--ah-card);
+  border-color: var(--ah-line);
+  color: var(--ah-ink) !important;
+  box-shadow: var(--ah-shadow-soft);
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) :where(h1, h2, h3, h4, b, strong, a) {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) :where(p, span, small, label, li, td) {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme] .account-grid .data-table {
+  color: var(--ah-ink);
+}
+
+body[data-theme] .account-grid .data-table th,
+body[data-theme] .account-grid .data-table td {
+  border-color: var(--ah-line);
+}
+
+body[data-theme] .account-grid .data-table th {
+  color: color-mix(in srgb, var(--ah-ink) 72%, transparent) !important;
+}
+
+body[data-theme] .account-grid .data-table td a,
+body[data-theme] .account-grid .empty-state a {
+  color: var(--ah-primary) !important;
+  font-weight: 800;
+}
+
+body[data-theme] .account-grid .status-pill {
+  color: color-mix(in srgb, var(--ah-accent) 88%, var(--ah-ink)) !important;
+  background: color-mix(in srgb, var(--ah-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ah-accent) 38%, var(--ah-line));
+}
+
+body[data-theme] .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+body[data-theme] .stat-card {
+  min-height: 118px;
+  padding: 18px;
+  border: 1px solid var(--ah-line);
+  border-radius: 12px;
+}
+
+body[data-theme] .stat-card span {
+  display: block;
+  margin-bottom: 10px;
+}
+
+body[data-theme] .stat-card strong {
+  display: block;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+}
+
+body[data-theme="white"] .side-menu,
+body[data-theme="white"] .side-menu a,
+body[data-theme="white"] .side-menu button,
+body[data-theme="white"] .account-grid :where(.panel, .data-card, .empty-state, .status-box, .table-wrap, .coupon-card, .stat-card) {
+  color: var(--ah-ink) !important;
 }
 
 body[data-theme] .product-card {
@@ -1520,6 +1764,56 @@ body[data-theme] .pill--deal {
   background: color-mix(in srgb, var(--ah-accent-soft) 88%, #ffffff);
 }
 
+body[data-theme] .marketplace-trust-item strong,
+body[data-theme] .product-detail__assurance strong,
+body[data-theme] .product-detail__seller strong {
+  color: var(--ah-ink);
+}
+
+body[data-theme] .catalog-chip {
+  border-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-bg-strong) 92%, transparent);
+  color: var(--ah-ink);
+}
+
+body[data-theme] .catalog-chip:hover,
+body[data-theme] .catalog-chip:focus-visible,
+body[data-theme] .catalog-chip.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 72%, var(--ah-line));
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
+  color: var(--ah-bg);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--ah-primary) 22%, transparent);
+}
+
+body[data-theme] .market-signal {
+  border-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 10%, transparent);
+  color: var(--ah-primary);
+}
+
+body[data-theme] .market-signal--value {
+  border-color: color-mix(in srgb, #f59e0b 38%, var(--ah-line));
+  background: color-mix(in srgb, #f59e0b 15%, var(--ah-card));
+  color: #fbbf24;
+}
+
+body[data-theme] .market-signal--coupon {
+  border-color: color-mix(in srgb, var(--ah-primary) 32%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 15%, var(--ah-card));
+  color: var(--ah-primary);
+}
+
+body[data-theme] .market-signal--delivery {
+  border-color: color-mix(in srgb, #22c55e 34%, var(--ah-line));
+  background: color-mix(in srgb, #22c55e 14%, var(--ah-card));
+  color: #34d399;
+}
+
+body[data-theme] .product-detail__assurance,
+body[data-theme] .product-detail__seller {
+  border-color: var(--ah-line);
+}
+
 .product-rating {
   display: inline-flex;
   align-items: center;
@@ -1831,6 +2125,38 @@ body[data-theme].academy-page {
   height: auto;
 }
 
+body[data-theme] .payment-handoff__meta span {
+  border-color: var(--ah-line);
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  color: var(--ah-muted);
+}
+
+body[data-theme] .payment-handoff__copy,
+body[data-theme] .payment-handoff > p,
+body[data-theme] .payment-result > p {
+  color: var(--ah-muted);
+}
+
+body[data-theme] .payment-result__icon {
+  background: color-mix(in srgb, var(--ah-primary) 12%, transparent);
+  color: var(--ah-primary);
+}
+
+body[data-theme] .payment-result--success .payment-result__icon {
+  background: color-mix(in srgb, #16a34a 16%, transparent);
+  color: #15803d;
+}
+
+body[data-theme] .payment-result--failed .payment-result__icon {
+  background: color-mix(in srgb, #e11d48 14%, transparent);
+  color: #be123c;
+}
+
+body[data-theme] .payment-result--pending .payment-result__icon {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #b45309;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
@@ -1877,6 +2203,46 @@ body[data-theme="white"] .site-footer .footer-bottom a,
 body[data-theme="white"] .site-footer .footer-payment-strip,
 body[data-theme="white"] .site-footer .store-btn__kicker {
   color: #aeb9ca !important;
+}
+
+.site-footer,
+.site-footer .footer-col h2,
+.site-footer .footer-col h3,
+.site-footer .footer-col a:not(.footer-brand),
+.site-footer .footer-col p,
+.site-footer .footer-bottom,
+.site-footer .footer-bottom a,
+.site-footer .footer-payment-strip,
+.site-footer .store-btn,
+.site-footer .store-btn--app strong,
+.site-footer .store-btn__kicker,
+.site-footer .social-icons span {
+  color: #ffffff !important;
+}
+
+.site-footer .footer-col a:not(.footer-brand):hover,
+.site-footer .footer-bottom a:hover {
+  color: #bfeaff !important;
+}
+
+.site-footer .footer-iyzico-badge,
+.site-footer .footer-iyzico-badge * {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel),
+body[data-theme="corporate"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel, .hero-time-card, .hero-main-card, .hero-reward-card, .stat-live-card, .live-ad-card, .tier, .partner) {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel) :where(h1,h2,h3,h4,p,a,span,strong,small,li,label,input,textarea,button),
+body[data-theme="corporate"] :where(.platform-menu, .toast__item, .admin-toast__item, .pwa-install-card, .payment-handoff, .payment-result, .ah-assistant__panel, .hero-time-card, .hero-main-card, .hero-reward-card, .stat-live-card, .live-ad-card, .tier, .partner) :where(h1,h2,h3,h4,p,a,span,strong,small,li,label,input,textarea,button) {
+  color: #111827 !important;
+}
+
+body[data-theme="white"] :where(.search-btn, .login, .btn, .buy-btn, .cart-btn, .platform-theme-btn),
+body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-btn, .platform-theme-btn, .platform-action) {
+  color: #ffffff !important;
 }
 
 .platform-page {
@@ -2109,6 +2475,107 @@ body[data-theme] .tier,
 body[data-theme] .partner {
   border-color: color-mix(in srgb, var(--ah-primary) 44%, transparent) !important;
   box-shadow: 0 0 28px color-mix(in srgb, var(--ah-primary) 18%, transparent) !important;
+}
+
+body[data-theme="corporate"] .platform-control-btn,
+body[data-theme="corporate"] .platform-controls--home .platform-control-btn,
+body[data-theme="corporate"]:not(:has(.site-shell)) header .platform-control-btn {
+  border-color: rgba(0, 77, 141, 0.18) !important;
+  background: #ffffff !important;
+  color: var(--ah-ink) !important;
+  box-shadow: 0 6px 16px rgba(19, 40, 58, 0.08) !important;
+}
+
+body[data-theme="corporate"]:has(.premium-hero) header,
+body[data-theme="corporate"] .site-header {
+  background: #ffffff !important;
+  border-bottom-color: rgba(0, 77, 141, 0.14) !important;
+  box-shadow: 0 8px 24px rgba(19, 40, 58, 0.08) !important;
+  backdrop-filter: none !important;
+}
+
+body[data-theme="corporate"] .platform-theme-btn,
+body[data-theme="corporate"] .search-btn,
+body[data-theme="corporate"] .login {
+  background: #0067b1 !important;
+  color: #ffffff !important;
+  border: 1px solid #0067b1 !important;
+  box-shadow: 0 8px 18px rgba(0, 77, 141, 0.14) !important;
+}
+
+body[data-theme="corporate"] .platform-menu,
+body[data-theme="corporate"] .platform-controls--home .platform-menu,
+body[data-theme="corporate"]:not(:has(.site-shell)) header .platform-menu {
+  border-color: rgba(0, 77, 141, 0.14) !important;
+  background: #ffffff !important;
+  box-shadow: 0 16px 34px rgba(19, 40, 58, 0.12) !important;
+  backdrop-filter: none !important;
+}
+
+body[data-theme="corporate"] .platform-menu-item:hover,
+body[data-theme="corporate"] .platform-menu-item.is-active {
+  border-color: rgba(0, 103, 177, 0.24) !important;
+  background: rgba(0, 103, 177, 0.08) !important;
+}
+
+body[data-theme="corporate"] .platform-card,
+body[data-theme="corporate"] .platform-hero,
+body[data-theme="corporate"] .payment-handoff,
+body[data-theme="corporate"] .payment-result {
+  background: #ffffff !important;
+  border-color: rgba(0, 77, 141, 0.14) !important;
+  box-shadow: 0 10px 26px rgba(19, 40, 58, 0.08) !important;
+}
+
+body[data-theme="corporate"] .platform-hero,
+body[data-theme="corporate"] .platform-hero p {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme="corporate"] .platform-hero::after {
+  display: none !important;
+}
+
+body[data-theme="corporate"] .btn,
+body[data-theme="corporate"] .buy-btn,
+body[data-theme="corporate"] .cart-btn,
+body[data-theme="corporate"] .platform-action {
+  background: #0067b1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(0, 77, 141, 0.14) !important;
+}
+
+body[data-theme="corporate"] .tier-price {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 77, 141, 0.18) !important;
+  color: #0067b1 !important;
+  box-shadow: none !important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card,
+body[data-theme="corporate"] .hero-time-card,
+body[data-theme="corporate"] .hero-main-card,
+body[data-theme="corporate"] .hero-reward-card,
+body[data-theme="corporate"] .tier,
+body[data-theme="corporate"] .partner {
+  border-color: rgba(19, 40, 58, 0.12) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body[data-theme] .site-footer,
+body[data-theme] .site-footer .footer-col h2,
+body[data-theme] .site-footer .footer-col h3,
+body[data-theme] .site-footer .footer-col a:not(.footer-brand),
+body[data-theme] .site-footer .footer-col p,
+body[data-theme] .site-footer .footer-bottom,
+body[data-theme] .site-footer .footer-bottom a,
+body[data-theme] .site-footer .footer-payment-strip,
+body[data-theme] .site-footer .store-btn,
+body[data-theme] .site-footer .store-btn--app strong,
+body[data-theme] .site-footer .store-btn__kicker,
+body[data-theme] .site-footer .social-icons span {
+  color: #ffffff !important;
 }
 
 @media (max-width: 980px) {
@@ -2480,6 +2947,10 @@ body[data-theme] .partner {
   .platform-card {
     min-height: auto;
     padding: 18px;
+  }
+
+  body[data-theme] .stats-grid {
+    grid-template-columns: 1fr;
   }
 
   .footer-social,
@@ -2915,4 +3386,55 @@ html {
     min-width: 0 !important;
     overflow-x: clip !important;
   }
+}
+
+/* Site-wide footer contrast: dark footers keep readable white text in every theme. */
+body[data-theme] .site-footer,
+body[data-theme] .site-footer .footer-col h2,
+body[data-theme] .site-footer .footer-col h3,
+body[data-theme] .site-footer .footer-col a:not(.footer-brand),
+body[data-theme] .site-footer .footer-col p,
+body[data-theme] .site-footer .footer-bottom,
+body[data-theme] .site-footer .footer-bottom a,
+body[data-theme] .site-footer .footer-payment-strip,
+body[data-theme] .site-footer .store-btn,
+body[data-theme] .site-footer .store-btn--app strong,
+body[data-theme] .site-footer .store-btn__kicker,
+body[data-theme] .site-footer .social-icons span{
+  color:#fff!important;
+}
+
+body[data-theme] .site-footer .footer-col a:not(.footer-brand):hover,
+body[data-theme] .site-footer .footer-bottom a:hover{
+  color:#bfeaff!important;
+}
+
+body[data-theme] .site-footer .footer-iyzico-badge,
+body[data-theme] .site-footer .footer-iyzico-badge *{
+  color:#111827!important;
+}
+
+body[data-theme="corporate"] .hero-time-card,
+body[data-theme="corporate"] .hero-main-card,
+body[data-theme="corporate"] .hero-reward-card,
+body[data-theme="corporate"] .stat-live-card,
+body[data-theme="corporate"] .live-ad-card,
+body[data-theme="corporate"] .tier,
+body[data-theme="corporate"] .partner,
+body[data-theme="corporate"] .modules-grid.large-grid .module-card{
+  border-radius:8px!important;
+  box-shadow:none!important;
+}
+
+body[data-theme="corporate"]:has(.premium-hero) .nav-search,
+body[data-theme="corporate"]:has(.premium-hero) .hero-time-card,
+body[data-theme="corporate"]:has(.premium-hero) .hero-main-card,
+body[data-theme="corporate"]:has(.premium-hero) .hero-reward-card,
+body[data-theme="corporate"]:has(.premium-hero) .stat-live-card,
+body[data-theme="corporate"]:has(.premium-hero) .tier,
+body[data-theme="corporate"]:has(.premium-hero) .partner{
+  background:#fff!important;
+  border-color:rgba(19,40,58,.12)!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
 }

@@ -88,9 +88,19 @@ export const config = {
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),
   paymentsDisabled: readBool("PAYMENTS_DISABLED", false),
   auditEnabled: readBool("AUDIT_LOG_ENABLED", true),
+  superAdmin: {
+    ownerUserIds: csv(readEnv("SUPER_ADMIN_OWNER_USER_IDS", { required: false, defaultValue: "" })),
+    ownerEmails: csv(readEnv("SUPER_ADMIN_OWNER_EMAILS", { required: false, defaultValue: "" }))
+      .map((item) => item.toLowerCase()),
+    gitOpsEnabled: readBool("SUPER_ADMIN_GITOPS_ENABLED", false),
+    releaseWebhookUrl: readEnv("SUPER_ADMIN_RELEASE_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    releaseWebhookSecret: readOptionalSecret("SUPER_ADMIN_RELEASE_WEBHOOK_SECRET"),
+    releaseWebhookTimeoutMs: readNumber("SUPER_ADMIN_RELEASE_WEBHOOK_TIMEOUT_MS", 12000)
+  },
   turnstile: {
     siteKey: readEnv("TURNSTILE_SITE_KEY", { required: false, defaultValue: "" }),
-    secretKey: readEnv("TURNSTILE_SECRET_KEY", { required: false, defaultValue: "" }),
+    secretKey: readOptionalSecret("TURNSTILE_SECRET_KEY", "CF_TURNSTILE_SECRET_KEY", "CLOUDFLARE_TURNSTILE_SECRET_KEY"),
+    strict: !buildMode && readBool("TURNSTILE_STRICT", false),
     requiredInProduction: !buildMode && readBool("TURNSTILE_REQUIRED_IN_PRODUCTION", true),
     bypassInDevelopment: readBool("TURNSTILE_BYPASS_IN_DEVELOPMENT", true)
   },
@@ -127,7 +137,48 @@ export const config = {
     maxReplyChars: readNumber("ASSISTANT_MAX_REPLY_CHARS", 700),
     rateLimitMax: readNumber("ASSISTANT_RATE_LIMIT_MAX", 20),
     telegramBotToken: readOptionalSecret("ASSISTANT_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"),
-    telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" })
+    telegramWebhookSecret: readEnv("TELEGRAM_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
+    telegramBusinessOwnerId: readOptionalSecret("ASSISTANT_TELEGRAM_BUSINESS_OWNER_ID", "TELEGRAM_BUSINESS_OWNER_ID"),
+    webchatTelegramUrl: readEnv("ASSISTANT_WEBCHAT_TELEGRAM_URL", { required: false, defaultValue: "https://t.me/AllonaHub_Bot" }),
+    webchatWhatsappUrl: readEnv("ASSISTANT_WEBCHAT_WHATSAPP_URL", { required: false, defaultValue: "https://wa.me/905427781868?text=Merhaba%20AllonaHub%2C%20canl%C4%B1%20destek%20almak%20istiyorum." }),
+    metaVerifyToken: readOptionalSecret("ASSISTANT_META_VERIFY_TOKEN", "META_WEBHOOK_VERIFY_TOKEN"),
+    metaAppSecret: readOptionalSecret("ASSISTANT_META_APP_SECRET", "META_APP_SECRET"),
+    metaAccessToken: readOptionalSecret("ASSISTANT_META_ACCESS_TOKEN", "META_ACCESS_TOKEN"),
+    metaWhatsappAccessToken: readOptionalSecret(
+      "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
+      "WHATSAPP_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaWhatsappPhoneNumberId: readEnv("ASSISTANT_META_WHATSAPP_PHONE_NUMBER_ID", { required: false, defaultValue: "" }),
+    metaInstagramAccessToken: readOptionalSecret(
+      "ASSISTANT_META_INSTAGRAM_ACCESS_TOKEN",
+      "INSTAGRAM_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaInstagramGraphId: readEnv("ASSISTANT_META_INSTAGRAM_GRAPH_ID", { required: false, defaultValue: "me" }),
+    metaFacebookPageAccessToken: readOptionalSecret(
+      "ASSISTANT_META_FACEBOOK_PAGE_ACCESS_TOKEN",
+      "FACEBOOK_PAGE_ACCESS_TOKEN",
+      "ASSISTANT_META_ACCESS_TOKEN",
+      "META_ACCESS_TOKEN"
+    ),
+    metaFacebookPageId: readEnv("ASSISTANT_META_FACEBOOK_PAGE_ID", { required: false, defaultValue: "me" }),
+    metaGraphBaseUrl: readEnv("ASSISTANT_META_GRAPH_BASE_URL", { required: false, defaultValue: "https://graph.facebook.com" }).replace(/\/$/, ""),
+    metaGraphVersion: readEnv("ASSISTANT_META_GRAPH_VERSION", { required: false, defaultValue: "v23.0" }).replace(/^\/+|\/+$/g, ""),
+    metaSendTimeoutMs: readNumber("ASSISTANT_META_SEND_TIMEOUT_MS", 10000)
+  },
+  socialMedia: {
+    dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),
+    dryRun: readBool("SOCIAL_MEDIA_DRY_RUN", true),
+    dispatchWebhookUrl: readEnv("SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    dispatchWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET"),
+    secretEncryptionKey: readOptionalSecret("SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY"),
+    sendTimeoutMs: readNumber("SOCIAL_MEDIA_SEND_TIMEOUT_MS", 12000),
+    maxDispatchBatch: readNumber("SOCIAL_MEDIA_MAX_DISPATCH_BATCH", 20),
+    maxMediaBytes: readNumber("SOCIAL_MEDIA_MAX_MEDIA_BYTES", 157286400),
+    defaultTimezone: readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {

@@ -10,8 +10,10 @@ Ortak istemci `/js/config.js` ve `/js/supabase-client.js` içinde tanımlıdır.
 Ana işlemler:
 
 - `products`: aktif ürün listeleme, ürün detayı, admin ürün CRUD
+- `cart`: aktif sepet RPC'leri
 - `favorites`: kullanıcı favorileri
-- `orders`: sipariş ve sipariş kalemleri
+- `orders`: `create_transaction_order(...)` RPC ile server-side sipariş oluşturma, sipariş ve sipariş kalemleri
+- `rewards`: HP/XP ve kupon merkezi kayıtları
 - `profiles`: rol ve profil bilgisi
 
 ## iyzico CheckoutForm Akışı
@@ -28,6 +30,8 @@ Resmi dokümanlar:
 ### create-iyzico-checkout
 
 Konum: `supabase/functions/create-iyzico-checkout/index.ts`
+
+Bu fonksiyon ödeme oturumu başladığında `orders.payment_status = awaiting_payment` ve yeni Transaction Core alanı `orders.status = awaiting_payment` yazar. Kart bilgisi AllonaHub tarafında toplanmaz; frontend yalnızca güvenilir `iyzipay.com` alan adına ait `paymentPageUrl` değerine yönlendirir.
 
 İstek:
 
@@ -46,15 +50,40 @@ Yanıt:
 ```json
 {
   "paymentPageUrl": "https://sandbox-cpp.iyzipay.com?token=...",
-  "token": "checkout-token"
+  "checkoutFormContent": "<script>...</script>",
+  "token": "checkout-token",
+  "provider": "iyzico"
 }
 ```
+
+Frontend checkout başarılı yanıtı `sessionStorage` içinde kısa süreli ödeme handoff kaydı olarak saklar, `/pages/commerce/iyzico-pay.html` ara sayfasını açar ve müşteri kart bilgisini sadece iyzico CheckoutForm ekranında girer.
 
 ### iyzico-callback
 
 Konum: `supabase/functions/iyzico-callback/index.ts`
 
-iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status` alanını günceller.
+iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status`, `orders.order_status`, `orders.status` alanlarını günceller. Ödeme başarılıysa sipariş `paid`, başarısızsa `failed/pending` durumuna alınır. Ürün siparişi dönüşü kullanıcıyı `/pages/commerce/order-success.html?payment=...&id=...` sonucuna yönlendirir.
+
+## Transaction Core RPC
+
+Frontend checkout doğrudan `orders.insert` yapmaz. Sipariş oluşturma RPC üzerinden çalışır:
+
+```sql
+select public.create_transaction_order(
+  p_address_id := 'uuid',
+  p_coupon_code := 'KUPON',
+  p_hp_to_use := 50
+);
+```
+
+RPC server-side olarak aktif sepeti, stokları, ürün fiyatlarını, default/seçili adresi, kupon limitlerini, HP limitlerini, kargoyu ve toplamları doğrular. Sipariş oluşunca sepet `completed` yapılır.
+
+Sepet RPC'leri:
+
+- `get_active_cart()`
+- `add_cart_item(p_product_id, p_quantity)`
+- `set_cart_item_quantity(p_product_id, p_quantity)`
+- `clear_active_cart()`
 
 ## Güvenlik
 
@@ -81,7 +110,8 @@ Endpointler:
 - `GET|POST /v1/payments/iyzico/callback`: iyzico dönüşünü işler.
 - `POST /v1/cv/checkout`: Auth zorunlu, CV ödeme oturumu başlatır.
 - `GET /v1/partner/commission/preview`: Partner/admin komisyon önizleme.
-- `POST /v1/hp-wallet/ledger`: HP Wallet işlem kayıt taslağı.
+- `POST /v1/rewards/ledger`: Admin/süper admin HP/XP/Kupon Merkezi işlem kayıt notu.
+- `POST /v1/hp-wallet/ledger`: Eski rota; geriye dönük uyumluluk alias'ı. Yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`: `x-cron-secret` ile cron ödeme kontrolü.
 
 Detaylı deploy: `docs/deploy/hetzner-cpx31-backend.md`.

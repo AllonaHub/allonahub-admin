@@ -24,10 +24,9 @@ fi
 echo "Registering Telegram webhook at: $WEBHOOK_URL"
 curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook" \
   -H "Content-Type: application/json" \
-  -d "$(printf '{"url":"%s","secret_token":"%s","drop_pending_updates":true,"allowed_updates":["message","edited_message","callback_query"]}' "$WEBHOOK_URL" "$WEBHOOK_SECRET")"
+  -d "$(printf '{"url":"%s","secret_token":"%s","drop_pending_updates":true,"allowed_updates":["message","edited_message","callback_query","business_connection","business_message","edited_business_message","deleted_business_messages"]}' "$WEBHOOK_URL" "$WEBHOOK_SECRET")"
 
 echo
 echo "Telegram webhook info:"
 curl -fsS "https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo"
 echo
-

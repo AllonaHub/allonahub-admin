@@ -14,21 +14,33 @@
       sold_count: 186,
       rating: 4.8,
       discount: "%18",
+      favorite_count: 1240,
+      view_count: 386,
+      cart_count: 78,
+      coupon_label: "Sepette %5",
+      delivery_label: "Hızlı teslimat",
+      seller_score: 9.4,
       image_url: "/images/modules/teknoloji.png",
       created_at: "2026-06-15T09:00:00Z"
     },
     {
       id: "demo-shop-02",
-      name: "Akıllı Market Sepeti",
-      description: "Market alışverişi ve günlük ihtiyaçlar için avantajlı başlangıç paketi.",
-      category: "Market",
-      brand: "Allona Market",
+      name: "Akıllı Ev Düzenleyici Set",
+      description: "Ev ve çalışma alanı için kablo, masa ve küçük aksesuar düzenleme seti.",
+      category: "Ev Yaşam",
+      brand: "Allona Shop",
       price: 849,
       stock: 42,
       sold_count: 244,
       rating: 4.7,
       discount: "%12",
-      image_url: "/images/modules/market.png",
+      favorite_count: 980,
+      view_count: 224,
+      cart_count: 64,
+      coupon_label: "Kuponlu",
+      delivery_label: "Bugün teslim",
+      seller_score: 9.2,
+      image_url: "/images/modules/shop-light-v5.jpg",
       created_at: "2026-06-14T09:00:00Z"
     },
     {
@@ -42,6 +54,12 @@
       sold_count: 391,
       rating: 4.9,
       discount: "HP+",
+      favorite_count: 2100,
+      view_count: 512,
+      cart_count: 148,
+      coupon_label: "HP avantajı",
+      delivery_label: "Dijital teslim",
+      seller_score: 9.7,
       image_url: "/images/modules/wallet.png",
       created_at: "2026-06-13T09:00:00Z"
     },
@@ -56,6 +74,12 @@
       sold_count: 128,
       rating: 4.6,
       discount: "%22",
+      favorite_count: 760,
+      view_count: 143,
+      cart_count: 42,
+      coupon_label: "Sepette indirim",
+      delivery_label: "Hızlı teslimat",
+      seller_score: 9.1,
       image_url: "/images/modules/evhizmetleri.png",
       created_at: "2026-06-12T09:00:00Z"
     },
@@ -70,21 +94,33 @@
       sold_count: 96,
       rating: 4.5,
       discount: "Yeni",
+      favorite_count: 410,
+      view_count: 118,
+      cart_count: 29,
+      coupon_label: "",
+      delivery_label: "Ücretsiz kargo",
+      seller_score: 8.9,
       image_url: "/images/modules/sporfitnes.png",
       created_at: "2026-06-11T09:00:00Z"
     },
     {
       id: "demo-shop-06",
-      name: "Allona Yemek Menü Fırsatı",
-      description: "Restoran kampanyaları için avantajlı menü ve kupon paketi.",
-      category: "Yemek",
-      brand: "Allona Yemek",
-      price: 289,
-      stock: 60,
-      sold_count: 318,
+      name: "Akıllı Ev Aksesuar Seti",
+      description: "Allona Shop seçkisiyle ev ve çalışma alanı için pratik aksesuar paketi.",
+      category: "Ev Yaşam",
+      brand: "Allona Shop",
+      price: 489,
+      stock: 36,
+      sold_count: 154,
       rating: 4.8,
       discount: "%15",
-      image_url: "/images/modules/yemek.png",
+      favorite_count: 820,
+      view_count: 238,
+      cart_count: 54,
+      coupon_label: "Shop kuponu",
+      delivery_label: "Ücretsiz kargo",
+      seller_score: 9.3,
+      image_url: "/images/modules/shop-light-v5.jpg",
       created_at: "2026-06-10T09:00:00Z"
     },
     {
@@ -98,6 +134,12 @@
       sold_count: 112,
       rating: 4.7,
       discount: "%10",
+      favorite_count: 690,
+      view_count: 166,
+      cart_count: 37,
+      coupon_label: "Kuponlu",
+      delivery_label: "Ücretsiz kargo",
+      seller_score: 9.0,
       image_url: "/images/modules/evcilhayvan.png",
       created_at: "2026-06-09T09:00:00Z"
     },
@@ -112,6 +154,12 @@
       sold_count: 74,
       rating: 4.6,
       discount: "HP x2",
+      favorite_count: 520,
+      view_count: 97,
+      cart_count: 24,
+      coupon_label: "HP x2",
+      delivery_label: "Rezervasyon desteği",
+      seller_score: 9.1,
       image_url: "/images/modules/seyahat.png",
       created_at: "2026-06-08T09:00:00Z"
     }
@@ -145,13 +193,13 @@
       link_url: "/pages/commerce/shop.html?category=Teknoloji"
     },
     {
-      title: "Market, bakım ve ev ihtiyaçları.",
-      subtitle: "Günlük Alışveriş",
+      title: "Ev, yaşam ve aksesuar seçkisi.",
+      subtitle: "Shop Vitrini",
       campaign_text: "Mobilde yatay kaydırmalı kategori deneyimi",
       description: "Tek ekranda hızlı karar, net fiyat ve mobil öncelikli alışveriş akışı.",
-      image_url: "/images/modules/market.png",
-      cta_label: "Market Ürünleri",
-      link_url: "/pages/commerce/shop.html?category=Market"
+      image_url: "/images/modules/shop-light-v5.jpg",
+      cta_label: "Shop Ürünleri",
+      link_url: "/pages/commerce/shop.html?category=Ev%20Ya%C5%9Fam"
     },
     {
       title: "HP, kupon ve premium avantaj.",
@@ -160,7 +208,7 @@
       description: "Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.",
       image_url: "/images/modules/wallet.png",
       cta_label: "Kupona Git",
-      link_url: "/pages/wallet/hubwallet.html"
+      link_url: "/pages/account/rewards.html"
     }
   ];
 
@@ -173,13 +221,23 @@
     ]);
   }
 
+  function isShopCatalogProduct(product) {
+    return App.catalog?.isShopProduct ? App.catalog.isShopProduct(product) : true;
+  }
+
+  function shopProductsOnly(productList) {
+    return (productList || []).filter(isShopCatalogProduct);
+  }
+
   function filtersFromDom() {
     return {
       search: document.querySelector("[data-filter-search]")?.value || core.getParam("q") || "",
       category: document.querySelector("[data-filter-category]")?.value || "",
+      brand: document.querySelector("[data-filter-brand]")?.value || "",
       minPrice: document.querySelector("[data-filter-min]")?.value || "",
       maxPrice: document.querySelector("[data-filter-max]")?.value || "",
-      sort: document.querySelector("[data-filter-sort]")?.value || "newest"
+      sort: document.querySelector("[data-filter-sort]")?.value || "newest",
+      quick: document.querySelector("[data-filter-quick]")?.value || ""
     };
   }
 
@@ -187,6 +245,7 @@
     const filters = filtersFromDom();
     const q = filters.search.trim().toLocaleLowerCase("tr-TR");
     const category = filters.category.trim().toLocaleLowerCase("tr-TR");
+    const brand = filters.brand.trim().toLocaleLowerCase("tr-TR");
     const min = Number(filters.minPrice || 0);
     const max = Number(filters.maxPrice || 0);
 
@@ -194,14 +253,31 @@
       const text = `${product.name} ${product.description} ${product.category} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
       const searchOk = !q || text.includes(q);
       const categoryOk = !category || product.category.toLocaleLowerCase("tr-TR") === category;
+      const brandOk = !brand || String(product.brand || "").toLocaleLowerCase("tr-TR") === brand;
       const minOk = !min || product.price >= min;
       const maxOk = !max || product.price <= max;
-      return searchOk && categoryOk && minOk && maxOk;
+      const hasDiscount = product.discount_percent > 0 || product.compare_at_price > product.price || Boolean(product.discount_label);
+      const hasCoupon = Boolean(product.coupon_label || (hasDiscount && product.discount_percent >= 10));
+      const fastDelivery = /hızlı|bugün|aynı gün|dijital/i.test(product.delivery_label || "") || product.stock >= 20;
+      const freeShipping = product.price >= Number(App.config?.freeShippingThreshold || 1500) || /ücretsiz/i.test(product.delivery_label || "");
+      const quickOk = !filters.quick
+        || (filters.quick === "deals" && hasDiscount)
+        || (filters.quick === "coupon" && hasCoupon)
+        || (filters.quick === "fast" && fastDelivery)
+        || (filters.quick === "free_shipping" && freeShipping)
+        || (filters.quick === "top" && (product.sold_count >= 100 || product.rating >= 4.7));
+      return searchOk && categoryOk && brandOk && minOk && maxOk && quickOk;
     });
 
     if (filters.sort === "price_asc") list.sort((a, b) => a.price - b.price);
     else if (filters.sort === "price_desc") list.sort((a, b) => b.price - a.price);
     else if (filters.sort === "best_selling") list.sort((a, b) => b.sold_count - a.sold_count);
+    else if (filters.sort === "rating_desc") list.sort((a, b) => b.rating - a.rating);
+    else if (filters.sort === "discount_desc") list.sort((a, b) => {
+      const discountA = a.discount_percent || (a.compare_at_price > a.price ? Math.round(((a.compare_at_price - a.price) / a.compare_at_price) * 100) : 0);
+      const discountB = b.discount_percent || (b.compare_at_price > b.price ? Math.round(((b.compare_at_price - b.price) / b.compare_at_price) * 100) : 0);
+      return discountB - discountA;
+    });
     else list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
     return list;
@@ -236,17 +312,38 @@
     select.innerHTML = `<option value="">Tüm kategoriler</option>${categories.map((category) => `<option value="${core.escapeHTML(category)}">${core.escapeHTML(category)}</option>`).join("")}`;
   }
 
+  function renderBrandOptions() {
+    const select = document.querySelector("[data-filter-brand]");
+    if (!select) return;
+    const brands = [...new Set(products.map((product) => product.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+    select.innerHTML = `<option value="">Tüm markalar</option>${brands.map((brand) => `<option value="${core.escapeHTML(brand)}">${core.escapeHTML(brand)}</option>`).join("")}`;
+  }
+
+  function setQuickFilter(value) {
+    const input = document.querySelector("[data-filter-quick]");
+    if (input) input.value = value || "";
+    document.querySelectorAll("[data-quick-filter]").forEach((button) => {
+      button.classList.toggle("is-active", Boolean(value) && button.dataset.quickFilter === value);
+      button.setAttribute("aria-pressed", Boolean(value) && button.dataset.quickFilter === value ? "true" : "false");
+    });
+  }
+
   function syncFiltersFromParams() {
     const searchInput = document.querySelector("[data-filter-search]");
     const categorySelect = document.querySelector("[data-filter-category]");
+    const brandSelect = document.querySelector("[data-filter-brand]");
     const sortSelect = document.querySelector("[data-filter-sort]");
     const q = core.getParam("q");
     const category = core.getParam("category");
+    const brand = core.getParam("brand");
     const sort = core.getParam("sort");
+    const quick = core.getParam("quick");
 
     if (searchInput && q) searchInput.value = q;
     if (categorySelect && category) categorySelect.value = category;
+    if (brandSelect && brand) brandSelect.value = brand;
     if (sortSelect && sort) sortSelect.value = sort;
+    if (quick) setQuickFilter(quick);
   }
 
   function renderHomeSections() {
@@ -307,10 +404,11 @@
       }
     }
 
-    const partnerProducts = productList.filter((item) => item.partner_id).map(heroAdFromProduct);
+    const scopedRemoteAds = remoteAds.filter((ad) => !ad.product || isShopCatalogProduct(ad.product));
+    const partnerProducts = productList.filter((item) => item.partner_id && isShopCatalogProduct(item)).map(heroAdFromProduct);
     const popularProducts = [...productList].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
     const ads = uniqueAds([
-      ...remoteAds.map(heroAdFromRecord),
+      ...scopedRemoteAds.map(heroAdFromRecord),
       ...partnerProducts,
       ...popularProducts,
       ...fallbackHeroAds
@@ -346,19 +444,21 @@
     loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
 
     try {
-      const liveProducts = await withTimeout(App.db?.products?.listActive({ sort: "newest" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500);
-      products = liveProducts.length ? liveProducts : fallbackProducts;
+      const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500));
+      products = liveProducts.length ? liveProducts : shopProductsOnly(fallbackProducts);
       if (!liveProducts.length) {
         console.warn("Supabase products boş döndü, mağaza katalog fallback ürünleri gösteriliyor.");
       }
       renderCategoryOptions();
+      renderBrandOptions();
       syncFiltersFromParams();
       renderHomeSections();
       await refreshHeroAds();
     } catch (error) {
       console.warn("Supabase products yüklenemedi, mağaza katalog fallback ürünleri gösteriliyor:", error.message || error);
-      products = fallbackProducts;
+      products = shopProductsOnly(fallbackProducts);
       renderCategoryOptions();
+      renderBrandOptions();
       syncFiltersFromParams();
       renderHomeSections();
       await refreshHeroAds();
@@ -374,10 +474,18 @@
       event.preventDefault();
       renderHomeSections();
     });
+    form.addEventListener("click", (event) => {
+      const quick = event.target.closest("[data-quick-filter]");
+      if (!quick) return;
+      const nextValue = quick.classList.contains("is-active") ? "" : quick.dataset.quickFilter;
+      setQuickFilter(nextValue);
+      renderHomeSections();
+    });
     const reset = form.querySelector("[data-filter-reset]");
     if (reset) {
       reset.addEventListener("click", () => {
         form.reset();
+        setQuickFilter("");
         if (window.history && window.location.search) {
           window.history.replaceState(null, "", window.location.pathname);
         }

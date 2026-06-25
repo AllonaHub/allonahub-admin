@@ -21,6 +21,7 @@
   ];
   const themes = [
     { code: "ocean", label: "Deniz" },
+    { code: "corporate", label: "Sade Kurumsal" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
     { code: "turquoise", label: "Turkuaz" },
@@ -29,6 +30,8 @@
   const themeAliases = {
     neon: "ocean",
     allona: "ocean",
+    sade: "corporate",
+    kurumsal: "corporate",
     marketplace: "forest",
     graphite: "ocean"
   };
@@ -37,6 +40,7 @@
     theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
     packs: {}
   };
+  let accountAuthListenerBound = false;
   const embeddedLanguagePacks = {
     az: {
       dir: "ltr",
@@ -102,7 +106,7 @@
         "Sonraki kampanya": "Növbəti kampaniya",
         "Kampanya seçimi": "Kampaniya seçimi",
         "AllonaShop kategorileri": "AllonaShop kateqoriyaları",
-        "Trendyol tarzı kategori menüsü": "Trendyol tipli kateqoriya menyusu",
+        "Allona Shop kategori menüsü": "Allona Shop kateqoriya menyusu",
         "Katalog": "Kataloq",
         "Kadın": "Qadın",
         "Erkek": "Kişi",
@@ -360,6 +364,7 @@
   let translationObserver = null;
   let languageRefreshTimer = null;
   let isApplyingLanguage = false;
+  let sharedCatalogPromise = null;
 
   function isNestedPage() {
     return /\/(admin|pages|partner)\//.test(window.location.pathname);
@@ -397,27 +402,66 @@
     });
   }
 
+  async function loadSharedCatalog() {
+    if (sharedCatalogPromise) return sharedCatalogPromise;
+    sharedCatalogPromise = fetch(assetUrl(`/i18n/catalog.json?v=${ASSET_VERSION}`), { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`i18n catalog ${response.status}`);
+        return response.json();
+      })
+      .catch((error) => {
+        console.warn("AllonaHub shared language catalog could not be loaded:", error.message);
+        return { phrases: {}, keys: {}, dirs: {} };
+      });
+    return sharedCatalogPromise;
+  }
+
+  function catalogPackFor(catalog, language) {
+    const phrases = {};
+    Object.entries((catalog && catalog.phrases) || {}).forEach(([source, translations]) => {
+      if (language === "tr") {
+        phrases[source] = (translations && translations.tr) || source;
+        return;
+      }
+      if (translations && translations[language]) phrases[source] = translations[language];
+    });
+    return {
+      dir: catalog && catalog.dirs && catalog.dirs[language],
+      keys: (catalog && catalog.keys && catalog.keys[language]) || {},
+      phrases
+    };
+  }
+
+  async function loadLanguagePackFile(language) {
+    try {
+      const response = await fetch(assetUrl(`/i18n/${language}.json?v=${ASSET_VERSION}`), { cache: "no-cache" });
+      if (!response.ok) throw new Error(`i18n ${language} ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      console.warn("AllonaHub language pack could not be loaded:", error.message);
+      return { dir: language === "ar" ? "rtl" : "ltr", phrases: {}, keys: {} };
+    }
+  }
+
   async function loadLanguage(language) {
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     if (state.packs[selected]) return state.packs[selected];
-    try {
-      const response = await fetch(assetUrl(`/i18n/${selected}.json?v=${ASSET_VERSION}`), { cache: "no-cache" });
-      if (!response.ok) throw new Error(`i18n ${selected} ${response.status}`);
-      const remotePack = await response.json();
-      const embeddedPack = embeddedLanguagePacks[selected] || {};
-      const pack = {
-        ...embeddedPack,
-        ...remotePack,
-        keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}) },
-        phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}) }
-      };
-      state.packs[selected] = pack;
-      return pack;
-    } catch (error) {
-      console.warn("AllonaHub language pack could not be loaded:", error.message);
-      state.packs[selected] = embeddedLanguagePacks[selected] || { dir: "ltr", phrases: {}, keys: {} };
-      return state.packs[selected];
-    }
+    const [remotePack, sharedCatalog] = await Promise.all([
+      loadLanguagePackFile(selected),
+      loadSharedCatalog()
+    ]);
+    const embeddedPack = embeddedLanguagePacks[selected] || {};
+    const catalogPack = catalogPackFor(sharedCatalog, selected);
+    const pack = {
+      ...embeddedPack,
+      ...remotePack,
+      ...catalogPack,
+      dir: catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
+      keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}) },
+      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}) }
+    };
+    state.packs[selected] = pack;
+    return pack;
   }
 
   function shouldSkipTranslateNode(parent) {
@@ -489,6 +533,59 @@
     return translatePhrase(pack.phrases || {}, source) || source;
   }
 
+  function writeTranslatedText(node, translated) {
+    if (!node || !translated) return;
+    const original = node.__allonaSourceText || node.textContent;
+    const prefix = original.match(/^\s*/)[0];
+    const suffix = original.match(/\s*$/)[0];
+    node.textContent = `${prefix}${translated}${suffix}`;
+  }
+
+  function translateKeyedNodes(pack) {
+    const phrases = pack.phrases || {};
+    const keys = pack.keys || {};
+    document.querySelectorAll("[data-i18n]").forEach((node) => {
+      if (shouldSkipTranslateAttribute(node)) return;
+      const key = node.getAttribute("data-i18n");
+      if (!node.__allonaSourceText) node.__allonaSourceText = node.textContent;
+      const source = node.__allonaSourceText.trim();
+      const translated = keys[key] || translatePhrase(phrases, source) || translatePhrase(phrases, key);
+      if (!translated) {
+        node.textContent = node.__allonaSourceText;
+        return;
+      }
+      writeTranslatedText(node, translated);
+    });
+
+    ["placeholder", "aria-label", "title", "alt", "value"].forEach((attribute) => {
+      const dataAttribute = `data-i18n-${attribute}`;
+      document.querySelectorAll(`[${dataAttribute}]`).forEach((node) => {
+        if (shouldSkipTranslateAttribute(node)) return;
+        const key = node.getAttribute(dataAttribute);
+        const sourceKey = `__allonaSource_${attribute}`;
+        if (!node[sourceKey]) node[sourceKey] = node.getAttribute(attribute) || "";
+        const translated = keys[key] || translatePhrase(phrases, node[sourceKey]) || translatePhrase(phrases, key);
+        node.setAttribute(attribute, translated || node[sourceKey]);
+      });
+    });
+  }
+
+  function translateDocumentMetadata(pack) {
+    const phrases = pack.phrases || {};
+    if (!document.documentElement.__allonaSourceTitle) {
+      document.documentElement.__allonaSourceTitle = document.title;
+    }
+    const translatedTitle = translatePhrase(phrases, document.documentElement.__allonaSourceTitle);
+    document.title = translatedTitle || document.documentElement.__allonaSourceTitle;
+
+    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"], meta[name="twitter:title"], meta[name="twitter:description"]').forEach((node) => {
+      const key = "__allonaSource_content";
+      if (!node[key]) node[key] = node.getAttribute("content") || "";
+      const translated = translatePhrase(phrases, node[key]);
+      node.setAttribute("content", translated || node[key]);
+    });
+  }
+
   function translateExactText(pack) {
     const phrases = pack.phrases || {};
     const roots = document.body ? [document.body] : [];
@@ -501,9 +598,7 @@
           node.textContent = node.__allonaSourceText;
           return;
         }
-        const prefix = node.__allonaSourceText.match(/^\s*/)[0];
-        const suffix = node.__allonaSourceText.match(/\s*$/)[0];
-        node.textContent = `${prefix}${translated}${suffix}`;
+        writeTranslatedText(node, translated);
       });
     });
 
@@ -515,9 +610,7 @@
         node.textContent = node.__allonaSourceText;
         return;
       }
-      const prefix = node.__allonaSourceText.match(/^\s*/)[0];
-      const suffix = node.__allonaSourceText.match(/\s*$/)[0];
-      node.textContent = `${prefix}${translated}${suffix}`;
+      writeTranslatedText(node, translated);
     });
 
     ["placeholder", "aria-label", "title", "alt"].forEach((attribute) => {
@@ -529,6 +622,8 @@
         node.setAttribute(attribute, translated || node[key]);
       });
     });
+    translateKeyedNodes(pack);
+    translateDocumentMetadata(pack);
   }
 
   function translationEndpoint() {
@@ -735,7 +830,7 @@
       "[data-account-link]",
       "a.login",
       "a[href$='/pages/account/user.html']",
-      "a[href$='/pages/account/login.html']"
+      "a[href*='/pages/account/user.html?']"
     ];
     return [...document.querySelectorAll(selectors.join(","))].filter((link) => {
       const text = (link.textContent || "").trim().toLocaleLowerCase("tr-TR");
@@ -771,7 +866,7 @@
     const loggedIn = await hasAuthenticatedUser();
     if (!loggedIn) {
       links.forEach((link) => {
-        link.href = assetUrl("/pages/account/register.html");
+        link.href = assetUrl("/pages/account/user.html");
         link.textContent = localizedText("Giriş Yap");
         link.setAttribute("aria-label", localizedText("Giriş Yap"));
         link.setAttribute("data-account-link", "");
@@ -783,6 +878,16 @@
       link.textContent = localizedText("Hesabım");
       link.setAttribute("aria-label", localizedText("Hesabım"));
       link.setAttribute("data-account-link", "");
+    });
+  }
+
+  function bindAccountAuthListener() {
+    if (accountAuthListenerBound) return;
+    const auth = App.supabase && App.supabase.auth;
+    if (!auth || !auth.onAuthStateChange) return;
+    accountAuthListenerBound = true;
+    auth.onAuthStateChange(() => {
+      updateAccountLinks();
     });
   }
 
@@ -827,14 +932,14 @@
       [/partner|başvuru|restoran partneri|hizmet veren/i, "/pages/partner/partner.html"],
       [/destek|yardım|sss|sıkça/i, "/pages/company/destek.html"],
       [/kampanya|kupon/i, "/pages/commerce/kuponlar.html"],
-      [/hp|wallet|kupon|puan/i, "/pages/wallet/hubwallet.html"],
+      [/hp|wallet|kupon|puan/i, "/pages/account/rewards.html"],
       [/gizlilik/i, "/pages/legal/gizlilik.html"],
       [/çerez/i, "/pages/legal/cerez.html"],
       [/kvkk/i, "/pages/legal/kvkk.html"],
       [/kullanım|şart/i, "/pages/legal/kullanim-sartlari.html"],
       [/mesafeli|sözleşme/i, "/pages/legal/mesafeli-satis.html"],
       [/iletişim|bize/i, "/pages/company/iletisim.html"],
-      [/modül|hizmet/i, "/pages/ecosystem/ecosystem.html#modules"],
+      [/modül|hizmet/i, "/index.html#modules"],
       [/kariyer|iş/i, "/pages/career/allonakariyer.html"],
       [/allona shop|ürün|mağaza/i, "/pages/commerce/allonashop.html"],
       [/yemek|restoran/i, "/pages/commerce/allonayemek.html"],
@@ -900,6 +1005,7 @@
     document.addEventListener("allona:layout-ready", () => {
       normalizePlatformBrand();
       mountControls();
+      bindAccountAuthListener();
       applyTheme(state.theme);
       startTranslationObserver();
       applyLanguage(state.language).then(updateAccountLinks);
@@ -922,6 +1028,7 @@
     normalizePlatformBrand();
     applyTheme(state.theme);
     mountControls();
+    bindAccountAuthListener();
     repairEmptyLinks();
     startTranslationObserver();
     await applyLanguage(state.language);

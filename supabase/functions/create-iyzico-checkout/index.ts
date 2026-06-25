@@ -1,11 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const encoder = new TextEncoder();
-const SECRET_ENV_NAMES = new Set([
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "IYZICO_API_KEY",
-  "IYZICO_SECRET_KEY"
-]);
 
 function allowedOrigin(req: Request) {
   const origin = req.headers.get("Origin") || "";
@@ -13,7 +8,7 @@ function allowedOrigin(req: Request) {
     .split(",")
     .map((item) => item.trim().replace(/\/$/, ""))
     .filter(Boolean);
-  const local = ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"];
+  const local = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5176", "http://127.0.0.1:3000", "http://127.0.0.1:5173", "http://127.0.0.1:5176"];
   const allowList = [...configured, ...local];
   return allowList.includes(origin.replace(/\/$/, "")) ? origin : configured[0] || "https://allonahub.com";
 }
@@ -36,30 +31,33 @@ function json(req: Request, body: unknown, status = 200) {
 
 function env(name: string) {
   const value = Deno.env.get(name);
-  if (!value) {
-    throw new Error(SECRET_ENV_NAMES.has(name) ? "Required server secret is missing" : `${name} is not configured.`);
-  }
+  if (!value) throw new Error(`${name} secret is not configured.`);
   return value;
-}
-
-function safeError(error: unknown) {
-  if (error instanceof Error) {
-    return { name: error.name, message: error.message };
-  }
-  return { name: "Error", message: "Unknown error" };
-}
-
-function safeIyzicoResult(result: Record<string, unknown>) {
-  return {
-    status: result.status,
-    errorCode: result.errorCode,
-    errorMessage: result.errorMessage,
-    paymentStatus: result.paymentStatus
-  };
 }
 
 function amount(value: unknown) {
   return Number(Number(value || 0).toFixed(2));
+}
+
+function legacyOrderPayload(payload: Record<string, unknown>) {
+  const next = { ...payload };
+  delete next.status;
+  if (next.order_status === "awaiting_payment") next.order_status = "pending";
+  if (next.order_status === "paid") next.order_status = "confirmed";
+  return next;
+}
+
+function shouldRetryLegacyOrderUpdate(error: unknown) {
+  const message = String((error as { message?: string })?.message || error || "");
+  return /status|order_status|schema cache|invalid input value/i.test(message);
+}
+
+async function updateOrder(admin: ReturnType<typeof createClient>, orderId: string, payload: Record<string, unknown>) {
+  const { error } = await admin.from("orders").update(payload).eq("id", orderId);
+  if (!error) return;
+  if (!shouldRetryLegacyOrderUpdate(error)) throw error;
+  const retry = await admin.from("orders").update(legacyOrderPayload(payload)).eq("id", orderId);
+  if (retry.error) throw retry.error;
 }
 
 function splitName(fullName: string) {
@@ -156,7 +154,7 @@ Deno.serve(async (req) => {
       locale: "tr",
       conversationId: order.id,
       price: amount(order.subtotal),
-      paidPrice: amount(order.total_amount ?? order.total),
+      paidPrice: amount(order.grand_total ?? order.total_amount ?? order.total),
       currency: "TRY",
       basketId: order.order_no || order.order_number || order.id,
       paymentGroup: "PRODUCT",
@@ -217,25 +215,29 @@ Deno.serve(async (req) => {
 
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
-      await admin.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
-      console.error("iyzico checkout failed", { orderId: order.id, result: safeIyzicoResult(result) });
+      await updateOrder(admin, order.id, {
+        payment_status: "failed",
+        status: "pending",
+        order_status: "pending"
+      });
+      console.error("iyzico checkout failed", { orderId: order.id, result });
       return json(req, { error: "Ödeme oturumu başlatılamadı." }, 400);
     }
 
-    await admin
-      .from("orders")
-      .update({
-        payment_status: "awaiting_payment",
-        iyzico_token: result.token || null
-      })
-      .eq("id", order.id);
+    await updateOrder(admin, order.id, {
+      payment_status: "awaiting_payment",
+      status: "awaiting_payment",
+      order_status: "awaiting_payment"
+    });
 
     return json(req, {
       paymentPageUrl: result.paymentPageUrl,
-      token: result.token
+      checkoutFormContent: result.checkoutFormContent || null,
+      token: result.token,
+      provider: "iyzico"
     });
   } catch (error) {
-    console.error("create-iyzico-checkout failed", safeError(error));
+    console.error("create-iyzico-checkout failed", error);
     return json(req, { error: "Ödeme işlemi şu anda başlatılamadı." }, 500);
   }
 });

@@ -54,7 +54,7 @@
               </span>
               <span class="badge" data-cart-count>0</span>
             </a>
-            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/register.html")}" data-account-link>Giriş Yap</a>
+            <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/user.html")}" data-account-link>Giriş Yap</a>
             <span class="platform-controls-slot" data-platform-controls-slot></span>
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
           </div>
@@ -62,12 +62,13 @@
         <div class="nav-row">
           <div class="container nav-row__inner">
             <nav class="nav-links" id="site-primary-nav" data-nav-links aria-label="Ana menü">
-              <a href="${core.url("/pages/ecosystem/ecosystem.html")}" ${active("/pages/ecosystem/ecosystem.html")}>Ekosistem</a>
+              <a href="${core.url("/index.html#modules")}" ${active("/index.html")}>Ekosistem</a>
               <a href="${core.url("/allonahub-akademi.html")}" ${active("/allonahub-akademi.html")}>Akademi</a>
               <a href="${core.url("/pages/ecosystem/allonataksi.html")}" ${active("/pages/ecosystem/allonataksi.html")}>Taksi</a>
               <a href="${core.url("/pages/commerce/shop.html")}" ${active("/pages/commerce/shop.html")}>Mağaza</a>
+              <a href="${core.url("/pages/commerce/allonamarket.html")}" ${active("/pages/commerce/allonamarket.html")}>Market</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
-              <a href="${core.url("/pages/commerce/checkout.html")}" ${active("/pages/commerce/checkout.html")}>Ödeme</a>
+              <a href="${core.url("/pages/commerce/guvenli-odeme.html")}" ${active("/pages/commerce/guvenli-odeme.html")}>Ödeme</a>
               <a href="${core.url("/pages/account/user-panel.html")}" ${active("/pages/account/user-panel.html")}>Hesabım</a>
             </nav>
           </div>
@@ -125,7 +126,7 @@
           </div>
           <div class="footer-col">
             <h3>Ekosistem</h3>
-            <a href="${core.url("/pages/ecosystem/ecosystem.html#modules")}">Tüm Modüller</a>
+            <a href="${core.url("/index.html#modules")}">Tüm Modüller</a>
             <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
             <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
             <a href="${core.url("/pages/account/premium.html")}">Premium</a>
@@ -249,7 +250,10 @@
       if (!form) return;
       event.preventDefault();
       const q = new FormData(form).get("q") || "";
-      window.location.href = core.url(`/pages/commerce/shop.html?q=${encodeURIComponent(q)}`);
+      const target = document.querySelector("[data-page='allona-market']")
+        ? "/pages/commerce/allonamarket.html"
+        : "/pages/commerce/shop.html";
+      window.location.href = core.url(`${target}?q=${encodeURIComponent(q)}`);
     });
 
     document.addEventListener("click", (event) => {

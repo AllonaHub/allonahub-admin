@@ -1,0 +1,9 @@
+# AllonaHub corporate inbound aliases.
+# setup-mail-forwarding.sh maps each local part to FORWARD_TO.
+info
+legal
+destek
+iletisim
+partner.destek
+teknik.destek
+basvuru

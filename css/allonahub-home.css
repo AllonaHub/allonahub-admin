@@ -52,7 +52,8 @@ html.is-standalone body{min-height:100svh}
 .hero-clock{margin:18px 0 25px;font-size:36px;letter-spacing:7px;color:#00e5ff;text-shadow:0 0 18px #00e5ff}
 .hero-location{display:flex;gap:14px;align-items:center;font-size:18px;color:white}
 .hero-location p{margin:4px 0 0;color:rgba(255,255,255,.7)}
-.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f;transition:background .25s ease,box-shadow .25s ease}
+.pin-dot.is-location-active{background:#00ff66;box-shadow:0 0 18px #00ff66,0 0 34px rgba(0,255,102,.45)}
 .time-visual{width:88px;height:88px;border-radius:50%;position:relative;filter:drop-shadow(0 0 22px var(--time-glow,#ffd700));animation:floatPulse 3s ease-in-out infinite}
 .sun-visual{--time-glow:#ffd700;background:radial-gradient(circle,#fff7a8 0%,#ffd700 35%,#ff8c00 70%)}
 .day-visual{--time-glow:#00e5ff;background:radial-gradient(circle,#dff9ff 0%,#00d4ff 42%,#0066ff 80%)}
@@ -103,38 +104,166 @@ html.is-standalone body{min-height:100svh}
 .modules-grid.large-grid .module-card:hover{transform:translateY(-7px) scale(1.02)!important;box-shadow:0 0 34px rgba(0,225,255,.45)!important;border-color:#00e5ff!important}
 .modules-grid.large-grid .module-card h3{color:#ffd700!important;font-size:21px!important;margin:0 0 6px!important;text-shadow:0 0 12px rgba(0,0,0,.8)!important}
 .modules-grid.large-grid .module-card p{color:white!important;font-size:13px!important;margin:0!important;text-shadow:0 0 10px rgba(0,0,0,.9)!important}
-.module-card--shop{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/shop.png')!important}
-.module-card--yemek{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/yemek.png')!important}
-.module-card--market{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/market.png')!important}
-.module-card--taksi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/taksi.png')!important}
-.module-card--saglik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/saglik.png')!important}
-.module-card--avm-dunyasi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/avm-dunyasi-v4.jpg')!important}
-.module-card--seyahat{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/seyahat.png')!important}
-.module-card--gayrimenkul{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/gayrimenkul.png')!important}
-.module-card--denizcilik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/denizcilik.png')!important}
-.module-card--hukuk{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/hukuk.png')!important}
-.module-card--danismanlik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/danismanlik.png')!important}
-.module-card--egitim{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/egitim.png')!important}
-.module-card--kariyer{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/kariyer.png')!important}
-.module-card--finans{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/finans.png')!important}
-.module-card--otomotiv{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/otomotiv.png')!important}
-.module-card--eglence{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/eglence.png')!important}
-.module-card--evcilhayvan{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/evcilhayvan.png')!important}
-.module-card--teknoloji{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/teknoloji.png')!important}
-.module-card--sporfitnes{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/sporfitnes.png')!important}
-.module-card--guzellik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/guzellik.png')!important}
-.module-card--sigorta{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/sigorta.png')!important}
-.module-card--kurye{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/kurye.png')!important}
-.module-card--evhizmetleri{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/evhizmetleri.png')!important}
-.module-card--lojistik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/lojistik.png')!important}
-.module-card--nakliye{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/nakliye.png')!important}
-.module-card--organizasyon{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/organizasyon.png')!important}
-.module-card--tarim{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/tarim.png')!important}
-.module-card--insaatyapi{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/insaatyapi.png')!important}
-.module-card--muhendislik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/muhendislik-v4.jpg')!important}
-.module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/trade-v4.jpg')!important}
-.module-card--otelcilik{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/otelcilik-v4.jpg')!important}
+.module-card--shop{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/shop-light-v5.jpg')!important}
+.module-card--yemek{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/yemek-light-v5.jpg')!important}
+.module-card--market{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/market-light-v5.jpg')!important}
+.module-card--taksi{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/taksi-light-v5.jpg')!important}
+.module-card--saglik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/saglik-light-v5.jpg')!important}
+.module-card--avm-dunyasi{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/avm-dunyasi-light-v5.jpg')!important}
+.module-card--seyahat{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/seyahat-light-v5.jpg')!important}
+.module-card--gayrimenkul{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/gayrimenkul-light-v5.jpg')!important}
+.module-card--denizcilik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/denizcilik-light-v5.jpg')!important}
+.module-card--hukuk{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/hukuk-light-v5.jpg')!important}
+.module-card--danismanlik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/danismanlik-light-v5.jpg')!important}
+.module-card--egitim{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/egitim-light-v5.jpg')!important}
+.module-card--kariyer{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/kariyer-light-v5.jpg')!important}
+.module-card--finans{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/finans-light-v5.jpg')!important}
+.module-card--otomotiv{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/otomotiv-light-v5.jpg')!important}
+.module-card--eglence{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/eglence-light-v5.jpg')!important}
+.module-card--evcilhayvan{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/evcilhayvan-light-v5.jpg')!important}
+.module-card--teknoloji{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/teknoloji-light-v5.jpg')!important}
+.module-card--sporfitnes{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/sporfitnes-light-v5.jpg')!important}
+.module-card--guzellik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/guzellik-light-v5.jpg')!important}
+.module-card--sigorta{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/sigorta-light-v5.jpg')!important}
+.module-card--kurye{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/kurye-light-v5.jpg')!important}
+.module-card--evhizmetleri{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/evhizmetleri-light-v5.jpg')!important}
+.module-card--lojistik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/lojistik-light-v5.jpg')!important}
+.module-card--nakliye{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/nakliye-light-v5.jpg')!important}
+.module-card--organizasyon{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/organizasyon-light-v5.jpg')!important}
+.module-card--tarim{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/tarim-light-v5.jpg')!important}
+.module-card--insaatyapi{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/insaatyapi-light-v5.jpg')!important}
+.module-card--muhendislik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/muhendislik-light-v5.jpg')!important}
+.module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/trade-light-v5.jpg')!important}
+.module-card--otelcilik{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/otelcilik-light-v5.jpg')!important}
 .module-card--wallet{background-image:linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.15)),url('../images/modules/wallet.png')!important}
+body[data-theme="white"] .module-card--shop{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/shop-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--yemek{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/yemek-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--market{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/market-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--taksi{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/taksi-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--saglik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/saglik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--denizcilik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/denizcilik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--hukuk{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/hukuk-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--danismanlik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/danismanlik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--finans{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/finans-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--otomotiv{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/otomotiv-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--eglence{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/eglence-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--teknoloji{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/teknoloji-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--sporfitnes{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/sporfitnes-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--sigorta{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/sigorta-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--kurye{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/kurye-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--tarim{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/tarim-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--avm-dunyasi{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/avm-dunyasi-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--seyahat{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/seyahat-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--gayrimenkul{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/gayrimenkul-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--egitim{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/egitim-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--kariyer{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/kariyer-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--evcilhayvan{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/evcilhayvan-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--guzellik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/guzellik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--evhizmetleri{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/evhizmetleri-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--lojistik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/lojistik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--nakliye{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/nakliye-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--organizasyon{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/organizasyon-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--insaatyapi{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/insaatyapi-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--muhendislik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/muhendislik-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--trade{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/trade-light-v5.jpg')!important}
+body[data-theme="white"] .module-card--otelcilik{background-image:linear-gradient(to top,rgba(0,0,0,.46),rgba(0,0,0,.02)),url('../images/modules/otelcilik-light-v5.jpg')!important}
+
+body[data-theme="corporate"]{background:#f6f9fc!important;color:#13283a!important}
+body[data-theme="corporate"]::before{background:linear-gradient(180deg,#fff 0%,#f6f9fc 42%,#eef5fb 100%)!important}
+body[data-theme="corporate"]::after{display:none!important;animation:none!important}
+body[data-theme="corporate"] .top-mini-nav a{color:rgba(19,40,58,.68)!important}
+body[data-theme="corporate"] .top-mini-nav a:hover{color:#0067b1!important}
+body[data-theme="corporate"] header{background:#fff!important;border-bottom:1px solid rgba(0,77,141,.14)!important;box-shadow:0 8px 24px rgba(19,40,58,.08)!important;backdrop-filter:none!important}
+body[data-theme="corporate"] nav a{color:#13283a!important}
+body[data-theme="corporate"] nav a:hover{color:#0067b1!important}
+body[data-theme="corporate"] .nav-search{border-color:rgba(0,77,141,.18)!important;background:#fff!important;box-shadow:0 6px 18px rgba(19,40,58,.08)!important}
+body[data-theme="corporate"] .nav-search input{color:#13283a!important}
+body[data-theme="corporate"] .nav-search input::placeholder{color:rgba(19,40,58,.54)!important}
+body[data-theme="corporate"] .search-btn,
+body[data-theme="corporate"] .login,
+body[data-theme="corporate"] .pwa-install-button,
+body[data-theme="corporate"] .btn{background:#0067b1!important;color:#fff!important;box-shadow:0 8px 18px rgba(0,77,141,.14)!important}
+body[data-theme="corporate"] .pwa-install-card{background:#fff!important;border-color:rgba(0,77,141,.14)!important;box-shadow:0 10px 26px rgba(19,40,58,.08)!important}
+body[data-theme="corporate"] .pwa-install-copy span{color:#0067b1!important}
+body[data-theme="corporate"] .pwa-install-copy strong{color:#13283a!important}
+body[data-theme="corporate"] .pwa-install-copy p{color:rgba(19,40,58,.68)!important}
+body[data-theme="corporate"] .pwa-install-dismiss{background:rgba(0,77,141,.08)!important;color:#13283a!important}
+body[data-theme="corporate"] .premium-hero{grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr)!important;gap:18px;align-items:stretch!important}
+body[data-theme="corporate"] .hero-main-card{grid-column:1!important;grid-row:1 / span 2!important;text-align:left!important;align-items:flex-start!important;min-height:260px!important;padding:42px!important;justify-content:center!important}
+body[data-theme="corporate"] .hero-time-card{grid-column:2!important;grid-row:1!important}
+body[data-theme="corporate"] .hero-reward-card{grid-column:2!important;grid-row:2!important}
+body[data-theme="corporate"] .hero-time-card,
+body[data-theme="corporate"] .hero-main-card,
+body[data-theme="corporate"] .hero-reward-card,
+body[data-theme="corporate"] .stat-live-card,
+body[data-theme="corporate"] .live-ad-card,
+body[data-theme="corporate"] .tier,
+body[data-theme="corporate"] .partner{background:#fff!important;border:1px solid rgba(19,40,58,.12)!important;border-radius:8px!important;box-shadow:none!important}
+body[data-theme="corporate"] .hero-main-card h1,
+body[data-theme="corporate"] .stat-live-card h3,
+body[data-theme="corporate"] .section-head h2,
+body[data-theme="corporate"] .partner h2{color:#111827!important;text-shadow:none!important}
+body[data-theme="corporate"] .hero-main-card h1{max-width:720px!important;font-size:clamp(42px,4vw,58px)!important;letter-spacing:0!important}
+body[data-theme="corporate"] .hero-main-card p{margin:0!important;max-width:680px!important}
+body[data-theme="corporate"] .hero-main-card p,
+body[data-theme="corporate"] .hero-location p,
+body[data-theme="corporate"] .hero-reward-card p,
+body[data-theme="corporate"] .section-head p,
+body[data-theme="corporate"] .live-ads-head p,
+body[data-theme="corporate"] .partner p,
+body[data-theme="corporate"] .tier p,
+body[data-theme="corporate"] .tier li{color:#111827!important}
+body[data-theme="corporate"] .hero-clock,
+body[data-theme="corporate"] .ad-label,
+body[data-theme="corporate"] .live-ads-head a{color:#0067b1!important;text-shadow:none!important}
+body[data-theme="corporate"] .section-head span,
+body[data-theme="corporate"] .live-ads-head h2,
+body[data-theme="corporate"] .ad-title,
+body[data-theme="corporate"] .hero-reward-card h3,
+body[data-theme="corporate"] .tier h3,
+body[data-theme="corporate"] .footer-col h3{color:#c79312!important;text-shadow:none!important}
+body[data-theme="corporate"] .hero-orb,
+body[data-theme="corporate"] .ad-glow{display:none!important}
+body[data-theme="corporate"] .time-visual,
+body[data-theme="corporate"] .diamond-visual{animation:none!important;filter:none!important;box-shadow:none!important}
+body[data-theme="corporate"] .time-visual::before,
+body[data-theme="corporate"] .time-visual::after{display:none!important}
+body[data-theme="corporate"] .time-visual{width:0!important;height:0!important;margin:0!important}
+body[data-theme="corporate"] .diamond-visual{display:none!important}
+body[data-theme="corporate"] .hero-time-card,
+body[data-theme="corporate"] .hero-reward-card{min-height:0!important;padding:26px!important;text-align:left!important;align-items:flex-start!important}
+body[data-theme="corporate"] .hero-greeting{margin:0 0 8px!important;font-size:22px!important;color:#111827!important}
+body[data-theme="corporate"] .hero-location{color:#111827!important}
+body[data-theme="corporate"] .modules-section{background:#fff!important;border-top:1px solid rgba(19,40,58,.10)!important;border-bottom:1px solid rgba(19,40,58,.10)!important}
+body[data-theme="corporate"] .modules-grid.large-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+body[data-theme="corporate"] .modules-grid.large-grid .module-card{height:auto!important;min-height:116px!important;padding:18px 18px 18px 20px!important;align-items:flex-start!important;background:#fff!important;background-image:none!important;border:1px solid rgba(19,40,58,.12)!important;border-left:4px solid #0067b1!important;border-radius:8px!important;box-shadow:none!important}
+body[data-theme="corporate"] .modules-grid.large-grid .module-card:hover{transform:none!important;background:#f8fbff!important;border-color:rgba(0,103,177,.28)!important;border-left-color:#d6a21c!important;box-shadow:none!important}
+body[data-theme="corporate"] .modules-grid.large-grid .module-card h3{color:#111827!important;text-shadow:none!important;font-size:18px!important}
+body[data-theme="corporate"] .modules-grid.large-grid .module-card p{color:#111827!important;text-shadow:none!important;font-size:13px!important;line-height:1.45!important}
+body[data-theme="corporate"] .section-title{color:#13283a!important}
+body[data-theme="corporate"] .section-sub{color:rgba(19,40,58,.68)!important}
+body[data-theme="corporate"] .footer-main{border-top-color:rgba(0,77,141,.14)!important}
+body[data-theme="corporate"] .footer-main .footer-col a,
+body[data-theme="corporate"] .footer-main .footer-col p,
+body[data-theme="corporate"] .footer-main .footer-bottom{color:#111827!important}
+body[data-theme="corporate"] .site-footer .footer-col a,
+body[data-theme="corporate"] .site-footer .footer-col p,
+body[data-theme="corporate"] .site-footer .footer-bottom,
+body[data-theme="corporate"] .site-footer .footer-bottom a{color:#fff!important}
+
+@media(max-width:980px){
+  body[data-theme="corporate"] .premium-hero{grid-template-columns:1fr!important}
+  body[data-theme="corporate"] .hero-main-card,
+  body[data-theme="corporate"] .hero-time-card,
+  body[data-theme="corporate"] .hero-reward-card{grid-column:1!important;grid-row:auto!important}
+  body[data-theme="corporate"] .modules-grid.large-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
+@media(max-width:520px){
+  body[data-theme="corporate"] .hero-main-card{padding:24px 18px!important}
+  body[data-theme="corporate"] .hero-main-card h1{font-size:clamp(30px,8vw,38px)!important}
+  body[data-theme="corporate"] .modules-grid.large-grid{grid-template-columns:1fr!important}
+}
 
 .section{max-width:1720px;margin:55px auto;padding:0 20px}
 .section-title{color:#ffd700;font-size:38px;text-align:center;margin-bottom:12px}
@@ -1106,5 +1235,49 @@ html.is-standalone body{min-height:100svh}
 
   .modules-grid.large-grid .module-card{
     height:158px!important;
+  }
+}
+
+/* Corporate theme final pass: keep homepage modules flat across all breakpoints. */
+body[data-theme="corporate"] .modules-grid.large-grid .module-card{
+  height:auto!important;
+  min-height:116px!important;
+  padding:18px 18px 18px 20px!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  background:#fff!important;
+  background-image:none!important;
+  background-position:center!important;
+  border:1px solid rgba(19,40,58,.12)!important;
+  border-left:4px solid #0067b1!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card:hover{
+  background:#f8fafc!important;
+  border-color:rgba(0,103,177,.24)!important;
+  border-left-color:#0067b1!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card h3,
+body[data-theme="corporate"] .modules-grid.large-grid .module-card p{
+  color:#111827!important;
+  text-shadow:none!important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card p{
+  display:block!important;
+  overflow:visible!important;
+  -webkit-line-clamp:unset;
+}
+
+@media(max-width:720px){
+  body[data-theme="corporate"] .modules-grid.large-grid .module-card{
+    min-height:104px!important;
+    padding:16px!important;
   }
 }

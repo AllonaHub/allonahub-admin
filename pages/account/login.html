@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Giriş Yap | AllonaHub</title>
+  <link rel="canonical" href="user.html">
+  <meta http-equiv="refresh" content="0; url=user.html">
+  <script>
+    (function(){
+      const target=new URL("user.html", window.location.href);
+      new URLSearchParams(window.location.search).forEach((value,key)=>target.searchParams.set(key,value));
+      target.searchParams.set("tab","login");
+      window.location.replace(target.href+window.location.hash);
+    })();
+  </script>
   <meta name="description" content="AllonaHub hesabınıza giriş yapın.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
 </head>
 <body>
   <div class="site-shell">
@@ -37,21 +47,21 @@
           Google ile Giriş Yap
         </button>
         <div data-auth-status></div>
-        <p class="auth-switch"><a href="forgot-password.html">Şifremi unuttum</a> · <a href="register.html">Kayıt ol</a></p>
+        <p class="auth-switch"><a href="user.html?tab=forgot">Şifremi unuttum</a> · <a href="user.html?tab=register">Kayıt ol</a></p>
       </section>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
-  <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
-  <script src="../../js/auth.js?v=20260623-mfa1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-reset1" defer></script>
+  <script src="../../js/auth.js?v=20260623-mfa2" defer></script>
   <script src="../../js/cv-access.js?v=20260619-payform1" defer></script>
-  <script src="../../js/cart.js?v=20260619-live9" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/auth-pages.js?v=20260623-mfa1" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+  <script src="../../js/cart.js?v=20260621-tx1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/auth-pages.js?v=20260623-mfa2" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
 </body>
 </html>

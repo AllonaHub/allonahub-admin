@@ -10,15 +10,15 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="../../images/allonahub-shopping-hero.png">
   <link rel="canonical" href="https://allonahub.com/">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260621-checkout-contrast1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
 </head>
 <body>
   <div class="site-shell shop-landing" data-page="shop">
     <div data-layout="header"></div>
 
     <section class="container shop-category-menu shop-category-menu--top" aria-label="AllonaShop kategorileri">
-      <nav class="shop-category-rail" aria-label="Trendyol tarzı kategori menüsü">
+      <nav class="shop-category-rail" aria-label="Allona Shop kategori menüsü">
         <div class="shop-category-item">
           <a class="shop-category-trigger" href="shop.html?category=Kad%C4%B1n&amp;q=Kad%C4%B1n">Kadın</a>
           <div class="shop-category-mega" role="menu" aria-label="Kadın kategorileri">
@@ -382,7 +382,7 @@
               <h2>HP, kupon ve premium avantaj.</h2>
               <p>Alışveriş motivasyonunu artıran sadakat, kupon ve üyelik alanlarıyla uyumlu.</p>
               <strong>Premium üyeliklerle daha fazla kazanım</strong>
-              <a class="btn" href="../wallet/hubwallet.html">Kupona Git</a>
+              <a class="btn" href="../account/rewards.html">Kupona Git</a>
             </div>
           </article>
         </div>
@@ -391,7 +391,7 @@
       </section>
 
       <section class="container shop-category-menu" aria-label="AllonaShop kategorileri">
-        <nav class="shop-category-rail" aria-label="Trendyol tarzı kategori menüsü">
+        <nav class="shop-category-rail" aria-label="Allona Shop kategori menüsü">
           <div class="shop-category-item">
             <a class="shop-category-trigger" href="shop.html?category=Kad%C4%B1n&amp;q=Kad%C4%B1n">Kadın</a>
             <div class="shop-category-mega" role="menu" aria-label="Kadın kategorileri">
@@ -594,6 +594,7 @@
         </div>
 
         <form class="filters" data-product-filters>
+          <input type="hidden" data-filter-quick value="">
           <div class="field">
             <label for="home-search">Arama</label>
             <input id="home-search" type="search" data-filter-search placeholder="Ürün, kategori veya marka">
@@ -601,6 +602,10 @@
           <div class="field">
             <label for="home-category">Kategori</label>
             <select id="home-category" data-filter-category><option value="">Tüm kategoriler</option></select>
+          </div>
+          <div class="field">
+            <label for="home-brand">Marka</label>
+            <select id="home-brand" data-filter-brand><option value="">Tüm markalar</option></select>
           </div>
           <div class="field">
             <label for="home-min">Min fiyat</label>
@@ -617,7 +622,16 @@
               <option value="best_selling">En çok satan</option>
               <option value="price_asc">Fiyat artan</option>
               <option value="price_desc">Fiyat azalan</option>
+              <option value="rating_desc">En yüksek puan</option>
+              <option value="discount_desc">En yüksek indirim</option>
             </select>
+          </div>
+          <div class="catalog-chip-row" aria-label="Hızlı filtreler">
+            <button class="catalog-chip" type="button" data-quick-filter="deals" aria-pressed="false">İyi Fiyat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="coupon" aria-pressed="false">Kuponlu</button>
+            <button class="catalog-chip" type="button" data-quick-filter="fast" aria-pressed="false">Hızlı Teslimat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="free_shipping" aria-pressed="false">Ücretsiz Kargo</button>
+            <button class="catalog-chip" type="button" data-quick-filter="top" aria-pressed="false">Çok Satanlar</button>
           </div>
         </form>
 
@@ -672,12 +686,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-live5" defer></script>
-  <script src="../../js/core.js?v=20260620-shop-controls" defer></script>
-  <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
-  <script src="../../js/auth.js?v=20260623-mfa1" defer></script>
-  <script src="../../js/cart.js?v=20260619-live9" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-cart-icon" defer></script>
-  <script src="../../js/shop-page.js?v=20260620-shop-controls" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-catalog-scope1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/shop-page.js?v=20260623-catalog-scope1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
 </body>
 </html>

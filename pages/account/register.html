@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kayıt Ol | AllonaHub</title>
+  <link rel="canonical" href="user.html?tab=register">
+  <meta http-equiv="refresh" content="0; url=user.html?tab=register">
+  <script>
+    (function(){
+      const target=new URL("user.html", window.location.href);
+      new URLSearchParams(window.location.search).forEach((value,key)=>target.searchParams.set(key,value));
+      target.searchParams.set("tab","register");
+      window.location.replace(target.href+window.location.hash);
+    })();
+  </script>
   <meta name="description" content="AllonaHub hesabı oluşturun.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260621-mobile1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
 </head>
 <body>
   <div class="site-shell">
@@ -45,7 +55,7 @@
           Google ile Devam Et
         </button>
         <div data-auth-status></div>
-        <p class="auth-switch">Hesabınız var mı? <a href="login.html">Giriş yapın</a></p>
+        <p class="auth-switch">Hesabınız var mı? <a href="user.html">Giriş yapın</a></p>
       </section>
     </main>
     <div data-layout="footer"></div>
@@ -53,14 +63,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/core.js?v=20260619-sec1" defer></script>
-  <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260620-auth2" defer></script>
-  <script src="../../js/auth.js?v=20260623-mfa1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260623-mfa2" defer></script>
   <script src="../../js/cv-access.js?v=20260619-payform1" defer></script>
-  <script src="../../js/cart.js?v=20260619-live9" defer></script>
-  <script src="../../js/layout.v3.js?v=20260620-mobile2" defer></script>
-  <script src="../../js/auth-pages.js?v=20260623-mfa1" defer></script>
-  <script src="../../js/platform.js?v=20260620-brand1" defer></script>
+  <script src="../../js/cart.js?v=20260621-tx1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/auth-pages.js?v=20260623-mfa2" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260624-buildmode1" defer></script>
 </body>
 </html>

@@ -17,6 +17,7 @@
       orders: [],
       tickets: [],
       proposals: [],
+      social: {},
       approvals: [],
       emergency: { alerts: [], requests: [] },
       permissions: null,
@@ -34,6 +35,7 @@
     orders: { label: "Sipariş Yönetimi", marker: "", permission: "orders.view" },
     support: { label: "Destek Talepleri", marker: "", permission: "support.view" },
     content: { label: "İçerik Yönetimi", marker: "", permission: "content.view" },
+    social: { label: "Sosyal Medya", marker: "Yeni", permission: "content.view" },
     security: { label: "Güvenlik İzleme", marker: "", permission: "security.view" },
     approvals: { label: "Onay Kuyruğu", marker: "SA", permission: "approvals.view" },
     emergency: { label: "Acil Alarmlar", marker: "Ses", permission: "emergency.view" },
@@ -77,6 +79,45 @@
     return `<span class="admin-badge ${color ? `admin-badge--${color}` : ""}">${escape(text)}</span>`;
   }
 
+  const socialPlatforms = ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal", "telegram", "whatsapp", "google_business"];
+
+  function socialPlatformOptions(selected) {
+    const selectedSet = new Set(String(selected || socialPlatforms.join(",")).split(",").map((item) => item.trim()).filter(Boolean));
+    return socialPlatforms.map((platform) => `
+      <label class="admin-check">
+        <input type="checkbox" name="target_platforms" value="${escape(platform)}" ${selectedSet.has(platform) ? "checked" : ""}>
+        <span>${escape(platform)}</span>
+      </label>
+    `).join("");
+  }
+
+  function checkedValues(form, name) {
+    return [...form.querySelectorAll(`[name="${name}"]:checked`)].map((item) => item.value);
+  }
+
+  function csvValues(value) {
+    return String(value || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function jsonObject(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error("Payload JSON obje formatında olmalı.");
+    }
+    return parsed;
+  }
+
+  function dateTimeInputToIso(value) {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
   function can(permissionKey) {
     if (!permissionKey) return true;
     return state.access?.permissions?.[permissionKey] === true;
@@ -105,7 +146,7 @@
 
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    return core.url(`/pages/account/login.html?returnTo=${returnTo}`);
+    return core.url(`/pages/account/user.html?returnTo=${returnTo}`);
   }
 
   function mfaUrl() {
@@ -473,6 +514,317 @@
     ].join("");
   }
 
+  function renderSocialMedia(payload) {
+    const social = payload || {};
+    const accounts = social.accounts || [];
+    const drafts = social.drafts || [];
+    const posts = social.posts || [];
+    const attempts = social.attempts || [];
+    const rules = social.rules || [];
+    const plans = social.plans || [];
+    const connections = social.connections || {};
+    const vault = social.vault || {};
+    const dispatch = social.dispatch || {};
+    const postsByDraft = posts.reduce((acc, post) => {
+      acc[post.draft_id] = acc[post.draft_id] || [];
+      acc[post.draft_id].push(post);
+      return acc;
+    }, {});
+    const latestAttempts = attempts.reduce((acc, attempt) => {
+      if (!acc[attempt.post_id]) acc[attempt.post_id] = attempt;
+      return acc;
+    }, {});
+    const metrics = [
+      ["Aktif hesap", accounts.filter((item) => item.is_active).length],
+      ["Hazır taslak", drafts.filter((item) => item.status === "ready_for_review").length],
+      ["Planlı post", posts.filter((item) => ["approved", "scheduled", "queued"].includes(item.status)).length],
+      ["Yayınlanan", posts.filter((item) => item.status === "published").length],
+      ["Dry run", dispatch.dry_run ? "Açık" : "Kapalı"],
+      ["Webhook", dispatch.webhook_configured ? "Hazır" : "Bekliyor"],
+      ["Vault", vault.enabled ? "Aktif" : "Key bekliyor"]
+    ];
+    const metricGrid = `<div class="admin-metrics">${metrics.map(([label, value]) => `
+      <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>
+    `).join("")}</div>`;
+    const accountRows = accounts.map((account) => `
+      <tr>
+        <td>${titleCell(account.display_name, `@${account.handle}`)}</td>
+        <td>${badge(account.platform)}</td>
+        <td>${badge(account.connector_mode)}</td>
+        <td>${badge(account.connection_status, account.connection_status === "connected" ? "green" : "")}</td>
+        <td><a class="admin-link" href="${escape(account.account_url || "#")}" target="_blank" rel="noopener">Aç</a></td>
+      </tr>
+    `);
+    const ruleRows = rules.map((rule) => `
+      <tr>
+        <td>${titleCell(rule.rule_key, rule.rule_label)}</td>
+        <td>${badge(rule.is_enforced ? "enforced" : "paused", rule.is_enforced ? "green" : "orange")}</td>
+        <td>${escape(rule.enforcement_layer || "-")}</td>
+      </tr>
+    `);
+    const connectionRows = Object.values(connections).map((connection) => {
+      const missing = connection.missing_required || [];
+      const secretText = (connection.secrets || []).map((secret) => (
+        `${secret.present ? "OK" : "Eksik"} ${secret.key}${secret.required ? "" : " (opsiyonel)"}`
+      )).join(" / ");
+      return `
+        <tr>
+          <td>${titleCell(connection.platform, secretText)}</td>
+          <td>${badge(connection.ready ? "ready" : "missing", connection.ready ? "green" : "orange")}</td>
+          <td>${escape(missing.length ? missing.join(", ") : "-")}</td>
+          <td>${connection.ready ? `<button class="admin-btn" type="button" data-social-test="${escape(connection.platform)}">Test</button>` : ""}</td>
+        </tr>
+      `;
+    });
+    const draftRows = drafts.map((draft) => {
+      const draftPosts = postsByDraft[draft.id] || [];
+      const platformText = draftPosts.map((post) => post.platform).join(", ") || "-";
+      const canSubmit = ["draft", "needs_changes"].includes(draft.status);
+      const canApprove = ["ready_for_review", "draft", "approved", "scheduled"].includes(draft.status);
+      return `
+        <tr>
+          <td>${titleCell(draft.title, draft.body)}</td>
+          <td>${badge(draft.status)} ${badge(draft.uniqueness_status, draft.uniqueness_status === "unique" ? "green" : "orange")}</td>
+          <td>${escape(platformText)}</td>
+          <td>${dateTime(draft.scheduled_for || draft.created_at)}</td>
+          <td>
+            <span class="admin-actions">
+              ${canSubmit ? `<button class="admin-btn" type="button" data-social-submit="${escape(draft.id)}">Onaya Gönder</button>` : ""}
+              ${canApprove ? `<button class="admin-btn admin-btn--gold" type="button" data-social-approve="${escape(draft.id)}">Onayla</button>` : ""}
+              ${canApprove ? `<button class="admin-btn admin-btn--primary" type="button" data-social-publish="${escape(draft.id)}">Onayla + Kuyruğa Al</button>` : ""}
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+    const postRows = posts.slice(0, 120).map((post) => {
+      const account = post.account || {};
+      const attempt = latestAttempts[post.id];
+      const canDispatch = ["approved", "scheduled", "queued", "failed"].includes(post.status);
+      return `
+        <tr>
+          <td>${titleCell(post.platform, account.display_name || account.handle)}</td>
+          <td>${escape(post.caption || "-")}</td>
+          <td>${badge(post.status)}</td>
+          <td>${dateTime(post.scheduled_for)}</td>
+          <td>${attempt ? badge(attempt.status) : "-"}</td>
+          <td>${canDispatch ? `<button class="admin-btn" type="button" data-social-dispatch="${escape(post.id)}">Dispatch</button>` : ""}</td>
+        </tr>
+      `;
+    });
+    const planRows = plans.map((plan) => `
+      <tr>
+        <td>${titleCell(plan.plan_date, plan.summary)}</td>
+        <td>${badge(plan.objective)}</td>
+        <td>${badge(plan.status)}</td>
+        <td>${escape((plan.target_platforms || []).join(", "))}</td>
+      </tr>
+    `);
+    const draftForm = `
+      <form data-social-draft-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialTitle">Başlık</label>
+            <input id="socialTitle" name="title" maxlength="180" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialTheme">Tema</label>
+            <input id="socialTheme" name="content_theme" maxlength="220" value="AllonaHub ekosistem büyümesi" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialLanding">Link</label>
+            <input id="socialLanding" name="landing_url" maxlength="700" value="https://allonahub.com">
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialHook">Hook</label>
+            <input id="socialHook" name="hook" maxlength="400">
+          </div>
+          <div class="admin-field">
+            <label for="socialCta">CTA</label>
+            <input id="socialCta" name="cta" maxlength="400" value="AllonaHub'u keşfet">
+          </div>
+          <div class="admin-field">
+            <label for="socialSchedule">Plan zamanı</label>
+            <input id="socialSchedule" name="scheduled_for" type="datetime-local">
+          </div>
+        </div>
+        <div class="admin-field" style="margin-top:12px">
+          <label for="socialBody">Metin</label>
+          <textarea id="socialBody" name="body" maxlength="4000" required></textarea>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialHashtags">Hashtag</label>
+            <input id="socialHashtags" name="hashtags" maxlength="400" value="AllonaHub,AllonaShop,ekosistem">
+          </div>
+          <div class="admin-field">
+            <label for="socialVisual">Görsel parmak izi</label>
+            <input id="socialVisual" name="visual_fingerprint" maxlength="220">
+          </div>
+          <div class="admin-field">
+            <label for="socialPostType">Format</label>
+            <select id="socialPostType" name="post_type">
+              <option value="feed">Feed</option>
+              <option value="reel">Reel</option>
+              <option value="short">Short</option>
+              <option value="pin">Pin</option>
+              <option value="text">Text</option>
+              <option value="carousel">Carousel</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialImageUrl">Görsel URL</label>
+            <input id="socialImageUrl" name="image_url" maxlength="900" placeholder="https://...">
+          </div>
+          <div class="admin-field">
+            <label for="socialVideoUrl">Video URL</label>
+            <input id="socialVideoUrl" name="video_url" maxlength="900" placeholder="https://...">
+          </div>
+          <div class="admin-field">
+            <label for="socialPrivacy">Video gizlilik</label>
+            <select id="socialPrivacy" name="privacy_status">
+              <option value="public">Public</option>
+              <option value="unlisted">Unlisted</option>
+              <option value="private">Private</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialWhatsappTo">WhatsApp hedefi</label>
+            <input id="socialWhatsappTo" name="whatsapp_to" maxlength="40" placeholder="+905...">
+          </div>
+          <div class="admin-field">
+            <label for="socialActionType">CTA tipi</label>
+            <select id="socialActionType" name="action_type">
+              <option value="LEARN_MORE">Learn more</option>
+              <option value="SIGN_UP">Sign up</option>
+              <option value="ORDER">Order</option>
+              <option value="CALL">Call</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="socialPayloadJson">Ek payload JSON</label>
+            <input id="socialPayloadJson" name="platform_payload_json" maxlength="1600" placeholder='{"topic_type":"STANDARD"}'>
+          </div>
+        </div>
+        <div class="admin-check-grid" style="margin-top:12px">${socialPlatformOptions()}</div>
+        <div class="admin-form-actions">
+          <button class="admin-btn admin-btn--primary" type="submit">Taslak Oluştur</button>
+        </div>
+      </form>
+    `;
+    const accountForm = `
+      <form data-social-account-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialAccountPlatform">Platform</label>
+            <select id="socialAccountPlatform" name="platform">${socialPlatforms.map((item) => `<option value="${escape(item)}">${escape(item)}</option>`).join("")}</select>
+          </div>
+          <div class="admin-field">
+            <label for="socialAccountHandle">Kullanıcı adı</label>
+            <input id="socialAccountHandle" name="handle" maxlength="160" value="allonahub" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialAccountName">Görünen ad</label>
+            <input id="socialAccountName" name="display_name" maxlength="160" value="AllonaHub" required>
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialAccountUrl">URL</label>
+            <input id="socialAccountUrl" name="account_url" maxlength="500">
+          </div>
+          <div class="admin-field">
+            <label for="socialConnectorMode">Connector</label>
+            <select id="socialConnectorMode" name="connector_mode">
+              <option value="pending">Pending</option>
+              <option value="manual">Manual</option>
+              <option value="server_webhook">Server webhook</option>
+              <option value="native_api">Native API</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="socialConnectionStatus">Bağlantı</label>
+            <select id="socialConnectionStatus" name="connection_status">
+              <option value="not_connected">Not connected</option>
+              <option value="connected">Connected</option>
+              <option value="needs_reauth">Needs reauth</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-actions">
+          <button class="admin-btn" type="submit">Hesabı Kaydet</button>
+        </div>
+      </form>
+    `;
+    const secretForm = `
+      <form data-social-secret-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialSecretPlatform">Platform</label>
+            <select id="socialSecretPlatform" name="platform">${Object.keys(connections).map((item) => `<option value="${escape(item)}">${escape(item)}</option>`).join("")}</select>
+          </div>
+          <div class="admin-field">
+            <label for="socialSecretKey">Secret anahtarı</label>
+            <input id="socialSecretKey" name="secret_key" maxlength="90" placeholder="ACCESS_TOKEN" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialSecretValue">Secret değeri</label>
+            <input id="socialSecretValue" name="secret_value" type="password" maxlength="16000" autocomplete="off" required>
+          </div>
+        </div>
+        <div class="admin-form-actions">
+          <button class="admin-btn admin-btn--gold" type="submit" ${vault.enabled ? "" : "disabled"}>Secret Kaydet / Döndür</button>
+        </div>
+      </form>
+    `;
+    const planForm = `
+      <form data-social-plan-form>
+        <div class="admin-grid-3">
+          <div class="admin-field">
+            <label for="socialPlanDate">Tarih</label>
+            <input id="socialPlanDate" name="plan_date" type="date" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialPlanObjective">Hedef</label>
+            <input id="socialPlanObjective" name="objective" maxlength="80" value="growth" required>
+          </div>
+          <div class="admin-field">
+            <label for="socialPlanSummary">Özet</label>
+            <input id="socialPlanSummary" name="summary" maxlength="900">
+          </div>
+        </div>
+        <div class="admin-check-grid" style="margin-top:12px">${socialPlatformOptions()}</div>
+        <div class="admin-form-actions">
+          <button class="admin-btn" type="submit">Günlük Planı Kaydet</button>
+          <button class="admin-btn admin-btn--gold" type="button" data-social-dispatch-due>Planlı Kuyruğu Çalıştır</button>
+        </div>
+      </form>
+    `;
+
+    $("#adminContent").innerHTML = [
+      section("Sosyal Medya Merkezi", "Taslak, onay, tekrar engeli ve çoklu platform kuyruğu", warningPanel() + metricGrid),
+      `<div class="admin-split">
+        ${section("Yeni Taslak", "", draftForm)}
+        ${section("Günlük Plan", "", planForm)}
+      </div>`,
+      `<div class="admin-split">
+        ${section("Hesap Envanteri", "", accountForm + table(["Hesap", "Platform", "Connector", "Bağlantı", "URL"], accountRows, "Hesap bulunamadı."))}
+        ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu", "Test"], connectionRows, "Bağlantı tanımı bulunamadı."))}
+      </div>`,
+      section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı.")),
+      section("Taslaklar", "", table(["İçerik", "Durum", "Platform", "Tarih", "İşlem"], draftRows, "Taslak bulunamadı.")),
+      section("Platform Kuyruğu", "", table(["Platform", "Caption", "Durum", "Plan", "Son Deneme", "İşlem"], postRows, "Platform postu bulunamadı.")),
+      section("Günlük Planlar", "", table(["Tarih", "Hedef", "Durum", "Platform"], planRows, "Günlük plan bulunamadı."))
+    ].join("");
+  }
+
   function renderSecurity(payload) {
     const events = payload?.events || [];
     const flags = payload?.flags || [];
@@ -710,7 +1062,7 @@
     return `
       <div class="admin-field">
         <label for="modal-${escape(field.id)}">${escape(field.label)}</label>
-        <input id="modal-${escape(field.id)}" name="${escape(field.id)}" maxlength="${escape(field.max || 180)}" value="${escape(field.value || "")}" ${field.required ? "required" : ""}>
+        <input id="modal-${escape(field.id)}" name="${escape(field.id)}" type="${escape(field.inputType || "text")}" maxlength="${escape(field.max || 180)}" value="${escape(field.value || "")}" ${field.required ? "required" : ""}>
       </div>
     `;
   }
@@ -796,6 +1148,13 @@
     renderContent(state.cache.proposals);
   }
 
+  async function loadSocialMedia() {
+    const data = await api(`/v1/ops-console/social-media?${queryParams()}`);
+    state.cache.social = data.social || {};
+    state.warnings = data.warnings || [];
+    renderSocialMedia(state.cache.social);
+  }
+
   async function loadSecurity() {
     const data = await api("/v1/ops-console/security-monitoring");
     state.cache.security = data;
@@ -851,6 +1210,7 @@
       if (state.view === "partners") await loadPartners();
       if (state.view === "orders") await loadOrders();
       if (state.view === "content") await loadContent();
+      if (state.view === "social") await loadSocialMedia();
       if (state.view === "support") await loadSupport();
       if (state.view === "security") await loadSecurity();
       if (state.view === "approvals") await loadApprovals();
@@ -1024,6 +1384,145 @@
     await loadContent();
   }
 
+  async function createSocialDraft(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    const targetPlatforms = checkedValues(form, "target_platforms");
+    const extraPayload = jsonObject(raw.platform_payload_json);
+    const platformPayload = {
+      link: raw.landing_url || "",
+      landing_url: raw.landing_url || "",
+      image_url: raw.image_url || "",
+      video_url: raw.video_url || "",
+      privacy_status: raw.privacy_status || "public",
+      privacy_level: raw.privacy_status === "private" ? "SELF_ONLY" : "PUBLIC_TO_EVERYONE",
+      action_type: raw.action_type || "LEARN_MORE",
+      to: raw.whatsapp_to || "",
+      ...extraPayload
+    };
+    await api("/v1/ops-console/social-media/drafts", {
+      method: "POST",
+      body: {
+        title: raw.title,
+        content_theme: raw.content_theme,
+        hook: raw.hook || "",
+        body: raw.body,
+        cta: raw.cta || "",
+        landing_url: raw.landing_url || "",
+        scheduled_for: dateTimeInputToIso(raw.scheduled_for),
+        target_platforms: targetPlatforms.length ? targetPlatforms : socialPlatforms,
+        post_type: raw.post_type || "feed",
+        hashtags: csvValues(raw.hashtags),
+        visual_fingerprint: raw.visual_fingerprint || "",
+        platform_payload: platformPayload,
+        metadata: { prepared_from: "admin_social_center" }
+      }
+    });
+    showToast("Sosyal medya taslağı oluşturuldu.");
+    form.reset();
+    await loadSocialMedia();
+  }
+
+  async function saveSocialAccount(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    await api("/v1/ops-console/social-media/accounts", {
+      method: "POST",
+      body: {
+        platform: raw.platform,
+        display_name: raw.display_name,
+        handle: raw.handle,
+        account_url: raw.account_url || "",
+        connector_mode: raw.connector_mode || "pending",
+        connection_status: raw.connection_status || "not_connected",
+        is_active: true
+      }
+    });
+    showToast("Sosyal medya hesabı kaydedildi.");
+    await loadSocialMedia();
+  }
+
+  async function saveSocialPlan(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    const targetPlatforms = checkedValues(form, "target_platforms");
+    await api("/v1/ops-console/social-media/daily-plans", {
+      method: "POST",
+      body: {
+        plan_date: raw.plan_date,
+        objective: raw.objective || "growth",
+        summary: raw.summary || "",
+        target_platforms: targetPlatforms.length ? targetPlatforms : socialPlatforms
+      }
+    });
+    showToast("Günlük sosyal medya planı kaydedildi.");
+    await loadSocialMedia();
+  }
+
+  async function saveSocialSecret(form) {
+    const raw = Object.fromEntries(new FormData(form).entries());
+    await api("/v1/ops-console/social-media/secrets", {
+      method: "POST",
+      body: {
+        platform: raw.platform,
+        secret_key: String(raw.secret_key || "").trim().toUpperCase(),
+        secret_value: raw.secret_value
+      }
+    });
+    showToast("Secret güvenli şekilde kaydedildi.");
+    form.reset();
+    await loadSocialMedia();
+  }
+
+  async function testSocialConnection(platform) {
+    const data = await api("/v1/ops-console/social-media/connections/test", {
+      method: "POST",
+      body: { platform }
+    });
+    const status = data?.result?.status || "tested";
+    const message = data?.result?.errorMessage ? ` - ${data.result.errorMessage}` : "";
+    showToast(`Bağlantı testi: ${normalizeStatus(status)}${message}`, data?.ok ? "" : "error");
+    await loadSocialMedia();
+  }
+
+  async function submitSocialDraft(draftId) {
+    await api(`/v1/ops-console/social-media/drafts/${encodeURIComponent(draftId)}/submit`, { method: "POST" });
+    showToast("Taslak onaya gönderildi.");
+    await loadSocialMedia();
+  }
+
+  async function approveSocialDraft(draftId, publishNow) {
+    const data = await openModal({
+      title: publishNow ? "Onayla ve Kuyruğa Al" : "Sosyal Medya Onayı",
+      message: publishNow ? "Onaylanan postlar server dispatch kuyruğuna alınacak." : "Onaylanan postlar planlı durumuna geçecek.",
+      confirmText: publishNow ? "Onayla + Kuyruğa Al" : "Onayla",
+      fields: [
+        { id: "scheduled_for", label: "Plan zamanı", inputType: "datetime-local", required: false },
+        { id: "approval_note", label: "Onay notu", type: "textarea", required: false, max: 900 }
+      ]
+    });
+    if (!data) return;
+    await api(`/v1/ops-console/social-media/drafts/${encodeURIComponent(draftId)}/approve`, {
+      method: "POST",
+      body: {
+        publish_now: Boolean(publishNow),
+        scheduled_for: dateTimeInputToIso(data.scheduled_for),
+        approval_note: data.approval_note || ""
+      }
+    });
+    showToast(publishNow ? "Taslak onaylandı ve kuyruk çalıştırıldı." : "Taslak onaylandı.");
+    await loadSocialMedia();
+  }
+
+  async function dispatchSocialPost(postId) {
+    await api(`/v1/ops-console/social-media/posts/${encodeURIComponent(postId)}/dispatch`, { method: "POST" });
+    showToast("Dispatch isteği kaydedildi.");
+    await loadSocialMedia();
+  }
+
+  async function dispatchDueSocialPosts() {
+    await api("/v1/ops-console/social-media/dispatch-due", { method: "POST" });
+    showToast("Planlı sosyal medya kuyruğu çalıştırıldı.");
+    await loadSocialMedia();
+  }
+
   function playEmergencyTone() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) {
@@ -1150,6 +1649,35 @@
       const supportStatus = event.target.closest("[data-support-status]");
       if (supportStatus) {
         await updateSupportStatus(supportStatus.dataset.id, supportStatus.dataset.source, supportStatus.dataset.supportStatus).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialSubmit = event.target.closest("[data-social-submit]");
+      if (socialSubmit) {
+        await submitSocialDraft(socialSubmit.dataset.socialSubmit).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialApprove = event.target.closest("[data-social-approve]");
+      if (socialApprove) {
+        await approveSocialDraft(socialApprove.dataset.socialApprove, false).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialPublish = event.target.closest("[data-social-publish]");
+      if (socialPublish) {
+        await approveSocialDraft(socialPublish.dataset.socialPublish, true).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialDispatch = event.target.closest("[data-social-dispatch]");
+      if (socialDispatch) {
+        await dispatchSocialPost(socialDispatch.dataset.socialDispatch).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const socialTest = event.target.closest("[data-social-test]");
+      if (socialTest) {
+        await testSocialConnection(socialTest.dataset.socialTest).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      if (event.target.closest("[data-social-dispatch-due]")) {
+        await dispatchDueSocialPosts().catch((error) => showToast(error.message, "error"));
       }
     });
 
@@ -1158,6 +1686,26 @@
       if (contentForm) {
         event.preventDefault();
         await createContentProposal(contentForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialDraftForm = event.target.closest("[data-social-draft-form]");
+      if (socialDraftForm) {
+        event.preventDefault();
+        await createSocialDraft(socialDraftForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialAccountForm = event.target.closest("[data-social-account-form]");
+      if (socialAccountForm) {
+        event.preventDefault();
+        await saveSocialAccount(socialAccountForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialPlanForm = event.target.closest("[data-social-plan-form]");
+      if (socialPlanForm) {
+        event.preventDefault();
+        await saveSocialPlan(socialPlanForm).catch((error) => showToast(error.message, "error"));
+      }
+      const socialSecretForm = event.target.closest("[data-social-secret-form]");
+      if (socialSecretForm) {
+        event.preventDefault();
+        await saveSocialSecret(socialSecretForm).catch((error) => showToast(error.message, "error"));
       }
       const emergencyForm = event.target.closest("[data-emergency-form]");
       if (emergencyForm) {

@@ -49,4 +49,3 @@ end $$;
 
 comment on table public.conversation_logs is
   'Central AllonaHub assistant logs for channel-independent support conversations. Public channels must write through the backend service, not direct anon table access.';
-
