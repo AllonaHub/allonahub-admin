@@ -2741,10 +2741,9 @@ async function prepareSocialMediaAssets({ request, ctx, limit }) {
     });
   }
 
-  await auditedOpsEvent({
+  const auditPayload = {
     request,
-    ctx,
-    action: "admin.ops.social_media_assets_prepared",
+    action: ctx ? "admin.ops.social_media_assets_prepared" : "cron.social_media_assets_prepared",
     resourceType: "social_media_asset",
     severity: preparedRows.some((row) => row.asset_url) ? "info" : "warning",
     metadata: {
@@ -2752,7 +2751,17 @@ async function prepareSocialMediaAssets({ request, ctx, limit }) {
       statuses: preparedRows.map((row) => row.status),
       warning_count: warnings.length
     }
-  });
+  };
+  if (ctx) {
+    await auditedOpsEvent({ ...auditPayload, ctx });
+  } else {
+    await auditEvent({
+      ...auditPayload,
+      source: "cron",
+      purpose: "social_media_assets_prepare",
+      evidenceTags: ["social_media_asset", "cron"]
+    });
+  }
 
   return {
     ok: true,
@@ -7442,6 +7451,24 @@ export function registerRoutes(app) {
       }
     });
 
+    return { ok: true, ...result };
+  });
+
+  app.post("/v1/cron/social-media-assets-prepare", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.social_media_assets_prepare_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      const error = new Error("Cron yetkisi doğrulanamadı.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const payload = socialMediaAssetPrepareSchema.parse(request.body || {});
+    const result = await prepareSocialMediaAssets({ request, ctx: null, limit: payload.limit });
     return { ok: true, ...result };
   });
 
