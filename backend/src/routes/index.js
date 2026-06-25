@@ -367,6 +367,10 @@ const socialMediaDailyPackageSchema = z.object({
   variant: z.coerce.number().int().min(0).max(30).optional().default(0)
 });
 
+const socialMediaAssetPrepareSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(30).optional().default(10)
+});
+
 const socialMediaPostMediaSchema = z.object({
   image_url: httpsUrlOptionalSchema,
   video_url: httpsUrlOptionalSchema,
@@ -2188,17 +2192,222 @@ async function findSocialDuplicate({ contentHash, semanticHash, visualHash, excl
   return data?.[0] || null;
 }
 
+function promptOnlySocialAsset(asset, metadata = {}) {
+  return {
+    provider: "prompt_only",
+    status: "manual_required",
+    asset_url: "",
+    image_url: "",
+    video_url: "",
+    alt_text: asset.alt_text || "",
+    metadata
+  };
+}
+
+function failedSocialAsset(asset, provider, message, metadata = {}) {
+  return {
+    provider,
+    status: "generation_failed",
+    asset_url: "",
+    image_url: "",
+    video_url: "",
+    alt_text: asset.alt_text || "",
+    metadata: {
+      ...metadata,
+      error: String(message || "Asset generation failed.").slice(0, 500)
+    }
+  };
+}
+
+function socialAssetHasPreparedMedia(asset) {
+  const metadata = asset?.metadata || {};
+  return Boolean(asset?.asset_url || metadata.image_url || metadata.video_url);
+}
+
+function cleanStoragePart(value, fallback = "asset") {
+  const cleaned = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return cleaned || fallback;
+}
+
+function extensionFromMime(contentType) {
+  const type = String(contentType || "").split(";")[0].trim().toLowerCase();
+  if (type === "image/jpeg" || type === "image/jpg") return "jpg";
+  if (type === "image/webp") return "webp";
+  if (type === "image/gif") return "gif";
+  if (type === "video/mp4") return "mp4";
+  return "png";
+}
+
+async function ensureSocialAssetBucket(warnings) {
+  const bucket = String(config.socialMedia.assetStorageBucket || "").trim();
+  if (!bucket) return false;
+  const { error } = await supabaseAdmin.storage.createBucket(bucket, {
+    public: true,
+    fileSizeLimit: config.socialMedia.maxMediaBytes
+  });
+  if (!error) return true;
+  if (/already|exists|duplicate/i.test(error.message || "")) return true;
+  warnings.push(`Asset storage bucket hazirlanamadi: ${error.message || "unknown"}`);
+  return false;
+}
+
+async function uploadSocialAssetBytes({ bytes, contentType, asset, packageMeta, warnings }) {
+  const bucket = String(config.socialMedia.assetStorageBucket || "").trim();
+  if (!await ensureSocialAssetBucket(warnings)) {
+    throw new Error("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET hazir degil.");
+  }
+  if (bytes.byteLength > config.socialMedia.maxMediaBytes) {
+    throw new Error("Uretilen asset izin verilen medya boyutunu asti.");
+  }
+
+  const extension = extensionFromMime(contentType);
+  const digest = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
+  const datePart = cleanStoragePart(packageMeta?.plan_date || new Date().toISOString().slice(0, 10), "daily");
+  const assetPart = cleanStoragePart(asset.visual_fingerprint || asset.title || digest, "asset");
+  const prefix = cleanStoragePart(config.socialMedia.assetStoragePrefix || "social-media", "social-media");
+  const path = `${prefix}/${datePart}/${assetPart}-${digest}.${extension}`;
+
+  const { error } = await supabaseAdmin.storage.from(bucket).upload(path, bytes, {
+    contentType: contentType || "image/png",
+    cacheControl: "31536000",
+    upsert: false
+  });
+  if (error && !/already|exists|duplicate/i.test(error.message || "")) {
+    throw new Error(error.message || "Asset storage upload failed.");
+  }
+
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
+  const publicUrl = String(data?.publicUrl || "");
+  if (!publicUrl) throw new Error("Asset public URL alinamadi.");
+  return { publicUrl, path, bucket };
+}
+
+function parseOpenAiImageItem(item) {
+  const b64 = String(item?.b64_json || "").trim();
+  if (b64) {
+    return { bytes: Buffer.from(b64, "base64"), contentType: "image/png", source: "b64_json" };
+  }
+  return null;
+}
+
+async function fetchOpenAiImageUrl(item) {
+  const url = String(item?.url || "").trim();
+  if (!/^https:\/\//i.test(url)) return null;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`OpenAI image URL fetch failed: HTTP ${response.status}`);
+  const arrayBuffer = await response.arrayBuffer();
+  return {
+    bytes: Buffer.from(arrayBuffer),
+    contentType: response.headers.get("content-type") || "image/png",
+    source: "url"
+  };
+}
+
+function socialAssetPrompt(asset, packageMeta) {
+  const platforms = Array.isArray(asset.platforms) ? asset.platforms.join(", ") : "";
+  return [
+    asset.prompt || asset.visual_concept || asset.title || "AllonaHub social media visual",
+    "Brand: AllonaHub.",
+    "Style: clean modern SaaS dashboard, realistic interface lighting, premium business visual.",
+    "Do not include readable text, real personal data, platform logos, or fake UI secrets.",
+    platforms ? `Target platforms: ${platforms}.` : "",
+    packageMeta?.plan_date ? `Campaign date: ${packageMeta.plan_date}.` : "",
+    packageMeta?.objective ? `Objective: ${packageMeta.objective}.` : ""
+  ].filter(Boolean).join("\n");
+}
+
+async function requestSocialAssetFromOpenAi({ asset, packageMeta, warnings }) {
+  if (!config.socialMedia.assetGenerationEnabled) {
+    return promptOnlySocialAsset(asset);
+  }
+  if (config.socialMedia.assetGenerationProvider !== "openai") {
+    warnings.push(`Asset provider desteklenmiyor: ${config.socialMedia.assetGenerationProvider}`);
+    return promptOnlySocialAsset(asset, { provider: config.socialMedia.assetGenerationProvider });
+  }
+  if (!config.socialMedia.assetOpenAiApiKey) {
+    warnings.push("SOCIAL_MEDIA_ASSET_OPENAI_API_KEY eksik; asset manual_required kaldi.");
+    return promptOnlySocialAsset(asset, { missing: "SOCIAL_MEDIA_ASSET_OPENAI_API_KEY" });
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(15000, config.socialMedia.sendTimeoutMs * 4));
+  try {
+    const response = await fetch(config.socialMedia.assetOpenAiEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.socialMedia.assetOpenAiApiKey}`
+      },
+      body: JSON.stringify({
+        model: config.socialMedia.assetOpenAiModel,
+        prompt: socialAssetPrompt(asset, packageMeta),
+        size: config.socialMedia.assetOpenAiSize,
+        n: 1
+      }),
+      signal: controller.signal
+    });
+    const text = await response.text();
+    let parsed = {};
+    try {
+      parsed = text ? JSON.parse(text) : {};
+    } catch {
+      parsed = {};
+    }
+    if (!response.ok) {
+      const message = parsed?.error?.message || parsed?.message || `HTTP ${response.status}`;
+      warnings.push(`OpenAI asset generation basarisiz: ${message}`);
+      return failedSocialAsset(asset, "openai_image", message, {
+        response_status: response.status,
+        error_code: parsed?.error?.code || null,
+        error_type: parsed?.error?.type || null
+      });
+    }
+
+    const item = Array.isArray(parsed?.data) ? parsed.data[0] : null;
+    const image = parseOpenAiImageItem(item) || await fetchOpenAiImageUrl(item);
+    if (!image?.bytes?.byteLength) {
+      throw new Error("OpenAI image payload bos dondu.");
+    }
+
+    const uploaded = await uploadSocialAssetBytes({
+      bytes: image.bytes,
+      contentType: image.contentType,
+      asset,
+      packageMeta,
+      warnings
+    });
+
+    return {
+      provider: "openai_image",
+      status: "url_ready",
+      asset_url: uploaded.publicUrl,
+      image_url: uploaded.publicUrl,
+      video_url: "",
+      alt_text: item?.revised_prompt || asset.alt_text || asset.title || "",
+      metadata: {
+        model: config.socialMedia.assetOpenAiModel,
+        size: config.socialMedia.assetOpenAiSize,
+        source: image.source,
+        storage_bucket: uploaded.bucket,
+        storage_path: uploaded.path
+      }
+    };
+  } catch (error) {
+    const message = error?.name === "AbortError" ? "timeout" : (error?.message || "OpenAI asset generation failed.");
+    warnings.push(`OpenAI asset generation hatasi: ${message}`);
+    return failedSocialAsset(asset, "openai_image", message);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function requestSocialAssetFromWebhook({ request, asset, packageMeta, warnings }) {
   if (!config.socialMedia.assetWebhookUrl) {
-    return {
-      provider: "prompt_only",
-      status: "manual_required",
-      asset_url: "",
-      image_url: "",
-      video_url: "",
-      alt_text: asset.alt_text || "",
-      metadata: {}
-    };
+    return requestSocialAssetFromOpenAi({ asset, packageMeta, warnings });
   }
 
   const body = JSON.stringify({
@@ -2283,17 +2492,24 @@ async function createSocialAssetForPackage({ request, ctx = null, generatedPacka
     warnings,
     "social_media_assets"
   );
-  if (existing[0]) return existing[0];
+  const existingAsset = existing[0] || null;
+  const packageMeta = {
+    plan_date: generatedPackage.plan_date,
+    objective: generatedPackage.objective,
+    target_platforms: generatedPackage.target_platforms
+  };
+  const shouldPrepareExistingAsset =
+    Boolean(existingAsset)
+    && generateAssets
+    && !socialAssetHasPreparedMedia(existingAsset)
+    && (Boolean(config.socialMedia.assetWebhookUrl) || Boolean(config.socialMedia.assetGenerationEnabled));
+  if (existingAsset && !shouldPrepareExistingAsset) return existingAsset;
 
   const prepared = generateAssets
     ? await requestSocialAssetFromWebhook({
         request,
         asset,
-        packageMeta: {
-          plan_date: generatedPackage.plan_date,
-          objective: generatedPackage.objective,
-          target_platforms: generatedPackage.target_platforms
-        },
+        packageMeta,
         warnings
       })
     : {
@@ -2305,6 +2521,37 @@ async function createSocialAssetForPackage({ request, ctx = null, generatedPacka
         alt_text: asset.alt_text || "",
         metadata: {}
       };
+
+  if (existingAsset) {
+    const existingMetadata = existingAsset.metadata || {};
+    const updatedAsset = await optionalMutation(
+      supabaseAdmin
+        .from("social_media_assets")
+        .update({
+          asset_type: prepared.video_url && !prepared.image_url ? "video" : (existingAsset.asset_type || asset.asset_type),
+          asset_url: prepared.asset_url || existingAsset.asset_url || "",
+          alt_text: prepared.alt_text || existingAsset.alt_text || asset.alt_text || "",
+          prompt: existingAsset.prompt || asset.prompt || "",
+          metadata: {
+            ...existingMetadata,
+            prepared_from: existingMetadata.prepared_from || "daily_package_generator",
+            provider: prepared.provider || existingMetadata.provider || "prompt_only",
+            status: prepared.status || existingMetadata.status || "manual_required",
+            platforms: asset.platforms || existingMetadata.platforms || [],
+            image_url: prepared.image_url || existingMetadata.image_url || "",
+            video_url: prepared.video_url || existingMetadata.video_url || "",
+            webhook_metadata: prepared.metadata || existingMetadata.webhook_metadata || {},
+            package_date: generatedPackage.plan_date
+          }
+        })
+        .eq("id", existingAsset.id)
+        .select("*")
+        .single(),
+      warnings,
+      "social_media_assets"
+    );
+    return updatedAsset || existingAsset;
+  }
 
   return optionalMutation(
     supabaseAdmin
@@ -2335,6 +2582,186 @@ async function createSocialAssetForPackage({ request, ctx = null, generatedPacka
   );
 }
 
+function socialAssetRowToPackageMeta(row) {
+  const metadata = row?.metadata || {};
+  const platforms = Array.isArray(metadata.platforms) && metadata.platforms.length
+    ? metadata.platforms
+    : SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS;
+  return {
+    plan_date: metadata.package_date || todayInSocialTimezone(),
+    objective: metadata.objective || "growth",
+    target_platforms: platforms
+  };
+}
+
+function socialAssetRowToAssetInput(row) {
+  const metadata = row?.metadata || {};
+  const platforms = Array.isArray(metadata.platforms) ? metadata.platforms : [];
+  return {
+    id: row.id,
+    title: row.title || "AllonaHub social media asset",
+    asset_type: row.asset_type || "image",
+    prompt: row.prompt || "",
+    visual_concept: metadata.visual_concept || row.prompt || "",
+    visual_fingerprint: row.visual_fingerprint || "",
+    platforms,
+    alt_text: row.alt_text || ""
+  };
+}
+
+async function applyPreparedSocialAsset({ row, asset, prepared, packageMeta, warnings }) {
+  const existingMetadata = row.metadata || {};
+  const preparedMetadata = prepared?.metadata && typeof prepared.metadata === "object" && !Array.isArray(prepared.metadata)
+    ? prepared.metadata
+    : {};
+  const imageUrl = String(prepared?.image_url || "");
+  const videoUrl = String(prepared?.video_url || "");
+  const assetUrl = String(prepared?.asset_url || imageUrl || videoUrl || row.asset_url || "");
+  const nextAssetType = videoUrl && !imageUrl ? "video" : (assetUrl ? "image" : (row.asset_type || asset.asset_type || "image"));
+
+  const updated = await optionalMutation(
+    supabaseAdmin
+      .from("social_media_assets")
+      .update({
+        asset_type: nextAssetType,
+        asset_url: assetUrl,
+        alt_text: prepared?.alt_text || row.alt_text || asset.alt_text || "",
+        prompt: row.prompt || asset.prompt || "",
+        metadata: {
+          ...existingMetadata,
+          prepared_from: existingMetadata.prepared_from || "asset_prepare_endpoint",
+          provider: prepared?.provider || existingMetadata.provider || "prompt_only",
+          status: prepared?.status || existingMetadata.status || (assetUrl ? "url_ready" : "manual_required"),
+          platforms: asset.platforms || existingMetadata.platforms || [],
+          image_url: imageUrl || existingMetadata.image_url || "",
+          video_url: videoUrl || existingMetadata.video_url || "",
+          webhook_metadata: preparedMetadata,
+          package_date: existingMetadata.package_date || packageMeta.plan_date,
+          prepared_at: new Date().toISOString()
+        }
+      })
+      .eq("id", row.id)
+      .select("*")
+      .single(),
+    warnings,
+    "social_media_assets"
+  );
+  return updated || row;
+}
+
+async function syncPreparedAssetToPlatformPosts({ assetRow, warnings }) {
+  if (!assetRow?.id || !socialAssetHasPreparedMedia(assetRow)) return 0;
+  const metadata = assetRow.metadata || {};
+  const imageUrl = String(metadata.image_url || (assetRow.asset_type === "image" ? assetRow.asset_url : "") || "");
+  const videoUrl = String(metadata.video_url || (assetRow.asset_type !== "image" ? assetRow.asset_url : "") || "");
+  const assetUrl = String(assetRow.asset_url || imageUrl || videoUrl || "");
+  if (!assetUrl) return 0;
+
+  const posts = await optionalQuery(
+    supabaseAdmin
+      .from("social_media_platform_posts")
+      .select("id, platform, media_asset_ids, platform_payload")
+      .order("created_at", { ascending: false })
+      .limit(240),
+    [],
+    warnings,
+    "social_media_platform_posts"
+  );
+
+  const linkedPosts = posts.filter((post) => (
+    (Array.isArray(post.media_asset_ids) && post.media_asset_ids.includes(assetRow.id))
+    || post.platform_payload?.asset_id === assetRow.id
+  ));
+  let updatedCount = 0;
+  for (const post of linkedPosts) {
+    const nextPayload = {
+      ...(post.platform_payload || {}),
+      asset_id: assetRow.id,
+      asset_url: assetUrl,
+      asset_status: metadata.status || "url_ready"
+    };
+    if (imageUrl) nextPayload.image_url = imageUrl;
+    if (videoUrl) nextPayload.video_url = videoUrl;
+    await optionalMutation(
+      supabaseAdmin
+        .from("social_media_platform_posts")
+        .update({
+          platform_payload: nextPayload,
+          last_error: ""
+        })
+        .eq("id", post.id)
+        .select("id"),
+      warnings,
+      "social_media_platform_posts"
+    );
+    updatedCount += 1;
+  }
+  return updatedCount;
+}
+
+async function prepareSocialMediaAssets({ request, ctx, limit }) {
+  const warnings = [];
+  const dispatchStatus = socialMediaDispatchStatus();
+  if (!dispatchStatus.asset_generation_ready) {
+    throw httpError("Asset generator hazir degil. SOCIAL_MEDIA_ASSET_GENERATION_ENABLED/SOCIAL_MEDIA_ASSET_OPENAI_API_KEY/SOCIAL_MEDIA_ASSET_STORAGE_BUCKET ayarlanmali.", 409);
+  }
+
+  const rows = await optionalQuery(
+    supabaseAdmin
+      .from("social_media_assets")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(80),
+    [],
+    warnings,
+    "social_media_assets"
+  );
+  const missingAssets = rows
+    .filter((row) => {
+      if (socialAssetHasPreparedMedia(row)) return false;
+      const status = String(row.metadata?.status || "").trim();
+      return !status || ["manual_required", "prompt_ready", "generation_failed"].includes(status);
+    })
+    .slice(0, Math.max(1, Math.min(Number(limit || 10), 30)));
+
+  const preparedRows = [];
+  for (const row of missingAssets) {
+    const packageMeta = socialAssetRowToPackageMeta(row);
+    const asset = socialAssetRowToAssetInput(row);
+    const prepared = await requestSocialAssetFromWebhook({ request, asset, packageMeta, warnings });
+    const updated = await applyPreparedSocialAsset({ row, asset, prepared, packageMeta, warnings });
+    const syncedPosts = await syncPreparedAssetToPlatformPosts({ assetRow: updated, warnings });
+    preparedRows.push({
+      asset_id: updated.id,
+      title: updated.title,
+      status: updated.metadata?.status || "",
+      asset_url: updated.asset_url || "",
+      provider: updated.metadata?.provider || "",
+      synced_posts: syncedPosts
+    });
+  }
+
+  await auditedOpsEvent({
+    request,
+    ctx,
+    action: "admin.ops.social_media_assets_prepared",
+    resourceType: "social_media_asset",
+    severity: preparedRows.some((row) => row.asset_url) ? "info" : "warning",
+    metadata: {
+      count: preparedRows.length,
+      statuses: preparedRows.map((row) => row.status),
+      warning_count: warnings.length
+    }
+  });
+
+  return {
+    ok: true,
+    prepared: preparedRows,
+    warnings,
+    dispatch: socialMediaDispatchStatus()
+  };
+}
+
 function attachAssetToDraftPayload(payload, asset) {
   if (!asset) return payload;
   const metadata = asset.metadata || {};
@@ -2348,8 +2775,8 @@ function attachAssetToDraftPayload(payload, asset) {
       asset_url: asset.asset_url || "",
       asset_status: metadata.status || "prompt_ready"
     };
-    if (imageUrl && ["instagram", "facebook", "pinterest"].includes(platform)) nextPayload.image_url = imageUrl;
-    if (videoUrl && ["instagram", "tiktok", "youtube"].includes(platform)) nextPayload.video_url = videoUrl;
+    if (imageUrl) nextPayload.image_url = imageUrl;
+    if (videoUrl) nextPayload.video_url = videoUrl;
     return [platform, {
       ...override,
       platform_payload: nextPayload
@@ -6461,6 +6888,13 @@ export function registerRoutes(app) {
     });
 
     return reply.code(result.skipped ? 200 : 201).send({ ok: true, ...result });
+  });
+
+  opsPost("/social-media/assets/prepare", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.social_media.assets_prepare");
+    const payload = socialMediaAssetPrepareSchema.parse(request.body || {});
+    const result = await prepareSocialMediaAssets({ request, ctx, limit: payload.limit });
+    return reply.code(200).send(result);
   });
 
   opsPost("/social-media/drafts", async (request, reply) => {

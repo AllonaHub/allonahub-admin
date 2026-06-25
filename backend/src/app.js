@@ -42,6 +42,7 @@ export async function buildApp() {
         "SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET",
         "SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY",
         "SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET",
+        "SOCIAL_MEDIA_ASSET_OPENAI_API_KEY",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.iyzico.secretKey",
@@ -58,6 +59,7 @@ export async function buildApp() {
         "config.socialMedia.dispatchWebhookSecret",
         "config.socialMedia.secretEncryptionKey",
         "config.socialMedia.assetWebhookSecret",
+        "config.socialMedia.assetOpenAiApiKey",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "iyzico.secretKey",
@@ -74,6 +76,7 @@ export async function buildApp() {
         "socialMedia.dispatchWebhookSecret",
         "socialMedia.secretEncryptionKey",
         "socialMedia.assetWebhookSecret",
+        "socialMedia.assetOpenAiApiKey",
         "cronSecret"
       ]
     },

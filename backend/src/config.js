@@ -154,6 +154,32 @@ export const config = {
     dailyDraftsEnabled: readBool("SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED", false),
     assetWebhookUrl: readEnv("SOCIAL_MEDIA_ASSET_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
     assetWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET"),
+    assetGenerationEnabled: readBool("SOCIAL_MEDIA_ASSET_GENERATION_ENABLED", false),
+    assetGenerationProvider: readEnv("SOCIAL_MEDIA_ASSET_GENERATION_PROVIDER", {
+      required: false,
+      defaultValue: "openai"
+    }).toLowerCase(),
+    assetOpenAiApiKey: readOptionalSecret("SOCIAL_MEDIA_ASSET_OPENAI_API_KEY"),
+    assetOpenAiEndpoint: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_ENDPOINT", {
+      required: false,
+      defaultValue: "https://api.openai.com/v1/images/generations"
+    }).replace(/\/$/, ""),
+    assetOpenAiModel: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_MODEL", {
+      required: false,
+      defaultValue: "gpt-image-1"
+    }),
+    assetOpenAiSize: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_SIZE", {
+      required: false,
+      defaultValue: "1024x1024"
+    }),
+    assetStorageBucket: readEnv("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET", {
+      required: false,
+      defaultValue: "social-media-assets"
+    }),
+    assetStoragePrefix: readEnv("SOCIAL_MEDIA_ASSET_STORAGE_PREFIX", {
+      required: false,
+      defaultValue: "social-media"
+    }),
     defaultTimezone: readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),

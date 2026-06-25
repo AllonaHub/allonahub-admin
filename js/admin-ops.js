@@ -495,7 +495,16 @@
       ["Webhook", dispatch.webhook_configured ? "Hazır" : "Bekliyor"],
       ["Vault", vault.enabled ? "Aktif" : "Key bekliyor"],
       ["Günlük paket", dispatch.daily_drafts_enabled ? "Cron açık" : "Manuel"],
-      ["Asset", dispatch.asset_webhook_configured ? "Webhook hazır" : "Prompt"]
+      [
+        "Asset",
+        dispatch.asset_webhook_configured
+          ? "Webhook hazır"
+          : dispatch.asset_generation_ready
+            ? "Otomatik"
+            : dispatch.asset_generation_enabled
+              ? "Eksik ayar"
+              : "Prompt"
+      ]
     ];
     const metricGrid = `<div class="admin-metrics">${metrics.map(([label, value]) => `
       <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>
@@ -584,6 +593,21 @@
         </tr>
       `;
     });
+    const assetGenerationReady = Boolean(dispatch.asset_generation_ready);
+    const assetPrepareHint = assetGenerationReady
+      ? ""
+      : statusBox(
+          dispatch.asset_generation_enabled
+            ? "Asset üretimi için provider secretı veya storage bucket ayarı eksik."
+            : "Asset üretimi kapalı. Generator env ayarları yapılana kadar promptlar manuel asset olarak kalır."
+        );
+    const assetActions = `
+      <div class="admin-form-actions">
+        <button class="admin-btn admin-btn--gold" type="button" data-social-prepare-assets ${assetGenerationReady ? "" : "disabled"}>
+          Eksik Assetleri Hazırla
+        </button>
+      </div>
+    `;
     const planRows = plans.map((plan) => `
       <tr>
         <td>${titleCell(plan.plan_date, plan.summary)}</td>
@@ -813,7 +837,7 @@
         ${section("Hesap Envanteri", "", accountForm + table(["Hesap", "Platform", "Connector", "Bağlantı", "URL"], accountRows, "Hesap bulunamadı."))}
         ${section("Bağlantı Secretleri", "", secretForm + table(["Platform", "Durum", "Eksik Zorunlu", "Test"], connectionRows, "Bağlantı tanımı bulunamadı."))}
       </div>`,
-      section("Görsel / Video Assetleri", "", table(["Asset", "Durum", "Platform", "URL"], assetRows, "Asset kaydı bulunamadı.")),
+      section("Görsel / Video Assetleri", "", assetPrepareHint + assetActions + table(["Asset", "Durum", "Platform", "URL"], assetRows, "Asset kaydı bulunamadı.")),
       section("Kurallar", "", table(["Kural", "Durum", "Katman"], ruleRows, "Kural bulunamadı.")),
       section("Taslaklar", "", table(["İçerik", "Durum", "Platform", "Tarih", "İşlem"], draftRows, "Taslak bulunamadı.")),
       section("Platform Kuyruğu", "", table(["Platform", "Caption", "Durum", "Plan", "Son Deneme", "İşlem"], postRows, "Platform postu bulunamadı.")),
@@ -1319,6 +1343,16 @@
     await loadSocialMedia();
   }
 
+  async function prepareSocialAssets() {
+    const data = await api("/v1/ops-console/social-media/assets/prepare", {
+      method: "POST",
+      body: { limit: 20 }
+    });
+    const count = data?.prepared?.length || 0;
+    showToast(`Asset hazırlama tamamlandı: ${count}`);
+    await loadSocialMedia();
+  }
+
   async function saveSocialSecret(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     await api("/v1/ops-console/social-media/secrets", {
@@ -1509,6 +1543,10 @@
       const socialTest = event.target.closest("[data-social-test]");
       if (socialTest) {
         await testSocialConnection(socialTest.dataset.socialTest).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      if (event.target.closest("[data-social-prepare-assets]")) {
+        await prepareSocialAssets().catch((error) => showToast(error.message, "error"));
         return;
       }
       if (event.target.closest("[data-social-dispatch-due]")) {
