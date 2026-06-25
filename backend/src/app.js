@@ -163,7 +163,15 @@ export async function buildApp() {
   });
 
   app.setErrorHandler((error, request, reply) => {
-    request.log.error({ error }, "Request failed");
+    request.log.error({
+      err: error,
+      error_message: error?.message || null,
+      error_code: error?.code || null,
+      error_details: error?.details || null,
+      error_hint: error?.hint || null,
+      error_operation: error?.operationLabel || error?.operation_label || null,
+      status_code: error?.statusCode || error?.status || null
+    }, "Request failed");
     const status = error.statusCode && error.statusCode >= 400 ? error.statusCode : 500;
     const publicMessage = error.name === "ZodError"
       ? "İstek alanları doğrulanamadı."

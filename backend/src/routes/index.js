@@ -580,6 +580,10 @@ function sha256Json(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function sha256Text(value) {
+  return createHash("sha256").update(String(value || "")).digest("hex");
+}
+
 function assertEvidenceWindow(from, to) {
   const fromMs = new Date(from).getTime();
   const toMs = new Date(to).getTime();
@@ -2870,7 +2874,10 @@ async function optionalQuery(query, fallback, warnings, label) {
     if (count !== null && count !== undefined) return { data: data || fallback, count };
     return data || fallback;
   }
-  if (!looksLikeMissingSchema(error)) throw error;
+  if (!looksLikeMissingSchema(error)) {
+    error.operationLabel = label;
+    throw error;
+  }
   warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
   if (count !== null && count !== undefined) return { data: fallback, count: 0 };
   return fallback;
@@ -2879,7 +2886,10 @@ async function optionalQuery(query, fallback, warnings, label) {
 async function optionalMutation(query, warnings, label) {
   const { data, error } = await query;
   if (!error) return data;
-  if (!looksLikeMissingSchema(error)) throw error;
+  if (!looksLikeMissingSchema(error)) {
+    error.operationLabel = label;
+    throw error;
+  }
   warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
   throw httpError(`${label} icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.`, 409);
 }
