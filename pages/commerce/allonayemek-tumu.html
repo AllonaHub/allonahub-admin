@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Allona Yemek Tüm Ürünler | AllonaHub</title>
+  <meta name="description" content="Allona Yemek canlı restoran ve menü kataloğunun tüm ürünler sayfası.">
+  <link rel="icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/allonahub-home.css?v=20260622-corp2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
+  <link rel="stylesheet" href="../../css/allona-food.css?v=20260626-food-shelves1">
+</head>
+<body class="food-module-page" data-page="allona-food-all">
+  <div class="top-mini-nav">
+    <a href="../../pages/wallet/hp-nedir.html">HP nedir?</a>
+    <a href="../../pages/commerce/kuponlar.html">İndirim Kuponu</a>
+    <a href="../../pages/partner/partner.html">Ekosisteme Katıl</a>
+    <a href="../../pages/company/hakkimizda.html">Hakkımızda</a>
+    <a href="../../pages/company/destek.html">Yardım ve Destek</a>
+    <a href="../../allonahub-akademi.html">AllonaHub Akademi</a>
+  </div>
+
+  <header>
+    <a class="logo" href="../../index.html">
+      <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
+      <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
+    </a>
+
+    <div class="nav-search">
+      <span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></span>
+      <input id="globalSearchInput" placeholder="Restoran, yemek veya kampanya ara...">
+      <button class="search-btn" type="button" data-global-search>Ara</button>
+    </div>
+
+    <nav>
+      <a href="../../index.html#modules">Hizmetlerimiz</a>
+      <a href="../../pages/commerce/allonayemek.html">Allona Yemek</a>
+      <a href="../../pages/commerce/kuponlar.html">Kupon</a>
+      <a href="../../pages/partner/partner.html">Partner Ol</a>
+      <a class="login" href="../../pages/account/user.html">Giriş Yap</a>
+      <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
+    </nav>
+  </header>
+
+  <main class="food-page food-all-page">
+    <section class="food-partner-band" aria-label="Allona Yemek tüm ürünler başlığı">
+      <div>
+        <p class="food-eyebrow"><i class="fa-solid fa-utensils" aria-hidden="true"></i> Allona Yemek</p>
+        <h1>Tüm Restoranlar ve Menüler</h1>
+        <p>Canlı Supabase kataloğundaki restoranlar, kampanyalar ve menüler tek sayfada listelenir.</p>
+      </div>
+      <a class="food-link-btn" href="allonayemek.html"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>Yemek Ana Sayfası</a>
+    </section>
+
+    <section class="food-app-shell" aria-label="Allona Yemek tüm ürünler ekranı">
+      <aside class="food-panel" aria-label="Allona Yemek filtre paneli">
+        <div class="food-brand">
+          <img src="../../images/brand/allona.logo.png" alt="AllonaHub">
+          <div><strong>Allona</strong><span>Yemek</span></div>
+        </div>
+
+        <div class="food-location">
+          <button type="button" data-location-action><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span data-food-location-label>İstanbul, Beşiktaş</span></button>
+          <button type="button" data-address-edit aria-label="Adresi değiştir"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+        </div>
+
+        <form class="food-search" data-food-search-form>
+          <input type="search" data-food-search placeholder="Restoran, yemek veya kampanya ara">
+          <button type="submit" aria-label="Ara"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        </form>
+
+        <div class="food-mode" role="tablist" aria-label="Sipariş tipi">
+          <button class="is-active" type="button" data-mode="delivery"><i class="fa-solid fa-motorcycle" aria-hidden="true"></i><span>Teslimat</span></button>
+          <button type="button" data-mode="pickup"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><span>Gel-Al</span></button>
+        </div>
+
+        <div class="food-filter-title">
+          <h2>Mutfaklar</h2>
+          <button type="button" data-clear-filters>Temizle</button>
+        </div>
+        <div class="food-chip-grid" data-cuisine-filters>
+          <button class="food-chip is-active" type="button" data-cuisine="all">Tümü</button>
+          <button class="food-chip" type="button" data-cuisine="Burger">Burger</button>
+          <button class="food-chip" type="button" data-cuisine="Pizza">Pizza</button>
+          <button class="food-chip" type="button" data-cuisine="Kebap">Kebap</button>
+          <button class="food-chip" type="button" data-cuisine="Döner">Döner</button>
+          <button class="food-chip" type="button" data-cuisine="Sağlıklı">Sağlıklı</button>
+          <button class="food-chip" type="button" data-cuisine="Tatlı">Tatlı</button>
+          <button class="food-chip" type="button" data-cuisine="Kahve">Kahve</button>
+        </div>
+
+        <div class="food-filter-title"><h2>Hızlı Filtre</h2></div>
+        <div class="food-chip-grid" data-quick-filters>
+          <button class="food-chip" type="button" data-quick="open">Açık</button>
+          <button class="food-chip" type="button" data-quick="deal">Kampanyalı</button>
+          <button class="food-chip" type="button" data-quick="fast">30 dk altı</button>
+          <button class="food-chip" type="button" data-quick="free">Ücretsiz teslimat</button>
+        </div>
+
+        <div class="food-field">
+          <label for="food-sort">Sıralama</label>
+          <select id="food-sort" data-food-sort>
+            <option value="recommended">Önerilen</option>
+            <option value="rating">Puana göre</option>
+            <option value="fast">Teslimat hızına göre</option>
+            <option value="hp">HP kazancına göre</option>
+          </select>
+        </div>
+      </aside>
+
+      <div class="food-main">
+        <header class="food-toolbar">
+          <div class="food-toolbar-title">
+            <b>Tüm Allona Yemek Kataloğu</b>
+            <span data-food-summary>Restoranlar ve menüler yükleniyor.</span>
+          </div>
+          <div class="food-actions">
+            <a class="food-action" href="../account/favorites.html"><i class="fa-regular fa-heart" aria-hidden="true"></i><span>Favoriler</span></a>
+            <a class="food-action" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i><span>Sepet</span><strong data-cart-count>0</strong></a>
+            <a class="food-action food-action--primary" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i><span>Ödeme</span></a>
+          </div>
+        </header>
+
+        <div class="food-status" data-food-status>Canlı restoran kataloğu hazırlanıyor.</div>
+
+        <section class="food-order-strip" aria-label="Sepet özeti">
+          <div class="food-order-metric"><span>Sepet</span><strong><b data-cart-count-rail>0</b> ürün</strong></div>
+          <div class="food-order-metric"><span>Ara Toplam</span><strong data-subtotal>0,00 TL</strong></div>
+          <div class="food-order-metric"><span>Teslimat</span><strong data-delivery-fee>0,00 TL</strong></div>
+          <div class="food-order-metric"><span>İndirim</span><strong data-discount>0,00 TL</strong></div>
+          <div class="food-order-metric"><span>HP</span><strong data-hp-earned>0 HP</strong></div>
+          <div class="food-order-total"><span>Toplam</span><strong data-total>0,00 TL</strong></div>
+          <div class="food-order-actions">
+            <a class="food-link-btn food-link-btn--light" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>Sepete Git</a>
+            <a class="food-checkout" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
+          </div>
+        </section>
+
+        <section class="food-section" aria-label="Yemek kategorileri">
+          <div class="food-section-head">
+            <div>
+              <h2>Kategoriler</h2>
+              <p>Listeyi mutfak tipine göre daralt.</p>
+            </div>
+          </div>
+          <div class="food-category-strip food-scroll-row" data-category-strip>
+            <button class="food-category is-active" type="button" data-cuisine="all"><i class="fa-solid fa-border-all" aria-hidden="true"></i>Tümü</button>
+            <button class="food-category" type="button" data-cuisine="Burger"><i class="fa-solid fa-burger" aria-hidden="true"></i>Burger</button>
+            <button class="food-category" type="button" data-cuisine="Pizza"><i class="fa-solid fa-pizza-slice" aria-hidden="true"></i>Pizza</button>
+            <button class="food-category" type="button" data-cuisine="Kebap"><i class="fa-solid fa-fire-burner" aria-hidden="true"></i>Kebap</button>
+            <button class="food-category" type="button" data-cuisine="Döner"><i class="fa-solid fa-utensils" aria-hidden="true"></i>Döner</button>
+            <button class="food-category" type="button" data-cuisine="Tatlı"><i class="fa-solid fa-ice-cream" aria-hidden="true"></i>Tatlı</button>
+            <button class="food-category" type="button" data-cuisine="Kahve"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i>Kahve</button>
+            <button class="food-category" type="button" data-cuisine="Sağlıklı"><i class="fa-solid fa-seedling" aria-hidden="true"></i>Sağlıklı</button>
+          </div>
+        </section>
+
+        <section class="food-section" id="food-restaurants" aria-label="Tüm restoranlar">
+          <div class="food-section-head">
+            <div>
+              <h2>Tüm Restoranlar</h2>
+              <p>Puan, minimum tutar, teslimat süresi ve kampanyalar.</p>
+            </div>
+            <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i>Restoran Ekle</a>
+          </div>
+          <div class="food-grid" data-restaurant-grid></div>
+          <div class="food-empty" data-food-empty>Bu filtrelerle restoran bulunamadı.</div>
+        </section>
+
+        <section class="food-section" aria-label="Tüm menüler">
+          <div class="food-section-head">
+            <div>
+              <h2>Tüm Menüler</h2>
+              <p>Sepete eklenebilir canlı menü ürünleri.</p>
+            </div>
+            <a class="food-link-btn" href="../commerce/kuponlar.html"><i class="fa-solid fa-percent" aria-hidden="true"></i>Kampanyalar</a>
+          </div>
+          <div class="food-menu-grid" data-menu-grid></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div data-layout="footer"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260622-food1" defer></script>
+  <script src="../../js/core.js?v=20260626-food-shelves1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-catalog-scope1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
+  <script src="../../js/allona-food-page.js?v=20260626-food-shelves1" defer></script>
+</body>
+</html>

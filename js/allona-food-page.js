@@ -38,6 +38,7 @@
   const discountNode = qs("[data-discount]");
   const hpNode = qs("[data-hp-earned]");
   const totalNode = qs("[data-total]");
+  const isAllFoodPage = document.body?.dataset.page === "allona-food-all";
 
   function escape(value) {
     return core.escapeHTML ? core.escapeHTML(value) : String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
@@ -404,6 +405,7 @@
       renderRestaurants();
       renderMenu();
       renderCart();
+      focusAllPageView();
       setStatus(products.length ? "Canlı Supabase ürünleri gösteriliyor." : "Canlı Yemek ürünü bulunamadı.", products.length ? "success" : "warning");
     } catch (error) {
       console.warn("Allona Yemek canlı katalog hatası:", error.message || error);
@@ -669,7 +671,7 @@
 
   function renderRestaurants() {
     const list = sortedRestaurants();
-    if (!restaurantGrid || !emptyState || !visibleCount || !summary) return;
+    if (!restaurantGrid || !emptyState) return;
     restaurantGrid.innerHTML = list.map((item) => `
       <article class="food-card" data-food-detail="${escape(item.id)}" tabindex="0" role="button" aria-label="${escape(item.name)} menü detayını aç">
         <div class="food-card-media">
@@ -696,8 +698,8 @@
       </article>
     `).join("");
     emptyState.classList.toggle("is-visible", list.length === 0);
-    visibleCount.textContent = list.length;
-    summary.textContent = `${list.length} restoran, ${state.mode === "pickup" ? "gel-al" : "teslimat"} modunda listeleniyor.`;
+    if (visibleCount) visibleCount.textContent = list.length;
+    if (summary) summary.textContent = `${list.length} restoran, ${state.mode === "pickup" ? "gel-al" : "teslimat"} modunda listeleniyor.`;
   }
 
   function renderMenu() {
@@ -807,21 +809,22 @@
   function renderCart() {
     const count = state.cart.reduce((sum, item) => sum + item.qty, 0);
     countBadges.forEach((node) => { node.textContent = count; });
-    if (!cartItems) return;
     if (count === 0) {
-      cartItems.innerHTML = `<div class="food-cart-empty">Sepete menü eklediğinde toplam, teslimat ve HP burada görünür.</div>`;
       state.discount = 0;
-    } else {
+      if (cartItems) {
+        cartItems.innerHTML = `<div class="food-cart-empty">Sepete menü eklediğinde toplam, teslimat ve HP burada görünür.</div>`;
+      }
+    } else if (cartItems) {
       cartItems.innerHTML = state.cart.map((item) => `
-        <div class="food-cart-item">
-          <div>
-            <b>${escape(item.name)} x${escape(item.qty)}</b>
-            <span>${escape(item.restaurant)} • ${money.format(item.price * item.qty)}</span>
-            ${item.customizationSummary ? `<small class="food-cart-note">${escape(item.customizationSummary)}</small>` : ""}
+          <div class="food-cart-item">
+            <div>
+              <b>${escape(item.name)} x${escape(item.qty)}</b>
+              <span>${escape(item.restaurant)} • ${money.format(item.price * item.qty)}</span>
+              ${item.customizationSummary ? `<small class="food-cart-note">${escape(item.customizationSummary)}</small>` : ""}
+            </div>
+            <button type="button" data-remove-item="${escape(item.id)}" aria-label="${escape(item.name)} ürünü çıkar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
           </div>
-          <button type="button" data-remove-item="${escape(item.id)}" aria-label="${escape(item.name)} ürünü çıkar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        </div>
-      `).join("");
+        `).join("");
     }
     const totals = cartMath();
     if (subtotalNode) subtotalNode.textContent = money.format(totals.subtotal);
@@ -842,6 +845,24 @@
     qsa("[data-order-track] .food-track-step").forEach((node, index) => {
       node.classList.toggle("is-done", index < state.trackStep);
     });
+  }
+
+  function scrollShelf(target, direction) {
+    const row = qs(`[data-scroll-row="${target}"]`);
+    if (!row) return;
+    const amount = Math.max(260, Math.round(row.clientWidth * 0.82)) * direction;
+    row.scrollTo({ left: Math.max(0, row.scrollLeft + amount), behavior: "smooth" });
+  }
+
+  function focusAllPageView() {
+    if (!isAllFoodPage) return;
+    const view = core.getParam ? core.getParam("view") : new URLSearchParams(window.location.search).get("view");
+    const target = view === "menus"
+      ? qs("[data-menu-grid]")?.closest(".food-section")
+      : view === "restaurants"
+        ? qs("[data-restaurant-grid]")?.closest(".food-section")
+        : null;
+    if (target) window.setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "start" }), 180);
   }
 
   function bindEvents() {
@@ -941,6 +962,8 @@
       }
       const remove = event.target.closest("[data-remove-item]");
       if (remove) removeItem(remove.dataset.removeItem);
+      const scroll = event.target.closest("[data-scroll-target]");
+      if (scroll) scrollShelf(scroll.dataset.scrollTarget, Number(scroll.dataset.scrollDir || 1));
     });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeDetailModal();

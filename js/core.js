@@ -35,6 +35,7 @@
     "allonamarket.html": "/pages/commerce/allonamarket.html",
     "allonashop.html": "/pages/commerce/allonashop.html",
     "allonayemek.html": "/pages/commerce/allonayemek.html",
+    "allonayemek-tumu.html": "/pages/commerce/allonayemek-tumu.html",
     "cart.html": "/pages/commerce/cart.html",
     "checkout.html": "/pages/commerce/guvenli-odeme.html",
     "guvenli-odeme.html": "/pages/commerce/guvenli-odeme.html",

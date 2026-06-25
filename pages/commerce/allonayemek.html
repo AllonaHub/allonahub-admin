@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/allonahub-home.css?v=20260622-corp2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260622-corp2">
-  <link rel="stylesheet" href="../../css/allona-food.css?v=20260622-options1">
+  <link rel="stylesheet" href="../../css/allona-food.css?v=20260626-food-shelves1">
 </head>
 <body class="food-module-page" data-page="allona-food">
   <div class="top-mini-nav">
@@ -156,9 +156,41 @@
             <a class="food-action" href="../account/favorites.html"><i class="fa-regular fa-heart" aria-hidden="true"></i><span>Favoriler</span></a>
             <a class="food-action" href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Kupon</span><strong>4</strong></a>
             <a class="food-action" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i><span>Sepet</span><strong data-cart-count>0</strong></a>
+            <a class="food-action food-action--primary" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i><span>Ödeme</span></a>
           </div>
         </header>
         <div class="food-status" data-food-status>Canlı restoran kataloğu hazırlanıyor.</div>
+
+        <section class="food-order-strip" aria-label="Sepet özeti">
+          <div class="food-order-metric">
+            <span>Sepet</span>
+            <strong><b data-cart-count-rail>0</b> ürün</strong>
+          </div>
+          <div class="food-order-metric">
+            <span>Ara Toplam</span>
+            <strong data-subtotal>0,00 TL</strong>
+          </div>
+          <div class="food-order-metric">
+            <span>Teslimat</span>
+            <strong data-delivery-fee>0,00 TL</strong>
+          </div>
+          <div class="food-order-metric">
+            <span>İndirim</span>
+            <strong data-discount>0,00 TL</strong>
+          </div>
+          <div class="food-order-metric">
+            <span>HP</span>
+            <strong data-hp-earned>0 HP</strong>
+          </div>
+          <div class="food-order-total">
+            <span>Toplam</span>
+            <strong data-total>0,00 TL</strong>
+          </div>
+          <div class="food-order-actions">
+            <a class="food-link-btn food-link-btn--light" href="../commerce/cart.html"><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>Sepete Git</a>
+            <a class="food-checkout" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
+          </div>
+        </section>
 
         <section class="food-section" aria-label="Yemek kategorileri">
           <div class="food-section-head">
@@ -167,7 +199,7 @@
               <p>Hızlı seçim için popüler mutfaklar.</p>
             </div>
           </div>
-          <div class="food-category-strip" data-category-strip>
+          <div class="food-category-strip food-scroll-row" data-category-strip>
             <button class="food-category is-active" type="button" data-cuisine="all"><i class="fa-solid fa-border-all" aria-hidden="true"></i>Tümü</button>
             <button class="food-category" type="button" data-cuisine="Burger"><i class="fa-solid fa-burger" aria-hidden="true"></i>Burger</button>
             <button class="food-category" type="button" data-cuisine="Pizza"><i class="fa-solid fa-pizza-slice" aria-hidden="true"></i>Pizza</button>
@@ -185,9 +217,16 @@
               <h2>Restoranlar</h2>
               <p>Puan, süre, kampanya ve teslimat bilgisi aynı kartta.</p>
             </div>
-            <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i>Restoran Ekle</a>
+            <div class="food-section-actions">
+              <div class="food-scroll-controls" aria-label="Restoran rafı kontrolü">
+                <button type="button" data-scroll-target="restaurants" data-scroll-dir="-1" aria-label="Restoranları sola kaydır"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" data-scroll-target="restaurants" data-scroll-dir="1" aria-label="Restoranları sağa kaydır"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+              </div>
+              <a class="food-link-btn food-link-btn--light" href="allonayemek-tumu.html?view=restaurants"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>Tümünü Gör</a>
+              <a class="food-link-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i>Restoran Ekle</a>
+            </div>
           </div>
-          <div class="food-grid" data-restaurant-grid></div>
+          <div class="food-grid food-scroll-row" data-restaurant-grid data-scroll-row="restaurants"></div>
           <div class="food-empty" data-food-empty>Bu filtrelerle restoran bulunamadı.</div>
         </section>
 
@@ -195,11 +234,18 @@
           <div class="food-section-head">
             <div>
               <h2>Öne Çıkan Menüler</h2>
-              <p>Sepete eklenebilir örnek menü akışı.</p>
+              <p>Yatay raf yapısı, ürünler çoğaldıkça yana kaydırılarak genişler.</p>
             </div>
-            <a class="food-link-btn" href="../commerce/kuponlar.html"><i class="fa-solid fa-percent" aria-hidden="true"></i>Kampanyalar</a>
+            <div class="food-section-actions">
+              <div class="food-scroll-controls" aria-label="Menü rafı kontrolü">
+                <button type="button" data-scroll-target="menus" data-scroll-dir="-1" aria-label="Menüleri sola kaydır"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                <button type="button" data-scroll-target="menus" data-scroll-dir="1" aria-label="Menüleri sağa kaydır"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+              </div>
+              <a class="food-link-btn food-link-btn--light" href="allonayemek-tumu.html?view=menus"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>Tümünü Gör</a>
+              <a class="food-link-btn" href="../commerce/kuponlar.html"><i class="fa-solid fa-percent" aria-hidden="true"></i>Kampanyalar</a>
+            </div>
           </div>
-          <div class="food-menu-grid" data-menu-grid></div>
+          <div class="food-menu-grid food-scroll-row" data-menu-grid data-scroll-row="menus"></div>
         </section>
 
         <section class="food-section" aria-label="Operasyon modülleri">
@@ -252,42 +298,6 @@
         </section>
       </div>
 
-      <aside class="food-rail" aria-label="Sepet ve sipariş paneli">
-        <div class="food-cart-head">
-          <h2>Sepet</h2>
-          <span data-cart-count-rail>0</span>
-        </div>
-        <div class="food-cart-items" data-cart-items>
-          <div class="food-cart-empty">Sepete menü eklediğinde toplam, teslimat ve HP burada görünür.</div>
-        </div>
-
-        <form class="food-coupon" data-coupon-form>
-          <input type="text" data-coupon-code placeholder="Kupon kodu">
-          <button type="submit">Uygula</button>
-        </form>
-
-        <div class="food-totals">
-          <div class="food-total-row"><span>Ara toplam</span><b data-subtotal>0,00 TL</b></div>
-          <div class="food-total-row"><span>Teslimat</span><b data-delivery-fee>0,00 TL</b></div>
-          <div class="food-total-row"><span>Kupon</span><b data-discount>0,00 TL</b></div>
-          <div class="food-total-row"><span>Kazanılacak HP</span><b data-hp-earned>0 HP</b></div>
-          <div class="food-total-row"><span>Toplam</span><strong data-total>0,00 TL</strong></div>
-        </div>
-        <a class="food-checkout" href="../commerce/guvenli-odeme.html" data-food-checkout><i class="fa-solid fa-credit-card" aria-hidden="true"></i>Ödemeye Devam Et</a>
-
-        <div class="food-track-card">
-          <div class="food-cart-head">
-            <h2>Sipariş Takibi</h2>
-          </div>
-          <div class="food-track" data-order-track>
-            <div class="food-track-step is-done"><span class="food-track-dot">1</span><div><b>Sepet oluşturuldu</b><span>Kupon ve HP hesaplandı</span></div></div>
-            <div class="food-track-step"><span class="food-track-dot">2</span><div><b>Restoran onayı</b><span>Hazırlık süresi bekleniyor</span></div></div>
-            <div class="food-track-step"><span class="food-track-dot">3</span><div><b>Kurye yolda</b><span>Canlı konum bağlantısı</span></div></div>
-            <div class="food-track-step"><span class="food-track-dot">4</span><div><b>Teslim edildi</b><span>Değerlendirme ve destek</span></div></div>
-          </div>
-          <button class="food-mini-action" type="button" data-progress-order><i class="fa-solid fa-forward-step" aria-hidden="true"></i>Sipariş Durumunu İlerle</button>
-        </div>
-      </aside>
     </section>
 
     <p class="food-footer-note">Allona Yemek modülü; AllonaHub ortak hesap, kupon, partner ve kurye altyapısına bağlı çalışır.</p>
@@ -296,12 +306,12 @@
   <div data-layout="footer"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260622-food1" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/core.js?v=20260626-food-shelves1" defer></script>
   <script src="../../js/supabase-client.js?v=20260623-catalog-scope1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
   <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
   <script src="../../js/layout.v3.js?v=20260623-visualfix1" defer></script>
   <script src="../../js/platform.js?v=20260623-visualfix1" defer></script>
-  <script src="../../js/allona-food-page.js?v=20260623-catalog-scope1" defer></script>
+  <script src="../../js/allona-food-page.js?v=20260626-food-shelves1" defer></script>
 </body>
 </html>
