@@ -143,6 +143,14 @@
     setTimeout(() => item.remove(), 3600);
   }
 
+  function readableError(error) {
+    const message = String(error?.message || "").trim();
+    if (/load failed|failed to fetch|networkerror|network request failed|cancelled/i.test(message)) {
+      return "API bağlantısı kurulamadı. Lütfen Cloudflare/API erişimini ve oturum tokenını kontrol edip sayfayı yenileyin.";
+    }
+    return message || "Panel verisi yüklenemedi.";
+  }
+
   function warningPanel(warnings) {
     const rows = [...new Set([...(state.warnings || []), ...(warnings || [])])].filter(Boolean);
     if (!rows.length) return "";
@@ -162,18 +170,24 @@
   async function api(path, options) {
     const token = await sessionToken();
     if (!token) return null;
-    const response = await fetch(`${config.apiBaseUrl}${path}`, {
-      method: options?.method || "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: options?.body ? JSON.stringify(options.body) : undefined,
-      credentials: "omit"
-    });
+    let response;
+    try {
+      response = await fetch(`${config.apiBaseUrl}${path}`, {
+        method: options?.method || "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: options?.body ? JSON.stringify(options.body) : undefined,
+        credentials: "omit"
+      });
+    } catch (error) {
+      console.error("[AdminOps] API fetch failed", path, error);
+      throw new Error(readableError(error));
+    }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = payload.message || payload.error || "İşlem tamamlanamadı.";
+      const message = payload.message || payload.error || `API isteği tamamlanamadı. HTTP ${response.status}`;
       if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
@@ -1049,7 +1063,8 @@
       if (state.view === "reports") await loadReports();
       if (state.view === "audit") await loadAudit();
     } catch (error) {
-      $("#adminContent").innerHTML = statusBox(error.message || "Panel verisi yüklenemedi.", "error");
+      console.error("[AdminOps] view load failed", state.view, error);
+      $("#adminContent").innerHTML = statusBox(readableError(error), "error");
     }
   }
 
