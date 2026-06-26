@@ -23,24 +23,28 @@
       </div>
       <header class="site-header">
         <div class="container header-main">
-          <a class="brand" href="${core.url("/index.html")}" aria-label="AllonaHub ana sayfa">
-            <img src="${core.url("/images/brand/allona.logo.png")}" alt="AllonaHub Logo">
-            <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
-          </a>
+          <div class="header-brand-row">
+            <a class="brand" href="${core.url("/index.html")}" aria-label="AllonaHub ana sayfa">
+              <img src="${core.url("/images/brand/allona.logo.png")}" alt="AllonaHub Logo">
+              <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
+            </a>
+            <span class="platform-controls-slot" data-platform-controls-slot></span>
+          </div>
           <form class="search-form" data-site-search>
             <input type="search" name="q" autocomplete="off" placeholder="Ürün, kategori, hizmet veya marka ara" aria-label="Ürün, kategori, hizmet veya marka ara">
             <button class="btn" type="submit">Ara</button>
           </form>
           <div class="header-actions">
+            <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
             <a class="icon-btn icon-btn--count" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler">
               🔔 <span class="badge" data-notification-count>0</span>
-            </a>
-            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/commerce/kuponlar.html")}" aria-label="Kuponlar">
-              Kupon
             </a>
             <a class="icon-btn icon-btn--count icon-btn--favorite" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               <span class="header-action-icon header-action-icon--heart" aria-hidden="true">♥</span>
               <span class="badge" data-fav-count>0</span>
+            </a>
+            <a class="icon-btn icon-btn--wide" href="${core.url("/pages/commerce/kuponlar.html")}" aria-label="Kuponlar">
+              Kupon
             </a>
             <a class="icon-btn icon-btn--count icon-btn--cart" href="${core.url("/pages/commerce/cart.html")}" aria-label="Sepet">
               <span class="header-action-icon header-action-icon--cart" aria-hidden="true">
@@ -55,8 +59,6 @@
               <span class="badge" data-cart-count>0</span>
             </a>
             <a class="link-btn icon-btn--wide" href="${core.url("/pages/account/user.html")}" data-account-link>Giriş Yap</a>
-            <span class="platform-controls-slot" data-platform-controls-slot></span>
-            <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
           </div>
         </div>
         <div class="nav-row">

@@ -130,7 +130,13 @@ const accent=slides[index]?.style.getPropertyValue("--ad-accent")||"#00e5ff";
 dot.style.setProperty("--dot-color",accent);
 });
 if(dots[index]){
-dots[index].scrollIntoView({block:"nearest",inline:"center"});
+const stage=dots[index].parentElement;
+if(stage){
+const dotRect=dots[index].getBoundingClientRect();
+const stageRect=stage.getBoundingClientRect();
+const offset=dotRect.left-stageRect.left-(stageRect.width-dotRect.width)/2;
+stage.scrollTo({left:stage.scrollLeft+offset,behavior:"smooth"});
+}
 }
 }
 function start(){

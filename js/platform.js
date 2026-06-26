@@ -893,6 +893,17 @@
 
   function mountControls() {
     if (document.querySelector("[data-platform-controls]")) return;
+    const standaloneHeader = document.querySelector("body > header:not(.site-header)");
+    const standaloneBrand = standaloneHeader && standaloneHeader.querySelector(".logo, .brand");
+    if (standaloneBrand) {
+      const homeSlot = standaloneHeader.querySelector("[data-platform-controls-slot]") || document.createElement("span");
+      homeSlot.classList.add("platform-controls-slot", "platform-controls-slot--home");
+      homeSlot.dataset.platformControlsSlot = "home";
+      standaloneBrand.insertAdjacentElement("afterend", homeSlot);
+      homeSlot.innerHTML = controlsMarkup("home");
+      bindControlValues();
+      return;
+    }
     const slot = document.querySelector("[data-platform-controls-slot]");
     if (slot) {
       slot.innerHTML = controlsMarkup(slot.dataset.platformControlsSlot || "");
