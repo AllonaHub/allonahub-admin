@@ -752,7 +752,7 @@ a{
       <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
 
       <div class="link-row">
-        <a href="#">Telefon ile giriş</a>
+        <a href="user.html?tab=login&amp;method=phone">Telefon ile giriş</a>
         <a href="../company/destek.html">Güvenlik merkezi</a>
       </div>
     </div>
@@ -1837,6 +1837,11 @@ function openInitialAuthTab(){
   const tab=raw==="register" || raw==="forgot" ? raw : "login";
   const tabButton=[...document.querySelectorAll(".tab")].find(button=>button.getAttribute("onclick")?.includes(`'${tab}'`));
   openTab(tab,{target:tabButton});
+  if(String(params.get("method") || "").toLowerCase()==="phone"){
+    setTimeout(function(){
+      secureAuthAlert("Telefon ile giriş altyapısı hazırlanıyor. Şimdilik e-posta veya Google ile güvenli giriş yapabilirsiniz.");
+    },250);
+  }
 }
 
 document.addEventListener("click",function(e){

@@ -7,11 +7,16 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#020814,#061b33,#002b4d);color:#fff}
-.wrap{max-width:860px;margin:auto;padding:72px 24px}
+.wrap{max-width:1040px;margin:auto;padding:72px 24px}
 .card{border:1px solid rgba(0,229,255,.25);border-radius:26px;padding:32px;background:rgba(3,10,24,.88);box-shadow:0 0 34px rgba(0,229,255,.14)}
 h1{margin:0 0 14px;color:#ffd700}
 p{color:rgba(255,255,255,.76);line-height:1.7}
-a{display:inline-block;margin-top:18px;padding:13px 22px;border-radius:999px;background:#00d5e8;color:#fff;text-decoration:none;font-weight:800}
+.search-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.search-actions a{display:inline-block;padding:13px 22px;border-radius:999px;background:#00d5e8;color:#fff;text-decoration:none;font-weight:800}
+.suggestions{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:24px}
+.suggestion{border:1px solid rgba(0,229,255,.18);border-radius:18px;padding:18px;background:rgba(255,255,255,.06);color:#fff;text-decoration:none}
+.suggestion b{display:block;color:#ffd700;margin-bottom:6px}
+.suggestion span{color:rgba(255,255,255,.72);font-size:14px;line-height:1.5}
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std7">
 </head>
@@ -20,14 +25,38 @@ a{display:inline-block;margin-top:18px;padding:13px 22px;border-radius:999px;bac
 <section class="card">
 <h1>Arama</h1>
 <p id="searchText">Arama sonucu hazırlanıyor.</p>
-<a href="../../index.html">Ana sayfaya dön</a>
+<div class="search-actions">
+  <a id="shopLink" href="../commerce/shop.html">Allona Shop'ta Ara</a>
+  <a id="marketLink" href="../commerce/allonamarket.html">Market'te Ara</a>
+  <a id="careerLink" href="../career/allonakariyer.html">Kariyer'de Ara</a>
+  <a id="partnerLink" href="../partner/partner.html">Partner Başvurusu</a>
+  <a href="../../index.html#modules">Tüm Modüller</a>
+</div>
+<div class="suggestions" id="suggestions" aria-label="Önerilen AllonaHub yönlendirmeleri"></div>
 </section>
 </main>
 <script>
 const q=new URLSearchParams(window.location.search).get("q")||"";
 document.getElementById("searchText").textContent=q
-  ? `"${q}" için uygun AllonaHub modülü henüz eşleşmedi. Ana sayfadaki hizmetler bölümünden devam edebilirsiniz.`
+  ? `"${q}" için AllonaHub içinde ilgili modül, ürün, hizmet veya başvuru alanına devam edebilirsiniz.`
   : "Arama yapmak için ana sayfadaki arama alanını kullanabilirsiniz.";
+const encoded=encodeURIComponent(q);
+if(q){
+  document.getElementById("shopLink").href=`../commerce/shop.html?q=${encoded}`;
+  document.getElementById("marketLink").href=`../commerce/allonamarket.html?q=${encoded}`;
+  document.getElementById("careerLink").href=`../career/allonakariyer.html?q=${encoded}`;
+  document.getElementById("partnerLink").href=`../partner/partner.html?intent=application&q=${encoded}`;
+}
+const suggestions=[
+  ["Ürün ve hizmet keşfi","Shop, Market ve ekosistem ürünlerinde ara","../commerce/shop.html"],
+  ["Kariyer ve CV","İlan, başvuru ve CV oluşturma akışına git","../career/allonakariyer.html"],
+  ["Partner olmak","İşletme, uzman veya hizmet veren başvurusu yap","../partner/partner.html"],
+  ["Destek merkezi","Yardım, güvenlik ve işlem destek alanına git","../company/destek.html"]
+];
+document.getElementById("suggestions").innerHTML=suggestions.map(function(item){
+  const href=q ? `${item[2]}?q=${encoded}` : item[2];
+  return `<a class="suggestion" href="${href}"><b>${item[0]}</b><span>${item[1]}</span></a>`;
+}).join("");
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/core.js?v=20260623-locnav1" defer></script>
