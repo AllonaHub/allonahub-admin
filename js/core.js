@@ -346,11 +346,13 @@
       ? socialSignals.slice(0, 2).join(" · ")
       : (product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : `${product.seller_name || product.brand || "Allona"} güvencesi`);
     const productHref = productUrl(product);
+    const descriptionId = `product-desc-${String(product.id || product.slug || product.name || "item").replace(/[^a-z0-9_-]+/gi, "-").slice(0, 64)}`;
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
         <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
+          <span class="product-card__zoom-lens" aria-hidden="true"></span>
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
         <div class="product-card__body">
@@ -365,7 +367,7 @@
             <span class="market-signal market-signal--delivery">${escapeHTML(deliveryLabel)}</span>
           </div>
           <h3><a href="${escapeHTML(productHref)}">${escapeHTML(product.name)}</a></h3>
-          <p class="product-card__description">${escapeHTML(truncate(product.description, 92))}</p>
+          <p class="product-card__description" id="${escapeHTML(descriptionId)}">${escapeHTML(truncate(product.description, 92))}</p>
           <div class="product-card__signals">
             <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
             <span class="product-social-proof">${escapeHTML(socialProof)}</span>

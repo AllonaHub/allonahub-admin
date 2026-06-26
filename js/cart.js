@@ -309,6 +309,108 @@
     }, 80);
   }
 
+  const productCardInteractiveSelector = [
+    "a",
+    "button",
+    "input",
+    "select",
+    "textarea",
+    "label",
+    "summary",
+    "[role='button']",
+    "[role='link']"
+  ].join(",");
+
+  function closestElement(target, selector) {
+    if (!target) return null;
+    const node = target.nodeType === 1 ? target : target.parentElement;
+    return node && node.closest ? node.closest(selector) : null;
+  }
+
+  function isShopSurface(node) {
+    return Boolean(node && node.closest && node.closest('.site-shell[data-page="shop"]'));
+  }
+
+  function isInside(parent, child) {
+    return Boolean(parent && child && child.nodeType && parent.contains(child));
+  }
+
+  function shopProductCardFromTarget(target) {
+    const card = closestElement(target, "[data-product-card]");
+    return card && isShopSurface(card) ? card : null;
+  }
+
+  function isProductCardInteractiveTarget(target, card) {
+    const interactive = closestElement(target, productCardInteractiveSelector);
+    return Boolean(interactive && card && card.contains(interactive));
+  }
+
+  function prepareShopProductCard(card) {
+    if (!card || card.dataset.shopCardReady === "true") return;
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-expanded", card.classList.contains("is-description-open") ? "true" : "false");
+    const description = card.querySelector(".product-card__description");
+    if (description) description.setAttribute("aria-hidden", card.classList.contains("is-description-open") ? "false" : "true");
+    card.dataset.shopCardReady = "true";
+  }
+
+  function prepareShopProductCards() {
+    document.querySelectorAll('.site-shell[data-page="shop"] [data-product-card]').forEach(prepareShopProductCard);
+  }
+
+  function setProductDescriptionOpen(card, isOpen) {
+    if (!card) return;
+    prepareShopProductCard(card);
+    document.querySelectorAll('.site-shell[data-page="shop"] .product-card.is-description-open').forEach((item) => {
+      if (item !== card) setProductDescriptionOpen(item, false);
+    });
+    card.classList.toggle("is-description-open", isOpen);
+    card.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    const description = card.querySelector(".product-card__description");
+    if (description) description.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  }
+
+  function toggleProductDescription(card) {
+    setProductDescriptionOpen(card, !card.classList.contains("is-description-open"));
+  }
+
+  function shopProductZoomMediaFromTarget(target) {
+    const media = closestElement(target, ".product-card__media");
+    if (!media || !isShopSurface(media) || !media.querySelector(".product-card__zoom-lens")) return null;
+    return media;
+  }
+
+  function coarsePointer() {
+    return Boolean(window.matchMedia && window.matchMedia("(hover: none), (pointer: coarse)").matches);
+  }
+
+  function syncProductZoom(media, event) {
+    const image = media && media.querySelector("img");
+    const lens = media && media.querySelector(".product-card__zoom-lens");
+    if (!image || !lens) return false;
+    const source = image.currentSrc || image.src || "";
+    const rect = media.getBoundingClientRect();
+    if (!source || !rect.width || !rect.height) return false;
+    const x = event ? Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)) : 0.5;
+    const y = event ? Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) : 0.5;
+    media.style.setProperty("--zoom-x", `${(x * 100).toFixed(2)}%`);
+    media.style.setProperty("--zoom-y", `${(y * 100).toFixed(2)}%`);
+    media.style.setProperty("--zoom-bg-x", `${(x * 100).toFixed(2)}%`);
+    media.style.setProperty("--zoom-bg-y", `${(y * 100).toFixed(2)}%`);
+    lens.style.backgroundImage = `url("${source.replace(/"/g, "%22")}")`;
+    return true;
+  }
+
+  function startProductZoom(media, event) {
+    if (coarsePointer() || !syncProductZoom(media, event)) return;
+    media.classList.add("is-zooming");
+  }
+
+  function stopProductZoom(media) {
+    if (!media) return;
+    media.classList.remove("is-zooming");
+  }
+
   function getLocalFavorites() {
     return read(config.storageKeys.favorites, []);
   }
@@ -397,6 +499,7 @@
   document.addEventListener("click", async (event) => {
     const addButton = event.target.closest("[data-add-product]");
     const favButton = event.target.closest("[data-fav-product]");
+    const productCard = shopProductCardFromTarget(event.target);
 
     if (addButton) {
       try {
@@ -424,15 +527,57 @@
         favButton.disabled = false;
       }
     }
+
+    if (productCard && !isProductCardInteractiveTarget(event.target, productCard)) {
+      toggleProductDescription(productCard);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || !["Enter", " "].includes(event.key)) return;
+    const productCard = shopProductCardFromTarget(event.target);
+    if (!productCard || event.target !== productCard) return;
+    event.preventDefault();
+    toggleProductDescription(productCard);
+  });
+
+  document.addEventListener("pointerover", (event) => {
+    const media = shopProductZoomMediaFromTarget(event.target);
+    if (!media || isInside(media, event.relatedTarget)) return;
+    startProductZoom(media, event);
+  });
+
+  document.addEventListener("pointermove", (event) => {
+    const media = shopProductZoomMediaFromTarget(event.target);
+    if (media && media.classList.contains("is-zooming")) syncProductZoom(media, event);
+  });
+
+  document.addEventListener("pointerout", (event) => {
+    const media = shopProductZoomMediaFromTarget(event.target);
+    if (!media || isInside(media, event.relatedTarget)) return;
+    stopProductZoom(media);
+  });
+
+  document.addEventListener("focusin", (event) => {
+    const media = shopProductZoomMediaFromTarget(event.target);
+    if (media && event.target === media) startProductZoom(media);
+  });
+
+  document.addEventListener("focusout", (event) => {
+    const media = shopProductZoomMediaFromTarget(event.target);
+    if (!media || isInside(media, event.relatedTarget)) return;
+    stopProductZoom(media);
   });
 
   const favoriteObserver = new MutationObserver(() => {
     scheduleFavoriteRefresh();
+    prepareShopProductCards();
   });
 
   document.addEventListener("DOMContentLoaded", () => {
     updateBadges();
     refreshFavoriteUi();
+    prepareShopProductCards();
     favoriteObserver.observe(document.body, { childList: true, subtree: true });
   });
   window.addEventListener("storage", () => {
