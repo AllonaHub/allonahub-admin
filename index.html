@@ -13,7 +13,7 @@
 
 <link rel="manifest" href="manifest.json?v=20260622-icon1">
 <link rel="apple-touch-icon" href="images/brand/allonahub-icon-180.png?v=20260622-icon1">
-<link rel="stylesheet" href="css/allonahub-home.css?v=20260623-visualfix1">
+<link rel="stylesheet" href="css/allonahub-home.css?v=20260626-hero-ads1">
 <link rel="stylesheet" href="css/platform.css?v=20260623-visualfix1">
 </head>
 
@@ -62,30 +62,108 @@
 </div>
 </section>
 
-<section class="premium-hero">
-<div class="hero-time-card">
-<div id="timeVisual" class="time-visual sun-visual"></div>
-<div id="heroGreeting" class="hero-greeting">Günaydın</div>
-<div id="heroClock" class="hero-clock">00:00:00</div>
-<div class="hero-location">
+<section class="premium-hero ad-hero" aria-label="AllonaHub reklam vitrini" data-ad-hero>
+<div class="ad-hero__viewport">
+<article class="ad-hero__slide is-active" data-ad-slide style="--ad-image:url('images/modules/shop-light-v5.jpg');--ad-accent:#00e5ff">
+<div class="ad-hero__content">
+<span class="ad-hero__eyebrow">AllonaHub Özel</span>
+<h1>Allona Shop fırsat vitrini</h1>
+<p>Tek hesapla alışveriş, sepet, güvenli ödeme ve kampanya deneyimini premium AllonaHub akışında birleştir.</p>
+<div class="ad-hero__actions">
+<a class="ad-hero__button" href="pages/commerce/allonashop.html">Alışverişe Git</a>
+<a class="ad-hero__link" href="pages/commerce/kuponlar.html">Kuponları Gör</a>
+</div>
+</div>
+<div class="ad-hero__visual-panel" aria-hidden="true">
+<span>Güvenli Sepet</span>
+<strong>Shop + Kupon</strong>
+<small>AllonaHub ekosistem avantajı</small>
+</div>
+</article>
+
+<article class="ad-hero__slide" data-ad-slide style="--ad-image:url('images/modules/market-light-v5.jpg');--ad-accent:#20e3a2">
+<div class="ad-hero__content">
+<span class="ad-hero__eyebrow">Günlük İhtiyaç</span>
+<h1>Allona Market kapına gelsin</h1>
+<p>Temel ihtiyaçlar, aile alışverişi ve hızlı teslimat akışı aynı platform kalitesiyle hazır.</p>
+<div class="ad-hero__actions">
+<a class="ad-hero__button" href="pages/commerce/allonamarket.html">Markete Git</a>
+<a class="ad-hero__link" href="pages/partner/partner.html">Market Partneri Ol</a>
+</div>
+</div>
+<div class="ad-hero__visual-panel" aria-hidden="true">
+<span>Hızlı Teslimat</span>
+<strong>Market + Kurye</strong>
+<small>Stok, sepet ve teslimat bağlantısı</small>
+</div>
+</article>
+
+<article class="ad-hero__slide" data-ad-slide style="--ad-image:url('images/modules/avm-dunyasi-light-v5.jpg');--ad-accent:#ffd166">
+<div class="ad-hero__content">
+<span class="ad-hero__eyebrow">Şehir Deneyimi</span>
+<h1>AVM Dünyası tek ekranda</h1>
+<p>Mağaza, kampanya, etkinlik ve yeme-içme deneyimlerini AllonaHub kalitesinde keşfet.</p>
+<div class="ad-hero__actions">
+<a class="ad-hero__button" href="pages/ecosystem/allonaavm.html">AVM Dünyası</a>
+<a class="ad-hero__link" href="#modules">Tüm Hizmetler</a>
+</div>
+</div>
+<div class="ad-hero__visual-panel" aria-hidden="true">
+<span>Yeni Modül</span>
+<strong>AVM + Etkinlik</strong>
+<small>Mağaza ve kampanya keşfi</small>
+</div>
+</article>
+
+<article class="ad-hero__slide" data-ad-slide style="--ad-image:url('images/modules/taksi-light-v5.jpg');--ad-accent:#46a6ff">
+<div class="ad-hero__content">
+<span class="ad-hero__eyebrow">Canlı Ulaşım</span>
+<h1>Allona Taksi ile şehirde hareket</h1>
+<p>Yakındaki sürücü, rota takibi ve güvenli ulaşım akışını AllonaHub hesabınla yönet.</p>
+<div class="ad-hero__actions">
+<a class="ad-hero__button" href="pages/ecosystem/allonataksi.html">Taksiye Git</a>
+<a class="ad-hero__link" href="pages/partner/partner.html">Sürücü Başvurusu</a>
+</div>
+</div>
+<div class="ad-hero__visual-panel" aria-hidden="true">
+<span>Canlı Takip</span>
+<strong>Taksi + Harita</strong>
+<small>Şehir içi ulaşım çözümü</small>
+</div>
+</article>
+
+<article class="ad-hero__slide" data-ad-slide style="--ad-image:url('images/modules/wallet.png');--ad-accent:#b58cff">
+<div class="ad-hero__content">
+<span class="ad-hero__eyebrow">Hub Wallet</span>
+<h1>HP avantajlarını hesabında topla</h1>
+<p>Kupon, ödül, görev ve alışveriş avantajlarını tek AllonaHub hesabında takip et.</p>
+<div class="ad-hero__actions">
+<a class="ad-hero__button" href="pages/account/rewards.html">Ödüllerim</a>
+<a class="ad-hero__link" href="pages/wallet/hp-nedir.html">HP Nedir?</a>
+</div>
+</div>
+<div class="ad-hero__visual-panel" aria-hidden="true">
+<span>Sadakat</span>
+<strong>HP + Kupon</strong>
+<small>Tek hesapla avantaj yönetimi</small>
+</div>
+</article>
+
+<div class="ad-hero__location hero-location">
 <span class="pin-dot" id="heroLocationStatus" aria-label="Konum izni kapalı" title="Konum izni kapalı" data-no-translate></span>
 <div>
 <strong id="heroCity">Konum belirlenemedi</strong>
 <p id="heroCountry">İzin verilmedi</p>
 </div>
 </div>
-</div>
 
-<div class="hero-main-card">
-<div class="hero-orb"></div>
-<h1>Global Süper<br>Ekosisteme Hoş Geldiniz</h1>
-<p>Alışveriş, kampanyalar ve partner hizmetleri için yeni nesil dijital ekosistem</p>
+<div class="ad-hero__dots" aria-label="Reklam seçimi">
+<button class="ad-hero__dot is-active" type="button" data-ad-dot aria-label="Allona Shop reklamı"></button>
+<button class="ad-hero__dot" type="button" data-ad-dot aria-label="Allona Market reklamı"></button>
+<button class="ad-hero__dot" type="button" data-ad-dot aria-label="AVM Dünyası reklamı"></button>
+<button class="ad-hero__dot" type="button" data-ad-dot aria-label="Allona Taksi reklamı"></button>
+<button class="ad-hero__dot" type="button" data-ad-dot aria-label="Hub Wallet reklamı"></button>
 </div>
-
-<div class="hero-reward-card">
-<div class="diamond-visual"></div>
-<h3>HP Dünyası</h3>
-<p>Ödüller, kampanyalar ve sadakat avantajlarını keşfet.</p>
 </div>
 </section>
 
@@ -243,7 +321,7 @@
 <script src="js/auth.js?v=20260623-mfa2" defer></script>
 <script src="js/layout.v3.js?v=20260623-visualfix1" defer></script>
 <script src="js/platform.js?v=20260623-visualfix1" defer></script>
-<script src="js/allonahub-home.js?v=20260623-visualfix1" defer></script>
+<script src="js/allonahub-home.js?v=20260626-hero-ads1" defer></script>
 <script src="js/pwa-install.js?v=20260623-reset3" defer></script>
 <script src="js/assistant-widget.js?v=20260624-botfix1" defer data-channel="webchat"></script>
 </body>

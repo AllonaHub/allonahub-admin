@@ -6,6 +6,7 @@ const s=now.getSeconds();
 const clock=document.getElementById("heroClock");
 const greeting=document.getElementById("heroGreeting");
 const visual=document.getElementById("timeVisual");
+if(!clock||!greeting||!visual){return}
 const pad=n=>String(n).padStart(2,"0");
 clock.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
 const total=h*60+m;
@@ -14,9 +15,53 @@ if(total>=300&&total<=720){greeting.textContent="Günaydın";visual.classList.ad
 else if(total>=721&&total<=1140){greeting.textContent="Merhaba";visual.classList.add("day-visual")}
 else if(total>=1141&&total<=1380){greeting.textContent="İyi Akşamlar";visual.classList.add("evening-visual")}
 else{greeting.textContent="İyi Geceler";visual.classList.add("night-visual")}
-}
+	}
+if(document.getElementById("heroClock")){
 updateHeroTime();
 setInterval(updateHeroTime,1000);
+}
+
+function initHeroAdSlider(){
+const hero=document.querySelector("[data-ad-hero]");
+if(!hero){return}
+const slides=[...hero.querySelectorAll("[data-ad-slide]")];
+const dots=[...hero.querySelectorAll("[data-ad-dot]")];
+if(slides.length<2){return}
+let index=0;
+let timer;
+function showSlide(nextIndex){
+index=(nextIndex+slides.length)%slides.length;
+slides.forEach((slide,slideIndex)=>{
+const active=slideIndex===index;
+slide.classList.toggle("is-active",active);
+slide.setAttribute("aria-hidden",active?"false":"true");
+});
+dots.forEach((dot,dotIndex)=>{
+const active=dotIndex===index;
+dot.classList.toggle("is-active",active);
+dot.setAttribute("aria-pressed",active?"true":"false");
+const accent=slides[index]?.style.getPropertyValue("--ad-accent")||"#00e5ff";
+dot.style.setProperty("--dot-color",accent);
+});
+}
+function start(){
+clearInterval(timer);
+timer=setInterval(()=>showSlide(index+1),2000);
+}
+dots.forEach((dot,dotIndex)=>{
+dot.addEventListener("click",()=>{
+showSlide(dotIndex);
+start();
+});
+});
+hero.addEventListener("mouseenter",()=>clearInterval(timer));
+hero.addEventListener("mouseleave",start);
+hero.addEventListener("focusin",()=>clearInterval(timer));
+hero.addEventListener("focusout",start);
+showSlide(0);
+start();
+}
+initHeroAdSlider();
 
 function updateLocationStatus(active,city,country){
 const cityEl=document.getElementById("heroCity");
