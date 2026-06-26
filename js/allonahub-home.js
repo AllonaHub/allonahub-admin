@@ -149,7 +149,7 @@ stage.scrollTo({left:stage.scrollLeft+offset,behavior:"smooth"});
 }
 function start(){
 clearInterval(timer);
-timer=setInterval(()=>showSlide(index+1),3000);
+timer=setInterval(()=>showSlide(index+1),2000);
 }
 dots.forEach((dot,dotIndex)=>{
 dot.addEventListener("click",()=>{
