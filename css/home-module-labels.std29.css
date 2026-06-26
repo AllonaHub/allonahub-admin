@@ -1,0 +1,57 @@
+/* Homepage service labels: text-only cache-safe override. */
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-align: left;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :where(h3, p, span, b, strong) {
+  max-width: 100%;
+  text-shadow: none !important;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+  margin: 0 0 6px !important;
+  color: #ffd700 !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  line-height: 1.12 !important;
+  text-align: left !important;
+  text-wrap: balance;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+  text-wrap: pretty;
+}
+
+@media (max-width: 760px) {
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+    padding: 8px 9px;
+    border-radius: 12px;
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    margin-bottom: 4px !important;
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+}
