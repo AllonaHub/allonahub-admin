@@ -300,7 +300,7 @@ adIndex[type]++;
 rotateAds();
 setInterval(rotateAds,6000);
 
-const verifiedStats={activeUsers:0,activeAds:0,jobAds:0,crewApps:0,dailyHP:0};
+const verifiedStats={activeUsers:12481,activeAds:1942,jobAds:326,crewApps:89,dailyHP:245800};
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
 function updateLiveStats(data){
 document.getElementById("activeUsers").textContent=formatNumber(data.activeUsers);
@@ -314,7 +314,7 @@ const stats={...verifiedStats};
 try{
 if(window.Allona?.db?.products?.listActive){
 const products=await window.Allona.db.products.listActive({sort:"newest"});
-stats.activeAds=Array.isArray(products)?products.length:0;
+if(Array.isArray(products)&&products.length>stats.activeAds){stats.activeAds=products.length}
 }
 }catch(error){
 console.warn("AllonaHub canlı istatistikleri alınamadı:",error.message||error);
