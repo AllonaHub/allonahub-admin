@@ -1174,6 +1174,42 @@
     }
   }
 
+  const mobileRailSelector = [
+    ".site-shell :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid)",
+    ".page > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid)",
+    "body.food-module-page :is(.food-grid, .food-menu-grid, .restaurant-grid, .menu-grid)",
+    ".module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid)"
+  ].join(",");
+  let mobileRailObserver;
+  let mobileRailFrame = 0;
+
+  function applyMobileRailOrder() {
+    const orderMap = [1, 3, 2, 4];
+    document.querySelectorAll(mobileRailSelector).forEach((rail) => {
+      [...rail.children].forEach((item, index) => {
+        const page = Math.floor(index / 4);
+        const slot = orderMap[index % 4];
+        item.style.setProperty("--ah-mobile-rail-order", String(page * 4 + slot));
+      });
+      rail.dataset.mobileRail = "2x2";
+    });
+  }
+
+  function queueMobileRailOrder() {
+    if (mobileRailFrame) return;
+    mobileRailFrame = window.requestAnimationFrame(() => {
+      mobileRailFrame = 0;
+      applyMobileRailOrder();
+    });
+  }
+
+  function startMobileRailObserver() {
+    applyMobileRailOrder();
+    if (mobileRailObserver || !document.body) return;
+    mobileRailObserver = new MutationObserver(queueMobileRailOrder);
+    mobileRailObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
   function bindEvents() {
     document.addEventListener("change", (event) => {
       const languageSelect = event.target.closest("[data-language-select]");
@@ -1219,6 +1255,7 @@
       normalizePlatformBrand();
       mountControls();
       mountModuleAdBanner();
+      startMobileRailObserver();
       bindAccountAuthListener();
       applyTheme(state.theme);
       startTranslationObserver();
@@ -1243,6 +1280,7 @@
     applyTheme(state.theme);
     mountControls();
     mountModuleAdBanner();
+    startMobileRailObserver();
     bindAccountAuthListener();
     repairEmptyLinks();
     startTranslationObserver();

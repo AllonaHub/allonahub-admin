@@ -6088,3 +6088,471 @@ body[data-theme="corporate"] nav .shop-category-trigger {
 body[data-theme]:not([data-theme="white"]):not([data-theme="corporate"]) nav .shop-category-trigger {
   color: var(--ah-ink) !important;
 }
+
+/* Mobile shared module rail v5: carry homepage 2x2 swipe behavior into modules. */
+@media (max-width: 760px) {
+  body[data-theme] :where(.site-shell, .page) :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ),
+  body[data-theme] .module-page main > :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ) {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: repeat(2, minmax(132px, max-content)) !important;
+    grid-auto-columns: calc((100% - 10px) / 2) !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding: 0 12px 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-padding-inline: 12px !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-theme] :where(.site-shell, .page) :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  )::-webkit-scrollbar,
+  body[data-theme] .module-page main > :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  )::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-theme] :where(.site-shell, .page) :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ) > *,
+  body[data-theme] .module-page main > :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ) > * {
+    flex: initial !important;
+    flex-basis: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    order: var(--ah-mobile-rail-order, 0) !important;
+    scroll-snap-align: start !important;
+  }
+
+  body[data-theme] :where(
+    .catalog-chip-row,
+    .market-chip-row,
+    .market-category-strip,
+    .food-category-strip,
+    .food-section-actions,
+    .market-partner-actions,
+    .food-order-actions,
+    .field--actions,
+    .section-actions,
+    .hero-actions
+  ) {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-theme] :where(
+    .catalog-chip-row,
+    .market-chip-row,
+    .market-category-strip,
+    .food-category-strip,
+    .food-section-actions,
+    .market-partner-actions,
+    .food-order-actions,
+    .field--actions,
+    .section-actions,
+    .hero-actions
+  )::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-theme] :where(
+    .catalog-chip,
+    .market-chip,
+    .market-category-chip,
+    .food-category,
+    .food-link-btn,
+    .food-checkout,
+    .btn,
+    .link-btn
+  ) {
+    flex: 0 0 auto !important;
+    min-height: 44px !important;
+    padding-inline: 12px !important;
+    white-space: nowrap !important;
+  }
+
+  body[data-theme] :where(.section-header, .market-section__head, .food-section-head) {
+    gap: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  body[data-theme] :where(.product-card, .food-card, .food-menu-item, .restaurant, .service-card, .module-card) {
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: hidden !important;
+  }
+
+  body[data-theme] :where(.product-card__media, .food-card-media) {
+    height: clamp(112px, 30vw, 148px) !important;
+    min-height: 0 !important;
+    max-height: 148px !important;
+    overflow: hidden !important;
+  }
+
+  body[data-theme] :where(.product-card__media img, .food-card-media img) {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  body[data-theme] .product-card__body {
+    gap: 7px !important;
+    padding: 10px !important;
+  }
+
+  body[data-theme] :where(.product-card__meta, .product-card__deal-row, .product-card__signals, .price-row, .product-card__actions, .food-card-footer, .food-price-line, .food-meta) {
+    gap: 6px !important;
+    min-width: 0 !important;
+  }
+
+  body[data-theme] :where(.product-card__description, .food-card-desc, .food-menu-item > p) {
+    display: -webkit-box !important;
+    overflow: hidden !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+  }
+
+  body[data-theme] :where(.product-card__actions .btn, .product-card__actions .link-btn, .food-add) {
+    flex: 1 1 72px !important;
+    min-width: 0 !important;
+    padding-inline: 8px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body[data-theme] :where(.site-shell, .page) :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ),
+  body[data-theme] .module-page main > :where(
+    .product-grid,
+    .market-product-rail,
+    .food-grid,
+    .food-menu-grid,
+    .restaurant-grid,
+    .menu-grid,
+    .service-grid,
+    .grid-5,
+    .grid-4,
+    .grid-3,
+    .cards,
+    .detail-grid,
+    .module-grid,
+    .category-grid,
+    .request-grid,
+    .listing-grid,
+    .clinic-grid,
+    .panel-grid,
+    .quick-grid,
+    .platform-card-grid
+  ) {
+    grid-template-rows: repeat(2, minmax(124px, max-content)) !important;
+    grid-auto-columns: calc((100% - 8px) / 2) !important;
+    gap: 8px !important;
+    padding-inline: 10px !important;
+    scroll-padding-inline: 10px !important;
+  }
+
+  body[data-theme] :where(.product-card__media, .food-card-media) {
+    height: clamp(104px, 29vw, 132px) !important;
+    max-height: 132px !important;
+  }
+}
+
+/* Mobile shared module rail v5.1: stronger override for older module-specific grids. */
+@media (max-width: 760px) {
+  body[data-theme] .site-shell :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid),
+  body[data-theme] .page :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid),
+  body[data-theme].food-module-page :is(.food-grid, .food-menu-grid, .restaurant-grid, .menu-grid),
+  body[data-theme] .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid) {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: repeat(2, minmax(132px, max-content)) !important;
+    grid-auto-columns: calc((100% - 10px) / 2) !important;
+    justify-items: stretch !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-padding-inline: 12px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-theme] .site-shell :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid) > *,
+  body[data-theme] .page :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid) > *,
+  body[data-theme].food-module-page :is(.food-grid, .food-menu-grid, .restaurant-grid, .menu-grid) > *,
+  body[data-theme] .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid) > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
+    order: var(--ah-mobile-rail-order, 0) !important;
+    scroll-snap-align: start !important;
+  }
+
+  body[data-theme] :where(.product-card, .food-card, .food-menu-item) {
+    min-height: 0 !important;
+  }
+
+  body[data-theme] .product-card__body {
+    min-width: 0 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+  }
+
+  body[data-theme] :where(.product-card__meta, .product-card__deal-row, .product-card__signals) {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+
+  body[data-theme] :where(.product-card__meta, .product-card__deal-row, .product-card__signals)::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-theme] :where(.product-card__meta, .product-card__deal-row, .product-card__signals) > * {
+    flex: 0 0 auto !important;
+    min-height: 24px !important;
+    max-width: 120px !important;
+    padding: 3px 7px !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body[data-theme] .product-card__meta > :where(.pill:not(.pill--deal)) {
+    max-width: 74px !important;
+  }
+
+  body[data-theme] .product-card__meta > .pill--deal {
+    max-width: 54px !important;
+  }
+
+  body[data-theme] .product-card__meta > .stock {
+    max-width: 42px !important;
+  }
+
+  body[data-theme] .product-card__deal-row > * {
+    max-width: 68px !important;
+  }
+
+  body[data-theme] .product-card__signals .product-social-proof {
+    max-width: 62px !important;
+  }
+
+  body[data-theme] .product-card h3,
+  body[data-theme] .product-card h3 a {
+    min-height: 0 !important;
+    line-height: 1.14 !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  body[data-theme] .price-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  body[data-theme] .price-stack {
+    min-width: 0 !important;
+  }
+
+  body[data-theme] .product-card__actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  body[data-theme] :where(.product-card__actions .btn, .product-card__actions .link-btn) {
+    width: 100% !important;
+    min-height: 40px !important;
+    padding-inline: 6px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body[data-theme] .site-shell :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid),
+  body[data-theme] .page :is(.product-grid, .market-product-rail, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid),
+  body[data-theme].food-module-page :is(.food-grid, .food-menu-grid, .restaurant-grid, .menu-grid),
+  body[data-theme] .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .service-grid, .grid-5, .grid-4, .grid-3, .cards, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid) {
+    grid-template-rows: repeat(2, minmax(124px, max-content)) !important;
+    grid-auto-columns: calc((100% - 8px) / 2) !important;
+    gap: 8px !important;
+  }
+}
