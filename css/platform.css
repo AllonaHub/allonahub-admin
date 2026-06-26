@@ -4521,3 +4521,306 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     grid-column: 1 / -1 !important;
   }
 }
+
+/* AllonaHub mobile theme contract v1: app-ready readable surfaces in every module. */
+@media (max-width: 760px) {
+  body[data-theme] {
+    background: var(--ah-page-bg) !important;
+    color: var(--ah-ink) !important;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body[data-theme="marketplace"],
+  body[data-theme="forest"] {
+    --ah-ink: #f8fbff;
+    --ah-muted: rgba(240, 253, 255, 0.82);
+    --ah-surface: #06342f;
+    --ah-card: linear-gradient(145deg, rgba(6, 52, 47, 0.96), rgba(2, 14, 20, 0.98));
+  }
+
+  body[data-theme] :where(
+    .site-shell,
+    .site-main,
+    main,
+    .page,
+    .wrapper,
+    .container,
+    .platform-page,
+    .platform-shell,
+    .page-shell,
+    .module-shell,
+    .content-shell,
+    .account-shell,
+    .partner-shell,
+    .checkout-shell,
+    .cart-shell,
+    .food-page,
+    .market-page
+  ) {
+    color: var(--ah-ink) !important;
+  }
+
+  body[data-theme] :where(
+    .card,
+    .panel,
+    .glass,
+    .soft,
+    .header,
+    .search,
+    .actions,
+    .catbar,
+    .hero-main,
+    .hero-card,
+    .promo,
+    .restaurant,
+    .menu-item,
+    .product,
+    .market-cat,
+    .food-cat,
+    .delivery-card,
+    .partner-cta,
+    .info,
+    .sticky-cart,
+    .product-card,
+    .marketplace-trust-item,
+    .summary-card,
+    .auth-card,
+    .data-card,
+    .trust-item,
+    .cart-item,
+    .empty-state,
+    .status-box,
+    .platform-card,
+    .coupon-card,
+    .module-card,
+    .shop-category-mega,
+    .platform-menu,
+    .modal__content,
+    .drawer,
+    .dropdown,
+    .toast__item,
+    .admin-toast__item,
+    .pwa-install-card,
+    .payment-handoff,
+    .payment-result,
+    .ah-assistant__panel
+  ) {
+    background: var(--ah-card) !important;
+    border-color: var(--ah-line) !important;
+    box-shadow: var(--ah-shadow-soft) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body[data-theme] :where(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    strong,
+    b,
+    label,
+    legend,
+    .section-title,
+    .section-title h2,
+    .section-header h2,
+    .page-heading h1,
+    .card h3,
+    .panel h2,
+    .hero-main h1,
+    .hero-card h3,
+    .promo h3,
+    .restaurant b,
+    .restaurant h3,
+    .menu-item b,
+    .menu-item h3,
+    .product b,
+    .product-card h3,
+    .product-card h3 a,
+    .module-card h3,
+    .delivery-card h3,
+    .partner-cta h2,
+    .info h2
+  ) {
+    color: var(--ah-ink) !important;
+  }
+
+  body[data-theme] :where(
+    p,
+    li,
+    small,
+    .muted,
+    .meta,
+    .section-sub,
+    .section-header p,
+    .page-heading p,
+    .hero-main p,
+    .hero-card p,
+    .promo p,
+    .restaurant p,
+    .menu-item p,
+    .product p,
+    .product-card__meta,
+    .product-card__description,
+    .product-social-proof,
+    .marketplace-trust-item span,
+    .product-detail__assurance span,
+    .product-detail__seller,
+    .stock,
+    .delivery-card p,
+    .partner-cta p,
+    .info p,
+    .flow div,
+    .flow-step,
+    .panel-list div
+  ) {
+    color: var(--ah-muted) !important;
+  }
+
+  body[data-theme] :where(
+    a:not(.btn):not(.link-btn):not(.icon-btn):not(.footer-brand),
+    .top-links a,
+    .catbar a,
+    .actions a,
+    .nav-links a,
+    .platform-menu-item,
+    .shop-category-mega a,
+    .dropdown a,
+    .drawer a,
+    .modal__content a:not(.btn)
+  ) {
+    color: var(--ah-ink) !important;
+  }
+
+  body[data-theme] :where(
+    a:not(.btn):not(.link-btn):not(.icon-btn):not(.footer-brand):hover,
+    a:not(.btn):not(.link-btn):not(.icon-btn):not(.footer-brand):focus-visible,
+    .top-links a:hover,
+    .catbar a:hover,
+    .actions a:hover,
+    .nav-links a:hover,
+    .platform-menu-item:hover,
+    .platform-menu-item.is-active,
+    .shop-category-mega a:hover,
+    .dropdown a:hover,
+    .drawer a:hover
+  ) {
+    color: var(--ah-primary) !important;
+  }
+
+  body[data-theme] :where(
+    .platform-menu,
+    .shop-category-mega,
+    .nav-links.is-open,
+    .modal__content,
+    .drawer,
+    .dropdown,
+    [popover],
+    .pwa-install-card,
+    .payment-handoff,
+    .payment-result,
+    .toast__item,
+    .admin-toast__item,
+    .ah-assistant__panel
+  ) :where(h1, h2, h3, h4, p, a, span, strong, small, li, label, button) {
+    color: inherit !important;
+  }
+
+  body[data-theme] :where(input, select, textarea, .search-form, .nav-search, .search) {
+    background: var(--ah-surface) !important;
+    border-color: var(--ah-line) !important;
+    color: var(--ah-ink) !important;
+    caret-color: var(--ah-primary);
+  }
+
+  body[data-theme] :where(input::placeholder, textarea::placeholder, .search input::placeholder, .nav-search input::placeholder) {
+    color: color-mix(in srgb, var(--ah-ink) 58%, transparent) !important;
+  }
+
+  body[data-theme] :where(
+    a[href],
+    button:not([disabled]),
+    [role="button"],
+    input:not([disabled]),
+    select:not([disabled]),
+    textarea:not([disabled])
+  ) {
+    touch-action: manipulation;
+  }
+
+  body[data-theme] :where(
+    .platform-menu,
+    .shop-category-mega,
+    .modal,
+    .modal__content,
+    .drawer,
+    .dropdown,
+    [popover]
+  ) {
+    z-index: 10050 !important;
+  }
+
+  body[data-theme] :where(
+    .btn,
+    .search-btn,
+    .login,
+    .buy-btn,
+    .cart-btn,
+    .checkout-btn,
+    .food-checkout,
+    .platform-action,
+    .store-btn
+  ) {
+    min-height: 44px !important;
+    color: #ffffff !important;
+  }
+
+  body[data-theme] :where(.link-btn, .icon-btn, .mobile-nav-toggle, .platform-control-btn) {
+    min-height: 44px !important;
+    border-color: color-mix(in srgb, var(--ah-primary) 38%, var(--ah-line)) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body[data-theme] :where(
+    .form-actions,
+    .button-row,
+    .cta-row,
+    .auth-actions,
+    .product-actions,
+    .cart-actions,
+    .checkout-actions,
+    .header-actions,
+    .footer-apps
+  ) {
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  body[data-theme] .site-footer {
+    background:
+      radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--ah-primary) 20%, transparent), transparent 32%),
+      radial-gradient(circle at 90% 20%, color-mix(in srgb, var(--ah-secondary) 14%, transparent), transparent 28%),
+      linear-gradient(180deg, #071525 0%, #030912 100%) !important;
+    border-top-color: var(--ah-footer-line) !important;
+    color: #ffffff !important;
+  }
+
+  body[data-theme] .site-footer :where(.footer-col h2, .footer-col h3, .footer-brand, .store-btn, .store-btn--app strong, .social-icons span) {
+    color: #ffffff !important;
+  }
+
+  body[data-theme] .site-footer :where(.footer-col a:not(.footer-brand), .footer-col p, .footer-bottom, .footer-bottom a, .footer-payment-strip, .store-btn__kicker) {
+    color: rgba(255, 255, 255, 0.84) !important;
+  }
+
+  body[data-theme] .site-footer :where(.footer-col a:not(.footer-brand):hover, .footer-bottom a:hover) {
+    color: var(--ah-primary) !important;
+  }
+
+  body[data-theme] .site-footer .footer-iyzico-badge,
+  body[data-theme] .site-footer .footer-iyzico-badge * {
+    color: #111827 !important;
+  }
+}

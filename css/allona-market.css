@@ -648,3 +648,103 @@ body.market-module-page[data-theme] .market-product-rail .price {
     background: var(--market-accent, #ffd166) !important;
   }
 }
+
+/* Mobile theme bridge: Market follows the shared AllonaHub platform contract. */
+@media (max-width: 760px) {
+  body.market-module-page[data-theme] {
+    --market-bg: var(--ah-bg);
+    --market-bg-soft: var(--ah-bg-mid);
+    --market-card: var(--ah-card);
+    --market-surface: var(--ah-surface);
+    --market-ink: var(--ah-ink);
+    --market-muted: var(--ah-muted);
+    --market-line: var(--ah-line);
+    --market-primary: var(--ah-primary);
+    --market-primary-strong: var(--ah-primary-strong);
+    --market-accent: var(--ah-accent);
+    --market-accent-soft: var(--ah-accent-soft);
+    --market-shadow: var(--ah-shadow-soft);
+    --market-shadow-hover: var(--ah-shadow);
+    background: var(--ah-page-bg) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme]::before {
+    background: var(--ah-page-bg) !important;
+  }
+
+  body.market-module-page[data-theme] .site-shell,
+  body.market-module-page[data-theme] .market-page {
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] :where(
+    .market-toolbar,
+    .market-trust-card,
+    .market-section,
+    .market-partner-band,
+    .market-product-rail .product-card,
+    .market-product-rail .empty-state,
+    .market-product-rail .status-box
+  ) {
+    background: var(--ah-card) !important;
+    border-color: var(--ah-line) !important;
+    box-shadow: var(--ah-shadow-soft) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] .market-product-rail .product-card__media {
+    background:
+      url("../images/product-fallback.svg") center / 52% no-repeat,
+      linear-gradient(135deg, color-mix(in srgb, var(--ah-surface) 76%, #ffffff 24%), color-mix(in srgb, var(--ah-bg-strong) 82%, #ffffff 18%)) !important;
+    border-bottom-color: var(--ah-line) !important;
+  }
+
+  body.market-module-page[data-theme] :where(
+    .market-toolbar__head h2,
+    .market-section__head h2,
+    .market-partner-band h2,
+    .market-product-rail .product-card h3,
+    .market-product-rail .product-card h3 a,
+    .market-trust-card strong
+  ) {
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] :where(
+    .market-toolbar p,
+    .market-section__head p,
+    .market-partner-band p,
+    .market-product-rail .product-card__meta,
+    .market-product-rail .product-card__description,
+    .market-product-rail .stock,
+    .market-trust-card span,
+    .market-feedback,
+    .market-page .field label
+  ) {
+    color: var(--ah-muted) !important;
+  }
+
+  body.market-module-page[data-theme] :where(.market-page .field input, .market-page .field select, .market-page .field textarea, .market-chip, .market-category-chip) {
+    background: var(--ah-surface) !important;
+    border-color: var(--ah-line) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] :where(.market-chip:hover, .market-chip:focus-visible, .market-chip.is-active, .market-category-chip:hover, .market-category-chip:focus-visible, .market-category-chip.is-active) {
+    border-color: color-mix(in srgb, var(--ah-primary) 45%, var(--ah-line)) !important;
+    background: color-mix(in srgb, var(--ah-primary) 12%, var(--ah-surface)) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] :where(.market-page .btn--light, .market-page .link-btn) {
+    background: var(--ah-surface) !important;
+    border-color: color-mix(in srgb, var(--ah-primary) 34%, var(--ah-line)) !important;
+    color: var(--ah-ink) !important;
+  }
+
+  body.market-module-page[data-theme] .market-product-rail .price,
+  body.market-module-page[data-theme] .market-feedback--source {
+    color: var(--ah-primary) !important;
+  }
+}
