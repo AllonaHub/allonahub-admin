@@ -108,7 +108,7 @@
 
   if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw-reset2.js?v=20260626-hero-ads1", {scope: "./"})
+      navigator.serviceWorker.register("sw-reset2.js?v=20260626-module-ads1", {scope: "./"})
         .then(registration => registration.update())
         .catch(() => undefined);
     });

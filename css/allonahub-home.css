@@ -45,9 +45,11 @@ html.is-standalone body{min-height:100svh}
 
 .premium-hero{width:100%;max-width:1720px;margin:25px auto 25px;padding:0 20px}
 .ad-hero__viewport{position:relative;min-height:380px;overflow:hidden;border-radius:30px;background:#020814;border:1px solid rgba(0,229,255,.28);box-shadow:0 24px 70px rgba(0,0,0,.32),0 0 36px rgba(0,229,255,.14)}
-.ad-hero__slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.42fr);align-items:stretch;background-image:linear-gradient(90deg,rgba(2,8,20,.94) 0%,rgba(2,8,20,.78) 42%,rgba(2,8,20,.38) 100%),var(--ad-image);background-size:cover;background-position:center;opacity:0;visibility:hidden;transform:scale(1.025);transition:opacity .55s ease,visibility .55s ease,transform .7s ease}
+.ad-hero__slides{position:absolute;inset:0}
+.ad-hero__slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.42fr);align-items:stretch;background-image:linear-gradient(90deg,rgba(2,8,20,.94) 0%,rgba(2,8,20,.78) 42%,rgba(2,8,20,.38) 100%),var(--ad-image);background-size:cover;background-position:center;color:inherit;text-decoration:none;cursor:pointer;opacity:0;visibility:hidden;transform:scale(1.025);transition:opacity .55s ease,visibility .55s ease,transform .7s ease}
 .ad-hero__slide::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 20%,rgba(0,229,255,.18),transparent 34%),linear-gradient(180deg,rgba(255,255,255,.07),transparent 45%);pointer-events:none}
 .ad-hero__slide.is-active{opacity:1;visibility:visible;transform:scale(1);z-index:2}
+.ad-hero__slide:focus-visible{outline:3px solid #ffd700;outline-offset:-6px}
 .ad-hero__content{position:relative;z-index:3;min-height:380px;max-width:760px;padding:52px 52px 94px;display:flex;flex-direction:column;justify-content:center}
 .ad-hero__eyebrow{width:max-content;max-width:100%;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#9adfff;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0}
 .ad-hero__content h1{margin:18px 0 16px;color:#fff;font-size:clamp(40px,4.8vw,72px);line-height:1.02;letter-spacing:0;text-shadow:0 0 26px rgba(0,229,255,.20)}
@@ -64,9 +66,10 @@ html.is-standalone body{min-height:100svh}
 .hero-location p{margin:4px 0 0;color:rgba(255,255,255,.7)}
 .ad-hero__location{position:absolute;right:30px;top:26px;z-index:5;max-width:310px;padding:10px 13px;border-radius:18px;background:rgba(1,12,28,.58);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(16px)}
 .ad-hero__location strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ad-hero__dots{position:absolute;right:30px;bottom:30px;z-index:5;display:flex;align-items:center;gap:8px}
-.ad-hero__dot{width:36px;height:6px;border:0;border-radius:999px;background:rgba(255,255,255,.30);cursor:pointer;transition:width .25s ease,background .25s ease,box-shadow .25s ease}
-.ad-hero__dot.is-active{width:58px;background:var(--dot-color,#00e5ff);box-shadow:0 0 16px rgba(0,229,255,.42)}
+.ad-hero__dots{position:absolute;right:30px;bottom:30px;z-index:5;width:max-content;max-width:min(640px,calc(100% - 380px));display:flex;align-items:center;gap:7px;overflow-x:auto;overflow-y:hidden;padding:4px 0 8px;scrollbar-width:none}
+.ad-hero__dots::-webkit-scrollbar{display:none}
+.ad-hero__dot{flex:0 0 auto;width:18px;height:6px;border:0;border-radius:999px;background:rgba(255,255,255,.30);cursor:pointer;transition:width .25s ease,background .25s ease,box-shadow .25s ease}
+.ad-hero__dot.is-active{width:42px;background:var(--dot-color,#00e5ff);box-shadow:0 0 16px rgba(0,229,255,.42)}
 .ad-hero__dot:focus-visible{outline:2px solid #ffd700;outline-offset:4px}
 .pin-dot{width:14px;height:14px;border-radius:50%;background:#ff375f;box-shadow:0 0 18px #ff375f;transition:background .25s ease,box-shadow .25s ease}
 .pin-dot.is-location-active{background:#00ff66;box-shadow:0 0 18px #00ff66,0 0 34px rgba(0,255,102,.45)}
@@ -706,8 +709,10 @@ body[data-theme="corporate"] .site-footer .footer-bottom a{color:#fff!important}
 
   .ad-hero__dots{
     left:20px;
-    right:auto;
+    right:20px;
     bottom:24px;
+    width:auto;
+    max-width:none;
   }
 
   .ad-hero__dot{
@@ -1181,8 +1186,10 @@ body[data-theme="corporate"] .site-footer .footer-bottom a{color:#fff!important}
 
   .ad-hero__dots{
     left:16px!important;
-    right:auto!important;
+    right:16px!important;
     bottom:22px!important;
+    width:auto!important;
+    max-width:none!important;
     gap:6px!important;
   }
 
