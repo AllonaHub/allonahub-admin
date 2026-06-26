@@ -6798,3 +6798,75 @@ body[data-theme]:not([data-theme="white"]):not([data-theme="corporate"]) nav .sh
     gap: 8px !important;
   }
 }
+
+/* Mobile shared module rail v6: one rule set for module card rails only. */
+@media (max-width: 760px) {
+  body[data-theme] {
+    --ah-mobile-rail-gap: 10px;
+    --ah-mobile-rail-pad: 12px;
+    --ah-mobile-rail-card: calc((100% - var(--ah-mobile-rail-gap)) / 2);
+    --ah-mobile-rail-row-min: 132px;
+    --ah-mobile-rail-snap: x mandatory;
+  }
+
+  body[data-theme] :is(
+    .modules-section .modules-grid.large-grid,
+    .site-shell :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .page :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid)
+  ) {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: repeat(2, minmax(var(--ah-mobile-rail-row-min), max-content)) !important;
+    grid-auto-columns: var(--ah-mobile-rail-card) !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+    gap: var(--ah-mobile-rail-gap) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding: 0 var(--ah-mobile-rail-pad) 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-padding-inline: var(--ah-mobile-rail-pad) !important;
+    scroll-snap-type: var(--ah-mobile-rail-snap) !important;
+    overscroll-behavior-inline: contain !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-theme] :is(
+    .modules-section .modules-grid.large-grid,
+    .site-shell :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .page :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid)
+  )::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body[data-theme] :is(
+    .modules-section .modules-grid.large-grid,
+    .site-shell :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .page :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid),
+    .module-page main > :is(.product-grid, .market-product-rail, .food-grid, .food-menu-grid, .restaurant-grid, .menu-grid, .food-chip-grid, .service-grid, .service-box, .grid, .grid-7, .grid-5, .grid-4, .grid-3, .cards, .features, .content-grid, .detail-grid, .module-grid, .category-grid, .request-grid, .listing-grid, .clinic-grid, .panel-grid, .quick-grid, .platform-card-grid, .edu-grid, .course-grid, .legal-grid, .bar-grid, .expert-grid, .deal-grid, .promo-grid, .driver-grid, .safety-grid, .summary-grid, .insight-grid, .flow-zone, .flow-grid, .timeline, .booking-grid, .toggle-grid, .ride-options, .quick-destination-grid, .action-grid)
+  ) > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    justify-self: stretch !important;
+    align-self: stretch !important;
+    order: var(--ah-mobile-rail-order, 0) !important;
+    scroll-snap-align: start !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body[data-theme] {
+    --ah-mobile-rail-gap: 8px;
+    --ah-mobile-rail-pad: 10px;
+    --ah-mobile-rail-card: calc((100% - var(--ah-mobile-rail-gap)) / 2);
+    --ah-mobile-rail-row-min: 124px;
+  }
+}
