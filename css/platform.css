@@ -5650,7 +5650,9 @@ body[data-theme="corporate"] .module-ad-banner__content {
 /* Homepage module labels: keep text flat, readable, and contained inside the image cards. */
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
   min-width: 0;
+  width: 100%;
   max-width: 100%;
+  text-align: left;
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -5659,8 +5661,14 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] >
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :where(h3, p, span, b, strong) {
+  display: block;
+  width: 100%;
   max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left !important;
   text-shadow: none !important;
+  text-overflow: ellipsis;
   overflow-wrap: break-word;
   word-break: normal;
 }
@@ -5669,14 +5677,14 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h
   margin: 0 0 6px !important;
   font-size: 21px !important;
   line-height: normal !important;
-  text-wrap: balance;
+  text-wrap: nowrap;
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
   margin: 0 !important;
   font-size: 13px !important;
   line-height: normal !important;
-  text-wrap: pretty;
+  text-wrap: nowrap;
 }
 
 @media (max-width: 760px) {
