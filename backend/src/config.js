@@ -6,6 +6,10 @@ function readEnv(name, options = {}) {
   return value || options.defaultValue || "";
 }
 
+function normalizeEnvString(value) {
+  return String(value || "").trim().replace(/^['"]|['"]$/g, "");
+}
+
 function readNumber(name, defaultValue) {
   const value = Number(process.env[name] || defaultValue);
   if (!Number.isFinite(value)) return defaultValue;
@@ -21,7 +25,7 @@ function readBool(name, defaultValue = false) {
 function readOptionalSecret(...names) {
   for (const name of names) {
     const value = process.env[name];
-    if (value) return value;
+    if (value) return normalizeEnvString(value);
   }
   return "";
 }
@@ -145,42 +149,60 @@ export const config = {
   socialMedia: {
     dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),
     dryRun: readBool("SOCIAL_MEDIA_DRY_RUN", true),
-    dispatchWebhookUrl: readEnv("SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    dispatchWebhookUrl: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL", { required: false, defaultValue: "" })
+    ).replace(/\/$/, ""),
     dispatchWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET"),
     secretEncryptionKey: readOptionalSecret("SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY"),
     sendTimeoutMs: readNumber("SOCIAL_MEDIA_SEND_TIMEOUT_MS", 12000),
     maxDispatchBatch: readNumber("SOCIAL_MEDIA_MAX_DISPATCH_BATCH", 20),
     maxMediaBytes: readNumber("SOCIAL_MEDIA_MAX_MEDIA_BYTES", 157286400),
     dailyDraftsEnabled: readBool("SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED", false),
-    assetWebhookUrl: readEnv("SOCIAL_MEDIA_ASSET_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    assetWebhookUrl: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_WEBHOOK_URL", { required: false, defaultValue: "" })
+    ).replace(/\/$/, ""),
     assetWebhookSecret: readOptionalSecret("SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET"),
     assetGenerationEnabled: readBool("SOCIAL_MEDIA_ASSET_GENERATION_ENABLED", false),
-    assetGenerationProvider: readEnv("SOCIAL_MEDIA_ASSET_GENERATION_PROVIDER", {
-      required: false,
-      defaultValue: "openai"
-    }).toLowerCase(),
+    assetGenerationProvider: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_GENERATION_PROVIDER", {
+        required: false,
+        defaultValue: "openai"
+      })
+    ).toLowerCase(),
     assetOpenAiApiKey: readOptionalSecret("SOCIAL_MEDIA_ASSET_OPENAI_API_KEY"),
-    assetOpenAiEndpoint: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_ENDPOINT", {
-      required: false,
-      defaultValue: "https://api.openai.com/v1/images/generations"
-    }).replace(/\/$/, ""),
-    assetOpenAiModel: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_MODEL", {
-      required: false,
-      defaultValue: "gpt-image-1"
-    }),
-    assetOpenAiSize: readEnv("SOCIAL_MEDIA_ASSET_OPENAI_SIZE", {
-      required: false,
-      defaultValue: "1024x1024"
-    }),
-    assetStorageBucket: readEnv("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET", {
-      required: false,
-      defaultValue: "social-media-assets"
-    }),
-    assetStoragePrefix: readEnv("SOCIAL_MEDIA_ASSET_STORAGE_PREFIX", {
-      required: false,
-      defaultValue: "social-media"
-    }),
-    defaultTimezone: readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
+    assetOpenAiEndpoint: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_OPENAI_ENDPOINT", {
+        required: false,
+        defaultValue: "https://api.openai.com/v1/images/generations"
+      })
+    ).replace(/\/$/, ""),
+    assetOpenAiModel: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_OPENAI_MODEL", {
+        required: false,
+        defaultValue: "gpt-image-1"
+      })
+    ),
+    assetOpenAiSize: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_OPENAI_SIZE", {
+        required: false,
+        defaultValue: "1024x1024"
+      })
+    ),
+    assetStorageBucket: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET", {
+        required: false,
+        defaultValue: "social-media-assets"
+      })
+    ),
+    assetStoragePrefix: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_ASSET_STORAGE_PREFIX", {
+        required: false,
+        defaultValue: "social-media"
+      })
+    ),
+    defaultTimezone: normalizeEnvString(
+      readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
+    )
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
