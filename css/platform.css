@@ -4798,6 +4798,26 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     gap: 8px !important;
   }
 
+  body[data-theme] :where(.top-links a, .actions a, .section-title a, .catbar a) {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+  }
+
+  body[data-theme] :where(.top-links a, .actions a, .section-title a) {
+    border: 1px solid color-mix(in srgb, var(--ah-primary) 32%, var(--ah-line)) !important;
+    background: color-mix(in srgb, var(--ah-primary) 10%, transparent) !important;
+  }
+
+  body[data-theme] :where(.section-title, .top-links, .actions, .catbar) {
+    gap: 8px !important;
+  }
+
   body[data-theme] .site-footer {
     background:
       radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--ah-primary) 20%, transparent), transparent 32%),
