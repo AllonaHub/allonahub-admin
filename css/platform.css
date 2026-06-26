@@ -4077,7 +4077,8 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   .food-promo-control,
   .market-hero__control,
   .food-section-actions button,
-  .food-link-btn {
+  .food-link-btn,
+  .product-card__favorite {
     min-height: 48px !important;
     height: auto !important;
   }
@@ -4090,8 +4091,14 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   .header-actions .mobile-nav-toggle,
   .shop-promo-control,
   .food-promo-control,
-  .market-hero__control {
+  .market-hero__control,
+  .product-card__favorite {
     min-width: 48px !important;
+  }
+
+  .product-card__favorite {
+    width: 48px !important;
+    height: 48px !important;
   }
 
   .search-btn,
