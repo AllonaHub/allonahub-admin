@@ -5646,3 +5646,49 @@ body[data-theme="corporate"] .module-ad-banner__content {
     padding: 0 14px;
   }
 }
+
+/* Homepage module labels: keep text flat, readable, and contained inside the image cards. */
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+  min-width: 0;
+  max-width: 100%;
+  box-shadow: none !important;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :where(h3, p, span, b, strong) {
+  max-width: 100%;
+  text-shadow: none !important;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+  margin: 0 0 4px !important;
+  font-size: clamp(16px, 1.18vw, 20px) !important;
+  line-height: 1.1 !important;
+  text-wrap: balance;
+}
+
+body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
+  margin: 0 !important;
+  font-size: clamp(11px, 0.82vw, 13px) !important;
+  line-height: 1.24 !important;
+  text-wrap: pretty;
+}
+
+@media (max-width: 760px) {
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+    padding: 8px 9px;
+    border-radius: 12px;
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+    font-size: 14px !important;
+    line-height: 1.08 !important;
+    margin-bottom: 3px !important;
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
+    font-size: 10.5px !important;
+    line-height: 1.18 !important;
+  }
+}
