@@ -5696,3 +5696,171 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p
     line-height: 1.25 !important;
   }
 }
+
+/* Mobile shell v3: keep module pages app-like without changing desktop surfaces. */
+@media (max-width: 760px) {
+  .top-bar {
+    display: none !important;
+  }
+
+  body[data-theme] .site-header .header-actions .badge {
+    top: 4px !important;
+    right: 4px !important;
+    min-width: 17px !important;
+    width: auto !important;
+    height: 17px !important;
+    padding: 0 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 999px !important;
+    line-height: 1 !important;
+    font-size: 10px !important;
+    background: var(--ah-accent-soft) !important;
+    color: #021112 !important;
+    box-shadow: none !important;
+  }
+
+  body[data-theme] .site-header .header-actions .icon-btn--count {
+    overflow: hidden !important;
+  }
+
+  body[data-theme] .site-header .header-actions :where(a, button) {
+    text-decoration: none !important;
+    text-underline-offset: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  body[data-theme] :where(.tier-price, .pill--deal) {
+    background-color: var(--ah-accent-soft) !important;
+    background-image: none !important;
+    border-color: color-mix(in srgb, var(--ah-accent-soft) 68%, #021112) !important;
+    color: #021112 !important;
+    text-shadow: none !important;
+  }
+
+  body[data-theme] .tier-price,
+  body[data-theme] .pill--deal {
+    background: var(--ah-accent-soft) !important;
+    color: #021112 !important;
+    text-shadow: none !important;
+  }
+
+  body[data-theme] :where(.food-add, .segment-btn.is-active, .call-btn) {
+    background-color: var(--ah-primary) !important;
+    background-image: linear-gradient(135deg, var(--ah-primary), color-mix(in srgb, var(--ah-primary) 68%, var(--ah-accent-soft))) !important;
+    border-color: color-mix(in srgb, var(--ah-primary) 62%, #021112) !important;
+    color: #021112 !important;
+    text-shadow: none !important;
+  }
+
+  body[data-theme] .food-add,
+  body[data-theme] .segment-btn.is-active,
+  body[data-theme] .call-btn {
+    color: #021112 !important;
+    text-shadow: none !important;
+  }
+
+  body[data-theme] .module-ad-banner,
+  body[data-theme] .module-ad-banner__frame,
+  body[data-theme] .module-ad-banner__content {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body[data-theme] .module-ad-banner__content {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    padding-inline: 16px !important;
+  }
+
+  body[data-theme] .module-ad-banner__content > * {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-theme] .module-ad-banner__content :where(strong, .module-ad-banner__copy) {
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  body[data-theme] .page > :where(.search-panel, .service-grid, .flow, .grid-5, .cards, .timeline, .flow-grid),
+  body[data-theme] .module-page main > .module-grid {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 8px 10px !important;
+    scroll-padding-inline: 8px !important;
+    scroll-snap-type: x proximity !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-theme] .page > :where(.search-panel, .service-grid, .flow, .grid-5, .cards, .timeline, .flow-grid)::-webkit-scrollbar,
+  body[data-theme] .module-page main > .module-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-theme] .page > :where(.service-grid, .flow, .grid-5, .cards, .timeline, .flow-grid) > *,
+  body[data-theme] .module-page main > .module-grid > * {
+    flex: 0 0 min(78vw, 286px) !important;
+    width: min(78vw, 286px) !important;
+    max-width: min(78vw, 286px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start !important;
+  }
+
+  body[data-theme] .page > .search-panel > :where(.input-box, .input, label, div:not(.search-mark)) {
+    flex: 0 0 min(72vw, 260px) !important;
+    width: min(72vw, 260px) !important;
+    max-width: min(72vw, 260px) !important;
+  }
+
+  body[data-theme] .page > .search-panel > :where(.btn, button, a) {
+    flex: 0 0 76px !important;
+    width: 76px !important;
+    max-width: 76px !important;
+    min-width: 76px !important;
+    padding-inline: 12px !important;
+  }
+
+  body[data-theme] .site-footer .store-buttons {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  body[data-theme] .site-footer .store-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  body[data-theme] .leaflet-control-attribution,
+  body[data-theme] .leaflet-control-attribution a {
+    min-height: 40px !important;
+    line-height: 40px !important;
+  }
+
+  body[data-theme] .leaflet-control-attribution a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding-inline: 4px !important;
+  }
+
+  body.taxi-module-page .site-footer .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
