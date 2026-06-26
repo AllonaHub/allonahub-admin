@@ -5667,6 +5667,7 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
   margin: 0 0 6px !important;
+  color: #061b33 !important;
   font-size: 21px !important;
   line-height: normal !important;
   text-wrap: balance;
@@ -5674,6 +5675,7 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
   margin: 0 !important;
+  color: #1f2937 !important;
   font-size: 13px !important;
   line-height: normal !important;
   text-wrap: pretty;
