@@ -306,40 +306,65 @@
   function slideMarkup(ad, index) {
     const accent = safeAccent(ad.accent);
     const href = heroHref(ad.link_url || "/pages/commerce/shop.html");
-    const title = ad.title || "Allona Shop ürün reklamı";
-    const image = core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"));
+    const title = ad.title || "Allona Shop ürünü";
+    const description = core.truncate(ad.description || "Seçili ürünü Allona Shop kataloğunda inceleyin.", 132);
+    const headingTag = index === 0 ? "h2" : "h3";
     return `
-      <a class="shop-promo-slide shop-promo-slide--image-only ${index === 0 ? "is-active" : ""}" data-shop-promo-slide href="${href}" aria-label="${core.escapeHTML(title)} ürün detayını aç" style="--module-ad-accent:${accent}">
-        <img src="${image}" alt="${core.escapeHTML(title)}" loading="${index === 0 ? "eager" : "lazy"}">
-      </a>
+      <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide style="--module-ad-accent:${accent}">
+        <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"))}" alt="${core.escapeHTML(title)}" loading="${index === 0 ? "eager" : "lazy"}">
+        <div class="shop-promo-content">
+          <p class="eyebrow">${core.escapeHTML(ad.subtitle || "Allona Shop")}</p>
+          <${headingTag}>${core.escapeHTML(title)}</${headingTag}>
+          <p>${core.escapeHTML(description)}</p>
+          <div class="shop-promo-details">
+            ${ad.price_label ? `<span class="shop-promo-price">${core.escapeHTML(ad.price_label)}</span>` : ""}
+            ${ad.meta_label ? `<span class="shop-promo-meta">${core.escapeHTML(ad.meta_label)}</span>` : ""}
+          </div>
+          ${ad.price_label ? "" : `<strong>${core.escapeHTML(ad.campaign_text || "Bugünün öne çıkan ürünü")}</strong>`}
+          <a class="btn" href="${href}">${core.escapeHTML(ad.cta_label || "Ürünü İncele")}</a>
+        </div>
+      </article>
     `;
   }
 
-  function renderTopModuleBannerAds(ads) {
-    const banner = document.querySelector("[data-module-ad-banner][data-module-key='shop']");
-    if (!banner || !ads.length) return false;
-    const firstAccent = safeAccent(ads[0]?.accent);
-    banner.classList.add("module-ad-banner--shop-hero");
-    banner.dataset.shopHeroBanner = "";
-    banner.style.setProperty("--module-ad-accent", firstAccent);
-    banner.innerHTML = `
-      <div class="module-ad-banner__frame shop-promo-slider shop-promo-slider--top shop-promo-slider--image-only" data-shop-promo-slider aria-label="Allona Shop üst ürün görsel bannerı">
-        <div class="shop-promo-track" data-shop-promo-track>
-          ${ads.map(slideMarkup).join("")}
+  function ensureShopPromoRail() {
+    let section = document.querySelector("[data-shop-promo-rail]");
+    if (!section) {
+      section = document.createElement("section");
+      section.className = "container shop-promo-section";
+      section.dataset.shopPromoRail = "";
+      section.setAttribute("aria-label", "Allona Shop ürün reklamları");
+      section.innerHTML = `
+        <div class="shop-promo-slider" data-shop-promo-slider aria-label="Allona Shop ürün reklamları">
+          <button class="shop-promo-control shop-promo-control--prev" type="button" data-shop-promo-prev aria-label="Önceki ürün reklamı">‹</button>
+          <div class="shop-promo-track" data-shop-promo-track></div>
+          <button class="shop-promo-control shop-promo-control--next" type="button" data-shop-promo-next aria-label="Sonraki ürün reklamı">›</button>
+          <div class="shop-promo-dots" data-shop-promo-dots aria-label="Ürün reklamı seçimi"></div>
         </div>
-      </div>
-    `;
-    initShopPromoSlider(banner.querySelector("[data-shop-promo-slider]"));
-    return true;
+      `;
+    }
+
+    const moduleBanner = document.querySelector("[data-module-ad-banner][data-module-key='shop']");
+    if (moduleBanner) {
+      moduleBanner.insertAdjacentElement("afterend", section);
+    } else {
+      const main = document.querySelector(".site-main");
+      main?.insertAdjacentElement("afterbegin", section);
+    }
+    return section;
   }
 
   function renderHeroAds(ads) {
     heroAds = ads;
-    if (renderTopModuleBannerAds(ads)) return;
-    const slider = document.querySelector(".site-main [data-shop-promo-slider]");
+    const section = ensureShopPromoRail();
+    const slider = section?.querySelector("[data-shop-promo-slider]");
     const track = slider?.querySelector("[data-shop-promo-track]");
-    if (!slider || !track || !ads.length) return;
-    track.innerHTML = ads.map(slideMarkup).join("");
+    if (!section || !slider || !track || !ads.length) {
+      if (section) section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    track.innerHTML = ads.slice(0, 5).map(slideMarkup).join("");
     initShopPromoSlider(slider);
   }
 
