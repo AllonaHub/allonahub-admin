@@ -4823,4 +4823,142 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   body[data-theme] .site-footer .footer-iyzico-badge * {
     color: #111827 !important;
   }
+
+  body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] {
+    background-color: var(--ah-bg-strong) !important;
+    background-image:
+      linear-gradient(to top, rgba(0, 0, 0, .66), rgba(0, 0, 0, .08)),
+      var(--ah-module-card-image, linear-gradient(145deg, rgba(5, 25, 50, .92), rgba(3, 10, 24, .96))) !important;
+    background-position: center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--shop {
+    --ah-module-card-image: url("../images/modules/shop-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--yemek {
+    --ah-module-card-image: url("../images/modules/yemek-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--market {
+    --ah-module-card-image: url("../images/modules/market-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--taksi {
+    --ah-module-card-image: url("../images/modules/taksi-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--saglik {
+    --ah-module-card-image: url("../images/modules/saglik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--avm-dunyasi {
+    --ah-module-card-image: url("../images/modules/avm-dunyasi-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--seyahat {
+    --ah-module-card-image: url("../images/modules/seyahat-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--gayrimenkul {
+    --ah-module-card-image: url("../images/modules/gayrimenkul-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--denizcilik {
+    --ah-module-card-image: url("../images/modules/denizcilik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--hukuk {
+    --ah-module-card-image: url("../images/modules/hukuk-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--danismanlik {
+    --ah-module-card-image: url("../images/modules/danismanlik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--egitim {
+    --ah-module-card-image: url("../images/modules/egitim-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--kariyer {
+    --ah-module-card-image: url("../images/modules/kariyer-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--finans {
+    --ah-module-card-image: url("../images/modules/finans-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--otomotiv {
+    --ah-module-card-image: url("../images/modules/otomotiv-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--eglence {
+    --ah-module-card-image: url("../images/modules/eglence-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--evcilhayvan {
+    --ah-module-card-image: url("../images/modules/evcilhayvan-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--teknoloji {
+    --ah-module-card-image: url("../images/modules/teknoloji-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--sporfitnes {
+    --ah-module-card-image: url("../images/modules/sporfitnes-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--guzellik {
+    --ah-module-card-image: url("../images/modules/guzellik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--sigorta {
+    --ah-module-card-image: url("../images/modules/sigorta-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--kurye {
+    --ah-module-card-image: url("../images/modules/kurye-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--evhizmetleri {
+    --ah-module-card-image: url("../images/modules/evhizmetleri-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--lojistik {
+    --ah-module-card-image: url("../images/modules/lojistik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--nakliye {
+    --ah-module-card-image: url("../images/modules/nakliye-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--organizasyon {
+    --ah-module-card-image: url("../images/modules/organizasyon-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--tarim {
+    --ah-module-card-image: url("../images/modules/tarim-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--insaatyapi {
+    --ah-module-card-image: url("../images/modules/insaatyapi-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--muhendislik {
+    --ah-module-card-image: url("../images/modules/muhendislik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--trade {
+    --ah-module-card-image: url("../images/modules/trade-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--otelcilik {
+    --ah-module-card-image: url("../images/modules/otelcilik-light-v5.jpg");
+  }
+
+  body[data-theme] .modules-grid.large-grid .module-card--wallet {
+    --ah-module-card-image: url("../images/modules/wallet.png");
+  }
 }
