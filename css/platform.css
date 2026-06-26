@@ -5022,3 +5022,232 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     scroll-snap-align: unset !important;
   }
 }
+
+/* HD advertising surfaces: themes can color the shell, but must not veil module images. */
+body[data-theme] .modules-grid.large-grid .module-card--shop { --ah-module-card-image: url("../images/modules/shop-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--yemek { --ah-module-card-image: url("../images/modules/yemek-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--market { --ah-module-card-image: url("../images/modules/market-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--taksi { --ah-module-card-image: url("../images/modules/taksi-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--saglik { --ah-module-card-image: url("../images/modules/saglik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--avm-dunyasi { --ah-module-card-image: url("../images/modules/avm-dunyasi-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--seyahat { --ah-module-card-image: url("../images/modules/seyahat-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--gayrimenkul { --ah-module-card-image: url("../images/modules/gayrimenkul-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--denizcilik { --ah-module-card-image: url("../images/modules/denizcilik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--hukuk { --ah-module-card-image: url("../images/modules/hukuk-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--danismanlik { --ah-module-card-image: url("../images/modules/danismanlik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--egitim { --ah-module-card-image: url("../images/modules/egitim-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--kariyer { --ah-module-card-image: url("../images/modules/kariyer-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--finans { --ah-module-card-image: url("../images/modules/finans-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--otomotiv { --ah-module-card-image: url("../images/modules/otomotiv-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--eglence { --ah-module-card-image: url("../images/modules/eglence-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--evcilhayvan { --ah-module-card-image: url("../images/modules/evcilhayvan-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--teknoloji { --ah-module-card-image: url("../images/modules/teknoloji-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--sporfitnes { --ah-module-card-image: url("../images/modules/sporfitnes-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--guzellik { --ah-module-card-image: url("../images/modules/guzellik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--sigorta { --ah-module-card-image: url("../images/modules/sigorta-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--kurye { --ah-module-card-image: url("../images/modules/kurye-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--evhizmetleri { --ah-module-card-image: url("../images/modules/evhizmetleri-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--lojistik { --ah-module-card-image: url("../images/modules/lojistik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--nakliye { --ah-module-card-image: url("../images/modules/nakliye-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--organizasyon { --ah-module-card-image: url("../images/modules/organizasyon-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--tarim { --ah-module-card-image: url("../images/modules/tarim-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--insaatyapi { --ah-module-card-image: url("../images/modules/insaatyapi-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--muhendislik { --ah-module-card-image: url("../images/modules/muhendislik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--trade { --ah-module-card-image: url("../images/modules/trade-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--otelcilik { --ah-module-card-image: url("../images/modules/otelcilik-light-v5.jpg"); }
+body[data-theme] .modules-grid.large-grid .module-card--wallet { --ah-module-card-image: url("../images/modules/wallet.png"); }
+
+body[data-theme]:not([data-theme="corporate"]) .modules-grid.large-grid .module-card[class*="module-card--"] {
+  background-color: var(--ah-bg-strong) !important;
+  background-image: var(--ah-module-card-image) !important;
+  background-position: center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate;
+}
+
+body[data-theme]:not([data-theme="corporate"]) .modules-grid.large-grid .module-card[class*="module-card--"]::before,
+body[data-theme]:not([data-theme="corporate"]) .modules-grid.large-grid .module-card[class*="module-card--"]::after {
+  content: none !important;
+  display: none !important;
+}
+
+body[data-theme]:not([data-theme="corporate"]) .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(2, 8, 20, 0.76), rgba(2, 8, 20, 0.42));
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme] .ad-hero__slide::before {
+  background: linear-gradient(90deg, rgba(2, 8, 20, 0.74) 0%, rgba(2, 8, 20, 0.46) 30%, rgba(2, 8, 20, 0.12) 50%, rgba(2, 8, 20, 0) 70%) !important;
+  opacity: 0.96 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+body[data-theme] .ad-hero__media,
+body[data-theme] .ad-hero__media img,
+body[data-theme] .shop-promo-slide img,
+body[data-theme] .food-promo-slide img,
+body[data-theme] .market-hero__slide {
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body[data-theme] .market-hero__slide {
+  background: var(--market-hero-image) center / cover no-repeat !important;
+}
+
+.module-ad-banner {
+  width: min(var(--ah-wide-page-max, 1720px), calc(100% - 40px));
+  margin: 18px auto 22px;
+}
+
+.module-ad-banner__frame {
+  position: relative;
+  display: block;
+  min-height: 340px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 38%, transparent);
+  border-radius: 26px;
+  background: var(--ah-bg-strong);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28), 0 0 34px color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 16%, transparent);
+  isolation: isolate;
+}
+
+.module-ad-banner__media,
+.module-ad-banner__media img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.module-ad-banner__media {
+  z-index: 0;
+  background: var(--ah-bg-strong);
+}
+
+.module-ad-banner__media img {
+  object-fit: cover;
+  object-position: center;
+  border: 0;
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
+.module-ad-banner__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 340px;
+  width: min(620px, 64%);
+  flex-direction: column;
+  justify-content: center;
+  gap: 13px;
+  padding: clamp(32px, 5vw, 58px);
+  background: linear-gradient(90deg, rgba(2, 8, 20, 0.80), rgba(2, 8, 20, 0.52) 74%, rgba(2, 8, 20, 0));
+  color: #ffffff;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+}
+
+.module-ad-banner__eyebrow {
+  width: max-content;
+  max-width: 100%;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 70%, #ffffff);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.module-ad-banner__content strong {
+  color: #ffffff;
+  font-size: clamp(2.3rem, 4.8vw, 4.6rem);
+  font-weight: 950;
+  line-height: 1.02;
+}
+
+.module-ad-banner__copy {
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.module-ad-banner__button {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--module-ad-accent, var(--ah-primary)), var(--ah-primary-strong));
+  color: #ffffff;
+  font-weight: 950;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 32%, transparent);
+}
+
+.module-ad-banner__frame:hover {
+  border-color: color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 68%, #ffffff);
+  box-shadow: 0 28px 82px rgba(0, 0, 0, 0.32), 0 0 42px color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 24%, transparent);
+}
+
+body[data-theme="corporate"] .module-ad-banner__frame {
+  border-radius: 8px;
+  box-shadow: 0 18px 48px rgba(19, 40, 58, 0.16);
+}
+
+body[data-theme="corporate"] .module-ad-banner__content {
+  background: linear-gradient(90deg, rgba(2, 8, 20, 0.76), rgba(2, 8, 20, 0.44) 72%, rgba(2, 8, 20, 0));
+}
+
+@media (max-width: 760px) {
+  .module-ad-banner {
+    width: min(calc(100% - 16px), var(--ah-wide-page-max, 1720px));
+    margin: 12px auto 16px;
+  }
+
+  .module-ad-banner__frame,
+  .module-ad-banner__content {
+    min-height: 430px;
+  }
+
+  .module-ad-banner__content {
+    width: 100%;
+    justify-content: flex-end;
+    padding: 36px 18px 28px;
+    background: linear-gradient(0deg, rgba(2, 8, 20, 0.86) 0%, rgba(2, 8, 20, 0.54) 54%, rgba(2, 8, 20, 0) 100%);
+  }
+
+  .module-ad-banner__copy {
+    font-size: 0.92rem;
+  }
+
+  .module-ad-banner__button {
+    min-height: 42px;
+    padding: 0 14px;
+  }
+}

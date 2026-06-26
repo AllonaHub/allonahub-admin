@@ -40,6 +40,40 @@
     theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
     packs: {}
   };
+  const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
+  const moduleAdCampaigns = [
+    { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/allonashop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
+    { key: "yemek", paths: ["/pages/commerce/allonayemek.html", "/pages/commerce/allonayemek-tumu.html"], title: "Allona Yemek", eyebrow: "Lezzet Reklamı", sentence: "Yakındaki restoranları, fırsat menülerini ve hızlı siparişi canlı reklam vitriniyle öne çıkar.", href: "/pages/commerce/allonayemek.html", image: "/images/ads/hero-ad-yemek.jpg", accent: "#ff8a3d", cta: "Lezzetleri Gör" },
+    { key: "market", paths: ["/pages/commerce/allonamarket.html"], title: "Allona Market", eyebrow: "Market Fırsatı", sentence: "Gıda, temizlik ve ev ihtiyaçlarını hızlı teslimat odaklı market akışıyla göster.", href: "/pages/commerce/allonamarket.html", image: "/images/ads/hero-ad-market.jpg", accent: "#20e3a2", cta: "Markete Git" },
+    { key: "taksi", paths: ["/pages/ecosystem/allonataksi.html"], title: "Allona Taksi", eyebrow: "Ulaşım", sentence: "Güvenli rota, canlı sürücü akışı ve şehir içi yolculuk fırsatlarını öne çıkar.", href: "/pages/ecosystem/allonataksi.html", image: "/images/ads/hero-ad-taksi.jpg", accent: "#46a6ff", cta: "Taksi Çağır" },
+    { key: "avm", paths: ["/pages/ecosystem/allonaavm.html"], title: "AVM Dünyası", eyebrow: "Mağaza Vitrini", sentence: "Mağaza, etkinlik ve kampanya keşfini premium alışveriş merkezi reklam alanında sun.", href: "/pages/ecosystem/allonaavm.html", image: "/images/ads/hero-ad-avm-dunyasi.jpg", accent: "#ffd166", cta: "AVM'yi Keşfet" },
+    { key: "seyahat", paths: ["/pages/ecosystem/allonaseyahat.html"], title: "Seyahat & Turizm", eyebrow: "Seyahat Reklamı", sentence: "Otel, bilet ve tur planlarını ferah bir kampanya bandıyla kullanıcıya taşır.", href: "/pages/ecosystem/allonaseyahat.html", image: "/images/ads/hero-ad-seyahat.jpg", accent: "#28c7ff", cta: "Seyahati Planla" },
+    { key: "gayrimenkul", paths: ["/pages/ecosystem/allonagayrimenkul.html"], title: "Gayrimenkul", eyebrow: "Emlak Vitrini", sentence: "Satılık ve kiralık yaşam alanlarını güven veren ilan reklamıyla öne çıkar.", href: "/pages/ecosystem/allonagayrimenkul.html", image: "/images/ads/hero-ad-gayrimenkul.jpg", accent: "#d6a21c", cta: "İlanları Gör" },
+    { key: "denizcilik", paths: ["/pages/ecosystem/allonadenizcilik.html", "/pages/ecosystem/denizcilik.html", "/pages/ecosystem/maritime.html"], title: "Denizcilik", eyebrow: "Maritime", sentence: "Gemi, crew ve lojistik fırsatlarını profesyonel denizcilik vitriniyle yayınla.", href: "/pages/ecosystem/allonadenizcilik.html", image: "/images/ads/hero-ad-denizcilik.jpg", accent: "#00b4d8", cta: "Denize Açıl" },
+    { key: "hukuk", paths: ["/pages/ecosystem/allonahukuk.html"], title: "Hukuk", eyebrow: "Güvenli Destek", sentence: "Avukat ve hukuki danışmanlık arayışını net bir başvuru reklamıyla hızlandır.", href: "/pages/ecosystem/allonahukuk.html", image: "/images/ads/hero-ad-hukuk.jpg", accent: "#8ec5ff", cta: "Destek Al" },
+    { key: "danismanlik", paths: ["/pages/ecosystem/allonadanismanlik.html"], title: "Danışmanlık", eyebrow: "Uzman Ağı", sentence: "İş, belge ve süreç ihtiyaçları için doğru uzmana daha hızlı ulaş.", href: "/pages/ecosystem/allonadanismanlik.html", image: "/images/ads/hero-ad-danismanlik.jpg", accent: "#7bdff2", cta: "Uzman Bul" },
+    { key: "egitim", paths: ["/pages/ecosystem/allonaegitim.html"], title: "Eğitim", eyebrow: "Öğrenim", sentence: "Kurs, akademi ve gelişim fırsatlarını tek temiz reklam vitrininde tanıt.", href: "/pages/ecosystem/allonaegitim.html", image: "/images/ads/hero-ad-egitim.jpg", accent: "#7cdaff", cta: "Eğitime Başla" },
+    { key: "kariyer", paths: ["/pages/career/allonakariyer.html"], title: "Kariyer", eyebrow: "İş Fırsatı", sentence: "Yeni iş ilanlarını ve aday akışını profesyonel kariyer reklamlarıyla büyüt.", href: "/pages/career/allonakariyer.html", image: "/images/ads/hero-ad-kariyer.jpg", accent: "#4cc9f0", cta: "İşleri Gör" },
+    { key: "finans", paths: ["/pages/ecosystem/allonafinans.html"], title: "Finans", eyebrow: "Finansal Çözüm", sentence: "Ödeme, bütçe ve finansal hizmetleri sade bir premium vitrinde anlat.", href: "/pages/ecosystem/allonafinans.html", image: "/images/ads/hero-ad-finans.jpg", accent: "#58d68d", cta: "Finansı Keşfet" },
+    { key: "otomotiv", paths: ["/pages/ecosystem/allonaotomotiv.html"], title: "Otomotiv", eyebrow: "Araç Vitrini", sentence: "Araç, servis ve mobilite çözümlerini net bir otomotiv reklamı ile göster.", href: "/pages/ecosystem/allonaotomotiv.html", image: "/images/ads/hero-ad-otomotiv.jpg", accent: "#ffbf69", cta: "Araçları Gör" },
+    { key: "eglence", paths: ["/pages/ecosystem/allonaeglence.html"], title: "Eğlence & Etkinlik", eyebrow: "Etkinlik", sentence: "Konser, festival ve şehir etkinliklerini canlı bir keşif reklamıyla duyur.", href: "/pages/ecosystem/allonaeglence.html", image: "/images/ads/hero-ad-eglence.jpg", accent: "#ff6bcb", cta: "Etkinlikleri Gör" },
+    { key: "evcilhayvan", paths: ["/pages/ecosystem/allonaevcilhayvan.html"], title: "Evcil Hayvan", eyebrow: "Pet Hizmeti", sentence: "Bakım, veteriner ve ürün ihtiyaçlarını sıcak bir hizmet vitriniyle tanıt.", href: "/pages/ecosystem/allonaevcilhayvan.html", image: "/images/ads/hero-ad-evcilhayvan.jpg", accent: "#f4a261", cta: "Pet Hizmetleri" },
+    { key: "teknoloji", paths: ["/pages/ecosystem/allonateknoloji.html"], title: "Teknoloji", eyebrow: "Dijital Vitrin", sentence: "Elektronik, yazılım ve dijital çözümleri modern reklam alanıyla öne çıkar.", href: "/pages/ecosystem/allonateknoloji.html", image: "/images/ads/hero-ad-teknoloji.jpg", accent: "#64dfdf", cta: "Teknolojiye Git" },
+    { key: "sporfitnes", paths: ["/pages/ecosystem/allonasporfitness.html"], title: "Spor & Fitness", eyebrow: "Aktif Yaşam", sentence: "Spor salonu, antrenman ve sağlıklı yaşam fırsatlarını enerjik bir vitrinde sun.", href: "/pages/ecosystem/allonasporfitness.html", image: "/images/ads/hero-ad-sporfitnes.jpg", accent: "#95d5b2", cta: "Spora Başla" },
+    { key: "guzellik", paths: ["/pages/ecosystem/allonaguzellik.html"], title: "Güzellik & Kozmetik", eyebrow: "Bakım", sentence: "Bakım, kozmetik ve randevu fırsatlarını ferah bir reklam görseliyle tanıt.", href: "/pages/ecosystem/allonaguzellik.html", image: "/images/ads/hero-ad-guzellik.jpg", accent: "#ffafcc", cta: "Güzelliği Keşfet" },
+    { key: "sigorta", paths: ["/pages/ecosystem/allonasigorta.html"], title: "Sigorta", eyebrow: "Güvence", sentence: "Araç, konut ve sağlık güvencelerini sade karşılaştırma deneyimiyle öne çıkar.", href: "/pages/ecosystem/allonasigorta.html", image: "/images/ads/hero-ad-sigorta.jpg", accent: "#90dbf4", cta: "Güvence Al" },
+    { key: "kurye", paths: ["/pages/ecosystem/allonakurye.html"], title: "Kurye & Teslimat", eyebrow: "Teslimat", sentence: "Acil gönderileri hızlı kurye ağıyla güvenli şekilde yola çıkar.", href: "/pages/ecosystem/allonakurye.html", image: "/images/ads/hero-ad-kurye.jpg", accent: "#00f5d4", cta: "Kurye Çağır" },
+    { key: "evhizmetleri", paths: ["/pages/ecosystem/allonaevhizmetleri.html"], title: "Ev Hizmetleri", eyebrow: "Ev Çözümü", sentence: "Temizlik, elektrik ve tadilat ihtiyaçlarını güvenilir ustalarla buluştur.", href: "/pages/ecosystem/allonaevhizmetleri.html", image: "/images/ads/hero-ad-evhizmetleri.jpg", accent: "#f9c74f", cta: "Hizmet Bul" },
+    { key: "lojistik", paths: ["/pages/ecosystem/allonalojistik.html"], title: "Kargo & Lojistik", eyebrow: "Operasyon", sentence: "Depo, taşıma ve operasyon süreçlerini tek lojistik reklam akışı içinde anlat.", href: "/pages/ecosystem/allonalojistik.html", image: "/images/ads/hero-ad-lojistik.jpg", accent: "#00bbf9", cta: "Lojistiğe Git" },
+    { key: "nakliye", paths: ["/pages/ecosystem/allonanakliye.html"], title: "Nakliye", eyebrow: "Taşıma", sentence: "Ev, ofis ve parça eşya taşımayı güven veren nakliye çözümleriyle planla.", href: "/pages/ecosystem/allonanakliye.html", image: "/images/ads/hero-ad-nakliye.jpg", accent: "#f9844a", cta: "Nakliye Planla" },
+    { key: "organizasyon", paths: ["/pages/ecosystem/allonaorganizasyon.html"], title: "Organizasyon & Düğün", eyebrow: "Planlama", sentence: "Davet, düğün ve özel günleri zarif bir reklam vitriniyle hazırla.", href: "/pages/ecosystem/allonaorganizasyon.html", image: "/images/ads/hero-ad-organizasyon.jpg", accent: "#ffd6a5", cta: "Organize Et" },
+    { key: "tarim", paths: ["/pages/ecosystem/allonatarim.html"], title: "Allona Tarım", eyebrow: "Üretim", sentence: "Tohum, gübre ve çiftçilik çözümlerini üretim odaklı bir vitrinde topla.", href: "/pages/ecosystem/allonatarim.html", image: "/images/ads/hero-ad-tarim.jpg", accent: "#80ed99", cta: "Tarıma Git" },
+    { key: "insaat", paths: ["/pages/ecosystem/allonainsaat.html"], title: "İnşaat & Yapı", eyebrow: "Yapı Vitrini", sentence: "Proje, müteahhit ve yapı çözümlerini güçlü bir inşaat reklamı ile göster.", href: "/pages/ecosystem/allonainsaat.html", image: "/images/ads/hero-ad-insaatyapi.jpg", accent: "#adb5bd", cta: "Projeleri Gör" },
+    { key: "muhendislik", paths: ["/pages/ecosystem/allonamuhendislik.html"], title: "Mühendislik", eyebrow: "Teknik Proje", sentence: "Çizim, analiz ve teknik proje ihtiyaçlarını uzman mühendislerle buluştur.", href: "/pages/ecosystem/allonamuhendislik.html", image: "/images/ads/hero-ad-muhendislik.jpg", accent: "#5eead4", cta: "Mühendis Bul" },
+    { key: "trade", paths: ["/pages/ecosystem/allonatrade.html"], title: "Trade", eyebrow: "Global Ticaret", sentence: "İthalat, ihracat ve ticaret fırsatlarını global bağlantılarla büyüt.", href: "/pages/ecosystem/allonatrade.html", image: "/images/ads/hero-ad-trade.jpg", accent: "#fcbf49", cta: "Ticarete Başla" },
+    { key: "otelcilik", paths: ["/pages/ecosystem/allonaotelcilik.html"], title: "Otelcilik", eyebrow: "Konaklama", sentence: "Otel, tesis ve konaklama fırsatlarını profesyonel turizm akışıyla keşfet.", href: "/pages/ecosystem/allonaotelcilik.html", image: "/images/ads/hero-ad-otelcilik.jpg", accent: "#f4d35e", cta: "Otelcilik Gör" },
+    { key: "saglik", paths: ["/pages/ecosystem/allonasaglik.html"], title: "Allona Sağlık", eyebrow: "Sağlık", sentence: "Sağlık ve bakım hizmetlerini güven veren sade bir başvuru alanında tanıt.", href: "/pages/ecosystem/allonasaglik.html", image: "/images/ads/hero-ad-saglik.jpg", accent: "#70e000", cta: "Sağlığı Keşfet" }
+  ];
   let accountAuthListenerBound = false;
   const embeddedLanguagePacks = {
     az: {
@@ -972,6 +1006,140 @@
     });
   }
 
+  function normalizePathname(path) {
+    return String(path || "")
+      .replace(/\/+/g, "/")
+      .replace(/\/$/, "")
+      .toLocaleLowerCase("tr-TR");
+  }
+
+  function activeModuleCampaign() {
+    const pathname = normalizePathname(window.location.pathname);
+    return moduleAdCampaigns.find((campaign) => campaign.paths.some((path) => pathname.endsWith(normalizePathname(path))));
+  }
+
+  function readPartnerAdPool(moduleKey) {
+    const pools = [];
+    if (window.AllonaModuleAds) pools.push(window.AllonaModuleAds);
+    if (window.AllonaPartnerAds) pools.push(window.AllonaPartnerAds);
+    try {
+      const raw = localStorage.getItem(MODULE_PARTNER_ADS_KEY);
+      if (raw) pools.push(JSON.parse(raw));
+    } catch (error) {
+      // Partner ad data is optional; invalid local data should not block the module page.
+    }
+    return pools.flatMap((source) => {
+      if (!source) return [];
+      if (Array.isArray(source)) return source.filter((item) => partnerAdMatchesModule(item, moduleKey));
+      if (Array.isArray(source[moduleKey])) return source[moduleKey];
+      return [];
+    }).filter(isActivePartnerAd);
+  }
+
+  function partnerAdMatchesModule(item, moduleKey) {
+    if (!item) return false;
+    if (item.moduleKey === moduleKey) return true;
+    if (Array.isArray(item.moduleKeys) && item.moduleKeys.includes(moduleKey)) return true;
+    return item.moduleKey === "all" || item.moduleKey === "*";
+  }
+
+  function isActivePartnerAd(item) {
+    if (!item || !item.title || !item.image) return false;
+    const now = Date.now();
+    const startsAt = item.startsAt || item.startDate || item.activeFrom;
+    const endsAt = item.endsAt || item.endDate || item.activeUntil;
+    const startTime = startsAt ? Date.parse(startsAt) : NaN;
+    const endTime = endsAt ? Date.parse(endsAt) : NaN;
+    if (Number.isFinite(startTime) && now < startTime) return false;
+    if (Number.isFinite(endTime) && now > endTime) return false;
+    return item.status !== "paused" && item.status !== "draft";
+  }
+
+  function pickDailyPartnerAd(campaign) {
+    const partnerAds = readPartnerAdPool(campaign.key);
+    if (!partnerAds.length) return campaign;
+    const now = new Date();
+    const dayKey = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+    const rotationPool = partnerAds.slice().sort((a, b) => (Number(b.priority || 0) - Number(a.priority || 0)));
+    const selected = rotationPool[Math.floor(dayKey / 180) % rotationPool.length] || rotationPool[dayKey % rotationPool.length] || rotationPool[0];
+    return {
+      ...campaign,
+      title: selected.title || campaign.title,
+      eyebrow: selected.eyebrow || selected.label || campaign.eyebrow,
+      sentence: selected.sentence || selected.description || campaign.sentence,
+      href: selected.href || selected.url || campaign.href,
+      image: selected.image || campaign.image,
+      accent: selected.accent || campaign.accent,
+      cta: selected.cta || campaign.cta,
+      partnerTier: selected.partnerTier || "premium",
+      partnerVisibility: selected.partnerVisibility || selected.visibilityRule || "premium-partner-six-month-cycle"
+    };
+  }
+
+  function createModuleAdBanner(ad, campaign) {
+    const banner = document.createElement("section");
+    banner.className = "module-ad-banner";
+    banner.dataset.moduleAdBanner = "";
+    banner.dataset.moduleKey = campaign.key;
+    banner.dataset.adSlot = `module:${campaign.key}:hero`;
+    banner.dataset.partnerVisibilityRule = ad.partnerVisibility || "premium-partner-six-month-cycle";
+    banner.style.setProperty("--module-ad-accent", ad.accent || "#00e5ff");
+
+    const link = document.createElement("a");
+    link.className = "module-ad-banner__frame";
+    link.href = assetUrl(ad.href);
+    link.setAttribute("aria-label", `${ad.title} reklam alanına git`);
+
+    const media = document.createElement("span");
+    media.className = "module-ad-banner__media";
+    media.setAttribute("aria-hidden", "true");
+    const image = document.createElement("img");
+    image.src = assetUrl(ad.image);
+    image.alt = "";
+    image.loading = "eager";
+    image.decoding = "async";
+    media.append(image);
+
+    const content = document.createElement("span");
+    content.className = "module-ad-banner__content";
+    const eyebrow = document.createElement("span");
+    eyebrow.className = "module-ad-banner__eyebrow";
+    eyebrow.textContent = ad.eyebrow;
+    const title = document.createElement("strong");
+    title.textContent = ad.title;
+    const copy = document.createElement("span");
+    copy.className = "module-ad-banner__copy";
+    copy.textContent = ad.sentence;
+    const cta = document.createElement("span");
+    cta.className = "module-ad-banner__button";
+    cta.textContent = ad.cta || "Modülü Keşfet";
+    content.append(eyebrow, title, copy, cta);
+
+    link.append(media, content);
+    banner.append(link);
+    return banner;
+  }
+
+  function mountModuleAdBanner() {
+    if (document.querySelector("[data-module-ad-banner], [data-ad-hero]")) return;
+    const campaign = activeModuleCampaign();
+    if (!campaign) return;
+    const ad = pickDailyPartnerAd(campaign);
+    const banner = createModuleAdBanner(ad, campaign);
+    const layoutHeader = document.querySelector("[data-layout='header']");
+    if (layoutHeader && layoutHeader.parentElement) {
+      layoutHeader.insertAdjacentElement("afterend", banner);
+      return;
+    }
+    const main = document.querySelector("main");
+    if (main) {
+      main.insertAdjacentElement("afterbegin", banner);
+      return;
+    }
+    const page = document.querySelector(".site-shell, .page");
+    if (page) page.insertAdjacentElement("afterbegin", banner);
+  }
+
   function bindEvents() {
     document.addEventListener("change", (event) => {
       const languageSelect = event.target.closest("[data-language-select]");
@@ -1016,6 +1184,7 @@
     document.addEventListener("allona:layout-ready", () => {
       normalizePlatformBrand();
       mountControls();
+      mountModuleAdBanner();
       bindAccountAuthListener();
       applyTheme(state.theme);
       startTranslationObserver();
@@ -1039,6 +1208,7 @@
     normalizePlatformBrand();
     applyTheme(state.theme);
     mountControls();
+    mountModuleAdBanner();
     bindAccountAuthListener();
     repairEmptyLinks();
     startTranslationObserver();
