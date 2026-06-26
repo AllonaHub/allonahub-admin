@@ -5710,6 +5710,41 @@ body[data-theme="corporate"] .module-ad-banner__content {
   height: clamp(430px, 34vw, 540px);
 }
 
+.shop-promo-slider--image-only {
+  background: var(--ah-surface);
+}
+
+.shop-promo-slider--image-only .shop-promo-slide {
+  background: var(--ah-soft);
+}
+
+.shop-promo-slider--image-only .shop-promo-slide::before,
+.module-ad-banner--shop-hero .shop-promo-slider--image-only .shop-promo-slide::before {
+  display: none !important;
+}
+
+.shop-promo-slider--image-only .shop-promo-content,
+.module-ad-banner--shop-hero .shop-promo-slider--image-only .shop-promo-content {
+  display: none !important;
+}
+
+.shop-promo-slider--image-only .shop-promo-slide img,
+body[data-theme] .shop-promo-slider--image-only .shop-promo-slide img,
+.module-ad-banner--shop-hero .shop-promo-slider--image-only .shop-promo-slide img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
 @media (max-width: 760px) {
   .module-ad-banner {
     width: min(calc(100% - 16px), var(--ah-wide-page-max, 1720px));

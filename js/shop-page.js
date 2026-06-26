@@ -323,13 +323,10 @@
     banner.dataset.shopHeroBanner = "";
     banner.style.setProperty("--module-ad-accent", firstAccent);
     banner.innerHTML = `
-      <div class="module-ad-banner__frame shop-promo-slider shop-promo-slider--top" data-shop-promo-slider aria-label="Allona Shop üst ürün bannerı">
-        <button class="shop-promo-control shop-promo-control--prev" type="button" data-shop-promo-prev aria-label="Önceki ürün reklamı">‹</button>
+      <div class="module-ad-banner__frame shop-promo-slider shop-promo-slider--top shop-promo-slider--image-only" data-shop-promo-slider aria-label="Allona Shop üst ürün görsel bannerı">
         <div class="shop-promo-track" data-shop-promo-track>
           ${ads.map(slideMarkup).join("")}
         </div>
-        <button class="shop-promo-control shop-promo-control--next" type="button" data-shop-promo-next aria-label="Sonraki ürün reklamı">›</button>
-        <div class="shop-promo-dots" data-shop-promo-dots aria-label="Ürün reklamı seçimi"></div>
       </div>
     `;
     initShopPromoSlider(banner.querySelector("[data-shop-promo-slider]"));
@@ -415,14 +412,14 @@
     const dotsWrap = slider.querySelector("[data-shop-promo-dots]");
     const prev = slider.querySelector("[data-shop-promo-prev]");
     const next = slider.querySelector("[data-shop-promo-next]");
-    if (!slides.length || !dotsWrap) return;
+    if (!slides.length) return;
 
     let index = 0;
 
     function show(nextIndex) {
       index = (nextIndex + slides.length) % slides.length;
       slides.forEach((slide, slideIndex) => slide.classList.toggle("is-active", slideIndex === index));
-      dotsWrap.querySelectorAll("button").forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
+      dotsWrap?.querySelectorAll("button").forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
     }
 
     function restart() {
@@ -430,17 +427,19 @@
       slider.__shopPromoTimer = window.setInterval(() => show(index + 1), 3000);
     }
 
-    dotsWrap.innerHTML = "";
-    slides.forEach((_, slideIndex) => {
-      const dot = document.createElement("button");
-      dot.type = "button";
-      dot.setAttribute("aria-label", `${slideIndex + 1}. kampanyayı göster`);
-      dot.addEventListener("click", () => {
-        show(slideIndex);
-        restart();
+    if (dotsWrap) {
+      dotsWrap.innerHTML = "";
+      slides.forEach((_, slideIndex) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.setAttribute("aria-label", `${slideIndex + 1}. kampanyayı göster`);
+        dot.addEventListener("click", () => {
+          show(slideIndex);
+          restart();
+        });
+        dotsWrap.appendChild(dot);
       });
-      dotsWrap.appendChild(dot);
-    });
+    }
 
     if (prev) {
       prev.onclick = () => {
