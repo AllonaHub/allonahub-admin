@@ -4109,7 +4109,11 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   body > header nav a,
+  body > header nav .login,
+  body:has(.premium-hero) > header nav a,
+  body:has(.premium-hero) > header nav .login,
   .site-header nav a,
+  .site-header nav .login,
   .top-bar__links a,
   .nav-links a,
   .top-links a,
@@ -4118,11 +4122,27 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     display: inline-flex !important;
     align-items: center !important;
     min-height: 44px !important;
+    height: auto !important;
   }
 
   .product-card__body h3 a,
   .product-card h3 a {
     line-height: 1.18 !important;
+  }
+
+  input,
+  select,
+  textarea,
+  .search input,
+  .nav-search input,
+  .search-form input,
+  [data-food-search],
+  [data-food-sort],
+  .food-action,
+  .food-checkout,
+  [data-food-checkout] {
+    min-height: 48px !important;
+    height: auto !important;
   }
 
   .search-btn,
