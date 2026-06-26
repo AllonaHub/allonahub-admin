@@ -355,7 +355,7 @@
     loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
 
     try {
-      const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 4500));
+      const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 9000));
       products = liveProducts;
       if (!liveProducts.length) {
         console.warn("Supabase products aktif Allona Shop ürünü döndürmedi; yalnızca canlı katalog kullanılacak.");

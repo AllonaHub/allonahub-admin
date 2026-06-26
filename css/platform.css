@@ -5678,6 +5678,21 @@ body[data-theme="corporate"] .module-ad-banner__content {
   background: linear-gradient(90deg, rgba(2, 8, 20, 0.76), rgba(2, 8, 20, 0.44) 72%, rgba(2, 8, 20, 0));
 }
 
+.module-ad-banner[data-module-key="shop"]:not([data-shop-hero-banner]) .module-ad-banner__content {
+  display: none !important;
+}
+
+.module-ad-banner[data-module-key="shop"]:not([data-shop-hero-banner]) .module-ad-banner__frame {
+  min-height: 430px;
+  background: var(--ah-bg-strong);
+}
+
+.module-ad-banner[data-module-key="shop"]:not([data-shop-hero-banner]) .module-ad-banner__media img {
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+
 .module-ad-banner--shop-hero {
   margin-bottom: 18px;
 }
