@@ -1985,15 +1985,6 @@ body[data-theme] .site-shell[data-page="shop"] .product-card.is-description-open
   color: var(--ah-muted) !important;
 }
 
-body[data-theme] .site-shell[data-page="shop"] .product-card__zoom-lens {
-  border-color: color-mix(in srgb, #ffffff 86%, var(--ah-primary));
-  background-color: var(--ah-bg-strong);
-  box-shadow:
-    0 18px 38px color-mix(in srgb, #050a12 38%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--ah-primary) 34%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, #ffffff 64%, transparent);
-}
-
 body[data-theme]:not(.academy-page):not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) {
   width: 100% !important;
   max-width: none !important;

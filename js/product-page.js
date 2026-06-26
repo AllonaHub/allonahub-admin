@@ -14,6 +14,84 @@
     return String(count);
   }
 
+  const DETAIL_ZOOM_SCALE = 2.85;
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function syncDetailZoom(area, event) {
+    const image = area?.querySelector("[data-product-detail-image]");
+    const lens = area?.querySelector("[data-product-detail-zoom]");
+    const source = image?.currentSrc || image?.src || "";
+    if (!area || !image || !lens || !source) return false;
+
+    const rect = area.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+
+    const rawX = event && typeof event.clientX === "number" ? event.clientX - rect.left : rect.width / 2;
+    const rawY = event && typeof event.clientY === "number" ? event.clientY - rect.top : rect.height / 2;
+    const x = clamp(rawX, 0, rect.width);
+    const y = clamp(rawY, 0, rect.height);
+    const lensRect = lens.getBoundingClientRect();
+    const lensWidth = lensRect.width || 240;
+    const lensHeight = lensRect.height || lensWidth;
+    const centerX = clamp(x, lensWidth / 2, Math.max(lensWidth / 2, rect.width - lensWidth / 2));
+    const centerY = clamp(y, lensHeight / 2, Math.max(lensHeight / 2, rect.height - lensHeight / 2));
+
+    const naturalWidth = image.naturalWidth || rect.width;
+    const naturalHeight = image.naturalHeight || rect.height;
+    const coverScale = Math.max(rect.width / naturalWidth, rect.height / naturalHeight);
+    const renderedWidth = naturalWidth * coverScale;
+    const renderedHeight = naturalHeight * coverScale;
+    const offsetX = (rect.width - renderedWidth) / 2;
+    const offsetY = (rect.height - renderedHeight) / 2;
+    const imageX = clamp(x - offsetX, 0, renderedWidth);
+    const imageY = clamp(y - offsetY, 0, renderedHeight);
+
+    area.style.setProperty("--detail-zoom-x", `${centerX.toFixed(1)}px`);
+    area.style.setProperty("--detail-zoom-y", `${centerY.toFixed(1)}px`);
+    lens.style.backgroundImage = `url("${source.replace(/"/g, "%22")}")`;
+    lens.style.backgroundSize = `${(renderedWidth * DETAIL_ZOOM_SCALE).toFixed(1)}px ${(renderedHeight * DETAIL_ZOOM_SCALE).toFixed(1)}px`;
+    lens.style.backgroundPosition = `${(lensWidth / 2 - imageX * DETAIL_ZOOM_SCALE).toFixed(1)}px ${(lensHeight / 2 - imageY * DETAIL_ZOOM_SCALE).toFixed(1)}px`;
+    return true;
+  }
+
+  function startDetailZoom(area, event) {
+    if (!syncDetailZoom(area, event)) return;
+    area.classList.add("is-zooming");
+  }
+
+  function stopDetailZoom(area) {
+    area?.classList.remove("is-zooming");
+  }
+
+  function bindDetailZoom(root) {
+    const area = root.querySelector("[data-product-detail-zoom-area]");
+    if (!area || area.dataset.zoomReady === "true") return;
+    area.dataset.zoomReady = "true";
+
+    area.addEventListener("pointerenter", (event) => startDetailZoom(area, event));
+    area.addEventListener("pointermove", (event) => {
+      if (area.classList.contains("is-zooming")) syncDetailZoom(area, event);
+    });
+    area.addEventListener("pointerleave", () => stopDetailZoom(area));
+    area.addEventListener("pointerdown", (event) => {
+      area.setPointerCapture?.(event.pointerId);
+      startDetailZoom(area, event);
+    });
+    area.addEventListener("pointerup", () => stopDetailZoom(area));
+    area.addEventListener("pointercancel", () => stopDetailZoom(area));
+    area.addEventListener("lostpointercapture", () => stopDetailZoom(area));
+    area.addEventListener("focus", () => startDetailZoom(area));
+    area.addEventListener("blur", () => stopDetailZoom(area));
+
+    const image = area.querySelector("[data-product-detail-image]");
+    image?.addEventListener("load", () => {
+      if (area.classList.contains("is-zooming")) syncDetailZoom(area);
+    });
+  }
+
   function renderProduct(product) {
     const root = document.querySelector("[data-product-detail]");
     if (!root) return;
@@ -36,7 +114,10 @@
 
     root.innerHTML = `
       <div class="product-detail__media panel">
-        <img src="${core.escapeHTML(image)}" alt="${core.escapeHTML(product.name)}" loading="eager" onerror="this.src='${core.url("/images/product-fallback.svg")}'">
+        <div class="product-detail__image-wrap" data-product-detail-zoom-area tabindex="0" aria-label="Ürün görselini yakından incele">
+          <img src="${core.escapeHTML(image)}" alt="${core.escapeHTML(product.name)}" loading="eager" data-product-detail-image onerror="this.src='${core.url("/images/product-fallback.svg")}'">
+          <span class="product-detail__zoom-lens" data-product-detail-zoom aria-hidden="true"></span>
+        </div>
       </div>
       <section class="product-detail__info panel">
         <div class="product-detail__topline">
@@ -109,6 +190,8 @@
         }
       }
     });
+
+    bindDetailZoom(root);
 
     root.addEventListener("click", async (event) => {
       const qtyInput = root.querySelector("[data-product-qty]");

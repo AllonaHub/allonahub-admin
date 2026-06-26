@@ -352,7 +352,6 @@
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
         <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
-          <span class="product-card__zoom-lens" aria-hidden="true"></span>
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
         <div class="product-card__body">
