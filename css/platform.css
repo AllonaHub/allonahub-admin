@@ -5649,13 +5649,8 @@ body[data-theme="corporate"] .module-ad-banner__content {
 
 /* Homepage module labels: keep text flat, readable, and contained inside the image cards. */
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   min-width: 0;
-  width: 100%;
   max-width: 100%;
-  text-align: left;
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -5664,9 +5659,7 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] >
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :where(h3, p, span, b, strong) {
-  width: 100%;
   max-width: 100%;
-  text-align: left !important;
   text-shadow: none !important;
   overflow-wrap: break-word;
   word-break: normal;
@@ -5674,18 +5667,14 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
   margin: 0 0 6px !important;
-  color: #b8860b !important;
   font-size: 21px !important;
-  font-weight: 950 !important;
   line-height: normal !important;
   text-wrap: balance;
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
   margin: 0 !important;
-  color: #b8860b !important;
   font-size: 13px !important;
-  font-weight: 850 !important;
   line-height: normal !important;
   text-wrap: pretty;
 }
