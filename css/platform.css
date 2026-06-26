@@ -5666,16 +5666,16 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] :
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
-  margin: 0 0 4px !important;
-  font-size: clamp(16px, 1.18vw, 20px) !important;
-  line-height: 1.1 !important;
+  margin: 0 0 6px !important;
+  font-size: 21px !important;
+  line-height: normal !important;
   text-wrap: balance;
 }
 
 body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
   margin: 0 !important;
-  font-size: clamp(11px, 0.82vw, 13px) !important;
-  line-height: 1.24 !important;
+  font-size: 13px !important;
+  line-height: normal !important;
   text-wrap: pretty;
 }
 
@@ -5686,13 +5686,13 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p
   }
 
   body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
-    font-size: 14px !important;
-    line-height: 1.08 !important;
-    margin-bottom: 3px !important;
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    margin-bottom: 4px !important;
   }
 
   body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p {
-    font-size: 10.5px !important;
-    line-height: 1.18 !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
   }
 }
