@@ -1315,3 +1315,141 @@ a {
     margin-top: -28px;
   }
 }
+
+/* User panel mobile standard v1: horizontal app rails. */
+@media (max-width: 760px) {
+  .premium-shell {
+    width: min(calc(100% - 12px), 1760px) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 6px !important;
+    overflow-x: clip !important;
+  }
+
+  .premium-topbar {
+    grid-template-columns: 48px minmax(0, 1fr) 48px !important;
+    gap: 8px !important;
+    min-height: 62px !important;
+    padding: 8px !important;
+    border-radius: 18px !important;
+  }
+
+  .premium-icon-btn,
+  .metric-help,
+  .metric-arrow,
+  .edit-chip {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .premium-brand {
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+
+  .premium-brand span {
+    min-width: 0 !important;
+  }
+
+  .premium-brand strong,
+  .premium-brand span span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .hero-grid,
+  .identity-card,
+  .xp-card,
+  .reward-banner {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .identity-card,
+  .level-emblem,
+  .xp-card,
+  .reward-banner {
+    border-radius: 18px !important;
+    padding: 16px !important;
+  }
+
+  .identity-name h1 {
+    font-size: clamp(24px, 7vw, 34px) !important;
+    line-height: 1.08 !important;
+  }
+
+  .metric-grid,
+  .action-rail,
+  .hub-grid,
+  .benefit-strip {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .metric-grid::-webkit-scrollbar,
+  .action-rail::-webkit-scrollbar,
+  .hub-grid::-webkit-scrollbar,
+  .benefit-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .metric-grid > *,
+  .action-rail > *,
+  .hub-grid > *,
+  .benefit-strip > * {
+    flex: 0 0 min(80vw, 306px) !important;
+    max-width: min(80vw, 306px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  .metric-card,
+  .action-tile,
+  .hub-card {
+    min-height: 144px !important;
+    border-radius: 18px !important;
+  }
+
+  .member-no,
+  .tier-pill,
+  .streak-pill {
+    min-height: 44px !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .bottom-nav {
+    width: min(calc(100% - 18px), 540px) !important;
+    min-height: 68px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    gap: 2px !important;
+    padding: 6px !important;
+    border-radius: 22px !important;
+  }
+
+  .bottom-nav a {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .bottom-logo {
+    width: 70px !important;
+    height: 70px !important;
+    margin-top: -26px !important;
+  }
+
+  body.user-panel-page .site-footer {
+    margin-top: 20px !important;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+}

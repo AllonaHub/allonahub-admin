@@ -527,3 +527,124 @@ body.market-module-page[data-theme] .market-product-rail .price {
     right: 18px;
   }
 }
+
+/* Allona Market mobile standard v1: compact app controls and rails. */
+@media (max-width: 760px) {
+  .market-page {
+    width: min(calc(100% - 16px), var(--ah-wide-page-max, 1720px)) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+
+  .market-hero {
+    min-height: 520px !important;
+    border-radius: 18px !important;
+  }
+
+  .market-hero__content {
+    padding: 24px 18px 86px !important;
+  }
+
+  .market-hero__actions,
+  .market-partner-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .market-hero__actions::-webkit-scrollbar,
+  .market-partner-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .market-hero__actions .btn,
+  .market-partner-actions .btn {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-height: 48px !important;
+    padding-inline: 14px !important;
+    white-space: nowrap !important;
+  }
+
+  .market-hero__control {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .market-trust-strip,
+  .market-filters {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .market-trust-strip::-webkit-scrollbar,
+  .market-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .market-trust-strip > *,
+  .market-filters > * {
+    flex: 0 0 min(72vw, 276px) !important;
+    max-width: min(72vw, 276px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  .market-product-rail {
+    margin-inline: -8px !important;
+    padding-inline: 8px !important;
+    gap: 10px !important;
+  }
+
+  .market-product-rail .product-card {
+    flex-basis: min(80vw, 310px) !important;
+    max-width: min(80vw, 310px) !important;
+  }
+
+  .market-hero__dots button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    position: relative !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .market-hero__dots button::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .58) !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .market-hero__dots button.is-active {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .market-hero__dots button.is-active::before {
+    width: 30px !important;
+    background: var(--market-accent, #ffd166) !important;
+  }
+}

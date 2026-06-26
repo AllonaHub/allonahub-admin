@@ -124,3 +124,107 @@ body.profile-sync-page .profession-item:hover {
     height: auto;
   }
 }
+
+/* Profile mobile standard v1: override legacy desktop width without removing it. */
+@media (max-width: 760px) {
+  body.profile-sync-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+
+  body.profile-sync-page .page {
+    width: min(calc(100% - 12px), 1320px) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 0 28px !important;
+    overflow-x: clip !important;
+  }
+
+  body.profile-sync-page .header {
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  body.profile-sync-page .brand {
+    min-height: 64px !important;
+    justify-content: center !important;
+  }
+
+  body.profile-sync-page .search {
+    min-height: 48px !important;
+    padding-inline: 12px !important;
+  }
+
+  body.profile-sync-page .search input {
+    min-width: 0 !important;
+  }
+
+  body.profile-sync-page .top-actions,
+  body.profile-sync-page .action-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.profile-sync-page .top-actions::-webkit-scrollbar,
+  body.profile-sync-page .action-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.profile-sync-page .top-actions a,
+  body.profile-sync-page .top-actions button,
+  body.profile-sync-page .action-row button,
+  body.profile-sync-page .blue-btn,
+  body.profile-sync-page .outline-btn {
+    flex: 0 0 auto !important;
+    min-height: 48px !important;
+    padding-inline: 14px !important;
+    white-space: nowrap !important;
+  }
+
+  body.profile-sync-page .profile-layout,
+  body.profile-sync-page .status-grid,
+  body.profile-sync-page .module-preview,
+  .cv-center-card {
+    display: flex !important;
+    grid-template-columns: none !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.profile-sync-page .profile-layout::-webkit-scrollbar,
+  body.profile-sync-page .status-grid::-webkit-scrollbar,
+  body.profile-sync-page .module-preview::-webkit-scrollbar,
+  .cv-center-card::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.profile-sync-page .profile-layout > *,
+  body.profile-sync-page .status-grid > *,
+  body.profile-sync-page .module-preview > *,
+  .cv-center-card > * {
+    flex: 0 0 min(84vw, 326px) !important;
+    max-width: min(84vw, 326px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  body.profile-sync-page .form-grid,
+  body.profile-sync-page .privacy-row {
+    grid-template-columns: 1fr !important;
+  }
+}

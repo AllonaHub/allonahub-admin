@@ -1568,3 +1568,190 @@ body[data-theme="white"] .food-link-btn {
     width: 100%;
   }
 }
+
+/* Allona Yemek mobile standard v1: rails stay inside the viewport. */
+@media (max-width: 760px) {
+  .food-page {
+    width: min(calc(100% - 16px), 1720px) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+
+  .food-location,
+  .food-search,
+  .food-coupon {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .food-location button,
+  .food-search button,
+  .food-coupon button,
+  .food-action,
+  .food-link-btn,
+  .food-detail-submit,
+  .food-scroll-controls button {
+    min-height: 48px !important;
+  }
+
+  .food-scroll-controls button {
+    width: 48px !important;
+    min-width: 48px !important;
+  }
+
+  .food-category-strip,
+  .food-scroll-row,
+  .food-chip-grid,
+  .food-side-stats,
+  .food-grid,
+  .food-menu-grid,
+  .food-live-band,
+  .food-order-strip,
+  .food-ops {
+    display: flex !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .food-category-strip::-webkit-scrollbar,
+  .food-scroll-row::-webkit-scrollbar,
+  .food-chip-grid::-webkit-scrollbar,
+  .food-side-stats::-webkit-scrollbar,
+  .food-grid::-webkit-scrollbar,
+  .food-menu-grid::-webkit-scrollbar,
+  .food-live-band::-webkit-scrollbar,
+  .food-order-strip::-webkit-scrollbar,
+  .food-ops::-webkit-scrollbar {
+    display: none;
+  }
+
+  .food-category {
+    flex: 0 0 min(34vw, 132px) !important;
+    max-width: min(34vw, 132px) !important;
+    min-height: 86px !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+    scroll-snap-align: start;
+  }
+
+  .food-chip-grid > *,
+  .food-side-stats > *,
+  .food-live-band > *,
+  .food-ops > * {
+    flex: 0 0 min(82vw, 320px) !important;
+    max-width: min(82vw, 320px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  .food-grid > *,
+  .food-menu-grid > * {
+    flex: 0 0 min(82vw, 316px) !important;
+    max-width: min(82vw, 316px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  .food-order-strip > * {
+    flex: 0 0 min(46vw, 180px) !important;
+    max-width: min(46vw, 180px) !important;
+    min-width: 0 !important;
+    scroll-snap-align: start;
+  }
+
+  .food-order-total,
+  .food-order-actions {
+    flex-basis: min(82vw, 320px) !important;
+    max-width: min(82vw, 320px) !important;
+  }
+
+  .food-order-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .food-promo-track {
+    height: auto !important;
+    min-height: 500px !important;
+  }
+
+  .food-promo-slide {
+    grid-template-columns: 1fr !important;
+  }
+
+  .food-promo-slide img {
+    width: 100% !important;
+    height: 190px !important;
+    min-height: 190px !important;
+    max-height: 190px !important;
+    order: 0 !important;
+  }
+
+  .food-promo-content {
+    padding: 22px 18px 56px !important;
+  }
+
+  .food-promo-control {
+    width: 48px !important;
+    height: 48px !important;
+    top: 162px !important;
+  }
+
+  .food-promo-dots button {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    position: relative !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .food-promo-dots button::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, .58) !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .food-promo-dots button.is-active {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .food-promo-dots button.is-active::before {
+    width: 30px !important;
+    background: var(--ah-accent-soft, #ffd166) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .food-category {
+    flex-basis: min(38vw, 138px) !important;
+    max-width: min(38vw, 138px) !important;
+  }
+
+  .food-order-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
