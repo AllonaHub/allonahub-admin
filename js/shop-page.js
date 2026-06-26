@@ -246,7 +246,7 @@
       description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst kataloğunda keşfedin.",
       image_url: ad.image_url || product?.image_url || "/images/modules/allona-shop.png",
       cta_label: ad.cta_label || "İncele",
-      link_url: ad.link_url || (product ? core.productUrl(product) : "/pages/commerce/shop.html"),
+      link_url: product ? core.productUrl(product) : (ad.link_url || "/pages/commerce/shop.html"),
       source_id: ad.id || product?.id,
       price_label: product ? core.money(product.price) : "",
       meta_label: product ? [product.seller_name, product.rating ? `${product.rating.toFixed(1)} puan` : ""].filter(Boolean).join(" • ") : "",
@@ -305,21 +305,13 @@
 
   function slideMarkup(ad, index) {
     const accent = safeAccent(ad.accent);
-    const headingTag = index === 0 ? "h1" : "h2";
-    const headingId = index === 0 ? " id=\"hero-title\"" : "";
+    const href = heroHref(ad.link_url || "/pages/commerce/shop.html");
+    const title = ad.title || "Allona Shop ürün reklamı";
+    const image = core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"));
     return `
-      <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide style="--module-ad-accent:${accent}">
-        <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"))}" alt="${core.escapeHTML(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
-        <div class="shop-promo-content">
-          <p class="eyebrow">${core.escapeHTML(ad.subtitle)}</p>
-          <${headingTag}${headingId}>${core.escapeHTML(ad.title)}</${headingTag}>
-          <p>${core.escapeHTML(ad.description)}</p>
-          <strong>${core.escapeHTML(ad.campaign_text)}</strong>
-          ${ad.price_label ? `<span class="shop-promo-price">${core.escapeHTML(ad.price_label)}</span>` : ""}
-          ${ad.meta_label ? `<span class="shop-promo-meta">${core.escapeHTML(ad.meta_label)}</span>` : ""}
-          <a class="btn" href="${heroHref(ad.link_url || "/pages/commerce/shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
-        </div>
-      </article>
+      <a class="shop-promo-slide shop-promo-slide--image-only ${index === 0 ? "is-active" : ""}" data-shop-promo-slide href="${href}" aria-label="${core.escapeHTML(title)} ürün detayını aç" style="--module-ad-accent:${accent}">
+        <img src="${image}" alt="${core.escapeHTML(title)}" loading="${index === 0 ? "eager" : "lazy"}">
+      </a>
     `;
   }
 

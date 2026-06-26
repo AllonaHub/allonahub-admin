@@ -1379,6 +1379,21 @@ body[data-theme] .product-card__media {
   transform: scale(1);
 }
 
+.shop-promo-slide--image-only {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.shop-promo-slide--image-only::before {
+  content: none !important;
+  display: none !important;
+}
+
+.shop-promo-slide--image-only:focus-visible {
+  outline: 3px solid var(--ah-accent-soft);
+  outline-offset: -6px;
+}
+
 .shop-promo-slide img {
   position: absolute;
   inset: 0;
@@ -1389,6 +1404,8 @@ body[data-theme] .product-card__media {
   object-fit: cover;
   object-position: center;
   opacity: 1;
+  filter: none !important;
+  mix-blend-mode: normal !important;
   transform: scale(1.01);
   transition: transform 720ms ease;
 }
