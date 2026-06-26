@@ -3884,8 +3884,8 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .footer-col {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
+    flex: 0 0 min(86vw, 326px) !important;
+    max-width: min(86vw, 326px) !important;
     min-width: 0 !important;
     min-height: 0 !important;
     padding: 14px !important;
@@ -3896,8 +3896,8 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .footer-col:first-child {
-    flex-basis: 100% !important;
-    max-width: 100% !important;
+    flex-basis: min(86vw, 326px) !important;
+    max-width: min(86vw, 326px) !important;
   }
 
   .footer-brand {
@@ -3919,9 +3919,10 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .footer-col a {
-    min-height: 30px !important;
+    min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
+    padding-block: 4px !important;
   }
 
   .footer-social,
@@ -4015,6 +4016,12 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     gap: 8px !important;
     white-space: nowrap !important;
   }
+
+  .footer-bottom__links a {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 44px !important;
+  }
 }
 
 @media (max-width: 430px) {
@@ -4049,8 +4056,8 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .footer-col {
-    flex-basis: 100% !important;
-    max-width: 100% !important;
+    flex-basis: min(86vw, 312px) !important;
+    max-width: min(86vw, 312px) !important;
   }
 }
 
@@ -4099,6 +4106,23 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   .product-card__favorite {
     width: 48px !important;
     height: 48px !important;
+  }
+
+  body > header nav a,
+  .site-header nav a,
+  .top-bar__links a,
+  .nav-links a,
+  .top-links a,
+  .product-card__body h3 a,
+  .product-card h3 a {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 44px !important;
+  }
+
+  .product-card__body h3 a,
+  .product-card h3 a {
+    line-height: 1.18 !important;
   }
 
   .search-btn,
