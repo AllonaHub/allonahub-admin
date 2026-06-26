@@ -550,7 +550,18 @@
     };
   }
 
+  function taxiLiveDataEnabled() {
+    if (App.config && App.config.taxiLiveDataEnabled === true) return true;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("taxiLive") === "1" || localStorage.getItem("allona.taxi.liveData") === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
   async function listTaxiVehicleClasses() {
+    if (!taxiLiveDataEnabled()) return [];
     const { data, error } = await client()
       .from("taxi_vehicle_classes")
       .select("service_key,label,short_description,base_fare,per_km_fare,per_min_fare,minimum_fare,reserve_fee,airport_fee,surge_multiplier,hp_rate,sort_order")
@@ -563,6 +574,7 @@
   }
 
   async function listTaxiDrivers() {
+    if (!taxiLiveDataEnabled()) return [];
     const { data, error } = await client()
       .from("taxi_drivers")
       .select("id,public_code,display_name,service_keys,service_label,vehicle_make,vehicle_model,vehicle_color,vehicle_plate,rating,completed_trips,hp_reward,is_verified,is_female_driver,airport_permit,accepts_cash,accepts_card,accepts_coupon,availability_status,current_lat,current_lng,last_seen_at,created_at,updated_at")
@@ -578,6 +590,7 @@
   }
 
   async function listTaxiDestinations() {
+    if (!taxiLiveDataEnabled()) return [];
     const { data, error } = await client()
       .from("taxi_destinations")
       .select("id,label,short_label,category,lat,lng,priority")

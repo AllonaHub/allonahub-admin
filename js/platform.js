@@ -944,11 +944,31 @@
       bindControlValues();
       return;
     }
+    if (mountLegacyMobileControls()) return;
     const account = accountLinkCandidates()[0];
     if (account) {
       account.insertAdjacentHTML("afterend", controlsMarkup(account.classList.contains("login") ? "home" : ""));
       bindControlValues();
     }
+  }
+
+  function mountLegacyMobileControls() {
+    let legacyHost = document.querySelector(".page > .header, .module-page > .header, .platform-page > .header");
+    let legacyBrand = legacyHost && legacyHost.querySelector(":scope > .brand, :scope > .logo");
+    if (!legacyBrand) {
+      legacyHost = document.querySelector(".wrapper");
+      legacyBrand = legacyHost && legacyHost.querySelector(":scope > .brand, :scope > .logo");
+    }
+    if (!legacyHost || legacyHost.closest(".site-header") || !legacyBrand) return false;
+    const slot = document.createElement("span");
+    slot.className = "platform-controls-slot platform-controls-slot--home platform-controls-slot--legacy-mobile";
+    slot.dataset.platformControlsSlot = "home";
+    legacyBrand.insertAdjacentElement("afterend", slot);
+    legacyHost.classList.add(legacyHost.classList.contains("wrapper") ? "platform-legacy-mobile-panel" : "platform-legacy-mobile-header");
+    document.body.classList.add("has-legacy-mobile-controls");
+    slot.innerHTML = controlsMarkup("home");
+    bindControlValues();
+    return true;
   }
 
   function bindControlValues() {

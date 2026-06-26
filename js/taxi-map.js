@@ -1019,6 +1019,7 @@
       zoomControl: true,
       scrollWheelZoom: true
     }).setView(fallbackCenter, 13);
+    normalizeLeafletControls();
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -1033,6 +1034,14 @@
     loadSupabaseTaxiData();
     state.intervalId = window.setInterval(moveDrivers, updateIntervalMs);
     setLiveLabel("Canlı harita aktif");
+  }
+
+  function normalizeLeafletControls() {
+    const links = $all(".leaflet-control-zoom a");
+    links.forEach((link) => {
+      link.setAttribute("href", "#taxi-live-map");
+      link.setAttribute("role", "button");
+    });
   }
 
   document.addEventListener("DOMContentLoaded", initMap);
