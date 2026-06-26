@@ -1334,23 +1334,25 @@ body[data-theme] .product-card__media {
 .shop-promo-slider {
   position: relative;
   overflow: hidden;
+  min-height: 430px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--ah-primary) 30%, var(--ah-line));
   background: var(--ah-surface);
   box-shadow: 0 24px 64px color-mix(in srgb, var(--ah-primary) 14%, transparent);
+  isolation: isolate;
 }
 
 .shop-promo-track {
-  min-height: 420px;
+  min-height: 430px;
+  height: clamp(430px, 34vw, 540px);
   position: relative;
 }
 
 .shop-promo-slide {
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(340px, 1.06fr);
-  align-items: stretch;
+  display: block;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
   transform: scale(1.012);
@@ -1360,6 +1362,17 @@ body[data-theme] .product-card__media {
     linear-gradient(135deg, color-mix(in srgb, var(--ah-ink) 92%, #001b33 8%), color-mix(in srgb, var(--ah-primary-strong) 72%, #020814 28%));
 }
 
+.shop-promo-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(2, 8, 20, 0.86) 0%, rgba(2, 8, 20, 0.62) 38%, rgba(2, 8, 20, 0.18) 68%, rgba(2, 8, 20, 0.04) 100%),
+    radial-gradient(circle at 16% 26%, color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 24%, transparent), transparent 34%);
+  pointer-events: none;
+}
+
 .shop-promo-slide.is-active {
   opacity: 1;
   pointer-events: auto;
@@ -1367,22 +1380,35 @@ body[data-theme] .product-card__media {
 }
 
 .shop-promo-slide img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 100%;
   object-fit: cover;
-  order: 2;
-  opacity: 0.82;
+  object-position: center;
+  opacity: 1;
+  transform: scale(1.01);
+  transition: transform 720ms ease;
+}
+
+.shop-promo-slide.is-active img {
+  transform: scale(1);
 }
 
 .shop-promo-content {
+  box-sizing: border-box;
   display: grid;
   align-content: center;
   gap: 14px;
+  width: min(680px, 62%);
+  height: 100%;
+  min-height: 430px;
   padding: clamp(36px, 5vw, 58px) clamp(40px, 5vw, 58px) clamp(36px, 5vw, 58px) clamp(68px, 6vw, 82px);
   color: #ffffff;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .shop-promo-content .eyebrow {
@@ -1409,6 +1435,22 @@ body[data-theme] .product-card__media {
 .shop-promo-content strong {
   color: #ffffff;
   font-size: 1rem;
+}
+
+.shop-promo-price {
+  width: max-content;
+  max-width: 100%;
+  color: #ffffff;
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.shop-promo-meta {
+  max-width: 560px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .shop-promo-content .btn {
@@ -1514,12 +1556,21 @@ body[data-theme] .product-card__media {
   align-items: center;
   justify-content: center;
   padding: 0 10px;
-  color: var(--ah-ink);
+  color: color-mix(in srgb, var(--ah-bg-strong) 82%, #102132 18%);
   font-size: clamp(0.78rem, 0.82vw, 0.94rem);
   font-weight: 950;
   text-align: center;
   white-space: nowrap;
   transition: color 160ms ease, background 160ms ease;
+}
+
+body[data-theme]:not([data-theme="white"]) .shop-category-trigger {
+  color: color-mix(in srgb, var(--ah-ink) 78%, #102132 22%);
+}
+
+body[data-theme="white"] .shop-category-trigger,
+body[data-theme="corporate"] .shop-category-trigger {
+  color: #102132;
 }
 
 .shop-category-trigger::after {
@@ -5619,6 +5670,23 @@ body[data-theme="corporate"] .module-ad-banner__content {
   background: linear-gradient(90deg, rgba(2, 8, 20, 0.76), rgba(2, 8, 20, 0.44) 72%, rgba(2, 8, 20, 0));
 }
 
+.module-ad-banner--shop-hero {
+  margin-bottom: 18px;
+}
+
+.module-ad-banner--shop-hero .module-ad-banner__frame.shop-promo-slider {
+  display: block;
+  min-height: 430px;
+  border-radius: 26px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.module-ad-banner--shop-hero .shop-promo-track {
+  min-height: 430px;
+  height: clamp(430px, 34vw, 540px);
+}
+
 @media (max-width: 760px) {
   .module-ad-banner {
     width: min(calc(100% - 16px), var(--ah-wide-page-max, 1720px));
@@ -5925,4 +5993,107 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p
     min-height: 124px !important;
     padding: 10px !important;
   }
+}
+
+/* Allona Shop: the old lower product ad rail now lives inside the top module banner. */
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-content,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-content h1,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-content h2,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-content p,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-content strong,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-price,
+body[data-theme="white"] .module-ad-banner--shop-hero .shop-promo-meta {
+  color: #ffffff !important;
+}
+
+.module-ad-banner--shop-hero .shop-promo-content .eyebrow {
+  color: color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 72%, #ffffff) !important;
+}
+
+@media (max-width: 980px) {
+  .module-ad-banner--shop-hero .module-ad-banner__frame.shop-promo-slider,
+  .module-ad-banner--shop-hero .shop-promo-track {
+    min-height: 560px !important;
+    height: 560px !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-slide {
+    display: block !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-slide::before {
+    background:
+      linear-gradient(0deg, rgba(2, 8, 20, 0.90) 0%, rgba(2, 8, 20, 0.68) 52%, rgba(2, 8, 20, 0.18) 100%),
+      radial-gradient(circle at 22% 70%, color-mix(in srgb, var(--module-ad-accent, var(--ah-primary)) 24%, transparent), transparent 34%) !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-slide img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    order: initial !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-content {
+    align-content: end !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    padding: 82px 18px 92px !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-content h1,
+  .module-ad-banner--shop-hero .shop-promo-content h2 {
+    font-size: 2rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-content p {
+    font-size: 0.95rem !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-price {
+    font-size: 1.55rem !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-control {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-dots {
+    top: auto !important;
+    bottom: 18px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .module-ad-banner--shop-hero .module-ad-banner__frame.shop-promo-slider,
+  .module-ad-banner--shop-hero .shop-promo-track {
+    min-height: 540px !important;
+    height: 540px !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-content h1,
+  .module-ad-banner--shop-hero .shop-promo-content h2 {
+    font-size: 1.72rem !important;
+  }
+
+  .module-ad-banner--shop-hero .shop-promo-content p {
+    font-size: 0.88rem !important;
+  }
+}
+
+body[data-theme="white"] nav .shop-category-trigger,
+body[data-theme="corporate"] nav .shop-category-trigger {
+  color: #102132 !important;
+}
+
+body[data-theme]:not([data-theme="white"]):not([data-theme="corporate"]) nav .shop-category-trigger {
+  color: var(--ah-ink) !important;
 }

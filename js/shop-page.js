@@ -1,7 +1,9 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   let products = [];
+  let heroAds = [];
 
   function withTimeout(promise, timeoutMs) {
     return Promise.race([
@@ -147,17 +149,91 @@
     renderGrid("[data-recommended-grid]", products.filter((item) => item.stock > 0).slice(4, 8));
   }
 
+  function moduleAdMatchesShop(item) {
+    if (!item) return false;
+    if (item.moduleKey === "shop" || item.module_key === "shop") return true;
+    const keys = item.moduleKeys || item.module_keys || [];
+    if (Array.isArray(keys) && keys.includes("shop")) return true;
+    return item.moduleKey === "all" || item.moduleKey === "*" || item.module_key === "all" || item.module_key === "*";
+  }
+
+  function isActiveModulePartnerAd(item) {
+    if (!item || !(item.title || item.name) || !(item.image || item.image_url)) return false;
+    const now = Date.now();
+    const startsAt = item.startsAt || item.startDate || item.activeFrom || item.starts_at;
+    const endsAt = item.endsAt || item.endDate || item.activeUntil || item.ends_at;
+    const startTime = startsAt ? Date.parse(startsAt) : NaN;
+    const endTime = endsAt ? Date.parse(endsAt) : NaN;
+    if (Number.isFinite(startTime) && now < startTime) return false;
+    if (Number.isFinite(endTime) && now > endTime) return false;
+    return item.status !== "paused" && item.status !== "draft";
+  }
+
+  function rotateByModuleBannerRule(items) {
+    if (!items.length) return [];
+    const now = new Date();
+    const dayKey = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+    const pool = items.slice().sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0));
+    const selected = pool[Math.floor(dayKey / 180) % pool.length] || pool[dayKey % pool.length] || pool[0];
+    return [selected, ...pool.filter((item) => item !== selected)];
+  }
+
+  function readShopModuleAdPool() {
+    const pools = [];
+    if (window.AllonaModuleAds) pools.push(window.AllonaModuleAds);
+    if (window.AllonaPartnerAds) pools.push(window.AllonaPartnerAds);
+    try {
+      const raw = localStorage.getItem(MODULE_PARTNER_ADS_KEY);
+      if (raw) pools.push(JSON.parse(raw));
+    } catch (error) {
+      // Optional partner ad data should never block the Shop catalog.
+    }
+
+    const ads = pools.flatMap((source) => {
+      if (!source) return [];
+      if (Array.isArray(source)) return source.filter(moduleAdMatchesShop);
+      if (Array.isArray(source.shop)) return source.shop;
+      return [];
+    }).filter(isActiveModulePartnerAd);
+
+    return rotateByModuleBannerRule(ads);
+  }
+
+  function safeAccent(value) {
+    const raw = String(value || "").trim();
+    if (/^#[\da-f]{3,8}$/i.test(raw)) return raw;
+    if (/^rgba?\(/i.test(raw)) return raw;
+    return "#00e5ff";
+  }
+
+  function heroHref(value) {
+    const raw = String(value || "").trim();
+    if (raw.startsWith("#")) return core.escapeHTML(raw);
+    return core.escapeHTML(core.sanitizeUrl(raw, "/pages/commerce/shop.html"));
+  }
+
   function heroAdFromProduct(product) {
     const item = core.normalizeProduct(product);
+    const discountText = item.discount_label || (item.discount_percent ? `%${item.discount_percent} indirim` : "");
+    const campaignText = discountText || item.delivery_label || `${core.money(item.price)} / hızlı sepet`;
+    const meta = [
+      item.seller_name,
+      item.rating ? `${item.rating.toFixed(1)} puan` : "",
+      item.stock > 0 ? `${item.stock} stok` : "Stok sinyali bekleniyor"
+    ].filter(Boolean).join(" • ");
+
     return {
       title: item.name,
       subtitle: item.brand || item.category || "Partner Ürünü",
-      campaign_text: item.discount || item.discount_label || `${core.money(item.price)} / hızlı sepet`,
+      campaign_text: campaignText,
       description: item.description || "Partner ürününü AllonaShop kataloğunda güvenli ödeme ve HP avantajıyla inceleyin.",
       image_url: item.image_url,
       cta_label: "Ürünü İncele",
       link_url: core.productUrl(item),
-      source_id: item.id
+      source_id: item.id,
+      price_label: core.money(item.price),
+      meta_label: meta,
+      accent: "#00e5ff"
     };
   }
 
@@ -171,7 +247,26 @@
       image_url: ad.image_url || product?.image_url || "/images/modules/allona-shop.png",
       cta_label: ad.cta_label || "İncele",
       link_url: ad.link_url || (product ? core.productUrl(product) : "/pages/commerce/shop.html"),
-      source_id: ad.id || product?.id
+      source_id: ad.id || product?.id,
+      price_label: product ? core.money(product.price) : "",
+      meta_label: product ? [product.seller_name, product.rating ? `${product.rating.toFixed(1)} puan` : ""].filter(Boolean).join(" • ") : "",
+      accent: ad.accent || "#00e5ff"
+    };
+  }
+
+  function heroAdFromModuleRecord(ad) {
+    return {
+      title: ad.title || ad.name || "Allona Shop",
+      subtitle: ad.eyebrow || ad.label || "Günlük Vitrin",
+      campaign_text: ad.campaign_text || ad.campaignText || ad.partnerTier || "Üst banner yayını",
+      description: ad.sentence || ad.description || "Seçili ürün ve kampanyaları Allona Shop üst banner alanında keşfedin.",
+      image_url: ad.image || ad.image_url || "/images/ads/hero-ad-shop.jpg",
+      cta_label: ad.cta || ad.cta_label || "Alışverişe Git",
+      link_url: ad.href || ad.url || ad.link_url || "/pages/commerce/allonashop.html",
+      source_id: ad.id || ad.slug || ad.title || ad.name,
+      price_label: ad.price_label || "",
+      meta_label: ad.meta_label || ad.visibilityRule || ad.partnerVisibility || "",
+      accent: safeAccent(ad.accent)
     };
   }
 
@@ -198,7 +293,9 @@
     const scopedRemoteAds = remoteAds.filter((ad) => !ad.product || isShopCatalogProduct(ad.product));
     const partnerProducts = productList.filter((item) => item.partner_id && isShopCatalogProduct(item)).map(heroAdFromProduct);
     const popularProducts = [...productList].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
+    const moduleAds = readShopModuleAdPool().map(heroAdFromModuleRecord);
     const ads = uniqueAds([
+      ...moduleAds,
       ...scopedRemoteAds.map(heroAdFromRecord),
       ...partnerProducts,
       ...popularProducts
@@ -206,27 +303,59 @@
     return ads.slice(0, 5);
   }
 
-  function renderHeroAds(ads) {
-    const slider = document.querySelector("[data-shop-promo-slider]");
-    const track = slider?.querySelector("[data-shop-promo-track]");
-    if (!slider || !track || !ads.length) return;
-    track.innerHTML = ads.map((ad, index) => `
-      <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide>
+  function slideMarkup(ad, index) {
+    const accent = safeAccent(ad.accent);
+    const headingTag = index === 0 ? "h1" : "h2";
+    const headingId = index === 0 ? " id=\"hero-title\"" : "";
+    return `
+      <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide style="--module-ad-accent:${accent}">
         <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"))}" alt="${core.escapeHTML(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
         <div class="shop-promo-content">
           <p class="eyebrow">${core.escapeHTML(ad.subtitle)}</p>
-          <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${core.escapeHTML(ad.title)}</h${index === 0 ? "1" : "2"}>
+          <${headingTag}${headingId}>${core.escapeHTML(ad.title)}</${headingTag}>
           <p>${core.escapeHTML(ad.description)}</p>
           <strong>${core.escapeHTML(ad.campaign_text)}</strong>
-          <a class="btn" href="${core.escapeHTML(ad.link_url || "/pages/commerce/shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
+          ${ad.price_label ? `<span class="shop-promo-price">${core.escapeHTML(ad.price_label)}</span>` : ""}
+          ${ad.meta_label ? `<span class="shop-promo-meta">${core.escapeHTML(ad.meta_label)}</span>` : ""}
+          <a class="btn" href="${heroHref(ad.link_url || "/pages/commerce/shop.html")}">${core.escapeHTML(ad.cta_label || "İncele")}</a>
         </div>
       </article>
-    `).join("");
+    `;
+  }
+
+  function renderTopModuleBannerAds(ads) {
+    const banner = document.querySelector("[data-module-ad-banner][data-module-key='shop']");
+    if (!banner || !ads.length) return false;
+    const firstAccent = safeAccent(ads[0]?.accent);
+    banner.classList.add("module-ad-banner--shop-hero");
+    banner.dataset.shopHeroBanner = "";
+    banner.style.setProperty("--module-ad-accent", firstAccent);
+    banner.innerHTML = `
+      <div class="module-ad-banner__frame shop-promo-slider shop-promo-slider--top" data-shop-promo-slider aria-label="Allona Shop üst ürün bannerı">
+        <button class="shop-promo-control shop-promo-control--prev" type="button" data-shop-promo-prev aria-label="Önceki ürün reklamı">‹</button>
+        <div class="shop-promo-track" data-shop-promo-track>
+          ${ads.map(slideMarkup).join("")}
+        </div>
+        <button class="shop-promo-control shop-promo-control--next" type="button" data-shop-promo-next aria-label="Sonraki ürün reklamı">›</button>
+        <div class="shop-promo-dots" data-shop-promo-dots aria-label="Ürün reklamı seçimi"></div>
+      </div>
+    `;
+    initShopPromoSlider(banner.querySelector("[data-shop-promo-slider]"));
+    return true;
+  }
+
+  function renderHeroAds(ads) {
+    heroAds = ads;
+    if (renderTopModuleBannerAds(ads)) return;
+    const slider = document.querySelector(".site-main [data-shop-promo-slider]");
+    const track = slider?.querySelector("[data-shop-promo-track]");
+    if (!slider || !track || !ads.length) return;
+    track.innerHTML = ads.map(slideMarkup).join("");
+    initShopPromoSlider(slider);
   }
 
   async function refreshHeroAds() {
     renderHeroAds(await loadHeroAds(products));
-    initShopPromoSlider();
   }
 
   async function loadProducts() {
@@ -284,8 +413,10 @@
     }
   }
 
-  function initShopPromoSlider() {
-    const slider = document.querySelector("[data-shop-promo-slider]");
+  function initShopPromoSlider(scope) {
+    const slider = scope?.matches?.("[data-shop-promo-slider]")
+      ? scope
+      : (scope || document).querySelector("[data-shop-promo-slider]");
     if (!slider) return;
     if (slider.__shopPromoTimer) window.clearInterval(slider.__shopPromoTimer);
     const slides = [...slider.querySelectorAll("[data-shop-promo-slide]")];
@@ -340,6 +471,9 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!document.querySelector("[data-page='shop']")) return;
+    document.addEventListener("allona:module-ad-banner-ready", (event) => {
+      if (event.detail?.key === "shop" && heroAds.length) renderHeroAds(heroAds);
+    });
     bindFilters();
     initShopPromoSlider();
     loadProducts();

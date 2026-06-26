@@ -1140,6 +1140,15 @@
     return banner;
   }
 
+  function announceModuleAdBanner(banner) {
+    document.dispatchEvent(new CustomEvent("allona:module-ad-banner-ready", {
+      detail: {
+        key: banner?.dataset?.moduleKey || "",
+        banner
+      }
+    }));
+  }
+
   function mountModuleAdBanner() {
     if (document.querySelector("[data-module-ad-banner], [data-ad-hero]")) return;
     const campaign = activeModuleCampaign();
@@ -1149,15 +1158,20 @@
     const layoutHeader = document.querySelector("[data-layout='header']");
     if (layoutHeader && layoutHeader.parentElement) {
       layoutHeader.insertAdjacentElement("afterend", banner);
+      announceModuleAdBanner(banner);
       return;
     }
     const main = document.querySelector("main");
     if (main) {
       main.insertAdjacentElement("afterbegin", banner);
+      announceModuleAdBanner(banner);
       return;
     }
     const page = document.querySelector(".site-shell, .page");
-    if (page) page.insertAdjacentElement("afterbegin", banner);
+    if (page) {
+      page.insertAdjacentElement("afterbegin", banner);
+      announceModuleAdBanner(banner);
+    }
   }
 
   function bindEvents() {
