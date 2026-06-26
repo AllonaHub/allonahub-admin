@@ -166,6 +166,18 @@ start();
 }
 initHeroAdSlider();
 
+function initMobileModuleRailOrder(){
+const grid=document.querySelector(".modules-section .modules-grid.large-grid");
+if(!grid){return}
+const orderMap=[1,3,2,4];
+[...grid.querySelectorAll(".module-card")].forEach((card,index)=>{
+const page=Math.floor(index/4);
+const slot=orderMap[index%4];
+card.style.setProperty("--mobile-module-order",String(page*4+slot));
+});
+}
+initMobileModuleRailOrder();
+
 function updateLocationStatus(active,city,country){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
