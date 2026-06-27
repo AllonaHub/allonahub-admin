@@ -14,6 +14,8 @@ Bu klasor ALLONAHUB bot gelistirme altyapisini yeni bir paket olarak ekler. Mevc
 - Destek kaydi: riskli veya insan onayi gereken konularda `support-tickets.jsonl`
 - Gunluk rapor: `GET /api/report/daily`
 - Opsiyonel OpenAI Responses API entegrasyonu: varsayilan kapali
+- Akilli cevap planlama: musteri tonu, eksik bilgi, onceki niyet ve next-best-action ile cevap hazirlama
+- Cok turlu konusma hafizasi: teklif ve destek akislari sonraki mesajlarda surdurulur
 
 ## Calistirma
 
@@ -65,3 +67,4 @@ Model bilincli olarak varsayilan verilmedi. Boylece guncel model, maliyet ve ver
 - Gercek CRM veya destek kuyruğu entegrasyonu baglanmali.
 - WhatsApp outbound mesaj gonderimi icin resmi token ve izinler tamamlanmali.
 - AVM, taksi ve denizcilik icin gercek API araclari eklenmeli.
+- Production AI icin model, eval, maliyet siniri, insan geri bildirimi ve guvenli tool onay mekanizmasi eklenmeli.

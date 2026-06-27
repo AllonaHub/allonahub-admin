@@ -138,11 +138,20 @@ export function buildKnowledgeAnswer(results) {
 
   const bullets = results
     .slice(0, 3)
-    .map((result) => `- ${result.title}: ${result.snippet}`)
+    .map((result) => `- ${result.title}: ${cleanSnippet(result.snippet)}`)
     .join('\n');
 
   return {
-    answer: `Bilgi tabanindaki en ilgili notlar sunlar:\n${bullets}`,
+    answer: `Onayli bilgi tabanina gore ilgili basliklar:\n${bullets}`,
     citations
   };
+}
+
+function cleanSnippet(snippet) {
+  return snippet
+    .replace(/\|/g, ' ')
+    .replace(/---/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 260);
 }

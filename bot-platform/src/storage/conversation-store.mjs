@@ -17,6 +17,10 @@ export class ConversationStore {
         status: 'open',
         createdAt: nowIso(),
         lastMessageAt: nowIso(),
+        smartContext: {
+          slots: {},
+          intentHistory: []
+        },
         turns: []
       };
 

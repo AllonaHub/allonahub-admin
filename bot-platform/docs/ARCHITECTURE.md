@@ -7,6 +7,8 @@
 | HTTP | `src/http/server.mjs` | Chat ve webhook endpointlerini sunar |
 | Orkestrator | `src/core/orchestrator.mjs` | Intent, risk, bilgi tabani, AI ve insan devrini yonetir |
 | Intent | `src/core/intent.mjs` | Kullanici mesajini modullere ayirir |
+| Musteri icgorusu | `src/core/customer-insights.mjs` | Slot, ton, aciliyet, tercih edilen kanal ve devam sinyali cikarir |
+| Akilli planlayici | `src/core/response-planner.mjs` | Cevap, eksik bilgi, next-best-action ve quick reply setini hazirlar |
 | Bilgi tabani | `src/knowledge/loader.mjs` | Proje dokumanlarini parcalar ve arar |
 | Guvenlik | `src/security/*` | Redaction, risk, rate limit ve imza dogrulama |
 | Destek | `src/tools/support-ticket.mjs` | Insan devri ve panel sahipligi icin kayit acma |
@@ -19,10 +21,12 @@
 2. Rate limit ve gerekiyorsa webhook imzasi kontrol edilir.
 3. Intent siniflandirilir.
 4. Risk analizi yapilir.
-5. Bilgi tabaninda ilgili kaynaklar aranir.
-6. Riskli veya insan onayi gereken konuysa destek kaydi acilir.
-7. AI etkinse onayli bilgi baglamiyla cevap uretilir; degilse kaynakli yerel cevap doner.
-8. Konusma olayi maskelenerek JSONL loga yazilir.
+5. Musteri tonu, aciliyeti, eksik bilgileri ve devam eden onceki intent belirlenir.
+6. Bilgi tabaninda ilgili kaynaklar aranir.
+7. Riskli veya insan onayi gereken konuysa destek kaydi acilir.
+8. Akilli planlayici cevap, eksik slot ve sonraki en iyi aksiyonu belirler.
+9. AI etkinse onayli bilgi baglamiyla cevap iyilestirilir; degilse kaynakli yerel cevap doner.
+10. Konusma olayi maskelenerek JSONL loga yazilir.
 
 ## Panel Baglantisi
 

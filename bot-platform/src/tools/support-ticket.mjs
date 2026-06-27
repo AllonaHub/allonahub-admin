@@ -21,7 +21,14 @@ function routeOwner(intent) {
   }
 }
 
-export async function createSupportTicket({ store, conversation, message, classification, risk }) {
+export async function createSupportTicket({
+  store,
+  conversation,
+  message,
+  classification,
+  risk,
+  customerContext
+}) {
   const ticket = {
     ticketId: createId('ticket'),
     conversationId: conversation.conversationId,
@@ -36,6 +43,13 @@ export async function createSupportTicket({ store, conversation, message, classi
       riskyActions: risk.riskyActions,
       criticalPolicyHits: risk.criticalPolicyHits
     },
+    customerContext: customerContext
+      ? {
+          urgency: customerContext.urgency,
+          sentiment: customerContext.lastSentiment?.tone,
+          slots: customerContext.slots
+        }
+      : undefined,
     user: conversation.user,
     createdAt: nowIso()
   };

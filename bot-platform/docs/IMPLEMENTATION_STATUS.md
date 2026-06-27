@@ -13,6 +13,12 @@ Tarih: 27 Haziran 2026
 - Gunluk rapor endpointi eklendi.
 - Opsiyonel OpenAI Responses API entegrasyonu eklendi; varsayilan kapali.
 - Node testleri eklendi.
+- Akilli musteri baglami eklendi: ad, iletisim, yolculuk ID, tercih edilen kanal, konu tipi ve ihtiyac ozeti toplanir.
+- Duygu/aciliyet analizi eklendi: normal, memnun, sikayetci ve acil tonlara gore cevap farklilasir.
+- Cok turlu devam mantigi eklendi: musteri sonraki mesajda iletisim veya yolculuk ID verdiginde onceki teklif/destek akisi surer.
+- Tekrarlayan ticket engeli eklendi: ayni konusmada aktif destek kaydi yeniden uretilmez.
+- Next-best-action eklendi: bot eksik bilgiyi secip musteriden siradaki en faydali cevabi ister.
+- Gelişmiş akilli orkestrasyon testleri eklendi.
 
 ## Bilerek Otomatik Yapilmayanlar
 
@@ -27,3 +33,4 @@ Tarih: 27 Haziran 2026
 - Taksi, AVM, denizcilik ve sosyal medya icin gercek backend API araclari.
 - CRM veya destek masasi entegrasyonu.
 - Production loglama, izleme, alarm ve veri saklama politikasi.
+- Vektor arama, canli CRM/panel entegrasyonu, gercek modül API araclari ve insan geri bildirimi.
