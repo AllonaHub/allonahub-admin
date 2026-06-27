@@ -1031,6 +1031,11 @@
     "work-queue": ["İş Kuyruğu", "Modül onayları, riskler, destek ve yayın kararları"],
     alerts: ["Uyarı / Risk Akışı", "Öncelikli güvenlik, sistem ve yayın riskleri"],
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
+    "release-history": ["Yayın Geçmişi", "Onaylanan, gönderilen ve hata alan yayın kararları"],
+    operations: ["Operasyon Merkezi", "Sipariş, destek ve canlı operasyon görünümü"],
+    finance: ["Finans Merkezi", "Ciro, ödeme, komisyon, iade ve hakediş kontrolü"],
+    content: ["İçerik Kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerikleri"],
+    health: ["Sistem Sağlığı", "API, database, webhook, modül ve operasyon servisleri"],
     access: ["Erişim Kilidi", "Owner-only oturum ve güvenli sınırlar"],
     permissions: ["Yetki Merkezi", "Rol verme, hesap durumu ve risk seviyesi kontrolü"],
     "module-map": ["Modül Haritası", "Ana sayfa modülleri ve gelecek operasyon hazırlığı"],
@@ -1221,14 +1226,18 @@
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
       ownerLine("İş kuyruğu", "AVM, yemek, taksi, sosyal medya, destek, güvenlik ve yayın kararlarını tek listede izle.", "<button type=\"button\" data-view-jump=\"work-queue\">Aç</button>", "critical"),
+      ownerLine("Operasyon merkezi", "Siparişler, destek talepleri ve canlı operasyon akışını Super Admin içinden izle.", "<button type=\"button\" data-view-jump=\"operations\">Aç</button>", "high"),
+      ownerLine("Finans merkezi", "Ciro, ödeme riski, komisyon, iade ve hakediş ayarlarını tek yerden takip et.", "<button type=\"button\" data-view-jump=\"finance\">Aç</button>", "critical"),
+      ownerLine("İçerik kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerik önerilerini gör.", "<button type=\"button\" data-view-jump=\"content\">Aç</button>", "high"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
       ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
-      ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
+      ownerLine("Canlı altyapı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
       ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Bekleyen onay varsa detay incelemesi gerekir", "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenleri incele</button>", gitops.enabled ? "high" : "medium"),
+      ownerLine("Sistem sağlığı", "API, DB, GitOps, komut kabiliyeti ve operasyon raporlarını tek ekranda gör.", "<button type=\"button\" data-view-jump=\"health\">Aç</button>", system.database === "online" ? "low" : "critical"),
       ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
   }
@@ -1409,9 +1418,18 @@
 
   async function loadOwnerApprovals() {
     ownerLoading("Yayın Onayları");
-    const payload = await api("/v1/control-center/release-approvals?limit=80&status=pending");
-    state.approvals = payload.approvals || [];
-    const rows = state.approvals.map((item) => {
+    const [releasePayload, queuePayload] = await Promise.all([
+      api("/v1/control-center/release-approvals?limit=80&status=pending"),
+      api("/v1/control-center/work-queue?limit=80&status=open")
+    ]);
+    state.approvals = releasePayload.approvals || [];
+    state.approvalQueueItems = (queuePayload.items || []).filter((item) => {
+      return item.target_type === "content_change_proposal"
+        || item.target_type === "content_module"
+        || item.target_type === "admin_approval_request";
+    });
+
+    const releaseRows = state.approvals.map((item) => {
       return ownerLine(
         `${item.approval_type} / onay bekliyor`,
         `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "Açıklama yok")}`,
@@ -1419,9 +1437,165 @@
         item.risk_level
       );
     });
-    ownerSetOutput(rows.length
-      ? ownerLine("Bekleyen yayın onayları", `${formatNumber(rows.length)} kayıt detay incelemesi bekliyor.`, "", "critical") + rows.join("")
-      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "", "low"));
+
+    const queueRows = state.approvalQueueItems.map((item) => {
+      const scope = item.metadata && item.metadata.content_scope ? ` / ${item.metadata.content_scope}` : "";
+      return ownerLine(
+        `${item.title || "Admin onayı"} / admin panelden geldi`,
+        `${escape(item.source_module || "admin_ops")} / ${escape(item.target_type || "-")}${escape(scope)} / ${formatDate(item.created_at)}`,
+        `<button type="button" data-view-jump="work-queue">İş kuyruğunda aç</button>`,
+        item.risk_level || "medium"
+      );
+    });
+
+    const total = releaseRows.length + queueRows.length;
+    ownerSetOutput(total
+      ? ownerLine("Bekleyen onaylar", `${formatNumber(total)} kayıt: ${formatNumber(releaseRows.length)} yayın / ${formatNumber(queueRows.length)} admin-içerik onayı.`, "", total ? "critical" : "low") +
+        (queueRows.length ? ownerLine("Admin Panel İçerik Onayları", "Ana sayfa modülü, banner, kampanya, sayfa ve yasal içerik önerileri burada görünür.", "", "high") + queueRows.join("") : "") +
+        (releaseRows.length ? ownerLine("Yayın / Deploy Onayları", "Main, deploy, migration ve panel değişikliği onayları.", "", "critical") + releaseRows.join("") : "")
+      : ownerLine("Bekleyen yayın onayı yok", "Admin içerik onayı, main commit/push, deploy, migration veya panel değişikliği için bekleyen kayıt bulunmuyor.", "", "low"));
+  }
+
+  async function loadOwnerReleaseHistory() {
+    ownerLoading("Yayın Geçmişi");
+    const payload = await api("/v1/control-center/release-approvals?limit=80");
+    state.releaseHistory = payload.approvals || [];
+    const rows = state.releaseHistory.map((item) => {
+      const response = item.webhook_response || {};
+      const action = item.status === "pending"
+        ? `<button type="button" data-approval-detail="${escape(item.id)}">Detay / Onay</button>`
+        : `<button type="button" data-release-history-detail="${escape(item.id)}">Detay</button>`;
+      return ownerLine(
+        `${item.approval_type || "release"} / ${item.status || "-"}`,
+        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "Açıklama yok")} / webhook ${escape(String(item.webhook_status || response.code || response.ok || "-"))} / ${formatDate(item.created_at)}`,
+        action,
+        item.status === "failed" ? "critical" : (item.status === "pending" ? "critical" : item.risk_level || "low")
+      );
+    });
+    ownerSetOutput(
+      ownerLine("Yayın kayıtları", `${formatNumber(state.releaseHistory.length)} kayıt listeleniyor. Pending kayıtlar Bekleyenler ekranında da görünür.`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenler</button>", "medium") +
+      (rows.length ? rows.join("") : ownerEmpty("Yayın geçmişi kaydı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerOperations() {
+    ownerLoading("Operasyon Merkezi");
+    const [dashboardPayload, ordersPayload, supportPayload] = await Promise.all([
+      api("/v1/admin/ops/dashboard"),
+      api("/v1/admin/ops/orders?limit=12"),
+      api("/v1/admin/ops/support-tickets?limit=12")
+    ]);
+    const metrics = dashboardPayload.dashboard && dashboardPayload.dashboard.metrics || {};
+    const orders = ordersPayload.orders || [];
+    const tickets = supportPayload.tickets || [];
+    const orderRows = orders.slice(0, 8).map((order) => ownerLine(
+      order.order_no || order.id,
+      `${escape(order.customer_name || order.customer_email || "-")} / ${money(order.total)} / sipariş ${escape(order.order_status || "-")} / ödeme ${escape(order.payment_status || "-")} / ${formatDate(order.created_at)}`,
+      `<a href="./orders.html">Sipariş merkezi</a>`,
+      ["cancelled", "failed"].includes(order.order_status) || ["failed", "refunded"].includes(order.payment_status) ? "high" : "medium"
+    ));
+    const ticketRows = tickets.slice(0, 8).map((ticket) => ownerLine(
+      ticket.title || ticket.category || "Destek talebi",
+      `${escape(ticket.source || "user")} / ${escape(ticket.requester_label || "-")} / durum ${escape(ticket.status || "-")} / ${formatDate(ticket.created_at)}`,
+      `<a href="./index.html">Admin Ops</a>`,
+      ticket.priority === "urgent" ? "critical" : "medium"
+    ));
+    ownerSetOutput(
+      ownerLine("Bugünkü operasyon", `${formatNumber(metrics.daily_users)} yeni kullanıcı / ${formatNumber(metrics.daily_partner_applications)} partner başvurusu / ${formatNumber(metrics.recent_orders)} son sipariş`, "<a href=\"./index.html\">Admin Ops</a>", "medium") +
+      ownerLine("Açık destek", `${formatNumber(metrics.open_support_tickets)} talep / ${formatNumber(metrics.system_alerts)} sistem uyarısı`, "<button type=\"button\" data-view-jump=\"work-queue\">İş kuyruğu</button>", metrics.open_support_tickets || metrics.system_alerts ? "high" : "low") +
+      ownerLine("Son siparişler", `${formatNumber(orders.length)} kayıt`, "", "medium") +
+      (orderRows.join("") || ownerEmpty("Sipariş kaydı bulunamadı.")) +
+      ownerLine("Destek akışı", `${formatNumber(tickets.length)} kayıt`, "", tickets.length ? "high" : "low") +
+      (ticketRows.join("") || ownerEmpty("Açık destek kaydı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerFinance() {
+    ownerLoading("Finans Merkezi");
+    const [commandPayload, reportsPayload, settingsPayload] = await Promise.all([
+      state.commandCenter || loadCommandCenter(),
+      api("/v1/admin/ops/reports"),
+      api("/v1/control-center/settings")
+    ]);
+    const summary = commandPayload.summary || {};
+    const reports = reportsPayload.reports || {};
+    const orderReport = reports.order_report || {};
+    const supportReport = reports.support_report || {};
+    const settings = settingsPayload.settings || [];
+    const financeSettings = settings.filter((item) => item.category === "finance" || ["payments_paused", "default_commission_rate", "minimum_payout_amount"].includes(item.setting_key));
+    const rows = financeSettings.map((setting) => ownerLine(
+      setting.label || setting.setting_key,
+      `${escape(setting.setting_key)} / değer ${escape(String(setting.setting_value))} / risk ${escape(setting.risk_level || "medium")}`,
+      "<button type=\"button\" data-view-jump=\"system\">Ayarı düzenle</button>",
+      setting.risk_level
+    ));
+    ownerSetOutput(
+      ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri incele</button>", "medium") +
+      ownerLine("Sipariş riski", `${formatNumber(orderReport.daily_orders)} günlük sipariş / ${formatNumber(orderReport.risky_open)} açık risk`, "<button type=\"button\" data-view-jump=\"work-queue\">Risk kuyruğu</button>", orderReport.risky_open ? "critical" : "low") +
+      ownerLine("Destek / iade sinyali", `${formatNumber(supportReport.open)} açık destek / ${formatNumber(supportReport.resolved_today)} bugün çözülen`, "<button type=\"button\" data-view-jump=\"operations\">Destek akışı</button>", supportReport.open ? "high" : "low") +
+      ownerLine("Finans ayarları", `${formatNumber(financeSettings.length)} kontrol`, "", "critical") +
+      (rows.join("") || ownerEmpty("Finans ayarı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerContent() {
+    ownerLoading("İçerik Kontrolü");
+    const [contentPayload, socialPayload, modulePayload] = await Promise.all([
+      api("/v1/admin/ops/content-proposals"),
+      api("/v1/admin/ops/social-media?limit=40"),
+      api("/v1/control-center/module-map")
+    ]);
+    const proposals = contentPayload.proposals || [];
+    const social = socialPayload.social || {};
+    const drafts = social.drafts || [];
+    const posts = social.posts || [];
+    const modules = modulePayload.modules || [];
+    const proposalRows = proposals.slice(0, 10).map((item) => ownerLine(
+      item.title || item.content_scope || "İçerik önerisi",
+      `${escape(item.content_scope || "-")} / durum ${escape(item.status || "-")} / ${escape(item.summary || "")} / ${formatDate(item.created_at)}`,
+      "<button type=\"button\" data-view-jump=\"approvals\">Onayları gör</button>",
+      item.content_scope === "legal" ? "critical" : "high"
+    ));
+    const draftRows = drafts.slice(0, 8).map((item) => ownerLine(
+      item.title || item.content_theme || "Sosyal medya taslağı",
+      `${escape(item.status || "-")} / ${escape(item.platform || item.content_theme || "-")} / ${formatDate(item.created_at)}`,
+      "<a href=\"./index.html\">Admin Ops</a>",
+      item.status === "failed" ? "high" : "medium"
+    ));
+    ownerSetOutput(
+      ownerLine("İçerik önerileri", `${formatNumber(proposals.length)} kayıt / banner, kampanya, sayfa ve yasal içerik`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyen onaylar</button>", proposals.length ? "high" : "low") +
+      (proposalRows.join("") || ownerEmpty("İçerik önerisi bulunamadı.")) +
+      ownerLine("Sosyal medya", `${formatNumber(drafts.length)} taslak / ${formatNumber(posts.length)} platform gönderisi`, "<a href=\"./index.html\">Sosyal medya merkezi</a>", drafts.length ? "medium" : "low") +
+      (draftRows.join("") || ownerEmpty("Sosyal medya taslağı bulunamadı.")) +
+      ownerLine("Modül vitrini", `${formatNumber(modules.length)} modül içerik/görünürlük haritasına bağlı`, "<button type=\"button\" data-view-jump=\"module-map\">Modül haritası</button>", "medium")
+    );
+  }
+
+  async function loadOwnerHealth() {
+    ownerLoading("Sistem Sağlığı");
+    const [commandPayload, healthPayload, reportsPayload] = await Promise.all([
+      state.commandCenter || loadCommandCenter(),
+      api("/v1/control-center/action-health"),
+      api("/v1/admin/ops/reports")
+    ]);
+    const system = commandPayload.system_health || {};
+    const gitops = commandPayload.gitops || {};
+    const actions = healthPayload.actions || {};
+    const reports = reportsPayload.reports || {};
+    const actionRows = Object.entries(actions).map(([key, value]) => ownerLine(
+      key,
+      `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / webhook hazır değil" : ""}`,
+      "",
+      value.ok && value.dispatch_ready !== false ? "low" : "high"
+    ));
+    ownerSetOutput(
+      ownerLine("API / DB", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / build ${escape(system.build || "-")}`, "<button type=\"button\" data-action-health-check>Komut testi</button>", system.database === "online" ? "low" : "critical") +
+      ownerLine("Canlı bayraklar", `Bakım ${system.maintenance_mode ? "açık" : "kapalı"} / ödeme ${system.payments_disabled ? "kapalı" : "aktif"} / acil API ${system.emergency_api_disabled ? "kapalı" : "aktif"}`, "<button type=\"button\" data-view-jump=\"system\">Sistem ayarları</button>", system.emergency_api_disabled || system.payments_disabled ? "critical" : "low") +
+      ownerLine("GitOps", `Enabled ${gitops.enabled ? "evet" : "hayır"} / webhook ${gitops.release_webhook_configured ? "hazır" : "eksik"}`, "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>", gitops.enabled && gitops.release_webhook_configured ? "low" : "high") +
+      ownerLine("Operasyon raporu", `${formatNumber(reports.order_report && reports.order_report.daily_orders)} sipariş bugün / ${formatNumber(reports.support_report && reports.support_report.open)} açık destek`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", reports.support_report && reports.support_report.open ? "high" : "low") +
+      ownerLine("Komut kabiliyeti", `${formatNumber(actionRows.length)} kontrol`, "", "medium") +
+      (actionRows.join("") || ownerEmpty("Komut sağlık kaydı bulunamadı."))
+    );
   }
 
   function releaseApprovalManualPending(approval) {
@@ -1737,6 +1911,11 @@
       else if (view === "work-queue") await loadOwnerWorkQueue(params);
       else if (view === "alerts") await loadOwnerAlerts();
       else if (view === "approvals") await loadOwnerApprovals();
+      else if (view === "release-history") await loadOwnerReleaseHistory();
+      else if (view === "operations") await loadOwnerOperations();
+      else if (view === "finance") await loadOwnerFinance();
+      else if (view === "content") await loadOwnerContent();
+      else if (view === "health") await loadOwnerHealth();
       else if (view === "access") await loadOwnerAccess();
       else if (view === "permissions") await loadOwnerPermissions(params);
       else if (view === "module-map") await loadOwnerModuleMap();
@@ -1858,7 +2037,7 @@
   }
 
   function showApprovalDetail(id) {
-    const item = (state.approvals || []).find((approval) => approval.id === id);
+    const item = [...(state.approvals || []), ...(state.releaseHistory || [])].find((approval) => approval.id === id);
     if (!item) return;
     const manualPending = releaseApprovalManualPending(item);
     const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
@@ -1872,6 +2051,21 @@
       ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(item.webhook_response || {}).slice(0, 500))}`, "", item.status === "failed" && !manualPending ? "critical" : "low"),
       ownerLine("Tarih", formatDate(item.created_at), "", "low"),
       canApprove ? ownerLine("Karar", "Bu kaydı inceledikten sonra owner onayı verebilirsin.", `<button type="button" data-approval-approve="${escape(item.id)}">Owner onayı ver</button>`, "critical") : ""
+    ].join(""));
+  }
+
+  function showReleaseHistoryDetail(id) {
+    const item = (state.releaseHistory || []).find((approval) => approval.id === id);
+    if (!item) return;
+    const response = item.webhook_response || {};
+    openDrawer("Yayın Geçmişi Detayı", [
+      ownerLine("Tip", escape(item.approval_type || "-"), "", item.risk_level),
+      ownerLine("Durum", escape(item.status || "-"), item.dispatched_at ? `dispatch ${formatDate(item.dispatched_at)}` : "", item.status === "failed" ? "critical" : "medium"),
+      ownerLine("Hedef", escape(item.target_ref || "-"), "", "medium"),
+      ownerLine("Özet", escape(item.target_summary || "-"), "", "medium"),
+      ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(response).slice(0, 700))}`, "", item.status === "failed" ? "critical" : "low"),
+      ownerLine("Metadata", escape(JSON.stringify(item.metadata || {}).slice(0, 1200)), "", "medium"),
+      ownerLine("Tarih", `${formatDate(item.created_at)} / onay ${formatDate(item.approved_at)}`, "", "low")
     ].join(""));
   }
 
@@ -2003,6 +2197,9 @@
 
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
+
+        const releaseHistoryDetail = eventClosest(event, "[data-release-history-detail]");
+        if (releaseHistoryDetail) showReleaseHistoryDetail(releaseHistoryDetail.dataset.releaseHistoryDetail);
 
         const approvalApprove = eventClosest(event, "[data-approval-approve]");
         if (approvalApprove) await approveReleaseApproval(approvalApprove);
