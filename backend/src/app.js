@@ -57,8 +57,10 @@ export async function buildApp() {
       redact: [
         "req.headers.authorization",
         "req.body.secret_value",
+        "req.body.secrets",
         "headers.authorization",
         "body.secret_value",
+        "body.secrets",
         "SUPABASE_SERVICE_ROLE_KEY",
         "IYZICO_SECRET_KEY",
         "IYZICO_API_KEY",

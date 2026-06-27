@@ -15,6 +15,10 @@
     qrCodes: [],
     tickets: [],
     campaigns: [],
+    integrations: [],
+    integrationConnectors: [],
+    integrationRuns: [],
+    integrationWarnings: [],
     metrics: {},
     recommendations: []
   };
@@ -73,6 +77,16 @@
     "image_url",
     "description",
     "sku"
+  ];
+
+  const DEFAULT_INTEGRATION_CONNECTORS = [
+    { provider: "generic_feed", label: "CSV / JSON Feed", availability: "free", stage: "enabled", active_now: true, outbound_active_now: false, sort_order: 10 },
+    { provider: "woocommerce", label: "WooCommerce", availability: "free", stage: "starter", active_now: true, outbound_active_now: false, sort_order: 20 },
+    { provider: "shopify", label: "Shopify", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 30 },
+    { provider: "trendyol", label: "Trendyol Pazaryeri", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 40 },
+    { provider: "hepsiburada", label: "Hepsiburada", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 50 },
+    { provider: "n11", label: "n11", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 60 },
+    { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 90 }
   ];
 
   function $(selector, root) {
@@ -155,9 +169,9 @@
   }
 
   function statusClass(status) {
-    if (["active", "paid", "settled", "delivered", "verified"].includes(status)) return "partner-os-status--good";
-    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing"].includes(status)) return "partner-os-status--warn";
-    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked"].includes(status)) return "partner-os-status--bad";
+    if (["active", "paid", "settled", "delivered", "verified", "enabled", "success"].includes(status)) return "partner-os-status--good";
+    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention"].includes(status)) return "partner-os-status--warn";
+    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled"].includes(status)) return "partner-os-status--bad";
     return "";
   }
 
@@ -186,7 +200,17 @@
       waiting: "Bekliyor",
       resolved: "Çözüldü",
       scheduled: "Planlandı",
-      approved: "Onaylandı"
+      approved: "Onaylandı",
+      enabled: "Açık",
+      starter: "Başlangıç",
+      premium_ready: "Premium hazır",
+      planned: "Planlı",
+      needs_attention: "İlgi istiyor",
+      partial: "Kısmi",
+      success: "Başarılı",
+      skipped: "Atlandı",
+      queued: "Kuyrukta",
+      running: "Çalışıyor"
     };
     return labels[status] || status || "-";
   }
@@ -313,6 +337,7 @@
     const metrics = state.metrics || {};
     const actions = [];
     if (!state.products.length) actions.push(["İlk ürünü ekle", "fa-box-open", "products", "primary"]);
+    if (!state.integrations.length) actions.push(["Entegrasyon bağla", "fa-plug-circle-bolt", "integrations", "primary"]);
     if (!state.paymentIntents.length) actions.push(["Ödeme isteği oluştur", "fa-qrcode", "payments", "primary"]);
     if (!state.campaigns.length) actions.push(["Kampanya planla", "fa-bullhorn", "growth", ""]);
     if (Number(metrics.open_order_count || 0) > 0) actions.push(["Siparişleri güncelle", "fa-truck-fast", "orders", ""]);
@@ -359,6 +384,12 @@
         body: "Katalog, stok, fiyat, görsel ve açıklama alanlarını doldur.",
         done: Number(metrics.active_product_count || 0) > 0,
         target: "products"
+      },
+      {
+        title: "Ürün akışını bağla",
+        body: "CSV, JSON veya WooCommerce bağlantısını ücretsiz başlangıç paketinde hazırla.",
+        done: state.integrations.length > 0,
+        target: "integrations"
       },
       {
         title: "Ödeme kanalını dene",
@@ -691,6 +722,112 @@
     }).join("");
   }
 
+  function integrationConnectors() {
+    const source = state.integrationConnectors.length ? state.integrationConnectors : DEFAULT_INTEGRATION_CONNECTORS;
+    return [...source].sort((a, b) => Number(a.sort_order || 100) - Number(b.sort_order || 100));
+  }
+
+  function integrationConnector(provider) {
+    return integrationConnectors().find((item) => item.provider === provider) || { provider, label: provider || "-", active_now: false };
+  }
+
+  function integrationProviderLabel(provider) {
+    return integrationConnector(provider).label || provider || "-";
+  }
+
+  function integrationStageLabel(connector) {
+    if (connector.active_now) return connector.availability === "free" ? "Ücretsiz açık" : "Açık";
+    if (connector.stage === "premium_ready") return "Premium hazır";
+    if (connector.stage === "planned") return "Planlı";
+    return statusLabel(connector.stage || "pending");
+  }
+
+  function renderIntegrationProviderOptions() {
+    const select = $("[data-integration-provider]");
+    if (!select) return;
+    const connectors = integrationConnectors();
+    select.innerHTML = connectors.map((connector) => `
+      <option value="${escape(connector.provider)}" ${connector.active_now ? "" : "disabled"}>
+        ${escape(connector.label)}${connector.active_now ? "" : " (yakında)"}
+      </option>
+    `).join("");
+  }
+
+  function renderIntegrationConnectors() {
+    const target = $("[data-integration-connectors]");
+    if (!target) return;
+    target.innerHTML = integrationConnectors().map((connector) => {
+      const enabled = Boolean(connector.active_now);
+      const status = enabled ? "active" : connector.stage || "pending";
+      return `
+        <article class="partner-os-integration-card ${enabled ? "is-enabled" : "is-locked"}">
+          <i class="fa-solid ${enabled ? "fa-plug-circle-bolt" : "fa-lock"}"></i>
+          <div>
+            <strong>${escape(connector.label)}</strong>
+            <span>${escape(integrationStageLabel(connector))} · ${escape(connector.outbound_active_now ? "Çift yönlü" : "İçe aktarım")}</span>
+          </div>
+          ${statusPill(status)}
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrationRows() {
+    const target = $("[data-integration-rows]");
+    if (!target) return;
+    if (!state.integrations.length) {
+      target.innerHTML = emptyList("Bağlantı yok", "CSV/JSON feed veya WooCommerce ile ilk ürün akışını bağla.");
+      return;
+    }
+    target.innerHTML = state.integrations.map((integration) => {
+      const connector = integrationConnector(integration.provider);
+      const secretKeys = (integration.secrets || []).map((item) => item.secret_key).join(", ");
+      return `
+        <article class="partner-os-integration-row">
+          <div>
+            <strong>${escape(integration.display_name || integrationProviderLabel(integration.provider))}</strong>
+            <span>${escape(connector.label)} · ${escape(integration.sync_mode || "manual")} · ${escape(secretKeys || "secret bekliyor")}</span>
+          </div>
+          <div class="partner-os-integration-row-actions">
+            ${statusPill(integration.status || "draft")}
+            <button type="button" data-integration-test="${escape(integration.id)}"><i class="fa-solid fa-vial"></i><span>Test</span></button>
+            <button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-rotate"></i><span>Önizle</span></button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrationRuns() {
+    const target = $("[data-integration-runs]");
+    if (!target) return;
+    if (!state.integrationRuns.length) {
+      target.innerHTML = emptyList("Senkron yok", "Bağlantı testinden sonra önizleme çalıştır.");
+      return;
+    }
+    target.innerHTML = state.integrationRuns.slice(0, 10).map((run) => {
+      const preview = Array.isArray(run.summary?.preview) ? run.summary.preview : [];
+      return `
+        <article class="partner-os-integration-run">
+          <div>
+            <strong>${escape(integrationProviderLabel(state.integrations.find((item) => item.id === run.integration_id)?.provider))} · ${escape(run.run_mode || "preview")}</strong>
+            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel</span>
+            ${preview.length ? `<small>${preview.slice(0, 3).map((item) => escape(item.name)).join(", ")}</small>` : ""}
+            ${run.error_message ? `<small>${escape(run.error_message)}</small>` : ""}
+          </div>
+          ${statusPill(run.status || "queued")}
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrations() {
+    renderIntegrationProviderOptions();
+    renderIntegrationConnectors();
+    renderIntegrationRows();
+    renderIntegrationRuns();
+  }
+
   function renderOrders() {
     const target = $("[data-order-rows]");
     if (!target) return;
@@ -858,6 +995,7 @@
     renderRecentPayments();
     renderPaymentRows();
     renderProducts();
+    renderIntegrations();
     renderOrders();
     renderFinance();
     renderOperations();
@@ -900,6 +1038,10 @@
     state.qrCodes = [];
     state.tickets = [];
     state.campaigns = [];
+    state.integrations = [];
+    state.integrationConnectors = DEFAULT_INTEGRATION_CONNECTORS;
+    state.integrationRuns = [];
+    state.integrationWarnings = [];
     state.metrics = {
       product_count: state.products.length,
       active_product_count: state.products.filter((item) => item.status === "active").length,
@@ -941,6 +1083,10 @@
           qrCodes: payload.qrCodes || [],
           tickets: payload.tickets || [],
           campaigns: payload.campaigns || [],
+          integrations: payload.integrations || [],
+          integrationConnectors: payload.integrationConnectors || DEFAULT_INTEGRATION_CONNECTORS,
+          integrationRuns: payload.integrationRuns || [],
+          integrationWarnings: payload.integrationWarnings || [],
           metrics: payload.metrics || {},
           recommendations: payload.recommendations || []
         });
@@ -1317,6 +1463,146 @@
     toast(result.failed ? "Toplu yükleme tamamlandı; bazı satırlar atlandı." : "Toplu ürün yükleme tamamlandı.", result.failed ? "warning" : "success");
   }
 
+  function integrationSecretsFromData(data) {
+    const provider = data.provider || "generic_feed";
+    const sourceUrl = String(data.source_url || "").trim();
+    const apiKey = String(data.api_key || "").trim();
+    const apiSecret = String(data.api_secret || "").trim();
+    const secrets = {};
+
+    if (provider === "generic_feed") {
+      if (sourceUrl) secrets.FEED_URL = sourceUrl;
+      return secrets;
+    }
+    if (provider === "woocommerce") {
+      if (sourceUrl) secrets.API_BASE_URL = sourceUrl;
+      if (apiKey) secrets.CONSUMER_KEY = apiKey;
+      if (apiSecret) secrets.CONSUMER_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "shopify") {
+      if (sourceUrl) secrets.SHOP_DOMAIN = sourceUrl;
+      if (apiSecret || apiKey) secrets.ACCESS_TOKEN = apiSecret || apiKey;
+      return secrets;
+    }
+    if (provider === "trendyol") {
+      if (sourceUrl) secrets.SUPPLIER_ID = sourceUrl;
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "hepsiburada") {
+      if (sourceUrl) secrets.MERCHANT_ID = sourceUrl;
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "n11") {
+      if (apiKey) secrets.APP_KEY = apiKey;
+      if (apiSecret) secrets.APP_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "ciceksepeti") {
+      if (apiKey || apiSecret) secrets.API_KEY = apiKey || apiSecret;
+      return secrets;
+    }
+    if (provider === "pazarama") {
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (sourceUrl) secrets.API_BASE_URL = sourceUrl;
+    if (apiKey || apiSecret) secrets.ACCESS_TOKEN = apiSecret || apiKey;
+    return secrets;
+  }
+
+  function integrationPayloadFromForm(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    return {
+      provider: data.provider || "generic_feed",
+      display_name: data.display_name || integrationProviderLabel(data.provider),
+      status: "draft",
+      sync_mode: data.sync_mode || "manual",
+      default_publish_status: data.default_publish_status || "draft",
+      import_enabled: true,
+      export_enabled: false,
+      settings: {
+        module_key: data.module_key || "shop",
+        default_category: data.default_category || "Genel"
+      },
+      secrets: integrationSecretsFromData(data)
+    };
+  }
+
+  async function saveIntegration(form) {
+    const button = form.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    try {
+      const payload = await apiFetch("/v1/partner/integrations", {
+        method: "POST",
+        body: JSON.stringify(integrationPayloadFromForm(form))
+      });
+      const integration = payload.integration;
+      state.integrations = [integration, ...state.integrations.filter((item) => item.id !== integration.id)];
+      renderIntegrations();
+      renderActionCenter();
+      renderOnboarding();
+      form.reset();
+      toast("Entegrasyon bağlantısı kaydedildi.");
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "integration_created",
+          severity: "info",
+          resourceType: "partner_integration",
+          resourceId: integration.id,
+          evidenceTags: ["partner_os", "integration"],
+          metadata: {
+            provider: integration.provider,
+            sync_mode: integration.sync_mode,
+            default_publish_status: integration.default_publish_status
+          }
+        });
+      }
+    } catch (error) {
+      toast(error.message || "Entegrasyon kaydedilemedi.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function testIntegration(integrationId) {
+    try {
+      const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/test`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (payload.integration) {
+        state.integrations = state.integrations.map((item) => item.id === integrationId ? { ...item, ...payload.integration } : item);
+      }
+      renderIntegrations();
+      toast("Entegrasyon bağlantısı doğrulandı.");
+    } catch (error) {
+      toast(error.message || "Entegrasyon testi başarısız.", "error");
+    }
+  }
+
+  async function syncIntegration(integrationId) {
+    try {
+      const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/sync`, {
+        method: "POST",
+        body: JSON.stringify({ mode: "preview", direction: "inbound" })
+      });
+      if (payload.run) {
+        state.integrationRuns = [payload.run, ...state.integrationRuns.filter((item) => item.id !== payload.run.id)];
+      }
+      renderIntegrationRuns();
+      toast("Senkron önizlemesi tamamlandı.");
+    } catch (error) {
+      toast(error.message || "Senkron önizlemesi çalışmadı.", "error");
+    }
+  }
+
   async function saveProfile(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     try {
@@ -1468,6 +1754,8 @@
       const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
       const downloadTemplate = event.target.closest("[data-download-template]");
       const exportProducts = event.target.closest("[data-export-products]");
+      const integrationTest = event.target.closest("[data-integration-test]");
+      const integrationSync = event.target.closest("[data-integration-sync]");
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
@@ -1499,6 +1787,8 @@
         downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
         toast("Katalog Excel dosyası indirildi.");
       }
+      if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
+      if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync);
     });
 
     const paymentForm = $("[data-payment-form]");
@@ -1514,6 +1804,14 @@
       productForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createProduct(productForm);
+      });
+    }
+
+    const integrationForm = $("[data-integration-form]");
+    if (integrationForm) {
+      integrationForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        saveIntegration(integrationForm);
       });
     }
 

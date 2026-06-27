@@ -214,6 +214,15 @@ export const config = {
       readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
     )
   },
+  integrations: {
+    enabled: readBool("PARTNER_INTEGRATIONS_ENABLED", true),
+    premiumEnabled: readBool("PARTNER_INTEGRATIONS_PREMIUM_ENABLED", false),
+    outboundEnabled: readBool("PARTNER_INTEGRATIONS_OUTBOUND_ENABLED", false),
+    remoteFetchEnabled: readBool("PARTNER_INTEGRATIONS_REMOTE_FETCH_ENABLED", true),
+    maxPreviewRows: readNumber("PARTNER_INTEGRATIONS_MAX_PREVIEW_ROWS", 50),
+    maxApplyRows: readNumber("PARTNER_INTEGRATIONS_MAX_APPLY_ROWS", 100),
+    fetchTimeoutMs: readNumber("PARTNER_INTEGRATIONS_FETCH_TIMEOUT_MS", 12000)
+  },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
     url: readEnv("SUPABASE_URL"),

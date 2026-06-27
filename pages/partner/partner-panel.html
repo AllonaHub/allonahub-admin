@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260628-corporate1">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260627-partner-permissions1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260628-integrations1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -33,6 +33,7 @@
           <button type="button" data-panel-target="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulum</span></button>
           <button type="button" data-panel-target="payments"><i class="fa-solid fa-tower-broadcast"></i><span>QR & NFC POS</span></button>
           <button type="button" data-panel-target="products"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
+          <button type="button" data-panel-target="integrations"><i class="fa-solid fa-plug-circle-bolt"></i><span>Entegrasyonlar</span></button>
           <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
           <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
           <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
@@ -73,6 +74,7 @@
               <div class="partner-os-hero-actions">
                 <button type="button" data-panel-jump="payments"><i class="fa-solid fa-qrcode"></i><span>Ödeme Al</span></button>
                 <button type="button" data-panel-jump="products"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
+                <button type="button" data-panel-jump="integrations"><i class="fa-solid fa-plug"></i><span>Entegrasyon</span></button>
                 <button type="button" data-panel-jump="finance"><i class="fa-solid fa-file-invoice-dollar"></i><span>Hakediş</span></button>
                 <button type="button" data-panel-jump="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulumu Bitir</span></button>
               </div>
@@ -299,6 +301,93 @@
                 </thead>
                 <tbody data-product-rows></tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="integrations" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Entegrasyon Merkezi</p>
+                <h2>Ürün Akışları ve Connector Altyapısı</h2>
+              </div>
+              <span class="partner-os-live">Ücretsiz başlangıç</span>
+            </div>
+
+            <div class="partner-os-integration-connectors" data-integration-connectors></div>
+
+            <form class="partner-os-product-form partner-os-integration-form" data-integration-form>
+              <label>
+                <span>Platform</span>
+                <select name="provider" data-integration-provider></select>
+              </label>
+              <label>
+                <span>Bağlantı adı</span>
+                <input name="display_name" required placeholder="Ana mağaza, XML feed, WooCommerce...">
+              </label>
+              <label>
+                <span>Yayın durumu</span>
+                <select name="default_publish_status">
+                  <option value="draft">Taslakta beklet</option>
+                  <option value="active">Direkt yayına al</option>
+                </select>
+              </label>
+              <label>
+                <span>Senkron modu</span>
+                <select name="sync_mode">
+                  <option value="manual">Manuel</option>
+                  <option value="scheduled">Zamanlı</option>
+                </select>
+              </label>
+              <label>
+                <span>Kaynak / mağaza URL</span>
+                <input name="source_url" placeholder="https://...">
+              </label>
+              <label>
+                <span>API anahtarı</span>
+                <input name="api_key" autocomplete="off" placeholder="Gerekiyorsa">
+              </label>
+              <label>
+                <span>API secret / token</span>
+                <input name="api_secret" autocomplete="off" placeholder="Gerekiyorsa">
+              </label>
+              <label>
+                <span>Varsayılan kanal</span>
+                <select name="module_key">
+                  <option value="shop">Allona Shop</option>
+                  <option value="market">Allona Market</option>
+                  <option value="food">Allona Yemek</option>
+                  <option value="service">Hizmet / Ekosistem</option>
+                </select>
+              </label>
+              <label class="partner-os-span-2">
+                <span>Varsayılan kategori</span>
+                <input name="default_category" placeholder="Genel">
+              </label>
+              <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Bağlantıyı Kaydet</span></button>
+            </form>
+
+            <div class="partner-os-grid partner-os-grid--two">
+              <section class="partner-os-subpanel">
+                <div class="partner-os-panel-head">
+                  <div>
+                    <p>Kayıtlı Bağlantılar</p>
+                    <h2>Partner Connectorları</h2>
+                  </div>
+                </div>
+                <div class="partner-os-integration-list" data-integration-rows></div>
+              </section>
+
+              <section class="partner-os-subpanel">
+                <div class="partner-os-panel-head">
+                  <div>
+                    <p>Çalıştırma Geçmişi</p>
+                    <h2>Senkron Logları</h2>
+                  </div>
+                </div>
+                <div class="partner-os-integration-runs" data-integration-runs></div>
+              </section>
             </div>
           </div>
         </section>
@@ -539,7 +628,7 @@
   <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/layout.v3.js?v=20260627-legal-live1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-  <script src="../../js/partner-os.js?v=20260627-partner-permissions1" defer></script>
+  <script src="../../js/partner-os.js?v=20260628-integrations1" defer></script>
   <script src="../../js/platform.js?v=20260628-corporate1" defer></script>
   <script src="../../js/sw-refresh.heading2.js?v=20260628-corporate1" defer></script>
 </body>
