@@ -175,6 +175,7 @@ const PLATFORM_LINKS = Object.freeze({
   organization: "/pages/ecosystem/allonaorganizasyon.html",
   avm: "/pages/ecosystem/allonaavm.html",
   entertainment: "/pages/ecosystem/allonaeglence.html",
+  legalCenter: "/legal/index.html",
   privacy: "/pages/legal/gizlilik.html",
   kvkk: "/pages/legal/kvkk.html",
   terms: "/pages/legal/kullanim-sartlari.html",
@@ -435,13 +436,14 @@ const CORE_TOPICS = [
     label: "Gizlilik, KVKK ve güvenlik",
     confidence: 0.84,
     terms: ["kvkk", "gizlilik", "güvenlik", "guvenlik", "çerez", "cerez", "kişisel veri", "kisisel veri", "kullanım şartları", "kullanim sartlari"],
-    link: "privacy",
+    link: "legalCenter",
     actions: [
+      { label: "Yasal Merkez", link: "legalCenter" },
       { label: "Gizlilik", link: "privacy" },
       { label: "KVKK", link: "kvkk" },
       { label: "Güvenlik", link: "security" }
     ],
-    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, güvenlik ve kullanım şartları yasal sayfalarda ayrı ayrı yer alır; kişisel veri veya ödeme kartı bilgisi istemem ve paylaşmam. Gizlilik: ${platformUrl("privacy")} KVKK: ${platformUrl("kvkk")}`
+    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, çerezler, kullanım şartları, ticari iletişim ve iade/iptal başlıklarını Yasal Merkez'de topladık: ${platformUrl("legalCenter")} Kişisel veri veya ödeme kartı bilgisi sohbet üzerinden istemem ve paylaşmam.`
   },
   {
     key: "contact_support",
@@ -496,6 +498,7 @@ const SMART_FAQ_TOPICS = [
     terms: ["güvenilir mi", "guvenilir mi", "güvenli mi", "guvenli mi", "dolandırıcılık", "dolandiricilik", "sahte", "doğrulama", "dogrulama", "güven", "guven", "risk", "kart saklıyor", "kart sakliyor"],
     link: "security",
     actions: [
+      { label: "Yasal Merkez", link: "legalCenter" },
       { label: "Güvenlik", link: "security" },
       { label: "KVKK", link: "kvkk" },
       { label: "Gizlilik", link: "privacy" }

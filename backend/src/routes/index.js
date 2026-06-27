@@ -521,6 +521,7 @@ const SUPER_ADMIN_CONTROL_LINKS = [
   { key: "market", label: "Allona Market", href: "../pages/commerce/allonamarket.html", target: "redirect", risk_level: "medium" },
   { key: "food", label: "Allona Yemek", href: "../pages/commerce/allonayemek.html", target: "redirect", risk_level: "medium" },
   { key: "taxi", label: "Allona Taksi", href: "../pages/ecosystem/allonataksi.html", target: "redirect", risk_level: "medium" },
+  { key: "legal_center", label: "Yasal Merkez", href: "../legal/index.html", target: "redirect", risk_level: "low" },
   { key: "security_policy", label: "Güvenlik Politikası", href: "../pages/legal/guvenlik-politikasi.html", target: "redirect", risk_level: "low" }
 ];
 

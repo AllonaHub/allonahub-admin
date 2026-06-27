@@ -26,6 +26,8 @@ Bu rapor 27 Haziran 2026 tarihinde ALLONAHUB proje klasöründeki mevcut statik 
 | `shared/mobile/mobile-core.css` | Ortak yasal footer ve form bilgilendirme sınıfları eklendi |
 | `avm-dunyasi-modulu/assets/js/partner.js` | Partner sözleşme, KVKK, ticari ileti ve yanıltıcı reklam kontrolleri güçlendirildi |
 | `user-panel/assets/js/app.js` | Kampanya bildirimi tercihi ticari ileti izni mantığına göre yeniden adlandırıldı |
+| `backend/src/lib/assistant.js` | Backend asistan link haritasına `legalCenter` eklendi; KVKK/gizlilik cevapları Yasal Merkez'e yönlendirildi |
+| `backend/src/routes/index.js` | Süper admin kontrol linklerine Yasal Merkez eklendi |
 
 ## Şirket Bilgisi Bulgusu
 
