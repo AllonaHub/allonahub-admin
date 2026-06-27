@@ -1775,22 +1775,23 @@
   async function submitReleaseApproval(form) {
     if (state.releaseApprovalSubmitting) return;
     const formData = new FormData(form);
+    const targetSummary = String(formData.get("target_summary") || "").trim();
     const payload = {
       approval_type: String(formData.get("approval_type") || "main_commit_push"),
       target_ref: String(formData.get("target_ref") || "main").trim(),
-      target_summary: String(formData.get("target_summary") || "").trim(),
+      target_summary: targetSummary,
       risk_level: String(formData.get("risk_level") || "critical"),
       metadata: {
-        source: "super_admin_owner_console"
+        source: "super_admin_owner_console",
+        reason: targetSummary
       }
     };
-    closeReleaseModal();
-    const confirmed = await confirmAction("Bu owner onayı audit log'a yazılacak ve yapılandırılmışsa güvenli yayın webhook'u tetiklenecek.", {
-      defaultReason: payload.target_summary,
-      requireReason: true
-    });
-    if (!confirmed.confirmed) return;
-    payload.metadata.reason = confirmed.reason;
+    if (targetSummary.length < 6) {
+      setAlert("Yayın onayı için en az 6 karakterlik onay özeti gerekli.", "error");
+      const summaryInput = form.querySelector("[name='target_summary']");
+      if (summaryInput) summaryInput.focus();
+      return;
+    }
     const submitButton = form.querySelector("[type='submit']");
     state.releaseApprovalSubmitting = true;
     if (submitButton) {
@@ -1823,6 +1824,7 @@
         ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high")),
         warnings.map((warning) => ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")).join("")
       ].join(""));
+      closeReleaseModal();
       await jumpOwnerView("approvals");
       form.reset();
       const targetRef = form.querySelector("[name='target_ref']");

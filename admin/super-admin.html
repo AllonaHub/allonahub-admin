@@ -93,7 +93,7 @@
   <div class="sa-modal" data-release-modal hidden>
     <form class="sa-modal-card" data-release-form role="dialog" aria-modal="true" aria-labelledby="releaseTitle">
       <h2 id="releaseTitle">Yayın / Main Onayı</h2>
-      <p>Bu onay backend audit log'a yazılır. GitHub/CI tetiklemesi yalnızca server-side güvenli webhook yapılandırılmışsa yapılır.</p>
+      <p>Bu form gönderildiğinde owner onayı backend audit log'a yazılır. Onay özeti audit reason olarak kullanılır; GitHub/CI tetiklemesi yalnızca server-side güvenli webhook yapılandırılmışsa yapılır.</p>
       <label>
         Onay tipi
         <select name="approval_type" required>
@@ -134,6 +134,6 @@
   <script src="../js/core.js?v=20260623-mfa2"></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
   <script src="../js/auth.js?v=20260623-mfa2"></script>
-  <script src="../js/super-admin.js?v=20260627-releasefix1"></script>
+  <script src="../js/super-admin.js?v=20260627-releasefix2"></script>
 </body>
 </html>
