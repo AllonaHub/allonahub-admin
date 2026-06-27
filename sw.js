@@ -13,6 +13,7 @@ const APP_SHELL = [
   "./js/auth.js?v=20260623-mfa2",
   "./js/layout.v3.js?v=20260627-legal-live1",
   "./js/platform.js?v=20260628-heading2",
+  "./js/sw-refresh.heading2.js?v=20260628-heading2",
   "./js/allonahub-home.js?v=20260626-mobile-std34",
   "./js/pwa-install.js?v=20260628-heading2",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
