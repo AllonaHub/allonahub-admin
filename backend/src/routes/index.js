@@ -447,7 +447,7 @@ const superAdminModuleUpdateSchema = z.object({
 const superAdminReleaseApprovalSchema = z.object({
   approval_type: z.enum(SUPER_ADMIN_RELEASE_APPROVAL_TYPES),
   target_ref: z.string().trim().min(1).max(180).optional().default("main"),
-  target_summary: z.string().trim().min(6).max(1200),
+  target_summary: z.string().trim().min(3).max(1200),
   risk_level: riskLevelSchema.optional().default("critical"),
   metadata: z.record(z.unknown()).optional().default({})
 });

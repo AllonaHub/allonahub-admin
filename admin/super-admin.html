@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AllonaHub Super Admin</title>
   <link rel="stylesheet" href="../css/platform.css?v=20260626-mobile-std27">
-  <link rel="stylesheet" href="../css/super-admin.css?v=20260627-releasefix1">
+  <link rel="stylesheet" href="../css/super-admin.css?v=20260627-releasefix3">
 </head>
 <body data-page="super-admin" data-theme="graphite">
   <div class="sa-shell" data-super-admin-shell>
@@ -120,8 +120,9 @@
       </label>
       <label>
         Onay özeti
-        <textarea name="target_summary" rows="4" maxlength="1200" required placeholder="Neyi yayına almak istediğini açıkla"></textarea>
+        <textarea name="target_summary" rows="4" minlength="3" maxlength="1200" required placeholder="Neyi yayına almak istediğini açıkla"></textarea>
       </label>
+      <div class="sa-modal-status" data-release-status aria-live="polite"></div>
       <div class="sa-modal-actions">
         <button class="sa-btn sa-btn-ghost" type="button" data-release-cancel>Vazgeç</button>
         <button class="sa-btn sa-btn-danger" type="submit">Owner Onayı Ver</button>
@@ -134,6 +135,6 @@
   <script src="../js/core.js?v=20260623-mfa2"></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
   <script src="../js/auth.js?v=20260623-mfa2"></script>
-  <script src="../js/super-admin.js?v=20260627-releasefix2"></script>
+  <script src="../js/super-admin.js?v=20260627-releasefix3"></script>
 </body>
 </html>

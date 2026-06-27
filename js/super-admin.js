@@ -1772,6 +1772,13 @@
     if (modal) modal.hidden = true;
   }
 
+  function setReleaseStatus(message, tone) {
+    const target = $("[data-release-status]");
+    if (!target) return;
+    target.textContent = message || "";
+    target.dataset.tone = tone || "";
+  }
+
   async function submitReleaseApproval(form) {
     if (state.releaseApprovalSubmitting) return;
     const formData = new FormData(form);
@@ -1786,8 +1793,10 @@
         reason: targetSummary
       }
     };
-    if (targetSummary.length < 6) {
-      setAlert("Yayın onayı için en az 6 karakterlik onay özeti gerekli.", "error");
+    if (targetSummary.length < 3) {
+      const message = "Yayın onayı için en az 3 karakterlik onay özeti gerekli.";
+      setReleaseStatus(message, "error");
+      setAlert(message, "error");
       const summaryInput = form.querySelector("[name='target_summary']");
       if (summaryInput) summaryInput.focus();
       return;
@@ -1799,6 +1808,7 @@
       submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || "";
       submitButton.textContent = "Onay kaydediliyor...";
     }
+    setReleaseStatus("Yayın onayı backend'e gönderiliyor...", "ok");
     setAlert("Yayın onayı backend'e gönderiliyor...", "ok");
     try {
       const result = await api("/v1/control-center/release-approvals", {
@@ -1818,6 +1828,7 @@
           : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`),
         okStatus ? "ok" : "error"
       );
+      setReleaseStatus("Yayın onayı kaydedildi.", "ok");
       openDrawer("Yayın Onayı Sonucu", [
         ownerLine("Durum", escape(status), released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı"), released ? "low" : (manualPending ? "medium" : "critical")),
         ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
@@ -1831,6 +1842,7 @@
       if (targetRef) targetRef.value = "main";
     } catch (error) {
       const message = publicError(error, "Yayın onayı oluşturulamadı.");
+      setReleaseStatus(message, "error");
       setAlert(message, "error");
       openDrawer("Yayın Onayı Hatası", [
         ownerLine("İşlem tamamlanamadı", escape(message), "<button type=\"button\" data-release-open>Tekrar dene</button>", "critical"),

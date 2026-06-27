@@ -558,6 +558,22 @@ textarea {
   margin-top: 14px;
 }
 
+.sa-modal-status {
+  min-height: 22px;
+  margin-top: 10px;
+  color: var(--sa-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sa-modal-status[data-tone="ok"] {
+  color: var(--sa-green);
+}
+
+.sa-modal-status[data-tone="error"] {
+  color: var(--sa-red);
+}
+
 .sa-empty {
   min-height: 64px;
   display: grid;
