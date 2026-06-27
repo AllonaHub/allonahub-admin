@@ -1605,6 +1605,8 @@
     const reports = reportsPayload.reports || {};
     const alarm = alarmPayload.alarm || {};
     const channels = alarm.channels || {};
+    const incident = alarm.incident || {};
+    const protection = incident.protection || {};
     const actionRows = Object.entries(actions).map(([key, value]) => ownerLine(
       key,
       `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / webhook hazır değil" : ""}`,
@@ -1615,11 +1617,45 @@
       ownerLine("API / DB", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / build ${escape(system.build || "-")}`, "<button type=\"button\" data-action-health-check>Komut testi</button>", system.database === "online" ? "low" : "critical") +
       ownerLine("Canlı bayraklar", `Bakım ${system.maintenance_mode ? "açık" : "kapalı"} / ödeme ${system.payments_disabled ? "kapalı" : "aktif"} / acil API ${system.emergency_api_disabled ? "kapalı" : "aktif"}`, "<button type=\"button\" data-view-jump=\"system\">Sistem ayarları</button>", system.emergency_api_disabled || system.payments_disabled ? "critical" : "low") +
       ownerLine("GitOps", `Enabled ${gitops.enabled ? "evet" : "hayır"} / webhook ${gitops.release_webhook_configured ? "hazır" : "eksik"}`, "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>", gitops.enabled && gitops.release_webhook_configured ? "low" : "high") +
-      ownerLine("Alarm kanalları", `Ses ${channels.browser_audio ? "aktif" : "pasif"} / Telegram ${channels.telegram ? "hazır" : "eksik"} / webhook ${channels.webhook ? "hazır" : "eksik"} / email ${channels.email_webhook ? "hazır" : "eksik"} / min ${escape(alarm.min_severity || "-")}`, "<button type=\"button\" data-alarm-server-test>Server alarm testi</button>", channels.telegram || channels.webhook || channels.email_webhook ? "low" : "high") +
+      ownerLine("Alarm kanalları", `Ses ${channels.browser_audio ? "aktif" : "pasif"} / Telegram ${channels.telegram ? "hazır" : "eksik"} / webhook ${channels.webhook ? "hazır" : "eksik"} / email ${channels.email_webhook ? "hazır" : "eksik"} / SMS ${channels.sms ? "hazır" : "eksik"} / min ${escape(alarm.min_severity || "-")}`, "<button type=\"button\" data-alarm-server-test>Server alarm testi</button>", channels.telegram || channels.webhook || channels.email_webhook || channels.sms ? "low" : "high") +
+      ownerLine("Aktif alarm", incident.active ? `${escape(incident.level || "-")} / ${incident.redZone ? "kırmızı alan" : "standart"} / ${escape(incident.action || "-")}` : "Aktif alarm yok", incident.active ? "<button type=\"button\" data-alarm-acknowledge>Alarmı sustur</button> <button type=\"button\" data-alarm-resolve>Alarmı kapat</button>" : "", incident.active ? "critical" : "low") +
+      ownerLine("Runtime koruma", `API ${protection.api_locked ? "kilitli" : "açık"} / ödeme ${protection.payments_locked ? "kilitli" : "açık"} / sipariş ${protection.orders_locked ? "kilitli" : "açık"}`, [
+        `<button type="button" data-alarm-protection="${protection.api_locked ? "unlock_api" : "lock_api"}">${protection.api_locked ? "API aç" : "API kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="${protection.payments_locked ? "unlock_payments" : "lock_payments"}">${protection.payments_locked ? "Ödeme aç" : "Ödeme kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="${protection.orders_locked ? "unlock_orders" : "lock_orders"}">${protection.orders_locked ? "Sipariş aç" : "Sipariş kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="clear">Tüm korumayı temizle</button>`
+      ].join(" "), protection.api_locked || protection.payments_locked || protection.orders_locked ? "critical" : "medium") +
       ownerLine("Operasyon raporu", `${formatNumber(reports.order_report && reports.order_report.daily_orders)} sipariş bugün / ${formatNumber(reports.support_report && reports.support_report.open)} açık destek`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", reports.support_report && reports.support_report.open ? "high" : "low") +
       ownerLine("Komut kabiliyeti", `${formatNumber(actionRows.length)} kontrol`, "", "medium") +
       (actionRows.join("") || ownerEmpty("Komut sağlık kaydı bulunamadı."))
     );
+  }
+
+  async function postAlarmDecision(path, body, button, message) {
+    await runConfirmed(message, async (reason) => {
+      await api(path, {
+        method: "POST",
+        body: { ...body, reason }
+      });
+      await loadOwnerHealth();
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
+  }
+
+  async function acknowledgeServerAlarm(button) {
+    await postAlarmDecision("/v1/control-center/alarm-acknowledge", {}, button, "Aktif alarm 30 dakika susturulacak.");
+  }
+
+  async function resolveServerAlarm(button) {
+    await postAlarmDecision("/v1/control-center/alarm-resolve", {}, button, "Aktif alarm manuel olarak kapatılacak.");
+  }
+
+  async function updateAlarmProtection(button) {
+    const action = button.dataset.alarmProtection;
+    await postAlarmDecision("/v1/control-center/alarm-protection", { action }, button, `Runtime koruma aksiyonu uygulanacak: ${action}`);
   }
 
   async function runServerAlarmTest(button) {
@@ -1630,7 +1666,8 @@
       openDrawer("Server Alarm Testi", [
         ownerLine("Telegram", channels.telegram?.configured ? `${channels.telegram.sent ? "gönderildi" : "başarısız"} / ${escape(channels.telegram.status || channels.telegram.error || "-")}` : "yapılandırılmamış", "", channels.telegram?.sent ? "low" : "high"),
         ownerLine("Webhook", channels.webhook?.configured ? `${channels.webhook.sent ? "gönderildi" : "başarısız"} / ${escape(channels.webhook.status || channels.webhook.error || "-")}` : "yapılandırılmamış", "", channels.webhook?.sent ? "low" : "high"),
-        ownerLine("Email webhook", channels.email?.configured ? `${channels.email.sent ? "gönderildi" : "başarısız"} / ${escape(channels.email.status || channels.email.error || "-")}` : "yapılandırılmamış", "", channels.email?.sent ? "low" : "medium")
+        ownerLine("Email webhook", channels.email?.configured ? `${channels.email.sent ? "gönderildi" : "başarısız"} / ${escape(channels.email.status || channels.email.error || "-")}` : "yapılandırılmamış", "", channels.email?.sent ? "low" : "medium"),
+        ownerLine("SMS", channels.sms?.configured ? `${channels.sms.sent ? "gönderildi" : "başarısız"} / ${escape(channels.sms.status || channels.sms.error || "-")}` : "yapılandırılmamış", "", channels.sms?.sent ? "low" : "medium")
       ].join(""));
     }, {
       trigger: button,
@@ -2238,6 +2275,15 @@
 
         const alarmServerTest = eventClosest(event, "[data-alarm-server-test]");
         if (alarmServerTest) await runServerAlarmTest(alarmServerTest);
+
+        const alarmAcknowledge = eventClosest(event, "[data-alarm-acknowledge]");
+        if (alarmAcknowledge) await acknowledgeServerAlarm(alarmAcknowledge);
+
+        const alarmResolve = eventClosest(event, "[data-alarm-resolve]");
+        if (alarmResolve) await resolveServerAlarm(alarmResolve);
+
+        const alarmProtection = eventClosest(event, "[data-alarm-protection]");
+        if (alarmProtection) await updateAlarmProtection(alarmProtection);
 
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);

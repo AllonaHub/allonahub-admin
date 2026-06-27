@@ -19,6 +19,8 @@
     root: null,
     button: null,
     status: null,
+    overlay: null,
+    overlayBody: null,
     seen: new Set()
   };
 
@@ -124,10 +126,31 @@
     return payload;
   }
 
+  async function alarmPost(path, body) {
+    const token = await sessionToken();
+    const response = await fetch(`${config.apiBaseUrl}${path}`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body || {})
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.message || payload.error || "Alarm işlemi tamamlanamadı.");
+    return payload;
+  }
+
   function endpoint() {
     return pageKind() === "super"
       ? "/v1/control-center/security"
       : "/v1/ops-console/security-monitoring";
+  }
+
+  async function alarmStatus() {
+    if (pageKind() !== "super") return null;
+    return alarmApi("/v1/control-center/alarm-status").catch(() => null);
   }
 
   function ensureAudio() {
@@ -216,6 +239,63 @@
     state.status.textContent = statusText();
   }
 
+  function activeIncidentFromStatus(payload) {
+    const incident = payload && payload.alarm && payload.alarm.incident;
+    return incident && incident.active ? incident : null;
+  }
+
+  function overlayVisibleIncident(level, items, statusPayload) {
+    const incident = activeIncidentFromStatus(statusPayload);
+    if (incident) {
+      return {
+        level: incident.level || "critical",
+        redZone: Boolean(incident.redZone),
+        title: incident.redZone ? "Kırmızı Alan Güvenlik Alarmı" : "Güvenlik Alarmı",
+        message: `${incident.action || "security"} ${incident.ipAddress ? `/ IP ${incident.ipAddress}` : ""}`,
+        protection: incident.protection || null,
+        serverIncident: true
+      };
+    }
+    if ((LEVEL_WEIGHT[level] || 0) < LEVEL_WEIGHT.critical) return null;
+    const first = items[0] || {};
+    return {
+      level,
+      redZone: true,
+      title: "Kritik Güvenlik Alarmı",
+      message: `${itemTitle(first)}${itemMessage(first) ? ` - ${itemMessage(first)}` : ""}`,
+      protection: null,
+      serverIncident: false
+    };
+  }
+
+  function protectionText(protection) {
+    if (!protection) return "Koruma durumu alınamadı.";
+    const parts = [
+      protection.api_locked ? "API kilidi aktif" : "",
+      protection.payments_locked ? "Ödeme kilidi aktif" : "",
+      protection.orders_locked ? "Sipariş kilidi aktif" : "",
+      protection.maintenance_suggested ? "Bakım modu önerildi" : "",
+      protection.session_revoke_suggested ? "Oturum iptali önerildi" : "",
+      protection.rollback_suggested ? "Rollback önerildi" : ""
+    ].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "Otomatik koruma kilidi aktif değil.";
+  }
+
+  function showOverlay(incident) {
+    if (!incident || !state.overlay || !state.overlayBody) return;
+    state.overlay.dataset.level = incident.level || "critical";
+    state.overlay.hidden = false;
+    state.overlayBody.innerHTML = `
+      <strong>${incident.title}</strong>
+      <span>${incident.message || "Kritik olay algılandı."}</span>
+      <small>${protectionText(incident.protection)}</small>
+    `;
+  }
+
+  function hideOverlay() {
+    if (state.overlay) state.overlay.hidden = true;
+  }
+
   function injectUi() {
     if (state.root) return;
     const style = document.createElement("style");
@@ -228,6 +308,16 @@
       .ah-admin-alarm button[aria-pressed="true"]{background:#0f5132;border-color:rgba(56,217,150,.5)}
       .ah-admin-alarm__test{background:#44211c!important;border-color:rgba(255,184,77,.5)!important}
       .ah-admin-alarm__status{color:rgba(255,255,255,.78);overflow-wrap:anywhere}
+      .ah-admin-alarm-screen{position:fixed;inset:0;z-index:2147483100;display:grid;place-items:center;padding:24px;background:rgba(5,8,14,.82);backdrop-filter:blur(8px)}
+      .ah-admin-alarm-screen[hidden]{display:none}
+      .ah-admin-alarm-screen__panel{width:min(620px,calc(100vw - 32px));border:2px solid rgba(255,77,109,.92);border-radius:10px;background:#100b11;color:#fff;box-shadow:0 28px 90px rgba(0,0,0,.58),0 0 0 8px rgba(255,77,109,.18);padding:18px;display:grid;gap:14px}
+      .ah-admin-alarm-screen__body{display:grid;gap:6px}
+      .ah-admin-alarm-screen__body strong{font-size:20px}
+      .ah-admin-alarm-screen__body span{font-size:14px;color:rgba(255,255,255,.88)}
+      .ah-admin-alarm-screen__body small{font-size:12px;color:rgba(255,255,255,.68)}
+      .ah-admin-alarm-screen__actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+      .ah-admin-alarm-screen__actions button{min-height:38px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:#211827;color:#fff;padding:8px 11px;font-weight:900;cursor:pointer}
+      .ah-admin-alarm-screen__actions [data-admin-alarm-resolve]{background:#681b2b}
     `;
     document.head.appendChild(style);
 
@@ -245,6 +335,24 @@
       </div>
     `;
     document.body.appendChild(state.root);
+    state.overlay = document.createElement("section");
+    state.overlay.className = "ah-admin-alarm-screen";
+    state.overlay.hidden = true;
+    state.overlay.setAttribute("role", "alertdialog");
+    state.overlay.setAttribute("aria-modal", "true");
+    state.overlay.innerHTML = `
+      <div class="ah-admin-alarm-screen__panel">
+        <div class="ah-admin-alarm-screen__body" data-admin-alarm-overlay-body></div>
+        <div class="ah-admin-alarm-screen__actions">
+          <button type="button" data-admin-alarm-enable-sound>Sesli alarmı aç</button>
+          <button type="button" data-admin-alarm-ack>30 dk sustur</button>
+          <button type="button" data-admin-alarm-resolve>Alarmı kapat</button>
+          <button type="button" data-admin-alarm-hide>Paneli gizle</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(state.overlay);
+    state.overlayBody = state.overlay.querySelector("[data-admin-alarm-overlay-body]");
     state.button = state.root.querySelector("[data-admin-alarm-toggle]");
     state.status = state.root.querySelector("[data-admin-alarm-status]");
     state.button.addEventListener("click", enableAlarm);
@@ -255,6 +363,10 @@
       renderStatus();
       await playAlarm("critical");
     });
+    state.overlay.querySelector("[data-admin-alarm-enable-sound]").addEventListener("click", enableAlarm);
+    state.overlay.querySelector("[data-admin-alarm-hide]").addEventListener("click", hideOverlay);
+    state.overlay.querySelector("[data-admin-alarm-ack]").addEventListener("click", acknowledgeAlarm);
+    state.overlay.querySelector("[data-admin-alarm-resolve]").addEventListener("click", resolveAlarm);
   }
 
   async function enableAlarm() {
@@ -280,11 +392,36 @@
     saveJson(SEEN_KEY, trimmed);
   }
 
+  async function acknowledgeAlarm() {
+    if (pageKind() === "super") {
+      await alarmPost("/v1/control-center/alarm-acknowledge", { reason: "Alarm panelinden manuel susturma" }).catch(() => null);
+    }
+    hideOverlay();
+    state.lastMessage = "Alarm susturuldu";
+    renderStatus();
+  }
+
+  async function resolveAlarm() {
+    if (pageKind() === "super") {
+      await alarmPost("/v1/control-center/alarm-resolve", { reason: "Alarm panelinden manuel kapatma" }).catch(() => null);
+      await alarmPost("/v1/control-center/alarm-protection", { action: "clear", reason: "Alarm kapatılırken runtime koruma temizlendi" }).catch(() => null);
+    }
+    hideOverlay();
+    state.lastLevel = "low";
+    state.lastMessage = "Alarm kapatıldı";
+    renderStatus();
+  }
+
   async function pollAlarm() {
     if (!pageKind()) return;
     try {
-      const payload = await alarmApi(endpoint());
+      const [payload, statusPayload] = await Promise.all([
+        alarmApi(endpoint()),
+        alarmStatus()
+      ]);
       const items = normalizeItems(payload);
+      const serverIncident = overlayVisibleIncident("critical", [], statusPayload);
+      if (serverIncident) showOverlay(serverIncident);
       if (!state.baselineReady) {
         remember(items);
         state.baselineReady = true;
@@ -309,6 +446,8 @@
       state.lastLevel = level;
       state.lastMessage = `${actionable.length} yeni uyarı: ${itemTitle(first)}`;
       renderStatus();
+      const visibleIncident = overlayVisibleIncident(level, actionable, statusPayload);
+      if (visibleIncident) showOverlay(visibleIncident);
       await playAlarm(level);
       notify(level, actionable);
     } catch (error) {

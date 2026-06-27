@@ -105,7 +105,12 @@ export const config = {
     emailWebhookUrl: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_URL", { required: false, defaultValue: "" }),
     emailWebhookSecret: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     alertFrom: readEnv("SECURITY_ALERT_FROM", { required: false, defaultValue: "security@allonahub.com" }),
-    alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" })
+    alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" }),
+    smsProvider: readEnv("SECURITY_ALERT_SMS_PROVIDER", { required: false, defaultValue: "" }),
+    smsAccountSid: readEnv("SECURITY_ALERT_SMS_ACCOUNT_SID", { required: false, defaultValue: "" }),
+    smsAuthToken: readOptionalSecret("SECURITY_ALERT_SMS_AUTH_TOKEN"),
+    smsFrom: readEnv("SECURITY_ALERT_SMS_FROM", { required: false, defaultValue: "" }),
+    smsTo: readEnv("SECURITY_ALERT_SMS_TO", { required: false, defaultValue: "" })
   },
   assistant: {
     enabled: readBool("ASSISTANT_ENABLED", true),

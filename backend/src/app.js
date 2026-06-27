@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
+import { runtimeSecurityProtection } from "./lib/security-alerts.js";
 import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerRoutes } from "./routes/index.js";
 
@@ -16,6 +17,37 @@ function requestHostname(request) {
     .split(":")[0]
     .trim()
     .toLowerCase();
+}
+
+function runtimeProtectedPath(pathname, method) {
+  const protection = runtimeSecurityProtection();
+  const methodName = String(method || "GET").toUpperCase();
+  const ownerPath = pathname.startsWith("/v1/control-center")
+    || pathname.startsWith("/v1/owner-console")
+    || pathname === "/v1/admin/ops/security-monitoring"
+    || pathname === "/v1/ops-console/security-monitoring"
+    || pathname.startsWith("/v1/admin/security")
+    || pathname === "/health"
+    || pathname === "/ready";
+  if (ownerPath) return null;
+
+  if (protection.apiLocked && pathname.startsWith("/v1/")) {
+    return "API_RUNTIME_LOCKED";
+  }
+  if (protection.paymentsLocked && (
+    pathname.startsWith("/v1/payments") ||
+    pathname.startsWith("/v1/cv/checkout") ||
+    pathname.startsWith("/v1/partner/payment-intents")
+  )) {
+    return "PAYMENTS_RUNTIME_LOCKED";
+  }
+  if (protection.ordersLocked && (
+    (pathname === "/v1/orders" && methodName !== "GET") ||
+    pathname.startsWith("/v1/partner/orders/status")
+  )) {
+    return "ORDERS_RUNTIME_LOCKED";
+  }
+  return null;
 }
 
 export async function buildApp() {
@@ -135,6 +167,15 @@ export async function buildApp() {
         ok: false,
         error: "MAINTENANCE_MODE",
         message: "Sistem bakım modunda."
+      });
+    }
+
+    const runtimeLock = runtimeProtectedPath(pathname, request.method);
+    if (runtimeLock) {
+      return reply.code(503).send({
+        ok: false,
+        error: runtimeLock,
+        message: "Sistem güvenlik alarmı nedeniyle koruma modunda."
       });
     }
   });

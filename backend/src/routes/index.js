@@ -4,7 +4,13 @@ import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import { buildSocialMediaDailyPackage, SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS } from "../lib/social-media-daily-package.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
-import { securityAlertStatus, sendSecurityAlert } from "../lib/security-alerts.js";
+import {
+  acknowledgeSecurityAlarm,
+  resolveSecurityAlarm,
+  securityAlertStatus,
+  sendSecurityAlert,
+  updateRuntimeProtection
+} from "../lib/security-alerts.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
@@ -454,6 +460,15 @@ const superAdminReleaseApprovalSchema = z.object({
 });
 
 const superAdminReleaseApprovalDecisionSchema = z.object({
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const superAdminAlarmDecisionSchema = z.object({
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const superAdminAlarmProtectionSchema = z.object({
+  action: z.enum(["clear", "lock_api", "lock_payments", "lock_orders", "unlock_api", "unlock_payments", "unlock_orders"]),
   reason: z.string().trim().min(6).max(1200)
 });
 
@@ -5229,6 +5244,74 @@ export function registerRoutes(app) {
       }
     });
     return { ok: true, result };
+  });
+
+  superPost("/alarm-acknowledge", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_acknowledge");
+    const body = superAdminAlarmDecisionSchema.parse(request.body || {});
+    const incident = acknowledgeSecurityAlarm({
+      actorId: ctx.user.id,
+      reason: body.reason
+    });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_acknowledged",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "warning",
+      metadata: {
+        reason: body.reason,
+        incident
+      }
+    });
+    return { ok: true, incident };
+  });
+
+  superPost("/alarm-resolve", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_resolve");
+    const body = superAdminAlarmDecisionSchema.parse(request.body || {});
+    const incident = resolveSecurityAlarm({
+      actorId: ctx.user.id,
+      reason: body.reason
+    });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_resolved",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "warning",
+      metadata: {
+        reason: body.reason,
+        incident
+      }
+    });
+    return { ok: true, incident };
+  });
+
+  superPost("/alarm-protection", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_protection.update");
+    const body = superAdminAlarmProtectionSchema.parse(request.body || {});
+    const protection = updateRuntimeProtection(body.action, ctx.user.id, body.reason);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_protection_updated",
+      source: "admin",
+      resourceType: "security_alarm_protection",
+      resourceId: body.action,
+      severity: ["clear", "unlock_api", "unlock_payments", "unlock_orders"].includes(body.action) ? "warning" : "critical",
+      metadata: {
+        action: body.action,
+        reason: body.reason,
+        protection
+      }
+    });
+    return { ok: true, protection };
   });
 
   superGet("/work-queue", async (request) => {
