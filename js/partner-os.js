@@ -171,6 +171,8 @@
       }
     }
 
+    applyCatalogProfile();
+
     const trust = Math.max(0, Math.min(100, Number(state.metrics.trust_score || business.trust_score || 70)));
     if ($("[data-trust-score]")) $("[data-trust-score]").textContent = `${trust}`;
     if ($("[data-trust-progress]")) $("[data-trust-progress]").style.width = `${trust}%`;
@@ -209,6 +211,64 @@
         <small>${escape(hint)}</small>
       </article>
     `).join("");
+  }
+
+  function currentCatalogScope() {
+    const businessType = String(state.business?.partner_type || "").toLocaleLowerCase("tr-TR");
+    if (["market", "grocery", "supermarket", "süpermarket"].includes(businessType)) return "market";
+    if (["food", "restaurant", "restoran", "yemek"].includes(businessType)) return "food";
+    if (["service", "hizmet"].includes(businessType)) return "service";
+    return "shop";
+  }
+
+  function catalogProfile(scope) {
+    const profiles = {
+      market: {
+        href: "../commerce/allonamarket.html",
+        label: "Markete Git",
+        category: "Market / Kahvaltı",
+        brand: "Allona Market Partneri",
+        image: "/images/modules/market-water-pack.png"
+      },
+      food: {
+        href: "../commerce/allonayemek.html",
+        label: "Yemek Vitrinine Git",
+        category: "Yemek / Menü",
+        brand: "Allona Burger House",
+        image: "/images/modules/yemek-light-v5.jpg"
+      },
+      service: {
+        href: "../ecosystem/ecosystem.html",
+        label: "Ekosisteme Git",
+        category: "Hizmet / Operasyon",
+        brand: "Allona Partner",
+        image: "/images/product-fallback.svg"
+      },
+      shop: {
+        href: "../commerce/allonashop.html",
+        label: "Mağazaya Git",
+        category: "Genel",
+        brand: "Allona Shop Partneri",
+        image: "/images/modules/allona-shop.png"
+      }
+    };
+    return profiles[scope] || profiles.shop;
+  }
+
+  function applyCatalogProfile() {
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    const storeLink = $("[data-partner-store-link]");
+    const storeLabel = $("[data-partner-store-label]");
+    const productForm = $("[data-product-form]");
+    if (storeLink) storeLink.href = profile.href;
+    if (storeLabel) storeLabel.textContent = profile.label;
+    if (!productForm || productForm.dataset.catalogProfileReady === "true") return;
+    if (productForm.elements.catalog_scope) productForm.elements.catalog_scope.value = scope;
+    if (productForm.elements.category && !productForm.elements.category.value) productForm.elements.category.placeholder = profile.category;
+    if (productForm.elements.brand && !productForm.elements.brand.value) productForm.elements.brand.placeholder = profile.brand;
+    if (productForm.elements.image_url && !productForm.elements.image_url.value) productForm.elements.image_url.placeholder = profile.image;
+    productForm.dataset.catalogProfileReady = "true";
   }
 
   function renderRecommendations() {
@@ -637,24 +697,27 @@
 
   async function createProduct(form) {
     const data = Object.fromEntries(new FormData(form).entries());
-    const isFood = data.catalog_scope === "food";
+    const scope = ["shop", "market", "food", "service"].includes(data.catalog_scope) ? data.catalog_scope : "shop";
+    const profile = catalogProfile(scope);
     const businessName = state.business?.display_name || state.business?.legal_name || state.access.profile?.full_name || "Allona Partner";
     const payload = {
       name: data.name,
       description: data.description || "",
-      category: data.category || (isFood ? "Yemek" : "Genel"),
+      category: data.category || profile.category,
       brand: data.brand || businessName,
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
       status: ["active", "draft"].includes(data.status) ? data.status : "active",
+      module_key: scope,
+      catalog_scope: scope,
       partner_id: state.access.user.id,
       partner_code: state.business?.partner_code || state.business?.id || state.access.user.id,
       partner_email: state.access.user.email || "",
-      image_url: data.image_url || (isFood ? "/images/modules/yemek-light-v5.jpg" : ""),
+      image_url: data.image_url || profile.image,
       slug: core.slugify(`${data.name}-${Date.now()}`),
-      coupon_status: isFood ? "Menü kuponu" : "Aktif",
-      hp_status: isFood ? "HP kazandırır" : "Aktif",
-      sku: core.slugify(`${isFood ? "ALY" : "ALP"}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
+      coupon_status: scope === "food" ? "Menü kuponu" : scope === "market" ? "Market kuponu" : "Aktif",
+      hp_status: scope === "food" ? "HP kazandırır" : scope === "market" ? "Market HP" : "Aktif",
+      sku: core.slugify(`${scope === "market" ? "ALM" : scope === "food" ? "ALY" : scope === "service" ? "ALS" : "ALP"}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
     };
     if (!payload.name || payload.price < 0) {
       toast("Ürün adı ve fiyat alanını kontrol edin.", "error");
@@ -686,7 +749,7 @@
         });
       }
       form.reset();
-      toast(isFood ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
+      toast(scope === "market" ? "Market ürünü canlı kataloğa eklendi." : scope === "food" ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
     } catch (error) {
       toast(error.message || "Ürün kaydedilemedi. Partner yetkisi veya ürün şemasını kontrol edin.", "error");
     } finally {

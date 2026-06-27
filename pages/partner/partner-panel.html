@@ -54,7 +54,7 @@
             <p data-partner-summary>Ürün, sipariş, QR, NFC, hakediş ve kampanya akışları hazırlanıyor.</p>
           </div>
           <div class="partner-os-actions">
-            <a href="../commerce/allonashop.html"><i class="fa-solid fa-store"></i><span>Mağazaya Git</span></a>
+            <a href="../commerce/allonashop.html" data-partner-store-link><i class="fa-solid fa-store"></i><span data-partner-store-label>Mağazaya Git</span></a>
             <button type="button" data-refresh-partner><i class="fa-solid fa-rotate"></i><span>Yenile</span></button>
             <button type="button" data-partner-logout><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Çıkış</span></button>
           </div>
@@ -203,13 +203,13 @@
             </div>
             <form class="partner-os-product-form" data-product-form>
               <label><span>Ürün / hizmet adı</span><input name="name" required placeholder="Örn. Şehir içi taksi transferi"></label>
-              <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="food">Allona Yemek</option><option value="service">Hizmet / Ekosistem</option></select></label>
-              <label><span>Kategori</span><input name="category" required placeholder="Burger, pizza, market, taksi..."></label>
-              <label><span>Restoran / marka adı</span><input name="brand" placeholder="Örn. Allona Burger House"></label>
+              <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="market">Allona Market</option><option value="food">Allona Yemek</option><option value="service">Hizmet / Ekosistem</option></select></label>
+              <label><span>Kategori</span><input name="category" required placeholder="Market / Kahvaltı, Burger, hizmet..."></label>
+              <label><span>Restoran / marka adı</span><input name="brand" placeholder="Örn. Allona Market Partneri"></label>
               <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required placeholder="0.00"></label>
               <label><span>Stok / kontenjan</span><input name="stock" type="number" min="0" step="1" value="1"></label>
               <label><span>Yayın durumu</span><select name="status"><option value="active">Yayında</option><option value="draft">Taslak</option></select></label>
-              <label class="partner-os-span-2"><span>Görsel URL</span><input name="image_url" placeholder="/images/modules/yemek-light-v5.jpg veya https://..."></label>
+              <label class="partner-os-span-2"><span>Görsel URL</span><input name="image_url" placeholder="/images/modules/market-water-pack.png veya https://..."></label>
               <label class="partner-os-span-2"><span>Açıklama</span><input name="description" placeholder="Müşteriye görünen kısa açıklama"></label>
               <button type="submit"><i class="fa-solid fa-plus"></i><span>Kataloğa Ekle</span></button>
             </form>
@@ -414,12 +414,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260620-partneros1" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260619-sec1" defer></script>
+  <script src="../../js/core.js?v=20260627-market-owner1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/auth.js?v=20260620-account1" defer></script>
-  <script src="../../js/cart.js?v=20260621-tx1" defer></script>
+  <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/partner-os.js?v=20260620-pos1" defer></script>
+  <script src="../../js/partner-os.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

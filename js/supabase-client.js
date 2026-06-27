@@ -118,6 +118,7 @@
     if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
     if (["market", "allona_market", "allonamarket", "supermarket", "süpermarket", "grocery"].includes(scope)) return "market";
     if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
+    if (["service", "hizmet", "services", "ecosystem", "ekosistem"].includes(scope)) return "service";
     return "";
   }
 
@@ -307,6 +308,8 @@
       : rawImageUrl;
     const price = Number(payload.price || 0);
     const stock = Number(payload.stock || 0);
+    const moduleKey = normalizedScope(payload.module_key || payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope) || "shop";
+    const skuPrefix = moduleKey === "market" ? "ALM" : moduleKey === "food" ? "ALY" : moduleKey === "service" ? "ALS" : "ALP";
     const modernProduct = {
       name: cleanName,
       description,
@@ -314,6 +317,7 @@
       stock,
       image_url: imageUrl,
       category,
+      module_key: moduleKey,
       status,
       slug: payload.slug ? core.slugify(payload.slug) : core.slugify(cleanName),
       meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
@@ -330,13 +334,14 @@
       stock,
       image_url: imageUrl,
       category,
+      module_key: moduleKey,
       status,
       brand,
-      partner_id: String(payload.partner_code || payload.partner_id || "ALP-FOOD"),
+      partner_id: security && security.isUuid(payload.partner_id) ? payload.partner_id : String(payload.partner_code || payload.partner_id || "ALP-PARTNER"),
       partner_email: payload.partner_email || "",
       coupon_status: payload.coupon_status || payload.coupon_label || "Aktif",
       hp_status: payload.hp_status || payload.hp_label || "Aktif",
-      sku: payload.sku || core.slugify(`${cleanName}-${payload.partner_id || "food"}`).toUpperCase().slice(0, 48),
+      sku: payload.sku || core.slugify(`${skuPrefix}-${cleanName}-${payload.partner_id || "partner"}`).toUpperCase().slice(0, 48),
       barcode: payload.barcode || ""
     };
 
@@ -354,7 +359,14 @@
     } catch (error) {
       const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
       if (!/column|schema cache|could not find|does not exist|invalid input syntax for type uuid/i.test(message)) throw error;
-      return core.normalizeProduct(await runWrite(legacyProduct));
+      try {
+        return core.normalizeProduct(await runWrite(legacyProduct));
+      } catch (legacyError) {
+        const legacyMessage = `${legacyError && legacyError.message || ""} ${legacyError && legacyError.details || ""} ${legacyError && legacyError.hint || ""}`;
+        if (!/module_key|catalog_scope|schema cache|could not find|does not exist/i.test(legacyMessage)) throw legacyError;
+        const { module_key: _moduleKey, ...legacyWithoutModuleKey } = legacyProduct;
+        return core.normalizeProduct(await runWrite(legacyWithoutModuleKey));
+      }
     }
   }
 

@@ -372,7 +372,38 @@ body.market-module-page .toast__item--error {
 
 .market-product-rail .product-card {
   flex: 0 0 clamp(252px, 22vw, 322px);
+  min-width: 0;
   scroll-snap-align: start;
+}
+
+.market-product-rail .product-card :where(.pill, .market-signal, .stock, .product-social-proof) {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-product-rail .product-card__meta,
+.market-product-rail .product-card__deal-row,
+.market-product-rail .product-card__signals {
+  min-width: 0;
+}
+
+.market-product-rail .product-card h3 {
+  display: -webkit-box;
+  min-height: 2.7em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.market-product-rail .product-card__description {
+  display: -webkit-box;
+  min-height: 3.9em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 body.market-module-page[data-theme] .market-product-rail .product-card,
@@ -613,6 +644,17 @@ body.market-module-page[data-theme] .market-product-rail .price {
   .market-product-rail .product-card {
     flex-basis: min(80vw, 310px) !important;
     max-width: min(80vw, 310px) !important;
+  }
+
+  body.market-module-page[data-theme] .market-product-rail .product-card__actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body.market-module-page[data-theme] .market-product-rail .product-card__actions :where(.btn, .link-btn) {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 8px !important;
+    white-space: normal !important;
   }
 
   .market-hero__dots button {

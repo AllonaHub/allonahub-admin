@@ -14,6 +14,22 @@
     return String(count);
   }
 
+  function previewProductFromStorage(id) {
+    const slug = core.getParam("slug");
+    const keys = [
+      id ? `allona_product_preview_${id}` : "",
+      slug ? `allona_product_preview_slug_${slug}` : "",
+      "allona_product_preview_last"
+    ].filter(Boolean);
+    for (const key of keys) {
+      try {
+        const product = core.normalizeProduct(JSON.parse(localStorage.getItem(key) || "null"));
+        if (product && product.id && (!id || String(product.id) === String(id))) return product;
+      } catch (error) {}
+    }
+    return null;
+  }
+
   const DETAIL_ZOOM_SCALE = 2.85;
 
   function clamp(value, min, max) {
@@ -229,16 +245,31 @@
     core.renderStatus(root, "Ürün yükleniyor...");
     try {
       if (!canQueryRemoteProduct(id)) {
+        const previewProduct = previewProductFromStorage(id);
+        if (previewProduct) {
+          renderProduct(previewProduct);
+          return;
+        }
         core.renderStatus(root, "Ürün bağlantısı geçersiz veya eski demo kaydına ait.", "error");
         return;
       }
       const product = await App.db.products.byId(id);
       if (!product) {
+        const previewProduct = previewProductFromStorage(id);
+        if (previewProduct) {
+          renderProduct(previewProduct);
+          return;
+        }
         core.renderStatus(root, "Ürün bulunamadı veya aktif değil.", "error");
         return;
       }
       renderProduct(product);
     } catch (error) {
+      const previewProduct = previewProductFromStorage(id);
+      if (previewProduct) {
+        renderProduct(previewProduct);
+        return;
+      }
       core.renderStatus(root, error.message || "Ürün yüklenemedi.", "error");
     }
   }

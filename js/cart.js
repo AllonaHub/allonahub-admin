@@ -41,6 +41,17 @@
     }
   }
 
+  function rememberProductPreview(value) {
+    const product = normalizeProductSnapshot(value);
+    if (!product || !product.id) return;
+    try {
+      const serialized = JSON.stringify(product);
+      localStorage.setItem(`allona_product_preview_${product.id}`, serialized);
+      if (product.slug) localStorage.setItem(`allona_product_preview_slug_${product.slug}`, serialized);
+      localStorage.setItem("allona_product_preview_last", serialized);
+    } catch (error) {}
+  }
+
   function remoteCartLines(cart) {
     return ((cart && cart.items) || [])
       .map((item) => {
@@ -458,7 +469,12 @@
   document.addEventListener("click", async (event) => {
     const addButton = event.target.closest("[data-add-product]");
     const favButton = event.target.closest("[data-fav-product]");
+    const previewLink = event.target.closest("[data-product-preview-link]");
     const productCard = shopProductCardFromTarget(event.target);
+
+    if (previewLink) {
+      rememberProductPreview(previewLink.dataset.productSnapshot);
+    }
 
     if (addButton) {
       try {

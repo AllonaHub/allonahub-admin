@@ -274,6 +274,7 @@
 
   function productUrl(product) {
     const item = normalizeProduct(product);
+    if (item.detail_url) return url(item.detail_url);
     const params = new URLSearchParams();
     if (item.id) params.set("id", item.id);
     if (item.slug) params.set("slug", item.slug);
@@ -318,7 +319,9 @@
       discount_percent: product.discount_percent,
       compare_at_price: product.compare_at_price,
       seller_name: product.seller_name,
-      seller_score: product.seller_score
+      seller_score: product.seller_score,
+      detail_url: product.detail_url || "",
+      is_preview: Boolean(product.is_preview)
     };
     return escapeHTML(encodeURIComponent(JSON.stringify(snapshot)));
   }
@@ -350,7 +353,7 @@
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
-        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
+        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}" data-product-preview-link="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
@@ -380,7 +383,7 @@
           </div>
           <div class="product-card__actions">
             <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
-            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}">İncele</a>
+            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}" data-product-preview-link="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}">İncele</a>
           </div>
         </div>
       </article>
