@@ -1773,6 +1773,7 @@
   }
 
   async function submitReleaseApproval(form) {
+    if (state.releaseApprovalSubmitting) return;
     const formData = new FormData(form);
     const payload = {
       approval_type: String(formData.get("approval_type") || "main_commit_push"),
@@ -1790,6 +1791,14 @@
     });
     if (!confirmed.confirmed) return;
     payload.metadata.reason = confirmed.reason;
+    const submitButton = form.querySelector("[type='submit']");
+    state.releaseApprovalSubmitting = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || "";
+      submitButton.textContent = "Onay kaydediliyor...";
+    }
+    setAlert("Yayın onayı backend'e gönderiliyor...", "ok");
     try {
       const result = await api("/v1/control-center/release-approvals", {
         method: "POST",
@@ -1797,6 +1806,7 @@
       });
       const approval = result.approval || {};
       const response = approval.webhook_response || {};
+      const warnings = result.schema_warnings || [];
       const status = approval.status || "approved";
       const released = status === "dispatched";
       const manualPending = status === "approved" || response.code === "GITOPS_NOT_CONFIGURED" || response.code === "GITOPS_DISABLED";
@@ -1810,14 +1820,27 @@
       openDrawer("Yayın Onayı Sonucu", [
         ownerLine("Durum", escape(status), released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı"), released ? "low" : (manualPending ? "medium" : "critical")),
         ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
-        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high"))
+        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high")),
+        warnings.map((warning) => ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")).join("")
       ].join(""));
       await jumpOwnerView("approvals");
       form.reset();
       const targetRef = form.querySelector("[name='target_ref']");
       if (targetRef) targetRef.value = "main";
     } catch (error) {
-      setAlert(publicError(error, "Yayın onayı oluşturulamadı."));
+      const message = publicError(error, "Yayın onayı oluşturulamadı.");
+      setAlert(message, "error");
+      openDrawer("Yayın Onayı Hatası", [
+        ownerLine("İşlem tamamlanamadı", escape(message), "<button type=\"button\" data-release-open>Tekrar dene</button>", "critical"),
+        ownerLine("Kontrol", "Owner lock, MFA2, release approval migration ve backend build durumunu Komut Sağlık Testi ile kontrol et.", "<button type=\"button\" data-action-health-check>Komutları test et</button>", "high")
+      ].join(""));
+      openReleaseModal();
+    } finally {
+      state.releaseApprovalSubmitting = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || "Owner Onayı Ver";
+      }
     }
   }
 

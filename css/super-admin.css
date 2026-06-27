@@ -1534,8 +1534,19 @@ body[data-page="super-admin"] .sa-modal select {
   min-height: 38px;
   border: 1px solid var(--sa-line);
   border-radius: var(--sa-radius);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
   color: var(--sa-text);
+}
+
+body[data-page="super-admin"] .sa-modal textarea {
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--sa-text);
+}
+
+body[data-page="super-admin"] .sa-modal option {
+  color: #08111f;
 }
 
 body[data-page="super-admin"] .sa-login-panel,

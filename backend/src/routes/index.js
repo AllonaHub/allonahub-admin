@@ -5438,8 +5438,20 @@ export function registerRoutes(app) {
       .eq("id", data.id)
       .select("*")
       .single();
-    if (updateError) throw updateError;
-    approval = updated;
+    let dispatchUpdateWarning = null;
+    if (updateError) {
+      if (!looksLikeMissingSchema(updateError)) throw updateError;
+      dispatchUpdateWarning = schemaWarning("super_admin_release_approvals_dispatch_columns", updateError);
+      request.log.warn({ error: updateError.message, approvalId: data.id }, "Release approval saved but dispatch columns could not be updated");
+      approval = {
+        ...data,
+        webhook_status: dispatch.webhook_status,
+        webhook_response: dispatch.webhook_response || {},
+        status: dispatch.status || data.status
+      };
+    } else {
+      approval = updated;
+    }
 
     await auditEvent({
       request,
@@ -5458,14 +5470,16 @@ export function registerRoutes(app) {
         status: approval.status,
         dispatched: dispatch.dispatched,
         webhook_status: dispatch.webhook_status,
-        gitops_enabled: config.superAdmin.gitOpsEnabled
+        gitops_enabled: config.superAdmin.gitOpsEnabled,
+        dispatch_update_warning: dispatchUpdateWarning?.message || null
       }
     });
 
     return {
       ok: true,
       approval: releaseApprovalPublic(approval),
-      dispatch
+      dispatch,
+      schema_warnings: dispatchUpdateWarning ? [dispatchUpdateWarning] : []
     };
   });
 
