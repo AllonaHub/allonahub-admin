@@ -2558,22 +2558,15 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
   position: relative;
   overflow: hidden;
   border-radius: 8px;
-  padding: clamp(28px, 5vw, 58px);
+  padding: clamp(22px, 3.2vw, 34px);
   color: #ffffff;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--ah-ink) 92%, transparent), color-mix(in srgb, var(--ah-primary-strong) 70%, transparent)),
-    radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--ah-primary) 35%, transparent), transparent 34%);
-  box-shadow: var(--ah-shadow);
+    linear-gradient(135deg, color-mix(in srgb, var(--ah-ink) 88%, transparent), color-mix(in srgb, var(--ah-primary-strong) 58%, transparent));
+  box-shadow: var(--ah-shadow-soft);
 }
 
 .platform-hero::after {
-  content: "";
-  position: absolute;
-  inset: auto -10% -35% auto;
-  width: 360px;
-  height: 360px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--ah-accent) 26%, transparent), transparent 66%);
+  content: none;
 }
 
 .platform-hero > * {
@@ -2591,9 +2584,9 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
 
 .platform-hero h1 {
   max-width: 760px;
-  margin: 10px 0 14px;
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1.05;
+  margin: 8px 0 10px;
+  font-size: clamp(1.75rem, 3vw, 2.55rem);
+  line-height: 1.14;
   letter-spacing: 0;
 }
 
@@ -2601,7 +2594,7 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
   max-width: 760px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 1.06rem;
+  font-size: 1rem;
 }
 
 .platform-section {
@@ -2612,7 +2605,22 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
 .platform-section h2 {
   margin: 0;
   color: var(--ah-ink);
-  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  font-size: clamp(1.18rem, 2vw, 1.55rem);
+}
+
+.page-heading {
+  padding-top: clamp(24px, 4vw, 44px);
+  padding-bottom: clamp(16px, 3vw, 30px);
+}
+
+.page-heading h1 {
+  font-size: clamp(1.75rem, 3vw, 2.45rem) !important;
+  line-height: 1.16 !important;
+}
+
+.page-heading p {
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
 }
 
 .platform-card-grid {
@@ -2622,12 +2630,12 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
 }
 
 .platform-card {
-  min-height: 170px;
+  min-height: 140px;
   border: 1px solid var(--ah-line);
   border-radius: 8px;
   background: var(--ah-card);
   box-shadow: var(--ah-shadow-soft);
-  padding: 22px;
+  padding: 18px;
 }
 
 .platform-card h3 {
@@ -2661,7 +2669,7 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
   font-weight: 850;
   background: var(--ah-primary-strong);
   color: #ffffff;
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--ah-primary) 22%, transparent);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ah-primary) 14%, transparent);
 }
 
 .platform-action--secondary {
@@ -2699,7 +2707,7 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
   background: var(--ah-card);
   box-shadow: var(--ah-shadow-soft);
   color: var(--ah-ink);
-  padding: clamp(20px, 3vw, 32px);
+  padding: clamp(18px, 2.4vw, 26px);
 }
 
 .info-panel h2,
@@ -2709,8 +2717,8 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
 .legal-document h2 {
   margin: 0 0 14px;
   color: var(--ah-ink);
-  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
-  line-height: 1.15;
+  font-size: clamp(1.12rem, 1.8vw, 1.42rem);
+  line-height: 1.24;
 }
 
 .info-panel h3,
@@ -3430,16 +3438,16 @@ body[data-theme] .site-footer .social-icons span {
   }
 
   .platform-hero {
-    padding: 28px 18px;
+    padding: 22px 16px;
   }
 
   .platform-hero h1 {
-    font-size: 34px;
-    line-height: 1.1;
+    font-size: 27px;
+    line-height: 1.16;
   }
 
   .platform-section h2 {
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .footer-social,
@@ -3512,7 +3520,7 @@ body[data-theme] .site-footer .social-icons span {
   }
 
   .platform-hero h1 {
-    font-size: 30px;
+    font-size: 24px;
   }
 
   .platform-card {

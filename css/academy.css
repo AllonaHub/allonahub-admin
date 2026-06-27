@@ -43,8 +43,8 @@
 }
 
 .academy-hero__content {
-  min-height: 430px;
-  padding: clamp(28px, 5vw, 58px);
+  min-height: 320px;
+  padding: clamp(24px, 3.6vw, 38px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -75,18 +75,18 @@
 
 .academy-hero h1 {
   margin: 0;
-  font-size: clamp(3rem, 7vw, 6.2rem);
-  line-height: 0.95;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.08;
   letter-spacing: 0;
-  text-shadow: 0 0 26px rgba(0, 229, 255, 0.2);
+  text-shadow: none;
 }
 
 .academy-hero__lead {
   max-width: 760px;
   color: rgba(255, 255, 255, 0.8);
-  font-size: clamp(1.05rem, 2vw, 1.28rem);
-  line-height: 1.7;
-  margin: 24px 0 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  margin: 16px 0 0;
 }
 
 .academy-actions {
@@ -403,8 +403,8 @@
 .academy-access h2,
 .academy-cta h2 {
   color: #ffffff;
-  font-size: clamp(2rem, 4vw, 3.3rem);
-  line-height: 1.05;
+  font-size: clamp(1.45rem, 2.6vw, 2.1rem);
+  line-height: 1.18;
   margin: 0 0 14px;
 }
 
@@ -556,8 +556,8 @@
 .academy-live h2,
 .academy-certificate h2 {
   color: #ffffff;
-  font-size: clamp(2rem, 4vw, 3.3rem);
-  line-height: 1.05;
+  font-size: clamp(1.45rem, 2.6vw, 2.1rem);
+  line-height: 1.18;
   margin: 0 0 14px;
 }
 
