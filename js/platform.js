@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260628-heading2";
+  const SERVICE_WORKER_VERSION = "20260628-corporate1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -52,8 +52,7 @@
   };
   const DEFAULT_THEME = "corporate";
   const THEME_DEFAULT_MIGRATION_KEY = "allona.theme.defaultCorporate.v1";
-  const storedTheme = localStorage.getItem(THEME_KEY);
-  if (!localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY) && (!storedTheme || (themeAliases[storedTheme] || storedTheme) === "ocean")) {
+  if (!localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY)) {
     localStorage.setItem(THEME_KEY, DEFAULT_THEME);
     localStorage.setItem(THEME_DEFAULT_MIGRATION_KEY, "1");
   }
