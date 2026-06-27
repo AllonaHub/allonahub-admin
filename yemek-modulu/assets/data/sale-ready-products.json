@@ -1,0 +1,107 @@
+[
+  {
+    "id": "10000000-0000-4000-8000-000000000101",
+    "partner_id": "10000000-0000-4000-8000-000000000001",
+    "category_slug": "durum",
+    "name": "Tavuk Döner Dürüm",
+    "slug": "tavuk-doner-durum",
+    "description": "Izgara tavuk döner, marul, domates ve özel sosla sarılmış sıcak lavaş dürüm.",
+    "price": 185,
+    "currency": "TRY",
+    "status": "active",
+    "stock_status": "in_stock",
+    "prep_time_minutes": 18,
+    "image_url": "yemek-modulu/assets/img/tavuk-doner-durum.png",
+    "image_alt": "Tavuk döner dürüm, turşu eşliğinde beyaz tabakta",
+    "image_match_status": "approved",
+    "ingredients": ["tavuk döner", "lavaş", "marul", "domates", "sos"],
+    "allergens": ["gluten", "süt ürünü içerebilir"],
+    "tags": ["dürüm", "tavuk", "hızlı servis"],
+    "courier_required": true,
+    "delivery_profile": {
+      "temperature_handling": "hot",
+      "package_count": 1,
+      "max_delivery_minutes": 45
+    },
+    "image_generation_prompt": "Turkish chicken doner wrap on a plate, delivery-app catalog product photo"
+  },
+  {
+    "id": "10000000-0000-4000-8000-000000000102",
+    "partner_id": "10000000-0000-4000-8000-000000000001",
+    "category_slug": "firin",
+    "name": "Lahmacun",
+    "slug": "lahmacun",
+    "description": "İnce hamur üzerinde baharatlı kıyma harcı, limon, maydanoz ve soğan eşliğiyle.",
+    "price": 110,
+    "currency": "TRY",
+    "status": "active",
+    "stock_status": "in_stock",
+    "prep_time_minutes": 15,
+    "image_url": "yemek-modulu/assets/img/lahmacun.png",
+    "image_alt": "Limon, maydanoz ve soğanla servis edilen lahmacun",
+    "image_match_status": "approved",
+    "ingredients": ["ince hamur", "kıyma", "domates", "biber", "maydanoz"],
+    "allergens": ["gluten"],
+    "tags": ["lahmacun", "fırın", "klasik"],
+    "courier_required": true,
+    "delivery_profile": {
+      "temperature_handling": "hot",
+      "package_count": 1,
+      "max_delivery_minutes": 40
+    },
+    "image_generation_prompt": "Turkish lahmacun with lemon, parsley and onion, delivery-app catalog product photo"
+  },
+  {
+    "id": "10000000-0000-4000-8000-000000000103",
+    "partner_id": "10000000-0000-4000-8000-000000000001",
+    "category_slug": "corba",
+    "name": "Mercimek Çorbası",
+    "slug": "mercimek-corbasi",
+    "description": "Kırmızı mercimekle hazırlanmış sıcak çorba, tereyağlı pul biber ve limonla servis edilir.",
+    "price": 95,
+    "currency": "TRY",
+    "status": "active",
+    "stock_status": "in_stock",
+    "prep_time_minutes": 10,
+    "image_url": "yemek-modulu/assets/img/mercimek-corbasi.png",
+    "image_alt": "Limon ve ekmekle servis edilen mercimek çorbası",
+    "image_match_status": "approved",
+    "ingredients": ["kırmızı mercimek", "tereyağı", "pul biber", "limon"],
+    "allergens": ["süt ürünü"],
+    "tags": ["çorba", "sıcak", "vejetaryen"],
+    "courier_required": true,
+    "delivery_profile": {
+      "temperature_handling": "hot_liquid",
+      "package_count": 1,
+      "max_delivery_minutes": 35
+    },
+    "image_generation_prompt": "Turkish red lentil soup with lemon and bread, delivery-app catalog product photo"
+  },
+  {
+    "id": "10000000-0000-4000-8000-000000000104",
+    "partner_id": "10000000-0000-4000-8000-000000000001",
+    "category_slug": "tatli",
+    "name": "Fıstıklı Baklava",
+    "slug": "fistikli-baklava",
+    "description": "Şerbetli, çıtır katmanlı, bol Antep fıstıklı klasik baklava porsiyonu.",
+    "price": 165,
+    "currency": "TRY",
+    "status": "active",
+    "stock_status": "in_stock",
+    "prep_time_minutes": 5,
+    "image_url": "yemek-modulu/assets/img/fistikli-baklava.png",
+    "image_alt": "Antep fıstıklı baklava dilimleri beyaz tabakta",
+    "image_match_status": "approved",
+    "ingredients": ["yufka", "Antep fıstığı", "şerbet", "tereyağı"],
+    "allergens": ["gluten", "ağaç yemişi", "süt ürünü"],
+    "tags": ["tatlı", "baklava", "fıstık"],
+    "courier_required": true,
+    "delivery_profile": {
+      "temperature_handling": "ambient",
+      "package_count": 1,
+      "max_delivery_minutes": 60
+    },
+    "image_generation_prompt": "Turkish pistachio baklava on a white plate, delivery-app catalog product photo"
+  }
+]
+
