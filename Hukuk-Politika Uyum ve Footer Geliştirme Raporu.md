@@ -10,7 +10,7 @@ Bu rapor 27 Haziran 2026 tarihinde ALLONAHUB proje klasöründeki mevcut statik 
 | Ortak yasal stil | `legal/assets/legal.css` eklendi | Tamamlandı |
 | Footer standardı | Denizcilik, AVM, Shop ve User Panel ekranları yasal merkeze bağlandı | Tamamlandı |
 | KVKK ayrımı | Aydınlatma metni ile ticari ileti izni ayrı tutuldu | Tamamlandı |
-| Şirket bilgisi kontrolü | MERSİS/VKN/resmi adres bilgisi repo içinde aranıp doğrulanamadı | Kritik yayın öncesi not bırakıldı |
+| Şirket bilgisi kontrolü | MERSİS/VKN/resmi adres bilgisi mevcut `pages/company/iletisim.html` ve `pages/legal/*` içeriklerinde bulundu | Yasal merkeze işlendi |
 | Form metinleri | Teklif, destek, partner navlun, partner paylaşım ve kullanıcı destek/profil alanlarına yasal bilgilendirme eklendi | Tamamlandı |
 
 ## Güncellenen Uygulama Dosyaları
@@ -27,11 +27,25 @@ Bu rapor 27 Haziran 2026 tarihinde ALLONAHUB proje klasöründeki mevcut statik 
 | `avm-dunyasi-modulu/assets/js/partner.js` | Partner sözleşme, KVKK, ticari ileti ve yanıltıcı reklam kontrolleri güçlendirildi |
 | `user-panel/assets/js/app.js` | Kampanya bildirimi tercihi ticari ileti izni mantığına göre yeniden adlandırıldı |
 
-## Kritik Bulgu
+## Şirket Bilgisi Bulgusu
 
-Repo içinde doğrulanabilir şirket unvanı, MERSİS no, VKN, vergi dairesi, ticaret sicil no, KEP adresi ve resmi posta adresi bulunamadı.
+İlk lokal taramada ana çalışma ağacında `hakkimizda.html` ve canlı `pages/company` dosyaları görünmediği için şirket bilgileri eksik raporlandı. Remote `origin/main` üzerinden açılan güncel çalışma ağacında bilgiler `pages/company/iletisim.html`, `pages/legal/kvkk.html`, `pages/legal/iade-politikasi.html` ve diğer yasal sayfalarda bulundu.
 
-Bu nedenle yasal metinlerde sahte veya varsayımsal şirket bilgisi kullanılmadı. Yayına çıkmadan önce bu alanlar resmi şirket kayıtlarıyla doldurulmalıdır.
+Yasal merkeze işlenen bilgiler:
+
+| Alan | Bilgi |
+| --- | --- |
+| Şirket unvanı | Allworksin Business Danışmanlık Ticaret Limited Şirketi |
+| MERSİS no | 055194568800001 |
+| Vergi dairesi | Halkalı Vergi Dairesi |
+| Vergi no | 0551945688 |
+| Adres | Atatürk Mahallesi Güner Sokak 1/1B Blok B1 Daire No:203 Küçükçekmece / İstanbul / Türkiye |
+| Telefon | +90 542 778 18 68 |
+| Genel e-posta | info@allonahub.com |
+| Destek e-posta | destek@allonahub.com |
+| Yasal başvuru | legal@allonahub.com |
+
+Kalan eksik: KEP adresi ve ticaret sicil numarası taranan dosyalarda ayrıca bulunmadı.
 
 ## Mevzuat ve Politika Yaklaşımı
 
@@ -57,7 +71,7 @@ Bu nedenle yasal metinlerde sahte veya varsayımsal şirket bilgisi kullanılmad
 
 ## Yayın Öncesi Zorunlu Tamamlanacaklar
 
-1. Şirket unvanı, MERSİS, VKN, vergi dairesi, ticaret sicil no, KEP, adres, telefon ve resmi e-posta eklenmeli.
+1. KEP adresi ve ticaret sicil numarası resmi şirket kayıtlarından doğrulanıp yasal merkeze eklenmeli.
 2. Gerçek çerez envanteri teknik ekip tarafından çıkarılmalı.
 3. Canlı ödeme/satış açılacaksa ürün veya hizmet türüne göre mesafeli satış ve ön bilgilendirme metni hukuk/mali müşavir kontrolünden geçmeli.
 4. Ticari elektronik ileti izni İYS süreciyle uyumlu hale getirilmeli.

@@ -196,5 +196,5 @@ Her hukuk-politika denetimi sonunda aşağıdaki format kullanılmalıdır:
 | Yasal merkez | Oluşturuldu | `legal/index.html` içinde gizlilik, KVKK, çerez, kullanım, üyelik, partner, ticari iletişim, iade/iptal, mesafeli satış ve veri saklama bölümleri var. |
 | Footer bağlantıları | Geliştirildi | Denizcilik, AVM, Shop ve User Panel ekranları ortak yasal merkeze bağlandı. |
 | Form bilgilendirmeleri | Geliştirildi | Teklif, destek, partner içerik ve kullanıcı destek/profil alanlarına KVKK/partner/ticari ileti metinleri eklendi. |
-| Şirket bilgileri | Kritik eksik | Repo içinde doğrulanabilir MERSİS, VKN, vergi dairesi, ticaret sicil no, KEP ve resmi adres bilgisi bulunamadı; sahte veri kullanılmadı. |
+| Şirket bilgileri | Kısmen tamamlandı | Güncel remote ağaçtaki `pages/company/iletisim.html` ve `pages/legal/*` dosyalarından unvan, MERSİS, VKN, vergi dairesi, adres, telefon ve e-postalar yasal merkeze işlendi. KEP ve ticaret sicil no ayrıca doğrulanmalı. |
 | Rapor | Oluşturuldu | `Hukuk-Politika Uyum ve Footer Geliştirme Raporu.md` dosyasında yapılan işler ve kalan yayın öncesi aksiyonlar listelendi. |
