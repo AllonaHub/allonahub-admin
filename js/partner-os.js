@@ -19,6 +19,62 @@
     recommendations: []
   };
 
+  const MODULE_PROFILES = {
+    shop: {
+      label: "Allona Shop",
+      shortLabel: "Shop",
+      typeLabels: ["Ürün", "Ürün Ekle"],
+      href: "../commerce/allonashop.html",
+      category: "Genel",
+      brand: "Allona Shop Partneri",
+      image: "/images/modules/allona-shop.png",
+      skuPrefix: "ALP"
+    },
+    market: {
+      label: "Allona Market",
+      shortLabel: "Market",
+      typeLabels: ["Market ürünü", "Market Ürünü Ekle"],
+      href: "../commerce/allonamarket.html",
+      category: "Market / Kahvaltı",
+      brand: "Allona Market Partneri",
+      image: "/images/modules/market-water-pack.png",
+      skuPrefix: "ALM"
+    },
+    food: {
+      label: "Allona Yemek",
+      shortLabel: "Yemek",
+      typeLabels: ["Menü ürünü", "Menü Ürünü Ekle"],
+      href: "../commerce/allonayemek.html",
+      category: "Yemek / Menü",
+      brand: "Allona Burger House",
+      image: "/images/modules/yemek-light-v5.jpg",
+      skuPrefix: "ALY"
+    },
+    service: {
+      label: "Hizmet / Ekosistem",
+      shortLabel: "Hizmet",
+      typeLabels: ["Hizmet", "Hizmet Ekle"],
+      href: "../ecosystem/ecosystem.html",
+      category: "Hizmet / Operasyon",
+      brand: "Allona Partner",
+      image: "/images/product-fallback.svg",
+      skuPrefix: "ALS"
+    }
+  };
+
+  const PRODUCT_TEMPLATE_COLUMNS = [
+    "catalog_scope",
+    "name",
+    "category",
+    "brand",
+    "price",
+    "stock",
+    "status",
+    "image_url",
+    "description",
+    "sku"
+  ];
+
   function $(selector, root) {
     return (root || document).querySelector(selector);
   }
@@ -339,46 +395,166 @@
     `).join("");
   }
 
-  function currentCatalogScope() {
+  function normalizeModuleKey(value) {
+    const key = String(value || "").trim().toLocaleLowerCase("tr-TR");
+    const aliases = {
+      allonashop: "shop",
+      product: "shop",
+      products: "shop",
+      urun: "shop",
+      "ürün": "shop",
+      marketplace: "shop",
+      grocery: "market",
+      supermarket: "market",
+      "süpermarket": "market",
+      restaurant: "food",
+      restoran: "food",
+      yemek: "food",
+      menu: "food",
+      menü: "food",
+      services: "service",
+      hizmet: "service",
+      ecosystem: "service"
+    };
+    return MODULE_PROFILES[key] ? key : aliases[key] || "";
+  }
+
+  function defaultModuleForPartnerType() {
     const businessType = String(state.business?.partner_type || "").toLocaleLowerCase("tr-TR");
-    if (["market", "grocery", "supermarket", "süpermarket"].includes(businessType)) return "market";
-    if (["food", "restaurant", "restoran", "yemek"].includes(businessType)) return "food";
-    if (["service", "hizmet"].includes(businessType)) return "service";
-    return "shop";
+    return normalizeModuleKey(businessType) || "shop";
+  }
+
+  function parseMaybeJson(value) {
+    if (!value || typeof value !== "string") return value;
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return value;
+    }
+  }
+
+  function businessMetadata() {
+    return parseMaybeJson(state.business?.metadata)
+      || parseMaybeJson(state.business?.settings)
+      || parseMaybeJson(state.business?.module_permissions)
+      || {};
+  }
+
+  function collectModuleCandidates() {
+    const business = state.business || {};
+    const metadata = businessMetadata();
+    return [
+      business.allowed_modules,
+      business.enabled_modules,
+      business.modules,
+      business.module_permissions,
+      metadata.allowed_modules,
+      metadata.enabled_modules,
+      metadata.modules,
+      metadata.module_permissions,
+      metadata.partner_modules
+    ].map(parseMaybeJson).filter(Boolean);
+  }
+
+  function moduleAccessMap() {
+    const access = Object.keys(MODULE_PROFILES).reduce((map, key) => {
+      map[key] = false;
+      return map;
+    }, {});
+    let hasExplicitAccess = false;
+
+    collectModuleCandidates().forEach((candidate) => {
+      if (Array.isArray(candidate)) {
+        candidate.forEach((item) => {
+          const key = normalizeModuleKey(typeof item === "object" ? item.key || item.module || item.name : item);
+          const enabled = !(item && typeof item === "object" && (item.enabled === false || item.write === false || item.status === "disabled"));
+          if (key) {
+            access[key] = enabled;
+            hasExplicitAccess = true;
+          }
+        });
+        return;
+      }
+      if (candidate && typeof candidate === "object") {
+        Object.entries(candidate).forEach(([rawKey, rawValue]) => {
+          const key = normalizeModuleKey(rawKey);
+          const enabled = rawValue === true
+            || rawValue === "true"
+            || rawValue === "enabled"
+            || rawValue === "active"
+            || rawValue === "write"
+            || rawValue === "manage"
+            || rawValue === 1
+            || (rawValue && typeof rawValue === "object" && rawValue.enabled !== false && rawValue.write !== false);
+          if (key) {
+            access[key] = Boolean(enabled);
+            hasExplicitAccess = true;
+          }
+        });
+      }
+    });
+
+    if (!hasExplicitAccess) access[defaultModuleForPartnerType()] = true;
+    return access;
+  }
+
+  function enabledScopes() {
+    const access = moduleAccessMap();
+    return Object.keys(MODULE_PROFILES).filter((key) => access[key]);
+  }
+
+  function isModuleEnabled(scope) {
+    return Boolean(moduleAccessMap()[normalizeModuleKey(scope)]);
+  }
+
+  function currentCatalogScope() {
+    return enabledScopes()[0] || defaultModuleForPartnerType();
   }
 
   function catalogProfile(scope) {
-    const profiles = {
-      market: {
-        href: "../commerce/allonamarket.html",
-        label: "Markete Git",
-        category: "Market / Kahvaltı",
-        brand: "Allona Market Partneri",
-        image: "/images/modules/market-water-pack.png"
-      },
-      food: {
-        href: "../commerce/allonayemek.html",
-        label: "Yemek Vitrinine Git",
-        category: "Yemek / Menü",
-        brand: "Allona Burger House",
-        image: "/images/modules/yemek-light-v5.jpg"
-      },
-      service: {
-        href: "../ecosystem/ecosystem.html",
-        label: "Ekosisteme Git",
-        category: "Hizmet / Operasyon",
-        brand: "Allona Partner",
-        image: "/images/product-fallback.svg"
-      },
-      shop: {
-        href: "../commerce/allonashop.html",
-        label: "Mağazaya Git",
-        category: "Genel",
-        brand: "Allona Shop Partneri",
-        image: "/images/modules/allona-shop.png"
-      }
-    };
-    return profiles[scope] || profiles.shop;
+    return MODULE_PROFILES[scope] || MODULE_PROFILES.shop;
+  }
+
+  function renderModuleAccess() {
+    const target = $("[data-module-access]");
+    if (!target) return;
+    const access = moduleAccessMap();
+    target.innerHTML = Object.entries(MODULE_PROFILES).map(([key, profile]) => {
+      const enabled = Boolean(access[key]);
+      return `
+        <article class="partner-os-module-card ${enabled ? "is-enabled" : "is-locked"}">
+          <i class="fa-solid ${enabled ? "fa-unlock-keyhole" : "fa-lock"}"></i>
+          <div>
+            <strong>${escape(profile.label)}</strong>
+            <span>${enabled ? "Admin tarafından açık; katalog ve yükleme aktif." : "Görünür, ancak ekleme ve düzenleme kapalı."}</span>
+          </div>
+          <em>${enabled ? "Açık" : "Kilitli"}</em>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function applyModulePermissions() {
+    const form = $("[data-product-form]");
+    const access = moduleAccessMap();
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    const addButton = $("[data-product-add]");
+    if (addButton) {
+      const label = addButton.querySelector("span");
+      if (label) label.textContent = profile.typeLabels[1];
+    }
+    if (!form) return;
+    if (form.elements.catalog_scope) {
+      $all("option", form.elements.catalog_scope).forEach((option) => {
+        const key = normalizeModuleKey(option.value);
+        option.disabled = !access[key];
+        option.textContent = `${catalogProfile(key).label}${access[key] ? "" : " (kilitli)"}`;
+      });
+      form.elements.catalog_scope.value = scope;
+    }
+    const nameLabel = form.querySelector("label:first-child span");
+    if (nameLabel) nameLabel.textContent = `${profile.typeLabels[0]} adı`;
   }
 
   function applyCatalogProfile() {
@@ -388,7 +564,9 @@
     const storeLabel = $("[data-partner-store-label]");
     const productForm = $("[data-product-form]");
     if (storeLink) storeLink.href = profile.href;
-    if (storeLabel) storeLabel.textContent = profile.label;
+    if (storeLabel) storeLabel.textContent = `${profile.shortLabel} Vitrinine Git`;
+    applyModulePermissions();
+    renderModuleAccess();
     if (!productForm || productForm.dataset.catalogProfileReady === "true") return;
     if (productForm.elements.catalog_scope) productForm.elements.catalog_scope.value = scope;
     if (productForm.elements.category && !productForm.elements.category.value) productForm.elements.category.placeholder = profile.category;
@@ -880,12 +1058,11 @@
     }
   }
 
-  async function createProduct(form) {
-    const data = Object.fromEntries(new FormData(form).entries());
-    const scope = ["shop", "market", "food", "service"].includes(data.catalog_scope) ? data.catalog_scope : "shop";
+  function productPayloadFromData(data) {
+    const scope = normalizeModuleKey(data.catalog_scope) || currentCatalogScope();
     const profile = catalogProfile(scope);
     const businessName = state.business?.display_name || state.business?.legal_name || state.access.profile?.full_name || "Allona Partner";
-    const payload = {
+    return {
       name: data.name,
       description: data.description || "",
       category: data.category || profile.category,
@@ -902,44 +1079,242 @@
       slug: core.slugify(`${data.name}-${Date.now()}`),
       coupon_status: scope === "food" ? "Menü kuponu" : scope === "market" ? "Market kuponu" : "Aktif",
       hp_status: scope === "food" ? "HP kazandırır" : scope === "market" ? "Market HP" : "Aktif",
-      sku: core.slugify(`${scope === "market" ? "ALM" : scope === "food" ? "ALY" : scope === "service" ? "ALS" : "ALP"}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
+      sku: data.sku || core.slugify(`${profile.skuPrefix}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
     };
+  }
+
+  async function persistProductPayload(payload, options) {
+    const settings = options || {};
     if (!payload.name || payload.price < 0) {
-      toast("Ürün adı ve fiyat alanını kontrol edin.", "error");
-      return;
+      throw new Error("Ürün adı ve fiyat alanını kontrol edin.");
     }
+    if (!isModuleEnabled(payload.catalog_scope)) {
+      throw new Error(`${catalogProfile(payload.catalog_scope).label} modülü bu partner için kilitli.`);
+    }
+    const created = await App.db.products.upsert(payload);
+    state.products = [created, ...state.products];
+    state.metrics.product_count = state.products.length;
+    state.metrics.active_product_count = state.products.filter((item) => item.status === "active").length;
+    state.metrics.low_stock_count = state.products.filter((item) => Number(item.stock || 0) <= 5).length;
+    if (App.complianceAudit && !settings.skipAudit) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "product_draft_created",
+        severity: "info",
+        resourceType: "product",
+        resourceId: created.id,
+        evidenceTags: ["partner_os", "catalog"],
+        metadata: {
+          category: created.category || payload.category,
+          price: Number(created.price || payload.price || 0),
+          status: created.status || "draft",
+          source: settings.source || "form"
+        }
+      });
+    }
+    return created;
+  }
+
+  async function createProductFromData(data, options) {
+    const payload = productPayloadFromData(data);
+    const created = await persistProductPayload(payload, options);
+    renderProducts();
+    renderKpis();
+    return created;
+  }
+
+  async function createProduct(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const scope = normalizeModuleKey(data.catalog_scope) || currentCatalogScope();
     const button = form.querySelector("button[type='submit']");
     button.disabled = true;
     try {
-      const created = await App.db.products.upsert(payload);
-      state.products = [created, ...state.products];
-      state.metrics.product_count = state.products.length;
-      state.metrics.active_product_count = state.products.filter((item) => item.status === "active").length;
-      state.metrics.low_stock_count = state.products.filter((item) => Number(item.stock || 0) <= 5).length;
-      renderProducts();
-      renderKpis();
-      if (App.complianceAudit) {
-        await App.complianceAudit.record({
-          category: "partner",
-          action: "product_draft_created",
-          severity: "info",
-          resourceType: "product",
-          resourceId: created.id,
-          evidenceTags: ["partner_os", "catalog"],
-          metadata: {
-            category: created.category || payload.category,
-            price: Number(created.price || payload.price || 0),
-            status: created.status || "draft"
-          }
-        });
-      }
+      await createProductFromData(data, { source: "form" });
       form.reset();
+      applyCatalogProfile();
       toast(scope === "market" ? "Market ürünü canlı kataloğa eklendi." : scope === "food" ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
     } catch (error) {
       toast(error.message || "Ürün kaydedilemedi. Partner yetkisi veya ürün şemasını kontrol edin.", "error");
     } finally {
       button.disabled = false;
     }
+  }
+
+  function productTemplateRows() {
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    return [{
+      catalog_scope: scope,
+      name: scope === "food" ? "Cheeseburger Menü" : scope === "service" ? "Standart Hizmet Paketi" : "Örnek Ürün",
+      category: profile.category,
+      brand: state.business?.display_name || profile.brand,
+      price: 199.9,
+      stock: scope === "service" ? 1 : 25,
+      status: "draft",
+      image_url: profile.image,
+      description: "Excel ile yükleme örneği",
+      sku: `${profile.skuPrefix}-ORNEK-001`
+    }];
+  }
+
+  function rowsFromProducts() {
+    return state.products.map((item) => ({
+      catalog_scope: item.catalog_scope || item.module_key || currentCatalogScope(),
+      name: item.name || item.title || "",
+      category: item.category || "",
+      brand: item.brand || "",
+      price: Number(item.price || 0),
+      stock: Number(item.stock || 0),
+      status: item.status || "draft",
+      image_url: item.image_url || "",
+      description: item.description || "",
+      sku: item.sku || ""
+    }));
+  }
+
+  function downloadBlob(blob, filename) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function downloadRows(rows, filename, sheetName) {
+    const normalizedRows = rows.length ? rows : [PRODUCT_TEMPLATE_COLUMNS.reduce((row, key) => ({ ...row, [key]: "" }), {})];
+    if (window.XLSX) {
+      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: PRODUCT_TEMPLATE_COLUMNS });
+      const workbook = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      window.XLSX.writeFile(workbook, filename);
+      return;
+    }
+    const csv = [
+      PRODUCT_TEMPLATE_COLUMNS.join(";"),
+      ...normalizedRows.map((row) => PRODUCT_TEMPLATE_COLUMNS.map((key) => {
+        const value = String(row[key] ?? "");
+        return `"${value.replace(/"/g, '""')}"`;
+      }).join(";"))
+    ].join("\n");
+    downloadBlob(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }), filename.replace(/\.xlsx$/i, ".csv"));
+  }
+
+  function parseDelimited(text) {
+    const firstLine = String(text || "").split(/\r?\n/).find((line) => line.trim()) || "";
+    const delimiter = [";", "\t", ","].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let quoted = false;
+    for (let index = 0; index < text.length; index += 1) {
+      const char = text[index];
+      const next = text[index + 1];
+      if (char === '"' && quoted && next === '"') {
+        cell += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = !quoted;
+      } else if (char === delimiter && !quoted) {
+        row.push(cell);
+        cell = "";
+      } else if ((char === "\n" || char === "\r") && !quoted) {
+        if (char === "\r" && next === "\n") index += 1;
+        row.push(cell);
+        if (row.some((value) => String(value).trim())) rows.push(row);
+        row = [];
+        cell = "";
+      } else {
+        cell += char;
+      }
+    }
+    row.push(cell);
+    if (row.some((value) => String(value).trim())) rows.push(row);
+    const headers = (rows.shift() || []).map((header) => String(header || "").trim());
+    return rows.map((values) => headers.reduce((entry, header, index) => {
+      entry[header] = values[index] ?? "";
+      return entry;
+    }, {}));
+  }
+
+  function normalizeProductRow(row) {
+    const aliases = {
+      catalog_scope: ["catalog_scope", "module", "module_key", "kanal", "yayın kanalı", "yayin kanali", "modül", "modul"],
+      name: ["name", "title", "ürün adı", "urun adi", "hizmet adı", "hizmet adi", "ad"],
+      category: ["category", "kategori"],
+      brand: ["brand", "marka", "restoran", "restoran / marka adı", "restoran / marka adi"],
+      price: ["price", "fiyat", "tutar"],
+      stock: ["stock", "stok", "kontenjan"],
+      status: ["status", "durum", "yayın durumu", "yayin durumu"],
+      image_url: ["image_url", "görsel url", "gorsel url", "resim", "fotoğraf", "fotograf"],
+      description: ["description", "açıklama", "aciklama"],
+      sku: ["sku", "stok kodu", "ürün kodu", "urun kodu"]
+    };
+    const normalized = {};
+    const source = Object.entries(row || {}).reduce((map, [key, value]) => {
+      map[String(key || "").trim().toLocaleLowerCase("tr-TR")] = value;
+      return map;
+    }, {});
+    Object.entries(aliases).forEach(([target, keys]) => {
+      const found = keys.find((key) => Object.prototype.hasOwnProperty.call(source, key));
+      normalized[target] = found ? source[found] : "";
+    });
+    return normalized;
+  }
+
+  async function readProductFile(file) {
+    if (/\.xlsx?$/i.test(file.name) && !window.XLSX) {
+      throw new Error("Excel motoru yüklenemedi. Dosyayı CSV olarak kaydedip tekrar deneyin.");
+    }
+    if (window.XLSX && /\.xlsx?$/i.test(file.name)) {
+      const buffer = await file.arrayBuffer();
+      const workbook = window.XLSX.read(buffer, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      return window.XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    }
+    const text = await file.text();
+    return parseDelimited(text);
+  }
+
+  function showBulkResult(result) {
+    const target = $("[data-bulk-result]");
+    if (!target) return;
+    target.hidden = false;
+    target.innerHTML = `
+      <strong>${result.created} kayıt eklendi, ${result.failed} satır atlandı.</strong>
+      ${result.errors.length ? `<ul>${result.errors.slice(0, 8).map((error) => `<li>${escape(error)}</li>`).join("")}</ul>` : "<span>Yükleme tamamlandı.</span>"}
+    `;
+  }
+
+  async function importProductFile(file) {
+    if (!file) return;
+    const rows = await readProductFile(file);
+    const result = { created: 0, failed: 0, errors: [] };
+    for (const [index, row] of rows.entries()) {
+      try {
+        await createProductFromData(normalizeProductRow(row), { source: "excel", skipAudit: true });
+        result.created += 1;
+      } catch (error) {
+        result.failed += 1;
+        result.errors.push(`Satır ${index + 2}: ${error.message || "Kaydedilemedi."}`);
+      }
+    }
+    if (App.complianceAudit && result.created) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "product_bulk_imported",
+        severity: "info",
+        resourceType: "product",
+        resourceId: state.business?.id || state.access.user.id,
+        evidenceTags: ["partner_os", "catalog", "excel"],
+        metadata: { created: result.created, failed: result.failed, file_name: file.name }
+      });
+    }
+    renderProducts();
+    renderKpis();
+    showBulkResult(result);
+    toast(result.failed ? "Toplu yükleme tamamlandı; bazı satırlar atlandı." : "Toplu ürün yükleme tamamlandı.", result.failed ? "warning" : "success");
   }
 
   async function saveProfile(form) {
@@ -1089,7 +1464,10 @@
       const refresh = event.target.closest("[data-refresh-partner]");
       const logout = event.target.closest("[data-partner-logout]");
       const growth = event.target.closest("[data-growth-action]");
-      const productDemo = event.target.closest("[data-product-demo]");
+      const productAdd = event.target.closest("[data-product-add]");
+      const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
+      const downloadTemplate = event.target.closest("[data-download-template]");
+      const exportProducts = event.target.closest("[data-export-products]");
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
@@ -1104,7 +1482,23 @@
           form.elements.title.focus();
         }
       }
-      if (productDemo) toast("Aşağıdaki form ürünü yeni şemaya uygun taslak olarak kaydeder.");
+      if (productAdd) {
+        activatePanel("products");
+        const form = $("[data-product-form]");
+        if (form && form.elements.name) form.elements.name.focus();
+      }
+      if (bulkTrigger) {
+        const input = $("[data-bulk-product-input]");
+        if (input) input.click();
+      }
+      if (downloadTemplate) {
+        downloadRows(productTemplateRows(), "allona-partner-urun-sablonu.xlsx", "UrunSablonu");
+        toast("Excel yükleme şablonu indirildi.");
+      }
+      if (exportProducts) {
+        downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
+        toast("Katalog Excel dosyası indirildi.");
+      }
     });
 
     const paymentForm = $("[data-payment-form]");
@@ -1120,6 +1514,19 @@
       productForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createProduct(productForm);
+      });
+    }
+
+    const bulkInput = $("[data-bulk-product-input]");
+    if (bulkInput) {
+      bulkInput.addEventListener("change", async () => {
+        const file = bulkInput.files && bulkInput.files[0];
+        bulkInput.value = "";
+        try {
+          await importProductFile(file);
+        } catch (error) {
+          toast(error.message || "Excel dosyası okunamadı.", "error");
+        }
       });
     }
 

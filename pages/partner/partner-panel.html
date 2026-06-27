@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260627-partner-pro1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260627-partner-permissions1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -268,8 +268,18 @@
                 <p>Katalog</p>
                 <h2>Ürün ve Hizmetler</h2>
               </div>
-              <button type="button" data-product-demo>Yeni ürün akışı</button>
+              <div class="partner-os-panel-actions">
+                <button type="button" data-product-add><i class="fa-solid fa-plus"></i><span>Ürün / Hizmet Ekle</span></button>
+                <button type="button" data-bulk-product-trigger><i class="fa-solid fa-file-excel"></i><span>Toplu Ürün Ekle</span></button>
+              </div>
             </div>
+            <div class="partner-os-module-access" data-module-access></div>
+            <div class="partner-os-upload-actions">
+              <button type="button" data-download-template><i class="fa-solid fa-download"></i><span>Excel Şablonu İndir</span></button>
+              <button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Excel'e Aktar</span></button>
+              <input type="file" data-bulk-product-input accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
+            </div>
+            <div class="partner-os-bulk-result" data-bulk-result hidden></div>
             <form class="partner-os-product-form" data-product-form>
               <label><span>Ürün / hizmet adı</span><input name="name" required placeholder="Örn. Şehir içi taksi transferi"></label>
               <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="market">Allona Market</option><option value="food">Allona Yemek</option><option value="service">Hizmet / Ekosistem</option></select></label>
@@ -528,7 +538,8 @@
   <script src="../../js/auth.js?v=20260620-account1" defer></script>
   <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/partner-os.js?v=20260627-partner-pro1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="../../js/partner-os.js?v=20260627-partner-permissions1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>
