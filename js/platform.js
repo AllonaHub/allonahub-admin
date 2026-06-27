@@ -11,6 +11,21 @@
       return "20260619-live9";
     }
   })();
+  const SERVICE_WORKER_VERSION = "20260628-heading2";
+
+  const refreshServiceWorker = () => {
+    if(!("serviceWorker" in navigator)){return}
+    if(!(location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){return}
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register(`/sw.js?v=${SERVICE_WORKER_VERSION}`, {scope: "/"})
+        .then(registration => registration.update())
+        .catch(() => undefined);
+    });
+  };
+
+  refreshServiceWorker();
+
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
