@@ -1228,7 +1228,7 @@
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
-      ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Onay kaydı açık, otomatik GitOps kapalı", "<button type=\"button\" data-release-open>Onay ver</button>", gitops.enabled ? "high" : "medium"),
+      ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Bekleyen onay varsa detay incelemesi gerekir", "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenleri incele</button>", gitops.enabled ? "high" : "medium"),
       ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
   }
@@ -1409,20 +1409,19 @@
 
   async function loadOwnerApprovals() {
     ownerLoading("Yayın Onayları");
-    const payload = await api("/v1/control-center/release-approvals?limit=80");
+    const payload = await api("/v1/control-center/release-approvals?limit=80&status=pending");
     state.approvals = payload.approvals || [];
-    const header = ownerLine("Yeni onay", "Main commit/push, deploy veya migration için owner onayı oluştur.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical");
     const rows = state.approvals.map((item) => {
-      const manualPending = releaseApprovalManualPending(item);
-      const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
       return ownerLine(
-        `${item.approval_type} / ${statusText}`,
-        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "-")}`,
+        `${item.approval_type} / onay bekliyor`,
+        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "Açıklama yok")}`,
         `<button type="button" data-approval-detail="${escape(item.id)}">Detay</button>`,
-        manualPending ? "medium" : item.risk_level
+        item.risk_level
       );
     });
-    ownerSetOutput(header + (rows.length ? rows.join("") : ownerEmpty("Yayın onayı kaydı yok.")));
+    ownerSetOutput(rows.length
+      ? ownerLine("Bekleyen yayın onayları", `${formatNumber(rows.length)} kayıt detay incelemesi bekliyor.`, "", "critical") + rows.join("")
+      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "", "low"));
   }
 
   function releaseApprovalManualPending(approval) {
@@ -1557,7 +1556,7 @@
     const future = state.futureOperations.map((item) => ownerLine(
       item.label || item.key,
       `${escape(item.status || "planned")} / risk ${escape(item.risk_level || "medium")}`,
-      "<button type=\"button\" data-release-open>Yayın planı</button>",
+      "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>",
       item.risk_level
     )).join("");
     ownerSetOutput(
@@ -1576,7 +1575,7 @@
       ownerLine("Durum", `${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / kaynak ${escape(item.source || "-")}`, "", "medium"),
       ownerLine("Kontrol", `Aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / başvuru ${escape(item.application_status || "-")}`, "<button type=\"button\" data-view-jump=\"modules\">Ayarlar</button>", "medium"),
       ownerLine("Operasyonlar", escape((item.operations || []).join(", ") || "-"), "", item.maturity === "controlled" ? "high" : "low"),
-      ownerLine("Yayın", "Bu modüldeki kritik içerik veya backend değişikliği Yayın Onayları üzerinden geçirilir.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical")
+      ownerLine("Yayın", "Bu modüldeki kritik içerik veya backend değişikliği Yayın Onayları üzerinden geçirilir.", "<button type=\"button\" data-view-jump=\"approvals\">Onayları incele</button>", "critical")
     ].join(""));
   }
 
@@ -1863,14 +1862,44 @@
     if (!item) return;
     const manualPending = releaseApprovalManualPending(item);
     const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
+    const canApprove = item.status === "pending";
     openDrawer("Yayın Onayı", [
       ownerLine("Tip", escape(item.approval_type || "-"), "", item.risk_level),
       ownerLine("Durum", escape(statusText || "-"), manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "", manualPending ? "medium" : item.risk_level),
       ownerLine("Hedef", escape(item.target_ref || "-"), "", "medium"),
       ownerLine("Özet", escape(item.target_summary || "-"), "", "medium"),
+      ownerLine("Metadata", escape(JSON.stringify(item.metadata || {}).slice(0, 1200)), "", "medium"),
       ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(item.webhook_response || {}).slice(0, 500))}`, "", item.status === "failed" && !manualPending ? "critical" : "low"),
-      ownerLine("Tarih", formatDate(item.created_at), "", "low")
+      ownerLine("Tarih", formatDate(item.created_at), "", "low"),
+      canApprove ? ownerLine("Karar", "Bu kaydı inceledikten sonra owner onayı verebilirsin.", `<button type="button" data-approval-approve="${escape(item.id)}">Owner onayı ver</button>`, "critical") : ""
     ].join(""));
+  }
+
+  async function approveReleaseApproval(button) {
+    const approvalId = button.dataset.approvalApprove;
+    const item = (state.approvals || []).find((approval) => approval.id === approvalId);
+    if (!item) return;
+    const message = `${item.approval_type || "release"} / ${item.target_ref || "main"} için owner onayı verilecek.`;
+    await runConfirmed(message, async (reason) => {
+      const result = await api(`/v1/control-center/release-approvals/${encodeURIComponent(approvalId)}/approve`, {
+        method: "POST",
+        body: { reason }
+      });
+      const approval = result.approval || {};
+      const response = approval.webhook_response || {};
+      const status = approval.status || "approved";
+      openDrawer("Yayın Onayı Sonucu", [
+        ownerLine("Durum", escape(status), status === "dispatched" ? "deploy hattına gönderildi" : "onay kaydedildi", status === "failed" ? "critical" : "low"),
+        ownerLine("Hedef", `${escape(approval.target_ref || "-")} / ${escape(approval.approval_type || "-")}`, "", "medium"),
+        ownerLine("Özet", escape(approval.target_summary || "-"), "", "medium"),
+        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", status === "failed" ? "high" : "low"),
+        ownerLine("Mesaj", escape(response.message || response.body || "Owner onayı kaydedildi."), "", status === "failed" ? "high" : "low")
+      ].join(""));
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   function showEventDetail(id) {
@@ -1973,6 +2002,9 @@
 
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
+
+        const approvalApprove = eventClosest(event, "[data-approval-approve]");
+        if (approvalApprove) await approveReleaseApproval(approvalApprove);
 
         const eventDetail = eventClosest(event, "[data-event-detail]");
         if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);

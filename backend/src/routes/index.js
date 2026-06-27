@@ -452,6 +452,10 @@ const superAdminReleaseApprovalSchema = z.object({
   metadata: z.record(z.unknown()).optional().default({})
 });
 
+const superAdminReleaseApprovalDecisionSchema = z.object({
+  reason: z.string().trim().min(6).max(1200)
+});
+
 const superAdminPermissionUpdateSchema = z.object({
   role: z.enum(SUPER_ADMIN_GRANTABLE_ROLES).optional(),
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -5471,6 +5475,104 @@ export function registerRoutes(app) {
         dispatched: dispatch.dispatched,
         webhook_status: dispatch.webhook_status,
         gitops_enabled: config.superAdmin.gitOpsEnabled,
+        dispatch_update_warning: dispatchUpdateWarning?.message || null
+      }
+    });
+
+    return {
+      ok: true,
+      approval: releaseApprovalPublic(approval),
+      dispatch,
+      schema_warnings: dispatchUpdateWarning ? [dispatchUpdateWarning] : []
+    };
+  });
+
+  superPost("/release-approvals/:approvalId/approve", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.approve");
+    const { approvalId } = z.object({ approvalId: uuidSchema }).parse(request.params || {});
+    const body = superAdminReleaseApprovalDecisionSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .select("*")
+      .eq("id", approvalId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) {
+        throw httpError("super_admin_release_approvals migration henüz uygulanmamış.", 503);
+      }
+      throw beforeError;
+    }
+    if (!before) throw httpError("Yayın onayı kaydı bulunamadı.", 404);
+    if (before.status !== "pending") {
+      throw httpError("Bu yayın onayı zaten karara bağlanmış.", 409);
+    }
+
+    const approvedAt = new Date().toISOString();
+    const { data: approved, error: approveError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .update({
+        status: "approved",
+        approved_by: ctx.user.id,
+        approved_at: approvedAt,
+        metadata: normalizeJsonValue({
+          ...(before.metadata || {}),
+          owner_source: ctx.superAdminOwner?.source || "unknown",
+          approval_reason: body.reason,
+          approved_from: "super_admin_detail_review"
+        }),
+        updated_at: approvedAt
+      })
+      .eq("id", approvalId)
+      .eq("status", "pending")
+      .select("*")
+      .single();
+    if (approveError) throw approveError;
+
+    const dispatch = await dispatchSuperAdminReleaseApproval(approved, request);
+    const updatePayload = {
+      status: dispatch.status,
+      webhook_status: dispatch.webhook_status,
+      webhook_response: normalizeJsonValue(dispatch.webhook_response || {}),
+      dispatched_at: dispatch.dispatched ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    };
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .update(updatePayload)
+      .eq("id", approvalId)
+      .select("*")
+      .single();
+    let dispatchUpdateWarning = null;
+    let approval = updated;
+    if (updateError) {
+      if (!looksLikeMissingSchema(updateError)) throw updateError;
+      dispatchUpdateWarning = schemaWarning("super_admin_release_approvals_dispatch_columns", updateError);
+      approval = {
+        ...approved,
+        webhook_status: dispatch.webhook_status,
+        webhook_response: dispatch.webhook_response || {},
+        status: dispatch.status || approved.status
+      };
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.release_approval_approved",
+      resourceType: "super_admin_release_approval",
+      resourceId: approvalId,
+      severity: superAdminAuditSeverity(approval.risk_level),
+      source: "admin",
+      purpose: "release_control",
+      evidenceTags: ["super_admin", "release_approval", "owner_approved", approval.approval_type],
+      metadata: {
+        approval_type: approval.approval_type,
+        target_ref: approval.target_ref,
+        status: approval.status,
+        dispatched: dispatch.dispatched,
+        webhook_status: dispatch.webhook_status,
+        reason: body.reason,
         dispatch_update_warning: dispatchUpdateWarning?.message || null
       }
     });
