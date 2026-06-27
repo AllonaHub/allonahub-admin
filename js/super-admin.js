@@ -1421,7 +1421,7 @@
     });
     ownerSetOutput(rows.length
       ? ownerLine("Bekleyen yayın onayları", `${formatNumber(rows.length)} kayıt detay incelemesi bekliyor.`, "", "critical") + rows.join("")
-      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "<button type=\"button\" data-release-open>Yeni onay isteği oluştur</button>", "low"));
+      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "", "low"));
   }
 
   function releaseApprovalManualPending(approval) {
@@ -1828,16 +1828,14 @@
           : (waitingOwner ? "Yayın onayı isteği oluşturuldu; detay incelemesi bekliyor." : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`)),
         okStatus ? "ok" : "error"
       );
-      setReleaseStatus("Yayın onayı isteği oluşturuldu.", "ok");
-      openDrawer("Yayın Onayı İsteği", [
-        ownerLine("Durum", escape(status), waitingOwner ? "detay incelemesi ve owner onayı bekliyor" : (released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı")), waitingOwner ? "critical" : (released ? "low" : (manualPending ? "medium" : "critical"))),
-        ownerLine("Hedef", `${escape(approval.target_ref || "-")} / ${escape(approval.approval_type || "-")}`, escape(approval.target_summary || "-"), "medium"),
-        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
-        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı isteği oluşturuldu."), "<button type=\"button\" data-view-jump=\"approvals\">Bekleyen onayı incele</button>", waitingOwner ? "critical" : (released ? "low" : (manualPending ? "medium" : "high"))),
-        warnings.map((warning) => ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")).join("")
-      ].join(""));
       closeReleaseModal();
       await jumpOwnerView("approvals");
+      if (waitingOwner && approval.id) showApprovalDetail(approval.id);
+      if (warnings.length) {
+        openDrawer("Yayın Onayı Uyarısı", warnings.map((warning) => (
+          ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")
+        )).join(""));
+      }
       form.reset();
       const targetRef = form.querySelector("[name='target_ref']");
       if (targetRef) targetRef.value = "main";
