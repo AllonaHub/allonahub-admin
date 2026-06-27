@@ -46,21 +46,46 @@ function severityAllowed(severity) {
   return (SEVERITY_WEIGHT[normalized] || 0) >= (SEVERITY_WEIGHT[min] || 3);
 }
 
-function isRedZoneEvent(event) {
-  const raw = [
+function eventText(event) {
+  return [
     event.severity,
     event.action,
     event.resourceType,
     event.resourceId,
     event.actorRole,
     event.ipAddress,
+    event.userAgent,
     JSON.stringify(event.metadata || {})
   ].join(" ").toLowerCase();
-  return normalizeSeverity(event.severity) === "critical" && (
-    /super_admin|owner|admin\.boundary_denied|authz\.denied|permission|role|mfa/.test(raw) ||
+}
+
+function isTrustedAdminEvent(event) {
+  const role = String(event.actorRole || "").toLowerCase();
+  const action = String(event.action || "").toLowerCase();
+  if (!event.actorId || !["admin", "super_admin"].includes(role)) return false;
+  if (!/^(admin\.ops\.|super_admin\.)/.test(action)) return false;
+
+  const raw = eventText(event);
+  if (
+    /boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied/.test(raw) ||
+    /mfa_required|config_missing|missing|mismatch|unauthorized|forbidden/.test(raw) ||
+    /failed|blocked|suspicious|attack|intrusion|sql|xss|csrf|bruteforce/.test(raw)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isRedZoneEvent(event) {
+  if (normalizeSeverity(event.severity) !== "critical") return false;
+  if (isTrustedAdminEvent(event)) return false;
+  const raw = eventText(event);
+  return (
+    /admin\.boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission|mfa_required/.test(raw) ||
     /payment|finance|payout|iyzico|checkout|refund|wallet/.test(raw) ||
     /secret|webhook|token|service_role|api_key|gitops|release/.test(raw) ||
-    /attack|blocked|suspicious|sql|xss|csrf|intrusion/.test(raw)
+    /attack|blocked|suspicious|sql|xss|csrf|intrusion|bruteforce/.test(raw)
   );
 }
 
@@ -120,7 +145,7 @@ function activateRuntimeProtection(event, payload) {
   if (/order|checkout|cart/.test(raw)) {
     runtimeProtection.ordersLocked = true;
   }
-  if (/super_admin|owner|admin\.boundary_denied|authz\.denied|secret|service_role|api_key|webhook|gitops|release|attack|intrusion/.test(raw)) {
+  if (/admin\.boundary_denied|authz\.denied|auth\.denied|secret|service_role|api_key|webhook|gitops|release|attack|intrusion|suspicious|blocked/.test(raw)) {
     runtimeProtection.apiLocked = true;
     runtimeProtection.sessionRevokeSuggested = true;
     runtimeProtection.maintenanceSuggested = true;
@@ -347,7 +372,7 @@ export function securityAlertStatus() {
 export async function sendSecurityAlert(event, options = {}) {
   const payload = buildPayload(event, options.channel || "security");
   const alertEvent = { ...event, channel: options.channel };
-  if (options.force || isRedZoneEvent(alertEvent)) {
+  if ((options.force || isRedZoneEvent(alertEvent)) && options.activateIncident !== false) {
     activateIncident(alertEvent, payload);
   }
   if (!options.force && !shouldSend(alertEvent)) {

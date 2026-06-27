@@ -78,9 +78,19 @@
     return item.message || item.reason || item.summary || item.resource_type || item.source || "";
   }
 
+  function trustedAdminItem(item) {
+    const raw = `${item.action || ""} ${item.actor_role || ""} ${item.role || ""} ${item.message || ""} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
+    if (!/(^| )(admin\.ops\.|super_admin\.)/.test(raw)) return false;
+    if (/boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied/.test(raw)) return false;
+    if (/mfa_required|config_missing|missing|mismatch|unauthorized|forbidden/.test(raw)) return false;
+    if (/failed|blocked|suspicious|attack|intrusion|sql|xss|csrf|bruteforce/.test(raw)) return false;
+    return true;
+  }
+
   function classifyItem(item) {
     const raw = `${item.severity || ""} ${item.action || ""} ${item.flag_type || ""} ${item.title || ""} ${item.message || ""}`.toLowerCase();
-    if (/critical|authz\.denied|admin\.boundary_denied|owner|super_admin|webhook|secret|attack|blocked|suspicious|payment|finance/.test(raw)) {
+    if (trustedAdminItem(item)) return "low";
+    if (/critical|authz\.denied|admin\.boundary_denied|owner_denied|role_denied|webhook|secret|attack|blocked|suspicious|payment|finance/.test(raw)) {
       return "critical";
     }
     if (/warning|auth\.denied|mfa|required|failed|risk|flag|denied/.test(raw)) return "high";
@@ -241,7 +251,9 @@
 
   function activeIncidentFromStatus(payload) {
     const incident = payload && payload.alarm && payload.alarm.incident;
-    return incident && incident.active ? incident : null;
+    if (!incident || !incident.active) return null;
+    if (incident.silencedUntil && Date.parse(incident.silencedUntil) > Date.now()) return null;
+    return incident;
   }
 
   function overlayVisibleIncident(level, items, statusPayload) {

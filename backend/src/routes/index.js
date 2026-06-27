@@ -5228,7 +5228,7 @@ export function registerRoutes(app) {
         owner_source: ctx.superAdminOwner?.source || "unknown",
         requested_from: "super_admin_panel"
       }
-    }, { force: true, channel: "manual_test" });
+    }, { force: true, channel: "manual_test", activateIncident: false });
     await auditEvent({
       request,
       actorId: ctx.user.id,
