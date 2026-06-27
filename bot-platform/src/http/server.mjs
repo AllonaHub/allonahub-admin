@@ -69,6 +69,44 @@ function normalizeWhatsappWebhook(body) {
   };
 }
 
+const quickReplyActionLinks = new Map([
+  ['CV olustur', '/pages/career/career-cv-form.html'],
+  ['Kariyer basvurusu', '/pages/career/allonakariyer.html'],
+  ['Denizcilik CV', '/pages/career/cv-form.html'],
+  ['Is ilanlari', '/pages/career/allonakariyer.html'],
+  ['Denizcilik isleri', '/pages/ecosystem/allonadenizcilik.html'],
+  ['AllonaHub nedir', '/pages/company/hakkimizda.html'],
+  ['Hakkimizda', '/pages/company/hakkimizda.html'],
+  ['Hizmetleri goster', '/index.html#modules'],
+  ['SSS', '/pages/company/destek.html'],
+  ['Destek merkezi', '/pages/company/destek.html'],
+  ['Destek talebi ac', '/pages/company/destek.html'],
+  ['Insan destegi', '/pages/company/destek.html'],
+  ['Iletisim', '/pages/company/iletisim.html'],
+  ['Partner olmak istiyorum', '/pages/partner/partner.html'],
+  ['Partner rehberi', '/pages/partner/partner.html'],
+  ['Akademi', '/allonahub-akademi.html'],
+  ['Kariyer', '/pages/career/allonakariyer.html']
+]);
+
+function quickRepliesToActions(quickReplies = []) {
+  return (Array.isArray(quickReplies) ? quickReplies : [])
+    .map((label) => {
+      const url = quickReplyActionLinks.get(label);
+      return url ? { type: 'open_url', label, url } : null;
+    })
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function toAssistantMessageContract(result) {
+  return {
+    ...result,
+    message: result.answer,
+    actions: quickRepliesToActions(result.quickReplies)
+  };
+}
+
 export function createHttpServer({ config, orchestrator, rateLimiter, reportBuilder, eventStore }) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
@@ -142,6 +180,12 @@ export function createHttpServer({ config, orchestrator, rateLimiter, reportBuil
 
       if (url.pathname === '/api/chat') {
         sendJson(response, 200, await orchestrator.handleMessage(normalizeGenericWebhook(body)), corsHeaders());
+        return;
+      }
+
+      if (url.pathname === '/v1/assistant/messages') {
+        const result = await orchestrator.handleMessage(normalizeGenericWebhook(body));
+        sendJson(response, 200, toAssistantMessageContract(result), corsHeaders());
         return;
       }
 

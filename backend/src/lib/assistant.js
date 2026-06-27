@@ -292,21 +292,63 @@ const CORE_TOPICS = [
       { label: "Partner Ol", link: "partner" },
       { label: "Destek", link: "support" }
     ],
-    text: ({ platformUrl }) => `Merhabalar, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, HP/kupon, partnerlik, CV-kariyer, akademi, hesap ve destek konularında yardımcı olurum. Ne yapmak istediğinizi kısaca yazın, sizi doğru sayfaya yönlendireyim: ${platformUrl("services")}`
+    text: ({ platformUrl, context }) => hasConversationHistory(context)
+      ? `Tekrar merhaba, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon ve destek konularında sizi doğru adıma yönlendirebilirim. Kısaca ne yapmak istediğinizi yazın; hizmetleri de buradan inceleyebilirsiniz: ${platformUrl("services")}`
+      : `Merhabalar, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, HP/kupon, partnerlik, CV-kariyer, denizcilik, akademi, hesap ve destek konularında yardımcı olurum. Ne yapmak istediğinizi kısaca yazın, sizi doğru sayfaya yönlendireyim: ${platformUrl("services")}`
   },
   {
-    key: "platform_overview",
-    label: "AllonaHub ekosistemi",
-    confidence: 0.82,
-    terms: ["allonahub nedir", "platform nedir", "ekosistem", "hizmetler", "modüller", "neler var", "ne işe yarar"],
+    key: "wellbeing",
+    label: "Sıcak sohbet",
+    confidence: 0.84,
+    terms: ["nasılsın", "nasilsin", "nasıl gidiyor", "nasil gidiyor", "iyi misin", "keyfin nasıl", "keyfin nasil", "bugün nasılsın", "bugun nasilsin"],
     link: "services",
     actions: [
       { label: "Hizmetler", link: "services" },
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Denizcilik", link: "maritime" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "İyiyim, teşekkür ederim. Umarım senin de günün güzel geçiyordur. AllonaHub deneyimini daha kolay, kazandıran ve çok katmanlı hale getirmek için buradayım; alışverişten kariyere, denizcilikten partnerliğe kadar sana uygun yolu birlikte seçebiliriz. Ne yapmak istediğini yaz, ben sıcak ve net şekilde yönlendireyim."
+  },
+  {
+    key: "thanks",
+    label: "Teşekkür",
+    confidence: 0.8,
+    terms: ["teşekkür", "tesekkur", "sağ ol", "sag ol", "eyvallah", "harika", "çok iyi", "cok iyi"],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "Rica ederim, burada sizin için varım. İsterseniz şimdi CV, denizcilik, partnerlik, sipariş, akademi veya destek konularından biriyle devam edebiliriz."
+  },
+  {
+    key: "platform_overview",
+    label: "AllonaHub hakkında",
+    confidence: 0.82,
+    terms: ["allonahub nedir", "allona hub nedir", "allonahub kimdir", "allona hub kimdir", "hakkımızda", "hakkimizda", "hakkınızda", "hakkinizda", "platform nedir", "ekosistem", "hizmetler", "modüller", "neler var", "ne işe yarar"],
+    link: "about",
+    actions: [
+      { label: "Hakkımızda", link: "about" },
+      { label: "Hizmetler", link: "services" },
+      { label: "Destek / SSS", link: "support" },
       { label: "Kariyer", link: "career" },
-      { label: "Partner Ol", link: "partner" },
       { label: "Akademi", link: "academy" }
     ],
-    text: ({ platformUrl }) => `Merhabalar, memnuniyetle anlatayım. AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, HP/kupon, partner ve destek hizmetlerini tek hesapta toplayan dijital ekosistemdir. Tüm modülleri buradan keşfedebilirsiniz: ${platformUrl("services")}`
+    text: ({ platformUrl }) => `Memnuniyetle anlatayım. AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, akademi, HP/kupon, partnerlik ve destek katmanlarını tek ekosistemde toplayan dijital platformdur. Kurumsal bilgi için Hakkımızda sayfasına, sık sorulan konular için destek alanına geçebilirsiniz: ${platformUrl("about")} | ${platformUrl("support")}`
+  },
+  {
+    key: "faq_help",
+    label: "SSS ve yardım",
+    confidence: 0.84,
+    terms: ["sss", "sıkça sorulan", "sikca sorulan", "sık sorulan", "sik sorulan", "en çok sorulan", "en cok sorulan", "yardım merkezi", "yardim merkezi", "nasıl kullanılır", "nasil kullanilir", "nasıl yapabilirim", "nasil yapabilirim", "nasıl yaparım", "nasil yaparim"],
+    link: "support",
+    actions: [
+      { label: "Destek / SSS", link: "support" },
+      { label: "İletişim", link: "contact" },
+      { label: "Hizmetler", link: "services" }
+    ],
+    text: ({ platformUrl }) => `Sık sorulan konularda size hızlıca yol gösterebilirim: hesap, sipariş, ödeme/iade, HP-kupon, partnerlik, CV-kariyer, akademi ve destek. Genel destek ve SSS yönlendirmesi için: ${platformUrl("support")} Sorunuzu tek cümleyle yazarsanız cevabı doğrudan o başlığa göre hazırlarım.`
   },
   {
     key: "account_access",

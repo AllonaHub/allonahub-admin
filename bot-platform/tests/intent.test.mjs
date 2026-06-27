@@ -14,6 +14,12 @@ test('classifies mall guide messages', () => {
   assert.equal(result.intent, 'mall_guide');
 });
 
+test('classifies warm conversation and platform questions', () => {
+  assert.equal(classifyIntent('Nasılsın bugün?').intent, 'wellbeing');
+  assert.equal(classifyIntent('AllonaHub kimdir, hakkınızda bilgi verir misin?').intent, 'about_platform');
+  assert.equal(classifyIntent('CV oluşturmak istiyorum').intent, 'career_cv');
+});
+
 test('returns unknown for unrelated messages', () => {
   const result = classifyIntent('Bugun hava nasil');
   assert.equal(result.intent, 'unknown');

@@ -1,5 +1,35 @@
 const intentDefinitions = [
   {
+    intent: 'wellbeing',
+    priority: 'low',
+    keywords: ['nasilsin', 'nasil gidiyor', 'iyi misin', 'keyfin nasil', 'bugun nasilsin']
+  },
+  {
+    intent: 'thanks',
+    priority: 'low',
+    keywords: ['tesekkur', 'tesekkurler', 'sag ol', 'eyvallah', 'harika']
+  },
+  {
+    intent: 'about_platform',
+    priority: 'medium',
+    keywords: ['allonahub nedir', 'allona hub nedir', 'allonahub kimdir', 'hakkimizda', 'hakkinda', 'hakkinizda', 'platform nedir', 'ekosistem nedir']
+  },
+  {
+    intent: 'faq_help',
+    priority: 'medium',
+    keywords: ['sss', 'sikca sorulan', 'sik sorulan', 'en cok sorulan', 'yardim merkezi', 'nasil kullanilir']
+  },
+  {
+    intent: 'career_cv',
+    priority: 'medium',
+    keywords: ['cv', 'ozgecmis', 'kariyer', 'is basvurusu', 'is ilani', 'is ariyorum', 'cv olustur']
+  },
+  {
+    intent: 'academy',
+    priority: 'medium',
+    keywords: ['akademi', 'egitim', 'kurs', 'sertifika', 'rehber', 'webinar']
+  },
+  {
     intent: 'taxi_support',
     priority: 'high',
     keywords: ['taksi', 'yolculuk', 'surucu', 'ucret', 'odeme', 'iptal', 'rota', 'konum']
@@ -74,6 +104,14 @@ const intentDefinitions = [
 function normalize(value) {
   return String(value ?? '')
     .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();

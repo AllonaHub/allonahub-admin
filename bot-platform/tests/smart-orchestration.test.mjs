@@ -78,3 +78,33 @@ test('returns a guided answer for mall campaign questions', async () => {
   assert.equal(response.smart.nextBestAction, 'ask_location_or_store');
   assert.match(response.answer, /sehir, AVM adi veya magaza/);
 });
+
+test('answers warm small talk without paid AI', async () => {
+  const app = await appWithTempStorage();
+  const response = await app.orchestrator.handleMessage({
+    conversationId: 'smart-wellbeing',
+    channel: 'test',
+    message: 'Nasılsın?',
+    user: { externalUserId: 'customer-4' }
+  });
+
+  assert.equal(response.intent, 'wellbeing');
+  assert.equal(response.agent.cost.externalCalls, 0);
+  assert.match(response.answer, /Iyiyim, tesekkur ederim/);
+  assert.match(response.answer, /AllonaHub deneyimini/);
+});
+
+test('routes about questions to company and service pages', async () => {
+  const app = await appWithTempStorage();
+  const response = await app.orchestrator.handleMessage({
+    conversationId: 'smart-about',
+    channel: 'test',
+    message: 'AllonaHub kimdir ve hakkinizda bilgi verir misin?',
+    user: { externalUserId: 'customer-5' }
+  });
+
+  assert.equal(response.intent, 'about_platform');
+  assert.equal(response.smart.nextBestAction, 'open_about_or_services');
+  assert.match(response.answer, /hakkimizda\.html/);
+  assert.match(response.answer, /#modules/);
+});

@@ -105,3 +105,29 @@ test('serves health and chat endpoints', async () => {
     assert.equal(actions.status, 200);
     assert.ok(actions.json().actions.length > 0);
 });
+
+test('serves widget-compatible assistant message endpoint', async () => {
+  const app = await createBotApp({
+    storageDir: await tempStorage(),
+    knowledgeRootDir: fixtureRoot,
+    knowledgeSourcesUrl: fixtureSources
+  });
+
+  const reply = await request(app.server, {
+    method: 'POST',
+    url: '/v1/assistant/messages',
+    body: {
+      conversationId: 'widget-contract',
+      message: 'CV oluşturmak istiyorum',
+      channel: 'webchat',
+      user: { externalUserId: 'widget-user' }
+    }
+  });
+
+  const payload = reply.json();
+  assert.equal(reply.status, 200);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.intent, 'career_cv');
+  assert.match(payload.message, /CV olustur/);
+  assert.ok(payload.actions.some((action) => action.url.includes('career-cv-form.html')));
+});

@@ -11,7 +11,13 @@ const requiredSlotsByIntent = {
 };
 
 const quickReplies = {
-  greeting: ['Hizmetleri goster', 'Teklif almak istiyorum', 'Destek talebi ac'],
+  greeting: ['CV olustur', 'Partner olmak istiyorum', 'Hizmetleri goster', 'Destek talebi ac'],
+  wellbeing: ['CV olustur', 'AllonaHub nedir', 'Denizcilik isleri', 'Destek talebi ac'],
+  thanks: ['Rica ederim', 'Baska konu sor', 'Hizmetleri goster'],
+  about_platform: ['Hakkimizda', 'Hizmetleri goster', 'SSS', 'Partner olmak istiyorum'],
+  faq_help: ['SSS', 'Destek merkezi', 'Iletisim', 'Hizmetleri goster'],
+  career_cv: ['CV olustur', 'Kariyer basvurusu', 'Denizcilik CV', 'Is ilanlari'],
+  academy: ['Akademi', 'Kariyer', 'Partner rehberi'],
   services: ['Teklif al', 'Iletisim bilgisi birak', 'AVM modulu', 'Taksi modulu'],
   offer: ['Ad soyad ekle', 'Telefon ekle', 'E-posta ekle', 'Ihtiyac ozeti yaz'],
   taxi_support: ['Yolculuk ID ekle', 'Odeme sorunu', 'Iptal sorunu', 'Acil destek'],
@@ -24,6 +30,19 @@ const quickReplies = {
   admin_ops: ['Onay kuyrugu', 'Raporlar', 'Audit log'],
   maritime: ['Teklif al', 'Liman operasyonu', 'Evrak sureci'],
   unknown: ['Hizmetleri goster', 'Destek talebi ac', 'Insan destegi']
+};
+
+const platformLinks = {
+  services: 'https://allonahub.com/index.html#modules',
+  support: 'https://allonahub.com/pages/company/destek.html',
+  about: 'https://allonahub.com/pages/company/hakkimizda.html',
+  academy: 'https://allonahub.com/allonahub-akademi.html',
+  partner: 'https://allonahub.com/pages/partner/partner.html',
+  career: 'https://allonahub.com/pages/career/allonakariyer.html',
+  smartCv: 'https://allonahub.com/pages/career/career-cv-form.html',
+  maritime: 'https://allonahub.com/pages/ecosystem/allonadenizcilik.html',
+  maritimeCv: 'https://allonahub.com/pages/career/cv-form.html',
+  contact: 'https://allonahub.com/pages/company/iletisim.html'
 };
 
 function missingSlots(intent, slots) {
@@ -116,14 +135,114 @@ export function buildSmartResponsePlan({
   }
 
   if (classification.intent === 'greeting') {
+    const returning = (customerContext.intentHistory ?? []).length > 1;
     return {
       action: 'answer',
-      answer:
-        'Merhaba. Hizmet, teklif, taksi destek, AVM rehberi, hesap veya partner konularinda size uygun adimla ilerleyebilirim.',
+      answer: returning
+        ? [
+            'Tekrar merhaba, yazdiginiz icin tesekkur ederim.',
+            "AllonaHub'da siparis, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon ve destek konularinda size dogru adimi hazirlayabilirim.",
+            `Baslamak icin kisa bir konu yazabilirsiniz: ${platformLinks.services}`
+          ].join('\n')
+        : [
+            'Merhaba, AllonaHub destek asistaniyim; yazdiginiz icin tesekkur ederim.',
+            "Siparis, partner basvurusu, CV olusturma, denizcilik, akademi ve destek konularinda sizi dogru sayfaya ve dogru isleme yonlendirebilirim.",
+            `Hizmetleri kesfetmek isterseniz: ${platformLinks.services}`
+          ].join('\n'),
       quickReplies: quickReplies.greeting,
       missingSlots: [],
       allowAiEnhancement: false,
       meta: { tone, nextBestAction: 'choose_topic' }
+    };
+  }
+
+  if (classification.intent === 'wellbeing') {
+    return {
+      action: 'answer',
+      answer: [
+        'Iyiyim, tesekkur ederim. Umarim sizin de gununuz guzel geciyordur.',
+        "AllonaHub deneyimini daha akilli, kazandiran ve kolay hale getirmek icin buradayim; alisveristen kariyere, denizcilikten partnerlige kadar cok katmanli bir platformda size uygun yolu birlikte secebiliriz.",
+        'Ne yapmak istediginizi yazin; ben sicak, net ve konuya uygun sekilde yonlendireyim.'
+      ].join('\n'),
+      quickReplies: quickReplies.wellbeing,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone: 'positive', nextBestAction: 'continue_conversation' }
+    };
+  }
+
+  if (classification.intent === 'thanks') {
+    return {
+      action: 'answer',
+      answer:
+        'Rica ederim, burada sizin icin varim. Isterseniz simdi CV, denizcilik, partnerlik, siparis, akademi veya destek konularindan biriyle devam edebiliriz.',
+      quickReplies: quickReplies.thanks,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone: 'positive', nextBestAction: 'offer_next_topic' }
+    };
+  }
+
+  if (classification.intent === 'about_platform') {
+    return {
+      action: 'answer',
+      answer: [
+        'AllonaHub; alisveris, yemek, market, taksi, kariyer, denizcilik, akademi, partnerlik, HP/kupon ve destek katmanlarini tek ekosistemde toplayan dijital platformdur.',
+        'Kullanici icin kolay ulasim ve kazandiran deneyim, partner icin satis/operasyon yonetimi, adaylar icin CV ve kariyer akisi sunar.',
+        `Kurumsal bilgi: ${platformLinks.about}`,
+        `Hizmetler ve moduller: ${platformLinks.services}`
+      ].join('\n'),
+      quickReplies: quickReplies.about_platform,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone, nextBestAction: 'open_about_or_services' }
+    };
+  }
+
+  if (classification.intent === 'faq_help') {
+    return {
+      action: 'answer',
+      answer: [
+        'Sik sorulan konularda size hizlica yol gosterebilirim: hesap, siparis, odeme/iade, HP-kupon, partnerlik, CV-kariyer, akademi ve destek.',
+        `Genel destek ve SSS yonlendirmesi: ${platformLinks.support}`,
+        `Iletisim sayfasi: ${platformLinks.contact}`,
+        'Sorunuzu tek cumleyle yazarsaniz cevabi dogrudan o basliga gore hazirlarim.'
+      ].join('\n'),
+      quickReplies: quickReplies.faq_help,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone, nextBestAction: 'answer_faq_topic' }
+    };
+  }
+
+  if (classification.intent === 'career_cv') {
+    return {
+      action: 'answer',
+      answer: [
+        'Kariyer tarafinda en iyi baslangic guclu bir CV hazirlamak.',
+        'Akilli CV olusturucuda bilgilerinizi duzenleyebilir, PDF uretebilir ve uygun kariyer/denizcilik basvuru adimlarina gecebilirsiniz.',
+        `CV olustur: ${platformLinks.smartCv}`,
+        `Kariyer alani: ${platformLinks.career}`
+      ].join('\n'),
+      quickReplies: quickReplies.career_cv,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone, nextBestAction: 'open_cv_builder' }
+    };
+  }
+
+  if (classification.intent === 'academy') {
+    return {
+      action: 'answer',
+      answer: [
+        'AllonaHub Akademi; platform kullanimi, partnerlik, kariyer, dijital ticaret ve ekosistem rehberleri icin hazirlanan ogrenme alanidir.',
+        `Akademi sayfasina buradan gecebilirsiniz: ${platformLinks.academy}`,
+        'Aradiginiz egitim konusunu yazarsaniz sizi daha nokta atisi yonlendirebilirim.'
+      ].join('\n'),
+      quickReplies: quickReplies.academy,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone, nextBestAction: 'open_academy' }
     };
   }
 
@@ -196,6 +315,22 @@ export function buildSmartResponsePlan({
       missingSlots: missing,
       allowAiEnhancement: true,
       meta: { tone, nextBestAction: 'ask_location_or_store' }
+    };
+  }
+
+  if (classification.intent === 'maritime') {
+    return {
+      action: 'answer',
+      answer: [
+        'Denizcilik icin dogru yerdesiniz.',
+        'Allona Denizcilik; crew, CV, sertifika, gemi/liman operasyonu, navlun, brokerlik ve denizcilik basvurularini tek akista toplamak icin kurgulandi.',
+        `Denizcilik alani: ${platformLinks.maritime}`,
+        `Denizcilik CV: ${platformLinks.maritimeCv}`
+      ].join('\n'),
+      quickReplies: quickReplies.maritime,
+      missingSlots: [],
+      allowAiEnhancement: false,
+      meta: { tone, nextBestAction: 'open_maritime_flow' }
     };
   }
 

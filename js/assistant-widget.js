@@ -9,6 +9,28 @@
     whatsapp: SCRIPT && SCRIPT.dataset.whatsappUrl || `https://wa.me/905427781868?text=${encodeURIComponent("Merhaba AllonaHub, canlı destek almak istiyorum.")}`,
     telegram: SCRIPT && SCRIPT.dataset.telegramUrl || "https://t.me/AllonaHub_Bot"
   };
+  const QUICK_OPTIONS = [
+    { label: "Sipariş", message: "Siparişimi sorgulamak istiyorum" },
+    { label: "Partner", message: "Partner başvurusu yapmak istiyorum" },
+    { label: "CV Oluştur", message: "CV oluşturmak istiyorum" },
+    { label: "Denizcilik", message: "Denizcilik iş ilanları hakkında bilgi almak istiyorum" },
+    { label: "Akademi", message: "AllonaHub Akademi hakkında bilgi almak istiyorum" },
+    { label: "Destek Talebi", message: "Destek talebi oluşturmak istiyorum", ticket: true }
+  ];
+  const LOCAL_LINKS = {
+    services: "/index.html#modules",
+    support: "/pages/company/destek.html",
+    contact: "/pages/company/iletisim.html",
+    about: "/pages/company/hakkimizda.html",
+    academy: "/allonahub-akademi.html",
+    partner: "/pages/partner/partner.html",
+    orders: "/pages/account/orders.html",
+    career: "/pages/career/allonakariyer.html",
+    smartCv: "/pages/career/career-cv-form.html",
+    maritime: "/pages/ecosystem/allonadenizcilik.html",
+    maritimeCv: "/pages/career/cv-form.html",
+    legalCenter: "/legal/index.html"
+  };
 
   function escapeHTML(value) {
     if (App.core && App.core.escapeHTML) return App.core.escapeHTML(value);
@@ -35,6 +57,86 @@
     } catch (error) {
       return "";
     }
+  }
+
+  function pageAction(label, key) {
+    return { type: "open_url", label, url: LOCAL_LINKS[key] || LOCAL_LINKS.support };
+  }
+
+  function hasAny(normalized, terms) {
+    return terms.some((term) => normalized.includes(term));
+  }
+
+  function localAssistantReply(message) {
+    const normalized = String(message || "")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/ı/g, "i")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (hasAny(normalized, ["nasilsin", "nasil gidiyor", "iyi misin", "keyfin nasil"])) {
+      return {
+        message: "İyiyim, teşekkür ederim. Umarım senin de günün güzel geçiyordur. AllonaHub; alışverişten kariyere, denizcilikten partnerliğe kadar çok katmanlı ve kazandıran bir platform deneyimi sunmak için tasarlandı. Ne yapmak istediğini yazarsan seni en doğru adıma yönlendireyim.",
+        actions: [pageAction("Hizmetler", "services"), pageAction("CV Oluştur", "smartCv"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["merhaba", "selam", "iyi gunler", "iyi aksamlar", "hello", "hi"])) {
+      return {
+        message: "Merhaba, yazdığın için teşekkür ederim. AllonaHub’da sipariş, partner başvurusu, CV oluşturma, denizcilik, akademi ve destek konularında sana yardımcı olabilirim. Kısaca ne yapmak istediğini yaz; ben seni doğru sayfaya ve doğru adıma götüreyim.",
+        actions: [pageAction("CV Oluştur", "smartCv"), pageAction("Partner Ol", "partner"), pageAction("Hizmetler", "services"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["allonahub nedir", "allona hub nedir", "allonahub kimdir", "hakkimizda", "hakkinda", "platform nedir"])) {
+      return {
+        message: "AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, akademi, partnerlik, HP/kupon ve destek katmanlarını tek ekosistemde toplayan dijital platformdur. Daha detaylı kurumsal bilgi için Hakkımızda sayfasına, sık sorulan konular için destek alanına geçebilirsin.",
+        actions: [pageAction("Hakkımızda", "about"), pageAction("Hizmetler", "services"), pageAction("Destek / SSS", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["cv", "ozgecmis", "kariyer", "is basvurusu", "is ilani", "is ariyorum"])) {
+      return {
+        message: "Kariyer tarafında en iyi başlangıç güçlü bir CV hazırlamak. Akıllı CV oluşturucuyla bilgilerini düzenleyebilir, PDF üretebilir ve uygun kariyer/başvuru adımlarına geçebilirsin.",
+        actions: [pageAction("CV Oluştur", "smartCv"), pageAction("Kariyer", "career"), pageAction("Denizcilik CV", "maritimeCv")]
+      };
+    }
+
+    if (hasAny(normalized, ["denizcilik", "gemi", "crew", "kaptan", "liman", "navlun"])) {
+      return {
+        message: "Denizcilik için doğru yerdesin. Allona Denizcilik; crew, CV, sertifika, gemi/liman operasyonu, navlun ve denizcilik başvurularını tek akışta toplamak için kurgulandı.",
+        actions: [pageAction("Denizcilik", "maritime"), pageAction("Denizcilik CV", "maritimeCv"), pageAction("CV Oluştur", "smartCv")]
+      };
+    }
+
+    if (hasAny(normalized, ["akademi", "egitim", "kurs", "sertifika", "rehber"])) {
+      return {
+        message: "AllonaHub Akademi; platformu, partnerliği, kariyer süreçlerini ve dijital ticaret adımlarını daha anlaşılır hale getiren eğitim/rehber alanıdır. İstersen seni Akademi sayfasına yönlendireyim.",
+        actions: [pageAction("Akademi", "academy"), pageAction("Kariyer", "career"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["partner", "satici", "magaza ac", "isletme", "komisyon"])) {
+      return {
+        message: "Partnerlik için işletme bilgilerin, kategori ve iletişim detaylarınla başvuru akışına geçebilirsin. Onay sonrası ürün, sipariş, kampanya ve ödeme süreçleri partner panelinden yönetilir.",
+        actions: [pageAction("Partner Ol", "partner"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["siparis", "kargo", "teslimat", "iade", "iptal"])) {
+      return {
+        message: "Sipariş ve teslimat konularında güvenli bilgi için giriş yapılmış hesap üzerinden Siparişlerim alanı kullanılmalı. Siparişe özel sorun varsa destek kaydı açman en sağlıklı yol olur.",
+        actions: [pageAction("Siparişlerim", "orders"), pageAction("Destek", "support")]
+      };
+    }
+
+    return {
+      message: "Seni anladım. Bu konuda en doğru yönlendirmeyi yapabilmem için isteğini bir cümle daha net yazabilir misin? İstersen CV, denizcilik, partnerlik, sipariş, akademi veya destek başlıklarından biriyle başlayabiliriz.",
+      actions: [pageAction("Hizmetler", "services"), pageAction("Destek / SSS", "support"), pageAction("İletişim", "contact")]
+    };
   }
 
   function apiBaseUrl() {
@@ -140,6 +242,9 @@
       .ah-assistant__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
       .ah-assistant__action{display:flex;align-items:center;justify-content:center;min-height:36px;padding:8px 9px;border:1px solid color-mix(in srgb,var(--as-primary) 30%,var(--as-line));border-radius:7px;background:color-mix(in srgb,var(--as-primary-soft) 12%,var(--as-panel-bg));color:var(--as-panel-text);text-decoration:none;font-size:12px;font-weight:800;line-height:1.2;text-align:center;overflow-wrap:anywhere}
       .ah-assistant__action:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg));border-color:color-mix(in srgb,var(--as-primary) 50%,var(--as-line))}
+      .ah-assistant__foot{position:relative;min-width:0}
+      .ah-assistant__quick-drawer{position:relative}
+      .ah-assistant__quick-toggle{display:none}
       .ah-assistant__quick{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--as-line);background:var(--as-panel-bg)}
       .ah-assistant__quick button{border:1px solid color-mix(in srgb,var(--as-primary) 30%,var(--as-line));background:color-mix(in srgb,var(--as-primary-soft) 12%,var(--as-panel-bg));color:var(--as-panel-text);border-radius:6px;padding:7px 9px;font-size:12px;font-weight:700;cursor:pointer}
       .ah-assistant__quick button:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg))}
@@ -160,6 +265,7 @@
       body[data-theme] .ah-assistant .ah-assistant__msg--user .ah-assistant__msg-text{color:#fff !important}
       body[data-theme] .ah-assistant .ah-assistant__msg--status{color:var(--as-muted) !important}
       body[data-theme] .ah-assistant .ah-assistant__quick,body[data-theme] .ah-assistant .ah-assistant__form{background:var(--as-panel-bg) !important;border-color:var(--as-line) !important}
+      body[data-theme] .ah-assistant .ah-assistant__quick-toggle{background:var(--as-accent) !important;color:var(--as-accent-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__action,body[data-theme] .ah-assistant .ah-assistant__quick button{background:color-mix(in srgb,var(--as-primary-soft) 12%,var(--as-panel-bg)) !important;border-color:color-mix(in srgb,var(--as-primary) 30%,var(--as-line)) !important;color:var(--as-panel-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__action:hover,body[data-theme] .ah-assistant .ah-assistant__quick button:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg)) !important}
       body[data-theme] .ah-assistant .ah-assistant__input{background:var(--as-surface) !important;border-color:var(--as-line) !important;color:var(--as-panel-text) !important}
@@ -168,9 +274,11 @@
       body[data-theme] .ah-assistant .ah-assistant__channel,body[data-theme] .ah-assistant .ah-assistant__channel :where(strong,small){color:#fff !important}
       body[data-theme] .ah-assistant .ah-assistant__channel-icon{color:#061b33 !important}
       body[data-theme] .ah-assistant .ah-assistant__channel--whatsapp .ah-assistant__channel-icon,body[data-theme] .ah-assistant .ah-assistant__channel--telegram .ah-assistant__channel-icon{color:#fff !important}
+      body[data-theme] .ah-assistant.ah-assistant--quick-open .ah-assistant__quick{opacity:1 !important;visibility:visible !important;pointer-events:auto !important}
+      body[data-theme] .ah-assistant.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0) !important}
       @supports not (color:color-mix(in srgb,#fff 50%,#000)){.ah-assistant__button{border-color:rgba(255,255,255,.36);box-shadow:0 18px 46px rgba(0,122,255,.34),0 0 0 6px rgba(255,215,0,.08)}.ah-assistant__button:before{background:conic-gradient(from 120deg,rgba(255,215,0,.95),rgba(0,229,255,.45),rgba(255,255,255,.82),rgba(255,215,0,.95))}.ah-assistant__button:after{background:linear-gradient(145deg,var(--as-bg-strong),var(--as-bg-mid))}.ah-assistant__button:hover{box-shadow:0 22px 54px rgba(0,122,255,.42),0 0 0 7px rgba(255,215,0,.12)}.ah-assistant__channel{border-color:rgba(255,255,255,.26)}.ah-assistant__channel:hover{border-color:rgba(0,229,255,.5)}.ah-assistant__head{border-bottom-color:var(--as-line)}body[data-theme] .ah-assistant .ah-assistant__head{border-bottom-color:var(--as-line) !important}.ah-assistant__msg--assistant{box-shadow:0 10px 24px rgba(2,8,20,.12)}.ah-assistant__msg--user{border-color:rgba(255,255,255,.24);box-shadow:0 10px 24px rgba(0,122,255,.18)}.ah-assistant__action,.ah-assistant__quick button{border-color:var(--as-line);background:var(--as-surface)}body[data-theme] .ah-assistant .ah-assistant__action,body[data-theme] .ah-assistant .ah-assistant__quick button{border-color:var(--as-line) !important;background:var(--as-surface) !important}.ah-assistant__action:hover,.ah-assistant__quick button:hover{background:var(--as-panel-bg)}body[data-theme] .ah-assistant .ah-assistant__action:hover,body[data-theme] .ah-assistant .ah-assistant__quick button:hover{background:var(--as-panel-bg) !important}.ah-assistant__input:focus{box-shadow:0 0 0 3px rgba(11,114,255,.14)}}
       @keyframes ahAssistSpin{to{transform:rotate(360deg)}}
-      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant__button{width:60px;height:60px;border-radius:20px}.ah-assistant__button:after{border-radius:17px}.ah-assistant__button-mark{width:40px;height:40px}.ah-assistant__channels{right:0;bottom:70px;width:min(198px,calc(100vw - 24px));max-height:min(236px,calc(100vh - 100px))}.ah-assistant__channel{min-height:54px;border-radius:16px}.ah-assistant__actions{grid-template-columns:1fr}}
+      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant--open .ah-assistant__panel{grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant__button{width:60px;height:60px;border-radius:20px}.ah-assistant__button:after{border-radius:17px}.ah-assistant__button-mark{width:40px;height:40px}.ah-assistant__channels{right:0;bottom:70px;width:min(198px,calc(100vw - 24px));max-height:min(236px,calc(100vh - 100px))}.ah-assistant__channel{min-height:54px;border-radius:16px}.ah-assistant__actions{grid-template-columns:1fr}.ah-assistant__messages{padding-bottom:18px}.ah-assistant__quick-drawer{position:absolute;right:-1px;bottom:calc(100% + 8px);z-index:3;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:end;width:min(304px,calc(100vw - 56px));transform:translateX(calc(100% - 38px));transition:transform .22s ease;pointer-events:none}.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0)}.ah-assistant__quick-toggle{display:grid;place-items:center;width:38px;min-height:48px;border:0;border-radius:8px 0 0 8px;background:var(--as-accent);color:var(--as-accent-text);font-size:22px;font-weight:1000;line-height:1;box-shadow:0 14px 34px rgba(2,8,20,.26);cursor:pointer;pointer-events:auto}.ah-assistant__quick-toggle span{display:block;transition:transform .2s ease}.ah-assistant--quick-open .ah-assistant__quick-toggle span{transform:rotate(180deg)}.ah-assistant__quick{max-height:166px;overflow:auto;display:flex;align-content:flex-start;gap:7px;padding:10px;border:1px solid var(--as-line);border-radius:8px 0 0 8px;background:var(--as-panel-bg);box-shadow:0 18px 52px rgba(2,8,20,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}.ah-assistant--quick-open .ah-assistant__quick{opacity:1;visibility:visible;pointer-events:auto}.ah-assistant__quick button{min-height:34px;padding:7px 9px}.ah-assistant__form{padding:10px;grid-template-columns:minmax(0,1fr) 44px}.ah-assistant__input{min-height:40px}.ah-assistant__send{width:44px;height:40px}}
     `;
     document.head.appendChild(style);
   }
@@ -212,6 +320,11 @@
   }
 
   function widgetMarkup() {
+    const quickButtons = QUICK_OPTIONS.map((option) => {
+      const attr = option.ticket ? "data-assistant-ticket" : "data-assistant-quick";
+      return `<button type="button" ${attr}="${escapeHTML(option.message)}">${escapeHTML(option.label)}</button>`;
+    }).join("");
+
     return `
       <div class="ah-assistant__channels" id="allonahub-assistant-channels" aria-label="Hızlı destek kanalları" data-assistant-channels>
         <button class="ah-assistant__channel ah-assistant__channel--chat" type="button" data-assistant-open-chat>
@@ -239,14 +352,14 @@
           <button class="ah-assistant__close" type="button" aria-label="Kapat" data-assistant-close>&times;</button>
         </header>
         <div class="ah-assistant__messages" data-assistant-messages></div>
-        <div>
-          <div class="ah-assistant__quick">
-            <button type="button" data-assistant-quick="Siparişimi sorgulamak istiyorum">Sipariş</button>
-            <button type="button" data-assistant-quick="Partner başvurusu yapmak istiyorum">Partner</button>
-            <button type="button" data-assistant-quick="CV oluşturmak istiyorum">CV Oluştur</button>
-            <button type="button" data-assistant-quick="Denizcilik iş ilanları hakkında bilgi almak istiyorum">Denizcilik</button>
-            <button type="button" data-assistant-quick="AllonaHub Akademi hakkında bilgi almak istiyorum">Akademi</button>
-            <button type="button" data-assistant-ticket="Destek talebi oluşturmak istiyorum">Destek Talebi</button>
+        <div class="ah-assistant__foot">
+          <div class="ah-assistant__quick-drawer">
+            <button class="ah-assistant__quick-toggle" type="button" aria-label="Hazır seçenekleri aç" aria-expanded="false" aria-controls="allonahub-assistant-quick" data-assistant-quick-toggle>
+              <span aria-hidden="true">‹</span>
+            </button>
+            <div class="ah-assistant__quick" id="allonahub-assistant-quick">
+              ${quickButtons}
+            </div>
           </div>
           <form class="ah-assistant__form" data-assistant-form>
             <textarea class="ah-assistant__input" rows="1" maxlength="1600" placeholder="Mesajınızı yazın" data-assistant-input></textarea>
@@ -307,6 +420,7 @@
     const form = root.querySelector("[data-assistant-form]");
     const sendButton = root.querySelector(".ah-assistant__send");
     const toggleButton = root.querySelector("[data-assistant-toggle]");
+    const quickToggleButton = root.querySelector("[data-assistant-quick-toggle]");
 
     appendMessage(messages, "assistant", "Merhaba, AllonaHub destek asistanıyım. Sipariş, partner başvurusu, SSS, Akademi ve destek konularında yardımcı olurum. Canlı temsilciye geçmek isterseniz Telegram veya WhatsApp bağlantılarını paylaşırım.");
 
@@ -315,11 +429,41 @@
       if (toggleButton) toggleButton.setAttribute("aria-expanded", value ? "true" : "false");
     }
 
+    function setQuickOpen(value) {
+      root.classList.toggle("ah-assistant--quick-open", Boolean(value));
+      const quick = root.querySelector(".ah-assistant__quick");
+      const drawer = root.querySelector(".ah-assistant__quick-drawer");
+      if (quick) {
+        if (value) {
+          quick.style.setProperty("opacity", "1", "important");
+          quick.style.setProperty("visibility", "visible", "important");
+          quick.style.setProperty("pointer-events", "auto", "important");
+        } else {
+          quick.style.removeProperty("opacity");
+          quick.style.removeProperty("visibility");
+          quick.style.removeProperty("pointer-events");
+        }
+      }
+      if (drawer) {
+        if (value) {
+          drawer.style.setProperty("transform", "translateX(0)", "important");
+        } else {
+          drawer.style.removeProperty("transform");
+        }
+      }
+      if (quickToggleButton) {
+        quickToggleButton.setAttribute("aria-expanded", value ? "true" : "false");
+        quickToggleButton.setAttribute("aria-label", value ? "Hazır seçenekleri kapat" : "Hazır seçenekleri aç");
+      }
+    }
+
     function setChatOpen(value) {
       root.classList.toggle("ah-assistant--open", Boolean(value));
       if (value) {
         setActionsOpen(false);
         input.focus();
+      } else {
+        setQuickOpen(false);
       }
     }
 
@@ -350,9 +494,11 @@
         appendMessage(messages, "assistant", result.message || "Canlı destek için Telegram veya WhatsApp hattımızdan bize ulaşabilirsiniz.", result.actions || []);
       } catch (error) {
         status.remove();
-        appendMessage(messages, "assistant", error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.");
+        const fallback = localAssistantReply(clean);
+        appendMessage(messages, "assistant", fallback.message || error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.", fallback.actions || []);
       } finally {
         setBusy(false);
+        setQuickOpen(false);
         input.focus();
       }
     }
@@ -371,27 +517,43 @@
       setChatOpen(false);
     });
 
+    if (quickToggleButton) {
+      quickToggleButton.addEventListener("click", () => {
+        setQuickOpen(!root.classList.contains("ah-assistant--quick-open"));
+      });
+    }
+
     root.querySelectorAll("[data-assistant-channel-link]").forEach((link) => {
       link.addEventListener("click", () => setActionsOpen(false));
     });
 
     document.addEventListener("click", (event) => {
-      if (!root.contains(event.target)) setActionsOpen(false);
+      if (!root.contains(event.target)) {
+        setActionsOpen(false);
+        setQuickOpen(false);
+      }
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         setActionsOpen(false);
         setChatOpen(false);
+        setQuickOpen(false);
       }
     });
 
     root.querySelectorAll("[data-assistant-quick]").forEach((button) => {
-      button.addEventListener("click", () => submit(button.dataset.assistantQuick || ""));
+      button.addEventListener("click", () => {
+        setQuickOpen(false);
+        submit(button.dataset.assistantQuick || "");
+      });
     });
 
     root.querySelectorAll("[data-assistant-ticket]").forEach((button) => {
-      button.addEventListener("click", () => submit(button.dataset.assistantTicket || "", { createSupportTicket: true }));
+      button.addEventListener("click", () => {
+        setQuickOpen(false);
+        submit(button.dataset.assistantTicket || "", { createSupportTicket: true });
+      });
     });
 
     input.addEventListener("input", () => {
@@ -417,16 +579,26 @@
     open() {
       const root = document.querySelector("[data-allonahub-assistant-widget]");
       if (root) {
-        root.classList.remove("ah-assistant--actions-open");
+        root.classList.remove("ah-assistant--actions-open", "ah-assistant--quick-open");
         root.classList.add("ah-assistant--open");
         root.querySelector("[data-assistant-toggle]")?.setAttribute("aria-expanded", "false");
+        root.querySelector("[data-assistant-quick-toggle]")?.setAttribute("aria-expanded", "false");
+        const quick = root.querySelector(".ah-assistant__quick");
+        const drawer = root.querySelector(".ah-assistant__quick-drawer");
+        if (quick) quick.removeAttribute("style");
+        if (drawer) drawer.removeAttribute("style");
       }
     },
     close() {
       const root = document.querySelector("[data-allonahub-assistant-widget]");
       if (root) {
-        root.classList.remove("ah-assistant--open", "ah-assistant--actions-open");
+        root.classList.remove("ah-assistant--open", "ah-assistant--actions-open", "ah-assistant--quick-open");
         root.querySelector("[data-assistant-toggle]")?.setAttribute("aria-expanded", "false");
+        root.querySelector("[data-assistant-quick-toggle]")?.setAttribute("aria-expanded", "false");
+        const quick = root.querySelector(".ah-assistant__quick");
+        const drawer = root.querySelector(".ah-assistant__quick-drawer");
+        if (quick) quick.removeAttribute("style");
+        if (drawer) drawer.removeAttribute("style");
       }
     }
   };
