@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB Shop Katalog</title>
+    <link rel="stylesheet" href="./assets/css/shop-categories.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body class="shop-page">
+    <main class="shop-shell">
+      <header class="shop-topbar">
+        <div class="shop-brand">
+          <span class="shop-brand__mark">A</span>
+          <span>
+            <strong>ALLONAHUB Shop</strong>
+            <span>AVM katalog</span>
+          </span>
+        </div>
+
+        <label class="shop-search">
+          <input type="search" data-shop-search placeholder="Ürün, mağaza veya kategori ara">
+        </label>
+
+        <div class="shop-status-strip">
+          <span>Trendyol</span>
+          <span>Hepsiburada</span>
+          <span>Pazar yeri katalog</span>
+        </div>
+      </header>
+
+      <section class="shop-workspace" aria-label="Shop katalog">
+        <div data-shop-category-menu></div>
+
+        <aside class="shop-products-panel">
+          <div class="shop-section-title">
+            <h2>Ürün vitrini</h2>
+            <span>Yayınlı ürünler</span>
+          </div>
+          <div class="shop-product-grid" data-shop-product-grid></div>
+        </aside>
+      </section>
+
+      <section class="shop-audit-strip" data-shop-metrics aria-label="Katalog metrikleri"></section>
+    </main>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB Shop</span>
+          <span>Satış, kampanya ve tüketici bilgilendirmesi</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#cerez">Çerezler</a>
+          <a href="../legal/index.html#iade-iptal">İade/İptal</a>
+          <a href="../legal/index.html#mesafeli-satis">Mesafeli Satış</a>
+          <a href="../legal/index.html#ticari-iletisim">Ticari İletişim</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">Canlı ödeme açılmadan önce satıcı bilgisi, ürün niteliği, toplam fiyat, teslimat, cayma hakkı ve iade koşulları işlem öncesinde gösterilmelidir.</p>
+      </div>
+    </footer>
+
+    <script src="./assets/js/data.js"></script>
+    <script src="./assets/js/shop-categories.js"></script>
+  </body>
+</html>

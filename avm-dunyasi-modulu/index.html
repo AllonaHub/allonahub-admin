@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB AVM Dünyası</title>
+    <meta
+      name="description"
+      content="ALLONAHUB AVM Dünyası: AVM keşfi, mağaza ve restoran rehberi, kampanyalar, kuponlar ve yatay ürün vitrini."
+    >
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/shop-categories.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand-mark" href="index.html" aria-label="ALLONAHUB AVM Dünyası">
+          <span class="brand-symbol">A</span>
+          <span>
+            <strong>ALLONAHUB</strong>
+            <span>AVM Dünyası</span>
+          </span>
+        </a>
+        <nav class="topnav" aria-label="Modül bağlantıları">
+          <a class="nav-link is-active" href="index.html">AVM Dünyası</a>
+          <a class="nav-link" href="shop.html">Shop Katalog</a>
+          <a class="nav-link" href="partner.html">AVM Partneri</a>
+          <a class="nav-link" href="admin.html">AVM Admini</a>
+        </nav>
+      </header>
+
+      <main class="module-layout">
+        <aside class="directory-panel" aria-label="AVM rehberi">
+          <div class="directory-header">
+            <span class="eyebrow" id="dataSource">Seed veri</span>
+            <h1>AVM Rehberi</h1>
+            <p class="muted">Türkiye AVM dizini, partner durumları ve canlı yönetim kayıtları.</p>
+          </div>
+
+          <section class="stat-grid" aria-label="Rehber özeti">
+            <article>
+              <span class="muted">AVM</span>
+              <strong id="directoryCount">0</strong>
+            </article>
+            <article>
+              <span class="muted">Partner</span>
+              <strong id="partnerCount">0</strong>
+            </article>
+            <article>
+              <span class="muted">Ürün</span>
+              <strong id="productCount">0</strong>
+            </article>
+            <article>
+              <span class="muted">Mağaza</span>
+              <strong id="storeCount">0</strong>
+            </article>
+          </section>
+
+          <section class="filter-stack" aria-label="AVM filtreleri">
+            <input id="searchInput" type="search" placeholder="AVM, şehir, ilçe ara" autocomplete="off">
+            <select id="cityFilter" aria-label="Şehir filtresi"></select>
+            <select id="categoryFilter" aria-label="Kategori filtresi"></select>
+            <span class="muted" id="resultCount">0 AVM</span>
+          </section>
+
+          <section class="mall-list" id="mallList" aria-label="AVM listesi"></section>
+        </aside>
+
+        <section class="detail-panel" id="mallDetail" aria-label="AVM detayları">
+          <header class="detail-header">
+            <div>
+              <span class="eyebrow" id="selectedMallLocation">Şehir / İlçe</span>
+              <h1 id="selectedMallName">AVM</h1>
+              <p class="muted" id="selectedMallMeta">Mağaza ve ürün bilgileri</p>
+              <div class="rating-line" id="selectedMallRating"></div>
+            </div>
+            <div class="detail-actions">
+              <button class="secondary-button" id="favoriteMall" type="button">Favoriye Al</button>
+              <a class="secondary-button" id="partnerLink" href="partner.html">Partner Sayfası</a>
+              <a class="primary-button" id="adminLink" href="admin.html">Admin Paneli</a>
+            </div>
+          </header>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>AVM Hizmetleri</h2>
+              <span class="muted">Otopark, erişim, danışma ve ziyaret altyapısı</span>
+            </div>
+            <div class="service-list" id="serviceList"></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Kampanyalar</h2>
+              <span class="muted">Tarih kontrollü fırsatlar</span>
+            </div>
+            <div class="campaign-strip" id="campaignStrip"></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Mağazalar, İşletmeler ve Restoranlar</h2>
+              <span class="muted">Kat, ünite, kategori ve puan bilgileri</span>
+            </div>
+            <div class="store-strip" id="storeStrip"></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Shop Kategorileri</h2>
+              <span class="muted">Kategori ağı ve pazar yeri kırılımları</span>
+            </div>
+            <div class="embedded-shop-menu" data-shop-category-menu></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Shop Vitrini</h2>
+              <span class="muted">Fiyat, değerlendirme, sepet ve hemen al aksiyonları</span>
+            </div>
+            <div class="product-rail" id="productRail"></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Kuponlar</h2>
+              <span class="muted">Limit, kullanım ve geçerlilik takibi</span>
+            </div>
+            <div class="coupon-strip" id="couponStrip"></div>
+          </section>
+
+          <section class="content-section">
+            <div class="section-heading">
+              <h2>Değerlendirmeler</h2>
+              <span class="muted">Mağaza ve restoran geri bildirimleri</span>
+            </div>
+            <div class="review-list" id="reviewList"></div>
+          </section>
+        </section>
+
+        <aside class="cart-panel" aria-label="Sepet">
+          <header class="cart-header">
+            <span class="eyebrow">Shop</span>
+            <h2>Sepet</h2>
+            <p class="muted"><span id="cartCount">0</span> ürün seçildi</p>
+          </header>
+          <div class="cart-total">
+            <span>Toplam</span>
+            <strong id="cartTotal">0 TL</strong>
+          </div>
+          <ul class="cart-items" id="cartItems"></ul>
+          <p class="cart-notice" id="cartNotice" aria-live="polite"></p>
+          <div class="button-row directory-header">
+            <button class="secondary-button" id="clearCart" type="button">Sepeti Temizle</button>
+            <button class="primary-button" type="button">Ödeme Akışı</button>
+          </div>
+        </aside>
+      </main>
+
+      <p class="source-note">
+        AVM dizini public kaynaklı seed veriyle başlatıldı. Canlı doğrulama, partner onboarding ve Supabase tabloları üzerinden yapılır.
+      </p>
+    </div>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB AVM Dünyası</span>
+          <span>Yasal ve politika merkezi</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#cerez">Çerezler</a>
+          <a href="../legal/index.html#kullanim">Kullanım Şartları</a>
+          <a href="../legal/index.html#iade-iptal">İade/İptal</a>
+          <a href="../legal/index.html#ticari-iletisim">Ticari İletişim</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">AVM, mağaza, kampanya, kupon ve shop içerikleri yayın öncesi doğruluk, tarih, limit ve tüketici bilgilendirmesi açısından kontrol edilmelidir.</p>
+      </div>
+    </footer>
+
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/shop-categories.js"></script>
+  </body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB AVM Partneri</title>
+    <meta
+      name="description"
+      content="AVM partneri için profil, mağaza, restoran, shop, kampanya, kupon, raporlama ve destek kapsamı."
+    >
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body>
+    <div class="partner-shell">
+      <header class="topbar">
+        <a class="brand-mark" href="index.html" aria-label="ALLONAHUB AVM Dünyası">
+          <span class="brand-symbol">A</span>
+          <span>
+            <strong>ALLONAHUB</strong>
+            <span>AVM Partneri</span>
+          </span>
+        </a>
+        <nav class="topnav" aria-label="Modül bağlantıları">
+          <a class="nav-link" href="index.html">AVM Dünyası</a>
+          <a class="nav-link" href="shop.html">Shop Katalog</a>
+          <a class="nav-link is-active" href="partner.html">AVM Partneri</a>
+          <a class="nav-link" href="admin.html">AVM Admini</a>
+        </nav>
+      </header>
+
+      <main class="partner-main">
+        <header class="partner-header">
+          <div>
+            <span class="eyebrow">Partner merkezi</span>
+            <h1 id="partnerMallName">AVM Partneri</h1>
+            <p class="muted" id="partnerMallLocation">Şehir / İlçe</p>
+          </div>
+          <select class="partner-select" id="partnerMallSelect" aria-label="Partner AVM seç"></select>
+        </header>
+
+        <section class="partner-summary" aria-label="Partner özeti">
+          <article>
+            <span class="eyebrow" id="partnerMallStatus">Onboarding</span>
+            <h2>AVM Partner İçeriği</h2>
+            <p class="muted">
+              Bu HTML, AVM yönetimi ve partner ekiplerinin kendi AVM içindeki mağazaları, işletmeleri,
+              restoranları, ürünleri, kampanyaları ve raporları yönetmesi için kapsamı tanımlar.
+            </p>
+            <div class="partner-cta">
+              <a class="primary-button" id="partnerAdminLink" href="admin.html">Admin Panelini Aç</a>
+              <a class="secondary-button" id="partnerPublicLink" href="index.html">Kullanıcı Görünümü</a>
+            </div>
+          </article>
+          <article>
+            <span class="muted">Kayıtlı mağaza</span>
+            <strong id="partnerStoreCount">0</strong>
+          </article>
+          <article>
+            <span class="muted">Shop ürünü</span>
+            <strong id="partnerProductCount">0</strong>
+          </article>
+          <article>
+            <span class="muted">Panel kapsamı</span>
+            <strong>8</strong>
+          </article>
+        </section>
+
+        <section class="partner-sections" id="partnerSections" aria-label="Partner bölümleri"></section>
+
+        <section class="panel-block">
+          <div class="section-heading">
+            <h2>Partner Yayın Öncesi Kontrol Listesi</h2>
+            <span class="muted">Yetki, veri, shop ve operasyon kontrolleri</span>
+          </div>
+          <ul class="check-list" id="partnerChecklist"></ul>
+        </section>
+      </main>
+    </div>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB AVM Partneri</span>
+          <span>Partner yasal ve içerik sorumluluğu</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#partner">Partner Koşulları</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#ticari-iletisim">Ticari İletişim</a>
+          <a href="../legal/index.html#kullanim">Kullanım Şartları</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">Partner içerikleri fiyat, stok, kampanya, marka, lokasyon, çalışma saati ve iletişim doğruluğu bakımından partner sorumluluğundadır.</p>
+      </div>
+    </footer>
+
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="assets/js/partner.js"></script>
+  </body>
+</html>
