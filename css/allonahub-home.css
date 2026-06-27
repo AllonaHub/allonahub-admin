@@ -1443,6 +1443,49 @@ body[data-theme="corporate"] .modules-grid.large-grid .module-card p{
     display:none;
   }
 
+  body > header .platform-controls-slot--home{
+    width:94px!important;
+    max-width:94px!important;
+    min-width:94px!important;
+    overflow:visible!important;
+  }
+
+  body > header .platform-controls-slot--home .platform-controls{
+    width:94px!important;
+    max-width:94px!important;
+    min-width:94px!important;
+    display:grid!important;
+    grid-template-columns:44px 44px!important;
+    gap:6px!important;
+    overflow:visible!important;
+  }
+
+  body > header .platform-controls-slot--home .platform-control{
+    width:44px!important;
+    min-width:44px!important;
+    max-width:44px!important;
+  }
+
+  body > header .platform-controls-slot--home .platform-control-value{
+    display:none!important;
+  }
+
+  body > header .platform-controls-slot--home .platform-control-btn{
+    width:44px!important;
+    min-width:44px!important;
+    max-width:44px!important;
+    height:44px!important;
+    min-height:44px!important;
+    padding:0!important;
+    gap:0!important;
+  }
+
+  body > header .platform-controls-slot--home .platform-menu{
+    right:0!important;
+    left:auto!important;
+    max-width:min(248px,calc(100vw - 24px))!important;
+  }
+
   .nav-search{
     width:100%!important;
     min-width:0!important;
