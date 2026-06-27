@@ -7,17 +7,38 @@
   let savedAddresses = [];
   const PAYMENT_HANDOFF_KEY = "allona_iyzico_checkout";
 
+  function sellerName(product) {
+    return product.seller_public_name || product.seller_name || "AllonaHub";
+  }
+
+  function sellerDisclosureLines() {
+    return lines
+      .map((item) => {
+        const product = item.product || {};
+        return `${product.name}: ${product.seller_kind || "Satıcı"} ${sellerName(product)}. ${product.invoice_responsibility || ""}`;
+      })
+      .filter(Boolean);
+  }
+
+  function uniqueSellerNames() {
+    return [...new Set(lines.map((item) => sellerName(item.product || {})).filter(Boolean))].slice(0, 5);
+  }
+
   function renderSummary() {
     const node = document.querySelector("[data-checkout-summary]");
     if (!node) return;
     const form = document.querySelector("[data-checkout-form]");
     const hpToUse = form ? Number(form.hp_to_use && form.hp_to_use.value || 0) : 0;
     const totals = App.cart.totals(lines, appliedCoupon, hpToUse);
+    const sellers = uniqueSellerNames();
     node.innerHTML = `
       <h2>Sipariş Özeti</h2>
       ${lines.map((item) => `
-        <div class="summary-line">
-          <span>${core.escapeHTML(item.product.name)} × ${item.qty}</span>
+        <div class="summary-line summary-line--item">
+          <span>
+            ${core.escapeHTML(item.product.name)} × ${item.qty}
+            <small>${core.escapeHTML(item.product.seller_kind || "Satıcı")}: ${core.escapeHTML(sellerName(item.product))}</small>
+          </span>
           <strong>${core.money(item.product.price * item.qty)}</strong>
         </div>
       `).join("")}
@@ -26,6 +47,16 @@
       <div class="summary-line"><span>Kupon</span><strong>-${core.money(totals.discount)}</strong></div>
       <div class="summary-line"><span>HP indirim hakkı</span><strong>-${core.money(totals.hpDiscount)}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
+      <div class="summary-legal">
+        <strong>Ödeme öncesi kontrol</strong>
+        <p>${core.escapeHTML(sellers.join(", "))}${sellers.length === 5 ? " ve diğer satıcılar" : ""}</p>
+        <p>Satıcı/fatura bilgileri, teslimat koşulları, cayma hakkı ve yasal metinler onay kutularıyla ödeme öncesinde sunulur.</p>
+        <span>
+          <a href="${core.url("/pages/legal/on-bilgilendirme.html")}" target="_blank" rel="noopener">Ön Bilgilendirme</a>
+          <a href="${core.url("/pages/legal/mesafeli-satis.html")}" target="_blank" rel="noopener">Mesafeli Satış</a>
+          <a href="${core.url("/pages/legal/etbis-guven-damgasi.html")}" target="_blank" rel="noopener">ETBİS/Güven</a>
+        </span>
+      </div>
     `;
   }
 
@@ -183,7 +214,8 @@
       clean.invoice_type ? `Fatura türü: ${clean.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
       clean.tax_office ? `Vergi dairesi: ${clean.tax_office}` : "",
       clean.coupon_code ? `Kupon: ${clean.coupon_code}` : "",
-      `Yasal onaylar: Ön bilgilendirme ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
+      ...sellerDisclosureLines().map((line) => `Satıcı bilgilendirmesi: ${line}`),
+      `Yasal onaylar: Ön bilgilendirme, satıcı/teslimat/fatura bilgisi ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
     ]);
 
     return {
@@ -300,8 +332,8 @@
         }
         const user = await App.auth.requireAuth();
         if (!user) return;
-        if (!form.pre_info_accepted.checked || !form.distance_sales_accepted.checked) {
-          core.renderStatus("[data-checkout-status]", "Ödeme öncesi yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
+        if (!form.pre_info_accepted.checked || !form.seller_info_accepted.checked || !form.distance_sales_accepted.checked) {
+          core.renderStatus("[data-checkout-status]", "Ödeme öncesi satıcı, yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
           return;
         }
         await App.cart.syncLocalToRemote();
@@ -321,6 +353,7 @@
               city: orderPayload.city,
               legal_acceptance: {
                 pre_info: Boolean(form.pre_info_accepted.checked),
+                seller_info: Boolean(form.seller_info_accepted.checked),
                 distance_sales: Boolean(form.distance_sales_accepted.checked)
               }
             }

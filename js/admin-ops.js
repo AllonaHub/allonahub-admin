@@ -183,7 +183,11 @@
       });
     } catch (error) {
       console.error("[AdminOps] API fetch failed", path, error);
-      throw new Error(readableError(error));
+      const wrapped = new Error(readableError(error));
+      wrapped.network = true;
+      wrapped.apiPath = path;
+      wrapped.cause = error;
+      throw wrapped;
     }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -195,6 +199,132 @@
       throw new Error(message);
     }
     return payload;
+  }
+
+  function partnerApplicationsFallbackReason(error) {
+    const message = String(error?.message || "");
+    const path = String(error?.apiPath || "");
+    if (!/partner-applications/i.test(path) && !/partner başvur/i.test(message)) return "";
+    if (error?.network || /API bağlantısı kurulamadı|failed to fetch|load failed|network/i.test(message)) {
+      return "Partner başvuruları API path'i Cloudflare tarafından engellendi; Supabase RLS fallback aktif.";
+    }
+    return "";
+  }
+
+  function dbClient() {
+    if (!App.db || !App.db.client) throw new Error("Supabase istemcisi yüklenemedi.");
+    return App.db.client();
+  }
+
+  function applicationFilters() {
+    return {
+      search: $("#adminGlobalSearch")?.value?.trim() || "",
+      status: $("#adminGlobalStatus")?.value || "",
+      limit: 100
+    };
+  }
+
+  function filterApplications(items, filters) {
+    const options = filters || applicationFilters();
+    const q = String(options.search || "").toLocaleLowerCase("tr-TR");
+    const status = String(options.status || "");
+    return (items || [])
+      .filter((item) => !status || item.status === status)
+      .filter((item) => {
+        if (!q) return true;
+        return [
+          item.company_name,
+          item.contact_name,
+          item.email,
+          item.phone,
+          item.tax_number,
+          item.company_type,
+          item.category,
+          item.city,
+          item.country
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("tr-TR")
+          .includes(q);
+      })
+      .slice(0, Number(options.limit || 100));
+  }
+
+  async function listApplicationsFromSupabase() {
+    const filters = applicationFilters();
+    let query = dbClient()
+      .from("partner_applications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(Math.max(Number(filters.limit || 100), 200));
+
+    if (filters.status) query = query.eq("status", filters.status);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return filterApplications(data || [], filters);
+  }
+
+  async function getApplicationFromSupabase(applicationId) {
+    const { data, error } = await dbClient()
+      .from("partner_applications")
+      .select("*")
+      .eq("id", applicationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("Partner başvurusu bulunamadı.");
+    return data;
+  }
+
+  async function updateApplicationReviewFromSupabase(applicationId, payload) {
+    const nowIso = new Date().toISOString();
+    const recommendation = payload.action === "recommend_approve"
+      ? "approve"
+      : payload.action === "recommend_reject"
+      ? "reject"
+      : payload.action === "send_super_admin"
+      ? "needs_super_admin"
+      : null;
+    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+
+    const { data, error } = await dbClient()
+      .from("partner_applications")
+      .update({
+        status: "review",
+        review_stage: reviewStage,
+        admin_recommendation: recommendation,
+        risk_level: payload.risk_level,
+        reviewed_by: state.profile?.id || null,
+        reviewed_at: nowIso,
+        metadata: {
+          last_admin_action: payload.action,
+          last_admin_reason: payload.reason,
+          last_admin_action_at: nowIso,
+          fallback_source: "admin_ops_supabase"
+        }
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    try {
+      const { error: noteError } = await dbClient()
+        .from("admin_operation_notes")
+        .insert({
+          author_id: state.profile?.id || null,
+          target_type: "partner_application",
+          target_id: applicationId,
+          note_type: "review",
+          body: payload.reason
+        });
+      if (noteError) throw noteError;
+    } catch (noteError) {
+      console.warn("[AdminOps] fallback note insert skipped", noteError);
+    }
+
+    return data;
   }
 
   function setLoading(message) {
@@ -1008,10 +1138,19 @@
   }
 
   async function loadApplications() {
-    const data = await api(`/v1/ops-console/partner-applications?${queryParams()}`);
-    state.cache.applications = data.applications || [];
-    state.warnings = data.warnings || [];
-    renderApplications(state.cache.applications);
+    try {
+      const data = await api(`/v1/ops-console/partner-applications?${queryParams()}`);
+      state.cache.applications = data.applications || [];
+      state.warnings = data.warnings || [];
+      renderApplications(state.cache.applications);
+    } catch (error) {
+      const fallbackReason = partnerApplicationsFallbackReason(error);
+      if (!fallbackReason) throw error;
+      console.warn("[AdminOps] partner applications API fallback active", error);
+      state.cache.applications = await listApplicationsFromSupabase();
+      state.warnings = [fallbackReason];
+      renderApplications(state.cache.applications);
+    }
   }
 
   async function loadPartners() {
@@ -1098,8 +1237,15 @@
         const data = await api(`/v1/ops-console/users/${encodeURIComponent(id)}`);
         renderObjectDetails("Kullanıcı Detayı", data.profile);
       } else if (type === "application") {
-        const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
-        renderObjectDetails("Başvuru Detayı", data.application);
+        try {
+          const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
+          renderObjectDetails("Başvuru Detayı", data.application);
+        } catch (error) {
+          const fallbackReason = partnerApplicationsFallbackReason(error);
+          if (!fallbackReason) throw error;
+          console.warn("[AdminOps] partner application detail fallback active", error);
+          renderObjectDetails("Başvuru Detayı", await getApplicationFromSupabase(id));
+        }
       } else if (type === "order") {
         const data = await api(`/v1/ops-console/orders/${encodeURIComponent(id)}`);
         renderObjectDetails("Sipariş Detayı", data.order);
@@ -1178,10 +1324,19 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
-      method: "PATCH",
-      body: { action, risk_level: data.risk_level, reason: data.reason }
-    });
+    const payload = { action, risk_level: data.risk_level, reason: data.reason };
+    try {
+      await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
+        method: "PATCH",
+        body: payload
+      });
+    } catch (error) {
+      const fallbackReason = partnerApplicationsFallbackReason(error);
+      if (!fallbackReason) throw error;
+      console.warn("[AdminOps] partner application review fallback active", error);
+      await updateApplicationReviewFromSupabase(applicationId, payload);
+      state.warnings = [fallbackReason];
+    }
     showToast("Başvuru inceleme kaydı oluşturuldu.");
     await loadApplications();
   }

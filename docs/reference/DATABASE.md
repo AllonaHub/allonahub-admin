@@ -235,6 +235,14 @@ Supabase SQL Editor'da bu dosyanın içeriği eksiksiz çalıştırılmalıdır.
 
 Önceki doğrudan `orders.insert` SQL'i kullanılmamalıdır. MVP checkout, yalnızca `create_transaction_order(...)` RPC'siyle sipariş oluşturur.
 
+Canlı admin dashboard'da `orders: Supabase migration veya policy production veritabaninda eksik gorunuyor.` uyarısı görülürse production veritabanında orders şeması, RLS policy'leri veya PostgREST schema cache geride kalmış demektir. Veri silmeden onarım için aşağıdaki repair migration tek parça çalıştırılmalıdır:
+
+```text
+supabase/migrations/20260627183000_repair_orders_live_schema.sql
+```
+
+Supabase SQL Editor kullanılıyorsa yalnızca `.sql` dosyasının içeriği yapıştırılır. `MIGRATION_FILE=...`, `SUPABASE_DB_URL=...` veya `bash ...` satırları SQL değildir; bunlar sadece terminalde çalışan alternatif komutlardır.
+
 ```sql
 -- Supabase SQL Editor:
 -- 1. supabase/migrations/20260621015000_transaction_core_mvp.sql dosyasını aç.

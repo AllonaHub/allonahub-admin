@@ -113,7 +113,10 @@
     "pazaryeri-satis.html": "/pages/partner/pazaryeri-satis.html",
     "cerez-politikasi.html": "/pages/legal/cerez-politikasi.html",
     "cerez.html": "/pages/legal/cerez.html",
+    "etbis.html": "/pages/legal/etbis-guven-damgasi.html",
+    "etbis-guven-damgasi.html": "/pages/legal/etbis-guven-damgasi.html",
     "gizlilik.html": "/pages/legal/gizlilik.html",
+    "guven-damgasi.html": "/pages/legal/etbis-guven-damgasi.html",
     "guvenlik-politikasi.html": "/pages/legal/guvenlik-politikasi.html",
     "iade-politikasi.html": "/pages/legal/iade-politikasi.html",
     "iptal-iade.html": "/pages/legal/iptal-iade.html",
@@ -241,6 +244,19 @@
     const category = product.category || "Genel";
     const id = product.id;
     const slug = product.slug || product.seo_slug || slugify(`${name}-${id || ""}`);
+    const partnerId = product.partner_id || product.partnerId || product.seller_id || "";
+    const sellerPublicName = product.seller_public_name || product.seller_name || product.partner_name || product.store_name || product.shop_name || product.brand || (partnerId ? "AllonaHub Partner Satıcı" : "AllonaHub");
+    const sellerKind = product.seller_kind || product.seller_type_label || (partnerId ? "Partner satıcı" : "Platform satıcısı");
+    const sellerLegalName = product.seller_legal_name || product.legal_seller_name || product.seller_company_name || product.company_name || "";
+    const sellerCity = product.seller_city || product.seller_location || product.city || "";
+    const sellerContact = product.seller_contact || product.seller_support_email || product.seller_email || product.partner_email || "";
+    const sellerTaxMasked = product.seller_tax_number_masked || product.tax_number_masked || "";
+    const invoiceResponsibility = product.invoice_responsibility || (partnerId
+      ? "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür."
+      : "Fatura ve satış sonrası süreçler AllonaHub resmi şirket kayıtlarıyla yürütülür.");
+    const sellerDisclosure = product.seller_disclosure || (partnerId
+      ? "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür."
+      : "Satıcı, platform ve destek bilgileri AllonaHub yasal metinleri ve iletişim sayfasında yayınlanır.");
 
     return {
       ...product,
@@ -266,7 +282,17 @@
       cart_count: Number(product.cart_count || product.in_cart_count || product.cart_add_count || 0),
       coupon_label: product.coupon_label || product.coupon_text || (typeof product.coupon === "string" ? product.coupon : ""),
       delivery_label: product.delivery_label || product.shipping_label || product.fulfillment_label || "",
-      seller_name: product.seller_name || product.partner_name || product.store_name || product.brand || "Allona Partner",
+      partner_id: partnerId,
+      is_partner_product: Boolean(partnerId),
+      seller_name: sellerPublicName,
+      seller_public_name: sellerPublicName,
+      seller_kind: sellerKind,
+      seller_legal_name: sellerLegalName,
+      seller_city: sellerCity,
+      seller_contact: sellerContact,
+      seller_tax_number_masked: sellerTaxMasked,
+      invoice_responsibility: invoiceResponsibility,
+      seller_disclosure: sellerDisclosure,
       seller_score: Number(product.seller_score || product.store_score || product.partner_score || 0),
       meta_title: product.meta_title || name,
       meta_description: product.meta_description || description
@@ -320,7 +346,17 @@
       discount_percent: product.discount_percent,
       compare_at_price: product.compare_at_price,
       seller_name: product.seller_name,
+      seller_public_name: product.seller_public_name,
+      seller_kind: product.seller_kind,
+      seller_legal_name: product.seller_legal_name,
+      seller_city: product.seller_city,
+      seller_contact: product.seller_contact,
+      seller_tax_number_masked: product.seller_tax_number_masked,
+      invoice_responsibility: product.invoice_responsibility,
+      seller_disclosure: product.seller_disclosure,
       seller_score: product.seller_score,
+      partner_id: product.partner_id,
+      is_partner_product: product.is_partner_product,
       detail_url: product.detail_url || "",
       is_preview: Boolean(product.is_preview)
     };
@@ -374,6 +410,10 @@
           <div class="product-card__signals">
             <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
             <span class="product-social-proof">${escapeHTML(socialProof)}</span>
+          </div>
+          <div class="product-card__seller" aria-label="Satıcı bilgisi">
+            <span>${escapeHTML(product.seller_kind)}</span>
+            <strong>${escapeHTML(product.seller_public_name)}</strong>
           </div>
           <div class="price-row">
             <span class="price-stack">

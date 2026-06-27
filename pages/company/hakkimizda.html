@@ -15,7 +15,7 @@
 
     .about-page{
       min-height:100vh;
-      padding:64px 22px;
+      padding:90px 22px;
       background:
         radial-gradient(circle at top left,rgba(0,200,255,.16),transparent 30%),
         radial-gradient(circle at top right,rgba(120,92,255,.13),transparent 28%),
@@ -37,25 +37,25 @@
     }
 
     h1{
-      font-size:clamp(30px,4vw,42px);
-      line-height:1.16;
-      margin:0 0 18px;
+      font-size:clamp(36px,6vw,64px);
+      line-height:1.08;
+      margin:0 0 26px;
       background:linear-gradient(90deg,#ffffff,#74dcff,#8b7cff);
       -webkit-background-clip:text;
       color:transparent;
     }
 
     .lead{
-      font-size:17px;
-      line-height:1.75;
+      font-size:19px;
+      line-height:1.85;
       color:#c4d3e6;
       max-width:850px;
-      margin-bottom:38px;
+      margin-bottom:52px;
     }
 
     .about-content{
       display:grid;
-      gap:26px;
+      gap:34px;
     }
 
     .about-block{
@@ -64,7 +64,7 @@
     }
 
     .about-block h2{
-      font-size:22px;
+      font-size:26px;
       margin:0 0 14px;
       color:#ffffff;
     }
@@ -77,13 +77,13 @@
     }
 
     .about-final{
-      margin-top:40px;
-      padding-top:26px;
+      margin-top:58px;
+      padding-top:34px;
       border-top:1px solid rgba(255,255,255,.12);
     }
 
     .about-final h2{
-      font-size:clamp(24px,3vw,32px);
+      font-size:clamp(30px,4vw,46px);
       margin:0 0 16px;
       color:#fff;
     }
@@ -114,11 +114,11 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260628-corporate1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
 </head>
 
 <body>
-  <main class="about-page" id="top">
+  <main class="about-page">
     <div class="about-container">
 
       <div class="about-label">AllonaHub Hakkında</div>
@@ -204,16 +204,8 @@
     </div>
   </main>
   <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script>
-    window.addEventListener("load", function () {
-      if (window.location.hash === "#top" || !window.location.hash) {
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      }
-    });
-  </script>
-  <script src="../../js/layout.v3.js?v=20260627-legal-live1" defer></script>
-  <script src="../../js/platform.js?v=20260628-corporate1" defer></script>
-  <script src="../../js/sw-refresh.heading2.js?v=20260628-corporate1" defer></script>
+  <script src="../../js/core.js?v=20260628-etbis1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-etbis1" defer></script>
+  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

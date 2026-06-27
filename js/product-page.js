@@ -14,6 +14,42 @@
     return String(count);
   }
 
+  function sellerRow(label, value) {
+    if (!value) return "";
+    return `
+      <div class="product-seller-card__row">
+        <span>${core.escapeHTML(label)}</span>
+        <strong>${core.escapeHTML(value)}</strong>
+      </div>
+    `;
+  }
+
+  function renderSellerCard(product, sellerScore) {
+    return `
+      <section class="product-seller-card" aria-label="Satıcı ve fatura bilgileri">
+        <div class="product-seller-card__head">
+          <div>
+            <span>${core.escapeHTML(product.seller_kind || "Satıcı")}</span>
+            <strong>${core.escapeHTML(product.seller_public_name || product.seller_name || "AllonaHub")}</strong>
+          </div>
+          <em>${core.escapeHTML(sellerScore)}</em>
+        </div>
+        <div class="product-seller-card__grid">
+          ${sellerRow("Ticari unvan", product.seller_legal_name)}
+          ${sellerRow("Konum", product.seller_city)}
+          ${sellerRow("Vergi bilgisi", product.seller_tax_number_masked)}
+          ${sellerRow("İletişim", product.seller_contact)}
+        </div>
+        <p>${core.escapeHTML(product.invoice_responsibility)}</p>
+        <p>${core.escapeHTML(product.seller_disclosure)}</p>
+        <div class="product-seller-card__links">
+          <a href="${core.url("/pages/legal/on-bilgilendirme.html")}" target="_blank" rel="noopener">Ön bilgilendirme</a>
+          <a href="${core.url("/pages/legal/etbis-guven-damgasi.html")}" target="_blank" rel="noopener">ETBİS ve güven durumu</a>
+        </div>
+      </section>
+    `;
+  }
+
   function previewProductFromStorage(id) {
     const slug = core.getParam("slug");
     const keys = [
@@ -126,7 +162,7 @@
       product.cart_count ? `${compactCount(product.cart_count)} sepette` : "",
       product.view_count ? `${compactCount(product.view_count)} görüntüleme` : ""
     ].filter(Boolean);
-    const sellerScore = product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : "Doğrulanmış satıcı";
+    const sellerScore = product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : "Satıcı bilgisi kayıtlı";
 
     root.innerHTML = `
       <div class="product-detail__media panel">
@@ -159,10 +195,7 @@
           <span><strong>Güvenli ödeme</strong> AllonaHub ödeme altyapısıyla korunur.</span>
           <span><strong>Kolay iade</strong> İade ve destek süreci hesap panelinden izlenir.</span>
         </div>
-        <div class="product-detail__seller">
-          <span>${core.escapeHTML(product.seller_name || product.brand || "Allona Partner")}</span>
-          <strong>${core.escapeHTML(sellerScore)}</strong>
-        </div>
+        ${renderSellerCard(product, sellerScore)}
         <div class="form-actions">
           <div class="quantity-control" aria-label="Adet">
             <button type="button" data-qty-dec>-</button>
@@ -202,7 +235,11 @@
           price: product.price,
           priceCurrency: "TRY",
           availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          url: window.location.href
+          url: window.location.href,
+          seller: {
+            "@type": "Organization",
+            name: product.seller_legal_name || product.seller_public_name || product.seller_name || "AllonaHub"
+          }
         }
       }
     });
