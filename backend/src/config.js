@@ -95,6 +95,11 @@ export const config = {
     cfThreatScoreBlockAbove: readNumber("AUTO_DEFENSE_CF_THREAT_SCORE_BLOCK_ABOVE", 50)
   },
   alerts: {
+    enabled: readBool("SECURITY_ALERTS_ENABLED", true),
+    minSeverity: readEnv("SECURITY_ALERT_MIN_SEVERITY", { required: false, defaultValue: "critical" }),
+    cooldownMs: readNumber("SECURITY_ALERT_COOLDOWN_MS", 180000),
+    webhookUrl: readEnv("SECURITY_ALERT_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    webhookSecret: readEnv("SECURITY_ALERT_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     telegramBotToken: readEnv("TELEGRAM_BOT_TOKEN", { required: false, defaultValue: "" }),
     telegramChatId: readEnv("TELEGRAM_CHAT_ID", { required: false, defaultValue: "" }),
     emailWebhookUrl: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_URL", { required: false, defaultValue: "" }),

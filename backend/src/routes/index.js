@@ -4,6 +4,7 @@ import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import { buildSocialMediaDailyPackage, SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS } from "../lib/social-media-daily-package.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
+import { securityAlertStatus, sendSecurityAlert } from "../lib/security-alerts.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
@@ -5175,6 +5176,59 @@ export function registerRoutes(app) {
   superGet("/action-health", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.action_health.view");
     return superAdminActionHealth(ctx, request);
+  });
+
+  superGet("/alarm-status", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_status.view");
+    const status = securityAlertStatus();
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_status_viewed",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "info",
+      metadata: {
+        channels: status.channels,
+        min_severity: status.min_severity
+      }
+    });
+    return { ok: true, alarm: status };
+  });
+
+  superPost("/alarm-test", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_test.send");
+    const result = await sendSecurityAlert({
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_test",
+      resourceType: "security_alarm",
+      resourceId: "manual-test",
+      severity: "critical",
+      ipAddress: clientIp(request),
+      source: "admin",
+      purpose: "security_alarm_test",
+      metadata: {
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        requested_from: "super_admin_panel"
+      }
+    }, { force: true, channel: "manual_test" });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_test_sent",
+      source: "admin",
+      resourceType: "security_alarm",
+      resourceId: "manual-test",
+      severity: "warning",
+      metadata: {
+        channels: result.channels || {},
+        alert_status: result.status || {}
+      }
+    });
+    return { ok: true, result };
   });
 
   superGet("/work-queue", async (request) => {

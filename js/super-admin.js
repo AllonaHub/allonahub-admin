@@ -1593,15 +1593,18 @@
 
   async function loadOwnerHealth() {
     ownerLoading("Sistem Sağlığı");
-    const [commandPayload, healthPayload, reportsPayload] = await Promise.all([
+    const [commandPayload, healthPayload, reportsPayload, alarmPayload] = await Promise.all([
       state.commandCenter || loadCommandCenter(),
       api("/v1/control-center/action-health"),
-      api("/v1/admin/ops/reports")
+      api("/v1/admin/ops/reports"),
+      api("/v1/control-center/alarm-status")
     ]);
     const system = commandPayload.system_health || {};
     const gitops = commandPayload.gitops || {};
     const actions = healthPayload.actions || {};
     const reports = reportsPayload.reports || {};
+    const alarm = alarmPayload.alarm || {};
+    const channels = alarm.channels || {};
     const actionRows = Object.entries(actions).map(([key, value]) => ownerLine(
       key,
       `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / webhook hazır değil" : ""}`,
@@ -1612,10 +1615,28 @@
       ownerLine("API / DB", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / build ${escape(system.build || "-")}`, "<button type=\"button\" data-action-health-check>Komut testi</button>", system.database === "online" ? "low" : "critical") +
       ownerLine("Canlı bayraklar", `Bakım ${system.maintenance_mode ? "açık" : "kapalı"} / ödeme ${system.payments_disabled ? "kapalı" : "aktif"} / acil API ${system.emergency_api_disabled ? "kapalı" : "aktif"}`, "<button type=\"button\" data-view-jump=\"system\">Sistem ayarları</button>", system.emergency_api_disabled || system.payments_disabled ? "critical" : "low") +
       ownerLine("GitOps", `Enabled ${gitops.enabled ? "evet" : "hayır"} / webhook ${gitops.release_webhook_configured ? "hazır" : "eksik"}`, "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>", gitops.enabled && gitops.release_webhook_configured ? "low" : "high") +
+      ownerLine("Alarm kanalları", `Ses ${channels.browser_audio ? "aktif" : "pasif"} / Telegram ${channels.telegram ? "hazır" : "eksik"} / webhook ${channels.webhook ? "hazır" : "eksik"} / email ${channels.email_webhook ? "hazır" : "eksik"} / min ${escape(alarm.min_severity || "-")}`, "<button type=\"button\" data-alarm-server-test>Server alarm testi</button>", channels.telegram || channels.webhook || channels.email_webhook ? "low" : "high") +
       ownerLine("Operasyon raporu", `${formatNumber(reports.order_report && reports.order_report.daily_orders)} sipariş bugün / ${formatNumber(reports.support_report && reports.support_report.open)} açık destek`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", reports.support_report && reports.support_report.open ? "high" : "low") +
       ownerLine("Komut kabiliyeti", `${formatNumber(actionRows.length)} kontrol`, "", "medium") +
       (actionRows.join("") || ownerEmpty("Komut sağlık kaydı bulunamadı."))
     );
+  }
+
+  async function runServerAlarmTest(button) {
+    const message = "Server-side güvenlik alarmı test edilecek. Telegram/webhook/email kanalları yapılandırıldıysa bildirim gönderilir.";
+    await runConfirmed(message, async () => {
+      const result = await api("/v1/control-center/alarm-test", { method: "POST", body: {} });
+      const channels = result.result && result.result.channels || {};
+      openDrawer("Server Alarm Testi", [
+        ownerLine("Telegram", channels.telegram?.configured ? `${channels.telegram.sent ? "gönderildi" : "başarısız"} / ${escape(channels.telegram.status || channels.telegram.error || "-")}` : "yapılandırılmamış", "", channels.telegram?.sent ? "low" : "high"),
+        ownerLine("Webhook", channels.webhook?.configured ? `${channels.webhook.sent ? "gönderildi" : "başarısız"} / ${escape(channels.webhook.status || channels.webhook.error || "-")}` : "yapılandırılmamış", "", channels.webhook?.sent ? "low" : "high"),
+        ownerLine("Email webhook", channels.email?.configured ? `${channels.email.sent ? "gönderildi" : "başarısız"} / ${escape(channels.email.status || channels.email.error || "-")}` : "yapılandırılmamış", "", channels.email?.sent ? "low" : "medium")
+      ].join(""));
+    }, {
+      trigger: button,
+      defaultReason: "Server-side alarm kanal testi",
+      requireReason: true
+    });
   }
 
   function releaseApprovalManualPending(approval) {
@@ -2214,6 +2235,9 @@
         }
 
         if (eventClosest(event, "[data-action-health-check]")) await runOwnerActionHealthCheck();
+
+        const alarmServerTest = eventClosest(event, "[data-alarm-server-test]");
+        if (alarmServerTest) await runServerAlarmTest(alarmServerTest);
 
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
