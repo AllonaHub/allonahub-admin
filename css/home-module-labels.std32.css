@@ -46,6 +46,25 @@ body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="modul
   color: #111827 !important;
 }
 
+body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(18, 58, 86, 0.12) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  box-shadow: none !important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+  color: #123a56 !important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] p {
+  color: #102334 !important;
+}
+
 body[data-theme] .modules-grid.large-grid .module-card:is(
   .module-card--seyahat,
   .module-card--eglence,

@@ -52,12 +52,12 @@
       "ru": "Океан",
       "ar": "المحيط"
     },
-    "Sade Kurumsal": {
-      "az": "Sadə korporativ",
-      "en": "Simple Corporate",
-      "de": "Schlicht geschäftlich",
-      "ru": "Простая корпоративная",
-      "ar": "مؤسسي بسيط"
+    "Kurumsal": {
+      "az": "Korporativ",
+      "en": "Corporate",
+      "de": "Geschäftlich",
+      "ru": "Корпоративная",
+      "ar": "مؤسسي"
     },
     "Gün Batımı": {
       "az": "Gün batımı",

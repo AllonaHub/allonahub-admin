@@ -36,7 +36,7 @@
   ];
   const themes = [
     { code: "ocean", label: "Deniz" },
-    { code: "corporate", label: "Sade Kurumsal" },
+    { code: "corporate", label: "Kurumsal" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
     { code: "turquoise", label: "Turkuaz" },
@@ -50,9 +50,16 @@
     marketplace: "forest",
     graphite: "ocean"
   };
+  const DEFAULT_THEME = "corporate";
+  const THEME_DEFAULT_MIGRATION_KEY = "allona.theme.defaultCorporate.v1";
+  const storedTheme = localStorage.getItem(THEME_KEY);
+  if (!localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY) && (!storedTheme || (themeAliases[storedTheme] || storedTheme) === "ocean")) {
+    localStorage.setItem(THEME_KEY, DEFAULT_THEME);
+    localStorage.setItem(THEME_DEFAULT_MIGRATION_KEY, "1");
+  }
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
+    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || DEFAULT_THEME,
     packs: {}
   };
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
@@ -435,7 +442,7 @@
 
   function applyTheme(theme) {
     const normalized = themeAliases[theme] || theme;
-    const selected = themes.some((item) => item.code === normalized) ? normalized : "ocean";
+    const selected = themes.some((item) => item.code === normalized) ? normalized : DEFAULT_THEME;
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);
