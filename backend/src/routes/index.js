@@ -548,13 +548,13 @@ const DEFAULT_PLATFORM_MODULES = [
 ];
 
 const SUPER_ADMIN_CONTROL_LINKS = [
-  { key: "admin_panel", label: "Admin Panel", href: "./index.html", target: "redirect", risk_level: "high" },
-  { key: "orders", label: "Sipariş Merkezi", href: "./orders.html", target: "redirect", risk_level: "high" },
-  { key: "coupons", label: "Kupon Merkezi", href: "./coupons.html", target: "redirect", risk_level: "medium" },
-  { key: "hp_rewards", label: "HP / Cüzdan", href: "./rewards.html", target: "redirect", risk_level: "medium" },
-  { key: "user_panel", label: "User Panel", href: "../pages/account/user-panel.html", target: "redirect", risk_level: "medium" },
-  { key: "partner_panel", label: "Partner Panel", href: "../pages/partner/partner-panel.html", target: "redirect", risk_level: "high" },
-  { key: "partner_orders", label: "Partner Siparişleri", href: "../pages/partner/partner-orders.html", target: "redirect", risk_level: "high" },
+  { key: "operations", label: "Sipariş / Operasyon Yönetimi", view: "operations", target: "owner_view", risk_level: "high" },
+  { key: "finance", label: "Finans / Ödeme Yönetimi", view: "finance", target: "owner_view", risk_level: "critical" },
+  { key: "content", label: "Kupon / Kampanya / İçerik Yönetimi", view: "content", target: "owner_view", risk_level: "high" },
+  { key: "users", label: "Kullanıcı Yönetimi", view: "users", target: "owner_view", risk_level: "high" },
+  { key: "partners", label: "Partner Yönetimi", view: "partners", target: "owner_view", risk_level: "high" },
+  { key: "permissions", label: "Yetki Merkezi", view: "permissions", target: "owner_view", risk_level: "critical" },
+  { key: "modules", label: "Modül Yönetimi", view: "modules", target: "owner_view", risk_level: "high" },
   { key: "shop", label: "AllonaShop", href: "../pages/commerce/allonashop.html", target: "redirect", risk_level: "medium" },
   { key: "market", label: "Allona Market", href: "../pages/commerce/allonamarket.html", target: "redirect", risk_level: "medium" },
   { key: "food", label: "Allona Yemek", href: "../pages/commerce/allonayemek.html", target: "redirect", risk_level: "medium" },

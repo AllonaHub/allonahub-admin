@@ -1106,13 +1106,33 @@
     if (drawer) drawer.hidden = true;
   }
 
+  function ownerControlLinkView(link) {
+    const legacyMap = {
+      orders: "operations",
+      partner_orders: "operations",
+      coupons: "content",
+      hp_rewards: "finance",
+      user_panel: "users",
+      partner_panel: "partners",
+      admin_panel: "operations"
+    };
+    return link.view || legacyMap[link.key] || "";
+  }
+
   function ownerControlLinks(links) {
-    const rows = (links || []).map((link) => ownerLine(
-      link.label || link.key,
-      `${escape(link.key || "route")} / risk: ${escape(link.risk_level || "low")}`,
-      `<a href="${escape(link.href || "#")}">Aç</a>`,
-      link.risk_level
-    ));
+    const rows = (links || []).map((link) => {
+      const view = ownerControlLinkView(link);
+      const action = view
+        ? `<button type="button" data-view-jump="${escape(view)}">Yönet</button>`
+        : `<a href="${escape(link.href || "#")}">Aç</a>`;
+      const target = view ? `super admin: ${view}` : (link.href || "route");
+      return ownerLine(
+        link.label || link.key,
+        `${escape(link.key || "route")} / ${escape(target)} / risk: ${escape(link.risk_level || "low")}`,
+        action,
+        link.risk_level
+      );
+    });
     return rows.length ? rows.join("") : ownerEmpty("Yönlendirme bulunamadı.");
   }
 
@@ -1230,7 +1250,7 @@
       ownerLine("Finans merkezi", "Ciro, ödeme riski, komisyon, iade ve hakediş ayarlarını tek yerden takip et.", "<button type=\"button\" data-view-jump=\"finance\">Aç</button>", "critical"),
       ownerLine("İçerik kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerik önerilerini gör.", "<button type=\"button\" data-view-jump=\"content\">Aç</button>", "high"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
-      ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
+      ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri yönet</button>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
@@ -1238,7 +1258,7 @@
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
       ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Bekleyen onay varsa detay incelemesi gerekir", "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenleri incele</button>", gitops.enabled ? "high" : "medium"),
       ownerLine("Sistem sağlığı", "API, DB, GitOps, komut kabiliyeti ve operasyon raporlarını tek ekranda gör.", "<button type=\"button\" data-view-jump=\"health\">Aç</button>", system.database === "online" ? "low" : "critical"),
-      ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
+      ownerLine("Yönetim kısayolları", "Sipariş, finans, içerik, kullanıcı, partner ve modül yönetimi", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
   }
 
@@ -1491,7 +1511,7 @@
     const orderRows = orders.slice(0, 8).map((order) => ownerLine(
       order.order_no || order.id,
       `${escape(order.customer_name || order.customer_email || "-")} / ${money(order.total)} / sipariş ${escape(order.order_status || "-")} / ödeme ${escape(order.payment_status || "-")} / ${formatDate(order.created_at)}`,
-      `<a href="./orders.html">Sipariş merkezi</a>`,
+      `<button type="button" data-view-jump="operations">Operasyon görünümü</button>`,
       ["cancelled", "failed"].includes(order.order_status) || ["failed", "refunded"].includes(order.payment_status) ? "high" : "medium"
     ));
     const ticketRows = tickets.slice(0, 8).map((ticket) => ownerLine(
