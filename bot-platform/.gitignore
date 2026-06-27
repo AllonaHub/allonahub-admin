@@ -1,0 +1,7 @@
+runtime/*.jsonl
+runtime/*.log
+runtime/*.tmp
+runtime/*.db
+.env
+.env.*
+!.env.example

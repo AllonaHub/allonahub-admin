@@ -1,0 +1,48 @@
+{
+  "handoff": {
+    "criticalKeywords": [
+      "acil",
+      "guvenlik",
+      "odeme hatasi",
+      "iade",
+      "iptal",
+      "kaza",
+      "sikayet",
+      "hesap silme",
+      "kvkk",
+      "veri ihlali",
+      "token",
+      "sifre"
+    ],
+    "humanRequiredIntents": [
+      "taxi_support",
+      "legal_policy",
+      "security",
+      "partner_support",
+      "user_account"
+    ]
+  },
+  "privacy": {
+    "maskInLogs": true,
+    "collectMinimumData": true,
+    "blockedDataTypes": [
+      "card_number",
+      "password",
+      "api_key",
+      "session_token",
+      "national_id"
+    ]
+  },
+  "safeAutomation": {
+    "readOnlyByDefault": true,
+    "requiresHumanApproval": [
+      "payment",
+      "refund",
+      "trip_cancel",
+      "coupon_redeem",
+      "role_change",
+      "data_export",
+      "social_publish"
+    ]
+  }
+}
