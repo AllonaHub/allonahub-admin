@@ -1,10 +1,18 @@
 export async function buildDailyReport({ store }) {
   const events = await store.readAll('conversation-events', { limit: 1000 });
   const tickets = await store.readAll('support-tickets', { limit: 1000 });
+  const agentActions = await store.readAll('offline-agent-actions', { limit: 1000 });
+  const approvals = await store.readAll('approval-queue', { limit: 1000 });
   const today = new Date().toISOString().slice(0, 10);
 
   const todayEvents = events.filter((event) => String(event.createdAt ?? '').startsWith(today));
   const todayTickets = tickets.filter((ticket) => String(ticket.createdAt ?? '').startsWith(today));
+  const todayAgentActions = agentActions.filter((action) =>
+    String(action.createdAt ?? '').startsWith(today)
+  );
+  const todayApprovals = approvals.filter((approval) =>
+    String(approval.createdAt ?? '').startsWith(today)
+  );
   const conversations = new Set(todayEvents.map((event) => event.conversationId).filter(Boolean));
   const intents = new Map();
 
@@ -19,6 +27,13 @@ export async function buildDailyReport({ store }) {
     totalTurns: todayEvents.length,
     handoffCount: todayTickets.length,
     criticalTicketCount: todayTickets.filter((ticket) => ticket.priority === 'critical').length,
+    offlineAgentActionCount: todayAgentActions.length,
+    approvalQueueCount: todayApprovals.length,
+    cost: {
+      estimatedCost: 0,
+      currency: 'USD',
+      externalCalls: 0
+    },
     topIntents: [...intents.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)

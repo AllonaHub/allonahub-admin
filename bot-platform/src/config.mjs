@@ -26,6 +26,7 @@ export function loadConfig(overrides = {}) {
   return {
     packageRoot,
     repoRoot,
+    costMode: overrides.costMode ?? process.env.BOT_COST_MODE ?? 'free',
     host: overrides.host ?? process.env.BOT_HOST ?? '127.0.0.1',
     port: overrides.port ?? numberFromEnv('BOT_PORT', 8787),
     storageDir: overrides.storageDir ?? resolveStorageDir(process.env.BOT_STORAGE_DIR),

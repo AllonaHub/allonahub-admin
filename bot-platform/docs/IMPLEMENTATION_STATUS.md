@@ -19,6 +19,9 @@ Tarih: 27 Haziran 2026
 - Tekrarlayan ticket engeli eklendi: ayni konusmada aktif destek kaydi yeniden uretilmez.
 - Next-best-action eklendi: bot eksik bilgiyi secip musteriden siradaki en faydali cevabi ister.
 - Gelişmiş akilli orkestrasyon testleri eklendi.
+- Ucretsiz Seviye 5 offline agent eklendi.
+- Maliyet korumasi eklendi: free modda OpenAI/API cagrisi teknik olarak kapali.
+- Offline agent aksiyon kaydi, onay kuyrugu ve yerel onay karari endpointleri eklendi.
 
 ## Bilerek Otomatik Yapilmayanlar
 

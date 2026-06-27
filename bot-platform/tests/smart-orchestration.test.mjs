@@ -29,6 +29,8 @@ test('continues an offer flow and fills customer slots across turns', async () =
 
   assert.equal(first.intent, 'offer');
   assert.equal(first.smart.action, 'ask_followup');
+  assert.equal(first.agent.level, 'level_5_free_offline');
+  assert.equal(first.agent.cost.estimatedCost, 0);
   assert.ok(first.smart.missingSlots.includes('name'));
   assert.ok(first.ticket.ticketId);
 

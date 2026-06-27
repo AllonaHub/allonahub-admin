@@ -65,18 +65,43 @@ test('serves health and chat endpoints', async () => {
   assert.equal(health.status, 200);
   assert.equal(health.json().ok, true);
 
-  const chat = await request(app.server, {
-    method: 'POST',
-    url: '/api/chat',
-    body: {
-      conversationId: 'http-test',
-      message: 'AVM kampanya bilgisi lazim',
-      channel: 'web',
-      user: { externalUserId: 'http-user' }
-    }
-  });
-  const payload = chat.json();
-  assert.equal(chat.status, 200);
-  assert.equal(payload.ok, true);
-  assert.equal(payload.intent, 'mall_guide');
+    const chat = await request(app.server, {
+      method: 'POST',
+      url: '/api/chat',
+      body: {
+        conversationId: 'http-test',
+        message: 'Taksi odeme hatasi var, iade yap',
+        channel: 'web',
+        user: { externalUserId: 'http-user' }
+      }
+    });
+    const payload = chat.json();
+    assert.equal(chat.status, 200);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.intent, 'taxi_support');
+    assert.equal(payload.agent.cost.estimatedCost, 0);
+    assert.equal(payload.agent.autonomy.canUseExternalApis, false);
+
+    const approvals = await request(app.server, { method: 'GET', url: '/api/agent/approvals' });
+    const approvalsPayload = approvals.json();
+    assert.equal(approvals.status, 200);
+    assert.equal(approvalsPayload.ok, true);
+    assert.ok(approvalsPayload.approvals.length > 0);
+
+    const approvalActionId = approvalsPayload.approvals[0].actionId;
+    const decision = await request(app.server, {
+      method: 'POST',
+      url: '/api/agent/approval-decision',
+      body: {
+        approvalActionId,
+        decision: 'needs_info',
+        reviewer: 'http-test'
+      }
+    });
+    assert.equal(decision.status, 200);
+    assert.equal(decision.json().decision.approvalActionId, approvalActionId);
+
+    const actions = await request(app.server, { method: 'GET', url: '/api/agent/actions' });
+    assert.equal(actions.status, 200);
+    assert.ok(actions.json().actions.length > 0);
 });

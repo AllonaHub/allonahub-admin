@@ -1,6 +1,11 @@
 import http from 'node:http';
 import { readRequestBody, parseJsonBody, sendJson } from './body.mjs';
 import { verifyHmacSignature } from '../security/signature.mjs';
+import {
+  listApprovalQueue,
+  listOfflineAgentActions,
+  recordApprovalDecision
+} from '../tools/approval-workflow.mjs';
 
 function corsHeaders() {
   return {
@@ -64,7 +69,7 @@ function normalizeWhatsappWebhook(body) {
   };
 }
 
-export function createHttpServer({ config, orchestrator, rateLimiter, reportBuilder }) {
+export function createHttpServer({ config, orchestrator, rateLimiter, reportBuilder, eventStore }) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
 
@@ -94,6 +99,34 @@ export function createHttpServer({ config, orchestrator, rateLimiter, reportBuil
         return;
       }
 
+      if (request.method === 'GET' && url.pathname === '/api/agent/actions') {
+        sendJson(
+          response,
+          200,
+          {
+            ok: true,
+            costMode: config.costMode,
+            actions: await listOfflineAgentActions({ store: eventStore })
+          },
+          corsHeaders()
+        );
+        return;
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/agent/approvals') {
+        sendJson(
+          response,
+          200,
+          {
+            ok: true,
+            costMode: config.costMode,
+            approvals: await listApprovalQueue({ store: eventStore })
+          },
+          corsHeaders()
+        );
+        return;
+      }
+
       if (request.method !== 'POST') {
         sendJson(response, 404, { ok: false, error: 'not_found' }, corsHeaders());
         return;
@@ -109,6 +142,19 @@ export function createHttpServer({ config, orchestrator, rateLimiter, reportBuil
 
       if (url.pathname === '/api/chat') {
         sendJson(response, 200, await orchestrator.handleMessage(normalizeGenericWebhook(body)), corsHeaders());
+        return;
+      }
+
+      if (url.pathname === '/api/agent/approval-decision') {
+        sendJson(
+          response,
+          200,
+          {
+            ok: true,
+            decision: await recordApprovalDecision({ store: eventStore, decision: body })
+          },
+          corsHeaders()
+        );
         return;
       }
 

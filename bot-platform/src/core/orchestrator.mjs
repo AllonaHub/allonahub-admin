@@ -7,10 +7,12 @@ import {
   publicCustomerContext
 } from './customer-insights.mjs';
 import { buildSmartResponsePlan } from './response-planner.mjs';
+import { buildOfflineAgentPlan } from './offline-agent.mjs';
 import { analyzeRisk } from '../security/risk.mjs';
 import { hasSensitiveData, maskSensitiveText } from '../security/redaction.mjs';
 import { buildKnowledgeAnswer, searchKnowledgeBase } from '../knowledge/loader.mjs';
 import { createSupportTicket } from '../tools/support-ticket.mjs';
+import { executeOfflineAgentPlan } from '../tools/offline-agent-executor.mjs';
 
 export class BotOrchestrator {
   constructor({ knowledgeBase, conversationStore, eventStore, policy, aiResponder, systemPromptPath }) {
@@ -102,6 +104,20 @@ export class BotOrchestrator {
       customerContext: conversation.smartContext,
       insights
     });
+    const agentPlan = buildOfflineAgentPlan({
+      message,
+      classification,
+      risk,
+      ticket,
+      smartPlan,
+      customerContext: conversation.smartContext,
+      knowledgeResults
+    });
+    const agentExecution = await executeOfflineAgentPlan({
+      store: this.eventStore,
+      conversationId: conversation.conversationId,
+      plan: agentPlan
+    });
     const answer = await this.buildAnswer({
       message,
       classification,
@@ -132,6 +148,21 @@ export class BotOrchestrator {
         tone: smartPlan.meta?.tone,
         customerContext: publicCustomerContext(conversation.smartContext)
       },
+      agent: {
+        level: agentPlan.agentLevel,
+        decision: agentPlan.decision,
+        autonomy: agentPlan.autonomy,
+        cost: agentPlan.cost,
+        actions: agentPlan.actions.map((action) => ({
+          actionId: action.actionId,
+          type: action.type,
+          mode: action.mode,
+          status: action.status,
+          priority: action.priority,
+          description: action.description
+        })),
+        execution: agentExecution
+      },
       safety: {
         promptInjectionDetected: risk.hasPromptInjection,
         riskyActionDetected: risk.hasRiskyAction,
@@ -145,6 +176,7 @@ export class BotOrchestrator {
       botAnswer: answer,
       classification,
       smart: response.smart,
+      agent: response.agent,
       handoffRequired: response.handoffRequired,
       ticketId: ticket?.ticketId,
       citations: response.citations

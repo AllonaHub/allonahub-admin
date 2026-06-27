@@ -52,7 +52,16 @@ Gerekenler:
 - Cok kanalli calisir: web, WhatsApp, Telegram, Instagram DM, admin panel.
 - Canli izleme, alarm ve insan geri bildirimiyle kendini gelistirir.
 
-Gerekenler:
+Ucretsiz/offline uygulanan kisim:
+
+- Yerel bilgi tabaniyla calisir.
+- Dis API ve token harcamasi yapmaz.
+- Musteri baglami ve next-best-action ile aksiyon plani uretir.
+- Guvenli yerel aksiyonlari kayit altina alir.
+- Riskli islemleri onay kuyruguna alir.
+- Gunluk raporda offline agent aksiyon sayisi ve sifir maliyet metrikleri verir.
+
+Canli entegrasyon icin ileride gerekenler:
 
 - Tool izin matrisi.
 - Onay mekanizmasi.
@@ -62,14 +71,14 @@ Gerekenler:
 
 ## Ulasilabilecek Ust Sinir
 
-Teknik olarak botu Seviye 5'e kadar cikarabiliriz. Bunun anlami:
+Teknik olarak botu maliyetsiz sekilde "Seviye 5 Free Offline" noktasina kadar cikarabiliriz. Bunun anlami:
 
 - Musteriyi anlar.
 - Konusma gecmisini hatirlar.
 - Eksik bilgiyi toplar.
-- Panel ve modüllerden veri okur.
-- Riskli islemi otomatik yapmaz, onaya gonderir.
-- Guvenli islemleri otomatik tamamlar.
+- Panel ve modüller icin yerel aksiyon gorevi hazirlar.
+- Riskli islemi otomatik yapmaz, onay kuyruguna gonderir.
+- Guvenli islemleri yerel kayit olarak tamamlar.
 - Her cevabi kaynak, log ve kalite metriğiyle izler.
 
 Tam otonom finans, iade, iptal, hesap silme, yetki verme veya veri disari aktarma islemleri onerilmez. Bu alanlarda en ust seviye, "bot hazirlar ve insan onayiyla uygular" modeli olmalidir.

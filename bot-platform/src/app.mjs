@@ -6,12 +6,14 @@ import { ConversationStore } from './storage/conversation-store.mjs';
 import { BotOrchestrator } from './core/orchestrator.mjs';
 import { InMemoryRateLimiter } from './security/rate-limit.mjs';
 import { createOpenAIResponder } from './ai/openai-responses.mjs';
+import { enforceFreeMode, assertNoPaidApi } from './security/cost-guard.mjs';
 import { buildDailyReport } from './tools/reporting.mjs';
 import { createHttpServer } from './http/server.mjs';
 import fs from 'node:fs/promises';
 
 export async function createBotApp(overrides = {}) {
-  const config = loadConfig(overrides);
+  const config = enforceFreeMode(loadConfig(overrides));
+  assertNoPaidApi(config);
   const policy = JSON.parse(
     await fs.readFile(new URL('../config/policies.json', import.meta.url), 'utf8')
   );
@@ -26,7 +28,7 @@ export async function createBotApp(overrides = {}) {
     maskLogs: policy.privacy?.maskInLogs !== false
   });
   const conversationStore = new ConversationStore({ eventStore });
-  const aiResponder = createOpenAIResponder(config.ai);
+  const aiResponder = config.costGuard.externalApiAllowed ? createOpenAIResponder(config.ai) : null;
   const orchestrator = new BotOrchestrator({
     knowledgeBase,
     conversationStore,
@@ -49,7 +51,8 @@ export async function createBotApp(overrides = {}) {
       config,
       orchestrator,
       rateLimiter,
-      reportBuilder: () => buildDailyReport({ store: eventStore })
+      reportBuilder: () => buildDailyReport({ store: eventStore }),
+      eventStore
     })
   };
 }

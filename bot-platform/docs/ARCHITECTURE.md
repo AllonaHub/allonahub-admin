@@ -12,6 +12,8 @@
 | Bilgi tabani | `src/knowledge/loader.mjs` | Proje dokumanlarini parcalar ve arar |
 | Guvenlik | `src/security/*` | Redaction, risk, rate limit ve imza dogrulama |
 | Destek | `src/tools/support-ticket.mjs` | Insan devri ve panel sahipligi icin kayit acma |
+| Offline agent | `src/core/offline-agent.mjs` | Ucretsiz Seviye 5 aksiyon plani uretir |
+| Onay is akisi | `src/tools/approval-workflow.mjs` | Onay kuyrugunu ve yerel onay kararlarini yonetir |
 | Raporlama | `src/tools/reporting.mjs` | Gunluk bot raporu uretme |
 | AI | `src/ai/openai-responses.mjs` | Opsiyonel Responses API cagrisi |
 
