@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260620-pos1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260627-partner-pro1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -30,12 +30,14 @@
 
         <nav class="partner-os-menu">
           <button class="is-active" type="button" data-panel-target="dashboard"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></button>
+          <button type="button" data-panel-target="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulum</span></button>
           <button type="button" data-panel-target="payments"><i class="fa-solid fa-tower-broadcast"></i><span>QR & NFC POS</span></button>
           <button type="button" data-panel-target="products"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
           <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
           <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
           <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
           <button type="button" data-panel-target="operations"><i class="fa-solid fa-store"></i><span>Şube & Cihaz</span></button>
+          <button type="button" data-panel-target="academy"><i class="fa-solid fa-graduation-cap"></i><span>Akademi</span></button>
           <button type="button" data-panel-target="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
           <button type="button" data-panel-target="settings"><i class="fa-solid fa-shield-halved"></i><span>Ayarlar</span></button>
         </nav>
@@ -72,6 +74,7 @@
                 <button type="button" data-panel-jump="payments"><i class="fa-solid fa-qrcode"></i><span>Ödeme Al</span></button>
                 <button type="button" data-panel-jump="products"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
                 <button type="button" data-panel-jump="finance"><i class="fa-solid fa-file-invoice-dollar"></i><span>Hakediş</span></button>
+                <button type="button" data-panel-jump="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulumu Bitir</span></button>
               </div>
             </div>
             <div class="partner-os-trust">
@@ -83,6 +86,38 @@
           </div>
 
           <div class="partner-os-kpis" data-partner-kpis></div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Mağaza Sağlığı</p>
+                  <h2>Operasyon Puanı</h2>
+                </div>
+              </div>
+              <div class="partner-os-health" data-store-health></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Hızlı Aksiyon</p>
+                  <h2>Bugünün İşleri</h2>
+                </div>
+              </div>
+              <div class="partner-os-action-list" data-action-center></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Duyurular</p>
+                  <h2>Partner Merkezi</h2>
+                </div>
+              </div>
+              <div class="partner-os-mini-list" data-announcement-list></div>
+            </section>
+          </div>
 
           <div class="partner-os-grid partner-os-grid--two">
             <section class="partner-os-panel">
@@ -105,6 +140,40 @@
               </div>
               <div class="partner-os-mini-list" data-recent-payments></div>
             </section>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="onboarding" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Kurulum Merkezi</p>
+                <h2>Partner Hesabını Yayına Hazırla</h2>
+              </div>
+              <span class="partner-os-live" data-onboarding-score>Kontrol ediliyor</span>
+            </div>
+            <div class="partner-os-onboarding" data-onboarding-list></div>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-id-card-clip"></i>
+              <h3>Belge ve Profil</h3>
+              <p>Yasal unvan, logo, iletişim, ödeme takvimi ve lokasyon bilgilerini tamamla.</p>
+              <button type="button" data-panel-jump="settings">Bilgileri Aç</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-box-open"></i>
+              <h3>Katalog Hazırlığı</h3>
+              <p>Ürün, hizmet veya menü kayıtlarını fiyat, stok, görsel ve açıklamayla canlıya hazırla.</p>
+              <button type="button" data-panel-jump="products">Kataloğa Git</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-shield-heart"></i>
+              <h3>Güvenlik</h3>
+              <p>MFA, destek kayıtları ve işlem loglarıyla partner hesabını koruma altında tut.</p>
+              <a class="partner-os-link-button" href="../account/mfa.html?returnTo=/pages/partner/partner-panel.html">MFA Ayarları</a>
+            </article>
           </div>
         </section>
 
@@ -288,6 +357,34 @@
         </section>
 
         <section class="partner-os-section" id="growth" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Büyüme Merkezi</p>
+                <h2>Kampanya Planla</h2>
+              </div>
+              <span class="partner-os-live">Onay akışına hazır</span>
+            </div>
+            <form class="partner-os-product-form" data-campaign-form>
+              <label><span>Kampanya adı</span><input name="title" required placeholder="Hafta sonu özel indirimi"></label>
+              <label><span>Kampanya türü</span><select name="campaign_type"><option value="coupon">Kupon</option><option value="sponsored_listing">Vitrin reklamı</option><option value="loyalty">HP sadakat</option><option value="free_delivery">Ücretsiz teslimat</option></select></label>
+              <label><span>Başlangıç</span><input name="starts_at" type="date"></label>
+              <label><span>Bitiş</span><input name="ends_at" type="date"></label>
+              <label><span>Bütçe / limit</span><input name="budget" type="number" min="0" step="1" placeholder="1000"></label>
+              <label><span>Hedef</span><select name="objective"><option value="conversion">Satış artırma</option><option value="traffic">Mağaza trafiği</option><option value="retention">Tekrar müşteri</option><option value="launch">Yeni ürün lansmanı</option></select></label>
+              <label class="partner-os-span-2"><span>Açıklama</span><input name="summary" placeholder="Koşullar, hedef ürünler ve görünürlük notu"></label>
+              <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Kampanyayı Planla</span></button>
+            </form>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Kampanya</th><th>Tür</th><th>Tarih</th><th>Hedef</th><th>Durum</th></tr>
+                </thead>
+                <tbody data-campaign-rows></tbody>
+              </table>
+            </div>
+          </div>
+
           <div class="partner-os-grid partner-os-grid--three">
             <article class="partner-os-feature">
               <i class="fa-solid fa-ticket"></i>
@@ -330,6 +427,18 @@
               </div>
               <div class="partner-os-mini-list" data-device-list></div>
             </section>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="academy" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Partner Akademi</p>
+                <h2>Eğitim, Rehber ve Kontrol Listeleri</h2>
+              </div>
+            </div>
+            <div class="partner-os-academy" data-academy-list></div>
           </div>
         </section>
 
@@ -419,7 +528,7 @@
   <script src="../../js/auth.js?v=20260620-account1" defer></script>
   <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/partner-os.js?v=20260627-market-owner1" defer></script>
+  <script src="../../js/partner-os.js?v=20260627-partner-pro1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

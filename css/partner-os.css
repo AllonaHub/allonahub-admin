@@ -539,8 +539,28 @@
 .partner-os-terminal button,
 .partner-os-support-form button,
 .partner-os-settings button,
-.partner-os-product-form button {
+.partner-os-product-form button,
+.partner-os-link-button,
+.partner-os-action-list button,
+.partner-os-onboarding-item button,
+.partner-os-academy-card button {
   width: 100%;
+}
+
+.partner-os-link-button {
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font: inherit;
+  font-weight: 900;
+  background: color-mix(in srgb, var(--ah-bg-mid) 72%, transparent);
+  color: var(--ah-primary);
+  text-decoration: none;
+  margin-top: 16px;
 }
 
 .partner-os-product-form {
@@ -558,6 +578,141 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--ah-bg-mid) 58%, transparent);
   padding: 16px;
+}
+
+.partner-os-health {
+  display: grid;
+  gap: 14px;
+}
+
+.partner-os-health-score {
+  min-height: 112px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: color-mix(in srgb, var(--ah-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ah-primary) 28%, transparent);
+}
+
+.partner-os-health-score strong {
+  color: var(--ah-accent);
+  font-size: clamp(2.7rem, 6vw, 4.2rem);
+  line-height: 1;
+}
+
+.partner-os-health-score span {
+  color: var(--ah-muted);
+  font-weight: 900;
+}
+
+.partner-os-health-bars {
+  display: grid;
+  gap: 8px;
+}
+
+.partner-os-health-bars div {
+  min-height: 38px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.partner-os-health-bars span:first-child {
+  color: var(--ah-muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.partner-os-action-list {
+  display: grid;
+  gap: 10px;
+}
+
+.partner-os-action-list button,
+.partner-os-onboarding-item button,
+.partner-os-academy-card button {
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 66%, transparent);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 68%, transparent);
+  color: var(--ah-ink);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.partner-os-action-list button.is-primary {
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
+  color: #fff;
+}
+
+.partner-os-onboarding {
+  display: grid;
+  gap: 10px;
+}
+
+.partner-os-onboarding-item {
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 116px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 62%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 54%, transparent);
+  padding: 12px;
+}
+
+.partner-os-onboarding-item > i {
+  color: var(--ah-accent);
+  font-size: 1.25rem;
+}
+
+.partner-os-onboarding-item.is-done > i {
+  color: #59f1a5;
+}
+
+.partner-os-onboarding-item strong,
+.partner-os-academy-card strong {
+  display: block;
+  color: var(--ah-ink);
+}
+
+.partner-os-onboarding-item span,
+.partner-os-academy-card span {
+  display: block;
+  color: var(--ah-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.partner-os-academy {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.partner-os-academy-card {
+  min-height: 190px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 62%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 54%, transparent);
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.partner-os-academy-card > i {
+  color: var(--ah-primary);
+  font-size: 1.55rem;
 }
 
 .partner-os-terminal-empty,
@@ -860,7 +1015,8 @@
   .partner-os-hero,
   .partner-os-grid--terminal,
   .partner-os-grid--two,
-  .partner-os-grid--three {
+  .partner-os-grid--three,
+  .partner-os-academy {
     grid-template-columns: 1fr;
   }
 }
@@ -903,7 +1059,8 @@
 
   .partner-os-kpis,
   .partner-os-form-grid,
-  .partner-os-product-form {
+  .partner-os-product-form,
+  .partner-os-onboarding-item {
     grid-template-columns: 1fr;
   }
 

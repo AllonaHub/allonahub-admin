@@ -14,6 +14,7 @@
     devices: [],
     qrCodes: [],
     tickets: [],
+    campaigns: [],
     metrics: {},
     recommendations: []
   };
@@ -209,6 +210,131 @@
         <span>${escape(label)}</span>
         <strong>${escape(value)}</strong>
         <small>${escape(hint)}</small>
+      </article>
+    `).join("");
+  }
+
+  function renderStoreHealth() {
+    const target = $("[data-store-health]");
+    if (!target) return;
+    const metrics = state.metrics || {};
+    const business = state.business || {};
+    const score = Math.max(0, Math.min(100, Number(metrics.trust_score || business.trust_score || 70)));
+    const rows = [
+      ["Profil", business.logo_url && business.display_name ? "Tamam" : "Eksik bilgi", business.logo_url && business.display_name ? "active" : "pending"],
+      ["Katalog", Number(metrics.active_product_count || 0) > 0 ? `${metrics.active_product_count} aktif` : "Ürün bekliyor", Number(metrics.active_product_count || 0) > 0 ? "active" : "pending"],
+      ["Ödeme", Number(metrics.awaiting_payment_count || 0) || Number(metrics.paid_today || 0) ? "Aktif" : "Kurulum bekliyor", Number(metrics.awaiting_payment_count || 0) || Number(metrics.paid_today || 0) ? "active" : "pending"],
+      ["Destek", Number(metrics.open_ticket_count || 0) ? `${metrics.open_ticket_count} açık` : "Temiz", Number(metrics.open_ticket_count || 0) ? "pending" : "active"]
+    ];
+    target.innerHTML = `
+      <div class="partner-os-health-score">
+        <strong>${score}</strong>
+        <span>Genel sağlık</span>
+      </div>
+      <div class="partner-os-health-bars">
+        ${rows.map(([label, value, status]) => `
+          <div>
+            <span>${escape(label)}</span>
+            ${statusPill(status).replace(statusLabel(status), escape(value))}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function actionButton(label, icon, target, tone) {
+    return `
+      <button type="button" class="${tone ? `is-${tone}` : ""}" data-panel-jump="${escape(target)}">
+        <i class="fa-solid ${escape(icon)}"></i>
+        <span>${escape(label)}</span>
+      </button>
+    `;
+  }
+
+  function renderActionCenter() {
+    const target = $("[data-action-center]");
+    if (!target) return;
+    const metrics = state.metrics || {};
+    const actions = [];
+    if (!state.products.length) actions.push(["İlk ürünü ekle", "fa-box-open", "products", "primary"]);
+    if (!state.paymentIntents.length) actions.push(["Ödeme isteği oluştur", "fa-qrcode", "payments", "primary"]);
+    if (!state.campaigns.length) actions.push(["Kampanya planla", "fa-bullhorn", "growth", ""]);
+    if (Number(metrics.open_order_count || 0) > 0) actions.push(["Siparişleri güncelle", "fa-truck-fast", "orders", ""]);
+    if (!actions.length) {
+      actions.push(["Performansı incele", "fa-chart-line", "finance", "primary"], ["Destek merkezini aç", "fa-headset", "support", ""]);
+    }
+    target.innerHTML = actions.slice(0, 4).map((item) => actionButton(...item)).join("");
+  }
+
+  function renderAnnouncements() {
+    const target = $("[data-announcement-list]");
+    if (!target) return;
+    const announcements = [
+      { title: "Partner MFA zorunlu", body: "Partner girişleri iki aşamalı doğrulama ile korunuyor.", status: "active" },
+      { title: "Kampanya planlayıcı hazır", body: "Kupon, vitrin reklamı ve HP sadakat planlarını büyüme merkezinde oluştur.", status: "pending" },
+      { title: "QR/NFC ödeme merkezi", body: "Tahsilat linki, QR ve SoftPOS akışları tek ekranda izlenir.", status: "active" }
+    ];
+    target.innerHTML = announcements.map((item) => `
+      <article class="partner-os-list-item">
+        <div><strong>${escape(item.title)}</strong><span>${escape(item.body)}</span></div>
+        <em>${escape(statusLabel(item.status))}</em>
+      </article>
+    `).join("");
+  }
+
+  function onboardingItems() {
+    const business = state.business || {};
+    const metrics = state.metrics || {};
+    return [
+      {
+        title: "Partner profilini tamamla",
+        body: "Görünen ad, yasal unvan, telefon, şehir, logo ve açıklama bilgileri.",
+        done: Boolean(business.display_name && business.phone && business.city),
+        target: "settings"
+      },
+      {
+        title: "MFA güvenliğini doğrula",
+        body: "Partner paneline erişim için iki aşamalı doğrulama kullan.",
+        done: true,
+        target: "settings"
+      },
+      {
+        title: "İlk ürün veya hizmeti ekle",
+        body: "Katalog, stok, fiyat, görsel ve açıklama alanlarını doldur.",
+        done: Number(metrics.active_product_count || 0) > 0,
+        target: "products"
+      },
+      {
+        title: "Ödeme kanalını dene",
+        body: "QR, ödeme linki veya NFC SoftPOS için test ödeme isteği oluştur.",
+        done: state.paymentIntents.length > 0,
+        target: "payments"
+      },
+      {
+        title: "İlk kampanyanı planla",
+        body: "Kupon, HP sadakat veya sponsorlu görünürlük kampanyası hazırla.",
+        done: state.campaigns.length > 0,
+        target: "growth"
+      }
+    ];
+  }
+
+  function renderOnboarding() {
+    const target = $("[data-onboarding-list]");
+    const scoreTarget = $("[data-onboarding-score]");
+    if (!target) return;
+    const items = onboardingItems();
+    const doneCount = items.filter((item) => item.done).length;
+    const percent = Math.round((doneCount / items.length) * 100);
+    if (scoreTarget) scoreTarget.textContent = `%${percent} tamamlandı`;
+    target.innerHTML = items.map((item) => `
+      <article class="partner-os-onboarding-item ${item.done ? "is-done" : ""}">
+        <i class="fa-solid ${item.done ? "fa-circle-check" : "fa-circle"}"></i>
+        <div>
+          <strong>${escape(item.title)}</strong>
+          <span>${escape(item.body)}</span>
+        </div>
+        <button type="button" data-panel-jump="${escape(item.target)}">${item.done ? "Aç" : "Tamamla"}</button>
       </article>
     `).join("");
   }
@@ -492,9 +618,64 @@
       : emptyList("Açık talep yok", "Ödeme, QR/NFC, kargo veya teknik konularda talep açabilirsin.");
   }
 
+  function campaignTypeLabel(value) {
+    const labels = {
+      coupon: "Kupon",
+      sponsored_listing: "Vitrin reklamı",
+      loyalty: "HP sadakat",
+      free_delivery: "Ücretsiz teslimat"
+    };
+    return labels[value] || value || "-";
+  }
+
+  function renderCampaigns() {
+    const target = $("[data-campaign-rows]");
+    if (!target) return;
+    if (!state.campaigns.length) {
+      target.innerHTML = `<tr><td colspan="5">Henüz planlanmış kampanya yok.</td></tr>`;
+      return;
+    }
+    target.innerHTML = state.campaigns.map((campaign) => `
+      <tr>
+        <td><strong>${escape(campaign.title)}</strong><br><small>${escape(campaign.summary || "")}</small></td>
+        <td>${escape(campaignTypeLabel(campaign.campaign_type))}</td>
+        <td>${escape([campaign.starts_at, campaign.ends_at].filter(Boolean).join(" - ") || "Tarih bekliyor")}</td>
+        <td>${escape(statusLabel(campaign.objective || "conversion"))}</td>
+        <td>${statusPill(campaign.status || "review")}</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderAcademy() {
+    const target = $("[data-academy-list]");
+    if (!target) return;
+    const lessons = [
+      ["Hızlı başlangıç", "Profil, katalog, ödeme ve destek kurulumunu 15 dakikada tamamla.", "onboarding", "fa-list-check"],
+      ["Ürün ve stok kalitesi", "Görsel, açıklama, fiyat, stok ve kategori standardını güçlendir.", "products", "fa-boxes-stacked"],
+      ["Sipariş operasyonu", "Hazırlık, kargo, teslimat ve müşteri iletişimi akışlarını takip et.", "orders", "fa-truck-fast"],
+      ["Kampanya ve reklam", "Kupon, HP, vitrin ve tekrar müşteri planlarını tek yerden yönet.", "growth", "fa-bullhorn"],
+      ["Finans ve hakediş", "Komisyon, net kazanç, ödeme takvimi ve raporları doğru oku.", "finance", "fa-wallet"],
+      ["Güvenlik standardı", "MFA, destek, audit ve hesap güvenliği kontrollerini düzenli tut.", "settings", "fa-shield-halved"]
+    ];
+    target.innerHTML = lessons.map(([title, body, targetId, icon]) => `
+      <article class="partner-os-academy-card">
+        <i class="fa-solid ${escape(icon)}"></i>
+        <div>
+          <strong>${escape(title)}</strong>
+          <span>${escape(body)}</span>
+        </div>
+        <button type="button" data-panel-jump="${escape(targetId)}">Aç</button>
+      </article>
+    `).join("");
+  }
+
   function renderAll() {
     applyBusinessProfile();
     renderKpis();
+    renderStoreHealth();
+    renderActionCenter();
+    renderAnnouncements();
+    renderOnboarding();
     renderRecommendations();
     renderRecentPayments();
     renderPaymentRows();
@@ -503,6 +684,8 @@
     renderFinance();
     renderOperations();
     renderTickets();
+    renderCampaigns();
+    renderAcademy();
   }
 
   async function loadFallbackData() {
@@ -538,6 +721,7 @@
     state.devices = [];
     state.qrCodes = [];
     state.tickets = [];
+    state.campaigns = [];
     state.metrics = {
       product_count: state.products.length,
       active_product_count: state.products.filter((item) => item.status === "active").length,
@@ -578,6 +762,7 @@
           devices: payload.devices || [],
           qrCodes: payload.qrCodes || [],
           tickets: payload.tickets || [],
+          campaigns: payload.campaigns || [],
           metrics: payload.metrics || {},
           recommendations: payload.recommendations || []
         });
@@ -831,6 +1016,47 @@
     }
   }
 
+  async function createCampaign(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!data.title) {
+      toast("Kampanya adı zorunlu.", "error");
+      return;
+    }
+    const campaign = {
+      id: uuid(),
+      title: data.title,
+      campaign_type: data.campaign_type || "coupon",
+      starts_at: data.starts_at || "",
+      ends_at: data.ends_at || "",
+      budget: Number(data.budget || 0),
+      objective: data.objective || "conversion",
+      summary: data.summary || "",
+      status: "review",
+      created_at: new Date().toISOString()
+    };
+    state.campaigns = [campaign, ...state.campaigns];
+    renderCampaigns();
+    renderActionCenter();
+    renderOnboarding();
+    form.reset();
+    toast("Kampanya planı oluşturuldu ve onay akışına hazırlandı.");
+    if (App.complianceAudit) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "campaign_plan_created",
+        severity: "info",
+        resourceType: "partner_campaign",
+        resourceId: campaign.id,
+        evidenceTags: ["partner_os", "growth"],
+        metadata: {
+          campaign_type: campaign.campaign_type,
+          objective: campaign.objective,
+          budget: campaign.budget
+        }
+      });
+    }
+  }
+
   async function updateOrder(orderId, payload) {
     try {
       await apiFetch("/v1/partner/orders/status", {
@@ -869,7 +1095,15 @@
       if (jump) activatePanel(jump.dataset.panelJump);
       if (refresh) loadPartnerOs();
       if (logout) App.auth.signOut({ scope: "local" });
-      if (growth) toast("Kampanya modülü için plan kaydı hazır. Bir sonraki adımda reklam bütçesi, tarih ve hedef kitle formu bağlanacak.");
+      if (growth) {
+        activatePanel("growth");
+        const form = $("[data-campaign-form]");
+        if (form && form.elements.campaign_type) {
+          const mapping = { coupon: "coupon", ads: "sponsored_listing", loyalty: "loyalty" };
+          form.elements.campaign_type.value = mapping[growth.dataset.growthAction] || "coupon";
+          form.elements.title.focus();
+        }
+      }
       if (productDemo) toast("Aşağıdaki form ürünü yeni şemaya uygun taslak olarak kaydeder.");
     });
 
@@ -902,6 +1136,14 @@
       supportForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createTicket(supportForm);
+      });
+    }
+
+    const campaignForm = $("[data-campaign-form]");
+    if (campaignForm) {
+      campaignForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        createCampaign(campaignForm);
       });
     }
 
