@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Paylasimlar | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Denizcilik modulu partner paylasimlari, operasyon duyurulari ve navlun notlari.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="paylasimlar">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="radio"></i>Paylasim akisi</span>
+        <h1>Navlun ve operasyon duyurulari</h1>
+        <p class="lead">Firmalar kapasite, fiyat ve operasyon notlarini yayinlar; musteri veya partner ilgili rotaya tek tikla teklif talebi acabilir.</p>
+      </section>
+
+      <section class="section split-layout">
+        <div>
+          <div class="section-heading">
+            <div>
+              <h2>Yayindaki paylasimlar</h2>
+              <p>Butonlar teklif, detay ve yanit akislarina baglidir.</p>
+            </div>
+          </div>
+          <div class="grid-list" data-render="posts-board"></div>
+        </div>
+
+        <aside class="form-panel">
+          <h2>Paylasim Ekle</h2>
+          <form data-form="post">
+            <div class="form-grid">
+              <div class="field">
+                <label for="post-type">Tur</label>
+                <select id="post-type" name="type" required>
+                  <option>Navlun Paylasimi</option>
+                  <option>Bos Kapasite</option>
+                  <option>Danisman Notu</option>
+                  <option>Operasyon Uyarisi</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="post-price">Fiyat USD</label>
+                <input id="post-price" name="priceUsd" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="field wide">
+                <label for="post-owner">Firma / Danisman</label>
+                <input id="post-owner" name="owner" required placeholder="Marmara Forwarding">
+              </div>
+              <div class="field wide">
+                <label for="post-route">Rota</label>
+                <select id="post-route" name="route" data-route-options required></select>
+              </div>
+              <div class="field wide">
+                <label for="post-title">Baslik</label>
+                <input id="post-title" name="title" required placeholder="Mersin - Rotterdam icin ek kapasite">
+              </div>
+              <div class="field wide">
+                <label for="post-content">Icerik</label>
+                <textarea id="post-content" name="content" required placeholder="Kapasite, cut-off ve sart bilgisini girin."></textarea>
+              </div>
+              <div class="field wide">
+                <label for="post-tags">Etiketler</label>
+                <input id="post-tags" name="tags" placeholder="FCL, 40HC, Kuzey Avrupa">
+              </div>
+            </div>
+            <div class="consent-stack">
+              <label class="consent-option">
+                <input type="checkbox" name="partnerContentTerms" required>
+                <span><a href="../legal/index.html#partner">Partner Koşulları</a> ve <a href="../legal/index.html#kullanim">Kullanım Şartları</a> kapsamında paylaşımın doğru, güncel ve yanıltıcı olmadığını onaylıyorum.</span>
+              </label>
+            </div>
+            <button class="button" type="submit"><i data-lucide="send"></i><span>Yayina Al</span></button>
+          </form>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="destek.html">Destek</a><a href="teklif.html">Teklif</a><a href="navlun.html">Navlun</a><a href="../legal/index.html#partner">Partner Koşulları</a><a href="../legal/index.html#gizlilik">Gizlilik</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Paylaşımlar yanıltıcı reklam, geçersiz fiyat, belirsiz kampanya ve yetkisiz marka kullanımı içermemelidir.</p></div>
+    </footer>
+  </body>
+</html>

@@ -32,8 +32,8 @@
       },
       {
         id: "campaign",
-        title: "Kampanya ve favori duyurulari",
-        description: "Favori AVM ve magazalardan secili firsatlari gosterir.",
+        title: "Ticari ileti ve kampanya izni",
+        description: "Istege bagli pazarlama, kampanya ve favori duyurulari icin kullanilir; her zaman kapatilabilir.",
         enabled: true,
       },
     ],

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teklif Talebi | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Deniz navlunu icin teklif talebi olusturma ekrani.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="teklif">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="send"></i>Teklif talebi</span>
+        <h1>Yuk bilgini gir, partnerler yanitlasin</h1>
+        <p class="lead">Talep kaydi Supabase acikken veritabanina, kapaliyken yerel kayda duser. Her durumda partner panelinde gorunur.</p>
+      </section>
+
+      <section class="section split-layout">
+        <aside class="form-panel">
+          <h2>Talep Formu</h2>
+          <form data-form="quote">
+            <div class="form-grid">
+              <div class="field wide"><label for="quote-company">Firma</label><input id="quote-company" name="companyName" required placeholder="Anadolu Makine A.S."></div>
+              <div class="field"><label for="quote-contact">Yetkili</label><input id="quote-contact" name="contactName" required placeholder="Ozan Kaya"></div>
+              <div class="field"><label for="quote-phone">Telefon</label><input id="quote-phone" name="phone" required placeholder="+90 5xx xxx xx xx"></div>
+              <div class="field wide"><label for="quote-email">E-posta</label><input id="quote-email" name="email" type="email" required placeholder="lojistik@firma.com"></div>
+              <div class="field wide"><label for="quote-route">Hazir rota</label><select id="quote-route" name="route" data-route-options required></select></div>
+              <div class="field"><label for="quote-origin">Cikis</label><input id="quote-origin" name="origin" placeholder="Konya"></div>
+              <div class="field"><label for="quote-destination">Varis</label><input id="quote-destination" name="destination" placeholder="Hamburg"></div>
+              <div class="field wide"><label for="quote-cargo">Yuk tipi</label><input id="quote-cargo" name="cargoType" required placeholder="Paketli makine parcasi"></div>
+              <div class="field"><label for="quote-container">Konteyner</label><select id="quote-container" name="containerType"><option>40HC</option><option>20DC</option><option>1-6 CBM</option><option>Tir Slot</option></select></div>
+              <div class="field"><label for="quote-date">Hedef tarih</label><input id="quote-date" name="targetDate" type="date" required></div>
+              <div class="field wide"><label for="quote-budget">Butce USD</label><input id="quote-budget" name="budgetUsd" type="number" min="0" step="1" placeholder="3300"></div>
+            </div>
+            <div class="consent-stack">
+              <label class="consent-option">
+                <input type="checkbox" name="kvkkNotice" required>
+                <span><a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> ve <a href="../legal/index.html#gizlilik">Gizlilik Politikası</a> kapsamında bilgilerimin teklif ve operasyon amacıyla işlenebileceğini okudum.</span>
+              </label>
+              <label class="consent-option">
+                <input type="checkbox" name="commercialConsent">
+                <span>Kampanya, navlun duyurusu ve ticari bilgilendirme almak için <a href="../legal/index.html#ticari-iletisim">ticari iletişim izni</a> veriyorum.</span>
+              </label>
+            </div>
+            <button class="button" type="submit"><i data-lucide="send"></i><span>Talebi Kaydet</span></button>
+          </form>
+        </aside>
+
+        <div>
+          <div class="section-heading"><div><h2>Acik talepler</h2><p>Yeni kayitlar aninda bu alana eklenir.</p></div></div>
+          <div class="horizontal-strip" data-render="quote-requests"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="destek.html">Destek</a><a href="navlun.html">Navlun</a><a href="partner-panel.html">Partner</a><a href="../legal/index.html#gizlilik">Gizlilik</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#cerez">Çerezler</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Teklif talebinde paylaşılan firma, yetkili ve iletişim bilgileri yalnızca talep değerlendirme, operasyon ve destek amaçlarıyla kullanılır.</p></div>
+    </footer>
+  </body>
+</html>

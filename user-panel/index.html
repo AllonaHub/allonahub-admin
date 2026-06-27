@@ -196,6 +196,9 @@
                   Varsayilan adres
                   <textarea name="address" rows="3" required></textarea>
                 </label>
+                <p class="legal-helper span-2">
+                  Profil bilgileriniz <a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> ve <a href="../legal/index.html#gizlilik">Gizlilik Politikası</a> kapsamında hesap, destek, güvenlik ve hizmet sunumu amacıyla işlenir.
+                </p>
                 <div class="form-actions span-2">
                   <button class="primary-button" type="submit">Profili kaydet</button>
                   <button class="secondary-button" type="button" data-action="reset-demo">Demo veriyi sifirla</button>
@@ -298,6 +301,12 @@
                   Aciklama
                   <textarea name="message" rows="4" required></textarea>
                 </label>
+                <div class="consent-stack span-2">
+                  <label class="consent-option">
+                    <input type="checkbox" name="supportKvkkNotice" required>
+                    <span><a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> kapsamında destek talebi için gerekli bilgilerin işlenebileceğini okudum; özel nitelikli veya gereksiz kişisel veri paylaşmayacağım.</span>
+                  </label>
+                </div>
                 <div class="form-actions span-2">
                   <button class="primary-button" type="submit">Talep olustur</button>
                 </div>
@@ -353,6 +362,25 @@
         </main>
       </div>
     </div>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB User Panel</span>
+          <span>Kullanıcı hakları ve veri tercihleri</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#cerez">Çerezler</a>
+          <a href="../legal/index.html#uyelik">Üyelik</a>
+          <a href="../legal/index.html#ticari-iletisim">Ticari İletişim</a>
+          <a href="../legal/index.html#veri-saklama">Veri Saklama</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">Profil, bildirim, kupon, yolculuk ve destek verileri kullanıcı tercihleri, hesap güvenliği ve hizmet sunumu kapsamında işlenir.</p>
+      </div>
+    </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
