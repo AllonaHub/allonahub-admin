@@ -92,8 +92,8 @@
 
   <div class="sa-modal" data-release-modal hidden>
     <form class="sa-modal-card" data-release-form role="dialog" aria-modal="true" aria-labelledby="releaseTitle">
-      <h2 id="releaseTitle">Yayın / Main Onayı</h2>
-      <p>Bu form gönderildiğinde owner onayı backend audit log'a yazılır. Onay özeti audit reason olarak kullanılır; GitHub/CI tetiklemesi yalnızca server-side güvenli webhook yapılandırılmışsa yapılır.</p>
+      <h2 id="releaseTitle">Yayın Onayı İsteği</h2>
+      <p>Bu form yalnızca bekleyen owner onayı oluşturur. GitHub/CI/deploy tetiklemesi, detay incelendikten sonra ayrıca owner onayı verilirse yapılır.</p>
       <label>
         Onay tipi
         <select name="approval_type" required>
@@ -125,7 +125,7 @@
       <div class="sa-modal-status" data-release-status aria-live="polite"></div>
       <div class="sa-modal-actions">
         <button class="sa-btn sa-btn-ghost" type="button" data-release-cancel>Vazgeç</button>
-        <button class="sa-btn sa-btn-danger" type="submit">Owner Onayı Ver</button>
+        <button class="sa-btn sa-btn-danger" type="submit">Onay İsteği Oluştur</button>
       </div>
     </form>
   </div>
@@ -135,6 +135,6 @@
   <script src="../js/core.js?v=20260623-mfa2"></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
   <script src="../js/auth.js?v=20260623-mfa2"></script>
-  <script src="../js/super-admin.js?v=20260627-approvalgate1"></script>
+  <script src="../js/super-admin.js?v=20260627-approvalgate2"></script>
 </body>
 </html>

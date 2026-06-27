@@ -5397,18 +5397,16 @@ export function registerRoutes(app) {
   superPost("/release-approvals", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.create");
     const body = superAdminReleaseApprovalSchema.parse(request.body || {});
-    const now = new Date().toISOString();
     const insertPayload = {
       approval_type: body.approval_type,
       target_ref: body.target_ref,
       target_summary: body.target_summary,
-      status: "approved",
+      status: "pending",
       risk_level: body.risk_level,
       requested_by: ctx.user.id,
-      approved_by: ctx.user.id,
-      approved_at: now,
       metadata: normalizeJsonValue({
         ...body.metadata,
+        approval_gate: "detail_review_required",
         owner_source: ctx.superAdminOwner?.source || "unknown",
         request_host: requestHostname(request),
         request_ip: clientIp(request)
@@ -5427,63 +5425,41 @@ export function registerRoutes(app) {
       throw error;
     }
 
-    const dispatch = await dispatchSuperAdminReleaseApproval(data, request);
-    let approval = data;
-    const updatePayload = {
-      status: dispatch.status,
-      webhook_status: dispatch.webhook_status,
-      webhook_response: normalizeJsonValue(dispatch.webhook_response || {}),
-      dispatched_at: dispatch.dispatched ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString()
-    };
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from("super_admin_release_approvals")
-      .update(updatePayload)
-      .eq("id", data.id)
-      .select("*")
-      .single();
-    let dispatchUpdateWarning = null;
-    if (updateError) {
-      if (!looksLikeMissingSchema(updateError)) throw updateError;
-      dispatchUpdateWarning = schemaWarning("super_admin_release_approvals_dispatch_columns", updateError);
-      request.log.warn({ error: updateError.message, approvalId: data.id }, "Release approval saved but dispatch columns could not be updated");
-      approval = {
-        ...data,
-        webhook_status: dispatch.webhook_status,
-        webhook_response: dispatch.webhook_response || {},
-        status: dispatch.status || data.status
-      };
-    } else {
-      approval = updated;
-    }
-
     await auditEvent({
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "super_admin.release_approval_created",
+      action: "super_admin.release_approval_requested",
       resourceType: "super_admin_release_approval",
-      resourceId: approval.id,
+      resourceId: data.id,
       severity: superAdminAuditSeverity(body.risk_level),
       source: "admin",
       purpose: "release_control",
-      evidenceTags: ["super_admin", "release_approval", body.approval_type],
+      evidenceTags: ["super_admin", "release_approval", "pending_owner_review", body.approval_type],
       metadata: {
         approval_type: body.approval_type,
         target_ref: body.target_ref,
-        status: approval.status,
-        dispatched: dispatch.dispatched,
-        webhook_status: dispatch.webhook_status,
+        status: data.status,
+        dispatched: false,
+        webhook_status: null,
         gitops_enabled: config.superAdmin.gitOpsEnabled,
-        dispatch_update_warning: dispatchUpdateWarning?.message || null
+        approval_gate: "detail_review_required"
       }
     });
 
     return {
       ok: true,
-      approval: releaseApprovalPublic(approval),
-      dispatch,
-      schema_warnings: dispatchUpdateWarning ? [dispatchUpdateWarning] : []
+      approval: releaseApprovalPublic(data),
+      dispatch: {
+        status: "pending",
+        dispatched: false,
+        webhook_status: null,
+        webhook_response: {
+          code: "PENDING_OWNER_REVIEW",
+          message: "Yayın onayı oluşturuldu; deploy/main/migration işlemi owner detay onayı bekliyor."
+        }
+      },
+      schema_warnings: []
     };
   });
 

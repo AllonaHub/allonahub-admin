@@ -1421,7 +1421,7 @@
     });
     ownerSetOutput(rows.length
       ? ownerLine("Bekleyen yayın onayları", `${formatNumber(rows.length)} kayıt detay incelemesi bekliyor.`, "", "critical") + rows.join("")
-      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "", "low"));
+      : ownerLine("Bekleyen yayın onayı yok", "Main commit/push, deploy, migration veya panel değişikliği için owner onayı bekleyen kayıt bulunmuyor.", "<button type=\"button\" data-release-open>Yeni onay isteği oluştur</button>", "low"));
   }
 
   function releaseApprovalManualPending(approval) {
@@ -1805,10 +1805,10 @@
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || "";
-      submitButton.textContent = "Onay kaydediliyor...";
+      submitButton.textContent = "İstek oluşturuluyor...";
     }
-    setReleaseStatus("Yayın onayı backend'e gönderiliyor...", "ok");
-    setAlert("Yayın onayı backend'e gönderiliyor...", "ok");
+    setReleaseStatus("Yayın onayı isteği backend'e gönderiliyor...", "ok");
+    setAlert("Yayın onayı isteği backend'e gönderiliyor...", "ok");
     try {
       const result = await api("/v1/control-center/release-approvals", {
         method: "POST",
@@ -1817,21 +1817,23 @@
       const approval = result.approval || {};
       const response = approval.webhook_response || {};
       const warnings = result.schema_warnings || [];
-      const status = approval.status || "approved";
+      const status = approval.status || "pending";
       const released = status === "dispatched";
+      const waitingOwner = status === "pending";
       const manualPending = status === "approved" || response.code === "GITOPS_NOT_CONFIGURED" || response.code === "GITOPS_DISABLED";
-      const okStatus = released || manualPending;
+      const okStatus = released || manualPending || waitingOwner;
       setAlert(
         released
           ? "Yayın onayı deploy hattına gönderildi."
-          : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`),
+          : (waitingOwner ? "Yayın onayı isteği oluşturuldu; detay incelemesi bekliyor." : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`)),
         okStatus ? "ok" : "error"
       );
-      setReleaseStatus("Yayın onayı kaydedildi.", "ok");
-      openDrawer("Yayın Onayı Sonucu", [
-        ownerLine("Durum", escape(status), released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı"), released ? "low" : (manualPending ? "medium" : "critical")),
+      setReleaseStatus("Yayın onayı isteği oluşturuldu.", "ok");
+      openDrawer("Yayın Onayı İsteği", [
+        ownerLine("Durum", escape(status), waitingOwner ? "detay incelemesi ve owner onayı bekliyor" : (released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı")), waitingOwner ? "critical" : (released ? "low" : (manualPending ? "medium" : "critical"))),
+        ownerLine("Hedef", `${escape(approval.target_ref || "-")} / ${escape(approval.approval_type || "-")}`, escape(approval.target_summary || "-"), "medium"),
         ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
-        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high")),
+        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı isteği oluşturuldu."), "<button type=\"button\" data-view-jump=\"approvals\">Bekleyen onayı incele</button>", waitingOwner ? "critical" : (released ? "low" : (manualPending ? "medium" : "high"))),
         warnings.map((warning) => ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")).join("")
       ].join(""));
       closeReleaseModal();
@@ -1852,7 +1854,7 @@
       state.releaseApprovalSubmitting = false;
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = submitButton.dataset.originalText || "Owner Onayı Ver";
+        submitButton.textContent = submitButton.dataset.originalText || "Onay İsteği Oluştur";
       }
     }
   }
@@ -1895,6 +1897,7 @@
         ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", status === "failed" ? "high" : "low"),
         ownerLine("Mesaj", escape(response.message || response.body || "Owner onayı kaydedildi."), "", status === "failed" ? "high" : "low")
       ].join(""));
+      state.approvals = (state.approvals || []).filter((approvalItem) => approvalItem.id !== approvalId);
     }, {
       trigger: button,
       defaultReason: message,
