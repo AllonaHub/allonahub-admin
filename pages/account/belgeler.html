@@ -6,36 +6,81 @@
   <title>Belgelerim | AllonaHub</title>
   <meta name="description" content="AllonaHub kullanıcı belge merkezi.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260627-legal-live1">
 </head>
 <body>
   <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
-      <div class="container platform-page">
+      <div class="container documents-page">
         <section class="platform-hero">
           <p class="platform-eyebrow">Hesabım</p>
           <h1>Belgelerim</h1>
-          <p>CV, başvuru, sözleşme, hizmet ve partner belgeleri için merkezi kullanıcı alanı.</p>
+          <p>Profil, başvuru, CV, partner ve sözleşme süreçlerine ait belge akışları tek merkezden takip edilir.</p>
         </section>
+
+        <div class="status-alert status-alert--top" role="status" aria-live="polite">
+          <div>
+            <strong>Belge durumu</strong>
+            <span>Yüklediğiniz herhangi bir belgeniz bulunmamaktadır.</span>
+          </div>
+          <a class="platform-action platform-action--secondary" href="user-panel.html">Panele Dön</a>
+        </div>
+
         <section class="platform-section">
-          <h2>Belge Alanları</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Kimlik ve Profil</h3><p>Profil doğrulama ve kullanıcı bilgilerine bağlı belge özetleri.</p></article>
-            <article class="platform-card"><h3>Başvurular</h3><p>Kariyer, denizcilik, partner ve hizmet başvurularına ait dosyalar.</p></article>
-            <article class="platform-card"><h3>Sözleşmeler</h3><p>Sipariş, hizmet ve yasal bilgilendirme dokümanlarına hızlı erişim.</p></article>
+          <div class="document-toolbar">
+            <h2>Belge Alanları</h2>
+            <a class="platform-action" href="../career/cv-form.html?v=20260619-cv2">CV Formunu Aç</a>
+          </div>
+          <div class="document-grid">
+            <article class="platform-card">
+              <h3>Kimlik ve Profil</h3>
+              <p>Profil doğrulama, iletişim bilgileri ve hesap güvenliğiyle ilişkili belge özetleri burada gruplanır.</p>
+              <p class="document-meta">Durum: kayıtlı belge bulunmuyor</p>
+            </article>
+            <article class="platform-card">
+              <h3>Başvurular</h3>
+              <p>Kariyer, partner, kurucu üyelik ve hizmet başvurularına bağlı dosyalar başvuru sürecinde takip edilir.</p>
+              <p class="document-meta">Durum: başvuru belgesi bekleniyor</p>
+            </article>
+            <article class="platform-card">
+              <h3>Sözleşmeler</h3>
+              <p>Mesafeli satış, ön bilgilendirme, iade, güvenlik ve üyelik şartları gibi yasal dokümanlara hızlı erişim sağlar.</p>
+              <p class="document-meta">Durum: genel yasal sayfalar yayında</p>
+            </article>
           </div>
         </section>
-        <div class="platform-actions">
-          <a class="platform-action" href="user-panel.html">Panele Dön</a>
-          <a class="platform-action platform-action--secondary" href="../career/cv-form.html?v=20260619-cv2">CV Formu</a>
-        </div>
+
+        <section class="notification-panel">
+          <h2>Bağlı İşlemler</h2>
+          <ul class="document-list">
+            <li class="document-item">
+              <strong>Akıllı CV ve Kariyer</strong>
+              <span>CV oluşturma ve kariyer başvuru formları belge merkezine yönlendirilir.</span>
+              <a class="platform-action platform-action--secondary" href="../career/cv-form.html?v=20260619-cv2">CV Formu</a>
+            </li>
+            <li class="document-item">
+              <strong>Partner ve Kurucu Üyelik</strong>
+              <span>Partner başvurusu sırasında paylaşılacak işletme belgeleri değerlendirme sürecinde takip edilir.</span>
+              <a class="platform-action platform-action--secondary" href="../partner/partner.html">Partner Başvurusu</a>
+            </li>
+            <li class="document-item">
+              <strong>Yasal Dokümanlar</strong>
+              <span>Güncel sözleşme ve politika metinleri footer altındaki Yasal başlığına taşındı.</span>
+              <a class="platform-action platform-action--secondary" href="../legal/kullanim-sartlari.html">Kullanım Şartları</a>
+            </li>
+          </ul>
+        </section>
       </div>
     </main>
     <div data-layout="footer"></div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-live5" defer></script>
   <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260627-legal-live1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

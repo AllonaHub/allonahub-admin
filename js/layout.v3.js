@@ -116,26 +116,6 @@
             <a href="${core.url("/pages/account/orders.html")}">Siparişlerim</a>
           </div>
           <div class="footer-col">
-            <h3>Müşteri</h3>
-            <a href="${core.url("/pages/company/hakkimizda.html")}">Hakkımızda</a>
-            <a href="${core.url("/pages/company/iletisim.html")}">İletişim</a>
-            <a href="${core.url("/pages/company/destek.html")}">Destek Merkezi</a>
-            <a href="${core.url("/allonahub-akademi.html")}">AllonaHub Akademi</a>
-            <a href="${core.url("/pages/account/belgeler.html")}">Belgelerim</a>
-            <a href="${core.url("/pages/account/bildirimler.html")}">Bildirimler</a>
-            <a href="${core.url("/pages/legal/teslimat-kargo.html")}">Teslimat ve Kargo</a>
-            <a href="${core.url("/pages/legal/iade-politikasi.html")}">İade ve Cayma Hakkı</a>
-          </div>
-          <div class="footer-col">
-            <h3>Ekosistem</h3>
-            <a href="${core.url("/index.html#modules")}">Tüm Modüller</a>
-            <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
-            <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
-            <a href="${core.url("/pages/account/premium.html")}">Premium</a>
-            <a href="${core.url("/pages/career/allonakariyer.html")}">Kariyer</a>
-            <a href="${core.url("/pages/partner/partner-uyelik.html")}">Partner Üyelik</a>
-          </div>
-          <div class="footer-col">
             <h3>Yasal</h3>
             <a href="${core.url("/pages/legal/mesafeli-satis.html")}">Mesafeli Satış Sözleşmesi</a>
             <a href="${core.url("/pages/legal/on-bilgilendirme.html")}">Ön Bilgilendirme Formu</a>
@@ -144,6 +124,28 @@
             <a href="${core.url("/pages/legal/cerez-politikasi.html")}">Çerez Politikası</a>
             <a href="${core.url("/pages/legal/kullanim-sartlari.html")}">Kullanım Şartları</a>
             <a href="${core.url("/pages/legal/guvenlik-politikasi.html")}">Güvenlik Politikası</a>
+            <a href="${core.url("/pages/legal/teslimat-kargo.html")}">Teslimat ve Kargo</a>
+            <a href="${core.url("/pages/legal/iade-politikasi.html")}">İade ve Cayma Hakkı</a>
+          </div>
+          <div class="footer-col">
+            <h3>Müşteri</h3>
+            <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
+            <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
+            <a href="${core.url("/pages/account/premium.html")}">Premium</a>
+            <a href="${core.url("/pages/career/allonakariyer.html")}">Kariyer</a>
+            <a href="${core.url("/pages/partner/partner-uyelik.html")}">Partner Üyelik</a>
+            <a href="${core.url("/pages/partner/kurucu-uyelik.html")}">Kurucu Üyelik</a>
+            <a href="${core.url("/pages/account/belgeler.html")}">Belgelerim</a>
+            <a href="${core.url("/pages/account/bildirimler.html")}">Bildirimler</a>
+          </div>
+          <div class="footer-col">
+            <h3>Ekosistem</h3>
+            <a href="${core.url("/index.html#modules")}">Tüm Modüller</a>
+            <a href="${core.url("/pages/company/hakkimizda.html#top")}">Hakkımızda</a>
+            <a href="${core.url("/pages/company/iletisim.html")}">İletişim</a>
+            <a href="${core.url("/pages/company/destek.html")}">Destek Merkezi</a>
+            <a href="${core.url("/allonahub-akademi.html")}">AllonaHub Akademi</a>
+            <a href="${core.url("/pages/wallet/hp-nedir.html")}">HP Dünyası</a>
           </div>
         </div>
         <div class="container social-icons" aria-label="AllonaHub sosyal medya bağlantıları">

@@ -6,36 +6,78 @@
   <title>Bildirimler | AllonaHub</title>
   <meta name="description" content="AllonaHub bildirim merkezi.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260627-legal-live1">
 </head>
 <body>
   <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
-      <div class="container platform-page">
+      <div class="container notifications-page">
         <section class="platform-hero">
           <p class="platform-eyebrow">Hesabım</p>
           <h1>Bildirimler</h1>
-          <p>Siparişler, kampanyalar, partner mesajları, görevler ve hesap güvenliği bildirimleri tek merkezde toplanır.</p>
+          <p>Sipariş, kampanya, partner, belge ve hesap güvenliği bildirimleri tek merkezde düzenli şekilde takip edilir.</p>
         </section>
+
+        <div class="status-alert status-alert--top" role="status" aria-live="polite">
+          <div>
+            <strong>Bildirim durumu</strong>
+            <span>Şu anda yeni kullanıcı bildiriminiz bulunmamaktadır.</span>
+          </div>
+          <a class="platform-action platform-action--secondary" href="user-panel.html">Kullanıcı Paneli</a>
+        </div>
+
+        <section class="notification-panel">
+          <div class="notification-toolbar">
+            <h2>Bildirim Merkezi</h2>
+            <a class="platform-action" href="../company/destek.html">Destek Al</a>
+          </div>
+          <ul class="notification-list">
+            <li class="notification-item">
+              <span class="notification-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Hesap güvenliği</strong>
+                <p>Giriş, şifre değişimi, doğrulama ve şüpheli işlem uyarıları bu alanda gösterilir.</p>
+                <span class="notification-meta">Canlı kayıt bulunmuyor</span>
+              </div>
+            </li>
+            <li class="notification-item">
+              <span class="notification-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Sipariş ve teslimat</strong>
+                <p>Ödeme onayı, kargo hareketi, teslimat ve iade süreçlerine ait işlem bildirimleri burada listelenir.</p>
+                <span class="notification-meta">Bekleyen sipariş bildirimi yok</span>
+              </div>
+            </li>
+            <li class="notification-item">
+              <span class="notification-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Partner ve başvuru</strong>
+                <p>Partner başvurusu, kurucu üyelik, belge inceleme ve panel süreçlerine ait bilgilendirmeler bu grupta toplanır.</p>
+                <span class="notification-meta">Bekleyen başvuru bildirimi yok</span>
+              </div>
+            </li>
+          </ul>
+        </section>
+
         <section class="platform-section">
           <h2>Bildirim Kanalları</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Sipariş</h3><p>Sepet, ödeme, kargo ve teslimat durumları için işlem bildirimleri.</p></article>
-            <article class="platform-card"><h3>Kampanya</h3><p>Kupon, premium avantaj ve HP fırsatları için kişiselleştirilmiş duyurular.</p></article>
-            <article class="platform-card"><h3>Güvenlik</h3><p>Hesap girişi, şifre değişimi ve önemli profil hareketleri için güvenlik uyarıları.</p></article>
+          <div class="notification-grid">
+            <article class="platform-card"><h3>İşlem Bildirimleri</h3><p>Sipariş, ödeme, kargo, iade ve hesap işlemleri için zorunlu bilgilendirmeler.</p></article>
+            <article class="platform-card"><h3>Kampanya Bildirimleri</h3><p>Kupon, premium, HP ve avantaj duyuruları için tercih yönetimine bağlı bilgilendirmeler.</p></article>
+            <article class="platform-card"><h3>Güvenlik Bildirimleri</h3><p>Hesap erişimi, şifre, doğrulama ve riskli işlem uyarıları için kritik bildirimler.</p></article>
           </div>
         </section>
-        <div class="platform-actions">
-          <a class="platform-action" href="user-panel.html">Kullanıcı Paneli</a>
-          <a class="platform-action platform-action--secondary" href="../company/destek.html">Destek Al</a>
-        </div>
       </div>
     </main>
     <div data-layout="footer"></div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-live5" defer></script>
   <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260627-legal-live1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

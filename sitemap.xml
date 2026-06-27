@@ -237,6 +237,12 @@
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://allonahub.com/pages/partner/kurucu-uyelik.html</loc>
+    <lastmod>2026-06-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 
   <url>
     <loc>https://allonahub.com/pages/company/hakkimizda.html</loc>

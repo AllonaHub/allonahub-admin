@@ -144,6 +144,8 @@ const PLATFORM_LINKS = Object.freeze({
   partnerOrders: "/pages/partner/partner-orders.html",
   partnerCargo: "/pages/partner/partner-cargo-settings.html",
   partnerPay: "/pages/partner/pay.html",
+  partnerMembership: "/pages/partner/partner-uyelik.html",
+  founderMembership: "/pages/partner/kurucu-uyelik.html",
   marketplaceSales: "/pages/partner/pazaryeri-satis.html",
   career: "/pages/career/allonakariyer.html",
   smartCv: "/pages/career/career-cv-form.html",
@@ -178,7 +180,10 @@ const PLATFORM_LINKS = Object.freeze({
   legalCenter: "/legal/index.html",
   privacy: "/pages/legal/gizlilik.html",
   kvkk: "/pages/legal/kvkk.html",
+  cookies: "/pages/legal/cerez-politikasi.html",
   terms: "/pages/legal/kullanim-sartlari.html",
+  distanceSales: "/pages/legal/mesafeli-satis.html",
+  preInfo: "/pages/legal/on-bilgilendirme.html",
   returns: "/pages/legal/iade-politikasi.html",
   shipping: "/pages/legal/teslimat-kargo.html",
   security: "/pages/legal/guvenlik-politikasi.html"
@@ -382,10 +387,11 @@ const CORE_TOPICS = [
     key: "partner_application",
     label: "Partner başvurusu",
     confidence: 0.9,
-    terms: ["partner", "bayi", "satıcı", "satici", "mağaza aç", "magaza ac", "işletme başvurusu", "isletme basvurusu", "partner başvurusu", "partner basvurusu", "satıcı başvurusu", "satici basvurusu", "komisyon", "pazaryeri satışı", "pazaryeri satisi"],
+    terms: ["partner", "bayi", "satıcı", "satici", "mağaza aç", "magaza ac", "işletme başvurusu", "isletme basvurusu", "partner başvurusu", "partner basvurusu", "satıcı başvurusu", "satici basvurusu", "kurucu üyelik", "kurucu uyelik", "komisyon", "pazaryeri satışı", "pazaryeri satisi"],
     link: "partner",
     actions: [
       { label: "Partner Başvurusu", link: "partner" },
+      { label: "Kurucu Üyelik", link: "founderMembership" },
       { label: "Partner Paneli", link: "partnerPanel" },
       { label: "Pazaryeri Satış", link: "marketplaceSales" }
     ],
@@ -435,15 +441,16 @@ const CORE_TOPICS = [
     key: "legal_privacy",
     label: "Gizlilik, KVKK ve güvenlik",
     confidence: 0.84,
-    terms: ["kvkk", "gizlilik", "güvenlik", "guvenlik", "çerez", "cerez", "kişisel veri", "kisisel veri", "kullanım şartları", "kullanim sartlari"],
+    terms: ["kvkk", "gizlilik", "güvenlik", "guvenlik", "çerez", "cerez", "kişisel veri", "kisisel veri", "kullanım şartları", "kullanim sartlari", "mesafeli satış", "mesafeli satis", "ön bilgilendirme", "on bilgilendirme"],
     link: "legalCenter",
     actions: [
       { label: "Yasal Merkez", link: "legalCenter" },
       { label: "Gizlilik", link: "privacy" },
       { label: "KVKK", link: "kvkk" },
+      { label: "Çerez", link: "cookies" },
       { label: "Güvenlik", link: "security" }
     ],
-    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, çerezler, kullanım şartları, ticari iletişim ve iade/iptal başlıklarını Yasal Merkez'de topladık: ${platformUrl("legalCenter")} Kişisel veri veya ödeme kartı bilgisi sohbet üzerinden istemem ve paylaşmam.`
+    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, çerezler, kullanım şartları, mesafeli satış, ön bilgilendirme ve iade/iptal başlıklarını Yasal Merkez'de ve ilgili canlı sayfalarda yayınlıyoruz: ${platformUrl("legalCenter")} Kişisel veri veya ödeme kartı bilgisi sohbet üzerinden istemem ve paylaşmam.`
   },
   {
     key: "contact_support",

@@ -114,11 +114,11 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260627-legal-live1">
 </head>
 
 <body>
-  <main class="about-page">
+  <main class="about-page" id="top">
     <div class="about-container">
 
       <div class="about-label">AllonaHub Hakkında</div>
@@ -205,7 +205,14 @@
   </main>
   <div data-layout="footer"></div>
   <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script>
+    window.addEventListener("load", function () {
+      if (window.location.hash === "#top" || !window.location.hash) {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+    });
+  </script>
+  <script src="../../js/layout.v3.js?v=20260627-legal-live1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

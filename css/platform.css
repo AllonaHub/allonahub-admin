@@ -2670,6 +2670,339 @@ body[data-theme="corporate"] :where(.search-btn, .login, .btn, .buy-btn, .cart-b
   box-shadow: none;
 }
 
+.content-page,
+.contact-page,
+.support-page,
+.documents-page,
+.notifications-page {
+  display: grid;
+  gap: 26px;
+  padding-bottom: 48px;
+}
+
+.content-layout,
+.contact-layout,
+.support-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.info-panel,
+.form-panel,
+.status-panel,
+.legal-document,
+.notification-panel {
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: var(--ah-card);
+  box-shadow: var(--ah-shadow-soft);
+  color: var(--ah-ink);
+  padding: clamp(20px, 3vw, 32px);
+}
+
+.info-panel h2,
+.form-panel h2,
+.status-panel h2,
+.notification-panel h2,
+.legal-document h2 {
+  margin: 0 0 14px;
+  color: var(--ah-ink);
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.info-panel h3,
+.status-panel h3,
+.notification-panel h3,
+.legal-document h3 {
+  margin: 0 0 8px;
+  color: var(--ah-primary-strong);
+  line-height: 1.25;
+}
+
+.info-panel p,
+.info-panel li,
+.form-panel p,
+.status-panel p,
+.status-panel li,
+.notification-panel p,
+.notification-panel li,
+.legal-document p,
+.legal-document li,
+.legal-document td,
+.legal-document th {
+  color: var(--ah-muted);
+  line-height: 1.75;
+}
+
+.info-list,
+.channel-list,
+.document-list,
+.notification-list,
+.legal-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.info-list li,
+.channel-item,
+.document-item,
+.notification-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-primary) 7%, var(--ah-bg-strong));
+}
+
+.info-list strong,
+.channel-item strong,
+.document-item strong,
+.notification-item strong {
+  color: var(--ah-ink);
+}
+
+.info-list a,
+.channel-item a,
+.legal-document a {
+  color: var(--ah-primary-strong);
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field label {
+  color: var(--ah-ink);
+  font-weight: 850;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-strong) 86%, transparent);
+  color: var(--ah-ink);
+  padding: 12px 13px;
+  font: inherit;
+}
+
+.field textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.form-note,
+.legal-note,
+.status-alert {
+  border: 1px solid color-mix(in srgb, var(--ah-accent-soft) 38%, var(--ah-line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-accent-soft) 12%, var(--ah-bg-strong));
+  color: var(--ah-ink);
+  padding: 14px;
+}
+
+.status-alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.status-alert strong {
+  color: var(--ah-ink);
+}
+
+.status-alert span {
+  color: var(--ah-muted);
+}
+
+.status-alert--top {
+  justify-self: end;
+  max-width: 420px;
+}
+
+.document-toolbar,
+.notification-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.document-grid,
+.notification-grid,
+.policy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.notification-item {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.notification-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--ah-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ah-primary) 15%, transparent);
+}
+
+.notification-meta,
+.document-meta {
+  color: var(--ah-muted);
+  font-size: 0.92rem;
+}
+
+.legal-document {
+  max-width: 1060px;
+  margin-inline: auto;
+}
+
+.legal-document__meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 22px;
+}
+
+.legal-document__meta span {
+  border: 1px solid var(--ah-line);
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  color: var(--ah-ink);
+  font-size: 0.88rem;
+  font-weight: 850;
+}
+
+.legal-document > article + article {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ah-line);
+}
+
+.legal-document ol,
+.legal-document ul {
+  margin: 10px 0 0;
+  padding-left: 22px;
+}
+
+.legal-document li + li {
+  margin-top: 8px;
+}
+
+.legal-document table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.legal-document th,
+.legal-document td {
+  border: 1px solid var(--ah-line);
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-document th {
+  color: var(--ah-ink);
+  background: color-mix(in srgb, var(--ah-primary) 10%, transparent);
+}
+
+body[data-theme] :where(.info-panel, .form-panel, .status-panel, .notification-panel, .legal-document, .channel-item, .document-item, .notification-item) {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] :where(.info-panel, .form-panel, .status-panel, .notification-panel, .legal-document) :where(p, li, td, span:not(.notification-dot), small) {
+  color: var(--ah-muted) !important;
+}
+
+body[data-theme] :where(.info-panel, .form-panel, .status-panel, .notification-panel, .legal-document) :where(h1, h2, h3, h4, strong, label) {
+  color: var(--ah-ink) !important;
+}
+
+body[data-theme] .legal-document :where(a, h3),
+body[data-theme] .info-list a,
+body[data-theme] .channel-item a {
+  color: var(--ah-primary-strong) !important;
+}
+
+body[data-theme="white"] :where(.info-panel, .form-panel, .status-panel, .notification-panel, .legal-document, .channel-item, .document-item, .notification-item),
+body[data-theme="corporate"] :where(.info-panel, .form-panel, .status-panel, .notification-panel, .legal-document, .channel-item, .document-item, .notification-item) {
+  background: #ffffff !important;
+  border-color: rgba(0, 77, 141, 0.14) !important;
+  box-shadow: 0 10px 26px rgba(19, 40, 58, 0.08) !important;
+}
+
+body[data-theme="white"] :where(.field input, .field select, .field textarea),
+body[data-theme="corporate"] :where(.field input, .field select, .field textarea) {
+  background: #ffffff !important;
+  color: #13283a !important;
+}
+
+@media (max-width: 980px) {
+  .content-layout,
+  .contact-layout,
+  .support-layout,
+  .document-grid,
+  .notification-grid,
+  .policy-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-alert--top {
+    justify-self: stretch;
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .status-alert {
+    display: grid;
+  }
+
+  .legal-document {
+    padding: 18px;
+  }
+}
+
 body[data-theme] .logo-title .gold,
 body[data-theme] .section-head span,
 body[data-theme] .section-title,
