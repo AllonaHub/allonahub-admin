@@ -6,6 +6,7 @@
 <title>Partner Siparişleri | AllonaHub</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/config.js?v=20260627-config-central"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
@@ -47,8 +48,8 @@ button{cursor:pointer}
 <div id="notice" class="notice"></div>
 
 <script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
+const SUPABASE_KEY = window.Allona?.config?.supabaseAnonKey || "";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showNotice(msg){

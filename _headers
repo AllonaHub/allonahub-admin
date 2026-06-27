@@ -2,3 +2,11 @@
   X-Robots-Tag: noindex, nofollow, noarchive
   X-Content-Type-Options: nosniff
   Content-Security-Policy: default-src 'none'; script-src 'none'; style-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; sandbox
+
+/docs/archive/*
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Content-Type-Options: nosniff
+
+/docs/architecture/*.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Content-Type-Options: nosniff

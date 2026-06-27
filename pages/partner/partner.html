@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="../../js/config.js?v=20260627-config-central"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
@@ -293,8 +294,8 @@ body{overflow-x:hidden}
 </div>
 
 <script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
+const SUPABASE_ANON_KEY = window.Allona?.config?.supabaseAnonKey || "";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
@@ -303,9 +304,9 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
   }
 });
 
-const EMAILJS_SERVICE_ID = "service_s9myas7";
-const EMAILJS_TEMPLATE_ID = "template_i7xzsya";
-const EMAILJS_PUBLIC_KEY = "j_8unIhsqi5PEVebP";
+const EMAILJS_SERVICE_ID = window.Allona?.config?.emailjs?.serviceId || "";
+const EMAILJS_TEMPLATE_ID = window.Allona?.config?.emailjs?.templateId || "";
+const EMAILJS_PUBLIC_KEY = window.Allona?.config?.emailjs?.publicKey || "";
 emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
 
 function showNotice(message){

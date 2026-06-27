@@ -7,6 +7,7 @@
   <title>Yardım ve Destek | AllonaHub</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="../../js/config.js?v=20260627-config-central"></script>
 
   <style>
     * {
@@ -337,7 +338,10 @@
   </main>
 
   <script>
-    emailjs.init("j_8unIhsqi5PEVebP");
+    const EMAILJS_SERVICE_ID = window.Allona?.config?.emailjs?.serviceId || "";
+    const EMAILJS_TEMPLATE_ID = window.Allona?.config?.emailjs?.templateId || "";
+    const EMAILJS_PUBLIC_KEY = window.Allona?.config?.emailjs?.publicKey || "";
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
     document.getElementById("supportForm").addEventListener("submit", function(e) {
       e.preventDefault();
@@ -348,7 +352,7 @@
       button.disabled = true;
       button.textContent = "Gönderiliyor...";
 
-      emailjs.sendForm("service_s9myas7", "template_i7xzsya", this)
+      emailjs.sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, this)
         .then(function() {
           status.style.display = "block";
           status.style.color = "#9ff6c4";

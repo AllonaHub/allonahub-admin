@@ -3,8 +3,8 @@
   const PROFILE_EVENT = "allonahub:profile-updated";
   const PROFILE_CHANNEL = "allonahub-profile-sync";
   const HP_LEDGER_KEY = "allonahub_hp_ledger_v1";
-  const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+  const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
+  const SUPABASE_KEY = window.Allona?.config?.supabaseAnonKey || "";
 
   const LEVELS = [
     { level: 1, minXp: 0, name: "New Member", key: "new-member", accent: "#18b8ff", bonus: "Başlangıç HP alanı" },
