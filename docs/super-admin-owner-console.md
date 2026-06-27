@@ -57,6 +57,33 @@ Guardrails:
 
 The map includes commerce, transport, finance, legal, health, real estate, automotive, education, career, logistics, hospitality, trade and other current/future ecosystem modules. Critical module releases should still be approved through Release Approval / GitOps.
 
+## Unified Work Queue
+
+`/v1/control-center/work-queue` gives the owner a single operational queue for approvals, incidents, support escalations, release gates and module risks.
+
+The persistent table is:
+
+```sql
+public.super_admin_work_queue
+```
+
+The endpoint also derives temporary queue items from existing operational sources when the persistent queue is empty or a migration is still pending:
+
+- `admin_approval_requests`
+- `content_change_proposals`
+- `support_tickets`
+- `super_admin_release_approvals`
+- `security_audit_events`
+
+Persistent queue records can be updated and decided through:
+
+```http
+PATCH /v1/control-center/work-queue/:itemId
+POST /v1/control-center/work-queue/:itemId/decision
+```
+
+Derived records are read-only in the owner console and link the owner back to the relevant source view.
+
 ## Release Approval / GitOps
 
 The browser never receives GitHub, Supabase, server, or service-role secrets. Owner approval creates an audited row in `super_admin_release_approvals`.

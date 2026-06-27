@@ -407,6 +407,10 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
 const BACKEND_BUILD_MARKER = "super-admin-actions-20260625-actions8";
+const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
+const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
+const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
+const SUPER_ADMIN_WORK_QUEUE_DECISIONS = ["approved", "rejected", "deferred", "escalated", "resolved"];
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -463,6 +467,36 @@ const superAdminPermissionUpdateSchema = z.object({
 
 const superAdminOwnerRepairSchema = z.object({
   reason: z.string().trim().min(6).max(900).optional().default("Owner access mismatch repair")
+});
+
+const superAdminWorkQueueQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(80),
+  status: z.enum(SUPER_ADMIN_WORK_QUEUE_STATUSES).optional(),
+  source_module: z.enum(SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES).optional(),
+  risk_level: riskLevelSchema.optional()
+});
+
+const superAdminWorkQueueUpdateSchema = z.object({
+  status: z.enum(SUPER_ADMIN_WORK_QUEUE_STATUSES).optional(),
+  priority: z.enum(SUPER_ADMIN_WORK_QUEUE_PRIORITIES).optional(),
+  risk_level: riskLevelSchema.optional(),
+  owner_user_id: uuidSchema.nullable().optional(),
+  due_at: z.string().datetime().nullable().optional(),
+  summary: z.string().trim().max(1800).optional(),
+  reason: z.string().trim().min(6).max(900)
+}).refine((value) => (
+  value.status !== undefined ||
+  value.priority !== undefined ||
+  value.risk_level !== undefined ||
+  value.owner_user_id !== undefined ||
+  value.due_at !== undefined ||
+  value.summary !== undefined
+), "En az bir iş kuyruğu alanı güncellenmelidir.");
+
+const superAdminWorkQueueDecisionSchema = z.object({
+  decision: z.enum(SUPER_ADMIN_WORK_QUEUE_DECISIONS),
+  reason: z.string().trim().min(6).max(1200),
+  status: z.enum(["decided", "resolved", "waiting_owner"]).optional()
 });
 
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
@@ -1810,6 +1844,7 @@ async function superAdminActionHealth(ctx, request) {
     tableHealth("partner_applications_write_target", "partner_applications"),
     tableHealth("super_admin_settings_write_target", "super_admin_settings"),
     tableHealth("platform_modules_write_target", "platform_modules"),
+    tableHealth("super_admin_work_queue_write_target", "super_admin_work_queue"),
     tableHealth("super_admin_release_approvals_write_target", "super_admin_release_approvals"),
     tableHealth("security_audit_events_audit_target", "security_audit_events"),
     tableHealth("super_admin_permission_changes_audit_target", "super_admin_permission_changes")
@@ -1848,6 +1883,10 @@ async function superAdminActionHealth(ctx, request) {
       partner_decision: { ok: checks.find((item) => item.table === "partner_applications")?.ok === true, endpoint: "PATCH /v1/control-center/partner-applications/:applicationId" },
       settings_update: { ok: checks.find((item) => item.table === "super_admin_settings")?.ok === true, endpoint: "PATCH /v1/control-center/settings/:settingKey" },
       modules_update: { ok: checks.find((item) => item.table === "platform_modules")?.ok === true, endpoint: "PATCH /v1/control-center/modules/:moduleKey" },
+      work_queue: {
+        ok: checks.find((item) => item.table === "super_admin_work_queue")?.ok === true,
+        endpoint: "GET/PATCH/POST /v1/control-center/work-queue"
+      },
       release_approval: {
         ok: checks.find((item) => item.table === "super_admin_release_approvals")?.ok === true,
         endpoint: "POST /v1/control-center/release-approvals",
@@ -3486,6 +3525,208 @@ function normalizeJsonValue(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function workQueueRiskFromSeverity(severity) {
+  if (severity === "critical") return "critical";
+  if (severity === "warning") return "high";
+  if (severity === "debug") return "low";
+  return "medium";
+}
+
+function workQueuePriorityFromRisk(riskLevel) {
+  if (riskLevel === "critical") return "urgent";
+  if (riskLevel === "high") return "high";
+  if (riskLevel === "low") return "low";
+  return "normal";
+}
+
+function workQueuePublic(row, source = "stored") {
+  const riskLevel = row.risk_level || "medium";
+  return {
+    id: row.id,
+    source,
+    source_module: row.source_module || "other",
+    target_type: row.target_type || "operation",
+    target_id: row.target_id || "",
+    title: row.title || "Super Admin işi",
+    summary: row.summary || "",
+    priority: row.priority || workQueuePriorityFromRisk(riskLevel),
+    risk_level: riskLevel,
+    status: row.status || "open",
+    owner_user_id: row.owner_user_id || null,
+    due_at: row.due_at || null,
+    decision_required: row.decision_required !== false,
+    decision: row.decision || null,
+    decision_reason: row.decision_reason || "",
+    metadata: row.metadata || {},
+    audit_event_id: row.audit_event_id || null,
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null,
+    decided_at: row.decided_at || null,
+    actionable: source === "stored"
+  };
+}
+
+function derivedWorkQueueItem({ id, sourceModule, targetType, targetId, title, summary, riskLevel = "medium", status = "open", createdAt, metadata = {} }) {
+  return workQueuePublic({
+    id,
+    source_module: sourceModule,
+    target_type: targetType,
+    target_id: targetId,
+    title,
+    summary,
+    risk_level: riskLevel,
+    priority: workQueuePriorityFromRisk(riskLevel),
+    status,
+    decision_required: true,
+    metadata,
+    created_at: createdAt,
+    updated_at: createdAt
+  }, "derived");
+}
+
+async function loadDerivedSuperAdminWorkQueue({ limit, status, sourceModule, riskLevel }) {
+  const fallbackLimit = Math.min(Number(limit || 80), 80);
+  const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const [
+    approvalRequests,
+    contentProposals,
+    supportTickets,
+    releaseApprovals,
+    securityEvents
+  ] = await Promise.all([
+    runAdminQuery(
+      "work_queue_admin_approval_requests",
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_content_change_proposals",
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_support_tickets",
+      supabaseAdmin
+        .from("support_tickets")
+        .select("*")
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["high", "urgent"])
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_release_approvals",
+      supabaseAdmin
+        .from("super_admin_release_approvals")
+        .select("*")
+        .in("status", ["pending", "approved", "failed"])
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_security_events",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("*")
+        .in("severity", ["warning", "critical"])
+        .gte("created_at", since48h)
+        .order("created_at", { ascending: false })
+        .limit(40),
+      []
+    )
+  ]);
+
+  const warnings = [approvalRequests, contentProposals, supportTickets, releaseApprovals, securityEvents]
+    .map((item) => item.warning)
+    .filter(Boolean);
+  const items = [
+    ...(approvalRequests.data || []).map((item) => derivedWorkQueueItem({
+      id: `approval:${item.id}`,
+      sourceModule: "admin_ops",
+      targetType: item.target_type || "admin_approval_request",
+      targetId: item.target_id || item.id,
+      title: item.summary || "Admin onayı bekliyor",
+      summary: `${item.request_type || "approval"} / ${item.status || "pending_super_admin"}`,
+      riskLevel: "high",
+      createdAt: item.created_at,
+      metadata: { admin_approval_request_id: item.id, proposed_action: item.proposed_action || {} }
+    })),
+    ...(contentProposals.data || []).map((item) => derivedWorkQueueItem({
+      id: `content:${item.id}`,
+      sourceModule: item.content_scope === "legal" ? "legal" : "admin_ops",
+      targetType: "content_change_proposal",
+      targetId: item.id,
+      title: item.title || "İçerik önerisi",
+      summary: item.summary || item.content_scope || "",
+      riskLevel: item.content_scope === "legal" ? "critical" : "medium",
+      createdAt: item.created_at,
+      metadata: { content_scope: item.content_scope, payload: item.payload || {} }
+    })),
+    ...(supportTickets.data || []).map((item) => derivedWorkQueueItem({
+      id: `support:${item.id}`,
+      sourceModule: item.category === "taxi" ? "taxi" : (item.requester_type === "partner" ? "partner" : "user_panel"),
+      targetType: "support_ticket",
+      targetId: item.id,
+      title: item.title || "Destek talebi",
+      summary: `${item.category || "general"} / ${item.priority || "normal"} / ${item.status || "open"}`,
+      riskLevel: item.priority === "urgent" ? "critical" : "high",
+      createdAt: item.created_at,
+      metadata: { requester_type: item.requester_type, category: item.category }
+    })),
+    ...(releaseApprovals.data || []).map((item) => derivedWorkQueueItem({
+      id: `release:${item.id}`,
+      sourceModule: "release",
+      targetType: "super_admin_release_approval",
+      targetId: item.id,
+      title: item.target_summary || item.approval_type || "Yayın onayı",
+      summary: `${item.approval_type || "release"} / ${item.status || "pending"} / ${item.target_ref || "main"}`,
+      riskLevel: item.risk_level || "critical",
+      status: item.status === "failed" ? "waiting_owner" : "open",
+      createdAt: item.created_at,
+      metadata: { approval_type: item.approval_type, webhook_status: item.webhook_status || null }
+    })),
+    ...(securityEvents.data || []).map((item) => derivedWorkQueueItem({
+      id: `security:${item.id}`,
+      sourceModule: "security",
+      targetType: item.resource_type || "security_audit_event",
+      targetId: item.resource_id || item.id,
+      title: item.action || "Güvenlik olayı",
+      summary: `${item.severity || "warning"} / IP ${item.ip_address || "-"}`,
+      riskLevel: workQueueRiskFromSeverity(item.severity),
+      createdAt: item.created_at,
+      metadata: { audit_event_id: item.id, actor_role: item.actor_role || null }
+    }))
+  ];
+
+  const filtered = items
+    .filter((item) => !status || item.status === status)
+    .filter((item) => !sourceModule || item.source_module === sourceModule)
+    .filter((item) => !riskLevel || item.risk_level === riskLevel)
+    .sort((a, b) => {
+      const priorityScore = { urgent: 4, high: 3, normal: 2, low: 1 };
+      const riskScore = { critical: 4, high: 3, medium: 2, low: 1 };
+      const scoreA = (priorityScore[a.priority] || 0) + (riskScore[a.risk_level] || 0);
+      const scoreB = (priorityScore[b.priority] || 0) + (riskScore[b.risk_level] || 0);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })
+    .slice(0, fallbackLimit);
+
+  return { items: filtered, warnings };
+}
+
 async function getOrderForPayment(orderId, ctx) {
   const { data: order, error } = await supabaseAdmin
     .from("orders")
@@ -4930,6 +5171,184 @@ export function registerRoutes(app) {
   superGet("/action-health", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.action_health.view");
     return superAdminActionHealth(ctx, request);
+  });
+
+  superGet("/work-queue", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.list");
+    const queryParams = superAdminWorkQueueQuerySchema.parse(request.query || {});
+    const warnings = [];
+
+    let storedQuery = supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status) storedQuery = storedQuery.eq("status", queryParams.status);
+    if (queryParams.source_module) storedQuery = storedQuery.eq("source_module", queryParams.source_module);
+    if (queryParams.risk_level) storedQuery = storedQuery.eq("risk_level", queryParams.risk_level);
+
+    const stored = await runAdminQuery("super_admin_work_queue", storedQuery, []);
+    if (stored.warning) warnings.push(stored.warning);
+    const derived = await loadDerivedSuperAdminWorkQueue({
+      limit: queryParams.limit,
+      status: queryParams.status,
+      sourceModule: queryParams.source_module,
+      riskLevel: queryParams.risk_level
+    });
+    warnings.push(...derived.warnings);
+
+    const storedItems = (stored.data || []).map((item) => workQueuePublic(item));
+    const items = [...storedItems, ...derived.items]
+      .sort((a, b) => {
+        const priorityScore = { urgent: 4, high: 3, normal: 2, low: 1 };
+        const riskScore = { critical: 4, high: 3, medium: 2, low: 1 };
+        const scoreA = (priorityScore[a.priority] || 0) + (riskScore[a.risk_level] || 0);
+        const scoreB = (priorityScore[b.priority] || 0) + (riskScore[b.risk_level] || 0);
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      })
+      .slice(0, queryParams.limit);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_viewed",
+      source: "admin",
+      resourceType: "super_admin_work_queue",
+      metadata: {
+        stored_count: storedItems.length,
+        derived_count: derived.items.length,
+        status: queryParams.status || "all",
+        source_module: queryParams.source_module || "all",
+        risk_level: queryParams.risk_level || "all",
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items,
+      summary: {
+        total: items.length,
+        stored: storedItems.length,
+        derived: derived.items.length,
+        urgent: items.filter((item) => item.priority === "urgent" || item.risk_level === "critical").length,
+        waiting_owner: items.filter((item) => item.status === "waiting_owner").length,
+        actionable: items.filter((item) => item.actionable).length
+      },
+      filters: {
+        source_modules: SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES,
+        statuses: SUPER_ADMIN_WORK_QUEUE_STATUSES,
+        risk_levels: ["low", "medium", "high", "critical"]
+      },
+      schema_warnings: warnings
+    };
+  });
+
+  superPatch("/work-queue/:itemId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.update");
+    const { itemId } = z.object({ itemId: uuidSchema }).parse(request.params || {});
+    const body = superAdminWorkQueueUpdateSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*")
+      .eq("id", itemId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) throw httpError("super_admin_work_queue migration henüz uygulanmamış.", 503);
+      throw beforeError;
+    }
+    if (!before) throw httpError("İş kuyruğu kaydı bulunamadı.", 404);
+
+    const updatePayload = {
+      updated_by: ctx.user.id
+    };
+    ["status", "priority", "risk_level", "owner_user_id", "due_at", "summary"].forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(body, key)) updatePayload[key] = body[key];
+    });
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .update(updatePayload)
+      .eq("id", itemId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_updated",
+      resourceType: "super_admin_work_queue",
+      resourceId: itemId,
+      severity: updated.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      purpose: "super_admin_work_queue",
+      evidenceTags: ["super_admin", "work_queue", updated.source_module || "other"],
+      metadata: {
+        old_value: before,
+        new_value: updated,
+        reason: body.reason
+      }
+    });
+
+    return { ok: true, item: workQueuePublic(updated) };
+  });
+
+  superPost("/work-queue/:itemId/decision", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.decide");
+    const { itemId } = z.object({ itemId: uuidSchema }).parse(request.params || {});
+    const body = superAdminWorkQueueDecisionSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*")
+      .eq("id", itemId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) throw httpError("super_admin_work_queue migration henüz uygulanmamış.", 503);
+      throw beforeError;
+    }
+    if (!before) throw httpError("İş kuyruğu kaydı bulunamadı.", 404);
+
+    const status = body.status || (body.decision === "resolved" ? "resolved" : "decided");
+    const { data: updated, error } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .update({
+        status,
+        decision: body.decision,
+        decision_reason: body.reason,
+        decided_by: ctx.user.id,
+        decided_at: new Date().toISOString(),
+        updated_by: ctx.user.id
+      })
+      .eq("id", itemId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_decided",
+      resourceType: "super_admin_work_queue",
+      resourceId: itemId,
+      severity: updated.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      purpose: "super_admin_work_queue",
+      evidenceTags: ["super_admin", "work_queue", body.decision],
+      metadata: {
+        old_status: before.status,
+        new_status: updated.status,
+        decision: body.decision,
+        reason: body.reason,
+        source_module: updated.source_module
+      }
+    });
+
+    return { ok: true, item: workQueuePublic(updated) };
   });
 
   superGet("/release-approvals", async (request) => {

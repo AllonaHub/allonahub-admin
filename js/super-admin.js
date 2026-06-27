@@ -1028,6 +1028,7 @@
 
   const ownerViewTitles = {
     overview: ["Kontrol Merkezi", "Tüm ekosistem sinyalleri tek akışta"],
+    "work-queue": ["İş Kuyruğu", "Modül onayları, riskler, destek ve yayın kararları"],
     alerts: ["Uyarı / Risk Akışı", "Öncelikli güvenlik, sistem ve yayın riskleri"],
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
     access: ["Erişim Kilidi", "Owner-only oturum ve güvenli sınırlar"],
@@ -1219,6 +1220,7 @@
       ownerLine("Toplam kullanıcı", formatNumber(summary.total_users), "<button type=\"button\" data-view-jump=\"users\">Yönet</button>", "medium"),
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
+      ownerLine("İş kuyruğu", "AVM, yemek, taksi, sosyal medya, destek, güvenlik ve yayın kararlarını tek listede izle.", "<button type=\"button\" data-view-jump=\"work-queue\">Aç</button>", "critical"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
       ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
@@ -1242,6 +1244,123 @@
       openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(message), "", "critical"));
       setAlert(message, "error");
     }
+  }
+
+  function workQueueFilterMarkup(params) {
+    const source = params && params.source_module || "";
+    const status = params && params.status || "";
+    const risk = params && params.risk_level || "";
+    const sources = ["", "admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
+    const statuses = ["", "open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
+    const risks = ["", "low", "medium", "high", "critical"];
+    return `
+      <form class="sa-inline-form" data-owner-work-queue-filter>
+        <select name="source_module">
+          ${sources.map((item) => `<option value="${escape(item)}" ${source === item ? "selected" : ""}>${escape(item || "Tüm modüller")}</option>`).join("")}
+        </select>
+        <select name="status">
+          ${statuses.map((item) => `<option value="${escape(item)}" ${status === item ? "selected" : ""}>${escape(item || "Tüm durumlar")}</option>`).join("")}
+        </select>
+        <select name="risk_level">
+          ${risks.map((item) => `<option value="${escape(item)}" ${risk === item ? "selected" : ""}>${escape(item || "Tüm riskler")}</option>`).join("")}
+        </select>
+        <button class="sa-btn sa-btn-ghost" type="submit">Filtrele</button>
+      </form>
+    `;
+  }
+
+  async function loadOwnerWorkQueue(params) {
+    ownerLoading("İş Kuyruğu");
+    const query = new URLSearchParams(params || {});
+    const payload = await api(`/v1/control-center/work-queue?${query.toString()}`);
+    state.workQueueItems = payload.items || [];
+    const summary = payload.summary || {};
+    const rows = state.workQueueItems.map((item) => {
+      const actionable = item.actionable === true;
+      const action = actionable
+        ? [
+          `<button type="button" data-work-queue-status="in_progress" data-work-queue-id="${escape(item.id)}">İşleme al</button>`,
+          `<button type="button" data-work-queue-status="waiting_owner" data-work-queue-id="${escape(item.id)}">Owner bekliyor</button>`,
+          `<button type="button" data-work-queue-decision="resolved" data-work-queue-id="${escape(item.id)}">Çöz</button>`
+        ].join(" ")
+        : `<button type="button" data-work-queue-source="${escape(item.source_module || "other")}">Kaynağa git</button>`;
+      return ownerLine(
+        `${item.title || "İş"} ${actionable ? "" : "(türetilmiş)"}`,
+        `${escape(item.source_module || "other")} / ${escape(item.target_type || "-")} / durum ${escape(item.status || "open")} / öncelik ${escape(item.priority || "normal")} / ${formatDate(item.created_at)}`,
+        action,
+        item.risk_level
+      );
+    });
+    const warningRows = (payload.schema_warnings || []).map((item) => ownerLine(
+      item.label || "schema",
+      escape(item.message || "Migration kontrol edilmeli."),
+      escape(item.code || ""),
+      "high"
+    ));
+    ownerSetOutput(
+      workQueueFilterMarkup(params) +
+      ownerLine("Kuyruk özeti", `${formatNumber(summary.total)} kayıt / ${formatNumber(summary.stored)} kalıcı / ${formatNumber(summary.derived)} türetilmiş / ${formatNumber(summary.urgent)} acil`, "<button type=\"button\" data-action-health-check>Komutları test et</button>", summary.urgent ? "critical" : "medium") +
+      (warningRows.join("") || "") +
+      (rows.length ? rows.join("") : ownerEmpty("İş kuyruğu kaydı bulunamadı."))
+    );
+  }
+
+  function sourceViewForWorkQueue(sourceModule) {
+    const map = {
+      admin_ops: "partners",
+      avm: "module-map",
+      food: "module-map",
+      taxi: "module-map",
+      social_media: "module-map",
+      partner: "partners",
+      user_panel: "users",
+      security: "security",
+      legal: "module-map",
+      release: "approvals",
+      system: "system"
+    };
+    return map[sourceModule] || "module-map";
+  }
+
+  async function updateWorkQueueStatus(button) {
+    const itemId = button.dataset.workQueueId;
+    const status = button.dataset.workQueueStatus;
+    const item = (state.workQueueItems || []).find((entry) => entry.id === itemId);
+    const message = `${item?.title || "İş kuyruğu kaydı"} durumu ${status} yapılacak.`;
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/control-center/work-queue/${encodeURIComponent(itemId)}`, {
+        method: "PATCH",
+        body: {
+          status,
+          reason
+        }
+      });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
+  }
+
+  async function decideWorkQueueItem(button) {
+    const itemId = button.dataset.workQueueId;
+    const decision = button.dataset.workQueueDecision;
+    const item = (state.workQueueItems || []).find((entry) => entry.id === itemId);
+    const message = `${item?.title || "İş kuyruğu kaydı"} için ${decision} kararı verilecek.`;
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/control-center/work-queue/${encodeURIComponent(itemId)}/decision`, {
+        method: "POST",
+        body: {
+          decision,
+          status: decision === "resolved" ? "resolved" : "decided",
+          reason
+        }
+      });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   function renderOwnerActionHealth(payload) {
@@ -1616,6 +1735,7 @@
     setCommandHeader(view);
     try {
       if (view === "overview") await loadOwnerOverview();
+      else if (view === "work-queue") await loadOwnerWorkQueue(params);
       else if (view === "alerts") await loadOwnerAlerts();
       else if (view === "approvals") await loadOwnerApprovals();
       else if (view === "access") await loadOwnerAccess();
@@ -1774,6 +1894,19 @@
           return;
         }
 
+        const workQueueFilter = eventClosest(event, "[data-owner-work-queue-filter]");
+        if (workQueueFilter) {
+          event.preventDefault();
+          const form = new FormData(workQueueFilter);
+          const params = {};
+          ["source_module", "status", "risk_level"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerWorkQueue(params);
+          return;
+        }
+
         const releaseForm = eventClosest(event, "[data-release-form]");
         if (releaseForm) {
           event.preventDefault();
@@ -1809,6 +1942,15 @@
 
         const moduleMapDetail = eventClosest(event, "[data-module-map-detail]");
         if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
+
+        const workQueueSource = eventClosest(event, "[data-work-queue-source]");
+        if (workQueueSource) await jumpOwnerView(sourceViewForWorkQueue(workQueueSource.dataset.workQueueSource));
+
+        const workQueueStatus = eventClosest(event, "[data-work-queue-status]");
+        if (workQueueStatus) await updateWorkQueueStatus(workQueueStatus);
+
+        const workQueueDecision = eventClosest(event, "[data-work-queue-decision]");
+        if (workQueueDecision) await decideWorkQueueItem(workQueueDecision);
 
         const permissionSave = eventClosest(event, "[data-permission-save]");
         if (permissionSave) await updatePermission(permissionSave);
