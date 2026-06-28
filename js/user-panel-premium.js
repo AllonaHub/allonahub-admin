@@ -19,7 +19,7 @@
     maritime: [
       ["fa-ship", "Maritime CV", "Denizcilik CV formunu aç", "cv"],
       ["fa-certificate", "Belgeler", "STCW ve sertifika takibi", "/pages/account/belgeler.html"],
-      ["fa-briefcase", "Gemi İşleri", "Pozisyona uygun ilanlar", "/pages/ecosystem/allonadenizcilik.html"]
+      ["fa-briefcase", "Gemi İşleri", "Pozisyona uygun ilanlar", "/pages/account/is-ilanlari.html?sector=maritime"]
     ],
     health: [
       ["fa-user-doctor", "Sağlık Profili", "Uzmanlık ve hizmet bilgileri", "/pages/ecosystem/allonasaglik.html"],
@@ -42,8 +42,8 @@
       ["fa-file-lines", "Akilli CV", "Egitim kariyer CV'si", "cv"]
     ],
     technology: [
-      ["fa-code", "Teknoloji Profili", "Proje ve portföy alanı", "/pages/ecosystem/teknoloji.html"],
-      ["fa-shield-halved", "AI & Güvenlik", "Dijital yetenekler", "/pages/ecosystem/teknoloji.html"],
+      ["fa-code", "Teknoloji Profili", "Proje ve portföy alanı", "/pages/ecosystem/allonateknoloji.html"],
+      ["fa-shield-halved", "AI & Güvenlik", "Dijital yetenekler", "/pages/ecosystem/allonateknoloji.html"],
       ["fa-file-lines", "Akıllı CV", "Teknoloji kariyer CV'si", "cv"]
     ],
     business: [
@@ -830,7 +830,17 @@
   }
 
   function renderModules(profile) {
-    const list = moduleCards[profile.module] || moduleCards.general;
+    const list = (moduleCards[profile.module] || moduleCards.general).slice();
+    const hasJobCard = list.some((item) => String(item[3] || "").includes("is-ilanlari.html"));
+    if (!hasJobCard && profile.profession_key && profile.profession_key !== "other_profession") {
+      const isMaritime = sync && sync.isMaritimeProfile ? sync.isMaritimeProfile(profile) : false;
+      list.push([
+        "fa-briefcase",
+        isMaritime ? "Gemi İşleri" : "İş İlanları",
+        "Mesleğine uygun ilanlar",
+        `/pages/account/is-ilanlari.html?sector=${encodeURIComponent(profile.sector_key || "general")}`
+      ]);
+    }
     const box = $("#moduleGrid");
     if (!box) return;
     box.innerHTML = list.map(([icon, title, text, target]) => `
@@ -1016,7 +1026,7 @@
     if (!q) return;
     if (/cv|özgeçmiş|kariyer/.test(q)) return goTo("cv");
     if (/iade|iptal|sipariş|siparis|refund|cancel/.test(q)) return openRefundCenter();
-    if (/hp|kupon|puan|cash|bakiye/.test(q)) return goTo("/pages/commerce/kuponlar.html");
+    if (/hp|kupon|puan|cash|bakiye/.test(q)) return goTo("/pages/account/puanlar.html");
     if (/profil|hesap|foto/.test(q)) return goTo("/pages/account/profil.html");
     if (/belge|sertifika/.test(q)) return goTo("/pages/account/belgeler.html");
     if (/premium|seviye|level/.test(q)) return goTo("/pages/account/premium.html");

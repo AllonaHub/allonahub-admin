@@ -9,8 +9,11 @@
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
   <style>
     .notification-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
+    .notification-tabs{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 16px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .notification-tab{appearance:none;border:0;background:transparent;color:#b9d3df;font-weight:900;padding:0 0 10px;cursor:pointer;border-bottom:2px solid transparent}
+    .notification-tab.is-active{color:#fff;border-bottom-color:#00d5ff}
     .notification-list{display:grid;gap:10px}
-    .notification-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .notification-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
     .notification-item i{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:rgba(0,181,255,.16);color:#00d5ff}
     .notification-item h3{margin:0 0 4px;font-size:16px}
     .notification-item p{margin:0;color:var(--muted);line-height:1.5}
@@ -39,6 +42,12 @@
             </div>
             <button class="platform-action" type="button" data-mark-notifications-read>Okundu İşaretle</button>
           </div>
+          <div class="notification-tabs" role="tablist" aria-label="Bildirim kategorileri">
+            <button class="notification-tab is-active" type="button" data-notification-filter="all">Tümü</button>
+            <button class="notification-tab" type="button" data-notification-filter="panel">Panel Bildirimleri</button>
+            <button class="notification-tab" type="button" data-notification-filter="job">İş İlanları</button>
+            <button class="notification-tab" type="button" data-notification-filter="admin">AllonaHub Yönetim</button>
+          </div>
           <div class="notification-list" data-notification-list></div>
         </section>
         <div class="platform-actions">
@@ -54,8 +63,8 @@
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix1" defer></script>
-  <script src="../../js/user-notifications.js?v=20260629-panel-fix1" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/user-notifications.js?v=20260629-panel-fix2" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
   <script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
@@ -65,14 +74,16 @@
       const summary = document.querySelector("[data-notification-summary]");
       const button = document.querySelector("[data-mark-notifications-read]");
       const helper = window.AllonaUserNotifications;
-      const iconMap = { order: "fa-box", support: "fa-headset", coupon: "fa-ticket", task: "fa-calendar-check", profile: "fa-user-pen", account: "fa-user-lock" };
+      let activeFilter = "all";
+      const iconMap = { order: "fa-box", support: "fa-headset", coupon: "fa-ticket", task: "fa-calendar-check", profile: "fa-user-pen", account: "fa-user-lock", job: "fa-briefcase", admin: "fa-bullhorn" };
       const esc = (value) => window.Allona?.core?.escapeHTML ? window.Allona.core.escapeHTML(value || "") : String(value || "");
       if (!helper || !list) return;
       const render = async () => {
         const result = await helper.load();
         const items = result.notifications || [];
-        if (summary) summary.textContent = `${items.length} bildirim / ${result.unreadCount || 0} okunmamış.`;
-        list.innerHTML = items.length ? items.map((item) => `
+        const filtered = activeFilter === "all" ? items : items.filter((item) => (item.category || "panel") === activeFilter);
+        if (summary) summary.textContent = `${filtered.length} gösteriliyor / ${items.length} toplam bildirim / ${result.unreadCount || 0} okunmamış.`;
+        list.innerHTML = filtered.length ? filtered.map((item) => `
           <a class="notification-item" href="${item.href || "user-panel.html"}" data-tone="${item.tone || "info"}">
             <i class="fa-solid ${iconMap[item.type] || "fa-bell"}"></i>
             <span>
@@ -89,6 +100,13 @@
           };
         }
       };
+      document.querySelectorAll("[data-notification-filter]").forEach((tab) => {
+        tab.addEventListener("click", async () => {
+          activeFilter = tab.dataset.notificationFilter || "all";
+          document.querySelectorAll("[data-notification-filter]").forEach((item) => item.classList.toggle("is-active", item === tab));
+          await render();
+        });
+      });
       await render();
     });
   </script>

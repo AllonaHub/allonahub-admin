@@ -5,38 +5,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Belgelerim | AllonaHub</title>
   <meta name="description" content="AllonaHub kullanıcı belge merkezi.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260628-modules1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <style>
+    .documents-page{display:grid;gap:18px;padding-bottom:42px}
+    .documents-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+    .document-panel{padding:22px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .document-panel h2{margin:0 0 10px}
+    .document-panel p{color:var(--muted);line-height:1.6}
+    .document-form{display:grid;gap:14px}
+    .document-form label{display:grid;gap:7px;font-weight:900;color:#dff6ff}
+    .document-form input,.document-form select,.document-form textarea{width:100%;min-height:44px;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:rgba(2,8,20,.42);color:#fff;padding:10px 12px}
+    .document-form textarea{min-height:94px;resize:vertical}
+    .document-check{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;color:#d8edf5;line-height:1.45}
+    .document-check input{width:18px;height:18px;min-height:18px;margin-top:2px}
+    .document-list{display:grid;gap:10px}
+    .document-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11)}
+    .document-row i{width:42px;height:42px;display:grid;place-items:center;border-radius:8px;background:rgba(0,181,255,.14);color:#00d5ff}
+    .document-row h3{margin:0 0 4px;font-size:16px}
+    .document-row p{margin:0;color:#b9d3df;font-size:13px}
+    .document-row small{color:#9fc6d6;text-align:right}
+    .document-status{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:rgba(255,202,95,.14);color:#ffd166;font-weight:900;font-size:12px}
+    .document-status.is-approved{background:rgba(39,214,139,.14);color:#27d68b}
+    .document-status.is-rejected{background:rgba(255,92,122,.14);color:#ff7b9d}
+    .document-guides{display:grid;gap:10px}
+    .document-guide{padding:14px;border-radius:8px;background:rgba(0,181,255,.08);border:1px solid rgba(0,181,255,.14);color:#d9f2fb;line-height:1.5}
+    .document-note{padding:14px;border-radius:8px;background:rgba(255,202,95,.1);border:1px solid rgba(255,202,95,.18);color:#ffe3a7;line-height:1.5}
+    @media(max-width:880px){.documents-layout{grid-template-columns:1fr}.document-row{grid-template-columns:42px minmax(0,1fr)}.document-row small{grid-column:2;text-align:left}}
+  </style>
 </head>
 <body>
   <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
-      <div class="container platform-page">
+      <div class="container platform-page documents-page" data-page="documents">
         <section class="platform-hero">
           <p class="platform-eyebrow">Hesabım</p>
           <h1>Belgelerim</h1>
-          <p>CV, başvuru, sözleşme, hizmet ve partner belgeleri için merkezi kullanıcı alanı.</p>
+          <p>Sertifika, sağlık uygunluk ve mesleki belgelerini yükle. Belgeler önce AllonaHub onayına düşer; onaylanan belgeler yalnızca izin verirsen mesleğine uygun partnerlerle paylaşılır.</p>
         </section>
-        <section class="platform-section">
-          <h2>Belge Alanları</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Kimlik ve Profil</h3><p>Profil doğrulama ve kullanıcı bilgilerine bağlı belge özetleri.</p></article>
-            <article class="platform-card"><h3>Başvurular</h3><p>Kariyer, denizcilik, partner ve hizmet başvurularına ait dosyalar.</p></article>
-            <article class="platform-card"><h3>Sözleşmeler</h3><p>Sipariş, hizmet ve yasal bilgilendirme dokümanlarına hızlı erişim.</p></article>
+        <div data-document-status></div>
+        <section class="documents-layout">
+          <article class="document-panel">
+            <h2>Belge Yükle</h2>
+            <p>CV bu alana yüklenmez. CV için mesleğine uygun CV merkezini kullan.</p>
+            <form class="document-form" data-document-form>
+              <label>
+                Belge türü
+                <select name="type" data-document-type required>
+                  <option value="certificate">Sertifika / Yeterlilik</option>
+                  <option value="health">Sağlık / Uygunluk Belgesi</option>
+                  <option value="diploma">Diploma / Eğitim Belgesi</option>
+                  <option value="professional">Mesleki Belge</option>
+                  <option value="contract">Sözleşme / Başvuru Belgesi</option>
+                </select>
+              </label>
+              <label>
+                Belge başlığı
+                <input name="title" placeholder="Örn. STCW Basic Safety, Sağlık Raporu" required>
+              </label>
+              <label>
+                Dosya
+                <input name="file" type="file" accept=".pdf,image/jpeg,image/png,image/webp,application/pdf" required>
+              </label>
+              <label>
+                Açıklama
+                <textarea name="note" placeholder="Belgenin geçerlilik tarihi, veren kurum veya açıklama..."></textarea>
+              </label>
+              <label class="document-check">
+                <input name="share_with_partners" type="checkbox">
+                <span>Onaylandıktan sonra mesleğime uygun partnerler ve işverenlerle paylaşılmasına izin veriyorum.</span>
+              </label>
+              <button class="platform-action" type="submit">Onaya Gönder</button>
+            </form>
+          </article>
+          <aside class="document-panel">
+            <h2>Kurallar</h2>
+            <div class="document-guides">
+              <div class="document-guide"><b>Onay akışı</b><br>Yüklenen belge önce beklemede olur. Onaylanmadan partnerlerle paylaşılmaz.</div>
+              <div class="document-guide"><b>Paylaşım izni</b><br>İzin verilmeyen belge, onaylansa bile partner alanlarına açılmaz.</div>
+              <div class="document-guide"><b>Meslek eşleşmesi</b><br>Denizcilik belgeleri denizcilik partnerleriyle, diğer belgeler seçilen sektör partnerleriyle eşleştirilir.</div>
+              <div class="document-note">Pasaport / Denizci Belgesi türü yalnızca denizcilik profillerinde görünür. Genel profillerde kişisel belge talep edilmez.</div>
+            </div>
+          </aside>
+        </section>
+        <section class="document-panel">
+          <div class="section-header">
+            <div><p class="eyebrow">Belgelerim</p><h2>Yüklenen Belgeler</h2></div>
+            <a class="btn btn--light" data-cv-center-link href="../career/career-cv-form.html">CV Merkezi</a>
           </div>
+          <div class="document-list" data-document-list></div>
         </section>
         <div class="platform-actions">
           <a class="platform-action" href="user-panel.html">Panele Dön</a>
-          <a class="platform-action platform-action--secondary" href="../career/cv-form.html?v=20260619-cv2">CV Formu</a>
+          <a class="platform-action platform-action--secondary" href="is-ilanlari.html">Mesleğime Uygun İşler</a>
         </div>
       </div>
     </main>
     <div data-layout="footer"></div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/account-documents.js?v=20260629-panel-fix2" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
-<script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
 </body>
 </html>

@@ -113,10 +113,11 @@
     );
   }
 
-  function notification(id, type, title, message, createdAt, href, tone) {
+  function notification(id, type, title, message, createdAt, href, tone, category) {
     return {
       id,
       type,
+      category: category || "panel",
       title,
       message,
       created_at: createdAt || new Date().toISOString(),
@@ -143,7 +144,8 @@
         `${orderNo(order)} için durum: ${order.order_status || order.status || "pending"}.`,
         order.updated_at || order.created_at,
         `/pages/account/order-detail.html?id=${encodeURIComponent(order.id)}`,
-        status.includes("cancel") || status.includes("refund") ? "warning" : "info"
+        status.includes("cancel") || status.includes("refund") ? "warning" : "info",
+        "panel"
       );
     });
   }
@@ -162,7 +164,8 @@
         ticket.title || ticket.message || "Talebin ekip tarafından inceleniyor.",
         ticket.updated_at || ticket.created_at,
         "/pages/account/bildirimler.html",
-        status.includes("resolved") || status.includes("closed") ? "success" : "warning"
+        status.includes("resolved") || status.includes("closed") ? "success" : "warning",
+        "panel"
       );
     });
   }
@@ -180,7 +183,8 @@
       `${coupon.title || coupon.code} ${coupon.status === "used" ? "kullanılmış görünüyor." : "alışverişte kullanılabilir."}`,
       coupon.used_at || coupon.assigned_at || coupon.created_at,
       "/pages/commerce/kuponlar.html",
-      coupon.status === "used" ? "success" : "info"
+      coupon.status === "used" ? "success" : "info",
+      "panel"
     ));
   }
 
@@ -194,7 +198,8 @@
         "Meslek, telefon ve temel bilgilerini tamamladığında panel önerileri daha doğru çalışır.",
         new Date().toISOString(),
         "/pages/account/profil.html",
-        "warning"
+        "warning",
+        "panel"
       ));
     }
     if (profile?.last_daily_login_date !== todayKey()) {
@@ -205,10 +210,57 @@
         "Bugünkü düşük değerli görev HP ve XP ödülünü panelden alabilirsin.",
         new Date().toISOString(),
         "/pages/account/user-panel.html",
-        "success"
+        "success",
+        "panel"
       ));
     }
     return items;
+  }
+
+  function adminNotifications(profile) {
+    return [
+      notification(
+        `admin:rules:${todayKey()}`,
+        "admin",
+        "AllonaHub yönetim bildirimi",
+        "HP ve kupon kullanım kuralları panelinde güncel şekilde uygulanır.",
+        new Date().toISOString(),
+        "/pages/account/rewards.html",
+        "info",
+        "admin"
+      ),
+      notification(
+        `admin:documents:${profile?.user_id || profile?.id || "profile"}`,
+        "admin",
+        "Belge onay akışı",
+        "Yüklenen belgeler onaylanmadan partnerlerle paylaşılmaz.",
+        new Date().toISOString(),
+        "/pages/account/belgeler.html",
+        "warning",
+        "admin"
+      )
+    ];
+  }
+
+  function jobNotifications(profile) {
+    if (!profile || !profile.profession_key || profile.profession_key === "other_profession") return [];
+    const isMaritime = sync && sync.isMaritimeProfile ? sync.isMaritimeProfile(profile) : false;
+    const title = isMaritime ? "Gemi işleri bildirimi" : "Mesleğine uygun iş bildirimi";
+    const message = isMaritime
+      ? `${profile.profession_name || "Denizcilik"} pozisyonuna uygun ilanlar sadece ilgili role göre gösterilir.`
+      : `${profile.profession_name || "Meslek"} için uygun iş ve partner fırsatları hazırlandığında burada görünür.`;
+    return [
+      notification(
+        `job:${profile.sector_key || "general"}:${profile.profession_key}`,
+        "job",
+        title,
+        message,
+        new Date().toISOString(),
+        "/pages/account/is-ilanlari.html",
+        "info",
+        "job"
+      )
+    ];
   }
 
   async function load(options) {
@@ -219,7 +271,7 @@
       return {
         user: null,
         notifications: [
-          notification("guest:login", "account", "Bildirimler için giriş yap", "Sipariş, kupon ve destek bildirimlerini görmek için hesabına giriş yap.", new Date().toISOString(), "/pages/account/user.html", "warning")
+          notification("guest:login", "account", "Bildirimler için giriş yap", "Sipariş, kupon ve destek bildirimlerini görmek için hesabına giriş yap.", new Date().toISOString(), "/pages/account/user.html", "warning", "panel")
         ],
         unreadCount: 1
       };
@@ -234,7 +286,9 @@
       ...profileNotifications(profile || {}),
       ...orderNotifications(orders),
       ...ticketNotifications(tickets),
-      ...couponNotifications(user, remoteCoupons)
+      ...couponNotifications(user, remoteCoupons),
+      ...jobNotifications(profile || {}),
+      ...adminNotifications(profile || {})
     ]
       .filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
