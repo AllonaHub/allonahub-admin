@@ -909,7 +909,12 @@ function boolParam(name){
   return value==="1" || value==="true" || value==="yes";
 }
 
-const FORCE_ACCOUNT_SWITCH=boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
+function paramValue(name){
+  return String(new URLSearchParams(window.location.search).get(name) || "").trim().toLowerCase();
+}
+
+const PASSWORD_UPDATED_LOGIN=paramValue("password")==="updated" || paramValue("reset")==="success";
+const FORCE_ACCOUNT_SWITCH=PASSWORD_UPDATED_LOGIN || boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
 
 function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
@@ -997,6 +1002,22 @@ async function applyBackendSession(session){
 
 function loginFailureMessage(error){
   const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
+  const status=Number(error && error.status || 0);
+  const code=String(error && error.payload && error.payload.error || "").toLowerCase();
+  if(
+    status===400 ||
+    status===403 ||
+    raw.includes("robot") ||
+    raw.includes("turnstile") ||
+    raw.includes("cloudflare") ||
+    raw.includes("doğrulama") ||
+    raw.includes("dogrulama")
+  ){
+    return "Güvenlik doğrulaması tamamlanamadı. Lütfen sayfayı yenileyip aynı cihazdan tekrar deneyin.";
+  }
+  if(status===429 || code.includes("auto_defense") || raw.includes("sınırlandırıldı") || raw.includes("sinirlandirildi")){
+    return "Çok fazla deneme algılandı. Lütfen kısa süre bekleyip aynı cihazdan tekrar deneyin.";
+  }
   if(raw.includes("email not confirmed") || raw.includes("not confirmed")){
     return "E-posta adresi henüz doğrulanmamış görünüyor. Lütfen e-posta kutundaki doğrulama bağlantısını kontrol et.";
   }
@@ -1018,7 +1039,7 @@ async function directSupabaseLogin(email,password){
 
 function canUseDirectLoginFallback(error){
   const status=Number(error && error.status || 0);
-  return status===0 || [401,404,405,500,501,502,503,504].includes(status);
+  return status===0 || [404,405,500,501,502,503,504].includes(status);
 }
 
 async function needsMfaVerification(){
@@ -1060,7 +1081,8 @@ function strongEnoughPassword(value){
   return String(value || "").length >= 8;
 }
 
-function clearAuthArtifacts(){
+function clearAuthArtifacts(options){
+  const settings=options || {};
   [
     "allonahub_user_profile",
     "allonahub_auth_verified_at",
@@ -1074,7 +1096,10 @@ function clearAuthArtifacts(){
 
   for(let i=localStorage.length-1;i>=0;i-=1){
     const key=localStorage.key(i) || "";
-    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
+    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login") || settings.allRateLimits && key.startsWith("allona_rate:")){
+      localStorage.removeItem(key);
+    }
+    if(settings.supabaseTokens && (/^sb-.+-auth-token$/.test(key) || key==="supabase.auth.token")){
       localStorage.removeItem(key);
     }
   }
@@ -1083,13 +1108,12 @@ function clearAuthArtifacts(){
 async function prepareAccountSwitch(){
   if(!FORCE_ACCOUNT_SWITCH || IS_PASSWORD_RECOVERY_REDIRECT)return;
   manualAuthInProgress=true;
-  clearAuthArtifacts();
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
   try{
     await supabaseClient.auth.signOut({scope:"local"});
   }catch(error){}
-  finally{
-    manualAuthInProgress=false;
-  }
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
+  manualAuthInProgress=false;
 }
 
 function rateLimitAction(key, limit, windowMs){

@@ -8,6 +8,7 @@ const TRAVERSAL_PATTERN = /(\.\.\/|\.\.\\|%2e%2e|%252e%252e|\/etc\/passwd|\\wind
 const PROBE_PATTERN = /(\/wp-admin|\/wp-login|\/wordpress|\/xmlrpc\.php|\/phpmyadmin|\/\.env|\/vendor\/phpunit|\/cgi-bin|\/adminer)/i;
 const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console|payments|cv|orders|partner|rewards|hp-wallet|cron)\b/i;
 const ADMIN_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console)\b/i;
+const AUTH_PATH_PATTERN = /^\/v1\/auth\/(login|register|forgot-password|turnstile)\b/i;
 
 const state = {
   ipScores: new Map(),
@@ -88,6 +89,7 @@ function routeLimitFor(pathname, request) {
   const strict = state.strictModeUntil > now();
   if (ADMIN_PATH_PATTERN.test(pathname) && hasBearerToken(request)) return strict ? 30 : 80;
   if (ADMIN_PATH_PATTERN.test(pathname)) return strict ? 8 : 16;
+  if (AUTH_PATH_PATTERN.test(pathname)) return strict ? 40 : 80;
   if (/^\/v1\/payments\b/i.test(pathname)) return strict ? 10 : 24;
   if (/^\/v1\/(orders|cv|partner|rewards|hp-wallet)\b/i.test(pathname)) return strict ? 18 : 36;
   return strict ? 60 : 120;
@@ -248,18 +250,19 @@ function requestSignals(request, bodyValue = "", options = {}) {
   const ip = clientIp(request);
   const raw = `${request.url || ""} ${normalizePayload(request.query)} ${normalizePayload(bodyValue)}`;
   const signals = [];
+  const authPath = AUTH_PATH_PATTERN.test(pathname);
 
   if (config.autoDefense.ipDenylist.includes(ip)) {
     signals.push({ type: "reputation", reason: "configured_ip_denylist", score: 12, action: "ip_block" });
   }
 
   const cfBotScore = cloudflareScore(request.headers["cf-bot-score"]);
-  if (cfBotScore !== null && cfBotScore <= config.autoDefense.cfBotScoreBlockBelow) {
+  if (!authPath && cfBotScore !== null && cfBotScore <= config.autoDefense.cfBotScoreBlockBelow) {
     signals.push({ type: "reputation", reason: `low_cf_bot_score:${cfBotScore}`, score: 8, action: "ip_block" });
   }
 
   const cfThreatScore = cloudflareScore(request.headers["cf-threat-score"]);
-  if (cfThreatScore !== null && cfThreatScore >= config.autoDefense.cfThreatScoreBlockAbove) {
+  if (!authPath && cfThreatScore !== null && cfThreatScore >= config.autoDefense.cfThreatScoreBlockAbove) {
     signals.push({ type: "reputation", reason: `high_cf_threat_score:${cfThreatScore}`, score: 8, action: "ip_block" });
   }
 
@@ -304,6 +307,11 @@ function requestSignals(request, bodyValue = "", options = {}) {
 function failureSignals(request, statusCode) {
   const pathname = routePath(request);
   if (![400, 401, 403, 404, 429].includes(statusCode)) return [];
+  if (AUTH_PATH_PATTERN.test(pathname)) {
+    return statusCode === 429
+      ? [{ type: "auth_rate", reason: "auth_endpoint_rate_limited", score: 2, action: "strict_mode" }]
+      : [];
+  }
   const signals = [];
   if (statusCode === 401) signals.push({ type: "auth", reason: "auth_failure", score: 3, action: "strict_mode" });
   if (statusCode === 403) signals.push({ type: "authz", reason: "authorization_failure", score: 4, action: "strict_mode" });
