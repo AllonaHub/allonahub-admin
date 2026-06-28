@@ -214,6 +214,12 @@ const partnerOrderStatusSchema = z.object({
   tracking_number: z.string().trim().max(120).optional().nullable()
 });
 
+const partnerRefundCancellationDecisionSchema = z.object({
+  action: z.enum(["approve_cancellation", "approve_refund", "reject_request"]),
+  reason: z.string().trim().min(6).max(1200),
+  note: z.string().trim().max(1200).optional().default("")
+});
+
 const INTEGRATION_PROVIDERS = [
   "generic_feed",
   "woocommerce",
@@ -3495,8 +3501,8 @@ function refundCancellationReason({ order, notes = [], flags = [], tickets = [] 
 }
 
 function refundCancellationPublic(order, extras = {}) {
-  const kind = refundCancellationKind(order);
-  const riskLevel = kind === "refund" ? "critical" : (kind === "cancellation" ? "high" : "medium");
+  const kind = extras.type || refundCancellationKind(order);
+  const riskLevel = extras.risk_level || (kind === "refund" ? "critical" : (kind === "cancellation" ? "high" : "medium"));
   const reason = refundCancellationReason({ order, ...extras });
   return {
     id: order.id,
@@ -3517,7 +3523,14 @@ function refundCancellationPublic(order, extras = {}) {
     tickets: extras.tickets || [],
     provider_dispatch: extras.provider_dispatch || null,
     provider_status: paymentProviderDispatchStatus(),
-    order_items: extras.order_items || order.order_items || []
+    order_items: extras.order_items || order.order_items || [],
+    request_status: extras.request_status || null,
+    decision_required: Boolean(extras.decision_required),
+    partner_decision: extras.partner_decision || null,
+    partner_total: Number(extras.partner_total || 0),
+    source_ticket_id: extras.source_ticket_id || null,
+    source_ticket_status: extras.source_ticket_status || null,
+    signal_at: extras.signal_at || order.updated_at || order.created_at || null
   };
 }
 
@@ -4108,13 +4121,21 @@ async function ensurePartnerBusiness(ctx, request) {
   return created;
 }
 
-function summarizePartnerOrders(orders, ownerId, isAdminUser) {
+function partnerOrderItems(order, ownerId, isAdminUser, userId = ownerId) {
+  return (order?.order_items || []).filter((item) => {
+    const product = item.product || item.products || {};
+    return isAdminUser || product.partner_id === ownerId || product.partner_id === userId || item.partner_id === ownerId || item.partner_id === userId;
+  });
+}
+
+function partnerCanAccessOrder(order, ownerId, isAdminUser, userId = ownerId) {
+  return partnerOrderItems(order, ownerId, isAdminUser, userId).length > 0;
+}
+
+function summarizePartnerOrders(orders, ownerId, isAdminUser, userId = ownerId) {
   return (orders || [])
     .map((order) => {
-      const partnerItems = (order.order_items || []).filter((item) => {
-        const product = item.product || item.products || {};
-        return isAdminUser || product.partner_id === ownerId;
-      });
+      const partnerItems = partnerOrderItems(order, ownerId, isAdminUser, userId);
       if (!partnerItems.length) return null;
       const partnerTotal = partnerItems.reduce((sum, item) => sum + Number(item.price || item.unit_price || 0) * Number(item.quantity || 1), 0);
       return {
@@ -4126,7 +4147,138 @@ function summarizePartnerOrders(orders, ownerId, isAdminUser) {
     .filter(Boolean);
 }
 
-function partnerMetrics({ business, products, orders, paymentIntents, transactions, payouts, tickets }) {
+function refundCancellationSignalType(order, tickets = [], flags = []) {
+  const raw = [
+    ...tickets.map((ticket) => ticket.metadata?.request_type || ticket.metadata?.type || ticket.category),
+    ...flags.map((flag) => flag.metadata?.request_type || flag.metadata?.refund_kind || flag.metadata?.partner_decision),
+    refundCancellationKind(order)
+  ].find(Boolean);
+  const normalized = String(raw || "").toLowerCase();
+  if (/cancel|cancellation|iptal/.test(normalized)) return "cancellation";
+  if (/refund|return|iade|geri/.test(normalized)) return "refund";
+
+  const text = [
+    ...tickets.flatMap((ticket) => [ticket.title, ticket.message]),
+    ...flags.map((flag) => flag.reason)
+  ].join(" ").toLocaleLowerCase("tr-TR");
+  if (/iptal|cancel|cancellation/.test(text)) return "cancellation";
+  if (/iade|refund|return|geri ödeme|geri odeme/.test(text)) return "refund";
+  return "signal";
+}
+
+function refundCancellationFlagMatches(flag) {
+  const text = [
+    flag?.reason,
+    flag?.metadata?.partner_decision,
+    flag?.metadata?.admin_action,
+    flag?.metadata?.super_admin_action,
+    flag?.metadata?.dispute_status,
+    flag?.metadata?.request_type
+  ].join(" ").toLocaleLowerCase("tr-TR");
+  return /refund|iade|return|iptal|cancel|cancellation|geri ödeme|geri odeme|ihtilaf|dispute/.test(text);
+}
+
+function refundCancellationTicketMatchesOrder(ticket, order) {
+  const metadata = ticket?.metadata || {};
+  if (metadata.order_id && String(metadata.order_id) === String(order.id)) return true;
+  const haystack = [ticket?.title, ticket?.message, metadata.order_no, metadata.order_number, metadata.order_id]
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+  return [order.id, order.order_no, order.order_number, order.customer_email]
+    .filter(Boolean)
+    .some((value) => haystack.includes(String(value).toLocaleLowerCase("tr-TR")));
+}
+
+function partnerRefundCancellationSummary(items) {
+  return {
+    total: items.length,
+    pending_partner: items.filter((item) => item.request_status === "pending_partner").length,
+    disputes: items.filter((item) => item.request_status === "dispute_admin_review").length,
+    approved: items.filter((item) => item.request_status === "approved").length,
+    refunded: items.filter((item) => item.type === "refund").length,
+    cancelled: items.filter((item) => item.type === "cancellation").length
+  };
+}
+
+async function loadPartnerRefundCancellations({ orders, ownerId, userId, isAdminUser, limit = 120, warnings }) {
+  const scopedOrders = (orders || []).filter((order) => partnerCanAccessOrder(order, ownerId, isAdminUser, userId));
+  if (!scopedOrders.length) {
+    const items = [];
+    return { items, summary: partnerRefundCancellationSummary(items), warnings };
+  }
+
+  const orderIds = scopedOrders.map((order) => String(order.id));
+  const [tickets, flags] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin
+        .from("support_tickets")
+        .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+        .or(refundCancellationSupportFilter(""))
+        .order("created_at", { ascending: false })
+        .limit(Math.min(Math.max(limit, 40), 200)),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .select("id, flag_type, severity, reason, status, metadata, target_id, created_at, updated_at")
+        .eq("target_type", "order")
+        .in("target_id", orderIds)
+        .order("created_at", { ascending: false })
+        .limit(240),
+      [],
+      warnings,
+      "admin_operation_flags"
+    )
+  ]);
+
+  const items = scopedOrders.map((order) => {
+    const orderTickets = (tickets || []).filter((ticket) => refundCancellationTicketMatchesOrder(ticket, order));
+    const orderFlags = (flags || [])
+      .filter((flag) => String(flag.target_id) === String(order.id))
+      .filter(refundCancellationFlagMatches);
+    const terminalKind = refundCancellationKind(order);
+    if (!orderTickets.length && !orderFlags.length && terminalKind === "signal") return null;
+
+    const rejectedFlag = orderFlags.find((flag) => flag.metadata?.partner_decision === "reject_request" || flag.metadata?.dispute_status === "admin_review_required");
+    const approvedFlag = orderFlags.find((flag) => ["approve_refund", "approve_cancellation"].includes(flag.metadata?.partner_decision));
+    const openTicket = orderTickets.find((ticket) => ["open", "in_progress"].includes(ticket.status));
+    const requestStatus = rejectedFlag
+      ? "dispute_admin_review"
+      : (approvedFlag || terminalKind !== "signal" ? "approved" : (openTicket ? "pending_partner" : "signal"));
+    const signalDates = [
+      ...orderTickets.map((ticket) => ticket.updated_at || ticket.created_at),
+      ...orderFlags.map((flag) => flag.updated_at || flag.created_at),
+      order.updated_at,
+      order.created_at
+    ].filter(Boolean);
+    const partnerItems = partnerOrderItems(order, ownerId, isAdminUser, userId);
+    const partnerTotal = partnerItems.reduce((sum, item) => sum + Number(item.price || item.unit_price || 0) * Number(item.quantity || 1), 0);
+
+    return refundCancellationPublic(order, {
+      type: refundCancellationSignalType(order, orderTickets, orderFlags),
+      risk_level: rejectedFlag ? "critical" : (openTicket ? "high" : undefined),
+      tickets: orderTickets,
+      flags: orderFlags,
+      order_items: partnerItems,
+      request_status: requestStatus,
+      decision_required: requestStatus === "pending_partner",
+      partner_decision: rejectedFlag?.metadata?.partner_decision || approvedFlag?.metadata?.partner_decision || null,
+      partner_total: Number(partnerTotal.toFixed(2)),
+      source_ticket_id: orderTickets[0]?.id || null,
+      source_ticket_status: orderTickets[0]?.status || null,
+      signal_at: signalDates.sort((a, b) => new Date(b) - new Date(a))[0] || null
+    });
+  }).filter(Boolean)
+    .sort((a, b) => new Date(b.signal_at || b.updated_at || b.created_at || 0) - new Date(a.signal_at || a.updated_at || a.created_at || 0))
+    .slice(0, limit);
+
+  return { items, summary: partnerRefundCancellationSummary(items), warnings };
+}
+
+function partnerMetrics({ business, products, orders, paymentIntents, transactions, payouts, tickets, refundCancellations = [] }) {
   const paidIntents = paymentIntents.filter((intent) => intent.status === "paid");
   const openTickets = tickets.filter((ticket) => ["open", "waiting"].includes(ticket.status));
   const gross = transactions.reduce((sum, item) => sum + Number(item.gross_amount || 0), 0);
@@ -4151,6 +4303,8 @@ function partnerMetrics({ business, products, orders, paymentIntents, transactio
     net_volume: Number(net.toFixed(2)),
     payout_pending: Number(payoutPending.toFixed(2)),
     open_ticket_count: openTickets.length,
+    refund_cancellation_pending_count: refundCancellations.filter((item) => item.request_status === "pending_partner").length,
+    refund_cancellation_dispute_count: refundCancellations.filter((item) => item.request_status === "dispute_admin_review").length,
     trust_score: Number(business.trust_score || 70),
     level: Number(business.level || 1)
   };
@@ -5421,7 +5575,16 @@ export function registerRoutes(app) {
     const firstError = results.find((result) => result.error)?.error;
     if (firstError) throw firstError;
 
-    const orders = summarizePartnerOrders(ordersResult.data || [], ownerId, isAdminUser);
+    const orders = summarizePartnerOrders(ordersResult.data || [], ownerId, isAdminUser, ctx.user.id);
+    const refundWarnings = [];
+    const refundCancellations = await loadPartnerRefundCancellations({
+      orders,
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      warnings: refundWarnings,
+      limit: 120
+    });
     const metrics = partnerMetrics({
       business,
       products: productsResult.data || [],
@@ -5429,7 +5592,8 @@ export function registerRoutes(app) {
       paymentIntents: intentsResult.data || [],
       transactions: transactionsResult.data || [],
       payouts: payoutsResult.data || [],
-      tickets: ticketsResult.data || []
+      tickets: ticketsResult.data || [],
+      refundCancellations: refundCancellations.items
     });
     const integrationWarnings = [];
     const [integrationConnectors, integrations, integrationRuns, integrationSecretRows] = await Promise.all([
@@ -5492,6 +5656,7 @@ export function registerRoutes(app) {
       metadata: {
         product_count: metrics.product_count,
         order_count: metrics.order_count,
+        refund_cancellation_count: refundCancellations.summary.total,
         integration_count: integrationRows.length
       }
     });
@@ -5508,12 +5673,281 @@ export function registerRoutes(app) {
       transactions: transactionsResult.data || [],
       payouts: payoutsResult.data || [],
       tickets: ticketsResult.data || [],
+      refundCancellations: refundCancellations.items,
+      refundCancellationSummary: refundCancellations.summary,
+      refundWarnings,
       integrations: integrationRows,
       integrationConnectors,
       integrationRuns: integrationRuns || [],
       integrationWarnings,
       metrics,
       recommendations: partnerRecommendations(metrics, devicesResult.data || [])
+    };
+  });
+
+  app.get("/v1/partner/refund-cancellations", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.refund_cancellations.list"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const isAdminUser = isAdmin(ctx.profile);
+    const query = z.object({
+      limit: z.coerce.number().int().min(1).max(120).optional().default(80)
+    }).parse(request.query || {});
+    const warnings = [];
+    const orderRows = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .order("created_at", { ascending: false })
+        .limit(200),
+      [],
+      warnings,
+      "orders"
+    );
+    const refundCancellations = await loadPartnerRefundCancellations({
+      orders: orderRows,
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      limit: query.limit,
+      warnings
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.refund_cancellations_viewed",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: {
+        total: refundCancellations.summary.total,
+        pending_partner: refundCancellations.summary.pending_partner,
+        disputes: refundCancellations.summary.disputes
+      }
+    });
+
+    return {
+      ok: true,
+      items: refundCancellations.items,
+      summary: refundCancellations.summary,
+      provider_status: paymentProviderDispatchStatus(),
+      warnings
+    };
+  });
+
+  app.post("/v1/partner/refund-cancellations/:orderId/decision", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.refund_cancellation.decision"
+    });
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = partnerRefundCancellationDecisionSchema.parse(request.body || {});
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const isAdminUser = isAdmin(ctx.profile);
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+    if (!partnerCanAccessOrder(before, ownerId, isAdminUser, ctx.user.id)) {
+      throw httpError("Bu sipariş için iade/iptal kararı verme yetkiniz yok.", 403);
+    }
+    const currentRefundState = await loadPartnerRefundCancellations({
+      orders: [before],
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      limit: 5,
+      warnings
+    });
+    const currentRefundItem = currentRefundState.items.find((item) => String(item.id) === String(orderId));
+    if (!isAdminUser && !currentRefundItem?.decision_required) {
+      throw httpError("Bu sipariş için partner kararı bekleyen iade/iptal talebi bulunmuyor.", 409);
+    }
+    if (!isAdminUser && currentRefundItem?.type === "cancellation" && body.action === "approve_refund") {
+      throw httpError("İptal talebi iade olarak onaylanamaz.", 409);
+    }
+    if (!isAdminUser && currentRefundItem?.type === "refund" && body.action === "approve_cancellation") {
+      throw httpError("İade talebi iptal olarak onaylanamaz.", 409);
+    }
+
+    let updated = before;
+    let providerDispatch = null;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = {
+        ...before,
+        ...(await updateRefundCancellationOrder(orderId, updatePayload, warnings)),
+        order_items: before.order_items || []
+      };
+      const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+      providerDispatch = await notifyPaymentProviderRefundCancellation({
+        action: body.action,
+        order: updated,
+        context: providerContext,
+        reason: body.reason,
+        note: body.note,
+        actorId: ctx.user.id,
+        ip: clientIp(request)
+      });
+    }
+
+    const actionLabels = {
+      approve_cancellation: "Partner iptal talebini kabul etti",
+      approve_refund: "Partner iade talebini kabul etti",
+      reject_request: "Partner talebi reddetti ve admin ihtilaf incelemesine gönderdi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : "",
+      body.action === "reject_request" ? "Ödeme kuruluşu bildirimi yapılmadı; admin hakem kararı bekleniyor." : ""
+    ].filter(Boolean).join("\n").slice(0, 1550);
+    const flagStatus = body.action === "reject_request" ? "in_review" : "resolved";
+    const flagSeverity = body.action === "approve_refund" || body.action === "reject_request" ? "critical" : "warning";
+    const metadata = {
+      partner_action: body.action,
+      partner_decision: body.action,
+      partner_business_id: business.id,
+      partner_owner_id: ownerId,
+      order_status_before: before.order_status || before.status || null,
+      payment_status_before: before.payment_status || null,
+      order_status_after: updated.order_status || updated.status || null,
+      payment_status_after: updated.payment_status || null,
+      provider_dispatch: providerDispatch,
+      dispute_status: body.action === "reject_request" ? "admin_review_required" : null,
+      payment_provider_notified: Boolean(providerDispatch?.ok)
+    };
+
+    const notePromise = optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          note_type: body.action === "reject_request" ? "support" : "review",
+          visibility: "admin",
+          body: noteBody
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    const flagPromise = optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          flag_type: "risky_order",
+          severity: flagSeverity,
+          status: flagStatus,
+          reason: noteBody.slice(0, 1150),
+          metadata
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    const supportTicketPromise = body.action === "reject_request"
+      ? optionalMutation(
+          supabaseAdmin
+            .from("support_tickets")
+            .insert({
+              user_id: ctx.user.id,
+              requester_type: "partner",
+              category: "refund_cancellation",
+              priority: "urgent",
+              title: `İade/iptal ihtilafı - ${before.order_no || before.order_number || orderId}`.slice(0, 176),
+              message: [
+                "Partner iade/iptal talebini reddetti ve admin hakem incelemesine gönderdi.",
+                `Sipariş: ${before.order_no || before.order_number || orderId}`,
+                `Partner: ${business.display_name || business.legal_name || business.id}`,
+                `Karar nedeni: ${body.reason}`,
+                body.note ? `Partner açıklaması: ${body.note}` : ""
+              ].filter(Boolean).join("\n").slice(0, 2900),
+              status: "open",
+              metadata: {
+                source: "partner_panel",
+                order_id: orderId,
+                order_no: before.order_no || before.order_number || orderId,
+                request_type: currentRefundItem?.type || refundCancellationSignalType(before),
+                partner_business_id: business.id,
+                partner_decision: "reject_request",
+                dispute_status: "admin_review_required",
+                payment_provider_notified: false
+              }
+            })
+            .select("id, status, created_at")
+            .single(),
+          warnings,
+          "support_tickets"
+        )
+      : Promise.resolve(null);
+    const [note, flag, supportTicket] = await Promise.all([notePromise, flagPromise, supportTicketPromise]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `partner.refund_cancellation_${body.action}`,
+      resourceType: "order",
+      resourceId: orderId,
+      severity: flagSeverity,
+      purpose: "partner_refund_cancellation_control",
+      evidenceTags: ["partner_os", "refund_cancellation", body.action],
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        partner_business_id: business.id,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null,
+        support_ticket_id: supportTicket?.id || null,
+        provider_dispatch: providerDispatch
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, {
+        type: body.action === "approve_cancellation" ? "cancellation" : (body.action === "approve_refund" ? "refund" : (currentRefundItem?.type || refundCancellationSignalType(before))),
+        notes: [note].filter(Boolean),
+        flags: [flag].filter(Boolean),
+        provider_dispatch: providerDispatch,
+        request_status: body.action === "reject_request" ? "dispute_admin_review" : "approved",
+        decision_required: false,
+        partner_decision: body.action,
+        order_items: partnerOrderItems(before, ownerId, isAdminUser, ctx.user.id)
+      }),
+      note,
+      flag,
+      support_ticket: supportTicket,
+      provider_dispatch: providerDispatch,
+      warnings
     };
   });
 

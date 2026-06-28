@@ -965,6 +965,99 @@
   background: rgba(255, 91, 91, 0.14);
 }
 
+.partner-os-refund-table {
+  min-width: 1040px;
+}
+
+.partner-os-refund-reason {
+  max-width: 260px;
+  line-height: 1.45;
+}
+
+.partner-os-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.partner-os-table-actions button {
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 66%, transparent);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  color: var(--ah-ink);
+  background: color-mix(in srgb, var(--ah-bg-mid) 76%, transparent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.partner-os-table-actions button:hover,
+.partner-os-table-actions button:focus-visible {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
+  color: var(--ah-accent);
+}
+
+.partner-os-table-actions button.is-primary {
+  border-color: color-mix(in srgb, var(--ah-primary) 62%, transparent);
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
+  color: #fff;
+}
+
+.partner-os-table-actions button.is-danger {
+  border-color: rgba(255, 91, 91, 0.45);
+  background: rgba(255, 91, 91, 0.14);
+  color: #ffb1b1;
+}
+
+.partner-os-table-actions > span {
+  color: var(--ah-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.partner-os-refund-detail td {
+  background: color-mix(in srgb, var(--ah-bg-mid) 68%, transparent);
+}
+
+.partner-os-refund-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.partner-os-refund-detail-grid article {
+  min-height: 96px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 58%, transparent);
+  border-radius: 8px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--ah-bg) 58%, transparent);
+}
+
+.partner-os-refund-detail-grid strong,
+.partner-os-refund-detail-grid span {
+  display: block;
+}
+
+.partner-os-refund-detail-grid strong {
+  color: var(--ah-accent);
+  font-size: 0.82rem;
+}
+
+.partner-os-refund-detail-grid span {
+  color: var(--ah-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+}
+
 .partner-os-feature {
   min-height: 210px;
 }
@@ -1267,6 +1360,7 @@
   .partner-os-grid--three,
   .partner-os-module-access,
   .partner-os-integration-connectors,
+  .partner-os-refund-detail-grid,
   .partner-os-academy {
     grid-template-columns: 1fr;
   }

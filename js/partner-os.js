@@ -10,6 +10,7 @@
     paymentIntents: [],
     transactions: [],
     payouts: [],
+    refundCancellations: [],
     locations: [],
     devices: [],
     qrCodes: [],
@@ -20,7 +21,8 @@
     integrationRuns: [],
     integrationWarnings: [],
     metrics: {},
-    recommendations: []
+    recommendations: [],
+    selectedRefundId: null
   };
 
   const MODULE_PROFILES = {
@@ -170,8 +172,8 @@
 
   function statusClass(status) {
     if (["active", "paid", "settled", "delivered", "verified", "enabled", "success"].includes(status)) return "partner-os-status--good";
-    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention"].includes(status)) return "partner-os-status--warn";
-    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled"].includes(status)) return "partner-os-status--bad";
+    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal"].includes(status)) return "partner-os-status--warn";
+    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled", "dispute_admin_review"].includes(status)) return "partner-os-status--bad";
     return "";
   }
 
@@ -210,7 +212,11 @@
       success: "Başarılı",
       skipped: "Atlandı",
       queued: "Kuyrukta",
-      running: "Çalışıyor"
+      running: "Çalışıyor",
+      pending_partner: "Partner onayı",
+      dispute_admin_review: "Admin ihtilafı",
+      signal: "Sinyal",
+      support_signal: "Destek sinyali"
     };
     return labels[status] || status || "-";
   }
@@ -276,6 +282,7 @@
     const kpis = [
       ["Bugünkü Tahsilat", money(metrics.paid_today), "QR/NFC/link ödemeleri"],
       ["Açık Sipariş", metrics.open_order_count || 0, "Hazırlık ve kargo bekleyen"],
+      ["İade / İptal", metrics.refund_cancellation_pending_count || 0, "Partner kararı bekleyen"],
       ["Bekleyen Ödeme", metrics.awaiting_payment_count || 0, "Açık QR/link istekleri"],
       ["Net Hacim", money(metrics.net_volume), "Komisyon sonrası kayıt"],
       ["Aktif Ürün", metrics.active_product_count || 0, "Yayında görünen ürün/hizmet"],
@@ -336,6 +343,9 @@
     if (!target) return;
     const metrics = state.metrics || {};
     const actions = [];
+    if (Number(metrics.refund_cancellation_pending_count || 0) > 0 || Number(metrics.refund_cancellation_dispute_count || 0) > 0) {
+      actions.push(["İade / iptal incele", "fa-rotate-left", "refunds", "primary"]);
+    }
     if (!state.products.length) actions.push(["İlk ürünü ekle", "fa-box-open", "products", "primary"]);
     if (!state.integrations.length) actions.push(["Entegrasyon bağla", "fa-plug-circle-bolt", "integrations", "primary"]);
     if (!state.paymentIntents.length) actions.push(["Ödeme isteği oluştur", "fa-qrcode", "payments", "primary"]);
@@ -854,6 +864,90 @@
     }).join("");
   }
 
+  function refundTypeLabel(value) {
+    const labels = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "Talep"
+    };
+    return labels[value] || value || "Talep";
+  }
+
+  function refundProviderText(item) {
+    const dispatch = item.provider_dispatch;
+    if (!dispatch) return item.request_status === "approved" ? "Bildirim kaydı yok" : "Karar bekliyor";
+    if (dispatch.ok) return "Ödeme kuruluşuna iletildi";
+    const iyzicoCode = dispatch.channels?.iyzico?.code;
+    const webhookCode = dispatch.channels?.webhook?.code;
+    return iyzicoCode || webhookCode || "Bildirim beklemede";
+  }
+
+  function refundDetailMarkup(item) {
+    const ticket = (item.tickets || [])[0] || {};
+    const flag = (item.flags || [])[0] || {};
+    const provider = refundProviderText(item);
+    return `
+      <tr class="partner-os-refund-detail">
+        <td colspan="7">
+          <div class="partner-os-refund-detail-grid">
+            <article>
+              <strong>Talep açıklaması</strong>
+              <span>${escape(item.reason || ticket.message || ticket.title || "Açıklama kaydı yok.")}</span>
+            </article>
+            <article>
+              <strong>İptal / iade nedeni</strong>
+              <span>${escape(flag.reason || ticket.message || "Partner kararı bekleniyor.")}</span>
+            </article>
+            <article>
+              <strong>Ödeme bildirimi</strong>
+              <span>${escape(provider)}</span>
+            </article>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderRefundCancellations() {
+    const target = $("[data-refund-cancellation-rows]");
+    const summary = $("[data-refund-cancellation-summary]");
+    const items = state.refundCancellations || [];
+    const pending = items.filter((item) => item.request_status === "pending_partner").length;
+    const disputes = items.filter((item) => item.request_status === "dispute_admin_review").length;
+    if (summary) summary.textContent = `${pending} bekleyen · ${disputes} ihtilaf`;
+    if (!target) return;
+    if (!items.length) {
+      target.innerHTML = `<tr><td colspan="7">Partner kararı bekleyen iade veya iptal talebi görünmüyor.</td></tr>`;
+      return;
+    }
+    target.innerHTML = items.map((item) => {
+      const approveAction = item.type === "cancellation" ? "approve_cancellation" : "approve_refund";
+      const actionButtons = item.decision_required
+        ? `
+          <button class="is-primary" type="button" data-refund-order="${escape(item.id)}" data-refund-decision="${escape(approveAction)}"><i class="fa-solid fa-check"></i><span>Kabul Et</span></button>
+          <button class="is-danger" type="button" data-refund-order="${escape(item.id)}" data-refund-decision="reject_request"><i class="fa-solid fa-scale-balanced"></i><span>İhtilafa Gönder</span></button>
+        `
+        : `<span>${escape(item.request_status === "dispute_admin_review" ? "Admin incelemesinde" : refundProviderText(item))}</span>`;
+      const row = `
+        <tr>
+          <td><strong>${escape(item.order_no || item.id)}</strong><br><small>${escape(formatDate(item.signal_at || item.created_at))}</small></td>
+          <td>${escape(refundTypeLabel(item.type))}</td>
+          <td>${escape(item.customer_name || item.customer_email || "-")}</td>
+          <td>${money(item.partner_total || item.total)}</td>
+          <td>${statusPill(item.request_status || item.order_status || "signal")}</td>
+          <td class="partner-os-refund-reason">${escape(core.truncate(item.reason || "-", 96))}</td>
+          <td>
+            <div class="partner-os-table-actions">
+              <button type="button" data-refund-detail="${escape(item.id)}"><i class="fa-solid fa-circle-info"></i><span>Detay</span></button>
+              ${actionButtons}
+            </div>
+          </td>
+        </tr>
+      `;
+      return row + (state.selectedRefundId === item.id ? refundDetailMarkup(item) : "");
+    }).join("");
+  }
+
   function renderFinance() {
     const metrics = state.metrics || {};
     const summary = $("[data-finance-summary]");
@@ -997,6 +1091,7 @@
     renderProducts();
     renderIntegrations();
     renderOrders();
+    renderRefundCancellations();
     renderFinance();
     renderOperations();
     renderTickets();
@@ -1033,6 +1128,7 @@
     state.paymentIntents = [];
     state.transactions = [];
     state.payouts = [];
+    state.refundCancellations = [];
     state.locations = [];
     state.devices = [];
     state.qrCodes = [];
@@ -1078,6 +1174,7 @@
           paymentIntents: payload.paymentIntents || [],
           transactions: payload.transactions || [],
           payouts: payload.payouts || [],
+          refundCancellations: payload.refundCancellations || [],
           locations: payload.locations || [],
           devices: payload.devices || [],
           qrCodes: payload.qrCodes || [],
@@ -1743,6 +1840,54 @@
     }
   }
 
+  async function refreshRefundCancellations() {
+    const payload = await apiFetch("/v1/partner/refund-cancellations");
+    state.refundCancellations = payload.items || [];
+    state.metrics = {
+      ...(state.metrics || {}),
+      refund_cancellation_pending_count: payload.summary?.pending_partner || 0,
+      refund_cancellation_dispute_count: payload.summary?.disputes || 0
+    };
+    renderKpis();
+    renderActionCenter();
+    renderRefundCancellations();
+  }
+
+  async function runRefundDecision(orderId, action) {
+    const item = (state.refundCancellations || []).find((entry) => String(entry.id) === String(orderId));
+    const label = action === "reject_request" ? "İhtilafa gönder" : "Kabul et";
+    const defaultReason = action === "reject_request"
+      ? "Partner sözleşme ve iade koşullarına göre talebi admin ihtilaf incelemesine gönderdi."
+      : "Partner sözleşme ve iade koşullarına göre talebi kabul etti.";
+    const reason = window.prompt(`${label} nedeni`, defaultReason);
+    if (!reason) return;
+    const noteInput = window.prompt("Ek açıklama", item?.reason || "");
+    const note = noteInput === null ? "" : noteInput;
+    try {
+      const payload = await apiFetch(`/v1/partner/refund-cancellations/${encodeURIComponent(orderId)}/decision`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason, note })
+      });
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: `refund_cancellation_${action}`,
+          severity: action === "approve_refund" || action === "reject_request" ? "critical" : "warning",
+          resourceType: "order",
+          resourceId: orderId,
+          evidenceTags: ["partner_os", "refund_cancellation"],
+          metadata: {
+            provider_dispatch: payload.provider_dispatch || null
+          }
+        });
+      }
+      await refreshRefundCancellations();
+      toast(action === "reject_request" ? "Talep admin ihtilafına gönderildi." : "Talep kabul edildi ve ödeme bildirimi tetiklendi.");
+    } catch (error) {
+      toast(error.message || "İade/iptal kararı kaydedilemedi.", "error");
+    }
+  }
+
   function bindEvents() {
     document.addEventListener("click", (event) => {
       const nav = event.target.closest("[data-panel-target]");
@@ -1756,6 +1901,8 @@
       const exportProducts = event.target.closest("[data-export-products]");
       const integrationTest = event.target.closest("[data-integration-test]");
       const integrationSync = event.target.closest("[data-integration-sync]");
+      const refundDetail = event.target.closest("[data-refund-detail]");
+      const refundDecision = event.target.closest("[data-refund-decision]");
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
@@ -1789,6 +1936,11 @@
       }
       if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
       if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync);
+      if (refundDetail) {
+        state.selectedRefundId = state.selectedRefundId === refundDetail.dataset.refundDetail ? null : refundDetail.dataset.refundDetail;
+        renderRefundCancellations();
+      }
+      if (refundDecision) runRefundDecision(refundDecision.dataset.refundOrder, refundDecision.dataset.refundDecision);
     });
 
     const paymentForm = $("[data-payment-form]");
