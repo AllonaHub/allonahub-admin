@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260628-mobile-fullscreen1";
+  const VERSION = "20260628-mobile-fullscreen2";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram", "facebook"];
