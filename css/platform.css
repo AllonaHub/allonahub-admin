@@ -7277,20 +7277,27 @@ body[data-theme="corporate"] .platform-hero {
 }
 
 body[data-theme="corporate"] .ad-hero__slide::before {
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 251, 253, 0.86) 42%, rgba(248, 251, 253, 0.46) 72%, rgba(248, 251, 253, 0.22) 100%),
-    radial-gradient(circle at 22% 22%, rgba(10, 94, 150, 0.14), transparent 34%) !important;
+  background: transparent !important;
+  opacity: 0 !important;
 }
 
 body[data-theme="corporate"] .ad-hero__content :where(h1,p,span,strong,small),
 body[data-theme="corporate"] .ad-hero__location :where(strong,p,span) {
-  color: var(--ah-ink) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.46) !important;
 }
 
 body[data-theme="corporate"] .ad-hero__eyebrow,
 body[data-theme="corporate"] .ad-hero__location {
-  background: rgba(255, 255, 255, 0.78) !important;
-  border-color: rgba(18, 58, 86, 0.14) !important;
+  background: rgba(1, 12, 28, 0.34) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+body[data-theme="corporate"] .ad-hero__media,
+body[data-theme="corporate"] .ad-hero__media img {
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
 }
 
 body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] {
@@ -7331,8 +7338,8 @@ body[data-theme="corporate"] .ad-hero__content span,
 body[data-theme="corporate"] .ad-hero__location strong,
 body[data-theme="corporate"] .ad-hero__location p,
 body[data-theme="corporate"] .ad-hero__location span {
-  color: var(--ah-ink) !important;
-  text-shadow: none !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.46) !important;
 }
 
 body[data-theme="corporate"] .ad-hero__button,
