@@ -3515,6 +3515,34 @@ function refundCancellationPublic(order, extras = {}) {
   };
 }
 
+async function updateRefundCancellationOrder(orderId, payload, warnings) {
+  const selectColumns = "id, order_no, customer_email, total, order_status, payment_status, updated_at";
+  const runUpdate = (updatePayload) => supabaseAdmin
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+    .select(selectColumns)
+    .single();
+
+  let { data, error } = await runUpdate(payload);
+  if (!error) return data;
+
+  if (Object.prototype.hasOwnProperty.call(payload, "status") && looksLikeMissingSchema(error)) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.status;
+    warnings.push("orders.status: opsiyonel durum kolonu production veritabaninda eksik gorunuyor; order_status uzerinden guncellendi.");
+    ({ data, error } = await runUpdate(fallbackPayload));
+    if (!error) return data;
+  }
+
+  if (!looksLikeMissingSchema(error)) {
+    error.operationLabel = "orders";
+    throw error;
+  }
+  warnings.push("orders: Supabase migration veya policy production veritabaninda eksik gorunuyor.");
+  throw httpError("orders icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.", 409);
+}
+
 function refundCancellationSupportFilter(search) {
   const terms = ["iade", "iptal", "geri ödeme", "geri odeme", "refund", "cancel"];
   const clean = cleanSearch(search);
@@ -8357,6 +8385,293 @@ export function registerRoutes(app) {
       metadata: { flag_type: "risky_order" }
     });
     return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  opsGet("/refund-cancellations", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.list");
+    const queryParams = superAdminRefundCancellationQuerySchema.parse(request.query || {});
+    const warnings = [];
+    const search = cleanSearch(queryParams.search);
+
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, user_id, customer_name, customer_email, customer_phone, total, order_status, payment_status, created_at, updated_at")
+      .or("order_status.in.(cancelled,refunded),payment_status.eq.refunded")
+      .order("updated_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status === "cancelled") ordersQuery = ordersQuery.in("order_status", ["cancelled"]);
+    if (queryParams.status === "refunded") ordersQuery = ordersQuery.or("order_status.eq.refunded,payment_status.eq.refunded");
+    const filter = textSearchFilter(["order_no", "customer_name", "customer_email", "customer_phone"], search);
+    if (filter) ordersQuery = ordersQuery.or(filter);
+
+    let ticketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+      .or(refundCancellationSupportFilter(search))
+      .order("created_at", { ascending: false })
+      .limit(Math.min(queryParams.limit, 40));
+    if (queryParams.status === "pending_signal") ticketQuery = ticketQuery.in("status", ["open", "in_progress"]);
+
+    const [orders, tickets] = await Promise.all([
+      optionalQuery(ordersQuery, [], warnings, "orders"),
+      optionalQuery(ticketQuery, [], warnings, "support_tickets")
+    ]);
+
+    const items = (orders || []).map((order) => refundCancellationPublic(order));
+    const ticketSignals = queryParams.status === "all" || queryParams.status === "pending_signal"
+      ? (tickets || []).map((ticket) => ({
+          id: `ticket:${ticket.id}`,
+          type: "support_signal",
+          ticket_id: ticket.id,
+          order_no: ticket.metadata?.order_no || ticket.metadata?.order_id || "Destek talebi",
+          customer_name: ticket.profile?.full_name || "",
+          customer_email: ticket.profile?.email || "",
+          customer_phone: ticket.profile?.phone || "",
+          total: 0,
+          order_status: "pending_signal",
+          payment_status: "",
+          reason: ticket.message || ticket.title || "",
+          risk_level: ticket.priority === "urgent" ? "critical" : "high",
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          tickets: [ticket],
+          notes: [],
+          flags: [],
+          order_items: []
+        }))
+      : [];
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.refund_cancellations_viewed",
+      resourceType: "refund_cancellation",
+      severity: "info",
+      metadata: {
+        status: queryParams.status,
+        search: search || null,
+        order_count: items.length,
+        support_signal_count: ticketSignals.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items: [...items, ...ticketSignals].slice(0, queryParams.limit),
+      summary: {
+        total: items.length + ticketSignals.length,
+        refunded: items.filter((item) => item.type === "refund").length,
+        cancelled: items.filter((item) => item.type === "cancellation").length,
+        support_signals: ticketSignals.length,
+        action_required: ticketSignals.length + items.filter((item) => item.type === "refund").length
+      },
+      warnings
+    };
+  });
+
+  opsGet("/refund-cancellations/:orderId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.detail");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const warnings = [];
+    const order = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    const supportFilters = [
+      order.order_no ? `title.ilike.%${order.order_no}%` : "",
+      order.order_no ? `message.ilike.%${order.order_no}%` : "",
+      order.order_number ? `title.ilike.%${order.order_number}%` : "",
+      order.order_number ? `message.ilike.%${order.order_number}%` : "",
+      order.customer_email ? `title.ilike.%${order.customer_email}%` : "",
+      order.customer_email ? `message.ilike.%${order.customer_email}%` : ""
+    ].filter(Boolean).join(",");
+
+    const [notes, flags, tickets] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, visibility, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(40),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, metadata, created_at, updated_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      supportFilters
+        ? optionalQuery(
+            supabaseAdmin
+              .from("support_tickets")
+              .select("id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+              .or(supportFilters)
+              .order("created_at", { ascending: false })
+              .limit(20),
+            [],
+            warnings,
+            "support_tickets"
+          )
+        : Promise.resolve([])
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.refund_cancellation_detail_viewed",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: "info",
+      metadata: {
+        note_count: notes.length,
+        flag_count: flags.length,
+        support_signal_count: tickets.length
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(order, {
+        notes,
+        flags,
+        tickets,
+        order_items: order.order_items || []
+      }),
+      warnings
+    };
+  });
+
+  opsPost("/refund-cancellations/:orderId/action", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.action");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = superAdminRefundCancellationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, customer_email, total, order_status, payment_status")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+
+    let updated = before;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = await updateRefundCancellationOrder(orderId, updatePayload, warnings);
+    }
+
+    const actionLabels = {
+      mark_review: "İncelemeye alındı",
+      approve_cancellation: "İptal onaylandı",
+      approve_refund: "İade onaylandı",
+      reject_request: "Talep reddedildi",
+      add_note: "Not eklendi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : ""
+    ].filter(Boolean).join("\n");
+
+    const [note, flag] = await Promise.all([
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            note_type: "review",
+            visibility: "admin",
+            body: noteBody
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .insert({
+            flagged_by: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            flag_type: "risky_order",
+            severity: body.action === "approve_refund" ? "critical" : "warning",
+            status: body.action === "mark_review" ? "in_review" : "resolved",
+            reason: noteBody,
+            metadata: {
+              admin_action: body.action,
+              order_status_before: before.order_status || before.status || null,
+              payment_status_before: before.payment_status || null,
+              order_status_after: updated.order_status || updated.status || null,
+              payment_status_after: updated.payment_status || null
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: `admin.ops.refund_cancellation_${body.action}`,
+      resourceType: "order",
+      resourceId: orderId,
+      severity: body.action === "approve_refund" ? "critical" : "warning",
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        old_value: before,
+        new_value: updated,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean) }),
+      note,
+      flag,
+      warnings
+    };
   });
 
   opsGet("/support-tickets", async (request) => {

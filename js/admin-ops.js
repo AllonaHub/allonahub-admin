@@ -14,6 +14,7 @@
       applications: [],
       partners: [],
       orders: [],
+      refunds: [],
       tickets: [],
       proposals: [],
       social: {},
@@ -29,6 +30,7 @@
     applications: { label: "Partner Başvuruları", marker: "" },
     partners: { label: "Partner Operasyonları", marker: "" },
     orders: { label: "Sipariş Yönetimi", marker: "" },
+    refunds: { label: "İade ve İptaller", marker: "" },
     content: { label: "İçerik Yönetimi", marker: "" },
     social: { label: "Sosyal Medya", marker: "Yeni" },
     support: { label: "Destek Talepleri", marker: "" },
@@ -113,6 +115,33 @@
 
   function titleCell(title, sub) {
     return `<span class="admin-row-title">${escape(title || "-")}</span><span class="admin-row-sub">${escape(sub || "")}</span>`;
+  }
+
+  function shortText(value, max = 180) {
+    const text = String(value || "").trim();
+    if (text.length <= max) return text;
+    return `${text.slice(0, max - 1)}…`;
+  }
+
+  function refundTypeLabel(value) {
+    const map = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "İşaret",
+      support_signal: "Destek sinyali"
+    };
+    return map[value] || value || "-";
+  }
+
+  function refundActionLabel(action) {
+    const map = {
+      mark_review: "İncelemeye al",
+      approve_cancellation: "İptali onayla",
+      approve_refund: "İadeyi onayla",
+      reject_request: "Talebi reddet",
+      add_note: "Not ekle"
+    };
+    return map[action] || action || "Aksiyon";
   }
 
   function statusBox(message, type) {
@@ -519,6 +548,58 @@
       "Sipariş Yönetimi",
       "Sipariş, ödeme, teslimat ve riskli sipariş takibi",
       warningPanel() + table(["Sipariş", "Müşteri", "Tutar", "Sipariş", "Ödeme", "Kargo", "İşlem"], rows, "Sipariş bulunamadı.")
+    );
+  }
+
+  function renderRefunds(payload) {
+    const data = payload || {};
+    const items = data.items || [];
+    const summary = data.summary || {};
+    const metricHtml = `<div class="admin-metrics">
+      ${[
+        ["Toplam", summary.total],
+        ["İade", summary.refunded],
+        ["İptal", summary.cancelled],
+        ["Destek sinyali", summary.support_signals],
+        ["Aksiyon bekleyen", summary.action_required]
+      ].map(([label, value]) => `<div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value || 0)}</strong></div>`).join("")}
+    </div>`;
+    const filterHint = `
+      <div class="admin-panel-note">
+        Arama kutusundan sipariş no, müşteri, e-posta veya neden arayabilirsin.
+        Durum filtresinde <strong>Refunded</strong>, <strong>Cancelled</strong> veya <strong>Pending signal</strong> seçilebilir.
+      </div>
+    `;
+    const rows = items.map((item) => {
+      const isTicket = item.type === "support_signal";
+      const actions = isTicket
+        ? `<button class="admin-btn" type="button" data-refund-ticket-detail="${escape(item.ticket_id || item.id)}">Detay</button>`
+        : `
+          <span class="admin-actions">
+            <button class="admin-btn" type="button" data-refund-detail="${escape(item.id)}">Detay</button>
+            <button class="admin-btn" type="button" data-refund-action="mark_review" data-id="${escape(item.id)}">İncele</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_cancellation" data-id="${escape(item.id)}">İptal Onayla</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_refund" data-id="${escape(item.id)}">İade Onayla</button>
+            <button class="admin-btn admin-btn--danger" type="button" data-refund-action="reject_request" data-id="${escape(item.id)}">Reddet</button>
+          </span>
+        `;
+      return `
+        <tr>
+          <td>${titleCell(item.order_no || item.id, dateTime(item.updated_at || item.created_at))}</td>
+          <td>${badge(refundTypeLabel(item.type), item.type === "refund" ? "red" : item.type === "cancellation" ? "orange" : "")}</td>
+          <td>${titleCell(item.customer_name || item.customer_email || "-", item.customer_phone || item.customer_email || "")}</td>
+          <td>${item.total ? money(item.total) : "-"}</td>
+          <td>${badge(item.order_status || "-")}</td>
+          <td>${badge(item.payment_status || "-")}</td>
+          <td>${escape(shortText(item.reason || "Neden kaydı yok", 150))}</td>
+          <td>${actions}</td>
+        </tr>
+      `;
+    });
+    $("#adminContent").innerHTML = section(
+      "İade ve İptaller",
+      "İade, iptal, destek sinyali, neden ve operasyon aksiyonları",
+      warningPanel(data.warnings || []) + metricHtml + filterHint + table(["Sipariş", "Tip", "Müşteri", "Tutar", "Sipariş", "Ödeme", "Neden", "İşlem"], rows, "İade veya iptal kaydı bulunamadı.")
     );
   }
 
@@ -1167,6 +1248,19 @@
     renderOrders(state.cache.orders);
   }
 
+  async function loadRefunds() {
+    const params = new URLSearchParams();
+    const search = $("#adminGlobalSearch")?.value?.trim() || "";
+    const status = $("#adminGlobalStatus")?.value || "";
+    if (search) params.set("search", search);
+    if (["cancelled", "refunded", "pending_signal"].includes(status)) params.set("status", status);
+    params.set("limit", "100");
+    const data = await api(`/v1/ops-console/refund-cancellations?${params.toString()}`);
+    state.cache.refunds = data.items || [];
+    state.warnings = data.warnings || [];
+    renderRefunds(data);
+  }
+
   async function loadSupport() {
     const data = await api(`/v1/ops-console/support-tickets?${queryParams()}`);
     state.cache.tickets = data.tickets || [];
@@ -1219,6 +1313,7 @@
       if (state.view === "applications") await loadApplications();
       if (state.view === "partners") await loadPartners();
       if (state.view === "orders") await loadOrders();
+      if (state.view === "refunds") await loadRefunds();
       if (state.view === "content") await loadContent();
       if (state.view === "social") await loadSocialMedia();
       if (state.view === "support") await loadSupport();
@@ -1259,6 +1354,84 @@
     } catch (error) {
       showToast(error.message || "Detay açılamadı.", "error");
     }
+  }
+
+  function showRefundTicketDetail(ticketId) {
+    const item = (state.cache.refunds || []).find((entry) => String(entry.ticket_id || entry.id) === String(ticketId) || String(entry.id) === `ticket:${ticketId}`);
+    const ticket = item?.tickets?.[0];
+    if (!ticket) {
+      showToast("Destek sinyali detayı bulunamadı.", "error");
+      return;
+    }
+    $("#adminDrawerTitle").textContent = "İade / İptal Destek Sinyali";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Başlık</dt><dd>${escape(ticket.title || "-")}</dd></div>
+        <div><dt>Durum</dt><dd>${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.category || "-")}</dd></div>
+        <div><dt>Talep sahibi</dt><dd>${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}</dd></div>
+        <div><dt>Açıklama</dt><dd>${escape(ticket.message || "-")}</dd></div>
+        <div><dt>Metadata</dt><dd>${escape(JSON.stringify(ticket.metadata || {}).slice(0, 900))}</dd></div>
+        <div><dt>Tarih</dt><dd>${dateTime(ticket.created_at)} / ${dateTime(ticket.updated_at)}</dd></div>
+      </dl>
+    `;
+    $("#adminDrawer").classList.add("is-open");
+  }
+
+  async function showRefundDetail(orderId) {
+    const payload = await api(`/v1/ops-console/refund-cancellations/${encodeURIComponent(orderId)}`);
+    const item = payload.item || {};
+    const noteRows = (item.notes || []).slice(0, 8).map((note) => `
+      <div class="admin-list-item">
+        <strong>${escape(note.note_type || "not")} / ${dateTime(note.created_at)}</strong>
+        <p>${escape(note.body || "-")}</p>
+      </div>
+    `).join("");
+    const flagRows = (item.flags || []).slice(0, 8).map((flag) => `
+      <div class="admin-list-item">
+        <strong>${badge(flag.severity || "warning")} ${escape(flag.flag_type || "flag")} / ${escape(flag.status || "-")}</strong>
+        <p>${escape(flag.reason || "-")}</p>
+      </div>
+    `).join("");
+    const ticketRows = (item.tickets || []).slice(0, 6).map((ticket) => `
+      <div class="admin-list-item">
+        <strong>${escape(ticket.title || "Destek sinyali")} / ${escape(ticket.status || "-")}</strong>
+        <p>${escape(shortText(ticket.message || "-", 280))}</p>
+      </div>
+    `).join("");
+    const productRows = (item.order_items || []).slice(0, 12).map((row) => `
+      <tr>
+        <td>${escape(row.product?.name || row.name || row.product_id || "Ürün")}</td>
+        <td>${escape(row.quantity || 1)}</td>
+        <td>${money(row.price || row.unit_price || 0)}</td>
+        <td>${escape(row.partner_id || row.product?.partner_id || "-")}</td>
+      </tr>
+    `);
+
+    $("#adminDrawerTitle").textContent = "İade / İptal Detayı";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Sipariş</dt><dd>${escape(item.order_no || item.id || "-")} / ${escape(refundTypeLabel(item.type))}</dd></div>
+        <div><dt>Müşteri</dt><dd>${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}</dd></div>
+        <div><dt>Tutar</dt><dd>${money(item.total)} / sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")}</dd></div>
+        <div><dt>Neden / açıklama</dt><dd>${escape(item.reason || "Kayıtlarda neden bulunamadı; karar öncesi destek ve not kayıtlarını kontrol et.")}</dd></div>
+        <div><dt>Tarih</dt><dd>${dateTime(item.created_at)} / ${dateTime(item.updated_at)}</dd></div>
+      </dl>
+      <div class="admin-actions" style="margin:12px 0">
+        <button class="admin-btn" type="button" data-refund-action="mark_review" data-id="${escape(item.id)}">İncelemeye al</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_cancellation" data-id="${escape(item.id)}">İptali onayla</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_refund" data-id="${escape(item.id)}">İadeyi onayla</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-refund-action="reject_request" data-id="${escape(item.id)}">Talebi reddet</button>
+        <button class="admin-btn" type="button" data-refund-action="add_note" data-id="${escape(item.id)}">Not ekle</button>
+      </div>
+      ${table(["Ürün", "Adet", "Tutar", "Partner"], productRows, "Ürün kalemi bulunamadı.")}
+      <div class="admin-split" style="margin-top:14px">
+        ${section("Operasyon notları", "", noteRows ? `<div class="admin-list">${noteRows}</div>` : statusBox("Operasyon notu yok."))}
+        ${section("Risk / işlem flagleri", "", flagRows ? `<div class="admin-list">${flagRows}</div>` : statusBox("Flag kaydı yok."))}
+      </div>
+      ${section("Destek sinyalleri", "", ticketRows ? `<div class="admin-list">${ticketRows}</div>` : statusBox("Bu siparişle eşleşen destek sinyali yok."))}
+      ${warningPanel(payload.warnings || [])}
+    `;
+    $("#adminDrawer").classList.add("is-open");
   }
 
   async function createUserNote(userId) {
@@ -1378,6 +1551,35 @@
     });
     showToast("Destek talebi güncellendi.");
     await loadSupport();
+  }
+
+  async function runRefundAction(orderId, action) {
+    const label = refundActionLabel(action);
+    const item = (state.cache.refunds || []).find((entry) => String(entry.id) === String(orderId));
+    const data = await openModal({
+      title: `İade / İptal - ${label}`,
+      message: `${item?.order_no || orderId} için "${label}" işlemi uygulanacak. Tüm kararlar audit log'a yazılır.`,
+      confirmText: label,
+      danger: action === "reject_request" || action === "approve_refund",
+      fields: [
+        { id: "reason", label: "İşlem gerekçesi", type: "textarea", required: true, max: 1200 },
+        { id: "note", label: "Ek açıklama", type: "textarea", required: false, max: 1200, value: label }
+      ]
+    });
+    if (!data) return;
+    const result = await api(`/v1/ops-console/refund-cancellations/${encodeURIComponent(orderId)}/action`, {
+      method: "POST",
+      body: {
+        action,
+        reason: data.reason,
+        note: data.note || ""
+      }
+    });
+    showToast("İade / iptal aksiyonu kaydedildi.");
+    if (result.item) {
+      await showRefundDetail(orderId).catch(() => null);
+    }
+    await loadRefunds();
   }
 
   async function createContentProposal(form) {
@@ -1663,6 +1865,21 @@
       const orderRisk = event.target.closest("[data-order-risk]");
       if (orderRisk) {
         await flagOrder(orderRisk.dataset.orderRisk).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const refundDetail = event.target.closest("[data-refund-detail]");
+      if (refundDetail) {
+        await showRefundDetail(refundDetail.dataset.refundDetail).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const refundTicketDetail = event.target.closest("[data-refund-ticket-detail]");
+      if (refundTicketDetail) {
+        showRefundTicketDetail(refundTicketDetail.dataset.refundTicketDetail);
+        return;
+      }
+      const refundAction = event.target.closest("[data-refund-action]");
+      if (refundAction) {
+        await runRefundAction(refundAction.dataset.id, refundAction.dataset.refundAction).catch((error) => showToast(error.message, "error"));
         return;
       }
       const supportStatus = event.target.closest("[data-support-status]");
