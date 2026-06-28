@@ -1,5 +1,5 @@
 (function () {
-  const SERVICE_WORKER_VERSION = "20260628-banner1";
+  const SERVICE_WORKER_VERSION = "20260628-banner2";
   const canUseServiceWorker = "serviceWorker" in navigator &&
     (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
