@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260621";
+  const VERSION = "20260628-mobile-fullscreen1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram", "facebook"];
@@ -137,6 +137,36 @@
       message: "Seni anladım. Bu konuda en doğru yönlendirmeyi yapabilmem için isteğini bir cümle daha net yazabilir misin? İstersen CV, denizcilik, partnerlik, sipariş, akademi veya destek başlıklarından biriyle başlayabiliriz.",
       actions: [pageAction("Hizmetler", "services"), pageAction("Destek / SSS", "support"), pageAction("İletişim", "contact")]
     };
+  }
+
+  let mobileLockScrollY = 0;
+
+  function isMobileAssistantView() {
+    return window.matchMedia("(max-width:520px)").matches;
+  }
+
+  function setAssistantMobileLock(value) {
+    const shouldLock = Boolean(value && isMobileAssistantView());
+    const html = document.documentElement;
+    const body = document.body;
+    if (!body) return;
+
+    if (shouldLock && !body.classList.contains("ah-assistant-mobile-lock")) {
+      mobileLockScrollY = window.scrollY || window.pageYOffset || 0;
+      html.classList.add("ah-assistant-mobile-lock");
+      body.classList.add("ah-assistant-mobile-lock");
+      body.style.top = `-${mobileLockScrollY}px`;
+      return;
+    }
+
+    if (!shouldLock && body.classList.contains("ah-assistant-mobile-lock")) {
+      const restoreY = Math.abs(parseInt(body.style.top || "0", 10)) || mobileLockScrollY;
+      html.classList.remove("ah-assistant-mobile-lock");
+      body.classList.remove("ah-assistant-mobile-lock");
+      body.style.top = "";
+      window.scrollTo(0, restoreY);
+      mobileLockScrollY = 0;
+    }
   }
 
   function apiBaseUrl() {
@@ -279,6 +309,7 @@
       @supports not (color:color-mix(in srgb,#fff 50%,#000)){.ah-assistant__button{border-color:rgba(255,255,255,.36);box-shadow:0 18px 46px rgba(0,122,255,.34),0 0 0 6px rgba(255,215,0,.08)}.ah-assistant__button:before{background:conic-gradient(from 120deg,rgba(255,215,0,.95),rgba(0,229,255,.45),rgba(255,255,255,.82),rgba(255,215,0,.95))}.ah-assistant__button:after{background:linear-gradient(145deg,var(--as-bg-strong),var(--as-bg-mid))}.ah-assistant__button:hover{box-shadow:0 22px 54px rgba(0,122,255,.42),0 0 0 7px rgba(255,215,0,.12)}.ah-assistant__channel{border-color:rgba(255,255,255,.26)}.ah-assistant__channel:hover{border-color:rgba(0,229,255,.5)}.ah-assistant__head{border-bottom-color:var(--as-line)}body[data-theme] .ah-assistant .ah-assistant__head{border-bottom-color:var(--as-line) !important}.ah-assistant__msg--assistant{box-shadow:0 10px 24px rgba(2,8,20,.12)}.ah-assistant__msg--user{border-color:rgba(255,255,255,.24);box-shadow:0 10px 24px rgba(0,122,255,.18)}.ah-assistant__action,.ah-assistant__quick button{border-color:var(--as-line);background:var(--as-surface)}body[data-theme] .ah-assistant .ah-assistant__action,body[data-theme] .ah-assistant .ah-assistant__quick button{border-color:var(--as-line) !important;background:var(--as-surface) !important}.ah-assistant__action:hover,.ah-assistant__quick button:hover{background:var(--as-panel-bg)}body[data-theme] .ah-assistant .ah-assistant__action:hover,body[data-theme] .ah-assistant .ah-assistant__quick button:hover{background:var(--as-panel-bg) !important}.ah-assistant__input:focus{box-shadow:0 0 0 3px rgba(11,114,255,.14)}}
       @keyframes ahAssistSpin{to{transform:rotate(360deg)}}
       @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant--open .ah-assistant__panel{grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant__button{width:60px;height:60px;border-radius:20px}.ah-assistant__button:after{border-radius:17px}.ah-assistant__button-mark{width:40px;height:40px}.ah-assistant__channels{right:0;bottom:70px;width:min(198px,calc(100vw - 24px));max-height:min(236px,calc(100vh - 100px))}.ah-assistant__channel{min-height:54px;border-radius:16px}.ah-assistant__actions{grid-template-columns:1fr}.ah-assistant__messages{padding-bottom:18px}.ah-assistant__quick-drawer{position:absolute;right:-1px;bottom:calc(100% + 8px);z-index:3;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:end;width:min(304px,calc(100vw - 56px));transform:translateX(calc(100% - 38px));transition:transform .22s ease;pointer-events:none}.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0)}.ah-assistant__quick-toggle{display:grid;place-items:center;width:38px;min-height:48px;border:0;border-radius:8px 0 0 8px;background:var(--as-accent);color:var(--as-accent-text);font-size:22px;font-weight:1000;line-height:1;box-shadow:0 14px 34px rgba(2,8,20,.26);cursor:pointer;pointer-events:auto}.ah-assistant__quick-toggle span{display:block;transition:transform .2s ease}.ah-assistant--quick-open .ah-assistant__quick-toggle span{transform:rotate(180deg)}.ah-assistant__quick{max-height:166px;overflow:auto;display:flex;align-content:flex-start;gap:7px;padding:10px;border:1px solid var(--as-line);border-radius:8px 0 0 8px;background:var(--as-panel-bg);box-shadow:0 18px 52px rgba(2,8,20,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}.ah-assistant--quick-open .ah-assistant__quick{opacity:1;visibility:visible;pointer-events:auto}.ah-assistant__quick button{min-height:34px;padding:7px 9px}.ah-assistant__form{padding:10px;grid-template-columns:minmax(0,1fr) 44px}.ah-assistant__input{min-height:40px}.ah-assistant__send{width:44px;height:40px}}
+      @media (max-width:520px){html.ah-assistant-mobile-lock,body.ah-assistant-mobile-lock{overflow:hidden!important;height:100%!important;overscroll-behavior:none!important}body.ah-assistant-mobile-lock{position:fixed!important;inset:0!important;width:100%!important;touch-action:none!important}.ah-assistant.ah-assistant--open{position:fixed;inset:0;right:auto;bottom:auto;width:100dvw;height:100dvh;display:block;justify-items:stretch;gap:0}.ah-assistant.ah-assistant--open .ah-assistant__button,.ah-assistant.ah-assistant--open .ah-assistant__channels{display:none}.ah-assistant.ah-assistant--open .ah-assistant__panel{position:fixed;inset:0;width:100dvw;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;box-shadow:none;display:grid;grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant.ah-assistant--open .ah-assistant__head{display:grid;grid-template-columns:auto minmax(0,1fr);justify-content:start;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}.ah-assistant.ah-assistant--open .ah-assistant__close{order:-1;width:auto;min-width:76px;height:38px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:0;border-radius:8px}.ah-assistant.ah-assistant--open .ah-assistant__close:before{content:"‹";font-size:26px;line-height:1}.ah-assistant.ah-assistant--open .ah-assistant__close:after{content:"Geri";font-size:13px;font-weight:900;line-height:1}.ah-assistant.ah-assistant--open .ah-assistant__title strong{font-size:14px}.ah-assistant.ah-assistant--open .ah-assistant__title span{font-size:11px}.ah-assistant.ah-assistant--open .ah-assistant__messages{min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 18px}.ah-assistant.ah-assistant--open .ah-assistant__foot{padding-bottom:env(safe-area-inset-bottom,0px)}.ah-assistant.ah-assistant--open .ah-assistant__quick-drawer{right:0;bottom:calc(100% + 10px)}}
     `;
     document.head.appendChild(style);
   }
@@ -421,8 +452,9 @@
     const sendButton = root.querySelector(".ah-assistant__send");
     const toggleButton = root.querySelector("[data-assistant-toggle]");
     const quickToggleButton = root.querySelector("[data-assistant-quick-toggle]");
+    const closeButton = root.querySelector("[data-assistant-close]");
 
-    appendMessage(messages, "assistant", "Merhaba, AllonaHub destek asistanıyım. Sipariş, partner başvurusu, SSS, Akademi ve destek konularında yardımcı olurum. Canlı temsilciye geçmek isterseniz Telegram veya WhatsApp bağlantılarını paylaşırım.");
+    appendMessage(messages, "assistant", "Merhaba, AllonaHub AI destek asistanına hoş geldiniz. Sipariş, CV-kariyer, denizcilik, partnerlik, akademi ve destek konularında size hızlıca yardımcı olurum. Ne yapmak istediğinizi yazın; sizi en doğru adıma yönlendireyim.");
 
     function setActionsOpen(value) {
       root.classList.toggle("ah-assistant--actions-open", Boolean(value));
@@ -459,6 +491,8 @@
 
     function setChatOpen(value) {
       root.classList.toggle("ah-assistant--open", Boolean(value));
+      setAssistantMobileLock(value);
+      if (closeButton) closeButton.setAttribute("aria-label", value && isMobileAssistantView() ? "Geri dön" : "Kapat");
       if (value) {
         setActionsOpen(false);
         input.focus();
@@ -542,6 +576,13 @@
       }
     });
 
+    window.addEventListener("resize", () => {
+      setAssistantMobileLock(root.classList.contains("ah-assistant--open"));
+      if (closeButton) {
+        closeButton.setAttribute("aria-label", root.classList.contains("ah-assistant--open") && isMobileAssistantView() ? "Geri dön" : "Kapat");
+      }
+    });
+
     root.querySelectorAll("[data-assistant-quick]").forEach((button) => {
       button.addEventListener("click", () => {
         setQuickOpen(false);
@@ -581,8 +622,10 @@
       if (root) {
         root.classList.remove("ah-assistant--actions-open", "ah-assistant--quick-open");
         root.classList.add("ah-assistant--open");
+        setAssistantMobileLock(true);
         root.querySelector("[data-assistant-toggle]")?.setAttribute("aria-expanded", "false");
         root.querySelector("[data-assistant-quick-toggle]")?.setAttribute("aria-expanded", "false");
+        root.querySelector("[data-assistant-close]")?.setAttribute("aria-label", isMobileAssistantView() ? "Geri dön" : "Kapat");
         const quick = root.querySelector(".ah-assistant__quick");
         const drawer = root.querySelector(".ah-assistant__quick-drawer");
         if (quick) quick.removeAttribute("style");
@@ -593,8 +636,10 @@
       const root = document.querySelector("[data-allonahub-assistant-widget]");
       if (root) {
         root.classList.remove("ah-assistant--open", "ah-assistant--actions-open", "ah-assistant--quick-open");
+        setAssistantMobileLock(false);
         root.querySelector("[data-assistant-toggle]")?.setAttribute("aria-expanded", "false");
         root.querySelector("[data-assistant-quick-toggle]")?.setAttribute("aria-expanded", "false");
+        root.querySelector("[data-assistant-close]")?.setAttribute("aria-label", "Kapat");
         const quick = root.querySelector(".ah-assistant__quick");
         const drawer = root.querySelector(".ah-assistant__quick-drawer");
         if (quick) quick.removeAttribute("style");

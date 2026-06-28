@@ -225,6 +225,7 @@ function scoreTopic(topic, text) {
   let score = 0;
   for (const term of topic.terms || []) {
     const needle = normalizeSearchText(term);
+    if (needle.length < 2) continue;
     if (!needle || !haystack.includes(needle)) continue;
     const wordMatch = new RegExp(`(^|\\s)${escapeRegExp(needle)}(\\s|$)`, "u").test(haystack);
     score += needle.includes(" ") ? 3 : 1;
