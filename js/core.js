@@ -9,6 +9,7 @@
     "favorites.html": "/pages/account/favorites.html",
     "forgot-password.html": "/pages/account/user.html?tab=forgot",
     "gorevler.html": "/pages/account/gorevler.html",
+    "hublar.html": "/pages/account/hublar.html",
     "login.html": "/pages/account/user.html",
     "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",

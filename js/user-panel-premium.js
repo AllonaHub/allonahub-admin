@@ -10,9 +10,9 @@
   const couponWalletKey = "allonahub_user_coupons_v1";
   const refundWindowDays = 14;
   const couponHpRewards = {
-    WELCOME10: 100,
-    PARTNER15: 150,
-    HP20: 200
+    WELCOME10: 0,
+    PARTNER15: 0,
+    HP20: 0
   };
 
   const moduleCards = {
@@ -149,7 +149,8 @@
 
   function couponHpReward(coupon) {
     const base = couponBaseCode(coupon?.code);
-    return Math.max(0, Number(coupon?.hp_reward || couponHpRewards[base] || 0));
+    if (Object.prototype.hasOwnProperty.call(couponHpRewards, base)) return Math.max(0, Number(couponHpRewards[base] || 0));
+    return Math.max(0, Number(coupon?.hp_reward || 0));
   }
 
   function couponAwardId(coupon) {
@@ -195,8 +196,8 @@
   function dailyRewardValues() {
     const level = Math.max(1, Number(currentProfile?.level || 1));
     return {
-      hp: Math.max(20, Math.round(level * 8)),
-      xp: Math.max(20, Math.round(level * 10)),
+      hp: Math.min(12, Math.max(4, Math.round(3 + level * 1.5))),
+      xp: Math.min(55, Math.max(18, Math.round(18 + level * 7))),
       streak: 1
     };
   }
@@ -267,6 +268,16 @@
     goTo(action);
   }
 
+  function showPanelDrawer() {
+    const drawer = $("#panelDrawer");
+    if (drawer) drawer.hidden = false;
+  }
+
+  function hidePanelDrawer() {
+    const drawer = $("#panelDrawer");
+    if (drawer) drawer.hidden = true;
+  }
+
   function bindNavigation() {
     document.querySelectorAll("[data-go], [data-panel-action]").forEach((node) => {
       node.addEventListener("click", () => {
@@ -289,10 +300,19 @@
       node.addEventListener("click", hideHpInfo);
     });
 
+    document.querySelectorAll("[data-panel-menu-open]").forEach((node) => {
+      node.addEventListener("click", showPanelDrawer);
+    });
+
+    document.querySelectorAll("[data-panel-menu-close]").forEach((node) => {
+      node.addEventListener("click", hidePanelDrawer);
+    });
+
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         hideHpInfo();
         hideRefundCenter();
+        hidePanelDrawer();
       }
     });
 
@@ -825,12 +845,19 @@
   }
 
   function renderTransactions(profile) {
-    const hpMultiplier = Math.max(20, Math.round((profile.level || 1) * 8));
-    const items = [
-      ["fa-gift", "Günlük Giriş", "Bugün giriş yapıldı", `+${hpMultiplier} HP`],
-      ["fa-store", profile.module === "maritime" ? "Maritime Profil" : "AllonaHub", "Profil eşleşmesi güncellendi", "+30 HP"],
-      ["fa-bullseye", "Görev Tamamlandı", "Profil merkezi kontrol edildi", "+20 HP"]
-    ];
+    const ledger = sync && sync.getHpLedger ? sync.getHpLedger(currentUser).slice(0, 4) : [];
+    const items = ledger.length
+      ? ledger.map((entry) => [
+          entry.bucket === "daily" ? "fa-calendar-check" : entry.bucket === "shopping" ? "fa-bag-shopping" : "fa-coins",
+          entry.title || "HP hareketi",
+          entry.source || bucketLabel(entry.bucket),
+          `${Number(entry.amount || 0) >= 0 ? "+" : ""}${formatHp(entry.amount || 0)}`
+        ])
+      : [
+          ["fa-user-check", "Profil merkezi", "Bilgilerini tamamladığında burada gerçek hareketler görünür.", "Hazır"],
+          ["fa-calendar-check", "Günlük giriş", "Düşük değerli görev HP ve XP ödülü günlük alınabilir.", `+${dailyRewardValues().hp} HP`],
+          ["fa-bag-shopping", "Alışveriş HP", "Siparişlerden kazanılan HP ayrı bakiyede izlenir.", "0 HP"]
+        ];
     const box = $("#transactionList");
     if (!box) return;
     box.innerHTML = items.map(([icon, title, text, amount]) => `
@@ -842,6 +869,42 @@
     `).join("");
   }
 
+  function isPremiumProfile(profile) {
+    const value = String(profile?.premium_level || profile?.plan_tier || "basic").toLocaleLowerCase("tr-TR");
+    return !/basic|free|new|standart|standard|ücretsiz|ucretsiz/.test(value);
+  }
+
+  function renderBenefits(profile) {
+    const target = document.querySelector(".account-benefit-list");
+    if (!target) return;
+    const premium = isPremiumProfile(profile);
+    const items = premium
+      ? [
+          ["fa-truck-fast", "Premium ücretsiz kargo"],
+          ["fa-headset", "Öncelikli destek"],
+          ["fa-percent", "Özel kampanya erişimi"],
+          ["fa-gem", "Premium seviye rozetleri"]
+        ]
+      : [
+          ["fa-user-check", "Profilini tamamla"],
+          ["fa-ticket", "Tek seferlik ilk alışveriş kuponu"],
+          ["fa-shield-halved", "Güvenli ödeme takibi"],
+          ["fa-layer-group", "Ekosistem modülleri"]
+        ];
+    target.innerHTML = items.map(([icon, text]) => `<span><i class="fa-solid ${icon}"></i> ${text}</span>`).join("");
+  }
+
+  async function refreshNotificationCount() {
+    if (!window.AllonaUserNotifications || !currentUser) return;
+    try {
+      const result = await window.AllonaUserNotifications.load({ user: currentUser, profile: currentProfile });
+      const count = Math.min(99, Number(result.unreadCount || 0));
+      setText("#panelNotificationCount", String(count));
+    } catch (error) {
+      setText("#panelNotificationCount", "0");
+    }
+  }
+
   function renderPanel(profile) {
     const levelInfo = sync.levelFromXp(profile.xp);
     currentProfile = { ...profile, level: levelInfo.current.level, level_name: levelInfo.current.name };
@@ -851,6 +914,8 @@
     setText("#firstName", profileFirstName(profile));
     setText("#fullName", profile.full_name || "AllonaHub Üyesi");
     setText("#memberNo", profile.member_no || sync.makeUserId(currentUser));
+    setText("#drawerName", profile.full_name || "AllonaHub Üyesi");
+    setText("#drawerMemberNo", profile.member_no || sync.makeUserId(currentUser));
     setText("#tierName", levelInfo.current.name);
     setText("#levelName", levelInfo.current.name);
     setText("#levelNumber", `Lv.${levelInfo.current.level}`);
@@ -877,6 +942,8 @@
     renderAvatar(profile);
     renderModules(profile);
     renderTransactions(profile);
+    renderBenefits(profile);
+    refreshNotificationCount();
   }
 
   function isCurrentUserProfile(profile) {

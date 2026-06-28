@@ -4,9 +4,12 @@
   const security = App.security;
   const sync = window.AllonaProfileSync;
   const economyClient = sync && sync.createClient ? sync.createClient() : null;
+  let activeUser = null;
   const storageKeys = {
     pending: "allonahub_pending_coupon_v1",
-    wallet: "allonahub_user_coupons_v1"
+    wallet: "allonahub_user_coupons_v1",
+    claimed: "allonahub_claimed_starter_coupons_v1",
+    firstHpConversion: "allonahub_first_hp_conversion_v1"
   };
 
   const coupons = {
@@ -15,7 +18,7 @@
       title: "Welcome 10 Kuponu",
       discountType: "percent",
       discountValue: 10,
-      hpReward: 100,
+      hpReward: 0,
       description: "Yeni üyenin hesabına tanımlanan hoş geldin indirimi."
     },
     PARTNER15: {
@@ -23,16 +26,16 @@
       title: "Partner 15 Kuponu",
       discountType: "percent",
       discountValue: 15,
-      hpReward: 150,
+      hpReward: 0,
       description: "Seçili partner mağazalarda kullanılabilir indirim."
     },
     HP20: {
       code: "HP20",
-      title: "HP 20 Kuponu",
+      title: "HP Avantaj Kuponu",
       discountType: "percent",
-      discountValue: 20,
-      hpReward: 200,
-      description: "HP sadakat avantajı için tanımlanan indirim."
+      discountValue: 8,
+      hpReward: 0,
+      description: "HP sadakat alanı için düşük oranlı indirim."
     }
   };
 
@@ -107,7 +110,8 @@
 
   function couponHpReward(coupon) {
     const base = coupons[couponBaseCode(coupon?.code)];
-    return Math.max(0, Number(coupon?.hp_reward || base?.hpReward || 0));
+    if (base) return Math.max(0, Number(base.hpReward || 0));
+    return Math.max(0, Number(coupon?.hp_reward || 0));
   }
 
   function couponAwardId(coupon) {
@@ -124,6 +128,42 @@
   function getLocalWallet(user) {
     const all = safeJson(storageKeys.wallet, {});
     return Array.isArray(all[userKey(user)]) ? all[userKey(user)] : [];
+  }
+
+  function claimedCoupons(user) {
+    const all = safeJson(storageKeys.claimed, {});
+    const list = all[userKey(user)];
+    return Array.isArray(list) ? list.map((code) => String(code).toUpperCase()) : [];
+  }
+
+  function markCouponClaimed(user, code) {
+    if (!user || !code) return;
+    const all = safeJson(storageKeys.claimed, {});
+    const key = userKey(user);
+    const next = Array.from(new Set([...(all[key] || []), String(code).toUpperCase()]));
+    all[key] = next;
+    writeJson(storageKeys.claimed, all);
+  }
+
+  function isStarterCouponClaimed(user, code) {
+    const normalized = String(code || "").toUpperCase();
+    return claimedCoupons(user).includes(normalized)
+      || getLocalWallet(user).some((item) => couponBaseCode(item?.code) === normalized);
+  }
+
+  function firstHpConversionUsed(user) {
+    const all = safeJson(storageKeys.firstHpConversion, {});
+    return Boolean(all[userKey(user)]);
+  }
+
+  function markFirstHpConversionUsed(user, coupon) {
+    if (!user) return;
+    const all = safeJson(storageKeys.firstHpConversion, {});
+    all[userKey(user)] = {
+      code: coupon?.code || "",
+      used_at: new Date().toISOString()
+    };
+    writeJson(storageKeys.firstHpConversion, all);
   }
 
   function saveLocalCoupon(user, coupon) {
@@ -183,9 +223,38 @@
     target.innerHTML = items.map((item) => `
       <div class="wallet-coupon">
         <strong>${core.escapeHTML(item.title || item.code)}</strong>
-        <span>${core.escapeHTML(item.code)} - ${core.escapeHTML(formatCouponValue(item))}${couponHpReward(item) ? ` - +${formatHp(couponHpReward(item))}` : ""}</span>
+        <span>${core.escapeHTML(item.code)} - ${core.escapeHTML(formatCouponValue(item))}${item.status === "used" ? " - kullanıldı" : ""}</span>
       </div>
     `).join("");
+  }
+
+  async function renderStarterCoupons(user) {
+    const cards = document.querySelectorAll("[data-starter-coupon]");
+    if (!cards.length) return;
+    let remoteCodes = [];
+    if (user && App.db && App.db.client) {
+      try {
+        const { data, error } = await App.db.client()
+          .from("user_coupons")
+          .select("code, status")
+          .eq("user_id", user.id)
+          .in("code", Object.keys(coupons));
+        if (error) throw error;
+        remoteCodes = (data || []).map((item) => String(item.code || "").toUpperCase());
+      } catch (error) {
+        remoteCodes = [];
+      }
+    }
+    cards.forEach((card) => {
+      const code = String(card.dataset.starterCoupon || "").toUpperCase();
+      const claimed = user && (isStarterCouponClaimed(user, code) || remoteCodes.includes(code));
+      card.hidden = Boolean(claimed);
+    });
+    const visible = Array.from(cards).some((card) => !card.hidden);
+    const grid = document.querySelector("[data-starter-coupon-grid]");
+    if (grid) grid.hidden = !visible;
+    const done = document.querySelector("[data-starter-coupon-done]");
+    if (done) done.hidden = visible;
   }
 
   async function loadProfile() {
@@ -211,8 +280,10 @@
     if (noteNode) {
       if (totals.total < 1000) {
         noteNode.textContent = `125 TL kupon için ${formatHp(Math.max(0, 1000 - totals.total))} daha gerekiyor.`;
+      } else if (activeUser && !firstHpConversionUsed(activeUser) && totals.shopping <= 0) {
+        noteNode.textContent = "İlk kullanım hakkınla toplam HP'ni tek seferlik kupona çevirebilirsin.";
       } else if (totals.shopping <= 0) {
-        noteNode.textContent = "Günlük görev HP'si tek başına kupona çevrilemez. Dönüşüm için alışverişten kazanılan HP de gerekir.";
+        noteNode.textContent = "İlk kullanım hakkından sonra günlük görev HP'si tek başına kupona çevrilemez. Dönüşüm için alışverişten kazanılan HP de gerekir.";
       } else {
         noteNode.textContent = "1000 HP karşılığı 125 TL kupon oluşturabilirsin. Alışveriş HP'si öncelikli kullanılır.";
       }
@@ -253,12 +324,19 @@
 
     const coupon = normalizeCoupon(code, action);
     const user = await currentUser();
+    activeUser = user;
     if (!user) {
       writeJson(storageKeys.pending, coupon);
       renderStatus("Kupon hazırlandı. Hesabınıza tanımlamak için kayıt sayfasına yönlendiriliyorsunuz.", "info");
       window.setTimeout(() => {
         window.location.href = registerReturnUrl();
       }, 450);
+      return;
+    }
+
+    if (isStarterCouponClaimed(user, coupon.code)) {
+      renderStatus("Bu başlangıç kuponu daha önce hesabına tanımlanmış.", "info");
+      await renderStarterCoupons(user);
       return;
     }
 
@@ -274,52 +352,24 @@
     }
 
     saveLocalCoupon(user, coupon);
-    let profile = await loadProfile();
-    let awarded = false;
-    try {
-      const awardedProfile = await awardCouponHp(user, coupon);
-      awarded = Boolean(awardedProfile);
-      profile = awardedProfile || profile;
-    } catch (error) {
-      console.warn("Kupon HP ödülü işlenemedi.", error);
-    }
+    markCouponClaimed(user, coupon.code);
+    const profile = await loadProfile();
     renderWallet(user);
     renderPointShop(profile);
-    renderStatus(`${coupon.title} hesabınızda aktif hale getirildi. ${awarded ? `+${formatHp(couponHpReward(coupon))} alışveriş HP olarak işlendi.` : "HP ödülü daha önce işlenmişse tekrar eklenmez."}`, "success");
+    await renderStarterCoupons(user);
+    renderStatus(`${coupon.title} hesabınızda tek seferlik kupon olarak aktif hale getirildi.`, "success");
     if (core.toast) core.toast(remoteSaved ? "Kupon hesabına tanımlandı." : "Kupon hesabına kaydedildi.");
   }
 
   async function convertCouponToHp(code) {
-    const coupon = normalizeCoupon(code, "convert");
-    const user = await currentUser();
-    if (!user) {
-      renderStatus("Kuponu HP'ye eklemek için hesabınıza giriş yapmalısınız.", "info");
-      window.setTimeout(() => {
-        window.location.href = registerReturnUrl();
-      }, 450);
-      return;
-    }
-
-    try {
-      if (sync.hasHpLedgerEntry && sync.hasHpLedgerEntry(user, couponAwardId(coupon))) {
-        renderPointShop(await loadProfile());
-        renderStatus("Bu kuponun HP ödülü daha önce hesabına işlenmiş.", "info");
-        return;
-      }
-      const profile = await awardCouponHp(user, coupon) || await loadProfile();
-      renderPointShop(profile);
-      renderStatus(`${coupon.title} ${formatHp(couponHpReward(coupon))} olarak alışveriş HP'ne eklendi.`, "success");
-      if (core.toast) core.toast("Kupon HP olarak işlendi.");
-    } catch (error) {
-      console.error("Kupon HP dönüşümü tamamlanamadı:", error);
-      renderStatus("Kupon HP'ye güvenli şekilde eklenemedi. Lütfen tekrar deneyin.", "info");
-    }
+    renderStatus("Başlangıç kuponları artık HP'ye çevrilmez. Kuponu ödeme sayfasında indirim olarak kullanabilirsin.", "info");
   }
 
   async function convertPointsToCoupon(button) {
     const requiredHp = Math.max(0, Number(button?.dataset.requiredHp || 1000));
     const couponValue = Math.max(0, Number(button?.dataset.couponValue || 125));
     const user = await currentUser();
+    activeUser = user;
     if (!user) {
       renderStatus("HP kuponu oluşturmak için hesabınıza giriş yapmalısınız.", "info");
       window.setTimeout(() => {
@@ -338,8 +388,9 @@
       renderStatus(`Bu kupon için ${formatHp(requiredHp)} gerekiyor. Mevcut toplam: ${formatHp(totals.total)}.`, "info");
       return;
     }
-    if (totals.shopping <= 0) {
-      renderStatus("Günlük görev HP'si tek başına kupona çevrilemez. Önce alışverişten HP kazanmalısınız.", "info");
+    const firstUseAvailable = !firstHpConversionUsed(user);
+    if (!firstUseAvailable && totals.shopping <= 0) {
+      renderStatus("İlk kullanım hakkından sonra günlük görev HP'si tek başına kupona çevrilemez. Önce alışverişten HP kazanmalısınız.", "info");
       return;
     }
 
@@ -374,6 +425,7 @@
         console.warn("HP kuponu Supabase yazımı tamamlanamadı.", error);
       }
       saveLocalCoupon(user, coupon);
+      if (firstUseAvailable) markFirstHpConversionUsed(user, coupon);
       renderWallet(user);
       renderPointShop(updated);
       renderStatus(`${coupon.title} oluşturuldu. ${formatHp(requiredHp)} kullanıldı.`, "success");
@@ -388,6 +440,7 @@
     const pending = safeJson(storageKeys.pending, null);
     if (!pending || !pending.code) return;
     const user = await currentUser();
+    activeUser = user;
     if (!user) return;
     try {
       await saveRemoteCoupon(user, pending);
@@ -395,11 +448,7 @@
       console.warn("Bekleyen kupon merkezi hesaba yazılamadı.", error);
     }
     saveLocalCoupon(user, pending);
-    try {
-      await awardCouponHp(user, pending);
-    } catch (error) {
-      console.warn("Bekleyen kupon HP ödülü işlenemedi.", error);
-    }
+    markCouponClaimed(user, pending.code);
     localStorage.removeItem(storageKeys.pending);
     renderStatus(`${pending.title || pending.code} hesabınızda aktif hale getirildi.`, "success");
     renderWallet(user);
@@ -425,8 +474,10 @@
   document.addEventListener("DOMContentLoaded", async () => {
     bindCouponActions();
     const user = await currentUser();
+    activeUser = user;
     await applyPendingCoupon();
     renderWallet(user);
     renderPointShop(await loadProfile());
+    await renderStarterCoupons(user);
   });
 })();

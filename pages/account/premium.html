@@ -1,22 +1,123 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premium | AllonaHub</title>
-<meta http-equiv="refresh" content="0; url=../../index.html#premium">
-<style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;background:#020814;color:#fff}
-a{color:#00e5ff}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seviye ve HP | AllonaHub</title>
+  <meta name="description" content="AllonaHub kullanıcı seviye, XP ve HP ayrımı.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260628-modules1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <style>
+    .level-page{display:grid;gap:18px;padding-bottom:42px}
+    .level-overview{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+    .level-card{padding:24px;border-radius:22px;background:linear-gradient(145deg,rgba(0,181,255,.12),rgba(255,255,255,.06));border:1px solid rgba(0,181,255,.18)}
+    .level-card h2,.level-card h3{margin:0 0 8px}
+    .level-card p{color:var(--muted);line-height:1.6}
+    .level-progress{height:12px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin:16px 0}
+    .level-progress i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#00d5ff,#ffd700)}
+    .level-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .level-stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
+    .level-stat span{display:block;color:#9fc6d6;font-size:12px;font-weight:900;text-transform:uppercase}
+    .level-stat strong{display:block;margin-top:8px;font-size:24px}
+    .level-list{display:grid;gap:8px}
+    .level-row{display:grid;grid-template-columns:90px minmax(0,1fr) 130px;gap:12px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+    .level-row.is-current{border-color:rgba(255,215,0,.42);box-shadow:0 0 22px rgba(255,215,0,.14)}
+    .level-row b{color:#fff}
+    .level-row span,.level-row small{color:#b9d3df}
+    .page-actions{display:flex;gap:10px;flex-wrap:wrap}
+    @media(max-width:860px){.level-overview,.level-stats,.level-row{grid-template-columns:1fr}.level-row{gap:5px}}
+  </style>
 </head>
 <body>
-<p>Premium üyelik bölümüne yönlendiriliyorsunuz. <a href="../../index.html#premium">Devam et</a></p>
-  <div data-layout="footer"></div>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Seviye ve HP</h1>
+          <p>XP seviyeni, bir sonraki seviyeye kalan ilerlemeyi ve HP kaynak ayrımını buradan takip et.</p>
+        </div>
+      </section>
+      <section class="container level-page">
+        <div class="page-actions">
+          <a class="btn" href="user-panel.html">Hesabıma Dön</a>
+          <a class="btn btn--light" href="../commerce/kuponlar.html#puan-dukkani">Puan Dükkanı</a>
+        </div>
+        <section class="level-overview">
+          <article class="level-card">
+            <p class="eyebrow">Aktif seviye</p>
+            <h2 data-level-name>New Member</h2>
+            <p data-level-copy>Seviye bilgilerin yükleniyor.</p>
+            <div class="level-progress"><i data-level-progress></i></div>
+            <p data-level-next>Bir sonraki seviye hazırlanıyor.</p>
+          </article>
+          <article class="level-card">
+            <h3>HP Kuralı</h3>
+            <p>Günlük görev HP'si tek başına sürekli indirim kuponuna çevrilmez. İlk kullanım hakkından sonra dönüşüm için alışverişten kazanılan HP ile birlikte değerlendirilir.</p>
+          </article>
+        </section>
+        <section class="level-stats" aria-label="HP ve XP özeti">
+          <div class="level-stat"><span>Toplam HP</span><strong data-total-hp>0 HP</strong></div>
+          <div class="level-stat"><span>Günlük Görev HP</span><strong data-daily-hp>0 HP</strong></div>
+          <div class="level-stat"><span>Alışveriş HP</span><strong data-shopping-hp>0 HP</strong></div>
+        </section>
+        <section class="level-card">
+          <h3>Seviye Basamakları</h3>
+          <div class="level-list" data-level-list></div>
+        </section>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
-<script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const sync = window.AllonaProfileSync;
+      const client = sync && sync.createClient ? sync.createClient() : null;
+      const fmt = (value) => `${Number(value || 0).toLocaleString("tr-TR")} HP`;
+      const set = (selector, value) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+      if (!sync || !client) return;
+      const loaded = await sync.load(client);
+      if (!loaded || !loaded.user) {
+        window.location.href = "user.html";
+        return;
+      }
+      const profile = loaded.profile || {};
+      const info = sync.levelFromXp(profile.xp || 0);
+      const daily = Math.max(0, Number(profile.cashout_balance || 0));
+      const shopping = Math.max(0, Number(profile.hub_cash || profile.wallet_balance || 0));
+      set("[data-level-name]", `${info.current.name} / Lv.${info.current.level}`);
+      set("[data-level-copy]", `${Number(info.xp || 0).toLocaleString("tr-TR")} XP ile bu seviyedesin. ${info.current.bonus || ""}`);
+      set("[data-level-next]", info.next ? `${info.remaining.toLocaleString("tr-TR")} XP sonra ${info.next.name}.` : "Legend seviyesindesin.");
+      set("[data-total-hp]", fmt(profile.hp || 0));
+      set("[data-daily-hp]", fmt(daily));
+      set("[data-shopping-hp]", fmt(shopping));
+      const bar = document.querySelector("[data-level-progress]");
+      if (bar) bar.style.width = `${info.progress || 0}%`;
+      const list = document.querySelector("[data-level-list]");
+      if (list) {
+        list.innerHTML = sync.LEVELS.map((level) => `
+          <div class="level-row ${level.level === info.current.level ? "is-current" : ""}">
+            <b>Lv.${level.level}</b>
+            <span>${level.name}<br><small>${level.bonus}</small></span>
+            <strong>${Number(level.minXp || 0).toLocaleString("tr-TR")} XP</strong>
+          </div>
+        `).join("");
+      }
+    });
+  </script>
 </body>
 </html>

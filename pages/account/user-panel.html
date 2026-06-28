@@ -7,26 +7,23 @@
   <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260628-refund-center1">
+  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260629-panel-fix1">
 </head>
 <body class="user-panel-page" data-level-theme="new-member">
   <div class="premium-shell">
     <header class="premium-topbar" aria-label="AllonaHub kullanıcı panel üst menüsü">
-      <button class="premium-icon-btn" type="button" data-go="../../index.html" aria-label="Ana sayfa">
+      <button class="premium-icon-btn" type="button" data-panel-menu-open aria-label="Hesap menüsünü aç">
         <i class="fa-solid fa-bars"></i>
       </button>
 
       <a class="premium-brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
         <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
-        <span>
-          <strong>ALLONAHUB</strong>
-          <span>Hayatını AllonaHub'la kolaylaştır.</span>
-        </span>
+        <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
       </a>
 
       <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler">
         <i class="fa-solid fa-bell"></i>
-        <span class="count">3</span>
+        <span class="count" id="panelNotificationCount">0</span>
       </a>
     </header>
 
@@ -136,7 +133,7 @@
           <nav class="account-menu-group" aria-label="Hublarım">
             <div class="account-menu-title">
               <span>HUB'larım</span>
-              <a href="../../index.html#modules">Tümünü Gör</a>
+              <a href="hublar.html">Tümünü Gör</a>
             </div>
             <a class="account-menu-row" href="../commerce/allonayemek.html">
               <span><i class="fa-solid fa-burger"></i> AllonaFood</span>
@@ -157,10 +154,10 @@
               <span>Avantajlar</span>
             </div>
             <div class="account-benefit-list">
-              <span><i class="fa-solid fa-truck-fast"></i> Ücretsiz Kargo</span>
-              <span><i class="fa-solid fa-coins"></i> Daha Fazla HP Kazan</span>
-              <span><i class="fa-solid fa-percent"></i> Özel Kampanyalar</span>
-              <span><i class="fa-solid fa-headset"></i> Öncelikli Destek</span>
+              <span><i class="fa-solid fa-user-check"></i> Profilini tamamla</span>
+              <span><i class="fa-solid fa-ticket"></i> İlk alışveriş kuponu</span>
+              <span><i class="fa-solid fa-shield-halved"></i> Güvenli ödeme takibi</span>
+              <span><i class="fa-solid fa-layer-group"></i> Ekosistem modülleri</span>
             </div>
           </div>
 
@@ -183,13 +180,19 @@
           <p>Hesap merkezi</p>
           <h2>Hesabım</h2>
           <div class="account-focus-line"></div>
+          <div class="account-focus-actions">
+            <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profili Düzenle</a>
+            <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
+            <a href="bildirimler.html"><i class="fa-solid fa-bell"></i> Bildirimler</a>
+            <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
+          </div>
         </section>
       </section>
     </main>
   </div>
 
   <nav class="bottom-nav" aria-label="Kullanıcı panel alt menüsü">
-    <a class="active" href="../../index.html">
+    <a href="../../index.html">
       <i class="fa-solid fa-house"></i>
       <span>Ana Sayfa</span>
     </a>
@@ -197,7 +200,7 @@
       <i class="fa-solid fa-bag-shopping"></i>
       <span>Alışveriş</span>
     </a>
-    <a class="bottom-logo" href="user-panel.html" aria-label="AllonaHub panel">
+    <a class="bottom-logo active" href="user-panel.html" aria-label="AllonaHub panel">
       <img src="../../images/brand/allona.logo.png" alt="">
     </a>
     <a href="../commerce/kuponlar.html">
@@ -211,6 +214,31 @@
   </nav>
 
   <div data-layout="footer"></div>
+  <div class="panel-drawer" id="panelDrawer" hidden>
+    <button class="panel-drawer-backdrop" type="button" data-panel-menu-close aria-label="Menüyü kapat"></button>
+    <aside class="panel-drawer-sheet premium-glass" aria-label="Kullanıcı hızlı menüsü">
+      <button class="panel-drawer-close" type="button" data-panel-menu-close aria-label="Menüyü kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="panel-drawer-profile">
+        <span class="avatar-photo" id="miniAvatar">AH</span>
+        <div>
+          <strong id="drawerName">AllonaHub Üyesi</strong>
+          <small id="drawerMemberNo">AH-USER-000000</small>
+        </div>
+      </div>
+      <nav class="panel-drawer-links">
+        <a href="user-panel.html"><i class="fa-solid fa-house-user"></i> Hesabım</a>
+        <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profilimi Düzenle</a>
+        <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
+        <a href="bildirimler.html"><i class="fa-solid fa-bell"></i> Bildirimler</a>
+        <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
+        <a href="hublar.html"><i class="fa-solid fa-layer-group"></i> HUB'larım</a>
+        <a href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket"></i> Kuponlarım</a>
+        <a href="../company/destek.html"><i class="fa-solid fa-headset"></i> Destek</a>
+      </nav>
+    </aside>
+  </div>
   <div class="panel-status" id="panelStatus" role="status" aria-live="polite"></div>
   <div class="hp-info-modal" id="hpInfoModal" hidden>
     <div class="hp-info-backdrop" data-hp-info-close></div>
@@ -280,8 +308,9 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260627-config-central" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
-  <script src="../../js/user-panel-premium.js?v=20260628-refund-center1" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix1" defer></script>
+  <script src="../../js/user-notifications.js?v=20260629-panel-fix1" defer></script>
+  <script src="../../js/user-panel-premium.js?v=20260629-panel-fix1" defer></script>
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
