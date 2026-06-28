@@ -585,9 +585,15 @@ async function setLocationByBrowser(){
 const cityEl=document.getElementById("heroCity");
 const countryEl=document.getElementById("heroCountry");
 if(!navigator.geolocation){return}
-navigator.geolocation.getCurrentPosition(async function(pos){
-const lat=pos.coords.latitude;
-const lon=pos.coords.longitude;
+const privacy=window.Allona&&window.Allona.privacy;
+const location=privacy&&privacy.getLocation ? await privacy.getLocation({maximumAge:600000,timeout:8000}) : null;
+if(!location){
+cityEl.textContent="İstanbul";
+countryEl.textContent="Türkiye";
+return
+}
+const lat=location.latitude;
+const lon=location.longitude;
 try{
 const res=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=tr`);
 const data=await res.json();
@@ -598,10 +604,6 @@ countryEl.textContent=address.country||"Türkiye";
 cityEl.textContent="İstanbul";
 countryEl.textContent="Türkiye";
 }
-},function(){
-cityEl.textContent="İstanbul";
-countryEl.textContent="Türkiye";
-});
 }
 setLocationByBrowser();
 </script>
@@ -718,5 +720,6 @@ if(e.key==="Enter"){globalSearch()}
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+<script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
 </body>
 </html>

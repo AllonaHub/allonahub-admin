@@ -1,5 +1,5 @@
 (function () {
-  const SERVICE_WORKER_VERSION = "20260628-modules1";
+  const SERVICE_WORKER_VERSION = "20260628-privacy1";
   const canUseServiceWorker = "serviceWorker" in navigator &&
     (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
