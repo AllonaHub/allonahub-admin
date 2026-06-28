@@ -233,6 +233,12 @@ export const config = {
     apiKey: readEnv("IYZICO_API_KEY"),
     secretKey: readEnv("IYZICO_SECRET_KEY"),
     baseUrl: readEnv("IYZICO_BASE_URL", { required: false, defaultValue: "https://sandbox-api.iyzipay.com" }).replace(/\/$/, "")
+  },
+  paymentProvider: {
+    refundWebhookUrl: readEnv("PAYMENT_PROVIDER_REFUND_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    refundWebhookSecret: readOptionalSecret("PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET"),
+    refundWebhookTimeoutMs: readNumber("PAYMENT_PROVIDER_REFUND_WEBHOOK_TIMEOUT_MS", 12000),
+    nativeRefundsEnabled: readBool("PAYMENT_PROVIDER_NATIVE_REFUNDS_ENABLED", false)
   }
 };
 

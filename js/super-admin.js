@@ -1554,6 +1554,17 @@
     return map[action] || action || "Aksiyon";
   }
 
+  function providerDispatchText(dispatch) {
+    if (!dispatch) return "Provider bildirimi henüz yok.";
+    const webhook = dispatch.channels && dispatch.channels.webhook || {};
+    const iyzico = dispatch.channels && dispatch.channels.iyzico || {};
+    const parts = [
+      webhook.configured ? `webhook ${webhook.sent ? "gönderildi" : "başarısız"}${webhook.status ? `/${webhook.status}` : ""}` : "webhook yok",
+      iyzico.skipped ? `iyzico ${iyzico.code || "atlanmış"}` : `iyzico ${iyzico.sent ? "gönderildi" : "hazır değil"}${iyzico.status ? `/${iyzico.status}` : ""}`
+    ];
+    return parts.join(" / ");
+  }
+
   function refundFiltersMarkup(params) {
     const status = params && params.status || "all";
     const search = params && params.search || "";
@@ -2240,6 +2251,7 @@
       ownerLine("Müşteri", `${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}`, "", "medium"),
       ownerLine("Tutar", money(item.total), `sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")}`, item.type === "refund" ? "critical" : "high"),
       ownerLine("Neden / açıklama", escape(item.reason || "Kayıtlarda neden bulunamadı; karar öncesi destek ve not kayıtlarını kontrol et."), "", item.reason ? "medium" : "high"),
+      ownerLine("Ödeme sağlayıcı", providerDispatchText(item.provider_dispatch), "webhook/native durum", item.provider_dispatch?.ok ? "low" : "medium"),
       ownerLine("Aksiyonlar", "Detayı inceledikten sonra işlem uygula. Tüm kararlar audit log'a yazılır.", [
         `<button type="button" data-refund-action="mark_review" data-refund-order="${escape(item.id)}">İncelemeye al</button>`,
         `<button type="button" data-refund-action="approve_cancellation" data-refund-order="${escape(item.id)}">İptali onayla</button>`,
@@ -2279,6 +2291,7 @@
         ownerLine("İşlem", escape(label), "audit log'a yazıldı", action === "approve_refund" ? "critical" : "high"),
         ownerLine("Sipariş", `${escape(updated.order_no || orderId)} / sipariş ${escape(updated.order_status || "-")} / ödeme ${escape(updated.payment_status || "-")}`, "", updated.type === "refund" ? "critical" : "medium"),
         ownerLine("Gerekçe", escape(reason), "", "medium"),
+        ownerLine("Ödeme sağlayıcı", providerDispatchText(result.provider_dispatch), "provider API bildirimi", result.provider_dispatch?.ok ? "low" : "high"),
         ownerLine("Not", result.note?.id ? `Operasyon notu oluşturuldu: ${escape(result.note.id)}` : "Not oluşturulamadı", "", result.note?.id ? "low" : "high"),
         ownerLine("Flag", result.flag?.id ? `İşlem flag'i oluşturuldu: ${escape(result.flag.id)}` : "Flag oluşturulamadı", "", result.flag?.id ? "low" : "high")
       ].join(""));

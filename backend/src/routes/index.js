@@ -11,6 +11,10 @@ import {
   sendSecurityAlert,
   updateRuntimeProtection
 } from "../lib/security-alerts.js";
+import {
+  notifyPaymentProviderRefundCancellation,
+  paymentProviderDispatchStatus
+} from "../lib/payment-provider-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
@@ -3511,6 +3515,8 @@ function refundCancellationPublic(order, extras = {}) {
     notes: extras.notes || [],
     flags: extras.flags || [],
     tickets: extras.tickets || [],
+    provider_dispatch: extras.provider_dispatch || null,
+    provider_status: paymentProviderDispatchStatus(),
     order_items: extras.order_items || order.order_items || []
   };
 }
@@ -3554,6 +3560,58 @@ function refundCancellationSupportFilter(search) {
     filters.push(`title.ilike.%${clean}%`, `message.ilike.%${clean}%`);
   }
   return filters.join(",");
+}
+
+async function loadOrderPaymentProviderContext(orderId, warnings) {
+  const providerWarnings = warnings || [];
+  const context = {};
+  const providerOrder = await optionalQuery(
+    supabaseAdmin
+      .from("orders")
+      .select("id, payment_provider_reference, paid_at")
+      .eq("id", orderId)
+      .maybeSingle(),
+    null,
+    providerWarnings,
+    "orders_provider_context"
+  ).catch((error) => {
+    if (!looksLikeMissingSchema(error)) throw error;
+    providerWarnings.push("orders_provider_context: payment provider referans kolonları production şemasında eksik görünüyor.");
+    return null;
+  });
+  if (providerOrder?.payment_provider_reference) {
+    context.payment_id = providerOrder.payment_provider_reference;
+    context.provider_reference = providerOrder.payment_provider_reference;
+    context.source = "orders.payment_provider_reference";
+  }
+  if (providerOrder?.paid_at) context.paid_at = providerOrder.paid_at;
+
+  const transaction = await optionalQuery(
+    supabaseAdmin
+      .from("partner_transactions")
+      .select("id, provider, provider_reference, gross_amount, currency, metadata, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    [],
+    providerWarnings,
+    "partner_transactions"
+  ).catch((error) => {
+    if (!looksLikeMissingSchema(error)) throw error;
+    providerWarnings.push("partner_transactions: ödeme sağlayıcı transaction kaydı bulunamadı veya şema eksik.");
+    return [];
+  });
+  const row = Array.isArray(transaction) ? transaction[0] : null;
+  if (row) {
+    context.provider = row.provider || context.provider;
+    context.payment_id = context.payment_id || row.provider_reference || null;
+    context.provider_reference = context.provider_reference || row.provider_reference || null;
+    context.payment_transaction_id = row.metadata?.payment_transaction_id || row.metadata?.paymentTransactionId || null;
+    context.gross_amount = Number(row.gross_amount || 0);
+    context.currency = row.currency || "TRY";
+    context.source = context.source || "partner_transactions";
+  }
+  return context;
 }
 
 async function loadAdminDashboardData(warnings) {
@@ -6532,6 +6590,7 @@ export function registerRoutes(app) {
         notes,
         flags,
         tickets,
+        provider_dispatch: flags.find((flag) => flag.metadata?.provider_dispatch)?.metadata?.provider_dispatch || null,
         order_items: order.order_items || []
       }),
       warnings
@@ -6590,6 +6649,16 @@ export function registerRoutes(app) {
       `${actionLabels[body.action]}: ${body.reason}`,
       body.note ? `Ek açıklama: ${body.note}` : ""
     ].filter(Boolean).join("\n");
+    const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+    const providerDispatch = await notifyPaymentProviderRefundCancellation({
+      action: body.action,
+      order: updated,
+      context: providerContext,
+      reason: body.reason,
+      note: body.note,
+      actorId: ctx.user.id,
+      ip: clientIp(request)
+    });
 
     const [note, flag] = await Promise.all([
       optionalMutation(
@@ -6624,7 +6693,8 @@ export function registerRoutes(app) {
               order_status_before: before.order_status || before.status || null,
               payment_status_before: before.payment_status || null,
               order_status_after: updated.order_status || updated.status || null,
-              payment_status_after: updated.payment_status || null
+              payment_status_after: updated.payment_status || null,
+              provider_dispatch: providerDispatch
             }
           })
           .select("*")
@@ -6651,15 +6721,17 @@ export function registerRoutes(app) {
         old_value: before,
         new_value: updated,
         note_id: note?.id || null,
-        flag_id: flag?.id || null
+        flag_id: flag?.id || null,
+        provider_dispatch: providerDispatch
       }
     });
 
     return {
       ok: true,
-      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean) }),
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean), provider_dispatch: providerDispatch }),
       note,
       flag,
+      provider_dispatch: providerDispatch,
       warnings
     };
   });
@@ -8555,6 +8627,7 @@ export function registerRoutes(app) {
         notes,
         flags,
         tickets,
+        provider_dispatch: flags.find((flag) => flag.metadata?.provider_dispatch)?.metadata?.provider_dispatch || null,
         order_items: order.order_items || []
       }),
       warnings
@@ -8604,6 +8677,16 @@ export function registerRoutes(app) {
       `${actionLabels[body.action]}: ${body.reason}`,
       body.note ? `Ek açıklama: ${body.note}` : ""
     ].filter(Boolean).join("\n");
+    const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+    const providerDispatch = await notifyPaymentProviderRefundCancellation({
+      action: body.action,
+      order: updated,
+      context: providerContext,
+      reason: body.reason,
+      note: body.note,
+      actorId: ctx.user.id,
+      ip: clientIp(request)
+    });
 
     const [note, flag] = await Promise.all([
       optionalMutation(
@@ -8638,7 +8721,8 @@ export function registerRoutes(app) {
               order_status_before: before.order_status || before.status || null,
               payment_status_before: before.payment_status || null,
               order_status_after: updated.order_status || updated.status || null,
-              payment_status_after: updated.payment_status || null
+              payment_status_after: updated.payment_status || null,
+              provider_dispatch: providerDispatch
             }
           })
           .select("*")
@@ -8661,15 +8745,17 @@ export function registerRoutes(app) {
         old_value: before,
         new_value: updated,
         note_id: note?.id || null,
-        flag_id: flag?.id || null
+        flag_id: flag?.id || null,
+        provider_dispatch: providerDispatch
       }
     });
 
     return {
       ok: true,
-      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean) }),
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean), provider_dispatch: providerDispatch }),
       note,
       flag,
+      provider_dispatch: providerDispatch,
       warnings
     };
   });

@@ -42,6 +42,28 @@ export async function iyzicoPost(uriPath, payload) {
   return { ok: response.ok, status: response.status, result };
 }
 
+export function iyzicoRefundPayload({ conversationId, paymentTransactionId, price, currency = "TRY", ip, reason = "OTHER", description = "" }) {
+  return {
+    locale: "tr",
+    conversationId,
+    paymentTransactionId,
+    price: amount(price),
+    currency,
+    ip: ip || "0.0.0.0",
+    reason,
+    description: String(description || "AllonaHub refund cancellation approval").slice(0, 255)
+  };
+}
+
+export function iyzicoCancelPayload({ conversationId, paymentId, ip }) {
+  return {
+    locale: "tr",
+    conversationId,
+    paymentId,
+    ip: ip || "0.0.0.0"
+  };
+}
+
 export function orderCheckoutPayload({ order, userId, callbackUrl, ip }) {
   const shipping = order.shipping_address || { address: order.address, city: order.city };
   const billing = order.billing_address || shipping;
