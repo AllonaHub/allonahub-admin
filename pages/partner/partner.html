@@ -92,6 +92,51 @@ button{cursor:pointer;border:0}
 .social-icons a{width:60px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:50%;background:rgba(255,255,255,.06);box-shadow:0 0 18px rgba(0,229,255,.20);transition:.35s;font-size:22px}
 .social-icons span{font-size:11px;font-weight:600;color:#fff;opacity:.9}
 .social-icons .wa{color:#25D366}.social-icons .ig{background:linear-gradient(45deg,#f58529,#feda77,#dd2a7b,#8134af,#515bd4);color:white}.social-icons .x{color:white}.social-icons .fb{color:#1877F2}.social-icons .yt{color:#FF0000}.social-icons .li{color:#0A66C2}.social-icons .tg{color:#229ED9}.social-icons .tk{color:white}.social-icons .mail{color:#ffd700}
+body[data-theme="corporate"],
+body[data-theme="white"]{background:#f5f7fb!important;color:#050505!important}
+body[data-theme="corporate"]:before,
+body[data-theme="white"]:before{background:linear-gradient(180deg,#eef4f8 0%,#ffffff 48%,#e8eef5 100%)!important}
+body[data-theme="corporate"]:after,
+body[data-theme="white"]:after{display:none!important}
+body[data-theme="corporate"] .glass,
+body[data-theme="white"] .glass{background:#fff!important;border-color:rgba(0,0,0,.12)!important;box-shadow:0 12px 34px rgba(16,32,51,.10)!important}
+body[data-theme="corporate"] :where(h1,h2,h3,h4,p,a,b,span,small,label,button,input,textarea,select,option,div),
+body[data-theme="white"] :where(h1,h2,h3,h4,p,a,b,span,small,label,button,input,textarea,select,option,div){color:#050505!important;text-shadow:none!important}
+body[data-theme="corporate"] .brand b,
+body[data-theme="white"] .brand b{color:#050505!important}
+body[data-theme="corporate"] .brand span,
+body[data-theme="white"] .brand span{color:#0b63ce!important}
+body[data-theme="corporate"] .search input,
+body[data-theme="white"] .search input,
+body[data-theme="corporate"] .input input,
+body[data-theme="corporate"] .input select,
+body[data-theme="corporate"] .input textarea,
+body[data-theme="white"] .input input,
+body[data-theme="white"] .input select,
+body[data-theme="white"] .input textarea{color:#050505!important}
+body[data-theme="corporate"] .input,
+body[data-theme="white"] .input,
+body[data-theme="corporate"] .tabs,
+body[data-theme="white"] .tabs,
+body[data-theme="corporate"] .badge,
+body[data-theme="white"] .badge,
+body[data-theme="corporate"] .partner-security-strip div,
+body[data-theme="white"] .partner-security-strip div,
+body[data-theme="corporate"] .partner-capabilities div,
+body[data-theme="white"] .partner-capabilities div{background:#f7fafc!important;border-color:rgba(0,0,0,.12)!important}
+body[data-theme="corporate"] .btn,
+body[data-theme="white"] .btn{color:#050505!important}
+body[data-theme="corporate"] .tab.active,
+body[data-theme="white"] .tab.active,
+body[data-theme="corporate"] .search button,
+body[data-theme="white"] .search button{color:#050505!important}
+body[data-theme="corporate"] .platform-controls :where(button,span),
+body[data-theme="white"] .platform-controls :where(button,span){color:#050505!important}
+body[data-theme="corporate"] .platform-menu,
+body[data-theme="white"] .platform-menu{background:#fff!important;border-color:rgba(0,0,0,.12)!important}
+body[data-theme="sunset"]:before{background:linear-gradient(135deg,#1c0712,#55240b,#8b4e05)!important}
+body[data-theme="forest"]:before{background:linear-gradient(135deg,#03140e,#0f3b2e,#0b5f45)!important}
+body[data-theme="turquoise"]:before{background:linear-gradient(135deg,#012025,#035765,#08a6a6)!important}
 @media(max-width:900px){
 body{overflow-x:hidden}
 .page{width:100%;padding:14px 12px 38px}
@@ -109,7 +154,7 @@ body{overflow-x:hidden}
 .section-title{align-items:flex-start;gap:10px;flex-direction:column}
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260628-corporate1">
 </head>
 
 <body>
@@ -799,12 +844,76 @@ document.getElementById("phone").addEventListener("input",function(){
   this.value=this.value.replace(/[^\d\s]/g,"").replace(/\s+/g," ");
 });
 
+const partnerPageTranslations={
+  en:{
+    "Ana Sayfa":"Home","Kullanıcı Girişi":"User Login","Kupon":"Coupons","Ara":"Search",
+    "Partner, ödeme, kampanya, mağaza, QR veya sektör ara...":"Search partner, payment, campaign, store, QR or sector...",
+    "AllonaHub Partner Ekosistemine Katıl":"Join the AllonaHub Partner Ecosystem",
+    "İşletmeni AllonaHub ekosistemine taşı. Başvurunu gönder, onay sürecinden sonra partner panelinden ürün, hizmet, kampanya ve ödeme süreçlerini yönet.":"Bring your business into the AllonaHub ecosystem. Submit your application, then manage products, services, campaigns and payments from the partner panel after approval.",
+    "Ödeme Al":"Take Payments","Kampanya Yönet":"Manage Campaigns","Panel Erişimi":"Panel Access",
+    "Partner Girişi":"Partner Login","Mevcut partnerler giriş yapabilir, yeni işletmeler başvuru oluşturabilir.":"Existing partners can sign in, new businesses can apply.",
+    "MFA Zorunlu":"MFA Required","Partner panel erişimi iki aşamalı doğrulama ile korunur.":"Partner panel access is protected by two-factor verification.",
+    "Cloudflare Kontrolü":"Cloudflare Check","Giriş ve başvuru robot doğrulamasından geçer.":"Login and application pass bot verification.",
+    "Onaylı Yayın":"Approved Publishing","Başvurular admin kontrolü sonrası aktif edilir.":"Applications are activated after admin review.",
+    "Giriş":"Login","Başvuru":"Application","E-posta":"Email","Şifre":"Password","Partner Paneline Giriş":"Enter Partner Panel","Google ile Giriş":"Sign in with Google",
+    "Sipariş":"Orders","Kargo, hazırlık ve teslimat takibi.":"Track cargo, preparation and delivery.","Finans":"Finance","Hakediş, komisyon ve ödeme özeti.":"Payouts, commission and payment summary.","Kampanya":"Campaigns","Kupon, vitrin ve HP planları.":"Coupon, showcase and HP plans.","Destek":"Support","Partner talep ve operasyon merkezi.":"Partner request and operations center.",
+    "Firma / İşletme Adı":"Company / Business Name","Yetkili Ad Soyad":"Authorized Full Name","Telefon numarası":"Phone number","Vergi Numarası":"Tax Number","Vergi Dairesi":"Tax Office","Şirket Türü Seç":"Select Company Type","Web Sitesi (opsiyonel)":"Website (optional)","İl / Şehir":"City","Ülke":"Country","Sektör Seç":"Select Sector","Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?":"Short description: What does your business do? Which products/services will you offer?","Başvuruyu Gönder":"Submit Application","Tümünü Temizle":"Clear All",
+    "Partner Avantajları":"Partner Benefits","Başvuru Yap":"Apply","Daha Fazla Görünürlük":"More Visibility","İşletmen AllonaHub modüllerinde doğru müşteriye görünür.":"Your business appears to the right customers in AllonaHub modules.","HP Ekonomisi":"HP Economy","Kullanıcılar HP ve kupon avantajı ile partnerlere daha sık döner.":"Users return to partners more often with HP and coupon benefits.","Güvenli Ödeme":"Secure Payment","Ödeme talepleri, kuponlar ve işlem geçmişi kayıt altında tutulur.":"Payment requests, coupons and transaction history are recorded.","Tek Panel":"One Panel","Ürün, hizmet, kampanya, ödeme ve raporlar tek merkezden yönetilir.":"Products, services, campaigns, payments and reports are managed from one center.","Başvuru Süreci":"Application Process","Hemen Başvur":"Apply Now"
+  },
+  az:{
+    "Ana Sayfa":"Ana səhifə","Kullanıcı Girişi":"İstifadəçi girişi","Kupon":"Kupon","Ara":"Axtar",
+    "Partner Girişi":"Partner girişi","Giriş":"Giriş","Başvuru":"Müraciət","E-posta":"E-poçt","Şifre":"Şifrə","Partner Paneline Giriş":"Partner panelinə giriş","Google ile Giriş":"Google ilə giriş","Başvuruyu Gönder":"Müraciəti göndər","Tümünü Temizle":"Hamısını təmizlə","Firma / İşletme Adı":"Şirkət / biznes adı","Yetkili Ad Soyad":"Səlahiyyətli ad soyad","Telefon numarası":"Telefon nömrəsi","Vergi Numarası":"Vergi nömrəsi","Vergi Dairesi":"Vergi idarəsi","Şirket Türü Seç":"Şirkət növünü seç","İl / Şehir":"Şəhər","Ülke":"Ölkə","Sektör Seç":"Sektoru seç","Partner Avantajları":"Partner üstünlükləri","Başvuru Yap":"Müraciət et","Başvuru Süreci":"Müraciət prosesi","Hemen Başvur":"İndi müraciət et"
+  },
+  de:{
+    "Ana Sayfa":"Startseite","Kullanıcı Girişi":"Benutzerlogin","Kupon":"Coupon","Ara":"Suchen",
+    "Partner Girişi":"Partner Login","Giriş":"Login","Başvuru":"Bewerbung","E-posta":"E-Mail","Şifre":"Passwort","Partner Paneline Giriş":"Zum Partner Panel","Google ile Giriş":"Mit Google anmelden","Başvuruyu Gönder":"Bewerbung senden","Tümünü Temizle":"Alles löschen","Firma / İşletme Adı":"Firma / Geschäftsname","Yetkili Ad Soyad":"Name der verantwortlichen Person","Telefon numarası":"Telefonnummer","Vergi Numarası":"Steuernummer","Vergi Dairesi":"Finanzamt","Şirket Türü Seç":"Unternehmensform wählen","İl / Şehir":"Stadt","Ülke":"Land","Sektör Seç":"Branche wählen","Partner Avantajları":"Partner Vorteile","Başvuru Yap":"Bewerben","Başvuru Süreci":"Bewerbungsprozess","Hemen Başvur":"Jetzt bewerben"
+  },
+  ru:{
+    "Ana Sayfa":"Главная","Kullanıcı Girişi":"Вход пользователя","Kupon":"Купон","Ara":"Поиск",
+    "Partner Girişi":"Вход партнера","Giriş":"Вход","Başvuru":"Заявка","E-posta":"Эл. почта","Şifre":"Пароль","Partner Paneline Giriş":"Войти в панель партнера","Google ile Giriş":"Войти через Google","Başvuruyu Gönder":"Отправить заявку","Tümünü Temizle":"Очистить все","Firma / İşletme Adı":"Название компании","Yetkili Ad Soyad":"ФИО ответственного","Telefon numarası":"Телефон","Vergi Numarası":"Налоговый номер","Vergi Dairesi":"Налоговая инспекция","Şirket Türü Seç":"Выберите тип компании","İl / Şehir":"Город","Ülke":"Страна","Sektör Seç":"Выберите сектор","Partner Avantajları":"Преимущества партнера","Başvuru Yap":"Подать заявку","Başvuru Süreci":"Процесс заявки","Hemen Başvur":"Подать сейчас"
+  },
+  ar:{
+    "Ana Sayfa":"الصفحة الرئيسية","Kullanıcı Girişi":"دخول المستخدم","Kupon":"قسيمة","Ara":"بحث",
+    "Partner Girişi":"دخول الشريك","Giriş":"دخول","Başvuru":"طلب","E-posta":"البريد الإلكتروني","Şifre":"كلمة المرور","Partner Paneline Giriş":"دخول لوحة الشريك","Google ile Giriş":"الدخول عبر Google","Başvuruyu Gönder":"إرسال الطلب","Tümünü Temizle":"مسح الكل","Firma / İşletme Adı":"اسم الشركة / النشاط","Yetkili Ad Soyad":"اسم المسؤول","Telefon numarası":"رقم الهاتف","Vergi Numarası":"الرقم الضريبي","Vergi Dairesi":"مكتب الضرائب","Şirket Türü Seç":"اختر نوع الشركة","İl / Şehir":"المدينة","Ülke":"الدولة","Sektör Seç":"اختر القطاع","Partner Avantajları":"مزايا الشريك","Başvuru Yap":"قدّم طلبك","Başvuru Süreci":"خطوات الطلب","Hemen Başvur":"قدّم الآن"
+  }
+};
+
+function translatePartnerPage(language){
+  const selected=partnerPageTranslations[language] ? language : "tr";
+  const dictionary=partnerPageTranslations[selected] || {};
+  document.querySelectorAll("body *").forEach(node=>{
+    if(["SCRIPT","STYLE","OPTION"].includes(node.tagName) || node.closest("[data-no-translate]"))return;
+    Array.from(node.childNodes).forEach(child=>{
+      if(child.nodeType!==Node.TEXT_NODE)return;
+      if(!child.__partnerSourceText)child.__partnerSourceText=child.textContent;
+      const source=child.__partnerSourceText.trim();
+      if(!source)return;
+      const translated=selected==="tr" ? child.__partnerSourceText : dictionary[source];
+      child.textContent=translated ? child.__partnerSourceText.replace(source,translated) : child.__partnerSourceText;
+    });
+    ["placeholder","aria-label","title"].forEach(attribute=>{
+      if(!node.hasAttribute(attribute))return;
+      const key=`__partnerSource_${attribute}`;
+      if(!node[key])node[key]=node.getAttribute(attribute);
+      const source=node[key];
+      node.setAttribute(attribute,selected==="tr" ? source : dictionary[source] || source);
+    });
+  });
+}
+
+document.addEventListener("allona:language-changed",event=>{
+  translatePartnerPage(event.detail && event.detail.language);
+});
+document.addEventListener("DOMContentLoaded",()=>{
+  translatePartnerPage(localStorage.getItem("allona.language") || "tr");
+});
+
 initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
   <script src="../../js/security-challenge.js?v=20260627-partner-turnstile1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/platform.js?v=20260628-corporate1" defer></script>
 </body>
 </html>
