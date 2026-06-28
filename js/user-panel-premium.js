@@ -423,10 +423,9 @@
     const box = $("#moduleGrid");
     if (!box) return;
     box.innerHTML = list.map(([icon, title, text, target]) => `
-      <button class="action-tile premium-glass" type="button" data-go="${target}">
-        <span class="action-icon"><i class="fa-solid ${icon}"></i></span>
-        <b>${title}</b>
-        <span class="sr-only">${text}</span>
+      <button class="account-menu-row" type="button" data-go="${target}">
+        <span><i class="fa-solid ${icon}"></i> ${title}</span>
+        <small>${text}</small>
       </button>
     `).join("");
     box.querySelectorAll("[data-go]").forEach((node) => {
@@ -444,11 +443,10 @@
     const box = $("#transactionList");
     if (!box) return;
     box.innerHTML = items.map(([icon, title, text, amount]) => `
-      <article class="transaction premium-glass">
-        <span class="transaction-icon"><i class="fa-solid ${icon}"></i></span>
-        <span><b>${title}</b><span>${text}</span></span>
-        <span><strong>${amount}</strong><small>TAMAMLANDI</small></span>
-        <span class="metric-arrow"><i class="fa-solid fa-chevron-right"></i></span>
+      <article class="account-transaction">
+        <span><i class="fa-solid ${icon}"></i> <b>${title}</b></span>
+        <small>${text}</small>
+        <strong>${amount}</strong>
       </article>
     `).join("");
   }
