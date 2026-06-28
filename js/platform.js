@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260628-corporate1";
+  const SERVICE_WORKER_VERSION = "20260628-modules1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
