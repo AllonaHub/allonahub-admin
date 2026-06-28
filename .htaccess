@@ -1,0 +1,23 @@
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(self), payment=(self)"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^checkout\.html$ /pages/commerce/guvenli-odeme.html [R=301,L]
+  RewriteRule ^etbis\.html$ /pages/legal/etbis-guven-damgasi.html [R=301,L]
+  RewriteRule ^etbis-guven-damgasi\.html$ /pages/legal/etbis-guven-damgasi.html [R=301,L]
+  RewriteRule ^guven-damgasi\.html$ /pages/legal/etbis-guven-damgasi.html [R=301,L]
+  RewriteRule ^pages/legal/mesafeli-satis-sozlesmesi\.html$ /pages/legal/mesafeli-satis.html [R=301,L]
+  RewriteRule ^pages/legal/cerez\.html$ /pages/legal/cerez-politikasi.html [R=301,L]
+  RewriteRule ^pages/legal/iptal-iade\.html$ /pages/legal/iade-politikasi.html [R=301,L]
+  RewriteRule ^pages/legal/kullanım-sartları\.html$ /pages/legal/kullanim-sartlari.html [R=301,L]
+</IfModule>
+
+<Files "_headers">
+  Require all denied
+</Files>

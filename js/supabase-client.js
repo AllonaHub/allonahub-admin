@@ -310,6 +310,18 @@
     const stock = Number(payload.stock || 0);
     const moduleKey = normalizedScope(payload.module_key || payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope) || "shop";
     const skuPrefix = moduleKey === "market" ? "ALM" : moduleKey === "food" ? "ALY" : moduleKey === "service" ? "ALS" : "ALP";
+    const sellerFields = {
+      seller_public_name: security ? security.normalizeText(payload.seller_public_name || payload.seller_name || payload.brand || "", { max: 140 }) : String(payload.seller_public_name || payload.seller_name || payload.brand || "").trim(),
+      seller_kind: security ? security.normalizeText(payload.seller_kind || (payload.partner_id ? "Partner satıcı" : "Platform satıcısı"), { max: 60 }) : String(payload.seller_kind || (payload.partner_id ? "Partner satıcı" : "Platform satıcısı")).trim(),
+      seller_legal_name: security ? security.normalizeText(payload.seller_legal_name || "", { max: 180 }) : String(payload.seller_legal_name || "").trim(),
+      seller_city: security ? security.normalizeText(payload.seller_city || "", { max: 90 }) : String(payload.seller_city || "").trim(),
+      seller_contact: security ? security.normalizeText(payload.seller_contact || payload.partner_email || "", { max: 180 }) : String(payload.seller_contact || payload.partner_email || "").trim(),
+      seller_tax_number_masked: security ? security.normalizeText(payload.seller_tax_number_masked || "", { max: 40 }) : String(payload.seller_tax_number_masked || "").trim(),
+      invoice_responsibility: security ? security.normalizeText(payload.invoice_responsibility || "", { max: 260 }) : String(payload.invoice_responsibility || "").trim(),
+      seller_disclosure: security ? security.normalizeText(payload.seller_disclosure || "", { max: 320 }) : String(payload.seller_disclosure || "").trim(),
+      compliance_review_status: ["pending", "approved", "rejected", "needs_review"].includes(payload.compliance_review_status) ? payload.compliance_review_status : "pending",
+      compliance_notes: security ? security.normalizeText(payload.compliance_notes || "", { max: 360 }) : String(payload.compliance_notes || "").trim()
+    };
     const modernProduct = {
       name: cleanName,
       description,
@@ -323,7 +335,8 @@
       meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
       meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || "",
       brand,
-      partner_id: payload.partner_id || undefined
+      partner_id: payload.partner_id || undefined,
+      ...sellerFields
     };
 
     const legacyProduct = {
@@ -342,8 +355,31 @@
       coupon_status: payload.coupon_status || payload.coupon_label || "Aktif",
       hp_status: payload.hp_status || payload.hp_label || "Aktif",
       sku: payload.sku || core.slugify(`${skuPrefix}-${cleanName}-${payload.partner_id || "partner"}`).toUpperCase().slice(0, 48),
-      barcode: payload.barcode || ""
+      barcode: payload.barcode || "",
+      ...sellerFields
     };
+
+    function withoutSellerFields(product) {
+      const {
+        seller_public_name: _sellerPublicName,
+        seller_kind: _sellerKind,
+        seller_legal_name: _sellerLegalName,
+        seller_city: _sellerCity,
+        seller_contact: _sellerContact,
+        seller_tax_number_masked: _sellerTaxNumberMasked,
+        invoice_responsibility: _invoiceResponsibility,
+        seller_disclosure: _sellerDisclosure,
+        compliance_review_status: _complianceReviewStatus,
+        compliance_notes: _complianceNotes,
+        ...rest
+      } = product;
+      return rest;
+    }
+
+    function isSchemaFallbackError(error) {
+      const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+      return /column|schema cache|could not find|does not exist|invalid input syntax for type uuid|module_key|catalog_scope/i.test(message);
+    }
 
     async function runWrite(product) {
       const query = payload.id
@@ -357,16 +393,24 @@
     try {
       return core.normalizeProduct(await runWrite(modernProduct));
     } catch (error) {
-      const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
-      if (!/column|schema cache|could not find|does not exist|invalid input syntax for type uuid/i.test(message)) throw error;
-      try {
-        return core.normalizeProduct(await runWrite(legacyProduct));
-      } catch (legacyError) {
-        const legacyMessage = `${legacyError && legacyError.message || ""} ${legacyError && legacyError.details || ""} ${legacyError && legacyError.hint || ""}`;
-        if (!/module_key|catalog_scope|schema cache|could not find|does not exist/i.test(legacyMessage)) throw legacyError;
-        const { module_key: _moduleKey, ...legacyWithoutModuleKey } = legacyProduct;
-        return core.normalizeProduct(await runWrite(legacyWithoutModuleKey));
+      if (!isSchemaFallbackError(error)) throw error;
+      const { module_key: _moduleKey, ...legacyWithoutModuleKey } = legacyProduct;
+      const variants = [
+        legacyProduct,
+        withoutSellerFields(modernProduct),
+        withoutSellerFields(legacyProduct),
+        withoutSellerFields(legacyWithoutModuleKey)
+      ];
+      let lastError = error;
+      for (const variant of variants) {
+        try {
+          return core.normalizeProduct(await runWrite(variant));
+        } catch (variantError) {
+          if (!isSchemaFallbackError(variantError)) throw variantError;
+          lastError = variantError;
+        }
       }
+      throw lastError;
     }
   }
 

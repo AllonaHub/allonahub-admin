@@ -76,9 +76,25 @@
     "price",
     "stock",
     "status",
+    "seller_public_name",
+    "seller_legal_name",
+    "seller_city",
+    "seller_contact",
+    "seller_tax_number_masked",
+    "invoice_responsibility",
+    "seller_disclosure",
     "image_url",
     "description",
     "sku"
+  ];
+
+  const RESTRICTED_PRODUCT_PATTERNS = [
+    ["Alkol ve tütün ürünü", /\b(alkol|alkollü|bira|şarap|rakı|viski|votka|tütün|sigara|puro|nargile|elektronik sigara|vape)\b/i],
+    ["Silah, patlayıcı veya kesici saldırı ürünü", /\b(silah|tabanca|tüfek|mermi|fişek|patlayıcı|bomba|bıçak|sustalı|elektro şok|şok cihazı)\b/i],
+    ["İlaç veya reçeteli sağlık ürünü", /\b(reçeteli|ilaç|antibiyotik|hormon|steroid|anabolik|uyuşturucu|narkotik|cbd|kenevir|esrar)\b/i],
+    ["Kumar, bahis veya şans oyunu", /\b(kumar|bahis|casino|poker|rulet|iddaa kuponu|şans oyunu)\b/i],
+    ["Yetişkin içerik veya hizmet", /\b(yetişkin|erotik|escort|cinsel|pornografik)\b/i],
+    ["Canlı hayvan veya kontrol gerektiren hayvan satışı", /\b(canlı hayvan|yavru kedi|yavru köpek|evcil hayvan satışı)\b/i]
   ];
 
   const DEFAULT_INTEGRATION_CONNECTORS = [
@@ -1249,6 +1265,17 @@
     };
   }
 
+  function restrictedProductReason(data) {
+    const text = [
+      data.name,
+      data.category,
+      data.brand,
+      data.description
+    ].map((value) => String(value || "")).join(" ");
+    const found = RESTRICTED_PRODUCT_PATTERNS.find(([, pattern]) => pattern.test(text));
+    return found ? found[0] : "";
+  }
+
   async function createPaymentIntent(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     data.amount = Number(data.amount || 0);
@@ -1305,6 +1332,17 @@
     const scope = normalizeModuleKey(data.catalog_scope) || currentCatalogScope();
     const profile = catalogProfile(scope);
     const businessName = state.business?.display_name || state.business?.legal_name || state.access.profile?.full_name || "Allona Partner";
+    const sellerPublicName = data.seller_public_name || businessName;
+    const sellerLegalName = data.seller_legal_name || state.business?.legal_name || "";
+    const sellerCity = data.seller_city || state.business?.city || "";
+    const sellerContact = data.seller_contact || state.business?.support_email || state.access.user.email || "";
+    const sellerTaxMasked = data.seller_tax_number_masked || "";
+    const invoiceResponsibility = data.invoice_responsibility || "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.";
+    const sellerDisclosure = data.seller_disclosure || "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.";
+    const complianceReason = restrictedProductReason(data);
+    if (complianceReason) {
+      throw new Error(`${complianceReason} kategorisi otomatik ürün yüklemeye kapalıdır. Lütfen AllonaHub destek üzerinden manuel inceleme talebi açın.`);
+    }
     return {
       name: data.name,
       description: data.description || "",
@@ -1312,12 +1350,22 @@
       brand: data.brand || businessName,
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
-      status: ["active", "draft"].includes(data.status) ? data.status : "active",
+      status: "draft",
       module_key: scope,
       catalog_scope: scope,
       partner_id: state.access.user.id,
       partner_code: state.business?.partner_code || state.business?.id || state.access.user.id,
       partner_email: state.access.user.email || "",
+      seller_public_name: sellerPublicName,
+      seller_kind: "Partner satıcı",
+      seller_legal_name: sellerLegalName,
+      seller_city: sellerCity,
+      seller_contact: sellerContact,
+      seller_tax_number_masked: sellerTaxMasked,
+      invoice_responsibility: invoiceResponsibility,
+      seller_disclosure: sellerDisclosure,
+      compliance_review_status: "pending",
+      compliance_notes: data.status === "active" ? "Partner yayın talebi oluşturdu; admin onayı bekleniyor." : "Partner ürün taslağı oluşturdu; admin onayı bekleniyor.",
       image_url: data.image_url || profile.image,
       slug: core.slugify(`${data.name}-${Date.now()}`),
       coupon_status: scope === "food" ? "Menü kuponu" : scope === "market" ? "Market kuponu" : "Aktif",
@@ -1375,7 +1423,7 @@
       await createProductFromData(data, { source: "form" });
       form.reset();
       applyCatalogProfile();
-      toast(scope === "market" ? "Market ürünü canlı kataloğa eklendi." : scope === "food" ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
+      toast(scope === "market" ? "Market ürünü admin onayına gönderildi." : scope === "food" ? "Yemek ürünü admin onayına gönderildi." : "Ürün admin onayına gönderildi.");
     } catch (error) {
       toast(error.message || "Ürün kaydedilemedi. Partner yetkisi veya ürün şemasını kontrol edin.", "error");
     } finally {
@@ -1394,6 +1442,13 @@
       price: 199.9,
       stock: scope === "service" ? 1 : 25,
       status: "draft",
+      seller_public_name: state.business?.display_name || profile.brand,
+      seller_legal_name: state.business?.legal_name || "",
+      seller_city: state.business?.city || "",
+      seller_contact: state.access?.user?.email || "",
+      seller_tax_number_masked: "",
+      invoice_responsibility: "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.",
+      seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
       image_url: profile.image,
       description: "Excel ile yükleme örneği",
       sku: `${profile.skuPrefix}-ORNEK-001`
@@ -1409,6 +1464,13 @@
       price: Number(item.price || 0),
       stock: Number(item.stock || 0),
       status: item.status || "draft",
+      seller_public_name: item.seller_public_name || item.seller_name || "",
+      seller_legal_name: item.seller_legal_name || "",
+      seller_city: item.seller_city || "",
+      seller_contact: item.seller_contact || "",
+      seller_tax_number_masked: item.seller_tax_number_masked || "",
+      invoice_responsibility: item.invoice_responsibility || "",
+      seller_disclosure: item.seller_disclosure || "",
       image_url: item.image_url || "",
       description: item.description || "",
       sku: item.sku || ""

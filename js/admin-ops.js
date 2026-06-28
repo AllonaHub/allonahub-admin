@@ -15,6 +15,7 @@
       partners: [],
       orders: [],
       refunds: [],
+      productReviews: [],
       tickets: [],
       proposals: [],
       social: {},
@@ -31,6 +32,7 @@
     partners: { label: "Partner Operasyonları", marker: "" },
     orders: { label: "Sipariş Yönetimi", marker: "" },
     refunds: { label: "İade ve İptaller", marker: "" },
+    productReviews: { label: "Ürün Onayı", marker: "ETBİS" },
     content: { label: "İçerik Yönetimi", marker: "" },
     social: { label: "Sosyal Medya", marker: "Yeni" },
     support: { label: "Destek Talepleri", marker: "" },
@@ -456,6 +458,53 @@
         ${section("Sistem Uyarıları", "", alertList)}
       </div>`
     ].join("");
+  }
+
+  function productReviewStatusLabel(value) {
+    const map = {
+      pending: "Onay bekliyor",
+      approved: "Onaylandı",
+      rejected: "Reddedildi",
+      needs_review: "Revizyon gerekli"
+    };
+    return map[value] || value || "pending";
+  }
+
+  function productReviewStatusTone(value) {
+    if (value === "approved") return "green";
+    if (value === "rejected") return "red";
+    return "orange";
+  }
+
+  function renderProductReviews(products) {
+    const rows = products.map((raw) => {
+      const product = core.normalizeProduct(raw);
+      const reviewStatus = raw.compliance_review_status || "pending";
+      return `
+        <tr>
+          <td>${titleCell(product.name, `${product.category || "-"} / ${product.module_key || "shop"}`)}</td>
+          <td>${titleCell(product.seller_public_name || product.seller_name || "-", product.seller_legal_name || product.seller_city || "-")}</td>
+          <td>${money(product.price)}<br><small>${escape(product.stock)} stok</small></td>
+          <td>${badge(product.status)}<br>${badge(productReviewStatusLabel(reviewStatus), productReviewStatusTone(reviewStatus))}</td>
+          <td>${escape(shortText(product.invoice_responsibility || "-", 120))}</td>
+          <td>
+            <span class="admin-actions">
+              <button class="admin-btn" type="button" data-detail="product-review" data-id="${escape(product.id)}">Detay</button>
+              <button class="admin-btn admin-btn--gold" type="button" data-product-review-action="approved" data-id="${escape(product.id)}">Yayına Al</button>
+              <button class="admin-btn" type="button" data-product-review-action="needs_review" data-id="${escape(product.id)}">Revizyon</button>
+              <button class="admin-btn admin-btn--danger" type="button" data-product-review-action="rejected" data-id="${escape(product.id)}">Reddet</button>
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+    $("#adminContent").innerHTML = section(
+      "Ürün Onayı",
+      "Partner katalog kayıtlarında satıcı, fatura, iade/cayma ve yasaklı ürün uygunluğu kontrolü",
+      warningPanel() + table(["Ürün", "Satıcı", "Fiyat/Stok", "Durum", "Fatura Sorumluluğu", "Aksiyon"], rows, "Onay bekleyen ürün bulunamadı."),
+      `<button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
+    );
   }
 
   function renderUsers(users) {
@@ -1261,6 +1310,26 @@
     renderRefunds(data);
   }
 
+  async function loadProductReviews() {
+    if (!App.db?.client) throw new Error("Supabase bağlantısı hazır değil.");
+    const { data, error } = await App.db.client()
+      .from("products")
+      .select("*")
+      .or("compliance_review_status.eq.pending,compliance_review_status.eq.needs_review,status.eq.draft")
+      .order("created_at", { ascending: false })
+      .limit(120);
+    if (error) {
+      const message = `${error.message || ""} ${error.details || ""} ${error.hint || ""}`;
+      if (/compliance_review_status|column|schema cache|could not find/i.test(message)) {
+        throw new Error("Ürün onay alanları canlı veritabanında yok. Önce 20260629090000_add_product_seller_disclosure_fields.sql migration'ı uygulanmalı.");
+      }
+      throw error;
+    }
+    state.cache.productReviews = data || [];
+    state.warnings = [];
+    renderProductReviews(state.cache.productReviews);
+  }
+
   async function loadSupport() {
     const data = await api(`/v1/ops-console/support-tickets?${queryParams()}`);
     state.cache.tickets = data.tickets || [];
@@ -1314,6 +1383,7 @@
       if (state.view === "partners") await loadPartners();
       if (state.view === "orders") await loadOrders();
       if (state.view === "refunds") await loadRefunds();
+      if (state.view === "productReviews") await loadProductReviews();
       if (state.view === "content") await loadContent();
       if (state.view === "social") await loadSocialMedia();
       if (state.view === "support") await loadSupport();
@@ -1344,6 +1414,9 @@
       } else if (type === "order") {
         const data = await api(`/v1/ops-console/orders/${encodeURIComponent(id)}`);
         renderObjectDetails("Sipariş Detayı", data.order);
+      } else if (type === "product-review") {
+        const item = state.cache.productReviews.find((product) => String(product.id) === String(id));
+        renderObjectDetails("Ürün Onay Detayı", item);
       } else if (type === "partner") {
         const item = state.cache.partners.find((partner) => partner.id === id);
         renderObjectDetails("Partner Detayı", item);
@@ -1580,6 +1653,55 @@
       await showRefundDetail(orderId).catch(() => null);
     }
     await loadRefunds();
+  }
+
+  async function runProductReviewAction(productId, decision) {
+    const item = state.cache.productReviews.find((product) => String(product.id) === String(productId));
+    const labels = {
+      approved: "Yayına Al",
+      needs_review: "Revizyon İste",
+      rejected: "Reddet"
+    };
+    const data = await openModal({
+      title: `Ürün Kararı: ${labels[decision] || decision}`,
+      message: `${item?.name || item?.product_name || productId} için karar kaydedilecek. Satıcı, fatura, teslimat ve yasaklı ürün uygunluğu kontrol edilmiş olmalı.`,
+      confirmText: labels[decision] || "Kaydet",
+      danger: decision === "rejected",
+      fields: [
+        { id: "reason", label: "Karar notu", type: "textarea", required: true, max: 1200 }
+      ]
+    });
+    if (!data) return;
+
+    const nextStatus = decision === "approved" ? "active" : decision === "rejected" ? "archived" : "draft";
+    const { error } = await App.db.client()
+      .from("products")
+      .update({
+        status: nextStatus,
+        compliance_review_status: decision,
+        compliance_notes: data.reason || ""
+      })
+      .eq("id", productId);
+    if (error) throw error;
+
+    if (App.complianceAudit) {
+      await App.complianceAudit.record({
+        category: "product",
+        action: "admin_product_compliance_decision",
+        severity: decision === "approved" ? "info" : "warning",
+        resourceType: "product",
+        resourceId: productId,
+        evidenceTags: ["admin_ops", "product_compliance", decision],
+        metadata: {
+          decision,
+          status: nextStatus,
+          reason: data.reason || ""
+        }
+      });
+    }
+
+    showToast(decision === "approved" ? "Ürün yayına alındı." : decision === "rejected" ? "Ürün reddedildi." : "Ürün revizyona gönderildi.");
+    await loadProductReviews();
   }
 
   async function createContentProposal(form) {
@@ -1880,6 +2002,11 @@
       const refundAction = event.target.closest("[data-refund-action]");
       if (refundAction) {
         await runRefundAction(refundAction.dataset.id, refundAction.dataset.refundAction).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const productReviewAction = event.target.closest("[data-product-review-action]");
+      if (productReviewAction) {
+        await runProductReviewAction(productReviewAction.dataset.id, productReviewAction.dataset.productReviewAction).catch((error) => showToast(error.message, "error"));
         return;
       }
       const supportStatus = event.target.closest("[data-support-status]");
