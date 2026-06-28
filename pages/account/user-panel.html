@@ -7,7 +7,7 @@
   <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260628-account-left1">
+  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260628-refund-center1">
 </head>
 <body class="user-panel-page" data-level-theme="new-member">
   <div class="premium-shell">
@@ -106,6 +106,10 @@
             <button class="account-menu-row" type="button" data-go="../commerce/kuponlar.html">
               <span><i class="fa-solid fa-ticket"></i> Kuponlarım</span>
               <b>2</b>
+            </button>
+            <button class="account-menu-row" type="button" data-panel-action="refund-cancellation">
+              <span><i class="fa-solid fa-rotate-left"></i> İade / İptal Talepleri</span>
+              <b>Talep</b>
             </button>
             <button class="account-menu-row" type="button" data-go="../commerce/kuponlar.html#puan-dukkani">
               <span><i class="fa-solid fa-star"></i> Puan Dükkanı</span>
@@ -238,10 +242,46 @@
       </div>
     </section>
   </div>
+  <div class="refund-center-modal" id="refundCenterModal" hidden>
+    <div class="refund-center-backdrop" data-refund-center-close></div>
+    <section class="refund-center-dialog premium-glass" role="dialog" aria-modal="true" aria-labelledby="refundCenterTitle">
+      <button class="refund-center-close" type="button" data-refund-center-close aria-label="İade ve iptal penceresini kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <p class="refund-center-eyebrow">Sipariş İşlemleri</p>
+      <h2 id="refundCenterTitle">İade ve İptal Talebi</h2>
+      <p class="refund-center-copy">Uygun siparişler talep oluşturma listesinde, süresi geçen veya tamamlanmış kayıtlar geçmiş siparişler bölümünde görünür.</p>
+      <div class="refund-type-tabs" role="tablist" aria-label="Talep türü">
+        <button class="is-active" type="button" data-refund-request-kind="refund">
+          <i class="fa-solid fa-rotate-left"></i>
+          İade Talebi Oluştur
+        </button>
+        <button type="button" data-refund-request-kind="cancellation">
+          <i class="fa-solid fa-ban"></i>
+          İptal Talebi Oluştur
+        </button>
+      </div>
+      <div class="refund-center-status" id="refundCenterStatus" role="status" aria-live="polite">Son siparişlerin hazırlanıyor.</div>
+      <section class="refund-section" aria-label="Talep oluşturulabilir siparişler">
+        <div class="refund-section-head">
+          <strong>Talep oluşturulabilir siparişler</strong>
+          <span id="refundEligibleCount">0 sipariş</span>
+        </div>
+        <div class="refund-order-list" id="refundEligibleOrders"></div>
+      </section>
+      <section class="refund-section refund-section-muted" aria-label="Geçmiş siparişler">
+        <div class="refund-section-head">
+          <strong>Geçmiş siparişler</strong>
+          <span id="refundExpiredCount">0 sipariş</span>
+        </div>
+        <div class="refund-order-list" id="refundExpiredOrders"></div>
+      </section>
+    </section>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260627-config-central" defer></script>
   <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
-  <script src="../../js/user-panel-premium.js?v=20260628-account-left1" defer></script>
+  <script src="../../js/user-panel-premium.js?v=20260628-refund-center1" defer></script>
   <script src="../../js/core.js?v=20260628-modules1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
