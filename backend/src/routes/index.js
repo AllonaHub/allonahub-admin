@@ -545,6 +545,18 @@ const superAdminAlarmProtectionSchema = z.object({
   reason: z.string().trim().min(6).max(1200)
 });
 
+const superAdminRefundCancellationQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80),
+  status: z.enum(["all", "cancelled", "refunded", "pending_signal"]).optional().default("all"),
+  search: z.string().trim().max(120).optional().default("")
+});
+
+const superAdminRefundCancellationActionSchema = z.object({
+  action: z.enum(["mark_review", "approve_cancellation", "approve_refund", "reject_request", "add_note"]),
+  reason: z.string().trim().min(6).max(1200),
+  note: z.string().trim().max(1200).optional().default("")
+});
+
 const superAdminPermissionUpdateSchema = z.object({
   role: z.enum(SUPER_ADMIN_GRANTABLE_ROLES).optional(),
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -3463,6 +3475,59 @@ async function optionalMutation(query, warnings, label) {
   throw httpError(`${label} icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.`, 409);
 }
 
+function refundCancellationKind(order) {
+  const orderStatus = String(order?.order_status || order?.status || "").toLowerCase();
+  const paymentStatus = String(order?.payment_status || "").toLowerCase();
+  if (paymentStatus === "refunded" || orderStatus === "refunded") return "refund";
+  if (orderStatus === "cancelled") return "cancellation";
+  return "signal";
+}
+
+function refundCancellationReason({ order, notes = [], flags = [], tickets = [] } = {}) {
+  const firstFlag = (flags || []).find((item) => item.reason);
+  const firstNote = (notes || []).find((item) => item.body);
+  const firstTicket = (tickets || []).find((item) => item.message || item.title);
+  return firstFlag?.reason || firstNote?.body || firstTicket?.message || firstTicket?.title || order?.cancellation_reason || order?.refund_reason || "";
+}
+
+function refundCancellationPublic(order, extras = {}) {
+  const kind = refundCancellationKind(order);
+  const riskLevel = kind === "refund" ? "critical" : (kind === "cancellation" ? "high" : "medium");
+  const reason = refundCancellationReason({ order, ...extras });
+  return {
+    id: order.id,
+    type: kind,
+    order_no: order.order_no || order.order_number || order.id,
+    customer_name: order.customer_name || "",
+    customer_email: order.customer_email || "",
+    customer_phone: order.customer_phone || "",
+    total: Number(order.total || order.grand_total || 0),
+    order_status: order.order_status || order.status || "",
+    payment_status: order.payment_status || "",
+    reason,
+    risk_level: riskLevel,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    notes: extras.notes || [],
+    flags: extras.flags || [],
+    tickets: extras.tickets || [],
+    order_items: extras.order_items || order.order_items || []
+  };
+}
+
+function refundCancellationSupportFilter(search) {
+  const terms = ["iade", "iptal", "geri ödeme", "geri odeme", "refund", "cancel"];
+  const clean = cleanSearch(search);
+  const filters = terms.flatMap((term) => [
+    `title.ilike.%${term}%`,
+    `message.ilike.%${term}%`
+  ]);
+  if (clean) {
+    filters.push(`title.ilike.%${clean}%`, `message.ilike.%${clean}%`);
+  }
+  return filters.join(",");
+}
+
 async function loadAdminDashboardData(warnings) {
   const today = startOfTodayIso();
   const [
@@ -6265,6 +6330,310 @@ export function registerRoutes(app) {
       }
     });
     return { ok: true, protection };
+  });
+
+  superGet("/refund-cancellations", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.list");
+    const queryParams = superAdminRefundCancellationQuerySchema.parse(request.query || {});
+    const warnings = [];
+    const search = cleanSearch(queryParams.search);
+
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, order_number, user_id, customer_name, customer_email, customer_phone, total, grand_total, order_status, status, payment_status, created_at, updated_at")
+      .or("order_status.in.(cancelled,refunded),status.in.(cancelled,refunded),payment_status.eq.refunded")
+      .order("updated_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status === "cancelled") ordersQuery = ordersQuery.in("order_status", ["cancelled"]);
+    if (queryParams.status === "refunded") ordersQuery = ordersQuery.or("order_status.eq.refunded,status.eq.refunded,payment_status.eq.refunded");
+    const filter = textSearchFilter(["order_no", "order_number", "customer_name", "customer_email", "customer_phone"], search);
+    if (filter) ordersQuery = ordersQuery.or(filter);
+
+    let ticketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+      .or(refundCancellationSupportFilter(search))
+      .order("created_at", { ascending: false })
+      .limit(Math.min(queryParams.limit, 40));
+    if (queryParams.status === "pending_signal") ticketQuery = ticketQuery.in("status", ["open", "in_progress"]);
+
+    const [orders, tickets] = await Promise.all([
+      optionalQuery(ordersQuery, [], warnings, "orders"),
+      optionalQuery(ticketQuery, [], warnings, "support_tickets")
+    ]);
+
+    const items = (orders || []).map((order) => refundCancellationPublic(order));
+    const ticketSignals = queryParams.status === "all" || queryParams.status === "pending_signal"
+      ? (tickets || []).map((ticket) => ({
+          id: `ticket:${ticket.id}`,
+          type: "support_signal",
+          ticket_id: ticket.id,
+          order_no: ticket.metadata?.order_no || ticket.metadata?.order_id || "Destek talebi",
+          customer_name: ticket.profile?.full_name || "",
+          customer_email: ticket.profile?.email || "",
+          customer_phone: ticket.profile?.phone || "",
+          total: 0,
+          order_status: "pending_signal",
+          payment_status: "",
+          reason: ticket.message || ticket.title || "",
+          risk_level: ticket.priority === "urgent" ? "critical" : "high",
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          tickets: [ticket],
+          notes: [],
+          flags: [],
+          order_items: []
+        }))
+      : [];
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.refund_cancellations_viewed",
+      source: "admin",
+      resourceType: "refund_cancellation",
+      severity: "info",
+      metadata: {
+        status: queryParams.status,
+        search: search || null,
+        order_count: items.length,
+        support_signal_count: ticketSignals.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items: [...items, ...ticketSignals].slice(0, queryParams.limit),
+      summary: {
+        total: items.length + ticketSignals.length,
+        refunded: items.filter((item) => item.type === "refund").length,
+        cancelled: items.filter((item) => item.type === "cancellation").length,
+        support_signals: ticketSignals.length,
+        action_required: ticketSignals.length + items.filter((item) => item.type === "refund").length
+      },
+      warnings
+    };
+  });
+
+  superGet("/refund-cancellations/:orderId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.detail");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const warnings = [];
+    const order = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    const supportFilters = [
+      order.order_no ? `title.ilike.%${order.order_no}%` : "",
+      order.order_no ? `message.ilike.%${order.order_no}%` : "",
+      order.order_number ? `title.ilike.%${order.order_number}%` : "",
+      order.order_number ? `message.ilike.%${order.order_number}%` : "",
+      order.customer_email ? `title.ilike.%${order.customer_email}%` : "",
+      order.customer_email ? `message.ilike.%${order.customer_email}%` : ""
+    ].filter(Boolean).join(",");
+
+    const [notes, flags, tickets] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, visibility, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(40),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, metadata, created_at, updated_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      supportFilters
+        ? optionalQuery(
+            supabaseAdmin
+              .from("support_tickets")
+              .select("id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+              .or(supportFilters)
+              .order("created_at", { ascending: false })
+              .limit(20),
+            [],
+            warnings,
+            "support_tickets"
+          )
+        : Promise.resolve([])
+    ]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.refund_cancellation_detail_viewed",
+      source: "admin",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: "info",
+      metadata: {
+        note_count: notes.length,
+        flag_count: flags.length,
+        support_signal_count: tickets.length
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(order, {
+        notes,
+        flags,
+        tickets,
+        order_items: order.order_items || []
+      }),
+      warnings
+    };
+  });
+
+  superPost("/refund-cancellations/:orderId/action", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.action");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = superAdminRefundCancellationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, order_number, customer_email, total, grand_total, order_status, status, payment_status")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+
+    let updated = before;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = await optionalMutation(
+        supabaseAdmin
+          .from("orders")
+          .update(updatePayload)
+          .eq("id", orderId)
+          .select("id, order_no, order_number, customer_email, total, grand_total, order_status, status, payment_status, updated_at")
+          .single(),
+        warnings,
+        "orders"
+      );
+    }
+
+    const actionLabels = {
+      mark_review: "İncelemeye alındı",
+      approve_cancellation: "İptal onaylandı",
+      approve_refund: "İade onaylandı",
+      reject_request: "Talep reddedildi",
+      add_note: "Not eklendi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : ""
+    ].filter(Boolean).join("\n");
+
+    const [note, flag] = await Promise.all([
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            note_type: "review",
+            visibility: "super_admin",
+            body: noteBody
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .insert({
+            flagged_by: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            flag_type: "risky_order",
+            severity: body.action === "approve_refund" ? "critical" : "warning",
+            status: body.action === "mark_review" ? "in_review" : "resolved",
+            reason: noteBody,
+            metadata: {
+              super_admin_action: body.action,
+              order_status_before: before.order_status || before.status || null,
+              payment_status_before: before.payment_status || null,
+              order_status_after: updated.order_status || updated.status || null,
+              payment_status_after: updated.payment_status || null
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `super_admin.refund_cancellation_${body.action}`,
+      source: "admin",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: body.action === "approve_refund" ? "critical" : "warning",
+      purpose: "refund_cancellation_control",
+      evidenceTags: ["super_admin", "refund_cancellation", body.action],
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        old_value: before,
+        new_value: updated,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean) }),
+      note,
+      flag,
+      warnings
+    };
   });
 
   superGet("/work-queue", async (request) => {

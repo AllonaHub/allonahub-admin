@@ -11,7 +11,8 @@
     applications: [],
     businesses: [],
     settings: [],
-    modules: []
+    modules: [],
+    refundCancellations: []
   };
 
   const viewLoaders = {
@@ -1033,6 +1034,7 @@
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
     "release-history": ["Yayın Geçmişi", "Onaylanan, gönderilen ve hata alan yayın kararları"],
     operations: ["Operasyon Merkezi", "Sipariş, destek ve canlı operasyon görünümü"],
+    refunds: ["İade ve İptaller", "İade, iptal, neden ve owner aksiyon kontrolü"],
     finance: ["Finans Merkezi", "Ciro, ödeme, komisyon, iade ve hakediş kontrolü"],
     content: ["İçerik Kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerikleri"],
     health: ["Sistem Sağlığı", "API, database, webhook, modül ve operasyon servisleri"],
@@ -1247,6 +1249,7 @@
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
       ownerLine("İş kuyruğu", "AVM, yemek, taksi, sosyal medya, destek, güvenlik ve yayın kararlarını tek listede izle.", "<button type=\"button\" data-view-jump=\"work-queue\">Aç</button>", "critical"),
       ownerLine("Operasyon merkezi", "Siparişler, destek talepleri ve canlı operasyon akışını Super Admin içinden izle.", "<button type=\"button\" data-view-jump=\"operations\">Aç</button>", "high"),
+      ownerLine("İade ve iptaller", "İade/iptal kayıtlarını, nedenleri, destek sinyallerini ve owner aksiyonlarını tek yerden yönet.", "<button type=\"button\" data-view-jump=\"refunds\">Aç</button>", "critical"),
       ownerLine("Finans merkezi", "Ciro, ödeme riski, komisyon, iade ve hakediş ayarlarını tek yerden takip et.", "<button type=\"button\" data-view-jump=\"finance\">Aç</button>", "critical"),
       ownerLine("İçerik kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerik önerilerini gör.", "<button type=\"button\" data-view-jump=\"content\">Aç</button>", "high"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
@@ -1530,6 +1533,81 @@
     );
   }
 
+  function refundTypeLabel(value) {
+    const map = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "İşaret",
+      support_signal: "Destek sinyali"
+    };
+    return map[value] || value || "-";
+  }
+
+  function refundActionLabel(action) {
+    const map = {
+      mark_review: "İncelemeye al",
+      approve_cancellation: "İptali onayla",
+      approve_refund: "İadeyi onayla",
+      reject_request: "Talebi reddet",
+      add_note: "Not ekle"
+    };
+    return map[action] || action || "Aksiyon";
+  }
+
+  function refundFiltersMarkup(params) {
+    const status = params && params.status || "all";
+    const search = params && params.search || "";
+    return `
+      <form class="sa-filter" data-owner-refunds-filter>
+        <input name="search" type="search" value="${escape(search)}" placeholder="Sipariş no, müşteri, e-posta veya neden ara">
+        <select name="status">
+          ${[
+            ["all", "Tümü"],
+            ["refunded", "İadeler"],
+            ["cancelled", "İptaller"],
+            ["pending_signal", "Destek sinyalleri"]
+          ].map(([value, label]) => `<option value="${value}" ${status === value ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+        <button type="submit">Filtrele</button>
+      </form>
+    `;
+  }
+
+  async function loadOwnerRefunds(params) {
+    ownerLoading("İade ve İptaller");
+    const query = new URLSearchParams({ limit: "80" });
+    if (params && params.status) query.set("status", params.status);
+    if (params && params.search) query.set("search", params.search);
+    const payload = await api(`/v1/control-center/refund-cancellations?${query.toString()}`);
+    const summary = payload.summary || {};
+    state.refundCancellations = payload.items || [];
+    const rows = state.refundCancellations.map((item) => {
+      const isTicket = item.type === "support_signal";
+      const detail = isTicket
+        ? `<button type="button" data-refund-ticket-detail="${escape(item.ticket_id || item.id)}">Detay</button>`
+        : `<button type="button" data-refund-detail="${escape(item.id)}">Detay</button>`;
+      const actions = isTicket ? detail : [
+        detail,
+        `<button type="button" data-refund-action="mark_review" data-refund-order="${escape(item.id)}">İncele</button>`,
+        item.type !== "cancellation" ? `<button type="button" data-refund-action="approve_cancellation" data-refund-order="${escape(item.id)}">İptal</button>` : "",
+        item.type !== "refund" ? `<button type="button" data-refund-action="approve_refund" data-refund-order="${escape(item.id)}">İade</button>` : "",
+        `<button type="button" data-refund-action="reject_request" data-refund-order="${escape(item.id)}">Reddet</button>`
+      ].filter(Boolean).join(" ");
+      return ownerLine(
+        `${refundTypeLabel(item.type)} / ${item.order_no || item.id}`,
+        `${escape(item.customer_name || item.customer_email || "-")} / ${item.total ? money(item.total) : "tutar yok"} / sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")} / neden: ${escape(core.truncate ? core.truncate(item.reason || "-", 180) : String(item.reason || "-").slice(0, 180))} / ${formatDate(item.updated_at || item.created_at)}`,
+        actions,
+        item.risk_level || (item.type === "refund" ? "critical" : "high")
+      );
+    });
+    ownerSetOutput(
+      refundFiltersMarkup(params || {}) +
+      ownerLine("Özet", `${formatNumber(summary.total)} kayıt / ${formatNumber(summary.refunded)} iade / ${formatNumber(summary.cancelled)} iptal / ${formatNumber(summary.support_signals)} destek sinyali`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", summary.action_required ? "critical" : "low") +
+      (payload.warnings || []).map((warning) => ownerLine("Şema uyarısı", escape(warning), "", "high")).join("") +
+      (rows.join("") || ownerEmpty("İade veya iptal kaydı bulunamadı."))
+    );
+  }
+
   async function loadOwnerFinance() {
     ownerLoading("Finans Merkezi");
     const [commandPayload, reportsPayload, settingsPayload] = await Promise.all([
@@ -1552,7 +1630,7 @@
     ownerSetOutput(
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri incele</button>", "medium") +
       ownerLine("Sipariş riski", `${formatNumber(orderReport.daily_orders)} günlük sipariş / ${formatNumber(orderReport.risky_open)} açık risk`, "<button type=\"button\" data-view-jump=\"work-queue\">Risk kuyruğu</button>", orderReport.risky_open ? "critical" : "low") +
-      ownerLine("Destek / iade sinyali", `${formatNumber(supportReport.open)} açık destek / ${formatNumber(supportReport.resolved_today)} bugün çözülen`, "<button type=\"button\" data-view-jump=\"operations\">Destek akışı</button>", supportReport.open ? "high" : "low") +
+      ownerLine("Destek / iade sinyali", `${formatNumber(supportReport.open)} açık destek / ${formatNumber(supportReport.resolved_today)} bugün çözülen`, "<button type=\"button\" data-view-jump=\"refunds\">İade ve iptaller</button>", supportReport.open ? "high" : "low") +
       ownerLine("Finans ayarları", `${formatNumber(financeSettings.length)} kontrol`, "", "critical") +
       (rows.join("") || ownerEmpty("Finans ayarı bulunamadı."))
     );
@@ -1991,6 +2069,7 @@
       else if (view === "approvals") await loadOwnerApprovals();
       else if (view === "release-history") await loadOwnerReleaseHistory();
       else if (view === "operations") await loadOwnerOperations();
+      else if (view === "refunds") await loadOwnerRefunds(params);
       else if (view === "finance") await loadOwnerFinance();
       else if (view === "content") await loadOwnerContent();
       else if (view === "health") await loadOwnerHealth();
@@ -2112,6 +2191,102 @@
         submitButton.textContent = submitButton.dataset.originalText || "Onay İsteği Oluştur";
       }
     }
+  }
+
+  function showRefundTicketDetail(ticketId) {
+    const item = (state.refundCancellations || []).find((entry) => String(entry.ticket_id || entry.id) === String(ticketId) || String(entry.id) === `ticket:${ticketId}`);
+    const ticket = item && item.tickets && item.tickets[0];
+    if (!ticket) return;
+    openDrawer("İade / İptal Destek Sinyali", [
+      ownerLine("Başlık", escape(ticket.title || "-"), "", item.risk_level || "high"),
+      ownerLine("Durum", `${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.category || "-")}`, "", item.risk_level || "high"),
+      ownerLine("Talep sahibi", `${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}`, "", "medium"),
+      ownerLine("Açıklama", escape(ticket.message || "-"), "", "medium"),
+      ownerLine("Metadata", escape(JSON.stringify(ticket.metadata || {}).slice(0, 900)), "", "low"),
+      ownerLine("Aksiyon", "Bu kayıt bir destek sinyali. Sipariş eşleştikten sonra sipariş detayı üzerinden iade/iptal aksiyonu alınmalı.", "<button type=\"button\" data-view-jump=\"operations\">Siparişlerde ara</button>", "high"),
+      ownerLine("Tarih", `${formatDate(ticket.created_at)} / güncelleme ${formatDate(ticket.updated_at)}`, "", "low")
+    ].join(""));
+  }
+
+  async function showRefundDetail(orderId) {
+    const payload = await api(`/v1/control-center/refund-cancellations/${encodeURIComponent(orderId)}`);
+    const item = payload.item || {};
+    const noteRows = (item.notes || []).slice(0, 8).map((note) => ownerLine(
+      note.note_type || "not",
+      `${escape(note.body || "-")} / ${formatDate(note.created_at)}`,
+      "",
+      note.note_type === "risk" ? "high" : "low"
+    )).join("");
+    const flagRows = (item.flags || []).slice(0, 8).map((flag) => ownerLine(
+      flag.flag_type || "flag",
+      `${escape(flag.status || "-")} / ${escape(flag.reason || "-")} / ${formatDate(flag.created_at)}`,
+      "",
+      flag.severity || "medium"
+    )).join("");
+    const ticketRows = (item.tickets || []).slice(0, 6).map((ticket) => ownerLine(
+      ticket.title || "Destek sinyali",
+      `${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.message || "-").slice(0, 260)}`,
+      "",
+      ticket.priority === "urgent" ? "critical" : "high"
+    )).join("");
+    const itemRows = (item.order_items || []).slice(0, 10).map((row) => ownerLine(
+      row.product?.name || row.name || row.product_id || "Ürün",
+      `${formatNumber(row.quantity || 1)} adet / ${money(row.price || row.unit_price || 0)} / partner ${escape(row.partner_id || row.product?.partner_id || "-")}`,
+      "",
+      "low"
+    )).join("");
+    openDrawer("İade / İptal Detayı", [
+      ownerLine("Sipariş", `${escape(item.order_no || item.id || "-")} / ${refundTypeLabel(item.type)}`, "", item.risk_level || "high"),
+      ownerLine("Müşteri", `${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}`, "", "medium"),
+      ownerLine("Tutar", money(item.total), `sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")}`, item.type === "refund" ? "critical" : "high"),
+      ownerLine("Neden / açıklama", escape(item.reason || "Kayıtlarda neden bulunamadı; karar öncesi destek ve not kayıtlarını kontrol et."), "", item.reason ? "medium" : "high"),
+      ownerLine("Aksiyonlar", "Detayı inceledikten sonra işlem uygula. Tüm kararlar audit log'a yazılır.", [
+        `<button type="button" data-refund-action="mark_review" data-refund-order="${escape(item.id)}">İncelemeye al</button>`,
+        `<button type="button" data-refund-action="approve_cancellation" data-refund-order="${escape(item.id)}">İptali onayla</button>`,
+        `<button type="button" data-refund-action="approve_refund" data-refund-order="${escape(item.id)}">İadeyi onayla</button>`,
+        `<button type="button" data-refund-action="reject_request" data-refund-order="${escape(item.id)}">Talebi reddet</button>`,
+        `<button type="button" data-refund-action="add_note" data-refund-order="${escape(item.id)}">Not ekle</button>`
+      ].join(" "), "critical"),
+      ownerLine("Ürünler", `${formatNumber((item.order_items || []).length)} kalem`, "", "medium"),
+      itemRows || ownerEmpty("Ürün kalemi bulunamadı."),
+      ownerLine("Operasyon notları", `${formatNumber((item.notes || []).length)} kayıt`, "", "medium"),
+      noteRows || ownerEmpty("Operasyon notu yok."),
+      ownerLine("Risk / işlem flagleri", `${formatNumber((item.flags || []).length)} kayıt`, "", "medium"),
+      flagRows || ownerEmpty("Flag kaydı yok."),
+      ownerLine("Destek sinyalleri", `${formatNumber((item.tickets || []).length)} kayıt`, "", "high"),
+      ticketRows || ownerEmpty("Bu siparişle eşleşen destek sinyali yok."),
+      (payload.warnings || []).map((warning) => ownerLine("Şema uyarısı", escape(warning), "", "high")).join("")
+    ].join(""));
+  }
+
+  async function runRefundAction(button) {
+    const orderId = button.dataset.refundOrder;
+    const action = button.dataset.refundAction;
+    const label = refundActionLabel(action);
+    const item = (state.refundCancellations || []).find((entry) => String(entry.id) === String(orderId));
+    const message = `${item?.order_no || orderId} için "${label}" işlemi uygulanacak.`;
+    await runConfirmed(message, async (reason) => {
+      const result = await api(`/v1/control-center/refund-cancellations/${encodeURIComponent(orderId)}/action`, {
+        method: "POST",
+        body: {
+          action,
+          reason,
+          note: label
+        }
+      });
+      const updated = result.item || {};
+      openDrawer("İade / İptal Aksiyon Sonucu", [
+        ownerLine("İşlem", escape(label), "audit log'a yazıldı", action === "approve_refund" ? "critical" : "high"),
+        ownerLine("Sipariş", `${escape(updated.order_no || orderId)} / sipariş ${escape(updated.order_status || "-")} / ödeme ${escape(updated.payment_status || "-")}`, "", updated.type === "refund" ? "critical" : "medium"),
+        ownerLine("Gerekçe", escape(reason), "", "medium"),
+        ownerLine("Not", result.note?.id ? `Operasyon notu oluşturuldu: ${escape(result.note.id)}` : "Not oluşturulamadı", "", result.note?.id ? "low" : "high"),
+        ownerLine("Flag", result.flag?.id ? `İşlem flag'i oluşturuldu: ${escape(result.flag.id)}` : "Flag oluşturulamadı", "", result.flag?.id ? "low" : "high")
+      ].join(""));
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   function showApprovalDetail(id) {
@@ -2246,6 +2421,19 @@
           return;
         }
 
+        const refundsFilter = eventClosest(event, "[data-owner-refunds-filter]");
+        if (refundsFilter) {
+          event.preventDefault();
+          const form = new FormData(refundsFilter);
+          const params = {};
+          ["search", "status"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerRefunds(params);
+          return;
+        }
+
         const releaseForm = eventClosest(event, "[data-release-form]");
         if (releaseForm) {
           event.preventDefault();
@@ -2293,6 +2481,15 @@
 
         const approvalApprove = eventClosest(event, "[data-approval-approve]");
         if (approvalApprove) await approveReleaseApproval(approvalApprove);
+
+        const refundDetail = eventClosest(event, "[data-refund-detail]");
+        if (refundDetail) await showRefundDetail(refundDetail.dataset.refundDetail);
+
+        const refundTicketDetail = eventClosest(event, "[data-refund-ticket-detail]");
+        if (refundTicketDetail) showRefundTicketDetail(refundTicketDetail.dataset.refundTicketDetail);
+
+        const refundAction = eventClosest(event, "[data-refund-action]");
+        if (refundAction) await runRefundAction(refundAction);
 
         const eventDetail = eventClosest(event, "[data-event-detail]");
         if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
