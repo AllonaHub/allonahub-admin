@@ -590,6 +590,27 @@
     throw lastError || new Error("İşlem tamamlanamadı.");
   }
 
+  async function ownerOptionalApi(path, fallback, label) {
+    try {
+      return await api(path);
+    } catch (error) {
+      return Object.assign({}, fallback || {}, {
+        __ownerWarning: {
+          label: label || path,
+          message: publicError(error, "Veri alınamadı.")
+        }
+      });
+    }
+  }
+
+  function ownerDataWarnings() {
+    return Array.from(arguments)
+      .map((payload) => payload && payload.__ownerWarning)
+      .filter(Boolean)
+      .map((warning) => ownerLine(`${warning.label} veri uyarısı`, escape(warning.message), "", "high"))
+      .join("");
+  }
+
   function renderEmpty(target, message) {
     target.innerHTML = `<div class="sa-empty">${escape(message || "Kayıt bulunamadı.")}</div>`;
   }
@@ -1325,6 +1346,17 @@
     return payload;
   }
 
+  async function loadCommandCenterOptional(label) {
+    if (state.commandCenter) return state.commandCenter;
+    const payload = await ownerOptionalApi("/v1/control-center/command-center", {
+      summary: {},
+      system_health: {},
+      gitops: {}
+    }, label || "Komut merkezi");
+    if (!payload.__ownerWarning) state.commandCenter = payload;
+    return payload;
+  }
+
   async function loadOwnerSession() {
     const payload = await api("/v1/control-center/owner-session");
     state.ownerSession = payload;
@@ -1685,9 +1717,9 @@
   async function loadOwnerOperations() {
     ownerLoading("Operasyon Merkezi");
     const [dashboardPayload, ordersPayload, supportPayload] = await Promise.all([
-      api("/v1/admin/ops/dashboard"),
-      api("/v1/admin/ops/orders?limit=12"),
-      api("/v1/admin/ops/support-tickets?limit=12")
+      ownerOptionalApi("/v1/admin/ops/dashboard", { dashboard: { metrics: {} } }, "Operasyon dashboard"),
+      ownerOptionalApi("/v1/admin/ops/orders?limit=12", { orders: [] }, "Siparişler"),
+      ownerOptionalApi("/v1/admin/ops/support-tickets?limit=12", { tickets: [] }, "Destek talepleri")
     ]);
     const metrics = dashboardPayload.dashboard && dashboardPayload.dashboard.metrics || {};
     const orders = ordersPayload.orders || [];
@@ -1705,6 +1737,7 @@
       ticket.priority === "urgent" ? "critical" : "medium"
     ));
     ownerSetOutput(
+      ownerDataWarnings(dashboardPayload, ordersPayload, supportPayload) +
       ownerLine("Bugünkü operasyon", `${formatNumber(metrics.daily_users)} yeni kullanıcı / ${formatNumber(metrics.daily_partner_applications)} partner başvurusu / ${formatNumber(metrics.recent_orders)} son sipariş`, "<a href=\"./index.html\">Admin Ops</a>", "medium") +
       ownerLine("Açık destek", `${formatNumber(metrics.open_support_tickets)} talep / ${formatNumber(metrics.system_alerts)} sistem uyarısı`, "<button type=\"button\" data-view-jump=\"work-queue\">İş kuyruğu</button>", metrics.open_support_tickets || metrics.system_alerts ? "high" : "low") +
       ownerLine("Son siparişler", `${formatNumber(orders.length)} kayıt`, "", "medium") +
@@ -1803,9 +1836,9 @@
   async function loadOwnerFinance() {
     ownerLoading("Finans Merkezi");
     const [commandPayload, reportsPayload, settingsPayload] = await Promise.all([
-      state.commandCenter || loadCommandCenter(),
-      api("/v1/admin/ops/reports"),
-      api("/v1/control-center/settings")
+      loadCommandCenterOptional("Komut merkezi"),
+      ownerOptionalApi("/v1/admin/ops/reports", { reports: { order_report: {}, support_report: {} } }, "Operasyon raporları"),
+      ownerOptionalApi("/v1/control-center/settings", { settings: [] }, "Sistem ayarları")
     ]);
     const summary = commandPayload.summary || {};
     const reports = reportsPayload.reports || {};
@@ -1820,6 +1853,7 @@
       setting.risk_level
     ));
     ownerSetOutput(
+      ownerDataWarnings(commandPayload, reportsPayload, settingsPayload) +
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri incele</button>", "medium") +
       ownerLine("Sipariş riski", `${formatNumber(orderReport.daily_orders)} günlük sipariş / ${formatNumber(orderReport.risky_open)} açık risk`, "<button type=\"button\" data-view-jump=\"work-queue\">Risk kuyruğu</button>", orderReport.risky_open ? "critical" : "low") +
       ownerLine("Destek / iade sinyali", `${formatNumber(supportReport.open)} açık destek / ${formatNumber(supportReport.resolved_today)} bugün çözülen`, "<button type=\"button\" data-view-jump=\"refunds\">İade ve iptaller</button>", supportReport.open ? "high" : "low") +
@@ -1831,9 +1865,9 @@
   async function loadOwnerContent() {
     ownerLoading("İçerik Kontrolü");
     const [contentPayload, socialPayload, modulePayload] = await Promise.all([
-      api("/v1/admin/ops/content-proposals"),
-      api("/v1/admin/ops/social-media?limit=40"),
-      api("/v1/control-center/module-map")
+      ownerOptionalApi("/v1/admin/ops/content-proposals", { proposals: [] }, "İçerik önerileri"),
+      ownerOptionalApi("/v1/admin/ops/social-media?limit=40", { social: { drafts: [], posts: [] } }, "Sosyal medya"),
+      ownerOptionalApi("/v1/control-center/module-map", { modules: [] }, "Modül haritası")
     ]);
     const proposals = contentPayload.proposals || [];
     const social = socialPayload.social || {};
@@ -1853,6 +1887,7 @@
       item.status === "failed" ? "high" : "medium"
     ));
     ownerSetOutput(
+      ownerDataWarnings(contentPayload, socialPayload, modulePayload) +
       ownerLine("İçerik önerileri", `${formatNumber(proposals.length)} kayıt / banner, kampanya, sayfa ve yasal içerik`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyen onaylar</button>", proposals.length ? "high" : "low") +
       (proposalRows.join("") || ownerEmpty("İçerik önerisi bulunamadı.")) +
       ownerLine("Sosyal medya", `${formatNumber(drafts.length)} taslak / ${formatNumber(posts.length)} platform gönderisi`, "<a href=\"./index.html\">Sosyal medya merkezi</a>", drafts.length ? "medium" : "low") +
@@ -1864,10 +1899,10 @@
   async function loadOwnerHealth() {
     ownerLoading("Sistem Sağlığı");
     const [commandPayload, healthPayload, reportsPayload, alarmPayload] = await Promise.all([
-      state.commandCenter || loadCommandCenter(),
-      api("/v1/control-center/action-health"),
-      api("/v1/admin/ops/reports"),
-      api("/v1/control-center/alarm-status")
+      loadCommandCenterOptional("Komut merkezi"),
+      ownerOptionalApi("/v1/control-center/action-health", { actions: {} }, "Komut sağlığı"),
+      ownerOptionalApi("/v1/admin/ops/reports", { reports: { order_report: {}, support_report: {} } }, "Operasyon raporları"),
+      ownerOptionalApi("/v1/control-center/alarm-status", { alarm: { channels: {}, incident: {} } }, "Alarm durumu")
     ]);
     const system = commandPayload.system_health || {};
     const gitops = commandPayload.gitops || {};
@@ -1884,6 +1919,7 @@
       value.ok && value.dispatch_ready !== false ? "low" : "high"
     ));
     ownerSetOutput(
+      ownerDataWarnings(commandPayload, healthPayload, reportsPayload, alarmPayload) +
       ownerLine("API / DB", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / build ${escape(system.build || "-")}`, "<button type=\"button\" data-action-health-check>Komut testi</button>", system.database === "online" ? "low" : "critical") +
       ownerLine("Canlı bayraklar", `Bakım ${system.maintenance_mode ? "açık" : "kapalı"} / ödeme ${system.payments_disabled ? "kapalı" : "aktif"} / acil API ${system.emergency_api_disabled ? "kapalı" : "aktif"}`, "<button type=\"button\" data-view-jump=\"system\">Sistem ayarları</button>", system.emergency_api_disabled || system.payments_disabled ? "critical" : "low") +
       ownerLine("GitOps", `Enabled ${gitops.enabled ? "evet" : "hayır"} / webhook ${gitops.release_webhook_configured ? "hazır" : "eksik"}`, "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>", gitops.enabled && gitops.release_webhook_configured ? "low" : "high") +

@@ -955,6 +955,7 @@
     }
     target.innerHTML = state.integrationRuns.slice(0, 10).map((run) => {
       const preview = Array.isArray(run.summary?.preview) ? run.summary.preview : [];
+      const canApplyPreview = run.run_mode === "preview" && ["success", "partial"].includes(run.status) && run.integration_id;
       return `
         <article class="partner-os-integration-run">
           <div>
@@ -964,7 +965,10 @@
             ${run.warning_count ? `<small>${escape(run.warning_count)} uyarı kontrol bekliyor.</small>` : ""}
             ${run.error_message ? `<small>${escape(run.error_message)}</small>` : ""}
           </div>
-          ${statusPill(run.status || "queued")}
+          <div class="partner-os-integration-row-actions">
+            ${statusPill(run.status || "queued")}
+            ${canApplyPreview ? `<button type="button" data-integration-apply="${escape(run.integration_id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Kataloğa Aktar</span></button>` : ""}
+          </div>
         </article>
       `;
     }).join("");

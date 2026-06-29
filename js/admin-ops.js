@@ -1425,22 +1425,13 @@
   }
 
   async function loadProductReviews() {
-    if (!App.db?.client) throw new Error("Supabase bağlantısı hazır değil.");
-    const { data, error } = await App.db.client()
-      .from("products")
-      .select("*")
-      .or("compliance_review_status.eq.pending,compliance_review_status.eq.needs_review,status.eq.draft")
-      .order("created_at", { ascending: false })
-      .limit(120);
-    if (error) {
-      const message = `${error.message || ""} ${error.details || ""} ${error.hint || ""}`;
-      if (/compliance_review_status|column|schema cache|could not find/i.test(message)) {
-        throw new Error("Ürün onay alanları canlı veritabanında yok. Önce 20260629090000_add_product_seller_disclosure_fields.sql migration'ı uygulanmalı.");
-      }
-      throw error;
-    }
-    state.cache.productReviews = data || [];
-    state.warnings = [];
+    const params = new URLSearchParams();
+    const search = $("#adminGlobalSearch")?.value?.trim() || "";
+    if (search) params.set("search", search);
+    params.set("limit", "120");
+    const data = await api(`/v1/ops-console/product-reviews?${params.toString()}`);
+    state.cache.productReviews = data.products || [];
+    state.warnings = data.warnings || [];
     renderProductReviews(state.cache.productReviews);
   }
 
@@ -1879,16 +1870,13 @@
     });
     if (!data) return;
 
-    const nextStatus = decision === "approved" ? "active" : decision === "rejected" ? "archived" : "draft";
-    const { error } = await App.db.client()
-      .from("products")
-      .update({
-        status: nextStatus,
-        compliance_review_status: decision,
-        compliance_notes: data.reason || ""
-      })
-      .eq("id", productId);
-    if (error) throw error;
+    const result = await api(`/v1/ops-console/product-reviews/${encodeURIComponent(productId)}/decision`, {
+      method: "POST",
+      body: {
+        decision,
+        reason: data.reason || ""
+      }
+    });
 
     if (App.complianceAudit) {
       await App.complianceAudit.record({
@@ -1900,7 +1888,7 @@
         evidenceTags: ["admin_ops", "product_compliance", decision],
         metadata: {
           decision,
-          status: nextStatus,
+          status: result.product?.status || "",
           reason: data.reason || ""
         }
       });

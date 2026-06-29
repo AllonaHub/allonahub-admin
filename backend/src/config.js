@@ -46,6 +46,7 @@ const requiredAllowedOrigins = [
   "https://allonahub.com",
   "https://www.allonahub.com",
   "https://admin.allonahub.com",
+  "https://partner.allonahub.com",
   "https://allonahub.github.io"
 ];
 

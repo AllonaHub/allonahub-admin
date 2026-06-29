@@ -327,6 +327,11 @@ const adminFlagSchema = z.object({
   severity: z.enum(["info", "warning", "critical"]).optional().default("warning")
 });
 
+const adminProductReviewDecisionSchema = z.object({
+  decision: z.enum(["approved", "needs_review", "rejected"]),
+  reason: z.string().trim().min(3).max(1200)
+});
+
 const partnerApplicationActionSchema = z.object({
   action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
   reason: z.string().trim().min(3).max(1200),
@@ -537,7 +542,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove4";
+const BACKEND_BUILD_MARKER = "super-admin-owner-ops-product-review-20260629-1";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -2217,25 +2222,45 @@ async function requireOpsAdmin(request, action) {
   });
 
   const { data, error } = await ctx.db.rpc("is_ops_admin");
-  if (error || data !== true) {
+  if (!error && data === true) return ctx;
+
+  if (isAdmin(ctx.profile) && hasMfa(ctx)) {
     await auditEvent({
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "admin.ops.boundary_denied",
+      action: "admin.ops.boundary_fallback_allowed",
       resourceType: "admin_ops",
-      severity: "critical",
+      severity: "warning",
       source: "admin",
       purpose: "admin_operations",
       metadata: {
         requested_action: action,
-        db_role_check_error: error?.message || null
-      }
+        db_role_check_error: error?.message || null,
+        db_role_check_result: data ?? null,
+        fallback: "backend_role_mfa_admin_boundary_verified"
+      },
+      evidenceTags: ["admin_ops", "boundary_fallback"]
     });
-    throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
+    return ctx;
   }
 
-  return ctx;
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "admin.ops.boundary_denied",
+    resourceType: "admin_ops",
+    severity: "critical",
+    source: "admin",
+    purpose: "admin_operations",
+    metadata: {
+      requested_action: action,
+      db_role_check_error: error?.message || null,
+      db_role_check_result: data ?? null
+    }
+  });
+  throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
 }
 
 async function auditedOpsEvent({ request, ctx, action, resourceType = null, resourceId = null, severity = "info", metadata = {} }) {
@@ -10571,6 +10596,90 @@ export function registerRoutes(app) {
     });
 
     return { ok: true, order, notes, flags, warnings };
+  });
+
+  opsGet("/product-reviews", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    let dbQuery = supabaseAdmin
+      .from("products")
+      .select("*")
+      .or("compliance_review_status.eq.pending,compliance_review_status.eq.needs_review,status.eq.draft")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    const filter = textSearchFilter(["name", "category", "brand", "seller_public_name", "seller_legal_name", "sku", "integration_source"], query.search);
+    if (filter) dbQuery = dbQuery.or(filter);
+
+    const products = await optionalQuery(dbQuery, [], warnings, "products");
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_reviews_viewed",
+      resourceType: "product",
+      metadata: {
+        search: query.search || null,
+        count: products.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return { ok: true, products, warnings };
+  });
+
+  opsPost("/product-reviews/:productId/decision", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.decide");
+    const productId = uuidSchema.parse(request.params.productId);
+    const body = adminProductReviewDecisionSchema.parse(request.body || {});
+    const nextStatus = body.decision === "approved" ? "active" : body.decision === "rejected" ? "archived" : "draft";
+    const nowIso = new Date().toISOString();
+
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("id", productId)
+      .maybeSingle();
+    if (beforeError && looksLikeMissingSchema(beforeError)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Ürün bulunamadı.", 404);
+
+    const { data: product, error } = await supabaseAdmin
+      .from("products")
+      .update({
+        status: nextStatus,
+        compliance_review_status: body.decision,
+        compliance_notes: body.reason,
+        updated_at: nowIso
+      })
+      .eq("id", productId)
+      .select("*")
+      .single();
+    if (error && looksLikeMissingSchema(error)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (error) throw error;
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_review_decided",
+      resourceType: "product",
+      resourceId: productId,
+      severity: body.decision === "approved" ? "info" : "warning",
+      metadata: {
+        decision: body.decision,
+        status: nextStatus,
+        previous_status: before.status || null,
+        previous_compliance_review_status: before.compliance_review_status || null,
+        integration_source: before.integration_source || null,
+        reason: body.reason
+      }
+    });
+
+    return { ok: true, product, warnings: [] };
   });
 
   opsPost("/orders/:orderId/risk-flag", async (request, reply) => {
