@@ -346,7 +346,17 @@
       const payload = await api("/v1/control-center/owner-preflight");
       return ownerPreflightAccessDiagnosis(payload, fallbackDiagnosis);
     } catch (error) {
-      return fallbackDiagnosis;
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "Owner preflight API yanıtı alınamadı.",
+        helper: publicError(error, "Owner doğrulaması backend'e ulaşamadı. API, CORS, Cloudflare veya oturum tokenı kontrol edilmeli."),
+        steps: [
+          "Sayfayı yenile ve tekrar dene.",
+          "MFA2 tamamlandıysa owner-preflight API çağrısı backend'e ulaşmalı.",
+          "Devam ederse api.allonahub.com CORS/admin host ve Cloudflare challenge durumunu kontrol et."
+        ]
+      };
     }
   }
 
@@ -480,7 +490,6 @@
         return;
       }
 
-      const profile = App.auth && App.auth.getProfile ? await App.auth.getProfile(user.id) : null;
       if (App.auth && App.auth.mfaStatus) {
         const status = await App.auth.mfaStatus();
         if (status && !status.mfaVerified) {
@@ -490,18 +499,6 @@
           }));
           return;
         }
-      }
-
-      if (!profile || !SUPER_ADMIN_ENTRY_ROLES.includes(profile.role)) {
-        const enrichedDiagnosis = await loadOwnerPreflightDiagnosis({
-          ...diagnosis,
-          message: "Bu hesap admin veya super_admin rolünde değil.",
-          helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
-          steps: ["Owner allowlist ve MFA2 adımlarını tamamla.", "Owner doğrulanırsa kendi hesabını super_admin yap."]
-        });
-        if (enrichedDiagnosis.can_open_panel && await openOwnerConsoleFromPreflight(enrichedDiagnosis.preflight_payload)) return;
-        setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
-        return;
       }
 
       const enrichedDiagnosis = await loadOwnerPreflightDiagnosis(diagnosis);
