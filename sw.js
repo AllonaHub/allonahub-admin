@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260629-partnerhost1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260629-adminlogin2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -53,9 +53,16 @@ self.addEventListener("fetch", event => {
     requestUrl.pathname === "/partner" ||
     requestUrl.pathname.startsWith("/partner/") ||
     requestUrl.pathname === "/partner-panel" ||
+    requestUrl.pathname.startsWith("/admin/") ||
     requestUrl.pathname.startsWith("/pages/partner/") ||
     requestUrl.pathname.startsWith("/pages/account/") ||
+    requestUrl.pathname === "/css/admin-ops.css" ||
+    requestUrl.pathname === "/css/super-admin.css" ||
+    requestUrl.pathname === "/js/admin-ops.js" ||
+    requestUrl.pathname === "/js/super-admin.js" ||
+    requestUrl.pathname === "/js/admin-alarm.js" ||
     requestUrl.pathname === "/js/auth.js" ||
+    requestUrl.pathname === "/js/mfa.js" ||
     requestUrl.pathname === "/js/partner-os.js" ||
     requestUrl.pathname === "/js/supabase-client.js"
   );

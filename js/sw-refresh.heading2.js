@@ -1,5 +1,5 @@
 (function () {
-  const SERVICE_WORKER_VERSION = "20260629-partnerhost1";
+  const SERVICE_WORKER_VERSION = "20260629-adminlogin2";
   const canUseServiceWorker = "serviceWorker" in navigator &&
     (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
