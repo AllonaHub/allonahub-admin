@@ -19,7 +19,9 @@
     integrations: [],
     integrationConnectors: [],
     integrationRuns: [],
+    partnerWarnings: [],
     integrationWarnings: [],
+    refundWarnings: [],
     integrationPolicy: {},
     metrics: {},
     recommendations: [],
@@ -427,6 +429,111 @@
       actions.push(["Performansı incele", "fa-chart-line", "finance", "primary"], ["Destek merkezini aç", "fa-headset", "support", ""]);
     }
     target.innerHTML = actions.slice(0, 4).map((item) => actionButton(...item)).join("");
+  }
+
+  function numeric(value) {
+    const number = Number(value || 0);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function countByStatus(items, statuses) {
+    const wanted = new Set(statuses);
+    return (items || []).filter((item) => wanted.has(String(item.status || item.request_status || "").toLowerCase())).length;
+  }
+
+  function productAttentionCount() {
+    const reviewStatuses = new Set(["pending", "needs_review", "review", "in_review"]);
+    const productStatuses = new Set(["draft", "pending", "review", "needs_review"]);
+    return (state.products || []).filter((product) => (
+      reviewStatuses.has(String(product.compliance_review_status || "").toLowerCase())
+      || productStatuses.has(String(product.status || "").toLowerCase())
+      || numeric(product.stock) <= 5
+    )).length;
+  }
+
+  function integrationAttentionCount() {
+    const warningCount = (state.integrationWarnings || []).length;
+    const integrationCount = countByStatus(state.integrations, ["needs_attention", "disabled", "paused"]);
+    const runCount = (state.integrationRuns || []).slice(0, 8).filter((run) => {
+      const status = String(run.status || "").toLowerCase();
+      return ["failed", "partial"].includes(status) || numeric(run.failed_count) > 0 || numeric(run.warning_count) > 0;
+    }).length;
+    return warningCount + integrationCount + runCount;
+  }
+
+  function campaignAttentionCount() {
+    return countByStatus(state.campaigns, ["draft", "pending", "review", "queued"]);
+  }
+
+  function notificationBuckets() {
+    const metrics = state.metrics || {};
+    const onboarding = onboardingItems().filter((item) => !item.done).length;
+    const support = Math.max(
+      numeric(metrics.open_ticket_count),
+      countByStatus(state.tickets, ["open", "waiting", "in_progress"])
+    );
+    const refunds = numeric(metrics.refund_cancellation_pending_count) + numeric(metrics.refund_cancellation_dispute_count);
+    const settings = (state.partnerWarnings || []).length + (state.refundWarnings || []).length;
+    const buckets = {
+      onboarding: { count: onboarding, tone: "info", label: `${onboarding} kurulum adımı bekliyor` },
+      payments: { count: numeric(metrics.awaiting_payment_count), tone: "info", label: `${numeric(metrics.awaiting_payment_count)} ödeme işlemi bekliyor` },
+      products: { count: productAttentionCount(), tone: "warning", label: "Ürünlerde kontrol bekleyen kayıt var" },
+      integrations: { count: integrationAttentionCount(), tone: "warning", label: "Entegrasyon uyarısı var" },
+      orders: { count: numeric(metrics.open_order_count), tone: "info", label: `${numeric(metrics.open_order_count)} açık sipariş var` },
+      refunds: { count: refunds, tone: "critical", label: `${refunds} iade/iptal aksiyonu bekliyor` },
+      growth: { count: campaignAttentionCount(), tone: "info", label: "Kampanya onay/planlama sinyali var" },
+      support: { count: support, tone: "warning", label: `${support} açık destek bildirimi var` },
+      settings: { count: settings, tone: "critical", label: "Sistem veya veri erişimi uyarısı var" }
+    };
+    buckets.dashboard = {
+      count: Object.entries(buckets).reduce((total, [key, item]) => key === "onboarding" ? total : total + numeric(item.count), 0),
+      tone: Object.values(buckets).some((item) => item.tone === "critical" && numeric(item.count) > 0) ? "critical" : "warning",
+      label: "Panelde okunmamış operasyon bildirimi var"
+    };
+    return buckets;
+  }
+
+  function navButtonLabel(button) {
+    const label = Array.from(button.children).find((child) => (
+      child.tagName === "SPAN" && !child.classList.contains("partner-os-nav-badge")
+    ));
+    return label?.textContent?.trim() || button.dataset.panelTarget || "Bölüm";
+  }
+
+  function setNavBadge(button, notification) {
+    if (!button) return;
+    const count = numeric(notification?.count);
+    let badge = button.querySelector(".partner-os-nav-badge");
+    if (!count) {
+      if (badge) badge.remove();
+      button.classList.remove("has-notification", "has-critical-notification");
+      button.removeAttribute("data-notification-count");
+      button.removeAttribute("title");
+      button.setAttribute("aria-label", navButtonLabel(button));
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "partner-os-nav-badge";
+      badge.setAttribute("aria-hidden", "true");
+      button.appendChild(badge);
+    }
+    const label = navButtonLabel(button);
+    const display = count > 99 ? "99+" : String(count);
+    const description = notification.label || `${display} bildirim var`;
+    badge.textContent = display;
+    button.dataset.notificationCount = display;
+    button.classList.add("has-notification");
+    button.classList.toggle("has-critical-notification", notification.tone === "critical");
+    button.title = `${label}: ${description}`;
+    button.setAttribute("aria-label", `${label}: ${description}`);
+  }
+
+  function renderNotificationBadges() {
+    const buckets = notificationBuckets();
+    $all("[data-panel-target]").forEach((button) => {
+      setNavBadge(button, buckets[button.dataset.panelTarget]);
+    });
   }
 
   function renderAnnouncements() {
@@ -1295,6 +1402,7 @@
     renderTickets();
     renderCampaigns();
     renderAcademy();
+    renderNotificationBadges();
   }
 
   async function loadFallbackData() {
@@ -1336,7 +1444,9 @@
     state.integrations = [];
     state.integrationConnectors = DEFAULT_INTEGRATION_CONNECTORS;
     state.integrationRuns = [];
+    state.partnerWarnings = [];
     state.integrationWarnings = [];
+    state.refundWarnings = [];
     state.integrationPolicy = {
       apply_enabled: false,
       require_apply_confirmation: true,
@@ -1388,7 +1498,9 @@
           integrations: payload.integrations || [],
           integrationConnectors: payload.integrationConnectors || DEFAULT_INTEGRATION_CONNECTORS,
           integrationRuns: payload.integrationRuns || [],
+          partnerWarnings: payload.partnerWarnings || [],
           integrationWarnings: payload.integrationWarnings || [],
+          refundWarnings: payload.refundWarnings || [],
           integrationPolicy: payload.integrationPolicy || {},
           metrics: payload.metrics || {},
           recommendations: payload.recommendations || []
@@ -1493,6 +1605,7 @@
       renderPaymentRows();
       renderRecentPayments();
       renderKpis();
+      renderNotificationBadges();
       if (App.complianceAudit) {
         await App.complianceAudit.record({
           category: "partner",
@@ -1602,6 +1715,7 @@
     renderProducts();
     setProductView("list");
     renderKpis();
+    renderNotificationBadges();
     return created;
   }
 
@@ -1809,6 +1923,7 @@
     }
     renderProducts();
     renderKpis();
+    renderNotificationBadges();
     showBulkResult(result);
     toast(result.failed ? "Toplu yükleme tamamlandı; bazı satırlar atlandı." : "Toplu ürün yükleme tamamlandı.", result.failed ? "warning" : "success");
   }
@@ -1984,6 +2099,7 @@
         toast(`Ürün çekme tamamlandı: ${integrationRunSummary(payload.run)} Ürünlerim ve admin onay ekranı yenilendi.`);
       } else {
         renderIntegrationRuns();
+        renderNotificationBadges();
         toast(`Önizleme tamamlandı: ${integrationRunSummary(payload.run)} Kataloğa yazmak için Ürünleri Çek butonunu kullan.`);
       }
     } catch (error) {
@@ -2043,6 +2159,7 @@
       state.metrics.open_ticket_count = state.tickets.filter((item) => ["open", "waiting"].includes(item.status)).length;
       renderTickets();
       renderKpis();
+      renderNotificationBadges();
       if (App.complianceAudit) {
         await App.complianceAudit.record({
           category: "support",
@@ -2087,6 +2204,7 @@
     renderCampaigns();
     renderActionCenter();
     renderOnboarding();
+    renderNotificationBadges();
     form.reset();
     toast("Kampanya planı oluşturuldu ve onay akışına hazırlandı.");
     if (App.complianceAudit) {
@@ -2142,6 +2260,7 @@
     renderKpis();
     renderActionCenter();
     renderRefundCancellations();
+    renderNotificationBadges();
   }
 
   async function runRefundDecision(orderId, action) {

@@ -147,6 +147,7 @@
 }
 
 .partner-os-menu button {
+  position: relative;
   width: 100%;
   justify-content: flex-start;
   padding: 0 12px;
@@ -156,6 +157,61 @@
   width: 20px;
   color: var(--ah-primary);
   text-align: center;
+}
+
+.partner-os-nav-badge {
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--ah-accent) 36%, transparent);
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ah-accent) 16%, var(--ah-bg-strong));
+  color: var(--ah-accent);
+  font-size: 0.72rem;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ah-bg-strong) 72%, transparent);
+}
+
+.partner-os-menu button.has-notification {
+  border-color: color-mix(in srgb, var(--ah-accent) 46%, var(--ah-line));
+}
+
+.partner-os-menu button.has-notification::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ah-accent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ah-accent) 42%, transparent);
+  animation: partner-os-notification-pulse 1.9s ease-out infinite;
+}
+
+.partner-os-menu button.has-critical-notification .partner-os-nav-badge {
+  border-color: rgba(255, 77, 109, 0.52);
+  background: rgba(255, 77, 109, 0.16);
+  color: #ff4d6d;
+}
+
+.partner-os-menu button.has-critical-notification::after {
+  background: #ff4d6d;
+  box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.42);
+}
+
+@keyframes partner-os-notification-pulse {
+  70% {
+    box-shadow: 0 0 0 8px rgba(255, 198, 41, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 198, 41, 0);
+  }
 }
 
 .partner-os-menu button:hover,
@@ -1549,6 +1605,20 @@
     justify-content: center;
   }
 
+  .partner-os-nav-badge {
+    position: absolute;
+    top: -6px;
+    right: -5px;
+    margin-left: 0;
+    min-width: 21px;
+    height: 21px;
+  }
+
+  .partner-os-menu button.has-notification::after {
+    top: 5px;
+    right: 5px;
+  }
+
   .partner-os-sidebar-note {
     display: none;
   }
@@ -1645,5 +1715,11 @@
 
   .partner-os-integration-row-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-os-menu button.has-notification::after {
+    animation: none;
   }
 }
