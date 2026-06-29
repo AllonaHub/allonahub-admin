@@ -4,6 +4,7 @@ const API = "https://api.cloudflare.com/client/v4";
 const token = process.env.CLOUDFLARE_API_TOKEN;
 const zoneId = process.env.CLOUDFLARE_ZONE_ID;
 const applyPartnerDns = process.env.APPLY_PARTNER_DNS === "1";
+const applyApiWafOnly = process.env.APPLY_API_WAF_ONLY === "1";
 
 if (!token || !zoneId) {
   console.error("Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID.");
@@ -322,6 +323,12 @@ const cacheRules = [{
     }
   }
 }];
+
+if (applyApiWafOnly) {
+  await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
+  console.log("Cloudflare AllonaHub API WAF rules applied.");
+  process.exit(0);
+}
 
 if (applyPartnerDns) {
   await upsertDnsRecord({
