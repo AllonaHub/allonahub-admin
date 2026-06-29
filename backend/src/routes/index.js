@@ -5105,15 +5105,15 @@ async function fetchTrendyolRows(secrets, limit) {
   const supplierId = String(secrets.SUPPLIER_ID || "").trim();
   const apiKey = String(secrets.API_KEY || "").trim();
   const apiSecret = String(secrets.API_SECRET || "").trim();
-  const url = new URL(`https://api.trendyol.com/sapigw/suppliers/${encodeURIComponent(supplierId)}/products`);
-  url.searchParams.set("approved", "true");
+  const url = new URL(`https://apigw.trendyol.com/integration/product/sellers/${encodeURIComponent(supplierId)}/products/approved`);
+  url.searchParams.set("supplierId", supplierId);
   url.searchParams.set("page", "0");
-  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 200)));
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
   const response = await fetchWithTimeout(url.href, {
     headers: {
       Accept: "application/json",
       Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
-      "User-Agent": `AllonaHub-PartnerIntegration/${supplierId}`
+      "User-Agent": `${supplierId} - AllonaHub`
     }
   });
   if (!response.ok) throw httpError(`Trendyol ürünleri okunamadı: HTTP ${response.status}`, 502);
