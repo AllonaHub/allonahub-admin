@@ -12,6 +12,7 @@ const APP_SHELL = [
   "./js/supabase-client.js?v=20260629-partnerhost1",
   "./js/auth.js?v=20260629-partnerhost1",
   "./js/layout.v3.js?v=20260628-banner2",
+  "./js/subdomain-router.js?v=20260629-subdomains1",
   "./js/platform.js?v=20260629-partnerhost1",
   "./js/sw-refresh.heading2.js?v=20260629-partnerhost1",
   "./js/privacy-consent.js?v=20260629-partnerhost1",

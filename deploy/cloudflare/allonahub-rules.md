@@ -95,6 +95,84 @@ API ile DNS dahil uygulamak icin token'da Zone DNS Edit ve Zone Rulesets Edit ye
 APPLY_PARTNER_DNS=1 node deploy/cloudflare/apply-allonahub-rules.mjs
 ```
 
+## Modül Subdomainleri
+
+AllonaHub modülleri wildcard DNS ile tek altyapıya yönlendirilir. Cloudflare DNS kaydı:
+
+```text
+CNAME *.allonahub.com -> allonahub.com
+Proxy: on
+```
+
+API ile DNS dahil uygulamak için:
+
+```bash
+APPLY_WILDCARD_DNS=1 node deploy/cloudflare/apply-allonahub-rules.mjs
+```
+
+Partner DNS ve modül wildcard DNS birlikte uygulanacaksa:
+
+```bash
+APPLY_PARTNER_DNS=1 APPLY_WILDCARD_DNS=1 node deploy/cloudflare/apply-allonahub-rules.mjs
+```
+
+Kanonik modül girişleri:
+
+| Subdomain | Kanonik sayfa |
+| --- | --- |
+| `admin.allonahub.com` | `/admin/index.html` |
+| `owner.allonahub.com` | `/admin/super-admin.html` |
+| `superadmin.allonahub.com` | `/admin/super-admin.html` |
+| `partner.allonahub.com` | `/pages/partner/partner.html` |
+| `checkout.allonahub.com` | `/pages/commerce/guvenli-odeme.html` |
+| `legal.allonahub.com` | `/legal/index.html` |
+| `wallet.allonahub.com` | `/pages/wallet/hp-nedir.html` |
+| `account.allonahub.com` | `/pages/account/user.html` |
+| `shop.allonahub.com` | `/pages/commerce/allonashop.html` |
+| `yemek.allonahub.com` | `/pages/commerce/allonayemek.html` |
+| `market.allonahub.com` | `/pages/commerce/allonamarket.html` |
+| `taksi.allonahub.com` | `/pages/ecosystem/allonataksi.html` |
+| `avm.allonahub.com` | `/pages/ecosystem/allonaavm.html` |
+| `seyahat.allonahub.com` | `/pages/ecosystem/allonaseyahat.html` |
+| `emlak.allonahub.com` | `/pages/ecosystem/allonagayrimenkul.html` |
+| `denizcilik.allonahub.com` | `/pages/ecosystem/allonadenizcilik.html` |
+| `hukuk.allonahub.com` | `/pages/ecosystem/allonahukuk.html` |
+| `danismanlik.allonahub.com` | `/pages/ecosystem/allonadanismanlik.html` |
+| `egitim.allonahub.com` | `/pages/ecosystem/allonaegitim.html` |
+| `kariyer.allonahub.com` | `/pages/career/allonakariyer.html` |
+| `finans.allonahub.com` | `/pages/ecosystem/allonafinans.html` |
+| `otomotiv.allonahub.com` | `/pages/ecosystem/allonaotomotiv.html` |
+| `eglence.allonahub.com` | `/pages/ecosystem/allonaeglence.html` |
+| `pet.allonahub.com` | `/pages/ecosystem/allonaevcilhayvan.html` |
+| `teknoloji.allonahub.com` | `/pages/ecosystem/allonateknoloji.html` |
+| `spor.allonahub.com` | `/pages/ecosystem/allonasporfitness.html` |
+| `guzellik.allonahub.com` | `/pages/ecosystem/allonaguzellik.html` |
+| `sigorta.allonahub.com` | `/pages/ecosystem/allonasigorta.html` |
+| `kurye.allonahub.com` | `/pages/ecosystem/allonakurye.html` |
+| `evhizmetleri.allonahub.com` | `/pages/ecosystem/allonaevhizmetleri.html` |
+| `lojistik.allonahub.com` | `/pages/ecosystem/allonalojistik.html` |
+| `nakliye.allonahub.com` | `/pages/ecosystem/allonanakliye.html` |
+| `organizasyon.allonahub.com` | `/pages/ecosystem/allonaorganizasyon.html` |
+| `tarim.allonahub.com` | `/pages/ecosystem/allonatarim.html` |
+| `insaat.allonahub.com` | `/pages/ecosystem/allonainsaat.html` |
+| `muhendislik.allonahub.com` | `/pages/ecosystem/allonamuhendislik.html` |
+| `trade.allonahub.com` | `/pages/ecosystem/allonatrade.html` |
+| `otelcilik.allonahub.com` | `/pages/ecosystem/allonaotelcilik.html` |
+| `saglik.allonahub.com` | `/pages/ecosystem/allonasaglik.html` |
+
+Frontend tarafinda `js/subdomain-router.js` bu haritayi tarayarak wildcard DNS altindaki kok istekleri dogru kanonik sayfaya tasir. Cloudflare dynamic redirect kurallari da ayni kok girisleri origin'e dusmeden 301 ile kanonik sayfaya yonlendirir.
+
+Canli kontrol komutlari:
+
+```bash
+curl -I https://shop.allonahub.com/
+curl -I https://yemek.allonahub.com/
+curl -I https://market.allonahub.com/
+curl -I https://partner.allonahub.com/panel
+```
+
+Supabase Auth kullaniliyorsa her yeni subdomain icin redirect URL allowlist'i de kontrol edilmelidir. Ortak oturum deneyimi istenirse sonraki fazda merkezi auth/SSO veya server cookie mimarisi tasarlanmalidir.
+
 ## WAF Notu
 
 `/checkout.html` istegi canlida `cf-mitigated: challenge` ile kesiliyor. Redirect rule uygulaninca istek origin'e ve eski checkout path'ine dusmeden guvenli odeme sayfasina aktarilmalidir. Challenge devam ederse WAF Custom Rule icinde bu path'i challenge aksiyonundan haric tutan kural sirasi duzenlenmelidir.

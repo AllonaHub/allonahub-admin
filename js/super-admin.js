@@ -117,6 +117,24 @@
     return false;
   }
 
+  async function requireOwnerEntry() {
+    if (!App.auth || !App.auth.requireAuth) throw new Error("Oturum modülü yüklenemedi.");
+    const user = await App.auth.requireAuth();
+    if (!user) return null;
+    let profile = null;
+    if (App.auth.getProfile) {
+      profile = await App.auth.getProfile(user.id).catch(() => null);
+    }
+    return {
+      user,
+      profile: profile || {
+        id: user.id,
+        email: user.email || "",
+        role: "owner_candidate"
+      }
+    };
+  }
+
   function loginFallback(message) {
     return `
       <main class="sa-main">
@@ -2552,7 +2570,7 @@
   }
 
   async function initOwnerConsole() {
-    state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
+    state.access = await requireOwnerEntry();
     if (!state.access) return;
     if (await redirectToMfaForPrivilegedSession()) return;
     bindOwnerConsole();
@@ -2665,7 +2683,7 @@
       return;
     }
     try {
-      state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
+      state.access = await requireOwnerEntry();
       if (!state.access) return;
       if (await redirectToMfaForPrivilegedSession()) return;
       const roleTarget = $("[data-sa-role]");

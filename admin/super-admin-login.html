@@ -38,7 +38,7 @@
   <script src="../js/config.js?v=20260623-mfa2"></script>
   <script src="../js/core.js?v=20260629-media1"></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
-  <script src="../js/auth.js?v=20260629-superlogin1"></script>
+  <script src="../js/auth.js?v=20260629-admingate1"></script>
   <script>
     (function () {
       const App = window.Allona = window.Allona || {};
@@ -62,10 +62,9 @@
           const data = new FormData(form);
           const result = await App.auth.signIn(data.get("email"), data.get("password"));
           const user = result && result.user || await App.auth.getUser();
-          const profile = user ? await App.auth.getProfile(user.id) : null;
-          if (!profile || !["admin", "super_admin"].includes(profile.role)) {
-            await App.auth.signOut({ scope: "local", redirect: false }).catch(function () {});
-            throw new Error("Bu hesap süper admin/owner giriş kapısı için yetkili değil.");
+          const profile = user ? await App.auth.getProfile(user.id).catch(function () { return null; }) : null;
+          if (profile && !["admin", "super_admin"].includes(profile.role)) {
+            setStatus("Oturum alındı. Owner kilidi backend tarafından doğrulanacak.", "warning");
           }
 
           const mfa = await App.auth.mfaStatus();

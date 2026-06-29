@@ -5,6 +5,7 @@ const token = process.env.CLOUDFLARE_API_TOKEN;
 const zoneId = process.env.CLOUDFLARE_ZONE_ID;
 const applyPartnerDns = process.env.APPLY_PARTNER_DNS === "1";
 const applyApiWafOnly = process.env.APPLY_API_WAF_ONLY === "1";
+const applyWildcardDns = process.env.APPLY_WILDCARD_DNS === "1" || process.env.APPLY_MODULE_DNS === "1";
 
 if (!token || !zoneId) {
   console.error("Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID.");
@@ -69,9 +70,76 @@ async function upsertEntrypoint(phase, name, rules, options = {}) {
 }
 
 const hostExpression = '(http.host eq "allonahub.com" or http.host eq "www.allonahub.com")';
+const subdomainHostExpression = 'ends_with(http.host, ".allonahub.com")';
 const partnerHostExpression = 'http.host eq "partner.allonahub.com"';
-const publicHostExpression = `(${hostExpression} or ${partnerHostExpression})`;
+const publicHostExpression = `(${hostExpression} or ${subdomainHostExpression})`;
 const apiHostExpression = 'http.host eq "api.allonahub.com"';
+
+const MODULE_SUBDOMAIN_ROUTES = [
+  { key: "app", hosts: ["app"], target: "/index.html" },
+  { key: "admin", hosts: ["admin"], target: "/admin/index.html" },
+  { key: "owner", hosts: ["owner", "superadmin", "super-admin"], target: "/admin/super-admin.html" },
+  { key: "partner", hosts: ["partner", "seller", "satici"], target: "/pages/partner/partner.html" },
+  { key: "checkout", hosts: ["checkout", "odeme"], target: "/pages/commerce/guvenli-odeme.html" },
+  { key: "legal", hosts: ["legal", "yasal"], target: "/legal/index.html" },
+  { key: "wallet", hosts: ["wallet", "hp"], target: "/pages/wallet/hp-nedir.html" },
+  { key: "account", hosts: ["account", "hesap"], target: "/pages/account/user.html" },
+  { key: "shop", hosts: ["shop", "allonashop", "magaza"], target: "/pages/commerce/allonashop.html" },
+  { key: "food", hosts: ["yemek", "food", "allonayemek"], target: "/pages/commerce/allonayemek.html" },
+  { key: "market", hosts: ["market", "allonamarket"], target: "/pages/commerce/allonamarket.html" },
+  { key: "taxi", hosts: ["taksi", "taxi", "allonataksi"], target: "/pages/ecosystem/allonataksi.html" },
+  { key: "mall", hosts: ["avm", "mall"], target: "/pages/ecosystem/allonaavm.html" },
+  { key: "travel", hosts: ["seyahat", "travel", "turizm"], target: "/pages/ecosystem/allonaseyahat.html" },
+  { key: "real-estate", hosts: ["emlak", "gayrimenkul"], target: "/pages/ecosystem/allonagayrimenkul.html" },
+  { key: "maritime", hosts: ["denizcilik", "maritime"], target: "/pages/ecosystem/allonadenizcilik.html" },
+  { key: "legal-services", hosts: ["hukuk"], target: "/pages/ecosystem/allonahukuk.html" },
+  { key: "consulting", hosts: ["danismanlik", "consulting"], target: "/pages/ecosystem/allonadanismanlik.html" },
+  { key: "education", hosts: ["egitim", "education"], target: "/pages/ecosystem/allonaegitim.html" },
+  { key: "career", hosts: ["kariyer", "career"], target: "/pages/career/allonakariyer.html" },
+  { key: "finance", hosts: ["finans", "finance"], target: "/pages/ecosystem/allonafinans.html" },
+  { key: "automotive", hosts: ["otomotiv", "auto", "arac"], target: "/pages/ecosystem/allonaotomotiv.html" },
+  { key: "events", hosts: ["eglence", "etkinlik", "events"], target: "/pages/ecosystem/allonaeglence.html" },
+  { key: "pet", hosts: ["pet", "evcilhayvan"], target: "/pages/ecosystem/allonaevcilhayvan.html" },
+  { key: "technology", hosts: ["teknoloji", "tech"], target: "/pages/ecosystem/allonateknoloji.html" },
+  { key: "sports-fitness", hosts: ["spor", "fitness", "sporfitness"], target: "/pages/ecosystem/allonasporfitness.html" },
+  { key: "beauty", hosts: ["guzellik", "kozmetik", "beauty"], target: "/pages/ecosystem/allonaguzellik.html" },
+  { key: "insurance", hosts: ["sigorta", "insurance"], target: "/pages/ecosystem/allonasigorta.html" },
+  { key: "courier", hosts: ["kurye", "teslimat"], target: "/pages/ecosystem/allonakurye.html" },
+  { key: "home-services", hosts: ["evhizmetleri", "usta"], target: "/pages/ecosystem/allonaevhizmetleri.html" },
+  { key: "logistics", hosts: ["lojistik", "kargo"], target: "/pages/ecosystem/allonalojistik.html" },
+  { key: "moving", hosts: ["nakliye"], target: "/pages/ecosystem/allonanakliye.html" },
+  { key: "organization", hosts: ["organizasyon", "dugun"], target: "/pages/ecosystem/allonaorganizasyon.html" },
+  { key: "agriculture", hosts: ["tarim", "agriculture"], target: "/pages/ecosystem/allonatarim.html" },
+  { key: "construction", hosts: ["insaat", "yapi"], target: "/pages/ecosystem/allonainsaat.html" },
+  { key: "engineering", hosts: ["muhendislik", "engineering"], target: "/pages/ecosystem/allonamuhendislik.html" },
+  { key: "trade", hosts: ["trade", "ticaret"], target: "/pages/ecosystem/allonatrade.html" },
+  { key: "hospitality", hosts: ["otelcilik", "otel", "hotel"], target: "/pages/ecosystem/allonaotelcilik.html" },
+  { key: "health", hosts: ["saglik", "health"], target: "/pages/ecosystem/allonasaglik.html" }
+];
+
+function expressionSet(values) {
+  return `{${values.map((value) => `"${value}"`).join(" ")}}`;
+}
+
+const moduleSubdomainRedirectRules = MODULE_SUBDOMAIN_ROUTES
+  .filter((route) => route.target !== "/index.html")
+  .map((route) => {
+    const canonicalHost = `${route.hosts[0]}.allonahub.com`;
+    const hostNames = route.hosts.map((host) => `${host}.allonahub.com`);
+    return {
+      ref: `allonahub-subdomain-${route.key}-entry`,
+      description: `Route ${canonicalHost} to ${route.target}`,
+      expression: `http.host in ${expressionSet(hostNames)} and http.request.uri.path in {"/" "/index.html"}`,
+      action: "redirect",
+      action_parameters: {
+        from_value: {
+          status_code: 301,
+          target_url: { value: `https://${canonicalHost}${route.target}` },
+          preserve_query_string: true
+        }
+      }
+    };
+  });
 
 async function upsertDnsRecord(record) {
   const query = new URLSearchParams({
@@ -116,6 +184,7 @@ const headerRules = [{
 }];
 
 const redirectRules = [
+  ...moduleSubdomainRedirectRules,
   {
     ref: "allonahub-main-partner-entry-to-subdomain",
     description: "Move partner entry pages to partner subdomain",
@@ -340,9 +409,23 @@ if (applyPartnerDns) {
   });
 }
 
+if (applyWildcardDns) {
+  await upsertDnsRecord({
+    type: "CNAME",
+    name: "*.allonahub.com",
+    content: "allonahub.com",
+    proxied: true,
+    comment: "AllonaHub wildcard module subdomains"
+  });
+}
+
 await upsertEntrypoint("http_response_headers_transform", "AllonaHub response header rules", headerRules);
 await upsertEntrypoint("http_request_dynamic_redirect", "AllonaHub redirect rules", redirectRules);
 await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
 await upsertEntrypoint("http_request_cache_settings", "AllonaHub cache rules", cacheRules, { prepend: true });
 
-console.log(`Cloudflare AllonaHub rules applied.${applyPartnerDns ? " Partner DNS applied." : " Partner DNS skipped; set APPLY_PARTNER_DNS=1 to create it."}`);
+console.log([
+  "Cloudflare AllonaHub rules applied.",
+  applyPartnerDns ? "Partner DNS applied." : "Partner DNS skipped; set APPLY_PARTNER_DNS=1 to create it.",
+  applyWildcardDns ? "Wildcard module DNS applied." : "Wildcard module DNS skipped; set APPLY_WILDCARD_DNS=1 to create it."
+].join(" "));
