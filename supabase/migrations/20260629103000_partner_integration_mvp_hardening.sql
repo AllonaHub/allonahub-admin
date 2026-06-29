@@ -184,5 +184,29 @@ create index if not exists products_compliance_review_idx
 create index if not exists products_partner_integration_source_idx
   on public.products(partner_id, integration_source, integration_external_id);
 
+do $$
+begin
+  if to_regclass('public.products_partner_integration_external_unique_idx') is null then
+    if exists (
+      select 1
+      from public.products
+      where partner_id is not null
+        and integration_source is not null
+        and integration_external_id is not null
+      group by partner_id, integration_source, integration_external_id
+      having count(*) > 1
+    ) then
+      raise notice 'products_partner_integration_external_unique_idx skipped because duplicate imported products already exist.';
+    else
+      execute $sql$
+        create unique index products_partner_integration_external_unique_idx
+          on public.products(partner_id, integration_source, integration_external_id)
+          where integration_source is not null
+            and integration_external_id is not null
+      $sql$;
+    end if;
+  end if;
+end $$;
+
 create index if not exists partner_integrations_last_test_idx
   on public.partner_integrations(partner_id, last_test_status, last_test_at desc);
