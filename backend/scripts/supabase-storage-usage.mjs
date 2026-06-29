@@ -1,9 +1,34 @@
 #!/usr/bin/env node
 
-import { createClient } from "@supabase/supabase-js";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.ALLONA_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ALLONA_SUPABASE_SERVICE_ROLE_KEY;
+function parseEnvValue(value) {
+  return String(value || "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+function loadEnvFile(filePath) {
+  if (!filePath || !existsSync(filePath)) return false;
+  const text = readFileSync(filePath, "utf8");
+  text.split(/\r?\n/).forEach((line) => {
+    const match = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (!match) return;
+    const [, key, rawValue] = match;
+    if (!process.env[key]) process.env[key] = parseEnvValue(rawValue);
+  });
+  return true;
+}
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+[
+  process.env.ENV_FILE,
+  resolve(process.cwd(), "deploy/hetzner/.env.production"),
+  resolve(repoRoot, "deploy/hetzner/.env.production")
+].some(loadEnvFile);
+
+const supabaseUrl = parseEnvValue(process.env.SUPABASE_URL || process.env.ALLONA_SUPABASE_URL).replace(/\/$/, "");
+const serviceRoleKey = parseEnvValue(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.ALLONA_SUPABASE_SERVICE_ROLE_KEY);
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running this script.");
@@ -38,9 +63,11 @@ if (retentionDays && (!Number.isFinite(retentionDays) || retentionDays < 1 || re
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { persistSession: false, autoRefreshToken: false }
-});
+const storageApiUrl = `${supabaseUrl}/storage/v1`;
+const authHeaders = {
+  apikey: serviceRoleKey,
+  Authorization: `Bearer ${serviceRoleKey}`
+};
 
 function bytes(value) {
   const size = Number(value || 0);
@@ -64,19 +91,56 @@ async function listPath(bucket, path = "") {
   const limit = 1000;
 
   while (true) {
-    const { data, error } = await supabase.storage.from(bucket).list(path, {
-      limit,
-      offset,
-      sortBy: { column: "name", order: "asc" }
+    const items = await storageRequest(`/object/list/${encodeURIComponent(bucket)}`, {
+      method: "POST",
+      body: {
+        prefix: path,
+        limit,
+        offset,
+        sortBy: { column: "name", order: "asc" }
+      }
     });
-    if (error) throw new Error(`${bucket}/${path}: ${error.message}`);
-    const items = data || [];
     rows.push(...items);
     if (items.length < limit) break;
     offset += limit;
   }
 
   return rows;
+}
+
+async function storageRequest(path, options = {}) {
+  const response = await fetch(`${storageApiUrl}${path}`, {
+    method: options.method || "GET",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+  const text = await response.text();
+  let payload = null;
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch {
+    payload = text;
+  }
+  if (!response.ok) {
+    const message = typeof payload === "string" ? payload : (payload?.message || payload?.error || response.statusText);
+    throw new Error(`${options.method || "GET"} ${path}: ${message}`);
+  }
+  return payload || [];
+}
+
+async function listBuckets() {
+  return storageRequest("/bucket");
+}
+
+async function removeStorageObjects(bucket, paths) {
+  return storageRequest(`/object/${encodeURIComponent(bucket)}`, {
+    method: "DELETE",
+    body: { prefixes: paths }
+  });
 }
 
 async function walkBucket(bucket, path = "") {
@@ -100,8 +164,7 @@ async function walkBucket(bucket, path = "") {
   return files;
 }
 
-const { data: bucketRows, error: bucketError } = await supabase.storage.listBuckets();
-if (bucketError) throw new Error(bucketError.message);
+const bucketRows = await listBuckets();
 
 const buckets = (bucketRows || [])
   .map((bucket) => bucket.name)
@@ -146,8 +209,7 @@ for (const bucket of new Set(deleteCandidates.map((file) => file.bucket))) {
   const paths = deleteCandidates.filter((file) => file.bucket === bucket).map((file) => file.path);
   for (let index = 0; index < paths.length; index += 100) {
     const batch = paths.slice(index, index + 100);
-    const { error } = await supabase.storage.from(bucket).remove(batch);
-    if (error) throw new Error(`${bucket}: ${error.message}`);
+    await removeStorageObjects(bucket, batch);
     console.log(`${bucket}: deleted ${batch.length} objects`);
   }
 }
