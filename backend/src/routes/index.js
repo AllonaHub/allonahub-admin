@@ -7182,76 +7182,118 @@ export function registerRoutes(app) {
     const business = await ensurePartnerBusiness(ctx, request);
     const ownerId = business.owner_id || ctx.user.id;
     const isAdminUser = isAdmin(ctx.profile);
+    const partnerWarnings = [];
 
     const [
-      productsResult,
-      ordersResult,
-      locationsResult,
-      devicesResult,
-      qrCodesResult,
-      intentsResult,
-      transactionsResult,
-      payoutsResult,
-      ticketsResult
+      products,
+      orderRows,
+      locations,
+      devices,
+      qrCodes,
+      paymentIntents,
+      transactions,
+      payouts,
+      tickets
     ] = await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("*")
-        .eq("partner_id", ownerId)
-        .order("created_at", { ascending: false })
-        .limit(200),
-      supabaseAdmin
-        .from("orders")
-        .select("*, order_items(*, product:products(id, name, category, partner_id))")
-        .order("created_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_locations")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("is_default", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_devices")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_qr_codes")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_payment_intents")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_transactions")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("occurred_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_payouts")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("period_end", { ascending: false })
-        .limit(24),
-      supabaseAdmin
-        .from("partner_support_tickets")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false })
-        .limit(80)
+      optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_id", ownerId)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        [],
+        partnerWarnings,
+        "products"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("*, order_items(*, product:products(id, name, category, partner_id))")
+          .order("created_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_locations")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("is_default", { ascending: false })
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_locations"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_devices")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_devices"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_qr_codes")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_qr_codes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_payment_intents")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "partner_payment_intents"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_transactions")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("occurred_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "partner_transactions"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_payouts")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("period_end", { ascending: false })
+          .limit(24),
+        [],
+        partnerWarnings,
+        "partner_payouts"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_support_tickets")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        partnerWarnings,
+        "partner_support_tickets"
+      )
     ]);
 
-    const results = [productsResult, ordersResult, locationsResult, devicesResult, qrCodesResult, intentsResult, transactionsResult, payoutsResult, ticketsResult];
-    const firstError = results.find((result) => result.error)?.error;
-    if (firstError) throw firstError;
-
-    const orders = summarizePartnerOrders(ordersResult.data || [], ownerId, isAdminUser, ctx.user.id);
+    const orders = summarizePartnerOrders(orderRows || [], ownerId, isAdminUser, ctx.user.id);
     const refundWarnings = [];
     const refundCancellations = await loadPartnerRefundCancellations({
       orders,
@@ -7263,12 +7305,12 @@ export function registerRoutes(app) {
     });
     const metrics = partnerMetrics({
       business,
-      products: productsResult.data || [],
+      products: products || [],
       orders,
-      paymentIntents: intentsResult.data || [],
-      transactions: transactionsResult.data || [],
-      payouts: payoutsResult.data || [],
-      tickets: ticketsResult.data || [],
+      paymentIntents: paymentIntents || [],
+      transactions: transactions || [],
+      payouts: payouts || [],
+      tickets: tickets || [],
       refundCancellations: refundCancellations.items
     });
     const integrationWarnings = [];
@@ -7333,22 +7375,24 @@ export function registerRoutes(app) {
         product_count: metrics.product_count,
         order_count: metrics.order_count,
         refund_cancellation_count: refundCancellations.summary.total,
-        integration_count: integrationRows.length
+        integration_count: integrationRows.length,
+        warning_count: partnerWarnings.length + refundWarnings.length + integrationWarnings.length
       }
     });
 
     return {
       ok: true,
       business,
-      products: productsResult.data || [],
+      products: products || [],
       orders,
-      locations: locationsResult.data || [],
-      devices: devicesResult.data || [],
-      qrCodes: qrCodesResult.data || [],
-      paymentIntents: intentsResult.data || [],
-      transactions: transactionsResult.data || [],
-      payouts: payoutsResult.data || [],
-      tickets: ticketsResult.data || [],
+      locations: locations || [],
+      devices: devices || [],
+      qrCodes: qrCodes || [],
+      paymentIntents: paymentIntents || [],
+      transactions: transactions || [],
+      payouts: payouts || [],
+      tickets: tickets || [],
+      partnerWarnings,
       refundCancellations: refundCancellations.items,
       refundCancellationSummary: refundCancellations.summary,
       refundWarnings,
@@ -7358,7 +7402,7 @@ export function registerRoutes(app) {
       integrationWarnings,
       integrationPolicy: { ...partnerIntegrationPolicy(), partner_plan_tier: partnerIntegrationPlanTier(business) },
       metrics,
-      recommendations: partnerRecommendations(metrics, devicesResult.data || [])
+      recommendations: partnerRecommendations(metrics, devices || [])
     };
   });
 
