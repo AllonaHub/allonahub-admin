@@ -123,6 +123,7 @@
 }
 
 .partner-os-menu button,
+.partner-os-menu a,
 .partner-os-actions a,
 .partner-os-actions button,
 .partner-os-panel-head button,
@@ -146,7 +147,8 @@
   cursor: pointer;
 }
 
-.partner-os-menu button {
+.partner-os-menu button,
+.partner-os-menu a {
   position: relative;
   width: 100%;
   justify-content: flex-start;
@@ -215,7 +217,9 @@
 }
 
 .partner-os-menu button:hover,
-.partner-os-menu button.is-active {
+.partner-os-menu button.is-active,
+.partner-os-menu a:hover,
+.partner-os-menu a.is-active {
   border-color: color-mix(in srgb, var(--ah-primary) 56%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-primary) 16%, var(--ah-bg-strong));
   color: var(--ah-accent);
@@ -249,7 +253,8 @@
   pointer-events: auto;
 }
 
-.partner-os-submenu button {
+.partner-os-submenu button,
+.partner-os-submenu a {
   min-height: 38px;
   font-size: 0.84rem;
 }
@@ -715,6 +720,7 @@
 }
 
 .partner-os-panel-actions button,
+.partner-os-panel-actions a,
 .partner-os-upload-actions button {
   min-height: 40px;
   border: 1px solid color-mix(in srgb, var(--ah-line) 70%, transparent);
@@ -728,9 +734,11 @@
   justify-content: center;
   gap: 8px;
   padding: 0 12px;
+  text-decoration: none;
 }
 
 .partner-os-panel-actions button:first-child,
+.partner-os-panel-actions a:first-child,
 .partner-os-upload-actions button:first-child {
   border-color: transparent;
   background: var(--ah-primary);
@@ -739,6 +747,8 @@
 
 .partner-os-panel-actions button:hover,
 .partner-os-panel-actions button.is-active,
+.partner-os-panel-actions a:hover,
+.partner-os-panel-actions a.is-active,
 .partner-os-upload-actions button:hover {
   border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-primary) 16%, var(--ah-bg-strong));
@@ -1601,7 +1611,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .partner-os-menu button {
+  .partner-os-menu button,
+  .partner-os-menu a {
     justify-content: center;
   }
 
@@ -1661,6 +1672,7 @@
   .partner-os-actions a,
   .partner-os-actions button,
   .partner-os-panel-actions button,
+  .partner-os-panel-actions a,
   .partner-os-upload-actions button {
     flex: 1 1 148px;
   }
@@ -1674,7 +1686,8 @@
     margin-top: 6px;
   }
 
-  .partner-os-menu button {
+  .partner-os-menu button,
+  .partner-os-menu a {
     min-height: 50px;
     font-size: 0.82rem;
   }

@@ -26,7 +26,8 @@
     metrics: {},
     recommendations: [],
     selectedRefundId: null,
-    productView: "list"
+    productView: "list",
+    initialHashApplied: false
   };
 
   const MODULE_PROFILES = {
@@ -1511,6 +1512,7 @@
         showAlert("Partner API şu an erişilemedi; panel güvenli yerel fallback ile açıldı. Canlı yayında API aktif olduğunda tüm modüller veri çeker.");
       }
       renderAll();
+      applyInitialHash();
     } catch (error) {
       showAlert(error.message || "Bu alana erişim yetkiniz yok.", "error");
     }
@@ -1520,6 +1522,18 @@
     $all("[data-panel-section]").forEach((section) => section.classList.toggle("is-active", section.id === id));
     $all("[data-panel-target]").forEach((button) => button.classList.toggle("is-active", button.dataset.panelTarget === id));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function applyInitialHash() {
+    if (state.initialHashApplied) return;
+    state.initialHashApplied = true;
+    const hash = String(window.location.hash || "").replace(/^#/, "");
+    if (hash === "products-add") {
+      activatePanel("products");
+      setProductView("add", { focusForm: true });
+      return;
+    }
+    if (hash && document.getElementById(hash)) activatePanel(hash);
   }
 
   function paymentPreview(intent) {
