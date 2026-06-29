@@ -366,11 +366,13 @@
     const user = await getUser();
     if (user) return user;
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-    if (/\/admin\/super-admin\.html$/i.test(window.location.pathname)) {
+    const page = document.body?.dataset?.page || "";
+    const path = window.location.pathname;
+    if (page === "super-admin" || /\/admin\/super-admin\.html$/i.test(path)) {
       window.location.href = App.core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
       return null;
     }
-    if (/\/admin\/index\.html$/i.test(window.location.pathname) || /\/admin\/$/i.test(window.location.pathname)) {
+    if (page === "admin-ops" || /\/admin\/index\.html$/i.test(path) || /\/admin\/$/i.test(path)) {
       window.location.href = App.core.url(`/admin/admin-login.html?returnTo=${returnTo}`);
       return null;
     }

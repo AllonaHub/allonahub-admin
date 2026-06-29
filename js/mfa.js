@@ -71,6 +71,23 @@
     return rememberReturnTo(target);
   }
 
+  function targetPath(target) {
+    try {
+      return new URL(target, window.location.href).pathname;
+    } catch {
+      return String(target || "").split("?")[0];
+    }
+  }
+
+  function isAdminHostRoot(target) {
+    try {
+      const url = new URL(target, window.location.href);
+      return url.hostname === "admin.allonahub.com" && (url.pathname === "/" || url.pathname === "");
+    } catch {
+      return window.location.hostname === "admin.allonahub.com" && (String(target || "") === "/" || !String(target || "").trim());
+    }
+  }
+
   function qrSrc(value) {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -176,11 +193,12 @@
     const user = await App.auth.getUser();
     if (!user) {
       const target = returnTo();
-      if (/\/admin\/super-admin\.html/i.test(target)) {
+      const path = targetPath(target);
+      if (/\/admin\/super-admin\.html/i.test(path) || isAdminHostRoot(target)) {
         window.location.href = core.url(`/admin/super-admin-login.html?returnTo=${encodeURIComponent(target)}`);
         return;
       }
-      if (/\/admin\/index\.html/i.test(target) || /\/admin\/$/i.test(target)) {
+      if (/\/admin\/index\.html/i.test(path) || /\/admin\/$/i.test(path)) {
         window.location.href = core.url(`/admin/admin-login.html?returnTo=${encodeURIComponent(target)}`);
         return;
       }
