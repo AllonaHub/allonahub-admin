@@ -691,6 +691,109 @@ button {
   display: none !important;
 }
 
+.admin-login-page {
+  display: grid;
+  place-items: center;
+}
+
+.admin-login-shell {
+  width: min(520px, calc(100% - 32px));
+  padding: 32px 0;
+}
+
+.admin-login-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(7, 17, 29, 0.92);
+  box-shadow: var(--admin-shadow);
+  padding: clamp(20px, 4vw, 30px);
+}
+
+.admin-login-card .admin-brand {
+  min-width: 0;
+}
+
+.admin-login-kicker {
+  margin: 0 0 8px;
+  color: var(--admin-gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.admin-login-card h1 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: clamp(30px, 6vw, 44px);
+  line-height: 1;
+}
+
+.admin-login-card p {
+  margin: 10px 0 0;
+  color: var(--admin-muted);
+  line-height: 1.5;
+}
+
+.admin-login-field {
+  display: grid;
+  gap: 7px;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-login-field input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--admin-text);
+  outline: 0;
+  padding: 0 12px;
+}
+
+.admin-login-field input:focus {
+  border-color: var(--admin-sea);
+  box-shadow: 0 0 0 3px rgba(0, 213, 232, 0.12);
+}
+
+.admin-login-status {
+  min-height: 42px;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--admin-muted);
+  padding: 11px 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-login-status[hidden] {
+  display: none;
+}
+
+.admin-login-status[data-tone="success"] {
+  border-color: rgba(43, 214, 138, 0.42);
+  background: rgba(43, 214, 138, 0.1);
+  color: var(--admin-green);
+}
+
+.admin-login-status[data-tone="warning"] {
+  border-color: rgba(255, 180, 84, 0.42);
+  background: rgba(255, 180, 84, 0.1);
+  color: var(--admin-orange);
+}
+
+.admin-login-status[data-tone="error"] {
+  border-color: rgba(255, 92, 124, 0.48);
+  background: rgba(255, 92, 124, 0.1);
+  color: var(--admin-red);
+}
+
 @media (max-width: 1180px) {
   .admin-shell {
     width: min(calc(100% - 28px), 1760px);

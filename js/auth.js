@@ -370,6 +370,10 @@
       window.location.href = App.core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
       return null;
     }
+    if (/\/admin\/index\.html$/i.test(window.location.pathname) || /\/admin\/$/i.test(window.location.pathname)) {
+      window.location.href = App.core.url(`/admin/admin-login.html?returnTo=${returnTo}`);
+      return null;
+    }
     window.location.href = App.core.url(`/pages/account/user.html?returnTo=${returnTo}`);
     return null;
   }

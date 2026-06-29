@@ -180,6 +180,10 @@
         window.location.href = core.url(`/admin/super-admin-login.html?returnTo=${encodeURIComponent(target)}`);
         return;
       }
+      if (/\/admin\/index\.html/i.test(target) || /\/admin\/$/i.test(target)) {
+        window.location.href = core.url(`/admin/admin-login.html?returnTo=${encodeURIComponent(target)}`);
+        return;
+      }
       window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(target)}`);
       return;
     }
