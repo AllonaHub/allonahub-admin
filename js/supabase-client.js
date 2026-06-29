@@ -4,6 +4,10 @@
   const config = App.config;
   const security = App.security;
 
+  function isPasswordRecoveryType(type) {
+    return ["recovery", "password_recovery"].includes(String(type || "").toLowerCase());
+  }
+
   function hasPasswordRecoveryParams() {
     const sources = [
       new URLSearchParams(window.location.search || ""),
@@ -12,10 +16,7 @@
 
     return sources.some((params) => {
       const type = String(params.get("type") || "").toLowerCase();
-      return type === "recovery" ||
-        params.has("access_token") ||
-        params.has("refresh_token") ||
-        params.has("error_code");
+      return isPasswordRecoveryType(type);
     });
   }
 

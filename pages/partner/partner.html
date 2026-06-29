@@ -191,7 +191,7 @@ body{overflow-x:hidden}
 .section-title{align-items:flex-start;gap:10px;flex-direction:column}
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260629-partnerlogin2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260629-googleoauth1">
 </head>
 
 <body>
@@ -411,6 +411,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 const EMAILJS_SERVICE_ID = window.Allona?.config?.emailjs?.serviceId || "";
 const EMAILJS_TEMPLATE_ID = window.Allona?.config?.emailjs?.templateId || "";
 const EMAILJS_PUBLIC_KEY = window.Allona?.config?.emailjs?.publicKey || "";
+const OAUTH_RETURN_TO_KEY = "allonahub.oauth.returnTo";
 emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
 
 function apiBaseUrl(){
@@ -510,6 +511,10 @@ async function partnerLoginWithGoogle(){
   redirectUrl.searchParams.set("partnerOAuth","google");
 
   try{
+    try{
+      sessionStorage.setItem(OAUTH_RETURN_TO_KEY,redirectUrl.href);
+    }catch(error){}
+
     await verifySecurityChallenge("login");
     const { error }=await supabaseClient.auth.signInWithOAuth({
       provider:"google",
@@ -1003,7 +1008,7 @@ initPartnerGoogleCallback();
   <script src="../../js/core.js?v=20260629-media1" defer></script>
   <script src="../../js/security-challenge.js?v=20260627-partner-turnstile1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
-  <script src="../../js/platform.js?v=20260629-partnerlogin2" defer></script>
-  <script src="../../js/privacy-consent.js?v=20260629-partnerlogin2" defer></script>
+  <script src="../../js/platform.js?v=20260629-googleoauth1" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260629-googleoauth1" defer></script>
 </body>
 </html>

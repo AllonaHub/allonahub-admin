@@ -703,7 +703,7 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260629-partnerlogin2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260629-googleoauth1">
 </head>
 
 <body>
@@ -882,7 +882,7 @@ function hasPasswordRecoveryParams(){
   ];
   return sources.some(function(params){
     const type=String(params.get("type") || "").toLowerCase();
-    return type==="recovery" || params.has("access_token") || params.has("refresh_token") || params.has("error_code");
+    return type==="recovery" || type==="password_recovery";
   });
 }
 const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
@@ -907,6 +907,7 @@ function pageUrl(path){
 const SITE_URL=pageUrl("/pages/account/user-panel.html");
 const RESET_URL=pageUrl("/pages/account/reset-password.html");
 const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
+const OAUTH_RETURN_TO_KEY="allonahub.oauth.returnTo";
 let manualAuthInProgress=false;
 
 function boolParam(name){
@@ -1744,6 +1745,10 @@ async function loginWithGoogle(){
   redirectUrl.searchParams.set("returnTo",safeReturnTo("user-panel.html"));
 
   try{
+    try{
+      sessionStorage.setItem(OAUTH_RETURN_TO_KEY,redirectUrl.href);
+    }catch(error){}
+
     const turnstileToken=await securityChallengeToken("login");
     await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
 
@@ -1890,7 +1895,7 @@ document.addEventListener("click",function(e){
   <script src="../../js/core.js?v=20260629-media1" defer></script>
   <script src="../../js/security-challenge.js?v=20260624-canonical1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
-  <script src="../../js/platform.js?v=20260629-partnerlogin2" defer></script>
-<script src="../../js/privacy-consent.js?v=20260629-partnerlogin2" defer></script>
+  <script src="../../js/platform.js?v=20260629-googleoauth1" defer></script>
+<script src="../../js/privacy-consent.js?v=20260629-googleoauth1" defer></script>
 </body>
 </html>
