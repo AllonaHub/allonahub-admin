@@ -7,7 +7,7 @@
   <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260629-panel-fix2">
+  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260629-panel-fix3">
 </head>
 <body class="user-panel-page" data-level-theme="new-member">
   <div class="premium-shell">
@@ -21,9 +21,10 @@
         <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
       </a>
 
-      <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler">
+      <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler" data-notification-entry>
         <i class="fa-solid fa-bell"></i>
-        <span class="count" id="panelNotificationCount">0</span>
+        <span class="count" id="panelNotificationCount" data-notification-count hidden>0</span>
+        <span class="notification-pulse" aria-hidden="true"></span>
       </a>
     </header>
 
@@ -183,7 +184,7 @@
           <div class="account-focus-actions">
             <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profili Düzenle</a>
             <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
-            <a href="bildirimler.html"><i class="fa-solid fa-bell"></i> Bildirimler</a>
+            <a href="bildirimler.html" data-notification-entry><i class="fa-solid fa-bell"></i> Bildirimler <span class="notification-chip" data-notification-chip hidden>Yeni</span></a>
             <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
           </div>
         </section>
@@ -231,7 +232,7 @@
         <a href="user-panel.html"><i class="fa-solid fa-house-user"></i> Hesabım</a>
         <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profilimi Düzenle</a>
         <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
-        <a href="bildirimler.html"><i class="fa-solid fa-bell"></i> Bildirimler</a>
+        <a href="bildirimler.html" data-notification-entry><i class="fa-solid fa-bell"></i> Bildirimler <span class="notification-chip" data-notification-chip hidden>Yeni</span></a>
         <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
         <a href="hublar.html"><i class="fa-solid fa-layer-group"></i> HUB'larım</a>
         <a href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket"></i> Kuponlarım</a>
@@ -310,7 +311,7 @@
   <script src="../../js/config.js?v=20260627-config-central" defer></script>
   <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
   <script src="../../js/user-notifications.js?v=20260629-panel-fix2" defer></script>
-  <script src="../../js/user-panel-premium.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/user-panel-premium.js?v=20260629-panel-fix3" defer></script>
   <script src="../../js/core.js?v=20260629-media1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>

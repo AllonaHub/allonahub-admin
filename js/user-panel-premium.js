@@ -905,13 +905,35 @@
   }
 
   async function refreshNotificationCount() {
-    if (!window.AllonaUserNotifications || !currentUser) return;
+    const applyBadge = (rawCount) => {
+      const count = Math.min(99, Math.max(0, Number(rawCount || 0)));
+      const hasUnread = count > 0;
+      const label = count >= 99 ? "99+" : String(count);
+      document.querySelectorAll("[data-notification-entry]").forEach((node) => {
+        node.classList.toggle("has-unread", hasUnread);
+        node.dataset.hasNotifications = hasUnread ? "true" : "false";
+        node.setAttribute("aria-label", hasUnread ? `Bildirimler, ${label} okunmamış` : "Bildirimler");
+        const counter = node.querySelector("[data-notification-count], .count");
+        if (counter) {
+          counter.textContent = label;
+          counter.hidden = !hasUnread;
+        }
+        const chip = node.querySelector("[data-notification-chip]");
+        if (chip) {
+          chip.textContent = hasUnread ? `${label} yeni` : "Yeni";
+          chip.hidden = !hasUnread;
+        }
+      });
+    };
+    if (!window.AllonaUserNotifications || !currentUser) {
+      applyBadge(0);
+      return;
+    }
     try {
       const result = await window.AllonaUserNotifications.load({ user: currentUser, profile: currentProfile });
-      const count = Math.min(99, Number(result.unreadCount || 0));
-      setText("#panelNotificationCount", String(count));
+      applyBadge(result.unreadCount || 0);
     } catch (error) {
-      setText("#panelNotificationCount", "0");
+      applyBadge(0);
     }
   }
 
