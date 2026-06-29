@@ -380,6 +380,18 @@ function apiBaseUrl(){
   return String(window.Allona?.config?.apiBaseUrl || "").replace(/\/$/,"");
 }
 
+function partnerPageUrl(path){
+  return new URL(path, window.location.origin).href;
+}
+
+function partnerPanelUrl(){
+  return partnerPageUrl("/pages/partner/partner-panel.html");
+}
+
+function partnerLoginUrl(){
+  return partnerPageUrl("/pages/partner/partner.html");
+}
+
 function showNotice(message){
   const n=document.getElementById("notice");
   n.textContent=String(message || "");
@@ -414,12 +426,12 @@ async function verifySecurityChallenge(action){
 }
 
 function partnerPanelReturnPath(){
-  const target=new URL("partner-panel.html", window.location.href);
+  const target=new URL(partnerPanelUrl());
   return `${target.pathname}${target.search}${target.hash}`;
 }
 
 function partnerMfaUrl(){
-  const url=new URL("../account/mfa.html", window.location.href);
+  const url=new URL("/pages/account/mfa.html", window.location.origin);
   url.searchParams.set("returnTo", partnerPanelReturnPath());
   return url.href;
 }
@@ -445,7 +457,7 @@ async function enforcePartnerMfa(){
 }
 
 async function partnerLoginWithGoogle(){
-  const redirectUrl=new URL("partner.html", window.location.href);
+  const redirectUrl=new URL(partnerLoginUrl());
   redirectUrl.searchParams.set("partnerOAuth","google");
 
   try{
@@ -505,7 +517,7 @@ async function completePartnerGoogleLogin(session){
   localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
   if(await enforcePartnerMfa())return;
-  window.location.href="partner-panel.html";
+  window.location.href=partnerPanelUrl();
 }
 
 function initPartnerGoogleCallback(){
@@ -702,7 +714,7 @@ async function partnerLogin(){
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
     if(await enforcePartnerMfa())return;
-    window.location.href="partner-panel.html";
+    window.location.href=partnerPanelUrl();
 
   }catch(err){
     showNotice("Giriş sırasında hata oluştu. Lütfen tekrar deneyin.");
