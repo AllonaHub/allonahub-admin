@@ -12,7 +12,11 @@
     businesses: [],
     settings: [],
     modules: [],
-    refundCancellations: []
+    refundCancellations: [],
+    navBadgeTimer: null,
+    navBadgeRefreshing: false,
+    transientAlarmBadgeUntil: 0,
+    transientAlarmBadgeCount: 0
   };
 
   const viewLoaders = {
@@ -26,6 +30,7 @@
   };
 
   const SUPER_ADMIN_ENTRY_ROLES = ["admin", "super_admin"];
+  const OWNER_NAV_BADGE_REFRESH_MS = 60000;
 
   function $(selector, root) {
     return (root || document).querySelector(selector);
@@ -1343,6 +1348,7 @@
   async function loadCommandCenter() {
     const payload = await api("/v1/control-center/command-center");
     state.commandCenter = payload;
+    applyOwnerNavBadges(payload);
     return payload;
   }
 
@@ -1354,7 +1360,132 @@
       gitops: {}
     }, label || "Komut merkezi");
     if (!payload.__ownerWarning) state.commandCenter = payload;
+    if (!payload.__ownerWarning) applyOwnerNavBadges(payload);
     return payload;
+  }
+
+  function ownerNavButton(view) {
+    return document.querySelector(`[data-view-target="${cssEscape(view)}"]`);
+  }
+
+  function ownerBadgeCount(value) {
+    const count = Math.max(0, Number(value || 0));
+    if (!count) return "";
+    return count > 99 ? "99+" : String(count);
+  }
+
+  function ownerBadgeTone(tone) {
+    const normalized = normalizeRisk(tone);
+    if (normalized === "critical") return "critical";
+    if (normalized === "high" || normalized === "warning") return "high";
+    if (normalized === "medium") return "medium";
+    return "low";
+  }
+
+  function setOwnerNavBadge(view, count, tone, label) {
+    const button = ownerNavButton(view);
+    if (!button) return;
+    const displayCount = ownerBadgeCount(count);
+    if (!displayCount) {
+      button.removeAttribute("data-sa-badge-count");
+      button.removeAttribute("data-sa-badge-tone");
+      button.removeAttribute("data-sa-badge-label");
+      button.removeAttribute("aria-label");
+      return;
+    }
+    const text = (button.textContent || view).trim();
+    const safeTone = ownerBadgeTone(tone);
+    const safeLabel = label || `${text} için ${displayCount} yeni bildirim`;
+    button.dataset.saBadgeCount = displayCount;
+    button.dataset.saBadgeTone = safeTone;
+    button.dataset.saBadgeLabel = safeLabel;
+    button.setAttribute("aria-label", `${text}: ${safeLabel}`);
+  }
+
+  function clearOwnerNavBadges() {
+    document.querySelectorAll("[data-view-target][data-sa-badge-count]").forEach((button) => {
+      button.removeAttribute("data-sa-badge-count");
+      button.removeAttribute("data-sa-badge-tone");
+      button.removeAttribute("data-sa-badge-label");
+      button.removeAttribute("aria-label");
+    });
+  }
+
+  function releaseApprovalNeedsAttention(item) {
+    return ["pending", "approved", "failed"].includes(String(item && item.status || "").toLowerCase());
+  }
+
+  function applyOwnerNavBadges(payload) {
+    if (!payload || payload.__ownerWarning) return;
+    clearOwnerNavBadges();
+    const summary = payload.summary || {};
+    const system = payload.system_health || {};
+    const risks = payload.risks || [];
+    const moduleMap = payload.module_map || {};
+    const releaseApprovals = payload.release_approvals || [];
+    const criticalRisks = risks.filter((item) => ownerBadgeTone(item.severity) === "critical").length;
+    const highRisks = risks.filter((item) => ["critical", "high"].includes(ownerBadgeTone(item.severity))).length;
+    const releaseAttention = releaseApprovals.filter(releaseApprovalNeedsAttention).length;
+    const pendingApplications = Number(summary.pending_applications || 0);
+    const securityAlerts = Number(summary.security_alerts_24h || 0);
+    const criticalEvents = Number(summary.critical_events_sample || 0);
+    const moduleAttention = Number(moduleMap.inactive_count || 0);
+    const incidentCount = Number(system.auto_defense && system.auto_defense.recent_incident_count || 0);
+    const healthAttention = [
+      system.database && system.database !== "online",
+      system.maintenance_mode,
+      system.payments_disabled,
+      system.emergency_api_disabled,
+      incidentCount > 0
+    ].filter(Boolean).length;
+    const transientAlarmActive = Date.now() < Number(state.transientAlarmBadgeUntil || 0);
+    const transientAlarmCount = transientAlarmActive ? Number(state.transientAlarmBadgeCount || 1) : 0;
+    const alertCount = risks.length + transientAlarmCount;
+    const alertTone = criticalRisks || transientAlarmCount ? "critical" : (highRisks ? "high" : "medium");
+
+    setOwnerNavBadge("alerts", alertCount, alertTone, `${formatNumber(alertCount)} risk veya alarm sinyali`);
+    setOwnerNavBadge("security", securityAlerts + criticalEvents + transientAlarmCount, criticalEvents || transientAlarmCount ? "critical" : "high", `${formatNumber(securityAlerts)} güvenlik uyarısı / ${formatNumber(criticalEvents)} kritik olay`);
+    setOwnerNavBadge("approvals", releaseAttention, releaseAttention ? "critical" : "low", `${formatNumber(releaseAttention)} yayın onayı takip istiyor`);
+    setOwnerNavBadge("partners", pendingApplications, "high", `${formatNumber(pendingApplications)} partner başvurusu karar bekliyor`);
+    setOwnerNavBadge("module-map", moduleAttention, "medium", `${formatNumber(moduleAttention)} modül görünürlük kontrolü istiyor`);
+    setOwnerNavBadge("health", healthAttention, system.emergency_api_disabled || system.payments_disabled ? "critical" : "high", `${formatNumber(healthAttention)} sistem sağlığı uyarısı`);
+    setOwnerNavBadge("finance", system.payments_disabled ? 1 : 0, "critical", "Ödeme akışı durdurulmuş görünüyor");
+    setOwnerNavBadge("system", system.maintenance_mode || system.emergency_api_disabled ? healthAttention : 0, system.emergency_api_disabled ? "critical" : "high", "Canlı sistem bayrakları kontrol istiyor");
+
+    const workQueueAttention = releaseAttention + pendingApplications + Math.min(securityAlerts, 20) + transientAlarmCount;
+    setOwnerNavBadge("work-queue", workQueueAttention, transientAlarmCount || criticalRisks ? "critical" : "high", `${formatNumber(workQueueAttention)} takip edilecek iş veya uyarı`);
+  }
+
+  async function refreshOwnerNavBadges() {
+    if (state.navBadgeRefreshing || !document.querySelector("[data-command-output]")) return;
+    state.navBadgeRefreshing = true;
+    try {
+      const payload = await api("/v1/control-center/command-center");
+      state.commandCenter = payload;
+      applyOwnerNavBadges(payload);
+    } catch {
+      // Badges are informative only; panel data loaders show actionable errors.
+    } finally {
+      state.navBadgeRefreshing = false;
+    }
+  }
+
+  function startOwnerNavBadgeRefresh() {
+    if (state.navBadgeTimer) return;
+    if (state.commandCenter) applyOwnerNavBadges(state.commandCenter);
+    state.navBadgeTimer = window.setInterval(refreshOwnerNavBadges, OWNER_NAV_BADGE_REFRESH_MS);
+    window.addEventListener("focus", refreshOwnerNavBadges);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshOwnerNavBadges();
+    });
+    window.addEventListener("allonahub:admin-alarm-signal", (event) => {
+      const detail = event.detail || {};
+      state.transientAlarmBadgeUntil = Date.now() + 5 * 60 * 1000;
+      state.transientAlarmBadgeCount = Math.max(1, Number(detail.count || 1));
+      if (state.commandCenter) applyOwnerNavBadges(state.commandCenter);
+      setOwnerNavBadge("alerts", state.transientAlarmBadgeCount, detail.level || "critical", "Yeni güvenlik alarmı var");
+      setOwnerNavBadge("security", state.transientAlarmBadgeCount, detail.level || "critical", "Yeni güvenlik alarmı var");
+    });
   }
 
   async function loadOwnerSession() {
@@ -1520,6 +1651,7 @@
     const payload = await api(`/v1/control-center/work-queue?${query.toString()}`);
     state.workQueueItems = payload.items || [];
     const summary = payload.summary || {};
+    setOwnerNavBadge("work-queue", summary.total, summary.urgent ? "critical" : "high", `${formatNumber(summary.total)} iş kuyruğu kaydı / ${formatNumber(summary.urgent)} acil`);
     const rows = state.workQueueItems.map((item) => {
       const actionable = item.actionable === true;
       const action = actionable
@@ -1685,6 +1817,7 @@
     });
 
     const total = releaseRows.length + queueRows.length;
+    setOwnerNavBadge("approvals", total, releaseRows.length ? "critical" : "high", `${formatNumber(total)} bekleyen onay`);
     ownerSetOutput(
       ownerDataWarnings(releasePayload, queuePayload) +
       (total
@@ -1699,6 +1832,7 @@
     ownerLoading("Yayın Geçmişi");
     const payload = await ownerOptionalApi("/v1/control-center/release-approvals?limit=80", { approvals: [] }, "Yayın geçmişi");
     state.releaseHistory = payload.approvals || [];
+    setOwnerNavBadge("release-history", state.releaseHistory.filter(releaseApprovalNeedsAttention).length, "high", "Yayın geçmişinde takip isteyen kayıt var");
     const rows = state.releaseHistory.map((item) => {
       const response = item.webhook_response || {};
       const action = item.status === "pending"
@@ -1814,6 +1948,7 @@
     }, "İade ve iptal kayıtları");
     const summary = payload.summary || {};
     state.refundCancellations = payload.items || [];
+    setOwnerNavBadge("refunds", summary.action_required, summary.action_required ? "critical" : "low", `${formatNumber(summary.action_required)} iade/iptal aksiyonu gerekiyor`);
     const rows = state.refundCancellations.map((item) => {
       const isTicket = item.type === "support_signal";
       const detail = isTicket
@@ -2188,6 +2323,8 @@
     const payload = await api("/v1/control-center/partners");
     state.applications = payload.applications || [];
     state.businesses = payload.businesses || [];
+    const pendingApplications = state.applications.filter((item) => ["pending", "review", "in_review"].includes(String(item.status || "").toLowerCase())).length;
+    setOwnerNavBadge("partners", pendingApplications, "high", `${formatNumber(pendingApplications)} partner başvurusu karar bekliyor`);
     const applicationRows = state.applications.map((item) => ownerLine(
       item.company_name || item.contact_name || item.id,
       `${escape(item.email || item.phone || "-")} / durum ${escape(item.status || "-")} / ${formatDate(item.created_at)}`,
@@ -2214,6 +2351,9 @@
     const payload = await api("/v1/control-center/security");
     const securityData = payload.security || {};
     const metrics = securityData.metrics || {};
+    const securityAttention = Number(metrics.failed_auth_24h || 0) + Number(metrics.critical_events_sample || 0) + Number(metrics.suspicious_ip_count || 0);
+    setOwnerNavBadge("security", securityAttention, metrics.critical_events_sample ? "critical" : "high", `${formatNumber(securityAttention)} güvenlik sinyali`);
+    setOwnerNavBadge("alerts", securityAttention, metrics.critical_events_sample ? "critical" : "high", `${formatNumber(securityAttention)} güvenlik sinyali`);
     const ipRows = (securityData.suspicious_ips || []).map((item) => ownerLine(
       item.ip,
       `${formatNumber(item.count)} riskli olay`,
@@ -2602,6 +2742,7 @@
 
   function bindOwnerConsole() {
     state.ownerConsoleBound = true;
+    startOwnerNavBadgeRefresh();
 
     const nav = $("[data-sa-nav]");
     if (nav && nav.dataset.bound !== "true") {
@@ -2772,7 +2913,10 @@
     const refresh = $("[data-sa-refresh]");
     if (refresh && refresh.dataset.bound !== "true") {
       refresh.dataset.bound = "true";
-      refresh.addEventListener("click", reloadOwnerActiveView);
+      refresh.addEventListener("click", async () => {
+        await reloadOwnerActiveView();
+        await refreshOwnerNavBadges();
+      });
     }
 
     const signOut = $("[data-sa-signout]");

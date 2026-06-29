@@ -1114,6 +1114,68 @@ body[data-page="super-admin"] .sa-command-nav a::after {
   font-weight: 900;
 }
 
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-count] {
+  border-color: rgba(245, 200, 75, 0.34);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.055), rgba(245, 200, 75, 0.075));
+}
+
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-count]::after {
+  content: attr(data-sa-badge-count);
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 999px;
+  background: #f5c84b;
+  color: #111827;
+  box-shadow: 0 8px 18px rgba(245, 200, 75, 0.18);
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-tone="critical"] {
+  border-color: rgba(255, 77, 109, 0.62);
+  background: linear-gradient(90deg, rgba(255, 77, 109, 0.12), rgba(255, 255, 255, 0.045));
+}
+
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-tone="critical"]::after {
+  background: #ff4d6d;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 77, 109, 0.18), 0 10px 24px rgba(255, 77, 109, 0.28);
+  animation: saBadgePulse 1.5s ease-in-out infinite;
+}
+
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-tone="high"]::after {
+  background: #ffb84d;
+  color: #17120a;
+  box-shadow: 0 8px 20px rgba(255, 184, 77, 0.22);
+}
+
+body[data-page="super-admin"] .sa-command-nav button[data-sa-badge-tone="medium"]::after {
+  background: #8d7cff;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(141, 124, 255, 0.18);
+}
+
+body[data-page="super-admin"] .sa-command-nav button.is-active[data-sa-badge-count]::after {
+  border-color: rgba(7, 17, 31, 0.18);
+}
+
+@keyframes saBadgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
 body[data-page="super-admin"] .sa-command-nav button:hover,
 body[data-page="super-admin"] .sa-command-nav a:hover,
 body[data-page="super-admin"] .sa-command-nav button:focus-visible,

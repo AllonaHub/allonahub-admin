@@ -295,6 +295,21 @@
     }
   }
 
+  function emitAlarmSignal(level, items) {
+    try {
+      window.dispatchEvent(new CustomEvent("allonahub:admin-alarm-signal", {
+        detail: {
+          level,
+          count: (items || []).length || 1,
+          title: itemTitle((items || [])[0] || {}),
+          message: itemMessage((items || [])[0] || "")
+        }
+      }));
+    } catch {
+      // Badge updates are best-effort; alarm sound and overlay remain primary.
+    }
+  }
+
   function statusText() {
     const enabledText = state.enabled ? "Alarm açık" : "Alarm kapalı";
     if (state.suppressedUntil && Date.now() < state.suppressedUntil) {
@@ -530,7 +545,10 @@
       ]);
       const items = normalizeItems(payload);
       const serverIncident = overlayVisibleIncident("critical", [], statusPayload);
-      if (serverIncident) showOverlay(serverIncident);
+      if (serverIncident) {
+        showOverlay(serverIncident);
+        emitAlarmSignal("critical", [{ title: serverIncident.title, message: serverIncident.message }]);
+      }
       if (!state.baselineReady) {
         remember(items);
         state.baselineReady = true;
@@ -563,6 +581,7 @@
       state.lastLevel = level;
       state.lastMessage = `${actionable.length} yeni uyarı: ${itemTitle(first)}`;
       renderStatus();
+      emitAlarmSignal(level, actionable);
       const visibleIncident = overlayVisibleIncident(level, actionable, statusPayload);
       if (visibleIncident) showOverlay(visibleIncident);
       await playAlarm(level);
