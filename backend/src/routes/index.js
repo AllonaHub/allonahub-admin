@@ -1247,6 +1247,23 @@ async function superAdminOwnerPreflight(ctx) {
   return owner;
 }
 
+async function userOwnsActivePartnerBusiness(userId) {
+  if (!userId) return false;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("partner_businesses")
+      .select("id")
+      .eq("owner_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (error) return false;
+    return Boolean(data?.id);
+  } catch (error) {
+    return false;
+  }
+}
+
 async function requireAuth(request, options = {}) {
   const ctx = await authContext(request);
   const action = options.action || "auth.required";
@@ -1262,15 +1279,20 @@ async function requireAuth(request, options = {}) {
   }
 
   if (options.roles?.length && !hasRole(ctx.profile, options.roles)) {
-    await auditEvent({
-      request,
-      actorId: ctx.user.id,
-      actorRole: ctx.profile.role,
-      action: "authz.denied",
-      severity: "warning",
-      metadata: { action, required_roles: options.roles }
-    });
-    throw httpError("Bu işlem için yetkiniz yok.", 403);
+    if (options.roles.includes("partner") && await userOwnsActivePartnerBusiness(ctx.user.id)) {
+      ctx.profile = { ...ctx.profile, role: "partner" };
+      ctx.partnerBusinessRoleGranted = true;
+    } else {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "authz.denied",
+        severity: "warning",
+        metadata: { action, required_roles: options.roles }
+      });
+      throw httpError("Bu işlem için yetkiniz yok.", 403);
+    }
   }
 
   if (options.mfa && mfaRequiredForRole(ctx.profile.role) && !hasMfa(ctx)) {

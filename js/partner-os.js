@@ -1241,19 +1241,20 @@
 
   async function loadFallbackData() {
     const access = state.access;
+    const partnerBusiness = access.partnerBusiness || {};
     const business = {
-      id: `local-${access.user.id}`,
-      owner_id: access.user.id,
-      display_name: access.profile.full_name || access.user.email || "Allona Partner",
-      partner_code: "LOCAL-PARTNER",
-      partner_type: "shop",
-      status: "active",
-      verification_status: "pending",
-      trust_score: 72,
-      level: 1,
+      id: partnerBusiness.id || `local-${access.user.id}`,
+      owner_id: partnerBusiness.owner_id || access.user.id,
+      display_name: partnerBusiness.display_name || partnerBusiness.legal_name || access.profile.full_name || access.user.email || "Allona Partner",
+      partner_code: partnerBusiness.partner_code || "LOCAL-PARTNER",
+      partner_type: partnerBusiness.partner_type || "shop",
+      status: partnerBusiness.status || "active",
+      verification_status: partnerBusiness.verification_status || "pending",
+      trust_score: partnerBusiness.trust_score || 72,
+      level: partnerBusiness.level || 1,
       default_commission_rate: 0.12,
-      email: access.user.email,
-      phone: access.profile.phone || ""
+      email: partnerBusiness.email || access.user.email,
+      phone: partnerBusiness.phone || access.profile.phone || ""
     };
 
     const { data: products } = await App.db.client()

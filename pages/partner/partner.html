@@ -587,6 +587,35 @@ async function resolvePartnerRecord(user,email){
   const cleanEmail=normalizePartnerEmail(email || user?.email || "");
   try{
     const {data,error}=await supabaseClient
+      .from("partner_businesses")
+      .select("*")
+      .eq("owner_id",user.id)
+      .eq("status","active")
+      .limit(1)
+      .maybeSingle();
+    if(!error && data){
+      return {
+        ...data,
+        id:data.id,
+        partner_id:data.owner_id || user.id,
+        partner_business_id:data.id,
+        partner_code:data.partner_code || data.id,
+        partner_name:data.display_name || data.legal_name || cleanEmail || "Allona Partner",
+        email:data.email || cleanEmail,
+        phone:data.phone || "",
+        city:data.city || "",
+        country:data.country || "",
+        partner_type:data.partner_type || "shop",
+        score:data.trust_score || 70,
+        level:data.level || 1,
+        xp:data.xp || 0,
+        source:"partner_businesses"
+      };
+    }
+  }catch(error){}
+
+  try{
+    const {data,error}=await supabaseClient
       .from("partners")
       .select("*")
       .eq("email",cleanEmail)

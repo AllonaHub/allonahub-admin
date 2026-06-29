@@ -887,7 +887,7 @@ function hasPasswordRecoveryParams(){
 }
 const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
 if(IS_PASSWORD_RECOVERY_REDIRECT){
-  const target=new URL("reset-password.html", window.location.href);
+  const target=new URL("/pages/account/reset-password.html", window.location.origin);
   target.search=window.location.search || "";
   target.hash=window.location.hash || "";
   window.location.replace(target.href);
@@ -904,8 +904,8 @@ function pageUrl(path){
   return new URL(path, window.location.href).href;
 }
 
-const SITE_URL=pageUrl("user-panel.html");
-const RESET_URL=pageUrl("reset-password.html");
+const SITE_URL=pageUrl("/pages/account/user-panel.html");
+const RESET_URL=pageUrl("/pages/account/reset-password.html");
 const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
 let manualAuthInProgress=false;
 
@@ -1836,7 +1836,7 @@ document.addEventListener("DOMContentLoaded",function(){
   prepareAccountSwitch();
   supabaseClient.auth.onAuthStateChange(function(event){
     if(event==="PASSWORD_RECOVERY"){
-      window.location.replace("reset-password.html");
+      window.location.replace(pageUrl("/pages/account/reset-password.html"));
       return;
     }
     if(event==="SIGNED_IN" || event==="INITIAL_SESSION"){
