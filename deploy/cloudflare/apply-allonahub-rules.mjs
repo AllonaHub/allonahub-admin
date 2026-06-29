@@ -31,7 +31,7 @@ async function getEntrypoint(phase) {
   try {
     return await cf(`/zones/${zoneId}/rulesets/phases/${phase}/entrypoint`);
   } catch (error) {
-    if (/not found|does not exist/i.test(error.message)) return null;
+    if (/not found|does not exist|could not find entrypoint ruleset/i.test(error.message)) return null;
     throw error;
   }
 }
