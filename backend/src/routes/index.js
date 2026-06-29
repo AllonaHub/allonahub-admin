@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { lookup as dnsLookup } from "node:dns/promises";
 import net from "node:net";
 import { z } from "zod";
@@ -551,11 +551,14 @@ const superAdminUserUpdateSchema = z.object({
   Boolean(value.note)
 ), "En az bir kullanıcı alanı güncellenmelidir.");
 
+const PARTNER_APPROVAL_TYPES = ["shop", "food", "market", "service"];
+
 const partnerApplicationDecisionSchema = z.object({
   decision: z.enum(["review", "approved", "rejected"]),
   reason: z.string().trim().max(800).optional().default(""),
   commission_rate: z.coerce.number().min(0).max(0.9).optional(),
-  store_status: z.enum(["review", "active", "paused", "suspended"]).optional()
+  store_status: z.enum(["review", "active", "paused", "suspended"]).optional(),
+  partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional()
 });
 
 const superAdminSettingUpdateSchema = z.object({
@@ -4322,6 +4325,375 @@ async function ensurePartnerBusiness(ctx, request) {
     metadata: { display_name: displayName }
   });
   return created;
+}
+
+function partnerApplicationMetadata(application) {
+  const metadata = application?.metadata;
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) return metadata;
+  if (typeof metadata === "string") {
+    try {
+      const parsed = JSON.parse(metadata);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    } catch (error) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function normalizePartnerApprovalType(value) {
+  const raw = String(value || "").toLocaleLowerCase("tr-TR");
+  if (!raw) return "";
+  if (/\b(food|yemek|restoran|restaurant|lokanta|kafe|cafe|menü|menu|paket servis|fast food)\b/i.test(raw)) return "food";
+  if (/\b(market|grocery|bakkal|süpermarket|supermarket|manav|şarküteri|sarkuteri)\b/i.test(raw)) return "market";
+  if (/\b(service|hizmet|danışman|danisman|klinik|sağlık|saglik|güzellik|guzellik|kuaför|kuafor|nakliye|lojistik|kurye|taksi|otel|emlak|hukuk|eğitim|egitim)\b/i.test(raw)) return "service";
+  if (/\b(shop|ürün|urun|mağaza|magaza|satıcı|satici|e-ticaret|eticaret|pazaryeri|perakende|ticaret)\b/i.test(raw)) return "shop";
+  return PARTNER_APPROVAL_TYPES.includes(raw) ? raw : "";
+}
+
+function partnerApprovalTypeForApplication(application, requestedType) {
+  const metadata = partnerApplicationMetadata(application);
+  const explicit = normalizePartnerApprovalType(requestedType)
+    || normalizePartnerApprovalType(metadata.partner_type)
+    || normalizePartnerApprovalType(metadata.module_key)
+    || normalizePartnerApprovalType(metadata.catalog_scope);
+  if (explicit) return explicit;
+
+  const haystack = [
+    metadata.category,
+    metadata.company_type,
+    metadata.message,
+    application?.company_name,
+    application?.contact_name
+  ].filter(Boolean).join(" ");
+
+  return normalizePartnerApprovalType(haystack) || "shop";
+}
+
+function partnerInviteRedirectUrl() {
+  const target = new URL("/pages/account/reset-password.html", `${config.siteUrl}/`);
+  target.searchParams.set("returnTo", "https://partner.allonahub.com/");
+  return target.href;
+}
+
+function temporaryPartnerPassword() {
+  return `${randomBytes(30).toString("base64url")}Aa1!`;
+}
+
+function partnerAuthMetadata(application, partnerType) {
+  const metadata = partnerApplicationMetadata(application);
+  return compactRow({
+    full_name: application.contact_name || application.company_name,
+    phone: application.phone,
+    company_name: application.company_name,
+    partner_type: partnerType,
+    module: partnerType,
+    city: metadata.city,
+    country: metadata.country,
+    source: "partner_application_approval"
+  });
+}
+
+async function findAuthUserByEmail(email, request) {
+  const target = authEmail(email);
+  if (!target || typeof supabaseAdmin.auth?.admin?.listUsers !== "function") return null;
+
+  const perPage = 1000;
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      request?.log?.warn({ error: error.message, email_hash: authEmailHash(target) }, "Partner auth user lookup failed");
+      throw httpError("Partner Auth kullanıcısı kontrol edilemedi. Supabase service-role yetkisini kontrol edin.", 503);
+    }
+
+    const users = Array.isArray(data?.users) ? data.users : [];
+    const found = users.find((user) => authEmail(user.email) === target);
+    if (found) return found;
+    if (users.length < perPage) return null;
+  }
+
+  request?.log?.warn({ email_hash: authEmailHash(target) }, "Partner auth user lookup reached page cap");
+  return null;
+}
+
+async function resolveAuthUserById(userId, fallbackEmail, request) {
+  if (!userId) return null;
+  if (typeof supabaseAdmin.auth?.admin?.getUserById !== "function") {
+    return { id: userId, email: fallbackEmail || "" };
+  }
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error || !data?.user) {
+    request?.log?.warn({ error: error?.message, userId }, "Partner auth user id lookup failed");
+    return { id: userId, email: fallbackEmail || "" };
+  }
+  return data.user;
+}
+
+async function ensurePartnerAuthUser(application, partnerType, request) {
+  const email = authEmail(application.email);
+  if (!email) throw httpError("Başvuruda geçerli e-posta yok.", 400);
+
+  const existingById = await resolveAuthUserById(application.user_id, email, request);
+  if (existingById) return { user: existingById, created: false, invite_sent: false, password_reset_sent: false };
+
+  const existingByEmail = await findAuthUserByEmail(email, request);
+  if (existingByEmail) return { user: existingByEmail, created: false, invite_sent: false, password_reset_sent: false };
+
+  const metadata = partnerAuthMetadata(application, partnerType);
+  const redirectTo = partnerInviteRedirectUrl();
+  let lastError = null;
+
+  if (typeof supabaseAdmin.auth?.admin?.inviteUserByEmail === "function") {
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: metadata,
+      redirectTo
+    });
+    if (!error && data?.user) {
+      return { user: data.user, created: true, invite_sent: true, password_reset_sent: false };
+    }
+    lastError = error;
+    if (/already|registered|exists/i.test(String(error?.message || ""))) {
+      const user = await findAuthUserByEmail(email, request);
+      if (user) return { user, created: false, invite_sent: false, password_reset_sent: false };
+    }
+  }
+
+  if (typeof supabaseAdmin.auth?.admin?.createUser === "function") {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: temporaryPartnerPassword(),
+      email_confirm: true,
+      user_metadata: metadata,
+      app_metadata: { role: "partner" }
+    });
+    if (!error && data?.user) {
+      let passwordResetSent = false;
+      try {
+        const reset = await supabasePublic.auth.resetPasswordForEmail(email, { redirectTo });
+        passwordResetSent = !reset.error;
+      } catch (resetError) {
+        passwordResetSent = false;
+      }
+      return { user: data.user, created: true, invite_sent: false, password_reset_sent: passwordResetSent };
+    }
+    lastError = error || lastError;
+  }
+
+  throw httpError(`Partner Auth kullanıcısı otomatik oluşturulamadı: ${lastError?.message || "Supabase Admin API kullanılamıyor."}`, 503);
+}
+
+async function syncPartnerAuthMetadata(user, application, partnerType, request) {
+  if (!user?.id || typeof supabaseAdmin.auth?.admin?.updateUserById !== "function") return;
+  const userMetadata = {
+    ...(user.user_metadata || {}),
+    ...partnerAuthMetadata(application, partnerType)
+  };
+  const currentRole = String(user.app_metadata?.role || "").toLowerCase();
+  const appMetadata = ["admin", "super_admin"].includes(currentRole)
+    ? user.app_metadata
+    : { ...(user.app_metadata || {}), role: "partner" };
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+    user_metadata: userMetadata,
+    app_metadata: appMetadata
+  });
+  if (!error) return;
+  request?.log?.warn({ error: error.message, userId: user.id }, "Partner auth metadata sync failed");
+}
+
+async function ensurePartnerProfile(user, application, partnerType) {
+  const metadata = partnerApplicationMetadata(application);
+  const { data: current, error: currentError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, full_name, phone, country, city, role, module")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (currentError && !looksLikeMissingSchema(currentError)) throw currentError;
+
+  const currentRole = String(current?.role || user.app_metadata?.role || "").toLowerCase();
+  const nextRole = ["admin", "super_admin"].includes(currentRole) ? currentRole : "partner";
+  const row = compactRow({
+    id: user.id,
+    email: current?.email || user.email || application.email,
+    full_name: current?.full_name || application.contact_name || application.company_name,
+    phone: current?.phone || application.phone,
+    country: current?.country || metadata.country,
+    city: current?.city || metadata.city,
+    role: nextRole,
+    module: current?.module || partnerType,
+    updated_at: new Date().toISOString()
+  });
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .upsert(row, { onConflict: "id" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+function partnerBusinessMetadata(existingBusiness, application, partnerType, ctx, reason, nowIso) {
+  const existing = existingBusiness?.metadata && typeof existingBusiness.metadata === "object" ? existingBusiness.metadata : {};
+  const applicationMetadata = partnerApplicationMetadata(application);
+  return {
+    ...existing,
+    enabled_modules: [partnerType],
+    module_permissions: {
+      ...(existing.module_permissions && typeof existing.module_permissions === "object" ? existing.module_permissions : {}),
+      [partnerType]: {
+        enabled: true,
+        write: true,
+        approved_at: nowIso,
+        approved_by: ctx.user.id
+      }
+    },
+    partner_modules: [
+      { key: partnerType, enabled: true, write: true }
+    ],
+    approved_from_application_id: application.id,
+    approved_by: ctx.user.id,
+    approval_reason: reason || "",
+    activated_by_super_admin: true,
+    activated_at: nowIso,
+    application_metadata: applicationMetadata
+  };
+}
+
+async function upsertApprovedPartnerBusiness({ application, user, partnerType, body, ctx, nowIso }) {
+  const { data: existingBusiness, error: existingBusinessError } = await supabaseAdmin
+    .from("partner_businesses")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (existingBusinessError && !looksLikeMissingSchema(existingBusinessError)) throw existingBusinessError;
+  if (existingBusinessError) throw httpError("partner_businesses tablosu production Supabase projesinde hazır değil.", 409);
+
+  const metadata = partnerApplicationMetadata(application);
+  const businessPayload = {
+    owner_id: user.id,
+    display_name: application.company_name || application.contact_name || user.email,
+    legal_name: application.company_name || application.contact_name || user.email,
+    partner_type: partnerType,
+    email: authEmail(application.email || user.email),
+    phone: application.phone || null,
+    country: metadata.country || null,
+    city: metadata.city || null,
+    status: body.store_status || "active",
+    verification_status: "verified",
+    default_commission_rate: body.commission_rate ?? 0.12,
+    metadata: partnerBusinessMetadata(existingBusiness, application, partnerType, ctx, body.reason, nowIso)
+  };
+
+  const query = existingBusiness
+    ? supabaseAdmin.from("partner_businesses").update(businessPayload).eq("id", existingBusiness.id).select("*").single()
+    : supabaseAdmin.from("partner_businesses").insert(businessPayload).select("*").single();
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+
+async function updatePartnerApplicationApproved({ application, user, partnerType, body, ctx, nowIso }) {
+  const metadata = partnerApplicationMetadata(application);
+  const approvalMetadata = {
+    ...metadata,
+    approved_by: ctx.user.id,
+    approved_at: nowIso,
+    partner_type: partnerType,
+    activation_source: "super_admin_approval",
+    approval_reason: body.reason || ""
+  };
+  const richPayload = {
+    user_id: user.id,
+    status: "approved",
+    review_stage: "closed",
+    admin_recommendation: "approve",
+    reviewed_by: ctx.user.id,
+    reviewed_at: nowIso,
+    metadata: approvalMetadata,
+    updated_at: nowIso
+  };
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_applications")
+    .update(richPayload)
+    .eq("id", application.id)
+    .select("*")
+    .single();
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+
+  const { data: fallbackData, error: fallbackError } = await supabaseAdmin
+    .from("partner_applications")
+    .update({
+      user_id: user.id,
+      status: "approved",
+      updated_at: nowIso
+    })
+    .eq("id", application.id)
+    .select("*")
+    .single();
+  if (fallbackError) throw fallbackError;
+  return fallbackData;
+}
+
+async function closePartnerApprovalRequests(applicationId, decision, ctx, nowIso, request) {
+  const nextStatus = decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : null;
+  if (!nextStatus) return;
+  const { error } = await supabaseAdmin
+    .from("admin_approval_requests")
+    .update({
+      status: nextStatus,
+      decided_by: ctx.user.id,
+      decided_at: nowIso
+    })
+    .eq("target_type", "partner_application")
+    .eq("target_id", applicationId)
+    .eq("status", "pending_super_admin");
+  if (error && !looksLikeMissingSchema(error)) {
+    request?.log?.warn({ error: error.message, applicationId }, "Partner approval request close failed");
+  }
+}
+
+async function activateApprovedPartnerApplication({ application, body, ctx, request }) {
+  const nowIso = new Date().toISOString();
+  const partnerType = partnerApprovalTypeForApplication(application, body.partner_type);
+  const authResult = await ensurePartnerAuthUser(application, partnerType, request);
+  await syncPartnerAuthMetadata(authResult.user, application, partnerType, request);
+  const profile = await ensurePartnerProfile(authResult.user, application, partnerType);
+  const partnerBusiness = await upsertApprovedPartnerBusiness({
+    application,
+    user: authResult.user,
+    partnerType,
+    body,
+    ctx,
+    nowIso
+  });
+  const approvedApplication = await updatePartnerApplicationApproved({
+    application,
+    user: authResult.user,
+    partnerType,
+    body,
+    ctx,
+    nowIso
+  });
+  await closePartnerApprovalRequests(application.id, "approved", ctx, nowIso, request);
+
+  return {
+    application: approvedApplication,
+    partnerBusiness,
+    profile,
+    partnerType,
+    auth: {
+      user_id: authResult.user.id,
+      email: authResult.user.email || application.email,
+      created: authResult.created,
+      invite_sent: authResult.invite_sent,
+      password_reset_sent: authResult.password_reset_sent
+    }
+  };
 }
 
 function partnerOrderItems(order, ownerId, isAdminUser, userId = ownerId) {
@@ -9048,54 +9420,30 @@ export function registerRoutes(app) {
     if (beforeError) throw beforeError;
     if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
 
-    const applicationPayload = {
-      status: body.decision,
-      updated_at: new Date().toISOString()
-    };
-
-    const { data: application, error: updateError } = await supabaseAdmin
-      .from("partner_applications")
-      .update(applicationPayload)
-      .eq("id", applicationId)
-      .select("*")
-      .single();
-    if (updateError) throw updateError;
-
+    let application = null;
     let partnerBusiness = null;
-    if (body.decision === "approved" && before.user_id) {
-      const { data: existingBusiness, error: existingBusinessError } = await supabaseAdmin
-        .from("partner_businesses")
+    let activation = null;
+    const nowIso = new Date().toISOString();
+
+    if (body.decision === "approved") {
+      activation = await activateApprovedPartnerApplication({ application: before, body, ctx, request });
+      application = activation.application;
+      partnerBusiness = activation.partnerBusiness;
+    } else {
+      const applicationPayload = {
+        status: body.decision,
+        updated_at: nowIso
+      };
+
+      const { data: updatedApplication, error: updateError } = await supabaseAdmin
+        .from("partner_applications")
+        .update(applicationPayload)
+        .eq("id", applicationId)
         .select("*")
-        .eq("owner_id", before.user_id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (existingBusinessError && !looksLikeMissingSchema(existingBusinessError)) throw existingBusinessError;
-
-      if (!existingBusinessError) {
-        const businessPayload = {
-          owner_id: before.user_id,
-          display_name: before.company_name,
-          legal_name: before.company_name,
-          email: before.email,
-          phone: before.phone,
-          status: body.store_status || "active",
-          verification_status: "verified",
-          default_commission_rate: body.commission_rate ?? 0.12,
-          metadata: {
-            approved_from_application_id: applicationId,
-            approved_by: ctx.user.id,
-            approval_reason: body.reason || ""
-          }
-        };
-
-        const businessQuery = existingBusiness
-          ? supabaseAdmin.from("partner_businesses").update(businessPayload).eq("id", existingBusiness.id).select("*").single()
-          : supabaseAdmin.from("partner_businesses").insert(businessPayload).select("*").single();
-        const { data: businessRow, error: businessError } = await businessQuery;
-        if (businessError) throw businessError;
-        partnerBusiness = businessRow;
-      }
+        .single();
+      if (updateError) throw updateError;
+      application = updatedApplication;
+      await closePartnerApprovalRequests(applicationId, body.decision, ctx, nowIso, request);
     }
 
     await auditEvent({
@@ -9114,13 +9462,18 @@ export function registerRoutes(app) {
           status: application.status,
           commission_rate: body.commission_rate ?? null,
           store_status: body.store_status || null,
-          partner_business_id: partnerBusiness?.id || null
+          partner_business_id: partnerBusiness?.id || null,
+          partner_type: activation?.partnerType || body.partner_type || null,
+          auth_user_id: activation?.auth?.user_id || application.user_id || null,
+          auth_user_created: activation?.auth?.created || false,
+          invite_sent: activation?.auth?.invite_sent || false,
+          password_reset_sent: activation?.auth?.password_reset_sent || false
         },
         reason: body.reason || ""
       }
     });
 
-    return { ok: true, application, partner_business: partnerBusiness };
+    return { ok: true, application, partner_business: partnerBusiness, activation };
   });
 
   superGet("/security", async (request) => {

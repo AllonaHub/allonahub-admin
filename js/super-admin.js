@@ -959,7 +959,7 @@
     const decision = button.dataset.partnerDecision;
     const messages = {
       review: "Başvuru incelemeye alınacak.",
-      approved: "Partner başvurusu onaylanacak ve uygun kullanıcı için mağaza kaydı hazırlanacak.",
+      approved: "Partner başvurusu onaylanacak; kullanıcı, profil, modül yetkisi ve aktif partner işletmesi otomatik oluşturulacak.",
       rejected: "Partner başvurusu reddedilecek."
     };
     const message = messages[decision] || "Partner başvurusu güncellenecek.";
