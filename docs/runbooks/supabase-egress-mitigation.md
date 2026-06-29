@@ -51,6 +51,29 @@ curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup 
   --data '{"retention_days":2,"limit":500,"dry_run":true}'
 ```
 
+## Oncelikli cozum: local cleanup cron
+
+Cloudflare challenge'a takilmamak icin sosyal medya asset temizligini public API endpointi yerine prod sunucuda lokal script olarak calistirmak daha saglamdir. Bu yontemde Cloudflare, WAF ve `x-cron-secret` devreye girmez; script sadece server-side `SUPABASE_SERVICE_ROLE_KEY` ile Supabase Storage'a baglanir.
+
+Gunluk cron:
+
+```bash
+30 3 * * * cd /opt/allonahub && node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0 >/var/log/allonahub-social-assets-cleanup.log 2>&1
+```
+
+Manuel dry-run:
+
+```bash
+cd /opt/allonahub
+node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2
+```
+
+Gercek silme:
+
+```bash
+node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0
+```
+
 ## Storage kullanimini listeleme
 
 Prod sunucuda servis role key bulunan ortamda:

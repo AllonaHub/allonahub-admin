@@ -205,7 +205,7 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 ```bash
 0 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-payments -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
 15 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/sync -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
-30 3 * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup -H "content-type: application/json" -H "x-cron-secret: GERCEK_CRON_SECRET" --data '{"retention_days":2,"limit":500}' >/dev/null
+30 3 * * * cd /opt/allonahub && node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0 >/var/log/allonahub-social-assets-cleanup.log 2>&1
 ```
 
 ## Cloudflare Güvenlik

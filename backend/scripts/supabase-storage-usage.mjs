@@ -20,11 +20,21 @@ const args = new Map(
 const bucketFilter = args.get("bucket") || "";
 const prefixFilter = args.get("prefix") || "";
 const deleteOlderThan = args.get("delete-older-than") || "";
+const retentionDays = Number(args.get("retention-days") || 0);
 const dryRun = args.get("dry-run") !== "0";
-const deleteBefore = deleteOlderThan ? new Date(deleteOlderThan) : null;
+const deleteBefore = deleteOlderThan
+  ? new Date(deleteOlderThan)
+  : retentionDays > 0
+    ? new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000)
+    : null;
 
 if (deleteBefore && Number.isNaN(deleteBefore.getTime())) {
   console.error("Invalid --delete-older-than value. Use YYYY-MM-DD.");
+  process.exit(1);
+}
+
+if (retentionDays && (!Number.isFinite(retentionDays) || retentionDays < 1 || retentionDays > 365)) {
+  console.error("Invalid --retention-days value. Use a number between 1 and 365.");
   process.exit(1);
 }
 
@@ -125,7 +135,8 @@ console.log(`Total: ${bytes(grandTotal)}`);
 
 if (!deleteBefore) process.exit(0);
 
-console.log(`Delete candidates older than ${deleteOlderThan}: ${deleteCandidates.length}`);
+const deleteLabel = deleteOlderThan || `${retentionDays} day retention (${deleteBefore.toISOString()})`;
+console.log(`Delete candidates older than ${deleteLabel}: ${deleteCandidates.length}`);
 if (dryRun) {
   console.log("Dry run only. Re-run with --dry-run=0 to delete.");
   process.exit(0);
