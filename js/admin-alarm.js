@@ -78,8 +78,12 @@
     return item.message || item.reason || item.summary || item.resource_type || item.source || "";
   }
 
+  function itemRaw(item) {
+    return `${item.severity || ""} ${item.action || ""} ${item.flag_type || ""} ${item.kind || ""} ${item.title || ""} ${item.message || ""} ${item.reason || ""} ${item.actor_role || ""} ${item.role || ""} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
+  }
+
   function trustedAdminItem(item) {
-    const raw = `${item.action || ""} ${item.actor_role || ""} ${item.role || ""} ${item.message || ""} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
+    const raw = itemRaw(item);
     if (!/(^| )(admin\.ops\.|super_admin\.)/.test(raw)) return false;
     if (/boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied/.test(raw)) return false;
     if (/mfa_required|config_missing|missing|mismatch|unauthorized|forbidden/.test(raw)) return false;
@@ -87,8 +91,30 @@
     return true;
   }
 
+  function isCriticalAlarmItem(item) {
+    const raw = itemRaw(item);
+    if (trustedAdminItem(item)) return false;
+    if (item.type === "admin_notification") {
+      return normalizeLevel(item.severity) === "critical"
+        || /red_zone|red zone|kırmızı|critical|saldırı|attack|intrusion|breach|compromise/.test(raw);
+    }
+    if (item.type === "operation_flag") {
+      return normalizeLevel(item.severity) === "critical";
+    }
+    return normalizeLevel(item.severity) === "critical"
+      || /authz\.denied|admin\.boundary_denied|owner_denied|role_denied|permission_super_admin_denied|red_zone|red zone|attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf/.test(raw);
+  }
+
+  function isAudibleAlarmItem(item) {
+    if (trustedAdminItem(item)) return false;
+    if (isCriticalAlarmItem(item)) return true;
+    const raw = itemRaw(item);
+    return normalizeLevel(item.severity) === "high"
+      && /auth\.denied|failed|blocked|suspicious|risk|flag|denied/.test(raw);
+  }
+
   function classifyItem(item) {
-    const raw = `${item.severity || ""} ${item.action || ""} ${item.flag_type || ""} ${item.title || ""} ${item.message || ""}`.toLowerCase();
+    const raw = itemRaw(item);
     if (trustedAdminItem(item)) return "low";
     if (/critical|authz\.denied|admin\.boundary_denied|owner_denied|role_denied|webhook|secret|attack|blocked|suspicious|payment|finance/.test(raw)) {
       return "critical";
@@ -110,7 +136,7 @@
     return [
       ...(payload.events || []).map((item) => ({ ...item, type: "security_event", severity: classifyItem(item) })),
       ...(payload.flags || []).map((item) => ({ ...item, type: "operation_flag", severity: classifyItem(item) })),
-      ...(payload.notifications || []).map((item) => ({ ...item, type: "admin_notification", severity: classifyItem(item) }))
+      ...(payload.notifications || []).map((item) => ({ ...item, type: "admin_notification", severity: normalizeLevel(item.severity) }))
     ];
   }
 
@@ -445,15 +471,17 @@
 
       const fresh = items.filter((item) => !state.seen.has(itemId(item)));
       remember(items);
-      const actionable = fresh.filter((item) => (LEVEL_WEIGHT[normalizeLevel(item.severity)] || 0) >= LEVEL_WEIGHT.medium);
-      if (!actionable.length) {
+      const audible = fresh.filter(isAudibleAlarmItem);
+      const critical = fresh.filter(isCriticalAlarmItem);
+      if (!audible.length && !critical.length) {
         state.lastLevel = "low";
         state.lastMessage = "Yeni kritik uyarı yok";
         renderStatus();
         return;
       }
 
-      const level = maxLevel(actionable);
+      const actionable = critical.length ? critical : audible;
+      const level = critical.length ? "critical" : maxLevel(actionable);
       const first = actionable[0];
       state.lastLevel = level;
       state.lastMessage = `${actionable.length} yeni uyarı: ${itemTitle(first)}`;
@@ -461,7 +489,7 @@
       const visibleIncident = overlayVisibleIncident(level, actionable, statusPayload);
       if (visibleIncident) showOverlay(visibleIncident);
       await playAlarm(level);
-      notify(level, actionable);
+      if (critical.length) notify(level, actionable);
     } catch (error) {
       state.lastLevel = "high";
       state.lastMessage = error.message || "Alarm izleme hatası";

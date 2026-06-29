@@ -11081,6 +11081,7 @@ export function registerRoutes(app) {
         supabaseAdmin
           .from("admin_notifications")
           .select("id, user_id, kind, severity, title, message, metadata, created_at")
+          .eq("severity", "critical")
           .order("created_at", { ascending: false })
           .limit(80),
         [],
