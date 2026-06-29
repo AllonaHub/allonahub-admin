@@ -230,9 +230,18 @@
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
       }
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      error.payload = payload;
+      error.apiPath = path;
+      throw error;
     }
     return payload;
+  }
+
+  function apiRouteMissing(error) {
+    const message = String(error?.message || error?.payload?.message || "");
+    return error?.status === 404 || /route .*not found|not found/i.test(message);
   }
 
   function partnerApplicationsFallbackReason(error) {
@@ -1676,10 +1685,18 @@
     if (!data) return;
     const payload = { action, risk_level: data.risk_level, reason: data.reason };
     try {
-      await api("/v1/ops-console/partner-application-reviews", {
-        method: "POST",
-        body: { application_id: applicationId, ...payload }
-      });
+      try {
+        await api("/v1/ops-console/partner-application-reviews", {
+          method: "POST",
+          body: { application_id: applicationId, ...payload }
+        });
+      } catch (error) {
+        if (!apiRouteMissing(error)) throw error;
+        await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
+          method: "PATCH",
+          body: payload
+        });
+      }
     } catch (error) {
       const fallbackReason = partnerApplicationsFallbackReason(error);
       if (!fallbackReason) throw error;
@@ -1710,16 +1727,27 @@
       ]
     });
     if (!data) return;
-    const result = await api("/v1/control-center/partner-application-decisions", {
-      method: "POST",
-      body: {
-        application_id: applicationId,
-        decision,
-        reason: data.reason || labels[decision] || "Partner başvuru kararı",
-        commission_rate: 0.12,
-        store_status: decision === "approved" ? "active" : "review"
-      }
-    });
+    const decisionPayload = {
+      application_id: applicationId,
+      decision,
+      reason: data.reason || labels[decision] || "Partner başvuru kararı",
+      commission_rate: 0.12,
+      store_status: decision === "approved" ? "active" : "review"
+    };
+    let result = null;
+    try {
+      result = await api("/v1/control-center/partner-application-decisions", {
+        method: "POST",
+        body: decisionPayload
+      });
+    } catch (error) {
+      if (!apiRouteMissing(error)) throw error;
+      const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
+      result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+        method: "PATCH",
+        body: legacyPayload
+      });
+    }
     const business = result.partner_business || {};
     showToast(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.");
     $("#adminDrawerTitle").textContent = "Partner Kararı";

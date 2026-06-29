@@ -539,6 +539,11 @@
     return response.status === 403 && /route|not found|challenge/i.test(message);
   }
 
+  function apiRouteMissing(error) {
+    const message = String(error?.message || error?.payload?.message || "");
+    return error?.status === 404 || /route .*not found|not found/i.test(message);
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
     const paths = controlCenterPathCandidates(path);
@@ -1063,16 +1068,27 @@
     button.dataset.originalText = button.dataset.originalText || button.textContent || "";
     button.textContent = "Uygulanıyor...";
     try {
-      const result = await api("/v1/control-center/partner-application-decisions", {
-        method: "POST",
-        body: {
-          application_id: applicationId,
-          decision,
-          reason: confirmed.reason || message,
-          commission_rate: 0.12,
-          store_status: decision === "approved" ? "active" : "review"
-        }
-      });
+      const decisionPayload = {
+        application_id: applicationId,
+        decision,
+        reason: confirmed.reason || message,
+        commission_rate: 0.12,
+        store_status: decision === "approved" ? "active" : "review"
+      };
+      let result = null;
+      try {
+        result = await api("/v1/control-center/partner-application-decisions", {
+          method: "POST",
+          body: decisionPayload
+        });
+      } catch (error) {
+        if (!apiRouteMissing(error)) throw error;
+        const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
+        result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+          method: "PATCH",
+          body: legacyPayload
+        });
+      }
       showPartnerDecisionResult(result, decision);
       if ($("[data-command-output]")) {
         await reloadOwnerActiveView();
