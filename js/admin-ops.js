@@ -209,7 +209,8 @@
         method: options?.method || "GET",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
         },
         body: options?.body ? JSON.stringify(options.body) : undefined,
         credentials: "omit"
@@ -1675,9 +1676,9 @@
     if (!data) return;
     const payload = { action, risk_level: data.risk_level, reason: data.reason };
     try {
-      await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
-        method: "PATCH",
-        body: payload
+      await api("/v1/ops-console/partner-application-reviews", {
+        method: "POST",
+        body: { application_id: applicationId, ...payload }
       });
     } catch (error) {
       const fallbackReason = partnerApplicationsFallbackReason(error);
@@ -1709,9 +1710,10 @@
       ]
     });
     if (!data) return;
-    const result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
-      method: "PATCH",
+    const result = await api("/v1/control-center/partner-application-decisions", {
+      method: "POST",
       body: {
+        application_id: applicationId,
         decision,
         reason: data.reason || labels[decision] || "Partner başvuru kararı",
         commission_rate: 0.12,

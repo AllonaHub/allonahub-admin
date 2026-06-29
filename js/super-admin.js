@@ -550,7 +550,8 @@
         cache: "no-store",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
         },
         body: options && options.body ? JSON.stringify(options.body) : undefined
       });
@@ -1062,9 +1063,10 @@
     button.dataset.originalText = button.dataset.originalText || button.textContent || "";
     button.textContent = "Uygulanıyor...";
     try {
-      const result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
-        method: "PATCH",
+      const result = await api("/v1/control-center/partner-application-decisions", {
+        method: "POST",
         body: {
+          application_id: applicationId,
           decision,
           reason: confirmed.reason || message,
           commission_rate: 0.12,

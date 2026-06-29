@@ -333,6 +333,10 @@ const partnerApplicationActionSchema = z.object({
   risk_level: z.enum(["info", "warning", "critical"]).optional().default("info")
 });
 
+const partnerApplicationActionRequestSchema = partnerApplicationActionSchema.extend({
+  application_id: uuidSchema
+});
+
 const publicPartnerApplicationSchema = z.object({
   partner_name: z.string().trim().max(160).optional().default(""),
   company_name: z.string().trim().max(160).optional().default(""),
@@ -533,7 +537,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerinvite1";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove2";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -559,6 +563,10 @@ const partnerApplicationDecisionSchema = z.object({
   commission_rate: z.coerce.number().min(0).max(0.9).optional(),
   store_status: z.enum(["review", "active", "paused", "suspended"]).optional(),
   partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional()
+});
+
+const partnerApplicationDecisionRequestSchema = partnerApplicationDecisionSchema.extend({
+  application_id: uuidSchema
 });
 
 const superAdminPartnerInviteSchema = z.object({
@@ -4816,6 +4824,174 @@ async function createDirectPartnerApplication({ body, ctx, request, nowIso }) {
     .single();
   if (legacyError) throw legacyError;
   return { ...legacyData, metadata };
+}
+
+async function decidePartnerApplicationRequest({ request, applicationId, body }) {
+  const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
+  const { data: before, error: beforeError } = await supabaseAdmin
+    .from("partner_applications")
+    .select("*")
+    .eq("id", applicationId)
+    .maybeSingle();
+  if (beforeError) throw beforeError;
+  if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
+
+  let application = null;
+  let partnerBusiness = null;
+  let activation = null;
+  const nowIso = new Date().toISOString();
+
+  if (body.decision === "approved") {
+    activation = await activateApprovedPartnerApplication({ application: before, body, ctx, request });
+    application = activation.application;
+    partnerBusiness = activation.partnerBusiness;
+  } else {
+    const applicationPayload = {
+      status: body.decision,
+      updated_at: nowIso
+    };
+
+    const { data: updatedApplication, error: updateError } = await supabaseAdmin
+      .from("partner_applications")
+      .update(applicationPayload)
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+    application = updatedApplication;
+    await closePartnerApprovalRequests(applicationId, body.decision, ctx, nowIso, request);
+  }
+
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "super_admin.partner_application_decided",
+    resourceType: "partner_application",
+    resourceId: applicationId,
+    severity: body.decision === "approved" ? "warning" : "info",
+    source: "admin",
+    evidenceTags: ["super_admin", "partner_application"],
+    metadata: {
+      old_value: { status: before.status },
+      new_value: {
+        status: application.status,
+        commission_rate: body.commission_rate ?? null,
+        store_status: body.store_status || null,
+        partner_business_id: partnerBusiness?.id || null,
+        partner_type: activation?.partnerType || body.partner_type || null,
+        auth_user_id: activation?.auth?.user_id || application.user_id || null,
+        auth_user_created: activation?.auth?.created || false,
+        invite_sent: activation?.auth?.invite_sent || false,
+        password_reset_sent: activation?.auth?.password_reset_sent || false
+      },
+      reason: body.reason || ""
+    }
+  });
+
+  return { ok: true, application, partner_business: partnerBusiness, activation };
+}
+
+async function reviewPartnerApplicationRequest({ request, applicationId, payload }) {
+  const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
+  const warnings = [];
+  const nowIso = new Date().toISOString();
+  const recommendation = payload.action === "recommend_approve"
+    ? "approve"
+    : payload.action === "recommend_reject"
+    ? "reject"
+    : payload.action === "send_super_admin"
+    ? "needs_super_admin"
+    : null;
+  const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+  const currentApplication = await optionalQuery(
+    supabaseAdmin
+      .from("partner_applications")
+      .select("metadata")
+      .eq("id", applicationId)
+      .maybeSingle(),
+    null,
+    warnings,
+    "partner_applications"
+  );
+  const existingMetadata = currentApplication?.metadata && typeof currentApplication.metadata === "object"
+    ? currentApplication.metadata
+    : {};
+
+  const application = await optionalMutation(
+    supabaseAdmin
+      .from("partner_applications")
+      .update({
+        status: "review",
+        review_stage: reviewStage,
+        admin_recommendation: recommendation,
+        risk_level: payload.risk_level,
+        reviewed_by: ctx.user.id,
+        reviewed_at: nowIso,
+        metadata: {
+          ...existingMetadata,
+          last_admin_action: payload.action,
+          last_admin_reason: payload.reason,
+          last_admin_action_at: nowIso
+        }
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single(),
+    warnings,
+    "partner_applications"
+  );
+
+  await optionalMutation(
+    supabaseAdmin
+      .from("admin_operation_notes")
+      .insert({
+        author_id: ctx.user.id,
+        target_type: "partner_application",
+        target_id: applicationId,
+        note_type: "review",
+        body: payload.reason
+      }),
+    warnings,
+    "admin_operation_notes"
+  );
+
+  let approvalRequest = null;
+  if (payload.action !== "start_review") {
+    approvalRequest = await optionalMutation(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .insert({
+          requested_by: ctx.user.id,
+          target_type: "partner_application",
+          target_id: applicationId,
+          request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
+          status: "pending_super_admin",
+          summary: payload.reason,
+          proposed_action: {
+            action: payload.action,
+            recommendation,
+            risk_level: payload.risk_level
+          }
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_approval_requests"
+    );
+  }
+
+  await auditedOpsEvent({
+    request,
+    ctx,
+    action: `admin.ops.partner_application_${payload.action}`,
+    resourceType: "partner_application",
+    resourceId: applicationId,
+    severity: payload.risk_level,
+    metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
+  });
+
+  return { ok: true, application, approvalRequest, warnings };
 }
 
 function partnerOrderItems(order, ownerId, isAdminUser, userId = ownerId) {
@@ -9579,71 +9755,15 @@ export function registerRoutes(app) {
   });
 
   superPatch("/partner-applications/:applicationId", async (request) => {
-    const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
     const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
     const body = partnerApplicationDecisionSchema.parse(request.body || {});
-    const { data: before, error: beforeError } = await supabaseAdmin
-      .from("partner_applications")
-      .select("*")
-      .eq("id", applicationId)
-      .maybeSingle();
-    if (beforeError) throw beforeError;
-    if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
+    return decidePartnerApplicationRequest({ request, applicationId, body });
+  });
 
-    let application = null;
-    let partnerBusiness = null;
-    let activation = null;
-    const nowIso = new Date().toISOString();
-
-    if (body.decision === "approved") {
-      activation = await activateApprovedPartnerApplication({ application: before, body, ctx, request });
-      application = activation.application;
-      partnerBusiness = activation.partnerBusiness;
-    } else {
-      const applicationPayload = {
-        status: body.decision,
-        updated_at: nowIso
-      };
-
-      const { data: updatedApplication, error: updateError } = await supabaseAdmin
-        .from("partner_applications")
-        .update(applicationPayload)
-        .eq("id", applicationId)
-        .select("*")
-        .single();
-      if (updateError) throw updateError;
-      application = updatedApplication;
-      await closePartnerApprovalRequests(applicationId, body.decision, ctx, nowIso, request);
-    }
-
-    await auditEvent({
-      request,
-      actorId: ctx.user.id,
-      actorRole: ctx.profile.role,
-      action: "super_admin.partner_application_decided",
-      resourceType: "partner_application",
-      resourceId: applicationId,
-      severity: body.decision === "approved" ? "warning" : "info",
-      source: "admin",
-      evidenceTags: ["super_admin", "partner_application"],
-      metadata: {
-        old_value: { status: before.status },
-        new_value: {
-          status: application.status,
-          commission_rate: body.commission_rate ?? null,
-          store_status: body.store_status || null,
-          partner_business_id: partnerBusiness?.id || null,
-          partner_type: activation?.partnerType || body.partner_type || null,
-          auth_user_id: activation?.auth?.user_id || application.user_id || null,
-          auth_user_created: activation?.auth?.created || false,
-          invite_sent: activation?.auth?.invite_sent || false,
-          password_reset_sent: activation?.auth?.password_reset_sent || false
-        },
-        reason: body.reason || ""
-      }
-    });
-
-    return { ok: true, application, partner_business: partnerBusiness, activation };
+  superPost("/partner-application-decisions", async (request) => {
+    const payload = partnerApplicationDecisionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return decidePartnerApplicationRequest({ request, applicationId, body });
   });
 
   superGet("/security", async (request) => {
@@ -10240,107 +10360,15 @@ export function registerRoutes(app) {
   });
 
   opsPatch("/partner-applications/:applicationId/review", async (request) => {
-    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const payload = partnerApplicationActionSchema.parse(request.body || {});
-    const warnings = [];
-    const nowIso = new Date().toISOString();
-    const recommendation = payload.action === "recommend_approve"
-      ? "approve"
-      : payload.action === "recommend_reject"
-      ? "reject"
-      : payload.action === "send_super_admin"
-      ? "needs_super_admin"
-      : null;
-    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
-    const currentApplication = await optionalQuery(
-      supabaseAdmin
-        .from("partner_applications")
-        .select("metadata")
-        .eq("id", applicationId)
-        .maybeSingle(),
-      null,
-      warnings,
-      "partner_applications"
-    );
-    const existingMetadata = currentApplication?.metadata && typeof currentApplication.metadata === "object"
-      ? currentApplication.metadata
-      : {};
+    return reviewPartnerApplicationRequest({ request, applicationId, payload });
+  });
 
-    const application = await optionalMutation(
-      supabaseAdmin
-        .from("partner_applications")
-        .update({
-          status: "review",
-          review_stage: reviewStage,
-          admin_recommendation: recommendation,
-          risk_level: payload.risk_level,
-          reviewed_by: ctx.user.id,
-          reviewed_at: nowIso,
-          metadata: {
-            ...existingMetadata,
-            last_admin_action: payload.action,
-            last_admin_reason: payload.reason,
-            last_admin_action_at: nowIso
-          }
-        })
-        .eq("id", applicationId)
-        .select("*")
-        .single(),
-      warnings,
-      "partner_applications"
-    );
-
-    await optionalMutation(
-      supabaseAdmin
-        .from("admin_operation_notes")
-        .insert({
-          author_id: ctx.user.id,
-          target_type: "partner_application",
-          target_id: applicationId,
-          note_type: "review",
-          body: payload.reason
-        }),
-      warnings,
-      "admin_operation_notes"
-    );
-
-    let approvalRequest = null;
-    if (payload.action !== "start_review") {
-      approvalRequest = await optionalMutation(
-        supabaseAdmin
-          .from("admin_approval_requests")
-          .insert({
-            requested_by: ctx.user.id,
-            target_type: "partner_application",
-            target_id: applicationId,
-            request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
-            status: "pending_super_admin",
-            summary: payload.reason,
-            proposed_action: {
-              action: payload.action,
-              recommendation,
-              risk_level: payload.risk_level
-            }
-          })
-          .select("*")
-          .single(),
-        warnings,
-        "admin_approval_requests"
-      );
-    }
-
-    await auditedOpsEvent({
-      request,
-      ctx,
-      action: `admin.ops.partner_application_${payload.action}`,
-      resourceType: "partner_application",
-      resourceId: applicationId,
-      severity: payload.risk_level,
-      metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
-    });
-
-    return { ok: true, application, approvalRequest, warnings };
+  opsPost("/partner-application-reviews", async (request) => {
+    const payload = partnerApplicationActionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return reviewPartnerApplicationRequest({ request, applicationId, payload: body });
   });
 
   opsGet("/partners", async (request) => {
