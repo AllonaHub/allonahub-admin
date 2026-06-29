@@ -36,7 +36,7 @@ async function getEntrypoint(phase) {
   }
 }
 
-async function upsertEntrypoint(phase, name, rules) {
+async function upsertEntrypoint(phase, name, rules, options = {}) {
   const current = await getEntrypoint(phase);
   if (!current) {
     return cf(`/zones/${zoneId}/rulesets`, {
@@ -53,6 +53,7 @@ async function upsertEntrypoint(phase, name, rules) {
 
   const managedRefs = new Set(rules.map((rule) => rule.ref));
   const keptRules = (current.rules || []).filter((rule) => !managedRefs.has(rule.ref));
+  const nextRules = options.prepend ? [...rules, ...keptRules] : [...keptRules, ...rules];
   return cf(`/zones/${zoneId}/rulesets/${current.id}`, {
     method: "PUT",
     body: JSON.stringify({
@@ -60,12 +61,13 @@ async function upsertEntrypoint(phase, name, rules) {
       description: current.description || "AllonaHub ETBIS/Güven Damgasi production rules",
       kind: "zone",
       phase,
-      rules: [...keptRules, ...rules]
+      rules: nextRules
     })
   });
 }
 
 const hostExpression = '(http.host eq "allonahub.com" or http.host eq "www.allonahub.com")';
+const apiHostExpression = 'http.host eq "api.allonahub.com"';
 
 const headerRules = [{
   ref: "allonahub-security-headers",
@@ -151,7 +153,35 @@ const redirectRules = [
   }
 ];
 
+const wafRules = [{
+  ref: "allonahub-api-cron-skip-challenge",
+  description: "Skip challenge for authenticated API cron calls",
+  expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/") and any(lower(http.request.headers.names[*])[*] eq "x-cron-secret")`,
+  action: "skip",
+  action_parameters: {
+    ruleset: "current",
+    products: [
+      "bic",
+      "hot",
+      "rateLimit",
+      "securityLevel",
+      "uaBlock",
+      "waf",
+      "zoneLockdown"
+    ],
+    phases: [
+      "http_ratelimit",
+      "http_request_firewall_managed",
+      "http_request_sbfm"
+    ]
+  },
+  logging: {
+    enabled: true
+  }
+}];
+
 await upsertEntrypoint("http_response_headers_transform", "AllonaHub response header rules", headerRules);
 await upsertEntrypoint("http_request_dynamic_redirect", "AllonaHub redirect rules", redirectRules);
+await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
 
 console.log("Cloudflare AllonaHub rules applied.");

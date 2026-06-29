@@ -58,6 +58,17 @@ Eski yasal metin kopyalari icin ek 301 yonlendirmeleri:
 
 `/checkout.html` istegi canlida `cf-mitigated: challenge` ile kesiliyor. Redirect rule uygulaninca istek origin'e ve eski checkout path'ine dusmeden guvenli odeme sayfasina aktarilmalidir. Challenge devam ederse WAF Custom Rule icinde bu path'i challenge aksiyonundan haric tutan kural sirasi duzenlenmelidir.
 
+API cron endpointleri icin ek WAF skip kurali uygulanir:
+
+```text
+http.host eq "api.allonahub.com"
+and http.request.method eq "POST"
+and starts_with(http.request.uri.path, "/v1/cron/")
+and any(lower(http.request.headers.names[*])[*] eq "x-cron-secret")
+```
+
+Bu kural sadece Cloudflare challenge/security katmanini atlatir. Backend yine `x-cron-secret` degerini dogrular; secret yanlis ise istek reddedilir.
+
 ## API ile Uygulama
 
 Gereken environment:
