@@ -146,6 +146,7 @@
     const { error } = await App.supabase.auth.signOut({ scope });
     if (error) throw authSafeError("Çıkış işlemi tamamlanamadı. Lütfen tekrar deneyin.");
     clearLocalAuthState();
+    if (options && options.redirect === false) return;
     window.location.href = App.core.url("/index.html");
   }
 
@@ -365,6 +366,10 @@
     const user = await getUser();
     if (user) return user;
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    if (/\/admin\/super-admin\.html$/i.test(window.location.pathname)) {
+      window.location.href = App.core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
+      return null;
+    }
     window.location.href = App.core.url(`/pages/account/user.html?returnTo=${returnTo}`);
     return null;
   }

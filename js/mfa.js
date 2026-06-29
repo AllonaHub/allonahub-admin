@@ -175,7 +175,12 @@
   async function load() {
     const user = await App.auth.getUser();
     if (!user) {
-      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(returnTo())}`);
+      const target = returnTo();
+      if (/\/admin\/super-admin\.html/i.test(target)) {
+        window.location.href = core.url(`/admin/super-admin-login.html?returnTo=${encodeURIComponent(target)}`);
+        return;
+      }
+      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(target)}`);
       return;
     }
     state.status = await App.auth.mfaStatus();

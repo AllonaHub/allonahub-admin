@@ -99,7 +99,7 @@
 
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    return core.url(`/pages/account/user.html?tab=login&switchAccount=1&intent=super_admin&v=20260624-switchsuper1&returnTo=${returnTo}`);
+    return core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
   }
 
   function mfaUrl() {
