@@ -704,9 +704,7 @@
                   <td>${formatDate(item.created_at)}</td>
                   <td>
                     <div class="sa-row-actions">
-                      <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İnceleme</button>
-                      <button class="sa-btn sa-mini" type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla</button>
-                      <button class="sa-btn sa-btn-danger sa-mini" type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>
+                      <button class="sa-btn sa-mini" type="button" data-partner-detail="${escape(item.id)}">Karar Ver</button>
                     </div>
                   </td>
                 </tr>
@@ -739,6 +737,82 @@
         `;
       }
     }
+  }
+
+  function partnerCreateFormMarkup() {
+    return `
+      <form class="sa-inline-form" data-partner-create-form>
+        <label>Firma / Mağaza
+          <input name="company_name" required maxlength="160" placeholder="Örn. Allona Market Partneri">
+        </label>
+        <label>Yetkili
+          <input name="contact_name" required maxlength="140" placeholder="Ad Soyad">
+        </label>
+        <label>E-posta
+          <input name="email" required type="email" maxlength="180" placeholder="partner@firma.com">
+        </label>
+        <label>Telefon
+          <input name="phone" maxlength="40" placeholder="+90 5xx xxx xx xx">
+        </label>
+        <label>Tip
+          <select name="partner_type">
+            <option value="shop">Shop / Pazaryeri</option>
+            <option value="food">Yemek / Restoran</option>
+            <option value="market">Market</option>
+            <option value="service">Hizmet / Ekosistem</option>
+          </select>
+        </label>
+        <label>Şehir
+          <input name="city" maxlength="90" placeholder="İstanbul">
+        </label>
+        <label>Komisyon
+          <input name="commission_rate" type="number" min="0" max="0.9" step="0.01" value="0.12">
+        </label>
+        <button class="sa-btn" type="submit">Partner Aç</button>
+      </form>
+    `;
+  }
+
+  async function createPartnerFromForm(form) {
+    const formData = new FormData(form);
+    const companyName = String(formData.get("company_name") || "").trim();
+    const contactName = String(formData.get("contact_name") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const partnerType = String(formData.get("partner_type") || "shop").trim();
+    const payload = {
+      company_name: companyName,
+      contact_name: contactName,
+      email,
+      phone: String(formData.get("phone") || "").trim(),
+      city: String(formData.get("city") || "").trim(),
+      country: "Türkiye",
+      category: partnerType,
+      partner_type: partnerType,
+      commission_rate: Number(formData.get("commission_rate") || 0.12),
+      store_status: "active",
+      reason: `Super Admin panelinden ${companyName || email} için doğrudan partner daveti oluşturuldu.`
+    };
+
+    const trigger = form.querySelector("button[type='submit']");
+    await runConfirmed(`${companyName || email} için partner hesabı açılacak. Kullanıcı yoksa Supabase Auth daveti gönderilecek, profil rolü partner yapılacak ve aktif partner işletmesi oluşturulacak.`, async (reason) => {
+      const result = await api("/v1/control-center/partners", {
+        method: "POST",
+        body: { ...payload, reason: reason || payload.reason }
+      });
+      const activation = result.activation || {};
+      const auth = activation.auth || {};
+      openDrawer("Partner Açılış Sonucu", [
+        ownerLine("Firma", escape(result.partner_business?.display_name || companyName || "-"), "", "low"),
+        ownerLine("Auth kullanıcısı", `${escape(auth.email || email)} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı bağlandı"}`, "", "medium"),
+        ownerLine("Davet", `${auth.invite_sent ? "Davet gönderildi" : "Davet gönderilmedi"} / ${auth.password_reset_sent ? "şifre belirleme e-postası gönderildi" : "şifre e-postası yok"}`, "", auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
+        ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\">partner.allonahub.com</a>", "", "low")
+      ].join(""));
+      form.reset();
+    }, {
+      trigger,
+      defaultReason: payload.reason,
+      requireReason: true
+    });
   }
 
   async function loadSecurity() {
@@ -807,6 +881,7 @@
         <div>
           <h3>${escape(item.name || item.module_key)}</h3>
           <span>${escape(item.category || "services")}</span>
+          ${item.subdomain_url ? `<a class="sa-mini-link" href="${escape(item.subdomain_url)}" target="_blank" rel="noopener">${escape(item.subdomain)}.allonahub.com</a>` : ""}
         </div>
         <div class="sa-module-row">
           <span>Aktif</span>
@@ -978,21 +1053,83 @@
       rejected: "Partner başvurusu reddedilecek."
     };
     const message = messages[decision] || "Partner başvurusu güncellenecek.";
-    await runConfirmed(message, async (reason) => {
-      await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+    const confirmed = await confirmAction(message, {
+      defaultReason: message,
+      requireReason: decision !== "review"
+    });
+    if (!confirmed.confirmed) return;
+    button.disabled = true;
+    button.dataset.originalText = button.dataset.originalText || button.textContent || "";
+    button.textContent = "Uygulanıyor...";
+    try {
+      const result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
         method: "PATCH",
         body: {
           decision,
-          reason: reason || message,
+          reason: confirmed.reason || message,
           commission_rate: 0.12,
           store_status: decision === "approved" ? "active" : "review"
         }
       });
-    }, {
-      trigger: button,
-      defaultReason: message,
-      requireReason: decision !== "review"
-    });
+      showPartnerDecisionResult(result, decision);
+      if ($("[data-command-output]")) {
+        await reloadOwnerActiveView();
+      } else {
+        await reloadActiveView();
+      }
+      setAlert(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.", "ok");
+    } catch (error) {
+      const messageText = publicError(error, "Partner kararı tamamlanamadı.");
+      setAlert(messageText, "error");
+      openDrawer("Partner Kararı Hatası", ownerLine("İşlem tamamlanamadı", escape(messageText), "<button type=\"button\" data-action-health-check>Komutları test et</button>", "critical"));
+    } finally {
+      button.disabled = false;
+      button.textContent = button.dataset.originalText || "Uygula";
+    }
+  }
+
+  function partnerApplicationById(applicationId) {
+    return state.applications.find((item) => String(item.id) === String(applicationId));
+  }
+
+  function partnerApplicationDetailMarkup(item) {
+    const metadata = item?.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    const actions = [
+      `<button type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla ve Aktif Et</button>`,
+      `<button type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>`,
+      `<button type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İncelemeye Al</button>`
+    ].join(" ");
+    return [
+      ownerLine("Firma", escape(item.company_name || "-"), "", "medium"),
+      ownerLine("Yetkili", escape(item.contact_name || "-"), "", "medium"),
+      ownerLine("İletişim", `${escape(item.email || "-")} / ${escape(item.phone || "-")}`, "", "medium"),
+      ownerLine("Vergi / şehir", `${escape(item.tax_number || "-")} / ${escape(metadata.city || item.city || "-")}`, "", "medium"),
+      ownerLine("Durum", `${escape(item.status || "-")} / ${escape(item.review_stage || "-")} / öneri ${escape(item.admin_recommendation || "-")}`, "", item.status === "pending" ? "high" : "medium"),
+      ownerLine("Açıklama", escape(metadata.message || item.message || "-"), "", "medium"),
+      ownerLine("Karar", "Detayı inceledikten sonra nihai kararı ver. Onay, partner hesabını ve aktif mağazayı otomatik açar.", actions, "critical")
+    ].join("");
+  }
+
+  function showPartnerApplicationDetail(applicationId) {
+    const item = partnerApplicationById(applicationId);
+    if (!item) {
+      openDrawer("Partner Başvurusu", ownerLine("Başvuru bulunamadı", escape(applicationId), "", "critical"));
+      return;
+    }
+    openDrawer("Partner Başvuru Detayı", partnerApplicationDetailMarkup(item));
+  }
+
+  function showPartnerDecisionResult(result, decision) {
+    const application = result?.application || {};
+    const business = result?.partner_business || {};
+    const activation = result?.activation || {};
+    const auth = activation.auth || {};
+    openDrawer("Partner Kararı", [
+      ownerLine("Başvuru", `${escape(application.company_name || application.id || "-")} / ${escape(application.status || decision)}`, "", decision === "approved" ? "low" : "medium"),
+      ownerLine("Partner mağazası", `${escape(business.display_name || "-")} / ${escape(business.status || "-")} / ${escape(business.verification_status || "-")}`, "", business.status === "active" ? "low" : "high"),
+      ownerLine("Auth kullanıcısı", `${escape(auth.email || application.email || "-")} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı"}`, "", "medium"),
+      ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\" target=\"_blank\" rel=\"noopener\">partner.allonahub.com</a>", "", "low")
+    ].join(""));
   }
 
   async function saveSetting(button) {
@@ -1906,7 +2043,7 @@
     const rows = state.moduleMap.map((item) => ownerLine(
       item.name || item.module_key,
       `${escape(item.category || "-")} / ${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / komisyon ${formatNumber(Number(item.commission_rate || 0) * 100)}%`,
-      `<a href="${escape(item.href || "#")}">Aç</a> <button type="button" data-module-map-detail="${escape(item.module_key)}">Operasyon</button>`,
+      `${item.subdomain_url ? `<a href="${escape(item.subdomain_url)}" target="_blank" rel="noopener">Subdomain</a> ` : ""}<a href="${escape(item.href || "#")}">Eski yol</a> <button type="button" data-module-map-detail="${escape(item.module_key)}">Operasyon</button>`,
       item.maturity === "controlled" ? "high" : (item.maturity === "transactional" || item.maturity === "operational" ? "medium" : "low")
     ));
     const future = state.futureOperations.map((item) => ownerLine(
@@ -1980,11 +2117,7 @@
     const applicationRows = state.applications.map((item) => ownerLine(
       item.company_name || item.contact_name || item.id,
       `${escape(item.email || item.phone || "-")} / durum ${escape(item.status || "-")} / ${formatDate(item.created_at)}`,
-      [
-        `<button type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İnceleme</button>`,
-        `<button type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla</button>`,
-        `<button type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>`
-      ].join(" "),
+      `<button type="button" data-partner-detail="${escape(item.id)}">Karar Ver</button>`,
       item.status === "pending" ? "high" : "medium"
     ));
     const businessRows = state.businesses.map((item) => ownerLine(
@@ -1994,6 +2127,7 @@
       item.status === "active" ? "low" : "medium"
     ));
     ownerSetOutput(
+      partnerCreateFormMarkup() +
       ownerLine("Başvurular", `${formatNumber(state.applications.length)} kayıt`, "", state.applications.length ? "high" : "low") +
       (applicationRows.length ? applicationRows.join("") : ownerEmpty("Başvuru bulunamadı.")) +
       ownerLine("Mağazalar", `${formatNumber(state.businesses.length)} kayıt`, "", "medium") +
@@ -2410,6 +2544,13 @@
       state.ownerDocumentEventsBound = true;
 
       document.addEventListener("submit", async (event) => {
+        const partnerCreateForm = eventClosest(event, "[data-partner-create-form]");
+        if (partnerCreateForm) {
+          event.preventDefault();
+          await createPartnerFromForm(partnerCreateForm);
+          return;
+        }
+
         const usersFilter = eventClosest(event, "[data-owner-users-filter]");
         if (usersFilter) {
           event.preventDefault();
@@ -2543,6 +2684,9 @@
         const partnerDecision = eventClosest(event, "[data-partner-decision]");
         if (partnerDecision) await decidePartner(partnerDecision);
 
+        const partnerDetail = eventClosest(event, "[data-partner-detail]");
+        if (partnerDetail) showPartnerApplicationDetail(partnerDetail.dataset.partnerDetail);
+
         const settingSave = eventClosest(event, "[data-setting-save]");
         if (settingSave) await saveSetting(settingSave);
 
@@ -2621,11 +2765,22 @@
       const partnerDecision = eventClosest(event, "[data-partner-decision]");
       if (partnerDecision) await decidePartner(partnerDecision);
 
+      const partnerDetail = eventClosest(event, "[data-partner-detail]");
+      if (partnerDetail) showPartnerApplicationDetail(partnerDetail.dataset.partnerDetail);
+
       const settingSave = eventClosest(event, "[data-setting-save]");
       if (settingSave) await saveSetting(settingSave);
 
       const moduleSave = eventClosest(event, "[data-module-save]");
       if (moduleSave) await saveModule(moduleSave);
+    });
+
+    document.addEventListener("submit", async (event) => {
+      const partnerCreateForm = eventClosest(event, "[data-partner-create-form]");
+      if (partnerCreateForm) {
+        event.preventDefault();
+        await createPartnerFromForm(partnerCreateForm);
+      }
     });
 
     const refresh = $("[data-sa-refresh]");

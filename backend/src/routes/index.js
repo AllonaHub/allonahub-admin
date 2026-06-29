@@ -533,7 +533,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260625-actions8";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerinvite1";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -559,6 +559,25 @@ const partnerApplicationDecisionSchema = z.object({
   commission_rate: z.coerce.number().min(0).max(0.9).optional(),
   store_status: z.enum(["review", "active", "paused", "suspended"]).optional(),
   partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional()
+});
+
+const superAdminPartnerInviteSchema = z.object({
+  company_name: z.string().trim().min(2).max(160),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema,
+  phone: z.string().trim().max(40).optional().default(""),
+  tax_number: z.string().trim().max(60).optional().default(""),
+  tax_office: z.string().trim().max(120).optional().default(""),
+  company_type: z.string().trim().max(120).optional().default(""),
+  city: z.string().trim().max(90).optional().default(""),
+  country: z.string().trim().max(90).optional().default("Türkiye"),
+  category: z.string().trim().max(140).optional().default("AllonaHub Partner"),
+  website: z.string().trim().max(240).optional().default(""),
+  message: z.string().trim().max(1600).optional().default("Super Admin panelinden doğrudan partner oluşturuldu."),
+  partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional().default("shop"),
+  commission_rate: z.coerce.number().min(0).max(0.9).optional().default(0.12),
+  store_status: z.enum(["review", "active", "paused", "suspended"]).optional().default("active"),
+  reason: z.string().trim().min(6).max(900).optional().default("Super Admin panelinden doğrudan partner daveti oluşturuldu.")
 });
 
 const superAdminSettingUpdateSchema = z.object({
@@ -697,6 +716,40 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "hospitality", name: "Otelcilik", category: "travel" },
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
 ];
+
+const MODULE_SUBDOMAIN_BY_KEY = {
+  shop: "shop",
+  food: "yemek",
+  market: "market",
+  taxi: "taksi",
+  mall: "avm",
+  travel: "seyahat",
+  health: "saglik",
+  maritime: "denizcilik",
+  legal: "hukuk",
+  consulting: "danismanlik",
+  real_estate: "emlak",
+  automotive: "otomotiv",
+  education: "egitim",
+  career: "kariyer",
+  finance: "finans",
+  events: "eglence",
+  pet: "pet",
+  technology: "teknoloji",
+  sports_fitness: "spor",
+  beauty: "guzellik",
+  insurance: "sigorta",
+  courier: "kurye",
+  home_services: "evhizmetleri",
+  logistics: "lojistik",
+  moving: "nakliye",
+  organization: "organizasyon",
+  agriculture: "tarim",
+  construction: "insaat",
+  engineering: "muhendislik",
+  trade: "trade",
+  hospitality: "otelcilik"
+};
 
 const SUPER_ADMIN_CONTROL_LINKS = [
   { key: "operations", label: "Sipariş / Operasyon Yönetimi", view: "operations", target: "owner_view", risk_level: "high" },
@@ -1567,6 +1620,7 @@ function moduleOperationMapPublic(moduleRows = []) {
     const configured = byKey.get(item.module_key);
     return {
       ...item,
+      ...moduleSubdomainPublic(item.module_key),
       sort_order: configured?.sort_order ?? (index + 1) * 10,
       is_active: configured?.is_active ?? true,
       is_visible: configured?.is_visible ?? true,
@@ -1576,6 +1630,15 @@ function moduleOperationMapPublic(moduleRows = []) {
       source: configured ? "database" : "homepage_map"
     };
   });
+}
+
+function moduleSubdomainPublic(moduleKey) {
+  const subdomain = MODULE_SUBDOMAIN_BY_KEY[moduleKey];
+  if (!subdomain) return {};
+  return {
+    subdomain,
+    subdomain_url: `https://${subdomain}.allonahub.com`
+  };
 }
 
 function permissionChangePublic(row) {
@@ -4372,7 +4435,7 @@ function partnerApprovalTypeForApplication(application, requestedType) {
 
 function partnerInviteRedirectUrl() {
   const target = new URL("/pages/account/reset-password.html", `${config.siteUrl}/`);
-  target.searchParams.set("returnTo", "https://partner.allonahub.com/");
+  target.searchParams.set("returnTo", "/pages/partner/partner-panel.html");
   return target.href;
 }
 
@@ -4694,6 +4757,65 @@ async function activateApprovedPartnerApplication({ application, body, ctx, requ
       password_reset_sent: authResult.password_reset_sent
     }
   };
+}
+
+async function createDirectPartnerApplication({ body, ctx, request, nowIso }) {
+  const email = authEmail(body.email);
+  const metadata = {
+    source: "super_admin_direct_invite",
+    tax_office: body.tax_office,
+    company_type: body.company_type,
+    website: body.website,
+    city: body.city,
+    country: body.country,
+    category: body.category,
+    message: body.message,
+    partner_type: body.partner_type,
+    created_by: ctx.user.id,
+    created_at: nowIso,
+    approval_reason: body.reason
+  };
+
+  const richPayload = compactRow({
+    company_name: body.company_name,
+    contact_name: body.contact_name,
+    email,
+    phone: body.phone,
+    tax_number: body.tax_number || `DIRECT-${authEmailHash(email).slice(0, 10)}`,
+    status: "review",
+    review_stage: "sent_to_super_admin",
+    admin_recommendation: "approve",
+    risk_level: "info",
+    reviewed_by: ctx.user.id,
+    reviewed_at: nowIso,
+    metadata
+  });
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_applications")
+    .insert(richPayload)
+    .select("*")
+    .single();
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+
+  request?.log?.warn({ error: error.message }, "Direct partner invite rich application insert failed; trying legacy payload");
+  const legacyPayload = compactRow({
+    company_name: body.company_name,
+    contact_name: body.contact_name,
+    email,
+    phone: body.phone,
+    tax_number: body.tax_number || `DIRECT-${authEmailHash(email).slice(0, 10)}`,
+    status: "pending"
+  });
+
+  const { data: legacyData, error: legacyError } = await supabaseAdmin
+    .from("partner_applications")
+    .insert(legacyPayload)
+    .select("*")
+    .single();
+  if (legacyError) throw legacyError;
+  return { ...legacyData, metadata };
 }
 
 function partnerOrderItems(order, ownerId, isAdminUser, userId = ownerId) {
@@ -9408,6 +9530,54 @@ export function registerRoutes(app) {
     };
   });
 
+  superPost("/partners", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.partner.direct_invite");
+    const body = superAdminPartnerInviteSchema.parse(request.body || {});
+    const nowIso = new Date().toISOString();
+    const application = await createDirectPartnerApplication({ body, ctx, request, nowIso });
+    const activation = await activateApprovedPartnerApplication({
+      application,
+      body: {
+        decision: "approved",
+        reason: body.reason,
+        commission_rate: body.commission_rate,
+        store_status: body.store_status,
+        partner_type: body.partner_type
+      },
+      ctx,
+      request
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.partner_direct_invite_created",
+      resourceType: "partner_business",
+      resourceId: activation.partnerBusiness?.id || null,
+      severity: "warning",
+      source: "admin",
+      evidenceTags: ["super_admin", "partner", "direct_invite"],
+      metadata: {
+        application_id: activation.application?.id || application.id,
+        partner_type: activation.partnerType,
+        auth_user_id: activation.auth?.user_id,
+        auth_user_created: activation.auth?.created || false,
+        invite_sent: activation.auth?.invite_sent || false,
+        password_reset_sent: activation.auth?.password_reset_sent || false,
+        email_hash: authEmailHash(body.email),
+        reason: body.reason
+      }
+    });
+
+    return {
+      ok: true,
+      application: activation.application,
+      partner_business: activation.partnerBusiness,
+      activation
+    };
+  });
+
   superPatch("/partner-applications/:applicationId", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
     const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
@@ -9678,9 +9848,14 @@ export function registerRoutes(app) {
       metadata: { warning: Boolean(result.warning) }
     });
 
+    const modulesWithSubdomains = modules.map((item) => ({
+      ...item,
+      ...moduleSubdomainPublic(item.module_key)
+    }));
+
     return {
       ok: true,
-      modules,
+      modules: modulesWithSubdomains,
       schema_warnings: result.warning ? [result.warning] : []
     };
   });
@@ -10078,6 +10253,19 @@ export function registerRoutes(app) {
       ? "needs_super_admin"
       : null;
     const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+    const currentApplication = await optionalQuery(
+      supabaseAdmin
+        .from("partner_applications")
+        .select("metadata")
+        .eq("id", applicationId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "partner_applications"
+    );
+    const existingMetadata = currentApplication?.metadata && typeof currentApplication.metadata === "object"
+      ? currentApplication.metadata
+      : {};
 
     const application = await optionalMutation(
       supabaseAdmin
@@ -10090,6 +10278,7 @@ export function registerRoutes(app) {
           reviewed_by: ctx.user.id,
           reviewed_at: nowIso,
           metadata: {
+            ...existingMetadata,
             last_admin_action: payload.action,
             last_admin_reason: payload.reason,
             last_admin_action_at: nowIso

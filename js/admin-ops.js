@@ -545,9 +545,7 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="application" data-id="${escape(item.id)}">Detay</button>
-            <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}">İncele</button>
-            <button class="admin-btn admin-btn--gold" type="button" data-application-action="recommend_approve" data-id="${escape(item.id)}">Onay Öner</button>
-            <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}">Ret Öner</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-application-decision="${escape(item.id)}">Karar Ver</button>
           </span>
         </td>
       </tr>
@@ -1240,6 +1238,45 @@
     $("#adminDrawer").classList.add("is-open");
   }
 
+  function applicationDecisionMarkup(application, notes = [], approvalRequests = []) {
+    const item = application || {};
+    const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    const isSuper = state.profile?.role === "super_admin";
+    const rows = [
+      ["Firma", item.company_name || "-"],
+      ["Yetkili", item.contact_name || "-"],
+      ["E-posta", item.email || "-"],
+      ["Telefon", item.phone || "-"],
+      ["Vergi No", item.tax_number || "-"],
+      ["Durum", item.status || "-"],
+      ["İnceleme", item.review_stage || "-"],
+      ["Admin önerisi", item.admin_recommendation || "-"],
+      ["Risk", item.risk_level || "-"],
+      ["Kategori", metadata.category || item.category || "-"],
+      ["Mesaj", metadata.message || item.message || "-"],
+      ["Tarih", dateTime(item.created_at)]
+    ].map(([key, value]) => `<div><dt>${escape(key)}</dt><dd>${escape(value)}</dd></div>`).join("");
+    const noteRows = (notes || []).slice(0, 5).map((note) => `<li>${escape(dateTime(note.created_at))}: ${escape(note.body || "-")}</li>`).join("");
+    const requestRows = (approvalRequests || []).slice(0, 5).map((request) => `<li>${escape(request.status || "-")} / ${escape(request.summary || "-")}</li>`).join("");
+    const actionButtons = isSuper
+      ? `
+        <button class="admin-btn admin-btn--gold" type="button" data-application-final-decision="approved" data-id="${escape(item.id)}">Onayla ve Aktif Et</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-application-final-decision="rejected" data-id="${escape(item.id)}">Reddet</button>
+        <button class="admin-btn" type="button" data-application-final-decision="review" data-id="${escape(item.id)}">İncelemeye Al</button>
+      `
+      : `
+        <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}">İncelemeye Al</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-application-action="send_super_admin" data-id="${escape(item.id)}">Super Admin Onayına Gönder</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}">Ret Öner</button>
+      `;
+    return `
+      <dl class="admin-kv">${rows}</dl>
+      ${noteRows ? `<h3>İnceleme notları</h3><ul>${noteRows}</ul>` : ""}
+      ${requestRows ? `<h3>Onay kayıtları</h3><ul>${requestRows}</ul>` : ""}
+      <div class="admin-actions">${actionButtons}</div>
+    `;
+  }
+
   function closeDrawer() {
     $("#adminDrawer")?.classList.remove("is-open");
   }
@@ -1462,12 +1499,16 @@
       } else if (type === "application") {
         try {
           const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
-          renderObjectDetails("Başvuru Detayı", data.application);
+          $("#adminDrawerTitle").textContent = "Başvuru Detayı";
+          $("#adminDrawerBody").innerHTML = applicationDecisionMarkup(data.application, data.notes, data.approvalRequests);
+          $("#adminDrawer").classList.add("is-open");
         } catch (error) {
           const fallbackReason = partnerApplicationsFallbackReason(error);
           if (!fallbackReason) throw error;
           console.warn("[AdminOps] partner application detail fallback active", error);
-          renderObjectDetails("Başvuru Detayı", await getApplicationFromSupabase(id));
+          $("#adminDrawerTitle").textContent = "Başvuru Detayı";
+          $("#adminDrawerBody").innerHTML = applicationDecisionMarkup(await getApplicationFromSupabase(id));
+          $("#adminDrawer").classList.add("is-open");
         }
       } else if (type === "order") {
         const data = await api(`/v1/ops-console/orders/${encodeURIComponent(id)}`);
@@ -1485,6 +1526,10 @@
     } catch (error) {
       showToast(error.message || "Detay açılamadı.", "error");
     }
+  }
+
+  async function showApplicationDecision(applicationId) {
+    await showDetail("application", applicationId);
   }
 
   function showRefundTicketDetail(ticketId) {
@@ -1642,6 +1687,49 @@
       state.warnings = [fallbackReason];
     }
     showToast("Başvuru inceleme kaydı oluşturuldu.");
+    await loadApplications();
+    await showApplicationDecision(applicationId).catch(() => null);
+  }
+
+  async function finalPartnerApplicationDecision(applicationId, decision) {
+    const labels = {
+      approved: "Onayla ve Aktif Et",
+      rejected: "Reddet",
+      review: "İncelemeye Al"
+    };
+    const data = await openModal({
+      title: `Partner Başvuru Kararı: ${labels[decision] || decision}`,
+      message: decision === "approved"
+        ? "Super Admin onayıyla partner hesabı, profil rolü ve aktif partner mağazası oluşturulacak."
+        : "Karar audit log'a yazılacak.",
+      confirmText: labels[decision] || "Kararı Kaydet",
+      danger: decision === "rejected",
+      fields: [
+        { id: "reason", label: "Karar gerekçesi", type: "textarea", required: decision !== "review", max: 1200 }
+      ]
+    });
+    if (!data) return;
+    const result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+      method: "PATCH",
+      body: {
+        decision,
+        reason: data.reason || labels[decision] || "Partner başvuru kararı",
+        commission_rate: 0.12,
+        store_status: decision === "approved" ? "active" : "review"
+      }
+    });
+    const business = result.partner_business || {};
+    showToast(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.");
+    $("#adminDrawerTitle").textContent = "Partner Kararı";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Başvuru</dt><dd>${escape(result.application?.company_name || applicationId)}</dd></div>
+        <div><dt>Durum</dt><dd>${escape(result.application?.status || decision)}</dd></div>
+        <div><dt>Partner mağazası</dt><dd>${escape(business.display_name || "-")} / ${escape(business.status || "-")}</dd></div>
+        <div><dt>Partner paneli</dt><dd><a href="https://partner.allonahub.com/" target="_blank" rel="noopener">partner.allonahub.com</a></dd></div>
+      </dl>
+    `;
+    $("#adminDrawer").classList.add("is-open");
     await loadApplications();
   }
 
@@ -2025,6 +2113,16 @@
       const detail = event.target.closest("[data-detail]");
       if (detail) {
         await showDetail(detail.dataset.detail, detail.dataset.id, detail.dataset.source);
+        return;
+      }
+      const applicationDecision = event.target.closest("[data-application-decision]");
+      if (applicationDecision) {
+        await showApplicationDecision(applicationDecision.dataset.applicationDecision).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const finalApplicationDecision = event.target.closest("[data-application-final-decision]");
+      if (finalApplicationDecision) {
+        await finalPartnerApplicationDecision(finalApplicationDecision.dataset.id, finalApplicationDecision.dataset.applicationFinalDecision).catch((error) => showToast(error.message, "error"));
         return;
       }
       const userNote = event.target.closest("[data-user-note]");
