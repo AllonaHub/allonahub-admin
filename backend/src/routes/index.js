@@ -3750,6 +3750,54 @@ function textSearchFilter(columns, value) {
   return columns.map((column) => `${column}.ilike.%${term}%`).join(",");
 }
 
+function normalizedReviewValue(value) {
+  return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function productNeedsAdminReview(product = {}) {
+  const status = normalizedReviewValue(product.status);
+  const reviewStatus = normalizedReviewValue(
+    product.compliance_review_status
+      || product.review_status
+      || product.approval_status
+      || product.moderation_status
+  );
+  const hasPartnerOrImportSignal = Boolean(
+    product.partner_id
+      || product.partner_code
+      || product.partner_email
+      || product.integration_source
+      || product.integration_external_id
+  );
+  const closedReviewStatuses = new Set(["approved", "rejected"]);
+  const closedProductStatuses = new Set(["active", "approved", "published", "archived", "rejected", "deleted", "hidden"]);
+  const waitingReviewStatuses = new Set(["pending", "needs_review", "review", "in_review", "draft", "submitted", "awaiting_review", "waiting_review"]);
+  const waitingProductStatuses = new Set(["", "draft", "pending", "review", "in_review", "needs_review", "submitted", "awaiting_review", "waiting_review"]);
+
+  if (closedReviewStatuses.has(reviewStatus) || ["archived", "rejected", "deleted", "hidden"].includes(status)) return false;
+  if (waitingReviewStatuses.has(reviewStatus)) return hasPartnerOrImportSignal || waitingProductStatuses.has(status);
+  if (waitingProductStatuses.has(status)) return true;
+  return hasPartnerOrImportSignal && !closedProductStatuses.has(status);
+}
+
+function productMatchesAdminReviewSearch(product = {}, search) {
+  const term = cleanSearch(search).toLocaleLowerCase("tr-TR");
+  if (!term) return true;
+  return [
+    product.name,
+    product.product_name,
+    product.category,
+    product.brand,
+    product.seller_public_name,
+    product.seller_legal_name,
+    product.sku,
+    product.integration_source,
+    product.integration_external_id,
+    product.partner_code,
+    product.partner_email
+  ].some((value) => String(value || "").toLocaleLowerCase("tr-TR").includes(term));
+}
+
 function normalizePartnerSupportStatus(status) {
   if (status === "waiting") return "in_progress";
   if (status === "closed") return "resolved";
@@ -6041,6 +6089,7 @@ function integrationProductPayload({ business, integration, item }) {
   const complianceStatus = compliance.status === "rejected" ? "rejected" : compliance.warnings.length ? "needs_review" : "pending";
   return {
     name: item.name,
+    product_name: item.name,
     description: item.description,
     price: item.price,
     stock: item.stock,
@@ -6080,6 +6129,7 @@ function integrationProductPayload({ business, integration, item }) {
 async function applyIntegrationProducts({ business, integration, products }) {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
   const externalIds = products.map((item) => item.external_product_id).filter(Boolean);
+  const productPartnerId = business.owner_id || business.id;
   const { data: existingLinks, error: linkError } = await supabaseAdmin
     .from("partner_integration_product_links")
     .select("*")
@@ -6088,6 +6138,20 @@ async function applyIntegrationProducts({ business, integration, products }) {
   if (linkError) throw linkError;
 
   const linkMap = new Map((existingLinks || []).map((link) => [`${link.external_product_id}:${link.external_variant_id || ""}`, link]));
+  const { data: existingProducts, error: productLookupError } = await supabaseAdmin
+    .from("products")
+    .select("id, integration_external_id")
+    .eq("partner_id", productPartnerId)
+    .eq("integration_source", integration.provider)
+    .in("integration_external_id", externalIds.length ? externalIds : ["__none__"]);
+  if (productLookupError) throw productLookupError;
+
+  const productMap = new Map();
+  for (const product of existingProducts || []) {
+    if (product.integration_external_id && !productMap.has(product.integration_external_id)) {
+      productMap.set(product.integration_external_id, product);
+    }
+  }
 
   for (const item of products) {
     const key = `${item.external_product_id}:${item.external_variant_id || ""}`;
@@ -6110,7 +6174,9 @@ async function applyIntegrationProducts({ business, integration, products }) {
 
       const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
 
-      let productId = existing?.product_id || null;
+      const existingProduct = existing?.product_id ? null : productMap.get(item.external_product_id);
+      let productId = existing?.product_id || existingProduct?.id || null;
+      const productAlreadyExists = Boolean(productId);
       if (productId) {
         const { error: productUpdateError } = await supabaseAdmin
           .from("products")
@@ -6126,6 +6192,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
           .single();
         if (productInsertError) throw productInsertError;
         productId = product.id;
+        productMap.set(item.external_product_id, product);
         result.created += 1;
       }
 
@@ -6137,7 +6204,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
         external_variant_id: item.external_variant_id,
         external_sku: item.external_sku || null,
         source_hash: hash,
-        sync_status: productId === existing?.product_id ? "updated" : "created",
+        sync_status: productAlreadyExists ? "updated" : "created",
         compliance_status: productPayload.compliance_review_status,
         last_validation_warnings: compliance.warnings || [],
         last_payload: item.raw || {},
@@ -10646,16 +10713,26 @@ export function registerRoutes(app) {
     const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.list");
     const query = adminListQuerySchema.parse(request.query || {});
     const warnings = [];
-    let dbQuery = supabaseAdmin
+    const fetchLimit = Math.min(Math.max(query.limit * 3, 200), 600);
+    const dbQuery = supabaseAdmin
       .from("products")
       .select("*")
-      .or("compliance_review_status.eq.pending,compliance_review_status.eq.needs_review,status.eq.draft")
       .order("created_at", { ascending: false })
-      .limit(query.limit);
-    const filter = textSearchFilter(["name", "category", "brand", "seller_public_name", "seller_legal_name", "sku", "integration_source"], query.search);
-    if (filter) dbQuery = dbQuery.or(filter);
+      .limit(fetchLimit);
 
-    const products = await optionalQuery(dbQuery, [], warnings, "products");
+    const rows = await optionalQuery(dbQuery, [], warnings, "products");
+    let products = (rows || [])
+      .filter(productNeedsAdminReview)
+      .filter((product) => productMatchesAdminReviewSearch(product, query.search));
+    if (query.status) {
+      const requestedStatus = normalizedReviewValue(query.status);
+      products = products.filter((product) => {
+        const status = normalizedReviewValue(product.status);
+        const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+        return status === requestedStatus || reviewStatus === requestedStatus;
+      });
+    }
+    products = products.slice(0, query.limit);
 
     await auditedOpsEvent({
       request,
@@ -10664,6 +10741,8 @@ export function registerRoutes(app) {
       resourceType: "product",
       metadata: {
         search: query.search || null,
+        status: query.status || null,
+        fetched_count: rows.length,
         count: products.length,
         warning_count: warnings.length
       }
@@ -10690,17 +10769,30 @@ export function registerRoutes(app) {
     if (beforeError) throw beforeError;
     if (!before) throw httpError("Ürün bulunamadı.", 404);
 
-    const { data: product, error } = await supabaseAdmin
+    const updatePayload = {
+      status: nextStatus,
+      compliance_review_status: body.decision,
+      compliance_notes: body.reason,
+      updated_at: nowIso
+    };
+
+    let { data: product, error } = await supabaseAdmin
       .from("products")
-      .update({
-        status: nextStatus,
-        compliance_review_status: body.decision,
-        compliance_notes: body.reason,
-        updated_at: nowIso
-      })
+      .update(updatePayload)
       .eq("id", productId)
       .select("*")
       .single();
+    if (error && looksLikeMissingSchema(error)) {
+      delete updatePayload.updated_at;
+      const retry = await supabaseAdmin
+        .from("products")
+        .update(updatePayload)
+        .eq("id", productId)
+        .select("*")
+        .single();
+      product = retry.data;
+      error = retry.error;
+    }
     if (error && looksLikeMissingSchema(error)) {
       throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
     }
