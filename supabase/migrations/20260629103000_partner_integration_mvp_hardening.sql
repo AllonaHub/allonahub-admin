@@ -48,6 +48,15 @@ begin
 end $$;
 
 alter table public.products
+  add column if not exists name text,
+  add column if not exists product_name text,
+  add column if not exists description text,
+  add column if not exists price numeric not null default 0,
+  add column if not exists stock integer not null default 0,
+  add column if not exists image_url text,
+  add column if not exists category text,
+  add column if not exists brand text,
+  add column if not exists status text not null default 'draft',
   add column if not exists sku text,
   add column if not exists partner_code text,
   add column if not exists partner_email text,
@@ -68,6 +77,23 @@ alter table public.products
   add column if not exists seller_disclosure text,
   add column if not exists compliance_review_status text not null default 'pending',
   add column if not exists compliance_notes text;
+
+update public.products
+set
+  name = coalesce(nullif(name, ''), nullif(product_name, ''), 'Ürün'),
+  product_name = coalesce(nullif(product_name, ''), nullif(name, ''), 'Ürün'),
+  description = coalesce(description, ''),
+  price = coalesce(price, 0),
+  stock = coalesce(stock, 0),
+  category = coalesce(nullif(category, ''), 'Genel'),
+  status = coalesce(nullif(status, ''), 'draft');
+
+alter table public.products
+  alter column product_name set default 'Ürün',
+  alter column name set default 'Ürün',
+  alter column price set default 0,
+  alter column stock set default 0,
+  alter column status set default 'draft';
 
 update public.products
 set module_key = 'shop'
@@ -94,10 +120,10 @@ update public.products
 set
   slug = coalesce(
     nullif(slug, ''),
-    lower(trim(both '-' from regexp_replace(coalesce(name, sku, id::text), '[^a-zA-Z0-9]+', '-', 'g')))
+    lower(trim(both '-' from regexp_replace(coalesce(name, product_name, sku, id::text), '[^a-zA-Z0-9]+', '-', 'g')))
   ),
-  meta_title = coalesce(nullif(meta_title, ''), name),
-  meta_description = coalesce(nullif(meta_description, ''), left(coalesce(description, name, ''), 300))
+  meta_title = coalesce(nullif(meta_title, ''), name, product_name),
+  meta_description = coalesce(nullif(meta_description, ''), left(coalesce(description, name, product_name, ''), 300))
 where slug is null
    or slug = ''
    or meta_title is null
