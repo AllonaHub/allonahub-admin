@@ -152,6 +152,16 @@
     return `<div class="admin-status ${type === "error" ? "admin-status--error" : ""}">${escape(message)}</div>`;
   }
 
+  function partnerAccessEmailStatus(auth) {
+    if (auth?.access_email_sent || auth?.invite_sent || auth?.password_reset_sent) {
+      const type = auth.access_email_type === "invite" ? "davet maili" : "şifre belirleme maili";
+      return `${type} gönderildi`;
+    }
+    return auth?.access_email_error
+      ? `erişim maili gönderilemedi: ${auth.access_email_error}`
+      : "erişim maili gönderilmedi";
+  }
+
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
     return core.url(`/admin/admin-login.html?returnTo=${returnTo}`);
@@ -1757,6 +1767,7 @@
       }
     }
     const business = result.partner_business || {};
+    const auth = result.activation?.auth || {};
     showToast(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.");
     $("#adminDrawerTitle").textContent = "Partner Kararı";
     $("#adminDrawerBody").innerHTML = `
@@ -1764,6 +1775,8 @@
         <div><dt>Başvuru</dt><dd>${escape(result.application?.company_name || applicationId)}</dd></div>
         <div><dt>Durum</dt><dd>${escape(result.application?.status || decision)}</dd></div>
         <div><dt>Partner mağazası</dt><dd>${escape(business.display_name || "-")} / ${escape(business.status || "-")}</dd></div>
+        <div><dt>Auth kullanıcısı</dt><dd>${escape(auth.email || result.application?.email || "-")} / ${escape(auth.user_id || "-")}</dd></div>
+        <div><dt>Erişim maili</dt><dd>${escape(partnerAccessEmailStatus(auth))}</dd></div>
         <div><dt>Partner paneli</dt><dd><a href="https://partner.allonahub.com/" target="_blank" rel="noopener">partner.allonahub.com</a></dd></div>
       </dl>
     `;

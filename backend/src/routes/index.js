@@ -537,7 +537,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove3";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove4";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -4495,9 +4495,55 @@ async function resolveAuthUserById(userId, fallbackEmail, request) {
   const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
   if (error || !data?.user) {
     request?.log?.warn({ error: error?.message, userId }, "Partner auth user id lookup failed");
-    return { id: userId, email: fallbackEmail || "" };
+    return null;
   }
   return data.user;
+}
+
+function authUserMatchesEmail(user, email) {
+  const userEmail = authEmail(user?.email);
+  const targetEmail = authEmail(email);
+  return Boolean(user?.id && targetEmail && (!userEmail || userEmail === targetEmail));
+}
+
+async function sendPartnerAccessEmail(email, request, source) {
+  const target = authEmail(email);
+  const redirectTo = partnerInviteRedirectUrl();
+  if (!target) return { sent: false, error: "missing_email", redirect_to: redirectTo };
+  if (typeof supabasePublic.auth?.resetPasswordForEmail !== "function") {
+    return { sent: false, error: "supabase_reset_password_unavailable", redirect_to: redirectTo };
+  }
+  try {
+    const { error } = await supabasePublic.auth.resetPasswordForEmail(target, { redirectTo });
+    if (error) {
+      request?.log?.warn({
+        error: error.message,
+        email_hash: authEmailHash(target),
+        source
+      }, "Partner access email delivery request failed");
+      return { sent: false, error: error.message || "delivery_failed", redirect_to: redirectTo };
+    }
+    return { sent: true, error: "", redirect_to: redirectTo };
+  } catch (error) {
+    request?.log?.warn({
+      error: error?.message,
+      email_hash: authEmailHash(target),
+      source
+    }, "Partner access email delivery request crashed");
+    return { sent: false, error: error?.message || "delivery_failed", redirect_to: redirectTo };
+  }
+}
+
+function partnerAuthResult(user, options = {}) {
+  return {
+    user,
+    created: Boolean(options.created),
+    invite_sent: Boolean(options.inviteSent),
+    password_reset_sent: Boolean(options.passwordResetSent),
+    access_email_sent: Boolean(options.inviteSent || options.passwordResetSent || options.accessEmailSent),
+    access_email_error: options.accessEmailError || "",
+    access_email_type: options.accessEmailType || (options.inviteSent ? "invite" : options.passwordResetSent ? "password_reset" : "")
+  };
 }
 
 async function ensurePartnerAuthUser(application, partnerType, request) {
@@ -4505,10 +4551,31 @@ async function ensurePartnerAuthUser(application, partnerType, request) {
   if (!email) throw httpError("Başvuruda geçerli e-posta yok.", 400);
 
   const existingById = await resolveAuthUserById(application.user_id, email, request);
-  if (existingById) return { user: existingById, created: false, invite_sent: false, password_reset_sent: false };
+  if (existingById && authUserMatchesEmail(existingById, email)) {
+    const accessEmail = await sendPartnerAccessEmail(email, request, "existing_by_id");
+    return partnerAuthResult(existingById, {
+      passwordResetSent: accessEmail.sent,
+      accessEmailError: accessEmail.error,
+      accessEmailType: "password_reset"
+    });
+  }
+  if (existingById) {
+    request?.log?.warn({
+      userId: existingById.id,
+      existing_email_hash: authEmailHash(existingById.email || ""),
+      application_email_hash: authEmailHash(email)
+    }, "Partner application user_id email mismatch ignored");
+  }
 
   const existingByEmail = await findAuthUserByEmail(email, request);
-  if (existingByEmail) return { user: existingByEmail, created: false, invite_sent: false, password_reset_sent: false };
+  if (existingByEmail) {
+    const accessEmail = await sendPartnerAccessEmail(email, request, "existing_by_email");
+    return partnerAuthResult(existingByEmail, {
+      passwordResetSent: accessEmail.sent,
+      accessEmailError: accessEmail.error,
+      accessEmailType: "password_reset"
+    });
+  }
 
   const metadata = partnerAuthMetadata(application, partnerType);
   const redirectTo = partnerInviteRedirectUrl();
@@ -4520,12 +4587,23 @@ async function ensurePartnerAuthUser(application, partnerType, request) {
       redirectTo
     });
     if (!error && data?.user) {
-      return { user: data.user, created: true, invite_sent: true, password_reset_sent: false };
+      return partnerAuthResult(data.user, {
+        created: true,
+        inviteSent: true,
+        accessEmailType: "invite"
+      });
     }
     lastError = error;
     if (/already|registered|exists/i.test(String(error?.message || ""))) {
       const user = await findAuthUserByEmail(email, request);
-      if (user) return { user, created: false, invite_sent: false, password_reset_sent: false };
+      if (user) {
+        const accessEmail = await sendPartnerAccessEmail(email, request, "invite_existing_user");
+        return partnerAuthResult(user, {
+          passwordResetSent: accessEmail.sent,
+          accessEmailError: accessEmail.error,
+          accessEmailType: "password_reset"
+        });
+      }
     }
   }
 
@@ -4538,14 +4616,13 @@ async function ensurePartnerAuthUser(application, partnerType, request) {
       app_metadata: { role: "partner" }
     });
     if (!error && data?.user) {
-      let passwordResetSent = false;
-      try {
-        const reset = await supabasePublic.auth.resetPasswordForEmail(email, { redirectTo });
-        passwordResetSent = !reset.error;
-      } catch (resetError) {
-        passwordResetSent = false;
-      }
-      return { user: data.user, created: true, invite_sent: false, password_reset_sent: passwordResetSent };
+      const accessEmail = await sendPartnerAccessEmail(email, request, "created_auth_user");
+      return partnerAuthResult(data.user, {
+        created: true,
+        passwordResetSent: accessEmail.sent,
+        accessEmailError: accessEmail.error,
+        accessEmailType: "password_reset"
+      });
     }
     lastError = error || lastError;
   }
@@ -4564,10 +4641,15 @@ async function syncPartnerAuthMetadata(user, application, partnerType, request) 
     ? user.app_metadata
     : { ...(user.app_metadata || {}), role: "partner" };
 
-  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+  const updatePayload = {
     user_metadata: userMetadata,
     app_metadata: appMetadata
-  });
+  };
+  if (!user.email_confirmed_at) {
+    updatePayload.email_confirm = true;
+  }
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, updatePayload);
   if (!error) return;
   request?.log?.warn({ error: error.message, userId: user.id }, "Partner auth metadata sync failed");
 }
@@ -4762,7 +4844,10 @@ async function activateApprovedPartnerApplication({ application, body, ctx, requ
       email: authResult.user.email || application.email,
       created: authResult.created,
       invite_sent: authResult.invite_sent,
-      password_reset_sent: authResult.password_reset_sent
+      password_reset_sent: authResult.password_reset_sent,
+      access_email_sent: authResult.access_email_sent,
+      access_email_error: authResult.access_email_error,
+      access_email_type: authResult.access_email_type
     }
   };
 }
@@ -4883,7 +4968,10 @@ async function decidePartnerApplicationRequest({ request, applicationId, body, c
         auth_user_id: activation?.auth?.user_id || application.user_id || null,
         auth_user_created: activation?.auth?.created || false,
         invite_sent: activation?.auth?.invite_sent || false,
-        password_reset_sent: activation?.auth?.password_reset_sent || false
+        password_reset_sent: activation?.auth?.password_reset_sent || false,
+        access_email_sent: activation?.auth?.access_email_sent || false,
+        access_email_type: activation?.auth?.access_email_type || null,
+        access_email_error: activation?.auth?.access_email_error || null
       },
       reason: body.reason || ""
     }
@@ -9741,6 +9829,9 @@ export function registerRoutes(app) {
         auth_user_created: activation.auth?.created || false,
         invite_sent: activation.auth?.invite_sent || false,
         password_reset_sent: activation.auth?.password_reset_sent || false,
+        access_email_sent: activation.auth?.access_email_sent || false,
+        access_email_type: activation.auth?.access_email_type || null,
+        access_email_error: activation.auth?.access_email_error || null,
         email_hash: authEmailHash(body.email),
         reason: body.reason
       }

@@ -83,6 +83,16 @@
     return `<span class="sa-status-${escape(className)}">${escape(map[status] || value || "-")}</span>`;
   }
 
+  function partnerAccessEmailStatus(auth) {
+    if (auth?.access_email_sent || auth?.invite_sent || auth?.password_reset_sent) {
+      const type = auth.access_email_type === "invite" ? "davet maili" : "şifre belirleme maili";
+      return `${type} gönderildi`;
+    }
+    return auth?.access_email_error
+      ? `erişim maili gönderilemedi: ${auth.access_email_error}`
+      : "erişim maili gönderilmedi";
+  }
+
   function setAlert(message, tone) {
     const target = $("[data-sa-alert]");
     if (!target) return;
@@ -810,7 +820,7 @@
       openDrawer("Partner Açılış Sonucu", [
         ownerLine("Firma", escape(result.partner_business?.display_name || companyName || "-"), "", "low"),
         ownerLine("Auth kullanıcısı", `${escape(auth.email || email)} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı bağlandı"}`, "", "medium"),
-        ownerLine("Davet", `${auth.invite_sent ? "Davet gönderildi" : "Davet gönderilmedi"} / ${auth.password_reset_sent ? "şifre belirleme e-postası gönderildi" : "şifre e-postası yok"}`, "", auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
+        ownerLine("Erişim maili", escape(partnerAccessEmailStatus(auth)), "", auth.access_email_sent || auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
         ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\">partner.allonahub.com</a>", "", "low")
       ].join(""));
       form.reset();
@@ -1146,6 +1156,7 @@
       ownerLine("Başvuru", `${escape(application.company_name || application.id || "-")} / ${escape(application.status || decision)}`, "", decision === "approved" ? "low" : "medium"),
       ownerLine("Partner mağazası", `${escape(business.display_name || "-")} / ${escape(business.status || "-")} / ${escape(business.verification_status || "-")}`, "", business.status === "active" ? "low" : "high"),
       ownerLine("Auth kullanıcısı", `${escape(auth.email || application.email || "-")} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı"}`, "", "medium"),
+      ownerLine("Erişim maili", escape(partnerAccessEmailStatus(auth)), "", auth.access_email_sent || auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
       ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\" target=\"_blank\" rel=\"noopener\">partner.allonahub.com</a>", "", "low")
     ].join(""));
   }
