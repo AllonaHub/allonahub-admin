@@ -989,8 +989,8 @@
           <div class="partner-os-integration-row-actions">
             ${statusPill(integration.status || "draft")}
             <button type="button" data-integration-test="${escape(integration.id)}"><i class="fa-solid fa-vial"></i><span>Test</span></button>
-            <button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Ürünleri Çek</span></button>
-            ${canApply ? `<button type="button" data-integration-apply="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Kataloğa Aktar</span></button>` : ""}
+            <button type="button" data-integration-preview="${escape(integration.id)}"><i class="fa-solid fa-eye"></i><span>Önizle</span></button>
+            ${canApply ? `<button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Ürünleri Çek</span></button>` : ""}
           </div>
         </article>
       `;
@@ -1006,6 +1006,7 @@
     }
     target.innerHTML = state.integrationRuns.slice(0, 10).map((run) => {
       const preview = Array.isArray(run.summary?.preview) ? run.summary.preview : [];
+      const summaryErrors = Array.isArray(run.summary?.errors) ? run.summary.errors : [];
       const canApplyPreview = run.run_mode === "preview" && ["success", "partial"].includes(run.status) && run.integration_id;
       return `
         <article class="partner-os-integration-run">
@@ -1014,6 +1015,7 @@
             <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel · ${escape(run.failed_count || 0)} hata</span>
             ${preview.length ? `<small>${preview.slice(0, 3).map((item) => `${escape(item.name)}${item.compliance_status ? ` (${escape(statusLabel(item.compliance_status))})` : ""}`).join(", ")}</small>` : ""}
             ${run.warning_count ? `<small>${escape(run.warning_count)} uyarı kontrol bekliyor.</small>` : ""}
+            ${summaryErrors.length ? `<small>${summaryErrors.slice(0, 2).map((item) => escape(item.message || item.external_product_id || "Ürün işlenemedi")).join(" · ")}</small>` : ""}
             ${run.error_message ? `<small>${escape(run.error_message)}</small>` : ""}
           </div>
           <div class="partner-os-integration-row-actions">
@@ -1945,6 +1947,16 @@
     }
   }
 
+  function integrationRunSummary(run) {
+    const created = Number(run?.created_count || 0);
+    const updated = Number(run?.updated_count || 0);
+    const skipped = Number(run?.skipped_count || 0);
+    const failed = Number(run?.failed_count || 0);
+    const checked = Number(run?.checked_count || 0);
+    if (!checked) return "Kaynakta okunacak ürün bulunamadı.";
+    return `${created} yeni, ${updated} güncel, ${skipped} zaten aynı, ${failed} hata.`;
+  }
+
   async function syncIntegration(integrationId, mode) {
     try {
       const runMode = mode || "preview";
@@ -1952,13 +1964,13 @@
       if (runMode === "apply") {
         const policy = integrationPolicy();
         const confirmationText = policy.apply_confirmation_text || "KATALOGA_AKTAR";
-        const answer = window.prompt(`Kataloğa aktarım ürünleri taslak olarak oluşturur. Devam etmek için ${confirmationText} yazın.`);
-        if (answer !== confirmationText) {
+        const confirmed = window.confirm("Ürünleri AllonaHub kataloğuna taslak/kontrol durumunda aktaralım mı?");
+        if (!confirmed) {
           toast("Kataloğa aktarım iptal edildi.", "warning");
           return;
         }
-        body.confirm_apply = answer;
-        body.approval_note = "Partner panelinden kontrollü kataloğa aktarım.";
+        body.confirm_apply = confirmationText;
+        body.approval_note = "Partner panelinden ücretsiz ürün çekme ile kataloğa aktarım.";
       }
       const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/sync`, {
         method: "POST",
@@ -1969,10 +1981,10 @@
       }
       if (runMode === "apply") {
         await loadPartnerOs();
-        toast("Kataloğa aktarım tamamlandı; ürünler taslak/kontrol durumunda işlendi.");
+        toast(`Ürün çekme tamamlandı: ${integrationRunSummary(payload.run)} Ürünlerim ve admin onay ekranı yenilendi.`);
       } else {
         renderIntegrationRuns();
-        toast("Senkron önizlemesi tamamlandı.");
+        toast(`Önizleme tamamlandı: ${integrationRunSummary(payload.run)} Kataloğa yazmak için Ürünleri Çek butonunu kullan.`);
       }
     } catch (error) {
       toast(error.message || "Entegrasyon senkronu çalışmadı.", "error");
@@ -2181,6 +2193,7 @@
       const exportProducts = event.target.closest("[data-export-products]");
       const integrationMode = event.target.closest("[data-integration-mode]");
       const integrationTest = event.target.closest("[data-integration-test]");
+      const integrationPreview = event.target.closest("[data-integration-preview]");
       const integrationSync = event.target.closest("[data-integration-sync]");
       const integrationApply = event.target.closest("[data-integration-apply]");
       const refundDetail = event.target.closest("[data-refund-detail]");
@@ -2223,7 +2236,8 @@
       }
       if (integrationMode) setIntegrationMode(integrationMode.dataset.integrationMode);
       if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
-      if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync);
+      if (integrationPreview) syncIntegration(integrationPreview.dataset.integrationPreview, "preview");
+      if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync, "apply");
       if (integrationApply) syncIntegration(integrationApply.dataset.integrationApply, "apply");
       if (refundDetail) {
         state.selectedRefundId = state.selectedRefundId === refundDetail.dataset.refundDetail ? null : refundDetail.dataset.refundDetail;
