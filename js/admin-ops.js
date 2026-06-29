@@ -1779,6 +1779,15 @@
         <div><dt>Erişim maili</dt><dd>${escape(partnerAccessEmailStatus(auth))}</dd></div>
         <div><dt>Partner paneli</dt><dd><a href="https://partner.allonahub.com/" target="_blank" rel="noopener">partner.allonahub.com</a></dd></div>
       </dl>
+      ${decision === "approved" ? `
+        <div class="admin-status">
+          Bu başvuru approved statüsüne geçtiği için bekleyen başvuru filtresinden çıkabilir. Aktif kayıt Partner Operasyonları listesinde takip edilir.
+        </div>
+        <div class="admin-actions">
+          <button class="admin-btn admin-btn--primary" type="button" data-admin-view="partners">Aktif Partnerleri Aç</button>
+          <button class="admin-btn" type="button" data-admin-view="applications">Başvuruları Aç</button>
+        </div>
+      ` : ""}
     `;
     $("#adminDrawer").classList.add("is-open");
     await loadApplications();
