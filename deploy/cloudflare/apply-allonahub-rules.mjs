@@ -156,7 +156,7 @@ const redirectRules = [
 const wafRules = [{
   ref: "allonahub-api-cron-skip-challenge",
   description: "Skip challenge for authenticated API cron calls",
-  expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/") and any(lower(http.request.headers.names[*])[*] eq "x-cron-secret")`,
+  expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/") and has_key(http.request.headers, "x-cron-secret")`,
   action: "skip",
   action_parameters: {
     ruleset: "current",
