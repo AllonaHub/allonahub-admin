@@ -13,6 +13,8 @@ command -v psql >/dev/null 2>&1 || {
   exit 1
 }
 
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/migrations/20260623133000_create_allona_market_catalog.sql"
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/migrations/20260629090000_add_product_seller_disclosure_fields.sql"
 psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/migrations/20260628120000_create_partner_integration_core.sql"
 psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f "$ROOT_DIR/supabase/migrations/20260629103000_partner_integration_mvp_hardening.sql"
 

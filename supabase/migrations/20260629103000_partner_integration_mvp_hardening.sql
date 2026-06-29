@@ -51,9 +51,13 @@ alter table public.products
   add column if not exists sku text,
   add column if not exists partner_code text,
   add column if not exists partner_email text,
+  add column if not exists module_key text not null default 'shop',
   add column if not exists catalog_scope text,
   add column if not exists integration_source text,
   add column if not exists integration_external_id text,
+  add column if not exists slug text,
+  add column if not exists meta_title text,
+  add column if not exists meta_description text,
   add column if not exists seller_public_name text,
   add column if not exists seller_kind text not null default 'Platform satıcısı',
   add column if not exists seller_legal_name text,
@@ -65,37 +69,60 @@ alter table public.products
   add column if not exists compliance_review_status text not null default 'pending',
   add column if not exists compliance_notes text;
 
+update public.products
+set module_key = 'shop'
+where module_key is null
+   or module_key not in ('shop', 'market', 'food', 'taxi', 'service');
+
+alter table public.products
+  alter column module_key set default 'shop',
+  alter column module_key set not null;
+
 do $$
 begin
-  if exists (
-    select 1
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'products'
-      and column_name = 'module_key'
-  ) then
-    execute $sql$
-      update public.products
-      set catalog_scope = coalesce(
-        nullif(catalog_scope, ''),
-        case when module_key in ('shop', 'market', 'food', 'taxi', 'service') then module_key else null end,
-        'shop'
-      )
-      where catalog_scope is null
-         or catalog_scope = ''
-    $sql$;
-  else
-    update public.products
-    set catalog_scope = coalesce(nullif(catalog_scope, ''), 'shop')
-    where catalog_scope is null
-       or catalog_scope = '';
-  end if;
+  update public.products
+  set catalog_scope = coalesce(
+    nullif(catalog_scope, ''),
+    case when module_key in ('shop', 'market', 'food', 'taxi', 'service') then module_key else null end,
+    'shop'
+  )
+  where catalog_scope is null
+     or catalog_scope = '';
 end $$;
+
+update public.products
+set
+  slug = coalesce(
+    nullif(slug, ''),
+    lower(trim(both '-' from regexp_replace(coalesce(name, sku, id::text), '[^a-zA-Z0-9]+', '-', 'g')))
+  ),
+  meta_title = coalesce(nullif(meta_title, ''), name),
+  meta_description = coalesce(nullif(meta_description, ''), left(coalesce(description, name, ''), 300))
+where slug is null
+   or slug = ''
+   or meta_title is null
+   or meta_title = ''
+   or meta_description is null
+   or meta_description = '';
 
 update public.products
 set compliance_review_status = coalesce(nullif(compliance_review_status, ''), 'pending')
 where compliance_review_status is null
    or compliance_review_status = '';
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'products_module_key_check'
+      and conrelid = 'public.products'::regclass
+  ) then
+    alter table public.products
+      add constraint products_module_key_check
+      check (module_key in ('shop', 'market', 'food', 'taxi', 'service'));
+  end if;
+end $$;
 
 do $$
 begin
@@ -121,6 +148,12 @@ begin
       check (compliance_review_status in ('pending', 'approved', 'rejected', 'needs_review'));
   end if;
 end $$;
+
+create index if not exists products_module_status_idx
+  on public.products(module_key, status, created_at desc);
+
+create index if not exists products_compliance_review_idx
+  on public.products(compliance_review_status, status, created_at desc);
 
 create index if not exists products_partner_integration_source_idx
   on public.products(partner_id, integration_source, integration_external_id);
