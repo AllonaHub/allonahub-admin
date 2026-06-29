@@ -4,6 +4,7 @@
 
   const STORAGE_KEY = "allonahub_admin_alarm_v1";
   const SEEN_KEY = "allonahub_admin_alarm_seen_v1";
+  const SILENCE_KEY = "allonahub_admin_alarm_silence_v1";
   const POLL_MS = 30000;
   const MAX_SEEN = 160;
   const LEVEL_WEIGHT = { low: 0, info: 0, medium: 1, warning: 2, high: 2, critical: 3 };
@@ -21,6 +22,8 @@
     status: null,
     overlay: null,
     overlayBody: null,
+    suppressedUntil: 0,
+    activeAudio: new Set(),
     seen: new Set()
   };
 
@@ -82,8 +85,14 @@
     return `${item.severity || ""} ${item.action || ""} ${item.flag_type || ""} ${item.kind || ""} ${item.title || ""} ${item.message || ""} ${item.reason || ""} ${item.actor_role || ""} ${item.role || ""} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
   }
 
+  function isPrivilegedActor(item) {
+    const role = String(item.actor_role || item.role || "").toLowerCase();
+    return ["admin", "super_admin"].includes(role);
+  }
+
   function trustedAdminItem(item) {
     const raw = itemRaw(item);
+    if (isPrivilegedActor(item) && item.source === "admin" && !/(authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied)/.test(raw)) return true;
     if (!/(^| )(admin\.ops\.|super_admin\.)/.test(raw)) return false;
     if (/boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied/.test(raw)) return false;
     if (/mfa_required|config_missing|missing|mismatch|unauthorized|forbidden/.test(raw)) return false;
@@ -91,8 +100,16 @@
     return true;
   }
 
+  function isExternalThreatItem(item) {
+    const raw = itemRaw(item);
+    if (trustedAdminItem(item)) return false;
+    if (isPrivilegedActor(item) && item.source === "admin" && !/(authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied)/.test(raw)) return false;
+    return /authz\.denied|admin\.boundary_denied|owner_denied|role_denied|permission_super_admin_denied|red_zone|red zone|kırmızı|attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf|auto_defense|blocked_ip|suspicious_ip/.test(raw);
+  }
+
   function isCriticalAlarmItem(item) {
     const raw = itemRaw(item);
+    if (!isExternalThreatItem(item)) return false;
     if (trustedAdminItem(item)) return false;
     if (item.type === "admin_notification") {
       return normalizeLevel(item.severity) === "critical"
@@ -106,11 +123,7 @@
   }
 
   function isAudibleAlarmItem(item) {
-    if (trustedAdminItem(item)) return false;
-    if (isCriticalAlarmItem(item)) return true;
-    const raw = itemRaw(item);
-    return normalizeLevel(item.severity) === "high"
-      && /auth\.denied|failed|blocked|suspicious|risk|flag|denied/.test(raw);
+    return isCriticalAlarmItem(item);
   }
 
   function classifyItem(item) {
@@ -196,6 +209,23 @@
     return state.audioContext;
   }
 
+  function trackAudio(node) {
+    state.activeAudio.add(node);
+    node.onended = () => state.activeAudio.delete(node);
+  }
+
+  function stopActiveAudio() {
+    for (const node of state.activeAudio) {
+      try {
+        node.stop(0);
+      } catch {}
+    }
+    state.activeAudio.clear();
+    try {
+      if (state.audioContext && state.audioContext.state === "running") state.audioContext.suspend();
+    } catch {}
+  }
+
   function playTone({ frequency = 720, duration = 0.16, delay = 0, type = "square", gain = 0.08 }) {
     const ctx = ensureAudio();
     const oscillator = ctx.createOscillator();
@@ -207,6 +237,7 @@
     volume.gain.exponentialRampToValueAtTime(gain, start + 0.015);
     volume.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     oscillator.connect(volume).connect(ctx.destination);
+    trackAudio(oscillator);
     oscillator.start(start);
     oscillator.stop(start + duration + 0.02);
   }
@@ -224,12 +255,14 @@
     }
     volume.gain.exponentialRampToValueAtTime(0.0001, start + 3.2);
     oscillator.connect(volume).connect(ctx.destination);
+    trackAudio(oscillator);
     oscillator.start(start);
     oscillator.stop(start + 3.25);
   }
 
   async function playAlarm(level) {
     if (!state.enabled) return;
+    if (Date.now() < state.suppressedUntil) return;
     const ctx = ensureAudio();
     if (ctx.state === "suspended") await ctx.resume();
     if (level === "critical") {
@@ -264,12 +297,15 @@
 
   function statusText() {
     const enabledText = state.enabled ? "Alarm açık" : "Alarm kapalı";
+    if (state.suppressedUntil && Date.now() < state.suppressedUntil) {
+      return `${enabledText} / susturuldu: ${new Date(state.suppressedUntil).toLocaleTimeString("tr-TR")}`;
+    }
     return `${enabledText} / ${state.lastLevel}: ${state.lastMessage}`;
   }
 
   function renderStatus() {
     if (!state.button || !state.status) return;
-    state.button.textContent = state.enabled ? "Alarm Açık" : "Alarmı Etkinleştir";
+    state.button.textContent = state.enabled ? "Alarmı Kapat" : "Alarmı Aç";
     state.button.setAttribute("aria-pressed", state.enabled ? "true" : "false");
     state.root.dataset.level = state.lastLevel;
     state.status.textContent = statusText();
@@ -278,6 +314,7 @@
   function activeIncidentFromStatus(payload) {
     const incident = payload && payload.alarm && payload.alarm.incident;
     if (!incident || !incident.active) return null;
+    if (!incident.redZone) return null;
     if (incident.silencedUntil && Date.parse(incident.silencedUntil) > Date.now()) return null;
     return incident;
   }
@@ -320,6 +357,7 @@
   }
 
   function showOverlay(incident) {
+    if (!state.enabled || Date.now() < state.suppressedUntil) return;
     if (!incident || !state.overlay || !state.overlayBody) return;
     state.overlay.dataset.level = incident.level || "critical";
     state.overlay.hidden = false;
@@ -338,14 +376,15 @@
     if (state.root) return;
     const style = document.createElement("style");
     style.textContent = `
-      .ah-admin-alarm{position:fixed;right:16px;bottom:16px;z-index:2147483000;display:grid;gap:8px;max-width:min(360px,calc(100vw - 32px));padding:10px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:rgba(6,14,28,.94);color:#fff;box-shadow:0 18px 54px rgba(0,0,0,.32);font:12px/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .ah-admin-alarm{position:fixed;right:12px;bottom:12px;z-index:900;display:grid;gap:6px;width:min(280px,calc(100vw - 24px));padding:8px;border:1px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(6,14,28,.90);color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.26);font:11px/1.3 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       .ah-admin-alarm[data-level="high"]{border-color:rgba(255,184,77,.72)}
       .ah-admin-alarm[data-level="critical"]{border-color:rgba(255,77,109,.9);box-shadow:0 0 0 2px rgba(255,77,109,.22),0 18px 54px rgba(0,0,0,.42)}
       .ah-admin-alarm__row{display:flex;align-items:center;gap:8px;justify-content:space-between}
-      .ah-admin-alarm button{border:1px solid rgba(255,255,255,.22);border-radius:6px;background:#12223a;color:#fff;min-height:30px;padding:6px 9px;font-weight:800;cursor:pointer}
+      .ah-admin-alarm strong{font-size:11px}
+      .ah-admin-alarm button{border:1px solid rgba(255,255,255,.22);border-radius:6px;background:#12223a;color:#fff;min-height:26px;padding:4px 7px;font-weight:800;cursor:pointer;font-size:11px}
       .ah-admin-alarm button[aria-pressed="true"]{background:#0f5132;border-color:rgba(56,217,150,.5)}
       .ah-admin-alarm__test{background:#44211c!important;border-color:rgba(255,184,77,.5)!important}
-      .ah-admin-alarm__status{color:rgba(255,255,255,.78);overflow-wrap:anywhere}
+      .ah-admin-alarm__status{color:rgba(255,255,255,.78);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
       .ah-admin-alarm-screen{position:fixed;inset:0;z-index:2147483100;display:grid;place-items:center;padding:24px;background:rgba(5,8,14,.82);backdrop-filter:blur(8px)}
       .ah-admin-alarm-screen[hidden]{display:none}
       .ah-admin-alarm-screen__panel{width:min(620px,calc(100vw - 32px));border:2px solid rgba(255,77,109,.92);border-radius:10px;background:#100b11;color:#fff;box-shadow:0 28px 90px rgba(0,0,0,.58),0 0 0 8px rgba(255,77,109,.18);padding:18px;display:grid;gap:14px}
@@ -365,7 +404,7 @@
     state.root.innerHTML = `
       <div class="ah-admin-alarm__row">
         <strong>Güvenlik Alarmı</strong>
-        <button type="button" data-admin-alarm-toggle aria-pressed="false">Alarmı Etkinleştir</button>
+        <button type="button" data-admin-alarm-toggle aria-pressed="false">Alarmı Aç</button>
       </div>
       <div class="ah-admin-alarm__row">
         <span class="ah-admin-alarm__status" data-admin-alarm-status>Alarm beklemede</span>
@@ -393,7 +432,7 @@
     state.overlayBody = state.overlay.querySelector("[data-admin-alarm-overlay-body]");
     state.button = state.root.querySelector("[data-admin-alarm-toggle]");
     state.status = state.root.querySelector("[data-admin-alarm-status]");
-    state.button.addEventListener("click", enableAlarm);
+    state.button.addEventListener("click", toggleAlarm);
     state.root.querySelector("[data-admin-alarm-test]").addEventListener("click", async () => {
       await enableAlarm();
       state.lastLevel = "critical";
@@ -409,7 +448,9 @@
 
   async function enableAlarm() {
     state.enabled = true;
-    saveJson(STORAGE_KEY, { enabled: true });
+    state.suppressedUntil = 0;
+    saveJson(STORAGE_KEY, { enabled: true, updated_at: new Date().toISOString() });
+    saveJson(SILENCE_KEY, { until: 0 });
     try {
       const ctx = ensureAudio();
       if (ctx.state === "suspended") await ctx.resume();
@@ -421,6 +462,27 @@
       Notification.requestPermission().catch(() => {});
     }
     renderStatus();
+    pollAlarm();
+  }
+
+  function disableAlarm(message = "Alarm kapatıldı") {
+    state.enabled = false;
+    state.suppressedUntil = 0;
+    stopActiveAudio();
+    hideOverlay();
+    saveJson(STORAGE_KEY, { enabled: false, updated_at: new Date().toISOString() });
+    saveJson(SILENCE_KEY, { until: 0 });
+    state.lastLevel = "low";
+    state.lastMessage = message;
+    renderStatus();
+  }
+
+  async function toggleAlarm() {
+    if (state.enabled) {
+      disableAlarm("Manuel kapatıldı");
+      return;
+    }
+    await enableAlarm();
   }
 
   function remember(items) {
@@ -434,6 +496,9 @@
     if (pageKind() === "super") {
       await alarmPost("/v1/control-center/alarm-acknowledge", { reason: "Alarm panelinden manuel susturma" }).catch(() => null);
     }
+    state.suppressedUntil = Date.now() + 30 * 60 * 1000;
+    saveJson(SILENCE_KEY, { until: state.suppressedUntil });
+    stopActiveAudio();
     hideOverlay();
     state.lastMessage = "Alarm susturuldu";
     renderStatus();
@@ -444,14 +509,20 @@
       await alarmPost("/v1/control-center/alarm-resolve", { reason: "Alarm panelinden manuel kapatma" }).catch(() => null);
       await alarmPost("/v1/control-center/alarm-protection", { action: "clear", reason: "Alarm kapatılırken runtime koruma temizlendi" }).catch(() => null);
     }
-    hideOverlay();
-    state.lastLevel = "low";
-    state.lastMessage = "Alarm kapatıldı";
-    renderStatus();
+    const currentItems = await alarmApi(endpoint()).then(normalizeItems).catch(() => []);
+    remember(currentItems);
+    disableAlarm("Alarm kapatıldı");
   }
 
   async function pollAlarm() {
     if (!pageKind()) return;
+    if (!state.enabled) {
+      hideOverlay();
+      state.lastLevel = "low";
+      state.lastMessage = "Kapalı; manuel açılınca izler";
+      renderStatus();
+      return;
+    }
     try {
       const [payload, statusPayload] = await Promise.all([
         alarmApi(endpoint()),
@@ -471,6 +542,12 @@
 
       const fresh = items.filter((item) => !state.seen.has(itemId(item)));
       remember(items);
+      if (Date.now() < state.suppressedUntil) {
+        state.lastLevel = "low";
+        state.lastMessage = "Alarm susturuldu";
+        renderStatus();
+        return;
+      }
       const audible = fresh.filter(isAudibleAlarmItem);
       const critical = fresh.filter(isCriticalAlarmItem);
       if (!audible.length && !critical.length) {
@@ -502,6 +579,7 @@
     state.initialized = true;
     const saved = loadJson(STORAGE_KEY, {});
     state.enabled = saved.enabled === true;
+    state.suppressedUntil = Number(loadJson(SILENCE_KEY, {}).until || 0);
     state.seen = new Set(loadJson(SEEN_KEY, []));
     injectUi();
     renderStatus();
