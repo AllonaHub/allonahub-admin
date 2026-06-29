@@ -64,10 +64,9 @@ API cron endpointleri icin ek WAF skip kurali uygulanir:
 http.host eq "api.allonahub.com"
 and http.request.method eq "POST"
 and starts_with(http.request.uri.path, "/v1/cron/")
-and has_key(http.request.headers, "x-cron-secret")
 ```
 
-Bu kural sadece Cloudflare challenge/security katmanini atlatir. Backend yine `x-cron-secret` degerini dogrular; secret yanlis ise istek reddedilir.
+Bu kural sadece Cloudflare challenge/security katmanini atlatir. Rate limit atlanmaz. Backend yine `x-cron-secret` degerini dogrular; secret yanlis ise istek reddedilir.
 
 ## API ile Uygulama
 
