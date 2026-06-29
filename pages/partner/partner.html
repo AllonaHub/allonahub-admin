@@ -137,6 +137,43 @@ body[data-theme="white"] .platform-menu{background:#fff!important;border-color:r
 body[data-theme="sunset"]:before{background:linear-gradient(135deg,#1c0712,#55240b,#8b4e05)!important}
 body[data-theme="forest"]:before{background:linear-gradient(135deg,#03140e,#0f3b2e,#0b5f45)!important}
 body[data-theme="turquoise"]:before{background:linear-gradient(135deg,#012025,#035765,#08a6a6)!important}
+@media(min-width:1100px){
+.page{padding-top:14px}
+.header{height:72px;grid-template-columns:280px 1fr 360px;gap:16px;margin-bottom:16px}
+.brand{height:72px}
+.hero{grid-template-columns:minmax(0,1fr) minmax(540px,620px);align-items:start;gap:24px;margin-bottom:24px}
+.hero-main{padding:30px;text-align:left;margin:0}
+.hero-main h1{font-size:clamp(2.45rem,3.2vw,3.7rem)}
+.hero-main p{max-width:620px;margin:0}
+.hero-badges{max-width:none;margin:22px 0 0}
+.partner-login{width:100%;min-height:auto;margin:0 0 24px;padding:28px}
+.partner-login h2{font-size:32px}
+.partner-login p{margin-bottom:16px}
+.partner-security-strip{margin-bottom:14px}
+.partner-security-strip div{min-height:68px}
+.partner-capabilities div{min-height:84px}
+}
+@media(min-width:1100px) and (max-height:900px){
+.page{padding-top:12px}
+.header{height:66px;margin-bottom:14px}
+.brand{height:66px}
+.brand b,.brand span{font-size:26px}
+.search{height:54px}
+.actions{min-height:54px}
+.hero{gap:18px}
+.hero-main{padding:24px}
+.hero-main h1{font-size:clamp(2.15rem,2.8vw,3rem);margin-bottom:10px}
+.hero-main p{font-size:15px;line-height:1.45}
+.hero-badges{margin-top:16px;gap:10px}
+.badge{padding:12px}
+.badge b{font-size:20px}
+.partner-login{padding:24px}
+.partner-login h2{font-size:28px}
+.partner-security-strip{display:none}
+.input{height:50px;margin-bottom:11px}
+.btn{height:50px}
+.partner-capabilities{display:none}
+}
 @media(max-width:900px){
 body{overflow-x:hidden}
 .page{width:100%;padding:14px 12px 38px}
@@ -154,7 +191,7 @@ body{overflow-x:hidden}
 .section-title{align-items:flex-start;gap:10px;flex-direction:column}
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260628-corporate1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260629-partnerlogin2">
 </head>
 
 <body>
@@ -966,7 +1003,7 @@ initPartnerGoogleCallback();
   <script src="../../js/core.js?v=20260629-media1" defer></script>
   <script src="../../js/security-challenge.js?v=20260627-partner-turnstile1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
-  <script src="../../js/platform.js?v=20260628-corporate1" defer></script>
-  <script src="../../js/privacy-consent.js?v=20260628-privacy1" defer></script>
+  <script src="../../js/platform.js?v=20260629-partnerlogin2" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260629-partnerlogin2" defer></script>
 </body>
 </html>

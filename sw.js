@@ -1,22 +1,22 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260628-banner2";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260629-partnerlogin2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.json?v=20260622-icon1",
   "./manifest.webmanifest?v=20260622-icon1",
   "./css/allonahub-home.css?v=20260628-banner2",
-  "./css/platform.css?v=20260628-banner2",
+  "./css/platform.css?v=20260629-partnerlogin2",
   "./css/home-module-labels.std32.css?v=20260628-banner2",
   "./js/config.js?v=20260621-homeauth1",
   "./js/core.js?v=20260629-media1",
-  "./js/supabase-client.js?v=20260623-reset1",
-  "./js/auth.js?v=20260623-mfa2",
+  "./js/supabase-client.js?v=20260629-partnerlogin2",
+  "./js/auth.js?v=20260629-partnerlogin2",
   "./js/layout.v3.js?v=20260628-banner2",
-  "./js/platform.js?v=20260628-banner2",
-  "./js/sw-refresh.heading2.js?v=20260628-banner2",
-  "./js/privacy-consent.js?v=20260628-banner2",
+  "./js/platform.js?v=20260629-partnerlogin2",
+  "./js/sw-refresh.heading2.js?v=20260629-partnerlogin2",
+  "./js/privacy-consent.js?v=20260629-partnerlogin2",
   "./js/allonahub-home.js?v=20260626-mobile-std34",
-  "./js/pwa-install.js?v=20260628-banner2",
+  "./js/pwa-install.js?v=20260629-partnerlogin2",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-192.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-512.png?v=20260622-icon1",
@@ -49,13 +49,40 @@ self.addEventListener("fetch", event => {
 
   const requestUrl = new URL(request.url);
   const sameOrigin = requestUrl.origin === self.location.origin;
+  const partnerAuthPath = sameOrigin && (
+    requestUrl.pathname === "/partner" ||
+    requestUrl.pathname.startsWith("/partner/") ||
+    requestUrl.pathname === "/partner-panel" ||
+    requestUrl.pathname.startsWith("/pages/partner/") ||
+    requestUrl.pathname.startsWith("/pages/account/") ||
+    requestUrl.pathname === "/js/auth.js" ||
+    requestUrl.pathname === "/js/partner-os.js" ||
+    requestUrl.pathname === "/js/supabase-client.js"
+  );
+
+  if(partnerAuthPath){
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if(response && response.ok){
+            const copy = response.clone();
+            caches.open(ALLONAHUB_CACHE).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
   if(request.mode === "navigate"){
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(ALLONAHUB_CACHE).then(cache => cache.put(request, copy));
+          if(response && response.ok){
+            const copy = response.clone();
+            caches.open(ALLONAHUB_CACHE).then(cache => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() => caches.match(request).then(cached => cached || caches.match("./index.html")))
