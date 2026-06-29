@@ -54,6 +54,13 @@ Eski yasal metin kopyalari icin ek 301 yonlendirmeleri:
 | `/pages/legal/cerez.html` | `/pages/legal/cerez-politikasi.html` |
 | `/pages/legal/iptal-iade.html` | `/pages/legal/iade-politikasi.html` |
 
+Partner kisa yollarinda canli origin `_redirects` dosyasini yorumlamadigi icin Cloudflare 301 kurali da uygulanir:
+
+| Kisa URL | Kanonik URL |
+| --- | --- |
+| `/partner`, `/partner/`, `/partner.html`, `/partner-login.html`, `/partner-giris.html`, `/partner/login`, `/partner/giris` | `/pages/partner/partner.html` |
+| `/partner-panel`, `/partner-panel/`, `/partner-panel.html`, `/partner/panel`, `/partner/os`, `/partner/partner-panel.html` | `/pages/partner/partner-panel.html` |
+
 ## WAF Notu
 
 `/checkout.html` istegi canlida `cf-mitigated: challenge` ile kesiliyor. Redirect rule uygulaninca istek origin'e ve eski checkout path'ine dusmeden guvenli odeme sayfasina aktarilmalidir. Challenge devam ederse WAF Custom Rule icinde bu path'i challenge aksiyonundan haric tutan kural sirasi duzenlenmelidir.

@@ -87,6 +87,32 @@ const headerRules = [{
 
 const redirectRules = [
   {
+    ref: "allonahub-partner-entry-shortlinks",
+    description: "Redirect partner entry short links",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner" "/partner/" "/partner.html" "/partner-login.html" "/partner-giris.html" "/partner/index.html" "/partner/login" "/partner/login/" "/partner/giris" "/partner/giris/"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://allonahub.com/pages/partner/partner.html" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
+    ref: "allonahub-partner-panel-shortlinks",
+    description: "Redirect partner panel short links",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner-panel" "/partner-panel/" "/partner-panel.html" "/partner/panel" "/partner/panel/" "/partner/os" "/partner/os/" "/partner/partner-panel.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://allonahub.com/pages/partner/partner-panel.html" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
     ref: "allonahub-checkout-redirect",
     description: "Redirect legacy checkout to secure payment",
     expression: `${hostExpression} and http.request.uri.path eq "/checkout.html"`,
