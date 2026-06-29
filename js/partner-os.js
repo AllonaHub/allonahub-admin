@@ -110,6 +110,57 @@
     { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 90 }
   ];
 
+  const INTEGRATION_CREDENTIAL_HINTS = {
+    generic_feed: {
+      sourceLabel: "Feed URL",
+      sourcePlaceholder: "https://partner-site.com/products.csv veya .json",
+      keyLabel: "API anahtarı",
+      keyPlaceholder: "Gerekmiyorsa boş bırak",
+      secretLabel: "API secret / token",
+      secretPlaceholder: "Gerekmiyorsa boş bırak"
+    },
+    woocommerce: {
+      sourceLabel: "WooCommerce mağaza URL",
+      sourcePlaceholder: "https://magazaadresiniz.com",
+      keyLabel: "Consumer Key",
+      keyPlaceholder: "ck_...",
+      secretLabel: "Consumer Secret",
+      secretPlaceholder: "cs_..."
+    },
+    shopify: {
+      sourceLabel: "Shopify shop domain",
+      sourcePlaceholder: "magazaniz.myshopify.com",
+      keyLabel: "API anahtarı",
+      keyPlaceholder: "Opsiyonel",
+      secretLabel: "Admin API access token",
+      secretPlaceholder: "shpat_..."
+    },
+    trendyol: {
+      sourceLabel: "Supplier ID / Satıcı ID",
+      sourcePlaceholder: "Trendyol tedarikçi numaranız",
+      keyLabel: "Trendyol API Key",
+      keyPlaceholder: "Satıcı panelindeki API key",
+      secretLabel: "Trendyol API Secret",
+      secretPlaceholder: "Satıcı panelindeki API secret"
+    },
+    hepsiburada: {
+      sourceLabel: "Merchant ID",
+      sourcePlaceholder: "Hepsiburada merchant ID",
+      keyLabel: "Hepsiburada API Key",
+      keyPlaceholder: "API key",
+      secretLabel: "Hepsiburada API Secret",
+      secretPlaceholder: "API secret"
+    },
+    n11: {
+      sourceLabel: "Kaynak / mağaza URL",
+      sourcePlaceholder: "Opsiyonel",
+      keyLabel: "n11 App Key",
+      keyPlaceholder: "App key",
+      secretLabel: "n11 App Secret",
+      secretPlaceholder: "App secret"
+    }
+  };
+
   function $(selector, root) {
     return (root || document).querySelector(selector);
   }
@@ -827,6 +878,24 @@
         ${escape(connector.label)}${connector.active_now ? "" : " (yakında)"}
       </option>
     `).join("");
+    applyIntegrationCredentialHints();
+  }
+
+  function applyIntegrationCredentialHints() {
+    const provider = $("[data-integration-provider]")?.value || "generic_feed";
+    const hints = INTEGRATION_CREDENTIAL_HINTS[provider] || INTEGRATION_CREDENTIAL_HINTS.generic_feed;
+    const sourceLabel = $("[data-integration-source-label]");
+    const sourceInput = $("[data-integration-source-input]");
+    const keyLabel = $("[data-integration-key-label]");
+    const keyInput = $("[data-integration-key-input]");
+    const secretLabel = $("[data-integration-secret-label]");
+    const secretInput = $("[data-integration-secret-input]");
+    if (sourceLabel) sourceLabel.textContent = hints.sourceLabel;
+    if (sourceInput) sourceInput.placeholder = hints.sourcePlaceholder;
+    if (keyLabel) keyLabel.textContent = hints.keyLabel;
+    if (keyInput) keyInput.placeholder = hints.keyPlaceholder;
+    if (secretLabel) secretLabel.textContent = hints.secretLabel;
+    if (secretInput) secretInput.placeholder = hints.secretPlaceholder;
   }
 
   function renderIntegrationConnectors() {
@@ -869,7 +938,7 @@
           <div class="partner-os-integration-row-actions">
             ${statusPill(integration.status || "draft")}
             <button type="button" data-integration-test="${escape(integration.id)}"><i class="fa-solid fa-vial"></i><span>Test</span></button>
-            <button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-rotate"></i><span>Önizle</span></button>
+            <button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Ürünleri Çek</span></button>
             ${canApply ? `<button type="button" data-integration-apply="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Kataloğa Aktar</span></button>` : ""}
           </div>
         </article>
@@ -1777,6 +1846,7 @@
       const mode = currentIntegrationMode();
       form.reset();
       setIntegrationMode(mode);
+      applyIntegrationCredentialHints();
       toast("Entegrasyon bağlantısı kaydedildi.");
       if (App.complianceAudit) {
         await App.complianceAudit.record({
@@ -2120,6 +2190,8 @@
         event.preventDefault();
         saveIntegration(integrationForm);
       });
+      integrationForm.elements.provider?.addEventListener("change", applyIntegrationCredentialHints);
+      applyIntegrationCredentialHints();
     }
 
     const bulkInput = $("[data-bulk-product-input]");
