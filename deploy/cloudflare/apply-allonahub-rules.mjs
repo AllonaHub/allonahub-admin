@@ -178,8 +178,33 @@ const wafRules = [{
   }
 }];
 
+const cacheRules = [{
+  ref: "allonahub-product-media-cache",
+  description: "Cache proxied Supabase product images at Cloudflare edge",
+  expression: `${apiHostExpression} and http.request.method eq "GET" and starts_with(http.request.uri.path, "/v1/media/product-images/")`,
+  action: "set_cache_settings",
+  action_parameters: {
+    cache: true,
+    edge_ttl: {
+      mode: "override_origin",
+      default: 31536000
+    },
+    browser_ttl: {
+      mode: "override_origin",
+      default: 31536000
+    },
+    cache_key: {
+      ignore_query_strings_order: true
+    },
+    serve_stale: {
+      disable_stale_while_updating: false
+    }
+  }
+}];
+
 await upsertEntrypoint("http_response_headers_transform", "AllonaHub response header rules", headerRules);
 await upsertEntrypoint("http_request_dynamic_redirect", "AllonaHub redirect rules", redirectRules);
 await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
+await upsertEntrypoint("http_request_cache_settings", "AllonaHub cache rules", cacheRules, { prepend: true });
 
 console.log("Cloudflare AllonaHub rules applied.");

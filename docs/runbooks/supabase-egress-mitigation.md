@@ -103,11 +103,44 @@ node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --d
 
 ## Kalici azaltma secenekleri
 
-- Public medya dosyalarini Supabase Storage yerine Cloudflare R2/Images tarafina tasimak.
+- Urun gorsellerini `https://api.allonahub.com/v1/media/product-images/...` proxy'si uzerinden servis etmek. Bu endpoint Supabase `product-images` bucket'indan okur, 1 yil immutable cache header'i dondurur ve Cloudflare cache rule ile edge cache'e alinabilir.
 - Urun ve sosyal medya gorsellerini WebP/JPEG olarak 1200px civarina sikistirip yuklemek.
 - Buyuk video veya taslak dosyalarini Supabase public bucket'ta tutmamak.
 - Bot taramasini Cloudflare WAF/cache/rate limit ile kisitlamak.
 - Frontend listelerinde gereksiz buyuk gorsel URL'lerini tekrar tekrar yuklememek.
+
+## Urun gorseli cache proxy ve optimizasyon
+
+Backend route:
+
+```text
+GET /v1/media/product-images/products/.../file.webp
+```
+
+Frontend `product-images` Supabase public URL'lerini otomatik olarak bu route'a cevirir. Boylece yeni/var olan urun datasinda dogrudan Supabase URL'si kalsa bile tarayici `api.allonahub.com` uzerindeki cache'li proxy'yi kullanir.
+
+Cloudflare cache rule `deploy/cloudflare/apply-allonahub-rules.mjs` icindedir:
+
+```text
+http.host eq "api.allonahub.com"
+and http.request.method eq "GET"
+and starts_with(http.request.uri.path, "/v1/media/product-images/")
+```
+
+Mevcut agir PNG/JPEG urun gorsellerini WebP'ye cevirip yeni URL'leri `products.image_url` ve `partner_ads.image_url` alanlarina yazmak icin prod sunucuda once dry-run:
+
+```bash
+cd /opt/allonahub
+sh deploy/hetzner/optimize-product-images.sh --dry-run=1
+```
+
+Gercek uygulama:
+
+```bash
+sh deploy/hetzner/optimize-product-images.sh --dry-run=0
+```
+
+Eski orijinalleri hemen silme. Trafik sorunu yeni proxy URL'lerine gecisle cozulur; eski dosyalar sadece 26 MB civari depolama tutar. Eski linklerin kullanilmadigi dogrulandiktan sonra `--delete-originals=1` ile ayrica temizlenebilir.
 
 ## Not
 

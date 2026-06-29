@@ -68,6 +68,26 @@ and starts_with(http.request.uri.path, "/v1/cron/")
 
 Bu kural sadece Cloudflare challenge/security katmanini atlatir. Rate limit atlanmaz. Backend yine `x-cron-secret` degerini dogrular; secret yanlis ise istek reddedilir.
 
+## API Urun Gorseli Cache Kurali
+
+Supabase `product-images` bucket'indaki urun gorselleri backend proxy uzerinden servis edilir:
+
+```text
+https://api.allonahub.com/v1/media/product-images/products/...
+```
+
+Cloudflare Cache Rule:
+
+```text
+http.host eq "api.allonahub.com"
+and http.request.method eq "GET"
+and starts_with(http.request.uri.path, "/v1/media/product-images/")
+```
+
+Action: Cache eligible requests, edge TTL 1 yil, browser TTL 1 yil.
+
+Bu kural Supabase cached egress'i azaltir: kullanici istekleri tekrarlandikca Supabase yerine Cloudflare edge cache cevap verir. Backend route'u yine `product-images/products/...` path dogrulamasi yapar ve yalnizca gorsel uzantilarini servis eder.
+
 ## API ile Uygulama
 
 Gereken environment:

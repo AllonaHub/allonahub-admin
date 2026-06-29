@@ -744,6 +744,57 @@ function sha256Text(value) {
   return createHash("sha256").update(String(value || "")).digest("hex");
 }
 
+const PRODUCT_IMAGE_CONTENT_TYPES = new Map([
+  ["avif", "image/avif"],
+  ["jpg", "image/jpeg"],
+  ["jpeg", "image/jpeg"],
+  ["png", "image/png"],
+  ["webp", "image/webp"]
+]);
+
+function productImageContentType(path) {
+  const extension = String(path || "").split(".").pop().toLowerCase();
+  return PRODUCT_IMAGE_CONTENT_TYPES.get(extension) || "application/octet-stream";
+}
+
+function normalizeProductImagePath(rawPath) {
+  let decoded = "";
+  try {
+    decoded = decodeURIComponent(String(rawPath || ""));
+  } catch {
+    throw httpError("Urun gorseli yolu gecersiz.", 400);
+  }
+
+  const path = decoded.replace(/^\/+/, "");
+  const parts = path.split("/");
+  const extension = path.split(".").pop().toLowerCase();
+  const invalid = (
+    !path ||
+    path.length > 900 ||
+    !path.startsWith("products/") ||
+    path.includes("\\") ||
+    path.includes("\0") ||
+    path.includes("//") ||
+    parts.some((part) => !part || part === "." || part === "..") ||
+    !PRODUCT_IMAGE_CONTENT_TYPES.has(extension) ||
+    !/^[a-z0-9._/-]+$/i.test(path)
+  );
+  if (invalid) throw httpError("Urun gorseli bulunamadi.", 404);
+  return path;
+}
+
+function mediaCacheHeaders(reply, path) {
+  const ttl = Math.max(3600, Number(config.productMedia.cacheMaxAgeSeconds || 31536000));
+  const etag = `"product-image-${sha256Text(path).slice(0, 24)}"`;
+  reply.header("Cache-Control", `public, max-age=${ttl}, s-maxage=${ttl}, immutable`);
+  reply.header("CDN-Cache-Control", `public, max-age=${ttl}`);
+  reply.header("Cloudflare-CDN-Cache-Control", `public, max-age=${ttl}`);
+  reply.header("ETag", etag);
+  reply.header("Vary", "Accept-Encoding");
+  reply.header("X-Content-Type-Options", "nosniff");
+  return etag;
+}
+
 function assertEvidenceWindow(from, to) {
   const fromMs = new Date(from).getTime();
   const toMs = new Date(to).getTime();
@@ -5054,6 +5105,25 @@ export function registerRoutes(app) {
       return reply.code(503).send({ ok: false, message: "Supabase bağlantısı hazır değil." });
     }
     return { ok: true };
+  });
+
+  app.get("/v1/media/product-images/*", async (request, reply) => {
+    const path = normalizeProductImagePath(request.params["*"]);
+    const etag = mediaCacheHeaders(reply, path);
+    if (request.headers["if-none-match"] === etag) {
+      return reply.code(304).send();
+    }
+
+    const bucket = config.productMedia.storageBucket || "product-images";
+    const { data, error } = await supabaseAdmin.storage.from(bucket).download(path);
+    if (error || !data) {
+      throw httpError("Urun gorseli bulunamadi.", 404);
+    }
+
+    const bytes = Buffer.from(await data.arrayBuffer());
+    reply.type(data.type || productImageContentType(path));
+    reply.header("Content-Length", String(bytes.byteLength));
+    return reply.send(bytes);
   });
 
   app.post("/v1/auth/turnstile", async (request) => {

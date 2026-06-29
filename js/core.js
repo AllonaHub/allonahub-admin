@@ -220,6 +220,47 @@
     return fallback;
   }
 
+  function encodePathSegments(path) {
+    return String(path || "")
+      .split("/")
+      .filter(Boolean)
+      .map((part) => {
+        try {
+          return encodeURIComponent(decodeURIComponent(part));
+        } catch (error) {
+          return encodeURIComponent(part);
+        }
+      })
+      .join("/");
+  }
+
+  function productMediaUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const apiBaseUrl = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
+    if (!apiBaseUrl) return raw;
+
+    if (/^products\/[a-z0-9._/-]+\.(?:avif|jpe?g|png|webp)$/i.test(raw)) {
+      return `${apiBaseUrl}/v1/media/product-images/${encodePathSegments(raw)}`;
+    }
+
+    try {
+      const parsed = new URL(raw, window.location.href);
+      const proxyPrefix = "/v1/media/product-images/";
+      if (parsed.host === new URL(apiBaseUrl).host && parsed.pathname.startsWith(proxyPrefix)) return parsed.href;
+
+      const storagePrefix = "/storage/v1/object/public/product-images/";
+      if (/\.supabase\.co$/i.test(parsed.hostname) && parsed.pathname.startsWith(storagePrefix)) {
+        const storagePath = parsed.pathname.slice(storagePrefix.length);
+        return `${apiBaseUrl}${proxyPrefix}${encodePathSegments(storagePath)}`;
+      }
+    } catch (error) {
+      return raw;
+    }
+
+    return raw;
+  }
+
   function money(value) {
     const amount = Number(value || 0);
     return amount.toLocaleString(App.config.locale, {
@@ -271,7 +312,7 @@
       price: Number(product.price || 0),
       stock: Number(product.stock ?? 0),
       status: product.status || "active",
-      image_url: product.image_url || product.image || "",
+      image_url: productMediaUrl(product.image_url || product.image || ""),
       module_key: product.module_key || product.moduleKey || product.catalog_scope || product.module_scope || product.commerce_scope || "",
       created_at: product.created_at || "",
       sold_count: Number(product.sold_count || 0),
@@ -600,6 +641,7 @@
     url,
     escapeHTML,
     sanitizeUrl,
+    productMediaUrl,
     money,
     slugify,
     normalizeProduct,

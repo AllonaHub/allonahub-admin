@@ -215,6 +215,12 @@ export const config = {
       readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
     )
   },
+  productMedia: {
+    storageBucket: normalizeEnvString(
+      readEnv("PRODUCT_IMAGE_STORAGE_BUCKET", { required: false, defaultValue: "product-images" })
+    ),
+    cacheMaxAgeSeconds: readNumber("PRODUCT_IMAGE_CACHE_MAX_AGE_SECONDS", 31536000)
+  },
   integrations: {
     enabled: readBool("PARTNER_INTEGRATIONS_ENABLED", true),
     premiumEnabled: readBool("PARTNER_INTEGRATIONS_PREMIUM_ENABLED", false),
