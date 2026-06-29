@@ -537,7 +537,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove2";
+const BACKEND_BUILD_MARKER = "super-admin-actions-20260629-partnerapprove3";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -4826,8 +4826,8 @@ async function createDirectPartnerApplication({ body, ctx, request, nowIso }) {
   return { ...legacyData, metadata };
 }
 
-async function decidePartnerApplicationRequest({ request, applicationId, body }) {
-  const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
+async function decidePartnerApplicationRequest({ request, applicationId, body, ctx = null }) {
+  const actorCtx = ctx || await requireSuperAdmin(request, "super_admin.partner_application.decide");
   const { data: before, error: beforeError } = await supabaseAdmin
     .from("partner_applications")
     .select("*")
@@ -4842,7 +4842,7 @@ async function decidePartnerApplicationRequest({ request, applicationId, body })
   const nowIso = new Date().toISOString();
 
   if (body.decision === "approved") {
-    activation = await activateApprovedPartnerApplication({ application: before, body, ctx, request });
+    activation = await activateApprovedPartnerApplication({ application: before, body, ctx: actorCtx, request });
     application = activation.application;
     partnerBusiness = activation.partnerBusiness;
   } else {
@@ -4859,19 +4859,19 @@ async function decidePartnerApplicationRequest({ request, applicationId, body })
       .single();
     if (updateError) throw updateError;
     application = updatedApplication;
-    await closePartnerApprovalRequests(applicationId, body.decision, ctx, nowIso, request);
+    await closePartnerApprovalRequests(applicationId, body.decision, actorCtx, nowIso, request);
   }
 
   await auditEvent({
     request,
-    actorId: ctx.user.id,
-    actorRole: ctx.profile.role,
-    action: "super_admin.partner_application_decided",
+    actorId: actorCtx.user.id,
+    actorRole: actorCtx.profile.role,
+    action: actorCtx.profile.role === "super_admin" ? "super_admin.partner_application_decided" : "admin.ops.partner_application_decided",
     resourceType: "partner_application",
     resourceId: applicationId,
     severity: body.decision === "approved" ? "warning" : "info",
     source: "admin",
-    evidenceTags: ["super_admin", "partner_application"],
+    evidenceTags: [actorCtx.profile.role === "super_admin" ? "super_admin" : "admin_ops", "partner_application"],
     metadata: {
       old_value: { status: before.status },
       new_value: {
@@ -9667,7 +9667,7 @@ export function registerRoutes(app) {
       "partner_applications_super_admin",
       supabaseAdmin
         .from("partner_applications")
-        .select("*, profile:profiles(id, full_name, email, phone)", { count: "exact" })
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .limit(80),
       []
@@ -10369,6 +10369,13 @@ export function registerRoutes(app) {
     const payload = partnerApplicationActionRequestSchema.parse(request.body || {});
     const { application_id: applicationId, ...body } = payload;
     return reviewPartnerApplicationRequest({ request, applicationId, payload: body });
+  });
+
+  opsPost("/partner-application-decisions", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.decide");
+    const payload = partnerApplicationDecisionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return decidePartnerApplicationRequest({ request, applicationId, body, ctx });
   });
 
   opsGet("/partners", async (request) => {

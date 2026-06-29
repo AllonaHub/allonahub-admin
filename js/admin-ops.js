@@ -1251,7 +1251,7 @@
   function applicationDecisionMarkup(application, notes = [], approvalRequests = []) {
     const item = application || {};
     const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
-    const isSuper = state.profile?.role === "super_admin";
+    const canDecide = ["admin", "super_admin"].includes(String(state.profile?.role || "").toLowerCase());
     const rows = [
       ["Firma", item.company_name || "-"],
       ["Yetkili", item.contact_name || "-"],
@@ -1268,7 +1268,7 @@
     ].map(([key, value]) => `<div><dt>${escape(key)}</dt><dd>${escape(value)}</dd></div>`).join("");
     const noteRows = (notes || []).slice(0, 5).map((note) => `<li>${escape(dateTime(note.created_at))}: ${escape(note.body || "-")}</li>`).join("");
     const requestRows = (approvalRequests || []).slice(0, 5).map((request) => `<li>${escape(request.status || "-")} / ${escape(request.summary || "-")}</li>`).join("");
-    const actionButtons = isSuper
+    const actionButtons = canDecide
       ? `
         <button class="admin-btn admin-btn--gold" type="button" data-application-final-decision="approved" data-id="${escape(item.id)}">Onayla ve Aktif Et</button>
         <button class="admin-btn admin-btn--danger" type="button" data-application-final-decision="rejected" data-id="${escape(item.id)}">Reddet</button>
@@ -1718,7 +1718,7 @@
     const data = await openModal({
       title: `Partner Başvuru Kararı: ${labels[decision] || decision}`,
       message: decision === "approved"
-        ? "Super Admin onayıyla partner hesabı, profil rolü ve aktif partner mağazası oluşturulacak."
+        ? "Admin onayıyla partner hesabı, profil rolü ve aktif partner mağazası oluşturulacak."
         : "Karar audit log'a yazılacak.",
       confirmText: labels[decision] || "Kararı Kaydet",
       danger: decision === "rejected",
@@ -1736,17 +1736,25 @@
     };
     let result = null;
     try {
-      result = await api("/v1/control-center/partner-application-decisions", {
+      result = await api("/v1/ops-console/partner-application-decisions", {
         method: "POST",
         body: decisionPayload
       });
     } catch (error) {
       if (!apiRouteMissing(error)) throw error;
-      const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
-      result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
-        method: "PATCH",
-        body: legacyPayload
-      });
+      try {
+        result = await api("/v1/control-center/partner-application-decisions", {
+          method: "POST",
+          body: decisionPayload
+        });
+      } catch (controlError) {
+        if (!apiRouteMissing(controlError)) throw controlError;
+        const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
+        result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+          method: "PATCH",
+          body: legacyPayload
+        });
+      }
     }
     const business = result.partner_business || {};
     showToast(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.");
