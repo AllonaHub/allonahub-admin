@@ -5329,6 +5329,9 @@ async function applyIntegrationProducts({ business, integration, products }) {
 }
 
 async function runPartnerIntegrationSync({ business, integration, payload, request }) {
+  if (payload.direction === "inbound" && !integration.import_enabled) {
+    throw httpError("Bu entegrasyonda içe aktarım kapalı.", 409);
+  }
   if (payload.direction === "outbound" && !config.integrations.outboundEnabled) {
     throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
   }
@@ -5339,7 +5342,11 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
     if (payload.trigger_source === "cron" && !config.integrations.scheduledApplyEnabled) {
       throw httpError("Zamanlı kataloğa aktarım şu anda kapalı.", 409);
     }
-    if (config.integrations.requireApplyConfirmation && payload.confirm_apply !== config.integrations.applyConfirmationText) {
+    if (
+      payload.trigger_source !== "cron"
+      && config.integrations.requireApplyConfirmation
+      && payload.confirm_apply !== config.integrations.applyConfirmationText
+    ) {
       throw httpError("Kataloğa aktarım onayı eşleşmedi.", 409);
     }
   }
@@ -5361,7 +5368,9 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
       trigger_source: payload.trigger_source,
       run_mode: payload.mode,
       status: "running",
-      summary: { provider: integration.provider, limit }
+      applied_by: payload.mode === "apply" ? request?.integrationActorId || null : null,
+      approval_note: payload.mode === "apply" ? payload.approval_note || "Kontrollü katalog aktarımı." : null,
+      summary: { provider: integration.provider, limit, policy: partnerIntegrationPolicy() }
     })
     .select("*")
     .single();
@@ -5374,26 +5383,34 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
     const products = rawRows
       .slice(0, limit)
       .map((row, index) => normalizeIntegrationProduct(row, integration, index))
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
+    const invalidProducts = products.filter((product) => product.compliance.errors.length);
+    const validProducts = products.filter((product) => !product.compliance.errors.length);
 
-    let applyResult = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [] };
+    let applyResult = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
     if (payload.mode === "apply") {
-      applyResult = await applyIntegrationProducts({ business, integration, products });
+      applyResult = await applyIntegrationProducts({ business, integration, products: validProducts });
     }
 
-    const status = applyResult.failed > 0 ? "partial" : "success";
+    const warningCount = products.reduce((total, product) => total + product.compliance.warnings.length, 0);
+    const validationErrors = invalidProducts.map((product) => ({
+      external_product_id: product.external_product_id,
+      message: product.compliance.errors.join(" ")
+    }));
+    const status = applyResult.failed > 0 || invalidProducts.length > 0 ? "partial" : "success";
     const summary = {
       provider: integration.provider,
       mode: payload.mode,
-      preview: products.slice(0, 12).map((item) => ({
-        external_product_id: item.external_product_id,
-        name: item.name,
-        price: item.price,
-        stock: item.stock,
-        category: item.category,
-        module_key: item.module_key
-      })),
-      errors: applyResult.errors.slice(0, 10)
+      publish_status: productStatusForIntegrationApply(integration),
+      force_draft_on_apply: config.integrations.forceDraftOnApply,
+      checked_count: products.length,
+      valid_count: validProducts.length,
+      invalid_count: invalidProducts.length,
+      warning_count: warningCount,
+      preview: products.slice(0, 12).map(integrationProductPreview),
+      errors: [...validationErrors, ...applyResult.errors].slice(0, 10),
+      warnings: applyResult.warnings.slice(0, 10)
     };
 
     const { data: updatedRun, error: updateRunError } = await supabaseAdmin
@@ -5404,7 +5421,8 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
         created_count: applyResult.created,
         updated_count: applyResult.updated,
         skipped_count: applyResult.skipped,
-        failed_count: applyResult.failed,
+        failed_count: applyResult.failed + invalidProducts.length,
+        warning_count: warningCount,
         summary,
         finished_at: new Date().toISOString()
       })
@@ -5423,10 +5441,16 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
         last_sync_at: new Date().toISOString(),
         last_success_at: status === "success" ? new Date().toISOString() : integration.last_success_at,
         last_error_at: status === "partial" ? new Date().toISOString() : null,
-        last_error_message: status === "partial" ? `${applyResult.failed} ürün işlenemedi.` : null,
+        last_error_message: status === "partial" ? `${applyResult.failed + invalidProducts.length} ürün işlenemedi veya kontrol bekliyor.` : null,
         next_sync_at: nextSyncAt
       })
       .eq("id", integration.id);
+
+    await supabaseAdmin
+      .from("partner_integration_secrets")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("integration_id", integration.id)
+      .eq("status", "active");
 
     await auditEvent({
       request,
@@ -5435,7 +5459,14 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
       action: "partner.integration_sync_completed",
       resourceType: "partner_integration",
       resourceId: integration.id,
-      metadata: { provider: integration.provider, mode: payload.mode, status, checked_count: products.length }
+      metadata: {
+        provider: integration.provider,
+        mode: payload.mode,
+        status,
+        checked_count: products.length,
+        invalid_count: invalidProducts.length,
+        warning_count: warningCount
+      }
     });
 
     return updatedRun;
@@ -5462,6 +5493,172 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
 
     throw error;
   }
+}
+
+function wooCommerceProductPayload(product, action) {
+  const basePayload = {
+    name: product.name,
+    type: "simple",
+    regular_price: String(Number(product.price || 0).toFixed(2)),
+    description: product.description || "",
+    short_description: product.meta_description || product.description || "",
+    manage_stock: true,
+    stock_quantity: Math.max(0, Math.floor(Number(product.stock || 0))),
+    status: product.status === "active" ? "publish" : "draft",
+    sku: product.sku || undefined
+  };
+  if (product.image_url && /^https?:\/\//i.test(product.image_url)) {
+    basePayload.images = [{ src: product.image_url }];
+  }
+  if (action === "stock_price") {
+    return {
+      regular_price: basePayload.regular_price,
+      manage_stock: true,
+      stock_quantity: basePayload.stock_quantity
+    };
+  }
+  if (action === "archive") return { status: "draft" };
+  return basePayload;
+}
+
+async function dispatchWooCommercePublishJob({ job, integration, product }) {
+  const secrets = await loadIntegrationSecrets(integration.id);
+  requireIntegrationSecrets("woocommerce", secrets);
+  const { data: existingLink, error: linkError } = await supabaseAdmin
+    .from("partner_integration_product_links")
+    .select("*")
+    .eq("integration_id", integration.id)
+    .eq("product_id", product.id)
+    .maybeSingle();
+  if (linkError) throw linkError;
+
+  const baseUrl = String(secrets.API_BASE_URL || "").trim().replace(/\/$/, "");
+  const consumerKey = String(secrets.CONSUMER_KEY || "").trim();
+  const consumerSecret = String(secrets.CONSUMER_SECRET || "").trim();
+  const externalProductId = existingLink?.external_product_id || "";
+  const isUpdate = Boolean(externalProductId) && job.action !== "create";
+  const isDelete = job.action === "delete" && Boolean(externalProductId);
+  const url = new URL(`${baseUrl}/wp-json/wc/v3/products${isUpdate || isDelete ? `/${externalProductId}` : ""}`);
+  if (isDelete) url.searchParams.set("force", "false");
+
+  const response = await fetchWithTimeout(url.href, {
+    method: isDelete ? "DELETE" : isUpdate ? "PUT" : "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`
+    },
+    body: isDelete ? undefined : JSON.stringify(wooCommerceProductPayload(product, job.action))
+  });
+  const resultText = await response.text();
+  let resultBody = {};
+  try {
+    resultBody = resultText ? JSON.parse(resultText) : {};
+  } catch {
+    resultBody = { raw: resultText.slice(0, 1000) };
+  }
+  if (!response.ok) throw httpError(`WooCommerce yayın gönderimi başarısız: HTTP ${response.status}`, 502);
+  const resolvedExternalId = String(resultBody.id || externalProductId || "");
+  if (!resolvedExternalId) throw httpError("WooCommerce yanıtında ürün ID dönmedi.", 502);
+
+  const linkPayload = {
+    partner_id: integration.partner_id,
+    integration_id: integration.id,
+    product_id: product.id,
+    external_product_id: resolvedExternalId,
+    external_sku: product.sku || null,
+    source_hash: sourceHashFor(product),
+    sync_status: isDelete ? "archived" : isUpdate ? "updated" : "created",
+    compliance_status: product.compliance_review_status || "pending",
+    last_payload: resultBody || {},
+    last_synced_at: new Date().toISOString()
+  };
+  if (existingLink) {
+    const { error } = await supabaseAdmin.from("partner_integration_product_links").update(linkPayload).eq("id", existingLink.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseAdmin.from("partner_integration_product_links").insert(linkPayload);
+    if (error) throw error;
+  }
+
+  return {
+    provider: "woocommerce",
+    external_product_id: resolvedExternalId,
+    status: resultBody.status || "ok"
+  };
+}
+
+async function dispatchIntegrationPublishJob(job) {
+  const integration = job.integration;
+  const product = job.product;
+  if (!integration) throw httpError("Yayın işi entegrasyon kaydı olmadan çalışamaz.", 409);
+  if (!product) throw httpError("Yayın işi ürün kaydı olmadan çalışamaz.", 409);
+  if (!integration.export_enabled) throw httpError("Bu entegrasyonda dışarı yayın kapalı.", 409);
+  if (integration.provider === "woocommerce") {
+    return dispatchWooCommercePublishJob({ job, integration, product });
+  }
+  throw httpError("Bu connector için canlı outbound gönderici premium connector fazında açılacak.", 409);
+}
+
+async function processIntegrationPublishJobs({ request, limit = 20 }) {
+  if (!config.integrations.outboundEnabled) {
+    return { ok: true, skipped: true, reason: "PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=false", processed: 0, results: [] };
+  }
+  const { data: jobs, error } = await supabaseAdmin
+    .from("partner_integration_publish_jobs")
+    .select("*, integration:partner_integrations(*), product:products(*)")
+    .in("status", ["queued", "failed"])
+    .lte("scheduled_at", new Date().toISOString())
+    .order("priority", { ascending: true })
+    .order("scheduled_at", { ascending: true })
+    .limit(Math.max(1, Math.min(Number(limit || 20), 100)));
+  if (error) {
+    if (looksLikeMissingSchema(error)) {
+      return { ok: true, skipped: true, reason: "partner_integration_publish_jobs_migration_missing", processed: 0, results: [] };
+    }
+    throw error;
+  }
+
+  const results = [];
+  for (const job of jobs || []) {
+    await supabaseAdmin
+      .from("partner_integration_publish_jobs")
+      .update({ status: "processing", processed_at: null, error_message: null })
+      .eq("id", job.id);
+    try {
+      const result = await dispatchIntegrationPublishJob(job);
+      await supabaseAdmin
+        .from("partner_integration_publish_jobs")
+        .update({ status: "success", result, processed_at: new Date().toISOString(), error_message: null })
+        .eq("id", job.id);
+      results.push({ job_id: job.id, status: "success", result });
+    } catch (error) {
+      const status = error.statusCode === 409 ? "skipped" : "failed";
+      await supabaseAdmin
+        .from("partner_integration_publish_jobs")
+        .update({
+          status,
+          result: { message: error.message },
+          error_message: error.message,
+          processed_at: new Date().toISOString()
+        })
+        .eq("id", job.id);
+      results.push({ job_id: job.id, status, message: error.message });
+    }
+  }
+
+  await auditEvent({
+    request,
+    action: "cron.integrations_publish_completed",
+    resourceType: "partner_integration_publish_job",
+    metadata: {
+      processed: results.length,
+      failed: results.filter((item) => item.status === "failed").length,
+      skipped: results.filter((item) => item.status === "skipped").length
+    }
+  });
+
+  return { ok: true, processed: results.length, results };
 }
 
 export function registerRoutes(app) {
@@ -6706,18 +6903,19 @@ export function registerRoutes(app) {
     try {
       if (probeRemote && config.integrations.remoteFetchEnabled) {
         const rows = await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows);
+        const products = rows.slice(0, config.integrations.maxTestRows)
+          .map((row, index) => normalizeIntegrationProduct(row, integration, index))
+          .filter(Boolean)
+          .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
+        const invalidCount = products.filter((product) => product.compliance.errors.length).length;
+        const warningCount = products.reduce((total, product) => total + product.compliance.warnings.length, 0);
         remoteProbe = {
-          status: "success",
+          status: invalidCount ? "warning" : "success",
           rows_read: rows.length,
-          sample: rows.slice(0, config.integrations.maxTestRows).map((row, index) => {
-            const product = normalizeIntegrationProduct(row, integration, index);
-            return product ? {
-              external_product_id: product.external_product_id,
-              name: product.name,
-              price: product.price,
-              stock: product.stock
-            } : null;
-          }).filter(Boolean)
+          valid_count: products.length - invalidCount,
+          invalid_count: invalidCount,
+          warning_count: warningCount,
+          sample: products.map(integrationProductPreview)
         };
       }
     } catch (error) {
@@ -6736,17 +6934,20 @@ export function registerRoutes(app) {
       throw error;
     }
 
+    const secretUpdate = { last_verified_at: now, updated_by: ctx.user.id };
+    if (probeRemote) secretUpdate.last_used_at = now;
     await supabaseAdmin
       .from("partner_integration_secrets")
-      .update({ last_verified_at: now, updated_by: ctx.user.id })
+      .update(secretUpdate)
       .eq("integration_id", integration.id)
       .in("secret_key", keys.length ? keys : ["__none__"]);
+    const testStatus = remoteProbe?.status === "warning" ? "warning" : "success";
     const { data: updated, error } = await supabaseAdmin
       .from("partner_integrations")
       .update({
         status: integration.status === "draft" || integration.status === "needs_attention" ? "active" : integration.status,
         last_test_at: now,
-        last_test_status: "success",
+        last_test_status: testStatus,
         last_test_message: probeRemote && remoteProbe?.rows_read !== undefined ? `${remoteProbe.rows_read} kayıt okunabildi.` : "Secret konfigürasyonu doğrulandı.",
         last_error_at: null,
         last_error_message: null,
@@ -6764,14 +6965,19 @@ export function registerRoutes(app) {
       action: "partner.integration_tested",
       resourceType: "partner_integration",
       resourceId: integration.id,
-      metadata: { provider: integration.provider, secret_count: keys.length }
+      metadata: {
+        provider: integration.provider,
+        secret_count: keys.length,
+        probe_status: remoteProbe?.status || "skipped",
+        rows_read: remoteProbe?.rows_read || 0
+      }
     });
 
     return {
       ok: true,
       integration: updated,
       result: {
-        status: "configuration_ready",
+        status: testStatus,
         provider: integration.provider,
         checked_secret_keys: keys,
         remote_probe: remoteProbe
@@ -6793,6 +6999,112 @@ export function registerRoutes(app) {
     request.integrationActorRole = ctx.profile.role;
     const run = await runPartnerIntegrationSync({ business, integration, payload, request });
     return { ok: true, run };
+  });
+
+  app.post("/v1/partner/integrations/:integrationId/publish-jobs", async (request, reply) => {
+    if (!config.integrations.enabled) throw httpError("Partner entegrasyonları şu anda kapalı.", 503);
+    if (!config.integrations.outboundEnabled) throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integration.publish"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const integrationId = uuidSchema.parse(request.params.integrationId);
+    const integration = await loadPartnerIntegration(business, integrationId);
+    if (!integration.export_enabled) throw httpError("Bu entegrasyonda dış platformlara yayın kapalı.", 409);
+    const payload = partnerIntegrationPublishJobSchema.parse(request.body || {});
+    const { data: products, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("id, name, status, partner_id")
+      .in("id", payload.product_ids)
+      .eq("partner_id", ownerId);
+    if (productError) throw productError;
+    if ((products || []).length !== payload.product_ids.length) {
+      throw httpError("Bazı ürünler bulunamadı veya bu partner hesabına ait değil.", 404);
+    }
+
+    const rows = payload.product_ids.map((productId) => ({
+      partner_id: business.id,
+      integration_id: integration.id,
+      product_id: productId,
+      action: payload.action,
+      priority: payload.priority,
+      payload: { source: "partner_panel", requested_by: ctx.user.id },
+      scheduled_at: payload.scheduled_at || new Date().toISOString(),
+      created_by: ctx.user.id
+    }));
+    const { data: jobs, error: jobError } = await supabaseAdmin
+      .from("partner_integration_publish_jobs")
+      .insert(rows)
+      .select("*");
+    if (jobError) throw jobError;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.integration_publish_jobs_created",
+      resourceType: "partner_integration",
+      resourceId: integration.id,
+      metadata: { provider: integration.provider, action: payload.action, product_count: rows.length }
+    });
+
+    return reply.code(201).send({ ok: true, jobs });
+  });
+
+  opsGet("/integrations", async (request) => {
+    await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      action: "ops.integrations.list",
+      mfa: true
+    });
+    const query = z.object({
+      provider: z.string().trim().max(40).optional().default(""),
+      status: z.string().trim().max(40).optional().default(""),
+      limit: z.coerce.number().int().min(1).max(200).optional().default(80)
+    }).parse(request.query || {});
+    const warnings = [];
+    let integrationQuery = supabaseAdmin
+      .from("partner_integrations")
+      .select("*, partner:partner_businesses(id, owner_id, partner_code, display_name, legal_name, status, verification_status, level, metadata)")
+      .order("updated_at", { ascending: false })
+      .limit(query.limit);
+    if (query.provider) integrationQuery = integrationQuery.eq("provider", query.provider);
+    if (query.status) integrationQuery = integrationQuery.eq("status", query.status);
+
+    const [integrations, runs, publishJobs] = await Promise.all([
+      optionalQuery(integrationQuery, [], warnings, "partner_integrations"),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_runs")
+          .select("*, integration:partner_integrations(provider, display_name)")
+          .order("started_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "partner_integration_runs"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_publish_jobs")
+          .select("*, integration:partner_integrations(provider, display_name), product:products(id, name, status)")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "partner_integration_publish_jobs"
+      )
+    ]);
+
+    return {
+      ok: true,
+      policy: partnerIntegrationPolicy(),
+      integrations,
+      runs,
+      publishJobs,
+      warnings
+    };
   });
 
   app.patch("/v1/partner/profile", async (request) => {
@@ -10835,7 +11147,9 @@ export function registerRoutes(app) {
         continue;
       }
       try {
-        const scheduledMode = integration.settings?.scheduled_run_mode === "apply" ? "apply" : "preview";
+        const scheduledMode = integration.settings?.scheduled_run_mode === "apply" && config.integrations.scheduledApplyEnabled
+          ? "apply"
+          : "preview";
         const run = await runPartnerIntegrationSync({
           business: integration.partner,
           integration,
@@ -10861,6 +11175,19 @@ export function registerRoutes(app) {
     });
 
     return { ok: true, checked: results.length, results };
+  });
+
+  app.post("/v1/cron/integrations/publish", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.integrations_publish_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+    return processIntegrationPublishJobs({ request, limit: 20 });
   });
 
   app.post("/v1/cron/social-media-daily-drafts", async (request) => {
