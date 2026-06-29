@@ -65,10 +65,32 @@ alter table public.products
   add column if not exists compliance_review_status text not null default 'pending',
   add column if not exists compliance_notes text;
 
-update public.products
-set catalog_scope = coalesce(nullif(catalog_scope, ''), module_key, 'shop')
-where catalog_scope is null
-   or catalog_scope = '';
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'products'
+      and column_name = 'module_key'
+  ) then
+    execute $sql$
+      update public.products
+      set catalog_scope = coalesce(
+        nullif(catalog_scope, ''),
+        case when module_key in ('shop', 'market', 'food', 'taxi', 'service') then module_key else null end,
+        'shop'
+      )
+      where catalog_scope is null
+         or catalog_scope = ''
+    $sql$;
+  else
+    update public.products
+    set catalog_scope = coalesce(nullif(catalog_scope, ''), 'shop')
+    where catalog_scope is null
+       or catalog_scope = '';
+  end if;
+end $$;
 
 update public.products
 set compliance_review_status = coalesce(nullif(compliance_review_status, ''), 'pending')
