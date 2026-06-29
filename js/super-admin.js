@@ -1655,8 +1655,8 @@
   async function loadOwnerApprovals() {
     ownerLoading("Yayın Onayları");
     const [releasePayload, queuePayload] = await Promise.all([
-      api("/v1/control-center/release-approvals?limit=80&status=pending"),
-      api("/v1/control-center/work-queue?limit=80&status=open")
+      ownerOptionalApi("/v1/control-center/release-approvals?limit=80&status=pending", { approvals: [] }, "Yayın onayları"),
+      ownerOptionalApi("/v1/control-center/work-queue?limit=80&status=open", { items: [] }, "İş kuyruğu")
     ]);
     state.approvals = releasePayload.approvals || [];
     state.approvalQueueItems = (queuePayload.items || []).filter((item) => {
@@ -1685,16 +1685,19 @@
     });
 
     const total = releaseRows.length + queueRows.length;
-    ownerSetOutput(total
-      ? ownerLine("Bekleyen onaylar", `${formatNumber(total)} kayıt: ${formatNumber(releaseRows.length)} yayın / ${formatNumber(queueRows.length)} admin-içerik onayı.`, "", total ? "critical" : "low") +
-        (queueRows.length ? ownerLine("Admin Panel İçerik Onayları", "Ana sayfa modülü, banner, kampanya, sayfa ve yasal içerik önerileri burada görünür.", "", "high") + queueRows.join("") : "") +
-        (releaseRows.length ? ownerLine("Yayın / Deploy Onayları", "Main, deploy, migration ve panel değişikliği onayları.", "", "critical") + releaseRows.join("") : "")
-      : ownerLine("Bekleyen yayın onayı yok", "Admin içerik onayı, main commit/push, deploy, migration veya panel değişikliği için bekleyen kayıt bulunmuyor.", "", "low"));
+    ownerSetOutput(
+      ownerDataWarnings(releasePayload, queuePayload) +
+      (total
+        ? ownerLine("Bekleyen onaylar", `${formatNumber(total)} kayıt: ${formatNumber(releaseRows.length)} yayın / ${formatNumber(queueRows.length)} admin-içerik onayı.`, "", total ? "critical" : "low") +
+          (queueRows.length ? ownerLine("Admin Panel İçerik Onayları", "Ana sayfa modülü, banner, kampanya, sayfa ve yasal içerik önerileri burada görünür.", "", "high") + queueRows.join("") : "") +
+          (releaseRows.length ? ownerLine("Yayın / Deploy Onayları", "Main, deploy, migration ve panel değişikliği onayları.", "", "critical") + releaseRows.join("") : "")
+        : ownerLine("Bekleyen yayın onayı yok", "Admin içerik onayı, main commit/push, deploy, migration veya panel değişikliği için bekleyen kayıt bulunmuyor.", "", "low"))
+    );
   }
 
   async function loadOwnerReleaseHistory() {
     ownerLoading("Yayın Geçmişi");
-    const payload = await api("/v1/control-center/release-approvals?limit=80");
+    const payload = await ownerOptionalApi("/v1/control-center/release-approvals?limit=80", { approvals: [] }, "Yayın geçmişi");
     state.releaseHistory = payload.approvals || [];
     const rows = state.releaseHistory.map((item) => {
       const response = item.webhook_response || {};
@@ -1709,6 +1712,7 @@
       );
     });
     ownerSetOutput(
+      ownerDataWarnings(payload) +
       ownerLine("Yayın kayıtları", `${formatNumber(state.releaseHistory.length)} kayıt listeleniyor. Pending kayıtlar Bekleyenler ekranında da görünür.`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenler</button>", "medium") +
       (rows.length ? rows.join("") : ownerEmpty("Yayın geçmişi kaydı bulunamadı."))
     );
@@ -1803,7 +1807,11 @@
     const query = new URLSearchParams({ limit: "80" });
     if (params && params.status) query.set("status", params.status);
     if (params && params.search) query.set("search", params.search);
-    const payload = await api(`/v1/control-center/refund-cancellations?${query.toString()}`);
+    const payload = await ownerOptionalApi(`/v1/control-center/refund-cancellations?${query.toString()}`, {
+      summary: {},
+      items: [],
+      warnings: []
+    }, "İade ve iptal kayıtları");
     const summary = payload.summary || {};
     state.refundCancellations = payload.items || [];
     const rows = state.refundCancellations.map((item) => {
@@ -1827,6 +1835,7 @@
     });
     ownerSetOutput(
       refundFiltersMarkup(params || {}) +
+      ownerDataWarnings(payload) +
       ownerLine("Özet", `${formatNumber(summary.total)} kayıt / ${formatNumber(summary.refunded)} iade / ${formatNumber(summary.cancelled)} iptal / ${formatNumber(summary.support_signals)} destek sinyali`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", summary.action_required ? "critical" : "low") +
       (payload.warnings || []).map((warning) => ownerLine("Şema uyarısı", escape(warning), "", "high")).join("") +
       (rows.join("") || ownerEmpty("İade veya iptal kaydı bulunamadı."))
