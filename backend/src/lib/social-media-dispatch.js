@@ -778,6 +778,7 @@ export function socialMediaDispatchStatus() {
     asset_generation_provider: config.socialMedia.assetGenerationProvider,
     asset_generation_ready: Boolean(config.socialMedia.assetWebhookUrl) || assetGenerationReady,
     asset_storage_bucket_configured: Boolean(config.socialMedia.assetStorageBucket),
+    asset_retention_days: config.socialMedia.assetRetentionDays,
     default_timezone: config.socialMedia.defaultTimezone,
     max_batch: config.socialMedia.maxDispatchBatch,
     max_media_bytes: config.socialMedia.maxMediaBytes,

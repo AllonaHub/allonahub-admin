@@ -461,6 +461,12 @@ const socialMediaAssetPrepareSchema = z.object({
   limit: z.coerce.number().int().min(1).max(30).optional().default(10)
 });
 
+const socialMediaAssetCleanupSchema = z.object({
+  retention_days: z.coerce.number().int().min(1).max(30).optional(),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500),
+  dry_run: z.boolean().optional().default(false)
+});
+
 const socialMediaPostMediaSchema = z.object({
   image_url: httpsUrlOptionalSchema,
   video_url: httpsUrlOptionalSchema,
@@ -2395,6 +2401,97 @@ function extensionFromMime(contentType) {
   if (type === "image/gif") return "gif";
   if (type === "video/mp4") return "mp4";
   return "png";
+}
+
+function storageObjectSize(item) {
+  return Number(item?.metadata?.size || item?.metadata?.contentLength || item?.metadata?.ContentLength || 0);
+}
+
+function storageObjectTimestamp(item) {
+  return item?.updated_at || item?.created_at || item?.last_accessed_at || item?.metadata?.lastModified || "";
+}
+
+function isStorageFolder(item) {
+  return !item?.id && !storageObjectSize(item) && !item?.metadata?.mimetype;
+}
+
+async function listStoragePath(bucket, path = "") {
+  const rows = [];
+  const pageSize = 1000;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabaseAdmin.storage.from(bucket).list(path, {
+      limit: pageSize,
+      offset,
+      sortBy: { column: "name", order: "asc" }
+    });
+    if (error) throw new Error(`${bucket}/${path}: ${error.message}`);
+    const items = data || [];
+    rows.push(...items);
+    if (items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return rows;
+}
+
+async function walkStoragePath(bucket, path = "") {
+  const items = await listStoragePath(bucket, path);
+  const files = [];
+  for (const item of items) {
+    const fullPath = path ? `${path}/${item.name}` : item.name;
+    if (isStorageFolder(item)) {
+      files.push(...await walkStoragePath(bucket, fullPath));
+      continue;
+    }
+    files.push({
+      path: fullPath,
+      size: storageObjectSize(item),
+      updatedAt: storageObjectTimestamp(item)
+    });
+  }
+  return files;
+}
+
+async function cleanupSocialMediaAssetStorage({ retentionDays, limit, dryRun }) {
+  const bucket = String(config.socialMedia.assetStorageBucket || "").trim();
+  const prefix = String(config.socialMedia.assetStoragePrefix || "").replace(/^\/+|\/+$/g, "");
+  if (!bucket || !prefix) {
+    throw new Error("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET ve SOCIAL_MEDIA_ASSET_STORAGE_PREFIX dolu olmalı.");
+  }
+
+  const days = Math.max(1, Number(retentionDays || config.socialMedia.assetRetentionDays || 2));
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const files = await walkStoragePath(bucket, prefix);
+  const candidates = files
+    .map((file) => ({ ...file, parsedDate: file.updatedAt ? new Date(file.updatedAt) : null }))
+    .filter((file) => file.parsedDate && !Number.isNaN(file.parsedDate.getTime()) && file.parsedDate < cutoff)
+    .sort((a, b) => a.parsedDate - b.parsedDate)
+    .slice(0, Math.max(1, Math.min(Number(limit || 500), 1000)));
+
+  const totalBytes = candidates.reduce((sum, file) => sum + file.size, 0);
+  const deletedPaths = [];
+
+  if (!dryRun && candidates.length) {
+    for (let index = 0; index < candidates.length; index += 100) {
+      const batch = candidates.slice(index, index + 100).map((file) => file.path);
+      const { error } = await supabaseAdmin.storage.from(bucket).remove(batch);
+      if (error) throw new Error(`${bucket}: ${error.message}`);
+      deletedPaths.push(...batch);
+    }
+  }
+
+  return {
+    bucket,
+    prefix,
+    retention_days: days,
+    cutoff: cutoff.toISOString(),
+    scanned: files.length,
+    matched: candidates.length,
+    deleted: dryRun ? 0 : deletedPaths.length,
+    dry_run: Boolean(dryRun),
+    estimated_freed_bytes: totalBytes,
+    sample_paths: candidates.slice(0, 20).map((file) => file.path)
+  };
 }
 
 async function ensureSocialAssetBucket(warnings) {
@@ -10343,6 +10440,40 @@ export function registerRoutes(app) {
     const payload = socialMediaAssetPrepareSchema.parse(request.body || {});
     const result = await prepareSocialMediaAssets({ request, ctx: null, limit: payload.limit });
     return { ok: true, ...result };
+  });
+
+  app.post("/v1/cron/social-media-assets-cleanup", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.social_media_assets_cleanup_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      const error = new Error("Cron yetkisi doğrulanamadı.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const payload = socialMediaAssetCleanupSchema.parse(request.body || {});
+    const result = await cleanupSocialMediaAssetStorage({
+      retentionDays: payload.retention_days,
+      limit: payload.limit,
+      dryRun: payload.dry_run
+    });
+
+    await auditEvent({
+      request,
+      action: "cron.social_media_assets_cleaned",
+      resourceType: "storage_bucket",
+      resourceId: result.bucket,
+      severity: result.deleted ? "warning" : "info",
+      source: "cron",
+      purpose: "social_media_asset_retention",
+      metadata: result
+    });
+
+    return { ok: true, cleanup: result };
   });
 
   app.post("/v1/cron/social-media-dispatch", async (request) => {

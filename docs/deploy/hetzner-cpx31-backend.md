@@ -179,6 +179,7 @@ curl https://api.allonahub.com/health
 - `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
 - `POST /v1/cron/integrations/sync`
+- `POST /v1/cron/social-media-assets-cleanup`
 
 Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
 
@@ -204,6 +205,7 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 ```bash
 0 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-payments -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
 15 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/sync -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
+30 3 * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup -H "content-type: application/json" -H "x-cron-secret: GERCEK_CRON_SECRET" --data '{"retention_days":2,"limit":500}' >/dev/null
 ```
 
 ## Cloudflare Güvenlik

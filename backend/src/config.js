@@ -210,6 +210,7 @@ export const config = {
         defaultValue: "social-media"
       })
     ),
+    assetRetentionDays: readNumber("SOCIAL_MEDIA_ASSET_RETENTION_DAYS", 2),
     defaultTimezone: normalizeEnvString(
       readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
     )

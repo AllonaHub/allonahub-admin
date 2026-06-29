@@ -10,11 +10,45 @@ Supabase uyarisi "cached egress bandwidth" icin geldiyse ana supheli alan Storag
 2. Storage > Buckets alaninda buyuk bucketlari kontrol et.
 3. `social-media-assets` bucket'i varsa eski/gereksiz assetleri temizle.
 4. Yeni yuklemeler icin `SOCIAL_MEDIA_MAX_MEDIA_BYTES=8388608` kullan.
-5. Sosyal medya asset uretimi aciksa gecici olarak kapat:
+5. Sosyal medya asset retention kuralini 2 gun olarak tut:
+
+```bash
+SOCIAL_MEDIA_ASSET_RETENTION_DAYS=2
+```
+
+6. Sosyal medya asset uretimi aciksa gecici olarak kapat:
 
 ```bash
 SOCIAL_MEDIA_ASSET_GENERATION_ENABLED=false
 SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=false
+```
+
+## Otomatik 2 gunluk temizlik cron'u
+
+Backend endpoint:
+
+```text
+POST /v1/cron/social-media-assets-cleanup
+```
+
+Bu endpoint sadece `SOCIAL_MEDIA_ASSET_STORAGE_BUCKET` ve `SOCIAL_MEDIA_ASSET_STORAGE_PREFIX` altindaki sosyal medya assetlerini siler. Urun gorselleri, musteri dosyalari veya diger bucketlar hedeflenmez.
+
+Gunluk cron ornegi:
+
+```bash
+30 3 * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup \
+  -H "content-type: application/json" \
+  -H "x-cron-secret: GERCEK_CRON_SECRET" \
+  --data '{"retention_days":2,"limit":500}' >/dev/null
+```
+
+Once dry-run:
+
+```bash
+curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup \
+  -H "content-type: application/json" \
+  -H "x-cron-secret: GERCEK_CRON_SECRET" \
+  --data '{"retention_days":2,"limit":500,"dry_run":true}'
 ```
 
 ## Storage kullanimini listeleme
