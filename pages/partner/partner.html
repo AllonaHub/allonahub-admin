@@ -892,26 +892,38 @@ async function sendPartnerApplication(){
   sendBtn.textContent="Gönderiliyor...";
 
   try{
-    await verifySecurityChallenge("partner_application");
-    const {error:supabaseError}=await supabaseClient
-      .from("partner_applications")
-      .insert([data]);
-
-    if(supabaseError){
-      console.error("Partner başvurusu kaydedilemedi", supabaseError);
-      showNotice("Başvuru şu anda kaydedilemedi. Lütfen daha sonra tekrar deneyin.");
-      return;
+    const base=apiBaseUrl();
+    if(!base)throw new Error("Başvuru servisi yapılandırılmadı.");
+    const turnstileToken=await securityChallengeToken("partner_application");
+    if(!turnstileToken && window.Allona?.securityChallenge?.enabled?.()){
+      throw new Error("Robot doğrulaması tamamlanamadı.");
     }
 
-    await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
+    const response=await fetch(`${base}/v1/partner-applications`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({...data,turnstileToken})
+    });
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok || payload.ok===false){
+      throw new Error(payload.message || "Başvuru şu anda kaydedilemedi.");
+    }
 
-    localStorage.setItem("lastPartnerApplication",JSON.stringify(data));
-    showNotice("Başvurunuz alındı. Başvuru kaydedildi ve mail gönderildi.");
+    if(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY){
+      try{
+        await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,data);
+      }catch(mailError){
+        console.warn("Partner başvurusu kaydedildi, mail bildirimi gönderilemedi", mailError);
+      }
+    }
+
+    localStorage.setItem("lastPartnerApplication",JSON.stringify({...data,application_id:payload.application?.id || ""}));
+    showNotice("Başvurunuz alındı. Admin inceleme kuyruğuna düştü.");
     clearApplyForm(false);
 
   }catch(err){
     console.error("Partner başvurusu gönderilemedi", err);
-    showNotice("Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
+    showNotice(err.message || "Başvuru gönderilemedi. Lütfen daha sonra tekrar deneyin.");
   }finally{
     sendBtn.disabled=false;
     sendBtn.textContent="Başvuruyu Gönder";

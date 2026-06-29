@@ -333,6 +333,26 @@ const partnerApplicationActionSchema = z.object({
   risk_level: z.enum(["info", "warning", "critical"]).optional().default("info")
 });
 
+const publicPartnerApplicationSchema = z.object({
+  partner_name: z.string().trim().max(160).optional().default(""),
+  company_name: z.string().trim().max(160).optional().default(""),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema,
+  phone: z.string().trim().min(7).max(40),
+  tax_number: z.string().trim().min(2).max(60),
+  tax_office: z.string().trim().max(120).optional().default(""),
+  company_type: z.string().trim().min(2).max(120),
+  website: z.string().trim().max(240).optional().default(""),
+  city: z.string().trim().min(2).max(90),
+  country: z.string().trim().min(2).max(90),
+  category: z.string().trim().min(2).max(140),
+  message: z.string().trim().max(1600).optional().default(""),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+}).refine((value) => value.company_name || value.partner_name, {
+  message: "Firma / işletme adı zorunlu.",
+  path: ["company_name"]
+});
+
 const supportStatusSchema = z.object({
   source: z.enum(["user", "partner"]),
   status: z.enum(["open", "in_progress", "resolved"]),
@@ -5758,6 +5778,94 @@ export function registerRoutes(app) {
       evidenceTags: ["auth", "turnstile"]
     });
     return { ok: true, skipped: challenge.skipped };
+  });
+
+  app.post("/v1/partner-applications", async (request, reply) => {
+    const payload = parseAuthPayload(publicPartnerApplicationSchema, request.body);
+    const companyName = (payload.company_name || payload.partner_name).trim();
+    await verifyTurnstile(request, "partner_application", payload.turnstileToken);
+
+    if (payload.website) {
+      try {
+        const parsedWebsite = new URL(payload.website);
+        if (!["http:", "https:"].includes(parsedWebsite.protocol)) {
+          throw httpError("Web sitesi adresi geçerli değil.", 400);
+        }
+      } catch (error) {
+        if (error.statusCode) throw error;
+        throw httpError("Web sitesi adresi geçerli değil.", 400);
+      }
+    }
+
+    const settings = await supabaseAdmin
+      .from("super_admin_settings")
+      .select("setting_value")
+      .eq("setting_key", "partner_applications_paused")
+      .maybeSingle();
+    const pausedSetting = settings.data?.setting_value;
+    if (!settings.error && (pausedSetting === true || pausedSetting === "true" || pausedSetting?.value === true)) {
+      throw httpError("Yeni partner başvuruları geçici olarak durduruldu.", 423);
+    }
+
+    const email = authEmail(payload.email);
+    const recent = await supabaseAdmin
+      .from("partner_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    if (!recent.error && Number(recent.count || 0) >= 2) {
+      throw httpError("Bu e-posta için bugün çok fazla başvuru alındı.", 429);
+    }
+
+    const warnings = [];
+    const application = await optionalMutation(
+      supabaseAdmin
+        .from("partner_applications")
+        .insert({
+          company_name: companyName,
+          contact_name: payload.contact_name,
+          email,
+          phone: payload.phone,
+          tax_number: payload.tax_number,
+          status: "pending",
+          review_stage: "new",
+          risk_level: "info",
+          metadata: {
+            source: "partner_public_form",
+            tax_office: payload.tax_office,
+            company_type: payload.company_type,
+            website: payload.website,
+            city: payload.city,
+            country: payload.country,
+            category: payload.category,
+            message: payload.message,
+            submitted_at: new Date().toISOString()
+          }
+        })
+        .select("id, company_name, contact_name, email, status, review_stage, created_at")
+        .single(),
+      warnings,
+      "partner_applications"
+    );
+
+    await auditEvent({
+      request,
+      action: "partner_application.submitted",
+      resourceType: "partner_application",
+      resourceId: application.id,
+      severity: "info",
+      source: "client",
+      evidenceTags: ["partner", "application", "public_form"],
+      metadata: {
+        company_name: companyName,
+        email_hash: authEmailHash(email),
+        city: payload.city,
+        country: payload.country,
+        category: payload.category
+      }
+    });
+
+    return reply.code(201).send({ ok: true, application, warnings });
   });
 
   app.post("/v1/auth/login", async (request, reply) => {
