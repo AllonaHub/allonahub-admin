@@ -2364,7 +2364,7 @@
       event.action || "audit",
       `${formatDate(event.created_at)} / ${escape(event.resource_type || "-")} ${escape(event.resource_id || "")} / IP ${escape(event.ip_address || "-")}`,
       `<button type="button" data-event-detail="${escape(event.id || "")}">Detay</button>`,
-      event.severity
+      event.risk_severity || event.severity
     ));
     state.securityEvents = securityData.recent_events || [];
     ownerSetOutput([

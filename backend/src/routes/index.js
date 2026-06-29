@@ -578,7 +578,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-owner-ops-product-review-20260629-1";
+const BACKEND_BUILD_MARKER = "admin-alarm-external-threats-20260629-1";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -1635,6 +1635,54 @@ async function countAdminRows(label, table, configure) {
   if (configure) query = configure(query);
   const result = await runAdminQuery(label, query, null);
   return { count: result.count || 0, warning: result.warning };
+}
+
+function auditEventSearchText(event) {
+  return [
+    event?.severity,
+    event?.action,
+    event?.resource_type,
+    event?.resource_id,
+    event?.actor_role,
+    event?.source,
+    event?.purpose,
+    event?.metadata ? JSON.stringify(event.metadata) : ""
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function isPrivilegedAuditActor(event) {
+  return ["admin", "super_admin"].includes(String(event?.actor_role || "").toLowerCase());
+}
+
+function isTrustedPrivilegedAuditEvent(event) {
+  const raw = auditEventSearchText(event);
+  if (!isPrivilegedAuditActor(event)) return false;
+  if (event?.source !== "admin") return false;
+  if (/authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied|mfa_required|unauthorized|forbidden/.test(raw)) return false;
+  if (/attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf|red_zone|blocked_ip|suspicious_ip/.test(raw)) return false;
+  return true;
+}
+
+function isExternalSecurityAuditEvent(event) {
+  const raw = auditEventSearchText(event);
+  if (isTrustedPrivilegedAuditEvent(event)) return false;
+  if (isPrivilegedAuditActor(event) && event?.source === "admin" && !/authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied/.test(raw)) {
+    return false;
+  }
+  return /authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied|red_zone|attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf|auto_defense|blocked_ip|suspicious_ip/.test(raw);
+}
+
+function securityRiskSeverity(event) {
+  return isExternalSecurityAuditEvent(event) ? (event?.severity || "warning") : "low";
+}
+
+function securityEventPublic(event) {
+  return {
+    ...event,
+    risk_severity: securityRiskSeverity(event),
+    trusted_internal: isTrustedPrivilegedAuditEvent(event),
+    external_threat: isExternalSecurityAuditEvent(event)
+  };
 }
 
 function superAdminAuditSeverity(riskLevel) {
@@ -4172,10 +4220,10 @@ async function loadAdminDashboardData(warnings) {
     optionalQuery(
       supabaseAdmin
         .from("security_audit_events")
-        .select("id, action, severity, resource_type, resource_id, created_at")
+        .select("id, actor_role, action, severity, resource_type, resource_id, ip_address, source, purpose, metadata, created_at")
         .in("severity", ["warning", "critical"])
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(80),
       [],
       warnings,
       "security_audit_events"
@@ -4193,6 +4241,8 @@ async function loadAdminDashboardData(warnings) {
     )
   ]);
 
+  const securityThreatEvents = (securityEvents || []).filter(isExternalSecurityAuditEvent).slice(0, 8).map(securityEventPublic);
+
   return {
     metrics: {
       daily_users: Number(usersToday.count || 0),
@@ -4200,7 +4250,7 @@ async function loadAdminDashboardData(warnings) {
       pending_applications: Number(pendingApplications.count || 0),
       recent_orders: recentOrders.length,
       open_support_tickets: Number(userTickets.count || 0) + Number(partnerTickets.count || 0),
-      system_alerts: notifications.length + securityEvents.length + flags.length
+      system_alerts: notifications.length + securityThreatEvents.length + flags.length
     },
     recentOrders,
     alerts: [
@@ -4212,10 +4262,10 @@ async function loadAdminDashboardData(warnings) {
         message: item.reason,
         created_at: item.created_at
       })),
-      ...securityEvents.map((item) => ({
+      ...securityThreatEvents.map((item) => ({
         id: item.id,
         type: "security",
-        severity: item.severity,
+        severity: item.risk_severity || item.severity,
         title: item.action,
         message: `${item.resource_type || "system"} ${item.resource_id || ""}`.trim(),
         created_at: item.created_at
@@ -4433,14 +4483,14 @@ async function loadDerivedSuperAdminWorkQueue({ limit, status, sourceModule, ris
       createdAt: item.created_at,
       metadata: { approval_type: item.approval_type, webhook_status: item.webhook_status || null }
     })),
-    ...(securityEvents.data || []).map((item) => derivedWorkQueueItem({
+    ...(securityEvents.data || []).filter(isExternalSecurityAuditEvent).map((item) => derivedWorkQueueItem({
       id: `security:${item.id}`,
       sourceModule: "security",
       targetType: item.resource_type || "security_audit_event",
       targetId: item.resource_id || item.id,
       title: item.action || "Güvenlik olayı",
       summary: `${item.severity || "warning"} / IP ${item.ip_address || "-"}`,
-      riskLevel: workQueueRiskFromSeverity(item.severity),
+      riskLevel: workQueueRiskFromSeverity(securityRiskSeverity(item)),
       createdAt: item.created_at,
       metadata: { audit_event_id: item.id, actor_role: item.actor_role || null }
     }))
@@ -8808,7 +8858,17 @@ export function registerRoutes(app) {
       countAdminRows("partner_businesses_total", "partner_businesses"),
       countAdminRows("orders_total", "orders"),
       countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
-      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "security_alerts_24h",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .in("severity", ["warning", "critical"])
+          .gte("created_at", since24h)
+          .order("created_at", { ascending: false })
+          .limit(500),
+        []
+      ),
       runAdminQuery(
         "orders_daily_revenue",
         supabaseAdmin
@@ -8861,9 +8921,10 @@ export function registerRoutes(app) {
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
     const autoDefense = autoDefenseStatus();
     const releaseApprovals = (releaseRows.data || []).map(releaseApprovalPublic);
-    const recentEvents = recentSecurity.data || [];
+    const recentEvents = (recentSecurity.data || []).map(securityEventPublic);
+    const threatEvents24h = (securityAlerts.data || []).filter(isExternalSecurityAuditEvent);
     const moduleMap = moduleOperationMapPublic(moduleRows.data || []);
-    const criticalEvents = recentEvents.filter((event) => event.severity === "critical");
+    const criticalEvents = recentEvents.filter((event) => event.external_threat && event.severity === "critical");
     const unresolvedApprovals = releaseApprovals.filter((item) => ["approved", "failed", "pending"].includes(item.status));
     const inactiveModules = moduleMap.filter((item) => item.is_active !== true || item.is_visible !== true);
 
@@ -8883,10 +8944,10 @@ export function registerRoutes(app) {
         title: "Ödemeler durduruldu",
         message: "PAYMENTS_DISABLED true; ödeme akışı kapalı."
       } : null,
-      securityAlerts.count > 0 ? {
+      threatEvents24h.length > 0 ? {
         severity: "high",
         title: "Güvenlik uyarısı",
-        message: `${securityAlerts.count} uyarı son 24 saatte audit akışına düştü.`
+        message: `${threatEvents24h.length} dış güvenlik uyarısı son 24 saatte audit akışına düştü.`
       } : null,
       pendingApplications.count > 0 ? {
         severity: "medium",
@@ -8941,7 +9002,7 @@ export function registerRoutes(app) {
         total_orders: orders.count,
         daily_revenue: Number(dailyRevenue.toFixed(2)),
         pending_applications: pendingApplications.count,
-        security_alerts_24h: securityAlerts.count,
+        security_alerts_24h: threatEvents24h.length,
         critical_events_sample: criticalEvents.length,
         release_approvals: releaseApprovals.length,
         homepage_modules: moduleMap.length,
@@ -10022,7 +10083,17 @@ export function registerRoutes(app) {
       countAdminRows("partner_businesses_total", "partner_businesses"),
       countAdminRows("orders_total", "orders"),
       countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
-      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "security_alerts_24h",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .in("severity", ["warning", "critical"])
+          .gte("created_at", since24h)
+          .order("created_at", { ascending: false })
+          .limit(500),
+        []
+      ),
       runAdminQuery(
         "orders_daily_revenue",
         supabaseAdmin
@@ -10047,6 +10118,7 @@ export function registerRoutes(app) {
 
     const dailyRevenue = (revenueRows.data || [])
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const threatEvents24h = (securityAlerts.data || []).filter(isExternalSecurityAuditEvent);
     const autoDefense = autoDefenseStatus();
 
     await auditEvent({
@@ -10058,7 +10130,7 @@ export function registerRoutes(app) {
       resourceType: "super_admin_dashboard",
       metadata: {
         warning_count: warnings.length,
-        security_alerts_24h: securityAlerts.count
+        security_alerts_24h: threatEvents24h.length
       }
     });
 
@@ -10071,7 +10143,7 @@ export function registerRoutes(app) {
           total_orders: orders.count,
           daily_revenue: Number(dailyRevenue.toFixed(2)),
           pending_applications: pendingApplications.count,
-          security_alerts: securityAlerts.count
+          security_alerts: threatEvents24h.length
         },
         system_health: {
           api: "online",
@@ -10319,13 +10391,24 @@ export function registerRoutes(app) {
     );
     if (events.warning) warnings.push(events.warning);
 
-    const failedAuth = await countAdminRows("super_admin_failed_auth_24h", "security_audit_events", (query) => (
-      query.in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"]).gte("created_at", since24h)
-    ));
+    const failedAuth = await runAdminQuery(
+      "super_admin_failed_auth_24h",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+        .in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"])
+        .gte("created_at", since24h)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      []
+    );
     if (failedAuth.warning) warnings.push(failedAuth.warning);
 
-    const criticalEvents = (events.data || []).filter((event) => event.severity === "critical").length;
-    const suspiciousIps = Object.entries((events.data || [])
+    const publicEvents = (events.data || []).map(securityEventPublic);
+    const threatEvents = publicEvents.filter((event) => event.external_threat);
+    const failedAuthThreats = (failedAuth.data || []).filter(isExternalSecurityAuditEvent);
+    const criticalEvents = threatEvents.filter((event) => event.severity === "critical").length;
+    const suspiciousIps = Object.entries(threatEvents
       .filter((event) => event.ip_address && ["warning", "critical"].includes(event.severity))
       .reduce((acc, event) => {
         acc[event.ip_address] = (acc[event.ip_address] || 0) + 1;
@@ -10344,7 +10427,7 @@ export function registerRoutes(app) {
       source: "admin",
       resourceType: "security_center",
       metadata: {
-        failed_auth_24h: failedAuth.count,
+        failed_auth_24h: failedAuthThreats.length,
         critical_event_sample_count: criticalEvents
       }
     });
@@ -10353,13 +10436,13 @@ export function registerRoutes(app) {
       ok: true,
       security: {
         metrics: {
-          failed_auth_24h: failedAuth.count,
+          failed_auth_24h: failedAuthThreats.length,
           critical_events_sample: criticalEvents,
           suspicious_ip_count: suspiciousIps.length,
           blocked_ip_count: autoDefense.blockedIpCount
         },
         suspicious_ips: suspiciousIps,
-        recent_events: events.data || [],
+        recent_events: publicEvents,
         auto_defense: autoDefense
       },
       schema_warnings: warnings

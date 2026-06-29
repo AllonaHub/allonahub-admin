@@ -22,6 +22,7 @@
     status: null,
     overlay: null,
     overlayBody: null,
+    widgetVisible: false,
     suppressedUntil: 0,
     activeAudio: new Set(),
     seen: new Set()
@@ -129,10 +130,11 @@
   function classifyItem(item) {
     const raw = itemRaw(item);
     if (trustedAdminItem(item)) return "low";
-    if (/critical|authz\.denied|admin\.boundary_denied|owner_denied|role_denied|webhook|secret|attack|blocked|suspicious|payment|finance/.test(raw)) {
+    if (item.risk_severity === "low" || item.trusted_internal === true) return "low";
+    if (isExternalThreatItem(item) && /critical|authz\.denied|admin\.boundary_denied|owner_denied|role_denied|attack|blocked|suspicious|red_zone|breach|intrusion/.test(raw)) {
       return "critical";
     }
-    if (/warning|auth\.denied|mfa|required|failed|risk|flag|denied/.test(raw)) return "high";
+    if (isExternalThreatItem(item) || /auth\.denied|failed|denied/.test(raw)) return "high";
     return normalizeLevel(item.severity || item.risk_level || "medium");
   }
 
@@ -326,6 +328,13 @@
     state.status.textContent = statusText();
   }
 
+  function setWidgetVisible(visible) {
+    state.widgetVisible = Boolean(visible);
+    if (!state.root) return;
+    state.root.hidden = !state.widgetVisible;
+    state.root.dataset.visible = state.widgetVisible ? "true" : "false";
+  }
+
   function activeIncidentFromStatus(payload) {
     const incident = payload && payload.alarm && payload.alarm.incident;
     if (!incident || !incident.active) return null;
@@ -372,8 +381,9 @@
   }
 
   function showOverlay(incident) {
-    if (!state.enabled || Date.now() < state.suppressedUntil) return;
+    if (Date.now() < state.suppressedUntil) return;
     if (!incident || !state.overlay || !state.overlayBody) return;
+    setWidgetVisible(true);
     state.overlay.dataset.level = incident.level || "critical";
     state.overlay.hidden = false;
     state.overlayBody.innerHTML = `
@@ -392,6 +402,7 @@
     const style = document.createElement("style");
     style.textContent = `
       .ah-admin-alarm{position:fixed;right:12px;bottom:12px;z-index:900;display:grid;gap:6px;width:min(280px,calc(100vw - 24px));padding:8px;border:1px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(6,14,28,.90);color:#fff;box-shadow:0 14px 40px rgba(0,0,0,.26);font:11px/1.3 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .ah-admin-alarm[hidden],.ah-admin-alarm[data-visible="false"]{display:none}
       .ah-admin-alarm[data-level="high"]{border-color:rgba(255,184,77,.72)}
       .ah-admin-alarm[data-level="critical"]{border-color:rgba(255,77,109,.9);box-shadow:0 0 0 2px rgba(255,77,109,.22),0 18px 54px rgba(0,0,0,.42)}
       .ah-admin-alarm__row{display:flex;align-items:center;gap:8px;justify-content:space-between}
@@ -427,6 +438,7 @@
       </div>
     `;
     document.body.appendChild(state.root);
+    setWidgetVisible(false);
     state.overlay = document.createElement("section");
     state.overlay.className = "ah-admin-alarm-screen";
     state.overlay.hidden = true;
@@ -485,6 +497,7 @@
     state.suppressedUntil = 0;
     stopActiveAudio();
     hideOverlay();
+    setWidgetVisible(false);
     saveJson(STORAGE_KEY, { enabled: false, updated_at: new Date().toISOString() });
     saveJson(SILENCE_KEY, { until: 0 });
     state.lastLevel = "low";
@@ -515,6 +528,7 @@
     saveJson(SILENCE_KEY, { until: state.suppressedUntil });
     stopActiveAudio();
     hideOverlay();
+    setWidgetVisible(false);
     state.lastMessage = "Alarm susturuldu";
     renderStatus();
   }
@@ -531,13 +545,6 @@
 
   async function pollAlarm() {
     if (!pageKind()) return;
-    if (!state.enabled) {
-      hideOverlay();
-      state.lastLevel = "low";
-      state.lastMessage = "Kapalı; manuel açılınca izler";
-      renderStatus();
-      return;
-    }
     try {
       const [payload, statusPayload] = await Promise.all([
         alarmApi(endpoint()),
@@ -561,6 +568,8 @@
       const fresh = items.filter((item) => !state.seen.has(itemId(item)));
       remember(items);
       if (Date.now() < state.suppressedUntil) {
+        hideOverlay();
+        setWidgetVisible(false);
         state.lastLevel = "low";
         state.lastMessage = "Alarm susturuldu";
         renderStatus();
@@ -569,6 +578,8 @@
       const audible = fresh.filter(isAudibleAlarmItem);
       const critical = fresh.filter(isCriticalAlarmItem);
       if (!audible.length && !critical.length) {
+        hideOverlay();
+        setWidgetVisible(false);
         state.lastLevel = "low";
         state.lastMessage = "Yeni kritik uyarı yok";
         renderStatus();
@@ -578,6 +589,7 @@
       const actionable = critical.length ? critical : audible;
       const level = critical.length ? "critical" : maxLevel(actionable);
       const first = actionable[0];
+      setWidgetVisible(true);
       state.lastLevel = level;
       state.lastMessage = `${actionable.length} yeni uyarı: ${itemTitle(first)}`;
       renderStatus();
@@ -587,6 +599,8 @@
       await playAlarm(level);
       if (critical.length) notify(level, actionable);
     } catch (error) {
+      hideOverlay();
+      setWidgetVisible(false);
       state.lastLevel = "high";
       state.lastMessage = error.message || "Alarm izleme hatası";
       renderStatus();
