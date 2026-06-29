@@ -368,6 +368,11 @@ const adminProductReviewDecisionSchema = z.object({
   reason: z.string().trim().min(3).max(1200)
 });
 
+const adminProductReviewBulkDecisionSchema = adminProductReviewDecisionSchema.extend({
+  product_ids: z.array(uuidSchema).min(1).max(100),
+  only_auto_approvable: z.boolean().optional().default(false)
+});
+
 const partnerApplicationActionSchema = z.object({
   action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
   reason: z.string().trim().min(3).max(1200),
@@ -3862,6 +3867,247 @@ function productNeedsAdminReview(product = {}) {
   if (waitingReviewStatuses.has(reviewStatus)) return hasPartnerOrImportSignal || waitingProductStatuses.has(status);
   if (waitingProductStatuses.has(status)) return true;
   return hasPartnerOrImportSignal && !closedProductStatuses.has(status);
+}
+
+const productReviewFieldLabels = {
+  name: "Ürün adı",
+  product_name: "Ürün adı",
+  description: "Açıklama",
+  meta_title: "SEO başlığı",
+  meta_description: "SEO açıklaması",
+  category: "Kategori",
+  brand: "Marka",
+  seller_disclosure: "Satıcı bilgilendirme",
+  invoice_responsibility: "Fatura sorumluluğu"
+};
+
+const productReviewPolicyRules = [
+  {
+    code: "prohibited_or_illegal_terms",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["name", "product_name", "description", "meta_title", "meta_description", "category", "brand"],
+    pattern: /\b(sahte|replika|kaçak|kacak|yasadışı|yasadisi|uyuşturucu|uyusturucu|narkotik|silah|tabanca|tüfek|tufek|patlayıcı|patlayici|çalıntı|calinti|kumar|bahis)\b/i,
+    title: "Yasaklı veya hukuki riskli ifade",
+    suggestion: "Ürün adı, kategori veya açıklamadaki yasaklı/kaçak/hukuki riskli ifadeyi kaldırıp mevzuata uygun ürün içeriğiyle değiştirin."
+  },
+  {
+    code: "regulated_health_claim",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["name", "product_name", "description", "meta_title", "meta_description"],
+    pattern: /(%100\s*(kesin|garanti)|kesin\s+(çözüm|cozum|tedavi)|mucize|garantili\s+tedavi|doktor\s+onaylı|doktor\s+onayli|bakanlık\s+onaylı|bakanlik\s+onayli|reçetesiz\s+ilaç|recetesiz\s+ilac)/i,
+    title: "Sağlık/performans iddiası",
+    suggestion: "İspatlanamayan sağlık, tedavi, kesin sonuç veya resmi onay iddialarını açıklamadan çıkarın."
+  },
+  {
+    code: "contact_information_in_content",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["description", "meta_description", "seller_disclosure"],
+    pattern: /((\+?90\s*)?0?\s*5\d{2}[\s().-]*\d{3}[\s().-]*\d{2}[\s().-]*\d{2}|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|https?:\/\/|www\.|wa\.me|whatsapp|telegram|instagram|tiktok|facebook|x\.com|\.com\b|\.net\b|\.org\b)/i,
+    title: "Açıklamada harici iletişim/yönlendirme",
+    suggestion: "Telefon, e-posta, sosyal medya, WhatsApp veya dış link bilgisini ürün açıklamasından kaldırın; iletişim AllonaHub akışı üzerinden yürümeli."
+  },
+  {
+    code: "return_exchange_payment_bypass",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["description", "meta_description", "seller_disclosure"],
+    pattern: /(iade\s+(yok|kabul\s+edilmez|alınmaz|alinmaz)|değişim\s+(yok|kabul\s+edilmez)|degisim\s+(yok|kabul\s+edilmez)|cayma\s+hakkı\s+yok|cayma\s+hakki\s+yok|kapıda\s+ödeme|kapida\s+odeme|iban|havale|eft|elden\s+ödeme|elden\s+odeme|whatsapp'tan\s+sipariş|whatsapptan\s+siparis)/i,
+    title: "İade/değişim veya ödeme akışını bozan ifade",
+    suggestion: "İade/değişim yasağı, IBAN/havale/elden ödeme veya platform dışı sipariş yönlendirmesi içeren metni kaldırın."
+  },
+  {
+    code: "violence_or_hate_content",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["name", "product_name", "description", "meta_title", "meta_description"],
+    pattern: /(nefret\s+söylemi|nefret\s+soylemi|ırkçı|irkci|şiddet\s+çağrısı|siddet\s+cagrisi|terör|teror|örgüt|orgut)/i,
+    title: "Şiddet/nefret içerik riski",
+    suggestion: "Şiddet, nefret veya terör çağrışımı yapan ifadeleri kaldırın ve ürünü hukuka uygun şekilde yeniden tanımlayın."
+  }
+];
+
+function productReviewFieldText(product = {}, field) {
+  return String(product[field] || "").trim();
+}
+
+function addProductReviewReason(reasons, reason) {
+  if (!reason?.code) return;
+  const key = `${reason.code}:${reason.field || ""}`;
+  if (reasons.some((item) => `${item.code}:${item.field || ""}` === key)) return;
+  reasons.push(reason);
+}
+
+function productReviewRuleReasons(product = {}) {
+  const reasons = [];
+  for (const rule of productReviewPolicyRules) {
+    for (const field of rule.fields) {
+      const value = productReviewFieldText(product, field);
+      if (!value || !rule.pattern.test(value)) continue;
+      addProductReviewReason(reasons, {
+        code: rule.code,
+        severity: rule.severity,
+        field,
+        field_label: productReviewFieldLabels[field] || field,
+        title: rule.title,
+        message: `${productReviewFieldLabels[field] || field} alanında politika/hukuk riski olabilecek ifade bulundu.`,
+        suggestion: rule.suggestion,
+        requires_revision: Boolean(rule.requiresRevision)
+      });
+    }
+  }
+  return reasons;
+}
+
+function productOperationalReviewReasons(product = {}) {
+  const reasons = [];
+  const price = Number(product.price || 0);
+  const stock = Number(product.stock ?? 0);
+  const description = String(product.description || "").trim();
+  if (!product.image_url && !product.image) {
+    addProductReviewReason(reasons, {
+      code: "image_missing",
+      severity: "warning",
+      field: "image_url",
+      field_label: "Ürün görseli",
+      title: "Görsel eksik",
+      message: "Ürün görseli yok veya yüklenmemiş görünüyor.",
+      suggestion: "Görsel kalite kontrolü yapın; bu tek başına zorunlu revizyon değildir.",
+      requires_revision: false
+    });
+  }
+  if (!description || description.length < 20) {
+    addProductReviewReason(reasons, {
+      code: "description_short",
+      severity: "warning",
+      field: "description",
+      field_label: "Açıklama",
+      title: "Açıklama kısa",
+      message: "Açıklama müşteri için yetersiz olabilir.",
+      suggestion: "Gerekirse açıklama kalitesini artırın; politika riski yoksa ürün yayına alınabilir.",
+      requires_revision: false
+    });
+  }
+  if (price <= 0) {
+    addProductReviewReason(reasons, {
+      code: "price_missing",
+      severity: "info",
+      field: "price",
+      field_label: "Fiyat",
+      title: "Fiyat yok",
+      message: "Fiyat 0 veya boş görünüyor.",
+      suggestion: "Fiyat operasyonel kontroldür; hukuki/politika revizyonu olarak işaretlenmez.",
+      requires_revision: false
+    });
+  }
+  if (stock <= 0) {
+    addProductReviewReason(reasons, {
+      code: "stock_missing",
+      severity: "info",
+      field: "stock",
+      field_label: "Stok",
+      title: "Stok yok",
+      message: "Stok 0 veya boş görünüyor.",
+      suggestion: "Stok operasyonel kontroldür; hukuki/politika revizyonu olarak işaretlenmez.",
+      requires_revision: false
+    });
+  }
+  return reasons;
+}
+
+function productReviewAutomation(product = {}) {
+  const reasons = [
+    ...productReviewRuleReasons(product),
+    ...productOperationalReviewReasons(product)
+  ];
+  const revisionRequired = reasons.some((reason) => reason.requires_revision);
+  const criticalCount = reasons.filter((reason) => reason.severity === "critical").length;
+  const warningCount = reasons.filter((reason) => reason.severity === "warning").length;
+  const infoCount = reasons.filter((reason) => reason.severity === "info").length;
+  const score = Math.min(100, criticalCount * 45 + warningCount * 18 + infoCount * 6);
+  const riskLevel = criticalCount ? "critical" : warningCount ? "warning" : infoCount ? "info" : "clear";
+  const lane = revisionRequired ? "needs_revision" : warningCount ? "watch" : "ready";
+
+  return {
+    risk_level: riskLevel,
+    lane,
+    score,
+    auto_approvable: !revisionRequired,
+    revision_required: revisionRequired,
+    reasons,
+    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "seller_disclosure", "image_url", "price", "stock"]
+  };
+}
+
+function attachProductReviewAutomation(product = {}) {
+  return {
+    ...product,
+    review_automation: productReviewAutomation(product)
+  };
+}
+
+function productReviewMatchesAutomationStatus(product = {}, statusFilter = "") {
+  const filter = normalizedReviewValue(statusFilter);
+  if (!filter || filter === "all") return true;
+  const automation = product.review_automation || productReviewAutomation(product);
+  const status = normalizedReviewValue(product.status);
+  const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+  const notes = String(product.compliance_notes || "").toLocaleLowerCase("tr-TR");
+
+  if (filter === "ready") return automation.lane === "ready" && automation.auto_approvable;
+  if (filter === "watch") return automation.lane === "watch" && automation.auto_approvable;
+  if (filter === "risk" || filter === "risky") return automation.revision_required || automation.risk_level === "critical" || automation.lane === "needs_revision";
+  if (filter === "needs_revision") return automation.revision_required || reviewStatus === "needs_review" || status === "needs_review";
+  if (filter === "revised") return reviewStatus === "pending" && /revizyon|revision|düzelt|duzelt/i.test(notes);
+  return status === filter || reviewStatus === filter;
+}
+
+function productReviewAutomationSummary(products = []) {
+  const summary = {
+    total: products.length,
+    ready: 0,
+    watch: 0,
+    needs_revision: 0,
+    critical: 0,
+    warning: 0,
+    info: 0,
+    auto_approvable: 0,
+    revised: 0
+  };
+  for (const product of products) {
+    const automation = product.review_automation || productReviewAutomation(product);
+    if (automation.lane === "ready") summary.ready += 1;
+    if (automation.lane === "watch") summary.watch += 1;
+    if (automation.lane === "needs_revision") summary.needs_revision += 1;
+    if (automation.risk_level === "critical") summary.critical += 1;
+    if (automation.risk_level === "warning") summary.warning += 1;
+    if (automation.risk_level === "info") summary.info += 1;
+    if (automation.auto_approvable) summary.auto_approvable += 1;
+    if (productReviewMatchesAutomationStatus(product, "revised")) summary.revised += 1;
+  }
+  return summary;
+}
+
+function productReviewDecisionPayload(decision, reason, nowIso = new Date().toISOString()) {
+  const nextStatus = decision === "approved" ? "active" : decision === "rejected" ? "archived" : "draft";
+  return {
+    status: nextStatus,
+    compliance_review_status: decision,
+    compliance_notes: reason,
+    updated_at: nowIso
+  };
+}
+
+function productReviewRevisionReason(product = {}, baseReason = "") {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const requiredReasons = automation.reasons.filter((reason) => reason.requires_revision);
+  if (!requiredReasons.length) return baseReason;
+  const details = requiredReasons
+    .map((reason) => `- ${reason.field_label || reason.field}: ${reason.title}. ${reason.suggestion}`)
+    .join("\n");
+  return `${baseReason}\n\nOtomasyon tespiti:\n${details}`.trim().slice(0, 1200);
 }
 
 function productMatchesAdminReviewSearch(product = {}, search) {
@@ -11117,15 +11363,12 @@ export function registerRoutes(app) {
     const rows = await optionalQuery(dbQuery, [], warnings, "products");
     let products = (rows || [])
       .filter(productNeedsAdminReview)
-      .filter((product) => productMatchesAdminReviewSearch(product, query.search));
+      .filter((product) => productMatchesAdminReviewSearch(product, query.search))
+      .map(attachProductReviewAutomation);
     if (query.status) {
-      const requestedStatus = normalizedReviewValue(query.status);
-      products = products.filter((product) => {
-        const status = normalizedReviewValue(product.status);
-        const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
-        return status === requestedStatus || reviewStatus === requestedStatus;
-      });
+      products = products.filter((product) => productReviewMatchesAutomationStatus(product, query.status));
     }
+    const summary = productReviewAutomationSummary(products);
     products = products.slice(0, query.limit);
 
     await auditedOpsEvent({
@@ -11142,14 +11385,89 @@ export function registerRoutes(app) {
       }
     });
 
-    return { ok: true, products, warnings };
+    return { ok: true, products, summary, warnings };
+  });
+
+  opsPost("/product-reviews/bulk-decision", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.decide");
+    const body = adminProductReviewBulkDecisionSchema.parse(request.body || {});
+    const warnings = [];
+    const nowIso = new Date().toISOString();
+    const { data: rows, error: rowsError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .in("id", body.product_ids);
+    if (rowsError && looksLikeMissingSchema(rowsError)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (rowsError) throw rowsError;
+
+    const productById = new Map((rows || []).map((product) => [String(product.id), product]));
+    const missingIds = body.product_ids.filter((productId) => !productById.has(String(productId)));
+    const products = body.product_ids
+      .map((productId) => productById.get(String(productId)))
+      .filter(Boolean)
+      .map(attachProductReviewAutomation);
+    const updatedProducts = [];
+    const skipped = missingIds.map((productId) => ({
+      product_id: productId,
+      reason: "Ürün bulunamadı."
+    }));
+
+    for (const product of products) {
+      const automation = product.review_automation || productReviewAutomation(product);
+      if (body.decision === "approved" && body.only_auto_approvable && !automation.auto_approvable) {
+        skipped.push({
+          product_id: product.id,
+          name: product.name || product.product_name || "",
+          reason: "Otomasyon bu üründe revizyon riski gördüğü için toplu güvenli onaydan çıkarıldı.",
+          review_automation: automation
+        });
+        continue;
+      }
+
+      const reason = body.decision === "needs_review"
+        ? productReviewRevisionReason(product, body.reason)
+        : body.reason;
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload(body.decision, reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation(updated));
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_reviews_bulk_decided",
+      resourceType: "product",
+      severity: body.decision === "approved" ? "info" : "warning",
+      metadata: {
+        decision: body.decision,
+        requested_count: body.product_ids.length,
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        only_auto_approvable: Boolean(body.only_auto_approvable),
+        reason: body.reason
+      }
+    });
+
+    return {
+      ok: true,
+      products: updatedProducts,
+      skipped,
+      summary: productReviewAutomationSummary(updatedProducts),
+      warnings: [...new Set(warnings)]
+    };
   });
 
   opsPost("/product-reviews/:productId/decision", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.decide");
     const productId = uuidSchema.parse(request.params.productId);
     const body = adminProductReviewDecisionSchema.parse(request.body || {});
-    const nextStatus = body.decision === "approved" ? "active" : body.decision === "rejected" ? "archived" : "draft";
     const nowIso = new Date().toISOString();
 
     const { data: before, error: beforeError } = await supabaseAdmin
@@ -11163,34 +11481,13 @@ export function registerRoutes(app) {
     if (beforeError) throw beforeError;
     if (!before) throw httpError("Ürün bulunamadı.", 404);
 
-    const updatePayload = {
-      status: nextStatus,
-      compliance_review_status: body.decision,
-      compliance_notes: body.reason,
-      updated_at: nowIso
-    };
-
-    let { data: product, error } = await supabaseAdmin
-      .from("products")
-      .update(updatePayload)
-      .eq("id", productId)
-      .select("*")
-      .single();
-    if (error && looksLikeMissingSchema(error)) {
-      delete updatePayload.updated_at;
-      const retry = await supabaseAdmin
-        .from("products")
-        .update(updatePayload)
-        .eq("id", productId)
-        .select("*")
-        .single();
-      product = retry.data;
-      error = retry.error;
-    }
-    if (error && looksLikeMissingSchema(error)) {
-      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
-    }
-    if (error) throw error;
+    const reason = body.decision === "needs_review"
+      ? productReviewRevisionReason(before, body.reason)
+      : body.reason;
+    const updatePayload = productReviewDecisionPayload(body.decision, reason, nowIso);
+    const nextStatus = updatePayload.status;
+    const { product, removedFields } = await updatePartnerProductRow(productId, updatePayload);
+    const warnings = removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`);
 
     await auditedOpsEvent({
       request,
@@ -11205,11 +11502,11 @@ export function registerRoutes(app) {
         previous_status: before.status || null,
         previous_compliance_review_status: before.compliance_review_status || null,
         integration_source: before.integration_source || null,
-        reason: body.reason
+        reason
       }
     });
 
-    return { ok: true, product, warnings: [] };
+    return { ok: true, product: attachProductReviewAutomation(product), warnings };
   });
 
   opsPost("/orders/:orderId/risk-flag", async (request, reply) => {

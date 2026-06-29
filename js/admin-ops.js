@@ -551,16 +551,41 @@
     return "orange";
   }
 
+  function productReviewAutomationLabel(automation) {
+    if (!automation) return "Kontrol bekliyor";
+    if (automation.revision_required || automation.lane === "needs_revision") return "Revizyon riski";
+    if (automation.lane === "watch" || automation.risk_level === "warning") return "Kontrol et";
+    return "Onaya hazır";
+  }
+
+  function productReviewAutomationTone(automation) {
+    if (!automation) return "orange";
+    if (automation.revision_required || automation.risk_level === "critical" || automation.lane === "needs_revision") return "red";
+    if (automation.risk_level === "warning" || automation.lane === "watch") return "orange";
+    return "green";
+  }
+
+  function productReviewAutomationReason(automation) {
+    const reasons = automation?.reasons || [];
+    if (!reasons.length) return "Otomasyon revizyon riski görmedi.";
+    return reasons
+      .slice(0, 2)
+      .map((reason) => `${reason.field_label || reason.field || "Alan"}: ${reason.title || reason.message || "Kontrol"}`)
+      .join(" · ");
+  }
+
   function renderProductReviews(products) {
     const rows = products.map((raw) => {
       const product = core.normalizeProduct(raw);
       const reviewStatus = raw.compliance_review_status || "pending";
+      const automation = raw.review_automation;
       return `
         <tr>
           <td>${titleCell(product.name, `${product.category || "-"} / ${product.module_key || "shop"}`)}</td>
           <td>${titleCell(product.seller_public_name || product.seller_name || "-", product.seller_legal_name || product.seller_city || "-")}</td>
           <td>${money(product.price)}<br><small>${escape(product.stock)} stok</small></td>
           <td>${badge(product.status)}<br>${badge(productReviewStatusLabel(reviewStatus), productReviewStatusTone(reviewStatus))}</td>
+          <td>${badge(productReviewAutomationLabel(automation), productReviewAutomationTone(automation))}<br><small>${escape(shortText(productReviewAutomationReason(automation), 130))}</small></td>
           <td>${escape(shortText(product.invoice_responsibility || "-", 120))}</td>
           <td>
             <span class="admin-actions">
@@ -577,8 +602,8 @@
     $("#adminContent").innerHTML = section(
       "Ürün Onayı",
       "Partner katalog kayıtlarında satıcı, fatura, iade/cayma ve yasaklı ürün uygunluğu kontrolü",
-      warningPanel() + table(["Ürün", "Satıcı", "Fiyat/Stok", "Durum", "Fatura Sorumluluğu", "Aksiyon"], rows, "Onay bekleyen ürün bulunamadı."),
-      `<button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
+      warningPanel() + table(["Ürün", "Satıcı", "Fiyat/Stok", "Durum", "Otomasyon", "Fatura Sorumluluğu", "Aksiyon"], rows, "Onay bekleyen ürün bulunamadı."),
+      `<a class="admin-btn admin-btn--gold" href="product-reviews.html">Ürün Onay Otomasyonu</a><button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
     );
   }
 
