@@ -23,7 +23,8 @@
     integrationPolicy: {},
     metrics: {},
     recommendations: [],
-    selectedRefundId: null
+    selectedRefundId: null,
+    productView: "list"
   };
 
   const MODULE_PROFILES = {
@@ -780,10 +781,21 @@
   }
 
   function renderProducts() {
+    renderProductSummary();
     const target = $("[data-product-rows]");
     if (!target) return;
     if (!state.products.length) {
-      target.innerHTML = `<tr><td colspan="6">Henüz ürün veya hizmet eklenmedi.</td></tr>`;
+      target.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="partner-os-empty-row">
+              <strong>Henüz ürün veya hizmet eklenmedi.</strong>
+              <span>İlk ürününü eklediğinde burada fiyat, stok, durum ve yayın sinyaliyle birlikte görünecek.</span>
+              <button type="button" data-product-add><i class="fa-solid fa-plus"></i><span>Ürün ekle</span></button>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
     target.innerHTML = state.products.map((raw) => {
@@ -801,6 +813,45 @@
         </tr>
       `;
     }).join("");
+  }
+
+  function renderProductSummary() {
+    const target = $("[data-product-summary]");
+    if (!target) return;
+    const products = state.products.map((item) => core.normalizeProduct(item));
+    const active = products.filter((item) => item.status === "active").length;
+    const waiting = products.filter((item) => ["draft", "pending", "review"].includes(item.status)).length;
+    const lowStock = products.filter((item) => Number(item.stock || 0) <= 5).length;
+    const stats = [
+      ["Ürünlerim", products.length, "Toplam kayıt"],
+      ["Yayında", active, "Aktif ürün/hizmet"],
+      ["Onay bekleyen", waiting, "Taslak ve inceleme"],
+      ["Stok uyarısı", lowStock, "5 ve altı stok"]
+    ];
+    target.innerHTML = stats.map(([label, value, hint]) => `
+      <article>
+        <span>${escape(label)}</span>
+        <strong>${escape(value)}</strong>
+        <small>${escape(hint)}</small>
+      </article>
+    `).join("");
+  }
+
+  function setProductView(view, options) {
+    const nextView = view === "add" ? "add" : "list";
+    state.productView = nextView;
+    $all("[data-product-view-panel]").forEach((panel) => {
+      const active = panel.dataset.productViewPanel === nextView;
+      panel.hidden = !active;
+      panel.classList.toggle("is-active", active);
+    });
+    $all("[data-product-view-target]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.productViewTarget === nextView);
+    });
+    if (nextView === "add" && options?.focusForm) {
+      const form = $("[data-product-form]");
+      if (form?.elements?.name) form.elements.name.focus();
+    }
   }
 
   function integrationConnectors() {
@@ -1233,6 +1284,7 @@
     renderRecentPayments();
     renderPaymentRows();
     renderProducts();
+    setProductView(state.productView || "list");
     renderIntegrations();
     renderOrders();
     renderRefundCancellations();
@@ -1546,6 +1598,7 @@
     const payload = productPayloadFromData(data);
     const created = await persistProductPayload(payload, options);
     renderProducts();
+    setProductView("list");
     renderKpis();
     return created;
   }
@@ -2122,6 +2175,7 @@
       const logout = event.target.closest("[data-partner-logout]");
       const growth = event.target.closest("[data-growth-action]");
       const productAdd = event.target.closest("[data-product-add]");
+      const productView = event.target.closest("[data-product-view-target]");
       const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
       const downloadTemplate = event.target.closest("[data-download-template]");
       const exportProducts = event.target.closest("[data-export-products]");
@@ -2134,6 +2188,10 @@
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
+      if (productView) {
+        activatePanel("products");
+        setProductView(productView.dataset.productViewTarget);
+      }
       if (refresh) loadPartnerOs();
       if (logout) App.auth.signOut({ scope: "local" });
       if (growth) {
@@ -2147,14 +2205,15 @@
       }
       if (productAdd) {
         activatePanel("products");
-        const form = $("[data-product-form]");
-        if (form && form.elements.name) form.elements.name.focus();
+        setProductView("add", { focusForm: true });
       }
       if (bulkTrigger) {
+        setProductView("add");
         const input = $("[data-bulk-product-input]");
         if (input) input.click();
       }
       if (downloadTemplate) {
+        setProductView("add");
         downloadRows(productTemplateRows(), "allona-partner-urun-sablonu.xlsx", "UrunSablonu");
         toast("Excel yükleme şablonu indirildi.");
       }
