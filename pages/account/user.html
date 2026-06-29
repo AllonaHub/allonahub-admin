@@ -391,6 +391,10 @@ a{
   margin-top:6px;
   box-shadow:0 0 24px rgba(0,213,255,.36);
   transition:.3s;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
 }
 
 .btn:hover{
@@ -409,7 +413,8 @@ a{
   border:1px solid rgba(0,150,255,.22);
 }
 
-.icloud-btn{
+.icloud-btn,
+.partner-panel-btn{
   background:linear-gradient(135deg,#ffffff,#eef8ff);
   color:var(--deep);
   border:1px solid rgba(0,150,255,.24);
@@ -750,7 +755,7 @@ a{
       <div class="security-challenge" data-security-challenge="login"></div>
       <button class="btn" onclick="loginUser()">Giriş Yap</button>
       <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
-      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+      <a class="btn social-btn partner-panel-btn" href="../partner/partner.html">Partner Panelle Giriş Yap</a>
 
       <div class="link-row">
         <a href="user.html?tab=login&amp;method=phone">Telefon ile giriş</a>
