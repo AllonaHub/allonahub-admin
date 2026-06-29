@@ -16,6 +16,15 @@
   }
 
   const AUTH_RETURN_TO_KEY = "allonahub.auth.returnTo";
+  const TRUSTED_RETURN_ORIGINS = [
+    "https://allonahub.com",
+    "https://www.allonahub.com",
+    "https://partner.allonahub.com"
+  ];
+
+  function trustedReturnOrigin(origin) {
+    return origin === window.location.origin || TRUSTED_RETURN_ORIGINS.includes(origin);
+  }
 
   function normalizeReturnTo(value, fallback) {
     const raw = String(value || "").trim();
@@ -23,7 +32,8 @@
     try {
       const decoded = decodeURIComponent(raw);
       const target = new URL(decoded, window.location.href);
-      if (target.origin !== window.location.origin) return fallback;
+      if (!trustedReturnOrigin(target.origin)) return fallback;
+      if (target.origin !== window.location.origin) return target.href;
       return `${target.pathname}${target.search}${target.hash}` || fallback;
     } catch {
       return fallback;

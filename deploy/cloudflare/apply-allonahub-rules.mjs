@@ -3,6 +3,7 @@
 const API = "https://api.cloudflare.com/client/v4";
 const token = process.env.CLOUDFLARE_API_TOKEN;
 const zoneId = process.env.CLOUDFLARE_ZONE_ID;
+const applyPartnerDns = process.env.APPLY_PARTNER_DNS === "1";
 
 if (!token || !zoneId) {
   console.error("Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID.");
@@ -67,12 +68,40 @@ async function upsertEntrypoint(phase, name, rules, options = {}) {
 }
 
 const hostExpression = '(http.host eq "allonahub.com" or http.host eq "www.allonahub.com")';
+const partnerHostExpression = 'http.host eq "partner.allonahub.com"';
+const publicHostExpression = `(${hostExpression} or ${partnerHostExpression})`;
 const apiHostExpression = 'http.host eq "api.allonahub.com"';
+
+async function upsertDnsRecord(record) {
+  const query = new URLSearchParams({
+    type: record.type,
+    name: record.name
+  });
+  const existing = await cf(`/zones/${zoneId}/dns_records?${query.toString()}`);
+  const payload = {
+    type: record.type,
+    name: record.name,
+    content: record.content,
+    proxied: record.proxied !== false,
+    ttl: 1,
+    comment: record.comment || "Managed by AllonaHub deploy script"
+  };
+  if (existing && existing.length) {
+    return cf(`/zones/${zoneId}/dns_records/${existing[0].id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+  }
+  return cf(`/zones/${zoneId}/dns_records`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
 
 const headerRules = [{
   ref: "allonahub-security-headers",
   description: "AllonaHub security headers",
-  expression: hostExpression,
+  expression: publicHostExpression,
   action: "rewrite",
   action_parameters: {
     headers: {
@@ -86,6 +115,58 @@ const headerRules = [{
 }];
 
 const redirectRules = [
+  {
+    ref: "allonahub-main-partner-entry-to-subdomain",
+    description: "Move partner entry pages to partner subdomain",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner" "/partner/" "/partner.html" "/partner-login.html" "/partner-giris.html" "/partner/index.html" "/partner/login" "/partner/login/" "/partner/giris" "/partner/giris/" "/pages/partner/partner.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
+    ref: "allonahub-main-partner-panel-to-subdomain",
+    description: "Move partner panel pages to partner subdomain",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner-panel" "/partner-panel/" "/partner-panel.html" "/partner/panel" "/partner/panel/" "/partner/os" "/partner/os/" "/partner/partner-panel.html" "/pages/partner/partner-panel.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/panel" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
+    ref: "allonahub-partner-subdomain-entry",
+    description: "Route partner subdomain entry paths to login page",
+    expression: `${partnerHostExpression} and http.request.uri.path in {"/" "/login" "/login/" "/giris" "/giris/" "/basvuru" "/basvuru/" "/partner" "/partner/" "/partner.html" "/partner-login.html" "/partner-giris.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/pages/partner/partner.html" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
+    ref: "allonahub-partner-subdomain-panel",
+    description: "Route partner subdomain panel paths to Partner OS",
+    expression: `${partnerHostExpression} and http.request.uri.path in {"/panel" "/panel/" "/os" "/os/" "/partner-panel" "/partner-panel/" "/partner-panel.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/pages/partner/partner-panel.html" },
+        preserve_query_string: true
+      }
+    }
+  },
   {
     ref: "allonahub-partner-entry-shortlinks",
     description: "Redirect partner entry short links",
@@ -228,9 +309,19 @@ const cacheRules = [{
   }
 }];
 
+if (applyPartnerDns) {
+  await upsertDnsRecord({
+    type: "CNAME",
+    name: "partner.allonahub.com",
+    content: "allonahub.com",
+    proxied: true,
+    comment: "AllonaHub partner portal subdomain"
+  });
+}
+
 await upsertEntrypoint("http_response_headers_transform", "AllonaHub response header rules", headerRules);
 await upsertEntrypoint("http_request_dynamic_redirect", "AllonaHub redirect rules", redirectRules);
 await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
 await upsertEntrypoint("http_request_cache_settings", "AllonaHub cache rules", cacheRules, { prepend: true });
 
-console.log("Cloudflare AllonaHub rules applied.");
+console.log(`Cloudflare AllonaHub rules applied.${applyPartnerDns ? " Partner DNS applied." : " Partner DNS skipped; set APPLY_PARTNER_DNS=1 to create it."}`);

@@ -9,7 +9,7 @@ Canli kontrolde `https://allonahub.com/_headers` dosyasinin normal statik dosya 
 Expression:
 
 ```text
-(http.host eq "allonahub.com" or http.host eq "www.allonahub.com")
+((http.host eq "allonahub.com" or http.host eq "www.allonahub.com") or http.host eq "partner.allonahub.com")
 ```
 
 Set edilecek header'lar:
@@ -60,6 +60,40 @@ Partner kisa yollarinda canli origin `_redirects` dosyasini yorumlamadigi icin C
 | --- | --- |
 | `/partner`, `/partner/`, `/partner.html`, `/partner-login.html`, `/partner-giris.html`, `/partner/login`, `/partner/giris` | `/pages/partner/partner.html` |
 | `/partner-panel`, `/partner-panel/`, `/partner-panel.html`, `/partner/panel`, `/partner/os`, `/partner/partner-panel.html` | `/pages/partner/partner-panel.html` |
+
+## Partner Subdomain
+
+Trendyol benzeri partner portal yapisi icin `partner.allonahub.com` subdomain'i kullanilir.
+
+DNS:
+
+```text
+CNAME partner -> allonahub.com
+Proxy: on
+```
+
+Ana domain partner kisa yollari partner subdomain'e tasinir:
+
+| Eski URL | Yeni URL |
+| --- | --- |
+| `https://allonahub.com/partner` | `https://partner.allonahub.com/` |
+| `https://allonahub.com/pages/partner/partner.html` | `https://partner.allonahub.com/` |
+| `https://allonahub.com/partner-panel` | `https://partner.allonahub.com/panel` |
+| `https://allonahub.com/pages/partner/partner-panel.html` | `https://partner.allonahub.com/panel` |
+
+Partner subdomain kisa yollari:
+
+| Kisa URL | Kanonik URL |
+| --- | --- |
+| `https://partner.allonahub.com/` | `/pages/partner/partner.html` |
+| `https://partner.allonahub.com/login` | `/pages/partner/partner.html` |
+| `https://partner.allonahub.com/panel` | `/pages/partner/partner-panel.html` |
+
+API ile DNS dahil uygulamak icin token'da Zone DNS Edit ve Zone Rulesets Edit yetkileri olmalidir:
+
+```bash
+APPLY_PARTNER_DNS=1 node deploy/cloudflare/apply-allonahub-rules.mjs
+```
 
 ## WAF Notu
 
