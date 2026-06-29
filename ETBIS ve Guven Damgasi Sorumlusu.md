@@ -54,6 +54,9 @@ Bu dosya AllonaHub icin ETBIS kaydi ve Guven Damgasi basvurusu oncesi hazirlik, 
    - EV SSL, TSE A/B sinifi sizma testi, KEP/ticaret sicil dogrulamasi ve canli uygulama sirasi icin `docs/runbooks/etbis-guven-damgasi-basvuru-runbook.md` eklendi.
    - KEP adresi `allworksinbusiness@hs01.kep.tr` ve ticaret sicil no `376656-5` yasal merkez ve ana yasal metinlere eklendi.
    - Cloudflare token, zone id ve Supabase DB URL alma/terminalden calistirma adimlari icin `docs/runbooks/live-access-env-setup.md` eklendi.
+   - 29.06.2026 tarihinde Cloudflare header/redirect kurallari canlida uygulandi.
+   - Canli kontrolde `allonahub.com` ve `www.allonahub.com` yanitlarinda HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy ve Permissions-Policy goruldu.
+   - Canli kontrolde `/checkout.html` Cloudflare challenge'a dusmeden `/pages/commerce/guvenli-odeme.html` adresine 301 yonleniyor.
 
 ## Kalan dis bagimliliklar ve faz ayrimi
 
@@ -77,20 +80,14 @@ Bu dosya AllonaHub icin ETBIS kaydi ve Guven Damgasi basvurusu oncesi hazirlik, 
    - Repo tarafinda bilgi alani hazir.
    - Kayit tamamlandiginda resmi dogrulama linki ve ETBIS bilgisi yasal sayfalara eklenmeli.
 
-5. Canli edge/WAF davranisi tekrar kontrol edilmeli.
-   - `checkout.html` canlida Cloudflare challenge'a dusebiliyordu; repo tarafinda guvenli odeme sayfasina yonlendirme mevcut.
-   - 29.06.2026 kontrolunde `checkout.html` hala Cloudflare challenge dondu. Root redirect dosyasi eklendi; buna ragmen challenge devam ederse Cloudflare WAF kural sirasi/path istisnasi panelden duzeltilmeli.
+5. Canli edge/header davranisi duzeltildi.
+   - `checkout.html` artik Cloudflare challenge'a dusmeden guvenli odeme sayfasina 301 yonleniyor.
+   - Ana domain ve `www` yanitlarinda guvenlik basliklari canlida goruluyor.
+   - Cloudflare API token gecici olarak kullanildi; islem tamamlandigi icin token Cloudflare panelinden revoke edilmelidir.
 
-6. Ana web guvenlik basliklari canlida hala eksik.
-   - 29.06.2026 kontrolunde ana sayfa yanitinda HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy ve Permissions-Policy basliklari gorunmedi.
-   - 29.06.2026 kontrolunde `https://allonahub.com/_headers` statik dosya olarak indirilebildi. Bu, hosting'in `_headers` dosyasini yorumlamadigini gosterir.
-   - Repo tarafina Apache/LiteSpeed icin `.htaccess` fallback'i eklendi.
-   - Cloudflare Transform Rules/Response Header Modification icin script ve runbook hazirlandi; canliya uygulamak icin Cloudflare API token ve zone id gerekiyor.
-
-7. Cloudflare ve Supabase canli erisim bilgileri eksik.
-   - Ortamda `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, `SUPABASE_DB_URL`, `DATABASE_URL` veya `POSTGRES_URL` bulunmadi.
-   - Bu nedenle Cloudflare WAF/header kurallari ve Supabase migration canliya bu oturumdan uygulanamadi.
-   - Erişim bilgileri verildiginde hazir scriptlerle uygulanabilir.
+6. Supabase canli migration henuz uygulanmadi.
+   - `products` tablosu icin seller/compliance alanlarini ekleyen migration hazir.
+   - Canli DB icin `SUPABASE_DB_URL`, `DATABASE_URL` veya `POSTGRES_URL` ve `psql`/SQL Editor uygulamasi gerekiyor.
 
 ## Basvuru oncesi operasyonel kontrol listesi
 
@@ -100,7 +97,7 @@ Bu dosya AllonaHub icin ETBIS kaydi ve Guven Damgasi basvurusu oncesi hazirlik, 
 - ETBIS kaydini tamamla; kayit bilgisi geldikten sonra `pages/legal/etbis-guven-damgasi.html` ve footer dogrulama linklerini guncelle.
 - Partner urunlerinde public satici alanlarini veri giris formuna gir; ticari unvan, sehir, destek iletisim, vergi no maskesi ve fatura sorumlulugu admin onay ekraninda kontrol edilebilir.
 - Yasakli/sarta bagli urun listesi ve kategori bazli admin onay kontrolunu canlida test et; ilk kelime bariyeri ve admin inceleme/ret/onay akisi repo tarafinda hazir.
-- Cloudflare uzerinde guvenlik header'lari ve `/checkout.html` WAF/redirect davranisini duzelt.
+- Cloudflare token'i revoke et; header ve `/checkout.html` redirect davranisi canlida uygulandi.
 - Cerez riza paneli, analitik/pazarlama ayrimi ve IYS onay-ret surecini canli akis uzerinde ayri kontrol et.
 
 ## Kaynaklar

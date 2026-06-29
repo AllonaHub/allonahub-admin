@@ -86,7 +86,7 @@ Guncellenen sayfalar:
 
 ## 4. Canli teknik uygulama sirasi
 
-1. Cloudflare rule scriptini uygula.
+1. Cloudflare rule scripti 29.06.2026 tarihinde uygulandi; yeni degisiklik gerekirse script tekrar calistirilabilir.
 2. Supabase migration'i canli DB'ye uygula.
 3. Yeni admin urun onay ekranini deploy et.
 4. Header ve redirect canli kontrollerini tekrar calistir.
