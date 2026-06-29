@@ -260,30 +260,44 @@ const redirectRules = [
   }
 ];
 
-const wafRules = [{
-  ref: "allonahub-api-cron-skip-challenge",
-  description: "Skip challenge for authenticated API cron calls",
-  expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/")`,
-  action: "skip",
-  action_parameters: {
-    ruleset: "current",
-    products: [
-      "bic",
-      "hot",
-      "securityLevel",
-      "uaBlock",
-      "waf",
-      "zoneLockdown"
-    ],
-    phases: [
-      "http_request_firewall_managed",
-      "http_request_sbfm"
-    ]
+const apiSkipChallengeParameters = {
+  ruleset: "current",
+  products: [
+    "bic",
+    "hot",
+    "securityLevel",
+    "uaBlock",
+    "waf",
+    "zoneLockdown"
+  ],
+  phases: [
+    "http_request_firewall_managed",
+    "http_request_sbfm"
+  ]
+};
+
+const wafRules = [
+  {
+    ref: "allonahub-api-runtime-skip-challenge",
+    description: "Skip browser challenges for the public API runtime",
+    expression: `${apiHostExpression} and (http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))`,
+    action: "skip",
+    action_parameters: apiSkipChallengeParameters,
+    logging: {
+      enabled: true
+    }
   },
-  logging: {
-    enabled: true
+  {
+    ref: "allonahub-api-cron-skip-challenge",
+    description: "Skip challenge for authenticated API cron calls",
+    expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/")`,
+    action: "skip",
+    action_parameters: apiSkipChallengeParameters,
+    logging: {
+      enabled: true
+    }
   }
-}];
+];
 
 const cacheRules = [{
   ref: "allonahub-product-media-cache",
