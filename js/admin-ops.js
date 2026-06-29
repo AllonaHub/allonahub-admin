@@ -391,6 +391,59 @@
     });
   }
 
+  function currentMetrics() {
+    return state.dashboard?.metrics || {};
+  }
+
+  function countItems(items, predicate) {
+    return (items || []).filter(predicate).length;
+  }
+
+  function notificationCount(view) {
+    const metrics = currentMetrics();
+    const alerts = state.dashboard?.alerts || [];
+    const cache = state.cache || {};
+    const refundSignalCount = countItems(alerts, (item) => /iade|iptal|refund|cancel|ihtilaf|dispute/i.test(`${item.title || ""} ${item.message || ""}`));
+    const applicationCount = Math.max(
+      Number(metrics.pending_applications || 0),
+      countItems(cache.applications, (item) => ["pending", "review"].includes(String(item.status || "")))
+    );
+    const supportCount = Math.max(
+      Number(metrics.open_support_tickets || 0),
+      countItems(cache.tickets, (item) => ["open", "in_progress", "waiting"].includes(String(item.status || "")))
+    );
+    const securityCount = Number(metrics.system_alerts || 0);
+    const counts = {
+      dashboard: securityCount + applicationCount + supportCount,
+      applications: applicationCount,
+      support: supportCount,
+      security: securityCount,
+      refunds: Math.max(
+        refundSignalCount,
+        countItems(cache.refunds, (item) => ["support_signal", "signal"].includes(item.type) || item.order_status === "pending_signal")
+      ),
+      productReviews: countItems(cache.productReviews, (item) => !["approved", "rejected"].includes(String(item.compliance_review_status || "pending"))),
+      content: countItems(cache.proposals, (item) => ["pending_super_admin", "review", "draft"].includes(String(item.status || ""))),
+      social: countItems(cache.social?.drafts, (item) => ["ready_for_review", "queued", "failed"].includes(String(item.status || "")))
+    };
+    return Math.max(0, Number(counts[view] || 0));
+  }
+
+  function notificationTone(view, count) {
+    if (!count) return "";
+    if (["security", "refunds"].includes(view)) return "critical";
+    if (["support", "applications", "productReviews", "content"].includes(view)) return "attention";
+    return "info";
+  }
+
+  function navBadge(view) {
+    const count = notificationCount(view);
+    if (!count) return "";
+    const label = count > 99 ? "99+" : String(count);
+    const tone = notificationTone(view, count);
+    return `<span class="admin-nav-alert" data-tone="${escape(tone)}" title="${escape(label)} yeni bildirim">${escape(label)}</span>`;
+  }
+
   function viewFromHash() {
     const key = String(window.location.hash || "").replace("#", "").trim();
     return views[key] ? key : "dashboard";
@@ -1364,6 +1417,7 @@
     const data = await api("/v1/ops-console/dashboard");
     state.dashboard = data.dashboard;
     state.warnings = data.warnings || [];
+    renderNav();
     renderDashboard(data.dashboard);
   }
 
@@ -1496,6 +1550,7 @@
       if (state.view === "security") await loadSecurity();
       if (state.view === "reports") await loadReports();
       if (state.view === "audit") await loadAudit();
+      renderNav();
     } catch (error) {
       console.error("[AdminOps] view load failed", state.view, error);
       $("#adminContent").innerHTML = statusBox(readableError(error), "error");
@@ -2126,6 +2181,7 @@
       state.capabilities = data.capabilities || {};
       state.dashboard = data.dashboard;
       state.warnings = data.warnings || [];
+      renderNav();
       $("#adminProfileName").textContent = state.profile.full_name || "Admin";
       $("#adminProfileRole").textContent = state.profile.role || "admin";
       if (state.view === "dashboard") {
@@ -2306,12 +2362,19 @@
   function renderNav() {
     const nav = $("#adminNav");
     if (!nav) return;
-    nav.innerHTML = Object.entries(views).map(([key, item]) => `
-      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""}">
-        <span>${escape(item.label)}</span>
+    nav.innerHTML = Object.entries(views).map(([key, item]) => {
+      const count = notificationCount(key);
+      return `
+      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""} ${count ? "has-alert" : ""}">
+        <span class="admin-nav-label">
+          <span>${escape(item.label)}</span>
+          ${navBadge(key)}
+        </span>
         ${item.marker ? `<small>${escape(item.marker)}</small>` : ""}
       </button>
-    `).join("");
+    `;
+    }).join("");
+    setActiveNav();
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
