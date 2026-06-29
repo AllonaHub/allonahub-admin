@@ -16,6 +16,7 @@
       orders: [],
       refunds: [],
       productReviews: [],
+      integrations: {},
       tickets: [],
       proposals: [],
       social: {},
@@ -30,6 +31,7 @@
     users: { label: "Kullanıcı Takibi", marker: "" },
     applications: { label: "Partner Başvuruları", marker: "" },
     partners: { label: "Partner Operasyonları", marker: "" },
+    integrations: { label: "Entegrasyonlar", marker: "MVP" },
     orders: { label: "Sipariş Yönetimi", marker: "" },
     refunds: { label: "İade ve İptaller", marker: "" },
     productReviews: { label: "Ürün Onayı", marker: "ETBİS" },
@@ -574,6 +576,54 @@
       "Partner durumu, mağaza bilgisi ve operasyonel izleme",
       warningPanel() + table(["Partner", "Tip", "Durum", "Doğrulama", "Güven", "Şehir", "İşlem"], rows, "Partner kaydı bulunamadı.")
     );
+  }
+
+  function renderIntegrations(data) {
+    const integrations = data.integrations || [];
+    const runs = data.runs || [];
+    const publishJobs = data.publishJobs || [];
+    const policy = data.policy || {};
+    const metricHtml = `<div class="admin-metrics">${[
+      ["Bağlantı", integrations.length],
+      ["Sorunlu run", runs.filter((item) => ["failed", "partial"].includes(item.status)).length],
+      ["Publish kuyruğu", publishJobs.filter((item) => ["queued", "failed"].includes(item.status)).length],
+      ["Apply", policy.apply_enabled ? "Açık" : "Kapalı"],
+      ["Outbound", policy.outbound_enabled ? "Açık" : "Kapalı"]
+    ].map(([label, value]) => `<div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`).join("")}</div>`;
+    const integrationRows = integrations.map((item) => `
+      <tr>
+        <td>${titleCell(item.display_name || item.provider, item.partner?.display_name || item.partner?.partner_code || item.partner_id)}</td>
+        <td>${badge(item.provider)}<br><small>${escape(item.plan_tier || "free")}</small></td>
+        <td>${badge(item.status)}<br>${badge(item.last_test_status || "test bekliyor")}</td>
+        <td>${escape(item.sync_mode || "manual")}<br><small>${escape(item.import_enabled ? "import açık" : "import kapalı")} / ${escape(item.export_enabled ? "export açık" : "export kapalı")}</small></td>
+        <td>${dateTime(item.last_sync_at)}<br><small>${escape(shortText(item.last_error_message || item.last_test_message || "-", 90))}</small></td>
+      </tr>
+    `);
+    const runRows = runs.map((run) => `
+      <tr>
+        <td>${titleCell(run.integration?.display_name || run.integration?.provider || run.integration_id, dateTime(run.started_at))}</td>
+        <td>${badge(run.run_mode)} / ${badge(run.direction)}</td>
+        <td>${badge(run.status)}</td>
+        <td>${escape(run.checked_count || 0)} kontrol · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel</td>
+        <td>${escape(run.failed_count || 0)} hata · ${escape(run.warning_count || 0)} uyarı</td>
+      </tr>
+    `);
+    const jobRows = publishJobs.map((job) => `
+      <tr>
+        <td>${titleCell(job.product?.name || job.product_id, job.integration?.display_name || job.integration?.provider || job.integration_id)}</td>
+        <td>${badge(job.action)}</td>
+        <td>${badge(job.status)}</td>
+        <td>${dateTime(job.scheduled_at)}<br><small>${escape(shortText(job.error_message || "-", 90))}</small></td>
+      </tr>
+    `);
+    $("#adminContent").innerHTML = [
+      section("Entegrasyon Merkezi", "Partner connectorları, sync runları ve outbound kuyruğu", warningPanel(data.warnings) + metricHtml),
+      section("Bağlantılar", "", table(["Entegrasyon", "Provider", "Durum", "Mod", "Son Çalışma"], integrationRows, "Entegrasyon kaydı bulunamadı.")),
+      `<div class="admin-split">
+        ${section("Senkron Logları", "", table(["Run", "Tip", "Durum", "Sayaç", "Kontrol"], runRows, "Senkron kaydı bulunamadı."))}
+        ${section("Publish Kuyruğu", "", table(["Ürün", "Aksiyon", "Durum", "Plan"], jobRows, "Publish işi bulunamadı."))}
+      </div>`
+    ].join("");
   }
 
   function renderOrders(orders) {
@@ -1290,6 +1340,13 @@
     renderPartners(state.cache.partners);
   }
 
+  async function loadIntegrations() {
+    const data = await api(`/v1/ops-console/integrations?${queryParams()}`);
+    state.cache.integrations = data || {};
+    state.warnings = data.warnings || [];
+    renderIntegrations(data);
+  }
+
   async function loadOrders() {
     const data = await api(`/v1/ops-console/orders?${queryParams()}`);
     state.cache.orders = data.orders || [];
@@ -1381,6 +1438,7 @@
       if (state.view === "users") await loadUsers();
       if (state.view === "applications") await loadApplications();
       if (state.view === "partners") await loadPartners();
+      if (state.view === "integrations") await loadIntegrations();
       if (state.view === "orders") await loadOrders();
       if (state.view === "refunds") await loadRefunds();
       if (state.view === "productReviews") await loadProductReviews();

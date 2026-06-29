@@ -1,4 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
+import { lookup as dnsLookup } from "node:dns/promises";
+import net from "node:net";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
@@ -290,7 +292,16 @@ const partnerIntegrationSyncSchema = z.object({
   mode: z.enum(["preview", "apply"]).optional().default("preview"),
   direction: z.enum(["inbound", "outbound"]).optional().default("inbound"),
   trigger_source: z.enum(["manual", "cron", "webhook", "admin", "system"]).optional().default("manual"),
-  limit: z.coerce.number().int().min(1).max(500).optional()
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  confirm_apply: z.string().trim().max(120).optional().default(""),
+  approval_note: z.string().trim().max(500).optional().default("")
+});
+
+const partnerIntegrationPublishJobSchema = z.object({
+  product_ids: z.array(uuidSchema).min(1).max(100),
+  action: z.enum(["create", "update", "upsert", "stock_price", "archive", "delete"]).optional().default("upsert"),
+  priority: z.coerce.number().int().min(1).max(999).optional().default(100),
+  scheduled_at: z.string().datetime().optional()
 });
 
 const rewardsLedgerSchema = z.object({
@@ -4575,6 +4586,66 @@ function integrationConnectorFallbackRows() {
       sort_order: 40
     },
     {
+      provider: "hepsiburada",
+      label: "Hepsiburada",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.hepsiburada,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 50
+    },
+    {
+      provider: "n11",
+      label: "n11",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.n11,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 60
+    },
+    {
+      provider: "ciceksepeti",
+      label: "Çiçeksepeti",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "planned",
+      inbound_supported: true,
+      outbound_supported: false,
+      free_enabled: false,
+      premium_ready: false,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.ciceksepeti,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 70
+    },
+    {
+      provider: "pazarama",
+      label: "Pazarama",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "planned",
+      inbound_supported: true,
+      outbound_supported: false,
+      free_enabled: false,
+      premium_ready: false,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.pazarama,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 80
+    },
+    {
       provider: "custom_api",
       label: "Özel API",
       category: "custom",
@@ -4611,15 +4682,53 @@ function normalizeIntegrationSecretKey(value) {
 function connectorAllowsUse(connector) {
   if (!connector) return false;
   if (connector.free_enabled) return true;
+  if (connector.stage === "planned" || connector.premium_ready === false) return false;
   if (connector.availability === "premium") return config.integrations.premiumEnabled;
   if (connector.availability === "enterprise") return config.integrations.premiumEnabled;
   return false;
+}
+
+function partnerIntegrationPlanTier(business = {}) {
+  const metadata = business.metadata || {};
+  const raw = String(metadata.integration_plan || metadata.plan_tier || metadata.subscription_tier || "").toLowerCase();
+  if (["enterprise", "kurumsal"].includes(raw)) return "enterprise";
+  if (["premium", "pro", "professional"].includes(raw)) return "premium";
+  if (Number(business.level || 0) >= 20) return "enterprise";
+  if (Number(business.level || 0) >= 5) return "premium";
+  return "free";
+}
+
+function partnerCanUseConnector(connector, business) {
+  if (!connectorAllowsUse(connector)) return false;
+  if (connector.availability === "free" || connector.free_enabled) return true;
+  const tier = partnerIntegrationPlanTier(business);
+  if (connector.availability === "enterprise") return tier === "enterprise";
+  return ["premium", "enterprise"].includes(tier);
 }
 
 function connectorForProvider(connectors, provider) {
   return (connectors || []).find((item) => item.provider === provider)
     || integrationConnectorFallbackRows().find((item) => item.provider === provider)
     || null;
+}
+
+function partnerIntegrationPolicy() {
+  return {
+    enabled: config.integrations.enabled,
+    premium_enabled: config.integrations.premiumEnabled,
+    outbound_enabled: config.integrations.outboundEnabled,
+    apply_enabled: config.integrations.applyEnabled,
+    scheduled_apply_enabled: config.integrations.scheduledApplyEnabled,
+    require_apply_confirmation: config.integrations.requireApplyConfirmation,
+    apply_confirmation_text: config.integrations.applyConfirmationText,
+    force_draft_on_apply: config.integrations.forceDraftOnApply,
+    remote_fetch_enabled: config.integrations.remoteFetchEnabled,
+    block_private_fetch_targets: config.integrations.blockPrivateFetchTargets,
+    allowed_fetch_hosts: config.integrations.allowedFetchHosts,
+    max_preview_rows: config.integrations.maxPreviewRows,
+    max_apply_rows: config.integrations.maxApplyRows,
+    max_test_rows: config.integrations.maxTestRows
+  };
 }
 
 async function partnerIntegrationConnectors(warnings = []) {
@@ -4781,26 +4890,86 @@ function imageFromRow(row) {
   return "";
 }
 
+function isPrivateIpAddress(address) {
+  if (!address) return true;
+  if (net.isIPv4(address)) {
+    const parts = address.split(".").map((part) => Number(part));
+    if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0) return true;
+    if (parts[0] === 169 && parts[1] === 254) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
+    return false;
+  }
+  if (net.isIPv6(address)) {
+    const normalized = address.toLowerCase();
+    return normalized === "::1"
+      || normalized === "::"
+      || normalized.startsWith("fc")
+      || normalized.startsWith("fd")
+      || normalized.startsWith("fe80:")
+      || normalized.startsWith("::ffff:127.")
+      || normalized.startsWith("::ffff:10.")
+      || normalized.startsWith("::ffff:192.168.");
+  }
+  return true;
+}
+
+function hostnameAllowed(hostname) {
+  const allowedHosts = config.integrations.allowedFetchHosts || [];
+  if (!allowedHosts.length) return true;
+  const normalized = String(hostname || "").toLowerCase();
+  return allowedHosts.some((allowed) => {
+    const rule = String(allowed || "").toLowerCase();
+    if (!rule) return false;
+    if (rule.startsWith("*.")) return normalized.endsWith(rule.slice(1));
+    return normalized === rule || normalized.endsWith(`.${rule}`);
+  });
+}
+
+async function assertSafeIntegrationUrl(rawUrl) {
+  const parsed = new URL(rawUrl);
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw httpError("Entegrasyon URL adresi http veya https olmalı.", 400);
+  }
+  if (!hostnameAllowed(parsed.hostname)) {
+    throw httpError("Bu entegrasyon hostu allowlist dışında.", 403);
+  }
+  if (config.integrations.blockPrivateFetchTargets) {
+    const records = await dnsLookup(parsed.hostname, { all: true, verbatim: true });
+    if (!records.length || records.some((record) => isPrivateIpAddress(record.address))) {
+      throw httpError("Private/internal IP hedeflerine entegrasyon isteği engellendi.", 403);
+    }
+  }
+  return parsed;
+}
+
 function normalizeIntegrationProduct(row, integration, index) {
   const name = String(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"]) || "").trim();
   if (!name) return null;
+  const firstVariant = Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {};
+  const firstCategory = Array.isArray(row?.categories) && row.categories.length ? row.categories[0] : null;
 
   const externalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || `row-${index + 1}`).trim();
-  const variantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || "").trim();
-  const sku = String(firstValue(row, ["sku", "stock_code", "stok_kodu", "urun_kodu"]) || externalId).trim();
+  const variantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
+  const sku = String(firstValue(row, ["sku", "stock_code", "stockCode", "barcode", "stok_kodu", "urun_kodu"]) || firstVariant.sku || firstVariant.barcode || externalId).trim();
   const settings = integration.settings || {};
   const moduleKey = ["shop", "market", "food", "service"].includes(settings.module_key) ? settings.module_key : "shop";
+  const categoryValue = firstValue(row, ["category", "categoryName", "productMainId", "categories", "kategori"])
+    || (typeof firstCategory === "string" ? firstCategory : firstCategory?.name)
+    || settings.default_category
+    || "Genel";
 
   return {
     external_product_id: externalId,
     external_variant_id: variantId || null,
     external_sku: sku,
     name,
-    description: String(firstValue(row, ["description", "short_description", "summary", "aciklama", "açıklama"]) || "").trim().slice(0, 1800),
-    price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "fiyat", "tutar"]))),
-    stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "stok", "adet"])))),
+    description: String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1800),
+    price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
+    stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "quantity", "availableQuantity", "stok", "adet"]) || firstVariant.inventory_quantity))),
     image_url: imageFromRow(row),
-    category: String(firstValue(row, ["category", "categories", "kategori"]) || settings.default_category || "Genel").trim().slice(0, 90),
+    category: String(categoryValue).trim().slice(0, 90),
     brand: String(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").trim().slice(0, 120),
     module_key: moduleKey,
     raw: row
@@ -4811,11 +4980,55 @@ function sourceHashFor(value) {
   return createHash("sha256").update(JSON.stringify(value || {})).digest("hex");
 }
 
+const RESTRICTED_INTEGRATION_PRODUCT_PATTERNS = [
+  ["Alkol ve tütün ürünü", /\b(alkol|alkollü|bira|şarap|rakı|viski|votka|tütün|sigara|puro|nargile|elektronik sigara|vape)\b/i],
+  ["Silah, patlayıcı veya kesici saldırı ürünü", /\b(silah|tabanca|tüfek|mermi|fişek|patlayıcı|bomba|sustalı|elektro şok|şok cihazı)\b/i],
+  ["İlaç veya reçeteli sağlık ürünü", /\b(reçeteli|ilaç|antibiyotik|hormon|steroid|anabolik|uyuşturucu|narkotik|cbd|kenevir|esrar)\b/i],
+  ["Kumar, bahis veya şans oyunu", /\b(kumar|bahis|casino|poker|rulet|iddaa kuponu|şans oyunu)\b/i],
+  ["Yetişkin içerik veya hizmet", /\b(yetişkin|erotik|escort|cinsel|pornografik)\b/i],
+  ["Canlı hayvan veya kontrol gerektiren hayvan satışı", /\b(canlı hayvan|yavru kedi|yavru köpek|evcil hayvan satışı)\b/i]
+];
+
+function integrationProductCompliance(product) {
+  const errors = [];
+  const warnings = [];
+  const text = [product.name, product.category, product.brand, product.description].map((value) => String(value || "")).join(" ");
+  const restricted = RESTRICTED_INTEGRATION_PRODUCT_PATTERNS.find(([, pattern]) => pattern.test(text));
+  if (restricted) errors.push(`${restricted[0]} otomatik import kapsamı dışında.`);
+  if (!product.name || product.name.length < 2) errors.push("Ürün adı eksik.");
+  if (Number(product.price || 0) < 0) errors.push("Fiyat negatif olamaz.");
+  if (Number(product.price || 0) === 0) warnings.push("Fiyat 0 görünüyor; yayına almadan önce kontrol edilmeli.");
+  if (Number(product.stock || 0) < 0) errors.push("Stok negatif olamaz.");
+  if (!["shop", "market", "food", "service"].includes(product.module_key)) errors.push("Geçersiz kanal seçimi.");
+  if (product.image_url && !/^https?:\/\//i.test(product.image_url)) warnings.push("Görsel URL http/https formatında değil.");
+  if (!product.category || product.category === "Genel") warnings.push("Kategori genel görünüyor; eşleme iyileştirilebilir.");
+  return {
+    status: errors.length ? "rejected" : warnings.length ? "needs_review" : "pending",
+    errors,
+    warnings
+  };
+}
+
+function integrationProductPreview(product) {
+  return {
+    external_product_id: product.external_product_id,
+    name: product.name,
+    price: product.price,
+    stock: product.stock,
+    category: product.category,
+    module_key: product.module_key,
+    compliance_status: product.compliance?.status || "pending",
+    compliance_warnings: product.compliance?.warnings || [],
+    compliance_errors: product.compliance?.errors || []
+  };
+}
+
 async function fetchWithTimeout(url, options = {}) {
+  await assertSafeIntegrationUrl(url);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), Math.max(1000, config.integrations.fetchTimeoutMs));
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    return await fetch(url, { ...options, redirect: "manual", signal: controller.signal });
   } finally {
     clearTimeout(timeout);
   }
@@ -4854,17 +5067,181 @@ async function fetchWooCommerceRows(secrets, limit) {
   return jsonProductRows(await response.json());
 }
 
+function shopifyDomain(value) {
+  const raw = String(value || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+  if (!raw) throw httpError("Shopify domain zorunlu.", 400);
+  return raw.includes(".") ? raw : `${raw}.myshopify.com`;
+}
+
+async function fetchShopifyRows(secrets, limit) {
+  const domain = shopifyDomain(secrets.SHOP_DOMAIN);
+  const token = String(secrets.ACCESS_TOKEN || "").trim();
+  const url = new URL(`https://${domain}/admin/api/2024-10/products.json`);
+  url.searchParams.set("limit", String(Math.min(Math.max(limit || 50, 1), 250)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      "X-Shopify-Access-Token": token
+    }
+  });
+  if (!response.ok) throw httpError(`Shopify ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.products || payload);
+}
+
+async function fetchTrendyolRows(secrets, limit) {
+  const supplierId = String(secrets.SUPPLIER_ID || "").trim();
+  const apiKey = String(secrets.API_KEY || "").trim();
+  const apiSecret = String(secrets.API_SECRET || "").trim();
+  const url = new URL(`https://api.trendyol.com/sapigw/suppliers/${encodeURIComponent(supplierId)}/products`);
+  url.searchParams.set("approved", "true");
+  url.searchParams.set("page", "0");
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 200)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
+      "User-Agent": `AllonaHub-PartnerIntegration/${supplierId}`
+    }
+  });
+  if (!response.ok) throw httpError(`Trendyol ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.content || payload.products || payload);
+}
+
+async function fetchHepsiburadaRows(secrets, limit) {
+  const merchantId = String(secrets.MERCHANT_ID || "").trim();
+  const apiKey = String(secrets.API_KEY || "").trim();
+  const apiSecret = String(secrets.API_SECRET || "").trim();
+  const url = new URL(`https://mpop.hepsiburada.com/product/api/products/all-products-of-merchant/${encodeURIComponent(merchantId)}`);
+  url.searchParams.set("page", "0");
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
+      "User-Agent": merchantId
+    }
+  });
+  if (!response.ok) throw httpError(`Hepsiburada ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.data || payload.listings || payload.products || payload);
+}
+
+async function fetchN11Rows(secrets, limit) {
+  const appKey = String(secrets.APP_KEY || "").trim();
+  const appSecret = String(secrets.APP_SECRET || "").trim();
+  const url = new URL("https://api.n11.com/rest/product/seller-products");
+  url.searchParams.set("page", "0");
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      appkey: appKey,
+      appsecret: appSecret,
+      Authorization: `Basic ${Buffer.from(`${appKey}:${appSecret}`).toString("base64")}`
+    }
+  });
+  if (!response.ok) throw httpError(`n11 ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.content || payload.data || payload.products || payload.items || payload);
+}
+
+async function fetchCustomApiRows(secrets, limit) {
+  const baseUrl = String(secrets.API_BASE_URL || "").trim().replace(/\/$/, "");
+  if (!/^https?:\/\//i.test(baseUrl)) throw httpError("Özel API URL http veya https olmalı.", 400);
+  const url = new URL(baseUrl);
+  if (!url.searchParams.has("limit")) url.searchParams.set("limit", String(Math.min(Math.max(limit || 50, 1), 500)));
+  const token = String(secrets.ACCESS_TOKEN || "").trim();
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json,text/csv,text/plain;q=0.9,*/*;q=0.5",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+  });
+  if (!response.ok) throw httpError(`Özel API ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const text = await response.text();
+  if (contentType.includes("json") || /^[\s\r\n]*[\[{]/.test(text)) {
+    return jsonProductRows(JSON.parse(text));
+  }
+  return parseCsvRows(text);
+}
+
 async function fetchIntegrationRows(integration, secrets, limit) {
   if (!config.integrations.remoteFetchEnabled) {
     throw httpError("Uzaktan ürün okuma şu anda kapalı.", 503);
   }
   if (integration.provider === "generic_feed") return fetchGenericFeedRows(secrets, limit);
   if (integration.provider === "woocommerce") return fetchWooCommerceRows(secrets, limit);
-  throw httpError("Bu connector altyapıda hazır, canlı senkron premium açılış bayrağı bekliyor.", 409);
+  if (integration.provider === "shopify") return fetchShopifyRows(secrets, limit);
+  if (integration.provider === "trendyol") return fetchTrendyolRows(secrets, limit);
+  if (integration.provider === "hepsiburada") return fetchHepsiburadaRows(secrets, limit);
+  if (integration.provider === "n11") return fetchN11Rows(secrets, limit);
+  if (integration.provider === "custom_api") return fetchCustomApiRows(secrets, limit);
+  throw httpError("Bu connector için canlı ürün okuma adaptörü henüz aktif değil.", 409);
+}
+
+function productStatusForIntegrationApply(integration) {
+  if (config.integrations.forceDraftOnApply) return "draft";
+  return integration.default_publish_status === "active" ? "active" : "draft";
+}
+
+function integrationProductSku(integration, item) {
+  const rawSku = String(item.external_sku || item.external_product_id || "").trim();
+  const prefix = integration.provider.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
+  return `${prefix}-${backendSlug(rawSku || item.name).toUpperCase()}`.slice(0, 48);
+}
+
+function partnerPublicName(business) {
+  return business.display_name || business.legal_name || "AllonaHub Partner";
+}
+
+function integrationProductPayload({ business, integration, item }) {
+  const status = productStatusForIntegrationApply(integration);
+  const sellerName = partnerPublicName(business);
+  const compliance = item.compliance || integrationProductCompliance(item);
+  const complianceStatus = compliance.status === "rejected" ? "rejected" : compliance.warnings.length ? "needs_review" : "pending";
+  return {
+    name: item.name,
+    description: item.description,
+    price: item.price,
+    stock: item.stock,
+    image_url: item.image_url || null,
+    category: item.category || "Genel",
+    module_key: item.module_key || "shop",
+    catalog_scope: item.module_key || "shop",
+    status,
+    slug: backendSlug(`${item.name}-${integration.provider}-${item.external_product_id}-${item.external_variant_id || ""}`),
+    meta_title: item.name,
+    meta_description: item.description,
+    brand: item.brand || sellerName,
+    partner_id: business.owner_id,
+    partner_code: business.partner_code || business.id,
+    partner_email: business.email || null,
+    seller_public_name: sellerName,
+    seller_kind: "Partner satıcı",
+    seller_legal_name: business.legal_name || "",
+    seller_city: business.city || "",
+    seller_contact: business.email || business.phone || "",
+    seller_tax_number_masked: "",
+    invoice_responsibility: "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.",
+    seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
+    compliance_review_status: complianceStatus,
+    compliance_notes: [
+      `Entegrasyon importu: ${integration.provider}.`,
+      status === "draft" ? "Ürün taslak olarak admin/operasyon kontrolüne alındı." : "Ürün aktif import edildi.",
+      ...compliance.errors,
+      ...compliance.warnings
+    ].join(" ").slice(0, 1200),
+    sku: integrationProductSku(integration, item),
+    integration_source: integration.provider,
+    integration_external_id: item.external_product_id
+  };
 }
 
 async function applyIntegrationProducts({ business, integration, products }) {
-  const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [] };
+  const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
   const externalIds = products.map((item) => item.external_product_id).filter(Boolean);
   const { data: existingLinks, error: linkError } = await supabaseAdmin
     .from("partner_integration_product_links")
@@ -4880,26 +5257,21 @@ async function applyIntegrationProducts({ business, integration, products }) {
     const hash = sourceHashFor(item.raw);
     const existing = linkMap.get(key);
     try {
+      const compliance = item.compliance || integrationProductCompliance(item);
+      if (compliance.errors.length) {
+        result.failed += 1;
+        result.errors.push({ external_product_id: item.external_product_id, message: compliance.errors.join(" ") });
+        continue;
+      }
+      if (compliance.warnings.length) {
+        result.warnings.push({ external_product_id: item.external_product_id, warnings: compliance.warnings });
+      }
       if (existing?.source_hash === hash && existing.product_id) {
         result.skipped += 1;
         continue;
       }
 
-      const productPayload = {
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        stock: item.stock,
-        image_url: item.image_url || null,
-        category: item.category || "Genel",
-        module_key: item.module_key || "shop",
-        status: integration.default_publish_status || "draft",
-        slug: backendSlug(`${item.name}-${integration.provider}-${item.external_product_id}-${item.external_variant_id || ""}`),
-        meta_title: item.name,
-        meta_description: item.description,
-        brand: item.brand || business.display_name || "",
-        partner_id: business.owner_id
-      };
+      const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
 
       let productId = existing?.product_id || null;
       if (productId) {
@@ -4929,6 +5301,8 @@ async function applyIntegrationProducts({ business, integration, products }) {
         external_sku: item.external_sku || null,
         source_hash: hash,
         sync_status: productId === existing?.product_id ? "updated" : "created",
+        compliance_status: productPayload.compliance_review_status,
+        last_validation_warnings: compliance.warnings || [],
         last_payload: item.raw || {},
         last_synced_at: new Date().toISOString()
       };
@@ -4957,6 +5331,17 @@ async function applyIntegrationProducts({ business, integration, products }) {
 async function runPartnerIntegrationSync({ business, integration, payload, request }) {
   if (payload.direction === "outbound" && !config.integrations.outboundEnabled) {
     throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
+  }
+  if (payload.mode === "apply") {
+    if (!config.integrations.applyEnabled) {
+      throw httpError("Kataloğa aktarım şu anda kapalı.", 409);
+    }
+    if (payload.trigger_source === "cron" && !config.integrations.scheduledApplyEnabled) {
+      throw httpError("Zamanlı kataloğa aktarım şu anda kapalı.", 409);
+    }
+    if (config.integrations.requireApplyConfirmation && payload.confirm_apply !== config.integrations.applyConfirmationText) {
+      throw httpError("Kataloğa aktarım onayı eşleşmedi.", 409);
+    }
   }
   if (payload.mode === "apply" && payload.direction === "outbound") {
     throw httpError("Outbound publish kuyruğu hazır, canlı gönderim henüz kapalı.", 409);
@@ -5849,6 +6234,7 @@ export function registerRoutes(app) {
       integrationConnectors,
       integrationRuns: integrationRuns || [],
       integrationWarnings,
+      integrationPolicy: { ...partnerIntegrationPolicy(), partner_plan_tier: partnerIntegrationPlanTier(business) },
       metrics,
       recommendations: partnerRecommendations(metrics, devicesResult.data || [])
     };
@@ -6182,13 +6568,7 @@ export function registerRoutes(app) {
       })),
       runs,
       warnings,
-      policy: {
-        enabled: config.integrations.enabled,
-        premium_enabled: config.integrations.premiumEnabled,
-        outbound_enabled: config.integrations.outboundEnabled,
-        max_preview_rows: config.integrations.maxPreviewRows,
-        max_apply_rows: config.integrations.maxApplyRows
-      }
+      policy: { ...partnerIntegrationPolicy(), partner_plan_tier: partnerIntegrationPlanTier(business) }
     };
   });
 
@@ -6203,8 +6583,8 @@ export function registerRoutes(app) {
     const connectors = await partnerIntegrationConnectors([]);
     const connector = connectorForProvider(connectors, payload.provider);
     if (!connector) throw httpError("Bu connector tanımlı değil.", 400);
-    if (!connectorAllowsUse(connector)) {
-      throw httpError("Bu connector premium açılış bayrağı bekliyor.", 409);
+    if (!partnerCanUseConnector(connector, business)) {
+      throw httpError("Bu connector premium açılış bayrağı veya partner plan hakkı bekliyor.", 409);
     }
     if (payload.export_enabled && !config.integrations.outboundEnabled) {
       throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
@@ -6214,6 +6594,7 @@ export function registerRoutes(app) {
       ? new Date(Date.now() + Number(payload.sync_interval_minutes || 1440) * 60 * 1000).toISOString()
       : null;
     const planTier = connector.availability === "free" ? "free" : connector.availability === "enterprise" ? "enterprise" : "premium";
+    const partnerTier = partnerIntegrationPlanTier(business);
     const row = {
       partner_id: business.id,
       provider: payload.provider,
@@ -6221,7 +6602,7 @@ export function registerRoutes(app) {
       connection_mode: payload.connection_mode || connector.connector_mode || "generic_feed",
       direction: payload.export_enabled ? "bidirectional" : payload.direction,
       status: payload.status,
-      plan_tier: payload.plan_tier === "free" ? planTier : payload.plan_tier,
+      plan_tier: planTier,
       sync_mode: payload.sync_mode,
       sync_interval_minutes: payload.sync_interval_minutes,
       next_sync_at: nextSyncAt,
@@ -6232,7 +6613,8 @@ export function registerRoutes(app) {
         ...(connector.default_settings || {}),
         ...(payload.settings || {}),
         onboarding_offer: "free_partner_acquisition",
-        upgrade_path: connector.premium_ready ? "premium_connector_pack" : "starter"
+        upgrade_path: connector.premium_ready ? "premium_connector_pack" : "starter",
+        partner_plan_tier: partnerTier
       },
       updated_by: ctx.user.id
     };
@@ -6313,12 +6695,47 @@ export function registerRoutes(app) {
     });
     const business = await ensurePartnerBusiness(ctx, request);
     const integrationId = uuidSchema.parse(request.params.integrationId);
+    const probeRemote = z.object({ probe_remote: z.coerce.boolean().optional().default(false) }).parse(request.body || {}).probe_remote;
     const integration = await loadPartnerIntegration(business, integrationId);
     const secrets = await loadIntegrationSecrets(integration.id);
     requireIntegrationSecrets(integration.provider, secrets);
-
+    let remoteProbe = config.integrations.remoteFetchEnabled ? "available_during_sync" : "disabled";
     const now = new Date().toISOString();
     const keys = Object.keys(secrets);
+
+    try {
+      if (probeRemote && config.integrations.remoteFetchEnabled) {
+        const rows = await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows);
+        remoteProbe = {
+          status: "success",
+          rows_read: rows.length,
+          sample: rows.slice(0, config.integrations.maxTestRows).map((row, index) => {
+            const product = normalizeIntegrationProduct(row, integration, index);
+            return product ? {
+              external_product_id: product.external_product_id,
+              name: product.name,
+              price: product.price,
+              stock: product.stock
+            } : null;
+          }).filter(Boolean)
+        };
+      }
+    } catch (error) {
+      await supabaseAdmin
+        .from("partner_integrations")
+        .update({
+          status: "needs_attention",
+          last_test_at: now,
+          last_test_status: "failed",
+          last_test_message: error.message || "Remote test başarısız.",
+          last_error_at: now,
+          last_error_message: error.message || "Remote test başarısız.",
+          updated_by: ctx.user.id
+        })
+        .eq("id", integration.id);
+      throw error;
+    }
+
     await supabaseAdmin
       .from("partner_integration_secrets")
       .update({ last_verified_at: now, updated_by: ctx.user.id })
@@ -6328,6 +6745,9 @@ export function registerRoutes(app) {
       .from("partner_integrations")
       .update({
         status: integration.status === "draft" || integration.status === "needs_attention" ? "active" : integration.status,
+        last_test_at: now,
+        last_test_status: "success",
+        last_test_message: probeRemote && remoteProbe?.rows_read !== undefined ? `${remoteProbe.rows_read} kayıt okunabildi.` : "Secret konfigürasyonu doğrulandı.",
         last_error_at: null,
         last_error_message: null,
         updated_by: ctx.user.id
@@ -6354,7 +6774,7 @@ export function registerRoutes(app) {
         status: "configuration_ready",
         provider: integration.provider,
         checked_secret_keys: keys,
-        remote_probe: config.integrations.remoteFetchEnabled ? "available_during_sync" : "disabled"
+        remote_probe: remoteProbe
       }
     };
   });

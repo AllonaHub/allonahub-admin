@@ -20,6 +20,7 @@
     integrationConnectors: [],
     integrationRuns: [],
     integrationWarnings: [],
+    integrationPolicy: {},
     metrics: {},
     recommendations: [],
     selectedRefundId: null
@@ -104,6 +105,8 @@
     { provider: "trendyol", label: "Trendyol Pazaryeri", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 40 },
     { provider: "hepsiburada", label: "Hepsiburada", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 50 },
     { provider: "n11", label: "n11", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 60 },
+    { provider: "ciceksepeti", label: "Çiçeksepeti", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 70 },
+    { provider: "pazarama", label: "Pazarama", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 80 },
     { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 90 }
   ];
 
@@ -188,7 +191,7 @@
 
   function statusClass(status) {
     if (["active", "paid", "settled", "delivered", "verified", "enabled", "success"].includes(status)) return "partner-os-status--good";
-    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal"].includes(status)) return "partner-os-status--warn";
+    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal", "needs_review"].includes(status)) return "partner-os-status--warn";
     if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled", "dispute_admin_review"].includes(status)) return "partner-os-status--bad";
     return "";
   }
@@ -224,6 +227,7 @@
       premium_ready: "Premium hazır",
       planned: "Planlı",
       needs_attention: "İlgi istiyor",
+      needs_review: "Kontrol",
       partial: "Kısmi",
       success: "Başarılı",
       skipped: "Atlandı",
@@ -761,6 +765,10 @@
     return integrationConnector(provider).label || provider || "-";
   }
 
+  function integrationPolicy() {
+    return state.integrationPolicy || {};
+  }
+
   function integrationStageLabel(connector) {
     if (connector.active_now) return connector.availability === "free" ? "Ücretsiz açık" : "Açık";
     if (connector.stage === "premium_ready") return "Premium hazır";
@@ -808,16 +816,19 @@
     target.innerHTML = state.integrations.map((integration) => {
       const connector = integrationConnector(integration.provider);
       const secretKeys = (integration.secrets || []).map((item) => item.secret_key).join(", ");
+      const policy = integrationPolicy();
+      const canApply = Boolean(policy.apply_enabled) && !["paused", "disabled", "archived"].includes(integration.status);
       return `
         <article class="partner-os-integration-row">
           <div>
             <strong>${escape(integration.display_name || integrationProviderLabel(integration.provider))}</strong>
-            <span>${escape(connector.label)} · ${escape(integration.sync_mode || "manual")} · ${escape(secretKeys || "secret bekliyor")}</span>
+            <span>${escape(connector.label)} · ${escape(integration.sync_mode || "manual")} · ${escape(secretKeys || "secret bekliyor")} · ${escape(policy.force_draft_on_apply ? "taslak aktarım" : "yayın ayarı geçerli")}</span>
           </div>
           <div class="partner-os-integration-row-actions">
             ${statusPill(integration.status || "draft")}
             <button type="button" data-integration-test="${escape(integration.id)}"><i class="fa-solid fa-vial"></i><span>Test</span></button>
             <button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-rotate"></i><span>Önizle</span></button>
+            ${canApply ? `<button type="button" data-integration-apply="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Kataloğa Aktar</span></button>` : ""}
           </div>
         </article>
       `;
@@ -837,8 +848,9 @@
         <article class="partner-os-integration-run">
           <div>
             <strong>${escape(integrationProviderLabel(state.integrations.find((item) => item.id === run.integration_id)?.provider))} · ${escape(run.run_mode || "preview")}</strong>
-            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel</span>
-            ${preview.length ? `<small>${preview.slice(0, 3).map((item) => escape(item.name)).join(", ")}</small>` : ""}
+            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel · ${escape(run.failed_count || 0)} hata</span>
+            ${preview.length ? `<small>${preview.slice(0, 3).map((item) => `${escape(item.name)}${item.compliance_status ? ` (${escape(statusLabel(item.compliance_status))})` : ""}`).join(", ")}</small>` : ""}
+            ${run.warning_count ? `<small>${escape(run.warning_count)} uyarı kontrol bekliyor.</small>` : ""}
             ${run.error_message ? `<small>${escape(run.error_message)}</small>` : ""}
           </div>
           ${statusPill(run.status || "queued")}
@@ -1154,6 +1166,12 @@
     state.integrationConnectors = DEFAULT_INTEGRATION_CONNECTORS;
     state.integrationRuns = [];
     state.integrationWarnings = [];
+    state.integrationPolicy = {
+      apply_enabled: false,
+      require_apply_confirmation: true,
+      apply_confirmation_text: "KATALOGA_AKTAR",
+      force_draft_on_apply: true
+    };
     state.metrics = {
       product_count: state.products.length,
       active_product_count: state.products.filter((item) => item.status === "active").length,
@@ -1200,6 +1218,7 @@
           integrationConnectors: payload.integrationConnectors || DEFAULT_INTEGRATION_CONNECTORS,
           integrationRuns: payload.integrationRuns || [],
           integrationWarnings: payload.integrationWarnings || [],
+          integrationPolicy: payload.integrationPolicy || {},
           metrics: payload.metrics || {},
           recommendations: payload.recommendations || []
         });
@@ -1734,31 +1753,50 @@
     try {
       const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/test`, {
         method: "POST",
-        body: JSON.stringify({})
+        body: JSON.stringify({ probe_remote: true })
       });
       if (payload.integration) {
         state.integrations = state.integrations.map((item) => item.id === integrationId ? { ...item, ...payload.integration } : item);
       }
       renderIntegrations();
-      toast("Entegrasyon bağlantısı doğrulandı.");
+      const rowsRead = payload.result?.remote_probe?.rows_read;
+      toast(rowsRead !== undefined ? `Bağlantı doğrulandı; ${rowsRead} kayıt okunabildi.` : "Entegrasyon bağlantısı doğrulandı.");
     } catch (error) {
       toast(error.message || "Entegrasyon testi başarısız.", "error");
     }
   }
 
-  async function syncIntegration(integrationId) {
+  async function syncIntegration(integrationId, mode) {
     try {
+      const runMode = mode || "preview";
+      const body = { mode: runMode, direction: "inbound" };
+      if (runMode === "apply") {
+        const policy = integrationPolicy();
+        const confirmationText = policy.apply_confirmation_text || "KATALOGA_AKTAR";
+        const answer = window.prompt(`Kataloğa aktarım ürünleri taslak olarak oluşturur. Devam etmek için ${confirmationText} yazın.`);
+        if (answer !== confirmationText) {
+          toast("Kataloğa aktarım iptal edildi.", "warning");
+          return;
+        }
+        body.confirm_apply = answer;
+        body.approval_note = "Partner panelinden kontrollü kataloğa aktarım.";
+      }
       const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/sync`, {
         method: "POST",
-        body: JSON.stringify({ mode: "preview", direction: "inbound" })
+        body: JSON.stringify(body)
       });
       if (payload.run) {
         state.integrationRuns = [payload.run, ...state.integrationRuns.filter((item) => item.id !== payload.run.id)];
       }
-      renderIntegrationRuns();
-      toast("Senkron önizlemesi tamamlandı.");
+      if (runMode === "apply") {
+        await loadPartnerOs();
+        toast("Kataloğa aktarım tamamlandı; ürünler taslak/kontrol durumunda işlendi.");
+      } else {
+        renderIntegrationRuns();
+        toast("Senkron önizlemesi tamamlandı.");
+      }
     } catch (error) {
-      toast(error.message || "Senkron önizlemesi çalışmadı.", "error");
+      toast(error.message || "Entegrasyon senkronu çalışmadı.", "error");
     }
   }
 
@@ -1963,6 +2001,7 @@
       const exportProducts = event.target.closest("[data-export-products]");
       const integrationTest = event.target.closest("[data-integration-test]");
       const integrationSync = event.target.closest("[data-integration-sync]");
+      const integrationApply = event.target.closest("[data-integration-apply]");
       const refundDetail = event.target.closest("[data-refund-detail]");
       const refundDecision = event.target.closest("[data-refund-decision]");
 
@@ -1998,6 +2037,7 @@
       }
       if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
       if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync);
+      if (integrationApply) syncIntegration(integrationApply.dataset.integrationApply, "apply");
       if (refundDetail) {
         state.selectedRefundId = state.selectedRefundId === refundDetail.dataset.refundDetail ? null : refundDetail.dataset.refundDetail;
         renderRefundCancellations();

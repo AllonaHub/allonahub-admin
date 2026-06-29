@@ -1,0 +1,4 @@
+id,sku,name,description,price,stock,category,brand,image_url,module_key
+demo-1001,ALP-DEMO-1001,Organik Zeytinyağı 1L,Soğuk sıkım cam şişe,349.90,24,Market / Gıda,Allona Demo,https://allonahub.com/images/product-fallback.svg,market
+demo-1002,ALP-DEMO-1002,El Yapımı Seramik Kupa,Mat beyaz kupa,219.50,12,Ev & Yaşam,Allona Demo,https://allonahub.com/images/product-fallback.svg,shop
+demo-1003,ALP-DEMO-1003,Standart Bakım Paketi,Servis paketi taslak örneği,799.00,1,Hizmet,Allona Demo,https://allonahub.com/images/product-fallback.svg,service

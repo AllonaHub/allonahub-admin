@@ -173,12 +173,15 @@ curl https://api.allonahub.com/health
 - `POST /v1/partner/integrations`
 - `POST /v1/partner/integrations/:integrationId/test`
 - `POST /v1/partner/integrations/:integrationId/sync`
+- `POST /v1/partner/integrations/:integrationId/publish-jobs`
+- `GET /v1/admin/ops/integrations`
 - `POST /v1/assistant/messages`
 - `POST /v1/telegram/webhook`
 - `POST /v1/rewards/ledger`
 - `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
 - `POST /v1/cron/integrations/sync`
+- `POST /v1/cron/integrations/publish`
 - `POST /v1/cron/social-media-assets-cleanup`
 
 Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
@@ -194,8 +197,17 @@ Migration ve Telegram webhook hazırlığı:
 
 ```bash
 SUPABASE_DB_URL="postgresql://..." ./deploy/assistant/apply-assistant-migration.sh
+SUPABASE_DB_URL="postgresql://..." bash ./deploy/integrations/apply-partner-integration-migrations.sh
 ASSISTANT_TELEGRAM_BOT_TOKEN="..." TELEGRAM_WEBHOOK_SECRET="..." ./deploy/assistant/register-telegram-webhook.sh
 API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
+```
+
+Partner entegrasyon smoke testi:
+
+```bash
+PARTNER_JWT="..." \
+PARTNER_INTEGRATION_FEED_URL="https://partner.example.com/products.json" \
+node scripts/partner-integration-smoke-test.mjs
 ```
 
 ## Cron
@@ -205,6 +217,7 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 ```bash
 0 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-payments -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
 15 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/sync -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
+25 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/publish -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
 30 3 * * * cd /opt/allonahub && node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0 >/var/log/allonahub-social-assets-cleanup.log 2>&1
 ```
 

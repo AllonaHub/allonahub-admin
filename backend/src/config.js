@@ -225,9 +225,22 @@ export const config = {
     enabled: readBool("PARTNER_INTEGRATIONS_ENABLED", true),
     premiumEnabled: readBool("PARTNER_INTEGRATIONS_PREMIUM_ENABLED", false),
     outboundEnabled: readBool("PARTNER_INTEGRATIONS_OUTBOUND_ENABLED", false),
+    applyEnabled: readBool("PARTNER_INTEGRATIONS_APPLY_ENABLED", true),
+    scheduledApplyEnabled: readBool("PARTNER_INTEGRATIONS_SCHEDULED_APPLY_ENABLED", false),
+    requireApplyConfirmation: readBool("PARTNER_INTEGRATIONS_REQUIRE_APPLY_CONFIRMATION", true),
+    applyConfirmationText: normalizeEnvString(
+      readEnv("PARTNER_INTEGRATIONS_APPLY_CONFIRMATION_TEXT", {
+        required: false,
+        defaultValue: "KATALOGA_AKTAR"
+      })
+    ),
+    forceDraftOnApply: readBool("PARTNER_INTEGRATIONS_FORCE_DRAFT_ON_APPLY", true),
     remoteFetchEnabled: readBool("PARTNER_INTEGRATIONS_REMOTE_FETCH_ENABLED", true),
+    blockPrivateFetchTargets: readBool("PARTNER_INTEGRATIONS_BLOCK_PRIVATE_FETCH_TARGETS", true),
+    allowedFetchHosts: csv(readEnv("PARTNER_INTEGRATIONS_ALLOWED_FETCH_HOSTS", { required: false, defaultValue: "" })),
     maxPreviewRows: readNumber("PARTNER_INTEGRATIONS_MAX_PREVIEW_ROWS", 50),
     maxApplyRows: readNumber("PARTNER_INTEGRATIONS_MAX_APPLY_ROWS", 100),
+    maxTestRows: readNumber("PARTNER_INTEGRATIONS_MAX_TEST_ROWS", 3),
     fetchTimeoutMs: readNumber("PARTNER_INTEGRATIONS_FETCH_TIMEOUT_MS", 12000)
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),

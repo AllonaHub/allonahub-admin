@@ -1,0 +1,28 @@
+{
+  "products": [
+    {
+      "id": "json-2001",
+      "sku": "ALP-JSON-2001",
+      "name": "Premium Kahve Çekirdeği 250g",
+      "description": "Taze kavrulmuş örnek ürün",
+      "price": 189.9,
+      "stock": 36,
+      "category": "Market / Kahve",
+      "brand": "Allona Demo",
+      "image_url": "https://allonahub.com/images/product-fallback.svg",
+      "module_key": "market"
+    },
+    {
+      "id": "json-2002",
+      "sku": "ALP-JSON-2002",
+      "name": "Kablosuz Masa Lambası",
+      "description": "USB-C şarjlı örnek katalog ürünü",
+      "price": 529,
+      "stock": 8,
+      "category": "Ev & Yaşam",
+      "brand": "Allona Demo",
+      "image_url": "https://allonahub.com/images/product-fallback.svg",
+      "module_key": "shop"
+    }
+  ]
+}
