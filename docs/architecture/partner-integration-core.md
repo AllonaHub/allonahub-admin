@@ -4,8 +4,8 @@ AllonaHub Partner Integration Core, partner ürünlerini dış kaynaklardan Allo
 
 ## Başlangıç Kapsamı
 
-- Ücretsiz açık: `generic_feed` ve `woocommerce`
-- Premium inbound açık: `shopify`, `trendyol`, `hepsiburada`, `n11`, `custom_api`
+- Ürün çekme ücretsiz açık: `generic_feed`, `woocommerce`, `shopify`, `trendyol`, `hepsiburada`, `n11`, `custom_api`
+- Premium: tam entegrasyon / outbound yayın
 - Planlı: `ciceksepeti`, `pazarama`
 - Güvenli varsayılan: dışarıdan çekilen ürünler `draft` durumunda bekletilir
 - Panel: Partner OS > Entegrasyonlar
@@ -41,7 +41,7 @@ SUPABASE_DB_URL="postgresql://..." bash deploy/integrations/apply-partner-integr
 
 ```text
 PARTNER_INTEGRATIONS_ENABLED=true
-PARTNER_INTEGRATIONS_PREMIUM_ENABLED=true
+PARTNER_INTEGRATIONS_PREMIUM_ENABLED=false
 PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=false
 PARTNER_INTEGRATIONS_APPLY_ENABLED=true
 PARTNER_INTEGRATIONS_SCHEDULED_APPLY_ENABLED=false
@@ -57,19 +57,20 @@ PARTNER_INTEGRATIONS_MAX_TEST_ROWS=3
 PARTNER_INTEGRATIONS_FETCH_TIMEOUT_MS=12000
 ```
 
-Premium connectorları production'da kapatmak gerekirse:
+Planlı connectorları production'da ücretsiz ürün çekmeye açmak gerekirse:
 
 ```sql
 update public.partner_integration_connectors
-set free_enabled = false,
+set premium_ready = true,
     stage = 'premium_ready',
     updated_at = now()
-where provider in ('shopify', 'trendyol', 'hepsiburada', 'n11');
+where provider in ('ciceksepeti', 'pazarama');
 ```
 
-Outbound yayın katmanını açmak için backend env:
+Tam entegrasyon / outbound yayın katmanını açmak için backend env:
 
 ```text
+PARTNER_INTEGRATIONS_PREMIUM_ENABLED=true
 PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=true
 ```
 
@@ -95,13 +96,13 @@ Partner paneli başlangıçta `preview` ve kontrollü `apply` çalıştırır. `
 
 - Migrationlar uygulanır.
 - Production env bayrakları ücretsiz başlangıç değerleriyle set edilir.
-- Partner panelinde CSV/JSON feed veya WooCommerce bağlantısı kaydedilir.
+- Partner panelinde CSV/JSON feed, WooCommerce, Shopify, Trendyol, Hepsiburada, n11 veya özel API bağlantısı kaydedilir.
 - `Test` gerçek remote probe çalıştırır.
 - `Önizle` ürünleri parse eder, compliance uyarı/hatalarını gösterir.
 - `Kataloğa Aktar` onay metniyle çalışır ve ürünleri taslak olarak kataloğa işler.
 - `POST /v1/cron/integrations/sync` zamanlı önizleme için açıktır.
 - `GET /v1/admin/ops/integrations` ile admin izleme yapılır.
-- Outbound publish queue hazırdır; canlı gönderim `PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=true` olmadan çalışmaz.
+- Tam entegrasyon / outbound publish queue hazırdır; canlı gönderim premium üyelik ve `PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=true` olmadan çalışmaz.
 
 Smoke test:
 
@@ -115,8 +116,8 @@ node scripts/partner-integration-smoke-test.mjs
 
 Bugünkü teklif ücretsiz partner kazanımı içindir. İleride paketleme:
 
-- Free: CSV/JSON feed, WooCommerce preview, manuel senkron
-- Premium: Shopify/Trendyol/Hepsiburada/n11/custom API inbound, zamanlı senkron, yüksek limit
+- Free: Dış platformlardan AllonaHub'a ürün çekme, preview, manuel senkron ve kontrollü kataloğa aktarma
+- Premium: Tam entegrasyon; AllonaHub ürünlerini bağlı platformlara yayınlama, zamanlı outbound, yüksek limit
 - Enterprise: Özel API, outbound yayın kuyruğu, özel field mapping, SLA destek
 
 Bu ayrım `partner_integration_connectors.availability`, `free_enabled`, backend env bayrakları ve partner plan kontrolleriyle yönetilir.

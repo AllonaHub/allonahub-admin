@@ -325,9 +325,24 @@
               <span class="partner-os-live">Ücretsiz başlangıç</span>
             </div>
 
+            <div class="partner-os-integration-modes" data-integration-modes>
+              <button class="is-active" type="button" data-integration-mode="import">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+                <span>Ürünleri Çek</span>
+                <small>Ücretsiz</small>
+              </button>
+              <button type="button" data-integration-mode="full">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>Tam Entegrasyon</span>
+                <small>Premium</small>
+              </button>
+            </div>
+            <div class="partner-os-integration-note" data-integration-note></div>
+
             <div class="partner-os-integration-connectors" data-integration-connectors></div>
 
             <form class="partner-os-product-form partner-os-integration-form" data-integration-form>
+              <input type="hidden" name="export_enabled" value="false" data-integration-export-enabled>
               <label>
                 <span>Platform</span>
                 <select name="provider" data-integration-provider></select>

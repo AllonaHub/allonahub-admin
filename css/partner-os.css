@@ -1107,6 +1107,91 @@
   margin-bottom: 14px;
 }
 
+.partner-os-integration-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.partner-os-integration-modes button {
+  min-height: 82px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 70%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 58%, transparent);
+  color: var(--ah-ink);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 14px;
+  text-align: left;
+  font: inherit;
+}
+
+.partner-os-integration-modes button i {
+  grid-row: 1 / span 2;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ah-primary) 18%, transparent);
+  color: var(--ah-primary);
+}
+
+.partner-os-integration-modes button span,
+.partner-os-integration-modes button small {
+  display: block;
+}
+
+.partner-os-integration-modes button span {
+  font-weight: 900;
+}
+
+.partner-os-integration-modes button small {
+  color: var(--ah-muted);
+  font-weight: 900;
+}
+
+.partner-os-integration-modes button.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, transparent);
+  background: color-mix(in srgb, var(--ah-primary) 12%, var(--ah-bg-mid));
+}
+
+.partner-os-integration-note {
+  border: 1px solid color-mix(in srgb, var(--ah-primary) 30%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.partner-os-integration-note strong,
+.partner-os-integration-note span,
+.partner-os-integration-note em {
+  display: block;
+}
+
+.partner-os-integration-note strong {
+  color: var(--ah-ink);
+}
+
+.partner-os-integration-note span,
+.partner-os-integration-note em {
+  color: var(--ah-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.partner-os-integration-note em {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--ah-primary);
+}
+
 .partner-os-integration-card,
 .partner-os-integration-row,
 .partner-os-integration-run,
@@ -1359,6 +1444,7 @@
   .partner-os-grid--two,
   .partner-os-grid--three,
   .partner-os-module-access,
+  .partner-os-integration-modes,
   .partner-os-integration-connectors,
   .partner-os-refund-detail-grid,
   .partner-os-academy {

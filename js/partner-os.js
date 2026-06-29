@@ -101,13 +101,13 @@
   const DEFAULT_INTEGRATION_CONNECTORS = [
     { provider: "generic_feed", label: "CSV / JSON Feed", availability: "free", stage: "enabled", active_now: true, outbound_active_now: false, sort_order: 10 },
     { provider: "woocommerce", label: "WooCommerce", availability: "free", stage: "starter", active_now: true, outbound_active_now: false, sort_order: 20 },
-    { provider: "shopify", label: "Shopify", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 30 },
-    { provider: "trendyol", label: "Trendyol Pazaryeri", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 40 },
-    { provider: "hepsiburada", label: "Hepsiburada", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 50 },
-    { provider: "n11", label: "n11", availability: "premium", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 60 },
+    { provider: "shopify", label: "Shopify", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 30 },
+    { provider: "trendyol", label: "Trendyol Pazaryeri", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 40 },
+    { provider: "hepsiburada", label: "Hepsiburada", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 50 },
+    { provider: "n11", label: "n11", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 60 },
     { provider: "ciceksepeti", label: "Çiçeksepeti", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 70 },
     { provider: "pazarama", label: "Pazarama", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 80 },
-    { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: false, outbound_active_now: false, sort_order: 90 }
+    { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 90 }
   ];
 
   function $(selector, root) {
@@ -769,8 +769,50 @@
     return state.integrationPolicy || {};
   }
 
+  function currentIntegrationMode() {
+    const active = $("[data-integration-mode].is-active");
+    return active && active.dataset.integrationMode === "full" ? "full" : "import";
+  }
+
+  function partnerHasFullIntegrationAccess() {
+    const policy = integrationPolicy();
+    return Boolean(policy.premium_enabled && policy.full_integration_enabled && ["premium", "enterprise"].includes(policy.partner_plan_tier));
+  }
+
+  function setIntegrationMode(mode) {
+    const selected = mode === "full" ? "full" : "import";
+    $all("[data-integration-mode]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.integrationMode === selected);
+    });
+    const exportInput = $("[data-integration-export-enabled]");
+    if (exportInput) exportInput.value = selected === "full" ? "true" : "false";
+    renderIntegrationModeNote();
+  }
+
+  function renderIntegrationModeNote() {
+    const target = $("[data-integration-note]");
+    if (!target) return;
+    const mode = currentIntegrationMode();
+    const policy = integrationPolicy();
+    if (mode === "full") {
+      const unlocked = partnerHasFullIntegrationAccess();
+      target.innerHTML = `
+        <strong>Tam Entegrasyon ${unlocked ? "aktif" : "premium gerektirir"}</strong>
+        <span>Tam entegrasyon, buradan entegre olarak buraya yüklediğiniz ürünün API'sini girdiğiniz tüm platformlara yayılmasını sağlayacak bir entegrasyon platformudur. Bunu elde etmek için premium üyelik elde etmeniz gerekiyor.</span>
+        ${policy.outbound_enabled ? "" : "<em>Dış platformlara yayın şu anda operasyon onayı bekliyor.</em>"}
+      `;
+      target.classList.add("is-premium");
+      return;
+    }
+    target.innerHTML = `
+      <strong>Ürünleri Çek ücretsiz</strong>
+      <span>Partner kazanımı için dış platform, mağaza veya feed ürünlerini AllonaHub kataloğuna çekme ücretsizdir. Ürünler güvenlik için taslak/kontrol akışına alınır.</span>
+    `;
+    target.classList.remove("is-premium");
+  }
+
   function integrationStageLabel(connector) {
-    if (connector.active_now) return connector.availability === "free" ? "Ücretsiz açık" : "Açık";
+    if (connector.active_now) return connector.outbound_active_now ? "Tam entegrasyon açık" : "Ürün çekme ücretsiz";
     if (connector.stage === "premium_ready") return "Premium hazır";
     if (connector.stage === "planned") return "Planlı";
     return statusLabel(connector.stage || "pending");
@@ -860,6 +902,7 @@
   }
 
   function renderIntegrations() {
+    renderIntegrationModeNote();
     renderIntegrationProviderOptions();
     renderIntegrationConnectors();
     renderIntegrationRows();
@@ -1696,6 +1739,7 @@
 
   function integrationPayloadFromForm(form) {
     const data = Object.fromEntries(new FormData(form).entries());
+    const fullIntegration = data.export_enabled === "true" || currentIntegrationMode() === "full";
     return {
       provider: data.provider || "generic_feed",
       display_name: data.display_name || integrationProviderLabel(data.provider),
@@ -1703,7 +1747,8 @@
       sync_mode: data.sync_mode || "manual",
       default_publish_status: data.default_publish_status || "draft",
       import_enabled: true,
-      export_enabled: false,
+      export_enabled: fullIntegration,
+      direction: fullIntegration ? "bidirectional" : "inbound",
       settings: {
         module_key: data.module_key || "shop",
         default_category: data.default_category || "Genel"
@@ -1716,6 +1761,10 @@
     const button = form.querySelector("button[type='submit']");
     if (button) button.disabled = true;
     try {
+      if (currentIntegrationMode() === "full" && !partnerHasFullIntegrationAccess()) {
+        toast("Tam entegrasyon premium üyelik gerektirir. Ürünleri çekme ücretsizdir; tam entegrasyon premium sonrası açılır.", "warning");
+        return;
+      }
       const payload = await apiFetch("/v1/partner/integrations", {
         method: "POST",
         body: JSON.stringify(integrationPayloadFromForm(form))
@@ -1725,7 +1774,9 @@
       renderIntegrations();
       renderActionCenter();
       renderOnboarding();
+      const mode = currentIntegrationMode();
       form.reset();
+      setIntegrationMode(mode);
       toast("Entegrasyon bağlantısı kaydedildi.");
       if (App.complianceAudit) {
         await App.complianceAudit.record({
@@ -1999,6 +2050,7 @@
       const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
       const downloadTemplate = event.target.closest("[data-download-template]");
       const exportProducts = event.target.closest("[data-export-products]");
+      const integrationMode = event.target.closest("[data-integration-mode]");
       const integrationTest = event.target.closest("[data-integration-test]");
       const integrationSync = event.target.closest("[data-integration-sync]");
       const integrationApply = event.target.closest("[data-integration-apply]");
@@ -2035,6 +2087,7 @@
         downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
         toast("Katalog Excel dosyası indirildi.");
       }
+      if (integrationMode) setIntegrationMode(integrationMode.dataset.integrationMode);
       if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
       if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync);
       if (integrationApply) syncIntegration(integrationApply.dataset.integrationApply, "apply");

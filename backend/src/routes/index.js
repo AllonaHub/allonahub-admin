@@ -4679,10 +4679,18 @@ function normalizeIntegrationSecretKey(value) {
     .slice(0, 90);
 }
 
-function connectorAllowsUse(connector) {
+function connectorReady(connector) {
   if (!connector) return false;
+  return connector.stage !== "planned" && connector.premium_ready !== false;
+}
+
+function connectorAllowsImport(connector) {
+  return Boolean(connectorReady(connector) && connector.inbound_supported);
+}
+
+function connectorAllowsUse(connector) {
+  if (!connectorReady(connector)) return false;
   if (connector.free_enabled) return true;
-  if (connector.stage === "planned" || connector.premium_ready === false) return false;
   if (connector.availability === "premium") return config.integrations.premiumEnabled;
   if (connector.availability === "enterprise") return config.integrations.premiumEnabled;
   return false;
@@ -4698,8 +4706,9 @@ function partnerIntegrationPlanTier(business = {}) {
   return "free";
 }
 
-function partnerCanUseConnector(connector, business) {
-  if (!connectorAllowsUse(connector)) return false;
+function partnerCanUseConnector(connector, business, options = {}) {
+  if (!options.fullIntegration) return connectorAllowsImport(connector);
+  if (!connectorAllowsUse(connector) || !connector.outbound_supported || !config.integrations.outboundEnabled) return false;
   if (connector.availability === "free" || connector.free_enabled) return true;
   const tier = partnerIntegrationPlanTier(business);
   if (connector.availability === "enterprise") return tier === "enterprise";
@@ -4722,6 +4731,9 @@ function partnerIntegrationPolicy() {
     require_apply_confirmation: config.integrations.requireApplyConfirmation,
     apply_confirmation_text: config.integrations.applyConfirmationText,
     force_draft_on_apply: config.integrations.forceDraftOnApply,
+    free_import_enabled: true,
+    full_integration_requires_premium: true,
+    full_integration_enabled: config.integrations.outboundEnabled,
     remote_fetch_enabled: config.integrations.remoteFetchEnabled,
     block_private_fetch_targets: config.integrations.blockPrivateFetchTargets,
     allowed_fetch_hosts: config.integrations.allowedFetchHosts,
@@ -4744,7 +4756,7 @@ async function partnerIntegrationConnectors(warnings = []) {
     );
     return (rows || integrationConnectorFallbackRows()).map((connector) => ({
       ...connector,
-      active_now: connectorAllowsUse(connector),
+      active_now: connectorAllowsImport(connector),
       outbound_active_now: Boolean(connector.outbound_supported && config.integrations.outboundEnabled && connectorAllowsUse(connector))
     }));
   } catch (error) {
@@ -4752,7 +4764,7 @@ async function partnerIntegrationConnectors(warnings = []) {
     warnings.push("partner_integration_connectors: Supabase migration production veritabaninda eksik gorunuyor.");
     return integrationConnectorFallbackRows().map((connector) => ({
       ...connector,
-      active_now: connectorAllowsUse(connector),
+      active_now: connectorAllowsImport(connector),
       outbound_active_now: false
     }));
   }
@@ -6780,31 +6792,34 @@ export function registerRoutes(app) {
     const connectors = await partnerIntegrationConnectors([]);
     const connector = connectorForProvider(connectors, payload.provider);
     if (!connector) throw httpError("Bu connector tanımlı değil.", 400);
-    if (!partnerCanUseConnector(connector, business)) {
-      throw httpError("Bu connector premium açılış bayrağı veya partner plan hakkı bekliyor.", 409);
+    const wantsFullIntegration = Boolean(payload.export_enabled || payload.direction === "outbound" || payload.direction === "bidirectional");
+    if (!partnerCanUseConnector(connector, business, { fullIntegration: wantsFullIntegration })) {
+      throw httpError(wantsFullIntegration
+        ? "Tam entegrasyon premium üyelik ve dış platform yayın izni gerektirir."
+        : "Bu connector ile ücretsiz ürün çekme şu anda aktif değil.", 409);
     }
-    if (payload.export_enabled && !config.integrations.outboundEnabled) {
+    if (wantsFullIntegration && !config.integrations.outboundEnabled) {
       throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
     }
 
     const nextSyncAt = payload.sync_mode === "scheduled"
       ? new Date(Date.now() + Number(payload.sync_interval_minutes || 1440) * 60 * 1000).toISOString()
       : null;
-    const planTier = connector.availability === "free" ? "free" : connector.availability === "enterprise" ? "enterprise" : "premium";
+    const planTier = !wantsFullIntegration ? "free" : connector.availability === "enterprise" ? "enterprise" : "premium";
     const partnerTier = partnerIntegrationPlanTier(business);
     const row = {
       partner_id: business.id,
       provider: payload.provider,
       display_name: payload.display_name,
       connection_mode: payload.connection_mode || connector.connector_mode || "generic_feed",
-      direction: payload.export_enabled ? "bidirectional" : payload.direction,
+      direction: wantsFullIntegration ? "bidirectional" : "inbound",
       status: payload.status,
       plan_tier: planTier,
       sync_mode: payload.sync_mode,
       sync_interval_minutes: payload.sync_interval_minutes,
       next_sync_at: nextSyncAt,
       import_enabled: payload.import_enabled,
-      export_enabled: payload.export_enabled,
+      export_enabled: wantsFullIntegration,
       default_publish_status: payload.default_publish_status,
       settings: {
         ...(connector.default_settings || {}),
