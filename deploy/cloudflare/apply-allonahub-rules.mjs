@@ -212,6 +212,19 @@ const redirectRules = [
     }
   },
   {
+    ref: "allonahub-main-partner-products-to-subdomain",
+    description: "Move partner product manager pages to partner subdomain",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner-products" "/partner-products/" "/partner-products.html" "/partner/products" "/partner/products/" "/partner/urunlerim" "/partner/urunlerim/" "/partner/ürünlerim" "/partner/ürünlerim/" "/partner/partner-products.html" "/pages/partner/partner-products.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/products" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
     ref: "allonahub-partner-subdomain-entry",
     description: "Route partner subdomain entry paths to login page",
     expression: `${partnerHostExpression} and http.request.uri.path in {"/" "/login" "/login/" "/giris" "/giris/" "/basvuru" "/basvuru/" "/partner" "/partner/" "/partner.html" "/partner-login.html" "/partner-giris.html"}`,
@@ -238,6 +251,19 @@ const redirectRules = [
     }
   },
   {
+    ref: "allonahub-partner-subdomain-products",
+    description: "Route partner subdomain product manager paths to products page",
+    expression: `${partnerHostExpression} and http.request.uri.path in {"/products" "/products/" "/urunlerim" "/urunlerim/" "/ürünlerim" "/ürünlerim/" "/partner-products" "/partner-products/" "/partner-products.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://partner.allonahub.com/pages/partner/partner-products.html" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
     ref: "allonahub-partner-entry-shortlinks",
     description: "Redirect partner entry short links",
     expression: `${hostExpression} and http.request.uri.path in {"/partner" "/partner/" "/partner.html" "/partner-login.html" "/partner-giris.html" "/partner/index.html" "/partner/login" "/partner/login/" "/partner/giris" "/partner/giris/"}`,
@@ -259,6 +285,19 @@ const redirectRules = [
       from_value: {
         status_code: 301,
         target_url: { value: "https://allonahub.com/pages/partner/partner-panel.html" },
+        preserve_query_string: true
+      }
+    }
+  },
+  {
+    ref: "allonahub-partner-products-shortlinks",
+    description: "Redirect partner product manager short links",
+    expression: `${hostExpression} and http.request.uri.path in {"/partner-products" "/partner-products/" "/partner-products.html" "/partner/products" "/partner/products/" "/partner/urunlerim" "/partner/urunlerim/" "/partner/ürünlerim" "/partner/ürünlerim/" "/partner/partner-products.html"}`,
+    action: "redirect",
+    action_parameters: {
+      from_value: {
+        status_code: 301,
+        target_url: { value: "https://allonahub.com/pages/partner/partner-products.html" },
         preserve_query_string: true
       }
     }

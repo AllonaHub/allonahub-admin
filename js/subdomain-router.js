@@ -14,7 +14,10 @@
         "/giris": "/pages/partner/partner.html",
         "/basvuru": "/pages/partner/partner.html",
         "/panel": "/pages/partner/partner-panel.html",
-        "/os": "/pages/partner/partner-panel.html"
+        "/os": "/pages/partner/partner-panel.html",
+        "/products": "/pages/partner/partner-products.html",
+        "/urunlerim": "/pages/partner/partner-products.html",
+        "/ürünlerim": "/pages/partner/partner-products.html"
       }
     },
     { key: "checkout", hosts: ["checkout", "odeme"], target: "/pages/commerce/guvenli-odeme.html" },
