@@ -193,6 +193,11 @@
     const label = info.label || [info.color, info.size].filter(Boolean).join(" / ") || "Standart";
     const confidence = confidenceLabel(info.confidence);
     const source = sourceLabel(info.source);
+    const duplicateText = info.duplicate_status === "duplicate"
+      ? "Tekrar kayıt"
+      : Number(info.duplicate_count || 0)
+        ? `${Number(info.duplicate_count || 0)} tekrar gizlendi`
+        : "";
     const priceRange = info.price_range || {};
     const priceText = Number(priceRange.max || 0) > Number(priceRange.min || 0)
       ? `${money(priceRange.min)} - ${money(priceRange.max)}`
@@ -205,6 +210,7 @@
         </span>
         ${info.color ? `<span class="partner-product-variant-chip">${escape(info.color)}</span>` : ""}
         ${info.size ? `<span class="partner-product-variant-chip">${escape(info.size)}</span>` : ""}
+        ${duplicateText ? `<span class="partner-product-variant-chip is-warning">${escape(duplicateText)}</span>` : ""}
         <small>${escape(source)} · ${escape(confidence)}${priceText ? ` · ${escape(priceText)}` : ""}</small>
       </span>
     `;
@@ -275,6 +281,8 @@
       needs_review: "Revizyon",
       rejected: "Reddedildi",
       archived: "Arşiv",
+      closed: "Satışa Kapalı",
+      inactive: "Pasif",
       hidden: "Gizli"
     };
     return labels[normalize(value)] || value || "Taslak";
@@ -370,6 +378,8 @@
       product.category,
       product.brand,
       product.sku,
+      product.barcode,
+      product.variant_automation?.barcode,
       product.variant_automation?.label,
       product.variant_automation?.color,
       product.variant_automation?.size,
@@ -389,8 +399,10 @@
     const stock = Number(product.stock || 0);
     if (filter === "low_stock") return stock > 0 && stock <= 5;
     if (filter === "out_of_stock") return stock <= 0;
-    if (filter === "pending") return ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review", "needs_review"].includes(review) || ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review", "needs_review"].includes(status);
-    if (filter === "needs_review") return review === "needs_review" || status === "needs_review";
+    if (filter === "closed") return ["archived", "hidden", "deleted", "closed", "inactive"].includes(status);
+    if (filter === "variant_group") return Number(product.variant_automation?.group_size || 0) > 1;
+    if (filter === "pending") return ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(review) || ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(status);
+    if (filter === "needs_review") return review === "needs_review" || status === "needs_review" || Boolean(product.review_automation?.revision_required);
     if (filter === "rejected") return review === "rejected" || status === "rejected" || status === "archived";
     return status === filter || review === filter;
   }
@@ -445,9 +457,11 @@
       total: normalized.length,
       active: normalized.filter((item) => normalize(item.status) === "active").length,
       pending: normalized.filter((item) => productMatchesStatus(item, "pending")).length,
+      needs_review: normalized.filter((item) => productMatchesStatus(item, "needs_review")).length,
       low_stock: normalized.filter((item) => Number(item.stock || 0) > 0 && Number(item.stock || 0) <= 5).length,
       out_of_stock: normalized.filter((item) => Number(item.stock || 0) <= 0).length,
       rejected: normalized.filter((item) => productMatchesStatus(item, "rejected")).length,
+      closed: normalized.filter((item) => productMatchesStatus(item, "closed")).length,
       variant_groups: variantGroups.size,
       variant_products: normalized.filter((item) => Number(item.variant_automation?.group_size || 0) > 1).length
     };
@@ -458,20 +472,22 @@
     if (!target) return;
     const summary = summaryFromProducts(state.products);
     const rows = [
-      ["Toplam", summary.total, "fa-boxes-stacked"],
-      ["Yayında", summary.active, "fa-circle-check"],
-      ["Onay", summary.pending, "fa-hourglass-half"],
-      ["Kritik stok", summary.low_stock, "fa-triangle-exclamation"],
-      ["Stok yok", summary.out_of_stock, "fa-box-open"],
-      ["Reddedilen", summary.rejected, "fa-ban"],
-      ["Varyant grubu", summary.variant_groups, "fa-layer-group"]
+      ["Toplam", summary.total, "fa-boxes-stacked", "all"],
+      ["Yayında", summary.active, "fa-circle-check", "active"],
+      ["Onay Bekleyen", summary.pending, "fa-hourglass-half", "pending"],
+      ["Revize Gereken", summary.needs_review, "fa-pen-ruler", "needs_review"],
+      ["Kritik Stok", summary.low_stock, "fa-triangle-exclamation", "low_stock"],
+      ["Stok Yok", summary.out_of_stock, "fa-box-open", "out_of_stock"],
+      ["Reddedilen", summary.rejected, "fa-ban", "rejected"],
+      ["Satışa Kapalı", summary.closed, "fa-lock", "closed"],
+      ["Varyant Grubu", summary.variant_groups, "fa-layer-group", "variant_group"]
     ];
-    target.innerHTML = rows.map(([label, value, icon]) => `
-      <article class="partner-products-kpi">
+    target.innerHTML = rows.map(([label, value, icon, status]) => `
+      <button type="button" class="partner-products-kpi ${state.filters.status === status ? "is-active" : ""}" data-product-kpi-status="${escape(status)}">
         <span>${escape(label)}</span>
         <strong>${escape(value)}</strong>
         <i class="fa-solid ${escape(icon)}"></i>
-      </article>
+      </button>
     `).join("");
   }
 
@@ -582,6 +598,7 @@
       renderSummary();
       renderPagination();
       syncTableScrollbars();
+      renderKpis();
       return;
     }
 
@@ -589,6 +606,11 @@
       const product = normalizeProduct(raw);
       const image = product.image_url || raw.image_url || "";
       const variant = variantInfo(product);
+      const barcode = raw.barcode || product.barcode || variant.barcode || "";
+      const codeLine = [
+        product.sku ? `SKU ${product.sku}` : "",
+        barcode ? `Barkod ${barcode}` : ""
+      ].filter(Boolean).join(" · ") || product.brand || product.seller_public_name || "Kod yok";
       const stockClass = Number(product.stock || 0) <= 0 ? "is-empty" : Number(product.stock || 0) <= 5 ? "is-low" : "";
       const approvedForPublish = canPublish(product);
       const archived = normalize(product.status) === "archived";
@@ -601,13 +623,13 @@
             <div class="partner-product-cell">
               <span class="partner-product-media-cluster">
                 <span class="partner-product-thumb">
-                  ${image ? `<img src="${escape(image)}" alt="${escape(product.name)}" loading="lazy" onerror="this.remove()">` : `<i class="fa-solid fa-image"></i>`}
+                  ${image ? `<img src="${escape(image)}" alt="${escape(product.name)}" loading="lazy" data-product-image-preview="${escape(image)}" onerror="this.remove()">` : `<i class="fa-solid fa-image"></i>`}
                 </span>
                 ${renderVariantMiniStrip(product, raw)}
               </span>
               <span>
                 <button type="button" class="partner-product-name-link" data-open-product-detail="${escape(product.id)}">${escape(product.name)}</button>
-                <small>${escape(product.sku || product.brand || product.seller_public_name || "SKU yok")}</small>
+                <small>${escape(codeLine)}</small>
                 ${renderVariantSummary(product)}
               </span>
             </div>
@@ -649,10 +671,10 @@
     renderSummary();
     renderPagination();
     syncTableScrollbars();
+    renderKpis();
   }
 
   function renderAll() {
-    renderKpis();
     renderRows();
   }
 
@@ -663,6 +685,40 @@
   function goToProductDetail(productId) {
     if (!productId) return;
     window.location.href = productDetailUrl(productId);
+  }
+
+  function openImagePreview(src, alt) {
+    const imageUrl = String(src || "").trim();
+    if (!imageUrl) return;
+    let modal = $("[data-product-image-lightbox]");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "partner-product-image-lightbox";
+      modal.setAttribute("data-product-image-lightbox", "");
+      modal.hidden = true;
+      modal.innerHTML = `
+        <button type="button" class="partner-product-image-lightbox__backdrop" data-close-image-preview aria-label="Görseli kapat"></button>
+        <div class="partner-product-image-lightbox__panel" role="dialog" aria-modal="true" aria-label="Ürün görseli">
+          <button type="button" data-close-image-preview><i class="fa-solid fa-arrow-left"></i><span>Geri Dön</span></button>
+          <img alt="">
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    const img = modal.querySelector("img");
+    if (img) {
+      img.src = imageUrl;
+      img.alt = alt || "Ürün görseli";
+    }
+    modal.hidden = false;
+    document.body.classList.add("partner-product-image-open");
+  }
+
+  function closeImagePreview() {
+    const modal = $("[data-product-image-lightbox]");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("partner-product-image-open");
   }
 
   function syncTableScrollbars() {
@@ -731,6 +787,7 @@
     set("id", product.id);
     set("name", product.name);
     set("sku", rawProduct.sku || "");
+    set("barcode", rawProduct.barcode || rawProduct.variant_automation?.barcode || "");
     set("catalog_scope", rawProduct.catalog_scope || rawProduct.module_key || product.module_key || "shop");
     set("category", product.category || "");
     set("brand", rawProduct.brand || "");
@@ -810,6 +867,7 @@
     return {
       name: String(data.name || "").trim(),
       sku: String(data.sku || "").trim(),
+      barcode: String(data.barcode || "").trim(),
       catalog_scope: data.catalog_scope || "shop",
       module_key: data.catalog_scope || "shop",
       category: String(data.category || "").trim(),
@@ -1129,7 +1187,24 @@
       const submitReview = event.target.closest("[data-submit-selected-review]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
       const pageButton = event.target.closest("[data-product-page]");
+      const kpi = event.target.closest("[data-product-kpi-status]");
+      const imagePreview = event.target.closest("[data-product-image-preview]");
+      const closeImage = event.target.closest("[data-close-image-preview]");
       const row = event.target.closest("[data-product-row]");
+      if (closeImage) closeImagePreview();
+      if (imagePreview) {
+        event.preventDefault();
+        event.stopPropagation();
+        openImagePreview(imagePreview.dataset.productImagePreview || imagePreview.currentSrc || imagePreview.src, imagePreview.alt);
+        return;
+      }
+      if (kpi) {
+        state.filters.status = kpi.dataset.productKpiStatus || "all";
+        resetPage();
+        const status = $("[data-product-status-filter]");
+        if (status) status.value = state.filters.status;
+        renderRows();
+      }
       if (refresh) loadProducts();
       if (edit) goToProductDetail(edit.dataset.editProduct);
       if (detail) goToProductDetail(detail.dataset.openProductDetail);
@@ -1246,7 +1321,10 @@
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeEditor();
+      if (event.key === "Escape") {
+        closeImagePreview();
+        closeEditor();
+      }
     });
   }
 

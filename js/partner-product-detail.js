@@ -81,6 +81,40 @@
     target.textContent = message;
   }
 
+  function openImagePreview(src, alt) {
+    const imageUrl = String(src || "").trim();
+    if (!imageUrl) return;
+    let modal = $("[data-product-image-lightbox]");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.className = "partner-product-image-lightbox";
+      modal.setAttribute("data-product-image-lightbox", "");
+      modal.hidden = true;
+      modal.innerHTML = `
+        <button type="button" class="partner-product-image-lightbox__backdrop" data-close-image-preview aria-label="Görseli kapat"></button>
+        <div class="partner-product-image-lightbox__panel" role="dialog" aria-modal="true" aria-label="Ürün görseli">
+          <button type="button" data-close-image-preview><i class="fa-solid fa-arrow-left"></i><span>Geri Dön</span></button>
+          <img alt="">
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    const img = modal.querySelector("img");
+    if (img) {
+      img.src = imageUrl;
+      img.alt = alt || "Ürün görseli";
+    }
+    modal.hidden = false;
+    document.body.classList.add("partner-product-image-open");
+  }
+
+  function closeImagePreview() {
+    const modal = $("[data-product-image-lightbox]");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("partner-product-image-open");
+  }
+
   function productName(product) {
     return product?.name || product?.product_name || "Ürün";
   }
@@ -137,6 +171,8 @@
       needs_review: "Revizyon",
       rejected: "Reddedildi",
       archived: "Arşiv",
+      closed: "Satışa Kapalı",
+      inactive: "Pasif",
       hidden: "Gizli"
     };
     return labels[normalize(value)] || value || "Taslak";
@@ -211,6 +247,7 @@
     set("id", product.id);
     set("name", product.name);
     set("sku", product.sku || "");
+    set("barcode", product.barcode || product.variant_automation?.barcode || "");
     set("catalog_scope", product.catalog_scope || product.module_key || "shop");
     set("category", product.category || "");
     set("brand", product.brand || "");
@@ -245,6 +282,8 @@
     const current = {
       ...product,
       name: form.elements.name?.value || product.name,
+      sku: form.elements.sku?.value || product.sku,
+      barcode: form.elements.barcode?.value || product.barcode || product.variant_automation?.barcode,
       price: Number(form.elements.price?.value || product.price || 0),
       stock: Number(form.elements.stock?.value || product.stock || 0),
       category: form.elements.category?.value || product.category,
@@ -261,15 +300,15 @@
     if (publish) publish.hidden = !canPublish(current);
     preview.innerHTML = `
       <div class="partner-product-detail-hero">
-        ${gallery[0] ? `<img src="${escape(gallery[0])}" alt="${escape(current.name)}" loading="lazy" onerror="this.hidden=true">` : `<div class="partner-product-thumb"><i class="fa-solid fa-image"></i></div>`}
+        ${gallery[0] ? `<img src="${escape(gallery[0])}" alt="${escape(current.name)}" loading="lazy" data-product-image-preview="${escape(gallery[0])}" onerror="this.hidden=true">` : `<div class="partner-product-thumb"><i class="fa-solid fa-image"></i></div>`}
         <div>
           <strong>${escape(current.name || "Ürün")}</strong>
           <span>${escape(current.category || "Genel")} · ${money(current.price)} · Stok ${escape(current.stock)}</span>
-          <small>${escape(current.sku || current.brand || "SKU yok")}</small>
+          <small>${escape([current.sku ? `SKU ${current.sku}` : "", current.barcode ? `Barkod ${current.barcode}` : ""].filter(Boolean).join(" · ") || current.brand || "Kod yok")}</small>
         </div>
       </div>
       <div class="partner-product-detail-media-grid">
-        ${gallery.map((url) => `<img src="${escape(url)}" alt="${escape(current.name)} görseli" loading="lazy" onerror="this.remove()">`).join("")}
+        ${gallery.map((url) => `<img src="${escape(url)}" alt="${escape(current.name)} görseli" loading="lazy" data-product-image-preview="${escape(url)}" onerror="this.remove()">`).join("")}
       </div>
       ${current.video_url ? `
         <video controls src="${escape(current.video_url)}"></video>
@@ -284,6 +323,7 @@
     return {
       name: String(data.name || "").trim(),
       sku: String(data.sku || "").trim(),
+      barcode: String(data.barcode || "").trim(),
       catalog_scope: data.catalog_scope || "shop",
       module_key: data.catalog_scope || "shop",
       category: String(data.category || "").trim(),
@@ -389,6 +429,13 @@
       const refresh = event.target.closest("[data-refresh-product-detail]");
       const publish = event.target.closest("[data-publish-product-detail]");
       const archive = event.target.closest("[data-archive-product-detail]");
+      const imagePreview = event.target.closest("[data-product-image-preview]");
+      const closeImage = event.target.closest("[data-close-image-preview]");
+      if (closeImage) closeImagePreview();
+      if (imagePreview) {
+        event.preventDefault();
+        openImagePreview(imagePreview.dataset.productImagePreview || imagePreview.currentSrc || imagePreview.src, imagePreview.alt);
+      }
       if (refresh) loadProduct();
       if (publish) publishProduct(publish);
       if (archive) archiveProduct(archive);
@@ -407,6 +454,10 @@
       if (!form) return;
       event.preventDefault();
       submitProduct(form);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeImagePreview();
     });
   }
 

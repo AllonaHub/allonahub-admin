@@ -255,6 +255,7 @@ const partnerProductUpdateSchema = z.object({
   category: nullablePartnerProductText(120),
   brand: nullablePartnerProductText(140),
   sku: nullablePartnerProductText(90),
+  barcode: nullablePartnerProductText(80),
   module_key: z.enum(["shop", "market", "food", "taxi", "service"]).optional(),
   catalog_scope: z.enum(["shop", "market", "food", "taxi", "service"]).optional(),
   seller_public_name: nullablePartnerProductText(140),
@@ -3999,11 +4000,24 @@ const productReviewFieldLabels = {
   meta_description: "SEO açıklaması",
   category: "Kategori",
   brand: "Marka",
+  sku: "SKU",
+  barcode: "Barkod",
   seller_disclosure: "Satıcı bilgilendirme",
   invoice_responsibility: "Fatura sorumluluğu"
 };
 
+const marketplacePlatformPattern = /\b(trendyol|hepsiburada|n11|amazon|etsy|shopify|woocommerce|çiçeksepeti|ciceksepeti|pazarama|pttavm|gittigidiyor)\b/i;
+
 const productReviewPolicyRules = [
+  {
+    code: "external_marketplace_branding",
+    severity: "critical",
+    requiresRevision: true,
+    fields: ["name", "product_name", "description", "meta_title", "meta_description", "brand", "sku"],
+    pattern: marketplacePlatformPattern,
+    title: "Dış platform adı içeriyor",
+    suggestion: "Ürün adı, açıklama, SEO metni, marka veya SKU içinde dış pazar yeri adını kaldırın; ürün AllonaHub kataloğunda platform bağımsız ve kendi ürün bilgisiyle yayınlanmalı."
+  },
   {
     code: "prohibited_or_illegal_terms",
     severity: "critical",
@@ -4139,10 +4153,41 @@ function productOperationalReviewReasons(product = {}) {
   return reasons;
 }
 
+function productVariantReviewReasons(product = {}) {
+  const reasons = [];
+  const variant = product.variant_automation || {};
+  if (variant.duplicate_status === "duplicate") {
+    addProductReviewReason(reasons, {
+      code: "duplicate_variant_visual_or_barcode",
+      severity: "critical",
+      field: variant.barcode ? "barcode" : "image_url",
+      field_label: variant.barcode ? "Barkod" : "Ürün görseli",
+      title: "Aynı ürün tekrar import edilmiş",
+      message: "Aynı barkod, ürün kodu veya aynı görsel/renk sinyaliyle gelen ürün tekrar kayıt gibi görünüyor.",
+      suggestion: "Bu kaydı yayına almayın; tekil ürün ana kaydı korunmalı, yalnızca gerçekten farklı renk/beden/görsel varyantları yayına alınmalıdır.",
+      requires_revision: true
+    });
+  }
+  if (variant.duplicate_count > 0 && variant.duplicate_status === "primary") {
+    addProductReviewReason(reasons, {
+      code: "duplicate_variant_siblings_suppressed",
+      severity: "warning",
+      field: "image_url",
+      field_label: "Varyant görselleri",
+      title: "Aynı görsel tekrarları gizlendi",
+      message: `${variant.duplicate_count} tekrar kayıt varyant listesinden ayrıldı.`,
+      suggestion: "Varyant ailesinde yalnızca farklı renk/beden/görsel kayıtlarını bırakın.",
+      requires_revision: false
+    });
+  }
+  return reasons;
+}
+
 function productReviewAutomation(product = {}) {
   const reasons = [
     ...productReviewRuleReasons(product),
-    ...productOperationalReviewReasons(product)
+    ...productOperationalReviewReasons(product),
+    ...productVariantReviewReasons(product)
   ];
   const revisionRequired = reasons.some((reason) => reason.requires_revision);
   const criticalCount = reasons.filter((reason) => reason.severity === "critical").length;
@@ -4159,7 +4204,7 @@ function productReviewAutomation(product = {}) {
     auto_approvable: !revisionRequired,
     revision_required: revisionRequired,
     reasons,
-    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock"]
+    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "sku", "barcode", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock"]
   };
 }
 
@@ -4222,14 +4267,17 @@ function productReviewDecisionPayload(decision, reason, nowIso = new Date().toIS
   };
 }
 
+const PRODUCT_REVISION_DEFAULT_NOTICE = "Ürün revizyonu gereklidir. Dış platform adı, tekrar ürün/varyant, barkod, görsel, açıklama, fiyat, stok ve kategori alanları AllonaHub yayın kurallarına göre kontrol edilmelidir. Dış pazar yeri adları ürün adı, açıklama, SEO metni, marka ve SKU alanlarından kaldırılmalıdır.";
+
 function productReviewRevisionReason(product = {}, baseReason = "") {
   const automation = product.review_automation || productReviewAutomation(product);
   const requiredReasons = automation.reasons.filter((reason) => reason.requires_revision);
-  if (!requiredReasons.length) return baseReason;
+  const intro = String(baseReason || PRODUCT_REVISION_DEFAULT_NOTICE).trim();
+  if (!requiredReasons.length) return intro;
   const details = requiredReasons
     .map((reason) => `- ${reason.field_label || reason.field}: ${reason.title}. ${reason.suggestion}`)
     .join("\n");
-  return `${baseReason}\n\nOtomasyon tespiti:\n${details}`.trim().slice(0, 1200);
+  return `${intro}\n\nOtomasyon tespiti:\n${details}`.trim().slice(0, 1200);
 }
 
 function productAutoPublishCandidate(product = {}) {
@@ -4512,6 +4560,21 @@ async function buildOpsAutomationSnapshot(options = {}) {
   let products = (productRows || [])
     .filter(productNeedsAdminReview)
     .map(attachProductReviewAutomation);
+  const productIds = products.map((product) => product.id).filter(Boolean);
+  const productLinkRows = await optionalQuery(
+    supabaseAdmin
+      .from("partner_integration_product_links")
+      .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+      .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
+    [],
+    warnings,
+    "partner_integration_product_links"
+  );
+  const linksByProductId = new Map();
+  for (const link of productLinkRows || []) {
+    if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+  }
+  products = attachVariantGroups(products, linksByProductId);
   let autoReady = products
     .filter(productAutoPublishCandidate)
     .map((product) => productAutomationItem(product, "auto_ready"));
@@ -4746,6 +4809,7 @@ function productMatchesAdminReviewSearch(product = {}, search) {
     product.seller_public_name,
     product.seller_legal_name,
     product.sku,
+    product.barcode,
     product.integration_source,
     product.integration_external_id,
     product.partner_code,
@@ -4771,6 +4835,7 @@ function partnerProductMatchesSearch(product = {}, search) {
     product.category,
     product.brand,
     product.sku,
+    product.barcode,
     product.seller_public_name,
     product.seller_legal_name,
     product.integration_source,
@@ -4785,7 +4850,9 @@ function partnerProductMatchesStatus(product = {}, statusFilter = "all") {
   const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
   if (filter === "low_stock") return Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 5;
   if (filter === "out_of_stock") return Number(product.stock || 0) <= 0;
-  if (filter === "pending") return ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review", "needs_review"].includes(reviewStatus) || ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review", "needs_review"].includes(status);
+  if (filter === "closed") return ["archived", "hidden", "deleted", "closed", "inactive"].includes(status);
+  if (filter === "variant_group") return Number(product.variant_automation?.group_size || 0) > 1;
+  if (filter === "pending") return ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(reviewStatus) || ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(status);
   if (filter === "needs_review") return reviewStatus === "needs_review" || status === "needs_review";
   if (filter === "approved") return reviewStatus === "approved";
   if (filter === "rejected") return reviewStatus === "rejected" || status === "rejected" || status === "archived";
@@ -4801,10 +4868,11 @@ function partnerProductSummary(products = []) {
     total: products.length,
     active: products.filter((product) => normalizedReviewValue(product.status) === "active").length,
     pending: products.filter((product) => partnerProductMatchesStatus(product, "pending")).length,
-    needs_review: products.filter((product) => productNeedsAdminReview(product)).length,
+    needs_review: products.filter((product) => partnerProductMatchesStatus(product, "needs_review") || product.review_automation?.revision_required).length,
     low_stock: products.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 5).length,
     out_of_stock: products.filter((product) => Number(product.stock || 0) <= 0).length,
     rejected: products.filter((product) => partnerProductMatchesStatus(product, "rejected")).length,
+    closed: products.filter((product) => partnerProductMatchesStatus(product, "closed")).length,
     variant_groups: variantGroups.size,
     variant_products: products.filter((product) => Number(product.variant_automation?.group_size || 0) > 1).length
   };
@@ -4870,14 +4938,42 @@ function variantLabel(signal = {}) {
   return [signal.color, signal.size].filter(Boolean).join(" / ") || "Standart";
 }
 
+function productVariantDuplicateKey(signal = {}) {
+  if (signal.barcode) return `barcode:${normalizedIntegrationCode(signal.barcode)}`;
+  if (signal.image_signature) {
+    return [
+      "visual",
+      normalizeVariantText(signal.model_root || ""),
+      normalizeVariantText(signal.image_signature),
+      normalizeVariantText(signal.color || "standart"),
+      normalizeVariantText(signal.size || "")
+    ].join(":");
+  }
+  if (signal.product_code) {
+    return [
+      "code",
+      normalizedIntegrationCode(signal.product_code),
+      normalizeVariantText(signal.color || "standart"),
+      normalizeVariantText(signal.size || "")
+    ].join(":");
+  }
+  return `match:${normalizedIntegrationCode(signal.match_key || "") || "single"}`;
+}
+
 function attachVariantGroups(products = [], linksByProductId = new Map()) {
   const enriched = products.map((product) => {
     const link = linksByProductId.get(String(product.id)) || null;
     const signal = productVariantSignal(product, link);
+    const duplicateKey = productVariantDuplicateKey(signal);
     return {
       ...product,
       variant_automation: {
         ...signal,
+        duplicate_key: duplicateKey,
+        duplicate_status: "primary",
+        duplicate_of: null,
+        duplicate_count: 0,
+        duplicate_reason: "",
         label: variantLabel(signal),
         group_size: 1,
         group_stock: Number(product.stock || 0),
@@ -4905,8 +5001,22 @@ function attachVariantGroups(products = [], linksByProductId = new Map()) {
 
   return enriched.map((product) => {
     const group = groups.get(product.variant_automation.group_key) || [product];
+    const uniqueByDuplicateKey = new Map();
+    const duplicateCountByPrimaryId = new Map();
+    for (const item of group) {
+      const duplicateKey = item.variant_automation.duplicate_key || item.variant_automation.match_key || String(item.id);
+      if (!uniqueByDuplicateKey.has(duplicateKey)) {
+        uniqueByDuplicateKey.set(duplicateKey, item);
+        continue;
+      }
+      const primary = uniqueByDuplicateKey.get(duplicateKey);
+      duplicateCountByPrimaryId.set(String(primary.id), (duplicateCountByPrimaryId.get(String(primary.id)) || 0) + 1);
+    }
+    const uniqueGroup = [...uniqueByDuplicateKey.values()];
+    const duplicatePrimary = uniqueByDuplicateKey.get(product.variant_automation.duplicate_key || product.variant_automation.match_key || String(product.id));
+    const isDuplicate = duplicatePrimary && String(duplicatePrimary.id) !== String(product.id);
     const prices = group.map((item) => Number(item.price || 0)).filter((value) => Number.isFinite(value));
-    const siblings = group
+    const siblings = uniqueGroup
       .filter((item) => String(item.id) !== String(product.id))
       .slice(0, 8)
       .map((item) => ({
@@ -4921,18 +5031,28 @@ function attachVariantGroups(products = [], linksByProductId = new Map()) {
         size: item.variant_automation.size || "",
         label: item.variant_automation.label || "Varyant"
       }));
+    const variantAutomation = {
+      ...product.variant_automation,
+      group_size: uniqueGroup.length,
+      group_stock: uniqueGroup.reduce((total, item) => total + Number(item.stock || 0), 0),
+      price_range: {
+        min: prices.length ? Math.min(...prices) : 0,
+        max: prices.length ? Math.max(...prices) : 0
+      },
+      duplicate_status: isDuplicate ? "duplicate" : "primary",
+      duplicate_of: isDuplicate ? duplicatePrimary.id : null,
+      duplicate_count: isDuplicate ? 0 : (duplicateCountByPrimaryId.get(String(product.id)) || 0),
+      duplicate_reason: isDuplicate
+        ? "Aynı barkod/kod veya aynı görsel-renk sinyaliyle gelen tekrar kayıt."
+        : duplicateCountByPrimaryId.get(String(product.id))
+          ? `${duplicateCountByPrimaryId.get(String(product.id))} tekrar kayıt varyant listesinden ayrıldı.`
+          : "",
+      siblings
+    };
     return {
       ...product,
-      variant_automation: {
-        ...product.variant_automation,
-        group_size: group.length,
-        group_stock: group.reduce((total, item) => total + Number(item.stock || 0), 0),
-        price_range: {
-          min: prices.length ? Math.min(...prices) : 0,
-          max: prices.length ? Math.max(...prices) : 0
-        },
-        siblings
-      }
+      variant_automation: variantAutomation,
+      review_automation: productReviewAutomation({ ...product, variant_automation: variantAutomation })
     };
   });
 }
@@ -4956,6 +5076,7 @@ function buildPartnerProductUpdatePayload(productId, before, body) {
     "category",
     "brand",
     "sku",
+    "barcode",
     "seller_public_name",
     "seller_legal_name",
     "seller_city",
@@ -5063,6 +5184,47 @@ async function updatePartnerProductRow(productId, payload) {
   }
 
   throw httpError("Ürün revizyonu canlı veritabanı şeması nedeniyle tamamlanamadı.", 409);
+}
+
+async function insertPartnerProductRow(payload) {
+  const insertPayload = { ...payload };
+  const removed = new Set();
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .insert(insertPayload)
+      .select("id")
+      .single();
+    if (!error) return { product: data, appliedFields: Object.keys(insertPayload), removedFields: [...removed] };
+
+    const missingColumn = missingColumnFromError(error);
+    if (missingColumn && Object.prototype.hasOwnProperty.call(insertPayload, missingColumn)) {
+      delete insertPayload[missingColumn];
+      removed.add(missingColumn);
+      continue;
+    }
+    throw error;
+  }
+
+  throw httpError("Ürün canlı veritabanı şeması nedeniyle eklenemedi.", 409);
+}
+
+async function ensureUniquePartnerBarcode({ productId, partnerId, barcode }) {
+  const normalized = String(barcode || "").trim();
+  if (!normalized || !partnerId) return;
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("id, name, product_name")
+    .eq("partner_id", partnerId)
+    .eq("barcode", normalized)
+    .neq("id", productId)
+    .limit(1);
+  if (error && looksLikeMissingSchema(error)) return;
+  if (error) throw error;
+  if (Array.isArray(data) && data.length) {
+    throw httpError("Bu barkod aynı partnerde başka bir üründe kullanılıyor. Aynı barkodla ikinci ürün açılamaz.", 409);
+  }
 }
 
 function normalizePartnerSupportStatus(status) {
@@ -7632,6 +7794,7 @@ function integrationProductCompliance(product) {
   const restricted = RESTRICTED_INTEGRATION_PRODUCT_PATTERNS.find(([, pattern]) => pattern.test(text));
   if (restricted) errors.push(`${restricted[0]} otomatik import kapsamı dışında.`);
   if (!product.name || product.name.length < 2) errors.push("Ürün adı eksik.");
+  if (marketplacePlatformPattern.test(text)) warnings.push("Ürün bilgisinde dış pazar yeri adı geçiyor; AllonaHub yayını öncesi marka/platform ifadesi temizlenmeli.");
   if (Number(product.price || 0) < 0) errors.push("Fiyat negatif olamaz.");
   if (Number(product.price || 0) === 0) warnings.push("Fiyat 0 görünüyor; yayına almadan önce kontrol edilmeli.");
   if (Number(product.stock || 0) < 0) errors.push("Stok negatif olamaz.");
@@ -8014,6 +8177,7 @@ function integrationProductPayload({ business, integration, item }) {
       ...compliance.warnings
     ].filter(Boolean).join(" ").slice(0, 1200),
     sku: integrationProductSku(integration, item),
+    barcode: item.barcode || null,
     integration_source: integration.provider,
     integration_external_id: identity
   };
@@ -8021,8 +8185,10 @@ function integrationProductPayload({ business, integration, item }) {
 
 async function applyIntegrationProducts({ business, integration, products }) {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
+  const incomingDuplicateKeys = new Map();
   const externalIds = products.map((item) => item.external_product_id).filter(Boolean);
   const identityIds = products.map(integrationProductIdentity).filter(Boolean);
+  const barcodeIds = [...new Set(products.map((item) => String(item.barcode || "").trim()).filter(Boolean))];
   const productPartnerId = business.owner_id || business.id;
   const { data: existingLinks, error: linkError } = await supabaseAdmin
     .from("partner_integration_product_links")
@@ -8046,9 +8212,31 @@ async function applyIntegrationProducts({ business, integration, products }) {
       productMap.set(product.integration_external_id, product);
     }
   }
+  const barcodeProductMap = new Map();
+  if (barcodeIds.length) {
+    const { data: barcodeProducts, error: barcodeLookupError } = await supabaseAdmin
+      .from("products")
+      .select("id, barcode")
+      .eq("partner_id", productPartnerId)
+      .in("barcode", barcodeIds);
+    if (barcodeLookupError && !looksLikeMissingSchema(barcodeLookupError)) throw barcodeLookupError;
+    for (const product of barcodeProducts || []) {
+      const barcodeKey = String(product.barcode || "").trim();
+      if (barcodeKey && !barcodeProductMap.has(barcodeKey)) barcodeProductMap.set(barcodeKey, product);
+    }
+  }
 
   for (const item of products) {
     const identity = integrationProductIdentity(item);
+    const duplicateKey = productVariantDuplicateKey({
+      barcode: item.barcode,
+      product_code: item.product_code,
+      image_signature: item.variant_image_signature,
+      model_root: item.variant_model_root,
+      color: item.variant_color,
+      size: item.variant_size,
+      match_key: item.variant_match_key
+    });
     const key = `${item.external_product_id}:${item.external_variant_id || ""}`;
     const hash = sourceHashFor(item.raw);
     const existing = linkMap.get(key);
@@ -8059,6 +8247,16 @@ async function applyIntegrationProducts({ business, integration, products }) {
         result.errors.push({ external_product_id: item.external_product_id, message: compliance.errors.join(" ") });
         continue;
       }
+      if (duplicateKey && incomingDuplicateKeys.has(duplicateKey) && !existing) {
+        result.skipped += 1;
+        result.warnings.push({
+          external_product_id: item.external_product_id,
+          warnings: ["Aynı barkod/kod veya aynı görsel-renk sinyaliyle gelen tekrar kayıt oluşturulmadı."]
+        });
+        continue;
+      }
+      if (duplicateKey) incomingDuplicateKeys.set(duplicateKey, item);
+
       if (compliance.warnings.length) {
         result.warnings.push({ external_product_id: item.external_product_id, warnings: compliance.warnings });
       }
@@ -8069,25 +8267,29 @@ async function applyIntegrationProducts({ business, integration, products }) {
 
       const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
 
-      const existingProduct = existing?.product_id ? null : productMap.get(identity);
+      const existingProduct = existing?.product_id ? null : (productMap.get(identity) || barcodeProductMap.get(String(item.barcode || "").trim()));
       let productId = existing?.product_id || existingProduct?.id || null;
       const productAlreadyExists = Boolean(productId);
       if (productId) {
-        const { error: productUpdateError } = await supabaseAdmin
-          .from("products")
-          .update(productPayload)
-          .eq("id", productId);
-        if (productUpdateError) throw productUpdateError;
+        const { removedFields } = await updatePartnerProductRow(productId, productPayload);
+        if (removedFields.length) {
+          result.warnings.push({
+            external_product_id: item.external_product_id,
+            warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+          });
+        }
         result.updated += 1;
       } else {
-        const { data: product, error: productInsertError } = await supabaseAdmin
-          .from("products")
-          .insert(productPayload)
-          .select("id")
-          .single();
-        if (productInsertError) throw productInsertError;
+        const { product, removedFields } = await insertPartnerProductRow(productPayload);
         productId = product.id;
+        if (removedFields.length) {
+          result.warnings.push({
+            external_product_id: item.external_product_id,
+            warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+          });
+        }
         productMap.set(identity, product);
+        if (item.barcode) barcodeProductMap.set(String(item.barcode).trim(), product);
         result.created += 1;
       }
       const lastPayload = item.raw && typeof item.raw === "object" && !Array.isArray(item.raw)
@@ -9351,6 +9553,9 @@ export function registerRoutes(app) {
     for (const productId of productIds) {
       try {
         const before = await loadPartnerOwnedProduct(productId, business, ctx);
+        if (body.updates && Object.prototype.hasOwnProperty.call(body.updates, "barcode")) {
+          await ensureUniquePartnerBarcode({ productId, partnerId: before.partner_id, barcode: body.updates.barcode });
+        }
         const built = body.updates
           ? buildPartnerProductUpdatePayload(productId, before, body.updates)
           : {
@@ -9539,6 +9744,9 @@ export function registerRoutes(app) {
     const body = partnerProductUpdateSchema.parse(request.body || {});
     const business = await ensurePartnerBusiness(ctx, request);
     const before = await loadPartnerOwnedProduct(productId, business, ctx);
+    if (Object.prototype.hasOwnProperty.call(body, "barcode")) {
+      await ensureUniquePartnerBarcode({ productId, partnerId: before.partner_id, barcode: body.barcode });
+    }
 
     const {
       updatePayload,
@@ -13289,6 +13497,21 @@ export function registerRoutes(app) {
       .filter(productNeedsAdminReview)
       .filter((product) => productMatchesAdminReviewSearch(product, query.search))
       .map(attachProductReviewAutomation);
+    const productIds = products.map((product) => product.id).filter(Boolean);
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    const linksByProductId = new Map();
+    for (const link of linkRows || []) {
+      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+    }
+    products = attachVariantGroups(products, linksByProductId);
     if (query.status) {
       products = products.filter((product) => productReviewMatchesAutomationStatus(product, query.status));
     }
@@ -13328,10 +13551,24 @@ export function registerRoutes(app) {
 
     const productById = new Map((rows || []).map((product) => [String(product.id), product]));
     const missingIds = body.product_ids.filter((productId) => !productById.has(String(productId)));
-    const products = body.product_ids
+    let products = body.product_ids
       .map((productId) => productById.get(String(productId)))
       .filter(Boolean)
       .map(attachProductReviewAutomation);
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", products.length ? products.map((product) => product.id) : ["00000000-0000-0000-0000-000000000000"]),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    const linksByProductId = new Map();
+    for (const link of linkRows || []) {
+      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+    }
+    products = attachVariantGroups(products, linksByProductId);
     const updatedProducts = [];
     const skipped = missingIds.map((productId) => ({
       product_id: productId,

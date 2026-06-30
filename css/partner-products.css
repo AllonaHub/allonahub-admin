@@ -144,35 +144,53 @@
 
 .partner-products-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
   margin-top: 14px;
 }
 
 .partner-products-kpi {
-  min-height: 104px;
+  min-height: 58px;
   border: 1px solid var(--ah-line);
   border-radius: 8px;
   display: grid;
-  align-content: space-between;
-  gap: 12px;
-  padding: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 10px;
   background: color-mix(in srgb, var(--ah-bg-strong) 90%, transparent);
+  color: var(--ah-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .partner-products-kpi span {
+  grid-column: 1 / -1;
   color: var(--ah-muted);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 850;
+  line-height: 1.1;
 }
 
 .partner-products-kpi strong {
-  font-size: 1.75rem;
+  font-size: 1.08rem;
   line-height: 1;
 }
 
 .partner-products-kpi i {
-  color: var(--ah-primary);
+  display: none;
+}
+
+.partner-products-kpi:hover,
+.partner-products-kpi.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 54%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 11%, var(--ah-bg-strong));
+}
+
+.partner-products-kpi.is-active span,
+.partner-products-kpi.is-active strong {
+  color: var(--ah-accent);
 }
 
 .partner-products-toolbar {
@@ -244,6 +262,9 @@
 .partner-products-bulk {
   position: sticky;
   top: 14px;
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px;
 }
 
@@ -331,7 +352,9 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  max-height: calc(100vh - 210px);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .partner-products-table-frame {
@@ -502,6 +525,10 @@
 }
 
 .partner-product-thumb img {
+  cursor: zoom-in;
+}
+
+.partner-product-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -620,6 +647,12 @@
   font-size: 0.68rem;
   font-weight: 950;
   white-space: nowrap;
+}
+
+.partner-product-variant-chip.is-warning {
+  border-color: color-mix(in srgb, var(--ah-accent) 46%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-accent) 13%, transparent);
+  color: var(--ah-accent);
 }
 
 .partner-products-money,
@@ -1000,6 +1033,70 @@
   text-decoration: none;
 }
 
+.partner-product-image-open {
+  overflow: hidden;
+}
+
+.partner-product-image-lightbox[hidden] {
+  display: none;
+}
+
+.partner-product-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.partner-product-image-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(2, 7, 12, 0.72);
+  cursor: zoom-out;
+}
+
+.partner-product-image-lightbox__panel {
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 980px);
+  max-height: min(88vh, 760px);
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--ah-bg-strong) 98%, #ffffff 2%);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36);
+}
+
+.partner-product-image-lightbox__panel button {
+  min-height: 38px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--ah-ink);
+  background: color-mix(in srgb, var(--ah-bg-mid) 72%, transparent);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.partner-product-image-lightbox__panel img {
+  width: 100%;
+  max-height: calc(88vh - 92px);
+  border-radius: 8px;
+  object-fit: contain;
+  background: #05070b;
+}
+
 .partner-product-detail {
   max-width: 1500px;
 }
@@ -1052,6 +1149,11 @@
   border-radius: 8px;
   object-fit: cover;
   background: color-mix(in srgb, var(--ah-bg-mid) 82%, transparent);
+}
+
+.partner-product-detail-hero img,
+.partner-product-detail-media-grid img {
+  cursor: zoom-in;
 }
 
 .partner-product-detail-hero strong,

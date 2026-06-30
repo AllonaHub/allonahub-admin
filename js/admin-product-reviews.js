@@ -431,6 +431,7 @@
   }
 
   function revisionReasonFor(products) {
+    const intro = "Ürün revizyonu gereklidir. Dış platform adı, tekrar ürün/varyant, barkod, görsel, açıklama, fiyat, stok ve kategori alanları AllonaHub yayın kurallarına göre kontrol edilmelidir. Dış pazar yeri adları ürün adı, açıklama, SEO metni, marka ve SKU alanlarından kaldırılmalıdır.";
     const rows = products.flatMap((raw) => {
       const product = normalizeProduct(raw);
       const required = (automation(raw).reasons || []).filter((reason) => reason.requires_revision);
@@ -439,7 +440,7 @@
       }
       return required.map((reason) => `- ${product.name} / ${reason.field_label || reason.field}: ${reason.title}. ${reason.suggestion}`);
     });
-    return `Ürün revizyonu gereklidir.\n${rows.join("\n")}`.slice(0, 1200);
+    return `${intro}\n${rows.join("\n")}`.slice(0, 1200);
   }
 
   function decisionLabel(decision) {
