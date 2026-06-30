@@ -149,11 +149,12 @@
   }
 
   function productCatalogText(item) {
+    const categoryLabel = core.labelFromValue ? core.labelFromValue(item.category, "") : item.category;
     return [
       item.name,
       item.product_name,
       item.description,
-      item.category,
+      categoryLabel,
       item.brand,
       item.seller_name,
       item.partner_name,
@@ -169,7 +170,8 @@
   function isFoodCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
     const explicit = explicitCatalogScope(item);
-    if (explicit) return explicit === "food";
+    if (explicit === "food") return true;
+    if (explicit && explicit !== "shop") return false;
 
     const category = String(item.category || "").toLocaleLowerCase("tr-TR");
     const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
@@ -189,7 +191,8 @@
   function isMarketCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
     const explicit = explicitCatalogScope(item);
-    if (explicit) return explicit === "market";
+    if (explicit === "market") return true;
+    if (explicit && explicit !== "shop") return false;
 
     const category = String(item.category || "").toLocaleLowerCase("tr-TR");
     const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
@@ -233,8 +236,11 @@
 
     return items.filter((item) => {
       if (!matchesCatalogScope(item, options.scope)) return false;
-      const text = `${item.name} ${item.description} ${item.category} ${item.brand || ""}`.toLocaleLowerCase("tr-TR");
-      const categoryMatch = !category || item.category.toLocaleLowerCase("tr-TR") === category;
+      const itemCategory = App.core?.labelFromValue ? App.core.labelFromValue(item.category, "") : String(item.category || "");
+      const text = `${item.name} ${item.description} ${itemCategory} ${item.brand || ""}`.toLocaleLowerCase("tr-TR");
+      const categoryMatch = !category || (App.shopCategories?.productMatchesCategory
+        ? App.shopCategories.productMatchesCategory(item, options.category)
+        : itemCategory.toLocaleLowerCase("tr-TR") === category);
       const searchMatch = !q || text.includes(q);
       const minMatch = !min || item.price >= min;
       const maxMatch = !max || item.price <= max;
@@ -301,7 +307,8 @@
     if (payload.id && security && !security.isUuid(payload.id)) throw new Error("Ürün kimliği geçersiz.");
     const status = ["active", "draft", "archived"].includes(payload.status) ? payload.status : "active";
     const description = security ? security.normalizeMultiline(payload.description, { max: 1800 }) : payload.description || "";
-    const category = security ? security.normalizeText(payload.category || "Genel", { max: 90 }) : payload.category || "Genel";
+    const categoryLabel = core.labelFromValue ? core.labelFromValue(payload.category, "Genel") : String(payload.category || "Genel");
+    const category = security ? security.normalizeText(categoryLabel || "Genel", { max: 90 }) : categoryLabel || "Genel";
     const brand = security ? security.normalizeText(payload.brand || payload.seller_name || "", { max: 120 }) : payload.brand || payload.seller_name || "";
     const rawImageUrl = String(payload.image_url || "").trim();
     const imageUrl = security

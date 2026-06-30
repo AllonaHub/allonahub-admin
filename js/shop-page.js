@@ -71,9 +71,12 @@
     const max = priceFilterToBase(filters.maxPrice);
 
     let list = products.filter((product) => {
-      const text = `${product.name} ${product.description} ${product.category} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
+      const productCategory = core.labelFromValue ? core.labelFromValue(product.category, "") : String(product.category || "");
+      const text = `${product.name} ${product.description} ${productCategory} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
       const searchOk = !q || text.includes(q);
-      const categoryOk = !category || product.category.toLocaleLowerCase("tr-TR") === category;
+      const categoryOk = !category || (App.shopCategories?.productMatchesCategory
+        ? App.shopCategories.productMatchesCategory(product, filters.category)
+        : productCategory.toLocaleLowerCase("tr-TR") === category);
       const brandOk = !brand || String(product.brand || "").toLocaleLowerCase("tr-TR") === brand;
       const minOk = !min || product.price >= min;
       const maxOk = !max || product.price <= max;
@@ -129,7 +132,18 @@
   function renderCategoryOptions() {
     const select = document.querySelector("[data-filter-category]");
     if (!select) return;
-    const categories = [...new Set(products.map((product) => product.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+    const rawCategories = App.shopCategories?.categoryOptions
+      ? App.shopCategories.categoryOptions(products)
+      : [...new Set(products
+        .map((product) => core.labelFromValue ? core.labelFromValue(product.category, "") : String(product.category || ""))
+        .filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "tr"));
+    const categories = rawCategories
+      .map((category) => core.labelFromValue ? core.labelFromValue(category, "") : String(category || ""))
+      .filter((category) => {
+        const normalized = App.shopCategories?.normalizeText ? App.shopCategories.normalizeText(category) : category.toLocaleLowerCase("tr-TR");
+        return category && category !== "[object Object]" && normalized !== "genel";
+      });
     select.innerHTML = `<option value="">Tüm kategoriler</option>${categories.map((category) => `<option value="${core.escapeHTML(category)}">${core.escapeHTML(category)}</option>`).join("")}`;
   }
 

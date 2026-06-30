@@ -6,8 +6,8 @@
   <title>AllonaHub Partner Ürün Yönetimi</title>
   <meta name="description" content="AllonaHub partner ürün, stok, fiyat ve görsel yönetimi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
   <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-productops1">
 </head>
@@ -93,7 +93,7 @@
           <form data-bulk-product-form>
             <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" placeholder="Yeni fiyat"></label>
             <label><span>Stok</span><input name="stock" type="number" min="0" step="1" placeholder="Yeni stok"></label>
-            <label><span>Kategori</span><input name="category" placeholder="Kategori"></label>
+            <label><span>Kategori</span><input name="category" placeholder="Kategori" list="shop-category-options"></label>
             <label><span>Marka</span><input name="brand" placeholder="Marka"></label>
             <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Toplu Kaydet</span></button>
           </form>
@@ -144,7 +144,7 @@
               <label class="partner-product-span-2"><span>Ürün adı</span><input name="name" required maxlength="180"></label>
               <label><span>SKU</span><input name="sku" maxlength="90"></label>
               <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="market">Allona Market</option><option value="food">Allona Yemek</option><option value="service">Hizmet</option><option value="taxi">Taksi</option></select></label>
-              <label><span>Kategori</span><input name="category" maxlength="120"></label>
+              <label><span>Kategori</span><input name="category" maxlength="120" list="shop-category-options"></label>
               <label><span>Marka / Restoran</span><input name="brand" maxlength="140"></label>
               <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required></label>
               <label><span>Stok</span><input name="stock" type="number" min="0" step="1" required></label>
@@ -175,17 +175,35 @@
     </main>
 
     <div data-layout="footer"></div>
+    <datalist id="shop-category-options">
+      <option value="Kadın"></option>
+      <option value="Erkek"></option>
+      <option value="Elektronik"></option>
+      <option value="Ayakkabı & Çanta"></option>
+      <option value="Moda"></option>
+      <option value="Ev & Yaşam"></option>
+      <option value="Oto, Bahçe & Yapı Market"></option>
+      <option value="Anne & Çocuk"></option>
+      <option value="Spor & Outdoor"></option>
+      <option value="Kozmetik"></option>
+      <option value="Süpermarket"></option>
+      <option value="Kitap & Hobi"></option>
+      <option value="Saat & Aksesuar"></option>
+      <option value="Beyaz Eşya"></option>
+      <option value="Bilgisayar & Tablet"></option>
+      <option value="Telefon & Aksesuar"></option>
+    </datalist>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260620-partneros1" defer></script>
-  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/core.js?v=20260630-shopcat2" defer></script>
   <script src="../../js/supabase-client.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-productops2" defer></script>
-  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
-  <script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-shopcat2" defer></script>
+  <script src="../../js/platform.js?v=20260630-shopcat2" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260630-shopcat2" defer></script>
 </body>
 </html>

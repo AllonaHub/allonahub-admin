@@ -644,11 +644,28 @@
       .slice(0, 90);
   }
 
+  function labelFromValue(value, fallback) {
+    if (value == null || value === "") return fallback || "";
+    if (typeof value === "string" || typeof value === "number") {
+      const label = String(value).trim();
+      return label && label !== "[object Object]" ? label : fallback || "";
+    }
+    if (Array.isArray(value)) return value.map((item) => labelFromValue(item, "")).filter(Boolean).join(", ") || fallback || "";
+    if (typeof value === "object") {
+      for (const key of ["name", "title", "label", "category_name", "categoryName", "category", "slug", "id"]) {
+        const label = labelFromValue(value[key], "");
+        if (label && label !== "[object Object]") return label;
+      }
+      return String(fallback || "");
+    }
+    return String(value || fallback || "");
+  }
+
   function normalizeProduct(raw) {
     const product = raw || {};
     const name = product.name || product.product_name || "Ürün";
     const description = product.description || product.short_description || "";
-    const category = product.category || "Genel";
+    const category = labelFromValue(product.category || product.category_name || product.categoryName, "Genel");
     const id = product.id;
     const slug = product.slug || product.seo_slug || slugify(`${name}-${id || ""}`);
     const partnerId = product.partner_id || product.partnerId || product.seller_id || "";
@@ -1007,6 +1024,7 @@
     productMediaUrl,
     money,
     slugify,
+    labelFromValue,
     normalizeProduct,
     productCard,
     productUrl,
