@@ -5,7 +5,9 @@ const token = process.env.CLOUDFLARE_API_TOKEN;
 const zoneId = process.env.CLOUDFLARE_ZONE_ID;
 const applyPartnerDns = process.env.APPLY_PARTNER_DNS === "1";
 const applyApiWafOnly = process.env.APPLY_API_WAF_ONLY === "1";
+const applySecurityGuardsOnly = process.env.APPLY_SECURITY_GUARDS_ONLY === "1";
 const applyWildcardDns = process.env.APPLY_WILDCARD_DNS === "1" || process.env.APPLY_MODULE_DNS === "1";
+const securityProfile = (process.env.ALLONAHUB_SECURITY_PROFILE || "setup").toLowerCase();
 
 if (!token || !zoneId) {
   console.error("Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID.");
@@ -77,6 +79,8 @@ const subdomainHostExpression = 'ends_with(http.host, ".allonahub.com")';
 const partnerHostExpression = 'http.host eq "partner.allonahub.com"';
 const publicHostExpression = `(${hostExpression} or ${subdomainHostExpression})`;
 const apiHostExpression = 'http.host eq "api.allonahub.com"';
+const apiRuntimePathExpression = '(http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))';
+const apiProductMediaExpression = `${apiHostExpression} and http.request.method eq "GET" and starts_with(http.request.uri.path, "/v1/media/product-images/")`;
 
 const MODULE_SUBDOMAIN_ROUTES = [
   { key: "app", hosts: ["app"], target: "/index.html" },
@@ -390,8 +394,8 @@ const apiSkipChallengeParameters = {
 
 const wafRules = [{
   ref: "allonahub-api-runtime-skip-challenge",
-  description: "Skip browser challenges for AllonaHub API runtime, cron, and cacheable product media",
-  expression: `${apiHostExpression} and (http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))`,
+  description: `AllonaHub ${securityProfile}: keep API JSON/media routes out of browser challenges while backend auth and rate limits stay active`,
+  expression: `${apiHostExpression} and ${apiRuntimePathExpression}`,
   action: "skip",
   action_parameters: apiSkipChallengeParameters,
   logging: {
@@ -407,7 +411,7 @@ const apiWafLegacyRefs = [
 const cacheRules = [{
   ref: "allonahub-product-media-cache",
   description: "Cache proxied Supabase product images at Cloudflare edge",
-  expression: `${apiHostExpression} and http.request.method eq "GET" and starts_with(http.request.uri.path, "/v1/media/product-images/")`,
+  expression: apiProductMediaExpression,
   action: "set_cache_settings",
   action_parameters: {
     cache: true,
@@ -434,6 +438,16 @@ if (applyApiWafOnly) {
     replaceRefs: apiWafLegacyRefs
   });
   console.log("Cloudflare AllonaHub API WAF rules applied.");
+  process.exit(0);
+}
+
+if (applySecurityGuardsOnly) {
+  await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, {
+    prepend: true,
+    replaceRefs: apiWafLegacyRefs
+  });
+  await upsertEntrypoint("http_request_cache_settings", "AllonaHub cache rules", cacheRules, { prepend: true });
+  console.log(`Cloudflare AllonaHub security guards applied for ${securityProfile} profile.`);
   process.exit(0);
 }
 

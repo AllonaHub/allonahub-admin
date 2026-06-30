@@ -225,14 +225,15 @@ node scripts/partner-integration-smoke-test.mjs
 
 - SSL/TLS: Full Strict
 - WAF Managed Rules: açık
-- Bot Fight Mode: açık
+- Bot Fight Mode: kurulumda kapali kalabilir; lansmanda Super Bot Fight Mode/Bot Management veya WAF + rate limit profili kullan
 - Rate limit:
   - `/v1/payments/*`
   - `/v1/cv/checkout`
   - `/v1/orders`
   - `/v1/cron/*`
-- Cache: `api.allonahub.com` için bypass
+- Cache: `GET /v1/media/product-images/*` Cloudflare edge cache, diger hassas API cevaplari bypass
 - Minimum TLS: 1.2
+- Sertlestirme sonrasi kontrol: `node deploy/cloudflare/verify-allonahub-security-guards.mjs`
 
 ## Kurumsal E-posta Yönlendirme
 

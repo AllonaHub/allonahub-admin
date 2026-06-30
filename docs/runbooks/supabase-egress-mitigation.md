@@ -1,6 +1,6 @@
 # Supabase Egress Mitigation
 
-Son guncelleme: 29.06.2026
+Son guncelleme: 30.06.2026
 
 Supabase uyarisi "cached egress bandwidth" icin geldiyse ana supheli alan Storage/CDN uzerinden indirilen public dosyalardir. Bu, az kullanici olsa bile buyuk gorsel/video dosyalari, bot taramasi veya admin/social media asset uretimi ile hizli artabilir.
 
@@ -108,6 +108,7 @@ node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --d
 - Buyuk video veya taslak dosyalarini Supabase public bucket'ta tutmamak.
 - Bot taramasini Cloudflare WAF/cache/rate limit ile kisitlamak.
 - Frontend listelerinde gereksiz buyuk gorsel URL'lerini tekrar tekrar yuklememek.
+- Cloudflare sertlestirmesinden sonra `node deploy/cloudflare/verify-allonahub-security-guards.mjs` ile media route'unun 200 dondugunu ve ikinci istekte Cloudflare cache'e dustugunu kontrol etmek.
 
 ## Urun gorseli cache proxy ve optimizasyon
 

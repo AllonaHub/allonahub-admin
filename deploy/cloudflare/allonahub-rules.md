@@ -1,6 +1,6 @@
 # AllonaHub Cloudflare Rules
 
-Son kontrol: 29.06.2026
+Son kontrol: 30.06.2026
 
 Canli kontrolde `https://allonahub.com/_headers` dosyasinin normal statik dosya olarak servis edildigi goruldu. Bu, mevcut hosting'in Netlify/Cloudflare Pages `_headers` formatini yorumlamadigini gosterir. Bu nedenle ana domain guvenlik header'lari Cloudflare Response Header Transform Rule veya origin sunucu ayari ile uygulanmalidir.
 
@@ -177,15 +177,19 @@ Supabase Auth kullaniliyorsa her yeni subdomain icin redirect URL allowlist'i de
 
 `/checkout.html` istegi canlida `cf-mitigated: challenge` ile kesiliyor. Redirect rule uygulaninca istek origin'e ve eski checkout path'ine dusmeden guvenli odeme sayfasina aktarilmalidir. Challenge devam ederse WAF Custom Rule icinde bu path'i challenge aksiyonundan haric tutan kural sirasi duzenlenmelidir.
 
-API cron endpointleri icin ek WAF skip kurali uygulanir:
+API runtime, cron ve media endpointleri icin ek WAF skip kurali uygulanir:
 
 ```text
 http.host eq "api.allonahub.com"
-and http.request.method eq "POST"
-and starts_with(http.request.uri.path, "/v1/cron/")
+and (
+  http.request.uri.path in {"/health" "/ready"}
+  or starts_with(http.request.uri.path, "/v1/")
+)
 ```
 
-Bu kural sadece Cloudflare challenge/security katmanini atlatir. Rate limit atlanmaz. Backend yine `x-cron-secret` degerini dogrular; secret yanlis ise istek reddedilir.
+Bu kural sadece Cloudflare challenge uretebilen katmanlari API/media icin atlatir. Rate limit atlanmaz. Backend yine JWT, MFA, rol, `x-cron-secret` ve uygulama rate limitlerini dogrular; secret veya token yanlis ise istek reddedilir.
+
+Free plandaki Bot Fight Mode WAF skip kurallarindan bagimsiz challenge uretebilir. Kurulum asamasinda Free Bot Fight Mode kapali kalabilir. Lansmanda Super Bot Fight Mode/Bot Management veya WAF + rate limit profili tercih edilmelidir. Detay: `docs/runbooks/cloudflare-security-hardening.md`.
 
 ## API Urun Gorseli Cache Kurali
 
@@ -220,4 +224,11 @@ Ardindan:
 
 ```bash
 node deploy/cloudflare/apply-allonahub-rules.mjs
+```
+
+Sadece API/media guvenlik raylarini ve cache kuralini yeniden basmak icin:
+
+```bash
+APPLY_SECURITY_GUARDS_ONLY=1 node deploy/cloudflare/apply-allonahub-rules.mjs
+node deploy/cloudflare/verify-allonahub-security-guards.mjs
 ```

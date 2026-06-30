@@ -102,7 +102,7 @@ Cloudflare/Domain DNS tarafında `mail.allonahub.com` A kaydı ve `allonahub.com
 - Rate limit: kayıt, giriş, partner başvuru, checkout, CV ödeme, admin ve cron URL'leri
 - Cloudflare Access: `admin.allonahub.com` ve Coolify dashboard için zorunlu
 - Security Headers: HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
-- Bot koruması: şüpheli form POST ve hızlı checkout denemelerine challenge
+- Bot korumasi: kurulumda Free Bot Fight Mode kapali olabilir; lansmanda API/media guard kurallari dogrulandiktan sonra Super Bot Fight Mode/Bot Management veya WAF + rate limit profili
 - Redirect: `http` -> `https`
 - Domain: canlı özel domain
 
