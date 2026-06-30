@@ -89,6 +89,8 @@
     "invoice_responsibility",
     "seller_disclosure",
     "image_url",
+    "media_gallery",
+    "video_url",
     "description",
     "sku"
   ];
@@ -1660,6 +1662,8 @@
     if (complianceReason) {
       throw new Error(`${complianceReason} kategorisi otomatik ürün yüklemeye kapalıdır. Lütfen AllonaHub destek üzerinden manuel inceleme talebi açın.`);
     }
+    const mediaGallery = parseMediaGallery(data.media_gallery);
+    const primaryImage = data.image_url || mediaGallery[0] || profile.image;
     return {
       name: data.name,
       description: data.description || "",
@@ -1683,12 +1687,27 @@
       seller_disclosure: sellerDisclosure,
       compliance_review_status: "pending",
       compliance_notes: data.status === "active" ? "Partner yayın talebi oluşturdu; admin onayı bekleniyor." : "Partner ürün taslağı oluşturdu; admin onayı bekleniyor.",
-      image_url: data.image_url || profile.image,
+      image_url: primaryImage,
+      media_gallery: mediaGallery.length ? mediaGallery : (primaryImage ? [primaryImage] : []),
+      video_url: String(data.video_url || "").trim(),
       slug: core.slugify(`${data.name}-${Date.now()}`),
       coupon_status: scope === "food" ? "Menü kuponu" : scope === "market" ? "Market kuponu" : "Aktif",
       hp_status: scope === "food" ? "HP kazandırır" : scope === "market" ? "Market HP" : "Aktif",
       sku: data.sku || core.slugify(`${profile.skuPrefix}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
     };
+  }
+
+  function parseMediaGallery(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    } catch (error) {
+      // Excel/CSV imports may carry gallery URLs as comma or newline separated text.
+    }
+    return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).slice(0, 8);
   }
 
   async function persistProductPayload(payload, options) {
@@ -1769,6 +1788,8 @@
       invoice_responsibility: "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.",
       seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
       image_url: profile.image,
+      media_gallery: JSON.stringify([profile.image]),
+      video_url: "",
       description: "Excel ile yükleme örneği",
       sku: `${profile.skuPrefix}-ORNEK-001`
     }];
@@ -1791,6 +1812,8 @@
       invoice_responsibility: item.invoice_responsibility || "",
       seller_disclosure: item.seller_disclosure || "",
       image_url: item.image_url || "",
+      media_gallery: Array.isArray(item.media_gallery) ? JSON.stringify(item.media_gallery) : item.media_gallery || "",
+      video_url: item.video_url || "",
       description: item.description || "",
       sku: item.sku || ""
     }));
@@ -1872,6 +1895,8 @@
       stock: ["stock", "stok", "kontenjan"],
       status: ["status", "durum", "yayın durumu", "yayin durumu"],
       image_url: ["image_url", "görsel url", "gorsel url", "resim", "fotoğraf", "fotograf"],
+      media_gallery: ["media_gallery", "galeri", "görsel galeri", "gorsel galeri", "ek görseller", "ek gorseller"],
+      video_url: ["video_url", "video", "video url", "ürün videosu", "urun videosu"],
       description: ["description", "açıklama", "aciklama"],
       sku: ["sku", "stok kodu", "ürün kodu", "urun kodu"]
     };

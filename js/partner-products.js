@@ -173,6 +173,41 @@
     return isApproved(product) && !isActive(product) && normalize(product.status) !== "archived";
   }
 
+  function automation(product) {
+    return product.review_automation || {
+      lane: "ready",
+      risk_level: "clear",
+      score: 0,
+      auto_approvable: true,
+      revision_required: false,
+      reasons: []
+    };
+  }
+
+  function isRiskProduct(product) {
+    const auto = automation(product);
+    return Boolean(
+      auto.revision_required
+      || auto.lane === "needs_revision"
+      || auto.lane === "watch"
+      || ["critical", "warning"].includes(auto.risk_level)
+      || productMatchesStatus(product, "needs_review")
+      || productMatchesStatus(product, "rejected")
+    );
+  }
+
+  function isReadyProduct(product) {
+    const auto = automation(product);
+    return Boolean(
+      !isRiskProduct(product)
+      && (
+        canPublish(product)
+        || normalize(product.compliance_review_status || product.review_status || product.approval_status) === "approved"
+        || (auto.auto_approvable && auto.lane === "ready" && auto.risk_level === "clear" && !auto.revision_required)
+      )
+    );
+  }
+
   function productMatchesSearch(product, search) {
     const term = String(search || "").trim().toLocaleLowerCase("tr-TR");
     if (!term) return true;
@@ -413,6 +448,8 @@
     set("price", Number(product.price || 0));
     set("stock", Number(product.stock || 0));
     set("image_url", rawProduct.image_url || product.image_url || "");
+    set("media_gallery", Array.isArray(rawProduct.media_gallery) ? JSON.stringify(rawProduct.media_gallery.slice(0, 8)) : rawProduct.media_gallery || "");
+    set("video_url", rawProduct.video_url || product.video_url || "");
     set("description", product.description || "");
     set("seller_public_name", rawProduct.seller_public_name || product.seller_public_name || "");
     set("seller_city", rawProduct.seller_city || product.seller_city || "");
@@ -474,6 +511,7 @@
 
   function payloadFromForm(form) {
     const data = Object.fromEntries(new FormData(form).entries());
+    const mediaGallery = parseMediaGallery(data.media_gallery);
     return {
       name: String(data.name || "").trim(),
       sku: String(data.sku || "").trim(),
@@ -484,6 +522,8 @@
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
       image_url: String(data.image_url || "").trim(),
+      media_gallery: mediaGallery,
+      video_url: String(data.video_url || "").trim(),
       description: String(data.description || "").trim(),
       seller_public_name: String(data.seller_public_name || "").trim(),
       seller_city: String(data.seller_city || "").trim(),
@@ -495,6 +535,19 @@
       meta_title: String(data.meta_title || "").trim(),
       meta_description: String(data.meta_description || "").trim()
     };
+  }
+
+  function parseMediaGallery(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    } catch (error) {
+      // Plain comma or newline separated gallery URLs are accepted for Excel/import compatibility.
+    }
+    return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).slice(0, 8);
   }
 
   async function updateProduct(productId, payload, options) {
@@ -522,6 +575,13 @@
     const input = $(`[data-select-product="${escapeSelector(id)}"]`);
     if (input) input.checked = checked;
     renderSelectedState();
+  }
+
+  function selectExact(products, label) {
+    const ids = products.map((product) => String(product.id || "")).filter(Boolean);
+    state.selected = new Set(ids);
+    renderRows();
+    toast(`${ids.length} ${label} seçildi.`);
   }
 
   function quickPayload(productId) {
@@ -651,8 +711,11 @@
       const archive = event.target.closest("[data-archive-product]");
       const close = event.target.closest("[data-close-product-drawer]");
       const clear = event.target.closest("[data-clear-product-filters]");
+      const selectAllAction = event.target.closest("[data-select-all-products-action]");
       const selectVisible = event.target.closest("[data-select-visible-products]");
       const selectActive = event.target.closest("[data-select-active-products]");
+      const selectReady = event.target.closest("[data-select-ready-products]");
+      const selectRisk = event.target.closest("[data-select-risk-products]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
       const row = event.target.closest("[data-product-row]");
       if (refresh) loadProducts();
@@ -674,6 +737,15 @@
       if (selectVisible) {
         visibleProducts().forEach((product) => state.selected.add(String(product.id)));
         renderRows();
+      }
+      if (selectAllAction) {
+        selectExact(state.products.map(normalizeProduct), "ürün");
+      }
+      if (selectReady) {
+        selectExact(visibleProducts().map(normalizeProduct).filter(isReadyProduct), "onaya hazır ürün");
+      }
+      if (selectRisk) {
+        selectExact(visibleProducts().map(normalizeProduct).filter(isRiskProduct), "riskli ürün");
       }
       if (selectActive) {
         visibleProducts()

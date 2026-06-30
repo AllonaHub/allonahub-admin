@@ -219,6 +219,22 @@ const nullablePartnerProductText = (max) => z.preprocess(
   z.string().trim().max(max).nullable().optional()
 );
 
+const partnerProductMediaGallerySchema = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return value.split(/[\n,]+/);
+    }
+  }
+  return [];
+}, z.array(z.string().trim().max(1200).refine((value) => (
+  !value || /^https?:\/\//i.test(value)
+), "Galeri URL http/https formatında olmalı.")).max(8).optional());
+
 const partnerProductListQuerySchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
   status: z.string().trim().max(80).optional().default("all"),
@@ -232,6 +248,8 @@ const partnerProductUpdateSchema = z.object({
   price: z.coerce.number().min(0).max(10000000).optional(),
   stock: z.coerce.number().int().min(0).max(1000000).optional(),
   image_url: nullablePartnerProductText(900),
+  media_gallery: partnerProductMediaGallerySchema,
+  video_url: nullablePartnerProductText(1200),
   category: nullablePartnerProductText(120),
   brand: nullablePartnerProductText(140),
   sku: nullablePartnerProductText(90),
@@ -4131,7 +4149,7 @@ function productReviewAutomation(product = {}) {
     auto_approvable: !revisionRequired,
     revision_required: revisionRequired,
     reasons,
-    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "seller_disclosure", "image_url", "price", "stock"]
+    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock"]
   };
 }
 
@@ -4209,7 +4227,8 @@ function productAutoPublishCandidate(product = {}) {
   const price = Number(product.price || 0);
   const stock = Number(product.stock ?? 0);
   const description = String(product.description || "").trim();
-  const image = String(product.image_url || product.image || "").trim();
+  const galleryImage = Array.isArray(product.media_gallery) ? product.media_gallery.find(Boolean) : "";
+  const image = String(product.image_url || galleryImage || product.image || "").trim();
   return Boolean(
     productNeedsAdminReview(product)
       && automation.auto_approvable
@@ -7119,15 +7138,39 @@ async function assertSafeIntegrationUrl(rawUrl) {
   return parsed;
 }
 
+const INTEGRATION_BARCODE_KEYS = ["barcode", "barCode", "Barcode", "barkod", "gtin", "GTIN", "ean", "ean13", "EAN", "upc", "UPC"];
+const INTEGRATION_PRODUCT_CODE_KEYS = ["sku", "stock_code", "stockCode", "stok_kodu", "urun_kodu", "ürün_kodu", "product_code", "productCode", "code", "model_code", "modelCode", "tuketim_kodu", "tüketim_kodu"];
+const INTEGRATION_GROUP_CODE_KEYS = ["productMainId", "mainProductId", "item_group_id", "group_id", "groupCode", "model_code", "modelCode", "parent_id", "parentId"];
+
+function integrationRowValue(row, variant, keys) {
+  return firstValue(row, keys) || firstValue(variant || {}, keys);
+}
+
+function normalizedIntegrationCode(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[^a-zA-Z0-9._:-]/g, "")
+    .toUpperCase()
+    .slice(0, 160);
+}
+
 function normalizeIntegrationProduct(row, integration, index) {
   const name = String(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"]) || "").trim();
   if (!name) return null;
   const firstVariant = Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {};
   const firstCategory = Array.isArray(row?.categories) && row.categories.length ? row.categories[0] : null;
 
-  const externalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || `row-${index + 1}`).trim();
-  const variantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
-  const sku = String(firstValue(row, ["sku", "stock_code", "stockCode", "barcode", "stok_kodu", "urun_kodu"]) || firstVariant.sku || firstVariant.barcode || externalId).trim();
+  const barcode = String(integrationRowValue(row, firstVariant, INTEGRATION_BARCODE_KEYS) || "").trim();
+  const productCode = String(integrationRowValue(row, firstVariant, INTEGRATION_PRODUCT_CODE_KEYS) || "").trim();
+  const groupCode = String(integrationRowValue(row, firstVariant, INTEGRATION_GROUP_CODE_KEYS) || "").trim();
+  const explicitExternalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || firstVariant.product_id || "").trim();
+  const externalId = String(groupCode || explicitExternalId || productCode || barcode || `row-${index + 1}`).trim();
+  const explicitVariantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
+  const variantId = String(explicitVariantId || barcode || productCode || "").trim();
+  const sku = String(productCode || barcode || firstVariant.sku || externalId).trim();
+  const variantGroupKey = normalizedIntegrationCode(groupCode || externalId);
+  const variantMatchKey = normalizedIntegrationCode(barcode || productCode || variantId || sku || externalId);
   const settings = integration.settings || {};
   const moduleKey = ["shop", "market", "food", "service"].includes(settings.module_key) ? settings.module_key : "shop";
   const categoryValue = firstValue(row, ["category", "categoryName", "productMainId", "categories", "kategori"])
@@ -7139,6 +7182,10 @@ function normalizeIntegrationProduct(row, integration, index) {
     external_product_id: externalId,
     external_variant_id: variantId || null,
     external_sku: sku,
+    barcode,
+    product_code: productCode,
+    variant_group_key: variantGroupKey,
+    variant_match_key: variantMatchKey,
     name,
     description: String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1800),
     price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
@@ -7187,11 +7234,17 @@ function integrationProductCompliance(product) {
 function integrationProductPreview(product) {
   return {
     external_product_id: product.external_product_id,
+    external_variant_id: product.external_variant_id || null,
+    variant_group_key: product.variant_group_key || "",
+    variant_match_key: product.variant_match_key || "",
+    barcode: product.barcode || "",
+    product_code: product.product_code || "",
     name: product.name,
     price: product.price,
     stock: product.stock,
     category: product.category,
     module_key: product.module_key,
+    auto_approved: integrationProductAutoApproved(product, product.compliance),
     compliance_status: product.compliance?.status || "pending",
     compliance_warnings: product.compliance?.warnings || [],
     compliance_errors: product.compliance?.errors || []
@@ -7362,8 +7415,29 @@ function productStatusForIntegrationApply(integration) {
   return integration.default_publish_status === "active" ? "active" : "draft";
 }
 
+function integrationProductIdentity(item) {
+  return normalizedIntegrationCode(item.variant_match_key || item.external_variant_id || item.external_product_id) || String(item.external_product_id || "");
+}
+
+function integrationProductAutoApproved(item, compliance) {
+  const review = compliance || integrationProductCompliance(item);
+  const description = String(item.description || "").trim();
+  const image = String(item.image_url || "").trim();
+  const category = String(item.category || "").trim();
+  return Boolean(
+    !review.errors.length
+    && !review.warnings.length
+    && Number(item.price || 0) > 0
+    && Number(item.stock || 0) > 0
+    && description.length >= 20
+    && /^https?:\/\//i.test(image)
+    && category
+    && category !== "Genel"
+  );
+}
+
 function integrationProductSku(integration, item) {
-  const rawSku = String(item.external_sku || item.external_product_id || "").trim();
+  const rawSku = String(item.external_sku || item.variant_match_key || item.external_product_id || "").trim();
   const prefix = integration.provider.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
   return `${prefix}-${backendSlug(rawSku || item.name).toUpperCase()}`.slice(0, 48);
 }
@@ -7373,10 +7447,18 @@ function partnerPublicName(business) {
 }
 
 function integrationProductPayload({ business, integration, item }) {
-  const status = productStatusForIntegrationApply(integration);
   const sellerName = partnerPublicName(business);
   const compliance = item.compliance || integrationProductCompliance(item);
-  const complianceStatus = compliance.status === "rejected" ? "rejected" : compliance.warnings.length ? "needs_review" : "pending";
+  const autoApproved = integrationProductAutoApproved(item, compliance);
+  const status = autoApproved ? "active" : productStatusForIntegrationApply(integration);
+  const complianceStatus = autoApproved
+    ? "approved"
+    : compliance.status === "rejected"
+      ? "rejected"
+      : compliance.warnings.length
+        ? "needs_review"
+        : "pending";
+  const identity = integrationProductIdentity(item);
   return {
     name: item.name,
     product_name: item.name,
@@ -7406,19 +7488,26 @@ function integrationProductPayload({ business, integration, item }) {
     compliance_review_status: complianceStatus,
     compliance_notes: [
       `Entegrasyon importu: ${integration.provider}.`,
-      status === "draft" ? "Ürün taslak olarak admin/operasyon kontrolüne alındı." : "Ürün aktif import edildi.",
+      autoApproved
+        ? "Risksiz entegrasyon ürünü otomasyon tarafından onaylandı ve yayına alındı."
+        : status === "draft"
+          ? "Ürün taslak olarak admin/operasyon kontrolüne alındı."
+          : "Ürün aktif import edildi.",
+      item.barcode ? `Barkod: ${item.barcode}.` : "",
+      item.product_code ? `Ürün kodu: ${item.product_code}.` : "",
       ...compliance.errors,
       ...compliance.warnings
-    ].join(" ").slice(0, 1200),
+    ].filter(Boolean).join(" ").slice(0, 1200),
     sku: integrationProductSku(integration, item),
     integration_source: integration.provider,
-    integration_external_id: item.external_product_id
+    integration_external_id: identity
   };
 }
 
 async function applyIntegrationProducts({ business, integration, products }) {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
   const externalIds = products.map((item) => item.external_product_id).filter(Boolean);
+  const identityIds = products.map(integrationProductIdentity).filter(Boolean);
   const productPartnerId = business.owner_id || business.id;
   const { data: existingLinks, error: linkError } = await supabaseAdmin
     .from("partner_integration_product_links")
@@ -7433,7 +7522,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
     .select("id, integration_external_id")
     .eq("partner_id", productPartnerId)
     .eq("integration_source", integration.provider)
-    .in("integration_external_id", externalIds.length ? externalIds : ["__none__"]);
+    .in("integration_external_id", identityIds.length ? identityIds : ["__none__"]);
   if (productLookupError) throw productLookupError;
 
   const productMap = new Map();
@@ -7444,6 +7533,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
   }
 
   for (const item of products) {
+    const identity = integrationProductIdentity(item);
     const key = `${item.external_product_id}:${item.external_variant_id || ""}`;
     const hash = sourceHashFor(item.raw);
     const existing = linkMap.get(key);
@@ -7457,14 +7547,15 @@ async function applyIntegrationProducts({ business, integration, products }) {
       if (compliance.warnings.length) {
         result.warnings.push({ external_product_id: item.external_product_id, warnings: compliance.warnings });
       }
-      if (existing?.source_hash === hash && existing.product_id) {
+      const autoApproved = integrationProductAutoApproved(item, compliance);
+      if (existing?.source_hash === hash && existing.product_id && !autoApproved) {
         result.skipped += 1;
         continue;
       }
 
       const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
 
-      const existingProduct = existing?.product_id ? null : productMap.get(item.external_product_id);
+      const existingProduct = existing?.product_id ? null : productMap.get(identity);
       let productId = existing?.product_id || existingProduct?.id || null;
       const productAlreadyExists = Boolean(productId);
       if (productId) {
@@ -7482,9 +7573,19 @@ async function applyIntegrationProducts({ business, integration, products }) {
           .single();
         if (productInsertError) throw productInsertError;
         productId = product.id;
-        productMap.set(item.external_product_id, product);
+        productMap.set(identity, product);
         result.created += 1;
       }
+      const lastPayload = item.raw && typeof item.raw === "object" && !Array.isArray(item.raw)
+        ? { ...item.raw }
+        : { value: item.raw };
+      lastPayload.allonahub_variant = {
+        barcode: item.barcode || "",
+        product_code: item.product_code || "",
+        group_key: item.variant_group_key || "",
+        match_key: item.variant_match_key || "",
+        integration_identity: identity
+      };
 
       const linkPayload = {
         partner_id: business.id,
@@ -7497,7 +7598,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
         sync_status: productAlreadyExists ? "updated" : "created",
         compliance_status: productPayload.compliance_review_status,
         last_validation_warnings: compliance.warnings || [],
-        last_payload: item.raw || {},
+        last_payload: lastPayload,
         last_synced_at: new Date().toISOString()
       };
 
@@ -7602,6 +7703,7 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
       valid_count: validProducts.length,
       invalid_count: invalidProducts.length,
       warning_count: warningCount,
+      auto_approved_count: validProducts.filter((product) => integrationProductAutoApproved(product, product.compliance)).length,
       preview: products.slice(0, 12).map(integrationProductPreview),
       errors: [...validationErrors, ...applyResult.errors].slice(0, 10),
       warnings: applyResult.warnings.slice(0, 10)
@@ -8645,7 +8747,8 @@ export function registerRoutes(app) {
       .filter((product) => partnerProductMatchesSearch(product, query.search))
       .filter((product) => partnerProductMatchesStatus(product, query.status))
       .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
-      .slice(0, query.limit);
+      .slice(0, query.limit)
+      .map(attachProductReviewAutomation);
 
     await auditEvent({
       request,
@@ -8695,6 +8798,7 @@ export function registerRoutes(app) {
     [
       "description",
       "image_url",
+      "video_url",
       "category",
       "brand",
       "sku",
@@ -8710,6 +8814,7 @@ export function registerRoutes(app) {
     ].forEach((field) => {
       if (has(field)) updatePayload[field] = cleanNullable(body[field]);
     });
+    if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || []).slice(0, 8);
     if (has("price")) updatePayload.price = Number(body.price || 0);
     if (has("stock")) updatePayload.stock = Number(body.stock || 0);
     if (has("module_key")) updatePayload.module_key = body.module_key;

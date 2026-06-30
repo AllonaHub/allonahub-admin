@@ -83,7 +83,10 @@
             <span>Seçili ürünler için boş bırakılan alanlar korunur.</span>
           </div>
           <div class="partner-products-selection-actions" aria-label="Hızlı seçim">
+            <button type="button" data-select-all-products-action><i class="fa-solid fa-list-check"></i><span>Tümünü Seç</span></button>
             <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
+            <button type="button" data-select-ready-products><i class="fa-solid fa-shield-check"></i><span>Onaya Hazırları Seç</span></button>
+            <button type="button" data-select-risk-products><i class="fa-solid fa-triangle-exclamation"></i><span>Risklileri Seç</span></button>
             <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
             <button type="button" data-clear-selected-products><i class="fa-solid fa-xmark"></i><span>Seçimi Temizle</span></button>
           </div>
@@ -145,8 +148,11 @@
               <label><span>Marka / Restoran</span><input name="brand" maxlength="140"></label>
               <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required></label>
               <label><span>Stok</span><input name="stock" type="number" min="0" step="1" required></label>
-              <label class="partner-product-span-2"><span>Görsel dosyası</span><input name="image_file" type="file" accept="image/avif,image/jpeg,image/png,image/webp" data-product-image-file></label>
+              <input name="media_gallery" type="hidden" data-product-media-gallery>
+              <label class="partner-product-span-2"><span>Görsel dosyaları (en fazla 8)</span><input name="image_file" type="file" accept="image/avif,image/jpeg,image/png,image/webp" multiple data-product-image-file></label>
               <label class="partner-product-span-2"><span>Görsel URL</span><input name="image_url" maxlength="900" data-product-image-url></label>
+              <label class="partner-product-span-2"><span>Video dosyası (en fazla 1)</span><input name="video_file" type="file" accept="video/mp4,video/webm,video/quicktime" data-product-video-file></label>
+              <label class="partner-product-span-2"><span>Video URL</span><input name="video_url" maxlength="1200" data-product-video-url></label>
               <label class="partner-product-span-2"><span>Açıklama</span><textarea name="description" maxlength="1800"></textarea></label>
               <label><span>Satıcı görünen adı</span><input name="seller_public_name" maxlength="140"></label>
               <label><span>Satıcı şehir</span><input name="seller_city" maxlength="90"></label>
@@ -177,8 +183,8 @@
   <script src="../../js/supabase-client.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
-  <script src="../../js/product-image-upload.js?v=20260629-media1" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-productops1" defer></script>
+  <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-productops2" defer></script>
   <script src="../../js/platform.js?v=20260630-currency3" defer></script>
   <script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>

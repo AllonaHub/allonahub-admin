@@ -307,6 +307,25 @@
     const imageUrl = security
       ? (security.sanitizePublicUrl(rawImageUrl) || (/^(\/?images\/|\.{1,2}\/images\/)/i.test(rawImageUrl) ? rawImageUrl : ""))
       : rawImageUrl;
+    const normalizeGallery = (value) => {
+      if (Array.isArray(value)) return value;
+      const raw = String(value || "").trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        // CSV and Excel imports may pass galleries as comma or newline separated text.
+      }
+      return raw.split(/[\n,]+/);
+    };
+    const mediaGallery = normalizeGallery(payload.media_gallery)
+      .map((url) => String(url || "").trim())
+      .map((url) => security ? (security.sanitizePublicUrl(url) || (/^(\/?images\/|\.{1,2}\/images\/)/i.test(url) ? url : "")) : url)
+      .filter(Boolean)
+      .slice(0, 8);
+    const rawVideoUrl = String(payload.video_url || "").trim();
+    const videoUrl = security ? security.sanitizePublicUrl(rawVideoUrl) : rawVideoUrl;
     const price = Number(payload.price || 0);
     const stock = Number(payload.stock || 0);
     const moduleKey = normalizedScope(payload.module_key || payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope) || "shop";
@@ -337,6 +356,8 @@
       meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || "",
       brand,
       partner_id: payload.partner_id || undefined,
+      media_gallery: mediaGallery.length ? mediaGallery : (imageUrl ? [imageUrl] : []),
+      video_url: videoUrl || "",
       ...sellerFields
     };
 
@@ -357,8 +378,19 @@
       hp_status: payload.hp_status || payload.hp_label || "Aktif",
       sku: payload.sku || core.slugify(`${skuPrefix}-${cleanName}-${payload.partner_id || "partner"}`).toUpperCase().slice(0, 48),
       barcode: payload.barcode || "",
+      media_gallery: mediaGallery.length ? mediaGallery : (imageUrl ? [imageUrl] : []),
+      video_url: videoUrl || "",
       ...sellerFields
     };
+
+    function withoutOptionalMediaFields(product) {
+      const {
+        media_gallery: _mediaGallery,
+        video_url: _videoUrl,
+        ...rest
+      } = product;
+      return rest;
+    }
 
     function withoutSellerFields(product) {
       const {
@@ -398,9 +430,13 @@
       const { module_key: _moduleKey, ...legacyWithoutModuleKey } = legacyProduct;
       const variants = [
         legacyProduct,
+        withoutOptionalMediaFields(modernProduct),
+        withoutOptionalMediaFields(legacyProduct),
         withoutSellerFields(modernProduct),
         withoutSellerFields(legacyProduct),
-        withoutSellerFields(legacyWithoutModuleKey)
+        withoutSellerFields(withoutOptionalMediaFields(modernProduct)),
+        withoutSellerFields(withoutOptionalMediaFields(legacyProduct)),
+        withoutSellerFields(withoutOptionalMediaFields(legacyWithoutModuleKey))
       ];
       let lastError = error;
       for (const variant of variants) {

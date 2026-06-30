@@ -568,14 +568,41 @@
     showToast(`${readyIds.length} güvenli ürün seçildi.`);
   }
 
+  function selectRiskProducts() {
+    const riskIds = state.products
+      .filter((raw) => {
+        const auto = automation(raw);
+        return auto.revision_required || auto.lane === "needs_revision" || auto.lane === "watch" || ["critical", "warning"].includes(auto.risk_level);
+      })
+      .map((product) => String(product.id));
+    state.selected = new Set(riskIds);
+    renderSelectedState();
+    showToast(`${riskIds.length} riskli/kontrol gerektiren ürün seçildi.`);
+  }
+
+  function selectAllProducts() {
+    const ids = state.products.map((product) => String(product.id)).filter(Boolean);
+    state.selected = new Set(ids);
+    renderSelectedState();
+    showToast(`${ids.length} ürün seçildi.`);
+  }
+
   function bindEvents() {
     document.addEventListener("click", async (event) => {
       if (event.target.closest("[data-product-review-refresh]")) {
         await loadProducts().catch((error) => showAlert(readableError(error), "error"));
         return;
       }
+      if (event.target.closest("[data-select-all-reviews]")) {
+        selectAllProducts();
+        return;
+      }
       if (event.target.closest("[data-select-ready]")) {
         selectReadyProducts();
+        return;
+      }
+      if (event.target.closest("[data-select-risk]")) {
+        selectRiskProducts();
         return;
       }
       if (event.target.closest("[data-bulk-approve]")) {
