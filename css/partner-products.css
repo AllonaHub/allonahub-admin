@@ -142,6 +142,100 @@
   color: #ff8ca2;
 }
 
+.partner-products-revision-callout {
+  margin-top: 14px;
+  border: 1px solid rgba(255, 77, 109, 0.48);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 14px;
+  background:
+    linear-gradient(90deg, rgba(255, 77, 109, 0.18), rgba(255, 77, 109, 0.07)),
+    color-mix(in srgb, var(--ah-bg-strong) 90%, transparent);
+  color: var(--ah-ink);
+  box-shadow: inset 4px 0 0 #ff4d6d, var(--ah-shadow-soft);
+}
+
+.partner-products-revision-callout[hidden] {
+  display: none;
+}
+
+.partner-products-revision-callout > div:first-child {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  min-width: min(100%, 420px);
+}
+
+.partner-products-revision-callout strong {
+  display: block;
+  color: #ffb1bf;
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.partner-products-revision-callout p,
+.partner-products-revision-callout small {
+  margin: 3px 0 0;
+  color: color-mix(in srgb, var(--ah-ink) 78%, #ffffff 22%);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.partner-products-revision-pulse {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 13px;
+  background: #ff4d6d;
+  box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.55);
+  animation: partnerRevisionPulse 1.45s ease-out infinite;
+}
+
+.partner-products-revision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.partner-products-revision-actions button {
+  min-height: 38px;
+  border: 1px solid rgba(255, 77, 109, 0.4);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: #ffd8df;
+  background: rgba(255, 77, 109, 0.14);
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.partner-products-revision-actions button:hover {
+  border-color: rgba(255, 77, 109, 0.72);
+  background: rgba(255, 77, 109, 0.22);
+}
+
+@keyframes partnerRevisionPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(255, 77, 109, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 109, 0);
+  }
+}
+
 .partner-products-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
@@ -221,6 +315,7 @@
 .partner-products-toolbar input,
 .partner-products-toolbar select,
 .partner-products-bulk input,
+.partner-products-bulk textarea,
 .partner-product-edit-grid input,
 .partner-product-edit-grid select,
 .partner-product-edit-grid textarea {
@@ -235,6 +330,12 @@
   outline: none;
 }
 
+.partner-products-bulk textarea {
+  min-height: 86px;
+  padding-top: 10px;
+  resize: vertical;
+}
+
 .partner-product-edit-grid textarea {
   min-height: 92px;
   padding-top: 10px;
@@ -244,6 +345,7 @@
 .partner-products-toolbar input:focus,
 .partner-products-toolbar select:focus,
 .partner-products-bulk input:focus,
+.partner-products-bulk textarea:focus,
 .partner-product-edit-grid input:focus,
 .partner-product-edit-grid select:focus,
 .partner-product-edit-grid textarea:focus {
@@ -272,6 +374,10 @@
   display: grid;
   gap: 10px;
   margin-top: 12px;
+}
+
+.partner-products-bulk-span-2 {
+  grid-column: 1 / -1;
 }
 
 .partner-products-page-size {
@@ -480,6 +586,15 @@
   box-shadow: inset 3px 0 0 color-mix(in srgb, var(--ah-accent) 76%, transparent);
 }
 
+.partner-products-table tbody tr.needs-revision {
+  background: rgba(255, 77, 109, 0.08);
+  box-shadow: inset 4px 0 0 #ff4d6d;
+}
+
+.partner-products-table tbody tr.needs-revision:hover {
+  background: rgba(255, 77, 109, 0.12);
+}
+
 .partner-products-table tbody tr.is-selected {
   box-shadow: inset 3px 0 0 var(--ah-primary);
 }
@@ -653,6 +768,31 @@
   border-color: color-mix(in srgb, var(--ah-accent) 46%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-accent) 13%, transparent);
   color: var(--ah-accent);
+}
+
+.partner-product-revision-note {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 24px;
+  border: 1px solid rgba(255, 77, 109, 0.44);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  padding: 3px 7px;
+  background: rgba(255, 77, 109, 0.12);
+  color: #ffb1bf;
+  font-size: 0.68rem;
+  font-weight: 950;
+  line-height: 1.15;
+  vertical-align: middle;
+}
+
+.partner-product-revision-note small {
+  max-width: 245px;
+  margin-top: 0;
+  color: #ffd8df;
 }
 
 .partner-products-money,

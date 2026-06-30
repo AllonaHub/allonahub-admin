@@ -31,6 +31,13 @@ import {
   supabasePublic
 } from "../lib/supabase.js";
 import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
+import {
+  PRODUCT_REVISION_DEFAULT_NOTICE,
+  marketplacePlatformPattern,
+  productIntegrationRevisionRules,
+  productReviewFieldLabels,
+  productReviewPolicyRules
+} from "../product-revision-rules/index.js";
 
 const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email().max(180);
@@ -4005,79 +4012,6 @@ function productNeedsAdminReview(product = {}) {
   return hasPartnerOrImportSignal && !closedProductStatuses.has(status);
 }
 
-const productReviewFieldLabels = {
-  name: "Ürün adı",
-  product_name: "Ürün adı",
-  description: "Açıklama",
-  meta_title: "SEO başlığı",
-  meta_description: "SEO açıklaması",
-  category: "Kategori",
-  brand: "Marka",
-  sku: "SKU",
-  barcode: "Barkod",
-  seller_disclosure: "Satıcı bilgilendirme",
-  invoice_responsibility: "Fatura sorumluluğu"
-};
-
-const marketplacePlatformPattern = /\b(trendyol|hepsiburada|n11|amazon|etsy|shopify|woocommerce|çiçeksepeti|ciceksepeti|pazarama|pttavm|gittigidiyor)\b/i;
-
-const productReviewPolicyRules = [
-  {
-    code: "external_marketplace_branding",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["name", "product_name", "description", "meta_title", "meta_description", "brand", "sku"],
-    pattern: marketplacePlatformPattern,
-    title: "Dış platform adı içeriyor",
-    suggestion: "Ürün adı, açıklama, SEO metni, marka veya SKU içinde dış pazar yeri adını kaldırın; ürün AllonaHub kataloğunda platform bağımsız ve kendi ürün bilgisiyle yayınlanmalı."
-  },
-  {
-    code: "prohibited_or_illegal_terms",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["name", "product_name", "description", "meta_title", "meta_description", "category", "brand"],
-    pattern: /\b(sahte|replika|kaçak|kacak|yasadışı|yasadisi|uyuşturucu|uyusturucu|narkotik|silah|tabanca|tüfek|tufek|patlayıcı|patlayici|çalıntı|calinti|kumar|bahis)\b/i,
-    title: "Yasaklı veya hukuki riskli ifade",
-    suggestion: "Ürün adı, kategori veya açıklamadaki yasaklı/kaçak/hukuki riskli ifadeyi kaldırıp mevzuata uygun ürün içeriğiyle değiştirin."
-  },
-  {
-    code: "regulated_health_claim",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["name", "product_name", "description", "meta_title", "meta_description"],
-    pattern: /(%100\s*(kesin|garanti)|kesin\s+(çözüm|cozum|tedavi)|mucize|garantili\s+tedavi|doktor\s+onaylı|doktor\s+onayli|bakanlık\s+onaylı|bakanlik\s+onayli|reçetesiz\s+ilaç|recetesiz\s+ilac)/i,
-    title: "Sağlık/performans iddiası",
-    suggestion: "İspatlanamayan sağlık, tedavi, kesin sonuç veya resmi onay iddialarını açıklamadan çıkarın."
-  },
-  {
-    code: "contact_information_in_content",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["description", "meta_description", "seller_disclosure"],
-    pattern: /((\+?90\s*)?0?\s*5\d{2}[\s().-]*\d{3}[\s().-]*\d{2}[\s().-]*\d{2}|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|https?:\/\/|www\.|wa\.me|whatsapp|telegram|instagram|tiktok|facebook|x\.com|\.com\b|\.net\b|\.org\b)/i,
-    title: "Açıklamada harici iletişim/yönlendirme",
-    suggestion: "Telefon, e-posta, sosyal medya, WhatsApp veya dış link bilgisini ürün açıklamasından kaldırın; iletişim AllonaHub akışı üzerinden yürümeli."
-  },
-  {
-    code: "return_exchange_payment_bypass",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["description", "meta_description", "seller_disclosure"],
-    pattern: /(iade\s+(yok|kabul\s+edilmez|alınmaz|alinmaz)|değişim\s+(yok|kabul\s+edilmez)|degisim\s+(yok|kabul\s+edilmez)|cayma\s+hakkı\s+yok|cayma\s+hakki\s+yok|kapıda\s+ödeme|kapida\s+odeme|iban|havale|eft|elden\s+ödeme|elden\s+odeme|whatsapp'tan\s+sipariş|whatsapptan\s+siparis)/i,
-    title: "İade/değişim veya ödeme akışını bozan ifade",
-    suggestion: "İade/değişim yasağı, IBAN/havale/elden ödeme veya platform dışı sipariş yönlendirmesi içeren metni kaldırın."
-  },
-  {
-    code: "violence_or_hate_content",
-    severity: "critical",
-    requiresRevision: true,
-    fields: ["name", "product_name", "description", "meta_title", "meta_description"],
-    pattern: /(nefret\s+söylemi|nefret\s+soylemi|ırkçı|irkci|şiddet\s+çağrısı|siddet\s+cagrisi|terör|teror|örgüt|orgut)/i,
-    title: "Şiddet/nefret içerik riski",
-    suggestion: "Şiddet, nefret veya terör çağrışımı yapan ifadeleri kaldırın ve ürünü hukuka uygun şekilde yeniden tanımlayın."
-  }
-];
-
 function productReviewFieldText(product = {}, field) {
   return String(product[field] || "").trim();
 }
@@ -4166,6 +4100,35 @@ function productOperationalReviewReasons(product = {}) {
   return reasons;
 }
 
+function productHasIntegrationSignal(product = {}) {
+  return Boolean(
+    product.integration_source
+      || product.integration_external_id
+      || product.external_product_id
+      || product.external_variant_id
+      || product.external_sku
+  );
+}
+
+function productIntegrationRevisionReasons(product = {}) {
+  if (!productHasIntegrationSignal(product)) return [];
+  const reasons = [];
+  for (const rule of productIntegrationRevisionRules) {
+    if (!rule?.code || typeof rule.test !== "function" || !rule.test(product)) continue;
+    addProductReviewReason(reasons, {
+      code: rule.code,
+      severity: rule.severity,
+      field: rule.field,
+      field_label: productReviewFieldLabels[rule.field] || rule.field,
+      title: rule.title,
+      message: rule.message || `${productReviewFieldLabels[rule.field] || rule.field} alanı entegrasyon importu için revize edilmeli.`,
+      suggestion: rule.suggestion,
+      requires_revision: Boolean(rule.requiresRevision)
+    });
+  }
+  return reasons;
+}
+
 function productVariantReviewReasons(product = {}) {
   const reasons = [];
   const variant = product.variant_automation || {};
@@ -4199,6 +4162,7 @@ function productVariantReviewReasons(product = {}) {
 function productReviewAutomation(product = {}) {
   const reasons = [
     ...productReviewRuleReasons(product),
+    ...productIntegrationRevisionReasons(product),
     ...productOperationalReviewReasons(product),
     ...productVariantReviewReasons(product)
   ];
@@ -4217,7 +4181,7 @@ function productReviewAutomation(product = {}) {
     auto_approvable: !revisionRequired,
     revision_required: revisionRequired,
     reasons,
-    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "sku", "barcode", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock"]
+    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "sku", "barcode", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock", "integration_source", "integration_external_id"]
   };
 }
 
@@ -4279,8 +4243,6 @@ function productReviewDecisionPayload(decision, reason, nowIso = new Date().toIS
     updated_at: nowIso
   };
 }
-
-const PRODUCT_REVISION_DEFAULT_NOTICE = "Ürün revizyonu gereklidir. Dış platform adı, tekrar ürün/varyant, barkod, görsel, açıklama, fiyat, stok ve kategori alanları AllonaHub yayın kurallarına göre kontrol edilmelidir. Dış pazar yeri adları ürün adı, açıklama, SEO metni, marka ve SKU alanlarından kaldırılmalıdır.";
 
 function productReviewRevisionReason(product = {}, baseReason = "") {
   const automation = product.review_automation || productReviewAutomation(product);
@@ -5062,9 +5024,14 @@ function productVariantLinkPayload(link = {}) {
   return payload.allonahub_variant && typeof payload.allonahub_variant === "object" ? payload.allonahub_variant : {};
 }
 
+function isGeneratedIntegrationBarcode(value) {
+  return /^ALH-[A-Z0-9]+-[A-F0-9]{14}$/i.test(String(value || "").trim());
+}
+
 function productVariantSignal(product = {}, link = null) {
   const variant = productVariantLinkPayload(link || {});
-  const barcode = String(variant.barcode || product.barcode || "").trim();
+  const rawBarcode = String(variant.barcode || product.barcode || "").trim();
+  const barcode = isGeneratedIntegrationBarcode(rawBarcode) ? "" : rawBarcode;
   const productCode = String(variant.product_code || product.sku || link?.external_sku || "").trim();
   const sourceGroupKey = String(variant.group_key || "").trim();
   const sourceMatchKey = String(variant.match_key || link?.external_variant_id || link?.external_sku || product.integration_external_id || product.sku || "").trim();
@@ -5073,7 +5040,7 @@ function productVariantSignal(product = {}, link = null) {
   const modelRoot = usefulModelRoot(variant.model_root || productModelRoot(product.brand, product.name, product.product_name, product.category));
   const color = String(variant.color || colorFromText(product.name, product.product_name, product.sku, imageUrl) || "").trim();
   const size = String(variant.size || "").trim();
-  const groupKey = normalizedIntegrationCode(sourceGroupKey || modelRoot || product.integration_external_id || product.sku || product.id);
+  const groupKey = normalizedIntegrationCode(sourceGroupKey || modelRoot || imageSignature || product.integration_external_id || product.sku || product.id);
   const matchKey = normalizedIntegrationCode(barcode || productCode || sourceMatchKey || imageSignature || product.id);
   const source = sourceGroupKey
     ? "external_group"
@@ -8381,6 +8348,16 @@ function integrationProductSku(integration, item) {
   return `${prefix}-${backendSlug(rawSku || item.name).toUpperCase()}`.slice(0, 48);
 }
 
+function integrationProductBarcode(integration, item) {
+  const provided = String(item.barcode || "").trim();
+  if (provided) return provided.slice(0, 80);
+  const provider = String(integration.provider || "INT").toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
+  const identity = integrationProductIdentity(item) || item.external_sku || item.product_code || item.name || "";
+  if (!identity) return "";
+  const digest = createHash("sha1").update(`${provider}:${identity}`).digest("hex").slice(0, 14).toUpperCase();
+  return `ALH-${provider}-${digest}`.slice(0, 80);
+}
+
 function partnerPublicName(business) {
   return business.display_name || business.legal_name || "AllonaHub Partner";
 }
@@ -8389,8 +8366,8 @@ function integrationProductPayload({ business, integration, item }) {
   const sellerName = partnerPublicName(business);
   const compliance = item.compliance || integrationProductCompliance(item);
   const autoApproved = integrationProductAutoApproved(item, compliance);
-  const status = autoApproved ? "active" : productStatusForIntegrationApply(integration);
-  const complianceStatus = autoApproved
+  let status = autoApproved ? "active" : productStatusForIntegrationApply(integration);
+  let complianceStatus = autoApproved
     ? "approved"
     : compliance.status === "rejected"
       ? "rejected"
@@ -8398,7 +8375,7 @@ function integrationProductPayload({ business, integration, item }) {
         ? "needs_review"
         : "pending";
   const identity = integrationProductIdentity(item);
-  return {
+  const payload = {
     name: item.name,
     product_name: item.name,
     description: item.description,
@@ -8433,6 +8410,7 @@ function integrationProductPayload({ business, integration, item }) {
           ? "Ürün taslak olarak admin/operasyon kontrolüne alındı."
           : "Ürün aktif import edildi.",
       item.barcode ? `Barkod: ${item.barcode}.` : "",
+      item.generated_barcode ? "Barkod dış platformdan gelmedi; AllonaHub iç barkodu üretildi." : "",
       item.product_code ? `Ürün kodu: ${item.product_code}.` : "",
       item.variant_color ? `Varyant renk: ${item.variant_color}.` : "",
       item.variant_size ? `Varyant beden/ölçü: ${item.variant_size}.` : "",
@@ -8444,14 +8422,36 @@ function integrationProductPayload({ business, integration, item }) {
     integration_source: integration.provider,
     integration_external_id: identity
   };
+  const automation = productReviewAutomation(payload);
+  if (automation.revision_required) {
+    status = "draft";
+    complianceStatus = "needs_review";
+    payload.status = status;
+    payload.compliance_review_status = complianceStatus;
+    payload.compliance_notes = productReviewRevisionReason(
+      { ...payload, review_automation: automation },
+      payload.compliance_notes
+    );
+  }
+  return payload;
 }
 
 async function applyIntegrationProducts({ business, integration, products }) {
   const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
+  const preparedProducts = products.map((item) => {
+    const barcode = integrationProductBarcode(integration, item);
+    const previousBarcode = String(item.barcode || "").trim();
+    if (!barcode) return item;
+    return {
+      ...item,
+      barcode,
+      generated_barcode: !previousBarcode
+    };
+  });
   const incomingDuplicateKeys = new Map();
-  const externalIds = products.map((item) => item.external_product_id).filter(Boolean);
-  const identityIds = products.map(integrationProductIdentity).filter(Boolean);
-  const barcodeIds = [...new Set(products.map((item) => String(item.barcode || "").trim()).filter(Boolean))];
+  const externalIds = preparedProducts.map((item) => item.external_product_id).filter(Boolean);
+  const identityIds = preparedProducts.map(integrationProductIdentity).filter(Boolean);
+  const barcodeIds = [...new Set(preparedProducts.map((item) => String(item.barcode || "").trim()).filter(Boolean))];
   const productPartnerId = business.owner_id || business.id;
   const { data: existingLinks, error: linkError } = await supabaseAdmin
     .from("partner_integration_product_links")
@@ -8489,10 +8489,10 @@ async function applyIntegrationProducts({ business, integration, products }) {
     }
   }
 
-  for (const item of products) {
+  for (const item of preparedProducts) {
     const identity = integrationProductIdentity(item);
     const duplicateKey = productVariantDuplicateKey({
-      barcode: item.barcode,
+      barcode: item.generated_barcode ? "" : item.barcode,
       product_code: item.product_code,
       image_signature: item.variant_image_signature,
       model_root: item.variant_model_root,

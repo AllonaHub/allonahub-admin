@@ -348,6 +348,81 @@
     };
   }
 
+  function revisionReasonItems(product) {
+    return (automation(product).reasons || [])
+      .filter((reason) => reason.requires_revision || reason.severity === "critical")
+      .slice(0, 6);
+  }
+
+  function revisionRequired(product) {
+    const auto = automation(product);
+    return Boolean(
+      auto.revision_required
+      || auto.lane === "needs_revision"
+      || auto.risk_level === "critical"
+      || productMatchesStatus(product, "needs_review")
+    );
+  }
+
+  function revisionProducts() {
+    return state.products.map(normalizeProduct).filter(revisionRequired);
+  }
+
+  function revisionReasonText(product, limit = 2) {
+    const reasons = revisionReasonItems(product);
+    if (!reasons.length) return "Otomasyon bu üründe revizyon gerektiren alanlar tespit etti.";
+    const visible = reasons.slice(0, limit).map((reason) => reason.title || reason.message || reason.field_label || reason.field).filter(Boolean);
+    const extra = reasons.length > visible.length ? ` +${reasons.length - visible.length}` : "";
+    return `${visible.join(" · ")}${extra}`;
+  }
+
+  function renderRevisionInlineWarning(product) {
+    if (!revisionRequired(product)) return "";
+    return `
+      <span class="partner-product-revision-note">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <b>Revize gerekli</b>
+        <small>${escape(revisionReasonText(product, 3))}</small>
+      </span>
+    `;
+  }
+
+  function renderRevisionCallout() {
+    const target = $("[data-revision-callout]");
+    if (!target) return;
+    const rows = revisionProducts();
+    if (!rows.length) {
+      target.hidden = true;
+      target.innerHTML = "";
+      return;
+    }
+    const reasonCounts = new Map();
+    rows.forEach((product) => {
+      revisionReasonItems(product).forEach((reason) => {
+        const label = reason.title || reason.message || reason.field_label || reason.field || "Revizyon";
+        reasonCounts.set(label, (reasonCounts.get(label) || 0) + 1);
+      });
+    });
+    const topReasons = [...reasonCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+    target.hidden = false;
+    target.innerHTML = `
+      <div>
+        <span class="partner-products-revision-pulse" aria-hidden="true"></span>
+        <div>
+          <strong>${escape(rows.length)} ürün revize bekliyor</strong>
+          <p>IP/API entegrasyonuyla gelen ürünler otomatik kurallardan geçti. Kırmızı ürünleri admin onayına göndermeden önce düzeltin.</p>
+          ${topReasons.length ? `<small>${topReasons.map(([label, count]) => `${escape(label)} (${escape(count)})`).join(" · ")}</small>` : ""}
+        </div>
+      </div>
+      <div class="partner-products-revision-actions">
+        <button type="button" data-filter-revision-products><i class="fa-solid fa-filter"></i><span>Revizyonları Göster</span></button>
+        <button type="button" data-select-revision-products><i class="fa-solid fa-list-check"></i><span>Revize Gerekenleri Seç</span></button>
+      </div>
+    `;
+  }
+
   function isRiskProduct(product) {
     const auto = automation(product);
     return Boolean(
@@ -578,7 +653,7 @@
     });
     const form = $("[data-bulk-product-form]");
     if (form) {
-      $all("input", form).forEach((node) => {
+      $all("input, textarea, select", form).forEach((node) => {
         node.disabled = count === 0;
       });
       $all("button", form).forEach((node) => {
@@ -599,6 +674,7 @@
   function renderRows() {
     const target = $("[data-product-rows]");
     if (!target) return;
+    renderRevisionCallout();
     const rows = visibleProducts();
     if (!rows.length) {
       target.innerHTML = `
@@ -631,8 +707,13 @@
       const stockClass = Number(product.stock || 0) <= 0 ? "is-empty" : Number(product.stock || 0) <= 5 ? "is-low" : "";
       const approvedForPublish = canPublish(product);
       const archived = normalize(product.status) === "archived";
+      const needsRevision = revisionRequired(product);
+      const rowClasses = [
+        state.selected.has(String(product.id)) ? "is-selected" : "",
+        needsRevision ? "needs-revision" : ""
+      ].filter(Boolean).join(" ");
       return `
-        <tr data-product-row="${escape(product.id)}" class="${state.selected.has(String(product.id)) ? "is-selected" : ""}">
+        <tr data-product-row="${escape(product.id)}" class="${escape(rowClasses)}">
           <td class="partner-products-select">
             <input type="checkbox" data-select-product="${escape(product.id)}" aria-label="${escape(product.name)} seç" ${state.selected.has(String(product.id)) ? "checked" : ""}>
           </td>
@@ -648,6 +729,7 @@
                 <button type="button" class="partner-product-name-link" data-open-product-detail="${escape(product.id)}">${escape(product.name)}</button>
                 <small>${escape(codeLine)}</small>
                 ${renderVariantSummary(product)}
+                ${renderRevisionInlineWarning(product)}
               </span>
             </div>
           </td>
@@ -955,6 +1037,19 @@
     toast(`${ids.length} ${label} seçildi.${limitNote}`, ids.length > BULK_PRODUCT_LIMIT ? "warning" : undefined);
   }
 
+  function showRevisionFilter() {
+    state.filters.status = "needs_review";
+    resetPage();
+    const status = $("[data-product-status-filter]");
+    if (status) status.value = "needs_review";
+    renderRows();
+  }
+
+  function selectRevisionProducts() {
+    if (state.filters.status !== "needs_review") showRevisionFilter();
+    selectExact(visibleProducts().map(normalizeProduct).filter(revisionRequired), "revize gereken ürün");
+  }
+
   function markQuickDirty(productId) {
     const rawProduct = productById(productId);
     const row = $(`[data-product-row="${escapeSelector(String(productId))}"]`);
@@ -1055,13 +1150,26 @@
     if (String(data.stock || "").trim() !== "") payload.stock = Number(data.stock || 0);
     if (String(data.category || "").trim()) payload.category = String(data.category || "").trim();
     if (String(data.brand || "").trim()) payload.brand = String(data.brand || "").trim();
+    if (String(data.sku || "").trim()) payload.sku = String(data.sku || "").trim();
+    if (String(data.barcode || "").trim()) {
+      if (state.selected.size > 1) throw new Error("Barkod benzersiz olmalı; toplu barkod revizyonu için tek ürün seçin.");
+      payload.barcode = String(data.barcode || "").trim();
+    }
+    if (String(data.seller_disclosure || "").trim()) payload.seller_disclosure = String(data.seller_disclosure || "").trim();
+    if (String(data.description || "").trim()) payload.description = String(data.description || "").trim();
     return payload;
   }
 
   async function submitBulk(form) {
     const ids = [...state.selected];
     if (!validateBulkSelection(ids)) return;
-    const payload = bulkPayload(form);
+    let payload = {};
+    try {
+      payload = bulkPayload(form);
+    } catch (error) {
+      toast(error.message || "Toplu revizyon alanlarını kontrol edin.", "warning");
+      return;
+    }
     if (!Object.keys(payload).length) {
       toast("Toplu revizyon için en az bir alan girin.", "warning");
       return;
@@ -1197,10 +1305,12 @@
       const selectVisible = event.target.closest("[data-select-visible-products]");
       const selectActive = event.target.closest("[data-select-active-products]");
       const selectReady = event.target.closest("[data-select-ready-products]");
+      const selectRevision = event.target.closest("[data-select-revision-products]");
       const selectRisk = event.target.closest("[data-select-risk-products]");
       const selectMissingPrice = event.target.closest("[data-select-missing-price-products]");
       const selectMissingStock = event.target.closest("[data-select-missing-stock-products]");
       const selectLowStock = event.target.closest("[data-select-low-stock-products]");
+      const filterRevision = event.target.closest("[data-filter-revision-products]");
       const submitReview = event.target.closest("[data-submit-selected-review]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
       const pageButton = event.target.closest("[data-product-page]");
@@ -1221,6 +1331,9 @@
         const status = $("[data-product-status-filter]");
         if (status) status.value = state.filters.status;
         renderRows();
+      }
+      if (filterRevision) {
+        showRevisionFilter();
       }
       if (refresh) loadProducts();
       if (edit) goToProductDetail(edit.dataset.editProduct);
@@ -1248,6 +1361,9 @@
       }
       if (selectReady) {
         selectExact(visibleProducts().map(normalizeProduct).filter(isReadyProduct), "onaya hazır ürün");
+      }
+      if (selectRevision) {
+        selectRevisionProducts();
       }
       if (selectRisk) {
         selectExact(visibleProducts().map(normalizeProduct).filter(isRiskProduct), "riskli ürün");

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-productqueue1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-revisionqueue2">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -39,6 +39,7 @@
       </header>
 
       <div class="partner-products-alert" data-product-alert hidden></div>
+      <section class="partner-products-revision-callout" data-revision-callout hidden></section>
 
       <section class="partner-products-kpis" data-product-kpis aria-label="Ürün özeti"></section>
 
@@ -99,6 +100,7 @@
             <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
             <button type="button" data-select-ready-products><i class="fa-solid fa-shield-check"></i><span>Onaya Hazırları Seç</span></button>
             <button type="button" data-submit-selected-review><i class="fa-solid fa-paper-plane"></i><span>Seçili Ürünleri Onaya Gönder</span></button>
+            <button type="button" data-select-revision-products><i class="fa-solid fa-pen-ruler"></i><span>Revize Gerekenleri Seç</span></button>
             <button type="button" data-select-risk-products><i class="fa-solid fa-triangle-exclamation"></i><span>Risklileri Seç</span></button>
             <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
             <button type="button" data-select-missing-price-products><i class="fa-solid fa-tags"></i><span>Fiyatı Olmayanları Seç</span></button>
@@ -111,6 +113,10 @@
             <label><span>Stok</span><input name="stock" type="number" min="0" step="1" placeholder="Yeni stok"></label>
             <label><span>Kategori</span><input name="category" placeholder="Kategori" list="shop-category-options"></label>
             <label><span>Marka</span><input name="brand" placeholder="Marka"></label>
+            <label><span>SKU</span><input name="sku" placeholder="SKU / stok kodu" maxlength="90"></label>
+            <label><span>Barkod</span><input name="barcode" placeholder="Barkod / GTIN" maxlength="80"></label>
+            <label class="partner-products-bulk-span-2"><span>Satıcı bilgilendirme</span><input name="seller_disclosure" placeholder="Platform dışı ifade kaldırıldı" maxlength="420"></label>
+            <label class="partner-products-bulk-span-2"><span>Açıklama</span><textarea name="description" placeholder="Seçili ürünler için açıklama revizyonu" maxlength="1800"></textarea></label>
             <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Toplu Kaydet</span></button>
           </form>
         </aside>
@@ -226,7 +232,7 @@
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-productqueue1" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-revisionqueue2" defer></script>
   <script src="../../js/platform.js?v=20260630-shopcat2" defer></script>
   <script src="../../js/privacy-consent.js?v=20260630-shopcat2" defer></script>
 </body>
