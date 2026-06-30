@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
+  const BULK_PRODUCT_LIMIT = 50;
   const state = {
     access: null,
     business: null,
@@ -8,6 +9,7 @@
     selected: new Set(),
     currentProductId: "",
     pageSize: 50,
+    page: 1,
     filters: {
       search: "",
       status: "all",
@@ -413,7 +415,24 @@
   }
 
   function visibleProducts() {
-    return filteredProducts().slice(0, state.pageSize);
+    const rows = filteredProducts();
+    const page = clampCurrentPage(rows.length);
+    const start = (page - 1) * state.pageSize;
+    return rows.slice(start, start + state.pageSize);
+  }
+
+  function totalPages(filteredCount) {
+    return Math.max(1, Math.ceil(Number(filteredCount || 0) / state.pageSize));
+  }
+
+  function clampCurrentPage(filteredCount) {
+    const pages = totalPages(filteredCount);
+    state.page = Math.min(Math.max(Number(state.page || 1), 1), pages);
+    return state.page;
+  }
+
+  function resetPage() {
+    state.page = 1;
   }
 
   function summaryFromProducts(products) {
@@ -459,30 +478,83 @@
   function renderSummary() {
     const target = $("[data-product-manager-summary]");
     const filtered = filteredProducts().length;
-    const visible = Math.min(state.pageSize, filtered);
+    const page = clampCurrentPage(filtered);
+    const visible = visibleProducts().length;
+    const start = filtered ? ((page - 1) * state.pageSize) + 1 : 0;
+    const end = filtered ? start + visible - 1 : 0;
     const total = state.products.length;
     const businessName = state.business?.display_name || state.business?.legal_name || "Partner";
-    if (target) target.textContent = `${businessName} kataloğu · ${visible}/${filtered}/${total} ürün gösteriliyor.`;
+    if (target) target.textContent = `${businessName} kataloğu · ${start}-${end}/${filtered} filtre sonucu · ${total} toplam ürün.`;
     const windowTarget = $("[data-product-window-summary]");
     if (windowTarget) {
-      const start = filtered ? 1 : 0;
-      windowTarget.textContent = `${start}-${visible} arası gösteriliyor · ${filtered} filtre sonucu`;
+      windowTarget.textContent = `${start}-${end} arası gösteriliyor · ${totalPages(filtered)} sayfa`;
     }
+  }
+
+  function paginationPages(current, pages) {
+    const values = new Set([1, pages, current, current - 1, current + 1, current - 2, current + 2]);
+    return [...values]
+      .filter((value) => value >= 1 && value <= pages)
+      .sort((a, b) => a - b);
+  }
+
+  function renderPagination() {
+    const target = $("[data-product-pagination]");
+    if (!target) return;
+    const filtered = filteredProducts().length;
+    const pages = totalPages(filtered);
+    const current = clampCurrentPage(filtered);
+    const visible = visibleProducts().length;
+    const start = filtered ? ((current - 1) * state.pageSize) + 1 : 0;
+    const end = filtered ? start + visible - 1 : 0;
+    const pageButtons = paginationPages(current, pages);
+    target.innerHTML = `
+      <div>
+        <strong>${escape(start)}-${escape(end)}</strong>
+        <span>${escape(filtered)} ürün içinde gösteriliyor</span>
+      </div>
+      <div class="partner-products-page-buttons">
+        <button type="button" data-product-page="${escape(current - 1)}" ${current <= 1 ? "disabled" : ""} title="Önceki sayfa">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        ${pageButtons.map((page, index) => `
+          ${index > 0 && page - pageButtons[index - 1] > 1 ? `<span class="partner-products-page-ellipsis">...</span>` : ""}
+          <button type="button" data-product-page="${escape(page)}" class="${page === current ? "is-active" : ""}" ${page === current ? "aria-current=\"page\"" : ""}>${escape(page)}</button>
+        `).join("")}
+        <button type="button" data-product-page="${escape(current + 1)}" ${current >= pages ? "disabled" : ""} title="Sonraki sayfa">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    `;
   }
 
   function renderSelectedState() {
     const count = state.selected.size;
     const target = $("[data-selected-count]");
     if (target) target.textContent = `${count} ürün seçildi`;
+    const overLimit = count > BULK_PRODUCT_LIMIT;
+    const hint = $("[data-bulk-limit-hint]");
+    if (hint) {
+      hint.textContent = overLimit
+        ? `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir. ${count - BULK_PRODUCT_LIMIT} ürünü seçimden çıkarın veya sayfa sayfa gönderin.`
+        : `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir.`;
+      hint.classList.toggle("is-warning", overLimit);
+    }
     $all("[data-product-row]").forEach((row) => {
       row.classList.toggle("is-selected", state.selected.has(String(row.dataset.productRow || "")));
     });
     const form = $("[data-bulk-product-form]");
     if (form) {
-      $all("input, button", form).forEach((node) => {
+      $all("input", form).forEach((node) => {
         node.disabled = count === 0;
       });
+      $all("button", form).forEach((node) => {
+        node.disabled = count === 0 || overLimit;
+      });
     }
+    $all("[data-submit-selected-review]").forEach((node) => {
+      node.disabled = count === 0 || overLimit;
+    });
     const master = $("[data-select-all-products]");
     if (master) {
       const rows = visibleProducts();
@@ -508,6 +580,8 @@
       `;
       renderSelectedState();
       renderSummary();
+      renderPagination();
+      syncTableScrollbars();
       return;
     }
 
@@ -532,7 +606,7 @@
                 ${renderVariantMiniStrip(product, raw)}
               </span>
               <span>
-                <strong>${escape(product.name)}</strong>
+                <button type="button" class="partner-product-name-link" data-open-product-detail="${escape(product.id)}">${escape(product.name)}</button>
                 <small>${escape(product.sku || product.brand || product.seller_public_name || "SKU yok")}</small>
                 ${renderVariantSummary(product)}
               </span>
@@ -555,7 +629,7 @@
             </button>
             <button type="button" data-edit-product="${escape(product.id)}" title="Ürün içeriğini düzenle">
               <i class="fa-solid fa-pen-to-square"></i>
-              <span>Düzenle</span>
+              <span>Detay</span>
             </button>
             ${approvedForPublish ? `
               <button type="button" data-publish-product="${escape(product.id)}" title="Onaylı ürünü yayına al">
@@ -573,11 +647,51 @@
     }).join("");
     renderSelectedState();
     renderSummary();
+    renderPagination();
+    syncTableScrollbars();
   }
 
   function renderAll() {
     renderKpis();
     renderRows();
+  }
+
+  function productDetailUrl(productId) {
+    return `/pages/partner/partner-product-detail.html?id=${encodeURIComponent(productId)}`;
+  }
+
+  function goToProductDetail(productId) {
+    if (!productId) return;
+    window.location.href = productDetailUrl(productId);
+  }
+
+  function syncTableScrollbars() {
+    const wrap = $("[data-table-wrap]");
+    const top = $("[data-table-scrollbar]");
+    const inner = $("[data-table-scrollbar-inner]");
+    const table = $(".partner-products-table");
+    if (!wrap || !top || !inner || !table) return;
+    inner.style.width = `${table.scrollWidth}px`;
+    top.hidden = table.scrollWidth <= wrap.clientWidth + 2;
+    if (top.dataset.syncReady === "true") return;
+    top.dataset.syncReady = "true";
+    let syncing = false;
+    top.addEventListener("scroll", () => {
+      if (syncing) return;
+      syncing = true;
+      wrap.scrollLeft = top.scrollLeft;
+      syncing = false;
+    });
+    wrap.addEventListener("scroll", () => {
+      if (syncing) return;
+      syncing = true;
+      top.scrollLeft = wrap.scrollLeft;
+      syncing = false;
+    });
+    window.addEventListener("resize", () => {
+      inner.style.width = `${table.scrollWidth}px`;
+      top.hidden = table.scrollWidth <= wrap.clientWidth + 2;
+    });
   }
 
   function setButtonBusy(button, busy) {
@@ -762,7 +876,8 @@
     const ids = products.map((product) => String(product.id || "")).filter(Boolean);
     state.selected = new Set(ids);
     renderRows();
-    toast(`${ids.length} ${label} seçildi.`);
+    const limitNote = ids.length > BULK_PRODUCT_LIMIT ? ` Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün gönderilebilir.` : "";
+    toast(`${ids.length} ${label} seçildi.${limitNote}`, ids.length > BULK_PRODUCT_LIMIT ? "warning" : undefined);
   }
 
   function markQuickDirty(productId) {
@@ -870,7 +985,7 @@
 
   async function submitBulk(form) {
     const ids = [...state.selected];
-    if (!ids.length) return;
+    if (!validateBulkSelection(ids)) return;
     const payload = bulkPayload(form);
     if (!Object.keys(payload).length) {
       toast("Toplu revizyon için en az bir alan girin.", "warning");
@@ -879,15 +994,76 @@
     const button = form.querySelector("button[type='submit']");
     setButtonBusy(button, true);
     try {
-      for (const productId of ids) {
-        await updateProduct(productId, payload, { silent: true });
-      }
-      state.selected.clear();
+      const result = await apiFetch("/v1/partner/products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          product_ids: ids,
+          updates: payload
+        })
+      });
+      applyBulkResult(result, ids);
       form.reset();
       renderAll();
-      toast(`${ids.length} ürün revizyonu admin onayına gönderildi.`, "success");
+      toastBulkResult(result, ids.length);
     } catch (error) {
-      toast(error.message || "Toplu revizyon tamamlanamadı.", "error");
+      toastBulkError(error);
+    } finally {
+      setButtonBusy(button, false);
+      renderSelectedState();
+    }
+  }
+
+  function validateBulkSelection(ids) {
+    if (!ids.length) return false;
+    if (ids.length > BULK_PRODUCT_LIMIT) {
+      toast(`Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir. Lütfen seçimi azaltın veya sayfa sayfa gönderin.`, "warning");
+      renderSelectedState();
+      return false;
+    }
+    return true;
+  }
+
+  function applyBulkResult(result, ids) {
+    if (result.products?.length) {
+      const updatedById = new Map(result.products.map((product) => [String(product.id), product]));
+      state.products = state.products.map((product) => updatedById.get(String(product.id)) || product);
+    }
+    const failedIds = new Set((result.failed || []).map((item) => String(item.product_id || "")));
+    state.selected = new Set(ids.filter((id) => failedIds.has(String(id))));
+  }
+
+  function toastBulkResult(result, fallbackCount) {
+    if (result.failed?.length) {
+      toast(`${result.message || "Toplu işlem kısmen tamamlandı."} Tamamlanamayanlar seçili bırakıldı.`, "warning");
+    } else {
+      toast(result.message || `${fallbackCount} ürün admin onayına gönderildi.`, "success");
+    }
+  }
+
+  function toastBulkError(error) {
+    const message = /RATE_LIMITED|çok fazla|sınır/i.test(error.message || "")
+      ? "Toplu işlem çok sayıda ayrı istek yerine tek istekle gönderilecek şekilde güncellendi. Lütfen birkaç saniye sonra tekrar deneyin."
+      : error.message || "Toplu işlem tamamlanamadı.";
+    toast(message, "error");
+  }
+
+  async function submitSelectedForReview(button) {
+    const ids = [...state.selected];
+    if (!validateBulkSelection(ids)) return;
+    setButtonBusy(button, true);
+    try {
+      const result = await apiFetch("/v1/partner/products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          product_ids: ids,
+          submit_for_review: true
+        })
+      });
+      applyBulkResult(result, ids);
+      renderAll();
+      toastBulkResult(result, ids.length);
+    } catch (error) {
+      toastBulkError(error);
     } finally {
       setButtonBusy(button, false);
       renderSelectedState();
@@ -899,6 +1075,7 @@
     document.addEventListener("click", (event) => {
       const refresh = event.target.closest("[data-refresh-products]");
       const edit = event.target.closest("[data-edit-product]");
+      const detail = event.target.closest("[data-open-product-detail]");
       const quickSave = event.target.closest("[data-save-quick-product]");
       const publish = event.target.closest("[data-publish-product]");
       const archive = event.target.closest("[data-archive-product]");
@@ -912,16 +1089,20 @@
       const selectMissingPrice = event.target.closest("[data-select-missing-price-products]");
       const selectMissingStock = event.target.closest("[data-select-missing-stock-products]");
       const selectLowStock = event.target.closest("[data-select-low-stock-products]");
+      const submitReview = event.target.closest("[data-submit-selected-review]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
+      const pageButton = event.target.closest("[data-product-page]");
       const row = event.target.closest("[data-product-row]");
       if (refresh) loadProducts();
-      if (edit) openEditor(edit.dataset.editProduct);
+      if (edit) goToProductDetail(edit.dataset.editProduct);
+      if (detail) goToProductDetail(detail.dataset.openProductDetail);
       if (quickSave) saveQuickProduct(quickSave.dataset.saveQuickProduct, quickSave);
       if (publish) publishProduct(publish.dataset.publishProduct, publish);
       if (archive) archiveProduct(archive.dataset.archiveProduct, archive);
       if (close) closeEditor();
       if (clear) {
         state.filters = { search: "", status: "all", sort: "updated_desc" };
+        resetPage();
         const search = $("[data-product-search]");
         const status = $("[data-product-status-filter]");
         const sort = $("[data-product-sort]");
@@ -954,18 +1135,27 @@
       if (selectLowStock) {
         selectExact(visibleProducts().map(normalizeProduct).filter(isCriticalStockProduct), "stoku az kalan ürün");
       }
+      if (submitReview) {
+        submitSelectedForReview(submitReview);
+      }
       if (clearSelected) {
         state.selected.clear();
         renderRows();
       }
+      if (pageButton) {
+        state.page = Number(pageButton.dataset.productPage || 1) || 1;
+        renderRows();
+        $("[data-partner-products-shell]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       if (row && !event.target.closest("button,a,input,select,textarea,label")) {
-        toggleSelection(row.dataset.productRow);
+        goToProductDetail(row.dataset.productRow);
       }
     });
 
     document.addEventListener("input", (event) => {
       if (event.target.matches("[data-product-search]")) {
         state.filters.search = event.target.value || "";
+        resetPage();
         debouncedRender();
       }
       if (event.target.closest("[data-product-edit-form]")) {
@@ -980,14 +1170,17 @@
     document.addEventListener("change", (event) => {
       if (event.target.matches("[data-product-status-filter]")) {
         state.filters.status = event.target.value || "all";
+        resetPage();
         renderRows();
       }
       if (event.target.matches("[data-product-sort]")) {
         state.filters.sort = event.target.value || "updated_desc";
+        resetPage();
         renderRows();
       }
       if (event.target.matches("[data-product-page-size]")) {
         state.pageSize = Number(event.target.value || 50) || 50;
+        resetPage();
         renderRows();
       }
       if (event.target.matches("[data-select-product]")) {

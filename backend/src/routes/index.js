@@ -238,8 +238,10 @@ const partnerProductMediaGallerySchema = z.preprocess((value) => {
 const partnerProductListQuerySchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
   status: z.string().trim().max(80).optional().default("all"),
-  limit: z.coerce.number().int().min(1).max(500).optional().default(300)
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500)
 });
+
+const PARTNER_PRODUCT_BULK_LIMIT = 50;
 
 const partnerProductUpdateSchema = z.object({
   name: z.string().trim().min(2).max(180).optional(),
@@ -266,6 +268,14 @@ const partnerProductUpdateSchema = z.object({
   meta_description: nullablePartnerProductText(300)
 }).refine((value) => Object.keys(value).length > 0, {
   message: "Guncellenecek urun alani gonderilmedi."
+});
+
+const partnerProductBulkUpdateSchema = z.object({
+  product_ids: z.array(uuidSchema).min(1).max(PARTNER_PRODUCT_BULK_LIMIT),
+  updates: partnerProductUpdateSchema.optional(),
+  submit_for_review: z.boolean().optional().default(false)
+}).refine((value) => value.submit_for_review || value.updates, {
+  message: "Toplu islem icin guncelleme alani veya onaya gonderme secimi gerekli."
 });
 
 const partnerOrderStatusSchema = z.object({
@@ -4927,6 +4937,70 @@ function attachVariantGroups(products = [], linksByProductId = new Map()) {
   });
 }
 
+function buildPartnerProductUpdatePayload(productId, before, body) {
+  const has = (field) => Object.prototype.hasOwnProperty.call(body, field);
+  const cleanNullable = (value) => value === null ? null : String(value ?? "").trim();
+  const updatePayload = {};
+  const nextName = has("name") ? body.name : has("product_name") ? body.product_name : "";
+
+  if (nextName) {
+    updatePayload.name = nextName;
+    updatePayload.product_name = nextName;
+    updatePayload.slug = backendSlug(`${nextName}-${productId}`);
+    if (!has("meta_title")) updatePayload.meta_title = nextName;
+  }
+  [
+    "description",
+    "image_url",
+    "video_url",
+    "category",
+    "brand",
+    "sku",
+    "seller_public_name",
+    "seller_legal_name",
+    "seller_city",
+    "seller_contact",
+    "seller_tax_number_masked",
+    "invoice_responsibility",
+    "seller_disclosure",
+    "meta_title",
+    "meta_description"
+  ].forEach((field) => {
+    if (has(field)) updatePayload[field] = cleanNullable(body[field]);
+  });
+  if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || []).slice(0, 8);
+  if (has("price")) updatePayload.price = Number(body.price || 0);
+  if (has("stock")) updatePayload.stock = Number(body.stock || 0);
+  if (has("module_key")) updatePayload.module_key = body.module_key;
+  if (has("catalog_scope")) updatePayload.catalog_scope = body.catalog_scope;
+
+  const changedFields = Object.keys(body);
+  const instantFields = new Set(["price", "stock"]);
+  const onlyInstantUpdate = changedFields.length > 0 && changedFields.every((field) => instantFields.has(field));
+  const previousReviewStatus = normalizedReviewValue(before.compliance_review_status || before.review_status || before.approval_status);
+  const previousStatus = normalizedReviewValue(before.status);
+
+  if (onlyInstantUpdate) {
+    if (previousStatus === "active" || previousReviewStatus === "approved") {
+      updatePayload.status = previousStatus === "archived" ? "archived" : "active";
+    }
+    updatePayload.compliance_notes = "Partner fiyat/stok güncellemesi uygulandı.";
+  } else {
+    updatePayload.status = "draft";
+    updatePayload.compliance_review_status = "pending";
+    updatePayload.compliance_notes = "Partner ürün revizyonu admin onayına gönderildi.";
+  }
+  updatePayload.updated_at = new Date().toISOString();
+
+  return {
+    updatePayload,
+    changedFields,
+    onlyInstantUpdate,
+    previousStatus,
+    previousReviewStatus
+  };
+}
+
 async function loadPartnerOwnedProduct(productId, business, ctx) {
   const ownerIds = partnerProductOwnerIds(business, ctx);
   const { data: product, error } = await supabaseAdmin
@@ -9070,6 +9144,205 @@ export function registerRoutes(app) {
     };
   });
 
+  app.patch("/v1/partner/products/bulk", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.bulk_update"
+    });
+    const body = partnerProductBulkUpdateSchema.parse(request.body || {});
+    const productIds = [...new Set(body.product_ids.map(String))];
+    if (productIds.length > PARTNER_PRODUCT_BULK_LIMIT) {
+      throw httpError(`Tek seferde en fazla ${PARTNER_PRODUCT_BULK_LIMIT} ürün onaya gönderilebilir.`, 400);
+    }
+    const business = await ensurePartnerBusiness(ctx, request);
+    const products = [];
+    const failed = [];
+    const warnings = [];
+    let instantUpdateCount = 0;
+    let reviewSubmitCount = 0;
+
+    for (const productId of productIds) {
+      try {
+        const before = await loadPartnerOwnedProduct(productId, business, ctx);
+        const built = body.updates
+          ? buildPartnerProductUpdatePayload(productId, before, body.updates)
+          : {
+              updatePayload: {
+                status: "draft",
+                compliance_review_status: "pending",
+                compliance_notes: "Partner ürünü admin onayına gönderdi.",
+                updated_at: new Date().toISOString()
+              },
+              changedFields: [],
+              onlyInstantUpdate: false
+            };
+        if (body.submit_for_review) {
+          built.updatePayload.status = "draft";
+          built.updatePayload.compliance_review_status = "pending";
+          built.updatePayload.compliance_notes = "Partner ürünü admin onayına gönderdi.";
+          built.updatePayload.updated_at = new Date().toISOString();
+          built.onlyInstantUpdate = false;
+        }
+        const {
+          updatePayload,
+          changedFields,
+          onlyInstantUpdate
+        } = built;
+        const { product, removedFields } = await updatePartnerProductRow(productId, updatePayload);
+        products.push(product);
+        if (onlyInstantUpdate) instantUpdateCount += 1;
+        else reviewSubmitCount += 1;
+        removedFields.forEach((field) => warnings.push(`products.${field}: üretim şemasında yok; bu alan atlandı.`));
+        await auditEvent({
+          request,
+          actorId: ctx.user.id,
+          actorRole: ctx.profile.role,
+          action: onlyInstantUpdate ? "partner.product_stock_price_updated" : "partner.product_revision_submitted",
+          resourceType: "product",
+          resourceId: productId,
+          metadata: {
+            mode: "bulk",
+            changed_fields: changedFields,
+            previous_status: before.status || null,
+            previous_compliance_review_status: before.compliance_review_status || null,
+            next_status: product.status || "draft",
+            next_compliance_review_status: product.compliance_review_status || "pending"
+          }
+        });
+      } catch (error) {
+        failed.push({
+          product_id: productId,
+          message: error?.statusCode === 403
+            ? "Bu ürünü düzenleme yetkiniz yok."
+            : error?.message || "Ürün güncellenemedi."
+        });
+      }
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.products_bulk_update_requested",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: {
+        requested_count: productIds.length,
+        updated_count: products.length,
+        failed_count: failed.length,
+        instant_update_count: instantUpdateCount,
+        review_submit_count: reviewSubmitCount
+      }
+    });
+
+    return {
+      ok: true,
+      products,
+      failed,
+      warnings: [...new Set(warnings)],
+      limit: PARTNER_PRODUCT_BULK_LIMIT,
+      message: failed.length
+        ? `${products.length} ürün güncellendi, ${failed.length} ürün tamamlanamadı.`
+        : reviewSubmitCount
+          ? `${reviewSubmitCount} ürün admin onayına gönderildi.`
+          : `${instantUpdateCount} ürün fiyat/stok güncellemesiyle kaydedildi.`
+    };
+  });
+
+  app.get("/v1/partner/products/:productId", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.detail"
+    });
+    const productId = uuidSchema.parse(request.params.productId);
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownedProduct = await loadPartnerOwnedProduct(productId, business, ctx);
+    const ownerIds = partnerProductOwnerIds(business, ctx);
+    const warnings = [];
+
+    const productQueries = [
+      optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .in("partner_id", ownerIds)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products"
+      )
+    ];
+    if (business.partner_code) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_code", business.partner_code)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products.partner_code"
+      ));
+    }
+    if (business.email) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_email", business.email)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products.partner_email"
+      ));
+    }
+
+    const productGroups = await Promise.all(productQueries);
+    const productsById = new Map();
+    for (const row of [ownedProduct, ...productGroups.flat()]) {
+      if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
+    }
+    const candidateProducts = [...productsById.values()].map(attachProductReviewAutomation);
+    const productIds = candidateProducts.map((product) => product.id).filter(Boolean);
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    const linksByProductId = new Map();
+    for (const link of linkRows || []) {
+      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+    }
+    const products = attachVariantGroups(candidateProducts, linksByProductId);
+    const product = products.find((item) => String(item.id) === String(productId)) || attachProductReviewAutomation(ownedProduct);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.product_detail_viewed",
+      resourceType: "product",
+      resourceId: productId,
+      metadata: {
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      business,
+      product,
+      warnings
+    };
+  });
+
   app.patch("/v1/partner/products/:productId", async (request) => {
     const ctx = await requireAuth(request, {
       roles: ["partner", "admin", "super_admin"],
@@ -9080,60 +9353,11 @@ export function registerRoutes(app) {
     const business = await ensurePartnerBusiness(ctx, request);
     const before = await loadPartnerOwnedProduct(productId, business, ctx);
 
-    const has = (field) => Object.prototype.hasOwnProperty.call(body, field);
-    const cleanNullable = (value) => value === null ? null : String(value ?? "").trim();
-    const updatePayload = {};
-    const nextName = has("name") ? body.name : has("product_name") ? body.product_name : "";
-
-    if (nextName) {
-      updatePayload.name = nextName;
-      updatePayload.product_name = nextName;
-      updatePayload.slug = backendSlug(`${nextName}-${productId}`);
-      if (!has("meta_title")) updatePayload.meta_title = nextName;
-    }
-    [
-      "description",
-      "image_url",
-      "video_url",
-      "category",
-      "brand",
-      "sku",
-      "seller_public_name",
-      "seller_legal_name",
-      "seller_city",
-      "seller_contact",
-      "seller_tax_number_masked",
-      "invoice_responsibility",
-      "seller_disclosure",
-      "meta_title",
-      "meta_description"
-    ].forEach((field) => {
-      if (has(field)) updatePayload[field] = cleanNullable(body[field]);
-    });
-    if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || []).slice(0, 8);
-    if (has("price")) updatePayload.price = Number(body.price || 0);
-    if (has("stock")) updatePayload.stock = Number(body.stock || 0);
-    if (has("module_key")) updatePayload.module_key = body.module_key;
-    if (has("catalog_scope")) updatePayload.catalog_scope = body.catalog_scope;
-
-    const nowIso = new Date().toISOString();
-    const changedFields = Object.keys(body);
-    const instantFields = new Set(["price", "stock"]);
-    const onlyInstantUpdate = changedFields.length > 0 && changedFields.every((field) => instantFields.has(field));
-    const previousReviewStatus = normalizedReviewValue(before.compliance_review_status || before.review_status || before.approval_status);
-    const previousStatus = normalizedReviewValue(before.status);
-
-    if (onlyInstantUpdate) {
-      if (previousStatus === "active" || previousReviewStatus === "approved") {
-        updatePayload.status = previousStatus === "archived" ? "archived" : "active";
-      }
-      updatePayload.compliance_notes = "Partner fiyat/stok güncellemesi uygulandı.";
-    } else {
-      updatePayload.status = "draft";
-      updatePayload.compliance_review_status = "pending";
-      updatePayload.compliance_notes = "Partner ürün revizyonu admin onayına gönderildi.";
-    }
-    updatePayload.updated_at = nowIso;
+    const {
+      updatePayload,
+      changedFields,
+      onlyInstantUpdate
+    } = buildPartnerProductUpdatePayload(productId, before, body);
 
     const { product, appliedFields, removedFields } = await updatePartnerProductRow(productId, updatePayload);
 
@@ -9145,7 +9369,7 @@ export function registerRoutes(app) {
       resourceType: "product",
       resourceId: productId,
       metadata: {
-        changed_fields: Object.keys(body),
+        changed_fields: changedFields,
         applied_fields: appliedFields,
         ignored_missing_fields: removedFields,
         previous_status: before.status || null,

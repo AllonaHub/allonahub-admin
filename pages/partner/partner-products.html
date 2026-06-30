@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-selection1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-bulkdetail1">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -81,6 +81,7 @@
           <div>
             <strong data-selected-count>0 ürün seçildi</strong>
             <span>Seçili ürünler için boş bırakılan alanlar korunur.</span>
+            <small class="partner-products-bulk-hint" data-bulk-limit-hint>Tek seferde en fazla 50 ürün onaya gönderilebilir.</small>
           </div>
           <div class="partner-products-page-size" aria-label="Liste adedi">
             <span>Gösterim</span>
@@ -95,6 +96,7 @@
             <button type="button" data-select-all-products-action><i class="fa-solid fa-list-check"></i><span>Tümünü Seç</span></button>
             <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
             <button type="button" data-select-ready-products><i class="fa-solid fa-shield-check"></i><span>Onaya Hazırları Seç</span></button>
+            <button type="button" data-submit-selected-review><i class="fa-solid fa-paper-plane"></i><span>Seçili Ürünleri Onaya Gönder</span></button>
             <button type="button" data-select-risk-products><i class="fa-solid fa-triangle-exclamation"></i><span>Risklileri Seç</span></button>
             <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
             <button type="button" data-select-missing-price-products><i class="fa-solid fa-tags"></i><span>Fiyatı Olmayanları Seç</span></button>
@@ -111,28 +113,34 @@
           </form>
         </aside>
 
-        <div class="partner-products-table-wrap">
-          <table class="partner-products-table">
-            <thead>
-              <tr>
-                <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Görünen ürünleri seç"></th>
-                <th>Ürün</th>
-                <th>Kategori</th>
-                <th>Fiyat</th>
-                <th>Stok</th>
-                <th>Durum</th>
-                <th>Güncelleme</th>
-                <th>Aksiyon</th>
-              </tr>
-            </thead>
-            <tbody data-product-rows>
-              <tr>
-                <td colspan="8">
-                  <div class="partner-products-loading">Ürünler yükleniyor.</div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="partner-products-table-frame">
+          <div class="partner-products-scrollbar" data-table-scrollbar aria-label="Tabloyu yatay kaydır" hidden>
+            <div data-table-scrollbar-inner></div>
+          </div>
+          <div class="partner-products-table-wrap" data-table-wrap>
+            <table class="partner-products-table">
+              <thead>
+                <tr>
+                  <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Görünen ürünleri seç"></th>
+                  <th>Ürün</th>
+                  <th>Kategori</th>
+                  <th>Fiyat</th>
+                  <th>Stok</th>
+                  <th>Durum</th>
+                  <th>Güncelleme</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody data-product-rows>
+                <tr>
+                  <td colspan="8">
+                    <div class="partner-products-loading">Ürünler yükleniyor.</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav class="partner-products-pagination" data-product-pagination aria-label="Ürün sayfaları"></nav>
         </div>
       </section>
 
@@ -215,7 +223,7 @@
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-selection1" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-bulkdetail1" defer></script>
   <script src="../../js/platform.js?v=20260630-shopcat2" defer></script>
   <script src="../../js/privacy-consent.js?v=20260630-shopcat2" defer></script>
 </body>
