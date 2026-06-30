@@ -49,6 +49,12 @@
     return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
   }
 
+  function shortText(value, max) {
+    const text = String(value || "").trim();
+    if (!text || text.length <= max) return text;
+    return `${text.slice(0, Math.max(0, max - 1))}...`;
+  }
+
   function apiBaseUrl() {
     const configured = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
     if (/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)) return "http://localhost:3000";
@@ -306,6 +312,17 @@
       <span class="partner-products-badge ${badgeClass(product)}">${escape(statusLabel(status))}</span>
       ${reviewText}
     `;
+  }
+
+  function revisionNotice(product) {
+    const review = normalize(product.compliance_review_status || product.review_status || product.approval_status);
+    if (review !== "needs_review" && normalize(product.status) !== "needs_review") return "";
+    const required = (automation(product).reasons || []).filter((reason) => reason.requires_revision);
+    const reasonText = required.length
+      ? required.map((reason) => `${reason.field_label || reason.field}: ${reason.title}. ${reason.suggestion}`).join(" ")
+      : "";
+    const note = String(product.compliance_notes || reasonText || "Ürün için revizyon istendi. Detayları düzenleyip tekrar onaya gönderin.").trim();
+    return `<small class="partner-products-revision-note">${escape(shortText(note, 220))}</small>`;
   }
 
   function isApproved(product) {
@@ -642,7 +659,7 @@
           <td>
             <input class="partner-products-quick-input ${stockClass}" type="number" min="0" step="1" value="${escape(Number(product.stock || 0))}" data-quick-stock="${escape(product.id)}" aria-label="${escape(product.name)} stok">
           </td>
-          <td>${statusBadges(product)}</td>
+          <td>${statusBadges(product)}${revisionNotice(product)}</td>
           <td>${escape(formatDate(product.updated_at || product.created_at))}</td>
           <td class="partner-products-row-actions">
             <button type="button" data-save-quick-product="${escape(product.id)}" title="Fiyat ve stoku kaydet">

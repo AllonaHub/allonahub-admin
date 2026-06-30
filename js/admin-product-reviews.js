@@ -6,6 +6,16 @@
   const state = {
     products: [],
     summary: {},
+    page: {
+      limit: 120,
+      offset: 0,
+      nextOffset: 0,
+      hasMore: false,
+      totalCandidates: null,
+      scannedCount: 0,
+      autoRevisionedCount: 0,
+      loadingMore: false
+    },
     warnings: [],
     selected: new Set(),
     searchTimer: null
@@ -223,6 +233,26 @@
     return review === "pending" && /revizyon|revision|düzelt|duzelt/.test(notes);
   }
 
+  function loadedSummary() {
+    const summary = {
+      loaded: state.products.length,
+      ready: 0,
+      watch: 0,
+      needs_revision: 0,
+      critical: 0,
+      revised: 0
+    };
+    for (const raw of state.products) {
+      const auto = automation(raw);
+      if (auto.lane === "ready") summary.ready += 1;
+      if (auto.lane === "watch") summary.watch += 1;
+      if (auto.lane === "needs_revision") summary.needs_revision += 1;
+      if (auto.risk_level === "critical") summary.critical += 1;
+      if (isRevisedProduct(raw)) summary.revised += 1;
+    }
+    return summary;
+  }
+
   function metricMarkup(label, value, tone) {
     return `
       <article class="admin-product-review-metric" ${tone ? `data-tone="${escape(tone)}"` : ""}>
@@ -234,13 +264,15 @@
 
   function renderSummary() {
     const summary = state.summary || {};
+    const loaded = loadedSummary();
+    const queueTotal = summary.queue_total ?? state.page.totalCandidates ?? summary.total ?? state.products.length;
     const rows = [
-      ["Toplam Kuyruk", summary.total || state.products.length, ""],
-      ["Onaya Hazır", summary.ready || 0, "ready"],
-      ["Kontrol Edilecek", summary.watch || 0, "watch"],
-      ["Revizyon Riski", summary.needs_revision || 0, "risk"],
-      ["Kritik Risk", summary.critical || 0, "risk"],
-      ["Revizeden Gelen", summary.revised || 0, "watch"]
+      ["Toplam Kuyruk", queueTotal, ""],
+      ["Yüklenen", loaded.loaded, ""],
+      ["Onaya Hazır", loaded.ready, "ready"],
+      ["Kontrol Edilecek", loaded.watch, "watch"],
+      ["Revizyon Riski", loaded.needs_revision, "risk"],
+      ["Revizeden Gelen", loaded.revised, "watch"]
     ];
     const target = $("[data-product-review-summary]");
     if (target) target.innerHTML = rows.map(([label, value, tone]) => metricMarkup(label, value, tone)).join("");
@@ -402,25 +434,78 @@
     renderSelectedState();
   }
 
+  function renderPagination() {
+    const target = $("[data-product-review-pagination]");
+    const info = $("[data-product-review-page-info]");
+    const button = $("[data-product-review-load-more]");
+    if (!target || !info || !button) return;
+    const total = state.page.totalCandidates;
+    const totalText = Number.isFinite(Number(total)) ? ` / ${Number(total).toLocaleString(config.locale || "tr-TR")} kuyruk adayı` : "";
+    const scannedText = state.page.scannedCount ? ` Taranan kayıt: ${Number(state.page.scannedCount).toLocaleString(config.locale || "tr-TR")}.` : "";
+    const revisionText = state.page.autoRevisionedCount ? ` Otomasyon ${Number(state.page.autoRevisionedCount).toLocaleString(config.locale || "tr-TR")} riskli ürünü partner revizyonuna taşıdı.` : "";
+    info.textContent = `${state.products.length.toLocaleString(config.locale || "tr-TR")} ürün yüklendi${totalText}.${scannedText}${revisionText}`;
+    button.hidden = !state.page.hasMore;
+    button.disabled = state.page.loadingMore;
+    button.textContent = state.page.loadingMore ? "Yükleniyor..." : "Devamını Yükle";
+    target.hidden = !state.products.length && !state.page.hasMore;
+  }
+
   function renderAll() {
     renderSummary();
     renderBoard();
+    renderPagination();
     const warnings = [...new Set(state.warnings || [])].filter(Boolean);
     showAlert(warnings.join(" "));
   }
 
-  async function loadProducts() {
+  function mergeProducts(existing, incoming) {
+    const byId = new Map(existing.map((product) => [String(product.id), product]));
+    for (const product of incoming || []) {
+      if (product?.id) byId.set(String(product.id), product);
+    }
+    return [...byId.values()];
+  }
+
+  async function loadProducts(options) {
+    const append = options?.append === true;
     const params = new URLSearchParams();
     const search = $("[data-product-review-search]")?.value?.trim() || "";
     const status = $("[data-product-review-status]")?.value || "";
     if (search) params.set("search", search);
     if (status) params.set("status", status);
-    params.set("limit", "200");
+    params.set("limit", String(state.page.limit));
+    params.set("offset", String(append ? (state.page.nextOffset || 0) : 0));
     const board = $("[data-product-review-board]");
-    if (board) board.innerHTML = `<div class="admin-status">Ürün onay kuyruğu yükleniyor...</div>`;
-    const data = await api(`/v1/ops-console/product-reviews?${params.toString()}`);
-    state.products = data.products || [];
+    if (!append && board) board.innerHTML = `<div class="admin-status">Ürün onay kuyruğu yükleniyor...</div>`;
+    if (!append) {
+      state.page.nextOffset = 0;
+      state.page.hasMore = false;
+      state.page.totalCandidates = null;
+      state.page.scannedCount = 0;
+      state.page.autoRevisionedCount = 0;
+    }
+    state.page.loadingMore = append;
+    renderPagination();
+    let data;
+    try {
+      data = await api(`/v1/ops-console/product-reviews?${params.toString()}`);
+    } finally {
+      state.page.loadingMore = false;
+      renderPagination();
+    }
+    data = data || {};
+    state.products = append ? mergeProducts(state.products, data.products || []) : (data.products || []);
     state.summary = data.summary || {};
+    const page = data.page || {};
+    state.page.nextOffset = page.next_offset || 0;
+    state.page.hasMore = Boolean(page.has_more);
+    state.page.totalCandidates = page.total_candidates ?? state.page.totalCandidates;
+    state.page.scannedCount = append
+      ? state.page.scannedCount + Number(page.scanned_count || 0)
+      : Number(page.scanned_count || 0);
+    state.page.autoRevisionedCount = append
+      ? state.page.autoRevisionedCount + Number(page.auto_revisioned_count || 0)
+      : Number(page.auto_revisioned_count || 0);
     state.warnings = data.warnings || [];
     state.selected = new Set([...state.selected].filter((id) => state.products.some((product) => String(product.id) === String(id))));
     renderAll();
@@ -592,6 +677,11 @@
     document.addEventListener("click", async (event) => {
       if (event.target.closest("[data-product-review-refresh]")) {
         await loadProducts().catch((error) => showAlert(readableError(error), "error"));
+        return;
+      }
+      if (event.target.closest("[data-product-review-load-more]")) {
+        if (!state.page.hasMore || state.page.loadingMore) return;
+        await loadProducts({ append: true }).catch((error) => showAlert(readableError(error), "error"));
         return;
       }
       if (event.target.closest("[data-select-all-reviews]")) {

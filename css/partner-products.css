@@ -731,6 +731,17 @@
   color: #ff8ca2;
 }
 
+.partner-products-revision-note {
+  margin-top: 6px;
+  display: block;
+  max-width: 220px;
+  color: #ffd7a3;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: normal;
+}
+
 .partner-products-row-actions {
   min-width: 130px;
 }

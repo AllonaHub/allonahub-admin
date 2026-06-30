@@ -386,6 +386,15 @@ const adminListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(80)
 });
 
+const adminProductReviewListQuerySchema = adminListQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(120),
+  offset: z.coerce.number().int().min(0).max(100000000).optional().default(0)
+});
+
+const ADMIN_PRODUCT_REVIEW_DB_BATCH = 1000;
+const ADMIN_PRODUCT_REVIEW_MAX_SCAN = 12000;
+const ADMIN_PRODUCT_AUTO_REVISION_BATCH = 100;
+
 const adminNoteSchema = z.object({
   body: z.string().trim().min(3).max(1600),
   note_type: z.enum(["general", "risk", "review", "support", "callback"]).optional().default("general")
@@ -406,7 +415,11 @@ const adminProductReviewBulkDecisionSchema = adminProductReviewDecisionSchema.ex
   only_auto_approvable: z.boolean().optional().default(false)
 });
 
-const automationActionSchema = z.enum(["publish_safe_products"]);
+const cronProductReviewAutomationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(200)
+});
+
+const automationActionSchema = z.enum(["publish_safe_products", "request_product_revisions"]);
 
 const automationRunSchema = z.object({
   apply: z.boolean().optional().default(false),
@@ -4419,10 +4432,10 @@ function automationRules() {
     },
     {
       key: "product_revision_required",
-      title: "Politika/hukuk riski olan ürünü admine düşür",
-      summary: "Yasaklı ifade, harici iletişim, iade/değişim yasağı veya ödeme akışı dışına çıkaran metin varsa revizyon gerekçesiyle admin kuyruğuna alınır.",
-      auto_apply: false,
-      action: "admin_review"
+      title: "Politika/hukuk riski olan ürünü partnere revizyona gönder",
+      summary: "Yasaklı ifade, harici iletişim, iade/değişim yasağı veya ödeme akışı dışına çıkaran metin varsa otomasyon alan bazlı düzeltme notu yazar ve ürünü partner revizyonuna taşır.",
+      auto_apply: true,
+      action: "request_product_revisions"
     },
     {
       key: "money_and_dispute_guardrail",
@@ -4452,7 +4465,7 @@ function automationSchemaWarningObjects(warnings = []) {
 async function buildOpsAutomationSnapshot(options = {}) {
   const limit = Math.min(Math.max(Number(options.limit || 80), 1), 120);
   const apply = options.apply === true;
-  const actions = new Set(options.actions && options.actions.length ? options.actions : ["publish_safe_products"]);
+  const actions = new Set(options.actions && options.actions.length ? options.actions : ["publish_safe_products", "request_product_revisions"]);
   const warnings = [];
   const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const fetchLimit = Math.max(180, Math.min(600, limit * 5));
@@ -4705,8 +4718,34 @@ async function buildOpsAutomationSnapshot(options = {}) {
 
   const applied = {
     products_published: [],
+    product_revisions_requested: [],
     skipped: []
   };
+
+  if (apply && actions.has("request_product_revisions")) {
+    const revisionResult = await autoRequestProductRevisions(products, {
+      request: options.request,
+      ctx: options.ctx,
+      warnings,
+      source: "automation_run",
+      limit: Math.min(limit, ADMIN_PRODUCT_AUTO_REVISION_BATCH)
+    });
+    applied.product_revisions_requested = revisionResult.updatedProducts.map((product) => ({
+      id: product.id,
+      title: product.name || product.product_name || "Ürün",
+      status: product.status || "draft",
+      compliance_review_status: product.compliance_review_status || "needs_review",
+      updated_at: product.updated_at || null
+    }));
+    applied.skipped.push(...revisionResult.skipped);
+    if (revisionResult.updatedProducts.length) {
+      const updatedById = new Map(revisionResult.updatedProducts.map((product) => [String(product.id), product]));
+      for (let index = 0; index < products.length; index += 1) {
+        const updated = updatedById.get(String(products[index]?.id || ""));
+        if (updated) products[index] = updated;
+      }
+    }
+  }
 
   if (apply && actions.has("publish_safe_products")) {
     const nowIso = new Date().toISOString();
@@ -4749,6 +4788,7 @@ async function buildOpsAutomationSnapshot(options = {}) {
         metadata: {
           actions: [...actions],
           applied_product_count: applied.products_published.length,
+          revision_requested_count: applied.product_revisions_requested.length,
           reason
         }
       };
@@ -4784,6 +4824,7 @@ async function buildOpsAutomationSnapshot(options = {}) {
       watchlist: sortedWatchlist.length,
       critical: criticalCount,
       applied: applied.products_published.length,
+      revisions_requested: applied.product_revisions_requested.length,
       action_required: sortedAdminQueue.length + sortedSuperAdminQueue.length
     },
     queues: {
@@ -4815,6 +4856,142 @@ function productMatchesAdminReviewSearch(product = {}, search) {
     product.partner_code,
     product.partner_email
   ].some((value) => String(value || "").toLocaleLowerCase("tr-TR").includes(term));
+}
+
+const adminProductReviewSearchColumns = [
+  "name",
+  "product_name",
+  "description",
+  "category",
+  "brand",
+  "sku",
+  "barcode",
+  "seller_public_name",
+  "seller_legal_name",
+  "integration_source",
+  "integration_external_id",
+  "partner_code",
+  "partner_email"
+];
+
+function adminProductReviewDbQuery(query = {}, includeCount = false) {
+  let dbQuery = supabaseAdmin
+    .from("products")
+    .select("*", includeCount ? { count: "exact" } : {})
+    .in("compliance_review_status", ["pending", "needs_review"])
+    .order("created_at", { ascending: false });
+  const searchFilter = textSearchFilter(adminProductReviewSearchColumns, query.search);
+  if (searchFilter) dbQuery = dbQuery.or(searchFilter);
+  return dbQuery;
+}
+
+async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
+  const products = [];
+  const skipped = [];
+  let totalCandidates = null;
+  let scannedCount = 0;
+  let nextOffset = query.offset;
+  let reachedEnd = false;
+  let autoRevisionedCount = 0;
+  let autoRevisionSkippedCount = 0;
+  const scanLimit = Math.max(ADMIN_PRODUCT_REVIEW_MAX_SCAN, query.limit * 4);
+
+  while (products.length < query.limit && scannedCount < scanLimit) {
+    const remainingScan = scanLimit - scannedCount;
+    const batchSize = Math.min(
+      ADMIN_PRODUCT_REVIEW_DB_BATCH,
+      Math.max(query.limit * 3, 200),
+      remainingScan
+    );
+    const batchOffset = nextOffset;
+    const { data, error, count } = await adminProductReviewDbQuery(query, totalCandidates === null)
+      .range(nextOffset, nextOffset + batchSize - 1);
+    if (error && looksLikeMissingSchema(error)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (error) throw error;
+    if (totalCandidates === null && typeof count === "number") totalCandidates = count;
+
+    const rows = data || [];
+    scannedCount += rows.length;
+    nextOffset += rows.length;
+    if (!rows.length) {
+      reachedEnd = true;
+      break;
+    }
+
+    let batchProducts = rows
+      .filter(productNeedsAdminReview)
+      .filter((product) => productMatchesAdminReviewSearch(product, query.search))
+      .map(attachProductReviewAutomation);
+    batchProducts = await attachProductReviewVariantGroups(batchProducts, warnings);
+
+    const autoRevision = await autoRequestProductRevisions(batchProducts, {
+      request,
+      ctx,
+      warnings,
+      source: "product_review_queue"
+    });
+    autoRevisionedCount += autoRevision.updatedProducts.length;
+    autoRevisionSkippedCount += autoRevision.skipped.length;
+    skipped.push(...autoRevision.skipped);
+    if (autoRevision.updatedProducts.length) {
+      const updatedById = new Map(autoRevision.updatedProducts.map((product) => [String(product.id), product]));
+      batchProducts = batchProducts.map((product) => updatedById.get(String(product.id)) || product);
+    }
+
+    if (query.status) {
+      batchProducts = batchProducts.filter((product) => productReviewMatchesAutomationStatus(product, query.status));
+    }
+    const acceptedById = new Map(batchProducts.map((product) => [String(product.id), product]));
+    let filledPage = false;
+    for (let index = 0; index < rows.length; index += 1) {
+      const product = acceptedById.get(String(rows[index]?.id || ""));
+      if (!product) continue;
+      products.push(product);
+      if (products.length >= query.limit) {
+        nextOffset = batchOffset + index + 1;
+        filledPage = true;
+        break;
+      }
+    }
+    if (filledPage) break;
+
+    if (rows.length < batchSize) {
+      reachedEnd = true;
+      break;
+    }
+  }
+
+  if (scannedCount >= scanLimit && products.length < query.limit) {
+    warnings.push("Filtre çok dar olduğu için bu sayfada tarama sınırına ulaşıldı. Daha fazla kayıt için devamını yükleyin veya filtreyi daraltın.");
+  }
+
+  const pageProducts = products.slice(0, query.limit);
+  const hasMore = totalCandidates === null ? !reachedEnd : nextOffset < totalCandidates;
+  const summary = productReviewAutomationSummary(pageProducts);
+  summary.queue_total = totalCandidates ?? pageProducts.length;
+  summary.loaded = pageProducts.length;
+  summary.scanned = scannedCount;
+  summary.auto_revisioned = autoRevisionedCount;
+  summary.auto_revision_skipped = autoRevisionSkippedCount;
+
+  return {
+    products: pageProducts,
+    summary,
+    page: {
+      limit: query.limit,
+      offset: query.offset,
+      next_offset: hasMore ? nextOffset : null,
+      has_more: hasMore,
+      scanned_count: scannedCount,
+      total_candidates: totalCandidates,
+      returned_count: pageProducts.length,
+      auto_revisioned_count: autoRevisionedCount,
+      auto_revision_skipped_count: autoRevisionSkippedCount
+    },
+    skipped
+  };
 }
 
 function partnerProductOwnerIds(business, ctx) {
@@ -5055,6 +5232,92 @@ function attachVariantGroups(products = [], linksByProductId = new Map()) {
       review_automation: productReviewAutomation({ ...product, variant_automation: variantAutomation })
     };
   });
+}
+
+async function attachProductReviewVariantGroups(products = [], warnings = []) {
+  const productIds = products.map((product) => product.id).filter(Boolean);
+  const linkRows = await optionalQuery(
+    supabaseAdmin
+      .from("partner_integration_product_links")
+      .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+      .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
+    [],
+    warnings,
+    "partner_integration_product_links"
+  );
+  const linksByProductId = new Map();
+  for (const link of linkRows || []) {
+    if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+  }
+  return attachVariantGroups(products, linksByProductId);
+}
+
+function productNeedsAutomatedRevisionRequest(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+  const status = normalizedReviewValue(product.status);
+  if (!automation.revision_required) return false;
+  if (reviewStatus === "needs_review" || status === "needs_review") return false;
+  return productNeedsAdminReview(product);
+}
+
+async function autoRequestProductRevisions(products = [], options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || ADMIN_PRODUCT_AUTO_REVISION_BATCH), 1), ADMIN_PRODUCT_AUTO_REVISION_BATCH);
+  const warnings = options.warnings || [];
+  const nowIso = new Date().toISOString();
+  const updatedProducts = [];
+  const skipped = [];
+  const candidates = products
+    .filter(productNeedsAutomatedRevisionRequest)
+    .slice(0, limit);
+
+  for (const product of candidates) {
+    const reason = productReviewRevisionReason(
+      product,
+      "Otomasyon: Üründe revizyon gerektiren politika/hukuk riski tespit edildi. Lütfen aşağıdaki alanları düzeltip ürünü tekrar onaya gönderin."
+    );
+    try {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("needs_review", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation({
+        ...updated,
+        review_automation: product.review_automation,
+        variant_automation: product.variant_automation
+      }));
+    } catch (error) {
+      skipped.push({
+        product_id: product.id,
+        name: product.name || product.product_name || "",
+        reason: error?.message || "Otomatik revizyon bildirimi kaydedilemedi."
+      });
+    }
+  }
+
+  if (updatedProducts.length && options.request && options.ctx) {
+    await auditedOpsEvent({
+      request: options.request,
+      ctx: options.ctx,
+      action: "admin.ops.product_reviews_auto_revision_requested",
+      resourceType: "product",
+      severity: "warning",
+      metadata: {
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        source: options.source || "product_review_queue"
+      }
+    });
+  }
+
+  return {
+    updatedProducts,
+    skipped,
+    warnings
+  };
 }
 
 function buildPartnerProductUpdatePayload(productId, before, body) {
@@ -13483,40 +13746,14 @@ export function registerRoutes(app) {
 
   opsGet("/product-reviews", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.list");
-    const query = adminListQuerySchema.parse(request.query || {});
+    const query = adminProductReviewListQuerySchema.parse(request.query || {});
     const warnings = [];
-    const fetchLimit = Math.min(Math.max(query.limit * 3, 200), 600);
-    const dbQuery = supabaseAdmin
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(fetchLimit);
-
-    const rows = await optionalQuery(dbQuery, [], warnings, "products");
-    let products = (rows || [])
-      .filter(productNeedsAdminReview)
-      .filter((product) => productMatchesAdminReviewSearch(product, query.search))
-      .map(attachProductReviewAutomation);
-    const productIds = products.map((product) => product.id).filter(Boolean);
-    const linkRows = await optionalQuery(
-      supabaseAdmin
-        .from("partner_integration_product_links")
-        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
-      [],
-      warnings,
-      "partner_integration_product_links"
-    );
-    const linksByProductId = new Map();
-    for (const link of linkRows || []) {
-      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-    }
-    products = attachVariantGroups(products, linksByProductId);
-    if (query.status) {
-      products = products.filter((product) => productReviewMatchesAutomationStatus(product, query.status));
-    }
-    const summary = productReviewAutomationSummary(products);
-    products = products.slice(0, query.limit);
+    const pageResult = await loadAdminProductReviewPage({
+      request,
+      ctx,
+      query,
+      warnings
+    });
 
     await auditedOpsEvent({
       request,
@@ -13526,13 +13763,24 @@ export function registerRoutes(app) {
       metadata: {
         search: query.search || null,
         status: query.status || null,
-        fetched_count: rows.length,
-        count: products.length,
+        offset: query.offset,
+        limit: query.limit,
+        scanned_count: pageResult.page.scanned_count,
+        total_candidates: pageResult.page.total_candidates,
+        count: pageResult.products.length,
+        auto_revisioned_count: pageResult.page.auto_revisioned_count,
         warning_count: warnings.length
       }
     });
 
-    return { ok: true, products, summary, warnings };
+    return {
+      ok: true,
+      products: pageResult.products,
+      summary: pageResult.summary,
+      page: pageResult.page,
+      skipped: pageResult.skipped,
+      warnings: [...new Set(warnings)]
+    };
   });
 
   opsPost("/product-reviews/bulk-decision", async (request) => {
@@ -15016,6 +15264,60 @@ export function registerRoutes(app) {
       ok: true,
       checked: data?.length || 0,
       staleOrders: data || []
+    };
+  });
+
+  app.post("/v1/cron/product-reviews/auto-revisions", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.product_reviews_auto_revisions_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+
+    const payload = cronProductReviewAutomationSchema.parse(request.body || {});
+    const warnings = [];
+    const { data, error } = await adminProductReviewDbQuery({ search: "" }, false)
+      .range(0, Math.min(payload.limit * 4, ADMIN_PRODUCT_REVIEW_MAX_SCAN) - 1);
+    if (error && looksLikeMissingSchema(error)) {
+      return { ok: true, skipped: true, reason: "products_review_migration_missing" };
+    }
+    if (error) throw error;
+
+    let products = (data || [])
+      .filter(productNeedsAdminReview)
+      .map(attachProductReviewAutomation);
+    products = await attachProductReviewVariantGroups(products, warnings);
+    const result = await autoRequestProductRevisions(products, {
+      request,
+      warnings,
+      source: "cron_product_review_auto_revisions",
+      limit: Math.min(payload.limit, ADMIN_PRODUCT_AUTO_REVISION_BATCH)
+    });
+
+    await auditEvent({
+      request,
+      action: "cron.product_reviews_auto_revisions",
+      source: "system",
+      resourceType: "product",
+      severity: result.updatedProducts.length ? "warning" : "info",
+      metadata: {
+        scanned_count: data?.length || 0,
+        updated_count: result.updatedProducts.length,
+        skipped_count: result.skipped.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      scanned_count: data?.length || 0,
+      updated_count: result.updatedProducts.length,
+      skipped: result.skipped,
+      warnings: [...new Set(warnings)]
     };
   });
 

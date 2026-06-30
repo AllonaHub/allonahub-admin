@@ -441,6 +441,28 @@
   color: var(--admin-muted);
 }
 
+.admin-product-review-pagination {
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius);
+  background: rgba(7, 17, 29, 0.78);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-product-review-pagination[hidden] {
+  display: none;
+}
+
+.admin-product-review-pagination span {
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
 .admin-product-review-modal textarea {
   width: 100%;
   min-height: 180px;
