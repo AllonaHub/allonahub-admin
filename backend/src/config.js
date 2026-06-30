@@ -68,6 +68,11 @@ export const config = {
     secretKey: readOptionalSecret("TURNSTILE_SECRET_KEY", "CF_TURNSTILE_SECRET_KEY", "CLOUDFLARE_TURNSTILE_SECRET_KEY"),
     strict: readBool("TURNSTILE_STRICT", false)
   },
+  companyLookup: {
+    turkeyApiUrl: readEnv("COMPANY_LOOKUP_TR_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    turkeyApiToken: readOptionalSecret("COMPANY_LOOKUP_TR_API_TOKEN"),
+    timeoutMs: readNumber("COMPANY_LOOKUP_TIMEOUT_MS", 12000)
+  },
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
   maintenanceMode: readBool("MAINTENANCE_MODE", false),
   emergencyApiDisabled: readBool("EMERGENCY_API_DISABLED", false),

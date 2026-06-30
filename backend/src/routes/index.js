@@ -410,10 +410,18 @@ const publicPartnerApplicationSchema = z.object({
   country: z.string().trim().min(2).max(90),
   category: z.string().trim().min(2).max(140),
   message: z.string().trim().max(1600).optional().default(""),
+  company_lookup: z.record(z.unknown()).optional().default({}),
   turnstileToken: z.string().trim().max(4096).optional().default("")
 }).refine((value) => value.company_name || value.partner_name, {
   message: "Firma / işletme adı zorunlu.",
   path: ["company_name"]
+});
+
+const partnerCompanyLookupSchema = z.object({
+  country: z.string().trim().max(90).optional().default(""),
+  country_code: z.string().trim().max(8).optional().default(""),
+  tax_number: z.string().trim().min(2).max(60),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
 const supportStatusSchema = z.object({
@@ -5438,6 +5446,250 @@ function normalizePartnerApprovalType(value) {
   return PARTNER_APPROVAL_TYPES.includes(raw) ? raw : "";
 }
 
+const EU_VIES_COUNTRIES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"
+]);
+
+const COMPANY_COUNTRY_ALIASES = new Map([
+  ["TURKIYE", "TR"], ["TÜRKİYE", "TR"], ["TURKEY", "TR"], ["TR", "TR"],
+  ["ALMANYA", "DE"], ["GERMANY", "DE"], ["DE", "DE"],
+  ["FRANSA", "FR"], ["FRANCE", "FR"], ["FR", "FR"],
+  ["ITALYA", "IT"], ["İTALYA", "IT"], ["ITALY", "IT"], ["IT", "IT"],
+  ["ISPANYA", "ES"], ["İSPANYA", "ES"], ["SPAIN", "ES"], ["ES", "ES"],
+  ["HOLLANDA", "NL"], ["NETHERLANDS", "NL"], ["NL", "NL"],
+  ["BELCIKA", "BE"], ["BELÇİKA", "BE"], ["BELGIUM", "BE"], ["BE", "BE"],
+  ["AVUSTURYA", "AT"], ["AUSTRIA", "AT"], ["AT", "AT"],
+  ["IRLANDA", "IE"], ["İRLANDA", "IE"], ["IRELAND", "IE"], ["IE", "IE"],
+  ["PORTEKIZ", "PT"], ["PORTEKİZ", "PT"], ["PORTUGAL", "PT"], ["PT", "PT"],
+  ["POLONYA", "PL"], ["POLAND", "PL"], ["PL", "PL"],
+  ["ROMANYA", "RO"], ["ROMANIA", "RO"], ["RO", "RO"],
+  ["YUNANISTAN", "EL"], ["YUNANİSTAN", "EL"], ["GREECE", "EL"], ["GR", "EL"], ["EL", "EL"]
+]);
+
+function normalizeCompanyCountryCode(country, explicitCode = "") {
+  const explicit = String(explicitCode || "").trim().toUpperCase();
+  if (explicit) return explicit === "GR" ? "EL" : explicit;
+  const raw = String(country || "").trim().toLocaleUpperCase("tr-TR");
+  if (COMPANY_COUNTRY_ALIASES.has(raw)) return COMPANY_COUNTRY_ALIASES.get(raw);
+  const ascii = raw
+    .replace(/İ/g, "I")
+    .replace(/Ş/g, "S")
+    .replace(/Ğ/g, "G")
+    .replace(/Ü/g, "U")
+    .replace(/Ö/g, "O")
+    .replace(/Ç/g, "C");
+  return COMPANY_COUNTRY_ALIASES.get(ascii) || ascii.slice(0, 2);
+}
+
+function normalizeTaxNumberForCountry(countryCode, taxNumber) {
+  let raw = String(taxNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+  raw = raw.replace(/[^A-Z0-9]/g, "");
+  if (countryCode && raw.startsWith(countryCode)) raw = raw.slice(countryCode.length);
+  if (countryCode === "EL" && raw.startsWith("GR")) raw = raw.slice(2);
+  return raw;
+}
+
+function validateTurkishIdentityNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!/^[1-9]\d{10}$/.test(digits)) return false;
+  const nums = digits.split("").map(Number);
+  const odd = nums[0] + nums[2] + nums[4] + nums[6] + nums[8];
+  const even = nums[1] + nums[3] + nums[5] + nums[7];
+  return ((odd * 7 - even) % 10 + 10) % 10 === nums[9]
+    && nums.slice(0, 10).reduce((sum, digit) => sum + digit, 0) % 10 === nums[10];
+}
+
+function validateTurkishTaxNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!/^\d{10}$/.test(digits)) return false;
+  const nums = digits.split("").map(Number);
+  let sum = 0;
+  for (let index = 0; index < 9; index += 1) {
+    const transformed = (nums[index] + 9 - index) % 10;
+    let check = transformed === 0 ? 0 : (transformed * (2 ** (9 - index))) % 9;
+    if (transformed !== 0 && check === 0) check = 9;
+    sum += check;
+  }
+  return (10 - (sum % 10)) % 10 === nums[9];
+}
+
+function companyLookupValidation(countryCode, normalizedTaxNumber) {
+  if (countryCode === "TR") {
+    const taxType = normalizedTaxNumber.length === 11 ? "tckn" : "vkn";
+    return {
+      tax_number_type: taxType,
+      valid_format: taxType === "tckn"
+        ? validateTurkishIdentityNumber(normalizedTaxNumber)
+        : validateTurkishTaxNumber(normalizedTaxNumber)
+    };
+  }
+  if (EU_VIES_COUNTRIES.has(countryCode)) {
+    return { tax_number_type: "eu_vat", valid_format: /^[A-Z0-9]{2,14}$/.test(normalizedTaxNumber) };
+  }
+  return { tax_number_type: "tax_number", valid_format: normalizedTaxNumber.length >= 2 };
+}
+
+function xmlEscape(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function xmlText(xml, tag) {
+  const match = String(xml || "").match(new RegExp(`<(?:\\\\w+:)?${tag}>([\\\\s\\\\S]*?)</(?:\\\\w+:)?${tag}>`, "i"));
+  if (!match) return "";
+  return match[1]
+    .replace(/<!\[CDATA\[|\]\]>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .trim();
+}
+
+async function companyLookupFetchWithTimeout(url, options = {}, timeoutMs = config.companyLookup.timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function lookupEuVatCompany({ countryCode, taxNumber, request }) {
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <urn:checkVat>
+      <urn:countryCode>${xmlEscape(countryCode)}</urn:countryCode>
+      <urn:vatNumber>${xmlEscape(taxNumber)}</urn:vatNumber>
+    </urn:checkVat>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+  const response = await companyLookupFetchWithTimeout("https://ec.europa.eu/taxation_customs/vies/services/checkVatService", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/xml; charset=utf-8",
+      SOAPAction: ""
+    },
+    body
+  });
+  const text = await response.text();
+  if (!response.ok) throw httpError(`VIES servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  const valid = /^true$/i.test(xmlText(text, "valid"));
+  const legalName = xmlText(text, "name");
+  const address = xmlText(text, "address");
+  await auditEvent({
+    request,
+    action: "partner.company_lookup_vies",
+    resourceType: "company_lookup",
+    resourceId: `${countryCode}${taxNumber}`,
+    severity: valid ? "info" : "warning",
+    source: "server",
+    evidenceTags: ["partner", "company_lookup", "vies"],
+    metadata: { country_code: countryCode, valid }
+  });
+  return {
+    ok: true,
+    provider: "eu_vies",
+    status: valid ? "verified" : "not_found",
+    verified: valid,
+    company: valid ? {
+      legal_name: legalName && legalName !== "---" ? legalName : "",
+      display_name: legalName && legalName !== "---" ? legalName : "",
+      address,
+      country_code: countryCode,
+      country: countryCode,
+      tax_number: `${countryCode}${taxNumber}`
+    } : null,
+    source: "European Commission VIES",
+    fetched_at: new Date().toISOString()
+  };
+}
+
+function normalizeCompanyProviderPayload(payload, fallback = {}) {
+  const source = payload?.company || payload?.data || payload?.result || payload || {};
+  const legalName = source.legal_name || source.company_name || source.title || source.name || source.unvan || source.unvan_ad || "";
+  return {
+    legal_name: String(legalName || "").trim(),
+    display_name: String(source.display_name || source.trade_name || source.brand || legalName || "").trim(),
+    tax_office: String(source.tax_office || source.vergi_dairesi || "").trim(),
+    company_type: String(source.company_type || source.type || source.sirket_turu || "").trim(),
+    city: String(source.city || source.il || fallback.city || "").trim(),
+    country: String(source.country || fallback.country || "").trim(),
+    address: String(source.address || source.adres || "").trim(),
+    website: String(source.website || source.web_site || "").trim(),
+    tax_number: String(source.tax_number || source.vkn || source.tckn || fallback.tax_number || "").trim(),
+    status: String(source.status || source.durum || "").trim()
+  };
+}
+
+async function lookupTurkeyCompany({ taxNumber, request }) {
+  const validation = companyLookupValidation("TR", taxNumber);
+  if (!validation.valid_format) {
+    return {
+      ok: true,
+      provider: "tr_tax_validation",
+      status: "invalid_format",
+      verified: false,
+      company: null,
+      source: "local_format_validation",
+      fetched_at: new Date().toISOString(),
+      message: validation.tax_number_type === "tckn" ? "TCKN formatı doğrulanamadı." : "VKN formatı doğrulanamadı.",
+      validation
+    };
+  }
+  if (!config.companyLookup.turkeyApiUrl) {
+    return {
+      ok: false,
+      provider: "tr_authorized_provider",
+      status: "provider_unconfigured",
+      verified: false,
+      company: null,
+      source: "authorized_provider_required",
+      fetched_at: new Date().toISOString(),
+      message: "Türkiye VKN/TCKN için canlı şirket bilgisi resmi veya yetkili entegratör servisi gerektirir. COMPANY_LOOKUP_TR_API_URL bağlanınca bu buton otomatik doldurur.",
+      validation
+    };
+  }
+  const headers = { "Content-Type": "application/json" };
+  if (config.companyLookup.turkeyApiToken) headers.Authorization = `Bearer ${config.companyLookup.turkeyApiToken}`;
+  const response = await companyLookupFetchWithTimeout(config.companyLookup.turkeyApiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ tax_number: taxNumber, country_code: "TR" })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw httpError(payload.message || `Türkiye şirket servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  const company = normalizeCompanyProviderPayload(payload, { country: "Türkiye", tax_number: taxNumber });
+  await auditEvent({
+    request,
+    action: "partner.company_lookup_tr",
+    resourceType: "company_lookup",
+    resourceId: taxNumber,
+    severity: company.legal_name ? "info" : "warning",
+    source: "server",
+    evidenceTags: ["partner", "company_lookup", "turkey"],
+    metadata: { provider_configured: true, found: Boolean(company.legal_name) }
+  });
+  return {
+    ok: true,
+    provider: "tr_authorized_provider",
+    status: company.legal_name ? "verified" : "not_found",
+    verified: Boolean(company.legal_name),
+    company: company.legal_name ? company : null,
+    source: config.companyLookup.turkeyApiUrl,
+    fetched_at: new Date().toISOString(),
+    validation
+  };
+}
+
 function partnerApprovalTypeForApplication(application, requestedType) {
   const metadata = partnerApplicationMetadata(application);
   const explicit = normalizePartnerApprovalType(requestedType)
@@ -7573,6 +7825,49 @@ export function registerRoutes(app) {
     return { ok: true, skipped: challenge.skipped };
   });
 
+  app.post("/v1/partner-company-lookup", async (request) => {
+    const payload = parseAuthPayload(partnerCompanyLookupSchema, request.body);
+    await verifyTurnstile(request, "partner_company_lookup", payload.turnstileToken);
+    const countryCode = normalizeCompanyCountryCode(payload.country, payload.country_code);
+    const normalizedTaxNumber = normalizeTaxNumberForCountry(countryCode, payload.tax_number);
+    const validation = companyLookupValidation(countryCode, normalizedTaxNumber);
+
+    if (!validation.valid_format) {
+      return {
+        ok: true,
+        provider: countryCode === "TR" ? "tr_tax_validation" : EU_VIES_COUNTRIES.has(countryCode) ? "eu_vies" : "local_format_validation",
+        status: "invalid_format",
+        verified: false,
+        company: null,
+        country_code: countryCode,
+        normalized_tax_number: normalizedTaxNumber,
+        validation,
+        message: "Vergi numarası formatı doğrulanamadı."
+      };
+    }
+
+    if (countryCode === "TR") {
+      const result = await lookupTurkeyCompany({ taxNumber: normalizedTaxNumber, request });
+      return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber };
+    }
+    if (EU_VIES_COUNTRIES.has(countryCode)) {
+      const result = await lookupEuVatCompany({ countryCode, taxNumber: normalizedTaxNumber, request });
+      return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber, validation };
+    }
+
+    return {
+      ok: false,
+      provider: "unsupported_country",
+      status: "provider_unavailable",
+      verified: false,
+      company: null,
+      country_code: countryCode,
+      normalized_tax_number: normalizedTaxNumber,
+      validation,
+      message: "Bu ülke için şirket bilgisi otomatik çekme sağlayıcısı henüz bağlı değil."
+    };
+  });
+
   app.post("/v1/partner-applications", async (request, reply) => {
     const payload = parseAuthPayload(publicPartnerApplicationSchema, request.body);
     const companyName = (payload.company_name || payload.partner_name).trim();
@@ -7632,6 +7927,7 @@ export function registerRoutes(app) {
             country: payload.country,
             category: payload.category,
             message: payload.message,
+            company_lookup: payload.company_lookup || {},
             submitted_at: new Date().toISOString()
           }
         })
@@ -7654,7 +7950,9 @@ export function registerRoutes(app) {
         email_hash: authEmailHash(email),
         city: payload.city,
         country: payload.country,
-        category: payload.category
+        category: payload.category,
+        company_lookup_status: payload.company_lookup?.status || null,
+        company_lookup_provider: payload.company_lookup?.provider || null
       }
     });
 
