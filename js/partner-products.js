@@ -32,6 +32,11 @@
     }[char]));
   }
 
+  function escapeSelector(value) {
+    if (window.CSS?.escape) return window.CSS.escape(String(value || ""));
+    return String(value || "").replace(/["\\]/g, "\\$&");
+  }
+
   function money(value) {
     if (core.money) return core.money(value);
     return Number(value || 0).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
@@ -156,6 +161,18 @@
     `;
   }
 
+  function isApproved(product) {
+    return normalize(product.compliance_review_status || product.review_status || product.approval_status) === "approved";
+  }
+
+  function isActive(product) {
+    return normalize(product.status) === "active";
+  }
+
+  function canPublish(product) {
+    return isApproved(product) && !isActive(product) && normalize(product.status) !== "archived";
+  }
+
   function productMatchesSearch(product, search) {
     const term = String(search || "").trim().toLocaleLowerCase("tr-TR");
     if (!term) return true;
@@ -252,6 +269,9 @@
     const count = state.selected.size;
     const target = $("[data-selected-count]");
     if (target) target.textContent = `${count} ürün seçildi`;
+    $all("[data-product-row]").forEach((row) => {
+      row.classList.toggle("is-selected", state.selected.has(String(row.dataset.productRow || "")));
+    });
     const form = $("[data-bulk-product-form]");
     if (form) {
       $all("input, button", form).forEach((node) => {
@@ -290,8 +310,10 @@
       const product = normalizeProduct(raw);
       const image = product.image_url || raw.image_url || "";
       const stockClass = Number(product.stock || 0) <= 0 ? "is-empty" : Number(product.stock || 0) <= 5 ? "is-low" : "";
+      const approvedForPublish = canPublish(product);
+      const archived = normalize(product.status) === "archived";
       return `
-        <tr data-product-row="${escape(product.id)}">
+        <tr data-product-row="${escape(product.id)}" class="${state.selected.has(String(product.id)) ? "is-selected" : ""}">
           <td class="partner-products-select">
             <input type="checkbox" data-select-product="${escape(product.id)}" aria-label="${escape(product.name)} seç" ${state.selected.has(String(product.id)) ? "checked" : ""}>
           </td>
@@ -307,14 +329,33 @@
             </div>
           </td>
           <td>${escape(product.category || "-")}<small>${escape(product.brand || "")}</small></td>
-          <td class="partner-products-money">${money(product.price)}</td>
-          <td><span class="partner-products-stock ${stockClass}">${escape(product.stock)}</span></td>
+          <td class="partner-products-money">
+            <input class="partner-products-quick-input" type="number" min="0" step="0.01" value="${escape(Number(product.price || 0))}" data-quick-price="${escape(product.id)}" aria-label="${escape(product.name)} fiyat">
+            <small>${money(product.price)}</small>
+          </td>
+          <td>
+            <input class="partner-products-quick-input ${stockClass}" type="number" min="0" step="1" value="${escape(Number(product.stock || 0))}" data-quick-stock="${escape(product.id)}" aria-label="${escape(product.name)} stok">
+          </td>
           <td>${statusBadges(product)}</td>
           <td>${escape(formatDate(product.updated_at || product.created_at))}</td>
-          <td>
-            <button type="button" data-edit-product="${escape(product.id)}">
+          <td class="partner-products-row-actions">
+            <button type="button" data-save-quick-product="${escape(product.id)}" title="Fiyat ve stoku kaydet">
+              <i class="fa-solid fa-floppy-disk"></i>
+              <span>Kaydet</span>
+            </button>
+            <button type="button" data-edit-product="${escape(product.id)}" title="Ürün içeriğini düzenle">
               <i class="fa-solid fa-pen-to-square"></i>
               <span>Düzenle</span>
+            </button>
+            ${approvedForPublish ? `
+              <button type="button" data-publish-product="${escape(product.id)}" title="Onaylı ürünü yayına al">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span>Yayına Al</span>
+              </button>
+            ` : ""}
+            <button type="button" class="is-danger" data-archive-product="${escape(product.id)}" ${archived ? "disabled" : ""} title="Ürünü yayından kaldır ve arşivle">
+              <i class="fa-solid fa-box-archive"></i>
+              <span>${archived ? "Arşiv" : "Sil"}</span>
             </button>
           </td>
         </tr>
@@ -472,6 +513,80 @@
     return result.product;
   }
 
+  function toggleSelection(productId, force) {
+    const id = String(productId || "");
+    if (!id) return;
+    const checked = typeof force === "boolean" ? force : !state.selected.has(id);
+    if (checked) state.selected.add(id);
+    else state.selected.delete(id);
+    const input = $(`[data-select-product="${escapeSelector(id)}"]`);
+    if (input) input.checked = checked;
+    renderSelectedState();
+  }
+
+  function quickPayload(productId) {
+    const priceInput = $(`[data-quick-price="${escapeSelector(String(productId))}"]`);
+    const stockInput = $(`[data-quick-stock="${escapeSelector(String(productId))}"]`);
+    const price = Number(priceInput?.value || 0);
+    const stock = Number(stockInput?.value || 0);
+    if (!Number.isFinite(price) || price < 0) throw new Error("Fiyat değerini kontrol edin.");
+    if (!Number.isInteger(stock) || stock < 0) throw new Error("Stok tam sayı olmalı.");
+    return { price, stock };
+  }
+
+  async function saveQuickProduct(productId, button) {
+    setButtonBusy(button, true);
+    try {
+      await updateProduct(productId, quickPayload(productId));
+      renderAll();
+    } catch (error) {
+      toast(error.message || "Fiyat/stok güncellenemedi.", "error");
+    } finally {
+      setButtonBusy(button, false);
+    }
+  }
+
+  async function publishProduct(productId, button) {
+    setButtonBusy(button, true);
+    try {
+      const result = await apiFetch(`/v1/partner/products/${encodeURIComponent(productId)}/publish`, {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      if (result.product) {
+        state.products = state.products.map((product) => String(product.id) === String(productId) ? result.product : product);
+      }
+      renderAll();
+      toast(result.message || "Ürün yayına alındı.", "success");
+    } catch (error) {
+      toast(error.message || "Ürün yayına alınamadı.", "error");
+    } finally {
+      setButtonBusy(button, false);
+    }
+  }
+
+  async function archiveProduct(productId, button) {
+    const product = normalizeProduct(productById(productId) || {});
+    const confirmed = window.confirm(`${product.name || "Bu ürün"} yayından kaldırılıp arşivlenecek. Devam edilsin mi?`);
+    if (!confirmed) return;
+    setButtonBusy(button, true);
+    try {
+      const result = await apiFetch(`/v1/partner/products/${encodeURIComponent(productId)}`, {
+        method: "DELETE"
+      });
+      if (result.product) {
+        state.products = state.products.map((row) => String(row.id) === String(productId) ? result.product : row);
+      }
+      state.selected.delete(String(productId));
+      renderAll();
+      toast(result.message || "Ürün arşivlendi.", "success");
+    } catch (error) {
+      toast(error.message || "Ürün arşivlenemedi.", "error");
+    } finally {
+      setButtonBusy(button, false);
+    }
+  }
+
   async function submitEditor(form) {
     const productId = form.elements.id?.value || state.currentProductId;
     if (!productId) return;
@@ -531,10 +646,20 @@
     document.addEventListener("click", (event) => {
       const refresh = event.target.closest("[data-refresh-products]");
       const edit = event.target.closest("[data-edit-product]");
+      const quickSave = event.target.closest("[data-save-quick-product]");
+      const publish = event.target.closest("[data-publish-product]");
+      const archive = event.target.closest("[data-archive-product]");
       const close = event.target.closest("[data-close-product-drawer]");
       const clear = event.target.closest("[data-clear-product-filters]");
+      const selectVisible = event.target.closest("[data-select-visible-products]");
+      const selectActive = event.target.closest("[data-select-active-products]");
+      const clearSelected = event.target.closest("[data-clear-selected-products]");
+      const row = event.target.closest("[data-product-row]");
       if (refresh) loadProducts();
       if (edit) openEditor(edit.dataset.editProduct);
+      if (quickSave) saveQuickProduct(quickSave.dataset.saveQuickProduct, quickSave);
+      if (publish) publishProduct(publish.dataset.publishProduct, publish);
+      if (archive) archiveProduct(archive.dataset.archiveProduct, archive);
       if (close) closeEditor();
       if (clear) {
         state.filters = { search: "", status: "all", sort: "updated_desc" };
@@ -545,6 +670,24 @@
         if (status) status.value = "all";
         if (sort) sort.value = "updated_desc";
         renderRows();
+      }
+      if (selectVisible) {
+        visibleProducts().forEach((product) => state.selected.add(String(product.id)));
+        renderRows();
+      }
+      if (selectActive) {
+        visibleProducts()
+          .map(normalizeProduct)
+          .filter(isActive)
+          .forEach((product) => state.selected.add(String(product.id)));
+        renderRows();
+      }
+      if (clearSelected) {
+        state.selected.clear();
+        renderRows();
+      }
+      if (row && !event.target.closest("button,a,input,select,textarea,label")) {
+        toggleSelection(row.dataset.productRow);
       }
     });
 
@@ -570,9 +713,7 @@
       }
       if (event.target.matches("[data-select-product]")) {
         const id = String(event.target.dataset.selectProduct || "");
-        if (event.target.checked) state.selected.add(id);
-        else state.selected.delete(id);
-        renderSelectedState();
+        toggleSelection(id, event.target.checked);
       }
       if (event.target.matches("[data-select-all-products]")) {
         const ids = visibleProducts().map((product) => String(product.id));

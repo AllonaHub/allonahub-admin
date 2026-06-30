@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260628-modules1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260629-partnerhost1">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-productsfix1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-productops1">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -82,12 +82,17 @@
             <strong data-selected-count>0 ürün seçildi</strong>
             <span>Seçili ürünler için boş bırakılan alanlar korunur.</span>
           </div>
+          <div class="partner-products-selection-actions" aria-label="Hızlı seçim">
+            <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
+            <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
+            <button type="button" data-clear-selected-products><i class="fa-solid fa-xmark"></i><span>Seçimi Temizle</span></button>
+          </div>
           <form data-bulk-product-form>
             <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" placeholder="Yeni fiyat"></label>
             <label><span>Stok</span><input name="stock" type="number" min="0" step="1" placeholder="Yeni stok"></label>
             <label><span>Kategori</span><input name="category" placeholder="Kategori"></label>
             <label><span>Marka</span><input name="brand" placeholder="Marka"></label>
-            <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Revize Et</span></button>
+            <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Toplu Kaydet</span></button>
           </form>
         </aside>
 
@@ -173,7 +178,7 @@
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260629-media1" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-productsfix1" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-productops1" defer></script>
   <script src="../../js/platform.js?v=20260630-currency2" defer></script>
   <script src="../../js/privacy-consent.js?v=20260629-partnerhost1" defer></script>
 </body>

@@ -230,6 +230,13 @@
   margin-top: 12px;
 }
 
+.partner-products-selection-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .partner-products-bulk button[disabled],
 .partner-product-drawer-panel button[disabled],
 .partner-products-table button[disabled] {
@@ -243,7 +250,7 @@
 
 .partner-products-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1180px;
   border-collapse: collapse;
 }
 
@@ -270,8 +277,29 @@
   border-bottom: 0;
 }
 
+.partner-products-table tbody tr {
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.partner-products-table tbody tr:hover,
+.partner-products-table tbody tr.is-selected {
+  background: color-mix(in srgb, var(--ah-primary) 7%, transparent);
+}
+
+.partner-products-table tbody tr.is-selected {
+  box-shadow: inset 3px 0 0 var(--ah-primary);
+}
+
 .partner-products-select {
   width: 46px;
+}
+
+.partner-products-select input,
+.partner-products-table thead input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ah-primary);
+  cursor: pointer;
 }
 
 .partner-product-cell {
@@ -330,6 +358,34 @@
   color: #ff6d8a;
 }
 
+.partner-products-quick-input {
+  width: 112px;
+  min-height: 38px;
+  border: 1px solid var(--ah-line);
+  border-radius: 8px;
+  padding: 0 10px;
+  color: var(--ah-ink);
+  background: color-mix(in srgb, var(--ah-bg-mid) 80%, transparent);
+  font: inherit;
+  font-weight: 900;
+  outline: none;
+}
+
+.partner-products-quick-input:focus {
+  border-color: color-mix(in srgb, var(--ah-primary) 64%, var(--ah-line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ah-primary) 13%, transparent);
+}
+
+.partner-products-quick-input.is-low {
+  border-color: color-mix(in srgb, var(--ah-accent) 52%, var(--ah-line));
+  color: var(--ah-accent);
+}
+
+.partner-products-quick-input.is-empty {
+  border-color: rgba(255, 77, 109, 0.5);
+  color: #ff8ca2;
+}
+
 .partner-products-badge {
   min-height: 28px;
   border: 1px solid var(--ah-line);
@@ -362,6 +418,32 @@
   border-color: rgba(255, 77, 109, 0.5);
   background: rgba(255, 77, 109, 0.12);
   color: #ff8ca2;
+}
+
+.partner-products-row-actions {
+  min-width: 310px;
+}
+
+.partner-products-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.partner-products-row-actions button {
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.partner-products-row-actions button.is-danger {
+  border-color: rgba(255, 77, 109, 0.34);
+  background: rgba(255, 77, 109, 0.1);
+  color: #ff9caf;
+}
+
+.partner-products-row-actions button.is-danger:hover {
+  border-color: rgba(255, 77, 109, 0.62);
+  background: rgba(255, 77, 109, 0.18);
 }
 
 .partner-products-empty,
