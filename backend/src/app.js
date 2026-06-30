@@ -185,8 +185,6 @@ export async function buildApp() {
     }
   });
 
-  registerAutoDefense(app);
-
   await app.register(cors, {
     origin(origin, callback) {
       if (!origin) return callback(null, true);
@@ -197,6 +195,8 @@ export async function buildApp() {
     methods: ["GET", "POST", "PATCH", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"]
   });
+
+  registerAutoDefense(app);
 
   await app.register(rateLimit, {
     max: 120,

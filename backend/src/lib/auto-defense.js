@@ -44,8 +44,18 @@ function hasBearerToken(request) {
   return /^bearer\s+\S+/i.test(String(request.headers.authorization || "").trim());
 }
 
+function isOptionsRequest(request) {
+  return String(request.method || "").toUpperCase() === "OPTIONS";
+}
+
+function isPartnerProductsRead(request, pathname = routePath(request)) {
+  return String(request.method || "GET").toUpperCase() === "GET"
+    && /^\/v1\/partner\/products\/?$/i.test(pathname);
+}
+
 function canPassPrivilegedAuthGate(request, pathname = routePath(request)) {
-  return ADMIN_PATH_PATTERN.test(pathname) && hasBearerToken(request);
+  if (!hasBearerToken(request)) return false;
+  return ADMIN_PATH_PATTERN.test(pathname) || isPartnerProductsRead(request, pathname);
 }
 
 function compactPath(pathname) {
@@ -87,6 +97,7 @@ function pushIncident(report) {
 
 function routeLimitFor(pathname, request) {
   const strict = state.strictModeUntil > now();
+  if (isPartnerProductsRead(request, pathname) && hasBearerToken(request)) return strict ? 80 : 180;
   if (ADMIN_PATH_PATTERN.test(pathname) && hasBearerToken(request)) return strict ? 30 : 80;
   if (ADMIN_PATH_PATTERN.test(pathname)) return strict ? 8 : 16;
   if (AUTH_PATH_PATTERN.test(pathname)) return strict ? 40 : 80;
@@ -245,7 +256,7 @@ function cloudflareScore(value) {
 }
 
 function requestSignals(request, bodyValue = "", options = {}) {
-  const countRouteHit = options.countRoute !== false;
+  const countRouteHit = options.countRoute !== false && !isOptionsRequest(request);
   const pathname = routePath(request);
   const ip = clientIp(request);
   const raw = `${request.url || ""} ${normalizePayload(request.query)} ${normalizePayload(bodyValue)}`;
@@ -360,6 +371,7 @@ export function autoDefenseStatus() {
 export function registerAutoDefense(app) {
   app.addHook("onRequest", async (request, reply) => {
     if (!config.autoDefense.enabled) return;
+    if (isOptionsRequest(request)) return;
     cleanup();
 
     const ip = clientIp(request);
@@ -386,6 +398,7 @@ export function registerAutoDefense(app) {
 
   app.addHook("preValidation", async (request) => {
     if (!config.autoDefense.enabled) return;
+    if (isOptionsRequest(request)) return;
     const signals = requestSignals(request, request.body, { countRoute: false });
     const blocked = await evaluate(request, signals);
     if (blocked && routePath(request) !== "/health" && !canPassPrivilegedAuthGate(request)) {
@@ -395,12 +408,14 @@ export function registerAutoDefense(app) {
 
   app.addHook("onResponse", async (request, reply) => {
     if (!config.autoDefense.enabled) return;
+    if (isOptionsRequest(request)) return;
     const signals = failureSignals(request, reply.statusCode);
     await evaluate(request, signals);
   });
 
   app.addHook("onError", async (request, _reply, error) => {
     if (!config.autoDefense.enabled) return;
+    if (isOptionsRequest(request)) return;
     const statusCode = error.statusCode || 500;
     const signals = failureSignals(request, statusCode);
     if (statusCode >= 500 && SENSITIVE_PATH_PATTERN.test(routePath(request))) {
