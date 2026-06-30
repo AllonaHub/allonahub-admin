@@ -262,12 +262,354 @@
     return raw;
   }
 
-  function money(value) {
+  const CURRENCY_PREF_KEY = "allona.currency";
+  const CURRENCY_RATES_PREFIX = "allona.currency.rates.";
+  const BASE_CURRENCY = String(App.config?.baseCurrency || App.config?.currency || "TRY").toUpperCase();
+  const DEFAULT_RATES_URL = "https://open.er-api.com/v6/latest/{base}";
+  const CURRENCY_CACHE_MS = Number(App.config?.currencyCacheHours || 12) * 60 * 60 * 1000;
+  const countryCurrencyMap = {
+    AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AT: "EUR", AU: "AUD", AW: "AWG", AZ: "AZN",
+    BA: "BAM", BB: "BBD", BD: "BDT", BE: "EUR", BF: "XOF", BG: "BGN", BH: "BHD", BI: "BIF", BJ: "XOF", BN: "BND", BO: "BOB", BR: "BRL", BS: "BSD", BT: "BTN", BW: "BWP", BY: "BYN",
+    CA: "CAD", CD: "CDF", CG: "XAF", CH: "CHF", CI: "XOF", CL: "CLP", CM: "XAF", CN: "CNY", CO: "COP", CR: "CRC", CV: "CVE", CY: "EUR", CZ: "CZK",
+    DE: "EUR", DJ: "DJF", DK: "DKK", DM: "XCD", DO: "DOP", DZ: "DZD", EC: "USD", EE: "EUR", EG: "EGP", ES: "EUR", ET: "ETB",
+    FI: "EUR", FJ: "FJD", FR: "EUR", GB: "GBP", GE: "GEL", GH: "GHS", GM: "GMD", GN: "GNF", GR: "EUR", GT: "GTQ", HK: "HKD", HR: "EUR", HU: "HUF",
+    ID: "IDR", IE: "EUR", IL: "ILS", IN: "INR", IQ: "IQD", IR: "IRR", IS: "ISK", IT: "EUR", JM: "JMD", JO: "JOD", JP: "JPY",
+    KE: "KES", KG: "KGS", KH: "KHR", KR: "KRW", KW: "KWD", KZ: "KZT", LB: "LBP", LI: "CHF", LK: "LKR", LT: "EUR", LU: "EUR", LV: "EUR", LY: "LYD",
+    MA: "MAD", MC: "EUR", MD: "MDL", ME: "EUR", MG: "MGA", MK: "MKD", ML: "XOF", MM: "MMK", MN: "MNT", MT: "EUR", MU: "MUR", MX: "MXN", MY: "MYR",
+    NG: "NGN", NL: "EUR", NO: "NOK", NP: "NPR", NZ: "NZD", OM: "OMR", PA: "PAB", PE: "PEN", PH: "PHP", PK: "PKR", PL: "PLN", PT: "EUR", PY: "PYG",
+    QA: "QAR", RO: "RON", RS: "RSD", RU: "RUB", RW: "RWF", SA: "SAR", SE: "SEK", SG: "SGD", SI: "EUR", SK: "EUR", SN: "XOF", TH: "THB", TJ: "TJS", TM: "TMT",
+    TN: "TND", TR: "TRY", UA: "UAH", US: "USD", UY: "UYU", UZ: "UZS", VN: "VND", ZA: "ZAR"
+  };
+  const timeZoneCountryMap = {
+    "Europe/Istanbul": "TR",
+    "Asia/Baku": "AZ",
+    "America/New_York": "US",
+    "America/Chicago": "US",
+    "America/Denver": "US",
+    "America/Los_Angeles": "US",
+    "America/Toronto": "CA",
+    "Europe/London": "GB",
+    "Europe/Berlin": "DE",
+    "Europe/Paris": "FR",
+    "Europe/Rome": "IT",
+    "Europe/Madrid": "ES",
+    "Europe/Amsterdam": "NL",
+    "Europe/Brussels": "BE",
+    "Europe/Vienna": "AT",
+    "Europe/Zurich": "CH",
+    "Asia/Dubai": "AE",
+    "Asia/Riyadh": "SA",
+    "Asia/Qatar": "QA",
+    "Asia/Kuwait": "KW",
+    "Asia/Bahrain": "BH",
+    "Asia/Muscat": "OM",
+    "Asia/Baghdad": "IQ",
+    "Asia/Amman": "JO",
+    "Asia/Beirut": "LB",
+    "Africa/Cairo": "EG",
+    "Africa/Casablanca": "MA",
+    "Asia/Tehran": "IR",
+    "Asia/Tokyo": "JP",
+    "Asia/Seoul": "KR",
+    "Asia/Shanghai": "CN",
+    "Asia/Singapore": "SG",
+    "Asia/Kolkata": "IN"
+  };
+  const currencyLocaleMap = {
+    AED: "ar-AE", AZN: "az-AZ", BHD: "ar-BH", CAD: "en-CA", CHF: "de-CH", CNY: "zh-CN", EGP: "ar-EG", EUR: "de-DE", GBP: "en-GB",
+    IQD: "ar-IQ", JOD: "ar-JO", KWD: "ar-KW", OMR: "ar-OM", QAR: "ar-QA", SAR: "ar-SA", TRY: "tr-TR", USD: "en-US"
+  };
+  const currencyState = {
+    base: BASE_CURRENCY,
+    target: BASE_CURRENCY,
+    country: "TR",
+    locale: App.config?.locale || "tr-TR",
+    rates: { [BASE_CURRENCY]: 1 },
+    updatedAt: 0,
+    provider: "",
+    ready: false
+  };
+
+  function normalizeCurrency(value) {
+    const code = String(value || "").trim().toUpperCase();
+    return /^[A-Z]{3}$/.test(code) ? code : "";
+  }
+
+  function targetCurrencyForCountry(country) {
+    return countryCurrencyMap[String(country || "").trim().toUpperCase()] || BASE_CURRENCY;
+  }
+
+  function localeForCurrency(currency) {
+    return currencyLocaleMap[currency] || App.config?.locale || navigator.language || "tr-TR";
+  }
+
+  function currencyParam() {
+    try {
+      return normalizeCurrency(new URL(window.location.href).searchParams.get("currency"));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function storedCurrency() {
+    try {
+      return normalizeCurrency(localStorage.getItem(CURRENCY_PREF_KEY));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function regionFromLocale(value) {
+    try {
+      return new Intl.Locale(value).region || "";
+    } catch (error) {
+      const parts = String(value || "").split("-");
+      return parts.length > 1 ? parts.pop().toUpperCase() : "";
+    }
+  }
+
+  function detectedCountry() {
+    const localeCountry = (navigator.languages || [navigator.language || ""])
+      .map(regionFromLocale)
+      .find(Boolean);
+    if (localeCountry) return localeCountry;
+    try {
+      const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return timeZoneCountryMap[zone] || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function ratesUrl(base) {
+    const template = App.config?.currencyRatesUrl || DEFAULT_RATES_URL;
+    return String(template).replace("{base}", encodeURIComponent(base));
+  }
+
+  function readRatesCache(base, allowStale) {
+    try {
+      const cache = JSON.parse(localStorage.getItem(`${CURRENCY_RATES_PREFIX}${base}`) || "null");
+      if (!cache || !cache.rates) return null;
+      if (!allowStale && Date.now() - Number(cache.fetchedAt || 0) > CURRENCY_CACHE_MS) return null;
+      return cache;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeRatesCache(base, payload) {
+    try {
+      localStorage.setItem(`${CURRENCY_RATES_PREFIX}${base}`, JSON.stringify(payload));
+    } catch (error) {}
+  }
+
+  function applyRates(payload) {
+    if (!payload || !payload.rates) return;
+    currencyState.rates = { ...payload.rates, [currencyState.base]: 1 };
+    currencyState.updatedAt = Number(payload.updatedAt || Date.now());
+    currencyState.provider = payload.provider || "";
+    currencyState.ready = true;
+  }
+
+  async function loadCurrencyRates(options) {
+    const settings = options || {};
+    const cached = !settings.force && readRatesCache(currencyState.base, false);
+    if (cached) {
+      applyRates(cached);
+      return cached;
+    }
+    try {
+      const response = await fetch(ratesUrl(currencyState.base), { cache: "no-cache" });
+      if (!response.ok) throw new Error(`currency rates ${response.status}`);
+      const payload = await response.json();
+      if (payload.result && payload.result !== "success") throw new Error(payload["error-type"] || "currency rates failed");
+      const next = {
+        rates: payload.rates || {},
+        updatedAt: Number(payload.time_last_update_unix || 0) ? Number(payload.time_last_update_unix) * 1000 : Date.now(),
+        fetchedAt: Date.now(),
+        provider: payload.provider || "ExchangeRate-API"
+      };
+      writeRatesCache(currencyState.base, next);
+      applyRates(next);
+      return next;
+    } catch (error) {
+      const stale = readRatesCache(currencyState.base, true);
+      if (stale) {
+        applyRates(stale);
+        return stale;
+      }
+      currencyState.ready = false;
+      return null;
+    }
+  }
+
+  function convertedAmount(value, fromCurrency, toCurrency) {
     const amount = Number(value || 0);
-    return amount.toLocaleString(App.config.locale, {
+    const from = normalizeCurrency(fromCurrency) || currencyState.base;
+    const to = normalizeCurrency(toCurrency) || currencyState.target;
+    if (from === to) return { amount, currency: to };
+    const rates = currencyState.rates || {};
+    const fromRate = Number(rates[from] || 0);
+    const toRate = Number(rates[to] || 0);
+    if (!fromRate || !toRate) return { amount, currency: from };
+    return { amount: (amount / fromRate) * toRate, currency: to };
+  }
+
+  function formatCurrency(value, options) {
+    const settings = options || {};
+    const sourceCurrency = normalizeCurrency(settings.sourceCurrency || settings.currency) || currencyState.base;
+    const targetCurrency = normalizeCurrency(settings.targetCurrency) || currencyState.target;
+    const converted = convertedAmount(value, sourceCurrency, targetCurrency);
+    return Number(converted.amount || 0).toLocaleString(localeForCurrency(converted.currency), {
       style: "currency",
-      currency: App.config.currency
+      currency: converted.currency,
+      maximumFractionDigits: Number.isInteger(converted.amount) && Math.abs(converted.amount) >= 1000 ? 0 : 2
     });
+  }
+
+  function money(value, options) {
+    return formatCurrency(value, options);
+  }
+
+  function parseTryAmount(value) {
+    const raw = String(value || "").replace(/\s/g, "");
+    if (!raw) return NaN;
+    if (raw.includes(",")) return Number(raw.replace(/\./g, "").replace(",", "."));
+    if (/^\d{1,3}(?:\.\d{3})+$/.test(raw)) return Number(raw.replace(/\./g, ""));
+    return Number(raw);
+  }
+
+  function extractStaticPrice(text) {
+    const value = String(text || "");
+    const prefixMatch = value.match(/^(.*?)(-?)\s*₺\s*(\d[\d\s.,]*)(.*)$/);
+    const suffixMatch = value.match(/^(.*?)(-?)\s*(\d[\d\s.,]*)\s*(?:₺|TL\b|TRY\b)(.*)$/i);
+    const match = prefixMatch || suffixMatch;
+    if (!match) return null;
+    const amount = parseTryAmount(match[3]);
+    if (!Number.isFinite(amount)) return null;
+    return {
+      amount: match[2] === "-" ? -amount : amount,
+      before: match[1] || "",
+      after: match[4] || ""
+    };
+  }
+
+  function convertStaticPriceNode(node) {
+    if (!node || node.nodeType !== 1 || node.closest("[data-no-currency]")) return;
+    if (!node.dataset.basePrice) {
+      const parsed = extractStaticPrice(node.textContent);
+      if (!parsed) return;
+      node.dataset.basePrice = String(parsed.amount);
+      node.dataset.priceBefore = parsed.before;
+      node.dataset.priceAfter = parsed.after;
+      node.dataset.sourceCurrency = BASE_CURRENCY;
+    }
+    const amount = Number(node.dataset.basePrice);
+    if (!Number.isFinite(amount)) return;
+    node.textContent = `${node.dataset.priceBefore || ""}${money(amount, { sourceCurrency: node.dataset.sourceCurrency || BASE_CURRENCY })}${node.dataset.priceAfter || ""}`;
+    node.dataset.currency = currencyState.target;
+  }
+
+  function scanStaticPrices(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    const selector = ".price, .compare-price, .tier-price, .shop-promo-price, .food-promo-price, .price-row > span:not(.price-stack):not(.stock):not(.pill), .food-price-line strong, .summary-line strong, .summaryLine strong, [data-currency-price]";
+    if (scope.matches && scope.matches(selector)) convertStaticPriceNode(scope);
+    scope.querySelectorAll(selector).forEach(convertStaticPriceNode);
+  }
+
+  function notifyCurrencyChange() {
+    document.documentElement.setAttribute("data-currency", currencyState.target);
+    document.documentElement.setAttribute("data-currency-country", currencyState.country || "");
+    scanStaticPrices(document);
+    document.dispatchEvent(new CustomEvent("allona:currency-changed", { detail: { ...currencyState } }));
+  }
+
+  async function setCurrency(currency, options) {
+    const selected = normalizeCurrency(currency) || BASE_CURRENCY;
+    const settings = options || {};
+    currencyState.target = selected;
+    currencyState.locale = localeForCurrency(selected);
+    if (settings.country) currencyState.country = String(settings.country).toUpperCase();
+    if (settings.manual) {
+      try {
+        localStorage.setItem(CURRENCY_PREF_KEY, selected);
+      } catch (error) {}
+    }
+    await loadCurrencyRates();
+    notifyCurrencyChange();
+    return { ...currencyState };
+  }
+
+  function clearCurrencyPreference() {
+    try {
+      localStorage.removeItem(CURRENCY_PREF_KEY);
+    } catch (error) {}
+  }
+
+  async function reverseGeocodeCurrency(latitude, longitude) {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=3&addressdetails=1&accept-language=en`, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`location currency ${response.status}`);
+      const payload = await response.json();
+      const country = String(payload.address?.country_code || "").toUpperCase();
+      return country ? { country, currency: targetCurrencyForCountry(country) } : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function updateCurrencyFromBrowserLocation() {
+    if (storedCurrency() || !navigator.geolocation || !navigator.permissions) return;
+    try {
+      const permission = await navigator.permissions.query({ name: "geolocation" });
+      if (permission.state !== "granted") {
+        if ("onchange" in permission) {
+          permission.onchange = () => updateCurrencyFromBrowserLocation();
+        }
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const match = await reverseGeocodeCurrency(position.coords.latitude, position.coords.longitude);
+        if (match && match.currency && match.currency !== currencyState.target) {
+          await setCurrency(match.currency, { country: match.country, source: "geolocation" });
+        }
+      }, () => undefined, { maximumAge: 30 * 60 * 1000, timeout: 8000 });
+    } catch (error) {}
+  }
+
+  function setupStaticPriceObserver() {
+    if (!document.body || document.body.__allonaCurrencyObserver) return;
+    scanStaticPrices(document);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) scanStaticPrices(node);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.body.__allonaCurrencyObserver = observer;
+  }
+
+  function initCurrency() {
+    const paramCurrency = currencyParam();
+    const savedCurrency = storedCurrency();
+    const country = detectedCountry() || "TR";
+    const selected = paramCurrency || savedCurrency || targetCurrencyForCountry(country);
+    currencyState.country = country;
+    currencyState.target = normalizeCurrency(selected) || BASE_CURRENCY;
+    if (paramCurrency) {
+      try {
+        localStorage.setItem(CURRENCY_PREF_KEY, paramCurrency);
+      } catch (error) {}
+    }
+    loadCurrencyRates().then(notifyCurrencyChange);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupStaticPriceObserver);
+    } else {
+      setupStaticPriceObserver();
+    }
+    updateCurrencyFromBrowserLocation();
   }
 
   function slugify(value) {
@@ -462,8 +804,8 @@
           </div>
           <div class="price-row">
             <span class="price-stack">
-              <span class="price">${money(product.price)}</span>
-              ${compareAt ? `<span class="compare-price">${money(compareAt)}</span>` : ""}
+              <span class="price" data-currency-price data-base-price="${escapeHTML(product.price)}" data-source-currency="${BASE_CURRENCY}">${money(product.price)}</span>
+              ${compareAt ? `<span class="compare-price" data-currency-price data-base-price="${escapeHTML(compareAt)}" data-source-currency="${BASE_CURRENCY}">${money(compareAt)}</span>` : ""}
             </span>
             <span class="pill pill--gold">Allona</span>
           </div>
@@ -657,6 +999,24 @@
     debounce
   };
 
+  App.currency = {
+    state: currencyState,
+    targetForCountry: targetCurrencyForCountry,
+    convert(value, fromCurrency, toCurrency) {
+      return convertedAmount(value, fromCurrency, toCurrency);
+    },
+    format: money,
+    setCurrency,
+    clearPreference: clearCurrencyPreference,
+    refresh() {
+      return loadCurrencyRates({ force: true }).then(() => {
+        notifyCurrencyChange();
+        return { ...currencyState };
+      });
+    },
+    scan: scanStaticPrices
+  };
+
   App.security = {
     normalizeText,
     normalizeMultiline,
@@ -667,4 +1027,6 @@
     rateLimit,
     publicErrorMessage
   };
+
+  initCurrency();
 })();

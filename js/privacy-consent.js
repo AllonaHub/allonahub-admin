@@ -4,7 +4,7 @@
   const LOCATION_PERMISSION_KEY = "allona.location.permission.v1";
   const LOCATION_CACHE_KEY = "allona.location.lastKnown.v1";
   const CONSENT_VERSION = "20260628-privacy1";
-  const SERVICE_WORKER_VERSION = "20260630-language1";
+  const SERVICE_WORKER_VERSION = "20260630-currency1";
 
   const categories = {
     necessary: true,

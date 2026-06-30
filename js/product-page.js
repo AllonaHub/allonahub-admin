@@ -185,8 +185,8 @@
         <p>${core.escapeHTML(product.description || "Ürün açıklaması yakında güncellenecek.")}</p>
         <div class="price-row">
           <span class="price-stack">
-            <span class="price">${core.money(product.price)}</span>
-            ${compareAt ? `<span class="compare-price">${core.money(compareAt)}</span>` : ""}
+            <span class="price" data-currency-price data-base-price="${core.escapeHTML(product.price)}" data-source-currency="TRY">${core.money(product.price)}</span>
+            ${compareAt ? `<span class="compare-price" data-currency-price data-base-price="${core.escapeHTML(compareAt)}" data-source-currency="TRY">${core.money(compareAt)}</span>` : ""}
           </span>
           <span class="${product.stock > 0 ? "stock" : "stock stock--out"}">${product.stock > 0 ? `${product.stock} stok` : "Stok yok"}</span>
         </div>
