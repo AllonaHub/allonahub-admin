@@ -373,6 +373,19 @@ const adminProductReviewBulkDecisionSchema = adminProductReviewDecisionSchema.ex
   only_auto_approvable: z.boolean().optional().default(false)
 });
 
+const automationActionSchema = z.enum(["publish_safe_products"]);
+
+const automationRunSchema = z.object({
+  apply: z.boolean().optional().default(false),
+  actions: z.array(automationActionSchema).optional().default(["publish_safe_products"]),
+  limit: z.coerce.number().int().min(1).max(80).optional().default(40),
+  reason: z.string().trim().max(900).optional().default("")
+});
+
+const automationQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80)
+});
+
 const partnerApplicationActionSchema = z.object({
   action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
   reason: z.string().trim().min(3).max(1200),
@@ -4110,6 +4123,508 @@ function productReviewRevisionReason(product = {}, baseReason = "") {
   return `${baseReason}\n\nOtomasyon tespiti:\n${details}`.trim().slice(0, 1200);
 }
 
+function productAutoPublishCandidate(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const price = Number(product.price || 0);
+  const stock = Number(product.stock ?? 0);
+  const description = String(product.description || "").trim();
+  const image = String(product.image_url || product.image || "").trim();
+  return Boolean(
+    productNeedsAdminReview(product)
+      && automation.auto_approvable
+      && automation.lane === "ready"
+      && automation.risk_level === "clear"
+      && !automation.revision_required
+      && price > 0
+      && stock > 0
+      && description.length >= 20
+      && image
+  );
+}
+
+function automationRiskRank(riskLevel) {
+  const rank = { critical: 5, high: 4, warning: 3, medium: 2, info: 1, low: 1, clear: 0 };
+  return rank[String(riskLevel || "").toLowerCase()] ?? 2;
+}
+
+function automationItem({ lane, type, targetId, title, summary, riskLevel = "medium", action = "", createdAt = null, metadata = {} }) {
+  return {
+    id: `${lane}:${type}:${targetId || title || Date.now()}`,
+    lane,
+    type,
+    target_id: targetId || "",
+    title: title || "Otomasyon kaydı",
+    summary: summary || "",
+    risk_level: riskLevel,
+    action,
+    created_at: createdAt,
+    metadata
+  };
+}
+
+function productAutomationSummaryText(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  if (!automation.reasons.length) return "Politika, görsel, fiyat, stok ve açıklama kuralları geçti.";
+  return automation.reasons
+    .slice(0, 3)
+    .map((reason) => `${reason.field_label || reason.field || "Alan"}: ${reason.title || reason.message || "Kontrol"}`)
+    .join(" · ");
+}
+
+function productAutomationItem(product = {}, lane = "admin_queue") {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const riskLevel = automation.risk_level === "critical"
+    ? "critical"
+    : automation.risk_level === "warning"
+      ? "high"
+      : automation.risk_level === "info"
+        ? "medium"
+        : "low";
+  const action = lane === "auto_ready"
+    ? "Otomatik yayına alınabilir"
+    : automation.revision_required
+      ? "Admin revizyon bildirimi göndermeli"
+      : "Admin kontrol edebilir";
+  return automationItem({
+    lane,
+    type: "product",
+    targetId: product.id,
+    title: product.name || product.product_name || product.sku || "Ürün onayı",
+    summary: productAutomationSummaryText(product),
+    riskLevel,
+    action,
+    createdAt: product.created_at || product.updated_at || null,
+    metadata: {
+      partner_id: product.partner_id || null,
+      seller: product.seller_public_name || product.seller_legal_name || product.partner_email || "",
+      status: product.status || "",
+      review_status: product.compliance_review_status || product.review_status || product.approval_status || "",
+      automation
+    }
+  });
+}
+
+function automationSupportRisk(ticket = {}) {
+  const priority = String(ticket.priority || "").toLowerCase();
+  const text = `${ticket.category || ""} ${ticket.title || ""} ${ticket.message || ""}`.toLocaleLowerCase("tr-TR");
+  if (priority === "urgent" || /kvkk|hukuk|mahkeme|savcı|savci|güvenlik|guvenlik|dolandırıcılık|dolandiricilik|chargeback|ters ibraz/i.test(text)) return "critical";
+  if (priority === "high" || /iade|iptal|refund|cancel|ödeme|odeme|hakediş|hakedis|dispute|ihtilaf/i.test(text)) return "high";
+  return "medium";
+}
+
+function automationSupportItem(ticket = {}, source = "user") {
+  const riskLevel = automationSupportRisk(ticket);
+  return automationItem({
+    lane: riskLevel === "critical" ? "super_admin_queue" : "admin_queue",
+    type: source === "partner" ? "partner_support_ticket" : "support_ticket",
+    targetId: ticket.id,
+    title: ticket.title || (source === "partner" ? "Partner destek talebi" : "Destek talebi"),
+    summary: `${ticket.category || "general"} / ${ticket.priority || "normal"} / ${ticket.status || "open"}`,
+    riskLevel,
+    action: riskLevel === "critical" ? "Süper admin kararı gerekir" : "Admin aksiyonu gerekir",
+    createdAt: ticket.created_at || null,
+    metadata: {
+      source,
+      requester_type: ticket.requester_type || source,
+      category: ticket.category || "",
+      priority: ticket.priority || "",
+      status: ticket.status || ""
+    }
+  });
+}
+
+function automationApplicationRisk(application = {}) {
+  const metadata = partnerApplicationMetadata(application);
+  const risk = String(application.risk_level || metadata.risk_level || "").toLowerCase();
+  const recommendation = String(application.admin_recommendation || metadata.admin_recommendation || "").toLowerCase();
+  const status = String(application.status || "").toLowerCase();
+  if (status === "pending_super_admin" || recommendation === "needs_super_admin" || ["critical", "high"].includes(risk)) return "high";
+  return "medium";
+}
+
+function automationSortItems(items = []) {
+  return [...items].sort((a, b) => {
+    const riskDelta = automationRiskRank(b.risk_level) - automationRiskRank(a.risk_level);
+    if (riskDelta) return riskDelta;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  });
+}
+
+function automationRules() {
+  return [
+    {
+      key: "safe_product_publish",
+      title: "Temiz ürünleri otomatik yayına al",
+      summary: "Politika riski olmayan, fiyatı, stoğu, görseli ve açıklaması tamam ürünler manuel onaya bekletilmez.",
+      auto_apply: true,
+      action: "publish_safe_products"
+    },
+    {
+      key: "product_revision_required",
+      title: "Politika/hukuk riski olan ürünü admine düşür",
+      summary: "Yasaklı ifade, harici iletişim, iade/değişim yasağı veya ödeme akışı dışına çıkaran metin varsa revizyon gerekçesiyle admin kuyruğuna alınır.",
+      auto_apply: false,
+      action: "admin_review"
+    },
+    {
+      key: "money_and_dispute_guardrail",
+      title: "İade, iptal ve ödeme kararını otomatik onaylama",
+      summary: "Finansal kararlar partner/admin kararına ve ihtilaf durumunda süper admin hakemliğine bırakılır.",
+      auto_apply: false,
+      action: "manual_decision"
+    },
+    {
+      key: "owner_only_escalation",
+      title: "İçerik, yayın, güvenlik ve kritik yetki işlerini süper admine taşı",
+      summary: "pending_super_admin içerikler, release onayları ve dış güvenlik sinyalleri owner console iş kuyruğuna düşer.",
+      auto_apply: false,
+      action: "super_admin_review"
+    }
+  ];
+}
+
+function automationSchemaWarningObjects(warnings = []) {
+  return [...new Set(warnings)].map((message) => ({
+    label: "automation",
+    code: "AUTOMATION_SCHEMA_WARNING",
+    message
+  }));
+}
+
+async function buildOpsAutomationSnapshot(options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || 80), 1), 120);
+  const apply = options.apply === true;
+  const actions = new Set(options.actions && options.actions.length ? options.actions : ["publish_safe_products"]);
+  const warnings = [];
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const fetchLimit = Math.max(180, Math.min(600, limit * 5));
+
+  const [
+    productRows,
+    applicationRows,
+    supportTickets,
+    partnerSupportTickets,
+    approvalRequests,
+    contentProposals,
+    releaseApprovals,
+    securityEvents
+  ] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(fetchLimit),
+      [],
+      warnings,
+      "products"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("partner_applications")
+        .select("*")
+        .in("status", ["pending", "review", "pending_super_admin"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("support_tickets")
+        .select("*")
+        .in("status", ["open", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("partner_support_tickets")
+        .select("*")
+        .in("status", ["open", "waiting", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "partner_support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "admin_approval_requests"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "content_change_proposals"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("super_admin_release_approvals")
+        .select("*")
+        .in("status", ["pending", "approved", "failed"])
+        .order("created_at", { ascending: false })
+        .limit(60),
+      [],
+      warnings,
+      "super_admin_release_approvals"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("*")
+        .in("severity", ["warning", "critical"])
+        .gte("created_at", since24h)
+        .order("created_at", { ascending: false })
+        .limit(120),
+      [],
+      warnings,
+      "security_audit_events"
+    )
+  ]);
+
+  let products = (productRows || [])
+    .filter(productNeedsAdminReview)
+    .map(attachProductReviewAutomation);
+  let autoReady = products
+    .filter(productAutoPublishCandidate)
+    .map((product) => productAutomationItem(product, "auto_ready"));
+  const autoReadyProductById = new Map(products.filter(productAutoPublishCandidate).map((product) => [String(product.id), product]));
+  const adminQueue = [];
+  const superAdminQueue = [];
+  const watchlist = [];
+  const contentProposalIds = new Set((contentProposals || []).map((proposal) => String(proposal.id)));
+
+  for (const product of products) {
+    const automation = product.review_automation || productReviewAutomation(product);
+    if (productAutoPublishCandidate(product)) continue;
+    if (automation.revision_required || automation.risk_level === "critical") {
+      adminQueue.push(productAutomationItem(product, "admin_queue"));
+    } else {
+      watchlist.push(productAutomationItem(product, "watchlist"));
+    }
+  }
+
+  for (const application of applicationRows || []) {
+    const riskLevel = automationApplicationRisk(application);
+    const item = automationItem({
+      lane: riskLevel === "high" ? "super_admin_queue" : "admin_queue",
+      type: "partner_application",
+      targetId: application.id,
+      title: application.company_name || application.partner_name || application.contact_name || "Partner başvurusu",
+      summary: `${application.status || "pending"} / ${application.category || application.company_type || "partner"}`,
+      riskLevel,
+      action: riskLevel === "high" ? "Süper admin kararı gerekir" : "Admin incelemesi gerekir",
+      createdAt: application.created_at || null,
+      metadata: {
+        email: application.email || "",
+        city: application.city || "",
+        category: application.category || "",
+        status: application.status || ""
+      }
+    });
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else adminQueue.push(item);
+  }
+
+  for (const ticket of supportTickets || []) {
+    const item = automationSupportItem(ticket, "user");
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else if (automationRiskRank(item.risk_level) >= automationRiskRank("high")) adminQueue.push(item);
+    else watchlist.push(item);
+  }
+
+  for (const ticket of partnerSupportTickets || []) {
+    const item = automationSupportItem(ticket, "partner");
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else if (automationRiskRank(item.risk_level) >= automationRiskRank("high")) adminQueue.push(item);
+    else watchlist.push(item);
+  }
+
+  for (const request of approvalRequests || []) {
+    if (contentProposalIds.has(String(request.target_id || ""))) continue;
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "admin_approval_request",
+      targetId: request.id,
+      title: request.summary || request.request_type || "Admin onayı",
+      summary: `${request.request_type || "approval"} / ${request.status || "pending_super_admin"}`,
+      riskLevel: "high",
+      action: "Süper admin onayı gerekir",
+      createdAt: request.created_at || null,
+      metadata: {
+        target_type: request.target_type || "",
+        target_id: request.target_id || "",
+        proposed_action: request.proposed_action || {}
+      }
+    }));
+  }
+
+  for (const proposal of contentProposals || []) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "content_change_proposal",
+      targetId: proposal.id,
+      title: proposal.title || "İçerik önerisi",
+      summary: proposal.summary || proposal.content_scope || "",
+      riskLevel: proposal.content_scope === "legal" ? "critical" : "high",
+      action: "Süper admin içerik onayı gerekir",
+      createdAt: proposal.created_at || null,
+      metadata: {
+        content_scope: proposal.content_scope || "",
+        status: proposal.status || "",
+        payload: proposal.payload || {}
+      }
+    }));
+  }
+
+  for (const approval of releaseApprovals || []) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "super_admin_release_approval",
+      targetId: approval.id,
+      title: approval.target_summary || approval.approval_type || "Yayın onayı",
+      summary: `${approval.approval_type || "release"} / ${approval.status || "pending"} / ${approval.target_ref || "main"}`,
+      riskLevel: approval.risk_level || "critical",
+      action: "Owner onayı veya yayın takibi gerekir",
+      createdAt: approval.created_at || null,
+      metadata: {
+        status: approval.status || "",
+        target_ref: approval.target_ref || "",
+        webhook_status: approval.webhook_status || null
+      }
+    }));
+  }
+
+  for (const event of (securityEvents || []).filter(isExternalSecurityAuditEvent)) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "security_audit_event",
+      targetId: event.id,
+      title: event.action || "Güvenlik olayı",
+      summary: `${event.severity || "warning"} / ${event.resource_type || "system"} / IP ${event.ip_address || "-"}`,
+      riskLevel: workQueueRiskFromSeverity(securityRiskSeverity(event)),
+      action: "Süper admin güvenlik incelemesi gerekir",
+      createdAt: event.created_at || null,
+      metadata: {
+        actor_role: event.actor_role || "",
+        source: event.source || "",
+        purpose: event.purpose || ""
+      }
+    }));
+  }
+
+  const applied = {
+    products_published: [],
+    skipped: []
+  };
+
+  if (apply && actions.has("publish_safe_products")) {
+    const nowIso = new Date().toISOString();
+    const reason = options.reason || "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı.";
+    const candidates = autoReady
+      .map((item) => autoReadyProductById.get(String(item.target_id)))
+      .filter(Boolean)
+      .slice(0, Math.min(limit, 80));
+
+    for (const product of candidates) {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("approved", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: production şemasında yok; bu alan atlandı.`));
+      }
+      applied.products_published.push({
+        id: updated.id,
+        title: updated.name || updated.product_name || product.name || product.product_name || "Ürün",
+        status: updated.status || "active",
+        updated_at: updated.updated_at || nowIso
+      });
+    }
+
+    const appliedIds = new Set(applied.products_published.map((item) => String(item.id)));
+    autoReady = autoReady.filter((item) => !appliedIds.has(String(item.target_id)));
+
+    if (options.ctx && options.request) {
+      const auditPayload = {
+        request: options.request,
+        actorId: options.ctx.user.id,
+        actorRole: options.ctx.profile.role,
+        action: options.mode === "super_admin" ? "super_admin.automation_run" : "admin.ops.automation_run",
+        source: "admin",
+        resourceType: "automation",
+        severity: applied.products_published.length ? "warning" : "info",
+        purpose: options.mode === "super_admin" ? "super_admin_automation" : "admin_operations",
+        evidenceTags: ["automation", "product_review"],
+        metadata: {
+          actions: [...actions],
+          applied_product_count: applied.products_published.length,
+          reason
+        }
+      };
+      if (options.mode === "super_admin") {
+        await auditEvent(auditPayload);
+      } else {
+        await auditedOpsEvent({
+          request: options.request,
+          ctx: options.ctx,
+          action: "admin.ops.automation_run",
+          resourceType: "automation",
+          severity: applied.products_published.length ? "warning" : "info",
+          metadata: auditPayload.metadata
+        });
+      }
+    }
+  }
+
+  const sortedAutoReady = automationSortItems(autoReady);
+  const sortedAdminQueue = automationSortItems(adminQueue);
+  const sortedSuperAdminQueue = automationSortItems(superAdminQueue);
+  const sortedWatchlist = automationSortItems(watchlist);
+  const criticalCount = [...sortedAdminQueue, ...sortedSuperAdminQueue, ...sortedWatchlist]
+    .filter((item) => item.risk_level === "critical").length;
+
+  return {
+    checked_at: new Date().toISOString(),
+    mode: options.mode || "admin",
+    summary: {
+      auto_ready: sortedAutoReady.length,
+      admin_required: sortedAdminQueue.length,
+      super_admin_required: sortedSuperAdminQueue.length,
+      watchlist: sortedWatchlist.length,
+      critical: criticalCount,
+      applied: applied.products_published.length,
+      action_required: sortedAdminQueue.length + sortedSuperAdminQueue.length
+    },
+    queues: {
+      auto_ready: sortedAutoReady.slice(0, limit),
+      admin_queue: sortedAdminQueue.slice(0, limit),
+      super_admin_queue: sortedSuperAdminQueue.slice(0, limit),
+      watchlist: sortedWatchlist.slice(0, limit)
+    },
+    applied,
+    rules: automationRules(),
+    warnings: [...new Set(warnings)]
+  };
+}
+
 function productMatchesAdminReviewSearch(product = {}, search) {
   const term = cleanSearch(search).toLocaleLowerCase("tr-TR");
   if (!term) return true;
@@ -4488,6 +5003,8 @@ async function loadAdminDashboardData(warnings) {
   ]);
 
   const securityThreatEvents = (securityEvents || []).filter(isExternalSecurityAuditEvent).slice(0, 8).map(securityEventPublic);
+  const automation = await buildOpsAutomationSnapshot({ limit: 40, mode: "admin" });
+  warnings.push(...automation.warnings);
 
   return {
     metrics: {
@@ -4496,9 +5013,10 @@ async function loadAdminDashboardData(warnings) {
       pending_applications: Number(pendingApplications.count || 0),
       recent_orders: recentOrders.length,
       open_support_tickets: Number(userTickets.count || 0) + Number(partnerTickets.count || 0),
-      system_alerts: notifications.length + securityThreatEvents.length + flags.length
+      system_alerts: notifications.length + securityThreatEvents.length + flags.length + Number(automation.summary.action_required || 0)
     },
     recentOrders,
+    automation,
     alerts: [
       ...flags.map((item) => ({
         id: item.id,
@@ -9173,6 +9691,8 @@ export function registerRoutes(app) {
     const criticalEvents = recentEvents.filter((event) => event.external_threat && event.severity === "critical");
     const unresolvedApprovals = releaseApprovals.filter((item) => ["approved", "failed", "pending"].includes(item.status));
     const inactiveModules = moduleMap.filter((item) => item.is_active !== true || item.is_visible !== true);
+    const automation = await buildOpsAutomationSnapshot({ limit: 60, mode: "super_admin" });
+    warnings.push(...automationSchemaWarningObjects(automation.warnings));
 
     const risks = [
       config.emergencyApiDisabled ? {
@@ -9209,6 +9729,16 @@ export function registerRoutes(app) {
         severity: "medium",
         title: "Modül görünürlük uyarısı",
         message: `${inactiveModules.length} ana sayfa modülü pasif veya gizli görünüyor.`
+      } : null,
+      automation.summary.critical > 0 ? {
+        severity: "critical",
+        title: "Otomasyon kritik kuyruğu",
+        message: `${automation.summary.critical} kritik kayıt süper admin veya admin kararı bekliyor.`
+      } : null,
+      automation.summary.super_admin_required > 0 ? {
+        severity: "high",
+        title: "Otomasyon owner kuyruğu",
+        message: `${automation.summary.super_admin_required} kayıt süper admin onayı veya incelemesi istiyor.`
       } : null,
       ...warnings.map((warning) => ({
         severity: "medium",
@@ -9252,6 +9782,9 @@ export function registerRoutes(app) {
         critical_events_sample: criticalEvents.length,
         release_approvals: releaseApprovals.length,
         homepage_modules: moduleMap.length,
+        automation_action_required: automation.summary.action_required,
+        automation_auto_ready: automation.summary.auto_ready,
+        automation_super_admin_required: automation.summary.super_admin_required,
         future_operations: SUPER_ADMIN_FUTURE_OPERATIONS.length
       },
       system_health: {
@@ -9267,6 +9800,7 @@ export function registerRoutes(app) {
           recent_incident_count: autoDefense.recentIncidents.length
         }
       },
+      automation,
       risks,
       recent_security_events: recentEvents,
       release_approvals: releaseApprovals,
@@ -9281,6 +9815,56 @@ export function registerRoutes(app) {
         release_webhook_configured: Boolean(config.superAdmin.releaseWebhookUrl && config.superAdmin.releaseWebhookSecret)
       },
       schema_warnings: warnings
+    };
+  });
+
+  superGet("/automation", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.automation.view");
+    const query = automationQuerySchema.parse(request.query || {});
+    const automation = await buildOpsAutomationSnapshot({ limit: query.limit, mode: "super_admin" });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.automation_viewed",
+      source: "admin",
+      resourceType: "automation",
+      severity: automation.summary.critical ? "warning" : "info",
+      purpose: "super_admin_automation",
+      evidenceTags: ["super_admin", "automation"],
+      metadata: {
+        auto_ready: automation.summary.auto_ready,
+        action_required: automation.summary.action_required,
+        super_admin_required: automation.summary.super_admin_required,
+        warning_count: automation.warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      automation,
+      schema_warnings: automationSchemaWarningObjects(automation.warnings)
+    };
+  });
+
+  superPost("/automation/run", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.automation.run");
+    const body = automationRunSchema.parse(request.body || {});
+    const automation = await buildOpsAutomationSnapshot({
+      limit: body.limit,
+      apply: body.apply,
+      actions: body.actions,
+      reason: body.reason,
+      ctx,
+      request,
+      mode: "super_admin"
+    });
+
+    return {
+      ok: true,
+      automation,
+      schema_warnings: automationSchemaWarningObjects(automation.warnings)
     };
   });
 
@@ -10362,6 +10946,9 @@ export function registerRoutes(app) {
       partners.count = partnerProfiles.count;
     }
 
+    const automation = await buildOpsAutomationSnapshot({ limit: 50, mode: "super_admin" });
+    warnings.push(...automationSchemaWarningObjects(automation.warnings));
+
     const dailyRevenue = (revenueRows.data || [])
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
     const threatEvents24h = (securityAlerts.data || []).filter(isExternalSecurityAuditEvent);
@@ -10389,7 +10976,10 @@ export function registerRoutes(app) {
           total_orders: orders.count,
           daily_revenue: Number(dailyRevenue.toFixed(2)),
           pending_applications: pendingApplications.count,
-          security_alerts: threatEvents24h.length
+          security_alerts: threatEvents24h.length,
+          automation_action_required: automation.summary.action_required,
+          automation_auto_ready: automation.summary.auto_ready,
+          automation_super_admin_required: automation.summary.super_admin_required
         },
         system_health: {
           api: "online",
@@ -10403,6 +10993,7 @@ export function registerRoutes(app) {
             recent_incident_count: autoDefense.recentIncidents.length
           }
         },
+        automation,
         schema_warnings: warnings
       }
     };
@@ -10938,6 +11529,52 @@ export function registerRoutes(app) {
       ok: true,
       events: result.data || [],
       schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  opsGet("/automation", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.automation.view");
+    const query = automationQuerySchema.parse(request.query || {});
+    const automation = await buildOpsAutomationSnapshot({ limit: query.limit, mode: "admin" });
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.automation_viewed",
+      resourceType: "automation",
+      severity: automation.summary.critical ? "warning" : "info",
+      metadata: {
+        auto_ready: automation.summary.auto_ready,
+        action_required: automation.summary.action_required,
+        super_admin_required: automation.summary.super_admin_required,
+        warning_count: automation.warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      automation,
+      warnings: automation.warnings
+    };
+  });
+
+  opsPost("/automation/run", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.automation.run");
+    const body = automationRunSchema.parse(request.body || {});
+    const automation = await buildOpsAutomationSnapshot({
+      limit: body.limit,
+      apply: body.apply,
+      actions: body.actions,
+      reason: body.reason,
+      ctx,
+      request,
+      mode: "admin"
+    });
+
+    return {
+      ok: true,
+      automation,
+      warnings: automation.warnings
     };
   });
 

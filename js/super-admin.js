@@ -13,6 +13,7 @@
     settings: [],
     modules: [],
     refundCancellations: [],
+    ownerAutomation: null,
     navBadgeTimer: null,
     navBadgeRefreshing: false,
     transientAlarmBadgeUntil: 0,
@@ -1236,6 +1237,7 @@
 
   const ownerViewTitles = {
     overview: ["Kontrol Merkezi", "Tüm ekosistem sinyalleri tek akışta"],
+    automation: ["Otomasyon Merkezi", "Düşük riskli işleri otomatik, kritik işleri owner kuyruğunda yönet"],
     "work-queue": ["İş Kuyruğu", "Modül onayları, riskler, destek ve yayın kararları"],
     alerts: ["Uyarı / Risk Akışı", "Öncelikli güvenlik, sistem ve yayın riskleri"],
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
@@ -1421,6 +1423,8 @@
     const summary = payload.summary || {};
     const system = payload.system_health || {};
     const risks = payload.risks || [];
+    const automation = payload.automation || {};
+    const automationSummary = automation.summary || {};
     const moduleMap = payload.module_map || {};
     const releaseApprovals = payload.release_approvals || [];
     const criticalRisks = risks.filter((item) => ownerBadgeTone(item.severity) === "critical").length;
@@ -1442,6 +1446,7 @@
     const transientAlarmCount = transientAlarmActive ? Number(state.transientAlarmBadgeCount || 1) : 0;
     const alertCount = risks.length + transientAlarmCount;
     const alertTone = criticalRisks || transientAlarmCount ? "critical" : (highRisks ? "high" : "medium");
+    const automationAttention = Number(automationSummary.action_required || 0) + Number(automationSummary.auto_ready || 0);
 
     setOwnerNavBadge("alerts", alertCount, alertTone, `${formatNumber(alertCount)} risk veya alarm sinyali`);
     setOwnerNavBadge("security", securityAlerts + criticalEvents + transientAlarmCount, criticalEvents || transientAlarmCount ? "critical" : "high", `${formatNumber(securityAlerts)} güvenlik uyarısı / ${formatNumber(criticalEvents)} kritik olay`);
@@ -1451,8 +1456,9 @@
     setOwnerNavBadge("health", healthAttention, system.emergency_api_disabled || system.payments_disabled ? "critical" : "high", `${formatNumber(healthAttention)} sistem sağlığı uyarısı`);
     setOwnerNavBadge("finance", system.payments_disabled ? 1 : 0, "critical", "Ödeme akışı durdurulmuş görünüyor");
     setOwnerNavBadge("system", system.maintenance_mode || system.emergency_api_disabled ? healthAttention : 0, system.emergency_api_disabled ? "critical" : "high", "Canlı sistem bayrakları kontrol istiyor");
+    setOwnerNavBadge("automation", automationAttention, automationSummary.critical ? "critical" : "high", `${formatNumber(automationAttention)} otomasyon aksiyonu veya hazır kayıt`);
 
-    const workQueueAttention = releaseAttention + pendingApplications + Math.min(securityAlerts, 20) + transientAlarmCount;
+    const workQueueAttention = releaseAttention + pendingApplications + Math.min(securityAlerts, 20) + transientAlarmCount + Number(automationSummary.super_admin_required || 0);
     setOwnerNavBadge("work-queue", workQueueAttention, transientAlarmCount || criticalRisks ? "critical" : "high", `${formatNumber(workQueueAttention)} takip edilecek iş veya uyarı`);
   }
 
@@ -1585,6 +1591,8 @@
     const system = payload.system_health || {};
     const gitops = payload.gitops || {};
     const owner = payload.owner || {};
+    const automation = payload.automation || {};
+    const automationSummary = automation.summary || {};
     ownerSetOutput([
       ownerLine("Owner kilidi", `Sadece kayıtlı sahip: ${escape((owner.email || owner.user_id) || "doğrulandı")}`, "<button type=\"button\" data-view-jump=\"access\">Detay</button>", "critical"),
       owner.bootstrap_required ? ownerLine("Kalıcı Super Admin", "Owner doğrulandı; profil rolünü Super Admin yaparak kalıcı erişimi tamamla.", "<button type=\"button\" data-view-jump=\"permissions\">Yetki Merkezi</button>", "critical") : "",
@@ -1592,6 +1600,7 @@
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
       ownerLine("İş kuyruğu", "AVM, yemek, taksi, sosyal medya, destek, güvenlik ve yayın kararlarını tek listede izle.", "<button type=\"button\" data-view-jump=\"work-queue\">Aç</button>", "critical"),
+      ownerLine("Otomasyon merkezi", `${formatNumber(automationSummary.auto_ready)} otomatik hazır / ${formatNumber(automationSummary.action_required)} karar isteyen kayıt`, "<button type=\"button\" data-view-jump=\"automation\">Aç</button>", automationSummary.critical ? "critical" : (automationSummary.action_required ? "high" : "medium")),
       ownerLine("Operasyon merkezi", "Siparişler, destek talepleri ve canlı operasyon akışını Super Admin içinden izle.", "<button type=\"button\" data-view-jump=\"operations\">Aç</button>", "high"),
       ownerLine("İade ve iptaller", "İade/iptal kayıtlarını, nedenleri, destek sinyallerini ve owner aksiyonlarını tek yerden yönet.", "<button type=\"button\" data-view-jump=\"refunds\">Aç</button>", "critical"),
       ownerLine("Finans merkezi", "Ciro, ödeme riski, komisyon, iade ve hakediş ayarlarını tek yerden takip et.", "<button type=\"button\" data-view-jump=\"finance\">Aç</button>", "critical"),
@@ -1882,6 +1891,94 @@
       (orderRows.join("") || ownerEmpty("Sipariş kaydı bulunamadı.")) +
       ownerLine("Destek akışı", `${formatNumber(tickets.length)} kayıt`, "", tickets.length ? "high" : "low") +
       (ticketRows.join("") || ownerEmpty("Açık destek kaydı bulunamadı."))
+    );
+  }
+
+  function ownerAutomationItemLine(item) {
+    return ownerLine(
+      item.title || item.type || "Otomasyon kaydı",
+      `${escape(item.type || "-")} / risk ${escape(item.risk_level || "medium")} / ${escape(item.summary || "-")} / ${formatDate(item.created_at)}`,
+      item.action ? escape(item.action) : "",
+      item.risk_level
+    );
+  }
+
+  function ownerAutomationQueueBlock(title, items, emptyText, risk) {
+    const rows = (items || []).map(ownerAutomationItemLine).join("");
+    return ownerLine(title, `${formatNumber((items || []).length)} kayıt`, "", risk || ((items || []).length ? "high" : "low")) +
+      (rows || ownerEmpty(emptyText));
+  }
+
+  function ownerAutomationWarnings(payload) {
+    return (payload.schema_warnings || payload.warnings || []).map((warning) => ownerLine(
+      warning.label || "automation",
+      escape(warning.message || warning || "Şema uyarısı"),
+      "",
+      "high"
+    )).join("");
+  }
+
+  function ownerAutomationRules(rules) {
+    const rows = (rules || []).map((rule) => ownerLine(
+      rule.title || rule.key || "Otomasyon kuralı",
+      escape(rule.summary || ""),
+      rule.auto_apply ? "Otomatik uygulanabilir" : "Manuel karar gerekir",
+      rule.auto_apply ? "medium" : "high"
+    ));
+    return rows.length ? rows.join("") : ownerEmpty("Otomasyon kuralı bulunamadı.");
+  }
+
+  async function loadOwnerAutomation() {
+    ownerLoading("Otomasyon Merkezi");
+    const payload = await ownerOptionalApi("/v1/control-center/automation?limit=80", {
+      automation: { summary: {}, queues: {}, rules: [] },
+      schema_warnings: []
+    }, "Otomasyon merkezi");
+    const automation = payload.automation || { summary: {}, queues: {}, rules: [] };
+    const summary = automation.summary || {};
+    const queues = automation.queues || {};
+    state.ownerAutomation = automation;
+    setOwnerNavBadge(
+      "automation",
+      Number(summary.action_required || 0) + Number(summary.auto_ready || 0),
+      summary.critical ? "critical" : "high",
+      `${formatNumber(Number(summary.action_required || 0) + Number(summary.auto_ready || 0))} otomasyon kaydı`
+    );
+    ownerSetOutput(
+      ownerDataWarnings(payload) +
+      ownerAutomationWarnings(payload) +
+      ownerLine("Otomasyon özeti", `${formatNumber(summary.auto_ready)} otomatik hazır / ${formatNumber(summary.admin_required)} admin / ${formatNumber(summary.super_admin_required)} süper admin / ${formatNumber(summary.watchlist)} takip`, "<button type=\"button\" data-action-health-check>Komutları test et</button>", summary.critical ? "critical" : "medium") +
+      ownerLine("Güvenli ürün yayını", `${formatNumber(summary.auto_ready)} ürün kuralları geçti`, `<button type="button" data-owner-automation-run="publish_safe_products" ${Number(summary.auto_ready || 0) ? "" : "disabled"}>Güvenli Ürünleri Yayına Al</button>`, summary.auto_ready ? "high" : "low") +
+      ownerAutomationQueueBlock("Otomatik hazır", queues.auto_ready || [], "Otomatik yayınlanabilecek kayıt yok.", "medium") +
+      ownerAutomationQueueBlock("Admin kuyruğu", queues.admin_queue || [], "Admin kararı bekleyen kayıt yok.", summary.admin_required ? "high" : "low") +
+      ownerAutomationQueueBlock("Süper admin kuyruğu", queues.super_admin_queue || [], "Süper admin kuyruğu boş.", summary.super_admin_required ? "critical" : "low") +
+      ownerAutomationQueueBlock("Takip listesi", queues.watchlist || [], "Takip listesi boş.", summary.watchlist ? "medium" : "low") +
+      ownerLine("Kurallar", `${formatNumber((automation.rules || []).length)} aktif kural`, "", "medium") +
+      ownerAutomationRules(automation.rules || [])
+    );
+  }
+
+  async function runOwnerAutomation(button) {
+    const summary = (state.ownerAutomation || {}).summary || {};
+    await runConfirmed(
+      `${formatNumber(summary.auto_ready)} güvenli ürün otomasyonla yayına alınacak. İade, ödeme, partner ve içerik owner kararları otomatik onaylanmaz.`,
+      async (reason) => {
+        const payload = await api("/v1/control-center/automation/run", {
+          method: "POST",
+          body: {
+            apply: true,
+            actions: [button.dataset.ownerAutomationRun || "publish_safe_products"],
+            limit: 50,
+            reason
+          }
+        });
+        state.ownerAutomation = payload.automation || state.ownerAutomation;
+      },
+      {
+        trigger: button,
+        requireReason: true,
+        defaultReason: "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı."
+      }
     );
   }
 
@@ -2438,6 +2535,7 @@
     setCommandHeader(view);
     try {
       if (view === "overview") await loadOwnerOverview();
+      else if (view === "automation") await loadOwnerAutomation();
       else if (view === "work-queue") await loadOwnerWorkQueue(params);
       else if (view === "alerts") await loadOwnerAlerts();
       else if (view === "approvals") await loadOwnerApprovals();
@@ -2844,6 +2942,9 @@
         }
 
         if (eventClosest(event, "[data-action-health-check]")) await runOwnerActionHealthCheck();
+
+        const automationRun = eventClosest(event, "[data-owner-automation-run]");
+        if (automationRun) await runOwnerAutomation(automationRun);
 
         const alarmServerTest = eventClosest(event, "[data-alarm-server-test]");
         if (alarmServerTest) await runServerAlarmTest(alarmServerTest);

@@ -22,12 +22,14 @@
       social: {},
       security: {},
       reports: {},
-      audit: []
+      audit: [],
+      automation: null
     }
   };
 
   const views = {
     dashboard: { label: "Dashboard", marker: "Canlı" },
+    automation: { label: "Otomasyon Merkezi", marker: "Yeni" },
     users: { label: "Kullanıcı Takibi", marker: "" },
     applications: { label: "Partner Başvuruları", marker: "" },
     partners: { label: "Partner Operasyonları", marker: "" },
@@ -403,6 +405,8 @@
     const metrics = currentMetrics();
     const alerts = state.dashboard?.alerts || [];
     const cache = state.cache || {};
+    const automation = cache.automation || state.dashboard?.automation || {};
+    const automationSummary = automation.summary || {};
     const refundSignalCount = countItems(alerts, (item) => /iade|iptal|refund|cancel|ihtilaf|dispute/i.test(`${item.title || ""} ${item.message || ""}`));
     const applicationCount = Math.max(
       Number(metrics.pending_applications || 0),
@@ -422,6 +426,7 @@
         refundSignalCount,
         countItems(cache.refunds, (item) => ["support_signal", "signal"].includes(item.type) || item.order_status === "pending_signal")
       ),
+      automation: Number(automationSummary.action_required || 0) + Number(automationSummary.auto_ready || 0),
       productReviews: countItems(cache.productReviews, (item) => !["approved", "rejected"].includes(String(item.compliance_review_status || "pending"))),
       content: countItems(cache.proposals, (item) => ["pending_super_admin", "review", "draft"].includes(String(item.status || ""))),
       social: countItems(cache.social?.drafts, (item) => ["ready_for_review", "queued", "failed"].includes(String(item.status || "")))
@@ -432,6 +437,7 @@
   function notificationTone(view, count) {
     if (!count) return "";
     if (["security", "refunds"].includes(view)) return "critical";
+    if (view === "automation") return Number((state.cache.automation || state.dashboard?.automation || {}).summary?.critical || 0) ? "critical" : "attention";
     if (["support", "applications", "productReviews", "content"].includes(view)) return "attention";
     return "info";
   }
@@ -500,6 +506,107 @@
     `).join("")}</div>`;
   }
 
+  function automationSummaryGrid(summary) {
+    const items = [
+      ["Otomatik hazır", summary.auto_ready],
+      ["Admin kararı", summary.admin_required],
+      ["Süper admin", summary.super_admin_required],
+      ["Takip listesi", summary.watchlist],
+      ["Kritik", summary.critical],
+      ["Uygulandı", summary.applied]
+    ];
+    return `<div class="admin-metrics">${items.map(([label, value]) => `
+      <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value || 0)}</strong></div>
+    `).join("")}</div>`;
+  }
+
+  function automationRiskTone(risk) {
+    if (risk === "critical") return "red";
+    if (risk === "high" || risk === "warning") return "orange";
+    if (risk === "low" || risk === "clear") return "green";
+    return "";
+  }
+
+  function automationLaneTitle(lane) {
+    const map = {
+      auto_ready: "Otomatik hazır",
+      admin_queue: "Admin kuyruğu",
+      super_admin_queue: "Süper admin kuyruğu",
+      watchlist: "Takip listesi"
+    };
+    return map[lane] || lane || "Kuyruk";
+  }
+
+  function automationQueueRows(items) {
+    return (items || []).map((item) => `
+      <tr>
+        <td>${titleCell(item.title, `${automationLaneTitle(item.lane)} / ${item.type || "-"}`)}</td>
+        <td>${badge(item.risk_level || "medium", automationRiskTone(item.risk_level))}</td>
+        <td>${escape(shortText(item.summary || "-", 180))}</td>
+        <td>${escape(shortText(item.action || "-", 120))}</td>
+        <td>${dateTime(item.created_at)}</td>
+      </tr>
+    `);
+  }
+
+  function automationQueuePreview(automation) {
+    const queues = automation?.queues || {};
+    const rows = [
+      ...(queues.auto_ready || []).slice(0, 4),
+      ...(queues.admin_queue || []).slice(0, 4),
+      ...(queues.super_admin_queue || []).slice(0, 4),
+      ...(queues.watchlist || []).slice(0, 3)
+    ];
+    return table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(rows), "Otomasyon kuyruğunda kayıt yok.");
+  }
+
+  function automationRulesList(rules) {
+    const rows = (rules || []).map((rule) => `
+      <div class="admin-list-item">
+        <strong>${badge(rule.auto_apply ? "otomatik" : "manuel", rule.auto_apply ? "green" : "orange")} ${escape(rule.title)}</strong>
+        <p>${escape(rule.summary || "")}</p>
+      </div>
+    `).join("");
+    return rows ? `<div class="admin-list">${rows}</div>` : statusBox("Otomasyon kuralı bulunamadı.");
+  }
+
+  function automationActions(automation) {
+    const summary = automation?.summary || {};
+    return `
+      <button class="admin-btn admin-btn--gold" type="button" data-admin-automation-run="publish_safe_products" ${Number(summary.auto_ready || 0) ? "" : "disabled"}>Güvenli Ürünleri Yayına Al</button>
+      <button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>
+    `;
+  }
+
+  function automationPanel(automation) {
+    if (!automation) return "";
+    const summary = automation.summary || {};
+    return section(
+      "Otomasyon Merkezi",
+      `Son kontrol: ${dateTime(automation.checked_at)}`,
+      automationSummaryGrid(summary) + automationQueuePreview(automation),
+      `<button class="admin-btn" type="button" data-admin-view="automation">Detay</button>${automationActions(automation)}`
+    );
+  }
+
+  function renderAutomationCenter(automation) {
+    const payload = automation || state.cache.automation || state.dashboard?.automation || { summary: {}, queues: {}, rules: [] };
+    const queues = payload.queues || {};
+    $("#adminContent").innerHTML = [
+      section(
+        "Otomasyon Merkezi",
+        "Düşük riskli işler otomatik, riskli işler admin, kritik işler süper admin kuyruğuna düşer",
+        warningPanel(payload.warnings) + automationSummaryGrid(payload.summary || {}),
+        automationActions(payload)
+      ),
+      section("Otomatik Hazır", "Kuralları geçen ve güvenli yayınlanabilecek kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.auto_ready || []), "Otomatik yayınlanabilecek kayıt yok.")),
+      section("Admin Kuyruğu", "Admin kararı veya revizyon bildirimi isteyen kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.admin_queue || []), "Admin kararı bekleyen kayıt yok.")),
+      section("Süper Admin Kuyruğu", "Owner onayı, kritik güvenlik, içerik veya yayın kararı isteyen kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.super_admin_queue || []), "Süper admin kuyruğu boş.")),
+      section("Takip Listesi", "Otomatik işlem yapılmayan ama izlenen operasyonel kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.watchlist || []), "Takip listesi boş.")),
+      section("Kurallar", "Otomasyonun hangi işi nerede durdurduğunu gösterir", automationRulesList(payload.rules || []))
+    ].join("");
+  }
+
   function renderDashboard(payload) {
     const dashboard = payload || state.dashboard || { metrics: {}, recentOrders: [], alerts: [] };
     const orders = dashboard.recentOrders || [];
@@ -528,6 +635,7 @@
     $("#adminContent").innerHTML = [
       section("Admin Dashboard", "Günlük operasyon özeti", metricsGrid(dashboard.metrics || {})),
       warningPanel(),
+      automationPanel(dashboard.automation),
       `<div class="admin-split">
         ${section("Son Siparişler", "", table(["Sipariş", "Müşteri", "Tutar", "Sipariş", "Ödeme"], orderRows, "Sipariş kaydı bulunamadı."))}
         ${section("Sistem Uyarıları", "", alertList)}
@@ -1441,9 +1549,17 @@
   async function loadDashboard() {
     const data = await api("/v1/ops-console/dashboard");
     state.dashboard = data.dashboard;
+    state.cache.automation = data.dashboard?.automation || state.cache.automation;
     state.warnings = data.warnings || [];
     renderNav();
     renderDashboard(data.dashboard);
+  }
+
+  async function loadAutomation() {
+    const data = await api("/v1/ops-console/automation?limit=80");
+    state.cache.automation = data.automation || { summary: {}, queues: {}, rules: [] };
+    state.warnings = data.warnings || [];
+    renderAutomationCenter(state.cache.automation);
   }
 
   async function loadUsers() {
@@ -1562,6 +1678,7 @@
     setLoading(`${views[state.view].label} yükleniyor...`);
     try {
       if (state.view === "dashboard") await loadDashboard();
+      if (state.view === "automation") await loadAutomation();
       if (state.view === "users") await loadUsers();
       if (state.view === "applications") await loadApplications();
       if (state.view === "partners") await loadPartners();
@@ -1978,6 +2095,44 @@
     await loadProductReviews();
   }
 
+  async function runAdminAutomation(action) {
+    const summary = (state.cache.automation || state.dashboard?.automation || {}).summary || {};
+    const data = await openModal({
+      title: "Otomasyonu Çalıştır",
+      message: `${Number(summary.auto_ready || 0)} güvenli ürün otomatik yayına alınabilir. Finans, iade, partner ve süper admin kararları otomatik onaylanmaz.`,
+      confirmText: "Otomasyonu Çalıştır",
+      fields: [
+        {
+          id: "reason",
+          label: "Audit gerekçesi",
+          type: "textarea",
+          required: true,
+          max: 900,
+          value: "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı."
+        }
+      ]
+    });
+    if (!data) return;
+    const result = await api("/v1/ops-console/automation/run", {
+      method: "POST",
+      body: {
+        apply: true,
+        actions: [action || "publish_safe_products"],
+        limit: 40,
+        reason: data.reason || ""
+      }
+    });
+    state.cache.automation = result.automation || state.cache.automation;
+    const count = Number(result.automation?.applied?.products_published?.length || 0);
+    showToast(count ? `${count} güvenli ürün otomasyonla yayına alındı.` : "Otomasyon çalıştı; yayınlanacak yeni güvenli ürün bulunmadı.");
+    if (state.view === "automation") {
+      renderAutomationCenter(state.cache.automation);
+    } else {
+      await loadDashboard();
+    }
+    renderNav();
+  }
+
   async function createContentProposal(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     const data = await openModal({
@@ -2233,6 +2388,11 @@
       }
       if (event.target.closest("#adminRefresh")) {
         await loadView(state.view);
+        return;
+      }
+      const automationRun = event.target.closest("[data-admin-automation-run]");
+      if (automationRun) {
+        await runAdminAutomation(automationRun.dataset.adminAutomationRun).catch((error) => showToast(error.message, "error"));
         return;
       }
       if (event.target.closest("#adminSignOut")) {
