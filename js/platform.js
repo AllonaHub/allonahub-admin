@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260630-partnerproducts1";
+  const SERVICE_WORKER_VERSION = "20260630-language1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -478,7 +478,10 @@
         phrases[source] = (translations && translations.tr) || source;
         return;
       }
-      if (translations && translations[language]) phrases[source] = translations[language];
+      const translated = translations && translations[language];
+      const sourceText = String(source || "").replace(/\s+/g, " ").trim();
+      const translatedText = String(translated || "").replace(/\s+/g, " ").trim();
+      if (translatedText && translatedText !== sourceText) phrases[source] = translated;
     });
     return {
       dir: catalog && catalog.dirs && catalog.dirs[language],
@@ -513,7 +516,7 @@
       ...catalogPack,
       dir: catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
       keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}) },
-      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}) }
+      phrases: { ...(catalogPack.phrases || {}), ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}) }
     };
     state.packs[selected] = pack;
     return pack;
