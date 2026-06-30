@@ -592,7 +592,7 @@
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded("/pages/partner/partner-products.html")) return;
-      const params = new URLSearchParams({ limit: "500" });
+      const params = new URLSearchParams({ limit: "1000" });
       const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
       state.business = payload.business || state.access.partnerBusiness || null;
       state.products = payload.products || [];
