@@ -55,6 +55,8 @@
       meta.innerHTML = `
         <span>Sipariş: <strong>${core.escapeHTML(session.orderNo || session.orderId || "-")}</strong></span>
         <span>Sağlayıcı: <strong>iyzico CheckoutForm</strong></span>
+        ${session.displayTotal ? `<span>Gösterilen fiyat: <strong>${core.escapeHTML(session.displayTotal)} (${core.escapeHTML(session.displayCurrency || "-")})</strong></span>` : ""}
+        ${session.settlementTotal ? `<span>Tahsil edilecek: <strong>${core.escapeHTML(session.settlementTotal)} (${core.escapeHTML(session.settlementCurrency || "TRY")})</strong></span>` : ""}
       `;
     }
 

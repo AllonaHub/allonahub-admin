@@ -117,5 +117,6 @@
     if (!document.querySelector("[data-page='cart']")) return;
     bindCart();
     loadCart();
+    document.addEventListener("allona:currency-changed", () => renderCart());
   });
 })();

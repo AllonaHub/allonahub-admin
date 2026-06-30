@@ -227,6 +227,14 @@ export const config = {
     ),
     cacheMaxAgeSeconds: readNumber("PRODUCT_IMAGE_CACHE_MAX_AGE_SECONDS", 31536000)
   },
+  currency: {
+    baseCurrency: normalizeEnvString(readEnv("CURRENCY_BASE", { required: false, defaultValue: "TRY" })).toUpperCase(),
+    ratesUrl: normalizeEnvString(
+      readEnv("CURRENCY_RATES_URL", { required: false, defaultValue: "https://open.er-api.com/v6/latest/{base}" })
+    ),
+    cacheMs: readNumber("CURRENCY_RATES_CACHE_MS", 12 * 60 * 60 * 1000),
+    timeoutMs: readNumber("CURRENCY_RATES_TIMEOUT_MS", 8000)
+  },
   integrations: {
     enabled: readBool("PARTNER_INTEGRATIONS_ENABLED", true),
     premiumEnabled: readBool("PARTNER_INTEGRATIONS_PREMIUM_ENABLED", false),

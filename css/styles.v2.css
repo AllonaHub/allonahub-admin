@@ -1253,6 +1253,40 @@ img {
   font-size: 1.15rem;
 }
 
+.payment-currency-disclosure {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--sea-2) 26%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--sea-2) 8%, var(--white));
+}
+
+.payment-currency-disclosure strong {
+  color: var(--ink);
+  font-size: 0.94rem;
+}
+
+.payment-currency-disclosure div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.payment-currency-disclosure b {
+  color: var(--ink);
+  text-align: right;
+}
+
+.payment-currency-disclosure p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .summary-legal {
   display: grid;
   gap: 8px;

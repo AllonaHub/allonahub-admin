@@ -240,7 +240,7 @@ body.market-module-page .site-shell {
 
 .market-filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1.2fr) minmax(190px, .82fr) minmax(170px, .72fr) minmax(120px, .42fr);
+  grid-template-columns: minmax(220px, 1.2fr) minmax(180px, .82fr) repeat(2, minmax(118px, .46fr)) minmax(160px, .72fr) minmax(120px, .42fr);
   gap: 10px;
 }
 

@@ -265,8 +265,9 @@
   const CURRENCY_PREF_KEY = "allona.currency";
   const CURRENCY_RATES_PREFIX = "allona.currency.rates.";
   const BASE_CURRENCY = String(App.config?.baseCurrency || App.config?.currency || "TRY").toUpperCase();
-  const DEFAULT_RATES_URL = "https://open.er-api.com/v6/latest/{base}";
+  const EXTERNAL_RATES_URL = "https://open.er-api.com/v6/latest/{base}";
   const CURRENCY_CACHE_MS = Number(App.config?.currencyCacheHours || 12) * 60 * 60 * 1000;
+  const supportedCurrencies = ["TRY", "USD", "EUR", "AZN", "AED", "SAR", "GBP", "RUB"];
   const countryCurrencyMap = {
     AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AT: "EUR", AU: "AUD", AW: "AWG", AZ: "AZN",
     BA: "BAM", BB: "BBD", BD: "BDT", BE: "EUR", BF: "XOF", BG: "BGN", BH: "BHD", BI: "BIF", BJ: "XOF", BN: "BND", BO: "BOB", BR: "BRL", BS: "BSD", BT: "BTN", BW: "BWP", BY: "BYN",
@@ -327,6 +328,7 @@
     rates: { [BASE_CURRENCY]: 1 },
     updatedAt: 0,
     provider: "",
+    source: "initial",
     ready: false
   };
 
@@ -381,9 +383,16 @@
     }
   }
 
-  function ratesUrl(base) {
-    const template = App.config?.currencyRatesUrl || DEFAULT_RATES_URL;
-    return String(template).replace("{base}", encodeURIComponent(base));
+  function ratesUrls(base) {
+    const apiBaseUrl = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
+    const proxyUrl = apiBaseUrl ? `${apiBaseUrl}/v1/currency/rates?base={base}` : "";
+    const templates = [
+      App.config?.currencyRatesUrl,
+      proxyUrl,
+      EXTERNAL_RATES_URL
+    ].filter(Boolean);
+    return [...new Set(templates)]
+      .map((template) => String(template).replace("{base}", encodeURIComponent(base)));
   }
 
   function readRatesCache(base, allowStale) {
@@ -408,7 +417,21 @@
     currencyState.rates = { ...payload.rates, [currencyState.base]: 1 };
     currencyState.updatedAt = Number(payload.updatedAt || Date.now());
     currencyState.provider = payload.provider || "";
+    currencyState.source = payload.source || currencyState.source;
     currencyState.ready = true;
+  }
+
+  function normalizeRatesPayload(payload, source) {
+    const rates = payload?.rates || payload?.conversion_rates || {};
+    if (!rates || typeof rates !== "object") throw new Error("currency rates missing");
+    if (payload.result && payload.result !== "success") throw new Error(payload["error-type"] || "currency rates failed");
+    return {
+      rates,
+      updatedAt: Number(payload.time_last_update_unix || 0) ? Number(payload.time_last_update_unix) * 1000 : Number(payload.updatedAt || payload.updated_at || Date.now()),
+      fetchedAt: Date.now(),
+      provider: payload.provider || "ExchangeRate-API",
+      source
+    };
   }
 
   async function loadCurrencyRates(options) {
@@ -418,29 +441,28 @@
       applyRates(cached);
       return cached;
     }
-    try {
-      const response = await fetch(ratesUrl(currencyState.base), { cache: "no-cache" });
-      if (!response.ok) throw new Error(`currency rates ${response.status}`);
-      const payload = await response.json();
-      if (payload.result && payload.result !== "success") throw new Error(payload["error-type"] || "currency rates failed");
-      const next = {
-        rates: payload.rates || {},
-        updatedAt: Number(payload.time_last_update_unix || 0) ? Number(payload.time_last_update_unix) * 1000 : Date.now(),
-        fetchedAt: Date.now(),
-        provider: payload.provider || "ExchangeRate-API"
-      };
-      writeRatesCache(currencyState.base, next);
-      applyRates(next);
-      return next;
-    } catch (error) {
-      const stale = readRatesCache(currencyState.base, true);
-      if (stale) {
-        applyRates(stale);
-        return stale;
+    let lastError = null;
+    for (const endpoint of ratesUrls(currencyState.base)) {
+      try {
+        const response = await fetch(endpoint, { cache: "no-cache" });
+        if (!response.ok) throw new Error(`currency rates ${response.status}`);
+        const payload = await response.json();
+        const next = normalizeRatesPayload(payload, endpoint.includes("/v1/currency/rates") ? "backend_proxy" : "external_provider");
+        writeRatesCache(currencyState.base, next);
+        applyRates(next);
+        return next;
+      } catch (error) {
+        lastError = error;
       }
-      currencyState.ready = false;
-      return null;
     }
+    const stale = readRatesCache(currencyState.base, true);
+    if (stale) {
+      applyRates({ ...stale, source: "stale_cache" });
+      return stale;
+    }
+    currencyState.ready = false;
+    currencyState.source = lastError ? "unavailable" : "empty";
+    return null;
   }
 
   function convertedAmount(value, fromCurrency, toCurrency) {
@@ -1001,9 +1023,13 @@
 
   App.currency = {
     state: currencyState,
+    supported: supportedCurrencies,
     targetForCountry: targetCurrencyForCountry,
     convert(value, fromCurrency, toCurrency) {
       return convertedAmount(value, fromCurrency, toCurrency);
+    },
+    toBase(value, sourceCurrency) {
+      return convertedAmount(value, sourceCurrency || currencyState.target, currencyState.base);
     },
     format: money,
     setCurrency,

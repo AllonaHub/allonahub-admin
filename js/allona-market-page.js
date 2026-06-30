@@ -337,9 +337,39 @@
     return {
       search: document.querySelector("[data-market-search]")?.value || core.getParam("q") || "",
       category: document.querySelector("[data-market-category]")?.value || "",
+      minPrice: document.querySelector("[data-market-min]")?.value || "",
+      maxPrice: document.querySelector("[data-market-max]")?.value || "",
       sort: document.querySelector("[data-market-sort]")?.value || "newest",
       quick: document.querySelector("[data-market-quick]")?.value || ""
     };
+  }
+
+  function selectedCurrencyCode() {
+    return String(App.currency?.state?.target || App.config?.currency || "TRY").toUpperCase();
+  }
+
+  function priceFilterToBase(value) {
+    const amount = Number(value || 0);
+    if (!amount) return 0;
+    const state = App.currency?.state || {};
+    const sourceCurrency = selectedCurrencyCode();
+    const baseCurrency = String(state.base || App.config?.currency || "TRY").toUpperCase();
+    if (sourceCurrency === baseCurrency || !App.currency?.toBase) return amount;
+    const converted = App.currency.toBase(amount, sourceCurrency);
+    return converted && converted.currency === baseCurrency ? Number(converted.amount || 0) : amount;
+  }
+
+  function updatePriceFilterCurrencyHints() {
+    const code = selectedCurrencyCode();
+    document.querySelectorAll("[data-market-min], [data-market-max]").forEach((input) => {
+      const label = input.id ? document.querySelector(`label[for="${CSS.escape(input.id)}"]`) : null;
+      if (label) {
+        if (!label.dataset.baseLabel) label.dataset.baseLabel = label.textContent.trim();
+        label.textContent = `${label.dataset.baseLabel} (${code})`;
+      }
+      input.placeholder = code;
+      input.setAttribute("aria-label", `${label?.dataset.baseLabel || "Fiyat"} (${code})`);
+    });
   }
 
   function isFreshProduct(product) {
@@ -381,11 +411,15 @@
     const filters = marketFiltersFromDom();
     const q = filters.search.trim().toLocaleLowerCase("tr-TR");
     const category = filters.category.trim().toLocaleLowerCase("tr-TR");
+    const min = priceFilterToBase(filters.minPrice);
+    const max = priceFilterToBase(filters.maxPrice);
 
     const list = products.filter((product) => {
       const text = productText(product);
       const searchOk = !q || text.includes(q);
       const categoryOk = !category || product.category.toLocaleLowerCase("tr-TR") === category;
+      const minOk = !min || product.price >= min;
+      const maxOk = !max || product.price <= max;
       const hasDeal = discountScore(product) > 0 || Boolean(product.discount_label || product.coupon_label);
       const fastDelivery = /hızlı|bugün|dakika|aynı gün/i.test(product.delivery_label || "") || product.stock >= 20;
       const quickOk = !filters.quick
@@ -394,7 +428,7 @@
         || (filters.quick === "fresh" && isFreshProduct(product))
         || (filters.quick === "home" && isHomeProduct(product))
         || (filters.quick === "top" && (product.sold_count >= 150 || product.rating >= 4.8));
-      return searchOk && categoryOk && quickOk;
+      return searchOk && categoryOk && minOk && maxOk && quickOk;
     });
 
     if (filters.sort === "price_asc") list.sort((a, b) => a.price - b.price);
@@ -589,6 +623,7 @@
       if (window.history && window.location.search) {
         window.history.replaceState(null, "", window.location.pathname);
       }
+      updatePriceFilterCurrencyHints();
       renderMarketSections();
     });
 
@@ -612,6 +647,7 @@
       products = showcase.items;
       renderCategoryOptions();
       syncFiltersFromParams();
+      updatePriceFilterCurrencyHints();
       renderSourceNotice(showcase.source);
       renderMarketSections();
     } catch (error) {
@@ -619,6 +655,7 @@
       products = previewProducts();
       renderCategoryOptions();
       syncFiltersFromParams();
+      updatePriceFilterCurrencyHints();
       renderSourceNotice("error");
       renderMarketSections();
     }
@@ -629,5 +666,9 @@
     bindHero();
     bindFilters();
     loadProducts();
+    document.addEventListener("allona:currency-changed", () => {
+      updatePriceFilterCurrencyHints();
+      renderMarketSections();
+    });
   });
 })();

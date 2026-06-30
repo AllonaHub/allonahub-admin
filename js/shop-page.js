@@ -34,13 +34,41 @@
     };
   }
 
+  function selectedCurrencyCode() {
+    return String(App.currency?.state?.target || App.config?.currency || "TRY").toUpperCase();
+  }
+
+  function priceFilterToBase(value) {
+    const amount = Number(value || 0);
+    if (!amount) return 0;
+    const state = App.currency?.state || {};
+    const sourceCurrency = selectedCurrencyCode();
+    const baseCurrency = String(state.base || App.config?.currency || "TRY").toUpperCase();
+    if (sourceCurrency === baseCurrency || !App.currency?.toBase) return amount;
+    const converted = App.currency.toBase(amount, sourceCurrency);
+    return converted && converted.currency === baseCurrency ? Number(converted.amount || 0) : amount;
+  }
+
+  function updatePriceFilterCurrencyHints() {
+    const code = selectedCurrencyCode();
+    document.querySelectorAll("[data-filter-min], [data-filter-max]").forEach((input) => {
+      const label = input.id ? document.querySelector(`label[for="${CSS.escape(input.id)}"]`) : null;
+      if (label) {
+        if (!label.dataset.baseLabel) label.dataset.baseLabel = label.textContent.trim();
+        label.textContent = `${label.dataset.baseLabel} (${code})`;
+      }
+      input.placeholder = code;
+      input.setAttribute("aria-label", `${label?.dataset.baseLabel || "Fiyat"} (${code})`);
+    });
+  }
+
   function applyLocalFilters() {
     const filters = filtersFromDom();
     const q = filters.search.trim().toLocaleLowerCase("tr-TR");
     const category = filters.category.trim().toLocaleLowerCase("tr-TR");
     const brand = filters.brand.trim().toLocaleLowerCase("tr-TR");
-    const min = Number(filters.minPrice || 0);
-    const max = Number(filters.maxPrice || 0);
+    const min = priceFilterToBase(filters.minPrice);
+    const max = priceFilterToBase(filters.maxPrice);
 
     let list = products.filter((product) => {
       const text = `${product.name} ${product.description} ${product.category} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
@@ -385,6 +413,7 @@
       renderCategoryOptions();
       renderBrandOptions();
       syncFiltersFromParams();
+      updatePriceFilterCurrencyHints();
       renderHomeSections();
       await refreshHeroAds();
     } catch (error) {
@@ -393,6 +422,7 @@
       renderCategoryOptions();
       renderBrandOptions();
       syncFiltersFromParams();
+      updatePriceFilterCurrencyHints();
       renderHomeSections();
       await refreshHeroAds();
     }
@@ -422,6 +452,7 @@
         if (window.history && window.location.search) {
           window.history.replaceState(null, "", window.location.pathname);
         }
+        updatePriceFilterCurrencyHints();
         renderHomeSections();
       });
     }
@@ -493,5 +524,9 @@
     bindFilters();
     initShopPromoSlider();
     loadProducts();
+    document.addEventListener("allona:currency-changed", () => {
+      updatePriceFilterCurrencyHints();
+      renderHomeSections();
+    });
   });
 })();

@@ -66,6 +66,10 @@ const cvCheckoutSchema = z.object({
   buyerPhone: phoneSchema
 });
 
+const currencyRatesQuerySchema = z.object({
+  base: z.string().trim().length(3).regex(/^[a-z]{3}$/i).optional().default(config.currency.baseCurrency || "TRY")
+});
+
 const authTurnstileSchema = z.object({
   action: z.string().trim().min(2).max(32).regex(/^[a-z0-9_-]+$/i).optional().default("form_submit"),
   turnstileToken: z.string().trim().max(4096).optional().default("")
@@ -896,6 +900,75 @@ function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+const currencyRatesCache = new Map();
+
+function normalizeCurrencyCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : "";
+}
+
+function currencyRatesUrl(base) {
+  const template = config.currency.ratesUrl || "https://open.er-api.com/v6/latest/{base}";
+  const href = String(template).replace("{base}", encodeURIComponent(base));
+  let parsed;
+  try {
+    parsed = new URL(href);
+  } catch {
+    throw httpError("Kur sağlayıcı adresi geçerli değil.", 500);
+  }
+  if (!["https:", "http:"].includes(parsed.protocol)) {
+    throw httpError("Kur sağlayıcı protokolü desteklenmiyor.", 500);
+  }
+  return parsed.href;
+}
+
+async function fetchCurrencyRates(base, request) {
+  const cacheKey = normalizeCurrencyCode(base) || normalizeCurrencyCode(config.currency.baseCurrency) || "TRY";
+  const cached = currencyRatesCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - Number(cached.fetchedAt || 0) < Number(config.currency.cacheMs || 0)) {
+    return { ...cached.payload, cache: "hit" };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Number(config.currency.timeoutMs || 8000));
+  try {
+    const endpoint = currencyRatesUrl(cacheKey);
+    const response = await fetch(endpoint, {
+      headers: {
+        accept: "application/json",
+        "user-agent": "AllonaHub-CurrencyProxy/1.0"
+      },
+      signal: controller.signal
+    });
+    if (!response.ok) throw httpError("Kur sağlayıcı yanıt vermedi.", 502);
+    const payload = await response.json();
+    if (payload.result && payload.result !== "success") throw httpError("Kur sağlayıcı başarılı yanıt döndürmedi.", 502);
+    const rates = payload.rates || payload.conversion_rates || {};
+    if (!rates || typeof rates !== "object" || !Object.keys(rates).length) {
+      throw httpError("Kur listesi alınamadı.", 502);
+    }
+    const normalized = {
+      ok: true,
+      result: "success",
+      provider: payload.provider || "ExchangeRate-API",
+      base_code: normalizeCurrencyCode(payload.base_code || payload.base || cacheKey) || cacheKey,
+      rates,
+      time_last_update_unix: Number(payload.time_last_update_unix || 0) || Math.floor(now / 1000),
+      fetched_at: new Date(now).toISOString(),
+      cache: "miss"
+    };
+    currencyRatesCache.set(cacheKey, { fetchedAt: now, payload: normalized });
+    return normalized;
+  } catch (error) {
+    request.log.warn({ err: error, base: cacheKey }, "Currency rates proxy failed");
+    if (cached) return { ...cached.payload, cache: "stale" };
+    throw error.statusCode ? error : httpError("Kur bilgisi şu anda alınamadı.", 502);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function sha256Json(value) {
@@ -7810,6 +7883,14 @@ export function registerRoutes(app) {
       return reply.code(503).send({ ok: false, message: "Supabase bağlantısı hazır değil." });
     }
     return { ok: true };
+  });
+
+  app.get("/v1/currency/rates", async (request, reply) => {
+    const query = currencyRatesQuerySchema.parse(request.query || {});
+    const base = normalizeCurrencyCode(query.base) || normalizeCurrencyCode(config.currency.baseCurrency) || "TRY";
+    const payload = await fetchCurrencyRates(base, request);
+    reply.header("Cache-Control", "public, max-age=900, stale-while-revalidate=43200");
+    return payload;
   });
 
   app.get("/v1/media/product-images/*", async (request, reply) => {

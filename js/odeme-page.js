@@ -29,6 +29,34 @@
     return [...new Set(lines.map((item) => sellerName(item.product || {})).filter(Boolean))].slice(0, 5);
   }
 
+  function currencySettlementContext(totals) {
+    const state = App.currency?.state || {};
+    const displayCurrency = String(state.target || "TRY").toUpperCase();
+    const settlementCurrency = String(state.base || App.config?.currency || "TRY").toUpperCase();
+    return {
+      displayCurrency,
+      settlementCurrency,
+      displayTotal: core.money(totals.total),
+      settlementTotal: core.money(totals.total, { targetCurrency: settlementCurrency }),
+      rateProvider: state.provider || "",
+      rateUpdatedAt: state.updatedAt || 0,
+      ratesReady: Boolean(state.ready)
+    };
+  }
+
+  function paymentCurrencyDisclosure(totals) {
+    const info = currencySettlementContext(totals);
+    const sameCurrency = info.displayCurrency === info.settlementCurrency;
+    return `
+      <div class="payment-currency-disclosure" data-no-currency>
+        <strong>Gösterilen fiyat / Tahsil edilecek para birimi</strong>
+        <div><span>Gösterilen fiyat</span><b>${core.escapeHTML(info.displayTotal)} (${core.escapeHTML(info.displayCurrency)})</b></div>
+        <div><span>Tahsil edilecek para birimi</span><b>${core.escapeHTML(info.settlementTotal)} (${core.escapeHTML(info.settlementCurrency)})</b></div>
+        <p>${sameCurrency ? "Gösterim ve ödeme aynı para birimindedir." : "Seçili para birimi bilgilendirme amaçlı gösterilir; ödeme sağlayıcı tahsilatı TRY üzerinden tamamlar."}</p>
+      </div>
+    `;
+  }
+
   function safeJson(key, fallback) {
     try {
       return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
@@ -183,6 +211,7 @@
       <div class="summary-line"><span>Kupon</span><strong>-${core.money(totals.discount)}</strong></div>
       <div class="summary-line"><span>HP indirim hakkı</span><strong>-${core.money(totals.hpDiscount)}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
+      ${paymentCurrencyDisclosure(totals)}
       <div class="summary-legal">
         <strong>Ödeme öncesi kontrol</strong>
         <p>${core.escapeHTML(sellers.join(", "))}${sellers.length === 5 ? " ve diğer satıcılar" : ""}</p>
@@ -304,7 +333,7 @@
     }
   }
 
-  function storePaymentHandoff(payment, order) {
+  function storePaymentHandoff(payment, order, currencyContext) {
     const paymentPageUrl = payment && payment.paymentPageUrl;
     if (!paymentPageUrl || !isTrustedIyzicoUrl(paymentPageUrl)) {
       throw new Error("iyzico güvenli ödeme bağlantısı doğrulanamadı.");
@@ -316,6 +345,10 @@
       orderNo: order && (order.order_number || order.order_no || order.id),
       paymentPageUrl,
       token: payment.token || "",
+      displayCurrency: currencyContext?.displayCurrency || "",
+      settlementCurrency: currencyContext?.settlementCurrency || "TRY",
+      displayTotal: currencyContext?.displayTotal || "",
+      settlementTotal: currencyContext?.settlementTotal || "",
       createdAt: Date.now(),
       expiresAt: Date.now() + (15 * 60 * 1000)
     };
@@ -486,6 +519,7 @@
         }
         await App.cart.syncLocalToRemote();
         const orderPayload = calculateOrderPayload(form);
+        const currencyContext = currencySettlementContext(App.cart.totals(lines, appliedCoupon, orderPayload.hp_to_use));
         orderPayload.address_id = await ensureCheckoutAddress(form, user, orderPayload);
         const order = await App.db.orders.create(orderPayload, lines);
         if (orderPayload.coupon_code) {
@@ -505,6 +539,7 @@
             metadata: {
               item_count: lines.length,
               city: orderPayload.city,
+              payment_currency: currencyContext,
               legal_acceptance: {
                 pre_info: Boolean(form.pre_info_accepted.checked),
                 seller_info: Boolean(form.seller_info_accepted.checked),
@@ -526,7 +561,7 @@
           return;
         }
         if (payment && payment.paymentPageUrl) {
-          const handoffStored = storePaymentHandoff(payment, order);
+          const handoffStored = storePaymentHandoff(payment, order, currencyContext);
           if (App.complianceAudit) {
             await App.complianceAudit.record({
               category: "payment",
@@ -535,7 +570,7 @@
               resourceType: "order",
               resourceId: order && order.id,
               evidenceTags: ["checkout", "payment_provider"],
-              metadata: { provider: "iyzico" }
+              metadata: { provider: "iyzico", payment_currency: currencyContext }
             });
           }
           App.cart.setItems([]);
@@ -585,5 +620,6 @@
     if (!document.querySelector("[data-page='checkout']")) return;
     bindCheckout();
     loadCheckout();
+    document.addEventListener("allona:currency-changed", () => renderSummary());
   });
 })();
