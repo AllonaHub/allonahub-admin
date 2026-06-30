@@ -53,6 +53,7 @@ const limit = Math.max(1, Math.min(Number(args.get("limit") || 100), 1000));
 const dryRun = args.get("dry-run") !== "0";
 const updateDb = args.get("update-db") !== "0";
 const deleteOriginals = args.get("delete-originals") === "1";
+const includeStorageObjects = args.get("include-storage") !== "0";
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running this script.");
@@ -147,6 +148,57 @@ async function selectRows(table) {
 }
 selectRows.cache = new Map();
 
+function storageObjectSize(item) {
+  return Number(item?.metadata?.size || item?.metadata?.contentLength || item?.metadata?.ContentLength || 0);
+}
+
+function isStorageFolder(item) {
+  return !item?.id && !storageObjectSize(item) && !item?.metadata?.mimetype;
+}
+
+async function listStoragePath(path = "") {
+  const rows = [];
+  let offset = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await supabase.storage.from(bucket).list(path, {
+      limit: pageSize,
+      offset,
+      sortBy: { column: "name", order: "asc" }
+    });
+    if (error) throw new Error(`${bucket}/${path || ""}: ${error.message}`);
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+    offset += pageSize;
+  }
+  return rows;
+}
+
+async function walkStoragePath(path = "") {
+  const files = [];
+  const items = await listStoragePath(path);
+  for (const item of items) {
+    const fullPath = path ? `${path}/${item.name}` : item.name;
+    if (isStorageFolder(item)) {
+      files.push(...await walkStoragePath(fullPath));
+    } else {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+async function storageTargetPaths() {
+  if (!includeStorageObjects) return [];
+  const paths = await walkStoragePath(prefix);
+  return paths.filter((path) => (
+    path &&
+    path.startsWith(`${prefix}/`) &&
+    !path.startsWith(`${optimizedPrefix}/`) &&
+    /\.(?:png|jpe?g|webp)$/i.test(path)
+  ));
+}
+
 async function updateRows(table, path, nextUrl) {
   const rows = (await selectRows(table)).filter((row) => storagePathFromUrl(row.image_url) === path);
   if (!rows.length) return 0;
@@ -165,16 +217,22 @@ async function updateRows(table, path, nextUrl) {
 
 const productRows = await selectRows("products");
 const adRows = await selectRows("partner_ads");
-const targetPaths = Array.from(new Set([...productRows, ...adRows]
+const referencedTargetPaths = [...productRows, ...adRows]
   .map((row) => storagePathFromUrl(row.image_url))
   .filter((path) => (
     path &&
     path.startsWith(`${prefix}/`) &&
     !path.startsWith(`${optimizedPrefix}/`) &&
     /\.(?:png|jpe?g|webp)$/i.test(path)
-  )))).slice(0, limit);
+  ));
+const targetPaths = Array.from(new Set([
+  ...referencedTargetPaths,
+  ...await storageTargetPaths()
+])).slice(0, limit);
 
 console.log(`Targets: ${targetPaths.length}`);
+console.log(`Referenced targets: ${new Set(referencedTargetPaths).size}`);
+if (includeStorageObjects) console.log("Storage scan: enabled");
 if (dryRun) console.log("Dry run only. Re-run with --dry-run=0 to upload and update DB.");
 
 let originalTotal = 0;

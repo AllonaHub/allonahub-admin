@@ -387,6 +387,16 @@ const apiSkipChallengeParameters = {
 
 const wafRules = [
   {
+    ref: "allonahub-product-media-skip-challenge",
+    description: "Skip browser challenges for cacheable product media proxy",
+    expression: `${apiHostExpression} and starts_with(http.request.uri.path, "/v1/media/product-images/")`,
+    action: "skip",
+    action_parameters: apiSkipChallengeParameters,
+    logging: {
+      enabled: true
+    }
+  },
+  {
     ref: "allonahub-api-runtime-skip-challenge",
     description: "Skip browser challenges for the public API runtime",
     expression: `${apiHostExpression} and (http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))`,

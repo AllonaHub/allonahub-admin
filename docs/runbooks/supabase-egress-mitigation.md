@@ -134,6 +134,8 @@ cd /opt/allonahub
 sh deploy/hetzner/optimize-product-images.sh --dry-run=1
 ```
 
+Script varsayilan olarak `product-images/products` altindaki storage objelerini de tarar. Boylece DB'de artik referans edilmeyen eski PNG/JPEG dosyalari da dry-run'da gorunur. Sadece DB referansli gorselleri islemek icin `--include-storage=0` kullanin.
+
 Gercek uygulama:
 
 ```bash
