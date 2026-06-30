@@ -1,6 +1,8 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const INTEGRATION_AUTO_PULL_DELAY_MS = 11000;
+  const INTEGRATION_AUTO_PULL_MAX_BATCHES = 50;
 
   const state = {
     access: null,
@@ -2138,20 +2140,39 @@
     return `${created} yeni, ${updated} güncel, ${skipped} zaten aynı, ${failed} hata.${pageSuffix}`;
   }
 
-  async function syncIntegration(integrationId, mode) {
+  function shouldContinueIntegrationPull(run) {
+    const pageInfo = run?.summary?.page_info || {};
+    return Boolean(
+      run?.run_mode === "apply"
+      && pageInfo.provider
+      && pageInfo.exhausted === false
+    );
+  }
+
+  function nextIntegrationPullLabel(run) {
+    const pageInfo = run?.summary?.page_info || {};
+    if (pageInfo.next_page !== null && pageInfo.next_page !== undefined) return `sayfa ${pageInfo.next_page}`;
+    return "sıradaki sayfa";
+  }
+
+  async function syncIntegration(integrationId, mode, options = {}) {
     try {
       const runMode = mode || "preview";
       const body = { mode: runMode, direction: "inbound" };
       if (runMode === "apply") {
         const policy = integrationPolicy();
         const confirmationText = policy.apply_confirmation_text || "KATALOGA_AKTAR";
-        const confirmed = window.confirm("Ürünleri AllonaHub kataloğuna taslak/kontrol durumunda aktaralım mı?");
-        if (!confirmed) {
-          toast("Kataloğa aktarım iptal edildi.", "warning");
-          return;
+        if (!options.autoContinue) {
+          const confirmed = window.confirm("Ürünleri AllonaHub kataloğuna taslak/kontrol durumunda aktaralım mı?");
+          if (!confirmed) {
+            toast("Kataloğa aktarım iptal edildi.", "warning");
+            return;
+          }
         }
         body.confirm_apply = confirmationText;
-        body.approval_note = "Partner panelinden ücretsiz ürün çekme ile kataloğa aktarım.";
+        body.approval_note = options.autoContinue
+          ? "Partner panelinden otomatik sayfalı ürün çekme ile kataloğa aktarım."
+          : "Partner panelinden ücretsiz ürün çekme ile kataloğa aktarım.";
       }
       const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/sync`, {
         method: "POST",
@@ -2163,6 +2184,16 @@
       if (runMode === "apply") {
         await loadPartnerOs();
         toast(`Ürün çekme tamamlandı: ${integrationRunSummary(payload.run)} Ürünlerim ve admin onay ekranı yenilendi.`);
+        const remainingBatches = Number(options.remainingBatches ?? INTEGRATION_AUTO_PULL_MAX_BATCHES);
+        if (shouldContinueIntegrationPull(payload.run) && remainingBatches > 0) {
+          toast(`${nextIntegrationPullLabel(payload.run)} ${Math.round(INTEGRATION_AUTO_PULL_DELAY_MS / 1000)} saniye içinde otomatik çekilecek.`, "info");
+          window.setTimeout(() => {
+            syncIntegration(integrationId, "apply", {
+              autoContinue: true,
+              remainingBatches: remainingBatches - 1
+            });
+          }, INTEGRATION_AUTO_PULL_DELAY_MS);
+        }
       } else {
         renderIntegrationRuns();
         renderNotificationBadges();
