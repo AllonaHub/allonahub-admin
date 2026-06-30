@@ -4783,6 +4783,10 @@ function partnerProductMatchesStatus(product = {}, statusFilter = "all") {
 }
 
 function partnerProductSummary(products = []) {
+  const variantGroups = new Set(products
+    .filter((product) => Number(product.variant_automation?.group_size || 0) > 1)
+    .map((product) => product.variant_automation?.group_key)
+    .filter(Boolean));
   return {
     total: products.length,
     active: products.filter((product) => normalizedReviewValue(product.status) === "active").length,
@@ -4790,8 +4794,137 @@ function partnerProductSummary(products = []) {
     needs_review: products.filter((product) => productNeedsAdminReview(product)).length,
     low_stock: products.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 5).length,
     out_of_stock: products.filter((product) => Number(product.stock || 0) <= 0).length,
-    rejected: products.filter((product) => partnerProductMatchesStatus(product, "rejected")).length
+    rejected: products.filter((product) => partnerProductMatchesStatus(product, "rejected")).length,
+    variant_groups: variantGroups.size,
+    variant_products: products.filter((product) => Number(product.variant_automation?.group_size || 0) > 1).length
   };
+}
+
+function productVariantLinkPayload(link = {}) {
+  const payload = link.last_payload && typeof link.last_payload === "object" && !Array.isArray(link.last_payload)
+    ? link.last_payload
+    : {};
+  return payload.allonahub_variant && typeof payload.allonahub_variant === "object" ? payload.allonahub_variant : {};
+}
+
+function productVariantSignal(product = {}, link = null) {
+  const variant = productVariantLinkPayload(link || {});
+  const barcode = String(variant.barcode || product.barcode || "").trim();
+  const productCode = String(variant.product_code || product.sku || link?.external_sku || "").trim();
+  const sourceGroupKey = String(variant.group_key || "").trim();
+  const sourceMatchKey = String(variant.match_key || link?.external_variant_id || link?.external_sku || product.integration_external_id || product.sku || "").trim();
+  const imageUrl = String(product.image_url || "").trim();
+  const imageSignature = String(variant.image_signature || variantImageSignature(imageUrl) || "").trim();
+  const modelRoot = usefulModelRoot(variant.model_root || productModelRoot(product.brand, product.name, product.product_name, product.category));
+  const color = String(variant.color || colorFromText(product.name, product.product_name, product.sku, imageUrl) || "").trim();
+  const size = String(variant.size || "").trim();
+  const groupKey = normalizedIntegrationCode(sourceGroupKey || modelRoot || product.integration_external_id || product.sku || product.id);
+  const matchKey = normalizedIntegrationCode(barcode || productCode || sourceMatchKey || imageSignature || product.id);
+  const source = sourceGroupKey
+    ? "external_group"
+    : barcode
+      ? "barcode"
+      : productCode
+        ? "product_code"
+        : modelRoot && imageSignature
+          ? "model_image"
+          : modelRoot
+            ? "model_name"
+            : "single_product";
+  const confidence = source === "external_group"
+    ? 0.96
+    : source === "barcode"
+      ? 0.92
+      : source === "product_code"
+        ? 0.86
+        : source === "model_image"
+          ? 0.74
+          : source === "model_name"
+            ? 0.62
+            : 0.35;
+  return {
+    group_key: groupKey,
+    match_key: matchKey,
+    barcode,
+    product_code: productCode,
+    color,
+    size,
+    image_signature: imageSignature,
+    model_root: modelRoot,
+    source,
+    confidence
+  };
+}
+
+function variantLabel(signal = {}) {
+  return [signal.color, signal.size].filter(Boolean).join(" / ") || "Standart";
+}
+
+function attachVariantGroups(products = [], linksByProductId = new Map()) {
+  const enriched = products.map((product) => {
+    const link = linksByProductId.get(String(product.id)) || null;
+    const signal = productVariantSignal(product, link);
+    return {
+      ...product,
+      variant_automation: {
+        ...signal,
+        label: variantLabel(signal),
+        group_size: 1,
+        group_stock: Number(product.stock || 0),
+        price_range: {
+          min: Number(product.price || 0),
+          max: Number(product.price || 0)
+        },
+        siblings: [],
+        reasons: [
+          signal.source === "external_group" ? "Dış platform varyant grup kodu eşleşti." : "",
+          signal.barcode ? "Barkod/GTIN varyant kimliği olarak kullanıldı." : "",
+          signal.color ? "Renk adı ürün veya görsel URL bilgisinden çıkarıldı." : "",
+          signal.image_signature && signal.source === "model_image" ? "Görsel dosya imzası model adıyla birlikte değerlendirildi." : ""
+        ].filter(Boolean)
+      }
+    };
+  });
+
+  const groups = new Map();
+  for (const product of enriched) {
+    const key = product.variant_automation.group_key || String(product.id);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(product);
+  }
+
+  return enriched.map((product) => {
+    const group = groups.get(product.variant_automation.group_key) || [product];
+    const prices = group.map((item) => Number(item.price || 0)).filter((value) => Number.isFinite(value));
+    const siblings = group
+      .filter((item) => String(item.id) !== String(product.id))
+      .slice(0, 8)
+      .map((item) => ({
+        id: item.id,
+        name: item.name || item.product_name || "",
+        image_url: item.image_url || "",
+        sku: item.sku || "",
+        status: item.status || "",
+        price: Number(item.price || 0),
+        stock: Number(item.stock || 0),
+        color: item.variant_automation.color || "",
+        size: item.variant_automation.size || "",
+        label: item.variant_automation.label || "Varyant"
+      }));
+    return {
+      ...product,
+      variant_automation: {
+        ...product.variant_automation,
+        group_size: group.length,
+        group_stock: group.reduce((total, item) => total + Number(item.stock || 0), 0),
+        price_range: {
+          min: prices.length ? Math.min(...prices) : 0,
+          max: prices.length ? Math.max(...prices) : 0
+        },
+        siblings
+      }
+    };
+  });
 }
 
 async function loadPartnerOwnedProduct(productId, business, ctx) {
@@ -7141,6 +7274,48 @@ async function assertSafeIntegrationUrl(rawUrl) {
 const INTEGRATION_BARCODE_KEYS = ["barcode", "barCode", "Barcode", "barkod", "gtin", "GTIN", "ean", "ean13", "EAN", "upc", "UPC"];
 const INTEGRATION_PRODUCT_CODE_KEYS = ["sku", "stock_code", "stockCode", "stok_kodu", "urun_kodu", "ürün_kodu", "product_code", "productCode", "code", "model_code", "modelCode", "tuketim_kodu", "tüketim_kodu"];
 const INTEGRATION_GROUP_CODE_KEYS = ["productMainId", "mainProductId", "item_group_id", "group_id", "groupCode", "model_code", "modelCode", "parent_id", "parentId"];
+const INTEGRATION_COLOR_KEYS = ["color", "colour", "renk", "variant_color", "variantColor", "option_color", "option1", "attribute_color"];
+const INTEGRATION_SIZE_KEYS = ["size", "beden", "variant_size", "variantSize", "option_size", "option2", "attribute_size"];
+const PRODUCT_COLOR_TOKENS = new Map([
+  ["siyah", "Siyah"],
+  ["black", "Siyah"],
+  ["beyaz", "Beyaz"],
+  ["white", "Beyaz"],
+  ["kirmizi", "Kırmızı"],
+  ["kırmızı", "Kırmızı"],
+  ["red", "Kırmızı"],
+  ["mavi", "Mavi"],
+  ["blue", "Mavi"],
+  ["lacivert", "Lacivert"],
+  ["navy", "Lacivert"],
+  ["yesil", "Yeşil"],
+  ["yeşil", "Yeşil"],
+  ["green", "Yeşil"],
+  ["sari", "Sarı"],
+  ["sarı", "Sarı"],
+  ["yellow", "Sarı"],
+  ["turuncu", "Turuncu"],
+  ["orange", "Turuncu"],
+  ["pembe", "Pembe"],
+  ["pink", "Pembe"],
+  ["mor", "Mor"],
+  ["purple", "Mor"],
+  ["gri", "Gri"],
+  ["gray", "Gri"],
+  ["grey", "Gri"],
+  ["bej", "Bej"],
+  ["beige", "Bej"],
+  ["kahverengi", "Kahverengi"],
+  ["brown", "Kahverengi"],
+  ["krem", "Krem"],
+  ["cream", "Krem"],
+  ["altin", "Altın"],
+  ["altın", "Altın"],
+  ["gold", "Altın"],
+  ["gumus", "Gümüş"],
+  ["gümüş", "Gümüş"],
+  ["silver", "Gümüş"]
+]);
 
 function integrationRowValue(row, variant, keys) {
   return firstValue(row, keys) || firstValue(variant || {}, keys);
@@ -7155,10 +7330,95 @@ function normalizedIntegrationCode(value) {
     .slice(0, 160);
 }
 
-function normalizeIntegrationProduct(row, integration, index) {
+function normalizeVariantText(value) {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function colorFromText(...values) {
+  const normalized = normalizeVariantText(values.filter(Boolean).join(" "));
+  if (!normalized) return "";
+  const tokens = normalized.split(" ");
+  for (const token of tokens) {
+    if (PRODUCT_COLOR_TOKENS.has(token)) return PRODUCT_COLOR_TOKENS.get(token);
+  }
+  for (const [token, label] of PRODUCT_COLOR_TOKENS.entries()) {
+    if (normalized.includes(` ${token} `) || normalized.startsWith(`${token} `) || normalized.endsWith(` ${token}`)) return label;
+  }
+  const hexMatch = normalized.match(/\b[0-9a-f]{6}\b/i);
+  return hexMatch ? `#${hexMatch[0].toUpperCase()}` : "";
+}
+
+function variantImageSignature(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = /^https?:\/\//i.test(raw) ? new URL(raw) : null;
+    const path = parsed ? parsed.pathname : raw;
+    const filename = decodeURIComponent(path.split("/").filter(Boolean).pop() || path);
+    return normalizeVariantText(filename).replace(/\b(jpg|jpeg|png|webp|avif|gif)\b/g, "").trim().slice(0, 120);
+  } catch {
+    return normalizeVariantText(raw).slice(0, 120);
+  }
+}
+
+function productModelRoot(...values) {
+  const normalized = normalizeVariantText(values.filter(Boolean).join(" "));
+  if (!normalized) return "";
+  const colorTokens = new Set([...PRODUCT_COLOR_TOKENS.keys()].map(normalizeVariantText));
+  return normalized
+    .split(" ")
+    .filter((token) => token.length > 1)
+    .filter((token) => !colorTokens.has(token))
+    .filter((token) => !/^(xs|s|m|l|xl|xxl|xxxl|standart|std|renk|beden|adet|numara)$/.test(token))
+    .filter((token) => !/^\d{1,2}$/.test(token))
+    .slice(0, 9)
+    .join("-")
+    .slice(0, 120);
+}
+
+function usefulModelRoot(value) {
+  const root = String(value || "").trim();
+  if (!root || root.length < 6) return "";
+  if (["urun", "urun-genel", "genel", "product", "product-general"].includes(root)) return "";
+  return root;
+}
+
+function imageFromVariant(row, variant) {
+  const raw = integrationRowValue(row, variant, ["image_url", "image", "imageUrl", "thumbnail", "photo", "foto", "gorsel"]);
+  if (raw) return String(raw).trim();
+  if (Array.isArray(variant?.images) && variant.images.length) {
+    const first = variant.images[0];
+    if (typeof first === "string") return first;
+    return String(first?.src || first?.url || "").trim();
+  }
+  return imageFromRow(row);
+}
+
+function integrationProductRows(row, integration, index) {
+  const variants = Array.isArray(row?.variants) && row.variants.length ? row.variants : [null];
+  const rows = [];
+  for (let variantIndex = 0; variantIndex < variants.length; variantIndex += 1) {
+    const normalized = normalizeIntegrationProduct(row, integration, index, variants[variantIndex], variantIndex, variants.length);
+    if (normalized) rows.push(normalized);
+  }
+  return rows;
+}
+
+function normalizeIntegrationProduct(row, integration, index, variantOverride = null, variantIndex = 0, variantCount = 1) {
   const name = String(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"]) || "").trim();
   if (!name) return null;
-  const firstVariant = Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {};
+  const firstVariant = variantOverride || (Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {});
   const firstCategory = Array.isArray(row?.categories) && row.categories.length ? row.categories[0] : null;
 
   const barcode = String(integrationRowValue(row, firstVariant, INTEGRATION_BARCODE_KEYS) || "").trim();
@@ -7167,9 +7427,14 @@ function normalizeIntegrationProduct(row, integration, index) {
   const explicitExternalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || firstVariant.product_id || "").trim();
   const externalId = String(groupCode || explicitExternalId || productCode || barcode || `row-${index + 1}`).trim();
   const explicitVariantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
-  const variantId = String(explicitVariantId || barcode || productCode || "").trim();
+  const variantId = String(explicitVariantId || barcode || productCode || (variantCount > 1 ? `variant-${variantIndex + 1}` : "")).trim();
   const sku = String(productCode || barcode || firstVariant.sku || externalId).trim();
-  const variantGroupKey = normalizedIntegrationCode(groupCode || externalId);
+  const imageUrl = imageFromVariant(row, firstVariant);
+  const color = String(integrationRowValue(row, firstVariant, INTEGRATION_COLOR_KEYS) || colorFromText(name, imageUrl, firstVariant.title, firstVariant.name) || "").trim();
+  const size = String(integrationRowValue(row, firstVariant, INTEGRATION_SIZE_KEYS) || "").trim();
+  const modelRoot = usefulModelRoot(productModelRoot(name, firstValue(row, ["model", "model_name", "modelName"]), groupCode, explicitExternalId));
+  const imageSignature = variantImageSignature(imageUrl);
+  const variantGroupKey = normalizedIntegrationCode(groupCode || modelRoot || explicitExternalId || externalId);
   const variantMatchKey = normalizedIntegrationCode(barcode || productCode || variantId || sku || externalId);
   const settings = integration.settings || {};
   const moduleKey = ["shop", "market", "food", "service"].includes(settings.module_key) ? settings.module_key : "shop";
@@ -7186,11 +7451,16 @@ function normalizeIntegrationProduct(row, integration, index) {
     product_code: productCode,
     variant_group_key: variantGroupKey,
     variant_match_key: variantMatchKey,
+    variant_color: color,
+    variant_size: size,
+    variant_image_signature: imageSignature,
+    variant_model_root: modelRoot,
+    variant_source: groupCode ? "group_code" : modelRoot ? "name_model" : imageSignature ? "image_signature" : "external_id",
     name,
     description: String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1800),
     price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
     stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "quantity", "availableQuantity", "stok", "adet"]) || firstVariant.inventory_quantity))),
-    image_url: imageFromRow(row),
+    image_url: imageUrl,
     category: String(categoryValue).trim().slice(0, 90),
     brand: String(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").trim().slice(0, 120),
     module_key: moduleKey,
@@ -7239,6 +7509,9 @@ function integrationProductPreview(product) {
     variant_match_key: product.variant_match_key || "",
     barcode: product.barcode || "",
     product_code: product.product_code || "",
+    variant_color: product.variant_color || "",
+    variant_size: product.variant_size || "",
+    variant_source: product.variant_source || "",
     name: product.name,
     price: product.price,
     stock: product.stock,
@@ -7495,6 +7768,8 @@ function integrationProductPayload({ business, integration, item }) {
           : "Ürün aktif import edildi.",
       item.barcode ? `Barkod: ${item.barcode}.` : "",
       item.product_code ? `Ürün kodu: ${item.product_code}.` : "",
+      item.variant_color ? `Varyant renk: ${item.variant_color}.` : "",
+      item.variant_size ? `Varyant beden/ölçü: ${item.variant_size}.` : "",
       ...compliance.errors,
       ...compliance.warnings
     ].filter(Boolean).join(" ").slice(0, 1200),
@@ -7584,6 +7859,11 @@ async function applyIntegrationProducts({ business, integration, products }) {
         product_code: item.product_code || "",
         group_key: item.variant_group_key || "",
         match_key: item.variant_match_key || "",
+        color: item.variant_color || "",
+        size: item.variant_size || "",
+        image_signature: item.variant_image_signature || "",
+        model_root: item.variant_model_root || "",
+        source: item.variant_source || "",
         integration_identity: identity
       };
 
@@ -7677,7 +7957,8 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
     const rawRows = await fetchIntegrationRows(integration, secrets, limit);
     const products = rawRows
       .slice(0, limit)
-      .map((row, index) => normalizeIntegrationProduct(row, integration, index))
+      .flatMap((row, index) => integrationProductRows(row, integration, index))
+      .slice(0, limit)
       .filter(Boolean)
       .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
     const invalidProducts = products.filter((product) => product.compliance.errors.length);
@@ -8743,12 +9024,27 @@ export function registerRoutes(app) {
       if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
     }
 
-    const products = [...productsById.values()]
+    const reviewProducts = [...productsById.values()]
       .filter((product) => partnerProductMatchesSearch(product, query.search))
       .filter((product) => partnerProductMatchesStatus(product, query.status))
       .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
       .slice(0, query.limit)
       .map(attachProductReviewAutomation);
+    const productIds = reviewProducts.map((product) => product.id).filter(Boolean);
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    const linksByProductId = new Map();
+    for (const link of linkRows || []) {
+      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
+    }
+    const products = attachVariantGroups(reviewProducts, linksByProductId);
 
     await auditEvent({
       request,
@@ -9647,7 +9943,8 @@ export function registerRoutes(app) {
       if (probeRemote && config.integrations.remoteFetchEnabled) {
         const rows = await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows);
         const products = rows.slice(0, config.integrations.maxTestRows)
-          .map((row, index) => normalizeIntegrationProduct(row, integration, index))
+          .flatMap((row, index) => integrationProductRows(row, integration, index))
+          .slice(0, config.integrations.maxTestRows)
           .filter(Boolean)
           .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
         const invalidCount = products.filter((product) => product.compliance.errors.length).length;

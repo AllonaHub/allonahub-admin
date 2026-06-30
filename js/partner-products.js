@@ -100,6 +100,142 @@
     return product.name || product.product_name || "Ürün";
   }
 
+  function parseGallery(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item || "").trim()).filter(Boolean);
+    } catch (error) {
+      // CSV imports may store gallery URLs as comma/newline separated strings.
+    }
+    return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+  }
+
+  function uniqueUrls(items) {
+    const seen = new Set();
+    return items.filter((url) => {
+      const key = String(url || "").trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function productGallery(product, raw) {
+    return uniqueUrls([
+      product.image_url,
+      raw?.image_url,
+      ...parseGallery(raw?.media_gallery || product.media_gallery)
+    ]).slice(0, 8);
+  }
+
+  function variantInfo(product) {
+    return product.variant_automation || {
+      group_key: "",
+      match_key: "",
+      label: "Standart",
+      color: "",
+      size: "",
+      group_size: 1,
+      group_stock: Number(product.stock || 0),
+      confidence: 0,
+      siblings: [],
+      reasons: []
+    };
+  }
+
+  function confidenceLabel(confidence) {
+    const value = Number(confidence || 0);
+    if (value >= 0.9) return "Kesin eşleşme";
+    if (value >= 0.72) return "Güçlü eşleşme";
+    if (value >= 0.6) return "Muhtemel eşleşme";
+    return "Tekil ürün";
+  }
+
+  function sourceLabel(source) {
+    const labels = {
+      external_group: "Grup kodu",
+      barcode: "Barkod",
+      product_code: "Ürün kodu",
+      model_image: "Model + görsel",
+      model_name: "Model adı",
+      single_product: "Tekil"
+    };
+    return labels[source] || "Otomasyon";
+  }
+
+  function renderVariantMiniStrip(product, raw) {
+    const info = variantInfo(product);
+    const gallery = productGallery(product, raw);
+    const siblingImages = (info.siblings || []).map((item) => item.image_url).filter(Boolean);
+    const urls = uniqueUrls([...gallery, ...siblingImages]).slice(0, 5);
+    if (!urls.length && Number(info.group_size || 0) <= 1) return "";
+    return `
+      <span class="partner-product-variant-strip" aria-label="Ürün görselleri ve varyantları">
+        ${urls.map((url, index) => `
+          <span class="partner-product-variant-mini" title="${index === 0 ? "Ana görsel" : "Varyant görseli"}">
+            <img src="${escape(url)}" alt="" loading="lazy" onerror="this.closest('.partner-product-variant-mini')?.remove()">
+          </span>
+        `).join("")}
+        ${Number(info.group_size || 0) > 1 ? `<span class="partner-product-variant-count">+${escape(Number(info.group_size || 0) - 1)}</span>` : ""}
+      </span>
+    `;
+  }
+
+  function renderVariantSummary(product) {
+    const info = variantInfo(product);
+    const groupSize = Number(info.group_size || 1);
+    const label = info.label || [info.color, info.size].filter(Boolean).join(" / ") || "Standart";
+    const confidence = confidenceLabel(info.confidence);
+    const source = sourceLabel(info.source);
+    const priceRange = info.price_range || {};
+    const priceText = Number(priceRange.max || 0) > Number(priceRange.min || 0)
+      ? `${money(priceRange.min)} - ${money(priceRange.max)}`
+      : "";
+    return `
+      <span class="partner-product-variant-meta">
+        <span class="partner-product-variant-chip">
+          <i class="fa-solid fa-layer-group"></i>
+          ${escape(groupSize > 1 ? `${groupSize} varyant` : label)}
+        </span>
+        ${info.color ? `<span class="partner-product-variant-chip">${escape(info.color)}</span>` : ""}
+        ${info.size ? `<span class="partner-product-variant-chip">${escape(info.size)}</span>` : ""}
+        <small>${escape(source)} · ${escape(confidence)}${priceText ? ` · ${escape(priceText)}` : ""}</small>
+      </span>
+    `;
+  }
+
+  function renderVariantFamily(product) {
+    const info = variantInfo(product);
+    const siblings = info.siblings || [];
+    if (!siblings.length) {
+      return `
+        <div class="partner-product-variant-family">
+          <strong>Varyant ailesi</strong>
+          <span>Bu ürün şu an tekil görünüyor. Aynı barkod/model/görsel sinyali geldikçe otomasyon burada gruplayacak.</span>
+        </div>
+      `;
+    }
+    return `
+      <div class="partner-product-variant-family">
+        <strong>Varyant ailesi · ${escape(info.group_size || siblings.length + 1)} ürün</strong>
+        <div class="partner-product-variant-family-list">
+          ${siblings.map((item) => `
+            <button type="button" data-edit-product="${escape(item.id)}" title="${escape(item.name || item.label || "Varyantı aç")}">
+              ${item.image_url ? `<img src="${escape(item.image_url)}" alt="" loading="lazy" onerror="this.hidden=true">` : `<i class="fa-solid fa-image"></i>`}
+              <span>
+                <b>${escape(item.label || item.color || item.sku || "Varyant")}</b>
+                <small>${escape(item.stock)} stok · ${money(item.price)}</small>
+              </span>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function normalizeProduct(raw) {
     return core.normalizeProduct ? core.normalizeProduct(raw || {}) : {
       ...(raw || {}),
@@ -218,6 +354,10 @@
       product.category,
       product.brand,
       product.sku,
+      product.variant_automation?.label,
+      product.variant_automation?.color,
+      product.variant_automation?.size,
+      product.variant_automation?.group_key,
       product.seller_public_name,
       product.seller_legal_name,
       product.integration_source,
@@ -260,13 +400,19 @@
 
   function summaryFromProducts(products) {
     const normalized = products.map(normalizeProduct);
+    const variantGroups = new Set(normalized
+      .filter((item) => Number(item.variant_automation?.group_size || 0) > 1)
+      .map((item) => item.variant_automation?.group_key)
+      .filter(Boolean));
     return {
       total: normalized.length,
       active: normalized.filter((item) => normalize(item.status) === "active").length,
       pending: normalized.filter((item) => productMatchesStatus(item, "pending")).length,
       low_stock: normalized.filter((item) => Number(item.stock || 0) > 0 && Number(item.stock || 0) <= 5).length,
       out_of_stock: normalized.filter((item) => Number(item.stock || 0) <= 0).length,
-      rejected: normalized.filter((item) => productMatchesStatus(item, "rejected")).length
+      rejected: normalized.filter((item) => productMatchesStatus(item, "rejected")).length,
+      variant_groups: variantGroups.size,
+      variant_products: normalized.filter((item) => Number(item.variant_automation?.group_size || 0) > 1).length
     };
   }
 
@@ -280,7 +426,8 @@
       ["Onay", summary.pending, "fa-hourglass-half"],
       ["Kritik stok", summary.low_stock, "fa-triangle-exclamation"],
       ["Stok yok", summary.out_of_stock, "fa-box-open"],
-      ["Reddedilen", summary.rejected, "fa-ban"]
+      ["Reddedilen", summary.rejected, "fa-ban"],
+      ["Varyant grubu", summary.variant_groups, "fa-layer-group"]
     ];
     target.innerHTML = rows.map(([label, value, icon]) => `
       <article class="partner-products-kpi">
@@ -344,6 +491,7 @@
     target.innerHTML = rows.map((raw) => {
       const product = normalizeProduct(raw);
       const image = product.image_url || raw.image_url || "";
+      const variant = variantInfo(product);
       const stockClass = Number(product.stock || 0) <= 0 ? "is-empty" : Number(product.stock || 0) <= 5 ? "is-low" : "";
       const approvedForPublish = canPublish(product);
       const archived = normalize(product.status) === "archived";
@@ -354,16 +502,20 @@
           </td>
           <td>
             <div class="partner-product-cell">
-              <span class="partner-product-thumb">
-                ${image ? `<img src="${escape(image)}" alt="${escape(product.name)}" loading="lazy" onerror="this.remove()">` : `<i class="fa-solid fa-image"></i>`}
+              <span class="partner-product-media-cluster">
+                <span class="partner-product-thumb">
+                  ${image ? `<img src="${escape(image)}" alt="${escape(product.name)}" loading="lazy" onerror="this.remove()">` : `<i class="fa-solid fa-image"></i>`}
+                </span>
+                ${renderVariantMiniStrip(product, raw)}
               </span>
               <span>
                 <strong>${escape(product.name)}</strong>
                 <small>${escape(product.sku || product.brand || product.seller_public_name || "SKU yok")}</small>
+                ${renderVariantSummary(product)}
               </span>
             </div>
           </td>
-          <td>${escape(product.category || "-")}<small>${escape(product.brand || "")}</small></td>
+          <td>${escape(product.category || "-")}<small>${escape(product.brand || "")}${variant.group_size > 1 ? ` · Grup stok ${escape(variant.group_stock || 0)}` : ""}</small></td>
           <td class="partner-products-money">
             <input class="partner-products-quick-input" type="number" min="0" step="0.01" value="${escape(Number(product.price || 0))}" data-quick-price="${escape(product.id)}" aria-label="${escape(product.name)} fiyat">
             <small>${money(product.price)}</small>
@@ -477,6 +629,10 @@
       <div>
         <strong>${escape(name)}</strong>
         <span>${escape(category || "Genel")} · ${money(price)} · Stok ${escape(stock)}</span>
+        ${renderVariantSummary(product)}
+      </div>
+      <div class="partner-product-preview-variants">
+        ${renderVariantMiniStrip(product, product)}
       </div>
     `;
   }
@@ -496,6 +652,8 @@
     if (title) title.textContent = product.name;
     if (status) status.textContent = statusLabel(product.compliance_review_status || product.status || "draft");
     if (subtitle) subtitle.textContent = `${product.sku || product.category || "Ürün"} · ${money(product.price)} · Stok ${product.stock}`;
+    const variantTarget = $("[data-product-edit-variants]");
+    if (variantTarget) variantTarget.innerHTML = renderVariantFamily(product);
     drawer.hidden = false;
     drawer.setAttribute("aria-hidden", "false");
     window.setTimeout(() => form.elements.name?.focus(), 60);
