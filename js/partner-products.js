@@ -706,7 +706,7 @@
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded("/pages/partner/partner-products.html")) return;
-      const params = new URLSearchParams({ limit: "1000" });
+      const params = new URLSearchParams({ limit: "500" });
       const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
       state.business = payload.business || state.access.partnerBusiness || null;
       state.products = payload.products || [];
@@ -994,13 +994,7 @@
     const button = form.querySelector("button[type='submit']");
     setButtonBusy(button, true);
     try {
-      const result = await apiFetch("/v1/partner/products/bulk", {
-        method: "PATCH",
-        body: JSON.stringify({
-          product_ids: ids,
-          updates: payload
-        })
-      });
+      const result = await bulkUpdateProducts(ids, payload);
       applyBulkResult(result, ids);
       form.reset();
       renderAll();
@@ -1052,13 +1046,7 @@
     if (!validateBulkSelection(ids)) return;
     setButtonBusy(button, true);
     try {
-      const result = await apiFetch("/v1/partner/products/bulk", {
-        method: "PATCH",
-        body: JSON.stringify({
-          product_ids: ids,
-          submit_for_review: true
-        })
-      });
+      const result = await bulkUpdateProducts(ids, null, { submitForReview: true });
       applyBulkResult(result, ids);
       renderAll();
       toastBulkResult(result, ids.length);
@@ -1068,6 +1056,55 @@
       setButtonBusy(button, false);
       renderSelectedState();
     }
+  }
+
+  async function bulkUpdateProducts(ids, payload, options) {
+    try {
+      return await apiFetch("/v1/partner/products/bulk", {
+        method: "PATCH",
+        body: JSON.stringify({
+          product_ids: ids,
+          ...(payload ? { updates: payload } : {}),
+          ...(options?.submitForReview ? { submit_for_review: true } : {})
+        })
+      });
+    } catch (error) {
+      if (!/404|not found|Route/i.test(error.message || "")) throw error;
+      return fallbackBulkUpdateProducts(ids, payload, options);
+    }
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  async function fallbackBulkUpdateProducts(ids, payload, options) {
+    const products = [];
+    const failed = [];
+    for (const productId of ids) {
+      try {
+        const result = await apiFetch(`/v1/partner/products/${encodeURIComponent(productId)}`, {
+          method: "PATCH",
+          body: JSON.stringify(options?.submitForReview
+            ? { category: (normalizeProduct(productById(productId) || {}).category || "Genel") }
+            : payload)
+        });
+        if (result.product) products.push(result.product);
+      } catch (error) {
+        failed.push({ product_id: productId, message: error.message || "Ürün güncellenemedi." });
+      }
+      await wait(260);
+    }
+    return {
+      ok: failed.length === 0,
+      products,
+      failed,
+      message: failed.length
+        ? `${products.length} ürün güncellendi, ${failed.length} ürün tamamlanamadı.`
+        : options?.submitForReview
+          ? `${products.length} ürün admin onayına gönderildi.`
+          : `${products.length} ürün revizyonu kaydedildi.`
+    };
   }
 
   function bindEvents() {
