@@ -991,6 +991,16 @@
     return Boolean(policy.premium_enabled && policy.full_integration_enabled && ["premium", "enterprise"].includes(policy.partner_plan_tier));
   }
 
+  function integrationPremiumUrl(plan) {
+    const selectedPlan = plan || "pro";
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}#integrations`);
+    return `partner-integration-premium.html?plan=${encodeURIComponent(selectedPlan)}&returnTo=${returnTo}`;
+  }
+
+  function openIntegrationPremium(plan) {
+    window.location.href = integrationPremiumUrl(plan);
+  }
+
   function setIntegrationMode(mode) {
     const selected = mode === "full" ? "full" : "import";
     $all("[data-integration-mode]").forEach((button) => {
@@ -1011,6 +1021,7 @@
       target.innerHTML = `
         <strong>Tam Entegrasyon ${unlocked ? "aktif" : "premium gerektirir"}</strong>
         <span>Tam entegrasyon, buradan entegre olarak buraya yüklediğiniz ürünün API'sini girdiğiniz tüm platformlara yayılmasını sağlayacak bir entegrasyon platformudur. Bunu elde etmek için premium üyelik elde etmeniz gerekiyor.</span>
+        ${unlocked ? "" : `<a class="partner-os-inline-link" href="${escape(integrationPremiumUrl("pro"))}">Premium paketleri gör</a>`}
         ${policy.outbound_enabled ? "" : "<em>Dış platformlara yayın şu anda operasyon onayı bekliyor.</em>"}
       `;
       target.classList.add("is-premium");
@@ -2046,6 +2057,7 @@
     try {
       if (currentIntegrationMode() === "full" && !partnerHasFullIntegrationAccess()) {
         toast("Tam entegrasyon premium üyelik gerektirir. Ürünleri çekme ücretsizdir; tam entegrasyon premium sonrası açılır.", "warning");
+        openIntegrationPremium("pro");
         return;
       }
       const payload = await apiFetch("/v1/partner/integrations", {
@@ -2392,7 +2404,13 @@
         downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
         toast("Katalog Excel dosyası indirildi.");
       }
-      if (integrationMode) setIntegrationMode(integrationMode.dataset.integrationMode);
+      if (integrationMode) {
+        if (integrationMode.dataset.integrationMode === "full" && !partnerHasFullIntegrationAccess()) {
+          openIntegrationPremium("pro");
+          return;
+        }
+        setIntegrationMode(integrationMode.dataset.integrationMode);
+      }
       if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
       if (integrationPreview) syncIntegration(integrationPreview.dataset.integrationPreview, "preview");
       if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync, "apply");
