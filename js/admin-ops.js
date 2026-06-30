@@ -212,21 +212,48 @@
     return session.access_token;
   }
 
+  async function refreshSessionToken() {
+    if (!App.supabase?.auth?.refreshSession) return "";
+    try {
+      const { data, error } = await App.supabase.auth.refreshSession();
+      if (error || !data?.session?.access_token) return "";
+      return data.session.access_token;
+    } catch {
+      return "";
+    }
+  }
+
+  function redirectToLoginSoon() {
+    window.setTimeout(() => {
+      window.location.href = loginUrl();
+    }, 500);
+  }
+
+  async function fetchApi(path, options, token) {
+    return fetch(`${config.apiBaseUrl}${path}`, {
+      method: options?.method || "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+      credentials: "omit"
+    });
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
     if (!token) return null;
     let response;
     try {
-      response = await fetch(`${config.apiBaseUrl}${path}`, {
-        method: options?.method || "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest"
-        },
-        body: options?.body ? JSON.stringify(options.body) : undefined,
-        credentials: "omit"
-      });
+      response = await fetchApi(path, options, token);
+      if (response.status === 401) {
+        const refreshedToken = await refreshSessionToken();
+        if (refreshedToken && refreshedToken !== token) {
+          response = await fetchApi(path, options, refreshedToken);
+        }
+      }
     } catch (error) {
       console.error("[AdminOps] API fetch failed", path, error);
       const wrapped = new Error(readableError(error));
@@ -238,6 +265,10 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = payload.message || payload.error || `API isteği tamamlanamadı. HTTP ${response.status}`;
+      if (response.status === 401) {
+        redirectToLoginSoon();
+        throw new Error("Oturum süresi doldu veya doğrulanamadı. Giriş sayfasına yönlendiriliyorsunuz.");
+      }
       if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
@@ -711,7 +742,7 @@
       "Ürün Onayı",
       "Partner katalog kayıtlarında satıcı, fatura, iade/cayma ve yasaklı ürün uygunluğu kontrolü",
       warningPanel() + table(["Ürün", "Satıcı", "Fiyat/Stok", "Durum", "Otomasyon", "Fatura Sorumluluğu", "Aksiyon"], rows, "Onay bekleyen ürün bulunamadı."),
-      `<a class="admin-btn admin-btn--gold" href="product-reviews.html">Ürün Onay Otomasyonu</a><button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
+      `<a class="admin-btn admin-btn--gold" href="/admin/product-reviews.html">Ürün Onay Otomasyonu</a><button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
     );
   }
 

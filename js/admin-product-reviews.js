@@ -102,21 +102,48 @@
     return session.access_token;
   }
 
+  async function refreshSessionToken() {
+    if (!App.supabase?.auth?.refreshSession) return "";
+    try {
+      const { data, error } = await App.supabase.auth.refreshSession();
+      if (error || !data?.session?.access_token) return "";
+      return data.session.access_token;
+    } catch {
+      return "";
+    }
+  }
+
+  function redirectToLoginSoon() {
+    window.setTimeout(() => {
+      window.location.href = loginUrl();
+    }, 500);
+  }
+
+  async function fetchApi(path, options, token) {
+    return fetch(`${config.apiBaseUrl}${path}`, {
+      method: options?.method || "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+      credentials: "omit"
+    });
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
     if (!token) return null;
     let response;
     try {
-      response = await fetch(`${config.apiBaseUrl}${path}`, {
-        method: options?.method || "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest"
-        },
-        body: options?.body ? JSON.stringify(options.body) : undefined,
-        credentials: "omit"
-      });
+      response = await fetchApi(path, options, token);
+      if (response.status === 401) {
+        const refreshedToken = await refreshSessionToken();
+        if (refreshedToken && refreshedToken !== token) {
+          response = await fetchApi(path, options, refreshedToken);
+        }
+      }
     } catch (error) {
       console.error("[AdminProductReviews] API fetch failed", path, error);
       const wrapped = new Error(readableError(error));
@@ -128,6 +155,10 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = payload.message || payload.error || `API isteği tamamlanamadı. HTTP ${response.status}`;
+      if (response.status === 401) {
+        redirectToLoginSoon();
+        throw new Error("Oturum süresi doldu veya doğrulanamadı. Giriş sayfasına yönlendiriliyorsunuz.");
+      }
       if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
@@ -529,7 +560,7 @@
     const readyIds = state.products
       .filter((raw) => {
         const auto = automation(raw);
-        return auto.auto_approvable && auto.lane !== "needs_revision";
+        return auto.auto_approvable && auto.lane === "ready" && auto.risk_level === "clear" && !auto.revision_required;
       })
       .map((product) => String(product.id));
     state.selected = new Set(readyIds);

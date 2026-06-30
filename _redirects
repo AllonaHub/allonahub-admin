@@ -24,6 +24,11 @@
 /admin-rewards.html /admin/rewards.html 301
 /admin-login.html /admin/admin-login.html 301
 /admin-login /admin/admin-login.html 301
+/product-reviews.html /admin/product-reviews.html 301
+/product-reviews /admin/product-reviews.html 301
+/urun-onay.html /admin/product-reviews.html 301
+/urun-otomasyonu.html /admin/product-reviews.html 301
+/admin/product-reviews /admin/product-reviews.html 301
 /super-admin.html /admin/super-admin.html 301
 /super-admin /admin/super-admin.html 301
 /super-admin-login.html /admin/super-admin-login.html 301
