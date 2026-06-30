@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-variants1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260630-selection1">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -82,12 +82,24 @@
             <strong data-selected-count>0 ürün seçildi</strong>
             <span>Seçili ürünler için boş bırakılan alanlar korunur.</span>
           </div>
+          <div class="partner-products-page-size" aria-label="Liste adedi">
+            <span>Gösterim</span>
+            <div class="partner-products-segmented" role="radiogroup" aria-label="Görünen ürün sayısı">
+              <label><input type="radio" name="product_page_size" value="20" data-product-page-size><span>20</span></label>
+              <label><input type="radio" name="product_page_size" value="50" data-product-page-size checked><span>50</span></label>
+              <label><input type="radio" name="product_page_size" value="100" data-product-page-size><span>100</span></label>
+            </div>
+            <small data-product-window-summary>İlk 50 ürün gösteriliyor.</small>
+          </div>
           <div class="partner-products-selection-actions" aria-label="Hızlı seçim">
             <button type="button" data-select-all-products-action><i class="fa-solid fa-list-check"></i><span>Tümünü Seç</span></button>
             <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
             <button type="button" data-select-ready-products><i class="fa-solid fa-shield-check"></i><span>Onaya Hazırları Seç</span></button>
             <button type="button" data-select-risk-products><i class="fa-solid fa-triangle-exclamation"></i><span>Risklileri Seç</span></button>
             <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
+            <button type="button" data-select-missing-price-products><i class="fa-solid fa-tags"></i><span>Fiyatı Olmayanları Seç</span></button>
+            <button type="button" data-select-missing-stock-products><i class="fa-solid fa-box-open"></i><span>Stoku Olmayanları Seç</span></button>
+            <button type="button" data-select-low-stock-products><i class="fa-solid fa-battery-quarter"></i><span>Stoku Az Kalanları Seç</span></button>
             <button type="button" data-clear-selected-products><i class="fa-solid fa-xmark"></i><span>Seçimi Temizle</span></button>
           </div>
           <form data-bulk-product-form>
@@ -103,7 +115,7 @@
           <table class="partner-products-table">
             <thead>
               <tr>
-                <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Tüm ürünleri seç"></th>
+                <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Görünen ürünleri seç"></th>
                 <th>Ürün</th>
                 <th>Kategori</th>
                 <th>Fiyat</th>
@@ -203,7 +215,7 @@
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-products.js?v=20260630-variants1" defer></script>
+  <script src="../../js/partner-products.js?v=20260630-selection1" defer></script>
   <script src="../../js/platform.js?v=20260630-shopcat2" defer></script>
   <script src="../../js/privacy-consent.js?v=20260630-shopcat2" defer></script>
 </body>

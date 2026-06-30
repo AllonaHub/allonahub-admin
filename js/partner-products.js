@@ -7,6 +7,7 @@
     products: [],
     selected: new Set(),
     currentProductId: "",
+    pageSize: 50,
     filters: {
       search: "",
       status: "all",
@@ -344,6 +345,19 @@
     );
   }
 
+  function isMissingPriceProduct(product) {
+    return Number(product.price || 0) <= 0;
+  }
+
+  function isMissingStockProduct(product) {
+    return Number(product.stock || 0) <= 0;
+  }
+
+  function isCriticalStockProduct(product) {
+    const stock = Number(product.stock || 0);
+    return stock > 0 && stock < 5;
+  }
+
   function productMatchesSearch(product, search) {
     const term = String(search || "").trim().toLocaleLowerCase("tr-TR");
     if (!term) return true;
@@ -379,7 +393,7 @@
     return status === filter || review === filter;
   }
 
-  function visibleProducts() {
+  function filteredProducts() {
     const rows = state.products
       .map((raw) => ({ raw, product: normalizeProduct(raw) }))
       .filter(({ product }) => productMatchesSearch(product, state.filters.search))
@@ -396,6 +410,10 @@
     });
 
     return rows.map(({ raw }) => raw);
+  }
+
+  function visibleProducts() {
+    return filteredProducts().slice(0, state.pageSize);
   }
 
   function summaryFromProducts(products) {
@@ -440,11 +458,16 @@
 
   function renderSummary() {
     const target = $("[data-product-manager-summary]");
-    if (!target) return;
-    const visible = visibleProducts().length;
+    const filtered = filteredProducts().length;
+    const visible = Math.min(state.pageSize, filtered);
     const total = state.products.length;
     const businessName = state.business?.display_name || state.business?.legal_name || "Partner";
-    target.textContent = `${businessName} kataloğu · ${visible}/${total} ürün listeleniyor.`;
+    if (target) target.textContent = `${businessName} kataloğu · ${visible}/${filtered}/${total} ürün gösteriliyor.`;
+    const windowTarget = $("[data-product-window-summary]");
+    if (windowTarget) {
+      const start = filtered ? 1 : 0;
+      windowTarget.textContent = `${start}-${visible} arası gösteriliyor · ${filtered} filtre sonucu`;
+    }
   }
 
   function renderSelectedState() {
@@ -742,6 +765,18 @@
     toast(`${ids.length} ${label} seçildi.`);
   }
 
+  function markQuickDirty(productId) {
+    const rawProduct = productById(productId);
+    const row = $(`[data-product-row="${escapeSelector(String(productId))}"]`);
+    if (!rawProduct || !row) return;
+    const product = normalizeProduct(rawProduct);
+    const priceInput = $(`[data-quick-price="${escapeSelector(String(productId))}"]`);
+    const stockInput = $(`[data-quick-stock="${escapeSelector(String(productId))}"]`);
+    const priceChanged = Number(priceInput?.value || 0) !== Number(product.price || 0);
+    const stockChanged = Number(stockInput?.value || 0) !== Number(product.stock || 0);
+    row.classList.toggle("has-unsaved-change", priceChanged || stockChanged);
+  }
+
   function quickPayload(productId) {
     const priceInput = $(`[data-quick-price="${escapeSelector(String(productId))}"]`);
     const stockInput = $(`[data-quick-stock="${escapeSelector(String(productId))}"]`);
@@ -874,6 +909,9 @@
       const selectActive = event.target.closest("[data-select-active-products]");
       const selectReady = event.target.closest("[data-select-ready-products]");
       const selectRisk = event.target.closest("[data-select-risk-products]");
+      const selectMissingPrice = event.target.closest("[data-select-missing-price-products]");
+      const selectMissingStock = event.target.closest("[data-select-missing-stock-products]");
+      const selectLowStock = event.target.closest("[data-select-low-stock-products]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
       const row = event.target.closest("[data-product-row]");
       if (refresh) loadProducts();
@@ -893,8 +931,7 @@
         renderRows();
       }
       if (selectVisible) {
-        visibleProducts().forEach((product) => state.selected.add(String(product.id)));
-        renderRows();
+        selectExact(visibleProducts().map(normalizeProduct), "görünen ürün");
       }
       if (selectAllAction) {
         selectExact(state.products.map(normalizeProduct), "ürün");
@@ -906,11 +943,16 @@
         selectExact(visibleProducts().map(normalizeProduct).filter(isRiskProduct), "riskli ürün");
       }
       if (selectActive) {
-        visibleProducts()
-          .map(normalizeProduct)
-          .filter(isActive)
-          .forEach((product) => state.selected.add(String(product.id)));
-        renderRows();
+        selectExact(visibleProducts().map(normalizeProduct).filter(isActive), "yayındaki ürün");
+      }
+      if (selectMissingPrice) {
+        selectExact(visibleProducts().map(normalizeProduct).filter(isMissingPriceProduct), "fiyatı olmayan ürün");
+      }
+      if (selectMissingStock) {
+        selectExact(visibleProducts().map(normalizeProduct).filter(isMissingStockProduct), "stoku olmayan ürün");
+      }
+      if (selectLowStock) {
+        selectExact(visibleProducts().map(normalizeProduct).filter(isCriticalStockProduct), "stoku az kalan ürün");
       }
       if (clearSelected) {
         state.selected.clear();
@@ -930,6 +972,9 @@
         const rawProduct = productById(state.currentProductId) || {};
         renderEditorPreview(normalizeProduct(rawProduct));
       }
+      if (event.target.matches("[data-quick-price], [data-quick-stock]")) {
+        markQuickDirty(event.target.dataset.quickPrice || event.target.dataset.quickStock);
+      }
     });
 
     document.addEventListener("change", (event) => {
@@ -939,6 +984,10 @@
       }
       if (event.target.matches("[data-product-sort]")) {
         state.filters.sort = event.target.value || "updated_desc";
+        renderRows();
+      }
+      if (event.target.matches("[data-product-page-size]")) {
+        state.pageSize = Number(event.target.value || 50) || 50;
         renderRows();
       }
       if (event.target.matches("[data-select-product]")) {
