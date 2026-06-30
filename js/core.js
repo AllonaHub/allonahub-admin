@@ -265,7 +265,6 @@
   const CURRENCY_PREF_KEY = "allona.currency";
   const CURRENCY_RATES_PREFIX = "allona.currency.rates.";
   const BASE_CURRENCY = String(App.config?.baseCurrency || App.config?.currency || "TRY").toUpperCase();
-  const EXTERNAL_RATES_URL = "https://open.er-api.com/v6/latest/{base}";
   const CURRENCY_CACHE_MS = Number(App.config?.currencyCacheHours || 12) * 60 * 60 * 1000;
   const supportedCurrencies = ["TRY", "USD", "EUR", "AZN", "AED", "SAR", "GBP", "RUB"];
   const countryCurrencyMap = {
@@ -387,9 +386,8 @@
     const apiBaseUrl = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
     const proxyUrl = apiBaseUrl ? `${apiBaseUrl}/v1/currency/rates?base={base}` : "";
     const templates = [
-      App.config?.currencyRatesUrl,
-      proxyUrl,
-      EXTERNAL_RATES_URL
+      App.config?.currencyRatesProxyUrl,
+      proxyUrl
     ].filter(Boolean);
     return [...new Set(templates)]
       .map((template) => String(template).replace("{base}", encodeURIComponent(base)));
@@ -447,7 +445,7 @@
         const response = await fetch(endpoint, { cache: "no-cache" });
         if (!response.ok) throw new Error(`currency rates ${response.status}`);
         const payload = await response.json();
-        const next = normalizeRatesPayload(payload, endpoint.includes("/v1/currency/rates") ? "backend_proxy" : "external_provider");
+        const next = normalizeRatesPayload(payload, "backend_proxy");
         writeRatesCache(currencyState.base, next);
         applyRates(next);
         return next;
