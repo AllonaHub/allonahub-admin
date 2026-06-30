@@ -7546,6 +7546,76 @@ function sourceHashFor(value) {
   return createHash("sha256").update(JSON.stringify(value || {})).digest("hex");
 }
 
+function integrationSettingsObject(settings) {
+  return settings && typeof settings === "object" && !Array.isArray(settings) ? settings : {};
+}
+
+function positiveInteger(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? Math.floor(number) : fallback;
+}
+
+function integrationImportCursor(integration, provider = integration?.provider) {
+  const settings = integrationSettingsObject(integration?.settings);
+  const cursorRoot = integrationSettingsObject(settings.import_cursor);
+  return integrationSettingsObject(cursorRoot[provider]);
+}
+
+function integrationSettingsWithImportCursor(settings, provider, cursor) {
+  const base = integrationSettingsObject(settings);
+  const cursorRoot = integrationSettingsObject(base.import_cursor);
+  const previousProviderCursor = integrationSettingsObject(cursorRoot[provider]);
+  const nextProviderCursor = Object.fromEntries(
+    Object.entries({ ...previousProviderCursor, ...cursor })
+      .filter(([, value]) => value !== undefined)
+  );
+  return {
+    ...base,
+    import_cursor: {
+      ...cursorRoot,
+      [provider]: nextProviderCursor
+    }
+  };
+}
+
+function integrationFetchRows(rows, metadata = {}) {
+  return {
+    rows: jsonProductRows(rows),
+    pageInfo: metadata.pageInfo || {},
+    nextCursor: metadata.nextCursor || null
+  };
+}
+
+function normalizedIntegrationFetchResult(result) {
+  if (Array.isArray(result)) return integrationFetchRows(result);
+  if (!result || typeof result !== "object") return integrationFetchRows([]);
+  return {
+    rows: jsonProductRows(result.rows || []),
+    pageInfo: result.pageInfo || {},
+    nextCursor: result.nextCursor || null
+  };
+}
+
+function uniqueIntegrationProducts(products) {
+  const seen = new Set();
+  const duplicates = [];
+  const unique = [];
+  for (const product of products) {
+    const identity = integrationProductIdentity(product) || `${product.external_product_id}:${product.external_variant_id || ""}`;
+    if (identity && seen.has(identity)) {
+      duplicates.push({
+        external_product_id: product.external_product_id,
+        external_variant_id: product.external_variant_id || null,
+        name: product.name
+      });
+      continue;
+    }
+    if (identity) seen.add(identity);
+    unique.push(product);
+  }
+  return { products: unique, duplicateCount: duplicates.length, duplicates: duplicates.slice(0, 10) };
+}
+
 const RESTRICTED_INTEGRATION_PRODUCT_PATTERNS = [
   ["Alkol ve tütün ürünü", /\b(alkol|alkollü|bira|şarap|rakı|viski|votka|tütün|sigara|puro|nargile|elektronik sigara|vape)\b/i],
   ["Silah, patlayıcı veya kesici saldırı ürünü", /\b(silah|tabanca|tüfek|mermi|fişek|patlayıcı|bomba|sustalı|elektro şok|şok cihazı)\b/i],
@@ -7664,14 +7734,23 @@ async function fetchShopifyRows(secrets, limit) {
   return jsonProductRows(payload.products || payload);
 }
 
-async function fetchTrendyolRows(secrets, limit) {
+async function fetchTrendyolRows(secrets, limit, integration = {}) {
   const supplierId = String(secrets.SUPPLIER_ID || "").trim();
   const apiKey = String(secrets.API_KEY || "").trim();
   const apiSecret = String(secrets.API_SECRET || "").trim();
+  const pageSize = Math.min(Math.max(limit || 50, 1), 100);
+  const cursor = integrationImportCursor(integration, "trendyol");
+  const requestedPage = positiveInteger(cursor.next_page, 0);
+  const requestedToken = String(cursor.next_page_token || "").trim();
   const url = new URL(`https://apigw.trendyol.com/integration/product/sellers/${encodeURIComponent(supplierId)}/products/approved`);
   url.searchParams.set("supplierId", supplierId);
-  url.searchParams.set("page", "0");
-  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
+  if (requestedToken) {
+    url.searchParams.set("nextPageToken", requestedToken);
+  } else {
+    url.searchParams.set("page", String(requestedPage));
+  }
+  url.searchParams.set("size", String(pageSize));
+  url.searchParams.set("orderByDirection", "ASC");
   const response = await fetchWithTimeout(url.href, {
     headers: {
       Accept: "application/json",
@@ -7681,7 +7760,47 @@ async function fetchTrendyolRows(secrets, limit) {
   });
   if (!response.ok) throw httpError(`Trendyol ürünleri okunamadı: HTTP ${response.status}`, 502);
   const payload = await response.json();
-  return jsonProductRows(payload.content || payload.products || payload);
+  const rows = jsonProductRows(payload.content || payload.products || payload);
+  const currentPage = positiveInteger(payload.page ?? payload.number, requestedPage);
+  const totalPages = positiveInteger(payload.totalPages ?? payload.total_pages, 0);
+  const totalElements = positiveInteger(payload.totalElements ?? payload.total_elements, 0);
+  const payloadNextToken = String(payload.nextPageToken || payload.next_page_token || "").trim();
+  const hasMoreByTotal = totalPages > 0 ? currentPage + 1 < totalPages : rows.length >= pageSize;
+  const hasMoreByToken = Boolean(payloadNextToken);
+  const hasMore = rows.length > 0 && (hasMoreByTotal || hasMoreByToken);
+  const nextCursor = {
+    next_page: hasMore ? currentPage + 1 : 0,
+    page_size: pageSize,
+    exhausted: !hasMore,
+    last_page: currentPage,
+    last_rows: rows.length,
+    total_pages: totalPages || null,
+    total_elements: totalElements || null,
+    last_synced_at: new Date().toISOString()
+  };
+  const nextPageWouldReachWindowLimit = (currentPage + 1) * pageSize >= 10000;
+  if (hasMore && payloadNextToken && (requestedToken || nextPageWouldReachWindowLimit)) {
+    nextCursor.next_page_token = payloadNextToken;
+    nextCursor.next_page = null;
+  } else {
+    nextCursor.next_page_token = null;
+  }
+  return integrationFetchRows(rows, {
+    pageInfo: {
+      provider: "trendyol",
+      requested_page: requestedToken ? null : requestedPage,
+      token_based: Boolean(requestedToken),
+      current_page: currentPage,
+      page_size: pageSize,
+      rows: rows.length,
+      total_pages: totalPages || null,
+      total_elements: totalElements || null,
+      next_page: nextCursor.next_page,
+      seeded_from_link_count: cursor.seeded_from_link_count || null,
+      exhausted: nextCursor.exhausted
+    },
+    nextCursor
+  });
 }
 
 async function fetchHepsiburadaRows(secrets, limit) {
@@ -7750,11 +7869,58 @@ async function fetchIntegrationRows(integration, secrets, limit) {
   if (integration.provider === "generic_feed") return fetchGenericFeedRows(secrets, limit);
   if (integration.provider === "woocommerce") return fetchWooCommerceRows(secrets, limit);
   if (integration.provider === "shopify") return fetchShopifyRows(secrets, limit);
-  if (integration.provider === "trendyol") return fetchTrendyolRows(secrets, limit);
+  if (integration.provider === "trendyol") return fetchTrendyolRows(secrets, limit, integration);
   if (integration.provider === "hepsiburada") return fetchHepsiburadaRows(secrets, limit);
   if (integration.provider === "n11") return fetchN11Rows(secrets, limit);
   if (integration.provider === "custom_api") return fetchCustomApiRows(secrets, limit);
   throw httpError("Bu connector için canlı ürün okuma adaptörü henüz aktif değil.", 409);
+}
+
+function integrationCursorHasPosition(cursor) {
+  return Boolean(
+    cursor
+    && typeof cursor === "object"
+    && (
+      cursor.next_page !== undefined
+      || cursor.next_page_token
+      || cursor.last_synced_at
+    )
+  );
+}
+
+function providerPageSize(provider, limit) {
+  if (["trendyol", "hepsiburada", "n11", "woocommerce"].includes(provider)) {
+    return Math.min(Math.max(limit || 50, 1), 100);
+  }
+  if (provider === "shopify") return Math.min(Math.max(limit || 50, 1), 250);
+  return Math.min(Math.max(limit || 50, 1), 500);
+}
+
+async function integrationWithSeededImportCursor({ integration, payload, limit }) {
+  if (payload.mode !== "apply" || payload.direction !== "inbound") return integration;
+  if (!["trendyol", "hepsiburada", "n11"].includes(integration.provider)) return integration;
+  const currentCursor = integrationImportCursor(integration, integration.provider);
+  if (integrationCursorHasPosition(currentCursor)) return integration;
+
+  const { count, error } = await supabaseAdmin
+    .from("partner_integration_product_links")
+    .select("id", { count: "exact", head: true })
+    .eq("integration_id", integration.id);
+  if (error || !count) return integration;
+
+  const pageSize = providerPageSize(integration.provider, limit);
+  const estimatedNextPage = Math.floor(Number(count || 0) / pageSize);
+  if (estimatedNextPage <= 0) return integration;
+
+  return {
+    ...integration,
+    settings: integrationSettingsWithImportCursor(integration.settings, integration.provider, {
+      next_page: estimatedNextPage,
+      page_size: pageSize,
+      seeded_from_link_count: Number(count || 0),
+      seeded_at: new Date().toISOString()
+    })
+  };
 }
 
 function productStatusForIntegrationApply(integration) {
@@ -7896,8 +8062,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
       if (compliance.warnings.length) {
         result.warnings.push({ external_product_id: item.external_product_id, warnings: compliance.warnings });
       }
-      const autoApproved = integrationProductAutoApproved(item, compliance);
-      if (existing?.source_hash === hash && existing.product_id && !autoApproved) {
+      if (existing?.source_hash === hash && existing.product_id) {
         result.skipped += 1;
         continue;
       }
@@ -8028,13 +8193,17 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
   try {
     const secrets = await loadIntegrationSecrets(integration.id);
     requireIntegrationSecrets(integration.provider, secrets);
-    const rawRows = await fetchIntegrationRows(integration, secrets, limit);
-    const products = rawRows
+    const integrationForFetch = await integrationWithSeededImportCursor({ integration, payload, limit });
+    const fetchResult = normalizedIntegrationFetchResult(await fetchIntegrationRows(integrationForFetch, secrets, limit));
+    const rawRows = fetchResult.rows;
+    const normalizedProducts = rawRows
       .slice(0, limit)
       .flatMap((row, index) => integrationProductRows(row, integration, index))
       .slice(0, limit)
       .filter(Boolean)
       .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
+    const uniqueProductResult = uniqueIntegrationProducts(normalizedProducts);
+    const products = uniqueProductResult.products;
     const invalidProducts = products.filter((product) => product.compliance.errors.length);
     const validProducts = products.filter((product) => !product.compliance.errors.length);
 
@@ -8055,13 +8224,23 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
       publish_status: productStatusForIntegrationApply(integration),
       force_draft_on_apply: config.integrations.forceDraftOnApply,
       checked_count: products.length,
+      raw_count: rawRows.length,
+      duplicate_count: uniqueProductResult.duplicateCount,
       valid_count: validProducts.length,
       invalid_count: invalidProducts.length,
       warning_count: warningCount,
       auto_approved_count: validProducts.filter((product) => integrationProductAutoApproved(product, product.compliance)).length,
+      page_info: fetchResult.pageInfo || {},
+      next_cursor: fetchResult.nextCursor || null,
       preview: products.slice(0, 12).map(integrationProductPreview),
       errors: [...validationErrors, ...applyResult.errors].slice(0, 10),
-      warnings: applyResult.warnings.slice(0, 10)
+      warnings: [
+        ...uniqueProductResult.duplicates.map((item) => ({
+          external_product_id: item.external_product_id,
+          warnings: ["Aynı entegrasyon kimliği bu çekim içinde tekrar geldi; tek kayıt olarak işlendi."]
+        })),
+        ...applyResult.warnings
+      ].slice(0, 10)
     };
 
     const { data: updatedRun, error: updateRunError } = await supabaseAdmin
@@ -8085,16 +8264,24 @@ async function runPartnerIntegrationSync({ business, integration, payload, reque
     const nextSyncAt = integration.sync_mode === "scheduled"
       ? new Date(Date.now() + Number(integration.sync_interval_minutes || 1440) * 60 * 1000).toISOString()
       : integration.next_sync_at;
+    const integrationUpdate = {
+      status: integration.status === "draft" ? "active" : integration.status,
+      last_sync_at: new Date().toISOString(),
+      last_success_at: status === "success" ? new Date().toISOString() : integration.last_success_at,
+      last_error_at: status === "partial" ? new Date().toISOString() : null,
+      last_error_message: status === "partial" ? `${applyResult.failed + invalidProducts.length} ürün işlenemedi veya kontrol bekliyor.` : null,
+      next_sync_at: nextSyncAt
+    };
+    if (payload.mode === "apply" && payload.direction === "inbound" && fetchResult.nextCursor) {
+      integrationUpdate.settings = integrationSettingsWithImportCursor(
+        integration.settings,
+        integration.provider,
+        fetchResult.nextCursor
+      );
+    }
     await supabaseAdmin
       .from("partner_integrations")
-      .update({
-        status: integration.status === "draft" ? "active" : integration.status,
-        last_sync_at: new Date().toISOString(),
-        last_success_at: status === "success" ? new Date().toISOString() : integration.last_success_at,
-        last_error_at: status === "partial" ? new Date().toISOString() : null,
-        last_error_message: status === "partial" ? `${applyResult.failed + invalidProducts.length} ürün işlenemedi veya kontrol bekliyor.` : null,
-        next_sync_at: nextSyncAt
-      })
+      .update(integrationUpdate)
       .eq("id", integration.id);
 
     await supabaseAdmin

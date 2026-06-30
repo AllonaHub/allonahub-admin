@@ -1128,12 +1128,19 @@
     target.innerHTML = state.integrationRuns.slice(0, 10).map((run) => {
       const preview = Array.isArray(run.summary?.preview) ? run.summary.preview : [];
       const summaryErrors = Array.isArray(run.summary?.errors) ? run.summary.errors : [];
+      const pageInfo = run.summary?.page_info || {};
+      const duplicateCount = Number(run.summary?.duplicate_count || 0);
+      const pageLine = pageInfo.provider
+        ? `Sayfa ${pageInfo.current_page ?? pageInfo.requested_page ?? 0} · ${pageInfo.rows || 0} kaynak kayıt${pageInfo.exhausted ? " · kaynak sonuna gelindi" : pageInfo.next_page !== null && pageInfo.next_page !== undefined ? ` · sıradaki sayfa ${pageInfo.next_page}` : ""}`
+        : "";
       const canApplyPreview = run.run_mode === "preview" && ["success", "partial"].includes(run.status) && run.integration_id;
       return `
         <article class="partner-os-integration-run">
           <div>
             <strong>${escape(integrationProviderLabel(state.integrations.find((item) => item.id === run.integration_id)?.provider))} · ${escape(run.run_mode || "preview")}</strong>
-            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel · ${escape(run.failed_count || 0)} hata</span>
+            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel · ${escape(run.skipped_count || 0)} aynı · ${escape(run.failed_count || 0)} hata</span>
+            ${pageLine ? `<small>${escape(pageLine)}</small>` : ""}
+            ${duplicateCount ? `<small>${escape(duplicateCount)} tekrar eden kaynak satırı tek ürün olarak işlendi.</small>` : ""}
             ${preview.length ? `<small>${preview.slice(0, 3).map((item) => `${escape(item.name)}${item.compliance_status ? ` (${escape(statusLabel(item.compliance_status))})` : ""}`).join(", ")}</small>` : ""}
             ${run.warning_count ? `<small>${escape(run.warning_count)} uyarı kontrol bekliyor.</small>` : ""}
             ${summaryErrors.length ? `<small>${summaryErrors.slice(0, 2).map((item) => escape(item.message || item.external_product_id || "Ürün işlenemedi")).join(" · ")}</small>` : ""}
@@ -2120,7 +2127,15 @@
     const failed = Number(run?.failed_count || 0);
     const checked = Number(run?.checked_count || 0);
     if (!checked) return "Kaynakta okunacak ürün bulunamadı.";
-    return `${created} yeni, ${updated} güncel, ${skipped} zaten aynı, ${failed} hata.`;
+    const pageInfo = run?.summary?.page_info || {};
+    const pageSuffix = pageInfo.provider
+      ? pageInfo.exhausted
+        ? " Kaynak sonuna gelindi; sonraki tam kontrolde baştan değişiklik taranır."
+        : pageInfo.next_page !== null && pageInfo.next_page !== undefined
+          ? ` Sıradaki çekimde sayfa ${pageInfo.next_page} alınacak.`
+          : ""
+      : "";
+    return `${created} yeni, ${updated} güncel, ${skipped} zaten aynı, ${failed} hata.${pageSuffix}`;
   }
 
   async function syncIntegration(integrationId, mode) {
