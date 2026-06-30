@@ -54,7 +54,10 @@ async function upsertEntrypoint(phase, name, rules, options = {}) {
     });
   }
 
-  const managedRefs = new Set(rules.map((rule) => rule.ref));
+  const managedRefs = new Set([
+    ...rules.map((rule) => rule.ref),
+    ...(options.replaceRefs || [])
+  ]);
   const keptRules = (current.rules || []).filter((rule) => !managedRefs.has(rule.ref));
   const nextRules = options.prepend ? [...rules, ...keptRules] : [...keptRules, ...rules];
   return cf(`/zones/${zoneId}/rulesets/${current.id}`, {
@@ -385,37 +388,20 @@ const apiSkipChallengeParameters = {
   ]
 };
 
-const wafRules = [
-  {
-    ref: "allonahub-product-media-skip-challenge",
-    description: "Skip browser challenges for cacheable product media proxy",
-    expression: `${apiHostExpression} and starts_with(http.request.uri.path, "/v1/media/product-images/")`,
-    action: "skip",
-    action_parameters: apiSkipChallengeParameters,
-    logging: {
-      enabled: true
-    }
-  },
-  {
-    ref: "allonahub-api-runtime-skip-challenge",
-    description: "Skip browser challenges for the public API runtime",
-    expression: `${apiHostExpression} and (http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))`,
-    action: "skip",
-    action_parameters: apiSkipChallengeParameters,
-    logging: {
-      enabled: true
-    }
-  },
-  {
-    ref: "allonahub-api-cron-skip-challenge",
-    description: "Skip challenge for authenticated API cron calls",
-    expression: `${apiHostExpression} and http.request.method eq "POST" and starts_with(http.request.uri.path, "/v1/cron/")`,
-    action: "skip",
-    action_parameters: apiSkipChallengeParameters,
-    logging: {
-      enabled: true
-    }
+const wafRules = [{
+  ref: "allonahub-api-runtime-skip-challenge",
+  description: "Skip browser challenges for AllonaHub API runtime, cron, and cacheable product media",
+  expression: `${apiHostExpression} and (http.request.uri.path in {"/health" "/ready"} or starts_with(http.request.uri.path, "/v1/"))`,
+  action: "skip",
+  action_parameters: apiSkipChallengeParameters,
+  logging: {
+    enabled: true
   }
+}];
+
+const apiWafLegacyRefs = [
+  "allonahub-product-media-skip-challenge",
+  "allonahub-api-cron-skip-challenge"
 ];
 
 const cacheRules = [{
@@ -443,7 +429,10 @@ const cacheRules = [{
 }];
 
 if (applyApiWafOnly) {
-  await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
+  await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, {
+    prepend: true,
+    replaceRefs: apiWafLegacyRefs
+  });
   console.log("Cloudflare AllonaHub API WAF rules applied.");
   process.exit(0);
 }
@@ -470,7 +459,10 @@ if (applyWildcardDns) {
 
 await upsertEntrypoint("http_response_headers_transform", "AllonaHub response header rules", headerRules);
 await upsertEntrypoint("http_request_dynamic_redirect", "AllonaHub redirect rules", redirectRules);
-await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, { prepend: true });
+await upsertEntrypoint("http_request_firewall_custom", "AllonaHub WAF custom rules", wafRules, {
+  prepend: true,
+  replaceRefs: apiWafLegacyRefs
+});
 await upsertEntrypoint("http_request_cache_settings", "AllonaHub cache rules", cacheRules, { prepend: true });
 
 console.log([
