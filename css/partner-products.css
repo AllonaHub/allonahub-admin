@@ -1280,6 +1280,92 @@
   padding: 18px;
 }
 
+.partner-product-detail-revision-panel {
+  margin-top: 14px;
+  border: 1px solid rgba(255, 77, 109, 0.48);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background:
+    linear-gradient(90deg, rgba(255, 77, 109, 0.17), rgba(255, 77, 109, 0.06)),
+    color-mix(in srgb, var(--ah-bg-strong) 91%, transparent);
+  box-shadow: inset 4px 0 0 #ff4d6d, var(--ah-shadow-soft);
+}
+
+.partner-product-detail-revision-panel[hidden] {
+  display: none;
+}
+
+.partner-product-detail-revision-head {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+.partner-product-detail-revision-head strong {
+  display: block;
+  color: #ffb1bf;
+  font-size: 1rem;
+}
+
+.partner-product-detail-revision-head p,
+.partner-product-detail-revision-head small {
+  display: block;
+  margin: 3px 0 0;
+  color: #ffd8df;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.partner-product-detail-revision-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.partner-product-detail-revision-list button {
+  min-height: 58px;
+  border: 1px solid rgba(255, 77, 109, 0.34);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  color: #ffd8df;
+  background: rgba(255, 77, 109, 0.1);
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.partner-product-detail-revision-list button:hover {
+  border-color: rgba(255, 77, 109, 0.65);
+  background: rgba(255, 77, 109, 0.18);
+}
+
+.partner-product-detail-revision-list b,
+.partner-product-detail-revision-list small {
+  display: block;
+}
+
+.partner-product-detail-revision-list small {
+  margin-top: 2px;
+  color: color-mix(in srgb, #ffd8df 82%, var(--ah-muted));
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.partner-product-edit-grid input.is-revision-focus,
+.partner-product-edit-grid textarea.is-revision-focus,
+.partner-product-edit-grid select.is-revision-focus {
+  border-color: #ff4d6d;
+  box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.18);
+}
+
 .partner-product-detail-preview {
   display: grid;
   gap: 12px;

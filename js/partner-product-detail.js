@@ -26,6 +26,12 @@
     return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
   }
 
+  function shortText(value, max) {
+    const text = String(value || "").trim();
+    if (!text || text.length <= max) return text;
+    return `${text.slice(0, Math.max(0, max - 1))}...`;
+  }
+
   function money(value) {
     if (core.money) return core.money(value);
     return Number(value || 0).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
@@ -190,6 +196,100 @@
     return isApproved(product) && !isActive(product) && normalize(product?.status) !== "archived";
   }
 
+  function automation(product) {
+    return product?.review_automation || {
+      lane: "ready",
+      risk_level: "clear",
+      revision_required: false,
+      reasons: []
+    };
+  }
+
+  function revisionReasonItems(product) {
+    return (automation(product).reasons || [])
+      .filter((reason) => reason.requires_revision || reason.severity === "critical")
+      .slice(0, 8);
+  }
+
+  function productNeedsRevision(product) {
+    const review = normalize(product?.compliance_review_status || product?.review_status || product?.approval_status);
+    const status = normalize(product?.status);
+    const auto = automation(product);
+    return Boolean(review === "needs_review" || status === "needs_review" || auto.revision_required || auto.lane === "needs_revision" || auto.risk_level === "critical");
+  }
+
+  function revisionFieldName(reason) {
+    const field = normalize(reason?.field || "");
+    const aliases = {
+      product_name: "name",
+      image: "image_url",
+      image_file: "image_url",
+      media_gallery: "image_url",
+      video: "video_url",
+      gtin: "barcode"
+    };
+    return aliases[field] || field || "name";
+  }
+
+  function focusRevisionField(field) {
+    const name = revisionFieldName({ field });
+    const input = $(`[name="${name}"]`) || $(`[name="${name.replace(/"/g, "")}"]`);
+    if (!input) return false;
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => {
+      input.focus({ preventScroll: true });
+      input.classList.add("is-revision-focus");
+      window.setTimeout(() => input.classList.remove("is-revision-focus"), 2200);
+    }, 260);
+    return true;
+  }
+
+  function firstRevisionField(product) {
+    const reason = revisionReasonItems(product)[0];
+    return revisionFieldName(reason || { field: product?.barcode ? "description" : "barcode" });
+  }
+
+  function shouldFocusRevision() {
+    return normalize(new URLSearchParams(window.location.search).get("focus")) === "revision";
+  }
+
+  function renderRevisionPanel(product) {
+    const target = $("[data-product-detail-revision-panel]");
+    if (!target) return;
+    if (!productNeedsRevision(product)) {
+      target.hidden = true;
+      target.innerHTML = "";
+      return;
+    }
+    const reasons = revisionReasonItems(product);
+    const note = String(product.compliance_notes || "").trim();
+    target.hidden = false;
+    target.innerHTML = `
+      <div class="partner-product-detail-revision-head">
+        <span class="partner-products-revision-pulse" aria-hidden="true"></span>
+        <div>
+          <strong>Bu ürün revizyon bekliyor</strong>
+          <p>İşaretli alanları düzeltip kaydettiğinizde ürün tekrar admin onayına gönderilir.</p>
+          ${note ? `<small>${escape(shortText(note, 420))}</small>` : ""}
+        </div>
+      </div>
+      <div class="partner-product-detail-revision-list">
+        ${(reasons.length ? reasons : [{ field: "description", field_label: "Açıklama", title: "Revizyon notunu kontrol edin", suggestion: note || "Ürün bilgilerini düzeltip tekrar onaya gönderin." }]).map((reason) => {
+          const field = revisionFieldName(reason);
+          return `
+            <button type="button" data-focus-revision-field="${escape(field)}">
+              <i class="fa-solid fa-arrow-down-short-wide"></i>
+              <span>
+                <b>${escape(reason.field_label || field)}</b>
+                <small>${escape([reason.title, reason.suggestion].filter(Boolean).join(" · "))}</small>
+              </span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
   function variantInfo(product) {
     return product.variant_automation || {
       label: "Standart",
@@ -298,6 +398,7 @@
     if (summary) summary.textContent = `${current.category || "Genel"} · ${money(current.price)} · Stok ${current.stock}`;
     if (status) status.textContent = statusLabel(current.compliance_review_status || current.status || "draft");
     if (publish) publish.hidden = !canPublish(current);
+    renderRevisionPanel({ ...raw, ...current });
     preview.innerHTML = `
       <div class="partner-product-detail-hero">
         ${gallery[0] ? `<img src="${escape(gallery[0])}" alt="${escape(current.name)}" loading="lazy" data-product-image-preview="${escape(gallery[0])}" onerror="this.hidden=true">` : `<div class="partner-product-thumb"><i class="fa-solid fa-image"></i></div>`}
@@ -361,6 +462,9 @@
       fillForm(normalizeProduct(state.product));
       showAlert("");
       renderPreview();
+      if (shouldFocusRevision()) {
+        window.setTimeout(() => focusRevisionField(firstRevisionField(state.product)), 420);
+      }
     } catch (error) {
       showAlert(error.message || "Ürün yüklenemedi.", "error");
     }
@@ -429,8 +533,10 @@
       const refresh = event.target.closest("[data-refresh-product-detail]");
       const publish = event.target.closest("[data-publish-product-detail]");
       const archive = event.target.closest("[data-archive-product-detail]");
+      const focusRevision = event.target.closest("[data-focus-revision-field]");
       const imagePreview = event.target.closest("[data-product-image-preview]");
       const closeImage = event.target.closest("[data-close-image-preview]");
+      if (focusRevision) focusRevisionField(focusRevision.dataset.focusRevisionField);
       if (closeImage) closeImagePreview();
       if (imagePreview) {
         event.preventDefault();

@@ -368,6 +368,10 @@
     return state.products.map(normalizeProduct).filter(revisionRequired);
   }
 
+  function firstRevisionProduct() {
+    return revisionProducts()[0] || null;
+  }
+
   function revisionReasonText(product, limit = 2) {
     const reasons = revisionReasonItems(product);
     if (!reasons.length) return "Otomasyon bu üründe revizyon gerektiren alanlar tespit etti.";
@@ -417,7 +421,8 @@
         </div>
       </div>
       <div class="partner-products-revision-actions">
-        <button type="button" data-filter-revision-products><i class="fa-solid fa-filter"></i><span>Revizyonları Göster</span></button>
+        <button type="button" data-open-first-revision-product><i class="fa-solid fa-pen-to-square"></i><span>Revizyonu Düzelt</span></button>
+        <button type="button" data-filter-revision-products><i class="fa-solid fa-filter"></i><span>Listeyi Filtrele</span></button>
         <button type="button" data-select-revision-products><i class="fa-solid fa-list-check"></i><span>Revize Gerekenleri Seç</span></button>
       </div>
     `;
@@ -777,13 +782,25 @@
     renderRows();
   }
 
-  function productDetailUrl(productId) {
-    return `/pages/partner/partner-product-detail.html?id=${encodeURIComponent(productId)}`;
+  function productDetailUrl(productId, options) {
+    const params = new URLSearchParams({ id: productId });
+    if (options?.focusRevision) params.set("focus", "revision");
+    return `/pages/partner/partner-product-detail.html?${params.toString()}`;
   }
 
   function goToProductDetail(productId) {
     if (!productId) return;
-    window.location.href = productDetailUrl(productId);
+    const product = normalizeProduct(productById(productId) || {});
+    window.location.href = productDetailUrl(productId, { focusRevision: revisionRequired(product) });
+  }
+
+  function goToFirstRevisionProduct() {
+    const product = firstRevisionProduct();
+    if (!product?.id) {
+      toast("Revize edilecek ürün bulunamadı.", "warning");
+      return;
+    }
+    window.location.href = productDetailUrl(product.id, { focusRevision: true });
   }
 
   function openImagePreview(src, alt) {
@@ -1311,6 +1328,7 @@
       const selectMissingStock = event.target.closest("[data-select-missing-stock-products]");
       const selectLowStock = event.target.closest("[data-select-low-stock-products]");
       const filterRevision = event.target.closest("[data-filter-revision-products]");
+      const openFirstRevision = event.target.closest("[data-open-first-revision-product]");
       const submitReview = event.target.closest("[data-submit-selected-review]");
       const clearSelected = event.target.closest("[data-clear-selected-products]");
       const pageButton = event.target.closest("[data-product-page]");
@@ -1334,6 +1352,9 @@
       }
       if (filterRevision) {
         showRevisionFilter();
+      }
+      if (openFirstRevision) {
+        goToFirstRevisionProduct();
       }
       if (refresh) loadProducts();
       if (edit) goToProductDetail(edit.dataset.editProduct);

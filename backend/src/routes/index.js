@@ -5470,6 +5470,7 @@ async function loadPartnerOwnedProduct(productId, business, ctx) {
   }
   if (error) throw error;
   if (!product) throw httpError("Ürün bulunamadı.", 404);
+  if (isAdmin(ctx.profile)) return product;
 
   const belongsToPartner = ownerIds.includes(String(product.partner_id || ""))
     || (business.partner_code && String(product.partner_code || "") === String(business.partner_code))
