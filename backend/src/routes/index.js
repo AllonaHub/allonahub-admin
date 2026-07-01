@@ -401,6 +401,9 @@ const adminProductReviewListQuerySchema = adminListQuerySchema.extend({
 const ADMIN_PRODUCT_REVIEW_DB_BATCH = 1000;
 const ADMIN_PRODUCT_REVIEW_MAX_SCAN = 12000;
 const ADMIN_PRODUCT_AUTO_REVISION_BATCH = 100;
+const ADMIN_PRODUCT_AUTO_PUBLISH_BATCH = 100;
+const ADMIN_PRODUCT_AUTO_ACTIONS_PER_REQUEST = 240;
+const PRODUCT_LINK_QUERY_CHUNK = 80;
 
 const adminNoteSchema = z.object({
   body: z.string().trim().min(3).max(1600),
@@ -430,7 +433,7 @@ const automationActionSchema = z.enum(["publish_safe_products", "request_product
 
 const automationRunSchema = z.object({
   apply: z.boolean().optional().default(false),
-  actions: z.array(automationActionSchema).optional().default(["publish_safe_products"]),
+  actions: z.array(automationActionSchema).optional().default(["publish_safe_products", "request_product_revisions"]),
   limit: z.coerce.number().int().min(1).max(80).optional().default(40),
   reason: z.string().trim().max(900).optional().default("")
 });
@@ -4536,20 +4539,7 @@ async function buildOpsAutomationSnapshot(options = {}) {
     .filter(productNeedsAdminReview)
     .map(attachProductReviewAutomation);
   const productIds = products.map((product) => product.id).filter(Boolean);
-  const productLinkRows = await optionalQuery(
-    supabaseAdmin
-      .from("partner_integration_product_links")
-      .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-      .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
-    [],
-    warnings,
-    "partner_integration_product_links"
-  );
-  const linksByProductId = new Map();
-  for (const link of productLinkRows || []) {
-    if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-  }
-  products = attachVariantGroups(products, linksByProductId);
+  products = attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
   let autoReady = products
     .filter(productAutoPublishCandidate)
     .map((product) => productAutomationItem(product, "auto_ready"));
@@ -4836,11 +4826,50 @@ const adminProductReviewSearchColumns = [
   "partner_email"
 ];
 
+function uniqueStrings(values = []) {
+  return [...new Set((values || []).map((value) => String(value || "").trim()).filter(Boolean))];
+}
+
+function chunks(values = [], size = 50) {
+  const rows = [];
+  for (let index = 0; index < values.length; index += size) {
+    rows.push(values.slice(index, index + size));
+  }
+  return rows;
+}
+
+async function loadProductIntegrationLinks(productIds = [], warnings = []) {
+  const ids = uniqueStrings(productIds);
+  if (!ids.length) return [];
+  const rows = [];
+  for (const group of chunks(ids, PRODUCT_LINK_QUERY_CHUNK)) {
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", group),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    rows.push(...(linkRows || []));
+  }
+  return rows;
+}
+
+function linksByProductId(linkRows = []) {
+  const map = new Map();
+  for (const link of linkRows || []) {
+    if (link?.product_id && !map.has(String(link.product_id))) map.set(String(link.product_id), link);
+  }
+  return map;
+}
+
 function adminProductReviewDbQuery(query = {}, includeCount = false) {
   let dbQuery = supabaseAdmin
     .from("products")
     .select("*", includeCount ? { count: "exact" } : {})
-    .in("compliance_review_status", ["pending", "needs_review"])
+    .eq("compliance_review_status", "pending")
     .order("created_at", { ascending: false });
   const searchFilter = textSearchFilter(adminProductReviewSearchColumns, query.search);
   if (searchFilter) dbQuery = dbQuery.or(searchFilter);
@@ -4854,8 +4883,11 @@ async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
   let scannedCount = 0;
   let nextOffset = query.offset;
   let reachedEnd = false;
+  let autoPublishedCount = 0;
+  let autoPublishSkippedCount = 0;
   let autoRevisionedCount = 0;
   let autoRevisionSkippedCount = 0;
+  let autoActionBudget = ADMIN_PRODUCT_AUTO_ACTIONS_PER_REQUEST;
   const scanLimit = Math.max(ADMIN_PRODUCT_REVIEW_MAX_SCAN, query.limit * 4);
 
   while (products.length < query.limit && scannedCount < scanLimit) {
@@ -4888,18 +4920,44 @@ async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
       .map(attachProductReviewAutomation);
     batchProducts = await attachProductReviewVariantGroups(batchProducts, warnings);
 
-    const autoRevision = await autoRequestProductRevisions(batchProducts, {
-      request,
-      ctx,
-      warnings,
-      source: "product_review_queue"
-    });
+    const autoPublish = autoActionBudget > 0
+      ? await autoPublishProductReviews(batchProducts, {
+          request,
+          ctx,
+          warnings,
+          source: "product_review_queue",
+          limit: Math.min(ADMIN_PRODUCT_AUTO_PUBLISH_BATCH, autoActionBudget)
+        })
+      : { updatedProducts: [], skipped: [] };
+    autoPublishedCount += autoPublish.updatedProducts.length;
+    autoPublishSkippedCount += autoPublish.skipped.length;
+    autoActionBudget -= autoPublish.updatedProducts.length;
+    skipped.push(...autoPublish.skipped);
+    if (autoPublish.updatedProducts.length) {
+      const publishedIds = new Set(autoPublish.updatedProducts.map((product) => String(product.id)));
+      batchProducts = batchProducts.filter((product) => !publishedIds.has(String(product.id)));
+    }
+
+    const autoRevision = autoActionBudget > 0
+      ? await autoRequestProductRevisions(batchProducts, {
+          request,
+          ctx,
+          warnings,
+          source: "product_review_queue",
+          limit: Math.min(ADMIN_PRODUCT_AUTO_REVISION_BATCH, autoActionBudget)
+        })
+      : { updatedProducts: [], skipped: [] };
     autoRevisionedCount += autoRevision.updatedProducts.length;
     autoRevisionSkippedCount += autoRevision.skipped.length;
+    autoActionBudget -= autoRevision.updatedProducts.length;
     skipped.push(...autoRevision.skipped);
     if (autoRevision.updatedProducts.length) {
       const updatedById = new Map(autoRevision.updatedProducts.map((product) => [String(product.id), product]));
       batchProducts = batchProducts.map((product) => updatedById.get(String(product.id)) || product);
+    }
+    if (autoPublish.updatedProducts.length || autoRevision.updatedProducts.length) {
+      nextOffset = batchOffset;
+      continue;
     }
 
     if (query.status) {
@@ -4935,6 +4993,8 @@ async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
   summary.queue_total = totalCandidates ?? pageProducts.length;
   summary.loaded = pageProducts.length;
   summary.scanned = scannedCount;
+  summary.auto_published = autoPublishedCount;
+  summary.auto_publish_skipped = autoPublishSkippedCount;
   summary.auto_revisioned = autoRevisionedCount;
   summary.auto_revision_skipped = autoRevisionSkippedCount;
 
@@ -4949,6 +5009,8 @@ async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
       scanned_count: scannedCount,
       total_candidates: totalCandidates,
       returned_count: pageProducts.length,
+      auto_published_count: autoPublishedCount,
+      auto_publish_skipped_count: autoPublishSkippedCount,
       auto_revisioned_count: autoRevisionedCount,
       auto_revision_skipped_count: autoRevisionSkippedCount
     },
@@ -5203,20 +5265,7 @@ function attachVariantGroups(products = [], linksByProductId = new Map()) {
 
 async function attachProductReviewVariantGroups(products = [], warnings = []) {
   const productIds = products.map((product) => product.id).filter(Boolean);
-  const linkRows = await optionalQuery(
-    supabaseAdmin
-      .from("partner_integration_product_links")
-      .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-      .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
-    [],
-    warnings,
-    "partner_integration_product_links"
-  );
-  const linksByProductId = new Map();
-  for (const link of linkRows || []) {
-    if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-  }
-  return attachVariantGroups(products, linksByProductId);
+  return attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
 }
 
 function productNeedsAutomatedRevisionRequest(product = {}) {
@@ -5226,6 +5275,63 @@ function productNeedsAutomatedRevisionRequest(product = {}) {
   if (!automation.revision_required) return false;
   if (reviewStatus === "needs_review" || status === "needs_review") return false;
   return productNeedsAdminReview(product);
+}
+
+async function autoPublishProductReviews(products = [], options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || ADMIN_PRODUCT_AUTO_PUBLISH_BATCH), 1), ADMIN_PRODUCT_AUTO_PUBLISH_BATCH);
+  const warnings = options.warnings || [];
+  const nowIso = new Date().toISOString();
+  const reason = options.reason || "Otomasyon: ürün politika, fiyat, stok, görsel ve açıklama kontrollerini geçti; otomatik yayına alındı.";
+  const updatedProducts = [];
+  const skipped = [];
+  const candidates = products
+    .filter(productAutoPublishCandidate)
+    .slice(0, limit);
+
+  for (const product of candidates) {
+    try {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("approved", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation({
+        ...updated,
+        review_automation: product.review_automation,
+        variant_automation: product.variant_automation
+      }));
+    } catch (error) {
+      skipped.push({
+        product_id: product.id,
+        name: product.name || product.product_name || "",
+        reason: error?.message || "Otomatik yayın tamamlanamadı."
+      });
+    }
+  }
+
+  if (updatedProducts.length && options.request && options.ctx) {
+    await auditedOpsEvent({
+      request: options.request,
+      ctx: options.ctx,
+      action: "admin.ops.product_reviews_auto_published",
+      resourceType: "product",
+      severity: "info",
+      metadata: {
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        source: options.source || "product_review_queue",
+        reason
+      }
+    });
+  }
+
+  return {
+    updatedProducts,
+    skipped,
+    warnings
+  };
 }
 
 async function autoRequestProductRevisions(products = [], options = {}) {
@@ -9757,20 +9863,7 @@ export function registerRoutes(app) {
       .slice(0, query.limit)
       .map(attachProductReviewAutomation);
     const productIds = reviewProducts.map((product) => product.id).filter(Boolean);
-    const linkRows = await optionalQuery(
-      supabaseAdmin
-        .from("partner_integration_product_links")
-        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
-      [],
-      warnings,
-      "partner_integration_product_links"
-    );
-    const linksByProductId = new Map();
-    for (const link of linkRows || []) {
-      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-    }
-    const products = attachVariantGroups(reviewProducts, linksByProductId);
+    const products = attachVariantGroups(reviewProducts, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
 
     await auditEvent({
       request,
@@ -9962,20 +10055,7 @@ export function registerRoutes(app) {
     }
     const candidateProducts = [...productsById.values()].map(attachProductReviewAutomation);
     const productIds = candidateProducts.map((product) => product.id).filter(Boolean);
-    const linkRows = await optionalQuery(
-      supabaseAdmin
-        .from("partner_integration_product_links")
-        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-        .in("product_id", productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"]),
-      [],
-      warnings,
-      "partner_integration_product_links"
-    );
-    const linksByProductId = new Map();
-    for (const link of linkRows || []) {
-      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-    }
-    const products = attachVariantGroups(candidateProducts, linksByProductId);
+    const products = attachVariantGroups(candidateProducts, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
     const product = products.find((item) => String(item.id) === String(productId)) || attachProductReviewAutomation(ownedProduct);
 
     await auditEvent({
@@ -10823,7 +10903,8 @@ export function registerRoutes(app) {
 
     try {
       if (probeRemote && config.integrations.remoteFetchEnabled) {
-        const rows = await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows);
+        const fetchResult = normalizedIntegrationFetchResult(await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows));
+        const rows = fetchResult.rows || [];
         const products = rows.slice(0, config.integrations.maxTestRows)
           .flatMap((row, index) => integrationProductRows(row, integration, index))
           .slice(0, config.integrations.maxTestRows)
@@ -13803,20 +13884,7 @@ export function registerRoutes(app) {
       .map((productId) => productById.get(String(productId)))
       .filter(Boolean)
       .map(attachProductReviewAutomation);
-    const linkRows = await optionalQuery(
-      supabaseAdmin
-        .from("partner_integration_product_links")
-        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
-        .in("product_id", products.length ? products.map((product) => product.id) : ["00000000-0000-0000-0000-000000000000"]),
-      [],
-      warnings,
-      "partner_integration_product_links"
-    );
-    const linksByProductId = new Map();
-    for (const link of linkRows || []) {
-      if (link?.product_id && !linksByProductId.has(String(link.product_id))) linksByProductId.set(String(link.product_id), link);
-    }
-    products = attachVariantGroups(products, linksByProductId);
+    products = attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(products.map((product) => product.id), warnings)));
     const updatedProducts = [];
     const skipped = missingIds.map((productId) => ({
       product_id: productId,

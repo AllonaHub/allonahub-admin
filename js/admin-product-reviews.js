@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
   const config = App.config || {};
+  const BULK_DECISION_LIMIT = 100;
 
   const state = {
     products: [],
@@ -13,6 +14,7 @@
       hasMore: false,
       totalCandidates: null,
       scannedCount: 0,
+      autoPublishedCount: 0,
       autoRevisionedCount: 0,
       loadingMore: false
     },
@@ -227,6 +229,23 @@
     return "ready";
   }
 
+  function isAutoPublishable(raw) {
+    const product = normalizeProduct(raw);
+    const auto = automation(raw);
+    const galleryImage = Array.isArray(raw.media_gallery) ? raw.media_gallery.find(Boolean) : "";
+    const image = String(product.image_url || raw.image_url || galleryImage || "").trim();
+    return Boolean(
+      auto.auto_approvable
+      && auto.lane === "ready"
+      && auto.risk_level === "clear"
+      && !auto.revision_required
+      && Number(product.price || 0) > 0
+      && Number(product.stock || 0) > 0
+      && String(product.description || raw.meta_description || "").trim().length >= 20
+      && image
+    );
+  }
+
   function isRevisedProduct(raw) {
     const review = normalizeStatus(raw.compliance_review_status || raw.review_status || raw.approval_status);
     const notes = String(raw.compliance_notes || "").toLocaleLowerCase("tr-TR");
@@ -244,8 +263,8 @@
     };
     for (const raw of state.products) {
       const auto = automation(raw);
-      if (auto.lane === "ready") summary.ready += 1;
-      if (auto.lane === "watch") summary.watch += 1;
+      if (isAutoPublishable(raw)) summary.ready += 1;
+      else if (auto.lane === "watch" || auto.lane === "ready") summary.watch += 1;
       if (auto.lane === "needs_revision") summary.needs_revision += 1;
       if (auto.risk_level === "critical") summary.critical += 1;
       if (isRevisedProduct(raw)) summary.revised += 1;
@@ -400,10 +419,12 @@
         byKey.get("revised").items.push(raw);
       } else if (auto.lane === "needs_revision") {
         byKey.get("needs_revision").items.push(raw);
-      } else if (auto.lane === "watch") {
+      } else if (isAutoPublishable(raw)) {
+        byKey.get("ready").items.push(raw);
+      } else if (auto.lane === "watch" || auto.lane === "ready") {
         byKey.get("watch").items.push(raw);
       } else {
-        byKey.get("ready").items.push(raw);
+        byKey.get("watch").items.push(raw);
       }
     }
     return groups.filter((group) => group.items.length);
@@ -442,8 +463,9 @@
     const total = state.page.totalCandidates;
     const totalText = Number.isFinite(Number(total)) ? ` / ${Number(total).toLocaleString(config.locale || "tr-TR")} kuyruk adayı` : "";
     const scannedText = state.page.scannedCount ? ` Taranan kayıt: ${Number(state.page.scannedCount).toLocaleString(config.locale || "tr-TR")}.` : "";
+    const publishedText = state.page.autoPublishedCount ? ` Otomasyon ${Number(state.page.autoPublishedCount).toLocaleString(config.locale || "tr-TR")} güvenli ürünü yayına aldı.` : "";
     const revisionText = state.page.autoRevisionedCount ? ` Otomasyon ${Number(state.page.autoRevisionedCount).toLocaleString(config.locale || "tr-TR")} riskli ürünü partner revizyonuna taşıdı.` : "";
-    info.textContent = `${state.products.length.toLocaleString(config.locale || "tr-TR")} ürün yüklendi${totalText}.${scannedText}${revisionText}`;
+    info.textContent = `${state.products.length.toLocaleString(config.locale || "tr-TR")} ürün yüklendi${totalText}.${scannedText}${publishedText}${revisionText}`;
     button.hidden = !state.page.hasMore;
     button.disabled = state.page.loadingMore;
     button.textContent = state.page.loadingMore ? "Yükleniyor..." : "Devamını Yükle";
@@ -482,6 +504,7 @@
       state.page.hasMore = false;
       state.page.totalCandidates = null;
       state.page.scannedCount = 0;
+      state.page.autoPublishedCount = 0;
       state.page.autoRevisionedCount = 0;
     }
     state.page.loadingMore = append;
@@ -503,6 +526,9 @@
     state.page.scannedCount = append
       ? state.page.scannedCount + Number(page.scanned_count || 0)
       : Number(page.scanned_count || 0);
+    state.page.autoPublishedCount = append
+      ? state.page.autoPublishedCount + Number(page.auto_published_count || 0)
+      : Number(page.auto_published_count || 0);
     state.page.autoRevisionedCount = append
       ? state.page.autoRevisionedCount + Number(page.auto_revisioned_count || 0)
       : Number(page.auto_revisioned_count || 0);
@@ -513,6 +539,14 @@
 
   function selectedProducts() {
     return [...state.selected].map(productById).filter(Boolean);
+  }
+
+  function chunks(values, size) {
+    const rows = [];
+    for (let index = 0; index < values.length; index += size) {
+      rows.push(values.slice(index, index + size));
+    }
+    return rows;
   }
 
   function revisionReasonFor(products) {
@@ -623,19 +657,25 @@
     });
     if (!modalData) return;
 
-    const result = await api("/v1/ops-console/product-reviews/bulk-decision", {
-      method: "POST",
-      body: {
-        product_ids: products.map((product) => product.id),
-        decision,
-        reason: modalData.reason || "",
-        only_auto_approvable: false
-      }
-    });
-    const updated = result?.products?.length || 0;
-    const skipped = result?.skipped?.length || 0;
-    if (result?.warnings?.length || skipped) {
-      showAlert([...new Set([...(result.warnings || []), skipped ? `${skipped} ürün atlandı.` : ""])].filter(Boolean).join(" "));
+    let updated = 0;
+    let skipped = 0;
+    const warnings = [];
+    for (const group of chunks(products, BULK_DECISION_LIMIT)) {
+      const result = await api("/v1/ops-console/product-reviews/bulk-decision", {
+        method: "POST",
+        body: {
+          product_ids: group.map((product) => product.id),
+          decision,
+          reason: modalData.reason || "",
+          only_auto_approvable: false
+        }
+      });
+      updated += result?.products?.length || 0;
+      skipped += result?.skipped?.length || 0;
+      warnings.push(...(result?.warnings || []));
+    }
+    if (warnings.length || skipped) {
+      showAlert([...new Set([...warnings, skipped ? `${skipped} ürün atlandı.` : ""])].filter(Boolean).join(" "));
     }
     showToast(`${updated} ürün için karar kaydedildi${skipped ? `, ${skipped} ürün atlandı` : ""}.`);
     state.selected.clear();
