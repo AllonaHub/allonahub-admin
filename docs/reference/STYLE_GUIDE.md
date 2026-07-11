@@ -32,6 +32,15 @@ Ortak footer, dil seçici ve tema seçici platform standardıdır. Yeni sayfalar
 - Giriş Yap / Hesabım alanının yanında dil ve tema seçimi görünür kalmalı.
 - Boş veya geçici linkler 404 üretmemeli; ilgili modül, destek, arama veya partner akışına bağlanmalı.
 
+## Geriye Dönük Görsel Bütünlük
+
+- `origin/main` üzerindeki mevcut sayfa yapısı görsel tabandır. Açık kullanıcı talimatı olmadan mevcut hero, görsel, bölüm, kart, metin, kontrol, link, rota, grid, renk paleti, tipografi veya tema varsayılanı kaldırılamaz, yeniden sıralanamaz ya da başka bir tasarımla değiştirilemez.
+- Geliştirme eklemeli yapılır. Yeni işlev mevcut yüzeyi değiştirmek yerine ayrı bileşen, ayrı rota veya mevcut tasarım diline uyan dar bir eklenti olarak uygulanır.
+- Ortak `/css/platform.css`, `/js/platform.js`, `/css/allonahub-home.css` ve `/js/allonahub-home.js` değişiklikleri tüm siteyi etkiler. Bu dosyalarda global tema, grid veya görünüm değişikliği otomasyon tarafından yapılamaz.
+- Mevcut rota veya dosya kullanımdan kaldırılacaksa silinmez; eski içerik korunur ve geriye uyumlu yönlendirme eklenir.
+- Arayüz değişikliğinden önce 1440 px ve 390 px ekran görüntüsü ile bölüm, link ve kontrol envanteri alınır. Sonraki görüntüde yalnız açıkça hedeflenen alan değişebilir; eksilen bölüm veya beklenmeyen görsel fark varsa değişiklik yayınlanmaz.
+- Görünümü etkileyen otomasyon değişiklikleri, testler geçse bile kullanıcı görsel onayı olmadan production'a gönderilemez.
+
 ## Tipografi
 
 - Sistem fontları kullanılır.
