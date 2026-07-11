@@ -104,6 +104,7 @@
   let transportRoutes = [];
   let operationalNotices = [];
   let sponsoredPlacements = [];
+  let sponsoredImpressionObserver;
   let parkingAreasReady = false;
   let hoursProfiles = [];
   let weeklyHoursRows = [];
@@ -446,6 +447,7 @@
 
   function normalizeRemoteSponsoredPlacement(row) {
     return {
+      record_id: row.id || null,
       id: row.public_id || row.id,
       title: row.title,
       placement: row.placement || "Sponsorlu içerik",
@@ -457,6 +459,52 @@
       ends_at: row.ends_at,
       display_order: Number(row.display_order || 999)
     };
+  }
+
+  async function recordSponsoredInteraction(item, interactionType) {
+    const db = client();
+    const sessionId = redemptionSessionId();
+    if (!db || !sessionId || !item?.record_id || !["impression", "click"].includes(interactionType)) return;
+    try {
+      const mall = await resolveMallCenter(db);
+      if (mall.error || !mall.id) return;
+      const { error } = await db.from("mall_ad_slot_interactions").insert({
+        mall_id: mall.id,
+        ad_slot_id: item.record_id,
+        ad_slot_public_id: item.id,
+        visitor_session_id: sessionId,
+        interaction_type: interactionType,
+        source_page: "avm-dunyasi"
+      });
+      if (error && error.code !== "23505") throw error;
+    } catch (error) {
+      // Sponsor reporting never blocks or delays the visitor action.
+    }
+  }
+
+  function observeSponsoredImpressions() {
+    sponsoredImpressionObserver?.disconnect();
+    sponsoredImpressionObserver = null;
+    if (!("IntersectionObserver" in window)) {
+      document.querySelectorAll("[data-avm-sponsored-id]").forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const visibleHeight = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+        if (rect.height > 0 && visibleHeight / rect.height >= 0.5) {
+          const item = sponsoredPlacements.find((row) => row.record_id === card.dataset.avmSponsoredId);
+          if (item) recordSponsoredInteraction(item, "impression");
+        }
+      });
+      return;
+    }
+    sponsoredImpressionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.5) return;
+        const item = sponsoredPlacements.find((row) => row.record_id === entry.target.dataset.avmSponsoredId);
+        if (item) recordSponsoredInteraction(item, "impression");
+        sponsoredImpressionObserver?.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll("[data-avm-sponsored-id]").forEach((card) => sponsoredImpressionObserver.observe(card));
   }
 
   function numberValue(value, fallback, min, max) {
@@ -1303,7 +1351,7 @@
         timeStyle: "short"
       });
       return `
-        <article class="avm-sponsored-card" data-avm-sponsored-card>
+        <article class="avm-sponsored-card" data-avm-sponsored-card data-avm-sponsored-id="${core.escapeHTML(item.record_id || "")}">
           <div class="avm-sponsored-card__media">
             <img src="${core.escapeHTML(item.image_url)}" alt="${core.escapeHTML(item.image_alt)}" loading="lazy" data-avm-sponsored-image>
             <span>Reklam</span>
@@ -1316,12 +1364,13 @@
             </div>
             <div class="avm-sponsored-card__footer">
               <small>${core.escapeHTML(`${endsAt}'e kadar yayında`)}</small>
-              <a class="btn btn--gold" href="${core.escapeHTML(item.cta_url)}" target="_blank" rel="sponsored noopener">${core.escapeHTML(item.cta_label)}</a>
+              <a class="btn btn--gold" href="${core.escapeHTML(item.cta_url)}" target="_blank" rel="sponsored noopener" data-avm-sponsored-cta>${core.escapeHTML(item.cta_label)}</a>
             </div>
           </div>
         </article>
       `;
     }).join("");
+    observeSponsoredImpressions();
   }
 
   async function loadSponsoredPlacements() {
@@ -2371,6 +2420,13 @@
       const section = document.querySelector("[data-avm-sponsored]");
       if (section && !target.querySelector("[data-avm-sponsored-card]")) section.hidden = true;
     }, true);
+    target.addEventListener("click", (event) => {
+      const link = event.target.closest("[data-avm-sponsored-cta]");
+      if (!link) return;
+      const slotId = link.closest("[data-avm-sponsored-id]")?.dataset.avmSponsoredId;
+      const item = sponsoredPlacements.find((row) => row.record_id === slotId);
+      if (item) recordSponsoredInteraction(item, "click");
+    });
     loadSponsoredPlacements();
   }
 

@@ -46,11 +46,13 @@ const supabaseMock = `
   const center = { id: "11111111-1111-4111-8111-111111111111", name: "Test AVM", city: "İstanbul", district: "Şişli", address: "Test adresi", phone: "+902120000000", website_url: "https://allonahub.com", hero_image_url: null, status: "active" };
   const profile = { id: "33333333-3333-4333-8333-333333333333", full_name: "AVM Test Admin", role: "admin" };
   const sponsor = { id: "22222222-2222-4222-8222-222222222222", public_id: "sponsor-test", title: "Onaylı Yaz Kampanyası", placement: "Mağaza rehberi", description: "Ziyaretçilere özel doğrulanmış sponsor kampanyası.", creative_image_url: "https://cdn.example/sponsor.webp", creative_image_alt: "Onaylı marka yaz kampanyası görseli", cta_label: "Kampanyayı İncele", cta_url: "https://brand.example/campaign", starts_at: new Date(now - 3600000).toISOString(), ends_at: new Date(now + 86400000).toISOString(), display_order: 1, status: "active" };
+  const sponsorSubmission = { id: "44444444-4444-4444-8444-444444444444", mall_id: center.id, submitted_by: profile.id, module_key: "mall", request_type: "advertising", brand_name: "Partner Test Marka", submission_title: "Sponsorlu Yaz Yerleşimi", submission_summary: "Yayındaki sponsor testi", requested_visibility: "sponsored", visibility_status: "published", status: "approved", published_item_id: null, published_ad_slot_id: sponsor.id, created_at: new Date(now - 3600000).toISOString() };
   window.__supabaseWrites = [];
   const resultFor = (table, single) => {
     if (table === "mall_centers") return { data: single ? center : [center], error: null, count: 1 };
     if (table === "profiles") return { data: single ? profile : [profile], error: null, count: 1 };
     if (table === "mall_ad_slots") return { data: single ? sponsor : [sponsor], error: null, count: 1 };
+    if (table === "mall_partner_submissions") return { data: single ? sponsorSubmission : [sponsorSubmission], error: null, count: 1 };
     return { data: single ? null : [], error: null, count: 0 };
   };
   const query = (table) => {
@@ -76,7 +78,11 @@ const supabaseMock = `
         getUser: async () => ({ data: { user: { id: profile.id, email: "partner@example.com", user_metadata: { full_name: profile.full_name } } } })
       },
       from: query,
-      rpc: async () => ({ data: [], error: null })
+      rpc: async (name) => {
+        if (name === "get_mall_partner_submission_summary") return { data: [{ total_count: 1, approved_count: 1, published_count: 1, advertising_count: 1 }], error: null };
+        if (name === "get_mall_ad_slot_interaction_summary") return { data: [{ ad_slot_id: sponsor.id, impression_count: 120, click_count: 9, click_rate: 7.5, recent_impression_count: 80, recent_click_count: 6 }], error: null };
+        return { data: [], error: null };
+      }
     })
   };
 })();
@@ -116,6 +122,16 @@ async function run() {
       assert(await page.locator("[data-avm-sponsored-card] img").getAttribute("alt") === "Onaylı marka yaz kampanyası görseli", "Sponsor alt metni korunmadı.");
       const rel = await page.locator("[data-avm-sponsored-card] a").getAttribute("rel");
       assert(rel && rel.split(/\s+/).includes("sponsored") && rel.split(/\s+/).includes("noopener"), "Sponsor bağlantısı rel sözleşmesini taşımıyor.");
+      await page.locator("[data-avm-sponsored-card]").scrollIntoViewIfNeeded();
+      await page.waitForFunction(() => window.__supabaseWrites.some((write) => write.table === "mall_ad_slot_interactions" && write.payload.interaction_type === "impression"));
+      await page.evaluate(() => {
+        const link = document.querySelector("[data-avm-sponsored-cta]");
+        link.addEventListener("click", (event) => event.preventDefault(), { once: true });
+        link.click();
+      });
+      await page.waitForFunction(() => window.__supabaseWrites.some((write) => write.table === "mall_ad_slot_interactions" && write.payload.interaction_type === "click"));
+      const sponsorWrites = await page.evaluate(() => window.__supabaseWrites.filter((write) => write.table === "mall_ad_slot_interactions"));
+      assert(sponsorWrites.every((write) => write.payload.ad_slot_id === "22222222-2222-4222-8222-222222222222"), "Sponsor ölçümü doğru reklam hedefine bağlanmadı.");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       assert(overflow <= 1, `${viewport.width}px görünümünde ${overflow}px yatay taşma var.`);
       assert(errors.length === 0, errors.join("\n"));
@@ -167,6 +183,10 @@ async function run() {
     await partner.route("https://cdn.jsdelivr.net/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: supabaseMock }));
     await partner.route("https://api.allonahub.com/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: '{"base":"TRY","rates":{"TRY":1}}' }));
     await partner.goto(`http://allonahub.test:${address.port}/partner/avm.html#avm-submissions`, { waitUntil: "networkidle" });
+    await partner.locator("[data-partner-avm-sponsor-report] h2").waitFor();
+    assert(await partner.locator("[data-report-avm-sponsor-impressions]").textContent() === "120", "Partner sponsor gösterim toplamı yanlış.");
+    assert(await partner.locator("[data-report-avm-sponsor-clicks]").textContent() === "9", "Partner sponsor tıklama toplamı yanlış.");
+    assert((await partner.locator("[data-report-avm-sponsor-rate]").textContent()).includes("7,5"), "Partner sponsor tıklama oranı yanlış.");
     const partnerForm = partner.locator("[data-partner-avm-form]");
     await partnerForm.locator('[name="request_type"]').selectOption("advertising");
     assert(await partnerForm.locator('[name="requested_start_date"]').getAttribute("required") !== null, "Reklam talebinde başlangıç tarihi zorunlu değil.");
@@ -194,7 +214,7 @@ async function run() {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));
   }
-  process.stdout.write("AVM sponsor placement smoke passed (visitor desktop/mobile + admin publish + partner request).\n");
+  process.stdout.write("AVM sponsor smoke passed (visitor measurement + admin publish + partner request/report).\n");
 }
 
 run().catch((error) => {

@@ -305,6 +305,93 @@
     }
   }
 
+  function renderPartnerSponsorReport(rows, summaryRows) {
+    const target = document.querySelector("[data-partner-avm-sponsor-report]");
+    const impressionReport = document.querySelector("[data-report-avm-sponsor-impressions]");
+    const clickReport = document.querySelector("[data-report-avm-sponsor-clicks]");
+    const rateReport = document.querySelector("[data-report-avm-sponsor-rate]");
+    const publishedByTarget = new Map();
+    rows
+      .filter((row) => row.request_type === "advertising" && row.visibility_status === "published" && row.published_ad_slot_id)
+      .forEach((row) => {
+        if (!publishedByTarget.has(row.published_ad_slot_id)) publishedByTarget.set(row.published_ad_slot_id, row);
+      });
+    const publishedRows = [...publishedByTarget.values()];
+    const summaries = new Map((summaryRows || []).map((summary) => [summary.ad_slot_id, {
+      impressions: Number(summary.impression_count) || 0,
+      clicks: Number(summary.click_count) || 0,
+      rate: Number(summary.click_rate) || 0,
+      recentImpressions: Number(summary.recent_impression_count) || 0,
+      recentClicks: Number(summary.recent_click_count) || 0
+    }]));
+    const impressions = [...summaries.values()].reduce((sum, summary) => sum + summary.impressions, 0);
+    const clicks = [...summaries.values()].reduce((sum, summary) => sum + summary.clicks, 0);
+    const rate = impressions ? (100 * clicks / impressions) : 0;
+    if (impressionReport) impressionReport.textContent = impressions;
+    if (clickReport) clickReport.textContent = clicks;
+    if (rateReport) rateReport.textContent = `${rate.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+    if (!target) return;
+    if (!publishedRows.length) {
+      target.innerHTML = '<div class="empty-state">Yayındaki sponsor hedefiniz bulunmadığı için reklam performans raporu oluşmadı.</div>';
+      return;
+    }
+    target.innerHTML = `
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">AVM Sponsor Performansı</p>
+          <h2>Gösterim ve tıklama özeti</h2>
+          <p class="muted">En az yarısı ekranda görülen sponsor kartları günlük tekil oturum bazında gösterim; CTA aksiyonları tıklama olarak sayılır.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table data-table--wide">
+          <thead><tr><th>Sponsor hedefi</th><th>Gösterim</th><th>Tıklama</th><th>Tıklama oranı</th><th>Son 30 gün gösterim</th><th>Son 30 gün tıklama</th></tr></thead>
+          <tbody>
+            ${publishedRows.map((row) => {
+              const summary = summaries.get(row.published_ad_slot_id) || { impressions: 0, clicks: 0, rate: 0, recentImpressions: 0, recentClicks: 0 };
+              return `
+                <tr>
+                  <td><strong>${core.escapeHTML(row.submission_title)}</strong><br><small>${core.escapeHTML(row.brand_name)}</small></td>
+                  <td>${summary.impressions}</td>
+                  <td>${summary.clicks}</td>
+                  <td>${summary.rate.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%</td>
+                  <td>${summary.recentImpressions}</td>
+                  <td>${summary.recentClicks}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function loadSponsorInteractionReport(rows) {
+    const target = document.querySelector("[data-partner-avm-sponsor-report]");
+    const reports = [
+      document.querySelector("[data-report-avm-sponsor-impressions]"),
+      document.querySelector("[data-report-avm-sponsor-clicks]"),
+      document.querySelector("[data-report-avm-sponsor-rate]")
+    ];
+    const targetIds = [...new Set(rows
+      .filter((row) => row.request_type === "advertising" && row.visibility_status === "published" && row.published_ad_slot_id)
+      .map((row) => row.published_ad_slot_id))];
+    if (!targetIds.length) {
+      renderPartnerSponsorReport(rows, []);
+      return;
+    }
+    try {
+      const { data, error } = await App.db.client().rpc("get_mall_ad_slot_interaction_summary", {
+        report_ad_slot_ids: targetIds
+      });
+      if (error) throw error;
+      renderPartnerSponsorReport(rows, data || []);
+    } catch (error) {
+      reports.forEach((node) => { if (node) node.textContent = "Kullanılamıyor"; });
+      if (target) core.renderStatus(target, error.message || "AVM sponsor performansı yüklenemedi.", "error");
+    }
+  }
+
   function timeValue(value) {
     const match = String(value || "").match(/^(\d{2}:\d{2})/);
     return match ? match[1] : "";
@@ -477,7 +564,7 @@
         let query = App.db.client()
           .from("mall_partner_submissions")
           .select(
-            "id,request_type,brand_name,submission_title,requested_visibility,visibility_status,status,published_item_id",
+            "id,request_type,brand_name,submission_title,requested_visibility,visibility_status,status,published_item_id,published_ad_slot_id",
             offset === 0 ? { count: "exact" } : undefined
           )
           .eq("mall_id", mallId)
@@ -644,7 +731,11 @@
       if (advertisingReport) advertisingReport.textContent = Number(summary.advertising_count) || 0;
       const redemptionReport = await loadCampaignRedemptionCounts(reportRows);
       renderPartnerCampaignReport(reportRows, redemptionReport);
-      await Promise.all([loadPartnerTenantHours(reportRows), loadDirectoryInteractionReport(reportRows)]);
+      await Promise.all([
+        loadPartnerTenantHours(reportRows),
+        loadDirectoryInteractionReport(reportRows),
+        loadSponsorInteractionReport(reportRows)
+      ]);
       if (requestId !== partnerAvmSubmissionRequestId) return;
       renderPartnerAvmSubmissions(rows, redemptionReport);
     } catch (error) {
