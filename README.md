@@ -14,7 +14,7 @@ Platform genelinde ortak footer `/js/layout.v3.js` tarafından üretilir ve sayf
 - Auth: Supabase Auth
 - Database: PostgreSQL (Supabase)
 - Storage: Supabase Storage
-- Payment: iyzico CheckoutForm
+- Payment: Bank API + hosted secure payment page
 - Maps: Leaflet + OpenStreetMap
 - Hosting: GitHub, Cloudflare, özel domain
 
@@ -48,11 +48,11 @@ Kökte yalnızca yayın için gerekli ana dosyalar tutulur: `index.html`, `favic
 ## Geliştirme İlkeleri
 
 - Ürünler `products` tablosundan okunur ve yalnızca `status = active` ürünler listelenir.
-- Kart bilgisi frontend veya Supabase veritabanında tutulmaz; ödeme iyzico CheckoutForm ekranında tamamlanır.
+- Kart bilgisi frontend veya Supabase veritabanında tutulmaz; ödeme banka ödeme formu ekranında tamamlanır.
 - Checkout öncesinde teslimat, fatura, sipariş özeti, kupon, kargo ve yasal onaylar tamamlanır.
 - Güvenlik Supabase RLS, Edge Functions ve minimum yetki prensibiyle ilerler.
 - Kurumsal güvenlik yaklaşımı Zero Trust, least privilege, MFA, audit log, emergency switch ve auto-defense prensipleriyle `docs/security/enterprise-security-program.md` ve `docs/security/incident-response-auto-defense.md` altında tanımlanır.
-- Service role key ve iyzico secret değerleri frontend'e yazılmaz; Hetzner backend veya Supabase Edge Function secret ortamında tutulur.
+- Service role key ve banka ödeme secret değerleri frontend'e yazılmaz; Hetzner backend veya Supabase Edge Function secret ortamında tutulur.
 - Var olan çalışan özellikler silinmez; değişiklikler geriye dönük uyumluluğu korur.
 - `/index.html` yeni AllonaHub süper uygulama anasayfa kaynağıdır; destekleyici mimari bu sayfanın marka, modül, premium ve partner ekosistemi mesajlarına göre kurulmalıdır.
 - Footer, dil seçici ve tema seçici bütün mevcut ve yeni modüllerde ortak platform davranışı olarak korunur.

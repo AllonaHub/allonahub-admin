@@ -325,13 +325,13 @@
       "ru": "Обновите количество, проверьте итог и перейдите к оформлению заказа.",
       "ar": "حدّث الكميات، راجع الإجمالي، ثم انتقل إلى إتمام الطلب."
     },
-    "Teslimat, fatura ve yasal onaylar tamamlanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.": {
-      "az": "Çatdırılma, faktura və hüquqi təsdiqlər tamamlanır; kart məlumatları yalnız iyzico təhlükəsiz ödəniş ekranında daxil edilir.",
-      "en": "Delivery, invoice, and legal approvals are completed here; card details are entered only on iyzico's secure payment screen.",
-      "de": "Lieferung, Rechnung und rechtliche Bestätigungen werden hier abgeschlossen; Kartendaten werden nur auf der sicheren iyzico-Zahlungsseite eingegeben.",
-      "ru": "Доставка, счет и юридические подтверждения оформляются здесь; данные карты вводятся только на защищенной странице оплаты iyzico.",
-      "ar": "يتم إكمال التسليم والفاتورة والموافقات القانونية هنا؛ وتُدخل بيانات البطاقة فقط في شاشة الدفع الآمنة من iyzico.",
-      "tr": "Teslimat, fatura ve yasal onaylar tamamlanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir."
+    "Teslimat, fatura ve yasal onaylar tamamlanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.": {
+      "az": "Çatdırılma, faktura və hüquqi təsdiqlər tamamlanır; kart məlumatları yalnız Sağlayıcı təhlükəsiz ödəniş ekranında daxil edilir.",
+      "en": "Delivery, invoice, and legal approvals are completed here; card details are entered only on Sağlayıcı's secure payment screen.",
+      "de": "Lieferung, Rechnung und rechtliche Bestätigungen werden hier abgeschlossen; Kartendaten werden nur auf der sicheren Sağlayıcı-Zahlungsseite eingegeben.",
+      "ru": "Доставка, счет и юридические подтверждения оформляются здесь; данные карты вводятся только на защищенной странице оплаты Sağlayıcı.",
+      "ar": "يتم إكمال التسليم والفاتورة والموافقات القانونية هنا؛ وتُدخل بيانات البطاقة فقط في شاشة الدفع الآمنة من Sağlayıcı.",
+      "tr": "Teslimat, fatura ve yasal onaylar tamamlanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir."
     },
     "Ön Bilgilendirme Formu": {
       "az": "İlkin məlumat formu",
@@ -363,21 +363,21 @@
       "ru": "Я прочитал(а) и подтверждаю договор дистанционной продажи.",
       "ar": "قرأت عقد البيع عن بُعد وأوافق عليه."
     },
-    "Kart bilgileri yalnızca iyzico ödeme sayfasında girilir.": {
-      "az": "Kart məlumatları yalnız iyzico ödəniş səhifəsində daxil edilir.",
-      "en": "Card details are entered only on the iyzico payment page.",
-      "de": "Kartendaten werden nur auf der iyzico-Zahlungsseite eingegeben.",
-      "ru": "Данные карты вводятся только на странице оплаты iyzico.",
-      "ar": "تُدخل بيانات البطاقة فقط في صفحة الدفع الخاصة بـ iyzico.",
-      "tr": "Kart bilgileri yalnızca iyzico ödeme sayfasında girilir."
+    "Kart bilgileri yalnızca banka ödeme sayfasında girilir.": {
+      "az": "Kart məlumatları yalnız Sağlayıcı ödəniş səhifəsində daxil edilir.",
+      "en": "Card details are entered only on the Sağlayıcı payment page.",
+      "de": "Kartendaten werden nur auf der Sağlayıcı-Zahlungsseite eingegeben.",
+      "ru": "Данные карты вводятся только на странице оплаты Sağlayıcı.",
+      "ar": "تُدخل بيانات البطاقة فقط في صفحة الدفع الخاصة بـ Sağlayıcı.",
+      "tr": "Kart bilgileri yalnızca banka ödeme sayfasında girilir."
     },
-    "Ödeme sonucu iyzico token dönüşüyle doğrulanır.": {
-      "az": "Ödəniş nəticəsi iyzico token cavabı ilə təsdiqlənir.",
-      "en": "The payment result is verified through the iyzico token callback.",
-      "de": "Das Zahlungsergebnis wird über den iyzico-Token-Rückruf verifiziert.",
-      "ru": "Результат оплаты проверяется через token-ответ iyzico.",
-      "ar": "يتم التحقق من نتيجة الدفع عبر عودة رمز iyzico.",
-      "tr": "Ödeme sonucu iyzico token dönüşüyle doğrulanır."
+    "Ödeme sonucu banka ödeme referansı dönüşüyle doğrulanır.": {
+      "az": "Ödəniş nəticəsi banka ödeme referansı cavabı ilə təsdiqlənir.",
+      "en": "The payment result is verified through the banka ödeme referansı callback.",
+      "de": "Das Zahlungsergebnis wird über den Sağlayıcı-Token-Rückruf verifiziert.",
+      "ru": "Результат оплаты проверяется через token-ответ Sağlayıcı.",
+      "ar": "يتم التحقق من نتيجة الدفع عبر عودة رمز Sağlayıcı.",
+      "tr": "Ödeme sonucu banka ödeme referansı dönüşüyle doğrulanır."
     },
     "Başarılı ödeme sonrası sipariş durumunuz otomatik güncellenir.": {
       "az": "Uğurlu ödənişdən sonra sifariş statusunuz avtomatik yenilənir.",
@@ -387,13 +387,13 @@
       "ar": "بعد الدفع الناجح يتم تحديث حالة طلبك تلقائياً.",
       "tr": "Başarılı ödeme sonrası sipariş durumunuz otomatik güncellenir."
     },
-    "iyzico ile Güvenli Ödemeye Geç": {
-      "az": "iyzico ilə təhlükəsiz ödənişə keç",
-      "en": "Continue to Secure Payment with iyzico",
-      "de": "Mit iyzico sicher bezahlen",
-      "ru": "Перейти к безопасной оплате через iyzico",
-      "ar": "المتابعة إلى الدفع الآمن عبر iyzico",
-      "tr": "iyzico ile Güvenli Ödemeye Geç"
+    "Güvenli Ödemeye Geç": {
+      "az": "Sağlayıcı ilə təhlükəsiz ödənişə keç",
+      "en": "Continue to Secure Payment with Sağlayıcı",
+      "de": "Mit Sağlayıcı sicher bezahlen",
+      "ru": "Перейти к безопасной оплате через Sağlayıcı",
+      "ar": "المتابعة إلى الدفع الآمن عبر Sağlayıcı",
+      "tr": "Güvenli Ödemeye Geç"
     },
     "Sepete Dön": {
       "az": "Səbətə qayıt",
@@ -435,13 +435,13 @@
       "ar": "حالة العملية",
       "tr": "İşlem durumu"
     },
-    "iyzico dönüşüyle sipariş durumunuz güncellendi.": {
-      "az": "iyzico cavabı ilə sifariş statusunuz yeniləndi.",
-      "en": "Your order status has been updated through the iyzico callback.",
-      "de": "Ihr Bestellstatus wurde durch den iyzico-Rückruf aktualisiert.",
-      "ru": "Статус заказа обновлен через ответ iyzico.",
-      "ar": "تم تحديث حالة طلبك من خلال رد iyzico.",
-      "tr": "iyzico dönüşüyle sipariş durumunuz güncellendi."
+    "banka ödeme dönüşüyle sipariş durumunuz güncellendi.": {
+      "az": "Sağlayıcı cavabı ilə sifariş statusunuz yeniləndi.",
+      "en": "Your order status has been updated through the banka ödeme callback.",
+      "de": "Ihr Bestellstatus wurde durch den Sağlayıcı-Rückruf aktualisiert.",
+      "ru": "Статус заказа обновлен через ответ Sağlayıcı.",
+      "ar": "تم تحديث حالة طلبك من خلال رد Sağlayıcı.",
+      "tr": "banka ödeme dönüşüyle sipariş durumunuz güncellendi."
     },
     "Siparişlerime Git": {
       "az": "Sifarişlərimə keç",
@@ -475,21 +475,21 @@
       "ar": "ضمان الدفع",
       "tr": "Ödeme Güvencesi"
     },
-    "iyzico Sayfasına Aktarılıyorsunuz": {
-      "az": "iyzico səhifəsinə yönləndirilirsiniz",
-      "en": "Redirecting to the iyzico Page",
-      "de": "Weiterleitung zur iyzico-Seite",
-      "ru": "Перенаправление на страницу iyzico",
-      "ar": "يتم تحويلك إلى صفحة iyzico",
-      "tr": "iyzico Sayfasına Aktarılıyorsunuz"
+    "banka ödeme sayfasına Aktarılıyorsunuz": {
+      "az": "Sağlayıcı səhifəsinə yönləndirilirsiniz",
+      "en": "Redirecting to the Sağlayıcı Page",
+      "de": "Weiterleitung zur Sağlayıcı-Seite",
+      "ru": "Перенаправление на страницу Sağlayıcı",
+      "ar": "يتم تحويلك إلى صفحة Sağlayıcı",
+      "tr": "banka ödeme sayfasına Aktarılıyorsunuz"
     },
-    "Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz. Ödeme formu yalnızca iyzico güvenli ödeme ekranında açılır.": {
-      "az": "Kart məlumatlarınız AllonaHub üzərində toplanmır və saxlanmır. Ödəniş formu yalnız iyzico təhlükəsiz ödəniş ekranında açılır.",
-      "en": "Your card details are not collected or stored by AllonaHub. The payment form opens only on iyzico's secure payment screen.",
-      "de": "Ihre Kartendaten werden von AllonaHub nicht erfasst oder gespeichert. Das Zahlungsformular öffnet sich nur auf der sicheren iyzico-Zahlungsseite.",
-      "ru": "Данные вашей карты не собираются и не хранятся в AllonaHub. Платежная форма открывается только на защищенной странице iyzico.",
-      "ar": "لا تجمع AllonaHub بيانات بطاقتك ولا تخزنها. يفتح نموذج الدفع فقط في شاشة الدفع الآمنة من iyzico.",
-      "tr": "Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz. Ödeme formu yalnızca iyzico güvenli ödeme ekranında açılır."
+    "Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz. Ödeme formu yalnızca banka güvenli ödeme ekranında açılır.": {
+      "az": "Kart məlumatlarınız AllonaHub üzərində toplanmır və saxlanmır. Ödəniş formu yalnız Sağlayıcı təhlükəsiz ödəniş ekranında açılır.",
+      "en": "Your card details are not collected or stored by AllonaHub. The payment form opens only on Sağlayıcı's secure payment screen.",
+      "de": "Ihre Kartendaten werden von AllonaHub nicht erfasst oder gespeichert. Das Zahlungsformular öffnet sich nur auf der sicheren Sağlayıcı-Zahlungsseite.",
+      "ru": "Данные вашей карты не собираются и не хранятся в AllonaHub. Платежная форма открывается только на защищенной странице Sağlayıcı.",
+      "ar": "لا تجمع AllonaHub بيانات بطاقتك ولا تخزنها. يفتح نموذج الدفع فقط في شاشة الدفع الآمنة من Sağlayıcı.",
+      "tr": "Kart bilgileriniz AllonaHub üzerinde toplanmaz veya saklanmaz. Ödeme formu yalnızca banka güvenli ödeme ekranında açılır."
     },
     "Ödeme oturumu hazırlanıyor": {
       "az": "Ödəniş sessiyası hazırlanır",
@@ -499,21 +499,21 @@
       "ar": "يتم تجهيز جلسة الدفع",
       "tr": "Ödeme oturumu hazırlanıyor"
     },
-    "iyzico güvenli ödeme sayfasına yönlendirileceksiniz.": {
-      "az": "iyzico təhlükəsiz ödəniş səhifəsinə yönləndiriləcəksiniz.",
-      "en": "You will be redirected to iyzico's secure payment page.",
-      "de": "Sie werden zur sicheren Zahlungsseite von iyzico weitergeleitet.",
-      "ru": "Вы будете перенаправлены на защищенную страницу оплаты iyzico.",
-      "ar": "سيتم تحويلك إلى صفحة الدفع الآمنة من iyzico.",
-      "tr": "iyzico güvenli ödeme sayfasına yönlendirileceksiniz."
+    "banka güvenli ödeme sayfasına yönlendirileceksiniz.": {
+      "az": "Sağlayıcı təhlükəsiz ödəniş səhifəsinə yönləndiriləcəksiniz.",
+      "en": "You will be redirected to Sağlayıcı's secure payment page.",
+      "de": "Sie werden zur sicheren Zahlungsseite von Sağlayıcı weitergeleitet.",
+      "ru": "Вы будете перенаправлены на защищенную страницу оплаты Sağlayıcı.",
+      "ar": "سيتم تحويلك إلى صفحة الدفع الآمنة من Sağlayıcı.",
+      "tr": "banka güvenli ödeme sayfasına yönlendirileceksiniz."
     },
-    "iyzico ile Ödemeye Devam Et": {
-      "az": "iyzico ilə ödənişə davam et",
-      "en": "Continue Payment with iyzico",
-      "de": "Zahlung mit iyzico fortsetzen",
-      "ru": "Продолжить оплату через iyzico",
-      "ar": "متابعة الدفع عبر iyzico",
-      "tr": "iyzico ile Ödemeye Devam Et"
+    "Ödemeye Devam Et": {
+      "az": "Sağlayıcı ilə ödənişə davam et",
+      "en": "Continue Payment with Sağlayıcı",
+      "de": "Zahlung mit Sağlayıcı fortsetzen",
+      "ru": "Продолжить оплату через Sağlayıcı",
+      "ar": "متابعة الدفع عبر Sağlayıcı",
+      "tr": "Ödemeye Devam Et"
     },
     "Checkout'a Dön": {
       "az": "Checkout-a qayıt",
@@ -530,13 +530,13 @@
       "ar": "ملاحظة أمنية",
       "tr": "Güvenlik Notu"
     },
-    "Ödeme tamamlandığında iyzico, sonucu AllonaHub callback adresine iletir. Sipariş durumunuz bu token doğrulamasıyla güncellenir.": {
-      "az": "Ödəniş tamamlandıqda iyzico nəticəni AllonaHub callback ünvanına göndərir. Sifariş statusunuz bu token təsdiqi ilə yenilənir.",
-      "en": "When payment is completed, iyzico sends the result to the AllonaHub callback URL. Your order status is updated through this token verification.",
-      "de": "Nach Abschluss der Zahlung sendet iyzico das Ergebnis an die AllonaHub-Callback-Adresse. Ihr Bestellstatus wird über diese Token-Verifizierung aktualisiert.",
-      "ru": "После завершения оплаты iyzico отправляет результат на callback-адрес AllonaHub. Статус заказа обновляется через эту проверку токена.",
-      "ar": "عند اكتمال الدفع، ترسل iyzico النتيجة إلى عنوان callback الخاص بـ AllonaHub. يتم تحديث حالة طلبك عبر هذا التحقق بالرمز.",
-      "tr": "Ödeme tamamlandığında iyzico, sonucu AllonaHub callback adresine iletir. Sipariş durumunuz bu token doğrulamasıyla güncellenir."
+    "Ödeme tamamlandığında banka ödeme altyapısı sonucu AllonaHub callback adresine iletir. Sipariş durumunuz bu token doğrulamasıyla güncellenir.": {
+      "az": "Ödəniş tamamlandıqda Sağlayıcı nəticəni AllonaHub callback ünvanına göndərir. Sifariş statusunuz bu token təsdiqi ilə yenilənir.",
+      "en": "When payment is completed, Sağlayıcı sends the result to the AllonaHub callback URL. Your order status is updated through this token verification.",
+      "de": "Nach Abschluss der Zahlung sendet Sağlayıcı das Ergebnis an die AllonaHub-Callback-Adresse. Ihr Bestellstatus wird über diese Token-Verifizierung aktualisiert.",
+      "ru": "После завершения оплаты Sağlayıcı отправляет результат на callback-адрес AllonaHub. Статус заказа обновляется через эту проверку токена.",
+      "ar": "عند اكتمال الدفع، ترسل Sağlayıcı النتيجة إلى عنوان callback الخاص بـ AllonaHub. يتم تحديث حالة طلبك عبر هذا التحقق بالرمز.",
+      "tr": "Ödeme tamamlandığında banka ödeme altyapısı sonucu AllonaHub callback adresine iletir. Sipariş durumunuz bu token doğrulamasıyla güncellenir."
     },
     "Hesap menüsü": {
       "az": "Hesab menyusu",
@@ -1257,13 +1257,13 @@
       "ar": "بنية دفع آمنة",
       "tr": "Güvenli ödeme altyapısı"
     },
-    "iyzico ile öde": {
-      "az": "iyzico ilə ödə",
-      "en": "Pay with iyzico",
-      "de": "Mit iyzico bezahlen",
-      "ru": "Оплатить через iyzico",
-      "ar": "ادفع عبر iyzico",
-      "tr": "iyzico ile öde"
+    "Banka ile öde": {
+      "az": "Sağlayıcı ilə ödə",
+      "en": "Pay with Sağlayıcı",
+      "de": "Mit Sağlayıcı bezahlen",
+      "ru": "Оплатить через Sağlayıcı",
+      "ar": "ادفع عبر Sağlayıcı",
+      "tr": "Banka ile öde"
     },
     "Tüm hakları saklıdır.": {
       "az": "Bütün hüquqlar qorunur.",
@@ -4371,12 +4371,12 @@
       "ar": "إعدادات المنطقة والتوفر",
       "tr": "Bölge ve müsaitlik ayarı"
     },
-    "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek ödeme checkout ve iyzico güvenli ödeme sayfasında tamamlanır.": {
-      "az": "Bu səhifə köhnə paket bağlantıları üçün uyğunluq yönləndirməsidir. Real ödəniş checkout və iyzico təhlükəsiz ödəniş səhifəsində tamamlanır.",
-      "en": "This page is a compatibility redirect for old package links. Real payment is completed on the checkout and iyzico secure payment page.",
-      "de": "Diese Seite ist eine Kompatibilitätsweiterleitung für alte Paketlinks. Die echte Zahlung wird im Checkout und auf der sicheren iyzico-Zahlungsseite abgeschlossen.",
-      "ru": "Эта страница является совместимой переадресацией для старых ссылок пакетов. Реальная оплата завершается на checkout и безопасной странице оплаты iyzico.",
-      "ar": "هذه الصفحة تحويل توافق لروابط الباقات القديمة. يتم إكمال الدفع الحقيقي في صفحة checkout وصفحة الدفع الآمنة من iyzico."
+    "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek ödeme checkout ve banka güvenli ödeme sayfasında tamamlanır.": {
+      "az": "Bu səhifə köhnə paket bağlantıları üçün uyğunluq yönləndirməsidir. Real ödəniş checkout və Sağlayıcı təhlükəsiz ödəniş səhifəsində tamamlanır.",
+      "en": "This page is a compatibility redirect for old package links. Real payment is completed on the checkout and Sağlayıcı secure payment page.",
+      "de": "Diese Seite ist eine Kompatibilitätsweiterleitung für alte Paketlinks. Die echte Zahlung wird im Checkout und auf der sicheren Sağlayıcı-Zahlungsseite abgeschlossen.",
+      "ru": "Эта страница является совместимой переадресацией для старых ссылок пакетов. Реальная оплата завершается на checkout и безопасной странице оплаты Sağlayıcı.",
+      "ar": "هذه الصفحة تحويل توافق لروابط الباقات القديمة. يتم إكمال الدفع الحقيقي في صفحة checkout وصفحة الدفع الآمنة من Sağlayıcı."
     },
     "Bu sayfa platform tasarımıdır. Kredi, sigorta, yatırım ve finansal ürünlerde nihai karar ve yasal sorumluluk yetkili banka, finans kuruluşu, sigorta şirketi veya lisanslı kurumlara aittir.": {
       "az": "Bu səhifə platform dizaynıdır. Kredit, sığorta, investisiya və maliyyə məhsullarında son qərar və hüquqi məsuliyyət səlahiyyətli banka, maliyyə qurumu, sığorta şirkəti və ya lisenziyalı qurumlara aiddir.",
@@ -8305,13 +8305,13 @@
       "ru": "AllonaHub Kariyer için sektör ve meslek seçimine göre profesyonel CV oluşturucu.",
       "ar": "AllonaHub Kariyer için sektör ve meslek seçimine göre profesyonel CV oluşturucu."
     },
-    "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.": {
-      "tr": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.",
-      "az": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.",
-      "en": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.",
-      "de": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.",
-      "ru": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz.",
-      "ar": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra iyzico CheckoutForm ekranına yönlendirilirsiniz."
+    "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.": {
+      "tr": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.",
+      "az": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.",
+      "en": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.",
+      "de": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.",
+      "ru": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz.",
+      "ar": "AllonaHub kart numarası, son kullanma tarihi veya CVC bilgisi toplamaz. Sipariş kaydı oluşturulduktan sonra banka ödeme formu ekranına yönlendirilirsiniz."
     },
     "AllonaHub kayıtları": {
       "tr": "AllonaHub kayıtları",
@@ -8561,13 +8561,13 @@
       "ru": "AllonaHub sipariş geçmişi.",
       "ar": "AllonaHub sipariş geçmişi."
     },
-    "AllonaHub sipariş ve iyzico ödeme sonucu.": {
-      "tr": "AllonaHub sipariş ve iyzico ödeme sonucu.",
-      "az": "AllonaHub sipariş ve iyzico ödeme sonucu.",
-      "en": "AllonaHub sipariş ve iyzico ödeme sonucu.",
-      "de": "AllonaHub sipariş ve iyzico ödeme sonucu.",
-      "ru": "AllonaHub sipariş ve iyzico ödeme sonucu.",
-      "ar": "AllonaHub sipariş ve iyzico ödeme sonucu."
+    "AllonaHub sipariş ve banka ödeme sonucu.": {
+      "tr": "AllonaHub sipariş ve banka ödeme sonucu.",
+      "az": "AllonaHub sipariş ve banka ödeme sonucu.",
+      "en": "AllonaHub sipariş ve banka ödeme sonucu.",
+      "de": "AllonaHub sipariş ve banka ödeme sonucu.",
+      "ru": "AllonaHub sipariş ve banka ödeme sonucu.",
+      "ar": "AllonaHub sipariş ve banka ödeme sonucu."
     },
     "AllonaHub Siparişi": {
       "tr": "AllonaHub Siparişi",
@@ -8577,13 +8577,13 @@
       "ru": "AllonaHub Siparişi",
       "ar": "AllonaHub Siparişi"
     },
-    "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.": {
-      "tr": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.",
-      "az": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.",
-      "en": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.",
-      "de": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.",
-      "ru": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz.",
-      "ar": "AllonaHub siparişiniz için iyzico güvenli ödeme sayfasına aktarılıyorsunuz."
+    "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.": {
+      "tr": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.",
+      "az": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.",
+      "en": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.",
+      "de": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.",
+      "ru": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz.",
+      "ar": "AllonaHub siparişiniz için banka güvenli ödeme sayfasına aktarılıyorsunuz."
     },
     "AllonaHub Super Admin": {
       "tr": "AllonaHub Super Admin",
@@ -8625,13 +8625,13 @@
       "ru": "AllonaHub teslimat adresleri.",
       "ar": "AllonaHub teslimat adresleri."
     },
-    "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.": {
-      "tr": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.",
-      "az": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.",
-      "en": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.",
-      "de": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.",
-      "ru": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi.",
-      "ar": "AllonaHub teslimat, fatura, yasal onay ve iyzico güvenli ödeme yönlendirmesi."
+    "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.": {
+      "tr": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.",
+      "az": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.",
+      "en": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.",
+      "de": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.",
+      "ru": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi.",
+      "ar": "AllonaHub teslimat, fatura, yasal onay ve banka güvenli ödeme yönlendirmesi."
     },
     "AllonaHub ürün detayı.": {
       "tr": "AllonaHub ürün detayı.",
@@ -8801,13 +8801,13 @@
       "ru": "Anahtar Güç",
       "ar": "Anahtar Güç"
     },
-    "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.": {
-      "tr": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.",
-      "az": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.",
-      "en": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.",
-      "de": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.",
-      "ru": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.",
-      "ar": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri."
+    "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.": {
+      "tr": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.",
+      "az": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.",
+      "en": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.",
+      "de": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.",
+      "ru": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.",
+      "ar": "Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri."
     },
     "Android'de butona bas; iPhone'da Safari Paylaş menüsünden Ana Ekrana Ekle'yi seç.": {
       "tr": "Android'de butona bas; iPhone'da Safari Paylaş menüsünden Ana Ekrana Ekle'yi seç.",
@@ -10225,13 +10225,13 @@
       "ru": "Bu sayfa canlı modül akışlarını bozmadan, boş kalan tıklamalar için bilgi veren ve kullanıcıyı doğru sonraki adıma götüren güvenli ara katman olarak hazırlanmıştır.",
       "ar": "Bu sayfa canlı modül akışlarını bozmadan, boş kalan tıklamalar için bilgi veren ve kullanıcıyı doğru sonraki adıma götüren güvenli ara katman olarak hazırlanmıştır."
     },
-    "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.": {
-      "tr": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.",
-      "az": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.",
-      "en": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.",
-      "de": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.",
-      "ru": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır.",
-      "ar": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve iyzico güvenli ödeme sayfasında tamamlanır."
+    "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.": {
+      "tr": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.",
+      "az": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.",
+      "en": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.",
+      "de": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.",
+      "ru": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır.",
+      "ar": "Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme ve banka güvenli ödeme sayfasında tamamlanır."
     },
     "Bu sayfa platform tasarımıdır. Sigorta teklifleri, poliçe şartları, teminat kapsamı ve yasal sorumluluklar yetkili sigorta şirketleri, acenteler, brokerler ve ilgili mevzuat çerçevesinde yürütülmelidir.": {
       "tr": "Bu sayfa platform tasarımıdır. Sigorta teklifleri, poliçe şartları, teminat kapsamı ve yasal sorumluluklar yetkili sigorta şirketleri, acenteler, brokerler ve ilgili mevzuat çerçevesinde yürütülmelidir.",
@@ -17209,37 +17209,37 @@
       "ru": "İyi Fiyat",
       "ar": "İyi Fiyat"
     },
-    "iyzico": {
-      "tr": "iyzico",
-      "az": "iyzico",
-      "en": "iyzico",
-      "de": "iyzico",
-      "ru": "iyzico",
-      "ar": "iyzico"
+    "Sağlayıcı": {
+      "tr": "Sağlayıcı",
+      "az": "Sağlayıcı",
+      "en": "Sağlayıcı",
+      "de": "Sağlayıcı",
+      "ru": "Sağlayıcı",
+      "ar": "Sağlayıcı"
     },
-    "iyzico Güvenli Ödeme": {
-      "tr": "iyzico Güvenli Ödeme",
-      "az": "iyzico Güvenli Ödeme",
-      "en": "iyzico Güvenli Ödeme",
-      "de": "iyzico Güvenli Ödeme",
-      "ru": "iyzico Güvenli Ödeme",
-      "ar": "iyzico Güvenli Ödeme"
+    "Banka Güvenli Ödeme": {
+      "tr": "Banka Güvenli Ödeme",
+      "az": "Banka Güvenli Ödeme",
+      "en": "Banka Güvenli Ödeme",
+      "de": "Banka Güvenli Ödeme",
+      "ru": "Banka Güvenli Ödeme",
+      "ar": "Banka Güvenli Ödeme"
     },
-    "iyzico Güvenli Ödeme | AllonaHub": {
-      "tr": "iyzico Güvenli Ödeme | AllonaHub",
-      "az": "iyzico Güvenli Ödeme | AllonaHub",
-      "en": "iyzico Güvenli Ödeme | AllonaHub",
-      "de": "iyzico Güvenli Ödeme | AllonaHub",
-      "ru": "iyzico Güvenli Ödeme | AllonaHub",
-      "ar": "iyzico Güvenli Ödeme | AllonaHub"
+    "Banka Güvenli Ödeme | AllonaHub": {
+      "tr": "Banka Güvenli Ödeme | AllonaHub",
+      "az": "Banka Güvenli Ödeme | AllonaHub",
+      "en": "Banka Güvenli Ödeme | AllonaHub",
+      "de": "Banka Güvenli Ödeme | AllonaHub",
+      "ru": "Banka Güvenli Ödeme | AllonaHub",
+      "ar": "Banka Güvenli Ödeme | AllonaHub"
     },
-    "iyzico token": {
-      "tr": "iyzico token",
-      "az": "iyzico token",
-      "en": "iyzico token",
-      "de": "iyzico token",
-      "ru": "iyzico token",
-      "ar": "iyzico token"
+    "banka ödeme referansı": {
+      "tr": "banka ödeme referansı",
+      "az": "banka ödeme referansı",
+      "en": "banka ödeme referansı",
+      "de": "banka ödeme referansı",
+      "ru": "banka ödeme referansı",
+      "ar": "banka ödeme referansı"
     },
     "İzin verilmedi": {
       "tr": "İzin verilmedi",
@@ -17729,13 +17729,13 @@
       "ru": "Kart Bilgileri",
       "ar": "Kart Bilgileri"
     },
-    "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.": {
-      "tr": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
-      "az": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
-      "en": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
-      "de": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
-      "ru": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
-      "ar": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır."
+    "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.": {
+      "tr": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
+      "az": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
+      "en": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
+      "de": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
+      "ru": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.",
+      "ar": "Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı banka ödeme onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır."
     },
     "Kart bilgileriniz AllonaHub üzerinde saklanmaz.": {
       "tr": "Kart bilgileriniz AllonaHub üzerinde saklanmaz.",
@@ -17769,13 +17769,13 @@
       "ru": "Kart Numarası",
       "ar": "Kart Numarası"
     },
-    "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.": {
-      "tr": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.",
-      "az": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.",
-      "en": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.",
-      "de": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.",
-      "ru": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.",
-      "ar": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir."
+    "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.": {
+      "tr": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.",
+      "az": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.",
+      "en": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.",
+      "de": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.",
+      "ru": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.",
+      "ar": "Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz. Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir."
     },
     "Kart Üzerindeki İsim": {
       "tr": "Kart Üzerindeki İsim",
@@ -22561,13 +22561,13 @@
       "ru": "Ödeme işlemleri güvenli ödeme sağlayıcı entegrasyonları ve sipariş doğrulama akışlarıyla yürütülür.",
       "ar": "Ödeme işlemleri güvenli ödeme sağlayıcı entegrasyonları ve sipariş doğrulama akışlarıyla yürütülür."
     },
-    "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.": {
-      "tr": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.",
-      "az": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.",
-      "en": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.",
-      "de": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.",
-      "ru": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.",
-      "ar": "Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır."
+    "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.": {
+      "tr": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.",
+      "az": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.",
+      "en": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.",
+      "de": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.",
+      "ru": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır.",
+      "ar": "Ödeme işlemleri banka ödeme formu yönlendirmesi ve token doğrulamasıyla tamamlanır."
     },
     "Ödeme linki": {
       "tr": "Ödeme linki",
@@ -27721,13 +27721,13 @@
       "ru": "Sipariş Sonucu | AllonaHub",
       "ar": "Sipariş Sonucu | AllonaHub"
     },
-    "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.": {
-      "tr": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.",
-      "az": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.",
-      "en": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.",
-      "de": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.",
-      "ru": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir.",
-      "ar": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme iyzico güvenli ödeme altyapısına yönlendirilir."
+    "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.": {
+      "tr": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.",
+      "az": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.",
+      "en": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.",
+      "de": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.",
+      "ru": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir.",
+      "ar": "Sipariş sürecinde teslimat, fatura ve sepet bilgileri kullanıcı tarafından onaylanır. Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka güvenli ödeme altyapısına yönlendirilir."
     },
     "Sipariş tipi": {
       "tr": "Sipariş tipi",

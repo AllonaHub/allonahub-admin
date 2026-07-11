@@ -83,7 +83,7 @@ function isRedZoneEvent(event) {
   const raw = eventText(event);
   return (
     /admin\.boundary_denied|authz\.denied|auth\.denied|owner_denied|role_denied|permission|mfa_required/.test(raw) ||
-    /payment|finance|payout|iyzico|checkout|refund|wallet/.test(raw) ||
+    /payment|finance|payout|Sağlayıcı|checkout|refund|wallet/.test(raw) ||
     /secret|webhook|token|service_role|api_key|gitops|release/.test(raw) ||
     /attack|blocked|suspicious|sql|xss|csrf|intrusion|bruteforce/.test(raw)
   );
@@ -139,7 +139,7 @@ function activateRuntimeProtection(event, payload) {
   runtimeProtection.activatedBy = "auto_red_zone";
   runtimeProtection.reason = payload.title || "Red zone security incident";
 
-  if (/payment|finance|payout|iyzico|checkout|refund|wallet/.test(raw)) {
+  if (/payment|finance|payout|Sağlayıcı|checkout|refund|wallet/.test(raw)) {
     runtimeProtection.paymentsLocked = true;
   }
   if (/order|checkout|cart/.test(raw)) {

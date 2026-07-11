@@ -33,7 +33,7 @@ Katmanlar:
 - Traefik/Coolify: host bazlı routing, TLS, sadece gerekli container yayını.
 - Backend: Helmet, CORS allowlist, host allowlist, rate limit, Zod validation, audit log.
 - Supabase: RLS, RPC, trigger, service role izolasyonu.
-- Iyzico: callback backend doğrulaması olmadan sipariş ödenmiş sayılmaz.
+- Sağlayıcı: callback backend doğrulaması olmadan sipariş ödenmiş sayılmaz.
 
 ## 4. MFA / 2FA
 
@@ -71,7 +71,7 @@ ADMIN_IP_ALLOWLIST=
 ## 6. Payment Security
 
 - Frontend ödeme başarılı dedi diye sipariş onaylanmaz.
-- `/v1/payments/iyzico/callback` iyzico detail sorgusu ile doğrular.
+- `/v1/payments/bank/callback` banka ödeme detail sorgusu ile doğrular.
 - `PAYMENTS_DISABLED=true` acil durumda ödeme başlatma ve callback işlemlerini kapatır.
 - Hatalı veya sahte callback `security_audit_events` tablosuna `critical` olarak düşer.
 
@@ -222,7 +222,7 @@ git diff --check
 node --check backend/src/server.js
 node --check backend/src/app.js
 node --check backend/src/config.js
-node --check backend/src/lib/iyzico.js
+node --check backend/src/lib/bank-payment-provider.js
 node --check backend/src/lib/supabase.js
 node --check backend/src/routes/index.js
 docker compose -f deploy/compose/docker-compose.hetzner-traefik.yml config --quiet
@@ -254,8 +254,8 @@ Server build `npm ci --omit=dev` kullanır ve lockfile ile sabitlenir. Son build
 Kod içine yazılmayacak:
 
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `IYZICO_API_KEY`
-- `IYZICO_SECRET_KEY`
+- `BANK_PAYMENT_API_KEY`
+- `BANK_PAYMENT_SECRET_KEY`
 - Cloudflare token
 - GitHub token
 
@@ -287,9 +287,9 @@ Production'a alınmadan önce zorunlu geçiş kriterleri:
 
 - Supabase MFA admin ve partner hesaplarında aktif.
 - Enterprise security migration uygulanmış.
-- `SUPABASE_SERVICE_ROLE_KEY`, iyzico keyleri ve cron secret gerçek değerlerle sunucuda.
+- `SUPABASE_SERVICE_ROLE_KEY`, banka ödeme keyleri ve cron secret gerçek değerlerle sunucuda.
 - `/health` 200.
 - `/ready` 200.
 - Test siparişi başarılı.
-- Iyzico sandbox ödeme callback doğrulanmış.
+- banka ödeme sandbox ödeme callback doğrulanmış.
 - Audit event oluştuğu doğrulanmış.

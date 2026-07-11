@@ -585,8 +585,8 @@
     }
   }
 
-  async function invokeIyzicoCheckout(orderId, buyer) {
-    const { data, error } = await client().functions.invoke(config.iyzicoFunctionName, {
+  async function invokeBankCheckout(orderId, buyer) {
+    const { data, error } = await client().functions.invoke(config.bankPaymentFunctionName, {
       body: { orderId, buyer }
     });
     if (error) throw error;
@@ -767,7 +767,7 @@
       clear: clearActiveCart
     },
     payments: {
-      createIyzicoCheckout: invokeIyzicoCheckout
+      createBankCheckout: invokeBankCheckout
     },
     taxi: {
       vehicleClasses: listTaxiVehicleClasses,

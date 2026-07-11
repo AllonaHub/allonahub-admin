@@ -81,7 +81,7 @@ create table if not exists public.partner_devices (
   device_type text not null default 'android_softpos'
     check (device_type in ('android_softpos', 'ios_tap_to_pay', 'physical_pos', 'qr_stand', 'web_terminal', 'taxi_terminal')),
   provider text not null default 'allonapay'
-    check (provider in ('allonapay', 'iyzico_cep_pos', 'iyzico_link', 'visa_tap_to_phone', 'mastercard_tap_on_phone', 'bank_pos', 'manual')),
+    check (provider in ('allonapay', 'bank_softpos', 'bank_payment_link', 'visa_tap_to_phone', 'mastercard_tap_on_phone', 'bank_pos', 'manual')),
   capability jsonb not null default '{"qr": true, "nfc": false, "link": true}'::jsonb,
   status text not null default 'pending'
     check (status in ('pending', 'active', 'paused', 'blocked', 'retired')),
@@ -122,7 +122,7 @@ create table if not exists public.partner_payment_intents (
   channel text not null default 'qr'
     check (channel in ('qr', 'nfc', 'payment_link', 'web_pos', 'physical_pos', 'cash', 'wallet')),
   provider text not null default 'allonapay'
-    check (provider in ('allonapay', 'iyzico_checkout', 'iyzico_link', 'iyzico_cep_pos', 'visa_tap_to_phone', 'mastercard_tap_on_phone', 'bank_pos', 'manual')),
+    check (provider in ('allonapay', 'bank_checkout', 'bank_payment_link', 'bank_softpos', 'visa_tap_to_phone', 'mastercard_tap_on_phone', 'bank_pos', 'manual')),
   amount numeric(12,2) not null check (amount > 0),
   currency text not null default 'TRY',
   description text,

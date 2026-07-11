@@ -139,7 +139,7 @@ Otomatik:
 
 Manuel:
 
-- Iyzico panelinde token/conversation doğrulanır
+- banka ödeme panelinde token/conversation doğrulanır
 - ilgili sipariş/CV ödeme kaydı incelenir
 - ödeme sistemini tamamen kapatma yalnızca onayla yapılır
 
@@ -238,4 +238,4 @@ Tam iş akışı testleri için gerçek server env gerekir:
 - sipariş
 - ödeme hazırlık
 
-Bu testler `SUPABASE_SERVICE_ROLE_KEY`, iyzico keyleri ve enterprise migration production'a uygulandıktan sonra çalıştırılır.
+Bu testler `SUPABASE_SERVICE_ROLE_KEY`, banka ödeme keyleri ve enterprise migration production'a uygulandıktan sonra çalıştırılır.

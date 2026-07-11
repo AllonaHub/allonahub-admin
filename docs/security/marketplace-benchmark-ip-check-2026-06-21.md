@@ -18,7 +18,7 @@ Trendyol kullanım koşullarında site tasarımı, bilgi, görsel, Trendyol mark
 
 - Allona Shop sayfasındaki "Trendyol tarzı kategori menüsü" erişilebilirlik etiketi "Allona Shop kategori menüsü" olarak değiştirildi.
 - Platform çeviri anahtarındaki aynı rakip marka referansı Allona Shop markalı metne çevrildi.
-- Checkout akışı kart verisini AllonaHub'da toplamayan, iyzico CheckoutForm yönlendirmesine dayalı ödeme modeline bağlandı.
+- Checkout akışı kart verisini AllonaHub'da toplamayan, banka ödeme formu yönlendirmesine dayalı ödeme modeline bağlandı.
 
 ## Yayın Öncesi Kontrol Listesi
 

@@ -12,11 +12,11 @@
 - Frontend formlara ortak validasyon, local rate limit ve güvenli hata mesajı katmanı eklendi.
 - Kart bilgileri veritabanına yazılmaz; sadece format kontrolü yapılır ve ödeme oturumu Edge Function üzerinden açılır.
 - Partner ürün görseli yüklemesinde JPG/PNG/WEBP ve 5 MB sınırı eklendi.
-- Kullanıcıya Supabase/iyzico teknik hata detaylarını basan kritik yerler güvenli genel mesajlara çevrildi.
+- Kullanıcıya Supabase/Sağlayıcı teknik hata detaylarını basan kritik yerler güvenli genel mesajlara çevrildi.
 
 ## Secret Taraması
 
-- Repo içinde `service_role`, iyzico secret veya private key commit'i bulunmadı.
+- Repo içinde `service_role`, banka ödeme secret veya private key commit'i bulunmadı.
 - Frontend'de sadece Supabase publishable/anon key bulunur; bu gizli anahtar değildir ve RLS ile sınırlandırılmalıdır.
 - `.env.example` eklendi; gerçek secretlar yalnızca Supabase Edge Function secrets veya hosting environment variables üzerinden girilmelidir.
 
@@ -31,9 +31,9 @@ supabase/migrations/20260619110000_security_hardening.sql
 Edge Functions tekrar deploy edilmelidir:
 
 ```bash
-supabase functions deploy create-iyzico-checkout
+supabase functions deploy create-bank-checkout
 supabase functions deploy create-cv-checkout
-supabase functions deploy iyzico-callback
+supabase functions deploy bank-payment-callback
 ```
 
 ## Cloudflare Önerileri

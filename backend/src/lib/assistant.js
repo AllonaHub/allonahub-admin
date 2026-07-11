@@ -368,7 +368,7 @@ const CORE_TOPICS = [
     key: "payment_checkout",
     label: "Ödeme ve sepet",
     confidence: 0.84,
-    terms: ["ödeme", "odeme", "sepet", "checkout", "kart", "iyzico", "fatura", "satın al", "satin al"],
+    terms: ["ödeme", "odeme", "sepet", "checkout", "kart", "Sağlayıcı", "fatura", "satın al", "satin al"],
     link: "cart",
     actions: [
       { label: "Sepet", link: "cart" },

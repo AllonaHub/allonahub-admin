@@ -103,9 +103,9 @@ Gerçek secretlar yalnızca bu dosyada tutulur:
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-IYZICO_API_KEY
-IYZICO_SECRET_KEY
-IYZICO_BASE_URL
+BANK_PAYMENT_API_KEY
+BANK_PAYMENT_SECRET_KEY
+BANK_PAYMENT_API_URL
 PAYMENT_PROVIDER_REFUND_WEBHOOK_URL
 PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET
 PAYMENT_PROVIDER_NATIVE_REFUNDS_ENABLED=false
@@ -165,8 +165,8 @@ curl https://api.allonahub.com/health
 - `GET /health`
 - `GET /ready`
 - `POST /v1/orders`
-- `POST /v1/payments/iyzico/checkout`
-- `GET|POST /v1/payments/iyzico/callback`
+- `POST /v1/payments/bank/checkout`
+- `GET|POST /v1/payments/bank/callback`
 - `POST /v1/cv/checkout`
 - `GET /v1/partner/commission/preview`
 - `GET /v1/partner/integrations`

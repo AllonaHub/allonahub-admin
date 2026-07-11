@@ -46,7 +46,7 @@
     if ($("[data-pay-description]")) {
       $("[data-pay-description]").textContent = payment === "paid"
         ? "Ödemeniz başarıyla işlendi. Dijital fiş ve işlem kaydı partner paneline yansıtıldı."
-        : "Bilgilerinizi girip güvenli iyzico ödeme ekranına devam edin.";
+        : "Bilgilerinizi girip güvenli banka ödeme ekranına devam edin.";
     }
     if ($("[data-pay-partner]")) $("[data-pay-partner]").textContent = partner;
     if ($("[data-pay-amount]")) $("[data-pay-amount]").textContent = amount ? core.money(amount) : "-";

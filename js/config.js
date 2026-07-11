@@ -15,7 +15,8 @@
       templateId: "template_i7xzsya",
       publicKey: "j_8unIhsqi5PEVebP"
     },
-    iyzicoFunctionName: "create-iyzico-checkout",
+    bankPaymentFunctionName: "create-bank-checkout",
+    bankPaymentAllowedHosts: ["api.allonahub.com", "allonahub.com", "bank.example.com", "bank-api.example.com"],
     cvCheckoutFunctionName: "create-cv-checkout",
     cvPrice: 149.99,
     translationEndpoint: "",

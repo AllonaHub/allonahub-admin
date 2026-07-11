@@ -7,7 +7,7 @@
   let savedAddresses = [];
   let checkoutUser = null;
   let checkoutProfile = null;
-  const PAYMENT_HANDOFF_KEY = "allona_iyzico_checkout";
+  const PAYMENT_HANDOFF_KEY = "allona_bank_payment_checkout";
   const COUPON_WALLET_KEY = "allonahub_user_coupons_v1";
   const FIRST_HP_CONVERSION_KEY = "allonahub_first_hp_conversion_v1";
   const HP_PER_TL = 8;
@@ -324,10 +324,13 @@
     return "Sipariş oluşturulamadı. Lütfen bilgilerinizi kontrol edip tekrar deneyin.";
   }
 
-  function isTrustedIyzicoUrl(value) {
+  function isTrustedBankPaymentUrl(value) {
     try {
       const url = new URL(value);
-      return url.protocol === "https:" && (url.hostname === "iyzipay.com" || url.hostname.endsWith(".iyzipay.com"));
+      const configuredHosts = App.config?.bankPaymentAllowedHosts || [];
+      const apiHost = App.config?.apiBaseUrl ? new URL(App.config.apiBaseUrl).hostname : "";
+      const allowedHosts = new Set([...configuredHosts, apiHost].filter(Boolean));
+      return url.protocol === "https:" && allowedHosts.has(url.hostname);
     } catch (error) {
       return false;
     }
@@ -335,12 +338,12 @@
 
   function storePaymentHandoff(payment, order, currencyContext) {
     const paymentPageUrl = payment && payment.paymentPageUrl;
-    if (!paymentPageUrl || !isTrustedIyzicoUrl(paymentPageUrl)) {
-      throw new Error("iyzico güvenli ödeme bağlantısı doğrulanamadı.");
+    if (!paymentPageUrl || !isTrustedBankPaymentUrl(paymentPageUrl)) {
+      throw new Error("banka güvenli ödeme bağlantısı doğrulanamadı.");
     }
 
     const payload = {
-      provider: "iyzico",
+      provider: "bank_payment",
       orderId: order && order.id,
       orderNo: order && (order.order_number || order.order_no || order.id),
       paymentPageUrl,
@@ -555,7 +558,7 @@
         };
         let payment;
         try {
-          payment = await App.db.payments.createIyzicoCheckout(order.id, buyer);
+          payment = await App.db.payments.createBankCheckout(order.id, buyer);
         } catch (paymentError) {
           core.renderStatus("[data-checkout-status]", "Siparişiniz kaydedildi fakat güvenli ödeme oturumu açılamadı. Lütfen kısa süre sonra tekrar deneyin veya AllonaHub destek ile iletişime geçin.", "error");
           return;
@@ -565,17 +568,17 @@
           if (App.complianceAudit) {
             await App.complianceAudit.record({
               category: "payment",
-              action: "iyzico_checkout_redirect",
+              action: "bank_checkout_redirect",
               severity: "info",
               resourceType: "order",
               resourceId: order && order.id,
               evidenceTags: ["checkout", "payment_provider"],
-              metadata: { provider: "iyzico", payment_currency: currencyContext }
+              metadata: { provider: "bank_payment", payment_currency: currencyContext }
             });
           }
           App.cart.setItems([]);
           if (handoffStored) {
-            window.location.href = core.url("/pages/commerce/iyzico-pay.html");
+            window.location.href = core.url("/pages/commerce/bank-payment.html");
           } else {
             window.location.href = payment.paymentPageUrl;
           }

@@ -16,22 +16,22 @@ Ana işlemler:
 - `rewards`: HP/XP ve kupon merkezi kayıtları
 - `profiles`: rol ve profil bilgisi
 
-## iyzico CheckoutForm Akışı
+## banka ödeme formu Akışı
 
-iyzico dokümantasyonuna göre CheckoutForm iki ana adımdan oluşur: başlatma ve sorgulama. Başlatma isteği `paymentPageUrl` döndürür; müşteri kart bilgisini iyzico ekranında girer. Dönüşte gelen `token` ile ödeme sonucu sorgulanır.
+Sağlayıcı dokümantasyonuna göre banka ödeme formu iki ana adımdan oluşur: başlatma ve sorgulama. Başlatma isteği `paymentPageUrl` döndürür; müşteri kart bilgisini banka ödeme ekranında girer. Dönüşte gelen `token` ile ödeme sonucu sorgulanır.
 
 Resmi dokümanlar:
 
-- https://docs.iyzico.com/odeme-metotlari/odeme-formu/cf-entegrasyonu
-- https://docs.iyzico.com/odeme-metotlari/odeme-formu/cf-entegrasyonu/cf-baslatma
-- https://docs.iyzico.com/odeme-metotlari/odeme-formu/cf-entegrasyonu/cf-sorgulama
-- https://docs.iyzico.com/on-hazirliklar/kimlik-dogrulama/hmacsha256-kimlik-dogrulama
+- https://bank.example.com/odeme-metotlari/odeme-formu/cf-entegrasyonu
+- https://bank.example.com/odeme-metotlari/odeme-formu/cf-entegrasyonu/cf-baslatma
+- https://bank.example.com/odeme-metotlari/odeme-formu/cf-entegrasyonu/cf-sorgulama
+- https://bank.example.com/on-hazirliklar/kimlik-dogrulama/hmacsha256-kimlik-dogrulama
 
-### create-iyzico-checkout
+### create-bank-checkout
 
-Konum: `supabase/functions/create-iyzico-checkout/index.ts`
+Konum: `supabase/functions/create-bank-checkout/index.ts`
 
-Bu fonksiyon ödeme oturumu başladığında `orders.payment_status = awaiting_payment` ve yeni Transaction Core alanı `orders.status = awaiting_payment` yazar. Kart bilgisi AllonaHub tarafında toplanmaz; frontend yalnızca güvenilir `iyzipay.com` alan adına ait `paymentPageUrl` değerine yönlendirir.
+Bu fonksiyon ödeme oturumu başladığında `orders.payment_status = awaiting_payment` ve yeni Transaction Core alanı `orders.status = awaiting_payment` yazar. Kart bilgisi AllonaHub tarafında toplanmaz; frontend yalnızca güvenilir banka ödeme alan adına ait `paymentPageUrl` değerine yönlendirir.
 
 İstek:
 
@@ -49,20 +49,20 @@ Yanıt:
 
 ```json
 {
-  "paymentPageUrl": "https://sandbox-cpp.iyzipay.com?token=...",
-  "checkoutFormContent": "<script>...</script>",
+  "paymentPageUrl": "https://bank.example.com/checkout?token=...",
+  "hostedPaymentContent": "<script>...</script>",
   "token": "checkout-token",
-  "provider": "iyzico"
+  "provider": "Sağlayıcı"
 }
 ```
 
-Frontend checkout başarılı yanıtı `sessionStorage` içinde kısa süreli ödeme handoff kaydı olarak saklar, `/pages/commerce/iyzico-pay.html` ara sayfasını açar ve müşteri kart bilgisini sadece iyzico CheckoutForm ekranında girer.
+Frontend checkout başarılı yanıtı `sessionStorage` içinde kısa süreli ödeme handoff kaydı olarak saklar, `/pages/commerce/bank-payment.html` ara sayfasını açar ve müşteri kart bilgisini sadece banka ödeme formu ekranında girer.
 
-### iyzico-callback
+### bank-payment-callback
 
-Konum: `supabase/functions/iyzico-callback/index.ts`
+Konum: `supabase/functions/bank-payment-callback/index.ts`
 
-iyzico dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status`, `orders.order_status`, `orders.status` alanlarını günceller. Ödeme başarılıysa sipariş `paid`, başarısızsa `failed/pending` durumuna alınır. Ürün siparişi dönüşü kullanıcıyı `/pages/commerce/order-success.html?payment=...&id=...` sonucuna yönlendirir.
+Sağlayıcı dönüşünde `token` alır, CF sorgulama isteğini yapar ve `orders.payment_status`, `orders.order_status`, `orders.status` alanlarını günceller. Ödeme başarılıysa sipariş `paid`, başarısızsa `failed/pending` durumuna alınır. Ürün siparişi dönüşü kullanıcıyı `/pages/commerce/order-success.html?payment=...&id=...` sonucuna yönlendirir.
 
 ## Transaction Core RPC
 
@@ -88,8 +88,8 @@ Sepet RPC'leri:
 ## Güvenlik
 
 - Kart verisi Allona tarafında toplanmaz.
-- iyzico API key ve secret sadece Supabase Edge Function secret olarak tutulur.
-- Hetzner backend kullanımında iyzico API key, iyzico secret ve Supabase service role key sadece sunucu environment içinde tutulur.
+- banka ödeme API key ve secret sadece Supabase Edge Function secret olarak tutulur.
+- Hetzner backend kullanımında banka ödeme API key, banka ödeme secret ve Supabase service role key sadece sunucu environment içinde tutulur.
 - Supabase anon key frontend için kullanılır; service role key asla frontend'e konmaz.
 - RLS kapatılmaz.
 
@@ -106,8 +106,8 @@ Endpointler:
 - `GET /health`: API sağlık kontrolü.
 - `GET /ready`: Supabase bağlantı hazırlık kontrolü.
 - `POST /v1/orders`: Auth zorunlu, güvenli sipariş oluşturma RPC'sini çağırır.
-- `POST /v1/payments/iyzico/checkout`: Auth zorunlu, sipariş için iyzico ödeme oturumu başlatır.
-- `GET|POST /v1/payments/iyzico/callback`: iyzico dönüşünü işler.
+- `POST /v1/payments/bank/checkout`: Auth zorunlu, sipariş için banka ödeme oturumu başlatır.
+- `GET|POST /v1/payments/bank/callback`: Sağlayıcı dönüşünü işler.
 - `POST /v1/cv/checkout`: Auth zorunlu, CV ödeme oturumu başlatır.
 - `GET /v1/partner/commission/preview`: Partner/admin komisyon önizleme.
 - `GET /v1/partner/integrations`: Partner connector kataloğu, bağlantılar ve son senkron logları.

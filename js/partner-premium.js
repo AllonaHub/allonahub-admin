@@ -2,7 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
   const CHECKOUT_KEY = "allona_partner_premium_checkout";
-  const IYZICO_HANDOFF_KEY = "allona_iyzico_checkout";
+  const BANK_PAYMENT_HANDOFF_KEY = "allona_bank_checkout";
 
   const PLANS = {
     launch: {
@@ -112,7 +112,10 @@
   function trustedPaymentUrl(value) {
     try {
       const url = new URL(value);
-      return url.protocol === "https:" && (url.hostname === "iyzipay.com" || url.hostname.endsWith(".iyzipay.com"));
+      const configuredHosts = App.config?.bankPaymentAllowedHosts || [];
+      const apiHost = App.config?.apiBaseUrl ? new URL(App.config.apiBaseUrl).hostname : "";
+      const allowedHosts = new Set([...configuredHosts, apiHost].filter(Boolean));
+      return url.protocol === "https:" && allowedHosts.has(url.hostname);
     } catch (error) {
       return false;
     }
@@ -123,14 +126,14 @@
     const handoff = writeCheckout(plan, "premium_plan_card");
     const remote = await startRemoteCheckout(plan);
     if (remote?.paymentPageUrl && trustedPaymentUrl(remote.paymentPageUrl)) {
-      sessionStorage.setItem(IYZICO_HANDOFF_KEY, JSON.stringify({
+      sessionStorage.setItem(BANK_PAYMENT_HANDOFF_KEY, JSON.stringify({
         paymentPageUrl: remote.paymentPageUrl,
         orderNo: remote.orderNo || `PREMIUM-${plan.key.toUpperCase()}`,
         displayTotal: money(plan.price),
         displayCurrency: "TRY",
         expiresAt: Date.now() + 15 * 60 * 1000
       }));
-      window.location.href = "../commerce/iyzico-pay.html";
+      window.location.href = "../commerce/bank-payment.html";
       return;
     }
     sessionStorage.setItem(CHECKOUT_KEY, JSON.stringify({
@@ -162,7 +165,7 @@
     const summary = document.querySelector("[data-premium-checkout-summary]");
     if (title) title.textContent = `${payload.plan_name || fallbackPlan.name} seçildi`;
     if (copy) {
-      copy.textContent = "Gerçek ödeme sağlayıcı anahtarları aktif edildiğinde bu adım otomatik olarak güvenli iyzico ödeme ekranına aktaracak. Şu an paket seçimi ve checkout payload'u hazır tutuluyor.";
+      copy.textContent = "Gerçek ödeme sağlayıcı anahtarları aktif edildiğinde bu adım otomatik olarak güvenli banka ödeme ekranına aktaracak. Şu an paket seçimi ve checkout payload'u hazır tutuluyor.";
     }
     if (summary) summary.innerHTML = checkoutSummary(payload);
   }

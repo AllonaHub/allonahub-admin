@@ -81,13 +81,13 @@ async function hmacSha256Hex(payload: string, secret: string) {
     .join("");
 }
 
-async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: string, body: string) {
+async function bankPaymentAuthorization(apiKey: string, secretKey: string, uriPath: string, body: string) {
   const randomKey = `${Date.now()}${crypto.getRandomValues(new Uint32Array(1))[0]}`;
   const signature = await hmacSha256Hex(`${randomKey}${uriPath}${body}`, secretKey);
   const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${signature}`;
   return {
     randomKey,
-    authorization: `IYZWSv2 ${btoa(authorizationString)}`
+    authorization: `AllonaPay ${btoa(authorizationString)}`
   };
 }
 
@@ -104,10 +104,10 @@ Deno.serve(async (req) => {
     if (contentLength > 20000) return json(req, { error: "Request body is too large" }, 413);
     const supabaseUrl = env("SUPABASE_URL");
     const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
-    const apiKey = env("IYZICO_API_KEY");
-    const secretKey = env("IYZICO_SECRET_KEY");
-    const iyzicoBaseUrl = Deno.env.get("IYZICO_BASE_URL") || "https://sandbox-api.iyzipay.com";
-    const callbackUrlBase = Deno.env.get("IYZICO_CALLBACK_URL") || `${supabaseUrl}/functions/v1/iyzico-callback`;
+    const apiKey = env("BANK_PAYMENT_API_KEY");
+    const secretKey = env("BANK_PAYMENT_SECRET_KEY");
+    const bankPaymentBaseUrl = Deno.env.get("BANK_PAYMENT_API_URL") || "https://bank-api.example.com";
+    const callbackUrlBase = Deno.env.get("BANK_PAYMENT_CALLBACK_URL") || `${supabaseUrl}/functions/v1/bank-payment-callback`;
 
     const admin = createClient(supabaseUrl, serviceKey);
     const authHeader = req.headers.get("Authorization") || "";
@@ -147,10 +147,10 @@ Deno.serve(async (req) => {
     };
     const billing = order.billing_address || shipping;
     const { name, surname } = splitName(order.customer_name);
-    const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
+    const uriPath = "/payments/checkout";
     const callbackUrl = `${callbackUrlBase}?orderId=${encodeURIComponent(order.id)}`;
 
-    const iyzicoPayload = {
+    const bankPaymentPayload = {
       locale: "tr",
       conversationId: order.id,
       price: amount(order.subtotal),
@@ -201,13 +201,13 @@ Deno.serve(async (req) => {
       })
     };
 
-    const body = JSON.stringify(iyzicoPayload);
-    const auth = await iyzicoAuthorization(apiKey, secretKey, uriPath, body);
-    const response = await fetch(`${iyzicoBaseUrl}${uriPath}`, {
+    const body = JSON.stringify(bankPaymentPayload);
+    const auth = await bankPaymentAuthorization(apiKey, secretKey, uriPath, body);
+    const response = await fetch(`${bankPaymentBaseUrl}${uriPath}`, {
       method: "POST",
       headers: {
         "Authorization": auth.authorization,
-        "x-iyzi-rnd": auth.randomKey,
+        "x-allona-rnd": auth.randomKey,
         "Content-Type": "application/json"
       },
       body
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
         status: "pending",
         order_status: "pending"
       });
-      console.error("iyzico checkout failed", { orderId: order.id, result });
+      console.error("bank checkout failed", { orderId: order.id, result });
       return json(req, { error: "Ödeme oturumu başlatılamadı." }, 400);
     }
 
@@ -232,12 +232,12 @@ Deno.serve(async (req) => {
 
     return json(req, {
       paymentPageUrl: result.paymentPageUrl,
-      checkoutFormContent: result.checkoutFormContent || null,
+      hostedPaymentContent: result.hostedPaymentContent || null,
       token: result.token,
-      provider: "iyzico"
+      provider: "bank_payment"
     });
   } catch (error) {
-    console.error("create-iyzico-checkout failed", error);
+    console.error("create-bank-checkout failed", error);
     return json(req, { error: "Ödeme işlemi şu anda başlatılamadı." }, 500);
   }
 });

@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
-  const STORAGE_KEY = "allona_iyzico_checkout";
+  const STORAGE_KEY = "allona_bank_payment_checkout";
 
   function readSession() {
     try {
@@ -11,10 +11,13 @@
     }
   }
 
-  function isTrustedIyzicoUrl(value) {
+  function isTrustedBankPaymentUrl(value) {
     try {
       const url = new URL(value);
-      return url.protocol === "https:" && (url.hostname === "iyzipay.com" || url.hostname.endsWith(".iyzipay.com"));
+      const configuredHosts = App.config?.bankPaymentAllowedHosts || [];
+      const apiHost = App.config?.apiBaseUrl ? new URL(App.config.apiBaseUrl).hostname : "";
+      const allowedHosts = new Set([...configuredHosts, apiHost].filter(Boolean));
+      return url.protocol === "https:" && allowedHosts.has(url.hostname);
     } catch (error) {
       return false;
     }
@@ -34,13 +37,13 @@
   }
 
   function init() {
-    if (!document.querySelector("[data-page='iyzico-pay']")) return;
+    if (!document.querySelector("[data-page='bank-payment']")) return;
     const session = readSession();
     const paymentUrl = session.paymentPageUrl;
     const meta = document.querySelector("[data-payment-handoff-meta]");
     const button = document.querySelector("[data-payment-continue]");
 
-    if (!paymentUrl || !isTrustedIyzicoUrl(paymentUrl)) {
+    if (!paymentUrl || !isTrustedBankPaymentUrl(paymentUrl)) {
       renderError("Güvenli ödeme oturumu bulunamadı veya doğrulanamadı. Lütfen checkout adımından tekrar deneyin.");
       return;
     }
@@ -54,7 +57,7 @@
     if (meta) {
       meta.innerHTML = `
         <span>Sipariş: <strong>${core.escapeHTML(session.orderNo || session.orderId || "-")}</strong></span>
-        <span>Sağlayıcı: <strong>iyzico CheckoutForm</strong></span>
+        <span>Sağlayıcı: <strong>Banka ödeme formu</strong></span>
         ${session.displayTotal ? `<span>Gösterilen fiyat: <strong>${core.escapeHTML(session.displayTotal)} (${core.escapeHTML(session.displayCurrency || "-")})</strong></span>` : ""}
         ${session.settlementTotal ? `<span>Tahsil edilecek: <strong>${core.escapeHTML(session.settlementTotal)} (${core.escapeHTML(session.settlementCurrency || "TRY")})</strong></span>` : ""}
       `;

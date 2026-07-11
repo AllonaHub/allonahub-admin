@@ -29,7 +29,7 @@ Each order/payment intent should persist:
 
 - Confirm which currencies each provider supports in production.
 - Keep TRY as fallback for unsupported currencies.
-- For iyzico, verify whether non-TRY checkout is contractually and technically enabled for the merchant account.
+- For Sağlayıcı, verify whether non-TRY checkout is contractually and technically enabled for the merchant account.
 - Add provider-level currency allowlists before enabling live foreign-currency capture.
 
 ## Backend Flow

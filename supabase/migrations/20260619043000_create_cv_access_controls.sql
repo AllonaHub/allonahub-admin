@@ -44,7 +44,7 @@ create table if not exists public.cv_payments (
   amount numeric(12,2) not null default 149.99 check (amount >= 0),
   currency text not null default 'TRY',
   status public.payment_status not null default 'pending',
-  iyzico_token text,
+  provider_reference text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

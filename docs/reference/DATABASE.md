@@ -204,7 +204,7 @@ Akıllı CV üretiminde kullanıcı formu doldurabilir; kısıtlama sadece CV/PD
 - `cv_device_accounts`: cihaz anahtarı ile kullanıcı eşleşmesini tutar.
 - `cv_access_accounts`: kullanıcı başına ücretsiz hak, kullanılan hak, ücretli kredi ve risk durumunu tutar.
 - `cv_generations`: her başarılı CV/PDF üretimini kayıt altına alır.
-- `cv_payments`: CV üretim kredisi için iyzico ödeme kayıtlarını tutar.
+- `cv_payments`: CV üretim kredisi için banka ödeme kayıtlarını tutar.
 - `admin_notifications`: admin paneline düşen riskli profil ve cihaz bildirimlerini tutar.
 
 İş kuralı:

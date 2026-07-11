@@ -42,7 +42,7 @@
     "cart.html": "/pages/commerce/cart.html",
     "checkout.html": "/pages/commerce/guvenli-odeme.html",
     "guvenli-odeme.html": "/pages/commerce/guvenli-odeme.html",
-    "iyzico-pay.html": "/pages/commerce/iyzico-pay.html",
+    "bank-payment.html": "/pages/commerce/bank-payment.html",
     "kopunlar.html": "/pages/commerce/kuponlar.html",
     "kuponlar.html": "/pages/commerce/kuponlar.html",
     "ode.html": "/pages/commerce/odeme.html",

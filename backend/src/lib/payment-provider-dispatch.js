@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { config } from "../config.js";
-import { iyzicoCancelPayload, iyzicoPost, iyzicoRefundPayload } from "./iyzico.js";
+import { bankCancelPayload, bankPaymentPost, bankRefundPayload } from "./bank-payment-provider.js";
 
 function amount(value) {
   return Number(Number(value || 0).toFixed(2));
@@ -26,7 +26,7 @@ function publicOrder(order = {}) {
     currency: order.currency || "TRY",
     order_status: order.order_status || order.status || null,
     payment_status: order.payment_status || null,
-    payment_provider: order.payment_provider || order.provider || "iyzico_checkout",
+    payment_provider: order.payment_provider || order.provider || "bank_checkout",
     provider_reference: order.payment_provider_reference || order.provider_reference || null,
     paid_at: order.paid_at || null
   };
@@ -75,12 +75,12 @@ function providerReference(order = {}, context = {}) {
   return {
     payment_id: context.payment_id || order.payment_provider_reference || order.provider_reference || null,
     payment_transaction_id: context.payment_transaction_id || order.payment_transaction_id || null,
-    provider: context.provider || order.payment_provider || order.provider || "iyzico_checkout",
+    provider: context.provider || order.payment_provider || order.provider || "bank_checkout",
     source: context.source || (order.payment_provider_reference ? "orders" : "unknown")
   };
 }
 
-async function notifyIyzicoNative({ action, order, context, reason, ip }) {
+async function notifyBankPaymentNative({ action, order, context, reason, ip }) {
   const ref = providerReference(order, context);
   if (!["approve_refund", "approve_cancellation"].includes(action)) {
     return { configured: true, sent: false, skipped: true, code: "NATIVE_NOT_REQUIRED" };
@@ -93,7 +93,7 @@ async function notifyIyzicoNative({ action, order, context, reason, ip }) {
     if (!ref.payment_transaction_id) {
       return { configured: true, sent: false, skipped: true, code: "MISSING_PAYMENT_TRANSACTION_ID" };
     }
-    const payload = iyzicoRefundPayload({
+    const payload = bankRefundPayload({
       conversationId: order.id,
       paymentTransactionId: ref.payment_transaction_id,
       price: order.total || order.grand_total || 0,
@@ -101,11 +101,11 @@ async function notifyIyzicoNative({ action, order, context, reason, ip }) {
       ip,
       description: reason
     });
-    const response = await iyzicoPost("/payment/refund", payload);
+    const response = await bankPaymentPost(config.bankPayment.refundPath, payload);
     return {
       configured: true,
       sent: response.ok && response.result?.status === "success",
-      provider: "iyzico",
+      provider: "bank_payment",
       operation: "refund",
       status: response.status,
       result: response.result,
@@ -116,16 +116,16 @@ async function notifyIyzicoNative({ action, order, context, reason, ip }) {
   if (!ref.payment_id) {
     return { configured: true, sent: false, skipped: true, code: "MISSING_PAYMENT_ID" };
   }
-  const payload = iyzicoCancelPayload({
+  const payload = bankCancelPayload({
     conversationId: order.id,
     paymentId: ref.payment_id,
     ip
   });
-  const response = await iyzicoPost("/payment/cancel", payload);
+  const response = await bankPaymentPost(config.bankPayment.cancelPath, payload);
   return {
     configured: true,
     sent: response.ok && response.result?.status === "success",
-    provider: "iyzico",
+    provider: "bank_payment",
     operation: "cancel",
     status: response.status,
     result: response.result,
@@ -138,7 +138,7 @@ export function paymentProviderDispatchStatus() {
     webhook_configured: Boolean(config.paymentProvider.refundWebhookUrl),
     webhook_signed: Boolean(config.paymentProvider.refundWebhookSecret),
     native_refunds_enabled: Boolean(config.paymentProvider.nativeRefundsEnabled),
-    iyzico_configured: Boolean(config.iyzico.apiKey && config.iyzico.secretKey && config.iyzico.baseUrl)
+    bank_payment_configured: Boolean(config.bankPayment.apiKey && config.bankPayment.secretKey && config.bankPayment.baseUrl)
   };
 }
 
@@ -158,23 +158,23 @@ export async function notifyPaymentProviderRefundCancellation({ action, order, c
     api: config.apiUrl
   };
 
-  const [webhook, iyzico] = await Promise.all([
+  const [webhook, bankPayment] = await Promise.all([
     postJson(
       config.paymentProvider.refundWebhookUrl,
       payload,
       config.paymentProvider.refundWebhookSecret,
       config.paymentProvider.refundWebhookTimeoutMs
     ),
-    notifyIyzicoNative({ action, order, context, reason, ip })
+    notifyBankPaymentNative({ action, order, context, reason, ip })
   ]);
 
   return {
-    ok: Boolean(webhook.sent || iyzico.sent),
+    ok: Boolean(webhook.sent || bankPayment.sent),
     status: paymentProviderDispatchStatus(),
     payload,
     channels: {
       webhook,
-      iyzico
+      bankPayment
     }
   };
 }

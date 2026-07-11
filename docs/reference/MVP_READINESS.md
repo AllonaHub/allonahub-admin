@@ -9,7 +9,7 @@ AllonaHub halka açık açılışına yalnızca aşağıdaki sistemler çalış�
 3. Kullanıcı Paneli
 4. Partner Paneli
 5. Sipariş Sistemi
-6. iyzico Ödeme Sistemi
+6. Sağlayıcı Ödeme Sistemi
 7. HP / Kupon Sistemi
 8. Finans ve Komisyon Merkezi
 9. Bildirim Sistemi
@@ -26,7 +26,7 @@ Bu çalışma Transaction Core MVP katmanını kurar:
 - Kullanıcı Kupon Merkezi.
 - Admin sipariş, kupon ve HP/XP ekranları.
 - Partner sipariş kalemi görünümü ve sınırlı durum güncelleme akışı.
-- iyzico ödeme başlatma/callback durumlarının yeni sipariş alanlarıyla uyumu.
+- banka ödeme başlatma/callback durumlarının yeni sipariş alanlarıyla uyumu.
 
 ## Canlı Açılış Öncesi Zorunlu Testler
 
@@ -37,8 +37,8 @@ Bu çalışma Transaction Core MVP katmanını kurar:
 - Kupon süresi, kullanım limiti ve minimum sepet tutarı doğru çalışmalı.
 - HP indirimi günlük/sipariş limitlerine uymalı ve toplamı negatif yapmamalı.
 - Sipariş oluşunca aktif sepet `completed` olmalı.
-- iyzico ödeme başlatma sayfası açılmalı; kart bilgisi yalnız iyzico ekranında girilmeli.
-- iyzico callback başarılı ödemede siparişi `paid`, başarısız ödemede `failed/pending` yapmalı.
+- banka ödeme başlatma sayfası açılmalı; kart bilgisi yalnız banka ödeme ekranında girilmeli.
+- banka ödeme callback başarılı ödemede siparişi `paid`, başarısız ödemede `failed/pending` yapmalı.
 - Partner sadece kendi sipariş kalemlerini görmeli.
 - Partner sadece `preparing`, `shipped`, `delivered` durumlarına güncelleyebilmeli.
 - Admin tüm siparişleri görmeli, fraud/status/admin note alanlarını yönetebilmeli.

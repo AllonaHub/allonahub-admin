@@ -34,7 +34,7 @@ import {
   supabaseAdmin,
   supabasePublic
 } from "../lib/supabase.js";
-import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
+import { cvCheckoutPayload, bankPaymentPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/bank-payment-provider.js";
 import {
   PRODUCT_REVISION_DEFAULT_NOTICE,
   marketplacePlatformPattern,
@@ -186,9 +186,9 @@ const partnerPaymentIntentSchema = z.object({
   channel: z.enum(["qr", "nfc", "payment_link", "web_pos", "physical_pos", "cash", "wallet"]).default("qr"),
   provider: z.enum([
     "allonapay",
-    "iyzico_checkout",
-    "iyzico_link",
-    "iyzico_cep_pos",
+    "bank_checkout",
+    "bank_payment_link",
+    "bank_softpos",
     "visa_tap_to_phone",
     "mastercard_tap_on_phone",
     "bank_pos",
@@ -6208,9 +6208,9 @@ async function getOrderForPayment(orderId, ctx) {
   return order;
 }
 
-async function initializeIyzicoCheckout({ order, ctx, request }) {
-  const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
-  const callbackUrl = `${config.apiUrl}/v1/payments/iyzico/callback?orderId=${encodeURIComponent(order.id)}`;
+async function initializeBankCheckout({ order, ctx, request }) {
+  const uriPath = config.bankPayment.checkoutPath;
+  const callbackUrl = `${config.apiUrl}/v1/payments/bank/callback?orderId=${encodeURIComponent(order.id)}`;
   const payload = orderCheckoutPayload({
     order,
     userId: ctx.user.id,
@@ -6218,10 +6218,10 @@ async function initializeIyzicoCheckout({ order, ctx, request }) {
     ip: clientIp(request)
   });
 
-  const { ok, result } = await iyzicoPost(uriPath, payload);
+  const { ok, result } = await bankPaymentPost(uriPath, payload);
   if (!ok || result.status !== "success") {
     await supabaseAdmin.from("orders").update({ payment_status: "failed" }).eq("id", order.id);
-    request.log.warn({ orderId: order.id, iyzicoStatus: result.status }, "iyzico checkout failed");
+    request.log.warn({ orderId: order.id, bankPaymentStatus: result.status }, "bank checkout failed");
     const error = new Error("Ödeme oturumu başlatılamadı.");
     error.statusCode = 400;
     throw error;
@@ -6238,9 +6238,9 @@ async function initializeIyzicoCheckout({ order, ctx, request }) {
   };
 }
 
-async function queryIyzicoCheckoutDetail(token, conversationId) {
-  const uriPath = "/payment/iyzipos/checkoutform/auth/ecom/detail";
-  return iyzicoPost(uriPath, {
+async function queryBankCheckoutDetail(token, conversationId) {
+  const uriPath = config.bankPayment.detailPath;
+  return bankPaymentPost(uriPath, {
     locale: "tr",
     conversationId,
     token
@@ -6262,11 +6262,11 @@ function publicPaymentBaseUrl(request) {
 
 function partnerProviderForChannel(channel, provider) {
   if (provider) return provider;
-  if (channel === "nfc") return "iyzico_cep_pos";
-  if (channel === "payment_link") return "iyzico_link";
+  if (channel === "nfc") return "bank_softpos";
+  if (channel === "payment_link") return "bank_payment_link";
   if (channel === "physical_pos") return "bank_pos";
   if (channel === "cash") return "manual";
-  return "iyzico_checkout";
+  return "bank_checkout";
 }
 
 function partnerPaymentStatusLabel(status) {
@@ -7484,7 +7484,7 @@ async function updateOrderPaymentFields(orderId, payload) {
 
   if (!looksLikeMissingSchema(error)) throw error;
   const legacyPayload = { ...payload };
-  delete legacyPayload.iyzico_token;
+  delete legacyPayload.provider_reference;
   delete legacyPayload.payment_provider_reference;
   delete legacyPayload.paid_at;
   const { error: legacyError } = await supabaseAdmin
@@ -9544,12 +9544,12 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, order: data });
   });
 
-  app.post("/v1/payments/iyzico/checkout", async (request) => {
+  app.post("/v1/payments/bank/checkout", async (request) => {
     assertPaymentsEnabled();
     const ctx = await requireAuth(request, { action: "payment.checkout", mfa: true });
     const payload = orderCheckoutSchema.parse(request.body || {});
     const order = await getOrderForPayment(payload.orderId, ctx);
-    const checkout = await initializeIyzicoCheckout({ order, ctx, request });
+    const checkout = await initializeBankCheckout({ order, ctx, request });
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -9557,7 +9557,7 @@ export function registerRoutes(app) {
       action: "payment.checkout_initialized",
       resourceType: "order",
       resourceId: order.id,
-      metadata: { provider: "iyzico", amount: Number(order.total_amount ?? order.total ?? 0) }
+      metadata: { provider: "bank_payment", amount: Number(order.total_amount ?? order.total ?? 0) }
     });
     return { ok: true, ...checkout };
   });
@@ -9586,8 +9586,8 @@ export function registerRoutes(app) {
       throw httpError("NFC ödeme sertifikalı SoftPOS cihazında tamamlanmalıdır.", 409);
     }
 
-    const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
-    const callbackUrl = `${config.apiUrl}/v1/payments/iyzico/callback?partnerPaymentIntentId=${encodeURIComponent(intent.id)}`;
+    const uriPath = config.bankPayment.checkoutPath;
+    const callbackUrl = `${config.apiUrl}/v1/payments/bank/callback?partnerPaymentIntentId=${encodeURIComponent(intent.id)}`;
     const checkoutPayload = partnerPaymentIntentCheckoutPayload({
       intent,
       business: intent.partner,
@@ -9595,7 +9595,7 @@ export function registerRoutes(app) {
       callbackUrl,
       ip: clientIp(request)
     });
-    const { ok, result } = await iyzicoPost(uriPath, checkoutPayload);
+    const { ok, result } = await bankPaymentPost(uriPath, checkoutPayload);
     if (!ok || result.status !== "success") {
       await supabaseAdmin
         .from("partner_payment_intents")
@@ -9607,7 +9607,7 @@ export function registerRoutes(app) {
         resourceType: "partner_payment_intent",
         resourceId: intent.id,
         severity: "warning",
-        metadata: { provider: "iyzico", provider_status: result.status || "unknown" }
+        metadata: { provider: "bank_payment", provider_status: result.status || "unknown" }
       });
       throw httpError("Ödeme sayfası başlatılamadı.", 400);
     }
@@ -9616,7 +9616,7 @@ export function registerRoutes(app) {
       .from("partner_payment_intents")
       .update({
         status: "awaiting_payment",
-        provider: "iyzico_checkout",
+        provider: "bank_checkout",
         provider_reference: result.token || null,
         provider_status: result.status || "initialized",
         payment_url: result.paymentPageUrl || intent.payment_url,
@@ -9632,12 +9632,12 @@ export function registerRoutes(app) {
       action: "partner.public_checkout_initialized",
       resourceType: "partner_payment_intent",
       resourceId: intent.id,
-      metadata: { provider: "iyzico", amount: Number(intent.amount || 0), channel: intent.channel }
+      metadata: { provider: "bank_payment", amount: Number(intent.amount || 0), channel: intent.channel }
     });
     return { ok: true, paymentPageUrl: result.paymentPageUrl, token: result.token };
   });
 
-  app.all("/v1/payments/iyzico/callback", async (request, reply) => {
+  app.all("/v1/payments/bank/callback", async (request, reply) => {
     assertPaymentsEnabled();
     const payload = await bodyOrQuery(request);
     const token = String(payload.token || "").trim();
@@ -9651,7 +9651,7 @@ export function registerRoutes(app) {
         action: "payment.callback_invalid",
         severity: "critical",
         metadata: {
-          provider: "iyzico",
+          provider: "bank_payment",
           has_order_id: Boolean(orderId),
           has_cv_payment_id: Boolean(cvPaymentId),
           has_partner_payment_intent_id: Boolean(partnerPaymentIntentId)
@@ -9660,7 +9660,7 @@ export function registerRoutes(app) {
       return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
     }
 
-    const { ok, result } = await queryIyzicoCheckoutDetail(token, partnerPaymentIntentId || cvPaymentId || orderId || token);
+    const { ok, result } = await queryBankCheckoutDetail(token, partnerPaymentIntentId || cvPaymentId || orderId || token);
     const paymentStatus = ok && result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
     await auditEvent({
       request,
@@ -9669,7 +9669,7 @@ export function registerRoutes(app) {
       resourceId: partnerPaymentIntentId || cvPaymentId || orderId,
       severity: paymentStatus === "paid" ? "info" : "warning",
       metadata: {
-        provider: "iyzico",
+        provider: "bank_payment",
         provider_status: result.status || "unknown",
         payment_status: result.paymentStatus || "unknown"
       }
@@ -9686,7 +9686,7 @@ export function registerRoutes(app) {
 
       const { data: updatedPayment, error: updatePaymentError } = await supabaseAdmin
         .from("cv_payments")
-        .update({ status: paymentStatus, iyzico_token: token })
+        .update({ status: paymentStatus, provider_reference: token })
         .eq("id", cvPaymentId)
         .neq("status", "paid")
         .select("id")
@@ -9753,7 +9753,7 @@ export function registerRoutes(app) {
             order_id: intent.order_id || null,
             transaction_type: "payment",
             channel: intent.channel || "qr",
-            provider: "iyzico_checkout",
+            provider: "bank_checkout",
             gross_amount: gross,
             commission_rate: commissionRate,
             commission_amount: commissionAmount,
@@ -9761,7 +9761,7 @@ export function registerRoutes(app) {
             currency: intent.currency || "TRY",
             status: "paid",
             provider_reference: result.paymentId || token,
-            metadata: { callback: "iyzico", conversation_id: result.conversationId || intent.id }
+            metadata: { callback: "bank_payment", conversation_id: result.conversationId || intent.id }
           });
         if (transactionError && transactionError.code !== "23505") throw transactionError;
       }
@@ -9804,8 +9804,8 @@ export function registerRoutes(app) {
       .single();
     if (paymentError) throw paymentError;
 
-    const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
-    const callbackUrl = `${config.apiUrl}/v1/payments/iyzico/callback?cvPaymentId=${encodeURIComponent(payment.id)}`;
+    const uriPath = config.bankPayment.checkoutPath;
+    const callbackUrl = `${config.apiUrl}/v1/payments/bank/callback?cvPaymentId=${encodeURIComponent(payment.id)}`;
     const checkoutPayload = cvCheckoutPayload({
       payment,
       profile: { ...ctx.profile, phone: payload.buyerPhone || ctx.profile.phone },
@@ -9813,7 +9813,7 @@ export function registerRoutes(app) {
       callbackUrl,
       ip: clientIp(request)
     });
-    const { ok, result } = await iyzicoPost(uriPath, checkoutPayload);
+    const { ok, result } = await bankPaymentPost(uriPath, checkoutPayload);
     if (!ok || result.status !== "success") {
       await supabaseAdmin.from("cv_payments").update({ status: "failed" }).eq("id", payment.id);
       await auditEvent({
@@ -9824,7 +9824,7 @@ export function registerRoutes(app) {
         resourceType: "cv_payment",
         resourceId: payment.id,
         severity: "warning",
-        metadata: { provider: "iyzico", provider_status: result.status || "unknown" }
+        metadata: { provider: "bank_payment", provider_status: result.status || "unknown" }
       });
       const error = new Error("CV ödeme oturumu başlatılamadı.");
       error.statusCode = 400;
@@ -9833,7 +9833,7 @@ export function registerRoutes(app) {
 
     await supabaseAdmin
       .from("cv_payments")
-      .update({ status: "awaiting_payment", iyzico_token: result.token || null })
+      .update({ status: "awaiting_payment", provider_reference: result.token || null })
       .eq("id", payment.id);
 
     await auditEvent({
@@ -9843,7 +9843,7 @@ export function registerRoutes(app) {
       action: "cv.checkout_initialized",
       resourceType: "cv_payment",
       resourceId: payment.id,
-      metadata: { provider: "iyzico", amount: Number(payment.amount || config.cvPriceTry) }
+      metadata: { provider: "bank_payment", amount: Number(payment.amount || config.cvPriceTry) }
     });
     return { ok: true, paymentPageUrl: result.paymentPageUrl, token: result.token, cvPaymentId: payment.id };
   });

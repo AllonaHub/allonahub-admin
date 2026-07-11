@@ -143,7 +143,7 @@ function recommendationsFor(attackType) {
   ];
   if (attackType.includes("payment")) {
     return [
-      "Iyzico callback loglari provider panelinden dogrulanmali.",
+      "banka ödeme callback loglari provider panelinden dogrulanmali.",
       "Siparis payment_status ve order_status kayitlari manuel kontrol edilmeli.",
       ...common
     ];

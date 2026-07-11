@@ -136,38 +136,10 @@
       letter-spacing:.2px;
     }
 
-    .logo.iyzico{
-      min-width:104px;
+    .logo--troy{
+      color:#003f8f;
+      letter-spacing:.8px;
     }
-
-    .logo.iyzico img{
-      display:block;
-      width:92px;
-      height:auto;
-    }
-
-    .iyzico-logo--white{display:none!important}
-
-    body[data-theme="ocean"] .logo.iyzico,
-    body[data-theme="sunset"] .logo.iyzico,
-    body[data-theme="forest"] .logo.iyzico,
-    body[data-theme="turquoise"] .logo.iyzico{
-      background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
-      border:1px solid rgba(0,213,255,.24);
-    }
-
-    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--colored,
-    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--colored,
-    body[data-theme="forest"] .logo.iyzico .iyzico-logo--colored,
-    body[data-theme="turquoise"] .logo.iyzico .iyzico-logo--colored{display:none!important}
-
-    body[data-theme="ocean"] .logo.iyzico .iyzico-logo--white,
-    body[data-theme="sunset"] .logo.iyzico .iyzico-logo--white,
-    body[data-theme="forest"] .logo.iyzico .iyzico-logo--white,
-    body[data-theme="turquoise"] .logo.iyzico .iyzico-logo--white{display:block!important}
-
-    body[data-theme="white"] .logo.iyzico .iyzico-logo--colored{display:block!important}
-    body[data-theme="white"] .logo.iyzico .iyzico-logo--white{display:none!important}
 
     .logo--mastercard{
       width:58px;
@@ -243,7 +215,7 @@
         <form id="paymentForm">
           <div class="info-box">
             Kart numarası, son kullanma tarihi ve CVC bilgileri AllonaHub üzerinde toplanmaz.
-            Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca iyzico güvenli ödeme ekranında girilir.
+            Sipariş veya paket seçiminiz güvenli ödeme adımında doğrulanır; kart bilgileri yalnızca banka güvenli ödeme ekranında girilir.
           </div>
 
           <a href="guvenli-odeme.html" class="pay-btn">
@@ -251,14 +223,11 @@
           </a>
 
           <div class="secure-note">
-            Ödeme işlemleri iyzico CheckoutForm yönlendirmesi ve token doğrulamasıyla tamamlanır.
+            Ödeme işlemleri banka ödeme yönlendirmesi ve ödeme referansı doğrulamasıyla tamamlanır.
           </div>
 
           <div class="logos">
-            <div class="logo iyzico">
-              <img class="iyzico-logo iyzico-logo--colored" src="../../images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
-              <img class="iyzico-logo iyzico-logo--white" src="../../images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
-            </div>
+            <div class="logo logo--troy">TROY</div>
             <div class="logo">VISA</div>
             <div class="logo logo--mastercard" aria-label="Mastercard"></div>
             <div class="logo">AMEX</div>
@@ -293,7 +262,7 @@
 
         <div class="info-box">
           Bu sayfa eski paket bağlantıları için uyumluluk yönlendirmesidir. Gerçek güvenli ödeme
-          ve iyzico güvenli ödeme sayfasında tamamlanır.
+          ve banka güvenli ödeme sayfasında tamamlanır.
         </div>
       </aside>
 

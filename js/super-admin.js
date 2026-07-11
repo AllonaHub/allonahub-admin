@@ -2006,10 +2006,10 @@
   function providerDispatchText(dispatch) {
     if (!dispatch) return "Provider bildirimi henüz yok.";
     const webhook = dispatch.channels && dispatch.channels.webhook || {};
-    const iyzico = dispatch.channels && dispatch.channels.iyzico || {};
+    const bankPayment = dispatch.channels && dispatch.channels.bankPayment || {};
     const parts = [
       webhook.configured ? `webhook ${webhook.sent ? "gönderildi" : "başarısız"}${webhook.status ? `/${webhook.status}` : ""}` : "webhook yok",
-      iyzico.skipped ? `iyzico ${iyzico.code || "atlanmış"}` : `iyzico ${iyzico.sent ? "gönderildi" : "hazır değil"}${iyzico.status ? `/${iyzico.status}` : ""}`
+      bankPayment.skipped ? `banka ödeme ${bankPayment.code || "atlanmış"}` : `banka ödeme ${bankPayment.sent ? "gönderildi" : "hazır değil"}${bankPayment.status ? `/${bankPayment.status}` : ""}`
     ];
     return parts.join(" / ");
   }

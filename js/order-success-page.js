@@ -21,14 +21,14 @@
         className: "payment-result--success",
         title: "Ödeme Alındı",
         heading: "Siparişiniz başarıyla ödendi",
-        copy: "iyzico ödeme doğrulaması tamamlandı. Siparişinizi Hesabım > Siparişlerim alanından takip edebilirsiniz.",
+        copy: "banka ödeme doğrulaması tamamlandı. Siparişinizi Hesabım > Siparişlerim alanından takip edebilirsiniz.",
         icon: "✓"
       },
       failed: {
         className: "payment-result--failed",
         title: "Ödeme Tamamlanamadı",
         heading: "Ödeme tamamlanamadı",
-        copy: "iyzico ödeme doğrulaması başarısız döndü. Kart bilgilerinizi iyzico ekranında tekrar kontrol ederek yeni ödeme deneyebilirsiniz.",
+        copy: "banka ödeme doğrulaması başarısız döndü. Kart bilgilerinizi banka ödeme ekranında tekrar kontrol ederek yeni ödeme deneyebilirsiniz.",
         icon: "!"
       },
       pending: {

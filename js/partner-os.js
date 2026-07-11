@@ -881,9 +881,9 @@
   function providerLabel(provider) {
     const labels = {
       allonapay: "AllonaPay",
-      iyzico_checkout: "iyzico Checkout",
-      iyzico_link: "iyzico Link",
-      iyzico_cep_pos: "iyzico Cep POS",
+      bank_checkout: "Banka Checkout",
+      bank_payment_link: "Banka Ödeme Linki",
+      bank_softpos: "Banka SoftPOS",
       visa_tap_to_phone: "Visa Tap to Phone",
       mastercard_tap_on_phone: "Mastercard Tap on Phone",
       bank_pos: "Banka POS",
@@ -1204,9 +1204,9 @@
     const dispatch = item.provider_dispatch;
     if (!dispatch) return item.request_status === "approved" ? "Bildirim kaydı yok" : "Karar bekliyor";
     if (dispatch.ok) return "Ödeme kuruluşuna iletildi";
-    const iyzicoCode = dispatch.channels?.iyzico?.code;
+    const bankPaymentCode = dispatch.channels?.bankPayment?.code;
     const webhookCode = dispatch.channels?.webhook?.code;
-    return iyzicoCode || webhookCode || "Bildirim beklemede";
+    return bankPaymentCode || webhookCode || "Bildirim beklemede";
   }
 
   function refundDetailMarkup(item) {
@@ -1328,7 +1328,7 @@
     const devices = $("[data-device-list]");
     if (devices) {
       const demoDevices = state.devices.length ? state.devices : [
-        { device_label: "Android NFC SoftPOS", device_type: "android_softpos", provider: "iyzico_cep_pos", status: "pending" },
+        { device_label: "Android NFC SoftPOS", device_type: "android_softpos", provider: "bank_softpos", status: "pending" },
         { device_label: "Dinamik QR Terminal", device_type: "qr_stand", provider: "allonapay", status: "active" },
         { device_label: "Taksi Mobil Terminal", device_type: "taxi_terminal", provider: "visa_tap_to_phone", status: "pending" }
       ];
@@ -1591,7 +1591,7 @@
       id,
       partner_id: state.business?.id,
       channel,
-      provider: channel === "nfc" ? "iyzico_cep_pos" : channel === "payment_link" ? "iyzico_link" : "iyzico_checkout",
+      provider: channel === "nfc" ? "bank_softpos" : channel === "payment_link" ? "bank_payment_link" : "bank_checkout",
       amount: Number(data.amount || 0),
       currency: "TRY",
       description: data.description || "Partner ödeme isteği",

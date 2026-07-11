@@ -18,22 +18,22 @@ async function hmacSha256Hex(payload, secret) {
 
 async function authorization(uriPath, body) {
   const randomKey = `${Date.now()}${crypto.randomInt(100000, 999999999)}`;
-  const signature = await hmacSha256Hex(`${randomKey}${uriPath}${body}`, config.iyzico.secretKey);
-  const authorizationString = `apiKey:${config.iyzico.apiKey}&randomKey:${randomKey}&signature:${signature}`;
+  const signature = await hmacSha256Hex(`${randomKey}${uriPath}${body}`, config.bankPayment.secretKey);
+  const authorizationString = `apiKey:${config.bankPayment.apiKey}&randomKey:${randomKey}&signature:${signature}`;
   return {
     randomKey,
-    value: `IYZWSv2 ${Buffer.from(authorizationString).toString("base64")}`
+    value: `AllonaPay ${Buffer.from(authorizationString).toString("base64")}`
   };
 }
 
-export async function iyzicoPost(uriPath, payload) {
+export async function bankPaymentPost(uriPath, payload) {
   const body = JSON.stringify(payload);
   const auth = await authorization(uriPath, body);
-  const response = await fetch(`${config.iyzico.baseUrl}${uriPath}`, {
+  const response = await fetch(`${config.bankPayment.baseUrl}${uriPath}`, {
     method: "POST",
     headers: {
       Authorization: auth.value,
-      "x-iyzi-rnd": auth.randomKey,
+      "x-allona-rnd": auth.randomKey,
       "Content-Type": "application/json"
     },
     body
@@ -42,7 +42,7 @@ export async function iyzicoPost(uriPath, payload) {
   return { ok: response.ok, status: response.status, result };
 }
 
-export function iyzicoRefundPayload({ conversationId, paymentTransactionId, price, currency = "TRY", ip, reason = "OTHER", description = "" }) {
+export function bankRefundPayload({ conversationId, paymentTransactionId, price, currency = "TRY", ip, reason = "OTHER", description = "" }) {
   return {
     locale: "tr",
     conversationId,
@@ -55,7 +55,7 @@ export function iyzicoRefundPayload({ conversationId, paymentTransactionId, pric
   };
 }
 
-export function iyzicoCancelPayload({ conversationId, paymentId, ip }) {
+export function bankCancelPayload({ conversationId, paymentId, ip }) {
   return {
     locale: "tr",
     conversationId,

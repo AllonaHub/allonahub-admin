@@ -151,40 +151,7 @@ input:focus{border-color:#00d5ff;box-shadow:0 0 14px rgba(0,213,255,.32)}
   font-weight:950;
   box-shadow:0 12px 24px rgba(0,0,0,.18);
 }
-.brandBadge--iyzico{color:#6337ff;letter-spacing:-.2px}
-.brandBadge--iyzico{
-  min-width:104px;
-  background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
-  border-color:rgba(0,213,255,.24);
-}
-.brandBadge--iyzico img{
-  display:block;
-  width:92px;
-  height:auto;
-}
-.iyzico-logo--colored{display:none!important}
-.iyzico-logo--white{display:block!important}
-body[data-theme="white"] .brandBadge--iyzico{
-  background:#fff;
-  border-color:rgba(0,119,255,.18);
-}
-body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--colored{display:block!important}
-body[data-theme="white"] .brandBadge--iyzico .iyzico-logo--white{display:none!important}
-body[data-theme="ocean"] .brandBadge--iyzico,
-body[data-theme="sunset"] .brandBadge--iyzico,
-body[data-theme="forest"] .brandBadge--iyzico,
-body[data-theme="turquoise"] .brandBadge--iyzico{
-  background:linear-gradient(145deg,rgba(5,25,50,.94),rgba(2,8,20,.98));
-  border-color:rgba(0,213,255,.24);
-}
-body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--colored,
-body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--colored,
-body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--colored,
-body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--colored{display:none!important}
-body[data-theme="ocean"] .brandBadge--iyzico .iyzico-logo--white,
-body[data-theme="sunset"] .brandBadge--iyzico .iyzico-logo--white,
-body[data-theme="forest"] .brandBadge--iyzico .iyzico-logo--white,
-body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:block!important}
+.brandBadge--troy{color:#003f8f;letter-spacing:.8px}
 .brandBadge--visa{color:#1434cb;font-style:italic;letter-spacing:.7px}
 .brandBadge--amex{color:#006fcf;letter-spacing:.4px}
 .brandBadge--mastercard{color:#222;min-width:54px;width:58px;padding-inline:6px;font-size:0}
@@ -255,7 +222,7 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
       <p>Her hesap için 2 ücretsiz CV/PDF üretim hakkı bulunur. Haklar bittikten sonra her yeni CV üretimi için tek kullanımlık ücretli kredi alınır.</p>
       <div class="features">
         <div class="feature"><strong>Tek kullanımlık kredi</strong><p>Ödeme sonrası hesabına 1 CV üretim kredisi tanımlanır.</p></div>
-        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme altyapısı iyzico onayı sonrası doğrudan kartlı ödeme kullanımına hazırdır.</p></div>
+        <div class="feature"><strong>Güvenli ödeme</strong><p>Kart bilgileri AllonaHub üzerinde saklanmaz; ödeme banka altyapısındaki güvenli ekranda tamamlanır. Kart saklama aktif edilirse Masterpass token modeli kullanılacaktır.</p></div>
         <div class="feature"><strong>Kısıtlama yok</strong><p>Bu ödeme kuralı dışında kullanıcıya farklı bir kullanım kısıtı uygulanmaz.</p></div>
       </div>
     </article>
@@ -275,30 +242,14 @@ body[data-theme="turquoise"] .brandBadge--iyzico .iyzico-logo--white{display:blo
         <div class="cardFields">
           <div class="cardFields__head">
             <strong>Kart Bilgileri</strong>
-            <span>Güvenli ödeme</span>
+            <span>Banka ekranında girilir</span>
           </div>
-          <label for="cardHolder">Kart Üzerindeki İsim</label>
-          <input id="cardHolder" name="cardHolder" autocomplete="cc-name" placeholder="Ad Soyad" required>
-          <label for="cardNumber">Kart Numarası</label>
-          <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000" required>
-          <div class="cardRow">
-            <div>
-              <label for="cardExpiry">Son Kullanma Tarihi</label>
-              <input id="cardExpiry" name="cardExpiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="AA/YY" required>
-            </div>
-            <div>
-              <label for="cardCvc">CVC</label>
-              <input id="cardCvc" name="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="000" required>
-            </div>
-          </div>
+          <p class="secureLine">Kart numarası, son kullanma tarihi ve CVC bu sayfada alınmaz. Ödeme oturumu banka güvenli ödeme ekranında açılır.</p>
         </div>
 
         <button class="payBtn" type="submit">Ödeme Yap</button>
         <div class="paymentBrands" aria-label="Desteklenen ödeme markaları">
-          <span class="brandBadge brandBadge--iyzico">
-            <img class="iyzico-logo iyzico-logo--colored" src="../../images/payments/iyzico-pay-tr-colored-horizontal.svg" alt="iyzico ile öde">
-            <img class="iyzico-logo iyzico-logo--white" src="../../images/payments/iyzico-pay-tr-white-horizontal.svg" alt="iyzico ile öde">
-          </span>
+          <span class="brandBadge brandBadge--troy">TROY</span>
           <span class="brandBadge brandBadge--visa">VISA</span>
           <span class="brandBadge brandBadge--mastercard" aria-label="Mastercard"></span>
           <span class="brandBadge brandBadge--amex">AMEX</span>
@@ -377,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = payment.paymentPageUrl;
         return;
       }
-      throw new Error("iyzico ödeme bağlantısı alınamadı.");
+      throw new Error("Banka ödeme bağlantısı alınamadı.");
     }catch(error){
       status.textContent = error.message || "Ödeme başlatılamadı. Lütfen kısa süre sonra tekrar deneyin.";
       button.disabled = false;

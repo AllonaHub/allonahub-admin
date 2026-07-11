@@ -16,27 +16,27 @@
 
 ```bash
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
-supabase secrets set IYZICO_API_KEY="..."
-supabase secrets set IYZICO_SECRET_KEY="..."
-supabase secrets set IYZICO_BASE_URL="https://sandbox-api.iyzipay.com"
+supabase secrets set BANK_PAYMENT_API_KEY="..."
+supabase secrets set BANK_PAYMENT_SECRET_KEY="..."
+supabase secrets set BANK_PAYMENT_API_URL="https://bank-api.example.com"
 supabase secrets set SITE_URL="https://allonahub.com"
 supabase secrets set ALLOWED_ORIGINS="https://allonahub.com"
 supabase secrets set CV_PRICE_TRY="149.99"
 ```
 
-Canlı geçişte `IYZICO_BASE_URL` iyzico üretim adresine alınmalıdır.
+Canlı geçişte `BANK_PAYMENT_API_URL` banka ödeme üretim adresine alınmalıdır.
 
 ## 2. Edge Functions
 
 ```bash
-supabase functions deploy create-iyzico-checkout
+supabase functions deploy create-bank-checkout
 supabase functions deploy create-cv-checkout
-supabase functions deploy iyzico-callback
+supabase functions deploy bank-payment-callback
 ```
 
-CV ödeme akışı için `iyzico-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
+CV ödeme akışı için `bank-payment-callback` fonksiyonu hem ürün siparişi `orderId` callback'ini hem de CV ödeme `cvPaymentId` callback'ini işler. `create-cv-checkout` başarılı ödeme başlatır, callback başarılı dönerse kullanıcıya 1 ücretli CV üretim kredisi eklenir.
 
-Kartlı ödeme akışında AllonaHub e-posta, telefon, teslimat ve yasal onay bilgilerini toplar; kart numarası, son kullanma tarihi veya CVC alanı açmaz. Sipariş kaydı sonrası kullanıcı iyzico CheckoutForm `paymentPageUrl` adresine yönlendirilir; kart verisi yalnızca iyzico güvenli ödeme ekranında girilir ve dönüş `iyzico-callback` token sorgulamasıyla doğrulanır.
+Kartlı ödeme akışında AllonaHub e-posta, telefon, teslimat ve yasal onay bilgilerini toplar; kart numarası, son kullanma tarihi veya CVC alanı açmaz. Sipariş kaydı sonrası kullanıcı banka ödeme formu `paymentPageUrl` adresine yönlendirilir; kart verisi yalnızca banka güvenli ödeme ekranında girilir ve dönüş `bank-payment-callback` token sorgulamasıyla doğrulanır.
 
 ## 3. GitHub
 
@@ -112,7 +112,7 @@ Cloudflare Email Routing kullanilan modelde gelen posta MX kayitlari Cloudflare'
 - `status = active` dışındaki ürünler görünmüyor.
 - Register, login, forgot password, profile akışı çalışıyor.
 - Sepet toplamı doğru hesaplanıyor.
-- Checkout sipariş oluşturuyor ve iyzico sayfasına yönlendiriyor.
+- Checkout sipariş oluşturuyor ve banka ödeme sayfasına yönlendiriyor.
 - CV formunda ilk hesap için 2 ücretsiz CV/PDF üretim hakkı çalışıyor.
 - Aynı cihazdan ikinci veya sonraki hesap CV hakkı talep ederse admin bildiriminde riskli profil görünüyor.
 - Ücretsiz CV hakları bitince kullanıcı `/pages/career/cv-payment.html` sayfasına yönleniyor.

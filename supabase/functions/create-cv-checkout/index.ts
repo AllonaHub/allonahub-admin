@@ -60,13 +60,13 @@ async function hmacSha256Hex(payload: string, secret: string) {
     .join("");
 }
 
-async function iyzicoAuthorization(apiKey: string, secretKey: string, uriPath: string, body: string) {
+async function bankPaymentAuthorization(apiKey: string, secretKey: string, uriPath: string, body: string) {
   const randomKey = `${Date.now()}${crypto.getRandomValues(new Uint32Array(1))[0]}`;
   const signature = await hmacSha256Hex(`${randomKey}${uriPath}${body}`, secretKey);
   const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${signature}`;
   return {
     randomKey,
-    authorization: `IYZWSv2 ${btoa(authorizationString)}`
+    authorization: `AllonaPay ${btoa(authorizationString)}`
   };
 }
 
@@ -83,10 +83,10 @@ Deno.serve(async (req) => {
     if (contentLength > 12000) return json(req, { error: "Request body is too large" }, 413);
     const supabaseUrl = env("SUPABASE_URL");
     const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
-    const apiKey = env("IYZICO_API_KEY");
-    const secretKey = env("IYZICO_SECRET_KEY");
-    const iyzicoBaseUrl = Deno.env.get("IYZICO_BASE_URL") || "https://sandbox-api.iyzipay.com";
-    const callbackUrlBase = Deno.env.get("IYZICO_CALLBACK_URL") || `${supabaseUrl}/functions/v1/iyzico-callback`;
+    const apiKey = env("BANK_PAYMENT_API_KEY");
+    const secretKey = env("BANK_PAYMENT_SECRET_KEY");
+    const bankPaymentBaseUrl = Deno.env.get("BANK_PAYMENT_API_URL") || "https://bank-api.example.com";
+    const callbackUrlBase = Deno.env.get("BANK_PAYMENT_CALLBACK_URL") || `${supabaseUrl}/functions/v1/bank-payment-callback`;
     const cvPrice = amount(Deno.env.get("CV_PRICE_TRY") || "149.99");
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -137,10 +137,10 @@ Deno.serve(async (req) => {
     if (paymentError) throw paymentError;
 
     const { name, surname } = splitName(profile?.full_name || authData.user.email || "");
-    const uriPath = "/payment/iyzipos/checkoutform/initialize/auth/ecom";
+    const uriPath = "/payments/checkout";
     const callbackUrl = `${callbackUrlBase}?cvPaymentId=${encodeURIComponent(payment.id)}`;
 
-    const iyzicoPayload = {
+    const bankPaymentPayload = {
       locale: "tr",
       conversationId: payment.id,
       price: cvPrice,
@@ -188,13 +188,13 @@ Deno.serve(async (req) => {
       ]
     };
 
-    const requestBody = JSON.stringify(iyzicoPayload);
-    const auth = await iyzicoAuthorization(apiKey, secretKey, uriPath, requestBody);
-    const response = await fetch(`${iyzicoBaseUrl}${uriPath}`, {
+    const requestBody = JSON.stringify(bankPaymentPayload);
+    const auth = await bankPaymentAuthorization(apiKey, secretKey, uriPath, requestBody);
+    const response = await fetch(`${bankPaymentBaseUrl}${uriPath}`, {
       method: "POST",
       headers: {
         "Authorization": auth.authorization,
-        "x-iyzi-rnd": auth.randomKey,
+        "x-allona-rnd": auth.randomKey,
         "Content-Type": "application/json"
       },
       body: requestBody
@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     const result = await response.json();
     if (!response.ok || result.status !== "success") {
       await admin.from("cv_payments").update({ status: "failed" }).eq("id", payment.id);
-      console.error("CV iyzico checkout failed", { cvPaymentId: payment.id, result });
+      console.error("CV bank checkout failed", { cvPaymentId: payment.id, result });
       return json(req, { error: "CV ödeme oturumu başlatılamadı." }, 400);
     }
 
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
       .from("cv_payments")
       .update({
         status: "awaiting_payment",
-        iyzico_token: result.token || null
+        provider_reference: result.token || null
       })
       .eq("id", payment.id);
 

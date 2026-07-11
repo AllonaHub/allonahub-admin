@@ -263,10 +263,14 @@ export const config = {
     anonKey: supabaseAnonKey,
     serviceRoleKey: readEnv("SUPABASE_SERVICE_ROLE_KEY")
   },
-  iyzico: {
-    apiKey: readEnv("IYZICO_API_KEY"),
-    secretKey: readEnv("IYZICO_SECRET_KEY"),
-    baseUrl: readEnv("IYZICO_BASE_URL", { required: false, defaultValue: "https://sandbox-api.iyzipay.com" }).replace(/\/$/, "")
+  bankPayment: {
+    apiKey: readEnv("BANK_PAYMENT_API_KEY"),
+    secretKey: readEnv("BANK_PAYMENT_SECRET_KEY"),
+    baseUrl: readEnv("BANK_PAYMENT_API_URL", { required: false, defaultValue: "https://bank-api.example.com" }).replace(/\/$/, ""),
+    checkoutPath: readEnv("BANK_PAYMENT_CHECKOUT_PATH", { required: false, defaultValue: "/payments/checkout" }),
+    detailPath: readEnv("BANK_PAYMENT_DETAIL_PATH", { required: false, defaultValue: "/payments/detail" }),
+    refundPath: readEnv("BANK_PAYMENT_REFUND_PATH", { required: false, defaultValue: "/payments/refund" }),
+    cancelPath: readEnv("BANK_PAYMENT_CANCEL_PATH", { required: false, defaultValue: "/payments/cancel" })
   },
   paymentProvider: {
     refundWebhookUrl: readEnv("PAYMENT_PROVIDER_REFUND_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
