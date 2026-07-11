@@ -1205,7 +1205,7 @@
     media.setAttribute("aria-hidden", "true");
     const image = document.createElement("img");
     image.src = assetUrl(ad.image);
-    image.alt = "";
+    image.alt = ad.title ? `${ad.title} vitrin gorseli` : "AllonaHub modul vitrin gorseli";
     image.loading = "eager";
     image.decoding = "async";
     media.append(image);

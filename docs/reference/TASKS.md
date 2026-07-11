@@ -58,6 +58,13 @@ Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılı
 - [x] Dosyası olmayan iç bağlantıları çalışan sayfalara veya gerçek modül hedeflerine bağla.
 - [x] Yeni destek/uyumluluk sayfalarını ortak header, ortak footer ve ana sayfa tasarım diliyle oluştur.
 
+## Öncelik 0.3 - Denizcilik Modülü
+
+- [x] Denizcilik partner başvurusu için Turnstile/backend uyumlu, PII depolamayan özel başvuru sayfasını ekle.
+- [x] Navlun taleplerim için owner-RLS varsayımıyla çalışan takip ekranını, retry ve iki aşamalı aksiyon ergonomisiyle ekle.
+- [x] Denizcilik CTA'larını yeni partner başvurusu ve navlun takip rotalarına bağla; boş link üretme.
+- [ ] Geniş denizcilik backend/RPC/migration setini admin repo mevcut değişiklikleriyle ayrı kontrollü entegrasyon dalgasında birleştir.
+
 ## Öncelik 1 - Üretime Hazırlık
 
 - [x] Tek dosyalık mevcut mağaza kodunu modüler proje yapısına taşı.
