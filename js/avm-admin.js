@@ -12,6 +12,18 @@
   let parkingAreaRows = [];
   let transportRouteRows = [];
   let operationalNoticeRows = [];
+  let adSlotRows = [];
+  let sponsorInteractionRows = [];
+  let sponsorInteractionTargetFilter = "";
+  let sponsorInteractionSlotTypeFilter = "";
+  let sponsorInteractionTypeFilter = "";
+  let sponsorInteractionStartDateFilter = "";
+  let sponsorInteractionEndDateFilter = "";
+  let sponsorInteractionTotal = 0;
+  let sponsorInteractionPage = 1;
+  let sponsorInteractionPageSize = 50;
+  let sponsorInteractionRequestId = 0;
+  let sponsorInteractionMetrics = { impressions: 0, clicks: 0 };
   let previewZoneId = "";
   let partnerSubmissionRows = [];
   let partnerSubmissionRequestTypeFilter = "";
@@ -188,6 +200,19 @@
     website_open: "Resmi site",
     phone_open: "Telefon",
     share: "Paylaşım"
+  };
+
+  const sponsorInteractionLabels = {
+    impression: "Gösterim",
+    click: "Tıklama"
+  };
+
+  const adSlotTypeLabels = {
+    sponsored_listing: "Sponsorlu listeleme",
+    event_area: "Etkinlik alanı",
+    digital_screen: "Dijital ekran",
+    banner: "Banner",
+    popup_lead: "Pop-up / kiralama lead"
   };
 
   const serviceCategoryLabels = {
@@ -1757,6 +1782,7 @@
         .order("display_order", { ascending: true });
       if (error) throw error;
       const rows = data || [];
+      adSlotRows = rows;
       target.innerHTML = rows.length
         ? `
           <div class="table-wrap">
@@ -1768,7 +1794,7 @@
                     <td>${core.escapeHTML(slot.title)}</td>
                     <td>${core.escapeHTML(slot.slot_type)}</td>
                     <td>${core.escapeHTML(slot.placement)}</td>
-                    <td>${directoryMediaCell({ image_url: slot.creative_image_url, image_alt: slot.creative_image_alt, title: slot.title })}<br><small>${core.escapeHTML(scheduleLabel(slot))}</small></td>
+                    <td>${directoryMediaCell({ image_url: slot.creative_image_url, image_alt: slot.creative_image_alt, title: slot.title })}<br><small>${core.escapeHTML(formatDirectorySchedule(slot))}</small></td>
                     <td>${core.escapeHTML(slot.lead_goal || "-")}</td>
                     <td>${rowStatus(slot.status)}</td>
                     <td>
@@ -1782,7 +1808,214 @@
         `
         : `<div class="empty-state">Reklam envanteri kaydı bulunamadı. Gerçek reklam alanları admin formundan taslak olarak oluşturulduğunda burada görünür.</div>`;
     } catch (error) {
+      adSlotRows = [];
       core.renderStatus(target, error.message || "Reklam envanteri yüklenemedi. Supabase AVM migration uygulanmalı.", "error");
+    }
+  }
+
+  function sponsorInteractionFilterSnapshot() {
+    return {
+      adSlotId: sponsorInteractionTargetFilter,
+      slotType: sponsorInteractionSlotTypeFilter,
+      interactionType: sponsorInteractionTypeFilter,
+      startDate: sponsorInteractionStartDateFilter,
+      endDate: sponsorInteractionEndDateFilter
+    };
+  }
+
+  async function querySponsorInteractionReport(limit, offset, filters = sponsorInteractionFilterSnapshot()) {
+    const mallId = await requireDefaultMallId();
+    return App.db.client().rpc("get_mall_ad_slot_interaction_report", {
+      report_mall_id: mallId,
+      report_ad_slot_id: filters.adSlotId || null,
+      report_slot_type: filters.slotType || null,
+      report_interaction_type: filters.interactionType || null,
+      report_start_date: filters.startDate || null,
+      report_end_date: filters.endDate || null,
+      report_limit: limit,
+      report_offset: offset
+    });
+  }
+
+  async function exportSponsorInteractions(button) {
+    if (!sponsorInteractionTotal) {
+      core.toast("Dışa aktarılacak sponsor etkileşimi yok.", "error");
+      return;
+    }
+    button.disabled = true;
+    try {
+      const filters = sponsorInteractionFilterSnapshot();
+      const batchSize = 200;
+      const rows = [];
+      let expectedTotal = sponsorInteractionTotal;
+      for (let offset = 0; offset < expectedTotal; offset += batchSize) {
+        const { data, error } = await querySponsorInteractionReport(batchSize, offset, filters);
+        if (error) throw error;
+        const batch = data || [];
+        if (!offset && batch[0]) expectedTotal = interactionNumber(batch[0].total_count);
+        rows.push(...batch);
+        if (batch.length < batchSize) break;
+      }
+      if (!rows.length) throw new Error("Filtre kapsamındaki kayıtlar artık bulunmuyor.");
+      const headers = ["Sponsor hedefi", "Hedef kodu", "Alan türü", "Yerleşim", "Etkileşim", "Kaynak", "Etkileşim günü", "Tarih"];
+      const csvRows = rows.map((row) => [
+        row.slot_title || "Yayından kaldırılmış sponsor hedefi",
+        row.ad_slot_public_id,
+        adSlotTypeLabels[row.slot_type] || row.slot_type,
+        row.placement,
+        sponsorInteractionLabels[row.interaction_type] || row.interaction_type,
+        row.source_page,
+        row.interaction_date,
+        row.created_at ? new Date(row.created_at).toLocaleString("tr-TR") : ""
+      ]);
+      const csv = [headers, ...csvRows].map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `avm-sponsor-etkilesimleri-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      core.toast(`${rows.length} sponsor etkileşimi CSV olarak hazırlandı.`);
+    } catch (error) {
+      core.toast(error.message || "Sponsor etkileşim raporu hazırlanamadı.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderSponsorInteractions() {
+    const target = document.querySelector("[data-avm-admin-sponsor-interactions]");
+    if (!target) return;
+    const totalPages = Math.max(1, Math.ceil(sponsorInteractionTotal / sponsorInteractionPageSize));
+    const clickRate = sponsorInteractionTypeFilter
+      ? "—"
+      : sponsorInteractionMetrics.impressions
+        ? `%${(100 * sponsorInteractionMetrics.clicks / sponsorInteractionMetrics.impressions).toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`
+        : "%0";
+    const slotTypes = [...new Set(adSlotRows.map((row) => row.slot_type).filter(Boolean))];
+    const hasFilters = Boolean(sponsorInteractionTargetFilter || sponsorInteractionSlotTypeFilter || sponsorInteractionTypeFilter || sponsorInteractionStartDateFilter || sponsorInteractionEndDateFilter);
+    target.innerHTML = `
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Sponsor Operasyon Raporu</p>
+          <h3>Gösterim ve Tıklamalar</h3>
+          <p class="muted">Günlük tekil sponsor etkileşimlerini hedef, alan türü ve İstanbul tarihiyle denetleyin.</p>
+        </div>
+      </div>
+      <div class="avm-operation-summary" aria-label="Sponsor etkileşim özeti">
+        <div class="avm-operation-stat"><span>Filtrelenmiş toplam</span><strong>${sponsorInteractionTotal}</strong></div>
+        <div class="avm-operation-stat"><span>Gösterim</span><strong>${sponsorInteractionMetrics.impressions}</strong></div>
+        <div class="avm-operation-stat"><span>Tıklama</span><strong>${sponsorInteractionMetrics.clicks}</strong></div>
+        <div class="avm-operation-stat"><span>Tıklama oranı</span><strong>${clickRate}</strong></div>
+      </div>
+      <p class="muted">${sponsorInteractionRows.length} kayıt bu sayfada / ${sponsorInteractionTotal} eşleşme · özet ve CSV seçili filtrelerin tamamını kapsar.</p>
+      <form class="filters avm-admin-sponsor-interaction-filters" data-avm-sponsor-interaction-filters>
+        <div class="field">
+          <label for="avm-sponsor-target-filter">Sponsor hedefi</label>
+          <select id="avm-sponsor-target-filter" data-avm-sponsor-interaction-filter-target>
+            <option value="">Tüm sponsor hedefleri</option>
+            ${adSlotRows.map((slot) => `<option value="${core.escapeHTML(slot.id)}" ${sponsorInteractionTargetFilter === slot.id ? "selected" : ""}>${core.escapeHTML(`${slot.title} · ${slot.public_id}`)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-sponsor-slot-type-filter">Alan türü</label>
+          <select id="avm-sponsor-slot-type-filter" data-avm-sponsor-interaction-filter-slot-type>
+            <option value="">Tüm alan türleri</option>
+            ${slotTypes.map((value) => `<option value="${core.escapeHTML(value)}" ${sponsorInteractionSlotTypeFilter === value ? "selected" : ""}>${core.escapeHTML(adSlotTypeLabels[value] || value)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-sponsor-interaction-type-filter">Etkileşim</label>
+          <select id="avm-sponsor-interaction-type-filter" data-avm-sponsor-interaction-filter-type>
+            <option value="">Tüm etkileşimler</option>
+            ${Object.entries(sponsorInteractionLabels).map(([value, label]) => `<option value="${value}" ${sponsorInteractionTypeFilter === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-sponsor-start-filter">Başlangıç</label>
+          <input id="avm-sponsor-start-filter" type="date" data-avm-sponsor-interaction-filter-start value="${core.escapeHTML(sponsorInteractionStartDateFilter)}" ${sponsorInteractionEndDateFilter ? `max="${core.escapeHTML(sponsorInteractionEndDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-sponsor-end-filter">Bitiş</label>
+          <input id="avm-sponsor-end-filter" type="date" data-avm-sponsor-interaction-filter-end value="${core.escapeHTML(sponsorInteractionEndDateFilter)}" ${sponsorInteractionStartDateFilter ? `min="${core.escapeHTML(sponsorInteractionStartDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-sponsor-page-size">Sayfa başına</label>
+          <select id="avm-sponsor-page-size" data-avm-sponsor-interaction-page-size>
+            ${[25, 50, 100].map((value) => `<option value="${value}" ${sponsorInteractionPageSize === value ? "selected" : ""}>${value} kayıt</option>`).join("")}
+          </select>
+        </div>
+        <div class="field field--actions">
+          <label aria-hidden="true">&nbsp;</label>
+          <div class="avm-redemption-filter-actions">
+            <button class="btn btn--light" type="button" data-avm-sponsor-interaction-reset>Temizle</button>
+            <button class="btn" type="button" data-avm-sponsor-interaction-export aria-label="Filtrelenmiş sponsor etkileşim raporunu CSV olarak indir">CSV İndir</button>
+          </div>
+        </div>
+      </form>
+      ${sponsorInteractionRows.length
+        ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Sponsor hedefi</th><th>Alan</th><th>Etkileşim</th><th>Kaynak</th><th>Tarih</th></tr></thead>
+              <tbody>
+                ${sponsorInteractionRows.map((row) => `
+                  <tr>
+                    <td><strong>${core.escapeHTML(row.slot_title || "Yayından kaldırılmış sponsor hedefi")}</strong><br><small>${core.escapeHTML(row.ad_slot_public_id || "-")}</small></td>
+                    <td>${core.escapeHTML(adSlotTypeLabels[row.slot_type] || row.slot_type || "-")}<br><small>${core.escapeHTML(row.placement || "-")}</small></td>
+                    <td>${core.escapeHTML(sponsorInteractionLabels[row.interaction_type] || row.interaction_type || "-")}</td>
+                    <td>${core.escapeHTML(row.source_page || "-")}</td>
+                    <td>${row.created_at ? new Date(row.created_at).toLocaleString("tr-TR") : core.escapeHTML(row.interaction_date || "-")}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+          <nav class="avm-report-pagination" aria-label="Sponsor etkileşim sayfaları">
+            <button class="icon-btn" type="button" data-avm-sponsor-interaction-previous aria-label="Önceki sayfa" title="Önceki sayfa" ${sponsorInteractionPage <= 1 ? "disabled" : ""}>←</button>
+            <span>Sayfa ${sponsorInteractionPage} / ${totalPages}</span>
+            <button class="icon-btn" type="button" data-avm-sponsor-interaction-next aria-label="Sonraki sayfa" title="Sonraki sayfa" ${sponsorInteractionPage >= totalPages ? "disabled" : ""}>→</button>
+          </nav>
+        `
+        : `<div class="empty-state">${hasFilters ? "Bu filtrelerle eşleşen sponsor etkileşimi yok." : "Henüz sponsor etkileşimi yok. Canlı gösterim ve tıklamalar burada görünür."}</div>`}
+    `;
+  }
+
+  async function loadSponsorInteractions(options = {}) {
+    const target = document.querySelector("[data-avm-admin-sponsor-interactions]");
+    if (!target) return;
+    if (options.resetPage) sponsorInteractionPage = 1;
+    const requestId = ++sponsorInteractionRequestId;
+    core.renderStatus(target, "Sponsor etkileşim raporu yükleniyor...");
+    try {
+      const offset = (sponsorInteractionPage - 1) * sponsorInteractionPageSize;
+      const { data, error } = await querySponsorInteractionReport(sponsorInteractionPageSize, offset);
+      if (error) throw error;
+      if (requestId !== sponsorInteractionRequestId) return;
+      sponsorInteractionRows = data || [];
+      sponsorInteractionTotal = sponsorInteractionRows[0] ? interactionNumber(sponsorInteractionRows[0].total_count) : 0;
+      sponsorInteractionMetrics = sponsorInteractionRows[0]
+        ? {
+            impressions: interactionNumber(sponsorInteractionRows[0].impression_count),
+            clicks: interactionNumber(sponsorInteractionRows[0].click_count)
+          }
+        : { impressions: 0, clicks: 0 };
+      const totalPages = Math.max(1, Math.ceil(sponsorInteractionTotal / sponsorInteractionPageSize));
+      if (sponsorInteractionPage > totalPages) {
+        sponsorInteractionPage = totalPages;
+        await loadSponsorInteractions();
+        return;
+      }
+      renderSponsorInteractions();
+    } catch (error) {
+      if (requestId !== sponsorInteractionRequestId) return;
+      sponsorInteractionRows = [];
+      sponsorInteractionTotal = 0;
+      sponsorInteractionMetrics = { impressions: 0, clicks: 0 };
+      core.renderStatus(target, error.message || "Sponsor etkileşim raporu yüklenemedi. Supabase sponsor admin reporting migration uygulanmalı.", "error");
     }
   }
 
@@ -3534,7 +3767,8 @@
         core.toast("Reklam alanı kaydedildi.");
         form.reset();
         if (form.elements.id) form.elements.id.value = "";
-        await Promise.all([loadAdSlots(), loadPartnerSubmissions()]);
+        await loadAdSlots();
+        await Promise.all([loadSponsorInteractions({ resetPage: true }), loadPartnerSubmissions()]);
       } catch (error) {
         core.toast(error.message || "Reklam alanı kaydedilemedi.", "error");
       } finally {
@@ -4040,14 +4274,66 @@
     });
   }
 
+  function bindSponsorInteractionControls() {
+    document.addEventListener("change", (event) => {
+      const targetFilter = event.target.closest("[data-avm-sponsor-interaction-filter-target]");
+      const slotTypeFilter = event.target.closest("[data-avm-sponsor-interaction-filter-slot-type]");
+      const typeFilter = event.target.closest("[data-avm-sponsor-interaction-filter-type]");
+      const startFilter = event.target.closest("[data-avm-sponsor-interaction-filter-start]");
+      const endFilter = event.target.closest("[data-avm-sponsor-interaction-filter-end]");
+      const pageSize = event.target.closest("[data-avm-sponsor-interaction-page-size]");
+      if (!targetFilter && !slotTypeFilter && !typeFilter && !startFilter && !endFilter && !pageSize) return;
+      if (targetFilter) sponsorInteractionTargetFilter = targetFilter.value;
+      if (slotTypeFilter) sponsorInteractionSlotTypeFilter = slotTypeFilter.value;
+      if (typeFilter) sponsorInteractionTypeFilter = typeFilter.value;
+      if (startFilter) sponsorInteractionStartDateFilter = startFilter.value;
+      if (endFilter) sponsorInteractionEndDateFilter = endFilter.value;
+      if (pageSize) sponsorInteractionPageSize = Number(pageSize.value) || 50;
+      if (sponsorInteractionStartDateFilter && sponsorInteractionEndDateFilter && sponsorInteractionEndDateFilter < sponsorInteractionStartDateFilter) {
+        core.toast("Bitiş tarihi başlangıç tarihinden önce olamaz.", "error");
+        renderSponsorInteractions();
+        return;
+      }
+      loadSponsorInteractions({ resetPage: true });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-avm-sponsor-interaction-reset]")) {
+        sponsorInteractionTargetFilter = "";
+        sponsorInteractionSlotTypeFilter = "";
+        sponsorInteractionTypeFilter = "";
+        sponsorInteractionStartDateFilter = "";
+        sponsorInteractionEndDateFilter = "";
+        loadSponsorInteractions({ resetPage: true });
+        return;
+      }
+      const exportButton = event.target.closest("[data-avm-sponsor-interaction-export]");
+      if (exportButton) {
+        exportSponsorInteractions(exportButton);
+        return;
+      }
+      if (event.target.closest("[data-avm-sponsor-interaction-previous]") && sponsorInteractionPage > 1) {
+        sponsorInteractionPage -= 1;
+        loadSponsorInteractions();
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(sponsorInteractionTotal / sponsorInteractionPageSize));
+      if (event.target.closest("[data-avm-sponsor-interaction-next]") && sponsorInteractionPage < totalPages) {
+        sponsorInteractionPage += 1;
+        loadSponsorInteractions();
+      }
+    });
+  }
+
   async function refreshMallOperations() {
     await loadFloorMaps();
     await loadFloorZones();
     await loadDirectory();
+    await loadAdSlots();
     await Promise.all([
       loadOpeningHoursAdmin(),
       loadOperationalNotices(),
-      loadAdSlots(),
+      loadSponsorInteractions(),
       loadPartnerSubmissions(),
       loadVisitPlans(),
       loadCampaignRedemptions({ refreshDimensions: true }),
@@ -4086,6 +4372,7 @@
     bindCampaignRedemptionUpdates();
     bindCampaignRedemptionControls();
     bindDirectoryInteractionControls();
+    bindSponsorInteractionControls();
     bindZonePreview();
     await loadMallCenter();
     await refreshMallOperations();

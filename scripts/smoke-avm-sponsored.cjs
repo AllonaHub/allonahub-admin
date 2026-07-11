@@ -45,9 +45,10 @@ const supabaseMock = `
   const now = Date.now();
   const center = { id: "11111111-1111-4111-8111-111111111111", name: "Test AVM", city: "İstanbul", district: "Şişli", address: "Test adresi", phone: "+902120000000", website_url: "https://allonahub.com", hero_image_url: null, status: "active" };
   const profile = { id: "33333333-3333-4333-8333-333333333333", full_name: "AVM Test Admin", role: "admin" };
-  const sponsor = { id: "22222222-2222-4222-8222-222222222222", public_id: "sponsor-test", title: "Onaylı Yaz Kampanyası", placement: "Mağaza rehberi", description: "Ziyaretçilere özel doğrulanmış sponsor kampanyası.", creative_image_url: "https://cdn.example/sponsor.webp", creative_image_alt: "Onaylı marka yaz kampanyası görseli", cta_label: "Kampanyayı İncele", cta_url: "https://brand.example/campaign", starts_at: new Date(now - 3600000).toISOString(), ends_at: new Date(now + 86400000).toISOString(), display_order: 1, status: "active" };
+  const sponsor = { id: "22222222-2222-4222-8222-222222222222", public_id: "sponsor-test", title: "Onaylı Yaz Kampanyası", slot_type: "sponsored_listing", placement: "Mağaza rehberi", description: "Ziyaretçilere özel doğrulanmış sponsor kampanyası.", creative_image_url: "https://cdn.example/sponsor.webp", creative_image_alt: "Onaylı marka yaz kampanyası görseli", cta_label: "Kampanyayı İncele", cta_url: "https://brand.example/campaign", starts_at: new Date(now - 3600000).toISOString(), ends_at: new Date(now + 86400000).toISOString(), display_order: 1, status: "active" };
   const sponsorSubmission = { id: "44444444-4444-4444-8444-444444444444", mall_id: center.id, submitted_by: profile.id, module_key: "mall", request_type: "advertising", brand_name: "Partner Test Marka", submission_title: "Sponsorlu Yaz Yerleşimi", submission_summary: "Yayındaki sponsor testi", requested_visibility: "sponsored", visibility_status: "published", status: "approved", published_item_id: null, published_ad_slot_id: sponsor.id, created_at: new Date(now - 3600000).toISOString() };
   window.__supabaseWrites = [];
+  window.__rpcCalls = [];
   const resultFor = (table, single) => {
     if (table === "mall_centers") return { data: single ? center : [center], error: null, count: 1 };
     if (table === "profiles") return { data: single ? profile : [profile], error: null, count: 1 };
@@ -78,9 +79,25 @@ const supabaseMock = `
         getUser: async () => ({ data: { user: { id: profile.id, email: "partner@example.com", user_metadata: { full_name: profile.full_name } } } })
       },
       from: query,
-      rpc: async (name) => {
+      rpc: async (name, args = {}) => {
+        window.__rpcCalls.push({ name, args });
         if (name === "get_mall_partner_submission_summary") return { data: [{ total_count: 1, approved_count: 1, published_count: 1, advertising_count: 1 }], error: null };
         if (name === "get_mall_ad_slot_interaction_summary") return { data: [{ ad_slot_id: sponsor.id, impression_count: 120, click_count: 9, click_rate: 7.5, recent_impression_count: 80, recent_click_count: 6 }], error: null };
+        if (name === "get_mall_ad_slot_interaction_report") return { data: [{
+          interaction_id: "55555555-5555-4555-8555-555555555555",
+          ad_slot_id: sponsor.id,
+          ad_slot_public_id: sponsor.public_id,
+          interaction_type: args.report_interaction_type || "impression",
+          source_page: "avm-dunyasi",
+          interaction_date: "2026-07-11",
+          created_at: new Date(now - 1800000).toISOString(),
+          slot_title: sponsor.title,
+          slot_type: sponsor.slot_type,
+          placement: sponsor.placement,
+          total_count: 60,
+          impression_count: args.report_interaction_type === "click" ? 0 : 51,
+          click_count: args.report_interaction_type === "impression" ? 0 : 9
+        }], error: null };
         return { data: [], error: null };
       }
     })
@@ -89,6 +106,7 @@ const supabaseMock = `
 `;
 
 async function run() {
+  const sponsorId = "22222222-2222-4222-8222-222222222222";
   const server = await startServer();
   const address = server.address();
   const browser = await chromium.launch({
@@ -98,7 +116,7 @@ async function run() {
   });
   try {
     for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
-      const page = await browser.newPage({ viewportSize: viewport });
+      const page = await browser.newPage({ viewport });
       const errors = [];
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(`console: ${message.text()}`);
@@ -138,7 +156,7 @@ async function run() {
       await page.close();
     }
 
-    const admin = await browser.newPage({ viewportSize: { width: 1440, height: 1000 } });
+    const admin = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const adminErrors = [];
     admin.on("console", (message) => {
       if (message.type() === "error") adminErrors.push(`console: ${message.text()}`);
@@ -152,6 +170,38 @@ async function run() {
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540"><rect width="100%" height="100%" fill="#d9ebe5"/></svg>'
     }));
     await admin.goto(`http://allonahub.test:${address.port}/admin/avm.html`, { waitUntil: "networkidle" });
+    await admin.locator("[data-avm-admin-sponsor-interactions] h3").waitFor();
+    assert(await admin.locator("[data-avm-admin-sponsor-interactions] tbody tr").count() === 1, "Admin sponsor etkileşim raporu satırı görünmedi.");
+    assert((await admin.locator("[data-avm-admin-sponsor-interactions]").textContent()).includes("%17,65"), "Admin sponsor tıklama oranı filtre toplamlarından hesaplanmadı.");
+    const sponsorTargetOptions = await admin.locator("[data-avm-sponsor-interaction-filter-target] option").evaluateAll((options) => options.map((option) => option.value));
+    const sponsorTargetMarkup = await admin.locator("[data-avm-sponsor-interaction-filter-target]").evaluate((element) => element.outerHTML);
+    assert(sponsorTargetOptions.includes(sponsorId), `Admin sponsor hedef filtresi envanteri taşımadı: ${sponsorTargetOptions.join(", ")} · ${sponsorTargetMarkup}`);
+    await admin.locator("[data-avm-sponsor-interaction-filter-target]").selectOption(sponsorId);
+    await admin.locator("[data-avm-sponsor-interaction-filter-slot-type]").selectOption("sponsored_listing");
+    await admin.locator("[data-avm-sponsor-interaction-filter-type]").selectOption("click");
+    await admin.locator("[data-avm-sponsor-interaction-filter-start]").fill("2026-07-01");
+    await admin.locator("[data-avm-sponsor-interaction-filter-end]").fill("2026-07-11");
+    await admin.locator("[data-avm-sponsor-interaction-page-size]").selectOption("25");
+    await admin.waitForFunction((sponsorId) => {
+      const calls = window.__rpcCalls.filter((call) => call.name === "get_mall_ad_slot_interaction_report");
+      const args = calls[calls.length - 1]?.args || {};
+      return args.report_ad_slot_id === sponsorId
+        && args.report_slot_type === "sponsored_listing"
+        && args.report_interaction_type === "click"
+        && args.report_start_date === "2026-07-01"
+        && args.report_end_date === "2026-07-11"
+        && args.report_limit === 25;
+    }, sponsorId);
+    await admin.locator("[data-avm-sponsor-interaction-next]").click();
+    await admin.waitForFunction(() => {
+      const calls = window.__rpcCalls.filter((call) => call.name === "get_mall_ad_slot_interaction_report");
+      return calls.some((call) => call.args.report_limit === 25 && call.args.report_offset === 25);
+    });
+    await admin.locator("[data-avm-sponsor-interaction-export]").click();
+    await admin.waitForFunction(() => {
+      const calls = window.__rpcCalls.filter((call) => call.name === "get_mall_ad_slot_interaction_report");
+      return calls.some((call) => call.args.report_limit === 200 && call.args.report_offset === 0);
+    });
     const form = admin.locator("[data-avm-ad-form]");
     await form.locator('[name="public_id"]').fill("sponsor-admin-smoke");
     await form.locator('[name="title"]').fill("Admin Sponsor Smoke");
@@ -174,7 +224,37 @@ async function run() {
     assert(adminErrors.length === 0, adminErrors.join("\n"));
     await admin.close();
 
-    const partner = await browser.newPage({ viewportSize: { width: 1280, height: 900 } });
+    const mobileAdmin = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const mobileAdminErrors = [];
+    mobileAdmin.on("console", (message) => {
+      if (message.type() === "error") mobileAdminErrors.push(`console: ${message.text()}`);
+    });
+    mobileAdmin.on("pageerror", (error) => mobileAdminErrors.push(`pageerror: ${error.message}`));
+    await mobileAdmin.route("https://cdn.jsdelivr.net/**", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: supabaseMock }));
+    await mobileAdmin.route("https://api.allonahub.com/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: '{"base":"TRY","rates":{"TRY":1}}' }));
+    await mobileAdmin.route("https://cdn.example/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540"><rect width="100%" height="100%" fill="#d9ebe5"/></svg>'
+    }));
+    await mobileAdmin.goto(`http://allonahub.test:${address.port}/admin/avm.html#ad-slots`, { waitUntil: "networkidle" });
+    await mobileAdmin.locator("[data-avm-admin-sponsor-interactions] h3").waitFor();
+    const mobileAdminOverflow = await mobileAdmin.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    const mobileAdminGridDebug = await mobileAdmin.locator("[data-avm-sponsor-interaction-filters]").evaluate((element) => ({
+      width: element.getBoundingClientRect().width,
+      columns: getComputedStyle(element).gridTemplateColumns,
+      parentWidth: element.parentElement.getBoundingClientRect().width,
+      fieldMinWidth: getComputedStyle(element.querySelector(".field")).minWidth
+    }));
+    const mobileAdminOverflowSources = await mobileAdmin.evaluate(() => [...document.querySelectorAll("body *")]
+      .filter((element) => element.getBoundingClientRect().right > document.documentElement.clientWidth + 1)
+      .slice(0, 8)
+      .map((element) => `${element.closest("section")?.id || "no-section"}/${element.parentElement?.className || "-"}/${element.tagName.toLowerCase()}.${element.className || "-"}:${Math.round(element.getBoundingClientRect().right)}`));
+    assert(mobileAdminOverflow <= 1, `390px admin görünümünde ${mobileAdminOverflow}px yatay taşma var: ${mobileAdminOverflowSources.join(", ")} · ${JSON.stringify(mobileAdminGridDebug)}`);
+    assert(mobileAdminErrors.length === 0, mobileAdminErrors.join("\n"));
+    await mobileAdmin.close();
+
+    const partner = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const partnerErrors = [];
     partner.on("console", (message) => {
       if (message.type() === "error") partnerErrors.push(`console: ${message.text()}`);
@@ -214,7 +294,7 @@ async function run() {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));
   }
-  process.stdout.write("AVM sponsor smoke passed (visitor measurement + admin publish + partner request/report).\n");
+  process.stdout.write("AVM sponsor smoke passed (visitor measurement + admin filtered report/publish + partner request/report).\n");
 }
 
 run().catch((error) => {
