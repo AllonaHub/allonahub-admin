@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AVM Yönetimi | AllonaHub</title>
+  <meta name="description" content="AllonaHub AVM Dünyası mağaza, etkinlik, kampanya, yeme-içme ve lead yönetimi.">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="site-shell" data-page="admin-avm">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">AVM Dünyası</p>
+          <h1>AVM Yönetimi</h1>
+          <p>Mağaza rehberi, etkinlik, kampanya, yeme-içme, tenant yayın talepleri ve AVM ön görüşmelerini yönetin.</p>
+        </div>
+      </section>
+
+      <section class="container admin-layout" data-admin-avm-shell>
+        <nav class="side-menu" aria-label="AVM yönetimi menüsü">
+          <a href="../admin/index.html">Genel Admin</a>
+          <a href="#center-profile" aria-current="page">Merkez Profili</a>
+          <a href="#opening-hours">Çalışma Saatleri</a>
+          <a href="#directory">AVM İçerikleri</a>
+          <a href="#floor-maps">Kat Görselleri</a>
+          <a href="#floor-zones">Kat Planı</a>
+          <a href="#parking-areas">Otopark Alanları</a>
+          <a href="#transport-routes">Ulaşım Rotaları</a>
+          <a href="#services">Ziyaretçi Hizmetleri</a>
+          <a href="#ad-slots">Reklam Alanları</a>
+          <a href="#partner-submissions">Tenant Yayın Talepleri</a>
+          <a href="#visit-plans">Ziyaret Planları</a>
+          <a href="#campaign-redemptions">Kampanya İlgileri</a>
+          <a href="#directory-interactions">İçerik Etkileşimleri</a>
+          <a href="#leads">Ön Görüşmeler</a>
+          <a href="../avm-dunyasi.html">AVM Sayfası</a>
+        </nav>
+
+        <div>
+          <section class="panel" id="center-profile">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Yayın Kimliği</p>
+                <h2>AVM Merkez Profilini Yönet</h2>
+                <p class="muted">Merkez yalnızca gerçek işletme bilgileri ve onaylı hero görseli tamamlandığında aktif yayına alınabilir.</p>
+              </div>
+            </div>
+            <form data-avm-center-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-center-slug">Merkez kodu</label>
+                  <input id="avm-center-slug" name="slug" value="allona-avm-dunyasi" readonly>
+                </div>
+                <div class="field">
+                  <label for="avm-center-name">AVM adı</label>
+                  <input id="avm-center-name" name="name" required autocomplete="organization">
+                </div>
+                <div class="field">
+                  <label for="avm-center-city">Şehir</label>
+                  <input id="avm-center-city" name="city" required autocomplete="address-level1">
+                </div>
+                <div class="field">
+                  <label for="avm-center-district">İlçe / bölge</label>
+                  <input id="avm-center-district" name="district" autocomplete="address-level2">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-center-address">Açık adres</label>
+                  <input id="avm-center-address" name="address" autocomplete="street-address">
+                </div>
+                <div class="field">
+                  <label for="avm-center-phone">Telefon</label>
+                  <input id="avm-center-phone" name="phone" type="tel" autocomplete="tel">
+                </div>
+                <div class="field">
+                  <label for="avm-center-status">Yayın durumu</label>
+                  <select id="avm-center-status" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-center-website">Resmi web adresi</label>
+                  <input id="avm-center-website" name="website_url" type="url" inputmode="url" autocomplete="url" placeholder="https://">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-center-hero">Onaylı hero görseli URL</label>
+                  <input id="avm-center-hero" name="hero_image_url" type="url" inputmode="url" placeholder="https://.../storage/v1/object/public/mall-assets/...">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Merkez Profilini Kaydet</button>
+              </div>
+            </form>
+            <div class="section" data-avm-center-status></div>
+          </section>
+
+          <section class="panel section" id="opening-hours">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ziyaret Zamanı</p>
+                <h2>Çalışma Saatlerini Yönet</h2>
+                <p class="muted">Merkez, mağazalar, yeme-içme alanları veya tek bir tenant için haftalık program ve özel gün istisnası yayınlayın.</p>
+              </div>
+            </div>
+
+            <form data-avm-hours-profile-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-hours-public-id">Profil kodu</label>
+                  <input id="avm-hours-public-id" name="public_id" required placeholder="shopping-center-hours">
+                </div>
+                <div class="field">
+                  <label for="avm-hours-title">Ziyaretçiye görünen başlık</label>
+                  <input id="avm-hours-title" name="title" required placeholder="Alışveriş Merkezi">
+                </div>
+                <div class="field">
+                  <label for="avm-hours-scope">Kapsam</label>
+                  <select id="avm-hours-scope" name="scope" required>
+                    <option value="mall">AVM merkezi</option>
+                    <option value="stores">Mağazalar</option>
+                    <option value="dining">Yeme İçme</option>
+                    <option value="cinema">Sinema</option>
+                    <option value="parking">Otopark</option>
+                    <option value="entertainment">Eğlence</option>
+                    <option value="services">Ziyaretçi Hizmetleri</option>
+                    <option value="directory_item">Tek katalog kaydı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-hours-directory-item">Katalog kaydı</label>
+                  <select id="avm-hours-directory-item" name="directory_item_id" data-avm-hours-directory-select disabled>
+                    <option value="">Katalog kaydı seçin</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-hours-order">Sıra</label>
+                  <input id="avm-hours-order" name="display_order" type="number" min="1" max="10000" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-hours-status">Yayın durumu</label>
+                  <select id="avm-hours-status" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Saat Profilini Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+
+            <div class="avm-hours-admin-block">
+              <div class="section-header">
+                <div>
+                  <h3>Haftalık Program</h3>
+                  <p class="muted">Aktif yayın için kapalı günler dahil yedi günün tamamını kaydedin.</p>
+                </div>
+              </div>
+              <form data-avm-weekly-hours-form>
+                <div class="field">
+                  <label for="avm-weekly-hours-profile">Saat profili</label>
+                  <select id="avm-weekly-hours-profile" name="profile_id" data-avm-hours-profile-select required>
+                    <option value="">Önce saat profili oluşturun</option>
+                  </select>
+                </div>
+                <div class="avm-hours-week-editor">
+                  <div class="avm-hours-week-row" data-avm-week-day="1">
+                    <strong>Pazartesi</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_1_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_1_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-1-open">Açılış</label><input id="avm-day-1-open" name="day_1_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-1-close">Kapanış</label><input id="avm-day-1-close" name="day_1_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-1-note">Not</label><input id="avm-day-1-note" name="day_1_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="2">
+                    <strong>Salı</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_2_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_2_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-2-open">Açılış</label><input id="avm-day-2-open" name="day_2_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-2-close">Kapanış</label><input id="avm-day-2-close" name="day_2_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-2-note">Not</label><input id="avm-day-2-note" name="day_2_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="3">
+                    <strong>Çarşamba</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_3_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_3_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-3-open">Açılış</label><input id="avm-day-3-open" name="day_3_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-3-close">Kapanış</label><input id="avm-day-3-close" name="day_3_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-3-note">Not</label><input id="avm-day-3-note" name="day_3_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="4">
+                    <strong>Perşembe</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_4_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_4_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-4-open">Açılış</label><input id="avm-day-4-open" name="day_4_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-4-close">Kapanış</label><input id="avm-day-4-close" name="day_4_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-4-note">Not</label><input id="avm-day-4-note" name="day_4_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="5">
+                    <strong>Cuma</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_5_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_5_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-5-open">Açılış</label><input id="avm-day-5-open" name="day_5_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-5-close">Kapanış</label><input id="avm-day-5-close" name="day_5_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-5-note">Not</label><input id="avm-day-5-note" name="day_5_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="6">
+                    <strong>Cumartesi</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_6_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_6_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-6-open">Açılış</label><input id="avm-day-6-open" name="day_6_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-6-close">Kapanış</label><input id="avm-day-6-close" name="day_6_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-6-note">Not</label><input id="avm-day-6-note" name="day_6_note" maxlength="300"></div>
+                  </div>
+                  <div class="avm-hours-week-row" data-avm-week-day="0">
+                    <strong>Pazar</strong>
+                    <div class="avm-hours-day-options"><label class="check-field"><input name="day_0_closed" type="checkbox"> Kapalı</label><label class="check-field"><input name="day_0_24_hours" type="checkbox"> 24 saat</label></div>
+                    <div class="field"><label for="avm-day-0-open">Açılış</label><input id="avm-day-0-open" name="day_0_opens_at" type="time" step="60" value="10:00" required></div>
+                    <div class="field"><label for="avm-day-0-close">Kapanış</label><input id="avm-day-0-close" name="day_0_closes_at" type="time" step="60" value="22:00" required></div>
+                    <div class="field"><label for="avm-day-0-note">Not</label><input id="avm-day-0-note" name="day_0_note" maxlength="300"></div>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn" type="submit">Yedi Günü Kaydet</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="avm-hours-admin-block">
+              <div class="section-header">
+                <div>
+                  <h3>Özel Gün İstisnası</h3>
+                  <p class="muted">Bayram, resmi tatil, etkinlik veya bakım günü saatleri haftalık programın üzerine uygulanır.</p>
+                </div>
+              </div>
+              <form data-avm-special-hours-form>
+                <input type="hidden" name="id">
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="avm-special-hours-profile">Saat profili</label>
+                    <select id="avm-special-hours-profile" name="profile_id" data-avm-special-hours-profile-select required>
+                      <option value="">Önce saat profili oluşturun</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="avm-special-hours-date">Tarih</label>
+                    <input id="avm-special-hours-date" name="service_date" type="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="avm-special-hours-open">Açılış</label>
+                    <input id="avm-special-hours-open" name="opens_at" type="time" step="60" required>
+                  </div>
+                  <div class="field">
+                    <label for="avm-special-hours-close">Kapanış</label>
+                    <input id="avm-special-hours-close" name="closes_at" type="time" step="60" required>
+                  </div>
+                  <div class="field">
+                    <label for="avm-special-hours-status">Yayın durumu</label>
+                    <select id="avm-special-hours-status" name="status" required>
+                      <option value="draft">draft</option>
+                      <option value="active">active</option>
+                      <option value="archived">archived</option>
+                    </select>
+                  </div>
+                  <div class="field field--checkbox">
+                    <label class="check-field"><input name="is_closed" type="checkbox" data-avm-special-hours-closed> Tüm gün kapalı</label>
+                  </div>
+                  <div class="field field--checkbox">
+                    <label class="check-field"><input name="is_24_hours" type="checkbox" data-avm-special-hours-24> 24 saat açık</label>
+                  </div>
+                  <div class="field field--full">
+                    <label for="avm-special-hours-note">Ziyaretçi notu</label>
+                    <input id="avm-special-hours-note" name="note" maxlength="300" placeholder="Örn. Bayramın birinci günü kapalı">
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn" type="submit">Özel Günü Kaydet</button>
+                  <button class="btn btn--light" type="reset">Temizle</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="section" data-avm-admin-hours></div>
+          </section>
+
+          <section class="panel section" id="directory">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Katalog</p>
+                <h2>AVM İçeriği Ekle / Düzenle</h2>
+              </div>
+            </div>
+            <form data-avm-admin-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-admin-public-id">Kayıt kodu</label>
+                  <input id="avm-admin-public-id" name="public_id" required placeholder="store-brand-name">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-type">Tür</label>
+                  <select id="avm-admin-type" name="item_type" required>
+                    <option value="stores">Mağaza</option>
+                    <option value="events">Etkinlik</option>
+                    <option value="deals">Kampanya</option>
+                    <option value="dining">Yeme İçme</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-title">Başlık</label>
+                  <input id="avm-admin-title" name="title" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-category">Kategori</label>
+                  <input id="avm-admin-category" name="category" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-floor">Kat / Bölge</label>
+                  <input id="avm-admin-floor" name="floor_label" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-floor-zone">Kat planı bölgesi</label>
+                  <select id="avm-admin-floor-zone" name="floor_zone_id" data-avm-directory-zone-select>
+                    <option value="">Bölgeye bağlama</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-admin-image-url">Onaylı görsel URL</label>
+                  <input id="avm-admin-image-url" name="image_url" type="url" inputmode="url" placeholder="https://.../storage/v1/object/public/mall-assets/...">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-admin-image-alt">Görsel açıklaması</label>
+                  <input id="avm-admin-image-alt" name="image_alt" maxlength="300">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-contact-phone">Ziyaretçi telefonu</label>
+                  <input id="avm-admin-contact-phone" name="contact_phone" type="tel" maxlength="40" autocomplete="tel">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-website">Resmi web adresi</label>
+                  <input id="avm-admin-website" name="website_url" type="url" inputmode="url" placeholder="https://">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-cta-label">Aksiyon etiketi</label>
+                  <input id="avm-admin-cta-label" name="cta_label" maxlength="80" placeholder="Örn. Rezervasyon Yap">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-cta-url">Aksiyon bağlantısı</label>
+                  <input id="avm-admin-cta-url" name="cta_url" type="url" inputmode="url" placeholder="https://">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-tags">Etiketler</label>
+                  <input id="avm-admin-tags" name="tags" placeholder="featured,today,family">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-minutes">Süre dk</label>
+                  <input id="avm-admin-minutes" name="estimated_minutes" type="number" min="1" step="1" value="20" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-touch">Temas puanı</label>
+                  <input id="avm-admin-touch" name="touch_score" type="number" min="1" step="1" value="3" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-order">Sıra</label>
+                  <input id="avm-admin-order" name="display_order" type="number" min="1" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-status">Durum</label>
+                  <select id="avm-admin-status" name="status">
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-admin-starts-at">Yayın başlangıcı (İstanbul)</label>
+                  <input id="avm-admin-starts-at" name="starts_at" type="datetime-local" step="60">
+                </div>
+                <div class="field">
+                  <label for="avm-admin-ends-at">Yayın bitişi (İstanbul)</label>
+                  <input id="avm-admin-ends-at" name="ends_at" type="datetime-local" step="60">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-admin-description">Açıklama</label>
+                  <textarea id="avm-admin-description" name="description" required></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-admin-terms">Kampanya koşulları</label>
+                  <textarea id="avm-admin-terms" name="terms_text" maxlength="5000" placeholder="Aktif kampanyalarda geçerlilik, istisna ve kullanım koşulları zorunludur."></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">İçeriği Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div data-avm-admin-directory></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="floor-maps">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Kat Görseli</p>
+                <h2>Gerçek Kat Planı Görseli Ekle / Düzenle</h2>
+                <p class="muted">Canlı kurulumda onaylı AVM kat planı görseli Supabase Storage `mall-assets` bucket'ına yüklenir; buradaki URL ziyaretçi haritasının arka planı olarak kullanılır.</p>
+              </div>
+            </div>
+            <form data-avm-map-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-map-public-id">Harita kodu</label>
+                  <input id="avm-map-public-id" name="public_id" required placeholder="map-ground-floor">
+                </div>
+                <div class="field">
+                  <label for="avm-map-title">Harita adı</label>
+                  <input id="avm-map-title" name="title" required placeholder="Zemin Kat Planı">
+                </div>
+                <div class="field">
+                  <label for="avm-map-floor">Kat / alan</label>
+                  <input id="avm-map-floor" name="floor_label" required placeholder="Zemin Kat">
+                </div>
+                <div class="field">
+                  <label for="avm-map-bucket">Storage bucket</label>
+                  <input id="avm-map-bucket" name="storage_bucket" required value="mall-assets">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-map-url">Görsel public URL</label>
+                  <input id="avm-map-url" name="image_url" type="url" placeholder="https://.../storage/v1/object/public/mall-assets/...">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-map-path">Storage yolu</label>
+                  <input id="avm-map-path" name="storage_path" placeholder="allona-avm-dunyasi/floor-plans/zemin-kat.webp">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-map-alt">Görsel açıklaması</label>
+                  <input id="avm-map-alt" name="image_alt" required placeholder="Zemin kat mağaza, atrium ve hizmet alanı planı">
+                </div>
+                <div class="field">
+                  <label for="avm-map-width">Orijinal genişlik px</label>
+                  <input id="avm-map-width" name="native_width_px" type="number" min="1" step="1">
+                </div>
+                <div class="field">
+                  <label for="avm-map-height">Orijinal yükseklik px</label>
+                  <input id="avm-map-height" name="native_height_px" type="number" min="1" step="1">
+                </div>
+                <div class="field">
+                  <label for="avm-map-order">Sıra</label>
+                  <input id="avm-map-order" name="display_order" type="number" min="1" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-map-status">Durum</label>
+                  <select id="avm-map-status" name="status">
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Kat Görselini Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div data-avm-admin-maps></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="floor-zones">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Kat Planı</p>
+                <h2>Yön Bulma Bölgesi Ekle / Düzenle</h2>
+                <p class="muted">Koordinatlar ziyaretçi sayfasındaki kat planı üzerinde yüzde bazlı konum üretir; genişlik ve sol konum birlikte taşma yapmayacak şekilde sınırlandırılır.</p>
+              </div>
+            </div>
+            <form data-avm-zone-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-zone-public-id">Bölge kodu</label>
+                  <input id="avm-zone-public-id" name="public_id" required placeholder="zone-ground-north">
+                </div>
+                <div class="field">
+                  <label for="avm-zone-title">Bölge adı</label>
+                  <input id="avm-zone-title" name="title" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-floor-map">Kat planı görseli</label>
+                  <select id="avm-zone-floor-map" name="floor_map_id" data-avm-zone-floor-map-select required>
+                    <option value="">Kat planı seçin</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-floor">Kat / alan</label>
+                  <input id="avm-zone-floor" name="floor_label" required readonly placeholder="Kat planından gelir">
+                </div>
+                <div class="field">
+                  <label for="avm-zone-type">Bölge türü</label>
+                  <select id="avm-zone-type" name="zone_type" required>
+                    <option value="stores">Mağaza</option>
+                    <option value="events">Etkinlik</option>
+                    <option value="dining">Yeme İçme</option>
+                    <option value="parking">Otopark</option>
+                    <option value="services">Hizmet</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-x">Sol konum %</label>
+                  <input id="avm-zone-x" name="map_x_percent" type="number" min="0" max="95" step="1" value="10" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-y">Üst konum %</label>
+                  <input id="avm-zone-y" name="map_y_percent" type="number" min="0" max="95" step="1" value="25" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-width">Genişlik %</label>
+                  <input id="avm-zone-width" name="map_width_percent" type="number" min="10" max="90" step="1" value="25" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-height">Min yükseklik px</label>
+                  <input id="avm-zone-height" name="map_height_px" type="number" min="44" max="180" step="1" value="58" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-order">Sıra</label>
+                  <input id="avm-zone-order" name="display_order" type="number" min="1" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-zone-status">Durum</label>
+                  <select id="avm-zone-status" name="status">
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-zone-route">Yönlendirme metni</label>
+                  <input id="avm-zone-route" name="route_hint" required placeholder="Ana giriş > Moda Koridoru > Atrium">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-zone-metric">Yönetim metriği</label>
+                  <input id="avm-zone-metric" name="management_metric" required placeholder="Mağaza arama ve sponsorlu kart etkileşimi">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-zone-description">Ziyaretçi açıklaması</label>
+                  <textarea id="avm-zone-description" name="description" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Bölgeyi Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div class="section-header">
+                <div>
+                  <p class="eyebrow">Koordinat QA</p>
+                  <h3>Admin Kat Planı Önizlemesi</h3>
+                  <p class="muted">Kaydedilmiş bölgeler ve formda düzenlenen koordinatlar ziyaretçi haritasıyla aynı yüzde sınırlarıyla gösterilir.</p>
+                </div>
+              </div>
+              <div data-avm-admin-zone-preview></div>
+            </div>
+            <div class="section">
+              <div data-avm-admin-zones></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="parking-areas">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Otopark Operasyonları</p>
+                <h2>Otopark Alanı Ekle / Düzenle</h2>
+                <p class="muted">Kapasite, özel park alanları, giriş, fiyat, çalışma profili ve doğrulanmış doluluk bilgisini yönetin.</p>
+              </div>
+            </div>
+            <form data-avm-parking-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-parking-public-id">Alan kodu</label>
+                  <input id="avm-parking-public-id" name="public_id" required maxlength="180" placeholder="parking-p1-east">
+                </div>
+                <div class="field">
+                  <label for="avm-parking-title">Alan adı</label>
+                  <input id="avm-parking-title" name="title" required maxlength="180" placeholder="P1 Doğu Otoparkı">
+                </div>
+                <div class="field">
+                  <label for="avm-parking-level">Kat / seviye</label>
+                  <input id="avm-parking-level" name="level_label" required maxlength="120" placeholder="P1">
+                </div>
+                <div class="field">
+                  <label for="avm-parking-entrance">Araç girişi</label>
+                  <input id="avm-parking-entrance" name="entrance_label" required maxlength="180" placeholder="Doğu Kapısı araç girişi">
+                </div>
+                <div class="field">
+                  <label for="avm-parking-zone">Kat planı bölgesi</label>
+                  <select id="avm-parking-zone" name="floor_zone_id" data-avm-parking-zone-select>
+                    <option value="">Bölge seçin</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-hours-profile">Çalışma saati profili</label>
+                  <select id="avm-parking-hours-profile" name="hours_profile_id" data-avm-parking-hours-select>
+                    <option value="">Parking profili seçin</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-capacity">Toplam kapasite</label>
+                  <input id="avm-parking-capacity" name="capacity_total" type="number" min="1" max="100000" step="1" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-accessible">Erişilebilir alan</label>
+                  <input id="avm-parking-accessible" name="accessible_spaces" type="number" min="0" max="100000" step="1" value="0" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-family">Aile alanı</label>
+                  <input id="avm-parking-family" name="family_spaces" type="number" min="0" max="100000" step="1" value="0" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-ev">EV şarj alanı</label>
+                  <input id="avm-parking-ev" name="ev_charging_spaces" type="number" min="0" max="100000" step="1" value="0" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-motorcycle">Motosiklet alanı</label>
+                  <input id="avm-parking-motorcycle" name="motorcycle_spaces" type="number" min="0" max="100000" step="1" value="0" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-max-height">Azami yükseklik (m)</label>
+                  <input id="avm-parking-max-height" name="max_height_m" type="number" min="1" max="10" step="0.01" inputmode="decimal" placeholder="1.90">
+                </div>
+                <div class="field">
+                  <label for="avm-parking-availability">Doluluk durumu</label>
+                  <select id="avm-parking-availability" name="availability_status" required>
+                    <option value="unknown">Anlık bilgi yok</option>
+                    <option value="available">Yer var</option>
+                    <option value="limited">Sınırlı yer</option>
+                    <option value="full">Dolu</option>
+                    <option value="closed">Kapalı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-available-spaces">Boş alan</label>
+                  <input id="avm-parking-available-spaces" name="spaces_available" type="number" min="0" max="100000" step="1" disabled>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-order">Sıra</label>
+                  <input id="avm-parking-order" name="display_order" type="number" min="1" max="10000" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-parking-status">Yayın durumu</label>
+                  <select id="avm-parking-status" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-parking-directions-url">Araç navigasyon URL'si</label>
+                  <input id="avm-parking-directions-url" name="directions_url" type="url" maxlength="1000" inputmode="url" placeholder="https://maps.google.com/...?">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-parking-directions">Yaya yönlendirmesi</label>
+                  <textarea id="avm-parking-directions" name="directions_text" rows="3" maxlength="1000" placeholder="P1 Doğu alanından B asansörünü kullanarak zemin kata çıkın."></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-parking-pricing">Ücret bilgisi</label>
+                  <textarea id="avm-parking-pricing" name="pricing_text" rows="3" maxlength="1000" placeholder="İlk 3 saat ücretsiz; güncel tarife ödeme noktalarında geçerlidir."></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-parking-best-for">Yakın hedefler</label>
+                  <input id="avm-parking-best-for" name="best_for" maxlength="500" placeholder="Sinema, yemek katı ve doğu mağaza koridoru">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Otopark Alanını Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section" data-avm-admin-parking></div>
+          </section>
+
+          <section class="panel section" id="transport-routes">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ulaşım Operasyonları</p>
+                <h2>Ulaşım Rotası Ekle / Düzenle</h2>
+                <p class="muted">Toplu taşıma, servis, taksi ve aktif ulaşım seçeneklerinin doğrulanmış saat, durak, ücret ve erişilebilirlik bilgisini yayınlayın.</p>
+              </div>
+            </div>
+            <form data-avm-transport-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-transport-public-id-admin">Rota kodu</label>
+                  <input id="avm-transport-public-id-admin" name="public_id" required maxlength="180" placeholder="metro-m2-avm">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-mode-admin">Ulaşım türü</label>
+                  <select id="avm-transport-mode-admin" name="mode" required>
+                    <option value="metro">Metro / raylı sistem</option>
+                    <option value="bus">Otobüs</option>
+                    <option value="shuttle">AVM servisi</option>
+                    <option value="minibus">Minibüs / dolmuş</option>
+                    <option value="taxi">Taksi</option>
+                    <option value="walking">Yaya</option>
+                    <option value="cycling">Bisiklet</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-transport-title-admin">Rota adı</label>
+                  <input id="avm-transport-title-admin" name="title" required maxlength="180" placeholder="M2 Metro bağlantısı">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-route-number">Hat / rota numarası</label>
+                  <input id="avm-transport-route-number" name="route_number" maxlength="80" placeholder="M2 veya 59R">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-origin">Başlangıç</label>
+                  <input id="avm-transport-origin" name="origin_label" required maxlength="180" placeholder="Merkez metro istasyonu">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-destination">Varış</label>
+                  <input id="avm-transport-destination" name="destination_label" required maxlength="180" placeholder="AVM ana giriş">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-stop">Durak / istasyon</label>
+                  <input id="avm-transport-stop" name="stop_name" maxlength="180" placeholder="AVM durağı, kuzey çıkışı">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-duration">Tahmini süre</label>
+                  <input id="avm-transport-duration" name="duration_text" maxlength="120" placeholder="Yaklaşık 18 dakika">
+                </div>
+                <div class="field">
+                  <label for="avm-transport-service-status">Hizmet durumu</label>
+                  <select id="avm-transport-service-status" name="service_status" required>
+                    <option value="operating">Hizmet veriyor</option>
+                    <option value="limited">Sınırlı hizmet</option>
+                    <option value="suspended">Geçici olarak durdu</option>
+                    <option value="planned">Planlandı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-transport-status-admin">Yayın durumu</label>
+                  <select id="avm-transport-status-admin" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-transport-order">Sıra</label>
+                  <input id="avm-transport-order" name="display_order" type="number" min="1" max="10000" step="1" value="100" required>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-transport-schedule">Sefer / çalışma bilgisi</label>
+                  <textarea id="avm-transport-schedule" name="schedule_text" rows="2" maxlength="500" placeholder="Hafta içi 06:00-00:00; güncel sefer sıklığını yazın."></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-transport-fare">Ücret bilgisi</label>
+                  <textarea id="avm-transport-fare" name="fare_text" rows="2" maxlength="500" placeholder="Güncel tarife ve ödeme yöntemleri"></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-transport-accessibility">Erişilebilirlik bilgisi</label>
+                  <textarea id="avm-transport-accessibility" name="accessibility_text" rows="2" maxlength="500" placeholder="Asansör, alçak taban, tekerlekli sandalye erişimi"></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-transport-directions">Adım adım yönlendirme</label>
+                  <textarea id="avm-transport-directions" name="directions_text" rows="3" maxlength="1000" required></textarea>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-transport-url">Doğrulanmış rota URL'si</label>
+                  <input id="avm-transport-url" name="directions_url" type="url" maxlength="1000" inputmode="url" placeholder="https://maps.google.com/...?">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Ulaşım Rotasını Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section" data-avm-admin-transport></div>
+          </section>
+
+          <section class="panel section" id="services">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ziyaretçi Operasyonları</p>
+                <h2>Hizmet Ekle / Düzenle</h2>
+                <p class="muted">Hizmetin konumunu, çalışma bilgisini, erişilebilirlik niteliğini ve geçici kesinti durumunu ziyaretçiye yayınlayın.</p>
+              </div>
+            </div>
+            <form data-avm-service-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-service-public-id">Hizmet kodu</label>
+                  <input id="avm-service-public-id" name="public_id" required placeholder="service-wheelchair-rental">
+                </div>
+                <div class="field">
+                  <label for="avm-service-title">Hizmet adı</label>
+                  <input id="avm-service-title" name="title" required>
+                </div>
+                <div class="field">
+                  <label for="avm-service-category-admin">Kategori</label>
+                  <select id="avm-service-category-admin" name="category" required>
+                    <option value="parking">Otopark</option>
+                    <option value="transport">Ulaşım</option>
+                    <option value="accessibility">Erişilebilirlik</option>
+                    <option value="family">Aile</option>
+                    <option value="guest_services">Danışma</option>
+                    <option value="amenities">Konfor</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-service-floor">Kat / konum</label>
+                  <input id="avm-service-floor" name="floor_label" required placeholder="Zemin Kat, Danışma">
+                </div>
+                <div class="field">
+                  <label for="avm-service-zone">Kat planı bölgesi</label>
+                  <select id="avm-service-zone" name="floor_zone_id" data-avm-service-zone-select>
+                    <option value="">Bölgeye bağlama</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-service-hours">Çalışma bilgisi</label>
+                  <input id="avm-service-hours" name="operating_hours" placeholder="Her gün 10:00-22:00">
+                </div>
+                <div class="field">
+                  <label for="avm-service-availability-admin">Hizmet durumu</label>
+                  <select id="avm-service-availability-admin" name="availability_status" required>
+                    <option value="available">Hizmet veriyor</option>
+                    <option value="limited">Sınırlı hizmet</option>
+                    <option value="temporarily_unavailable">Geçici olarak kapalı</option>
+                    <option value="scheduled">Planlı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-service-status">Yayın durumu</label>
+                  <select id="avm-service-status" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-service-order">Sıra</label>
+                  <input id="avm-service-order" name="display_order" type="number" min="1" max="10000" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label><input name="is_accessibility_service" type="checkbox"> Erişilebilirlik hizmeti</label>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-service-route">Yönlendirme metni</label>
+                  <input id="avm-service-route" name="route_hint" placeholder="Ana giriş > Danışma > Erişilebilirlik hizmet noktası">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-service-availability-note">Güncel durum notu</label>
+                  <input id="avm-service-availability-note" name="availability_note" placeholder="Örn. P4 şarj noktası bakımda; P1 ve P2 hizmet veriyor">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-service-description">Ziyaretçi açıklaması</label>
+                  <textarea id="avm-service-description" name="description" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Hizmeti Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div data-avm-admin-services></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="ad-slots">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Gelir Envanteri</p>
+                <h2>Reklam Alanı Ekle / Düzenle</h2>
+                <p class="muted">Sponsorlu mağaza kartı, atrium etkinliği, dijital ekran ve pop-up lead alanlarını yönetin.</p>
+              </div>
+            </div>
+            <form data-avm-ad-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-ad-public-id">Alan kodu</label>
+                  <input id="avm-ad-public-id" name="public_id" required placeholder="ad-sponsored-store">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-title">Alan adı</label>
+                  <input id="avm-ad-title" name="title" required>
+                </div>
+                <div class="field">
+                  <label for="avm-ad-type">Alan türü</label>
+                  <select id="avm-ad-type" name="slot_type" required>
+                    <option value="sponsored_listing">Sponsorlu listeleme</option>
+                    <option value="event_area">Etkinlik alanı</option>
+                    <option value="digital_screen">Dijital ekran</option>
+                    <option value="banner">Banner</option>
+                    <option value="popup_lead">Pop-up / kiralama lead</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-ad-placement">Yerleşim</label>
+                  <input id="avm-ad-placement" name="placement" required placeholder="Mağaza rehberi ve arama sonuçları">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-goal">Lead hedefi</label>
+                  <input id="avm-ad-goal" name="lead_goal" required placeholder="Reklam alanı satışı">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-order">Sıra</label>
+                  <input id="avm-ad-order" name="display_order" type="number" min="1" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-ad-status">Durum</label>
+                  <select id="avm-ad-status" name="status">
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="avm-ad-description">Açıklama</label>
+                  <textarea id="avm-ad-description" name="description" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Reklam Alanını Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section">
+              <div data-avm-admin-ad-slots></div>
+            </div>
+          </section>
+
+          <section class="panel section" id="partner-submissions">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Tenant ve Marka Operasyonları</p>
+                <h2>AVM Yayın Talepleri</h2>
+                <p class="muted">Partner panelinden gelen mağaza profili, kampanya, etkinlik ve reklam taleplerinin inceleme ve yayın durumunu yönetin.</p>
+              </div>
+            </div>
+            <div data-avm-admin-partner-submissions></div>
+          </section>
+
+          <section class="panel section" id="visit-plans">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ziyaret Planları</p>
+                <h2>Ziyaretçi Rota ve İlgi Özetleri</h2>
+                <p class="muted">Ziyaretçi planlayıcıdan gönderilen rota durakları, süre ve temas puanı AVM yönetim raporlaması için burada izlenir.</p>
+              </div>
+            </div>
+            <div data-avm-admin-visit-plans></div>
+          </section>
+
+          <section class="panel section" id="campaign-redemptions">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Kampanya Performansı</p>
+                <h2>Kampanya İlgi Kayıtları</h2>
+                <p class="muted">Ziyaretçilerin canlı kampanyalardaki ilgi aksiyonları burada AVM pazarlama ve tenant raporlaması için izlenir.</p>
+              </div>
+            </div>
+            <div data-avm-admin-campaign-redemptions></div>
+          </section>
+
+          <section class="panel section" id="directory-interactions">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">İçerik Performansı</p>
+                <h2>Katalog Etkileşimleri</h2>
+                <p class="muted">Detay görüntüleme, rota, ziyaret planı, iletişim, resmi site ve paylaşım aksiyonlarını günlük tekil ziyaretçi oturumu bazında izleyin.</p>
+              </div>
+            </div>
+            <div data-avm-admin-directory-interactions></div>
+          </section>
+
+          <section class="panel section" id="leads">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Partner Talepleri</p>
+                <h2>AVM Görüşme Talepleri</h2>
+              </div>
+            </div>
+            <div data-avm-admin-leads></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js" defer></script>
+  <script src="../js/core.js" defer></script>
+  <script src="../js/supabase-client.js" defer></script>
+  <script src="../js/auth.js" defer></script>
+  <script src="../js/cart.js" defer></script>
+  <script src="../js/layout.js" defer></script>
+  <script src="../js/avm-admin.js" defer></script>
+</body>
+</html>

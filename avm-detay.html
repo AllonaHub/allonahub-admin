@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AVM İçerik Detayı | AllonaHub</title>
+  <meta name="description" content="AllonaHub AVM Dünyası mağaza, etkinlik, kampanya ve yeme-içme detayları.">
+  <meta property="og:title" content="AVM İçerik Detayı | AllonaHub">
+  <meta property="og:description" content="AVM Dünyası içerik detayını, çalışma saatlerini ve konum bilgisini inceleyin.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="site-shell" data-page="avm-detail">
+    <div data-layout="header"></div>
+
+    <main class="site-main avm-detail-page">
+      <section class="container" data-avm-detail-status aria-live="polite">
+        <div class="status-box">AVM detayı yükleniyor...</div>
+      </section>
+
+      <article class="container avm-detail" data-avm-detail hidden>
+        <nav class="avm-detail__breadcrumbs" aria-label="İçerik yolu">
+          <a href="avm-dunyasi.html">AVM Dünyası</a>
+          <span aria-hidden="true">/</span>
+          <a data-avm-detail-directory-link href="avm-dunyasi.html#avm-experience">Katalog</a>
+          <span aria-hidden="true">/</span>
+          <span data-avm-detail-breadcrumb></span>
+        </nav>
+
+        <section class="avm-detail__hero" aria-labelledby="avm-detail-title">
+          <div class="avm-detail__media">
+            <img data-avm-detail-image alt="" hidden>
+          </div>
+          <div class="avm-detail__intro">
+            <div class="avm-directory-card__top">
+              <span class="pill pill--gold" data-avm-detail-type></span>
+              <span class="pill" data-avm-detail-floor></span>
+            </div>
+            <p class="eyebrow" data-avm-detail-center></p>
+            <h1 id="avm-detail-title" data-avm-detail-title></h1>
+            <p class="avm-detail__lead" data-avm-detail-description></p>
+            <div class="avm-detail__schedule" data-avm-detail-schedule hidden></div>
+            <div class="avm-detail__actions">
+              <a class="btn" data-avm-detail-cta target="_blank" rel="noopener" hidden></a>
+              <a class="btn btn--light" data-avm-detail-website target="_blank" rel="noopener" hidden>Resmi Site</a>
+              <a class="btn btn--light" data-avm-detail-phone hidden>Telefon</a>
+              <a class="btn btn--light" data-avm-detail-route hidden>Kat Planında Göster</a>
+              <a class="btn btn--light" data-avm-detail-directions target="_blank" rel="noopener" hidden>AVM'ye Yol Tarifi</a>
+              <a class="btn btn--light" data-avm-detail-calendar target="_blank" rel="noopener" hidden>Takvime Ekle</a>
+              <button class="btn btn--light" type="button" data-avm-detail-plan>Rotaya Ekle</button>
+              <button class="btn btn--light" type="button" data-avm-detail-share>Bağlantıyı Paylaş</button>
+              <button class="btn" type="button" data-avm-detail-redemption hidden>İlgileniyorum</button>
+            </div>
+            <div data-avm-detail-action-status aria-live="polite"></div>
+          </div>
+        </section>
+
+        <div class="avm-detail__body">
+          <div class="avm-detail__content">
+            <section aria-labelledby="avm-detail-about-title">
+              <p class="eyebrow">Detay</p>
+              <h2 id="avm-detail-about-title">Bilmeniz gerekenler</h2>
+              <p data-avm-detail-long-description></p>
+            </section>
+            <section data-avm-detail-terms-section aria-labelledby="avm-detail-terms-title" hidden>
+              <p class="eyebrow">Kampanya Koşulları</p>
+              <h2 id="avm-detail-terms-title">Geçerlilik ve kullanım</h2>
+              <p data-avm-detail-terms></p>
+            </section>
+          </div>
+
+          <aside class="avm-detail__aside" aria-label="Ziyaret bilgileri">
+            <section data-avm-detail-hours-section hidden>
+              <p class="eyebrow">Çalışma Saatleri</p>
+              <h2 data-avm-detail-hours-title></h2>
+              <strong data-avm-detail-hours-status></strong>
+              <p class="muted" data-avm-detail-hours-today></p>
+              <p class="avm-opening-hours__notice" data-avm-detail-hours-note hidden></p>
+              <details>
+                <summary>Haftalık program</summary>
+                <dl data-avm-detail-weekly-hours></dl>
+              </details>
+            </section>
+            <section>
+              <p class="eyebrow">Konum</p>
+              <h2 data-avm-detail-location></h2>
+              <p class="muted" data-avm-detail-category></p>
+            </section>
+          </aside>
+        </div>
+
+        <section class="section avm-detail__related" data-avm-detail-related-section hidden aria-labelledby="avm-detail-related-title">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Aynı Kategoride</p>
+              <h2 id="avm-detail-related-title">Diğer seçenekler</h2>
+            </div>
+          </div>
+          <div class="avm-detail__related-grid" data-avm-detail-related></div>
+        </section>
+      </article>
+    </main>
+
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/supabase-client.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/cart.js" defer></script>
+  <script src="js/layout.js" defer></script>
+  <script src="js/avm-detail.js" defer></script>
+</body>
+</html>

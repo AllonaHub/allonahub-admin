@@ -340,7 +340,7 @@ const searchRoutes=[
 {keys:["yemek","restoran","burger","pizza"],url:"/pages/commerce/allonayemek.html"},
 {keys:["market","süpermarket","gıda"],url:"/pages/commerce/allonamarket.html"},
 {keys:["taksi","ulaşım"],url:"/pages/ecosystem/allonataksi.html"},
-{keys:["avm","alışveriş merkezi","mall"],url:"/pages/ecosystem/allonaavm.html"},
+{keys:["avm","alışveriş merkezi","mall"],url:"/avm-dunyasi.html"},
 {keys:["sağlık","doktor","eczane"],url:"/pages/ecosystem/allonasaglik.html"},
 {keys:["seyahat","turizm","bilet"],url:"/pages/ecosystem/allonaseyahat.html"},
 {keys:["gayrimenkul","ev","arsa","kiralık","satılık"],url:"/pages/ecosystem/allonagayrimenkul.html"},
