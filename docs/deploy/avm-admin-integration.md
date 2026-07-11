@@ -22,9 +22,9 @@ Eski AVM bağlantısı ve diğer modül rotaları erişilebilir kalır; ana AVM 
 
 ## Supabase
 
-`supabase/migrations/20260711*.sql` ve `supabase/migrations/20260712*.sql` dosyaları AVM migration zinciridir. Production Supabase projesinde migration geçmişi kontrol edilerek tarih sırasıyla uygulanmalıdır. Zincir `20260712018000_add_avm_accessibility_requests.sql` ve `20260712019000_add_avm_accessibility_reporting.sql` ile günceldir.
+`supabase/migrations/20260711*.sql` ve `supabase/migrations/20260712*.sql` dosyaları AVM migration zinciridir. Production Supabase projesinde migration geçmişi kontrol edilerek tarih sırasıyla uygulanmalıdır. Zincir `20260712020000_add_avm_sponsored_placements.sql` ile günceldir.
 
-Migration sonrası gerçek merkez, saat, kat planı, bölge, katalog, hizmet, otopark, ulaşım, operasyon duyurusu ve partner kayıtları admin ekranından taslak olarak girilir. Operasyon onayı olmadan kayıtlar `active` yapılmaz. Katalog Kaydet aksiyonu günlük tekil `favorite_save` etkileşimini mevcut admin/partner rapor sözleşmesine ekler. Erişilebilirlik destek talepleri yalnız admin kapsamında filtrelenir, sayfalanır ve CSV alınır; ham ziyaretçi iletişim verisi partner/tenant paneline açılmaz.
+Migration sonrası gerçek merkez, saat, kat planı, bölge, katalog, hizmet, otopark, ulaşım, operasyon duyurusu ve partner kayıtları admin ekranından taslak olarak girilir. Operasyon onayı olmadan kayıtlar `active` yapılmaz. Katalog Kaydet aksiyonu günlük tekil `favorite_save` etkileşimini mevcut admin/partner rapor sözleşmesine ekler. Erişilebilirlik destek talepleri yalnız admin kapsamında filtrelenir, sayfalanır ve CSV alınır; ham ziyaretçi iletişim verisi partner/tenant paneline açılmaz. Sponsor yerleşimi yalnız onaylı görsel/alt metin, CTA ve İstanbul yayın aralığı tamamlandığında ziyaretçide açık `Reklam` etiketiyle yayınlanır; partner reklam talebi görsel ve iki tarih olmadan gönderilemez.
 
 ## Yayın Sırası
 

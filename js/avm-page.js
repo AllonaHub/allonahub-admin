@@ -103,6 +103,7 @@
   let parkingAreas = [];
   let transportRoutes = [];
   let operationalNotices = [];
+  let sponsoredPlacements = [];
   let parkingAreasReady = false;
   let hoursProfiles = [];
   let weeklyHoursRows = [];
@@ -439,6 +440,21 @@
       directions: row.directions_text || "",
       directions_url: safeHttpUrl(row.directions_url),
       service_status: row.service_status || "operating",
+      display_order: Number(row.display_order || 999)
+    };
+  }
+
+  function normalizeRemoteSponsoredPlacement(row) {
+    return {
+      id: row.public_id || row.id,
+      title: row.title,
+      placement: row.placement || "Sponsorlu içerik",
+      description: row.description || "",
+      image_url: safeHttpUrl(row.creative_image_url),
+      image_alt: row.creative_image_alt || row.title || "Sponsorlu içerik",
+      cta_label: row.cta_label || "İncele",
+      cta_url: safeHttpUrl(row.cta_url),
+      ends_at: row.ends_at,
       display_order: Number(row.display_order || 999)
     };
   }
@@ -1265,6 +1281,80 @@
       operationalNotices = [];
     }
     renderOperationalNotices();
+  }
+
+  function renderSponsoredPlacements() {
+    const section = document.querySelector("[data-avm-sponsored]");
+    const target = document.querySelector("[data-avm-sponsored-list]");
+    const source = document.querySelector("[data-avm-sponsored-source]");
+    if (!section || !target) return;
+    const visible = sponsoredPlacements.filter((item) => item.image_url && item.cta_url);
+    section.hidden = !visible.length;
+    if (!visible.length) {
+      target.innerHTML = "";
+      if (source) source.textContent = "";
+      return;
+    }
+    if (source) source.textContent = `${visible.length} onaylı sponsor yerleşimi gösteriliyor.`;
+    target.innerHTML = visible.map((item) => {
+      const endsAt = new Date(item.ends_at).toLocaleString("tr-TR", {
+        timeZone: "Europe/Istanbul",
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+      return `
+        <article class="avm-sponsored-card" data-avm-sponsored-card>
+          <div class="avm-sponsored-card__media">
+            <img src="${core.escapeHTML(item.image_url)}" alt="${core.escapeHTML(item.image_alt)}" loading="lazy" data-avm-sponsored-image>
+            <span>Reklam</span>
+          </div>
+          <div class="avm-sponsored-card__body">
+            <div>
+              <p class="eyebrow">${core.escapeHTML(item.placement)}</p>
+              <h3>${core.escapeHTML(item.title)}</h3>
+              <p>${core.escapeHTML(item.description)}</p>
+            </div>
+            <div class="avm-sponsored-card__footer">
+              <small>${core.escapeHTML(`${endsAt}'e kadar yayında`)}</small>
+              <a class="btn btn--gold" href="${core.escapeHTML(item.cta_url)}" target="_blank" rel="sponsored noopener">${core.escapeHTML(item.cta_label)}</a>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  async function loadSponsoredPlacements() {
+    if (isLocalPreview()) {
+      sponsoredPlacements = [];
+      renderSponsoredPlacements();
+      return;
+    }
+    const db = client();
+    if (!db) {
+      sponsoredPlacements = [];
+      renderSponsoredPlacements();
+      return;
+    }
+    try {
+      const mall = await resolveMallCenter(db);
+      if (mall.error) throw mall.error;
+      if (!mall.id) throw new Error("AVM merkezi kaydı bulunamadı.");
+      const now = new Date().toISOString();
+      const { data, error } = await db
+        .from("mall_ad_slots")
+        .select("id,public_id,title,placement,description,creative_image_url,creative_image_alt,cta_label,cta_url,starts_at,ends_at,display_order,status")
+        .eq("mall_id", mall.id)
+        .eq("status", "active")
+        .lte("starts_at", now)
+        .gte("ends_at", now)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      sponsoredPlacements = (data || []).map(normalizeRemoteSponsoredPlacement);
+    } catch (error) {
+      sponsoredPlacements = [];
+    }
+    renderSponsoredPlacements();
   }
 
   function setParkingSource(message, type) {
@@ -2272,6 +2362,18 @@
     loadOperationalNotices();
   }
 
+  function bindSponsoredPlacements() {
+    const target = document.querySelector("[data-avm-sponsored-list]");
+    if (!target) return;
+    target.addEventListener("error", (event) => {
+      if (!event.target.matches("[data-avm-sponsored-image]")) return;
+      event.target.closest("[data-avm-sponsored-card]")?.remove();
+      const section = document.querySelector("[data-avm-sponsored]");
+      if (section && !target.querySelector("[data-avm-sponsored-card]")) section.hidden = true;
+    }, true);
+    loadSponsoredPlacements();
+  }
+
   function bindParking() {
     const target = document.querySelector("[data-avm-parking-areas]");
     const form = document.querySelector("[data-avm-parking-location-form]");
@@ -2393,6 +2495,7 @@
     bindParking();
     bindTransport();
     bindOperationalNotices();
+    bindSponsoredPlacements();
     bindServices();
     bindAccessibilityRequests();
     bindPartner();

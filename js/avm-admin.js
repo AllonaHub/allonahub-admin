@@ -1761,13 +1761,14 @@
         ? `
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Alan</th><th>Tür</th><th>Yerleşim</th><th>Lead hedefi</th><th>Durum</th><th></th></tr></thead>
+              <thead><tr><th>Alan</th><th>Tür</th><th>Yerleşim</th><th>Yaratıcı / yayın</th><th>Lead hedefi</th><th>Durum</th><th></th></tr></thead>
               <tbody>
                 ${rows.map((slot) => `
                   <tr>
                     <td>${core.escapeHTML(slot.title)}</td>
                     <td>${core.escapeHTML(slot.slot_type)}</td>
                     <td>${core.escapeHTML(slot.placement)}</td>
+                    <td>${directoryMediaCell({ image_url: slot.creative_image_url, image_alt: slot.creative_image_alt, title: slot.title })}<br><small>${core.escapeHTML(scheduleLabel(slot))}</small></td>
                     <td>${core.escapeHTML(slot.lead_goal || "-")}</td>
                     <td>${rowStatus(slot.status)}</td>
                     <td>
@@ -3481,14 +3482,47 @@
       button.disabled = true;
       const values = core.parseForm(form);
       try {
+        const creativeImageUrl = String(values.creative_image_url || "").trim();
+        const creativeImageAlt = String(values.creative_image_alt || "").trim();
+        const ctaLabel = String(values.cta_label || "").trim();
+        const ctaUrl = String(values.cta_url || "").trim();
+        const startsAt = istanbulInputToIso(values.starts_at);
+        const endsAt = istanbulInputToIso(values.ends_at);
+        if (Boolean(creativeImageUrl) !== Boolean(creativeImageAlt)) {
+          throw new Error("Sponsor görseli URL ve erişilebilir açıklama birlikte girilmelidir.");
+        }
+        if (creativeImageUrl && !validHttpUrl(creativeImageUrl)) {
+          throw new Error("Sponsor görseli geçerli bir HTTP(S) URL olmalıdır.");
+        }
+        if (creativeImageAlt && creativeImageAlt.length < 3) {
+          throw new Error("Sponsor görseli açıklaması en az 3 karakter olmalıdır.");
+        }
+        if (Boolean(ctaLabel) !== Boolean(ctaUrl)) {
+          throw new Error("Sponsor aksiyon etiketi ve URL birlikte girilmelidir.");
+        }
+        if (ctaUrl && !validHttpUrl(ctaUrl)) {
+          throw new Error("Sponsor aksiyon bağlantısı geçerli bir HTTP(S) URL olmalıdır.");
+        }
+        if (Boolean(startsAt) !== Boolean(endsAt) || (startsAt && new Date(endsAt).getTime() <= new Date(startsAt).getTime())) {
+          throw new Error("Sponsor yayın başlangıcı ve bitişi birlikte, doğru sıralı bir İstanbul tarih-saat aralığı olmalıdır.");
+        }
+        if (values.status === "active" && (!creativeImageUrl || !ctaUrl || !startsAt || !endsAt)) {
+          throw new Error("Aktif sponsor yerleşimi için görsel, açıklama, aksiyon ve yayın aralığı zorunludur.");
+        }
         const payload = {
           mall_id: await requireDefaultMallId(),
-          public_id: values.public_id,
-          title: values.title,
+          public_id: String(values.public_id || "").trim(),
+          title: String(values.title || "").trim(),
           slot_type: values.slot_type,
-          placement: values.placement,
-          description: values.description || "",
-          lead_goal: values.lead_goal || "",
+          placement: String(values.placement || "").trim(),
+          description: String(values.description || "").trim(),
+          lead_goal: String(values.lead_goal || "").trim(),
+          creative_image_url: creativeImageUrl ? normalizedHttpUrl(creativeImageUrl) : null,
+          creative_image_alt: creativeImageAlt,
+          cta_label: ctaLabel || null,
+          cta_url: ctaUrl ? normalizedHttpUrl(ctaUrl) : null,
+          starts_at: startsAt,
+          ends_at: endsAt,
           display_order: numberValue(values.display_order, 100, 1),
           status: values.status || "draft"
         };

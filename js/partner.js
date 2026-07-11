@@ -723,8 +723,8 @@
     const mediaUrlInput = form.elements.media_url;
     const mediaAltInput = form.elements.media_alt;
     const syncRequestRequirements = () => {
-      const scheduleRequired = ["campaign", "event"].includes(typeInput?.value);
-      const mediaRequired = typeInput?.value !== "advertising";
+      const scheduleRequired = ["campaign", "event", "advertising"].includes(typeInput?.value);
+      const mediaRequired = true;
       if (startInput) startInput.required = scheduleRequired;
       if (endInput) endInput.required = scheduleRequired;
       if (mediaUrlInput) mediaUrlInput.required = mediaRequired;
@@ -751,9 +751,9 @@
         core.renderStatus(status, "Zorunlu alanlar yalnızca boşluk karakterlerinden oluşamaz.", "error");
         return;
       }
-      const requiresSchedule = ["campaign", "event"].includes(values.request_type);
+      const requiresSchedule = ["campaign", "event", "advertising"].includes(values.request_type);
       if (requiresSchedule && (!values.requested_start_date || !values.requested_end_date)) {
-        core.renderStatus(status, "Kampanya ve etkinlik taleplerinde başlangıç ile bitiş tarihi zorunludur.", "error");
+        core.renderStatus(status, "Kampanya, etkinlik ve reklam taleplerinde başlangıç ile bitiş tarihi zorunludur.", "error");
         return;
       }
       if (Boolean(values.requested_start_date) !== Boolean(values.requested_end_date)) {
@@ -766,9 +766,8 @@
       }
       const mediaUrl = String(values.media_url || "").trim();
       const mediaAlt = String(values.media_alt || "").trim();
-      const requiresMedia = values.request_type !== "advertising";
-      if (requiresMedia && (!mediaUrl || !mediaAlt)) {
-        core.renderStatus(status, "Mağaza profili, kampanya ve etkinlik taleplerinde içerik görseli ile görsel açıklaması zorunludur.", "error");
+      if (!mediaUrl || !mediaAlt) {
+        core.renderStatus(status, "Tüm AVM yayın taleplerinde içerik görseli ile görsel açıklaması zorunludur.", "error");
         return;
       }
       if (Boolean(mediaUrl) !== Boolean(mediaAlt)) {

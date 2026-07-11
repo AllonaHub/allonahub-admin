@@ -109,11 +109,11 @@
                   </select>
                 </div>
                 <div class="field">
-                  <label for="partner-avm-start">Başlangıç tarihi</label>
+                  <label for="partner-avm-start">Kampanya / etkinlik / reklam başlangıcı</label>
                   <input id="partner-avm-start" name="requested_start_date" type="date">
                 </div>
                 <div class="field">
-                  <label for="partner-avm-end">Bitiş tarihi</label>
+                  <label for="partner-avm-end">Kampanya / etkinlik / reklam bitişi</label>
                   <input id="partner-avm-end" name="requested_end_date" type="date">
                 </div>
                 <div class="field field--full">
@@ -121,12 +121,12 @@
                   <input id="partner-avm-url" name="destination_url" type="url" maxlength="500" placeholder="https://">
                 </div>
                 <div class="field field--full">
-                  <label for="partner-avm-media-url">İçerik görseli URL</label>
-                  <input id="partner-avm-media-url" name="media_url" type="url" inputmode="url" maxlength="500" placeholder="https://">
+                  <label for="partner-avm-media-url">İçerik görseli URL <span aria-hidden="true">*</span></label>
+                  <input id="partner-avm-media-url" name="media_url" type="url" inputmode="url" maxlength="500" placeholder="https://" required>
                 </div>
                 <div class="field field--full">
-                  <label for="partner-avm-media-alt">Görsel açıklaması</label>
-                  <input id="partner-avm-media-alt" name="media_alt" maxlength="300">
+                  <label for="partner-avm-media-alt">Görsel açıklaması <span aria-hidden="true">*</span></label>
+                  <input id="partner-avm-media-alt" name="media_alt" maxlength="300" required>
                 </div>
                 <div class="field field--full">
                   <label for="partner-avm-summary">İçerik ve operasyon özeti</label>
@@ -181,6 +181,6 @@
   <script src="../js/auth.js" defer></script>
   <script src="../js/cart.js" defer></script>
   <script src="../js/layout.js" defer></script>
-  <script src="../js/partner.js" defer></script>
+  <script src="../js/partner.js?v=20260711-avm-sponsored-placement" defer></script>
 </body>
 </html>

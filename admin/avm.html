@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AVM Yönetimi | AllonaHub</title>
   <meta name="description" content="AllonaHub AVM Dünyası mağaza, etkinlik, kampanya, yeme-içme ve lead yönetimi.">
-  <link rel="stylesheet" href="../css/styles.css?v=20260711-avm-accessibility-operations">
+  <link rel="stylesheet" href="../css/styles.css?v=20260711-avm-sponsored-placement">
 </head>
 <body>
   <div class="site-shell" data-page="admin-avm">
@@ -1004,6 +1004,14 @@
                   <input id="avm-ad-order" name="display_order" type="number" min="1" step="1" value="100" required>
                 </div>
                 <div class="field">
+                  <label for="avm-ad-starts-at">Yayın başlangıcı (İstanbul)</label>
+                  <input id="avm-ad-starts-at" name="starts_at" type="datetime-local" step="60">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-ends-at">Yayın bitişi (İstanbul)</label>
+                  <input id="avm-ad-ends-at" name="ends_at" type="datetime-local" step="60">
+                </div>
+                <div class="field">
                   <label for="avm-ad-status">Durum</label>
                   <select id="avm-ad-status" name="status">
                     <option value="draft">draft</option>
@@ -1014,6 +1022,22 @@
                 <div class="field field--full">
                   <label for="avm-ad-description">Açıklama</label>
                   <textarea id="avm-ad-description" name="description" required></textarea>
+                </div>
+                <div class="field">
+                  <label for="avm-ad-image-url">Sponsor görseli URL</label>
+                  <input id="avm-ad-image-url" name="creative_image_url" type="url" placeholder="https://.../storage/v1/object/public/mall-assets/...">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-image-alt">Sponsor görseli açıklaması</label>
+                  <input id="avm-ad-image-alt" name="creative_image_alt" maxlength="300" placeholder="Marka ve kampanya görselinin erişilebilir açıklaması">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-cta-label">Aksiyon etiketi</label>
+                  <input id="avm-ad-cta-label" name="cta_label" maxlength="80" placeholder="Kampanyayı İncele">
+                </div>
+                <div class="field">
+                  <label for="avm-ad-cta-url">Aksiyon URL</label>
+                  <input id="avm-ad-cta-url" name="cta_url" type="url" placeholder="https://marka.example/kampanya">
                 </div>
               </div>
               <div class="form-actions">
@@ -1103,6 +1127,6 @@
   <script src="../js/auth.js" defer></script>
   <script src="../js/cart.js" defer></script>
   <script src="../js/layout.js?v=20260711-avm-accessibility-reporting" defer></script>
-  <script src="../js/avm-admin.js?v=20260711-avm-accessibility-operations" defer></script>
+  <script src="../js/avm-admin.js?v=20260711-avm-sponsored-placement" defer></script>
 </body>
 </html>
