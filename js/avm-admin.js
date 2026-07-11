@@ -121,6 +121,23 @@
     archived: "Arşivlendi"
   };
 
+  const accessibilityRequestTypeLabels = {
+    wheelchair: "Tekerlekli sandalye",
+    guided_assistance: "Karşılama ve yönlendirme",
+    hearing_support: "İşitme desteği",
+    visual_support: "Görme desteği",
+    family_support: "Aile / bebek desteği",
+    other: "Diğer"
+  };
+
+  const accessibilityRequestStatusLabels = {
+    new: "Yeni",
+    confirmed: "Teyit edildi",
+    completed: "Tamamlandı",
+    cancelled: "İptal edildi",
+    archived: "Arşivlendi"
+  };
+
   const campaignActionLabels = {
     save_interest: "İlgi kaydı",
     redeem_request: "Kullanım talebi"
@@ -1774,6 +1791,48 @@
     }
   }
 
+  async function loadAccessibilityRequests() {
+    const target = document.querySelector("[data-avm-admin-accessibility-requests]");
+    if (!target) return;
+    core.renderStatus(target, "Erişilebilirlik destek talepleri yükleniyor...");
+    try {
+      const { data, error } = await App.db.client()
+        .from("mall_accessibility_requests")
+        .select("id,visitor_name,service_type,visit_at,party_size,contact_phone,contact_email,meeting_point,request_note,status,admin_note,created_at")
+        .order("visit_at", { ascending: true })
+        .limit(250);
+      if (error) throw error;
+      const rows = data || [];
+      target.innerHTML = rows.length
+        ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Ziyaret</th><th>Destek</th><th>Ziyaretçi</th><th>Buluşma / not</th><th>Durum</th><th>Oluşturma</th></tr></thead>
+              <tbody>
+                ${rows.map((request) => `
+                  <tr>
+                    <td>${request.visit_at ? new Date(request.visit_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "-"}<br><span class="muted">${core.escapeHTML(`${request.party_size || 1} kişi`)}</span></td>
+                    <td>${core.escapeHTML(accessibilityRequestTypeLabels[request.service_type] || request.service_type)}</td>
+                    <td>${core.escapeHTML(request.visitor_name)}<br>${core.escapeHTML([request.contact_phone, request.contact_email].filter(Boolean).join(" · ") || "-")}</td>
+                    <td>${core.escapeHTML(request.meeting_point || "Belirtilmedi")}<br><span class="muted">${core.escapeHTML(request.request_note || "Not yok")}</span></td>
+                    <td>
+                      <select data-avm-accessibility-request-status="${core.escapeHTML(request.id)}">
+                        ${["new", "confirmed", "completed", "cancelled", "archived"].map((value) => `<option value="${value}" ${request.status === value ? "selected" : ""}>${core.escapeHTML(accessibilityRequestStatusLabels[value])}</option>`).join("")}
+                      </select>
+                    </td>
+                    <td>${request.created_at ? new Date(request.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "-"}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `
+        : '<div class="empty-state">Henüz erişilebilirlik destek talebi yok.</div>';
+    } catch (error) {
+      core.renderStatus(target, error.message || "Erişilebilirlik talepleri yüklenemedi. İlgili Supabase migration uygulanmalı.", "error");
+    }
+  }
+
   function submissionSummaryNumber(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -3114,6 +3173,25 @@
     });
   }
 
+  function bindAccessibilityRequestUpdates() {
+    document.addEventListener("change", async (event) => {
+      const select = event.target.closest("[data-avm-accessibility-request-status]");
+      if (!select) return;
+      try {
+        const { error } = await App.db.client()
+          .from("mall_accessibility_requests")
+          .update({ status: select.value })
+          .eq("id", select.dataset.avmAccessibilityRequestStatus);
+        if (error) throw error;
+        core.toast("Erişilebilirlik talebi durumu güncellendi.");
+        await loadAccessibilityRequests();
+      } catch (error) {
+        core.toast(error.message || "Erişilebilirlik talebi güncellenemedi.", "error");
+        await loadAccessibilityRequests();
+      }
+    });
+  }
+
   function bindPartnerSubmissionUpdates() {
     document.addEventListener("change", async (event) => {
       const statusSelect = event.target.closest("[data-avm-partner-submission-status]");
@@ -3435,6 +3513,7 @@
       loadVisitPlans(),
       loadCampaignRedemptions({ refreshDimensions: true }),
       loadDirectoryInteractions(),
+      loadAccessibilityRequests(),
       loadLeads()
     ]);
     await Promise.all([loadParkingAreas(), loadTransportRoutes(), loadServices()]);
@@ -3457,6 +3536,7 @@
     bindServiceForm();
     bindAdSlotForm();
     bindLeadUpdates();
+    bindAccessibilityRequestUpdates();
     bindPartnerSubmissionUpdates();
     bindPartnerSubmissionControls();
     bindPartnerSubmissionTargetCreation();

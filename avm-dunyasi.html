@@ -343,6 +343,77 @@
         <div class="avm-service-grid" data-avm-services></div>
       </section>
 
+      <section class="container section avm-assistance" id="avm-assistance" aria-labelledby="avm-assistance-title">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Erişilebilir Ziyaret</p>
+            <h2 id="avm-assistance-title">Ziyaretinizden önce destek talebi oluşturun</h2>
+            <p class="muted">Tekerlekli sandalye, yönlendirme veya işitme/görme desteği ihtiyacınızı AVM operasyon ekibine önceden iletin. Talep onaylandığında ekip verdiğiniz iletişim kanalından dönüş yapar.</p>
+          </div>
+        </div>
+        <div class="avm-assistance-layout">
+          <div class="avm-assistance__intro">
+            <h3>Talep nasıl ilerler?</h3>
+            <ol>
+              <li>Ziyaret zamanı ve destek türünü belirtin.</li>
+              <li>AVM operasyon ekibi uygunluğu kontrol etsin.</li>
+              <li>Buluşma noktası ve teyit bilgisi size iletilsin.</li>
+            </ol>
+            <p class="muted">Acil durumlar için bu formu kullanmayın; doğrudan AVM danışması veya 112 ile iletişime geçin.</p>
+          </div>
+          <form class="panel avm-assistance-form" data-avm-assistance-form>
+            <div class="form-grid">
+              <div class="field">
+                <label for="avm-assistance-name">Ad soyad</label>
+                <input id="avm-assistance-name" name="visitor_name" required maxlength="120" autocomplete="name">
+              </div>
+              <div class="field">
+                <label for="avm-assistance-type">Destek türü</label>
+                <select id="avm-assistance-type" name="service_type" required>
+                  <option value="wheelchair">Tekerlekli sandalye</option>
+                  <option value="guided_assistance">Karşılama ve yönlendirme</option>
+                  <option value="hearing_support">İşitme desteği</option>
+                  <option value="visual_support">Görme desteği</option>
+                  <option value="family_support">Aile / bebek desteği</option>
+                  <option value="other">Diğer</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="avm-assistance-visit">Planlanan ziyaret (İstanbul)</label>
+                <input id="avm-assistance-visit" name="visit_at" type="datetime-local" step="900" required data-avm-assistance-visit-at>
+              </div>
+              <div class="field">
+                <label for="avm-assistance-party">Kişi sayısı</label>
+                <input id="avm-assistance-party" name="party_size" type="number" min="1" max="20" step="1" value="1" required>
+              </div>
+              <div class="field">
+                <label for="avm-assistance-phone">Telefon</label>
+                <input id="avm-assistance-phone" name="contact_phone" type="tel" maxlength="40" autocomplete="tel" placeholder="En az bir iletişim alanı gerekli">
+              </div>
+              <div class="field">
+                <label for="avm-assistance-email">E-posta</label>
+                <input id="avm-assistance-email" name="contact_email" type="email" maxlength="220" autocomplete="email" placeholder="En az bir iletişim alanı gerekli">
+              </div>
+              <div class="field field--full">
+                <label for="avm-assistance-meeting">Tercih edilen buluşma noktası</label>
+                <input id="avm-assistance-meeting" name="meeting_point" maxlength="180" placeholder="Örn. kuzey giriş danışma">
+              </div>
+              <div class="field field--full">
+                <label for="avm-assistance-note">İhtiyaç notu</label>
+                <textarea id="avm-assistance-note" name="request_note" rows="4" maxlength="1000" placeholder="Ekibin ziyareti hazırlaması için gerekli kısa bilgi"></textarea>
+              </div>
+              <div class="field field--full field--checkbox">
+                <label class="check-field"><input name="consent_ack" type="checkbox" required> Talebimin yönetilmesi için verdiğim iletişim ve ziyaret bilgilerinin AVM operasyon ekibiyle işlenmesini kabul ediyorum.</label>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="submit">Destek Talebi Gönder</button>
+            </div>
+            <div data-avm-assistance-status aria-live="polite"></div>
+          </form>
+        </div>
+      </section>
+
       <section class="container section avm-manager-preview" aria-labelledby="avm-live-summary-title">
         <div class="section-header">
           <div>
