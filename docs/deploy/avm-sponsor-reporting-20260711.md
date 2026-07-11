@@ -6,3 +6,4 @@
 - Required production SQL: `supabase/migrations/20260712021000_add_avm_sponsor_reporting.sql`, after the existing AVM migration chain. SQL is not applied by this code release.
 - No seed, secret, destructive migration, DNS or payment change is included.
 - Smoke: `scripts/smoke-avm-sponsored.cjs` covers visitor desktop/mobile measurement, admin sponsor publishing and partner request/report rendering.
+- Post-push cache check found the first versioned JS query had been warmed before origin propagation; hotfix uses the unused `avm-sponsor-reporting-6b2860f` query key in visitor and canonical partner HTML.
