@@ -14,3 +14,5 @@ Canlı smoke hedefleri:
 - `https://allonahub.com/admin/avm.html#accessibility-requests`
 - Migration sonrasında test talebinin `new`, `confirmed`, `completed`, `archived` akışını doğrula.
 - Partner AVM yayın talepleri ekranında ziyaretçi iletişim verisinin görünmediğini doğrula.
+
+Cloudflare ortak CSS/JS yanıtlarında dört saatlik HIT cache gözlendiği için AVM ziyaretçi ve admin HTML'i bu paketin değiştirdiği assetleri `v=20260711-avm-accessibility` sorgusuyla çağırır. Bu sürüm anahtarı HTML ile yeni handler/stil dosyalarının aynı anda kullanılmasını sağlar.
