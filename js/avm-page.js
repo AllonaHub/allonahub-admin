@@ -358,10 +358,10 @@
       detail: row.description || "",
       route: row.route_hint || "",
       metric: row.management_metric || "",
-      map_x_percent: Number(row.map_x_percent ?? 10),
-      map_y_percent: Number(row.map_y_percent ?? 25),
-      map_width_percent: Number(row.map_width_percent ?? 25),
-      map_height_px: Number(row.map_height_px ?? 58),
+      map_x_percent: row.map_x_percent,
+      map_y_percent: row.map_y_percent,
+      map_width_percent: row.map_width_percent,
+      map_height_px: row.map_height_px,
       display_order: Number(row.display_order || 999)
     };
   }
@@ -2073,20 +2073,19 @@
     return labels[zone.type] || zone.title;
   }
 
-  function zoneStyle(zone, index) {
-    const fallbackPositions = [
-      { x: 10, y: 29, w: 27, h: 58 },
-      { x: 39, y: 38, w: 23, h: 92 },
-      { x: 66, y: 25, w: 25, h: 58 },
-      { x: 12, y: 68, w: 29, h: 58 },
-      { x: 62, y: 67, w: 26, h: 58 }
-    ];
-    const fallback = fallbackPositions[index % fallbackPositions.length];
-    const w = numberValue(zone.map_width_percent, fallback.w, 10, 90);
-    const x = numberValue(zone.map_x_percent, fallback.x, 0, 100 - w);
-    const y = numberValue(zone.map_y_percent, fallback.y, 0, 95);
-    const h = numberValue(zone.map_height_px, fallback.h, 44, 180);
-    return `left:${x}%;top:${y}%;right:auto;bottom:auto;width:${w}%;min-height:${h}px;`;
+  function zoneCoordinates(zone) {
+    const raw = [zone.map_x_percent, zone.map_y_percent, zone.map_width_percent, zone.map_height_px];
+    if (raw.some((value) => value === null || value === undefined || value === "")) return null;
+    const [x, y, width, height] = raw.map(Number);
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    if (x < 0 || y < 0 || width < 10 || height < 44 || x > 95 || y > 95 || width > 90 || height > 180 || x + width > 100) return null;
+    return { x, y, width, height };
+  }
+
+  function zoneStyle(zone) {
+    const coordinates = zoneCoordinates(zone);
+    if (!coordinates) return "";
+    return `left:${coordinates.x}%;top:${coordinates.y}%;right:auto;bottom:auto;width:${coordinates.width}%;min-height:${coordinates.height}px;`;
   }
 
   function updateZonePanel(zone, floorMap, emptyMessage = "") {
@@ -2148,7 +2147,7 @@
     }
     const mapImage = safeHttpUrl(floorMap.image_url);
     const sorted = zones
-      .filter((zone) => zone.floor_map_id === floorMap.record_id)
+      .filter((zone) => zone.floor_map_id === floorMap.record_id && zoneCoordinates(zone))
       .sort((a, b) => a.display_order - b.display_order);
     if (!sorted.some((zone) => zone.id === activeZoneId)) activeZoneId = sorted[0]?.id || "";
     const activeZone = sorted.find((zone) => zone.id === activeZoneId) || null;
@@ -2166,7 +2165,7 @@
       ${mapImage ? `<img class="avm-floor-map__asset" data-avm-map-asset src="${core.escapeHTML(mapImage)}" alt="${core.escapeHTML(floorMap.image_alt || floorMap.title)}" loading="lazy">` : ""}
       <div class="avm-floor-map__level">${core.escapeHTML(floorMap.title)} · ${mapImage ? "Yayındaki plan görseli" : "Görsel kullanılamıyor"}</div>
       ${mapImage ? sorted.map((zone, index) => `
-        <button type="button" class="avm-map-zone ${zoneClass(zone, index)} ${zone.id === activeZoneId ? "is-active" : ""}" style="${zoneStyle(zone, index)}" data-avm-zone="${core.escapeHTML(zone.id)}" aria-label="${core.escapeHTML(`${zone.title} alanını seç`)}">
+        <button type="button" class="avm-map-zone ${zoneClass(zone, index)} ${zone.id === activeZoneId ? "is-active" : ""}" style="${zoneStyle(zone)}" data-avm-zone="${core.escapeHTML(zone.id)}" aria-label="${core.escapeHTML(`${zone.title} alanını seç`)}">
           ${core.escapeHTML(zoneLabel(zone))}
         </button>
       `).join("") : ""}

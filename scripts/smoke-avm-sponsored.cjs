@@ -46,6 +46,9 @@ const supabaseMock = `
   const center = { id: "11111111-1111-4111-8111-111111111111", name: "Test AVM", city: "İstanbul", district: "Şişli", address: "Test adresi", phone: "+902120000000", website_url: "https://allonahub.com", hero_image_url: null, status: "active" };
   const profile = { id: "33333333-3333-4333-8333-333333333333", full_name: "AVM Test Admin", role: "admin" };
   const sponsor = { id: "22222222-2222-4222-8222-222222222222", public_id: "sponsor-test", title: "Onaylı Yaz Kampanyası", slot_type: "sponsored_listing", placement: "Mağaza rehberi", description: "Ziyaretçilere özel doğrulanmış sponsor kampanyası.", creative_image_url: "https://cdn.example/sponsor.webp", creative_image_alt: "Onaylı marka yaz kampanyası görseli", cta_label: "Kampanyayı İncele", cta_url: "https://brand.example/campaign", starts_at: new Date(now - 3600000).toISOString(), ends_at: new Date(now + 86400000).toISOString(), display_order: 1, status: "active" };
+  const floorMap = { id: "66666666-6666-4666-8666-666666666666", public_id: "ground-floor", title: "Zemin Kat", floor_label: "Zemin Kat", image_url: "https://cdn.example/ground-floor.webp", image_alt: "Test AVM zemin kat planı", native_width_px: 1200, native_height_px: 800, storage_bucket: "mall-assets", storage_path: "test/ground-floor.webp", display_order: 1, status: "active" };
+  const floorZone = { id: "77777777-7777-4777-8777-777777777777", floor_map_id: floorMap.id, public_id: "ground-north", title: "Kuzey Mağaza Koridoru", floor_label: "Zemin Kat", zone_type: "stores", route_hint: "Ana girişten kuzeye ilerleyin", management_metric: "Mağaza yönlendirmesi", description: "Doğrulanmış test koordinatı", map_x_percent: 12, map_y_percent: 30, map_width_percent: 28, map_height_px: 64, display_order: 1, status: "active" };
+  const incompleteFloorZone = { ...floorZone, id: "88888888-8888-4888-8888-888888888888", public_id: "coordinate-pending", title: "Koordinat Bekleyen Bölge", map_x_percent: null, display_order: 2 };
   const sponsorSubmission = { id: "44444444-4444-4444-8444-444444444444", mall_id: center.id, submitted_by: profile.id, module_key: "mall", request_type: "advertising", brand_name: "Partner Test Marka", submission_title: "Sponsorlu Yaz Yerleşimi", submission_summary: "Yayındaki sponsor testi", requested_visibility: "sponsored", visibility_status: "published", status: "approved", published_item_id: null, published_ad_slot_id: sponsor.id, created_at: new Date(now - 3600000).toISOString() };
   window.__supabaseWrites = [];
   window.__rpcCalls = [];
@@ -53,6 +56,8 @@ const supabaseMock = `
     if (table === "mall_centers") return { data: single ? center : [center], error: null, count: 1 };
     if (table === "profiles") return { data: single ? profile : [profile], error: null, count: 1 };
     if (table === "mall_ad_slots") return { data: single ? sponsor : [sponsor], error: null, count: 1 };
+    if (table === "mall_floor_maps") return { data: single ? floorMap : [floorMap], error: null, count: 1 };
+    if (table === "mall_floor_zones") return { data: single ? floorZone : [floorZone, incompleteFloorZone], error: null, count: 2 };
     if (table === "mall_partner_submissions") return { data: single ? sponsorSubmission : [sponsorSubmission], error: null, count: 1 };
     return { data: single ? null : [], error: null, count: 0 };
   };
@@ -136,6 +141,11 @@ async function run() {
       }));
       await page.goto(`http://allonahub.test:${address.port}/avm-dunyasi.html`, { waitUntil: "networkidle" });
       await page.locator("[data-avm-sponsored]:not([hidden])").waitFor();
+      await page.locator("[data-avm-floor-map-select]").waitFor();
+      assert(await page.locator("[data-avm-floor-map-select]").count() === 1, "Kat planı sekmesi tek ve geçerli kapanış etiketiyle render edilmedi.");
+      assert(await page.locator("[data-avm-zone]").count() === 1, "Eksik koordinatlı bölge sentetik konumla ziyaretçiye açıldı.");
+      const zoneStyle = await page.locator('[data-avm-zone="ground-north"]').getAttribute("style");
+      assert(zoneStyle.includes("left:12%") && zoneStyle.includes("top:30%") && zoneStyle.includes("width:28%"), "Ziyaretçi kat planı gerçek koordinatları kullanmadı.");
       assert(await page.locator("[data-avm-sponsored-card]").count() === 1, "Tek onaylı sponsor kartı görünmeliydi.");
       assert(await page.locator("[data-avm-sponsored-card] img").getAttribute("alt") === "Onaylı marka yaz kampanyası görseli", "Sponsor alt metni korunmadı.");
       const rel = await page.locator("[data-avm-sponsored-card] a").getAttribute("rel");
@@ -171,6 +181,10 @@ async function run() {
     }));
     await admin.goto(`http://allonahub.test:${address.port}/admin/avm.html`, { waitUntil: "networkidle" });
     await admin.locator("[data-avm-admin-sponsor-interactions] h3").waitFor();
+    await admin.locator('[data-avm-preview-zone="77777777-7777-4777-8777-777777777777"]').waitFor();
+    const adminZoneStyle = await admin.locator('[data-avm-preview-zone="77777777-7777-4777-8777-777777777777"]').getAttribute("style");
+    assert(adminZoneStyle.includes("left:12%") && adminZoneStyle.includes("top:30%") && adminZoneStyle.includes("width:28%"), "Admin kat planı önizlemesi gerçek koordinatları kullanmadı.");
+    assert(await admin.locator("[data-avm-preview-zone]").count() === 1, "Eksik koordinatlı bölge admin önizlemesinde sentetik konumla gösterildi.");
     assert(await admin.locator("[data-avm-admin-sponsor-interactions] tbody tr").count() === 1, "Admin sponsor etkileşim raporu satırı görünmedi.");
     assert((await admin.locator("[data-avm-admin-sponsor-interactions]").textContent()).includes("%17,65"), "Admin sponsor tıklama oranı filtre toplamlarından hesaplanmadı.");
     const sponsorTargetOptions = await admin.locator("[data-avm-sponsor-interaction-filter-target] option").evaluateAll((options) => options.map((option) => option.value));

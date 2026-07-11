@@ -377,20 +377,19 @@
     return labels[type] || "Bölge";
   }
 
-  function zonePreviewStyle(zone, index) {
-    const fallbackPositions = [
-      { x: 10, y: 29, w: 27, h: 58 },
-      { x: 39, y: 38, w: 23, h: 92 },
-      { x: 66, y: 25, w: 25, h: 58 },
-      { x: 12, y: 68, w: 29, h: 58 },
-      { x: 62, y: 67, w: 26, h: 58 }
-    ];
-    const fallback = fallbackPositions[index % fallbackPositions.length];
-    const width = numberValue(zone.map_width_percent, fallback.w, 10, 90);
-    const x = numberValue(zone.map_x_percent, fallback.x, 0, 100 - width);
-    const y = numberValue(zone.map_y_percent, fallback.y, 0, 95);
-    const height = numberValue(zone.map_height_px, fallback.h, 44, 180);
-    return `left:${x}%;top:${y}%;right:auto;bottom:auto;width:${width}%;min-height:${height}px;`;
+  function zonePreviewCoordinates(zone) {
+    const raw = [zone.map_x_percent, zone.map_y_percent, zone.map_width_percent, zone.map_height_px];
+    if (raw.some((value) => value === null || value === undefined || value === "")) return null;
+    const [x, y, width, height] = raw.map(Number);
+    if (![x, y, width, height].every(Number.isFinite)) return null;
+    if (x < 0 || y < 0 || width < 10 || height < 44 || x > 95 || y > 95 || width > 90 || height > 180 || x + width > 100) return null;
+    return { map_x_percent: x, map_y_percent: y, map_width_percent: width, map_height_px: height };
+  }
+
+  function zonePreviewStyle(zone) {
+    const coordinates = zonePreviewCoordinates(zone);
+    if (!coordinates) return "";
+    return `left:${coordinates.map_x_percent}%;top:${coordinates.map_y_percent}%;right:auto;bottom:auto;width:${coordinates.map_width_percent}%;min-height:${coordinates.map_height_px}px;`;
   }
 
   function zoneDraftFromForm(form) {
@@ -445,11 +444,11 @@
       target.innerHTML = `<div class="empty-state">Koordinat önizlemesi için önce gerçek bir kat planı görseli seçin.</div>`;
       return;
     }
-    const rows = allRows.filter((zone) => zone.floor_map_id === selectedMapId);
+    const rows = allRows.filter((zone) => zone.floor_map_id === selectedMapId && zonePreviewCoordinates(zone));
     const draft = rows.find((zone) => zone.isDraft);
     previewZoneId = nextActiveId || zonePreviewId(draft || rows[0] || {});
     const active = rows.find((zone) => zonePreviewId(zone) === previewZoneId) || rows[0] || null;
-    const activeCoordinates = active ? zoneCoordinatePayload(active) : null;
+    const activeCoordinates = active ? zonePreviewCoordinates(active) : null;
     const mapImage = validHttpUrl(floorMap.image_url) ? floorMap.image_url : "";
     const width = Number(floorMap.native_width_px);
     const height = Number(floorMap.native_height_px);
@@ -465,7 +464,7 @@
             const id = zonePreviewId(zone);
             const isActive = id === zonePreviewId(active);
             return `
-              <button type="button" class="avm-map-zone ${zonePreviewClass(zone, index)} ${isActive ? "is-active" : ""} ${zone.isDraft ? "is-draft" : ""}" style="${zonePreviewStyle(zone, index)}" data-avm-preview-zone="${core.escapeHTML(id)}" aria-label="${core.escapeHTML(`${zone.title || "Bölge"} koordinatını seç`)}">
+              <button type="button" class="avm-map-zone ${zonePreviewClass(zone, index)} ${isActive ? "is-active" : ""} ${zone.isDraft ? "is-draft" : ""}" style="${zonePreviewStyle(zone)}" data-avm-preview-zone="${core.escapeHTML(id)}" aria-label="${core.escapeHTML(`${zone.title || "Bölge"} koordinatını seç`)}">
                 ${core.escapeHTML(zonePreviewLabel(zone.zone_type))}
               </button>
             `;
