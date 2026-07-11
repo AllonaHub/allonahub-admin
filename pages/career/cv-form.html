@@ -82,6 +82,24 @@ body{
   font-size:14px;
 }
 
+.cv-form-heading{
+  min-width:0;
+  flex:1 1 320px;
+}
+
+.cv-form-heading h1{
+  font-size:clamp(22px, 2.4vw, 30px);
+  letter-spacing:0;
+  line-height:1.12;
+}
+
+.cv-form-heading p{
+  margin-top:5px;
+  color:var(--neon);
+  font-size:14px;
+  font-weight:700;
+}
+
 .actions{
   display:flex;
   flex-wrap:wrap;
@@ -709,9 +727,13 @@ body{
     <div class="brand">
      <div class="logoFallback">AllonaHub</div>
       <div>
-        <h1>AllonaHub Maritime CV Builder</h1>
+        <strong>AllonaHub</strong>
         <span>Premium Neon Blue Seafarer Application System</span>
       </div>
+    </div>
+    <div class="cv-form-heading">
+      <h1>AllonaHub Maritime CV Builder</h1>
+      <p>Premium Neon Blue Seafarer Application System</p>
     </div>
 
     <div class="actions">
@@ -1068,7 +1090,7 @@ body{
             <td id="cv_familyName"></td>
             <td rowspan="9" class="photoCell">
               <div class="emptyPhoto" id="emptyPhoto" data-i18n="photo">PHOTO</div>
-              <img id="cv_photo" style="display:none;">
+              <img id="cv_photo" alt="Maritime CV aday fotografi" style="display:none;">
             </td>
           </tr>
 

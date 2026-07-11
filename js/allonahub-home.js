@@ -86,7 +86,7 @@ media.className="ad-hero__media";
 media.setAttribute("aria-hidden","true");
 const image=document.createElement("img");
 image.src=ad.image;
-image.alt="";
+image.alt=`${ad.title} reklam vitrini`;
 image.loading=index<3?"eager":"lazy";
 image.decoding="async";
 media.append(image);
