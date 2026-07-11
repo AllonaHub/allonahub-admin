@@ -2119,7 +2119,7 @@
         ? `
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Ziyaret</th><th>Destek</th><th>Ziyaretçi</th><th>Buluşma / not</th><th>Durum</th><th>Oluşturma</th></tr></thead>
+              <thead><tr><th>Ziyaret</th><th>Destek</th><th>Ziyaretçi</th><th>Buluşma / ziyaretçi notu</th><th>Operasyon notu</th><th>Durum</th><th>Oluşturma</th></tr></thead>
               <tbody>
                 ${accessibilityRequestRows.map((request) => `
                   <tr>
@@ -2127,6 +2127,13 @@
                     <td>${core.escapeHTML(accessibilityRequestTypeLabels[request.service_type] || request.service_type)}</td>
                     <td>${core.escapeHTML(request.visitor_name)}<br>${core.escapeHTML([request.contact_phone, request.contact_email].filter(Boolean).join(" · ") || "-")}</td>
                     <td>${core.escapeHTML(request.meeting_point || "Belirtilmedi")}<br><span class="muted">${core.escapeHTML(request.request_note || "Not yok")}</span></td>
+                    <td>
+                      <div class="avm-accessibility-operation">
+                        <label class="sr-only" for="avm-accessibility-note-${core.escapeHTML(request.request_id || request.id)}">${core.escapeHTML(request.visitor_name)} operasyon notu</label>
+                        <textarea id="avm-accessibility-note-${core.escapeHTML(request.request_id || request.id)}" rows="3" maxlength="1000" data-avm-accessibility-request-note="${core.escapeHTML(request.request_id || request.id)}" placeholder="Teyit, ekip veya buluşma talimatı">${core.escapeHTML(request.admin_note || "")}</textarea>
+                        <button class="btn btn--light" type="button" data-avm-accessibility-note-save="${core.escapeHTML(request.request_id || request.id)}">Notu Kaydet</button>
+                      </div>
+                    </td>
                     <td>
                       <select data-avm-accessibility-request-status="${core.escapeHTML(request.request_id || request.id)}">
                         ${Object.entries(accessibilityRequestStatusLabels).map(([value, label]) => `<option value="${value}" ${request.status === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
@@ -3602,6 +3609,31 @@
       } catch (error) {
         core.toast(error.message || "Erişilebilirlik talebi güncellenemedi.", "error");
         await loadAccessibilityRequests();
+      }
+    });
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-avm-accessibility-note-save]");
+      if (!button) return;
+      const requestId = button.dataset.avmAccessibilityNoteSave;
+      const input = button.closest(".avm-accessibility-operation")?.querySelector("[data-avm-accessibility-request-note]");
+      const adminNote = String(input?.value || "").trim();
+      if (adminNote.length === 1) {
+        core.toast("Operasyon notu boş bırakılmalı veya en az 2 karakter olmalıdır.", "error");
+        return;
+      }
+      button.disabled = true;
+      try {
+        const { error } = await App.db.client()
+          .from("mall_accessibility_requests")
+          .update({ admin_note: adminNote || null })
+          .eq("id", requestId);
+        if (error) throw error;
+        core.toast(adminNote ? "Erişilebilirlik operasyon notu kaydedildi." : "Erişilebilirlik operasyon notu temizlendi.");
+        await loadAccessibilityRequests();
+      } catch (error) {
+        core.toast(error.message || "Erişilebilirlik operasyon notu kaydedilemedi.", "error");
+        button.disabled = false;
       }
     });
   }

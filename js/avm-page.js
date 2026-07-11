@@ -509,6 +509,28 @@
     };
   }
 
+  function istanbulDateTimeInputValue(value = new Date()) {
+    const date = value instanceof Date ? value : new Date(value || "");
+    if (!Number.isFinite(date.getTime())) return "";
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Istanbul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(date).map((part) => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  }
+
+  function istanbulDateTimeInputToIso(value) {
+    const match = String(value || "").trim().match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::\d{2})?$/);
+    if (!match) return null;
+    const date = new Date(`${match[1]}:00+03:00`);
+    return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  }
+
   function dateLabel(dateKey, includeDate = false) {
     const value = new Date(`${dateKey}T12:00:00Z`).toLocaleDateString("tr-TR", {
       timeZone: "UTC",
@@ -2164,8 +2186,9 @@
 
     const setMinimumVisitTime = () => {
       const minimum = new Date(Date.now() + 60 * 60 * 1000);
-      const localValue = new Date(minimum.getTime() - minimum.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      visitInput.min = localValue;
+      const maximum = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000);
+      visitInput.min = istanbulDateTimeInputValue(minimum);
+      visitInput.max = istanbulDateTimeInputValue(maximum);
     };
     setMinimumVisitTime();
 
@@ -2179,7 +2202,8 @@
       const values = core.parseForm(form);
       const phone = String(values.contact_phone || "").trim();
       const email = String(values.contact_email || "").trim();
-      const visitAt = new Date(values.visit_at || "");
+      const visitAtIso = istanbulDateTimeInputToIso(values.visit_at);
+      const visitAt = new Date(visitAtIso || "");
       const partySize = Number(values.party_size || 0);
       const latestVisit = Date.now() + 180 * 24 * 60 * 60 * 1000;
       if (!phone && !email) {
@@ -2205,7 +2229,7 @@
           mall_id: mall.id,
           visitor_name: String(values.visitor_name || "").trim(),
           service_type: values.service_type,
-          visit_at: visitAt.toISOString(),
+          visit_at: visitAtIso,
           party_size: partySize,
           contact_phone: phone || null,
           contact_email: email || null,

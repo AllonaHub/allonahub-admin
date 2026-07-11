@@ -1506,6 +1506,23 @@ img {
   min-width: 0;
 }
 
+.avm-accessibility-operation {
+  display: grid;
+  min-width: 240px;
+  gap: 8px;
+}
+
+.avm-accessibility-operation textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+}
+
+.avm-accessibility-operation .btn {
+  width: 100%;
+  min-width: 0;
+}
+
 .avm-report-pagination {
   display: flex;
   align-items: center;
