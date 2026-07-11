@@ -22,9 +22,9 @@ Eski AVM bağlantısı ve diğer modül rotaları erişilebilir kalır; ana AVM 
 
 ## Supabase
 
-`supabase/migrations/20260711*.sql` ve `supabase/migrations/20260712*.sql` dosyaları AVM migration zinciridir. Production Supabase projesinde migration geçmişi kontrol edilerek tarih sırasıyla uygulanmalıdır. `20260712015000_add_avm_transport_routes.sql` de zincire dahildir.
+`supabase/migrations/20260711*.sql` ve `supabase/migrations/20260712*.sql` dosyaları AVM migration zinciridir. Production Supabase projesinde migration geçmişi kontrol edilerek tarih sırasıyla uygulanmalıdır. Zincir `20260712015000_add_avm_transport_routes.sql`, `20260712016000_add_avm_operational_notices.sql` ve `20260712017000_add_avm_favorite_interactions.sql` ile günceldir.
 
-Migration sonrası gerçek merkez, saat, kat planı, bölge, katalog, hizmet, otopark ve partner kayıtları admin ekranından taslak olarak girilir. Operasyon onayı olmadan kayıtlar `active` yapılmaz.
+Migration sonrası gerçek merkez, saat, kat planı, bölge, katalog, hizmet, otopark, ulaşım, operasyon duyurusu ve partner kayıtları admin ekranından taslak olarak girilir. Operasyon onayı olmadan kayıtlar `active` yapılmaz. Katalog Kaydet aksiyonu günlük tekil `favorite_save` etkileşimini mevcut admin/partner rapor sözleşmesine ekler.
 
 ## Yayın Sırası
 

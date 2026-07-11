@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   const planKey = "allona_avm_plan_v1";
+  const directoryFavoritesKey = "allona_avm_directory_favorites_v1";
   const parkingLocationKey = "allona_avm_parking_location_v1";
   const parkingLocationTtlMs = 48 * 60 * 60 * 1000;
   const parkingAvailabilityFreshMs = 15 * 60 * 1000;
@@ -60,6 +61,21 @@
     planned: "Planlandı"
   };
 
+  const noticeTypeLabels = {
+    general: "Genel",
+    access: "Giriş / erişim",
+    transport: "Ulaşım",
+    parking: "Otopark",
+    service: "Ziyaretçi hizmeti",
+    event: "Etkinlik etkisi"
+  };
+
+  const noticeSeverityLabels = {
+    info: "Bilgi",
+    advisory: "Dikkat",
+    urgent: "Önemli"
+  };
+
   const hoursScopeLabels = {
     mall: "AVM merkezi",
     stores: "Mağazalar",
@@ -86,6 +102,7 @@
   let services = [];
   let parkingAreas = [];
   let transportRoutes = [];
+  let operationalNotices = [];
   let parkingAreasReady = false;
   let hoursProfiles = [];
   let weeklyHoursRows = [];
@@ -95,6 +112,7 @@
   let activeZoneId = "";
   let currentView = viewLabels[directoryParams.get("view")] ? directoryParams.get("view") : "stores";
   let plan = readPlan();
+  let directoryFavorites = readDirectoryFavorites();
   let mallCenterLookup;
   let directoryLinkFocused = false;
   let redemptionSessionFallback = "";
@@ -120,6 +138,36 @@
     } catch (error) {
       // Visitor route planning can continue for the current page session.
     }
+  }
+
+  function readDirectoryFavorites() {
+    try {
+      const value = JSON.parse(localStorage.getItem(directoryFavoritesKey) || "[]");
+      return new Set(Array.isArray(value) ? value.filter((id) => typeof id === "string" && id).slice(0, 500) : []);
+    } catch (error) {
+      return new Set();
+    }
+  }
+
+  function writeDirectoryFavorites() {
+    try {
+      localStorage.setItem(directoryFavoritesKey, JSON.stringify([...directoryFavorites].slice(0, 500)));
+    } catch (error) {
+      // Favorites remain usable for the current page session when storage is unavailable.
+    }
+  }
+
+  function toggleDirectoryFavorite(id) {
+    const item = findItem(id);
+    if (!item) return;
+    if (directoryFavorites.has(item.id)) {
+      directoryFavorites.delete(item.id);
+    } else {
+      directoryFavorites.add(item.id);
+      recordDirectoryInteraction(item, "favorite_save");
+    }
+    writeDirectoryFavorites();
+    renderResults();
   }
 
   function readParkingLocation() {
@@ -1138,6 +1186,65 @@
     renderTransportRoutes();
   }
 
+  function renderOperationalNotices() {
+    const section = document.querySelector("[data-avm-notices]");
+    const target = document.querySelector("[data-avm-notice-list]");
+    if (!section || !target) return;
+    section.hidden = !operationalNotices.length;
+    target.innerHTML = operationalNotices.map((notice) => {
+      const end = new Date(notice.ends_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", dateStyle: "medium", timeStyle: "short" });
+      const ctaUrl = safeHttpUrl(notice.cta_url);
+      return `
+        <article class="avm-notice avm-notice--${core.escapeHTML(notice.severity)}">
+          <div class="avm-notice__meta">
+            <span class="pill">${core.escapeHTML(noticeTypeLabels[notice.notice_type] || notice.notice_type)}</span>
+            <span class="pill">${core.escapeHTML(noticeSeverityLabels[notice.severity] || notice.severity)}</span>
+            <span>${core.escapeHTML(`Geçerlilik: ${end}'e kadar`)}</span>
+          </div>
+          <div>
+            <h3>${core.escapeHTML(notice.title)}</h3>
+            <p>${core.escapeHTML(notice.summary)}</p>
+            ${notice.affected_area ? `<p><strong>Etkilenen alan:</strong> ${core.escapeHTML(notice.affected_area)}</p>` : ""}
+          </div>
+          ${ctaUrl && notice.cta_label ? `<a class="btn btn--light" href="${core.escapeHTML(ctaUrl)}" target="_blank" rel="noopener">${core.escapeHTML(notice.cta_label)}</a>` : ""}
+        </article>
+      `;
+    }).join("");
+  }
+
+  async function loadOperationalNotices() {
+    if (isLocalPreview()) {
+      operationalNotices = [];
+      renderOperationalNotices();
+      return;
+    }
+    const db = client();
+    if (!db) {
+      operationalNotices = [];
+      renderOperationalNotices();
+      return;
+    }
+    try {
+      const mall = await resolveMallCenter(db);
+      if (mall.error) throw mall.error;
+      if (!mall.id) throw new Error("AVM merkezi kaydı bulunamadı.");
+      const now = new Date().toISOString();
+      const { data, error } = await db
+        .from("mall_operational_notices")
+        .select("id,public_id,notice_type,severity,title,summary,affected_area,starts_at,ends_at,cta_label,cta_url,display_order,status")
+        .eq("mall_id", mall.id)
+        .eq("status", "active")
+        .lte("starts_at", now)
+        .gte("ends_at", now)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      operationalNotices = data || [];
+    } catch (error) {
+      operationalNotices = [];
+    }
+    renderOperationalNotices();
+  }
+
   function setParkingSource(message, type) {
     const node = document.querySelector("[data-avm-parking-source]");
     if (!node) return;
@@ -1508,7 +1615,11 @@
       const categoryOk = !active.category || item.category === active.category;
       const floorOk = !active.floor || item.floor === active.floor;
       const priorityOk = !active.priority
-        || (active.priority === "open_now" ? Boolean(itemOpeningStatus(item, now)?.isOpen) : item.tags.includes(active.priority));
+        || (active.priority === "open_now"
+          ? Boolean(itemOpeningStatus(item, now)?.isOpen)
+          : active.priority === "saved"
+            ? directoryFavorites.has(item.id)
+            : item.tags.includes(active.priority));
       return qOk && categoryOk && floorOk && priorityOk;
     });
   }
@@ -1528,6 +1639,7 @@
       ? `<button class="btn btn--light" type="button" data-avm-item-route="${core.escapeHTML(item.id)}">Haritada Göster</button>`
       : "";
     const detailAction = `<a class="btn btn--light" href="avm-detay.html?item=${encodeURIComponent(item.public_id)}">Detayı Aç</a>`;
+    const favoriteAction = `<button class="btn ${directoryFavorites.has(item.id) ? "btn--gold" : "btn--light"}" type="button" data-avm-favorite="${core.escapeHTML(item.id)}" aria-pressed="${directoryFavorites.has(item.id)}">${directoryFavorites.has(item.id) ? "Kaydedildi" : "Kaydet"}</button>`;
     const imageUrl = safeImageUrl(item.image_url);
     const hours = itemOpeningStatus(item);
     return `
@@ -1552,6 +1664,7 @@
         <div class="avm-directory-card__actions avm-directory-card__actions--split">
           <button class="btn btn--light" type="button" data-avm-add="${core.escapeHTML(item.id)}">Rotaya Ekle</button>
           ${detailAction}
+          ${favoriteAction}
           ${routeAction}
           ${campaignAction}
         </div>
@@ -1978,6 +2091,7 @@
       const add = event.target.closest("[data-avm-add]");
       const remove = event.target.closest("[data-avm-remove]");
       const redemption = event.target.closest("[data-avm-redemption]");
+      const favorite = event.target.closest("[data-avm-favorite]");
       const itemRoute = event.target.closest("[data-avm-item-route]");
       if (itemRoute) {
         showItemRoute(itemRoute.dataset.avmItemRoute);
@@ -1985,6 +2099,10 @@
       }
       if (redemption) {
         saveCampaignRedemption(redemption.dataset.avmRedemption, redemption);
+        return;
+      }
+      if (favorite) {
+        toggleDirectoryFavorite(favorite.dataset.avmFavorite);
         return;
       }
       if (add) addToPlan(add.dataset.avmAdd);
@@ -2052,6 +2170,12 @@
       form.reset();
       renderTransportRoutes();
     });
+  }
+
+  function bindOperationalNotices() {
+    if (!document.querySelector("[data-avm-notices]")) return;
+    renderOperationalNotices();
+    loadOperationalNotices();
   }
 
   function bindParking() {
@@ -2174,6 +2298,7 @@
     bindDirectory();
     bindParking();
     bindTransport();
+    bindOperationalNotices();
     bindServices();
     bindPartner();
   });

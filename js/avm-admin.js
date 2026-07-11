@@ -11,6 +11,7 @@
   let specialHoursRows = [];
   let parkingAreaRows = [];
   let transportRouteRows = [];
+  let operationalNoticeRows = [];
   let previewZoneId = "";
   let partnerSubmissionRows = [];
   let partnerSubmissionRequestTypeFilter = "";
@@ -129,6 +130,7 @@
     detail_view: "Detay görüntüleme",
     route_open: "Harita açma",
     plan_add: "Rotaya ekleme",
+    favorite_save: "Kaydetme",
     cta_open: "Dış aksiyon",
     website_open: "Resmi site",
     phone_open: "Telefon",
@@ -174,6 +176,21 @@
     limited: "Sınırlı hizmet",
     suspended: "Geçici olarak durdu",
     planned: "Planlandı"
+  };
+
+  const noticeTypeLabels = {
+    general: "Genel",
+    access: "Giriş / erişim",
+    transport: "Ulaşım",
+    parking: "Otopark",
+    service: "Ziyaretçi hizmeti",
+    event: "Etkinlik etkisi"
+  };
+
+  const noticeSeverityLabels = {
+    info: "Bilgi",
+    advisory: "Dikkat",
+    urgent: "Önemli"
   };
 
   const hoursScopeLabels = {
@@ -1619,6 +1636,61 @@
     }
   }
 
+  function noticeWindowLabel(row) {
+    const options = { timeZone: "Europe/Istanbul", dateStyle: "short", timeStyle: "short" };
+    return `${new Date(row.starts_at).toLocaleString("tr-TR", options)} - ${new Date(row.ends_at).toLocaleString("tr-TR", options)}`;
+  }
+
+  function renderOperationalNotices() {
+    const target = document.querySelector("[data-avm-admin-notices]");
+    if (!target) return;
+    const now = Date.now();
+    target.innerHTML = operationalNoticeRows.length
+      ? `
+        <div class="table-wrap">
+          <table class="data-table data-table--wide">
+            <thead><tr><th>Duyuru</th><th>Tür / önem</th><th>Yayın aralığı</th><th>Etkilenen alan</th><th>Durum</th><th></th></tr></thead>
+            <tbody>
+              ${operationalNoticeRows.map((row) => {
+                const current = row.status === "active" && new Date(row.starts_at).getTime() <= now && new Date(row.ends_at).getTime() >= now;
+                return `
+                  <tr>
+                    <td><strong>${core.escapeHTML(row.title)}</strong><br><small>${core.escapeHTML(row.public_id)}</small></td>
+                    <td>${core.escapeHTML(noticeTypeLabels[row.notice_type] || row.notice_type)} · ${core.escapeHTML(noticeSeverityLabels[row.severity] || row.severity)}</td>
+                    <td>${core.escapeHTML(noticeWindowLabel(row))}<br><small>${current ? "Şu anda görünür" : "Yayın aralığı dışında"}</small></td>
+                    <td>${core.escapeHTML(row.affected_area || "-")}</td>
+                    <td>${rowStatus(row.status)}</td>
+                    <td><button class="btn btn--light" type="button" data-avm-notice-edit='${core.escapeHTML(JSON.stringify(row))}'>Düzenle</button></td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `
+      : `<div class="empty-state">Operasyon duyurusu bulunamadı. Yalnızca doğrulanmış gerçek bir etki oluştuğunda taslak kayıt oluşturun.</div>`;
+  }
+
+  async function loadOperationalNotices() {
+    const target = document.querySelector("[data-avm-admin-notices]");
+    if (!target) return;
+    core.renderStatus(target, "Operasyon duyuruları yükleniyor...");
+    try {
+      const mallId = await requireDefaultMallId();
+      const { data, error } = await App.db.client()
+        .from("mall_operational_notices")
+        .select("*")
+        .eq("mall_id", mallId)
+        .order("starts_at", { ascending: false });
+      if (error) throw error;
+      operationalNoticeRows = data || [];
+      renderOperationalNotices();
+    } catch (error) {
+      operationalNoticeRows = [];
+      core.renderStatus(target, error.message || "Operasyon duyuruları yüklenemedi. Supabase mall_operational_notices migration uygulanmalı.", "error");
+    }
+  }
+
   async function loadAdSlots() {
     const target = document.querySelector("[data-avm-admin-ad-slots]");
     if (!target) return;
@@ -2919,6 +2991,68 @@
     });
   }
 
+  function bindOperationalNoticeForm() {
+    const form = document.querySelector("[data-avm-notice-form]");
+    if (!form) return;
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = form.querySelector("button[type='submit']");
+      button.disabled = true;
+      const values = core.parseForm(form);
+      try {
+        const startsAt = istanbulInputToIso(values.starts_at);
+        const endsAt = istanbulInputToIso(values.ends_at);
+        if (!startsAt || !endsAt || new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+          throw new Error("Duyuru bitişi başlangıçtan sonra olan geçerli bir İstanbul tarih-saat aralığı olmalıdır.");
+        }
+        const ctaLabel = String(values.cta_label || "").trim();
+        const ctaUrl = String(values.cta_url || "").trim();
+        if (Boolean(ctaLabel) !== Boolean(ctaUrl)) {
+          throw new Error("Aksiyon etiketi ve URL birlikte girilmelidir.");
+        }
+        if (ctaUrl && !validHttpUrl(ctaUrl)) {
+          throw new Error("Duyuru aksiyon bağlantısı geçerli bir HTTP(S) URL olmalıdır.");
+        }
+        const payload = {
+          mall_id: await requireDefaultMallId(),
+          public_id: String(values.public_id || "").trim(),
+          notice_type: values.notice_type,
+          severity: values.severity || "info",
+          title: String(values.title || "").trim(),
+          summary: String(values.summary || "").trim(),
+          affected_area: String(values.affected_area || "").trim() || null,
+          starts_at: startsAt,
+          ends_at: endsAt,
+          cta_label: ctaLabel || null,
+          cta_url: ctaUrl ? normalizedHttpUrl(ctaUrl) : null,
+          status: values.status || "draft",
+          display_order: numberValue(values.display_order, 100, 1, 10000)
+        };
+        const query = values.id
+          ? App.db.client().from("mall_operational_notices").update(payload).eq("id", values.id)
+          : App.db.client().from("mall_operational_notices").insert(payload);
+        const { error } = await query;
+        if (error) throw error;
+        core.toast("Operasyon duyurusu kaydedildi.");
+        form.reset();
+        form.elements.id.value = "";
+        await loadOperationalNotices();
+      } catch (error) {
+        core.toast(error.message || "Operasyon duyurusu kaydedilemedi.", "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      const edit = event.target.closest("[data-avm-notice-edit]");
+      if (!edit) return;
+      const item = parseRecord(edit.dataset.avmNoticeEdit);
+      if (!item) return;
+      fillForm(form, item);
+    });
+  }
+
   function bindAdSlotForm() {
     const form = document.querySelector("[data-avm-ad-form]");
     if (!form) return;
@@ -3295,6 +3429,7 @@
     await loadDirectory();
     await Promise.all([
       loadOpeningHoursAdmin(),
+      loadOperationalNotices(),
       loadAdSlots(),
       loadPartnerSubmissions(),
       loadVisitPlans(),
@@ -3310,6 +3445,7 @@
     const access = await guard();
     if (!access) return;
     bindMallCenterForm();
+    bindOperationalNoticeForm();
     bindHoursProfileForm();
     bindWeeklyHoursForm();
     bindSpecialHoursForm();

@@ -23,6 +23,7 @@
         <nav class="side-menu" aria-label="AVM yönetimi menüsü">
           <a href="../admin/index.html">Genel Admin</a>
           <a href="#center-profile" aria-current="page">Merkez Profili</a>
+          <a href="#operational-notices">Operasyon Duyuruları</a>
           <a href="#opening-hours">Çalışma Saatleri</a>
           <a href="#directory">AVM İçerikleri</a>
           <a href="#floor-maps">Kat Görselleri</a>
@@ -97,6 +98,89 @@
               </div>
             </form>
             <div class="section" data-avm-center-status></div>
+          </section>
+
+          <section class="panel section" id="operational-notices">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ziyaretçi Bilgilendirmesi</p>
+                <h2>Operasyon Duyurusu Ekle / Düzenle</h2>
+                <p class="muted">Bakım, giriş değişikliği, ulaşım, otopark, hizmet ve etkinlik etkilerini yalnızca doğrulanmış zaman aralığında yayınlayın.</p>
+              </div>
+            </div>
+            <form data-avm-notice-form>
+              <input type="hidden" name="id">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="avm-notice-public-id">Duyuru kodu</label>
+                  <input id="avm-notice-public-id" name="public_id" required maxlength="180" placeholder="north-entrance-maintenance">
+                </div>
+                <div class="field">
+                  <label for="avm-notice-type">Duyuru türü</label>
+                  <select id="avm-notice-type" name="notice_type" required>
+                    <option value="general">Genel</option>
+                    <option value="access">Giriş / erişim</option>
+                    <option value="transport">Ulaşım</option>
+                    <option value="parking">Otopark</option>
+                    <option value="service">Ziyaretçi hizmeti</option>
+                    <option value="event">Etkinlik etkisi</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-severity">Önem düzeyi</label>
+                  <select id="avm-notice-severity" name="severity" required>
+                    <option value="info">Bilgi</option>
+                    <option value="advisory">Dikkat</option>
+                    <option value="urgent">Önemli</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-status">Yayın durumu</label>
+                  <select id="avm-notice-status" name="status" required>
+                    <option value="draft">draft</option>
+                    <option value="active">active</option>
+                    <option value="archived">archived</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-start">Başlangıç (İstanbul)</label>
+                  <input id="avm-notice-start" name="starts_at" type="datetime-local" required>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-end">Bitiş (İstanbul)</label>
+                  <input id="avm-notice-end" name="ends_at" type="datetime-local" required>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-order">Sıra</label>
+                  <input id="avm-notice-order" name="display_order" type="number" min="1" max="10000" step="1" value="100" required>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-area">Etkilenen alan</label>
+                  <input id="avm-notice-area" name="affected_area" maxlength="300" placeholder="Kuzey giriş, P2 veya yemek katı">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-notice-title-admin">Başlık</label>
+                  <input id="avm-notice-title-admin" name="title" required maxlength="180">
+                </div>
+                <div class="field field--full">
+                  <label for="avm-notice-summary">Ziyaretçi açıklaması</label>
+                  <textarea id="avm-notice-summary" name="summary" rows="3" maxlength="1000" required></textarea>
+                </div>
+                <div class="field">
+                  <label for="avm-notice-cta-label">Aksiyon etiketi</label>
+                  <input id="avm-notice-cta-label" name="cta_label" maxlength="80" placeholder="Alternatif rotayı aç">
+                </div>
+                <div class="field">
+                  <label for="avm-notice-cta-url">Aksiyon URL'si</label>
+                  <input id="avm-notice-cta-url" name="cta_url" type="url" maxlength="1000" inputmode="url" placeholder="https://">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Duyuruyu Kaydet</button>
+                <button class="btn btn--light" type="reset">Temizle</button>
+              </div>
+            </form>
+            <div class="section" data-avm-admin-notices></div>
           </section>
 
           <section class="panel section" id="opening-hours">
