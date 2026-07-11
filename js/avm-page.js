@@ -2156,6 +2156,76 @@
     });
   }
 
+  function bindAccessibilityRequests() {
+    const form = document.querySelector("[data-avm-assistance-form]");
+    const status = document.querySelector("[data-avm-assistance-status]");
+    const visitInput = document.querySelector("[data-avm-assistance-visit-at]");
+    if (!form || !status || !visitInput) return;
+
+    const setMinimumVisitTime = () => {
+      const minimum = new Date(Date.now() + 60 * 60 * 1000);
+      const localValue = new Date(minimum.getTime() - minimum.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      visitInput.min = localValue;
+    };
+    setMinimumVisitTime();
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const db = client();
+      if (!db) {
+        core.renderStatus(status, "Canlı kayıt bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin veya AVM danışmasıyla iletişime geçin.", "error");
+        return;
+      }
+      const values = core.parseForm(form);
+      const phone = String(values.contact_phone || "").trim();
+      const email = String(values.contact_email || "").trim();
+      const visitAt = new Date(values.visit_at || "");
+      const partySize = Number(values.party_size || 0);
+      const latestVisit = Date.now() + 180 * 24 * 60 * 60 * 1000;
+      if (!phone && !email) {
+        core.renderStatus(status, "Telefon veya e-posta alanlarından en az birini doldurun.", "error");
+        return;
+      }
+      if (!Number.isFinite(visitAt.getTime()) || visitAt.getTime() < Date.now() + 55 * 60 * 1000 || visitAt.getTime() > latestVisit) {
+        core.renderStatus(status, "Ziyaret zamanı en az bir saat sonrası ve en fazla 180 gün içinde olmalıdır.", "error");
+        return;
+      }
+      if (!Number.isInteger(partySize) || partySize < 1 || partySize > 20) {
+        core.renderStatus(status, "Kişi sayısı 1 ile 20 arasında olmalıdır.", "error");
+        return;
+      }
+
+      const button = form.querySelector("button[type='submit']");
+      if (button) button.disabled = true;
+      try {
+        const mall = await resolveMallCenter(db);
+        if (mall.error) throw mall.error;
+        if (!mall.id) throw new Error("Yayındaki AVM merkezi bulunamadı.");
+        const { error } = await db.from("mall_accessibility_requests").insert({
+          mall_id: mall.id,
+          visitor_name: String(values.visitor_name || "").trim(),
+          service_type: values.service_type,
+          visit_at: visitAt.toISOString(),
+          party_size: partySize,
+          contact_phone: phone || null,
+          contact_email: email || null,
+          meeting_point: String(values.meeting_point || "").trim() || null,
+          request_note: String(values.request_note || "").trim() || null,
+          consent_ack: values.consent_ack === "on",
+          source_page: "avm-dunyasi"
+        });
+        if (error) throw error;
+        form.reset();
+        setMinimumVisitTime();
+        core.renderStatus(status, "Destek talebiniz AVM operasyon kuyruğuna alındı. Talep teyidi verdiğiniz iletişim kanalından yapılacaktır.", "success");
+      } catch (error) {
+        core.renderStatus(status, error.message || "Destek talebi kaydedilemedi. Lütfen daha sonra tekrar deneyin.", "error");
+      } finally {
+        if (button) button.disabled = false;
+      }
+    });
+  }
+
   function bindTransport() {
     const target = document.querySelector("[data-avm-transport-routes]");
     const form = document.querySelector("[data-avm-transport-filters]");
@@ -2300,6 +2370,7 @@
     bindTransport();
     bindOperationalNotices();
     bindServices();
+    bindAccessibilityRequests();
     bindPartner();
   });
 })();

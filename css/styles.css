@@ -3964,3 +3964,34 @@ img {
     grid-template-columns: 1fr;
   }
 }
+
+.avm-assistance-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.avm-assistance__intro {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(145deg, rgba(197, 151, 52, 0.12), rgba(255, 255, 255, 0.8));
+}
+
+.avm-assistance__intro ol {
+  margin: 18px 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 12px;
+}
+
+.avm-assistance-form {
+  margin: 0;
+}
+
+@media (max-width: 820px) {
+  .avm-assistance-layout {
+    grid-template-columns: 1fr;
+  }
+}
