@@ -4,6 +4,7 @@ import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
+import { runtimeSecurityProtection } from "./lib/security-alerts.js";
 import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerRoutes } from "./routes/index.js";
 
@@ -18,6 +19,37 @@ function requestHostname(request) {
     .toLowerCase();
 }
 
+function runtimeProtectedPath(pathname, method) {
+  const protection = runtimeSecurityProtection();
+  const methodName = String(method || "GET").toUpperCase();
+  const ownerPath = pathname.startsWith("/v1/control-center")
+    || pathname.startsWith("/v1/owner-console")
+    || pathname === "/v1/admin/ops/security-monitoring"
+    || pathname === "/v1/ops-console/security-monitoring"
+    || pathname.startsWith("/v1/admin/security")
+    || pathname === "/health"
+    || pathname === "/ready";
+  if (ownerPath) return null;
+
+  if (protection.apiLocked && pathname.startsWith("/v1/")) {
+    return "API_RUNTIME_LOCKED";
+  }
+  if (protection.paymentsLocked && (
+    pathname.startsWith("/v1/payments") ||
+    pathname.startsWith("/v1/cv/checkout") ||
+    pathname.startsWith("/v1/partner/payment-intents")
+  )) {
+    return "PAYMENTS_RUNTIME_LOCKED";
+  }
+  if (protection.ordersLocked && (
+    (pathname === "/v1/orders" && methodName !== "GET") ||
+    pathname.startsWith("/v1/partner/orders/status")
+  )) {
+    return "ORDERS_RUNTIME_LOCKED";
+  }
+  return null;
+}
+
 export async function buildApp() {
   const app = Fastify({
     logger: {
@@ -25,8 +57,10 @@ export async function buildApp() {
       redact: [
         "req.headers.authorization",
         "req.body.secret_value",
+        "req.body.secrets",
         "headers.authorization",
         "body.secret_value",
+        "body.secrets",
         "SUPABASE_SERVICE_ROLE_KEY",
         "IYZICO_SECRET_KEY",
         "IYZICO_API_KEY",
@@ -43,6 +77,7 @@ export async function buildApp() {
         "SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY",
         "SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET",
         "SOCIAL_MEDIA_ASSET_OPENAI_API_KEY",
+        "PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.iyzico.secretKey",
@@ -60,6 +95,7 @@ export async function buildApp() {
         "config.socialMedia.secretEncryptionKey",
         "config.socialMedia.assetWebhookSecret",
         "config.socialMedia.assetOpenAiApiKey",
+        "config.paymentProvider.refundWebhookSecret",
         "config.cronSecret",
         "supabase.serviceRoleKey",
         "iyzico.secretKey",
@@ -77,6 +113,7 @@ export async function buildApp() {
         "socialMedia.secretEncryptionKey",
         "socialMedia.assetWebhookSecret",
         "socialMedia.assetOpenAiApiKey",
+        "paymentProvider.refundWebhookSecret",
         "cronSecret"
       ]
     },
@@ -137,9 +174,16 @@ export async function buildApp() {
         message: "Sistem bakım modunda."
       });
     }
-  });
 
-  registerAutoDefense(app);
+    const runtimeLock = runtimeProtectedPath(pathname, request.method);
+    if (runtimeLock) {
+      return reply.code(503).send({
+        ok: false,
+        error: runtimeLock,
+        message: "Sistem güvenlik alarmı nedeniyle koruma modunda."
+      });
+    }
+  });
 
   await app.register(cors, {
     origin(origin, callback) {
@@ -148,9 +192,11 @@ export async function buildApp() {
       callback(null, config.allowedOrigins.includes(normalized));
     },
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"]
   });
+
+  registerAutoDefense(app);
 
   await app.register(rateLimit, {
     max: 120,

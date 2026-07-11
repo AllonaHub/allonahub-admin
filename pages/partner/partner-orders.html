@@ -6,6 +6,7 @@
 <title>Partner Siparişleri | AllonaHub</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/config.js?v=20260627-config-central"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
@@ -29,7 +30,7 @@ button{cursor:pointer}
 .disabled{background:#ffffff22;color:#ffffff88;cursor:not-allowed}
 .notice{position:fixed;right:25px;bottom:25px;background:#031326;border:1px solid #00e5ff88;border-radius:18px;padding:15px 18px;display:none}
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
 </head>
 
 <body>
@@ -47,8 +48,8 @@ button{cursor:pointer}
 <div id="notice" class="notice"></div>
 
 <script>
-const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
+const SUPABASE_KEY = window.Allona?.config?.supabaseAnonKey || "";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function showNotice(msg){
@@ -210,8 +211,9 @@ requirePartner().then(ok=>{
 });
 </script>
   <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>
 </html>

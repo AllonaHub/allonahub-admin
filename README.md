@@ -71,6 +71,6 @@ AI sağlayıcı anahtarı, Telegram bot tokenı ve webhook secret değerleri kes
 
 ## Kurumsal E-posta Yönlendirme
 
-`info@allonahub.com`, `legal@allonahub.com`, `destek@allonahub.com`, `iletisim@allonahub.com`, `partner.destek@allonahub.com`, `teknik.destek@allonahub.com` ve `basvuru@allonahub.com` adresleri için Hetzner Postfix forwarding paketi `deploy/hetzner/setup-mail-forwarding.sh` altında tutulur. DNS ve canlı sunucu adımları `docs/deploy/hetzner-email-forwarding.md` dosyasındadır.
+`info@allonahub.com`, `legal@allonahub.com`, `destek@allonahub.com`, `iletisim@allonahub.com`, `partner.destek@allonahub.com`, `teknik.destek@allonahub.com` ve `basvuru@allonahub.com` adresleri için Hetzner Postfix forwarding paketi `deploy/hetzner/setup-mail-forwarding.sh` altında tutulur. Gmail'den bu adreslerle cevap göndermek için `deploy/hetzner/setup-mail-submission.sh` authenticated SMTP/DKIM paketini hazırlar. DNS ve canlı sunucu adımları `docs/deploy/hetzner-email-forwarding.md` ve `docs/deploy/hetzner-email-outbound-identities.md` dosyalarındadır.
 
 Detaylı yön için `docs/architecture/ALLONA_SHOP_ARCHITECTURE.md`, `docs/security/enterprise-security-program.md`, `docs/security/incident-response-auto-defense.md`, `docs/reference/TASKS.md`, `docs/reference/DATABASE.md`, `docs/reference/API.md`, `docs/reference/DEPLOY.md` ve `docs/reference/STYLE_GUIDE.md` dosyalarını kullan.

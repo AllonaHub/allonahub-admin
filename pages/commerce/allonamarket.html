@@ -8,9 +8,9 @@
   <meta property="og:title" content="Allona Market | AllonaHub">
   <meta property="og:description" content="Canlı Supabase kataloğu, yatay ürün rayları, kampanyalar ve AllonaHub sepet akışıyla profesyonel market deneyimi.">
   <meta property="og:image" content="../../images/modules/market-light-v5.jpg">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260621-checkout-contrast1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-rail-v6">
-  <link rel="stylesheet" href="../../css/allona-market.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/allona-market.css?v=20260630-currency3">
 </head>
 <body class="market-module-page">
   <div class="site-shell" data-page="allona-market">
@@ -19,7 +19,7 @@
     <main class="market-page" aria-labelledby="market-title">
       <section class="market-hero" data-market-hero aria-label="Allona Market kampanyaları">
         <div class="market-hero__track">
-          <article class="market-hero__slide is-active" data-market-slide style="--market-hero-image:url('../images/modules/market-light-v5.jpg')">
+          <article class="market-hero__slide is-active" data-market-slide style="--market-hero-image:url('../../images/modules/market-light-v5.jpg')">
             <div class="market-hero__content">
               <p class="eyebrow">Allona Market</p>
               <h1 id="market-title">Günlük market ihtiyaçları tek canlı katalogda.</h1>
@@ -30,7 +30,7 @@
               </div>
             </div>
           </article>
-          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../images/modules/market-water-pack.png')">
+          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../../images/modules/market-water-pack.png')">
             <div class="market-hero__content">
               <p class="eyebrow">Hızlı Teslimat</p>
               <h2>Sepetini dakikalar içinde hazırlanmaya uygun kur.</h2>
@@ -41,7 +41,7 @@
               </div>
             </div>
           </article>
-          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../images/modules/market-paper-towels.png')">
+          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../../images/modules/market-paper-towels.png')">
             <div class="market-hero__content">
               <p class="eyebrow">Ev İhtiyaçları</p>
               <h2>Temizlik ve temel ihtiyaçlar yatay ürün raylarında.</h2>
@@ -52,7 +52,7 @@
               </div>
             </div>
           </article>
-          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../images/modules/market-snack-box.png')">
+          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../../images/modules/market-snack-box.png')">
             <div class="market-hero__content">
               <p class="eyebrow">Açılış Fırsatları</p>
               <h2>Kupon, HP ve indirim sinyalleri ürün kartında görünür.</h2>
@@ -63,7 +63,7 @@
               </div>
             </div>
           </article>
-          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../images/modules/market-baby-wipes.png')">
+          <article class="market-hero__slide" data-market-slide style="--market-hero-image:url('../../images/modules/market-baby-wipes.png')">
             <div class="market-hero__content">
               <p class="eyebrow">Aile & Bakım</p>
               <h2>Bebek, kişisel bakım ve ev ürünleri aynı güvenli akışta.</h2>
@@ -118,6 +118,14 @@
           <div class="field">
             <label for="market-category">Kategori</label>
             <select id="market-category" data-market-category><option value="">Tüm market kategorileri</option></select>
+          </div>
+          <div class="field">
+            <label for="market-min">Min fiyat</label>
+            <input id="market-min" type="number" min="0" step="1" data-market-min>
+          </div>
+          <div class="field">
+            <label for="market-max">Max fiyat</label>
+            <input id="market-max" type="number" min="0" step="1" data-market-max>
           </div>
           <div class="field">
             <label for="market-sort">Sıralama</label>
@@ -219,12 +227,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-live5" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260623-market2" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/supabase-client.js?v=20260627-market-owner1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
-  <script src="../../js/cart.js?v=20260621-cart-snapshot1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/allona-market-page.js?v=20260623-market2" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/allona-market-page.js?v=20260630-currency3" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>
 </html>

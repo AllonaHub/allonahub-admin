@@ -145,7 +145,8 @@
         </div>
       `;
     } catch (error) {
-      core.renderStatus(list, error.message || "Siparişler yüklenemedi.", "error");
+      console.warn("Siparişler yüklenemedi:", error.message || error);
+      list.innerHTML = `<div class="empty-state">Siparişler şu anda listelenemedi. Yeni alışveriş ve güvenli ödeme akışı çalışır durumda. <a href="${core.url("/pages/commerce/shop.html")}">Mağazaya gidin</a>.</div>`;
     }
   }
 
@@ -154,6 +155,10 @@
     if (!grid) return;
     core.renderStatus(grid, "Favoriler yükleniyor...");
     try {
+      if (!App.favorites || !App.favorites.hydrate) {
+        grid.innerHTML = `<div class="empty-state">Favori modülü hazırlanıyor. <a href="${core.url("/pages/commerce/shop.html")}">Ürünleri keşfedin</a>.</div>`;
+        return;
+      }
       const products = await App.favorites.hydrate();
       if (!products.length) {
         grid.innerHTML = `<div class="empty-state">Favori ürün bulunmuyor. <a href="${core.url("/pages/commerce/shop.html")}">Ürünleri keşfedin</a>.</div>`;
@@ -161,7 +166,8 @@
       }
       grid.innerHTML = products.map(core.productCard).join("");
     } catch (error) {
-      core.renderStatus(grid, error.message || "Favoriler yüklenemedi.", "error");
+      console.warn("Favoriler yüklenemedi:", error.message || error);
+      grid.innerHTML = `<div class="empty-state">Favoriler şu anda listelenemedi. Ürünleri keşfetmeye devam edebilirsin. <a href="${core.url("/pages/commerce/shop.html")}">Ürünleri keşfedin</a>.</div>`;
     }
   }
 

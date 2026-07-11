@@ -1,0 +1,22 @@
+# AllonaHub DNS records for the current Cloudflare Email Routing + Hetzner outbound SMTP model.
+# Keep the existing Cloudflare Email Routing MX records for inbound mail.
+# Replace HETZNER_IPV4 with the Hetzner mail/API server public IPv4.
+# Replace DKIM_PUBLIC_KEY with the p= value printed by setup-mail-submission.sh.
+
+# Keep these existing inbound MX records managed by Cloudflare Email Routing:
+@      MX   29 route1.mx.cloudflare.net.
+@      MX   31 route2.mx.cloudflare.net.
+@      MX   59 route3.mx.cloudflare.net.
+
+# Add this DNS-only record. Do not proxy it through Cloudflare.
+mail   A        HETZNER_IPV4
+
+# Update the existing root SPF TXT record to this single value.
+# Do not create a second SPF record.
+@      TXT      "v=spf1 include:_spf.mx.cloudflare.net a:mail.allonahub.com ~all"
+
+# Add this after setup-mail-submission.sh prints the DKIM public key.
+mail._domainkey TXT "v=DKIM1; h=sha256; k=rsa; p=DKIM_PUBLIC_KEY"
+
+# Existing DMARC can stay as-is during rollout.
+_dmarc TXT      "v=DMARC1; p=none; rua=mailto:legal@allonahub.com; fo=1; adkim=s; aspf=s"

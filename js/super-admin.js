@@ -11,7 +11,13 @@
     applications: [],
     businesses: [],
     settings: [],
-    modules: []
+    modules: [],
+    refundCancellations: [],
+    ownerAutomation: null,
+    navBadgeTimer: null,
+    navBadgeRefreshing: false,
+    transientAlarmBadgeUntil: 0,
+    transientAlarmBadgeCount: 0
   };
 
   const viewLoaders = {
@@ -25,6 +31,7 @@
   };
 
   const SUPER_ADMIN_ENTRY_ROLES = ["admin", "super_admin"];
+  const OWNER_NAV_BADGE_REFRESH_MS = 60000;
 
   function $(selector, root) {
     return (root || document).querySelector(selector);
@@ -82,6 +89,16 @@
     return `<span class="sa-status-${escape(className)}">${escape(map[status] || value || "-")}</span>`;
   }
 
+  function partnerAccessEmailStatus(auth) {
+    if (auth?.access_email_sent || auth?.invite_sent || auth?.password_reset_sent) {
+      const type = auth.access_email_type === "invite" ? "davet maili" : "şifre belirleme maili";
+      return `${type} gönderildi`;
+    }
+    return auth?.access_email_error
+      ? `erişim maili gönderilemedi: ${auth.access_email_error}`
+      : "erişim maili gönderilmedi";
+  }
+
   function setAlert(message, tone) {
     const target = $("[data-sa-alert]");
     if (!target) return;
@@ -98,7 +115,7 @@
 
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    return core.url(`/pages/account/user.html?tab=login&switchAccount=1&intent=super_admin&v=20260624-switchsuper1&returnTo=${returnTo}`);
+    return core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
   }
 
   function mfaUrl() {
@@ -114,6 +131,24 @@
       return true;
     }
     return false;
+  }
+
+  async function requireOwnerEntry() {
+    if (!App.auth || !App.auth.requireAuth) throw new Error("Oturum modülü yüklenemedi.");
+    const user = await App.auth.requireAuth();
+    if (!user) return null;
+    let profile = null;
+    if (App.auth.getProfile) {
+      profile = await App.auth.getProfile(user.id).catch(() => null);
+    }
+    return {
+      user,
+      profile: profile || {
+        id: user.id,
+        email: user.email || "",
+        role: "owner_candidate"
+      }
+    };
   }
 
   function loginFallback(message) {
@@ -327,7 +362,17 @@
       const payload = await api("/v1/control-center/owner-preflight");
       return ownerPreflightAccessDiagnosis(payload, fallbackDiagnosis);
     } catch (error) {
-      return fallbackDiagnosis;
+      return {
+        ...fallbackDiagnosis,
+        mode: "locked",
+        message: "Owner preflight API yanıtı alınamadı.",
+        helper: publicError(error, "Owner doğrulaması backend'e ulaşamadı. API, CORS, Cloudflare veya oturum tokenı kontrol edilmeli."),
+        steps: [
+          "Sayfayı yenile ve tekrar dene.",
+          "MFA2 tamamlandıysa owner-preflight API çağrısı backend'e ulaşmalı.",
+          "Devam ederse api.allonahub.com CORS/admin host ve Cloudflare challenge durumunu kontrol et."
+        ]
+      };
     }
   }
 
@@ -461,7 +506,6 @@
         return;
       }
 
-      const profile = App.auth && App.auth.getProfile ? await App.auth.getProfile(user.id) : null;
       if (App.auth && App.auth.mfaStatus) {
         const status = await App.auth.mfaStatus();
         if (status && !status.mfaVerified) {
@@ -471,18 +515,6 @@
           }));
           return;
         }
-      }
-
-      if (!profile || !SUPER_ADMIN_ENTRY_ROLES.includes(profile.role)) {
-        const enrichedDiagnosis = await loadOwnerPreflightDiagnosis({
-          ...diagnosis,
-          message: "Bu hesap admin veya super_admin rolünde değil.",
-          helper: "Super Admin giriş kapısına ulaşmak için hesap rolü en az admin olmalı.",
-          steps: ["Owner allowlist ve MFA2 adımlarını tamamla.", "Owner doğrulanırsa kendi hesabını super_admin yap."]
-        });
-        if (enrichedDiagnosis.can_open_panel && await openOwnerConsoleFromPreflight(enrichedDiagnosis.preflight_payload)) return;
-        setAccessFallback(shell, accessFallback(enrichedDiagnosis.message, { mode: enrichedDiagnosis.mode || "locked", diagnosis: enrichedDiagnosis }));
-        return;
       }
 
       const enrichedDiagnosis = await loadOwnerPreflightDiagnosis(diagnosis);
@@ -523,6 +555,11 @@
     return response.status === 403 && /route|not found|challenge/i.test(message);
   }
 
+  function apiRouteMissing(error) {
+    const message = String(error?.message || error?.payload?.message || "");
+    return error?.status === 404 || /route .*not found|not found/i.test(message);
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
     const paths = controlCenterPathCandidates(path);
@@ -534,7 +571,8 @@
         cache: "no-store",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
         },
         body: options && options.body ? JSON.stringify(options.body) : undefined
       });
@@ -556,6 +594,27 @@
     }
 
     throw lastError || new Error("İşlem tamamlanamadı.");
+  }
+
+  async function ownerOptionalApi(path, fallback, label) {
+    try {
+      return await api(path);
+    } catch (error) {
+      return Object.assign({}, fallback || {}, {
+        __ownerWarning: {
+          label: label || path,
+          message: publicError(error, "Veri alınamadı.")
+        }
+      });
+    }
+  }
+
+  function ownerDataWarnings() {
+    return Array.from(arguments)
+      .map((payload) => payload && payload.__ownerWarning)
+      .filter(Boolean)
+      .map((warning) => ownerLine(`${warning.label} veri uyarısı`, escape(warning.message), "", "high"))
+      .join("");
   }
 
   function renderEmpty(target, message) {
@@ -688,9 +747,7 @@
                   <td>${formatDate(item.created_at)}</td>
                   <td>
                     <div class="sa-row-actions">
-                      <button class="sa-btn sa-btn-ghost sa-mini" type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İnceleme</button>
-                      <button class="sa-btn sa-mini" type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla</button>
-                      <button class="sa-btn sa-btn-danger sa-mini" type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>
+                      <button class="sa-btn sa-mini" type="button" data-partner-detail="${escape(item.id)}">Karar Ver</button>
                     </div>
                   </td>
                 </tr>
@@ -723,6 +780,82 @@
         `;
       }
     }
+  }
+
+  function partnerCreateFormMarkup() {
+    return `
+      <form class="sa-inline-form" data-partner-create-form>
+        <label>Firma / Mağaza
+          <input name="company_name" required maxlength="160" placeholder="Örn. Allona Market Partneri">
+        </label>
+        <label>Yetkili
+          <input name="contact_name" required maxlength="140" placeholder="Ad Soyad">
+        </label>
+        <label>E-posta
+          <input name="email" required type="email" maxlength="180" placeholder="partner@firma.com">
+        </label>
+        <label>Telefon
+          <input name="phone" maxlength="40" placeholder="+90 5xx xxx xx xx">
+        </label>
+        <label>Tip
+          <select name="partner_type">
+            <option value="shop">Shop / Pazaryeri</option>
+            <option value="food">Yemek / Restoran</option>
+            <option value="market">Market</option>
+            <option value="service">Hizmet / Ekosistem</option>
+          </select>
+        </label>
+        <label>Şehir
+          <input name="city" maxlength="90" placeholder="İstanbul">
+        </label>
+        <label>Komisyon
+          <input name="commission_rate" type="number" min="0" max="0.9" step="0.01" value="0.12">
+        </label>
+        <button class="sa-btn" type="submit">Partner Aç</button>
+      </form>
+    `;
+  }
+
+  async function createPartnerFromForm(form) {
+    const formData = new FormData(form);
+    const companyName = String(formData.get("company_name") || "").trim();
+    const contactName = String(formData.get("contact_name") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const partnerType = String(formData.get("partner_type") || "shop").trim();
+    const payload = {
+      company_name: companyName,
+      contact_name: contactName,
+      email,
+      phone: String(formData.get("phone") || "").trim(),
+      city: String(formData.get("city") || "").trim(),
+      country: "Türkiye",
+      category: partnerType,
+      partner_type: partnerType,
+      commission_rate: Number(formData.get("commission_rate") || 0.12),
+      store_status: "active",
+      reason: `Super Admin panelinden ${companyName || email} için doğrudan partner daveti oluşturuldu.`
+    };
+
+    const trigger = form.querySelector("button[type='submit']");
+    await runConfirmed(`${companyName || email} için partner hesabı açılacak. Kullanıcı yoksa Supabase Auth daveti gönderilecek, profil rolü partner yapılacak ve aktif partner işletmesi oluşturulacak.`, async (reason) => {
+      const result = await api("/v1/control-center/partners", {
+        method: "POST",
+        body: { ...payload, reason: reason || payload.reason }
+      });
+      const activation = result.activation || {};
+      const auth = activation.auth || {};
+      openDrawer("Partner Açılış Sonucu", [
+        ownerLine("Firma", escape(result.partner_business?.display_name || companyName || "-"), "", "low"),
+        ownerLine("Auth kullanıcısı", `${escape(auth.email || email)} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı bağlandı"}`, "", "medium"),
+        ownerLine("Erişim maili", escape(partnerAccessEmailStatus(auth)), "", auth.access_email_sent || auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
+        ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\">partner.allonahub.com</a>", "", "low")
+      ].join(""));
+      form.reset();
+    }, {
+      trigger,
+      defaultReason: payload.reason,
+      requireReason: true
+    });
   }
 
   async function loadSecurity() {
@@ -791,6 +924,7 @@
         <div>
           <h3>${escape(item.name || item.module_key)}</h3>
           <span>${escape(item.category || "services")}</span>
+          ${item.subdomain_url ? `<a class="sa-mini-link" href="${escape(item.subdomain_url)}" target="_blank" rel="noopener">${escape(item.subdomain)}.allonahub.com</a>` : ""}
         </div>
         <div class="sa-module-row">
           <span>Aktif</span>
@@ -958,25 +1092,100 @@
     const decision = button.dataset.partnerDecision;
     const messages = {
       review: "Başvuru incelemeye alınacak.",
-      approved: "Partner başvurusu onaylanacak ve uygun kullanıcı için mağaza kaydı hazırlanacak.",
+      approved: "Partner başvurusu onaylanacak; kullanıcı, profil, modül yetkisi ve aktif partner işletmesi otomatik oluşturulacak.",
       rejected: "Partner başvurusu reddedilecek."
     };
     const message = messages[decision] || "Partner başvurusu güncellenecek.";
-    await runConfirmed(message, async (reason) => {
-      await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
-        method: "PATCH",
-        body: {
-          decision,
-          reason: reason || message,
-          commission_rate: 0.12,
-          store_status: decision === "approved" ? "active" : "review"
-        }
-      });
-    }, {
-      trigger: button,
+    const confirmed = await confirmAction(message, {
       defaultReason: message,
       requireReason: decision !== "review"
     });
+    if (!confirmed.confirmed) return;
+    button.disabled = true;
+    button.dataset.originalText = button.dataset.originalText || button.textContent || "";
+    button.textContent = "Uygulanıyor...";
+    try {
+      const decisionPayload = {
+        application_id: applicationId,
+        decision,
+        reason: confirmed.reason || message,
+        commission_rate: 0.12,
+        store_status: decision === "approved" ? "active" : "review"
+      };
+      let result = null;
+      try {
+        result = await api("/v1/control-center/partner-application-decisions", {
+          method: "POST",
+          body: decisionPayload
+        });
+      } catch (error) {
+        if (!apiRouteMissing(error)) throw error;
+        const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
+        result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+          method: "PATCH",
+          body: legacyPayload
+        });
+      }
+      showPartnerDecisionResult(result, decision);
+      if ($("[data-command-output]")) {
+        await reloadOwnerActiveView();
+      } else {
+        await reloadActiveView();
+      }
+      setAlert(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.", "ok");
+    } catch (error) {
+      const messageText = publicError(error, "Partner kararı tamamlanamadı.");
+      setAlert(messageText, "error");
+      openDrawer("Partner Kararı Hatası", ownerLine("İşlem tamamlanamadı", escape(messageText), "<button type=\"button\" data-action-health-check>Komutları test et</button>", "critical"));
+    } finally {
+      button.disabled = false;
+      button.textContent = button.dataset.originalText || "Uygula";
+    }
+  }
+
+  function partnerApplicationById(applicationId) {
+    return state.applications.find((item) => String(item.id) === String(applicationId));
+  }
+
+  function partnerApplicationDetailMarkup(item) {
+    const metadata = item?.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    const actions = [
+      `<button type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla ve Aktif Et</button>`,
+      `<button type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>`,
+      `<button type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İncelemeye Al</button>`
+    ].join(" ");
+    return [
+      ownerLine("Firma", escape(item.company_name || "-"), "", "medium"),
+      ownerLine("Yetkili", escape(item.contact_name || "-"), "", "medium"),
+      ownerLine("İletişim", `${escape(item.email || "-")} / ${escape(item.phone || "-")}`, "", "medium"),
+      ownerLine("Vergi / şehir", `${escape(item.tax_number || "-")} / ${escape(metadata.city || item.city || "-")}`, "", "medium"),
+      ownerLine("Durum", `${escape(item.status || "-")} / ${escape(item.review_stage || "-")} / öneri ${escape(item.admin_recommendation || "-")}`, "", item.status === "pending" ? "high" : "medium"),
+      ownerLine("Açıklama", escape(metadata.message || item.message || "-"), "", "medium"),
+      ownerLine("Karar", "Detayı inceledikten sonra nihai kararı ver. Onay, partner hesabını ve aktif mağazayı otomatik açar.", actions, "critical")
+    ].join("");
+  }
+
+  function showPartnerApplicationDetail(applicationId) {
+    const item = partnerApplicationById(applicationId);
+    if (!item) {
+      openDrawer("Partner Başvurusu", ownerLine("Başvuru bulunamadı", escape(applicationId), "", "critical"));
+      return;
+    }
+    openDrawer("Partner Başvuru Detayı", partnerApplicationDetailMarkup(item));
+  }
+
+  function showPartnerDecisionResult(result, decision) {
+    const application = result?.application || {};
+    const business = result?.partner_business || {};
+    const activation = result?.activation || {};
+    const auth = activation.auth || {};
+    openDrawer("Partner Kararı", [
+      ownerLine("Başvuru", `${escape(application.company_name || application.id || "-")} / ${escape(application.status || decision)}`, "", decision === "approved" ? "low" : "medium"),
+      ownerLine("Partner mağazası", `${escape(business.display_name || "-")} / ${escape(business.status || "-")} / ${escape(business.verification_status || "-")}`, "", business.status === "active" ? "low" : "high"),
+      ownerLine("Auth kullanıcısı", `${escape(auth.email || application.email || "-")} / ${auth.created ? "yeni oluşturuldu" : "mevcut kullanıcı"}`, "", "medium"),
+      ownerLine("Erişim maili", escape(partnerAccessEmailStatus(auth)), "", auth.access_email_sent || auth.invite_sent || auth.password_reset_sent ? "low" : "high"),
+      ownerLine("Partner paneli", "<a href=\"https://partner.allonahub.com/\" target=\"_blank\" rel=\"noopener\">partner.allonahub.com</a>", "", "low")
+    ].join(""));
   }
 
   async function saveSetting(button) {
@@ -1028,8 +1237,16 @@
 
   const ownerViewTitles = {
     overview: ["Kontrol Merkezi", "Tüm ekosistem sinyalleri tek akışta"],
+    automation: ["Otomasyon Merkezi", "Düşük riskli işleri otomatik, kritik işleri owner kuyruğunda yönet"],
+    "work-queue": ["İş Kuyruğu", "Modül onayları, riskler, destek ve yayın kararları"],
     alerts: ["Uyarı / Risk Akışı", "Öncelikli güvenlik, sistem ve yayın riskleri"],
     approvals: ["Yayın Onayları", "Main, deploy, migration ve panel değişikliği onayları"],
+    "release-history": ["Yayın Geçmişi", "Onaylanan, gönderilen ve hata alan yayın kararları"],
+    operations: ["Operasyon Merkezi", "Sipariş, destek ve canlı operasyon görünümü"],
+    refunds: ["İade ve İptaller", "İade, iptal, neden ve owner aksiyon kontrolü"],
+    finance: ["Finans Merkezi", "Ciro, ödeme, komisyon, iade ve hakediş kontrolü"],
+    content: ["İçerik Kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerikleri"],
+    health: ["Sistem Sağlığı", "API, database, webhook, modül ve operasyon servisleri"],
     access: ["Erişim Kilidi", "Owner-only oturum ve güvenli sınırlar"],
     permissions: ["Yetki Merkezi", "Rol verme, hesap durumu ve risk seviyesi kontrolü"],
     "module-map": ["Modül Haritası", "Ana sayfa modülleri ve gelecek operasyon hazırlığı"],
@@ -1100,20 +1317,181 @@
     if (drawer) drawer.hidden = true;
   }
 
+  function ownerControlLinkView(link) {
+    const legacyMap = {
+      orders: "operations",
+      partner_orders: "operations",
+      coupons: "content",
+      hp_rewards: "finance",
+      user_panel: "users",
+      partner_panel: "partners",
+      admin_panel: "operations"
+    };
+    return link.view || legacyMap[link.key] || "";
+  }
+
   function ownerControlLinks(links) {
-    const rows = (links || []).map((link) => ownerLine(
-      link.label || link.key,
-      `${escape(link.key || "route")} / risk: ${escape(link.risk_level || "low")}`,
-      `<a href="${escape(link.href || "#")}">Aç</a>`,
-      link.risk_level
-    ));
+    const rows = (links || []).map((link) => {
+      const view = ownerControlLinkView(link);
+      const action = view
+        ? `<button type="button" data-view-jump="${escape(view)}">Yönet</button>`
+        : `<a href="${escape(link.href || "#")}">Aç</a>`;
+      const target = view ? `super admin: ${view}` : (link.href || "route");
+      return ownerLine(
+        link.label || link.key,
+        `${escape(link.key || "route")} / ${escape(target)} / risk: ${escape(link.risk_level || "low")}`,
+        action,
+        link.risk_level
+      );
+    });
     return rows.length ? rows.join("") : ownerEmpty("Yönlendirme bulunamadı.");
   }
 
   async function loadCommandCenter() {
     const payload = await api("/v1/control-center/command-center");
     state.commandCenter = payload;
+    applyOwnerNavBadges(payload);
     return payload;
+  }
+
+  async function loadCommandCenterOptional(label) {
+    if (state.commandCenter) return state.commandCenter;
+    const payload = await ownerOptionalApi("/v1/control-center/command-center", {
+      summary: {},
+      system_health: {},
+      gitops: {}
+    }, label || "Komut merkezi");
+    if (!payload.__ownerWarning) state.commandCenter = payload;
+    if (!payload.__ownerWarning) applyOwnerNavBadges(payload);
+    return payload;
+  }
+
+  function ownerNavButton(view) {
+    return document.querySelector(`[data-view-target="${cssEscape(view)}"]`);
+  }
+
+  function ownerBadgeCount(value) {
+    const count = Math.max(0, Number(value || 0));
+    if (!count) return "";
+    return count > 99 ? "99+" : String(count);
+  }
+
+  function ownerBadgeTone(tone) {
+    const normalized = normalizeRisk(tone);
+    if (normalized === "critical") return "critical";
+    if (normalized === "high" || normalized === "warning") return "high";
+    if (normalized === "medium") return "medium";
+    return "low";
+  }
+
+  function setOwnerNavBadge(view, count, tone, label) {
+    const button = ownerNavButton(view);
+    if (!button) return;
+    const displayCount = ownerBadgeCount(count);
+    if (!displayCount) {
+      button.removeAttribute("data-sa-badge-count");
+      button.removeAttribute("data-sa-badge-tone");
+      button.removeAttribute("data-sa-badge-label");
+      button.removeAttribute("aria-label");
+      return;
+    }
+    const text = (button.textContent || view).trim();
+    const safeTone = ownerBadgeTone(tone);
+    const safeLabel = label || `${text} için ${displayCount} yeni bildirim`;
+    button.dataset.saBadgeCount = displayCount;
+    button.dataset.saBadgeTone = safeTone;
+    button.dataset.saBadgeLabel = safeLabel;
+    button.setAttribute("aria-label", `${text}: ${safeLabel}`);
+  }
+
+  function clearOwnerNavBadges() {
+    document.querySelectorAll("[data-view-target][data-sa-badge-count]").forEach((button) => {
+      button.removeAttribute("data-sa-badge-count");
+      button.removeAttribute("data-sa-badge-tone");
+      button.removeAttribute("data-sa-badge-label");
+      button.removeAttribute("aria-label");
+    });
+  }
+
+  function releaseApprovalNeedsAttention(item) {
+    return ["pending", "approved", "failed"].includes(String(item && item.status || "").toLowerCase());
+  }
+
+  function applyOwnerNavBadges(payload) {
+    if (!payload || payload.__ownerWarning) return;
+    clearOwnerNavBadges();
+    const summary = payload.summary || {};
+    const system = payload.system_health || {};
+    const risks = payload.risks || [];
+    const automation = payload.automation || {};
+    const automationSummary = automation.summary || {};
+    const moduleMap = payload.module_map || {};
+    const releaseApprovals = payload.release_approvals || [];
+    const criticalRisks = risks.filter((item) => ownerBadgeTone(item.severity) === "critical").length;
+    const highRisks = risks.filter((item) => ["critical", "high"].includes(ownerBadgeTone(item.severity))).length;
+    const releaseAttention = releaseApprovals.filter(releaseApprovalNeedsAttention).length;
+    const pendingApplications = Number(summary.pending_applications || 0);
+    const securityAlerts = Number(summary.security_alerts_24h || 0);
+    const criticalEvents = Number(summary.critical_events_sample || 0);
+    const moduleAttention = Number(moduleMap.inactive_count || 0);
+    const incidentCount = Number(system.auto_defense && system.auto_defense.recent_incident_count || 0);
+    const healthAttention = [
+      system.database && system.database !== "online",
+      system.maintenance_mode,
+      system.payments_disabled,
+      system.emergency_api_disabled,
+      incidentCount > 0
+    ].filter(Boolean).length;
+    const transientAlarmActive = Date.now() < Number(state.transientAlarmBadgeUntil || 0);
+    const transientAlarmCount = transientAlarmActive ? Number(state.transientAlarmBadgeCount || 1) : 0;
+    const alertCount = risks.length + transientAlarmCount;
+    const alertTone = criticalRisks || transientAlarmCount ? "critical" : (highRisks ? "high" : "medium");
+    const automationAttention = Number(automationSummary.action_required || 0) + Number(automationSummary.auto_ready || 0);
+
+    setOwnerNavBadge("alerts", alertCount, alertTone, `${formatNumber(alertCount)} risk veya alarm sinyali`);
+    setOwnerNavBadge("security", securityAlerts + criticalEvents + transientAlarmCount, criticalEvents || transientAlarmCount ? "critical" : "high", `${formatNumber(securityAlerts)} güvenlik uyarısı / ${formatNumber(criticalEvents)} kritik olay`);
+    setOwnerNavBadge("approvals", releaseAttention, releaseAttention ? "critical" : "low", `${formatNumber(releaseAttention)} yayın onayı takip istiyor`);
+    setOwnerNavBadge("partners", pendingApplications, "high", `${formatNumber(pendingApplications)} partner başvurusu karar bekliyor`);
+    setOwnerNavBadge("module-map", moduleAttention, "medium", `${formatNumber(moduleAttention)} modül görünürlük kontrolü istiyor`);
+    setOwnerNavBadge("health", healthAttention, system.emergency_api_disabled || system.payments_disabled ? "critical" : "high", `${formatNumber(healthAttention)} sistem sağlığı uyarısı`);
+    setOwnerNavBadge("finance", system.payments_disabled ? 1 : 0, "critical", "Ödeme akışı durdurulmuş görünüyor");
+    setOwnerNavBadge("system", system.maintenance_mode || system.emergency_api_disabled ? healthAttention : 0, system.emergency_api_disabled ? "critical" : "high", "Canlı sistem bayrakları kontrol istiyor");
+    setOwnerNavBadge("automation", automationAttention, automationSummary.critical ? "critical" : "high", `${formatNumber(automationAttention)} otomasyon aksiyonu veya hazır kayıt`);
+
+    const workQueueAttention = releaseAttention + pendingApplications + Math.min(securityAlerts, 20) + transientAlarmCount + Number(automationSummary.super_admin_required || 0);
+    setOwnerNavBadge("work-queue", workQueueAttention, transientAlarmCount || criticalRisks ? "critical" : "high", `${formatNumber(workQueueAttention)} takip edilecek iş veya uyarı`);
+  }
+
+  async function refreshOwnerNavBadges() {
+    if (state.navBadgeRefreshing || !document.querySelector("[data-command-output]")) return;
+    state.navBadgeRefreshing = true;
+    try {
+      const payload = await api("/v1/control-center/command-center");
+      state.commandCenter = payload;
+      applyOwnerNavBadges(payload);
+    } catch {
+      // Badges are informative only; panel data loaders show actionable errors.
+    } finally {
+      state.navBadgeRefreshing = false;
+    }
+  }
+
+  function startOwnerNavBadgeRefresh() {
+    if (state.navBadgeTimer) return;
+    if (state.commandCenter) applyOwnerNavBadges(state.commandCenter);
+    state.navBadgeTimer = window.setInterval(refreshOwnerNavBadges, OWNER_NAV_BADGE_REFRESH_MS);
+    window.addEventListener("focus", refreshOwnerNavBadges);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshOwnerNavBadges();
+    });
+    window.addEventListener("allonahub:admin-alarm-signal", (event) => {
+      const detail = event.detail || {};
+      state.transientAlarmBadgeUntil = Date.now() + 5 * 60 * 1000;
+      state.transientAlarmBadgeCount = Math.max(1, Number(detail.count || 1));
+      if (state.commandCenter) applyOwnerNavBadges(state.commandCenter);
+      setOwnerNavBadge("alerts", state.transientAlarmBadgeCount, detail.level || "critical", "Yeni güvenlik alarmı var");
+      setOwnerNavBadge("security", state.transientAlarmBadgeCount, detail.level || "critical", "Yeni güvenlik alarmı var");
+    });
   }
 
   async function loadOwnerSession() {
@@ -1213,21 +1591,30 @@
     const system = payload.system_health || {};
     const gitops = payload.gitops || {};
     const owner = payload.owner || {};
+    const automation = payload.automation || {};
+    const automationSummary = automation.summary || {};
     ownerSetOutput([
       ownerLine("Owner kilidi", `Sadece kayıtlı sahip: ${escape((owner.email || owner.user_id) || "doğrulandı")}`, "<button type=\"button\" data-view-jump=\"access\">Detay</button>", "critical"),
       owner.bootstrap_required ? ownerLine("Kalıcı Super Admin", "Owner doğrulandı; profil rolünü Super Admin yaparak kalıcı erişimi tamamla.", "<button type=\"button\" data-view-jump=\"permissions\">Yetki Merkezi</button>", "critical") : "",
       ownerLine("Toplam kullanıcı", formatNumber(summary.total_users), "<button type=\"button\" data-view-jump=\"users\">Yönet</button>", "medium"),
       ownerLine("Toplam partner", formatNumber(summary.total_partners), "<button type=\"button\" data-view-jump=\"partners\">Başvurular</button>", "medium"),
       ownerLine("Yetki merkezi", "Rol verme, askıya alma ve risk seviyesi owner doğrulamalı backend service-role yazımıyla çalışır.", "<button type=\"button\" data-view-jump=\"permissions\">Aç</button>", "critical"),
+      ownerLine("İş kuyruğu", "AVM, yemek, taksi, sosyal medya, destek, güvenlik ve yayın kararlarını tek listede izle.", "<button type=\"button\" data-view-jump=\"work-queue\">Aç</button>", "critical"),
+      ownerLine("Otomasyon merkezi", `${formatNumber(automationSummary.auto_ready)} otomatik hazır / ${formatNumber(automationSummary.action_required)} karar isteyen kayıt`, "<button type=\"button\" data-view-jump=\"automation\">Aç</button>", automationSummary.critical ? "critical" : (automationSummary.action_required ? "high" : "medium")),
+      ownerLine("Operasyon merkezi", "Siparişler, destek talepleri ve canlı operasyon akışını Super Admin içinden izle.", "<button type=\"button\" data-view-jump=\"operations\">Aç</button>", "high"),
+      ownerLine("İade ve iptaller", "İade/iptal kayıtlarını, nedenleri, destek sinyallerini ve owner aksiyonlarını tek yerden yönet.", "<button type=\"button\" data-view-jump=\"refunds\">Aç</button>", "critical"),
+      ownerLine("Finans merkezi", "Ciro, ödeme riski, komisyon, iade ve hakediş ayarlarını tek yerden takip et.", "<button type=\"button\" data-view-jump=\"finance\">Aç</button>", "critical"),
+      ownerLine("İçerik kontrolü", "Banner, kampanya, sayfa, sosyal medya ve modül içerik önerilerini gör.", "<button type=\"button\" data-view-jump=\"content\">Aç</button>", "high"),
       ownerLine("Ana sayfa modülleri", `${formatNumber(summary.homepage_modules)} modül / ${formatNumber(summary.future_operations)} gelecek operasyon`, "<button type=\"button\" data-view-jump=\"module-map\">Harita</button>", "medium"),
-      ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<a href=\"./orders.html\">Sipariş merkezi</a>", "medium"),
+      ownerLine("Toplam sipariş", formatNumber(summary.total_orders), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri yönet</button>", "medium"),
       ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"system\">Finans ayarları</button>", "low"),
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
-      ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
+      ownerLine("Canlı altyapı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
-      ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Onay kaydı açık, otomatik GitOps kapalı", "<button type=\"button\" data-release-open>Onay ver</button>", gitops.enabled ? "high" : "medium"),
-      ownerLine("Hızlı erişim", "Admin, user, partner ve modül ekranlarına geçiş", "<button type=\"button\" data-open-links>Liste</button>", "low")
+      ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Bekleyen onay varsa detay incelemesi gerekir", "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenleri incele</button>", gitops.enabled ? "high" : "medium"),
+      ownerLine("Sistem sağlığı", "API, DB, GitOps, komut kabiliyeti ve operasyon raporlarını tek ekranda gör.", "<button type=\"button\" data-view-jump=\"health\">Aç</button>", system.database === "online" ? "low" : "critical"),
+      ownerLine("Yönetim kısayolları", "Sipariş, finans, içerik, kullanıcı, partner ve modül yönetimi", "<button type=\"button\" data-open-links>Liste</button>", "low")
     ].join(""));
   }
 
@@ -1242,6 +1629,124 @@
       openDrawer("Komut Sağlık Testi", ownerLine("Test başarısız", escape(message), "", "critical"));
       setAlert(message, "error");
     }
+  }
+
+  function workQueueFilterMarkup(params) {
+    const source = params && params.source_module || "";
+    const status = params && params.status || "";
+    const risk = params && params.risk_level || "";
+    const sources = ["", "admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
+    const statuses = ["", "open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
+    const risks = ["", "low", "medium", "high", "critical"];
+    return `
+      <form class="sa-inline-form" data-owner-work-queue-filter>
+        <select name="source_module">
+          ${sources.map((item) => `<option value="${escape(item)}" ${source === item ? "selected" : ""}>${escape(item || "Tüm modüller")}</option>`).join("")}
+        </select>
+        <select name="status">
+          ${statuses.map((item) => `<option value="${escape(item)}" ${status === item ? "selected" : ""}>${escape(item || "Tüm durumlar")}</option>`).join("")}
+        </select>
+        <select name="risk_level">
+          ${risks.map((item) => `<option value="${escape(item)}" ${risk === item ? "selected" : ""}>${escape(item || "Tüm riskler")}</option>`).join("")}
+        </select>
+        <button class="sa-btn sa-btn-ghost" type="submit">Filtrele</button>
+      </form>
+    `;
+  }
+
+  async function loadOwnerWorkQueue(params) {
+    ownerLoading("İş Kuyruğu");
+    const query = new URLSearchParams(params || {});
+    const payload = await api(`/v1/control-center/work-queue?${query.toString()}`);
+    state.workQueueItems = payload.items || [];
+    const summary = payload.summary || {};
+    setOwnerNavBadge("work-queue", summary.total, summary.urgent ? "critical" : "high", `${formatNumber(summary.total)} iş kuyruğu kaydı / ${formatNumber(summary.urgent)} acil`);
+    const rows = state.workQueueItems.map((item) => {
+      const actionable = item.actionable === true;
+      const action = actionable
+        ? [
+          `<button type="button" data-work-queue-status="in_progress" data-work-queue-id="${escape(item.id)}">İşleme al</button>`,
+          `<button type="button" data-work-queue-status="waiting_owner" data-work-queue-id="${escape(item.id)}">Owner bekliyor</button>`,
+          `<button type="button" data-work-queue-decision="resolved" data-work-queue-id="${escape(item.id)}">Çöz</button>`
+        ].join(" ")
+        : `<button type="button" data-work-queue-source="${escape(item.source_module || "other")}">Kaynağa git</button>`;
+      return ownerLine(
+        `${item.title || "İş"} ${actionable ? "" : "(türetilmiş)"}`,
+        `${escape(item.source_module || "other")} / ${escape(item.target_type || "-")} / durum ${escape(item.status || "open")} / öncelik ${escape(item.priority || "normal")} / ${formatDate(item.created_at)}`,
+        action,
+        item.risk_level
+      );
+    });
+    const warningRows = (payload.schema_warnings || []).map((item) => ownerLine(
+      item.label || "schema",
+      escape(item.message || "Migration kontrol edilmeli."),
+      escape(item.code || ""),
+      "high"
+    ));
+    ownerSetOutput(
+      workQueueFilterMarkup(params) +
+      ownerLine("Kuyruk özeti", `${formatNumber(summary.total)} kayıt / ${formatNumber(summary.stored)} kalıcı / ${formatNumber(summary.derived)} türetilmiş / ${formatNumber(summary.urgent)} acil`, "<button type=\"button\" data-action-health-check>Komutları test et</button>", summary.urgent ? "critical" : "medium") +
+      (warningRows.join("") || "") +
+      (rows.length ? rows.join("") : ownerEmpty("İş kuyruğu kaydı bulunamadı."))
+    );
+  }
+
+  function sourceViewForWorkQueue(sourceModule) {
+    const map = {
+      admin_ops: "partners",
+      avm: "module-map",
+      food: "module-map",
+      taxi: "module-map",
+      social_media: "module-map",
+      partner: "partners",
+      user_panel: "users",
+      security: "security",
+      legal: "module-map",
+      release: "approvals",
+      system: "system"
+    };
+    return map[sourceModule] || "module-map";
+  }
+
+  async function updateWorkQueueStatus(button) {
+    const itemId = button.dataset.workQueueId;
+    const status = button.dataset.workQueueStatus;
+    const item = (state.workQueueItems || []).find((entry) => entry.id === itemId);
+    const message = `${item?.title || "İş kuyruğu kaydı"} durumu ${status} yapılacak.`;
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/control-center/work-queue/${encodeURIComponent(itemId)}`, {
+        method: "PATCH",
+        body: {
+          status,
+          reason
+        }
+      });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
+  }
+
+  async function decideWorkQueueItem(button) {
+    const itemId = button.dataset.workQueueId;
+    const decision = button.dataset.workQueueDecision;
+    const item = (state.workQueueItems || []).find((entry) => entry.id === itemId);
+    const message = `${item?.title || "İş kuyruğu kaydı"} için ${decision} kararı verilecek.`;
+    await runConfirmed(message, async (reason) => {
+      await api(`/v1/control-center/work-queue/${encodeURIComponent(itemId)}/decision`, {
+        method: "POST",
+        body: {
+          decision,
+          status: decision === "resolved" ? "resolved" : "decided",
+          reason
+        }
+      });
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   function renderOwnerActionHealth(payload) {
@@ -1290,20 +1795,432 @@
 
   async function loadOwnerApprovals() {
     ownerLoading("Yayın Onayları");
-    const payload = await api("/v1/control-center/release-approvals?limit=80");
-    state.approvals = payload.approvals || [];
-    const header = ownerLine("Yeni onay", "Main commit/push, deploy veya migration için owner onayı oluştur.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical");
-    const rows = state.approvals.map((item) => {
-      const manualPending = releaseApprovalManualPending(item);
-      const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
+    const [releasePayload, queuePayload] = await Promise.all([
+      ownerOptionalApi("/v1/control-center/release-approvals?limit=80&status=pending", { approvals: [] }, "Yayın onayları"),
+      ownerOptionalApi("/v1/control-center/work-queue?limit=80&status=open", { items: [] }, "İş kuyruğu")
+    ]);
+    state.approvals = releasePayload.approvals || [];
+    state.approvalQueueItems = (queuePayload.items || []).filter((item) => {
+      return item.target_type === "content_change_proposal"
+        || item.target_type === "content_module"
+        || item.target_type === "admin_approval_request";
+    });
+
+    const releaseRows = state.approvals.map((item) => {
       return ownerLine(
-        `${item.approval_type} / ${statusText}`,
-        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "-")}`,
+        `${item.approval_type} / onay bekliyor`,
+        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "Açıklama yok")}`,
         `<button type="button" data-approval-detail="${escape(item.id)}">Detay</button>`,
-        manualPending ? "medium" : item.risk_level
+        item.risk_level
       );
     });
-    ownerSetOutput(header + (rows.length ? rows.join("") : ownerEmpty("Yayın onayı kaydı yok.")));
+
+    const queueRows = state.approvalQueueItems.map((item) => {
+      const scope = item.metadata && item.metadata.content_scope ? ` / ${item.metadata.content_scope}` : "";
+      return ownerLine(
+        `${item.title || "Admin onayı"} / admin panelden geldi`,
+        `${escape(item.source_module || "admin_ops")} / ${escape(item.target_type || "-")}${escape(scope)} / ${formatDate(item.created_at)}`,
+        `<button type="button" data-view-jump="work-queue">İş kuyruğunda aç</button>`,
+        item.risk_level || "medium"
+      );
+    });
+
+    const total = releaseRows.length + queueRows.length;
+    setOwnerNavBadge("approvals", total, releaseRows.length ? "critical" : "high", `${formatNumber(total)} bekleyen onay`);
+    ownerSetOutput(
+      ownerDataWarnings(releasePayload, queuePayload) +
+      (total
+        ? ownerLine("Bekleyen onaylar", `${formatNumber(total)} kayıt: ${formatNumber(releaseRows.length)} yayın / ${formatNumber(queueRows.length)} admin-içerik onayı.`, "", total ? "critical" : "low") +
+          (queueRows.length ? ownerLine("Admin Panel İçerik Onayları", "Ana sayfa modülü, banner, kampanya, sayfa ve yasal içerik önerileri burada görünür.", "", "high") + queueRows.join("") : "") +
+          (releaseRows.length ? ownerLine("Yayın / Deploy Onayları", "Main, deploy, migration ve panel değişikliği onayları.", "", "critical") + releaseRows.join("") : "")
+        : ownerLine("Bekleyen yayın onayı yok", "Admin içerik onayı, main commit/push, deploy, migration veya panel değişikliği için bekleyen kayıt bulunmuyor.", "", "low"))
+    );
+  }
+
+  async function loadOwnerReleaseHistory() {
+    ownerLoading("Yayın Geçmişi");
+    const payload = await ownerOptionalApi("/v1/control-center/release-approvals?limit=80", { approvals: [] }, "Yayın geçmişi");
+    state.releaseHistory = payload.approvals || [];
+    setOwnerNavBadge("release-history", state.releaseHistory.filter(releaseApprovalNeedsAttention).length, "high", "Yayın geçmişinde takip isteyen kayıt var");
+    const rows = state.releaseHistory.map((item) => {
+      const response = item.webhook_response || {};
+      const action = item.status === "pending"
+        ? `<button type="button" data-approval-detail="${escape(item.id)}">Detay / Onay</button>`
+        : `<button type="button" data-release-history-detail="${escape(item.id)}">Detay</button>`;
+      return ownerLine(
+        `${item.approval_type || "release"} / ${item.status || "-"}`,
+        `${escape(item.target_ref || "main")} - ${escape(item.target_summary || "Açıklama yok")} / webhook ${escape(String(item.webhook_status || response.code || response.ok || "-"))} / ${formatDate(item.created_at)}`,
+        action,
+        item.status === "failed" ? "critical" : (item.status === "pending" ? "critical" : item.risk_level || "low")
+      );
+    });
+    ownerSetOutput(
+      ownerDataWarnings(payload) +
+      ownerLine("Yayın kayıtları", `${formatNumber(state.releaseHistory.length)} kayıt listeleniyor. Pending kayıtlar Bekleyenler ekranında da görünür.`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyenler</button>", "medium") +
+      (rows.length ? rows.join("") : ownerEmpty("Yayın geçmişi kaydı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerOperations() {
+    ownerLoading("Operasyon Merkezi");
+    const [dashboardPayload, ordersPayload, supportPayload] = await Promise.all([
+      ownerOptionalApi("/v1/admin/ops/dashboard", { dashboard: { metrics: {} } }, "Operasyon dashboard"),
+      ownerOptionalApi("/v1/admin/ops/orders?limit=12", { orders: [] }, "Siparişler"),
+      ownerOptionalApi("/v1/admin/ops/support-tickets?limit=12", { tickets: [] }, "Destek talepleri")
+    ]);
+    const metrics = dashboardPayload.dashboard && dashboardPayload.dashboard.metrics || {};
+    const orders = ordersPayload.orders || [];
+    const tickets = supportPayload.tickets || [];
+    const orderRows = orders.slice(0, 8).map((order) => ownerLine(
+      order.order_no || order.id,
+      `${escape(order.customer_name || order.customer_email || "-")} / ${money(order.total)} / sipariş ${escape(order.order_status || "-")} / ödeme ${escape(order.payment_status || "-")} / ${formatDate(order.created_at)}`,
+      `<button type="button" data-view-jump="operations">Operasyon görünümü</button>`,
+      ["cancelled", "failed"].includes(order.order_status) || ["failed", "refunded"].includes(order.payment_status) ? "high" : "medium"
+    ));
+    const ticketRows = tickets.slice(0, 8).map((ticket) => ownerLine(
+      ticket.title || ticket.category || "Destek talebi",
+      `${escape(ticket.source || "user")} / ${escape(ticket.requester_label || "-")} / durum ${escape(ticket.status || "-")} / ${formatDate(ticket.created_at)}`,
+      `<a href="./index.html">Admin Ops</a>`,
+      ticket.priority === "urgent" ? "critical" : "medium"
+    ));
+    ownerSetOutput(
+      ownerDataWarnings(dashboardPayload, ordersPayload, supportPayload) +
+      ownerLine("Bugünkü operasyon", `${formatNumber(metrics.daily_users)} yeni kullanıcı / ${formatNumber(metrics.daily_partner_applications)} partner başvurusu / ${formatNumber(metrics.recent_orders)} son sipariş`, "<a href=\"./index.html\">Admin Ops</a>", "medium") +
+      ownerLine("Açık destek", `${formatNumber(metrics.open_support_tickets)} talep / ${formatNumber(metrics.system_alerts)} sistem uyarısı`, "<button type=\"button\" data-view-jump=\"work-queue\">İş kuyruğu</button>", metrics.open_support_tickets || metrics.system_alerts ? "high" : "low") +
+      ownerLine("Son siparişler", `${formatNumber(orders.length)} kayıt`, "", "medium") +
+      (orderRows.join("") || ownerEmpty("Sipariş kaydı bulunamadı.")) +
+      ownerLine("Destek akışı", `${formatNumber(tickets.length)} kayıt`, "", tickets.length ? "high" : "low") +
+      (ticketRows.join("") || ownerEmpty("Açık destek kaydı bulunamadı."))
+    );
+  }
+
+  function ownerAutomationItemLine(item) {
+    return ownerLine(
+      item.title || item.type || "Otomasyon kaydı",
+      `${escape(item.type || "-")} / risk ${escape(item.risk_level || "medium")} / ${escape(item.summary || "-")} / ${formatDate(item.created_at)}`,
+      item.action ? escape(item.action) : "",
+      item.risk_level
+    );
+  }
+
+  function ownerAutomationQueueBlock(title, items, emptyText, risk) {
+    const rows = (items || []).map(ownerAutomationItemLine).join("");
+    return ownerLine(title, `${formatNumber((items || []).length)} kayıt`, "", risk || ((items || []).length ? "high" : "low")) +
+      (rows || ownerEmpty(emptyText));
+  }
+
+  function ownerAutomationWarnings(payload) {
+    return (payload.schema_warnings || payload.warnings || []).map((warning) => ownerLine(
+      warning.label || "automation",
+      escape(warning.message || warning || "Şema uyarısı"),
+      "",
+      "high"
+    )).join("");
+  }
+
+  function ownerAutomationRules(rules) {
+    const rows = (rules || []).map((rule) => ownerLine(
+      rule.title || rule.key || "Otomasyon kuralı",
+      escape(rule.summary || ""),
+      rule.auto_apply ? "Otomatik uygulanabilir" : "Manuel karar gerekir",
+      rule.auto_apply ? "medium" : "high"
+    ));
+    return rows.length ? rows.join("") : ownerEmpty("Otomasyon kuralı bulunamadı.");
+  }
+
+  async function loadOwnerAutomation() {
+    ownerLoading("Otomasyon Merkezi");
+    const payload = await ownerOptionalApi("/v1/control-center/automation?limit=80", {
+      automation: { summary: {}, queues: {}, rules: [] },
+      schema_warnings: []
+    }, "Otomasyon merkezi");
+    const automation = payload.automation || { summary: {}, queues: {}, rules: [] };
+    const summary = automation.summary || {};
+    const queues = automation.queues || {};
+    state.ownerAutomation = automation;
+    setOwnerNavBadge(
+      "automation",
+      Number(summary.action_required || 0) + Number(summary.auto_ready || 0),
+      summary.critical ? "critical" : "high",
+      `${formatNumber(Number(summary.action_required || 0) + Number(summary.auto_ready || 0))} otomasyon kaydı`
+    );
+    ownerSetOutput(
+      ownerDataWarnings(payload) +
+      ownerAutomationWarnings(payload) +
+      ownerLine("Otomasyon özeti", `${formatNumber(summary.auto_ready)} otomatik hazır / ${formatNumber(summary.admin_required)} admin / ${formatNumber(summary.super_admin_required)} süper admin / ${formatNumber(summary.watchlist)} takip`, "<button type=\"button\" data-action-health-check>Komutları test et</button>", summary.critical ? "critical" : "medium") +
+      ownerLine("Güvenli ürün yayını", `${formatNumber(summary.auto_ready)} ürün kuralları geçti`, `<button type="button" data-owner-automation-run="publish_safe_products" ${Number(summary.auto_ready || 0) ? "" : "disabled"}>Güvenli Ürünleri Yayına Al</button>`, summary.auto_ready ? "high" : "low") +
+      ownerAutomationQueueBlock("Otomatik hazır", queues.auto_ready || [], "Otomatik yayınlanabilecek kayıt yok.", "medium") +
+      ownerAutomationQueueBlock("Admin kuyruğu", queues.admin_queue || [], "Admin kararı bekleyen kayıt yok.", summary.admin_required ? "high" : "low") +
+      ownerAutomationQueueBlock("Süper admin kuyruğu", queues.super_admin_queue || [], "Süper admin kuyruğu boş.", summary.super_admin_required ? "critical" : "low") +
+      ownerAutomationQueueBlock("Takip listesi", queues.watchlist || [], "Takip listesi boş.", summary.watchlist ? "medium" : "low") +
+      ownerLine("Kurallar", `${formatNumber((automation.rules || []).length)} aktif kural`, "", "medium") +
+      ownerAutomationRules(automation.rules || [])
+    );
+  }
+
+  async function runOwnerAutomation(button) {
+    const summary = (state.ownerAutomation || {}).summary || {};
+    await runConfirmed(
+      `${formatNumber(summary.auto_ready)} güvenli ürün otomasyonla yayına alınacak. İade, ödeme, partner ve içerik owner kararları otomatik onaylanmaz.`,
+      async (reason) => {
+        const payload = await api("/v1/control-center/automation/run", {
+          method: "POST",
+          body: {
+            apply: true,
+            actions: [button.dataset.ownerAutomationRun || "publish_safe_products"],
+            limit: 50,
+            reason
+          }
+        });
+        state.ownerAutomation = payload.automation || state.ownerAutomation;
+      },
+      {
+        trigger: button,
+        requireReason: true,
+        defaultReason: "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı."
+      }
+    );
+  }
+
+  function refundTypeLabel(value) {
+    const map = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "İşaret",
+      support_signal: "Destek sinyali"
+    };
+    return map[value] || value || "-";
+  }
+
+  function refundActionLabel(action) {
+    const map = {
+      mark_review: "İncelemeye al",
+      approve_cancellation: "İptali onayla",
+      approve_refund: "İadeyi onayla",
+      reject_request: "Talebi reddet",
+      add_note: "Not ekle"
+    };
+    return map[action] || action || "Aksiyon";
+  }
+
+  function providerDispatchText(dispatch) {
+    if (!dispatch) return "Provider bildirimi henüz yok.";
+    const webhook = dispatch.channels && dispatch.channels.webhook || {};
+    const iyzico = dispatch.channels && dispatch.channels.iyzico || {};
+    const parts = [
+      webhook.configured ? `webhook ${webhook.sent ? "gönderildi" : "başarısız"}${webhook.status ? `/${webhook.status}` : ""}` : "webhook yok",
+      iyzico.skipped ? `iyzico ${iyzico.code || "atlanmış"}` : `iyzico ${iyzico.sent ? "gönderildi" : "hazır değil"}${iyzico.status ? `/${iyzico.status}` : ""}`
+    ];
+    return parts.join(" / ");
+  }
+
+  function refundFiltersMarkup(params) {
+    const status = params && params.status || "all";
+    const search = params && params.search || "";
+    return `
+      <form class="sa-filter" data-owner-refunds-filter>
+        <input name="search" type="search" value="${escape(search)}" placeholder="Sipariş no, müşteri, e-posta veya neden ara">
+        <select name="status">
+          ${[
+            ["all", "Tümü"],
+            ["refunded", "İadeler"],
+            ["cancelled", "İptaller"],
+            ["pending_signal", "Destek sinyalleri"]
+          ].map(([value, label]) => `<option value="${value}" ${status === value ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+        <button type="submit">Filtrele</button>
+      </form>
+    `;
+  }
+
+  async function loadOwnerRefunds(params) {
+    ownerLoading("İade ve İptaller");
+    const query = new URLSearchParams({ limit: "80" });
+    if (params && params.status) query.set("status", params.status);
+    if (params && params.search) query.set("search", params.search);
+    const payload = await ownerOptionalApi(`/v1/control-center/refund-cancellations?${query.toString()}`, {
+      summary: {},
+      items: [],
+      warnings: []
+    }, "İade ve iptal kayıtları");
+    const summary = payload.summary || {};
+    state.refundCancellations = payload.items || [];
+    setOwnerNavBadge("refunds", summary.action_required, summary.action_required ? "critical" : "low", `${formatNumber(summary.action_required)} iade/iptal aksiyonu gerekiyor`);
+    const rows = state.refundCancellations.map((item) => {
+      const isTicket = item.type === "support_signal";
+      const detail = isTicket
+        ? `<button type="button" data-refund-ticket-detail="${escape(item.ticket_id || item.id)}">Detay</button>`
+        : `<button type="button" data-refund-detail="${escape(item.id)}">Detay</button>`;
+      const actions = isTicket ? detail : [
+        detail,
+        `<button type="button" data-refund-action="mark_review" data-refund-order="${escape(item.id)}">İncele</button>`,
+        item.type !== "cancellation" ? `<button type="button" data-refund-action="approve_cancellation" data-refund-order="${escape(item.id)}">İptal</button>` : "",
+        item.type !== "refund" ? `<button type="button" data-refund-action="approve_refund" data-refund-order="${escape(item.id)}">İade</button>` : "",
+        `<button type="button" data-refund-action="reject_request" data-refund-order="${escape(item.id)}">Reddet</button>`
+      ].filter(Boolean).join(" ");
+      return ownerLine(
+        `${refundTypeLabel(item.type)} / ${item.order_no || item.id}`,
+        `${escape(item.customer_name || item.customer_email || "-")} / ${item.total ? money(item.total) : "tutar yok"} / sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")} / neden: ${escape(core.truncate ? core.truncate(item.reason || "-", 180) : String(item.reason || "-").slice(0, 180))} / ${formatDate(item.updated_at || item.created_at)}`,
+        actions,
+        item.risk_level || (item.type === "refund" ? "critical" : "high")
+      );
+    });
+    ownerSetOutput(
+      refundFiltersMarkup(params || {}) +
+      ownerDataWarnings(payload) +
+      ownerLine("Özet", `${formatNumber(summary.total)} kayıt / ${formatNumber(summary.refunded)} iade / ${formatNumber(summary.cancelled)} iptal / ${formatNumber(summary.support_signals)} destek sinyali`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", summary.action_required ? "critical" : "low") +
+      (payload.warnings || []).map((warning) => ownerLine("Şema uyarısı", escape(warning), "", "high")).join("") +
+      (rows.join("") || ownerEmpty("İade veya iptal kaydı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerFinance() {
+    ownerLoading("Finans Merkezi");
+    const [commandPayload, reportsPayload, settingsPayload] = await Promise.all([
+      loadCommandCenterOptional("Komut merkezi"),
+      ownerOptionalApi("/v1/admin/ops/reports", { reports: { order_report: {}, support_report: {} } }, "Operasyon raporları"),
+      ownerOptionalApi("/v1/control-center/settings", { settings: [] }, "Sistem ayarları")
+    ]);
+    const summary = commandPayload.summary || {};
+    const reports = reportsPayload.reports || {};
+    const orderReport = reports.order_report || {};
+    const supportReport = reports.support_report || {};
+    const settings = settingsPayload.settings || [];
+    const financeSettings = settings.filter((item) => item.category === "finance" || ["payments_paused", "default_commission_rate", "minimum_payout_amount"].includes(item.setting_key));
+    const rows = financeSettings.map((setting) => ownerLine(
+      setting.label || setting.setting_key,
+      `${escape(setting.setting_key)} / değer ${escape(String(setting.setting_value))} / risk ${escape(setting.risk_level || "medium")}`,
+      "<button type=\"button\" data-view-jump=\"system\">Ayarı düzenle</button>",
+      setting.risk_level
+    ));
+    ownerSetOutput(
+      ownerDataWarnings(commandPayload, reportsPayload, settingsPayload) +
+      ownerLine("Günlük ciro", money(summary.daily_revenue), "<button type=\"button\" data-view-jump=\"operations\">Siparişleri incele</button>", "medium") +
+      ownerLine("Sipariş riski", `${formatNumber(orderReport.daily_orders)} günlük sipariş / ${formatNumber(orderReport.risky_open)} açık risk`, "<button type=\"button\" data-view-jump=\"work-queue\">Risk kuyruğu</button>", orderReport.risky_open ? "critical" : "low") +
+      ownerLine("Destek / iade sinyali", `${formatNumber(supportReport.open)} açık destek / ${formatNumber(supportReport.resolved_today)} bugün çözülen`, "<button type=\"button\" data-view-jump=\"refunds\">İade ve iptaller</button>", supportReport.open ? "high" : "low") +
+      ownerLine("Finans ayarları", `${formatNumber(financeSettings.length)} kontrol`, "", "critical") +
+      (rows.join("") || ownerEmpty("Finans ayarı bulunamadı."))
+    );
+  }
+
+  async function loadOwnerContent() {
+    ownerLoading("İçerik Kontrolü");
+    const [contentPayload, socialPayload, modulePayload] = await Promise.all([
+      ownerOptionalApi("/v1/admin/ops/content-proposals", { proposals: [] }, "İçerik önerileri"),
+      ownerOptionalApi("/v1/admin/ops/social-media?limit=40", { social: { drafts: [], posts: [] } }, "Sosyal medya"),
+      ownerOptionalApi("/v1/control-center/module-map", { modules: [] }, "Modül haritası")
+    ]);
+    const proposals = contentPayload.proposals || [];
+    const social = socialPayload.social || {};
+    const drafts = social.drafts || [];
+    const posts = social.posts || [];
+    const modules = modulePayload.modules || [];
+    const proposalRows = proposals.slice(0, 10).map((item) => ownerLine(
+      item.title || item.content_scope || "İçerik önerisi",
+      `${escape(item.content_scope || "-")} / durum ${escape(item.status || "-")} / ${escape(item.summary || "")} / ${formatDate(item.created_at)}`,
+      "<button type=\"button\" data-view-jump=\"approvals\">Onayları gör</button>",
+      item.content_scope === "legal" ? "critical" : "high"
+    ));
+    const draftRows = drafts.slice(0, 8).map((item) => ownerLine(
+      item.title || item.content_theme || "Sosyal medya taslağı",
+      `${escape(item.status || "-")} / ${escape(item.platform || item.content_theme || "-")} / ${formatDate(item.created_at)}`,
+      "<a href=\"./index.html\">Admin Ops</a>",
+      item.status === "failed" ? "high" : "medium"
+    ));
+    ownerSetOutput(
+      ownerDataWarnings(contentPayload, socialPayload, modulePayload) +
+      ownerLine("İçerik önerileri", `${formatNumber(proposals.length)} kayıt / banner, kampanya, sayfa ve yasal içerik`, "<button type=\"button\" data-view-jump=\"approvals\">Bekleyen onaylar</button>", proposals.length ? "high" : "low") +
+      (proposalRows.join("") || ownerEmpty("İçerik önerisi bulunamadı.")) +
+      ownerLine("Sosyal medya", `${formatNumber(drafts.length)} taslak / ${formatNumber(posts.length)} platform gönderisi`, "<a href=\"./index.html\">Sosyal medya merkezi</a>", drafts.length ? "medium" : "low") +
+      (draftRows.join("") || ownerEmpty("Sosyal medya taslağı bulunamadı.")) +
+      ownerLine("Modül vitrini", `${formatNumber(modules.length)} modül içerik/görünürlük haritasına bağlı`, "<button type=\"button\" data-view-jump=\"module-map\">Modül haritası</button>", "medium")
+    );
+  }
+
+  async function loadOwnerHealth() {
+    ownerLoading("Sistem Sağlığı");
+    const [commandPayload, healthPayload, reportsPayload, alarmPayload] = await Promise.all([
+      loadCommandCenterOptional("Komut merkezi"),
+      ownerOptionalApi("/v1/control-center/action-health", { actions: {} }, "Komut sağlığı"),
+      ownerOptionalApi("/v1/admin/ops/reports", { reports: { order_report: {}, support_report: {} } }, "Operasyon raporları"),
+      ownerOptionalApi("/v1/control-center/alarm-status", { alarm: { channels: {}, incident: {} } }, "Alarm durumu")
+    ]);
+    const system = commandPayload.system_health || {};
+    const gitops = commandPayload.gitops || {};
+    const actions = healthPayload.actions || {};
+    const reports = reportsPayload.reports || {};
+    const alarm = alarmPayload.alarm || {};
+    const channels = alarm.channels || {};
+    const incident = alarm.incident || {};
+    const protection = incident.protection || {};
+    const actionRows = Object.entries(actions).map(([key, value]) => ownerLine(
+      key,
+      `${value.ok ? "hazır" : "eksik"}${value.endpoint ? ` / ${escape(value.endpoint)}` : ""}${value.dispatch_ready === false ? " / webhook hazır değil" : ""}`,
+      "",
+      value.ok && value.dispatch_ready !== false ? "low" : "high"
+    ));
+    ownerSetOutput(
+      ownerDataWarnings(commandPayload, healthPayload, reportsPayload, alarmPayload) +
+      ownerLine("API / DB", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / build ${escape(system.build || "-")}`, "<button type=\"button\" data-action-health-check>Komut testi</button>", system.database === "online" ? "low" : "critical") +
+      ownerLine("Canlı bayraklar", `Bakım ${system.maintenance_mode ? "açık" : "kapalı"} / ödeme ${system.payments_disabled ? "kapalı" : "aktif"} / acil API ${system.emergency_api_disabled ? "kapalı" : "aktif"}`, "<button type=\"button\" data-view-jump=\"system\">Sistem ayarları</button>", system.emergency_api_disabled || system.payments_disabled ? "critical" : "low") +
+      ownerLine("GitOps", `Enabled ${gitops.enabled ? "evet" : "hayır"} / webhook ${gitops.release_webhook_configured ? "hazır" : "eksik"}`, "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>", gitops.enabled && gitops.release_webhook_configured ? "low" : "high") +
+      ownerLine("Alarm kanalları", `Ses ${channels.browser_audio ? "aktif" : "pasif"} / Telegram ${channels.telegram ? "hazır" : "eksik"} / webhook ${channels.webhook ? "hazır" : "eksik"} / email ${channels.email_webhook ? "hazır" : "eksik"} / SMS ${channels.sms ? "hazır" : "eksik"} / min ${escape(alarm.min_severity || "-")}`, "<button type=\"button\" data-alarm-server-test>Server alarm testi</button>", channels.telegram || channels.webhook || channels.email_webhook || channels.sms ? "low" : "high") +
+      ownerLine("Aktif alarm", incident.active ? `${escape(incident.level || "-")} / ${incident.redZone ? "kırmızı alan" : "standart"} / ${escape(incident.action || "-")}` : "Aktif alarm yok", incident.active ? "<button type=\"button\" data-alarm-acknowledge>Alarmı sustur</button> <button type=\"button\" data-alarm-resolve>Alarmı kapat</button>" : "", incident.active ? "critical" : "low") +
+      ownerLine("Runtime koruma", `API ${protection.api_locked ? "kilitli" : "açık"} / ödeme ${protection.payments_locked ? "kilitli" : "açık"} / sipariş ${protection.orders_locked ? "kilitli" : "açık"}`, [
+        `<button type="button" data-alarm-protection="${protection.api_locked ? "unlock_api" : "lock_api"}">${protection.api_locked ? "API aç" : "API kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="${protection.payments_locked ? "unlock_payments" : "lock_payments"}">${protection.payments_locked ? "Ödeme aç" : "Ödeme kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="${protection.orders_locked ? "unlock_orders" : "lock_orders"}">${protection.orders_locked ? "Sipariş aç" : "Sipariş kilitle"}</button>`,
+        `<button type="button" data-alarm-protection="clear">Tüm korumayı temizle</button>`
+      ].join(" "), protection.api_locked || protection.payments_locked || protection.orders_locked ? "critical" : "medium") +
+      ownerLine("Operasyon raporu", `${formatNumber(reports.order_report && reports.order_report.daily_orders)} sipariş bugün / ${formatNumber(reports.support_report && reports.support_report.open)} açık destek`, "<button type=\"button\" data-view-jump=\"operations\">Operasyon</button>", reports.support_report && reports.support_report.open ? "high" : "low") +
+      ownerLine("Komut kabiliyeti", `${formatNumber(actionRows.length)} kontrol`, "", "medium") +
+      (actionRows.join("") || ownerEmpty("Komut sağlık kaydı bulunamadı."))
+    );
+  }
+
+  async function postAlarmDecision(path, body, button, message) {
+    await runConfirmed(message, async (reason) => {
+      await api(path, {
+        method: "POST",
+        body: { ...body, reason }
+      });
+      await loadOwnerHealth();
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
+  }
+
+  async function acknowledgeServerAlarm(button) {
+    await postAlarmDecision("/v1/control-center/alarm-acknowledge", {}, button, "Aktif alarm 30 dakika susturulacak.");
+  }
+
+  async function resolveServerAlarm(button) {
+    await postAlarmDecision("/v1/control-center/alarm-resolve", {}, button, "Aktif alarm manuel olarak kapatılacak.");
+  }
+
+  async function updateAlarmProtection(button) {
+    const action = button.dataset.alarmProtection;
+    await postAlarmDecision("/v1/control-center/alarm-protection", { action }, button, `Runtime koruma aksiyonu uygulanacak: ${action}`);
+  }
+
+  async function runServerAlarmTest(button) {
+    const message = "Server-side güvenlik alarmı test edilecek. Telegram/webhook/email kanalları yapılandırıldıysa bildirim gönderilir.";
+    await runConfirmed(message, async () => {
+      const result = await api("/v1/control-center/alarm-test", { method: "POST", body: {} });
+      const channels = result.result && result.result.channels || {};
+      openDrawer("Server Alarm Testi", [
+        ownerLine("Telegram", channels.telegram?.configured ? `${channels.telegram.sent ? "gönderildi" : "başarısız"} / ${escape(channels.telegram.status || channels.telegram.error || "-")}` : "yapılandırılmamış", "", channels.telegram?.sent ? "low" : "high"),
+        ownerLine("Webhook", channels.webhook?.configured ? `${channels.webhook.sent ? "gönderildi" : "başarısız"} / ${escape(channels.webhook.status || channels.webhook.error || "-")}` : "yapılandırılmamış", "", channels.webhook?.sent ? "low" : "high"),
+        ownerLine("Email webhook", channels.email?.configured ? `${channels.email.sent ? "gönderildi" : "başarısız"} / ${escape(channels.email.status || channels.email.error || "-")}` : "yapılandırılmamış", "", channels.email?.sent ? "low" : "medium"),
+        ownerLine("SMS", channels.sms?.configured ? `${channels.sms.sent ? "gönderildi" : "başarısız"} / ${escape(channels.sms.status || channels.sms.error || "-")}` : "yapılandırılmamış", "", channels.sms?.sent ? "low" : "medium")
+      ].join(""));
+    }, {
+      trigger: button,
+      defaultReason: "Server-side alarm kanal testi",
+      requireReason: true
+    });
   }
 
   function releaseApprovalManualPending(approval) {
@@ -1432,13 +2349,13 @@
     const rows = state.moduleMap.map((item) => ownerLine(
       item.name || item.module_key,
       `${escape(item.category || "-")} / ${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / komisyon ${formatNumber(Number(item.commission_rate || 0) * 100)}%`,
-      `<a href="${escape(item.href || "#")}">Aç</a> <button type="button" data-module-map-detail="${escape(item.module_key)}">Operasyon</button>`,
+      `${item.subdomain_url ? `<a href="${escape(item.subdomain_url)}" target="_blank" rel="noopener">Subdomain</a> ` : ""}<a href="${escape(item.href || "#")}">Eski yol</a> <button type="button" data-module-map-detail="${escape(item.module_key)}">Operasyon</button>`,
       item.maturity === "controlled" ? "high" : (item.maturity === "transactional" || item.maturity === "operational" ? "medium" : "low")
     ));
     const future = state.futureOperations.map((item) => ownerLine(
       item.label || item.key,
       `${escape(item.status || "planned")} / risk ${escape(item.risk_level || "medium")}`,
-      "<button type=\"button\" data-release-open>Yayın planı</button>",
+      "<button type=\"button\" data-view-jump=\"approvals\">Yayın onayları</button>",
       item.risk_level
     )).join("");
     ownerSetOutput(
@@ -1457,7 +2374,7 @@
       ownerLine("Durum", `${escape(item.phase || "-")} / ${escape(item.maturity || "-")} / kaynak ${escape(item.source || "-")}`, "", "medium"),
       ownerLine("Kontrol", `Aktif ${item.is_active ? "evet" : "hayır"} / görünür ${item.is_visible ? "evet" : "hayır"} / başvuru ${escape(item.application_status || "-")}`, "<button type=\"button\" data-view-jump=\"modules\">Ayarlar</button>", "medium"),
       ownerLine("Operasyonlar", escape((item.operations || []).join(", ") || "-"), "", item.maturity === "controlled" ? "high" : "low"),
-      ownerLine("Yayın", "Bu modüldeki kritik içerik veya backend değişikliği Yayın Onayları üzerinden geçirilir.", "<button type=\"button\" data-release-open>Onay ver</button>", "critical")
+      ownerLine("Yayın", "Bu modüldeki kritik içerik veya backend değişikliği Yayın Onayları üzerinden geçirilir.", "<button type=\"button\" data-view-jump=\"approvals\">Onayları incele</button>", "critical")
     ].join(""));
   }
 
@@ -1503,14 +2420,12 @@
     const payload = await api("/v1/control-center/partners");
     state.applications = payload.applications || [];
     state.businesses = payload.businesses || [];
+    const pendingApplications = state.applications.filter((item) => ["pending", "review", "in_review"].includes(String(item.status || "").toLowerCase())).length;
+    setOwnerNavBadge("partners", pendingApplications, "high", `${formatNumber(pendingApplications)} partner başvurusu karar bekliyor`);
     const applicationRows = state.applications.map((item) => ownerLine(
       item.company_name || item.contact_name || item.id,
       `${escape(item.email || item.phone || "-")} / durum ${escape(item.status || "-")} / ${formatDate(item.created_at)}`,
-      [
-        `<button type="button" data-partner-decision="review" data-application-id="${escape(item.id)}">İnceleme</button>`,
-        `<button type="button" data-partner-decision="approved" data-application-id="${escape(item.id)}">Onayla</button>`,
-        `<button type="button" data-partner-decision="rejected" data-application-id="${escape(item.id)}">Reddet</button>`
-      ].join(" "),
+      `<button type="button" data-partner-detail="${escape(item.id)}">Karar Ver</button>`,
       item.status === "pending" ? "high" : "medium"
     ));
     const businessRows = state.businesses.map((item) => ownerLine(
@@ -1520,6 +2435,7 @@
       item.status === "active" ? "low" : "medium"
     ));
     ownerSetOutput(
+      partnerCreateFormMarkup() +
       ownerLine("Başvurular", `${formatNumber(state.applications.length)} kayıt`, "", state.applications.length ? "high" : "low") +
       (applicationRows.length ? applicationRows.join("") : ownerEmpty("Başvuru bulunamadı.")) +
       ownerLine("Mağazalar", `${formatNumber(state.businesses.length)} kayıt`, "", "medium") +
@@ -1532,6 +2448,9 @@
     const payload = await api("/v1/control-center/security");
     const securityData = payload.security || {};
     const metrics = securityData.metrics || {};
+    const securityAttention = Number(metrics.failed_auth_24h || 0) + Number(metrics.critical_events_sample || 0) + Number(metrics.suspicious_ip_count || 0);
+    setOwnerNavBadge("security", securityAttention, metrics.critical_events_sample ? "critical" : "high", `${formatNumber(securityAttention)} güvenlik sinyali`);
+    setOwnerNavBadge("alerts", securityAttention, metrics.critical_events_sample ? "critical" : "high", `${formatNumber(securityAttention)} güvenlik sinyali`);
     const ipRows = (securityData.suspicious_ips || []).map((item) => ownerLine(
       item.ip,
       `${formatNumber(item.count)} riskli olay`,
@@ -1542,7 +2461,7 @@
       event.action || "audit",
       `${formatDate(event.created_at)} / ${escape(event.resource_type || "-")} ${escape(event.resource_id || "")} / IP ${escape(event.ip_address || "-")}`,
       `<button type="button" data-event-detail="${escape(event.id || "")}">Detay</button>`,
-      event.severity
+      event.risk_severity || event.severity
     ));
     state.securityEvents = securityData.recent_events || [];
     ownerSetOutput([
@@ -1616,8 +2535,16 @@
     setCommandHeader(view);
     try {
       if (view === "overview") await loadOwnerOverview();
+      else if (view === "automation") await loadOwnerAutomation();
+      else if (view === "work-queue") await loadOwnerWorkQueue(params);
       else if (view === "alerts") await loadOwnerAlerts();
       else if (view === "approvals") await loadOwnerApprovals();
+      else if (view === "release-history") await loadOwnerReleaseHistory();
+      else if (view === "operations") await loadOwnerOperations();
+      else if (view === "refunds") await loadOwnerRefunds(params);
+      else if (view === "finance") await loadOwnerFinance();
+      else if (view === "content") await loadOwnerContent();
+      else if (view === "health") await loadOwnerHealth();
       else if (view === "access") await loadOwnerAccess();
       else if (view === "permissions") await loadOwnerPermissions(params);
       else if (view === "module-map") await loadOwnerModuleMap();
@@ -1652,24 +2579,44 @@
     if (modal) modal.hidden = true;
   }
 
+  function setReleaseStatus(message, tone) {
+    const target = $("[data-release-status]");
+    if (!target) return;
+    target.textContent = message || "";
+    target.dataset.tone = tone || "";
+  }
+
   async function submitReleaseApproval(form) {
+    if (state.releaseApprovalSubmitting) return;
     const formData = new FormData(form);
+    const targetSummary = String(formData.get("target_summary") || "").trim();
     const payload = {
       approval_type: String(formData.get("approval_type") || "main_commit_push"),
       target_ref: String(formData.get("target_ref") || "main").trim(),
-      target_summary: String(formData.get("target_summary") || "").trim(),
+      target_summary: targetSummary,
       risk_level: String(formData.get("risk_level") || "critical"),
       metadata: {
-        source: "super_admin_owner_console"
+        source: "super_admin_owner_console",
+        reason: targetSummary
       }
     };
-    closeReleaseModal();
-    const confirmed = await confirmAction("Bu owner onayı audit log'a yazılacak ve yapılandırılmışsa güvenli yayın webhook'u tetiklenecek.", {
-      defaultReason: payload.target_summary,
-      requireReason: true
-    });
-    if (!confirmed.confirmed) return;
-    payload.metadata.reason = confirmed.reason;
+    if (targetSummary.length < 3) {
+      const message = "Yayın onayı için en az 3 karakterlik onay özeti gerekli.";
+      setReleaseStatus(message, "error");
+      setAlert(message, "error");
+      const summaryInput = form.querySelector("[name='target_summary']");
+      if (summaryInput) summaryInput.focus();
+      return;
+    }
+    const submitButton = form.querySelector("[type='submit']");
+    state.releaseApprovalSubmitting = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.dataset.originalText = submitButton.dataset.originalText || submitButton.textContent || "";
+      submitButton.textContent = "İstek oluşturuluyor...";
+    }
+    setReleaseStatus("Yayın onayı isteği backend'e gönderiliyor...", "ok");
+    setAlert("Yayın onayı isteği backend'e gönderiliyor...", "ok");
     try {
       const result = await api("/v1/control-center/release-approvals", {
         method: "POST",
@@ -1677,43 +2624,204 @@
       });
       const approval = result.approval || {};
       const response = approval.webhook_response || {};
-      const status = approval.status || "approved";
+      const warnings = result.schema_warnings || [];
+      const status = approval.status || "pending";
       const released = status === "dispatched";
+      const waitingOwner = status === "pending";
       const manualPending = status === "approved" || response.code === "GITOPS_NOT_CONFIGURED" || response.code === "GITOPS_DISABLED";
-      const okStatus = released || manualPending;
+      const okStatus = released || manualPending || waitingOwner;
       setAlert(
         released
           ? "Yayın onayı deploy hattına gönderildi."
-          : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`),
+          : (waitingOwner ? "Yayın onayı isteği oluşturuldu; detay incelemesi bekliyor." : (manualPending ? "Yayın onayı kaydedildi; webhook yoksa manuel deploy bekliyor." : `Yayın onayı kaydedildi: ${status}`)),
         okStatus ? "ok" : "error"
       );
-      openDrawer("Yayın Onayı Sonucu", [
-        ownerLine("Durum", escape(status), released ? "yayına gönderildi" : (manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "deploy hata aldı"), released ? "low" : (manualPending ? "medium" : "critical")),
-        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", released ? "low" : (manualPending ? "medium" : "high")),
-        ownerLine("Mesaj", escape(response.message || response.body || "Yayın onayı kaydedildi."), "<button type=\"button\" data-action-health-check>Yayın hattını test et</button>", released ? "low" : (manualPending ? "medium" : "high"))
-      ].join(""));
+      closeReleaseModal();
       await jumpOwnerView("approvals");
+      if (waitingOwner && approval.id) showApprovalDetail(approval.id);
+      if (warnings.length) {
+        openDrawer("Yayın Onayı Uyarısı", warnings.map((warning) => (
+          ownerLine(warning.label || "schema", escape(warning.message || "Şema uyarısı"), "", "high")
+        )).join(""));
+      }
       form.reset();
       const targetRef = form.querySelector("[name='target_ref']");
       if (targetRef) targetRef.value = "main";
     } catch (error) {
-      setAlert(publicError(error, "Yayın onayı oluşturulamadı."));
+      const message = publicError(error, "Yayın onayı oluşturulamadı.");
+      setReleaseStatus(message, "error");
+      setAlert(message, "error");
+      openDrawer("Yayın Onayı Hatası", [
+        ownerLine("İşlem tamamlanamadı", escape(message), "<button type=\"button\" data-release-open>Tekrar dene</button>", "critical"),
+        ownerLine("Kontrol", "Owner lock, MFA2, release approval migration ve backend build durumunu Komut Sağlık Testi ile kontrol et.", "<button type=\"button\" data-action-health-check>Komutları test et</button>", "high")
+      ].join(""));
+      openReleaseModal();
+    } finally {
+      state.releaseApprovalSubmitting = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = submitButton.dataset.originalText || "Onay İsteği Oluştur";
+      }
     }
   }
 
+  function showRefundTicketDetail(ticketId) {
+    const item = (state.refundCancellations || []).find((entry) => String(entry.ticket_id || entry.id) === String(ticketId) || String(entry.id) === `ticket:${ticketId}`);
+    const ticket = item && item.tickets && item.tickets[0];
+    if (!ticket) return;
+    openDrawer("İade / İptal Destek Sinyali", [
+      ownerLine("Başlık", escape(ticket.title || "-"), "", item.risk_level || "high"),
+      ownerLine("Durum", `${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.category || "-")}`, "", item.risk_level || "high"),
+      ownerLine("Talep sahibi", `${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}`, "", "medium"),
+      ownerLine("Açıklama", escape(ticket.message || "-"), "", "medium"),
+      ownerLine("Metadata", escape(JSON.stringify(ticket.metadata || {}).slice(0, 900)), "", "low"),
+      ownerLine("Aksiyon", "Bu kayıt bir destek sinyali. Sipariş eşleştikten sonra sipariş detayı üzerinden iade/iptal aksiyonu alınmalı.", "<button type=\"button\" data-view-jump=\"operations\">Siparişlerde ara</button>", "high"),
+      ownerLine("Tarih", `${formatDate(ticket.created_at)} / güncelleme ${formatDate(ticket.updated_at)}`, "", "low")
+    ].join(""));
+  }
+
+  async function showRefundDetail(orderId) {
+    const payload = await api(`/v1/control-center/refund-cancellations/${encodeURIComponent(orderId)}`);
+    const item = payload.item || {};
+    const noteRows = (item.notes || []).slice(0, 8).map((note) => ownerLine(
+      note.note_type || "not",
+      `${escape(note.body || "-")} / ${formatDate(note.created_at)}`,
+      "",
+      note.note_type === "risk" ? "high" : "low"
+    )).join("");
+    const flagRows = (item.flags || []).slice(0, 8).map((flag) => ownerLine(
+      flag.flag_type || "flag",
+      `${escape(flag.status || "-")} / ${escape(flag.reason || "-")} / ${formatDate(flag.created_at)}`,
+      "",
+      flag.severity || "medium"
+    )).join("");
+    const ticketRows = (item.tickets || []).slice(0, 6).map((ticket) => ownerLine(
+      ticket.title || "Destek sinyali",
+      `${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.message || "-").slice(0, 260)}`,
+      "",
+      ticket.priority === "urgent" ? "critical" : "high"
+    )).join("");
+    const itemRows = (item.order_items || []).slice(0, 10).map((row) => ownerLine(
+      row.product?.name || row.name || row.product_id || "Ürün",
+      `${formatNumber(row.quantity || 1)} adet / ${money(row.price || row.unit_price || 0)} / partner ${escape(row.partner_id || row.product?.partner_id || "-")}`,
+      "",
+      "low"
+    )).join("");
+    openDrawer("İade / İptal Detayı", [
+      ownerLine("Sipariş", `${escape(item.order_no || item.id || "-")} / ${refundTypeLabel(item.type)}`, "", item.risk_level || "high"),
+      ownerLine("Müşteri", `${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}`, "", "medium"),
+      ownerLine("Tutar", money(item.total), `sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")}`, item.type === "refund" ? "critical" : "high"),
+      ownerLine("Neden / açıklama", escape(item.reason || "Kayıtlarda neden bulunamadı; karar öncesi destek ve not kayıtlarını kontrol et."), "", item.reason ? "medium" : "high"),
+      ownerLine("Ödeme sağlayıcı", providerDispatchText(item.provider_dispatch), "webhook/native durum", item.provider_dispatch?.ok ? "low" : "medium"),
+      ownerLine("Aksiyonlar", "Detayı inceledikten sonra işlem uygula. Tüm kararlar audit log'a yazılır.", [
+        `<button type="button" data-refund-action="mark_review" data-refund-order="${escape(item.id)}">İncelemeye al</button>`,
+        `<button type="button" data-refund-action="approve_cancellation" data-refund-order="${escape(item.id)}">İptali onayla</button>`,
+        `<button type="button" data-refund-action="approve_refund" data-refund-order="${escape(item.id)}">İadeyi onayla</button>`,
+        `<button type="button" data-refund-action="reject_request" data-refund-order="${escape(item.id)}">Talebi reddet</button>`,
+        `<button type="button" data-refund-action="add_note" data-refund-order="${escape(item.id)}">Not ekle</button>`
+      ].join(" "), "critical"),
+      ownerLine("Ürünler", `${formatNumber((item.order_items || []).length)} kalem`, "", "medium"),
+      itemRows || ownerEmpty("Ürün kalemi bulunamadı."),
+      ownerLine("Operasyon notları", `${formatNumber((item.notes || []).length)} kayıt`, "", "medium"),
+      noteRows || ownerEmpty("Operasyon notu yok."),
+      ownerLine("Risk / işlem flagleri", `${formatNumber((item.flags || []).length)} kayıt`, "", "medium"),
+      flagRows || ownerEmpty("Flag kaydı yok."),
+      ownerLine("Destek sinyalleri", `${formatNumber((item.tickets || []).length)} kayıt`, "", "high"),
+      ticketRows || ownerEmpty("Bu siparişle eşleşen destek sinyali yok."),
+      (payload.warnings || []).map((warning) => ownerLine("Şema uyarısı", escape(warning), "", "high")).join("")
+    ].join(""));
+  }
+
+  async function runRefundAction(button) {
+    const orderId = button.dataset.refundOrder;
+    const action = button.dataset.refundAction;
+    const label = refundActionLabel(action);
+    const item = (state.refundCancellations || []).find((entry) => String(entry.id) === String(orderId));
+    const message = `${item?.order_no || orderId} için "${label}" işlemi uygulanacak.`;
+    await runConfirmed(message, async (reason) => {
+      const result = await api(`/v1/control-center/refund-cancellations/${encodeURIComponent(orderId)}/action`, {
+        method: "POST",
+        body: {
+          action,
+          reason,
+          note: label
+        }
+      });
+      const updated = result.item || {};
+      openDrawer("İade / İptal Aksiyon Sonucu", [
+        ownerLine("İşlem", escape(label), "audit log'a yazıldı", action === "approve_refund" ? "critical" : "high"),
+        ownerLine("Sipariş", `${escape(updated.order_no || orderId)} / sipariş ${escape(updated.order_status || "-")} / ödeme ${escape(updated.payment_status || "-")}`, "", updated.type === "refund" ? "critical" : "medium"),
+        ownerLine("Gerekçe", escape(reason), "", "medium"),
+        ownerLine("Ödeme sağlayıcı", providerDispatchText(result.provider_dispatch), "provider API bildirimi", result.provider_dispatch?.ok ? "low" : "high"),
+        ownerLine("Not", result.note?.id ? `Operasyon notu oluşturuldu: ${escape(result.note.id)}` : "Not oluşturulamadı", "", result.note?.id ? "low" : "high"),
+        ownerLine("Flag", result.flag?.id ? `İşlem flag'i oluşturuldu: ${escape(result.flag.id)}` : "Flag oluşturulamadı", "", result.flag?.id ? "low" : "high")
+      ].join(""));
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
+  }
+
   function showApprovalDetail(id) {
-    const item = (state.approvals || []).find((approval) => approval.id === id);
+    const item = [...(state.approvals || []), ...(state.releaseHistory || [])].find((approval) => approval.id === id);
     if (!item) return;
     const manualPending = releaseApprovalManualPending(item);
     const statusText = manualPending && item.status === "failed" ? "approved / webhook bekliyor" : item.status;
+    const canApprove = item.status === "pending";
     openDrawer("Yayın Onayı", [
       ownerLine("Tip", escape(item.approval_type || "-"), "", item.risk_level),
       ownerLine("Durum", escape(statusText || "-"), manualPending ? "onay kaydedildi; manuel deploy bekliyor" : "", manualPending ? "medium" : item.risk_level),
       ownerLine("Hedef", escape(item.target_ref || "-"), "", "medium"),
       ownerLine("Özet", escape(item.target_summary || "-"), "", "medium"),
+      ownerLine("Metadata", escape(JSON.stringify(item.metadata || {}).slice(0, 1200)), "", "medium"),
       ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(item.webhook_response || {}).slice(0, 500))}`, "", item.status === "failed" && !manualPending ? "critical" : "low"),
-      ownerLine("Tarih", formatDate(item.created_at), "", "low")
+      ownerLine("Tarih", formatDate(item.created_at), "", "low"),
+      canApprove ? ownerLine("Karar", "Bu kaydı inceledikten sonra owner onayı verebilirsin.", `<button type="button" data-approval-approve="${escape(item.id)}">Owner onayı ver</button>`, "critical") : ""
     ].join(""));
+  }
+
+  function showReleaseHistoryDetail(id) {
+    const item = (state.releaseHistory || []).find((approval) => approval.id === id);
+    if (!item) return;
+    const response = item.webhook_response || {};
+    openDrawer("Yayın Geçmişi Detayı", [
+      ownerLine("Tip", escape(item.approval_type || "-"), "", item.risk_level),
+      ownerLine("Durum", escape(item.status || "-"), item.dispatched_at ? `dispatch ${formatDate(item.dispatched_at)}` : "", item.status === "failed" ? "critical" : "medium"),
+      ownerLine("Hedef", escape(item.target_ref || "-"), "", "medium"),
+      ownerLine("Özet", escape(item.target_summary || "-"), "", "medium"),
+      ownerLine("Webhook", `${escape(String(item.webhook_status || "-"))} / ${escape(JSON.stringify(response).slice(0, 700))}`, "", item.status === "failed" ? "critical" : "low"),
+      ownerLine("Metadata", escape(JSON.stringify(item.metadata || {}).slice(0, 1200)), "", "medium"),
+      ownerLine("Tarih", `${formatDate(item.created_at)} / onay ${formatDate(item.approved_at)}`, "", "low")
+    ].join(""));
+  }
+
+  async function approveReleaseApproval(button) {
+    const approvalId = button.dataset.approvalApprove;
+    const item = (state.approvals || []).find((approval) => approval.id === approvalId);
+    if (!item) return;
+    const message = `${item.approval_type || "release"} / ${item.target_ref || "main"} için owner onayı verilecek.`;
+    await runConfirmed(message, async (reason) => {
+      const result = await api(`/v1/control-center/release-approvals/${encodeURIComponent(approvalId)}/approve`, {
+        method: "POST",
+        body: { reason }
+      });
+      const approval = result.approval || {};
+      const response = approval.webhook_response || {};
+      const status = approval.status || "approved";
+      openDrawer("Yayın Onayı Sonucu", [
+        ownerLine("Durum", escape(status), status === "dispatched" ? "deploy hattına gönderildi" : "onay kaydedildi", status === "failed" ? "critical" : "low"),
+        ownerLine("Hedef", `${escape(approval.target_ref || "-")} / ${escape(approval.approval_type || "-")}`, "", "medium"),
+        ownerLine("Özet", escape(approval.target_summary || "-"), "", "medium"),
+        ownerLine("Webhook", `${escape(String(approval.webhook_status || "-"))} / ${escape(response.code || response.ok || "-")}`, "", status === "failed" ? "high" : "low"),
+        ownerLine("Mesaj", escape(response.message || response.body || "Owner onayı kaydedildi."), "", status === "failed" ? "high" : "low")
+      ].join(""));
+      state.approvals = (state.approvals || []).filter((approvalItem) => approvalItem.id !== approvalId);
+    }, {
+      trigger: button,
+      defaultReason: message,
+      requireReason: true
+    });
   }
 
   function showEventDetail(id) {
@@ -1732,6 +2840,7 @@
 
   function bindOwnerConsole() {
     state.ownerConsoleBound = true;
+    startOwnerNavBadgeRefresh();
 
     const nav = $("[data-sa-nav]");
     if (nav && nav.dataset.bound !== "true") {
@@ -1748,6 +2857,13 @@
       state.ownerDocumentEventsBound = true;
 
       document.addEventListener("submit", async (event) => {
+        const partnerCreateForm = eventClosest(event, "[data-partner-create-form]");
+        if (partnerCreateForm) {
+          event.preventDefault();
+          await createPartnerFromForm(partnerCreateForm);
+          return;
+        }
+
         const usersFilter = eventClosest(event, "[data-owner-users-filter]");
         if (usersFilter) {
           event.preventDefault();
@@ -1771,6 +2887,32 @@
             if (value) params[key] = value;
           });
           await loadOwnerPermissions(params);
+          return;
+        }
+
+        const workQueueFilter = eventClosest(event, "[data-owner-work-queue-filter]");
+        if (workQueueFilter) {
+          event.preventDefault();
+          const form = new FormData(workQueueFilter);
+          const params = {};
+          ["source_module", "status", "risk_level"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerWorkQueue(params);
+          return;
+        }
+
+        const refundsFilter = eventClosest(event, "[data-owner-refunds-filter]");
+        if (refundsFilter) {
+          event.preventDefault();
+          const form = new FormData(refundsFilter);
+          const params = {};
+          ["search", "status"].forEach((key) => {
+            const value = String(form.get(key) || "").trim();
+            if (value) params[key] = value;
+          });
+          await loadOwnerRefunds(params);
           return;
         }
 
@@ -1801,14 +2943,53 @@
 
         if (eventClosest(event, "[data-action-health-check]")) await runOwnerActionHealthCheck();
 
+        const automationRun = eventClosest(event, "[data-owner-automation-run]");
+        if (automationRun) await runOwnerAutomation(automationRun);
+
+        const alarmServerTest = eventClosest(event, "[data-alarm-server-test]");
+        if (alarmServerTest) await runServerAlarmTest(alarmServerTest);
+
+        const alarmAcknowledge = eventClosest(event, "[data-alarm-acknowledge]");
+        if (alarmAcknowledge) await acknowledgeServerAlarm(alarmAcknowledge);
+
+        const alarmResolve = eventClosest(event, "[data-alarm-resolve]");
+        if (alarmResolve) await resolveServerAlarm(alarmResolve);
+
+        const alarmProtection = eventClosest(event, "[data-alarm-protection]");
+        if (alarmProtection) await updateAlarmProtection(alarmProtection);
+
         const approvalDetail = eventClosest(event, "[data-approval-detail]");
         if (approvalDetail) showApprovalDetail(approvalDetail.dataset.approvalDetail);
+
+        const releaseHistoryDetail = eventClosest(event, "[data-release-history-detail]");
+        if (releaseHistoryDetail) showReleaseHistoryDetail(releaseHistoryDetail.dataset.releaseHistoryDetail);
+
+        const approvalApprove = eventClosest(event, "[data-approval-approve]");
+        if (approvalApprove) await approveReleaseApproval(approvalApprove);
+
+        const refundDetail = eventClosest(event, "[data-refund-detail]");
+        if (refundDetail) await showRefundDetail(refundDetail.dataset.refundDetail);
+
+        const refundTicketDetail = eventClosest(event, "[data-refund-ticket-detail]");
+        if (refundTicketDetail) showRefundTicketDetail(refundTicketDetail.dataset.refundTicketDetail);
+
+        const refundAction = eventClosest(event, "[data-refund-action]");
+        if (refundAction) await runRefundAction(refundAction);
 
         const eventDetail = eventClosest(event, "[data-event-detail]");
         if (eventDetail) showEventDetail(eventDetail.dataset.eventDetail);
 
         const moduleMapDetail = eventClosest(event, "[data-module-map-detail]");
         if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);
+
+        const workQueueSource = eventClosest(event, "[data-work-queue-source]");
+        if (workQueueSource) await jumpOwnerView(sourceViewForWorkQueue(workQueueSource.dataset.workQueueSource));
+
+        const workQueueStatus = eventClosest(event, "[data-work-queue-status]");
+        if (workQueueStatus) await updateWorkQueueStatus(workQueueStatus);
+
+        const workQueueDecision = eventClosest(event, "[data-work-queue-decision]");
+        if (workQueueDecision) await decideWorkQueueItem(workQueueDecision);
 
         const permissionSave = eventClosest(event, "[data-permission-save]");
         if (permissionSave) await updatePermission(permissionSave);
@@ -1818,6 +2999,9 @@
 
         const partnerDecision = eventClosest(event, "[data-partner-decision]");
         if (partnerDecision) await decidePartner(partnerDecision);
+
+        const partnerDetail = eventClosest(event, "[data-partner-detail]");
+        if (partnerDetail) showPartnerApplicationDetail(partnerDetail.dataset.partnerDetail);
 
         const settingSave = eventClosest(event, "[data-setting-save]");
         if (settingSave) await saveSetting(settingSave);
@@ -1830,7 +3014,10 @@
     const refresh = $("[data-sa-refresh]");
     if (refresh && refresh.dataset.bound !== "true") {
       refresh.dataset.bound = "true";
-      refresh.addEventListener("click", reloadOwnerActiveView);
+      refresh.addEventListener("click", async () => {
+        await reloadOwnerActiveView();
+        await refreshOwnerNavBadges();
+      });
     }
 
     const signOut = $("[data-sa-signout]");
@@ -1843,7 +3030,7 @@
   }
 
   async function initOwnerConsole() {
-    state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
+    state.access = await requireOwnerEntry();
     if (!state.access) return;
     if (await redirectToMfaForPrivilegedSession()) return;
     bindOwnerConsole();
@@ -1897,11 +3084,22 @@
       const partnerDecision = eventClosest(event, "[data-partner-decision]");
       if (partnerDecision) await decidePartner(partnerDecision);
 
+      const partnerDetail = eventClosest(event, "[data-partner-detail]");
+      if (partnerDetail) showPartnerApplicationDetail(partnerDetail.dataset.partnerDetail);
+
       const settingSave = eventClosest(event, "[data-setting-save]");
       if (settingSave) await saveSetting(settingSave);
 
       const moduleSave = eventClosest(event, "[data-module-save]");
       if (moduleSave) await saveModule(moduleSave);
+    });
+
+    document.addEventListener("submit", async (event) => {
+      const partnerCreateForm = eventClosest(event, "[data-partner-create-form]");
+      if (partnerCreateForm) {
+        event.preventDefault();
+        await createPartnerFromForm(partnerCreateForm);
+      }
     });
 
     const refresh = $("[data-sa-refresh]");
@@ -1956,7 +3154,7 @@
       return;
     }
     try {
-      state.access = await App.auth.requireRole(SUPER_ADMIN_ENTRY_ROLES);
+      state.access = await requireOwnerEntry();
       if (!state.access) return;
       if (await redirectToMfaForPrivilegedSession()) return;
       const roleTarget = $("[data-sa-role]");

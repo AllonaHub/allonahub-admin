@@ -144,6 +144,7 @@
             <a href="${core.url("/pages/legal/cerez-politikasi.html")}">Çerez Politikası</a>
             <a href="${core.url("/pages/legal/kullanim-sartlari.html")}">Kullanım Şartları</a>
             <a href="${core.url("/pages/legal/guvenlik-politikasi.html")}">Güvenlik Politikası</a>
+            <a href="${core.url("/pages/legal/etbis-guven-damgasi.html")}">ETBİS ve Güven Damgası</a>
           </div>
         </div>
         <div class="container social-icons" aria-label="AllonaHub sosyal medya bağlantıları">
@@ -180,6 +181,7 @@
             <a href="${core.url("/pages/legal/kullanim-sartlari.html")}">Kullanım Şartları</a>
             <a href="${core.url("/pages/legal/gizlilik.html")}">Gizlilik Politikası</a>
             <a href="${core.url("/pages/legal/cerez-politikasi.html")}">Çerez Politikası</a>
+            <a href="${core.url("/pages/legal/etbis-guven-damgasi.html")}">ETBİS/Güven</a>
           </span>
         </div>
       </footer>

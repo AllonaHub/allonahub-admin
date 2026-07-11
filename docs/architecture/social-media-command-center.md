@@ -40,10 +40,11 @@ SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET=
 SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY=
 SOCIAL_MEDIA_SEND_TIMEOUT_MS=12000
 SOCIAL_MEDIA_MAX_DISPATCH_BATCH=20
-SOCIAL_MEDIA_MAX_MEDIA_BYTES=157286400
+SOCIAL_MEDIA_MAX_MEDIA_BYTES=8388608
 SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=false
 SOCIAL_MEDIA_ASSET_WEBHOOK_URL=
 SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET=
+SOCIAL_MEDIA_ASSET_RETENTION_DAYS=2
 SOCIAL_MEDIA_DEFAULT_TIMEZONE=Europe/Istanbul
 ```
 
@@ -115,6 +116,15 @@ curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-daily-drafts \
 
 curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-dispatch \
   -H "x-cron-secret: GERCEK_CRON_SECRET"
+```
+
+Asset retention icin gunluk cron:
+
+```bash
+curl -fsS -X POST https://api.allonahub.com/v1/cron/social-media-assets-cleanup \
+  -H "content-type: application/json" \
+  -H "x-cron-secret: GERCEK_CRON_SECRET" \
+  --data '{"retention_days":2,"limit":500}'
 ```
 
 Baslangicta `SOCIAL_MEDIA_DRY_RUN=true` kalmali. Platform hesaplari ve dispatcher canli dogrulandiktan sonra dry-run kapatilmalidir.

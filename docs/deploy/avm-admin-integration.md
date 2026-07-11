@@ -8,7 +8,7 @@ Bu entegrasyon, mevcut `allonahub-admin` statik sayfalarını ve backend deploy 
 - `pages/partner/index.html`, `js/layout.v3.js` ve `css/styles.v2.css` üzerine yazılmaz.
 - Mevcut backend ve admin panel dosyaları silinmez.
 - AVM için yeni root sayfaları ve ayrı `css/styles.css` / `js/layout.js` dosyaları kullanılır.
-- `partner/index.html`, mevcut `pages/partner/index.html` ile çakışmayan yeni AVM partner panelidir.
+- `partner/avm.html`, mevcut `partner/index.html` ve `pages/partner/index.html` giriş rotalarını bozmayan ayrı AVM partner panelidir.
 
 ## Yeni Yayın Rotaları
 
@@ -16,7 +16,7 @@ Bu entegrasyon, mevcut `allonahub-admin` statik sayfalarını ve backend deploy 
 - `/avm-detay.html?item=<public-id>`
 - `/avm-partner.html`
 - `/admin/avm.html`
-- `/partner/index.html#avm-submissions`
+- `/partner/avm.html#avm-submissions`
 
 Eski AVM bağlantısı ve diğer modül rotaları erişilebilir kalır; ana AVM kartları yeni ziyaretçi sayfasına yönlenir.
 
@@ -32,7 +32,7 @@ Migration sonrası gerçek merkez, saat, kat planı, bölge, katalog, hizmet, ot
 2. AVM migration zinciri uygulanır ve tablolar/RPC'ler doğrulanır.
 3. `mall-assets` bucket'ı ve gerçek AVM asset'leri hazırlanır.
 4. Static frontend deploy'u mevcut Cloudflare/GitHub Pages hattından yapılır.
-5. `/avm-dunyasi.html`, `/avm-detay.html`, `/admin/avm.html` ve `/partner/index.html` smoke test edilir.
+5. `/avm-dunyasi.html`, `/avm-detay.html`, `/admin/avm.html` ve `/partner/avm.html` smoke test edilir.
 6. Eski admin, partner ve `pages/ecosystem/allonaavm.html` rotaları ayrıca kontrol edilir.
 
 Bu dosyadaki entegrasyon branch'i, mevcut çalışma ağacındaki kullanıcı değişikliklerini stage etmez veya silmez. Production push öncesi yalnızca AVM entegrasyon dosyaları ayrı commitlenmelidir.

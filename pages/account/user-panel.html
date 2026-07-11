@@ -6,32 +6,30 @@
   <title>AllonaHub Kullanıcı Paneli</title>
   <meta name="description" content="AllonaHub kullanıcı paneli, HP, XP, seviye, kupon ve CV merkezi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
-  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/user-panel-premium.css?v=20260629-panel-fix3">
 </head>
 <body class="user-panel-page" data-level-theme="new-member">
   <div class="premium-shell">
     <header class="premium-topbar" aria-label="AllonaHub kullanıcı panel üst menüsü">
-      <button class="premium-icon-btn" type="button" data-go="../../index.html" aria-label="Ana sayfa">
+      <button class="premium-icon-btn" type="button" data-panel-menu-open aria-label="Hesap menüsünü aç">
         <i class="fa-solid fa-bars"></i>
       </button>
 
       <a class="premium-brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
         <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
-        <span>
-          <strong>ALLONAHUB</strong>
-          <span>Hayatını AllonaHub'la kolaylaştır.</span>
-        </span>
+        <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
       </a>
 
-      <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler">
+      <a class="premium-icon-btn" href="bildirimler.html" aria-label="Bildirimler" data-notification-entry>
         <i class="fa-solid fa-bell"></i>
-        <span class="count">3</span>
+        <span class="count" id="panelNotificationCount" data-notification-count hidden>0</span>
+        <span class="notification-pulse" aria-hidden="true"></span>
       </a>
     </header>
 
     <main>
-      <section class="hero-grid" aria-label="Profil ve seviye özeti">
+      <section class="hero-grid" aria-label="Profil özeti">
         <article class="identity-card premium-glass">
           <a class="avatar-stage" href="profil.html" aria-label="Profil fotoğrafını düzenle">
             <span class="avatar-photo" id="profileAvatar">AH</span>
@@ -63,211 +61,139 @@
             <p id="professionLine" class="member-no">Profil bilgileri yükleniyor.</p>
           </div>
         </article>
-
-        <article class="level-emblem premium-glass">
-          <div>
-            <div class="level-crest">
-              <div class="level-crest-inner" id="levelNumber">Lv.1</div>
-            </div>
-            <h2 id="levelName">New Member</h2>
-            <p id="levelBonus">Başlangıç HP alanı</p>
-          </div>
-        </article>
       </section>
 
-      <section class="metric-grid" aria-label="HP ve bakiye kartları">
-        <article class="metric-card premium-glass">
-          <div class="metric-top">
-            <span>TOPLAM HP</span>
-            <button class="metric-help" type="button" data-hp-breakdown="total" aria-label="Toplam HP kaynaklarını göster">
-              <i class="fa-regular fa-circle-question"></i>
-            </button>
+      <section class="account-panel-layout" aria-label="Hesabım çalışma alanı">
+        <aside class="account-sidebar premium-glass" aria-label="Hesabım paneli">
+          <div class="account-sidebar-head">
+            <span>Panel</span>
+            <strong>Hesabım</strong>
           </div>
-          <div class="metric-value"><span id="hpValue">250</span> <small>HP</small></div>
-          <div class="metric-visual">
-            <span class="coin-stack" aria-hidden="true"></span>
-            <a class="metric-arrow" href="../commerce/kuponlar.html" aria-label="Kuponlara git">
-              <i class="fa-solid fa-chevron-right"></i>
-            </a>
-          </div>
-        </article>
 
-        <article class="metric-card premium-glass">
-          <div class="metric-top">
-            <span>GÜNLÜK GÖREV HP</span>
-            <button class="metric-help" type="button" data-hp-breakdown="daily" aria-label="Günlük görev HP kaynaklarını göster">
-              <i class="fa-regular fa-circle-question"></i>
+          <div class="account-menu-group" aria-label="HP özeti">
+            <button class="account-menu-row" type="button" data-hp-breakdown="total">
+              <span><i class="fa-solid fa-coins"></i> Toplam HP</span>
+              <b><span id="hpValue">250</span> HP</b>
             </button>
-          </div>
-          <div class="metric-value"><span id="cashoutValue">0</span> <small>HP</small></div>
-          <div class="metric-visual">
-            <span class="wallet-visual" aria-hidden="true"></span>
-            <a class="metric-arrow" href="gorevler.html" aria-label="Günlük görevler alanına git">
-              <i class="fa-solid fa-chevron-right"></i>
-            </a>
-          </div>
-        </article>
-
-        <article class="metric-card premium-glass">
-          <div class="metric-top">
-            <span>ALIŞVERİŞTEN KAZANILAN HP</span>
-            <button class="metric-help" type="button" data-hp-breakdown="shopping" aria-label="Alışverişten kazanılan HP kaynaklarını göster">
-              <i class="fa-regular fa-circle-question"></i>
+            <button class="account-menu-row" type="button" data-hp-breakdown="daily">
+              <span><i class="fa-solid fa-calendar-check"></i> Günlük Görev HP</span>
+              <b><span id="cashoutValue">0</span> HP</b>
             </button>
-          </div>
-          <div class="metric-value"><span id="hubCashValue">0</span> <small>HP</small></div>
-          <div class="metric-visual">
-            <span class="card-visual" aria-hidden="true"></span>
-            <a class="metric-arrow" href="../commerce/kuponlar.html" aria-label="Alışveriş HP alanına git">
-              <i class="fa-solid fa-chevron-right"></i>
-            </a>
-          </div>
-        </article>
-      </section>
-
-      <section class="xp-card premium-glass" aria-label="Seviye XP puanı">
-        <div class="xp-badge"><span id="xpBadge">Lv.1</span></div>
-        <div class="xp-body">
-          <div class="xp-head">
-            <div>
-              <h2>SEVİYE XP PUANI</h2>
-              <p id="remainingXp">Yeni seviyeye hazırlanıyor.</p>
-            </div>
-            <div class="next-tier">
-              Sonraki Seviye
-              <span id="nextLevelLabel">Lv.2 Blue</span>
+            <button class="account-menu-row" type="button" data-hp-breakdown="shopping">
+              <span><i class="fa-solid fa-bag-shopping"></i> Alışveriş HP</span>
+              <b><span id="hubCashValue">0</span> HP</b>
+            </button>
+            <div class="account-menu-row account-xp-row" aria-label="Seviye XP puanı">
+              <span><i class="fa-solid fa-chart-line"></i> XP Durumu</span>
+              <b id="xpTotal">0 / 75 XP</b>
+              <small id="remainingXp">Yeni seviyeye hazırlanıyor.</small>
+              <span class="account-xp-track" aria-hidden="true"><i id="xpProgressBar"></i></span>
+              <small id="xpPercent">0%</small>
             </div>
           </div>
-          <div class="xp-progress" aria-hidden="true">
-            <span id="xpProgressBar"></span>
-          </div>
-          <div class="xp-foot">
-            <span class="xp-total" id="xpTotal">0 / 75 XP</span>
-            <span id="xpPercent">0%</span>
-          </div>
-        </div>
-      </section>
 
-      <section class="action-rail" aria-label="Kısa yollar">
-        <button class="action-tile premium-glass" type="button" data-go="gorevler.html">
-          <span class="action-icon"><i class="fa-solid fa-bullseye"></i><span class="action-badge">3</span></span>
-          <b>Görevler</b>
-        </button>
-        <button class="action-tile premium-glass" type="button" data-panel-action="daily-login">
-          <span class="action-icon"><i class="fa-solid fa-calendar-check"></i><span class="action-badge">1</span></span>
-          <b>Günlük Giriş</b>
-        </button>
-        <button class="action-tile premium-glass" type="button" data-go="../commerce/kuponlar.html">
-          <span class="action-icon"><i class="fa-solid fa-ticket"></i><span class="action-badge">2</span></span>
-          <b>Kuponlarım</b>
-        </button>
-        <button class="action-tile premium-glass" type="button" data-go="../commerce/kuponlar.html#puan-dukkani">
-          <span class="action-icon"><i class="fa-solid fa-star"></i></span>
-          <b>Puan Dükkanı</b>
-        </button>
-        <button class="action-tile premium-glass" type="button" data-go="../company/destek.html">
-          <span class="action-icon"><i class="fa-solid fa-gift"></i><span class="action-badge">1</span></span>
-          <b>Arkadaşını Davet Et</b>
-        </button>
-        <button class="action-tile premium-glass" type="button" id="cvAction" data-go="cv">
-          <span class="action-icon"><i class="fa-solid fa-file-lines"></i></span>
-          <b id="cvActionText">Akıllı CV Oluştur</b>
-        </button>
-      </section>
+          <nav class="account-menu-group" aria-label="Hesap işlemleri">
+            <button class="account-menu-row" type="button" data-go="gorevler.html">
+              <span><i class="fa-solid fa-bullseye"></i> Görevler</span>
+              <b>3</b>
+            </button>
+            <button class="account-menu-row" type="button" data-panel-action="daily-login">
+              <span><i class="fa-solid fa-fire"></i> Günlük Giriş</span>
+              <b>+HP</b>
+            </button>
+            <button class="account-menu-row" type="button" data-go="../commerce/kuponlar.html">
+              <span><i class="fa-solid fa-ticket"></i> Kuponlarım</span>
+              <b>2</b>
+            </button>
+            <button class="account-menu-row" type="button" data-panel-action="refund-cancellation">
+              <span><i class="fa-solid fa-rotate-left"></i> İade / İptal Talepleri</span>
+              <b>Talep</b>
+            </button>
+            <button class="account-menu-row" type="button" data-go="puanlar.html">
+              <span><i class="fa-solid fa-star"></i> Puan Dükkanı</span>
+              <b>Git</b>
+            </button>
+            <button class="account-menu-row" type="button" data-go="../company/destek.html">
+              <span><i class="fa-solid fa-gift"></i> Arkadaşını Davet Et</span>
+              <b>1</b>
+            </button>
+            <button class="account-menu-row" type="button" id="cvAction" data-go="cv">
+              <span><i class="fa-solid fa-file-lines"></i> <span id="cvActionText">Akıllı CV Oluştur</span></span>
+              <b>CV</b>
+            </button>
+          </nav>
 
-      <section class="reward-banner premium-glass" aria-label="Günlük giriş ödülü">
-        <div>
-          <h2>HER GÜN GİRİŞ YAP, HP KAZAN!</h2>
-          <p>Giriş yap, görevleri tamamla ve seviyeni büyüt. İlk dört seviye hızlı ilerler, sonrasında statü yolculuğu zorlaşır.</p>
-          <button class="premium-btn" type="button" data-panel-action="daily-login">
-            GİRİŞ YAP
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-        <div class="gift-scene" aria-hidden="true">
-          <div class="gift-box"></div>
-        </div>
-      </section>
-
-      <section class="section-row" aria-label="Mesleğe özel modüller">
-        <div class="section-title">
-          <div>
-            <h2>Mesleğine Özel Alanlar</h2>
-            <a id="moduleHint" href="profil.html">Profil bilgilerine göre hazırlanıyor.</a>
+          <div class="account-menu-group" aria-label="Mesleğe özel alanlar">
+            <div class="account-menu-title">
+              <span>Mesleğine Özel Alanlar</span>
+              <a id="moduleHint" href="profil.html">Profil bilgilerine göre hazırlanıyor.</a>
+            </div>
+            <div class="account-module-list" id="moduleGrid"></div>
           </div>
-          <a href="../../index.html#modules">Tümünü Gör</a>
-        </div>
-        <div class="action-rail" id="moduleGrid"></div>
-      </section>
 
-      <section class="section-row" aria-label="Hublarım">
-        <div class="section-title">
-          <h2>HUB'LARIM</h2>
-          <a href="../../index.html#modules">Tümünü Gör</a>
-        </div>
-        <div class="hub-grid">
-          <a class="hub-card premium-glass" href="../commerce/allonayemek.html">
-            <i class="fa-solid fa-burger"></i>
-            <b>AllonaFood</b>
-          </a>
-          <a class="hub-card premium-glass" href="../commerce/allonamarket.html">
-            <i class="fa-solid fa-basket-shopping"></i>
-            <b>AllonaMarket</b>
-          </a>
-          <a class="hub-card premium-glass" href="../commerce/allonashop.html">
-            <i class="fa-solid fa-bag-shopping"></i>
-            <b>AllonaShop</b>
-          </a>
-          <a class="hub-card premium-glass" href="../ecosystem/allonataksi.html">
-            <i class="fa-solid fa-car-side"></i>
-            <b>AllonaRide</b>
-          </a>
-          <a class="hub-card premium-glass" href="../../index.html#modules">
-            <i class="fa-solid fa-grip"></i>
-            <b>Tümü</b>
-          </a>
-        </div>
+          <nav class="account-menu-group" aria-label="Hublarım">
+            <div class="account-menu-title">
+              <span>HUB'larım</span>
+              <a href="hublar.html">Tümünü Gör</a>
+            </div>
+            <a class="account-menu-row" href="../commerce/allonayemek.html">
+              <span><i class="fa-solid fa-burger"></i> AllonaFood</span>
+            </a>
+            <a class="account-menu-row" href="../commerce/allonamarket.html">
+              <span><i class="fa-solid fa-basket-shopping"></i> AllonaMarket</span>
+            </a>
+            <a class="account-menu-row" href="../commerce/allonashop.html">
+              <span><i class="fa-solid fa-bag-shopping"></i> AllonaShop</span>
+            </a>
+            <a class="account-menu-row" href="../ecosystem/allonataksi.html">
+              <span><i class="fa-solid fa-car-side"></i> AllonaRide</span>
+            </a>
+          </nav>
 
-        <div class="benefit-strip premium-glass">
-          <div class="benefit">
-            <i class="fa-solid fa-truck-fast"></i>
-            <span><b>Ücretsiz Kargo</b><span>Tüm siparişlerde</span></span>
+          <div class="account-menu-group" aria-label="Avantajlar">
+            <div class="account-menu-title">
+              <span>Avantajlar</span>
+            </div>
+            <div class="account-benefit-list">
+              <span><i class="fa-solid fa-user-check"></i> Profilini tamamla</span>
+              <span><i class="fa-solid fa-ticket"></i> İlk alışveriş kuponu</span>
+              <span><i class="fa-solid fa-shield-halved"></i> Güvenli ödeme takibi</span>
+              <span><i class="fa-solid fa-layer-group"></i> Ekosistem modülleri</span>
+            </div>
           </div>
-          <div class="benefit">
-            <i class="fa-solid fa-coins"></i>
-            <span><b>Daha Fazla HP Kazan</b><span>Seviyene göre bonus</span></span>
-          </div>
-          <div class="benefit">
-            <i class="fa-solid fa-percent"></i>
-            <span><b>Özel Kampanyalar</b><span>Sana özel fırsatlar</span></span>
-          </div>
-          <div class="benefit">
-            <i class="fa-solid fa-headset"></i>
-            <span><b>Öncelikli Destek</b><span>7/24 hızlı destek</span></span>
-          </div>
-        </div>
-      </section>
 
-      <section class="section-row" aria-label="Son işlemlerim">
-        <div class="section-title">
-          <h2>SON İŞLEMLERİM</h2>
-          <a href="bildirimler.html">Tümünü Gör</a>
-        </div>
-        <div class="transaction-list" id="transactionList"></div>
-      </section>
+          <div class="account-menu-group" aria-label="Son işlemlerim">
+            <div class="account-menu-title">
+              <span>Son işlemlerim</span>
+              <a href="bildirimler.html">Tümünü Gör</a>
+            </div>
+            <div class="transaction-list" id="transactionList"></div>
+          </div>
 
-      <section class="section-row" aria-label="Panel araması">
-        <div class="premium-glass" style="padding:16px;display:flex;gap:10px;align-items:center;">
-          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input id="panelSearchInput" type="search" placeholder="CV, HP, kupon, profil, belge veya destek ara..." style="flex:1;min-width:0;background:transparent;border:0;color:#fff;outline:0;font:inherit;">
-          <button class="premium-btn" type="button" onclick="panelSearch()">Ara</button>
-        </div>
+          <div class="account-menu-search" aria-label="Panel araması">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input id="panelSearchInput" type="search" placeholder="Ara">
+            <button type="button" onclick="panelSearch()">Ara</button>
+          </div>
+        </aside>
+
+        <section class="account-focus premium-glass" aria-label="Hesap merkezi">
+          <p>Hesap merkezi</p>
+          <h2>Hesabım</h2>
+          <div class="account-focus-line"></div>
+          <div class="account-focus-actions">
+            <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profili Düzenle</a>
+            <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
+            <a href="bildirimler.html" data-notification-entry><i class="fa-solid fa-bell"></i> Bildirimler <span class="notification-chip" data-notification-chip hidden>Yeni</span></a>
+            <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
+          </div>
+        </section>
       </section>
     </main>
   </div>
 
   <nav class="bottom-nav" aria-label="Kullanıcı panel alt menüsü">
-    <a class="active" href="../../index.html">
+    <a href="../../index.html">
       <i class="fa-solid fa-house"></i>
       <span>Ana Sayfa</span>
     </a>
@@ -275,7 +201,7 @@
       <i class="fa-solid fa-bag-shopping"></i>
       <span>Alışveriş</span>
     </a>
-    <a class="bottom-logo" href="user-panel.html" aria-label="AllonaHub panel">
+    <a class="bottom-logo active" href="user-panel.html" aria-label="AllonaHub panel">
       <img src="../../images/brand/allona.logo.png" alt="">
     </a>
     <a href="../commerce/kuponlar.html">
@@ -289,6 +215,31 @@
   </nav>
 
   <div data-layout="footer"></div>
+  <div class="panel-drawer" id="panelDrawer" hidden>
+    <button class="panel-drawer-backdrop" type="button" data-panel-menu-close aria-label="Menüyü kapat"></button>
+    <aside class="panel-drawer-sheet premium-glass" aria-label="Kullanıcı hızlı menüsü">
+      <button class="panel-drawer-close" type="button" data-panel-menu-close aria-label="Menüyü kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="panel-drawer-profile">
+        <span class="avatar-photo" id="miniAvatar">AH</span>
+        <div>
+          <strong id="drawerName">AllonaHub Üyesi</strong>
+          <small id="drawerMemberNo">AH-USER-000000</small>
+        </div>
+      </div>
+      <nav class="panel-drawer-links">
+        <a href="user-panel.html"><i class="fa-solid fa-house-user"></i> Hesabım</a>
+        <a href="profil.html"><i class="fa-solid fa-user-pen"></i> Profilimi Düzenle</a>
+        <a href="premium.html"><i class="fa-solid fa-chart-line"></i> Seviye ve HP</a>
+        <a href="bildirimler.html" data-notification-entry><i class="fa-solid fa-bell"></i> Bildirimler <span class="notification-chip" data-notification-chip hidden>Yeni</span></a>
+        <a href="orders.html"><i class="fa-solid fa-box"></i> Siparişlerim</a>
+        <a href="hublar.html"><i class="fa-solid fa-layer-group"></i> HUB'larım</a>
+        <a href="../commerce/kuponlar.html"><i class="fa-solid fa-ticket"></i> Kuponlarım</a>
+        <a href="../company/destek.html"><i class="fa-solid fa-headset"></i> Destek</a>
+      </nav>
+    </aside>
+  </div>
   <div class="panel-status" id="panelStatus" role="status" aria-live="polite"></div>
   <div class="hp-info-modal" id="hpInfoModal" hidden>
     <div class="hp-info-backdrop" data-hp-info-close></div>
@@ -320,11 +271,50 @@
       </div>
     </section>
   </div>
+  <div class="refund-center-modal" id="refundCenterModal" hidden>
+    <div class="refund-center-backdrop" data-refund-center-close></div>
+    <section class="refund-center-dialog premium-glass" role="dialog" aria-modal="true" aria-labelledby="refundCenterTitle">
+      <button class="refund-center-close" type="button" data-refund-center-close aria-label="İade ve iptal penceresini kapat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <p class="refund-center-eyebrow">Sipariş İşlemleri</p>
+      <h2 id="refundCenterTitle">İade ve İptal Talebi</h2>
+      <p class="refund-center-copy">Uygun siparişler talep oluşturma listesinde, süresi geçen veya tamamlanmış kayıtlar geçmiş siparişler bölümünde görünür.</p>
+      <div class="refund-type-tabs" role="tablist" aria-label="Talep türü">
+        <button class="is-active" type="button" data-refund-request-kind="refund">
+          <i class="fa-solid fa-rotate-left"></i>
+          İade Talebi Oluştur
+        </button>
+        <button type="button" data-refund-request-kind="cancellation">
+          <i class="fa-solid fa-ban"></i>
+          İptal Talebi Oluştur
+        </button>
+      </div>
+      <div class="refund-center-status" id="refundCenterStatus" role="status" aria-live="polite">Son siparişlerin hazırlanıyor.</div>
+      <section class="refund-section" aria-label="Talep oluşturulabilir siparişler">
+        <div class="refund-section-head">
+          <strong>Talep oluşturulabilir siparişler</strong>
+          <span id="refundEligibleCount">0 sipariş</span>
+        </div>
+        <div class="refund-order-list" id="refundEligibleOrders"></div>
+      </section>
+      <section class="refund-section refund-section-muted" aria-label="Geçmiş siparişler">
+        <div class="refund-section-head">
+          <strong>Geçmiş siparişler</strong>
+          <span id="refundExpiredCount">0 sipariş</span>
+        </div>
+        <div class="refund-order-list" id="refundExpiredOrders"></div>
+      </section>
+    </section>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
-  <script src="../../js/user-panel-premium.js?v=20260621-hp1" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/user-notifications.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/user-panel-premium.js?v=20260629-panel-fix3" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>
 </html>

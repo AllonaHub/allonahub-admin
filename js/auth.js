@@ -39,6 +39,24 @@
     }
   }
 
+  async function getOwnedPartnerBusiness(userId) {
+    if (!App.supabase || !userId) return null;
+    try {
+      const { data, error } = await App.supabase
+        .from("partner_businesses")
+        .select("id, owner_id, partner_code, display_name, legal_name, partner_type, email, phone, city, country, status, verification_status, trust_score, level, xp")
+        .eq("owner_id", userId)
+        .eq("status", "active")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) return null;
+      return data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   async function signIn(email, password) {
     const cleanEmail = security ? security.normalizeText(email, { max: 180 }).toLowerCase() : String(email || "").trim().toLowerCase();
     if (security && !security.isEmail(cleanEmail)) throw authSafeError("Geçerli bir e-posta adresi girin.");
@@ -128,6 +146,7 @@
     const { error } = await App.supabase.auth.signOut({ scope });
     if (error) throw authSafeError("Çıkış işlemi tamamlanamadı. Lütfen tekrar deneyin.");
     clearLocalAuthState();
+    if (options && options.redirect === false) return;
     window.location.href = App.core.url("/index.html");
   }
 
@@ -347,6 +366,16 @@
     const user = await getUser();
     if (user) return user;
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    const page = document.body?.dataset?.page || "";
+    const path = window.location.pathname;
+    if (page === "super-admin" || /\/admin\/super-admin\.html$/i.test(path)) {
+      window.location.href = App.core.url(`/admin/super-admin-login.html?returnTo=${returnTo}`);
+      return null;
+    }
+    if (page === "admin-ops" || /\/admin\/index\.html$/i.test(path) || /\/admin\/$/i.test(path)) {
+      window.location.href = App.core.url(`/admin/admin-login.html?returnTo=${returnTo}`);
+      return null;
+    }
     window.location.href = App.core.url(`/pages/account/user.html?returnTo=${returnTo}`);
     return null;
   }
@@ -356,6 +385,16 @@
     if (!user) return null;
     const profile = await getProfile(user.id);
     if (!profile || !roles.includes(profile.role)) {
+      if (roles.includes("partner")) {
+        const partnerBusiness = await getOwnedPartnerBusiness(user.id);
+        if (partnerBusiness) {
+          return {
+            user,
+            profile: { ...(profile || { id: user.id }), role: "partner" },
+            partnerBusiness
+          };
+        }
+      }
       throw new Error("Bu alana erişim yetkiniz yok.");
     }
     return { user, profile };

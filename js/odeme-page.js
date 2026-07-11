@@ -5,19 +5,204 @@
   let lines = [];
   let appliedCoupon = null;
   let savedAddresses = [];
+  let checkoutUser = null;
+  let checkoutProfile = null;
   const PAYMENT_HANDOFF_KEY = "allona_iyzico_checkout";
+  const COUPON_WALLET_KEY = "allonahub_user_coupons_v1";
+  const FIRST_HP_CONVERSION_KEY = "allonahub_first_hp_conversion_v1";
+  const HP_PER_TL = 8;
+
+  function sellerName(product) {
+    return product.seller_public_name || product.seller_name || "AllonaHub";
+  }
+
+  function sellerDisclosureLines() {
+    return lines
+      .map((item) => {
+        const product = item.product || {};
+        return `${product.name}: ${product.seller_kind || "Satıcı"} ${sellerName(product)}. ${product.invoice_responsibility || ""}`;
+      })
+      .filter(Boolean);
+  }
+
+  function uniqueSellerNames() {
+    return [...new Set(lines.map((item) => sellerName(item.product || {})).filter(Boolean))].slice(0, 5);
+  }
+
+  function currencySettlementContext(totals) {
+    const state = App.currency?.state || {};
+    const displayCurrency = String(state.target || "TRY").toUpperCase();
+    const settlementCurrency = String(state.base || App.config?.currency || "TRY").toUpperCase();
+    return {
+      displayCurrency,
+      settlementCurrency,
+      displayTotal: core.money(totals.total),
+      settlementTotal: core.money(totals.total, { targetCurrency: settlementCurrency }),
+      rateProvider: state.provider || "",
+      rateUpdatedAt: state.updatedAt || 0,
+      ratesReady: Boolean(state.ready)
+    };
+  }
+
+  function paymentCurrencyDisclosure(totals) {
+    const info = currencySettlementContext(totals);
+    const sameCurrency = info.displayCurrency === info.settlementCurrency;
+    return `
+      <div class="payment-currency-disclosure" data-no-currency>
+        <strong>Gösterilen fiyat / Tahsil edilecek para birimi</strong>
+        <div><span>Gösterilen fiyat</span><b>${core.escapeHTML(info.displayTotal)} (${core.escapeHTML(info.displayCurrency)})</b></div>
+        <div><span>Tahsil edilecek para birimi</span><b>${core.escapeHTML(info.settlementTotal)} (${core.escapeHTML(info.settlementCurrency)})</b></div>
+        <p>${sameCurrency ? "Gösterim ve ödeme aynı para birimindedir." : "Seçili para birimi bilgilendirme amaçlı gösterilir; ödeme sağlayıcı tahsilatı TRY üzerinden tamamlar."}</p>
+      </div>
+    `;
+  }
+
+  function safeJson(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function userKey(user) {
+    return user && user.id ? `user:${user.id}` : "guest";
+  }
+
+  function walletCoupons(user) {
+    const all = safeJson(COUPON_WALLET_KEY, {});
+    const list = all[userKey(user)];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function writeWalletCoupons(user, coupons) {
+    try {
+      const all = safeJson(COUPON_WALLET_KEY, {});
+      all[userKey(user)] = coupons;
+      localStorage.setItem(COUPON_WALLET_KEY, JSON.stringify(all));
+    } catch (error) {
+      // Remote order data remains the source of truth.
+    }
+  }
+
+  function firstHpUseAvailable(user) {
+    const all = safeJson(FIRST_HP_CONVERSION_KEY, {});
+    return !all[userKey(user)];
+  }
+
+  function markFirstHpUse(user, order) {
+    if (!user || !firstHpUseAvailable(user)) return;
+    try {
+      const all = safeJson(FIRST_HP_CONVERSION_KEY, {});
+      all[userKey(user)] = {
+        code: order?.order_number || order?.order_no || order?.id || "checkout",
+        used_at: new Date().toISOString()
+      };
+      localStorage.setItem(FIRST_HP_CONVERSION_KEY, JSON.stringify(all));
+    } catch (error) {
+      // The order still carries hp_to_use; this only blocks repeated first-use UI.
+    }
+  }
+
+  function hpBuckets(profile) {
+    return {
+      total: Math.max(0, Number(profile?.hp || 0)),
+      daily: Math.max(0, Number(profile?.cashout_balance || 0)),
+      shopping: Math.max(0, Number(profile?.hub_cash || profile?.wallet_balance || 0))
+    };
+  }
+
+  function allowedHpDiscount(requestedTl) {
+    const requested = Math.max(0, Number(requestedTl || 0));
+    if (!checkoutUser || !checkoutProfile || !requested) return requested;
+    const buckets = hpBuckets(checkoutProfile);
+    const requiredHp = Math.ceil(requested * HP_PER_TL);
+    if (buckets.total < requiredHp) {
+      return Math.floor(buckets.total / HP_PER_TL);
+    }
+    if (!firstHpUseAvailable(checkoutUser) && buckets.shopping <= 0) return 0;
+    return requested;
+  }
+
+  function normalizeCoupon(row) {
+    if (!row) return null;
+    const status = String(row.status || (row.is_active === false ? "inactive" : "active")).toLowerCase();
+    return {
+      code: String(row.code || "").toUpperCase(),
+      title: row.title || row.code || "Kupon",
+      status,
+      discount_type: row.discount_type || row.type || "fixed",
+      discount_value: Number(row.discount_value || row.value || 0),
+      max_discount: Number(row.max_discount || 0),
+      min_order_total: Number(row.min_order_total || row.minimum_subtotal || 0),
+      starts_at: row.starts_at || "",
+      ends_at: row.ends_at || "",
+      source: row.source || "campaign"
+    };
+  }
+
+  function validateCoupon(coupon, totals) {
+    if (!coupon || !coupon.code) throw new Error("Kupon bulunamadı.");
+    if (coupon.status && !["active", "aktif"].includes(coupon.status)) throw new Error("Kupon aktif değil.");
+    if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) throw new Error("Kupon henüz başlamadı.");
+    if (coupon.ends_at && new Date(coupon.ends_at) < new Date()) throw new Error("Kupon süresi doldu.");
+    if (Number(coupon.min_order_total || 0) > totals.subtotal) throw new Error("Sepet tutarı kupon için yeterli değil.");
+    return coupon;
+  }
+
+  async function loadCouponFromUserWallet(code, user) {
+    if (!user) return null;
+    if (App.db && App.db.client) {
+      try {
+        const { data, error } = await App.db.client()
+          .from("user_coupons")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("code", code)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) return normalizeCoupon(data);
+      } catch (error) {
+        // Local wallet fallback follows.
+      }
+    }
+    const local = walletCoupons(user).find((coupon) => String(coupon.code || "").toUpperCase() === code);
+    return normalizeCoupon(local);
+  }
+
+  async function markCouponUsed(code, user) {
+    if (!code || !user) return;
+    const now = new Date().toISOString();
+    const local = walletCoupons(user).map((coupon) => (
+      String(coupon.code || "").toUpperCase() === code
+        ? { ...coupon, status: "used", used_at: now }
+        : coupon
+    ));
+    writeWalletCoupons(user, local);
+    if (App.db && App.db.client) {
+      await App.db.client()
+        .from("user_coupons")
+        .update({ status: "used", used_at: now })
+        .eq("user_id", user.id)
+        .eq("code", code);
+    }
+  }
 
   function renderSummary() {
     const node = document.querySelector("[data-checkout-summary]");
     if (!node) return;
     const form = document.querySelector("[data-checkout-form]");
-    const hpToUse = form ? Number(form.hp_to_use && form.hp_to_use.value || 0) : 0;
+    const hpToUse = allowedHpDiscount(form ? Number(form.hp_to_use && form.hp_to_use.value || 0) : 0);
     const totals = App.cart.totals(lines, appliedCoupon, hpToUse);
+    const sellers = uniqueSellerNames();
     node.innerHTML = `
       <h2>Sipariş Özeti</h2>
       ${lines.map((item) => `
-        <div class="summary-line">
-          <span>${core.escapeHTML(item.product.name)} × ${item.qty}</span>
+        <div class="summary-line summary-line--item">
+          <span>
+            ${core.escapeHTML(item.product.name)} × ${item.qty}
+            <small>${core.escapeHTML(item.product.seller_kind || "Satıcı")}: ${core.escapeHTML(sellerName(item.product))}</small>
+          </span>
           <strong>${core.money(item.product.price * item.qty)}</strong>
         </div>
       `).join("")}
@@ -26,6 +211,17 @@
       <div class="summary-line"><span>Kupon</span><strong>-${core.money(totals.discount)}</strong></div>
       <div class="summary-line"><span>HP indirim hakkı</span><strong>-${core.money(totals.hpDiscount)}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
+      ${paymentCurrencyDisclosure(totals)}
+      <div class="summary-legal">
+        <strong>Ödeme öncesi kontrol</strong>
+        <p>${core.escapeHTML(sellers.join(", "))}${sellers.length === 5 ? " ve diğer satıcılar" : ""}</p>
+        <p>Satıcı/fatura bilgileri, teslimat koşulları, cayma hakkı ve yasal metinler onay kutularıyla ödeme öncesinde sunulur.</p>
+        <span>
+          <a href="${core.url("/pages/legal/on-bilgilendirme.html")}" target="_blank" rel="noopener">Ön Bilgilendirme</a>
+          <a href="${core.url("/pages/legal/mesafeli-satis.html")}" target="_blank" rel="noopener">Mesafeli Satış</a>
+          <a href="${core.url("/pages/legal/etbis-guven-damgasi.html")}" target="_blank" rel="noopener">ETBİS/Güven</a>
+        </span>
+      </div>
     `;
   }
 
@@ -74,6 +270,7 @@
 
     const user = await App.auth.requireAuth();
     if (!user) return;
+    checkoutUser = user;
 
     try {
       await App.cart.syncLocalToRemote();
@@ -84,6 +281,16 @@
         return;
       }
       const profile = await App.auth.getProfile(user.id);
+      if (window.AllonaProfileSync && window.AllonaProfileSync.createClient) {
+        try {
+          const loaded = await window.AllonaProfileSync.load(window.AllonaProfileSync.createClient());
+          checkoutProfile = loaded?.profile || profile || null;
+        } catch (error) {
+          checkoutProfile = profile || null;
+        }
+      } else {
+        checkoutProfile = profile || null;
+      }
       if (profile) {
         form.full_name.value = profile.full_name || "";
         form.phone.value = profile.phone || "";
@@ -126,7 +333,7 @@
     }
   }
 
-  function storePaymentHandoff(payment, order) {
+  function storePaymentHandoff(payment, order, currencyContext) {
     const paymentPageUrl = payment && payment.paymentPageUrl;
     if (!paymentPageUrl || !isTrustedIyzicoUrl(paymentPageUrl)) {
       throw new Error("iyzico güvenli ödeme bağlantısı doğrulanamadı.");
@@ -138,6 +345,10 @@
       orderNo: order && (order.order_number || order.order_no || order.id),
       paymentPageUrl,
       token: payment.token || "",
+      displayCurrency: currencyContext?.displayCurrency || "",
+      settlementCurrency: currencyContext?.settlementCurrency || "TRY",
+      displayTotal: currencyContext?.displayTotal || "",
+      settlementTotal: currencyContext?.settlementTotal || "",
       createdAt: Date.now(),
       expiresAt: Date.now() + (15 * 60 * 1000)
     };
@@ -166,7 +377,7 @@
       tax_office: security ? security.normalizeText(data.tax_office, { max: 90 }) : String(data.tax_office || "").trim(),
       coupon_code: security ? security.normalizeText(data.coupon_code, { max: 40 }).toUpperCase() : String(data.coupon_code || "").trim().toUpperCase(),
       address_id: security && data.address_id && security.isUuid(data.address_id) ? data.address_id : "",
-      hp_to_use: Math.max(0, Math.min(100, Number(data.hp_to_use || 0))),
+      hp_to_use: Math.max(0, Math.min(100, allowedHpDiscount(Number(data.hp_to_use || 0)))),
       billing_same: data.billing_same
     };
     validateCheckoutData(clean);
@@ -183,7 +394,8 @@
       clean.invoice_type ? `Fatura türü: ${clean.invoice_type === "company" ? "Kurumsal" : "Bireysel"}` : "",
       clean.tax_office ? `Vergi dairesi: ${clean.tax_office}` : "",
       clean.coupon_code ? `Kupon: ${clean.coupon_code}` : "",
-      `Yasal onaylar: Ön bilgilendirme ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
+      ...sellerDisclosureLines().map((line) => `Satıcı bilgilendirmesi: ${line}`),
+      `Yasal onaylar: Ön bilgilendirme, satıcı/teslimat/fatura bilgisi ve mesafeli satış sözleşmesi ${acceptedAt} tarihinde onaylandı.`
     ]);
 
     return {
@@ -263,20 +475,21 @@
           .select("*")
           .eq("code", code)
           .maybeSingle();
-        if (error) throw error;
-        if (!data) throw new Error("Kupon bulunamadı.");
-        if (data.is_active === false || (data.status && data.status !== "active")) throw new Error("Kupon aktif değil.");
-        if (data.starts_at && new Date(data.starts_at) > new Date()) throw new Error("Kupon henüz başlamadı.");
-        if (data.ends_at && new Date(data.ends_at) < new Date()) throw new Error("Kupon süresi doldu.");
-        if (Number(data.min_order_total || data.minimum_subtotal || 0) > totals.subtotal) throw new Error("Sepet tutarı kupon için yeterli değil.");
-        if (data.usage_limit && Number(data.used_count || 0) >= Number(data.usage_limit)) throw new Error("Kupon kullanım limiti doldu.");
+        let coupon = null;
+        if (!error && data) coupon = normalizeCoupon(data);
+        if (!coupon) coupon = await loadCouponFromUserWallet(code, checkoutUser || await App.auth.getUser());
+        if (error && !coupon) throw error;
+        if (data && data.usage_limit && Number(data.used_count || 0) >= Number(data.usage_limit)) throw new Error("Kupon kullanım limiti doldu.");
+        coupon = validateCoupon(coupon, totals);
 
-        const previewDiscount = data.discount_type === "percent"
-          ? totals.subtotal * (Number(data.discount_value || 0) / 100)
-          : Number(data.discount_value || 0);
+        const previewDiscount = coupon.discount_type === "percent"
+          ? totals.subtotal * (Number(coupon.discount_value || 0) / 100)
+          : Number(coupon.discount_value || 0);
         appliedCoupon = {
           type: "fixed",
-          value: data.max_discount ? Math.min(previewDiscount, Number(data.max_discount || 0)) : previewDiscount
+          value: coupon.max_discount ? Math.min(previewDiscount, Number(coupon.max_discount || 0)) : previewDiscount,
+          code: coupon.code,
+          source: coupon.source
         };
         core.renderStatus("[data-checkout-status]", "Kupon uygulandı.", "success");
       } catch (error) {
@@ -300,14 +513,21 @@
         }
         const user = await App.auth.requireAuth();
         if (!user) return;
-        if (!form.pre_info_accepted.checked || !form.distance_sales_accepted.checked) {
-          core.renderStatus("[data-checkout-status]", "Ödeme öncesi yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
+        if (!form.pre_info_accepted.checked || !form.seller_info_accepted.checked || !form.distance_sales_accepted.checked) {
+          core.renderStatus("[data-checkout-status]", "Ödeme öncesi satıcı, yasal bilgilendirme ve mesafeli satış onayları zorunludur.", "error");
           return;
         }
         await App.cart.syncLocalToRemote();
         const orderPayload = calculateOrderPayload(form);
+        const currencyContext = currencySettlementContext(App.cart.totals(lines, appliedCoupon, orderPayload.hp_to_use));
         orderPayload.address_id = await ensureCheckoutAddress(form, user, orderPayload);
         const order = await App.db.orders.create(orderPayload, lines);
+        if (orderPayload.coupon_code) {
+          await markCouponUsed(orderPayload.coupon_code, user).catch(() => null);
+        }
+        if (orderPayload.hp_to_use > 0) {
+          markFirstHpUse(user, order);
+        }
         if (App.complianceAudit) {
           await App.complianceAudit.record({
             category: "order",
@@ -319,8 +539,10 @@
             metadata: {
               item_count: lines.length,
               city: orderPayload.city,
+              payment_currency: currencyContext,
               legal_acceptance: {
                 pre_info: Boolean(form.pre_info_accepted.checked),
+                seller_info: Boolean(form.seller_info_accepted.checked),
                 distance_sales: Boolean(form.distance_sales_accepted.checked)
               }
             }
@@ -339,7 +561,7 @@
           return;
         }
         if (payment && payment.paymentPageUrl) {
-          const handoffStored = storePaymentHandoff(payment, order);
+          const handoffStored = storePaymentHandoff(payment, order, currencyContext);
           if (App.complianceAudit) {
             await App.complianceAudit.record({
               category: "payment",
@@ -348,7 +570,7 @@
               resourceType: "order",
               resourceId: order && order.id,
               evidenceTags: ["checkout", "payment_provider"],
-              metadata: { provider: "iyzico" }
+              metadata: { provider: "iyzico", payment_currency: currencyContext }
             });
           }
           App.cart.setItems([]);
@@ -398,5 +620,6 @@
     if (!document.querySelector("[data-page='checkout']")) return;
     bindCheckout();
     loadCheckout();
+    document.addEventListener("allona:currency-changed", () => renderSummary());
   });
 })();

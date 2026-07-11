@@ -1,0 +1,321 @@
+/*
+  ALLONAHUB Central Mobile Core
+  Import this file after each module's own stylesheet.
+  Mobile behavior is controlled here so every module follows one standard.
+*/
+
+:root {
+  --mobile-core-breakpoint: 820px;
+  --mobile-core-page-gap: clamp(14px, 4vw, 20px);
+  --mobile-core-rail-gap: 12px;
+  --mobile-core-card-min: 240px;
+  --mobile-core-card-max: 86vw;
+  --mobile-core-table-min: 680px;
+  --mobile-core-touch: 44px;
+  --mobile-core-radius: 8px;
+  --mobile-core-focus: 0 0 0 3px rgba(15, 118, 110, 0.22);
+}
+
+html {
+  min-width: 320px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  min-height: min(var(--mobile-core-touch), 100%);
+}
+
+:is(button, a, input, select, textarea):focus-visible {
+  outline: 0;
+  box-shadow: var(--mobile-core-focus);
+}
+
+.compliance-footer {
+  width: min(1240px, calc(100% - 32px));
+  margin: 24px auto 0;
+  padding: 18px 0 24px;
+  border-top: 1px solid var(--line, var(--shop-border, #dbe3ea));
+  color: var(--muted, var(--shop-muted, #64748b));
+}
+
+.compliance-footer__inner {
+  display: grid;
+  gap: 12px;
+}
+
+.compliance-footer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.compliance-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-weight: 800;
+}
+
+.compliance-footer__links a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius, var(--mobile-core-radius));
+  color: var(--teal-dark, var(--brand-strong, var(--shop-teal, #0f766e)));
+  text-decoration: none;
+}
+
+.compliance-footer__note {
+  max-width: 980px;
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.legal-helper,
+.consent-option {
+  color: var(--muted, var(--shop-muted, #64748b));
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.legal-helper a,
+.consent-option a {
+  color: var(--teal-dark, var(--brand-strong, var(--shop-teal, #0f766e)));
+  font-weight: 800;
+}
+
+.consent-stack {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+.consent-option {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.consent-option input {
+  min-width: 18px;
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.mobile-core-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-core-table-wrap > table,
+.table-wrap > table,
+[data-mobile-table] {
+  min-width: min(var(--mobile-core-table-min), 180vw);
+}
+
+.mobile-core-rail,
+[data-mobile-rail] {
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-core-rail:focus-visible,
+[data-mobile-rail]:focus-visible {
+  outline: 0;
+  box-shadow: var(--mobile-core-focus);
+}
+
+@media (max-width: 820px) {
+  :where(.app-shell, .admin-shell, .partner-shell, .page-shell, .module-layout, .content, main) {
+    max-width: 100%;
+  }
+
+  :where(.workspace, .content, .panel-section, .panel-section.is-visible, .surface, .detail-panel, .directory-panel, .cart-panel, .panel-block, .partner-section, .admin-panel, .shop-shell, .shop-workspace, .shop-products-panel) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  :where(.page-shell) {
+    width: min(100%, calc(100% - (var(--mobile-core-page-gap) * 2)));
+  }
+
+  :where(.topbar, .site-header, .detail-header, .section-heading, .surface-heading, .toolbar, .button-row, .hero-actions, .topbar-actions) {
+    gap: 10px;
+  }
+
+  :where(.topnav, .site-nav, .nav-list, .footer-links, .compliance-footer__links) {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  :where(.topnav, .site-nav, .nav-list, .footer-links, .compliance-footer__links) > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  :where(.module-layout, .dashboard-layout, .profile-layout, .security-grid, .admin-grid, .form-and-table, .hero, .split-layout) {
+    grid-template-columns: 1fr !important;
+  }
+
+  :where(.directory-panel, .cart-panel, .sidebar) {
+    position: static;
+    height: auto;
+    max-height: none;
+  }
+
+  :where(.metric-grid, .metrics-grid, .stat-grid, .kpi-grid, .quick-actions, .service-list, .campaign-strip, .coupon-strip, .store-strip, .product-rail, .approval-list, .horizontal-strip, .checklist, .preference-list, .item-list, .activity-list, .mall-list, .cart-items, .grid-list, .review-list, .definition-list, .shop-product-grid, .shop-status-strip, .shop-audit-strip, .admin-tabs, .admin-controls, .utility-band, .filters, [data-mobile-rail], .mobile-core-rail):not(.mobile-core-no-rail) {
+    display: grid !important;
+    width: 100%;
+    min-width: 0;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(min(var(--mobile-core-card-min), 74vw), var(--mobile-core-card-max));
+    grid-template-columns: none !important;
+    gap: var(--mobile-core-rail-gap);
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: var(--mobile-core-page-gap);
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  :where(.metric-grid, .metrics-grid, .stat-grid, .kpi-grid, .quick-actions, .service-list, .campaign-strip, .coupon-strip, .store-strip, .product-rail, .approval-list, .horizontal-strip, .checklist, .preference-list, .item-list, .activity-list, .mall-list, .cart-items, .grid-list, .review-list, .definition-list, .shop-product-grid, .shop-status-strip, .shop-audit-strip, .admin-tabs, .admin-controls, .utility-band, .filters, [data-mobile-rail], .mobile-core-rail):not(.mobile-core-no-rail) > * {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  :where(.filter-stack, .toolbar[data-mobile-filters], .module-filters, .filter-row, .filters, [data-mobile-chips]) {
+    display: flex !important;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+
+  :where(.filter-stack, .toolbar[data-mobile-filters], .module-filters, .filter-row, .filters, [data-mobile-chips]) > * {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  :where(.filter-stack) :is(input, select) {
+    min-width: min(72vw, 280px);
+  }
+
+  :where(.form-grid, .admin-form, form) {
+    grid-template-columns: 1fr !important;
+  }
+
+  :where(.span-2, .wide) {
+    grid-column: auto !important;
+  }
+
+  :where(.table-wrap, .mobile-core-table-wrap) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :where(table) {
+    border-collapse: collapse;
+  }
+
+  :where(.table-wrap table, .mobile-core-table-wrap table) {
+    min-width: min(var(--mobile-core-table-min), 190vw);
+  }
+
+  :where(.hero-copy) {
+    min-height: auto;
+  }
+
+  :where(.hero-media) {
+    max-height: 360px;
+  }
+
+  :where(.hero-media img) {
+    width: 100%;
+    height: 100%;
+    min-height: 240px;
+    object-fit: cover;
+    object-position: center right;
+  }
+
+  :where(.hero-stats) {
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(130px, 1fr);
+    grid-template-columns: none !important;
+    overflow-x: auto;
+    gap: 8px;
+  }
+
+  :where(.primary-button, .secondary-button, .ghost-button, .text-button, .danger-button, .button, .action-tile, .nav-link, .site-nav a) {
+    min-height: var(--mobile-core-touch);
+  }
+
+  :where(.detail-actions, .form-actions, .hero-actions) {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :where(.detail-actions, .form-actions, .hero-actions) > * {
+    flex: 0 0 auto;
+  }
+
+  :where(.source-note, .lead, .muted, p, small) {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --mobile-core-card-min: 220px;
+    --mobile-core-card-max: 88vw;
+    --mobile-core-rail-gap: 10px;
+  }
+
+  :where(.topbar, .site-header) {
+    padding-inline: 12px;
+  }
+
+  :where(.module-layout, .content, .section, .panel-block, .partner-section) {
+    padding-inline: 12px;
+  }
+}

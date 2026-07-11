@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB AVM Admin Paneli</title>
+    <meta
+      name="description"
+      content="AVM admin paneli: AVM profili, mağaza, restoran, ürün, kampanya, kupon, etkinlik, harita, değerlendirme, sipariş, onay ve audit yönetimi."
+    >
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body>
+    <div class="admin-shell">
+      <header class="topbar">
+        <a class="brand-mark" href="index.html" aria-label="ALLONAHUB AVM Dünyası">
+          <span class="brand-symbol">A</span>
+          <span>
+            <strong>ALLONAHUB</strong>
+            <span>AVM Admini</span>
+          </span>
+        </a>
+        <nav class="topnav" aria-label="Modül bağlantıları">
+          <a class="nav-link" href="index.html">AVM Dünyası</a>
+          <a class="nav-link" href="shop.html">Shop Katalog</a>
+          <a class="nav-link" href="partner.html">AVM Partneri</a>
+          <a class="nav-link is-active" href="admin.html">AVM Admini</a>
+        </nav>
+      </header>
+
+      <main class="admin-main">
+        <header class="admin-header">
+          <div>
+            <span class="eyebrow" id="adminSource">Seed veri</span>
+            <h1 id="adminMallName">AVM Admin Paneli</h1>
+            <p class="muted" id="adminMallLocation">Şehir / İlçe</p>
+          </div>
+          <div class="admin-controls">
+            <select id="mallSelect" aria-label="Yönetilecek AVM"></select>
+            <a class="secondary-button" href="index.html">Kullanıcı Ekranı</a>
+            <a class="primary-button" href="partner.html">Partner HTML</a>
+          </div>
+        </header>
+
+        <nav class="admin-tabs" id="adminTabs" aria-label="Admin panel bölümleri"></nav>
+        <section class="admin-panel" id="adminPanel" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB AVM Admini</span>
+          <span>Yasal denetim ve audit standardı</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#partner">Partner Koşulları</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#veri-saklama">Veri Saklama</a>
+          <a href="../legal/index.html#kullanim">Kullanım Şartları</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">Admin işlemlerinde kişisel veri görüntüleme, dışa aktarma, içerik onayı ve kritik değişiklikler audit kaydına bağlanmalıdır.</p>
+      </div>
+    </footer>
+
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    <script src="assets/js/admin.js"></script>
+  </body>
+</html>

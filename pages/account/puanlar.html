@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Puanlarım | AllonaHub</title>
+  <meta name="description" content="AllonaHub kullanıcı HP, XP ve puan hareketleri.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <style>
+    .points-page{display:grid;gap:18px;padding-bottom:42px}
+    .points-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .points-card{padding:18px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .points-card span{display:block;color:#9fc6d6;font-size:12px;font-weight:900;text-transform:uppercase}
+    .points-card strong{display:block;margin-top:8px;font-size:25px}
+    .points-ledger{padding:20px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .points-ledger h2{margin-top:0}
+    .points-rule{padding:16px;border-radius:8px;background:rgba(255,202,95,.12);border:1px solid rgba(255,202,95,.2);color:#ffe2a3;line-height:1.55}
+    @media(max-width:900px){.points-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.points-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="site-shell">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Hesabım</p>
+          <h1>Puanlarım</h1>
+          <p>Toplam HP, günlük görev HP'si, alışveriş HP'si ve XP hareketlerini tek ekrandan takip et.</p>
+        </div>
+      </section>
+      <section class="container points-page" data-page="points">
+        <div class="platform-actions">
+          <a class="platform-action" href="user-panel.html">Hesabıma Dön</a>
+          <a class="platform-action platform-action--secondary" href="rewards.html">Kupon Merkezi</a>
+          <a class="platform-action platform-action--secondary" href="../commerce/kuponlar.html#puan-dukkani">Kupon Oluştur</a>
+        </div>
+        <section class="points-grid" aria-label="Puan özeti">
+          <article class="points-card"><span>Toplam HP</span><strong data-points-total-hp>0 HP</strong></article>
+          <article class="points-card"><span>Günlük Görev HP</span><strong data-points-daily-hp>0 HP</strong></article>
+          <article class="points-card"><span>Alışveriş HP</span><strong data-points-shopping-hp>0 HP</strong></article>
+          <article class="points-card"><span>XP</span><strong data-points-xp>0 XP</strong></article>
+        </section>
+        <div class="points-rule">Günlük görevlerden kazanılan HP, ilk kullanım hakkından sonra tek başına kupon dönüşümüne kapalıdır. Dönüşüm için alışveriş HP'siyle birlikte değerlendirilir.</div>
+        <section class="points-ledger">
+          <h2>Son Puan Hareketleri</h2>
+          <div data-points-ledger></div>
+        </section>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const sync = window.AllonaProfileSync;
+      const client = sync && sync.createClient ? sync.createClient() : null;
+      const fmt = (value, suffix) => `${Number(value || 0).toLocaleString("tr-TR")} ${suffix}`;
+      const set = (selector, value) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+      const esc = (value) => window.Allona?.core?.escapeHTML ? window.Allona.core.escapeHTML(value || "") : String(value || "");
+      if (!sync || !client) return;
+      const loaded = await sync.load(client);
+      if (!loaded || !loaded.user) {
+        window.location.href = "user.html";
+        return;
+      }
+      const profile = loaded.profile || {};
+      const daily = Math.max(0, Number(profile.cashout_balance || 0));
+      const shopping = Math.max(0, Number(profile.hub_cash || profile.wallet_balance || 0));
+      const total = Math.max(0, Number(profile.hp || 0));
+      set("[data-points-total-hp]", fmt(total, "HP"));
+      set("[data-points-daily-hp]", fmt(daily, "HP"));
+      set("[data-points-shopping-hp]", fmt(shopping, "HP"));
+      set("[data-points-xp]", fmt(profile.xp || 0, "XP"));
+      const ledger = sync.getHpLedger ? sync.getHpLedger(loaded.user) : [];
+      const target = document.querySelector("[data-points-ledger]");
+      if (target) {
+        target.innerHTML = ledger.length ? `
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Kaynak</th><th>Tür</th><th>HP</th><th>Not</th><th>Tarih</th></tr></thead>
+              <tbody>
+                ${ledger.map((entry) => `
+                  <tr>
+                    <td>${esc(entry.source || "AllonaHub")}</td>
+                    <td>${esc(entry.bucket || "other")}</td>
+                    <td>${Number(entry.amount || 0).toLocaleString("tr-TR")}</td>
+                    <td>${esc(entry.note || entry.title || "-")}</td>
+                    <td>${entry.created_at ? new Date(entry.created_at).toLocaleDateString("tr-TR") : "-"}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        ` : `<div class="empty-state">Henüz puan hareketi bulunmuyor. Görevler ve alışverişlerden sonra burada görünür.</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

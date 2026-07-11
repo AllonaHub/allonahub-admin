@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AllonaHub Super Admin</title>
-  <link rel="stylesheet" href="../css/platform.css?v=20260626-mobile-std27">
-  <link rel="stylesheet" href="../css/super-admin.css?v=20260624-actions1">
+  <link rel="stylesheet" href="../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../css/super-admin.css?v=20260629-ownerbadge1">
 </head>
 <body data-page="super-admin" data-theme="graphite">
   <div class="sa-shell" data-super-admin-shell>
@@ -16,22 +16,25 @@
       </a>
       <nav class="sa-command-nav" data-sa-nav>
         <button class="is-active" type="button" data-view-target="overview">Kontrol Merkezi</button>
+        <button type="button" data-view-target="automation">Otomasyon Merkezi</button>
+        <button type="button" data-view-target="work-queue">İş Kuyruğu</button>
         <button type="button" data-view-target="alerts">Uyarı / Risk Akışı</button>
         <button type="button" data-view-target="approvals">Yayın Onayları</button>
+        <button type="button" data-view-target="release-history">Yayın Geçmişi</button>
+        <button type="button" data-view-target="operations">Sipariş / Operasyon</button>
+        <button type="button" data-view-target="refunds">İade ve İptaller</button>
+        <button type="button" data-view-target="finance">Finans Merkezi</button>
+        <button type="button" data-view-target="content">Kupon / Kampanya / İçerik</button>
+        <button type="button" data-view-target="health">Sistem Sağlığı</button>
         <button type="button" data-view-target="access">Erişim Kilidi</button>
         <button type="button" data-view-target="permissions">Yetki Merkezi</button>
         <button type="button" data-view-target="module-map">Modül Haritası</button>
         <button type="button" data-view-target="users">Kullanıcı Yönetimi</button>
-        <button type="button" data-view-target="partners">Partner Başvuruları</button>
+        <button type="button" data-view-target="partners">Partner Yönetimi</button>
         <button type="button" data-view-target="modules">Modül Yönetimi</button>
         <button type="button" data-view-target="system">Sistem Ayarları</button>
         <button type="button" data-view-target="security">Güvenlik Merkezi</button>
         <button type="button" data-view-target="audit">Audit Log</button>
-        <a href="./index.html" data-command-link>Admin Panel</a>
-        <a href="./orders.html" data-command-link>Sipariş Merkezi</a>
-        <a href="./coupons.html" data-command-link>Kupon Merkezi</a>
-        <a href="../pages/partner/partner-panel.html" data-command-link>Partner Panel</a>
-        <a href="../pages/account/user-panel.html" data-command-link>User Panel</a>
       </nav>
     </aside>
 
@@ -43,7 +46,7 @@
         </div>
         <div class="sa-session">
           <span data-sa-role>Owner doğrulanıyor</span>
-          <button class="sa-text-btn" type="button" data-release-open>Yayın Onayı</button>
+          <button class="sa-text-btn" type="button" data-view-jump="approvals">Yayın Onayları</button>
           <button class="sa-btn sa-btn-ghost" type="button" data-sa-refresh>Yenile</button>
           <button class="sa-btn sa-btn-danger" type="button" data-sa-signout>Çıkış</button>
         </div>
@@ -91,8 +94,8 @@
 
   <div class="sa-modal" data-release-modal hidden>
     <form class="sa-modal-card" data-release-form role="dialog" aria-modal="true" aria-labelledby="releaseTitle">
-      <h2 id="releaseTitle">Yayın / Main Onayı</h2>
-      <p>Bu onay backend audit log'a yazılır. GitHub/CI tetiklemesi yalnızca server-side güvenli webhook yapılandırılmışsa yapılır.</p>
+      <h2 id="releaseTitle">Yayın Onayı İsteği</h2>
+      <p>Bu form yalnızca bekleyen owner onayı oluşturur. GitHub/CI/deploy tetiklemesi, detay incelendikten sonra ayrıca owner onayı verilirse yapılır.</p>
       <label>
         Onay tipi
         <select name="approval_type" required>
@@ -119,20 +122,22 @@
       </label>
       <label>
         Onay özeti
-        <textarea name="target_summary" rows="4" maxlength="1200" required placeholder="Neyi yayına almak istediğini açıkla"></textarea>
+        <textarea name="target_summary" rows="4" minlength="3" maxlength="1200" required placeholder="Neyi yayına almak istediğini açıkla"></textarea>
       </label>
+      <div class="sa-modal-status" data-release-status aria-live="polite"></div>
       <div class="sa-modal-actions">
         <button class="sa-btn sa-btn-ghost" type="button" data-release-cancel>Vazgeç</button>
-        <button class="sa-btn sa-btn-danger" type="submit">Owner Onayı Ver</button>
+        <button class="sa-btn sa-btn-danger" type="submit">Onay İsteği Oluştur</button>
       </div>
     </form>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../js/config.js?v=20260623-mfa2"></script>
-  <script src="../js/core.js?v=20260623-mfa2"></script>
+  <script src="../js/core.js?v=20260630-currency3"></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
-  <script src="../js/auth.js?v=20260623-mfa2"></script>
-  <script src="../js/super-admin.js?v=20260625-actions8"></script>
+  <script src="../js/auth.js?v=20260629-adminroot1"></script>
+  <script src="../js/admin-alarm.js?v=20260629-alarmhide1"></script>
+  <script src="../js/super-admin.js?v=20260630-automation1"></script>
 </body>
 </html>

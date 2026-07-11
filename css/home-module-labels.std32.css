@@ -41,9 +41,25 @@ body[data-theme] .modules-grid.large-grid .module-card[class*="module-card--"] p
   text-align: left !important;
 }
 
-body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] h3,
+body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] > div {
+  width: calc(100% + 20px) !important;
+  max-width: none !important;
+  margin: 0 0 0 -8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] h3 {
+  color: #ffd700 !important;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.80) !important;
+}
+
 body[data-theme="corporate"] .modules-grid.large-grid .module-card[class*="module-card--"] p {
-  color: #111827 !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.90) !important;
 }
 
 body[data-theme] .modules-grid.large-grid .module-card:is(

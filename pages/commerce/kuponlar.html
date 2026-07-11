@@ -51,6 +51,23 @@ backdrop-filter:blur(12px);
 transition:.3s;
 }
 
+.coupon-card[hidden],
+.starter-coupon-done[hidden],
+.coupon-grid[hidden]{
+display:none;
+}
+
+.starter-coupon-done{
+margin:0 0 24px;
+padding:18px;
+border-radius:20px;
+background:rgba(43,214,138,.12);
+border:1px solid rgba(43,214,138,.28);
+color:#dff8ff;
+text-align:center;
+line-height:1.6;
+}
+
 .coupon-card:hover{
 transform:translateY(-5px);
 }
@@ -256,7 +273,7 @@ grid-template-columns:1fr;
 }
 
 	</style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-rail-v6">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
 </head>
 
 <body>
@@ -273,9 +290,13 @@ grid-template-columns:1fr;
 <a href="../account/user-panel.html" class="btn btn--ghost" data-account-return-link>Hesabıma Dön</a>
 </div>
 
-<div class="coupon-grid">
+<div class="starter-coupon-done" data-starter-coupon-done hidden>
+Başlangıç kuponların daha önce hesabına tanımlanmış. Aktif kuponlarını aşağıdaki cüzdan alanından takip edebilirsin.
+</div>
 
-<div class="coupon-card">
+<div class="coupon-grid" data-starter-coupon-grid>
+
+<div class="coupon-card" data-starter-coupon="WELCOME10">
 <div class="discount">%10</div>
 <div class="coupon-title">Hoş Geldin Kuponu</div>
 <div class="coupon-desc">
@@ -284,11 +305,10 @@ Yeni üyelere özel ilk alışveriş indirimi.
 <div class="code">WELCOME10</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="WELCOME10">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="WELCOME10">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
-<div class="coupon-card">
+<div class="coupon-card" data-starter-coupon="PARTNER15">
 <div class="discount">%15</div>
 <div class="coupon-title">Partner Kampanyası</div>
 <div class="coupon-desc">
@@ -297,20 +317,18 @@ Seçili partner mağazalarda geçerlidir.
 <div class="code">PARTNER15</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="PARTNER15">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="PARTNER15">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
-<div class="coupon-card">
-<div class="discount">%20</div>
+<div class="coupon-card" data-starter-coupon="HP20">
+<div class="discount">%8</div>
 <div class="coupon-title">HP Avantaj Kuponu</div>
 <div class="coupon-desc">
-Sadakat programı kullanıcılarına özel avantaj.
+Sadakat alanı kullanıcılarına düşük oranlı indirim.
 </div>
 <div class="code">HP20</div>
 <div class="coupon-actions">
 <button type="button" class="btn coupon-action" data-coupon-action="use" data-coupon-code="HP20">Kuponu Kullan</button>
-<button type="button" class="btn btn--ghost coupon-convert" data-coupon-action="convert" data-coupon-code="HP20">Kuponu HP'ye Ekle</button>
 </div>
 </div>
 
@@ -361,12 +379,13 @@ Kupon kullanım koşulları ilgili kampanya şartlarına tabidir.
   <div data-layout="footer"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-cvpay2" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/coupon-page.js?v=20260621-hp1" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
+  <script src="../../js/coupon-page.js?v=20260629-panel-fix1" defer></script>
 </body>
 </html>

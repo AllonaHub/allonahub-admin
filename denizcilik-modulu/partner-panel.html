@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Partner Panel | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Denizcilik partner panelinde navlun, paylasim ve destek kayitlari yonetilir.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="partner">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="briefcase-business"></i>Partner calisma alani</span>
+        <h1>Navlun gir, paylasim yap, talebe yanit ver</h1>
+        <p class="lead">Partnerler kendi navlun teklifini ve operasyon paylasimini ekler; talepler ve destek kayitlari ayni ekranda takip edilir.</p>
+      </section>
+
+      <section class="section">
+        <div class="metrics-grid" data-render="kpis"></div>
+      </section>
+
+      <section class="section split-layout" id="navlun-ekle">
+        <aside class="form-panel">
+          <h2>Navlun Bilgisi Ekle</h2>
+          <form data-form="rate">
+            <div class="form-grid">
+              <div class="field"><label for="rate-origin">Cikis</label><input id="rate-origin" name="origin" required placeholder="Mersin"></div>
+              <div class="field"><label for="rate-destination">Varis</label><input id="rate-destination" name="destination" required placeholder="Rotterdam"></div>
+              <div class="field"><label for="rate-carrier">Firma</label><input id="rate-carrier" name="carrier" required placeholder="Marmara Forwarding"></div>
+              <div class="field"><label for="rate-price">Fiyat USD</label><input id="rate-price" name="priceUsd" type="number" min="1" step="1" required placeholder="3200"></div>
+              <div class="field"><label for="rate-mode-form">Mod</label><select id="rate-mode-form" name="mode"><option>FCL</option><option>LCL</option><option>Ro-Ro</option></select></div>
+              <div class="field"><label for="rate-container-form">Tip</label><select id="rate-container-form" name="containerType"><option>40HC</option><option>20DC</option><option>1-6 CBM</option><option>Tir Slot</option></select></div>
+              <div class="field"><label for="rate-transit">Transit gun</label><input id="rate-transit" name="transitDays" type="number" min="1" required placeholder="11"></div>
+              <div class="field"><label for="rate-validity">Gecerlilik</label><input id="rate-validity" name="validity" type="date" required></div>
+              <div class="field"><label for="rate-capacity">Kapasite</label><input id="rate-capacity" name="capacity" required placeholder="18 TEU"></div>
+              <div class="field wide"><label for="rate-note">Not</label><textarea id="rate-note" name="note" required placeholder="Cut-off, lokal masraf ve operasyon notu."></textarea></div>
+            </div>
+            <div class="consent-stack">
+              <label class="consent-option">
+                <input type="checkbox" name="partnerTerms" required>
+                <span><a href="../legal/index.html#partner">Partner Koşulları</a> uyarınca fiyat, geçerlilik, kapasite ve operasyon bilgilerinin doğruluğundan sorumlu olduğumu okudum.</span>
+              </label>
+            </div>
+            <button class="button" type="submit"><i data-lucide="save"></i><span>Navlunu Kaydet</span></button>
+          </form>
+        </aside>
+
+        <div>
+          <div class="section-heading">
+            <div>
+              <h2>Teklif talepleri</h2>
+              <p>Partnerin hizli yanit verecegi acik musteri talepleri.</p>
+            </div>
+          </div>
+          <div class="horizontal-strip" data-render="quote-requests"></div>
+        </div>
+      </section>
+
+      <section class="section tint">
+        <div class="section-heading"><div><h2>Evrak ve Operasyon Kontrolu</h2><p>Uzun kontrol listesi yatay kaydirma ile ekrani bozmaz.</p></div></div>
+        <div class="checklist">
+          <div class="check-item"><strong>Booking</strong><p>Hat, ETD, cut-off ve ekipman tipi onaylandi.</p></div>
+          <div class="check-item"><strong>Konşimento</strong><p>Shipper, consignee, notify ve HS bilgisi kontrol edildi.</p></div>
+          <div class="check-item"><strong>Liman Masrafi</strong><p>THC, ISPS, dokumantasyon ve depo kalemleri teyit edildi.</p></div>
+          <div class="check-item"><strong>Yukleme</strong><p>Muhur, fotograf ve konteyner durumu kayda alindi.</p></div>
+          <div class="check-item"><strong>ETA Takibi</strong><p>Varis limani ve gecikme riski musteriye bildirildi.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="destek.html">Destek</a><a href="paylasimlar.html">Paylasimlar</a><a href="navlun.html">Navlun</a><a href="../legal/index.html#partner">Partner Koşulları</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#cerez">Çerezler</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Partner içerikleri fiyat, geçerlilik, kapasite, marka ve operasyon doğruluğu bakımından partner sorumluluğundadır.</p></div>
+    </footer>
+  </body>
+</html>

@@ -46,6 +46,7 @@ const requiredAllowedOrigins = [
   "https://allonahub.com",
   "https://www.allonahub.com",
   "https://admin.allonahub.com",
+  "https://partner.allonahub.com",
   "https://allonahub.github.io"
 ];
 
@@ -66,6 +67,11 @@ export const config = {
   turnstile: {
     secretKey: readOptionalSecret("TURNSTILE_SECRET_KEY", "CF_TURNSTILE_SECRET_KEY", "CLOUDFLARE_TURNSTILE_SECRET_KEY"),
     strict: readBool("TURNSTILE_STRICT", false)
+  },
+  companyLookup: {
+    turkeyApiUrl: readEnv("COMPANY_LOOKUP_TR_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    turkeyApiToken: readOptionalSecret("COMPANY_LOOKUP_TR_API_TOKEN"),
+    timeoutMs: readNumber("COMPANY_LOOKUP_TIMEOUT_MS", 12000)
   },
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
   maintenanceMode: readBool("MAINTENANCE_MODE", false),
@@ -95,12 +101,22 @@ export const config = {
     cfThreatScoreBlockAbove: readNumber("AUTO_DEFENSE_CF_THREAT_SCORE_BLOCK_ABOVE", 50)
   },
   alerts: {
+    enabled: readBool("SECURITY_ALERTS_ENABLED", true),
+    minSeverity: readEnv("SECURITY_ALERT_MIN_SEVERITY", { required: false, defaultValue: "critical" }),
+    cooldownMs: readNumber("SECURITY_ALERT_COOLDOWN_MS", 180000),
+    webhookUrl: readEnv("SECURITY_ALERT_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    webhookSecret: readEnv("SECURITY_ALERT_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     telegramBotToken: readEnv("TELEGRAM_BOT_TOKEN", { required: false, defaultValue: "" }),
     telegramChatId: readEnv("TELEGRAM_CHAT_ID", { required: false, defaultValue: "" }),
     emailWebhookUrl: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_URL", { required: false, defaultValue: "" }),
     emailWebhookSecret: readEnv("SECURITY_ALERT_EMAIL_WEBHOOK_SECRET", { required: false, defaultValue: "" }),
     alertFrom: readEnv("SECURITY_ALERT_FROM", { required: false, defaultValue: "security@allonahub.com" }),
-    alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" })
+    alertTo: readEnv("SECURITY_ALERT_TO", { required: false, defaultValue: "" }),
+    smsProvider: readEnv("SECURITY_ALERT_SMS_PROVIDER", { required: false, defaultValue: "" }),
+    smsAccountSid: readEnv("SECURITY_ALERT_SMS_ACCOUNT_SID", { required: false, defaultValue: "" }),
+    smsAuthToken: readOptionalSecret("SECURITY_ALERT_SMS_AUTH_TOKEN"),
+    smsFrom: readEnv("SECURITY_ALERT_SMS_FROM", { required: false, defaultValue: "" }),
+    smsTo: readEnv("SECURITY_ALERT_SMS_TO", { required: false, defaultValue: "" })
   },
   assistant: {
     enabled: readBool("ASSISTANT_ENABLED", true),
@@ -156,7 +172,7 @@ export const config = {
     secretEncryptionKey: readOptionalSecret("SOCIAL_MEDIA_SECRET_ENCRYPTION_KEY"),
     sendTimeoutMs: readNumber("SOCIAL_MEDIA_SEND_TIMEOUT_MS", 12000),
     maxDispatchBatch: readNumber("SOCIAL_MEDIA_MAX_DISPATCH_BATCH", 20),
-    maxMediaBytes: readNumber("SOCIAL_MEDIA_MAX_MEDIA_BYTES", 157286400),
+    maxMediaBytes: readNumber("SOCIAL_MEDIA_MAX_MEDIA_BYTES", 8388608),
     dailyDraftsEnabled: readBool("SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED", false),
     assetWebhookUrl: normalizeEnvString(
       readEnv("SOCIAL_MEDIA_ASSET_WEBHOOK_URL", { required: false, defaultValue: "" })
@@ -200,9 +216,46 @@ export const config = {
         defaultValue: "social-media"
       })
     ),
+    assetRetentionDays: readNumber("SOCIAL_MEDIA_ASSET_RETENTION_DAYS", 2),
     defaultTimezone: normalizeEnvString(
       readEnv("SOCIAL_MEDIA_DEFAULT_TIMEZONE", { required: false, defaultValue: "Europe/Istanbul" })
     )
+  },
+  productMedia: {
+    storageBucket: normalizeEnvString(
+      readEnv("PRODUCT_IMAGE_STORAGE_BUCKET", { required: false, defaultValue: "product-images" })
+    ),
+    cacheMaxAgeSeconds: readNumber("PRODUCT_IMAGE_CACHE_MAX_AGE_SECONDS", 31536000)
+  },
+  currency: {
+    baseCurrency: normalizeEnvString(readEnv("CURRENCY_BASE", { required: false, defaultValue: "TRY" })).toUpperCase(),
+    ratesUrl: normalizeEnvString(
+      readEnv("CURRENCY_RATES_URL", { required: false, defaultValue: "https://open.er-api.com/v6/latest/{base}" })
+    ),
+    cacheMs: readNumber("CURRENCY_RATES_CACHE_MS", 12 * 60 * 60 * 1000),
+    timeoutMs: readNumber("CURRENCY_RATES_TIMEOUT_MS", 8000)
+  },
+  integrations: {
+    enabled: readBool("PARTNER_INTEGRATIONS_ENABLED", true),
+    premiumEnabled: readBool("PARTNER_INTEGRATIONS_PREMIUM_ENABLED", false),
+    outboundEnabled: readBool("PARTNER_INTEGRATIONS_OUTBOUND_ENABLED", false),
+    applyEnabled: readBool("PARTNER_INTEGRATIONS_APPLY_ENABLED", true),
+    scheduledApplyEnabled: readBool("PARTNER_INTEGRATIONS_SCHEDULED_APPLY_ENABLED", false),
+    requireApplyConfirmation: readBool("PARTNER_INTEGRATIONS_REQUIRE_APPLY_CONFIRMATION", true),
+    applyConfirmationText: normalizeEnvString(
+      readEnv("PARTNER_INTEGRATIONS_APPLY_CONFIRMATION_TEXT", {
+        required: false,
+        defaultValue: "KATALOGA_AKTAR"
+      })
+    ),
+    forceDraftOnApply: readBool("PARTNER_INTEGRATIONS_FORCE_DRAFT_ON_APPLY", true),
+    remoteFetchEnabled: readBool("PARTNER_INTEGRATIONS_REMOTE_FETCH_ENABLED", true),
+    blockPrivateFetchTargets: readBool("PARTNER_INTEGRATIONS_BLOCK_PRIVATE_FETCH_TARGETS", true),
+    allowedFetchHosts: csv(readEnv("PARTNER_INTEGRATIONS_ALLOWED_FETCH_HOSTS", { required: false, defaultValue: "" })),
+    maxPreviewRows: readNumber("PARTNER_INTEGRATIONS_MAX_PREVIEW_ROWS", 50),
+    maxApplyRows: readNumber("PARTNER_INTEGRATIONS_MAX_APPLY_ROWS", 100),
+    maxTestRows: readNumber("PARTNER_INTEGRATIONS_MAX_TEST_ROWS", 3),
+    fetchTimeoutMs: readNumber("PARTNER_INTEGRATIONS_FETCH_TIMEOUT_MS", 12000)
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {
@@ -214,6 +267,12 @@ export const config = {
     apiKey: readEnv("IYZICO_API_KEY"),
     secretKey: readEnv("IYZICO_SECRET_KEY"),
     baseUrl: readEnv("IYZICO_BASE_URL", { required: false, defaultValue: "https://sandbox-api.iyzipay.com" }).replace(/\/$/, "")
+  },
+  paymentProvider: {
+    refundWebhookUrl: readEnv("PAYMENT_PROVIDER_REFUND_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
+    refundWebhookSecret: readOptionalSecret("PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET"),
+    refundWebhookTimeoutMs: readNumber("PAYMENT_PROVIDER_REFUND_WEBHOOK_TIMEOUT_MS", 12000),
+    nativeRefundsEnabled: readBool("PAYMENT_PROVIDER_NATIVE_REFUNDS_ENABLED", false)
   }
 };
 

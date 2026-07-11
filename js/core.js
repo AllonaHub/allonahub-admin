@@ -9,6 +9,8 @@
     "favorites.html": "/pages/account/favorites.html",
     "forgot-password.html": "/pages/account/user.html?tab=forgot",
     "gorevler.html": "/pages/account/gorevler.html",
+    "hublar.html": "/pages/account/hublar.html",
+    "is-ilanlari.html": "/pages/account/is-ilanlari.html",
     "login.html": "/pages/account/user.html",
     "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",
@@ -16,6 +18,7 @@
     "premium.html": "/pages/account/premium.html",
     "profil.html": "/pages/account/profil.html",
     "profile.html": "/pages/account/profile.html",
+    "puanlar.html": "/pages/account/puanlar.html",
     "register.html": "/pages/account/user.html?tab=register",
     "reset-password.html": "/pages/account/reset-password.html",
     "rewards.html": "/pages/account/rewards.html",
@@ -107,12 +110,17 @@
     "partner-orders.html": "/pages/partner/partner-orders.html",
     "partner-order-detail.html": "/pages/partner/partner-order-detail.html",
     "partner-panel.html": "/pages/partner/partner-panel.html",
+    "partner-products.html": "/pages/partner/partner-products.html",
     "partner-pay.html": "/pages/partner/pay.html",
     "partner-uyelik.html": "/pages/partner/partner-uyelik.html",
+    "kurucu-uyelik.html": "/pages/partner/kurucu-uyelik.html",
     "pazaryeri-satis.html": "/pages/partner/pazaryeri-satis.html",
     "cerez-politikasi.html": "/pages/legal/cerez-politikasi.html",
     "cerez.html": "/pages/legal/cerez.html",
+    "etbis.html": "/pages/legal/etbis-guven-damgasi.html",
+    "etbis-guven-damgasi.html": "/pages/legal/etbis-guven-damgasi.html",
     "gizlilik.html": "/pages/legal/gizlilik.html",
+    "guven-damgasi.html": "/pages/legal/etbis-guven-damgasi.html",
     "guvenlik-politikasi.html": "/pages/legal/guvenlik-politikasi.html",
     "iade-politikasi.html": "/pages/legal/iade-politikasi.html",
     "iptal-iade.html": "/pages/legal/iptal-iade.html",
@@ -213,12 +221,415 @@
     return fallback;
   }
 
-  function money(value) {
+  function encodePathSegments(path) {
+    return String(path || "")
+      .split("/")
+      .filter(Boolean)
+      .map((part) => {
+        try {
+          return encodeURIComponent(decodeURIComponent(part));
+        } catch (error) {
+          return encodeURIComponent(part);
+        }
+      })
+      .join("/");
+  }
+
+  function productMediaUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    const apiBaseUrl = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
+    if (!apiBaseUrl) return raw;
+
+    if (/^products\/[a-z0-9._/-]+\.(?:avif|jpe?g|png|webp)$/i.test(raw)) {
+      return `${apiBaseUrl}/v1/media/product-images/${encodePathSegments(raw)}`;
+    }
+
+    try {
+      const parsed = new URL(raw, window.location.href);
+      const proxyPrefix = "/v1/media/product-images/";
+      if (parsed.host === new URL(apiBaseUrl).host && parsed.pathname.startsWith(proxyPrefix)) return parsed.href;
+
+      const storagePrefix = "/storage/v1/object/public/product-images/";
+      if (/\.supabase\.co$/i.test(parsed.hostname) && parsed.pathname.startsWith(storagePrefix)) {
+        const storagePath = parsed.pathname.slice(storagePrefix.length);
+        return `${apiBaseUrl}${proxyPrefix}${encodePathSegments(storagePath)}`;
+      }
+    } catch (error) {
+      return raw;
+    }
+
+    return raw;
+  }
+
+  const CURRENCY_PREF_KEY = "allona.currency";
+  const CURRENCY_RATES_PREFIX = "allona.currency.rates.";
+  const BASE_CURRENCY = String(App.config?.baseCurrency || App.config?.currency || "TRY").toUpperCase();
+  const CURRENCY_CACHE_MS = Number(App.config?.currencyCacheHours || 12) * 60 * 60 * 1000;
+  const supportedCurrencies = ["TRY", "USD", "EUR", "AZN", "AED", "SAR", "GBP", "RUB"];
+  const countryCurrencyMap = {
+    AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AT: "EUR", AU: "AUD", AW: "AWG", AZ: "AZN",
+    BA: "BAM", BB: "BBD", BD: "BDT", BE: "EUR", BF: "XOF", BG: "BGN", BH: "BHD", BI: "BIF", BJ: "XOF", BN: "BND", BO: "BOB", BR: "BRL", BS: "BSD", BT: "BTN", BW: "BWP", BY: "BYN",
+    CA: "CAD", CD: "CDF", CG: "XAF", CH: "CHF", CI: "XOF", CL: "CLP", CM: "XAF", CN: "CNY", CO: "COP", CR: "CRC", CV: "CVE", CY: "EUR", CZ: "CZK",
+    DE: "EUR", DJ: "DJF", DK: "DKK", DM: "XCD", DO: "DOP", DZ: "DZD", EC: "USD", EE: "EUR", EG: "EGP", ES: "EUR", ET: "ETB",
+    FI: "EUR", FJ: "FJD", FR: "EUR", GB: "GBP", GE: "GEL", GH: "GHS", GM: "GMD", GN: "GNF", GR: "EUR", GT: "GTQ", HK: "HKD", HR: "EUR", HU: "HUF",
+    ID: "IDR", IE: "EUR", IL: "ILS", IN: "INR", IQ: "IQD", IR: "IRR", IS: "ISK", IT: "EUR", JM: "JMD", JO: "JOD", JP: "JPY",
+    KE: "KES", KG: "KGS", KH: "KHR", KR: "KRW", KW: "KWD", KZ: "KZT", LB: "LBP", LI: "CHF", LK: "LKR", LT: "EUR", LU: "EUR", LV: "EUR", LY: "LYD",
+    MA: "MAD", MC: "EUR", MD: "MDL", ME: "EUR", MG: "MGA", MK: "MKD", ML: "XOF", MM: "MMK", MN: "MNT", MT: "EUR", MU: "MUR", MX: "MXN", MY: "MYR",
+    NG: "NGN", NL: "EUR", NO: "NOK", NP: "NPR", NZ: "NZD", OM: "OMR", PA: "PAB", PE: "PEN", PH: "PHP", PK: "PKR", PL: "PLN", PT: "EUR", PY: "PYG",
+    QA: "QAR", RO: "RON", RS: "RSD", RU: "RUB", RW: "RWF", SA: "SAR", SE: "SEK", SG: "SGD", SI: "EUR", SK: "EUR", SN: "XOF", TH: "THB", TJ: "TJS", TM: "TMT",
+    TN: "TND", TR: "TRY", UA: "UAH", US: "USD", UY: "UYU", UZ: "UZS", VN: "VND", ZA: "ZAR"
+  };
+  const timeZoneCountryMap = {
+    "Europe/Istanbul": "TR",
+    "Asia/Baku": "AZ",
+    "America/New_York": "US",
+    "America/Chicago": "US",
+    "America/Denver": "US",
+    "America/Los_Angeles": "US",
+    "America/Toronto": "CA",
+    "Europe/London": "GB",
+    "Europe/Berlin": "DE",
+    "Europe/Paris": "FR",
+    "Europe/Rome": "IT",
+    "Europe/Madrid": "ES",
+    "Europe/Amsterdam": "NL",
+    "Europe/Brussels": "BE",
+    "Europe/Vienna": "AT",
+    "Europe/Zurich": "CH",
+    "Asia/Dubai": "AE",
+    "Asia/Riyadh": "SA",
+    "Asia/Qatar": "QA",
+    "Asia/Kuwait": "KW",
+    "Asia/Bahrain": "BH",
+    "Asia/Muscat": "OM",
+    "Asia/Baghdad": "IQ",
+    "Asia/Amman": "JO",
+    "Asia/Beirut": "LB",
+    "Africa/Cairo": "EG",
+    "Africa/Casablanca": "MA",
+    "Asia/Tehran": "IR",
+    "Asia/Tokyo": "JP",
+    "Asia/Seoul": "KR",
+    "Asia/Shanghai": "CN",
+    "Asia/Singapore": "SG",
+    "Asia/Kolkata": "IN"
+  };
+  const currencyLocaleMap = {
+    AED: "ar-AE", AZN: "az-AZ", BHD: "ar-BH", CAD: "en-CA", CHF: "de-CH", CNY: "zh-CN", EGP: "ar-EG", EUR: "de-DE", GBP: "en-GB",
+    IQD: "ar-IQ", JOD: "ar-JO", KWD: "ar-KW", OMR: "ar-OM", QAR: "ar-QA", SAR: "ar-SA", TRY: "tr-TR", USD: "en-US"
+  };
+  const currencyState = {
+    base: BASE_CURRENCY,
+    target: BASE_CURRENCY,
+    country: "TR",
+    locale: App.config?.locale || "tr-TR",
+    rates: { [BASE_CURRENCY]: 1 },
+    updatedAt: 0,
+    provider: "",
+    source: "initial",
+    ready: false
+  };
+
+  function normalizeCurrency(value) {
+    const code = String(value || "").trim().toUpperCase();
+    return /^[A-Z]{3}$/.test(code) ? code : "";
+  }
+
+  function targetCurrencyForCountry(country) {
+    return countryCurrencyMap[String(country || "").trim().toUpperCase()] || BASE_CURRENCY;
+  }
+
+  function localeForCurrency(currency) {
+    return currencyLocaleMap[currency] || App.config?.locale || navigator.language || "tr-TR";
+  }
+
+  function currencyParam() {
+    try {
+      return normalizeCurrency(new URL(window.location.href).searchParams.get("currency"));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function storedCurrency() {
+    try {
+      return normalizeCurrency(localStorage.getItem(CURRENCY_PREF_KEY));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function regionFromLocale(value) {
+    try {
+      return new Intl.Locale(value).region || "";
+    } catch (error) {
+      const parts = String(value || "").split("-");
+      return parts.length > 1 ? parts.pop().toUpperCase() : "";
+    }
+  }
+
+  function detectedCountry() {
+    const localeCountry = (navigator.languages || [navigator.language || ""])
+      .map(regionFromLocale)
+      .find(Boolean);
+    if (localeCountry) return localeCountry;
+    try {
+      const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return timeZoneCountryMap[zone] || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function ratesUrls(base) {
+    const apiBaseUrl = String(App.config?.apiBaseUrl || "").replace(/\/$/, "");
+    const proxyUrl = apiBaseUrl ? `${apiBaseUrl}/v1/currency/rates?base={base}` : "";
+    const templates = [
+      App.config?.currencyRatesProxyUrl,
+      proxyUrl
+    ].filter(Boolean);
+    return [...new Set(templates)]
+      .map((template) => String(template).replace("{base}", encodeURIComponent(base)));
+  }
+
+  function readRatesCache(base, allowStale) {
+    try {
+      const cache = JSON.parse(localStorage.getItem(`${CURRENCY_RATES_PREFIX}${base}`) || "null");
+      if (!cache || !cache.rates) return null;
+      if (!allowStale && Date.now() - Number(cache.fetchedAt || 0) > CURRENCY_CACHE_MS) return null;
+      return cache;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeRatesCache(base, payload) {
+    try {
+      localStorage.setItem(`${CURRENCY_RATES_PREFIX}${base}`, JSON.stringify(payload));
+    } catch (error) {}
+  }
+
+  function applyRates(payload) {
+    if (!payload || !payload.rates) return;
+    currencyState.rates = { ...payload.rates, [currencyState.base]: 1 };
+    currencyState.updatedAt = Number(payload.updatedAt || Date.now());
+    currencyState.provider = payload.provider || "";
+    currencyState.source = payload.source || currencyState.source;
+    currencyState.ready = true;
+  }
+
+  function normalizeRatesPayload(payload, source) {
+    const rates = payload?.rates || payload?.conversion_rates || {};
+    if (!rates || typeof rates !== "object") throw new Error("currency rates missing");
+    if (payload.result && payload.result !== "success") throw new Error(payload["error-type"] || "currency rates failed");
+    return {
+      rates,
+      updatedAt: Number(payload.time_last_update_unix || 0) ? Number(payload.time_last_update_unix) * 1000 : Number(payload.updatedAt || payload.updated_at || Date.now()),
+      fetchedAt: Date.now(),
+      provider: payload.provider || "ExchangeRate-API",
+      source
+    };
+  }
+
+  async function loadCurrencyRates(options) {
+    const settings = options || {};
+    const cached = !settings.force && readRatesCache(currencyState.base, false);
+    if (cached) {
+      applyRates(cached);
+      return cached;
+    }
+    let lastError = null;
+    for (const endpoint of ratesUrls(currencyState.base)) {
+      try {
+        const response = await fetch(endpoint, { cache: "no-cache" });
+        if (!response.ok) throw new Error(`currency rates ${response.status}`);
+        const payload = await response.json();
+        const next = normalizeRatesPayload(payload, "backend_proxy");
+        writeRatesCache(currencyState.base, next);
+        applyRates(next);
+        return next;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    const stale = readRatesCache(currencyState.base, true);
+    if (stale) {
+      applyRates({ ...stale, source: "stale_cache" });
+      return stale;
+    }
+    currencyState.ready = false;
+    currencyState.source = lastError ? "unavailable" : "empty";
+    return null;
+  }
+
+  function convertedAmount(value, fromCurrency, toCurrency) {
     const amount = Number(value || 0);
-    return amount.toLocaleString(App.config.locale, {
+    const from = normalizeCurrency(fromCurrency) || currencyState.base;
+    const to = normalizeCurrency(toCurrency) || currencyState.target;
+    if (from === to) return { amount, currency: to };
+    const rates = currencyState.rates || {};
+    const fromRate = Number(rates[from] || 0);
+    const toRate = Number(rates[to] || 0);
+    if (!fromRate || !toRate) return { amount, currency: from };
+    return { amount: (amount / fromRate) * toRate, currency: to };
+  }
+
+  function formatCurrency(value, options) {
+    const settings = options || {};
+    const sourceCurrency = normalizeCurrency(settings.sourceCurrency || settings.currency) || currencyState.base;
+    const targetCurrency = normalizeCurrency(settings.targetCurrency) || currencyState.target;
+    const converted = convertedAmount(value, sourceCurrency, targetCurrency);
+    return Number(converted.amount || 0).toLocaleString(localeForCurrency(converted.currency), {
       style: "currency",
-      currency: App.config.currency
+      currency: converted.currency,
+      maximumFractionDigits: Number.isInteger(converted.amount) && Math.abs(converted.amount) >= 1000 ? 0 : 2
     });
+  }
+
+  function money(value, options) {
+    return formatCurrency(value, options);
+  }
+
+  function parseTryAmount(value) {
+    const raw = String(value || "").replace(/\s/g, "");
+    if (!raw) return NaN;
+    if (raw.includes(",")) return Number(raw.replace(/\./g, "").replace(",", "."));
+    if (/^\d{1,3}(?:\.\d{3})+$/.test(raw)) return Number(raw.replace(/\./g, ""));
+    return Number(raw);
+  }
+
+  function extractStaticPrice(text) {
+    const value = String(text || "");
+    const prefixMatch = value.match(/^(.*?)(-?)\s*₺\s*(\d[\d\s.,]*)(.*)$/);
+    const suffixMatch = value.match(/^(.*?)(-?)\s*(\d[\d\s.,]*)\s*(?:₺|TL\b|TRY\b)(.*)$/i);
+    const match = prefixMatch || suffixMatch;
+    if (!match) return null;
+    const amount = parseTryAmount(match[3]);
+    if (!Number.isFinite(amount)) return null;
+    return {
+      amount: match[2] === "-" ? -amount : amount,
+      before: match[1] || "",
+      after: match[4] || ""
+    };
+  }
+
+  function convertStaticPriceNode(node) {
+    if (!node || node.nodeType !== 1 || node.closest("[data-no-currency]")) return;
+    if (!node.dataset.basePrice) {
+      const parsed = extractStaticPrice(node.textContent);
+      if (!parsed) return;
+      node.dataset.basePrice = String(parsed.amount);
+      node.dataset.priceBefore = parsed.before;
+      node.dataset.priceAfter = parsed.after;
+      node.dataset.sourceCurrency = BASE_CURRENCY;
+    }
+    const amount = Number(node.dataset.basePrice);
+    if (!Number.isFinite(amount)) return;
+    node.textContent = `${node.dataset.priceBefore || ""}${money(amount, { sourceCurrency: node.dataset.sourceCurrency || BASE_CURRENCY })}${node.dataset.priceAfter || ""}`;
+    node.dataset.currency = currencyState.target;
+  }
+
+  function scanStaticPrices(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    const selector = ".price, .compare-price, .tier-price, .shop-promo-price, .food-promo-price, .price-row > span:not(.price-stack):not(.stock):not(.pill), .food-price-line strong, .summary-line strong, .summaryLine strong, [data-currency-price]";
+    if (scope.matches && scope.matches(selector)) convertStaticPriceNode(scope);
+    scope.querySelectorAll(selector).forEach(convertStaticPriceNode);
+  }
+
+  function notifyCurrencyChange() {
+    document.documentElement.setAttribute("data-currency", currencyState.target);
+    document.documentElement.setAttribute("data-currency-country", currencyState.country || "");
+    scanStaticPrices(document);
+    document.dispatchEvent(new CustomEvent("allona:currency-changed", { detail: { ...currencyState } }));
+  }
+
+  async function setCurrency(currency, options) {
+    const selected = normalizeCurrency(currency) || BASE_CURRENCY;
+    const settings = options || {};
+    currencyState.target = selected;
+    currencyState.locale = localeForCurrency(selected);
+    if (settings.country) currencyState.country = String(settings.country).toUpperCase();
+    if (settings.manual) {
+      try {
+        localStorage.setItem(CURRENCY_PREF_KEY, selected);
+      } catch (error) {}
+    }
+    await loadCurrencyRates();
+    notifyCurrencyChange();
+    return { ...currencyState };
+  }
+
+  function clearCurrencyPreference() {
+    try {
+      localStorage.removeItem(CURRENCY_PREF_KEY);
+    } catch (error) {}
+  }
+
+  async function reverseGeocodeCurrency(latitude, longitude) {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=3&addressdetails=1&accept-language=en`, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`location currency ${response.status}`);
+      const payload = await response.json();
+      const country = String(payload.address?.country_code || "").toUpperCase();
+      return country ? { country, currency: targetCurrencyForCountry(country) } : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async function updateCurrencyFromBrowserLocation() {
+    if (storedCurrency() || !navigator.geolocation || !navigator.permissions) return;
+    try {
+      const permission = await navigator.permissions.query({ name: "geolocation" });
+      if (permission.state !== "granted") {
+        if ("onchange" in permission) {
+          permission.onchange = () => updateCurrencyFromBrowserLocation();
+        }
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const match = await reverseGeocodeCurrency(position.coords.latitude, position.coords.longitude);
+        if (match && match.currency && match.currency !== currencyState.target) {
+          await setCurrency(match.currency, { country: match.country, source: "geolocation" });
+        }
+      }, () => undefined, { maximumAge: 30 * 60 * 1000, timeout: 8000 });
+    } catch (error) {}
+  }
+
+  function setupStaticPriceObserver() {
+    if (!document.body || document.body.__allonaCurrencyObserver) return;
+    scanStaticPrices(document);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) scanStaticPrices(node);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.body.__allonaCurrencyObserver = observer;
+  }
+
+  function initCurrency() {
+    const paramCurrency = currencyParam();
+    const savedCurrency = storedCurrency();
+    const country = detectedCountry() || "TR";
+    const selected = paramCurrency || savedCurrency || targetCurrencyForCountry(country);
+    currencyState.country = country;
+    currencyState.target = normalizeCurrency(selected) || BASE_CURRENCY;
+    if (paramCurrency) {
+      try {
+        localStorage.setItem(CURRENCY_PREF_KEY, paramCurrency);
+      } catch (error) {}
+    }
+    loadCurrencyRates().then(notifyCurrencyChange);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupStaticPriceObserver);
+    } else {
+      setupStaticPriceObserver();
+    }
+    updateCurrencyFromBrowserLocation();
   }
 
   function slugify(value) {
@@ -233,13 +644,43 @@
       .slice(0, 90);
   }
 
+  function labelFromValue(value, fallback) {
+    if (value == null || value === "") return fallback || "";
+    if (typeof value === "string" || typeof value === "number") {
+      const label = String(value).trim();
+      return label && label !== "[object Object]" ? label : fallback || "";
+    }
+    if (Array.isArray(value)) return value.map((item) => labelFromValue(item, "")).filter(Boolean).join(", ") || fallback || "";
+    if (typeof value === "object") {
+      for (const key of ["name", "title", "label", "category_name", "categoryName", "category", "slug", "id"]) {
+        const label = labelFromValue(value[key], "");
+        if (label && label !== "[object Object]") return label;
+      }
+      return String(fallback || "");
+    }
+    return String(value || fallback || "");
+  }
+
   function normalizeProduct(raw) {
     const product = raw || {};
     const name = product.name || product.product_name || "Ürün";
     const description = product.description || product.short_description || "";
-    const category = product.category || "Genel";
+    const category = labelFromValue(product.category || product.category_name || product.categoryName, "Genel");
     const id = product.id;
     const slug = product.slug || product.seo_slug || slugify(`${name}-${id || ""}`);
+    const partnerId = product.partner_id || product.partnerId || product.seller_id || "";
+    const sellerPublicName = product.seller_public_name || product.seller_name || product.partner_name || product.store_name || product.shop_name || product.brand || (partnerId ? "AllonaHub Partner Satıcı" : "AllonaHub");
+    const sellerKind = product.seller_kind || product.seller_type_label || (partnerId ? "Partner satıcı" : "Platform satıcısı");
+    const sellerLegalName = product.seller_legal_name || product.legal_seller_name || product.seller_company_name || product.company_name || "";
+    const sellerCity = product.seller_city || product.seller_location || product.city || "";
+    const sellerContact = product.seller_contact || product.seller_support_email || product.seller_email || product.partner_email || "";
+    const sellerTaxMasked = product.seller_tax_number_masked || product.tax_number_masked || "";
+    const invoiceResponsibility = product.invoice_responsibility || (partnerId
+      ? "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür."
+      : "Fatura ve satış sonrası süreçler AllonaHub resmi şirket kayıtlarıyla yürütülür.");
+    const sellerDisclosure = product.seller_disclosure || (partnerId
+      ? "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür."
+      : "Satıcı, platform ve destek bilgileri AllonaHub yasal metinleri ve iletişim sayfasında yayınlanır.");
 
     return {
       ...product,
@@ -251,7 +692,7 @@
       price: Number(product.price || 0),
       stock: Number(product.stock ?? 0),
       status: product.status || "active",
-      image_url: product.image_url || product.image || "",
+      image_url: productMediaUrl(product.image_url || product.image || ""),
       module_key: product.module_key || product.moduleKey || product.catalog_scope || product.module_scope || product.commerce_scope || "",
       created_at: product.created_at || "",
       sold_count: Number(product.sold_count || 0),
@@ -265,7 +706,17 @@
       cart_count: Number(product.cart_count || product.in_cart_count || product.cart_add_count || 0),
       coupon_label: product.coupon_label || product.coupon_text || (typeof product.coupon === "string" ? product.coupon : ""),
       delivery_label: product.delivery_label || product.shipping_label || product.fulfillment_label || "",
-      seller_name: product.seller_name || product.partner_name || product.store_name || product.brand || "Allona Partner",
+      partner_id: partnerId,
+      is_partner_product: Boolean(partnerId),
+      seller_name: sellerPublicName,
+      seller_public_name: sellerPublicName,
+      seller_kind: sellerKind,
+      seller_legal_name: sellerLegalName,
+      seller_city: sellerCity,
+      seller_contact: sellerContact,
+      seller_tax_number_masked: sellerTaxMasked,
+      invoice_responsibility: invoiceResponsibility,
+      seller_disclosure: sellerDisclosure,
       seller_score: Number(product.seller_score || product.store_score || product.partner_score || 0),
       meta_title: product.meta_title || name,
       meta_description: product.meta_description || description
@@ -274,6 +725,7 @@
 
   function productUrl(product) {
     const item = normalizeProduct(product);
+    if (item.detail_url) return url(item.detail_url);
     const params = new URLSearchParams();
     if (item.id) params.set("id", item.id);
     if (item.slug) params.set("slug", item.slug);
@@ -318,7 +770,19 @@
       discount_percent: product.discount_percent,
       compare_at_price: product.compare_at_price,
       seller_name: product.seller_name,
-      seller_score: product.seller_score
+      seller_public_name: product.seller_public_name,
+      seller_kind: product.seller_kind,
+      seller_legal_name: product.seller_legal_name,
+      seller_city: product.seller_city,
+      seller_contact: product.seller_contact,
+      seller_tax_number_masked: product.seller_tax_number_masked,
+      invoice_responsibility: product.invoice_responsibility,
+      seller_disclosure: product.seller_disclosure,
+      seller_score: product.seller_score,
+      partner_id: product.partner_id,
+      is_partner_product: product.is_partner_product,
+      detail_url: product.detail_url || "",
+      is_preview: Boolean(product.is_preview)
     };
     return escapeHTML(encodeURIComponent(JSON.stringify(snapshot)));
   }
@@ -350,7 +814,7 @@
 
     return `
       <article class="product-card" data-product-card="${escapeHTML(product.id)}">
-        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}">
+        <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}" data-product-preview-link="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
         <button class="product-card__favorite" type="button" data-fav-product="${escapeHTML(product.id)}" aria-label="Favoriye ekle">♡</button>
@@ -371,16 +835,20 @@
             <span class="product-rating" aria-label="Ürün puanı">★ ${escapeHTML(ratingLabel)}</span>
             <span class="product-social-proof">${escapeHTML(socialProof)}</span>
           </div>
+          <div class="product-card__seller" aria-label="Satıcı bilgisi">
+            <span>${escapeHTML(product.seller_kind)}</span>
+            <strong>${escapeHTML(product.seller_public_name)}</strong>
+          </div>
           <div class="price-row">
             <span class="price-stack">
-              <span class="price">${money(product.price)}</span>
-              ${compareAt ? `<span class="compare-price">${money(compareAt)}</span>` : ""}
+              <span class="price" data-currency-price data-base-price="${escapeHTML(product.price)}" data-source-currency="${BASE_CURRENCY}">${money(product.price)}</span>
+              ${compareAt ? `<span class="compare-price" data-currency-price data-base-price="${escapeHTML(compareAt)}" data-source-currency="${BASE_CURRENCY}">${money(compareAt)}</span>` : ""}
             </span>
             <span class="pill pill--gold">Allona</span>
           </div>
           <div class="product-card__actions">
             <button class="btn" type="button" data-add-product="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}" ${disabled ? "disabled" : ""}>Sepete Ekle</button>
-            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}">İncele</a>
+            <a class="link-btn product-card__detail-link" href="${escapeHTML(productHref)}" data-product-preview-link="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}">İncele</a>
           </div>
         </div>
       </article>
@@ -553,8 +1021,10 @@
     url,
     escapeHTML,
     sanitizeUrl,
+    productMediaUrl,
     money,
     slugify,
+    labelFromValue,
     normalizeProduct,
     productCard,
     productUrl,
@@ -567,6 +1037,28 @@
     debounce
   };
 
+  App.currency = {
+    state: currencyState,
+    supported: supportedCurrencies,
+    targetForCountry: targetCurrencyForCountry,
+    convert(value, fromCurrency, toCurrency) {
+      return convertedAmount(value, fromCurrency, toCurrency);
+    },
+    toBase(value, sourceCurrency) {
+      return convertedAmount(value, sourceCurrency || currencyState.target, currencyState.base);
+    },
+    format: money,
+    setCurrency,
+    clearPreference: clearCurrencyPreference,
+    refresh() {
+      return loadCurrencyRates({ force: true }).then(() => {
+        notifyCurrencyChange();
+        return { ...currencyState };
+      });
+    },
+    scan: scanStaticPrices
+  };
+
   App.security = {
     normalizeText,
     normalizeMultiline,
@@ -577,4 +1069,6 @@
     rateLimit,
     publicErrorMessage
   };
+
+  initCurrency();
 })();

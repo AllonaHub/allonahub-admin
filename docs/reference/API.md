@@ -110,8 +110,16 @@ Endpointler:
 - `GET|POST /v1/payments/iyzico/callback`: iyzico dönüşünü işler.
 - `POST /v1/cv/checkout`: Auth zorunlu, CV ödeme oturumu başlatır.
 - `GET /v1/partner/commission/preview`: Partner/admin komisyon önizleme.
+- `GET /v1/partner/integrations`: Partner connector kataloğu, bağlantılar ve son senkron logları.
+- `POST /v1/partner/integrations`: Partner entegrasyon bağlantısı ve server-side şifreli secret kaydı.
+- `POST /v1/partner/integrations/:integrationId/test`: Kayıtlı secretleri doğrular ve aktif inbound connectorlarda gerçek remote probe çalıştırır.
+- `POST /v1/partner/integrations/:integrationId/sync`: Ürün akışını `preview` veya onay metinli `apply` modunda çalıştırır.
+- `POST /v1/partner/integrations/:integrationId/publish-jobs`: Outbound açıkken seçili ürünler için dış platform yayın kuyruğu oluşturur.
+- `GET /v1/admin/ops/integrations`: Admin/MFA ile entegrasyon, sync run ve publish job izleme.
 - `POST /v1/rewards/ledger`: Admin/süper admin HP/XP/Kupon Merkezi işlem kayıt notu.
 - `POST /v1/hp-wallet/ledger`: Eski rota; geriye dönük uyumluluk alias'ı. Yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`: `x-cron-secret` ile cron ödeme kontrolü.
+- `POST /v1/cron/integrations/sync`: Zamanlı partner entegrasyonlarını `x-cron-secret` ile çalıştırır.
+- `POST /v1/cron/integrations/publish`: Outbound publish job kuyruğunu `x-cron-secret` ile işler.
 
 Detaylı deploy: `docs/deploy/hetzner-cpx31-backend.md`.

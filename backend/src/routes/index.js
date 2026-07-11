@@ -1,9 +1,22 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
+import { lookup as dnsLookup } from "node:dns/promises";
+import net from "node:net";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import { buildSocialMediaDailyPackage, SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS } from "../lib/social-media-daily-package.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
+import {
+  acknowledgeSecurityAlarm,
+  resolveSecurityAlarm,
+  securityAlertStatus,
+  sendSecurityAlert,
+  updateRuntimeProtection
+} from "../lib/security-alerts.js";
+import {
+  notifyPaymentProviderRefundCancellation,
+  paymentProviderDispatchStatus
+} from "../lib/payment-provider-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
   auditEvent,
@@ -18,6 +31,13 @@ import {
   supabasePublic
 } from "../lib/supabase.js";
 import { cvCheckoutPayload, iyzicoPost, orderCheckoutPayload, partnerPaymentIntentCheckoutPayload } from "../lib/iyzico.js";
+import {
+  PRODUCT_REVISION_DEFAULT_NOTICE,
+  marketplacePlatformPattern,
+  productIntegrationRevisionRules,
+  productReviewFieldLabels,
+  productReviewPolicyRules
+} from "../product-revision-rules/index.js";
 
 const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email().max(180);
@@ -51,6 +71,10 @@ const publicPartnerIntentCheckoutSchema = z.object({
 const cvCheckoutSchema = z.object({
   buyerEmail: emailSchema.optional(),
   buyerPhone: phoneSchema
+});
+
+const currencyRatesQuerySchema = z.object({
+  base: z.string().trim().length(3).regex(/^[a-z]{3}$/i).optional().default(config.currency.baseCurrency || "TRY")
 });
 
 const authTurnstileSchema = z.object({
@@ -197,10 +221,163 @@ const partnerProfileUpdateSchema = z.object({
   payout_schedule: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional()
 });
 
+const nullablePartnerProductText = (max) => z.preprocess(
+  (value) => value === "" ? null : value,
+  z.string().trim().max(max).nullable().optional()
+);
+
+const partnerProductMediaGallerySchema = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return value.split(/[\n,]+/);
+    }
+  }
+  return [];
+}, z.array(z.string().trim().max(1200).refine((value) => (
+  !value || /^https?:\/\//i.test(value)
+), "Galeri URL http/https formatında olmalı.")).max(8).optional());
+
+const partnerProductListQuerySchema = z.object({
+  search: z.string().trim().max(120).optional().default(""),
+  status: z.string().trim().max(80).optional().default("all"),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500)
+});
+
+const PARTNER_PRODUCT_BULK_LIMIT = 50;
+
+const partnerProductUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(180).optional(),
+  product_name: z.string().trim().min(2).max(180).optional(),
+  description: nullablePartnerProductText(1800),
+  price: z.coerce.number().min(0).max(10000000).optional(),
+  stock: z.coerce.number().int().min(0).max(1000000).optional(),
+  image_url: nullablePartnerProductText(900),
+  media_gallery: partnerProductMediaGallerySchema,
+  video_url: nullablePartnerProductText(1200),
+  category: nullablePartnerProductText(120),
+  brand: nullablePartnerProductText(140),
+  sku: nullablePartnerProductText(90),
+  barcode: nullablePartnerProductText(80),
+  module_key: z.enum(["shop", "market", "food", "taxi", "service"]).optional(),
+  catalog_scope: z.enum(["shop", "market", "food", "taxi", "service"]).optional(),
+  seller_public_name: nullablePartnerProductText(140),
+  seller_legal_name: nullablePartnerProductText(180),
+  seller_city: nullablePartnerProductText(90),
+  seller_contact: nullablePartnerProductText(180),
+  seller_tax_number_masked: nullablePartnerProductText(40),
+  invoice_responsibility: nullablePartnerProductText(320),
+  seller_disclosure: nullablePartnerProductText(420),
+  meta_title: nullablePartnerProductText(180),
+  meta_description: nullablePartnerProductText(300)
+}).refine((value) => Object.keys(value).length > 0, {
+  message: "Guncellenecek urun alani gonderilmedi."
+});
+
+const partnerProductBulkUpdateSchema = z.object({
+  product_ids: z.array(uuidSchema).min(1).max(PARTNER_PRODUCT_BULK_LIMIT),
+  updates: partnerProductUpdateSchema.optional(),
+  submit_for_review: z.boolean().optional().default(false)
+}).refine((value) => value.submit_for_review || value.updates, {
+  message: "Toplu islem icin guncelleme alani veya onaya gonderme secimi gerekli."
+});
+
 const partnerOrderStatusSchema = z.object({
   orderId: uuidSchema,
   order_status: z.enum(["preparing", "shipped", "delivered"]).optional(),
   tracking_number: z.string().trim().max(120).optional().nullable()
+});
+
+const partnerRefundCancellationDecisionSchema = z.object({
+  action: z.enum(["approve_cancellation", "approve_refund", "reject_request"]),
+  reason: z.string().trim().min(6).max(1200),
+  note: z.string().trim().max(1200).optional().default("")
+});
+
+const INTEGRATION_PROVIDERS = [
+  "generic_feed",
+  "woocommerce",
+  "shopify",
+  "trendyol",
+  "hepsiburada",
+  "n11",
+  "ciceksepeti",
+  "pazarama",
+  "custom_api"
+];
+
+const INTEGRATION_SECRET_DEFINITIONS = {
+  generic_feed: [{ key: "FEED_URL", label: "Feed URL", required: true }],
+  woocommerce: [
+    { key: "API_BASE_URL", label: "Mağaza URL", required: true },
+    { key: "CONSUMER_KEY", label: "Consumer key", required: true },
+    { key: "CONSUMER_SECRET", label: "Consumer secret", required: true }
+  ],
+  shopify: [
+    { key: "SHOP_DOMAIN", label: "Shop domain", required: true },
+    { key: "ACCESS_TOKEN", label: "Admin API token", required: true }
+  ],
+  trendyol: [
+    { key: "SUPPLIER_ID", label: "Supplier ID", required: true },
+    { key: "API_KEY", label: "API key", required: true },
+    { key: "API_SECRET", label: "API secret", required: true }
+  ],
+  hepsiburada: [
+    { key: "MERCHANT_ID", label: "Merchant ID", required: true },
+    { key: "API_KEY", label: "API key", required: true },
+    { key: "API_SECRET", label: "API secret", required: true }
+  ],
+  n11: [
+    { key: "APP_KEY", label: "App key", required: true },
+    { key: "APP_SECRET", label: "App secret", required: true }
+  ],
+  ciceksepeti: [{ key: "API_KEY", label: "API key", required: true }],
+  pazarama: [
+    { key: "API_KEY", label: "API key", required: true },
+    { key: "API_SECRET", label: "API secret", required: true }
+  ],
+  custom_api: [
+    { key: "API_BASE_URL", label: "API URL", required: true },
+    { key: "ACCESS_TOKEN", label: "Access token", required: false },
+    { key: "WEBHOOK_SECRET", label: "Webhook secret", required: false }
+  ]
+};
+
+const partnerIntegrationSchema = z.object({
+  id: uuidSchema.optional(),
+  provider: z.enum(INTEGRATION_PROVIDERS),
+  display_name: z.string().trim().min(2).max(160),
+  connection_mode: z.enum(["generic_feed", "native_api", "webhook", "manual"]).optional(),
+  direction: z.enum(["inbound", "outbound", "bidirectional"]).optional().default("inbound"),
+  status: z.enum(["draft", "active", "paused", "needs_attention", "disabled", "archived"]).optional().default("draft"),
+  plan_tier: z.enum(["free", "premium", "enterprise"]).optional().default("free"),
+  sync_mode: z.enum(["manual", "scheduled", "webhook"]).optional().default("manual"),
+  sync_interval_minutes: z.coerce.number().int().min(15).max(10080).optional().default(1440),
+  import_enabled: z.coerce.boolean().optional().default(true),
+  export_enabled: z.coerce.boolean().optional().default(false),
+  default_publish_status: z.enum(["draft", "active"]).optional().default("draft"),
+  settings: z.record(z.unknown()).optional().default({}),
+  secrets: z.record(z.string().min(1).max(16000)).optional().default({})
+});
+
+const partnerIntegrationSyncSchema = z.object({
+  mode: z.enum(["preview", "apply"]).optional().default("preview"),
+  direction: z.enum(["inbound", "outbound"]).optional().default("inbound"),
+  trigger_source: z.enum(["manual", "cron", "webhook", "admin", "system"]).optional().default("manual"),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  confirm_apply: z.string().trim().max(120).optional().default(""),
+  approval_note: z.string().trim().max(500).optional().default("")
+});
+
+const partnerIntegrationPublishJobSchema = z.object({
+  product_ids: z.array(uuidSchema).min(1).max(100),
+  action: z.enum(["create", "update", "upsert", "stock_price", "archive", "delete"]).optional().default("upsert"),
+  priority: z.coerce.number().int().min(1).max(999).optional().default(100),
+  scheduled_at: z.string().datetime().optional()
 });
 
 const rewardsLedgerSchema = z.object({
@@ -216,6 +393,18 @@ const adminListQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(80)
 });
 
+const adminProductReviewListQuerySchema = adminListQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(120),
+  offset: z.coerce.number().int().min(0).max(100000000).optional().default(0)
+});
+
+const ADMIN_PRODUCT_REVIEW_DB_BATCH = 1000;
+const ADMIN_PRODUCT_REVIEW_MAX_SCAN = 12000;
+const ADMIN_PRODUCT_AUTO_REVISION_BATCH = 100;
+const ADMIN_PRODUCT_AUTO_PUBLISH_BATCH = 100;
+const ADMIN_PRODUCT_AUTO_ACTIONS_PER_REQUEST = 240;
+const PRODUCT_LINK_QUERY_CHUNK = 80;
+
 const adminNoteSchema = z.object({
   body: z.string().trim().min(3).max(1600),
   note_type: z.enum(["general", "risk", "review", "support", "callback"]).optional().default("general")
@@ -226,10 +415,69 @@ const adminFlagSchema = z.object({
   severity: z.enum(["info", "warning", "critical"]).optional().default("warning")
 });
 
+const adminProductReviewDecisionSchema = z.object({
+  decision: z.enum(["approved", "needs_review", "rejected"]),
+  reason: z.string().trim().min(3).max(1200)
+});
+
+const adminProductReviewBulkDecisionSchema = adminProductReviewDecisionSchema.extend({
+  product_ids: z.array(uuidSchema).min(1).max(100),
+  only_auto_approvable: z.boolean().optional().default(false)
+});
+
+const cronProductReviewAutomationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(200)
+});
+
+const automationActionSchema = z.enum(["publish_safe_products", "request_product_revisions"]);
+
+const automationRunSchema = z.object({
+  apply: z.boolean().optional().default(false),
+  actions: z.array(automationActionSchema).optional().default(["publish_safe_products", "request_product_revisions"]),
+  limit: z.coerce.number().int().min(1).max(80).optional().default(40),
+  reason: z.string().trim().max(900).optional().default("")
+});
+
+const automationQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80)
+});
+
 const partnerApplicationActionSchema = z.object({
   action: z.enum(["start_review", "recommend_approve", "recommend_reject", "send_super_admin"]),
   reason: z.string().trim().min(3).max(1200),
   risk_level: z.enum(["info", "warning", "critical"]).optional().default("info")
+});
+
+const partnerApplicationActionRequestSchema = partnerApplicationActionSchema.extend({
+  application_id: uuidSchema
+});
+
+const publicPartnerApplicationSchema = z.object({
+  partner_name: z.string().trim().max(160).optional().default(""),
+  company_name: z.string().trim().max(160).optional().default(""),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema,
+  phone: z.string().trim().min(7).max(40),
+  tax_number: z.string().trim().min(2).max(60),
+  tax_office: z.string().trim().max(120).optional().default(""),
+  company_type: z.string().trim().min(2).max(120),
+  website: z.string().trim().max(240).optional().default(""),
+  city: z.string().trim().min(2).max(90),
+  country: z.string().trim().min(2).max(90),
+  category: z.string().trim().min(2).max(140),
+  message: z.string().trim().max(1600).optional().default(""),
+  company_lookup: z.record(z.unknown()).optional().default({}),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+}).refine((value) => value.company_name || value.partner_name, {
+  message: "Firma / işletme adı zorunlu.",
+  path: ["company_name"]
+});
+
+const partnerCompanyLookupSchema = z.object({
+  country: z.string().trim().max(90).optional().default(""),
+  country_code: z.string().trim().max(8).optional().default(""),
+  tax_number: z.string().trim().min(2).max(60),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
 const supportStatusSchema = z.object({
@@ -371,6 +619,12 @@ const socialMediaAssetPrepareSchema = z.object({
   limit: z.coerce.number().int().min(1).max(30).optional().default(10)
 });
 
+const socialMediaAssetCleanupSchema = z.object({
+  retention_days: z.coerce.number().int().min(1).max(30).optional(),
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500),
+  dry_run: z.boolean().optional().default(false)
+});
+
 const socialMediaPostMediaSchema = z.object({
   image_url: httpsUrlOptionalSchema,
   video_url: httpsUrlOptionalSchema,
@@ -406,7 +660,11 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-actions-20260625-actions8";
+const BACKEND_BUILD_MARKER = "admin-alarm-external-threats-20260629-1";
+const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
+const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
+const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
+const SUPER_ADMIN_WORK_QUEUE_DECISIONS = ["approved", "rejected", "deferred", "escalated", "resolved"];
 
 const superAdminUserUpdateSchema = z.object({
   account_status: z.enum(["active", "passive", "suspended"]).optional(),
@@ -420,11 +678,37 @@ const superAdminUserUpdateSchema = z.object({
   Boolean(value.note)
 ), "En az bir kullanıcı alanı güncellenmelidir.");
 
+const PARTNER_APPROVAL_TYPES = ["shop", "food", "market", "service"];
+
 const partnerApplicationDecisionSchema = z.object({
   decision: z.enum(["review", "approved", "rejected"]),
   reason: z.string().trim().max(800).optional().default(""),
   commission_rate: z.coerce.number().min(0).max(0.9).optional(),
-  store_status: z.enum(["review", "active", "paused", "suspended"]).optional()
+  store_status: z.enum(["review", "active", "paused", "suspended"]).optional(),
+  partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional()
+});
+
+const partnerApplicationDecisionRequestSchema = partnerApplicationDecisionSchema.extend({
+  application_id: uuidSchema
+});
+
+const superAdminPartnerInviteSchema = z.object({
+  company_name: z.string().trim().min(2).max(160),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema,
+  phone: z.string().trim().max(40).optional().default(""),
+  tax_number: z.string().trim().max(60).optional().default(""),
+  tax_office: z.string().trim().max(120).optional().default(""),
+  company_type: z.string().trim().max(120).optional().default(""),
+  city: z.string().trim().max(90).optional().default(""),
+  country: z.string().trim().max(90).optional().default("Türkiye"),
+  category: z.string().trim().max(140).optional().default("AllonaHub Partner"),
+  website: z.string().trim().max(240).optional().default(""),
+  message: z.string().trim().max(1600).optional().default("Super Admin panelinden doğrudan partner oluşturuldu."),
+  partner_type: z.enum(PARTNER_APPROVAL_TYPES).optional().default("shop"),
+  commission_rate: z.coerce.number().min(0).max(0.9).optional().default(0.12),
+  store_status: z.enum(["review", "active", "paused", "suspended"]).optional().default("active"),
+  reason: z.string().trim().min(6).max(900).optional().default("Super Admin panelinden doğrudan partner daveti oluşturuldu.")
 });
 
 const superAdminSettingUpdateSchema = z.object({
@@ -443,9 +727,34 @@ const superAdminModuleUpdateSchema = z.object({
 const superAdminReleaseApprovalSchema = z.object({
   approval_type: z.enum(SUPER_ADMIN_RELEASE_APPROVAL_TYPES),
   target_ref: z.string().trim().min(1).max(180).optional().default("main"),
-  target_summary: z.string().trim().min(6).max(1200),
+  target_summary: z.string().trim().min(3).max(1200),
   risk_level: riskLevelSchema.optional().default("critical"),
   metadata: z.record(z.unknown()).optional().default({})
+});
+
+const superAdminReleaseApprovalDecisionSchema = z.object({
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const superAdminAlarmDecisionSchema = z.object({
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const superAdminAlarmProtectionSchema = z.object({
+  action: z.enum(["clear", "lock_api", "lock_payments", "lock_orders", "unlock_api", "unlock_payments", "unlock_orders"]),
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const superAdminRefundCancellationQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80),
+  status: z.enum(["all", "cancelled", "refunded", "pending_signal"]).optional().default("all"),
+  search: z.string().trim().max(120).optional().default("")
+});
+
+const superAdminRefundCancellationActionSchema = z.object({
+  action: z.enum(["mark_review", "approve_cancellation", "approve_refund", "reject_request", "add_note"]),
+  reason: z.string().trim().min(6).max(1200),
+  note: z.string().trim().max(1200).optional().default("")
 });
 
 const superAdminPermissionUpdateSchema = z.object({
@@ -463,6 +772,36 @@ const superAdminPermissionUpdateSchema = z.object({
 
 const superAdminOwnerRepairSchema = z.object({
   reason: z.string().trim().min(6).max(900).optional().default("Owner access mismatch repair")
+});
+
+const superAdminWorkQueueQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(80),
+  status: z.enum(SUPER_ADMIN_WORK_QUEUE_STATUSES).optional(),
+  source_module: z.enum(SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES).optional(),
+  risk_level: riskLevelSchema.optional()
+});
+
+const superAdminWorkQueueUpdateSchema = z.object({
+  status: z.enum(SUPER_ADMIN_WORK_QUEUE_STATUSES).optional(),
+  priority: z.enum(SUPER_ADMIN_WORK_QUEUE_PRIORITIES).optional(),
+  risk_level: riskLevelSchema.optional(),
+  owner_user_id: uuidSchema.nullable().optional(),
+  due_at: z.string().datetime().nullable().optional(),
+  summary: z.string().trim().max(1800).optional(),
+  reason: z.string().trim().min(6).max(900)
+}).refine((value) => (
+  value.status !== undefined ||
+  value.priority !== undefined ||
+  value.risk_level !== undefined ||
+  value.owner_user_id !== undefined ||
+  value.due_at !== undefined ||
+  value.summary !== undefined
+), "En az bir iş kuyruğu alanı güncellenmelidir.");
+
+const superAdminWorkQueueDecisionSchema = z.object({
+  decision: z.enum(SUPER_ADMIN_WORK_QUEUE_DECISIONS),
+  reason: z.string().trim().min(6).max(1200),
+  status: z.enum(["decided", "resolved", "waiting_owner"]).optional()
 });
 
 const DEFAULT_SUPER_ADMIN_SETTINGS = [
@@ -509,18 +848,53 @@ const DEFAULT_PLATFORM_MODULES = [
   { module_key: "other_services", name: "Diğer hizmetler", category: "services" }
 ];
 
+const MODULE_SUBDOMAIN_BY_KEY = {
+  shop: "shop",
+  food: "yemek",
+  market: "market",
+  taxi: "taksi",
+  mall: "avm",
+  travel: "seyahat",
+  health: "saglik",
+  maritime: "denizcilik",
+  legal: "hukuk",
+  consulting: "danismanlik",
+  real_estate: "emlak",
+  automotive: "otomotiv",
+  education: "egitim",
+  career: "kariyer",
+  finance: "finans",
+  events: "eglence",
+  pet: "pet",
+  technology: "teknoloji",
+  sports_fitness: "spor",
+  beauty: "guzellik",
+  insurance: "sigorta",
+  courier: "kurye",
+  home_services: "evhizmetleri",
+  logistics: "lojistik",
+  moving: "nakliye",
+  organization: "organizasyon",
+  agriculture: "tarim",
+  construction: "insaat",
+  engineering: "muhendislik",
+  trade: "trade",
+  hospitality: "otelcilik"
+};
+
 const SUPER_ADMIN_CONTROL_LINKS = [
-  { key: "admin_panel", label: "Admin Panel", href: "./index.html", target: "redirect", risk_level: "high" },
-  { key: "orders", label: "Sipariş Merkezi", href: "./orders.html", target: "redirect", risk_level: "high" },
-  { key: "coupons", label: "Kupon Merkezi", href: "./coupons.html", target: "redirect", risk_level: "medium" },
-  { key: "hp_rewards", label: "HP / Cüzdan", href: "./rewards.html", target: "redirect", risk_level: "medium" },
-  { key: "user_panel", label: "User Panel", href: "../pages/account/user-panel.html", target: "redirect", risk_level: "medium" },
-  { key: "partner_panel", label: "Partner Panel", href: "../pages/partner/partner-panel.html", target: "redirect", risk_level: "high" },
-  { key: "partner_orders", label: "Partner Siparişleri", href: "../pages/partner/partner-orders.html", target: "redirect", risk_level: "high" },
+  { key: "operations", label: "Sipariş / Operasyon Yönetimi", view: "operations", target: "owner_view", risk_level: "high" },
+  { key: "finance", label: "Finans / Ödeme Yönetimi", view: "finance", target: "owner_view", risk_level: "critical" },
+  { key: "content", label: "Kupon / Kampanya / İçerik Yönetimi", view: "content", target: "owner_view", risk_level: "high" },
+  { key: "users", label: "Kullanıcı Yönetimi", view: "users", target: "owner_view", risk_level: "high" },
+  { key: "partners", label: "Partner Yönetimi", view: "partners", target: "owner_view", risk_level: "high" },
+  { key: "permissions", label: "Yetki Merkezi", view: "permissions", target: "owner_view", risk_level: "critical" },
+  { key: "modules", label: "Modül Yönetimi", view: "modules", target: "owner_view", risk_level: "high" },
   { key: "shop", label: "AllonaShop", href: "../pages/commerce/allonashop.html", target: "redirect", risk_level: "medium" },
   { key: "market", label: "Allona Market", href: "../pages/commerce/allonamarket.html", target: "redirect", risk_level: "medium" },
   { key: "food", label: "Allona Yemek", href: "../pages/commerce/allonayemek.html", target: "redirect", risk_level: "medium" },
   { key: "taxi", label: "Allona Taksi", href: "../pages/ecosystem/allonataksi.html", target: "redirect", risk_level: "medium" },
+  { key: "legal_center", label: "Yasal Merkez", href: "../legal/index.html", target: "redirect", risk_level: "low" },
   { key: "security_policy", label: "Güvenlik Politikası", href: "../pages/legal/guvenlik-politikasi.html", target: "redirect", risk_level: "low" }
 ];
 
@@ -580,12 +954,134 @@ function httpError(message, statusCode) {
   return error;
 }
 
+const currencyRatesCache = new Map();
+
+function normalizeCurrencyCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : "";
+}
+
+function currencyRatesUrl(base) {
+  const template = config.currency.ratesUrl || "https://open.er-api.com/v6/latest/{base}";
+  const href = String(template).replace("{base}", encodeURIComponent(base));
+  let parsed;
+  try {
+    parsed = new URL(href);
+  } catch {
+    throw httpError("Kur sağlayıcı adresi geçerli değil.", 500);
+  }
+  if (!["https:", "http:"].includes(parsed.protocol)) {
+    throw httpError("Kur sağlayıcı protokolü desteklenmiyor.", 500);
+  }
+  return parsed.href;
+}
+
+async function fetchCurrencyRates(base, request) {
+  const cacheKey = normalizeCurrencyCode(base) || normalizeCurrencyCode(config.currency.baseCurrency) || "TRY";
+  const cached = currencyRatesCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - Number(cached.fetchedAt || 0) < Number(config.currency.cacheMs || 0)) {
+    return { ...cached.payload, cache: "hit" };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Number(config.currency.timeoutMs || 8000));
+  try {
+    const endpoint = currencyRatesUrl(cacheKey);
+    const response = await fetch(endpoint, {
+      headers: {
+        accept: "application/json",
+        "user-agent": "AllonaHub-CurrencyProxy/1.0"
+      },
+      signal: controller.signal
+    });
+    if (!response.ok) throw httpError("Kur sağlayıcı yanıt vermedi.", 502);
+    const payload = await response.json();
+    if (payload.result && payload.result !== "success") throw httpError("Kur sağlayıcı başarılı yanıt döndürmedi.", 502);
+    const rates = payload.rates || payload.conversion_rates || {};
+    if (!rates || typeof rates !== "object" || !Object.keys(rates).length) {
+      throw httpError("Kur listesi alınamadı.", 502);
+    }
+    const normalized = {
+      ok: true,
+      result: "success",
+      provider: payload.provider || "ExchangeRate-API",
+      base_code: normalizeCurrencyCode(payload.base_code || payload.base || cacheKey) || cacheKey,
+      rates,
+      time_last_update_unix: Number(payload.time_last_update_unix || 0) || Math.floor(now / 1000),
+      fetched_at: new Date(now).toISOString(),
+      cache: "miss"
+    };
+    currencyRatesCache.set(cacheKey, { fetchedAt: now, payload: normalized });
+    return normalized;
+  } catch (error) {
+    request.log.warn({ err: error, base: cacheKey }, "Currency rates proxy failed");
+    if (cached) return { ...cached.payload, cache: "stale" };
+    throw error.statusCode ? error : httpError("Kur bilgisi şu anda alınamadı.", 502);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function sha256Json(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
 function sha256Text(value) {
   return createHash("sha256").update(String(value || "")).digest("hex");
+}
+
+const PRODUCT_IMAGE_CONTENT_TYPES = new Map([
+  ["avif", "image/avif"],
+  ["jpg", "image/jpeg"],
+  ["jpeg", "image/jpeg"],
+  ["png", "image/png"],
+  ["webp", "image/webp"]
+]);
+
+function productImageContentType(path) {
+  const extension = String(path || "").split(".").pop().toLowerCase();
+  return PRODUCT_IMAGE_CONTENT_TYPES.get(extension) || "application/octet-stream";
+}
+
+function normalizeProductImagePath(rawPath) {
+  let decoded = "";
+  try {
+    decoded = decodeURIComponent(String(rawPath || ""));
+  } catch {
+    throw httpError("Urun gorseli yolu gecersiz.", 400);
+  }
+
+  const path = decoded.replace(/^\/+/, "");
+  const parts = path.split("/");
+  const extension = path.split(".").pop().toLowerCase();
+  const invalid = (
+    !path ||
+    path.length > 900 ||
+    !path.startsWith("products/") ||
+    path.includes("\\") ||
+    path.includes("\0") ||
+    path.includes("//") ||
+    parts.some((part) => !part || part === "." || part === "..") ||
+    !PRODUCT_IMAGE_CONTENT_TYPES.has(extension) ||
+    !/^[a-z0-9._/-]+$/i.test(path)
+  );
+  if (invalid) throw httpError("Urun gorseli bulunamadi.", 404);
+  return path;
+}
+
+function mediaCacheHeaders(reply, path) {
+  const ttl = Math.max(3600, Number(config.productMedia.cacheMaxAgeSeconds || 31536000));
+  const etag = `"product-image-${sha256Text(path).slice(0, 24)}"`;
+  reply.header("Cache-Control", `public, max-age=${ttl}, s-maxage=${ttl}, immutable`);
+  reply.header("CDN-Cache-Control", `public, max-age=${ttl}`);
+  reply.header("Cloudflare-CDN-Cache-Control", `public, max-age=${ttl}`);
+  reply.header("ETag", etag);
+  reply.header("Vary", "Accept-Encoding");
+  reply.header("Access-Control-Allow-Origin", "*");
+  reply.header("Cross-Origin-Resource-Policy", "cross-origin");
+  reply.header("X-Content-Type-Options", "nosniff");
+  return etag;
 }
 
 function assertEvidenceWindow(from, to) {
@@ -1027,6 +1523,23 @@ async function superAdminOwnerPreflight(ctx) {
   return owner;
 }
 
+async function userOwnsActivePartnerBusiness(userId) {
+  if (!userId) return false;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("partner_businesses")
+      .select("id")
+      .eq("owner_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (error) return false;
+    return Boolean(data?.id);
+  } catch (error) {
+    return false;
+  }
+}
+
 async function requireAuth(request, options = {}) {
   const ctx = await authContext(request);
   const action = options.action || "auth.required";
@@ -1042,15 +1555,20 @@ async function requireAuth(request, options = {}) {
   }
 
   if (options.roles?.length && !hasRole(ctx.profile, options.roles)) {
-    await auditEvent({
-      request,
-      actorId: ctx.user.id,
-      actorRole: ctx.profile.role,
-      action: "authz.denied",
-      severity: "warning",
-      metadata: { action, required_roles: options.roles }
-    });
-    throw httpError("Bu işlem için yetkiniz yok.", 403);
+    if (options.roles.includes("partner") && await userOwnsActivePartnerBusiness(ctx.user.id)) {
+      ctx.profile = { ...ctx.profile, role: "partner" };
+      ctx.partnerBusinessRoleGranted = true;
+    } else {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "authz.denied",
+        severity: "warning",
+        metadata: { action, required_roles: options.roles }
+      });
+      throw httpError("Bu işlem için yetkiniz yok.", 403);
+    }
   }
 
   if (options.mfa && mfaRequiredForRole(ctx.profile.role) && !hasMfa(ctx)) {
@@ -1270,6 +1788,54 @@ async function countAdminRows(label, table, configure) {
   return { count: result.count || 0, warning: result.warning };
 }
 
+function auditEventSearchText(event) {
+  return [
+    event?.severity,
+    event?.action,
+    event?.resource_type,
+    event?.resource_id,
+    event?.actor_role,
+    event?.source,
+    event?.purpose,
+    event?.metadata ? JSON.stringify(event.metadata) : ""
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function isPrivilegedAuditActor(event) {
+  return ["admin", "super_admin"].includes(String(event?.actor_role || "").toLowerCase());
+}
+
+function isTrustedPrivilegedAuditEvent(event) {
+  const raw = auditEventSearchText(event);
+  if (!isPrivilegedAuditActor(event)) return false;
+  if (event?.source !== "admin") return false;
+  if (/authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied|mfa_required|unauthorized|forbidden/.test(raw)) return false;
+  if (/attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf|red_zone|blocked_ip|suspicious_ip/.test(raw)) return false;
+  return true;
+}
+
+function isExternalSecurityAuditEvent(event) {
+  const raw = auditEventSearchText(event);
+  if (isTrustedPrivilegedAuditEvent(event)) return false;
+  if (isPrivilegedAuditActor(event) && event?.source === "admin" && !/authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied/.test(raw)) {
+    return false;
+  }
+  return /authz\.denied|auth\.denied|owner_denied|role_denied|permission_super_admin_denied|boundary_denied|red_zone|attack|intrusion|breach|compromise|bruteforce|sql|xss|csrf|auto_defense|blocked_ip|suspicious_ip/.test(raw);
+}
+
+function securityRiskSeverity(event) {
+  return isExternalSecurityAuditEvent(event) ? (event?.severity || "warning") : "low";
+}
+
+function securityEventPublic(event) {
+  return {
+    ...event,
+    risk_severity: securityRiskSeverity(event),
+    trusted_internal: isTrustedPrivilegedAuditEvent(event),
+    external_threat: isExternalSecurityAuditEvent(event)
+  };
+}
+
 function superAdminAuditSeverity(riskLevel) {
   if (riskLevel === "critical") return "critical";
   if (riskLevel === "high") return "warning";
@@ -1302,6 +1868,7 @@ function moduleOperationMapPublic(moduleRows = []) {
     const configured = byKey.get(item.module_key);
     return {
       ...item,
+      ...moduleSubdomainPublic(item.module_key),
       sort_order: configured?.sort_order ?? (index + 1) * 10,
       is_active: configured?.is_active ?? true,
       is_visible: configured?.is_visible ?? true,
@@ -1311,6 +1878,15 @@ function moduleOperationMapPublic(moduleRows = []) {
       source: configured ? "database" : "homepage_map"
     };
   });
+}
+
+function moduleSubdomainPublic(moduleKey) {
+  const subdomain = MODULE_SUBDOMAIN_BY_KEY[moduleKey];
+  if (!subdomain) return {};
+  return {
+    subdomain,
+    subdomain_url: `https://${subdomain}.allonahub.com`
+  };
 }
 
 function permissionChangePublic(row) {
@@ -1809,6 +2385,7 @@ async function superAdminActionHealth(ctx, request) {
     tableHealth("partner_applications_write_target", "partner_applications"),
     tableHealth("super_admin_settings_write_target", "super_admin_settings"),
     tableHealth("platform_modules_write_target", "platform_modules"),
+    tableHealth("super_admin_work_queue_write_target", "super_admin_work_queue"),
     tableHealth("super_admin_release_approvals_write_target", "super_admin_release_approvals"),
     tableHealth("security_audit_events_audit_target", "security_audit_events"),
     tableHealth("super_admin_permission_changes_audit_target", "super_admin_permission_changes")
@@ -1847,6 +2424,10 @@ async function superAdminActionHealth(ctx, request) {
       partner_decision: { ok: checks.find((item) => item.table === "partner_applications")?.ok === true, endpoint: "PATCH /v1/control-center/partner-applications/:applicationId" },
       settings_update: { ok: checks.find((item) => item.table === "super_admin_settings")?.ok === true, endpoint: "PATCH /v1/control-center/settings/:settingKey" },
       modules_update: { ok: checks.find((item) => item.table === "platform_modules")?.ok === true, endpoint: "PATCH /v1/control-center/modules/:moduleKey" },
+      work_queue: {
+        ok: checks.find((item) => item.table === "super_admin_work_queue")?.ok === true,
+        endpoint: "GET/PATCH/POST /v1/control-center/work-queue"
+      },
       release_approval: {
         ok: checks.find((item) => item.table === "super_admin_release_approvals")?.ok === true,
         endpoint: "POST /v1/control-center/release-approvals",
@@ -1876,25 +2457,45 @@ async function requireOpsAdmin(request, action) {
   });
 
   const { data, error } = await ctx.db.rpc("is_ops_admin");
-  if (error || data !== true) {
+  if (!error && data === true) return ctx;
+
+  if (isAdmin(ctx.profile) && hasMfa(ctx)) {
     await auditEvent({
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "admin.ops.boundary_denied",
+      action: "admin.ops.boundary_fallback_allowed",
       resourceType: "admin_ops",
-      severity: "critical",
+      severity: "warning",
       source: "admin",
       purpose: "admin_operations",
       metadata: {
         requested_action: action,
-        db_role_check_error: error?.message || null
-      }
+        db_role_check_error: error?.message || null,
+        db_role_check_result: data ?? null,
+        fallback: "backend_role_mfa_admin_boundary_verified"
+      },
+      evidenceTags: ["admin_ops", "boundary_fallback"]
     });
-    throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
+    return ctx;
   }
 
-  return ctx;
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "admin.ops.boundary_denied",
+    resourceType: "admin_ops",
+    severity: "critical",
+    source: "admin",
+    purpose: "admin_operations",
+    metadata: {
+      requested_action: action,
+      db_role_check_error: error?.message || null,
+      db_role_check_result: data ?? null
+    }
+  });
+  throw httpError("Admin Panel yetki sınırı doğrulanamadı.", 403);
 }
 
 async function auditedOpsEvent({ request, ctx, action, resourceType = null, resourceId = null, severity = "info", metadata = {} }) {
@@ -2240,6 +2841,97 @@ function extensionFromMime(contentType) {
   if (type === "image/gif") return "gif";
   if (type === "video/mp4") return "mp4";
   return "png";
+}
+
+function storageObjectSize(item) {
+  return Number(item?.metadata?.size || item?.metadata?.contentLength || item?.metadata?.ContentLength || 0);
+}
+
+function storageObjectTimestamp(item) {
+  return item?.updated_at || item?.created_at || item?.last_accessed_at || item?.metadata?.lastModified || "";
+}
+
+function isStorageFolder(item) {
+  return !item?.id && !storageObjectSize(item) && !item?.metadata?.mimetype;
+}
+
+async function listStoragePath(bucket, path = "") {
+  const rows = [];
+  const pageSize = 1000;
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabaseAdmin.storage.from(bucket).list(path, {
+      limit: pageSize,
+      offset,
+      sortBy: { column: "name", order: "asc" }
+    });
+    if (error) throw new Error(`${bucket}/${path}: ${error.message}`);
+    const items = data || [];
+    rows.push(...items);
+    if (items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return rows;
+}
+
+async function walkStoragePath(bucket, path = "") {
+  const items = await listStoragePath(bucket, path);
+  const files = [];
+  for (const item of items) {
+    const fullPath = path ? `${path}/${item.name}` : item.name;
+    if (isStorageFolder(item)) {
+      files.push(...await walkStoragePath(bucket, fullPath));
+      continue;
+    }
+    files.push({
+      path: fullPath,
+      size: storageObjectSize(item),
+      updatedAt: storageObjectTimestamp(item)
+    });
+  }
+  return files;
+}
+
+async function cleanupSocialMediaAssetStorage({ retentionDays, limit, dryRun }) {
+  const bucket = String(config.socialMedia.assetStorageBucket || "").trim();
+  const prefix = String(config.socialMedia.assetStoragePrefix || "").replace(/^\/+|\/+$/g, "");
+  if (!bucket || !prefix) {
+    throw new Error("SOCIAL_MEDIA_ASSET_STORAGE_BUCKET ve SOCIAL_MEDIA_ASSET_STORAGE_PREFIX dolu olmalı.");
+  }
+
+  const days = Math.max(1, Number(retentionDays || config.socialMedia.assetRetentionDays || 2));
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const files = await walkStoragePath(bucket, prefix);
+  const candidates = files
+    .map((file) => ({ ...file, parsedDate: file.updatedAt ? new Date(file.updatedAt) : null }))
+    .filter((file) => file.parsedDate && !Number.isNaN(file.parsedDate.getTime()) && file.parsedDate < cutoff)
+    .sort((a, b) => a.parsedDate - b.parsedDate)
+    .slice(0, Math.max(1, Math.min(Number(limit || 500), 1000)));
+
+  const totalBytes = candidates.reduce((sum, file) => sum + file.size, 0);
+  const deletedPaths = [];
+
+  if (!dryRun && candidates.length) {
+    for (let index = 0; index < candidates.length; index += 100) {
+      const batch = candidates.slice(index, index + 100).map((file) => file.path);
+      const { error } = await supabaseAdmin.storage.from(bucket).remove(batch);
+      if (error) throw new Error(`${bucket}: ${error.message}`);
+      deletedPaths.push(...batch);
+    }
+  }
+
+  return {
+    bucket,
+    prefix,
+    retention_days: days,
+    cutoff: cutoff.toISOString(),
+    scanned: files.length,
+    matched: candidates.length,
+    deleted: dryRun ? 0 : deletedPaths.length,
+    dry_run: Boolean(dryRun),
+    estimated_freed_bytes: totalBytes,
+    sample_paths: candidates.slice(0, 20).map((file) => file.path)
+  };
 }
 
 async function ensureSocialAssetBucket(warnings) {
@@ -3293,6 +3985,1585 @@ function textSearchFilter(columns, value) {
   return columns.map((column) => `${column}.ilike.%${term}%`).join(",");
 }
 
+function normalizedReviewValue(value) {
+  return String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function productNeedsAdminReview(product = {}) {
+  const status = normalizedReviewValue(product.status);
+  const reviewStatus = normalizedReviewValue(
+    product.compliance_review_status
+      || product.review_status
+      || product.approval_status
+      || product.moderation_status
+  );
+  const hasPartnerOrImportSignal = Boolean(
+    product.partner_id
+      || product.partner_code
+      || product.partner_email
+      || product.integration_source
+      || product.integration_external_id
+  );
+  const closedReviewStatuses = new Set(["approved", "rejected"]);
+  const closedProductStatuses = new Set(["active", "approved", "published", "archived", "rejected", "deleted", "hidden"]);
+  const waitingReviewStatuses = new Set(["pending", "needs_review", "review", "in_review", "draft", "submitted", "awaiting_review", "waiting_review"]);
+  const waitingProductStatuses = new Set(["", "draft", "pending", "review", "in_review", "needs_review", "submitted", "awaiting_review", "waiting_review"]);
+
+  if (closedReviewStatuses.has(reviewStatus) || ["archived", "rejected", "deleted", "hidden"].includes(status)) return false;
+  if (waitingReviewStatuses.has(reviewStatus)) return hasPartnerOrImportSignal || waitingProductStatuses.has(status);
+  if (waitingProductStatuses.has(status)) return true;
+  return hasPartnerOrImportSignal && !closedProductStatuses.has(status);
+}
+
+function productReviewFieldText(product = {}, field) {
+  return String(product[field] || "").trim();
+}
+
+function addProductReviewReason(reasons, reason) {
+  if (!reason?.code) return;
+  const key = `${reason.code}:${reason.field || ""}`;
+  if (reasons.some((item) => `${item.code}:${item.field || ""}` === key)) return;
+  reasons.push(reason);
+}
+
+function productReviewRuleReasons(product = {}) {
+  const reasons = [];
+  for (const rule of productReviewPolicyRules) {
+    for (const field of rule.fields) {
+      const value = productReviewFieldText(product, field);
+      if (!value || !rule.pattern.test(value)) continue;
+      addProductReviewReason(reasons, {
+        code: rule.code,
+        severity: rule.severity,
+        field,
+        field_label: productReviewFieldLabels[field] || field,
+        title: rule.title,
+        message: `${productReviewFieldLabels[field] || field} alanında politika/hukuk riski olabilecek ifade bulundu.`,
+        suggestion: rule.suggestion,
+        requires_revision: Boolean(rule.requiresRevision)
+      });
+    }
+  }
+  return reasons;
+}
+
+function productOperationalReviewReasons(product = {}) {
+  const reasons = [];
+  const price = Number(product.price || 0);
+  const stock = Number(product.stock ?? 0);
+  const description = String(product.description || "").trim();
+  if (!product.image_url && !product.image) {
+    addProductReviewReason(reasons, {
+      code: "image_missing",
+      severity: "warning",
+      field: "image_url",
+      field_label: "Ürün görseli",
+      title: "Görsel eksik",
+      message: "Ürün görseli yok veya yüklenmemiş görünüyor.",
+      suggestion: "Görsel kalite kontrolü yapın; bu tek başına zorunlu revizyon değildir.",
+      requires_revision: false
+    });
+  }
+  if (!description || description.length < 20) {
+    addProductReviewReason(reasons, {
+      code: "description_short",
+      severity: "warning",
+      field: "description",
+      field_label: "Açıklama",
+      title: "Açıklama kısa",
+      message: "Açıklama müşteri için yetersiz olabilir.",
+      suggestion: "Gerekirse açıklama kalitesini artırın; politika riski yoksa ürün yayına alınabilir.",
+      requires_revision: false
+    });
+  }
+  if (price <= 0) {
+    addProductReviewReason(reasons, {
+      code: "price_missing",
+      severity: "info",
+      field: "price",
+      field_label: "Fiyat",
+      title: "Fiyat yok",
+      message: "Fiyat 0 veya boş görünüyor.",
+      suggestion: "Fiyat operasyonel kontroldür; hukuki/politika revizyonu olarak işaretlenmez.",
+      requires_revision: false
+    });
+  }
+  if (stock <= 0) {
+    addProductReviewReason(reasons, {
+      code: "stock_missing",
+      severity: "info",
+      field: "stock",
+      field_label: "Stok",
+      title: "Stok yok",
+      message: "Stok 0 veya boş görünüyor.",
+      suggestion: "Stok operasyonel kontroldür; hukuki/politika revizyonu olarak işaretlenmez.",
+      requires_revision: false
+    });
+  }
+  return reasons;
+}
+
+function productHasIntegrationSignal(product = {}) {
+  return Boolean(
+    product.integration_source
+      || product.integration_external_id
+      || product.external_product_id
+      || product.external_variant_id
+      || product.external_sku
+  );
+}
+
+function productIntegrationRevisionReasons(product = {}) {
+  if (!productHasIntegrationSignal(product)) return [];
+  const reasons = [];
+  for (const rule of productIntegrationRevisionRules) {
+    if (!rule?.code || typeof rule.test !== "function" || !rule.test(product)) continue;
+    addProductReviewReason(reasons, {
+      code: rule.code,
+      severity: rule.severity,
+      field: rule.field,
+      field_label: productReviewFieldLabels[rule.field] || rule.field,
+      title: rule.title,
+      message: rule.message || `${productReviewFieldLabels[rule.field] || rule.field} alanı entegrasyon importu için revize edilmeli.`,
+      suggestion: rule.suggestion,
+      requires_revision: Boolean(rule.requiresRevision)
+    });
+  }
+  return reasons;
+}
+
+function productVariantReviewReasons(product = {}) {
+  const reasons = [];
+  const variant = product.variant_automation || {};
+  if (variant.duplicate_status === "duplicate") {
+    addProductReviewReason(reasons, {
+      code: "duplicate_variant_visual_or_barcode",
+      severity: "critical",
+      field: variant.barcode ? "barcode" : "image_url",
+      field_label: variant.barcode ? "Barkod" : "Ürün görseli",
+      title: "Aynı ürün tekrar import edilmiş",
+      message: "Aynı barkod, ürün kodu veya aynı görsel/renk sinyaliyle gelen ürün tekrar kayıt gibi görünüyor.",
+      suggestion: "Bu kaydı yayına almayın; tekil ürün ana kaydı korunmalı, yalnızca gerçekten farklı renk/beden/görsel varyantları yayına alınmalıdır.",
+      requires_revision: true
+    });
+  }
+  if (variant.duplicate_count > 0 && variant.duplicate_status === "primary") {
+    addProductReviewReason(reasons, {
+      code: "duplicate_variant_siblings_suppressed",
+      severity: "warning",
+      field: "image_url",
+      field_label: "Varyant görselleri",
+      title: "Aynı görsel tekrarları gizlendi",
+      message: `${variant.duplicate_count} tekrar kayıt varyant listesinden ayrıldı.`,
+      suggestion: "Varyant ailesinde yalnızca farklı renk/beden/görsel kayıtlarını bırakın.",
+      requires_revision: false
+    });
+  }
+  return reasons;
+}
+
+function productReviewAutomation(product = {}) {
+  const reasons = [
+    ...productReviewRuleReasons(product),
+    ...productIntegrationRevisionReasons(product),
+    ...productOperationalReviewReasons(product),
+    ...productVariantReviewReasons(product)
+  ];
+  const revisionRequired = reasons.some((reason) => reason.requires_revision);
+  const criticalCount = reasons.filter((reason) => reason.severity === "critical").length;
+  const warningCount = reasons.filter((reason) => reason.severity === "warning").length;
+  const infoCount = reasons.filter((reason) => reason.severity === "info").length;
+  const score = Math.min(100, criticalCount * 45 + warningCount * 18 + infoCount * 6);
+  const riskLevel = criticalCount ? "critical" : warningCount ? "warning" : infoCount ? "info" : "clear";
+  const lane = revisionRequired ? "needs_revision" : warningCount ? "watch" : "ready";
+
+  return {
+    risk_level: riskLevel,
+    lane,
+    score,
+    auto_approvable: !revisionRequired,
+    revision_required: revisionRequired,
+    reasons,
+    checked_fields: ["name", "description", "meta_title", "meta_description", "category", "brand", "sku", "barcode", "seller_disclosure", "image_url", "media_gallery", "video_url", "price", "stock", "integration_source", "integration_external_id"]
+  };
+}
+
+function attachProductReviewAutomation(product = {}) {
+  return {
+    ...product,
+    review_automation: productReviewAutomation(product)
+  };
+}
+
+function productReviewMatchesAutomationStatus(product = {}, statusFilter = "") {
+  const filter = normalizedReviewValue(statusFilter);
+  if (!filter || filter === "all") return true;
+  const automation = product.review_automation || productReviewAutomation(product);
+  const status = normalizedReviewValue(product.status);
+  const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+  const notes = String(product.compliance_notes || "").toLocaleLowerCase("tr-TR");
+
+  if (filter === "ready") return automation.lane === "ready" && automation.auto_approvable;
+  if (filter === "watch") return automation.lane === "watch" && automation.auto_approvable;
+  if (filter === "risk" || filter === "risky") return automation.revision_required || automation.risk_level === "critical" || automation.lane === "needs_revision";
+  if (filter === "needs_revision") return automation.revision_required || reviewStatus === "needs_review" || status === "needs_review";
+  if (filter === "revised") return reviewStatus === "pending" && /revizyon|revision|düzelt|duzelt/i.test(notes);
+  return status === filter || reviewStatus === filter;
+}
+
+function productReviewAutomationSummary(products = []) {
+  const summary = {
+    total: products.length,
+    ready: 0,
+    watch: 0,
+    needs_revision: 0,
+    critical: 0,
+    warning: 0,
+    info: 0,
+    auto_approvable: 0,
+    revised: 0
+  };
+  for (const product of products) {
+    const automation = product.review_automation || productReviewAutomation(product);
+    if (automation.lane === "ready") summary.ready += 1;
+    if (automation.lane === "watch") summary.watch += 1;
+    if (automation.lane === "needs_revision") summary.needs_revision += 1;
+    if (automation.risk_level === "critical") summary.critical += 1;
+    if (automation.risk_level === "warning") summary.warning += 1;
+    if (automation.risk_level === "info") summary.info += 1;
+    if (automation.auto_approvable) summary.auto_approvable += 1;
+    if (productReviewMatchesAutomationStatus(product, "revised")) summary.revised += 1;
+  }
+  return summary;
+}
+
+function productReviewDecisionPayload(decision, reason, nowIso = new Date().toISOString()) {
+  const nextStatus = decision === "approved" ? "active" : decision === "rejected" ? "archived" : "draft";
+  return {
+    status: nextStatus,
+    compliance_review_status: decision,
+    compliance_notes: reason,
+    updated_at: nowIso
+  };
+}
+
+function productReviewRevisionReason(product = {}, baseReason = "") {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const requiredReasons = automation.reasons.filter((reason) => reason.requires_revision);
+  const intro = String(baseReason || PRODUCT_REVISION_DEFAULT_NOTICE).trim();
+  if (!requiredReasons.length) return intro;
+  const details = requiredReasons
+    .map((reason) => `- ${reason.field_label || reason.field}: ${reason.title}. ${reason.suggestion}`)
+    .join("\n");
+  return `${intro}\n\nOtomasyon tespiti:\n${details}`.trim().slice(0, 1200);
+}
+
+function productAutoPublishCandidate(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const price = Number(product.price || 0);
+  const stock = Number(product.stock ?? 0);
+  const description = String(product.description || "").trim();
+  const galleryImage = Array.isArray(product.media_gallery) ? product.media_gallery.find(Boolean) : "";
+  const image = String(product.image_url || galleryImage || product.image || "").trim();
+  return Boolean(
+    productNeedsAdminReview(product)
+      && automation.auto_approvable
+      && automation.lane === "ready"
+      && automation.risk_level === "clear"
+      && !automation.revision_required
+      && price > 0
+      && stock > 0
+      && description.length >= 20
+      && image
+  );
+}
+
+function automationRiskRank(riskLevel) {
+  const rank = { critical: 5, high: 4, warning: 3, medium: 2, info: 1, low: 1, clear: 0 };
+  return rank[String(riskLevel || "").toLowerCase()] ?? 2;
+}
+
+function automationItem({ lane, type, targetId, title, summary, riskLevel = "medium", action = "", createdAt = null, metadata = {} }) {
+  return {
+    id: `${lane}:${type}:${targetId || title || Date.now()}`,
+    lane,
+    type,
+    target_id: targetId || "",
+    title: title || "Otomasyon kaydı",
+    summary: summary || "",
+    risk_level: riskLevel,
+    action,
+    created_at: createdAt,
+    metadata
+  };
+}
+
+function productAutomationSummaryText(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  if (!automation.reasons.length) return "Politika, görsel, fiyat, stok ve açıklama kuralları geçti.";
+  return automation.reasons
+    .slice(0, 3)
+    .map((reason) => `${reason.field_label || reason.field || "Alan"}: ${reason.title || reason.message || "Kontrol"}`)
+    .join(" · ");
+}
+
+function productAutomationItem(product = {}, lane = "admin_queue") {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const riskLevel = automation.risk_level === "critical"
+    ? "critical"
+    : automation.risk_level === "warning"
+      ? "high"
+      : automation.risk_level === "info"
+        ? "medium"
+        : "low";
+  const action = lane === "auto_ready"
+    ? "Otomatik yayına alınabilir"
+    : automation.revision_required
+      ? "Admin revizyon bildirimi göndermeli"
+      : "Admin kontrol edebilir";
+  return automationItem({
+    lane,
+    type: "product",
+    targetId: product.id,
+    title: product.name || product.product_name || product.sku || "Ürün onayı",
+    summary: productAutomationSummaryText(product),
+    riskLevel,
+    action,
+    createdAt: product.created_at || product.updated_at || null,
+    metadata: {
+      partner_id: product.partner_id || null,
+      seller: product.seller_public_name || product.seller_legal_name || product.partner_email || "",
+      status: product.status || "",
+      review_status: product.compliance_review_status || product.review_status || product.approval_status || "",
+      automation
+    }
+  });
+}
+
+function automationSupportRisk(ticket = {}) {
+  const priority = String(ticket.priority || "").toLowerCase();
+  const text = `${ticket.category || ""} ${ticket.title || ""} ${ticket.message || ""}`.toLocaleLowerCase("tr-TR");
+  if (priority === "urgent" || /kvkk|hukuk|mahkeme|savcı|savci|güvenlik|guvenlik|dolandırıcılık|dolandiricilik|chargeback|ters ibraz/i.test(text)) return "critical";
+  if (priority === "high" || /iade|iptal|refund|cancel|ödeme|odeme|hakediş|hakedis|dispute|ihtilaf/i.test(text)) return "high";
+  return "medium";
+}
+
+function automationSupportItem(ticket = {}, source = "user") {
+  const riskLevel = automationSupportRisk(ticket);
+  return automationItem({
+    lane: riskLevel === "critical" ? "super_admin_queue" : "admin_queue",
+    type: source === "partner" ? "partner_support_ticket" : "support_ticket",
+    targetId: ticket.id,
+    title: ticket.title || (source === "partner" ? "Partner destek talebi" : "Destek talebi"),
+    summary: `${ticket.category || "general"} / ${ticket.priority || "normal"} / ${ticket.status || "open"}`,
+    riskLevel,
+    action: riskLevel === "critical" ? "Süper admin kararı gerekir" : "Admin aksiyonu gerekir",
+    createdAt: ticket.created_at || null,
+    metadata: {
+      source,
+      requester_type: ticket.requester_type || source,
+      category: ticket.category || "",
+      priority: ticket.priority || "",
+      status: ticket.status || ""
+    }
+  });
+}
+
+function automationApplicationRisk(application = {}) {
+  const metadata = partnerApplicationMetadata(application);
+  const risk = String(application.risk_level || metadata.risk_level || "").toLowerCase();
+  const recommendation = String(application.admin_recommendation || metadata.admin_recommendation || "").toLowerCase();
+  const status = String(application.status || "").toLowerCase();
+  if (status === "pending_super_admin" || recommendation === "needs_super_admin" || ["critical", "high"].includes(risk)) return "high";
+  return "medium";
+}
+
+function automationSortItems(items = []) {
+  return [...items].sort((a, b) => {
+    const riskDelta = automationRiskRank(b.risk_level) - automationRiskRank(a.risk_level);
+    if (riskDelta) return riskDelta;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  });
+}
+
+function automationRules() {
+  return [
+    {
+      key: "safe_product_publish",
+      title: "Temiz ürünleri otomatik yayına al",
+      summary: "Politika riski olmayan, fiyatı, stoğu, görseli ve açıklaması tamam ürünler manuel onaya bekletilmez.",
+      auto_apply: true,
+      action: "publish_safe_products"
+    },
+    {
+      key: "product_revision_required",
+      title: "Politika/hukuk riski olan ürünü partnere revizyona gönder",
+      summary: "Yasaklı ifade, harici iletişim, iade/değişim yasağı veya ödeme akışı dışına çıkaran metin varsa otomasyon alan bazlı düzeltme notu yazar ve ürünü partner revizyonuna taşır.",
+      auto_apply: true,
+      action: "request_product_revisions"
+    },
+    {
+      key: "money_and_dispute_guardrail",
+      title: "İade, iptal ve ödeme kararını otomatik onaylama",
+      summary: "Finansal kararlar partner/admin kararına ve ihtilaf durumunda süper admin hakemliğine bırakılır.",
+      auto_apply: false,
+      action: "manual_decision"
+    },
+    {
+      key: "owner_only_escalation",
+      title: "İçerik, yayın, güvenlik ve kritik yetki işlerini süper admine taşı",
+      summary: "pending_super_admin içerikler, release onayları ve dış güvenlik sinyalleri owner console iş kuyruğuna düşer.",
+      auto_apply: false,
+      action: "super_admin_review"
+    }
+  ];
+}
+
+function automationSchemaWarningObjects(warnings = []) {
+  return [...new Set(warnings)].map((message) => ({
+    label: "automation",
+    code: "AUTOMATION_SCHEMA_WARNING",
+    message
+  }));
+}
+
+async function buildOpsAutomationSnapshot(options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || 80), 1), 120);
+  const apply = options.apply === true;
+  const actions = new Set(options.actions && options.actions.length ? options.actions : ["publish_safe_products", "request_product_revisions"]);
+  const warnings = [];
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const fetchLimit = Math.max(180, Math.min(600, limit * 5));
+
+  const [
+    productRows,
+    applicationRows,
+    supportTickets,
+    partnerSupportTickets,
+    approvalRequests,
+    contentProposals,
+    releaseApprovals,
+    securityEvents
+  ] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(fetchLimit),
+      [],
+      warnings,
+      "products"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("partner_applications")
+        .select("*")
+        .in("status", ["pending", "review", "pending_super_admin"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "partner_applications"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("support_tickets")
+        .select("*")
+        .in("status", ["open", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("partner_support_tickets")
+        .select("*")
+        .in("status", ["open", "waiting", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "partner_support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "admin_approval_requests"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(80),
+      [],
+      warnings,
+      "content_change_proposals"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("super_admin_release_approvals")
+        .select("*")
+        .in("status", ["pending", "approved", "failed"])
+        .order("created_at", { ascending: false })
+        .limit(60),
+      [],
+      warnings,
+      "super_admin_release_approvals"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("*")
+        .in("severity", ["warning", "critical"])
+        .gte("created_at", since24h)
+        .order("created_at", { ascending: false })
+        .limit(120),
+      [],
+      warnings,
+      "security_audit_events"
+    )
+  ]);
+
+  let products = (productRows || [])
+    .filter(productNeedsAdminReview)
+    .map(attachProductReviewAutomation);
+  const productIds = products.map((product) => product.id).filter(Boolean);
+  products = attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
+  let autoReady = products
+    .filter(productAutoPublishCandidate)
+    .map((product) => productAutomationItem(product, "auto_ready"));
+  const autoReadyProductById = new Map(products.filter(productAutoPublishCandidate).map((product) => [String(product.id), product]));
+  const adminQueue = [];
+  const superAdminQueue = [];
+  const watchlist = [];
+  const contentProposalIds = new Set((contentProposals || []).map((proposal) => String(proposal.id)));
+
+  for (const product of products) {
+    const automation = product.review_automation || productReviewAutomation(product);
+    if (productAutoPublishCandidate(product)) continue;
+    if (automation.revision_required || automation.risk_level === "critical") {
+      adminQueue.push(productAutomationItem(product, "admin_queue"));
+    } else {
+      watchlist.push(productAutomationItem(product, "watchlist"));
+    }
+  }
+
+  for (const application of applicationRows || []) {
+    const riskLevel = automationApplicationRisk(application);
+    const item = automationItem({
+      lane: riskLevel === "high" ? "super_admin_queue" : "admin_queue",
+      type: "partner_application",
+      targetId: application.id,
+      title: application.company_name || application.partner_name || application.contact_name || "Partner başvurusu",
+      summary: `${application.status || "pending"} / ${application.category || application.company_type || "partner"}`,
+      riskLevel,
+      action: riskLevel === "high" ? "Süper admin kararı gerekir" : "Admin incelemesi gerekir",
+      createdAt: application.created_at || null,
+      metadata: {
+        email: application.email || "",
+        city: application.city || "",
+        category: application.category || "",
+        status: application.status || ""
+      }
+    });
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else adminQueue.push(item);
+  }
+
+  for (const ticket of supportTickets || []) {
+    const item = automationSupportItem(ticket, "user");
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else if (automationRiskRank(item.risk_level) >= automationRiskRank("high")) adminQueue.push(item);
+    else watchlist.push(item);
+  }
+
+  for (const ticket of partnerSupportTickets || []) {
+    const item = automationSupportItem(ticket, "partner");
+    if (item.lane === "super_admin_queue") superAdminQueue.push(item);
+    else if (automationRiskRank(item.risk_level) >= automationRiskRank("high")) adminQueue.push(item);
+    else watchlist.push(item);
+  }
+
+  for (const request of approvalRequests || []) {
+    if (contentProposalIds.has(String(request.target_id || ""))) continue;
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "admin_approval_request",
+      targetId: request.id,
+      title: request.summary || request.request_type || "Admin onayı",
+      summary: `${request.request_type || "approval"} / ${request.status || "pending_super_admin"}`,
+      riskLevel: "high",
+      action: "Süper admin onayı gerekir",
+      createdAt: request.created_at || null,
+      metadata: {
+        target_type: request.target_type || "",
+        target_id: request.target_id || "",
+        proposed_action: request.proposed_action || {}
+      }
+    }));
+  }
+
+  for (const proposal of contentProposals || []) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "content_change_proposal",
+      targetId: proposal.id,
+      title: proposal.title || "İçerik önerisi",
+      summary: proposal.summary || proposal.content_scope || "",
+      riskLevel: proposal.content_scope === "legal" ? "critical" : "high",
+      action: "Süper admin içerik onayı gerekir",
+      createdAt: proposal.created_at || null,
+      metadata: {
+        content_scope: proposal.content_scope || "",
+        status: proposal.status || "",
+        payload: proposal.payload || {}
+      }
+    }));
+  }
+
+  for (const approval of releaseApprovals || []) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "super_admin_release_approval",
+      targetId: approval.id,
+      title: approval.target_summary || approval.approval_type || "Yayın onayı",
+      summary: `${approval.approval_type || "release"} / ${approval.status || "pending"} / ${approval.target_ref || "main"}`,
+      riskLevel: approval.risk_level || "critical",
+      action: "Owner onayı veya yayın takibi gerekir",
+      createdAt: approval.created_at || null,
+      metadata: {
+        status: approval.status || "",
+        target_ref: approval.target_ref || "",
+        webhook_status: approval.webhook_status || null
+      }
+    }));
+  }
+
+  for (const event of (securityEvents || []).filter(isExternalSecurityAuditEvent)) {
+    superAdminQueue.push(automationItem({
+      lane: "super_admin_queue",
+      type: "security_audit_event",
+      targetId: event.id,
+      title: event.action || "Güvenlik olayı",
+      summary: `${event.severity || "warning"} / ${event.resource_type || "system"} / IP ${event.ip_address || "-"}`,
+      riskLevel: workQueueRiskFromSeverity(securityRiskSeverity(event)),
+      action: "Süper admin güvenlik incelemesi gerekir",
+      createdAt: event.created_at || null,
+      metadata: {
+        actor_role: event.actor_role || "",
+        source: event.source || "",
+        purpose: event.purpose || ""
+      }
+    }));
+  }
+
+  const applied = {
+    products_published: [],
+    product_revisions_requested: [],
+    skipped: []
+  };
+
+  if (apply && actions.has("request_product_revisions")) {
+    const revisionResult = await autoRequestProductRevisions(products, {
+      request: options.request,
+      ctx: options.ctx,
+      warnings,
+      source: "automation_run",
+      limit: Math.min(limit, ADMIN_PRODUCT_AUTO_REVISION_BATCH)
+    });
+    applied.product_revisions_requested = revisionResult.updatedProducts.map((product) => ({
+      id: product.id,
+      title: product.name || product.product_name || "Ürün",
+      status: product.status || "draft",
+      compliance_review_status: product.compliance_review_status || "needs_review",
+      updated_at: product.updated_at || null
+    }));
+    applied.skipped.push(...revisionResult.skipped);
+    if (revisionResult.updatedProducts.length) {
+      const updatedById = new Map(revisionResult.updatedProducts.map((product) => [String(product.id), product]));
+      for (let index = 0; index < products.length; index += 1) {
+        const updated = updatedById.get(String(products[index]?.id || ""));
+        if (updated) products[index] = updated;
+      }
+    }
+  }
+
+  if (apply && actions.has("publish_safe_products")) {
+    const nowIso = new Date().toISOString();
+    const reason = options.reason || "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı.";
+    const candidates = autoReady
+      .map((item) => autoReadyProductById.get(String(item.target_id)))
+      .filter(Boolean)
+      .slice(0, Math.min(limit, 80));
+
+    for (const product of candidates) {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("approved", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: production şemasında yok; bu alan atlandı.`));
+      }
+      applied.products_published.push({
+        id: updated.id,
+        title: updated.name || updated.product_name || product.name || product.product_name || "Ürün",
+        status: updated.status || "active",
+        updated_at: updated.updated_at || nowIso
+      });
+    }
+
+    const appliedIds = new Set(applied.products_published.map((item) => String(item.id)));
+    autoReady = autoReady.filter((item) => !appliedIds.has(String(item.target_id)));
+
+    if (options.ctx && options.request) {
+      const auditPayload = {
+        request: options.request,
+        actorId: options.ctx.user.id,
+        actorRole: options.ctx.profile.role,
+        action: options.mode === "super_admin" ? "super_admin.automation_run" : "admin.ops.automation_run",
+        source: "admin",
+        resourceType: "automation",
+        severity: applied.products_published.length ? "warning" : "info",
+        purpose: options.mode === "super_admin" ? "super_admin_automation" : "admin_operations",
+        evidenceTags: ["automation", "product_review"],
+        metadata: {
+          actions: [...actions],
+          applied_product_count: applied.products_published.length,
+          revision_requested_count: applied.product_revisions_requested.length,
+          reason
+        }
+      };
+      if (options.mode === "super_admin") {
+        await auditEvent(auditPayload);
+      } else {
+        await auditedOpsEvent({
+          request: options.request,
+          ctx: options.ctx,
+          action: "admin.ops.automation_run",
+          resourceType: "automation",
+          severity: applied.products_published.length ? "warning" : "info",
+          metadata: auditPayload.metadata
+        });
+      }
+    }
+  }
+
+  const sortedAutoReady = automationSortItems(autoReady);
+  const sortedAdminQueue = automationSortItems(adminQueue);
+  const sortedSuperAdminQueue = automationSortItems(superAdminQueue);
+  const sortedWatchlist = automationSortItems(watchlist);
+  const criticalCount = [...sortedAdminQueue, ...sortedSuperAdminQueue, ...sortedWatchlist]
+    .filter((item) => item.risk_level === "critical").length;
+
+  return {
+    checked_at: new Date().toISOString(),
+    mode: options.mode || "admin",
+    summary: {
+      auto_ready: sortedAutoReady.length,
+      admin_required: sortedAdminQueue.length,
+      super_admin_required: sortedSuperAdminQueue.length,
+      watchlist: sortedWatchlist.length,
+      critical: criticalCount,
+      applied: applied.products_published.length,
+      revisions_requested: applied.product_revisions_requested.length,
+      action_required: sortedAdminQueue.length + sortedSuperAdminQueue.length
+    },
+    queues: {
+      auto_ready: sortedAutoReady.slice(0, limit),
+      admin_queue: sortedAdminQueue.slice(0, limit),
+      super_admin_queue: sortedSuperAdminQueue.slice(0, limit),
+      watchlist: sortedWatchlist.slice(0, limit)
+    },
+    applied,
+    rules: automationRules(),
+    warnings: [...new Set(warnings)]
+  };
+}
+
+function productMatchesAdminReviewSearch(product = {}, search) {
+  const term = cleanSearch(search).toLocaleLowerCase("tr-TR");
+  if (!term) return true;
+  return [
+    product.name,
+    product.product_name,
+    product.category,
+    product.brand,
+    product.seller_public_name,
+    product.seller_legal_name,
+    product.sku,
+    product.barcode,
+    product.integration_source,
+    product.integration_external_id,
+    product.partner_code,
+    product.partner_email
+  ].some((value) => String(value || "").toLocaleLowerCase("tr-TR").includes(term));
+}
+
+const adminProductReviewSearchColumns = [
+  "name",
+  "product_name",
+  "description",
+  "category",
+  "brand",
+  "sku",
+  "barcode",
+  "seller_public_name",
+  "seller_legal_name",
+  "integration_source",
+  "integration_external_id",
+  "partner_code",
+  "partner_email"
+];
+
+function uniqueStrings(values = []) {
+  return [...new Set((values || []).map((value) => String(value || "").trim()).filter(Boolean))];
+}
+
+function chunks(values = [], size = 50) {
+  const rows = [];
+  for (let index = 0; index < values.length; index += size) {
+    rows.push(values.slice(index, index + size));
+  }
+  return rows;
+}
+
+async function loadProductIntegrationLinks(productIds = [], warnings = []) {
+  const ids = uniqueStrings(productIds);
+  if (!ids.length) return [];
+  const rows = [];
+  for (const group of chunks(ids, PRODUCT_LINK_QUERY_CHUNK)) {
+    const linkRows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_product_links")
+        .select("product_id, external_product_id, external_variant_id, external_sku, last_payload, updated_at, last_synced_at")
+        .in("product_id", group),
+      [],
+      warnings,
+      "partner_integration_product_links"
+    );
+    rows.push(...(linkRows || []));
+  }
+  return rows;
+}
+
+function linksByProductId(linkRows = []) {
+  const map = new Map();
+  for (const link of linkRows || []) {
+    if (link?.product_id && !map.has(String(link.product_id))) map.set(String(link.product_id), link);
+  }
+  return map;
+}
+
+function adminProductReviewDbQuery(query = {}, includeCount = false) {
+  let dbQuery = supabaseAdmin
+    .from("products")
+    .select("*", includeCount ? { count: "exact" } : {})
+    .eq("compliance_review_status", "pending")
+    .order("created_at", { ascending: false });
+  const searchFilter = textSearchFilter(adminProductReviewSearchColumns, query.search);
+  if (searchFilter) dbQuery = dbQuery.or(searchFilter);
+  return dbQuery;
+}
+
+async function loadAdminProductReviewPage({ request, ctx, query, warnings }) {
+  const products = [];
+  const skipped = [];
+  let totalCandidates = null;
+  let scannedCount = 0;
+  let nextOffset = query.offset;
+  let reachedEnd = false;
+  let autoPublishedCount = 0;
+  let autoPublishSkippedCount = 0;
+  let autoRevisionedCount = 0;
+  let autoRevisionSkippedCount = 0;
+  let autoActionBudget = ADMIN_PRODUCT_AUTO_ACTIONS_PER_REQUEST;
+  const scanLimit = Math.max(ADMIN_PRODUCT_REVIEW_MAX_SCAN, query.limit * 4);
+
+  while (products.length < query.limit && scannedCount < scanLimit) {
+    const remainingScan = scanLimit - scannedCount;
+    const batchSize = Math.min(
+      ADMIN_PRODUCT_REVIEW_DB_BATCH,
+      Math.max(query.limit * 3, 200),
+      remainingScan
+    );
+    const batchOffset = nextOffset;
+    const { data, error, count } = await adminProductReviewDbQuery(query, totalCandidates === null)
+      .range(nextOffset, nextOffset + batchSize - 1);
+    if (error && looksLikeMissingSchema(error)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (error) throw error;
+    if (totalCandidates === null && typeof count === "number") totalCandidates = count;
+
+    const rows = data || [];
+    scannedCount += rows.length;
+    nextOffset += rows.length;
+    if (!rows.length) {
+      reachedEnd = true;
+      break;
+    }
+
+    let batchProducts = rows
+      .filter(productNeedsAdminReview)
+      .filter((product) => productMatchesAdminReviewSearch(product, query.search))
+      .map(attachProductReviewAutomation);
+    batchProducts = await attachProductReviewVariantGroups(batchProducts, warnings);
+
+    const autoPublish = autoActionBudget > 0
+      ? await autoPublishProductReviews(batchProducts, {
+          request,
+          ctx,
+          warnings,
+          source: "product_review_queue",
+          limit: Math.min(ADMIN_PRODUCT_AUTO_PUBLISH_BATCH, autoActionBudget)
+        })
+      : { updatedProducts: [], skipped: [] };
+    autoPublishedCount += autoPublish.updatedProducts.length;
+    autoPublishSkippedCount += autoPublish.skipped.length;
+    autoActionBudget -= autoPublish.updatedProducts.length;
+    skipped.push(...autoPublish.skipped);
+    if (autoPublish.updatedProducts.length) {
+      const publishedIds = new Set(autoPublish.updatedProducts.map((product) => String(product.id)));
+      batchProducts = batchProducts.filter((product) => !publishedIds.has(String(product.id)));
+    }
+
+    const autoRevision = autoActionBudget > 0
+      ? await autoRequestProductRevisions(batchProducts, {
+          request,
+          ctx,
+          warnings,
+          source: "product_review_queue",
+          limit: Math.min(ADMIN_PRODUCT_AUTO_REVISION_BATCH, autoActionBudget)
+        })
+      : { updatedProducts: [], skipped: [] };
+    autoRevisionedCount += autoRevision.updatedProducts.length;
+    autoRevisionSkippedCount += autoRevision.skipped.length;
+    autoActionBudget -= autoRevision.updatedProducts.length;
+    skipped.push(...autoRevision.skipped);
+    if (autoRevision.updatedProducts.length) {
+      const updatedById = new Map(autoRevision.updatedProducts.map((product) => [String(product.id), product]));
+      batchProducts = batchProducts.map((product) => updatedById.get(String(product.id)) || product);
+    }
+    if (autoPublish.updatedProducts.length || autoRevision.updatedProducts.length) {
+      nextOffset = batchOffset;
+      continue;
+    }
+
+    if (query.status) {
+      batchProducts = batchProducts.filter((product) => productReviewMatchesAutomationStatus(product, query.status));
+    }
+    const acceptedById = new Map(batchProducts.map((product) => [String(product.id), product]));
+    let filledPage = false;
+    for (let index = 0; index < rows.length; index += 1) {
+      const product = acceptedById.get(String(rows[index]?.id || ""));
+      if (!product) continue;
+      products.push(product);
+      if (products.length >= query.limit) {
+        nextOffset = batchOffset + index + 1;
+        filledPage = true;
+        break;
+      }
+    }
+    if (filledPage) break;
+
+    if (rows.length < batchSize) {
+      reachedEnd = true;
+      break;
+    }
+  }
+
+  if (scannedCount >= scanLimit && products.length < query.limit) {
+    warnings.push("Filtre çok dar olduğu için bu sayfada tarama sınırına ulaşıldı. Daha fazla kayıt için devamını yükleyin veya filtreyi daraltın.");
+  }
+
+  const pageProducts = products.slice(0, query.limit);
+  const hasMore = totalCandidates === null ? !reachedEnd : nextOffset < totalCandidates;
+  const summary = productReviewAutomationSummary(pageProducts);
+  summary.queue_total = totalCandidates ?? pageProducts.length;
+  summary.loaded = pageProducts.length;
+  summary.scanned = scannedCount;
+  summary.auto_published = autoPublishedCount;
+  summary.auto_publish_skipped = autoPublishSkippedCount;
+  summary.auto_revisioned = autoRevisionedCount;
+  summary.auto_revision_skipped = autoRevisionSkippedCount;
+
+  return {
+    products: pageProducts,
+    summary,
+    page: {
+      limit: query.limit,
+      offset: query.offset,
+      next_offset: hasMore ? nextOffset : null,
+      has_more: hasMore,
+      scanned_count: scannedCount,
+      total_candidates: totalCandidates,
+      returned_count: pageProducts.length,
+      auto_published_count: autoPublishedCount,
+      auto_publish_skipped_count: autoPublishSkippedCount,
+      auto_revisioned_count: autoRevisionedCount,
+      auto_revision_skipped_count: autoRevisionSkippedCount
+    },
+    skipped
+  };
+}
+
+function partnerProductOwnerIds(business, ctx) {
+  return [...new Set([
+    business?.owner_id,
+    ctx?.user?.id,
+    business?.id
+  ].filter(Boolean).map(String))];
+}
+
+function partnerProductMatchesSearch(product = {}, search) {
+  const term = cleanSearch(search).toLocaleLowerCase("tr-TR");
+  if (!term) return true;
+  return [
+    product.name,
+    product.product_name,
+    product.description,
+    product.category,
+    product.brand,
+    product.sku,
+    product.barcode,
+    product.seller_public_name,
+    product.seller_legal_name,
+    product.integration_source,
+    product.integration_external_id
+  ].some((value) => String(value || "").toLocaleLowerCase("tr-TR").includes(term));
+}
+
+function partnerProductMatchesStatus(product = {}, statusFilter = "all") {
+  const filter = normalizedReviewValue(statusFilter);
+  if (!filter || filter === "all") return true;
+  const status = normalizedReviewValue(product.status);
+  const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+  if (filter === "low_stock") return Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 5;
+  if (filter === "out_of_stock") return Number(product.stock || 0) <= 0;
+  if (filter === "closed") return ["archived", "hidden", "deleted", "closed", "inactive"].includes(status);
+  if (filter === "variant_group") return Number(product.variant_automation?.group_size || 0) > 1;
+  if (filter === "pending") return ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(reviewStatus) || ["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(status);
+  if (filter === "needs_review") return reviewStatus === "needs_review" || status === "needs_review";
+  if (filter === "approved") return reviewStatus === "approved";
+  if (filter === "rejected") return reviewStatus === "rejected" || status === "rejected" || status === "archived";
+  return status === filter || reviewStatus === filter;
+}
+
+function partnerProductSummary(products = []) {
+  const variantGroups = new Set(products
+    .filter((product) => Number(product.variant_automation?.group_size || 0) > 1)
+    .map((product) => product.variant_automation?.group_key)
+    .filter(Boolean));
+  return {
+    total: products.length,
+    active: products.filter((product) => normalizedReviewValue(product.status) === "active").length,
+    pending: products.filter((product) => partnerProductMatchesStatus(product, "pending")).length,
+    needs_review: products.filter((product) => partnerProductMatchesStatus(product, "needs_review") || product.review_automation?.revision_required).length,
+    low_stock: products.filter((product) => Number(product.stock || 0) > 0 && Number(product.stock || 0) <= 5).length,
+    out_of_stock: products.filter((product) => Number(product.stock || 0) <= 0).length,
+    rejected: products.filter((product) => partnerProductMatchesStatus(product, "rejected")).length,
+    closed: products.filter((product) => partnerProductMatchesStatus(product, "closed")).length,
+    variant_groups: variantGroups.size,
+    variant_products: products.filter((product) => Number(product.variant_automation?.group_size || 0) > 1).length
+  };
+}
+
+function productVariantLinkPayload(link = {}) {
+  const payload = link.last_payload && typeof link.last_payload === "object" && !Array.isArray(link.last_payload)
+    ? link.last_payload
+    : {};
+  return payload.allonahub_variant && typeof payload.allonahub_variant === "object" ? payload.allonahub_variant : {};
+}
+
+function isGeneratedIntegrationBarcode(value) {
+  return /^ALH-[A-Z0-9]+-[A-F0-9]{14}$/i.test(String(value || "").trim());
+}
+
+function productVariantSignal(product = {}, link = null) {
+  const variant = productVariantLinkPayload(link || {});
+  const rawBarcode = String(variant.barcode || product.barcode || "").trim();
+  const barcode = isGeneratedIntegrationBarcode(rawBarcode) ? "" : rawBarcode;
+  const productCode = String(variant.product_code || product.sku || link?.external_sku || "").trim();
+  const sourceGroupKey = String(variant.group_key || "").trim();
+  const sourceMatchKey = String(variant.match_key || link?.external_variant_id || link?.external_sku || product.integration_external_id || product.sku || "").trim();
+  const imageUrl = String(product.image_url || "").trim();
+  const imageSignature = String(variant.image_signature || variantImageSignature(imageUrl) || "").trim();
+  const modelRoot = usefulModelRoot(variant.model_root || productModelRoot(product.brand, product.name, product.product_name, product.category));
+  const color = String(variant.color || colorFromText(product.name, product.product_name, product.sku, imageUrl) || "").trim();
+  const size = String(variant.size || "").trim();
+  const groupKey = normalizedIntegrationCode(sourceGroupKey || modelRoot || imageSignature || product.integration_external_id || product.sku || product.id);
+  const matchKey = normalizedIntegrationCode(barcode || productCode || sourceMatchKey || imageSignature || product.id);
+  const source = sourceGroupKey
+    ? "external_group"
+    : barcode
+      ? "barcode"
+      : productCode
+        ? "product_code"
+        : modelRoot && imageSignature
+          ? "model_image"
+          : modelRoot
+            ? "model_name"
+            : "single_product";
+  const confidence = source === "external_group"
+    ? 0.96
+    : source === "barcode"
+      ? 0.92
+      : source === "product_code"
+        ? 0.86
+        : source === "model_image"
+          ? 0.74
+          : source === "model_name"
+            ? 0.62
+            : 0.35;
+  return {
+    group_key: groupKey,
+    match_key: matchKey,
+    barcode,
+    product_code: productCode,
+    color,
+    size,
+    image_signature: imageSignature,
+    model_root: modelRoot,
+    source,
+    confidence
+  };
+}
+
+function variantLabel(signal = {}) {
+  return [signal.color, signal.size].filter(Boolean).join(" / ") || "Standart";
+}
+
+function productVariantDuplicateKey(signal = {}) {
+  if (signal.barcode) return `barcode:${normalizedIntegrationCode(signal.barcode)}`;
+  if (signal.image_signature) {
+    return [
+      "visual",
+      normalizeVariantText(signal.model_root || ""),
+      normalizeVariantText(signal.image_signature),
+      normalizeVariantText(signal.color || "standart"),
+      normalizeVariantText(signal.size || "")
+    ].join(":");
+  }
+  if (signal.product_code) {
+    return [
+      "code",
+      normalizedIntegrationCode(signal.product_code),
+      normalizeVariantText(signal.color || "standart"),
+      normalizeVariantText(signal.size || "")
+    ].join(":");
+  }
+  return `match:${normalizedIntegrationCode(signal.match_key || "") || "single"}`;
+}
+
+function attachVariantGroups(products = [], linksByProductId = new Map()) {
+  const enriched = products.map((product) => {
+    const link = linksByProductId.get(String(product.id)) || null;
+    const signal = productVariantSignal(product, link);
+    const duplicateKey = productVariantDuplicateKey(signal);
+    return {
+      ...product,
+      variant_automation: {
+        ...signal,
+        duplicate_key: duplicateKey,
+        duplicate_status: "primary",
+        duplicate_of: null,
+        duplicate_count: 0,
+        duplicate_reason: "",
+        label: variantLabel(signal),
+        group_size: 1,
+        group_stock: Number(product.stock || 0),
+        price_range: {
+          min: Number(product.price || 0),
+          max: Number(product.price || 0)
+        },
+        siblings: [],
+        reasons: [
+          signal.source === "external_group" ? "Dış platform varyant grup kodu eşleşti." : "",
+          signal.barcode ? "Barkod/GTIN varyant kimliği olarak kullanıldı." : "",
+          signal.color ? "Renk adı ürün veya görsel URL bilgisinden çıkarıldı." : "",
+          signal.image_signature && signal.source === "model_image" ? "Görsel dosya imzası model adıyla birlikte değerlendirildi." : ""
+        ].filter(Boolean)
+      }
+    };
+  });
+
+  const groups = new Map();
+  for (const product of enriched) {
+    const key = product.variant_automation.group_key || String(product.id);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(product);
+  }
+
+  return enriched.map((product) => {
+    const group = groups.get(product.variant_automation.group_key) || [product];
+    const uniqueByDuplicateKey = new Map();
+    const duplicateCountByPrimaryId = new Map();
+    for (const item of group) {
+      const duplicateKey = item.variant_automation.duplicate_key || item.variant_automation.match_key || String(item.id);
+      if (!uniqueByDuplicateKey.has(duplicateKey)) {
+        uniqueByDuplicateKey.set(duplicateKey, item);
+        continue;
+      }
+      const primary = uniqueByDuplicateKey.get(duplicateKey);
+      duplicateCountByPrimaryId.set(String(primary.id), (duplicateCountByPrimaryId.get(String(primary.id)) || 0) + 1);
+    }
+    const uniqueGroup = [...uniqueByDuplicateKey.values()];
+    const duplicatePrimary = uniqueByDuplicateKey.get(product.variant_automation.duplicate_key || product.variant_automation.match_key || String(product.id));
+    const isDuplicate = duplicatePrimary && String(duplicatePrimary.id) !== String(product.id);
+    const prices = group.map((item) => Number(item.price || 0)).filter((value) => Number.isFinite(value));
+    const siblings = uniqueGroup
+      .filter((item) => String(item.id) !== String(product.id))
+      .slice(0, 8)
+      .map((item) => ({
+        id: item.id,
+        name: item.name || item.product_name || "",
+        image_url: item.image_url || "",
+        sku: item.sku || "",
+        status: item.status || "",
+        price: Number(item.price || 0),
+        stock: Number(item.stock || 0),
+        color: item.variant_automation.color || "",
+        size: item.variant_automation.size || "",
+        label: item.variant_automation.label || "Varyant"
+      }));
+    const variantAutomation = {
+      ...product.variant_automation,
+      group_size: uniqueGroup.length,
+      group_stock: uniqueGroup.reduce((total, item) => total + Number(item.stock || 0), 0),
+      price_range: {
+        min: prices.length ? Math.min(...prices) : 0,
+        max: prices.length ? Math.max(...prices) : 0
+      },
+      duplicate_status: isDuplicate ? "duplicate" : "primary",
+      duplicate_of: isDuplicate ? duplicatePrimary.id : null,
+      duplicate_count: isDuplicate ? 0 : (duplicateCountByPrimaryId.get(String(product.id)) || 0),
+      duplicate_reason: isDuplicate
+        ? "Aynı barkod/kod veya aynı görsel-renk sinyaliyle gelen tekrar kayıt."
+        : duplicateCountByPrimaryId.get(String(product.id))
+          ? `${duplicateCountByPrimaryId.get(String(product.id))} tekrar kayıt varyant listesinden ayrıldı.`
+          : "",
+      siblings
+    };
+    return {
+      ...product,
+      variant_automation: variantAutomation,
+      review_automation: productReviewAutomation({ ...product, variant_automation: variantAutomation })
+    };
+  });
+}
+
+async function attachProductReviewVariantGroups(products = [], warnings = []) {
+  const productIds = products.map((product) => product.id).filter(Boolean);
+  return attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
+}
+
+function productNeedsAutomatedRevisionRequest(product = {}) {
+  const automation = product.review_automation || productReviewAutomation(product);
+  const reviewStatus = normalizedReviewValue(product.compliance_review_status || product.review_status || product.approval_status);
+  const status = normalizedReviewValue(product.status);
+  if (!automation.revision_required) return false;
+  if (reviewStatus === "needs_review" || status === "needs_review") return false;
+  return productNeedsAdminReview(product);
+}
+
+async function autoPublishProductReviews(products = [], options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || ADMIN_PRODUCT_AUTO_PUBLISH_BATCH), 1), ADMIN_PRODUCT_AUTO_PUBLISH_BATCH);
+  const warnings = options.warnings || [];
+  const nowIso = new Date().toISOString();
+  const reason = options.reason || "Otomasyon: ürün politika, fiyat, stok, görsel ve açıklama kontrollerini geçti; otomatik yayına alındı.";
+  const updatedProducts = [];
+  const skipped = [];
+  const candidates = products
+    .filter(productAutoPublishCandidate)
+    .slice(0, limit);
+
+  for (const product of candidates) {
+    try {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("approved", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation({
+        ...updated,
+        review_automation: product.review_automation,
+        variant_automation: product.variant_automation
+      }));
+    } catch (error) {
+      skipped.push({
+        product_id: product.id,
+        name: product.name || product.product_name || "",
+        reason: error?.message || "Otomatik yayın tamamlanamadı."
+      });
+    }
+  }
+
+  if (updatedProducts.length && options.request && options.ctx) {
+    await auditedOpsEvent({
+      request: options.request,
+      ctx: options.ctx,
+      action: "admin.ops.product_reviews_auto_published",
+      resourceType: "product",
+      severity: "info",
+      metadata: {
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        source: options.source || "product_review_queue",
+        reason
+      }
+    });
+  }
+
+  return {
+    updatedProducts,
+    skipped,
+    warnings
+  };
+}
+
+async function autoRequestProductRevisions(products = [], options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit || ADMIN_PRODUCT_AUTO_REVISION_BATCH), 1), ADMIN_PRODUCT_AUTO_REVISION_BATCH);
+  const warnings = options.warnings || [];
+  const nowIso = new Date().toISOString();
+  const updatedProducts = [];
+  const skipped = [];
+  const candidates = products
+    .filter(productNeedsAutomatedRevisionRequest)
+    .slice(0, limit);
+
+  for (const product of candidates) {
+    const reason = productReviewRevisionReason(
+      product,
+      "Otomasyon: Üründe revizyon gerektiren politika/hukuk riski tespit edildi. Lütfen aşağıdaki alanları düzeltip ürünü tekrar onaya gönderin."
+    );
+    try {
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload("needs_review", reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation({
+        ...updated,
+        review_automation: product.review_automation,
+        variant_automation: product.variant_automation
+      }));
+    } catch (error) {
+      skipped.push({
+        product_id: product.id,
+        name: product.name || product.product_name || "",
+        reason: error?.message || "Otomatik revizyon bildirimi kaydedilemedi."
+      });
+    }
+  }
+
+  if (updatedProducts.length && options.request && options.ctx) {
+    await auditedOpsEvent({
+      request: options.request,
+      ctx: options.ctx,
+      action: "admin.ops.product_reviews_auto_revision_requested",
+      resourceType: "product",
+      severity: "warning",
+      metadata: {
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        source: options.source || "product_review_queue"
+      }
+    });
+  }
+
+  return {
+    updatedProducts,
+    skipped,
+    warnings
+  };
+}
+
+function buildPartnerProductUpdatePayload(productId, before, body) {
+  const has = (field) => Object.prototype.hasOwnProperty.call(body, field);
+  const cleanNullable = (value) => value === null ? null : String(value ?? "").trim();
+  const updatePayload = {};
+  const nextName = has("name") ? body.name : has("product_name") ? body.product_name : "";
+
+  if (nextName) {
+    updatePayload.name = nextName;
+    updatePayload.product_name = nextName;
+    updatePayload.slug = backendSlug(`${nextName}-${productId}`);
+    if (!has("meta_title")) updatePayload.meta_title = nextName;
+  }
+  [
+    "description",
+    "image_url",
+    "video_url",
+    "category",
+    "brand",
+    "sku",
+    "barcode",
+    "seller_public_name",
+    "seller_legal_name",
+    "seller_city",
+    "seller_contact",
+    "seller_tax_number_masked",
+    "invoice_responsibility",
+    "seller_disclosure",
+    "meta_title",
+    "meta_description"
+  ].forEach((field) => {
+    if (has(field)) updatePayload[field] = cleanNullable(body[field]);
+  });
+  if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || []).slice(0, 8);
+  if (has("price")) updatePayload.price = Number(body.price || 0);
+  if (has("stock")) updatePayload.stock = Number(body.stock || 0);
+  if (has("module_key")) updatePayload.module_key = body.module_key;
+  if (has("catalog_scope")) updatePayload.catalog_scope = body.catalog_scope;
+
+  const changedFields = Object.keys(body);
+  const instantFields = new Set(["price", "stock"]);
+  const onlyInstantUpdate = changedFields.length > 0 && changedFields.every((field) => instantFields.has(field));
+  const previousReviewStatus = normalizedReviewValue(before.compliance_review_status || before.review_status || before.approval_status);
+  const previousStatus = normalizedReviewValue(before.status);
+
+  if (onlyInstantUpdate) {
+    if (previousStatus === "active" || previousReviewStatus === "approved") {
+      updatePayload.status = previousStatus === "archived" ? "archived" : "active";
+    }
+    updatePayload.compliance_notes = "Partner fiyat/stok güncellemesi uygulandı.";
+  } else {
+    updatePayload.status = "draft";
+    updatePayload.compliance_review_status = "pending";
+    updatePayload.compliance_notes = "Partner ürün revizyonu admin onayına gönderildi.";
+  }
+  updatePayload.updated_at = new Date().toISOString();
+
+  return {
+    updatePayload,
+    changedFields,
+    onlyInstantUpdate,
+    previousStatus,
+    previousReviewStatus
+  };
+}
+
+async function loadPartnerOwnedProduct(productId, business, ctx) {
+  const ownerIds = partnerProductOwnerIds(business, ctx);
+  const { data: product, error } = await supabaseAdmin
+    .from("products")
+    .select("*")
+    .eq("id", productId)
+    .maybeSingle();
+  if (error && looksLikeMissingSchema(error)) {
+    throw httpError("products migration production veritabaninda eksik gorunuyor.", 503);
+  }
+  if (error) throw error;
+  if (!product) throw httpError("Ürün bulunamadı.", 404);
+  if (isAdmin(ctx.profile)) return product;
+
+  const belongsToPartner = ownerIds.includes(String(product.partner_id || ""))
+    || (business.partner_code && String(product.partner_code || "") === String(business.partner_code))
+    || (business.email && String(product.partner_email || "").toLowerCase() === String(business.email).toLowerCase());
+  if (!belongsToPartner) {
+    throw httpError("Bu ürünü düzenleme yetkiniz yok.", 403);
+  }
+  return product;
+}
+
+function missingColumnFromError(error) {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""}`;
+  const match = message.match(/column\s+"?([a-zA-Z0-9_]+)"?\s+(?:of relation\s+"?products"?\s+)?does not exist/i)
+    || message.match(/Could not find the\s+'?([a-zA-Z0-9_]+)'?\s+column/i)
+    || message.match(/column\s+"?([a-zA-Z0-9_]+)"?\s+not found/i);
+  return match ? match[1] : "";
+}
+
+async function updatePartnerProductRow(productId, payload) {
+  const requiredReviewColumns = new Set(["status", "compliance_review_status", "compliance_notes"]);
+  const updatePayload = { ...payload };
+  const removed = new Set();
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .update(updatePayload)
+      .eq("id", productId)
+      .select("*")
+      .single();
+    if (!error) return { product: data, appliedFields: Object.keys(updatePayload), removedFields: [...removed] };
+
+    const missingColumn = missingColumnFromError(error);
+    if (missingColumn && Object.prototype.hasOwnProperty.call(updatePayload, missingColumn) && !requiredReviewColumns.has(missingColumn)) {
+      delete updatePayload[missingColumn];
+      removed.add(missingColumn);
+      continue;
+    }
+    if (looksLikeMissingSchema(error) && Object.prototype.hasOwnProperty.call(updatePayload, "updated_at")) {
+      delete updatePayload.updated_at;
+      removed.add("updated_at");
+      continue;
+    }
+    if (looksLikeMissingSchema(error) && requiredReviewColumns.has(missingColumn)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    throw error;
+  }
+
+  throw httpError("Ürün revizyonu canlı veritabanı şeması nedeniyle tamamlanamadı.", 409);
+}
+
+async function insertPartnerProductRow(payload) {
+  const insertPayload = { ...payload };
+  const removed = new Set();
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const { data, error } = await supabaseAdmin
+      .from("products")
+      .insert(insertPayload)
+      .select("id")
+      .single();
+    if (!error) return { product: data, appliedFields: Object.keys(insertPayload), removedFields: [...removed] };
+
+    const missingColumn = missingColumnFromError(error);
+    if (missingColumn && Object.prototype.hasOwnProperty.call(insertPayload, missingColumn)) {
+      delete insertPayload[missingColumn];
+      removed.add(missingColumn);
+      continue;
+    }
+    throw error;
+  }
+
+  throw httpError("Ürün canlı veritabanı şeması nedeniyle eklenemedi.", 409);
+}
+
+async function ensureUniquePartnerBarcode({ productId, partnerId, barcode }) {
+  const normalized = String(barcode || "").trim();
+  if (!normalized || !partnerId) return;
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("id, name, product_name")
+    .eq("partner_id", partnerId)
+    .eq("barcode", normalized)
+    .neq("id", productId)
+    .limit(1);
+  if (error && looksLikeMissingSchema(error)) return;
+  if (error) throw error;
+  if (Array.isArray(data) && data.length) {
+    throw httpError("Bu barkod aynı partnerde başka bir üründe kullanılıyor. Aynı barkodla ikinci ürün açılamaz.", 409);
+  }
+}
+
 function normalizePartnerSupportStatus(status) {
   if (status === "waiting") return "in_progress";
   if (status === "closed") return "resolved";
@@ -3328,6 +5599,148 @@ async function optionalMutation(query, warnings, label) {
   }
   warnings.push(`${label}: Supabase migration veya policy production veritabaninda eksik gorunuyor.`);
   throw httpError(`${label} icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.`, 409);
+}
+
+function refundCancellationKind(order) {
+  const orderStatus = String(order?.order_status || order?.status || "").toLowerCase();
+  const paymentStatus = String(order?.payment_status || "").toLowerCase();
+  if (paymentStatus === "refunded" || orderStatus === "refunded") return "refund";
+  if (orderStatus === "cancelled") return "cancellation";
+  return "signal";
+}
+
+function refundCancellationReason({ order, notes = [], flags = [], tickets = [] } = {}) {
+  const firstFlag = (flags || []).find((item) => item.reason);
+  const firstNote = (notes || []).find((item) => item.body);
+  const firstTicket = (tickets || []).find((item) => item.message || item.title);
+  return firstFlag?.reason || firstNote?.body || firstTicket?.message || firstTicket?.title || order?.cancellation_reason || order?.refund_reason || "";
+}
+
+function refundCancellationPublic(order, extras = {}) {
+  const kind = extras.type || refundCancellationKind(order);
+  const riskLevel = extras.risk_level || (kind === "refund" ? "critical" : (kind === "cancellation" ? "high" : "medium"));
+  const reason = refundCancellationReason({ order, ...extras });
+  return {
+    id: order.id,
+    type: kind,
+    order_no: order.order_no || order.order_number || order.id,
+    customer_name: order.customer_name || "",
+    customer_email: order.customer_email || "",
+    customer_phone: order.customer_phone || "",
+    total: Number(order.total || order.grand_total || 0),
+    order_status: order.order_status || order.status || "",
+    payment_status: order.payment_status || "",
+    reason,
+    risk_level: riskLevel,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    notes: extras.notes || [],
+    flags: extras.flags || [],
+    tickets: extras.tickets || [],
+    provider_dispatch: extras.provider_dispatch || null,
+    provider_status: paymentProviderDispatchStatus(),
+    order_items: extras.order_items || order.order_items || [],
+    request_status: extras.request_status || null,
+    decision_required: Boolean(extras.decision_required),
+    partner_decision: extras.partner_decision || null,
+    partner_total: Number(extras.partner_total || 0),
+    source_ticket_id: extras.source_ticket_id || null,
+    source_ticket_status: extras.source_ticket_status || null,
+    signal_at: extras.signal_at || order.updated_at || order.created_at || null
+  };
+}
+
+async function updateRefundCancellationOrder(orderId, payload, warnings) {
+  const selectColumns = "id, order_no, customer_email, total, order_status, payment_status, updated_at";
+  const runUpdate = (updatePayload) => supabaseAdmin
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+    .select(selectColumns)
+    .single();
+
+  let { data, error } = await runUpdate(payload);
+  if (!error) return data;
+
+  if (Object.prototype.hasOwnProperty.call(payload, "status") && looksLikeMissingSchema(error)) {
+    const fallbackPayload = { ...payload };
+    delete fallbackPayload.status;
+    warnings.push("orders.status: opsiyonel durum kolonu production veritabaninda eksik gorunuyor; order_status uzerinden guncellendi.");
+    ({ data, error } = await runUpdate(fallbackPayload));
+    if (!error) return data;
+  }
+
+  if (!looksLikeMissingSchema(error)) {
+    error.operationLabel = "orders";
+    throw error;
+  }
+  warnings.push("orders: Supabase migration veya policy production veritabaninda eksik gorunuyor.");
+  throw httpError("orders icin gerekli Supabase tablo/policy eksik. Migration uygulanmali.", 409);
+}
+
+function refundCancellationSupportFilter(search) {
+  const terms = ["iade", "iptal", "geri ödeme", "geri odeme", "refund", "cancel"];
+  const clean = cleanSearch(search);
+  const filters = terms.flatMap((term) => [
+    `title.ilike.%${term}%`,
+    `message.ilike.%${term}%`
+  ]);
+  if (clean) {
+    filters.push(`title.ilike.%${clean}%`, `message.ilike.%${clean}%`);
+  }
+  return filters.join(",");
+}
+
+async function loadOrderPaymentProviderContext(orderId, warnings) {
+  const providerWarnings = warnings || [];
+  const context = {};
+  const providerOrder = await optionalQuery(
+    supabaseAdmin
+      .from("orders")
+      .select("id, payment_provider_reference, paid_at")
+      .eq("id", orderId)
+      .maybeSingle(),
+    null,
+    providerWarnings,
+    "orders_provider_context"
+  ).catch((error) => {
+    if (!looksLikeMissingSchema(error)) throw error;
+    providerWarnings.push("orders_provider_context: payment provider referans kolonları production şemasında eksik görünüyor.");
+    return null;
+  });
+  if (providerOrder?.payment_provider_reference) {
+    context.payment_id = providerOrder.payment_provider_reference;
+    context.provider_reference = providerOrder.payment_provider_reference;
+    context.source = "orders.payment_provider_reference";
+  }
+  if (providerOrder?.paid_at) context.paid_at = providerOrder.paid_at;
+
+  const transaction = await optionalQuery(
+    supabaseAdmin
+      .from("partner_transactions")
+      .select("id, provider, provider_reference, gross_amount, currency, metadata, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    [],
+    providerWarnings,
+    "partner_transactions"
+  ).catch((error) => {
+    if (!looksLikeMissingSchema(error)) throw error;
+    providerWarnings.push("partner_transactions: ödeme sağlayıcı transaction kaydı bulunamadı veya şema eksik.");
+    return [];
+  });
+  const row = Array.isArray(transaction) ? transaction[0] : null;
+  if (row) {
+    context.provider = row.provider || context.provider;
+    context.payment_id = context.payment_id || row.provider_reference || null;
+    context.provider_reference = context.provider_reference || row.provider_reference || null;
+    context.payment_transaction_id = row.metadata?.payment_transaction_id || row.metadata?.paymentTransactionId || null;
+    context.gross_amount = Number(row.gross_amount || 0);
+    context.currency = row.currency || "TRY";
+    context.source = context.source || "partner_transactions";
+  }
+  return context;
 }
 
 async function loadAdminDashboardData(warnings) {
@@ -3396,10 +5809,10 @@ async function loadAdminDashboardData(warnings) {
     optionalQuery(
       supabaseAdmin
         .from("security_audit_events")
-        .select("id, action, severity, resource_type, resource_id, created_at")
+        .select("id, actor_role, action, severity, resource_type, resource_id, ip_address, source, purpose, metadata, created_at")
         .in("severity", ["warning", "critical"])
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(80),
       [],
       warnings,
       "security_audit_events"
@@ -3417,6 +5830,10 @@ async function loadAdminDashboardData(warnings) {
     )
   ]);
 
+  const securityThreatEvents = (securityEvents || []).filter(isExternalSecurityAuditEvent).slice(0, 8).map(securityEventPublic);
+  const automation = await buildOpsAutomationSnapshot({ limit: 40, mode: "admin" });
+  warnings.push(...automation.warnings);
+
   return {
     metrics: {
       daily_users: Number(usersToday.count || 0),
@@ -3424,9 +5841,10 @@ async function loadAdminDashboardData(warnings) {
       pending_applications: Number(pendingApplications.count || 0),
       recent_orders: recentOrders.length,
       open_support_tickets: Number(userTickets.count || 0) + Number(partnerTickets.count || 0),
-      system_alerts: notifications.length + securityEvents.length + flags.length
+      system_alerts: notifications.length + securityThreatEvents.length + flags.length + Number(automation.summary.action_required || 0)
     },
     recentOrders,
+    automation,
     alerts: [
       ...flags.map((item) => ({
         id: item.id,
@@ -3436,10 +5854,10 @@ async function loadAdminDashboardData(warnings) {
         message: item.reason,
         created_at: item.created_at
       })),
-      ...securityEvents.map((item) => ({
+      ...securityThreatEvents.map((item) => ({
         id: item.id,
         type: "security",
-        severity: item.severity,
+        severity: item.risk_severity || item.severity,
         title: item.action,
         message: `${item.resource_type || "system"} ${item.resource_id || ""}`.trim(),
         created_at: item.created_at
@@ -3483,6 +5901,208 @@ function criticalSettingNeedsReason(settingKey, value, reason) {
 function normalizeJsonValue(value) {
   if (value === undefined) return null;
   return JSON.parse(JSON.stringify(value));
+}
+
+function workQueueRiskFromSeverity(severity) {
+  if (severity === "critical") return "critical";
+  if (severity === "warning") return "high";
+  if (severity === "debug") return "low";
+  return "medium";
+}
+
+function workQueuePriorityFromRisk(riskLevel) {
+  if (riskLevel === "critical") return "urgent";
+  if (riskLevel === "high") return "high";
+  if (riskLevel === "low") return "low";
+  return "normal";
+}
+
+function workQueuePublic(row, source = "stored") {
+  const riskLevel = row.risk_level || "medium";
+  return {
+    id: row.id,
+    source,
+    source_module: row.source_module || "other",
+    target_type: row.target_type || "operation",
+    target_id: row.target_id || "",
+    title: row.title || "Super Admin işi",
+    summary: row.summary || "",
+    priority: row.priority || workQueuePriorityFromRisk(riskLevel),
+    risk_level: riskLevel,
+    status: row.status || "open",
+    owner_user_id: row.owner_user_id || null,
+    due_at: row.due_at || null,
+    decision_required: row.decision_required !== false,
+    decision: row.decision || null,
+    decision_reason: row.decision_reason || "",
+    metadata: row.metadata || {},
+    audit_event_id: row.audit_event_id || null,
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null,
+    decided_at: row.decided_at || null,
+    actionable: source === "stored"
+  };
+}
+
+function derivedWorkQueueItem({ id, sourceModule, targetType, targetId, title, summary, riskLevel = "medium", status = "open", createdAt, metadata = {} }) {
+  return workQueuePublic({
+    id,
+    source_module: sourceModule,
+    target_type: targetType,
+    target_id: targetId,
+    title,
+    summary,
+    risk_level: riskLevel,
+    priority: workQueuePriorityFromRisk(riskLevel),
+    status,
+    decision_required: true,
+    metadata,
+    created_at: createdAt,
+    updated_at: createdAt
+  }, "derived");
+}
+
+async function loadDerivedSuperAdminWorkQueue({ limit, status, sourceModule, riskLevel }) {
+  const fallbackLimit = Math.min(Number(limit || 80), 80);
+  const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const [
+    approvalRequests,
+    contentProposals,
+    supportTickets,
+    releaseApprovals,
+    securityEvents
+  ] = await Promise.all([
+    runAdminQuery(
+      "work_queue_admin_approval_requests",
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_content_change_proposals",
+      supabaseAdmin
+        .from("content_change_proposals")
+        .select("*")
+        .eq("status", "pending_super_admin")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_support_tickets",
+      supabaseAdmin
+        .from("support_tickets")
+        .select("*")
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["high", "urgent"])
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_release_approvals",
+      supabaseAdmin
+        .from("super_admin_release_approvals")
+        .select("*")
+        .in("status", ["pending", "approved", "failed"])
+        .order("created_at", { ascending: false })
+        .limit(30),
+      []
+    ),
+    runAdminQuery(
+      "work_queue_security_events",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("*")
+        .in("severity", ["warning", "critical"])
+        .gte("created_at", since48h)
+        .order("created_at", { ascending: false })
+        .limit(40),
+      []
+    )
+  ]);
+
+  const warnings = [approvalRequests, contentProposals, supportTickets, releaseApprovals, securityEvents]
+    .map((item) => item.warning)
+    .filter(Boolean);
+  const items = [
+    ...(approvalRequests.data || []).map((item) => derivedWorkQueueItem({
+      id: `approval:${item.id}`,
+      sourceModule: "admin_ops",
+      targetType: item.target_type || "admin_approval_request",
+      targetId: item.target_id || item.id,
+      title: item.summary || "Admin onayı bekliyor",
+      summary: `${item.request_type || "approval"} / ${item.status || "pending_super_admin"}`,
+      riskLevel: "high",
+      createdAt: item.created_at,
+      metadata: { admin_approval_request_id: item.id, proposed_action: item.proposed_action || {} }
+    })),
+    ...(contentProposals.data || []).map((item) => derivedWorkQueueItem({
+      id: `content:${item.id}`,
+      sourceModule: item.content_scope === "legal" ? "legal" : "admin_ops",
+      targetType: "content_change_proposal",
+      targetId: item.id,
+      title: item.title || "İçerik önerisi",
+      summary: item.summary || item.content_scope || "",
+      riskLevel: item.content_scope === "legal" ? "critical" : "medium",
+      createdAt: item.created_at,
+      metadata: { content_scope: item.content_scope, payload: item.payload || {} }
+    })),
+    ...(supportTickets.data || []).map((item) => derivedWorkQueueItem({
+      id: `support:${item.id}`,
+      sourceModule: item.category === "taxi" ? "taxi" : (item.requester_type === "partner" ? "partner" : "user_panel"),
+      targetType: "support_ticket",
+      targetId: item.id,
+      title: item.title || "Destek talebi",
+      summary: `${item.category || "general"} / ${item.priority || "normal"} / ${item.status || "open"}`,
+      riskLevel: item.priority === "urgent" ? "critical" : "high",
+      createdAt: item.created_at,
+      metadata: { requester_type: item.requester_type, category: item.category }
+    })),
+    ...(releaseApprovals.data || []).map((item) => derivedWorkQueueItem({
+      id: `release:${item.id}`,
+      sourceModule: "release",
+      targetType: "super_admin_release_approval",
+      targetId: item.id,
+      title: item.target_summary || item.approval_type || "Yayın onayı",
+      summary: `${item.approval_type || "release"} / ${item.status || "pending"} / ${item.target_ref || "main"}`,
+      riskLevel: item.risk_level || "critical",
+      status: item.status === "failed" ? "waiting_owner" : "open",
+      createdAt: item.created_at,
+      metadata: { approval_type: item.approval_type, webhook_status: item.webhook_status || null }
+    })),
+    ...(securityEvents.data || []).filter(isExternalSecurityAuditEvent).map((item) => derivedWorkQueueItem({
+      id: `security:${item.id}`,
+      sourceModule: "security",
+      targetType: item.resource_type || "security_audit_event",
+      targetId: item.resource_id || item.id,
+      title: item.action || "Güvenlik olayı",
+      summary: `${item.severity || "warning"} / IP ${item.ip_address || "-"}`,
+      riskLevel: workQueueRiskFromSeverity(securityRiskSeverity(item)),
+      createdAt: item.created_at,
+      metadata: { audit_event_id: item.id, actor_role: item.actor_role || null }
+    }))
+  ];
+
+  const filtered = items
+    .filter((item) => !status || item.status === status)
+    .filter((item) => !sourceModule || item.source_module === sourceModule)
+    .filter((item) => !riskLevel || item.risk_level === riskLevel)
+    .sort((a, b) => {
+      const priorityScore = { urgent: 4, high: 3, normal: 2, low: 1 };
+      const riskScore = { critical: 4, high: 3, medium: 2, low: 1 };
+      const scoreA = (priorityScore[a.priority] || 0) + (riskScore[a.risk_level] || 0);
+      const scoreB = (priorityScore[b.priority] || 0) + (riskScore[b.risk_level] || 0);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    })
+    .slice(0, fallbackLimit);
+
+  return { items: filtered, warnings };
 }
 
 async function getOrderForPayment(orderId, ctx) {
@@ -3622,13 +6242,949 @@ async function ensurePartnerBusiness(ctx, request) {
   return created;
 }
 
-function summarizePartnerOrders(orders, ownerId, isAdminUser) {
+function partnerApplicationMetadata(application) {
+  const metadata = application?.metadata;
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) return metadata;
+  if (typeof metadata === "string") {
+    try {
+      const parsed = JSON.parse(metadata);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    } catch (error) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function normalizePartnerApprovalType(value) {
+  const raw = String(value || "").toLocaleLowerCase("tr-TR");
+  if (!raw) return "";
+  if (/\b(food|yemek|restoran|restaurant|lokanta|kafe|cafe|menü|menu|paket servis|fast food)\b/i.test(raw)) return "food";
+  if (/\b(market|grocery|bakkal|süpermarket|supermarket|manav|şarküteri|sarkuteri)\b/i.test(raw)) return "market";
+  if (/\b(service|hizmet|danışman|danisman|klinik|sağlık|saglik|güzellik|guzellik|kuaför|kuafor|nakliye|lojistik|kurye|taksi|otel|emlak|hukuk|eğitim|egitim)\b/i.test(raw)) return "service";
+  if (/\b(shop|ürün|urun|mağaza|magaza|satıcı|satici|e-ticaret|eticaret|pazaryeri|perakende|ticaret)\b/i.test(raw)) return "shop";
+  return PARTNER_APPROVAL_TYPES.includes(raw) ? raw : "";
+}
+
+const EU_VIES_COUNTRIES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"
+]);
+
+const COMPANY_COUNTRY_ALIASES = new Map([
+  ["TURKIYE", "TR"], ["TÜRKİYE", "TR"], ["TURKEY", "TR"], ["TR", "TR"],
+  ["ALMANYA", "DE"], ["GERMANY", "DE"], ["DE", "DE"],
+  ["FRANSA", "FR"], ["FRANCE", "FR"], ["FR", "FR"],
+  ["ITALYA", "IT"], ["İTALYA", "IT"], ["ITALY", "IT"], ["IT", "IT"],
+  ["ISPANYA", "ES"], ["İSPANYA", "ES"], ["SPAIN", "ES"], ["ES", "ES"],
+  ["HOLLANDA", "NL"], ["NETHERLANDS", "NL"], ["NL", "NL"],
+  ["BELCIKA", "BE"], ["BELÇİKA", "BE"], ["BELGIUM", "BE"], ["BE", "BE"],
+  ["AVUSTURYA", "AT"], ["AUSTRIA", "AT"], ["AT", "AT"],
+  ["IRLANDA", "IE"], ["İRLANDA", "IE"], ["IRELAND", "IE"], ["IE", "IE"],
+  ["PORTEKIZ", "PT"], ["PORTEKİZ", "PT"], ["PORTUGAL", "PT"], ["PT", "PT"],
+  ["POLONYA", "PL"], ["POLAND", "PL"], ["PL", "PL"],
+  ["ROMANYA", "RO"], ["ROMANIA", "RO"], ["RO", "RO"],
+  ["YUNANISTAN", "EL"], ["YUNANİSTAN", "EL"], ["GREECE", "EL"], ["GR", "EL"], ["EL", "EL"]
+]);
+
+function normalizeCompanyCountryCode(country, explicitCode = "") {
+  const explicit = String(explicitCode || "").trim().toUpperCase();
+  if (explicit) return explicit === "GR" ? "EL" : explicit;
+  const raw = String(country || "").trim().toLocaleUpperCase("tr-TR");
+  if (COMPANY_COUNTRY_ALIASES.has(raw)) return COMPANY_COUNTRY_ALIASES.get(raw);
+  const ascii = raw
+    .replace(/İ/g, "I")
+    .replace(/Ş/g, "S")
+    .replace(/Ğ/g, "G")
+    .replace(/Ü/g, "U")
+    .replace(/Ö/g, "O")
+    .replace(/Ç/g, "C");
+  return COMPANY_COUNTRY_ALIASES.get(ascii) || ascii.slice(0, 2);
+}
+
+function normalizeTaxNumberForCountry(countryCode, taxNumber) {
+  let raw = String(taxNumber || "").trim().toUpperCase().replace(/\s+/g, "");
+  raw = raw.replace(/[^A-Z0-9]/g, "");
+  if (countryCode && raw.startsWith(countryCode)) raw = raw.slice(countryCode.length);
+  if (countryCode === "EL" && raw.startsWith("GR")) raw = raw.slice(2);
+  return raw;
+}
+
+function validateTurkishIdentityNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!/^[1-9]\d{10}$/.test(digits)) return false;
+  const nums = digits.split("").map(Number);
+  const odd = nums[0] + nums[2] + nums[4] + nums[6] + nums[8];
+  const even = nums[1] + nums[3] + nums[5] + nums[7];
+  return ((odd * 7 - even) % 10 + 10) % 10 === nums[9]
+    && nums.slice(0, 10).reduce((sum, digit) => sum + digit, 0) % 10 === nums[10];
+}
+
+function validateTurkishTaxNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!/^\d{10}$/.test(digits)) return false;
+  const nums = digits.split("").map(Number);
+  let sum = 0;
+  for (let index = 0; index < 9; index += 1) {
+    const transformed = (nums[index] + 9 - index) % 10;
+    let check = transformed === 0 ? 0 : (transformed * (2 ** (9 - index))) % 9;
+    if (transformed !== 0 && check === 0) check = 9;
+    sum += check;
+  }
+  return (10 - (sum % 10)) % 10 === nums[9];
+}
+
+function companyLookupValidation(countryCode, normalizedTaxNumber) {
+  if (countryCode === "TR") {
+    const taxType = normalizedTaxNumber.length === 11 ? "tckn" : "vkn";
+    return {
+      tax_number_type: taxType,
+      valid_format: taxType === "tckn"
+        ? validateTurkishIdentityNumber(normalizedTaxNumber)
+        : validateTurkishTaxNumber(normalizedTaxNumber)
+    };
+  }
+  if (EU_VIES_COUNTRIES.has(countryCode)) {
+    return { tax_number_type: "eu_vat", valid_format: /^[A-Z0-9]{2,14}$/.test(normalizedTaxNumber) };
+  }
+  return { tax_number_type: "tax_number", valid_format: normalizedTaxNumber.length >= 2 };
+}
+
+function xmlEscape(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function xmlText(xml, tag) {
+  const match = String(xml || "").match(new RegExp(`<(?:\\\\w+:)?${tag}>([\\\\s\\\\S]*?)</(?:\\\\w+:)?${tag}>`, "i"));
+  if (!match) return "";
+  return match[1]
+    .replace(/<!\[CDATA\[|\]\]>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&apos;/g, "'")
+    .trim();
+}
+
+async function companyLookupFetchWithTimeout(url, options = {}, timeoutMs = config.companyLookup.timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function lookupEuVatCompany({ countryCode, taxNumber, request }) {
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <urn:checkVat>
+      <urn:countryCode>${xmlEscape(countryCode)}</urn:countryCode>
+      <urn:vatNumber>${xmlEscape(taxNumber)}</urn:vatNumber>
+    </urn:checkVat>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+  const response = await companyLookupFetchWithTimeout("https://ec.europa.eu/taxation_customs/vies/services/checkVatService", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/xml; charset=utf-8",
+      SOAPAction: ""
+    },
+    body
+  });
+  const text = await response.text();
+  if (!response.ok) throw httpError(`VIES servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  const valid = /^true$/i.test(xmlText(text, "valid"));
+  const legalName = xmlText(text, "name");
+  const address = xmlText(text, "address");
+  await auditEvent({
+    request,
+    action: "partner.company_lookup_vies",
+    resourceType: "company_lookup",
+    resourceId: `${countryCode}${taxNumber}`,
+    severity: valid ? "info" : "warning",
+    source: "server",
+    evidenceTags: ["partner", "company_lookup", "vies"],
+    metadata: { country_code: countryCode, valid }
+  });
+  return {
+    ok: true,
+    provider: "eu_vies",
+    status: valid ? "verified" : "not_found",
+    verified: valid,
+    company: valid ? {
+      legal_name: legalName && legalName !== "---" ? legalName : "",
+      display_name: legalName && legalName !== "---" ? legalName : "",
+      address,
+      country_code: countryCode,
+      country: countryCode,
+      tax_number: `${countryCode}${taxNumber}`
+    } : null,
+    source: "European Commission VIES",
+    fetched_at: new Date().toISOString()
+  };
+}
+
+function normalizeCompanyProviderPayload(payload, fallback = {}) {
+  const source = payload?.company || payload?.data || payload?.result || payload || {};
+  const legalName = source.legal_name || source.company_name || source.title || source.name || source.unvan || source.unvan_ad || "";
+  return {
+    legal_name: String(legalName || "").trim(),
+    display_name: String(source.display_name || source.trade_name || source.brand || legalName || "").trim(),
+    tax_office: String(source.tax_office || source.vergi_dairesi || "").trim(),
+    company_type: String(source.company_type || source.type || source.sirket_turu || "").trim(),
+    city: String(source.city || source.il || fallback.city || "").trim(),
+    country: String(source.country || fallback.country || "").trim(),
+    address: String(source.address || source.adres || "").trim(),
+    website: String(source.website || source.web_site || "").trim(),
+    tax_number: String(source.tax_number || source.vkn || source.tckn || fallback.tax_number || "").trim(),
+    status: String(source.status || source.durum || "").trim()
+  };
+}
+
+async function lookupTurkeyCompany({ taxNumber, request }) {
+  const validation = companyLookupValidation("TR", taxNumber);
+  if (!validation.valid_format) {
+    return {
+      ok: true,
+      provider: "tr_tax_validation",
+      status: "invalid_format",
+      verified: false,
+      company: null,
+      source: "local_format_validation",
+      fetched_at: new Date().toISOString(),
+      message: validation.tax_number_type === "tckn" ? "TCKN formatı doğrulanamadı." : "VKN formatı doğrulanamadı.",
+      validation
+    };
+  }
+  if (!config.companyLookup.turkeyApiUrl) {
+    return {
+      ok: false,
+      provider: "tr_authorized_provider",
+      status: "provider_unconfigured",
+      verified: false,
+      company: null,
+      source: "authorized_provider_required",
+      fetched_at: new Date().toISOString(),
+      message: "Türkiye VKN/TCKN için canlı şirket bilgisi resmi veya yetkili entegratör servisi gerektirir. COMPANY_LOOKUP_TR_API_URL bağlanınca bu buton otomatik doldurur.",
+      validation
+    };
+  }
+  const headers = { "Content-Type": "application/json" };
+  if (config.companyLookup.turkeyApiToken) headers.Authorization = `Bearer ${config.companyLookup.turkeyApiToken}`;
+  const response = await companyLookupFetchWithTimeout(config.companyLookup.turkeyApiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ tax_number: taxNumber, country_code: "TR" })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw httpError(payload.message || `Türkiye şirket servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  const company = normalizeCompanyProviderPayload(payload, { country: "Türkiye", tax_number: taxNumber });
+  await auditEvent({
+    request,
+    action: "partner.company_lookup_tr",
+    resourceType: "company_lookup",
+    resourceId: taxNumber,
+    severity: company.legal_name ? "info" : "warning",
+    source: "server",
+    evidenceTags: ["partner", "company_lookup", "turkey"],
+    metadata: { provider_configured: true, found: Boolean(company.legal_name) }
+  });
+  return {
+    ok: true,
+    provider: "tr_authorized_provider",
+    status: company.legal_name ? "verified" : "not_found",
+    verified: Boolean(company.legal_name),
+    company: company.legal_name ? company : null,
+    source: config.companyLookup.turkeyApiUrl,
+    fetched_at: new Date().toISOString(),
+    validation
+  };
+}
+
+function partnerApprovalTypeForApplication(application, requestedType) {
+  const metadata = partnerApplicationMetadata(application);
+  const explicit = normalizePartnerApprovalType(requestedType)
+    || normalizePartnerApprovalType(metadata.partner_type)
+    || normalizePartnerApprovalType(metadata.module_key)
+    || normalizePartnerApprovalType(metadata.catalog_scope);
+  if (explicit) return explicit;
+
+  const haystack = [
+    metadata.category,
+    metadata.company_type,
+    metadata.message,
+    application?.company_name,
+    application?.contact_name
+  ].filter(Boolean).join(" ");
+
+  return normalizePartnerApprovalType(haystack) || "shop";
+}
+
+function partnerInviteRedirectUrl() {
+  const target = new URL("/pages/account/reset-password.html", `${config.siteUrl}/`);
+  target.searchParams.set("returnTo", "/pages/partner/partner-panel.html");
+  return target.href;
+}
+
+function temporaryPartnerPassword() {
+  return `${randomBytes(30).toString("base64url")}Aa1!`;
+}
+
+function partnerAuthMetadata(application, partnerType) {
+  const metadata = partnerApplicationMetadata(application);
+  return compactRow({
+    full_name: application.contact_name || application.company_name,
+    phone: application.phone,
+    company_name: application.company_name,
+    partner_type: partnerType,
+    module: partnerType,
+    city: metadata.city,
+    country: metadata.country,
+    source: "partner_application_approval"
+  });
+}
+
+async function findAuthUserByEmail(email, request) {
+  const target = authEmail(email);
+  if (!target || typeof supabaseAdmin.auth?.admin?.listUsers !== "function") return null;
+
+  const perPage = 1000;
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      request?.log?.warn({ error: error.message, email_hash: authEmailHash(target) }, "Partner auth user lookup failed");
+      throw httpError("Partner Auth kullanıcısı kontrol edilemedi. Supabase service-role yetkisini kontrol edin.", 503);
+    }
+
+    const users = Array.isArray(data?.users) ? data.users : [];
+    const found = users.find((user) => authEmail(user.email) === target);
+    if (found) return found;
+    if (users.length < perPage) return null;
+  }
+
+  request?.log?.warn({ email_hash: authEmailHash(target) }, "Partner auth user lookup reached page cap");
+  return null;
+}
+
+async function resolveAuthUserById(userId, fallbackEmail, request) {
+  if (!userId) return null;
+  if (typeof supabaseAdmin.auth?.admin?.getUserById !== "function") {
+    return { id: userId, email: fallbackEmail || "" };
+  }
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error || !data?.user) {
+    request?.log?.warn({ error: error?.message, userId }, "Partner auth user id lookup failed");
+    return null;
+  }
+  return data.user;
+}
+
+function authUserMatchesEmail(user, email) {
+  const userEmail = authEmail(user?.email);
+  const targetEmail = authEmail(email);
+  return Boolean(user?.id && targetEmail && (!userEmail || userEmail === targetEmail));
+}
+
+async function sendPartnerAccessEmail(email, request, source) {
+  const target = authEmail(email);
+  const redirectTo = partnerInviteRedirectUrl();
+  if (!target) return { sent: false, error: "missing_email", redirect_to: redirectTo };
+  if (typeof supabasePublic.auth?.resetPasswordForEmail !== "function") {
+    return { sent: false, error: "supabase_reset_password_unavailable", redirect_to: redirectTo };
+  }
+  try {
+    const { error } = await supabasePublic.auth.resetPasswordForEmail(target, { redirectTo });
+    if (error) {
+      request?.log?.warn({
+        error: error.message,
+        email_hash: authEmailHash(target),
+        source
+      }, "Partner access email delivery request failed");
+      return { sent: false, error: error.message || "delivery_failed", redirect_to: redirectTo };
+    }
+    return { sent: true, error: "", redirect_to: redirectTo };
+  } catch (error) {
+    request?.log?.warn({
+      error: error?.message,
+      email_hash: authEmailHash(target),
+      source
+    }, "Partner access email delivery request crashed");
+    return { sent: false, error: error?.message || "delivery_failed", redirect_to: redirectTo };
+  }
+}
+
+function partnerAuthResult(user, options = {}) {
+  return {
+    user,
+    created: Boolean(options.created),
+    invite_sent: Boolean(options.inviteSent),
+    password_reset_sent: Boolean(options.passwordResetSent),
+    access_email_sent: Boolean(options.inviteSent || options.passwordResetSent || options.accessEmailSent),
+    access_email_error: options.accessEmailError || "",
+    access_email_type: options.accessEmailType || (options.inviteSent ? "invite" : options.passwordResetSent ? "password_reset" : "")
+  };
+}
+
+async function ensurePartnerAuthUser(application, partnerType, request) {
+  const email = authEmail(application.email);
+  if (!email) throw httpError("Başvuruda geçerli e-posta yok.", 400);
+
+  const existingById = await resolveAuthUserById(application.user_id, email, request);
+  if (existingById && authUserMatchesEmail(existingById, email)) {
+    const accessEmail = await sendPartnerAccessEmail(email, request, "existing_by_id");
+    return partnerAuthResult(existingById, {
+      passwordResetSent: accessEmail.sent,
+      accessEmailError: accessEmail.error,
+      accessEmailType: "password_reset"
+    });
+  }
+  if (existingById) {
+    request?.log?.warn({
+      userId: existingById.id,
+      existing_email_hash: authEmailHash(existingById.email || ""),
+      application_email_hash: authEmailHash(email)
+    }, "Partner application user_id email mismatch ignored");
+  }
+
+  const existingByEmail = await findAuthUserByEmail(email, request);
+  if (existingByEmail) {
+    const accessEmail = await sendPartnerAccessEmail(email, request, "existing_by_email");
+    return partnerAuthResult(existingByEmail, {
+      passwordResetSent: accessEmail.sent,
+      accessEmailError: accessEmail.error,
+      accessEmailType: "password_reset"
+    });
+  }
+
+  const metadata = partnerAuthMetadata(application, partnerType);
+  const redirectTo = partnerInviteRedirectUrl();
+  let lastError = null;
+
+  if (typeof supabaseAdmin.auth?.admin?.inviteUserByEmail === "function") {
+    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      data: metadata,
+      redirectTo
+    });
+    if (!error && data?.user) {
+      return partnerAuthResult(data.user, {
+        created: true,
+        inviteSent: true,
+        accessEmailType: "invite"
+      });
+    }
+    lastError = error;
+    if (/already|registered|exists/i.test(String(error?.message || ""))) {
+      const user = await findAuthUserByEmail(email, request);
+      if (user) {
+        const accessEmail = await sendPartnerAccessEmail(email, request, "invite_existing_user");
+        return partnerAuthResult(user, {
+          passwordResetSent: accessEmail.sent,
+          accessEmailError: accessEmail.error,
+          accessEmailType: "password_reset"
+        });
+      }
+    }
+  }
+
+  if (typeof supabaseAdmin.auth?.admin?.createUser === "function") {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: temporaryPartnerPassword(),
+      email_confirm: true,
+      user_metadata: metadata,
+      app_metadata: { role: "partner" }
+    });
+    if (!error && data?.user) {
+      const accessEmail = await sendPartnerAccessEmail(email, request, "created_auth_user");
+      return partnerAuthResult(data.user, {
+        created: true,
+        passwordResetSent: accessEmail.sent,
+        accessEmailError: accessEmail.error,
+        accessEmailType: "password_reset"
+      });
+    }
+    lastError = error || lastError;
+  }
+
+  throw httpError(`Partner Auth kullanıcısı otomatik oluşturulamadı: ${lastError?.message || "Supabase Admin API kullanılamıyor."}`, 503);
+}
+
+async function syncPartnerAuthMetadata(user, application, partnerType, request) {
+  if (!user?.id || typeof supabaseAdmin.auth?.admin?.updateUserById !== "function") return;
+  const userMetadata = {
+    ...(user.user_metadata || {}),
+    ...partnerAuthMetadata(application, partnerType)
+  };
+  const currentRole = String(user.app_metadata?.role || "").toLowerCase();
+  const appMetadata = ["admin", "super_admin"].includes(currentRole)
+    ? user.app_metadata
+    : { ...(user.app_metadata || {}), role: "partner" };
+
+  const updatePayload = {
+    user_metadata: userMetadata,
+    app_metadata: appMetadata
+  };
+  if (!user.email_confirmed_at) {
+    updatePayload.email_confirm = true;
+  }
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(user.id, updatePayload);
+  if (!error) return;
+  request?.log?.warn({ error: error.message, userId: user.id }, "Partner auth metadata sync failed");
+}
+
+async function ensurePartnerProfile(user, application, partnerType) {
+  const metadata = partnerApplicationMetadata(application);
+  const { data: current, error: currentError } = await supabaseAdmin
+    .from("profiles")
+    .select("id, email, full_name, phone, country, city, role, module")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (currentError && !looksLikeMissingSchema(currentError)) throw currentError;
+
+  const currentRole = String(current?.role || user.app_metadata?.role || "").toLowerCase();
+  const nextRole = ["admin", "super_admin"].includes(currentRole) ? currentRole : "partner";
+  const row = compactRow({
+    id: user.id,
+    email: current?.email || user.email || application.email,
+    full_name: current?.full_name || application.contact_name || application.company_name,
+    phone: current?.phone || application.phone,
+    country: current?.country || metadata.country,
+    city: current?.city || metadata.city,
+    role: nextRole,
+    module: current?.module || partnerType,
+    updated_at: new Date().toISOString()
+  });
+
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .upsert(row, { onConflict: "id" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+function partnerBusinessMetadata(existingBusiness, application, partnerType, ctx, reason, nowIso) {
+  const existing = existingBusiness?.metadata && typeof existingBusiness.metadata === "object" ? existingBusiness.metadata : {};
+  const applicationMetadata = partnerApplicationMetadata(application);
+  return {
+    ...existing,
+    enabled_modules: [partnerType],
+    module_permissions: {
+      ...(existing.module_permissions && typeof existing.module_permissions === "object" ? existing.module_permissions : {}),
+      [partnerType]: {
+        enabled: true,
+        write: true,
+        approved_at: nowIso,
+        approved_by: ctx.user.id
+      }
+    },
+    partner_modules: [
+      { key: partnerType, enabled: true, write: true }
+    ],
+    approved_from_application_id: application.id,
+    approved_by: ctx.user.id,
+    approval_reason: reason || "",
+    activated_by_super_admin: true,
+    activated_at: nowIso,
+    application_metadata: applicationMetadata
+  };
+}
+
+async function upsertApprovedPartnerBusiness({ application, user, partnerType, body, ctx, nowIso }) {
+  const { data: existingBusiness, error: existingBusinessError } = await supabaseAdmin
+    .from("partner_businesses")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (existingBusinessError && !looksLikeMissingSchema(existingBusinessError)) throw existingBusinessError;
+  if (existingBusinessError) throw httpError("partner_businesses tablosu production Supabase projesinde hazır değil.", 409);
+
+  const metadata = partnerApplicationMetadata(application);
+  const businessPayload = {
+    owner_id: user.id,
+    display_name: application.company_name || application.contact_name || user.email,
+    legal_name: application.company_name || application.contact_name || user.email,
+    partner_type: partnerType,
+    email: authEmail(application.email || user.email),
+    phone: application.phone || null,
+    country: metadata.country || null,
+    city: metadata.city || null,
+    status: body.store_status || "active",
+    verification_status: "verified",
+    default_commission_rate: body.commission_rate ?? 0.12,
+    metadata: partnerBusinessMetadata(existingBusiness, application, partnerType, ctx, body.reason, nowIso)
+  };
+
+  const query = existingBusiness
+    ? supabaseAdmin.from("partner_businesses").update(businessPayload).eq("id", existingBusiness.id).select("*").single()
+    : supabaseAdmin.from("partner_businesses").insert(businessPayload).select("*").single();
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+
+async function updatePartnerApplicationApproved({ application, user, partnerType, body, ctx, nowIso }) {
+  const metadata = partnerApplicationMetadata(application);
+  const approvalMetadata = {
+    ...metadata,
+    approved_by: ctx.user.id,
+    approved_at: nowIso,
+    partner_type: partnerType,
+    activation_source: "super_admin_approval",
+    approval_reason: body.reason || ""
+  };
+  const richPayload = {
+    user_id: user.id,
+    status: "approved",
+    review_stage: "closed",
+    admin_recommendation: "approve",
+    reviewed_by: ctx.user.id,
+    reviewed_at: nowIso,
+    metadata: approvalMetadata,
+    updated_at: nowIso
+  };
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_applications")
+    .update(richPayload)
+    .eq("id", application.id)
+    .select("*")
+    .single();
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+
+  const { data: fallbackData, error: fallbackError } = await supabaseAdmin
+    .from("partner_applications")
+    .update({
+      user_id: user.id,
+      status: "approved",
+      updated_at: nowIso
+    })
+    .eq("id", application.id)
+    .select("*")
+    .single();
+  if (fallbackError) throw fallbackError;
+  return fallbackData;
+}
+
+async function closePartnerApprovalRequests(applicationId, decision, ctx, nowIso, request) {
+  const nextStatus = decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : null;
+  if (!nextStatus) return;
+  const { error } = await supabaseAdmin
+    .from("admin_approval_requests")
+    .update({
+      status: nextStatus,
+      decided_by: ctx.user.id,
+      decided_at: nowIso
+    })
+    .eq("target_type", "partner_application")
+    .eq("target_id", applicationId)
+    .eq("status", "pending_super_admin");
+  if (error && !looksLikeMissingSchema(error)) {
+    request?.log?.warn({ error: error.message, applicationId }, "Partner approval request close failed");
+  }
+}
+
+async function activateApprovedPartnerApplication({ application, body, ctx, request }) {
+  const nowIso = new Date().toISOString();
+  const partnerType = partnerApprovalTypeForApplication(application, body.partner_type);
+  const authResult = await ensurePartnerAuthUser(application, partnerType, request);
+  await syncPartnerAuthMetadata(authResult.user, application, partnerType, request);
+  const profile = await ensurePartnerProfile(authResult.user, application, partnerType);
+  const partnerBusiness = await upsertApprovedPartnerBusiness({
+    application,
+    user: authResult.user,
+    partnerType,
+    body,
+    ctx,
+    nowIso
+  });
+  const approvedApplication = await updatePartnerApplicationApproved({
+    application,
+    user: authResult.user,
+    partnerType,
+    body,
+    ctx,
+    nowIso
+  });
+  await closePartnerApprovalRequests(application.id, "approved", ctx, nowIso, request);
+
+  return {
+    application: approvedApplication,
+    partnerBusiness,
+    profile,
+    partnerType,
+    auth: {
+      user_id: authResult.user.id,
+      email: authResult.user.email || application.email,
+      created: authResult.created,
+      invite_sent: authResult.invite_sent,
+      password_reset_sent: authResult.password_reset_sent,
+      access_email_sent: authResult.access_email_sent,
+      access_email_error: authResult.access_email_error,
+      access_email_type: authResult.access_email_type
+    }
+  };
+}
+
+async function createDirectPartnerApplication({ body, ctx, request, nowIso }) {
+  const email = authEmail(body.email);
+  const metadata = {
+    source: "super_admin_direct_invite",
+    tax_office: body.tax_office,
+    company_type: body.company_type,
+    website: body.website,
+    city: body.city,
+    country: body.country,
+    category: body.category,
+    message: body.message,
+    partner_type: body.partner_type,
+    created_by: ctx.user.id,
+    created_at: nowIso,
+    approval_reason: body.reason
+  };
+
+  const richPayload = compactRow({
+    company_name: body.company_name,
+    contact_name: body.contact_name,
+    email,
+    phone: body.phone,
+    tax_number: body.tax_number || `DIRECT-${authEmailHash(email).slice(0, 10)}`,
+    status: "review",
+    review_stage: "sent_to_super_admin",
+    admin_recommendation: "approve",
+    risk_level: "info",
+    reviewed_by: ctx.user.id,
+    reviewed_at: nowIso,
+    metadata
+  });
+
+  const { data, error } = await supabaseAdmin
+    .from("partner_applications")
+    .insert(richPayload)
+    .select("*")
+    .single();
+  if (!error) return data;
+  if (!looksLikeMissingSchema(error)) throw error;
+
+  request?.log?.warn({ error: error.message }, "Direct partner invite rich application insert failed; trying legacy payload");
+  const legacyPayload = compactRow({
+    company_name: body.company_name,
+    contact_name: body.contact_name,
+    email,
+    phone: body.phone,
+    tax_number: body.tax_number || `DIRECT-${authEmailHash(email).slice(0, 10)}`,
+    status: "pending"
+  });
+
+  const { data: legacyData, error: legacyError } = await supabaseAdmin
+    .from("partner_applications")
+    .insert(legacyPayload)
+    .select("*")
+    .single();
+  if (legacyError) throw legacyError;
+  return { ...legacyData, metadata };
+}
+
+async function decidePartnerApplicationRequest({ request, applicationId, body, ctx = null }) {
+  const actorCtx = ctx || await requireSuperAdmin(request, "super_admin.partner_application.decide");
+  const { data: before, error: beforeError } = await supabaseAdmin
+    .from("partner_applications")
+    .select("*")
+    .eq("id", applicationId)
+    .maybeSingle();
+  if (beforeError) throw beforeError;
+  if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
+
+  let application = null;
+  let partnerBusiness = null;
+  let activation = null;
+  const nowIso = new Date().toISOString();
+
+  if (body.decision === "approved") {
+    activation = await activateApprovedPartnerApplication({ application: before, body, ctx: actorCtx, request });
+    application = activation.application;
+    partnerBusiness = activation.partnerBusiness;
+  } else {
+    const applicationPayload = {
+      status: body.decision,
+      updated_at: nowIso
+    };
+
+    const { data: updatedApplication, error: updateError } = await supabaseAdmin
+      .from("partner_applications")
+      .update(applicationPayload)
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+    application = updatedApplication;
+    await closePartnerApprovalRequests(applicationId, body.decision, actorCtx, nowIso, request);
+  }
+
+  await auditEvent({
+    request,
+    actorId: actorCtx.user.id,
+    actorRole: actorCtx.profile.role,
+    action: actorCtx.profile.role === "super_admin" ? "super_admin.partner_application_decided" : "admin.ops.partner_application_decided",
+    resourceType: "partner_application",
+    resourceId: applicationId,
+    severity: body.decision === "approved" ? "warning" : "info",
+    source: "admin",
+    evidenceTags: [actorCtx.profile.role === "super_admin" ? "super_admin" : "admin_ops", "partner_application"],
+    metadata: {
+      old_value: { status: before.status },
+      new_value: {
+        status: application.status,
+        commission_rate: body.commission_rate ?? null,
+        store_status: body.store_status || null,
+        partner_business_id: partnerBusiness?.id || null,
+        partner_type: activation?.partnerType || body.partner_type || null,
+        auth_user_id: activation?.auth?.user_id || application.user_id || null,
+        auth_user_created: activation?.auth?.created || false,
+        invite_sent: activation?.auth?.invite_sent || false,
+        password_reset_sent: activation?.auth?.password_reset_sent || false,
+        access_email_sent: activation?.auth?.access_email_sent || false,
+        access_email_type: activation?.auth?.access_email_type || null,
+        access_email_error: activation?.auth?.access_email_error || null
+      },
+      reason: body.reason || ""
+    }
+  });
+
+  return { ok: true, application, partner_business: partnerBusiness, activation };
+}
+
+async function reviewPartnerApplicationRequest({ request, applicationId, payload }) {
+  const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
+  const warnings = [];
+  const nowIso = new Date().toISOString();
+  const recommendation = payload.action === "recommend_approve"
+    ? "approve"
+    : payload.action === "recommend_reject"
+    ? "reject"
+    : payload.action === "send_super_admin"
+    ? "needs_super_admin"
+    : null;
+  const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+  const currentApplication = await optionalQuery(
+    supabaseAdmin
+      .from("partner_applications")
+      .select("metadata")
+      .eq("id", applicationId)
+      .maybeSingle(),
+    null,
+    warnings,
+    "partner_applications"
+  );
+  const existingMetadata = currentApplication?.metadata && typeof currentApplication.metadata === "object"
+    ? currentApplication.metadata
+    : {};
+
+  const application = await optionalMutation(
+    supabaseAdmin
+      .from("partner_applications")
+      .update({
+        status: "review",
+        review_stage: reviewStage,
+        admin_recommendation: recommendation,
+        risk_level: payload.risk_level,
+        reviewed_by: ctx.user.id,
+        reviewed_at: nowIso,
+        metadata: {
+          ...existingMetadata,
+          last_admin_action: payload.action,
+          last_admin_reason: payload.reason,
+          last_admin_action_at: nowIso
+        }
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single(),
+    warnings,
+    "partner_applications"
+  );
+
+  await optionalMutation(
+    supabaseAdmin
+      .from("admin_operation_notes")
+      .insert({
+        author_id: ctx.user.id,
+        target_type: "partner_application",
+        target_id: applicationId,
+        note_type: "review",
+        body: payload.reason
+      }),
+    warnings,
+    "admin_operation_notes"
+  );
+
+  let approvalRequest = null;
+  if (payload.action !== "start_review") {
+    approvalRequest = await optionalMutation(
+      supabaseAdmin
+        .from("admin_approval_requests")
+        .insert({
+          requested_by: ctx.user.id,
+          target_type: "partner_application",
+          target_id: applicationId,
+          request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
+          status: "pending_super_admin",
+          summary: payload.reason,
+          proposed_action: {
+            action: payload.action,
+            recommendation,
+            risk_level: payload.risk_level
+          }
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_approval_requests"
+    );
+  }
+
+  await auditedOpsEvent({
+    request,
+    ctx,
+    action: `admin.ops.partner_application_${payload.action}`,
+    resourceType: "partner_application",
+    resourceId: applicationId,
+    severity: payload.risk_level,
+    metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
+  });
+
+  return { ok: true, application, approvalRequest, warnings };
+}
+
+function partnerOrderItems(order, ownerId, isAdminUser, userId = ownerId) {
+  return (order?.order_items || []).filter((item) => {
+    const product = item.product || item.products || {};
+    return isAdminUser || product.partner_id === ownerId || product.partner_id === userId || item.partner_id === ownerId || item.partner_id === userId;
+  });
+}
+
+function partnerCanAccessOrder(order, ownerId, isAdminUser, userId = ownerId) {
+  return partnerOrderItems(order, ownerId, isAdminUser, userId).length > 0;
+}
+
+function summarizePartnerOrders(orders, ownerId, isAdminUser, userId = ownerId) {
   return (orders || [])
     .map((order) => {
-      const partnerItems = (order.order_items || []).filter((item) => {
-        const product = item.product || item.products || {};
-        return isAdminUser || product.partner_id === ownerId;
-      });
+      const partnerItems = partnerOrderItems(order, ownerId, isAdminUser, userId);
       if (!partnerItems.length) return null;
       const partnerTotal = partnerItems.reduce((sum, item) => sum + Number(item.price || item.unit_price || 0) * Number(item.quantity || 1), 0);
       return {
@@ -3640,7 +7196,138 @@ function summarizePartnerOrders(orders, ownerId, isAdminUser) {
     .filter(Boolean);
 }
 
-function partnerMetrics({ business, products, orders, paymentIntents, transactions, payouts, tickets }) {
+function refundCancellationSignalType(order, tickets = [], flags = []) {
+  const raw = [
+    ...tickets.map((ticket) => ticket.metadata?.request_type || ticket.metadata?.type || ticket.category),
+    ...flags.map((flag) => flag.metadata?.request_type || flag.metadata?.refund_kind || flag.metadata?.partner_decision),
+    refundCancellationKind(order)
+  ].find(Boolean);
+  const normalized = String(raw || "").toLowerCase();
+  if (/cancel|cancellation|iptal/.test(normalized)) return "cancellation";
+  if (/refund|return|iade|geri/.test(normalized)) return "refund";
+
+  const text = [
+    ...tickets.flatMap((ticket) => [ticket.title, ticket.message]),
+    ...flags.map((flag) => flag.reason)
+  ].join(" ").toLocaleLowerCase("tr-TR");
+  if (/iptal|cancel|cancellation/.test(text)) return "cancellation";
+  if (/iade|refund|return|geri ödeme|geri odeme/.test(text)) return "refund";
+  return "signal";
+}
+
+function refundCancellationFlagMatches(flag) {
+  const text = [
+    flag?.reason,
+    flag?.metadata?.partner_decision,
+    flag?.metadata?.admin_action,
+    flag?.metadata?.super_admin_action,
+    flag?.metadata?.dispute_status,
+    flag?.metadata?.request_type
+  ].join(" ").toLocaleLowerCase("tr-TR");
+  return /refund|iade|return|iptal|cancel|cancellation|geri ödeme|geri odeme|ihtilaf|dispute/.test(text);
+}
+
+function refundCancellationTicketMatchesOrder(ticket, order) {
+  const metadata = ticket?.metadata || {};
+  if (metadata.order_id && String(metadata.order_id) === String(order.id)) return true;
+  const haystack = [ticket?.title, ticket?.message, metadata.order_no, metadata.order_number, metadata.order_id]
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+  return [order.id, order.order_no, order.order_number, order.customer_email]
+    .filter(Boolean)
+    .some((value) => haystack.includes(String(value).toLocaleLowerCase("tr-TR")));
+}
+
+function partnerRefundCancellationSummary(items) {
+  return {
+    total: items.length,
+    pending_partner: items.filter((item) => item.request_status === "pending_partner").length,
+    disputes: items.filter((item) => item.request_status === "dispute_admin_review").length,
+    approved: items.filter((item) => item.request_status === "approved").length,
+    refunded: items.filter((item) => item.type === "refund").length,
+    cancelled: items.filter((item) => item.type === "cancellation").length
+  };
+}
+
+async function loadPartnerRefundCancellations({ orders, ownerId, userId, isAdminUser, limit = 120, warnings }) {
+  const scopedOrders = (orders || []).filter((order) => partnerCanAccessOrder(order, ownerId, isAdminUser, userId));
+  if (!scopedOrders.length) {
+    const items = [];
+    return { items, summary: partnerRefundCancellationSummary(items), warnings };
+  }
+
+  const orderIds = scopedOrders.map((order) => String(order.id));
+  const [tickets, flags] = await Promise.all([
+    optionalQuery(
+      supabaseAdmin
+        .from("support_tickets")
+        .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+        .or(refundCancellationSupportFilter(""))
+        .order("created_at", { ascending: false })
+        .limit(Math.min(Math.max(limit, 40), 200)),
+      [],
+      warnings,
+      "support_tickets"
+    ),
+    optionalQuery(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .select("id, flag_type, severity, reason, status, metadata, target_id, created_at, updated_at")
+        .eq("target_type", "order")
+        .in("target_id", orderIds)
+        .order("created_at", { ascending: false })
+        .limit(240),
+      [],
+      warnings,
+      "admin_operation_flags"
+    )
+  ]);
+
+  const items = scopedOrders.map((order) => {
+    const orderTickets = (tickets || []).filter((ticket) => refundCancellationTicketMatchesOrder(ticket, order));
+    const orderFlags = (flags || [])
+      .filter((flag) => String(flag.target_id) === String(order.id))
+      .filter(refundCancellationFlagMatches);
+    const terminalKind = refundCancellationKind(order);
+    if (!orderTickets.length && !orderFlags.length && terminalKind === "signal") return null;
+
+    const rejectedFlag = orderFlags.find((flag) => flag.metadata?.partner_decision === "reject_request" || flag.metadata?.dispute_status === "admin_review_required");
+    const approvedFlag = orderFlags.find((flag) => ["approve_refund", "approve_cancellation"].includes(flag.metadata?.partner_decision));
+    const openTicket = orderTickets.find((ticket) => ["open", "in_progress"].includes(ticket.status));
+    const requestStatus = rejectedFlag
+      ? "dispute_admin_review"
+      : (approvedFlag || terminalKind !== "signal" ? "approved" : (openTicket ? "pending_partner" : "signal"));
+    const signalDates = [
+      ...orderTickets.map((ticket) => ticket.updated_at || ticket.created_at),
+      ...orderFlags.map((flag) => flag.updated_at || flag.created_at),
+      order.updated_at,
+      order.created_at
+    ].filter(Boolean);
+    const partnerItems = partnerOrderItems(order, ownerId, isAdminUser, userId);
+    const partnerTotal = partnerItems.reduce((sum, item) => sum + Number(item.price || item.unit_price || 0) * Number(item.quantity || 1), 0);
+
+    return refundCancellationPublic(order, {
+      type: refundCancellationSignalType(order, orderTickets, orderFlags),
+      risk_level: rejectedFlag ? "critical" : (openTicket ? "high" : undefined),
+      tickets: orderTickets,
+      flags: orderFlags,
+      order_items: partnerItems,
+      request_status: requestStatus,
+      decision_required: requestStatus === "pending_partner",
+      partner_decision: rejectedFlag?.metadata?.partner_decision || approvedFlag?.metadata?.partner_decision || null,
+      partner_total: Number(partnerTotal.toFixed(2)),
+      source_ticket_id: orderTickets[0]?.id || null,
+      source_ticket_status: orderTickets[0]?.status || null,
+      signal_at: signalDates.sort((a, b) => new Date(b) - new Date(a))[0] || null
+    });
+  }).filter(Boolean)
+    .sort((a, b) => new Date(b.signal_at || b.updated_at || b.created_at || 0) - new Date(a.signal_at || a.updated_at || a.created_at || 0))
+    .slice(0, limit);
+
+  return { items, summary: partnerRefundCancellationSummary(items), warnings };
+}
+
+function partnerMetrics({ business, products, orders, paymentIntents, transactions, payouts, tickets, refundCancellations = [] }) {
   const paidIntents = paymentIntents.filter((intent) => intent.status === "paid");
   const openTickets = tickets.filter((ticket) => ["open", "waiting"].includes(ticket.status));
   const gross = transactions.reduce((sum, item) => sum + Number(item.gross_amount || 0), 0);
@@ -3665,6 +7352,8 @@ function partnerMetrics({ business, products, orders, paymentIntents, transactio
     net_volume: Number(net.toFixed(2)),
     payout_pending: Number(payoutPending.toFixed(2)),
     open_ticket_count: openTickets.length,
+    refund_cancellation_pending_count: refundCancellations.filter((item) => item.request_status === "pending_partner").length,
+    refund_cancellation_dispute_count: refundCancellations.filter((item) => item.request_status === "dispute_admin_review").length,
     trust_score: Number(business.trust_score || 70),
     level: Number(business.level || 1)
   };
@@ -3722,6 +7411,1666 @@ async function updateOrderPaymentFields(orderId, payload) {
   if (legacyError) throw legacyError;
 }
 
+function integrationConnectorFallbackRows() {
+  return [
+    {
+      provider: "generic_feed",
+      label: "CSV / JSON Feed",
+      category: "feed",
+      connector_mode: "generic_feed",
+      availability: "free",
+      stage: "enabled",
+      inbound_supported: true,
+      outbound_supported: false,
+      free_enabled: true,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.generic_feed,
+      default_settings: { default_publish_status: "draft", max_preview_rows: 50 },
+      sort_order: 10
+    },
+    {
+      provider: "woocommerce",
+      label: "WooCommerce",
+      category: "commerce",
+      connector_mode: "native_api",
+      availability: "free",
+      stage: "starter",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: true,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.woocommerce,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 20
+    },
+    {
+      provider: "shopify",
+      label: "Shopify",
+      category: "commerce",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.shopify,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 30
+    },
+    {
+      provider: "trendyol",
+      label: "Trendyol Pazaryeri",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.trendyol,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 40
+    },
+    {
+      provider: "hepsiburada",
+      label: "Hepsiburada",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.hepsiburada,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 50
+    },
+    {
+      provider: "n11",
+      label: "n11",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.n11,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 60
+    },
+    {
+      provider: "ciceksepeti",
+      label: "Çiçeksepeti",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "planned",
+      inbound_supported: true,
+      outbound_supported: false,
+      free_enabled: false,
+      premium_ready: false,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.ciceksepeti,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 70
+    },
+    {
+      provider: "pazarama",
+      label: "Pazarama",
+      category: "marketplace",
+      connector_mode: "native_api",
+      availability: "premium",
+      stage: "planned",
+      inbound_supported: true,
+      outbound_supported: false,
+      free_enabled: false,
+      premium_ready: false,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.pazarama,
+      default_settings: { default_publish_status: "draft" },
+      sort_order: 80
+    },
+    {
+      provider: "custom_api",
+      label: "Özel API",
+      category: "custom",
+      connector_mode: "native_api",
+      availability: "enterprise",
+      stage: "premium_ready",
+      inbound_supported: true,
+      outbound_supported: true,
+      free_enabled: false,
+      premium_ready: true,
+      secret_schema: INTEGRATION_SECRET_DEFINITIONS.custom_api,
+      default_settings: { default_publish_status: "draft", requires_mapping: true },
+      sort_order: 90
+    }
+  ];
+}
+
+function integrationSecretDefinitions(provider) {
+  return INTEGRATION_SECRET_DEFINITIONS[provider] || [];
+}
+
+function integrationSecretContext(integrationId, secretKey) {
+  return `partner_integration:${integrationId}:${secretKey}`;
+}
+
+function normalizeIntegrationSecretKey(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_:-]/g, "_")
+    .slice(0, 90);
+}
+
+function connectorReady(connector) {
+  if (!connector) return false;
+  return connector.stage !== "planned" && connector.premium_ready !== false;
+}
+
+function connectorAllowsImport(connector) {
+  return Boolean(connectorReady(connector) && connector.inbound_supported);
+}
+
+function connectorAllowsUse(connector) {
+  if (!connectorReady(connector)) return false;
+  if (connector.free_enabled) return true;
+  if (connector.availability === "premium") return config.integrations.premiumEnabled;
+  if (connector.availability === "enterprise") return config.integrations.premiumEnabled;
+  return false;
+}
+
+function partnerIntegrationPlanTier(business = {}) {
+  const metadata = business.metadata || {};
+  const raw = String(metadata.integration_plan || metadata.plan_tier || metadata.subscription_tier || "").toLowerCase();
+  if (["enterprise", "kurumsal"].includes(raw)) return "enterprise";
+  if (["premium", "pro", "professional"].includes(raw)) return "premium";
+  if (Number(business.level || 0) >= 20) return "enterprise";
+  if (Number(business.level || 0) >= 5) return "premium";
+  return "free";
+}
+
+function partnerCanUseConnector(connector, business, options = {}) {
+  if (!options.fullIntegration) return connectorAllowsImport(connector);
+  if (!connectorAllowsUse(connector) || !connector.outbound_supported || !config.integrations.outboundEnabled) return false;
+  if (connector.availability === "free" || connector.free_enabled) return true;
+  const tier = partnerIntegrationPlanTier(business);
+  if (connector.availability === "enterprise") return tier === "enterprise";
+  return ["premium", "enterprise"].includes(tier);
+}
+
+function connectorForProvider(connectors, provider) {
+  return (connectors || []).find((item) => item.provider === provider)
+    || integrationConnectorFallbackRows().find((item) => item.provider === provider)
+    || null;
+}
+
+function partnerIntegrationPolicy() {
+  return {
+    enabled: config.integrations.enabled,
+    premium_enabled: config.integrations.premiumEnabled,
+    outbound_enabled: config.integrations.outboundEnabled,
+    apply_enabled: config.integrations.applyEnabled,
+    scheduled_apply_enabled: config.integrations.scheduledApplyEnabled,
+    require_apply_confirmation: config.integrations.requireApplyConfirmation,
+    apply_confirmation_text: config.integrations.applyConfirmationText,
+    force_draft_on_apply: config.integrations.forceDraftOnApply,
+    free_import_enabled: true,
+    full_integration_requires_premium: true,
+    full_integration_enabled: config.integrations.outboundEnabled,
+    remote_fetch_enabled: config.integrations.remoteFetchEnabled,
+    block_private_fetch_targets: config.integrations.blockPrivateFetchTargets,
+    allowed_fetch_hosts: config.integrations.allowedFetchHosts,
+    max_preview_rows: config.integrations.maxPreviewRows,
+    max_apply_rows: config.integrations.maxApplyRows,
+    max_test_rows: config.integrations.maxTestRows
+  };
+}
+
+async function partnerIntegrationConnectors(warnings = []) {
+  try {
+    const rows = await optionalQuery(
+      supabaseAdmin
+        .from("partner_integration_connectors")
+        .select("*")
+        .order("sort_order", { ascending: true }),
+      integrationConnectorFallbackRows(),
+      warnings,
+      "partner_integration_connectors"
+    );
+    return (rows || integrationConnectorFallbackRows()).map((connector) => ({
+      ...connector,
+      active_now: connectorAllowsImport(connector),
+      outbound_active_now: Boolean(connector.outbound_supported && config.integrations.outboundEnabled && connectorAllowsUse(connector))
+    }));
+  } catch (error) {
+    if (!looksLikeMissingSchema(error)) throw error;
+    warnings.push("partner_integration_connectors: Supabase migration production veritabaninda eksik gorunuyor.");
+    return integrationConnectorFallbackRows().map((connector) => ({
+      ...connector,
+      active_now: connectorAllowsImport(connector),
+      outbound_active_now: false
+    }));
+  }
+}
+
+async function loadPartnerIntegration(business, integrationId) {
+  const { data, error } = await supabaseAdmin
+    .from("partner_integrations")
+    .select("*")
+    .eq("id", integrationId)
+    .eq("partner_id", business.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw httpError("Entegrasyon bulunamadı.", 404);
+  return data;
+}
+
+async function loadIntegrationSecrets(integrationId) {
+  const { data, error } = await supabaseAdmin
+    .from("partner_integration_secrets")
+    .select("id, integration_id, secret_key, encrypted_value, status")
+    .eq("integration_id", integrationId)
+    .eq("status", "active");
+  if (error) throw error;
+
+  const secrets = {};
+  for (const row of data || []) {
+    secrets[row.secret_key] = decryptSecretValue(row.encrypted_value, integrationSecretContext(integrationId, row.secret_key));
+  }
+  return secrets;
+}
+
+function requireIntegrationSecrets(provider, secrets) {
+  const missing = integrationSecretDefinitions(provider)
+    .filter((definition) => definition.required && !String(secrets[definition.key] || "").trim())
+    .map((definition) => definition.key);
+  if (missing.length) {
+    throw httpError(`Eksik entegrasyon bilgisi: ${missing.join(", ")}`, 409);
+  }
+}
+
+function parseCsvRows(text) {
+  const raw = String(text || "");
+  const firstLine = raw.split(/\r?\n/).find((line) => line.trim()) || "";
+  const delimiter = [";", "\t", ","].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    const next = raw[index + 1];
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === delimiter && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(cell);
+      if (row.some((value) => String(value).trim())) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  row.push(cell);
+  if (row.some((value) => String(value).trim())) rows.push(row);
+
+  const headers = (rows.shift() || []).map((header) => String(header || "").trim());
+  return rows.map((values) => headers.reduce((entry, header, index) => {
+    entry[header] = values[index] ?? "";
+    return entry;
+  }, {}));
+}
+
+function jsonProductRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.products)) return payload.products;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.result?.products)) return payload.result.products;
+  return [];
+}
+
+function firstValue(row, keys) {
+  for (const key of keys) {
+    if (row && Object.prototype.hasOwnProperty.call(row, key) && row[key] !== undefined && row[key] !== null && row[key] !== "") {
+      return row[key];
+    }
+  }
+  return "";
+}
+
+function numberFrom(value, fallback = 0) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
+  const normalized = String(value || "")
+    .replace(/\s/g, "")
+    .replace(/[₺$€]/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function backendSlug(value) {
+  return String(value || "urun")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120) || "urun";
+}
+
+function imageFromRow(row) {
+  const raw = firstValue(row, ["image_url", "image", "imageUrl", "thumbnail", "photo", "foto", "gorsel"]);
+  if (raw) return String(raw).trim();
+  if (Array.isArray(row?.images) && row.images.length) {
+    const first = row.images[0];
+    if (typeof first === "string") return first;
+    return String(first?.src || first?.url || "").trim();
+  }
+  return "";
+}
+
+function isPrivateIpAddress(address) {
+  if (!address) return true;
+  if (net.isIPv4(address)) {
+    const parts = address.split(".").map((part) => Number(part));
+    if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0) return true;
+    if (parts[0] === 169 && parts[1] === 254) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true;
+    return false;
+  }
+  if (net.isIPv6(address)) {
+    const normalized = address.toLowerCase();
+    return normalized === "::1"
+      || normalized === "::"
+      || normalized.startsWith("fc")
+      || normalized.startsWith("fd")
+      || normalized.startsWith("fe80:")
+      || normalized.startsWith("::ffff:127.")
+      || normalized.startsWith("::ffff:10.")
+      || normalized.startsWith("::ffff:192.168.");
+  }
+  return true;
+}
+
+function hostnameAllowed(hostname) {
+  const allowedHosts = config.integrations.allowedFetchHosts || [];
+  if (!allowedHosts.length) return true;
+  const normalized = String(hostname || "").toLowerCase();
+  return allowedHosts.some((allowed) => {
+    const rule = String(allowed || "").toLowerCase();
+    if (!rule) return false;
+    if (rule.startsWith("*.")) return normalized.endsWith(rule.slice(1));
+    return normalized === rule || normalized.endsWith(`.${rule}`);
+  });
+}
+
+async function assertSafeIntegrationUrl(rawUrl) {
+  const parsed = new URL(rawUrl);
+  if (!["http:", "https:"].includes(parsed.protocol)) {
+    throw httpError("Entegrasyon URL adresi http veya https olmalı.", 400);
+  }
+  if (!hostnameAllowed(parsed.hostname)) {
+    throw httpError("Bu entegrasyon hostu allowlist dışında.", 403);
+  }
+  if (config.integrations.blockPrivateFetchTargets) {
+    const records = await dnsLookup(parsed.hostname, { all: true, verbatim: true });
+    if (!records.length || records.some((record) => isPrivateIpAddress(record.address))) {
+      throw httpError("Private/internal IP hedeflerine entegrasyon isteği engellendi.", 403);
+    }
+  }
+  return parsed;
+}
+
+const INTEGRATION_BARCODE_KEYS = ["barcode", "barCode", "Barcode", "barkod", "gtin", "GTIN", "ean", "ean13", "EAN", "upc", "UPC"];
+const INTEGRATION_PRODUCT_CODE_KEYS = ["sku", "stock_code", "stockCode", "stok_kodu", "urun_kodu", "ürün_kodu", "product_code", "productCode", "code", "model_code", "modelCode", "tuketim_kodu", "tüketim_kodu"];
+const INTEGRATION_GROUP_CODE_KEYS = ["productMainId", "mainProductId", "item_group_id", "group_id", "groupCode", "model_code", "modelCode", "parent_id", "parentId"];
+const INTEGRATION_COLOR_KEYS = ["color", "colour", "renk", "variant_color", "variantColor", "option_color", "option1", "attribute_color"];
+const INTEGRATION_SIZE_KEYS = ["size", "beden", "variant_size", "variantSize", "option_size", "option2", "attribute_size"];
+const PRODUCT_COLOR_TOKENS = new Map([
+  ["siyah", "Siyah"],
+  ["black", "Siyah"],
+  ["beyaz", "Beyaz"],
+  ["white", "Beyaz"],
+  ["kirmizi", "Kırmızı"],
+  ["kırmızı", "Kırmızı"],
+  ["red", "Kırmızı"],
+  ["mavi", "Mavi"],
+  ["blue", "Mavi"],
+  ["lacivert", "Lacivert"],
+  ["navy", "Lacivert"],
+  ["yesil", "Yeşil"],
+  ["yeşil", "Yeşil"],
+  ["green", "Yeşil"],
+  ["sari", "Sarı"],
+  ["sarı", "Sarı"],
+  ["yellow", "Sarı"],
+  ["turuncu", "Turuncu"],
+  ["orange", "Turuncu"],
+  ["pembe", "Pembe"],
+  ["pink", "Pembe"],
+  ["mor", "Mor"],
+  ["purple", "Mor"],
+  ["gri", "Gri"],
+  ["gray", "Gri"],
+  ["grey", "Gri"],
+  ["bej", "Bej"],
+  ["beige", "Bej"],
+  ["kahverengi", "Kahverengi"],
+  ["brown", "Kahverengi"],
+  ["krem", "Krem"],
+  ["cream", "Krem"],
+  ["altin", "Altın"],
+  ["altın", "Altın"],
+  ["gold", "Altın"],
+  ["gumus", "Gümüş"],
+  ["gümüş", "Gümüş"],
+  ["silver", "Gümüş"]
+]);
+
+function integrationRowValue(row, variant, keys) {
+  return firstValue(row, keys) || firstValue(variant || {}, keys);
+}
+
+function normalizedIntegrationCode(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[^a-zA-Z0-9._:-]/g, "")
+    .toUpperCase()
+    .slice(0, 160);
+}
+
+function normalizeVariantText(value) {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function colorFromText(...values) {
+  const normalized = normalizeVariantText(values.filter(Boolean).join(" "));
+  if (!normalized) return "";
+  const tokens = normalized.split(" ");
+  for (const token of tokens) {
+    if (PRODUCT_COLOR_TOKENS.has(token)) return PRODUCT_COLOR_TOKENS.get(token);
+  }
+  for (const [token, label] of PRODUCT_COLOR_TOKENS.entries()) {
+    if (normalized.includes(` ${token} `) || normalized.startsWith(`${token} `) || normalized.endsWith(` ${token}`)) return label;
+  }
+  const hexMatch = normalized.match(/\b[0-9a-f]{6}\b/i);
+  return hexMatch ? `#${hexMatch[0].toUpperCase()}` : "";
+}
+
+function variantImageSignature(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = /^https?:\/\//i.test(raw) ? new URL(raw) : null;
+    const path = parsed ? parsed.pathname : raw;
+    const filename = decodeURIComponent(path.split("/").filter(Boolean).pop() || path);
+    return normalizeVariantText(filename).replace(/\b(jpg|jpeg|png|webp|avif|gif)\b/g, "").trim().slice(0, 120);
+  } catch {
+    return normalizeVariantText(raw).slice(0, 120);
+  }
+}
+
+function productModelRoot(...values) {
+  const normalized = normalizeVariantText(values.filter(Boolean).join(" "));
+  if (!normalized) return "";
+  const colorTokens = new Set([...PRODUCT_COLOR_TOKENS.keys()].map(normalizeVariantText));
+  return normalized
+    .split(" ")
+    .filter((token) => token.length > 1)
+    .filter((token) => !colorTokens.has(token))
+    .filter((token) => !/^(xs|s|m|l|xl|xxl|xxxl|standart|std|renk|beden|adet|numara)$/.test(token))
+    .filter((token) => !/^\d{1,2}$/.test(token))
+    .slice(0, 9)
+    .join("-")
+    .slice(0, 120);
+}
+
+function usefulModelRoot(value) {
+  const root = String(value || "").trim();
+  if (!root || root.length < 6) return "";
+  if (["urun", "urun-genel", "genel", "product", "product-general"].includes(root)) return "";
+  return root;
+}
+
+function imageFromVariant(row, variant) {
+  const raw = integrationRowValue(row, variant, ["image_url", "image", "imageUrl", "thumbnail", "photo", "foto", "gorsel"]);
+  if (raw) return String(raw).trim();
+  if (Array.isArray(variant?.images) && variant.images.length) {
+    const first = variant.images[0];
+    if (typeof first === "string") return first;
+    return String(first?.src || first?.url || "").trim();
+  }
+  return imageFromRow(row);
+}
+
+function integrationProductRows(row, integration, index) {
+  const variants = Array.isArray(row?.variants) && row.variants.length ? row.variants : [null];
+  const rows = [];
+  for (let variantIndex = 0; variantIndex < variants.length; variantIndex += 1) {
+    const normalized = normalizeIntegrationProduct(row, integration, index, variants[variantIndex], variantIndex, variants.length);
+    if (normalized) rows.push(normalized);
+  }
+  return rows;
+}
+
+function normalizeIntegrationProduct(row, integration, index, variantOverride = null, variantIndex = 0, variantCount = 1) {
+  const name = String(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"]) || "").trim();
+  if (!name) return null;
+  const firstVariant = variantOverride || (Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {});
+  const firstCategory = Array.isArray(row?.categories) && row.categories.length ? row.categories[0] : null;
+
+  const barcode = String(integrationRowValue(row, firstVariant, INTEGRATION_BARCODE_KEYS) || "").trim();
+  const productCode = String(integrationRowValue(row, firstVariant, INTEGRATION_PRODUCT_CODE_KEYS) || "").trim();
+  const groupCode = String(integrationRowValue(row, firstVariant, INTEGRATION_GROUP_CODE_KEYS) || "").trim();
+  const explicitExternalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || firstVariant.product_id || "").trim();
+  const externalId = String(groupCode || explicitExternalId || productCode || barcode || `row-${index + 1}`).trim();
+  const explicitVariantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
+  const variantId = String(explicitVariantId || barcode || productCode || (variantCount > 1 ? `variant-${variantIndex + 1}` : "")).trim();
+  const sku = String(productCode || barcode || firstVariant.sku || externalId).trim();
+  const imageUrl = imageFromVariant(row, firstVariant);
+  const color = String(integrationRowValue(row, firstVariant, INTEGRATION_COLOR_KEYS) || colorFromText(name, imageUrl, firstVariant.title, firstVariant.name) || "").trim();
+  const size = String(integrationRowValue(row, firstVariant, INTEGRATION_SIZE_KEYS) || "").trim();
+  const modelRoot = usefulModelRoot(productModelRoot(name, firstValue(row, ["model", "model_name", "modelName"]), groupCode, explicitExternalId));
+  const imageSignature = variantImageSignature(imageUrl);
+  const variantGroupKey = normalizedIntegrationCode(groupCode || modelRoot || explicitExternalId || externalId);
+  const variantMatchKey = normalizedIntegrationCode(barcode || productCode || variantId || sku || externalId);
+  const settings = integration.settings || {};
+  const moduleKey = ["shop", "market", "food", "service"].includes(settings.module_key) ? settings.module_key : "shop";
+  const categoryValue = firstValue(row, ["category", "categoryName", "productMainId", "categories", "kategori"])
+    || (typeof firstCategory === "string" ? firstCategory : firstCategory?.name)
+    || settings.default_category
+    || "Genel";
+
+  return {
+    external_product_id: externalId,
+    external_variant_id: variantId || null,
+    external_sku: sku,
+    barcode,
+    product_code: productCode,
+    variant_group_key: variantGroupKey,
+    variant_match_key: variantMatchKey,
+    variant_color: color,
+    variant_size: size,
+    variant_image_signature: imageSignature,
+    variant_model_root: modelRoot,
+    variant_source: groupCode ? "group_code" : modelRoot ? "name_model" : imageSignature ? "image_signature" : "external_id",
+    name,
+    description: String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1800),
+    price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
+    stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "quantity", "availableQuantity", "stok", "adet"]) || firstVariant.inventory_quantity))),
+    image_url: imageUrl,
+    category: String(categoryValue).trim().slice(0, 90),
+    brand: String(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").trim().slice(0, 120),
+    module_key: moduleKey,
+    raw: row
+  };
+}
+
+function sourceHashFor(value) {
+  return createHash("sha256").update(JSON.stringify(value || {})).digest("hex");
+}
+
+function integrationSettingsObject(settings) {
+  return settings && typeof settings === "object" && !Array.isArray(settings) ? settings : {};
+}
+
+function positiveInteger(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? Math.floor(number) : fallback;
+}
+
+function integrationImportCursor(integration, provider = integration?.provider) {
+  const settings = integrationSettingsObject(integration?.settings);
+  const cursorRoot = integrationSettingsObject(settings.import_cursor);
+  return integrationSettingsObject(cursorRoot[provider]);
+}
+
+function integrationSettingsWithImportCursor(settings, provider, cursor) {
+  const base = integrationSettingsObject(settings);
+  const cursorRoot = integrationSettingsObject(base.import_cursor);
+  const previousProviderCursor = integrationSettingsObject(cursorRoot[provider]);
+  const nextProviderCursor = Object.fromEntries(
+    Object.entries({ ...previousProviderCursor, ...cursor })
+      .filter(([, value]) => value !== undefined)
+  );
+  return {
+    ...base,
+    import_cursor: {
+      ...cursorRoot,
+      [provider]: nextProviderCursor
+    }
+  };
+}
+
+function integrationFetchRows(rows, metadata = {}) {
+  return {
+    rows: jsonProductRows(rows),
+    pageInfo: metadata.pageInfo || {},
+    nextCursor: metadata.nextCursor || null
+  };
+}
+
+function normalizedIntegrationFetchResult(result) {
+  if (Array.isArray(result)) return integrationFetchRows(result);
+  if (!result || typeof result !== "object") return integrationFetchRows([]);
+  return {
+    rows: jsonProductRows(result.rows || []),
+    pageInfo: result.pageInfo || {},
+    nextCursor: result.nextCursor || null
+  };
+}
+
+function uniqueIntegrationProducts(products) {
+  const seen = new Set();
+  const duplicates = [];
+  const unique = [];
+  for (const product of products) {
+    const identity = integrationProductIdentity(product) || `${product.external_product_id}:${product.external_variant_id || ""}`;
+    if (identity && seen.has(identity)) {
+      duplicates.push({
+        external_product_id: product.external_product_id,
+        external_variant_id: product.external_variant_id || null,
+        name: product.name
+      });
+      continue;
+    }
+    if (identity) seen.add(identity);
+    unique.push(product);
+  }
+  return { products: unique, duplicateCount: duplicates.length, duplicates: duplicates.slice(0, 10) };
+}
+
+const RESTRICTED_INTEGRATION_PRODUCT_PATTERNS = [
+  ["Alkol ve tütün ürünü", /\b(alkol|alkollü|bira|şarap|rakı|viski|votka|tütün|sigara|puro|nargile|elektronik sigara|vape)\b/i],
+  ["Silah, patlayıcı veya kesici saldırı ürünü", /\b(silah|tabanca|tüfek|mermi|fişek|patlayıcı|bomba|sustalı|elektro şok|şok cihazı)\b/i],
+  ["İlaç veya reçeteli sağlık ürünü", /\b(reçeteli|ilaç|antibiyotik|hormon|steroid|anabolik|uyuşturucu|narkotik|cbd|kenevir|esrar)\b/i],
+  ["Kumar, bahis veya şans oyunu", /\b(kumar|bahis|casino|poker|rulet|iddaa kuponu|şans oyunu)\b/i],
+  ["Yetişkin içerik veya hizmet", /\b(yetişkin|erotik|escort|cinsel|pornografik)\b/i],
+  ["Canlı hayvan veya kontrol gerektiren hayvan satışı", /\b(canlı hayvan|yavru kedi|yavru köpek|evcil hayvan satışı)\b/i]
+];
+
+function integrationProductCompliance(product) {
+  const errors = [];
+  const warnings = [];
+  const text = [product.name, product.category, product.brand, product.description].map((value) => String(value || "")).join(" ");
+  const restricted = RESTRICTED_INTEGRATION_PRODUCT_PATTERNS.find(([, pattern]) => pattern.test(text));
+  if (restricted) errors.push(`${restricted[0]} otomatik import kapsamı dışında.`);
+  if (!product.name || product.name.length < 2) errors.push("Ürün adı eksik.");
+  if (marketplacePlatformPattern.test(text)) warnings.push("Ürün bilgisinde dış pazar yeri adı geçiyor; AllonaHub yayını öncesi marka/platform ifadesi temizlenmeli.");
+  if (Number(product.price || 0) < 0) errors.push("Fiyat negatif olamaz.");
+  if (Number(product.price || 0) === 0) warnings.push("Fiyat 0 görünüyor; yayına almadan önce kontrol edilmeli.");
+  if (Number(product.stock || 0) < 0) errors.push("Stok negatif olamaz.");
+  if (!["shop", "market", "food", "service"].includes(product.module_key)) errors.push("Geçersiz kanal seçimi.");
+  if (product.image_url && !/^https?:\/\//i.test(product.image_url)) warnings.push("Görsel URL http/https formatında değil.");
+  if (!product.category || product.category === "Genel") warnings.push("Kategori genel görünüyor; eşleme iyileştirilebilir.");
+  return {
+    status: errors.length ? "rejected" : warnings.length ? "needs_review" : "pending",
+    errors,
+    warnings
+  };
+}
+
+function integrationProductPreview(product) {
+  return {
+    external_product_id: product.external_product_id,
+    external_variant_id: product.external_variant_id || null,
+    variant_group_key: product.variant_group_key || "",
+    variant_match_key: product.variant_match_key || "",
+    barcode: product.barcode || "",
+    product_code: product.product_code || "",
+    variant_color: product.variant_color || "",
+    variant_size: product.variant_size || "",
+    variant_source: product.variant_source || "",
+    name: product.name,
+    price: product.price,
+    stock: product.stock,
+    category: product.category,
+    module_key: product.module_key,
+    auto_approved: integrationProductAutoApproved(product, product.compliance),
+    compliance_status: product.compliance?.status || "pending",
+    compliance_warnings: product.compliance?.warnings || [],
+    compliance_errors: product.compliance?.errors || []
+  };
+}
+
+async function fetchWithTimeout(url, options = {}) {
+  await assertSafeIntegrationUrl(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(1000, config.integrations.fetchTimeoutMs));
+  try {
+    return await fetch(url, { ...options, redirect: "manual", signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchGenericFeedRows(secrets) {
+  const feedUrl = String(secrets.FEED_URL || "").trim();
+  if (!/^https?:\/\//i.test(feedUrl)) throw httpError("Feed URL http veya https olmalı.", 400);
+  const response = await fetchWithTimeout(feedUrl, {
+    headers: { Accept: "application/json,text/csv,text/plain;q=0.9,*/*;q=0.5" }
+  });
+  if (!response.ok) throw httpError(`Feed okunamadı: HTTP ${response.status}`, 502);
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const text = await response.text();
+  if (contentType.includes("json") || /^[\s\r\n]*[\[{]/.test(text)) {
+    return jsonProductRows(JSON.parse(text));
+  }
+  return parseCsvRows(text);
+}
+
+async function fetchWooCommerceRows(secrets, limit) {
+  const baseUrl = String(secrets.API_BASE_URL || "").trim().replace(/\/$/, "");
+  const consumerKey = String(secrets.CONSUMER_KEY || "").trim();
+  const consumerSecret = String(secrets.CONSUMER_SECRET || "").trim();
+  if (!/^https?:\/\//i.test(baseUrl)) throw httpError("WooCommerce mağaza URL http veya https olmalı.", 400);
+  const url = new URL(`${baseUrl}/wp-json/wc/v3/products`);
+  url.searchParams.set("per_page", String(Math.min(Math.max(limit || 50, 1), 100)));
+  url.searchParams.set("status", "publish");
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`
+    }
+  });
+  if (!response.ok) throw httpError(`WooCommerce ürünleri okunamadı: HTTP ${response.status}`, 502);
+  return jsonProductRows(await response.json());
+}
+
+function shopifyDomain(value) {
+  const raw = String(value || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+  if (!raw) throw httpError("Shopify domain zorunlu.", 400);
+  return raw.includes(".") ? raw : `${raw}.myshopify.com`;
+}
+
+async function fetchShopifyRows(secrets, limit) {
+  const domain = shopifyDomain(secrets.SHOP_DOMAIN);
+  const token = String(secrets.ACCESS_TOKEN || "").trim();
+  const url = new URL(`https://${domain}/admin/api/2024-10/products.json`);
+  url.searchParams.set("limit", String(Math.min(Math.max(limit || 50, 1), 250)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      "X-Shopify-Access-Token": token
+    }
+  });
+  if (!response.ok) throw httpError(`Shopify ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.products || payload);
+}
+
+async function fetchTrendyolRows(secrets, limit, integration = {}) {
+  const supplierId = String(secrets.SUPPLIER_ID || "").trim();
+  const apiKey = String(secrets.API_KEY || "").trim();
+  const apiSecret = String(secrets.API_SECRET || "").trim();
+  const pageSize = Math.min(Math.max(limit || 50, 1), 100);
+  const cursor = integrationImportCursor(integration, "trendyol");
+  const requestedPage = positiveInteger(cursor.next_page, 0);
+  const requestedToken = String(cursor.next_page_token || "").trim();
+  const url = new URL(`https://apigw.trendyol.com/integration/product/sellers/${encodeURIComponent(supplierId)}/products/approved`);
+  url.searchParams.set("supplierId", supplierId);
+  if (requestedToken) {
+    url.searchParams.set("nextPageToken", requestedToken);
+  } else {
+    url.searchParams.set("page", String(requestedPage));
+  }
+  url.searchParams.set("size", String(pageSize));
+  url.searchParams.set("orderByDirection", "ASC");
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
+      "User-Agent": `${supplierId} - AllonaHub`
+    }
+  });
+  if (!response.ok) throw httpError(`Trendyol ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  const rows = jsonProductRows(payload.content || payload.products || payload);
+  const currentPage = positiveInteger(payload.page ?? payload.number, requestedPage);
+  const totalPages = positiveInteger(payload.totalPages ?? payload.total_pages, 0);
+  const totalElements = positiveInteger(payload.totalElements ?? payload.total_elements, 0);
+  const payloadNextToken = String(payload.nextPageToken || payload.next_page_token || "").trim();
+  const hasMoreByTotal = totalPages > 0 ? currentPage + 1 < totalPages : rows.length >= pageSize;
+  const hasMoreByToken = Boolean(payloadNextToken);
+  const hasMore = rows.length > 0 && (hasMoreByTotal || hasMoreByToken);
+  const nextCursor = {
+    next_page: hasMore ? currentPage + 1 : 0,
+    page_size: pageSize,
+    exhausted: !hasMore,
+    last_page: currentPage,
+    last_rows: rows.length,
+    total_pages: totalPages || null,
+    total_elements: totalElements || null,
+    last_synced_at: new Date().toISOString()
+  };
+  const nextPageWouldReachWindowLimit = (currentPage + 1) * pageSize >= 10000;
+  if (hasMore && payloadNextToken && (requestedToken || nextPageWouldReachWindowLimit)) {
+    nextCursor.next_page_token = payloadNextToken;
+    nextCursor.next_page = null;
+  } else {
+    nextCursor.next_page_token = null;
+  }
+  return integrationFetchRows(rows, {
+    pageInfo: {
+      provider: "trendyol",
+      requested_page: requestedToken ? null : requestedPage,
+      token_based: Boolean(requestedToken),
+      current_page: currentPage,
+      page_size: pageSize,
+      rows: rows.length,
+      total_pages: totalPages || null,
+      total_elements: totalElements || null,
+      next_page: nextCursor.next_page,
+      seeded_from_link_count: cursor.seeded_from_link_count || null,
+      exhausted: nextCursor.exhausted
+    },
+    nextCursor
+  });
+}
+
+async function fetchHepsiburadaRows(secrets, limit) {
+  const merchantId = String(secrets.MERCHANT_ID || "").trim();
+  const apiKey = String(secrets.API_KEY || "").trim();
+  const apiSecret = String(secrets.API_SECRET || "").trim();
+  const url = new URL(`https://mpop.hepsiburada.com/product/api/products/all-products-of-merchant/${encodeURIComponent(merchantId)}`);
+  url.searchParams.set("page", "0");
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")}`,
+      "User-Agent": merchantId
+    }
+  });
+  if (!response.ok) throw httpError(`Hepsiburada ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.data || payload.listings || payload.products || payload);
+}
+
+async function fetchN11Rows(secrets, limit) {
+  const appKey = String(secrets.APP_KEY || "").trim();
+  const appSecret = String(secrets.APP_SECRET || "").trim();
+  const url = new URL("https://api.n11.com/rest/product/seller-products");
+  url.searchParams.set("page", "0");
+  url.searchParams.set("size", String(Math.min(Math.max(limit || 50, 1), 100)));
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json",
+      appkey: appKey,
+      appsecret: appSecret,
+      Authorization: `Basic ${Buffer.from(`${appKey}:${appSecret}`).toString("base64")}`
+    }
+  });
+  if (!response.ok) throw httpError(`n11 ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const payload = await response.json();
+  return jsonProductRows(payload.content || payload.data || payload.products || payload.items || payload);
+}
+
+async function fetchCustomApiRows(secrets, limit) {
+  const baseUrl = String(secrets.API_BASE_URL || "").trim().replace(/\/$/, "");
+  if (!/^https?:\/\//i.test(baseUrl)) throw httpError("Özel API URL http veya https olmalı.", 400);
+  const url = new URL(baseUrl);
+  if (!url.searchParams.has("limit")) url.searchParams.set("limit", String(Math.min(Math.max(limit || 50, 1), 500)));
+  const token = String(secrets.ACCESS_TOKEN || "").trim();
+  const response = await fetchWithTimeout(url.href, {
+    headers: {
+      Accept: "application/json,text/csv,text/plain;q=0.9,*/*;q=0.5",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+  });
+  if (!response.ok) throw httpError(`Özel API ürünleri okunamadı: HTTP ${response.status}`, 502);
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const text = await response.text();
+  if (contentType.includes("json") || /^[\s\r\n]*[\[{]/.test(text)) {
+    return jsonProductRows(JSON.parse(text));
+  }
+  return parseCsvRows(text);
+}
+
+async function fetchIntegrationRows(integration, secrets, limit) {
+  if (!config.integrations.remoteFetchEnabled) {
+    throw httpError("Uzaktan ürün okuma şu anda kapalı.", 503);
+  }
+  if (integration.provider === "generic_feed") return fetchGenericFeedRows(secrets, limit);
+  if (integration.provider === "woocommerce") return fetchWooCommerceRows(secrets, limit);
+  if (integration.provider === "shopify") return fetchShopifyRows(secrets, limit);
+  if (integration.provider === "trendyol") return fetchTrendyolRows(secrets, limit, integration);
+  if (integration.provider === "hepsiburada") return fetchHepsiburadaRows(secrets, limit);
+  if (integration.provider === "n11") return fetchN11Rows(secrets, limit);
+  if (integration.provider === "custom_api") return fetchCustomApiRows(secrets, limit);
+  throw httpError("Bu connector için canlı ürün okuma adaptörü henüz aktif değil.", 409);
+}
+
+function integrationCursorHasPosition(cursor) {
+  return Boolean(
+    cursor
+    && typeof cursor === "object"
+    && (
+      cursor.next_page !== undefined
+      || cursor.next_page_token
+      || cursor.last_synced_at
+    )
+  );
+}
+
+function providerPageSize(provider, limit) {
+  if (["trendyol", "hepsiburada", "n11", "woocommerce"].includes(provider)) {
+    return Math.min(Math.max(limit || 50, 1), 100);
+  }
+  if (provider === "shopify") return Math.min(Math.max(limit || 50, 1), 250);
+  return Math.min(Math.max(limit || 50, 1), 500);
+}
+
+async function integrationWithSeededImportCursor({ integration, payload, limit }) {
+  if (payload.mode !== "apply" || payload.direction !== "inbound") return integration;
+  if (!["trendyol", "hepsiburada", "n11"].includes(integration.provider)) return integration;
+  const currentCursor = integrationImportCursor(integration, integration.provider);
+  if (integrationCursorHasPosition(currentCursor)) return integration;
+
+  const { count, error } = await supabaseAdmin
+    .from("partner_integration_product_links")
+    .select("id", { count: "exact", head: true })
+    .eq("integration_id", integration.id);
+  if (error || !count) return integration;
+
+  const pageSize = providerPageSize(integration.provider, limit);
+  const estimatedNextPage = Math.floor(Number(count || 0) / pageSize);
+  if (estimatedNextPage <= 0) return integration;
+
+  return {
+    ...integration,
+    settings: integrationSettingsWithImportCursor(integration.settings, integration.provider, {
+      next_page: estimatedNextPage,
+      page_size: pageSize,
+      seeded_from_link_count: Number(count || 0),
+      seeded_at: new Date().toISOString()
+    })
+  };
+}
+
+function productStatusForIntegrationApply(integration) {
+  if (config.integrations.forceDraftOnApply) return "draft";
+  return integration.default_publish_status === "active" ? "active" : "draft";
+}
+
+function integrationProductIdentity(item) {
+  return normalizedIntegrationCode(item.variant_match_key || item.external_variant_id || item.external_product_id) || String(item.external_product_id || "");
+}
+
+function integrationProductAutoApproved(item, compliance) {
+  const review = compliance || integrationProductCompliance(item);
+  const description = String(item.description || "").trim();
+  const image = String(item.image_url || "").trim();
+  const category = String(item.category || "").trim();
+  return Boolean(
+    !review.errors.length
+    && !review.warnings.length
+    && Number(item.price || 0) > 0
+    && Number(item.stock || 0) > 0
+    && description.length >= 20
+    && /^https?:\/\//i.test(image)
+    && category
+    && category !== "Genel"
+  );
+}
+
+function integrationProductSku(integration, item) {
+  const rawSku = String(item.external_sku || item.variant_match_key || item.external_product_id || "").trim();
+  const prefix = integration.provider.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
+  return `${prefix}-${backendSlug(rawSku || item.name).toUpperCase()}`.slice(0, 48);
+}
+
+function integrationProductBarcode(integration, item) {
+  const provided = String(item.barcode || "").trim();
+  if (provided) return provided.slice(0, 80);
+  const provider = String(integration.provider || "INT").toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
+  const identity = integrationProductIdentity(item) || item.external_sku || item.product_code || item.name || "";
+  if (!identity) return "";
+  const digest = createHash("sha1").update(`${provider}:${identity}`).digest("hex").slice(0, 14).toUpperCase();
+  return `ALH-${provider}-${digest}`.slice(0, 80);
+}
+
+function partnerPublicName(business) {
+  return business.display_name || business.legal_name || "AllonaHub Partner";
+}
+
+function integrationProductPayload({ business, integration, item }) {
+  const sellerName = partnerPublicName(business);
+  const compliance = item.compliance || integrationProductCompliance(item);
+  const autoApproved = integrationProductAutoApproved(item, compliance);
+  let status = autoApproved ? "active" : productStatusForIntegrationApply(integration);
+  let complianceStatus = autoApproved
+    ? "approved"
+    : compliance.status === "rejected"
+      ? "rejected"
+      : compliance.warnings.length
+        ? "needs_review"
+        : "pending";
+  const identity = integrationProductIdentity(item);
+  const payload = {
+    name: item.name,
+    product_name: item.name,
+    description: item.description,
+    price: item.price,
+    stock: item.stock,
+    image_url: item.image_url || null,
+    category: item.category || "Genel",
+    module_key: item.module_key || "shop",
+    catalog_scope: item.module_key || "shop",
+    status,
+    slug: backendSlug(`${item.name}-${integration.provider}-${item.external_product_id}-${item.external_variant_id || ""}`),
+    meta_title: item.name,
+    meta_description: item.description,
+    brand: item.brand || sellerName,
+    partner_id: business.owner_id,
+    partner_code: business.partner_code || business.id,
+    partner_email: business.email || null,
+    seller_public_name: sellerName,
+    seller_kind: "Partner satıcı",
+    seller_legal_name: business.legal_name || "",
+    seller_city: business.city || "",
+    seller_contact: business.email || business.phone || "",
+    seller_tax_number_masked: "",
+    invoice_responsibility: "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.",
+    seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
+    compliance_review_status: complianceStatus,
+    compliance_notes: [
+      `Entegrasyon importu: ${integration.provider}.`,
+      autoApproved
+        ? "Risksiz entegrasyon ürünü otomasyon tarafından onaylandı ve yayına alındı."
+        : status === "draft"
+          ? "Ürün taslak olarak admin/operasyon kontrolüne alındı."
+          : "Ürün aktif import edildi.",
+      item.barcode ? `Barkod: ${item.barcode}.` : "",
+      item.generated_barcode ? "Barkod dış platformdan gelmedi; AllonaHub iç barkodu üretildi." : "",
+      item.product_code ? `Ürün kodu: ${item.product_code}.` : "",
+      item.variant_color ? `Varyant renk: ${item.variant_color}.` : "",
+      item.variant_size ? `Varyant beden/ölçü: ${item.variant_size}.` : "",
+      ...compliance.errors,
+      ...compliance.warnings
+    ].filter(Boolean).join(" ").slice(0, 1200),
+    sku: integrationProductSku(integration, item),
+    barcode: item.barcode || null,
+    integration_source: integration.provider,
+    integration_external_id: identity
+  };
+  const automation = productReviewAutomation(payload);
+  if (automation.revision_required) {
+    status = "draft";
+    complianceStatus = "needs_review";
+    payload.status = status;
+    payload.compliance_review_status = complianceStatus;
+    payload.compliance_notes = productReviewRevisionReason(
+      { ...payload, review_automation: automation },
+      payload.compliance_notes
+    );
+  }
+  return payload;
+}
+
+async function applyIntegrationProducts({ business, integration, products }) {
+  const result = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
+  const preparedProducts = products.map((item) => {
+    const barcode = integrationProductBarcode(integration, item);
+    const previousBarcode = String(item.barcode || "").trim();
+    if (!barcode) return item;
+    return {
+      ...item,
+      barcode,
+      generated_barcode: !previousBarcode
+    };
+  });
+  const incomingDuplicateKeys = new Map();
+  const externalIds = preparedProducts.map((item) => item.external_product_id).filter(Boolean);
+  const identityIds = preparedProducts.map(integrationProductIdentity).filter(Boolean);
+  const barcodeIds = [...new Set(preparedProducts.map((item) => String(item.barcode || "").trim()).filter(Boolean))];
+  const productPartnerId = business.owner_id || business.id;
+  const { data: existingLinks, error: linkError } = await supabaseAdmin
+    .from("partner_integration_product_links")
+    .select("*")
+    .eq("integration_id", integration.id)
+    .in("external_product_id", externalIds.length ? externalIds : ["__none__"]);
+  if (linkError) throw linkError;
+
+  const linkMap = new Map((existingLinks || []).map((link) => [`${link.external_product_id}:${link.external_variant_id || ""}`, link]));
+  const { data: existingProducts, error: productLookupError } = await supabaseAdmin
+    .from("products")
+    .select("id, integration_external_id")
+    .eq("partner_id", productPartnerId)
+    .eq("integration_source", integration.provider)
+    .in("integration_external_id", identityIds.length ? identityIds : ["__none__"]);
+  if (productLookupError) throw productLookupError;
+
+  const productMap = new Map();
+  for (const product of existingProducts || []) {
+    if (product.integration_external_id && !productMap.has(product.integration_external_id)) {
+      productMap.set(product.integration_external_id, product);
+    }
+  }
+  const barcodeProductMap = new Map();
+  if (barcodeIds.length) {
+    const { data: barcodeProducts, error: barcodeLookupError } = await supabaseAdmin
+      .from("products")
+      .select("id, barcode")
+      .eq("partner_id", productPartnerId)
+      .in("barcode", barcodeIds);
+    if (barcodeLookupError && !looksLikeMissingSchema(barcodeLookupError)) throw barcodeLookupError;
+    for (const product of barcodeProducts || []) {
+      const barcodeKey = String(product.barcode || "").trim();
+      if (barcodeKey && !barcodeProductMap.has(barcodeKey)) barcodeProductMap.set(barcodeKey, product);
+    }
+  }
+
+  for (const item of preparedProducts) {
+    const identity = integrationProductIdentity(item);
+    const duplicateKey = productVariantDuplicateKey({
+      barcode: item.generated_barcode ? "" : item.barcode,
+      product_code: item.product_code,
+      image_signature: item.variant_image_signature,
+      model_root: item.variant_model_root,
+      color: item.variant_color,
+      size: item.variant_size,
+      match_key: item.variant_match_key
+    });
+    const key = `${item.external_product_id}:${item.external_variant_id || ""}`;
+    const hash = sourceHashFor(item.raw);
+    const existing = linkMap.get(key);
+    try {
+      const compliance = item.compliance || integrationProductCompliance(item);
+      if (compliance.errors.length) {
+        result.failed += 1;
+        result.errors.push({ external_product_id: item.external_product_id, message: compliance.errors.join(" ") });
+        continue;
+      }
+      if (duplicateKey && incomingDuplicateKeys.has(duplicateKey) && !existing) {
+        result.skipped += 1;
+        result.warnings.push({
+          external_product_id: item.external_product_id,
+          warnings: ["Aynı barkod/kod veya aynı görsel-renk sinyaliyle gelen tekrar kayıt oluşturulmadı."]
+        });
+        continue;
+      }
+      if (duplicateKey) incomingDuplicateKeys.set(duplicateKey, item);
+
+      if (compliance.warnings.length) {
+        result.warnings.push({ external_product_id: item.external_product_id, warnings: compliance.warnings });
+      }
+      if (existing?.source_hash === hash && existing.product_id) {
+        result.skipped += 1;
+        continue;
+      }
+
+      const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
+
+      const existingProduct = existing?.product_id ? null : (productMap.get(identity) || barcodeProductMap.get(String(item.barcode || "").trim()));
+      let productId = existing?.product_id || existingProduct?.id || null;
+      const productAlreadyExists = Boolean(productId);
+      if (productId) {
+        const { removedFields } = await updatePartnerProductRow(productId, productPayload);
+        if (removedFields.length) {
+          result.warnings.push({
+            external_product_id: item.external_product_id,
+            warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+          });
+        }
+        result.updated += 1;
+      } else {
+        const { product, removedFields } = await insertPartnerProductRow(productPayload);
+        productId = product.id;
+        if (removedFields.length) {
+          result.warnings.push({
+            external_product_id: item.external_product_id,
+            warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+          });
+        }
+        productMap.set(identity, product);
+        if (item.barcode) barcodeProductMap.set(String(item.barcode).trim(), product);
+        result.created += 1;
+      }
+      const lastPayload = item.raw && typeof item.raw === "object" && !Array.isArray(item.raw)
+        ? { ...item.raw }
+        : { value: item.raw };
+      lastPayload.allonahub_variant = {
+        barcode: item.barcode || "",
+        product_code: item.product_code || "",
+        group_key: item.variant_group_key || "",
+        match_key: item.variant_match_key || "",
+        color: item.variant_color || "",
+        size: item.variant_size || "",
+        image_signature: item.variant_image_signature || "",
+        model_root: item.variant_model_root || "",
+        source: item.variant_source || "",
+        integration_identity: identity
+      };
+
+      const linkPayload = {
+        partner_id: business.id,
+        integration_id: integration.id,
+        product_id: productId,
+        external_product_id: item.external_product_id,
+        external_variant_id: item.external_variant_id,
+        external_sku: item.external_sku || null,
+        source_hash: hash,
+        sync_status: productAlreadyExists ? "updated" : "created",
+        compliance_status: productPayload.compliance_review_status,
+        last_validation_warnings: compliance.warnings || [],
+        last_payload: lastPayload,
+        last_synced_at: new Date().toISOString()
+      };
+
+      if (existing) {
+        const { error: updateLinkError } = await supabaseAdmin
+          .from("partner_integration_product_links")
+          .update(linkPayload)
+          .eq("id", existing.id);
+        if (updateLinkError) throw updateLinkError;
+      } else {
+        const { error: insertLinkError } = await supabaseAdmin
+          .from("partner_integration_product_links")
+          .insert(linkPayload);
+        if (insertLinkError) throw insertLinkError;
+      }
+    } catch (error) {
+      result.failed += 1;
+      result.errors.push({ external_product_id: item.external_product_id, message: error.message });
+    }
+  }
+
+  return result;
+}
+
+async function runPartnerIntegrationSync({ business, integration, payload, request }) {
+  if (payload.direction === "inbound" && !integration.import_enabled) {
+    throw httpError("Bu entegrasyonda içe aktarım kapalı.", 409);
+  }
+  if (payload.direction === "outbound" && !config.integrations.outboundEnabled) {
+    throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
+  }
+  if (payload.mode === "apply") {
+    if (!config.integrations.applyEnabled) {
+      throw httpError("Kataloğa aktarım şu anda kapalı.", 409);
+    }
+    if (payload.trigger_source === "cron" && !config.integrations.scheduledApplyEnabled) {
+      throw httpError("Zamanlı kataloğa aktarım şu anda kapalı.", 409);
+    }
+    if (
+      payload.trigger_source !== "cron"
+      && config.integrations.requireApplyConfirmation
+      && payload.confirm_apply !== config.integrations.applyConfirmationText
+    ) {
+      throw httpError("Kataloğa aktarım onayı eşleşmedi.", 409);
+    }
+  }
+  if (payload.mode === "apply" && payload.direction === "outbound") {
+    throw httpError("Outbound publish kuyruğu hazır, canlı gönderim henüz kapalı.", 409);
+  }
+
+  const limit = Math.min(
+    Math.max(Number(payload.limit || (payload.mode === "apply" ? config.integrations.maxApplyRows : config.integrations.maxPreviewRows)), 1),
+    payload.mode === "apply" ? config.integrations.maxApplyRows : config.integrations.maxPreviewRows
+  );
+
+  const { data: run, error: runError } = await supabaseAdmin
+    .from("partner_integration_runs")
+    .insert({
+      partner_id: business.id,
+      integration_id: integration.id,
+      direction: payload.direction,
+      trigger_source: payload.trigger_source,
+      run_mode: payload.mode,
+      status: "running",
+      applied_by: payload.mode === "apply" ? request?.integrationActorId || null : null,
+      approval_note: payload.mode === "apply" ? payload.approval_note || "Kontrollü katalog aktarımı." : null,
+      summary: { provider: integration.provider, limit, policy: partnerIntegrationPolicy() }
+    })
+    .select("*")
+    .single();
+  if (runError) throw runError;
+
+  try {
+    const secrets = await loadIntegrationSecrets(integration.id);
+    requireIntegrationSecrets(integration.provider, secrets);
+    const integrationForFetch = await integrationWithSeededImportCursor({ integration, payload, limit });
+    const fetchResult = normalizedIntegrationFetchResult(await fetchIntegrationRows(integrationForFetch, secrets, limit));
+    const rawRows = fetchResult.rows;
+    const normalizedProducts = rawRows
+      .slice(0, limit)
+      .flatMap((row, index) => integrationProductRows(row, integration, index))
+      .slice(0, limit)
+      .filter(Boolean)
+      .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
+    const uniqueProductResult = uniqueIntegrationProducts(normalizedProducts);
+    const products = uniqueProductResult.products;
+    const invalidProducts = products.filter((product) => product.compliance.errors.length);
+    const validProducts = products.filter((product) => !product.compliance.errors.length);
+
+    let applyResult = { created: 0, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] };
+    if (payload.mode === "apply") {
+      applyResult = await applyIntegrationProducts({ business, integration, products: validProducts });
+    }
+
+    const warningCount = products.reduce((total, product) => total + product.compliance.warnings.length, 0);
+    const validationErrors = invalidProducts.map((product) => ({
+      external_product_id: product.external_product_id,
+      message: product.compliance.errors.join(" ")
+    }));
+    const status = applyResult.failed > 0 || invalidProducts.length > 0 ? "partial" : "success";
+    const summary = {
+      provider: integration.provider,
+      mode: payload.mode,
+      publish_status: productStatusForIntegrationApply(integration),
+      force_draft_on_apply: config.integrations.forceDraftOnApply,
+      checked_count: products.length,
+      raw_count: rawRows.length,
+      duplicate_count: uniqueProductResult.duplicateCount,
+      valid_count: validProducts.length,
+      invalid_count: invalidProducts.length,
+      warning_count: warningCount,
+      auto_approved_count: validProducts.filter((product) => integrationProductAutoApproved(product, product.compliance)).length,
+      page_info: fetchResult.pageInfo || {},
+      next_cursor: fetchResult.nextCursor || null,
+      preview: products.slice(0, 12).map(integrationProductPreview),
+      errors: [...validationErrors, ...applyResult.errors].slice(0, 10),
+      warnings: [
+        ...uniqueProductResult.duplicates.map((item) => ({
+          external_product_id: item.external_product_id,
+          warnings: ["Aynı entegrasyon kimliği bu çekim içinde tekrar geldi; tek kayıt olarak işlendi."]
+        })),
+        ...applyResult.warnings
+      ].slice(0, 10)
+    };
+
+    const { data: updatedRun, error: updateRunError } = await supabaseAdmin
+      .from("partner_integration_runs")
+      .update({
+        status,
+        checked_count: products.length,
+        created_count: applyResult.created,
+        updated_count: applyResult.updated,
+        skipped_count: applyResult.skipped,
+        failed_count: applyResult.failed + invalidProducts.length,
+        warning_count: warningCount,
+        summary,
+        finished_at: new Date().toISOString()
+      })
+      .eq("id", run.id)
+      .select("*")
+      .single();
+    if (updateRunError) throw updateRunError;
+
+    const nextSyncAt = integration.sync_mode === "scheduled"
+      ? new Date(Date.now() + Number(integration.sync_interval_minutes || 1440) * 60 * 1000).toISOString()
+      : integration.next_sync_at;
+    const integrationUpdate = {
+      status: integration.status === "draft" ? "active" : integration.status,
+      last_sync_at: new Date().toISOString(),
+      last_success_at: status === "success" ? new Date().toISOString() : integration.last_success_at,
+      last_error_at: status === "partial" ? new Date().toISOString() : null,
+      last_error_message: status === "partial" ? `${applyResult.failed + invalidProducts.length} ürün işlenemedi veya kontrol bekliyor.` : null,
+      next_sync_at: nextSyncAt
+    };
+    if (payload.mode === "apply" && payload.direction === "inbound" && fetchResult.nextCursor) {
+      integrationUpdate.settings = integrationSettingsWithImportCursor(
+        integration.settings,
+        integration.provider,
+        fetchResult.nextCursor
+      );
+    }
+    await supabaseAdmin
+      .from("partner_integrations")
+      .update(integrationUpdate)
+      .eq("id", integration.id);
+
+    await supabaseAdmin
+      .from("partner_integration_secrets")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("integration_id", integration.id)
+      .eq("status", "active");
+
+    await auditEvent({
+      request,
+      actorId: request?.integrationActorId || null,
+      actorRole: request?.integrationActorRole || "system",
+      action: "partner.integration_sync_completed",
+      resourceType: "partner_integration",
+      resourceId: integration.id,
+      metadata: {
+        provider: integration.provider,
+        mode: payload.mode,
+        status,
+        checked_count: products.length,
+        invalid_count: invalidProducts.length,
+        warning_count: warningCount
+      }
+    });
+
+    return updatedRun;
+  } catch (error) {
+    await supabaseAdmin
+      .from("partner_integration_runs")
+      .update({
+        status: "failed",
+        error_message: error.message || "Entegrasyon senkronu tamamlanamadı.",
+        failed_count: 1,
+        summary: { provider: integration.provider, message: error.message },
+        finished_at: new Date().toISOString()
+      })
+      .eq("id", run.id);
+
+    await supabaseAdmin
+      .from("partner_integrations")
+      .update({
+        status: "needs_attention",
+        last_error_at: new Date().toISOString(),
+        last_error_message: error.message || "Entegrasyon senkronu tamamlanamadı."
+      })
+      .eq("id", integration.id);
+
+    throw error;
+  }
+}
+
+function wooCommerceProductPayload(product, action) {
+  const basePayload = {
+    name: product.name,
+    type: "simple",
+    regular_price: String(Number(product.price || 0).toFixed(2)),
+    description: product.description || "",
+    short_description: product.meta_description || product.description || "",
+    manage_stock: true,
+    stock_quantity: Math.max(0, Math.floor(Number(product.stock || 0))),
+    status: product.status === "active" ? "publish" : "draft",
+    sku: product.sku || undefined
+  };
+  if (product.image_url && /^https?:\/\//i.test(product.image_url)) {
+    basePayload.images = [{ src: product.image_url }];
+  }
+  if (action === "stock_price") {
+    return {
+      regular_price: basePayload.regular_price,
+      manage_stock: true,
+      stock_quantity: basePayload.stock_quantity
+    };
+  }
+  if (action === "archive") return { status: "draft" };
+  return basePayload;
+}
+
+async function dispatchWooCommercePublishJob({ job, integration, product }) {
+  const secrets = await loadIntegrationSecrets(integration.id);
+  requireIntegrationSecrets("woocommerce", secrets);
+  const { data: existingLink, error: linkError } = await supabaseAdmin
+    .from("partner_integration_product_links")
+    .select("*")
+    .eq("integration_id", integration.id)
+    .eq("product_id", product.id)
+    .maybeSingle();
+  if (linkError) throw linkError;
+
+  const baseUrl = String(secrets.API_BASE_URL || "").trim().replace(/\/$/, "");
+  const consumerKey = String(secrets.CONSUMER_KEY || "").trim();
+  const consumerSecret = String(secrets.CONSUMER_SECRET || "").trim();
+  const externalProductId = existingLink?.external_product_id || "";
+  const isUpdate = Boolean(externalProductId) && job.action !== "create";
+  const isDelete = job.action === "delete" && Boolean(externalProductId);
+  const url = new URL(`${baseUrl}/wp-json/wc/v3/products${isUpdate || isDelete ? `/${externalProductId}` : ""}`);
+  if (isDelete) url.searchParams.set("force", "false");
+
+  const response = await fetchWithTimeout(url.href, {
+    method: isDelete ? "DELETE" : isUpdate ? "PUT" : "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")}`
+    },
+    body: isDelete ? undefined : JSON.stringify(wooCommerceProductPayload(product, job.action))
+  });
+  const resultText = await response.text();
+  let resultBody = {};
+  try {
+    resultBody = resultText ? JSON.parse(resultText) : {};
+  } catch {
+    resultBody = { raw: resultText.slice(0, 1000) };
+  }
+  if (!response.ok) throw httpError(`WooCommerce yayın gönderimi başarısız: HTTP ${response.status}`, 502);
+  const resolvedExternalId = String(resultBody.id || externalProductId || "");
+  if (!resolvedExternalId) throw httpError("WooCommerce yanıtında ürün ID dönmedi.", 502);
+
+  const linkPayload = {
+    partner_id: integration.partner_id,
+    integration_id: integration.id,
+    product_id: product.id,
+    external_product_id: resolvedExternalId,
+    external_sku: product.sku || null,
+    source_hash: sourceHashFor(product),
+    sync_status: isDelete ? "archived" : isUpdate ? "updated" : "created",
+    compliance_status: product.compliance_review_status || "pending",
+    last_payload: resultBody || {},
+    last_synced_at: new Date().toISOString()
+  };
+  if (existingLink) {
+    const { error } = await supabaseAdmin.from("partner_integration_product_links").update(linkPayload).eq("id", existingLink.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseAdmin.from("partner_integration_product_links").insert(linkPayload);
+    if (error) throw error;
+  }
+
+  return {
+    provider: "woocommerce",
+    external_product_id: resolvedExternalId,
+    status: resultBody.status || "ok"
+  };
+}
+
+async function dispatchIntegrationPublishJob(job) {
+  const integration = job.integration;
+  const product = job.product;
+  if (!integration) throw httpError("Yayın işi entegrasyon kaydı olmadan çalışamaz.", 409);
+  if (!product) throw httpError("Yayın işi ürün kaydı olmadan çalışamaz.", 409);
+  if (!integration.export_enabled) throw httpError("Bu entegrasyonda dışarı yayın kapalı.", 409);
+  if (integration.provider === "woocommerce") {
+    return dispatchWooCommercePublishJob({ job, integration, product });
+  }
+  throw httpError("Bu connector için canlı outbound gönderici premium connector fazında açılacak.", 409);
+}
+
+async function processIntegrationPublishJobs({ request, limit = 20 }) {
+  if (!config.integrations.outboundEnabled) {
+    return { ok: true, skipped: true, reason: "PARTNER_INTEGRATIONS_OUTBOUND_ENABLED=false", processed: 0, results: [] };
+  }
+  const { data: jobs, error } = await supabaseAdmin
+    .from("partner_integration_publish_jobs")
+    .select("*, integration:partner_integrations(*), product:products(*)")
+    .in("status", ["queued", "failed"])
+    .lte("scheduled_at", new Date().toISOString())
+    .order("priority", { ascending: true })
+    .order("scheduled_at", { ascending: true })
+    .limit(Math.max(1, Math.min(Number(limit || 20), 100)));
+  if (error) {
+    if (looksLikeMissingSchema(error)) {
+      return { ok: true, skipped: true, reason: "partner_integration_publish_jobs_migration_missing", processed: 0, results: [] };
+    }
+    throw error;
+  }
+
+  const results = [];
+  for (const job of jobs || []) {
+    await supabaseAdmin
+      .from("partner_integration_publish_jobs")
+      .update({ status: "processing", processed_at: null, error_message: null })
+      .eq("id", job.id);
+    try {
+      const result = await dispatchIntegrationPublishJob(job);
+      await supabaseAdmin
+        .from("partner_integration_publish_jobs")
+        .update({ status: "success", result, processed_at: new Date().toISOString(), error_message: null })
+        .eq("id", job.id);
+      results.push({ job_id: job.id, status: "success", result });
+    } catch (error) {
+      const status = error.statusCode === 409 ? "skipped" : "failed";
+      await supabaseAdmin
+        .from("partner_integration_publish_jobs")
+        .update({
+          status,
+          result: { message: error.message },
+          error_message: error.message,
+          processed_at: new Date().toISOString()
+        })
+        .eq("id", job.id);
+      results.push({ job_id: job.id, status, message: error.message });
+    }
+  }
+
+  await auditEvent({
+    request,
+    action: "cron.integrations_publish_completed",
+    resourceType: "partner_integration_publish_job",
+    metadata: {
+      processed: results.length,
+      failed: results.filter((item) => item.status === "failed").length,
+      skipped: results.filter((item) => item.status === "skipped").length
+    }
+  });
+
+  return { ok: true, processed: results.length, results };
+}
+
 export function registerRoutes(app) {
   const aliasRoute = (method, paths, handler) => {
     for (const path of paths) {
@@ -3752,6 +9101,33 @@ export function registerRoutes(app) {
     return { ok: true };
   });
 
+  app.get("/v1/currency/rates", async (request, reply) => {
+    const query = currencyRatesQuerySchema.parse(request.query || {});
+    const base = normalizeCurrencyCode(query.base) || normalizeCurrencyCode(config.currency.baseCurrency) || "TRY";
+    const payload = await fetchCurrencyRates(base, request);
+    reply.header("Cache-Control", "public, max-age=900, stale-while-revalidate=43200");
+    return payload;
+  });
+
+  app.get("/v1/media/product-images/*", async (request, reply) => {
+    const path = normalizeProductImagePath(request.params["*"]);
+    const etag = mediaCacheHeaders(reply, path);
+    if (request.headers["if-none-match"] === etag) {
+      return reply.code(304).send();
+    }
+
+    const bucket = config.productMedia.storageBucket || "product-images";
+    const { data, error } = await supabaseAdmin.storage.from(bucket).download(path);
+    if (error || !data) {
+      throw httpError("Urun gorseli bulunamadi.", 404);
+    }
+
+    const bytes = Buffer.from(await data.arrayBuffer());
+    reply.type(data.type || productImageContentType(path));
+    reply.header("Content-Length", String(bytes.byteLength));
+    return reply.send(bytes);
+  });
+
   app.post("/v1/auth/turnstile", async (request) => {
     const payload = parseAuthPayload(authTurnstileSchema, request.body);
     const challenge = await verifyTurnstile(request, payload.action, payload.turnstileToken);
@@ -3766,6 +9142,140 @@ export function registerRoutes(app) {
       evidenceTags: ["auth", "turnstile"]
     });
     return { ok: true, skipped: challenge.skipped };
+  });
+
+  app.post("/v1/partner-company-lookup", async (request) => {
+    const payload = parseAuthPayload(partnerCompanyLookupSchema, request.body);
+    await verifyTurnstile(request, "partner_company_lookup", payload.turnstileToken);
+    const countryCode = normalizeCompanyCountryCode(payload.country, payload.country_code);
+    const normalizedTaxNumber = normalizeTaxNumberForCountry(countryCode, payload.tax_number);
+    const validation = companyLookupValidation(countryCode, normalizedTaxNumber);
+
+    if (!validation.valid_format) {
+      return {
+        ok: true,
+        provider: countryCode === "TR" ? "tr_tax_validation" : EU_VIES_COUNTRIES.has(countryCode) ? "eu_vies" : "local_format_validation",
+        status: "invalid_format",
+        verified: false,
+        company: null,
+        country_code: countryCode,
+        normalized_tax_number: normalizedTaxNumber,
+        validation,
+        message: "Vergi numarası formatı doğrulanamadı."
+      };
+    }
+
+    if (countryCode === "TR") {
+      const result = await lookupTurkeyCompany({ taxNumber: normalizedTaxNumber, request });
+      return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber };
+    }
+    if (EU_VIES_COUNTRIES.has(countryCode)) {
+      const result = await lookupEuVatCompany({ countryCode, taxNumber: normalizedTaxNumber, request });
+      return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber, validation };
+    }
+
+    return {
+      ok: false,
+      provider: "unsupported_country",
+      status: "provider_unavailable",
+      verified: false,
+      company: null,
+      country_code: countryCode,
+      normalized_tax_number: normalizedTaxNumber,
+      validation,
+      message: "Bu ülke için şirket bilgisi otomatik çekme sağlayıcısı henüz bağlı değil."
+    };
+  });
+
+  app.post("/v1/partner-applications", async (request, reply) => {
+    const payload = parseAuthPayload(publicPartnerApplicationSchema, request.body);
+    const companyName = (payload.company_name || payload.partner_name).trim();
+    await verifyTurnstile(request, "partner_application", payload.turnstileToken);
+
+    if (payload.website) {
+      try {
+        const parsedWebsite = new URL(payload.website);
+        if (!["http:", "https:"].includes(parsedWebsite.protocol)) {
+          throw httpError("Web sitesi adresi geçerli değil.", 400);
+        }
+      } catch (error) {
+        if (error.statusCode) throw error;
+        throw httpError("Web sitesi adresi geçerli değil.", 400);
+      }
+    }
+
+    const settings = await supabaseAdmin
+      .from("super_admin_settings")
+      .select("setting_value")
+      .eq("setting_key", "partner_applications_paused")
+      .maybeSingle();
+    const pausedSetting = settings.data?.setting_value;
+    if (!settings.error && (pausedSetting === true || pausedSetting === "true" || pausedSetting?.value === true)) {
+      throw httpError("Yeni partner başvuruları geçici olarak durduruldu.", 423);
+    }
+
+    const email = authEmail(payload.email);
+    const recent = await supabaseAdmin
+      .from("partner_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    if (!recent.error && Number(recent.count || 0) >= 2) {
+      throw httpError("Bu e-posta için bugün çok fazla başvuru alındı.", 429);
+    }
+
+    const warnings = [];
+    const application = await optionalMutation(
+      supabaseAdmin
+        .from("partner_applications")
+        .insert({
+          company_name: companyName,
+          contact_name: payload.contact_name,
+          email,
+          phone: payload.phone,
+          tax_number: payload.tax_number,
+          status: "pending",
+          review_stage: "new",
+          risk_level: "info",
+          metadata: {
+            source: "partner_public_form",
+            tax_office: payload.tax_office,
+            company_type: payload.company_type,
+            website: payload.website,
+            city: payload.city,
+            country: payload.country,
+            category: payload.category,
+            message: payload.message,
+            company_lookup: payload.company_lookup || {},
+            submitted_at: new Date().toISOString()
+          }
+        })
+        .select("id, company_name, contact_name, email, status, review_stage, created_at")
+        .single(),
+      warnings,
+      "partner_applications"
+    );
+
+    await auditEvent({
+      request,
+      action: "partner_application.submitted",
+      resourceType: "partner_application",
+      resourceId: application.id,
+      severity: "info",
+      source: "client",
+      evidenceTags: ["partner", "application", "public_form"],
+      metadata: {
+        company_name: companyName,
+        email_hash: authEmailHash(email),
+        city: payload.city,
+        country: payload.country,
+        category: payload.category,
+        company_lookup_status: payload.company_lookup?.status || null,
+        company_lookup_provider: payload.company_lookup?.provider || null
+      }
+    });
+
+    return reply.code(201).send({ ok: true, application, warnings });
   });
 
   app.post("/v1/auth/login", async (request, reply) => {
@@ -4291,6 +9801,409 @@ export function registerRoutes(app) {
     };
   });
 
+  app.get("/v1/partner/products", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.list"
+    });
+    const query = partnerProductListQuerySchema.parse(request.query || {});
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerIds = partnerProductOwnerIds(business, ctx);
+    const warnings = [];
+
+    const productQueries = [
+      optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .in("partner_id", ownerIds)
+          .order("created_at", { ascending: false })
+          .limit(query.limit),
+        [],
+        warnings,
+        "products"
+      )
+    ];
+    if (business.partner_code) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_code", business.partner_code)
+          .order("created_at", { ascending: false })
+          .limit(query.limit),
+        [],
+        warnings,
+        "products.partner_code"
+      ));
+    }
+    if (business.email) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_email", business.email)
+          .order("created_at", { ascending: false })
+          .limit(query.limit),
+        [],
+        warnings,
+        "products.partner_email"
+      ));
+    }
+
+    const productGroups = await Promise.all(productQueries);
+    const productsById = new Map();
+    for (const row of productGroups.flat()) {
+      if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
+    }
+
+    const reviewProducts = [...productsById.values()]
+      .filter((product) => partnerProductMatchesSearch(product, query.search))
+      .filter((product) => partnerProductMatchesStatus(product, query.status))
+      .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
+      .slice(0, query.limit)
+      .map(attachProductReviewAutomation);
+    const productIds = reviewProducts.map((product) => product.id).filter(Boolean);
+    const products = attachVariantGroups(reviewProducts, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.products_viewed",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: {
+        search: query.search || null,
+        status: query.status || "all",
+        count: products.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      business,
+      products,
+      summary: partnerProductSummary(products),
+      warnings
+    };
+  });
+
+  app.patch("/v1/partner/products/bulk", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.bulk_update"
+    });
+    const body = partnerProductBulkUpdateSchema.parse(request.body || {});
+    const productIds = [...new Set(body.product_ids.map(String))];
+    if (productIds.length > PARTNER_PRODUCT_BULK_LIMIT) {
+      throw httpError(`Tek seferde en fazla ${PARTNER_PRODUCT_BULK_LIMIT} ürün onaya gönderilebilir.`, 400);
+    }
+    const business = await ensurePartnerBusiness(ctx, request);
+    const products = [];
+    const failed = [];
+    const warnings = [];
+    let instantUpdateCount = 0;
+    let reviewSubmitCount = 0;
+
+    for (const productId of productIds) {
+      try {
+        const before = await loadPartnerOwnedProduct(productId, business, ctx);
+        if (body.updates && Object.prototype.hasOwnProperty.call(body.updates, "barcode")) {
+          await ensureUniquePartnerBarcode({ productId, partnerId: before.partner_id, barcode: body.updates.barcode });
+        }
+        const built = body.updates
+          ? buildPartnerProductUpdatePayload(productId, before, body.updates)
+          : {
+              updatePayload: {
+                status: "draft",
+                compliance_review_status: "pending",
+                compliance_notes: "Partner ürünü admin onayına gönderdi.",
+                updated_at: new Date().toISOString()
+              },
+              changedFields: [],
+              onlyInstantUpdate: false
+            };
+        if (body.submit_for_review) {
+          built.updatePayload.status = "draft";
+          built.updatePayload.compliance_review_status = "pending";
+          built.updatePayload.compliance_notes = "Partner ürünü admin onayına gönderdi.";
+          built.updatePayload.updated_at = new Date().toISOString();
+          built.onlyInstantUpdate = false;
+        }
+        const {
+          updatePayload,
+          changedFields,
+          onlyInstantUpdate
+        } = built;
+        const { product, removedFields } = await updatePartnerProductRow(productId, updatePayload);
+        products.push(product);
+        if (onlyInstantUpdate) instantUpdateCount += 1;
+        else reviewSubmitCount += 1;
+        removedFields.forEach((field) => warnings.push(`products.${field}: üretim şemasında yok; bu alan atlandı.`));
+        await auditEvent({
+          request,
+          actorId: ctx.user.id,
+          actorRole: ctx.profile.role,
+          action: onlyInstantUpdate ? "partner.product_stock_price_updated" : "partner.product_revision_submitted",
+          resourceType: "product",
+          resourceId: productId,
+          metadata: {
+            mode: "bulk",
+            changed_fields: changedFields,
+            previous_status: before.status || null,
+            previous_compliance_review_status: before.compliance_review_status || null,
+            next_status: product.status || "draft",
+            next_compliance_review_status: product.compliance_review_status || "pending"
+          }
+        });
+      } catch (error) {
+        failed.push({
+          product_id: productId,
+          message: error?.statusCode === 403
+            ? "Bu ürünü düzenleme yetkiniz yok."
+            : error?.message || "Ürün güncellenemedi."
+        });
+      }
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.products_bulk_update_requested",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: {
+        requested_count: productIds.length,
+        updated_count: products.length,
+        failed_count: failed.length,
+        instant_update_count: instantUpdateCount,
+        review_submit_count: reviewSubmitCount
+      }
+    });
+
+    return {
+      ok: true,
+      products,
+      failed,
+      warnings: [...new Set(warnings)],
+      limit: PARTNER_PRODUCT_BULK_LIMIT,
+      message: failed.length
+        ? `${products.length} ürün güncellendi, ${failed.length} ürün tamamlanamadı.`
+        : reviewSubmitCount
+          ? `${reviewSubmitCount} ürün admin onayına gönderildi.`
+          : `${instantUpdateCount} ürün fiyat/stok güncellemesiyle kaydedildi.`
+    };
+  });
+
+  app.get("/v1/partner/products/:productId", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.detail"
+    });
+    const productId = uuidSchema.parse(request.params.productId);
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownedProduct = await loadPartnerOwnedProduct(productId, business, ctx);
+    const ownerIds = partnerProductOwnerIds(business, ctx);
+    const warnings = [];
+
+    const productQueries = [
+      optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .in("partner_id", ownerIds)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products"
+      )
+    ];
+    if (business.partner_code) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_code", business.partner_code)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products.partner_code"
+      ));
+    }
+    if (business.email) {
+      productQueries.push(optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_email", business.email)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        [],
+        warnings,
+        "products.partner_email"
+      ));
+    }
+
+    const productGroups = await Promise.all(productQueries);
+    const productsById = new Map();
+    for (const row of [ownedProduct, ...productGroups.flat()]) {
+      if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
+    }
+    const candidateProducts = [...productsById.values()].map(attachProductReviewAutomation);
+    const productIds = candidateProducts.map((product) => product.id).filter(Boolean);
+    const products = attachVariantGroups(candidateProducts, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
+    const product = products.find((item) => String(item.id) === String(productId)) || attachProductReviewAutomation(ownedProduct);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.product_detail_viewed",
+      resourceType: "product",
+      resourceId: productId,
+      metadata: {
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      business,
+      product,
+      warnings
+    };
+  });
+
+  app.patch("/v1/partner/products/:productId", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.update"
+    });
+    const productId = uuidSchema.parse(request.params.productId);
+    const body = partnerProductUpdateSchema.parse(request.body || {});
+    const business = await ensurePartnerBusiness(ctx, request);
+    const before = await loadPartnerOwnedProduct(productId, business, ctx);
+    if (Object.prototype.hasOwnProperty.call(body, "barcode")) {
+      await ensureUniquePartnerBarcode({ productId, partnerId: before.partner_id, barcode: body.barcode });
+    }
+
+    const {
+      updatePayload,
+      changedFields,
+      onlyInstantUpdate
+    } = buildPartnerProductUpdatePayload(productId, before, body);
+
+    const { product, appliedFields, removedFields } = await updatePartnerProductRow(productId, updatePayload);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: onlyInstantUpdate ? "partner.product_stock_price_updated" : "partner.product_revision_submitted",
+      resourceType: "product",
+      resourceId: productId,
+      metadata: {
+        changed_fields: changedFields,
+        applied_fields: appliedFields,
+        ignored_missing_fields: removedFields,
+        previous_status: before.status || null,
+        previous_compliance_review_status: before.compliance_review_status || null,
+        next_status: product.status || "draft",
+        next_compliance_review_status: product.compliance_review_status || "pending"
+      }
+    });
+
+    return {
+      ok: true,
+      product,
+      message: onlyInstantUpdate
+        ? "Fiyat/stok güncellendi."
+        : "Ürün revizyonu admin onayına gönderildi.",
+      warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+    };
+  });
+
+  app.post("/v1/partner/products/:productId/publish", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.publish"
+    });
+    const productId = uuidSchema.parse(request.params.productId);
+    const business = await ensurePartnerBusiness(ctx, request);
+    const before = await loadPartnerOwnedProduct(productId, business, ctx);
+    const reviewStatus = normalizedReviewValue(before.compliance_review_status || before.review_status || before.approval_status);
+    if (reviewStatus !== "approved") {
+      throw httpError("Bu ürün yayına alınmadan önce admin onayı bekliyor.", 409);
+    }
+
+    const { product, removedFields } = await updatePartnerProductRow(productId, {
+      status: "active",
+      compliance_notes: "Partner onaylı ürünü yayına aldı.",
+      updated_at: new Date().toISOString()
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.product_published",
+      resourceType: "product",
+      resourceId: productId,
+      metadata: {
+        previous_status: before.status || null,
+        compliance_review_status: before.compliance_review_status || null
+      }
+    });
+
+    return {
+      ok: true,
+      product,
+      message: "Ürün yayına alındı.",
+      warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+    };
+  });
+
+  app.delete("/v1/partner/products/:productId", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.products.archive"
+    });
+    const productId = uuidSchema.parse(request.params.productId);
+    const business = await ensurePartnerBusiness(ctx, request);
+    const before = await loadPartnerOwnedProduct(productId, business, ctx);
+    const { product, removedFields } = await updatePartnerProductRow(productId, {
+      status: "archived",
+      compliance_review_status: "rejected",
+      compliance_notes: "Partner ürünü panelden arşivledi.",
+      updated_at: new Date().toISOString()
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.product_archived",
+      resourceType: "product",
+      resourceId: productId,
+      metadata: {
+        previous_status: before.status || null,
+        previous_compliance_review_status: before.compliance_review_status || null
+      }
+    });
+
+    return {
+      ok: true,
+      product,
+      message: "Ürün arşivlendi ve yayından kaldırıldı.",
+      warnings: removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`)
+    };
+  });
+
   app.get("/v1/partner/os", async (request) => {
     const ctx = await requireAuth(request, {
       roles: ["partner", "admin", "super_admin"],
@@ -4299,85 +10212,187 @@ export function registerRoutes(app) {
     const business = await ensurePartnerBusiness(ctx, request);
     const ownerId = business.owner_id || ctx.user.id;
     const isAdminUser = isAdmin(ctx.profile);
+    const partnerWarnings = [];
 
     const [
-      productsResult,
-      ordersResult,
-      locationsResult,
-      devicesResult,
-      qrCodesResult,
-      intentsResult,
-      transactionsResult,
-      payoutsResult,
-      ticketsResult
+      products,
+      orderRows,
+      locations,
+      devices,
+      qrCodes,
+      paymentIntents,
+      transactions,
+      payouts,
+      tickets
     ] = await Promise.all([
-      supabaseAdmin
-        .from("products")
-        .select("*")
-        .eq("partner_id", ownerId)
-        .order("created_at", { ascending: false })
-        .limit(200),
-      supabaseAdmin
-        .from("orders")
-        .select("*, order_items(*, product:products(id, name, category, partner_id))")
-        .order("created_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_locations")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("is_default", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_devices")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_qr_codes")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("partner_payment_intents")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_transactions")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("occurred_at", { ascending: false })
-        .limit(120),
-      supabaseAdmin
-        .from("partner_payouts")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("period_end", { ascending: false })
-        .limit(24),
-      supabaseAdmin
-        .from("partner_support_tickets")
-        .select("*")
-        .eq("partner_id", business.id)
-        .order("created_at", { ascending: false })
-        .limit(80)
+      optionalQuery(
+        supabaseAdmin
+          .from("products")
+          .select("*")
+          .eq("partner_id", ownerId)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        [],
+        partnerWarnings,
+        "products"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("orders")
+          .select("*, order_items(*, product:products(id, name, category, partner_id))")
+          .order("created_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "orders"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_locations")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("is_default", { ascending: false })
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_locations"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_devices")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_devices"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_qr_codes")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false }),
+        [],
+        partnerWarnings,
+        "partner_qr_codes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_payment_intents")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "partner_payment_intents"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_transactions")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("occurred_at", { ascending: false })
+          .limit(120),
+        [],
+        partnerWarnings,
+        "partner_transactions"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_payouts")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("period_end", { ascending: false })
+          .limit(24),
+        [],
+        partnerWarnings,
+        "partner_payouts"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_support_tickets")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        partnerWarnings,
+        "partner_support_tickets"
+      )
     ]);
 
-    const results = [productsResult, ordersResult, locationsResult, devicesResult, qrCodesResult, intentsResult, transactionsResult, payoutsResult, ticketsResult];
-    const firstError = results.find((result) => result.error)?.error;
-    if (firstError) throw firstError;
-
-    const orders = summarizePartnerOrders(ordersResult.data || [], ownerId, isAdminUser);
+    const orders = summarizePartnerOrders(orderRows || [], ownerId, isAdminUser, ctx.user.id);
+    const refundWarnings = [];
+    const refundCancellations = await loadPartnerRefundCancellations({
+      orders,
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      warnings: refundWarnings,
+      limit: 120
+    });
     const metrics = partnerMetrics({
       business,
-      products: productsResult.data || [],
+      products: products || [],
       orders,
-      paymentIntents: intentsResult.data || [],
-      transactions: transactionsResult.data || [],
-      payouts: payoutsResult.data || [],
-      tickets: ticketsResult.data || []
+      paymentIntents: paymentIntents || [],
+      transactions: transactions || [],
+      payouts: payouts || [],
+      tickets: tickets || [],
+      refundCancellations: refundCancellations.items
     });
+    const integrationWarnings = [];
+    const [integrationConnectors, integrations, integrationRuns, integrationSecretRows] = await Promise.all([
+      partnerIntegrationConnectors(integrationWarnings),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integrations")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("updated_at", { ascending: false }),
+        [],
+        integrationWarnings,
+        "partner_integrations"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_runs")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("started_at", { ascending: false })
+          .limit(30),
+        [],
+        integrationWarnings,
+        "partner_integration_runs"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_secrets")
+          .select("integration_id, secret_key, status, last_verified_at, updated_at")
+          .eq("partner_id", business.id)
+          .order("secret_key", { ascending: true }),
+        [],
+        integrationWarnings,
+        "partner_integration_secrets"
+      )
+    ]);
+
+    const secretStatusesByIntegration = (integrationSecretRows || []).reduce((map, row) => {
+      if (!map[row.integration_id]) map[row.integration_id] = [];
+      map[row.integration_id].push({
+        secret_key: row.secret_key,
+        status: row.status,
+        last_verified_at: row.last_verified_at,
+        updated_at: row.updated_at
+      });
+      return map;
+    }, {});
+    const integrationRows = (integrations || []).map((integration) => ({
+      ...integration,
+      secrets: secretStatusesByIntegration[integration.id] || []
+    }));
 
     await auditEvent({
       request,
@@ -4386,23 +10401,713 @@ export function registerRoutes(app) {
       action: "partner.os_viewed",
       resourceType: "partner_business",
       resourceId: business.id,
-      metadata: { product_count: metrics.product_count, order_count: metrics.order_count }
+      metadata: {
+        product_count: metrics.product_count,
+        order_count: metrics.order_count,
+        refund_cancellation_count: refundCancellations.summary.total,
+        integration_count: integrationRows.length,
+        warning_count: partnerWarnings.length + refundWarnings.length + integrationWarnings.length
+      }
     });
 
     return {
       ok: true,
       business,
-      products: productsResult.data || [],
+      products: products || [],
       orders,
-      locations: locationsResult.data || [],
-      devices: devicesResult.data || [],
-      qrCodes: qrCodesResult.data || [],
-      paymentIntents: intentsResult.data || [],
-      transactions: transactionsResult.data || [],
-      payouts: payoutsResult.data || [],
-      tickets: ticketsResult.data || [],
+      locations: locations || [],
+      devices: devices || [],
+      qrCodes: qrCodes || [],
+      paymentIntents: paymentIntents || [],
+      transactions: transactions || [],
+      payouts: payouts || [],
+      tickets: tickets || [],
+      partnerWarnings,
+      refundCancellations: refundCancellations.items,
+      refundCancellationSummary: refundCancellations.summary,
+      refundWarnings,
+      integrations: integrationRows,
+      integrationConnectors,
+      integrationRuns: integrationRuns || [],
+      integrationWarnings,
+      integrationPolicy: { ...partnerIntegrationPolicy(), partner_plan_tier: partnerIntegrationPlanTier(business) },
       metrics,
-      recommendations: partnerRecommendations(metrics, devicesResult.data || [])
+      recommendations: partnerRecommendations(metrics, devices || [])
+    };
+  });
+
+  app.get("/v1/partner/refund-cancellations", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.refund_cancellations.list"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const isAdminUser = isAdmin(ctx.profile);
+    const query = z.object({
+      limit: z.coerce.number().int().min(1).max(120).optional().default(80)
+    }).parse(request.query || {});
+    const warnings = [];
+    const orderRows = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .order("created_at", { ascending: false })
+        .limit(200),
+      [],
+      warnings,
+      "orders"
+    );
+    const refundCancellations = await loadPartnerRefundCancellations({
+      orders: orderRows,
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      limit: query.limit,
+      warnings
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.refund_cancellations_viewed",
+      resourceType: "partner_business",
+      resourceId: business.id,
+      metadata: {
+        total: refundCancellations.summary.total,
+        pending_partner: refundCancellations.summary.pending_partner,
+        disputes: refundCancellations.summary.disputes
+      }
+    });
+
+    return {
+      ok: true,
+      items: refundCancellations.items,
+      summary: refundCancellations.summary,
+      provider_status: paymentProviderDispatchStatus(),
+      warnings
+    };
+  });
+
+  app.post("/v1/partner/refund-cancellations/:orderId/decision", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.refund_cancellation.decision"
+    });
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = partnerRefundCancellationDecisionSchema.parse(request.body || {});
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const isAdminUser = isAdmin(ctx.profile);
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+    if (!partnerCanAccessOrder(before, ownerId, isAdminUser, ctx.user.id)) {
+      throw httpError("Bu sipariş için iade/iptal kararı verme yetkiniz yok.", 403);
+    }
+    const currentRefundState = await loadPartnerRefundCancellations({
+      orders: [before],
+      ownerId,
+      userId: ctx.user.id,
+      isAdminUser,
+      limit: 5,
+      warnings
+    });
+    const currentRefundItem = currentRefundState.items.find((item) => String(item.id) === String(orderId));
+    if (!isAdminUser && !currentRefundItem?.decision_required) {
+      throw httpError("Bu sipariş için partner kararı bekleyen iade/iptal talebi bulunmuyor.", 409);
+    }
+    if (!isAdminUser && currentRefundItem?.type === "cancellation" && body.action === "approve_refund") {
+      throw httpError("İptal talebi iade olarak onaylanamaz.", 409);
+    }
+    if (!isAdminUser && currentRefundItem?.type === "refund" && body.action === "approve_cancellation") {
+      throw httpError("İade talebi iptal olarak onaylanamaz.", 409);
+    }
+
+    let updated = before;
+    let providerDispatch = null;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = {
+        ...before,
+        ...(await updateRefundCancellationOrder(orderId, updatePayload, warnings)),
+        order_items: before.order_items || []
+      };
+      const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+      providerDispatch = await notifyPaymentProviderRefundCancellation({
+        action: body.action,
+        order: updated,
+        context: providerContext,
+        reason: body.reason,
+        note: body.note,
+        actorId: ctx.user.id,
+        ip: clientIp(request)
+      });
+    }
+
+    const actionLabels = {
+      approve_cancellation: "Partner iptal talebini kabul etti",
+      approve_refund: "Partner iade talebini kabul etti",
+      reject_request: "Partner talebi reddetti ve admin ihtilaf incelemesine gönderdi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : "",
+      body.action === "reject_request" ? "Ödeme kuruluşu bildirimi yapılmadı; admin hakem kararı bekleniyor." : ""
+    ].filter(Boolean).join("\n").slice(0, 1550);
+    const flagStatus = body.action === "reject_request" ? "in_review" : "resolved";
+    const flagSeverity = body.action === "approve_refund" || body.action === "reject_request" ? "critical" : "warning";
+    const metadata = {
+      partner_action: body.action,
+      partner_decision: body.action,
+      partner_business_id: business.id,
+      partner_owner_id: ownerId,
+      order_status_before: before.order_status || before.status || null,
+      payment_status_before: before.payment_status || null,
+      order_status_after: updated.order_status || updated.status || null,
+      payment_status_after: updated.payment_status || null,
+      provider_dispatch: providerDispatch,
+      dispute_status: body.action === "reject_request" ? "admin_review_required" : null,
+      payment_provider_notified: Boolean(providerDispatch?.ok)
+    };
+
+    const notePromise = optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_notes")
+        .insert({
+          author_id: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          note_type: body.action === "reject_request" ? "support" : "review",
+          visibility: "admin",
+          body: noteBody
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_notes"
+    );
+    const flagPromise = optionalMutation(
+      supabaseAdmin
+        .from("admin_operation_flags")
+        .insert({
+          flagged_by: ctx.user.id,
+          target_type: "order",
+          target_id: orderId,
+          flag_type: "risky_order",
+          severity: flagSeverity,
+          status: flagStatus,
+          reason: noteBody.slice(0, 1150),
+          metadata
+        })
+        .select("*")
+        .single(),
+      warnings,
+      "admin_operation_flags"
+    );
+    const supportTicketPromise = body.action === "reject_request"
+      ? optionalMutation(
+          supabaseAdmin
+            .from("support_tickets")
+            .insert({
+              user_id: ctx.user.id,
+              requester_type: "partner",
+              category: "refund_cancellation",
+              priority: "urgent",
+              title: `İade/iptal ihtilafı - ${before.order_no || before.order_number || orderId}`.slice(0, 176),
+              message: [
+                "Partner iade/iptal talebini reddetti ve admin hakem incelemesine gönderdi.",
+                `Sipariş: ${before.order_no || before.order_number || orderId}`,
+                `Partner: ${business.display_name || business.legal_name || business.id}`,
+                `Karar nedeni: ${body.reason}`,
+                body.note ? `Partner açıklaması: ${body.note}` : ""
+              ].filter(Boolean).join("\n").slice(0, 2900),
+              status: "open",
+              metadata: {
+                source: "partner_panel",
+                order_id: orderId,
+                order_no: before.order_no || before.order_number || orderId,
+                request_type: currentRefundItem?.type || refundCancellationSignalType(before),
+                partner_business_id: business.id,
+                partner_decision: "reject_request",
+                dispute_status: "admin_review_required",
+                payment_provider_notified: false
+              }
+            })
+            .select("id, status, created_at")
+            .single(),
+          warnings,
+          "support_tickets"
+        )
+      : Promise.resolve(null);
+    const [note, flag, supportTicket] = await Promise.all([notePromise, flagPromise, supportTicketPromise]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `partner.refund_cancellation_${body.action}`,
+      resourceType: "order",
+      resourceId: orderId,
+      severity: flagSeverity,
+      purpose: "partner_refund_cancellation_control",
+      evidenceTags: ["partner_os", "refund_cancellation", body.action],
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        partner_business_id: business.id,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null,
+        support_ticket_id: supportTicket?.id || null,
+        provider_dispatch: providerDispatch
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, {
+        type: body.action === "approve_cancellation" ? "cancellation" : (body.action === "approve_refund" ? "refund" : (currentRefundItem?.type || refundCancellationSignalType(before))),
+        notes: [note].filter(Boolean),
+        flags: [flag].filter(Boolean),
+        provider_dispatch: providerDispatch,
+        request_status: body.action === "reject_request" ? "dispute_admin_review" : "approved",
+        decision_required: false,
+        partner_decision: body.action,
+        order_items: partnerOrderItems(before, ownerId, isAdminUser, ctx.user.id)
+      }),
+      note,
+      flag,
+      support_ticket: supportTicket,
+      provider_dispatch: providerDispatch,
+      warnings
+    };
+  });
+
+  app.get("/v1/partner/integrations", async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integrations.list"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const warnings = [];
+    const connectors = await partnerIntegrationConnectors(warnings);
+    const [integrations, runs, secretRows] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integrations")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("updated_at", { ascending: false }),
+        [],
+        warnings,
+        "partner_integrations"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_runs")
+          .select("*")
+          .eq("partner_id", business.id)
+          .order("started_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "partner_integration_runs"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_secrets")
+          .select("integration_id, secret_key, status, last_verified_at, updated_at")
+          .eq("partner_id", business.id)
+          .order("secret_key", { ascending: true }),
+        [],
+        warnings,
+        "partner_integration_secrets"
+      )
+    ]);
+
+    const secretStatusesByIntegration = (secretRows || []).reduce((map, row) => {
+      if (!map[row.integration_id]) map[row.integration_id] = [];
+      map[row.integration_id].push({
+        secret_key: row.secret_key,
+        status: row.status,
+        last_verified_at: row.last_verified_at,
+        updated_at: row.updated_at
+      });
+      return map;
+    }, {});
+
+    return {
+      ok: true,
+      connectors,
+      integrations: (integrations || []).map((integration) => ({
+        ...integration,
+        secrets: secretStatusesByIntegration[integration.id] || []
+      })),
+      runs,
+      warnings,
+      policy: { ...partnerIntegrationPolicy(), partner_plan_tier: partnerIntegrationPlanTier(business) }
+    };
+  });
+
+  app.post("/v1/partner/integrations", async (request, reply) => {
+    if (!config.integrations.enabled) throw httpError("Partner entegrasyonları şu anda kapalı.", 503);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integration.upsert"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const payload = partnerIntegrationSchema.parse(request.body || {});
+    const connectors = await partnerIntegrationConnectors([]);
+    const connector = connectorForProvider(connectors, payload.provider);
+    if (!connector) throw httpError("Bu connector tanımlı değil.", 400);
+    const wantsFullIntegration = Boolean(payload.export_enabled || payload.direction === "outbound" || payload.direction === "bidirectional");
+    if (!partnerCanUseConnector(connector, business, { fullIntegration: wantsFullIntegration })) {
+      throw httpError(wantsFullIntegration
+        ? "Tam entegrasyon premium üyelik ve dış platform yayın izni gerektirir."
+        : "Bu connector ile ücretsiz ürün çekme şu anda aktif değil.", 409);
+    }
+    if (wantsFullIntegration && !config.integrations.outboundEnabled) {
+      throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
+    }
+
+    const nextSyncAt = payload.sync_mode === "scheduled"
+      ? new Date(Date.now() + Number(payload.sync_interval_minutes || 1440) * 60 * 1000).toISOString()
+      : null;
+    const planTier = !wantsFullIntegration ? "free" : connector.availability === "enterprise" ? "enterprise" : "premium";
+    const partnerTier = partnerIntegrationPlanTier(business);
+    const row = {
+      partner_id: business.id,
+      provider: payload.provider,
+      display_name: payload.display_name,
+      connection_mode: payload.connection_mode || connector.connector_mode || "generic_feed",
+      direction: wantsFullIntegration ? "bidirectional" : "inbound",
+      status: payload.status,
+      plan_tier: planTier,
+      sync_mode: payload.sync_mode,
+      sync_interval_minutes: payload.sync_interval_minutes,
+      next_sync_at: nextSyncAt,
+      import_enabled: payload.import_enabled,
+      export_enabled: wantsFullIntegration,
+      default_publish_status: payload.default_publish_status,
+      settings: {
+        ...(connector.default_settings || {}),
+        ...(payload.settings || {}),
+        onboarding_offer: "free_partner_acquisition",
+        upgrade_path: connector.premium_ready ? "premium_connector_pack" : "starter",
+        partner_plan_tier: partnerTier
+      },
+      updated_by: ctx.user.id
+    };
+
+    let integration;
+    if (payload.id) {
+      const existing = await loadPartnerIntegration(business, payload.id);
+      const { data, error } = await supabaseAdmin
+        .from("partner_integrations")
+        .update(row)
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      integration = data;
+    } else {
+      const { data, error } = await supabaseAdmin
+        .from("partner_integrations")
+        .insert({ ...row, created_by: ctx.user.id })
+        .select("*")
+        .single();
+      if (error) throw error;
+      integration = data;
+    }
+
+    const secretStatuses = [];
+    for (const [rawKey, rawValue] of Object.entries(payload.secrets || {})) {
+      const secretValue = String(rawValue || "").trim();
+      if (!secretValue) continue;
+      const secretKey = normalizeIntegrationSecretKey(rawKey);
+      if (!secretKey) continue;
+      const definition = integrationSecretDefinitions(payload.provider).find((item) => item.key === secretKey) || { label: secretKey };
+      const encryptedValue = encryptSecretValue(secretValue, integrationSecretContext(integration.id, secretKey));
+      const { data: secret, error: secretError } = await supabaseAdmin
+        .from("partner_integration_secrets")
+        .upsert({
+          partner_id: business.id,
+          integration_id: integration.id,
+          secret_key: secretKey,
+          secret_label: definition.label || secretKey,
+          encrypted_value: encryptedValue,
+          status: "active",
+          updated_by: ctx.user.id
+        }, { onConflict: "integration_id,secret_key" })
+        .select("integration_id, secret_key, status, last_verified_at, updated_at")
+        .single();
+      if (secretError) throw secretError;
+      secretStatuses.push(secret);
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: payload.id ? "partner.integration_updated" : "partner.integration_created",
+      resourceType: "partner_integration",
+      resourceId: integration.id,
+      metadata: {
+        provider: integration.provider,
+        sync_mode: integration.sync_mode,
+        import_enabled: integration.import_enabled,
+        export_enabled: integration.export_enabled,
+        secret_keys: Object.keys(payload.secrets || {}).map(normalizeIntegrationSecretKey)
+      }
+    });
+
+    return reply.code(payload.id ? 200 : 201).send({
+      ok: true,
+      integration: { ...integration, secrets: secretStatuses }
+    });
+  });
+
+  app.post("/v1/partner/integrations/:integrationId/test", async (request) => {
+    if (!config.integrations.enabled) throw httpError("Partner entegrasyonları şu anda kapalı.", 503);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integration.test"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const integrationId = uuidSchema.parse(request.params.integrationId);
+    const probeRemote = z.object({ probe_remote: z.coerce.boolean().optional().default(false) }).parse(request.body || {}).probe_remote;
+    const integration = await loadPartnerIntegration(business, integrationId);
+    const secrets = await loadIntegrationSecrets(integration.id);
+    requireIntegrationSecrets(integration.provider, secrets);
+    let remoteProbe = config.integrations.remoteFetchEnabled ? "available_during_sync" : "disabled";
+    const now = new Date().toISOString();
+    const keys = Object.keys(secrets);
+
+    try {
+      if (probeRemote && config.integrations.remoteFetchEnabled) {
+        const fetchResult = normalizedIntegrationFetchResult(await fetchIntegrationRows(integration, secrets, config.integrations.maxTestRows));
+        const rows = fetchResult.rows || [];
+        const products = rows.slice(0, config.integrations.maxTestRows)
+          .flatMap((row, index) => integrationProductRows(row, integration, index))
+          .slice(0, config.integrations.maxTestRows)
+          .filter(Boolean)
+          .map((product) => ({ ...product, compliance: integrationProductCompliance(product) }));
+        const invalidCount = products.filter((product) => product.compliance.errors.length).length;
+        const warningCount = products.reduce((total, product) => total + product.compliance.warnings.length, 0);
+        remoteProbe = {
+          status: invalidCount ? "warning" : "success",
+          rows_read: rows.length,
+          valid_count: products.length - invalidCount,
+          invalid_count: invalidCount,
+          warning_count: warningCount,
+          sample: products.map(integrationProductPreview)
+        };
+      }
+    } catch (error) {
+      await supabaseAdmin
+        .from("partner_integrations")
+        .update({
+          status: "needs_attention",
+          last_test_at: now,
+          last_test_status: "failed",
+          last_test_message: error.message || "Remote test başarısız.",
+          last_error_at: now,
+          last_error_message: error.message || "Remote test başarısız.",
+          updated_by: ctx.user.id
+        })
+        .eq("id", integration.id);
+      throw error;
+    }
+
+    const secretUpdate = { last_verified_at: now, updated_by: ctx.user.id };
+    if (probeRemote) secretUpdate.last_used_at = now;
+    await supabaseAdmin
+      .from("partner_integration_secrets")
+      .update(secretUpdate)
+      .eq("integration_id", integration.id)
+      .in("secret_key", keys.length ? keys : ["__none__"]);
+    const testStatus = remoteProbe?.status === "warning" ? "warning" : "success";
+    const { data: updated, error } = await supabaseAdmin
+      .from("partner_integrations")
+      .update({
+        status: integration.status === "draft" || integration.status === "needs_attention" ? "active" : integration.status,
+        last_test_at: now,
+        last_test_status: testStatus,
+        last_test_message: probeRemote && remoteProbe?.rows_read !== undefined ? `${remoteProbe.rows_read} kayıt okunabildi.` : "Secret konfigürasyonu doğrulandı.",
+        last_error_at: null,
+        last_error_message: null,
+        updated_by: ctx.user.id
+      })
+      .eq("id", integration.id)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.integration_tested",
+      resourceType: "partner_integration",
+      resourceId: integration.id,
+      metadata: {
+        provider: integration.provider,
+        secret_count: keys.length,
+        probe_status: remoteProbe?.status || "skipped",
+        rows_read: remoteProbe?.rows_read || 0
+      }
+    });
+
+    return {
+      ok: true,
+      integration: updated,
+      result: {
+        status: testStatus,
+        provider: integration.provider,
+        checked_secret_keys: keys,
+        remote_probe: remoteProbe
+      }
+    };
+  });
+
+  app.post("/v1/partner/integrations/:integrationId/sync", async (request) => {
+    if (!config.integrations.enabled) throw httpError("Partner entegrasyonları şu anda kapalı.", 503);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integration.sync"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const integrationId = uuidSchema.parse(request.params.integrationId);
+    const integration = await loadPartnerIntegration(business, integrationId);
+    const payload = partnerIntegrationSyncSchema.parse(request.body || {});
+    request.integrationActorId = ctx.user.id;
+    request.integrationActorRole = ctx.profile.role;
+    const run = await runPartnerIntegrationSync({ business, integration, payload, request });
+    return { ok: true, run };
+  });
+
+  app.post("/v1/partner/integrations/:integrationId/publish-jobs", async (request, reply) => {
+    if (!config.integrations.enabled) throw httpError("Partner entegrasyonları şu anda kapalı.", 503);
+    if (!config.integrations.outboundEnabled) throw httpError("Dış platformlara yayın şu anda premium açılış bayrağı bekliyor.", 409);
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      action: "partner.integration.publish"
+    });
+    const business = await ensurePartnerBusiness(ctx, request);
+    const ownerId = business.owner_id || ctx.user.id;
+    const integrationId = uuidSchema.parse(request.params.integrationId);
+    const integration = await loadPartnerIntegration(business, integrationId);
+    if (!integration.export_enabled) throw httpError("Bu entegrasyonda dış platformlara yayın kapalı.", 409);
+    const payload = partnerIntegrationPublishJobSchema.parse(request.body || {});
+    const { data: products, error: productError } = await supabaseAdmin
+      .from("products")
+      .select("id, name, status, partner_id")
+      .in("id", payload.product_ids)
+      .eq("partner_id", ownerId);
+    if (productError) throw productError;
+    if ((products || []).length !== payload.product_ids.length) {
+      throw httpError("Bazı ürünler bulunamadı veya bu partner hesabına ait değil.", 404);
+    }
+
+    const rows = payload.product_ids.map((productId) => ({
+      partner_id: business.id,
+      integration_id: integration.id,
+      product_id: productId,
+      action: payload.action,
+      priority: payload.priority,
+      payload: { source: "partner_panel", requested_by: ctx.user.id },
+      scheduled_at: payload.scheduled_at || new Date().toISOString(),
+      created_by: ctx.user.id
+    }));
+    const { data: jobs, error: jobError } = await supabaseAdmin
+      .from("partner_integration_publish_jobs")
+      .insert(rows)
+      .select("*");
+    if (jobError) throw jobError;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "partner.integration_publish_jobs_created",
+      resourceType: "partner_integration",
+      resourceId: integration.id,
+      metadata: { provider: integration.provider, action: payload.action, product_count: rows.length }
+    });
+
+    return reply.code(201).send({ ok: true, jobs });
+  });
+
+  opsGet("/integrations", async (request) => {
+    await requireAuth(request, {
+      roles: ["admin", "super_admin"],
+      action: "ops.integrations.list",
+      mfa: true
+    });
+    const query = z.object({
+      provider: z.string().trim().max(40).optional().default(""),
+      status: z.string().trim().max(40).optional().default(""),
+      limit: z.coerce.number().int().min(1).max(200).optional().default(80)
+    }).parse(request.query || {});
+    const warnings = [];
+    let integrationQuery = supabaseAdmin
+      .from("partner_integrations")
+      .select("*, partner:partner_businesses(id, owner_id, partner_code, display_name, legal_name, status, verification_status, level, metadata)")
+      .order("updated_at", { ascending: false })
+      .limit(query.limit);
+    if (query.provider) integrationQuery = integrationQuery.eq("provider", query.provider);
+    if (query.status) integrationQuery = integrationQuery.eq("status", query.status);
+
+    const [integrations, runs, publishJobs] = await Promise.all([
+      optionalQuery(integrationQuery, [], warnings, "partner_integrations"),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_runs")
+          .select("*, integration:partner_integrations(provider, display_name)")
+          .order("started_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "partner_integration_runs"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("partner_integration_publish_jobs")
+          .select("*, integration:partner_integrations(provider, display_name), product:products(id, name, status)")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        [],
+        warnings,
+        "partner_integration_publish_jobs"
+      )
+    ]);
+
+    return {
+      ok: true,
+      policy: partnerIntegrationPolicy(),
+      integrations,
+      runs,
+      publishJobs,
+      warnings
     };
   });
 
@@ -4757,7 +11462,17 @@ export function registerRoutes(app) {
       countAdminRows("partner_businesses_total", "partner_businesses"),
       countAdminRows("orders_total", "orders"),
       countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
-      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "security_alerts_24h",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .in("severity", ["warning", "critical"])
+          .gte("created_at", since24h)
+          .order("created_at", { ascending: false })
+          .limit(500),
+        []
+      ),
       runAdminQuery(
         "orders_daily_revenue",
         supabaseAdmin
@@ -4810,11 +11525,14 @@ export function registerRoutes(app) {
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
     const autoDefense = autoDefenseStatus();
     const releaseApprovals = (releaseRows.data || []).map(releaseApprovalPublic);
-    const recentEvents = recentSecurity.data || [];
+    const recentEvents = (recentSecurity.data || []).map(securityEventPublic);
+    const threatEvents24h = (securityAlerts.data || []).filter(isExternalSecurityAuditEvent);
     const moduleMap = moduleOperationMapPublic(moduleRows.data || []);
-    const criticalEvents = recentEvents.filter((event) => event.severity === "critical");
+    const criticalEvents = recentEvents.filter((event) => event.external_threat && event.severity === "critical");
     const unresolvedApprovals = releaseApprovals.filter((item) => ["approved", "failed", "pending"].includes(item.status));
     const inactiveModules = moduleMap.filter((item) => item.is_active !== true || item.is_visible !== true);
+    const automation = await buildOpsAutomationSnapshot({ limit: 60, mode: "super_admin" });
+    warnings.push(...automationSchemaWarningObjects(automation.warnings));
 
     const risks = [
       config.emergencyApiDisabled ? {
@@ -4832,10 +11550,10 @@ export function registerRoutes(app) {
         title: "Ödemeler durduruldu",
         message: "PAYMENTS_DISABLED true; ödeme akışı kapalı."
       } : null,
-      securityAlerts.count > 0 ? {
+      threatEvents24h.length > 0 ? {
         severity: "high",
         title: "Güvenlik uyarısı",
-        message: `${securityAlerts.count} uyarı son 24 saatte audit akışına düştü.`
+        message: `${threatEvents24h.length} dış güvenlik uyarısı son 24 saatte audit akışına düştü.`
       } : null,
       pendingApplications.count > 0 ? {
         severity: "medium",
@@ -4851,6 +11569,16 @@ export function registerRoutes(app) {
         severity: "medium",
         title: "Modül görünürlük uyarısı",
         message: `${inactiveModules.length} ana sayfa modülü pasif veya gizli görünüyor.`
+      } : null,
+      automation.summary.critical > 0 ? {
+        severity: "critical",
+        title: "Otomasyon kritik kuyruğu",
+        message: `${automation.summary.critical} kritik kayıt süper admin veya admin kararı bekliyor.`
+      } : null,
+      automation.summary.super_admin_required > 0 ? {
+        severity: "high",
+        title: "Otomasyon owner kuyruğu",
+        message: `${automation.summary.super_admin_required} kayıt süper admin onayı veya incelemesi istiyor.`
       } : null,
       ...warnings.map((warning) => ({
         severity: "medium",
@@ -4890,10 +11618,13 @@ export function registerRoutes(app) {
         total_orders: orders.count,
         daily_revenue: Number(dailyRevenue.toFixed(2)),
         pending_applications: pendingApplications.count,
-        security_alerts_24h: securityAlerts.count,
+        security_alerts_24h: threatEvents24h.length,
         critical_events_sample: criticalEvents.length,
         release_approvals: releaseApprovals.length,
         homepage_modules: moduleMap.length,
+        automation_action_required: automation.summary.action_required,
+        automation_auto_ready: automation.summary.auto_ready,
+        automation_super_admin_required: automation.summary.super_admin_required,
         future_operations: SUPER_ADMIN_FUTURE_OPERATIONS.length
       },
       system_health: {
@@ -4909,6 +11640,7 @@ export function registerRoutes(app) {
           recent_incident_count: autoDefense.recentIncidents.length
         }
       },
+      automation,
       risks,
       recent_security_events: recentEvents,
       release_approvals: releaseApprovals,
@@ -4926,9 +11658,676 @@ export function registerRoutes(app) {
     };
   });
 
+  superGet("/automation", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.automation.view");
+    const query = automationQuerySchema.parse(request.query || {});
+    const automation = await buildOpsAutomationSnapshot({ limit: query.limit, mode: "super_admin" });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.automation_viewed",
+      source: "admin",
+      resourceType: "automation",
+      severity: automation.summary.critical ? "warning" : "info",
+      purpose: "super_admin_automation",
+      evidenceTags: ["super_admin", "automation"],
+      metadata: {
+        auto_ready: automation.summary.auto_ready,
+        action_required: automation.summary.action_required,
+        super_admin_required: automation.summary.super_admin_required,
+        warning_count: automation.warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      automation,
+      schema_warnings: automationSchemaWarningObjects(automation.warnings)
+    };
+  });
+
+  superPost("/automation/run", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.automation.run");
+    const body = automationRunSchema.parse(request.body || {});
+    const automation = await buildOpsAutomationSnapshot({
+      limit: body.limit,
+      apply: body.apply,
+      actions: body.actions,
+      reason: body.reason,
+      ctx,
+      request,
+      mode: "super_admin"
+    });
+
+    return {
+      ok: true,
+      automation,
+      schema_warnings: automationSchemaWarningObjects(automation.warnings)
+    };
+  });
+
   superGet("/action-health", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.action_health.view");
     return superAdminActionHealth(ctx, request);
+  });
+
+  superGet("/alarm-status", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_status.view");
+    const status = securityAlertStatus();
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_status_viewed",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "info",
+      metadata: {
+        channels: status.channels,
+        min_severity: status.min_severity
+      }
+    });
+    return { ok: true, alarm: status };
+  });
+
+  superPost("/alarm-test", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_test.send");
+    const result = await sendSecurityAlert({
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_test",
+      resourceType: "security_alarm",
+      resourceId: "manual-test",
+      severity: "critical",
+      ipAddress: clientIp(request),
+      source: "admin",
+      purpose: "security_alarm_test",
+      metadata: {
+        owner_source: ctx.superAdminOwner?.source || "unknown",
+        requested_from: "super_admin_panel"
+      }
+    }, { force: true, channel: "manual_test", activateIncident: false });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_test_sent",
+      source: "admin",
+      resourceType: "security_alarm",
+      resourceId: "manual-test",
+      severity: "warning",
+      metadata: {
+        channels: result.channels || {},
+        alert_status: result.status || {}
+      }
+    });
+    return { ok: true, result };
+  });
+
+  superPost("/alarm-acknowledge", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_acknowledge");
+    const body = superAdminAlarmDecisionSchema.parse(request.body || {});
+    const incident = acknowledgeSecurityAlarm({
+      actorId: ctx.user.id,
+      reason: body.reason
+    });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_acknowledged",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "warning",
+      metadata: {
+        reason: body.reason,
+        incident
+      }
+    });
+    return { ok: true, incident };
+  });
+
+  superPost("/alarm-resolve", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_resolve");
+    const body = superAdminAlarmDecisionSchema.parse(request.body || {});
+    const incident = resolveSecurityAlarm({
+      actorId: ctx.user.id,
+      reason: body.reason
+    });
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_resolved",
+      source: "admin",
+      resourceType: "security_alarm",
+      severity: "warning",
+      metadata: {
+        reason: body.reason,
+        incident
+      }
+    });
+    return { ok: true, incident };
+  });
+
+  superPost("/alarm-protection", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.alarm_protection.update");
+    const body = superAdminAlarmProtectionSchema.parse(request.body || {});
+    const protection = updateRuntimeProtection(body.action, ctx.user.id, body.reason);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.alarm_protection_updated",
+      source: "admin",
+      resourceType: "security_alarm_protection",
+      resourceId: body.action,
+      severity: ["clear", "unlock_api", "unlock_payments", "unlock_orders"].includes(body.action) ? "warning" : "critical",
+      metadata: {
+        action: body.action,
+        reason: body.reason,
+        protection
+      }
+    });
+    return { ok: true, protection };
+  });
+
+  superGet("/refund-cancellations", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.list");
+    const queryParams = superAdminRefundCancellationQuerySchema.parse(request.query || {});
+    const warnings = [];
+    const search = cleanSearch(queryParams.search);
+
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, order_number, user_id, customer_name, customer_email, customer_phone, total, grand_total, order_status, status, payment_status, created_at, updated_at")
+      .or("order_status.in.(cancelled,refunded),status.in.(cancelled,refunded),payment_status.eq.refunded")
+      .order("updated_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status === "cancelled") ordersQuery = ordersQuery.in("order_status", ["cancelled"]);
+    if (queryParams.status === "refunded") ordersQuery = ordersQuery.or("order_status.eq.refunded,status.eq.refunded,payment_status.eq.refunded");
+    const filter = textSearchFilter(["order_no", "order_number", "customer_name", "customer_email", "customer_phone"], search);
+    if (filter) ordersQuery = ordersQuery.or(filter);
+
+    let ticketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+      .or(refundCancellationSupportFilter(search))
+      .order("created_at", { ascending: false })
+      .limit(Math.min(queryParams.limit, 40));
+    if (queryParams.status === "pending_signal") ticketQuery = ticketQuery.in("status", ["open", "in_progress"]);
+
+    const [orders, tickets] = await Promise.all([
+      optionalQuery(ordersQuery, [], warnings, "orders"),
+      optionalQuery(ticketQuery, [], warnings, "support_tickets")
+    ]);
+
+    const items = (orders || []).map((order) => refundCancellationPublic(order));
+    const ticketSignals = queryParams.status === "all" || queryParams.status === "pending_signal"
+      ? (tickets || []).map((ticket) => ({
+          id: `ticket:${ticket.id}`,
+          type: "support_signal",
+          ticket_id: ticket.id,
+          order_no: ticket.metadata?.order_no || ticket.metadata?.order_id || "Destek talebi",
+          customer_name: ticket.profile?.full_name || "",
+          customer_email: ticket.profile?.email || "",
+          customer_phone: ticket.profile?.phone || "",
+          total: 0,
+          order_status: "pending_signal",
+          payment_status: "",
+          reason: ticket.message || ticket.title || "",
+          risk_level: ticket.priority === "urgent" ? "critical" : "high",
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          tickets: [ticket],
+          notes: [],
+          flags: [],
+          order_items: []
+        }))
+      : [];
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.refund_cancellations_viewed",
+      source: "admin",
+      resourceType: "refund_cancellation",
+      severity: "info",
+      metadata: {
+        status: queryParams.status,
+        search: search || null,
+        order_count: items.length,
+        support_signal_count: ticketSignals.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items: [...items, ...ticketSignals].slice(0, queryParams.limit),
+      summary: {
+        total: items.length + ticketSignals.length,
+        refunded: items.filter((item) => item.type === "refund").length,
+        cancelled: items.filter((item) => item.type === "cancellation").length,
+        support_signals: ticketSignals.length,
+        action_required: ticketSignals.length + items.filter((item) => item.type === "refund").length
+      },
+      warnings
+    };
+  });
+
+  superGet("/refund-cancellations/:orderId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.detail");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const warnings = [];
+    const order = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    const supportFilters = [
+      order.order_no ? `title.ilike.%${order.order_no}%` : "",
+      order.order_no ? `message.ilike.%${order.order_no}%` : "",
+      order.order_number ? `title.ilike.%${order.order_number}%` : "",
+      order.order_number ? `message.ilike.%${order.order_number}%` : "",
+      order.customer_email ? `title.ilike.%${order.customer_email}%` : "",
+      order.customer_email ? `message.ilike.%${order.customer_email}%` : ""
+    ].filter(Boolean).join(",");
+
+    const [notes, flags, tickets] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, visibility, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(40),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, metadata, created_at, updated_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      supportFilters
+        ? optionalQuery(
+            supabaseAdmin
+              .from("support_tickets")
+              .select("id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+              .or(supportFilters)
+              .order("created_at", { ascending: false })
+              .limit(20),
+            [],
+            warnings,
+            "support_tickets"
+          )
+        : Promise.resolve([])
+    ]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.refund_cancellation_detail_viewed",
+      source: "admin",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: "info",
+      metadata: {
+        note_count: notes.length,
+        flag_count: flags.length,
+        support_signal_count: tickets.length
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(order, {
+        notes,
+        flags,
+        tickets,
+        provider_dispatch: flags.find((flag) => flag.metadata?.provider_dispatch)?.metadata?.provider_dispatch || null,
+        order_items: order.order_items || []
+      }),
+      warnings
+    };
+  });
+
+  superPost("/refund-cancellations/:orderId/action", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.refund_cancellations.action");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = superAdminRefundCancellationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, order_number, customer_email, total, grand_total, order_status, status, payment_status")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+
+    let updated = before;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = await optionalMutation(
+        supabaseAdmin
+          .from("orders")
+          .update(updatePayload)
+          .eq("id", orderId)
+          .select("id, order_no, order_number, customer_email, total, grand_total, order_status, status, payment_status, updated_at")
+          .single(),
+        warnings,
+        "orders"
+      );
+    }
+
+    const actionLabels = {
+      mark_review: "İncelemeye alındı",
+      approve_cancellation: "İptal onaylandı",
+      approve_refund: "İade onaylandı",
+      reject_request: "Talep reddedildi",
+      add_note: "Not eklendi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : ""
+    ].filter(Boolean).join("\n");
+    const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+    const providerDispatch = await notifyPaymentProviderRefundCancellation({
+      action: body.action,
+      order: updated,
+      context: providerContext,
+      reason: body.reason,
+      note: body.note,
+      actorId: ctx.user.id,
+      ip: clientIp(request)
+    });
+
+    const [note, flag] = await Promise.all([
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            note_type: "review",
+            visibility: "super_admin",
+            body: noteBody
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .insert({
+            flagged_by: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            flag_type: "risky_order",
+            severity: body.action === "approve_refund" ? "critical" : "warning",
+            status: body.action === "mark_review" ? "in_review" : "resolved",
+            reason: noteBody,
+            metadata: {
+              super_admin_action: body.action,
+              order_status_before: before.order_status || before.status || null,
+              payment_status_before: before.payment_status || null,
+              order_status_after: updated.order_status || updated.status || null,
+              payment_status_after: updated.payment_status || null,
+              provider_dispatch: providerDispatch
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `super_admin.refund_cancellation_${body.action}`,
+      source: "admin",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: body.action === "approve_refund" ? "critical" : "warning",
+      purpose: "refund_cancellation_control",
+      evidenceTags: ["super_admin", "refund_cancellation", body.action],
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        old_value: before,
+        new_value: updated,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null,
+        provider_dispatch: providerDispatch
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean), provider_dispatch: providerDispatch }),
+      note,
+      flag,
+      provider_dispatch: providerDispatch,
+      warnings
+    };
+  });
+
+  superGet("/work-queue", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.list");
+    const queryParams = superAdminWorkQueueQuerySchema.parse(request.query || {});
+    const warnings = [];
+
+    let storedQuery = supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status) storedQuery = storedQuery.eq("status", queryParams.status);
+    if (queryParams.source_module) storedQuery = storedQuery.eq("source_module", queryParams.source_module);
+    if (queryParams.risk_level) storedQuery = storedQuery.eq("risk_level", queryParams.risk_level);
+
+    const stored = await runAdminQuery("super_admin_work_queue", storedQuery, []);
+    if (stored.warning) warnings.push(stored.warning);
+    const derived = await loadDerivedSuperAdminWorkQueue({
+      limit: queryParams.limit,
+      status: queryParams.status,
+      sourceModule: queryParams.source_module,
+      riskLevel: queryParams.risk_level
+    });
+    warnings.push(...derived.warnings);
+
+    const storedItems = (stored.data || []).map((item) => workQueuePublic(item));
+    const items = [...storedItems, ...derived.items]
+      .sort((a, b) => {
+        const priorityScore = { urgent: 4, high: 3, normal: 2, low: 1 };
+        const riskScore = { critical: 4, high: 3, medium: 2, low: 1 };
+        const scoreA = (priorityScore[a.priority] || 0) + (riskScore[a.risk_level] || 0);
+        const scoreB = (priorityScore[b.priority] || 0) + (riskScore[b.risk_level] || 0);
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      })
+      .slice(0, queryParams.limit);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_viewed",
+      source: "admin",
+      resourceType: "super_admin_work_queue",
+      metadata: {
+        stored_count: storedItems.length,
+        derived_count: derived.items.length,
+        status: queryParams.status || "all",
+        source_module: queryParams.source_module || "all",
+        risk_level: queryParams.risk_level || "all",
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items,
+      summary: {
+        total: items.length,
+        stored: storedItems.length,
+        derived: derived.items.length,
+        urgent: items.filter((item) => item.priority === "urgent" || item.risk_level === "critical").length,
+        waiting_owner: items.filter((item) => item.status === "waiting_owner").length,
+        actionable: items.filter((item) => item.actionable).length
+      },
+      filters: {
+        source_modules: SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES,
+        statuses: SUPER_ADMIN_WORK_QUEUE_STATUSES,
+        risk_levels: ["low", "medium", "high", "critical"]
+      },
+      schema_warnings: warnings
+    };
+  });
+
+  superPatch("/work-queue/:itemId", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.update");
+    const { itemId } = z.object({ itemId: uuidSchema }).parse(request.params || {});
+    const body = superAdminWorkQueueUpdateSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*")
+      .eq("id", itemId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) throw httpError("super_admin_work_queue migration henüz uygulanmamış.", 503);
+      throw beforeError;
+    }
+    if (!before) throw httpError("İş kuyruğu kaydı bulunamadı.", 404);
+
+    const updatePayload = {
+      updated_by: ctx.user.id
+    };
+    ["status", "priority", "risk_level", "owner_user_id", "due_at", "summary"].forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(body, key)) updatePayload[key] = body[key];
+    });
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .update(updatePayload)
+      .eq("id", itemId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_updated",
+      resourceType: "super_admin_work_queue",
+      resourceId: itemId,
+      severity: updated.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      purpose: "super_admin_work_queue",
+      evidenceTags: ["super_admin", "work_queue", updated.source_module || "other"],
+      metadata: {
+        old_value: before,
+        new_value: updated,
+        reason: body.reason
+      }
+    });
+
+    return { ok: true, item: workQueuePublic(updated) };
+  });
+
+  superPost("/work-queue/:itemId/decision", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.work_queue.decide");
+    const { itemId } = z.object({ itemId: uuidSchema }).parse(request.params || {});
+    const body = superAdminWorkQueueDecisionSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .select("*")
+      .eq("id", itemId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) throw httpError("super_admin_work_queue migration henüz uygulanmamış.", 503);
+      throw beforeError;
+    }
+    if (!before) throw httpError("İş kuyruğu kaydı bulunamadı.", 404);
+
+    const status = body.status || (body.decision === "resolved" ? "resolved" : "decided");
+    const { data: updated, error } = await supabaseAdmin
+      .from("super_admin_work_queue")
+      .update({
+        status,
+        decision: body.decision,
+        decision_reason: body.reason,
+        decided_by: ctx.user.id,
+        decided_at: new Date().toISOString(),
+        updated_by: ctx.user.id
+      })
+      .eq("id", itemId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.work_queue_decided",
+      resourceType: "super_admin_work_queue",
+      resourceId: itemId,
+      severity: updated.risk_level === "critical" ? "critical" : "warning",
+      source: "admin",
+      purpose: "super_admin_work_queue",
+      evidenceTags: ["super_admin", "work_queue", body.decision],
+      metadata: {
+        old_status: before.status,
+        new_status: updated.status,
+        decision: body.decision,
+        reason: body.reason,
+        source_module: updated.source_module
+      }
+    });
+
+    return { ok: true, item: workQueuePublic(updated) };
   });
 
   superGet("/release-approvals", async (request) => {
@@ -4973,18 +12372,16 @@ export function registerRoutes(app) {
   superPost("/release-approvals", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.create");
     const body = superAdminReleaseApprovalSchema.parse(request.body || {});
-    const now = new Date().toISOString();
     const insertPayload = {
       approval_type: body.approval_type,
       target_ref: body.target_ref,
       target_summary: body.target_summary,
-      status: "approved",
+      status: "pending",
       risk_level: body.risk_level,
       requested_by: ctx.user.id,
-      approved_by: ctx.user.id,
-      approved_at: now,
       metadata: normalizeJsonValue({
         ...body.metadata,
+        approval_gate: "detail_review_required",
         owner_source: ctx.superAdminOwner?.source || "unknown",
         request_host: requestHostname(request),
         request_ip: clientIp(request)
@@ -5003,8 +12400,86 @@ export function registerRoutes(app) {
       throw error;
     }
 
-    const dispatch = await dispatchSuperAdminReleaseApproval(data, request);
-    let approval = data;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.release_approval_requested",
+      resourceType: "super_admin_release_approval",
+      resourceId: data.id,
+      severity: superAdminAuditSeverity(body.risk_level),
+      source: "admin",
+      purpose: "release_control",
+      evidenceTags: ["super_admin", "release_approval", "pending_owner_review", body.approval_type],
+      metadata: {
+        approval_type: body.approval_type,
+        target_ref: body.target_ref,
+        status: data.status,
+        dispatched: false,
+        webhook_status: null,
+        gitops_enabled: config.superAdmin.gitOpsEnabled,
+        approval_gate: "detail_review_required"
+      }
+    });
+
+    return {
+      ok: true,
+      approval: releaseApprovalPublic(data),
+      dispatch: {
+        status: "pending",
+        dispatched: false,
+        webhook_status: null,
+        webhook_response: {
+          code: "PENDING_OWNER_REVIEW",
+          message: "Yayın onayı oluşturuldu; deploy/main/migration işlemi owner detay onayı bekliyor."
+        }
+      },
+      schema_warnings: []
+    };
+  });
+
+  superPost("/release-approvals/:approvalId/approve", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.release_approvals.approve");
+    const { approvalId } = z.object({ approvalId: uuidSchema }).parse(request.params || {});
+    const body = superAdminReleaseApprovalDecisionSchema.parse(request.body || {});
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .select("*")
+      .eq("id", approvalId)
+      .maybeSingle();
+    if (beforeError) {
+      if (looksLikeMissingSchema(beforeError)) {
+        throw httpError("super_admin_release_approvals migration henüz uygulanmamış.", 503);
+      }
+      throw beforeError;
+    }
+    if (!before) throw httpError("Yayın onayı kaydı bulunamadı.", 404);
+    if (before.status !== "pending") {
+      throw httpError("Bu yayın onayı zaten karara bağlanmış.", 409);
+    }
+
+    const approvedAt = new Date().toISOString();
+    const { data: approved, error: approveError } = await supabaseAdmin
+      .from("super_admin_release_approvals")
+      .update({
+        status: "approved",
+        approved_by: ctx.user.id,
+        approved_at: approvedAt,
+        metadata: normalizeJsonValue({
+          ...(before.metadata || {}),
+          owner_source: ctx.superAdminOwner?.source || "unknown",
+          approval_reason: body.reason,
+          approved_from: "super_admin_detail_review"
+        }),
+        updated_at: approvedAt
+      })
+      .eq("id", approvalId)
+      .eq("status", "pending")
+      .select("*")
+      .single();
+    if (approveError) throw approveError;
+
+    const dispatch = await dispatchSuperAdminReleaseApproval(approved, request);
     const updatePayload = {
       status: dispatch.status,
       webhook_status: dispatch.webhook_status,
@@ -5015,37 +12490,49 @@ export function registerRoutes(app) {
     const { data: updated, error: updateError } = await supabaseAdmin
       .from("super_admin_release_approvals")
       .update(updatePayload)
-      .eq("id", data.id)
+      .eq("id", approvalId)
       .select("*")
       .single();
-    if (updateError) throw updateError;
-    approval = updated;
+    let dispatchUpdateWarning = null;
+    let approval = updated;
+    if (updateError) {
+      if (!looksLikeMissingSchema(updateError)) throw updateError;
+      dispatchUpdateWarning = schemaWarning("super_admin_release_approvals_dispatch_columns", updateError);
+      approval = {
+        ...approved,
+        webhook_status: dispatch.webhook_status,
+        webhook_response: dispatch.webhook_response || {},
+        status: dispatch.status || approved.status
+      };
+    }
 
     await auditEvent({
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "super_admin.release_approval_created",
+      action: "super_admin.release_approval_approved",
       resourceType: "super_admin_release_approval",
-      resourceId: approval.id,
-      severity: superAdminAuditSeverity(body.risk_level),
+      resourceId: approvalId,
+      severity: superAdminAuditSeverity(approval.risk_level),
       source: "admin",
       purpose: "release_control",
-      evidenceTags: ["super_admin", "release_approval", body.approval_type],
+      evidenceTags: ["super_admin", "release_approval", "owner_approved", approval.approval_type],
       metadata: {
-        approval_type: body.approval_type,
-        target_ref: body.target_ref,
+        approval_type: approval.approval_type,
+        target_ref: approval.target_ref,
         status: approval.status,
         dispatched: dispatch.dispatched,
         webhook_status: dispatch.webhook_status,
-        gitops_enabled: config.superAdmin.gitOpsEnabled
+        reason: body.reason,
+        dispatch_update_warning: dispatchUpdateWarning?.message || null
       }
     });
 
     return {
       ok: true,
       approval: releaseApprovalPublic(approval),
-      dispatch
+      dispatch,
+      schema_warnings: dispatchUpdateWarning ? [dispatchUpdateWarning] : []
     };
   });
 
@@ -5266,7 +12753,17 @@ export function registerRoutes(app) {
       countAdminRows("partner_businesses_total", "partner_businesses"),
       countAdminRows("orders_total", "orders"),
       countAdminRows("partner_applications_pending", "partner_applications", (query) => query.in("status", ["pending", "review"])),
-      countAdminRows("security_alerts_24h", "security_audit_events", (query) => query.in("severity", ["warning", "critical"]).gte("created_at", since24h)),
+      runAdminQuery(
+        "security_alerts_24h",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+          .in("severity", ["warning", "critical"])
+          .gte("created_at", since24h)
+          .order("created_at", { ascending: false })
+          .limit(500),
+        []
+      ),
       runAdminQuery(
         "orders_daily_revenue",
         supabaseAdmin
@@ -5289,8 +12786,12 @@ export function registerRoutes(app) {
       partners.count = partnerProfiles.count;
     }
 
+    const automation = await buildOpsAutomationSnapshot({ limit: 50, mode: "super_admin" });
+    warnings.push(...automationSchemaWarningObjects(automation.warnings));
+
     const dailyRevenue = (revenueRows.data || [])
       .reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const threatEvents24h = (securityAlerts.data || []).filter(isExternalSecurityAuditEvent);
     const autoDefense = autoDefenseStatus();
 
     await auditEvent({
@@ -5302,7 +12803,7 @@ export function registerRoutes(app) {
       resourceType: "super_admin_dashboard",
       metadata: {
         warning_count: warnings.length,
-        security_alerts_24h: securityAlerts.count
+        security_alerts_24h: threatEvents24h.length
       }
     });
 
@@ -5315,7 +12816,10 @@ export function registerRoutes(app) {
           total_orders: orders.count,
           daily_revenue: Number(dailyRevenue.toFixed(2)),
           pending_applications: pendingApplications.count,
-          security_alerts: securityAlerts.count
+          security_alerts: threatEvents24h.length,
+          automation_action_required: automation.summary.action_required,
+          automation_auto_ready: automation.summary.auto_ready,
+          automation_super_admin_required: automation.summary.super_admin_required
         },
         system_health: {
           api: "online",
@@ -5329,6 +12833,7 @@ export function registerRoutes(app) {
             recent_incident_count: autoDefense.recentIncidents.length
           }
         },
+        automation,
         schema_warnings: warnings
       }
     };
@@ -5446,7 +12951,7 @@ export function registerRoutes(app) {
       "partner_applications_super_admin",
       supabaseAdmin
         .from("partner_applications")
-        .select("*, profile:profiles(id, full_name, email, phone)", { count: "exact" })
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .limit(80),
       []
@@ -5485,91 +12990,67 @@ export function registerRoutes(app) {
     };
   });
 
-  superPatch("/partner-applications/:applicationId", async (request) => {
-    const ctx = await requireSuperAdmin(request, "super_admin.partner_application.decide");
-    const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
-    const body = partnerApplicationDecisionSchema.parse(request.body || {});
-    const { data: before, error: beforeError } = await supabaseAdmin
-      .from("partner_applications")
-      .select("*")
-      .eq("id", applicationId)
-      .maybeSingle();
-    if (beforeError) throw beforeError;
-    if (!before) throw httpError("Partner başvurusu bulunamadı.", 404);
-
-    const applicationPayload = {
-      status: body.decision,
-      updated_at: new Date().toISOString()
-    };
-
-    const { data: application, error: updateError } = await supabaseAdmin
-      .from("partner_applications")
-      .update(applicationPayload)
-      .eq("id", applicationId)
-      .select("*")
-      .single();
-    if (updateError) throw updateError;
-
-    let partnerBusiness = null;
-    if (body.decision === "approved" && before.user_id) {
-      const { data: existingBusiness, error: existingBusinessError } = await supabaseAdmin
-        .from("partner_businesses")
-        .select("*")
-        .eq("owner_id", before.user_id)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (existingBusinessError && !looksLikeMissingSchema(existingBusinessError)) throw existingBusinessError;
-
-      if (!existingBusinessError) {
-        const businessPayload = {
-          owner_id: before.user_id,
-          display_name: before.company_name,
-          legal_name: before.company_name,
-          email: before.email,
-          phone: before.phone,
-          status: body.store_status || "active",
-          verification_status: "verified",
-          default_commission_rate: body.commission_rate ?? 0.12,
-          metadata: {
-            approved_from_application_id: applicationId,
-            approved_by: ctx.user.id,
-            approval_reason: body.reason || ""
-          }
-        };
-
-        const businessQuery = existingBusiness
-          ? supabaseAdmin.from("partner_businesses").update(businessPayload).eq("id", existingBusiness.id).select("*").single()
-          : supabaseAdmin.from("partner_businesses").insert(businessPayload).select("*").single();
-        const { data: businessRow, error: businessError } = await businessQuery;
-        if (businessError) throw businessError;
-        partnerBusiness = businessRow;
-      }
-    }
+  superPost("/partners", async (request) => {
+    const ctx = await requireSuperAdmin(request, "super_admin.partner.direct_invite");
+    const body = superAdminPartnerInviteSchema.parse(request.body || {});
+    const nowIso = new Date().toISOString();
+    const application = await createDirectPartnerApplication({ body, ctx, request, nowIso });
+    const activation = await activateApprovedPartnerApplication({
+      application,
+      body: {
+        decision: "approved",
+        reason: body.reason,
+        commission_rate: body.commission_rate,
+        store_status: body.store_status,
+        partner_type: body.partner_type
+      },
+      ctx,
+      request
+    });
 
     await auditEvent({
       request,
       actorId: ctx.user.id,
       actorRole: ctx.profile.role,
-      action: "super_admin.partner_application_decided",
-      resourceType: "partner_application",
-      resourceId: applicationId,
-      severity: body.decision === "approved" ? "warning" : "info",
+      action: "super_admin.partner_direct_invite_created",
+      resourceType: "partner_business",
+      resourceId: activation.partnerBusiness?.id || null,
+      severity: "warning",
       source: "admin",
-      evidenceTags: ["super_admin", "partner_application"],
+      evidenceTags: ["super_admin", "partner", "direct_invite"],
       metadata: {
-        old_value: { status: before.status },
-        new_value: {
-          status: application.status,
-          commission_rate: body.commission_rate ?? null,
-          store_status: body.store_status || null,
-          partner_business_id: partnerBusiness?.id || null
-        },
-        reason: body.reason || ""
+        application_id: activation.application?.id || application.id,
+        partner_type: activation.partnerType,
+        auth_user_id: activation.auth?.user_id,
+        auth_user_created: activation.auth?.created || false,
+        invite_sent: activation.auth?.invite_sent || false,
+        password_reset_sent: activation.auth?.password_reset_sent || false,
+        access_email_sent: activation.auth?.access_email_sent || false,
+        access_email_type: activation.auth?.access_email_type || null,
+        access_email_error: activation.auth?.access_email_error || null,
+        email_hash: authEmailHash(body.email),
+        reason: body.reason
       }
     });
 
-    return { ok: true, application, partner_business: partnerBusiness };
+    return {
+      ok: true,
+      application: activation.application,
+      partner_business: activation.partnerBusiness,
+      activation
+    };
+  });
+
+  superPatch("/partner-applications/:applicationId", async (request) => {
+    const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params || {});
+    const body = partnerApplicationDecisionSchema.parse(request.body || {});
+    return decidePartnerApplicationRequest({ request, applicationId, body });
+  });
+
+  superPost("/partner-application-decisions", async (request) => {
+    const payload = partnerApplicationDecisionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return decidePartnerApplicationRequest({ request, applicationId, body });
   });
 
   superGet("/security", async (request) => {
@@ -5587,13 +13068,24 @@ export function registerRoutes(app) {
     );
     if (events.warning) warnings.push(events.warning);
 
-    const failedAuth = await countAdminRows("super_admin_failed_auth_24h", "security_audit_events", (query) => (
-      query.in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"]).gte("created_at", since24h)
-    ));
+    const failedAuth = await runAdminQuery(
+      "super_admin_failed_auth_24h",
+      supabaseAdmin
+        .from("security_audit_events")
+        .select("id, actor_role, action, resource_type, resource_id, severity, ip_address, source, purpose, metadata, created_at")
+        .in("action", ["auth.denied", "authz.denied", "mfa.required", "admin.boundary_denied"])
+        .gte("created_at", since24h)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      []
+    );
     if (failedAuth.warning) warnings.push(failedAuth.warning);
 
-    const criticalEvents = (events.data || []).filter((event) => event.severity === "critical").length;
-    const suspiciousIps = Object.entries((events.data || [])
+    const publicEvents = (events.data || []).map(securityEventPublic);
+    const threatEvents = publicEvents.filter((event) => event.external_threat);
+    const failedAuthThreats = (failedAuth.data || []).filter(isExternalSecurityAuditEvent);
+    const criticalEvents = threatEvents.filter((event) => event.severity === "critical").length;
+    const suspiciousIps = Object.entries(threatEvents
       .filter((event) => event.ip_address && ["warning", "critical"].includes(event.severity))
       .reduce((acc, event) => {
         acc[event.ip_address] = (acc[event.ip_address] || 0) + 1;
@@ -5612,7 +13104,7 @@ export function registerRoutes(app) {
       source: "admin",
       resourceType: "security_center",
       metadata: {
-        failed_auth_24h: failedAuth.count,
+        failed_auth_24h: failedAuthThreats.length,
         critical_event_sample_count: criticalEvents
       }
     });
@@ -5621,13 +13113,13 @@ export function registerRoutes(app) {
       ok: true,
       security: {
         metrics: {
-          failed_auth_24h: failedAuth.count,
+          failed_auth_24h: failedAuthThreats.length,
           critical_events_sample: criticalEvents,
           suspicious_ip_count: suspiciousIps.length,
           blocked_ip_count: autoDefense.blockedIpCount
         },
         suspicious_ips: suspiciousIps,
-        recent_events: events.data || [],
+        recent_events: publicEvents,
         auto_defense: autoDefense
       },
       schema_warnings: warnings
@@ -5774,9 +13266,14 @@ export function registerRoutes(app) {
       metadata: { warning: Boolean(result.warning) }
     });
 
+    const modulesWithSubdomains = modules.map((item) => ({
+      ...item,
+      ...moduleSubdomainPublic(item.module_key)
+    }));
+
     return {
       ok: true,
-      modules,
+      modules: modulesWithSubdomains,
       schema_warnings: result.warning ? [result.warning] : []
     };
   });
@@ -5872,6 +13369,52 @@ export function registerRoutes(app) {
       ok: true,
       events: result.data || [],
       schema_warnings: result.warning ? [result.warning] : []
+    };
+  });
+
+  opsGet("/automation", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.automation.view");
+    const query = automationQuerySchema.parse(request.query || {});
+    const automation = await buildOpsAutomationSnapshot({ limit: query.limit, mode: "admin" });
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.automation_viewed",
+      resourceType: "automation",
+      severity: automation.summary.critical ? "warning" : "info",
+      metadata: {
+        auto_ready: automation.summary.auto_ready,
+        action_required: automation.summary.action_required,
+        super_admin_required: automation.summary.super_admin_required,
+        warning_count: automation.warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      automation,
+      warnings: automation.warnings
+    };
+  });
+
+  opsPost("/automation/run", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.automation.run");
+    const body = automationRunSchema.parse(request.body || {});
+    const automation = await buildOpsAutomationSnapshot({
+      limit: body.limit,
+      apply: body.apply,
+      actions: body.actions,
+      reason: body.reason,
+      ctx,
+      request,
+      mode: "admin"
+    });
+
+    return {
+      ok: true,
+      automation,
+      warnings: automation.warnings
     };
   });
 
@@ -6161,93 +13704,22 @@ export function registerRoutes(app) {
   });
 
   opsPatch("/partner-applications/:applicationId/review", async (request) => {
-    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.review");
     const applicationId = uuidSchema.parse(request.params.applicationId);
     const payload = partnerApplicationActionSchema.parse(request.body || {});
-    const warnings = [];
-    const nowIso = new Date().toISOString();
-    const recommendation = payload.action === "recommend_approve"
-      ? "approve"
-      : payload.action === "recommend_reject"
-      ? "reject"
-      : payload.action === "send_super_admin"
-      ? "needs_super_admin"
-      : null;
-    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+    return reviewPartnerApplicationRequest({ request, applicationId, payload });
+  });
 
-    const application = await optionalMutation(
-      supabaseAdmin
-        .from("partner_applications")
-        .update({
-          status: "review",
-          review_stage: reviewStage,
-          admin_recommendation: recommendation,
-          risk_level: payload.risk_level,
-          reviewed_by: ctx.user.id,
-          reviewed_at: nowIso,
-          metadata: {
-            last_admin_action: payload.action,
-            last_admin_reason: payload.reason,
-            last_admin_action_at: nowIso
-          }
-        })
-        .eq("id", applicationId)
-        .select("*")
-        .single(),
-      warnings,
-      "partner_applications"
-    );
+  opsPost("/partner-application-reviews", async (request) => {
+    const payload = partnerApplicationActionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return reviewPartnerApplicationRequest({ request, applicationId, payload: body });
+  });
 
-    await optionalMutation(
-      supabaseAdmin
-        .from("admin_operation_notes")
-        .insert({
-          author_id: ctx.user.id,
-          target_type: "partner_application",
-          target_id: applicationId,
-          note_type: "review",
-          body: payload.reason
-        }),
-      warnings,
-      "admin_operation_notes"
-    );
-
-    let approvalRequest = null;
-    if (payload.action !== "start_review") {
-      approvalRequest = await optionalMutation(
-        supabaseAdmin
-          .from("admin_approval_requests")
-          .insert({
-            requested_by: ctx.user.id,
-            target_type: "partner_application",
-            target_id: applicationId,
-            request_type: recommendation === "reject" ? "partner_rejection" : "partner_approval",
-            status: "pending_super_admin",
-            summary: payload.reason,
-            proposed_action: {
-              action: payload.action,
-              recommendation,
-              risk_level: payload.risk_level
-            }
-          })
-          .select("*")
-          .single(),
-        warnings,
-        "admin_approval_requests"
-      );
-    }
-
-    await auditedOpsEvent({
-      request,
-      ctx,
-      action: `admin.ops.partner_application_${payload.action}`,
-      resourceType: "partner_application",
-      resourceId: applicationId,
-      severity: payload.risk_level,
-      metadata: { recommendation, approval_request_id: approvalRequest?.id || null }
-    });
-
-    return { ok: true, application, approvalRequest, warnings };
+  opsPost("/partner-application-decisions", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.decide");
+    const payload = partnerApplicationDecisionRequestSchema.parse(request.body || {});
+    const { application_id: applicationId, ...body } = payload;
+    return decidePartnerApplicationRequest({ request, applicationId, body, ctx });
   });
 
   opsGet("/partners", async (request) => {
@@ -6354,6 +13826,167 @@ export function registerRoutes(app) {
     return { ok: true, order, notes, flags, warnings };
   });
 
+  opsGet("/product-reviews", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.list");
+    const query = adminProductReviewListQuerySchema.parse(request.query || {});
+    const warnings = [];
+    const pageResult = await loadAdminProductReviewPage({
+      request,
+      ctx,
+      query,
+      warnings
+    });
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_reviews_viewed",
+      resourceType: "product",
+      metadata: {
+        search: query.search || null,
+        status: query.status || null,
+        offset: query.offset,
+        limit: query.limit,
+        scanned_count: pageResult.page.scanned_count,
+        total_candidates: pageResult.page.total_candidates,
+        count: pageResult.products.length,
+        auto_revisioned_count: pageResult.page.auto_revisioned_count,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      products: pageResult.products,
+      summary: pageResult.summary,
+      page: pageResult.page,
+      skipped: pageResult.skipped,
+      warnings: [...new Set(warnings)]
+    };
+  });
+
+  opsPost("/product-reviews/bulk-decision", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.decide");
+    const body = adminProductReviewBulkDecisionSchema.parse(request.body || {});
+    const warnings = [];
+    const nowIso = new Date().toISOString();
+    const { data: rows, error: rowsError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .in("id", body.product_ids);
+    if (rowsError && looksLikeMissingSchema(rowsError)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (rowsError) throw rowsError;
+
+    const productById = new Map((rows || []).map((product) => [String(product.id), product]));
+    const missingIds = body.product_ids.filter((productId) => !productById.has(String(productId)));
+    let products = body.product_ids
+      .map((productId) => productById.get(String(productId)))
+      .filter(Boolean)
+      .map(attachProductReviewAutomation);
+    products = attachVariantGroups(products, linksByProductId(await loadProductIntegrationLinks(products.map((product) => product.id), warnings)));
+    const updatedProducts = [];
+    const skipped = missingIds.map((productId) => ({
+      product_id: productId,
+      reason: "Ürün bulunamadı."
+    }));
+
+    for (const product of products) {
+      const automation = product.review_automation || productReviewAutomation(product);
+      if (body.decision === "approved" && body.only_auto_approvable && !automation.auto_approvable) {
+        skipped.push({
+          product_id: product.id,
+          name: product.name || product.product_name || "",
+          reason: "Otomasyon bu üründe revizyon riski gördüğü için toplu güvenli onaydan çıkarıldı.",
+          review_automation: automation
+        });
+        continue;
+      }
+
+      const reason = body.decision === "needs_review"
+        ? productReviewRevisionReason(product, body.reason)
+        : body.reason;
+      const { product: updated, removedFields } = await updatePartnerProductRow(
+        product.id,
+        productReviewDecisionPayload(body.decision, reason, nowIso)
+      );
+      if (removedFields.length) {
+        warnings.push(...removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`));
+      }
+      updatedProducts.push(attachProductReviewAutomation(updated));
+    }
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_reviews_bulk_decided",
+      resourceType: "product",
+      severity: body.decision === "approved" ? "info" : "warning",
+      metadata: {
+        decision: body.decision,
+        requested_count: body.product_ids.length,
+        updated_count: updatedProducts.length,
+        skipped_count: skipped.length,
+        only_auto_approvable: Boolean(body.only_auto_approvable),
+        reason: body.reason
+      }
+    });
+
+    return {
+      ok: true,
+      products: updatedProducts,
+      skipped,
+      summary: productReviewAutomationSummary(updatedProducts),
+      warnings: [...new Set(warnings)]
+    };
+  });
+
+  opsPost("/product-reviews/:productId/decision", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.product_reviews.decide");
+    const productId = uuidSchema.parse(request.params.productId);
+    const body = adminProductReviewDecisionSchema.parse(request.body || {});
+    const nowIso = new Date().toISOString();
+
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("id", productId)
+      .maybeSingle();
+    if (beforeError && looksLikeMissingSchema(beforeError)) {
+      throw httpError("products ürün onay alanları canlı veritabanında eksik. Migration uygulanmalı.", 503);
+    }
+    if (beforeError) throw beforeError;
+    if (!before) throw httpError("Ürün bulunamadı.", 404);
+
+    const reason = body.decision === "needs_review"
+      ? productReviewRevisionReason(before, body.reason)
+      : body.reason;
+    const updatePayload = productReviewDecisionPayload(body.decision, reason, nowIso);
+    const nextStatus = updatePayload.status;
+    const { product, removedFields } = await updatePartnerProductRow(productId, updatePayload);
+    const warnings = removedFields.map((field) => `products.${field}: üretim şemasında yok; bu alan atlandı.`);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.product_review_decided",
+      resourceType: "product",
+      resourceId: productId,
+      severity: body.decision === "approved" ? "info" : "warning",
+      metadata: {
+        decision: body.decision,
+        status: nextStatus,
+        previous_status: before.status || null,
+        previous_compliance_review_status: before.compliance_review_status || null,
+        integration_source: before.integration_source || null,
+        reason
+      }
+    });
+
+    return { ok: true, product: attachProductReviewAutomation(product), warnings };
+  });
+
   opsPost("/orders/:orderId/risk-flag", async (request, reply) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.orders.risk_flag");
     const orderId = uuidSchema.parse(request.params.orderId);
@@ -6386,6 +14019,307 @@ export function registerRoutes(app) {
       metadata: { flag_type: "risky_order" }
     });
     return reply.code(201).send({ ok: true, flag, warnings });
+  });
+
+  opsGet("/refund-cancellations", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.list");
+    const queryParams = superAdminRefundCancellationQuerySchema.parse(request.query || {});
+    const warnings = [];
+    const search = cleanSearch(queryParams.search);
+
+    let ordersQuery = supabaseAdmin
+      .from("orders")
+      .select("id, order_no, user_id, customer_name, customer_email, customer_phone, total, order_status, payment_status, created_at, updated_at")
+      .or("order_status.in.(cancelled,refunded),payment_status.eq.refunded")
+      .order("updated_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status === "cancelled") ordersQuery = ordersQuery.in("order_status", ["cancelled"]);
+    if (queryParams.status === "refunded") ordersQuery = ordersQuery.or("order_status.eq.refunded,payment_status.eq.refunded");
+    const filter = textSearchFilter(["order_no", "customer_name", "customer_email", "customer_phone"], search);
+    if (filter) ordersQuery = ordersQuery.or(filter);
+
+    let ticketQuery = supabaseAdmin
+      .from("support_tickets")
+      .select("id, user_id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+      .or(refundCancellationSupportFilter(search))
+      .order("created_at", { ascending: false })
+      .limit(Math.min(queryParams.limit, 40));
+    if (queryParams.status === "pending_signal") ticketQuery = ticketQuery.in("status", ["open", "in_progress"]);
+
+    const [orders, tickets] = await Promise.all([
+      optionalQuery(ordersQuery, [], warnings, "orders"),
+      optionalQuery(ticketQuery, [], warnings, "support_tickets")
+    ]);
+
+    const items = (orders || []).map((order) => refundCancellationPublic(order));
+    const ticketSignals = queryParams.status === "all" || queryParams.status === "pending_signal"
+      ? (tickets || []).map((ticket) => ({
+          id: `ticket:${ticket.id}`,
+          type: "support_signal",
+          ticket_id: ticket.id,
+          order_no: ticket.metadata?.order_no || ticket.metadata?.order_id || "Destek talebi",
+          customer_name: ticket.profile?.full_name || "",
+          customer_email: ticket.profile?.email || "",
+          customer_phone: ticket.profile?.phone || "",
+          total: 0,
+          order_status: "pending_signal",
+          payment_status: "",
+          reason: ticket.message || ticket.title || "",
+          risk_level: ticket.priority === "urgent" ? "critical" : "high",
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          tickets: [ticket],
+          notes: [],
+          flags: [],
+          order_items: []
+        }))
+      : [];
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.refund_cancellations_viewed",
+      resourceType: "refund_cancellation",
+      severity: "info",
+      metadata: {
+        status: queryParams.status,
+        search: search || null,
+        order_count: items.length,
+        support_signal_count: ticketSignals.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      items: [...items, ...ticketSignals].slice(0, queryParams.limit),
+      summary: {
+        total: items.length + ticketSignals.length,
+        refunded: items.filter((item) => item.type === "refund").length,
+        cancelled: items.filter((item) => item.type === "cancellation").length,
+        support_signals: ticketSignals.length,
+        action_required: ticketSignals.length + items.filter((item) => item.type === "refund").length
+      },
+      warnings
+    };
+  });
+
+  opsGet("/refund-cancellations/:orderId", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.detail");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const warnings = [];
+    const order = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*, product:products(id, name, category, partner_id))")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!order) throw httpError("Sipariş bulunamadı.", 404);
+
+    const supportFilters = [
+      order.order_no ? `title.ilike.%${order.order_no}%` : "",
+      order.order_no ? `message.ilike.%${order.order_no}%` : "",
+      order.order_number ? `title.ilike.%${order.order_number}%` : "",
+      order.order_number ? `message.ilike.%${order.order_number}%` : "",
+      order.customer_email ? `title.ilike.%${order.customer_email}%` : "",
+      order.customer_email ? `message.ilike.%${order.customer_email}%` : ""
+    ].filter(Boolean).join(",");
+
+    const [notes, flags, tickets] = await Promise.all([
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .select("id, note_type, body, visibility, created_at, author:profiles(id, full_name)")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(40),
+        [],
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalQuery(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .select("id, flag_type, severity, reason, status, metadata, created_at, updated_at")
+          .eq("target_type", "order")
+          .eq("target_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        [],
+        warnings,
+        "admin_operation_flags"
+      ),
+      supportFilters
+        ? optionalQuery(
+            supabaseAdmin
+              .from("support_tickets")
+              .select("id, requester_type, category, priority, title, message, status, metadata, created_at, updated_at, profile:profiles(id, full_name, email, phone)")
+              .or(supportFilters)
+              .order("created_at", { ascending: false })
+              .limit(20),
+            [],
+            warnings,
+            "support_tickets"
+          )
+        : Promise.resolve([])
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: "admin.ops.refund_cancellation_detail_viewed",
+      resourceType: "order",
+      resourceId: orderId,
+      severity: "info",
+      metadata: {
+        note_count: notes.length,
+        flag_count: flags.length,
+        support_signal_count: tickets.length
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(order, {
+        notes,
+        flags,
+        tickets,
+        provider_dispatch: flags.find((flag) => flag.metadata?.provider_dispatch)?.metadata?.provider_dispatch || null,
+        order_items: order.order_items || []
+      }),
+      warnings
+    };
+  });
+
+  opsPost("/refund-cancellations/:orderId/action", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.refund_cancellations.action");
+    const { orderId } = z.object({ orderId: uuidSchema }).parse(request.params || {});
+    const body = superAdminRefundCancellationActionSchema.parse(request.body || {});
+    const warnings = [];
+    const before = await optionalQuery(
+      supabaseAdmin
+        .from("orders")
+        .select("id, order_no, customer_email, total, order_status, payment_status")
+        .eq("id", orderId)
+        .maybeSingle(),
+      null,
+      warnings,
+      "orders"
+    );
+    if (!before) throw httpError("Sipariş bulunamadı.", 404);
+
+    let updated = before;
+    const updatePayload = {};
+    if (body.action === "approve_cancellation") {
+      updatePayload.order_status = "cancelled";
+      updatePayload.status = "cancelled";
+    }
+    if (body.action === "approve_refund") {
+      updatePayload.order_status = "refunded";
+      updatePayload.status = "refunded";
+      updatePayload.payment_status = "refunded";
+    }
+    if (Object.keys(updatePayload).length) {
+      updated = await updateRefundCancellationOrder(orderId, updatePayload, warnings);
+    }
+
+    const actionLabels = {
+      mark_review: "İncelemeye alındı",
+      approve_cancellation: "İptal onaylandı",
+      approve_refund: "İade onaylandı",
+      reject_request: "Talep reddedildi",
+      add_note: "Not eklendi"
+    };
+    const noteBody = [
+      `${actionLabels[body.action]}: ${body.reason}`,
+      body.note ? `Ek açıklama: ${body.note}` : ""
+    ].filter(Boolean).join("\n");
+    const providerContext = await loadOrderPaymentProviderContext(orderId, warnings);
+    const providerDispatch = await notifyPaymentProviderRefundCancellation({
+      action: body.action,
+      order: updated,
+      context: providerContext,
+      reason: body.reason,
+      note: body.note,
+      actorId: ctx.user.id,
+      ip: clientIp(request)
+    });
+
+    const [note, flag] = await Promise.all([
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_notes")
+          .insert({
+            author_id: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            note_type: "review",
+            visibility: "admin",
+            body: noteBody
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_notes"
+      ),
+      optionalMutation(
+        supabaseAdmin
+          .from("admin_operation_flags")
+          .insert({
+            flagged_by: ctx.user.id,
+            target_type: "order",
+            target_id: orderId,
+            flag_type: "risky_order",
+            severity: body.action === "approve_refund" ? "critical" : "warning",
+            status: body.action === "mark_review" ? "in_review" : "resolved",
+            reason: noteBody,
+            metadata: {
+              admin_action: body.action,
+              order_status_before: before.order_status || before.status || null,
+              payment_status_before: before.payment_status || null,
+              order_status_after: updated.order_status || updated.status || null,
+              payment_status_after: updated.payment_status || null,
+              provider_dispatch: providerDispatch
+            }
+          })
+          .select("*")
+          .single(),
+        warnings,
+        "admin_operation_flags"
+      )
+    ]);
+
+    await auditedOpsEvent({
+      request,
+      ctx,
+      action: `admin.ops.refund_cancellation_${body.action}`,
+      resourceType: "order",
+      resourceId: orderId,
+      severity: body.action === "approve_refund" ? "critical" : "warning",
+      metadata: {
+        reason: body.reason,
+        note: body.note || null,
+        old_value: before,
+        new_value: updated,
+        note_id: note?.id || null,
+        flag_id: flag?.id || null,
+        provider_dispatch: providerDispatch
+      }
+    });
+
+    return {
+      ok: true,
+      item: refundCancellationPublic(updated, { notes: [note].filter(Boolean), flags: [flag].filter(Boolean), provider_dispatch: providerDispatch }),
+      note,
+      flag,
+      provider_dispatch: providerDispatch,
+      warnings
+    };
   });
 
   opsGet("/support-tickets", async (request) => {
@@ -7229,6 +15163,7 @@ export function registerRoutes(app) {
         supabaseAdmin
           .from("admin_notifications")
           .select("id, user_id, kind, severity, title, message, metadata, created_at")
+          .eq("severity", "critical")
           .order("created_at", { ascending: false })
           .limit(80),
         [],
@@ -7401,6 +15336,142 @@ export function registerRoutes(app) {
     };
   });
 
+  app.post("/v1/cron/product-reviews/auto-revisions", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.product_reviews_auto_revisions_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+
+    const payload = cronProductReviewAutomationSchema.parse(request.body || {});
+    const warnings = [];
+    const { data, error } = await adminProductReviewDbQuery({ search: "" }, false)
+      .range(0, Math.min(payload.limit * 4, ADMIN_PRODUCT_REVIEW_MAX_SCAN) - 1);
+    if (error && looksLikeMissingSchema(error)) {
+      return { ok: true, skipped: true, reason: "products_review_migration_missing" };
+    }
+    if (error) throw error;
+
+    let products = (data || [])
+      .filter(productNeedsAdminReview)
+      .map(attachProductReviewAutomation);
+    products = await attachProductReviewVariantGroups(products, warnings);
+    const result = await autoRequestProductRevisions(products, {
+      request,
+      warnings,
+      source: "cron_product_review_auto_revisions",
+      limit: Math.min(payload.limit, ADMIN_PRODUCT_AUTO_REVISION_BATCH)
+    });
+
+    await auditEvent({
+      request,
+      action: "cron.product_reviews_auto_revisions",
+      source: "system",
+      resourceType: "product",
+      severity: result.updatedProducts.length ? "warning" : "info",
+      metadata: {
+        scanned_count: data?.length || 0,
+        updated_count: result.updatedProducts.length,
+        skipped_count: result.skipped.length,
+        warning_count: warnings.length
+      }
+    });
+
+    return {
+      ok: true,
+      scanned_count: data?.length || 0,
+      updated_count: result.updatedProducts.length,
+      skipped: result.skipped,
+      warnings: [...new Set(warnings)]
+    };
+  });
+
+  app.post("/v1/cron/integrations/sync", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.integrations_sync_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+
+    if (!config.integrations.enabled) {
+      return { ok: true, skipped: true, reason: "PARTNER_INTEGRATIONS_ENABLED=false" };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("partner_integrations")
+      .select("*, partner:partner_businesses(*)")
+      .eq("status", "active")
+      .eq("sync_mode", "scheduled")
+      .eq("import_enabled", true)
+      .lte("next_sync_at", new Date().toISOString())
+      .order("next_sync_at", { ascending: true })
+      .limit(20);
+    if (error) {
+      if (looksLikeMissingSchema(error)) {
+        return { ok: true, skipped: true, reason: "partner_integration_core_migration_missing" };
+      }
+      throw error;
+    }
+
+    const results = [];
+    request.integrationActorRole = "system";
+    for (const integration of data || []) {
+      if (!integration.partner) {
+        results.push({ integration_id: integration.id, status: "skipped", reason: "partner_missing" });
+        continue;
+      }
+      try {
+        const scheduledMode = integration.settings?.scheduled_run_mode === "apply" && config.integrations.scheduledApplyEnabled
+          ? "apply"
+          : "preview";
+        const run = await runPartnerIntegrationSync({
+          business: integration.partner,
+          integration,
+          request,
+          payload: {
+            mode: scheduledMode,
+            direction: "inbound",
+            trigger_source: "cron",
+            limit: scheduledMode === "apply" ? config.integrations.maxApplyRows : config.integrations.maxPreviewRows
+          }
+        });
+        results.push({ integration_id: integration.id, status: run.status, run_id: run.id });
+      } catch (runError) {
+        results.push({ integration_id: integration.id, status: "failed", message: runError.message });
+      }
+    }
+
+    await auditEvent({
+      request,
+      action: "cron.integrations_sync_completed",
+      resourceType: "partner_integration",
+      metadata: { checked: results.length, failed: results.filter((item) => item.status === "failed").length }
+    });
+
+    return { ok: true, checked: results.length, results };
+  });
+
+  app.post("/v1/cron/integrations/publish", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.integrations_publish_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+    return processIntegrationPublishJobs({ request, limit: 20 });
+  });
+
   app.post("/v1/cron/social-media-daily-drafts", async (request) => {
     if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
       await auditEvent({
@@ -7470,6 +15541,40 @@ export function registerRoutes(app) {
     const payload = socialMediaAssetPrepareSchema.parse(request.body || {});
     const result = await prepareSocialMediaAssets({ request, ctx: null, limit: payload.limit });
     return { ok: true, ...result };
+  });
+
+  app.post("/v1/cron/social-media-assets-cleanup", async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.social_media_assets_cleanup_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] }
+      });
+      const error = new Error("Cron yetkisi doğrulanamadı.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const payload = socialMediaAssetCleanupSchema.parse(request.body || {});
+    const result = await cleanupSocialMediaAssetStorage({
+      retentionDays: payload.retention_days,
+      limit: payload.limit,
+      dryRun: payload.dry_run
+    });
+
+    await auditEvent({
+      request,
+      action: "cron.social_media_assets_cleaned",
+      resourceType: "storage_bucket",
+      resourceId: result.bucket,
+      severity: result.deleted ? "warning" : "info",
+      source: "cron",
+      purpose: "social_media_asset_retention",
+      metadata: result
+    });
+
+    return { ok: true, cleanup: result };
   });
 
   app.post("/v1/cron/social-media-dispatch", async (request) => {

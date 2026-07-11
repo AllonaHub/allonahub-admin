@@ -14,21 +14,29 @@
       applications: [],
       partners: [],
       orders: [],
+      refunds: [],
+      productReviews: [],
+      integrations: {},
       tickets: [],
       proposals: [],
       social: {},
       security: {},
       reports: {},
-      audit: []
+      audit: [],
+      automation: null
     }
   };
 
   const views = {
     dashboard: { label: "Dashboard", marker: "Canlı" },
+    automation: { label: "Otomasyon Merkezi", marker: "Yeni" },
     users: { label: "Kullanıcı Takibi", marker: "" },
     applications: { label: "Partner Başvuruları", marker: "" },
     partners: { label: "Partner Operasyonları", marker: "" },
+    integrations: { label: "Entegrasyonlar", marker: "MVP" },
     orders: { label: "Sipariş Yönetimi", marker: "" },
+    refunds: { label: "İade ve İptaller", marker: "" },
+    productReviews: { label: "Ürün Onayı", marker: "ETBİS" },
     content: { label: "İçerik Yönetimi", marker: "" },
     social: { label: "Sosyal Medya", marker: "Yeni" },
     support: { label: "Destek Talepleri", marker: "" },
@@ -115,13 +123,50 @@
     return `<span class="admin-row-title">${escape(title || "-")}</span><span class="admin-row-sub">${escape(sub || "")}</span>`;
   }
 
+  function shortText(value, max = 180) {
+    const text = String(value || "").trim();
+    if (text.length <= max) return text;
+    return `${text.slice(0, max - 1)}…`;
+  }
+
+  function refundTypeLabel(value) {
+    const map = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "İşaret",
+      support_signal: "Destek sinyali"
+    };
+    return map[value] || value || "-";
+  }
+
+  function refundActionLabel(action) {
+    const map = {
+      mark_review: "İncelemeye al",
+      approve_cancellation: "İptali onayla",
+      approve_refund: "İadeyi onayla",
+      reject_request: "Talebi reddet",
+      add_note: "Not ekle"
+    };
+    return map[action] || action || "Aksiyon";
+  }
+
   function statusBox(message, type) {
     return `<div class="admin-status ${type === "error" ? "admin-status--error" : ""}">${escape(message)}</div>`;
   }
 
+  function partnerAccessEmailStatus(auth) {
+    if (auth?.access_email_sent || auth?.invite_sent || auth?.password_reset_sent) {
+      const type = auth.access_email_type === "invite" ? "davet maili" : "şifre belirleme maili";
+      return `${type} gönderildi`;
+    }
+    return auth?.access_email_error
+      ? `erişim maili gönderilemedi: ${auth.access_email_error}`
+      : "erişim maili gönderilmedi";
+  }
+
   function loginUrl() {
     const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
-    return core.url(`/pages/account/user.html?returnTo=${returnTo}`);
+    return core.url(`/admin/admin-login.html?returnTo=${returnTo}`);
   }
 
   function mfaUrl() {
@@ -167,34 +212,205 @@
     return session.access_token;
   }
 
+  async function refreshSessionToken() {
+    if (!App.supabase?.auth?.refreshSession) return "";
+    try {
+      const { data, error } = await App.supabase.auth.refreshSession();
+      if (error || !data?.session?.access_token) return "";
+      return data.session.access_token;
+    } catch {
+      return "";
+    }
+  }
+
+  function redirectToLoginSoon() {
+    window.setTimeout(() => {
+      window.location.href = loginUrl();
+    }, 500);
+  }
+
+  async function fetchApi(path, options, token) {
+    return fetch(`${config.apiBaseUrl}${path}`, {
+      method: options?.method || "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+      credentials: "omit"
+    });
+  }
+
   async function api(path, options) {
     const token = await sessionToken();
     if (!token) return null;
     let response;
     try {
-      response = await fetch(`${config.apiBaseUrl}${path}`, {
-        method: options?.method || "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: options?.body ? JSON.stringify(options.body) : undefined,
-        credentials: "omit"
-      });
+      response = await fetchApi(path, options, token);
+      if (response.status === 401) {
+        const refreshedToken = await refreshSessionToken();
+        if (refreshedToken && refreshedToken !== token) {
+          response = await fetchApi(path, options, refreshedToken);
+        }
+      }
     } catch (error) {
       console.error("[AdminOps] API fetch failed", path, error);
-      throw new Error(readableError(error));
+      const wrapped = new Error(readableError(error));
+      wrapped.network = true;
+      wrapped.apiPath = path;
+      wrapped.cause = error;
+      throw wrapped;
     }
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = payload.message || payload.error || `API isteği tamamlanamadı. HTTP ${response.status}`;
+      if (response.status === 401) {
+        redirectToLoginSoon();
+        throw new Error("Oturum süresi doldu veya doğrulanamadı. Giriş sayfasına yönlendiriliyorsunuz.");
+      }
       if (response.status === 403 && /mfa|iki aşamalı|2fa|aal2/i.test(message)) {
         window.location.href = mfaUrl();
         throw new Error("İki aşamalı doğrulama gerekli.");
       }
-      throw new Error(message);
+      const error = new Error(message);
+      error.status = response.status;
+      error.payload = payload;
+      error.apiPath = path;
+      throw error;
     }
     return payload;
+  }
+
+  function apiRouteMissing(error) {
+    const message = String(error?.message || error?.payload?.message || "");
+    return error?.status === 404 || /route .*not found|not found/i.test(message);
+  }
+
+  function partnerApplicationsFallbackReason(error) {
+    const message = String(error?.message || "");
+    const path = String(error?.apiPath || "");
+    if (!/partner-applications/i.test(path) && !/partner başvur/i.test(message)) return "";
+    if (error?.network || /API bağlantısı kurulamadı|failed to fetch|load failed|network/i.test(message)) {
+      return "Partner başvuruları API path'i Cloudflare tarafından engellendi; Supabase RLS fallback aktif.";
+    }
+    return "";
+  }
+
+  function dbClient() {
+    if (!App.db || !App.db.client) throw new Error("Supabase istemcisi yüklenemedi.");
+    return App.db.client();
+  }
+
+  function applicationFilters() {
+    return {
+      search: $("#adminGlobalSearch")?.value?.trim() || "",
+      status: $("#adminGlobalStatus")?.value || "",
+      limit: 100
+    };
+  }
+
+  function filterApplications(items, filters) {
+    const options = filters || applicationFilters();
+    const q = String(options.search || "").toLocaleLowerCase("tr-TR");
+    const status = String(options.status || "");
+    return (items || [])
+      .filter((item) => !status || item.status === status)
+      .filter((item) => {
+        if (!q) return true;
+        return [
+          item.company_name,
+          item.contact_name,
+          item.email,
+          item.phone,
+          item.tax_number,
+          item.company_type,
+          item.category,
+          item.city,
+          item.country
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("tr-TR")
+          .includes(q);
+      })
+      .slice(0, Number(options.limit || 100));
+  }
+
+  async function listApplicationsFromSupabase() {
+    const filters = applicationFilters();
+    let query = dbClient()
+      .from("partner_applications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(Math.max(Number(filters.limit || 100), 200));
+
+    if (filters.status) query = query.eq("status", filters.status);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return filterApplications(data || [], filters);
+  }
+
+  async function getApplicationFromSupabase(applicationId) {
+    const { data, error } = await dbClient()
+      .from("partner_applications")
+      .select("*")
+      .eq("id", applicationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("Partner başvurusu bulunamadı.");
+    return data;
+  }
+
+  async function updateApplicationReviewFromSupabase(applicationId, payload) {
+    const nowIso = new Date().toISOString();
+    const recommendation = payload.action === "recommend_approve"
+      ? "approve"
+      : payload.action === "recommend_reject"
+      ? "reject"
+      : payload.action === "send_super_admin"
+      ? "needs_super_admin"
+      : null;
+    const reviewStage = payload.action === "start_review" ? "in_review" : "recommendation_ready";
+
+    const { data, error } = await dbClient()
+      .from("partner_applications")
+      .update({
+        status: "review",
+        review_stage: reviewStage,
+        admin_recommendation: recommendation,
+        risk_level: payload.risk_level,
+        reviewed_by: state.profile?.id || null,
+        reviewed_at: nowIso,
+        metadata: {
+          last_admin_action: payload.action,
+          last_admin_reason: payload.reason,
+          last_admin_action_at: nowIso,
+          fallback_source: "admin_ops_supabase"
+        }
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+    if (error) throw error;
+
+    try {
+      const { error: noteError } = await dbClient()
+        .from("admin_operation_notes")
+        .insert({
+          author_id: state.profile?.id || null,
+          target_type: "partner_application",
+          target_id: applicationId,
+          note_type: "review",
+          body: payload.reason
+        });
+      if (noteError) throw noteError;
+    } catch (noteError) {
+      console.warn("[AdminOps] fallback note insert skipped", noteError);
+    }
+
+    return data;
   }
 
   function setLoading(message) {
@@ -206,6 +422,63 @@
     document.querySelectorAll("[data-admin-view]").forEach((button) => {
       button.classList.toggle("is-active", button.dataset.adminView === state.view);
     });
+  }
+
+  function currentMetrics() {
+    return state.dashboard?.metrics || {};
+  }
+
+  function countItems(items, predicate) {
+    return (items || []).filter(predicate).length;
+  }
+
+  function notificationCount(view) {
+    const metrics = currentMetrics();
+    const alerts = state.dashboard?.alerts || [];
+    const cache = state.cache || {};
+    const automation = cache.automation || state.dashboard?.automation || {};
+    const automationSummary = automation.summary || {};
+    const refundSignalCount = countItems(alerts, (item) => /iade|iptal|refund|cancel|ihtilaf|dispute/i.test(`${item.title || ""} ${item.message || ""}`));
+    const applicationCount = Math.max(
+      Number(metrics.pending_applications || 0),
+      countItems(cache.applications, (item) => ["pending", "review"].includes(String(item.status || "")))
+    );
+    const supportCount = Math.max(
+      Number(metrics.open_support_tickets || 0),
+      countItems(cache.tickets, (item) => ["open", "in_progress", "waiting"].includes(String(item.status || "")))
+    );
+    const securityCount = Number(metrics.system_alerts || 0);
+    const counts = {
+      dashboard: securityCount + applicationCount + supportCount,
+      applications: applicationCount,
+      support: supportCount,
+      security: securityCount,
+      refunds: Math.max(
+        refundSignalCount,
+        countItems(cache.refunds, (item) => ["support_signal", "signal"].includes(item.type) || item.order_status === "pending_signal")
+      ),
+      automation: Number(automationSummary.action_required || 0) + Number(automationSummary.auto_ready || 0),
+      productReviews: countItems(cache.productReviews, (item) => !["approved", "rejected"].includes(String(item.compliance_review_status || "pending"))),
+      content: countItems(cache.proposals, (item) => ["pending_super_admin", "review", "draft"].includes(String(item.status || ""))),
+      social: countItems(cache.social?.drafts, (item) => ["ready_for_review", "queued", "failed"].includes(String(item.status || "")))
+    };
+    return Math.max(0, Number(counts[view] || 0));
+  }
+
+  function notificationTone(view, count) {
+    if (!count) return "";
+    if (["security", "refunds"].includes(view)) return "critical";
+    if (view === "automation") return Number((state.cache.automation || state.dashboard?.automation || {}).summary?.critical || 0) ? "critical" : "attention";
+    if (["support", "applications", "productReviews", "content"].includes(view)) return "attention";
+    return "info";
+  }
+
+  function navBadge(view) {
+    const count = notificationCount(view);
+    if (!count) return "";
+    const label = count > 99 ? "99+" : String(count);
+    const tone = notificationTone(view, count);
+    return `<span class="admin-nav-alert" data-tone="${escape(tone)}" title="${escape(label)} yeni bildirim">${escape(label)}</span>`;
   }
 
   function viewFromHash() {
@@ -264,6 +537,107 @@
     `).join("")}</div>`;
   }
 
+  function automationSummaryGrid(summary) {
+    const items = [
+      ["Otomatik hazır", summary.auto_ready],
+      ["Admin kararı", summary.admin_required],
+      ["Süper admin", summary.super_admin_required],
+      ["Takip listesi", summary.watchlist],
+      ["Kritik", summary.critical],
+      ["Uygulandı", summary.applied]
+    ];
+    return `<div class="admin-metrics">${items.map(([label, value]) => `
+      <div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value || 0)}</strong></div>
+    `).join("")}</div>`;
+  }
+
+  function automationRiskTone(risk) {
+    if (risk === "critical") return "red";
+    if (risk === "high" || risk === "warning") return "orange";
+    if (risk === "low" || risk === "clear") return "green";
+    return "";
+  }
+
+  function automationLaneTitle(lane) {
+    const map = {
+      auto_ready: "Otomatik hazır",
+      admin_queue: "Admin kuyruğu",
+      super_admin_queue: "Süper admin kuyruğu",
+      watchlist: "Takip listesi"
+    };
+    return map[lane] || lane || "Kuyruk";
+  }
+
+  function automationQueueRows(items) {
+    return (items || []).map((item) => `
+      <tr>
+        <td>${titleCell(item.title, `${automationLaneTitle(item.lane)} / ${item.type || "-"}`)}</td>
+        <td>${badge(item.risk_level || "medium", automationRiskTone(item.risk_level))}</td>
+        <td>${escape(shortText(item.summary || "-", 180))}</td>
+        <td>${escape(shortText(item.action || "-", 120))}</td>
+        <td>${dateTime(item.created_at)}</td>
+      </tr>
+    `);
+  }
+
+  function automationQueuePreview(automation) {
+    const queues = automation?.queues || {};
+    const rows = [
+      ...(queues.auto_ready || []).slice(0, 4),
+      ...(queues.admin_queue || []).slice(0, 4),
+      ...(queues.super_admin_queue || []).slice(0, 4),
+      ...(queues.watchlist || []).slice(0, 3)
+    ];
+    return table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(rows), "Otomasyon kuyruğunda kayıt yok.");
+  }
+
+  function automationRulesList(rules) {
+    const rows = (rules || []).map((rule) => `
+      <div class="admin-list-item">
+        <strong>${badge(rule.auto_apply ? "otomatik" : "manuel", rule.auto_apply ? "green" : "orange")} ${escape(rule.title)}</strong>
+        <p>${escape(rule.summary || "")}</p>
+      </div>
+    `).join("");
+    return rows ? `<div class="admin-list">${rows}</div>` : statusBox("Otomasyon kuralı bulunamadı.");
+  }
+
+  function automationActions(automation) {
+    const summary = automation?.summary || {};
+    return `
+      <button class="admin-btn admin-btn--gold" type="button" data-admin-automation-run="publish_safe_products" ${Number(summary.auto_ready || 0) ? "" : "disabled"}>Güvenli Ürünleri Yayına Al</button>
+      <button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>
+    `;
+  }
+
+  function automationPanel(automation) {
+    if (!automation) return "";
+    const summary = automation.summary || {};
+    return section(
+      "Otomasyon Merkezi",
+      `Son kontrol: ${dateTime(automation.checked_at)}`,
+      automationSummaryGrid(summary) + automationQueuePreview(automation),
+      `<button class="admin-btn" type="button" data-admin-view="automation">Detay</button>${automationActions(automation)}`
+    );
+  }
+
+  function renderAutomationCenter(automation) {
+    const payload = automation || state.cache.automation || state.dashboard?.automation || { summary: {}, queues: {}, rules: [] };
+    const queues = payload.queues || {};
+    $("#adminContent").innerHTML = [
+      section(
+        "Otomasyon Merkezi",
+        "Düşük riskli işler otomatik, riskli işler admin, kritik işler süper admin kuyruğuna düşer",
+        warningPanel(payload.warnings) + automationSummaryGrid(payload.summary || {}),
+        automationActions(payload)
+      ),
+      section("Otomatik Hazır", "Kuralları geçen ve güvenli yayınlanabilecek kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.auto_ready || []), "Otomatik yayınlanabilecek kayıt yok.")),
+      section("Admin Kuyruğu", "Admin kararı veya revizyon bildirimi isteyen kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.admin_queue || []), "Admin kararı bekleyen kayıt yok.")),
+      section("Süper Admin Kuyruğu", "Owner onayı, kritik güvenlik, içerik veya yayın kararı isteyen kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.super_admin_queue || []), "Süper admin kuyruğu boş.")),
+      section("Takip Listesi", "Otomatik işlem yapılmayan ama izlenen operasyonel kayıtlar", table(["Kayıt", "Risk", "Sebep", "Aksiyon", "Tarih"], automationQueueRows(queues.watchlist || []), "Takip listesi boş.")),
+      section("Kurallar", "Otomasyonun hangi işi nerede durdurduğunu gösterir", automationRulesList(payload.rules || []))
+    ].join("");
+  }
+
   function renderDashboard(payload) {
     const dashboard = payload || state.dashboard || { metrics: {}, recentOrders: [], alerts: [] };
     const orders = dashboard.recentOrders || [];
@@ -292,11 +666,84 @@
     $("#adminContent").innerHTML = [
       section("Admin Dashboard", "Günlük operasyon özeti", metricsGrid(dashboard.metrics || {})),
       warningPanel(),
+      automationPanel(dashboard.automation),
       `<div class="admin-split">
         ${section("Son Siparişler", "", table(["Sipariş", "Müşteri", "Tutar", "Sipariş", "Ödeme"], orderRows, "Sipariş kaydı bulunamadı."))}
         ${section("Sistem Uyarıları", "", alertList)}
       </div>`
     ].join("");
+  }
+
+  function productReviewStatusLabel(value) {
+    const map = {
+      pending: "Onay bekliyor",
+      approved: "Onaylandı",
+      rejected: "Reddedildi",
+      needs_review: "Revizyon gerekli"
+    };
+    return map[value] || value || "pending";
+  }
+
+  function productReviewStatusTone(value) {
+    if (value === "approved") return "green";
+    if (value === "rejected") return "red";
+    return "orange";
+  }
+
+  function productReviewAutomationLabel(automation) {
+    if (!automation) return "Kontrol bekliyor";
+    if (automation.revision_required || automation.lane === "needs_revision") return "Revizyon riski";
+    if (automation.lane === "watch" || automation.risk_level === "warning") return "Kontrol et";
+    return "Onaya hazır";
+  }
+
+  function productReviewAutomationTone(automation) {
+    if (!automation) return "orange";
+    if (automation.revision_required || automation.risk_level === "critical" || automation.lane === "needs_revision") return "red";
+    if (automation.risk_level === "warning" || automation.lane === "watch") return "orange";
+    return "green";
+  }
+
+  function productReviewAutomationReason(automation) {
+    const reasons = automation?.reasons || [];
+    if (!reasons.length) return "Otomasyon revizyon riski görmedi.";
+    return reasons
+      .slice(0, 2)
+      .map((reason) => `${reason.field_label || reason.field || "Alan"}: ${reason.title || reason.message || "Kontrol"}`)
+      .join(" · ");
+  }
+
+  function renderProductReviews(products) {
+    const rows = products.map((raw) => {
+      const product = core.normalizeProduct(raw);
+      const reviewStatus = raw.compliance_review_status || "pending";
+      const automation = raw.review_automation;
+      return `
+        <tr>
+          <td>${titleCell(product.name, `${product.category || "-"} / ${product.module_key || "shop"}`)}</td>
+          <td>${titleCell(product.seller_public_name || product.seller_name || "-", product.seller_legal_name || product.seller_city || "-")}</td>
+          <td>${money(product.price)}<br><small>${escape(product.stock)} stok</small></td>
+          <td>${badge(product.status)}<br>${badge(productReviewStatusLabel(reviewStatus), productReviewStatusTone(reviewStatus))}</td>
+          <td>${badge(productReviewAutomationLabel(automation), productReviewAutomationTone(automation))}<br><small>${escape(shortText(productReviewAutomationReason(automation), 130))}</small></td>
+          <td>${escape(shortText(product.invoice_responsibility || "-", 120))}</td>
+          <td>
+            <span class="admin-actions">
+              <button class="admin-btn" type="button" data-detail="product-review" data-id="${escape(product.id)}">Detay</button>
+              <button class="admin-btn admin-btn--gold" type="button" data-product-review-action="approved" data-id="${escape(product.id)}">Yayına Al</button>
+              <button class="admin-btn" type="button" data-product-review-action="needs_review" data-id="${escape(product.id)}">Revizyon</button>
+              <button class="admin-btn admin-btn--danger" type="button" data-product-review-action="rejected" data-id="${escape(product.id)}">Reddet</button>
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+    $("#adminContent").innerHTML = section(
+      "Ürün Onayı",
+      "Partner katalog kayıtlarında satıcı, fatura, iade/cayma ve yasaklı ürün uygunluğu kontrolü",
+      warningPanel() + table(["Ürün", "Satıcı", "Fiyat/Stok", "Durum", "Otomasyon", "Fatura Sorumluluğu", "Aksiyon"], rows, "Onay bekleyen ürün bulunamadı."),
+      `<a class="admin-btn admin-btn--gold" href="/admin/product-reviews.html">Ürün Onay Otomasyonu</a><button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>`
+    );
   }
 
   function renderUsers(users) {
@@ -335,9 +782,7 @@
         <td>
           <span class="admin-actions">
             <button class="admin-btn" type="button" data-detail="application" data-id="${escape(item.id)}">Detay</button>
-            <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}">İncele</button>
-            <button class="admin-btn admin-btn--gold" type="button" data-application-action="recommend_approve" data-id="${escape(item.id)}">Onay Öner</button>
-            <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}">Ret Öner</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-application-decision="${escape(item.id)}">Karar Ver</button>
           </span>
         </td>
       </tr>
@@ -368,6 +813,54 @@
     );
   }
 
+  function renderIntegrations(data) {
+    const integrations = data.integrations || [];
+    const runs = data.runs || [];
+    const publishJobs = data.publishJobs || [];
+    const policy = data.policy || {};
+    const metricHtml = `<div class="admin-metrics">${[
+      ["Bağlantı", integrations.length],
+      ["Sorunlu run", runs.filter((item) => ["failed", "partial"].includes(item.status)).length],
+      ["Publish kuyruğu", publishJobs.filter((item) => ["queued", "failed"].includes(item.status)).length],
+      ["Apply", policy.apply_enabled ? "Açık" : "Kapalı"],
+      ["Outbound", policy.outbound_enabled ? "Açık" : "Kapalı"]
+    ].map(([label, value]) => `<div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value)}</strong></div>`).join("")}</div>`;
+    const integrationRows = integrations.map((item) => `
+      <tr>
+        <td>${titleCell(item.display_name || item.provider, item.partner?.display_name || item.partner?.partner_code || item.partner_id)}</td>
+        <td>${badge(item.provider)}<br><small>${escape(item.plan_tier || "free")}</small></td>
+        <td>${badge(item.status)}<br>${badge(item.last_test_status || "test bekliyor")}</td>
+        <td>${escape(item.sync_mode || "manual")}<br><small>${escape(item.import_enabled ? "import açık" : "import kapalı")} / ${escape(item.export_enabled ? "export açık" : "export kapalı")}</small></td>
+        <td>${dateTime(item.last_sync_at)}<br><small>${escape(shortText(item.last_error_message || item.last_test_message || "-", 90))}</small></td>
+      </tr>
+    `);
+    const runRows = runs.map((run) => `
+      <tr>
+        <td>${titleCell(run.integration?.display_name || run.integration?.provider || run.integration_id, dateTime(run.started_at))}</td>
+        <td>${badge(run.run_mode)} / ${badge(run.direction)}</td>
+        <td>${badge(run.status)}</td>
+        <td>${escape(run.checked_count || 0)} kontrol · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel</td>
+        <td>${escape(run.failed_count || 0)} hata · ${escape(run.warning_count || 0)} uyarı</td>
+      </tr>
+    `);
+    const jobRows = publishJobs.map((job) => `
+      <tr>
+        <td>${titleCell(job.product?.name || job.product_id, job.integration?.display_name || job.integration?.provider || job.integration_id)}</td>
+        <td>${badge(job.action)}</td>
+        <td>${badge(job.status)}</td>
+        <td>${dateTime(job.scheduled_at)}<br><small>${escape(shortText(job.error_message || "-", 90))}</small></td>
+      </tr>
+    `);
+    $("#adminContent").innerHTML = [
+      section("Entegrasyon Merkezi", "Partner connectorları, sync runları ve outbound kuyruğu", warningPanel(data.warnings) + metricHtml),
+      section("Bağlantılar", "", table(["Entegrasyon", "Provider", "Durum", "Mod", "Son Çalışma"], integrationRows, "Entegrasyon kaydı bulunamadı.")),
+      `<div class="admin-split">
+        ${section("Senkron Logları", "", table(["Run", "Tip", "Durum", "Sayaç", "Kontrol"], runRows, "Senkron kaydı bulunamadı."))}
+        ${section("Publish Kuyruğu", "", table(["Ürün", "Aksiyon", "Durum", "Plan"], jobRows, "Publish işi bulunamadı."))}
+      </div>`
+    ].join("");
+  }
+
   function renderOrders(orders) {
     const rows = orders.map((order) => `
       <tr>
@@ -389,6 +882,58 @@
       "Sipariş Yönetimi",
       "Sipariş, ödeme, teslimat ve riskli sipariş takibi",
       warningPanel() + table(["Sipariş", "Müşteri", "Tutar", "Sipariş", "Ödeme", "Kargo", "İşlem"], rows, "Sipariş bulunamadı.")
+    );
+  }
+
+  function renderRefunds(payload) {
+    const data = payload || {};
+    const items = data.items || [];
+    const summary = data.summary || {};
+    const metricHtml = `<div class="admin-metrics">
+      ${[
+        ["Toplam", summary.total],
+        ["İade", summary.refunded],
+        ["İptal", summary.cancelled],
+        ["Destek sinyali", summary.support_signals],
+        ["Aksiyon bekleyen", summary.action_required]
+      ].map(([label, value]) => `<div class="admin-metric"><span>${escape(label)}</span><strong>${escape(value || 0)}</strong></div>`).join("")}
+    </div>`;
+    const filterHint = `
+      <div class="admin-panel-note">
+        Arama kutusundan sipariş no, müşteri, e-posta veya neden arayabilirsin.
+        Durum filtresinde <strong>Refunded</strong>, <strong>Cancelled</strong> veya <strong>Pending signal</strong> seçilebilir.
+      </div>
+    `;
+    const rows = items.map((item) => {
+      const isTicket = item.type === "support_signal";
+      const actions = isTicket
+        ? `<button class="admin-btn" type="button" data-refund-ticket-detail="${escape(item.ticket_id || item.id)}">Detay</button>`
+        : `
+          <span class="admin-actions">
+            <button class="admin-btn" type="button" data-refund-detail="${escape(item.id)}">Detay</button>
+            <button class="admin-btn" type="button" data-refund-action="mark_review" data-id="${escape(item.id)}">İncele</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_cancellation" data-id="${escape(item.id)}">İptal Onayla</button>
+            <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_refund" data-id="${escape(item.id)}">İade Onayla</button>
+            <button class="admin-btn admin-btn--danger" type="button" data-refund-action="reject_request" data-id="${escape(item.id)}">Reddet</button>
+          </span>
+        `;
+      return `
+        <tr>
+          <td>${titleCell(item.order_no || item.id, dateTime(item.updated_at || item.created_at))}</td>
+          <td>${badge(refundTypeLabel(item.type), item.type === "refund" ? "red" : item.type === "cancellation" ? "orange" : "")}</td>
+          <td>${titleCell(item.customer_name || item.customer_email || "-", item.customer_phone || item.customer_email || "")}</td>
+          <td>${item.total ? money(item.total) : "-"}</td>
+          <td>${badge(item.order_status || "-")}</td>
+          <td>${badge(item.payment_status || "-")}</td>
+          <td>${escape(shortText(item.reason || "Neden kaydı yok", 150))}</td>
+          <td>${actions}</td>
+        </tr>
+      `;
+    });
+    $("#adminContent").innerHTML = section(
+      "İade ve İptaller",
+      "İade, iptal, destek sinyali, neden ve operasyon aksiyonları",
+      warningPanel(data.warnings || []) + metricHtml + filterHint + table(["Sipariş", "Tip", "Müşteri", "Tutar", "Sipariş", "Ödeme", "Neden", "İşlem"], rows, "İade veya iptal kaydı bulunamadı.")
     );
   }
 
@@ -930,6 +1475,45 @@
     $("#adminDrawer").classList.add("is-open");
   }
 
+  function applicationDecisionMarkup(application, notes = [], approvalRequests = []) {
+    const item = application || {};
+    const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    const canDecide = ["admin", "super_admin"].includes(String(state.profile?.role || "").toLowerCase());
+    const rows = [
+      ["Firma", item.company_name || "-"],
+      ["Yetkili", item.contact_name || "-"],
+      ["E-posta", item.email || "-"],
+      ["Telefon", item.phone || "-"],
+      ["Vergi No", item.tax_number || "-"],
+      ["Durum", item.status || "-"],
+      ["İnceleme", item.review_stage || "-"],
+      ["Admin önerisi", item.admin_recommendation || "-"],
+      ["Risk", item.risk_level || "-"],
+      ["Kategori", metadata.category || item.category || "-"],
+      ["Mesaj", metadata.message || item.message || "-"],
+      ["Tarih", dateTime(item.created_at)]
+    ].map(([key, value]) => `<div><dt>${escape(key)}</dt><dd>${escape(value)}</dd></div>`).join("");
+    const noteRows = (notes || []).slice(0, 5).map((note) => `<li>${escape(dateTime(note.created_at))}: ${escape(note.body || "-")}</li>`).join("");
+    const requestRows = (approvalRequests || []).slice(0, 5).map((request) => `<li>${escape(request.status || "-")} / ${escape(request.summary || "-")}</li>`).join("");
+    const actionButtons = canDecide
+      ? `
+        <button class="admin-btn admin-btn--gold" type="button" data-application-final-decision="approved" data-id="${escape(item.id)}">Onayla ve Aktif Et</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-application-final-decision="rejected" data-id="${escape(item.id)}">Reddet</button>
+        <button class="admin-btn" type="button" data-application-final-decision="review" data-id="${escape(item.id)}">İncelemeye Al</button>
+      `
+      : `
+        <button class="admin-btn" type="button" data-application-action="start_review" data-id="${escape(item.id)}">İncelemeye Al</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-application-action="send_super_admin" data-id="${escape(item.id)}">Super Admin Onayına Gönder</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-application-action="recommend_reject" data-id="${escape(item.id)}">Ret Öner</button>
+      `;
+    return `
+      <dl class="admin-kv">${rows}</dl>
+      ${noteRows ? `<h3>İnceleme notları</h3><ul>${noteRows}</ul>` : ""}
+      ${requestRows ? `<h3>Onay kayıtları</h3><ul>${requestRows}</ul>` : ""}
+      <div class="admin-actions">${actionButtons}</div>
+    `;
+  }
+
   function closeDrawer() {
     $("#adminDrawer")?.classList.remove("is-open");
   }
@@ -996,8 +1580,17 @@
   async function loadDashboard() {
     const data = await api("/v1/ops-console/dashboard");
     state.dashboard = data.dashboard;
+    state.cache.automation = data.dashboard?.automation || state.cache.automation;
     state.warnings = data.warnings || [];
+    renderNav();
     renderDashboard(data.dashboard);
+  }
+
+  async function loadAutomation() {
+    const data = await api("/v1/ops-console/automation?limit=80");
+    state.cache.automation = data.automation || { summary: {}, queues: {}, rules: [] };
+    state.warnings = data.warnings || [];
+    renderAutomationCenter(state.cache.automation);
   }
 
   async function loadUsers() {
@@ -1008,10 +1601,19 @@
   }
 
   async function loadApplications() {
-    const data = await api(`/v1/ops-console/partner-applications?${queryParams()}`);
-    state.cache.applications = data.applications || [];
-    state.warnings = data.warnings || [];
-    renderApplications(state.cache.applications);
+    try {
+      const data = await api(`/v1/ops-console/partner-applications?${queryParams()}`);
+      state.cache.applications = data.applications || [];
+      state.warnings = data.warnings || [];
+      renderApplications(state.cache.applications);
+    } catch (error) {
+      const fallbackReason = partnerApplicationsFallbackReason(error);
+      if (!fallbackReason) throw error;
+      console.warn("[AdminOps] partner applications API fallback active", error);
+      state.cache.applications = await listApplicationsFromSupabase();
+      state.warnings = [fallbackReason];
+      renderApplications(state.cache.applications);
+    }
   }
 
   async function loadPartners() {
@@ -1021,11 +1623,42 @@
     renderPartners(state.cache.partners);
   }
 
+  async function loadIntegrations() {
+    const data = await api(`/v1/ops-console/integrations?${queryParams()}`);
+    state.cache.integrations = data || {};
+    state.warnings = data.warnings || [];
+    renderIntegrations(data);
+  }
+
   async function loadOrders() {
     const data = await api(`/v1/ops-console/orders?${queryParams()}`);
     state.cache.orders = data.orders || [];
     state.warnings = data.warnings || [];
     renderOrders(state.cache.orders);
+  }
+
+  async function loadRefunds() {
+    const params = new URLSearchParams();
+    const search = $("#adminGlobalSearch")?.value?.trim() || "";
+    const status = $("#adminGlobalStatus")?.value || "";
+    if (search) params.set("search", search);
+    if (["cancelled", "refunded", "pending_signal"].includes(status)) params.set("status", status);
+    params.set("limit", "100");
+    const data = await api(`/v1/ops-console/refund-cancellations?${params.toString()}`);
+    state.cache.refunds = data.items || [];
+    state.warnings = data.warnings || [];
+    renderRefunds(data);
+  }
+
+  async function loadProductReviews() {
+    const params = new URLSearchParams();
+    const search = $("#adminGlobalSearch")?.value?.trim() || "";
+    if (search) params.set("search", search);
+    params.set("limit", "120");
+    const data = await api(`/v1/ops-console/product-reviews?${params.toString()}`);
+    state.cache.productReviews = data.products || [];
+    state.warnings = data.warnings || [];
+    renderProductReviews(state.cache.productReviews);
   }
 
   async function loadSupport() {
@@ -1076,16 +1709,21 @@
     setLoading(`${views[state.view].label} yükleniyor...`);
     try {
       if (state.view === "dashboard") await loadDashboard();
+      if (state.view === "automation") await loadAutomation();
       if (state.view === "users") await loadUsers();
       if (state.view === "applications") await loadApplications();
       if (state.view === "partners") await loadPartners();
+      if (state.view === "integrations") await loadIntegrations();
       if (state.view === "orders") await loadOrders();
+      if (state.view === "refunds") await loadRefunds();
+      if (state.view === "productReviews") await loadProductReviews();
       if (state.view === "content") await loadContent();
       if (state.view === "social") await loadSocialMedia();
       if (state.view === "support") await loadSupport();
       if (state.view === "security") await loadSecurity();
       if (state.view === "reports") await loadReports();
       if (state.view === "audit") await loadAudit();
+      renderNav();
     } catch (error) {
       console.error("[AdminOps] view load failed", state.view, error);
       $("#adminContent").innerHTML = statusBox(readableError(error), "error");
@@ -1098,11 +1736,25 @@
         const data = await api(`/v1/ops-console/users/${encodeURIComponent(id)}`);
         renderObjectDetails("Kullanıcı Detayı", data.profile);
       } else if (type === "application") {
-        const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
-        renderObjectDetails("Başvuru Detayı", data.application);
+        try {
+          const data = await api(`/v1/ops-console/partner-applications/${encodeURIComponent(id)}`);
+          $("#adminDrawerTitle").textContent = "Başvuru Detayı";
+          $("#adminDrawerBody").innerHTML = applicationDecisionMarkup(data.application, data.notes, data.approvalRequests);
+          $("#adminDrawer").classList.add("is-open");
+        } catch (error) {
+          const fallbackReason = partnerApplicationsFallbackReason(error);
+          if (!fallbackReason) throw error;
+          console.warn("[AdminOps] partner application detail fallback active", error);
+          $("#adminDrawerTitle").textContent = "Başvuru Detayı";
+          $("#adminDrawerBody").innerHTML = applicationDecisionMarkup(await getApplicationFromSupabase(id));
+          $("#adminDrawer").classList.add("is-open");
+        }
       } else if (type === "order") {
         const data = await api(`/v1/ops-console/orders/${encodeURIComponent(id)}`);
         renderObjectDetails("Sipariş Detayı", data.order);
+      } else if (type === "product-review") {
+        const item = state.cache.productReviews.find((product) => String(product.id) === String(id));
+        renderObjectDetails("Ürün Onay Detayı", item);
       } else if (type === "partner") {
         const item = state.cache.partners.find((partner) => partner.id === id);
         renderObjectDetails("Partner Detayı", item);
@@ -1113,6 +1765,88 @@
     } catch (error) {
       showToast(error.message || "Detay açılamadı.", "error");
     }
+  }
+
+  async function showApplicationDecision(applicationId) {
+    await showDetail("application", applicationId);
+  }
+
+  function showRefundTicketDetail(ticketId) {
+    const item = (state.cache.refunds || []).find((entry) => String(entry.ticket_id || entry.id) === String(ticketId) || String(entry.id) === `ticket:${ticketId}`);
+    const ticket = item?.tickets?.[0];
+    if (!ticket) {
+      showToast("Destek sinyali detayı bulunamadı.", "error");
+      return;
+    }
+    $("#adminDrawerTitle").textContent = "İade / İptal Destek Sinyali";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Başlık</dt><dd>${escape(ticket.title || "-")}</dd></div>
+        <div><dt>Durum</dt><dd>${escape(ticket.status || "-")} / ${escape(ticket.priority || "-")} / ${escape(ticket.category || "-")}</dd></div>
+        <div><dt>Talep sahibi</dt><dd>${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}</dd></div>
+        <div><dt>Açıklama</dt><dd>${escape(ticket.message || "-")}</dd></div>
+        <div><dt>Metadata</dt><dd>${escape(JSON.stringify(ticket.metadata || {}).slice(0, 900))}</dd></div>
+        <div><dt>Tarih</dt><dd>${dateTime(ticket.created_at)} / ${dateTime(ticket.updated_at)}</dd></div>
+      </dl>
+    `;
+    $("#adminDrawer").classList.add("is-open");
+  }
+
+  async function showRefundDetail(orderId) {
+    const payload = await api(`/v1/ops-console/refund-cancellations/${encodeURIComponent(orderId)}`);
+    const item = payload.item || {};
+    const noteRows = (item.notes || []).slice(0, 8).map((note) => `
+      <div class="admin-list-item">
+        <strong>${escape(note.note_type || "not")} / ${dateTime(note.created_at)}</strong>
+        <p>${escape(note.body || "-")}</p>
+      </div>
+    `).join("");
+    const flagRows = (item.flags || []).slice(0, 8).map((flag) => `
+      <div class="admin-list-item">
+        <strong>${badge(flag.severity || "warning")} ${escape(flag.flag_type || "flag")} / ${escape(flag.status || "-")}</strong>
+        <p>${escape(flag.reason || "-")}</p>
+      </div>
+    `).join("");
+    const ticketRows = (item.tickets || []).slice(0, 6).map((ticket) => `
+      <div class="admin-list-item">
+        <strong>${escape(ticket.title || "Destek sinyali")} / ${escape(ticket.status || "-")}</strong>
+        <p>${escape(shortText(ticket.message || "-", 280))}</p>
+      </div>
+    `).join("");
+    const productRows = (item.order_items || []).slice(0, 12).map((row) => `
+      <tr>
+        <td>${escape(row.product?.name || row.name || row.product_id || "Ürün")}</td>
+        <td>${escape(row.quantity || 1)}</td>
+        <td>${money(row.price || row.unit_price || 0)}</td>
+        <td>${escape(row.partner_id || row.product?.partner_id || "-")}</td>
+      </tr>
+    `);
+
+    $("#adminDrawerTitle").textContent = "İade / İptal Detayı";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Sipariş</dt><dd>${escape(item.order_no || item.id || "-")} / ${escape(refundTypeLabel(item.type))}</dd></div>
+        <div><dt>Müşteri</dt><dd>${escape(item.customer_name || "-")} / ${escape(item.customer_email || "-")} / ${escape(item.customer_phone || "-")}</dd></div>
+        <div><dt>Tutar</dt><dd>${money(item.total)} / sipariş ${escape(item.order_status || "-")} / ödeme ${escape(item.payment_status || "-")}</dd></div>
+        <div><dt>Neden / açıklama</dt><dd>${escape(item.reason || "Kayıtlarda neden bulunamadı; karar öncesi destek ve not kayıtlarını kontrol et.")}</dd></div>
+        <div><dt>Tarih</dt><dd>${dateTime(item.created_at)} / ${dateTime(item.updated_at)}</dd></div>
+      </dl>
+      <div class="admin-actions" style="margin:12px 0">
+        <button class="admin-btn" type="button" data-refund-action="mark_review" data-id="${escape(item.id)}">İncelemeye al</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_cancellation" data-id="${escape(item.id)}">İptali onayla</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-refund-action="approve_refund" data-id="${escape(item.id)}">İadeyi onayla</button>
+        <button class="admin-btn admin-btn--danger" type="button" data-refund-action="reject_request" data-id="${escape(item.id)}">Talebi reddet</button>
+        <button class="admin-btn" type="button" data-refund-action="add_note" data-id="${escape(item.id)}">Not ekle</button>
+      </div>
+      ${table(["Ürün", "Adet", "Tutar", "Partner"], productRows, "Ürün kalemi bulunamadı.")}
+      <div class="admin-split" style="margin-top:14px">
+        ${section("Operasyon notları", "", noteRows ? `<div class="admin-list">${noteRows}</div>` : statusBox("Operasyon notu yok."))}
+        ${section("Risk / işlem flagleri", "", flagRows ? `<div class="admin-list">${flagRows}</div>` : statusBox("Flag kaydı yok."))}
+      </div>
+      ${section("Destek sinyalleri", "", ticketRows ? `<div class="admin-list">${ticketRows}</div>` : statusBox("Bu siparişle eşleşen destek sinyali yok."))}
+      ${warningPanel(payload.warnings || [])}
+    `;
+    $("#adminDrawer").classList.add("is-open");
   }
 
   async function createUserNote(userId) {
@@ -1178,11 +1912,103 @@
       ]
     });
     if (!data) return;
-    await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
-      method: "PATCH",
-      body: { action, risk_level: data.risk_level, reason: data.reason }
-    });
+    const payload = { action, risk_level: data.risk_level, reason: data.reason };
+    try {
+      try {
+        await api("/v1/ops-console/partner-application-reviews", {
+          method: "POST",
+          body: { application_id: applicationId, ...payload }
+        });
+      } catch (error) {
+        if (!apiRouteMissing(error)) throw error;
+        await api(`/v1/ops-console/partner-applications/${encodeURIComponent(applicationId)}/review`, {
+          method: "PATCH",
+          body: payload
+        });
+      }
+    } catch (error) {
+      const fallbackReason = partnerApplicationsFallbackReason(error);
+      if (!fallbackReason) throw error;
+      console.warn("[AdminOps] partner application review fallback active", error);
+      await updateApplicationReviewFromSupabase(applicationId, payload);
+      state.warnings = [fallbackReason];
+    }
     showToast("Başvuru inceleme kaydı oluşturuldu.");
+    await loadApplications();
+    await showApplicationDecision(applicationId).catch(() => null);
+  }
+
+  async function finalPartnerApplicationDecision(applicationId, decision) {
+    const labels = {
+      approved: "Onayla ve Aktif Et",
+      rejected: "Reddet",
+      review: "İncelemeye Al"
+    };
+    const data = await openModal({
+      title: `Partner Başvuru Kararı: ${labels[decision] || decision}`,
+      message: decision === "approved"
+        ? "Admin onayıyla partner hesabı, profil rolü ve aktif partner mağazası oluşturulacak."
+        : "Karar audit log'a yazılacak.",
+      confirmText: labels[decision] || "Kararı Kaydet",
+      danger: decision === "rejected",
+      fields: [
+        { id: "reason", label: "Karar gerekçesi", type: "textarea", required: decision !== "review", max: 1200 }
+      ]
+    });
+    if (!data) return;
+    const decisionPayload = {
+      application_id: applicationId,
+      decision,
+      reason: data.reason || labels[decision] || "Partner başvuru kararı",
+      commission_rate: 0.12,
+      store_status: decision === "approved" ? "active" : "review"
+    };
+    let result = null;
+    try {
+      result = await api("/v1/ops-console/partner-application-decisions", {
+        method: "POST",
+        body: decisionPayload
+      });
+    } catch (error) {
+      if (!apiRouteMissing(error)) throw error;
+      try {
+        result = await api("/v1/control-center/partner-application-decisions", {
+          method: "POST",
+          body: decisionPayload
+        });
+      } catch (controlError) {
+        if (!apiRouteMissing(controlError)) throw controlError;
+        const { application_id: _applicationId, ...legacyPayload } = decisionPayload;
+        result = await api(`/v1/control-center/partner-applications/${encodeURIComponent(applicationId)}`, {
+          method: "PATCH",
+          body: legacyPayload
+        });
+      }
+    }
+    const business = result.partner_business || {};
+    const auth = result.activation?.auth || {};
+    showToast(decision === "approved" ? "Partner onaylandı ve aktif edildi." : "Partner kararı kaydedildi.");
+    $("#adminDrawerTitle").textContent = "Partner Kararı";
+    $("#adminDrawerBody").innerHTML = `
+      <dl class="admin-kv">
+        <div><dt>Başvuru</dt><dd>${escape(result.application?.company_name || applicationId)}</dd></div>
+        <div><dt>Durum</dt><dd>${escape(result.application?.status || decision)}</dd></div>
+        <div><dt>Partner mağazası</dt><dd>${escape(business.display_name || "-")} / ${escape(business.status || "-")}</dd></div>
+        <div><dt>Auth kullanıcısı</dt><dd>${escape(auth.email || result.application?.email || "-")} / ${escape(auth.user_id || "-")}</dd></div>
+        <div><dt>Erişim maili</dt><dd>${escape(partnerAccessEmailStatus(auth))}</dd></div>
+        <div><dt>Partner paneli</dt><dd><a href="https://partner.allonahub.com/" target="_blank" rel="noopener">partner.allonahub.com</a></dd></div>
+      </dl>
+      ${decision === "approved" ? `
+        <div class="admin-status">
+          Bu başvuru approved statüsüne geçtiği için bekleyen başvuru filtresinden çıkabilir. Aktif kayıt Partner Operasyonları listesinde takip edilir.
+        </div>
+        <div class="admin-actions">
+          <button class="admin-btn admin-btn--primary" type="button" data-admin-view="partners">Aktif Partnerleri Aç</button>
+          <button class="admin-btn" type="button" data-admin-view="applications">Başvuruları Aç</button>
+        </div>
+      ` : ""}
+    `;
+    $("#adminDrawer").classList.add("is-open");
     await loadApplications();
   }
 
@@ -1223,6 +2049,119 @@
     });
     showToast("Destek talebi güncellendi.");
     await loadSupport();
+  }
+
+  async function runRefundAction(orderId, action) {
+    const label = refundActionLabel(action);
+    const item = (state.cache.refunds || []).find((entry) => String(entry.id) === String(orderId));
+    const data = await openModal({
+      title: `İade / İptal - ${label}`,
+      message: `${item?.order_no || orderId} için "${label}" işlemi uygulanacak. Tüm kararlar audit log'a yazılır.`,
+      confirmText: label,
+      danger: action === "reject_request" || action === "approve_refund",
+      fields: [
+        { id: "reason", label: "İşlem gerekçesi", type: "textarea", required: true, max: 1200 },
+        { id: "note", label: "Ek açıklama", type: "textarea", required: false, max: 1200, value: label }
+      ]
+    });
+    if (!data) return;
+    const result = await api(`/v1/ops-console/refund-cancellations/${encodeURIComponent(orderId)}/action`, {
+      method: "POST",
+      body: {
+        action,
+        reason: data.reason,
+        note: data.note || ""
+      }
+    });
+    showToast("İade / iptal aksiyonu kaydedildi.");
+    if (result.item) {
+      await showRefundDetail(orderId).catch(() => null);
+    }
+    await loadRefunds();
+  }
+
+  async function runProductReviewAction(productId, decision) {
+    const item = state.cache.productReviews.find((product) => String(product.id) === String(productId));
+    const labels = {
+      approved: "Yayına Al",
+      needs_review: "Revizyon İste",
+      rejected: "Reddet"
+    };
+    const data = await openModal({
+      title: `Ürün Kararı: ${labels[decision] || decision}`,
+      message: `${item?.name || item?.product_name || productId} için karar kaydedilecek. Satıcı, fatura, teslimat ve yasaklı ürün uygunluğu kontrol edilmiş olmalı.`,
+      confirmText: labels[decision] || "Kaydet",
+      danger: decision === "rejected",
+      fields: [
+        { id: "reason", label: "Karar notu", type: "textarea", required: true, max: 1200 }
+      ]
+    });
+    if (!data) return;
+
+    const result = await api(`/v1/ops-console/product-reviews/${encodeURIComponent(productId)}/decision`, {
+      method: "POST",
+      body: {
+        decision,
+        reason: data.reason || ""
+      }
+    });
+
+    if (App.complianceAudit) {
+      await App.complianceAudit.record({
+        category: "product",
+        action: "admin_product_compliance_decision",
+        severity: decision === "approved" ? "info" : "warning",
+        resourceType: "product",
+        resourceId: productId,
+        evidenceTags: ["admin_ops", "product_compliance", decision],
+        metadata: {
+          decision,
+          status: result.product?.status || "",
+          reason: data.reason || ""
+        }
+      });
+    }
+
+    showToast(decision === "approved" ? "Ürün yayına alındı." : decision === "rejected" ? "Ürün reddedildi." : "Ürün revizyona gönderildi.");
+    await loadProductReviews();
+  }
+
+  async function runAdminAutomation(action) {
+    const summary = (state.cache.automation || state.dashboard?.automation || {}).summary || {};
+    const data = await openModal({
+      title: "Otomasyonu Çalıştır",
+      message: `${Number(summary.auto_ready || 0)} güvenli ürün otomatik yayına alınabilir. Finans, iade, partner ve süper admin kararları otomatik onaylanmaz.`,
+      confirmText: "Otomasyonu Çalıştır",
+      fields: [
+        {
+          id: "reason",
+          label: "Audit gerekçesi",
+          type: "textarea",
+          required: true,
+          max: 900,
+          value: "Otomasyon: düşük riskli ürün kuralları geçti; ürün yayına alındı."
+        }
+      ]
+    });
+    if (!data) return;
+    const result = await api("/v1/ops-console/automation/run", {
+      method: "POST",
+      body: {
+        apply: true,
+        actions: [action || "publish_safe_products"],
+        limit: 40,
+        reason: data.reason || ""
+      }
+    });
+    state.cache.automation = result.automation || state.cache.automation;
+    const count = Number(result.automation?.applied?.products_published?.length || 0);
+    showToast(count ? `${count} güvenli ürün otomasyonla yayına alındı.` : "Otomasyon çalıştı; yayınlanacak yeni güvenli ürün bulunmadı.");
+    if (state.view === "automation") {
+      renderAutomationCenter(state.cache.automation);
+    } else {
+      await loadDashboard();
+    }
+    renderNav();
   }
 
   async function createContentProposal(form) {
@@ -1453,6 +2392,7 @@
       state.capabilities = data.capabilities || {};
       state.dashboard = data.dashboard;
       state.warnings = data.warnings || [];
+      renderNav();
       $("#adminProfileName").textContent = state.profile.full_name || "Admin";
       $("#adminProfileRole").textContent = state.profile.role || "admin";
       if (state.view === "dashboard") {
@@ -1481,6 +2421,11 @@
         await loadView(state.view);
         return;
       }
+      const automationRun = event.target.closest("[data-admin-automation-run]");
+      if (automationRun) {
+        await runAdminAutomation(automationRun.dataset.adminAutomationRun).catch((error) => showToast(error.message, "error"));
+        return;
+      }
       if (event.target.closest("#adminSignOut")) {
         await App.auth.signOut();
         return;
@@ -1488,6 +2433,16 @@
       const detail = event.target.closest("[data-detail]");
       if (detail) {
         await showDetail(detail.dataset.detail, detail.dataset.id, detail.dataset.source);
+        return;
+      }
+      const applicationDecision = event.target.closest("[data-application-decision]");
+      if (applicationDecision) {
+        await showApplicationDecision(applicationDecision.dataset.applicationDecision).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const finalApplicationDecision = event.target.closest("[data-application-final-decision]");
+      if (finalApplicationDecision) {
+        await finalPartnerApplicationDecision(finalApplicationDecision.dataset.id, finalApplicationDecision.dataset.applicationFinalDecision).catch((error) => showToast(error.message, "error"));
         return;
       }
       const userNote = event.target.closest("[data-user-note]");
@@ -1508,6 +2463,26 @@
       const orderRisk = event.target.closest("[data-order-risk]");
       if (orderRisk) {
         await flagOrder(orderRisk.dataset.orderRisk).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const refundDetail = event.target.closest("[data-refund-detail]");
+      if (refundDetail) {
+        await showRefundDetail(refundDetail.dataset.refundDetail).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const refundTicketDetail = event.target.closest("[data-refund-ticket-detail]");
+      if (refundTicketDetail) {
+        showRefundTicketDetail(refundTicketDetail.dataset.refundTicketDetail);
+        return;
+      }
+      const refundAction = event.target.closest("[data-refund-action]");
+      if (refundAction) {
+        await runRefundAction(refundAction.dataset.id, refundAction.dataset.refundAction).catch((error) => showToast(error.message, "error"));
+        return;
+      }
+      const productReviewAction = event.target.closest("[data-product-review-action]");
+      if (productReviewAction) {
+        await runProductReviewAction(productReviewAction.dataset.id, productReviewAction.dataset.productReviewAction).catch((error) => showToast(error.message, "error"));
         return;
       }
       const supportStatus = event.target.closest("[data-support-status]");
@@ -1603,12 +2578,19 @@
   function renderNav() {
     const nav = $("#adminNav");
     if (!nav) return;
-    nav.innerHTML = Object.entries(views).map(([key, item]) => `
-      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""}">
-        <span>${escape(item.label)}</span>
+    nav.innerHTML = Object.entries(views).map(([key, item]) => {
+      const count = notificationCount(key);
+      return `
+      <button type="button" data-admin-view="${escape(key)}" class="${key === state.view ? "is-active" : ""} ${count ? "has-alert" : ""}">
+        <span class="admin-nav-label">
+          <span>${escape(item.label)}</span>
+          ${navBadge(key)}
+        </span>
         ${item.marker ? `<small>${escape(item.marker)}</small>` : ""}
       </button>
-    `).join("");
+    `;
+    }).join("");
+    setActiveNav();
   }
 
   document.addEventListener("DOMContentLoaded", async () => {

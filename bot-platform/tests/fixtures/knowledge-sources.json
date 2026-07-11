@@ -1,0 +1,17 @@
+[
+  {
+    "path": "services.md",
+    "domain": "services",
+    "priority": 5
+  },
+  {
+    "path": "taxi.md",
+    "domain": "taxi",
+    "priority": 5
+  },
+  {
+    "path": "mall.md",
+    "domain": "mall",
+    "priority": 5
+  }
+]

@@ -224,10 +224,19 @@ if(city||country){return {city,country}}
 return null
 }
 
-function requestBrowserLocation(){
-navigator.geolocation.getCurrentPosition(async function(pos){
-const lat=pos.coords.latitude;
-const lon=pos.coords.longitude;
+async function requestBrowserLocation(options){
+const privacy=window.Allona&&window.Allona.privacy;
+const location=privacy&&privacy.getLocation ? await privacy.getLocation({
+maximumAge:600000,
+timeout:8000,
+prompt:Boolean(options&&options.prompt)
+}) : null;
+if(!location){
+updateLocationStatus(false,"Konum belirlenemedi","Tarayıcı izni bekleniyor");
+return
+}
+const lat=location.latitude;
+const lon=location.longitude;
 let city="Konum bulundu";
 let country="Canlı konum açık";
 const place=await reverseGeocodeLocation(lat,lon);
@@ -236,18 +245,10 @@ city=place.city||city;
 country=place.country||country;
 }
 updateLocationStatus(true,city,country);
-},function(error){
-const message=getLocationErrorMessage(error);
-updateLocationStatus(false,message[0],message[1]);
-},{
-enableHighAccuracy:false,
-maximumAge:600000,
-timeout:8000
-});
 }
 
 async function setLocationByBrowser(){
-updateLocationStatus(false,"Konum belirlenemedi","İzin bekleniyor");
+updateLocationStatus(false,"Konum belirlenemedi","İzin durumu kontrol ediliyor");
 if(!navigator.geolocation){return}
 let permission;
 if(navigator.permissions&&navigator.permissions.query){
@@ -262,6 +263,11 @@ permission.onchange=function(){setLocationByBrowser()};
 }
 if(permission&&permission.state==="denied"){
 updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
+return
+}
+const privacy=window.Allona&&window.Allona.privacy;
+if(permission&&permission.state==="prompt"&&privacy&&privacy.cachedLocation&&!privacy.cachedLocation(600000)){
+updateLocationStatus(false,"Konum belirlenemedi","Tarayıcı izni bekleniyor");
 return
 }
 requestBrowserLocation();

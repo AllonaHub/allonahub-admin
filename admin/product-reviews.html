@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Ürün Onay Otomasyonu | AllonaHub Admin</title>
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../css/admin-ops.css?v=20260629-navalerts1">
+  <link rel="stylesheet" href="../css/admin-product-reviews.css?v=20260630-productqueue1">
+</head>
+<body class="admin-ops-page admin-product-review-page" data-page="admin-product-reviews">
+  <main class="admin-shell admin-product-review-shell">
+    <header class="admin-topbar admin-product-review-topbar" aria-label="Ürün onay üst bar">
+      <a class="admin-brand" href="/admin/index.html#productReviews" aria-label="Admin panele dön">
+        <img src="../images/brand/allona.logo.png" alt="AllonaHub">
+        <span>
+          <strong><span class="gold">Allona</span><span class="blue">Hub</span></strong>
+          <span>Ürün Onay Otomasyonu</span>
+        </span>
+      </a>
+
+      <div class="admin-product-review-filters">
+        <input type="search" autocomplete="off" placeholder="Ürün, satıcı, kategori veya SKU ara" data-product-review-search>
+        <select aria-label="Onay filtresi" data-product-review-status>
+          <option value="">Tüm onay kuyruğu</option>
+          <option value="ready">Otomasyon onaya hazır</option>
+          <option value="watch">Kontrol et, yayına alınabilir</option>
+          <option value="risk">Riskli kayıtlar</option>
+          <option value="needs_revision">Revizyon gerektirenler</option>
+          <option value="revised">Partner revize edip gönderenler</option>
+          <option value="pending">Onay bekleyenler</option>
+        </select>
+        <button class="admin-btn admin-btn--primary" type="button" data-product-review-refresh>Yenile</button>
+      </div>
+
+      <div class="admin-product-review-user">
+        <a class="admin-btn" href="/admin/index.html#productReviews">Admin Panel</a>
+      </div>
+    </header>
+
+    <section class="admin-product-review-hero" aria-label="Ürün onay özeti">
+      <div>
+        <span class="admin-product-review-kicker">Akıllı kontrol</span>
+        <h1>Ürün Onay Sayfası</h1>
+        <p>Görsel, açıklama, satıcı bilgisi ve politika riskleri tek ekranda toplanır; admin güvenli ürünleri toplu yayına alabilir.</p>
+      </div>
+      <div class="admin-product-review-actions">
+        <button class="admin-btn" type="button" data-select-all-reviews>Yüklüleri Seç</button>
+        <button class="admin-btn" type="button" data-select-ready>Güvenli Ürünleri Seç</button>
+        <button class="admin-btn" type="button" data-select-risk>Risklileri Seç</button>
+        <button class="admin-btn admin-btn--gold" type="button" data-bulk-approve>Seçili Ürünleri Yayına Al</button>
+        <button class="admin-btn" type="button" data-bulk-revision>Seçili Ürünlere Revizyon İste</button>
+      </div>
+    </section>
+
+    <section class="admin-product-review-summary" data-product-review-summary aria-label="Otomasyon metrikleri"></section>
+
+    <section class="admin-product-review-status" data-product-review-alert hidden></section>
+
+    <section class="admin-product-review-layout" aria-label="Ürün onay çalışma alanı">
+      <aside class="admin-product-review-rail">
+        <div class="admin-product-review-rail-card">
+          <strong data-selected-count>0 ürün seçildi</strong>
+          <span>Toplu aksiyon seçili ürünlere uygulanır.</span>
+        </div>
+        <div class="admin-product-review-rail-card">
+          <strong>Revizyon kuralı</strong>
+          <span>Stok, fiyat veya görsel eksikleri bilgi/kontrol uyarısıdır. Yasaklı ifade, iletişim yönlendirmesi ve iade/ödeme bypass metni revizyon riskidir.</span>
+        </div>
+      </aside>
+
+      <div class="admin-product-review-board" data-product-review-board>
+        <div class="admin-status">Ürün onay kuyruğu yükleniyor...</div>
+      </div>
+      <div class="admin-product-review-pagination" data-product-review-pagination hidden>
+        <span data-product-review-page-info></span>
+        <button class="admin-btn" type="button" data-product-review-load-more>Devamını Yükle</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="admin-modal admin-product-review-modal" id="productReviewModal" aria-hidden="true">
+    <form class="admin-modal__panel" data-product-review-modal-form>
+      <div class="admin-modal__head">
+        <h2 data-product-review-modal-title>Karar</h2>
+      </div>
+      <div class="admin-modal__body">
+        <p data-product-review-modal-message></p>
+        <label class="admin-field">
+          <span>Karar notu</span>
+          <textarea name="reason" maxlength="1200" required data-product-review-modal-reason></textarea>
+        </label>
+      </div>
+      <div class="admin-modal__actions">
+        <button class="admin-btn" type="button" data-product-review-modal-cancel>Vazgeç</button>
+        <button class="admin-btn admin-btn--primary" type="submit" data-product-review-modal-confirm>Kaydet</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-toast" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js?v=20260623-mfa2" defer></script>
+  <script src="../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../js/supabase-client.js?v=20260623-mfa2" defer></script>
+  <script src="../js/auth.js?v=20260629-adminroot1" defer></script>
+  <script src="../js/admin-product-reviews.js?v=20260701-productqueue2" defer></script>
+</body>
+</html>

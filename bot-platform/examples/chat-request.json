@@ -1,0 +1,9 @@
+{
+  "conversationId": "demo-001",
+  "channel": "web",
+  "message": "Taksi yolculugumda odeme hatasi oldu, destek istiyorum.",
+  "user": {
+    "displayName": "Demo Kullanici",
+    "externalUserId": "web-demo-user"
+  }
+}

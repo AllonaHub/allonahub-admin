@@ -106,6 +106,9 @@ SUPABASE_SERVICE_ROLE_KEY
 IYZICO_API_KEY
 IYZICO_SECRET_KEY
 IYZICO_BASE_URL
+PAYMENT_PROVIDER_REFUND_WEBHOOK_URL
+PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET
+PAYMENT_PROVIDER_NATIVE_REFUNDS_ENABLED=false
 ASSISTANT_ENABLED
 ASSISTANT_AI_PROVIDER
 ASSISTANT_TELEGRAM_BOT_TOKEN
@@ -166,11 +169,20 @@ curl https://api.allonahub.com/health
 - `GET|POST /v1/payments/iyzico/callback`
 - `POST /v1/cv/checkout`
 - `GET /v1/partner/commission/preview`
+- `GET /v1/partner/integrations`
+- `POST /v1/partner/integrations`
+- `POST /v1/partner/integrations/:integrationId/test`
+- `POST /v1/partner/integrations/:integrationId/sync`
+- `POST /v1/partner/integrations/:integrationId/publish-jobs`
+- `GET /v1/admin/ops/integrations`
 - `POST /v1/assistant/messages`
 - `POST /v1/telegram/webhook`
 - `POST /v1/rewards/ledger`
 - `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
+- `POST /v1/cron/integrations/sync`
+- `POST /v1/cron/integrations/publish`
+- `POST /v1/cron/social-media-assets-cleanup`
 
 Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
 
@@ -185,8 +197,17 @@ Migration ve Telegram webhook hazırlığı:
 
 ```bash
 SUPABASE_DB_URL="postgresql://..." ./deploy/assistant/apply-assistant-migration.sh
+SUPABASE_DB_URL="postgresql://..." bash ./deploy/integrations/apply-partner-integration-migrations.sh
 ASSISTANT_TELEGRAM_BOT_TOKEN="..." TELEGRAM_WEBHOOK_SECRET="..." ./deploy/assistant/register-telegram-webhook.sh
 API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
+```
+
+Partner entegrasyon smoke testi:
+
+```bash
+PARTNER_JWT="..." \
+PARTNER_INTEGRATION_FEED_URL="https://partner.example.com/products.json" \
+node scripts/partner-integration-smoke-test.mjs
 ```
 
 ## Cron
@@ -195,20 +216,24 @@ API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 
 ```bash
 0 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-payments -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
+15 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/sync -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
+25 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/publish -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
+30 3 * * * cd /opt/allonahub && node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0 >/var/log/allonahub-social-assets-cleanup.log 2>&1
 ```
 
 ## Cloudflare Güvenlik
 
 - SSL/TLS: Full Strict
 - WAF Managed Rules: açık
-- Bot Fight Mode: açık
+- Bot Fight Mode: kurulumda kapali kalabilir; lansmanda Super Bot Fight Mode/Bot Management veya WAF + rate limit profili kullan
 - Rate limit:
   - `/v1/payments/*`
   - `/v1/cv/checkout`
   - `/v1/orders`
   - `/v1/cron/*`
-- Cache: `api.allonahub.com` için bypass
+- Cache: `GET /v1/media/product-images/*` Cloudflare edge cache, diger hassas API cevaplari bypass
 - Minimum TLS: 1.2
+- Sertlestirme sonrasi kontrol: `node deploy/cloudflare/verify-allonahub-security-guards.mjs`
 
 ## Kurumsal E-posta Yönlendirme
 
@@ -221,10 +246,17 @@ sudo bash deploy/hetzner/setup-mail-forwarding.sh
 bash deploy/hetzner/check-mail-forwarding.sh
 ```
 
+Gmail'den cevap yazarken `destek@allonahub.com`, `legal@allonahub.com` ve `basvuru@allonahub.com` gibi adresleri giden kimlik olarak kullanmak için authenticated SMTP/DKIM paketi de hazırlanmıştır:
+
+```bash
+sudo bash deploy/hetzner/setup-mail-submission.sh
+```
+
 Detaylı DNS, port ve doğrulama adımları:
 
 ```text
 docs/deploy/hetzner-email-forwarding.md
+docs/deploy/hetzner-email-outbound-identities.md
 deploy/hetzner/mail-forwarding/dns-records.txt
 ```
 

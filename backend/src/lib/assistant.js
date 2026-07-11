@@ -144,6 +144,8 @@ const PLATFORM_LINKS = Object.freeze({
   partnerOrders: "/pages/partner/partner-orders.html",
   partnerCargo: "/pages/partner/partner-cargo-settings.html",
   partnerPay: "/pages/partner/pay.html",
+  partnerMembership: "/pages/partner/partner-uyelik.html",
+  founderMembership: "/pages/partner/kurucu-uyelik.html",
   marketplaceSales: "/pages/partner/pazaryeri-satis.html",
   career: "/pages/career/allonakariyer.html",
   smartCv: "/pages/career/career-cv-form.html",
@@ -175,9 +177,13 @@ const PLATFORM_LINKS = Object.freeze({
   organization: "/pages/ecosystem/allonaorganizasyon.html",
   avm: "/pages/ecosystem/allonaavm.html",
   entertainment: "/pages/ecosystem/allonaeglence.html",
+  legalCenter: "/legal/index.html",
   privacy: "/pages/legal/gizlilik.html",
   kvkk: "/pages/legal/kvkk.html",
+  cookies: "/pages/legal/cerez-politikasi.html",
   terms: "/pages/legal/kullanim-sartlari.html",
+  distanceSales: "/pages/legal/mesafeli-satis.html",
+  preInfo: "/pages/legal/on-bilgilendirme.html",
   returns: "/pages/legal/iade-politikasi.html",
   shipping: "/pages/legal/teslimat-kargo.html",
   security: "/pages/legal/guvenlik-politikasi.html"
@@ -219,6 +225,7 @@ function scoreTopic(topic, text) {
   let score = 0;
   for (const term of topic.terms || []) {
     const needle = normalizeSearchText(term);
+    if (needle.length < 2) continue;
     if (!needle || !haystack.includes(needle)) continue;
     const wordMatch = new RegExp(`(^|\\s)${escapeRegExp(needle)}(\\s|$)`, "u").test(haystack);
     score += needle.includes(" ") ? 3 : 1;
@@ -286,21 +293,63 @@ const CORE_TOPICS = [
       { label: "Partner Ol", link: "partner" },
       { label: "Destek", link: "support" }
     ],
-    text: ({ platformUrl }) => `Merhabalar, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, HP/kupon, partnerlik, CV-kariyer, akademi, hesap ve destek konularında yardımcı olurum. Ne yapmak istediğinizi kısaca yazın, sizi doğru sayfaya yönlendireyim: ${platformUrl("services")}`
+    text: ({ platformUrl, context }) => hasConversationHistory(context)
+      ? `Tekrar merhaba, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon ve destek konularında sizi doğru adıma yönlendirebilirim. Kısaca ne yapmak istediğinizi yazın; hizmetleri de buradan inceleyebilirsiniz: ${platformUrl("services")}`
+      : `Merhabalar, yazdığınız için teşekkür ederim. AllonaHub’da sipariş, HP/kupon, partnerlik, CV-kariyer, denizcilik, akademi, hesap ve destek konularında yardımcı olurum. Ne yapmak istediğinizi kısaca yazın, sizi doğru sayfaya yönlendireyim: ${platformUrl("services")}`
   },
   {
-    key: "platform_overview",
-    label: "AllonaHub ekosistemi",
-    confidence: 0.82,
-    terms: ["allonahub nedir", "platform nedir", "ekosistem", "hizmetler", "modüller", "neler var", "ne işe yarar"],
+    key: "wellbeing",
+    label: "Sıcak sohbet",
+    confidence: 0.84,
+    terms: ["nasılsın", "nasilsin", "nasıl gidiyor", "nasil gidiyor", "iyi misin", "keyfin nasıl", "keyfin nasil", "bugün nasılsın", "bugun nasilsin"],
     link: "services",
     actions: [
       { label: "Hizmetler", link: "services" },
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Denizcilik", link: "maritime" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "İyiyim, teşekkür ederim. Umarım senin de günün güzel geçiyordur. AllonaHub deneyimini daha kolay, kazandıran ve çok katmanlı hale getirmek için buradayım; alışverişten kariyere, denizcilikten partnerliğe kadar sana uygun yolu birlikte seçebiliriz. Ne yapmak istediğini yaz, ben sıcak ve net şekilde yönlendireyim."
+  },
+  {
+    key: "thanks",
+    label: "Teşekkür",
+    confidence: 0.8,
+    terms: ["teşekkür", "tesekkur", "sağ ol", "sag ol", "eyvallah", "harika", "çok iyi", "cok iyi"],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "Rica ederim, burada sizin için varım. İsterseniz şimdi CV, denizcilik, partnerlik, sipariş, akademi veya destek konularından biriyle devam edebiliriz."
+  },
+  {
+    key: "platform_overview",
+    label: "AllonaHub hakkında",
+    confidence: 0.82,
+    terms: ["allonahub nedir", "allona hub nedir", "allonahub kimdir", "allona hub kimdir", "hakkımızda", "hakkimizda", "hakkınızda", "hakkinizda", "platform nedir", "ekosistem", "hizmetler", "modüller", "neler var", "ne işe yarar"],
+    link: "about",
+    actions: [
+      { label: "Hakkımızda", link: "about" },
+      { label: "Hizmetler", link: "services" },
+      { label: "Destek / SSS", link: "support" },
       { label: "Kariyer", link: "career" },
-      { label: "Partner Ol", link: "partner" },
       { label: "Akademi", link: "academy" }
     ],
-    text: ({ platformUrl }) => `Merhabalar, memnuniyetle anlatayım. AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, HP/kupon, partner ve destek hizmetlerini tek hesapta toplayan dijital ekosistemdir. Tüm modülleri buradan keşfedebilirsiniz: ${platformUrl("services")}`
+    text: ({ platformUrl }) => `Memnuniyetle anlatayım. AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, akademi, HP/kupon, partnerlik ve destek katmanlarını tek ekosistemde toplayan dijital platformdur. Kurumsal bilgi için Hakkımızda sayfasına, sık sorulan konular için destek alanına geçebilirsiniz: ${platformUrl("about")} | ${platformUrl("support")}`
+  },
+  {
+    key: "faq_help",
+    label: "SSS ve yardım",
+    confidence: 0.84,
+    terms: ["sss", "sıkça sorulan", "sikca sorulan", "sık sorulan", "sik sorulan", "en çok sorulan", "en cok sorulan", "yardım merkezi", "yardim merkezi", "nasıl kullanılır", "nasil kullanilir", "nasıl yapabilirim", "nasil yapabilirim", "nasıl yaparım", "nasil yaparim"],
+    link: "support",
+    actions: [
+      { label: "Destek / SSS", link: "support" },
+      { label: "İletişim", link: "contact" },
+      { label: "Hizmetler", link: "services" }
+    ],
+    text: ({ platformUrl }) => `Sık sorulan konularda size hızlıca yol gösterebilirim: hesap, sipariş, ödeme/iade, HP-kupon, partnerlik, CV-kariyer, akademi ve destek. Genel destek ve SSS yönlendirmesi için: ${platformUrl("support")} Sorunuzu tek cümleyle yazarsanız cevabı doğrudan o başlığa göre hazırlarım.`
   },
   {
     key: "account_access",
@@ -381,10 +430,11 @@ const CORE_TOPICS = [
     key: "partner_application",
     label: "Partner başvurusu",
     confidence: 0.9,
-    terms: ["partner", "bayi", "satıcı", "satici", "mağaza aç", "magaza ac", "işletme başvurusu", "isletme basvurusu", "partner başvurusu", "partner basvurusu", "satıcı başvurusu", "satici basvurusu", "komisyon", "pazaryeri satışı", "pazaryeri satisi"],
+    terms: ["partner", "bayi", "satıcı", "satici", "mağaza aç", "magaza ac", "işletme başvurusu", "isletme basvurusu", "partner başvurusu", "partner basvurusu", "satıcı başvurusu", "satici basvurusu", "kurucu üyelik", "kurucu uyelik", "komisyon", "pazaryeri satışı", "pazaryeri satisi"],
     link: "partner",
     actions: [
       { label: "Partner Başvurusu", link: "partner" },
+      { label: "Kurucu Üyelik", link: "founderMembership" },
       { label: "Partner Paneli", link: "partnerPanel" },
       { label: "Pazaryeri Satış", link: "marketplaceSales" }
     ],
@@ -434,14 +484,16 @@ const CORE_TOPICS = [
     key: "legal_privacy",
     label: "Gizlilik, KVKK ve güvenlik",
     confidence: 0.84,
-    terms: ["kvkk", "gizlilik", "güvenlik", "guvenlik", "çerez", "cerez", "kişisel veri", "kisisel veri", "kullanım şartları", "kullanim sartlari"],
-    link: "privacy",
+    terms: ["kvkk", "gizlilik", "güvenlik", "guvenlik", "çerez", "cerez", "kişisel veri", "kisisel veri", "kullanım şartları", "kullanim sartlari", "mesafeli satış", "mesafeli satis", "ön bilgilendirme", "on bilgilendirme"],
+    link: "legalCenter",
     actions: [
+      { label: "Yasal Merkez", link: "legalCenter" },
       { label: "Gizlilik", link: "privacy" },
       { label: "KVKK", link: "kvkk" },
+      { label: "Çerez", link: "cookies" },
       { label: "Güvenlik", link: "security" }
     ],
-    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, güvenlik ve kullanım şartları yasal sayfalarda ayrı ayrı yer alır; kişisel veri veya ödeme kartı bilgisi istemem ve paylaşmam. Gizlilik: ${platformUrl("privacy")} KVKK: ${platformUrl("kvkk")}`
+    text: ({ platformUrl }) => `Memnuniyetle yardımcı olayım. Gizlilik, KVKK, çerezler, kullanım şartları, mesafeli satış, ön bilgilendirme ve iade/iptal başlıklarını Yasal Merkez'de ve ilgili canlı sayfalarda yayınlıyoruz: ${platformUrl("legalCenter")} Kişisel veri veya ödeme kartı bilgisi sohbet üzerinden istemem ve paylaşmam.`
   },
   {
     key: "contact_support",
@@ -496,6 +548,7 @@ const SMART_FAQ_TOPICS = [
     terms: ["güvenilir mi", "guvenilir mi", "güvenli mi", "guvenli mi", "dolandırıcılık", "dolandiricilik", "sahte", "doğrulama", "dogrulama", "güven", "guven", "risk", "kart saklıyor", "kart sakliyor"],
     link: "security",
     actions: [
+      { label: "Yasal Merkez", link: "legalCenter" },
       { label: "Güvenlik", link: "security" },
       { label: "KVKK", link: "kvkk" },
       { label: "Gizlilik", link: "privacy" }

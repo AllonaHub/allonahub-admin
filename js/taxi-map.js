@@ -754,8 +754,23 @@
     state.userMarker.bindPopup("Konumunuz");
   }
 
-  function startWatch() {
+  async function startWatch() {
     if (!navigator.geolocation || state.watchId) return;
+    if (window.Allona?.privacy?.watchLocation) {
+      state.watchId = await window.Allona.privacy.watchLocation((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setUserPosition(lat, lng);
+        renderDrivers();
+      }, () => {
+        setLiveLabel("Demo filo canlı");
+      }, {
+        highAccuracy: true,
+        timeout: 12000,
+        maximumAge: 10000
+      });
+      return;
+    }
     state.watchId = navigator.geolocation.watchPosition((position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
@@ -770,7 +785,7 @@
     });
   }
 
-  function locateUser() {
+  async function locateUser() {
     if (!navigator.geolocation) {
       setStatus("Tarayıcı konum servisini desteklemiyor. İstanbul merkezli demo filo aktif.");
       setLiveLabel("Demo filo canlı");
@@ -778,6 +793,29 @@
     }
 
     setStatus("Konum izni bekleniyor...");
+    if (window.Allona?.privacy?.getLocation) {
+      const location = await window.Allona.privacy.getLocation({
+        highAccuracy: true,
+        timeout: 9000,
+        maximumAge: 15000,
+        prompt: true,
+        force: true
+      });
+      if (!location) {
+        setStatus("Konum izni alınamadı. İstanbul merkezli demo filo aktif.");
+        setLiveLabel("Demo filo canlı");
+        return;
+      }
+      const lat = location.latitude;
+      const lng = location.longitude;
+      setUserPosition(lat, lng);
+      setPickup(lat, lng, "Alış noktası: Mevcut konum");
+      state.map.setView([lat, lng], 15);
+      setStatus("Konumunuz canlı haritaya işlendi. Yakındaki sürücü ETA bilgileri güncellendi.");
+      setLiveLabel("Konum canlı izleniyor");
+      startWatch();
+      return;
+    }
     navigator.geolocation.getCurrentPosition((position) => {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;

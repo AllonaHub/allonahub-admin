@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Süper Admin Girişi | AllonaHub</title>
+  <link rel="stylesheet" href="../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../css/super-admin.css?v=20260629-superlogin1">
+</head>
+<body data-page="super-admin" data-theme="graphite">
+  <div class="sa-shell">
+    <main class="sa-main">
+      <form class="sa-login-panel" data-super-admin-login-form>
+        <h1>Süper Admin Girişi</h1>
+        <p>Bu kapı yalnızca owner/süper admin oturumu içindir. Giriş sonrası MFA ve owner kilidi ayrı olarak doğrulanır.</p>
+        <div class="sa-empty">
+          <div>Normal kullanıcı veya admin panel girişi bu ekrandan ayrıdır.</div>
+          <div>Hata olursa sebebi burada açık şekilde gösterilir.</div>
+          <div>MFA gerekiyorsa doğrudan süper admin dönüş adresiyle doğrulamaya yönlendirilir.</div>
+        </div>
+        <label class="sa-login-field">
+          E-posta
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label class="sa-login-field">
+          Şifre
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="sa-modal-status" data-super-admin-login-status aria-live="polite" hidden></div>
+        <button class="sa-btn" type="submit">Süper Admin Olarak Giriş Yap</button>
+        <a class="sa-btn sa-btn-ghost" href="./super-admin.html">Owner Konsoluna Dön</a>
+      </form>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js?v=20260623-mfa2"></script>
+  <script src="../js/core.js?v=20260630-currency3"></script>
+  <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
+  <script src="../js/auth.js?v=20260629-adminroot1"></script>
+  <script>
+    (function () {
+      const App = window.Allona = window.Allona || {};
+      const form = document.querySelector("[data-super-admin-login-form]");
+      const status = document.querySelector("[data-super-admin-login-status]");
+      const returnTo = "/admin/super-admin.html";
+
+      function setStatus(message, tone) {
+        if (!status) return;
+        status.textContent = message || "";
+        status.dataset.tone = tone || "";
+        status.hidden = !message;
+      }
+
+      async function submit(event) {
+        event.preventDefault();
+        const button = form.querySelector("button[type='submit']");
+        button.disabled = true;
+        setStatus("Owner oturumu doğrulanıyor...", "warning");
+        try {
+          const data = new FormData(form);
+          const result = await App.auth.signIn(data.get("email"), data.get("password"));
+          const user = result && result.user || await App.auth.getUser();
+          const profile = user ? await App.auth.getProfile(user.id).catch(function () { return null; }) : null;
+          if (profile && !["admin", "super_admin"].includes(profile.role)) {
+            setStatus("Oturum alındı. Owner kilidi backend tarafından doğrulanacak.", "warning");
+          }
+
+          const mfa = await App.auth.mfaStatus();
+          if (mfa && mfa.authenticated && !mfa.mfaVerified) {
+            window.location.href = App.core.url("/pages/account/mfa.html?returnTo=" + encodeURIComponent(returnTo));
+            return;
+          }
+
+          setStatus("Giriş doğrulandı. Owner konsoluna yönlendiriliyorsunuz.", "success");
+          window.location.href = App.core.url(returnTo);
+        } catch (error) {
+          setStatus(error.message || "Süper admin girişi tamamlanamadı.", "error");
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      if (form) form.addEventListener("submit", submit);
+    })();
+  </script>
+</body>
+</html>

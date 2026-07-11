@@ -6,8 +6,8 @@
   <meta name="robots" content="noindex,nofollow">
   <title>AllonaHub Admin Paneli</title>
   <link rel="icon" href="../favicon.ico">
-  <link rel="stylesheet" href="../css/platform.css?v=20260626-mobile-std27">
-  <link rel="stylesheet" href="../css/admin-ops.css?v=20260623-visualfix1">
+  <link rel="stylesheet" href="../css/platform.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../css/admin-ops.css?v=20260629-navalerts1">
 </head>
 <body class="admin-ops-page" data-page="admin-ops">
   <main class="admin-shell" data-admin-shell>
@@ -26,11 +26,18 @@
           <option value="">Tüm durumlar</option>
           <option value="pending">Pending</option>
           <option value="review">Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="suspended">Suspended</option>
           <option value="open">Open</option>
           <option value="in_progress">In progress</option>
           <option value="resolved">Resolved</option>
           <option value="paid">Paid</option>
+          <option value="refunded">Refunded</option>
           <option value="cancelled">Cancelled</option>
+          <option value="pending_signal">Pending signal</option>
           <option value="hidden">Hidden</option>
         </select>
         <button class="admin-btn admin-btn--primary" type="button" id="adminRefresh">Yenile</button>
@@ -81,9 +88,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../js/config.js?v=20260623-mfa2" defer></script>
-  <script src="../js/core.js?v=20260623-mfa2" defer></script>
+  <script src="../js/core.js?v=20260630-currency3" defer></script>
   <script src="../js/supabase-client.js?v=20260623-mfa2" defer></script>
-  <script src="../js/auth.js?v=20260623-mfa2" defer></script>
-  <script src="../js/admin-ops.js?v=20260626-admin-repair1" defer></script>
+  <script src="../js/auth.js?v=20260629-adminroot1" defer></script>
+  <script src="../js/admin-alarm.js?v=20260629-alarmhide1" defer></script>
+  <script src="../js/admin-ops.js?v=20260630-productreviews2" defer></script>
 </body>
 </html>

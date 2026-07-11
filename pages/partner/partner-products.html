@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AllonaHub Partner Ürün Yönetimi</title>
+  <meta name="description" content="AllonaHub partner ürün, stok, fiyat ve görsel yönetimi.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-shopcat2">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260701-detailfix1">
+</head>
+<body>
+  <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
+    <div data-layout="header"></div>
+
+    <main class="partner-products" data-partner-products-shell>
+      <header class="partner-products-topbar">
+        <a class="partner-products-back" href="/pages/partner/partner-panel.html">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Partner OS</span>
+        </a>
+        <div>
+          <p>Partner Katalog Merkezi</p>
+          <h1>Ürünlerim</h1>
+          <span data-product-manager-summary>Ürünler hazırlanıyor.</span>
+        </div>
+        <div class="partner-products-actions">
+          <a href="/pages/partner/partner-panel.html#products-add" data-add-product-link>
+            <i class="fa-solid fa-plus"></i>
+            <span>Ürün Ekle</span>
+          </a>
+          <button type="button" data-refresh-products>
+            <i class="fa-solid fa-rotate"></i>
+            <span>Yenile</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="partner-products-alert" data-product-alert hidden></div>
+      <section class="partner-products-revision-callout" data-revision-callout hidden></section>
+
+      <section class="partner-products-kpis" data-product-kpis aria-label="Ürün özeti"></section>
+
+      <section class="partner-products-toolbar" aria-label="Ürün filtreleri">
+        <label>
+          <span>Arama</span>
+          <input type="search" data-product-search placeholder="Ürün, SKU, kategori veya marka">
+        </label>
+        <label>
+          <span>Durum</span>
+          <select data-product-status-filter>
+            <option value="all">Tüm ürünler</option>
+            <option value="active">Yayında</option>
+            <option value="pending">Onay bekleyen</option>
+            <option value="needs_review">Revizyon istendi</option>
+            <option value="draft">Taslak</option>
+            <option value="low_stock">Kritik stok</option>
+            <option value="out_of_stock">Stok yok</option>
+            <option value="rejected">Reddedilen</option>
+            <option value="closed">Satışa kapalı</option>
+            <option value="variant_group">Varyant grubu</option>
+          </select>
+        </label>
+        <label>
+          <span>Sıralama</span>
+          <select data-product-sort>
+            <option value="updated_desc">Son güncellenen</option>
+            <option value="name_asc">Ürün adı</option>
+            <option value="stock_asc">Stok düşükten</option>
+            <option value="price_desc">Fiyat yüksekten</option>
+            <option value="price_asc">Fiyat düşükten</option>
+          </select>
+        </label>
+        <button type="button" data-clear-product-filters>
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          <span>Temizle</span>
+        </button>
+      </section>
+
+      <section class="partner-products-workspace">
+        <aside class="partner-products-bulk" data-bulk-panel aria-label="Toplu revizyon">
+          <div>
+            <strong data-selected-count>0 ürün seçildi</strong>
+            <span>Seçili ürünler için boş bırakılan alanlar korunur.</span>
+            <small class="partner-products-bulk-hint" data-bulk-limit-hint>Tek seferde en fazla 50 ürün onaya gönderilebilir.</small>
+          </div>
+          <div class="partner-products-page-size" aria-label="Liste adedi">
+            <span>Gösterim</span>
+            <div class="partner-products-segmented" role="radiogroup" aria-label="Görünen ürün sayısı">
+              <label><input type="radio" name="product_page_size" value="20" data-product-page-size><span>20</span></label>
+              <label><input type="radio" name="product_page_size" value="50" data-product-page-size checked><span>50</span></label>
+              <label><input type="radio" name="product_page_size" value="100" data-product-page-size><span>100</span></label>
+            </div>
+            <small data-product-window-summary>İlk 50 ürün gösteriliyor.</small>
+          </div>
+          <div class="partner-products-selection-actions" aria-label="Hızlı seçim">
+            <button type="button" data-select-all-products-action><i class="fa-solid fa-list-check"></i><span>Tümünü Seç</span></button>
+            <button type="button" data-select-visible-products><i class="fa-solid fa-check-double"></i><span>Görünenleri Seç</span></button>
+            <button type="button" data-select-ready-products><i class="fa-solid fa-shield-check"></i><span>Onaya Hazırları Seç</span></button>
+            <button type="button" data-submit-selected-review><i class="fa-solid fa-paper-plane"></i><span>Seçili Ürünleri Onaya Gönder</span></button>
+            <button type="button" data-select-revision-products><i class="fa-solid fa-pen-ruler"></i><span>Revize Gerekenleri Seç</span></button>
+            <button type="button" data-select-risk-products><i class="fa-solid fa-triangle-exclamation"></i><span>Risklileri Seç</span></button>
+            <button type="button" data-select-active-products><i class="fa-solid fa-circle-check"></i><span>Yayındakileri Seç</span></button>
+            <button type="button" data-select-missing-price-products><i class="fa-solid fa-tags"></i><span>Fiyatı Olmayanları Seç</span></button>
+            <button type="button" data-select-missing-stock-products><i class="fa-solid fa-box-open"></i><span>Stoku Olmayanları Seç</span></button>
+            <button type="button" data-select-low-stock-products><i class="fa-solid fa-battery-quarter"></i><span>Stoku Az Kalanları Seç</span></button>
+            <button type="button" data-clear-selected-products><i class="fa-solid fa-xmark"></i><span>Seçimi Temizle</span></button>
+          </div>
+          <form data-bulk-product-form>
+            <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" placeholder="Yeni fiyat"></label>
+            <label><span>Stok</span><input name="stock" type="number" min="0" step="1" placeholder="Yeni stok"></label>
+            <label><span>Kategori</span><input name="category" placeholder="Kategori" list="shop-category-options"></label>
+            <label><span>Marka</span><input name="brand" placeholder="Marka"></label>
+            <label><span>SKU</span><input name="sku" placeholder="SKU / stok kodu" maxlength="90"></label>
+            <label><span>Barkod</span><input name="barcode" placeholder="Barkod / GTIN" maxlength="80"></label>
+            <label class="partner-products-bulk-span-2"><span>Satıcı bilgilendirme</span><input name="seller_disclosure" placeholder="Platform dışı ifade kaldırıldı" maxlength="420"></label>
+            <label class="partner-products-bulk-span-2"><span>Açıklama</span><textarea name="description" placeholder="Seçili ürünler için açıklama revizyonu" maxlength="1800"></textarea></label>
+            <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Toplu Kaydet</span></button>
+          </form>
+        </aside>
+
+        <div class="partner-products-table-frame">
+          <div class="partner-products-scrollbar" data-table-scrollbar aria-label="Tabloyu yatay kaydır" hidden>
+            <div data-table-scrollbar-inner></div>
+          </div>
+          <div class="partner-products-table-wrap" data-table-wrap>
+            <table class="partner-products-table">
+              <thead>
+                <tr>
+                  <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Görünen ürünleri seç"></th>
+                  <th>Ürün</th>
+                  <th>Kategori</th>
+                  <th>Fiyat</th>
+                  <th>Stok</th>
+                  <th>Durum</th>
+                  <th>Güncelleme</th>
+                  <th>Aksiyon</th>
+                </tr>
+              </thead>
+              <tbody data-product-rows>
+                <tr>
+                  <td colspan="8">
+                    <div class="partner-products-loading">Ürünler yükleniyor.</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav class="partner-products-pagination" data-product-pagination aria-label="Ürün sayfaları"></nav>
+        </div>
+      </section>
+
+      <aside class="partner-product-drawer" data-product-drawer hidden aria-hidden="true" aria-label="Ürün düzenleme">
+        <div class="partner-product-drawer-backdrop" data-close-product-drawer></div>
+        <div class="partner-product-drawer-panel">
+          <header>
+            <div>
+              <p data-drawer-status>Revizyon</p>
+              <h2 data-drawer-title>Ürün Düzenle</h2>
+              <span data-drawer-subtitle>Admin onayı bekleyen ürün revizyonu.</span>
+            </div>
+            <button type="button" data-close-product-drawer aria-label="Kapat">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </header>
+
+          <form class="partner-product-edit-form" data-product-edit-form data-product-form>
+            <input type="hidden" name="id">
+            <div class="partner-product-edit-grid">
+              <label class="partner-product-span-2"><span>Ürün adı</span><input name="name" required maxlength="180"></label>
+              <label><span>SKU</span><input name="sku" maxlength="90"></label>
+              <label><span>Barkod / GTIN</span><input name="barcode" maxlength="80"></label>
+              <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="market">Allona Market</option><option value="food">Allona Yemek</option><option value="service">Hizmet</option><option value="taxi">Taksi</option></select></label>
+              <label><span>Kategori</span><input name="category" maxlength="120" list="shop-category-options"></label>
+              <label><span>Marka / Restoran</span><input name="brand" maxlength="140"></label>
+              <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required></label>
+              <label><span>Stok</span><input name="stock" type="number" min="0" step="1" required></label>
+              <input name="media_gallery" type="hidden" data-product-media-gallery>
+              <label class="partner-product-span-2"><span>Görsel dosyaları (en fazla 8)</span><input name="image_file" type="file" accept="image/avif,image/jpeg,image/png,image/webp" multiple data-product-image-file></label>
+              <label class="partner-product-span-2"><span>Görsel URL</span><input name="image_url" maxlength="900" data-product-image-url></label>
+              <label class="partner-product-span-2"><span>Video dosyası (en fazla 1)</span><input name="video_file" type="file" accept="video/mp4,video/webm,video/quicktime" data-product-video-file></label>
+              <label class="partner-product-span-2"><span>Video URL</span><input name="video_url" maxlength="1200" data-product-video-url></label>
+              <label class="partner-product-span-2"><span>Açıklama</span><textarea name="description" maxlength="1800"></textarea></label>
+              <label><span>Satıcı görünen adı</span><input name="seller_public_name" maxlength="140"></label>
+              <label><span>Satıcı şehir</span><input name="seller_city" maxlength="90"></label>
+              <label class="partner-product-span-2"><span>Ticari unvan</span><input name="seller_legal_name" maxlength="180"></label>
+              <label><span>Destek iletişimi</span><input name="seller_contact" maxlength="180"></label>
+              <label><span>Vergi no maskesi</span><input name="seller_tax_number_masked" maxlength="40"></label>
+              <label class="partner-product-span-2"><span>Fatura sorumluluğu</span><input name="invoice_responsibility" maxlength="320"></label>
+              <label class="partner-product-span-2"><span>Satıcı bilgilendirme</span><input name="seller_disclosure" maxlength="420"></label>
+              <label class="partner-product-span-2"><span>SEO başlığı</span><input name="meta_title" maxlength="180"></label>
+              <label class="partner-product-span-2"><span>SEO açıklaması</span><textarea name="meta_description" maxlength="300"></textarea></label>
+            </div>
+            <div class="partner-product-preview" data-product-edit-preview></div>
+            <div data-product-edit-variants></div>
+            <footer>
+              <button type="button" data-close-product-drawer><i class="fa-solid fa-arrow-left"></i><span>Vazgeç</span></button>
+              <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Onaya Gönder</span></button>
+            </footer>
+          </form>
+        </div>
+      </aside>
+    </main>
+
+    <div data-layout="footer"></div>
+    <datalist id="shop-category-options">
+      <option value="Kadın"></option>
+      <option value="Erkek"></option>
+      <option value="Elektronik"></option>
+      <option value="Ayakkabı & Çanta"></option>
+      <option value="Moda"></option>
+      <option value="Ev & Yaşam"></option>
+      <option value="Oto, Bahçe & Yapı Market"></option>
+      <option value="Anne & Çocuk"></option>
+      <option value="Spor & Outdoor"></option>
+      <option value="Kozmetik"></option>
+      <option value="Süpermarket"></option>
+      <option value="Kitap & Hobi"></option>
+      <option value="Saat & Aksesuar"></option>
+      <option value="Beyaz Eşya"></option>
+      <option value="Bilgisayar & Tablet"></option>
+      <option value="Telefon & Aksesuar"></option>
+    </datalist>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260620-partneros1" defer></script>
+  <script src="../../js/core.js?v=20260630-shopcat2" defer></script>
+  <script src="../../js/supabase-client.js?v=20260629-partnerhost1" defer></script>
+  <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
+  <script src="../../js/partner-products.js?v=20260701-detailfix1" defer></script>
+  <script src="../../js/platform.js?v=20260630-shopcat2" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260630-shopcat2" defer></script>
+</body>
+</html>

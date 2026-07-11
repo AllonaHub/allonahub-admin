@@ -1,4 +1,6 @@
-# AllonaHub corporate email forwarding DNS template.
+# AllonaHub corporate email DNS template for direct Hetzner inbound + outbound.
+# Current production DNS uses Cloudflare Email Routing for inbound mail. For that setup,
+# use cloudflare-email-routing-outbound-dns.txt instead of replacing MX records here.
 # Replace HETZNER_IPV4 and, if used, HETZNER_IPV6 with the real Hetzner server IPs.
 # If an SPF TXT record already exists for @, merge this policy into that single SPF record.
 
@@ -7,4 +9,5 @@ mail   A       HETZNER_IPV4
 # mail AAAA    HETZNER_IPV6
 
 @      TXT     "v=spf1 mx -all"
+mail._domainkey TXT "v=DKIM1; h=sha256; k=rsa; p=REPLACE_WITH_SETUP_MAIL_SUBMISSION_PUBLIC_KEY"
 _dmarc TXT     "v=DMARC1; p=none; rua=mailto:legal@allonahub.com; fo=1; adkim=s; aspf=s"

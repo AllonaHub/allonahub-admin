@@ -1,13 +1,46 @@
 (function () {
+  const App = window.Allona = window.Allona || {};
   const menuItems = [
+    {
+      label: "Kadın",
+      category: "Kadın",
+      query: "Kadın",
+      sidebar: ["Kadın Giyim", "Kadın Ayakkabı", "Kadın Çanta", "Kadın İç Giyim", "Kadın Aksesuar"],
+      groups: [
+        ["Kadın Giyim", ["Elbise", "Bluz", "Gömlek", "Tişört", "Pantolon", "Jean", "Etek", "Ceket", "Mont", "Abiye"]],
+        ["Ayakkabı", ["Sneaker", "Topuklu Ayakkabı", "Bot", "Çizme", "Sandalet", "Terlik", "Babet", "Loafer"]],
+        ["Çanta", ["Omuz Çantası", "Sırt Çantası", "El Çantası", "Cüzdan", "Makyaj Çantası", "Valiz"]],
+        ["İç Giyim", ["Pijama", "Sütyen", "Külot", "Çorap", "Ev Giyim", "Korse"]],
+        ["Aksesuar", ["Kolye", "Küpe", "Bileklik", "Yüzük", "Şal", "Saç Aksesuarı"]]
+      ],
+      feature: ["Kadın kategorisini derinleştir", "Trendyol ana navigasyonundaki kadın giyim, ayakkabı, çanta ve aksesuar kırılımları tek panelde.", "Kadın Ürünleri", "Kadın"],
+      tiles: ["Elbise", "Topuklu", "Omuz Çantası", "Takı", "Abiye", "Ev Giyim"]
+    },
+    {
+      label: "Erkek",
+      category: "Erkek",
+      query: "Erkek",
+      sidebar: ["Erkek Giyim", "Erkek Ayakkabı", "Erkek Aksesuar", "Spor Giyim", "Bakım"],
+      groups: [
+        ["Erkek Giyim", ["Gömlek", "T-shirt", "Sweatshirt", "Pantolon", "Jean", "Takım Elbise", "Ceket", "Mont"]],
+        ["Ayakkabı", ["Spor Ayakkabı", "Klasik Ayakkabı", "Bot", "Sneaker", "Terlik", "Outdoor Ayakkabı"]],
+        ["Aksesuar", ["Saat", "Cüzdan", "Kemer", "Gözlük", "Çanta", "Şapka"]],
+        ["Spor", ["Eşofman", "Forma", "Antrenman", "Outdoor Giyim", "Koşu", "Fitness"]],
+        ["Kişisel Bakım", ["Parfüm", "Tıraş", "Saç Bakım", "Deodorant", "Cilt Bakım", "Bakım Seti"]]
+      ],
+      feature: ["Erkek alışverişini netleştir", "Giyim, ayakkabı ve aksesuar ürünleri doğru alt kategoriyle listelenir.", "Erkek Ürünleri", "Erkek"],
+      tiles: ["Gömlek", "Sneaker", "Saat", "Cüzdan", "Takım", "Outdoor"]
+    },
     {
       label: "Elektronik",
       category: "Elektronik",
       query: "Elektronik",
-      sidebar: ["Bilgisayar & Tablet", "Telefon & Aksesuar", "TV, Görüntü & Ses", "Oyun & Konsol", "Yazıcı & Ofis"],
+      sidebar: ["Bilgisayar & Tablet", "Telefon & Aksesuar", "TV, Görüntü & Ses", "Beyaz Eşya", "Oyun & Konsol", "Yazıcı & Ofis"],
       groups: [
         ["Bilgisayar & Tablet", ["Laptop", "Tablet", "Masaüstü Bilgisayar", "Oyuncu Bilgisayarı", "Mini PC", "2'si 1 Arada"]],
+        ["Telefon & Aksesuar", ["Cep Telefonu", "Akıllı Saat", "Telefon Kılıfı", "Şarj Cihazı", "Powerbank", "Bluetooth Kulaklık"]],
         ["Bilgisayar Parçaları", ["Anakart", "Ekran Kartı", "Bellek RAM", "İşlemci", "SSD", "Kasa ve Güç Kaynağı"]],
+        ["TV & Beyaz Eşya", ["Televizyon", "Beyaz Eşya", "Buzdolabı", "Çamaşır Makinesi", "Bulaşık Makinesi", "Klima"]],
         ["Ağ, Modem & Akıllı Ev", ["Modem", "Router", "Access Point", "Akıllı Ev", "Akıllı Sensör", "Güvenlik Kamerası"]],
         ["Çevre Birimleri", ["Monitör", "Klavye", "Mouse", "Kulaklık", "Webcam", "Yazıcı"]],
         ["Oyuncu Donanımları", ["Gaming Laptop", "Oyuncu Mouse", "Oyuncu Kulaklığı", "Mekanik Klavye", "Oyun Kolu", "RGB Ekipman"]],
@@ -17,7 +50,22 @@
       tiles: ["Monitörler", "RTX Laptoplar", "Akıllı Ev", "Yazılım & Güvenlik", "Veri Depolama", "Kulaklık & Ses"]
     },
     {
-      label: "Moda",
+      label: "Ayakkabı & Çanta",
+      category: "Ayakkabı & Çanta",
+      query: "Ayakkabı Çanta",
+      sidebar: ["Kadın Ayakkabı", "Erkek Ayakkabı", "Çanta", "Valiz", "Aksesuar"],
+      groups: [
+        ["Kadın Ayakkabı", ["Sneaker", "Topuklu", "Bot", "Çizme", "Sandalet", "Terlik"]],
+        ["Erkek Ayakkabı", ["Spor Ayakkabı", "Klasik Ayakkabı", "Bot", "Outdoor Ayakkabı", "Loafer", "Terlik"]],
+        ["Çanta", ["Omuz Çantası", "Sırt Çantası", "El Çantası", "Laptop Çantası", "Bel Çantası", "Cüzdan"]],
+        ["Seyahat", ["Valiz", "Kabin Boy", "Seyahat Çantası", "Organizer", "Pasaportluk", "Bagaj Aksesuarı"]],
+        ["Bakım", ["Ayakkabı Bakım", "Deri Bakım", "Çanta Askısı", "Tabanlık", "Bağcık", "Koruyucu Sprey"]]
+      ],
+      feature: ["Ayakkabı ve çanta ayrı vitrin", "Trendyol ana kategorisindeki ayakkabı & çanta bölümü doğrudan ürün eşlemesine bağlandı.", "Ayakkabı & Çanta", "Ayakkabı Çanta"],
+      tiles: ["Sneaker", "Omuz Çantası", "Valiz", "Bot", "Cüzdan", "Laptop Çantası"]
+    },
+    {
+      label: "Moda & Takı",
       category: "Moda",
       query: "Moda",
       sidebar: ["Kadın", "Erkek", "Ayakkabı & Çanta", "Takı & Aksesuar", "İç Giyim"],
@@ -33,10 +81,10 @@
       tiles: ["Yeni Sezon", "Takı Koleksiyonu", "Çanta & Valiz", "Ayakkabı Seçimi", "Saat & Gözlük", "Premium Stil"]
     },
     {
-      label: "Ev & Ofis",
+      label: "Ev & Yaşam",
       category: "Ev & Yaşam",
       query: "Ev Yaşam",
-      sidebar: ["Ev Tekstili", "Mobilya", "Mutfak", "Kırtasiye & Ofis", "Dekorasyon"],
+      sidebar: ["Ev Tekstili", "Mobilya", "Mutfak", "Dekorasyon", "Kırtasiye & Ofis"],
       groups: [
         ["Ev Yaşam", ["Mobilya", "Dekorasyon", "Aydınlatma", "Ev Tekstili", "Halı", "Duvar Dekoru"]],
         ["Mutfak & Sofra", ["Mutfak Gereçleri", "Sofra", "Kahve", "Tencere Tava", "Saklama", "Küçük Ev Aleti"]],
@@ -49,8 +97,8 @@
       tiles: ["Mutfak", "Ev Tekstili", "Ofis", "Dekorasyon", "Temizlik", "Aydınlatma"]
     },
     {
-      label: "Oto & Yapı",
-      category: "Oto & Yapı",
+      label: "Oto, Bahçe & Yapı Market",
+      category: "Oto, Bahçe & Yapı Market",
       query: "Oto Bahçe Yapı",
       sidebar: ["Oto Aksesuar", "Yapı Market", "Bahçe", "Elektrikli Alet", "Hırdavat"],
       groups: [
@@ -81,7 +129,7 @@
       tiles: ["Bebek Bakım", "Oyuncak", "Okul", "Anne Konfor", "Bebek Odası", "Hediye"]
     },
     {
-      label: "Spor",
+      label: "Spor & Outdoor",
       category: "Spor & Outdoor",
       query: "Spor Outdoor",
       sidebar: ["Spor Giyim", "Fitness", "Outdoor", "Bisiklet", "Beslenme"],
@@ -97,7 +145,7 @@
       tiles: ["Fitness", "Kamp", "Spor Ayakkabı", "Bisiklet", "Takviye", "Forma"]
     },
     {
-      label: "Kozmetik",
+      label: "Kozmetik & Kişisel Bakım",
       category: "Kozmetik",
       query: "Kozmetik",
       sidebar: ["Makyaj", "Cilt Bakım", "Saç Bakım", "Parfüm", "Kişisel Bakım"],
@@ -113,7 +161,7 @@
       tiles: ["Cilt Bakım", "Parfüm", "Saç Bakım", "Makyaj", "Hijyen", "Güneş Koruma"]
     },
     {
-      label: "Süpermarket",
+      label: "Süpermarket & Pet Shop",
       category: "Süpermarket",
       query: "Süpermarket Pet",
       sidebar: ["Gıda", "Temizlik", "Kişisel Hijyen", "Bebek Bezi", "Pet Shop"],
@@ -129,7 +177,7 @@
       tiles: ["Kahvaltılık", "Temizlik", "Pet Shop", "Bebek Bezi", "Kahve", "Hijyen"]
     },
     {
-      label: "Kitap & Hobi",
+      label: "Kitap, Müzik & Hobi",
       category: "Kitap & Hobi",
       query: "Kitap Hobi",
       sidebar: ["Kitap", "Müzik", "Film", "Hobi", "Koleksiyon"],
@@ -145,7 +193,7 @@
       tiles: ["Roman", "Enstrüman", "Kutu Oyunu", "Sanat Seti", "Koleksiyon", "Okul"]
     },
     {
-      label: "Saat & Takı",
+      label: "Saat & Aksesuar",
       category: "Saat & Aksesuar",
       query: "Saat Takı Aksesuar",
       sidebar: ["Saat", "Takı", "Gözlük", "Çanta Aksesuar", "Hediye"],
@@ -161,6 +209,34 @@
       tiles: ["Kolye", "Yüzük", "Saat", "Gözlük", "Hediye Seti", "Organizer"]
     }
   ];
+
+  const extraAliases = {
+    "ayakkabi": "Ayakkabı & Çanta",
+    "ayakkabi-canta": "Ayakkabı & Çanta",
+    "beyaz-esya": "Elektronik",
+    "bilgisayar": "Elektronik",
+    "canta": "Ayakkabı & Çanta",
+    "cep-telefonu": "Elektronik",
+    "ev-ofis": "Ev & Yaşam",
+    "ev-yasam": "Ev & Yaşam",
+    "erkek-giyim": "Erkek",
+    "hepsiburada": "",
+    "kadin-giyim": "Kadın",
+    "kitap-muzik-film-hobi": "Kitap & Hobi",
+    "kirtasiye-ofis": "Ev & Yaşam",
+    "kisisel-bakim": "Kozmetik",
+    "kozmetik-kisisel-bakim": "Kozmetik",
+    "moda": "Moda",
+    "oto-bahce-yapi-market": "Oto, Bahçe & Yapı Market",
+    "pet-shop": "Süpermarket",
+    "petshop": "Süpermarket",
+    "saat": "Saat & Aksesuar",
+    "saat-taki": "Saat & Aksesuar",
+    "spor": "Spor & Outdoor",
+    "supermarket-pet-shop": "Süpermarket",
+    "telefon": "Elektronik",
+    "tv-beyaz-esya": "Elektronik"
+  };
 
   function escapeHTML(value) {
     return String(value || "").replace(/[&<>"']/g, (char) => ({
@@ -180,7 +256,7 @@
   }
 
   function renderLink(label, category, className) {
-    return `<a${className ? ` class="${className}"` : ""} href="${escapeHTML(href(label))}">${escapeHTML(label)}</a>`;
+    return `<a${className ? ` class="${className}"` : ""} href="${escapeHTML(href(label, category))}">${escapeHTML(label)}</a>`;
   }
 
   function renderGroup(group, category) {
@@ -197,7 +273,7 @@
     const [featureTitle, featureText, featureCta, featureQuery] = item.feature;
     return `
       <div class="shop-category-item">
-        <a class="shop-category-trigger" href="${escapeHTML(href(item.query))}" aria-haspopup="true">${escapeHTML(item.label)}</a>
+        <a class="shop-category-trigger" href="${escapeHTML(href(item.query, item.category))}" aria-haspopup="true" aria-expanded="false">${escapeHTML(item.label)}</a>
         <div class="shop-category-mega" role="menu" aria-label="${escapeHTML(item.label)} kategorileri">
           <div class="shop-mega-sidebar" aria-label="${escapeHTML(item.label)} alt kategorileri">
             ${item.sidebar.map((link, index) => renderLink(link, item.category, index === 0 ? "is-active" : "")).join("")}
@@ -210,11 +286,11 @@
               <small>${escapeHTML(item.label)}</small>
               <strong>${escapeHTML(featureTitle)}</strong>
               <span>${escapeHTML(featureText)}</span>
-              <a class="shop-mega-cta" href="${escapeHTML(href(featureQuery))}">${escapeHTML(featureCta)}</a>
+              <a class="shop-mega-cta" href="${escapeHTML(href(featureQuery, item.category))}">${escapeHTML(featureCta)}</a>
             </div>
             <div class="shop-mega-tile-grid">
               ${item.tiles.map((tile) => `
-                <a class="shop-mega-tile" href="${escapeHTML(href(tile))}">
+                <a class="shop-mega-tile" href="${escapeHTML(href(tile, item.category))}">
                   <strong>${escapeHTML(tile)}</strong>
                   <span>Hızlı keşif</span>
                 </a>
@@ -239,13 +315,193 @@
     });
   }
 
+  function normalizeText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ı/g, "i")
+      .replace(/İ/g, "i")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/&/g, " ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function itemTerms(item) {
+    return [
+      item.label,
+      item.category,
+      item.query,
+      ...(item.sidebar || []),
+      ...(item.tiles || []),
+      ...(item.groups || []).flatMap(([title, links]) => [title, ...(links || [])])
+    ].filter(Boolean);
+  }
+
+  const categoryLookup = new Map();
+  const categoryTermLookup = new Map();
+
+  menuItems.forEach((item) => {
+    const terms = [...new Set(itemTerms(item).map(normalizeText).filter(Boolean))];
+    terms.forEach((term) => {
+      if (!categoryLookup.has(term)) categoryLookup.set(term, item);
+    });
+    categoryTermLookup.set(item.category, terms);
+  });
+
+  Object.entries(extraAliases).forEach(([alias, category]) => {
+    if (!category) return;
+    const item = menuItems.find((entry) => entry.category === category || entry.label === category);
+    if (item) {
+      const normalizedAlias = normalizeText(alias);
+      categoryLookup.set(normalizedAlias, item);
+      const terms = categoryTermLookup.get(item.category) || [];
+      if (normalizedAlias && !terms.includes(normalizedAlias)) {
+        categoryTermLookup.set(item.category, [...terms, normalizedAlias]);
+      }
+    }
+  });
+
+  function resolveCategory(value) {
+    const normalized = normalizeText(value);
+    return categoryLookup.get(normalized) || null;
+  }
+
+  function productText(product) {
+    const categoryLabel = App.core?.labelFromValue ? App.core.labelFromValue(product?.category, "") : product?.category;
+    return [
+      product?.name,
+      product?.product_name,
+      product?.description,
+      categoryLabel,
+      product?.brand,
+      product?.seller_name,
+      product?.seller_public_name,
+      product?.store_name,
+      product?.meta_title,
+      product?.meta_description
+    ].filter(Boolean).join(" ");
+  }
+
+  function cleanCategoryLabel(value) {
+    const label = App.core?.labelFromValue ? App.core.labelFromValue(value, "") : String(value || "");
+    const normalized = normalizeText(label);
+    return label && label !== "[object Object]" && normalized !== "genel" ? label : "";
+  }
+
+  function productMatchesCategory(product, selectedCategory) {
+    const rawSelected = String(selectedCategory || "").trim();
+    if (!rawSelected) return true;
+
+    const selectedNorm = normalizeText(rawSelected);
+    const productCategoryValue = cleanCategoryLabel(product?.category);
+    const productCategoryNorm = normalizeText(productCategoryValue || "");
+    const productHaystack = normalizeText(productText(product));
+    const selectedItem = resolveCategory(rawSelected);
+
+    if (productCategoryNorm === selectedNorm || productHaystack.includes(selectedNorm)) return true;
+    if (!selectedItem) return false;
+
+    const rootTerms = categoryTermLookup.get(selectedItem.category) || [];
+    if (rootTerms.includes(productCategoryNorm)) return true;
+    return rootTerms.some((term) => term.length >= 4 && productHaystack.includes(term));
+  }
+
+  function categoryOptions(productList) {
+    const roots = menuItems.map((item) => cleanCategoryLabel(item.category));
+    const productCategories = (productList || [])
+      .map((product) => cleanCategoryLabel(product.category))
+      .filter(Boolean);
+    return [...new Set([...roots, ...productCategories])].sort((a, b) => a.localeCompare(b, "tr"));
+  }
+
+  function closeMenus(nav) {
+    nav.querySelectorAll(".shop-category-item.is-open").forEach((item) => {
+      item.classList.remove("is-open");
+      item.querySelector(".shop-category-trigger")?.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  function openMenuItem(nav, item) {
+    closeMenus(nav);
+    item.classList.add("is-open");
+    item.querySelector(".shop-category-trigger")?.setAttribute("aria-expanded", "true");
+  }
+
+  function bindMenuInteractions(nav) {
+    if (nav.dataset.shopMegaBound === "true") return;
+    nav.dataset.shopMegaBound = "true";
+    let closeTimer = 0;
+
+    nav.addEventListener("pointerenter", (event) => {
+      const item = event.target.closest(".shop-category-item");
+      if (!item || !nav.contains(item)) return;
+      window.clearTimeout(closeTimer);
+      openMenuItem(nav, item);
+    }, true);
+
+    nav.addEventListener("focusin", (event) => {
+      const item = event.target.closest(".shop-category-item");
+      if (!item || !nav.contains(item)) return;
+      openMenuItem(nav, item);
+    });
+
+    nav.addEventListener("pointerleave", () => {
+      closeTimer = window.setTimeout(() => closeMenus(nav), 180);
+    });
+
+    nav.addEventListener("keydown", (event) => {
+      const current = event.target.closest(".shop-category-item");
+      if (!current) return;
+      const items = [...nav.querySelectorAll(".shop-category-item")];
+      const index = items.indexOf(current);
+      if (event.key === "Escape") {
+        closeMenus(nav);
+        current.querySelector(".shop-category-trigger")?.focus();
+      }
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+        event.preventDefault();
+        const next = items[(index + 1) % items.length];
+        next.querySelector(".shop-category-trigger")?.focus();
+        openMenuItem(nav, next);
+      }
+      if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const prev = items[(index - 1 + items.length) % items.length];
+        prev.querySelector(".shop-category-trigger")?.focus();
+        openMenuItem(nav, prev);
+      }
+    });
+
+    nav.addEventListener("click", (event) => {
+      const trigger = event.target.closest(".shop-category-trigger");
+      if (!trigger || !nav.contains(trigger)) return;
+      const item = trigger.closest(".shop-category-item");
+      const panel = item?.querySelector(".shop-category-mega");
+      if (!panel || window.getComputedStyle(panel).display === "none") return;
+      if (!item.classList.contains("is-open")) {
+        event.preventDefault();
+        openMenuItem(nav, item);
+      }
+    });
+  }
+
   function renderMenus() {
     document.querySelectorAll("[data-shop-mega-menu]").forEach((nav) => {
       nav.innerHTML = menuItems.map(renderItem).join("");
       nav.dataset.shopMegaReady = "true";
       markActive(nav);
+      bindMenuInteractions(nav);
     });
   }
+
+  App.shopCategories = {
+    items: menuItems,
+    normalizeText,
+    resolveCategory,
+    productMatchesCategory,
+    categoryOptions
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", renderMenus);

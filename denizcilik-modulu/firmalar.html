@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Firmalar | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Denizcilik modulu dogrulanmis lojistik firmalari ve hizmet hatlari.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="firmalar">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="building-2"></i>Firma agi</span>
+        <h1>Dogrulanmis denizcilik partnerleri</h1>
+        <p class="lead">Forwarder, acente, broker ve dijital lojistik firmalari hizmet hatlari, yanit suresi ve teklif aksiyonlariyla listelenir.</p>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div>
+            <h2>Aktif firmalar</h2>
+            <p>E-posta ve telefon aksiyonlari dogrudan calisir.</p>
+          </div>
+          <a class="button compact" href="partner-panel.html#navlun-ekle"><i data-lucide="plus"></i><span>Firma Teklifi Ekle</span></a>
+        </div>
+        <div class="grid-list" data-render="companies-board"></div>
+      </section>
+
+      <section class="section tint">
+        <div class="section-heading">
+          <div>
+            <h2>Hat Kapsami</h2>
+            <p>Uzayan operasyon alanlari kart dizisi yerine yatay kaydirma ile tutulur.</p>
+          </div>
+        </div>
+        <div class="checklist">
+          <div class="check-item"><strong>Kuzey Avrupa</strong><p>Hamburg, Rotterdam, Antwerp cikis ve varis slotlari.</p></div>
+          <div class="check-item"><strong>Akdeniz</strong><p>Valencia, Piraeus, Alexandria icin FCL ve LCL servisleri.</p></div>
+          <div class="check-item"><strong>Kizildeniz</strong><p>Jeddah, Jebel Ali ve Dammam baglantili ihracat akisidir.</p></div>
+          <div class="check-item"><strong>Karadeniz</strong><p>Poti, Constanta, Batumi ve Ro-Ro arac slotlari.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="destek.html">Destek</a><a href="teklif.html">Teklif</a><a href="partner-panel.html">Partner</a><a href="../legal/index.html#partner">Partner Koşulları</a><a href="../legal/index.html#gizlilik">Gizlilik</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Firma bilgileri doğruluk, yetki ve iletişim güncelliği bakımından yayın öncesi kontrol edilmelidir.</p></div>
+    </footer>
+  </body>
+</html>

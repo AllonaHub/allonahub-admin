@@ -1,6 +1,8 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core;
+  const INTEGRATION_AUTO_PULL_DELAY_MS = 11000;
+  const INTEGRATION_AUTO_PULL_MAX_BATCHES = 50;
 
   const state = {
     access: null,
@@ -10,12 +12,161 @@
     paymentIntents: [],
     transactions: [],
     payouts: [],
+    refundCancellations: [],
     locations: [],
     devices: [],
     qrCodes: [],
     tickets: [],
+    campaigns: [],
+    integrations: [],
+    integrationConnectors: [],
+    integrationRuns: [],
+    partnerWarnings: [],
+    integrationWarnings: [],
+    refundWarnings: [],
+    integrationPolicy: {},
     metrics: {},
-    recommendations: []
+    recommendations: [],
+    selectedRefundId: null,
+    productView: "list",
+    initialHashApplied: false
+  };
+
+  const MODULE_PROFILES = {
+    shop: {
+      label: "Allona Shop",
+      shortLabel: "Shop",
+      typeLabels: ["Ürün", "Ürün Ekle"],
+      href: "../commerce/allonashop.html",
+      category: "Genel",
+      brand: "Allona Shop Partneri",
+      image: "/images/modules/allona-shop.png",
+      skuPrefix: "ALP"
+    },
+    market: {
+      label: "Allona Market",
+      shortLabel: "Market",
+      typeLabels: ["Market ürünü", "Market Ürünü Ekle"],
+      href: "../commerce/allonamarket.html",
+      category: "Market / Kahvaltı",
+      brand: "Allona Market Partneri",
+      image: "/images/modules/market-water-pack.png",
+      skuPrefix: "ALM"
+    },
+    food: {
+      label: "Allona Yemek",
+      shortLabel: "Yemek",
+      typeLabels: ["Menü ürünü", "Menü Ürünü Ekle"],
+      href: "../commerce/allonayemek.html",
+      category: "Yemek / Menü",
+      brand: "Allona Burger House",
+      image: "/images/modules/yemek-light-v5.jpg",
+      skuPrefix: "ALY"
+    },
+    service: {
+      label: "Hizmet / Ekosistem",
+      shortLabel: "Hizmet",
+      typeLabels: ["Hizmet", "Hizmet Ekle"],
+      href: "../ecosystem/ecosystem.html",
+      category: "Hizmet / Operasyon",
+      brand: "Allona Partner",
+      image: "/images/product-fallback.svg",
+      skuPrefix: "ALS"
+    }
+  };
+
+  const PRODUCT_TEMPLATE_COLUMNS = [
+    "catalog_scope",
+    "name",
+    "category",
+    "brand",
+    "price",
+    "stock",
+    "status",
+    "seller_public_name",
+    "seller_legal_name",
+    "seller_city",
+    "seller_contact",
+    "seller_tax_number_masked",
+    "invoice_responsibility",
+    "seller_disclosure",
+    "image_url",
+    "media_gallery",
+    "video_url",
+    "description",
+    "sku"
+  ];
+
+  const RESTRICTED_PRODUCT_PATTERNS = [
+    ["Alkol ve tütün ürünü", /\b(alkol|alkollü|bira|şarap|rakı|viski|votka|tütün|sigara|puro|nargile|elektronik sigara|vape)\b/i],
+    ["Silah, patlayıcı veya kesici saldırı ürünü", /\b(silah|tabanca|tüfek|mermi|fişek|patlayıcı|bomba|bıçak|sustalı|elektro şok|şok cihazı)\b/i],
+    ["İlaç veya reçeteli sağlık ürünü", /\b(reçeteli|ilaç|antibiyotik|hormon|steroid|anabolik|uyuşturucu|narkotik|cbd|kenevir|esrar)\b/i],
+    ["Kumar, bahis veya şans oyunu", /\b(kumar|bahis|casino|poker|rulet|iddaa kuponu|şans oyunu)\b/i],
+    ["Yetişkin içerik veya hizmet", /\b(yetişkin|erotik|escort|cinsel|pornografik)\b/i],
+    ["Canlı hayvan veya kontrol gerektiren hayvan satışı", /\b(canlı hayvan|yavru kedi|yavru köpek|evcil hayvan satışı)\b/i]
+  ];
+
+  const DEFAULT_INTEGRATION_CONNECTORS = [
+    { provider: "generic_feed", label: "CSV / JSON Feed", availability: "free", stage: "enabled", active_now: true, outbound_active_now: false, sort_order: 10 },
+    { provider: "woocommerce", label: "WooCommerce", availability: "free", stage: "starter", active_now: true, outbound_active_now: false, sort_order: 20 },
+    { provider: "shopify", label: "Shopify", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 30 },
+    { provider: "trendyol", label: "Trendyol Pazaryeri", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 40 },
+    { provider: "hepsiburada", label: "Hepsiburada", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 50 },
+    { provider: "n11", label: "n11", availability: "premium", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 60 },
+    { provider: "ciceksepeti", label: "Çiçeksepeti", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 70 },
+    { provider: "pazarama", label: "Pazarama", availability: "premium", stage: "planned", active_now: false, outbound_active_now: false, sort_order: 80 },
+    { provider: "custom_api", label: "Özel API", availability: "enterprise", stage: "premium_ready", active_now: true, outbound_active_now: false, sort_order: 90 }
+  ];
+
+  const INTEGRATION_CREDENTIAL_HINTS = {
+    generic_feed: {
+      sourceLabel: "Feed URL",
+      sourcePlaceholder: "https://partner-site.com/products.csv veya .json",
+      keyLabel: "API anahtarı",
+      keyPlaceholder: "Gerekmiyorsa boş bırak",
+      secretLabel: "API secret / token",
+      secretPlaceholder: "Gerekmiyorsa boş bırak"
+    },
+    woocommerce: {
+      sourceLabel: "WooCommerce mağaza URL",
+      sourcePlaceholder: "https://magazaadresiniz.com",
+      keyLabel: "Consumer Key",
+      keyPlaceholder: "ck_...",
+      secretLabel: "Consumer Secret",
+      secretPlaceholder: "cs_..."
+    },
+    shopify: {
+      sourceLabel: "Shopify shop domain",
+      sourcePlaceholder: "magazaniz.myshopify.com",
+      keyLabel: "API anahtarı",
+      keyPlaceholder: "Opsiyonel",
+      secretLabel: "Admin API access token",
+      secretPlaceholder: "shpat_..."
+    },
+    trendyol: {
+      sourceLabel: "Supplier ID / Satıcı ID",
+      sourcePlaceholder: "Trendyol tedarikçi numaranız",
+      keyLabel: "Trendyol API Key",
+      keyPlaceholder: "Satıcı panelindeki API key",
+      secretLabel: "Trendyol API Secret",
+      secretPlaceholder: "Satıcı panelindeki API secret"
+    },
+    hepsiburada: {
+      sourceLabel: "Merchant ID",
+      sourcePlaceholder: "Hepsiburada merchant ID",
+      keyLabel: "Hepsiburada API Key",
+      keyPlaceholder: "API key",
+      secretLabel: "Hepsiburada API Secret",
+      secretPlaceholder: "API secret"
+    },
+    n11: {
+      sourceLabel: "Kaynak / mağaza URL",
+      sourcePlaceholder: "Opsiyonel",
+      keyLabel: "n11 App Key",
+      keyPlaceholder: "App key",
+      secretLabel: "n11 App Secret",
+      secretPlaceholder: "App secret"
+    }
   };
 
   function $(selector, root) {
@@ -98,9 +249,9 @@
   }
 
   function statusClass(status) {
-    if (["active", "paid", "settled", "delivered", "verified"].includes(status)) return "partner-os-status--good";
-    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing"].includes(status)) return "partner-os-status--warn";
-    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked"].includes(status)) return "partner-os-status--bad";
+    if (["active", "paid", "settled", "delivered", "verified", "enabled", "success"].includes(status)) return "partner-os-status--good";
+    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal", "needs_review"].includes(status)) return "partner-os-status--warn";
+    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled", "dispute_admin_review"].includes(status)) return "partner-os-status--bad";
     return "";
   }
 
@@ -129,7 +280,22 @@
       waiting: "Bekliyor",
       resolved: "Çözüldü",
       scheduled: "Planlandı",
-      approved: "Onaylandı"
+      approved: "Onaylandı",
+      enabled: "Açık",
+      starter: "Başlangıç",
+      premium_ready: "Premium hazır",
+      planned: "Planlı",
+      needs_attention: "İlgi istiyor",
+      needs_review: "Kontrol",
+      partial: "Kısmi",
+      success: "Başarılı",
+      skipped: "Atlandı",
+      queued: "Kuyrukta",
+      running: "Çalışıyor",
+      pending_partner: "Partner onayı",
+      dispute_admin_review: "Admin ihtilafı",
+      signal: "Sinyal",
+      support_signal: "Destek sinyali"
     };
     return labels[status] || status || "-";
   }
@@ -171,6 +337,8 @@
       }
     }
 
+    applyCatalogProfile();
+
     const trust = Math.max(0, Math.min(100, Number(state.metrics.trust_score || business.trust_score || 70)));
     if ($("[data-trust-score]")) $("[data-trust-score]").textContent = `${trust}`;
     if ($("[data-trust-progress]")) $("[data-trust-progress]").style.width = `${trust}%`;
@@ -193,6 +361,7 @@
     const kpis = [
       ["Bugünkü Tahsilat", money(metrics.paid_today), "QR/NFC/link ödemeleri"],
       ["Açık Sipariş", metrics.open_order_count || 0, "Hazırlık ve kargo bekleyen"],
+      ["İade / İptal", metrics.refund_cancellation_pending_count || 0, "Partner kararı bekleyen"],
       ["Bekleyen Ödeme", metrics.awaiting_payment_count || 0, "Açık QR/link istekleri"],
       ["Net Hacim", money(metrics.net_volume), "Komisyon sonrası kayıt"],
       ["Aktif Ürün", metrics.active_product_count || 0, "Yayında görünen ürün/hizmet"],
@@ -209,6 +378,426 @@
         <small>${escape(hint)}</small>
       </article>
     `).join("");
+  }
+
+  function renderStoreHealth() {
+    const target = $("[data-store-health]");
+    if (!target) return;
+    const metrics = state.metrics || {};
+    const business = state.business || {};
+    const score = Math.max(0, Math.min(100, Number(metrics.trust_score || business.trust_score || 70)));
+    const rows = [
+      ["Profil", business.logo_url && business.display_name ? "Tamam" : "Eksik bilgi", business.logo_url && business.display_name ? "active" : "pending"],
+      ["Katalog", Number(metrics.active_product_count || 0) > 0 ? `${metrics.active_product_count} aktif` : "Ürün bekliyor", Number(metrics.active_product_count || 0) > 0 ? "active" : "pending"],
+      ["Ödeme", Number(metrics.awaiting_payment_count || 0) || Number(metrics.paid_today || 0) ? "Aktif" : "Kurulum bekliyor", Number(metrics.awaiting_payment_count || 0) || Number(metrics.paid_today || 0) ? "active" : "pending"],
+      ["Destek", Number(metrics.open_ticket_count || 0) ? `${metrics.open_ticket_count} açık` : "Temiz", Number(metrics.open_ticket_count || 0) ? "pending" : "active"]
+    ];
+    target.innerHTML = `
+      <div class="partner-os-health-score">
+        <strong>${score}</strong>
+        <span>Genel sağlık</span>
+      </div>
+      <div class="partner-os-health-bars">
+        ${rows.map(([label, value, status]) => `
+          <div>
+            <span>${escape(label)}</span>
+            ${statusPill(status).replace(statusLabel(status), escape(value))}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function actionButton(label, icon, target, tone) {
+    return `
+      <button type="button" class="${tone ? `is-${tone}` : ""}" data-panel-jump="${escape(target)}">
+        <i class="fa-solid ${escape(icon)}"></i>
+        <span>${escape(label)}</span>
+      </button>
+    `;
+  }
+
+  function renderActionCenter() {
+    const target = $("[data-action-center]");
+    if (!target) return;
+    const metrics = state.metrics || {};
+    const actions = [];
+    if (Number(metrics.refund_cancellation_pending_count || 0) > 0 || Number(metrics.refund_cancellation_dispute_count || 0) > 0) {
+      actions.push(["İade / iptal incele", "fa-rotate-left", "refunds", "primary"]);
+    }
+    if (!state.products.length) actions.push(["İlk ürünü ekle", "fa-box-open", "products", "primary"]);
+    if (!state.integrations.length) actions.push(["Entegrasyon bağla", "fa-plug-circle-bolt", "integrations", "primary"]);
+    if (!state.paymentIntents.length) actions.push(["Ödeme isteği oluştur", "fa-qrcode", "payments", "primary"]);
+    if (!state.campaigns.length) actions.push(["Kampanya planla", "fa-bullhorn", "growth", ""]);
+    if (Number(metrics.open_order_count || 0) > 0) actions.push(["Siparişleri güncelle", "fa-truck-fast", "orders", ""]);
+    if (!actions.length) {
+      actions.push(["Performansı incele", "fa-chart-line", "finance", "primary"], ["Destek merkezini aç", "fa-headset", "support", ""]);
+    }
+    target.innerHTML = actions.slice(0, 4).map((item) => actionButton(...item)).join("");
+  }
+
+  function numeric(value) {
+    const number = Number(value || 0);
+    return Number.isFinite(number) ? number : 0;
+  }
+
+  function countByStatus(items, statuses) {
+    const wanted = new Set(statuses);
+    return (items || []).filter((item) => wanted.has(String(item.status || item.request_status || "").toLowerCase())).length;
+  }
+
+  function productAttentionCount() {
+    const reviewStatuses = new Set(["pending", "needs_review", "review", "in_review"]);
+    const productStatuses = new Set(["draft", "pending", "review", "needs_review"]);
+    return (state.products || []).filter((product) => (
+      reviewStatuses.has(String(product.compliance_review_status || "").toLowerCase())
+      || productStatuses.has(String(product.status || "").toLowerCase())
+      || numeric(product.stock) <= 5
+    )).length;
+  }
+
+  function integrationAttentionCount() {
+    const warningCount = (state.integrationWarnings || []).length;
+    const integrationCount = countByStatus(state.integrations, ["needs_attention", "disabled", "paused"]);
+    const runCount = (state.integrationRuns || []).slice(0, 8).filter((run) => {
+      const status = String(run.status || "").toLowerCase();
+      return ["failed", "partial"].includes(status) || numeric(run.failed_count) > 0 || numeric(run.warning_count) > 0;
+    }).length;
+    return warningCount + integrationCount + runCount;
+  }
+
+  function campaignAttentionCount() {
+    return countByStatus(state.campaigns, ["draft", "pending", "review", "queued"]);
+  }
+
+  function notificationBuckets() {
+    const metrics = state.metrics || {};
+    const onboarding = onboardingItems().filter((item) => !item.done).length;
+    const support = Math.max(
+      numeric(metrics.open_ticket_count),
+      countByStatus(state.tickets, ["open", "waiting", "in_progress"])
+    );
+    const refunds = numeric(metrics.refund_cancellation_pending_count) + numeric(metrics.refund_cancellation_dispute_count);
+    const settings = (state.partnerWarnings || []).length + (state.refundWarnings || []).length;
+    const buckets = {
+      onboarding: { count: onboarding, tone: "info", label: `${onboarding} kurulum adımı bekliyor` },
+      payments: { count: numeric(metrics.awaiting_payment_count), tone: "info", label: `${numeric(metrics.awaiting_payment_count)} ödeme işlemi bekliyor` },
+      products: { count: productAttentionCount(), tone: "warning", label: "Ürünlerde kontrol bekleyen kayıt var" },
+      integrations: { count: integrationAttentionCount(), tone: "warning", label: "Entegrasyon uyarısı var" },
+      orders: { count: numeric(metrics.open_order_count), tone: "info", label: `${numeric(metrics.open_order_count)} açık sipariş var` },
+      refunds: { count: refunds, tone: "critical", label: `${refunds} iade/iptal aksiyonu bekliyor` },
+      growth: { count: campaignAttentionCount(), tone: "info", label: "Kampanya onay/planlama sinyali var" },
+      support: { count: support, tone: "warning", label: `${support} açık destek bildirimi var` },
+      settings: { count: settings, tone: "critical", label: "Sistem veya veri erişimi uyarısı var" }
+    };
+    buckets.dashboard = {
+      count: Object.entries(buckets).reduce((total, [key, item]) => key === "onboarding" ? total : total + numeric(item.count), 0),
+      tone: Object.values(buckets).some((item) => item.tone === "critical" && numeric(item.count) > 0) ? "critical" : "warning",
+      label: "Panelde okunmamış operasyon bildirimi var"
+    };
+    return buckets;
+  }
+
+  function navButtonLabel(button) {
+    const label = Array.from(button.children).find((child) => (
+      child.tagName === "SPAN" && !child.classList.contains("partner-os-nav-badge")
+    ));
+    return label?.textContent?.trim() || button.dataset.panelTarget || "Bölüm";
+  }
+
+  function setNavBadge(button, notification) {
+    if (!button) return;
+    const count = numeric(notification?.count);
+    let badge = button.querySelector(".partner-os-nav-badge");
+    if (!count) {
+      if (badge) badge.remove();
+      button.classList.remove("has-notification", "has-critical-notification");
+      button.removeAttribute("data-notification-count");
+      button.removeAttribute("title");
+      button.setAttribute("aria-label", navButtonLabel(button));
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "partner-os-nav-badge";
+      badge.setAttribute("aria-hidden", "true");
+      button.appendChild(badge);
+    }
+    const label = navButtonLabel(button);
+    const display = count > 99 ? "99+" : String(count);
+    const description = notification.label || `${display} bildirim var`;
+    badge.textContent = display;
+    button.dataset.notificationCount = display;
+    button.classList.add("has-notification");
+    button.classList.toggle("has-critical-notification", notification.tone === "critical");
+    button.title = `${label}: ${description}`;
+    button.setAttribute("aria-label", `${label}: ${description}`);
+  }
+
+  function renderNotificationBadges() {
+    const buckets = notificationBuckets();
+    $all("[data-panel-target]").forEach((button) => {
+      setNavBadge(button, buckets[button.dataset.panelTarget]);
+    });
+  }
+
+  function renderAnnouncements() {
+    const target = $("[data-announcement-list]");
+    if (!target) return;
+    const announcements = [
+      { title: "Partner MFA zorunlu", body: "Partner girişleri iki aşamalı doğrulama ile korunuyor.", status: "active" },
+      { title: "Kampanya planlayıcı hazır", body: "Kupon, vitrin reklamı ve HP sadakat planlarını büyüme merkezinde oluştur.", status: "pending" },
+      { title: "QR/NFC ödeme merkezi", body: "Tahsilat linki, QR ve SoftPOS akışları tek ekranda izlenir.", status: "active" }
+    ];
+    target.innerHTML = announcements.map((item) => `
+      <article class="partner-os-list-item">
+        <div><strong>${escape(item.title)}</strong><span>${escape(item.body)}</span></div>
+        <em>${escape(statusLabel(item.status))}</em>
+      </article>
+    `).join("");
+  }
+
+  function onboardingItems() {
+    const business = state.business || {};
+    const metrics = state.metrics || {};
+    return [
+      {
+        title: "Partner profilini tamamla",
+        body: "Görünen ad, yasal unvan, telefon, şehir, logo ve açıklama bilgileri.",
+        done: Boolean(business.display_name && business.phone && business.city),
+        target: "settings"
+      },
+      {
+        title: "MFA güvenliğini doğrula",
+        body: "Partner paneline erişim için iki aşamalı doğrulama kullan.",
+        done: true,
+        target: "settings"
+      },
+      {
+        title: "İlk ürün veya hizmeti ekle",
+        body: "Katalog, stok, fiyat, görsel ve açıklama alanlarını doldur.",
+        done: Number(metrics.active_product_count || 0) > 0,
+        target: "products"
+      },
+      {
+        title: "Ürün akışını bağla",
+        body: "CSV, JSON veya WooCommerce bağlantısını ücretsiz başlangıç paketinde hazırla.",
+        done: state.integrations.length > 0,
+        target: "integrations"
+      },
+      {
+        title: "Ödeme kanalını dene",
+        body: "QR, ödeme linki veya NFC SoftPOS için test ödeme isteği oluştur.",
+        done: state.paymentIntents.length > 0,
+        target: "payments"
+      },
+      {
+        title: "İlk kampanyanı planla",
+        body: "Kupon, HP sadakat veya sponsorlu görünürlük kampanyası hazırla.",
+        done: state.campaigns.length > 0,
+        target: "growth"
+      }
+    ];
+  }
+
+  function renderOnboarding() {
+    const target = $("[data-onboarding-list]");
+    const scoreTarget = $("[data-onboarding-score]");
+    if (!target) return;
+    const items = onboardingItems();
+    const doneCount = items.filter((item) => item.done).length;
+    const percent = Math.round((doneCount / items.length) * 100);
+    if (scoreTarget) scoreTarget.textContent = `%${percent} tamamlandı`;
+    target.innerHTML = items.map((item) => `
+      <article class="partner-os-onboarding-item ${item.done ? "is-done" : ""}">
+        <i class="fa-solid ${item.done ? "fa-circle-check" : "fa-circle"}"></i>
+        <div>
+          <strong>${escape(item.title)}</strong>
+          <span>${escape(item.body)}</span>
+        </div>
+        <button type="button" data-panel-jump="${escape(item.target)}">${item.done ? "Aç" : "Tamamla"}</button>
+      </article>
+    `).join("");
+  }
+
+  function normalizeModuleKey(value) {
+    const key = String(value || "").trim().toLocaleLowerCase("tr-TR");
+    const aliases = {
+      allonashop: "shop",
+      product: "shop",
+      products: "shop",
+      urun: "shop",
+      "ürün": "shop",
+      marketplace: "shop",
+      grocery: "market",
+      supermarket: "market",
+      "süpermarket": "market",
+      restaurant: "food",
+      restoran: "food",
+      yemek: "food",
+      menu: "food",
+      menü: "food",
+      services: "service",
+      hizmet: "service",
+      ecosystem: "service"
+    };
+    return MODULE_PROFILES[key] ? key : aliases[key] || "";
+  }
+
+  function defaultModuleForPartnerType() {
+    const businessType = String(state.business?.partner_type || "").toLocaleLowerCase("tr-TR");
+    return normalizeModuleKey(businessType) || "shop";
+  }
+
+  function parseMaybeJson(value) {
+    if (!value || typeof value !== "string") return value;
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return value;
+    }
+  }
+
+  function businessMetadata() {
+    return parseMaybeJson(state.business?.metadata)
+      || parseMaybeJson(state.business?.settings)
+      || parseMaybeJson(state.business?.module_permissions)
+      || {};
+  }
+
+  function collectModuleCandidates() {
+    const business = state.business || {};
+    const metadata = businessMetadata();
+    return [
+      business.allowed_modules,
+      business.enabled_modules,
+      business.modules,
+      business.module_permissions,
+      metadata.allowed_modules,
+      metadata.enabled_modules,
+      metadata.modules,
+      metadata.module_permissions,
+      metadata.partner_modules
+    ].map(parseMaybeJson).filter(Boolean);
+  }
+
+  function moduleAccessMap() {
+    const access = Object.keys(MODULE_PROFILES).reduce((map, key) => {
+      map[key] = false;
+      return map;
+    }, {});
+    let hasExplicitAccess = false;
+
+    collectModuleCandidates().forEach((candidate) => {
+      if (Array.isArray(candidate)) {
+        candidate.forEach((item) => {
+          const key = normalizeModuleKey(typeof item === "object" ? item.key || item.module || item.name : item);
+          const enabled = !(item && typeof item === "object" && (item.enabled === false || item.write === false || item.status === "disabled"));
+          if (key) {
+            access[key] = enabled;
+            hasExplicitAccess = true;
+          }
+        });
+        return;
+      }
+      if (candidate && typeof candidate === "object") {
+        Object.entries(candidate).forEach(([rawKey, rawValue]) => {
+          const key = normalizeModuleKey(rawKey);
+          const enabled = rawValue === true
+            || rawValue === "true"
+            || rawValue === "enabled"
+            || rawValue === "active"
+            || rawValue === "write"
+            || rawValue === "manage"
+            || rawValue === 1
+            || (rawValue && typeof rawValue === "object" && rawValue.enabled !== false && rawValue.write !== false);
+          if (key) {
+            access[key] = Boolean(enabled);
+            hasExplicitAccess = true;
+          }
+        });
+      }
+    });
+
+    if (!hasExplicitAccess) access[defaultModuleForPartnerType()] = true;
+    return access;
+  }
+
+  function enabledScopes() {
+    const access = moduleAccessMap();
+    return Object.keys(MODULE_PROFILES).filter((key) => access[key]);
+  }
+
+  function isModuleEnabled(scope) {
+    return Boolean(moduleAccessMap()[normalizeModuleKey(scope)]);
+  }
+
+  function currentCatalogScope() {
+    return enabledScopes()[0] || defaultModuleForPartnerType();
+  }
+
+  function catalogProfile(scope) {
+    return MODULE_PROFILES[scope] || MODULE_PROFILES.shop;
+  }
+
+  function renderModuleAccess() {
+    const target = $("[data-module-access]");
+    if (!target) return;
+    const access = moduleAccessMap();
+    target.innerHTML = Object.entries(MODULE_PROFILES).map(([key, profile]) => {
+      const enabled = Boolean(access[key]);
+      return `
+        <article class="partner-os-module-card ${enabled ? "is-enabled" : "is-locked"}">
+          <i class="fa-solid ${enabled ? "fa-unlock-keyhole" : "fa-lock"}"></i>
+          <div>
+            <strong>${escape(profile.label)}</strong>
+            <span>${enabled ? "Admin tarafından açık; katalog ve yükleme aktif." : "Görünür, ancak ekleme ve düzenleme kapalı."}</span>
+          </div>
+          <em>${enabled ? "Açık" : "Kilitli"}</em>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function applyModulePermissions() {
+    const form = $("[data-product-form]");
+    const access = moduleAccessMap();
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    const addButton = $("[data-product-add]");
+    if (addButton) {
+      const label = addButton.querySelector("span");
+      if (label) label.textContent = profile.typeLabels[1];
+    }
+    if (!form) return;
+    if (form.elements.catalog_scope) {
+      $all("option", form.elements.catalog_scope).forEach((option) => {
+        const key = normalizeModuleKey(option.value);
+        option.disabled = !access[key];
+        option.textContent = `${catalogProfile(key).label}${access[key] ? "" : " (kilitli)"}`;
+      });
+      form.elements.catalog_scope.value = scope;
+    }
+    const nameLabel = form.querySelector("label:first-child span");
+    if (nameLabel) nameLabel.textContent = `${profile.typeLabels[0]} adı`;
+  }
+
+  function applyCatalogProfile() {
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    const storeLink = $("[data-partner-store-link]");
+    const storeLabel = $("[data-partner-store-label]");
+    const productForm = $("[data-product-form]");
+    if (storeLink) storeLink.href = profile.href;
+    if (storeLabel) storeLabel.textContent = `${profile.shortLabel} Vitrinine Git`;
+    applyModulePermissions();
+    renderModuleAccess();
+    if (!productForm || productForm.dataset.catalogProfileReady === "true") return;
+    if (productForm.elements.catalog_scope) productForm.elements.catalog_scope.value = scope;
+    if (productForm.elements.category && !productForm.elements.category.value) productForm.elements.category.placeholder = profile.category;
+    if (productForm.elements.brand && !productForm.elements.brand.value) productForm.elements.brand.placeholder = profile.brand;
+    if (productForm.elements.image_url && !productForm.elements.image_url.value) productForm.elements.image_url.placeholder = profile.image;
+    productForm.dataset.catalogProfileReady = "true";
   }
 
   function renderRecommendations() {
@@ -304,10 +893,21 @@
   }
 
   function renderProducts() {
+    renderProductSummary();
     const target = $("[data-product-rows]");
     if (!target) return;
     if (!state.products.length) {
-      target.innerHTML = `<tr><td colspan="6">Henüz ürün veya hizmet eklenmedi.</td></tr>`;
+      target.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="partner-os-empty-row">
+              <strong>Henüz ürün veya hizmet eklenmedi.</strong>
+              <span>İlk ürününü eklediğinde burada fiyat, stok, durum ve yayın sinyaliyle birlikte görünecek.</span>
+              <button type="button" data-product-add><i class="fa-solid fa-plus"></i><span>Ürün ekle</span></button>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
     target.innerHTML = state.products.map((raw) => {
@@ -325,6 +925,244 @@
         </tr>
       `;
     }).join("");
+  }
+
+  function renderProductSummary() {
+    const target = $("[data-product-summary]");
+    if (!target) return;
+    const products = state.products.map((item) => core.normalizeProduct(item));
+    const active = products.filter((item) => item.status === "active").length;
+    const waiting = products.filter((item) => ["draft", "pending", "review"].includes(item.status)).length;
+    const lowStock = products.filter((item) => Number(item.stock || 0) <= 5).length;
+    const stats = [
+      ["Ürünlerim", products.length, "Toplam kayıt"],
+      ["Yayında", active, "Aktif ürün/hizmet"],
+      ["Onay bekleyen", waiting, "Taslak ve inceleme"],
+      ["Stok uyarısı", lowStock, "5 ve altı stok"]
+    ];
+    target.innerHTML = stats.map(([label, value, hint]) => `
+      <article>
+        <span>${escape(label)}</span>
+        <strong>${escape(value)}</strong>
+        <small>${escape(hint)}</small>
+      </article>
+    `).join("");
+  }
+
+  function setProductView(view, options) {
+    const nextView = view === "add" ? "add" : "list";
+    state.productView = nextView;
+    $all("[data-product-view-panel]").forEach((panel) => {
+      const active = panel.dataset.productViewPanel === nextView;
+      panel.hidden = !active;
+      panel.classList.toggle("is-active", active);
+    });
+    $all("[data-product-view-target]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.productViewTarget === nextView);
+    });
+    if (nextView === "add" && options?.focusForm) {
+      const form = $("[data-product-form]");
+      if (form?.elements?.name) form.elements.name.focus();
+    }
+  }
+
+  function integrationConnectors() {
+    const source = state.integrationConnectors.length ? state.integrationConnectors : DEFAULT_INTEGRATION_CONNECTORS;
+    return [...source].sort((a, b) => Number(a.sort_order || 100) - Number(b.sort_order || 100));
+  }
+
+  function integrationConnector(provider) {
+    return integrationConnectors().find((item) => item.provider === provider) || { provider, label: provider || "-", active_now: false };
+  }
+
+  function integrationProviderLabel(provider) {
+    return integrationConnector(provider).label || provider || "-";
+  }
+
+  function integrationPolicy() {
+    return state.integrationPolicy || {};
+  }
+
+  function currentIntegrationMode() {
+    const active = $("[data-integration-mode].is-active");
+    return active && active.dataset.integrationMode === "full" ? "full" : "import";
+  }
+
+  function partnerHasFullIntegrationAccess() {
+    const policy = integrationPolicy();
+    return Boolean(policy.premium_enabled && policy.full_integration_enabled && ["premium", "enterprise"].includes(policy.partner_plan_tier));
+  }
+
+  function integrationPremiumUrl(plan) {
+    const selectedPlan = plan || "pro";
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}#integrations`);
+    return `partner-integration-premium.html?plan=${encodeURIComponent(selectedPlan)}&returnTo=${returnTo}`;
+  }
+
+  function openIntegrationPremium(plan) {
+    window.location.href = integrationPremiumUrl(plan);
+  }
+
+  function setIntegrationMode(mode) {
+    const selected = mode === "full" ? "full" : "import";
+    $all("[data-integration-mode]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.integrationMode === selected);
+    });
+    const exportInput = $("[data-integration-export-enabled]");
+    if (exportInput) exportInput.value = selected === "full" ? "true" : "false";
+    renderIntegrationModeNote();
+  }
+
+  function renderIntegrationModeNote() {
+    const target = $("[data-integration-note]");
+    if (!target) return;
+    const mode = currentIntegrationMode();
+    const policy = integrationPolicy();
+    if (mode === "full") {
+      const unlocked = partnerHasFullIntegrationAccess();
+      target.innerHTML = `
+        <strong>Tam Entegrasyon ${unlocked ? "aktif" : "premium gerektirir"}</strong>
+        <span>Tam entegrasyon, buradan entegre olarak buraya yüklediğiniz ürünün API'sini girdiğiniz tüm platformlara yayılmasını sağlayacak bir entegrasyon platformudur. Bunu elde etmek için premium üyelik elde etmeniz gerekiyor.</span>
+        ${unlocked ? "" : `<a class="partner-os-inline-link" href="${escape(integrationPremiumUrl("pro"))}">Premium paketleri gör</a>`}
+        ${policy.outbound_enabled ? "" : "<em>Dış platformlara yayın şu anda operasyon onayı bekliyor.</em>"}
+      `;
+      target.classList.add("is-premium");
+      return;
+    }
+    target.innerHTML = `
+      <strong>Ürünleri Çek ücretsiz</strong>
+      <span>Partner kazanımı için dış platform, mağaza veya feed ürünlerini AllonaHub kataloğuna çekme ücretsizdir. Ürünler güvenlik için taslak/kontrol akışına alınır.</span>
+    `;
+    target.classList.remove("is-premium");
+  }
+
+  function integrationStageLabel(connector) {
+    if (connector.active_now) return connector.outbound_active_now ? "Tam entegrasyon açık" : "Ürün çekme ücretsiz";
+    if (connector.stage === "premium_ready") return "Premium hazır";
+    if (connector.stage === "planned") return "Planlı";
+    return statusLabel(connector.stage || "pending");
+  }
+
+  function renderIntegrationProviderOptions() {
+    const select = $("[data-integration-provider]");
+    if (!select) return;
+    const connectors = integrationConnectors();
+    select.innerHTML = connectors.map((connector) => `
+      <option value="${escape(connector.provider)}" ${connector.active_now ? "" : "disabled"}>
+        ${escape(connector.label)}${connector.active_now ? "" : " (yakında)"}
+      </option>
+    `).join("");
+    applyIntegrationCredentialHints();
+  }
+
+  function applyIntegrationCredentialHints() {
+    const provider = $("[data-integration-provider]")?.value || "generic_feed";
+    const hints = INTEGRATION_CREDENTIAL_HINTS[provider] || INTEGRATION_CREDENTIAL_HINTS.generic_feed;
+    const sourceLabel = $("[data-integration-source-label]");
+    const sourceInput = $("[data-integration-source-input]");
+    const keyLabel = $("[data-integration-key-label]");
+    const keyInput = $("[data-integration-key-input]");
+    const secretLabel = $("[data-integration-secret-label]");
+    const secretInput = $("[data-integration-secret-input]");
+    if (sourceLabel) sourceLabel.textContent = hints.sourceLabel;
+    if (sourceInput) sourceInput.placeholder = hints.sourcePlaceholder;
+    if (keyLabel) keyLabel.textContent = hints.keyLabel;
+    if (keyInput) keyInput.placeholder = hints.keyPlaceholder;
+    if (secretLabel) secretLabel.textContent = hints.secretLabel;
+    if (secretInput) secretInput.placeholder = hints.secretPlaceholder;
+  }
+
+  function renderIntegrationConnectors() {
+    const target = $("[data-integration-connectors]");
+    if (!target) return;
+    target.innerHTML = integrationConnectors().map((connector) => {
+      const enabled = Boolean(connector.active_now);
+      const status = enabled ? "active" : connector.stage || "pending";
+      return `
+        <article class="partner-os-integration-card ${enabled ? "is-enabled" : "is-locked"}">
+          <i class="fa-solid ${enabled ? "fa-plug-circle-bolt" : "fa-lock"}"></i>
+          <div>
+            <strong>${escape(connector.label)}</strong>
+            <span>${escape(integrationStageLabel(connector))} · ${escape(connector.outbound_active_now ? "Çift yönlü" : "İçe aktarım")}</span>
+          </div>
+          ${statusPill(status)}
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrationRows() {
+    const target = $("[data-integration-rows]");
+    if (!target) return;
+    if (!state.integrations.length) {
+      target.innerHTML = emptyList("Bağlantı yok", "CSV/JSON feed veya WooCommerce ile ilk ürün akışını bağla.");
+      return;
+    }
+    target.innerHTML = state.integrations.map((integration) => {
+      const connector = integrationConnector(integration.provider);
+      const secretKeys = (integration.secrets || []).map((item) => item.secret_key).join(", ");
+      const policy = integrationPolicy();
+      const canApply = Boolean(policy.apply_enabled) && !["paused", "disabled", "archived"].includes(integration.status);
+      return `
+        <article class="partner-os-integration-row">
+          <div>
+            <strong>${escape(integration.display_name || integrationProviderLabel(integration.provider))}</strong>
+            <span>${escape(connector.label)} · ${escape(integration.sync_mode || "manual")} · ${escape(secretKeys || "secret bekliyor")} · ${escape(policy.force_draft_on_apply ? "taslak aktarım" : "yayın ayarı geçerli")}</span>
+          </div>
+          <div class="partner-os-integration-row-actions">
+            ${statusPill(integration.status || "draft")}
+            <button type="button" data-integration-test="${escape(integration.id)}"><i class="fa-solid fa-vial"></i><span>Test</span></button>
+            <button type="button" data-integration-preview="${escape(integration.id)}"><i class="fa-solid fa-eye"></i><span>Önizle</span></button>
+            ${canApply ? `<button type="button" data-integration-sync="${escape(integration.id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Ürünleri Çek</span></button>` : ""}
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrationRuns() {
+    const target = $("[data-integration-runs]");
+    if (!target) return;
+    if (!state.integrationRuns.length) {
+      target.innerHTML = emptyList("Senkron yok", "Bağlantı testinden sonra önizleme çalıştır.");
+      return;
+    }
+    target.innerHTML = state.integrationRuns.slice(0, 10).map((run) => {
+      const preview = Array.isArray(run.summary?.preview) ? run.summary.preview : [];
+      const summaryErrors = Array.isArray(run.summary?.errors) ? run.summary.errors : [];
+      const pageInfo = run.summary?.page_info || {};
+      const duplicateCount = Number(run.summary?.duplicate_count || 0);
+      const pageLine = pageInfo.provider
+        ? `Sayfa ${pageInfo.current_page ?? pageInfo.requested_page ?? 0} · ${pageInfo.rows || 0} kaynak kayıt${pageInfo.exhausted ? " · kaynak sonuna gelindi" : pageInfo.next_page !== null && pageInfo.next_page !== undefined ? ` · sıradaki sayfa ${pageInfo.next_page}` : ""}`
+        : "";
+      const canApplyPreview = run.run_mode === "preview" && ["success", "partial"].includes(run.status) && run.integration_id;
+      return `
+        <article class="partner-os-integration-run">
+          <div>
+            <strong>${escape(integrationProviderLabel(state.integrations.find((item) => item.id === run.integration_id)?.provider))} · ${escape(run.run_mode || "preview")}</strong>
+            <span>${escape(formatDate(run.started_at))} · ${escape(run.checked_count || 0)} kayıt · ${escape(run.created_count || 0)} yeni · ${escape(run.updated_count || 0)} güncel · ${escape(run.skipped_count || 0)} aynı · ${escape(run.failed_count || 0)} hata</span>
+            ${pageLine ? `<small>${escape(pageLine)}</small>` : ""}
+            ${duplicateCount ? `<small>${escape(duplicateCount)} tekrar eden kaynak satırı tek ürün olarak işlendi.</small>` : ""}
+            ${preview.length ? `<small>${preview.slice(0, 3).map((item) => `${escape(item.name)}${item.compliance_status ? ` (${escape(statusLabel(item.compliance_status))})` : ""}`).join(", ")}</small>` : ""}
+            ${run.warning_count ? `<small>${escape(run.warning_count)} uyarı kontrol bekliyor.</small>` : ""}
+            ${summaryErrors.length ? `<small>${summaryErrors.slice(0, 2).map((item) => escape(item.message || item.external_product_id || "Ürün işlenemedi")).join(" · ")}</small>` : ""}
+            ${run.error_message ? `<small>${escape(run.error_message)}</small>` : ""}
+          </div>
+          <div class="partner-os-integration-row-actions">
+            ${statusPill(run.status || "queued")}
+            ${canApplyPreview ? `<button type="button" data-integration-apply="${escape(run.integration_id)}"><i class="fa-solid fa-cloud-arrow-down"></i><span>Kataloğa Aktar</span></button>` : ""}
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  function renderIntegrations() {
+    renderIntegrationModeNote();
+    renderIntegrationProviderOptions();
+    renderIntegrationConnectors();
+    renderIntegrationRows();
+    renderIntegrationRuns();
   }
 
   function renderOrders() {
@@ -350,6 +1188,90 @@
           <td><input data-order-tracking="${escape(order.id)}" value="${escape(order.tracking_number || "")}" placeholder="Takip no"></td>
         </tr>
       `;
+    }).join("");
+  }
+
+  function refundTypeLabel(value) {
+    const labels = {
+      refund: "İade",
+      cancellation: "İptal",
+      signal: "Talep"
+    };
+    return labels[value] || value || "Talep";
+  }
+
+  function refundProviderText(item) {
+    const dispatch = item.provider_dispatch;
+    if (!dispatch) return item.request_status === "approved" ? "Bildirim kaydı yok" : "Karar bekliyor";
+    if (dispatch.ok) return "Ödeme kuruluşuna iletildi";
+    const iyzicoCode = dispatch.channels?.iyzico?.code;
+    const webhookCode = dispatch.channels?.webhook?.code;
+    return iyzicoCode || webhookCode || "Bildirim beklemede";
+  }
+
+  function refundDetailMarkup(item) {
+    const ticket = (item.tickets || [])[0] || {};
+    const flag = (item.flags || [])[0] || {};
+    const provider = refundProviderText(item);
+    return `
+      <tr class="partner-os-refund-detail">
+        <td colspan="7">
+          <div class="partner-os-refund-detail-grid">
+            <article>
+              <strong>Talep açıklaması</strong>
+              <span>${escape(item.reason || ticket.message || ticket.title || "Açıklama kaydı yok.")}</span>
+            </article>
+            <article>
+              <strong>İptal / iade nedeni</strong>
+              <span>${escape(flag.reason || ticket.message || "Partner kararı bekleniyor.")}</span>
+            </article>
+            <article>
+              <strong>Ödeme bildirimi</strong>
+              <span>${escape(provider)}</span>
+            </article>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderRefundCancellations() {
+    const target = $("[data-refund-cancellation-rows]");
+    const summary = $("[data-refund-cancellation-summary]");
+    const items = state.refundCancellations || [];
+    const pending = items.filter((item) => item.request_status === "pending_partner").length;
+    const disputes = items.filter((item) => item.request_status === "dispute_admin_review").length;
+    if (summary) summary.textContent = `${pending} bekleyen · ${disputes} ihtilaf`;
+    if (!target) return;
+    if (!items.length) {
+      target.innerHTML = `<tr><td colspan="7">Partner kararı bekleyen iade veya iptal talebi görünmüyor.</td></tr>`;
+      return;
+    }
+    target.innerHTML = items.map((item) => {
+      const approveAction = item.type === "cancellation" ? "approve_cancellation" : "approve_refund";
+      const actionButtons = item.decision_required
+        ? `
+          <button class="is-primary" type="button" data-refund-order="${escape(item.id)}" data-refund-decision="${escape(approveAction)}"><i class="fa-solid fa-check"></i><span>Kabul Et</span></button>
+          <button class="is-danger" type="button" data-refund-order="${escape(item.id)}" data-refund-decision="reject_request"><i class="fa-solid fa-scale-balanced"></i><span>İhtilafa Gönder</span></button>
+        `
+        : `<span>${escape(item.request_status === "dispute_admin_review" ? "Admin incelemesinde" : refundProviderText(item))}</span>`;
+      const row = `
+        <tr>
+          <td><strong>${escape(item.order_no || item.id)}</strong><br><small>${escape(formatDate(item.signal_at || item.created_at))}</small></td>
+          <td>${escape(refundTypeLabel(item.type))}</td>
+          <td>${escape(item.customer_name || item.customer_email || "-")}</td>
+          <td>${money(item.partner_total || item.total)}</td>
+          <td>${statusPill(item.request_status || item.order_status || "signal")}</td>
+          <td class="partner-os-refund-reason">${escape(core.truncate(item.reason || "-", 96))}</td>
+          <td>
+            <div class="partner-os-table-actions">
+              <button type="button" data-refund-detail="${escape(item.id)}"><i class="fa-solid fa-circle-info"></i><span>Detay</span></button>
+              ${actionButtons}
+            </div>
+          </td>
+        </tr>
+      `;
+      return row + (state.selectedRefundId === item.id ? refundDetailMarkup(item) : "");
     }).join("");
   }
 
@@ -432,34 +1354,96 @@
       : emptyList("Açık talep yok", "Ödeme, QR/NFC, kargo veya teknik konularda talep açabilirsin.");
   }
 
+  function campaignTypeLabel(value) {
+    const labels = {
+      coupon: "Kupon",
+      sponsored_listing: "Vitrin reklamı",
+      loyalty: "HP sadakat",
+      free_delivery: "Ücretsiz teslimat"
+    };
+    return labels[value] || value || "-";
+  }
+
+  function renderCampaigns() {
+    const target = $("[data-campaign-rows]");
+    if (!target) return;
+    if (!state.campaigns.length) {
+      target.innerHTML = `<tr><td colspan="5">Henüz planlanmış kampanya yok.</td></tr>`;
+      return;
+    }
+    target.innerHTML = state.campaigns.map((campaign) => `
+      <tr>
+        <td><strong>${escape(campaign.title)}</strong><br><small>${escape(campaign.summary || "")}</small></td>
+        <td>${escape(campaignTypeLabel(campaign.campaign_type))}</td>
+        <td>${escape([campaign.starts_at, campaign.ends_at].filter(Boolean).join(" - ") || "Tarih bekliyor")}</td>
+        <td>${escape(statusLabel(campaign.objective || "conversion"))}</td>
+        <td>${statusPill(campaign.status || "review")}</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderAcademy() {
+    const target = $("[data-academy-list]");
+    if (!target) return;
+    const lessons = [
+      ["Hızlı başlangıç", "Profil, katalog, ödeme ve destek kurulumunu 15 dakikada tamamla.", "onboarding", "fa-list-check"],
+      ["Ürün ve stok kalitesi", "Görsel, açıklama, fiyat, stok ve kategori standardını güçlendir.", "products", "fa-boxes-stacked"],
+      ["Sipariş operasyonu", "Hazırlık, kargo, teslimat ve müşteri iletişimi akışlarını takip et.", "orders", "fa-truck-fast"],
+      ["Kampanya ve reklam", "Kupon, HP, vitrin ve tekrar müşteri planlarını tek yerden yönet.", "growth", "fa-bullhorn"],
+      ["Finans ve hakediş", "Komisyon, net kazanç, ödeme takvimi ve raporları doğru oku.", "finance", "fa-wallet"],
+      ["Güvenlik standardı", "MFA, destek, audit ve hesap güvenliği kontrollerini düzenli tut.", "settings", "fa-shield-halved"]
+    ];
+    target.innerHTML = lessons.map(([title, body, targetId, icon]) => `
+      <article class="partner-os-academy-card">
+        <i class="fa-solid ${escape(icon)}"></i>
+        <div>
+          <strong>${escape(title)}</strong>
+          <span>${escape(body)}</span>
+        </div>
+        <button type="button" data-panel-jump="${escape(targetId)}">Aç</button>
+      </article>
+    `).join("");
+  }
+
   function renderAll() {
     applyBusinessProfile();
     renderKpis();
+    renderStoreHealth();
+    renderActionCenter();
+    renderAnnouncements();
+    renderOnboarding();
     renderRecommendations();
     renderRecentPayments();
     renderPaymentRows();
     renderProducts();
+    setProductView(state.productView || "list");
+    renderIntegrations();
     renderOrders();
+    renderRefundCancellations();
     renderFinance();
     renderOperations();
     renderTickets();
+    renderCampaigns();
+    renderAcademy();
+    renderNotificationBadges();
   }
 
   async function loadFallbackData() {
     const access = state.access;
+    const partnerBusiness = access.partnerBusiness || {};
     const business = {
-      id: `local-${access.user.id}`,
-      owner_id: access.user.id,
-      display_name: access.profile.full_name || access.user.email || "Allona Partner",
-      partner_code: "LOCAL-PARTNER",
-      partner_type: "shop",
-      status: "active",
-      verification_status: "pending",
-      trust_score: 72,
-      level: 1,
+      id: partnerBusiness.id || `local-${access.user.id}`,
+      owner_id: partnerBusiness.owner_id || access.user.id,
+      display_name: partnerBusiness.display_name || partnerBusiness.legal_name || access.profile.full_name || access.user.email || "Allona Partner",
+      partner_code: partnerBusiness.partner_code || "LOCAL-PARTNER",
+      partner_type: partnerBusiness.partner_type || "shop",
+      status: partnerBusiness.status || "active",
+      verification_status: partnerBusiness.verification_status || "pending",
+      trust_score: partnerBusiness.trust_score || 72,
+      level: partnerBusiness.level || 1,
       default_commission_rate: 0.12,
-      email: access.user.email,
-      phone: access.profile.phone || ""
+      email: partnerBusiness.email || access.user.email,
+      phone: partnerBusiness.phone || access.profile.phone || ""
     };
 
     const { data: products } = await App.db.client()
@@ -474,10 +1458,24 @@
     state.paymentIntents = [];
     state.transactions = [];
     state.payouts = [];
+    state.refundCancellations = [];
     state.locations = [];
     state.devices = [];
     state.qrCodes = [];
     state.tickets = [];
+    state.campaigns = [];
+    state.integrations = [];
+    state.integrationConnectors = DEFAULT_INTEGRATION_CONNECTORS;
+    state.integrationRuns = [];
+    state.partnerWarnings = [];
+    state.integrationWarnings = [];
+    state.refundWarnings = [];
+    state.integrationPolicy = {
+      apply_enabled: false,
+      require_apply_confirmation: true,
+      apply_confirmation_text: "KATALOGA_AKTAR",
+      force_draft_on_apply: true
+    };
     state.metrics = {
       product_count: state.products.length,
       active_product_count: state.products.filter((item) => item.status === "active").length,
@@ -514,10 +1512,19 @@
           paymentIntents: payload.paymentIntents || [],
           transactions: payload.transactions || [],
           payouts: payload.payouts || [],
+          refundCancellations: payload.refundCancellations || [],
           locations: payload.locations || [],
           devices: payload.devices || [],
           qrCodes: payload.qrCodes || [],
           tickets: payload.tickets || [],
+          campaigns: payload.campaigns || [],
+          integrations: payload.integrations || [],
+          integrationConnectors: payload.integrationConnectors || DEFAULT_INTEGRATION_CONNECTORS,
+          integrationRuns: payload.integrationRuns || [],
+          partnerWarnings: payload.partnerWarnings || [],
+          integrationWarnings: payload.integrationWarnings || [],
+          refundWarnings: payload.refundWarnings || [],
+          integrationPolicy: payload.integrationPolicy || {},
           metrics: payload.metrics || {},
           recommendations: payload.recommendations || []
         });
@@ -527,6 +1534,7 @@
         showAlert("Partner API şu an erişilemedi; panel güvenli yerel fallback ile açıldı. Canlı yayında API aktif olduğunda tüm modüller veri çeker.");
       }
       renderAll();
+      applyInitialHash();
     } catch (error) {
       showAlert(error.message || "Bu alana erişim yetkiniz yok.", "error");
     }
@@ -536,6 +1544,18 @@
     $all("[data-panel-section]").forEach((section) => section.classList.toggle("is-active", section.id === id));
     $all("[data-panel-target]").forEach((button) => button.classList.toggle("is-active", button.dataset.panelTarget === id));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function applyInitialHash() {
+    if (state.initialHashApplied) return;
+    state.initialHashApplied = true;
+    const hash = String(window.location.hash || "").replace(/^#/, "");
+    if (hash === "products-add") {
+      activatePanel("products");
+      setProductView("add", { focusForm: true });
+      return;
+    }
+    if (hash && document.getElementById(hash)) activatePanel(hash);
   }
 
   function paymentPreview(intent) {
@@ -583,6 +1603,17 @@
     };
   }
 
+  function restrictedProductReason(data) {
+    const text = [
+      data.name,
+      data.category,
+      data.brand,
+      data.description
+    ].map((value) => String(value || "")).join(" ");
+    const found = RESTRICTED_PRODUCT_PATTERNS.find(([, pattern]) => pattern.test(text));
+    return found ? found[0] : "";
+  }
+
   async function createPaymentIntent(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     data.amount = Number(data.amount || 0);
@@ -610,6 +1641,7 @@
       renderPaymentRows();
       renderRecentPayments();
       renderKpis();
+      renderNotificationBadges();
       if (App.complianceAudit) {
         await App.complianceAudit.record({
           category: "partner",
@@ -635,62 +1667,540 @@
     }
   }
 
-  async function createProduct(form) {
-    const data = Object.fromEntries(new FormData(form).entries());
-    const isFood = data.catalog_scope === "food";
+  function productPayloadFromData(data) {
+    const scope = normalizeModuleKey(data.catalog_scope) || currentCatalogScope();
+    const profile = catalogProfile(scope);
     const businessName = state.business?.display_name || state.business?.legal_name || state.access.profile?.full_name || "Allona Partner";
-    const payload = {
+    const sellerPublicName = data.seller_public_name || businessName;
+    const sellerLegalName = data.seller_legal_name || state.business?.legal_name || "";
+    const sellerCity = data.seller_city || state.business?.city || "";
+    const sellerContact = data.seller_contact || state.business?.support_email || state.access.user.email || "";
+    const sellerTaxMasked = data.seller_tax_number_masked || "";
+    const invoiceResponsibility = data.invoice_responsibility || "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.";
+    const sellerDisclosure = data.seller_disclosure || "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.";
+    const complianceReason = restrictedProductReason(data);
+    if (complianceReason) {
+      throw new Error(`${complianceReason} kategorisi otomatik ürün yüklemeye kapalıdır. Lütfen AllonaHub destek üzerinden manuel inceleme talebi açın.`);
+    }
+    const mediaGallery = parseMediaGallery(data.media_gallery);
+    const primaryImage = data.image_url || mediaGallery[0] || profile.image;
+    return {
       name: data.name,
       description: data.description || "",
-      category: data.category || (isFood ? "Yemek" : "Genel"),
+      category: data.category || profile.category,
       brand: data.brand || businessName,
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
-      status: ["active", "draft"].includes(data.status) ? data.status : "active",
+      status: "draft",
+      module_key: scope,
+      catalog_scope: scope,
       partner_id: state.access.user.id,
       partner_code: state.business?.partner_code || state.business?.id || state.access.user.id,
       partner_email: state.access.user.email || "",
-      image_url: data.image_url || (isFood ? "/images/modules/yemek-light-v5.jpg" : ""),
+      seller_public_name: sellerPublicName,
+      seller_kind: "Partner satıcı",
+      seller_legal_name: sellerLegalName,
+      seller_city: sellerCity,
+      seller_contact: sellerContact,
+      seller_tax_number_masked: sellerTaxMasked,
+      invoice_responsibility: invoiceResponsibility,
+      seller_disclosure: sellerDisclosure,
+      compliance_review_status: "pending",
+      compliance_notes: data.status === "active" ? "Partner yayın talebi oluşturdu; admin onayı bekleniyor." : "Partner ürün taslağı oluşturdu; admin onayı bekleniyor.",
+      image_url: primaryImage,
+      media_gallery: mediaGallery.length ? mediaGallery : (primaryImage ? [primaryImage] : []),
+      video_url: String(data.video_url || "").trim(),
       slug: core.slugify(`${data.name}-${Date.now()}`),
-      coupon_status: isFood ? "Menü kuponu" : "Aktif",
-      hp_status: isFood ? "HP kazandırır" : "Aktif",
-      sku: core.slugify(`${isFood ? "ALY" : "ALP"}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
+      coupon_status: scope === "food" ? "Menü kuponu" : scope === "market" ? "Market kuponu" : "Aktif",
+      hp_status: scope === "food" ? "HP kazandırır" : scope === "market" ? "Market HP" : "Aktif",
+      sku: data.sku || core.slugify(`${profile.skuPrefix}-${data.name}-${Date.now()}`).toUpperCase().slice(0, 48)
     };
-    if (!payload.name || payload.price < 0) {
-      toast("Ürün adı ve fiyat alanını kontrol edin.", "error");
-      return;
+  }
+
+  function parseMediaGallery(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    const raw = String(value || "").trim();
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 8);
+    } catch (error) {
+      // Excel/CSV imports may carry gallery URLs as comma or newline separated text.
     }
+    return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).slice(0, 8);
+  }
+
+  async function persistProductPayload(payload, options) {
+    const settings = options || {};
+    if (!payload.name || payload.price < 0) {
+      throw new Error("Ürün adı ve fiyat alanını kontrol edin.");
+    }
+    if (!isModuleEnabled(payload.catalog_scope)) {
+      throw new Error(`${catalogProfile(payload.catalog_scope).label} modülü bu partner için kilitli.`);
+    }
+    const created = await App.db.products.upsert(payload);
+    state.products = [created, ...state.products];
+    state.metrics.product_count = state.products.length;
+    state.metrics.active_product_count = state.products.filter((item) => item.status === "active").length;
+    state.metrics.low_stock_count = state.products.filter((item) => Number(item.stock || 0) <= 5).length;
+    if (App.complianceAudit && !settings.skipAudit) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "product_draft_created",
+        severity: "info",
+        resourceType: "product",
+        resourceId: created.id,
+        evidenceTags: ["partner_os", "catalog"],
+        metadata: {
+          category: created.category || payload.category,
+          price: Number(created.price || payload.price || 0),
+          status: created.status || "draft",
+          source: settings.source || "form"
+        }
+      });
+    }
+    return created;
+  }
+
+  async function createProductFromData(data, options) {
+    const payload = productPayloadFromData(data);
+    const created = await persistProductPayload(payload, options);
+    renderProducts();
+    setProductView("list");
+    renderKpis();
+    renderNotificationBadges();
+    return created;
+  }
+
+  async function createProduct(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const scope = normalizeModuleKey(data.catalog_scope) || currentCatalogScope();
     const button = form.querySelector("button[type='submit']");
     button.disabled = true;
     try {
-      const created = await App.db.products.upsert(payload);
-      state.products = [created, ...state.products];
-      state.metrics.product_count = state.products.length;
-      state.metrics.active_product_count = state.products.filter((item) => item.status === "active").length;
-      state.metrics.low_stock_count = state.products.filter((item) => Number(item.stock || 0) <= 5).length;
-      renderProducts();
-      renderKpis();
-      if (App.complianceAudit) {
-        await App.complianceAudit.record({
-          category: "partner",
-          action: "product_draft_created",
-          severity: "info",
-          resourceType: "product",
-          resourceId: created.id,
-          evidenceTags: ["partner_os", "catalog"],
-          metadata: {
-            category: created.category || payload.category,
-            price: Number(created.price || payload.price || 0),
-            status: created.status || "draft"
-          }
-        });
-      }
+      await createProductFromData(data, { source: "form" });
       form.reset();
-      toast(isFood ? "Yemek ürünü canlı kataloğa eklendi." : "Ürün kataloğa eklendi.");
+      applyCatalogProfile();
+      toast(scope === "market" ? "Market ürünü admin onayına gönderildi." : scope === "food" ? "Yemek ürünü admin onayına gönderildi." : "Ürün admin onayına gönderildi.");
     } catch (error) {
       toast(error.message || "Ürün kaydedilemedi. Partner yetkisi veya ürün şemasını kontrol edin.", "error");
     } finally {
       button.disabled = false;
+    }
+  }
+
+  function productTemplateRows() {
+    const scope = currentCatalogScope();
+    const profile = catalogProfile(scope);
+    return [{
+      catalog_scope: scope,
+      name: scope === "food" ? "Cheeseburger Menü" : scope === "service" ? "Standart Hizmet Paketi" : "Örnek Ürün",
+      category: profile.category,
+      brand: state.business?.display_name || profile.brand,
+      price: 199.9,
+      stock: scope === "service" ? 1 : 25,
+      status: "draft",
+      seller_public_name: state.business?.display_name || profile.brand,
+      seller_legal_name: state.business?.legal_name || "",
+      seller_city: state.business?.city || "",
+      seller_contact: state.access?.user?.email || "",
+      seller_tax_number_masked: "",
+      invoice_responsibility: "Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür.",
+      seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
+      image_url: profile.image,
+      media_gallery: JSON.stringify([profile.image]),
+      video_url: "",
+      description: "Excel ile yükleme örneği",
+      sku: `${profile.skuPrefix}-ORNEK-001`
+    }];
+  }
+
+  function rowsFromProducts() {
+    return state.products.map((item) => ({
+      catalog_scope: item.catalog_scope || item.module_key || currentCatalogScope(),
+      name: item.name || item.title || "",
+      category: item.category || "",
+      brand: item.brand || "",
+      price: Number(item.price || 0),
+      stock: Number(item.stock || 0),
+      status: item.status || "draft",
+      seller_public_name: item.seller_public_name || item.seller_name || "",
+      seller_legal_name: item.seller_legal_name || "",
+      seller_city: item.seller_city || "",
+      seller_contact: item.seller_contact || "",
+      seller_tax_number_masked: item.seller_tax_number_masked || "",
+      invoice_responsibility: item.invoice_responsibility || "",
+      seller_disclosure: item.seller_disclosure || "",
+      image_url: item.image_url || "",
+      media_gallery: Array.isArray(item.media_gallery) ? JSON.stringify(item.media_gallery) : item.media_gallery || "",
+      video_url: item.video_url || "",
+      description: item.description || "",
+      sku: item.sku || ""
+    }));
+  }
+
+  function downloadBlob(blob, filename) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function downloadRows(rows, filename, sheetName) {
+    const normalizedRows = rows.length ? rows : [PRODUCT_TEMPLATE_COLUMNS.reduce((row, key) => ({ ...row, [key]: "" }), {})];
+    if (window.XLSX) {
+      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: PRODUCT_TEMPLATE_COLUMNS });
+      const workbook = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      window.XLSX.writeFile(workbook, filename);
+      return;
+    }
+    const csv = [
+      PRODUCT_TEMPLATE_COLUMNS.join(";"),
+      ...normalizedRows.map((row) => PRODUCT_TEMPLATE_COLUMNS.map((key) => {
+        const value = String(row[key] ?? "");
+        return `"${value.replace(/"/g, '""')}"`;
+      }).join(";"))
+    ].join("\n");
+    downloadBlob(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }), filename.replace(/\.xlsx$/i, ".csv"));
+  }
+
+  function parseDelimited(text) {
+    const firstLine = String(text || "").split(/\r?\n/).find((line) => line.trim()) || "";
+    const delimiter = [";", "\t", ","].sort((a, b) => firstLine.split(b).length - firstLine.split(a).length)[0];
+    const rows = [];
+    let row = [];
+    let cell = "";
+    let quoted = false;
+    for (let index = 0; index < text.length; index += 1) {
+      const char = text[index];
+      const next = text[index + 1];
+      if (char === '"' && quoted && next === '"') {
+        cell += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = !quoted;
+      } else if (char === delimiter && !quoted) {
+        row.push(cell);
+        cell = "";
+      } else if ((char === "\n" || char === "\r") && !quoted) {
+        if (char === "\r" && next === "\n") index += 1;
+        row.push(cell);
+        if (row.some((value) => String(value).trim())) rows.push(row);
+        row = [];
+        cell = "";
+      } else {
+        cell += char;
+      }
+    }
+    row.push(cell);
+    if (row.some((value) => String(value).trim())) rows.push(row);
+    const headers = (rows.shift() || []).map((header) => String(header || "").trim());
+    return rows.map((values) => headers.reduce((entry, header, index) => {
+      entry[header] = values[index] ?? "";
+      return entry;
+    }, {}));
+  }
+
+  function normalizeProductRow(row) {
+    const aliases = {
+      catalog_scope: ["catalog_scope", "module", "module_key", "kanal", "yayın kanalı", "yayin kanali", "modül", "modul"],
+      name: ["name", "title", "ürün adı", "urun adi", "hizmet adı", "hizmet adi", "ad"],
+      category: ["category", "kategori"],
+      brand: ["brand", "marka", "restoran", "restoran / marka adı", "restoran / marka adi"],
+      price: ["price", "fiyat", "tutar"],
+      stock: ["stock", "stok", "kontenjan"],
+      status: ["status", "durum", "yayın durumu", "yayin durumu"],
+      image_url: ["image_url", "görsel url", "gorsel url", "resim", "fotoğraf", "fotograf"],
+      media_gallery: ["media_gallery", "galeri", "görsel galeri", "gorsel galeri", "ek görseller", "ek gorseller"],
+      video_url: ["video_url", "video", "video url", "ürün videosu", "urun videosu"],
+      description: ["description", "açıklama", "aciklama"],
+      sku: ["sku", "stok kodu", "ürün kodu", "urun kodu"]
+    };
+    const normalized = {};
+    const source = Object.entries(row || {}).reduce((map, [key, value]) => {
+      map[String(key || "").trim().toLocaleLowerCase("tr-TR")] = value;
+      return map;
+    }, {});
+    Object.entries(aliases).forEach(([target, keys]) => {
+      const found = keys.find((key) => Object.prototype.hasOwnProperty.call(source, key));
+      normalized[target] = found ? source[found] : "";
+    });
+    return normalized;
+  }
+
+  async function readProductFile(file) {
+    if (/\.xlsx?$/i.test(file.name) && !window.XLSX) {
+      throw new Error("Excel motoru yüklenemedi. Dosyayı CSV olarak kaydedip tekrar deneyin.");
+    }
+    if (window.XLSX && /\.xlsx?$/i.test(file.name)) {
+      const buffer = await file.arrayBuffer();
+      const workbook = window.XLSX.read(buffer, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      return window.XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    }
+    const text = await file.text();
+    return parseDelimited(text);
+  }
+
+  function showBulkResult(result) {
+    const target = $("[data-bulk-result]");
+    if (!target) return;
+    target.hidden = false;
+    target.innerHTML = `
+      <strong>${result.created} kayıt eklendi, ${result.failed} satır atlandı.</strong>
+      ${result.errors.length ? `<ul>${result.errors.slice(0, 8).map((error) => `<li>${escape(error)}</li>`).join("")}</ul>` : "<span>Yükleme tamamlandı.</span>"}
+    `;
+  }
+
+  async function importProductFile(file) {
+    if (!file) return;
+    const rows = await readProductFile(file);
+    const result = { created: 0, failed: 0, errors: [] };
+    for (const [index, row] of rows.entries()) {
+      try {
+        await createProductFromData(normalizeProductRow(row), { source: "excel", skipAudit: true });
+        result.created += 1;
+      } catch (error) {
+        result.failed += 1;
+        result.errors.push(`Satır ${index + 2}: ${error.message || "Kaydedilemedi."}`);
+      }
+    }
+    if (App.complianceAudit && result.created) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "product_bulk_imported",
+        severity: "info",
+        resourceType: "product",
+        resourceId: state.business?.id || state.access.user.id,
+        evidenceTags: ["partner_os", "catalog", "excel"],
+        metadata: { created: result.created, failed: result.failed, file_name: file.name }
+      });
+    }
+    renderProducts();
+    renderKpis();
+    renderNotificationBadges();
+    showBulkResult(result);
+    toast(result.failed ? "Toplu yükleme tamamlandı; bazı satırlar atlandı." : "Toplu ürün yükleme tamamlandı.", result.failed ? "warning" : "success");
+  }
+
+  function integrationSecretsFromData(data) {
+    const provider = data.provider || "generic_feed";
+    const sourceUrl = String(data.source_url || "").trim();
+    const apiKey = String(data.api_key || "").trim();
+    const apiSecret = String(data.api_secret || "").trim();
+    const secrets = {};
+
+    if (provider === "generic_feed") {
+      if (sourceUrl) secrets.FEED_URL = sourceUrl;
+      return secrets;
+    }
+    if (provider === "woocommerce") {
+      if (sourceUrl) secrets.API_BASE_URL = sourceUrl;
+      if (apiKey) secrets.CONSUMER_KEY = apiKey;
+      if (apiSecret) secrets.CONSUMER_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "shopify") {
+      if (sourceUrl) secrets.SHOP_DOMAIN = sourceUrl;
+      if (apiSecret || apiKey) secrets.ACCESS_TOKEN = apiSecret || apiKey;
+      return secrets;
+    }
+    if (provider === "trendyol") {
+      if (sourceUrl) secrets.SUPPLIER_ID = sourceUrl;
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "hepsiburada") {
+      if (sourceUrl) secrets.MERCHANT_ID = sourceUrl;
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "n11") {
+      if (apiKey) secrets.APP_KEY = apiKey;
+      if (apiSecret) secrets.APP_SECRET = apiSecret;
+      return secrets;
+    }
+    if (provider === "ciceksepeti") {
+      if (apiKey || apiSecret) secrets.API_KEY = apiKey || apiSecret;
+      return secrets;
+    }
+    if (provider === "pazarama") {
+      if (apiKey) secrets.API_KEY = apiKey;
+      if (apiSecret) secrets.API_SECRET = apiSecret;
+      return secrets;
+    }
+    if (sourceUrl) secrets.API_BASE_URL = sourceUrl;
+    if (apiKey || apiSecret) secrets.ACCESS_TOKEN = apiSecret || apiKey;
+    return secrets;
+  }
+
+  function integrationPayloadFromForm(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const fullIntegration = data.export_enabled === "true" || currentIntegrationMode() === "full";
+    return {
+      provider: data.provider || "generic_feed",
+      display_name: data.display_name || integrationProviderLabel(data.provider),
+      status: "draft",
+      sync_mode: data.sync_mode || "manual",
+      default_publish_status: data.default_publish_status || "draft",
+      import_enabled: true,
+      export_enabled: fullIntegration,
+      direction: fullIntegration ? "bidirectional" : "inbound",
+      settings: {
+        module_key: data.module_key || "shop",
+        default_category: data.default_category || "Genel"
+      },
+      secrets: integrationSecretsFromData(data)
+    };
+  }
+
+  async function saveIntegration(form) {
+    const button = form.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    try {
+      if (currentIntegrationMode() === "full" && !partnerHasFullIntegrationAccess()) {
+        toast("Tam entegrasyon premium üyelik gerektirir. Ürünleri çekme ücretsizdir; tam entegrasyon premium sonrası açılır.", "warning");
+        openIntegrationPremium("pro");
+        return;
+      }
+      const payload = await apiFetch("/v1/partner/integrations", {
+        method: "POST",
+        body: JSON.stringify(integrationPayloadFromForm(form))
+      });
+      const integration = payload.integration;
+      state.integrations = [integration, ...state.integrations.filter((item) => item.id !== integration.id)];
+      renderIntegrations();
+      renderActionCenter();
+      renderOnboarding();
+      const mode = currentIntegrationMode();
+      form.reset();
+      setIntegrationMode(mode);
+      applyIntegrationCredentialHints();
+      toast("Entegrasyon bağlantısı kaydedildi.");
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: "integration_created",
+          severity: "info",
+          resourceType: "partner_integration",
+          resourceId: integration.id,
+          evidenceTags: ["partner_os", "integration"],
+          metadata: {
+            provider: integration.provider,
+            sync_mode: integration.sync_mode,
+            default_publish_status: integration.default_publish_status
+          }
+        });
+      }
+    } catch (error) {
+      toast(error.message || "Entegrasyon kaydedilemedi.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function testIntegration(integrationId) {
+    try {
+      const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/test`, {
+        method: "POST",
+        body: JSON.stringify({ probe_remote: true })
+      });
+      if (payload.integration) {
+        state.integrations = state.integrations.map((item) => item.id === integrationId ? { ...item, ...payload.integration } : item);
+      }
+      renderIntegrations();
+      const rowsRead = payload.result?.remote_probe?.rows_read;
+      toast(rowsRead !== undefined ? `Bağlantı doğrulandı; ${rowsRead} kayıt okunabildi.` : "Entegrasyon bağlantısı doğrulandı.");
+    } catch (error) {
+      toast(error.message || "Entegrasyon testi başarısız.", "error");
+    }
+  }
+
+  function integrationRunSummary(run) {
+    const created = Number(run?.created_count || 0);
+    const updated = Number(run?.updated_count || 0);
+    const skipped = Number(run?.skipped_count || 0);
+    const failed = Number(run?.failed_count || 0);
+    const checked = Number(run?.checked_count || 0);
+    if (!checked) return "Kaynakta okunacak ürün bulunamadı.";
+    const pageInfo = run?.summary?.page_info || {};
+    const pageSuffix = pageInfo.provider
+      ? pageInfo.exhausted
+        ? " Kaynak sonuna gelindi; sonraki tam kontrolde baştan değişiklik taranır."
+        : pageInfo.next_page !== null && pageInfo.next_page !== undefined
+          ? ` Sıradaki çekimde sayfa ${pageInfo.next_page} alınacak.`
+          : ""
+      : "";
+    return `${created} yeni, ${updated} güncel, ${skipped} zaten aynı, ${failed} hata.${pageSuffix}`;
+  }
+
+  function shouldContinueIntegrationPull(run) {
+    const pageInfo = run?.summary?.page_info || {};
+    return Boolean(
+      run?.run_mode === "apply"
+      && pageInfo.provider
+      && pageInfo.exhausted === false
+    );
+  }
+
+  function nextIntegrationPullLabel(run) {
+    const pageInfo = run?.summary?.page_info || {};
+    if (pageInfo.next_page !== null && pageInfo.next_page !== undefined) return `sayfa ${pageInfo.next_page}`;
+    return "sıradaki sayfa";
+  }
+
+  async function syncIntegration(integrationId, mode, options = {}) {
+    try {
+      const runMode = mode || "preview";
+      const body = { mode: runMode, direction: "inbound" };
+      if (runMode === "apply") {
+        const policy = integrationPolicy();
+        const confirmationText = policy.apply_confirmation_text || "KATALOGA_AKTAR";
+        if (!options.autoContinue) {
+          const confirmed = window.confirm("Ürünleri AllonaHub kataloğuna taslak/kontrol durumunda aktaralım mı?");
+          if (!confirmed) {
+            toast("Kataloğa aktarım iptal edildi.", "warning");
+            return;
+          }
+        }
+        body.confirm_apply = confirmationText;
+        body.approval_note = options.autoContinue
+          ? "Partner panelinden otomatik sayfalı ürün çekme ile kataloğa aktarım."
+          : "Partner panelinden ücretsiz ürün çekme ile kataloğa aktarım.";
+      }
+      const payload = await apiFetch(`/v1/partner/integrations/${encodeURIComponent(integrationId)}/sync`, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      if (payload.run) {
+        state.integrationRuns = [payload.run, ...state.integrationRuns.filter((item) => item.id !== payload.run.id)];
+      }
+      if (runMode === "apply") {
+        await loadPartnerOs();
+        toast(`Ürün çekme tamamlandı: ${integrationRunSummary(payload.run)} Ürünlerim ve admin onay ekranı yenilendi.`);
+        const remainingBatches = Number(options.remainingBatches ?? INTEGRATION_AUTO_PULL_MAX_BATCHES);
+        if (shouldContinueIntegrationPull(payload.run) && remainingBatches > 0) {
+          toast(`${nextIntegrationPullLabel(payload.run)} ${Math.round(INTEGRATION_AUTO_PULL_DELAY_MS / 1000)} saniye içinde otomatik çekilecek.`, "info");
+          window.setTimeout(() => {
+            syncIntegration(integrationId, "apply", {
+              autoContinue: true,
+              remainingBatches: remainingBatches - 1
+            });
+          }, INTEGRATION_AUTO_PULL_DELAY_MS);
+        }
+      } else {
+        renderIntegrationRuns();
+        renderNotificationBadges();
+        toast(`Önizleme tamamlandı: ${integrationRunSummary(payload.run)} Kataloğa yazmak için Ürünleri Çek butonunu kullan.`);
+      }
+    } catch (error) {
+      toast(error.message || "Entegrasyon senkronu çalışmadı.", "error");
     }
   }
 
@@ -746,6 +2256,7 @@
       state.metrics.open_ticket_count = state.tickets.filter((item) => ["open", "waiting"].includes(item.status)).length;
       renderTickets();
       renderKpis();
+      renderNotificationBadges();
       if (App.complianceAudit) {
         await App.complianceAudit.record({
           category: "support",
@@ -765,6 +2276,48 @@
       toast("Destek talebi oluşturuldu.");
     } catch (error) {
       toast(error.message || "Destek talebi oluşturulamadı.", "error");
+    }
+  }
+
+  async function createCampaign(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!data.title) {
+      toast("Kampanya adı zorunlu.", "error");
+      return;
+    }
+    const campaign = {
+      id: uuid(),
+      title: data.title,
+      campaign_type: data.campaign_type || "coupon",
+      starts_at: data.starts_at || "",
+      ends_at: data.ends_at || "",
+      budget: Number(data.budget || 0),
+      objective: data.objective || "conversion",
+      summary: data.summary || "",
+      status: "review",
+      created_at: new Date().toISOString()
+    };
+    state.campaigns = [campaign, ...state.campaigns];
+    renderCampaigns();
+    renderActionCenter();
+    renderOnboarding();
+    renderNotificationBadges();
+    form.reset();
+    toast("Kampanya planı oluşturuldu ve onay akışına hazırlandı.");
+    if (App.complianceAudit) {
+      await App.complianceAudit.record({
+        category: "partner",
+        action: "campaign_plan_created",
+        severity: "info",
+        resourceType: "partner_campaign",
+        resourceId: campaign.id,
+        evidenceTags: ["partner_os", "growth"],
+        metadata: {
+          campaign_type: campaign.campaign_type,
+          objective: campaign.objective,
+          budget: campaign.budget
+        }
+      });
     }
   }
 
@@ -793,6 +2346,55 @@
     }
   }
 
+  async function refreshRefundCancellations() {
+    const payload = await apiFetch("/v1/partner/refund-cancellations");
+    state.refundCancellations = payload.items || [];
+    state.metrics = {
+      ...(state.metrics || {}),
+      refund_cancellation_pending_count: payload.summary?.pending_partner || 0,
+      refund_cancellation_dispute_count: payload.summary?.disputes || 0
+    };
+    renderKpis();
+    renderActionCenter();
+    renderRefundCancellations();
+    renderNotificationBadges();
+  }
+
+  async function runRefundDecision(orderId, action) {
+    const item = (state.refundCancellations || []).find((entry) => String(entry.id) === String(orderId));
+    const label = action === "reject_request" ? "İhtilafa gönder" : "Kabul et";
+    const defaultReason = action === "reject_request"
+      ? "Partner sözleşme ve iade koşullarına göre talebi admin ihtilaf incelemesine gönderdi."
+      : "Partner sözleşme ve iade koşullarına göre talebi kabul etti.";
+    const reason = window.prompt(`${label} nedeni`, defaultReason);
+    if (!reason) return;
+    const noteInput = window.prompt("Ek açıklama", item?.reason || "");
+    const note = noteInput === null ? "" : noteInput;
+    try {
+      const payload = await apiFetch(`/v1/partner/refund-cancellations/${encodeURIComponent(orderId)}/decision`, {
+        method: "POST",
+        body: JSON.stringify({ action, reason, note })
+      });
+      if (App.complianceAudit) {
+        await App.complianceAudit.record({
+          category: "partner",
+          action: `refund_cancellation_${action}`,
+          severity: action === "approve_refund" || action === "reject_request" ? "critical" : "warning",
+          resourceType: "order",
+          resourceId: orderId,
+          evidenceTags: ["partner_os", "refund_cancellation"],
+          metadata: {
+            provider_dispatch: payload.provider_dispatch || null
+          }
+        });
+      }
+      await refreshRefundCancellations();
+      toast(action === "reject_request" ? "Talep admin ihtilafına gönderildi." : "Talep kabul edildi ve ödeme bildirimi tetiklendi.");
+    } catch (error) {
+      toast(error.message || "İade/iptal kararı kaydedilemedi.", "error");
+    }
+  }
+
   function bindEvents() {
     document.addEventListener("click", (event) => {
       const nav = event.target.closest("[data-panel-target]");
@@ -800,14 +2402,70 @@
       const refresh = event.target.closest("[data-refresh-partner]");
       const logout = event.target.closest("[data-partner-logout]");
       const growth = event.target.closest("[data-growth-action]");
-      const productDemo = event.target.closest("[data-product-demo]");
+      const productAdd = event.target.closest("[data-product-add]");
+      const productView = event.target.closest("[data-product-view-target]");
+      const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
+      const downloadTemplate = event.target.closest("[data-download-template]");
+      const exportProducts = event.target.closest("[data-export-products]");
+      const integrationMode = event.target.closest("[data-integration-mode]");
+      const integrationTest = event.target.closest("[data-integration-test]");
+      const integrationPreview = event.target.closest("[data-integration-preview]");
+      const integrationSync = event.target.closest("[data-integration-sync]");
+      const integrationApply = event.target.closest("[data-integration-apply]");
+      const refundDetail = event.target.closest("[data-refund-detail]");
+      const refundDecision = event.target.closest("[data-refund-decision]");
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
+      if (productView) {
+        activatePanel("products");
+        setProductView(productView.dataset.productViewTarget);
+      }
       if (refresh) loadPartnerOs();
       if (logout) App.auth.signOut({ scope: "local" });
-      if (growth) toast("Kampanya modülü için plan kaydı hazır. Bir sonraki adımda reklam bütçesi, tarih ve hedef kitle formu bağlanacak.");
-      if (productDemo) toast("Aşağıdaki form ürünü yeni şemaya uygun taslak olarak kaydeder.");
+      if (growth) {
+        activatePanel("growth");
+        const form = $("[data-campaign-form]");
+        if (form && form.elements.campaign_type) {
+          const mapping = { coupon: "coupon", ads: "sponsored_listing", loyalty: "loyalty" };
+          form.elements.campaign_type.value = mapping[growth.dataset.growthAction] || "coupon";
+          form.elements.title.focus();
+        }
+      }
+      if (productAdd) {
+        activatePanel("products");
+        setProductView("add", { focusForm: true });
+      }
+      if (bulkTrigger) {
+        setProductView("add");
+        const input = $("[data-bulk-product-input]");
+        if (input) input.click();
+      }
+      if (downloadTemplate) {
+        setProductView("add");
+        downloadRows(productTemplateRows(), "allona-partner-urun-sablonu.xlsx", "UrunSablonu");
+        toast("Excel yükleme şablonu indirildi.");
+      }
+      if (exportProducts) {
+        downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
+        toast("Katalog Excel dosyası indirildi.");
+      }
+      if (integrationMode) {
+        if (integrationMode.dataset.integrationMode === "full" && !partnerHasFullIntegrationAccess()) {
+          openIntegrationPremium("pro");
+          return;
+        }
+        setIntegrationMode(integrationMode.dataset.integrationMode);
+      }
+      if (integrationTest) testIntegration(integrationTest.dataset.integrationTest);
+      if (integrationPreview) syncIntegration(integrationPreview.dataset.integrationPreview, "preview");
+      if (integrationSync) syncIntegration(integrationSync.dataset.integrationSync, "apply");
+      if (integrationApply) syncIntegration(integrationApply.dataset.integrationApply, "apply");
+      if (refundDetail) {
+        state.selectedRefundId = state.selectedRefundId === refundDetail.dataset.refundDetail ? null : refundDetail.dataset.refundDetail;
+        renderRefundCancellations();
+      }
+      if (refundDecision) runRefundDecision(refundDecision.dataset.refundOrder, refundDecision.dataset.refundDecision);
     });
 
     const paymentForm = $("[data-payment-form]");
@@ -826,6 +2484,29 @@
       });
     }
 
+    const integrationForm = $("[data-integration-form]");
+    if (integrationForm) {
+      integrationForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        saveIntegration(integrationForm);
+      });
+      integrationForm.elements.provider?.addEventListener("change", applyIntegrationCredentialHints);
+      applyIntegrationCredentialHints();
+    }
+
+    const bulkInput = $("[data-bulk-product-input]");
+    if (bulkInput) {
+      bulkInput.addEventListener("change", async () => {
+        const file = bulkInput.files && bulkInput.files[0];
+        bulkInput.value = "";
+        try {
+          await importProductFile(file);
+        } catch (error) {
+          toast(error.message || "Excel dosyası okunamadı.", "error");
+        }
+      });
+    }
+
     const profileForm = $("[data-profile-form]");
     if (profileForm) {
       profileForm.addEventListener("submit", (event) => {
@@ -839,6 +2520,14 @@
       supportForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createTicket(supportForm);
+      });
+    }
+
+    const campaignForm = $("[data-campaign-form]");
+    if (campaignForm) {
+      campaignForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        createCampaign(campaignForm);
       });
     }
 

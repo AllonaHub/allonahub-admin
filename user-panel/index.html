@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB User Panel</title>
+    <meta
+      name="description"
+      content="ALLONAHUB kullanıcı profil, bildirim, kupon, yolculuk ve destek paneli."
+    >
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Icerige gec</a>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Panel menusu">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">A</div>
+          <div>
+            <strong>ALLONAHUB</strong>
+            <span>User Panel</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Ana gezinme">
+          <button class="nav-item is-active" type="button" data-section="dashboard">
+            <span aria-hidden="true">⌂</span>
+            <span>Ozet</span>
+          </button>
+          <button class="nav-item" type="button" data-section="profile">
+            <span aria-hidden="true">◉</span>
+            <span>Profil</span>
+          </button>
+          <button class="nav-item" type="button" data-section="notifications">
+            <span aria-hidden="true">◌</span>
+            <span>Bildirimler</span>
+          </button>
+          <button class="nav-item" type="button" data-section="wallet">
+            <span aria-hidden="true">▣</span>
+            <span>Kuponlar</span>
+          </button>
+          <button class="nav-item" type="button" data-section="rides">
+            <span aria-hidden="true">⇄</span>
+            <span>Yolculuklar</span>
+          </button>
+          <button class="nav-item" type="button" data-section="support">
+            <span aria-hidden="true">?</span>
+            <span>Destek</span>
+          </button>
+          <button class="nav-item" type="button" data-section="security">
+            <span aria-hidden="true">◇</span>
+            <span>Guvenlik</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Hesap dogrulandi</span>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <button class="icon-button menu-toggle" type="button" aria-label="Menuyu ac veya kapat">
+            ☰
+          </button>
+          <div>
+            <p class="eyebrow">Kullanici alani</p>
+            <h1>Profil ve hesap merkezi</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="text-button" type="button" data-action="export-profile">Veri indir</button>
+            <button class="avatar-button" type="button" data-section-link="profile" aria-label="Profile git">
+              <span id="avatarInitials">AA</span>
+            </button>
+          </div>
+        </header>
+
+        <main id="main" class="content" tabindex="-1">
+          <section class="panel-section is-visible" id="dashboard" aria-labelledby="dashboard-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Bugunku durum</p>
+                <h2 id="dashboard-title">Hesap ozeti</h2>
+              </div>
+              <span class="pill">MVP hazir</span>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric-tile">
+                <span class="metric-label">Aktif kupon</span>
+                <strong id="activeCouponCount">0</strong>
+                <small>Son kullanma tarihi yaklasanlar izleniyor</small>
+              </article>
+              <article class="metric-tile">
+                <span class="metric-label">Favori nokta</span>
+                <strong id="favoriteCount">0</strong>
+                <small>AVM ve magazalar tek yerde</small>
+              </article>
+              <article class="metric-tile">
+                <span class="metric-label">Yolculuk</span>
+                <strong id="rideCount">0</strong>
+                <small>Odeme ve fis kayitlariyla</small>
+              </article>
+              <article class="metric-tile">
+                <span class="metric-label">Destek</span>
+                <strong id="openTicketCount">0</strong>
+                <small>Acik talepler takipte</small>
+              </article>
+            </div>
+
+            <div class="dashboard-layout">
+              <section class="surface" aria-labelledby="quick-actions-title">
+                <div class="surface-heading">
+                  <h3 id="quick-actions-title">Hizli islemler</h3>
+                </div>
+                <div class="quick-actions">
+                  <button class="action-tile" type="button" data-section-link="profile">
+                    <span aria-hidden="true">◉</span>
+                    Profili duzenle
+                  </button>
+                  <button class="action-tile" type="button" data-section-link="wallet">
+                    <span aria-hidden="true">▣</span>
+                    Kuponlari gor
+                  </button>
+                  <button class="action-tile" type="button" data-section-link="support">
+                    <span aria-hidden="true">?</span>
+                    Destek talebi ac
+                  </button>
+                  <button class="action-tile" type="button" data-section-link="security">
+                    <span aria-hidden="true">◇</span>
+                    Oturumlari kontrol et
+                  </button>
+                </div>
+              </section>
+
+              <section class="surface" aria-labelledby="activity-title">
+                <div class="surface-heading">
+                  <h3 id="activity-title">Son hareketler</h3>
+                </div>
+                <ul class="activity-list" id="activityList"></ul>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel-section" id="profile" aria-labelledby="profile-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Kisisel bilgiler</p>
+                <h2 id="profile-title">Profil</h2>
+              </div>
+              <span class="pill success">Dogrulanmis hesap</span>
+            </div>
+
+            <div class="profile-layout">
+              <section class="surface profile-card" aria-label="Profil karti">
+                <div class="profile-avatar" id="profileAvatar">AA</div>
+                <h3 id="profileNamePreview">Allona Business</h3>
+                <p id="profileMailPreview">allona@example.com</p>
+                <div class="profile-badges">
+                  <span>Telefon dogrulandi</span>
+                  <span>E-posta dogrulandi</span>
+                </div>
+              </section>
+
+              <form class="surface form-grid" id="profileForm">
+                <div class="surface-heading">
+                  <h3>Profil bilgileri</h3>
+                </div>
+                <label>
+                  Ad Soyad
+                  <input name="name" autocomplete="name" required>
+                </label>
+                <label>
+                  E-posta
+                  <input name="email" type="email" autocomplete="email" required>
+                </label>
+                <label>
+                  Telefon
+                  <input name="phone" autocomplete="tel" required>
+                </label>
+                <label>
+                  Varsayilan sehir
+                  <select name="city">
+                    <option>Istanbul</option>
+                    <option>Ankara</option>
+                    <option>Izmir</option>
+                    <option>Antalya</option>
+                    <option>Bursa</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  Varsayilan adres
+                  <textarea name="address" rows="3" required></textarea>
+                </label>
+                <p class="legal-helper span-2">
+                  Profil bilgileriniz <a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> ve <a href="../legal/index.html#gizlilik">Gizlilik Politikası</a> kapsamında hesap, destek, güvenlik ve hizmet sunumu amacıyla işlenir.
+                </p>
+                <div class="form-actions span-2">
+                  <button class="primary-button" type="submit">Profili kaydet</button>
+                  <button class="secondary-button" type="button" data-action="reset-demo">Demo veriyi sifirla</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="panel-section" id="notifications" aria-labelledby="notifications-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Izin ve tercih</p>
+                <h2 id="notifications-title">Bildirimler</h2>
+              </div>
+              <span class="pill">Merkezi tercih</span>
+            </div>
+
+            <div class="surface preference-list" id="preferenceList"></div>
+          </section>
+
+          <section class="panel-section" id="wallet" aria-labelledby="wallet-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Firsat ve favoriler</p>
+                <h2 id="wallet-title">Kuponlar ve favoriler</h2>
+              </div>
+              <button class="secondary-button" type="button" data-action="add-favorite">Favori ekle</button>
+            </div>
+
+            <div class="split-layout">
+              <section class="surface" aria-labelledby="coupons-title">
+                <div class="surface-heading">
+                  <h3 id="coupons-title">Kuponlar</h3>
+                </div>
+                <div class="item-list" id="couponList"></div>
+              </section>
+              <section class="surface" aria-labelledby="favorites-title">
+                <div class="surface-heading">
+                  <h3 id="favorites-title">Favoriler</h3>
+                </div>
+                <div class="item-list" id="favoriteList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel-section" id="rides" aria-labelledby="rides-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Taksi modulu</p>
+                <h2 id="rides-title">Yolculuk gecmisi</h2>
+              </div>
+              <span class="pill">Fis ve odeme takipli</span>
+            </div>
+            <div class="surface table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Yolculuk</th>
+                    <th>Tarih</th>
+                    <th>Rota</th>
+                    <th>Ucret</th>
+                    <th>Durum</th>
+                    <th>Islem</th>
+                  </tr>
+                </thead>
+                <tbody id="rideTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel-section" id="support" aria-labelledby="support-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Yardim merkezi</p>
+                <h2 id="support-title">Destek talepleri</h2>
+              </div>
+              <span class="pill warning">SLA takipli</span>
+            </div>
+
+            <div class="support-layout">
+              <form class="surface form-grid" id="ticketForm">
+                <div class="surface-heading">
+                  <h3>Yeni talep</h3>
+                </div>
+                <label>
+                  Konu
+                  <input name="subject" required placeholder="Orn. Kupon kullanamiyorum">
+                </label>
+                <label>
+                  Kategori
+                  <select name="category">
+                    <option>Hesap</option>
+                    <option>Kupon</option>
+                    <option>Taksi</option>
+                    <option>AVM</option>
+                    <option>Guvenlik</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  Aciklama
+                  <textarea name="message" rows="4" required></textarea>
+                </label>
+                <div class="consent-stack span-2">
+                  <label class="consent-option">
+                    <input type="checkbox" name="supportKvkkNotice" required>
+                    <span><a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> kapsamında destek talebi için gerekli bilgilerin işlenebileceğini okudum; özel nitelikli veya gereksiz kişisel veri paylaşmayacağım.</span>
+                  </label>
+                </div>
+                <div class="form-actions span-2">
+                  <button class="primary-button" type="submit">Talep olustur</button>
+                </div>
+              </form>
+
+              <section class="surface" aria-labelledby="tickets-title">
+                <div class="surface-heading">
+                  <h3 id="tickets-title">Taleplerim</h3>
+                </div>
+                <div class="item-list" id="ticketList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel-section" id="security" aria-labelledby="security-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Hesap koruma</p>
+                <h2 id="security-title">Guvenlik</h2>
+              </div>
+              <span class="pill success">MFA onerilir</span>
+            </div>
+
+            <div class="security-grid">
+              <section class="surface">
+                <div class="surface-heading">
+                  <h3>Guvenlik durumu</h3>
+                </div>
+                <div class="security-score">
+                  <strong id="securityScore">0%</strong>
+                  <span id="securityScoreText">Kontrol ediliyor</span>
+                </div>
+                <div class="preference-row">
+                  <div>
+                    <strong>Cift adimli dogrulama</strong>
+                    <span>Girislerde ek koruma saglar.</span>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="mfaToggle">
+                    <span></span>
+                  </label>
+                </div>
+              </section>
+
+              <section class="surface">
+                <div class="surface-heading">
+                  <h3>Aktif oturumlar</h3>
+                </div>
+                <div class="item-list" id="sessionList"></div>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <footer class="compliance-footer">
+      <div class="compliance-footer__inner">
+        <div class="compliance-footer__meta">
+          <span>© 2026 ALLONAHUB User Panel</span>
+          <span>Kullanıcı hakları ve veri tercihleri</span>
+        </div>
+        <nav class="compliance-footer__links" aria-label="Yasal bağlantılar">
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#cerez">Çerezler</a>
+          <a href="../legal/index.html#uyelik">Üyelik</a>
+          <a href="../legal/index.html#ticari-iletisim">Ticari İletişim</a>
+          <a href="../legal/index.html#veri-saklama">Veri Saklama</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </nav>
+        <p class="compliance-footer__note">Profil, bildirim, kupon, yolculuk ve destek verileri kullanıcı tercihleri, hesap güvenliği ve hizmet sunumu kapsamında işlenir.</p>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./assets/js/app.js"></script>
+  </body>
+</html>

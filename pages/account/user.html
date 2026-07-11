@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/config.js?v=20260627-config-central"></script>
 
 <style>
 *{
@@ -390,6 +391,10 @@ a{
   margin-top:6px;
   box-shadow:0 0 24px rgba(0,213,255,.36);
   transition:.3s;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
 }
 
 .btn:hover{
@@ -408,7 +413,8 @@ a{
   border:1px solid rgba(0,150,255,.22);
 }
 
-.icloud-btn{
+.icloud-btn,
+.partner-panel-btn{
   background:linear-gradient(135deg,#ffffff,#eef8ff);
   color:var(--deep);
   border:1px solid rgba(0,150,255,.24);
@@ -697,7 +703,7 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
 </head>
 
 <body>
@@ -749,7 +755,7 @@ a{
       <div class="security-challenge" data-security-challenge="login"></div>
       <button class="btn" onclick="loginUser()">Giriş Yap</button>
       <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
-      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+      <a class="btn social-btn partner-panel-btn" href="https://partner.allonahub.com/">Partner Panelle Giriş Yap</a>
 
       <div class="link-row">
         <a href="user.html?tab=login&amp;method=phone">Telefon ile giriş</a>
@@ -867,8 +873,8 @@ a{
 </div>
 
 <script>
-const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL=window.Allona?.config?.supabaseUrl || "";
+const SUPABASE_KEY=window.Allona?.config?.supabaseAnonKey || "";
 function hasPasswordRecoveryParams(){
   const sources=[
     new URLSearchParams(window.location.search || ""),
@@ -876,12 +882,12 @@ function hasPasswordRecoveryParams(){
   ];
   return sources.some(function(params){
     const type=String(params.get("type") || "").toLowerCase();
-    return type==="recovery" || params.has("access_token") || params.has("refresh_token") || params.has("error_code");
+    return type==="recovery" || type==="password_recovery";
   });
 }
 const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
 if(IS_PASSWORD_RECOVERY_REDIRECT){
-  const target=new URL("reset-password.html", window.location.href);
+  const target=new URL("/pages/account/reset-password.html", window.location.origin);
   target.search=window.location.search || "";
   target.hash=window.location.hash || "";
   window.location.replace(target.href);
@@ -898,9 +904,10 @@ function pageUrl(path){
   return new URL(path, window.location.href).href;
 }
 
-const SITE_URL=pageUrl("user-panel.html");
-const RESET_URL=pageUrl("reset-password.html");
+const SITE_URL=pageUrl("/pages/account/user-panel.html");
+const RESET_URL=pageUrl("/pages/account/reset-password.html");
 const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
+const OAUTH_RETURN_TO_KEY="allonahub.oauth.returnTo";
 let manualAuthInProgress=false;
 
 function boolParam(name){
@@ -908,7 +915,12 @@ function boolParam(name){
   return value==="1" || value==="true" || value==="yes";
 }
 
-const FORCE_ACCOUNT_SWITCH=boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
+function paramValue(name){
+  return String(new URLSearchParams(window.location.search).get(name) || "").trim().toLowerCase();
+}
+
+const PASSWORD_UPDATED_LOGIN=paramValue("password")==="updated" || paramValue("reset")==="success";
+const FORCE_ACCOUNT_SWITCH=PASSWORD_UPDATED_LOGIN || boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
 
 function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
@@ -996,6 +1008,22 @@ async function applyBackendSession(session){
 
 function loginFailureMessage(error){
   const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
+  const status=Number(error && error.status || 0);
+  const code=String(error && error.payload && error.payload.error || "").toLowerCase();
+  if(
+    status===400 ||
+    status===403 ||
+    raw.includes("robot") ||
+    raw.includes("turnstile") ||
+    raw.includes("cloudflare") ||
+    raw.includes("doğrulama") ||
+    raw.includes("dogrulama")
+  ){
+    return "Güvenlik doğrulaması tamamlanamadı. Lütfen sayfayı yenileyip aynı cihazdan tekrar deneyin.";
+  }
+  if(status===429 || code.includes("auto_defense") || raw.includes("sınırlandırıldı") || raw.includes("sinirlandirildi")){
+    return "Çok fazla deneme algılandı. Lütfen kısa süre bekleyip aynı cihazdan tekrar deneyin.";
+  }
   if(raw.includes("email not confirmed") || raw.includes("not confirmed")){
     return "E-posta adresi henüz doğrulanmamış görünüyor. Lütfen e-posta kutundaki doğrulama bağlantısını kontrol et.";
   }
@@ -1017,7 +1045,7 @@ async function directSupabaseLogin(email,password){
 
 function canUseDirectLoginFallback(error){
   const status=Number(error && error.status || 0);
-  return status===0 || [401,404,405,500,501,502,503,504].includes(status);
+  return status===0 || [404,405,500,501,502,503,504].includes(status);
 }
 
 async function needsMfaVerification(){
@@ -1059,7 +1087,8 @@ function strongEnoughPassword(value){
   return String(value || "").length >= 8;
 }
 
-function clearAuthArtifacts(){
+function clearAuthArtifacts(options){
+  const settings=options || {};
   [
     "allonahub_user_profile",
     "allonahub_auth_verified_at",
@@ -1073,7 +1102,10 @@ function clearAuthArtifacts(){
 
   for(let i=localStorage.length-1;i>=0;i-=1){
     const key=localStorage.key(i) || "";
-    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
+    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login") || settings.allRateLimits && key.startsWith("allona_rate:")){
+      localStorage.removeItem(key);
+    }
+    if(settings.supabaseTokens && (/^sb-.+-auth-token$/.test(key) || key==="supabase.auth.token")){
       localStorage.removeItem(key);
     }
   }
@@ -1082,13 +1114,12 @@ function clearAuthArtifacts(){
 async function prepareAccountSwitch(){
   if(!FORCE_ACCOUNT_SWITCH || IS_PASSWORD_RECOVERY_REDIRECT)return;
   manualAuthInProgress=true;
-  clearAuthArtifacts();
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
   try{
     await supabaseClient.auth.signOut({scope:"local"});
   }catch(error){}
-  finally{
-    manualAuthInProgress=false;
-  }
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
+  manualAuthInProgress=false;
 }
 
 function rateLimitAction(key, limit, windowMs){
@@ -1714,6 +1745,10 @@ async function loginWithGoogle(){
   redirectUrl.searchParams.set("returnTo",safeReturnTo("user-panel.html"));
 
   try{
+    try{
+      sessionStorage.setItem(OAUTH_RETURN_TO_KEY,redirectUrl.href);
+    }catch(error){}
+
     const turnstileToken=await securityChallengeToken("login");
     await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
 
@@ -1806,7 +1841,7 @@ document.addEventListener("DOMContentLoaded",function(){
   prepareAccountSwitch();
   supabaseClient.auth.onAuthStateChange(function(event){
     if(event==="PASSWORD_RECOVERY"){
-      window.location.replace("reset-password.html");
+      window.location.replace(pageUrl("/pages/account/reset-password.html"));
       return;
     }
     if(event==="SIGNED_IN" || event==="INITIAL_SESSION"){
@@ -1857,9 +1892,10 @@ document.addEventListener("click",function(e){
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/config.js?v=20260623-authunify1" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
   <script src="../../js/security-challenge.js?v=20260624-canonical1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>
 </html>

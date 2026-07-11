@@ -10,6 +10,11 @@
     freeShippingThreshold: 1500,
     apiBaseUrl: "https://api.allonahub.com",
     turnstileSiteKey: "0x4AAAAAADokiv3Rugyxil7J",
+    emailjs: {
+      serviceId: "service_s9myas7",
+      templateId: "template_i7xzsya",
+      publicKey: "j_8unIhsqi5PEVebP"
+    },
     iyzicoFunctionName: "create-iyzico-checkout",
     cvCheckoutFunctionName: "create-cv-checkout",
     cvPrice: 149.99,

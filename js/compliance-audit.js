@@ -86,6 +86,32 @@
       return Promise.resolve(null);
     }
 
+    if (App.privacy && typeof App.privacy.getLocation === "function") {
+      return App.privacy.getLocation({
+        highAccuracy: Boolean(settings.highAccuracy),
+        timeout: Number(settings.timeout || 8000),
+        maximumAge: Number(settings.maximumAge || 5 * 60 * 1000),
+        prompt: Boolean(settings.prompt)
+      }).then(async (location) => {
+        if (!location) return null;
+        lastKnownLocation = location;
+        if (settings.recordAction) {
+          await record({
+            category: "location_consent",
+            action: settings.recordAction,
+            severity: "info",
+            locationConsent: true,
+            location: lastKnownLocation,
+            evidenceTags: ["location_permission"],
+            metadata: {
+              reason: cleanText(settings.reason || "security_verification", 120)
+            }
+          });
+        }
+        return lastKnownLocation;
+      });
+    }
+
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {

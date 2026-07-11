@@ -4,6 +4,10 @@
   const config = App.config;
   const security = App.security;
 
+  function isPasswordRecoveryType(type) {
+    return ["recovery", "password_recovery"].includes(String(type || "").toLowerCase());
+  }
+
   function hasPasswordRecoveryParams() {
     const sources = [
       new URLSearchParams(window.location.search || ""),
@@ -12,10 +16,7 @@
 
     return sources.some((params) => {
       const type = String(params.get("type") || "").toLowerCase();
-      return type === "recovery" ||
-        params.has("access_token") ||
-        params.has("refresh_token") ||
-        params.has("error_code");
+      return isPasswordRecoveryType(type);
     });
   }
 
@@ -118,6 +119,7 @@
     if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
     if (["market", "allona_market", "allonamarket", "supermarket", "süpermarket", "grocery"].includes(scope)) return "market";
     if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
+    if (["service", "hizmet", "services", "ecosystem", "ekosistem"].includes(scope)) return "service";
     return "";
   }
 
@@ -147,11 +149,12 @@
   }
 
   function productCatalogText(item) {
+    const categoryLabel = core.labelFromValue ? core.labelFromValue(item.category, "") : item.category;
     return [
       item.name,
       item.product_name,
       item.description,
-      item.category,
+      categoryLabel,
       item.brand,
       item.seller_name,
       item.partner_name,
@@ -167,7 +170,8 @@
   function isFoodCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
     const explicit = explicitCatalogScope(item);
-    if (explicit) return explicit === "food";
+    if (explicit === "food") return true;
+    if (explicit && explicit !== "shop") return false;
 
     const category = String(item.category || "").toLocaleLowerCase("tr-TR");
     const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
@@ -187,7 +191,8 @@
   function isMarketCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
     const explicit = explicitCatalogScope(item);
-    if (explicit) return explicit === "market";
+    if (explicit === "market") return true;
+    if (explicit && explicit !== "shop") return false;
 
     const category = String(item.category || "").toLocaleLowerCase("tr-TR");
     const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
@@ -231,8 +236,11 @@
 
     return items.filter((item) => {
       if (!matchesCatalogScope(item, options.scope)) return false;
-      const text = `${item.name} ${item.description} ${item.category} ${item.brand || ""}`.toLocaleLowerCase("tr-TR");
-      const categoryMatch = !category || item.category.toLocaleLowerCase("tr-TR") === category;
+      const itemCategory = App.core?.labelFromValue ? App.core.labelFromValue(item.category, "") : String(item.category || "");
+      const text = `${item.name} ${item.description} ${itemCategory} ${item.brand || ""}`.toLocaleLowerCase("tr-TR");
+      const categoryMatch = !category || (App.shopCategories?.productMatchesCategory
+        ? App.shopCategories.productMatchesCategory(item, options.category)
+        : itemCategory.toLocaleLowerCase("tr-TR") === category);
       const searchMatch = !q || text.includes(q);
       const minMatch = !min || item.price >= min;
       const maxMatch = !max || item.price <= max;
@@ -299,14 +307,48 @@
     if (payload.id && security && !security.isUuid(payload.id)) throw new Error("Ürün kimliği geçersiz.");
     const status = ["active", "draft", "archived"].includes(payload.status) ? payload.status : "active";
     const description = security ? security.normalizeMultiline(payload.description, { max: 1800 }) : payload.description || "";
-    const category = security ? security.normalizeText(payload.category || "Genel", { max: 90 }) : payload.category || "Genel";
+    const categoryLabel = core.labelFromValue ? core.labelFromValue(payload.category, "Genel") : String(payload.category || "Genel");
+    const category = security ? security.normalizeText(categoryLabel || "Genel", { max: 90 }) : categoryLabel || "Genel";
     const brand = security ? security.normalizeText(payload.brand || payload.seller_name || "", { max: 120 }) : payload.brand || payload.seller_name || "";
     const rawImageUrl = String(payload.image_url || "").trim();
     const imageUrl = security
       ? (security.sanitizePublicUrl(rawImageUrl) || (/^(\/?images\/|\.{1,2}\/images\/)/i.test(rawImageUrl) ? rawImageUrl : ""))
       : rawImageUrl;
+    const normalizeGallery = (value) => {
+      if (Array.isArray(value)) return value;
+      const raw = String(value || "").trim();
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        // CSV and Excel imports may pass galleries as comma or newline separated text.
+      }
+      return raw.split(/[\n,]+/);
+    };
+    const mediaGallery = normalizeGallery(payload.media_gallery)
+      .map((url) => String(url || "").trim())
+      .map((url) => security ? (security.sanitizePublicUrl(url) || (/^(\/?images\/|\.{1,2}\/images\/)/i.test(url) ? url : "")) : url)
+      .filter(Boolean)
+      .slice(0, 8);
+    const rawVideoUrl = String(payload.video_url || "").trim();
+    const videoUrl = security ? security.sanitizePublicUrl(rawVideoUrl) : rawVideoUrl;
     const price = Number(payload.price || 0);
     const stock = Number(payload.stock || 0);
+    const moduleKey = normalizedScope(payload.module_key || payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope) || "shop";
+    const skuPrefix = moduleKey === "market" ? "ALM" : moduleKey === "food" ? "ALY" : moduleKey === "service" ? "ALS" : "ALP";
+    const sellerFields = {
+      seller_public_name: security ? security.normalizeText(payload.seller_public_name || payload.seller_name || payload.brand || "", { max: 140 }) : String(payload.seller_public_name || payload.seller_name || payload.brand || "").trim(),
+      seller_kind: security ? security.normalizeText(payload.seller_kind || (payload.partner_id ? "Partner satıcı" : "Platform satıcısı"), { max: 60 }) : String(payload.seller_kind || (payload.partner_id ? "Partner satıcı" : "Platform satıcısı")).trim(),
+      seller_legal_name: security ? security.normalizeText(payload.seller_legal_name || "", { max: 180 }) : String(payload.seller_legal_name || "").trim(),
+      seller_city: security ? security.normalizeText(payload.seller_city || "", { max: 90 }) : String(payload.seller_city || "").trim(),
+      seller_contact: security ? security.normalizeText(payload.seller_contact || payload.partner_email || "", { max: 180 }) : String(payload.seller_contact || payload.partner_email || "").trim(),
+      seller_tax_number_masked: security ? security.normalizeText(payload.seller_tax_number_masked || "", { max: 40 }) : String(payload.seller_tax_number_masked || "").trim(),
+      invoice_responsibility: security ? security.normalizeText(payload.invoice_responsibility || "", { max: 260 }) : String(payload.invoice_responsibility || "").trim(),
+      seller_disclosure: security ? security.normalizeText(payload.seller_disclosure || "", { max: 320 }) : String(payload.seller_disclosure || "").trim(),
+      compliance_review_status: ["pending", "approved", "rejected", "needs_review"].includes(payload.compliance_review_status) ? payload.compliance_review_status : "pending",
+      compliance_notes: security ? security.normalizeText(payload.compliance_notes || "", { max: 360 }) : String(payload.compliance_notes || "").trim()
+    };
     const modernProduct = {
       name: cleanName,
       description,
@@ -314,12 +356,16 @@
       stock,
       image_url: imageUrl,
       category,
+      module_key: moduleKey,
       status,
       slug: payload.slug ? core.slugify(payload.slug) : core.slugify(cleanName),
       meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
       meta_description: security ? security.normalizeText(payload.meta_description || payload.description || "", { max: 260 }) : payload.meta_description || payload.description || "",
       brand,
-      partner_id: payload.partner_id || undefined
+      partner_id: payload.partner_id || undefined,
+      media_gallery: mediaGallery.length ? mediaGallery : (imageUrl ? [imageUrl] : []),
+      video_url: videoUrl || "",
+      ...sellerFields
     };
 
     const legacyProduct = {
@@ -330,15 +376,50 @@
       stock,
       image_url: imageUrl,
       category,
+      module_key: moduleKey,
       status,
       brand,
-      partner_id: String(payload.partner_code || payload.partner_id || "ALP-FOOD"),
+      partner_id: security && security.isUuid(payload.partner_id) ? payload.partner_id : String(payload.partner_code || payload.partner_id || "ALP-PARTNER"),
       partner_email: payload.partner_email || "",
       coupon_status: payload.coupon_status || payload.coupon_label || "Aktif",
       hp_status: payload.hp_status || payload.hp_label || "Aktif",
-      sku: payload.sku || core.slugify(`${cleanName}-${payload.partner_id || "food"}`).toUpperCase().slice(0, 48),
-      barcode: payload.barcode || ""
+      sku: payload.sku || core.slugify(`${skuPrefix}-${cleanName}-${payload.partner_id || "partner"}`).toUpperCase().slice(0, 48),
+      barcode: payload.barcode || "",
+      media_gallery: mediaGallery.length ? mediaGallery : (imageUrl ? [imageUrl] : []),
+      video_url: videoUrl || "",
+      ...sellerFields
     };
+
+    function withoutOptionalMediaFields(product) {
+      const {
+        media_gallery: _mediaGallery,
+        video_url: _videoUrl,
+        ...rest
+      } = product;
+      return rest;
+    }
+
+    function withoutSellerFields(product) {
+      const {
+        seller_public_name: _sellerPublicName,
+        seller_kind: _sellerKind,
+        seller_legal_name: _sellerLegalName,
+        seller_city: _sellerCity,
+        seller_contact: _sellerContact,
+        seller_tax_number_masked: _sellerTaxNumberMasked,
+        invoice_responsibility: _invoiceResponsibility,
+        seller_disclosure: _sellerDisclosure,
+        compliance_review_status: _complianceReviewStatus,
+        compliance_notes: _complianceNotes,
+        ...rest
+      } = product;
+      return rest;
+    }
+
+    function isSchemaFallbackError(error) {
+      const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
+      return /column|schema cache|could not find|does not exist|invalid input syntax for type uuid|module_key|catalog_scope/i.test(message);
+    }
 
     async function runWrite(product) {
       const query = payload.id
@@ -352,9 +433,28 @@
     try {
       return core.normalizeProduct(await runWrite(modernProduct));
     } catch (error) {
-      const message = `${error && error.message || ""} ${error && error.details || ""} ${error && error.hint || ""}`;
-      if (!/column|schema cache|could not find|does not exist|invalid input syntax for type uuid/i.test(message)) throw error;
-      return core.normalizeProduct(await runWrite(legacyProduct));
+      if (!isSchemaFallbackError(error)) throw error;
+      const { module_key: _moduleKey, ...legacyWithoutModuleKey } = legacyProduct;
+      const variants = [
+        legacyProduct,
+        withoutOptionalMediaFields(modernProduct),
+        withoutOptionalMediaFields(legacyProduct),
+        withoutSellerFields(modernProduct),
+        withoutSellerFields(legacyProduct),
+        withoutSellerFields(withoutOptionalMediaFields(modernProduct)),
+        withoutSellerFields(withoutOptionalMediaFields(legacyProduct)),
+        withoutSellerFields(withoutOptionalMediaFields(legacyWithoutModuleKey))
+      ];
+      let lastError = error;
+      for (const variant of variants) {
+        try {
+          return core.normalizeProduct(await runWrite(variant));
+        } catch (variantError) {
+          if (!isSchemaFallbackError(variantError)) throw variantError;
+          lastError = variantError;
+        }
+      }
+      throw lastError;
     }
   }
 

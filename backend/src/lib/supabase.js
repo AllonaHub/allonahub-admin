@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import { config } from "../config.js";
+import { sendSecurityAlertFromAuditEvent } from "./security-alerts.js";
 
 export const supabaseAdmin = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
   auth: {
@@ -272,6 +273,19 @@ export async function auditEvent({
   });
   const cleanEvidenceTags = sanitizeEvidenceTags(evidenceTags);
   const cleanRetentionDays = Math.max(30, Math.min(Number(retentionDays || 365), 3650));
+  const alertEvent = {
+    actorId,
+    actorRole,
+    action,
+    resourceType,
+    resourceId,
+    severity,
+    ipAddress: ip || null,
+    userAgent,
+    metadata: cleanMetadata,
+    source,
+    purpose
+  };
 
   const rpcPayload = {
     p_actor_id: actorId,
@@ -293,7 +307,10 @@ export async function auditEvent({
   };
 
   const { error: rpcError } = await supabaseAdmin.rpc("append_security_audit_event", rpcPayload);
-  if (!rpcError) return;
+  if (!rpcError) {
+    sendSecurityAlertFromAuditEvent(alertEvent, request);
+    return;
+  }
 
   if (!auditErrorLooksLikeMissingMigration(rpcError)) {
     request?.log?.warn({ error: rpcError.message, action }, "Security audit RPC failed; using fallback insert");
@@ -322,4 +339,5 @@ export async function auditEvent({
     retention_until: new Date(Date.now() + cleanRetentionDays * 24 * 60 * 60 * 1000).toISOString(),
     evidence_tags: cleanEvidenceTags
   }, request);
+  sendSecurityAlertFromAuditEvent(alertEvent, request);
 }

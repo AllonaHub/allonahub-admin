@@ -16,6 +16,15 @@
   }
 
   const AUTH_RETURN_TO_KEY = "allonahub.auth.returnTo";
+  const TRUSTED_RETURN_ORIGINS = [
+    "https://allonahub.com",
+    "https://www.allonahub.com",
+    "https://partner.allonahub.com"
+  ];
+
+  function trustedReturnOrigin(origin) {
+    return origin === window.location.origin || TRUSTED_RETURN_ORIGINS.includes(origin);
+  }
 
   function normalizeReturnTo(value, fallback) {
     const raw = String(value || "").trim();
@@ -23,7 +32,8 @@
     try {
       const decoded = decodeURIComponent(raw);
       const target = new URL(decoded, window.location.href);
-      if (target.origin !== window.location.origin) return fallback;
+      if (!trustedReturnOrigin(target.origin)) return fallback;
+      if (target.origin !== window.location.origin) return target.href;
       return `${target.pathname}${target.search}${target.hash}` || fallback;
     } catch {
       return fallback;
@@ -59,6 +69,23 @@
     const raw = core.getParam("returnTo") || "";
     const target = raw ? normalizeReturnTo(raw, fallback) : storedReturnTo(fallback);
     return rememberReturnTo(target);
+  }
+
+  function targetPath(target) {
+    try {
+      return new URL(target, window.location.href).pathname;
+    } catch {
+      return String(target || "").split("?")[0];
+    }
+  }
+
+  function isAdminHostRoot(target) {
+    try {
+      const url = new URL(target, window.location.href);
+      return url.hostname === "admin.allonahub.com" && (url.pathname === "/" || url.pathname === "");
+    } catch {
+      return window.location.hostname === "admin.allonahub.com" && (String(target || "") === "/" || !String(target || "").trim());
+    }
   }
 
   function qrSrc(value) {
@@ -165,7 +192,17 @@
   async function load() {
     const user = await App.auth.getUser();
     if (!user) {
-      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(returnTo())}`);
+      const target = returnTo();
+      const path = targetPath(target);
+      if (/\/admin\/super-admin\.html/i.test(path) || isAdminHostRoot(target)) {
+        window.location.href = core.url(`/admin/super-admin-login.html?returnTo=${encodeURIComponent(target)}`);
+        return;
+      }
+      if (/\/admin\/index\.html/i.test(path) || /\/admin\/$/i.test(path)) {
+        window.location.href = core.url(`/admin/admin-login.html?returnTo=${encodeURIComponent(target)}`);
+        return;
+      }
+      window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(target)}`);
       return;
     }
     state.status = await App.auth.mfaStatus();

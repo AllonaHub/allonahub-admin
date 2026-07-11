@@ -3,16 +3,16 @@
   const PROFILE_EVENT = "allonahub:profile-updated";
   const PROFILE_CHANNEL = "allonahub-profile-sync";
   const HP_LEDGER_KEY = "allonahub_hp_ledger_v1";
-  const SUPABASE_URL = "https://xqvikrysciguzholdjeb.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+  const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
+  const SUPABASE_KEY = window.Allona?.config?.supabaseAnonKey || "";
 
   const LEVELS = [
     { level: 1, minXp: 0, name: "New Member", key: "new-member", accent: "#18b8ff", bonus: "Başlangıç HP alanı" },
-    { level: 2, minXp: 75, name: "Blue", key: "blue", accent: "#0aa7ff", bonus: "%10 ekstra HP" },
-    { level: 3, minXp: 150, name: "Silver", key: "silver", accent: "#dcecff", bonus: "%5 kupon avantajı" },
-    { level: 4, minXp: 300, name: "Gold", key: "gold", accent: "#f6b64b", bonus: "%10 özel kampanya" },
-    { level: 5, minXp: 600, name: "Platinum", key: "platinum", accent: "#edf6ff", bonus: "Öncelikli destek" },
-    { level: 6, minXp: 1500, name: "Diamond", key: "diamond", accent: "#20c8ff", bonus: "%20 ekstra HP" },
+    { level: 2, minXp: 40, name: "Blue", key: "blue", accent: "#0aa7ff", bonus: "Profil rozetleri açılır" },
+    { level: 3, minXp: 100, name: "Silver", key: "silver", accent: "#dcecff", bonus: "Kupon görünürlüğü artar" },
+    { level: 4, minXp: 220, name: "Gold", key: "gold", accent: "#f6b64b", bonus: "Gold profil çerçevesi" },
+    { level: 5, minXp: 520, name: "Platinum", key: "platinum", accent: "#edf6ff", bonus: "Öncelikli destek" },
+    { level: 6, minXp: 1200, name: "Diamond", key: "diamond", accent: "#20c8ff", bonus: "Özel seviye avantajları" },
     { level: 7, minXp: 3000, name: "Elite", key: "elite", accent: "#b35cff", bonus: "Elite fırsatlar" },
     { level: 8, minXp: 6000, name: "Elite Diamond", key: "elite-diamond", accent: "#59e6ff", bonus: "VIP avantajlar" },
     { level: 9, minXp: 12000, name: "Elite Black", key: "elite-black", accent: "#f4c15d", bonus: "Yüksek kampanya limiti" },
@@ -258,7 +258,7 @@
       contact_locked: pick("contact_locked", true) !== false,
       avatar: safeAvatarUrl(pick(["avatar_url", "avatar"], "")),
       avatar_url: safeAvatarUrl(pick(["avatar_url", "avatar"], "")),
-      hp: asNumber(pick("hp", 250), 250),
+      hp: asNumber(pick("hp", 0), 0),
       xp: asNumber(pick("xp"), 0),
       streak: asNumber(pick("streak"), 0),
       cashout_balance: asNumber(pick("cashout_balance"), 0),
@@ -334,7 +334,7 @@
       profile_visible: profile.profile_visible !== false,
       contact_locked: profile.contact_locked !== false,
       avatar_url: safeAvatarUrl(profile.avatar_url || profile.avatar || ""),
-      hp: asNumber(profile.hp, 250),
+      hp: asNumber(profile.hp, 0),
       xp: asNumber(profile.xp, 0),
       level: levelFromXp(profile.xp).current.level,
       streak: asNumber(profile.streak, 0),
@@ -364,7 +364,7 @@
       profile_visible: profile.profile_visible !== false,
       contact_locked: profile.contact_locked !== false,
       avatar_url: safeAvatarUrl(profile.avatar_url || profile.avatar || ""),
-      hp: asNumber(profile.hp, 250),
+      hp: asNumber(profile.hp, 0),
       xp: asNumber(profile.xp, 0),
       streak: asNumber(profile.streak, 0),
       cashout_balance: asNumber(profile.cashout_balance, 0),

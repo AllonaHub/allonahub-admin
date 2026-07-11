@@ -11,6 +11,21 @@
       return "20260619-live9";
     }
   })();
+  const SERVICE_WORKER_VERSION = "20260630-currency3";
+
+  const refreshServiceWorker = () => {
+    if(!("serviceWorker" in navigator)){return}
+    if(!(location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){return}
+
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register(`/sw.js?v=${SERVICE_WORKER_VERSION}`, {scope: "/"})
+        .then(registration => registration.update())
+        .catch(() => undefined);
+    });
+  };
+
+  refreshServiceWorker();
+
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
@@ -19,9 +34,27 @@
     { code: "ru", label: "RU" },
     { code: "ar", label: "AR" }
   ];
+  const currencyOptions = [
+    { code: "TRY", label: "TRY", symbol: "₺" },
+    { code: "USD", label: "USD", symbol: "$" },
+    { code: "EUR", label: "EUR", symbol: "€" },
+    { code: "AZN", label: "AZN", symbol: "₼" },
+    { code: "AED", label: "AED", symbol: "د.إ" },
+    { code: "SAR", label: "SAR", symbol: "﷼" },
+    { code: "GBP", label: "GBP", symbol: "£" },
+    { code: "RUB", label: "RUB", symbol: "₽" }
+  ];
+  const languageCurrencyMap = {
+    tr: "TRY",
+    az: "AZN",
+    en: "USD",
+    de: "EUR",
+    ru: "RUB",
+    ar: "AED"
+  };
   const themes = [
     { code: "ocean", label: "Deniz" },
-    { code: "corporate", label: "Sade Kurumsal" },
+    { code: "corporate", label: "Kurumsal" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
     { code: "turquoise", label: "Turkuaz" },
@@ -35,9 +68,15 @@
     marketplace: "forest",
     graphite: "ocean"
   };
+  const DEFAULT_THEME = "corporate";
+  const THEME_DEFAULT_MIGRATION_KEY = "allona.theme.defaultCorporate.v1";
+  if (!localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY)) {
+    localStorage.setItem(THEME_KEY, DEFAULT_THEME);
+    localStorage.setItem(THEME_DEFAULT_MIGRATION_KEY, "1");
+  }
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
+    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || DEFAULT_THEME,
     packs: {}
   };
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
@@ -420,7 +459,7 @@
 
   function applyTheme(theme) {
     const normalized = themeAliases[theme] || theme;
-    const selected = themes.some((item) => item.code === normalized) ? normalized : "ocean";
+    const selected = themes.some((item) => item.code === normalized) ? normalized : DEFAULT_THEME;
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);
@@ -457,7 +496,10 @@
         phrases[source] = (translations && translations.tr) || source;
         return;
       }
-      if (translations && translations[language]) phrases[source] = translations[language];
+      const translated = translations && translations[language];
+      const sourceText = String(source || "").replace(/\s+/g, " ").trim();
+      const translatedText = String(translated || "").replace(/\s+/g, " ").trim();
+      if (translatedText && translatedText !== sourceText) phrases[source] = translated;
     });
     return {
       dir: catalog && catalog.dirs && catalog.dirs[language],
@@ -492,7 +534,7 @@
       ...catalogPack,
       dir: catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
       keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}) },
-      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}) }
+      phrases: { ...(catalogPack.phrases || {}), ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}) }
     };
     state.packs[selected] = pack;
     return pack;
@@ -734,7 +776,41 @@
     }
   }
 
-  async function applyLanguage(language) {
+  function currentCurrency() {
+    const target = String(App.currency?.state?.target || "TRY").toUpperCase();
+    return currencyOptions.find((item) => item.code === target) || currencyOptions[0];
+  }
+
+  function updateCurrencyControls() {
+    const selected = currentCurrency();
+    document.querySelectorAll("[data-currency-current]").forEach((node) => {
+      node.textContent = selected.label;
+    });
+    document.querySelectorAll("[data-currency-symbol]").forEach((node) => {
+      node.textContent = selected.symbol;
+    });
+    document.querySelectorAll("[data-currency-option]").forEach((node) => {
+      node.classList.toggle("is-active", node.dataset.currencyOption === selected.code);
+      node.setAttribute("aria-checked", node.dataset.currencyOption === selected.code ? "true" : "false");
+    });
+  }
+
+  async function applyCurrency(currency, source) {
+    const selected = currencyOptions.some((item) => item.code === currency) ? currency : "TRY";
+    if (App.currency && App.currency.setCurrency) {
+      await App.currency.setCurrency(selected, { manual: true, source: source || "platform_selector" });
+    }
+    updateCurrencyControls();
+  }
+
+  function syncCurrencyForLanguage(language) {
+    const mappedCurrency = languageCurrencyMap[language];
+    if (!mappedCurrency) return;
+    applyCurrency(mappedCurrency, "language_selector").catch(() => updateCurrencyControls());
+  }
+
+  async function applyLanguage(language, options) {
+    const settings = options || {};
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     state.language = selected;
     localStorage.setItem(LANG_KEY, selected);
@@ -760,6 +836,9 @@
       node.setAttribute("aria-checked", node.dataset.languageOption === selected ? "true" : "false");
     });
     document.dispatchEvent(new CustomEvent("allona:language-changed", { detail: { language: selected } }));
+    if (settings.userAction && settings.syncCurrency !== false) {
+      syncCurrencyForLanguage(selected);
+    }
   }
 
   function scheduleLanguageRefresh() {
@@ -799,6 +878,15 @@
           </button>
           <div class="platform-menu" data-platform-menu role="menu" aria-label="Dil seçimi">
             ${languages.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.language ? "true" : "false"}" class="platform-menu-item ${item.code === state.language ? "is-active" : ""}" data-language-option="${item.code}">${item.label}</button>`).join("")}
+          </div>
+        </div>
+        <div class="platform-control platform-control--currency" data-platform-control>
+          <button class="platform-control-btn platform-currency-btn" type="button" data-platform-menu-toggle aria-label="Para birimi seçimi" aria-haspopup="menu" aria-expanded="false">
+            <span class="platform-currency-symbol" data-currency-symbol aria-hidden="true">${currentCurrency().symbol}</span>
+            <span class="platform-control-value" data-currency-current>${currentCurrency().label}</span>
+          </button>
+          <div class="platform-menu" data-platform-menu role="menu" aria-label="Para birimi seçimi">
+            ${currencyOptions.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === currentCurrency().code ? "true" : "false"}" class="platform-menu-item ${item.code === currentCurrency().code ? "is-active" : ""}" data-currency-option="${item.code}"><span class="platform-menu-currency">${item.symbol}</span>${item.label}</button>`).join("")}
           </div>
         </div>
         <div class="platform-control platform-control--theme" data-platform-control>
@@ -984,6 +1072,7 @@
     document.querySelectorAll("[data-theme-current]").forEach((node) => {
       node.textContent = currentTheme().label;
     });
+    updateCurrencyControls();
   }
 
   function inferRoute(label) {
@@ -1214,9 +1303,11 @@
   function bindEvents() {
     document.addEventListener("change", (event) => {
       const languageSelect = event.target.closest("[data-language-select]");
-      if (languageSelect) applyLanguage(languageSelect.value);
+      if (languageSelect) applyLanguage(languageSelect.value, { userAction: true });
       const themeSelect = event.target.closest("[data-theme-select]");
       if (themeSelect) applyTheme(themeSelect.value);
+      const currencySelect = event.target.closest("[data-currency-select]");
+      if (currencySelect) applyCurrency(currencySelect.value, "platform_select");
     });
     document.addEventListener("click", (event) => {
       const toggle = event.target.closest("[data-platform-menu-toggle]");
@@ -1232,7 +1323,15 @@
       const languageOption = event.target.closest("[data-language-option]");
       if (languageOption) {
         event.preventDefault();
-        applyLanguage(languageOption.dataset.languageOption);
+        applyLanguage(languageOption.dataset.languageOption, { userAction: true });
+        closePlatformMenus();
+        return;
+      }
+
+      const currencyOption = event.target.closest("[data-currency-option]");
+      if (currencyOption) {
+        event.preventDefault();
+        applyCurrency(currencyOption.dataset.currencyOption, "platform_menu");
         closePlatformMenus();
         return;
       }
@@ -1264,6 +1363,7 @@
       updateAccountLinks();
     });
     document.addEventListener("allona:language-changed", updateAccountLinks);
+    document.addEventListener("allona:currency-changed", updateCurrencyControls);
   }
 
   function closePlatformMenus(except) {
@@ -1298,8 +1398,10 @@
 
   App.platform = {
     languages,
+    currencies: currencyOptions,
     themes,
     setLanguage: applyLanguage,
+    setCurrency: applyCurrency,
     setTheme: applyTheme,
     assetUrl
   };

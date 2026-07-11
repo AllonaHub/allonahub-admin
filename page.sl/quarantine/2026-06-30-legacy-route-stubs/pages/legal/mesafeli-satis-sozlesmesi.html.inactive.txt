@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yönlendiriliyor | AllonaHub</title>
+  <meta http-equiv="refresh" content="0; url=mesafeli-satis.html">
+  <link rel="canonical" href="mesafeli-satis.html">
+  <script>
+    window.location.replace("mesafeli-satis.html" + window.location.search + window.location.hash);
+  </script>
+</head>
+<body>
+  <p>Yönlendiriliyorsunuz. <a href="mesafeli-satis.html">Devam et</a></p>
+</body>
+</html>

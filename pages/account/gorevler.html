@@ -5,27 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Görevler | AllonaHub</title>
   <meta name="description" content="AllonaHub kullanıcı görevleri ve HP kazanım akışları.">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <style>
+    .task-page{display:grid;gap:18px;padding-bottom:42px}
+    .task-status{min-height:1px}
+    .task-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .task-metric{padding:18px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .task-metric span{display:block;color:#9fc6d6;font-size:12px;font-weight:900;text-transform:uppercase}
+    .task-metric strong{display:block;margin-top:8px;font-size:26px}
+    .task-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .task-card{display:grid;gap:12px;padding:20px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .task-card h3{display:flex;gap:10px;align-items:center;margin:0}
+    .task-card p{margin:0;color:var(--muted);line-height:1.55}
+    .task-steps{display:grid;gap:8px;margin:2px 0 0;padding:0;list-style:none}
+    .task-steps li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;color:#bfd7e3;font-size:14px}
+    .task-steps i{margin-top:2px;color:#ffca5f}
+    .task-steps li.is-complete i{color:#27d68b}
+    .task-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto}
+    .task-actions .platform-action{min-height:42px;padding:0 14px}
+    .task-progress{height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+    .task-progress i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#00d5ff,#ffd700)}
+    .task-note{padding:16px;border-radius:8px;background:rgba(0,181,255,.1);border:1px solid rgba(0,181,255,.18);color:#cceaf5;line-height:1.55}
+    .task-card.is-done{border-color:rgba(39,214,139,.28);box-shadow:0 0 22px rgba(39,214,139,.08)}
+    .task-card.is-locked{border-color:rgba(255,202,95,.28)}
+    @media(max-width:940px){.task-overview,.task-grid{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
   <div class="site-shell">
     <div data-layout="header"></div>
     <main class="site-main">
-      <div class="container platform-page">
+      <div class="container platform-page task-page" data-page="account-tasks">
         <section class="platform-hero">
           <p class="platform-eyebrow">HP Kazan</p>
           <h1>Görevler</h1>
-          <p>Profil tamamlama, alışveriş, partner keşfi ve kampanya görevleriyle AllonaHub içinde sadakat avantajları kazan.</p>
+          <p>Profil tamamlama, keşif ve alışveriş görevlerini buradan takip et. Profil tamamlama ödülü yalnızca tüm adımlar tamamlandığında ve tek sefer işlenir.</p>
+        </section>
+        <div class="task-status" data-task-status></div>
+        <section class="task-overview" aria-label="Görev özeti">
+          <article class="task-metric"><span>Tamamlanan profil adımı</span><strong data-profile-task-count>0/0</strong></article>
+          <article class="task-metric"><span>Ödül durumu</span><strong data-profile-award-state>Kontrol</strong></article>
+          <article class="task-metric"><span>Görev ödülü</span><strong>+20 HP / +80 XP</strong></article>
         </section>
         <section class="platform-section">
           <h2>Görev Tipleri</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Profil</h3><p>Hesap bilgilerini tamamlayarak kişiselleştirilmiş modül önerileri açılır.</p></article>
-            <article class="platform-card"><h3>Keşif</h3><p>Yeni modülleri, kampanyaları ve partnerleri keşfederek HP avantajı kazanılır.</p></article>
-            <article class="platform-card"><h3>Alışveriş</h3><p>Uygun sepet ve siparişlerde kampanya görevleri otomatik takip edilir.</p></article>
+          <div class="task-grid" data-task-grid>
+            <article class="task-card" data-profile-task-card>
+              <h3><i class="fa-solid fa-user-pen"></i> Profil</h3>
+              <p>Profil ödülü günlük verilmez. Ad soyad, telefon, ülke, şehir, meslek ve kısa açıklama tamamlandıktan sonra tek sefer açılır.</p>
+              <div class="task-progress" aria-hidden="true"><i data-profile-task-progress></i></div>
+              <ul class="task-steps" data-profile-task-steps></ul>
+              <div class="task-actions">
+                <a class="platform-action" href="profil.html?focus=profile-task">Profili Tamamla</a>
+                <button class="platform-action platform-action--secondary" type="button" data-claim-profile-award>Ödülü Al</button>
+              </div>
+            </article>
+            <article class="task-card">
+              <h3><i class="fa-solid fa-layer-group"></i> Keşif</h3>
+              <p>Yeni modülleri ve mesleğine uygun hub alanlarını keşfet. Keşif görevleri panel davranışına göre ayrı izlenir.</p>
+              <ul class="task-steps">
+                <li><i class="fa-regular fa-circle"></i><span>HUB'larım sayfasından mesleğine uygun modülleri aç.</span></li>
+                <li><i class="fa-regular fa-circle"></i><span>Bildirim ve kampanya alanlarını kontrol et.</span></li>
+              </ul>
+              <div class="task-actions">
+                <a class="platform-action" href="hublar.html">Keşfe Git</a>
+              </div>
+            </article>
+            <article class="task-card">
+              <h3><i class="fa-solid fa-bag-shopping"></i> Alışveriş</h3>
+              <p>Gerçek ürün alışverişlerinden gelen HP, günlük görev HP'sinden ayrı tutulur ve puan dükkanında birlikte değerlendirilir.</p>
+              <ul class="task-steps">
+                <li><i class="fa-regular fa-circle"></i><span>Uygun ürünleri sepete ekle.</span></li>
+                <li><i class="fa-regular fa-circle"></i><span>Sipariş tamamlandığında alışveriş HP'si hesabına yansır.</span></li>
+              </ul>
+              <div class="task-actions">
+                <a class="platform-action" href="../commerce/shop.html">Alışverişe Git</a>
+              </div>
+            </article>
           </div>
         </section>
+        <div class="task-note">Günlük görev HP'si tek başına sürekli kupon oluşturmak için kullanılmaz. İlk kullanım hakkından sonra dönüşüm için alışveriş HP'siyle birlikte değerlendirilir.</div>
         <div class="platform-actions">
           <a class="platform-action" href="rewards.html">Kupon Merkezine Git</a>
           <a class="platform-action platform-action--secondary" href="user-panel.html">Kullanıcı Paneli</a>
@@ -34,8 +95,15 @@
     </main>
     <div data-layout="footer"></div>
   </div>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/account-tasks.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+<script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
 </body>
 </html>

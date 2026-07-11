@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Navlun Panosu | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Rota, konteyner ve fiyat filtresiyle deniz navlun panosu.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="navlun">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="badge-dollar-sign"></i>Navlun panosu</span>
+        <h1>Rota bazli fiyat ve kapasite takibi</h1>
+        <p class="lead">Partnerler mevcut teklifleri filtreleyebilir, musteri icin teklif talebi acabilir veya kendi navlun bilgisini partner panelinden yayinlayabilir.</p>
+      </section>
+
+      <section class="section">
+        <div class="utility-band">
+          <strong id="rates-count">Kayitlar hazirlaniyor</strong>
+          <div class="toolbar">
+            <a class="button compact" href="teklif.html"><i data-lucide="send"></i><span>Teklif Talebi</span></a>
+            <a class="button secondary compact" href="partner-panel.html#navlun-ekle"><i data-lucide="plus"></i><span>Navlun Ekle</span></a>
+          </div>
+        </div>
+
+        <div class="filters" aria-label="Navlun filtreleri">
+          <div class="field">
+            <label for="rate-search">Rota veya firma</label>
+            <input id="rate-search" data-rate-filter type="search" placeholder="Mersin, Hamburg, Marmara...">
+          </div>
+          <div class="field">
+            <label for="rate-mode">Mod</label>
+            <select id="rate-mode" data-rate-filter>
+              <option value="all">Tumu</option>
+              <option value="FCL">FCL</option>
+              <option value="LCL">LCL</option>
+              <option value="Ro-Ro">Ro-Ro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="rate-container">Konteyner</label>
+            <select id="rate-container" data-rate-filter>
+              <option value="all">Tumu</option>
+              <option value="20DC">20DC</option>
+              <option value="40HC">40HC</option>
+              <option value="1-6 CBM">1-6 CBM</option>
+              <option value="Tir Slot">Tir Slot</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="rate-budget">Maksimum USD</label>
+            <input id="rate-budget" data-rate-filter type="number" min="0" step="50" placeholder="3500">
+          </div>
+        </div>
+
+        <div data-render="rates-board"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="destek.html">Destek</a><a href="teklif.html">Teklif</a><a href="index.html">Panel</a><a href="../legal/index.html#partner">Partner Koşulları</a><a href="../legal/index.html#gizlilik">Gizlilik</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Navlun ve fiyat bilgileri geçerlilik tarihi, para birimi ve kapsam notuyla birlikte değerlendirilmelidir.</p></div>
+    </footer>
+  </body>
+</html>

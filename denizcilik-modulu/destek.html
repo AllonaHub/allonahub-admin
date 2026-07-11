@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Destek | ALLONAHUB Denizcilik</title>
+    <meta name="description" content="Denizcilik modulu destek kaydi ve operasyon takip ekrani.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="destek">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa"><span class="brand-mark"><i data-lucide="ship"></i></span><span>ALLONAHUB <small>Denizcilik Modulu</small></span></a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions"><span id="connection-status" class="connection-pill">Kontrol</span><button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button></div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-hero">
+        <span class="eyebrow"><i data-lucide="life-buoy"></i>Destek masasi</span>
+        <h1>Operasyon kayitlari takipte kalsin</h1>
+        <p class="lead">Booking, lokal masraf, evrak ve panel sorunlari kayda alinip durum bilgisiyle listelenir.</p>
+      </section>
+
+      <section class="section split-layout">
+        <aside class="form-panel">
+          <h2>Destek Kaydi Ac</h2>
+          <form data-form="support">
+            <div class="form-grid">
+              <div class="field wide"><label for="support-owner">Firma / Yetkili</label><input id="support-owner" name="owner" required placeholder="Marmara Forwarding"></div>
+              <div class="field wide"><label for="support-subject">Konu</label><input id="support-subject" name="subject" required placeholder="Booking numarasi panelde gorunmuyor"></div>
+              <div class="field wide"><label for="support-priority">Oncelik</label><select id="support-priority" name="priority"><option>Yuksek</option><option>Orta</option><option>Dusuk</option></select></div>
+            </div>
+            <div class="consent-stack">
+              <label class="consent-option">
+                <input type="checkbox" name="supportNotice" required>
+                <span><a href="../legal/index.html#kvkk">KVKK Aydınlatma Metni</a> kapsamında destek kaydı için gerekli bilgilerin işlenebileceğini okudum; talep içinde gereksiz kişisel veya özel nitelikli veri paylaşmayacağım.</span>
+              </label>
+            </div>
+            <button class="button" type="submit"><i data-lucide="ticket-plus"></i><span>Kayit Ac</span></button>
+          </form>
+        </aside>
+
+        <div>
+          <div class="section-heading"><div><h2>Acik destek kayitlari</h2><p>Durum ve oncelik bilgisiyle operasyon takibi.</p></div></div>
+          <div class="grid-list" data-render="support-tickets"></div>
+        </div>
+      </section>
+
+      <section class="section tint">
+        <div class="horizontal-strip">
+          <article class="info-panel"><h3>Booking sorunu</h3><p>Hat acentesi referansi, ETD ve konteyner tipiyle kayit acilir.</p></article>
+          <article class="info-panel"><h3>Masraf teyidi</h3><p>Lokal masraf kalemi, para birimi ve gecerlilik tarihiyle incelenir.</p></article>
+          <article class="info-panel"><h3>Evrak revizyonu</h3><p>Konşimento ve fatura bilgisi hata riskiyle birlikte kontrol edilir.</p></article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner"><div class="compliance-footer__meta"><span>© <span id="year"></span> ALLONAHUB Denizcilik</span><span>Yasal ve politika merkezi</span></div><div class="footer-links compliance-footer__links"><a href="teklif.html">Teklif</a><a href="partner-panel.html">Partner</a><a href="index.html">Panel</a><a href="../legal/index.html#gizlilik">Gizlilik</a><a href="../legal/index.html#kvkk">KVKK</a><a href="../legal/index.html#cerez">Çerezler</a><a href="../legal/index.html#kullanim">Kullanım Şartları</a><a href="../legal/index.html#iletisim">İletişim</a></div><p class="compliance-footer__note">Destek taleplerinde yalnızca gerekli bilgiler paylaşılmalı; özel nitelikli veri ve gereksiz belge yüklenmemelidir.</p></div>
+    </footer>
+  </body>
+</html>

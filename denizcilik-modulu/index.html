@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ALLONAHUB Denizcilik Modulu</title>
+    <meta name="description" content="ALLONAHUB denizcilik modulu navlun, partner, danisman ve teklif akislarini tek ekranda toplar.">
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link rel="stylesheet" href="../shared/mobile/mobile-core.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="./assets/js/data.js"></script>
+    <script defer src="./assets/js/supabase-config.js"></script>
+    <script defer src="./assets/js/supabase-client.js"></script>
+    <script defer src="./assets/js/app.js"></script>
+    <script defer src="../shared/mobile/mobile-core.js"></script>
+  </head>
+  <body data-page="dashboard">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="ALLONAHUB Denizcilik ana sayfa">
+        <span class="brand-mark"><i data-lucide="ship"></i></span>
+        <span>ALLONAHUB <small>Denizcilik Modulu</small></span>
+      </a>
+      <nav class="site-nav" aria-label="Ana navigasyon">
+        <a data-nav="dashboard" href="index.html"><i data-lucide="layout-dashboard"></i>Panel</a>
+        <a data-nav="navlun" href="navlun.html"><i data-lucide="badge-dollar-sign"></i>Navlun</a>
+        <a data-nav="paylasimlar" href="paylasimlar.html"><i data-lucide="radio"></i>Paylasimlar</a>
+        <a data-nav="firmalar" href="firmalar.html"><i data-lucide="building-2"></i>Firmalar</a>
+        <a data-nav="danismanlar" href="danismanlar.html"><i data-lucide="users"></i>Danismanlar</a>
+        <a data-nav="partner" href="partner-panel.html"><i data-lucide="briefcase-business"></i>Partner</a>
+      </nav>
+      <div class="header-actions">
+        <span id="connection-status" class="connection-pill">Kontrol</span>
+        <button class="menu-toggle" type="button" aria-label="Menuyu ac" aria-expanded="false"><i data-lucide="menu"></i></button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow"><i data-lucide="radar"></i>Canli operasyon masasi</span>
+          <h1>Deniz navlunu, partner ve teklif akisi tek yerde.</h1>
+          <p class="lead">Rota bazli fiyatlar, dogrulanmis firmalar, danisman takvimi ve partner paylasimlari dolu veriyle acilir; Supabase baglandiginda ayni ekranlar canli kayitlarla calisir.</p>
+          <div class="hero-actions">
+            <a class="button" href="navlun.html"><i data-lucide="search"></i><span>Navlun Bul</span></a>
+            <a class="button copper" href="teklif.html"><i data-lucide="send"></i><span>Teklif Talebi Ac</span></a>
+            <a class="button secondary" href="partner-panel.html"><i data-lucide="plus-circle"></i><span>Partner Girisi</span></a>
+          </div>
+        </div>
+        <div class="hero-media">
+          <img src="./assets/img/port-operations-hero.png" alt="Konteyner limaninda denizcilik operasyonu">
+          <div class="hero-stats">
+            <div><strong>10+</strong><span>rota navlun</span></div>
+            <div><strong>6</strong><span>aktif firma</span></div>
+            <div><strong>4</strong><span>uzman danisman</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="metrics-grid" data-render="kpis"></div>
+      </section>
+
+      <section class="section tint">
+        <div class="section-heading">
+          <div>
+            <h2>Navlun Panosu</h2>
+            <p>Uzun liste kartlari yatay akista kalir; mobilde dikey yigilma olusmaz.</p>
+          </div>
+          <a class="button secondary compact" href="navlun.html"><i data-lucide="arrow-right"></i><span>Tumunu Gor</span></a>
+        </div>
+        <div class="horizontal-strip" data-render="rates-preview"></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div>
+            <h2>Partner Paylasimlari</h2>
+            <p>Navlun duyurusu, bos kapasite ve operasyon uyarilari yayinda tutulur.</p>
+          </div>
+          <a class="button secondary compact" href="paylasimlar.html"><i data-lucide="radio"></i><span>Akisi Ac</span></a>
+        </div>
+        <div class="grid-list" data-render="posts-preview"></div>
+      </section>
+
+      <section class="section tint">
+        <div class="section-heading">
+          <div>
+            <h2>Firmalar ve Danismanlar</h2>
+            <p>Dogrulanmis lojistik firmalari ve uzman danismanlar dogrudan aksiyona baglidir.</p>
+          </div>
+          <div class="toolbar">
+            <a class="button secondary compact" href="firmalar.html"><i data-lucide="building-2"></i><span>Firmalar</span></a>
+            <a class="button secondary compact" href="danismanlar.html"><i data-lucide="calendar"></i><span>Danismanlar</span></a>
+          </div>
+        </div>
+        <div class="horizontal-strip" data-render="companies-preview"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="compliance-footer__meta">
+          <span>© <span id="year"></span> ALLONAHUB Denizcilik</span>
+          <span>Yasal ve politika merkezi</span>
+        </div>
+        <div class="footer-links compliance-footer__links">
+          <a href="destek.html">Destek</a>
+          <a href="teklif.html">Teklif</a>
+          <a href="404.html">Yardim Haritasi</a>
+          <a href="../legal/index.html#gizlilik">Gizlilik</a>
+          <a href="../legal/index.html#kvkk">KVKK</a>
+          <a href="../legal/index.html#cerez">Çerezler</a>
+          <a href="../legal/index.html#kullanim">Kullanım Şartları</a>
+          <a href="../legal/index.html#iletisim">İletişim</a>
+        </div>
+        <p class="compliance-footer__note">Teklif, destek ve partner işlemlerinde paylaşılan kişisel veriler KVKK aydınlatma metni kapsamında işlenir; ticari ileti izinleri ayrı alınır.</p>
+      </div>
+    </footer>
+  </body>
+</html>

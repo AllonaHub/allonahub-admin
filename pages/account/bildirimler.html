@@ -4,9 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bildirimler | AllonaHub</title>
-  <meta name="description" content="AllonaHub bildirim merkezi.">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <meta name="description" content="AllonaHub kullanıcı bildirim merkezi.">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
+  <style>
+    .notification-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
+    .notification-tabs{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 16px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .notification-tab{appearance:none;border:0;background:transparent;color:#b9d3df;font-weight:900;padding:0 0 10px;cursor:pointer;border-bottom:2px solid transparent}
+    .notification-tab.is-active{color:#fff;border-bottom-color:#00d5ff}
+    .notification-list{display:grid;gap:10px}
+    .notification-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+    .notification-item i{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:rgba(0,181,255,.16);color:#00d5ff}
+    .notification-item h3{margin:0 0 4px;font-size:16px}
+    .notification-item p{margin:0;color:var(--muted);line-height:1.5}
+    .notification-item small{color:#9fc6d6;white-space:nowrap}
+    .notification-item[data-tone="warning"] i{background:rgba(255,185,66,.16);color:#ffd166}
+    .notification-item[data-tone="success"] i{background:rgba(39,214,139,.16);color:#27d68b}
+    .notification-empty{padding:22px;border-radius:18px;background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.18);color:var(--muted)}
+    @media(max-width:720px){.notification-item{grid-template-columns:42px minmax(0,1fr)}.notification-item small{grid-column:2;white-space:normal}}
+  </style>
 </head>
 <body>
   <div class="site-shell">
@@ -16,26 +32,83 @@
         <section class="platform-hero">
           <p class="platform-eyebrow">Hesabım</p>
           <h1>Bildirimler</h1>
-          <p>Siparişler, kampanyalar, partner mesajları, görevler ve hesap güvenliği bildirimleri tek merkezde toplanır.</p>
+          <p>Siparişler, iade/iptal talepleri, kuponlar, günlük görevler ve profil uyarıları burada toplanır.</p>
         </section>
         <section class="platform-section">
-          <h2>Bildirim Kanalları</h2>
-          <div class="platform-card-grid">
-            <article class="platform-card"><h3>Sipariş</h3><p>Sepet, ödeme, kargo ve teslimat durumları için işlem bildirimleri.</p></article>
-            <article class="platform-card"><h3>Kampanya</h3><p>Kupon, premium avantaj ve HP fırsatları için kişiselleştirilmiş duyurular.</p></article>
-            <article class="platform-card"><h3>Güvenlik</h3><p>Hesap girişi, şifre değişimi ve önemli profil hareketleri için güvenlik uyarıları.</p></article>
+          <div class="notification-toolbar">
+            <div>
+              <h2>Bildirim Akışı</h2>
+              <p data-notification-summary>Bildirimler yükleniyor.</p>
+            </div>
+            <button class="platform-action" type="button" data-mark-notifications-read>Okundu İşaretle</button>
           </div>
+          <div class="notification-tabs" role="tablist" aria-label="Bildirim kategorileri">
+            <button class="notification-tab is-active" type="button" data-notification-filter="all">Tümü</button>
+            <button class="notification-tab" type="button" data-notification-filter="panel">Panel Bildirimleri</button>
+            <button class="notification-tab" type="button" data-notification-filter="job">İş İlanları</button>
+            <button class="notification-tab" type="button" data-notification-filter="admin">AllonaHub Yönetim</button>
+          </div>
+          <div class="notification-list" data-notification-list></div>
         </section>
         <div class="platform-actions">
-          <a class="platform-action" href="user-panel.html">Kullanıcı Paneli</a>
+          <a class="platform-action" href="user-panel.html">Hesabıma Dön</a>
           <a class="platform-action platform-action--secondary" href="../company/destek.html">Destek Al</a>
         </div>
       </div>
     </main>
     <div data-layout="footer"></div>
   </div>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260630-currency3" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/user-notifications.js?v=20260629-panel-fix2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260628-modules1" defer></script>
+  <script src="../../js/platform.js?v=20260630-currency3" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260630-currency3" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const list = document.querySelector("[data-notification-list]");
+      const summary = document.querySelector("[data-notification-summary]");
+      const button = document.querySelector("[data-mark-notifications-read]");
+      const helper = window.AllonaUserNotifications;
+      let activeFilter = "all";
+      const iconMap = { order: "fa-box", support: "fa-headset", coupon: "fa-ticket", task: "fa-calendar-check", profile: "fa-user-pen", account: "fa-user-lock", job: "fa-briefcase", admin: "fa-bullhorn" };
+      const esc = (value) => window.Allona?.core?.escapeHTML ? window.Allona.core.escapeHTML(value || "") : String(value || "");
+      if (!helper || !list) return;
+      const render = async () => {
+        const result = await helper.load();
+        const items = result.notifications || [];
+        const filtered = activeFilter === "all" ? items : items.filter((item) => (item.category || "panel") === activeFilter);
+        if (summary) summary.textContent = `${filtered.length} gösteriliyor / ${items.length} toplam bildirim / ${result.unreadCount || 0} okunmamış.`;
+        list.innerHTML = filtered.length ? filtered.map((item) => `
+          <a class="notification-item" href="${item.href || "user-panel.html"}" data-tone="${item.tone || "info"}">
+            <i class="fa-solid ${iconMap[item.type] || "fa-bell"}"></i>
+            <span>
+              <h3>${esc(item.title || "Bildirim")}</h3>
+              <p>${esc(item.message || "")}</p>
+            </span>
+            <small>${esc(helper.formatDate(item.created_at))}</small>
+          </a>
+        `).join("") : `<div class="notification-empty">Şu anda yeni bildirim yok.</div>`;
+        if (button) {
+          button.onclick = async () => {
+            helper.markAllRead(result.user, items);
+            await render();
+          };
+        }
+      };
+      document.querySelectorAll("[data-notification-filter]").forEach((tab) => {
+        tab.addEventListener("click", async () => {
+          activeFilter = tab.dataset.notificationFilter || "all";
+          document.querySelectorAll("[data-notification-filter]").forEach((item) => item.classList.toggle("is-active", item === tab));
+          await render();
+        });
+      });
+      await render();
+    });
+  </script>
 </body>
 </html>

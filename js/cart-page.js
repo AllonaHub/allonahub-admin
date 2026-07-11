@@ -3,15 +3,35 @@
   const core = App.core;
   let lines = [];
 
+  function uniqueSellerNames() {
+    return [...new Set(lines
+      .map((item) => item.product.seller_public_name || item.product.seller_name || "AllonaHub")
+      .filter(Boolean))]
+      .slice(0, 4);
+  }
+
   function renderSummary() {
     const summary = document.querySelector("[data-cart-summary]");
     if (!summary) return;
     const totals = App.cart.totals(lines);
+    const sellers = uniqueSellerNames();
     summary.innerHTML = `
       <h2>Sipariş Özeti</h2>
       <div class="summary-line"><span>Ara toplam</span><strong>${core.money(totals.subtotal)}</strong></div>
       <div class="summary-line"><span>Kargo</span><strong>${totals.shipping ? core.money(totals.shipping) : "Ücretsiz"}</strong></div>
       <div class="summary-line summary-line--total"><span>Toplam</span><strong>${core.money(totals.total)}</strong></div>
+      ${lines.length ? `
+        <div class="summary-legal">
+          <strong>Satıcı ve yasal bilgilendirme</strong>
+          <p>${core.escapeHTML(sellers.join(", "))}${sellers.length === 4 ? " ve diğer satıcılar" : ""}</p>
+          <p>Ödeme öncesinde satıcı, teslimat, fatura, cayma hakkı ve ön bilgilendirme metinlerini kontrol edebilirsiniz.</p>
+          <span>
+            <a href="${core.url("/pages/legal/on-bilgilendirme.html")}" target="_blank" rel="noopener">Ön Bilgilendirme</a>
+            <a href="${core.url("/pages/legal/mesafeli-satis.html")}" target="_blank" rel="noopener">Mesafeli Satış</a>
+            <a href="${core.url("/pages/legal/iade-politikasi.html")}" target="_blank" rel="noopener">İade ve Cayma</a>
+          </span>
+        </div>
+      ` : ""}
       ${lines.length
         ? `<a class="btn btn--full" href="${core.url("/pages/commerce/guvenli-odeme.html")}">Ödemeye Geç</a>`
         : `<button class="btn btn--full" type="button" disabled>Ödemeye Geç</button>`}
@@ -34,6 +54,10 @@
         <div>
           <h3><a href="${core.escapeHTML(core.productUrl(item.product))}">${core.escapeHTML(item.product.name)}</a></h3>
           <p>${core.escapeHTML(item.product.category)} · ${core.money(item.product.price)}</p>
+          <p class="cart-item__seller">
+            <span>${core.escapeHTML(item.product.seller_kind || "Satıcı")}</span>
+            <strong>${core.escapeHTML(item.product.seller_public_name || item.product.seller_name || "AllonaHub")}</strong>
+          </p>
         </div>
         <div class="cart-item__actions">
           <div class="quantity-control">
@@ -93,5 +117,6 @@
     if (!document.querySelector("[data-page='cart']")) return;
     bindCart();
     loadCart();
+    document.addEventListener("allona:currency-changed", () => renderCart());
   });
 })();

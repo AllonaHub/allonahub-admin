@@ -1,0 +1,77 @@
+[
+  {
+    "path": "Bot Geliştirme Sorumlusu.md",
+    "domain": "bot",
+    "priority": 5
+  },
+  {
+    "path": "Anasayfa ve Hizmetler.md",
+    "domain": "services",
+    "priority": 5
+  },
+  {
+    "path": "Genel Güvenlik (Security).md",
+    "domain": "security",
+    "priority": 5
+  },
+  {
+    "path": "Hukuk-Politika Sorumlusu.md",
+    "domain": "legal",
+    "priority": 5
+  },
+  {
+    "path": "Mobil Görünüm Sorumlusu.md",
+    "domain": "mobile",
+    "priority": 4
+  },
+  {
+    "path": "Mobil Modül Denetim ve Düzeltme Raporu.md",
+    "domain": "mobile",
+    "priority": 4
+  },
+  {
+    "path": "Taksi Modülü Sorumlusu.md",
+    "domain": "taxi",
+    "priority": 5
+  },
+  {
+    "path": "AVM Dünyası Modülü Sorumlusu.md",
+    "domain": "mall",
+    "priority": 5
+  },
+  {
+    "path": "Sosyal Medya Sorumlusu.md",
+    "domain": "social",
+    "priority": 4
+  },
+  {
+    "path": "Admin Panel Sorumlusu.md",
+    "domain": "admin",
+    "priority": 4
+  },
+  {
+    "path": "Süper Admin Paneli Araştırma Raporu.md",
+    "domain": "super-admin",
+    "priority": 4
+  },
+  {
+    "path": "Partner Panel Sorumlusu.md",
+    "domain": "partner",
+    "priority": 4
+  },
+  {
+    "path": "User Panel Sorumlusu.md",
+    "domain": "user",
+    "priority": 4
+  },
+  {
+    "path": "Günlük Geliştirme Motoru.md",
+    "domain": "delivery",
+    "priority": 3
+  },
+  {
+    "path": "denizcilik-modulu/MOBIL-GORUNUM.md",
+    "domain": "maritime",
+    "priority": 3
+  }
+]
