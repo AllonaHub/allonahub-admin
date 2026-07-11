@@ -82,6 +82,17 @@
   let directoryInteractionPageSize = 50;
   let directoryInteractionRequestId = 0;
   let directoryInteractionMetrics = { detail: 0, routePlan: 0, outbound: 0, share: 0 };
+  let leadRows = [];
+  let leadStatusFilter = "";
+  let leadInterestTypeFilter = "";
+  let leadSearchFilter = "";
+  let leadStartDateFilter = "";
+  let leadEndDateFilter = "";
+  let leadTotal = 0;
+  let leadPage = 1;
+  let leadPageSize = 50;
+  let leadRequestId = 0;
+  let leadMetrics = { newCount: 0, contacted: 0, qualified: 0, archived: 0 };
 
   const partnerRequestLabels = {
     tenant_profile: "Mağaza profili",
@@ -147,6 +158,20 @@
     completed: "Tamamlandı",
     cancelled: "İptal edildi",
     archived: "Arşivlendi"
+  };
+
+  const leadStatusLabels = {
+    new: "Yeni",
+    contacted: "İletişime geçildi",
+    qualified: "Nitelikli görüşme",
+    archived: "Arşivlendi"
+  };
+
+  const leadInterestTypeLabels = {
+    platform: "AVM platform kurulumu",
+    leasing: "Kiralama / kiosk / stand",
+    advertising: "Reklam ve sponsor alanı",
+    events: "Etkinlik ve marka aktivasyonu"
   };
 
   const campaignActionLabels = {
@@ -1760,45 +1785,202 @@
     }
   }
 
-  async function loadLeads() {
+  function leadFilterSnapshot() {
+    return {
+      status: leadStatusFilter,
+      interestType: leadInterestTypeFilter,
+      search: leadSearchFilter,
+      startDate: leadStartDateFilter,
+      endDate: leadEndDateFilter
+    };
+  }
+
+  function queryLeadReport(limit, offset, filters = leadFilterSnapshot()) {
+    return App.db.client().rpc("get_mall_lead_report", {
+      report_status: filters.status || null,
+      report_interest_type: filters.interestType || null,
+      report_search: filters.search.trim() || null,
+      report_start_date: filters.startDate || null,
+      report_end_date: filters.endDate || null,
+      report_limit: limit,
+      report_offset: offset
+    });
+  }
+
+  async function exportLeads(button) {
+    if (!leadTotal) {
+      core.toast("Dışa aktarılacak AVM ön görüşmesi yok.", "error");
+      return;
+    }
+    button.disabled = true;
+    try {
+      const filters = leadFilterSnapshot();
+      const batchSize = 200;
+      const rows = [];
+      let expectedTotal = leadTotal;
+      for (let offset = 0; offset < expectedTotal; offset += batchSize) {
+        const { data, error } = await queryLeadReport(batchSize, offset, filters);
+        if (error) throw error;
+        const batch = data || [];
+        if (!offset && batch[0]) expectedTotal = interactionNumber(batch[0].total_count);
+        rows.push(...batch);
+        if (batch.length < batchSize) break;
+      }
+      if (!rows.length) throw new Error("Filtre kapsamındaki ön görüşmeler artık bulunmuyor.");
+      const headers = ["AVM", "Yetkili Rolü", "E-posta", "Telefon", "Görüşme Türü", "AVM Segmenti", "İhtiyaç", "Kaynak", "Durum", "Tarih"];
+      const csvRows = rows.map((lead) => [
+        lead.mall_name,
+        lead.contact_role,
+        lead.email,
+        lead.phone,
+        leadInterestTypeLabels[lead.interest_type] || lead.interest_type,
+        lead.mall_size,
+        lead.need_summary,
+        lead.source_page,
+        leadStatusLabels[lead.status] || lead.status,
+        lead.created_at ? new Date(lead.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : ""
+      ]);
+      const csv = [headers, ...csvRows].map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `avm-on-gorusmeler-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      core.toast(`${rows.length} AVM ön görüşmesi CSV olarak hazırlandı.`);
+    } catch (error) {
+      core.toast(error.message || "AVM ön görüşme raporu hazırlanamadı.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderLeads() {
     const target = document.querySelector("[data-avm-admin-leads]");
     if (!target) return;
-    core.renderStatus(target, "AVM partner talepleri yükleniyor...");
-    try {
-      const { data, error } = await App.db.client()
-        .from("mall_leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const rows = data || [];
-      target.innerHTML = rows.length
+    const totalPages = Math.max(1, Math.ceil(leadTotal / leadPageSize));
+    const hasFilters = Boolean(leadStatusFilter || leadInterestTypeFilter || leadSearchFilter || leadStartDateFilter || leadEndDateFilter);
+    target.innerHTML = `
+      <div class="avm-operation-summary" aria-label="AVM ön görüşme operasyon özeti">
+        <div class="avm-operation-stat"><span>Filtrelenmiş görüşme</span><strong>${leadTotal}</strong></div>
+        <div class="avm-operation-stat"><span>Yeni</span><strong>${leadMetrics.newCount}</strong></div>
+        <div class="avm-operation-stat"><span>İletişime geçildi</span><strong>${leadMetrics.contacted}</strong></div>
+        <div class="avm-operation-stat"><span>Nitelikli</span><strong>${leadMetrics.qualified}</strong></div>
+      </div>
+      <p class="muted">${leadRows.length} kayıt bu sayfada / ${leadTotal} eşleşme · ${leadMetrics.archived} arşivlendi</p>
+      <form class="filters avm-admin-lead-filters" data-avm-lead-filters>
+        <div class="field">
+          <label for="avm-lead-status-filter">Durum</label>
+          <select id="avm-lead-status-filter" data-avm-lead-filter-status>
+            <option value="">Tüm durumlar</option>
+            ${Object.entries(leadStatusLabels).map(([value, label]) => `<option value="${value}" ${leadStatusFilter === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-lead-interest-filter">Görüşme türü</label>
+          <select id="avm-lead-interest-filter" data-avm-lead-filter-interest>
+            <option value="">Tüm görüşme türleri</option>
+            ${Object.entries(leadInterestTypeLabels).map(([value, label]) => `<option value="${value}" ${leadInterestTypeFilter === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-lead-search-filter">Görüşme ara</label>
+          <input id="avm-lead-search-filter" type="search" data-avm-lead-filter-search value="${core.escapeHTML(leadSearchFilter)}" placeholder="AVM, yetkili, iletişim veya ihtiyaç">
+        </div>
+        <div class="field">
+          <label for="avm-lead-start-filter">Başlangıç</label>
+          <input id="avm-lead-start-filter" type="date" data-avm-lead-filter-start value="${core.escapeHTML(leadStartDateFilter)}" ${leadEndDateFilter ? `max="${core.escapeHTML(leadEndDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-lead-end-filter">Bitiş</label>
+          <input id="avm-lead-end-filter" type="date" data-avm-lead-filter-end value="${core.escapeHTML(leadEndDateFilter)}" ${leadStartDateFilter ? `min="${core.escapeHTML(leadStartDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-lead-page-size">Sayfa başına</label>
+          <select id="avm-lead-page-size" data-avm-lead-page-size>
+            ${[25, 50, 100].map((value) => `<option value="${value}" ${leadPageSize === value ? "selected" : ""}>${value} kayıt</option>`).join("")}
+          </select>
+        </div>
+        <div class="field field--actions">
+          <label aria-hidden="true">&nbsp;</label>
+          <div class="avm-redemption-filter-actions">
+            <button class="btn btn--light" type="button" data-avm-lead-reset>Temizle</button>
+            <button class="btn" type="button" data-avm-lead-export aria-label="Filtrelenmiş AVM ön görüşmelerini CSV olarak indir">CSV İndir</button>
+          </div>
+        </div>
+      </form>
+      ${leadRows.length
         ? `
           <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>AVM</th><th>Yetkili</th><th>İletişim</th><th>Talep</th><th>İhtiyaç</th><th>Durum</th><th>Tarih</th></tr></thead>
+            <table class="data-table data-table--wide">
+              <thead><tr><th>AVM</th><th>Yetkili / İletişim</th><th>Görüşme</th><th>İhtiyaç</th><th>Durum</th><th>Tarih / Kaynak</th></tr></thead>
               <tbody>
-                ${rows.map((lead) => `
+                ${leadRows.map((lead) => `
                   <tr>
-                    <td>${core.escapeHTML(lead.mall_name)}</td>
-                    <td>${core.escapeHTML(lead.contact_role)}</td>
-                    <td>${core.escapeHTML(lead.email)}<br>${core.escapeHTML(lead.phone)}</td>
-                    <td>${core.escapeHTML(lead.interest_type || "platform")}</td>
-                    <td>${core.escapeHTML(lead.need_summary || "-")}</td>
+                    <td><strong>${core.escapeHTML(lead.mall_name)}</strong><br><small>${core.escapeHTML(lead.mall_size || "Segment belirtilmedi")}</small></td>
+                    <td>${core.escapeHTML(lead.contact_role)}<br><small>${core.escapeHTML(lead.email)} · ${core.escapeHTML(lead.phone)}</small></td>
+                    <td>${core.escapeHTML(leadInterestTypeLabels[lead.interest_type] || lead.interest_type || "AVM platform kurulumu")}</td>
+                    <td>${core.escapeHTML(core.truncate(lead.need_summary || "-", 180))}</td>
                     <td>
-                      <select data-avm-lead-status="${core.escapeHTML(lead.id)}">
-                        ${["new","contacted","qualified","archived"].map((status) => `<option value="${status}" ${lead.status === status ? "selected" : ""}>${status}</option>`).join("")}
+                      <select data-avm-lead-status="${core.escapeHTML(lead.lead_id || lead.id)}">
+                        ${Object.entries(leadStatusLabels).map(([value, label]) => `<option value="${value}" ${lead.status === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
                       </select>
                     </td>
-                    <td>${lead.created_at ? new Date(lead.created_at).toLocaleString("tr-TR") : "-"}</td>
+                    <td>${lead.created_at ? new Date(lead.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "-"}<br><small>${core.escapeHTML(lead.source_page || "avm-partner")}</small></td>
                   </tr>
                 `).join("")}
               </tbody>
             </table>
           </div>
         `
-        : `<div class="empty-state">Henüz AVM partner talebi yok.</div>`;
+        : `<div class="empty-state">${hasFilters ? "Seçilen filtrelerle eşleşen AVM ön görüşmesi yok." : "Henüz AVM ön görüşme talebi yok."}</div>`}
+      ${leadTotal > leadPageSize
+        ? `
+          <div class="pagination" aria-label="AVM ön görüşme sayfaları">
+            <button class="icon-btn" type="button" data-avm-lead-previous aria-label="Önceki sayfa" title="Önceki sayfa" ${leadPage <= 1 ? "disabled" : ""}>←</button>
+            <span>Sayfa ${leadPage} / ${totalPages}</span>
+            <button class="icon-btn" type="button" data-avm-lead-next aria-label="Sonraki sayfa" title="Sonraki sayfa" ${leadPage >= totalPages ? "disabled" : ""}>→</button>
+          </div>
+        `
+        : ""}
+    `;
+  }
+
+  async function loadLeads(options = {}) {
+    const target = document.querySelector("[data-avm-admin-leads]");
+    if (!target) return;
+    if (options.resetPage) leadPage = 1;
+    const requestId = ++leadRequestId;
+    core.renderStatus(target, "AVM ön görüşmeleri yükleniyor...");
+    try {
+      const offset = (leadPage - 1) * leadPageSize;
+      const { data, error } = await queryLeadReport(leadPageSize, offset);
+      if (error) throw error;
+      if (requestId !== leadRequestId) return;
+      leadRows = data || [];
+      if (!leadRows.length && leadPage > 1) {
+        leadPage = 1;
+        await loadLeads();
+        return;
+      }
+      const metrics = leadRows[0] || {};
+      leadTotal = interactionNumber(metrics.total_count);
+      leadMetrics = {
+        newCount: interactionNumber(metrics.new_count),
+        contacted: interactionNumber(metrics.contacted_count),
+        qualified: interactionNumber(metrics.qualified_count),
+        archived: interactionNumber(metrics.archived_count)
+      };
+      renderLeads();
     } catch (error) {
-      core.renderStatus(target, error.message || "AVM partner talepleri yüklenemedi. Supabase AVM migration uygulanmalı.", "error");
+      if (requestId !== leadRequestId) return;
+      leadRows = [];
+      leadTotal = 0;
+      leadMetrics = { newCount: 0, contacted: 0, qualified: 0, archived: 0 };
+      core.renderStatus(target, error.message || "AVM ön görüşmeleri yüklenemedi. Supabase lead raporlama migration uygulanmalı.", "error");
     }
   }
 
@@ -3338,8 +3520,69 @@
           .eq("id", select.dataset.avmLeadStatus);
         if (error) throw error;
         core.toast("AVM talep durumu güncellendi.");
+        await loadLeads();
       } catch (error) {
         core.toast(error.message || "AVM talebi güncellenemedi.", "error");
+        await loadLeads();
+      }
+    });
+  }
+
+  function bindLeadControls() {
+    document.addEventListener("submit", (event) => {
+      const form = event.target.closest("[data-avm-lead-filters]");
+      if (!form) return;
+      event.preventDefault();
+      leadSearchFilter = form.querySelector("[data-avm-lead-filter-search]")?.value || "";
+      loadLeads({ resetPage: true });
+    });
+
+    document.addEventListener("change", (event) => {
+      const statusFilter = event.target.closest("[data-avm-lead-filter-status]");
+      const interestFilter = event.target.closest("[data-avm-lead-filter-interest]");
+      const searchFilter = event.target.closest("[data-avm-lead-filter-search]");
+      const startFilter = event.target.closest("[data-avm-lead-filter-start]");
+      const endFilter = event.target.closest("[data-avm-lead-filter-end]");
+      const pageSize = event.target.closest("[data-avm-lead-page-size]");
+      if (!statusFilter && !interestFilter && !searchFilter && !startFilter && !endFilter && !pageSize) return;
+      if (statusFilter) leadStatusFilter = statusFilter.value;
+      if (interestFilter) leadInterestTypeFilter = interestFilter.value;
+      if (searchFilter) leadSearchFilter = searchFilter.value;
+      if (startFilter) leadStartDateFilter = startFilter.value;
+      if (endFilter) leadEndDateFilter = endFilter.value;
+      if (pageSize) leadPageSize = Number(pageSize.value) || 50;
+      if (leadStartDateFilter && leadEndDateFilter && leadEndDateFilter < leadStartDateFilter) {
+        core.toast("Bitiş tarihi başlangıç tarihinden önce olamaz.", "error");
+        renderLeads();
+        return;
+      }
+      loadLeads({ resetPage: true });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-avm-lead-reset]")) {
+        leadStatusFilter = "";
+        leadInterestTypeFilter = "";
+        leadSearchFilter = "";
+        leadStartDateFilter = "";
+        leadEndDateFilter = "";
+        loadLeads({ resetPage: true });
+        return;
+      }
+      const exportButton = event.target.closest("[data-avm-lead-export]");
+      if (exportButton) {
+        exportLeads(exportButton);
+        return;
+      }
+      if (event.target.closest("[data-avm-lead-previous]") && leadPage > 1) {
+        leadPage -= 1;
+        loadLeads();
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(leadTotal / leadPageSize));
+      if (event.target.closest("[data-avm-lead-next]") && leadPage < totalPages) {
+        leadPage += 1;
+        loadLeads();
       }
     });
   }
@@ -3766,6 +4009,7 @@
     bindServiceForm();
     bindAdSlotForm();
     bindLeadUpdates();
+    bindLeadControls();
     bindAccessibilityRequestUpdates();
     bindAccessibilityRequestControls();
     bindPartnerSubmissionUpdates();

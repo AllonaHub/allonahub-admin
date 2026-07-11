@@ -1451,6 +1451,10 @@ img {
   grid-template-columns: repeat(4, minmax(150px, 1fr));
 }
 
+.avm-admin-lead-filters {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
 .partner-avm-submission-filters {
   grid-template-columns: repeat(4, minmax(150px, 1fr));
 }
