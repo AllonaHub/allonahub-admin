@@ -68,11 +68,16 @@
     marketplace: "forest",
     graphite: "ocean"
   };
-  const DEFAULT_THEME = "corporate";
+  const DEFAULT_THEME = "ocean";
   const THEME_DEFAULT_MIGRATION_KEY = "allona.theme.defaultCorporate.v1";
-  if (!localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY)) {
-    localStorage.setItem(THEME_KEY, DEFAULT_THEME);
-    localStorage.setItem(THEME_DEFAULT_MIGRATION_KEY, "1");
+  const THEME_OCEAN_RESTORE_KEY = "allona.theme.restoreOcean.v1";
+  if (!localStorage.getItem(THEME_OCEAN_RESTORE_KEY)) {
+    const storedTheme = localStorage.getItem(THEME_KEY);
+    const wasForcedCorporate = localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY) === "1";
+    if (!storedTheme || (storedTheme === "corporate" && wasForcedCorporate)) {
+      localStorage.setItem(THEME_KEY, DEFAULT_THEME);
+    }
+    localStorage.setItem(THEME_OCEAN_RESTORE_KEY, "1");
   }
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
