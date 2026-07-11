@@ -194,6 +194,60 @@ pinEl.setAttribute("title",label);
 	}
 }
 
+const locationFallbacks={
+"Europe/Istanbul":{city:"İstanbul",country:"Türkiye"},
+"Asia/Baku":{city:"Bakü",country:"Azerbaycan"},
+"Asia/Dubai":{city:"Dubai",country:"Birleşik Arap Emirlikleri"},
+"Asia/Riyadh":{city:"Riyad",country:"Suudi Arabistan"},
+"Europe/Berlin":{city:"Berlin",country:"Almanya"},
+"Europe/London":{city:"Londra",country:"Birleşik Krallık"},
+"Europe/Paris":{city:"Paris",country:"Fransa"},
+"America/New_York":{city:"New York",country:"Amerika Birleşik Devletleri"},
+"America/Chicago":{city:"Chicago",country:"Amerika Birleşik Devletleri"},
+"America/Denver":{city:"Denver",country:"Amerika Birleşik Devletleri"},
+"America/Los_Angeles":{city:"Los Angeles",country:"Amerika Birleşik Devletleri"},
+"America/Toronto":{city:"Toronto",country:"Kanada"}
+};
+
+const localeCountryFallbacks={
+TR:{city:"Türkiye",country:"Yaklaşık konum"},
+AZ:{city:"Azerbaycan",country:"Yaklaşık konum"},
+US:{city:"Amerika Birleşik Devletleri",country:"Yaklaşık konum"},
+GB:{city:"Birleşik Krallık",country:"Yaklaşık konum"},
+DE:{city:"Almanya",country:"Yaklaşık konum"},
+FR:{city:"Fransa",country:"Yaklaşık konum"},
+AE:{city:"Birleşik Arap Emirlikleri",country:"Yaklaşık konum"},
+SA:{city:"Suudi Arabistan",country:"Yaklaşık konum"},
+RU:{city:"Rusya",country:"Yaklaşık konum"}
+};
+
+function regionFromLocale(value){
+try{return new Intl.Locale(value).region||""}
+catch(e){
+const parts=String(value||"").split("-");
+return parts.length>1?parts.pop().toUpperCase():""
+}
+}
+
+function approximateLocation(){
+try{
+const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+if(locationFallbacks[zone]){return {...locationFallbacks[zone],source:"timezone"}}
+}catch(e){}
+const country=(navigator.languages||[navigator.language||""]).map(regionFromLocale).find(Boolean);
+return localeCountryFallbacks[country] ? {...localeCountryFallbacks[country],source:"locale"} : null
+}
+
+function showApproximateLocation(){
+const fallback=approximateLocation();
+if(fallback){
+updateLocationStatus(false,fallback.city,"Canlı konum için dokun");
+return true
+}
+updateLocationStatus(false,"Konum belirlenemedi","Canlı konum için dokun");
+return false
+}
+
 function getLocationErrorMessage(error){
 if(error&&error.code===1){return ["Konum izni kapalı","İzin verilmedi"]}
 if(error&&error.code===2){return ["Konum alınamadı","Sinyal yok"]}
@@ -226,13 +280,14 @@ return null
 
 async function requestBrowserLocation(options){
 const privacy=window.Allona&&window.Allona.privacy;
+updateLocationStatus(false,"Konum alınıyor","Tarayıcı izni kontrol ediliyor");
 const location=privacy&&privacy.getLocation ? await privacy.getLocation({
 maximumAge:600000,
 timeout:8000,
 prompt:Boolean(options&&options.prompt)
 }) : null;
 if(!location){
-updateLocationStatus(false,"Konum belirlenemedi","Tarayıcı izni bekleniyor");
+showApproximateLocation();
 return
 }
 const lat=location.latitude;
@@ -249,6 +304,7 @@ updateLocationStatus(true,city,country);
 
 async function setLocationByBrowser(){
 updateLocationStatus(false,"Konum belirlenemedi","İzin durumu kontrol ediliyor");
+showApproximateLocation();
 if(!navigator.geolocation){return}
 let permission;
 if(navigator.permissions&&navigator.permissions.query){
@@ -262,16 +318,31 @@ permission.onchange=function(){setLocationByBrowser()};
 }
 }
 if(permission&&permission.state==="denied"){
-updateLocationStatus(false,"Konum belirlenemedi","İzin verilmedi");
+showApproximateLocation();
 return
 }
 const privacy=window.Allona&&window.Allona.privacy;
 if(permission&&permission.state==="prompt"&&privacy&&privacy.cachedLocation&&!privacy.cachedLocation(600000)){
-updateLocationStatus(false,"Konum belirlenemedi","Tarayıcı izni bekleniyor");
+showApproximateLocation();
 return
 }
 requestBrowserLocation();
 }
+function bindLocationPrompt(){
+const card=document.querySelector(".ad-hero__location");
+if(!card){return}
+card.setAttribute("role","button");
+card.setAttribute("tabindex","0");
+card.setAttribute("aria-label","Canlı konumu belirle");
+card.addEventListener("click",()=>requestBrowserLocation({prompt:true}));
+card.addEventListener("keydown",(event)=>{
+if(event.key==="Enter"||event.key===" "){
+event.preventDefault();
+requestBrowserLocation({prompt:true});
+}
+});
+}
+bindLocationPrompt();
 setLocationByBrowser();
 
 const approvedAds={

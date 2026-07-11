@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260630-currency3";
+  const SERVICE_WORKER_VERSION = "20260712-homefix1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
