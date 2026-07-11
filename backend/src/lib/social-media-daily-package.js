@@ -85,14 +85,14 @@ const PLATFORM_TIMES = Object.freeze({
 });
 
 const PLATFORM_HASHTAGS = Object.freeze({
-  instagram: ["AllonaHub", "DijitalBuyume", "SosyalMedyaYonetimi", "IsletmeSistemi", "SaaSTurkiye"],
-  facebook: ["AllonaHub", "KOBI", "DijitalDonusum", "OnlineSatis", "IsletmeBuyutme"],
-  threads: ["AllonaHub", "DijitalBuyume", "Girisim"],
-  x: ["AllonaHub", "GrowthOps", "SaaS"],
+  instagram: ["AllonaHub", "DijitalBuyume", "SosyalMedyaYonetimi", "AllonaShop", "SaaSTurkiye"],
+  facebook: ["AllonaHub", "KOBI", "DijitalDonusum", "OnlineSatis", "AllonaShop"],
+  threads: ["AllonaHub", "DijitalBuyume", "AllonaShop"],
+  x: ["AllonaHub", "GrowthOps", "AllonaShop"],
   linkedin: ["AllonaHub", "DigitalOperations", "SaaS", "BusinessGrowth", "SocialMediaManagement"],
-  tiktok: ["AllonaHub", "SosyalMedya", "DijitalBuyume", "Girisim", "SaaS"],
-  youtube: ["AllonaHub", "Shorts", "DijitalBuyume", "IsletmeYonetimi"],
-  pinterest: ["AllonaHub", "DijitalIsletme", "IcerikStratejisi", "SosyalMedyaPlani"],
+  tiktok: ["AllonaHub", "SosyalMedya", "DijitalBuyume", "AllonaShop", "SaaS"],
+  youtube: ["AllonaHub", "Shorts", "DijitalBuyume", "AllonaShop"],
+  pinterest: ["AllonaHub", "DijitalIsletme", "IcerikStratejisi", "AllonaShop"],
   nsosyal: ["AllonaHub", "YerliGirisim", "DijitalBuyume"],
   telegram: ["AllonaHub", "DijitalBuyume"],
   whatsapp: ["AllonaHub"],
@@ -112,12 +112,16 @@ function isoForIstanbul(planDate, time) {
   return `${planDate}T${time}:00+03:00`;
 }
 
-function tags(platform) {
-  return PLATFORM_HASHTAGS[platform] || ["AllonaHub", "DijitalBuyume"];
+function unique(values) {
+  return [...new Set((values || []).map((value) => String(value || "").trim()).filter(Boolean))];
 }
 
-function hashtagLine(platform) {
-  return tags(platform).map((tag) => `#${tag}`).join(" ");
+function tags(platform, extraTags = []) {
+  return unique([...(PLATFORM_HASHTAGS[platform] || ["AllonaHub", "DijitalBuyume"]), ...extraTags]).slice(0, 12);
+}
+
+function hashtagLine(platform, extraTags = []) {
+  return tags(platform, extraTags).map((tag) => `#${tag}`).join(" ");
 }
 
 function platformType(platform) {
@@ -136,6 +140,99 @@ function platformType(platform) {
     google_business: "feed"
   };
   return types[platform] || "feed";
+}
+
+function trimText(value, max = 900) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(0, max - 1)).trim()}...`;
+}
+
+function absoluteUrl(value, siteUrl) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https:\/\//i.test(raw)) return raw;
+  if (/^\/\//.test(raw)) return `https:${raw}`;
+  if (/^http:\/\//i.test(raw)) return "";
+  const base = String(siteUrl || "https://allonahub.com").replace(/\/$/, "");
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return `${base}${path}`;
+}
+
+function moneyTry(price, currency = "TRY") {
+  const amount = Number(price || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return "";
+  try {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: String(currency || "TRY").toUpperCase(),
+      maximumFractionDigits: 2
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency || "TRY"}`;
+  }
+}
+
+function slugify(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/İ/g, "i")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+function productUrl(product, siteUrl, landingUrl) {
+  const preferred = absoluteUrl(landingUrl, siteUrl);
+  const siteRoot = String(siteUrl || "https://allonahub.com").replace(/\/$/, "");
+  if (preferred && preferred.replace(/\/$/, "") !== siteRoot) return preferred;
+  const id = String(product?.id || "").trim();
+  if (!id) return preferred || `${siteRoot}/pages/commerce/allonashop.html`;
+  const params = new URLSearchParams({ id });
+  const slug = String(product?.slug || slugify(product?.name)).trim();
+  if (slug) params.set("slug", slug);
+  return `${siteRoot}/pages/commerce/product.html?${params.toString()}`;
+}
+
+function productTags(product) {
+  return unique([
+    "AllonaShop",
+    product?.module_key ? `Allona${String(product.module_key).replace(/[^a-z0-9]/gi, "")}` : "",
+    product?.category,
+    product?.brand,
+    String(product?.name || "").split(/\s+/).slice(0, 2).join("")
+  ].map((tag) => String(tag || "").replace(/[^a-z0-9ığüşöçİĞÜŞÖÇ]/gi, ""))).slice(0, 6);
+}
+
+function productSummary(product) {
+  return trimText(product?.meta_description || product?.description || `${product?.name || "Urun"} AllonaHub vitrininde incelenebilir.`, 240);
+}
+
+function platformProductCaption(platform, product, planDate, landingUrl) {
+  const name = trimText(product?.name || "AllonaHub urunu", 120);
+  const description = productSummary(product);
+  const price = moneyTry(product?.price, product?.currency || "TRY");
+  const stockText = Number(product?.stock || 0) > 0 ? "stokta" : "sinirli stok";
+  const category = trimText(product?.category || product?.module_key || "AllonaHub", 80);
+  const basePrice = price ? ` Fiyat: ${price}.` : "";
+  const base = {
+    instagram: `${name} bugunun AllonaHub vitrininde.\n\n${description}${basePrice}\n\n${stockText}; detay ve siparis icin urun sayfasina bak.`,
+    facebook: `Bugunun urun onerisi: ${name}.\n\n${description}${basePrice} AllonaHub uzerinden detaylari inceleyebilir, uygun oldugunda siparise gecebilirsin.`,
+    threads: `Bugunun vitrin urunu: ${name}.\n\n${description}${basePrice}`,
+    x: `AllonaHub urun notu (${planDate}): ${name}. ${description}${basePrice}`,
+    linkedin: `AllonaHub'da bugunun ticaret odagi ${category} kategorisinden ${name}.\n\n${description}${basePrice} Onayli urun akisimizde vitrin, stok ve satis linki tek operasyon hattinda izlenir.`,
+    tiktok: `${name} bugunun kisa urun vitrini. ${description}${basePrice} Detay icin AllonaHub urun sayfasina bak.`,
+    youtube: `${name} icin kisa urun tanitimi: ${description}${basePrice} AllonaHub'da detaylari incele.`,
+    pinterest: `${name}: ${description}${basePrice} AllonaHub urun vitrini.`,
+    nsosyal: `AllonaHub'da bugunun urunu: ${name}. ${description}${basePrice}`,
+    telegram: `AllonaHub gunluk urun onerisi: ${name}. ${description}${basePrice} Detay: ${landingUrl}`,
+    whatsapp: `AllonaHub urun onerisi: ${name}. Detay: ${landingUrl}`,
+    google_business: `${name}: ${description}${basePrice}`
+  };
+  return base[platform] || `${name}. ${description} ${landingUrl}`;
 }
 
 function platformCaption(platform, theme, planDate, landingUrl) {
@@ -166,17 +263,131 @@ function platformVisual(platform, theme) {
   return `Premium SaaS dashboard visual, ${theme.visual}, realistic modern interface, clean business lighting, no readable text`;
 }
 
+function productVisualPrompt(platform, product) {
+  const name = trimText(product?.name || "AllonaHub product", 120);
+  const category = trimText(product?.category || product?.module_key || "commerce", 80);
+  if (platform === "pinterest") {
+    return `Vertical product pin for ${name}, ${category} ecommerce product, premium marketplace styling, clean layout, no readable text`;
+  }
+  if (platform === "tiktok" || platform === "youtube") {
+    return `Short vertical product showcase storyboard for ${name}, ecommerce product detail, premium marketplace UI motion, no readable text`;
+  }
+  return `Premium ecommerce product social visual for ${name}, ${category}, clean product-detail composition, modern marketplace style, no readable text`;
+}
+
+function selectedPlatforms(options) {
+  return (options.targetPlatforms?.length ? options.targetPlatforms : SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS)
+    .filter((platform, index, list) => platform && list.indexOf(platform) === index);
+}
+
+export function buildProductSocialMediaDailyPackage(options = {}) {
+  const product = options.product || {};
+  const planDate = options.planDate || new Date().toISOString().slice(0, 10);
+  const objective = options.objective || "daily_product";
+  const siteUrl = options.siteUrl || "https://allonahub.com";
+  const landingUrl = productUrl(product, siteUrl, options.landingUrl);
+  const productName = trimText(product.name || "AllonaHub urunu", 120);
+  const productImageUrl = absoluteUrl(product.image_url, siteUrl);
+  const extraTags = productTags(product);
+  const platforms = selectedPlatforms(options);
+  const variant = Number(options.variant || 0);
+  const visualFingerprint = `product:${product.id || slugify(productName)}`;
+  const imagePrompt = productVisualPrompt("instagram", product);
+  const description = productSummary(product);
+  const platformOverrides = Object.fromEntries(platforms.map((platform) => {
+    const scheduled = isoForIstanbul(planDate, PLATFORM_TIMES[platform] || "12:00");
+    const caption = platformProductCaption(platform, product, planDate, landingUrl);
+    const visualPrompt = productVisualPrompt(platform, product);
+    return [platform, {
+      caption,
+      hashtags: tags(platform, extraTags).map((tag) => `#${tag}`),
+      post_type: platformType(platform),
+      scheduled_for: scheduled,
+      platform_payload: {
+        link: landingUrl,
+        landing_url: landingUrl,
+        image_url: productImageUrl,
+        video_url: "",
+        visual_concept: `${productName} product showcase`,
+        image_prompt: visualPrompt,
+        video_prompt: platform === "tiktok" || platform === "youtube" ? visualPrompt : "",
+        uniqueness_note: `${planDate} ${platform} product:${product.id || productName} v${variant}; platform-specific caption and prompt.`,
+        product_id: product.id || "",
+        product_name: productName,
+        product_price: product.price ?? null,
+        privacy_status: platform === "youtube" ? "public" : undefined,
+        privacy_level: platform === "tiktok" ? "PUBLIC_TO_EVERYONE" : undefined,
+        action_type: platform === "google_business" ? "LEARN_MORE" : undefined
+      }
+    }];
+  }));
+
+  return {
+    plan_date: planDate,
+    objective,
+    title: `${planDate} ${productName} sosyal medya urun paketi`,
+    summary: `${productName}: ${description}`,
+    target_platforms: platforms,
+    asset: {
+      title: `${planDate} ${productName}`,
+      asset_type: productImageUrl ? "image" : "image",
+      asset_url: productImageUrl,
+      prompt: imagePrompt,
+      alt_text: `${productName} urun gorseli`,
+      visual_fingerprint: visualFingerprint,
+      platforms: platforms.filter((platform) => !["threads", "x", "nsosyal", "telegram", "whatsapp"].includes(platform)),
+      source_image_url: productImageUrl
+    },
+    draft: {
+      title: `${productName} - ${planDate}`,
+      content_theme: `daily_product / ${objective}`,
+      hook: `Bugunun urunu: ${productName}.`,
+      body: `${description} AllonaHub urun vitrininden stok, fiyat ve detay bilgisiyle yayina hazirlandi.`,
+      cta: "Urunu incele",
+      landing_url: landingUrl,
+      language: "tr",
+      scheduled_for: null,
+      target_platforms: platforms,
+      post_type: "feed",
+      hashtags: hashtagLine("instagram", extraTags).split(" "),
+      visual_fingerprint: visualFingerprint,
+      platform_payload: {
+        link: landingUrl,
+        landing_url: landingUrl,
+        image_url: productImageUrl,
+        video_url: "",
+        image_prompt: imagePrompt,
+        visual_concept: `${productName} product showcase`,
+        asset_status: productImageUrl ? "url_ready" : "prompt_ready",
+        generated_for_date: planDate,
+        product_id: product.id || "",
+        product_name: productName
+      },
+      platform_overrides: platformOverrides,
+      metadata: {
+        prepared_from: "daily_product_generator",
+        plan_date: planDate,
+        objective,
+        product_id: product.id || "",
+        product_name: productName,
+        product_category: product.category || "",
+        product_module_key: product.module_key || "",
+        variant
+      }
+    }
+  };
+}
+
 export function buildSocialMediaDailyPackage(options = {}) {
   const planDate = options.planDate || new Date().toISOString().slice(0, 10);
   const objective = options.objective || "growth";
   const landingUrl = options.landingUrl || "https://allonahub.com/";
-  const selectedPlatforms = (options.targetPlatforms?.length ? options.targetPlatforms : SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS)
-    .filter((platform, index, list) => platform && list.indexOf(platform) === index);
+  const platforms = selectedPlatforms(options);
   const variant = Number(options.variant || 0);
   const theme = THEMES[(hashSeed(`${planDate}:${objective}`) + variant) % THEMES.length];
   const visualFingerprint = `daily:${planDate}:${theme.key}:v${variant}`;
   const imagePrompt = `Premium AllonaHub social media visual for ${theme.title}, ${theme.visual}, clean modern SaaS interface, no readable text`;
-  const platformOverrides = Object.fromEntries(selectedPlatforms.map((platform) => {
+  const platformOverrides = Object.fromEntries(platforms.map((platform) => {
     const scheduled = isoForIstanbul(planDate, PLATFORM_TIMES[platform] || "12:00");
     const caption = platformCaption(platform, theme, planDate, landingUrl);
     const visualPrompt = platformVisual(platform, theme);
@@ -206,14 +417,15 @@ export function buildSocialMediaDailyPackage(options = {}) {
     objective,
     title: `${planDate} AllonaHub sosyal medya buyume paketi`,
     summary: `${theme.title}: ${theme.angle}.`,
-    target_platforms: selectedPlatforms,
+    target_platforms: platforms,
     asset: {
       title: `${planDate} ${theme.title}`,
       asset_type: "image",
+      asset_url: "",
       prompt: imagePrompt,
       alt_text: `AllonaHub ${theme.title} gorseli`,
       visual_fingerprint: visualFingerprint,
-      platforms: selectedPlatforms.filter((platform) => !["threads", "x", "nsosyal", "telegram", "whatsapp"].includes(platform))
+      platforms: platforms.filter((platform) => !["threads", "x", "nsosyal", "telegram", "whatsapp"].includes(platform))
     },
     draft: {
       title: `${theme.title} - ${planDate}`,
@@ -224,7 +436,7 @@ export function buildSocialMediaDailyPackage(options = {}) {
       landing_url: landingUrl,
       language: "tr",
       scheduled_for: null,
-      target_platforms: selectedPlatforms,
+      target_platforms: platforms,
       post_type: "feed",
       hashtags: hashtagLine("instagram").split(" "),
       visual_fingerprint: visualFingerprint,

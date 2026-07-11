@@ -4,18 +4,21 @@ Bu altyapi AllonaHub sosyal medya buyumesi icin merkezi taslak, onay ve dagitim 
 
 ## Akis
 
-1. Admin Panel > Sosyal Medya ekraninda hesap envanteri, gunluk plan ve taslak hazirlanir.
-2. Backend taslagi `content_hash`, `semantic_hash` ve `visual_hash` ile kontrol eder.
-3. Ayni metin, ayni anlamdaki metin veya ayni gorsel parmak izi tekrar kullanilamaz.
-4. Taslak platform varyasyonlarina ayrilir: Instagram, Facebook, Threads, X, LinkedIn, TikTok, YouTube, Pinterest, Nsosyal, Telegram, WhatsApp, Google Business ve diger hesaplar.
-5. Admin taslagi onaylar. Onay olmadan post `queued`, `scheduled` veya `published` durumuna gecmez.
-6. `/v1/cron/social-media-dispatch` zamani gelen postlari server-side dispatcher'a gonderir.
-7. Connector hazir degilse veya `SOCIAL_MEDIA_DRY_RUN=true` ise dis platforma paylasim yapilmaz, deneme kaydi olusur.
+1. Admin Panel > Sosyal Medya ekraninda hesap envanteri, gunluk plan, otomatik urun paketi ve taslak hazirlanir.
+2. `/v1/cron/social-media-daily-drafts` aktifse gunluk stokta/aktif urun secilir, urun gorseli ve platform captionlari admin onayina dusurulur.
+3. Backend taslagi `content_hash`, `semantic_hash` ve `visual_hash` ile kontrol eder.
+4. Ayni metin, ayni anlamdaki metin veya ayni gorsel parmak izi tekrar kullanilamaz.
+5. Taslak platform varyasyonlarina ayrilir: Instagram, Facebook, Threads, X, LinkedIn, TikTok, YouTube, Pinterest, Nsosyal, Telegram, WhatsApp, Google Business ve diger hesaplar.
+6. `/v1/cron/social-media-assets-prepare` prompt bekleyen assetleri webhook veya OpenAI image provider ile public URL'ye cevirebilir.
+7. Admin taslagi onaylar. Onay olmadan post `queued`, `scheduled` veya `published` durumuna gecmez.
+8. `/v1/cron/social-media-dispatch` zamani gelen postlari native API, server webhook veya manual adapter'a gonderir.
+9. Connector hazir degilse veya `SOCIAL_MEDIA_DRY_RUN=true` ise dis platforma paylasim yapilmaz, deneme kaydi olusur.
 
 ## Tablolar
 
 - `social_media_accounts`: Platform hesap envanteri. Token veya sifre saklamaz.
 - `social_media_campaigns`: Kampanya/hedef gruplari.
+- `social_media_assets`: Urun gorseli, prompt, asset URL ve platform metadata kayitlari.
 - `social_media_drafts`: Ana icerik taslaklari ve tekrar engelleme hashleri.
 - `social_media_platform_posts`: Her platforma ozel caption, format, schedule ve yayin durumu.
 - `social_media_dispatch_attempts`: Dry-run, skipped, sent veya failed dispatch denemeleri.
@@ -61,7 +64,10 @@ SOCIAL_MEDIA_DISPATCH_ENABLED=true
 SOCIAL_MEDIA_DRY_RUN=false
 SOCIAL_MEDIA_DISPATCH_WEBHOOK_URL=https://YOUR-DISPATCHER/social/publish
 SOCIAL_MEDIA_DISPATCH_WEBHOOK_SECRET=replace-with-long-random-secret
+SOCIAL_MEDIA_DAILY_DRAFTS_ENABLED=true
 ```
+
+Urun gorseli `products.image_url` alaninda public HTTPS ise generator bu URL'yi direkt platform payload'ina baglar. Gorsel yoksa `social_media_assets.prompt` kaydi olusur; opsiyonel olarak `SOCIAL_MEDIA_ASSET_WEBHOOK_URL` veya `SOCIAL_MEDIA_ASSET_GENERATION_ENABLED=true` + `SOCIAL_MEDIA_ASSET_OPENAI_API_KEY` ile public asset URL uretilebilir.
 
 ## Dispatcher Contract
 
