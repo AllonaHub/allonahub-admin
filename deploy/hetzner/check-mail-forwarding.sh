@@ -16,6 +16,7 @@ if command -v dig >/dev/null 2>&1; then
   echo "== DNS TXT =="
   dig +short TXT "$DOMAIN" || true
   dig +short TXT "_dmarc.${DOMAIN}" || true
+  dig +short TXT "mail._domainkey.${DOMAIN}" || true
 else
   echo "dig is not installed; install dnsutils for DNS checks."
 fi
@@ -36,14 +37,16 @@ echo "== Services =="
 if command -v systemctl >/dev/null 2>&1; then
   systemctl is-active postfix || true
   systemctl is-active postsrsd || true
+  systemctl is-active opendkim || true
 else
   echo "systemctl is not available."
 fi
 
 echo
-echo "== SMTP port =="
+echo "== SMTP ports =="
 if command -v nc >/dev/null 2>&1; then
   nc -vz -w 5 "$MAIL_HOST" 25 || true
+  nc -vz -w 5 "$MAIL_HOST" 587 || true
 else
   echo "nc is not installed; skip TCP port check."
 fi

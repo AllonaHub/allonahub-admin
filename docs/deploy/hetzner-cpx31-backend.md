@@ -246,10 +246,17 @@ sudo bash deploy/hetzner/setup-mail-forwarding.sh
 bash deploy/hetzner/check-mail-forwarding.sh
 ```
 
+Gmail'den cevap yazarken `destek@allonahub.com`, `legal@allonahub.com` ve `basvuru@allonahub.com` gibi adresleri giden kimlik olarak kullanmak için authenticated SMTP/DKIM paketi de hazırlanmıştır:
+
+```bash
+sudo bash deploy/hetzner/setup-mail-submission.sh
+```
+
 Detaylı DNS, port ve doğrulama adımları:
 
 ```text
 docs/deploy/hetzner-email-forwarding.md
+docs/deploy/hetzner-email-outbound-identities.md
 deploy/hetzner/mail-forwarding/dns-records.txt
 ```
 

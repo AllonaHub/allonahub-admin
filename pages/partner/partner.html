@@ -433,6 +433,10 @@ function canUsePartnerPortalHost(){
   return window.location.protocol==="https:" && ["allonahub.com","www.allonahub.com",PARTNER_PORTAL_HOST].includes(host);
 }
 
+function isPartnerPortalHost(){
+  return String(window.location.hostname || "").toLowerCase()===PARTNER_PORTAL_HOST;
+}
+
 function partnerPageUrl(path){
   return new URL(path, window.location.origin).href;
 }
@@ -448,12 +452,12 @@ function mainSiteUrl(path){
 }
 
 function partnerPanelUrl(){
-  if(canUsePartnerPortalHost())return partnerPortalUrl("/panel");
+  if(isPartnerPortalHost())return partnerPortalUrl("/panel");
   return partnerPageUrl("/pages/partner/partner-panel.html");
 }
 
 function partnerLoginUrl(){
-  if(canUsePartnerPortalHost())return partnerPortalUrl("/");
+  if(isPartnerPortalHost())return partnerPortalUrl("/");
   return partnerPageUrl("/pages/partner/partner.html");
 }
 
@@ -508,7 +512,7 @@ function partnerPanelReturnPath(){
 }
 
 function partnerMfaUrl(){
-  const url=new URL("/pages/account/mfa.html", canUsePartnerPortalHost() ? MAIN_SITE_ORIGIN : window.location.origin);
+  const url=new URL("/pages/account/mfa.html", window.location.origin);
   url.searchParams.set("returnTo", partnerPanelUrl());
   return url.href;
 }

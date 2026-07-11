@@ -1,0 +1,9 @@
+# AllonaHub outbound identities for Gmail "Send mail as".
+# Format: local-part display-name
+info AllonaHub
+legal AllonaHub Legal
+destek AllonaHub Destek
+iletisim AllonaHub Iletisim
+partner.destek AllonaHub Partner Destek
+teknik.destek AllonaHub Teknik Destek
+basvuru AllonaHub Basvuru

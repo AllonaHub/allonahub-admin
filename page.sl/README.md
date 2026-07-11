@@ -26,6 +26,20 @@ Bilerek tasinmayan ornekler:
 - `images/modules/denizcilik.png`: Aktif ekosistem sayfasi kullaniyor.
 - `sw-reset2.js`: Aktif PWA kaydi kullaniyor.
 
+## 2026-06-30 legacy route stub paketi
+
+`quarantine/2026-06-30-legacy-route-stubs/` altina aktif canonical sayfalara yonlenen eski HTML uyumluluk stub'lari tasindi. Eski URL'lerin kirilmamasi icin `_redirects` dosyasina dogrudan `/pages/...` 301 kurallari eklendi.
+
+- `pages/career/kariyer.html` artik `_redirects` ile `pages/career/allonakariyer.html` adresine gider.
+- `pages/commerce/kopunlar.html` ve `pages/commerce/ode.html` artik canonical kupon/odeme sayfalarina gider.
+- Eski kisa ekosistem slug'lari artik `allona*` canonical sayfalarina gider.
+- `pages/legal/mesafeli-satis-sozlesmesi.html` artik `pages/legal/mesafeli-satis.html` adresine gider.
+
+Bilerek tasinmayanlar:
+
+- `checkout.html`, `etbis.html`, `etbis-guven-damgasi.html`, `guven-damgasi.html`: Cloudflare/canli fallback icin fiziksel redirect dosyasi olarak tutuldu.
+- Root ve subpath partner redirect dosyalari: partner subdomain ve Cloudflare redirect kural sirasi netlesene kadar fiziksel fallback olarak tutuldu.
+
 ## Eski/alias HTML kopyalari
 
 Bu dosyalar birebir ayni veya typo/eski URL dosyalaridir. Eski yollarin kirilmamasi icin asil konumlarinda canonical sayfaya yonlendiren kucuk HTML dosyasi birakildi.

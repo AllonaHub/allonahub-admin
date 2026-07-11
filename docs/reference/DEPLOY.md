@@ -92,7 +92,7 @@ sudo bash deploy/hetzner/setup-mail-forwarding.sh
 bash deploy/hetzner/check-mail-forwarding.sh
 ```
 
-Cloudflare/Domain DNS tarafında `mail.allonahub.com` A kaydı ve `allonahub.com` MX kaydı tanımlanmadan canlı teslimat tamamlanmış sayılmaz. Hetzner Cloud tarafında outbound TCP 25 kapalıysa Gmail'e forward teslimatı için Hetzner port açma talebi veya harici SMTP/mail relay gerekir.
+Cloudflare Email Routing kullanilan modelde gelen posta MX kayitlari Cloudflare'da kalir; Gmail `Send mail as` icin `mail.allonahub.com` A kaydi, SPF icinde `a:mail.allonahub.com` yetkisi ve DKIM TXT kaydi gerekir. Direkt Hetzner inbound modelinde ayrica `allonahub.com` MX kaydi `mail.allonahub.com` hostuna yonlendirilir. Hetzner Cloud tarafinda outbound TCP 25 kapaliysa Gmail'e forward teslimati icin Hetzner port acma talebi veya 587 kullanan harici bir mail relay/yonlendirme servisi tercih edilir.
 
 ## 4. Cloudflare
 

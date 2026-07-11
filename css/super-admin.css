@@ -448,6 +448,20 @@ textarea {
   font-size: 15px;
 }
 
+.sa-mini-link {
+  display: inline-flex;
+  margin-top: 6px;
+  color: var(--sa-blue);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.sa-mini-link:hover {
+  color: var(--sa-gold);
+}
+
 .sa-setting-control {
   display: flex;
   gap: 8px;
