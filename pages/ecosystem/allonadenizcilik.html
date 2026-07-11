@@ -92,6 +92,27 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
 .info h3{color:#00e5ff;margin:22px 0 8px}
 .info p{opacity:.82;line-height:1.65;margin-bottom:10px}
 .footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
+
+@media (max-width:760px){
+body{min-width:0!important;overflow-x:hidden!important}
+.page{width:100%!important;padding:18px 6px 48px!important}
+.top-links{height:auto!important;justify-content:flex-start!important;gap:8px!important;overflow-x:auto!important;padding-bottom:8px!important}
+.top-links a{flex:0 0 auto!important;padding:9px 12px!important;border:1px solid rgba(0,103,177,.20)!important;border-radius:12px!important;background:rgba(255,255,255,.62)!important}
+.header{height:auto!important;grid-template-columns:1fr!important;gap:10px!important;margin-bottom:10px!important}
+.brand{height:54px!important;justify-content:center!important}
+.search{height:auto!important;min-height:48px!important;padding:0 14px!important}
+.actions{height:auto!important;justify-content:flex-start!important;gap:8px!important;padding:8px!important;flex-wrap:wrap!important}
+.actions a{min-height:36px!important;padding:0 12px!important;border:1px solid rgba(0,103,177,.22)!important;border-radius:10px!important}
+.catbar{height:auto!important;min-height:50px!important;gap:16px!important;overflow-x:auto!important;margin-bottom:18px!important}
+html body[data-theme] .page>section.hero,
+body .page>section.hero{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;overflow:visible!important;margin-bottom:22px!important;padding:0!important;scroll-snap-type:none!important}
+html body[data-theme] .page>section.hero>*,
+body .page>section.hero>*{width:100%!important;min-width:0!important;max-width:none!important;flex-basis:auto!important;scroll-snap-align:none!important}
+.hero-main{min-height:auto!important;padding:24px 18px!important}
+.hero-main h1{font-size:clamp(34px,9vw,42px)!important;line-height:1.06!important}
+.hero-main p{font-size:16px!important}
+.hero-card{min-height:auto!important;padding:20px!important}
+}
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260630-currency3">
 </head>
@@ -117,7 +138,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradie
   <a href="../search/arama.html?q=denizcilik+maritime+Crew">Crew</a><a href="../search/arama.html?q=denizcilik+maritime+Y%C3%BCk+%C4%B0lanlar%C4%B1">Yük İlanları</a><a href="../search/arama.html?q=denizcilik+maritime+Navlun">Navlun</a><a href="../search/arama.html?q=denizcilik+maritime+Brokerlik">Brokerlik</a><a href="../search/arama.html?q=denizcilik+maritime+Gemi+%C4%B0lanlar%C4%B1">Gemi İlanları</a><a href="../search/arama.html?q=denizcilik+maritime+Chartering">Chartering</a><a href="../search/arama.html?q=denizcilik+maritime+Liman">Liman</a><a href="../search/arama.html?q=denizcilik+maritime+Acente">Acente</a><a href="../commerce/shop.html?q=Teknik+Servis&amp;source=allonadenizcilik">Teknik Servis</a>
 </div>
 
-<section class="hero">
+<section class="hero" data-ad-hero>
   <div class="hero-main glass">
     <h1>Allona Denizcilik<br>Global Maritime Ekosistemi</h1>
     <p>Crew, yük, navlun, brokerlik, gemi alım-satım, chartering, liman, acente, teknik servis ve denizcilik danışmanlığı tek premium platformda birleşir.</p>
