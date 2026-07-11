@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partner Panel | AllonaHub</title>
+  <meta name="description" content="AllonaHub partner paneli.">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="site-shell" data-page="partner">
+    <div data-layout="header"></div>
+    <main class="site-main">
+      <section class="container page-heading">
+        <div>
+          <p class="eyebrow">Partner</p>
+          <h1>Partner Panel</h1>
+          <p>Ürün, stok, sipariş, AVM yayın talepleri ve performans görünümü.</p>
+        </div>
+      </section>
+
+      <section class="container admin-layout" data-partner-shell>
+        <nav class="side-menu" aria-label="Partner menüsü">
+          <a href="#products">Ürünlerim</a>
+          <a href="#orders">Siparişler</a>
+          <a href="#avm-submissions">AVM Talepleri</a>
+          <a href="#reports">Raporlar</a>
+        </nav>
+
+        <div>
+          <section class="panel" id="products">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Ürün</p>
+                <h2>Ürünlerim</h2>
+              </div>
+            </div>
+            <div data-partner-products></div>
+          </section>
+
+          <section class="panel section" id="orders">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Sipariş</p>
+                <h2>Siparişler</h2>
+              </div>
+            </div>
+            <div data-partner-orders></div>
+          </section>
+
+          <section class="panel section" id="avm-submissions">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">AVM Dünyası</p>
+                <h2>Tenant ve Marka Yayın Talebi</h2>
+                <p class="muted">Mağaza profili, kampanya, etkinlik ve sponsor görünürlüğü taleplerinizi AVM yönetimine iletin.</p>
+              </div>
+              <a class="btn btn--light" href="../avm-dunyasi.html">AVM Sayfası</a>
+            </div>
+
+            <form data-partner-avm-form>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="partner-avm-brand">Marka / tenant adı</label>
+                  <input id="partner-avm-brand" name="brand_name" required maxlength="140">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-type">Talep türü</label>
+                  <select id="partner-avm-type" name="request_type" required>
+                    <option value="tenant_profile">Mağaza profili</option>
+                    <option value="campaign">Kampanya</option>
+                    <option value="event">Etkinlik</option>
+                    <option value="advertising">Reklam / sponsor alanı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="partner-avm-title">Talep başlığı</label>
+                  <input id="partner-avm-title" name="submission_title" required maxlength="180">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-visibility">İstenen görünürlük</label>
+                  <select id="partner-avm-visibility" name="requested_visibility" required>
+                    <option value="standard">Standart listeleme</option>
+                    <option value="featured">Öne çıkan alan</option>
+                    <option value="sponsored">Sponsorlu görünürlük</option>
+                    <option value="event_area">Etkinlik alanı</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="partner-avm-contact">Yetkili kişi</label>
+                  <input id="partner-avm-contact" name="contact_name" required maxlength="140">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-email">E-posta</label>
+                  <input id="partner-avm-email" name="contact_email" type="email" required maxlength="220">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-phone">Telefon</label>
+                  <input id="partner-avm-phone" name="contact_phone" type="tel" maxlength="40">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-budget">Bütçe aralığı</label>
+                  <select id="partner-avm-budget" name="budget_range">
+                    <option value="not_specified">Belirtilmedi</option>
+                    <option value="under_50000">50.000 TL altı</option>
+                    <option value="50000_150000">50.000 - 150.000 TL</option>
+                    <option value="150000_500000">150.000 - 500.000 TL</option>
+                    <option value="over_500000">500.000 TL üzeri</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="partner-avm-start">Başlangıç tarihi</label>
+                  <input id="partner-avm-start" name="requested_start_date" type="date">
+                </div>
+                <div class="field">
+                  <label for="partner-avm-end">Bitiş tarihi</label>
+                  <input id="partner-avm-end" name="requested_end_date" type="date">
+                </div>
+                <div class="field field--full">
+                  <label for="partner-avm-url">Hedef bağlantı</label>
+                  <input id="partner-avm-url" name="destination_url" type="url" maxlength="500" placeholder="https://">
+                </div>
+                <div class="field field--full">
+                  <label for="partner-avm-media-url">İçerik görseli URL</label>
+                  <input id="partner-avm-media-url" name="media_url" type="url" inputmode="url" maxlength="500" placeholder="https://">
+                </div>
+                <div class="field field--full">
+                  <label for="partner-avm-media-alt">Görsel açıklaması</label>
+                  <input id="partner-avm-media-alt" name="media_alt" maxlength="300">
+                </div>
+                <div class="field field--full">
+                  <label for="partner-avm-summary">İçerik ve operasyon özeti</label>
+                  <textarea id="partner-avm-summary" name="submission_summary" required maxlength="2500"></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn" type="submit">Talebi Gönder</button>
+                <a class="btn btn--light" href="../avm-partner.html#partner-form">Yeni Partner Başvurusu</a>
+              </div>
+              <div data-partner-avm-form-status></div>
+            </form>
+
+            <div class="section" data-partner-avm-submissions></div>
+          </section>
+
+          <section class="panel section" id="reports">
+            <div class="section-header">
+              <div>
+                <p class="eyebrow">Rapor</p>
+                <h2>Performans</h2>
+              </div>
+            </div>
+            <div class="data-card">
+              <div class="summary-line"><span>Toplam ürün</span><strong data-report-products>-</strong></div>
+              <div class="summary-line"><span>Bekleyen sipariş</span><strong data-report-orders>-</strong></div>
+              <div class="summary-line"><span>Ödeme bekleyen</span><strong data-report-payments>-</strong></div>
+              <div class="summary-line"><span>AVM yayın talebi</span><strong data-report-avm-submissions>-</strong></div>
+              <div class="summary-line"><span>Onaylanan AVM talebi</span><strong data-report-avm-approved>-</strong></div>
+              <div class="summary-line"><span>Yayındaki AVM hedefi</span><strong data-report-avm-published>-</strong></div>
+              <div class="summary-line"><span>Reklam / sponsor talebi</span><strong data-report-avm-advertising>-</strong></div>
+              <div class="summary-line"><span>AVM kampanya ilgisi</span><strong data-report-avm-redemptions>-</strong></div>
+              <div class="summary-line"><span>Yayındaki AVM kampanyası</span><strong data-report-avm-campaigns>-</strong></div>
+              <div class="summary-line"><span>Son 30 gün AVM ilgisi</span><strong data-report-avm-redemptions-30d>-</strong></div>
+              <div class="summary-line"><span>Yayındaki tenant saat profili</span><strong data-report-avm-hours>-</strong></div>
+              <div class="summary-line"><span>AVM katalog etkileşimi</span><strong data-report-avm-interactions>-</strong></div>
+            </div>
+            <div class="section" data-partner-avm-campaign-report></div>
+            <div class="section" data-partner-avm-hours-report></div>
+            <div class="section" data-partner-avm-interaction-report></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <div data-layout="footer"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js" defer></script>
+  <script src="../js/core.js" defer></script>
+  <script src="../js/supabase-client.js" defer></script>
+  <script src="../js/auth.js" defer></script>
+  <script src="../js/cart.js" defer></script>
+  <script src="../js/layout.js" defer></script>
+  <script src="../js/partner.js" defer></script>
+</body>
+</html>
