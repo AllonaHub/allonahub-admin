@@ -1,0 +1,1722 @@
+* {
+  box-sizing: border-box;
+}
+
+body.maritime-page {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020814, #071522 52%, #103036);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.maritime-skip-link {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 12000;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  color: #ffffff;
+  background: #020814;
+  border: 1px solid #00d5ff;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+  transform: translateY(calc(-100% - 20px));
+}
+
+.maritime-skip-link:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+  transform: translateY(0);
+}
+
+.maritime-shell {
+  width: min(calc(100% - 28px), 1500px);
+  margin: 0 auto;
+  padding: 18px 0 72px;
+}
+
+.maritime-top,
+.maritime-header,
+.maritime-rail,
+.maritime-card,
+.maritime-flow,
+.maritime-form,
+.maritime-listing,
+.maritime-market,
+.maritime-steps article,
+.maritime-partner,
+.maritime-info {
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  background: linear-gradient(145deg, rgba(5, 25, 50, 0.90), rgba(3, 10, 24, 0.94));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24), inset 0 0 20px rgba(255, 255, 255, 0.04);
+}
+
+.maritime-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 18px;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.maritime-top a,
+.maritime-actions a,
+.maritime-rail a,
+.maritime-section__head a,
+.maritime-listing,
+.maritime-market,
+.maritime-btn,
+.maritime-brand {
+  color: inherit;
+  text-decoration: none;
+}
+
+.maritime-top a,
+.maritime-actions a,
+.maritime-rail a,
+.maritime-section__head a {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.maritime-top a,
+.maritime-section__head a,
+.maritime-rail a:hover,
+.maritime-market small {
+  color: #00e5ff;
+}
+
+.maritime-header {
+  display: grid;
+  grid-template-columns: minmax(190px, 300px) minmax(280px, 1fr) minmax(260px, 380px);
+  gap: 16px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 8px;
+}
+
+.maritime-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 8px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.maritime-brand img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.maritime-brand b,
+.maritime-eyebrow,
+.maritime-section__head span,
+.maritime-flow span,
+.maritime-partner span {
+  color: #ffd700;
+}
+
+.maritime-brand span {
+  color: #00e5ff;
+}
+
+.maritime-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px 8px 18px;
+  border: 1px solid rgba(0, 229, 255, 0.20);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.maritime-search label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.maritime-search input,
+.maritime-form input,
+.maritime-form select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  font: inherit;
+}
+
+.maritime-search input {
+  background: transparent;
+}
+
+.maritime-search input::placeholder,
+.maritime-form input::placeholder {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.maritime-search button,
+.maritime-form button,
+.maritime-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+}
+
+.maritime-search button {
+  padding: 0 18px;
+}
+
+.maritime-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 16px;
+}
+
+.maritime-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.maritime-rail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  border-radius: 8px;
+  scrollbar-width: thin;
+}
+
+.maritime-rail strong {
+  flex: 0 0 auto;
+  color: #ffd700;
+  font-weight: 900;
+}
+
+.maritime-rail a {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.maritime-hero {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: clamp(440px, 58svh, 560px);
+  margin-top: 18px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  border-radius: 8px;
+  background: #020814;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.maritime-hero::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(2, 8, 20, 0.94) 0%, rgba(2, 8, 20, 0.76) 44%, rgba(2, 8, 20, 0.16) 100%);
+  content: "";
+  pointer-events: none;
+}
+
+.maritime-hero__media {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.maritime-hero__copy {
+  position: relative;
+  z-index: 2;
+  align-self: end;
+  width: min(100%, 920px);
+  padding: clamp(28px, 4vw, 52px);
+}
+
+.maritime-eyebrow,
+.maritime-section__head span,
+.maritime-flow span,
+.maritime-partner span {
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.maritime-hero h1 {
+  max-width: 900px;
+  margin: 10px 0 12px;
+  color: #fff;
+  font-size: clamp(38px, 5vw, 70px);
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.maritime-hero p,
+.maritime-flow p,
+.maritime-card p,
+.maritime-listing p,
+.maritime-market p,
+.maritime-steps p,
+.maritime-partner p,
+.maritime-info p {
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.58;
+}
+
+.maritime-hero__copy > p:not(.maritime-hero__lead) {
+  max-width: 760px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.maritime-hero__copy > .maritime-hero__lead {
+  max-width: 760px;
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.maritime-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.maritime-btn {
+  padding: 0 20px;
+}
+
+.maritime-btn--primary,
+.maritime-form button {
+  border-color: transparent;
+  background: linear-gradient(135deg, #ffd700, #c89200);
+  color: #020814;
+  box-shadow: 0 0 26px rgba(255, 215, 0, 0.24);
+}
+
+.maritime-hero__signal {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: center;
+  padding: 14px clamp(28px, 4vw, 52px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(2, 8, 20, 0.72);
+}
+
+.maritime-hero__signal strong,
+.maritime-card h3,
+.maritime-flow h2,
+.maritime-form h3,
+.maritime-listing b,
+.maritime-market h3,
+.maritime-steps b,
+.maritime-partner h2,
+.maritime-info h2 {
+  color: #ffd700;
+}
+
+.maritime-hero__signal span {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+}
+
+.maritime-section {
+  margin-top: 30px;
+}
+
+.maritime-section__head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.maritime-section__head h2,
+.maritime-flow h2,
+.maritime-partner h2,
+.maritime-info h2 {
+  margin: 6px 0 0;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.maritime-section__note {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.maritime-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.maritime-grid--modules {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.maritime-grid--listings {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.maritime-grid--market {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.maritime-card,
+.maritime-listing,
+.maritime-market,
+.maritime-steps article {
+  border-radius: 8px;
+}
+
+.maritime-card {
+  display: block;
+  min-height: 150px;
+  padding: 22px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.maritime-card h3,
+.maritime-market h3 {
+  margin: 0 0 8px;
+}
+
+.maritime-card p,
+.maritime-market p,
+.maritime-listing p,
+.maritime-steps p {
+  margin: 0;
+}
+
+.maritime-card small {
+  display: inline-flex;
+  margin-top: 16px;
+  color: #00e5ff;
+  font-weight: 900;
+}
+
+.maritime-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  gap: 18px;
+}
+
+.maritime-flow,
+.maritime-form {
+  border-radius: 8px;
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.maritime-flow ol {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding-left: 20px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.55;
+}
+
+.maritime-form h3 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+.maritime-form__note,
+.maritime-form__status {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.maritime-form__note {
+  margin: -6px 0 14px;
+}
+
+.maritime-form__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.38fr);
+  gap: 12px;
+}
+
+.maritime-form__status {
+  min-height: 20px;
+  margin: 12px 0 0;
+}
+
+.maritime-form__status[data-tone="success"] {
+  color: #80ed99;
+}
+
+.maritime-form__status[data-tone="error"] {
+  color: #ff9b9b;
+}
+
+.maritime-form__status:focus,
+.maritime-form__result:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+.maritime-form__resume,
+.maritime-form__result {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 215, 0, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.08);
+}
+
+.maritime-form__resume[hidden],
+.maritime-form__result[hidden] {
+  display: none;
+}
+
+.maritime-form__resume span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.maritime-form__result span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+}
+
+.maritime-form__result a {
+  color: #00e5ff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.maritime-form__resume div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.maritime-form__resume a,
+.maritime-form__resume button {
+  color: #00e5ff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.maritime-form__resume button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.maritime-form noscript {
+  display: block;
+  margin-top: 12px;
+  color: #ffcf70;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.maritime-form label {
+  display: block;
+  margin: 12px 0 7px;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 800;
+}
+
+.maritime-form input,
+.maritime-form select {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.maritime-form select option {
+  color: #020814;
+}
+
+.maritime-form > button[type="submit"] {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.maritime-form > button[type="submit"]:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.maritime-listing {
+  display: grid;
+  gap: 10px;
+  min-height: 270px;
+  padding: 16px;
+}
+
+.maritime-listing__image {
+  min-height: 128px;
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, rgba(0, 229, 255, 0.20), rgba(2, 8, 20, 0.78)),
+    url("../images/modules/denizcilik-light-v5.jpg") center/cover;
+}
+
+.maritime-listing small {
+  color: #00e5ff;
+  font-weight: 900;
+}
+
+.maritime-market {
+  display: block;
+  min-height: 184px;
+  padding: 24px;
+}
+
+.maritime-market small {
+  display: inline-flex;
+  margin-top: 16px;
+  font-weight: 900;
+}
+
+.maritime-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.maritime-steps article {
+  min-height: 166px;
+  padding: 18px;
+}
+
+.maritime-steps small {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.16);
+  color: #fff;
+  font-weight: 900;
+}
+
+.maritime-steps b {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.maritime-partner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(280px, 0.72fr);
+  gap: 20px;
+  align-items: center;
+  margin-top: 30px;
+  padding: clamp(24px, 4vw, 38px);
+  border-radius: 8px;
+}
+
+.maritime-partner ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.maritime-partner li {
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.maritime-info {
+  margin-top: 30px;
+  padding: clamp(24px, 4vw, 36px);
+  border-radius: 8px;
+}
+
+.maritime-info h3 {
+  margin: 22px 0 8px;
+  color: #00e5ff;
+}
+
+.maritime-info p {
+  margin: 0 0 10px;
+}
+
+.maritime-btn:focus-visible,
+.maritime-top a:focus-visible,
+.maritime-actions a:focus-visible,
+.maritime-rail a:focus-visible,
+.maritime-section__head a:focus-visible,
+.maritime-card:focus-visible,
+.maritime-listing:focus-visible,
+.maritime-market:focus-visible,
+.maritime-search input:focus-visible,
+.maritime-search button:focus-visible,
+.maritime-form input:focus-visible,
+.maritime-form select:focus-visible,
+.maritime-form button:focus-visible,
+.maritime-form__resume a:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+body[data-theme="white"].maritime-page,
+body[data-theme="corporate"].maritime-page {
+  background: linear-gradient(135deg, #f7fbff, #fff);
+  color: #111827;
+}
+
+body[data-theme="white"] .maritime-top,
+body[data-theme="white"] .maritime-header,
+body[data-theme="white"] .maritime-rail,
+body[data-theme="white"] .maritime-card,
+body[data-theme="white"] .maritime-flow,
+body[data-theme="white"] .maritime-form,
+body[data-theme="white"] .maritime-listing,
+body[data-theme="white"] .maritime-market,
+body[data-theme="white"] .maritime-steps article,
+body[data-theme="white"] .maritime-partner,
+body[data-theme="white"] .maritime-info,
+body[data-theme="corporate"] .maritime-top,
+body[data-theme="corporate"] .maritime-header,
+body[data-theme="corporate"] .maritime-rail,
+body[data-theme="corporate"] .maritime-card,
+body[data-theme="corporate"] .maritime-flow,
+body[data-theme="corporate"] .maritime-form,
+body[data-theme="corporate"] .maritime-listing,
+body[data-theme="corporate"] .maritime-market,
+body[data-theme="corporate"] .maritime-steps article,
+body[data-theme="corporate"] .maritime-partner,
+body[data-theme="corporate"] .maritime-info {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 34px rgba(19, 40, 58, 0.09);
+}
+
+body[data-theme="white"] .maritime-hero,
+body[data-theme="corporate"] .maritime-hero {
+  background: linear-gradient(120deg, #fff, #f0f7fb);
+}
+
+body[data-theme="white"] .maritime-hero h1,
+body[data-theme="white"] .maritime-card p,
+body[data-theme="white"] .maritime-flow p,
+body[data-theme="white"] .maritime-listing p,
+body[data-theme="white"] .maritime-market p,
+body[data-theme="white"] .maritime-steps p,
+body[data-theme="white"] .maritime-partner p,
+body[data-theme="white"] .maritime-info p,
+body[data-theme="corporate"] .maritime-hero h1,
+body[data-theme="corporate"] .maritime-card p,
+body[data-theme="corporate"] .maritime-flow p,
+body[data-theme="corporate"] .maritime-listing p,
+body[data-theme="corporate"] .maritime-market p,
+body[data-theme="corporate"] .maritime-steps p,
+body[data-theme="corporate"] .maritime-partner p,
+body[data-theme="corporate"] .maritime-info p {
+  color: #243244;
+}
+
+body[data-theme="white"] .maritime-section__note,
+body[data-theme="corporate"] .maritime-section__note {
+  color: #526174;
+}
+
+body[data-theme="white"] .maritime-form__note,
+body[data-theme="white"] .maritime-form__status,
+body[data-theme="white"] .maritime-form__resume span,
+body[data-theme="white"] .maritime-form__result span,
+body[data-theme="corporate"] .maritime-form__note,
+body[data-theme="corporate"] .maritime-form__status,
+body[data-theme="corporate"] .maritime-form__resume span,
+body[data-theme="corporate"] .maritime-form__result span {
+  color: #46566b;
+}
+
+body[data-theme="white"] .maritime-search input,
+body[data-theme="white"] .maritime-form input,
+body[data-theme="white"] .maritime-form select,
+body[data-theme="corporate"] .maritime-search input,
+body[data-theme="corporate"] .maritime-form input,
+body[data-theme="corporate"] .maritime-form select {
+  color: #111827;
+}
+
+.maritime-account-shell {
+  padding-top: 30px;
+}
+
+.maritime-account-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  background: linear-gradient(120deg, rgba(2, 8, 20, 0.96), rgba(4, 21, 46, 0.88));
+}
+
+.maritime-account-head h1 {
+  margin: 10px 0;
+  color: #fff;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 1.04;
+}
+
+.maritime-account-head p:not(.maritime-eyebrow) {
+  max-width: 780px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+}
+
+.maritime-account-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.maritime-requests {
+  margin-top: 30px;
+}
+
+.maritime-request-filter {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.maritime-request-filter select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 8px;
+  background: #07182d;
+  color: #fff;
+  font: inherit;
+}
+
+.maritime-request-feedback-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.maritime-request-feedback {
+  flex: 1;
+  min-height: 22px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.maritime-request-feedback[data-tone="error"] {
+  color: #ff9b9b;
+}
+
+.maritime-request-feedback[data-tone="warning"] {
+  color: #ffd76a;
+}
+
+.maritime-request-feedback:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+.maritime-request-retry {
+  min-height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 211, 106, 0.46);
+  border-radius: 8px;
+  padding: 7px 12px;
+  background: #07182d;
+  color: #ffd76a;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.maritime-request-retry:hover,
+.maritime-request-retry:focus-visible {
+  border-color: #ffd76a;
+  color: #ffffff;
+}
+
+.maritime-request-retry:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.maritime-request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.maritime-request {
+  padding: 18px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(3, 10, 24, 0.9);
+}
+
+.maritime-request.is-targeted {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.18), 0 18px 38px rgba(0, 0, 0, 0.22);
+}
+
+.maritime-request.is-targeted:focus {
+  outline: 0;
+}
+
+.maritime-request__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.maritime-request__head > strong {
+  color: #ffd700;
+  font-size: 17px;
+}
+
+.maritime-request__status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(0, 229, 255, 0.12);
+  color: #80eaff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.maritime-request__status[data-status="accepted"] {
+  background: rgba(128, 237, 153, 0.14);
+  color: #80ed99;
+}
+
+.maritime-request__status[data-status="cancelled"],
+.maritime-request__status[data-status="closed"] {
+  background: rgba(255, 155, 155, 0.12);
+  color: #ffb0b0;
+}
+
+.maritime-request__route {
+  margin: 12px 0 14px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.maritime-request__details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.maritime-request__details div {
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maritime-request__details small {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.maritime-request__details strong {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.maritime-request__offers {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 229, 255, 0.18);
+}
+
+.maritime-request__offers-head,
+.maritime-request__offer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.maritime-request__offers-head h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+}
+
+.maritime-request__offers-head > span,
+.maritime-request__offer-status {
+  color: #80eaff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.maritime-request__offer-list {
+  display: grid;
+  margin-top: 10px;
+}
+
+.maritime-request__offer {
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maritime-request__offer:first-child {
+  border-top: 0;
+}
+
+.maritime-request__offer-head > strong {
+  min-width: 0;
+  color: #ffd700;
+  overflow-wrap: anywhere;
+}
+
+.maritime-request__offer-status[data-status="accepted"] {
+  color: #80ed99;
+}
+
+.maritime-request__offer-status[data-status="rejected"],
+.maritime-request__offer-status[data-status="expired"] {
+  color: #ffb0b0;
+}
+
+.maritime-request__offer-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.maritime-request__offer-details div {
+  display: grid;
+  gap: 4px;
+}
+
+.maritime-request__offer-details small {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.maritime-request__offer-details strong {
+  color: rgba(255, 255, 255, 0.88);
+  overflow-wrap: anywhere;
+}
+
+.maritime-request__offer-terms,
+.maritime-request__offer-empty {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.66);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.maritime-request__offer-action {
+  min-height: 38px;
+  margin-top: 12px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 215, 0, 0.48);
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.12);
+  color: #ffe56a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.maritime-request__offer-action[data-confirmed="true"] {
+  border-color: #80ed99;
+  background: rgba(128, 237, 153, 0.16);
+  color: #a8f5bb;
+}
+
+.maritime-request__offer-action:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.maritime-request__offer-action:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+.maritime-request__timeline {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 229, 255, 0.18);
+}
+
+.maritime-request__timeline h3 {
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: 16px;
+}
+
+.maritime-request__timeline ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.maritime-request__timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.maritime-request__timeline li::before {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #00e5ff;
+  border-radius: 50%;
+  content: "";
+}
+
+.maritime-request__timeline time {
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.maritime-request__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.maritime-request__actions button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 155, 155, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 155, 155, 0.08);
+  color: #ffb0b0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.maritime-request__actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.maritime-request__actions button[data-confirmed="true"] {
+  border-color: #ff9b9b;
+  background: rgba(255, 155, 155, 0.18);
+  color: #fff;
+}
+
+.maritime-request__actions button:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+.maritime-request-empty,
+.maritime-request-login {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 24px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(3, 10, 24, 0.9);
+}
+
+.maritime-request-empty[hidden],
+.maritime-request-login[hidden] {
+  display: none;
+}
+
+.maritime-request-empty span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.maritime-request-empty a {
+  color: #00e5ff;
+  font-weight: 900;
+}
+
+.maritime-notification-center,
+.maritime-notification-login {
+  min-width: 0;
+}
+
+.maritime-notification-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.maritime-notification-head p {
+  margin: 0 0 6px;
+}
+
+.maritime-notification-head > span {
+  color: var(--ah-primary);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.maritime-notification-feedback {
+  min-height: 22px;
+  margin: 0;
+  color: var(--ah-muted);
+}
+
+.maritime-notification-feedback[data-tone="error"] {
+  color: #ff8f9f;
+}
+
+.maritime-notification-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ah-line);
+  list-style: none;
+}
+
+.maritime-notification {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--ah-line);
+}
+
+.maritime-notification__marker {
+  width: 8px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--ah-primary);
+}
+
+.maritime-notification[data-tone="action"] .maritime-notification__marker {
+  background: var(--ah-accent);
+}
+
+.maritime-notification[data-tone="success"] .maritime-notification__marker {
+  background: #31c787;
+}
+
+.maritime-notification[data-tone="warning"] .maritime-notification__marker {
+  background: #ff9a66;
+}
+
+.maritime-notification[data-tone="muted"] .maritime-notification__marker {
+  background: var(--ah-muted);
+}
+
+.maritime-notification div {
+  min-width: 0;
+}
+
+.maritime-notification strong,
+.maritime-notification div > span {
+  display: block;
+}
+
+.maritime-notification strong {
+  color: var(--ah-ink);
+  font-size: 0.94rem;
+}
+
+.maritime-notification div > span,
+.maritime-notification time {
+  margin-top: 4px;
+  color: var(--ah-muted);
+  font-size: 0.78rem;
+}
+
+.maritime-notification time {
+  white-space: nowrap;
+}
+
+.maritime-notification a,
+.maritime-notification-empty a {
+  min-height: 36px;
+  border: 1px solid color-mix(in srgb, var(--ah-primary) 48%, var(--ah-line));
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 11px;
+  color: var(--ah-primary);
+  background: color-mix(in srgb, var(--ah-primary) 9%, transparent);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.maritime-notification a:focus-visible,
+.maritime-notification-empty a:focus-visible {
+  outline: 3px solid var(--ah-accent);
+  outline-offset: 3px;
+}
+
+.maritime-notification-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 0;
+  color: var(--ah-muted);
+}
+
+.maritime-notification-empty[hidden],
+.maritime-notification-login[hidden],
+.maritime-notification-center[hidden] {
+  display: none;
+}
+
+.maritime-partner-application {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.maritime-partner-application__intro {
+  padding: 12px 0;
+}
+
+.maritime-partner-application__intro > span {
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.maritime-partner-application__intro h2 {
+  margin: 8px 0 12px;
+  color: #fff;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.08;
+}
+
+.maritime-partner-application__intro p {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}
+
+.maritime-partner-application__intro ul {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.maritime-partner-application__intro li {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+.maritime-partner-form {
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.maritime-form__row--equal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.maritime-partner-form textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  padding: 13px 14px;
+  border: 1px solid rgba(0, 229, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.maritime-form label > span:not(:only-child) {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.maritime-form .maritime-consent {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin-top: 18px;
+  cursor: pointer;
+}
+
+.maritime-form .maritime-consent input {
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  padding: 0;
+  accent-color: #ffd700;
+}
+
+.maritime-form .maritime-consent span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.maritime-consent a {
+  color: #00e5ff;
+}
+
+.maritime-partner-form textarea:focus-visible,
+.maritime-consent a:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+}
+
+body[data-theme="white"] .maritime-partner-application__intro h2,
+body[data-theme="corporate"] .maritime-partner-application__intro h2 {
+  color: #111827;
+}
+
+body[data-theme="white"] .maritime-partner-application__intro p,
+body[data-theme="white"] .maritime-partner-application__intro li,
+body[data-theme="corporate"] .maritime-partner-application__intro p,
+body[data-theme="corporate"] .maritime-partner-application__intro li {
+  color: #334155;
+}
+
+body[data-theme="white"] .maritime-partner-form textarea,
+body[data-theme="corporate"] .maritime-partner-form textarea {
+  background: rgba(2, 8, 20, 0.04);
+  color: #111827;
+}
+
+@media (max-width: 1120px) {
+  .maritime-header,
+  .maritime-split,
+  .maritime-partner {
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-actions {
+    justify-content: flex-start;
+  }
+
+  .maritime-grid--modules,
+  .maritime-grid--listings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-steps,
+  .maritime-grid--market {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .maritime-shell {
+    width: min(calc(100% - 18px), 1500px);
+    padding-top: 10px;
+  }
+
+  .maritime-top,
+  .maritime-rail {
+    display: none;
+  }
+
+  .maritime-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 0;
+    padding: 8px;
+  }
+
+  .maritime-brand {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 40px;
+    padding: 0;
+    font-size: 20px;
+  }
+
+  .maritime-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .maritime-actions {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    min-width: 0;
+    min-height: 38px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .maritime-actions a {
+    min-height: 38px;
+    flex: 0 0 auto;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .maritime-header,
+  .maritime-hero,
+  .maritime-flow,
+  .maritime-form,
+  .maritime-partner,
+  .maritime-info {
+    border-radius: 8px;
+  }
+
+  .maritime-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: 48px;
+    min-height: 48px;
+    padding: 4px 6px 4px 14px;
+  }
+
+  .maritime-search button {
+    width: auto;
+    min-height: 38px;
+    padding: 0 14px;
+  }
+
+  .maritime-search button,
+  .maritime-btn {
+    width: 100%;
+  }
+
+  .maritime-search button {
+    width: auto;
+  }
+
+  .maritime-hero h1 {
+    font-size: clamp(30px, 9.2vw, 36px);
+  }
+
+  .maritime-hero {
+    min-height: 360px;
+    margin-top: 12px;
+  }
+
+  .maritime-hero::after {
+    background: linear-gradient(180deg, rgba(2, 8, 20, 0.28) 0%, rgba(2, 8, 20, 0.88) 58%, rgba(2, 8, 20, 0.96) 100%);
+  }
+
+  .maritime-hero__copy {
+    padding: 16px 18px 14px;
+  }
+
+  .maritime-hero__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .maritime-hero__actions .maritime-btn {
+    min-height: 58px;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .maritime-hero__signal {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+
+  .maritime-hero__copy > p {
+    font-size: 15px;
+  }
+
+  .maritime-hero__copy > .maritime-hero__lead {
+    font-size: clamp(18px, 5.2vw, 22px);
+  }
+
+  .maritime-hero + .maritime-section {
+    margin-top: 12px;
+  }
+
+  .maritime-section__head {
+    display: block;
+  }
+
+  .maritime-section__head a {
+    display: inline-flex;
+    margin-top: 8px;
+  }
+
+  .maritime-grid--modules,
+  .maritime-grid--listings,
+  .maritime-grid--market,
+  .maritime-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-account-head,
+  .maritime-account-head__actions,
+  .maritime-partner-application {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-request__head {
+    align-items: start;
+  }
+
+  .maritime-request-feedback-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .maritime-request-retry {
+    align-self: flex-start;
+  }
+
+  .maritime-request__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-request__offer-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-request__timeline li {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .maritime-request__timeline time {
+    white-space: normal;
+  }
+
+  .maritime-notification-head,
+  .maritime-notification-empty {
+    align-items: start;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .maritime-notification {
+    grid-template-columns: 8px minmax(0, 1fr);
+    gap: 8px 12px;
+  }
+
+  .maritime-notification__marker {
+    grid-row: 1 / span 3;
+  }
+
+  .maritime-notification time,
+  .maritime-notification a {
+    grid-column: 2;
+    justify-self: start;
+    white-space: normal;
+  }
+
+  .maritime-form__row--equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .maritime-brand span {
+    display: none;
+  }
+}

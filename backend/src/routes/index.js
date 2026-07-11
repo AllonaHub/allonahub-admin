@@ -4,7 +4,11 @@ import net from "node:net";
 import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
-import { buildSocialMediaDailyPackage, SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS } from "../lib/social-media-daily-package.js";
+import {
+  buildProductSocialMediaDailyPackage,
+  buildSocialMediaDailyPackage,
+  SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS
+} from "../lib/social-media-daily-package.js";
 import { dispatchSocialMediaPost, socialMediaDispatchStatus, testSocialMediaConnector } from "../lib/social-media-dispatch.js";
 import {
   acknowledgeSecurityAlarm,
@@ -606,13 +610,15 @@ const httpsUrlOptionalSchema = z.string().trim().max(1200).optional().default(""
 
 const socialMediaDailyPackageSchema = z.object({
   plan_date: z.string().date().optional(),
-  objective: z.string().trim().min(2).max(80).optional().default("growth"),
+  objective: z.string().trim().min(2).max(80).optional().default("daily_product"),
   landing_url: httpsUrlOptionalSchema.default("https://allonahub.com/"),
   target_platforms: z.array(socialMediaPlatformSchema).min(1).max(13).optional().default(SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS),
   auto_submit: z.boolean().optional().default(true),
   generate_assets: z.boolean().optional().default(true),
   force_new: z.boolean().optional().default(false),
-  variant: z.coerce.number().int().min(0).max(30).optional().default(0)
+  variant: z.coerce.number().int().min(0).max(30).optional().default(0),
+  product_id: uuidSchema.optional(),
+  module_key: z.string().trim().max(80).optional().default("")
 });
 
 const socialMediaAssetPrepareSchema = z.object({
@@ -2805,6 +2811,19 @@ function promptOnlySocialAsset(asset, metadata = {}) {
   };
 }
 
+function directUrlSocialAsset(asset, url, metadata = {}) {
+  const cleanUrl = String(url || "").trim();
+  return {
+    provider: "product_image_url",
+    status: cleanUrl ? "url_ready" : "manual_required",
+    asset_url: cleanUrl,
+    image_url: cleanUrl,
+    video_url: "",
+    alt_text: asset.alt_text || "",
+    metadata
+  };
+}
+
 function failedSocialAsset(asset, provider, message, metadata = {}) {
   return {
     provider,
@@ -3190,29 +3209,24 @@ async function createSocialAssetForPackage({ request, ctx = null, generatedPacka
     objective: generatedPackage.objective,
     target_platforms: generatedPackage.target_platforms
   };
+  const directAssetUrl = String(asset.asset_url || asset.source_image_url || "").trim();
   const shouldPrepareExistingAsset =
     Boolean(existingAsset)
-    && generateAssets
+    && (Boolean(directAssetUrl) || generateAssets)
     && !socialAssetHasPreparedMedia(existingAsset)
-    && (Boolean(config.socialMedia.assetWebhookUrl) || Boolean(config.socialMedia.assetGenerationEnabled));
+    && (Boolean(directAssetUrl) || Boolean(config.socialMedia.assetWebhookUrl) || Boolean(config.socialMedia.assetGenerationEnabled));
   if (existingAsset && !shouldPrepareExistingAsset) return existingAsset;
 
-  const prepared = generateAssets
-    ? await requestSocialAssetFromWebhook({
+  const prepared = /^https:\/\//i.test(directAssetUrl)
+    ? directUrlSocialAsset(asset, directAssetUrl, { source: "product.image_url" })
+    : generateAssets
+      ? await requestSocialAssetFromWebhook({
         request,
         asset,
         packageMeta,
         warnings
       })
-    : {
-        provider: "prompt_only",
-        status: "manual_required",
-        asset_url: "",
-        image_url: "",
-        video_url: "",
-        alt_text: asset.alt_text || "",
-        metadata: {}
-      };
+      : promptOnlySocialAsset(asset);
 
   if (existingAsset) {
     const existingMetadata = existingAsset.metadata || {};
@@ -3865,10 +3879,55 @@ async function dispatchDueSocialMediaPosts({ request, ctx = null, limit = config
   return { results, warnings };
 }
 
+function dailyProductIndex(planDate, options, count) {
+  if (!count) return 0;
+  const seed = `${planDate}:${options.objective || "daily_product"}:${options.module_key || "all"}:${options.variant || 0}`;
+  let hash = 0;
+  for (const char of seed) {
+    hash = ((hash << 5) - hash) + char.charCodeAt(0);
+    hash |= 0;
+  }
+  return Math.abs(hash) % count;
+}
+
+async function loadDailySocialProducts({ options, warnings }) {
+  const fields = [
+    "id",
+    "name",
+    "description",
+    "price",
+    "stock",
+    "image_url",
+    "category",
+    "module_key",
+    "status",
+    "slug",
+    "meta_title",
+    "meta_description",
+    "brand",
+    "created_at",
+    "updated_at"
+  ].join(", ");
+
+  let query = supabaseAdmin
+    .from("products")
+    .select(fields)
+    .eq("status", "active")
+    .gt("stock", 0)
+    .order("updated_at", { ascending: false })
+    .limit(options.product_id ? 1 : 40);
+  if (options.product_id) query = query.eq("id", options.product_id);
+  if (options.module_key) query = query.eq("module_key", options.module_key);
+  if (!options.product_id) query = query.not("image_url", "is", null).neq("image_url", "");
+
+  const rows = await optionalQuery(query, [], warnings, "products");
+  return rows.filter((product) => product?.id && product?.name);
+}
+
 async function generateSocialDailyPackageRecords({ request, ctx = null, options = {}, source = "admin" }) {
   const warnings = [];
   const planDate = options.plan_date || todayInSocialTimezone();
-  const objective = options.objective || "growth";
+  const objective = options.objective || "daily_product";
   const targetPlatforms = options.target_platforms?.length ? options.target_platforms : SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS;
   const landingUrl = options.landing_url || `${config.siteUrl}/`;
 
@@ -3892,24 +3951,45 @@ async function generateSocialDailyPackageRecords({ request, ctx = null, options 
       draft: null,
       posts: [],
       asset: null,
+      product: null,
       package: null,
       warnings
     };
   }
 
+  const products = await loadDailySocialProducts({ options, warnings });
+  const startIndex = dailyProductIndex(planDate, options, products.length);
+  const orderedProducts = products.length ? [...products.slice(startIndex), ...products.slice(0, startIndex)] : [];
+  if (!orderedProducts.length) {
+    warnings.push("Gunluk paket icin aktif, stokta ve gorselli urun bulunamadi; marka/growth paketi uretilecek.");
+  }
+
   let generatedPackage = null;
   let draftResult = null;
   let asset = null;
+  let product = null;
   let lastError = null;
+  const attempts = orderedProducts.length ? Math.min(orderedProducts.length, 12) : 6;
 
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    generatedPackage = buildSocialMediaDailyPackage({
-      planDate,
-      objective,
-      landingUrl,
-      targetPlatforms,
-      variant: Number(options.variant || 0) + attempt
-    });
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    product = orderedProducts[attempt] || null;
+    generatedPackage = product
+      ? buildProductSocialMediaDailyPackage({
+          planDate,
+          objective,
+          landingUrl,
+          targetPlatforms,
+          variant: Number(options.variant || 0) + attempt,
+          product,
+          siteUrl: config.siteUrl
+        })
+      : buildSocialMediaDailyPackage({
+          planDate,
+          objective,
+          landingUrl,
+          targetPlatforms,
+          variant: Number(options.variant || 0) + attempt
+        });
     asset = await createSocialAssetForPackage({
       request,
       ctx,
@@ -3932,7 +4012,7 @@ async function generateSocialDailyPackageRecords({ request, ctx = null, options 
     } catch (error) {
       lastError = error;
       if (error?.statusCode !== 409 && error?.status !== 409) throw error;
-      warnings.push(`Gunluk paket varyanti tekrar nedeniyle atlandi: ${attempt}`);
+      warnings.push(`Gunluk paket urun/varyant tekrar nedeniyle atlandi: ${product?.name || attempt}`);
     }
   }
 
@@ -3953,12 +4033,14 @@ async function generateSocialDailyPackageRecords({ request, ctx = null, options 
         prepared_by: ctx?.user?.id || existingPlan?.prepared_by || null,
         metadata: {
           ...(existingPlan?.metadata || {}),
-          prepared_from: "daily_package_generator",
+          prepared_from: product ? "daily_product_generator" : "daily_package_generator",
           source,
-          generated_at: new Date().toISOString(),
-          asset_id: asset?.id || null,
           package_title: generatedPackage.title,
-          package_summary: generatedPackage.summary
+          package_summary: generatedPackage.summary,
+          asset_id: asset?.id || null,
+          product_id: product?.id || null,
+          product_name: product?.name || null,
+          generated_at: new Date().toISOString()
         }
       }, { onConflict: "plan_date,objective" })
       .select("*")
@@ -3974,6 +4056,7 @@ async function generateSocialDailyPackageRecords({ request, ctx = null, options 
     draft: draftResult.draft,
     posts: draftResult.posts,
     asset,
+    product,
     package: generatedPackage,
     warnings: [...warnings, ...draftResult.warnings]
   };
@@ -14826,6 +14909,7 @@ export function registerRoutes(app) {
         draft_id: result.draft?.id || null,
         post_count: result.posts.length,
         asset_id: result.asset?.id || null,
+        product_id: result.product?.id || null,
         warning_count: result.warnings.length
       }
     });
@@ -14902,9 +14986,9 @@ export function registerRoutes(app) {
       ctx,
       action: "admin.ops.social_media_post_media_updated",
       resourceType: "social_media_platform_post",
-      resourceId: post.id,
+      resourceId: postId,
       metadata: {
-        platform: post.platform,
+        platform: existing.platform,
         has_image_url: Boolean(nextPayload.image_url),
         has_video_url: Boolean(nextPayload.video_url),
         has_link: Boolean(nextPayload.link || nextPayload.landing_url)
@@ -14982,6 +15066,7 @@ export function registerRoutes(app) {
     });
     if (duplicate) throw httpError(`Tekrar icerik engellendi. Benzer kayit: ${duplicate.title}`, 409);
 
+    const hasScheduleOverride = Boolean(payload.publish_now || payload.scheduled_for || existing.scheduled_for);
     const scheduledFor = payload.publish_now ? new Date().toISOString() : (payload.scheduled_for || existing.scheduled_for || null);
     const draftStatus = scheduledFor ? "scheduled" : "approved";
     const postStatus = scheduledFor ? "scheduled" : "approved";
@@ -15011,7 +15096,7 @@ export function registerRoutes(app) {
       approved_at: new Date().toISOString(),
       last_error: ""
     };
-    if (scheduledFor) postUpdatePayload.scheduled_for = scheduledFor;
+    if (hasScheduleOverride) postUpdatePayload.scheduled_for = scheduledFor;
 
     await optionalMutation(
       supabaseAdmin
@@ -15518,6 +15603,8 @@ export function registerRoutes(app) {
         skipped: result.skipped,
         draft_id: result.draft?.id || null,
         post_count: result.posts.length,
+        asset_id: result.asset?.id || null,
+        product_id: result.product?.id || null,
         warning_count: result.warnings.length
       }
     });

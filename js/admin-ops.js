@@ -1357,11 +1357,25 @@
           </div>
           <div class="admin-field">
             <label for="socialPackageObjective">Hedef</label>
-            <input id="socialPackageObjective" name="objective" maxlength="80" value="growth">
+            <input id="socialPackageObjective" name="objective" maxlength="80" value="daily_product">
+          </div>
+          <div class="admin-field">
+            <label for="socialPackageModule">Modül</label>
+            <input id="socialPackageModule" name="module_key" maxlength="80" placeholder="shop, market, food">
+          </div>
+        </div>
+        <div class="admin-grid-3" style="margin-top:12px">
+          <div class="admin-field">
+            <label for="socialPackageProduct">Ürün ID</label>
+            <input id="socialPackageProduct" name="product_id" maxlength="80" placeholder="Opsiyonel UUID">
           </div>
           <div class="admin-field">
             <label for="socialPackageLanding">Landing link</label>
             <input id="socialPackageLanding" name="landing_url" maxlength="700" value="https://allonahub.com/">
+          </div>
+          <div class="admin-field">
+            <label for="socialPackageVariant">Varyant</label>
+            <input id="socialPackageVariant" name="variant" type="number" min="0" max="30" value="0">
           </div>
         </div>
         <div class="admin-check-grid" style="margin-top:12px">${socialPlatformOptions("instagram,facebook,threads,x,linkedin,tiktok,youtube,pinterest,nsosyal")}</div>
@@ -2267,18 +2281,22 @@
   async function generateSocialPackage(form) {
     const raw = Object.fromEntries(new FormData(form).entries());
     const targetPlatforms = checkedValues(form, "target_platforms");
+    const body = {
+      plan_date: raw.plan_date || undefined,
+      objective: raw.objective || "daily_product",
+      landing_url: raw.landing_url || "https://allonahub.com/",
+      target_platforms: targetPlatforms.length ? targetPlatforms : ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal"],
+      auto_submit: true,
+      generate_assets: true,
+      variant: Number(raw.variant || 0),
+      module_key: String(raw.module_key || "").trim()
+    };
+    if (String(raw.product_id || "").trim()) body.product_id = String(raw.product_id || "").trim();
     const data = await api("/v1/ops-console/social-media/daily-package/generate", {
       method: "POST",
-      body: {
-        plan_date: raw.plan_date || undefined,
-        objective: raw.objective || "growth",
-        landing_url: raw.landing_url || "https://allonahub.com/",
-        target_platforms: targetPlatforms.length ? targetPlatforms : ["instagram", "facebook", "threads", "x", "linkedin", "tiktok", "youtube", "pinterest", "nsosyal"],
-        auto_submit: true,
-        generate_assets: true
-      }
+      body
     });
-    showToast(data?.skipped ? "Bugünün paketi zaten var." : "Günlük paket onaya hazır oluşturuldu.");
+    showToast(data?.skipped ? "Bugünün paketi zaten var." : "Günlük ürün paketi onaya hazır oluşturuldu.");
     await loadSocialMedia();
   }
 

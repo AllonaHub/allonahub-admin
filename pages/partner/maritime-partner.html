@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Denizcilik Partner Basvurusu | AllonaHub</title>
+  <meta name="description" content="Gemi sirketi, broker, acente, crewing, liman veya teknik servis olarak Allona Denizcilik partner basvurusu yap.">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260711-challenge1">
+  <link rel="stylesheet" href="../../css/allona-maritime.css?v=20260711-maritime14">
+</head>
+<body class="maritime-page">
+  <div class="site-shell">
+    <div data-layout="header"></div>
+
+    <main class="maritime-shell maritime-account-shell">
+      <section class="maritime-hero" data-ad-hero aria-labelledby="maritimePartnerTitle">
+        <div class="maritime-hero__copy">
+          <p class="maritime-eyebrow">Allona Denizcilik Partner Agi</p>
+          <h1 id="maritimePartnerTitle">Denizcilik operasyonunu dogrulanmis partner akisina bagla.</h1>
+          <p>Gemi sirketi, broker, acente, crewing, liman ve teknik servis saglayicilari icin denizcilik odakli basvuru ve inceleme alani.</p>
+          <div class="maritime-hero__actions">
+            <a class="maritime-btn maritime-btn--primary" href="#maritimePartnerForm">Basvuruya Basla</a>
+            <a class="maritime-btn" href="../ecosystem/allonadenizcilik.html">Denizcilik Modulu</a>
+            <a class="maritime-btn" href="../company/destek.html?topic=maritime-partner">Destek Al</a>
+          </div>
+        </div>
+        <aside class="maritime-hero__panel" aria-label="Denizcilik partner operasyonu">
+          <img src="../../images/ads/hero-ad-denizcilik.jpg" alt="Allona Denizcilik gemi ve liman partner operasyonu">
+          <div>
+            <strong>Partner Dogrulamasi</strong>
+            <span>Basvuru; sirket, iletisim, faaliyet rolu ve operasyon kapsamiyla inceleme sirasina alinir.</span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="maritime-section maritime-partner-application" id="maritimePartnerForm" aria-labelledby="maritimePartnerFormTitle">
+        <div class="maritime-partner-application__intro">
+          <span>Basvuru</span>
+          <h2 id="maritimePartnerFormTitle">Denizcilik partner profilini olustur</h2>
+          <p>On incelemede faaliyet rolu, sirket bilgileri, iletisim kanali ve operasyon kapsami degerlendirilir.</p>
+          <ul>
+            <li>Gemi sahibi veya isletmeci</li>
+            <li>Broker ve chartering</li>
+            <li>Acente ve liman hizmetleri</li>
+            <li>Crewing ve personel temini</li>
+            <li>Teknik servis ve tedarik</li>
+          </ul>
+        </div>
+
+        <form class="maritime-form maritime-partner-form" data-maritime-partner-form>
+          <label for="maritimePartnerRole">Partner rolu</label>
+          <select id="maritimePartnerRole" required>
+            <option value="">Rol secin</option>
+            <option value="shipowner">Gemi Sahibi / Isletmeci</option>
+            <option value="broker">Broker / Chartering</option>
+            <option value="agency">Acente</option>
+            <option value="crewing">Crewing</option>
+            <option value="port_service">Liman Hizmeti</option>
+            <option value="technical_service">Teknik Servis / Tedarik</option>
+            <option value="other">Diger Denizcilik Hizmeti</option>
+          </select>
+
+          <label for="maritimeCompanyName">Firma / isletme adi</label>
+          <input id="maritimeCompanyName" autocomplete="organization" minlength="2" maxlength="160" required>
+
+          <label for="maritimeContactName">Yetkili ad soyad</label>
+          <input id="maritimeContactName" autocomplete="name" minlength="2" maxlength="140" required>
+
+          <div class="maritime-form__row maritime-form__row--equal">
+            <div>
+              <label for="maritimeEmail">E-posta</label>
+              <input id="maritimeEmail" type="email" autocomplete="email" maxlength="180" required>
+            </div>
+            <div>
+              <label for="maritimePhone">Telefon</label>
+              <input id="maritimePhone" type="tel" autocomplete="tel" minlength="7" maxlength="40" placeholder="+90 5xx xxx xx xx" required>
+            </div>
+          </div>
+
+          <label for="maritimeCompanyType">Sirket turu</label>
+          <select id="maritimeCompanyType" required>
+            <option value="">Sirket turu secin</option>
+            <option value="sole-proprietor">Sahis Sirketi</option>
+            <option value="limited">Limited Sirket</option>
+            <option value="joint-stock">Anonim Sirket</option>
+            <option value="cooperative">Kooperatif</option>
+            <option value="individual">Bireysel Hizmet Saglayici</option>
+            <option value="other">Diger</option>
+          </select>
+
+          <div class="maritime-form__row maritime-form__row--equal">
+            <div>
+              <label for="maritimeCountry">Ulke</label>
+              <input id="maritimeCountry" autocomplete="country-name" minlength="2" maxlength="90" required>
+            </div>
+            <div>
+              <label for="maritimeCity">Sehir</label>
+              <input id="maritimeCity" autocomplete="address-level2" minlength="2" maxlength="90" required>
+            </div>
+          </div>
+
+          <label for="maritimeWebsite">Web sitesi <span>(opsiyonel)</span></label>
+          <input id="maritimeWebsite" type="url" autocomplete="url" maxlength="500" placeholder="https://">
+
+          <label for="maritimeMessage">Faaliyet ve operasyon kapsami</label>
+          <textarea id="maritimeMessage" minlength="10" maxlength="1200" rows="5" required></textarea>
+
+          <label class="maritime-consent" for="maritimePrivacyConsent">
+            <input id="maritimePrivacyConsent" type="checkbox" required>
+            <span><a href="../legal/gizlilik.html">Gizlilik politikasini</a> okudum; basvuru bilgilerimin on inceleme icin islenmesini kabul ediyorum.</span>
+          </label>
+
+          <div data-security-challenge="maritime_partner_application"></div>
+          <p class="maritime-form__status" data-maritime-partner-status role="status" aria-live="polite"></p>
+          <div class="maritime-form__result" data-maritime-partner-result role="status" hidden>
+            <strong>Partner basvurun alindi.</strong>
+            <span data-maritime-partner-reference></span>
+            <a href="../company/destek.html?topic=maritime-partner">Basvuru Destegi</a>
+          </div>
+          <button type="submit" data-maritime-partner-submit>Basvuruyu Gonder</button>
+        </form>
+      </section>
+    </main>
+
+    <div data-layout="footer"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-live5" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/security-challenge.js?v=20260711-csp2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/allona-maritime-partner.js?v=20260711-maritime3" defer></script>
+</body>
+</html>

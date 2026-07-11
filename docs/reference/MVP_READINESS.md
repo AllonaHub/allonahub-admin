@@ -48,3 +48,11 @@ Bu çalışma Transaction Core MVP katmanını kurar:
 ## Operasyon Notu
 
 HP gerçek para cüzdanı değildir. MVP'de yalnızca indirim hakkı, kupon avantajı ve kampanya hakkı olarak gösterilir. Nakit çekim ve gerçek para bakiyesi gösterimi kapalıdır.
+
+## Denizcilik Modülü Yayın Kilidi
+
+- Denizcilik partner başvurusu PII verisini tarayıcı depolamasına yazmamalı; geçici hata durumunda aynı idempotency kimliğiyle yalnız sayfa belleğinde tekrar denenmeli.
+- Partner başvuru formunda ilk doğrulama hatası hatalı alana odaklanmalı, ağ/servis hatası görünür `alert` uyarısına düşmeli ve başarı/duplicate sonucu odaklanabilir sonuç kutusunda gösterilmeli.
+- Navlun takip ekranı oturum yoksa veri sorgulamak yerine giriş CTA'sı göstermeli; giriş dönüşünde yalnız sabit takip rotası ve doğrulanmış UUID hash'i korunmalı.
+- Navlun takipte teklif kabul ve iptal gibi iki aşamalı aksiyonlar ilk dokunuşta ağ isteği göndermemeli; `aria-pressed`, bağlamlı erişilebilir ad, hata sonrası düğme odağı ve başarı sonrası kart odağı korunmalı.
+- Geniş denizcilik RLS/RPC/migration seti canlıya alınmadan önce admin repo mevcut branch değişiklikleriyle çakışmasız birleştirilmeli, şema kontrol scriptleri ve canlı API smoke testleri tamamlanmalı.
