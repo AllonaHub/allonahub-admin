@@ -7407,3 +7407,406 @@ body[data-theme="corporate"] .site-footer .footer-brand .logo-title .blue,
 body[data-theme="corporate"] .site-footer .footer-col h3 {
   color: var(--ah-primary-strong) !important;
 }
+
+/* Theme text readability contract: visual structure stays intact; text contrast is centralized. */
+body[data-theme] {
+  --ah-readable-heading: var(--ah-ink);
+  --ah-readable-body: color-mix(in srgb, var(--ah-ink) 94%, transparent);
+  --ah-readable-muted: var(--ah-muted);
+  --ah-readable-link: var(--ah-primary);
+  --ah-readable-link-hover: var(--ah-accent-soft);
+  --ah-readable-control-ink: var(--ah-ink);
+  --ah-readable-button-ink: #ffffff;
+  --ah-readable-image-heading: var(--ah-accent-soft);
+  --ah-readable-image-body: #ffffff;
+  --ah-readable-image-shadow: 0 1px 14px rgba(0, 0, 0, 0.72);
+  --ah-readable-text-shadow: none;
+  color: var(--ah-readable-body) !important;
+}
+
+body[data-theme="ocean"],
+body[data-theme="neon"],
+body[data-theme="allona"],
+body[data-theme="graphite"] {
+  --ah-readable-heading: #f8fbff;
+  --ah-readable-body: rgba(248, 251, 255, 0.92);
+  --ah-readable-muted: rgba(226, 240, 255, 0.78);
+  --ah-readable-link: #7df5ff;
+  --ah-readable-link-hover: #ffe36d;
+  --ah-readable-control-ink: #ffffff;
+  --ah-readable-button-ink: #021120;
+  --ah-readable-image-heading: #ffd700;
+}
+
+body[data-theme="sunset"] {
+  --ah-readable-heading: #fff8f2;
+  --ah-readable-body: rgba(255, 248, 242, 0.92);
+  --ah-readable-muted: rgba(255, 228, 208, 0.80);
+  --ah-readable-link: #ffd166;
+  --ah-readable-link-hover: #ffffff;
+  --ah-readable-control-ink: #ffffff;
+  --ah-readable-button-ink: #220812;
+  --ah-readable-image-heading: #ffd166;
+}
+
+body[data-theme="forest"],
+body[data-theme="marketplace"] {
+  --ah-readable-heading: #f8fbff;
+  --ah-readable-body: rgba(240, 253, 255, 0.92);
+  --ah-readable-muted: rgba(212, 246, 241, 0.78);
+  --ah-readable-link: #8dfff7;
+  --ah-readable-link-hover: #ffd76a;
+  --ah-readable-control-ink: #ffffff;
+  --ah-readable-button-ink: #021112;
+  --ah-readable-image-heading: #ffc94a;
+}
+
+body[data-theme="turquoise"] {
+  --ah-readable-heading: #f7feff;
+  --ah-readable-body: rgba(235, 253, 255, 0.92);
+  --ah-readable-muted: rgba(210, 246, 250, 0.80);
+  --ah-readable-link: #8afff0;
+  --ah-readable-link-hover: #ffe28a;
+  --ah-readable-control-ink: #ffffff;
+  --ah-readable-button-ink: #011a1f;
+  --ah-readable-image-heading: #ffd76a;
+}
+
+body[data-theme="white"] {
+  --ah-readable-heading: #10212f;
+  --ah-readable-body: #1d3142;
+  --ah-readable-muted: rgba(16, 33, 47, 0.74);
+  --ah-readable-link: #005fba;
+  --ah-readable-link-hover: #003f7f;
+  --ah-readable-control-ink: #10212f;
+  --ah-readable-button-ink: #061524;
+  --ah-readable-image-heading: #ffe16a;
+}
+
+body[data-theme="corporate"] {
+  --ah-readable-heading: #102334;
+  --ah-readable-body: #13283a;
+  --ah-readable-muted: rgba(16, 35, 52, 0.76);
+  --ah-readable-link: #0a5e96;
+  --ah-readable-link-hover: #123a56;
+  --ah-readable-control-ink: #102334;
+  --ah-readable-button-ink: #ffffff;
+  --ah-readable-image-heading: #ffd700;
+}
+
+body[data-theme] :where(
+  .site-shell,
+  .site-main,
+  main,
+  .page,
+  .wrapper,
+  .container,
+  .platform-page,
+  .platform-shell,
+  .page-shell,
+  .module-shell,
+  .content-shell,
+  .account-shell,
+  .partner-shell,
+  .checkout-shell,
+  .cart-shell,
+  .food-page,
+  .market-page,
+  .section,
+  .modules-section
+) {
+  color: var(--ah-readable-body) !important;
+}
+
+body[data-theme] :where(
+  .platform-menu,
+  .shop-category-mega,
+  .nav-links.is-open,
+  .modal__content,
+  .drawer,
+  .dropdown,
+  .toast__item,
+  .admin-toast__item,
+  .pwa-install-card,
+  .payment-handoff,
+  .payment-result,
+  .ah-assistant__panel,
+  .card,
+  .panel,
+  .glass,
+  .soft,
+  .auth-card,
+  .summary-card,
+  .data-card,
+  .status-box,
+  .platform-card,
+  .coupon-card,
+  .legal-container,
+  .about-container,
+  .article-container,
+  .info-panel,
+  .form-panel,
+  .status-panel,
+  .notification-panel,
+  .legal-document,
+  .channel-item,
+  .document-item,
+  .notification-item
+) {
+  color: var(--ah-readable-body) !important;
+}
+
+body[data-theme] :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  strong,
+  b,
+  label,
+  legend,
+  caption,
+  th,
+  .section-title,
+  .section-head h2,
+  .section-header h2,
+  .page-heading h1,
+  .page-title,
+  .card-title,
+  .panel-title,
+  .platform-title
+) {
+  color: var(--ah-readable-heading) !important;
+  text-shadow: var(--ah-readable-text-shadow) !important;
+}
+
+body[data-theme] :where(
+  p,
+  li,
+  dd,
+  td,
+  summary,
+  figcaption,
+  small,
+  .muted,
+  .meta,
+  .note,
+  .help-text,
+  .description,
+  .lead,
+  .section-sub,
+  .section-head p,
+  .section-header p,
+  .page-heading p,
+  .product-card__meta,
+  .product-card__description,
+  .product-social-proof,
+  .stock,
+  .flow-step,
+  .panel-list div
+) {
+  color: var(--ah-readable-muted) !important;
+}
+
+body[data-theme] :where(
+  a:not(.btn):not(.link-btn):not(.icon-btn):not(.login):not(.footer-brand):not(.store-btn):not(.ad-hero__button),
+  .top-links a,
+  .catbar a,
+  .actions a,
+  .nav-links a,
+  .platform-menu-item,
+  .shop-category-mega a,
+  .dropdown a,
+  .drawer a,
+  .modal__content a:not(.btn)
+) {
+  color: var(--ah-readable-link) !important;
+}
+
+body[data-theme] :where(
+  a:not(.btn):not(.link-btn):not(.icon-btn):not(.login):not(.footer-brand):not(.store-btn):not(.ad-hero__button):hover,
+  a:not(.btn):not(.link-btn):not(.icon-btn):not(.login):not(.footer-brand):not(.store-btn):not(.ad-hero__button):focus-visible,
+  .top-links a:hover,
+  .catbar a:hover,
+  .actions a:hover,
+  .nav-links a:hover,
+  .platform-menu-item:hover,
+  .platform-menu-item.is-active,
+  .shop-category-mega a:hover,
+  .dropdown a:hover,
+  .drawer a:hover
+) {
+  color: var(--ah-readable-link-hover) !important;
+}
+
+body[data-theme] :where(input, select, textarea, option) {
+  color: var(--ah-readable-heading) !important;
+  caret-color: var(--ah-primary);
+}
+
+body[data-theme] :where(input::placeholder, textarea::placeholder, .search input::placeholder, .nav-search input::placeholder) {
+  color: color-mix(in srgb, var(--ah-readable-heading) 56%, transparent) !important;
+}
+
+body[data-theme] :where(.platform-control-btn:not(.platform-theme-btn), .link-btn, .icon-btn, .mobile-nav-toggle) {
+  color: var(--ah-readable-control-ink) !important;
+}
+
+body[data-theme] :where(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .platform-theme-btn,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn
+),
+body[data-theme] :where(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .platform-theme-btn,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn
+) :where(span, strong, small, i) {
+  color: var(--ah-readable-button-ink) !important;
+}
+
+body[data-theme]:has(.premium-hero) nav :is(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn
+),
+body[data-theme]:has(.premium-hero) nav :is(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn
+) :where(span, strong, small, i) {
+  color: var(--ah-readable-button-ink) !important;
+}
+
+body[data-theme] :where(
+  .module-card[class*="module-card--"],
+  .ad-hero__slide,
+  .ad-hero__content,
+  .ad-hero__location,
+  .ad-hero__visual-panel,
+  .hero-location,
+  .live-ad-card
+) {
+  --ah-readable-heading: var(--ah-readable-image-heading);
+  --ah-readable-body: var(--ah-readable-image-body);
+  --ah-readable-muted: rgba(255, 255, 255, 0.88);
+  color: var(--ah-readable-image-body) !important;
+}
+
+body[data-theme] :where(
+  .module-card[class*="module-card--"],
+  .ad-hero__slide,
+  .ad-hero__content,
+  .ad-hero__location,
+  .ad-hero__visual-panel,
+  .hero-location,
+  .live-ad-card
+) :where(h1, h2, h3, h4, strong, b, .ad-title) {
+  color: var(--ah-readable-image-heading) !important;
+  text-shadow: var(--ah-readable-image-shadow) !important;
+}
+
+body[data-theme] :where(
+  .module-card[class*="module-card--"],
+  .ad-hero__slide,
+  .ad-hero__content,
+  .ad-hero__location,
+  .ad-hero__visual-panel,
+  .hero-location,
+  .live-ad-card
+) :where(p, span, small, li, a:not(.btn):not(.ad-hero__button)) {
+  color: var(--ah-readable-image-body) !important;
+  text-shadow: var(--ah-readable-image-shadow) !important;
+}
+
+body[data-theme] .site-footer {
+  --ah-readable-heading: #ffffff;
+  --ah-readable-body: rgba(255, 255, 255, 0.92);
+  --ah-readable-muted: rgba(226, 237, 250, 0.78);
+  --ah-readable-link: #ffffff;
+  --ah-readable-link-hover: var(--ah-accent-soft);
+  color: var(--ah-readable-body) !important;
+}
+
+body[data-theme="corporate"] .site-footer {
+  --ah-readable-heading: var(--ah-ink);
+  --ah-readable-body: #13283a;
+  --ah-readable-muted: rgba(16, 35, 52, 0.74);
+  --ah-readable-link: #123a56;
+  --ah-readable-link-hover: #0a5e96;
+}
+
+body[data-theme="white"]:has(.premium-hero) :is(.section-head span, .section-title, .tier h3, .hero-reward-card h3),
+body[data-theme="corporate"]:has(.premium-hero) :is(.section-head span, .section-title, .tier h3, .hero-reward-card h3),
+body[data-theme="white"] :is(.section-head span, .section-title, .tier h3, .hero-reward-card h3),
+body[data-theme="corporate"] :is(.section-head span, .section-title, .tier h3, .hero-reward-card h3) {
+  color: var(--ah-primary-strong) !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="corporate"] .site-footer :where(.store-btn, .store-btn--app, .store-btn__kicker, .store-btn--app strong) {
+  color: #ffffff !important;
+}
+
+body[data-theme="corporate"] .site-footer .store-btn,
+body[data-theme="corporate"] .site-footer .store-btn--app,
+body[data-theme="corporate"] .site-footer .store-btn__kicker,
+body[data-theme="corporate"] .site-footer .store-btn--app strong {
+  color: #ffffff !important;
+}
+
+body[data-theme] .site-footer .social-icons .ig {
+  background: linear-gradient(45deg, #a24b0f, #9d6a00, #a81758, #5a247b, #323a98) !important;
+  color: #ffffff !important;
+}
+
+body[data-theme] .site-footer .social-icons .ig span {
+  color: #ffffff !important;
+}
+
+@media (max-width: 760px) {
+  body[data-theme="white"] > header nav a:not(.login),
+  body[data-theme="corporate"] > header nav a:not(.login) {
+    color: #ffffff !important;
+  }
+}
