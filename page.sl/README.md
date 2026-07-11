@@ -28,9 +28,9 @@ Bilerek tasinmayan ornekler:
 
 ## 2026-06-30 legacy route stub paketi
 
-`quarantine/2026-06-30-legacy-route-stubs/` altina aktif canonical sayfalara yonlenen eski HTML uyumluluk stub'lari tasindi. Eski URL'lerin kirilmamasi icin `_redirects` dosyasina dogrudan `/pages/...` 301 kurallari eklendi.
+`quarantine/2026-06-30-legacy-route-stubs/` altinda aktif canonical sayfalara yonlenen eski HTML uyumluluk stub'larinin arsiv kopyalari tutulur. Canli barindirma `_redirects` dosyasini uygulamadigi icin kucuk fiziksel yonlendirme dosyalari aktif path'lerde de korunur; `_redirects` kurallari uyumlu platformlar icin ikinci katmandir.
 
-- `pages/career/kariyer.html` artik `_redirects` ile `pages/career/allonakariyer.html` adresine gider.
+- `pages/career/kariyer.html` fiziksel uyumluluk stub'i veya `_redirects` ile `pages/career/allonakariyer.html` adresine gider.
 - `pages/commerce/kopunlar.html` ve `pages/commerce/ode.html` artik canonical kupon/odeme sayfalarina gider.
 - Eski kisa ekosistem slug'lari artik `allona*` canonical sayfalarina gider.
 - `pages/legal/mesafeli-satis-sozlesmesi.html` artik `pages/legal/mesafeli-satis.html` adresine gider.

@@ -1,14 +1,15 @@
 # 2026-06-30 legacy route stub archive
 
-Bu klasor, aktif canonical sayfalara yonlenen eski HTML uyumluluk stub'larini tutar.
+Bu klasor, aktif canonical sayfalara yonlenen eski HTML uyumluluk stub'larinin arsiv kopyalarini tutar.
 
 ## Calismama kurali
 
 - Dosyalar orijinal path yapisi korunarak `.inactive.txt` uzantisina cevrildi.
-- Eski URL'ler `_redirects` uzerinden dogrudan canonical sayfalara 301 yonlenir.
+- Canli barindirma `_redirects` dosyasini uygulamadigi icin eski URL'lerde fiziksel uyumluluk stub'lari da tutulur.
+- `_redirects` kurallari bu formati destekleyen platformlarda ek 301 katmani saglar.
 - Bu dosyalar aktif sayfa, sitemap veya navigasyon kaynagi olarak kullanilmamalidir.
 
-## Tasinan eski route stub'lari
+## Arsivlenen eski route stub'lari
 
 - `pages/career/kariyer.html` -> `pages/career/allonakariyer.html`
 - `pages/commerce/kopunlar.html` -> `pages/commerce/kuponlar.html`
