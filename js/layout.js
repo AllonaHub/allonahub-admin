@@ -61,7 +61,7 @@
       <header class="site-header">
         <div class="container header-main">
           <a class="brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-            <img src="${core.url("images/allona-logo-mark.png")}" alt="AllonaHub">
+            <img src="${core.url("/images/allona-logo-mark.png")}" alt="AllonaHub">
             <span class="brand__name"><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
           </a>
           <form class="search-form" data-site-search role="search">
@@ -139,7 +139,7 @@
         <div class="container footer-grid">
           <div class="footer-col">
             <a class="footer-brand" href="${core.url("index.html")}" aria-label="AllonaHub ana sayfa">
-              <img src="${core.url("images/allona-logo-mark.png")}" alt="">
+              <img src="${core.url("/images/allona-logo-mark.png")}" alt="">
               <span><span class="brand__allona">Allona</span><span class="brand__hub">Hub</span></span>
             </a>
             <p>AllonaHub ekosisteminin premium alışveriş deneyimi.</p>

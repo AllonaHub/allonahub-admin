@@ -43,6 +43,17 @@
   let visitPlanPageSize = 50;
   let visitPlanRequestId = 0;
   let visitPlanMetrics = { newCount: 0, reviewed: 0, actioned: 0, archived: 0, stops: 0, minutes: 0, touch: 0 };
+  let accessibilityRequestRows = [];
+  let accessibilityRequestStatusFilter = "";
+  let accessibilityRequestTypeFilter = "";
+  let accessibilityRequestSearchFilter = "";
+  let accessibilityRequestStartDateFilter = "";
+  let accessibilityRequestEndDateFilter = "";
+  let accessibilityRequestTotal = 0;
+  let accessibilityRequestPage = 1;
+  let accessibilityRequestPageSize = 50;
+  let accessibilityRequestRequestId = 0;
+  let accessibilityRequestMetrics = { newCount: 0, confirmed: 0, completed: 0, cancelled: 0, archived: 0, visitors: 0, upcoming: 0 };
   let campaignRedemptionRows = [];
   let campaignPartnerByItemId = new Map();
   let campaignPartnerLookupFailed = false;
@@ -1791,33 +1802,152 @@
     }
   }
 
-  async function loadAccessibilityRequests() {
+  function accessibilityRequestFilterSnapshot() {
+    return {
+      status: accessibilityRequestStatusFilter,
+      serviceType: accessibilityRequestTypeFilter,
+      search: accessibilityRequestSearchFilter,
+      startDate: accessibilityRequestStartDateFilter,
+      endDate: accessibilityRequestEndDateFilter
+    };
+  }
+
+  async function queryAccessibilityRequestReport(limit, offset, filters = accessibilityRequestFilterSnapshot()) {
+    const mallId = await requireDefaultMallId();
+    return App.db.client().rpc("get_mall_accessibility_request_report", {
+      report_mall_id: mallId,
+      report_status: filters.status || null,
+      report_service_type: filters.serviceType || null,
+      report_search: filters.search.trim() || null,
+      report_start_date: filters.startDate || null,
+      report_end_date: filters.endDate || null,
+      report_limit: limit,
+      report_offset: offset
+    });
+  }
+
+  async function exportAccessibilityRequests(button) {
+    if (!accessibilityRequestTotal) {
+      core.toast("Dışa aktarılacak erişilebilirlik talebi yok.", "error");
+      return;
+    }
+    button.disabled = true;
+    try {
+      const filters = accessibilityRequestFilterSnapshot();
+      const batchSize = 200;
+      const rows = [];
+      let expectedTotal = accessibilityRequestTotal;
+      for (let offset = 0; offset < expectedTotal; offset += batchSize) {
+        const { data, error } = await queryAccessibilityRequestReport(batchSize, offset, filters);
+        if (error) throw error;
+        const batch = data || [];
+        if (!offset && batch[0]) expectedTotal = interactionNumber(batch[0].total_count);
+        rows.push(...batch);
+        if (batch.length < batchSize) break;
+      }
+      if (!rows.length) throw new Error("Filtre kapsamındaki talepler artık bulunmuyor.");
+      const headers = ["Ziyaret", "Destek Türü", "Ad Soyad", "Kişi Sayısı", "Telefon", "E-posta", "Buluşma Noktası", "İhtiyaç Notu", "Admin Notu", "Durum", "Oluşturma"];
+      const csvRows = rows.map((request) => [
+        request.visit_at ? new Date(request.visit_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "",
+        accessibilityRequestTypeLabels[request.service_type] || request.service_type,
+        request.visitor_name,
+        request.party_size,
+        request.contact_phone,
+        request.contact_email,
+        request.meeting_point,
+        request.request_note,
+        request.admin_note,
+        accessibilityRequestStatusLabels[request.status] || request.status,
+        request.created_at ? new Date(request.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : ""
+      ]);
+      const csv = [headers, ...csvRows].map((row) => row.map(csvCell).join(",")).join("\n");
+      const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `avm-erisilebilirlik-talepleri-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      core.toast(`${rows.length} erişilebilirlik talebi CSV olarak hazırlandı.`);
+    } catch (error) {
+      core.toast(error.message || "Erişilebilirlik talebi raporu hazırlanamadı.", "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function renderAccessibilityRequests() {
     const target = document.querySelector("[data-avm-admin-accessibility-requests]");
     if (!target) return;
-    core.renderStatus(target, "Erişilebilirlik destek talepleri yükleniyor...");
-    try {
-      const { data, error } = await App.db.client()
-        .from("mall_accessibility_requests")
-        .select("id,visitor_name,service_type,visit_at,party_size,contact_phone,contact_email,meeting_point,request_note,status,admin_note,created_at")
-        .order("visit_at", { ascending: true })
-        .limit(250);
-      if (error) throw error;
-      const rows = data || [];
-      target.innerHTML = rows.length
+    const totalPages = Math.max(1, Math.ceil(accessibilityRequestTotal / accessibilityRequestPageSize));
+    const hasFilters = Boolean(accessibilityRequestStatusFilter || accessibilityRequestTypeFilter || accessibilityRequestSearchFilter || accessibilityRequestStartDateFilter || accessibilityRequestEndDateFilter);
+    target.innerHTML = `
+      <div class="avm-operation-summary" aria-label="Erişilebilirlik talebi operasyon özeti">
+        <div class="avm-operation-stat"><span>Filtrelenmiş talep</span><strong>${accessibilityRequestTotal}</strong></div>
+        <div class="avm-operation-stat"><span>Yeni</span><strong>${accessibilityRequestMetrics.newCount}</strong></div>
+        <div class="avm-operation-stat"><span>Teyit edildi</span><strong>${accessibilityRequestMetrics.confirmed}</strong></div>
+        <div class="avm-operation-stat"><span>Yaklaşan ziyaret</span><strong>${accessibilityRequestMetrics.upcoming}</strong></div>
+        <div class="avm-operation-stat"><span>Toplam ziyaretçi</span><strong>${accessibilityRequestMetrics.visitors}</strong></div>
+      </div>
+      <p class="muted">${accessibilityRequestRows.length} kayıt bu sayfada / ${accessibilityRequestTotal} eşleşme · ${accessibilityRequestMetrics.completed} tamamlandı · ${accessibilityRequestMetrics.cancelled} iptal · ${accessibilityRequestMetrics.archived} arşivlendi</p>
+      <form class="filters avm-admin-accessibility-request-filters" data-avm-accessibility-request-filters>
+        <div class="field">
+          <label for="avm-accessibility-status-filter">Durum</label>
+          <select id="avm-accessibility-status-filter" data-avm-accessibility-filter-status>
+            <option value="">Tüm durumlar</option>
+            ${Object.entries(accessibilityRequestStatusLabels).map(([value, label]) => `<option value="${value}" ${accessibilityRequestStatusFilter === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-accessibility-type-filter">Destek türü</label>
+          <select id="avm-accessibility-type-filter" data-avm-accessibility-filter-type>
+            <option value="">Tüm destek türleri</option>
+            ${Object.entries(accessibilityRequestTypeLabels).map(([value, label]) => `<option value="${value}" ${accessibilityRequestTypeFilter === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field">
+          <label for="avm-accessibility-search-filter">Talep ara</label>
+          <input id="avm-accessibility-search-filter" type="search" data-avm-accessibility-filter-search value="${core.escapeHTML(accessibilityRequestSearchFilter)}" placeholder="Ad, iletişim, buluşma veya not">
+        </div>
+        <div class="field">
+          <label for="avm-accessibility-start-filter">Ziyaret başlangıcı</label>
+          <input id="avm-accessibility-start-filter" type="date" data-avm-accessibility-filter-start value="${core.escapeHTML(accessibilityRequestStartDateFilter)}" ${accessibilityRequestEndDateFilter ? `max="${core.escapeHTML(accessibilityRequestEndDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-accessibility-end-filter">Ziyaret bitişi</label>
+          <input id="avm-accessibility-end-filter" type="date" data-avm-accessibility-filter-end value="${core.escapeHTML(accessibilityRequestEndDateFilter)}" ${accessibilityRequestStartDateFilter ? `min="${core.escapeHTML(accessibilityRequestStartDateFilter)}"` : ""}>
+        </div>
+        <div class="field">
+          <label for="avm-accessibility-page-size">Sayfa başına</label>
+          <select id="avm-accessibility-page-size" data-avm-accessibility-page-size>
+            ${[25, 50, 100].map((value) => `<option value="${value}" ${accessibilityRequestPageSize === value ? "selected" : ""}>${value} kayıt</option>`).join("")}
+          </select>
+        </div>
+        <div class="field field--actions">
+          <label aria-hidden="true">&nbsp;</label>
+          <div class="avm-redemption-filter-actions">
+            <button class="btn btn--light" type="button" data-avm-accessibility-reset>Temizle</button>
+            <button class="btn" type="button" data-avm-accessibility-export aria-label="Filtrelenmiş erişilebilirlik taleplerini CSV olarak indir">CSV İndir</button>
+          </div>
+        </div>
+      </form>
+      ${accessibilityRequestRows.length
         ? `
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr><th>Ziyaret</th><th>Destek</th><th>Ziyaretçi</th><th>Buluşma / not</th><th>Durum</th><th>Oluşturma</th></tr></thead>
               <tbody>
-                ${rows.map((request) => `
+                ${accessibilityRequestRows.map((request) => `
                   <tr>
                     <td>${request.visit_at ? new Date(request.visit_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "-"}<br><span class="muted">${core.escapeHTML(`${request.party_size || 1} kişi`)}</span></td>
                     <td>${core.escapeHTML(accessibilityRequestTypeLabels[request.service_type] || request.service_type)}</td>
                     <td>${core.escapeHTML(request.visitor_name)}<br>${core.escapeHTML([request.contact_phone, request.contact_email].filter(Boolean).join(" · ") || "-")}</td>
                     <td>${core.escapeHTML(request.meeting_point || "Belirtilmedi")}<br><span class="muted">${core.escapeHTML(request.request_note || "Not yok")}</span></td>
                     <td>
-                      <select data-avm-accessibility-request-status="${core.escapeHTML(request.id)}">
-                        ${["new", "confirmed", "completed", "cancelled", "archived"].map((value) => `<option value="${value}" ${request.status === value ? "selected" : ""}>${core.escapeHTML(accessibilityRequestStatusLabels[value])}</option>`).join("")}
+                      <select data-avm-accessibility-request-status="${core.escapeHTML(request.request_id || request.id)}">
+                        ${Object.entries(accessibilityRequestStatusLabels).map(([value, label]) => `<option value="${value}" ${request.status === value ? "selected" : ""}>${core.escapeHTML(label)}</option>`).join("")}
                       </select>
                     </td>
                     <td>${request.created_at ? new Date(request.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "-"}</td>
@@ -1826,10 +1956,51 @@
               </tbody>
             </table>
           </div>
+          <nav class="avm-report-pagination" aria-label="Erişilebilirlik talebi sayfaları">
+            <button class="icon-btn" type="button" data-avm-accessibility-previous aria-label="Önceki sayfa" title="Önceki sayfa" ${accessibilityRequestPage <= 1 ? "disabled" : ""}>←</button>
+            <span>Sayfa ${accessibilityRequestPage} / ${totalPages}</span>
+            <button class="icon-btn" type="button" data-avm-accessibility-next aria-label="Sonraki sayfa" title="Sonraki sayfa" ${accessibilityRequestPage >= totalPages ? "disabled" : ""}>→</button>
+          </nav>
         `
-        : '<div class="empty-state">Henüz erişilebilirlik destek talebi yok.</div>';
+        : `<div class="empty-state">${hasFilters ? "Bu filtrelerle eşleşen erişilebilirlik talebi yok." : "Henüz erişilebilirlik destek talebi yok."}</div>`}
+    `;
+  }
+
+  async function loadAccessibilityRequests(options = {}) {
+    const target = document.querySelector("[data-avm-admin-accessibility-requests]");
+    if (!target) return;
+    if (options.resetPage) accessibilityRequestPage = 1;
+    const requestId = ++accessibilityRequestRequestId;
+    core.renderStatus(target, "Erişilebilirlik destek talepleri yükleniyor...");
+    try {
+      const offset = (accessibilityRequestPage - 1) * accessibilityRequestPageSize;
+      const { data, error } = await queryAccessibilityRequestReport(accessibilityRequestPageSize, offset);
+      if (error) throw error;
+      if (requestId !== accessibilityRequestRequestId) return;
+      accessibilityRequestRows = data || [];
+      if (!accessibilityRequestRows.length && accessibilityRequestPage > 1) {
+        accessibilityRequestPage = 1;
+        await loadAccessibilityRequests();
+        return;
+      }
+      const metrics = accessibilityRequestRows[0] || {};
+      accessibilityRequestTotal = interactionNumber(metrics.total_count);
+      accessibilityRequestMetrics = {
+        newCount: interactionNumber(metrics.new_count),
+        confirmed: interactionNumber(metrics.confirmed_count),
+        completed: interactionNumber(metrics.completed_count),
+        cancelled: interactionNumber(metrics.cancelled_count),
+        archived: interactionNumber(metrics.archived_count),
+        visitors: interactionNumber(metrics.visitors_sum),
+        upcoming: interactionNumber(metrics.upcoming_count)
+      };
+      renderAccessibilityRequests();
     } catch (error) {
-      core.renderStatus(target, error.message || "Erişilebilirlik talepleri yüklenemedi. İlgili Supabase migration uygulanmalı.", "error");
+      if (requestId !== accessibilityRequestRequestId) return;
+      accessibilityRequestRows = [];
+      accessibilityRequestTotal = 0;
+      accessibilityRequestMetrics = { newCount: 0, confirmed: 0, completed: 0, cancelled: 0, archived: 0, visitors: 0, upcoming: 0 };
+      core.renderStatus(target, error.message || "Erişilebilirlik talepleri yüklenemedi. Supabase erişilebilirlik raporlama migration'ı uygulanmalı.", "error");
     }
   }
 
@@ -3192,6 +3363,65 @@
     });
   }
 
+  function bindAccessibilityRequestControls() {
+    document.addEventListener("submit", (event) => {
+      const form = event.target.closest("[data-avm-accessibility-request-filters]");
+      if (!form) return;
+      event.preventDefault();
+      accessibilityRequestSearchFilter = form.querySelector("[data-avm-accessibility-filter-search]")?.value || "";
+      loadAccessibilityRequests({ resetPage: true });
+    });
+
+    document.addEventListener("change", (event) => {
+      const statusFilter = event.target.closest("[data-avm-accessibility-filter-status]");
+      const typeFilter = event.target.closest("[data-avm-accessibility-filter-type]");
+      const searchFilter = event.target.closest("[data-avm-accessibility-filter-search]");
+      const startFilter = event.target.closest("[data-avm-accessibility-filter-start]");
+      const endFilter = event.target.closest("[data-avm-accessibility-filter-end]");
+      const pageSize = event.target.closest("[data-avm-accessibility-page-size]");
+      if (!statusFilter && !typeFilter && !searchFilter && !startFilter && !endFilter && !pageSize) return;
+      if (statusFilter) accessibilityRequestStatusFilter = statusFilter.value;
+      if (typeFilter) accessibilityRequestTypeFilter = typeFilter.value;
+      if (searchFilter) accessibilityRequestSearchFilter = searchFilter.value;
+      if (startFilter) accessibilityRequestStartDateFilter = startFilter.value;
+      if (endFilter) accessibilityRequestEndDateFilter = endFilter.value;
+      if (pageSize) accessibilityRequestPageSize = Number(pageSize.value) || 50;
+      if (accessibilityRequestStartDateFilter && accessibilityRequestEndDateFilter && accessibilityRequestEndDateFilter < accessibilityRequestStartDateFilter) {
+        core.toast("Ziyaret bitişi başlangıç tarihinden önce olamaz.", "error");
+        renderAccessibilityRequests();
+        return;
+      }
+      loadAccessibilityRequests({ resetPage: true });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-avm-accessibility-reset]")) {
+        accessibilityRequestStatusFilter = "";
+        accessibilityRequestTypeFilter = "";
+        accessibilityRequestSearchFilter = "";
+        accessibilityRequestStartDateFilter = "";
+        accessibilityRequestEndDateFilter = "";
+        loadAccessibilityRequests({ resetPage: true });
+        return;
+      }
+      const exportButton = event.target.closest("[data-avm-accessibility-export]");
+      if (exportButton) {
+        exportAccessibilityRequests(exportButton);
+        return;
+      }
+      if (event.target.closest("[data-avm-accessibility-previous]") && accessibilityRequestPage > 1) {
+        accessibilityRequestPage -= 1;
+        loadAccessibilityRequests();
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(accessibilityRequestTotal / accessibilityRequestPageSize));
+      if (event.target.closest("[data-avm-accessibility-next]") && accessibilityRequestPage < totalPages) {
+        accessibilityRequestPage += 1;
+        loadAccessibilityRequests();
+      }
+    });
+  }
+
   function bindPartnerSubmissionUpdates() {
     document.addEventListener("change", async (event) => {
       const statusSelect = event.target.closest("[data-avm-partner-submission-status]");
@@ -3537,6 +3767,7 @@
     bindAdSlotForm();
     bindLeadUpdates();
     bindAccessibilityRequestUpdates();
+    bindAccessibilityRequestControls();
     bindPartnerSubmissionUpdates();
     bindPartnerSubmissionControls();
     bindPartnerSubmissionTargetCreation();
