@@ -7886,3 +7886,120 @@ body[data-theme] .site-footer .social-icons .ig span {
     color: #ffffff !important;
   }
 }
+
+/* Branded footer social and app links */
+.site-footer .social-icons a {
+  position: relative;
+  overflow: hidden;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.site-footer .social-icons a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), transparent 54%);
+  opacity: 0.82;
+}
+
+.site-footer .social-icons .social-icon,
+.site-footer .social-icons b {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: #ffffff !important;
+}
+
+.site-footer .social-icons svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  fill: currentColor;
+}
+
+.site-footer .social-icons span {
+  position: relative;
+  z-index: 1;
+  color: #ffffff !important;
+}
+
+.site-footer .social-icons .wa {
+  background: #25d366 !important;
+  box-shadow: 0 16px 34px rgba(37, 211, 102, 0.26) !important;
+}
+
+.site-footer .social-icons .ig {
+  background: linear-gradient(45deg, #f58529, #feda77 24%, #dd2a7b 50%, #8134af 74%, #515bd4) !important;
+  box-shadow: 0 16px 34px rgba(221, 42, 123, 0.28) !important;
+}
+
+.site-footer .social-icons .x {
+  background: #0f172a !important;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.28) !important;
+}
+
+.site-footer .social-icons .fb {
+  background: #1877f2 !important;
+  box-shadow: 0 16px 34px rgba(24, 119, 242, 0.26) !important;
+}
+
+.site-footer .social-icons .yt {
+  background: #ff0000 !important;
+  box-shadow: 0 16px 34px rgba(255, 0, 0, 0.24) !important;
+}
+
+.site-footer .social-icons .li {
+  background: #0a66c2 !important;
+  box-shadow: 0 16px 34px rgba(10, 102, 194, 0.26) !important;
+}
+
+.site-footer .social-icons .tg {
+  background: #229ed9 !important;
+  box-shadow: 0 16px 34px rgba(34, 158, 217, 0.26) !important;
+}
+
+.site-footer .social-icons .tk {
+  background: linear-gradient(135deg, #010101 0%, #111111 48%, #fe2c55 49%, #25f4ee 100%) !important;
+  box-shadow: 0 16px 34px rgba(254, 44, 85, 0.2) !important;
+}
+
+.site-footer .social-icons .mail {
+  background: linear-gradient(135deg, #00d5ff, #0067ff) !important;
+  box-shadow: 0 16px 34px rgba(0, 119, 255, 0.26) !important;
+}
+
+.site-footer .store-btn--app:has(.store-btn__icon)::before {
+  display: none !important;
+  content: none !important;
+}
+
+.site-footer .store-btn__icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.site-footer .store-btn__icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+  fill: currentColor;
+}
+
+.site-footer .store-btn__icon--play {
+  background: linear-gradient(135deg, #00c853, #00b8ff 45%, #ffcf33 68%, #ff1744) !important;
+}
+
+.site-footer .store-btn__icon--apple {
+  background: #111827 !important;
+}

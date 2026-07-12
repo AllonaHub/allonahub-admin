@@ -2374,3 +2374,274 @@ body[data-level-theme="elite-diamond"] .avatar-stage::after {
     padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* User panel theme contrast guard */
+body.user-panel-page {
+  --panel-readable-heading: #ffffff;
+  --panel-readable-body: #eef8ff;
+  --panel-readable-muted: #a9bad2;
+  --panel-readable-link: color-mix(in srgb, var(--panel-accent) 84%, #ffffff);
+  --panel-readable-button: #00101d;
+}
+
+body.user-panel-page[data-theme] {
+  --ah-readable-heading: var(--panel-readable-heading);
+  --ah-readable-body: var(--panel-readable-body);
+  --ah-readable-muted: var(--panel-readable-muted);
+  --ah-readable-link: var(--panel-readable-link);
+  --ah-readable-link-hover: #ffffff;
+  color-scheme: dark !important;
+  color: var(--panel-readable-body) !important;
+  background:
+    radial-gradient(circle at 14% 5%, color-mix(in srgb, var(--panel-accent) 42%, transparent), transparent 24rem),
+    radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--panel-accent-2) 34%, transparent), transparent 23rem),
+    radial-gradient(circle at 52% 72%, rgba(246, 182, 75, .16), transparent 26rem),
+    linear-gradient(160deg, #01040b, var(--panel-bg), var(--panel-bg-2), #01040b) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .premium-shell,
+  .premium-shell *,
+  .panel-drawer,
+  .panel-drawer *,
+  .hp-info-modal,
+  .hp-info-modal *,
+  .refund-center-modal,
+  .refund-center-modal *,
+  .bottom-nav,
+  .bottom-nav *,
+  .panel-status
+) {
+  color: var(--panel-readable-body) !important;
+  text-shadow: none !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .premium-shell,
+  .panel-drawer,
+  .hp-info-modal,
+  .refund-center-modal,
+  .bottom-nav
+) :where(h1, h2, h3, h4, h5, h6, strong, b, label, legend, caption, th, .account-menu-title span) {
+  color: var(--panel-readable-heading) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .premium-shell,
+  .panel-drawer,
+  .hp-info-modal,
+  .refund-center-modal,
+  .bottom-nav
+) :where(p, li, dd, td, summary, figcaption, small, .hello, .member-no, .streak-pill, .account-benefit-list span, .refund-center-copy, .refund-order-main span, .refund-order-meta span, .refund-order-state span) {
+  color: var(--panel-readable-muted) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .premium-icon-btn,
+  .panel-drawer-close,
+  .hp-info-close,
+  .refund-center-close,
+  .bottom-nav a,
+  .account-menu-row,
+  .account-menu-row span,
+  .account-focus-actions a,
+  .panel-drawer-links a,
+  .refund-type-tabs button:not(.is-active),
+  .refund-check
+) {
+  color: var(--panel-readable-body) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .account-menu-row i,
+  .panel-drawer-links i,
+  .account-focus-actions i,
+  .premium-icon-btn i,
+  .bottom-nav i,
+  .account-menu-title a,
+  .tier-pill,
+  .tier-pill span,
+  .bottom-nav .active,
+  .bottom-nav .active i,
+  .bottom-nav .active span
+) {
+  color: var(--panel-readable-link) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .account-menu-row b,
+  .account-menu-row strong,
+  .refund-section-head strong,
+  .refund-order-main strong,
+  .hp-source-table th,
+  .hp-source-table td:last-child,
+  .hp-source-table tfoot td
+) {
+  color: var(--panel-readable-heading) !important;
+}
+
+body.user-panel-page[data-theme] :where(
+  .edit-chip,
+  .edit-chip *,
+  .premium-btn,
+  .premium-btn *,
+  .account-menu-search button,
+  .account-menu-search button *,
+  .refund-submit,
+  .refund-submit *,
+  .refund-type-tabs button.is-active,
+  .refund-type-tabs button.is-active *,
+  .notification-chip,
+  .notification-chip *
+) {
+  color: var(--panel-readable-button) !important;
+  text-shadow: none !important;
+}
+
+body.user-panel-page[data-theme] .notification-chip,
+body.user-panel-page[data-theme] .notification-chip * {
+  color: #ffffff !important;
+}
+
+body.user-panel-page[data-theme] :where(input, select, textarea) {
+  color: var(--panel-readable-heading) !important;
+  caret-color: var(--panel-accent) !important;
+}
+
+body.user-panel-page[data-theme] :where(input::placeholder, textarea::placeholder) {
+  color: color-mix(in srgb, var(--panel-readable-muted) 72%, transparent) !important;
+}
+
+body.user-panel-page[data-theme] .premium-glass {
+  color: var(--panel-readable-body) !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, .09), transparent 34%),
+    linear-gradient(160deg, rgba(7, 18, 36, .92), rgba(2, 7, 18, .92)) !important;
+}
+
+body.user-panel-page[data-theme] .premium-brand .logo-title .gold,
+body.user-panel-page[data-theme] .site-footer .logo-title .gold {
+  color: #ffd700 !important;
+}
+
+body.user-panel-page[data-theme] .premium-brand .logo-title .blue,
+body.user-panel-page[data-theme] .site-footer .logo-title .blue {
+  color: #00e5ff !important;
+}
+
+body.user-panel-page .site-footer {
+  margin-top: 28px !important;
+  padding: 34px 0 calc(124px + env(safe-area-inset-bottom)) !important;
+  color: var(--panel-readable-body) !important;
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, .12) !important;
+  box-shadow: none !important;
+}
+
+body.user-panel-page .site-footer .container {
+  width: min(calc(100% - 24px), 1720px) !important;
+  padding-inline: clamp(12px, 2vw, 22px) !important;
+}
+
+body.user-panel-page .site-footer .footer-grid {
+  gap: clamp(18px, 2.4vw, 30px) !important;
+  padding: 0 0 28px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.user-panel-page .site-footer .footer-col {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.user-panel-page .site-footer :where(h2, h3, strong, b, .footer-brand) {
+  color: var(--panel-readable-heading) !important;
+  text-shadow: none !important;
+}
+
+body.user-panel-page .site-footer :where(a:not(.footer-brand), p, span, small, li, .footer-bottom, .footer-payment-strip) {
+  color: var(--panel-readable-muted) !important;
+  text-shadow: none !important;
+}
+
+body.user-panel-page .site-footer :where(a:not(.footer-brand):hover, .footer-bottom a:hover) {
+  color: var(--panel-readable-link) !important;
+}
+
+body.user-panel-page .site-footer .social-icons,
+body.user-panel-page .site-footer .store-buttons,
+body.user-panel-page .site-footer .footer-payment-strip,
+body.user-panel-page .site-footer .footer-bottom {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body.user-panel-page .site-footer .social-icons a,
+body.user-panel-page .site-footer .social-icons :where(b, span, svg) {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
+body.user-panel-page .site-footer .store-btn,
+body.user-panel-page .site-footer .store-btn :where(span, strong, svg) {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
+body.user-panel-page .site-footer .footer-payment-badge,
+body.user-panel-page .site-footer .footer-payment-badge * {
+  color: #102334 !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-bottom,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-payment-strip {
+  color: var(--panel-readable-muted) !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col h2,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col h3,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .gold,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .blue {
+  color: var(--panel-readable-heading) !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col a:not(.footer-brand),
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col p,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col span,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-bottom,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-bottom a,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-payment-strip,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .store-btn__kicker {
+  color: var(--panel-readable-muted) !important;
+  text-shadow: none !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-col a:not(.footer-brand):hover,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-bottom a:hover {
+  color: var(--panel-readable-link) !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .social-icons a,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .social-icons a span,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .social-icons a b,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .store-btn,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .store-btn span,
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .store-btn strong {
+  color: #ffffff !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .gold {
+  color: #ffd700 !important;
+}
+
+body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .blue {
+  color: #00e5ff !important;
+}
