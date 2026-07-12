@@ -7,30 +7,317 @@
   <meta name="description" content="AllonaHub kullanıcı seviye, XP ve HP ayrımı.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260712-level-center1">
   <style>
-    .level-page{display:grid;gap:18px;padding-bottom:42px}
-    .level-overview{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}
-    .level-card{padding:24px;border-radius:22px;background:linear-gradient(145deg,rgba(0,181,255,.12),rgba(255,255,255,.06));border:1px solid rgba(0,181,255,.18)}
-    .level-card h2,.level-card h3{margin:0 0 8px}
-    .level-card p{color:var(--muted);line-height:1.6}
-    .level-progress{height:12px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin:16px 0}
-    .level-progress i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#00d5ff,#ffd700)}
-    .level-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .level-stat{padding:16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
-    .level-stat span{display:block;color:#9fc6d6;font-size:12px;font-weight:900;text-transform:uppercase}
-    .level-stat strong{display:block;margin-top:8px;font-size:24px}
-    .level-list{display:grid;gap:8px}
-    .level-row{display:grid;grid-template-columns:90px minmax(0,1fr) 130px;gap:12px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
-    .level-row.is-current{border-color:rgba(255,215,0,.42);box-shadow:0 0 22px rgba(255,215,0,.14)}
-    .level-row b{color:#fff}
-    .level-row span,.level-row small{color:#b9d3df}
-    .page-actions{display:flex;gap:10px;flex-wrap:wrap}
-    @media(max-width:860px){.level-overview,.level-stats,.level-row{grid-template-columns:1fr}.level-row{gap:5px}}
+    body.account-level-page {
+      --level-bg: #020712;
+      --level-bg-2: #05162a;
+      --level-card: rgba(7, 18, 36, .9);
+      --level-line: rgba(78, 205, 255, .24);
+      --level-text: #eef8ff;
+      --level-heading: #ffffff;
+      --level-muted: #a9bad2;
+      --level-accent: #18b8ff;
+      --level-accent-2: #f6b64b;
+      min-height: 100vh;
+      color: var(--level-text);
+      background:
+        radial-gradient(circle at 14% 5%, color-mix(in srgb, var(--level-accent) 38%, transparent), transparent 25rem),
+        radial-gradient(circle at 86% 14%, rgba(124, 77, 255, .24), transparent 23rem),
+        radial-gradient(circle at 50% 78%, rgba(246, 182, 75, .12), transparent 26rem),
+        linear-gradient(160deg, #01040b, var(--level-bg), var(--level-bg-2), #01040b);
+    }
+
+    body.account-level-page[data-theme] {
+      --ah-readable-heading: var(--level-heading);
+      --ah-readable-body: var(--level-text);
+      --ah-readable-muted: var(--level-muted);
+      --ah-readable-link: color-mix(in srgb, var(--level-accent) 84%, #ffffff);
+      --ah-readable-link-hover: #ffffff;
+      color-scheme: dark;
+      color: var(--level-text) !important;
+      background:
+        radial-gradient(circle at 14% 5%, color-mix(in srgb, var(--level-accent) 38%, transparent), transparent 25rem),
+        radial-gradient(circle at 86% 14%, rgba(124, 77, 255, .24), transparent 23rem),
+        radial-gradient(circle at 50% 78%, rgba(246, 182, 75, .12), transparent 26rem),
+        linear-gradient(160deg, #01040b, var(--level-bg), var(--level-bg-2), #01040b) !important;
+    }
+
+    body.account-level-page .site-shell,
+    body.account-level-page .site-main {
+      color: var(--level-text) !important;
+      background: transparent !important;
+    }
+
+    body.account-level-page .site-main {
+      padding: clamp(18px, 2.5vw, 34px) 0 56px;
+    }
+
+    body.account-level-page .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+      padding: clamp(22px, 3vw, 34px);
+      border: 1px solid var(--level-line);
+      border-radius: 24px;
+      color: var(--level-text) !important;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, .09), transparent 38%),
+        linear-gradient(160deg, rgba(7, 18, 36, .94), rgba(2, 7, 18, .9)) !important;
+      box-shadow: 0 22px 70px rgba(0, 0, 0, .36), 0 0 38px color-mix(in srgb, var(--level-accent) 16%, transparent);
+    }
+
+    body.account-level-page .page-heading h1,
+    body.account-level-page .level-card h2,
+    body.account-level-page .level-card h3,
+    body.account-level-page .level-stat strong,
+    body.account-level-page .level-row b,
+    body.account-level-page .level-row strong {
+      color: var(--level-heading) !important;
+      text-shadow: none !important;
+    }
+
+    body.account-level-page .page-heading p,
+    body.account-level-page .level-card p,
+    body.account-level-page .level-stat span,
+    body.account-level-page .level-row span,
+    body.account-level-page .level-row small,
+    body.account-level-page .level-status {
+      color: var(--level-muted) !important;
+      text-shadow: none !important;
+    }
+
+    body.account-level-page .page-heading .eyebrow,
+    body.account-level-page .level-card .eyebrow {
+      color: color-mix(in srgb, var(--level-accent) 86%, #ffffff) !important;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .level-page {
+      display: grid;
+      gap: 18px;
+      padding-bottom: 42px;
+    }
+
+    .level-overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+      gap: 16px;
+    }
+
+    .level-card,
+    .level-stat {
+      border: 1px solid var(--level-line);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), transparent 36%),
+        linear-gradient(160deg, rgba(7, 18, 36, .92), rgba(2, 7, 18, .9));
+      box-shadow: 0 18px 58px rgba(0, 0, 0, .32), inset 0 1px 0 rgba(255, 255, 255, .12);
+      backdrop-filter: blur(16px);
+    }
+
+    .level-card {
+      padding: 24px;
+      border-radius: 22px;
+    }
+
+    .level-card h2,
+    .level-card h3 {
+      margin: 0 0 8px;
+    }
+
+    .level-card p {
+      line-height: 1.6;
+    }
+
+    .level-progress {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .12);
+      overflow: hidden;
+      margin: 16px 0;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .36);
+    }
+
+    .level-progress i {
+      display: block;
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--level-accent), var(--level-accent-2));
+      transition: width .45s ease;
+    }
+
+    .level-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .level-stat {
+      padding: 16px;
+      border-radius: 18px;
+    }
+
+    .level-stat span {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .level-stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(22px, 2.2vw, 28px);
+      overflow-wrap: anywhere;
+    }
+
+    .level-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .level-row {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr) 130px;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .level-row.is-current {
+      border-color: color-mix(in srgb, var(--level-accent-2) 58%, transparent);
+      box-shadow: 0 0 24px color-mix(in srgb, var(--level-accent-2) 18%, transparent);
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    body.account-level-page .page-actions .btn {
+      color: #00101d !important;
+      background: linear-gradient(135deg, var(--level-accent), var(--level-accent-2)) !important;
+      border-color: transparent !important;
+    }
+
+    body.account-level-page .page-actions .btn--light {
+      color: var(--level-heading) !important;
+      background: rgba(255, 255, 255, .08) !important;
+      border-color: rgba(255, 255, 255, .18) !important;
+    }
+
+    .level-status {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .07);
+      font-weight: 800;
+    }
+
+    body.account-level-page .level-status[data-state="ready"] {
+      color: #9ff5cd !important;
+      border-color: rgba(53, 229, 154, .24);
+    }
+
+    body.account-level-page .level-status[data-state="error"] {
+      color: #ffb7c2 !important;
+      border-color: rgba(255, 76, 104, .28);
+    }
+
+    body.account-level-page .site-footer {
+      margin-top: 28px !important;
+      padding-top: 34px !important;
+      color: var(--level-text) !important;
+      background: transparent !important;
+      border-top: 1px solid rgba(255, 255, 255, .12) !important;
+      box-shadow: none !important;
+    }
+
+    body.account-level-page .site-footer .footer-grid {
+      background: transparent !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+
+    body.account-level-page .site-footer .footer-col {
+      padding: 0 !important;
+      color: var(--level-muted) !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-brand,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-col h2,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-col h3 {
+      color: var(--level-heading) !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-col a:not(.footer-brand),
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-col p,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-bottom,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-bottom a,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-payment-strip,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .store-btn__kicker {
+      color: var(--level-muted) !important;
+      text-shadow: none !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-col a:not(.footer-brand):hover,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-bottom a:hover {
+      color: color-mix(in srgb, var(--level-accent) 84%, #ffffff) !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .social-icons a,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .social-icons a span,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .social-icons a b,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .store-btn,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .store-btn span,
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .store-btn strong {
+      color: #ffffff !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .gold {
+      color: #ffd700 !important;
+    }
+
+    body.account-level-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .blue {
+      color: #00e5ff !important;
+    }
+
+    @media(max-width: 980px) {
+      body.account-level-page .page-heading,
+      .level-overview,
+      .level-stats,
+      .level-row {
+        grid-template-columns: 1fr;
+      }
+
+      body.account-level-page .page-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .level-row {
+        gap: 5px;
+      }
+    }
   </style>
 </head>
-<body>
-  <div class="site-shell">
+<body class="account-level-page">
+  <div class="site-shell" data-page="account-level">
     <div data-layout="header"></div>
     <main class="site-main">
       <section class="container page-heading">
@@ -44,7 +331,9 @@
         <div class="page-actions">
           <a class="btn" href="user-panel.html">Hesabıma Dön</a>
           <a class="btn btn--light" href="puanlar.html">Puan Dükkanı</a>
+          <a class="btn btn--light" href="../premium.html">Premium Paketleri</a>
         </div>
+        <div class="level-status" data-level-status role="status" aria-live="polite">Seviye ve HP bilgilerin hazırlanıyor.</div>
         <section class="level-overview">
           <article class="level-card">
             <p class="eyebrow">Aktif seviye</p>
@@ -62,6 +351,7 @@
           <div class="level-stat"><span>Toplam HP</span><strong data-total-hp>0 HP</strong></div>
           <div class="level-stat"><span>Günlük Görev HP</span><strong data-daily-hp>0 HP</strong></div>
           <div class="level-stat"><span>Alışveriş HP</span><strong data-shopping-hp>0 HP</strong></div>
+          <div class="level-stat"><span>XP Durumu</span><strong data-total-xp>0 XP</strong></div>
         </section>
         <section class="level-card">
           <h3>Seviye Basamakları</h3>
@@ -77,45 +367,93 @@
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260620-auth2" defer></script>
   <script src="../../js/user-profile-sync.js?v=20260629-panel-fix2" defer></script>
-  <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
-  <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260712-level-center1" defer></script>
+  <script src="../../js/platform.js?v=20260712-level-center1" defer></script>
+  <script src="../../js/privacy-consent.js?v=20260712-level-center1" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
       const sync = window.AllonaProfileSync;
       const client = sync && sync.createClient ? sync.createClient() : null;
+      const core = window.Allona && window.Allona.core;
       const fmt = (value) => `${Number(value || 0).toLocaleString("tr-TR")} HP`;
+      const fmtXp = (value) => `${Number(value || 0).toLocaleString("tr-TR")} XP`;
+      const safeNumber = (value) => {
+        const number = Number(value || 0);
+        return Number.isFinite(number) ? Math.max(0, number) : 0;
+      };
+      const escapeHTML = (value) => String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
       const set = (selector, value) => {
         const node = document.querySelector(selector);
         if (node) node.textContent = value;
       };
-      if (!sync || !client) return;
-      const loaded = await sync.load(client);
-      if (!loaded || !loaded.user) {
-        window.location.href = "user.html";
+      const status = document.querySelector("[data-level-status]");
+      const setStatus = (message, state = "loading") => {
+        if (!status) return;
+        status.textContent = message;
+        status.dataset.state = state;
+      };
+      const appUrl = (path) => core && core.url ? core.url(path) : path;
+      const loginUrl = () => {
+        const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+        return appUrl(`/pages/account/user.html?returnTo=${returnTo}`);
+      };
+      const render = (profile) => {
+        const levels = Array.isArray(sync.LEVELS) && sync.LEVELS.length ? sync.LEVELS : [];
+        const info = sync.levelFromXp(safeNumber(profile.xp));
+        const daily = safeNumber(profile.cashout_balance);
+        const shopping = safeNumber(profile.hub_cash || profile.wallet_balance);
+        const total = Math.max(safeNumber(profile.hp), daily + shopping);
+        const progress = Math.min(100, Math.max(0, safeNumber(info.progress)));
+        document.body.dataset.levelTheme = info.current.key || "new-member";
+        document.documentElement.style.setProperty("--level-accent", info.current.accent || "#18b8ff");
+        set("[data-level-name]", `${info.current.name} / Lv.${info.current.level}`);
+        set("[data-level-copy]", `${fmtXp(info.xp)} ile bu seviyedesin. ${info.current.bonus || ""}`);
+        set("[data-level-next]", info.next ? `${fmtXp(info.remaining)} sonra ${info.next.name}.` : "Legend seviyesindesin.");
+        set("[data-total-hp]", fmt(total));
+        set("[data-daily-hp]", fmt(daily));
+        set("[data-shopping-hp]", fmt(shopping));
+        set("[data-total-xp]", fmtXp(info.xp));
+        const bar = document.querySelector("[data-level-progress]");
+        if (bar) bar.style.width = `${progress}%`;
+        const list = document.querySelector("[data-level-list]");
+        if (list) {
+          list.innerHTML = levels.map((level) => `
+            <div class="level-row ${level.level === info.current.level ? "is-current" : ""}">
+              <b>Lv.${Number(level.level || 0).toLocaleString("tr-TR")}</b>
+              <span>${escapeHTML(level.name)}<br><small>${escapeHTML(level.bonus)}</small></span>
+              <strong>${Number(level.minXp || 0).toLocaleString("tr-TR")} XP</strong>
+            </div>
+          `).join("");
+        }
+        setStatus("Seviye ve HP bilgilerin güncel.", "ready");
+      };
+
+      if (!sync || !client || !sync.load || !sync.levelFromXp) {
+        setStatus("Seviye merkezi altyapısı hazırlanamadı. Lütfen sayfayı yenile.", "error");
         return;
       }
-      const profile = loaded.profile || {};
-      const info = sync.levelFromXp(profile.xp || 0);
-      const daily = Math.max(0, Number(profile.cashout_balance || 0));
-      const shopping = Math.max(0, Number(profile.hub_cash || profile.wallet_balance || 0));
-      set("[data-level-name]", `${info.current.name} / Lv.${info.current.level}`);
-      set("[data-level-copy]", `${Number(info.xp || 0).toLocaleString("tr-TR")} XP ile bu seviyedesin. ${info.current.bonus || ""}`);
-      set("[data-level-next]", info.next ? `${info.remaining.toLocaleString("tr-TR")} XP sonra ${info.next.name}.` : "Legend seviyesindesin.");
-      set("[data-total-hp]", fmt(profile.hp || 0));
-      set("[data-daily-hp]", fmt(daily));
-      set("[data-shopping-hp]", fmt(shopping));
-      const bar = document.querySelector("[data-level-progress]");
-      if (bar) bar.style.width = `${info.progress || 0}%`;
-      const list = document.querySelector("[data-level-list]");
-      if (list) {
-        list.innerHTML = sync.LEVELS.map((level) => `
-          <div class="level-row ${level.level === info.current.level ? "is-current" : ""}">
-            <b>Lv.${level.level}</b>
-            <span>${level.name}<br><small>${level.bonus}</small></span>
-            <strong>${Number(level.minXp || 0).toLocaleString("tr-TR")} XP</strong>
-          </div>
-        `).join("");
+
+      try {
+        const loaded = await sync.load(client);
+        if (!loaded || !loaded.user) {
+          window.location.href = loginUrl();
+          return;
+        }
+        render(loaded.profile || {});
+      } catch (error) {
+        console.error("Seviye merkezi yüklenemedi:", error);
+        const fallback = sync.storedProfile ? sync.storedProfile() : null;
+        if (fallback && Object.keys(fallback).length) {
+          render(fallback);
+          setStatus("Canlı profil bilgisi alınamadı; kayıtlı son bilgiler gösteriliyor.", "error");
+          return;
+        }
+        setStatus("Seviye bilgileri yüklenemedi. Lütfen tekrar giriş yap veya sayfayı yenile.", "error");
       }
     });
   </script>
