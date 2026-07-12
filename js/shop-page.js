@@ -22,10 +22,15 @@
     return (productList || []).filter(isShopCatalogProduct);
   }
 
+  function categoryPreset() {
+    const shell = document.querySelector(".site-shell[data-shop-category]");
+    return shell?.dataset.shopCategory || "";
+  }
+
   function filtersFromDom() {
     return {
       search: document.querySelector("[data-filter-search]")?.value || core.getParam("q") || "",
-      category: document.querySelector("[data-filter-category]")?.value || "",
+      category: document.querySelector("[data-filter-category]")?.value || core.getParam("category") || categoryPreset() || "",
       brand: document.querySelector("[data-filter-brand]")?.value || "",
       minPrice: document.querySelector("[data-filter-min]")?.value || "",
       maxPrice: document.querySelector("[data-filter-max]")?.value || "",
@@ -169,7 +174,7 @@
     const brandSelect = document.querySelector("[data-filter-brand]");
     const sortSelect = document.querySelector("[data-filter-sort]");
     const q = core.getParam("q");
-    const category = core.getParam("category");
+    const category = core.getParam("category") || categoryPreset();
     const brand = core.getParam("brand");
     const sort = core.getParam("sort");
     const quick = core.getParam("quick");
@@ -304,7 +309,7 @@
       description: ad.sentence || ad.description || "Seçili ürün ve kampanyaları Allona Shop üst banner alanında keşfedin.",
       image_url: ad.image || ad.image_url || "/images/ads/hero-ad-shop.jpg",
       cta_label: ad.cta || ad.cta_label || "Alışverişe Git",
-      link_url: ad.href || ad.url || ad.link_url || "/pages/commerce/allonashop.html",
+      link_url: ad.href || ad.url || ad.link_url || "/pages/commerce/shop.html",
       source_id: ad.id || ad.slug || ad.title || ad.name,
       price_label: ad.price_label || "",
       meta_label: ad.meta_label || ad.visibilityRule || ad.partnerVisibility || "",

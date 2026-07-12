@@ -390,52 +390,75 @@
     updateBadges();
   }
 
+  function toggleLocalFavorite(id, forceState) {
+    const current = getLocalFavorites().map(String);
+    const exists = current.includes(id);
+    const shouldAdd = typeof forceState === "boolean" ? forceState : !exists;
+    const next = shouldAdd
+      ? [...current.filter((item) => item !== id), id]
+      : current.filter((item) => item !== id);
+    setLocalFavorites(next);
+    syncFavoriteButtons(next);
+    return shouldAdd;
+  }
+
   async function favoriteIds() {
+    const localIds = getLocalFavorites().map(String);
     const user = App.auth ? await App.auth.getUser() : null;
-    if (!user) return getLocalFavorites().map(String);
-    const { data, error } = await App.db.client()
-      .from("favorites")
-      .select("product_id")
-      .eq("user_id", user.id);
-    if (error) throw error;
-    return (data || []).map((item) => String(item.product_id));
+    if (!user) return localIds;
+    try {
+      const { data, error } = await App.db.client()
+        .from("favorites")
+        .select("product_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      const mergedIds = [...new Set([...localIds, ...(data || []).map((item) => String(item.product_id))])];
+      if (mergedIds.length !== localIds.length) setLocalFavorites(mergedIds);
+      return mergedIds;
+    } catch (error) {
+      console.warn("Favoriler uzaktan okunamadı; yerel favoriler kullanılacak:", error.message || error);
+      return localIds;
+    }
   }
 
   async function toggleFavorite(productId) {
     const id = String(productId);
     const user = App.auth ? await App.auth.getUser() : null;
+    const isFavorite = toggleLocalFavorite(id);
 
     if (!user) {
-      const current = getLocalFavorites().map(String);
-      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
-      setLocalFavorites(next);
       core.toast("Favoriler güncellendi.");
-      syncFavoriteButtons(next);
-      return next.includes(id);
+      return isFavorite;
     }
 
-    const { data } = await App.db.client()
-      .from("favorites")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("product_id", id)
-      .maybeSingle();
+    try {
+      const { data, error: lookupError } = await App.db.client()
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("product_id", id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
 
-    if (data) {
-      const { error } = await App.db.client().from("favorites").delete().eq("id", data.id);
-      if (error) throw error;
-      core.toast("Favoriden çıkarıldı.");
+      if (!isFavorite && data) {
+        const { error } = await App.db.client().from("favorites").delete().eq("id", data.id);
+        if (error) throw error;
+      }
+
+      if (isFavorite && !data) {
+        const { error } = await App.db.client().from("favorites").insert({ user_id: user.id, product_id: id });
+        if (error) throw error;
+      }
+
+      core.toast(isFavorite ? "Favoriye eklendi." : "Favoriden çıkarıldı.");
       updateBadges();
       refreshFavoriteUi();
-      return false;
+      return isFavorite;
+    } catch (error) {
+      console.warn("Favori uzaktan eşitlenemedi; yerel kayıt korundu:", error.message || error);
+      core.toast("Favoriler güncellendi. Hesap eşitlemesi daha sonra tekrar denenecek.");
+      return isFavorite;
     }
-
-    const { error } = await App.db.client().from("favorites").insert({ user_id: user.id, product_id: id });
-    if (error) throw error;
-    core.toast("Favoriye eklendi.");
-    updateBadges();
-    refreshFavoriteUi();
-    return true;
   }
 
   async function hydrateFavorites() {

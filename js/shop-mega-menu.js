@@ -238,6 +238,22 @@
     "tv-beyaz-esya": "Elektronik"
   };
 
+  const categoryPages = {
+    "Kadın": "shop-kadin.html",
+    "Erkek": "shop-erkek.html",
+    "Elektronik": "shop-elektronik.html",
+    "Ayakkabı & Çanta": "shop-ayakkabi-canta.html",
+    "Moda": "shop-moda-taki.html",
+    "Ev & Yaşam": "shop-ev-yasam.html",
+    "Oto, Bahçe & Yapı Market": "shop-oto-bahce-yapi-market.html",
+    "Anne & Çocuk": "shop-anne-cocuk.html",
+    "Spor & Outdoor": "shop-spor-outdoor.html",
+    "Kozmetik": "shop-kozmetik-kisisel-bakim.html",
+    "Süpermarket": "shop-supermarket-pet-shop.html",
+    "Kitap & Hobi": "shop-kitap-muzik-hobi.html",
+    "Saat & Aksesuar": "shop-saat-aksesuar.html"
+  };
+
   function escapeHTML(value) {
     return String(value || "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -248,11 +264,18 @@
     })[char]);
   }
 
+  function categoryPage(category) {
+    const item = menuItems.find((entry) => entry.category === category || entry.label === category) || resolveCategory(category);
+    return item ? categoryPages[item.category] || "shop.html" : "shop.html";
+  }
+
   function href(query, category) {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (query) params.set("q", query);
-    return `shop.html?${params.toString()}`;
+    const page = category ? categoryPage(category) : "shop.html";
+    const queryString = params.toString();
+    return queryString ? `${page}?${queryString}` : page;
   }
 
   function renderLink(label, category, className) {
@@ -273,7 +296,7 @@
     const [featureTitle, featureText, featureCta, featureQuery] = item.feature;
     return `
       <div class="shop-category-item">
-        <a class="shop-category-trigger" href="${escapeHTML(href(item.query, item.category))}" aria-haspopup="true" aria-expanded="false">${escapeHTML(item.label)}</a>
+        <a class="shop-category-trigger" href="${escapeHTML(href("", item.category))}" title="${escapeHTML(item.label)}" aria-haspopup="true" aria-expanded="false">${escapeHTML(item.label)}</a>
         <div class="shop-category-mega" role="menu" aria-label="${escapeHTML(item.label)} kategorileri">
           <div class="shop-mega-sidebar" aria-label="${escapeHTML(item.label)} alt kategorileri">
             ${item.sidebar.map((link, index) => renderLink(link, item.category, index === 0 ? "is-active" : "")).join("")}
@@ -306,9 +329,11 @@
     const params = new URLSearchParams(window.location.search);
     const category = (params.get("category") || "").toLocaleLowerCase("tr-TR");
     const query = (params.get("q") || "").toLocaleLowerCase("tr-TR");
+    const page = window.location.pathname.split("/").pop();
     nav.querySelectorAll(".shop-category-trigger").forEach((trigger) => {
       const text = trigger.textContent.toLocaleLowerCase("tr-TR");
-      const isActive = Boolean(text && (category.includes(text) || query.includes(text)));
+      const item = menuItems.find((entry) => entry.label === trigger.textContent.trim());
+      const isActive = Boolean(text && (category.includes(text) || query.includes(text) || (item && categoryPages[item.category] === page)));
       trigger.classList.toggle("is-active", isActive);
       if (isActive) trigger.setAttribute("aria-current", "page");
       else trigger.removeAttribute("aria-current");
@@ -479,10 +504,7 @@
       const item = trigger.closest(".shop-category-item");
       const panel = item?.querySelector(".shop-category-mega");
       if (!panel || window.getComputedStyle(panel).display === "none") return;
-      if (!item.classList.contains("is-open")) {
-        event.preventDefault();
-        openMenuItem(nav, item);
-      }
+      closeMenus(nav);
     });
   }
 
@@ -498,6 +520,7 @@
   App.shopCategories = {
     items: menuItems,
     normalizeText,
+    categoryPage,
     resolveCategory,
     productMatchesCategory,
     categoryOptions

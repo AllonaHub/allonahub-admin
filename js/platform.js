@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260712-theme-overflow1";
+  const SERVICE_WORKER_VERSION = "20260712-shopfix1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -86,7 +86,7 @@
   };
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const moduleAdCampaigns = [
-    { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/allonashop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
+    { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/shop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
     { key: "yemek", paths: ["/pages/commerce/allonayemek.html", "/pages/commerce/allonayemek-tumu.html"], title: "Allona Yemek", eyebrow: "Lezzet Reklamı", sentence: "Yakındaki restoranları, fırsat menülerini ve hızlı siparişi canlı reklam vitriniyle öne çıkar.", href: "/pages/commerce/allonayemek.html", image: "/images/ads/hero-ad-yemek.jpg", accent: "#ff8a3d", cta: "Lezzetleri Gör" },
     { key: "market", paths: ["/pages/commerce/allonamarket.html"], title: "Allona Market", eyebrow: "Market Fırsatı", sentence: "Gıda, temizlik ve ev ihtiyaçlarını hızlı teslimat odaklı market akışıyla göster.", href: "/pages/commerce/allonamarket.html", image: "/images/ads/hero-ad-market.jpg", accent: "#20e3a2", cta: "Markete Git" },
     { key: "taksi", paths: ["/pages/ecosystem/allonataksi.html"], title: "Allona Taksi", eyebrow: "Ulaşım", sentence: "Güvenli rota, canlı sürücü akışı ve şehir içi yolculuk fırsatlarını öne çıkar.", href: "/pages/ecosystem/allonataksi.html", image: "/images/ads/hero-ad-taksi.jpg", accent: "#46a6ff", cta: "Taksi Çağır" },
@@ -1100,7 +1100,7 @@
       [/iletişim|bize/i, "/pages/company/iletisim.html"],
       [/modül|hizmet/i, "/index.html#modules"],
       [/kariyer|iş/i, "/pages/career/allonakariyer.html"],
-      [/allona shop|ürün|mağaza/i, "/pages/commerce/allonashop.html"],
+      [/allona shop|ürün|mağaza/i, "/pages/commerce/shop.html"],
       [/yemek|restoran/i, "/pages/commerce/allonayemek.html"],
       [/market/i, "/pages/commerce/allonamarket.html"],
       [/taksi|taxi/i, "/pages/ecosystem/allonataksi.html"]
