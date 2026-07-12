@@ -71,6 +71,7 @@
               <a href="${core.url("/pages/commerce/allonamarket.html")}" ${active("/pages/commerce/allonamarket.html")}>Market</a>
               <a href="${core.url("/pages/commerce/cart.html")}" ${active("/pages/commerce/cart.html")}>Sepet</a>
               <a href="${core.url("/pages/commerce/guvenli-odeme.html")}" ${active("/pages/commerce/guvenli-odeme.html")}>Ödeme</a>
+              <a href="${core.url("/pages/premium.html")}" ${active("/pages/premium.html")}>Premium</a>
               <a href="${core.url("/pages/account/user-panel.html")}" ${active("/pages/account/user-panel.html")}>Hesabım</a>
             </nav>
           </div>
@@ -131,7 +132,7 @@
             <a href="${core.url("/index.html#modules")}">Tüm Modüller</a>
             <a href="${core.url("/pages/partner/partner.html")}">Partner Başvurusu</a>
             <a href="${core.url("/pages/commerce/kuponlar.html")}">Kupon</a>
-            <a href="${core.url("/pages/account/premium.html")}">Premium</a>
+            <a href="${core.url("/pages/premium.html")}">Premium</a>
             <a href="${core.url("/pages/career/allonakariyer.html")}">Kariyer</a>
             <a href="${core.url("/pages/partner/partner-uyelik.html")}">Partner Üyelik</a>
           </div>

@@ -15,7 +15,7 @@
     "mfa.html": "/pages/account/mfa.html",
     "orders.html": "/pages/account/orders.html",
     "order-detail.html": "/pages/account/order-detail.html",
-    "premium.html": "/pages/account/premium.html",
+    "premium.html": "/pages/premium.html",
     "profil.html": "/pages/account/profil.html",
     "profile.html": "/pages/account/profile.html",
     "puanlar.html": "/pages/account/puanlar.html",

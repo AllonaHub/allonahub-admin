@@ -1,17 +1,18 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260712-theme-overflow1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260712-premium-page1";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./pages/premium.html",
   "./manifest.json?v=20260622-icon1",
   "./manifest.webmanifest?v=20260622-icon1",
   "./css/allonahub-home.css?v=20260628-banner2",
   "./css/platform.css?v=20260712-theme-overflow1",
   "./css/home-module-labels.std32.css?v=20260628-banner2",
   "./js/config.js?v=20260621-homeauth1",
-  "./js/core.js?v=20260630-currency3",
+  "./js/core.js?v=20260712-premium-page1",
   "./js/supabase-client.js?v=20260623-reset1",
   "./js/auth.js?v=20260623-mfa2",
-  "./js/layout.v3.js?v=20260628-banner2",
+  "./js/layout.v3.js?v=20260712-premium-page1",
   "./js/platform.js?v=20260712-theme-overflow1",
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
   "./js/privacy-consent.js?v=20260712-theme-overflow1",
