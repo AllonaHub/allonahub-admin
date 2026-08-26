@@ -1,13 +1,14 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260712-premium-page1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260826-active-modules1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./pages/premium.html",
+  "./pages/ecosystem/yakında.html",
   "./manifest.json?v=20260622-icon1",
   "./manifest.webmanifest?v=20260622-icon1",
-  "./css/allonahub-home.css?v=20260628-banner2",
+  "./css/allonahub-home.css?v=20260826-active-modules1",
   "./css/platform.css?v=20260712-theme-overflow1",
-  "./css/home-module-labels.std32.css?v=20260628-banner2",
+  "./css/home-module-labels.std32.css?v=20260826-active-modules1",
   "./js/config.js?v=20260621-homeauth1",
   "./js/core.js?v=20260712-premium-page1",
   "./js/supabase-client.js?v=20260623-reset1",
@@ -15,8 +16,8 @@ const APP_SHELL = [
   "./js/layout.v3.js?v=20260712-premium-page1",
   "./js/platform.js?v=20260712-theme-overflow1",
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
-  "./js/privacy-consent.js?v=20260712-theme-overflow1",
-  "./js/allonahub-home.js?v=20260626-mobile-std34",
+  "./js/privacy-consent.js?v=20260826-active-modules1",
+  "./js/allonahub-home.js?v=20260826-active-modules1",
   "./js/pwa-install.js?v=20260712-theme-overflow1",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-192.png?v=20260622-icon1",

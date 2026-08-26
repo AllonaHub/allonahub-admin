@@ -112,6 +112,9 @@ html.is-standalone body{min-height:100svh}
 .modules-grid.large-grid .module-card:hover{transform:translateY(-7px) scale(1.02)!important;box-shadow:0 0 34px rgba(0,225,255,.45)!important;border-color:#00e5ff!important}
 .modules-grid.large-grid .module-card h3{color:#ffd700!important;font-size:21px!important;margin:0 0 6px!important;text-shadow:0 0 12px rgba(0,0,0,.8)!important}
 .modules-grid.large-grid .module-card p{color:white!important;font-size:13px!important;margin:0!important;text-shadow:0 0 10px rgba(0,0,0,.9)!important}
+.modules-grid.large-grid .module-card--soon{border-color:rgba(255,215,0,.48)!important}
+.modules-grid.large-grid .module-card--soon:hover{border-color:#ffd700!important}
+.modules-grid.large-grid .module-status{display:inline-flex!important;align-items:center!important;width:max-content!important;max-width:100%!important;min-height:28px!important;margin-top:11px!important;padding:7px 11px!important;border-radius:999px!important;background:rgba(2,8,20,.72)!important;border:1px solid rgba(255,215,0,.70)!important;color:#fff7c2!important;font-size:11px!important;font-weight:900!important;line-height:1.1!important;letter-spacing:0!important;text-shadow:none!important;white-space:normal!important;overflow-wrap:anywhere!important;box-shadow:0 8px 18px rgba(0,0,0,.24)!important}
 .module-card--shop{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/shop-light-v5.jpg')!important}
 .module-card--yemek{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/yemek-light-v5.jpg')!important}
 .module-card--market{background-image:linear-gradient(to top,rgba(0,0,0,.64),rgba(0,0,0,.08)),url('../images/modules/market-light-v5.jpg')!important}
@@ -1377,6 +1380,17 @@ body[data-theme="corporate"] .modules-grid.large-grid .module-card p{
   display:block!important;
   overflow:visible!important;
   -webkit-line-clamp:unset;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-card--soon{
+  border-color:rgba(201,149,34,.58)!important;
+}
+
+body[data-theme="corporate"] .modules-grid.large-grid .module-status{
+  background:rgba(16,35,52,.86)!important;
+  border-color:rgba(201,149,34,.78)!important;
+  color:#fff7d6!important;
+  box-shadow:0 8px 18px rgba(16,35,52,.24)!important;
 }
 
 @media(max-width:720px){

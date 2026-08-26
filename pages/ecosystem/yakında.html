@@ -3,164 +3,299 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="theme-color" content="#061b33">
 <title>AllonaHub | Yakında Hizmetinizde</title>
-
+<link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial,Helvetica,sans-serif;
-}
-
+*{box-sizing:border-box}
+html{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
+  width:100%;
+  max-width:100%;
   min-height:100vh;
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#ffffff;
   background:
-    radial-gradient(circle at top left, rgba(0,183,255,.35), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(255,215,0,.25), transparent 30%),
-    linear-gradient(135deg,#020814,#061b33,#001f3f);
-  color:white;
+    linear-gradient(135deg,rgba(2,8,20,.96),rgba(6,27,51,.95)),
+    url("../../images/ads/hero-ad-shop.jpg") center/cover no-repeat;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:linear-gradient(135deg,rgba(2,8,20,.94),rgba(0,31,63,.86) 56%,rgba(2,8,20,.94));
+}
+.soon-page{
+  width:min(100%,1120px);
+  max-width:100%;
+  min-height:100vh;
+  margin:0 auto;
+  padding:34px 20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:24px;
+}
+.soon-brand{
+  display:inline-flex;
+  align-items:center;
+  gap:12px;
+  width:max-content;
+  max-width:100%;
+  color:inherit;
+  text-decoration:none;
+}
+.soon-brand img{
+  width:52px;
+  height:52px;
+  object-fit:contain;
+}
+.soon-brand strong{
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:0;
+}
+.soon-brand span:first-child{color:#ffd700}
+.soon-brand span:last-child{color:#00e5ff}
+.soon-panel{
+  width:100%;
+  min-width:0;
+  max-width:780px;
+  padding:42px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:24px;
+  background:rgba(3,13,28,.78);
+  box-shadow:0 24px 70px rgba(0,0,0,.34);
+}
+.soon-pill{
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  max-width:100%;
+  padding:8px 13px;
+  border-radius:999px;
+  border:1px solid rgba(255,215,0,.58);
+  background:rgba(255,215,0,.10);
+  color:#fff2a8;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.15;
+  overflow-wrap:anywhere;
+}
+h1{
+  max-width:720px;
+  margin:20px 0 16px;
+  color:#ffffff;
+  font-size:clamp(36px,6vw,64px);
+  line-height:1.03;
+  letter-spacing:0;
+}
+p{
+  max-width:680px;
+  margin:0;
+  color:rgba(255,255,255,.82);
+  font-size:18px;
+  line-height:1.65;
+  overflow-wrap:anywhere;
+}
+.soon-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:28px;
+  min-width:0;
+}
+.soon-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  max-width:100%;
+  padding:0 18px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  color:#06111f;
+  background:linear-gradient(135deg,#00e5ff,#ffd700);
+  font-weight:900;
+  text-decoration:none;
+  text-align:center;
+  line-height:1.15;
+  box-shadow:0 14px 28px rgba(0,229,255,.18);
+}
+.soon-btn--ghost{
+  color:#ffffff;
+  background:rgba(255,255,255,.10);
+  box-shadow:none;
+}
+.active-modules{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+  max-width:900px;
+}
+.active-modules a{
+  min-height:52px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(0,229,255,.22);
+  background:rgba(255,255,255,.08);
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+  text-align:center;
+  text-decoration:none;
   display:flex;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
+  line-height:1.2;
 }
-
-.wrapper{
-  width:90%;
+.active-modules a:hover,
+.soon-btn:hover{transform:translateY(-2px)}
+.soon-footnote{
   max-width:760px;
-  padding:55px 35px;
-  text-align:center;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:32px;
-  background:rgba(255,255,255,.08);
-  backdrop-filter:blur(22px);
-  box-shadow:
-    0 0 45px rgba(0,183,255,.25),
-    0 0 80px rgba(255,215,0,.10);
+  color:rgba(255,255,255,.66);
+  font-size:13px;
+  line-height:1.5;
 }
-
-.logo{
-  font-size:34px;
-  font-weight:900;
-  letter-spacing:1px;
-  margin-bottom:22px;
-  background:linear-gradient(90deg,#00c8ff,#ffffff,#ffd700);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
+body[data-theme="corporate"]{
+  background:#eef5fa!important;
+  color:#102334!important;
 }
-
-.badge{
-  display:inline-block;
-  padding:10px 22px;
-  border-radius:999px;
-  border:1px solid rgba(255,215,0,.5);
-  color:#ffd700;
-  font-weight:700;
-  font-size:14px;
-  margin-bottom:28px;
-  background:rgba(255,215,0,.08);
+body[data-theme="corporate"]::before{
+  background:linear-gradient(135deg,rgba(238,245,250,.96),rgba(255,255,255,.92))!important;
 }
-
-h1{
-  font-size:46px;
-  line-height:1.15;
-  margin-bottom:18px;
-  text-shadow:0 0 25px rgba(0,200,255,.45);
+body[data-theme="corporate"] .soon-panel{
+  background:#ffffff!important;
+  border-color:rgba(19,40,58,.12)!important;
+  border-radius:12px!important;
+  box-shadow:0 18px 42px rgba(16,35,52,.12)!important;
 }
-
-p{
-  font-size:18px;
-  line-height:1.7;
-  color:rgba(255,255,255,.78);
-  max-width:580px;
-  margin:0 auto 34px;
+body[data-theme="corporate"] h1,
+body[data-theme="corporate"] p,
+body[data-theme="corporate"] .soon-footnote,
+body[data-theme="corporate"] .soon-btn--ghost{
+  color:#102334!important;
 }
-
-.btn{
-  display:inline-block;
-  padding:15px 30px;
-  border-radius:16px;
-  text-decoration:none;
-  color:#06111f;
-  font-weight:900;
-  background:linear-gradient(135deg,#00c8ff,#ffd700);
-  box-shadow:0 0 28px rgba(0,200,255,.35);
-  transition:.25s;
+body[data-theme="corporate"] .soon-pill{
+  background:rgba(16,35,52,.08)!important;
+  border-color:rgba(201,149,34,.56)!important;
+  color:#8a650f!important;
 }
-
-.btn:hover{
-  transform:translateY(-3px);
-  box-shadow:0 0 40px rgba(255,215,0,.45);
+body[data-theme="corporate"] .soon-btn{
+  background:#0067b1!important;
+  color:#ffffff!important;
+  box-shadow:0 10px 22px rgba(0,77,141,.18)!important;
 }
-
-.glow{
-  position:absolute;
-  width:320px;
-  height:320px;
-  border-radius:50%;
-  background:rgba(0,200,255,.12);
-  filter:blur(60px);
-  z-index:-1;
+body[data-theme="corporate"] .soon-btn--ghost,
+body[data-theme="corporate"] .active-modules a{
+  background:#f3f7fb!important;
+  border-color:rgba(19,40,58,.12)!important;
 }
-
-.glow.one{
-  top:8%;
-  left:8%;
+body[data-theme="corporate"] .active-modules a{
+  color:#123a56!important;
 }
-
-.glow.two{
-  bottom:8%;
-  right:8%;
-  background:rgba(255,215,0,.12);
-}
-
-@media(max-width:600px){
-  h1{
-    font-size:34px;
+@media(max-width:760px){
+  .soon-page{
+    padding:24px 16px;
+    justify-content:flex-start;
   }
-
-  .logo{
-    font-size:28px;
+  .soon-panel{
+    padding:28px 20px;
+    border-radius:18px;
   }
-
-  p{
-    font-size:16px;
-  }
-
-  .wrapper{
-    padding:42px 24px;
-  }
+  .soon-brand strong{font-size:24px}
+  .soon-brand img{width:44px;height:44px}
+  p{font-size:16px}
+  .soon-actions{display:grid;grid-template-columns:1fr}
+  .soon-btn{width:100%}
+  .active-modules{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:380px){
+  .active-modules{grid-template-columns:1fr}
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
 </head>
-
 <body>
+<main class="soon-page">
+  <a class="soon-brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
+    <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
+    <strong><span>Allona</span><span>Hub</span></strong>
+  </a>
 
-<div class="glow one"></div>
-<div class="glow two"></div>
+  <section class="soon-panel" aria-labelledby="soonTitle">
+    <span class="soon-pill" data-soon-badge>Modül hazırlanıyor</span>
+    <h1 id="soonTitle" data-soon-title>Yakında Hizmetinizde</h1>
+    <p data-soon-copy>
+      Bu modül şu anda AllonaHub hizmet ağına hazırlanıyor. Şimdilik aktif önceliğimiz Allona Shop, Allona Yemek, Allona Market, Allona Taksi ve Denizcilik modüllerini tam çalışır seviyeye getirmek.
+    </p>
+    <div class="soon-actions" aria-label="Yakında hizmet aksiyonları">
+      <span class="soon-btn" aria-disabled="true">Yakında Hizmetinizde</span>
+      <a class="soon-btn soon-btn--ghost" href="../../index.html#modules">Aktif Modüllere Dön</a>
+    </div>
+  </section>
 
-<div class="wrapper">
-  <div class="logo">AllonaHub</div>
+  <nav class="active-modules" aria-label="Aktif modüller">
+    <a href="../commerce/allonashop.html">Allona Shop</a>
+    <a href="../commerce/allonayemek.html">Allona Yemek</a>
+    <a href="../commerce/allonamarket.html">Allona Market</a>
+    <a href="allonataksi.html">Allona Taksi</a>
+    <a href="allonadenizcilik.html">Denizcilik</a>
+  </nav>
 
-  <div class="badge">Premium ekosistem hazırlanıyor</div>
-
-  <h1>Yakında Hizmetinizde</h1>
-
-  <p>
-    Bu modül şu anda AllonaHub premium hizmet ağına hazırlanıyor.
-    AllonaHub aktif olarak geliştirilmeye devam ediyor.
-    Diğer hizmetler adım adım yayına alınacaktır.
-  </p>
-
-  <a class="btn" href="../../index.html">Ana Sayfaya Dön</a>
-</div>
-  <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
-<script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
+  <p class="soon-footnote">Diğer hizmetler geliştirme planına alındıkça bu bekleme ekranından kaldırılıp kendi canlı modül sayfasına bağlanacaktır.</p>
+</main>
+<div data-layout="footer"></div>
+<script>
+(function(){
+  const modules = {
+    "avm-dunyasi":"AVM Dünyası",
+    "seyahat":"Seyahat & Turizm",
+    "gayrimenkul":"Gayrimenkul",
+    "hukuk":"Hukuk",
+    "danismanlik":"Danışmanlık",
+    "egitim":"Eğitim",
+    "kariyer":"Kariyer",
+    "finans":"Finans",
+    "otomotiv":"Otomotiv",
+    "eglence":"Eğlence & Etkinlik",
+    "evcilhayvan":"Evcil Hayvan",
+    "teknoloji":"Teknoloji",
+    "sporfitnes":"Spor & Fitness",
+    "guzellik":"Güzellik & Kozmetik",
+    "sigorta":"Sigorta",
+    "kurye":"Kurye & Teslimat",
+    "evhizmetleri":"Ev Hizmetleri",
+    "lojistik":"Kargo & Lojistik",
+    "nakliye":"Nakliye",
+    "organizasyon":"Organizasyon & Düğün",
+    "tarim":"Allona Tarım",
+    "insaat":"İnşaat & Yapı",
+    "muhendislik":"Mühendislik",
+    "trade":"Trade",
+    "otelcilik":"Otelcilik",
+    "saglik":"Allona Sağlık"
+  };
+  const params = new URLSearchParams(window.location.search);
+  const key = String(params.get("module") || params.get("service") || "").toLocaleLowerCase("tr-TR");
+  const name = modules[key] || "Bu hizmet";
+  const badge = document.querySelector("[data-soon-badge]");
+  const title = document.querySelector("[data-soon-title]");
+  const copy = document.querySelector("[data-soon-copy]");
+  if (badge) badge.textContent = name + " hazırlanıyor";
+  if (title) title.textContent = name + " yakında hizmetinizde";
+  if (copy) {
+    copy.textContent = name + " modülü şu anda AllonaHub hizmet ağına hazırlanıyor. Şimdilik aktif önceliğimiz Allona Shop, Allona Yemek, Allona Market, Allona Taksi ve Denizcilik modüllerini tam çalışır seviyeye getirmek.";
+  }
+  document.title = "AllonaHub | " + name + " Yakında";
+})();
+</script>
+<script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+<script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
+<script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
+<script src="../../js/privacy-consent.js?v=20260826-active-modules1" defer></script>
 </body>
 </html>

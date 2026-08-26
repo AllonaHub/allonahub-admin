@@ -4,7 +4,7 @@
   const LOCATION_PERMISSION_KEY = "allona.location.permission.v1";
   const LOCATION_CACHE_KEY = "allona.location.lastKnown.v1";
   const CONSENT_VERSION = "20260628-privacy1";
-  const SERVICE_WORKER_VERSION = "20260712-theme-overflow1";
+  const SERVICE_WORKER_VERSION = "20260826-active-modules1";
 
   const categories = {
     necessary: true,
@@ -265,14 +265,28 @@
         .ah-cookie-banner {
           grid-template-columns: 1fr;
           align-items: stretch;
+          max-width: calc(100vw - 32px);
         }
 
         .ah-cookie-actions {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           justify-content: stretch;
+          min-width: 0;
         }
 
         .ah-cookie-btn {
-          flex: 1 1 140px;
+          width: 100%;
+          min-width: 0;
+          padding: 0 10px;
+          white-space: normal;
+          line-height: 1.15;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .ah-cookie-actions {
+          grid-template-columns: 1fr;
         }
       }
     `;
