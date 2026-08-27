@@ -52,6 +52,31 @@ const SUPABASE_URL = window.Allona?.config?.supabaseUrl || "";
 const SUPABASE_KEY = window.Allona?.config?.supabaseAnonKey || "";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+function apiBaseUrl(){
+  const configured=String(window.Allona?.config?.apiBaseUrl || "").replace(/\/$/,"");
+  if(/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)) return "http://localhost:3000";
+  return configured || "https://api.allonahub.com";
+}
+
+async function apiFetch(path,options){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(!session?.access_token) throw new Error("API için oturum doğrulanamadı.");
+  const settings=options || {};
+  const response=await fetch(`${apiBaseUrl()}${path}`,{
+    ...settings,
+    headers:{
+      Authorization:`Bearer ${session.access_token}`,
+      "Content-Type":"application/json",
+      ...(settings.headers || {})
+    }
+  });
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok || payload.ok===false){
+    throw new Error(payload.message || payload.error || "Partner API isteği tamamlanamadı.");
+  }
+  return payload;
+}
+
 function showNotice(msg){
   const n=document.getElementById("notice");
   n.textContent=String(msg || "");
@@ -87,34 +112,15 @@ async function requirePartner(){
 }
 
 async function loadOrders(){
-  const {data,error}=await supabaseClient
-    .from("orders")
-    .select("*")
-    .order("created_at",{ascending:false});
-
-  if(error){
+  let payload;
+  try{
+    payload=await apiFetch("/v1/partner/os");
+  }catch(error){
     document.getElementById("orders").innerHTML="Siparişler yüklenemedi.";
     console.error(error);
     return;
   }
-
-  let itemQuery=supabaseClient
-    .from("order_items")
-    .select("*");
-  const partnerId=localStorage.getItem("allonaPartnerId") || "";
-  if(partnerId){
-    itemQuery=itemQuery.eq("partner_id",partnerId);
-  }
-  const {data:items,error:itemsError}=await itemQuery;
-
-  if(itemsError){
-    document.getElementById("orders").innerHTML="Sipariş ürünleri yüklenemedi.";
-    console.error(itemsError);
-    return;
-  }
-
-  const partnerOrderIds=[...new Set((items||[]).map(i=>i.order_id))];
-  const partnerOrders=(data||[]).filter(o=>partnerOrderIds.includes(o.id));
+  const partnerOrders=payload.orders || [];
 
   if(!partnerOrders.length){
     document.getElementById("orders").innerHTML="Bu partnere ait sipariş bulunmuyor.";
@@ -122,7 +128,7 @@ async function loadOrders(){
   }
 
   document.getElementById("orders").innerHTML=partnerOrders.map(order=>{
-    const orderItems=items.filter(i=>i.order_id===order.id);
+    const orderItems=order.partner_items || order.order_items || [];
     const partnerState=order.partner_status || order.status || order.order_status || "pending";
     const allowedStatuses=["preparing","shipped","delivered"];
 
@@ -186,17 +192,12 @@ async function updatePartnerStatus(orderId,status){
     showNotice("Partner sadece hazırlanıyor, kargoda veya teslim edildi durumlarını seçebilir.");
     return;
   }
-  const payload={
-    partner_status:status,
-    order_status:status,
-    status:status
-  };
-  const {error}=await supabaseClient
-    .from("orders")
-    .update(payload)
-    .eq("id",orderId);
-
-  if(error){
+  try{
+    await apiFetch("/v1/partner/orders/status",{
+      method:"PATCH",
+      body:JSON.stringify({orderId,order_status:status})
+    });
+  }catch(error){
     console.error(error);
     showNotice("Sipariş güncellenemedi.");
     return;

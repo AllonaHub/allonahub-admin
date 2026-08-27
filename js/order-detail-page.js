@@ -11,6 +11,30 @@
     return false;
   }
 
+  function apiBaseUrl() {
+    const configured = String(App.config.apiBaseUrl || "").replace(/\/$/, "");
+    if (/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)) return "http://localhost:3000";
+    return configured || "https://api.allonahub.com";
+  }
+
+  async function loadPartnerOrder(orderId) {
+    const session = await App.auth.getSession();
+    if (!session || !session.access_token) throw new Error("API için oturum doğrulanamadı.");
+    const response = await fetch(`${apiBaseUrl()}/v1/partner/os`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json"
+      }
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok === false) {
+      throw new Error(payload.message || payload.error || "Partner siparişi yüklenemedi.");
+    }
+    const order = (payload.orders || []).find((item) => String(item.id) === String(orderId));
+    if (!order) return null;
+    return { ...order, order_items: order.partner_items || order.order_items || [] };
+  }
+
   function renderOrder(target, order, mode) {
     const items = order.order_items || [];
     target.innerHTML = `
@@ -81,9 +105,15 @@
         "tracking_number", "cargo_company", "created_at",
         "order_items(id,order_id,product_id,product_name,quantity,price,unit_price,total_price)"
       ].join(",");
-      const projection = mode === "user" ? customerSafeProjection : "*, order_items(*)";
-      const { data, error } = await App.db.client().from("orders").select(projection).eq("id", id).maybeSingle();
-      if (error) throw error;
+      let data;
+      if (mode === "partner") {
+        data = await loadPartnerOrder(id);
+      } else {
+        const projection = mode === "user" ? customerSafeProjection : "*, order_items(*)";
+        const result = await App.db.client().from("orders").select(projection).eq("id", id).maybeSingle();
+        if (result.error) throw result.error;
+        data = result.data;
+      }
       if (!data) throw new Error("Sipariş bulunamadı.");
       renderOrder(target, data, mode);
       document.dispatchEvent(new CustomEvent("allona:order-rendered", { detail: { orderId: data.id, mode } }));
