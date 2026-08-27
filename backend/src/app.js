@@ -222,8 +222,17 @@ export async function buildApp() {
       status_code: error?.statusCode || error?.status || null
     }, "Request failed");
     const status = error.statusCode && error.statusCode >= 400 ? error.statusCode : 500;
+    const validationDetails = error.name === "ZodError" && Array.isArray(error.issues)
+      ? error.issues
+        .slice(0, 3)
+        .map((issue) => {
+          const path = issue.path?.length ? issue.path.join(".") : "alan";
+          return `${path}: ${issue.message}`;
+        })
+        .join(" ")
+      : "";
     const publicMessage = error.name === "ZodError"
-      ? "İstek alanları doğrulanamadı."
+      ? `İstek alanları doğrulanamadı.${validationDetails ? ` ${validationDetails}` : ""}`
       : status >= 500
       ? "İşlem şu anda tamamlanamadı."
       : error.message || "İstek doğrulanamadı.";

@@ -49,6 +49,9 @@ export function hasMarketplaceBranding(value) {
 
 export function cleanMarketplaceText(value) {
   const cleaned = removeMarketplaceTerms(value)
+    .replace(/(:)\s*[-–—|/]+\s*/g, "$1 ")
+    .replace(/\s*[-–—|/]+\s*([,.;:!?])/g, "$1")
+    .replace(/:\s*\./g, ":")
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/([([{])\s+/g, "$1")
     .replace(/\s+([)\]}])/g, "$1")

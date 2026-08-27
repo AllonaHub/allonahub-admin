@@ -1,6 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
+  const PRODUCT_DETAIL_PREFILL_KEY = "allona_partner_product_detail_prefill_v1";
   const state = {
     access: null,
     business: null,
@@ -338,6 +339,30 @@
     return new URLSearchParams(window.location.search).get("id") || "";
   }
 
+  function cachedProductForDetail(productId) {
+    try {
+      const payload = JSON.parse(sessionStorage.getItem(PRODUCT_DETAIL_PREFILL_KEY) || "{}");
+      if (String(payload?.id || "") !== String(productId || "")) return null;
+      if (Date.now() - Number(payload.cached_at || 0) > 5 * 60 * 1000) return null;
+      return payload.product && typeof payload.product === "object" ? payload.product : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function cacheProductForDetail(product) {
+    try {
+      if (!product?.id) return;
+      sessionStorage.setItem(PRODUCT_DETAIL_PREFILL_KEY, JSON.stringify({
+        id: String(product.id),
+        product,
+        cached_at: Date.now()
+      }));
+    } catch (error) {
+      // Prefill cache is optional; the API remains the source of truth.
+    }
+  }
+
   function fillForm(product) {
     const form = $("[data-product-detail-form]");
     if (!form) return;
@@ -421,29 +446,33 @@
 
   function payloadFromForm(form) {
     const data = Object.fromEntries(new FormData(form).entries());
+    const textOrNull = (value) => {
+      const text = String(value || "").trim();
+      return text || null;
+    };
     return {
       name: String(data.name || "").trim(),
-      sku: String(data.sku || "").trim(),
-      barcode: String(data.barcode || "").trim(),
+      sku: textOrNull(data.sku),
+      barcode: textOrNull(data.barcode),
       catalog_scope: data.catalog_scope || "shop",
       module_key: data.catalog_scope || "shop",
-      category: String(data.category || "").trim(),
-      brand: String(data.brand || "").trim(),
+      category: textOrNull(data.category),
+      brand: textOrNull(data.brand),
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
-      image_url: String(data.image_url || "").trim(),
+      image_url: textOrNull(data.image_url),
       media_gallery: parseGallery(data.media_gallery).slice(0, 8),
-      video_url: String(data.video_url || "").trim(),
-      description: String(data.description || "").trim(),
-      seller_public_name: String(data.seller_public_name || "").trim(),
-      seller_city: String(data.seller_city || "").trim(),
-      seller_legal_name: String(data.seller_legal_name || "").trim(),
-      seller_contact: String(data.seller_contact || "").trim(),
-      seller_tax_number_masked: String(data.seller_tax_number_masked || "").trim(),
-      invoice_responsibility: String(data.invoice_responsibility || "").trim(),
-      seller_disclosure: String(data.seller_disclosure || "").trim(),
-      meta_title: String(data.meta_title || "").trim(),
-      meta_description: String(data.meta_description || "").trim()
+      video_url: textOrNull(data.video_url),
+      description: textOrNull(data.description),
+      seller_public_name: textOrNull(data.seller_public_name),
+      seller_city: textOrNull(data.seller_city),
+      seller_legal_name: textOrNull(data.seller_legal_name),
+      seller_contact: textOrNull(data.seller_contact),
+      seller_tax_number_masked: textOrNull(data.seller_tax_number_masked),
+      invoice_responsibility: textOrNull(data.invoice_responsibility),
+      seller_disclosure: textOrNull(data.seller_disclosure),
+      meta_title: textOrNull(data.meta_title),
+      meta_description: textOrNull(data.meta_description)
     };
   }
 
@@ -452,6 +481,13 @@
     try {
       state.productId = productIdFromUrl();
       if (!state.productId) throw new Error("Ürün bağlantısı eksik.");
+      const cachedProduct = cachedProductForDetail(state.productId);
+      if (cachedProduct) {
+        state.product = cachedProduct;
+        fillForm(normalizeProduct(cachedProduct));
+        renderPreview();
+        showAlert("Canlı ürün bilgileri doğrulanıyor.");
+      }
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded(`/pages/partner/partner-product-detail.html?id=${encodeURIComponent(state.productId)}`)) return;
@@ -459,6 +495,7 @@
       state.business = payload.business || null;
       state.product = payload.product || null;
       if (!state.product) throw new Error("Ürün bulunamadı.");
+      cacheProductForDetail(state.product);
       fillForm(normalizeProduct(state.product));
       showAlert("");
       renderPreview();

@@ -25,7 +25,8 @@ import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../li
 import {
   MARKETPLACE_BRANDING_SANITIZER_VERSION,
   cleanMarketplaceCode,
-  cleanMarketplaceText
+  cleanMarketplaceText,
+  hasMarketplaceBranding
 } from "../lib/marketplace-branding.js";
 import {
   auditEvent,
@@ -248,8 +249,8 @@ const partnerProductMediaGallerySchema = z.preprocess((value) => {
   }
   return [];
 }, z.array(z.string().trim().max(1200).refine((value) => (
-  !value || /^https?:\/\//i.test(value)
-), "Galeri URL http/https formatında olmalı.")).max(8).optional());
+  !value || /^https?:\/\//i.test(value) || value.startsWith("/")
+), "Galeri URL http/https veya site içi / yol formatında olmalı.")).max(8).optional());
 
 const partnerProductListQuerySchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -4283,6 +4284,105 @@ function attachProductReviewAutomation(product = {}) {
   };
 }
 
+const MARKETPLACE_BRANDING_TEXT_FIELDS = [
+  "name",
+  "product_name",
+  "description",
+  "meta_title",
+  "meta_description",
+  "brand",
+  "category",
+  "seller_disclosure",
+  "invoice_responsibility"
+];
+const MARKETPLACE_BRANDING_CODE_FIELDS = ["sku", "barcode"];
+
+function marketplaceBrandingCleanedNotes(value) {
+  const raw = String(value || "");
+  if (!hasMarketplaceBranding(raw)) return raw;
+  return cleanMarketplaceText(raw)
+    .replace(/Entegrasyon importu:\s*[. ]*/iu, "Entegrasyon importu: kaynak platformdan ürün çekildi. ")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+    .slice(0, 1200);
+}
+
+function marketplaceBrandingPatch(product = {}) {
+  const patch = {};
+  const changedFields = [];
+
+  for (const field of MARKETPLACE_BRANDING_TEXT_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(product, field)) continue;
+    const previous = String(product[field] ?? "");
+    if (!previous || !hasMarketplaceBranding(previous)) continue;
+    const cleaned = cleanMarketplaceText(previous);
+    if (cleaned && cleaned !== previous) {
+      patch[field] = cleaned;
+      changedFields.push(field);
+    }
+  }
+
+  for (const field of MARKETPLACE_BRANDING_CODE_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(product, field)) continue;
+    const previous = String(product[field] ?? "");
+    if (!previous || !hasMarketplaceBranding(previous)) continue;
+    const cleaned = cleanMarketplaceCode(previous);
+    if (cleaned !== previous) {
+      patch[field] = cleaned || null;
+      changedFields.push(field);
+    }
+  }
+
+  const previousSlug = String(product.slug || "");
+  if (previousSlug && hasMarketplaceBranding(previousSlug)) {
+    const nextName = patch.name || patch.product_name || product.name || product.product_name || "urun";
+    patch.slug = backendSlug(`${nextName}-${product.id || product.integration_external_id || ""}`);
+    changedFields.push("slug");
+  }
+
+  const previousNotes = String(product.compliance_notes || "");
+  const cleanedNotes = marketplaceBrandingCleanedNotes(previousNotes);
+  if (cleanedNotes && cleanedNotes !== previousNotes) {
+    patch.compliance_notes = cleanedNotes;
+    changedFields.push("compliance_notes");
+  }
+
+  return { patch, changedFields: [...new Set(changedFields)] };
+}
+
+async function autoCleanMarketplaceBrandingProducts(products = [], warnings = [], options = {}) {
+  const cleaned = [];
+  const persist = options.persist !== false;
+  let updatedCount = 0;
+
+  for (const product of products) {
+    if (!product?.id) {
+      cleaned.push(product);
+      continue;
+    }
+    const { patch, changedFields } = marketplaceBrandingPatch(product);
+    if (!changedFields.length) {
+      cleaned.push(product);
+      continue;
+    }
+
+    const nextProduct = { ...product, ...patch };
+    cleaned.push(nextProduct);
+    if (!persist) continue;
+
+    try {
+      const { removedFields } = await updatePartnerProductRow(product.id, patch);
+      updatedCount += 1;
+      removedFields.forEach((field) => warnings.push(`products.${field}: üretim şemasında yok; otomatik dış platform temizliğinde atlandı.`));
+    } catch (error) {
+      warnings.push(`products.${product.id}: dış platform adı otomatik temizlenemedi (${error.message || "bilinmeyen hata"}).`);
+    }
+  }
+
+  if (updatedCount) warnings.push(`${updatedCount} üründe dış platform adı otomatik temizlendi.`);
+  return cleaned;
+}
+
 function productReviewMatchesAutomationStatus(product = {}, statusFilter = "") {
   const filter = normalizedReviewValue(statusFilter);
   if (!filter || filter === "all") return true;
@@ -5483,9 +5583,17 @@ async function autoRequestProductRevisions(products = [], options = {}) {
 
 function buildPartnerProductUpdatePayload(productId, before, body) {
   const has = (field) => Object.prototype.hasOwnProperty.call(body, field);
-  const cleanNullable = (value) => value === null ? null : String(value ?? "").trim();
+  const cleanNullable = (field, value) => {
+    if (value === null) return null;
+    const trimmed = String(value ?? "").trim();
+    if (!trimmed) return null;
+    const cleaned = MARKETPLACE_BRANDING_CODE_FIELDS.includes(field)
+      ? cleanMarketplaceCode(trimmed)
+      : cleanMarketplaceText(trimmed);
+    return cleaned || null;
+  };
   const updatePayload = {};
-  const nextName = has("name") ? body.name : has("product_name") ? body.product_name : "";
+  const nextName = cleanMarketplaceText(has("name") ? body.name : has("product_name") ? body.product_name : "");
 
   if (nextName) {
     updatePayload.name = nextName;
@@ -5511,9 +5619,12 @@ function buildPartnerProductUpdatePayload(productId, before, body) {
     "meta_title",
     "meta_description"
   ].forEach((field) => {
-    if (has(field)) updatePayload[field] = cleanNullable(body[field]);
+    if (has(field)) updatePayload[field] = cleanNullable(field, body[field]);
   });
-  if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || []).slice(0, 8);
+  if (has("media_gallery")) updatePayload.media_gallery = (body.media_gallery || [])
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, 8);
   if (has("price")) updatePayload.price = Number(body.price || 0);
   if (has("stock")) updatePayload.stock = Number(body.stock || 0);
   if (has("module_key")) updatePayload.module_key = body.module_key;
@@ -9973,7 +10084,8 @@ export function registerRoutes(app) {
       if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
     }
 
-    const reviewProducts = [...productsById.values()]
+    const cleanedProductRows = await autoCleanMarketplaceBrandingProducts([...productsById.values()], warnings);
+    const reviewProducts = cleanedProductRows
       .filter((product) => partnerProductMatchesSearch(product, query.search))
       .filter((product) => partnerProductMatchesStatus(product, query.status))
       .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
@@ -10124,50 +10236,24 @@ export function registerRoutes(app) {
     const ownedProduct = await loadPartnerOwnedProduct(productId, business, ctx);
     const ownerIds = partnerProductOwnerIds(business, ctx);
     const warnings = [];
-
-    const productQueries = [
-      optionalQuery(
-        supabaseAdmin
-          .from("products")
-          .select("*")
-          .in("partner_id", ownerIds)
-          .order("created_at", { ascending: false })
-          .limit(1000),
-        [],
-        warnings,
-        "products"
-      )
-    ];
-    if (business.partner_code) {
-      productQueries.push(optionalQuery(
-        supabaseAdmin
-          .from("products")
-          .select("*")
-          .eq("partner_code", business.partner_code)
-          .order("created_at", { ascending: false })
-          .limit(1000),
-        [],
-        warnings,
-        "products.partner_code"
-      ));
+    const [cleanedOwnedProduct] = await autoCleanMarketplaceBrandingProducts([ownedProduct], warnings);
+    let siblingQuery = supabaseAdmin
+      .from("products")
+      .select("*")
+      .in("partner_id", ownerIds)
+      .order("updated_at", { ascending: false })
+      .limit(180);
+    if (cleanedOwnedProduct.integration_source) {
+      siblingQuery = siblingQuery.eq("integration_source", cleanedOwnedProduct.integration_source);
+    } else if (cleanedOwnedProduct.barcode) {
+      siblingQuery = siblingQuery.eq("barcode", cleanedOwnedProduct.barcode);
+    } else {
+      siblingQuery = siblingQuery.eq("id", productId);
     }
-    if (business.email) {
-      productQueries.push(optionalQuery(
-        supabaseAdmin
-          .from("products")
-          .select("*")
-          .eq("partner_email", business.email)
-          .order("created_at", { ascending: false })
-          .limit(1000),
-        [],
-        warnings,
-        "products.partner_email"
-      ));
-    }
-
-    const productGroups = await Promise.all(productQueries);
+    const siblingRows = await optionalQuery(siblingQuery, [], warnings, "products.detail_siblings");
+    const cleanedSiblingRows = await autoCleanMarketplaceBrandingProducts(siblingRows || [], warnings);
     const productsById = new Map();
-    for (const row of [ownedProduct, ...productGroups.flat()]) {
+    for (const row of [cleanedOwnedProduct, ...cleanedSiblingRows]) {
       if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
     }
     const candidateProducts = [...productsById.values()].map(attachProductReviewAutomation);

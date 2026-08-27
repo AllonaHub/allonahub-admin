@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
   const BULK_PRODUCT_LIMIT = 50;
+  const PRODUCT_DETAIL_PREFILL_KEY = "allona_partner_product_detail_prefill_v1";
   const PRODUCT_EXPORT_COLUMNS = [
     "id",
     "catalog_scope",
@@ -1124,9 +1125,24 @@
     return `/pages/partner/partner-product-detail.html?${params.toString()}`;
   }
 
+  function cacheProductForDetail(productId) {
+    try {
+      const product = productById(productId);
+      if (!product?.id) return;
+      sessionStorage.setItem(PRODUCT_DETAIL_PREFILL_KEY, JSON.stringify({
+        id: String(product.id),
+        product,
+        cached_at: Date.now()
+      }));
+    } catch (error) {
+      // Detail prefill is only a speed hint; navigation must continue even if storage is blocked.
+    }
+  }
+
   function goToProductDetail(productId) {
     if (!productId) return;
     const product = normalizeProduct(productById(productId) || {});
+    cacheProductForDetail(productId);
     window.location.href = productDetailUrl(productId, { focusRevision: revisionRequired(product) });
   }
 
@@ -1136,6 +1152,7 @@
       toast("Revize edilecek ürün bulunamadı.", "warning");
       return;
     }
+    cacheProductForDetail(product.id);
     window.location.href = productDetailUrl(product.id, { focusRevision: true });
   }
 
@@ -1316,29 +1333,33 @@
   function payloadFromForm(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     const mediaGallery = parseMediaGallery(data.media_gallery);
+    const textOrNull = (value) => {
+      const text = String(value || "").trim();
+      return text || null;
+    };
     return {
       name: String(data.name || "").trim(),
-      sku: String(data.sku || "").trim(),
-      barcode: String(data.barcode || "").trim(),
+      sku: textOrNull(data.sku),
+      barcode: textOrNull(data.barcode),
       catalog_scope: data.catalog_scope || "shop",
       module_key: data.catalog_scope || "shop",
-      category: String(data.category || "").trim(),
-      brand: String(data.brand || "").trim(),
+      category: textOrNull(data.category),
+      brand: textOrNull(data.brand),
       price: Number(data.price || 0),
       stock: Number(data.stock || 0),
-      image_url: String(data.image_url || "").trim(),
+      image_url: textOrNull(data.image_url),
       media_gallery: mediaGallery,
-      video_url: String(data.video_url || "").trim(),
-      description: String(data.description || "").trim(),
-      seller_public_name: String(data.seller_public_name || "").trim(),
-      seller_city: String(data.seller_city || "").trim(),
-      seller_legal_name: String(data.seller_legal_name || "").trim(),
-      seller_contact: String(data.seller_contact || "").trim(),
-      seller_tax_number_masked: String(data.seller_tax_number_masked || "").trim(),
-      invoice_responsibility: String(data.invoice_responsibility || "").trim(),
-      seller_disclosure: String(data.seller_disclosure || "").trim(),
-      meta_title: String(data.meta_title || "").trim(),
-      meta_description: String(data.meta_description || "").trim()
+      video_url: textOrNull(data.video_url),
+      description: textOrNull(data.description),
+      seller_public_name: textOrNull(data.seller_public_name),
+      seller_city: textOrNull(data.seller_city),
+      seller_legal_name: textOrNull(data.seller_legal_name),
+      seller_contact: textOrNull(data.seller_contact),
+      seller_tax_number_masked: textOrNull(data.seller_tax_number_masked),
+      invoice_responsibility: textOrNull(data.invoice_responsibility),
+      seller_disclosure: textOrNull(data.seller_disclosure),
+      meta_title: textOrNull(data.meta_title),
+      meta_description: textOrNull(data.meta_description)
     };
   }
 

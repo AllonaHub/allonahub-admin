@@ -68,7 +68,7 @@ const TEXT_FIELDS = [
   "seller_disclosure",
   "invoice_responsibility"
 ];
-const CODE_FIELDS = ["sku", "barcode", "slug"];
+const CODE_FIELDS = ["sku", "barcode"];
 
 function cleanComplianceNotes(value) {
   const raw = String(value || "");
@@ -100,9 +100,19 @@ function cleanedProductPatch(product = {}) {
     const previous = String(product[field] ?? "");
     if (!previous || !hasMarketplaceBranding(previous)) continue;
     const cleaned = cleanMarketplaceCode(previous);
-    if (cleaned && cleaned !== previous) {
-      patch[field] = cleaned;
+    if (cleaned !== previous) {
+      patch[field] = cleaned || null;
       changedFields.push(field);
+    }
+  }
+
+  const previousSlug = String(product.slug || "");
+  if (previousSlug && hasMarketplaceBranding(previousSlug)) {
+    const base = cleanMarketplaceCode(product.name || product.product_name || previousSlug) || `urun-${product.id || ""}`;
+    const cleaned = `${base.toLocaleLowerCase("tr-TR").replace(/[^a-z0-9ğüşıöç]+/gi, "-").replace(/^-+|-+$/g, "")}-${product.id || ""}`.slice(0, 180);
+    if (cleaned && cleaned !== previousSlug) {
+      patch.slug = cleaned;
+      changedFields.push("slug");
     }
   }
 
