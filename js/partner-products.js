@@ -3,6 +3,10 @@
   const core = App.core || {};
   const BULK_PRODUCT_LIMIT = 50;
   const PRODUCT_DETAIL_PREFILL_KEY = "allona_partner_product_detail_prefill_v1";
+  const TEXT_LIMITS = {
+    meta_title: 180,
+    meta_description: 300
+  };
   const PRODUCT_EXPORT_COLUMNS = [
     "id",
     "catalog_scope",
@@ -150,6 +154,12 @@
     const text = String(value || "").trim();
     if (!text || text.length <= max) return text;
     return `${text.slice(0, Math.max(0, max - 1))}...`;
+  }
+
+  function limitText(value, max) {
+    const text = String(value || "").trim();
+    if (!text || !max || text.length <= max) return text;
+    return text.slice(0, max).trim();
   }
 
   function apiBaseUrl() {
@@ -1273,8 +1283,8 @@
     set("seller_tax_number_masked", rawProduct.seller_tax_number_masked || product.seller_tax_number_masked || "");
     set("invoice_responsibility", rawProduct.invoice_responsibility || product.invoice_responsibility || "");
     set("seller_disclosure", rawProduct.seller_disclosure || product.seller_disclosure || "");
-    set("meta_title", rawProduct.meta_title || product.meta_title || product.name);
-    set("meta_description", rawProduct.meta_description || product.meta_description || product.description || "");
+    set("meta_title", limitText(rawProduct.meta_title || product.meta_title || product.name, TEXT_LIMITS.meta_title));
+    set("meta_description", limitText(rawProduct.meta_description || product.meta_description || product.description || "", TEXT_LIMITS.meta_description));
     renderEditorPreview(product);
   }
 
@@ -1333,8 +1343,8 @@
   function payloadFromForm(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     const mediaGallery = parseMediaGallery(data.media_gallery);
-    const textOrNull = (value) => {
-      const text = String(value || "").trim();
+    const textOrNull = (value, max) => {
+      const text = limitText(value, max);
       return text || null;
     };
     return {
@@ -1358,8 +1368,8 @@
       seller_tax_number_masked: textOrNull(data.seller_tax_number_masked),
       invoice_responsibility: textOrNull(data.invoice_responsibility),
       seller_disclosure: textOrNull(data.seller_disclosure),
-      meta_title: textOrNull(data.meta_title),
-      meta_description: textOrNull(data.meta_description)
+      meta_title: textOrNull(data.meta_title, TEXT_LIMITS.meta_title),
+      meta_description: textOrNull(data.meta_description, TEXT_LIMITS.meta_description)
     };
   }
 

@@ -231,8 +231,13 @@ const partnerProfileUpdateSchema = z.object({
   payout_schedule: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional()
 });
 
-const nullablePartnerProductText = (max) => z.preprocess(
-  (value) => value === "" ? null : value,
+const nullablePartnerProductText = (max, options = {}) => z.preprocess(
+  (value) => {
+    if (value === "" || value === null || value === undefined) return null;
+    const text = String(value).trim();
+    if (!text) return null;
+    return options.truncate ? text.slice(0, max).trim() : text;
+  },
   z.string().trim().max(max).nullable().optional()
 );
 
@@ -282,8 +287,8 @@ const partnerProductUpdateSchema = z.object({
   seller_tax_number_masked: nullablePartnerProductText(40),
   invoice_responsibility: nullablePartnerProductText(320),
   seller_disclosure: nullablePartnerProductText(420),
-  meta_title: nullablePartnerProductText(180),
-  meta_description: nullablePartnerProductText(300)
+  meta_title: nullablePartnerProductText(180, { truncate: true }),
+  meta_description: nullablePartnerProductText(300, { truncate: true })
 }).refine((value) => Object.keys(value).length > 0, {
   message: "Guncellenecek urun alani gonderilmedi."
 });
