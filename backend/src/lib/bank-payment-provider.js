@@ -16,7 +16,19 @@ async function hmacSha256Hex(payload, secret) {
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
+export function bankPaymentConfigured() {
+  return Boolean(config.bankPayment.apiKey && config.bankPayment.secretKey && config.bankPayment.baseUrl);
+}
+
+function bankPaymentConfigError() {
+  const error = new Error("Ödeme sağlayıcısı yapılandırılmadı.");
+  error.statusCode = 503;
+  error.code = "BANK_PAYMENT_NOT_CONFIGURED";
+  return error;
+}
+
 async function authorization(uriPath, body) {
+  if (!bankPaymentConfigured()) throw bankPaymentConfigError();
   const randomKey = `${Date.now()}${crypto.randomInt(100000, 999999999)}`;
   const signature = await hmacSha256Hex(`${randomKey}${uriPath}${body}`, config.bankPayment.secretKey);
   const authorizationString = `apiKey:${config.bankPayment.apiKey}&randomKey:${randomKey}&signature:${signature}`;
@@ -27,6 +39,7 @@ async function authorization(uriPath, body) {
 }
 
 export async function bankPaymentPost(uriPath, payload) {
+  if (!bankPaymentConfigured()) throw bankPaymentConfigError();
   const body = JSON.stringify(payload);
   const auth = await authorization(uriPath, body);
   const response = await fetch(`${config.bankPayment.baseUrl}${uriPath}`, {

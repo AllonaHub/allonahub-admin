@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { config } from "../config.js";
-import { bankCancelPayload, bankPaymentPost, bankRefundPayload } from "./bank-payment-provider.js";
+import { bankCancelPayload, bankPaymentConfigured, bankPaymentPost, bankRefundPayload } from "./bank-payment-provider.js";
 
 function amount(value) {
   return Number(Number(value || 0).toFixed(2));
@@ -138,7 +138,7 @@ export function paymentProviderDispatchStatus() {
     webhook_configured: Boolean(config.paymentProvider.refundWebhookUrl),
     webhook_signed: Boolean(config.paymentProvider.refundWebhookSecret),
     native_refunds_enabled: Boolean(config.paymentProvider.nativeRefundsEnabled),
-    bank_payment_configured: Boolean(config.bankPayment.apiKey && config.bankPayment.secretKey && config.bankPayment.baseUrl)
+    bank_payment_configured: bankPaymentConfigured()
   };
 }
 

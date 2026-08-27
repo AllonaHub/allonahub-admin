@@ -264,9 +264,9 @@ export const config = {
     serviceRoleKey: readEnv("SUPABASE_SERVICE_ROLE_KEY")
   },
   bankPayment: {
-    apiKey: readEnv("BANK_PAYMENT_API_KEY"),
-    secretKey: readEnv("BANK_PAYMENT_SECRET_KEY"),
-    baseUrl: readEnv("BANK_PAYMENT_API_URL", { required: false, defaultValue: "https://bank-api.example.com" }).replace(/\/$/, ""),
+    apiKey: readOptionalSecret("BANK_PAYMENT_API_KEY"),
+    secretKey: readOptionalSecret("BANK_PAYMENT_SECRET_KEY"),
+    baseUrl: readEnv("BANK_PAYMENT_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
     checkoutPath: readEnv("BANK_PAYMENT_CHECKOUT_PATH", { required: false, defaultValue: "/payments/checkout" }),
     detailPath: readEnv("BANK_PAYMENT_DETAIL_PATH", { required: false, defaultValue: "/payments/detail" }),
     refundPath: readEnv("BANK_PAYMENT_REFUND_PATH", { required: false, defaultValue: "/payments/refund" }),
