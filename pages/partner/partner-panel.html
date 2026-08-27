@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
   <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-dedupe2">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260827-marketplaceos1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -43,7 +43,11 @@
           <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
           <button type="button" data-panel-target="refunds"><i class="fa-solid fa-rotate-left"></i><span>İade & İptal</span></button>
           <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
-          <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
+          <button type="button" data-panel-target="growth"><i class="fa-solid fa-tags"></i><span>Promosyon & Fiyat</span></button>
+          <button type="button" data-panel-target="reports"><i class="fa-solid fa-chart-simple"></i><span>Rapor</span></button>
+          <button type="button" data-panel-target="customers"><i class="fa-solid fa-comments-dollar"></i><span>Mağaza & Müşteri</span></button>
+          <button type="button" data-panel-target="ads"><i class="fa-solid fa-rectangle-ad"></i><span>Reklam</span></button>
+          <button type="button" data-panel-target="development"><i class="fa-solid fa-arrow-trend-up"></i><span>Gelişim</span></button>
           <button type="button" data-panel-target="operations"><i class="fa-solid fa-store"></i><span>Şube & Cihaz</span></button>
           <button type="button" data-panel-target="academy"><i class="fa-solid fa-graduation-cap"></i><span>Akademi</span></button>
           <button type="button" data-panel-target="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
@@ -83,6 +87,7 @@
                 <button type="button" data-panel-jump="products" data-product-add data-product-view-target="add"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
                 <button type="button" data-panel-jump="integrations"><i class="fa-solid fa-plug"></i><span>Entegrasyon</span></button>
                 <button type="button" data-panel-jump="finance"><i class="fa-solid fa-file-invoice-dollar"></i><span>Hakediş</span></button>
+                <button type="button" data-panel-jump="reports"><i class="fa-solid fa-chart-simple"></i><span>Rapor</span></button>
                 <button type="button" data-panel-jump="refunds"><i class="fa-solid fa-rotate-left"></i><span>İade / İptal</span></button>
                 <button type="button" data-panel-jump="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulumu Bitir</span></button>
               </div>
@@ -96,6 +101,8 @@
           </div>
 
           <div class="partner-os-kpis" data-partner-kpis></div>
+
+          <section class="partner-os-marketplace-brief" data-marketplace-brief></section>
 
           <div class="partner-os-grid partner-os-grid--three">
             <section class="partner-os-panel">
@@ -293,7 +300,7 @@
               <div class="partner-os-table-wrap">
                 <table class="partner-os-table">
                   <thead>
-                    <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>Sinyal</th></tr>
+                    <tr><th>Ürün</th><th>Stok / Kod</th><th>Fiyat</th><th>Durum</th><th>Sinyal</th><th>Aksiyon</th></tr>
                   </thead>
                   <tbody data-product-rows></tbody>
                 </table>
@@ -520,6 +527,49 @@
           </section>
         </section>
 
+        <section class="partner-os-section" id="reports" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Rapor</p>
+                  <h2>Satış Performansı</h2>
+                </div>
+                <button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Excel</span></button>
+              </div>
+              <div class="partner-os-report-cards" data-report-sales-summary></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Günlük Kontrol</p>
+                  <h2>Rapor Aksiyonları</h2>
+                </div>
+              </div>
+              <div class="partner-os-action-list" data-report-action-list></div>
+            </section>
+          </div>
+
+          <section class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Ürün Analizi</p>
+                <h2>Stok, Fiyat ve Yayın Durumu</h2>
+              </div>
+              <a class="partner-os-link-button partner-os-link-button--inline" href="/pages/partner/partner-products.html"><i class="fa-solid fa-table-list"></i><span>Gelişmiş ürün listesi</span></a>
+            </div>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table partner-os-report-table">
+                <thead>
+                  <tr><th>Ürün</th><th>Satış</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>Öneri</th></tr>
+                </thead>
+                <tbody data-report-product-rows></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
         <section class="partner-os-section" id="growth" data-panel-section>
           <div class="partner-os-panel">
             <div class="partner-os-panel-head">
@@ -571,6 +621,98 @@
           </div>
         </section>
 
+        <section class="partner-os-section" id="ads" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Reklam Merkezi</p>
+                  <h2>Vitrin, Sponsorlu Görünürlük ve Bütçe</h2>
+                </div>
+                <button type="button" data-panel-jump="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya Planla</span></button>
+              </div>
+              <div class="partner-os-report-cards" data-ads-summary></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Reklam Aksiyonları</p>
+                  <h2>Hızlı Plan</h2>
+                </div>
+              </div>
+              <div class="partner-os-action-list" data-ads-action-list></div>
+            </section>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-ranking-star"></i>
+              <h3>Ürün Vitrini</h3>
+              <p>Yayında olan güçlü ürünleri kategori vitrinlerinde görünür yapmak için reklam planı oluştur.</p>
+              <button type="button" data-growth-action="ads">Planla</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Kupon Desteği</h3>
+              <p>Sepet, ürün veya mağaza bazlı kuponlarla kampanya akışını satışa bağla.</p>
+              <button type="button" data-growth-action="coupon">Kupon Aç</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-rotate"></i>
+              <h3>Tekrar Satış</h3>
+              <p>Favori, tekrar müşteri ve HP sadakat kurgularını müşteri segmentlerine bağla.</p>
+              <button type="button" data-growth-action="loyalty">Sadakat Planla</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="customers" data-panel-section>
+          <div class="partner-os-grid partner-os-grid--two">
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Mağaza & Müşteri</p>
+                  <h2>Satıcı Kalitesi</h2>
+                </div>
+                <button type="button" data-panel-jump="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
+              </div>
+              <div class="partner-os-report-cards" data-store-customer-summary></div>
+            </section>
+
+            <section class="partner-os-panel">
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Müşteri Aksiyonları</p>
+                  <h2>Yanıt Bekleyenler</h2>
+                </div>
+              </div>
+              <div class="partner-os-action-list" data-store-customer-actions></div>
+            </section>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-message"></i>
+              <h3>Ürün Soruları</h3>
+              <p>Ürün, teslimat ve satış öncesi soruları destek merkeziyle tek akışta takip et.</p>
+              <button type="button" data-panel-jump="support">Soruları Aç</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-rotate-left"></i>
+              <h3>İade İtirazları</h3>
+              <p>İade ve iptal kararlarını gerekçe, kanıt ve ödeme bildirimiyle birlikte yönet.</p>
+              <button type="button" data-panel-jump="refunds">İadeleri Aç</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-store"></i>
+              <h3>Mağaza Profili</h3>
+              <p>Görünen ad, yasal unvan, iletişim, şehir ve logo bilgilerini güncel tut.</p>
+              <button type="button" data-panel-jump="settings">Profili Aç</button>
+            </article>
+          </div>
+        </section>
+
         <section class="partner-os-section" id="operations" data-panel-section>
           <div class="partner-os-grid partner-os-grid--two">
             <section class="partner-os-panel">
@@ -603,6 +745,40 @@
               </div>
             </div>
             <div class="partner-os-academy" data-academy-list></div>
+          </div>
+        </section>
+
+        <section class="partner-os-section" id="development" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Gelişim Merkezi</p>
+                <h2>Satıcı Olgunluk ve Büyüme Planı</h2>
+              </div>
+              <span class="partner-os-live" data-development-score>Kontrol ediliyor</span>
+            </div>
+            <div class="partner-os-development-list" data-development-list></div>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--three">
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-list-check"></i>
+              <h3>Kurulum Tamamlama</h3>
+              <p>Eksik profil, katalog, entegrasyon ve ödeme adımlarını tek sırada tamamla.</p>
+              <button type="button" data-panel-jump="onboarding">Kuruluma Git</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-chart-simple"></i>
+              <h3>Performans İnceleme</h3>
+              <p>Stok, fiyat, yayında kalma ve hakediş metriklerini rapor merkezinden takip et.</p>
+              <button type="button" data-panel-jump="reports">Raporu Aç</button>
+            </article>
+            <article class="partner-os-feature">
+              <i class="fa-solid fa-graduation-cap"></i>
+              <h3>Partner Akademi</h3>
+              <p>Ürün kalitesi, kargo, müşteri yanıtı ve güvenlik kontrol listelerine ulaş.</p>
+              <button type="button" data-panel-jump="academy">Akademiyi Aç</button>
+            </article>
           </div>
         </section>
 
@@ -694,7 +870,7 @@
   <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-os.js?v=20260630-dedupe2" defer></script>
+  <script src="../../js/partner-os.js?v=20260827-marketplaceos1" defer></script>
   <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>

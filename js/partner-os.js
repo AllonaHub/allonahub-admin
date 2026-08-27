@@ -250,8 +250,8 @@
 
   function statusClass(status) {
     if (["active", "paid", "settled", "delivered", "verified", "enabled", "success"].includes(status)) return "partner-os-status--good";
-    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal", "needs_review"].includes(status)) return "partner-os-status--warn";
-    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled", "dispute_admin_review"].includes(status)) return "partner-os-status--bad";
+    if (["pending", "created", "awaiting_payment", "provider_pending", "review", "in_review", "preparing", "starter", "premium_ready", "queued", "running", "partial", "needs_attention", "pending_partner", "signal", "needs_review"].includes(status)) return "partner-os-status--warn";
+    if (["failed", "cancelled", "expired", "rejected", "suspended", "blocked", "disabled", "dispute_admin_review", "needs_revision", "revision_required"].includes(status)) return "partner-os-status--bad";
     return "";
   }
 
@@ -287,6 +287,9 @@
       planned: "Planlı",
       needs_attention: "İlgi istiyor",
       needs_review: "Kontrol",
+      needs_revision: "Revize gerekli",
+      revision_required: "Revize gerekli",
+      in_review: "İncelemede",
       partial: "Kısmi",
       success: "Başarılı",
       skipped: "Atlandı",
@@ -380,6 +383,58 @@
     `).join("");
   }
 
+  function renderMarketplaceBrief() {
+    const target = $("[data-marketplace-brief]");
+    if (!target) return;
+    const metrics = state.metrics || {};
+    const productIssues = productAttentionCount();
+    const refundIssues = numeric(metrics.refund_cancellation_pending_count) + numeric(metrics.refund_cancellation_dispute_count);
+    const integrationIssues = integrationAttentionCount();
+    const openOrders = numeric(metrics.open_order_count);
+    const operationRisk = productIssues + refundIssues + integrationIssues;
+    const operationStatus = operationRisk > 0 ? "Riskli" : "Sağlıklı";
+    const operationTone = operationRisk > 0 ? "pending" : "active";
+    const campaignCount = state.campaigns.length;
+    const activeProducts = numeric(metrics.active_product_count) || countByStatus(state.products, ["active"]);
+    const waitingProducts = countByStatus(state.products, ["draft", "pending", "review", "needs_review", "in_review"]);
+
+    target.innerHTML = `
+      <div class="partner-os-marketplace-strip">
+        <article>
+          <span>Operasyon Durumu</span>
+          <strong>${escape(operationStatus)}</strong>
+          <small>${escape(openOrders)} açık sipariş · ${escape(refundIssues)} iade/iptal · ${escape(productIssues)} ürün sinyali</small>
+          ${statusPill(operationTone)}
+        </article>
+        <article>
+          <span>Satış Performansı</span>
+          <strong>${money(metrics.gross_volume)}</strong>
+          <small>Net ${money(metrics.net_volume)} · bugün ${money(metrics.paid_today)}</small>
+          ${statusPill(numeric(metrics.paid_today) > 0 ? "active" : "pending")}
+        </article>
+        <article>
+          <span>Katalog Kalitesi</span>
+          <strong>${escape(activeProducts)} yayında</strong>
+          <small>${escape(waitingProducts)} onay/revize bekliyor · ${escape(numeric(metrics.low_stock_count))} kritik stok</small>
+          ${statusPill(productIssues ? "needs_review" : "active")}
+        </article>
+        <article>
+          <span>Büyüme Planı</span>
+          <strong>${escape(campaignCount)} kampanya</strong>
+          <small>Kupon, reklam ve tekrar müşteri akışları tek merkezden izlenir.</small>
+          ${statusPill(campaignCount ? "scheduled" : "pending")}
+        </article>
+      </div>
+      <div class="partner-os-marketplace-actions">
+        ${actionButton("Ürünleri düzenle", "fa-table-list", "products", "primary")}
+        ${actionButton("Siparişleri aç", "fa-truck-fast", "orders", "")}
+        ${actionButton("Raporları incele", "fa-chart-simple", "reports", "")}
+        ${actionButton("Reklam planla", "fa-rectangle-ad", "ads", "")}
+        ${actionButton("Müşteri aksiyonları", "fa-comments", "customers", "")}
+      </div>
+    `;
+  }
+
   function renderStoreHealth() {
     const target = $("[data-store-health]");
     if (!target) return;
@@ -417,6 +472,15 @@
     `;
   }
 
+  function growthActionButton(label, icon, action, tone) {
+    return `
+      <button type="button" class="${tone ? `is-${tone}` : ""}" data-growth-action="${escape(action)}">
+        <i class="fa-solid ${escape(icon)}"></i>
+        <span>${escape(label)}</span>
+      </button>
+    `;
+  }
+
   function renderActionCenter() {
     const target = $("[data-action-center]");
     if (!target) return;
@@ -426,14 +490,16 @@
       actions.push(["İade / iptal incele", "fa-rotate-left", "refunds", "primary"]);
     }
     if (!state.products.length) actions.push(["İlk ürünü ekle", "fa-box-open", "products", "primary"]);
+    if (productAttentionCount() > 0) actions.push(["Ürün kalite kontrolü", "fa-shield-halved", "products", "primary"]);
     if (!state.integrations.length) actions.push(["Entegrasyon bağla", "fa-plug-circle-bolt", "integrations", "primary"]);
     if (!state.paymentIntents.length) actions.push(["Ödeme isteği oluştur", "fa-qrcode", "payments", "primary"]);
-    if (!state.campaigns.length) actions.push(["Kampanya planla", "fa-bullhorn", "growth", ""]);
+    if (!state.campaigns.length) actions.push(["Promosyon planla", "fa-tags", "growth", ""]);
     if (Number(metrics.open_order_count || 0) > 0) actions.push(["Siparişleri güncelle", "fa-truck-fast", "orders", ""]);
+    actions.push(["Raporları incele", "fa-chart-simple", "reports", ""]);
     if (!actions.length) {
       actions.push(["Performansı incele", "fa-chart-line", "finance", "primary"], ["Destek merkezini aç", "fa-headset", "support", ""]);
     }
-    target.innerHTML = actions.slice(0, 4).map((item) => actionButton(...item)).join("");
+    target.innerHTML = actions.slice(0, 6).map((item) => actionButton(...item)).join("");
   }
 
   function numeric(value) {
@@ -447,11 +513,12 @@
   }
 
   function productAttentionCount() {
-    const reviewStatuses = new Set(["pending", "needs_review", "review", "in_review"]);
-    const productStatuses = new Set(["draft", "pending", "review", "needs_review"]);
+    const reviewStatuses = new Set(["pending", "needs_review", "needs_revision", "revision_required", "review", "in_review", "rejected"]);
+    const productStatuses = new Set(["draft", "pending", "review", "in_review", "needs_review", "needs_revision", "revision_required", "rejected"]);
     return (state.products || []).filter((product) => (
       reviewStatuses.has(String(product.compliance_review_status || "").toLowerCase())
       || productStatuses.has(String(product.status || "").toLowerCase())
+      || numeric(product.price) <= 0
       || numeric(product.stock) <= 5
     )).length;
   }
@@ -478,20 +545,30 @@
       countByStatus(state.tickets, ["open", "waiting", "in_progress"])
     );
     const refunds = numeric(metrics.refund_cancellation_pending_count) + numeric(metrics.refund_cancellation_dispute_count);
+    const productAttention = productAttentionCount();
+    const campaignAttention = campaignAttentionCount();
+    const integrationAttention = integrationAttentionCount();
     const settings = (state.partnerWarnings || []).length + (state.refundWarnings || []).length;
     const buckets = {
       onboarding: { count: onboarding, tone: "info", label: `${onboarding} kurulum adımı bekliyor` },
       payments: { count: numeric(metrics.awaiting_payment_count), tone: "info", label: `${numeric(metrics.awaiting_payment_count)} ödeme işlemi bekliyor` },
-      products: { count: productAttentionCount(), tone: "warning", label: "Ürünlerde kontrol bekleyen kayıt var" },
-      integrations: { count: integrationAttentionCount(), tone: "warning", label: "Entegrasyon uyarısı var" },
+      products: { count: productAttention, tone: "warning", label: "Ürünlerde kontrol bekleyen kayıt var" },
+      integrations: { count: integrationAttention, tone: "warning", label: "Entegrasyon uyarısı var" },
       orders: { count: numeric(metrics.open_order_count), tone: "info", label: `${numeric(metrics.open_order_count)} açık sipariş var` },
       refunds: { count: refunds, tone: "critical", label: `${refunds} iade/iptal aksiyonu bekliyor` },
-      growth: { count: campaignAttentionCount(), tone: "info", label: "Kampanya onay/planlama sinyali var" },
+      finance: { count: numeric(metrics.payout_pending) > 0 ? 1 : 0, tone: "info", label: "Hakediş raporu güncel" },
+      growth: { count: campaignAttention, tone: "info", label: "Promosyon/fiyat planlama sinyali var" },
+      reports: { count: productAttention + numeric(metrics.open_order_count) + refunds, tone: productAttention || refunds ? "warning" : "info", label: "Raporlarda takip edilmesi gereken veri var" },
+      customers: { count: support + refunds, tone: refunds ? "critical" : "warning", label: "Müşteri ve destek aksiyonu bekliyor" },
+      ads: { count: campaignAttention || (numeric(metrics.active_product_count) > 0 && !state.campaigns.length ? 1 : 0), tone: "info", label: "Reklam veya kampanya planı bekliyor" },
+      development: { count: onboarding + productAttention + integrationAttention, tone: productAttention || integrationAttention ? "warning" : "info", label: "Gelişim planında bekleyen adım var" },
+      operations: { count: numeric(metrics.open_order_count), tone: "info", label: "Operasyon güncellemesi bekliyor" },
       support: { count: support, tone: "warning", label: `${support} açık destek bildirimi var` },
       settings: { count: settings, tone: "critical", label: "Sistem veya veri erişimi uyarısı var" }
     };
+    const dashboardSummaryBuckets = new Set(["onboarding", "reports", "customers", "ads", "development"]);
     buckets.dashboard = {
-      count: Object.entries(buckets).reduce((total, [key, item]) => key === "onboarding" ? total : total + numeric(item.count), 0),
+      count: Object.entries(buckets).reduce((total, [key, item]) => dashboardSummaryBuckets.has(key) ? total : total + numeric(item.count), 0),
       tone: Object.values(buckets).some((item) => item.tone === "critical" && numeric(item.count) > 0) ? "critical" : "warning",
       label: "Panelde okunmamış operasyon bildirimi var"
     };
@@ -892,6 +969,24 @@
     return labels[provider] || provider || "-";
   }
 
+  function productQualitySignal(product) {
+    const status = String(product.status || "").toLowerCase();
+    const reviewStatus = String(product.compliance_review_status || product.review_status || product.moderation_status || "").toLowerCase();
+    if (["needs_revision", "revision_required"].includes(status) || ["needs_revision", "revision_required"].includes(reviewStatus)) {
+      return { label: "Revize gerekli", status: "failed", action: "Eksik/riskli alanları düzelt" };
+    }
+    if (["rejected", "blocked", "suspended"].includes(status) || reviewStatus === "rejected") {
+      return { label: "Yayına kapalı", status: "failed", action: "Ret gerekçesini incele" };
+    }
+    if (numeric(product.price) <= 0) return { label: "Fiyat eksik", status: "failed", action: "Fiyat gir" };
+    if (numeric(product.stock) <= 0) return { label: "Stok yok", status: "failed", action: "Stok ekle" };
+    if (numeric(product.stock) <= 5) return { label: "Kritik stok", status: "pending", action: "Stok güncelle" };
+    if (["draft", "pending", "review", "in_review"].includes(status) || ["pending", "review", "in_review", "needs_review"].includes(reviewStatus)) {
+      return { label: "Onay bekliyor", status: "pending", action: "Onay sürecini takip et" };
+    }
+    return { label: "Satışa hazır", status: "active", action: "Performansı izle" };
+  }
+
   function renderProducts() {
     renderProductSummary();
     const target = $("[data-product-rows]");
@@ -910,21 +1005,50 @@
       `;
       return;
     }
-    target.innerHTML = state.products.map((raw) => {
+    target.innerHTML = state.products.slice(0, 12).map((raw) => {
       const product = core.normalizeProduct(raw);
-      const signal = product.stock <= 0 ? "Stok yok" : product.stock <= 5 ? "Kritik stok" : "Satışa hazır";
-      const signalStatus = product.stock <= 0 ? "failed" : product.stock <= 5 ? "pending" : "active";
+      const signalInfo = productQualitySignal(product);
+      const image = product.image_url || "/images/product-fallback.svg";
+      const sku = raw.sku || product.sku || raw.external_sku || "-";
+      const barcode = raw.barcode || raw.gtin || raw.ean || "";
+      const modelCode = raw.model_code || raw.external_product_id || raw.product_model_code || "";
+      const variant = [raw.color, raw.colour, raw.size, raw.variant_name, raw.variant_value].filter(Boolean).join(" · ");
+      const detailUrl = `/pages/partner/partner-product-detail.html?id=${encodeURIComponent(product.id || raw.id || "")}`;
       return `
         <tr>
-          <td><strong>${escape(product.name)}</strong><br><small>${escape(core.truncate(product.description || "", 64))}</small></td>
-          <td>${escape(product.category)}</td>
-          <td>${money(product.price)}</td>
-          <td>${escape(product.stock)}</td>
+          <td>
+            <div class="partner-os-product-cell">
+              <img src="${escape(image)}" alt="${escape(product.name)}" loading="lazy" onerror="this.src='/images/product-fallback.svg'">
+              <div>
+                <strong>${escape(product.name)}</strong>
+                <span>${escape([product.category, product.brand].filter(Boolean).join(" · ") || "Kategori bekliyor")}</span>
+                ${variant ? `<small>${escape(variant)}</small>` : ""}
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>${escape(sku)}</strong>
+            <span class="partner-os-muted-line">${escape(barcode ? `Barkod: ${barcode}` : "Barkod bekliyor")}</span>
+            ${modelCode ? `<span class="partner-os-muted-line">${escape(`Model: ${modelCode}`)}</span>` : ""}
+          </td>
+          <td><strong>${money(product.price)}</strong><span class="partner-os-muted-line">Müşteri fiyatı</span></td>
           <td>${statusPill(product.status)}</td>
-          <td>${statusPill(signalStatus).replace(statusLabel(signalStatus), escape(signal))}</td>
+          <td>${statusPill(signalInfo.status).replace(statusLabel(signalInfo.status), escape(signalInfo.label))}</td>
+          <td>
+            <a class="partner-os-mini-action" href="${escape(detailUrl)}"><i class="fa-solid fa-pen-to-square"></i><span>Düzenle</span></a>
+          </td>
         </tr>
       `;
-    }).join("");
+    }).join("") + (state.products.length > 12 ? `
+      <tr>
+        <td colspan="6">
+          <a class="partner-os-table-more" href="/pages/partner/partner-products.html">
+            <i class="fa-solid fa-table-list"></i>
+            <span>${escape(state.products.length - 12)} ürün daha var; gelişmiş ürün listesinde aç</span>
+          </a>
+        </td>
+      </tr>
+    ` : "");
   }
 
   function renderProductSummary() {
@@ -1312,6 +1436,160 @@
     `).join("");
   }
 
+  function renderReportCards(target, cards) {
+    if (!target) return;
+    target.innerHTML = cards.map((card) => `
+      <article class="partner-os-report-card ${card.tone ? `is-${escape(card.tone)}` : ""}">
+        <span>${escape(card.label)}</span>
+        <strong>${escape(card.value)}</strong>
+        <small>${escape(card.hint)}</small>
+      </article>
+    `).join("");
+  }
+
+  function renderReports() {
+    const metrics = state.metrics || {};
+    const products = state.products.map((item) => core.normalizeProduct(item));
+    const active = products.filter((item) => item.status === "active").length;
+    const waiting = products.filter((item) => ["draft", "pending", "review", "in_review", "needs_review"].includes(String(item.status || "").toLowerCase())).length;
+    const missingPrice = products.filter((item) => numeric(item.price) <= 0).length;
+    const missingStock = products.filter((item) => numeric(item.stock) <= 0).length;
+    const lowStock = products.filter((item) => numeric(item.stock) > 0 && numeric(item.stock) <= 5).length;
+    renderReportCards($("[data-report-sales-summary]"), [
+      { label: "Brüt hacim", value: money(metrics.gross_volume), hint: `Net kazanç ${money(metrics.net_volume)}`, tone: "good" },
+      { label: "Bugünkü tahsilat", value: money(metrics.paid_today), hint: "QR/NFC/link toplamı", tone: numeric(metrics.paid_today) ? "good" : "warn" },
+      { label: "Aktif katalog", value: `${active} ürün`, hint: `${waiting} kayıt onay/revize akışında`, tone: active ? "good" : "warn" },
+      { label: "Stok-fiyat alarmı", value: `${missingPrice + missingStock + lowStock}`, hint: `${missingPrice} fiyat yok · ${missingStock} stok yok · ${lowStock} kritik`, tone: missingPrice + missingStock + lowStock ? "bad" : "good" }
+    ]);
+
+    const actionTarget = $("[data-report-action-list]");
+    if (actionTarget) {
+      const actions = [];
+      if (missingPrice) actions.push(actionButton("Fiyatı eksik ürünleri aç", "fa-tags", "products", "primary"));
+      if (missingStock || lowStock) actions.push(actionButton("Stok uyarılarını aç", "fa-boxes-stacked", "products", "primary"));
+      if (waiting) actions.push(actionButton("Onay bekleyenleri kontrol et", "fa-shield-halved", "products", ""));
+      actions.push(actionButton("Sipariş raporuna git", "fa-truck-fast", "orders", ""));
+      actions.push(`<button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Ürün Excel'i indir</span></button>`);
+      actionTarget.innerHTML = actions.slice(0, 6).join("");
+    }
+
+    const rowTarget = $("[data-report-product-rows]");
+    if (!rowTarget) return;
+    if (!products.length) {
+      rowTarget.innerHTML = `<tr><td colspan="6">Raporlanacak ürün görünmüyor.</td></tr>`;
+      return;
+    }
+    const weight = (product) => {
+      const signal = productQualitySignal(product);
+      if (signal.status === "failed") return 0;
+      if (signal.status === "pending") return 1;
+      return 2;
+    };
+    rowTarget.innerHTML = [...products]
+      .sort((a, b) => weight(a) - weight(b) || numeric(a.stock) - numeric(b.stock))
+      .slice(0, 12)
+      .map((product) => {
+        const signal = productQualitySignal(product);
+        const detailUrl = `/pages/partner/partner-product-detail.html?id=${encodeURIComponent(product.id || "")}`;
+        return `
+          <tr>
+            <td><strong>${escape(product.name)}</strong><br><small>${escape(product.category || "Kategori bekliyor")}</small></td>
+            <td>${escape(product.sold_count || 0)}</td>
+            <td>${money(product.price)}</td>
+            <td>${escape(product.stock)}</td>
+            <td>${statusPill(product.status)}</td>
+            <td>
+              <a class="partner-os-mini-action" href="${escape(detailUrl)}">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span>${escape(signal.action)}</span>
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join("");
+  }
+
+  function renderCustomers() {
+    const metrics = state.metrics || {};
+    const business = state.business || {};
+    const support = Math.max(
+      numeric(metrics.open_ticket_count),
+      countByStatus(state.tickets, ["open", "waiting", "in_progress"])
+    );
+    const refunds = numeric(metrics.refund_cancellation_pending_count) + numeric(metrics.refund_cancellation_dispute_count);
+    const trust = Math.max(0, Math.min(100, numeric(metrics.trust_score || business.trust_score || 70)));
+    renderReportCards($("[data-store-customer-summary]"), [
+      { label: "Mağaza skoru", value: `${trust}/100`, hint: business.verification_status ? statusLabel(business.verification_status) : "Doğrulama bekliyor", tone: trust >= 85 ? "good" : "warn" },
+      { label: "Açık müşteri işi", value: `${support + refunds}`, hint: `${support} destek · ${refunds} iade/iptal`, tone: support + refunds ? "bad" : "good" },
+      { label: "Açık sipariş", value: `${numeric(metrics.open_order_count)}`, hint: "Hazırlık ve kargo takibi", tone: numeric(metrics.open_order_count) ? "warn" : "good" },
+      { label: "Mağaza profili", value: business.logo_url && business.display_name ? "Tamam" : "Eksik", hint: business.city || "Şehir/profil bilgisi bekliyor", tone: business.logo_url && business.display_name ? "good" : "warn" }
+    ]);
+
+    const actionTarget = $("[data-store-customer-actions]");
+    if (!actionTarget) return;
+    const actions = [];
+    if (support) actions.push(actionButton("Destek taleplerini yanıtla", "fa-headset", "support", "primary"));
+    if (refunds) actions.push(actionButton("İade / iptal kararlarını aç", "fa-rotate-left", "refunds", "primary"));
+    if (numeric(metrics.open_order_count)) actions.push(actionButton("Sipariş ve kargo güncelle", "fa-truck-fast", "orders", ""));
+    actions.push(actionButton("Mağaza profilini düzenle", "fa-store", "settings", ""));
+    actions.push(actionButton("Müşteri etkisini raporda gör", "fa-chart-simple", "reports", ""));
+    actionTarget.innerHTML = actions.slice(0, 5).map((item) => typeof item === "string" ? item : actionButton(...item)).join("");
+  }
+
+  function renderAds() {
+    const metrics = state.metrics || {};
+    const activeCampaigns = countByStatus(state.campaigns, ["active", "scheduled", "approved"]);
+    const pendingCampaigns = campaignAttentionCount();
+    const activeProducts = numeric(metrics.active_product_count) || countByStatus(state.products, ["active"]);
+    renderReportCards($("[data-ads-summary]"), [
+      { label: "Reklama hazır ürün", value: `${activeProducts}`, hint: "Yayındaki katalogdan seçilebilir", tone: activeProducts ? "good" : "warn" },
+      { label: "Aktif kampanya", value: `${activeCampaigns}`, hint: `${pendingCampaigns} plan/onay bekliyor`, tone: activeCampaigns ? "good" : "warn" },
+      { label: "Bugünkü hacim", value: money(metrics.paid_today), hint: "Reklam etkisi için günlük takip", tone: numeric(metrics.paid_today) ? "good" : "warn" },
+      { label: "Bütçe kontrolü", value: money(state.campaigns.reduce((sum, item) => sum + numeric(item.budget), 0)), hint: "Planlanan kampanya bütçesi", tone: state.campaigns.length ? "good" : "warn" }
+    ]);
+
+    const target = $("[data-ads-action-list]");
+    if (!target) return;
+    target.innerHTML = [
+      growthActionButton("Sponsorlu görünürlük planla", "fa-ranking-star", "ads", "primary"),
+      growthActionButton("Kupon kampanyası oluştur", "fa-ticket", "coupon", ""),
+      growthActionButton("Sadakat kampanyası oluştur", "fa-users-viewfinder", "loyalty", ""),
+      actionButton("Reklama hazır ürünleri kontrol et", "fa-boxes-stacked", "products", ""),
+      actionButton("Performans raporunu aç", "fa-chart-simple", "reports", "")
+    ].join("");
+  }
+
+  function renderDevelopment() {
+    const target = $("[data-development-list]");
+    const scoreTarget = $("[data-development-score]");
+    if (!target) return;
+    const items = onboardingItems();
+    const doneCount = items.filter((item) => item.done).length;
+    const percent = Math.round((doneCount / Math.max(items.length, 1)) * 100);
+    if (scoreTarget) scoreTarget.textContent = `%${percent} olgunluk`;
+    const recommendations = (state.recommendations || []).slice(0, 3).map((item) => ({
+      title: item.title,
+      body: item.body,
+      target: item.target || "reports",
+      done: false,
+      icon: "fa-lightbulb"
+    }));
+    const rows = [
+      ...items.map((item) => ({ ...item, icon: item.done ? "fa-circle-check" : "fa-circle" })),
+      ...recommendations
+    ];
+    target.innerHTML = rows.map((item) => `
+      <article class="partner-os-development-item ${item.done ? "is-done" : ""}">
+        <i class="fa-solid ${escape(item.icon)}"></i>
+        <div>
+          <strong>${escape(item.title)}</strong>
+          <span>${escape(item.body)}</span>
+        </div>
+        <button type="button" data-panel-jump="${escape(item.target || "reports")}">${item.done ? "Aç" : "İlerle"}</button>
+      </article>
+    `).join("");
+  }
+
   function renderOperations() {
     const locations = $("[data-location-list]");
     if (locations) {
@@ -1408,6 +1686,7 @@
   function renderAll() {
     applyBusinessProfile();
     renderKpis();
+    renderMarketplaceBrief();
     renderStoreHealth();
     renderActionCenter();
     renderAnnouncements();
@@ -1421,10 +1700,14 @@
     renderOrders();
     renderRefundCancellations();
     renderFinance();
+    renderReports();
+    renderCustomers();
+    renderAds();
     renderOperations();
     renderTickets();
     renderCampaigns();
     renderAcademy();
+    renderDevelopment();
     renderNotificationBadges();
   }
 

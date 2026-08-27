@@ -33,6 +33,8 @@
   top: 14px;
   align-self: start;
   min-height: calc(100vh - 28px);
+  max-height: calc(100vh - 28px);
+  overflow-y: auto;
   border-radius: 8px;
   padding: 16px;
 }
@@ -128,6 +130,7 @@
 .partner-os-actions button,
 .partner-os-panel-head button,
 .partner-os-hero-actions button,
+.partner-os-marketplace-actions button,
 .partner-os-terminal button,
 .partner-os-support-form button,
 .partner-os-settings button,
@@ -467,6 +470,75 @@
   margin: 8px 0 4px;
 }
 
+.partner-os-marketplace-brief {
+  margin-top: 14px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 72%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 62%, transparent);
+  padding: 14px;
+}
+
+.partner-os-marketplace-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.partner-os-marketplace-strip article,
+.partner-os-report-card {
+  min-height: 114px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 58%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-strong) 60%, transparent);
+  padding: 13px;
+}
+
+.partner-os-marketplace-strip span,
+.partner-os-marketplace-strip small,
+.partner-os-report-card span,
+.partner-os-report-card small {
+  display: block;
+  color: var(--ah-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.42;
+}
+
+.partner-os-marketplace-strip strong,
+.partner-os-report-card strong {
+  display: block;
+  color: var(--ah-accent);
+  font-size: 1.35rem;
+  line-height: 1.1;
+  margin: 8px 0 7px;
+}
+
+.partner-os-marketplace-actions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.partner-os-report-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.partner-os-report-card.is-good {
+  border-color: rgba(0, 197, 106, 0.28);
+}
+
+.partner-os-report-card.is-warn {
+  border-color: color-mix(in srgb, var(--ah-accent) 36%, var(--ah-line));
+}
+
+.partner-os-report-card.is-bad {
+  border-color: rgba(255, 91, 91, 0.42);
+  background: rgba(255, 91, 91, 0.09);
+}
+
 .partner-os-grid {
   display: grid;
   gap: 14px;
@@ -641,6 +713,7 @@
 .partner-os-settings button,
 .partner-os-product-form button,
 .partner-os-link-button,
+.partner-os-marketplace-actions button,
 .partner-os-action-list button,
 .partner-os-onboarding-item button,
 .partner-os-academy-card button {
@@ -661,6 +734,12 @@
   color: var(--ah-primary);
   text-decoration: none;
   margin-top: 16px;
+}
+
+.partner-os-link-button--inline {
+  width: auto;
+  margin-top: 0;
+  padding: 0 12px;
 }
 
 .partner-os-product-form {
@@ -907,6 +986,7 @@
   gap: 10px;
 }
 
+.partner-os-marketplace-actions button,
 .partner-os-action-list button,
 .partner-os-onboarding-item button,
 .partner-os-academy-card button {
@@ -924,9 +1004,76 @@
   cursor: pointer;
 }
 
+.partner-os-marketplace-actions button.is-primary,
 .partner-os-action-list button.is-primary {
   background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
   color: #fff;
+}
+
+.partner-os-product-cell {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+}
+
+.partner-os-product-cell img {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--ah-bg-mid) 64%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ah-line) 58%, transparent);
+}
+
+.partner-os-product-cell strong,
+.partner-os-product-cell span,
+.partner-os-product-cell small,
+.partner-os-muted-line {
+  display: block;
+}
+
+.partner-os-product-cell strong {
+  color: var(--ah-ink);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.partner-os-product-cell span,
+.partner-os-product-cell small,
+.partner-os-muted-line {
+  color: var(--ah-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+.partner-os-mini-action,
+.partner-os-table-more {
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 62%, transparent);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  color: var(--ah-ink);
+  background: color-mix(in srgb, var(--ah-bg-mid) 70%, transparent);
+  font-weight: 900;
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.partner-os-mini-action:hover,
+.partner-os-table-more:hover {
+  border-color: color-mix(in srgb, var(--ah-primary) 54%, var(--ah-line));
+  color: var(--ah-accent);
+}
+
+.partner-os-table-more {
+  width: 100%;
 }
 
 .partner-os-onboarding {
@@ -990,6 +1137,61 @@
 .partner-os-academy-card > i {
   color: var(--ah-primary);
   font-size: 1.55rem;
+}
+
+.partner-os-development-list {
+  display: grid;
+  gap: 10px;
+}
+
+.partner-os-development-item {
+  min-height: 84px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 62%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 54%, transparent);
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 118px;
+  align-items: center;
+  gap: 12px;
+}
+
+.partner-os-development-item > i {
+  color: var(--ah-accent);
+  font-size: 1.2rem;
+}
+
+.partner-os-development-item.is-done > i {
+  color: #59f1a5;
+}
+
+.partner-os-development-item strong,
+.partner-os-development-item span {
+  display: block;
+}
+
+.partner-os-development-item strong {
+  color: var(--ah-ink);
+  font-size: 0.92rem;
+}
+
+.partner-os-development-item span {
+  color: var(--ah-muted);
+  font-size: 0.82rem;
+  line-height: 1.42;
+  margin-top: 4px;
+}
+
+.partner-os-development-item button {
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 66%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 68%, transparent);
+  color: var(--ah-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .partner-os-terminal-empty,
@@ -1943,6 +2145,7 @@
   .partner-os-sidebar {
     position: static;
     min-height: auto;
+    max-height: none;
   }
 
   .partner-os-menu {
@@ -1976,6 +2179,9 @@
   .partner-os-grid--terminal,
   .partner-os-grid--two,
   .partner-os-grid--three,
+  .partner-os-marketplace-strip,
+  .partner-os-marketplace-actions,
+  .partner-os-report-cards,
   .partner-os-module-access,
   .partner-os-integration-modes,
   .partner-os-integration-connectors,
@@ -2038,7 +2244,8 @@
   .partner-os-form-grid,
   .partner-os-product-summary,
   .partner-os-product-form,
-  .partner-os-onboarding-item {
+  .partner-os-onboarding-item,
+  .partner-os-development-item {
     grid-template-columns: 1fr;
   }
 
