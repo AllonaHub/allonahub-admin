@@ -126,6 +126,12 @@
   color: #ff9caf;
 }
 
+.partner-products-actions button.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-bg-strong));
+  color: var(--ah-accent);
+}
+
 .partner-products-alert {
   margin-top: 14px;
   padding: 12px 14px;
@@ -289,7 +295,7 @@
 
 .partner-products-toolbar {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(170px, 220px) minmax(170px, 220px) auto;
+  grid-template-columns: minmax(170px, 1.2fr) repeat(4, minmax(118px, 0.8fr)) minmax(150px, 0.8fr) minmax(150px, 0.8fr) auto;
   gap: 12px;
   align-items: end;
   margin-top: 14px;
@@ -481,7 +487,7 @@
 
 .partner-products-table {
   width: 100%;
-  min-width: 1280px;
+  min-width: 1600px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -513,45 +519,61 @@
 
 .partner-products-table th:nth-child(2),
 .partner-products-table td:nth-child(2) {
-  width: 430px;
+  width: 330px;
 }
 
 .partner-products-table th:nth-child(3),
 .partner-products-table td:nth-child(3) {
-  width: 160px;
+  width: 170px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .partner-products-table th:nth-child(4),
 .partner-products-table td:nth-child(4) {
-  width: 116px;
+  width: 170px;
+  overflow: hidden;
 }
 
 .partner-products-table th:nth-child(5),
 .partner-products-table td:nth-child(5) {
-  width: 96px;
+  width: 134px;
 }
 
 .partner-products-table th:nth-child(6),
 .partner-products-table td:nth-child(6) {
-  width: 176px;
-  overflow: hidden;
-  white-space: nowrap;
+  width: 122px;
 }
 
 .partner-products-table th:nth-child(7),
 .partner-products-table td:nth-child(7) {
-  width: 128px;
+  width: 88px;
+}
+
+.partner-products-table th:nth-child(8),
+.partner-products-table td:nth-child(8) {
+  width: 170px;
+  overflow: hidden;
+}
+
+.partner-products-table th:nth-child(9),
+.partner-products-table td:nth-child(9) {
+  width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.partner-products-table th:nth-child(8),
-.partner-products-table td:nth-child(8) {
+.partner-products-table th:nth-child(10),
+.partner-products-table td:nth-child(10) {
   width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partner-products-table th:nth-child(11),
+.partner-products-table td:nth-child(11) {
+  width: 132px;
 }
 
 .partner-products-table th:last-child,
@@ -801,6 +823,30 @@
   white-space: nowrap;
 }
 
+.partner-products-code-column strong,
+.partner-products-code-column small,
+.partner-products-variant-column small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partner-products-code-column strong {
+  color: var(--ah-ink);
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.partner-products-variant-column .partner-product-variant-meta {
+  margin-top: 0;
+}
+
+.partner-products-variant-column .partner-product-variant-meta small {
+  display: none;
+}
+
 .partner-products-stock.is-low {
   color: var(--ah-accent);
 }
@@ -915,9 +961,59 @@
   color: #ff9caf;
 }
 
+.partner-products-row-actions button.is-review {
+  border-color: rgba(255, 77, 109, 0.44);
+  background: rgba(255, 77, 109, 0.14);
+  color: #ffb1bf;
+}
+
 .partner-products-row-actions button.is-danger:hover {
   border-color: rgba(255, 77, 109, 0.62);
   background: rgba(255, 77, 109, 0.18);
+}
+
+.partner-products-row-actions button.is-review:hover {
+  border-color: rgba(255, 77, 109, 0.72);
+  background: rgba(255, 77, 109, 0.22);
+}
+
+.partner-products.is-compact-products .partner-products-table th,
+.partner-products.is-compact-products .partner-products-table td {
+  padding: 6px 8px;
+}
+
+.partner-products.is-compact-products .partner-products-table tbody tr {
+  height: 54px;
+}
+
+.partner-products.is-compact-products .partner-product-thumb {
+  width: 38px;
+  height: 38px;
+}
+
+.partner-products.is-compact-products .partner-product-media-cluster {
+  grid-template-columns: 38px auto;
+}
+
+.partner-products.is-compact-products .partner-product-variant-mini,
+.partner-products.is-compact-products .partner-product-variant-count {
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
+}
+
+.partner-products.is-compact-products .partner-product-name-link {
+  font-size: 0.8rem;
+}
+
+.partner-products.is-compact-products .partner-products-quick-input {
+  min-height: 28px;
+}
+
+.partner-products.is-compact-products .partner-products-row-actions button {
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 .partner-products-pagination {

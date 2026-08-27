@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260701-detailfix1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260827-sellerflow1">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -27,6 +27,14 @@
           <span data-product-manager-summary>Ürünler hazırlanıyor.</span>
         </div>
         <div class="partner-products-actions">
+          <button type="button" data-export-products>
+            <i class="fa-solid fa-file-excel"></i>
+            <span>Excel İndir</span>
+          </button>
+          <button type="button" data-toggle-table-density>
+            <i class="fa-solid fa-table-cells"></i>
+            <span>Kompakt Tablo</span>
+          </button>
           <a href="/pages/partner/partner-panel.html#products-add" data-add-product-link>
             <i class="fa-solid fa-plus"></i>
             <span>Ürün Ekle</span>
@@ -45,8 +53,24 @@
 
       <section class="partner-products-toolbar" aria-label="Ürün filtreleri">
         <label>
-          <span>Arama</span>
-          <input type="search" data-product-search placeholder="Ürün, SKU, kategori veya marka">
+          <span>Ürün Adı</span>
+          <input type="search" data-product-name-filter placeholder="Ürün adı">
+        </label>
+        <label>
+          <span>Barkod</span>
+          <input type="search" data-product-barcode-filter placeholder="Barkod / GTIN">
+        </label>
+        <label>
+          <span>Model / SKU</span>
+          <input type="search" data-product-code-filter placeholder="Model veya stok kodu">
+        </label>
+        <label>
+          <span>Kategori</span>
+          <input type="search" data-product-category-filter placeholder="Kategori">
+        </label>
+        <label>
+          <span>Marka</span>
+          <input type="search" data-product-brand-filter placeholder="Marka">
         </label>
         <label>
           <span>Durum</span>
@@ -130,18 +154,21 @@
               <thead>
                 <tr>
                   <th class="partner-products-select"><input type="checkbox" data-select-all-products aria-label="Görünen ürünleri seç"></th>
-                  <th>Ürün</th>
-                  <th>Kategori</th>
-                  <th>Fiyat</th>
+                  <th>Ürün Bilgisi</th>
+                  <th>Varyant</th>
+                  <th>Stok Kodu / Barkod</th>
+                  <th>Müşteri Fiyatı</th>
+                  <th>Satış Fiyatı</th>
                   <th>Stok</th>
                   <th>Durum</th>
-                  <th>Güncelleme</th>
-                  <th>Aksiyon</th>
+                  <th>Kategori</th>
+                  <th>Marka</th>
+                  <th>İşlemler</th>
                 </tr>
               </thead>
               <tbody data-product-rows>
                 <tr>
-                  <td colspan="8">
+                  <td colspan="11">
                     <div class="partner-products-loading">Ürünler yükleniyor.</div>
                   </td>
                 </tr>
@@ -232,7 +259,8 @@
   <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
   <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-products.js?v=20260701-detailfix1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="../../js/partner-products.js?v=20260827-sellerflow1" defer></script>
   <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>

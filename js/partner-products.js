@@ -2,6 +2,27 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
   const BULK_PRODUCT_LIMIT = 50;
+  const PRODUCT_EXPORT_COLUMNS = [
+    "id",
+    "catalog_scope",
+    "name",
+    "category",
+    "brand",
+    "sku",
+    "barcode",
+    "price",
+    "customer_visible_price",
+    "stock",
+    "status",
+    "compliance_review_status",
+    "variant_group",
+    "variant_label",
+    "updated_at",
+    "image_url",
+    "media_gallery",
+    "video_url",
+    "description"
+  ];
   const state = {
     access: null,
     business: null,
@@ -10,8 +31,14 @@
     currentProductId: "",
     pageSize: 50,
     page: 1,
+    compactTable: false,
     filters: {
       search: "",
+      name: "",
+      barcode: "",
+      code: "",
+      category: "",
+      brand: "",
       status: "all",
       sort: "updated_desc"
     }
@@ -43,6 +70,45 @@
   function money(value) {
     if (core.money) return core.money(value);
     return Number(value || 0).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
+  }
+
+  function filterText(value) {
+    return String(value || "").trim().toLocaleLowerCase("tr-TR");
+  }
+
+  function includesTerm(values, term) {
+    const query = filterText(term);
+    if (!query) return true;
+    return values.some((value) => filterText(value).includes(query));
+  }
+
+  function productCodes(product) {
+    const variant = variantInfo(product);
+    return {
+      sku: product.sku || product.stock_code || product.model_code || product.integration_external_id || "",
+      barcode: product.barcode || product.gtin || variant.barcode || "",
+      model: product.model_code || product.model || product.external_product_id || variant.product_code || ""
+    };
+  }
+
+  function customerVisiblePrice(product) {
+    return Number(
+      product.customer_visible_price
+      || product.customer_price
+      || product.final_price
+      || product.discounted_price
+      || product.price
+      || 0
+    );
+  }
+
+  function commissionText(product) {
+    const value = product.commission_rate || product.commission || product.marketplace_commission || "";
+    if (value === "" || value === null || value === undefined) return "";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return String(value);
+    if (numeric > 0 && numeric < 1) return `%${(numeric * 100).toFixed(2)}`;
+    return `%${numeric.toFixed(2)}`;
   }
 
   function normalize(value) {
@@ -276,6 +342,70 @@
     }
   }
 
+  function downloadBlob(blob, filename) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function downloadRows(rows, filename, sheetName) {
+    const normalizedRows = rows.length ? rows : [PRODUCT_EXPORT_COLUMNS.reduce((row, key) => ({ ...row, [key]: "" }), {})];
+    if (window.XLSX) {
+      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: PRODUCT_EXPORT_COLUMNS });
+      const workbook = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      window.XLSX.writeFile(workbook, filename);
+      return;
+    }
+    const csv = [
+      PRODUCT_EXPORT_COLUMNS.join(";"),
+      ...normalizedRows.map((row) => PRODUCT_EXPORT_COLUMNS.map((key) => {
+        const value = String(row[key] ?? "");
+        return `"${value.replace(/"/g, '""')}"`;
+      }).join(";"))
+    ].join("\n");
+    downloadBlob(new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" }), filename.replace(/\.xlsx$/i, ".csv"));
+  }
+
+  function exportRows(products) {
+    return products.map((raw) => {
+      const product = normalizeProduct(raw);
+      const codes = productCodes({ ...raw, ...product });
+      const variant = variantInfo(product);
+      return {
+        id: product.id || "",
+        catalog_scope: product.catalog_scope || product.module_key || "shop",
+        name: product.name || "",
+        category: product.category || "",
+        brand: product.brand || "",
+        sku: codes.sku,
+        barcode: codes.barcode,
+        price: Number(product.price || 0),
+        customer_visible_price: customerVisiblePrice(product),
+        stock: Number(product.stock || 0),
+        status: product.status || "",
+        compliance_review_status: product.compliance_review_status || product.review_status || product.approval_status || "",
+        variant_group: variant.group_key || "",
+        variant_label: variant.label || "",
+        updated_at: product.updated_at || product.created_at || "",
+        image_url: product.image_url || "",
+        media_gallery: Array.isArray(product.media_gallery) ? JSON.stringify(product.media_gallery) : product.media_gallery || "",
+        video_url: product.video_url || "",
+        description: product.description || ""
+      };
+    });
+  }
+
+  function exportProducts() {
+    const rows = exportRows(filteredProducts());
+    downloadRows(rows, "allona-partner-urun-listesi.xlsx", "Urunler");
+    toast(`${rows.length} ürün Excel dosyasına hazırlandı.`, "success");
+  }
+
   function statusLabel(value) {
     const labels = {
       active: "Yayında",
@@ -468,14 +598,16 @@
   function productMatchesSearch(product, search) {
     const term = String(search || "").trim().toLocaleLowerCase("tr-TR");
     if (!term) return true;
+    const codes = productCodes(product);
     return [
       product.name,
       product.product_name,
       product.description,
       product.category,
       product.brand,
-      product.sku,
-      product.barcode,
+      codes.sku,
+      codes.barcode,
+      codes.model,
       product.variant_automation?.barcode,
       product.variant_automation?.label,
       product.variant_automation?.color,
@@ -486,6 +618,18 @@
       product.integration_source,
       product.integration_external_id
     ].some((value) => String(value || "").toLocaleLowerCase("tr-TR").includes(term));
+  }
+
+  function productMatchesFieldFilters(product) {
+    const codes = productCodes(product);
+    const variant = variantInfo(product);
+    return (
+      includesTerm([product.name, product.product_name, product.description], state.filters.name)
+      && includesTerm([codes.barcode, product.variant_automation?.barcode], state.filters.barcode)
+      && includesTerm([codes.sku, codes.model, product.integration_external_id, product.external_sku, variant.group_key, variant.product_code], state.filters.code)
+      && includesTerm([product.category, product.catalog_scope, product.module_key], state.filters.category)
+      && includesTerm([product.brand, product.seller_public_name, product.seller_legal_name], state.filters.brand)
+    );
   }
 
   function productMatchesStatus(product, statusFilter) {
@@ -508,6 +652,7 @@
     const rows = state.products
       .map((raw) => ({ raw, product: normalizeProduct(raw) }))
       .filter(({ product }) => productMatchesSearch(product, state.filters.search))
+      .filter(({ product }) => productMatchesFieldFilters(product))
       .filter(({ product }) => productMatchesStatus(product, state.filters.status));
 
     rows.sort((left, right) => {
@@ -684,7 +829,7 @@
     if (!rows.length) {
       target.innerHTML = `
         <tr>
-          <td colspan="8">
+          <td colspan="11">
             <div class="partner-products-empty">
               <strong>Ürün bulunamadı.</strong>
               <span>Filtreleri temizleyip tekrar kontrol edebilirsiniz.</span>
@@ -702,13 +847,20 @@
 
     target.innerHTML = rows.map((raw) => {
       const product = normalizeProduct(raw);
+      const productWithRaw = { ...raw, ...product };
       const image = product.image_url || raw.image_url || "";
-      const variant = variantInfo(product);
-      const barcode = raw.barcode || product.barcode || variant.barcode || "";
+      const variant = variantInfo(productWithRaw);
+      const codes = productCodes(productWithRaw);
       const codeLine = [
-        product.sku ? `SKU ${product.sku}` : "",
-        barcode ? `Barkod ${barcode}` : ""
+        codes.sku ? `SKU ${codes.sku}` : "",
+        codes.barcode ? `Barkod ${codes.barcode}` : ""
       ].filter(Boolean).join(" · ") || product.brand || product.seller_public_name || "Kod yok";
+      const modelLine = [
+        codes.model ? `Model ${codes.model}` : "",
+        raw.integration_source ? `Kaynak ${raw.integration_source}` : ""
+      ].filter(Boolean).join(" · ");
+      const visiblePrice = customerVisiblePrice(productWithRaw);
+      const commission = commissionText(productWithRaw);
       const stockClass = Number(product.stock || 0) <= 0 ? "is-empty" : Number(product.stock || 0) <= 5 ? "is-low" : "";
       const approvedForPublish = canPublish(product);
       const archived = normalize(product.status) === "archived";
@@ -733,12 +885,23 @@
               <span>
                 <button type="button" class="partner-product-name-link" data-open-product-detail="${escape(product.id)}">${escape(product.name)}</button>
                 <small>${escape(codeLine)}</small>
-                ${renderVariantSummary(product)}
                 ${renderRevisionInlineWarning(product)}
               </span>
             </div>
           </td>
-          <td>${escape(product.category || "-")}<small>${escape(product.brand || "")}${variant.group_size > 1 ? ` · Grup stok ${escape(variant.group_stock || 0)}` : ""}</small></td>
+          <td class="partner-products-variant-column">
+            ${renderVariantSummary(productWithRaw)}
+            <small>${escape(confidenceLabel(variant.confidence))}${variant.duplicate_reason ? ` · ${escape(variant.duplicate_reason)}` : ""}</small>
+          </td>
+          <td class="partner-products-code-column">
+            <strong>${escape(codes.sku || "-")}</strong>
+            <small>${escape(codes.barcode ? `Barkod ${codes.barcode}` : "Barkod yok")}</small>
+            ${modelLine ? `<small>${escape(modelLine)}</small>` : ""}
+          </td>
+          <td class="partner-products-money">
+            <strong>${money(visiblePrice)}</strong>
+            ${commission ? `<small>Komisyon ${escape(commission)}</small>` : `<small>Müşteri görünen fiyat</small>`}
+          </td>
           <td class="partner-products-money">
             <input class="partner-products-quick-input" type="number" min="0" step="0.01" value="${escape(Number(product.price || 0))}" data-quick-price="${escape(product.id)}" aria-label="${escape(product.name)} fiyat">
             <small>${money(product.price)}</small>
@@ -746,16 +909,17 @@
           <td>
             <input class="partner-products-quick-input ${stockClass}" type="number" min="0" step="1" value="${escape(Number(product.stock || 0))}" data-quick-stock="${escape(product.id)}" aria-label="${escape(product.name)} stok">
           </td>
-          <td>${statusBadges(product)}${revisionNotice(product)}</td>
-          <td>${escape(formatDate(product.updated_at || product.created_at))}</td>
+          <td>${statusBadges(product)}<small>Güncelleme ${escape(formatDate(product.updated_at || product.created_at))}</small>${revisionNotice(product)}</td>
+          <td>${escape(product.category || "-")}<small>${escape(product.catalog_scope || product.module_key || "")}${variant.group_size > 1 ? ` · Grup stok ${escape(variant.group_stock || 0)}` : ""}</small></td>
+          <td>${escape(product.brand || product.seller_public_name || "-")}<small>${escape(product.seller_city || "")}</small></td>
           <td class="partner-products-row-actions">
             <button type="button" data-save-quick-product="${escape(product.id)}" title="Fiyat ve stoku kaydet">
               <i class="fa-solid fa-floppy-disk"></i>
               <span>Kaydet</span>
             </button>
-            <button type="button" data-edit-product="${escape(product.id)}" title="Ürün içeriğini düzenle">
+            <button type="button" class="${needsRevision ? "is-review" : ""}" data-edit-product="${escape(product.id)}" title="${needsRevision ? "Revizyonu düzelt" : "Ürün içeriğini düzenle"}">
               <i class="fa-solid fa-pen-to-square"></i>
-              <span>Detay</span>
+              <span>${needsRevision ? "Revize Et" : "Detay"}</span>
             </button>
             ${approvedForPublish ? `
               <button type="button" data-publish-product="${escape(product.id)}" title="Onaylı ürünü yayına al">
@@ -780,6 +944,18 @@
 
   function renderAll() {
     renderRows();
+    renderTableDensity();
+  }
+
+  function renderTableDensity() {
+    const shell = $("[data-partner-products-shell]");
+    const button = $("[data-toggle-table-density]");
+    shell?.classList.toggle("is-compact-products", state.compactTable);
+    if (button) {
+      button.classList.toggle("is-active", state.compactTable);
+      const label = button.querySelector("span");
+      if (label) label.textContent = state.compactTable ? "Rahat Tablo" : "Kompakt Tablo";
+    }
   }
 
   function productDetailUrl(productId, options) {
@@ -878,7 +1054,7 @@
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded("/pages/partner/partner-products.html")) return;
-      const params = new URLSearchParams({ limit: "500" });
+      const params = new URLSearchParams({ limit: "1000" });
       const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
       state.business = payload.business || state.access.partnerBusiness || null;
       state.products = payload.products || [];
@@ -1318,6 +1494,8 @@
       const archive = event.target.closest("[data-archive-product]");
       const close = event.target.closest("[data-close-product-drawer]");
       const clear = event.target.closest("[data-clear-product-filters]");
+      const exportProductsButton = event.target.closest("[data-export-products]");
+      const tableDensity = event.target.closest("[data-toggle-table-density]");
       const selectAllAction = event.target.closest("[data-select-all-products-action]");
       const selectVisible = event.target.closest("[data-select-visible-products]");
       const selectActive = event.target.closest("[data-select-active-products]");
@@ -1357,6 +1535,12 @@
         goToFirstRevisionProduct();
       }
       if (refresh) loadProducts();
+      if (exportProductsButton) exportProducts();
+      if (tableDensity) {
+        state.compactTable = !state.compactTable;
+        renderTableDensity();
+        syncTableScrollbars();
+      }
       if (edit) goToProductDetail(edit.dataset.editProduct);
       if (detail) goToProductDetail(detail.dataset.openProductDetail);
       if (quickSave) saveQuickProduct(quickSave.dataset.saveQuickProduct, quickSave);
@@ -1364,12 +1548,22 @@
       if (archive) archiveProduct(archive.dataset.archiveProduct, archive);
       if (close) closeEditor();
       if (clear) {
-        state.filters = { search: "", status: "all", sort: "updated_desc" };
+        state.filters = { search: "", name: "", barcode: "", code: "", category: "", brand: "", status: "all", sort: "updated_desc" };
         resetPage();
         const search = $("[data-product-search]");
+        const name = $("[data-product-name-filter]");
+        const barcode = $("[data-product-barcode-filter]");
+        const code = $("[data-product-code-filter]");
+        const category = $("[data-product-category-filter]");
+        const brand = $("[data-product-brand-filter]");
         const status = $("[data-product-status-filter]");
         const sort = $("[data-product-sort]");
         if (search) search.value = "";
+        if (name) name.value = "";
+        if (barcode) barcode.value = "";
+        if (code) code.value = "";
+        if (category) category.value = "";
+        if (brand) brand.value = "";
         if (status) status.value = "all";
         if (sort) sort.value = "updated_desc";
         renderRows();
@@ -1421,6 +1615,31 @@
     document.addEventListener("input", (event) => {
       if (event.target.matches("[data-product-search]")) {
         state.filters.search = event.target.value || "";
+        resetPage();
+        debouncedRender();
+      }
+      if (event.target.matches("[data-product-name-filter]")) {
+        state.filters.name = event.target.value || "";
+        resetPage();
+        debouncedRender();
+      }
+      if (event.target.matches("[data-product-barcode-filter]")) {
+        state.filters.barcode = event.target.value || "";
+        resetPage();
+        debouncedRender();
+      }
+      if (event.target.matches("[data-product-code-filter]")) {
+        state.filters.code = event.target.value || "";
+        resetPage();
+        debouncedRender();
+      }
+      if (event.target.matches("[data-product-category-filter]")) {
+        state.filters.category = event.target.value || "";
+        resetPage();
+        debouncedRender();
+      }
+      if (event.target.matches("[data-product-brand-filter]")) {
+        state.filters.brand = event.target.value || "";
         resetPage();
         debouncedRender();
       }
