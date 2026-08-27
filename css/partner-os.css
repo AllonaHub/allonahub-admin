@@ -355,14 +355,42 @@
 
 .partner-os-alert {
   margin-top: 14px;
+  border: 1px solid rgba(2, 132, 199, 0.28);
   border-radius: 8px;
   padding: 12px 14px;
-  color: var(--ah-ink);
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
+  font-weight: 850;
+}
+
+.partner-os-alert :where(strong, span, p, small, a) {
+  color: inherit;
 }
 
 .partner-os-alert.is-error {
-  border-color: rgba(255, 91, 91, 0.48);
-  background: rgba(255, 91, 91, 0.12);
+  border-color: rgba(190, 18, 60, 0.36);
+  background: #fff1f2;
+  color: #881337;
+}
+
+body:has(.partner-os-shell) .toast__item {
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.22) !important;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+body:has(.partner-os-shell) .toast__item :where(strong, span, p, small, a) {
+  color: inherit !important;
+}
+
+body:has(.partner-os-shell) .toast__item--error {
+  border-color: rgba(190, 18, 60, 0.36) !important;
+  background: #fff1f2 !important;
+  color: #881337 !important;
 }
 
 .partner-os-section {
