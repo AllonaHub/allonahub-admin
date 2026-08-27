@@ -2,9 +2,9 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
   const BULK_PRODUCT_LIMIT = 5000;
-  const PRODUCT_FETCH_LIMIT = 5000;
+  const PRODUCT_FETCH_PAGE_SIZE = 1000;
   const PRODUCT_DETAIL_PREFILL_KEY = "allona_partner_product_detail_prefill_v1";
-  const PRODUCT_LIST_CACHE_KEY = "allona_partner_products_cache_v2";
+  const PRODUCT_LIST_CACHE_KEY = "allona_partner_products_cache_v3";
   const PRODUCT_LIST_CACHE_TTL = 10 * 60 * 1000;
   const TEXT_LIMITS = {
     meta_title: 180,
@@ -70,6 +70,10 @@
     page: 1,
     compactTable: false,
     historyOpen: false,
+    catalogLoading: false,
+    catalogComplete: false,
+    catalogLoadedCount: 0,
+    catalogTotalHint: null,
     filters: {
       search: "",
       name: "",
@@ -285,6 +289,8 @@
       localStorage.setItem(productListCacheKey(), JSON.stringify({
         business: state.business || null,
         products: state.products.map(cacheableProduct),
+        catalog_complete: state.catalogComplete,
+        catalog_total: state.catalogTotalHint || state.products.length,
         cached_at: Date.now()
       }));
     } catch (error) {
@@ -297,9 +303,27 @@
     if (!cached?.products?.length) return false;
     state.business = cached.business || state.business;
     state.products = cached.products;
+    state.catalogLoadedCount = state.products.length;
+    state.catalogComplete = Boolean(cached.catalog_complete);
+    state.catalogTotalHint = Number(cached.catalog_total || 0) || null;
     renderAll();
     showAlert("Ürünler hazırlandı; canlı stok ve fiyatlar yenileniyor.");
     return true;
+  }
+
+  function mergeFetchedProducts(products = [], productMap = null) {
+    const byId = productMap || new Map(state.products.map((product) => [String(product.id), product]));
+    products.forEach((product) => {
+      if (product?.id) byId.set(String(product.id), product);
+    });
+    state.products = [...byId.values()];
+    state.catalogLoadedCount = state.products.length;
+  }
+
+  function productPageNextOffset(payload, currentOffset, rowCount) {
+    const value = Number(payload?.page_info?.next_offset);
+    if (Number.isFinite(value) && value > currentOffset) return value;
+    return currentOffset + Number(rowCount || 0);
   }
 
   function productName(product) {
@@ -950,10 +974,12 @@
     const end = filtered ? start + visible - 1 : 0;
     const total = state.products.length;
     const businessName = state.business?.display_name || state.business?.legal_name || "Partner";
-    if (target) target.textContent = `${businessName} kataloğu · ${start}-${end}/${filtered} filtre sonucu · ${total} toplam ürün.`;
+    const loadingText = state.catalogLoading ? " · eski ürünler de yükleniyor" : "";
+    const totalText = state.catalogComplete ? `${total} toplam ürün` : `${total} ürün getirildi`;
+    if (target) target.textContent = `${businessName} kataloğu · ${start}-${end}/${filtered} filtre sonucu · ${totalText}.${loadingText}`;
     const windowTarget = $("[data-product-window-summary]");
     if (windowTarget) {
-      windowTarget.textContent = `${start}-${end} arası gösteriliyor · ${totalPages(filtered)} sayfa`;
+      windowTarget.textContent = `${start}-${end} arası gösteriliyor · ${totalPages(filtered)} sayfa${state.catalogLoading ? " · katalog yükleniyor" : ""}`;
     }
   }
 
@@ -977,7 +1003,7 @@
     target.innerHTML = `
       <div>
         <strong>${escape(start)}-${escape(end)}</strong>
-        <span>${escape(filtered)} ürün içinde gösteriliyor</span>
+        <span>${escape(filtered)} ürün içinde gösteriliyor${state.catalogLoading ? " · devamı alınıyor" : ""}</span>
       </div>
       <div class="partner-products-page-buttons">
         <button type="button" data-product-page="${escape(current - 1)}" ${current <= 1 ? "disabled" : ""} title="Önceki sayfa">
@@ -1051,10 +1077,13 @@
     const overLimit = count > BULK_PRODUCT_LIMIT;
     const hint = $("[data-bulk-limit-hint]");
     if (hint) {
-      hint.textContent = overLimit
-        ? `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir. ${count - BULK_PRODUCT_LIMIT} ürünü seçimden çıkarın.`
-        : `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir.`;
-      hint.classList.toggle("is-warning", overLimit);
+      const hintText = state.catalogLoading
+        ? `${state.products.length} ürün getirildi; tüm katalog tamamlanınca toplu seçim aktif olur.`
+        : overLimit
+          ? `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir. ${count - BULK_PRODUCT_LIMIT} ürünü seçimden çıkarın.`
+          : `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir.`;
+      hint.textContent = hintText;
+      hint.classList.toggle("is-warning", overLimit || state.catalogLoading);
     }
     $all("[data-product-row]").forEach((row) => {
       row.classList.toggle("is-selected", state.selected.has(String(row.dataset.productRow || "")));
@@ -1070,6 +1099,9 @@
     }
     $all("[data-submit-selected-review]").forEach((node) => {
       node.disabled = count === 0 || overLimit;
+    });
+    $all("[data-select-all-products-action]").forEach((node) => {
+      node.disabled = state.catalogLoading || state.products.length === 0;
     });
     const master = $("[data-select-all-products]");
     if (master) {
@@ -1089,8 +1121,8 @@
         <tr>
           <td colspan="11">
             <div class="partner-products-empty">
-              <strong>Ürün bulunamadı.</strong>
-              <span>Filtreleri temizleyip tekrar kontrol edebilirsiniz.</span>
+              <strong>${state.catalogLoading ? "Ürünler yükleniyor." : "Ürün bulunamadı."}</strong>
+              <span>${state.catalogLoading ? "Katalog parçalar halinde getiriliyor." : "Filtreleri temizleyip tekrar kontrol edebilirsiniz."}</span>
             </div>
           </td>
         </tr>
@@ -1333,15 +1365,43 @@
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded("/pages/partner/partner-products.html")) return;
       hydratedFromCache = hydrateProductsFromCache();
-      const params = new URLSearchParams({ limit: String(PRODUCT_FETCH_LIMIT) });
-      const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
-      state.business = payload.business || state.access.partnerBusiness || null;
-      state.products = payload.products || [];
+      state.catalogLoading = true;
+      state.catalogComplete = false;
+      state.catalogTotalHint = null;
       state.selected.clear();
+      renderAll();
+
+      let offset = 0;
+      const liveProductsById = new Map();
+      while (true) {
+        const params = new URLSearchParams({
+          limit: String(PRODUCT_FETCH_PAGE_SIZE),
+          offset: String(offset)
+        });
+        const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
+        const rows = payload.products || [];
+        state.business = payload.business || state.access.partnerBusiness || state.business || null;
+        mergeFetchedProducts(rows, liveProductsById);
+        state.catalogTotalHint = Number(payload.page_info?.total_count || 0) || state.catalogTotalHint;
+        state.selected.clear();
+        renderAll();
+
+        const hasMore = Boolean(payload.page_info?.has_more) && rows.length > 0;
+        if (!hasMore) break;
+        const nextOffset = productPageNextOffset(payload, offset, rows.length);
+        if (!Number.isFinite(nextOffset) || nextOffset <= offset) break;
+        offset = nextOffset;
+        showAlert(`${state.products.length} ürün getirildi; eski kayıtlar da yükleniyor.`);
+      }
+
+      state.catalogLoading = false;
+      state.catalogComplete = true;
+      state.catalogLoadedCount = state.products.length;
       writeProductListCache();
       showAlert("");
       renderAll();
     } catch (error) {
+      state.catalogLoading = false;
       showAlert(
         hydratedFromCache
           ? "Canlı ürün listesi yenilenemedi; son başarılı liste gösteriliyor."
@@ -1893,6 +1953,11 @@
         selectExact(visibleProducts().map(normalizeProduct), "görünen ürün");
       }
       if (selectAllAction) {
+        if (state.catalogLoading) {
+          toast(`${state.products.length} ürün getirildi; tüm katalog tamamlanınca Tümünü Seç aktif olur.`, "warning");
+          renderSelectedState();
+          return;
+        }
         selectExact(state.products.map(normalizeProduct), "ürün");
       }
       if (selectReady) {

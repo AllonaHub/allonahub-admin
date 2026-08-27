@@ -260,10 +260,12 @@ const partnerProductMediaGallerySchema = z.preprocess((value) => {
 const partnerProductListQuerySchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
   status: z.string().trim().max(80).optional().default("all"),
-  limit: z.coerce.number().int().min(1).max(5000).optional().default(500)
+  limit: z.coerce.number().int().min(1).max(1000).optional().default(500),
+  offset: z.coerce.number().int().min(0).max(1000000).optional().default(0)
 });
 
 const PARTNER_PRODUCT_LIST_PAGE_SIZE = 1000;
+const PARTNER_PRODUCT_LIST_SCAN_CAP = 50000;
 const PARTNER_PRODUCT_BULK_LIMIT = 5000;
 const PARTNER_PRODUCT_BULK_CHUNK = 200;
 const PARTNER_PRODUCT_BULK_UPDATE_FIELDS = new Set([
@@ -5230,6 +5232,21 @@ function partnerProductOwnerIds(business, ctx) {
   ].filter(Boolean).map(String))];
 }
 
+function postgrestFilterToken(value) {
+  return String(value || "").trim().replace(/[(),]/g, " ");
+}
+
+function partnerProductOwnershipOrFilter(business, ctx) {
+  const filters = [];
+  const ownerIds = partnerProductOwnerIds(business, ctx).map(postgrestFilterToken).filter(Boolean);
+  if (ownerIds.length) filters.push(`partner_id.in.(${ownerIds.join(",")})`);
+  const partnerCode = postgrestFilterToken(business?.partner_code);
+  if (partnerCode) filters.push(`partner_code.eq.${partnerCode}`);
+  const partnerEmail = postgrestFilterToken(business?.email);
+  if (partnerEmail) filters.push(`partner_email.eq.${partnerEmail}`);
+  return filters.join(",");
+}
+
 function partnerProductBelongsToBusiness(product, business, ctx) {
   if (!product) return false;
   if (isAdmin(ctx.profile)) return true;
@@ -5905,7 +5922,7 @@ async function optionalMutation(query, warnings, label) {
 
 async function optionalProductPageQuery(buildQuery, limit, warnings, label) {
   const rows = [];
-  const requestedLimit = Math.max(1, Math.min(Number(limit || 500), 5000));
+  const requestedLimit = Math.max(1, Math.min(Number(limit || 500), PARTNER_PRODUCT_LIST_SCAN_CAP));
 
   for (let offset = 0; rows.length < requestedLimit; offset += PARTNER_PRODUCT_LIST_PAGE_SIZE) {
     const pageSize = Math.min(PARTNER_PRODUCT_LIST_PAGE_SIZE, requestedLimit - rows.length);
@@ -5921,6 +5938,35 @@ async function optionalProductPageQuery(buildQuery, limit, warnings, label) {
   }
 
   return rows.slice(0, requestedLimit);
+}
+
+async function loadPartnerProductDirectPage({ business, ctx, query, warnings }) {
+  if (cleanSearch(query.search) || normalizedReviewValue(query.status) !== "all") return null;
+  const ownershipFilter = partnerProductOwnershipOrFilter(business, ctx);
+  if (!ownershipFilter) return null;
+
+  const { data, error, count } = await supabaseAdmin
+    .from("products")
+    .select("*", { count: "exact" })
+    .or(ownershipFilter)
+    .order("created_at", { ascending: false })
+    .range(query.offset, query.offset + query.limit - 1);
+
+  if (error) {
+    warnings.push("products.direct_page: veritabanı sayfalaması uygulanamadı; güvenli katalog taraması kullanılıyor.");
+    return null;
+  }
+
+  const pageRows = await autoCleanMarketplaceBrandingProducts(data || [], warnings);
+  const totalCount = typeof count === "number" ? count : null;
+  return {
+    pageRows,
+    summaryProducts: pageRows.map(attachProductReviewAutomation),
+    hasMore: totalCount !== null ? query.offset + pageRows.length < totalCount : pageRows.length >= query.limit,
+    nextOffset: query.offset + pageRows.length,
+    loadedCount: totalCount !== null ? totalCount : query.offset + pageRows.length,
+    totalCount
+  };
 }
 
 function refundCancellationKind(order) {
@@ -10160,56 +10206,86 @@ export function registerRoutes(app) {
     const business = await ensurePartnerBusiness(ctx, request);
     const ownerIds = partnerProductOwnerIds(business, ctx);
     const warnings = [];
+    let pageRows = [];
+    let summaryProducts = [];
+    let hasMore = false;
+    let nextOffset = null;
+    let loadedCount = 0;
+    let totalCount = null;
 
-    const productQueries = [
-      optionalProductPageQuery(
-        () => supabaseAdmin
-          .from("products")
-          .select("*")
-          .in("partner_id", ownerIds)
-          .order("created_at", { ascending: false }),
-        query.limit,
-        warnings,
-        "products"
-      )
-    ];
-    if (business.partner_code) {
-      productQueries.push(optionalProductPageQuery(
-        () => supabaseAdmin
-          .from("products")
-          .select("*")
-          .eq("partner_code", business.partner_code)
-          .order("created_at", { ascending: false }),
-        query.limit,
-        warnings,
-        "products.partner_code"
-      ));
-    }
-    if (business.email) {
-      productQueries.push(optionalProductPageQuery(
-        () => supabaseAdmin
-          .from("products")
-          .select("*")
-          .eq("partner_email", business.email)
-          .order("created_at", { ascending: false }),
-        query.limit,
-        warnings,
-        "products.partner_email"
-      ));
+    const directPage = await loadPartnerProductDirectPage({ business, ctx, query, warnings });
+    if (directPage) {
+      pageRows = directPage.pageRows;
+      summaryProducts = directPage.summaryProducts;
+      hasMore = directPage.hasMore;
+      nextOffset = directPage.hasMore ? directPage.nextOffset : null;
+      loadedCount = directPage.loadedCount;
+      totalCount = directPage.totalCount;
+    } else {
+      const sourceLimit = Math.min(query.offset + query.limit + 1, PARTNER_PRODUCT_LIST_SCAN_CAP);
+      const productQueries = [
+        optionalProductPageQuery(
+          () => supabaseAdmin
+            .from("products")
+            .select("*")
+            .in("partner_id", ownerIds)
+            .order("created_at", { ascending: false }),
+          sourceLimit,
+          warnings,
+          "products"
+        )
+      ];
+      if (business.partner_code) {
+        productQueries.push(optionalProductPageQuery(
+          () => supabaseAdmin
+            .from("products")
+            .select("*")
+            .eq("partner_code", business.partner_code)
+            .order("created_at", { ascending: false }),
+          sourceLimit,
+          warnings,
+          "products.partner_code"
+        ));
+      }
+      if (business.email) {
+        productQueries.push(optionalProductPageQuery(
+          () => supabaseAdmin
+            .from("products")
+            .select("*")
+            .eq("partner_email", business.email)
+            .order("created_at", { ascending: false }),
+          sourceLimit,
+          warnings,
+          "products.partner_email"
+        ));
+      }
+
+      const productGroups = await Promise.all(productQueries);
+      const productsById = new Map();
+      for (const row of productGroups.flat()) {
+        if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
+      }
+
+      const cleanedProductRows = await autoCleanMarketplaceBrandingProducts([...productsById.values()], warnings);
+      const filteredProductRows = cleanedProductRows
+        .filter((product) => partnerProductMatchesSearch(product, query.search))
+        .filter((product) => partnerProductMatchesStatus(product, query.status))
+        .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")));
+      pageRows = filteredProductRows.slice(query.offset, query.offset + query.limit);
+      const sourceMayHaveMore = productGroups.some((group) => Array.isArray(group) && group.length >= sourceLimit);
+      hasMore = pageRows.length > 0 && (
+        sourceMayHaveMore || filteredProductRows.length > query.offset + pageRows.length
+      );
+      nextOffset = hasMore ? query.offset + pageRows.length : null;
+      loadedCount = filteredProductRows.length;
+      totalCount = hasMore ? null : filteredProductRows.length;
+      if (sourceMayHaveMore && sourceLimit >= PARTNER_PRODUCT_LIST_SCAN_CAP) {
+        warnings.push(`Partner katalog taraması ${PARTNER_PRODUCT_LIST_SCAN_CAP} kayıtla sınırlandı; daha eski kayıtlar için arama/filtre kullanılmalı.`);
+      }
+      summaryProducts = filteredProductRows.map(attachProductReviewAutomation);
     }
 
-    const productGroups = await Promise.all(productQueries);
-    const productsById = new Map();
-    for (const row of productGroups.flat()) {
-      if (row?.id && !productsById.has(row.id)) productsById.set(row.id, row);
-    }
-
-    const cleanedProductRows = await autoCleanMarketplaceBrandingProducts([...productsById.values()], warnings);
-    const reviewProducts = cleanedProductRows
-      .filter((product) => partnerProductMatchesSearch(product, query.search))
-      .filter((product) => partnerProductMatchesStatus(product, query.status))
-      .sort((a, b) => String(b.updated_at || b.created_at || "").localeCompare(String(a.updated_at || a.created_at || "")))
-      .slice(0, query.limit)
+    const reviewProducts = pageRows
       .map(attachProductReviewAutomation);
     const productIds = reviewProducts.map((product) => product.id).filter(Boolean);
     const products = attachVariantGroups(reviewProducts, linksByProductId(await loadProductIntegrationLinks(productIds, warnings)));
@@ -10224,6 +10300,8 @@ export function registerRoutes(app) {
       metadata: {
         search: query.search || null,
         status: query.status || "all",
+        offset: query.offset,
+        limit: query.limit,
         count: products.length,
         warning_count: warnings.length
       }
@@ -10233,8 +10311,18 @@ export function registerRoutes(app) {
       ok: true,
       business,
       products,
-      summary: partnerProductSummary(products),
-      warnings
+      summary: partnerProductSummary(summaryProducts),
+      warnings,
+      page_info: {
+        limit: query.limit,
+        offset: query.offset,
+        returned_count: products.length,
+        loaded_count: loadedCount,
+        total_count: totalCount,
+        has_more: hasMore,
+        next_offset: nextOffset,
+        scan_cap: PARTNER_PRODUCT_LIST_SCAN_CAP
+      }
     };
   });
 
