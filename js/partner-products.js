@@ -1,8 +1,11 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const core = App.core || {};
-  const BULK_PRODUCT_LIMIT = 50;
+  const BULK_PRODUCT_LIMIT = 5000;
+  const PRODUCT_FETCH_LIMIT = 5000;
   const PRODUCT_DETAIL_PREFILL_KEY = "allona_partner_product_detail_prefill_v1";
+  const PRODUCT_LIST_CACHE_KEY = "allona_partner_products_cache_v2";
+  const PRODUCT_LIST_CACHE_TTL = 10 * 60 * 1000;
   const TEXT_LIMITS = {
     meta_title: 180,
     meta_description: 300
@@ -210,6 +213,93 @@
   function toast(message, type) {
     if (core.toast) core.toast(message, type);
     else if (message) window.alert(message);
+  }
+
+  function productListCacheKey() {
+    const userId = state.access?.user?.id || "session";
+    return `${PRODUCT_LIST_CACHE_KEY}:${userId}`;
+  }
+
+  function cacheableProduct(product) {
+    const allowed = [
+      "id",
+      "name",
+      "product_name",
+      "description",
+      "category",
+      "brand",
+      "sku",
+      "barcode",
+      "price",
+      "customer_visible_price",
+      "customer_price",
+      "final_price",
+      "discounted_price",
+      "stock",
+      "status",
+      "compliance_review_status",
+      "review_status",
+      "approval_status",
+      "compliance_notes",
+      "image_url",
+      "media_gallery",
+      "video_url",
+      "catalog_scope",
+      "module_key",
+      "seller_public_name",
+      "seller_legal_name",
+      "seller_city",
+      "seller_contact",
+      "seller_tax_number_masked",
+      "invoice_responsibility",
+      "seller_disclosure",
+      "meta_title",
+      "meta_description",
+      "integration_source",
+      "integration_external_id",
+      "partner_code",
+      "partner_email",
+      "created_at",
+      "updated_at",
+      "review_automation",
+      "variant_automation"
+    ];
+    return Object.fromEntries(allowed
+      .filter((field) => Object.prototype.hasOwnProperty.call(product || {}, field))
+      .map((field) => [field, product[field]]));
+  }
+
+  function readProductListCache() {
+    try {
+      const payload = JSON.parse(localStorage.getItem(productListCacheKey()) || "{}");
+      if (!Array.isArray(payload.products) || Date.now() - Number(payload.cached_at || 0) > PRODUCT_LIST_CACHE_TTL) return null;
+      return payload;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeProductListCache() {
+    try {
+      if (!state.access?.user?.id || !state.products.length) return;
+      localStorage.setItem(productListCacheKey(), JSON.stringify({
+        business: state.business || null,
+        products: state.products.map(cacheableProduct),
+        cached_at: Date.now()
+      }));
+    } catch (error) {
+      // Cache is only a speed layer; the live API remains authoritative.
+    }
+  }
+
+  function hydrateProductsFromCache() {
+    const cached = readProductListCache();
+    if (!cached?.products?.length) return false;
+    state.business = cached.business || state.business;
+    state.products = cached.products;
+    renderAll();
+    showAlert("Ürünler hazırlandı; canlı stok ve fiyatlar yenileniyor.");
+    return true;
   }
 
   function productName(product) {
@@ -962,8 +1052,8 @@
     const hint = $("[data-bulk-limit-hint]");
     if (hint) {
       hint.textContent = overLimit
-        ? `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir. ${count - BULK_PRODUCT_LIMIT} ürünü seçimden çıkarın veya sayfa sayfa gönderin.`
-        : `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir.`;
+        ? `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir. ${count - BULK_PRODUCT_LIMIT} ürünü seçimden çıkarın.`
+        : `Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir.`;
       hint.classList.toggle("is-warning", overLimit);
     }
     $all("[data-product-row]").forEach((row) => {
@@ -1237,19 +1327,27 @@
 
   async function loadProducts() {
     showAlert("Ürünler yükleniyor.");
+    let hydratedFromCache = false;
     try {
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded("/pages/partner/partner-products.html")) return;
-      const params = new URLSearchParams({ limit: "1000" });
+      hydratedFromCache = hydrateProductsFromCache();
+      const params = new URLSearchParams({ limit: String(PRODUCT_FETCH_LIMIT) });
       const payload = await apiFetch(`/v1/partner/products?${params.toString()}`);
       state.business = payload.business || state.access.partnerBusiness || null;
       state.products = payload.products || [];
       state.selected.clear();
+      writeProductListCache();
       showAlert("");
       renderAll();
     } catch (error) {
-      showAlert(error.message || "Ürünler yüklenemedi.", "error");
+      showAlert(
+        hydratedFromCache
+          ? "Canlı ürün listesi yenilenemedi; son başarılı liste gösteriliyor."
+          : error.message || "Ürünler yüklenemedi.",
+        "error"
+      );
       renderAll();
     }
   }
@@ -1393,6 +1491,7 @@
     });
     if (result.product) {
       state.products = state.products.map((product) => String(product.id) === String(productId) ? result.product : product);
+      writeProductListCache();
     }
     if (!options?.silent) {
       if (result.warnings?.length) showAlert(result.warnings.join(" "));
@@ -1477,6 +1576,7 @@
       });
       if (result.product) {
         state.products = state.products.map((product) => String(product.id) === String(productId) ? result.product : product);
+        writeProductListCache();
       }
       renderAll();
       toast(result.message || "Ürün yayına alındı.", "success");
@@ -1500,6 +1600,7 @@
         state.products = state.products.map((row) => String(row.id) === String(productId) ? result.product : row);
       }
       state.selected.delete(String(productId));
+      writeProductListCache();
       renderAll();
       toast(result.message || "Ürün arşivlendi.", "success");
     } catch (error) {
@@ -1539,7 +1640,6 @@
       if (state.selected.size > 1) throw new Error("Barkod benzersiz olmalı; toplu barkod revizyonu için tek ürün seçin.");
       payload.barcode = String(data.barcode || "").trim();
     }
-    if (String(data.seller_disclosure || "").trim()) payload.seller_disclosure = String(data.seller_disclosure || "").trim();
     if (String(data.description || "").trim()) payload.description = String(data.description || "").trim();
     return payload;
   }
@@ -1560,13 +1660,16 @@
     }
     const button = form.querySelector("button[type='submit']");
     setButtonBusy(button, true);
+    showAlert(`${ids.length} ürün için toplu kayıt işleniyor.`);
     try {
       const result = await bulkUpdateProducts(ids, payload);
       applyBulkResult(result, ids);
       form.reset();
       renderAll();
+      showAlert("");
       toastBulkResult(result, ids.length);
     } catch (error) {
+      showAlert(error.message || "Toplu işlem tamamlanamadı.", "error");
       toastBulkError(error);
     } finally {
       setButtonBusy(button, false);
@@ -1577,7 +1680,7 @@
   function validateBulkSelection(ids) {
     if (!ids.length) return false;
     if (ids.length > BULK_PRODUCT_LIMIT) {
-      toast(`Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün onaya gönderilebilir. Lütfen seçimi azaltın veya sayfa sayfa gönderin.`, "warning");
+      toast(`Tek seferde en fazla ${BULK_PRODUCT_LIMIT} ürün toplu kaydedilebilir. Lütfen seçimi azaltın.`, "warning");
       renderSelectedState();
       return false;
     }
@@ -1585,12 +1688,21 @@
   }
 
   function applyBulkResult(result, ids) {
+    const failedIds = new Set((result.failed || []).map((item) => String(item.product_id || "")));
+    const updatedIds = new Set((result.updated_product_ids || ids).map(String).filter((id) => !failedIds.has(id)));
+    const appliedUpdates = result.applied_updates && typeof result.applied_updates === "object" ? result.applied_updates : null;
     if (result.products?.length) {
       const updatedById = new Map(result.products.map((product) => [String(product.id), product]));
       state.products = state.products.map((product) => updatedById.get(String(product.id)) || product);
+    } else if (updatedIds.size && appliedUpdates) {
+      state.products = state.products.map((product) => (
+        updatedIds.has(String(product.id))
+          ? { ...product, ...appliedUpdates }
+          : product
+      ));
     }
-    const failedIds = new Set((result.failed || []).map((item) => String(item.product_id || "")));
     state.selected = new Set(ids.filter((id) => failedIds.has(String(id))));
+    writeProductListCache();
   }
 
   function toastBulkResult(result, fallbackCount) {
@@ -1612,12 +1724,15 @@
     const ids = [...state.selected];
     if (!validateBulkSelection(ids)) return;
     setButtonBusy(button, true);
+    showAlert(`${ids.length} ürün admin onayına gönderiliyor.`);
     try {
       const result = await bulkUpdateProducts(ids, null, { submitForReview: true });
       applyBulkResult(result, ids);
       renderAll();
+      showAlert("");
       toastBulkResult(result, ids.length);
     } catch (error) {
+      showAlert(error.message || "Toplu onay gönderimi tamamlanamadı.", "error");
       toastBulkError(error);
     } finally {
       setButtonBusy(button, false);
@@ -1646,6 +1761,9 @@
   }
 
   async function fallbackBulkUpdateProducts(ids, payload, options) {
+    if (ids.length > 50) {
+      throw new Error("Toplu işlem API'si canlıya alınmadığı için 50 üzeri ürün güvenli şekilde işlenemedi. API güncellendikten sonra tekrar deneyin.");
+    }
     const products = [];
     const failed = [];
     for (const productId of ids) {
