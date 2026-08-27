@@ -56,6 +56,8 @@ const authHeaders = {
   apikey: serviceRoleKey,
   Authorization: `Bearer ${serviceRoleKey}`
 };
+let productOrder = "updated_at.desc.nullslast";
+let productOrderNoticeShown = false;
 
 const TEXT_FIELDS = [
   "name",
@@ -128,6 +130,24 @@ function cleanedProductPatch(product = {}) {
   return { patch, changedFields };
 }
 
+class SupabaseRequestError extends Error {
+  constructor(path, options, status, body) {
+    super(`${options.method || "GET"} ${path}: HTTP ${status} ${String(body || "").slice(0, 500)}`);
+    this.name = "SupabaseRequestError";
+    this.path = path;
+    this.status = status;
+    this.body = body;
+  }
+}
+
+function isMissingColumnError(error, column) {
+  return (
+    error instanceof SupabaseRequestError &&
+    error.status === 400 &&
+    String(error.body || "").includes(`column products.${column} does not exist`)
+  );
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${restApiUrl}${path}`, {
     method: options.method || "GET",
@@ -140,7 +160,7 @@ async function request(path, options = {}) {
   });
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`${options.method || "GET"} ${path}: HTTP ${response.status} ${text.slice(0, 500)}`);
+    throw new SupabaseRequestError(path, options, response.status, text);
   }
   if (response.status === 204) return null;
   const text = await response.text();
@@ -150,11 +170,22 @@ async function request(path, options = {}) {
 async function listProducts(limit, offset) {
   const params = new URLSearchParams({
     select: "*",
-    order: "updated_at.desc.nullslast",
+    order: productOrder,
     limit: String(limit),
     offset: String(offset)
   });
-  return request(`/products?${params.toString()}`);
+  try {
+    return await request(`/products?${params.toString()}`);
+  } catch (error) {
+    if (!isMissingColumnError(error, "updated_at")) throw error;
+    productOrder = "created_at.desc.nullslast";
+    if (!productOrderNoticeShown) {
+      console.warn("products.updated_at not found; using products.created_at order.");
+      productOrderNoticeShown = true;
+    }
+    params.set("order", productOrder);
+    return request(`/products?${params.toString()}`);
+  }
 }
 
 async function updateProduct(id, patch) {
