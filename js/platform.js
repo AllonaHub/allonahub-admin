@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260827-country1";
+  const SERVICE_WORKER_VERSION = "20260828-shopmodule1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -1259,6 +1259,14 @@
     if (!campaign) return;
     const ad = pickDailyPartnerAd(campaign);
     const banner = createModuleAdBanner(ad, campaign);
+    const shopAnchor = campaign.key === "shop"
+      ? document.querySelector(".shop-landing [data-shop-shortcuts]") || document.querySelector(".shop-landing .shop-category-menu--top")
+      : null;
+    if (shopAnchor) {
+      shopAnchor.insertAdjacentElement("afterend", banner);
+      announceModuleAdBanner(banner);
+      return;
+    }
     const layoutHeader = document.querySelector("[data-layout='header']");
     if (layoutHeader && layoutHeader.parentElement) {
       layoutHeader.insertAdjacentElement("afterend", banner);
