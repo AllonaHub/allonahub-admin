@@ -1,9 +1,11 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260628-mobile-fullscreen2";
+  const VERSION = "20260828-smart-actions1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
+  const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
+  const MAX_ACTION_BUTTONS = 3;
   const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram", "facebook"];
   const CONTACT_CHANNELS = {
     whatsapp: SCRIPT && SCRIPT.dataset.whatsappUrl || `https://wa.me/905427781868?text=${encodeURIComponent("Merhaba AllonaHub, canlı destek almak istiyorum.")}`,
@@ -57,6 +59,52 @@
     } catch (error) {
       return "";
     }
+  }
+
+  function normalizeAssistantAction(action) {
+    if (!action || action.type !== "open_url" || !action.label || !action.url) return null;
+    const href = safeActionUrl(action.url);
+    if (!href) return null;
+    return {
+      type: "open_url",
+      label: normalizeText(action.label, 44),
+      url: href
+    };
+  }
+
+  function assistantActionButtons(actions) {
+    const seen = new Set();
+    const cleanActions = [];
+    (Array.isArray(actions) ? actions : []).forEach((action) => {
+      if (cleanActions.length >= MAX_ACTION_BUTTONS) return;
+      const cleanAction = normalizeAssistantAction(action);
+      if (!cleanAction) return;
+      const key = cleanAction.url.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      cleanActions.push(cleanAction);
+    });
+    return cleanActions;
+  }
+
+  function stripUrlsForActions(text, actions) {
+    let clean = normalizeText(text, 1600);
+    if (!Array.isArray(actions) || !actions.length) return clean;
+    clean = clean
+      .replace(RAW_URL_PATTERN, "")
+      .replace(/\s*\|\s*/g, " ")
+      .replace(/\(\s*\)/g, "")
+      .replace(/\[\s*\]/g, "")
+      .replace(/\s+([.,;:!?])/g, "$1")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    clean = clean
+      .replace(/\s*(?:buradan|şuradan|suradan|bu bağlantıdan|bu baglantidan|aşağıdaki bağlantıdan|asagidaki baglantidan)\s*[:：]?\s*$/iu, ".")
+      .replace(/\s*[:：]\s*([.!?])?$/u, function (_match, punct) { return punct || "."; })
+      .replace(/\s+\./g, ".")
+      .replace(/\.{2,}/g, ".")
+      .trim();
+    return clean || "Size en uygun adımı seçebilmeniz için aşağıdaki seçenekleri hazırladım.";
   }
 
   function pageAction(label, key) {
@@ -315,9 +363,7 @@
   }
 
   function appendActions(item, actions) {
-    const cleanActions = (Array.isArray(actions) ? actions : [])
-      .filter((action) => action && action.type === "open_url" && action.label && action.url)
-      .slice(0, 6);
+    const cleanActions = assistantActionButtons(actions);
     if (!cleanActions.length) return;
 
     const grid = document.createElement("div");
@@ -340,11 +386,12 @@
   function appendMessage(messages, role, text, actions) {
     const item = document.createElement("div");
     item.className = `ah-assistant__msg ah-assistant__msg--${role}`;
+    const cleanActions = role === "assistant" ? assistantActionButtons(actions) : [];
     const textNode = document.createElement("div");
     textNode.className = "ah-assistant__msg-text";
-    textNode.textContent = text;
+    textNode.textContent = role === "assistant" ? stripUrlsForActions(text, cleanActions) : text;
     item.appendChild(textNode);
-    if (role === "assistant") appendActions(item, actions);
+    if (role === "assistant") appendActions(item, cleanActions);
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
     return item;
