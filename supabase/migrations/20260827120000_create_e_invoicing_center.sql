@@ -3119,7 +3119,22 @@ as $$
     select 1 from public.invoices i
     where i.id = target_invoice_id
       and (
-        i.customer_id = auth.uid()
+        (
+          i.customer_id = auth.uid()
+          and (
+            (i.document_scope = 'CUSTOMER_SALE' and i.document_type in ('E_INVOICE', 'E_ARCHIVE'))
+            or (
+              i.document_scope = 'RETURN'
+              and i.document_type = 'RETURN'
+              and (
+                i.provider_document_id is not null
+                or i.ettn_uuid is not null
+                or i.invoice_number is not null
+                or i.issued_at is not null
+              )
+            )
+          )
+        )
         or public.organization_member_has_access(i.organization_id)
         or public.legal_entity_member_has_access(i.legal_entity_id)
         or public.seller_member_has_access(i.seller_id)
@@ -4369,7 +4384,22 @@ create policy "seller_sub_orders_select" on public.seller_sub_orders for select 
 
 create policy "invoices_select_authorized" on public.invoices for select to authenticated
   using (
-    customer_id = auth.uid()
+    (
+      customer_id = auth.uid()
+      and (
+        (document_scope = 'CUSTOMER_SALE' and document_type in ('E_INVOICE', 'E_ARCHIVE'))
+        or (
+          document_scope = 'RETURN'
+          and document_type = 'RETURN'
+          and (
+            provider_document_id is not null
+            or ettn_uuid is not null
+            or invoice_number is not null
+            or issued_at is not null
+          )
+        )
+      )
+    )
     or public.organization_member_has_access(organization_id)
     or public.legal_entity_member_has_access(legal_entity_id)
     or public.seller_member_has_access(seller_id)

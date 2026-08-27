@@ -26,6 +26,7 @@
 - Store üyesi yalnız yetkili mağazayı görür.
 - Partner A, Partner B fatura/kalem/job/failure/provider hesabını göremez.
 - Müşteri yalnız kendi `orders.user_id` ile bağlı faturaları görür.
+- Müşteri sağlayıcıya hiç gönderilmeden reddedilmiş `RETURN` placeholder'larını liste, doğrudan invoice sorgusu veya invoice item sorgusuyla göremez; issuance/provider kanıtı bulunan iade belgesini görebilir.
 - Müşteri ve partner private bucket objesini doğrudan listeleyemez.
 - Müşteri kendi `taxpayer_status`, doğrulama kaynağı veya zamanını direct Supabase write ile değiştiremez.
 - Admin rolü ve MFA gerektiren backend aksiyonları ayrıca doğrulanır.

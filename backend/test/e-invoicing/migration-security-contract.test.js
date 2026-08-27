@@ -91,3 +91,15 @@ test("return and cancellation provider side effects are database fenced", async 
   assert.match(sql, /revoke all on function public\.reject_invoice_return_request\(uuid, uuid, text, text, text\) from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function public\.reject_invoice_return_request\(uuid, uuid, text, text, text\) to service_role/i);
 });
+
+test("customer RLS hides unissued return workflow placeholders", async () => {
+  const sql = await migration();
+  const invoiceAccess = functionBody(sql, "invoice_record_has_access", "invoice_operational_record_has_access");
+  const customerReturnEvidence = /document_scope\s*=\s*'RETURN'[\s\S]*?document_type\s*=\s*'RETURN'[\s\S]*?provider_document_id is not null[\s\S]*?ettn_uuid is not null[\s\S]*?invoice_number is not null[\s\S]*?issued_at is not null/i;
+
+  assert.match(invoiceAccess, customerReturnEvidence);
+  assert.match(
+    sql,
+    /create policy "invoices_select_authorized"[\s\S]*?customer_id = auth\.uid\(\)[\s\S]*?document_scope = 'CUSTOMER_SALE'[\s\S]*?document_scope = 'RETURN'[\s\S]*?issued_at is not null/i
+  );
+});

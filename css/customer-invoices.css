@@ -11,6 +11,7 @@
 .customer-invoice-profile__new summary { cursor: pointer; color: #087f87; font-weight: 800; }
 .customer-invoice-profile__new form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; margin-top: 13px; }
 .customer-invoice-profile__new label { display: grid; gap: 5px; color: var(--muted, #667481); font-size: .82rem; font-weight: 700; }
+.customer-invoice-profile__new [data-profile-scope][hidden] { display: none !important; }
 .customer-invoice-profile__new .is-wide { grid-column: span 2; }
 .customer-invoice-profile__default { display: flex !important; grid-column: span 2; align-items: center; grid-template-columns: auto 1fr; }
 .customer-invoice-profile__default input { min-height: 0; }

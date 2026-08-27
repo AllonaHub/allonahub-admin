@@ -195,6 +195,7 @@ Provider ve harici kanal hesabında yalnız `vault:*`, `env:INVOICE_*` veya `sec
 - Admin: `Finans -> e-Dönüşüm` tek ana giriş ve içeride dashboard, fatura/kuyruk/hata/iade/iptal/komisyon/mutabakat/audit bölümleri ile organization, şirket, seller, kanal, profil, provider ve tetikleme ayarı yönetimi.
 - Partner/işletme kullanıcısı: global profil rolünden bağımsız olarak organization/legal entity/seller/store üyeliğiyle context seçer; yalnız yetkili tenant verisi gelir. Yazma işlemleri AAL2/MFA ve server-side owner/manager/accounting kontrolü ister.
 - Müşteri: `Siparişlerim -> Sipariş -> Faturalar`; bir sipariş için birden çok satıcı faturası gösterilebilir.
+- Müşteri fatura listesi `CUSTOMER_SALE` belgelerini ve yalnız provider/belge oluşturma kanıtı bulunan `RETURN` belgelerini gösterir. Sağlayıcıya gitmeden reddedilen iade workflow placeholder'ları hem endpoint filtresi hem RLS tarafından gizlenir.
 - PDF/XML: public Storage URL'si gösterilmez. Authorization kontrollü backend kısa ömürlü signed URL üretir.
 - Sipariş iadesi ile fatura iade belgesi, sipariş iptali ile fatura iptali ayrı etiketlenir.
 - İade POST yanıtı kaybolursa UI, kullanıcı+invoice bağlamında saklanan canonical payload ve idempotency anahtarıyla lookup/replay yapar; kesin 4xx doğrulama hatasında bekleyen taslağı temizler.

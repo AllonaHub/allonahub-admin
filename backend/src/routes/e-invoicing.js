@@ -23,6 +23,7 @@ import {
   transitionInvoice
 } from "../modules/e-invoicing/application.js";
 import { assertCredentialBinding, resolveBoundCredential } from "../modules/e-invoicing/credential-store.js";
+import { isCustomerInvoiceVisible } from "../modules/e-invoicing/customer-visibility.js";
 import { EInvoicingError } from "../modules/e-invoicing/errors.js";
 import { invoiceProviderCatalog, createInvoiceProvider } from "../modules/e-invoicing/invoice-providers.js";
 import { deterministicHex } from "../modules/e-invoicing/idempotency.js";
@@ -1086,10 +1087,15 @@ export function registerEInvoicingRoutes(app) {
     const orderId = uuid.parse(request.params.orderId);
     const { data: order, error: orderError } = await supabaseAdmin.from("orders").select("id, user_id, customer_invoice_profile_id").eq("id", orderId).maybeSingle();
     if (orderError || !order || order.user_id !== ctx.user.id) throw httpError("Sipariş bulunamadı.", 404, "ORDER_NOT_FOUND");
-    const { data, error } = await supabaseAdmin.from("invoice_api_rows").select("id, seller_id, document_type, invoice_number, issue_date, currency, grand_total, status, created_at").eq("order_id", orderId).eq("customer_id", ctx.user.id).order("created_at", { ascending: false });
+    const { data, error } = await supabaseAdmin.from("invoice_api_rows")
+      .select("id, customer_id, seller_id, document_scope, document_type, provider_document_id, ettn_uuid, invoice_number, issue_date, issued_at, currency, grand_total, status, created_at")
+      .eq("order_id", orderId)
+      .eq("customer_id", ctx.user.id)
+      .order("created_at", { ascending: false });
     if (error) throw httpError("Sipariş faturaları alınamadı.", 503, "CUSTOMER_INVOICE_LIST_FAILED");
-    const invoiceIds = (data || []).map((invoice) => invoice.id);
-    const sellerIds = [...new Set((data || []).map((invoice) => invoice.seller_id).filter(Boolean))];
+    const visibleInvoices = (data || []).filter(isCustomerInvoiceVisible);
+    const invoiceIds = visibleInvoices.map((invoice) => invoice.id);
+    const sellerIds = [...new Set(visibleInvoices.map((invoice) => invoice.seller_id).filter(Boolean))];
     const artifacts = invoiceIds.length
       ? await supabaseAdmin.from("invoices").select("id, pdf_reference, xml_reference").in("id", invoiceIds)
       : { data: [], error: null };
@@ -1103,13 +1109,23 @@ export function registerEInvoicingRoutes(app) {
     return {
       ok: true,
       customerInvoiceProfileId: order.customer_invoice_profile_id || null,
-      profileLocked: (data || []).length > 0,
-      items: (data || []).map((invoice) => ({
-        ...invoice,
-        seller: sellerMap.get(invoice.seller_id) || null,
-        hasPdf: Boolean(artifactMap.get(invoice.id)?.pdf_reference),
-        hasXml: Boolean(artifactMap.get(invoice.id)?.xml_reference)
-      }))
+      profileLocked: visibleInvoices.some((invoice) => invoice.document_scope === "CUSTOMER_SALE"),
+      items: visibleInvoices.map((invoice) => {
+        const {
+          customer_id,
+          document_scope,
+          provider_document_id,
+          ettn_uuid,
+          issued_at,
+          ...customerInvoice
+        } = invoice;
+        return {
+          ...customerInvoice,
+          seller: sellerMap.get(invoice.seller_id) || null,
+          hasPdf: Boolean(artifactMap.get(invoice.id)?.pdf_reference),
+          hasXml: Boolean(artifactMap.get(invoice.id)?.xml_reference)
+        };
+      })
     };
   });
 
