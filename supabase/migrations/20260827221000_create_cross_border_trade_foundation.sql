@@ -367,17 +367,26 @@ create table if not exists public.impact_metric_snapshots (
   unique nulls not distinct (metric_key, country_id, corridor_id, period_start, period_end, currency)
 );
 
--- Optional country context for the existing HP ledger. Existing HP rows remain
--- valid and unchanged; new cross-border use must explicitly write this record.
-create table if not exists public.hp_ledger_country_contexts (
-  hp_ledger_id uuid primary key references public.hp_ledger(id) on delete cascade,
-  earning_country_id uuid references public.countries(id) on delete set null,
-  spending_country_id uuid references public.countries(id) on delete set null,
-  cross_border_redemption boolean not null default false,
-  policy_snapshot jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  check (not cross_border_redemption or (earning_country_id is not null and spending_country_id is not null))
-);
+-- Optional country context for installations that already have an HP ledger.
+-- Some legacy production schemas store HP only on profiles, so the foundation
+-- must not invent or replace a ledger. Re-running this migration after a real
+-- hp_ledger is introduced will create the context table safely.
+do $$
+begin
+  if to_regclass('public.hp_ledger') is not null then
+    execute $ddl$
+      create table if not exists public.hp_ledger_country_contexts (
+        hp_ledger_id uuid primary key references public.hp_ledger(id) on delete cascade,
+        earning_country_id uuid references public.countries(id) on delete set null,
+        spending_country_id uuid references public.countries(id) on delete set null,
+        cross_border_redemption boolean not null default false,
+        policy_snapshot jsonb not null default '{}'::jsonb,
+        created_at timestamptz not null default now(),
+        check (not cross_border_redemption or (earning_country_id is not null and spending_country_id is not null))
+      )
+    $ddl$;
+  end if;
+end $$;
 
 create index if not exists trade_corridors_status_idx
   on public.trade_corridors(status, origin_country_id, destination_country_id);
@@ -772,7 +781,12 @@ alter table public.integration_api_clients enable row level security;
 alter table public.integration_webhook_endpoints enable row level security;
 alter table public.integration_webhook_deliveries enable row level security;
 alter table public.impact_metric_snapshots enable row level security;
-alter table public.hp_ledger_country_contexts enable row level security;
+do $$
+begin
+  if to_regclass('public.hp_ledger_country_contexts') is not null then
+    execute 'alter table public.hp_ledger_country_contexts enable row level security';
+  end if;
+end $$;
 
 drop policy if exists "trade_corridors_admin_read" on public.trade_corridors;
 create policy "trade_corridors_admin_read" on public.trade_corridors
@@ -788,7 +802,7 @@ create policy "product_trade_profiles_partner_read" on public.product_trade_prof
     or exists (
       select 1 from public.products p
       where p.id = product_trade_profiles.product_id
-        and (p.partner_id = auth.uid() or p.partner_id is null)
+        and (p.partner_id::text = auth.uid()::text or p.partner_id is null)
     )
   );
 drop policy if exists "product_country_availability_public_read" on public.product_country_availability;
@@ -971,16 +985,23 @@ drop policy if exists "impact_metric_snapshots_admin_read" on public.impact_metr
 create policy "impact_metric_snapshots_admin_read" on public.impact_metric_snapshots
   for select to authenticated using (public.is_admin());
 
-drop policy if exists "hp_ledger_country_contexts_own_read" on public.hp_ledger_country_contexts;
-create policy "hp_ledger_country_contexts_own_read" on public.hp_ledger_country_contexts
-  for select to authenticated
-  using (
-    public.is_admin()
-    or exists (
-      select 1 from public.hp_ledger h
-      where h.id = hp_ledger_country_contexts.hp_ledger_id and h.user_id = auth.uid()
-    )
-  );
+do $$
+begin
+  if to_regclass('public.hp_ledger_country_contexts') is not null then
+    execute 'drop policy if exists "hp_ledger_country_contexts_own_read" on public.hp_ledger_country_contexts';
+    execute $policy$
+      create policy "hp_ledger_country_contexts_own_read" on public.hp_ledger_country_contexts
+        for select to authenticated
+        using (
+          public.is_admin()
+          or exists (
+            select 1 from public.hp_ledger h
+            where h.id = hp_ledger_country_contexts.hp_ledger_id and h.user_id = auth.uid()
+          )
+        )
+    $policy$;
+  end if;
+end $$;
 
 comment on table public.exchange_rate_snapshots is
   'Immutable provider/source snapshot. Historical orders must never be recalculated with a later rate.';
