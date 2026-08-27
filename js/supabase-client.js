@@ -517,6 +517,12 @@
     return data || [];
   }
 
+  async function listPartnerOrderSummaries() {
+    const { data, error } = await client().rpc("list_partner_order_summaries");
+    if (error) throw error;
+    return data || [];
+  }
+
   async function updateOrder(id, payload) {
     if (security && !security.isUuid(id)) throw new Error("Sipariş kimliği geçersiz.");
     const { data, error } = await client().from("orders").update(payload).eq("id", id).select("*").single();
@@ -757,6 +763,7 @@
     },
     orders: {
       list: listOrders,
+      partnerSummaries: listPartnerOrderSummaries,
       update: updateOrder,
       create: createOrder
     },

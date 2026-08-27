@@ -42,6 +42,7 @@ function csvWithDefaults(value, defaults = []) {
 }
 
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
+const runtimeEnvironment = readEnv("NODE_ENV", { required: false, defaultValue: "production" });
 const requiredAllowedOrigins = [
   "https://allonahub.com",
   "https://www.allonahub.com",
@@ -51,7 +52,7 @@ const requiredAllowedOrigins = [
 ];
 
 export const config = {
-  env: readEnv("NODE_ENV", { required: false, defaultValue: "production" }),
+  env: runtimeEnvironment,
   port: readNumber("PORT", 3000),
   logLevel: readEnv("LOG_LEVEL", { required: false, defaultValue: "info" }),
   siteUrl: readEnv("SITE_URL", { required: false, defaultValue: "https://allonahub.com" }).replace(/\/$/, ""),
@@ -256,6 +257,25 @@ export const config = {
     maxApplyRows: readNumber("PARTNER_INTEGRATIONS_MAX_APPLY_ROWS", 100),
     maxTestRows: readNumber("PARTNER_INTEGRATIONS_MAX_TEST_ROWS", 3),
     fetchTimeoutMs: readNumber("PARTNER_INTEGRATIONS_FETCH_TIMEOUT_MS", 12000)
+  },
+  eInvoicing: {
+    enabled: readBool("E_INVOICING_ENABLED", runtimeEnvironment !== "production"),
+    workerEnabled: readBool("E_INVOICING_WORKER_ENABLED", false),
+    providerCallsEnabled: readBool("E_INVOICING_PROVIDER_CALLS_ENABLED", false),
+    channelCallsEnabled: readBool("E_INVOICING_CHANNEL_CALLS_ENABLED", false),
+    mockProviderEnabled: readBool("E_INVOICING_MOCK_PROVIDER_ENABLED", runtimeEnvironment !== "production"),
+    jobBatchSize: Math.max(1, Math.min(readNumber("E_INVOICING_JOB_BATCH_SIZE", 10), 100)),
+    jobLeaseSeconds: Math.max(30, Math.min(readNumber("E_INVOICING_JOB_LEASE_SECONDS", 120), 3600)),
+    webhookToleranceSeconds: Math.max(30, Math.min(readNumber("E_INVOICING_WEBHOOK_TOLERANCE_SECONDS", 300), 1800)),
+    retryDelaysSeconds: csv(readEnv("E_INVOICING_RETRY_DELAYS_SECONDS", { required: false, defaultValue: "60,300,900,3600" }))
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0 && value <= 86400),
+    artifactSignedUrlSeconds: Math.max(30, Math.min(readNumber("E_INVOICING_ARTIFACT_SIGNED_URL_SECONDS", 60), 300))
+  },
+  countryEngine: {
+    enabled: readBool("COUNTRY_ENGINE_ENABLED", runtimeEnvironment !== "production"),
+    adminWritesEnabled: readBool("COUNTRY_ENGINE_ADMIN_WRITES_ENABLED", false),
+    publicImpactEnabled: readBool("COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED", runtimeEnvironment !== "production")
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {

@@ -4479,6 +4479,7 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     scroll-snap-type: x proximity;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 8px;
   }
 
   .shop-landing .site-main > .shop-category-menu:not(.shop-category-menu--top) {
@@ -4488,6 +4489,17 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   .shop-category-menu::-webkit-scrollbar,
   .shop-category-rail::-webkit-scrollbar {
     display: none;
+  }
+
+  .shop-category-menu {
+    padding-inline: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .shop-category-rail::after {
+    content: "" !important;
+    flex: 0 0 8px !important;
+    display: block !important;
   }
 
   .shop-category-item {
@@ -4559,38 +4571,30 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .footer-grid {
-    display: flex !important;
+    display: grid !important;
     grid-template-columns: none !important;
-    flex-wrap: nowrap !important;
-    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
     width: 100% !important;
-    padding: 0 0 12px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .footer-grid::-webkit-scrollbar {
-    display: none;
+    padding: 0 0 18px !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
   }
 
   .footer-col {
-    flex: 0 0 min(86vw, 326px) !important;
-    max-width: min(86vw, 326px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     min-height: 0 !important;
     padding: 14px !important;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.045);
-    scroll-snap-align: start;
   }
 
   .footer-col:first-child {
-    flex-basis: min(86vw, 326px) !important;
-    max-width: min(86vw, 326px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .footer-brand {
@@ -5057,9 +5061,11 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     width: 100% !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
-    padding: 0 0 1px !important;
+    padding: 0 2px 1px !important;
+    box-sizing: border-box !important;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 2px;
   }
 
   .site-header .header-actions::-webkit-scrollbar {
@@ -5070,6 +5076,7 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
     flex: 0 0 auto !important;
     width: auto !important;
     min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .site-header .mobile-nav-toggle {
@@ -5125,8 +5132,8 @@ body[data-theme="corporate"]:has(.premium-hero) .partner{
   }
 
   .site-header .header-actions [data-account-link] {
-    flex-basis: 82px !important;
-    min-width: 82px !important;
+    flex-basis: 74px !important;
+    min-width: 74px !important;
     font-size: 12px !important;
   }
 

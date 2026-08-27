@@ -238,6 +238,26 @@ button {
   gap: 6px;
 }
 
+.admin-edoc-entry {
+  min-height: 52px;
+  margin-bottom: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(0, 213, 232, 0.24);
+  border-radius: var(--admin-radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(120deg, rgba(0, 213, 232, 0.13), rgba(255, 180, 84, 0.06));
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+.admin-edoc-entry span:first-child { display: grid; }
+.admin-edoc-entry strong { color: var(--admin-gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.admin-edoc-entry small { color: var(--admin-muted); font-weight: 800; }
+.admin-edoc-entry:hover { border-color: rgba(0, 213, 232, 0.48); }
+
 .admin-nav button {
   min-height: 42px;
   border: 1px solid transparent;

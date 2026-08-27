@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Country Control Center | AllonaHub Admin</title>
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../css/platform.css?v=20260827-country1">
+  <link rel="stylesheet" href="../css/country-control.css?v=20260827-country1">
+</head>
+<body class="country-admin" data-page="admin-country-control">
+  <a class="country-skip" href="#countryMain">İçeriğe geç</a>
+  <div class="country-shell">
+    <aside class="country-sidebar" aria-label="Country Control Center menüsü">
+      <a class="country-brand" href="./index.html">
+        <img src="../images/brand/allona.logo.png" alt="AllonaHub">
+        <span><strong>AllonaHub</strong><small>Country Control Center</small></span>
+      </a>
+      <nav>
+        <a class="is-active" href="#countries">Countries</a>
+        <a href="#modules">Country Modules</a>
+        <a href="#corridors">Cross-Border Corridors</a>
+        <a href="#command">Turkic World Command Center</a>
+        <a href="#impact">Impact Evidence</a>
+      </nav>
+      <div class="country-safe-note">
+        <strong>Güvenli aktivasyon</strong>
+        <p>Country Engine mevcut Türkiye akışını ancak ayrı production onayı ve enforcement yayını sonrası yönetir.</p>
+      </div>
+    </aside>
+
+    <main class="country-main" id="countryMain">
+      <header class="country-topbar">
+        <div>
+          <p class="country-eyebrow">ALLONAHUB 2030 · TÜRK DÜNYASI DİJİTAL TİCARET KORİDORU</p>
+          <h1>Country Control Center</h1>
+          <p>Ülke, modül, koridor ve doğrulanmış etki verilerinin tek kontrol düzlemi.</p>
+        </div>
+        <div class="country-actions">
+          <span class="country-mode" data-country-mode>Bağlantı kontrol ediliyor</span>
+          <button type="button" data-country-refresh>Yenile</button>
+          <a href="./index.html">Admin Panele Dön</a>
+        </div>
+      </header>
+
+      <section class="country-notice" data-country-notice hidden aria-live="polite"></section>
+
+      <section id="command" class="country-section" aria-labelledby="commandTitle">
+        <div class="country-section-head">
+          <div><span>GERÇEK VERİ</span><h2 id="commandTitle">Turkic World Command Center</h2></div>
+          <p>Kaynak tablo yoksa veya ölçüm doğrulanmadıysa değer yerine çizgi gösterilir.</p>
+        </div>
+        <div class="country-kpis" data-country-kpis>
+          <article><span>Yükleniyor</span><strong>—</strong></article>
+        </div>
+      </section>
+
+      <section id="countries" class="country-section" aria-labelledby="countriesTitle">
+        <div class="country-section-head">
+          <div><span>COUNTRY ENGINE</span><h2 id="countriesTitle">Ülke Yol Haritası</h2></div>
+          <p>DISABLED → PLANNING → INTEGRATION → INTERNAL_TEST → BETA → PUBLIC</p>
+        </div>
+        <div class="country-grid" data-country-list>
+          <div class="country-empty">Ülkeler yükleniyor…</div>
+        </div>
+      </section>
+
+      <section id="modules" class="country-section" aria-labelledby="modulesTitle">
+        <div class="country-section-head country-section-head--actions">
+          <div><span>COUNTRY × MODULE</span><h2 id="modulesTitle">Modül Aktivasyon Matrisi</h2></div>
+          <label>Ülke<select data-country-select aria-label="Modül matrisinde ülke seç"></select></label>
+        </div>
+        <div class="country-table-wrap" data-module-table>
+          <div class="country-empty">Ülke verisi bekleniyor…</div>
+        </div>
+      </section>
+
+      <section id="corridors" class="country-section" aria-labelledby="corridorsTitle">
+        <div class="country-section-head">
+          <div><span>CROSS-BORDER</span><h2 id="corridorsTitle">Ticaret Koridorları</h2></div>
+          <p>Provider ve hukuki uygunluk tamamlanmadan commerce, lojistik veya rewards otomatik açılmaz.</p>
+        </div>
+        <div class="country-corridors" data-corridors></div>
+      </section>
+
+      <section id="impact" class="country-section" aria-labelledby="impactTitle">
+        <div class="country-section-head">
+          <div><span>AGGREGATE ONLY</span><h2 id="impactTitle">Etki Kanıtları</h2></div>
+          <p>Yalnız kaynak, yöntem ve doğrulama durumu kayıtlı aggregate metrikler public yayına alınabilir.</p>
+        </div>
+        <div class="country-impact" data-impact></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="country-dialog" data-country-dialog>
+    <form method="dialog" data-country-form>
+      <header><div><span data-dialog-eyebrow>Kontrollü değişiklik</span><h2 data-dialog-title>Ülke ayarı</h2></div><button type="button" data-dialog-close aria-label="Kapat">×</button></header>
+      <div class="country-dialog-body" data-dialog-body></div>
+      <footer><button type="button" data-dialog-cancel>Vazgeç</button><button class="is-primary" type="submit" data-dialog-submit>Kaydet</button></footer>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../js/config.js?v=20260827-country1" defer></script>
+  <script src="../js/core.js?v=20260827-country1" defer></script>
+  <script src="../js/supabase-client.js?v=20260827-country1" defer></script>
+  <script src="../js/auth.js?v=20260827-country1" defer></script>
+  <script src="../js/admin-country-control.js?v=20260827-country1" defer></script>
+</body>
+</html>

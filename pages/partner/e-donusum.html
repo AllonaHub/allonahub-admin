@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>e-Dönüşüm & Faturalar | AllonaHub Partner</title>
+  <link rel="icon" href="../../favicon.ico">
+  <link rel="stylesheet" href="../../css/e-donusum.css?v=20260827-edoc2">
+</head>
+<body class="edoc-page edoc-page--partner" data-edoc-app="partner">
+  <a class="edoc-skip" href="#edocMain">İçeriğe geç</a>
+  <div class="edoc-shell">
+    <aside class="edoc-sidebar">
+      <a class="edoc-brand" href="./partner-panel.html">
+        <img src="../../images/brand/allona.logo.png" alt="AllonaHub">
+        <span><strong>Partner OS</strong><small>e-Dönüşüm & Faturalar</small></span>
+      </a>
+      <div class="edoc-environment" data-edoc-environment><span class="edoc-dot"></span><span>Bağlantı kontrol ediliyor</span></div>
+      <nav class="edoc-nav" data-edoc-nav>
+        <button class="is-active" type="button" data-partner-edoc-view="dashboard"><span>01</span>Dashboard</button>
+        <button type="button" data-partner-edoc-view="invoices"><span>02</span>Faturalar</button>
+        <button type="button" data-partner-edoc-view="failures"><span>03</span>Hatalar</button>
+        <button type="button" data-partner-edoc-view="returns"><span>04</span>İade Belgeleri</button>
+        <button type="button" data-partner-edoc-view="cancellations"><span>05</span>Fatura İptalleri</button>
+        <button type="button" data-partner-edoc-view="commissions"><span>06</span>Komisyon Faturaları</button>
+        <button type="button" data-partner-edoc-view="reconciliation"><span>07</span>Mutabakat</button>
+        <button type="button" data-partner-edoc-view="providers"><span>08</span>Entegratörüm</button>
+        <button type="button" data-partner-edoc-view="channels"><span>09</span>Mağazalarım</button>
+        <button type="button" data-partner-edoc-view="profiles"><span>10</span>Fatura Profilim</button>
+        <button type="button" data-partner-edoc-view="settings"><span>11</span>Ayarlarım</button>
+      </nav>
+      <div class="edoc-safe-note"><strong>Veri sınırı</strong><p>Yalnız üyesi olduğunuz şirket, satıcı ve mağaza kayıtları RLS üzerinden görünür.</p></div>
+    </aside>
+
+    <main class="edoc-main" id="edocMain">
+      <header class="edoc-topbar">
+        <div><p class="edoc-eyebrow">PARTNER OS · FİNANS</p><h1 data-partner-edoc-title>e-Dönüşüm Dashboard</h1><p data-partner-edoc-subtitle>Faturalar ve mutabakat şirket bağlamında yönetilir.</p></div>
+        <div class="edoc-top-actions"><a href="./partner-panel.html">Partner Panele Dön</a><button type="button" data-partner-edoc-refresh>Yenile</button></div>
+      </header>
+      <section class="edoc-context">
+        <label>Organizasyon<select data-partner-edoc-context="organization"><option value="">Yükleniyor…</option></select></label>
+        <label>Şirket<select data-partner-edoc-context="legalEntity"><option value="">Tümü</option></select></label>
+        <label>Satıcı<select data-partner-edoc-context="seller"><option value="">Tümü</option></select></label>
+        <label>Mağaza<select data-partner-edoc-context="channelAccount"><option value="">Tümü</option></select></label>
+        <div class="edoc-context-state" data-partner-edoc-context-state>RLS doğrulanıyor</div>
+      </section>
+      <section class="edoc-notice" data-partner-edoc-notice hidden aria-live="polite"></section>
+      <section class="edoc-content" data-partner-edoc-content><div class="edoc-loading"><span></span><span></span><span></span><p>Partner fatura merkezi hazırlanıyor…</p></div></section>
+    </main>
+  </div>
+  <dialog class="edoc-dialog" data-partner-edoc-dialog>
+    <form method="dialog">
+      <div class="edoc-dialog-head"><h2 data-partner-edoc-dialog-title>İşlem</h2><button value="cancel" formnovalidate aria-label="Kapat">×</button></div>
+      <div data-partner-edoc-dialog-body></div>
+      <div class="edoc-dialog-actions"><button value="cancel" formnovalidate>Vazgeç</button><button value="confirm" class="is-primary">Onayla</button></div>
+    </form>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260623-mfa2" defer></script>
+  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260623-mfa2" defer></script>
+  <script src="../../js/auth.js?v=20260629-adminroot1" defer></script>
+  <script src="../../js/e-donusum-shared.js?v=20260827-edoc1" defer></script>
+  <script src="../../js/partner-e-donusum.js?v=20260827-edoc2" defer></script>
+</body>
+</html>

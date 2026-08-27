@@ -11,7 +11,7 @@
     return false;
   }
 
-  function renderOrder(target, order) {
+  function renderOrder(target, order, mode) {
     const items = order.order_items || [];
     target.innerHTML = `
       <article class="panel">
@@ -29,7 +29,7 @@
       </article>
       <div class="table-wrap">
         <table class="data-table">
-          <thead><tr><th>Ürün</th><th>Adet</th><th>Birim</th><th>Toplam</th><th>Partner Net</th></tr></thead>
+          <thead><tr><th>Ürün</th><th>Adet</th><th>Birim</th><th>Toplam</th>${mode === "user" ? "" : "<th>Partner Net</th>"}</tr></thead>
           <tbody>
             ${items.map((item) => `
               <tr>
@@ -37,7 +37,7 @@
                 <td>${Number(item.quantity || 0).toLocaleString("tr-TR")}</td>
                 <td>${core.money(item.unit_price || item.price || 0)}</td>
                 <td>${core.money(item.total_price || ((item.price || 0) * (item.quantity || 0)))}</td>
-                <td>${core.money(item.partner_net_earning || 0)}</td>
+                ${mode === "user" ? "" : `<td>${core.money(item.partner_net_earning || 0)}</td>`}
               </tr>
             `).join("")}
           </tbody>
@@ -51,6 +51,9 @@
         <div class="summary-line"><span>Kargo</span><strong>${core.money(order.shipping_total || order.shipping || 0)}</strong></div>
         <div class="summary-line summary-line--total"><span>Genel toplam</span><strong>${core.money(order.grand_total || order.total || 0)}</strong></div>
       </aside>
+      <section class="customer-invoices" data-order-invoices data-order-id="${core.escapeHTML(order.id)}" aria-live="polite">
+        <div class="customer-invoices__loading">Faturalar güvenli bağlantı üzerinden yükleniyor…</div>
+      </section>
     `;
   }
 
@@ -71,10 +74,19 @@
     }
     core.renderStatus(target, "Sipariş detayı yükleniyor...");
     try {
-      const { data, error } = await App.db.client().from("orders").select("*, order_items(*)").eq("id", id).maybeSingle();
+      const customerSafeProjection = [
+        "id", "order_no", "order_number", "user_id", "customer_name", "city", "address",
+        "subtotal", "shipping", "discount", "total", "order_status", "payment_status", "status",
+        "discount_total", "hp_discount", "coupon_discount", "shipping_total", "grand_total",
+        "tracking_number", "cargo_company", "created_at",
+        "order_items(id,order_id,product_id,product_name,quantity,price,unit_price,total_price)"
+      ].join(",");
+      const projection = mode === "user" ? customerSafeProjection : "*, order_items(*)";
+      const { data, error } = await App.db.client().from("orders").select(projection).eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Sipariş bulunamadı.");
-      renderOrder(target, data);
+      renderOrder(target, data, mode);
+      document.dispatchEvent(new CustomEvent("allona:order-rendered", { detail: { orderId: data.id, mode } }));
     } catch (error) {
       core.renderStatus(target, error.message || "Sipariş detayı yüklenemedi.", "error");
     }

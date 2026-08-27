@@ -5,8 +5,12 @@ import rateLimit from "@fastify/rate-limit";
 import { config } from "./config.js";
 import { registerAutoDefense } from "./lib/auto-defense.js";
 import { runtimeSecurityProtection } from "./lib/security-alerts.js";
+import { EInvoicingError } from "./modules/e-invoicing/errors.js";
+import { PlatformContextError } from "./modules/platform/errors.js";
 import { registerAssistantRoutes } from "./routes/assistant.js";
+import { registerEInvoicingRoutes } from "./routes/e-invoicing.js";
 import { registerRoutes } from "./routes/index.js";
+import { registerPlatformRoutes } from "./routes/platform.js";
 
 function requestId() {
   return `aln-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -78,6 +82,7 @@ export async function buildApp() {
         "SOCIAL_MEDIA_ASSET_WEBHOOK_SECRET",
         "SOCIAL_MEDIA_ASSET_OPENAI_API_KEY",
         "PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET",
+        "INVOICE_MOCK_WEBHOOK_SECRET",
         "CRON_SECRET",
         "config.supabase.serviceRoleKey",
         "config.bankPayment.secretKey",
@@ -192,7 +197,7 @@ export async function buildApp() {
       callback(null, config.allowedOrigins.includes(normalized));
     },
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"]
   });
 
@@ -212,16 +217,31 @@ export async function buildApp() {
   });
 
   app.setErrorHandler((error, request, reply) => {
-    request.log.error({
-      err: error,
-      error_message: error?.message || null,
-      error_code: error?.code || null,
-      error_details: error?.details || null,
-      error_hint: error?.hint || null,
-      error_operation: error?.operationLabel || error?.operation_label || null,
-      status_code: error?.statusCode || error?.status || null
-    }, "Request failed");
-    const status = error.statusCode && error.statusCode >= 400 ? error.statusCode : 500;
+    const rawStatus = Number(error?.statusCode ?? error?.status);
+    const status = error?.name === "ZodError"
+      ? 400
+      : Number.isInteger(rawStatus) && rawStatus >= 400 && rawStatus <= 599
+      ? rawStatus
+      : 500;
+    const trustedDomainError = error instanceof EInvoicingError || error instanceof PlatformContextError;
+    const normalizedErrorCode = String(error?.code || "").trim().toUpperCase();
+    const safeAnyCode = trustedDomainError && /^[A-Z][A-Z0-9_]{2,79}$/.test(normalizedErrorCode)
+      ? normalizedErrorCode
+      : null;
+    const safeDomainCode = status < 500 ? safeAnyCode : null;
+    if (status >= 500) {
+      request.log.error({
+        error_name: error?.name || null,
+        error_code: safeAnyCode,
+        status_code: status
+      }, "Request failed");
+    } else {
+      request.log.warn({
+        error_name: error?.name || null,
+        error_code: safeDomainCode,
+        status_code: status
+      }, "Request rejected");
+    }
     const validationDetails = error.name === "ZodError" && Array.isArray(error.issues)
       ? error.issues
         .slice(0, 3)
@@ -239,12 +259,14 @@ export async function buildApp() {
 
     reply.code(status).send({
       ok: false,
-      error: status >= 500 ? "INTERNAL_ERROR" : "REQUEST_ERROR",
+      error: status >= 500 ? "INTERNAL_ERROR" : safeDomainCode || "REQUEST_ERROR",
       message: publicMessage
     });
   });
 
   registerRoutes(app);
+  registerPlatformRoutes(app);
+  registerEInvoicingRoutes(app);
   registerAssistantRoutes(app);
   return app;
 }

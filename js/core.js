@@ -266,7 +266,7 @@
   const CURRENCY_RATES_PREFIX = "allona.currency.rates.";
   const BASE_CURRENCY = String(App.config?.baseCurrency || App.config?.currency || "TRY").toUpperCase();
   const CURRENCY_CACHE_MS = Number(App.config?.currencyCacheHours || 12) * 60 * 60 * 1000;
-  const supportedCurrencies = ["TRY", "USD", "EUR", "AZN", "AED", "SAR", "GBP", "RUB"];
+  const supportedCurrencies = ["TRY", "USD", "EUR", "AZN", "KZT", "UZS", "KGS", "AED", "SAR", "GBP", "RUB"];
   const countryCurrencyMap = {
     AD: "EUR", AE: "AED", AF: "AFN", AG: "XCD", AI: "XCD", AL: "ALL", AM: "AMD", AO: "AOA", AR: "ARS", AT: "EUR", AU: "AUD", AW: "AWG", AZ: "AZN",
     BA: "BAM", BB: "BBD", BD: "BDT", BE: "EUR", BF: "XOF", BG: "BGN", BH: "BHD", BI: "BIF", BJ: "XOF", BN: "BND", BO: "BOB", BR: "BRL", BS: "BSD", BT: "BTN", BW: "BWP", BY: "BYN",
@@ -283,6 +283,12 @@
   const timeZoneCountryMap = {
     "Europe/Istanbul": "TR",
     "Asia/Baku": "AZ",
+    "Asia/Almaty": "KZ",
+    "Asia/Aqtobe": "KZ",
+    "Asia/Atyrau": "KZ",
+    "Asia/Tashkent": "UZ",
+    "Asia/Samarkand": "UZ",
+    "Asia/Bishkek": "KG",
     "America/New_York": "US",
     "America/Chicago": "US",
     "America/Denver": "US",
@@ -317,7 +323,7 @@
   };
   const currencyLocaleMap = {
     AED: "ar-AE", AZN: "az-AZ", BHD: "ar-BH", CAD: "en-CA", CHF: "de-CH", CNY: "zh-CN", EGP: "ar-EG", EUR: "de-DE", GBP: "en-GB",
-    IQD: "ar-IQ", JOD: "ar-JO", KWD: "ar-KW", OMR: "ar-OM", QAR: "ar-QA", SAR: "ar-SA", TRY: "tr-TR", USD: "en-US"
+    IQD: "ar-IQ", JOD: "ar-JO", KGS: "ky-KG", KWD: "ar-KW", KZT: "kk-KZ", OMR: "ar-OM", QAR: "ar-QA", SAR: "ar-SA", TRY: "tr-TR", USD: "en-US", UZS: "uz-UZ"
   };
   const currencyState = {
     base: BASE_CURRENCY,
@@ -434,6 +440,17 @@
 
   async function loadCurrencyRates(options) {
     const settings = options || {};
+    if (currencyState.target === currencyState.base && !settings.force) {
+      const baseRates = {
+        rates: { [currencyState.base]: 1 },
+        updatedAt: Date.now(),
+        fetchedAt: Date.now(),
+        provider: "base_currency",
+        source: "base_currency"
+      };
+      applyRates(baseRates);
+      return baseRates;
+    }
     const cached = !settings.force && readRatesCache(currencyState.base, false);
     if (cached) {
       applyRates(cached);

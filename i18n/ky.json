@@ -1,0 +1,26 @@
+{
+  "dir": "ltr",
+  "keys": {
+    "languageLabel": "Тил тандоо"
+  },
+  "phrases": {
+    "Dil seçimi": "Тил тандоо",
+    "Tema seçimi": "Теманы тандоо",
+    "Giriş Yap": "Кирүү",
+    "Hesabım": "Менин аккаунтум",
+    "Hakkımızda": "Биз жөнүндө",
+    "Yardım ve Destek": "Жардам жана колдоо",
+    "Partner Ol": "Өнөктөш болуу",
+    "Türk Dünyası": "Түрк дүйнөсү",
+    "Ülke yol haritası": "Өлкөлөрдүн жол картасы",
+    "Tek hesap.": "Бир аккаунт.",
+    "Ortak ticaret koridoru.": "Жалпы соода коридору.",
+    "Yalnız doğrulanmış göstergeler": "Текшерилген көрсөткүчтөр гана",
+    "Desteklenen ülke": "Колдоого алынган өлкө",
+    "KOBİ": "Чакан жана орто бизнес",
+    "İhracat yapan partner": "Экспорттоочу өнөктөш",
+    "Sınır ötesi sipariş": "Чек ара аралык буйрутма",
+    "B2B eşleşme": "B2B дал келүү",
+    "Desteklenen istihdam": "Колдоого алынган жумуш менен камсыздоо"
+  }
+}

@@ -2645,3 +2645,31 @@ body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .
 body.user-panel-page[data-theme] .site-footer.allona-user-footer .footer-brand .logo-title .blue {
   color: #00e5ff !important;
 }
+
+@media (max-width: 760px) {
+  body.user-panel-page .site-footer .container {
+    width: min(calc(100% - 16px), 1720px) !important;
+    padding-inline: 0 !important;
+  }
+
+  body.user-panel-page .site-footer .footer-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    padding-bottom: 18px !important;
+  }
+
+  body.user-panel-page .site-footer .footer-col,
+  body.user-panel-page .site-footer .footer-col:first-child {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    border: 1px solid rgba(255, 255, 255, .12) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, .045) !important;
+  }
+}

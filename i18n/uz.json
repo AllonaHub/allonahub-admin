@@ -1,0 +1,26 @@
+{
+  "dir": "ltr",
+  "keys": {
+    "languageLabel": "Til tanlash"
+  },
+  "phrases": {
+    "Dil seçimi": "Til tanlash",
+    "Tema seçimi": "Mavzuni tanlash",
+    "Giriş Yap": "Kirish",
+    "Hesabım": "Mening hisobim",
+    "Hakkımızda": "Biz haqimizda",
+    "Yardım ve Destek": "Yordam va qoʻllab-quvvatlash",
+    "Partner Ol": "Hamkor boʻlish",
+    "Türk Dünyası": "Turkiy dunyo",
+    "Ülke yol haritası": "Mamlakatlar yoʻl xaritasi",
+    "Tek hesap.": "Bitta hisob.",
+    "Ortak ticaret koridoru.": "Umumiy savdo koridori.",
+    "Yalnız doğrulanmış göstergeler": "Faqat tasdiqlangan koʻrsatkichlar",
+    "Desteklenen ülke": "Qoʻllab-quvvatlanadigan mamlakat",
+    "KOBİ": "Kichik va oʻrta biznes",
+    "İhracat yapan partner": "Eksport qiluvchi hamkor",
+    "Sınır ötesi sipariş": "Transchegaraviy buyurtma",
+    "B2B eşleşme": "B2B moslik",
+    "Desteklenen istihdam": "Qoʻllab-quvvatlangan bandlik"
+  }
+}

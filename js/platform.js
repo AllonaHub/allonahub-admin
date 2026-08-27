@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260712-shopfix1";
+  const SERVICE_WORKER_VERSION = "20260827-country1";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -29,6 +29,9 @@
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
+    { code: "kk", label: "KK" },
+    { code: "uz", label: "UZ" },
+    { code: "ky", label: "KY" },
     { code: "en", label: "EN" },
     { code: "de", label: "DE" },
     { code: "ru", label: "RU" },
@@ -39,6 +42,9 @@
     { code: "USD", label: "USD", symbol: "$" },
     { code: "EUR", label: "EUR", symbol: "€" },
     { code: "AZN", label: "AZN", symbol: "₼" },
+    { code: "KZT", label: "KZT", symbol: "₸" },
+    { code: "UZS", label: "UZS", symbol: "soʻm" },
+    { code: "KGS", label: "KGS", symbol: "сом" },
     { code: "AED", label: "AED", symbol: "د.إ" },
     { code: "SAR", label: "SAR", symbol: "﷼" },
     { code: "GBP", label: "GBP", symbol: "£" },
@@ -47,6 +53,9 @@
   const languageCurrencyMap = {
     tr: "TRY",
     az: "AZN",
+    kk: "KZT",
+    uz: "UZS",
+    ky: "KGS",
     en: "USD",
     de: "EUR",
     ru: "RUB",

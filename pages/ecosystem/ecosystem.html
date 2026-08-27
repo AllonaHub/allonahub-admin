@@ -187,11 +187,11 @@ nav a:hover{color:#00e5ff!important}
 </section>
 
 <section class="live-stats-section">
-<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Kullanıcı</p><h3 id="activeUsers">12.481</h3></div>
-<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Partner</p><h3 id="activeAds">1.942</h3></div>
-<div class="stat-live-card"><span class="stat-dot"></span><p>Yeni Üyeler</p><h3 id="jobAds">326</h3></div>
-<div class="stat-live-card"><span class="stat-dot"></span><p>Crew</p><h3 id="crewApps">89</h3></div>
-<div class="stat-live-card"><span class="stat-dot"></span><p>Sadakat Puanı</p><h3 id="dailyHP">245.800</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Kullanıcı</p><h3 id="activeUsers">—</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Aktif Partner</p><h3 id="activeAds">—</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Yeni Üyeler</p><h3 id="jobAds">—</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Crew</p><h3 id="crewApps">—</h3></div>
+<div class="stat-live-card"><span class="stat-dot"></span><p>Sadakat Puanı</p><h3 id="dailyHP">—</h3></div>
 </section>
 
 
@@ -655,16 +655,7 @@ setInterval(rotateAds,6000);
 </script>
 
 <script>
-const verifiedStats={activeUsers:0,activeAds:0,jobAds:0,crewApps:0,dailyHP:0};
-function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
-function updateLiveStats(data){
-document.getElementById("activeUsers").textContent=formatNumber(data.activeUsers);
-document.getElementById("activeAds").textContent=formatNumber(data.activeAds);
-document.getElementById("jobAds").textContent=formatNumber(data.jobAds);
-document.getElementById("crewApps").textContent=formatNumber(data.crewApps);
-document.getElementById("dailyHP").textContent=formatNumber(data.dailyHP);
-}
-updateLiveStats(verifiedStats);
+document.querySelectorAll(".live-stats-section h3").forEach((node)=>{node.textContent="—"});
 </script>
 
 <script>

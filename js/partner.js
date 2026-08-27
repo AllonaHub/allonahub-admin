@@ -109,7 +109,7 @@
     if (!target) return;
     core.renderStatus(target, "Siparişler yükleniyor...");
     try {
-      const orders = await App.db.orders.list();
+      const orders = await App.db.orders.partnerSummaries();
       target.innerHTML = `
         <div class="table-wrap">
           <table class="data-table">

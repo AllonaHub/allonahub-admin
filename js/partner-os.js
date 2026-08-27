@@ -242,6 +242,18 @@
     return payload;
   }
 
+  async function syncEInvoicingEntry() {
+    const entry = $("[data-e-invoicing-entry]");
+    if (!entry) return;
+    entry.hidden = true;
+    try {
+      const catalog = await apiFetch("/v1/e-invoicing/catalog");
+      entry.hidden = catalog.enabled !== true;
+    } catch (error) {
+      entry.hidden = true;
+    }
+  }
+
   function showAlert(message, type) {
     const node = $("[data-partner-alert]");
     if (!node) return;
@@ -1966,6 +1978,7 @@
     try {
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
+      await syncEInvoicingEntry();
       try {
         const payload = await apiFetch("/v1/partner/os");
         Object.assign(state, {

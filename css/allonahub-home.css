@@ -84,8 +84,16 @@ html.is-standalone body{min-height:100svh}
 .stat-live-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(0,255,255,.22),transparent 60%)}
 .stat-live-card p{color:#9adfff;font-size:13px;margin:0 0 8px}
 .stat-live-card h3{color:#fff;font-size:26px;margin:0}
-.stat-dot{width:10px;height:10px;background:#00ff66;border-radius:50%;display:inline-block;margin-bottom:10px;box-shadow:0 0 12px #00ff66;animation:pulseLive 1.5s infinite}
+.live-stats-source{max-width:1720px;margin:-12px auto 24px;padding:0 20px;color:rgba(255,255,255,.58);font-size:11px;text-align:right}
+.stat-dot{width:10px;height:10px;background:#748395;border-radius:50%;display:inline-block;margin-bottom:10px;box-shadow:none}
+.stat-live-card.has-verified-stat .stat-dot{background:#00ff66;box-shadow:0 0 12px #00ff66;animation:pulseLive 1.5s infinite}
 @keyframes pulseLive{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
+
+.turkic-home-entry{max-width:1320px;margin:54px auto 10px;padding:38px;display:grid;grid-template-columns:1.3fr .7fr;gap:34px;align-items:center;border:1px solid rgba(0,229,255,.28);border-radius:28px;background:radial-gradient(circle at 90% 0,rgba(0,229,255,.18),transparent 35%),linear-gradient(135deg,#061b33,#043653);box-shadow:0 24px 60px rgba(0,20,45,.18)}
+.turkic-home-entry__content>span{color:#ffd700;font-size:11px;font-weight:900;letter-spacing:.14em}.turkic-home-entry h2{margin:9px 0 12px;color:#fff;font-size:clamp(30px,4vw,48px);line-height:1.05}.turkic-home-entry p{max-width:760px;margin:0;color:rgba(255,255,255,.72);line-height:1.65}.turkic-home-entry a{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin-top:20px;padding:0 18px;border-radius:10px;background:#00d5e8;color:#061b33;text-decoration:none;font-weight:900}.turkic-home-entry__countries{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.turkic-home-entry__countries strong{width:62px;height:62px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:rgba(2,8,20,.58);color:#7df3ff;font-size:19px}.turkic-home-entry__countries span{color:#ffd700;font-weight:900}
+body[data-theme="corporate"] .live-stats-source{color:#536171!important}
+body[data-theme="corporate"] .turkic-home-entry{border-radius:10px;background:linear-gradient(135deg,#123a56,#0a5e96);box-shadow:0 16px 35px rgba(16,35,52,.13)}
+@media(max-width:850px){.turkic-home-entry{margin-inline:14px;grid-template-columns:1fr;padding:26px}.turkic-home-entry__countries{justify-content:flex-start}.live-stats-source{text-align:left;padding-inline:14px}}
 
 .live-ads-section{max-width:1720px;margin:35px auto;padding:0 20px}
 .live-ads-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}

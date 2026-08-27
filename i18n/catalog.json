@@ -3,6 +3,9 @@
   "dirs": {
     "tr": "ltr",
     "az": "ltr",
+    "kk": "ltr",
+    "uz": "ltr",
+    "ky": "ltr",
     "en": "ltr",
     "de": "ltr",
     "ru": "ltr",
@@ -14,6 +17,15 @@
     },
     "az": {
       "languageLabel": "Dil seçimi"
+    },
+    "kk": {
+      "languageLabel": "Тіл таңдау"
+    },
+    "uz": {
+      "languageLabel": "Til tanlash"
+    },
+    "ky": {
+      "languageLabel": "Тил тандоо"
     },
     "en": {
       "languageLabel": "Language"

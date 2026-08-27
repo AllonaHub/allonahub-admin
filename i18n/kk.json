@@ -1,0 +1,26 @@
+{
+  "dir": "ltr",
+  "keys": {
+    "languageLabel": "Тіл таңдау"
+  },
+  "phrases": {
+    "Dil seçimi": "Тіл таңдау",
+    "Tema seçimi": "Тақырып таңдау",
+    "Giriş Yap": "Кіру",
+    "Hesabım": "Менің аккаунтым",
+    "Hakkımızda": "Біз туралы",
+    "Yardım ve Destek": "Көмек және қолдау",
+    "Partner Ol": "Серіктес болу",
+    "Türk Dünyası": "Түркі әлемі",
+    "Ülke yol haritası": "Елдердің жол картасы",
+    "Tek hesap.": "Бір аккаунт.",
+    "Ortak ticaret koridoru.": "Ортақ сауда дәлізі.",
+    "Yalnız doğrulanmış göstergeler": "Тек расталған көрсеткіштер",
+    "Desteklenen ülke": "Қолдау көрсетілетін ел",
+    "KOBİ": "ШОБ",
+    "İhracat yapan partner": "Экспорттаушы серіктес",
+    "Sınır ötesi sipariş": "Трансшекаралық тапсырыс",
+    "B2B eşleşme": "B2B сәйкестік",
+    "Desteklenen istihdam": "Қолдау көрсетілген жұмыспен қамту"
+  }
+}
