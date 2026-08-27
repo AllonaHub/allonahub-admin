@@ -8217,6 +8217,56 @@ const INTEGRATION_PRODUCT_CODE_KEYS = ["sku", "stock_code", "stockCode", "stok_k
 const INTEGRATION_GROUP_CODE_KEYS = ["productMainId", "mainProductId", "item_group_id", "group_id", "groupCode", "model_code", "modelCode", "parent_id", "parentId"];
 const INTEGRATION_COLOR_KEYS = ["color", "colour", "renk", "variant_color", "variantColor", "option_color", "option1", "attribute_color"];
 const INTEGRATION_SIZE_KEYS = ["size", "beden", "variant_size", "variantSize", "option_size", "option2", "attribute_size"];
+const INTEGRATION_PRICE_KEYS = [
+  "salePrice",
+  "sale_price",
+  "sellingPrice",
+  "selling_price",
+  "discountedPrice",
+  "discounted_price",
+  "currentPrice",
+  "current_price",
+  "price",
+  "regular_price",
+  "regularPrice",
+  "listPrice",
+  "list_price",
+  "basePrice",
+  "base_price",
+  "marketPrice",
+  "market_price",
+  "unitPrice",
+  "unit_price",
+  "fiyat",
+  "satis_fiyati",
+  "satış_fiyatı",
+  "tutar"
+];
+const INTEGRATION_STOCK_KEYS = [
+  "quantity",
+  "stock",
+  "stock_quantity",
+  "stockQuantity",
+  "inventory_quantity",
+  "inventoryQuantity",
+  "availableQuantity",
+  "available_quantity",
+  "availableStock",
+  "available_stock",
+  "stockAmount",
+  "stock_amount",
+  "quantityOnSale",
+  "quantity_on_sale",
+  "sellableQuantity",
+  "sellable_quantity",
+  "saleableQuantity",
+  "saleable_quantity",
+  "inventory",
+  "stok",
+  "stok_adedi",
+  "adet"
+];
+const INTEGRATION_PRODUCT_NORMALIZER_VERSION = "20260827-source-price-stock1";
 const PRODUCT_COLOR_TOKENS = new Map([
   ["siyah", "Siyah"],
   ["black", "Siyah"],
@@ -8259,7 +8309,44 @@ const PRODUCT_COLOR_TOKENS = new Map([
 ]);
 
 function integrationRowValue(row, variant, keys) {
-  return firstValue(row, keys) || firstValue(variant || {}, keys);
+  return firstValue(variant || {}, keys) || firstValue(row, keys);
+}
+
+function integrationNumberFromValue(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "object") {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const parsed = integrationNumberFromValue(item);
+        if (parsed !== null) return parsed;
+      }
+      return null;
+    }
+    for (const key of ["value", "amount", "price", "salePrice", "listPrice", "quantity", "stock", "availableQuantity"]) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+      const parsed = integrationNumberFromValue(value[key]);
+      if (parsed !== null) return parsed;
+    }
+    return null;
+  }
+  const parsed = numberFrom(value, Number.NaN);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function integrationSourceNumber(row, variant, keys, options = {}) {
+  const sources = [variant, row].filter((source) => source && typeof source === "object" && !Array.isArray(source));
+  let firstNumeric = null;
+  for (const source of sources) {
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+      const parsed = integrationNumberFromValue(source[key]);
+      if (parsed === null) continue;
+      const candidate = { value: parsed, present: true, field: key };
+      if (firstNumeric === null) firstNumeric = candidate;
+      if (!options.preferPositive || parsed > 0) return candidate;
+    }
+  }
+  return firstNumeric || { value: 0, present: false, field: "" };
 }
 
 function normalizedIntegrationCode(value) {
@@ -8398,6 +8485,8 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
     || (typeof firstCategory === "string" ? firstCategory : firstCategory?.name)
     || settings.default_category
     || "Genel";
+  const sourcePrice = integrationSourceNumber(row, firstVariant, INTEGRATION_PRICE_KEYS, { preferPositive: true });
+  const sourceStock = integrationSourceNumber(row, firstVariant, INTEGRATION_STOCK_KEYS);
 
   return {
     external_product_id: externalId,
@@ -8416,8 +8505,12 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
     description: cleanImportedText(
       String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ")
     ).slice(0, 1800),
-    price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
-    stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "quantity", "availableQuantity", "stok", "adet"]) || firstVariant.inventory_quantity))),
+    price: Math.max(0, sourcePrice.value),
+    stock: Math.max(0, Math.floor(sourceStock.value)),
+    source_price_present: sourcePrice.present,
+    source_stock_present: sourceStock.present,
+    source_price_field: sourcePrice.field,
+    source_stock_field: sourceStock.field,
     image_url: imageUrl,
     category: cleanImportedText(categoryValue, "Genel").slice(0, 90) || "Genel",
     brand: cleanImportedText(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").slice(0, 120),
@@ -8428,7 +8521,11 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
 
 function sourceHashFor(value) {
   return createHash("sha256")
-    .update(JSON.stringify({ value: value || {}, sanitizer: MARKETPLACE_BRANDING_SANITIZER_VERSION }))
+    .update(JSON.stringify({
+      value: value || {},
+      sanitizer: MARKETPLACE_BRANDING_SANITIZER_VERSION,
+      normalizer: INTEGRATION_PRODUCT_NORMALIZER_VERSION
+    }))
     .digest("hex");
 }
 
@@ -8520,8 +8617,10 @@ function integrationProductCompliance(product) {
   if (!product.name || product.name.length < 2) errors.push("Ürün adı eksik.");
   if (marketplacePlatformPattern.test(text)) warnings.push("Ürün bilgisinde dış pazar yeri adı geçiyor; AllonaHub yayını öncesi marka/platform ifadesi temizlenmeli.");
   if (Number(product.price || 0) < 0) errors.push("Fiyat negatif olamaz.");
-  if (Number(product.price || 0) === 0) warnings.push("Fiyat 0 görünüyor; yayına almadan önce kontrol edilmeli.");
+  if (product.source_price_present === false) warnings.push("Kaynak platformdan fiyat bilgisi okunamadı; mevcut fiyat korunmalı, yeni üründe satış fiyatı kontrol edilmeli.");
+  else if (Number(product.price || 0) === 0) warnings.push("Fiyat 0 görünüyor; yayına almadan önce kontrol edilmeli.");
   if (Number(product.stock || 0) < 0) errors.push("Stok negatif olamaz.");
+  if (product.source_stock_present === false) warnings.push("Kaynak platformdan stok bilgisi okunamadı; mevcut stok korunmalı, yeni üründe stok kontrol edilmeli.");
   if (!["shop", "market", "food", "service"].includes(product.module_key)) errors.push("Geçersiz kanal seçimi.");
   if (product.image_url && !/^https?:\/\//i.test(product.image_url)) warnings.push("Görsel URL http/https formatında değil.");
   if (!product.category || product.category === "Genel") warnings.push("Kategori genel görünüyor; eşleme iyileştirilebilir.");
@@ -8546,6 +8645,10 @@ function integrationProductPreview(product) {
     name: product.name,
     price: product.price,
     stock: product.stock,
+    source_price_present: product.source_price_present !== false,
+    source_stock_present: product.source_stock_present !== false,
+    source_price_field: product.source_price_field || "",
+    source_stock_field: product.source_stock_field || "",
     category: product.category,
     module_key: product.module_key,
     auto_approved: integrationProductAutoApproved(product, product.compliance),
@@ -8964,9 +9067,22 @@ async function applyIntegrationProducts({ business, integration, products }) {
   if (linkError) throw linkError;
 
   const linkMap = new Map((existingLinks || []).map((link) => [`${link.external_product_id}:${link.external_variant_id || ""}`, link]));
+  const linkedProductIds = [...new Set((existingLinks || []).map((link) => String(link.product_id || "").trim()).filter(Boolean))];
+  const linkedProductMap = new Map();
+  if (linkedProductIds.length) {
+    const { data: linkedProducts, error: linkedProductError } = await supabaseAdmin
+      .from("products")
+      .select("id, price, stock")
+      .eq("partner_id", productPartnerId)
+      .in("id", linkedProductIds);
+    if (linkedProductError) throw linkedProductError;
+    for (const product of linkedProducts || []) {
+      linkedProductMap.set(String(product.id), product);
+    }
+  }
   const { data: existingProducts, error: productLookupError } = await supabaseAdmin
     .from("products")
-    .select("id, integration_external_id")
+    .select("id, integration_external_id, price, stock")
     .eq("partner_id", productPartnerId)
     .eq("integration_source", integration.provider)
     .in("integration_external_id", identityIds.length ? identityIds : ["__none__"]);
@@ -8982,7 +9098,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
   if (barcodeIds.length) {
     const { data: barcodeProducts, error: barcodeLookupError } = await supabaseAdmin
       .from("products")
-      .select("id, barcode")
+      .select("id, barcode, price, stock")
       .eq("partner_id", productPartnerId)
       .in("barcode", barcodeIds);
     if (barcodeLookupError && !looksLikeMissingSchema(barcodeLookupError)) throw barcodeLookupError;
@@ -9007,7 +9123,7 @@ async function applyIntegrationProducts({ business, integration, products }) {
     const hash = sourceHashFor(item.raw);
     const existing = linkMap.get(key);
     try {
-      const compliance = item.compliance || integrationProductCompliance(item);
+      let compliance = item.compliance || integrationProductCompliance(item);
       if (compliance.errors.length) {
         result.failed += 1;
         result.errors.push({ external_product_id: item.external_product_id, message: compliance.errors.join(" ") });
@@ -9031,11 +9147,26 @@ async function applyIntegrationProducts({ business, integration, products }) {
         continue;
       }
 
-      const productPayload = integrationProductPayload({ business, integration, item: { ...item, compliance } });
-
-      const existingProduct = existing?.product_id ? null : (productMap.get(identity) || barcodeProductMap.get(String(item.barcode || "").trim()));
+      const existingProduct = existing?.product_id
+        ? linkedProductMap.get(String(existing.product_id))
+        : (productMap.get(identity) || barcodeProductMap.get(String(item.barcode || "").trim()));
       let productId = existing?.product_id || existingProduct?.id || null;
       const productAlreadyExists = Boolean(productId);
+      const payloadItem = { ...item };
+      if (productAlreadyExists && item.source_price_present === false && existingProduct && existingProduct.price !== undefined && existingProduct.price !== null) {
+        payloadItem.price = Math.max(0, numberFrom(existingProduct.price));
+        payloadItem.source_price_present = true;
+        payloadItem.source_price_field = "existing_product";
+      }
+      if (productAlreadyExists && item.source_stock_present === false && existingProduct && existingProduct.stock !== undefined && existingProduct.stock !== null) {
+        payloadItem.stock = Math.max(0, Math.floor(numberFrom(existingProduct.stock)));
+        payloadItem.source_stock_present = true;
+        payloadItem.source_stock_field = "existing_product";
+      }
+      compliance = integrationProductCompliance(payloadItem);
+      const productPayload = integrationProductPayload({ business, integration, item: { ...payloadItem, compliance } });
+      if (productAlreadyExists && item.source_price_present === false) delete productPayload.price;
+      if (productAlreadyExists && item.source_stock_present === false) delete productPayload.stock;
       if (productId) {
         const { removedFields } = await updatePartnerProductRow(productId, productPayload);
         if (removedFields.length) {
@@ -9071,6 +9202,12 @@ async function applyIntegrationProducts({ business, integration, products }) {
         image_signature: item.variant_image_signature || "",
         model_root: item.variant_model_root || "",
         source: item.variant_source || "",
+        source_price: item.price,
+        source_stock: item.stock,
+        source_price_present: item.source_price_present !== false,
+        source_stock_present: item.source_stock_present !== false,
+        source_price_field: item.source_price_field || "",
+        source_stock_field: item.source_stock_field || "",
         integration_identity: identity
       };
 
