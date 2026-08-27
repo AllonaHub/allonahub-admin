@@ -103,3 +103,19 @@ test("customer RLS hides unissued return workflow placeholders", async () => {
     /create policy "invoices_select_authorized"[\s\S]*?customer_id = auth\.uid\(\)[\s\S]*?document_scope = 'CUSTOMER_SALE'[\s\S]*?document_scope = 'RETURN'[\s\S]*?issued_at is not null/i
   );
 });
+
+test("legacy text order-item identifiers remain compatible with uuid order records", async () => {
+  const sql = await migration();
+
+  assert.match(sql, /oi\.order_id::text\s*=\s*p_order_id::text/i);
+  assert.match(sql, /o\.id::text\s*=\s*order_items\.order_id::text/i);
+  assert.match(sql, /sso\.order_id::text\s*=\s*new\.order_id::text/i);
+  assert.match(sql, /join scoped_totals st on st\.order_id\s*=\s*o\.id::text/i);
+});
+
+test("legacy text partner identifiers are compared without unsafe uuid casts", async () => {
+  const sql = await migration();
+
+  assert.match(sql, /oi\.partner_id::text\s*=\s*auth\.uid\(\)::text/i);
+  assert.match(sql, /partner_id::text\s*=\s*auth\.uid\(\)::text/i);
+});

@@ -715,8 +715,11 @@ language plpgsql
 set search_path = public, pg_temp
 as $$
 declare
-  target_order_id uuid;
-  source_order_id uuid;
+  -- Legacy production order_items.order_id is text even though orders.id is
+  -- uuid. Keep the trigger compatible with both layouts without rewriting
+  -- existing rows or forcing unsafe text-to-uuid casts.
+  target_order_id text;
+  source_order_id text;
   allocation_complete boolean;
   financial_change boolean := true;
 begin
@@ -756,14 +759,14 @@ begin
   -- Serialize item financial mutations with allocation completion. This closes
   -- the PENDING->COMPLETE snapshot race in both transaction directions.
   perform 1 from public.orders o
-  where o.id in (target_order_id, source_order_id)
+  where o.id::text in (target_order_id, source_order_id)
   order by o.id
   for update;
 
   select exists (
     select 1 from public.orders o
     where o.invoice_allocation_status = 'COMPLETE'
-      and o.id in (target_order_id, source_order_id)
+      and o.id::text in (target_order_id, source_order_id)
   ) into allocation_complete;
   if coalesce(allocation_complete, false) then
     raise exception 'Completed order seller allocation is immutable.' using errcode = '23514';
@@ -1373,7 +1376,7 @@ begin
       from public.seller_sub_orders sso
       join public.orders o on o.id = sso.order_id
       where sso.id = new.seller_sub_order_id
-        and sso.order_id = new.order_id
+        and sso.order_id::text = new.order_id::text
         and sso.seller_id = new.seller_id
     ) then raise exception 'Order item seller/sub-order mismatch.' using errcode = '23514'; end if;
 
@@ -1448,7 +1451,7 @@ begin
       from public.invoices i
       join public.order_items oi on oi.id = new.order_item_id
       where i.id = new.invoice_id
-        and oi.order_id = i.order_id
+        and oi.order_id::text = i.order_id::text
         and (i.sub_order_id is null or oi.seller_sub_order_id = i.sub_order_id)
         and (i.seller_id is null or oi.seller_id = i.seller_id)
     ) then raise exception 'Invoice item does not belong to the invoice seller/sub-order.' using errcode = '23514'; end if;
@@ -1698,7 +1701,7 @@ as $$
         'unit_code', oi.unit_code
       ) order by oi.created_at, oi.id)
       from public.order_items oi
-      where oi.order_id = p_order_id and oi.seller_sub_order_id = p_sub_order_id
+      where oi.order_id::text = p_order_id::text and oi.seller_sub_order_id = p_sub_order_id
     ), '[]'::jsonb)
   )
   from public.seller_sub_orders sso
@@ -2089,14 +2092,14 @@ begin
     unit_code text, discount_amount numeric, tax_rate numeric,
     tax_amount numeric, line_total numeric, sku text, barcode text
   ) on allocation.item_id = oi.id
-  where oi.order_id = p_order_id
+  where oi.order_id::text = p_order_id::text
   for update of oi;
   if not found then raise exception 'Order items not found.' using errcode = 'P0002'; end if;
 
   if exists (
     select 1
     from jsonb_to_recordset(p_items) as allocation(item_id uuid, expected_quantity numeric, expected_unit_price numeric)
-    left join public.order_items oi on oi.id = allocation.item_id and oi.order_id = p_order_id
+    left join public.order_items oi on oi.id = allocation.item_id and oi.order_id::text = p_order_id::text
     where oi.id is null
        or allocation.expected_quantity is null
        or allocation.expected_unit_price is null
@@ -2109,7 +2112,7 @@ begin
     if exists (
       select 1
       from jsonb_to_recordset(p_items) as allocation(item_id uuid)
-      join public.order_items oi on oi.id = allocation.item_id and oi.order_id = p_order_id
+      join public.order_items oi on oi.id = allocation.item_id and oi.order_id::text = p_order_id::text
       where not (
         oi.seller_id = p_seller_id
         or (
@@ -2213,7 +2216,7 @@ begin
     unit_code text, discount_amount numeric, tax_rate numeric,
     tax_amount numeric, line_total numeric, sku text, barcode text
   )
-  where oi.id = allocation.item_id and oi.order_id = p_order_id;
+  where oi.id = allocation.item_id and oi.order_id::text = p_order_id::text;
 
   select
     coalesce(sum(round(coalesce(oi.unit_price, oi.price)::numeric * oi.quantity::numeric, 2)), 0),
@@ -2285,7 +2288,7 @@ begin
   select count(*), count(*) filter (where oi.seller_id is not null and oi.seller_sub_order_id is not null)
   into order_item_count, assigned_item_count
   from public.order_items oi
-  where oi.order_id = p_order_id;
+  where oi.order_id::text = p_order_id::text;
   if order_item_count < 1 or assigned_item_count <> order_item_count then
     raise exception 'Every order item must be assigned before allocation completion.' using errcode = '23514';
   end if;
@@ -2293,8 +2296,8 @@ begin
     select 1
     from public.order_items oi
     left join public.seller_sub_orders sso on sso.id = oi.seller_sub_order_id
-    where oi.order_id = p_order_id
-      and (sso.id is null or sso.order_id <> p_order_id or sso.seller_id <> oi.seller_id)
+    where oi.order_id::text = p_order_id::text
+      and (sso.id is null or sso.order_id::text <> p_order_id::text or sso.seller_id <> oi.seller_id)
   ) then raise exception 'Order item seller allocation is inconsistent.' using errcode = '23514'; end if;
   if exists (
     select 1
@@ -2314,7 +2317,7 @@ begin
              or nullif(trim(coalesce(oi.unit_code, '')), '') is null
         ) as invalid_count
       from public.order_items oi
-      where oi.order_id = p_order_id and oi.seller_sub_order_id = sso.id
+      where oi.order_id::text = p_order_id::text and oi.seller_sub_order_id = sso.id
     ) totals on true
     where sso.order_id = p_order_id
       and (
@@ -3185,7 +3188,7 @@ set search_path = public, pg_temp
 set row_security = off
 as $$
   with authorized_sub_orders as (
-    select distinct sso.id, sso.order_id, sso.grand_total
+    select distinct sso.id, sso.order_id::text as order_id, sso.grand_total
     from public.seller_sub_orders sso
     where public.is_admin()
       or public.seller_member_has_access(sso.seller_id)
@@ -3195,13 +3198,13 @@ as $$
       )
   ),
   authorized_legacy_items as (
-    select oi.order_id, coalesce(oi.invoice_line_total, oi.price * oi.quantity) as line_total
+    select oi.order_id::text as order_id, coalesce(oi.invoice_line_total, oi.price * oi.quantity) as line_total
     from public.order_items oi
     where oi.seller_sub_order_id is null
       and (
         public.is_admin()
         or (
-          oi.partner_id = auth.uid()
+          oi.partner_id::text = auth.uid()::text
           and exists (
             select 1 from public.partner_businesses pb
             where pb.owner_id = auth.uid()
@@ -3230,7 +3233,7 @@ as $$
     o.payment_status::text,
     o.created_at
   from public.orders o
-  join scoped_totals st on st.order_id = o.id
+  join scoped_totals st on st.order_id = o.id::text
   where auth.uid() is not null
   order by o.created_at desc
   limit 200;
@@ -4179,7 +4182,7 @@ create policy "order_items_select_own_or_admin"
     public.is_admin()
     or (
       seller_sub_order_id is null
-      and partner_id = auth.uid()
+      and partner_id::text = auth.uid()::text
       and exists (
         select 1 from public.partner_businesses pb
         where pb.owner_id = auth.uid()
@@ -4203,7 +4206,7 @@ create policy "order_items_select_own_or_admin"
     )
     or exists (
       select 1 from public.orders o
-      where o.id = order_items.order_id and o.user_id = auth.uid()
+      where o.id::text = order_items.order_id::text and o.user_id = auth.uid()
     )
   );
 
