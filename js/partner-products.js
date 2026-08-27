@@ -23,6 +23,35 @@
     "video_url",
     "description"
   ];
+  const PRODUCT_TEMPLATE_COLUMNS = [
+    "catalog_scope",
+    "name",
+    "category",
+    "brand",
+    "sku",
+    "barcode",
+    "price",
+    "stock",
+    "image_url",
+    "media_gallery",
+    "video_url",
+    "description",
+    "seller_public_name",
+    "seller_legal_name",
+    "seller_city",
+    "seller_contact",
+    "seller_disclosure"
+  ];
+  const PRODUCT_HISTORY_COLUMNS = [
+    "date",
+    "product",
+    "sku",
+    "barcode",
+    "action",
+    "status",
+    "signal",
+    "note"
+  ];
   const state = {
     access: null,
     business: null,
@@ -32,6 +61,7 @@
     pageSize: 50,
     page: 1,
     compactTable: false,
+    historyOpen: false,
     filters: {
       search: "",
       name: "",
@@ -352,18 +382,18 @@
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
 
-  function downloadRows(rows, filename, sheetName) {
-    const normalizedRows = rows.length ? rows : [PRODUCT_EXPORT_COLUMNS.reduce((row, key) => ({ ...row, [key]: "" }), {})];
+  function downloadRows(rows, filename, sheetName, columns = PRODUCT_EXPORT_COLUMNS) {
+    const normalizedRows = rows.length ? rows : [columns.reduce((row, key) => ({ ...row, [key]: "" }), {})];
     if (window.XLSX) {
-      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: PRODUCT_EXPORT_COLUMNS });
+      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: columns });
       const workbook = window.XLSX.utils.book_new();
       window.XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
       window.XLSX.writeFile(workbook, filename);
       return;
     }
     const csv = [
-      PRODUCT_EXPORT_COLUMNS.join(";"),
-      ...normalizedRows.map((row) => PRODUCT_EXPORT_COLUMNS.map((key) => {
+      columns.join(";"),
+      ...normalizedRows.map((row) => columns.map((key) => {
         const value = String(row[key] ?? "");
         return `"${value.replace(/"/g, '""')}"`;
       }).join(";"))
@@ -404,6 +434,83 @@
     const rows = exportRows(filteredProducts());
     downloadRows(rows, "allona-partner-urun-listesi.xlsx", "Urunler");
     toast(`${rows.length} ürün Excel dosyasına hazırlandı.`, "success");
+  }
+
+  function productTemplateRows() {
+    return [
+      {
+        catalog_scope: "shop",
+        name: "Örnek Ürün",
+        category: "Saat & Aksesuar",
+        brand: state.business?.display_name || state.business?.legal_name || "Allona Partner",
+        sku: "ALP-ORNEK-001",
+        barcode: "8680000000001",
+        price: 199.9,
+        stock: 25,
+        image_url: "https://...",
+        media_gallery: JSON.stringify(["https://.../urun-1.webp", "https://.../urun-2.webp"]),
+        video_url: "",
+        description: "Ürünün müşteri tarafından görülecek açıklaması",
+        seller_public_name: state.business?.display_name || "Allona Partner",
+        seller_legal_name: state.business?.legal_name || "",
+        seller_city: state.business?.city || "",
+        seller_contact: state.business?.support_email || "",
+        seller_disclosure: "Satıcı bilgileri sipariş öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür."
+      }
+    ];
+  }
+
+  function downloadProductTemplate() {
+    downloadRows(productTemplateRows(), "allona-partner-urun-yukleme-sablonu.xlsx", "UrunSablonu", PRODUCT_TEMPLATE_COLUMNS);
+    toast("Ürün yükleme şablonu indirildi.", "success");
+  }
+
+  function productHistoryAction(product) {
+    const auto = automation(product);
+    const review = normalize(product.compliance_review_status || product.review_status || product.approval_status);
+    const status = normalize(product.status);
+    if (revisionRequired(product)) return "Revizyon talebi";
+    if (review === "approved" && status === "active") return "Yayına alındı";
+    if (review === "approved") return "Admin onayı";
+    if (["pending", "review", "in_review", "submitted", "awaiting_review", "waiting_review"].includes(review)) return "Onaya gönderildi";
+    if (auto.lane === "watch") return "Otomasyon uyarısı";
+    if (status === "archived" || status === "closed") return "Satışa kapatıldı";
+    return product.integration_source || product.integration_external_id ? "Entegrasyon importu" : "Ürün kaydı";
+  }
+
+  function productHistoryRows(products = filteredProducts()) {
+    return products.map((raw) => {
+      const product = normalizeProduct(raw);
+      const merged = { ...raw, ...product };
+      const codes = productCodes(merged);
+      const auto = automation(merged);
+      const reasons = (auto.reasons || [])
+        .filter((reason) => reason.requires_revision || reason.severity === "critical" || reason.severity === "warning")
+        .slice(0, 3)
+        .map((reason) => reason.title || reason.message || reason.field_label || reason.field)
+        .filter(Boolean);
+      const date = merged.updated_at || merged.created_at || "";
+      return {
+        id: merged.id,
+        date,
+        product: productName(merged),
+        sku: codes.sku,
+        barcode: codes.barcode,
+        action: productHistoryAction(merged),
+        status: statusLabel(merged.compliance_review_status || merged.review_status || merged.approval_status || merged.status),
+        signal: auto.revision_required ? "Revize gerekli" : auto.lane === "watch" ? "Kontrol önerilir" : "Hazır",
+        note: reasons.join(" · ") || merged.compliance_notes || ""
+      };
+    }).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  }
+
+  function exportProductHistory() {
+    const rows = productHistoryRows().map((row) => ({
+      ...row,
+      date: row.date || ""
+    }));
+    downloadRows(rows, "allona-partner-urun-islem-gecmisi.xlsx", "UrunGecmisi", PRODUCT_HISTORY_COLUMNS);
+    toast(`${rows.length} geçmiş satırı indirildi.`, "success");
   }
 
   function statusLabel(value) {
@@ -786,6 +893,56 @@
     `;
   }
 
+  function renderProductHistory() {
+    const section = $("[data-product-history]");
+    if (!section) return;
+    section.hidden = !state.historyOpen;
+    const summary = $("[data-product-history-summary]");
+    const target = $("[data-product-history-rows]");
+    if (!state.historyOpen) return;
+    const rows = productHistoryRows().slice(0, 80);
+    const revisionCount = rows.filter((row) => /reviz/i.test(row.signal)).length;
+    const readyCount = rows.filter((row) => row.signal === "Hazır").length;
+    if (summary) {
+      summary.textContent = `${rows.length} hareket gösteriliyor · ${revisionCount} revizyon · ${readyCount} hazır kayıt.`;
+    }
+    if (!target) return;
+    if (!rows.length) {
+      target.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="partner-products-empty">
+              <strong>Geçmiş kaydı görünmüyor.</strong>
+              <span>Ürün oluşturma, Excel importu, revizyon ve yayın hareketleri burada izlenecek.</span>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    target.innerHTML = rows.map((row) => `
+      <tr>
+        <td><strong>${escape(formatDate(row.date))}</strong></td>
+        <td>
+          <strong>${escape(shortText(row.product, 72))}</strong>
+          <small>${escape([row.sku ? `SKU ${row.sku}` : "", row.barcode ? `Barkod ${row.barcode}` : ""].filter(Boolean).join(" · ") || "Kod bekliyor")}</small>
+        </td>
+        <td>${escape(row.action)}</td>
+        <td><span class="partner-products-badge">${escape(row.status)}</span></td>
+        <td>
+          <strong>${escape(row.signal)}</strong>
+          ${row.note ? `<small>${escape(shortText(row.note, 130))}</small>` : ""}
+        </td>
+        <td>
+          <button type="button" data-open-product-detail="${escape(row.id)}">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Aç</span>
+          </button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
   function renderSelectedState() {
     const count = state.selected.size;
     const target = $("[data-selected-count]");
@@ -842,6 +999,7 @@
       renderPagination();
       syncTableScrollbars();
       renderKpis();
+      renderProductHistory();
       return;
     }
 
@@ -940,11 +1098,13 @@
     renderPagination();
     syncTableScrollbars();
     renderKpis();
+    renderProductHistory();
   }
 
   function renderAll() {
     renderRows();
     renderTableDensity();
+    renderProductHistory();
   }
 
   function renderTableDensity() {
@@ -1495,6 +1655,9 @@
       const close = event.target.closest("[data-close-product-drawer]");
       const clear = event.target.closest("[data-clear-product-filters]");
       const exportProductsButton = event.target.closest("[data-export-products]");
+      const downloadTemplate = event.target.closest("[data-download-product-template]");
+      const toggleHistory = event.target.closest("[data-toggle-product-history]");
+      const exportHistory = event.target.closest("[data-export-product-history]");
       const tableDensity = event.target.closest("[data-toggle-table-density]");
       const selectAllAction = event.target.closest("[data-select-all-products-action]");
       const selectVisible = event.target.closest("[data-select-visible-products]");
@@ -1536,6 +1699,15 @@
       }
       if (refresh) loadProducts();
       if (exportProductsButton) exportProducts();
+      if (downloadTemplate) downloadProductTemplate();
+      if (toggleHistory) {
+        state.historyOpen = !state.historyOpen;
+        renderProductHistory();
+        if (state.historyOpen) {
+          $("[data-product-history]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+      if (exportHistory) exportProductHistory();
       if (tableDensity) {
         state.compactTable = !state.compactTable;
         renderTableDensity();
@@ -1702,6 +1874,7 @@
   }
 
   function init() {
+    state.historyOpen = normalize(window.location.hash.replace("#", "")) === "history";
     bindEvents();
     loadProducts();
   }

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
   <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260827-marketplaceos1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260827-trendyolflow1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -296,6 +296,8 @@
             <div class="partner-os-product-view is-active" data-product-view-panel="list">
               <div class="partner-os-upload-actions">
                 <button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Excel'e Aktar</span></button>
+                <button type="button" data-download-template><i class="fa-solid fa-download"></i><span>Şablon İndir</span></button>
+                <a href="/pages/partner/partner-products.html#history"><i class="fa-solid fa-clock-rotate-left"></i><span>Ürün Geçmişi</span></a>
               </div>
               <div class="partner-os-table-wrap">
                 <table class="partner-os-table">
@@ -451,15 +453,75 @@
                 <p>Operasyon</p>
                 <h2>Sipariş & Kargo</h2>
               </div>
+              <button type="button" data-export-orders><i class="fa-solid fa-file-export"></i><span>Excel</span></button>
+            </div>
+            <div class="partner-os-order-summary" data-order-summary></div>
+            <div class="partner-os-order-toolbar">
+              <label><span>Müşteri / Sipariş</span><input data-order-search placeholder="Müşteri, sipariş no, ürün"></label>
+              <label><span>Barkod / Takip</span><input data-order-code-filter placeholder="Barkod veya takip no"></label>
+              <label>
+                <span>Durum</span>
+                <select data-order-status-filter>
+                  <option value="all">Tüm siparişler</option>
+                  <option value="confirmed">Onaylandı</option>
+                  <option value="preparing">Hazırlanıyor</option>
+                  <option value="shipped">Kargoda</option>
+                  <option value="delivered">Teslim edildi</option>
+                  <option value="cancelled">İptal</option>
+                </select>
+              </label>
+              <label>
+                <span>Her sayfada</span>
+                <select data-order-page-size>
+                  <option value="20">20 sipariş</option>
+                  <option value="50" selected>50 sipariş</option>
+                  <option value="100">100 sipariş</option>
+                </select>
+              </label>
+              <button type="button" data-clear-order-filters><i class="fa-solid fa-filter-circle-xmark"></i><span>Temizle</span></button>
             </div>
             <div class="partner-os-table-wrap">
               <table class="partner-os-table">
                 <thead>
-                  <tr><th>Sipariş</th><th>Ürünler</th><th>Tutar</th><th>Sipariş</th><th>Ödeme</th><th>Kargo</th></tr>
+                  <tr><th>Sipariş</th><th>Ürünler</th><th>Müşteri</th><th>Tutar</th><th>Sipariş</th><th>Ödeme</th><th>Kargo</th></tr>
                 </thead>
                 <tbody data-order-rows></tbody>
               </table>
             </div>
+          </div>
+
+          <div class="partner-os-grid partner-os-grid--two">
+            <form class="partner-os-panel partner-os-cargo-calculator" data-cargo-calculator>
+              <div class="partner-os-panel-head">
+                <div>
+                  <p>Kargo Fiyatları & Desi</p>
+                  <h2>Desi Hesaplama</h2>
+                </div>
+              </div>
+              <div class="partner-os-form-grid">
+                <label><span>En (cm)</span><input name="width" type="number" min="1" step="1" value="20"></label>
+                <label><span>Boy (cm)</span><input name="length" type="number" min="1" step="1" value="20"></label>
+                <label><span>Yükseklik (cm)</span><input name="height" type="number" min="1" step="1" value="10"></label>
+                <label><span>Ağırlık (kg)</span><input name="weight" type="number" min="0" step="0.1" value="1"></label>
+                <label>
+                  <span>Kargo firması</span>
+                  <select name="carrier">
+                    <option value="allona">Allona anlaşmalı</option>
+                    <option value="yurtici">Yurtiçi / benzeri</option>
+                    <option value="mng">MNG / benzeri</option>
+                    <option value="aras">Aras / benzeri</option>
+                  </select>
+                </label>
+                <button type="submit"><i class="fa-solid fa-calculator"></i><span>Hesapla</span></button>
+              </div>
+            </form>
+            <section class="partner-os-panel partner-os-cargo-result" data-cargo-result>
+              <div class="partner-os-terminal-empty">
+                <i class="fa-solid fa-box"></i>
+                <strong>Kargo maliyeti hesaplanmadı</strong>
+                <span>Desi, ağırlık ve tahmini partner taşıma bedeli burada görünecek.</span>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -870,7 +932,7 @@
   <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-os.js?v=20260827-marketplaceos1" defer></script>
+  <script src="../../js/partner-os.js?v=20260827-trendyolflow1" defer></script>
   <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>

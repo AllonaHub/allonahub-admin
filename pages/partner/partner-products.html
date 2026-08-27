@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-shopcat2">
   <link rel="stylesheet" href="../../css/platform.css?v=20260712-theme-overflow1">
   <link rel="stylesheet" href="../../css/partner-os.css?v=20260630-productsfix1">
-  <link rel="stylesheet" href="../../css/partner-products.css?v=20260827-sellerflow1">
+  <link rel="stylesheet" href="../../css/partner-products.css?v=20260827-trendyolflow1">
 </head>
 <body>
   <div class="site-shell partner-os-shell partner-products-shell" data-page="partner-products">
@@ -31,6 +31,14 @@
             <i class="fa-solid fa-file-excel"></i>
             <span>Excel İndir</span>
           </button>
+          <button type="button" data-download-product-template>
+            <i class="fa-solid fa-download"></i>
+            <span>Şablon İndir</span>
+          </button>
+          <button type="button" data-toggle-product-history>
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>İşlem Geçmişi</span>
+          </button>
           <button type="button" data-toggle-table-density>
             <i class="fa-solid fa-table-cells"></i>
             <span>Kompakt Tablo</span>
@@ -50,6 +58,28 @@
       <section class="partner-products-revision-callout" data-revision-callout hidden></section>
 
       <section class="partner-products-kpis" data-product-kpis aria-label="Ürün özeti"></section>
+
+      <section class="partner-products-history" data-product-history hidden aria-label="Ürün giriş ve güncelleme geçmişi">
+        <div class="partner-products-history-head">
+          <div>
+            <p>Ürün Giriş ve Güncelleme Geçmişi</p>
+            <h2>Excel, revizyon ve yayın hareketleri</h2>
+            <span data-product-history-summary>Geçmiş hazırlanıyor.</span>
+          </div>
+          <div class="partner-products-history-actions">
+            <button type="button" data-export-product-history><i class="fa-solid fa-file-export"></i><span>Geçmişi İndir</span></button>
+            <button type="button" data-toggle-product-history><i class="fa-solid fa-xmark"></i><span>Kapat</span></button>
+          </div>
+        </div>
+        <div class="partner-products-table-wrap partner-products-history-table-wrap">
+          <table class="partner-products-history-table">
+            <thead>
+              <tr><th>Tarih</th><th>Ürün</th><th>İşlem</th><th>Durum</th><th>Sinyal</th><th>Aksiyon</th></tr>
+            </thead>
+            <tbody data-product-history-rows></tbody>
+          </table>
+        </div>
+      </section>
 
       <section class="partner-products-toolbar" aria-label="Ürün filtreleri">
         <label>
@@ -260,7 +290,7 @@
   <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-  <script src="../../js/partner-products.js?v=20260827-sellerflow1" defer></script>
+  <script src="../../js/partner-products.js?v=20260827-trendyolflow1" defer></script>
   <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>

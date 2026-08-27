@@ -800,7 +800,8 @@
 
 .partner-os-panel-actions button,
 .partner-os-panel-actions a,
-.partner-os-upload-actions button {
+.partner-os-upload-actions button,
+.partner-os-upload-actions a {
   min-height: 40px;
   border: 1px solid color-mix(in srgb, var(--ah-line) 70%, transparent);
   border-radius: 8px;
@@ -818,7 +819,8 @@
 
 .partner-os-panel-actions button:first-child,
 .partner-os-panel-actions a:first-child,
-.partner-os-upload-actions button:first-child {
+.partner-os-upload-actions button:first-child,
+.partner-os-upload-actions a:first-child {
   border-color: transparent;
   background: var(--ah-primary);
   color: #06111d;
@@ -828,7 +830,8 @@
 .partner-os-panel-actions button.is-active,
 .partner-os-panel-actions a:hover,
 .partner-os-panel-actions a.is-active,
-.partner-os-upload-actions button:hover {
+.partner-os-upload-actions button:hover,
+.partner-os-upload-actions a:hover {
   border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-primary) 16%, var(--ah-bg-strong));
   color: var(--ah-accent);
@@ -1712,6 +1715,194 @@
   gap: 12px;
 }
 
+.partner-os-order-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.partner-os-order-card {
+  min-height: 78px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 64%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 56%, transparent);
+  color: var(--ah-ink);
+  padding: 10px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.partner-os-order-card:hover,
+.partner-os-order-card:focus-visible,
+.partner-os-order-card.is-active {
+  border-color: color-mix(in srgb, var(--ah-primary) 56%, var(--ah-line));
+  background: color-mix(in srgb, var(--ah-primary) 12%, var(--ah-bg-mid));
+  outline: 0;
+}
+
+.partner-os-order-card span,
+.partner-os-order-card small {
+  display: block;
+  color: var(--ah-muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.partner-os-order-card strong {
+  display: block;
+  color: var(--ah-accent);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.partner-os-order-card.is-good {
+  border-color: rgba(0, 197, 106, 0.25);
+}
+
+.partner-os-order-card.is-warn {
+  border-color: color-mix(in srgb, var(--ah-accent) 34%, var(--ah-line));
+}
+
+.partner-os-order-card.is-bad {
+  border-color: rgba(255, 91, 91, 0.42);
+  background: rgba(255, 91, 91, 0.1);
+}
+
+.partner-os-order-toolbar {
+  display: grid;
+  grid-template-columns: 1.3fr 1.15fr repeat(2, minmax(150px, 0.72fr)) auto;
+  gap: 9px;
+  align-items: end;
+  margin: 0 0 12px;
+}
+
+.partner-os-order-toolbar label,
+.partner-os-cargo-calculator label {
+  display: grid;
+  gap: 7px;
+}
+
+.partner-os-order-toolbar span,
+.partner-os-cargo-calculator label span {
+  color: var(--ah-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.partner-os-order-toolbar input,
+.partner-os-order-toolbar select,
+.partner-os-cargo-calculator input,
+.partner-os-cargo-calculator select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 70%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg) 68%, transparent);
+  color: var(--ah-ink);
+  padding: 0 11px;
+  font: inherit;
+  outline: 0;
+}
+
+.partner-os-order-toolbar select option,
+.partner-os-cargo-calculator select option {
+  color: #06111d;
+}
+
+.partner-os-order-toolbar button,
+.partner-os-cargo-calculator button {
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 66%, transparent);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 72%, transparent);
+  color: var(--ah-ink);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.partner-os-order-toolbar button:hover,
+.partner-os-cargo-calculator button:hover {
+  border-color: color-mix(in srgb, var(--ah-primary) 58%, var(--ah-line));
+  color: var(--ah-accent);
+}
+
+.partner-os-cargo-calculator button {
+  align-self: end;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--ah-primary), var(--ah-primary-strong));
+  color: #fff;
+}
+
+.partner-os-cargo-result {
+  min-height: 100%;
+}
+
+.partner-os-cargo-quote {
+  min-height: 100%;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+.partner-os-cargo-quote > span,
+.partner-os-cargo-quote > small {
+  display: block;
+  color: var(--ah-muted);
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.partner-os-cargo-quote > strong {
+  display: block;
+  color: var(--ah-accent);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.partner-os-cargo-quote > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.partner-os-cargo-quote article {
+  min-height: 76px;
+  border: 1px solid color-mix(in srgb, var(--ah-line) 58%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-bg-mid) 58%, transparent);
+  padding: 10px;
+}
+
+.partner-os-cargo-quote b,
+.partner-os-cargo-quote em {
+  display: block;
+}
+
+.partner-os-cargo-quote b {
+  color: var(--ah-ink);
+  font-size: 1.1rem;
+}
+
+.partner-os-cargo-quote em {
+  margin-top: 5px;
+  color: var(--ah-muted);
+  font-size: 0.76rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .partner-os-span-2 {
   grid-column: span 2;
 }
@@ -2183,6 +2374,8 @@
   .partner-os-marketplace-actions,
   .partner-os-report-cards,
   .partner-os-module-access,
+  .partner-os-order-summary,
+  .partner-os-order-toolbar,
   .partner-os-integration-modes,
   .partner-os-integration-connectors,
   .partner-premium-hero,
@@ -2221,7 +2414,8 @@
   .partner-os-actions button,
   .partner-os-panel-actions button,
   .partner-os-panel-actions a,
-  .partner-os-upload-actions button {
+  .partner-os-upload-actions button,
+  .partner-os-upload-actions a {
     flex: 1 1 148px;
   }
 
@@ -2277,6 +2471,10 @@
 
   .partner-os-integration-row-actions {
     justify-content: flex-start;
+  }
+
+  .partner-os-cargo-quote > div {
+    grid-template-columns: 1fr;
   }
 
   .partner-premium {

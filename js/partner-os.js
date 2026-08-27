@@ -29,6 +29,13 @@
     recommendations: [],
     selectedRefundId: null,
     productView: "list",
+    orderFilters: {
+      search: "",
+      code: "",
+      status: "all",
+      quick: "all",
+      pageSize: 50
+    },
     initialHashApplied: false
   };
 
@@ -1289,27 +1296,200 @@
     renderIntegrationRuns();
   }
 
+  function orderItems(order) {
+    return order.partner_items || order.order_items || [];
+  }
+
+  function orderNo(order) {
+    return order.order_no || order.order_number || order.id || "-";
+  }
+
+  function orderCustomer(order) {
+    return order.customer_name || order.buyer_name || order.customer_email || order.shipping_name || "-";
+  }
+
+  function orderCodeText(order) {
+    return [
+      order.tracking_number,
+      order.cargo_tracking_number,
+      order.shipment_tracking_number,
+      ...orderItems(order).flatMap((item) => [
+        item.barcode,
+        item.sku,
+        item.stock_code,
+        item.product?.barcode,
+        item.product?.sku
+      ])
+    ].filter(Boolean).join(" ");
+  }
+
+  function orderText(order) {
+    return [
+      orderNo(order),
+      orderCustomer(order),
+      order.customer_email,
+      order.customer_phone,
+      orderItems(order).map((item) => item.product_name || item.product?.name || "Ürün").join(" ")
+    ].filter(Boolean).join(" ");
+  }
+
+  function orderMatchesFilter(order) {
+    const filters = state.orderFilters || {};
+    const search = String(filters.search || "").trim().toLocaleLowerCase("tr-TR");
+    const code = String(filters.code || "").trim().toLocaleLowerCase("tr-TR");
+    const status = String(filters.status || "all").trim();
+    const quick = String(filters.quick || "all").trim();
+    const orderStatus = String(order.order_status || order.status || "").trim();
+    const searchOk = !search || orderText(order).toLocaleLowerCase("tr-TR").includes(search);
+    const codeOk = !code || orderCodeText(order).toLocaleLowerCase("tr-TR").includes(code);
+    const statusOk = status === "all" || orderStatus === status;
+    const hasTracking = Boolean(order.tracking_number || order.cargo_tracking_number || order.shipment_tracking_number);
+    const quickOk = quick === "missing_tracking"
+      ? ["confirmed", "preparing", "shipped"].includes(orderStatus) && !hasTracking
+      : true;
+    return searchOk && codeOk && statusOk && quickOk;
+  }
+
+  function filteredOrders() {
+    return (state.orders || []).filter(orderMatchesFilter);
+  }
+
+  function renderOrderSummary() {
+    const target = $("[data-order-summary]");
+    if (!target) return;
+    const rows = state.orders || [];
+    const filtered = filteredOrders();
+    const open = rows.filter((order) => ["confirmed", "preparing", "shipped"].includes(order.order_status || order.status)).length;
+    const shipped = rows.filter((order) => (order.order_status || order.status) === "shipped").length;
+    const delivered = rows.filter((order) => (order.order_status || order.status) === "delivered").length;
+    const missingTracking = rows.filter((order) => ["confirmed", "preparing", "shipped"].includes(order.order_status || order.status) && !order.tracking_number && !order.cargo_tracking_number).length;
+    const activeStatus = String(state.orderFilters.status || "all");
+    const activeQuick = String(state.orderFilters.quick || "all");
+    const cards = [
+      { label: "Filtre sonucu", value: filtered.length, hint: `${rows.length} toplam sipariş`, tone: filtered.length ? "good" : "warn", status: "all", quick: "all" },
+      { label: "Açık operasyon", value: open, hint: "Hazırlık/kargo/takip", tone: open ? "warn" : "good", status: "preparing", quick: "all" },
+      { label: "Kargoda", value: shipped, hint: "Takip bekleyen gönderiler", tone: shipped ? "warn" : "good", status: "shipped", quick: "all" },
+      { label: "Teslim", value: delivered, hint: "Tamamlanan sipariş", tone: delivered ? "good" : "warn", status: "delivered", quick: "all" },
+      { label: "Takip no eksik", value: missingTracking, hint: "Kargo alanı kontrol edilmeli", tone: missingTracking ? "bad" : "good", status: "all", quick: "missing_tracking" }
+    ];
+    target.innerHTML = cards.map((card) => `
+      <button type="button" class="partner-os-order-card is-${escape(card.tone)} ${activeStatus === card.status && activeQuick === card.quick ? "is-active" : ""}" data-order-card-status="${escape(card.status)}" data-order-card-quick="${escape(card.quick)}">
+        <span>${escape(card.label)}</span>
+        <strong>${escape(card.value)}</strong>
+        <small>${escape(card.hint)}</small>
+      </button>
+    `).join("");
+  }
+
+  function exportOrders() {
+    const rows = filteredOrders().map((order) => ({
+      order_no: orderNo(order),
+      customer: orderCustomer(order),
+      products: orderItems(order).map((item) => item.product_name || item.product?.name || "Ürün").join(", "),
+      total: order.partner_total || order.total || order.total_amount || 0,
+      order_status: statusLabel(order.order_status || order.status),
+      payment_status: statusLabel(order.payment_status || "pending"),
+      tracking_number: order.tracking_number || order.cargo_tracking_number || "",
+      created_at: order.created_at || ""
+    }));
+    downloadRows(rows, "allona-partner-siparis-kargo.xlsx", "SiparisKargo", [
+      "order_no",
+      "customer",
+      "products",
+      "total",
+      "order_status",
+      "payment_status",
+      "tracking_number",
+      "created_at"
+    ]);
+    toast(`${rows.length} sipariş Excel dosyasına hazırlandı.`);
+  }
+
+  function carrierLabel(value) {
+    const labels = {
+      allona: "Allona anlaşmalı",
+      yurtici: "Yurtiçi / benzeri",
+      mng: "MNG / benzeri",
+      aras: "Aras / benzeri"
+    };
+    return labels[value] || value || "Kargo";
+  }
+
+  function cargoRate(value) {
+    const rates = {
+      allona: 24,
+      yurtici: 29,
+      mng: 28,
+      aras: 27
+    };
+    return rates[value] || rates.allona;
+  }
+
+  function calculateCargoQuote(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    const width = Math.max(1, numeric(data.width));
+    const length = Math.max(1, numeric(data.length));
+    const height = Math.max(1, numeric(data.height));
+    const weight = Math.max(0, numeric(data.weight));
+    const desi = Number(((width * length * height) / 3000).toFixed(2));
+    const billedDesi = Math.max(1, Math.ceil(Math.max(desi, weight)));
+    const base = cargoRate(data.carrier);
+    const amount = Number((base + billedDesi * 11.5).toFixed(2));
+    return {
+      carrier: data.carrier || "allona",
+      width,
+      length,
+      height,
+      weight,
+      desi,
+      billedDesi,
+      amount
+    };
+  }
+
+  function renderCargoQuote(quote) {
+    const target = $("[data-cargo-result]");
+    if (!target || !quote) return;
+    target.innerHTML = `
+      <div class="partner-os-cargo-quote">
+        <span>${escape(carrierLabel(quote.carrier))}</span>
+        <strong>${money(quote.amount)}</strong>
+        <small>Tahmini taşıma bedeli. Nihai fatura kargo firmasının ölçümüne göre oluşur.</small>
+        <div>
+          <article><b>${escape(quote.desi)}</b><em>Desi</em></article>
+          <article><b>${escape(quote.weight)} kg</b><em>Ağırlık</em></article>
+          <article><b>${escape(quote.billedDesi)}</b><em>Fatura desisi</em></article>
+        </div>
+      </div>
+    `;
+  }
+
   function renderOrders() {
     const target = $("[data-order-rows]");
+    renderOrderSummary();
     if (!target) return;
-    if (!state.orders.length) {
-      target.innerHTML = `<tr><td colspan="6">Bu partnere ait sipariş görünmüyor.</td></tr>`;
+    const rows = filteredOrders().slice(0, Number(state.orderFilters.pageSize || 50));
+    if (!rows.length) {
+      target.innerHTML = `<tr><td colspan="7">Bu filtrede sipariş görünmüyor.</td></tr>`;
       return;
     }
-    target.innerHTML = state.orders.map((order) => {
-      const items = order.partner_items || order.order_items || [];
+    target.innerHTML = rows.map((order) => {
+      const items = orderItems(order);
+      const tracking = order.tracking_number || order.cargo_tracking_number || "";
+      const currentStatus = order.order_status || order.status || "confirmed";
       return `
         <tr>
-          <td><strong>${escape(order.order_no || order.order_number || order.id)}</strong><br><small>${formatDate(order.created_at)}</small></td>
+          <td><strong>${escape(orderNo(order))}</strong><br><small>${formatDate(order.created_at)}</small></td>
           <td>${escape(items.map((item) => item.product_name || item.product?.name || "Ürün").join(", "))}</td>
+          <td>${escape(orderCustomer(order))}</td>
           <td>${money(order.partner_total || order.total || order.total_amount)}</td>
           <td>
             <select data-order-status="${escape(order.id)}">
-              ${["confirmed", "preparing", "shipped", "delivered", "cancelled"].map((status) => `<option value="${status}" ${order.order_status === status ? "selected" : ""}>${escape(statusLabel(status))}</option>`).join("")}
+              ${["confirmed", "preparing", "shipped", "delivered", "cancelled"].map((status) => `<option value="${status}" ${currentStatus === status ? "selected" : ""}>${escape(statusLabel(status))}</option>`).join("")}
             </select>
           </td>
           <td>${statusPill(order.payment_status || "pending")}</td>
-          <td><input data-order-tracking="${escape(order.id)}" value="${escape(order.tracking_number || "")}" placeholder="Takip no"></td>
+          <td><input data-order-tracking="${escape(order.id)}" value="${escape(tracking)}" placeholder="Takip no"></td>
         </tr>
       `;
     }).join("");
@@ -2132,18 +2312,18 @@
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
 
-  function downloadRows(rows, filename, sheetName) {
-    const normalizedRows = rows.length ? rows : [PRODUCT_TEMPLATE_COLUMNS.reduce((row, key) => ({ ...row, [key]: "" }), {})];
+  function downloadRows(rows, filename, sheetName, columns = PRODUCT_TEMPLATE_COLUMNS) {
+    const normalizedRows = rows.length ? rows : [columns.reduce((row, key) => ({ ...row, [key]: "" }), {})];
     if (window.XLSX) {
-      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: PRODUCT_TEMPLATE_COLUMNS });
+      const worksheet = window.XLSX.utils.json_to_sheet(normalizedRows, { header: columns });
       const workbook = window.XLSX.utils.book_new();
       window.XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
       window.XLSX.writeFile(workbook, filename);
       return;
     }
     const csv = [
-      PRODUCT_TEMPLATE_COLUMNS.join(";"),
-      ...normalizedRows.map((row) => PRODUCT_TEMPLATE_COLUMNS.map((key) => {
+      columns.join(";"),
+      ...normalizedRows.map((row) => columns.map((key) => {
         const value = String(row[key] ?? "");
         return `"${value.replace(/"/g, '""')}"`;
       }).join(";"))
@@ -2690,6 +2870,9 @@
       const bulkTrigger = event.target.closest("[data-bulk-product-trigger]");
       const downloadTemplate = event.target.closest("[data-download-template]");
       const exportProducts = event.target.closest("[data-export-products]");
+      const exportOrdersButton = event.target.closest("[data-export-orders]");
+      const clearOrderFilters = event.target.closest("[data-clear-order-filters]");
+      const orderCard = event.target.closest("[data-order-card-status]");
       const integrationMode = event.target.closest("[data-integration-mode]");
       const integrationTest = event.target.closest("[data-integration-test]");
       const integrationPreview = event.target.closest("[data-integration-preview]");
@@ -2732,6 +2915,27 @@
       if (exportProducts) {
         downloadRows(rowsFromProducts(), "allona-partner-urunler.xlsx", "Urunler");
         toast("Katalog Excel dosyası indirildi.");
+      }
+      if (exportOrdersButton) exportOrders();
+      if (clearOrderFilters) {
+        state.orderFilters = { search: "", code: "", status: "all", quick: "all", pageSize: 50 };
+        const search = $("[data-order-search]");
+        const code = $("[data-order-code-filter]");
+        const status = $("[data-order-status-filter]");
+        const pageSize = $("[data-order-page-size]");
+        if (search) search.value = "";
+        if (code) code.value = "";
+        if (status) status.value = "all";
+        if (pageSize) pageSize.value = "50";
+        renderOrders();
+        toast("Sipariş filtreleri temizlendi.");
+      }
+      if (orderCard) {
+        state.orderFilters.status = orderCard.dataset.orderCardStatus || "all";
+        state.orderFilters.quick = orderCard.dataset.orderCardQuick || "all";
+        const status = $("[data-order-status-filter]");
+        if (status) status.value = state.orderFilters.status;
+        renderOrders();
       }
       if (integrationMode) {
         if (integrationMode.dataset.integrationMode === "full" && !partnerHasFullIntegrationAccess()) {
@@ -2811,6 +3015,53 @@
       campaignForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createCampaign(campaignForm);
+      });
+    }
+
+    const orderSearch = $("[data-order-search]");
+    if (orderSearch) {
+      orderSearch.addEventListener("input", () => {
+        state.orderFilters.search = orderSearch.value;
+        renderOrders();
+      });
+    }
+
+    const orderCode = $("[data-order-code-filter]");
+    if (orderCode) {
+      orderCode.addEventListener("input", () => {
+        state.orderFilters.code = orderCode.value;
+        renderOrders();
+      });
+    }
+
+    const orderStatus = $("[data-order-status-filter]");
+    if (orderStatus) {
+      orderStatus.addEventListener("change", () => {
+        state.orderFilters.status = orderStatus.value || "all";
+        state.orderFilters.quick = "all";
+        renderOrders();
+      });
+    }
+
+    const orderPageSize = $("[data-order-page-size]");
+    if (orderPageSize) {
+      orderPageSize.addEventListener("change", () => {
+        state.orderFilters.pageSize = Number(orderPageSize.value || 50);
+        renderOrders();
+      });
+    }
+
+    const cargoCalculator = $("[data-cargo-calculator]");
+    if (cargoCalculator) {
+      cargoCalculator.addEventListener("submit", (event) => {
+        event.preventDefault();
+        renderCargoQuote(calculateCargoQuote(cargoCalculator));
+      });
+      cargoCalculator.addEventListener("input", () => {
+        renderCargoQuote(calculateCargoQuote(cargoCalculator));
+      });
+      cargoCalculator.addEventListener("change", () => {
+        renderCargoQuote(calculateCargoQuote(cargoCalculator));
       });
     }
 
