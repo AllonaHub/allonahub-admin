@@ -1746,22 +1746,43 @@ body[data-theme="white"] .payment-logo--troy .bank-payment-logo--white {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  z-index: 120;
-  width: min(360px, calc(100vw - 40px));
-  display: grid;
+  z-index: 10000;
+  width: min(380px, calc(100vw - 40px));
+  max-height: min(240px, calc(100vh - 40px));
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   gap: 8px;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .toast__item {
-  background: var(--ink);
-  color: var(--white);
+  width: 100%;
+  background: #0f172a;
+  color: #ffffff;
   border-radius: var(--radius);
   padding: 12px 14px;
   box-shadow: var(--shadow);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
 }
 
 .toast__item--error {
-  background: var(--danger);
+  background: #991b1b;
+}
+
+.toast__item--warning {
+  background: #92400e;
+}
+
+.toast__item--success {
+  background: #065f46;
+}
+
+.toast__item--info {
+  background: #0f172a;
 }
 
 .site-footer {

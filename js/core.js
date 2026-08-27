@@ -910,6 +910,8 @@
   }
 
   function toast(message, type) {
+    const text = String(message || "").trim();
+    if (!text) return;
     let wrap = document.querySelector(".toast");
     if (!wrap) {
       wrap = document.createElement("div");
@@ -917,11 +919,34 @@
       wrap.setAttribute("aria-live", "polite");
       document.body.appendChild(wrap);
     }
+    const state = window.__allonaToastState || { seen: new Map() };
+    window.__allonaToastState = state;
+    const tone = ["success", "warning", "error", "info"].includes(type) ? type : "info";
+    const key = `${tone}:${text.toLocaleLowerCase("tr-TR").replace(/\d+(?:[.,]\d+)?/g, "#")}`;
+    const now = Date.now();
+    const isProgressToast = /(indirildi|yükleme|yükleniyor|çekme|çekilecek|getirildi|aktar|senkron)/i.test(text);
+    const duplicateWindowMs = isProgressToast ? 60000 : 12000;
+    const recentAt = Number(state.seen.get(key) || 0);
+    const existing = Array.from(wrap.querySelectorAll(".toast__item"))
+      .find((node) => node.dataset.toastKey === key);
+    if (now - recentAt < duplicateWindowMs) {
+      state.seen.set(key, now);
+      if (existing) {
+        clearTimeout(existing._allonaToastTimer);
+        existing._allonaToastTimer = setTimeout(() => existing.remove(), 3600);
+      }
+      return;
+    }
+    state.seen.set(key, now);
+    while (wrap.children.length >= 3) {
+      wrap.firstElementChild?.remove();
+    }
     const item = document.createElement("div");
-    item.className = `toast__item ${type === "error" ? "toast__item--error" : ""}`;
-    item.textContent = message;
+    item.className = `toast__item toast__item--${tone}${tone === "error" ? " toast__item--error" : ""}`;
+    item.dataset.toastKey = key;
+    item.textContent = text;
     wrap.appendChild(item);
-    setTimeout(() => item.remove(), 3200);
+    item._allonaToastTimer = setTimeout(() => item.remove(), 3600);
   }
 
   function parseForm(form) {
