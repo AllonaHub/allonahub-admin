@@ -1,3 +1,5 @@
+import { marketplacePlatformPattern } from "../lib/marketplace-branding.js";
+
 export const productReviewFieldLabels = {
   name: "Ürün adı",
   product_name: "Ürün adı",
@@ -13,9 +15,9 @@ export const productReviewFieldLabels = {
   invoice_responsibility: "Fatura sorumluluğu"
 };
 
-export const marketplacePlatformPattern = /\b(trendyol|hepsiburada|n11|amazon|etsy|shopify|woocommerce|çiçeksepeti|ciceksepeti|pazarama|pttavm|gittigidiyor)\b/i;
+export { marketplacePlatformPattern };
 
-export const PRODUCT_REVISION_DEFAULT_NOTICE = "Ürün revizyonu gereklidir. Dış platform adı, tekrar ürün/varyant, barkod, görsel, açıklama, fiyat, stok ve kategori alanları AllonaHub yayın kurallarına göre kontrol edilmelidir. Dış pazar yeri adları ürün adı, açıklama, SEO metni, marka ve SKU alanlarından kaldırılmalıdır.";
+export const PRODUCT_REVISION_DEFAULT_NOTICE = "Ürün revizyonu gereklidir. Tekrar ürün/varyant, barkod, görsel, açıklama, fiyat, stok, kategori ve otomatik temizlenemeyen dış platform ifadeleri AllonaHub yayın kurallarına göre kontrol edilmelidir.";
 
 export const productReviewPolicyRules = [
   {
@@ -25,7 +27,7 @@ export const productReviewPolicyRules = [
     fields: ["name", "product_name", "description", "meta_title", "meta_description", "brand", "sku"],
     pattern: marketplacePlatformPattern,
     title: "Dış platform adı içeriyor",
-    suggestion: "Ürün adı, açıklama, SEO metni, marka veya SKU içinde dış pazar yeri adını kaldırın; ürün AllonaHub kataloğunda platform bağımsız ve kendi ürün bilgisiyle yayınlanmalı."
+    suggestion: "Otomatik temizlenemeyen dış pazar yeri adını kaldırın; ürün AllonaHub kataloğunda platform bağımsız ve kendi ürün bilgisiyle yayınlanmalı."
   },
   {
     code: "prohibited_or_illegal_terms",

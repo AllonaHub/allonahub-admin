@@ -23,6 +23,11 @@ import {
 } from "../lib/payment-provider-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
 import {
+  MARKETPLACE_BRANDING_SANITIZER_VERSION,
+  cleanMarketplaceCode,
+  cleanMarketplaceText
+} from "../lib/marketplace-branding.js";
+import {
   auditEvent,
   authContext,
   hasMfa,
@@ -7986,6 +7991,18 @@ function normalizedIntegrationCode(value) {
     .slice(0, 160);
 }
 
+function cleanImportedText(value, fallback = "") {
+  const cleaned = cleanMarketplaceText(value);
+  if (cleaned) return cleaned;
+  return cleanMarketplaceText(fallback) || String(fallback || "").trim();
+}
+
+function cleanImportedCode(value, fallback = "") {
+  const cleaned = cleanMarketplaceCode(value);
+  if (cleaned) return cleaned;
+  return cleanMarketplaceCode(fallback) || String(fallback || "").trim();
+}
+
 function normalizeVariantText(value) {
   return String(value || "")
     .trim()
@@ -8072,22 +8089,25 @@ function integrationProductRows(row, integration, index) {
 }
 
 function normalizeIntegrationProduct(row, integration, index, variantOverride = null, variantIndex = 0, variantCount = 1) {
-  const name = String(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"]) || "").trim();
+  const name = cleanImportedText(firstValue(row, ["name", "product_name", "title", "urun_adi", "ürün adı", "ad"])).slice(0, 180);
   if (!name) return null;
   const firstVariant = variantOverride || (Array.isArray(row?.variants) && row.variants.length ? row.variants[0] : {});
   const firstCategory = Array.isArray(row?.categories) && row.categories.length ? row.categories[0] : null;
 
-  const barcode = String(integrationRowValue(row, firstVariant, INTEGRATION_BARCODE_KEYS) || "").trim();
-  const productCode = String(integrationRowValue(row, firstVariant, INTEGRATION_PRODUCT_CODE_KEYS) || "").trim();
-  const groupCode = String(integrationRowValue(row, firstVariant, INTEGRATION_GROUP_CODE_KEYS) || "").trim();
+  const rawBarcode = String(integrationRowValue(row, firstVariant, INTEGRATION_BARCODE_KEYS) || "").trim();
+  const rawProductCode = String(integrationRowValue(row, firstVariant, INTEGRATION_PRODUCT_CODE_KEYS) || "").trim();
+  const rawGroupCode = String(integrationRowValue(row, firstVariant, INTEGRATION_GROUP_CODE_KEYS) || "").trim();
+  const barcode = cleanImportedCode(rawBarcode).slice(0, 80);
+  const productCode = cleanImportedCode(rawProductCode).slice(0, 120);
+  const groupCode = cleanImportedCode(rawGroupCode).slice(0, 120);
   const explicitExternalId = String(firstValue(row, ["id", "product_id", "external_id", "sku", "code", "stok_kodu"]) || firstVariant.product_id || "").trim();
-  const externalId = String(groupCode || explicitExternalId || productCode || barcode || `row-${index + 1}`).trim();
+  const externalId = String(rawGroupCode || explicitExternalId || rawProductCode || rawBarcode || `row-${index + 1}`).trim();
   const explicitVariantId = String(firstValue(row, ["variant_id", "variation_id", "external_variant_id"]) || firstVariant.id || "").trim();
-  const variantId = String(explicitVariantId || barcode || productCode || (variantCount > 1 ? `variant-${variantIndex + 1}` : "")).trim();
-  const sku = String(productCode || barcode || firstVariant.sku || externalId).trim();
+  const variantId = String(explicitVariantId || rawBarcode || rawProductCode || (variantCount > 1 ? `variant-${variantIndex + 1}` : "")).trim();
+  const sku = cleanImportedCode(productCode || barcode || firstVariant.sku || explicitExternalId || externalId).slice(0, 90);
   const imageUrl = imageFromVariant(row, firstVariant);
-  const color = String(integrationRowValue(row, firstVariant, INTEGRATION_COLOR_KEYS) || colorFromText(name, imageUrl, firstVariant.title, firstVariant.name) || "").trim();
-  const size = String(integrationRowValue(row, firstVariant, INTEGRATION_SIZE_KEYS) || "").trim();
+  const color = cleanImportedText(integrationRowValue(row, firstVariant, INTEGRATION_COLOR_KEYS) || colorFromText(name, imageUrl, firstVariant.title, firstVariant.name) || "").slice(0, 90);
+  const size = cleanImportedText(integrationRowValue(row, firstVariant, INTEGRATION_SIZE_KEYS) || "").slice(0, 90);
   const modelRoot = usefulModelRoot(productModelRoot(name, firstValue(row, ["model", "model_name", "modelName"]), groupCode, explicitExternalId));
   const imageSignature = variantImageSignature(imageUrl);
   const variantGroupKey = normalizedIntegrationCode(groupCode || modelRoot || explicitExternalId || externalId);
@@ -8113,19 +8133,23 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
     variant_model_root: modelRoot,
     variant_source: groupCode ? "group_code" : modelRoot ? "name_model" : imageSignature ? "image_signature" : "external_id",
     name,
-    description: String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ").trim().slice(0, 1800),
+    description: cleanImportedText(
+      String(firstValue(row, ["description", "body_html", "short_description", "summary", "aciklama", "açıklama"]) || "").replace(/<[^>]*>/g, " ")
+    ).slice(0, 1800),
     price: Math.max(0, numberFrom(firstValue(row, ["price", "regular_price", "sale_price", "listPrice", "salePrice", "fiyat", "tutar"]) || firstVariant.price)),
     stock: Math.max(0, Math.floor(numberFrom(firstValue(row, ["stock", "stock_quantity", "inventory_quantity", "quantity", "availableQuantity", "stok", "adet"]) || firstVariant.inventory_quantity))),
     image_url: imageUrl,
-    category: String(categoryValue).trim().slice(0, 90),
-    brand: String(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").trim().slice(0, 120),
+    category: cleanImportedText(categoryValue, "Genel").slice(0, 90) || "Genel",
+    brand: cleanImportedText(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").slice(0, 120),
     module_key: moduleKey,
     raw: row
   };
 }
 
 function sourceHashFor(value) {
-  return createHash("sha256").update(JSON.stringify(value || {})).digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify({ value: value || {}, sanitizer: MARKETPLACE_BRANDING_SANITIZER_VERSION }))
+    .digest("hex");
 }
 
 function integrationSettingsObject(settings) {
@@ -8533,19 +8557,22 @@ function integrationProductAutoApproved(item, compliance) {
 }
 
 function integrationProductSku(integration, item) {
-  const rawSku = String(item.external_sku || item.variant_match_key || item.external_product_id || "").trim();
-  const prefix = integration.provider.toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
-  return `${prefix}-${backendSlug(rawSku || item.name).toUpperCase()}`.slice(0, 48);
+  const sourceSku = cleanImportedCode(item.external_sku || item.product_code || item.variant_match_key || "");
+  if (sourceSku) return sourceSku.slice(0, 90);
+  const identity = integrationProductIdentity(item) || item.external_product_id || item.name || "";
+  const digest = createHash("sha1").update(`${integration.provider}:${identity}`).digest("hex").slice(0, 10).toUpperCase();
+  const readable = cleanImportedCode(item.product_code || item.barcode || backendSlug(item.name).toUpperCase()).slice(0, 36);
+  return cleanImportedCode(`${readable || "ALH"}-${digest}`).slice(0, 90);
 }
 
 function integrationProductBarcode(integration, item) {
-  const provided = String(item.barcode || "").trim();
+  const provided = cleanImportedCode(item.barcode || "");
   if (provided) return provided.slice(0, 80);
   const provider = String(integration.provider || "INT").toUpperCase().replace(/[^A-Z0-9]+/g, "").slice(0, 12) || "INT";
   const identity = integrationProductIdentity(item) || item.external_sku || item.product_code || item.name || "";
   if (!identity) return "";
   const digest = createHash("sha1").update(`${provider}:${identity}`).digest("hex").slice(0, 14).toUpperCase();
-  return `ALH-${provider}-${digest}`.slice(0, 80);
+  return `ALH-${digest}`.slice(0, 80);
 }
 
 function partnerPublicName(business) {
@@ -8554,6 +8581,12 @@ function partnerPublicName(business) {
 
 function integrationProductPayload({ business, integration, item }) {
   const sellerName = partnerPublicName(business);
+  const productName = cleanImportedText(item.name).slice(0, 180) || "AllonaHub Ürün";
+  const productDescription = cleanImportedText(item.description).slice(0, 1800);
+  const productCategory = cleanImportedText(item.category || "Genel", "Genel").slice(0, 90) || "Genel";
+  const productBrand = cleanImportedText(item.brand || sellerName, sellerName).slice(0, 120) || sellerName;
+  const productSku = integrationProductSku(integration, item);
+  const productBarcode = integrationProductBarcode(integration, item);
   const compliance = item.compliance || integrationProductCompliance(item);
   const autoApproved = integrationProductAutoApproved(item, compliance);
   let status = autoApproved ? "active" : productStatusForIntegrationApply(integration);
@@ -8566,20 +8599,20 @@ function integrationProductPayload({ business, integration, item }) {
         : "pending";
   const identity = integrationProductIdentity(item);
   const payload = {
-    name: item.name,
-    product_name: item.name,
-    description: item.description,
+    name: productName,
+    product_name: productName,
+    description: productDescription,
     price: item.price,
     stock: item.stock,
     image_url: item.image_url || null,
-    category: item.category || "Genel",
+    category: productCategory,
     module_key: item.module_key || "shop",
     catalog_scope: item.module_key || "shop",
     status,
-    slug: backendSlug(`${item.name}-${integration.provider}-${item.external_product_id}-${item.external_variant_id || ""}`),
-    meta_title: item.name,
-    meta_description: item.description,
-    brand: item.brand || sellerName,
+    slug: backendSlug(`${productName}-${item.external_product_id}-${item.external_variant_id || ""}`),
+    meta_title: productName,
+    meta_description: productDescription,
+    brand: productBrand,
     partner_id: business.owner_id,
     partner_code: business.partner_code || business.id,
     partner_email: business.email || null,
@@ -8593,13 +8626,13 @@ function integrationProductPayload({ business, integration, item }) {
     seller_disclosure: "Satıcı bilgileri sipariş onayı öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür.",
     compliance_review_status: complianceStatus,
     compliance_notes: [
-      `Entegrasyon importu: ${integration.provider}.`,
+      "Entegrasyon importu: kaynak platformdan ürün çekildi.",
       autoApproved
         ? "Risksiz entegrasyon ürünü otomasyon tarafından onaylandı ve yayına alındı."
         : status === "draft"
           ? "Ürün taslak olarak admin/operasyon kontrolüne alındı."
           : "Ürün aktif import edildi.",
-      item.barcode ? `Barkod: ${item.barcode}.` : "",
+      productBarcode ? `Barkod: ${productBarcode}.` : "",
       item.generated_barcode ? "Barkod dış platformdan gelmedi; AllonaHub iç barkodu üretildi." : "",
       item.product_code ? `Ürün kodu: ${item.product_code}.` : "",
       item.variant_color ? `Varyant renk: ${item.variant_color}.` : "",
@@ -8607,8 +8640,8 @@ function integrationProductPayload({ business, integration, item }) {
       ...compliance.errors,
       ...compliance.warnings
     ].filter(Boolean).join(" ").slice(0, 1200),
-    sku: integrationProductSku(integration, item),
-    barcode: item.barcode || null,
+    sku: productSku,
+    barcode: productBarcode || null,
     integration_source: integration.provider,
     integration_external_id: identity
   };
