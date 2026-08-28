@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-rawurl1";
+  const VERSION = "20260828-start1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -166,6 +166,13 @@
       return {
         message: "Ben AllonaHub AI destek asistanıyım. Sipariş, hesap, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon, ödeme, iade ve platform kullanımı gibi konularda sana kısa ve doğru cevap vermeye çalışırım. Özel işlem gerekiyorsa seni güvenli sayfaya veya destek ekibine yönlendiririm.",
         actions: [pageAction("Hizmetler", "services"), pageAction("CV Oluştur", "smartCv"), pageAction("Destek / SSS", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["nasil baslayabilirim", "nereden baslayayim", "nereden baslamaliyim", "nereden baslayacagim", "baslangic", "yol goster", "beni yonlendir", "ne yapmaliyim"])) {
+      return {
+        message: "Tabii, birlikte en doğru başlangıcı seçelim. İş arıyorsan CV oluşturma, işletme veya satış tarafındaysan partner başvurusu, platformu keşfetmek istiyorsan hizmetler alanı en hızlı adımdır. Hedefini bir cümleyle yazarsan cevabı doğrudan o yola göre hazırlarım.",
+        actions: [pageAction("Hizmetler", "services"), pageAction("CV Oluştur", "smartCv"), pageAction("Partner Ol", "partner")]
       };
     }
 

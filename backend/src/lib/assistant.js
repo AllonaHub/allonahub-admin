@@ -433,6 +433,36 @@ const CORE_TOPICS = [
     text: "Ben AllonaHub AI destek asistanıyım. Sipariş, hesap, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon, ödeme, iade ve platform kullanımı gibi konularda niyetinizi anlayıp kısa ve doğru cevap vermeye çalışırım. Özel işlem veya hesap bilgisi gerekiyorsa sizi güvenli sayfaya ya da destek ekibine yönlendiririm."
   },
   {
+    key: "guided_start",
+    label: "Başlangıç yönlendirmesi",
+    confidence: 0.88,
+    terms: [
+      "nasıl başlayabilirim",
+      "nasil baslayabilirim",
+      "nereden başlayayım",
+      "nereden baslayayim",
+      "nereden başlamalıyım",
+      "nereden baslamaliyim",
+      "nereden başlayacağım",
+      "nereden baslayacagim",
+      "başlangıç",
+      "baslangic",
+      "yol göster",
+      "yol goster",
+      "beni yönlendir",
+      "beni yonlendir",
+      "ne yapmalıyım",
+      "ne yapmaliyim"
+    ],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Partner Ol", link: "partner" }
+    ],
+    text: "Tabii, birlikte en doğru başlangıcı seçelim. İş arıyorsanız CV oluşturma, işletme veya satış tarafındaysanız partner başvurusu, platformu keşfetmek istiyorsanız hizmetler alanı en hızlı adımdır. Bana hedefinizi bir cümleyle yazarsanız cevabı doğrudan o yola göre hazırlarım."
+  },
+  {
     key: "platform_overview",
     label: "AllonaHub hakkında",
     confidence: 0.82,

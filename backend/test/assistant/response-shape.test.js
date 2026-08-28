@@ -83,6 +83,22 @@ test("assistant sends only a raw URL when the user explicitly asks for a link", 
   assert.deepEqual(reply.actions, []);
 });
 
+test("assistant gives a guided start for unsure users", async () => {
+  const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "guided_start");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "CV Oluştur", "Partner Ol"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },
