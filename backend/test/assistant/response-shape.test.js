@@ -211,6 +211,24 @@ test("assistant makes shopping guidance warm without adding raw links", async ()
   assert.ok(reply.actions.length > 0);
 });
 
+test("assistant guides product discovery with shopping buttons", async () => {
+  const message = "Yüzük veya kolye almak istiyorum";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "shop_product_discovery");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /birlikte/i);
+  assert.match(reply.message, /kupon|HP|sepet/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Allona Shop", "Kuponlar", "Sepet"]);
+});
+
 test("assistant gives a guided start for unsure users", async () => {
   const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
   const intent = detectAssistantIntent(message);

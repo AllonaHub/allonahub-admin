@@ -343,7 +343,7 @@ function makeExternalAction(label, url) {
 
 const WARM_TONE_CLOSES = [
   {
-    keys: new Set(["shop", "food", "market", "order_howto", "payment_checkout", "hp_coupons", "campaigns_rewards", "premium"]),
+    keys: new Set(["shop", "shop_product_discovery", "food", "market", "order_howto", "payment_checkout", "hp_coupons", "campaigns_rewards", "premium"]),
     text: "İstersen burada kalıp birlikte en avantajlı ürünü, kuponu ve sepet adımını seçelim."
   },
   {
@@ -1180,6 +1180,49 @@ const SMART_FAQ_TOPICS = [
 
 const COMMERCE_TOPICS = [
   {
+    key: "shop_product_discovery",
+    label: "Ürün keşfi",
+    confidence: 0.9,
+    terms: [
+      "yüzük",
+      "yuzuk",
+      "kolye",
+      "bileklik",
+      "küpe",
+      "kupe",
+      "takı",
+      "taki",
+      "aksesuar",
+      "hediye",
+      "çanta",
+      "canta",
+      "ayakkabı",
+      "ayakkabi",
+      "elbise",
+      "kozmetik",
+      "elektronik",
+      "ürün almak",
+      "urun almak",
+      "bir şey almak",
+      "bir sey almak",
+      "satın almak istiyorum",
+      "satin almak istiyorum",
+      "ne alabilirim",
+      "kampanyalı ürün",
+      "kampanyali urun",
+      "kuponlu ürün",
+      "kuponlu urun"
+    ],
+    link: "shop",
+    summary: "ürün keşfi, kategori seçimi, kupon/HP kontrolü ve sepete yönlendirme için kullanılır",
+    actions: [
+      { label: "Allona Shop", link: "shop" },
+      { label: "Kuponlar", link: "coupons" },
+      { label: "Sepet", link: "cart" }
+    ],
+    text: "Harika, birlikte doğru ürünü seçelim. Aradığınız ürün, hediye amacı veya bütçeyi yazarsanız size uygun kategori, kupon/HP avantajı ve sepet adımını burada netleştiririm; böylece soğuk bir yönlendirme yerine gerçekten işinize yarayan alışveriş yolunu hazırlayabiliriz."
+  },
+  {
     key: "shop",
     label: "Allona Shop",
     terms: ["shop", "alışveriş", "alisveris", "pazaryeri", "mağaza", "magaza", "ürün", "urun", "favori"],
@@ -1202,13 +1245,13 @@ const COMMERCE_TOPICS = [
   }
 ].map((topic) => ({
   ...topic,
-  confidence: 0.82,
-  actions: [
+  confidence: topic.confidence || 0.82,
+  actions: topic.actions || [
     { label: topic.label, link: topic.link },
     { label: "Sepet", link: "cart" },
     { label: "Kuponlar", link: "coupons" }
   ],
-  text: () => `Merhabalar, ${topic.label} için memnuniyetle yardımcı olurum. Bu alan ${topic.summary}. Aradığınız ürün veya ihtiyacı yazın; sepet, kupon ve HP avantajını birlikte değerlendirip daha iyi bir alışveriş adımı seçelim.`
+  text: topic.text || (() => `Merhabalar, ${topic.label} için memnuniyetle yardımcı olurum. Bu alan ${topic.summary}. Aradığınız ürün veya ihtiyacı yazın; sepet, kupon ve HP avantajını birlikte değerlendirip daha iyi bir alışveriş adımı seçelim.`)
 }));
 
 const ECOSYSTEM_TOPICS = [
