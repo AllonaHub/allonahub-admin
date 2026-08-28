@@ -196,5 +196,7 @@ Expected behavior:
 
 - The endpoint returns `ok=true`.
 - The reply is short, Turkish and support-focused.
+- If action buttons are returned, the message text does not include raw URLs.
+- A single reply returns at most 3 action buttons and does not repeat the same destination.
 - `provider` in conversation metadata should be `fallback` while `ASSISTANT_AI_PROVIDER=rules`.
 - `conversation_logs` receives user and assistant rows after the migration is applied.
