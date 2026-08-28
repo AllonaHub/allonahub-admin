@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-voicebuttons1";
+  const VERSION = "20260828-warmtone1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -159,6 +159,30 @@
       message: stripUrlsForActions(reply && reply.message || "Memnuniyetle yardımcı olayım. Size kısa ve net şekilde anlatayım.", [{ type: "open_url", label: "Kaldır", url: window.location.href }]),
       actions: []
     };
+  }
+
+  function warmFallbackMessage(message, text) {
+    const clean = normalizeText(text, 1600);
+    if (!clean) return "Burada birlikte devam edelim; ihtiyacınızı yazın, sizi AllonaHub içindeki en doğru adıma taşıyayım.";
+    const normalized = String(message || "")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/ı/g, "i")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (/burada (birlikte|kalip)/i.test(clean)) return clean;
+    if (hasAny(normalized, ["alisveris", "siparis", "urun", "kupon", "hp", "sepet", "market", "yemek", "shop"])) {
+      return normalizeText(`${clean} İstersen burada kalıp birlikte en avantajlı ürünü, kuponu ve sepet adımını seçelim.`, 1600);
+    }
+    if (hasAny(normalized, ["cv", "kariyer", "denizcilik", "gemi", "crew", "basvuru", "is ariyorum"])) {
+      return normalizeText(`${clean} Pozisyonunu yazarsan CV’ni ve başvuru adımını birlikte daha güçlü hale getirelim.`, 1600);
+    }
+    if (hasAny(normalized, ["partner", "satici", "magaza", "isletme", "komisyon"])) {
+      return normalizeText(`${clean} İşletme türünü yazarsan satışa en hızlı başlayacağın partner yolunu birlikte netleştirelim.`, 1600);
+    }
+    return normalizeText(`${clean} Burada birlikte devam edelim; aradığın ürün, hizmet veya avantajı yaz, sana en uygun adımı hemen seçtireyim.`, 1600);
   }
 
   function pageAction(label, key) {
@@ -646,7 +670,7 @@
     let recognition = null;
     let voiceListening = false;
 
-    appendMessage(messages, "assistant", "Merhaba, AllonaHub AI destek asistanına hoş geldiniz. Sipariş, CV-kariyer, denizcilik, partnerlik, akademi ve destek konularında size hızlıca yardımcı olurum. Ne yapmak istediğinizi yazın; sizi en doğru adıma yönlendireyim.");
+    appendMessage(messages, "assistant", "Merhaba, AllonaHub AI destek asistanına hoş geldiniz. Alışveriş, kupon/HP avantajları, sipariş, CV-kariyer, denizcilik, partnerlik ve destek konularında birlikte ilerleyebiliriz. Ne aradığınızı yazın; size en uygun ürün, hizmet veya başvuru adımını sıcak ve hızlı şekilde hazırlayayım.");
 
     if (!SPEECH_RECOGNITION && voiceButton) {
       voiceButton.hidden = true;
@@ -817,7 +841,7 @@
       } catch (error) {
         status.remove();
         const fallback = textOnlyReplyForRequest(clean, rawUrlReplyForRequest(clean, localAssistantReply(clean)));
-        appendMessage(messages, "assistant", fallback.message || error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.", fallback.actions || []);
+        appendMessage(messages, "assistant", warmFallbackMessage(clean, fallback.message || error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin."), fallback.actions || []);
       } finally {
         setBusy(false);
         setQuickOpen(false);

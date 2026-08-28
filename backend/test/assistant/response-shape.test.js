@@ -178,6 +178,39 @@ test("assistant keeps topic buttons instead of escalating repeated CV guidance",
   assert.deepEqual(repeat.actions.map((action) => action.label), ["Denizcilik CV", "Denizcilik İşleri", "CV Oluştur"]);
 });
 
+test("assistant keeps users in conversation with a warm conversion tone", async () => {
+  const message = "CV oluşturmak istiyorum";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /birlikte/i);
+  assert.match(reply.message, /güçlü|guclu/i);
+  assert.ok(reply.actions.length > 0);
+});
+
+test("assistant makes shopping guidance warm without adding raw links", async () => {
+  const message = "Nasıl sipariş verebilirim?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /avantajlı|avantajli|kupon|sepet/i);
+  assert.ok(reply.actions.length > 0);
+});
+
 test("assistant gives a guided start for unsure users", async () => {
   const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
   const intent = detectAssistantIntent(message);
