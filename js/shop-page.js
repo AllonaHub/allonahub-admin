@@ -3,6 +3,7 @@
   const core = App.core;
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const QUICK_FILTERS = ["deals", "coupon", "fast", "free_shipping", "rated", "top"];
+  const FILTER_QUERY_KEYS = ["q", "category", "brand", "min", "max", "sort", "quick"];
   let products = [];
   let heroAds = [];
 
@@ -84,12 +85,16 @@
     return product.price >= Number(App.config?.freeShippingThreshold || 1500) || /ücretsiz/i.test(product.delivery_label || "");
   }
 
+  function ratingScore(product) {
+    return Number(product.rating || product.average_rating || 0);
+  }
+
   function hasHighRating(product) {
-    return Number(product.rating || product.average_rating || 0) >= 4.5;
+    return ratingScore(product) >= 4.5;
   }
 
   function hasTopSignal(product) {
-    return product.sold_count >= 100 || Number(product.rating || product.average_rating || 0) >= 4.7;
+    return product.sold_count >= 100 || ratingScore(product) >= 4.7;
   }
 
   function quickFilterMatches(product, value) {
@@ -127,7 +132,7 @@
     if (filters.sort === "price_asc") list.sort((a, b) => a.price - b.price);
     else if (filters.sort === "price_desc") list.sort((a, b) => b.price - a.price);
     else if (filters.sort === "best_selling") list.sort((a, b) => b.sold_count - a.sold_count);
-    else if (filters.sort === "rating_desc") list.sort((a, b) => b.rating - a.rating);
+    else if (filters.sort === "rating_desc") list.sort((a, b) => ratingScore(b) - ratingScore(a));
     else if (filters.sort === "discount_desc") list.sort((a, b) => {
       const discountA = a.discount_percent || (a.compare_at_price > a.price ? Math.round(((a.compare_at_price - a.price) / a.compare_at_price) * 100) : 0);
       const discountB = b.discount_percent || (b.compare_at_price > b.price ? Math.round(((b.compare_at_price - b.price) / b.compare_at_price) * 100) : 0);
@@ -271,6 +276,37 @@
     });
   }
 
+  function filterQueryValue(value) {
+    return String(value || "").trim();
+  }
+
+  function syncFilterUrl(filters) {
+    if (!window.history?.replaceState) return;
+    const url = new URL(window.location.href);
+    FILTER_QUERY_KEYS.forEach((key) => url.searchParams.delete(key));
+
+    const search = filterQueryValue(filters.search);
+    const category = filterQueryValue(filters.category);
+    const preset = filterQueryValue(categoryPreset());
+    const brand = filterQueryValue(filters.brand);
+    const minPrice = filterQueryValue(filters.minPrice);
+    const maxPrice = filterQueryValue(filters.maxPrice);
+    const sort = filterQueryValue(filters.sort);
+    const quick = filterQueryValue(filters.quick);
+
+    if (search) url.searchParams.set("q", search);
+    if (category && category !== preset) url.searchParams.set("category", category);
+    if (brand) url.searchParams.set("brand", brand);
+    if (minPrice) url.searchParams.set("min", minPrice);
+    if (maxPrice) url.searchParams.set("max", maxPrice);
+    if (sort && sort !== "newest") url.searchParams.set("sort", sort);
+    if (quick) url.searchParams.set("quick", quick);
+
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) window.history.replaceState(null, "", next);
+  }
+
   function quickFilterCount(value, filters) {
     return products.filter((product) => productMatchesFilters(product, { ...filters, quick: value })).length;
   }
@@ -302,22 +338,29 @@
     const searchInput = document.querySelector("[data-filter-search]");
     const categorySelect = document.querySelector("[data-filter-category]");
     const brandSelect = document.querySelector("[data-filter-brand]");
+    const minPriceInput = document.querySelector("[data-filter-min]");
+    const maxPriceInput = document.querySelector("[data-filter-max]");
     const sortSelect = document.querySelector("[data-filter-sort]");
     const q = core.getParam("q");
     const category = core.getParam("category") || categoryPreset();
     const brand = core.getParam("brand");
+    const minPrice = core.getParam("min") || core.getParam("minPrice");
+    const maxPrice = core.getParam("max") || core.getParam("maxPrice");
     const sort = core.getParam("sort");
     const quick = core.getParam("quick");
 
     if (searchInput && q) searchInput.value = q;
     if (categorySelect && category) setCategorySelectValue(category);
     if (brandSelect && brand) brandSelect.value = brand;
+    if (minPriceInput && minPrice) minPriceInput.value = minPrice;
+    if (maxPriceInput && maxPrice) maxPriceInput.value = maxPrice;
     if (sortSelect && sort) sortSelect.value = sort;
     if (quick) setQuickFilter(quick);
   }
 
   function renderHomeSections() {
     const filters = filtersFromDom();
+    syncFilterUrl(filters);
     updateQuickFilterAvailability(filters);
     const filteredProducts = applyLocalFilters(filters);
     renderProductCount(filteredProducts);
