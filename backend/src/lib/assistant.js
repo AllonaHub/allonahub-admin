@@ -32,9 +32,6 @@ const EXPLICIT_RAW_URL_TERMS = [
   "linkini",
   "url",
   "urlsini",
-  "adres",
-  "adresi",
-  "adresini",
   "baglanti",
   "baglantisi",
   "baglantisini",
@@ -42,6 +39,7 @@ const EXPLICIT_RAW_URL_TERMS = [
   "bağlantısı",
   "bağlantısını"
 ];
+const RAW_URL_ADDRESS_PATTERN = /\b(?:sayfa|sayfanin|sayfasinin|site|web|internet)\s+(?:adresi|adresini|adres)\b|\b(?:adresi|adresini)\s+(?:gonder|gonderir|gonderebilir|paylas|paylasir|ver|yaz|atar)\b/u;
 const TEXT_ONLY_TERMS = [
   "link atma",
   "link verme",
@@ -183,7 +181,7 @@ function wantsRawUrl(message, metadata = {}) {
   if (metadata?.preferRawUrl === true || metadata?.rawUrlRequested === true) return true;
   const text = normalizeSearchText(`${message || ""} ${metadata?.intent || ""} ${metadata?.topic || ""}`);
   if (!text) return false;
-  return EXPLICIT_RAW_URL_TERMS.some((term) => text.includes(normalizeSearchText(term)));
+  return EXPLICIT_RAW_URL_TERMS.some((term) => text.includes(normalizeSearchText(term))) || RAW_URL_ADDRESS_PATTERN.test(text);
 }
 
 function rawUrlReplyForRequest(message, metadata, actions = []) {
@@ -573,7 +571,7 @@ const CORE_TOPICS = [
       { label: "Kayıt Ol", link: "register" },
       { label: "Profil", link: "profile" }
     ],
-    text: ({ platformUrl }) => `Tabii, hesap işlemleri için yardımcı olayım. Giriş, kayıt, profil, adres, belge ve bildirim alanları kullanıcı panelinden yönetilir; giriş için: ${platformUrl("login")} Yeni üyelik için: ${platformUrl("register")} Şifre veya erişim sorunu sürerse destek talebi açabilirsiniz.`
+    text: "Tabii, hesap işlemleri için yardımcı olayım. Giriş, kayıt, profil, adres, belge ve bildirim alanları kullanıcı panelinden yönetilir. Giriş yapmak, yeni üyelik başlatmak veya profil bilgilerinizi düzenlemek için aşağıdaki uygun adımı seçebilirsiniz. Şifre veya erişim sorunu sürerse destek talebi açabilirsiniz."
   },
   {
     key: "payment_checkout",

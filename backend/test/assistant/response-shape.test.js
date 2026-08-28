@@ -83,6 +83,39 @@ test("assistant sends only a raw URL when the user explicitly asks for a link", 
   assert.deepEqual(reply.actions, []);
 });
 
+test("assistant sends a raw URL when the user asks for a page address", async () => {
+  const message = "Hakkımızda sayfasının adresini gönderir misin?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(RAW_URL_PATTERN.test(reply.message), true);
+  assert.match(reply.message, /hakkimizda\.html/);
+  assert.deepEqual(reply.actions, []);
+});
+
+test("assistant does not confuse account address questions with link requests", async () => {
+  const message = "Adresimi nasıl değiştirebilirim?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "account_access");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.doesNotMatch(reply.message, /için:\s*(Yeni|Şifre)/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Giriş Yap", "Kayıt Ol", "Profil"]);
+});
+
 test("assistant gives a guided start for unsure users", async () => {
   const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
   const intent = detectAssistantIntent(message);

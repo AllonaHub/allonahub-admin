@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-passreset1";
+  const VERSION = "20260828-urlintent1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -121,8 +121,9 @@
       .replace(/[^\p{L}\p{N}\s]+/gu, " ")
       .replace(/\s+/g, " ")
       .trim();
-    return ["link", "linki", "linkini", "url", "adres", "adresi", "adresini", "baglanti", "baglantisi", "baglantisini"]
-      .some((term) => normalized.includes(term));
+    const explicitTerms = ["link", "linki", "linkini", "url", "baglanti", "baglantisi", "baglantisini"];
+    const pageAddressPattern = /\b(?:sayfa|sayfanin|sayfasinin|site|web|internet)\s+(?:adresi|adresini|adres)\b|\b(?:adresi|adresini)\s+(?:gonder|gonderir|gonderebilir|paylas|paylasir|ver|yaz|atar)\b/u;
+    return explicitTerms.some((term) => normalized.includes(term)) || pageAddressPattern.test(normalized);
   }
 
   function wantsTextOnly(value) {
