@@ -9410,3 +9410,12 @@ html body.taxi-module-page[data-theme="corporate"] .live-pill :where(span, stron
   -webkit-text-fill-color: #ffffff !important;
   text-shadow: none !important;
 }
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel .ah-assistant__channel-icon,
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__close {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #123a56 !important;
+  -webkit-text-fill-color: #123a56 !important;
+  text-shadow: none !important;
+}

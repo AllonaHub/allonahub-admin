@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260828-corpcontrast3";
+  const SERVICE_WORKER_VERSION = "20260828-corpcontrast4";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -565,6 +565,8 @@ html body[data-theme="corporate"] .ah-assistant .ah-assistant__action,
 html body[data-theme="corporate"] .ah-assistant .ah-assistant__quick button,
 html body[data-theme="corporate"] .ah-assistant .ah-assistant__voice,
 html body[data-theme="corporate"] .ah-assistant .ah-assistant__input{background:#fff!important;color:#13283a!important;-webkit-text-fill-color:#13283a!important;text-shadow:none!important}
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel .ah-assistant__channel-icon,
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__close{background:#fff!important;background-image:none!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
 html body[data-theme="corporate"] :is(.btn,.cta-button,.checkout-btn,.payment-button,.pay-btn,.submit-btn,.buy-btn,.cart-btn,.add-to-cart,.search-btn,.login-btn,.platform-action,.platform-theme-btn,.pwa-install-button,.food-checkout,.store-btn,.module-ad-banner__button,.food-promo-btn,.ad-hero__button):not(.btn--ghost):not(.btn--light):not(.platform-action--secondary):not(.store-btn--app){background:linear-gradient(135deg,#123a56,#0a5e96)!important;border-color:rgba(18,58,86,.32)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
 html body[data-theme="corporate"] .module-ad-banner__content{width:min(560px,calc(100% - 48px))!important;min-height:auto!important;margin:24px!important;padding:clamp(20px,3.2vw,34px)!important;border:1px solid rgba(19,40,58,.14)!important;border-radius:8px!important;background:rgba(255,255,255,.92)!important;color:#102334!important;box-shadow:0 18px 42px rgba(19,40,58,.14)!important;text-shadow:none!important}
 html body[data-theme="corporate"] .module-ad-banner__content strong,

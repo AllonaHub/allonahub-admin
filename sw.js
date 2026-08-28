@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260828-corpcontrast3";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260828-corpcontrast4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -17,7 +17,7 @@ const APP_SHELL = [
   "./js/auth.js?v=20260629-partnerhost1",
   "./js/layout.v3.js?v=20260712-premium-page1",
   "./js/subdomain-router.js?v=20260629-subdomains1",
-  "./js/platform.js?v=20260828-corpcontrast3",
+  "./js/platform.js?v=20260828-corpcontrast4",
   "./js/turkic-world.js?v=20260827-country1",
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
   "./js/privacy-consent.js?v=20260826-active-modules1",
