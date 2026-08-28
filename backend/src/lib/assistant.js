@@ -42,6 +42,27 @@ const EXPLICIT_RAW_URL_TERMS = [
   "bağlantısı",
   "bağlantısını"
 ];
+const TEXT_ONLY_TERMS = [
+  "link atma",
+  "link verme",
+  "link gonderme",
+  "link gönderme",
+  "url atma",
+  "url verme",
+  "adres atma",
+  "adres verme",
+  "baglanti atma",
+  "baglanti verme",
+  "bağlantı atma",
+  "bağlantı verme",
+  "buton atma",
+  "buton verme",
+  "buton gonderme",
+  "buton gönderme",
+  "sadece anlat",
+  "sadece metin",
+  "metin olarak anlat"
+];
 export const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayınız. En kısa sürede temsilcimiz sizinle buradan iletişime geçecektir.";
 export const WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, canlı destek için sizi doğru kanala yönlendireyim. Web chat şu anda AI asistan olarak çalışıyor; gerçek temsilciye ulaşmak için Telegram botumuza veya WhatsApp destek hattımıza yazabilirsiniz. Aşağıdaki bağlantılardan size uygun olanı seçebilirsiniz.";
 export const LIVE_SUPPORT_CLOSED_MESSAGE = "Uzun süredir cevap vermediğiniz için müşteri temsilcimizle konuşmanız otomatik olarak sonlandırılmıştır. Dilerseniz tekrardan canlıya bağlanabilirsiniz.";
@@ -134,7 +155,31 @@ function stripRawUrlsWhenActions(value, actions = []) {
   return text || "Memnuniyetle yardımcı olayım. Size en uygun adımı seçebilmeniz için aşağıdaki seçenekleri hazırladım.";
 }
 
+function stripRawUrlsFromText(value, fallback = "Memnuniyetle yardımcı olayım. Size kısa ve net şekilde anlatayım.") {
+  const text = cleanAssistantText(value, config.assistant.maxReplyChars)
+    .replace(RAW_URL_PATTERN, "")
+    .replace(/\s*\|\s*/g, " ")
+    .replace(/\(\s*\)/g, "")
+    .replace(/\[\s*\]/g, "")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s*(?:buradan|şuradan|suradan|bu bağlantıdan|bu baglantidan|aşağıdaki bağlantıdan|asagidaki baglantidan)\s*[:：]?\s*$/iu, ".")
+    .replace(/\s*[:：]\s*([.!?])?$/u, (_match, punct) => punct || ".")
+    .replace(/\s+\./g, ".")
+    .replace(/\.{2,}/g, ".")
+    .trim();
+  return text || fallback;
+}
+
+function wantsTextOnly(message, metadata = {}) {
+  if (metadata?.textOnly === true || metadata?.suppressActions === true || metadata?.noLinks === true) return true;
+  const text = normalizeSearchText(`${message || ""} ${metadata?.intent || ""} ${metadata?.topic || ""}`);
+  if (!text) return false;
+  return TEXT_ONLY_TERMS.some((term) => text.includes(normalizeSearchText(term)));
+}
+
 function wantsRawUrl(message, metadata = {}) {
+  if (wantsTextOnly(message, metadata)) return false;
   if (metadata?.preferRawUrl === true || metadata?.rawUrlRequested === true) return true;
   const text = normalizeSearchText(`${message || ""} ${metadata?.intent || ""} ${metadata?.topic || ""}`);
   if (!text) return false;
@@ -1245,7 +1290,8 @@ function safeReplyText(value, fallback) {
 
 export async function generateAssistantReply({ message, channel, intent, context = {}, metadata = {}, request = null }) {
   const fallback = fallbackByIntent(intent, context, channel);
-  const fallbackActions = sanitizeAssistantActions(fallback.actions || []);
+  const textOnly = wantsTextOnly(message, metadata);
+  const fallbackActions = textOnly ? [] : sanitizeAssistantActions(fallback.actions || []);
   const rawUrlReply = rawUrlReplyForRequest(message, metadata, fallbackActions);
   if (rawUrlReply) {
     return {
@@ -1258,7 +1304,10 @@ export async function generateAssistantReply({ message, channel, intent, context
     };
   }
 
-  const fallbackText = stripRawUrlsWhenActions(stripRepeatedGreeting(fallback.text, context), fallbackActions);
+  const fallbackBaseText = stripRepeatedGreeting(fallback.text, context);
+  const fallbackText = textOnly
+    ? stripRawUrlsFromText(fallbackBaseText)
+    : stripRawUrlsWhenActions(fallbackBaseText, fallbackActions);
   let text = "";
   let provider = "fallback";
 
@@ -1269,11 +1318,14 @@ export async function generateAssistantReply({ message, channel, intent, context
     request?.log?.warn({ statusCode: error.statusCode || null, channel, intent: intent.key }, "Assistant AI fallback used");
   }
 
-  const messageText = stripRawUrlsWhenActions(safeReplyText(stripRepeatedGreeting(text, context), fallbackText), fallbackActions);
+  const safeText = safeReplyText(stripRepeatedGreeting(text, context), fallbackText);
+  const messageText = textOnly
+    ? stripRawUrlsFromText(safeText, fallbackText)
+    : stripRawUrlsWhenActions(safeText, fallbackActions);
   const shouldEscalateToLive = repeatsPreviousAssistantReply(messageText, context);
   const webchat = isWebchatChannel(channel);
 
-  if (shouldEscalateToLive) {
+  if (shouldEscalateToLive && !textOnly) {
     const redirectActions = sanitizeAssistantActions(webchat ? webchatLiveSupportActions() : fallbackActions);
     return {
       message: stripRawUrlsWhenActions(webchat ? WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE : LIVE_SUPPORT_REDIRECT_MESSAGE, redirectActions),

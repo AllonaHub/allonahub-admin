@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-chooser1";
+  const VERSION = "20260828-nolinks1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -110,6 +110,7 @@
   }
 
   function wantsRawUrlText(value) {
+    if (wantsTextOnly(value)) return false;
     const normalized = String(value || "")
       .toLocaleLowerCase("tr-TR")
       .replace(/ı/g, "i")
@@ -122,12 +123,33 @@
       .some((term) => normalized.includes(term));
   }
 
+  function wantsTextOnly(value) {
+    const normalized = String(value || "")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/ı/g, "i")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return ["link atma", "link verme", "link gonderme", "url atma", "url verme", "adres atma", "adres verme", "baglanti atma", "baglanti verme", "buton atma", "buton verme", "buton gonderme", "sadece anlat", "sadece metin", "metin olarak anlat"]
+      .some((term) => normalized.includes(term));
+  }
+
   function rawUrlReplyForRequest(message, reply) {
     if (!wantsRawUrlText(message)) return reply;
     const target = assistantActionButtons(reply && reply.actions || [])[0];
     if (!target) return reply;
     return {
       message: `${normalizeText(target.label, 44)} bağlantısı: ${target.url}`,
+      actions: []
+    };
+  }
+
+  function textOnlyReplyForRequest(message, reply) {
+    if (!wantsTextOnly(message)) return reply;
+    return {
+      message: stripUrlsForActions(reply && reply.message || "Memnuniyetle yardımcı olayım. Size kısa ve net şekilde anlatayım.", [{ type: "open_url", label: "Kaldır", url: window.location.href }]),
       actions: []
     };
   }
@@ -628,7 +650,7 @@
         appendMessage(messages, "assistant", result.message || "Canlı destek için Telegram veya WhatsApp hattımızdan bize ulaşabilirsiniz.", result.actions || []);
       } catch (error) {
         status.remove();
-        const fallback = rawUrlReplyForRequest(clean, localAssistantReply(clean));
+        const fallback = textOnlyReplyForRequest(clean, rawUrlReplyForRequest(clean, localAssistantReply(clean)));
         appendMessage(messages, "assistant", fallback.message || error.message || "Şu anda yanıt veremedim. Lütfen daha sonra tekrar deneyin.", fallback.actions || []);
       } finally {
         setBusy(false);

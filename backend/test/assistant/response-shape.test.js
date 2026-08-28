@@ -133,6 +133,22 @@ test("assistant helps users choose the right module", async () => {
   assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "Arama", "Destek / SSS"]);
 });
 
+test("assistant honors text-only requests without links or buttons", async () => {
+  const message = "Link atma, AllonaHub nedir kısaca anlatır mısın?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.equal(reply.actions.length, 0);
+  assert.match(reply.message, /AllonaHub/);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },
