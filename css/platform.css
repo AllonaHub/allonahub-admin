@@ -9403,3 +9403,10 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow {
     padding: 20px !important;
   }
 }
+
+html body.taxi-module-page[data-theme="corporate"] .live-pill,
+html body.taxi-module-page[data-theme="corporate"] .live-pill :where(span, strong, small, i) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}

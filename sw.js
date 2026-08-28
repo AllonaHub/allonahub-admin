@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260828-corpcontrast2";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260828-corpcontrast3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "./manifest.webmanifest?v=20260622-icon1",
   "./css/allonahub-home.css?v=20260828-cards1",
   "./css/turkic-world.css?v=20260827-country1",
-  "./css/platform.css?v=20260828-corporate3",
+  "./css/platform.css?v=20260828-corporate4",
   "./css/home-module-labels.std32.css?v=20260826-active-modules1",
   "./js/config.js?v=20260621-homeauth1",
   "./js/core.js?v=20260827-country1",
@@ -17,7 +17,7 @@ const APP_SHELL = [
   "./js/auth.js?v=20260629-partnerhost1",
   "./js/layout.v3.js?v=20260712-premium-page1",
   "./js/subdomain-router.js?v=20260629-subdomains1",
-  "./js/platform.js?v=20260828-corpcontrast2",
+  "./js/platform.js?v=20260828-corpcontrast3",
   "./js/turkic-world.js?v=20260827-country1",
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
   "./js/privacy-consent.js?v=20260826-active-modules1",

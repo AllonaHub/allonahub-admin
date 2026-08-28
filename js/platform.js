@@ -11,7 +11,7 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260828-corpcontrast2";
+  const SERVICE_WORKER_VERSION = "20260828-corpcontrast3";
 
   const refreshServiceWorker = () => {
     if(!("serviceWorker" in navigator)){return}
@@ -542,6 +542,11 @@ html body.taxi-module-page[data-theme="corporate"] .map-toolbar,
 html body.taxi-module-page[data-theme="corporate"] .live-map-shell,
 html body.taxi-module-page[data-theme="corporate"] .taxi-live-map{color:#fff!important;-webkit-text-fill-color:#fff!important}
 html body.taxi-module-page[data-theme="corporate"] .live-pill{background:rgba(2,8,20,.82)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.28)!important}
+html body.taxi-module-page[data-theme="corporate"] .live-pill,
+html body.taxi-module-page[data-theme="corporate"] .live-pill span,
+html body.taxi-module-page[data-theme="corporate"] .live-pill strong,
+html body.taxi-module-page[data-theme="corporate"] .live-pill small,
+html body.taxi-module-page[data-theme="corporate"] .live-pill i{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
 html body.taxi-module-page[data-theme="corporate"] .map-tool-btn{background:#123a56!important;background-image:linear-gradient(135deg,#123a56,#0a5e96)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.24)!important}
 html body.taxi-module-page[data-theme="corporate"] .leaflet-control-zoom a{background:#fff!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important}
 html body[data-theme="corporate"] .icon{background:#eef5fa!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
