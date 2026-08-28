@@ -1824,6 +1824,18 @@ body[data-theme="corporate"] .shop-category-trigger {
   gap: 8px;
 }
 
+.shop-category-mega.is-guided .shop-mega-col {
+  opacity: 0.5;
+  transition: opacity 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.shop-category-mega.is-guided .shop-mega-col.is-active {
+  opacity: 1;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ah-primary) 8%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ah-primary) 22%, transparent) inset;
+}
+
 .shop-mega-col h3 {
   margin: 0 0 8px;
   color: var(--ah-accent-soft) !important;

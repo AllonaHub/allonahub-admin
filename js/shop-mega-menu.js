@@ -282,10 +282,26 @@
     return `<a${className ? ` class="${className}"` : ""} href="${escapeHTML(href(label, category))}">${escapeHTML(label)}</a>`;
   }
 
-  function renderGroup(group, category) {
+  function bestGroupIndex(sidebarLabel, groups, fallbackIndex) {
+    const sidebarNorm = normalizeText(sidebarLabel);
+    const matchIndex = groups.findIndex(([title]) => {
+      const titleNorm = normalizeText(title);
+      return titleNorm && (sidebarNorm.includes(titleNorm) || titleNorm.includes(sidebarNorm));
+    });
+    return matchIndex >= 0 ? matchIndex : Math.min(fallbackIndex, Math.max(groups.length - 1, 0));
+  }
+
+  function renderSidebarLink(label, category, groups, index) {
+    const targetIndex = bestGroupIndex(label, groups, index);
+    const className = index === 0 ? "is-active" : "";
+    return `<a${className ? ` class="${className}"` : ""} href="${escapeHTML(href(label, category))}" data-shop-sidebar-link data-shop-group-index="${targetIndex}">${escapeHTML(label)}</a>`;
+  }
+
+  function renderGroup(group, category, index) {
     const [title, links] = group;
+    const activeClass = index === 0 ? " is-active" : "";
     return `
-      <div class="shop-mega-col">
+      <div class="shop-mega-col${activeClass}" data-shop-mega-group data-shop-group-index="${index}">
         <h3>${escapeHTML(title)}</h3>
         ${links.map((link) => renderLink(link, category)).join("")}
       </div>
@@ -299,10 +315,10 @@
         <a class="shop-category-trigger" href="${escapeHTML(href("", item.category))}" title="${escapeHTML(item.label)}" aria-haspopup="true" aria-expanded="false">${escapeHTML(item.label)}</a>
         <div class="shop-category-mega" role="menu" aria-label="${escapeHTML(item.label)} kategorileri">
           <div class="shop-mega-sidebar" aria-label="${escapeHTML(item.label)} alt kategorileri">
-            ${item.sidebar.map((link, index) => renderLink(link, item.category, index === 0 ? "is-active" : "")).join("")}
+            ${item.sidebar.map((link, index) => renderSidebarLink(link, item.category, item.groups, index)).join("")}
           </div>
           <div class="shop-mega-content">
-            ${item.groups.map((group) => renderGroup(group, item.category)).join("")}
+            ${item.groups.map((group, index) => renderGroup(group, item.category, index)).join("")}
           </div>
           <div class="shop-mega-spotlight">
             <div class="shop-mega-feature">
@@ -447,10 +463,28 @@
     });
   }
 
+  function activateSidebarGroup(item, groupIndex = 0) {
+    const panel = item?.querySelector(".shop-category-mega");
+    if (!panel) return;
+    const links = [...panel.querySelectorAll("[data-shop-sidebar-link]")];
+    const groups = [...panel.querySelectorAll("[data-shop-mega-group]")];
+    if (!groups.length) return;
+    const targetIndex = Math.max(0, Math.min(Number(groupIndex) || 0, groups.length - 1));
+    panel.classList.add("is-guided");
+    links.forEach((link) => {
+      link.classList.toggle("is-active", Number(link.dataset.shopGroupIndex) === targetIndex);
+    });
+    groups.forEach((group, index) => {
+      group.classList.toggle("is-active", index === targetIndex);
+    });
+  }
+
   function openMenuItem(nav, item) {
     closeMenus(nav);
     item.classList.add("is-open");
     item.querySelector(".shop-category-trigger")?.setAttribute("aria-expanded", "true");
+    const activeLink = item.querySelector("[data-shop-sidebar-link].is-active") || item.querySelector("[data-shop-sidebar-link]");
+    activateSidebarGroup(item, activeLink?.dataset.shopGroupIndex || 0);
   }
 
   function bindMenuInteractions(nav) {
@@ -469,6 +503,17 @@
       const item = event.target.closest(".shop-category-item");
       if (!item || !nav.contains(item)) return;
       openMenuItem(nav, item);
+      const sidebarLink = event.target.closest("[data-shop-sidebar-link]");
+      if (sidebarLink) activateSidebarGroup(item, sidebarLink.dataset.shopGroupIndex);
+    });
+
+    nav.addEventListener("pointerover", (event) => {
+      const sidebarLink = event.target.closest("[data-shop-sidebar-link]");
+      if (!sidebarLink || !nav.contains(sidebarLink)) return;
+      const item = sidebarLink.closest(".shop-category-item");
+      if (!item) return;
+      window.clearTimeout(closeTimer);
+      activateSidebarGroup(item, sidebarLink.dataset.shopGroupIndex);
     });
 
     nav.addEventListener("pointerleave", () => {
