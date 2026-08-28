@@ -178,20 +178,20 @@
           `).join("")}
         </div>
         <div class="container store-buttons" aria-label="AllonaHub mobil uygulama bağlantıları">
-          <a href="https://www.apple.com/app-store/" class="store-btn store-btn--app" data-store-icon="A" target="_blank" rel="noopener" aria-label="App Store'dan indir">
+          <span class="store-btn store-btn--app" data-store-icon="A" role="group" aria-label="Mobil uygulama yakında: App Store" aria-disabled="true">
             <span class="store-btn__icon store-btn__icon--apple" aria-hidden="true">${storeIcon("apple")}</span>
             <span class="store-btn__text">
-              <span class="store-btn__kicker">Download on the</span>
+              <span class="store-btn__kicker">Mobil uygulama yakında</span>
               <strong>App Store</strong>
             </span>
-          </a>
-          <a href="https://play.google.com/store" class="store-btn store-btn--app" data-store-icon="G" target="_blank" rel="noopener" aria-label="Google Play'den indir">
+          </span>
+          <span class="store-btn store-btn--app" data-store-icon="G" role="group" aria-label="Mobil uygulama yakında: Google Play" aria-disabled="true">
             <span class="store-btn__icon store-btn__icon--play" aria-hidden="true">${storeIcon("play")}</span>
             <span class="store-btn__text">
-              <span class="store-btn__kicker">GET IT ON</span>
+              <span class="store-btn__kicker">Mobil uygulama yakında</span>
               <strong>Google Play</strong>
             </span>
-          </a>
+          </span>
         </div>
         <div class="container footer-payment-strip" aria-label="AllonaHub güvenli ödeme altyapısı">
           <span>Güvenli ödeme altyapısı</span>
