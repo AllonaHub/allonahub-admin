@@ -149,6 +149,23 @@ test("assistant honors text-only requests without links or buttons", async () =>
   assert.match(reply.message, /AllonaHub/);
 });
 
+test("assistant gives step guidance for CV creation questions", async () => {
+  const message = "CV nasıl oluştururum?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "cv_howto");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /adım adım/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["CV Oluştur", "Kariyer", "Denizcilik CV"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

@@ -814,6 +814,34 @@ const SMART_FAQ_TOPICS = [
     ]
   },
   {
+    key: "cv_howto",
+    label: "CV oluşturma rehberi",
+    confidence: 0.91,
+    terms: [
+      "cv nasıl",
+      "cv nasil",
+      "cv oluşturma nasıl",
+      "cv olusturma nasil",
+      "cv nasıl oluşturulur",
+      "cv nasil olusturulur",
+      "cv nasıl oluştururum",
+      "cv nasil olustururum",
+      "cv hazırlama",
+      "cv hazirlama",
+      "özgeçmiş nasıl",
+      "ozgecmis nasil",
+      "özgeçmiş hazırla",
+      "ozgecmis hazirla"
+    ],
+    link: "smartCv",
+    actions: [
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Kariyer", link: "career" },
+      { label: "Denizcilik CV", link: "maritimeCv" }
+    ],
+    text: "Tabii, CV oluşturmayı adım adım sadeleştirelim. Önce iletişim ve deneyim bilgilerinizi girin, sonra eğitim/sertifika/yetenek alanlarını tamamlayın, son olarak PDF çıktısını kontrol edip uygun kariyer veya denizcilik başvurusuna geçin. Hangi alan için CV hazırladığınızı yazarsanız metni ona göre daha güçlü hale getirmenize de yardımcı olurum."
+  },
+  {
     key: "employer_hiring",
     label: "İşveren ve ilan verme",
     confidence: 0.87,

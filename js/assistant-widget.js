@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-nolinks1";
+  const VERSION = "20260828-cvhowto1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -218,6 +218,13 @@
       return {
         message: "AllonaHub; alışveriş, yemek, market, taksi, kariyer, denizcilik, akademi, partnerlik, HP/kupon ve destek katmanlarını tek ekosistemde toplayan dijital platformdur. Daha detaylı kurumsal bilgi için Hakkımızda sayfasına, sık sorulan konular için destek alanına geçebilirsin.",
         actions: [pageAction("Hakkımızda", "about"), pageAction("Hizmetler", "services"), pageAction("Destek / SSS", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["cv nasil", "cv olusturma nasil", "cv nasil olusturulur", "cv nasil olustururum", "cv hazirlama", "ozgecmis nasil", "ozgecmis hazirla"])) {
+      return {
+        message: "Tabii, CV oluşturmayı adım adım sadeleştirelim. Önce iletişim ve deneyim bilgilerini gir, sonra eğitim/sertifika/yetenek alanlarını tamamla, son olarak PDF çıktısını kontrol edip uygun kariyer veya denizcilik başvurusuna geç. Hangi alan için CV hazırladığını yazarsan metni ona göre daha güçlü hale getirmene de yardımcı olurum.",
+        actions: [pageAction("CV Oluştur", "smartCv"), pageAction("Kariyer", "career"), pageAction("Denizcilik CV", "maritimeCv")]
       };
     }
 
