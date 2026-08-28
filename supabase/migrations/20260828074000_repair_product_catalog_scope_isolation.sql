@@ -17,8 +17,7 @@ where module_key is null
 update public.products
 set
   module_key = 'market',
-  catalog_scope = 'market',
-  updated_at = coalesce(updated_at, now())
+  catalog_scope = 'market'
 where upper(coalesce(sku, '')) like 'ALM-%'
   and (
     module_key is distinct from 'market'
@@ -28,8 +27,7 @@ where upper(coalesce(sku, '')) like 'ALM-%'
 update public.products
 set
   module_key = 'food',
-  catalog_scope = 'food',
-  updated_at = coalesce(updated_at, now())
+  catalog_scope = 'food'
 where upper(coalesce(sku, '')) like 'ALY-%'
   and (
     module_key is distinct from 'food'
