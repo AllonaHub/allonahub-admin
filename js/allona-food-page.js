@@ -423,7 +423,8 @@
         <img src="${escape(mediaUrl(ad.image_url))}" alt="${escape(ad.title)}" loading="${index === 0 ? "eager" : "lazy"}">
         <div class="food-promo-content">
           <p class="food-eyebrow"><i class="fa-solid fa-bolt" aria-hidden="true"></i> ${escape(ad.subtitle)}</p>
-          <h${index === 0 ? "1 id=\"hero-title\"" : "2"}>${escape(ad.title)}</h${index === 0 ? "1" : "2"}>
+          ${index === 0 ? `<h1 id="hero-title">Allona Yemek restoran kampanyaları.</h1>` : ""}
+          <h2>${escape(ad.title)}</h2>
           <p>${escape(ad.description)}</p>
           <div class="food-promo-details">
             ${ad.price_label ? `<span class="food-promo-price">${escape(ad.price_label)}</span>` : ""}
