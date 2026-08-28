@@ -650,6 +650,19 @@ const CORE_TOPICS = [
 
 const SMART_FAQ_TOPICS = [
   {
+    key: "free_pricing",
+    label: "Ücretsiz kullanım ve paketler",
+    confidence: 0.9,
+    terms: ["ücretsiz mi", "ucretsiz mi", "ücretli mi", "ucretli mi", "bedava", "para öder miyim", "para oder miyim", "ödeme gerekiyor mu", "odeme gerekiyor mu", "ücret ödemeden", "ucret odemeden", "masraf olur mu"],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "Premium", link: "premium" },
+      { label: "Partner Ol", link: "partner" }
+    ],
+    text: "AllonaHub’u keşfetmek, bilgi almak ve uygun hizmet yolunu seçmek için önce ücretsiz şekilde ilerleyebilirsiniz. Ücretli paket, komisyon veya ödeme gerektiren bir işlem varsa ilgili adımda ayrıca görünür; onayınız olmadan ödeme akışına sokulmazsınız. İsterseniz hedefinizi yazın, size ücretsiz başlayabileceğiniz en doğru yolu söyleyeyim."
+  },
+  {
     key: "pricing_commission",
     label: "Ücret, fiyat ve komisyon",
     confidence: 0.87,

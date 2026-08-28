@@ -99,6 +99,23 @@ test("assistant gives a guided start for unsure users", async () => {
   assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "CV Oluştur", "Partner Ol"]);
 });
 
+test("assistant clarifies free usage and paid steps without pushing payment", async () => {
+  const message = "AllonaHub ücretsiz mi, ücretli paket var mı?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "free_pricing");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.ok(/onayınız olmadan ödeme/i.test(reply.message));
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "Premium", "Partner Ol"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

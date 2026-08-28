@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-start1";
+  const VERSION = "20260828-free1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -25,6 +25,7 @@
     contact: "/pages/company/iletisim.html",
     about: "/pages/company/hakkimizda.html",
     academy: "/allonahub-akademi.html",
+    premium: "/pages/account/premium.html",
     partner: "/pages/partner/partner.html",
     orders: "/pages/account/orders.html",
     career: "/pages/career/allonakariyer.html",
@@ -173,6 +174,13 @@
       return {
         message: "Tabii, birlikte en doğru başlangıcı seçelim. İş arıyorsan CV oluşturma, işletme veya satış tarafındaysan partner başvurusu, platformu keşfetmek istiyorsan hizmetler alanı en hızlı adımdır. Hedefini bir cümleyle yazarsan cevabı doğrudan o yola göre hazırlarım.",
         actions: [pageAction("Hizmetler", "services"), pageAction("CV Oluştur", "smartCv"), pageAction("Partner Ol", "partner")]
+      };
+    }
+
+    if (hasAny(normalized, ["ucretsiz mi", "ucretli mi", "bedava", "para oder miyim", "odeme gerekiyor mu", "ucret odemeden", "masraf olur mu"])) {
+      return {
+        message: "AllonaHub’u keşfetmek, bilgi almak ve uygun hizmet yolunu seçmek için önce ücretsiz şekilde ilerleyebilirsin. Ücretli paket, komisyon veya ödeme gerektiren bir işlem varsa ilgili adımda ayrıca görünür; onayın olmadan ödeme akışına sokulmazsın.",
+        actions: [pageAction("Hizmetler", "services"), pageAction("Premium", "premium"), pageAction("Partner Ol", "partner")]
       };
     }
 
