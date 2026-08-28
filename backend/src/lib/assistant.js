@@ -795,6 +795,34 @@ const SMART_FAQ_TOPICS = [
     text: "Tabii, hesap erişimini güvenli şekilde toparlayalım. Şifrenizi sohbetten istemem; Giriş sayfasındaki Şifremi Unuttum alanına kayıtlı e-posta adresinizi yazıp sıfırlama bağlantısını talep edin. E-posta gelmezse spam klasörünü kontrol edin; sorun sürerse destek ekibine kısa bir kayıt bırakabilirsiniz."
   },
   {
+    key: "address_management",
+    label: "Adres yönetimi",
+    confidence: 0.9,
+    terms: [
+      "adresimi nasıl",
+      "adresimi nasil",
+      "adresimi değiştir",
+      "adresimi degistir",
+      "adres değiştirme",
+      "adres degistirme",
+      "adres güncelle",
+      "adres guncelle",
+      "adres ekle",
+      "yeni adres",
+      "teslimat adresi",
+      "fatura adresi",
+      "adreslerim",
+      "adres bilgisi"
+    ],
+    link: "addresses",
+    actions: [
+      { label: "Adreslerim", link: "addresses" },
+      { label: "Profil", link: "profile" },
+      { label: "Giriş Yap", link: "login" }
+    ],
+    text: "Tabii, adres işlemini güvenli şekilde yönlendireyim. Giriş yaptıktan sonra Adreslerim alanından teslimat veya fatura adresi ekleyebilir, mevcut adresinizi düzenleyebilir ve varsayılan adresinizi seçebilirsiniz. Tam adres bilgisini sohbet içinde paylaşmanıza gerek yok; özel hata alırsanız destek ekibi kayıt üzerinden yardımcı olur."
+  },
+  {
     key: "trust_safety",
     label: "Güven, güvenlik ve doğrulama",
     confidence: 0.88,

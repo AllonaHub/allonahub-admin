@@ -99,7 +99,7 @@ test("assistant sends a raw URL when the user asks for a page address", async ()
   assert.deepEqual(reply.actions, []);
 });
 
-test("assistant does not confuse account address questions with link requests", async () => {
+test("assistant gives address management guidance without confusing it with link requests", async () => {
   const message = "Adresimi nasıl değiştirebilirim?";
   const intent = detectAssistantIntent(message);
   const reply = await generateAssistantReply({
@@ -110,10 +110,10 @@ test("assistant does not confuse account address questions with link requests", 
     metadata: {}
   });
 
-  assert.equal(intent.key, "account_access");
+  assert.equal(intent.key, "address_management");
   assert.equal(RAW_URL_PATTERN.test(reply.message), false);
-  assert.doesNotMatch(reply.message, /için:\s*(Yeni|Şifre)/i);
-  assert.deepEqual(reply.actions.map((action) => action.label), ["Giriş Yap", "Kayıt Ol", "Profil"]);
+  assert.match(reply.message, /Adreslerim/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Adreslerim", "Profil", "Giriş Yap"]);
 });
 
 test("assistant gives a guided start for unsure users", async () => {

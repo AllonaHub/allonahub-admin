@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-urlintent1";
+  const VERSION = "20260828-address1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -30,6 +30,8 @@
     partner: "/pages/partner/partner.html",
     login: "/pages/account/user.html",
     forgotPassword: "/pages/account/user.html?tab=forgot",
+    profile: "/pages/account/profil.html",
+    addresses: "/pages/account/addresses.html",
     orders: "/pages/account/orders.html",
     career: "/pages/career/allonakariyer.html",
     smartCv: "/pages/career/career-cv-form.html",
@@ -214,6 +216,13 @@
       return {
         message: "Tabii, hesap erişimini güvenli şekilde toparlayalım. Şifreni sohbetten istemem; Giriş sayfasındaki Şifremi Unuttum alanına kayıtlı e-posta adresini yazıp sıfırlama bağlantısını talep et. E-posta gelmezse spam klasörünü kontrol et; sorun sürerse destek ekibine kısa bir kayıt bırakabilirsin.",
         actions: [pageAction("Şifremi Unuttum", "forgotPassword"), pageAction("Giriş Yap", "login"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["adresimi nasil", "adresimi degistir", "adres degistirme", "adres guncelle", "adres ekle", "yeni adres", "teslimat adresi", "fatura adresi", "adreslerim", "adres bilgisi"])) {
+      return {
+        message: "Tabii, adres işlemini güvenli şekilde yönlendireyim. Giriş yaptıktan sonra Adreslerim alanından teslimat veya fatura adresi ekleyebilir, mevcut adresini düzenleyebilir ve varsayılan adresini seçebilirsin. Tam adres bilgisini sohbet içinde paylaşmana gerek yok; özel hata alırsan destek ekibi kayıt üzerinden yardımcı olur.",
+        actions: [pageAction("Adreslerim", "addresses"), pageAction("Profil", "profile"), pageAction("Giriş Yap", "login")]
       };
     }
 
