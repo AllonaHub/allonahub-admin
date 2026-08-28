@@ -259,6 +259,7 @@ const PLATFORM_LINKS = Object.freeze({
   academy: "/allonahub-akademi.html",
   login: "/pages/account/user.html",
   register: "/pages/account/user.html?tab=register",
+  forgotPassword: "/pages/account/user.html?tab=forgot",
   account: "/pages/account/user-panel.html",
   profile: "/pages/account/profil.html",
   addresses: "/pages/account/addresses.html",
@@ -763,6 +764,37 @@ const SMART_FAQ_TOPICS = [
       ({ platformUrl }) => `Elbette. AllonaHub web tabanlı çalışır; desteklenen cihazlarda tarayıcı menüsünden ana ekrana ekleyerek uygulama gibi kullanabilirsiniz. Başlangıç için ana sayfa: ${platformUrl("home")}`,
       ({ platformUrl }) => `Mobil kullanım için siteyi telefonunuzda açıp ana ekrana ekleyebilirsiniz. Böylece AllonaHub’a uygulama hissiyle hızlı erişirsiniz: ${platformUrl("home")}`
     ]
+  },
+  {
+    key: "password_reset",
+    label: "Şifre sıfırlama ve giriş desteği",
+    confidence: 0.91,
+    terms: [
+      "şifremi unuttum",
+      "sifremi unuttum",
+      "şifre sıfırlama",
+      "sifre sifirlama",
+      "şifre yenileme",
+      "sifre yenileme",
+      "parolamı unuttum",
+      "parolami unuttum",
+      "parola sıfırlama",
+      "parola sifirlama",
+      "giriş yapamıyorum",
+      "giris yapamiyorum",
+      "hesabıma giremiyorum",
+      "hesabima giremiyorum",
+      "hesap erişimi",
+      "hesap erisimi",
+      "reset password"
+    ],
+    link: "forgotPassword",
+    actions: [
+      { label: "Şifremi Unuttum", link: "forgotPassword" },
+      { label: "Giriş Yap", link: "login" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "Tabii, hesap erişimini güvenli şekilde toparlayalım. Şifrenizi sohbetten istemem; Giriş sayfasındaki Şifremi Unuttum alanına kayıtlı e-posta adresinizi yazıp sıfırlama bağlantısını talep edin. E-posta gelmezse spam klasörünü kontrol edin; sorun sürerse destek ekibine kısa bir kayıt bırakabilirsiniz."
   },
   {
     key: "trust_safety",

@@ -183,6 +183,23 @@ test("assistant explains how to place an order without treating it as tracking",
   assert.deepEqual(reply.actions.map((action) => action.label), ["Allona Shop", "Sepet", "Kuponlar"]);
 });
 
+test("assistant gives secure password reset guidance", async () => {
+  const message = "Şifremi unuttum, giriş yapamıyorum";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "password_reset");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /sohbetten istemem/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Şifremi Unuttum", "Giriş Yap", "Destek"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

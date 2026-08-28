@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-orderhowto1";
+  const VERSION = "20260828-passreset1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -28,6 +28,8 @@
     academy: "/allonahub-akademi.html",
     premium: "/pages/account/premium.html",
     partner: "/pages/partner/partner.html",
+    login: "/pages/account/user.html",
+    forgotPassword: "/pages/account/user.html?tab=forgot",
     orders: "/pages/account/orders.html",
     career: "/pages/career/allonakariyer.html",
     smartCv: "/pages/career/career-cv-form.html",
@@ -204,6 +206,13 @@
       return {
         message: "AllonaHub’u keşfetmek, bilgi almak ve uygun hizmet yolunu seçmek için önce ücretsiz şekilde ilerleyebilirsin. Ücretli paket, komisyon veya ödeme gerektiren bir işlem varsa ilgili adımda ayrıca görünür; onayın olmadan ödeme akışına sokulmazsın.",
         actions: [pageAction("Hizmetler", "services"), pageAction("Premium", "premium"), pageAction("Partner Ol", "partner")]
+      };
+    }
+
+    if (hasAny(normalized, ["sifremi unuttum", "sifre sifirlama", "sifre yenileme", "parolami unuttum", "parola sifirlama", "giris yapamiyorum", "hesabima giremiyorum", "hesap erisimi", "reset password"])) {
+      return {
+        message: "Tabii, hesap erişimini güvenli şekilde toparlayalım. Şifreni sohbetten istemem; Giriş sayfasındaki Şifremi Unuttum alanına kayıtlı e-posta adresini yazıp sıfırlama bağlantısını talep et. E-posta gelmezse spam klasörünü kontrol et; sorun sürerse destek ekibine kısa bir kayıt bırakabilirsin.",
+        actions: [pageAction("Şifremi Unuttum", "forgotPassword"), pageAction("Giriş Yap", "login"), pageAction("Destek", "support")]
       };
     }
 
