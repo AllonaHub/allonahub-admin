@@ -217,50 +217,12 @@
     return items;
   }
 
-  function adminNotifications(profile) {
-    return [
-      notification(
-        `admin:rules:${todayKey()}`,
-        "admin",
-        "AllonaHub yönetim bildirimi",
-        "HP ve kupon kullanım kuralları panelinde güncel şekilde uygulanır.",
-        new Date().toISOString(),
-        "/pages/account/rewards.html",
-        "info",
-        "admin"
-      ),
-      notification(
-        `admin:documents:${profile?.user_id || profile?.id || "profile"}`,
-        "admin",
-        "Belge onay akışı",
-        "Yüklenen belgeler onaylanmadan partnerlerle paylaşılmaz.",
-        new Date().toISOString(),
-        "/pages/account/belgeler.html",
-        "warning",
-        "admin"
-      )
-    ];
+  function adminNotifications() {
+    return [];
   }
 
-  function jobNotifications(profile) {
-    if (!profile || !profile.profession_key || profile.profession_key === "other_profession") return [];
-    const isMaritime = sync && sync.isMaritimeProfile ? sync.isMaritimeProfile(profile) : false;
-    const title = isMaritime ? "Gemi işleri bildirimi" : "Mesleğine uygun iş bildirimi";
-    const message = isMaritime
-      ? `${profile.profession_name || "Denizcilik"} pozisyonuna uygun ilanlar sadece ilgili role göre gösterilir.`
-      : `${profile.profession_name || "Meslek"} için uygun iş ve partner fırsatları hazırlandığında burada görünür.`;
-    return [
-      notification(
-        `job:${profile.sector_key || "general"}:${profile.profession_key}`,
-        "job",
-        title,
-        message,
-        new Date().toISOString(),
-        "/pages/account/is-ilanlari.html",
-        "info",
-        "job"
-      )
-    ];
+  function jobNotifications() {
+    return [];
   }
 
   async function load(options) {
@@ -273,7 +235,7 @@
         notifications: [
           notification("guest:login", "account", "Bildirimler için giriş yap", "Sipariş, kupon ve destek bildirimlerini görmek için hesabına giriş yap.", new Date().toISOString(), "/pages/account/user.html", "warning", "panel")
         ],
-        unreadCount: 1
+        unreadCount: 0
       };
     }
 
