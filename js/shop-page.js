@@ -261,6 +261,13 @@
     });
   }
 
+  function setCategorySelectValue(value) {
+    const categorySelect = document.querySelector("[data-filter-category]");
+    if (!categorySelect || !value) return;
+    const option = [...categorySelect.options].find((item) => item.value === value || item.textContent.trim() === value);
+    if (option) categorySelect.value = option.value;
+  }
+
   function syncFiltersFromParams() {
     const searchInput = document.querySelector("[data-filter-search]");
     const categorySelect = document.querySelector("[data-filter-category]");
@@ -273,7 +280,7 @@
     const quick = core.getParam("quick");
 
     if (searchInput && q) searchInput.value = q;
-    if (categorySelect && category) categorySelect.value = category;
+    if (categorySelect && category) setCategorySelectValue(category);
     if (brandSelect && brand) brandSelect.value = brand;
     if (sortSelect && sort) sortSelect.value = sort;
     if (quick) setQuickFilter(quick);
@@ -562,6 +569,7 @@
     if (reset) {
       reset.addEventListener("click", () => {
         form.reset();
+        setCategorySelectValue(categoryPreset());
         setQuickFilter("");
         if (window.history && window.location.search) {
           window.history.replaceState(null, "", window.location.pathname);
