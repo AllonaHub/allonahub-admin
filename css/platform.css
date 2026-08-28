@@ -7898,6 +7898,19 @@ body[data-theme="corporate"] .site-footer .footer-payment-badge {
   --shop-module-gap: 16px;
 }
 
+.shop-landing__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .shop-landing > .shop-category-menu--top,
 .shop-landing .shop-shortcut-rail,
 .shop-landing .shop-campaign-strip,
