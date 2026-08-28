@@ -823,6 +823,38 @@ const SMART_FAQ_TOPICS = [
     text: "Tabii, adres işlemini güvenli şekilde yönlendireyim. Giriş yaptıktan sonra Adreslerim alanından teslimat veya fatura adresi ekleyebilir, mevcut adresinizi düzenleyebilir ve varsayılan adresinizi seçebilirsiniz. Tam adres bilgisini sohbet içinde paylaşmanıza gerek yok; özel hata alırsanız destek ekibi kayıt üzerinden yardımcı olur."
   },
   {
+    key: "invoice_receipt",
+    label: "Fatura ve ödeme belgesi",
+    confidence: 0.9,
+    terms: [
+      "faturam",
+      "faturamı",
+      "faturami",
+      "fatura nerede",
+      "fatura indir",
+      "fatura nasıl alırım",
+      "fatura nasil alirim",
+      "fatura nasıl alınır",
+      "fatura nasil alinir",
+      "e fatura",
+      "e-fatura",
+      "makbuz",
+      "fiş",
+      "fis",
+      "ödeme belgesi",
+      "odeme belgesi",
+      "fatura kesilecek mi",
+      "kurumsal fatura"
+    ],
+    link: "orders",
+    actions: [
+      { label: "Siparişlerim", link: "orders" },
+      { label: "Belgeler", link: "documents" },
+      { label: "Destek", link: "support" }
+    ],
+    text: "Tabii, fatura ve ödeme belgesi konusunda yardımcı olayım. Fatura/makbuz işlemi siparişe bağlı ilerler; giriş yaptıktan sonra Siparişlerim veya Belgeler alanında oluşan belgeyi kontrol edebilirsiniz. Kurumsal fatura gerekiyorsa ödeme öncesi fatura bilgilerini doğru girdiğinizden emin olun; siparişe özel eksik belge varsa sipariş numarasıyla destek kaydı açmanız en sağlıklı yol olur."
+  },
+  {
     key: "trust_safety",
     label: "Güven, güvenlik ve doğrulama",
     confidence: 0.88,

@@ -116,6 +116,23 @@ test("assistant gives address management guidance without confusing it with link
   assert.deepEqual(reply.actions.map((action) => action.label), ["Adreslerim", "Profil", "Giriş Yap"]);
 });
 
+test("assistant gives invoice download guidance without generic payment fallback", async () => {
+  const message = "Faturamı nereden indirebilirim?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "invoice_receipt");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /Siparişlerim/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Siparişlerim", "Belgeler", "Destek"]);
+});
+
 test("assistant gives a guided start for unsure users", async () => {
   const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
   const intent = detectAssistantIntent(message);

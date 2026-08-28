@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-address1";
+  const VERSION = "20260828-invoice1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -32,6 +32,7 @@
     forgotPassword: "/pages/account/user.html?tab=forgot",
     profile: "/pages/account/profil.html",
     addresses: "/pages/account/addresses.html",
+    documents: "/pages/account/belgeler.html",
     orders: "/pages/account/orders.html",
     career: "/pages/career/allonakariyer.html",
     smartCv: "/pages/career/career-cv-form.html",
@@ -223,6 +224,13 @@
       return {
         message: "Tabii, adres işlemini güvenli şekilde yönlendireyim. Giriş yaptıktan sonra Adreslerim alanından teslimat veya fatura adresi ekleyebilir, mevcut adresini düzenleyebilir ve varsayılan adresini seçebilirsin. Tam adres bilgisini sohbet içinde paylaşmana gerek yok; özel hata alırsan destek ekibi kayıt üzerinden yardımcı olur.",
         actions: [pageAction("Adreslerim", "addresses"), pageAction("Profil", "profile"), pageAction("Giriş Yap", "login")]
+      };
+    }
+
+    if (hasAny(normalized, ["faturam", "faturami", "fatura nerede", "fatura indir", "fatura nasil alirim", "fatura nasil alinir", "e fatura", "makbuz", "fis", "odeme belgesi", "fatura kesilecek mi", "kurumsal fatura"])) {
+      return {
+        message: "Tabii, fatura ve ödeme belgesi konusunda yardımcı olayım. Fatura/makbuz işlemi siparişe bağlı ilerler; giriş yaptıktan sonra Siparişlerim veya Belgeler alanında oluşan belgeyi kontrol edebilirsin. Kurumsal fatura gerekiyorsa ödeme öncesi fatura bilgilerini doğru girdiğinden emin ol; siparişe özel eksik belge varsa sipariş numarasıyla destek kaydı açman en sağlıklı yol olur.",
+        actions: [pageAction("Siparişlerim", "orders"), pageAction("Belgeler", "documents"), pageAction("Destek", "support")]
       };
     }
 
