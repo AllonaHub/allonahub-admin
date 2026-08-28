@@ -50,6 +50,23 @@ test("assistant greeting replies are capped to three action buttons", async () =
   assert.equal(reply.actions.length, 3);
 });
 
+test("assistant explains itself when users ask who it is", async () => {
+  const message = "Sen kimsin, ne yapabilirsin?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "assistant_identity");
+  assert.match(reply.message, /AllonaHub AI destek asistan/i);
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.ok(reply.actions.length <= 3);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

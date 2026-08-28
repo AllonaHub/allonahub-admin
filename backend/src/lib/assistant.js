@@ -389,6 +389,19 @@ const CORE_TOPICS = [
     text: "Rica ederim, burada sizin için varım. İsterseniz şimdi CV, denizcilik, partnerlik, sipariş, akademi veya destek konularından biriyle devam edebiliriz."
   },
   {
+    key: "assistant_identity",
+    label: "Asistan kimliği ve yetenekleri",
+    confidence: 0.86,
+    terms: ["sen kimsin", "kimsin", "ne yapabilirsin", "neler yapabilirsin", "bot musun", "asistan mısın", "asistan misin", "nasıl yardımcı olursun", "nasil yardimci olursun", "hangi konularda yardımcı", "hangi konularda yardimci"],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "CV Oluştur", link: "smartCv" },
+      { label: "Destek / SSS", link: "support" }
+    ],
+    text: "Ben AllonaHub AI destek asistanıyım. Sipariş, hesap, CV-kariyer, denizcilik, partnerlik, akademi, HP/kupon, ödeme, iade ve platform kullanımı gibi konularda niyetinizi anlayıp kısa ve doğru cevap vermeye çalışırım. Özel işlem veya hesap bilgisi gerekiyorsa sizi güvenli sayfaya ya da destek ekibine yönlendiririm."
+  },
+  {
     key: "platform_overview",
     label: "AllonaHub hakkında",
     confidence: 0.82,
