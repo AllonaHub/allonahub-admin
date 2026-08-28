@@ -2,7 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
-  const QUICK_FILTERS = ["deals", "coupon", "fast", "free_shipping", "top"];
+  const QUICK_FILTERS = ["deals", "coupon", "fast", "free_shipping", "rated", "top"];
   let products = [];
   let heroAds = [];
 
@@ -84,8 +84,12 @@
     return product.price >= Number(App.config?.freeShippingThreshold || 1500) || /ücretsiz/i.test(product.delivery_label || "");
   }
 
+  function hasHighRating(product) {
+    return Number(product.rating || product.average_rating || 0) >= 4.5;
+  }
+
   function hasTopSignal(product) {
-    return product.sold_count >= 100 || product.rating >= 4.7;
+    return product.sold_count >= 100 || Number(product.rating || product.average_rating || 0) >= 4.7;
   }
 
   function quickFilterMatches(product, value) {
@@ -94,6 +98,7 @@
       || (value === "coupon" && hasCoupon(product))
       || (value === "fast" && hasFastDelivery(product))
       || (value === "free_shipping" && hasFreeShipping(product))
+      || (value === "rated" && hasHighRating(product))
       || (value === "top" && hasTopSignal(product));
   }
 
@@ -182,6 +187,30 @@
     });
   }
 
+  function ratingLabel(product) {
+    const rating = Number(product.rating || product.average_rating || 0);
+    if (!rating) return "";
+    const safeRating = Math.max(0, Math.min(5, rating)).toFixed(1);
+    const reviewCount = Number(product.review_count || product.reviews_count || product.rating_count || 0);
+    return reviewCount ? `${safeRating} (${reviewCount})` : safeRating;
+  }
+
+  function prepareProductRatings(node, items) {
+    const productsById = new Map(items.map((item) => {
+      const product = core.normalizeProduct(item);
+      return [String(product.id), product];
+    }));
+    node.querySelectorAll(".product-card").forEach((card) => {
+      const ratingNode = card.querySelector(".product-rating");
+      const product = productsById.get(String(card.dataset.productCard || ""));
+      if (!ratingNode || !product) return;
+      const label = ratingLabel(product);
+      ratingNode.textContent = label ? `★ ${label}` : "Puan bekleniyor";
+      ratingNode.setAttribute("aria-label", label ? `Ürün puanı ${label}` : "Ürün puanı bekleniyor");
+      ratingNode.classList.toggle("product-rating--pending", !label);
+    });
+  }
+
   function renderGrid(target, items) {
     const node = resolveGridNode(target);
     if (!node) return;
@@ -194,6 +223,7 @@
       return;
     }
     node.innerHTML = visibleItems.map(core.productCard).join("");
+    prepareProductRatings(node, visibleItems);
     prepareProductImages(node);
   }
 
