@@ -4,6 +4,7 @@
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const QUICK_FILTERS = ["deals", "coupon", "fast", "free_shipping", "rated", "top"];
   const FILTER_QUERY_KEYS = ["q", "category", "brand", "min", "max", "sort", "quick"];
+  const PRICE_PENDING_LABEL = "Fiyat bilgisi bekleniyor";
   let products = [];
   let heroAds = [];
 
@@ -27,6 +28,86 @@
   function categoryPreset() {
     const shell = document.querySelector(".site-shell[data-shop-category]");
     return shell?.dataset.shopCategory || "";
+  }
+
+  function isUnsafeShopLabel(value) {
+    const label = String(value || "").trim();
+    return !label || /^(\[object object\]|undefined|null|nan)$/i.test(label);
+  }
+
+  function isGenericShopCategory(value) {
+    const normalized = App.shopCategories?.normalizeText
+      ? App.shopCategories.normalizeText(value)
+      : String(value || "").trim().toLocaleLowerCase("tr-TR");
+    return normalized === "genel";
+  }
+
+  function shopLabel(value, fallback = "") {
+    const label = core.labelFromValue ? core.labelFromValue(value, "") : String(value || "").trim();
+    return isUnsafeShopLabel(label) ? fallback : label;
+  }
+
+  function firstShopLabel(values, fallback = "") {
+    for (const value of values) {
+      const label = shopLabel(value, "");
+      if (label) return label;
+    }
+    return fallback;
+  }
+
+  function firstSpecificShopLabel(values, fallback = "") {
+    for (const value of values) {
+      const label = shopLabel(value, "");
+      if (label && !isGenericShopCategory(label)) return label;
+    }
+    return fallback;
+  }
+
+  function safeNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function hasSalePrice(product) {
+    return safeNumber(product?.price, 0) > 0;
+  }
+
+  function normalizeShopProduct(raw) {
+    const product = raw || {};
+    const item = core.normalizeProduct(product);
+    const category = firstShopLabel([item.category, product.category_name, product.categoryName, product.category], "Genel");
+    const brand = firstShopLabel([item.brand, product.brand_name, product.brandName, product.manufacturer], "");
+    const name = firstShopLabel([item.name, product.product_name], "Ürün");
+    const description = firstShopLabel([item.description, product.short_description], "");
+    const sellerName = firstShopLabel([item.seller_name, item.seller_public_name, product.partner_name, product.store_name, product.shop_name, brand], "AllonaHub");
+    const sellerPublicName = firstShopLabel([item.seller_public_name, sellerName], sellerName);
+
+    return {
+      ...item,
+      name,
+      description,
+      category,
+      brand,
+      seller_name: sellerName,
+      seller_public_name: sellerPublicName,
+      meta_title: firstShopLabel([item.meta_title, name], name),
+      meta_description: firstShopLabel([item.meta_description, description], description),
+      price: safeNumber(item.price),
+      stock: safeNumber(item.stock),
+      sold_count: safeNumber(item.sold_count),
+      compare_at_price: safeNumber(item.compare_at_price),
+      discount_percent: safeNumber(item.discount_percent),
+      rating: safeNumber(item.rating),
+      review_count: safeNumber(item.review_count),
+      favorite_count: safeNumber(item.favorite_count),
+      view_count: safeNumber(item.view_count),
+      cart_count: safeNumber(item.cart_count),
+      seller_score: safeNumber(item.seller_score)
+    };
+  }
+
+  function normalizeShopProducts(productList) {
+    return (productList || []).map(normalizeShopProduct);
   }
 
   function filtersFromDom() {
@@ -114,13 +195,14 @@
     const min = priceFilterToBase(filters.minPrice);
     const max = priceFilterToBase(filters.maxPrice);
 
-    const productCategory = core.labelFromValue ? core.labelFromValue(product.category, "") : String(product.category || "");
-    const text = `${product.name} ${product.description} ${productCategory} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
+    const productCategory = shopLabel(product.category, "");
+    const productBrand = shopLabel(product.brand, "");
+    const text = [product.name, product.description, productCategory, productBrand].map((value) => shopLabel(value, "")).join(" ").toLocaleLowerCase("tr-TR");
     const searchOk = !q || text.includes(q);
     const categoryOk = !category || (App.shopCategories?.productMatchesCategory
       ? App.shopCategories.productMatchesCategory(product, filters.category)
       : productCategory.toLocaleLowerCase("tr-TR") === category);
-    const brandOk = !brand || String(product.brand || "").toLocaleLowerCase("tr-TR") === brand;
+    const brandOk = !brand || productBrand.toLocaleLowerCase("tr-TR") === brand;
     const minOk = !min || product.price >= min;
     const maxOk = !max || product.price <= max;
     return searchOk && categoryOk && brandOk && minOk && maxOk && quickFilterMatches(product, filters.quick);
@@ -202,7 +284,7 @@
 
   function prepareProductRatings(node, items) {
     const productsById = new Map(items.map((item) => {
-      const product = core.normalizeProduct(item);
+      const product = normalizeShopProduct(item);
       return [String(product.id), product];
     }));
     node.querySelectorAll(".product-card").forEach((card) => {
@@ -213,6 +295,36 @@
       ratingNode.textContent = label ? `★ ${label}` : "Puan bekleniyor";
       ratingNode.setAttribute("aria-label", label ? `Ürün puanı ${label}` : "Ürün puanı bekleniyor");
       ratingNode.classList.toggle("product-rating--pending", !label);
+    });
+  }
+
+  function markPendingPriceCards(node, items) {
+    const productsById = new Map(items.map((item) => {
+      const product = normalizeShopProduct(item);
+      return [String(product.id), product];
+    }));
+    node.querySelectorAll(".product-card").forEach((card) => {
+      const product = productsById.get(String(card.dataset.productCard || ""));
+      if (!product || hasSalePrice(product)) return;
+
+      card.dataset.pricePending = "true";
+      const price = card.querySelector(".price");
+      if (price) {
+        price.textContent = PRICE_PENDING_LABEL;
+        price.setAttribute("aria-label", PRICE_PENDING_LABEL);
+        price.removeAttribute("data-currency-price");
+        price.removeAttribute("data-base-price");
+        price.removeAttribute("data-source-currency");
+      }
+      card.querySelectorAll(".compare-price").forEach((comparePrice) => comparePrice.remove());
+
+      const addButton = card.querySelector("[data-add-product]");
+      if (addButton) {
+        addButton.disabled = true;
+        addButton.setAttribute("aria-disabled", "true");
+        addButton.title = "Fiyat bilgisi tamamlandığında sepete eklenebilir.";
+        addButton.textContent = "Fiyat Bekleniyor";
+      }
     });
   }
 
@@ -229,6 +341,7 @@
     }
     node.innerHTML = visibleItems.map(core.productCard).join("");
     prepareProductRatings(node, visibleItems);
+    markPendingPriceCards(node, visibleItems);
     prepareProductImages(node);
   }
 
@@ -252,18 +365,19 @@
         .filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "tr"));
     const categories = rawCategories
-      .map((category) => core.labelFromValue ? core.labelFromValue(category, "") : String(category || ""))
+      .map((category) => shopLabel(category, ""))
       .filter((category) => {
         const normalized = App.shopCategories?.normalizeText ? App.shopCategories.normalizeText(category) : category.toLocaleLowerCase("tr-TR");
-        return category && category !== "[object Object]" && normalized !== "genel";
-      });
+        return category && normalized !== "genel";
+      })
+      .filter((category, index, list) => list.indexOf(category) === index);
     select.innerHTML = `<option value="">Tüm kategoriler</option>${categories.map((category) => `<option value="${core.escapeHTML(category)}">${core.escapeHTML(category)}</option>`).join("")}`;
   }
 
   function renderBrandOptions() {
     const select = document.querySelector("[data-filter-brand]");
     if (!select) return;
-    const brands = [...new Set(products.map((product) => product.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
+    const brands = [...new Set(products.map((product) => shopLabel(product.brand, "")).filter(Boolean))].sort((a, b) => a.localeCompare(b, "tr"));
     select.innerHTML = `<option value="">Tüm markalar</option>${brands.map((brand) => `<option value="${core.escapeHTML(brand)}">${core.escapeHTML(brand)}</option>`).join("")}`;
   }
 
@@ -435,9 +549,11 @@
   }
 
   function heroAdFromProduct(product) {
-    const item = core.normalizeProduct(product);
+    const item = normalizeShopProduct(product);
     const discountText = item.discount_label || (item.discount_percent ? `%${item.discount_percent} indirim` : "");
-    const campaignText = discountText || item.delivery_label || `${core.money(item.price)} / hızlı sepet`;
+    const campaignText = hasSalePrice(item)
+      ? (discountText || item.delivery_label || `${core.money(item.price)} / hızlı sepet`)
+      : PRICE_PENDING_LABEL;
     const meta = [
       item.seller_name,
       item.rating ? `${item.rating.toFixed(1)} puan` : "",
@@ -446,31 +562,31 @@
 
     return {
       title: item.name,
-      subtitle: item.brand || item.category || "Partner Ürünü",
+      subtitle: firstSpecificShopLabel([item.brand, item.category], "Partner Ürünü"),
       campaign_text: campaignText,
       description: item.description || "Partner ürününü AllonaShop kataloğunda güvenli ödeme ve HP avantajıyla inceleyin.",
       image_url: item.image_url,
       cta_label: "Ürünü İncele",
       link_url: core.productUrl(item),
       source_id: item.id,
-      price_label: core.money(item.price),
+      price_label: hasSalePrice(item) ? core.money(item.price) : "",
       meta_label: meta,
       accent: "#00e5ff"
     };
   }
 
   function heroAdFromRecord(ad) {
-    const product = ad.product ? core.normalizeProduct(ad.product) : null;
+    const product = ad.product ? normalizeShopProduct(ad.product) : null;
     return {
-      title: ad.title || product?.name || "Partner reklamı",
-      subtitle: ad.subtitle || product?.brand || product?.category || "Günlük Partner Reklamı",
-      campaign_text: ad.campaign_text || product?.discount || product?.discount_label || "Bugüne özel görünürlük",
-      description: ad.description || product?.description || "Partner kampanyasını AllonaShop üst kataloğunda keşfedin.",
+      title: firstShopLabel([ad.title, product?.name], "Partner reklamı"),
+      subtitle: firstSpecificShopLabel([ad.subtitle, product?.brand, product?.category], "Günlük Partner Reklamı"),
+      campaign_text: firstShopLabel([ad.campaign_text, product?.discount, product?.discount_label], hasSalePrice(product) ? "Bugüne özel görünürlük" : PRICE_PENDING_LABEL),
+      description: firstShopLabel([ad.description, product?.description], "Partner kampanyasını AllonaShop üst kataloğunda keşfedin."),
       image_url: ad.image_url || product?.image_url || "/images/modules/allona-shop.png",
-      cta_label: ad.cta_label || "İncele",
+      cta_label: firstShopLabel([ad.cta_label], "İncele"),
       link_url: product ? core.productUrl(product) : (ad.link_url || "/pages/commerce/shop.html"),
       source_id: ad.id || product?.id,
-      price_label: product ? core.money(product.price) : "",
+      price_label: product && hasSalePrice(product) ? core.money(product.price) : "",
       meta_label: product ? [product.seller_name, product.rating ? `${product.rating.toFixed(1)} puan` : ""].filter(Boolean).join(" • ") : "",
       accent: ad.accent || "#00e5ff"
     };
@@ -478,16 +594,16 @@
 
   function heroAdFromModuleRecord(ad) {
     return {
-      title: ad.title || ad.name || "Allona Shop",
-      subtitle: ad.eyebrow || ad.label || "Günlük Vitrin",
-      campaign_text: ad.campaign_text || ad.campaignText || ad.partnerTier || "Üst banner yayını",
-      description: ad.sentence || ad.description || "Seçili ürün ve kampanyaları Allona Shop üst banner alanında keşfedin.",
+      title: firstShopLabel([ad.title, ad.name], "Allona Shop"),
+      subtitle: firstShopLabel([ad.eyebrow, ad.label], "Günlük Vitrin"),
+      campaign_text: firstShopLabel([ad.campaign_text, ad.campaignText, ad.partnerTier], "Üst banner yayını"),
+      description: firstShopLabel([ad.sentence, ad.description], "Seçili ürün ve kampanyaları Allona Shop üst banner alanında keşfedin."),
       image_url: ad.image || ad.image_url || "/images/ads/hero-ad-shop.jpg",
-      cta_label: ad.cta || ad.cta_label || "Alışverişe Git",
+      cta_label: firstShopLabel([ad.cta, ad.cta_label], "Alışverişe Git"),
       link_url: ad.href || ad.url || ad.link_url || "/pages/commerce/shop.html",
       source_id: ad.id || ad.slug || ad.title || ad.name,
-      price_label: ad.price_label || "",
-      meta_label: ad.meta_label || ad.visibilityRule || ad.partnerVisibility || "",
+      price_label: firstShopLabel([ad.price_label], ""),
+      meta_label: firstShopLabel([ad.meta_label, ad.visibilityRule, ad.partnerVisibility], ""),
       accent: safeAccent(ad.accent)
     };
   }
@@ -528,14 +644,14 @@
   function slideMarkup(ad, index) {
     const accent = safeAccent(ad.accent);
     const href = heroHref(ad.link_url || "/pages/commerce/shop.html");
-    const title = ad.title || "Allona Shop ürünü";
+    const title = shopLabel(ad.title, "Allona Shop ürünü");
     const description = core.truncate(ad.description || "Seçili ürünü Allona Shop kataloğunda inceleyin.", 132);
     const headingTag = index === 0 ? "h2" : "h3";
     return `
       <article class="shop-promo-slide ${index === 0 ? "is-active" : ""}" data-shop-promo-slide style="--module-ad-accent:${accent}">
         <img src="${core.escapeHTML(core.sanitizeUrl(ad.image_url, "/images/modules/allona-shop.png"))}" alt="${core.escapeHTML(title)}" loading="${index === 0 ? "eager" : "lazy"}">
         <div class="shop-promo-content">
-          <p class="eyebrow">${core.escapeHTML(ad.subtitle || "Allona Shop")}</p>
+          <p class="eyebrow">${core.escapeHTML(shopLabel(ad.subtitle, "Allona Shop"))}</p>
           <${headingTag}>${core.escapeHTML(title)}</${headingTag}>
           <p>${core.escapeHTML(description)}</p>
           <div class="shop-promo-details">
@@ -600,7 +716,7 @@
 
     try {
       const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 9000));
-      products = liveProducts;
+      products = normalizeShopProducts(liveProducts);
       if (!liveProducts.length) {
         console.warn("Supabase products aktif Allona Shop ürünü döndürmedi; yalnızca canlı katalog kullanılacak.");
       }
