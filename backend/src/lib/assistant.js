@@ -26,6 +26,22 @@ const PROMPT_INJECTION_PATTERN = /(ignore previous|system prompt|developer messa
 const SUPPORT_TICKET_PATTERN = /^\s*(destek|yardim|yardım)\s*$|(^|\s)(canli|canlı)(\s|$|[.!?])|canli destek|canlı destek|canliya bagla|canlıya bağla|canliya yonlendir|canlıya yönlendir|canliya al|canlıya al|destek istiyorum|destek lazim|destek lazım|destek al|destek ekibi|teknik destek|temsilci|operator|operatör|musteri temsilcisi|müşteri temsilcisi|insan destek|insana bagla|insana bağla|destek talebi olustur|destek talebi oluştur|ticket ac|ticket aç|talep ac|talep aç|sikayet kaydi|şikayet kaydı|beni arayin|beni arayın/i;
 const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
 const MAX_ASSISTANT_ACTIONS = 3;
+const EXPLICIT_RAW_URL_TERMS = [
+  "link",
+  "linki",
+  "linkini",
+  "url",
+  "urlsini",
+  "adres",
+  "adresi",
+  "adresini",
+  "baglanti",
+  "baglantisi",
+  "baglantisini",
+  "bağlantı",
+  "bağlantısı",
+  "bağlantısını"
+];
 export const LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, sizi canlı desteğe bağlıyorum. Lütfen bu sohbetten ayrılmayınız. En kısa sürede temsilcimiz sizinle buradan iletişime geçecektir.";
 export const WEBCHAT_LIVE_SUPPORT_REDIRECT_MESSAGE = "Tabii, canlı destek için sizi doğru kanala yönlendireyim. Web chat şu anda AI asistan olarak çalışıyor; gerçek temsilciye ulaşmak için Telegram botumuza veya WhatsApp destek hattımıza yazabilirsiniz. Aşağıdaki bağlantılardan size uygun olanı seçebilirsiniz.";
 export const LIVE_SUPPORT_CLOSED_MESSAGE = "Uzun süredir cevap vermediğiniz için müşteri temsilcimizle konuşmanız otomatik olarak sonlandırılmıştır. Dilerseniz tekrardan canlıya bağlanabilirsiniz.";
@@ -116,6 +132,21 @@ function stripRawUrlsWhenActions(value, actions = []) {
     .trim();
 
   return text || "Memnuniyetle yardımcı olayım. Size en uygun adımı seçebilmeniz için aşağıdaki seçenekleri hazırladım.";
+}
+
+function wantsRawUrl(message, metadata = {}) {
+  if (metadata?.preferRawUrl === true || metadata?.rawUrlRequested === true) return true;
+  const text = normalizeSearchText(`${message || ""} ${metadata?.intent || ""} ${metadata?.topic || ""}`);
+  if (!text) return false;
+  return EXPLICIT_RAW_URL_TERMS.some((term) => text.includes(normalizeSearchText(term)));
+}
+
+function rawUrlReplyForRequest(message, metadata, actions = []) {
+  if (!wantsRawUrl(message, metadata)) return null;
+  const target = sanitizeAssistantActions(actions, 1).find((action) => action.type === "open_url" && action.url);
+  if (!target) return null;
+  const label = cleanAssistantText(target.label, 52) || "İlgili sayfa";
+  return `${label} bağlantısı: ${target.url}`;
 }
 
 function cleanMetadataValue(value, depth = 0) {
@@ -1146,6 +1177,18 @@ function safeReplyText(value, fallback) {
 export async function generateAssistantReply({ message, channel, intent, context = {}, metadata = {}, request = null }) {
   const fallback = fallbackByIntent(intent, context, channel);
   const fallbackActions = sanitizeAssistantActions(fallback.actions || []);
+  const rawUrlReply = rawUrlReplyForRequest(message, metadata, fallbackActions);
+  if (rawUrlReply) {
+    return {
+      message: rawUrlReply,
+      intent: intent.key,
+      provider: "fallback",
+      actions: [],
+      usedAi: false,
+      createTicketSuggested: false
+    };
+  }
+
   const fallbackText = stripRawUrlsWhenActions(stripRepeatedGreeting(fallback.text, context), fallbackActions);
   let text = "";
   let provider = "fallback";

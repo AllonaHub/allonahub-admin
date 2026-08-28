@@ -67,6 +67,22 @@ test("assistant explains itself when users ask who it is", async () => {
   assert.ok(reply.actions.length <= 3);
 });
 
+test("assistant sends only a raw URL when the user explicitly asks for a link", async () => {
+  const message = "CV oluşturma linkini gönderir misin?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(RAW_URL_PATTERN.test(reply.message), true);
+  assert.match(reply.message, /career-cv-form\.html/);
+  assert.deepEqual(reply.actions, []);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },
