@@ -32,6 +32,13 @@
           <div class="field"><label for="category-max">Max fiyat</label><input id="category-max" type="number" min="0" step="1" data-filter-max></div>
           <div class="field"><label for="category-sort">Sıralama</label><select id="category-sort" data-filter-sort><option value="newest">En yeni</option><option value="best_selling">En çok satan</option><option value="price_asc">Fiyat artan</option><option value="price_desc">Fiyat azalan</option><option value="rating_desc">En yüksek puan</option><option value="discount_desc">En yüksek indirim</option></select></div>
           <div class="field field--actions"><label aria-hidden="true">&nbsp;</label><button class="btn btn--light" type="button" data-filter-reset>Temizle</button></div>
+          <div class="catalog-chip-row" aria-label="Hızlı filtreler">
+            <button class="catalog-chip" type="button" data-quick-filter="deals" aria-pressed="false">İyi Fiyat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="coupon" aria-pressed="false">Kuponlu</button>
+            <button class="catalog-chip" type="button" data-quick-filter="fast" aria-pressed="false">Hızlı Teslimat</button>
+            <button class="catalog-chip" type="button" data-quick-filter="free_shipping" aria-pressed="false">Ücretsiz Kargo</button>
+            <button class="catalog-chip" type="button" data-quick-filter="top" aria-pressed="false">Çok Satanlar</button>
+          </div>
         </form>
         <div class="catalog-feedback" aria-live="polite" data-product-count></div>
         <div class="product-grid" data-products-grid></div>
