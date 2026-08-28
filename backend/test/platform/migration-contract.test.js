@@ -5,11 +5,13 @@ import { fileURLToPath } from "node:url";
 
 const countryMigrationUrl = new URL("../../../supabase/migrations/20260827220000_create_country_engine.sql", import.meta.url);
 const commerceMigrationUrl = new URL("../../../supabase/migrations/20260827221000_create_cross_border_trade_foundation.sql", import.meta.url);
+const productCatalogScopeMigrationUrl = new URL("../../../supabase/migrations/20260828074000_repair_product_catalog_scope_isolation.sql", import.meta.url);
 
 async function migrations() {
   return {
     country: await readFile(fileURLToPath(countryMigrationUrl), "utf8"),
-    commerce: await readFile(fileURLToPath(commerceMigrationUrl), "utf8")
+    commerce: await readFile(fileURLToPath(commerceMigrationUrl), "utf8"),
+    productCatalogScope: await readFile(fileURLToPath(productCatalogScopeMigrationUrl), "utf8")
   };
 }
 
@@ -102,4 +104,22 @@ test("country and module state changes persist configuration evidence atomically
   assert.match(sql, /function\s+public\.apply_country_module_change/i);
   assert.match(sql, /insert\s+into\s+public\.country_configuration_events/i);
   assert.match(sql, /grant\s+execute[\s\S]*?to\s+service_role/i);
+});
+
+test("product catalog scope repair only targets canonical SKU prefixes", async () => {
+  const { productCatalogScope: sql } = await migrations();
+  assert.match(sql, /upper\(coalesce\(sku,\s*''\)\)\s+like\s+'ALM-%'[\s\S]*?module_key\s*=\s*'market'/i);
+  assert.match(sql, /upper\(coalesce\(sku,\s*''\)\)\s+like\s+'ALY-%'[\s\S]*?module_key\s*=\s*'food'/i);
+  assert.doesNotMatch(sql, /lower\(coalesce\((name|product_name|description|category)/i);
+});
+
+test("product catalog scope repair enforces future module and catalog consistency", async () => {
+  const { productCatalogScope: sql } = await migrations();
+  assert.match(sql, /create\s+or\s+replace\s+function\s+public\.enforce_product_catalog_scope/i);
+  assert.match(sql, /new\.module_key\s+<>\s+new\.catalog_scope/i);
+  assert.match(sql, /products_enforce_catalog_scope/i);
+  assert.match(sql, /products_catalog_scope_required_check/i);
+  assert.match(sql, /products_module_catalog_scope_match_check/i);
+  assert.match(sql, /products_alm_scope_check/i);
+  assert.match(sql, /products_aly_scope_check/i);
 });

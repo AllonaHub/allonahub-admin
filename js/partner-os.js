@@ -2530,6 +2530,7 @@
       direction: fullIntegration ? "bidirectional" : "inbound",
       settings: {
         module_key: data.module_key || "shop",
+        catalog_scope: data.module_key || "shop",
         default_category: data.default_category || "Genel"
       },
       secrets: integrationSecretsFromData(data)

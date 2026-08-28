@@ -119,33 +119,44 @@
     if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
     if (["market", "allona_market", "allonamarket", "supermarket", "süpermarket", "grocery"].includes(scope)) return "market";
     if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
+    if (["taxi", "allona_taksi", "allonataksi", "transport", "ulasim", "ulaşım"].includes(scope)) return "taxi";
     if (["service", "hizmet", "services", "ecosystem", "ekosistem"].includes(scope)) return "service";
     return "";
   }
 
-  function explicitCatalogScope(item) {
-    const candidates = [
-      item.module_key,
-      item.moduleKey,
-      item.catalog_scope,
-      item.catalogScope,
-      item.module_scope,
-      item.moduleScope,
-      item.commerce_scope,
-      item.commerceScope,
-      item.product_scope,
-      item.productScope
-    ];
-    for (const candidate of candidates) {
-      const scope = normalizedScope(candidate);
-      if (scope) return scope;
-    }
-
+  function skuCatalogScope(item) {
     const sku = String(item.sku || item.product_sku || "").trim().toLocaleUpperCase("tr-TR");
     if (/^ALM[-_]/.test(sku)) return "market";
     if (/^ALY[-_]/.test(sku)) return "food";
     if (/^(ALS|ASHOP|ALSHOP|SHOP)[-_]/.test(sku)) return "shop";
     return "";
+  }
+
+  function catalogScopeState(raw) {
+    const item = raw || {};
+    const moduleScope = normalizedScope(item.module_key || item.moduleKey);
+    const catalogScope = normalizedScope(
+      item.catalog_scope || item.catalogScope || item.module_scope || item.moduleScope
+        || item.commerce_scope || item.commerceScope || item.product_scope || item.productScope
+    );
+    const skuScope = skuCatalogScope(item);
+    const explicitScopes = [moduleScope, catalogScope].filter(Boolean);
+    const uniqueExplicitScopes = [...new Set(explicitScopes)];
+    if (uniqueExplicitScopes.length > 1) {
+      return { scope: "", valid: false, reason: "module_catalog_mismatch" };
+    }
+    const explicitScope = uniqueExplicitScopes[0] || "";
+    if (explicitScope && skuScope && explicitScope !== skuScope) {
+      return { scope: "", valid: false, reason: "sku_scope_mismatch" };
+    }
+    if (explicitScope) return { scope: explicitScope, valid: true, reason: "explicit" };
+    if (skuScope) return { scope: skuScope, valid: true, reason: "sku_prefix" };
+    return { scope: "", valid: false, reason: "missing_scope" };
+  }
+
+  function explicitCatalogScope(item) {
+    const state = catalogScopeState(item);
+    return state.valid ? state.scope : "";
   }
 
   function productCatalogText(item) {
@@ -169,61 +180,28 @@
 
   function isFoodCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
-    const explicit = explicitCatalogScope(item);
-    if (explicit === "food") return true;
-    if (explicit && explicit !== "shop") return false;
-
-    const category = String(item.category || "").toLocaleLowerCase("tr-TR");
-    const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
-      .filter(Boolean)
-      .join(" ")
-      .toLocaleLowerCase("tr-TR");
-    if (/yemek|restoran|restaurant|lokanta|pizzacı|pizzaci|kebapçı|kebapci|dönerci|donerci/.test(`${category} ${merchant}`)) {
-      return true;
-    }
-
-    const text = productCatalogText(item);
-    const foodSignal = /burger|pizza|kebap|döner|doner|dürüm|durum|tatlı|tatli|kahve|pide|lahmacun|bowl|salata|fast food/.test(text);
-    const serviceSignal = /menü|menu|sipariş|siparis|restoran|restaurant|teslimat|kurye|soğan|sogan|soslu|sossuz/.test(text);
-    return foodSignal && serviceSignal;
+    const state = catalogScopeState(item);
+    if (!state.valid) console.warn("Ürün katalog kapsamı eksik veya çelişkili; public Yemek listesinden çıkarıldı.", state.reason, item.id || item.sku || item.name || "");
+    return state.valid && state.scope === "food";
   }
 
   function isMarketCatalogProduct(raw) {
     const item = core.normalizeProduct ? core.normalizeProduct(raw) : (raw || {});
-    const explicit = explicitCatalogScope(item);
-    if (explicit === "market") return true;
-    if (explicit && explicit !== "shop") return false;
-
-    const category = String(item.category || "").toLocaleLowerCase("tr-TR");
-    const merchant = [item.brand, item.seller_name, item.partner_name, item.store_name]
-      .filter(Boolean)
-      .join(" ")
-      .toLocaleLowerCase("tr-TR");
-    const sku = String(item.sku || "").toLocaleLowerCase("tr-TR");
-    if (/allona market|market \/|süpermarket|supermarket/.test(`${category} ${merchant}`)) return true;
-    if (/^alm[-_]/.test(sku)) return true;
-
-    const marketText = [
-      item.name,
-      item.product_name,
-      item.category,
-      item.brand,
-      item.seller_name,
-      item.partner_name,
-      item.store_name,
-      item.sku
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLocaleLowerCase("tr-TR");
-    return /meyve|sebze|kahvaltı|kahvalti|süt|sut|yumurta|zeytin|zeytinyağı|zeytinyagi|makarna|temel gıda|temel gida|içecek|icecek|temizlik|deterjan|kağıt|kagit|bebek|ıslak mendil|islak mendil|atıştırmalık|atistirmalik|petshop/.test(marketText);
+    const state = catalogScopeState(item);
+    if (!state.valid) console.warn("Ürün katalog kapsamı eksik veya çelişkili; public Market listesinden çıkarıldı.", state.reason, item.id || item.sku || item.name || "");
+    return state.valid && state.scope === "market";
   }
 
   function matchesCatalogScope(item, scope) {
     const target = normalizedScope(scope);
+    const state = catalogScopeState(core.normalizeProduct ? core.normalizeProduct(item) : (item || {}));
+    if (target && (!state.valid || state.scope !== target)) {
+      if (!state.valid) console.warn("Ürün katalog kapsamı eksik veya çelişkili; public katalog listesinden çıkarıldı.", state.reason, item.id || item.sku || item.name || "");
+      return false;
+    }
     if (target === "food") return isFoodCatalogProduct(item);
     if (target === "market") return isMarketCatalogProduct(item);
-    if (target === "shop") return !isFoodCatalogProduct(item) && !isMarketCatalogProduct(item);
+    if (target === "shop") return state.valid && state.scope === "shop";
     return true;
   }
 
@@ -254,11 +232,16 @@
   }
 
   async function listActiveProducts(filters) {
-    const { data, error } = await client()
+    const targetScope = normalizedScope(filters && filters.scope);
+    let query = client()
       .from("products")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false });
+    if (targetScope) {
+      query = query.eq("module_key", targetScope).eq("catalog_scope", targetScope);
+    }
+    const { data, error } = await query;
 
     if (error) throw error;
     const normalized = (data || []).map(core.normalizeProduct);
@@ -335,7 +318,13 @@
     const videoUrl = security ? security.sanitizePublicUrl(rawVideoUrl) : rawVideoUrl;
     const price = Number(payload.price || 0);
     const stock = Number(payload.stock || 0);
-    const moduleKey = normalizedScope(payload.module_key || payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope) || "shop";
+    const requestedModuleScope = normalizedScope(payload.module_key || payload.moduleKey);
+    const requestedCatalogScope = normalizedScope(payload.catalog_scope || payload.catalogScope || payload.moduleScope || payload.scope);
+    const requestedScopes = [...new Set([requestedModuleScope, requestedCatalogScope].filter(Boolean))];
+    if (requestedScopes.length > 1) throw new Error("Ürün katalog kapsamı ve modül anahtarı aynı olmalıdır.");
+    const moduleKey = requestedScopes[0] || "shop";
+    const skuScope = skuCatalogScope(payload);
+    if (skuScope && skuScope !== moduleKey) throw new Error("Ürün SKU ön eki seçilen katalog kapsamıyla uyumlu değil.");
     const skuPrefix = moduleKey === "market" ? "ALM" : moduleKey === "food" ? "ALY" : moduleKey === "service" ? "ALS" : "ALP";
     const sellerFields = {
       seller_public_name: security ? security.normalizeText(payload.seller_public_name || payload.seller_name || payload.brand || "", { max: 140 }) : String(payload.seller_public_name || payload.seller_name || payload.brand || "").trim(),
@@ -357,6 +346,7 @@
       image_url: imageUrl,
       category,
       module_key: moduleKey,
+      catalog_scope: moduleKey,
       status,
       slug: payload.slug ? core.slugify(payload.slug) : core.slugify(cleanName),
       meta_title: security ? security.normalizeText(payload.meta_title || cleanName, { max: 180 }) : payload.meta_title || cleanName,
@@ -377,6 +367,7 @@
       image_url: imageUrl,
       category,
       module_key: moduleKey,
+      catalog_scope: moduleKey,
       status,
       brand,
       partner_id: security && security.isUuid(payload.partner_id) ? payload.partner_id : String(payload.partner_code || payload.partner_id || "ALP-PARTNER"),
@@ -467,6 +458,16 @@
   async function updateProductFields(id, payload) {
     if (security && !security.isUuid(id)) throw new Error("Ürün kimliği geçersiz.");
     const cleanPayload = { ...payload };
+    const requestedModuleScope = normalizedScope(cleanPayload.module_key || cleanPayload.moduleKey);
+    const requestedCatalogScope = normalizedScope(cleanPayload.catalog_scope || cleanPayload.catalogScope);
+    const requestedScopes = [...new Set([requestedModuleScope, requestedCatalogScope].filter(Boolean))];
+    if (requestedScopes.length > 1) throw new Error("Ürün katalog kapsamı ve modül anahtarı aynı olmalıdır.");
+    if (requestedScopes.length === 1) {
+      cleanPayload.module_key = requestedScopes[0];
+      cleanPayload.catalog_scope = requestedScopes[0];
+    }
+    delete cleanPayload.moduleKey;
+    delete cleanPayload.catalogScope;
     if (Object.prototype.hasOwnProperty.call(cleanPayload, "stock")) {
       cleanPayload.stock = Math.max(0, Number(cleanPayload.stock || 0));
     }
@@ -785,9 +786,10 @@
   };
 
   App.catalog = {
+    catalogScopeForProduct: explicitCatalogScope,
     isFoodProduct: isFoodCatalogProduct,
     isMarketProduct: isMarketCatalogProduct,
-    isShopProduct: (item) => !isFoodCatalogProduct(item) && !isMarketCatalogProduct(item),
+    isShopProduct: (item) => matchesCatalogScope(item, "shop"),
     matchesScope: matchesCatalogScope
   };
 })();

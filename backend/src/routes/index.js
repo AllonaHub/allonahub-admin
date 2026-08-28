@@ -277,6 +277,36 @@ const PARTNER_PRODUCT_BULK_UPDATE_FIELDS = new Set([
   "barcode",
   "description"
 ]);
+const PRODUCT_CATALOG_SCOPES = new Set(["shop", "market", "food", "taxi", "service"]);
+
+function normalizeProductCatalogScope(value) {
+  const scope = String(value || "").trim().toLocaleLowerCase("tr-TR").replace(/[\s-]+/g, "_");
+  if (["food", "yemek", "allona_yemek", "allonayemek", "restaurant", "restoran"].includes(scope)) return "food";
+  if (["market", "allona_market", "allonamarket", "supermarket", "süpermarket", "grocery"].includes(scope)) return "market";
+  if (["shop", "allona_shop", "allonashop", "marketplace", "pazaryeri"].includes(scope)) return "shop";
+  if (["taxi", "allona_taksi", "allonataksi", "transport", "ulasim", "ulaşım"].includes(scope)) return "taxi";
+  if (["service", "hizmet", "services", "ecosystem", "ekosistem"].includes(scope)) return "service";
+  return PRODUCT_CATALOG_SCOPES.has(scope) ? scope : "";
+}
+
+function productSkuCatalogScope(value) {
+  const sku = String(value || "").trim().toLocaleUpperCase("tr-TR");
+  if (/^ALM[-_]/.test(sku)) return "market";
+  if (/^ALY[-_]/.test(sku)) return "food";
+  if (/^(ALS|ASHOP|ALSHOP|SHOP)[-_]/.test(sku)) return "shop";
+  return "";
+}
+
+function canonicalProductCatalogScope(payload = {}, fallback = "shop") {
+  const moduleScope = normalizeProductCatalogScope(payload.module_key || payload.moduleKey);
+  const catalogScope = normalizeProductCatalogScope(payload.catalog_scope || payload.catalogScope);
+  const scopes = [...new Set([moduleScope, catalogScope].filter(Boolean))];
+  if (scopes.length > 1) throw httpError("Ürün katalog kapsamı ve modül anahtarı aynı olmalıdır.", 400);
+  const scope = scopes[0] || normalizeProductCatalogScope(fallback) || "shop";
+  const skuScope = productSkuCatalogScope(payload.sku || payload.external_sku || payload.product_code || "");
+  if (skuScope && scope !== skuScope) throw httpError("Ürün SKU ön eki seçilen katalog kapsamıyla uyumlu değil.", 400);
+  return scope;
+}
 
 const partnerProductUpdateSchema = z.object({
   name: z.string().trim().min(2).max(180).optional(),
@@ -5681,8 +5711,11 @@ function buildPartnerProductUpdatePayload(productId, before, body) {
     .slice(0, 8);
   if (has("price")) updatePayload.price = Number(body.price || 0);
   if (has("stock")) updatePayload.stock = Number(body.stock || 0);
-  if (has("module_key")) updatePayload.module_key = body.module_key;
-  if (has("catalog_scope")) updatePayload.catalog_scope = body.catalog_scope;
+  if (has("module_key") || has("catalog_scope")) {
+    const scope = canonicalProductCatalogScope(body, before.module_key || before.catalog_scope || "shop");
+    updatePayload.module_key = scope;
+    updatePayload.catalog_scope = scope;
+  }
 
   const changedFields = Object.keys(body);
   const instantFields = new Set(["price", "stock"]);
@@ -8480,7 +8513,7 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
   const variantGroupKey = normalizedIntegrationCode(groupCode || modelRoot || explicitExternalId || externalId);
   const variantMatchKey = normalizedIntegrationCode(barcode || productCode || variantId || sku || externalId);
   const settings = integration.settings || {};
-  const moduleKey = ["shop", "market", "food", "service"].includes(settings.module_key) ? settings.module_key : "shop";
+  const moduleKey = canonicalProductCatalogScope(settings, "shop");
   const categoryValue = firstValue(row, ["category", "categoryName", "productMainId", "categories", "kategori"])
     || (typeof firstCategory === "string" ? firstCategory : firstCategory?.name)
     || settings.default_category
@@ -8515,6 +8548,7 @@ function normalizeIntegrationProduct(row, integration, index, variantOverride = 
     category: cleanImportedText(categoryValue, "Genel").slice(0, 90) || "Genel",
     brand: cleanImportedText(firstValue(row, ["brand", "vendor", "marka"]) || settings.default_brand || "").slice(0, 120),
     module_key: moduleKey,
+    catalog_scope: moduleKey,
     raw: row
   };
 }
@@ -8622,6 +8656,7 @@ function integrationProductCompliance(product) {
   if (Number(product.stock || 0) < 0) errors.push("Stok negatif olamaz.");
   if (product.source_stock_present === false) warnings.push("Kaynak platformdan stok bilgisi okunamadı; mevcut stok korunmalı, yeni üründe stok kontrol edilmeli.");
   if (!["shop", "market", "food", "service"].includes(product.module_key)) errors.push("Geçersiz kanal seçimi.");
+  if (product.catalog_scope && product.catalog_scope !== product.module_key) errors.push("Katalog kapsamı ve kanal seçimi aynı olmalı.");
   if (product.image_url && !/^https?:\/\//i.test(product.image_url)) warnings.push("Görsel URL http/https formatında değil.");
   if (!product.category || product.category === "Genel") warnings.push("Kategori genel görünüyor; eşleme iyileştirilebilir.");
   return {
@@ -8651,6 +8686,7 @@ function integrationProductPreview(product) {
     source_stock_field: product.source_stock_field || "",
     category: product.category,
     module_key: product.module_key,
+    catalog_scope: product.catalog_scope || product.module_key,
     auto_approved: integrationProductAutoApproved(product, product.compliance),
     compliance_status: product.compliance?.status || "pending",
     compliance_warnings: product.compliance?.warnings || [],
@@ -8981,6 +9017,7 @@ function integrationProductPayload({ business, integration, item }) {
         ? "needs_review"
         : "pending";
   const identity = integrationProductIdentity(item);
+  const catalogScope = canonicalProductCatalogScope(item, integration.settings?.module_key || "shop");
   const payload = {
     name: productName,
     product_name: productName,
@@ -8989,8 +9026,8 @@ function integrationProductPayload({ business, integration, item }) {
     stock: item.stock,
     image_url: item.image_url || null,
     category: productCategory,
-    module_key: item.module_key || "shop",
-    catalog_scope: item.module_key || "shop",
+    module_key: catalogScope,
+    catalog_scope: catalogScope,
     status,
     slug: backendSlug(`${productName}-${item.external_product_id}-${item.external_variant_id || ""}`),
     meta_title: productName,
