@@ -112,9 +112,60 @@
     return list;
   }
 
-  function renderGrid(target, items) {
-    const node = typeof target === "string" ? document.querySelector(target) : target;
+  function resolveGridNode(target) {
+    return typeof target === "string" ? document.querySelector(target) : target;
+  }
+
+  function loadingSkeletonMarkup(index) {
+    return `
+      <article class="shop-product-skeleton" aria-hidden="true">
+        <div class="shop-product-skeleton__media">
+          <span class="shop-loading-spinner" aria-hidden="true"></span>
+        </div>
+        <div class="shop-product-skeleton__body">
+          <span style="--shop-skeleton-width:${68 + (index % 3) * 8}%"></span>
+          <span style="--shop-skeleton-width:${82 - (index % 2) * 14}%"></span>
+          <span style="--shop-skeleton-width:${46 + (index % 4) * 7}%"></span>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderLoadingGrid(target) {
+    const node = resolveGridNode(target);
     if (!node) return;
+    const count = Math.max(4, Math.min(8, Number(node.dataset.previewLimit || 6)));
+    node.classList.add("is-shop-loading");
+    node.setAttribute("aria-busy", "true");
+    node.innerHTML = Array.from({ length: count }, (_, index) => loadingSkeletonMarkup(index)).join("");
+  }
+
+  function markImageLoaded(card) {
+    card?.classList.remove("is-image-loading");
+  }
+
+  function prepareProductImages(node) {
+    node.querySelectorAll(".product-card").forEach((card) => {
+      const image = card.querySelector(".product-card__media img");
+      if (!image) return;
+      if (image.complete && image.naturalWidth > 0) {
+        markImageLoaded(card);
+        return;
+      }
+      card.classList.add("is-image-loading");
+      image.addEventListener("load", () => markImageLoaded(card), { once: true });
+      image.addEventListener("error", () => window.setTimeout(() => markImageLoaded(card), 450), { once: true });
+      window.setTimeout(() => {
+        if (image.complete) markImageLoaded(card);
+      }, 12000);
+    });
+  }
+
+  function renderGrid(target, items) {
+    const node = resolveGridNode(target);
+    if (!node) return;
+    node.classList.remove("is-shop-loading");
+    node.removeAttribute("aria-busy");
     const limit = Number(node.dataset.previewLimit || 0);
     const visibleItems = limit ? items.slice(0, limit) : items;
     if (!visibleItems.length) {
@@ -122,6 +173,7 @@
       return;
     }
     node.innerHTML = visibleItems.map(core.productCard).join("");
+    prepareProductImages(node);
   }
 
   function renderProductCount(items) {
@@ -421,7 +473,7 @@
 
   async function loadProducts() {
     const loadingTargets = ["[data-products-grid]", "[data-new-grid]", "[data-best-grid]", "[data-featured-grid]", "[data-recommended-grid]"];
-    loadingTargets.forEach((target) => core.renderStatus(target, "Ürünler yükleniyor..."));
+    loadingTargets.forEach(renderLoadingGrid);
 
     try {
       const liveProducts = shopProductsOnly(await withTimeout(App.db?.products?.listActive({ sort: "newest", scope: "shop" }) || Promise.reject(new Error("Supabase ürün servisi hazır değil.")), 9000));
