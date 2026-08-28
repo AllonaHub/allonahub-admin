@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const core = App.core;
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
+  const QUICK_FILTERS = ["deals", "coupon", "fast", "free_shipping", "top"];
   let products = [];
   let heroAds = [];
 
@@ -67,36 +68,56 @@
     });
   }
 
-  function applyLocalFilters() {
-    const filters = filtersFromDom();
+  function hasDiscount(product) {
+    return product.discount_percent > 0 || product.compare_at_price > product.price || Boolean(product.discount_label);
+  }
+
+  function hasCoupon(product) {
+    return Boolean(product.coupon_label || (hasDiscount(product) && product.discount_percent >= 10));
+  }
+
+  function hasFastDelivery(product) {
+    return /hızlı|bugün|aynı gün|dijital/i.test(product.delivery_label || "") || product.stock >= 20;
+  }
+
+  function hasFreeShipping(product) {
+    return product.price >= Number(App.config?.freeShippingThreshold || 1500) || /ücretsiz/i.test(product.delivery_label || "");
+  }
+
+  function hasTopSignal(product) {
+    return product.sold_count >= 100 || product.rating >= 4.7;
+  }
+
+  function quickFilterMatches(product, value) {
+    return !value
+      || (value === "deals" && hasDiscount(product))
+      || (value === "coupon" && hasCoupon(product))
+      || (value === "fast" && hasFastDelivery(product))
+      || (value === "free_shipping" && hasFreeShipping(product))
+      || (value === "top" && hasTopSignal(product));
+  }
+
+  function productMatchesFilters(product, filters) {
     const q = filters.search.trim().toLocaleLowerCase("tr-TR");
     const category = filters.category.trim().toLocaleLowerCase("tr-TR");
     const brand = filters.brand.trim().toLocaleLowerCase("tr-TR");
     const min = priceFilterToBase(filters.minPrice);
     const max = priceFilterToBase(filters.maxPrice);
 
-    let list = products.filter((product) => {
-      const productCategory = core.labelFromValue ? core.labelFromValue(product.category, "") : String(product.category || "");
-      const text = `${product.name} ${product.description} ${productCategory} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
-      const searchOk = !q || text.includes(q);
-      const categoryOk = !category || (App.shopCategories?.productMatchesCategory
-        ? App.shopCategories.productMatchesCategory(product, filters.category)
-        : productCategory.toLocaleLowerCase("tr-TR") === category);
-      const brandOk = !brand || String(product.brand || "").toLocaleLowerCase("tr-TR") === brand;
-      const minOk = !min || product.price >= min;
-      const maxOk = !max || product.price <= max;
-      const hasDiscount = product.discount_percent > 0 || product.compare_at_price > product.price || Boolean(product.discount_label);
-      const hasCoupon = Boolean(product.coupon_label || (hasDiscount && product.discount_percent >= 10));
-      const fastDelivery = /hızlı|bugün|aynı gün|dijital/i.test(product.delivery_label || "") || product.stock >= 20;
-      const freeShipping = product.price >= Number(App.config?.freeShippingThreshold || 1500) || /ücretsiz/i.test(product.delivery_label || "");
-      const quickOk = !filters.quick
-        || (filters.quick === "deals" && hasDiscount)
-        || (filters.quick === "coupon" && hasCoupon)
-        || (filters.quick === "fast" && fastDelivery)
-        || (filters.quick === "free_shipping" && freeShipping)
-        || (filters.quick === "top" && (product.sold_count >= 100 || product.rating >= 4.7));
-      return searchOk && categoryOk && brandOk && minOk && maxOk && quickOk;
-    });
+    const productCategory = core.labelFromValue ? core.labelFromValue(product.category, "") : String(product.category || "");
+    const text = `${product.name} ${product.description} ${productCategory} ${product.brand || ""}`.toLocaleLowerCase("tr-TR");
+    const searchOk = !q || text.includes(q);
+    const categoryOk = !category || (App.shopCategories?.productMatchesCategory
+      ? App.shopCategories.productMatchesCategory(product, filters.category)
+      : productCategory.toLocaleLowerCase("tr-TR") === category);
+    const brandOk = !brand || String(product.brand || "").toLocaleLowerCase("tr-TR") === brand;
+    const minOk = !min || product.price >= min;
+    const maxOk = !max || product.price <= max;
+    return searchOk && categoryOk && brandOk && minOk && maxOk && quickFilterMatches(product, filters.quick);
+  }
+
+  function applyLocalFilters(filters = filtersFromDom()) {
+    let list = products.filter((product) => productMatchesFilters(product, filters));
 
     if (filters.sort === "price_asc") list.sort((a, b) => a.price - b.price);
     else if (filters.sort === "price_desc") list.sort((a, b) => b.price - a.price);
@@ -220,6 +241,26 @@
     });
   }
 
+  function quickFilterCount(value, filters) {
+    return products.filter((product) => productMatchesFilters(product, { ...filters, quick: value })).length;
+  }
+
+  function updateQuickFilterAvailability(filters = filtersFromDom()) {
+    const currentQuick = filters.quick || "";
+    const baseFilters = { ...filters, quick: "" };
+    document.querySelectorAll("[data-quick-filter]").forEach((button) => {
+      const value = button.dataset.quickFilter || "";
+      const count = QUICK_FILTERS.includes(value) ? quickFilterCount(value, baseFilters) : 0;
+      const isCurrent = value === currentQuick;
+      const unavailable = count === 0 && !isCurrent;
+      button.disabled = unavailable;
+      button.dataset.resultCount = String(count);
+      button.classList.toggle("is-disabled", unavailable);
+      button.setAttribute("aria-disabled", unavailable ? "true" : "false");
+      button.title = unavailable ? "Bu filtrede aktif ürün yok" : "";
+    });
+  }
+
   function syncFiltersFromParams() {
     const searchInput = document.querySelector("[data-filter-search]");
     const categorySelect = document.querySelector("[data-filter-category]");
@@ -239,7 +280,9 @@
   }
 
   function renderHomeSections() {
-    const filteredProducts = applyLocalFilters();
+    const filters = filtersFromDom();
+    updateQuickFilterAvailability(filters);
+    const filteredProducts = applyLocalFilters(filters);
     renderProductCount(filteredProducts);
     renderGrid("[data-products-grid]", filteredProducts);
     renderGrid("[data-new-grid]", products.slice(0, 4));

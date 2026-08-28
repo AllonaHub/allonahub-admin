@@ -2061,6 +2061,21 @@ body[data-theme] .catalog-chip.is-active {
   box-shadow: 0 12px 26px color-mix(in srgb, var(--ah-primary) 22%, transparent);
 }
 
+body[data-theme] .site-shell[data-page="shop"] .catalog-chip.is-disabled,
+body[data-theme] .site-shell[data-page="shop"] .catalog-chip:disabled {
+  border-color: color-mix(in srgb, var(--ah-line) 82%, transparent);
+  background: color-mix(in srgb, var(--ah-bg-strong) 74%, transparent);
+  color: var(--ah-muted);
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
+body[data-theme] .site-shell[data-page="shop"] .catalog-chip.is-disabled:hover,
+body[data-theme] .site-shell[data-page="shop"] .catalog-chip:disabled:hover {
+  transform: none;
+}
+
 body[data-theme] .market-signal {
   border-color: color-mix(in srgb, var(--ah-primary) 18%, var(--ah-line));
   background: color-mix(in srgb, var(--ah-primary) 10%, transparent);
