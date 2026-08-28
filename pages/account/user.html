@@ -58,6 +58,18 @@ a{
   color:inherit;
 }
 
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
 .page{
   width:min(1320px,100%);
   margin:0 auto;
@@ -306,6 +318,7 @@ a{
 }
 
 .country-selected{
+  width:100%;
   height:56px;
   border-radius:17px;
   background:#f7fcff;
@@ -316,6 +329,8 @@ a{
   padding:0 16px;
   cursor:pointer;
   color:var(--text);
+  font:inherit;
+  text-align:left;
 }
 
 .country-dropdown{
@@ -350,15 +365,22 @@ a{
 }
 
 .country-item{
+  width:100%;
+  border:0;
   padding:12px 14px;
+  background:transparent;
   cursor:pointer;
   font-size:14px;
   color:var(--text);
   border-bottom:1px solid rgba(0,0,0,.05);
+  font:inherit;
+  text-align:left;
 }
 
-.country-item:hover{
+.country-item:hover,
+.country-item:focus-visible{
   background:#eef8ff;
+  outline:0;
 }
 
 .country-code-tag{
@@ -620,14 +642,21 @@ a{
 }
 
 .profession-item{
+  width:100%;
+  border:0;
   padding:12px 14px;
+  background:transparent;
   border-bottom:1px solid rgba(0,0,0,.05);
   cursor:pointer;
   color:var(--text);
+  font:inherit;
+  text-align:left;
 }
 
-.profession-item:hover{
+.profession-item:hover,
+.profession-item:focus-visible{
   background:#eef8ff;
+  outline:0;
 }
 
 .required-dot{
@@ -716,8 +745,9 @@ a{
 
   <div class="search glass">
     <span><i class="fa-solid fa-magnifying-glass"></i></span>
-    <input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
-    <button onclick="userSearch()">Ara</button>
+    <label class="sr-only" for="userSearchInput">Hesap merkezi araması</label>
+    <input id="userSearchInput" type="search" autocomplete="off" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+    <button type="button" onclick="userSearch()">Ara</button>
   </div>
 
   <div class="actions glass">
@@ -730,26 +760,29 @@ a{
 <section class="hero">
   <div class="login-box glass">
 
-    <h1>Allona<span>Hub</span>’a Giriş Yap</h1>
-    <p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
+    <h1 id="authTitle">Allona<span>Hub</span>’a Giriş Yap</h1>
+    <p id="authLead">Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
 
-    <div class="tabs">
-      <button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
-      <button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
-      <button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
+    <div class="tabs" role="tablist" aria-label="Hesap işlemleri">
+      <button id="authTabLogin" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="login" data-auth-tab="login" onclick="openTab('login', event)">Giriş Yap</button>
+      <button id="authTabRegister" class="tab" type="button" role="tab" aria-selected="false" aria-controls="register" data-auth-tab="register" onclick="openTab('register', event)">Kayıt Ol</button>
+      <button id="authTabForgot" class="tab" type="button" role="tab" aria-selected="false" aria-controls="forgot" data-auth-tab="forgot" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
     </div>
+    <div id="authStatus" class="sr-only" role="status" aria-live="polite"></div>
 
     <!-- LOGIN -->
-    <div id="login" class="form active">
+    <div id="login" class="form active" role="tabpanel" aria-labelledby="authTabLogin">
       <div class="phone-row">
         <div id="loginPicker" class="country-picker"></div>
         <div class="input">
-          <input id="loginEmail" placeholder="E-posta">
+          <label class="sr-only" for="loginEmail">Giriş e-posta adresi</label>
+          <input id="loginEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
         </div>
       </div>
 
       <div class="input">
-        <input id="loginPassword" type="password" placeholder="Şifre">
+        <label class="sr-only" for="loginPassword">Giriş şifresi</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Şifre">
       </div>
 
       <div class="security-challenge" data-security-challenge="login"></div>
@@ -764,41 +797,46 @@ a{
     </div>
 
     <!-- REGISTER -->
-    <div id="register" class="form">
+    <div id="register" class="form" role="tabpanel" aria-labelledby="authTabRegister">
 
       <div class="input">
-        <input id="fullName" placeholder="Ad Soyad">
+        <label class="sr-only" for="fullName">Ad soyad</label>
+        <input id="fullName" type="text" autocomplete="name" placeholder="Ad Soyad" aria-required="true">
       </div>
 
       <div class="input">
-        <input id="registerEmail" placeholder="E-posta">
+        <label class="sr-only" for="registerEmail">Kayıt e-posta adresi</label>
+        <input id="registerEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta" aria-required="true">
       </div>
 
       <div class="phone-row">
         <div id="registerPicker" class="country-picker"></div>
         <div class="input">
-          <input id="registerPhone" placeholder="Telefon numarası">
+          <label class="sr-only" for="registerPhone">Telefon numarası</label>
+          <input id="registerPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Telefon numarası">
         </div>
       </div>
 
       <div class="profession-wrap">
 
         <div class="select-box">
-          <select id="sectorSelect" onchange="onSectorChange()">
+          <label class="sr-only" for="sectorSelect">Sektör seçimi</label>
+          <select id="sectorSelect" autocomplete="off" aria-required="true" onchange="onSectorChange()">
             <option value="">Sektör Seçiniz *</option>
           </select>
         </div>
 
         <div class="profession-box">
           <div class="input">
-            <input id="professionSearch" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
+            <label class="sr-only" for="professionSearch">Meslek arama ve seçimi</label>
+            <input id="professionSearch" type="search" role="combobox" aria-autocomplete="list" aria-controls="professionResults" aria-expanded="false" aria-describedby="professionHelp" aria-required="true" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
           </div>
-          <div id="professionResults" class="profession-results"></div>
+          <div id="professionResults" class="profession-results" role="listbox" aria-label="Meslek sonuçları"></div>
         </div>
 
       </div>
 
-      <p class="form-note">
+      <p class="form-note" id="professionHelp">
         Meslek seçimi zorunludur. AllonaHub karşılama, panel önerileri, iş ilanları ve bildirimleri seçilen mesleğe göre kişiselleştirir.
       </p>
 
@@ -807,14 +845,16 @@ a{
       <input type="hidden" id="selectedProfessionTitle">
 
       <div class="input">
-        <input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()">
+        <label class="sr-only" for="password1">Yeni şifre</label>
+        <input id="password1" type="password" autocomplete="new-password" placeholder="Şifre oluştur" aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
 
       <div class="input">
-        <input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()">
+        <label class="sr-only" for="password2">Yeni şifre tekrarı</label>
+        <input id="password2" type="password" autocomplete="new-password" placeholder="Şifreyi tekrar gir" aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
 
-      <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
+      <div id="passwordWarning" class="warning-text" role="alert" aria-live="polite">Şifreler aynı değil.</div>
 
       <div class="security-challenge" data-security-challenge="register"></div>
       <button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
@@ -823,11 +863,12 @@ a{
     </div>
 
     <!-- FORGOT -->
-    <div id="forgot" class="form">
+    <div id="forgot" class="form" role="tabpanel" aria-labelledby="authTabForgot">
       <div class="phone-row">
         <div id="forgotPicker" class="country-picker"></div>
         <div class="input">
-          <input id="forgotEmail" placeholder="E-posta">
+          <label class="sr-only" for="forgotEmail">Şifre sıfırlama e-posta adresi</label>
+          <input id="forgotEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
         </div>
       </div>
 
@@ -1137,8 +1178,36 @@ function rateLimitAction(key, limit, windowMs){
 }
 
 function secureAuthAlert(message){
-  alert(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
+  showAuthDialog(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
 }
+
+function announceAuthMessage(message){
+  const node=document.getElementById("authStatus");
+  if(node)node.textContent=message || "";
+}
+
+function showAuthDialog(message){
+  announceAuthMessage(message);
+  alert(message);
+}
+
+const authTabContent={
+  login:{
+    title:"AllonaHub Kullanıcı Girişi",
+    heading:"Allona<span>Hub</span>’a Giriş Yap",
+    lead:"Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş."
+  },
+  register:{
+    title:"AllonaHub Kayıt Ol",
+    heading:"Allona<span>Hub</span>’a Kayıt Ol",
+    lead:"Yeni hesabını oluştur; mesleğine uygun panel, bildirimler, HP dünyası ve kupon avantajları tek profilde açılsın."
+  },
+  forgot:{
+    title:"AllonaHub Şifre Sıfırlama",
+    heading:"Allona<span>Hub</span> Şifreni Sıfırla",
+    lead:"Hesabına güvenli şekilde geri dönebilmen için e-posta adresine doğrulama bağlantısı gönder."
+  }
+};
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1424,17 +1493,21 @@ function renderProfessionResults(list){
   if(!list.length){
     box.innerHTML="";
     box.classList.remove("active");
+    const input=document.getElementById("professionSearch");
+    if(input)input.setAttribute("aria-expanded","false");
     return;
   }
 
   box.innerHTML=list.map(p=>`
-    <div class="profession-item" onclick="selectProfession('${p.key}')">
+    <button class="profession-item" type="button" role="option" onclick="selectProfession('${p.key}')">
       <b>${p.name}</b><br>
       <small>${p.title} olarak karşılanır</small>
-    </div>
+    </button>
   `).join("");
 
   box.classList.add("active");
+  const input=document.getElementById("professionSearch");
+  if(input)input.setAttribute("aria-expanded","true");
 }
 
 function selectProfession(key){
@@ -1459,6 +1532,8 @@ function selectProfession(key){
   document.getElementById("selectedProfessionTitle").value=profession.title;
 
   document.getElementById("professionResults").classList.remove("active");
+  const input=document.getElementById("professionSearch");
+  if(input)input.setAttribute("aria-expanded","false");
 }
 
 function getGreetingPreview(fullName){
@@ -1472,17 +1547,19 @@ function getGreetingPreview(fullName){
   if(!box)return;
 
   box.innerHTML=`
-    <div class="country-selected" onclick="toggleCountryDropdown('${id}')">
+    <span class="sr-only" id="${id}Label">${id==="registerPicker" ? "Kayıt ülke kodu" : id==="forgotPicker" ? "Şifre sıfırlama ülke kodu" : "Giriş ülke kodu"}</span>
+    <button class="country-selected" type="button" onclick="toggleCountryDropdown('${id}')" aria-haspopup="listbox" aria-expanded="false" aria-controls="${id}Dropdown" aria-labelledby="${id}Label ${id}Text">
       <span id="${id}Text">
         ${selectedCountries[id].f} ${selectedCountries[id].n}
         <span class="country-code-tag">${selectedCountries[id].c}</span>
       </span>
       <span>⌄</span>
-    </div>
+    </button>
 
     <div id="${id}Dropdown" class="country-dropdown">
-      <input class="country-search" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
-      <div id="${id}List"></div>
+      <label class="sr-only" for="${id}CountrySearch">${id==="registerPicker" ? "Kayıt için ülke ara" : id==="forgotPicker" ? "Şifre sıfırlama için ülke ara" : "Giriş için ülke ara"}</label>
+      <input id="${id}CountrySearch" class="country-search" type="search" autocomplete="off" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
+      <div id="${id}List" role="listbox" aria-label="Ülke kodları"></div>
     </div>
   `;
 
@@ -1494,7 +1571,15 @@ function toggleCountryDropdown(id){
     if(el.id!==id+"Dropdown")el.classList.remove("active");
   });
 
-  document.getElementById(id+"Dropdown").classList.toggle("active");
+  document.querySelectorAll(".country-selected").forEach(button=>{
+    if(!button.closest(`#${id}`))button.setAttribute("aria-expanded","false");
+  });
+
+  const dropdown=document.getElementById(id+"Dropdown");
+  const toggle=document.querySelector(`#${id} .country-selected`);
+  if(!dropdown)return;
+  const isOpen=dropdown.classList.toggle("active");
+  if(toggle)toggle.setAttribute("aria-expanded",String(isOpen));
 }
 
 function renderCountryList(id,list){
@@ -1502,9 +1587,9 @@ function renderCountryList(id,list){
   if(!listBox)return;
 
   listBox.innerHTML=list.map(item=>`
-    <div class="country-item" onclick="selectCountry('${id}','${item.iso}')">
+    <button class="country-item" type="button" role="option" onclick="selectCountry('${id}','${item.iso}')">
       ${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>
-    </div>
+    </button>
   `).join("");
 }
 
@@ -1534,6 +1619,8 @@ function selectCountry(id,iso){
   if(dropdown){
     dropdown.classList.remove("active");
   }
+  const toggle=document.querySelector(`#${id} .country-selected`);
+  if(toggle)toggle.setAttribute("aria-expanded","false");
 }
 
 function setCountryByLocale(){
@@ -1552,13 +1639,28 @@ function setCountryByLocale(){
 }
 
 function openTab(tabId,event){
-  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+  const activeTab=authTabContent[tabId] ? tabId : "login";
+  document.querySelectorAll(".form").forEach(el=>{
+    const isActive=el.id===activeTab;
+    el.classList.toggle("active",isActive);
+    el.setAttribute("aria-hidden",String(!isActive));
+  });
+  document.querySelectorAll(".tab").forEach(el=>{
+    const isActive=el.dataset.authTab===activeTab;
+    el.classList.toggle("active",isActive);
+    el.setAttribute("aria-selected",String(isActive));
+    el.tabIndex=isActive ? 0 : -1;
+  });
 
-  document.getElementById(tabId).classList.add("active");
+  const page=authTabContent[activeTab];
+  const title=document.getElementById("authTitle");
+  const lead=document.getElementById("authLead");
+  if(title)title.innerHTML=page.heading;
+  if(lead)lead.textContent=page.lead;
+  document.title=page.title;
 
-  if(event && event.target){
-    event.target.classList.add("active");
+  if(event && event.target && event.target.dataset.authTab===activeTab){
+    event.target.focus({preventScroll:true});
   }
 
   setTimeout(()=>{
@@ -1606,17 +1708,17 @@ async function registerUser(){
   }
 
   if(!fullName){
-    alert("Ad Soyad zorunludur.");
+    showAuthDialog("Ad Soyad zorunludur.");
     return;
   }
 
   if(!isEmail(email)){
-    alert("Geçerli bir e-posta adresi giriniz.");
+    showAuthDialog("Geçerli bir e-posta adresi giriniz.");
     return;
   }
 
   if(!strongEnoughPassword(password)){
-    alert("Şifre en az 8 karakter olmalıdır.");
+    showAuthDialog("Şifre en az 8 karakter olmalıdır.");
     return;
   }
 
@@ -1626,7 +1728,7 @@ async function registerUser(){
   }
 
   if(!selectedProfession){
-    alert("Lütfen sektör ve meslek seçiniz.");
+    showAuthDialog("Lütfen sektör ve meslek seçiniz.");
     return;
   }
 
@@ -1667,7 +1769,7 @@ async function registerUser(){
       greeting:greeting
     }));
 
-    alert("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
+    showAuthDialog("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
   }catch(error){
     secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
   }finally{
@@ -1765,7 +1867,7 @@ async function loginWithGoogle(){
 
     if(error)throw error;
   }catch(error){
-    alert("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+    showAuthDialog("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
   }
 }
 
@@ -1795,14 +1897,14 @@ async function resetPassword(){
       const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
       if(resetError)throw resetError;
     }
-    alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+    showAuthDialog("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
   }catch(error){
     secureAuthAlert(error.message || "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
   }
 }
 
 function icloudInfo(){
-  alert("Giriş İçin Başka Bir Yöntem deneyiniz.");
+  showAuthDialog("Giriş İçin Başka Bir Yöntem deneyiniz.");
 }
   function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
@@ -1870,7 +1972,7 @@ function openInitialAuthTab(){
   const params=new URLSearchParams(window.location.search);
   const raw=(params.get("tab") || params.get("mode") || window.location.hash.replace("#","") || "login").toLowerCase();
   const tab=raw==="register" || raw==="forgot" ? raw : "login";
-  const tabButton=[...document.querySelectorAll(".tab")].find(button=>button.getAttribute("onclick")?.includes(`'${tab}'`));
+  const tabButton=document.querySelector(`[data-auth-tab="${tab}"]`);
   openTab(tab,{target:tabButton});
   if(String(params.get("method") || "").toLowerCase()==="phone"){
     setTimeout(function(){
@@ -1882,11 +1984,14 @@ function openInitialAuthTab(){
 document.addEventListener("click",function(e){
   if(!e.target.closest(".country-picker")){
     document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
+    document.querySelectorAll(".country-selected").forEach(button=>button.setAttribute("aria-expanded","false"));
   }
 
   if(!e.target.closest(".profession-box")){
     const box=document.getElementById("professionResults");
     if(box)box.classList.remove("active");
+    const input=document.getElementById("professionSearch");
+    if(input)input.setAttribute("aria-expanded","false");
   }
 });
 </script>
