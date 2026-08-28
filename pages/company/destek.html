@@ -14,6 +14,18 @@
       box-sizing: border-box;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -309,13 +321,17 @@
 
         <form id="supportForm">
           <div class="row">
-            <input type="text" name="name" placeholder="Ad Soyad" required />
-            <input type="tel" name="phone" placeholder="Telefon Numaranız" required />
+            <label class="sr-only" for="supportName">Ad soyad</label>
+            <input id="supportName" type="text" name="name" autocomplete="name" placeholder="Ad Soyad" required />
+            <label class="sr-only" for="supportPhone">Telefon numarası</label>
+            <input id="supportPhone" type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="Telefon Numaranız" required />
           </div>
 
           <div class="row">
-            <input type="email" name="email" placeholder="E-posta Adresiniz" required />
-            <select name="subject" required>
+            <label class="sr-only" for="supportEmail">E-posta adresi</label>
+            <input id="supportEmail" type="email" name="email" autocomplete="email" placeholder="E-posta Adresiniz" required />
+            <label class="sr-only" for="supportSubject">Destek konusu</label>
+            <select id="supportSubject" name="subject" required>
               <option value="">Konu Seçiniz</option>
               <option value="Genel Destek">Genel Destek</option>
               <option value="Partner Başvurusu">Partner Başvurusu</option>
@@ -325,11 +341,12 @@
             </select>
           </div>
 
-          <textarea name="message" placeholder="Mesajınızı yazın..." required></textarea>
+          <label class="sr-only" for="supportMessage">Mesajınız</label>
+          <textarea id="supportMessage" name="message" autocomplete="off" placeholder="Mesajınızı yazın..." required></textarea>
 
           <button type="submit" class="submit-btn">Başvuruyu Gönder</button>
 
-          <div id="formStatus" class="status">
+          <div id="formStatus" class="status" role="status" aria-live="polite">
             Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.
           </div>
         </form>
