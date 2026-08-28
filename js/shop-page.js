@@ -31,8 +31,8 @@
 
   function filtersFromDom() {
     return {
-      search: document.querySelector("[data-filter-search]")?.value || core.getParam("q") || "",
-      category: document.querySelector("[data-filter-category]")?.value || core.getParam("category") || categoryPreset() || "",
+      search: document.querySelector("[data-filter-search]")?.value || "",
+      category: document.querySelector("[data-filter-category]")?.value || categoryPreset() || "",
       brand: document.querySelector("[data-filter-brand]")?.value || "",
       minPrice: document.querySelector("[data-filter-min]")?.value || "",
       maxPrice: document.querySelector("[data-filter-max]")?.value || "",
@@ -642,11 +642,17 @@
     if (reset) {
       reset.addEventListener("click", () => {
         form.reset();
+        form.querySelectorAll("[data-filter-search], [data-filter-min], [data-filter-max]").forEach((input) => {
+          input.value = "";
+        });
+        form.querySelectorAll("[data-filter-brand]").forEach((select) => {
+          select.value = "";
+        });
+        form.querySelectorAll("[data-filter-sort]").forEach((select) => {
+          select.value = "newest";
+        });
         setCategorySelectValue(categoryPreset());
         setQuickFilter("");
-        if (window.history && window.location.search) {
-          window.history.replaceState(null, "", window.location.pathname);
-        }
         updatePriceFilterCurrencyHints();
         renderHomeSections();
       });
