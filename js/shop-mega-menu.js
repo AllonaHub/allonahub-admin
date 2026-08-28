@@ -525,6 +525,9 @@
     });
 
     nav.addEventListener("pointerover", (event) => {
+      if (event.target.closest(".shop-category-mega, .shop-category-trigger")) {
+        window.clearTimeout(closeTimer);
+      }
       const sidebarLink = event.target.closest("[data-shop-sidebar-link]");
       if (!sidebarLink || !nav.contains(sidebarLink)) return;
       const item = sidebarLink.closest(".shop-category-item");
@@ -533,7 +536,8 @@
       activateSidebarGroup(item, sidebarLink.dataset.shopGroupIndex);
     });
 
-    nav.addEventListener("pointerleave", () => {
+    nav.addEventListener("pointerleave", (event) => {
+      if (event.relatedTarget && nav.contains(event.relatedTarget)) return;
       closeTimer = window.setTimeout(() => closeMenus(nav), 180);
     });
 
