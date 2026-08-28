@@ -939,6 +939,36 @@ const SMART_FAQ_TOPICS = [
     ]
   },
   {
+    key: "order_howto",
+    label: "Sipariş verme rehberi",
+    confidence: 0.91,
+    terms: [
+      "nasıl sipariş",
+      "nasil siparis",
+      "sipariş nasıl",
+      "siparis nasil",
+      "sipariş ver",
+      "siparis ver",
+      "sipariş oluştur",
+      "siparis olustur",
+      "alışveriş nasıl",
+      "alisveris nasil",
+      "ürün nasıl alırım",
+      "urun nasil alirim",
+      "ürün satın alma",
+      "urun satin alma",
+      "satın alma nasıl",
+      "satin alma nasil"
+    ],
+    link: "shop",
+    actions: [
+      { label: "Allona Shop", link: "shop" },
+      { label: "Sepet", link: "cart" },
+      { label: "Kuponlar", link: "coupons" }
+    ],
+    text: "Tabii, sipariş vermeyi kısa şekilde anlatalım. Önce ürünü veya hizmeti seçin, varsa kupon/HP avantajını kontrol edin, ürünü sepete ekleyin ve ödeme adımında adres ile teslimat bilgisini onaylayın. Sipariş sonrası durum ve takip bilgisi Siparişlerim alanından görüntülenir."
+  },
+  {
     key: "order_problem",
     label: "Sipariş sorunu",
     confidence: 0.88,
@@ -1073,7 +1103,7 @@ export function detectAssistantIntent(message, metadata = {}) {
   }
 
   const topic = detectPlatformTopic(text);
-  if (topic?.key === "order_problem") {
+  if (topic?.key === "order_problem" || topic?.key === "order_howto") {
     return {
       key: topic.key,
       label: topic.label,

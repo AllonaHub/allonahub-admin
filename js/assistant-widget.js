@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-cvhowto1";
+  const VERSION = "20260828-orderhowto1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -253,6 +253,13 @@
       return {
         message: "Partnerlik için işletme bilgilerin, kategori ve iletişim detaylarınla başvuru akışına geçebilirsin. Onay sonrası ürün, sipariş, kampanya ve ödeme süreçleri partner panelinden yönetilir.",
         actions: [pageAction("Partner Ol", "partner"), pageAction("Destek", "support")]
+      };
+    }
+
+    if (hasAny(normalized, ["nasil siparis", "siparis nasil", "siparis ver", "siparis olustur", "alisveris nasil", "urun nasil alirim", "urun satin alma", "satin alma nasil"])) {
+      return {
+        message: "Tabii, sipariş vermeyi kısa şekilde anlatalım. Önce ürünü veya hizmeti seç, varsa kupon/HP avantajını kontrol et, ürünü sepete ekle ve ödeme adımında adres ile teslimat bilgisini onayla. Sipariş sonrası durum ve takip bilgisini Siparişlerim alanından görebilirsin.",
+        actions: [pageAction("Allona Shop", "shop"), pageAction("Sepet", "cart"), pageAction("Kuponlar", "coupons")]
       };
     }
 

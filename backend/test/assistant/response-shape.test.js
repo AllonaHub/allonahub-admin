@@ -166,6 +166,23 @@ test("assistant gives step guidance for CV creation questions", async () => {
   assert.deepEqual(reply.actions.map((action) => action.label), ["CV Oluştur", "Kariyer", "Denizcilik CV"]);
 });
 
+test("assistant explains how to place an order without treating it as tracking", async () => {
+  const message = "Nasıl sipariş verebilirim?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "order_howto");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /sepete ekleyin/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Allona Shop", "Sepet", "Kuponlar"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

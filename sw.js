@@ -1,4 +1,4 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260828-cvhowto1";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260828-orderhowto1";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -22,7 +22,7 @@ const APP_SHELL = [
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
   "./js/privacy-consent.js?v=20260826-active-modules1",
   "./js/allonahub-home.js?v=20260827-country1",
-  "./js/assistant-widget.js?v=20260828-cvhowto1",
+  "./js/assistant-widget.js?v=20260828-orderhowto1",
   "./js/pwa-install.js?v=20260712-theme-overflow1",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
   "./images/brand/allonahub-icon-192.png?v=20260622-icon1",
