@@ -38,6 +38,30 @@ function rpcRow(data) {
   return data || null;
 }
 
+function isoDaysAgo(days) {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString();
+}
+
+function impactMetric({ metricKey, value, periodStart, periodEnd, dataSource, aggregationMethod, unit = "count" }) {
+  return {
+    metric_key: metricKey,
+    country_id: null,
+    corridor_id: null,
+    period_start: periodStart,
+    period_end: periodEnd,
+    numeric_value: Number(value || 0),
+    currency: null,
+    unit,
+    data_source: dataSource,
+    aggregation_method: aggregationMethod,
+    verified_at: periodEnd,
+    published_at: periodEnd,
+    source_status: "live_aggregate"
+  };
+}
+
 async function rows(query, label) {
   const { data, error } = await query;
   if (error) throw databaseFailure(label, error);
@@ -48,6 +72,12 @@ async function one(query, label) {
   const { data, error } = await query;
   if (error) throw databaseFailure(label, error);
   return data || null;
+}
+
+async function countRows(query, label) {
+  const { count, error } = await query;
+  if (error) throw databaseFailure(label, error);
+  return Number(count || 0);
 }
 
 export class CountryRepository {
@@ -167,6 +197,108 @@ export class CountryRepository {
       if (!latest.has(key)) latest.set(key, item);
     });
     return [...latest.values()];
+  }
+
+  activeProfilesQuery() {
+    const now = new Date().toISOString();
+    return this.client
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("account_status", "active")
+      .eq("flagged_suspicious", false)
+      .or(`suspended_until.is.null,suspended_until.lt.${now}`);
+  }
+
+  async sumHpEarnedSince(periodStart) {
+    let total = 0;
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await this.client
+        .from("hp_ledger")
+        .select("amount")
+        .eq("type", "earn")
+        .gte("created_at", periodStart)
+        .range(from, from + pageSize - 1);
+      if (error) {
+        if (["42P01", "PGRST205"].includes(error.code)) return null;
+        throw databaseFailure("hp_ledger", error);
+      }
+      const page = data || [];
+      total += page.reduce((sum, item) => sum + Math.max(0, Number(item.amount || 0)), 0);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+    return total;
+  }
+
+  async listLivePublicImpact() {
+    const periodEnd = new Date().toISOString();
+    const newUsersPeriodStart = isoDaysAgo(7);
+    const hpPeriodStart = isoDaysAgo(7);
+    const [activeUsers, activePartners, newUsers, hpEarned] = await Promise.all([
+      countRows(this.activeProfilesQuery(), "impact_active_users"),
+      countRows(
+        this.client
+          .from("partner_businesses")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "active")
+          .eq("verification_status", "verified"),
+        "impact_active_partners"
+      ),
+      countRows(
+        this.activeProfilesQuery().gte("created_at", newUsersPeriodStart),
+        "impact_new_users"
+      ),
+      this.sumHpEarnedSince(hpPeriodStart)
+    ]);
+
+    const metrics = [
+      impactMetric({
+        metricKey: "active_user_count",
+        value: activeUsers,
+        periodStart: null,
+        periodEnd,
+        dataSource: "public.profiles",
+        aggregationMethod: "account_status='active', flagged_suspicious=false ve suspended_until bos veya gecmis olan profil sayisi"
+      }),
+      impactMetric({
+        metricKey: "active_partner_count",
+        value: activePartners,
+        periodStart: null,
+        periodEnd,
+        dataSource: "public.partner_businesses",
+        aggregationMethod: "status='active' ve verification_status='verified' olan partner sayisi"
+      }),
+      impactMetric({
+        metricKey: "new_user_count",
+        value: newUsers,
+        periodStart: newUsersPeriodStart,
+        periodEnd,
+        dataSource: "public.profiles",
+        aggregationMethod: "son 7 gunde olusan aktif profil sayisi"
+      })
+    ];
+
+    const sourceNotes = [
+      "crew_count: kanonik crew basvuru/profil kaynagi yok; profil metninden tahmin edilmedi"
+    ];
+
+    if (hpEarned !== null) {
+      metrics.push(impactMetric({
+        metricKey: "hp_points_issued",
+        value: hpEarned,
+        periodStart: hpPeriodStart,
+        periodEnd,
+        dataSource: "public.hp_ledger",
+        aggregationMethod: "son 7 gunde olusan pozitif earn hareketlerinin toplami",
+        unit: "hp"
+      }));
+    } else {
+      sourceNotes.push("hp_points_issued: public.hp_ledger kaynagina ulasilamadi");
+    }
+
+    return { metrics, sourceNotes };
   }
 
   async applyCountryStateChange({ country, patch, expectedUpdatedAt, actorId, reason, approvalReference, requestId }) {

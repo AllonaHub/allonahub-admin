@@ -15,7 +15,7 @@ services:
       # fail-closed until provider, legal and operational approvals exist.
       COUNTRY_ENGINE_ENABLED: "true"
       COUNTRY_ENGINE_ADMIN_WRITES_ENABLED: "false"
-      COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED: "false"
+      COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED: "true"
       E_INVOICING_ENABLED: "true"
       E_INVOICING_WORKER_ENABLED: "false"
       E_INVOICING_PROVIDER_CALLS_ENABLED: "false"

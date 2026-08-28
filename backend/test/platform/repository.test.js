@@ -91,3 +91,89 @@ test("atomic RPC concurrency conflict remains a 409 domain error", async () => {
     (error) => error.code === "COUNTRY_MODULE_UPDATE_CONFLICT" && error.statusCode === 409
   );
 });
+
+function countBuilder(value, calls, table) {
+  const filters = [];
+  const builder = {
+    eq(column, filterValue) {
+      filters.push(["eq", column, filterValue]);
+      return builder;
+    },
+    or(filterValue) {
+      filters.push(["or", filterValue]);
+      return builder;
+    },
+    gte(column, filterValue) {
+      filters.push(["gte", column, filterValue]);
+      return builder;
+    },
+    then(resolve) {
+      calls.push({ table, filters });
+      resolve({ count: value, error: null });
+    }
+  };
+  return builder;
+}
+
+function rowsBuilder(data, calls, table) {
+  const filters = [];
+  const builder = {
+    eq(column, filterValue) {
+      filters.push(["eq", column, filterValue]);
+      return builder;
+    },
+    gte(column, filterValue) {
+      filters.push(["gte", column, filterValue]);
+      return builder;
+    },
+    range(from, to) {
+      filters.push(["range", from, to]);
+      return builder;
+    },
+    then(resolve) {
+      calls.push({ table, filters });
+      resolve({ data, error: null });
+    }
+  };
+  return builder;
+}
+
+test("live public impact computes only aggregate metrics from canonical tables", async () => {
+  const calls = [];
+  const profileCounts = [12, 3];
+  const client = {
+    from(table) {
+      return {
+        select(columns, options = {}) {
+          if (options.head) {
+            const count = table === "profiles" ? profileCounts.shift() : 4;
+            return countBuilder(count, calls, table);
+          }
+          assert.equal(table, "hp_ledger");
+          assert.equal(columns, "amount");
+          return rowsBuilder([{ amount: 20 }, { amount: -5 }, { amount: 30 }], calls, table);
+        }
+      };
+    }
+  };
+  const repository = new CountryRepository(client);
+  const result = await repository.listLivePublicImpact();
+
+  assert.deepEqual(result.metrics.map((item) => item.metric_key), [
+    "active_user_count",
+    "active_partner_count",
+    "new_user_count",
+    "hp_points_issued"
+  ]);
+  assert.equal(result.metrics.find((item) => item.metric_key === "active_user_count").numeric_value, 12);
+  assert.equal(result.metrics.find((item) => item.metric_key === "active_partner_count").numeric_value, 4);
+  assert.equal(result.metrics.find((item) => item.metric_key === "new_user_count").numeric_value, 3);
+  assert.equal(result.metrics.find((item) => item.metric_key === "hp_points_issued").numeric_value, 50);
+  assert.ok(result.sourceNotes.some((note) => note.includes("crew_count")));
+  assert.ok(calls.some((call) => (
+    call.table === "partner_businesses"
+    && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "status" && filter[2] === "active")
+    && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "verification_status" && filter[2] === "verified")
+  )));
+  assert.equal(calls.filter((call) => call.table === "profiles").length, 2);
+});

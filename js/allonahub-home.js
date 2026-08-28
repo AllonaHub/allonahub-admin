@@ -370,6 +370,7 @@ jobAds:["new_user_count","new_member_count"],
 crewApps:["crew_count","maritime_crew_count"],
 dailyHP:["hp_points_issued","daily_hp_points"]
 };
+const requiredVerifiedStats=["activeUsers","activeAds","jobAds"];
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
 function clearLiveStats(){Object.keys(verifiedStatKeys).forEach(id=>{const node=document.getElementById(id);if(node){node.textContent="—";node.closest(".stat-live-card")?.classList.remove("has-verified-stat")}})}
 function updateLiveStats(metrics){
@@ -388,11 +389,23 @@ const base=String(window.Allona?.config?.apiBaseUrl||"").replace(/\/$/,"");
 const response=await fetch(`${base}/v1/platform/impact`,{headers:{Accept:"application/json"}});
 if(!response.ok){throw new Error(`impact ${response.status}`)}
 const payload=await response.json();
-if(!payload.published||!Array.isArray(payload.metrics)||!payload.metrics.length){return}
+if(!Array.isArray(payload.metrics)||!payload.metrics.length){
+if(source){source.textContent=payload.sourceNotes?.join(" • ")||"Doğrulanmış aggregate veri henüz yayınlanmadı."}
+return
+}
 updateLiveStats(payload.metrics);
-if(source){source.textContent="Sayaçlar doğrulanmış ve public olarak yayımlanmış aggregate kayıtlardan gelir."}
+const hasRequiredStats=requiredVerifiedStats.every(id=>{
+const node=document.getElementById(id);
+return node&&node.textContent.trim()!=="—";
+});
+if(source){
+const optionalNotes=Array.isArray(payload.sourceNotes)&&payload.sourceNotes.length?` ${payload.sourceNotes.join(" • ")}`:"";
+source.textContent=hasRequiredStats
+?"Sayaçlar production aggregate veriden gelir; yeni üyeler son 7 günü gösterir."+optionalNotes
+:payload.sourceNotes?.join(" • ")||"Zorunlu aggregate kaynakları henüz tamamlanmadı.";
+}
 }catch(error){
-if(source){source.textContent="Doğrulanmış aggregate veri yayınlanmadığı için sayaç gösterilmiyor."}
+if(source){source.textContent="Canlı sayaç kaynağına şu anda ulaşılamıyor."}
 }
 }
 loadVerifiedStats();

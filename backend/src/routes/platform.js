@@ -89,7 +89,8 @@ function publicImpactPayload(items) {
     dataSource: item.data_source,
     aggregationMethod: item.aggregation_method,
     verifiedAt: item.verified_at,
-    publishedAt: item.published_at
+    publishedAt: item.published_at,
+    sourceStatus: item.source_status || "published_snapshot"
   }));
 }
 
@@ -119,10 +120,27 @@ export function registerPlatformRoutes(app) {
 
   app.get("/v1/platform/impact", async () => {
     if (!config.countryEngine.enabled || !config.countryEngine.publicImpactEnabled) {
-      return { ok: true, published: false, metrics: [] };
+      return {
+        ok: true,
+        published: false,
+        metrics: [],
+        sourceStatus: "disabled",
+        sourceNotes: ["Public impact aggregates are disabled in this environment."]
+      };
     }
-    const metrics = publicImpactPayload(await repository.listPublishedImpact());
-    return { ok: true, published: metrics.length > 0, metrics };
+    const liveImpact = await repository.listLivePublicImpact();
+    const metrics = publicImpactPayload(liveImpact.metrics);
+    const required = new Set(["active_user_count", "active_partner_count", "new_user_count"]);
+    const published = [...required].every((key) => metrics.some((metric) => (
+      metric.metricKey === key && Number.isFinite(Number(metric.value))
+    )));
+    return {
+      ok: true,
+      published,
+      sourceStatus: published ? "live_aggregate" : "incomplete",
+      sourceNotes: liveImpact.sourceNotes,
+      metrics
+    };
   });
 
   app.get("/v1/admin/country-control", async (request) => {
