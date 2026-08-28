@@ -804,6 +804,17 @@
     return escapeHTML(encodeURIComponent(JSON.stringify(snapshot)));
   }
 
+  let productCardRenderCount = 0;
+
+  function productCardDescriptionId(product) {
+    productCardRenderCount += 1;
+    const base = String(product.id || product.slug || product.name || "item")
+      .replace(/[^a-z0-9_-]+/gi, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64) || "item";
+    return `product-desc-${base}-${productCardRenderCount.toString(36)}`;
+  }
+
   function productCard(raw) {
     const product = normalizeProduct(raw);
     const disabled = product.stock <= 0;
@@ -827,10 +838,10 @@
       ? socialSignals.slice(0, 2).join(" · ")
       : (product.seller_score ? `${Number(product.seller_score).toFixed(1)} satıcı puanı` : `${product.seller_name || product.brand || "Allona"} güvencesi`);
     const productHref = productUrl(product);
-    const descriptionId = `product-desc-${String(product.id || product.slug || product.name || "item").replace(/[^a-z0-9_-]+/gi, "-").slice(0, 64)}`;
+    const descriptionId = productCardDescriptionId(product);
 
     return `
-      <article class="product-card" data-product-card="${escapeHTML(product.id)}">
+      <article class="product-card" data-product-card="${escapeHTML(product.id)}" aria-describedby="${escapeHTML(descriptionId)}">
         <a class="product-card__media" href="${escapeHTML(productHref)}" aria-label="${escapeHTML(product.name)}" data-product-preview-link="${escapeHTML(product.id)}" data-product-snapshot="${productSnapshotAttr(product)}">
           <img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.src='${url("/images/product-fallback.svg")}'">
         </a>
