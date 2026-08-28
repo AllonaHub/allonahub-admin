@@ -71,12 +71,12 @@
           <div class="header-actions">
             <div class="action-menu" data-notification-menu>
               <button class="icon-btn" type="button" data-notification-toggle aria-label="Bildirimler" aria-expanded="false" title="Bildirimler">
-                🔔 <span class="badge" data-notification-count>0</span>
+                🔔 <span class="badge" data-notification-count hidden aria-hidden="true"></span>
               </button>
               <div class="action-popover" data-notification-panel hidden>
                 <strong>Bildirimler</strong>
-                <p>Yeni bildiriminiz yok. Sipariş ve favori güncellemeleri burada görünecek.</p>
-                <a href="${core.url("orders.html")}">Siparişleri aç</a>
+                <p data-notification-summary>Bildirim merkezini açarak hesabındaki güncellemeleri görüntüleyebilirsin.</p>
+                <a href="${core.url("bildirimler.html")}">Bildirimleri aç</a>
               </div>
             </div>
             <a class="link-btn icon-btn--wide" href="${core.url("wallet.html")}" aria-label="Hub Wallet">Wallet</a>
@@ -201,6 +201,53 @@
     }
   }
 
+  async function updateNotificationCount() {
+    const badges = document.querySelectorAll(".site-header [data-notification-count]");
+    if (!badges.length) return;
+    const buttons = document.querySelectorAll(".site-header [data-notification-toggle]");
+    const summaries = document.querySelectorAll(".site-header [data-notification-summary]");
+
+    const setHidden = () => {
+      badges.forEach((node) => {
+        node.hidden = true;
+        node.setAttribute("aria-hidden", "true");
+        node.textContent = "";
+      });
+      buttons.forEach((node) => {
+        node.setAttribute("aria-label", "Bildirimler");
+        node.setAttribute("title", "Bildirimler");
+      });
+      summaries.forEach((node) => {
+        node.textContent = "Bildirim merkezini açarak hesabındaki güncellemeleri görüntüleyebilirsin.";
+      });
+    };
+
+    setHidden();
+    const helper = window.AllonaUserNotifications;
+    if (!helper || typeof helper.load !== "function") return;
+
+    try {
+      const result = await helper.load();
+      const count = Number(result && result.unreadCount);
+      if (!Number.isFinite(count) || count <= 0) return;
+      const label = `${count} okunmamış bildirim`;
+      badges.forEach((node) => {
+        node.textContent = count > 99 ? "99+" : String(count);
+        node.hidden = false;
+        node.removeAttribute("aria-hidden");
+      });
+      buttons.forEach((node) => {
+        node.setAttribute("aria-label", label);
+        node.setAttribute("title", label);
+      });
+      summaries.forEach((node) => {
+        node.textContent = `${label} var.`;
+      });
+    } catch (error) {
+      setHidden();
+    }
+  }
+
   function setMobileNav(open) {
     const nav = document.querySelector("[data-nav-links]");
     const toggle = document.querySelector("[data-nav-toggle]");
@@ -233,9 +280,9 @@
       const form = event.target.closest("[data-site-search]");
       if (!form) return;
       event.preventDefault();
-      const q = new FormData(form).get("q") || "";
-      const page = document.querySelector("[data-page='market']") ? "market.html" : "shop.html";
-      window.location.href = core.url(`${page}?q=${encodeURIComponent(q)}`);
+      const q = String(new FormData(form).get("q") || "").trim();
+      if (!q) return;
+      window.location.href = core.url(`/pages/search/arama.html?q=${encodeURIComponent(q)}`);
     });
 
     document.addEventListener("click", (event) => {
@@ -295,6 +342,7 @@
     if (App.cart) App.cart.updateBadges();
     updateAccountLink();
     updateRemoteFavoriteCount();
+    updateNotificationCount();
   }
 
   document.addEventListener("DOMContentLoaded", bindLayout);

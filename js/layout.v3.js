@@ -36,8 +36,8 @@
           </form>
           <div class="header-actions">
             <button class="icon-btn mobile-nav-toggle" type="button" data-nav-toggle aria-label="Menüyü aç" aria-expanded="false" aria-controls="site-primary-nav">☰</button>
-            <a class="icon-btn icon-btn--count" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler">
-              🔔 <span class="badge" data-notification-count>0</span>
+            <a class="icon-btn icon-btn--count" href="${core.url("/pages/account/bildirimler.html")}" aria-label="Bildirimler" data-notification-link>
+              🔔 <span class="badge" data-notification-count hidden aria-hidden="true"></span>
             </a>
             <a class="icon-btn icon-btn--count icon-btn--favorite" href="${core.url("/pages/account/favorites.html")}" aria-label="Favoriler">
               <span class="header-action-icon header-action-icon--heart" aria-hidden="true">♥</span>
@@ -235,6 +235,43 @@
     }
   }
 
+  async function updateNotificationCount() {
+    const badges = document.querySelectorAll(".site-header [data-notification-count]");
+    if (!badges.length) return;
+
+    const setHidden = () => {
+      badges.forEach((node) => {
+        node.hidden = true;
+        node.setAttribute("aria-hidden", "true");
+        node.textContent = "";
+      });
+      document.querySelectorAll(".site-header [data-notification-link]").forEach((node) => {
+        node.setAttribute("aria-label", "Bildirimler");
+      });
+    };
+
+    setHidden();
+    const helper = window.AllonaUserNotifications;
+    if (!helper || typeof helper.load !== "function") return;
+
+    try {
+      const result = await helper.load();
+      const count = Number(result && result.unreadCount);
+      if (!Number.isFinite(count) || count <= 0) return;
+      const label = `${count} okunmamış bildirim`;
+      badges.forEach((node) => {
+        node.textContent = count > 99 ? "99+" : String(count);
+        node.hidden = false;
+        node.removeAttribute("aria-hidden");
+      });
+      document.querySelectorAll(".site-header [data-notification-link]").forEach((node) => {
+        node.setAttribute("aria-label", label);
+      });
+    } catch (error) {
+      setHidden();
+    }
+  }
+
   function loadComplianceAudit() {
     if (App.complianceAudit || document.querySelector("script[data-compliance-audit]")) return;
     const script = document.createElement("script");
@@ -269,11 +306,9 @@
       const form = event.target.closest("[data-site-search]");
       if (!form) return;
       event.preventDefault();
-      const q = new FormData(form).get("q") || "";
-      const target = document.querySelector("[data-page='allona-market']")
-        ? "/pages/commerce/allonamarket.html"
-        : "/pages/commerce/shop.html";
-      window.location.href = core.url(`${target}?q=${encodeURIComponent(q)}`);
+      const q = String(new FormData(form).get("q") || "").trim();
+      if (!q) return;
+      window.location.href = core.url(`/pages/search/arama.html?q=${encodeURIComponent(q)}`);
     });
 
     document.addEventListener("click", (event) => {
@@ -298,6 +333,7 @@
     if (App.cart) App.cart.updateBadges();
     updateAccountLink();
     updateRemoteFavoriteCount();
+    updateNotificationCount();
     loadComplianceAudit();
     document.dispatchEvent(new CustomEvent("allona:layout-ready"));
   }
