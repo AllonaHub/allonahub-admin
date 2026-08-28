@@ -211,8 +211,8 @@ body{overflow-x:hidden}
 
 <div class="search glass">
 <span>🔍</span>
-<input id="partnerSearchInput" placeholder="Partner, ödeme, kampanya, mağaza, QR veya sektör ara...">
-<button onclick="partnerSearch()">Ara</button>
+<input id="partnerSearchInput" type="search" aria-label="Partner araması" autocomplete="off" spellcheck="false" placeholder="Partner, ödeme, kampanya, mağaza, QR veya sektör ara...">
+<button type="button" onclick="partnerSearch()">Ara</button>
 </div>
 
 <div class="actions glass">
@@ -246,17 +246,17 @@ body{overflow-x:hidden}
 <div><b>Onaylı Yayın</b><span>Başvurular admin kontrolü sonrası aktif edilir.</span></div>
 </div>
 
-<div class="tabs">
-<button class="tab active" onclick="openPartnerTab('login', event)">Giriş</button>
-<button class="tab" onclick="openPartnerTab('apply', event)">Başvuru</button>
+<div class="tabs" role="tablist" aria-label="Partner giriş ve başvuru sekmeleri">
+<button id="partnerLoginTab" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="login" onclick="openPartnerTab('login', event)">Giriş</button>
+<button id="partnerApplyTab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="apply" onclick="openPartnerTab('apply', event)">Başvuru</button>
 </div>
 
-<div id="login" class="form active">
-<div class="input"><input id="loginEmail" placeholder="E-posta"></div>
-<div class="input"><input id="loginPassword" type="password" placeholder="Şifre"></div>
+<div id="login" class="form active" role="tabpanel" aria-labelledby="partnerLoginTab">
+<div class="input"><input id="loginEmail" type="email" inputmode="email" autocomplete="username" spellcheck="false" aria-label="Partner giriş e-posta adresi" placeholder="E-posta"></div>
+<div class="input"><input id="loginPassword" type="password" autocomplete="current-password" aria-label="Partner giriş şifresi" placeholder="Şifre"></div>
 <div class="security-challenge" data-security-challenge="login"></div>
-<button class="btn" onclick="partnerLogin()">Partner Paneline Giriş</button>
-<button class="btn secondary-btn" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
+<button class="btn" type="button" onclick="partnerLogin()">Partner Paneline Giriş</button>
+<button class="btn secondary-btn" type="button" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
 <div class="partner-capabilities">
 <div><b>Sipariş</b><span>Kargo, hazırlık ve teslimat takibi.</span></div>
 <div><b>Finans</b><span>Hakediş, komisyon ve ödeme özeti.</span></div>
@@ -265,13 +265,13 @@ body{overflow-x:hidden}
 </div>
 </div>
 
-<div id="apply" class="form">
-<div class="input"><input id="partner_name" placeholder="Firma / İşletme Adı"></div>
-<div class="input"><input id="contact_name" placeholder="Yetkili Ad Soyad"></div>
-<div class="input"><input id="email" placeholder="E-posta"></div>
+<div id="apply" class="form" role="tabpanel" aria-labelledby="partnerApplyTab" hidden>
+<div class="input"><input id="partner_name" type="text" autocomplete="organization" aria-label="Firma veya işletme adı" placeholder="Firma / İşletme Adı"></div>
+<div class="input"><input id="contact_name" type="text" autocomplete="name" aria-label="Yetkili ad soyad" placeholder="Yetkili Ad Soyad"></div>
+<div class="input"><input id="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Başvuru e-posta adresi" placeholder="E-posta"></div>
 
 <div class="input">
-<select id="countryCode" style="width:260px;border-right:1px solid rgba(255,255,255,.15);margin-right:10px;">
+<select id="countryCode" aria-label="Telefon ülke kodu" autocomplete="tel-country-code" style="width:260px;border-right:1px solid rgba(255,255,255,.15);margin-right:10px;">
 <option value="+90">🇹🇷 Türkiye +90</option>
 <option value="+994">🇦🇿 Azerbaycan +994</option>
 <option value="+1">🇺🇸 ABD / Kanada +1</option>
@@ -309,15 +309,15 @@ body{overflow-x:hidden}
 <option value="+52">🇲🇽 Meksika +52</option>
 <option value="+27">🇿🇦 Güney Afrika +27</option>
 </select>
-<input id="phone" inputmode="numeric" placeholder="Telefon numarası">
+<input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" aria-label="Telefon numarası" placeholder="Telefon numarası">
 </div>
 
-<div class="input has-action"><input id="tax_number" placeholder="Vergi / VAT Numarası" autocomplete="off"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
-<div id="companyLookupStatus" class="lookup-status" hidden></div>
-<div class="input"><input id="tax_office" placeholder="Vergi Dairesi"></div>
+<div class="input has-action"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
+<div id="companyLookupStatus" class="lookup-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<div class="input"><input id="tax_office" type="text" autocomplete="off" spellcheck="false" aria-label="Vergi dairesi" placeholder="Vergi Dairesi"></div>
 
 <div class="input">
-<select id="company_type">
+<select id="company_type" aria-label="Şirket türü">
 <option value="">Şirket Türü Seç</option>
 <option>Şahıs Şirketi</option>
 <option>Limited Şirket</option>
@@ -328,12 +328,12 @@ body{overflow-x:hidden}
 </select>
 </div>
 
-<div class="input"><input id="website" placeholder="Web Sitesi (opsiyonel)"></div>
+<div class="input"><input id="website" type="url" inputmode="url" autocomplete="url" spellcheck="false" aria-label="Web sitesi" placeholder="Web Sitesi (opsiyonel)"></div>
 <div class="input"><select id="country" aria-label="Ülke"></select></div>
 <div class="input"><select id="city" aria-label="İl / Şehir"></select></div>
 
 <div class="input">
-<select id="category">
+<select id="category" aria-label="Sektör">
 <option value="">Sektör Seç</option>
 <option>AllonaHub / E-Ticaret</option>
 <option>Restoran & Yemek</option>
@@ -368,12 +368,12 @@ body{overflow-x:hidden}
 </select>
 </div>
 
-<div class="input textarea"><textarea id="message" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
+<div class="input textarea"><textarea id="message" autocomplete="off" spellcheck="true" aria-label="İşletme açıklaması" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
 <div class="security-challenge" data-security-challenge="partner_application"></div>
 
 <div class="form-actions">
-<button class="btn" onclick="sendPartnerApplication()">Başvuruyu Gönder</button>
-<button class="btn secondary-btn" onclick="clearApplyForm()">Tümünü Temizle</button>
+<button class="btn" type="button" onclick="sendPartnerApplication()">Başvuruyu Gönder</button>
+<button class="btn secondary-btn" type="button" onclick="clearApplyForm()">Tümünü Temizle</button>
 </div>
 </div>
 </div>
@@ -402,7 +402,7 @@ body{overflow-x:hidden}
 <div class="card glass"><h3>4. Satış & Ödeme</h3><p>Ürün, hizmet, kampanya ve QR ödeme akışları başlatılır.</p></div>
 </div>
 
-<div id="notice" class="notice"></div>
+<div id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></div>
 </div>
 
 <script>
@@ -757,6 +757,8 @@ function showLookupStatus(message,type="warning"){
   if(!node)return;
   node.hidden=!message;
   node.className=`lookup-status is-${type}`;
+  node.setAttribute("role",type==="error" ? "alert" : "status");
+  node.setAttribute("aria-live",type==="error" ? "assertive" : "polite");
   node.textContent=String(message || "");
 }
 
@@ -943,24 +945,41 @@ async function resolvePartnerRecord(user,email){
 }
 
 function openPartnerTab(tabId,event){
-  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
-  document.getElementById(tabId).classList.add("active");
+  document.querySelectorAll(".form").forEach(el=>{
+    const active=el.id===tabId;
+    el.classList.toggle("active",active);
+    el.hidden=!active;
+  });
+  document.querySelectorAll(".tab").forEach(btn=>{
+    const active=btn.getAttribute("aria-controls")===tabId;
+    btn.classList.toggle("active",active);
+    btn.setAttribute("aria-selected",active ? "true" : "false");
+  });
   if(window.Allona?.securityChallenge?.hydrate){
     window.Allona.securityChallenge.hydrate();
   }
 
-  if(event && event.target && event.target.classList.contains("tab")){
-    event.target.classList.add("active");
-  }else{
-    document.querySelectorAll(".tab").forEach(btn=>{
-      const text=btn.textContent.toLowerCase();
-      if((tabId==="apply" && text.includes("başvuru")) || (tabId==="login" && text.includes("giriş"))){
-        btn.classList.add("active");
-      }
-    });
+  if(!event || !event.target || !event.target.classList.contains("tab")){
     document.querySelector(".partner-login").scrollIntoView({behavior:"smooth"});
   }
+}
+
+function initPartnerTabKeyboard(){
+  const tabs=Array.from(document.querySelectorAll(".tab[role='tab']"));
+  tabs.forEach((tab,index)=>{
+    tab.addEventListener("keydown",(event)=>{
+      let nextIndex=index;
+      if(event.key==="ArrowRight" || event.key==="ArrowDown")nextIndex=(index+1)%tabs.length;
+      else if(event.key==="ArrowLeft" || event.key==="ArrowUp")nextIndex=(index-1+tabs.length)%tabs.length;
+      else if(event.key==="Home")nextIndex=0;
+      else if(event.key==="End")nextIndex=tabs.length-1;
+      else return;
+      event.preventDefault();
+      const targetTab=tabs[nextIndex];
+      targetTab.focus();
+      openPartnerTab(targetTab.getAttribute("aria-controls"),{target:targetTab});
+    });
+  });
 }
 
 async function partnerLogin(){
@@ -1255,6 +1274,7 @@ document.addEventListener("allona:language-changed",event=>{
 });
 document.addEventListener("DOMContentLoaded",()=>{
   initPartnerApplicationAutomation();
+  initPartnerTabKeyboard();
   translatePartnerPage(localStorage.getItem("allona.language") || "tr");
 });
 
