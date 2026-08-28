@@ -116,6 +116,23 @@ test("assistant clarifies free usage and paid steps without pushing payment", as
   assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "Premium", "Partner Ol"]);
 });
 
+test("assistant helps users choose the right module", async () => {
+  const message = "Shop mu market mi, hangi modül bana uygun?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "module_chooser");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /Shop/);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Hizmetler", "Arama", "Destek / SSS"]);
+});
+
 test("assistant action sanitizer deduplicates repeated destinations", () => {
   const actions = sanitizeAssistantActions([
     { type: "open_url", label: "Destek", url: "https://allonahub.com/pages/company/destek.html" },

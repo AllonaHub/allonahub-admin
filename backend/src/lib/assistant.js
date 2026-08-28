@@ -463,6 +463,32 @@ const CORE_TOPICS = [
     text: "Tabii, birlikte en doğru başlangıcı seçelim. İş arıyorsanız CV oluşturma, işletme veya satış tarafındaysanız partner başvurusu, platformu keşfetmek istiyorsanız hizmetler alanı en hızlı adımdır. Bana hedefinizi bir cümleyle yazarsanız cevabı doğrudan o yola göre hazırlarım."
   },
   {
+    key: "module_chooser",
+    label: "Doğru modül seçimi",
+    confidence: 0.88,
+    terms: [
+      "hangi hizmet",
+      "hangi modül",
+      "hangi modul",
+      "bana uygun",
+      "ne seçmeliyim",
+      "ne secmeliyim",
+      "hangisini seçmeliyim",
+      "hangisini secmeliyim",
+      "shop mu market mi",
+      "yemek mi market mi",
+      "kariyer mi denizcilik mi",
+      "cv mi denizcilik mi"
+    ],
+    link: "services",
+    actions: [
+      { label: "Hizmetler", link: "services" },
+      { label: "Arama", link: "search" },
+      { label: "Destek / SSS", link: "support" }
+    ],
+    text: "Size uygun modülü seçmek için niyete göre ilerleyelim: ürün alışverişi için Shop, günlük ihtiyaç için Market, yemek için Allona Yemek, iş ve özgeçmiş için Kariyer/CV, gemi ve crew tarafı için Denizcilik doğru başlangıçtır. Aradığınız hedefi tek cümleyle yazarsanız sizi en uygun modüle yönlendiririm."
+  },
+  {
     key: "platform_overview",
     label: "AllonaHub hakkında",
     confidence: 0.82,

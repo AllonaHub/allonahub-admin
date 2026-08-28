@@ -1,7 +1,7 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-free1";
+  const VERSION = "20260828-chooser1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
@@ -21,6 +21,7 @@
   ];
   const LOCAL_LINKS = {
     services: "/index.html#modules",
+    search: "/pages/search/arama.html",
     support: "/pages/company/destek.html",
     contact: "/pages/company/iletisim.html",
     about: "/pages/company/hakkimizda.html",
@@ -181,6 +182,13 @@
       return {
         message: "AllonaHub’u keşfetmek, bilgi almak ve uygun hizmet yolunu seçmek için önce ücretsiz şekilde ilerleyebilirsin. Ücretli paket, komisyon veya ödeme gerektiren bir işlem varsa ilgili adımda ayrıca görünür; onayın olmadan ödeme akışına sokulmazsın.",
         actions: [pageAction("Hizmetler", "services"), pageAction("Premium", "premium"), pageAction("Partner Ol", "partner")]
+      };
+    }
+
+    if (hasAny(normalized, ["hangi hizmet", "hangi modul", "bana uygun", "ne secmeliyim", "hangisini secmeliyim", "shop mu market mi", "yemek mi market mi", "kariyer mi denizcilik mi", "cv mi denizcilik mi"])) {
+      return {
+        message: "Size uygun modülü seçmek için niyete göre ilerleyelim: ürün alışverişi için Shop, günlük ihtiyaç için Market, yemek için Allona Yemek, iş ve özgeçmiş için Kariyer/CV, gemi ve crew tarafı için Denizcilik doğru başlangıçtır. Hedefinizi tek cümleyle yazarsanız sizi en uygun modüle yönlendiririm.",
+        actions: [pageAction("Hizmetler", "services"), pageAction("Arama", "search"), pageAction("Destek / SSS", "support")]
       };
     }
 
