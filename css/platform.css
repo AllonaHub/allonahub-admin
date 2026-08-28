@@ -9137,3 +9137,205 @@ html body[data-theme="corporate"] .ah-cookie-btn--primary {
   border-color: rgba(0, 77, 141, 0.28) !important;
   color: #ffffff !important;
 }
+
+/* Corporate final contrast pass: keeps late-loaded widgets and page-specific modules readable. */
+html body[data-theme="corporate"] {
+  --ah-corp-logo-gold: #8a5a00;
+  --ah-corp-action-bg: #123a56;
+  --ah-corp-action-bg-strong: #0a5e96;
+  --ah-corp-action-text: #ffffff;
+  --ah-corp-success-text: #047857;
+}
+
+html body[data-theme="corporate"] :where(.logo-title .gold, .platform-brand-normalized .gold, .brand-wordmark .gold, .footer-brand .gold) {
+  color: var(--ah-corp-logo-gold) !important;
+  -webkit-text-fill-color: var(--ah-corp-logo-gold) !important;
+  text-shadow: none !important;
+}
+
+html body[data-theme="corporate"] :where(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .platform-theme-btn,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn,
+  .premium-action:not(.premium-action--ghost),
+  button[type="submit"]
+) {
+  background-color: var(--ah-corp-action-bg) !important;
+  color: var(--ah-corp-action-text) !important;
+  -webkit-text-fill-color: var(--ah-corp-action-text) !important;
+  text-shadow: none !important;
+}
+
+html body[data-theme="corporate"] :where(
+  .btn,
+  .search-btn,
+  .login,
+  .buy-btn,
+  .cart-btn,
+  .checkout-btn,
+  .food-checkout,
+  .platform-action,
+  .platform-theme-btn,
+  .pwa-install-button,
+  .ad-hero__button,
+  .pay-btn,
+  .submit-btn,
+  .premium-action:not(.premium-action--ghost),
+  button[type="submit"]
+) :where(span, strong, small, i, svg) {
+  color: var(--ah-corp-action-text) !important;
+  -webkit-text-fill-color: var(--ah-corp-action-text) !important;
+  text-shadow: none !important;
+}
+
+html body[data-theme="corporate"] :where(.btn--ghost, .btn--light, .link-btn, .icon-btn, .platform-action--secondary, .premium-action--ghost) {
+  background-color: #ffffff !important;
+  color: var(--ah-corp-blue-strong) !important;
+  -webkit-text-fill-color: var(--ah-corp-blue-strong) !important;
+  border-color: var(--ah-corp-line) !important;
+  text-shadow: none !important;
+}
+
+html body[data-theme="corporate"] .soon-btn.soon-btn--ghost {
+  background-color: #f3f7fb !important;
+  color: var(--ah-corp-ink) !important;
+  -webkit-text-fill-color: var(--ah-corp-ink) !important;
+  border-color: var(--ah-corp-line) !important;
+  box-shadow: none !important;
+}
+
+html body[data-theme="corporate"] :where(.food-live-row em, .food-menu-item small, .food-status.is-success, .food-badge--green) {
+  color: var(--ah-corp-success-text) !important;
+  -webkit-text-fill-color: var(--ah-corp-success-text) !important;
+  text-shadow: none !important;
+}
+
+html body.premium-membership-page[data-theme="corporate"] .premium-final {
+  background: linear-gradient(135deg, #102334, #123a56) !important;
+  color: #ffffff !important;
+}
+
+html body.premium-membership-page[data-theme="corporate"] .premium-final :where(h1, h2, h3, p, a, span, strong, small) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+html body.premium-membership-page[data-theme="corporate"] .premium-final .premium-action:not(.premium-action--ghost) {
+  background: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.64) !important;
+  color: #102334 !important;
+  -webkit-text-fill-color: #102334 !important;
+}
+
+html body.premium-membership-page[data-theme="corporate"] .premium-final .premium-action--ghost {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.36) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant {
+  --as-panel-bg: #ffffff;
+  --as-panel-text: #13283a;
+  --as-muted: #536171;
+  --as-surface: #eef5fa;
+  --as-card-bg: #ffffff;
+  --as-line: rgba(19, 40, 58, 0.18);
+  --as-primary: #123a56;
+  --as-primary-soft: #0a5e96;
+  --as-accent: #d6a21c;
+  --as-accent-text: #071824;
+  color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__panel {
+  background: #ffffff !important;
+  border-color: rgba(19, 40, 58, 0.18) !important;
+  color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__head {
+  background-color: #123a56 !important;
+  background-image: linear-gradient(135deg, #123a56, #0a5e96) !important;
+  color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__head :where(strong, span, button, svg) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(.ah-assistant__messages, .ah-assistant__quickbar) {
+  background: #eef5fa !important;
+  color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__msg--assistant {
+  background: #ffffff !important;
+  border-color: rgba(19, 40, 58, 0.14) !important;
+  color: #13283a !important;
+  box-shadow: 0 10px 26px rgba(19, 40, 58, 0.08) !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__msg--user {
+  background-color: #0a5e96 !important;
+  background-image: linear-gradient(135deg, #0a5e96, #123a56) !important;
+  color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel {
+  background-color: #123a56 !important;
+  background-image: linear-gradient(135deg, #123a56, #0a5e96) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel :where(span, strong, small, svg) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(.ah-assistant__action, .ah-assistant__quick, .ah-assistant__voice) {
+  background-color: #ffffff !important;
+  border-color: rgba(19, 40, 58, 0.18) !important;
+  color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(.ah-assistant__action, .ah-assistant__quick, .ah-assistant__voice) :where(span, strong, small, svg) {
+  color: #13283a !important;
+  -webkit-text-fill-color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(.ah-assistant__send, .ah-assistant__quick-toggle) {
+  background-color: #0a5e96 !important;
+  background-image: linear-gradient(135deg, #0a5e96, #123a56) !important;
+  border-color: rgba(10, 94, 150, 0.24) !important;
+  color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(.ah-assistant__send, .ah-assistant__quick-toggle) :where(span, strong, small, svg) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(input, textarea) {
+  background-color: #ffffff !important;
+  border-color: rgba(19, 40, 58, 0.22) !important;
+  color: #13283a !important;
+}
+
+html body[data-theme="corporate"] .ah-assistant :where(input, textarea)::placeholder {
+  color: #536171 !important;
+}
