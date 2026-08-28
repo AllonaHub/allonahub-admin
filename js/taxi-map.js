@@ -196,10 +196,19 @@
     state.syncState = syncState;
     setText("[data-taxi-data-source]", source);
     setText("[data-taxi-sync-state]", syncState);
+    setLiveAvailability(source);
   }
 
   function requestStatus(message) {
     setText("[data-taxi-request-status]", message);
+  }
+
+  function setLiveAvailability(source) {
+    const live = /Supabase canlı filo/i.test(String(source || ""));
+    $all("[data-taxi-find]").forEach((button) => {
+      button.textContent = live ? "Taksi Çağır" : "Demo Eşleşmeyi Gör";
+      button.setAttribute("aria-label", live ? "Canlı taksi çağır" : "Demo taksi eşleşmesini göster");
+    });
   }
 
   function clearDriverMarkers() {
@@ -615,8 +624,8 @@
   async function loadSupabaseTaxiData() {
     const api = dataApi();
     if (!api) {
-      setDataSource("Demo filo", "Supabase client yok");
-      requestStatus("Supabase client yüklenmedi; demo filo ile çalışıyor.");
+      setDataSource("Demo önizleme", "Supabase client yok");
+      requestStatus("Supabase client yüklenmedi; gerçek çağrı kapalı, demo önizleme çalışıyor.");
       return;
     }
 
@@ -637,17 +646,17 @@
       }
 
       state.supabaseReady = Boolean(remoteDrivers && remoteDrivers.length);
-      setDataSource(state.supabaseReady ? "Supabase canlı filo" : "Demo filo", state.supabaseReady ? `${remoteDrivers.length} taksici kaydı` : "Kayıt yok, demo aktif");
-      requestStatus(state.supabaseReady ? "Canlı sürücü kayıtları Supabase'ten okundu." : "Supabase boş döndü; demo filo korunuyor.");
+      setDataSource(state.supabaseReady ? "Supabase canlı filo" : "Demo önizleme", state.supabaseReady ? `${remoteDrivers.length} taksici kaydı` : "Kayıt yok, gerçek çağrı kapalı");
+      requestStatus(state.supabaseReady ? "Canlı sürücü kayıtları Supabase'ten okundu." : "Supabase boş döndü; gerçek çağrı kapalı, demo önizleme korunuyor.");
       state.lastNotice = "";
       renderDrivers();
-      setLiveLabel(state.supabaseReady ? "Supabase canlı filo" : "Demo filo canlı");
+      setLiveLabel(state.supabaseReady ? "Supabase canlı filo" : "Demo harita önizleme");
     } catch (error) {
       console.warn("Allona Taxi Supabase data fallback", error);
       state.supabaseReady = false;
-      setDataSource("Demo filo", "Supabase migration bekliyor");
-      requestStatus("Taksi tabloları canlı DB'de yoksa demo filo devrede kalır.");
-      setLiveLabel("Demo filo canlı");
+      setDataSource("Demo önizleme", "Canlı tablo yok");
+      requestStatus("Taksi tabloları canlı DB'de yok; gerçek çağrı ve ödeme kapalı, demo önizleme aktif.");
+      setLiveLabel("Demo harita önizleme");
       renderServiceControls();
       renderDrivers();
     }
@@ -684,8 +693,8 @@
 
   async function persistRideRequest(driver) {
     const api = dataApi();
-    if (!api || !state.destination) {
-      requestStatus("Misafir demo eşleşme: varış seçildiğinde kayıtlı kullanıcı için Supabase isteği açılır.");
+    if (!api || !state.destination || !state.supabaseReady) {
+      requestStatus("Demo önizleme: canlı filo doğrulanmadan gerçek ride request veya ödeme kaydı oluşturulmaz.");
       return;
     }
 
@@ -714,7 +723,7 @@
       driver.lng += (Math.random() - 0.5) * 0.0018;
     });
     renderDrivers();
-    setLiveLabel("Sürücüler canlı güncelleniyor");
+    setLiveLabel(state.supabaseReady ? "Sürücüler canlı güncelleniyor" : "Demo filo hareketi");
   }
 
   function selectDriver(driverId) {
@@ -741,7 +750,9 @@
     setPhase("route");
     const service = serviceConfig[state.service].label;
     const reservation = formattedReserveTime();
-    setStatus(`${nearest.name} ${service} yolculuk için yönlendiriliyor. ${reservation} · ${paymentLabels[state.payment]} · ${safetySummary()}.`);
+    setStatus(state.supabaseReady
+      ? `${nearest.name} ${service} yolculuk için yönlendiriliyor. ${reservation} · ${paymentLabels[state.payment]} · ${safetySummary()}.`
+      : `${nearest.name} ${service} için demo eşleşme olarak gösteriliyor. ${reservation} · gerçek çağrı ve ödeme kapalı.`);
     await persistRideRequest(nearest);
   }
 

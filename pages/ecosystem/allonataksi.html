@@ -262,7 +262,7 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
 <section class="hero">
   <div class="booking glass">
     <h1>Allona Taksi<br>Akıllı Ulaşım</h1>
-    <p>Yakındaki sürücüler, canlı harita, güvenli ödeme, HP kazandıran yolculuklar ve AllonaHub Kupon bağlantısı tek ekranda.</p>
+    <p>Yakındaki sürücü, rota, ücret ve güvenlik akışı şu anda demo önizleme olarak gösterilir; gerçek çağrı ve ödeme canlı taksi tabloları doğrulandıktan sonra açılır.</p>
     <div class="input-box"><div class="pin"></div><input aria-label="Alış noktası" data-taxi-pickup value="Alış noktası: İstanbul merkez"></div>
     <div class="input-box"><div class="pin gold"></div><input aria-label="Varış noktası" data-taxi-dropoff placeholder="Varış noktası seç"></div>
     <select class="service-select" aria-label="Araç tipi" data-taxi-service>
@@ -332,22 +332,22 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
     </div>
 
     <div class="action-grid">
-      <button class="call-btn" type="button" data-taxi-find>Taksi Çağır</button>
+      <button class="call-btn" type="button" data-taxi-find>Demo Eşleşmeyi Gör</button>
       <button class="secondary-btn" type="button" data-taxi-share>Yolculuğu Paylaş</button>
     </div>
-    <p class="ride-request-note" data-taxi-request-status>Supabase canlı kayıt kontrolü başlıyor; misafir kullanıcıda demo eşleşme korunur.</p>
+    <p class="ride-request-note" data-taxi-request-status>Canlı taksi tabloları kontrol ediliyor; tablo yoksa yalnız demo önizleme çalışır.</p>
   </div>
 
   <div class="map glass">
     <div class="live-map-shell">
       <div class="map-toolbar">
-        <span class="live-pill"><span class="live-dot"></span><span data-taxi-live-label>Canlı harita hazırlanıyor</span></span>
+        <span class="live-pill"><span class="live-dot"></span><span data-taxi-live-label>Demo harita hazırlanıyor</span></span>
         <button class="map-tool-btn" type="button" data-taxi-locate>Konumumu Kullan</button>
       </div>
       <div id="taxi-live-map" class="taxi-live-map" data-taxi-map aria-label="Allona Taksi canlı haritası"></div>
       <div class="map-card">
         <h3 data-taxi-map-title>Yakında 5 sürücü</h3>
-        <p data-taxi-map-status>Tahmini varış bilgisi canlı güncelleniyor.</p>
+        <p data-taxi-map-status>Tahmini varış bilgisi demo filo hareketiyle güncelleniyor.</p>
         <div class="map-metrics" aria-label="Canlı yolculuk metrikleri">
           <div><span>Sürücü</span><b data-taxi-driver-name>-</b></div>
           <div><span>Plaka</span><b data-taxi-driver-plate>-</b></div>
@@ -365,9 +365,9 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
 
 <section class="command-center glass" id="taxi-command">
   <div>
-    <span class="status-eyebrow">Canlı operasyon</span>
+    <span class="status-eyebrow">Demo önizleme</span>
     <h2>Allona Taksi Kontrol Merkezi</h2>
-    <p data-taxi-command-status>Yolculuk için varış seç, araç tipini belirle ve güvenlik özelliklerini aktif tut. Sistem en uygun sürücüyü canlı filodan önerecek.</p>
+    <p data-taxi-command-status>Yolculuk için varış seç, araç tipini belirle ve güvenlik özelliklerini gör. Gerçek sürücü ataması canlı filo tabloları doğrulandığında açılır.</p>
   </div>
   <div class="insight-grid">
     <div class="insight"><span>Sürücü</span><b data-taxi-driver-name>Bekleniyor</b></div>
@@ -376,7 +376,7 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
     <div class="insight"><span>Rezervasyon</span><b data-taxi-reserve-summary>Şimdi</b></div>
   </div>
   <div class="ops-strip" aria-label="Allona Taksi canlı veri durumu">
-    <span>Veri Kaynağı <b data-taxi-data-source>Demo filo</b></span>
+    <span>Veri Kaynağı <b data-taxi-data-source>Demo önizleme</b></span>
     <span>Supabase <b data-taxi-sync-state>Bağlanıyor</b></span>
     <span>İstek Kaydı <b data-taxi-request-status>Hazırlanıyor</b></span>
   </div>
@@ -402,9 +402,9 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
 <div class="flow-zone" data-taxi-timeline>
   <div class="flow-step glass is-active" data-taxi-phase="plan"><b>1. Konum Seç</b><p>Alış ve varış noktasını belirle.</p></div>
   <div class="flow-step glass" data-taxi-phase="option"><b>2. Araç Tipi</b><p>Ekonomik, konfor, VIP veya aile seç.</p></div>
-  <div class="flow-step glass" data-taxi-phase="match"><b>3. Sürücü Atama</b><p>Doğrulanmış sürücü ve plaka eşleşir.</p></div>
-  <div class="flow-step glass" data-taxi-phase="route"><b>4. Canlı Takip</b><p>Paylaşılabilir harita ve RideCheck çalışır.</p></div>
-  <div class="flow-step glass" data-taxi-phase="complete"><b>5. HP Kazan</b><p>Yolculuk sonunda HP Kupon’a işlenir.</p></div>
+  <div class="flow-step glass" data-taxi-phase="match"><b>3. Demo Eşleşme</b><p>Örnek sürücü ve plaka ekranda gösterilir.</p></div>
+  <div class="flow-step glass" data-taxi-phase="route"><b>4. Harita Önizleme</b><p>Paylaşım ve RideCheck akışı güvenli demo olarak denenir.</p></div>
+  <div class="flow-step glass" data-taxi-phase="complete"><b>5. HP Önizleme</b><p>HP bilgisi gerçek yolculuk kaydı olmadan sadece hesaplama olarak gösterilir.</p></div>
 </div>
 
 <div class="section-title" id="safety-center"><h2>Güvenlik Merkezi</h2><a href="../company/destek.html">Destek Al</a></div>
@@ -431,13 +431,13 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
 
 <section class="info glass">
   <h2>Allona Taksi: Haritalı, Güvenli ve HP Kazandıran Ulaşım</h2>
-  <p>Allona Taksi; kullanıcı, sürücü ve ödeme süreçlerini AllonaHub ekosistemi içinde birleştiren akıllı ulaşım modülüdür. Kullanıcılar yolculuk yaparken canlı harita üzerinden sürücüyü takip edebilir, güvenli ödeme yapabilir ve her tamamlanan yolculuktan HP kazanabilir.</p>
+  <p>Allona Taksi; kullanıcı, sürücü ve ödeme süreçlerini AllonaHub ekosistemi içinde birleştirmek için hazırlanan ulaşım modülüdür. Bu sayfadaki harita, sürücü ve ödeme seçenekleri canlı taksi tabloları açılana kadar demo önizleme olarak çalışır.</p>
   <h3>Harita ve Sürücü Atama Mantığı</h3>
-  <p>Harita alanı Leaflet ve OpenStreetMap üzerinde canlı çalışır. Kullanıcı konum izni verirse alım noktası gerçek konuma taşınır; izin verilmezse İstanbul merkezli filo hareketiyle yakındaki sürücüler ve tahmini varış süreleri güncellenir.</p>
+  <p>Harita alanı Leaflet ve OpenStreetMap üzerinde çalışır. Kullanıcı konum izni verirse alım noktası gerçek konuma taşınır; canlı filo tablosu yoksa İstanbul merkezli demo filo hareketiyle tahmini varış süreleri güncellenir.</p>
   <h3>Supabase Canlı Filo Yapısı</h3>
   <p>Allona Taksi verileri ayrı <strong>taxi_*</strong> tablolarından okunacak şekilde tasarlanmıştır. Araç sınıfları, taksici kayıtları, hızlı varış noktaları ve üye yolculuk istekleri Yemek, Market ve Shop verileriyle karışmadan kendi modül alanında çalışır.</p>
   <h3>AllonaHub Kupon Bağlantısı</h3>
-  <p>Yolculuk tamamlandığında ödeme kaydı, sürücü hak edişi, platform komisyonu ve kullanıcı HP ödülü sistem içinde işlenir. Böylece taksi deneyimi yalnızca ulaşım değil, ekosistem bağlılığı sağlayan bir hizmete dönüşür.</p>
+  <p>Yolculuk tamamlanma, ödeme kaydı, sürücü hak edişi, platform komisyonu ve kullanıcı HP ödülü canlı backend etkinleştiğinde işlenecek alanlardır. Demo önizleme gerçek ödeme veya gerçek yolculuk kaydı oluşturmaz.</p>
 </section>
 </div>
   <div data-layout="footer"></div>
@@ -449,6 +449,6 @@ body.taxi-module-page .footer-bottom__links{justify-content:center!important;gap
   <script src="../../js/layout.v3.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/platform.js?v=20260712-theme-overflow1" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
-  <script src="../../js/taxi-map.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/taxi-map.js?v=20260828-demo-safe1" defer></script>
 </body>
 </html>
