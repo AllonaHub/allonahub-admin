@@ -85,9 +85,11 @@ html.is-standalone body{min-height:100svh}
 .stat-live-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top right,rgba(0,255,255,.22),transparent 60%)}
 .stat-live-card p{color:#9adfff;font-size:13px;margin:0 0 8px}
 .stat-live-card h3{color:#fff;font-size:26px;margin:0}
+.stat-live-card h3.stat-live-status{min-height:32px;display:flex;align-items:center;justify-content:center;font-size:clamp(13px,1.15vw,15px);line-height:1.2;font-weight:800;white-space:normal;overflow-wrap:anywhere}
 .live-stats-source{max-width:1720px;margin:-12px auto 24px;padding:0 20px;color:rgba(255,255,255,.58);font-size:11px;text-align:right}
 .stat-dot{width:10px;height:10px;background:#748395;border-radius:50%;display:inline-block;margin-bottom:10px;box-shadow:none}
 .stat-live-card.has-verified-stat .stat-dot{background:#00ff66;box-shadow:0 0 12px #00ff66;animation:pulseLive 1.5s infinite}
+.stat-live-card.has-missing-source .stat-dot{background:#f59e0b;box-shadow:0 0 10px rgba(245,158,11,.28);animation:none}
 @keyframes pulseLive{0%{transform:scale(1)}50%{transform:scale(1.5)}100%{transform:scale(1)}}
 
 .turkic-home-entry{max-width:1320px;margin:54px auto 10px;padding:38px;display:grid;grid-template-columns:1.3fr .7fr;gap:34px;align-items:center;border:1px solid rgba(0,229,255,.28);border-radius:28px;background:radial-gradient(circle at 90% 0,rgba(0,229,255,.18),transparent 35%),linear-gradient(135deg,#061b33,#043653);box-shadow:0 24px 60px rgba(0,20,45,.18)}
@@ -223,6 +225,7 @@ body[data-theme="corporate"] .hero-main-card h1,
 body[data-theme="corporate"] .stat-live-card h3,
 body[data-theme="corporate"] .section-head h2,
 body[data-theme="corporate"] .partner h2{color:#111827!important;text-shadow:none!important}
+body[data-theme="corporate"] .stat-live-card h3.stat-live-status{color:#334155!important}
 body[data-theme="corporate"] .hero-main-card h1{max-width:720px!important;font-size:clamp(42px,4vw,58px)!important;letter-spacing:0!important}
 body[data-theme="corporate"] .hero-main-card p{margin:0!important;max-width:680px!important}
 body[data-theme="corporate"] .hero-main-card p,
@@ -1274,6 +1277,12 @@ body[data-theme="corporate"] .site-footer .footer-bottom a{color:#fff!important}
 
   .stat-live-card h3{
     font-size:18px!important;
+  }
+
+  .stat-live-card h3.stat-live-status{
+    min-height:29px!important;
+    font-size:12px!important;
+    line-height:1.18!important;
   }
 
   .stat-dot{

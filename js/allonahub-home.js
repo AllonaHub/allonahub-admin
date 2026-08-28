@@ -370,15 +370,52 @@ jobAds:["new_user_count","new_member_count"],
 crewApps:["crew_count","maritime_crew_count"],
 dailyHP:["hp_points_issued","daily_hp_points"]
 };
+const statLabels={
+activeUsers:"Aktif Kullanıcı",
+activeAds:"Aktif Partner",
+jobAds:"Yeni Üyeler",
+crewApps:"Crew",
+dailyHP:"Sadakat Puanı"
+};
 const requiredVerifiedStats=["activeUsers","activeAds","jobAds"];
+const optionalStatFallbacks={
+crewApps:"Henüz ölçülmüyor",
+dailyHP:"Henüz ölçülmüyor"
+};
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
-function clearLiveStats(){Object.keys(verifiedStatKeys).forEach(id=>{const node=document.getElementById(id);if(node){node.textContent="—";node.closest(".stat-live-card")?.classList.remove("has-verified-stat")}})}
-function updateLiveStats(metrics){
-const globalMetrics=(metrics||[]).filter(item=>!item.countryId&&!item.corridorId);
-Object.entries(verifiedStatKeys).forEach(([id,keys])=>{
-const metric=globalMetrics.find(item=>keys.includes(item.metricKey));
+function metricKeyOf(item){return item?.metricKey||item?.metric_key}
+function globalMetricOnly(item){return !(item?.countryId||item?.country_id)&&!(item?.corridorId||item?.corridor_id)}
+function finiteMetricValue(value){if(value===null||value===undefined||value===""){return null}const numeric=Number(value);return Number.isFinite(numeric)?numeric:null}
+function setLiveStatState(id,text,state){
 const node=document.getElementById(id);
-if(node&&metric&&Number.isFinite(Number(metric.value))){node.textContent=formatNumber(metric.value);node.closest(".stat-live-card")?.classList.add("has-verified-stat")}
+if(!node){return}
+const card=node.closest(".stat-live-card");
+const label=statLabels[id]||card?.querySelector("p")?.textContent?.trim()||id;
+const verified=state==="verified";
+const missing=state==="missing";
+const ariaText=missing?`${label}: ${text}. API metriği yayınlandığında sayı otomatik gösterilir.`:`${label}: ${text==="—"?"veri bekleniyor":text}`;
+node.textContent=text;
+node.classList.toggle("stat-live-status",missing);
+node["__allonaSource_aria-label"]=ariaText;
+node.setAttribute("aria-label",ariaText);
+if(missing){node["__allonaSource_title"]=text;node.setAttribute("title",text)}else{node.removeAttribute("title");delete node["__allonaSource_title"]}
+card?.classList.toggle("has-verified-stat",verified);
+card?.classList.toggle("has-missing-source",missing);
+if(card){card["__allonaSource_aria-label"]=ariaText}
+card?.setAttribute("aria-label",ariaText);
+}
+function markOptionalStatsMissing(){Object.entries(optionalStatFallbacks).forEach(([id,text])=>setLiveStatState(id,text,"missing"))}
+function clearLiveStats(){Object.keys(verifiedStatKeys).forEach(id=>setLiveStatState(id,"—","pending"))}
+function updateLiveStats(metrics){
+const globalMetrics=(metrics||[]).filter(globalMetricOnly);
+const updatedStats=new Set();
+Object.entries(verifiedStatKeys).forEach(([id,keys])=>{
+const metric=globalMetrics.find(item=>keys.includes(metricKeyOf(item)));
+const numericValue=metric?finiteMetricValue(metric.value):null;
+if(numericValue!==null){setLiveStatState(id,formatNumber(numericValue),"verified");updatedStats.add(id)}
+});
+Object.entries(optionalStatFallbacks).forEach(([id,text])=>{
+if(!updatedStats.has(id)){setLiveStatState(id,text,"missing")}
 });
 }
 async function loadVerifiedStats(){
@@ -390,6 +427,7 @@ const response=await fetch(`${base}/v1/platform/impact`,{headers:{Accept:"applic
 if(!response.ok){throw new Error(`impact ${response.status}`)}
 const payload=await response.json();
 if(!Array.isArray(payload.metrics)||!payload.metrics.length){
+markOptionalStatsMissing();
 if(source){source.textContent=payload.sourceNotes?.join(" • ")||"Doğrulanmış aggregate veri henüz yayınlanmadı."}
 return
 }
