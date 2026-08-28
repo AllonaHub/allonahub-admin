@@ -133,6 +133,51 @@ test("assistant gives invoice download guidance without generic payment fallback
   assert.deepEqual(reply.actions.map((action) => action.label), ["Siparişlerim", "Belgeler", "Destek"]);
 });
 
+test("assistant prioritizes maritime CV buttons for seafarer CV questions", async () => {
+  const message = "Denizci CV nasıl oluştururum?";
+  const intent = detectAssistantIntent(message);
+  const reply = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+
+  assert.equal(intent.key, "maritime_cv_howto");
+  assert.equal(RAW_URL_PATTERN.test(reply.message), false);
+  assert.match(reply.message, /denizcilik/i);
+  assert.deepEqual(reply.actions.map((action) => action.label), ["Denizcilik CV", "Denizcilik İşleri", "CV Oluştur"]);
+});
+
+test("assistant keeps topic buttons instead of escalating repeated CV guidance", async () => {
+  const message = "Denizcilik için CV hazırlamak istiyorum";
+  const intent = detectAssistantIntent(message);
+  const first = await generateAssistantReply({
+    message,
+    channel: "webchat",
+    intent,
+    context: context(),
+    metadata: {}
+  });
+  const repeat = await generateAssistantReply({
+    message: "Denizci CV nasıl oluştururum?",
+    channel: "webchat",
+    intent: detectAssistantIntent("Denizci CV nasıl oluştururum?"),
+    context: {
+      conversation: {
+        previousAssistantMessages: 1,
+        lastAssistantMessage: first.message
+      }
+    },
+    metadata: {}
+  });
+
+  assert.equal(repeat.intent, "maritime_cv_howto");
+  assert.equal(RAW_URL_PATTERN.test(repeat.message), false);
+  assert.deepEqual(repeat.actions.map((action) => action.label), ["Denizcilik CV", "Denizcilik İşleri", "CV Oluştur"]);
+});
+
 test("assistant gives a guided start for unsure users", async () => {
   const message = "Nereden başlayacağımı bilmiyorum, beni yönlendirir misin?";
   const intent = detectAssistantIntent(message);

@@ -887,6 +887,47 @@ const SMART_FAQ_TOPICS = [
     ]
   },
   {
+    key: "maritime_cv_howto",
+    label: "Denizcilik CV rehberi",
+    confidence: 0.93,
+    terms: [
+      "denizcilik cv",
+      "denizci cv",
+      "denizci cv nasıl",
+      "denizci cv nasil",
+      "denizci cv nasıl oluştururum",
+      "denizci cv nasil olustururum",
+      "denizcilik cv nasıl",
+      "denizcilik cv nasil",
+      "denizcilik cv nasıl oluştururum",
+      "denizcilik cv nasil olustururum",
+      "denizci cv oluştur",
+      "denizci cv olustur",
+      "denizcilik cv oluştur",
+      "denizcilik cv olustur",
+      "denizci özgeçmiş",
+      "denizci ozgecmis",
+      "gemi cv",
+      "gemi işi cv",
+      "gemi isi cv",
+      "gemide cv",
+      "crew cv",
+      "crew özgeçmiş",
+      "crew ozgecmis",
+      "denizcilik için cv",
+      "denizcilik icin cv",
+      "gemi işi için cv",
+      "gemi isi icin cv"
+    ],
+    link: "maritimeCv",
+    actions: [
+      { label: "Denizcilik CV", link: "maritimeCv" },
+      { label: "Denizcilik İşleri", link: "maritime" },
+      { label: "CV Oluştur", link: "smartCv" }
+    ],
+    text: "Tabii, denizcilik için CV hazırlarken gemi görevi, ehliyet/yeterlilik, STCW ve sertifikalar, gemi deneyimi, vardiya ve referans bilgileri özellikle önemlidir. Denizcilik özel CV formundan başlayabilir, ardından uygun denizcilik iş ilanlarına geçebilirsiniz. Genel CV oluşturucu da kara/kariyer başvuruları için kullanılabilir."
+  },
+  {
     key: "job_seeker",
     label: "İş arayan ve CV",
     confidence: 0.89,
@@ -894,9 +935,9 @@ const SMART_FAQ_TOPICS = [
     link: "smartCv",
     actions: [
       { label: "CV Oluştur", link: "smartCv" },
+      { label: "Denizcilik CV", link: "maritimeCv" },
       { label: "Kariyer Başvurusu", link: "career" },
-      { label: "Denizcilik İşleri", link: "maritime" },
-      { label: "Denizcilik CV", link: "maritimeCv" }
+      { label: "Denizcilik İşleri", link: "maritime" }
     ],
     text: [
       ({ platformUrl }) => `Harika, kariyer tarafında sizi hızlıca yönlendireyim. Önce CV oluşturup profilinizi güçlendirebilir, sonra uygun ilan ve başvuru alanlarına geçebilirsiniz. CV oluşturma: ${platformUrl("smartCv")}`,
@@ -1436,6 +1477,10 @@ function safeReplyText(value, fallback) {
   return text || "Şu anda kısa bir yanıt veremiyorum. Destek talebi oluşturabilir veya biraz sonra tekrar deneyebilirsin.";
 }
 
+function canEscalateRepeatedReply(intent = {}) {
+  return ["general_support", "support_ticket", "contact_support", "complaint_issue"].includes(intent?.key);
+}
+
 export async function generateAssistantReply({ message, channel, intent, context = {}, metadata = {}, request = null }) {
   const fallback = fallbackByIntent(intent, context, channel);
   const textOnly = wantsTextOnly(message, metadata);
@@ -1470,7 +1515,7 @@ export async function generateAssistantReply({ message, channel, intent, context
   const messageText = textOnly
     ? stripRawUrlsFromText(safeText, fallbackText)
     : stripRawUrlsWhenActions(safeText, fallbackActions);
-  const shouldEscalateToLive = repeatsPreviousAssistantReply(messageText, context);
+  const shouldEscalateToLive = canEscalateRepeatedReply(intent) && repeatsPreviousAssistantReply(messageText, context);
   const webchat = isWebchatChannel(channel);
 
   if (shouldEscalateToLive && !textOnly) {

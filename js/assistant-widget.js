@@ -1,11 +1,12 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const SCRIPT = document.currentScript;
-  const VERSION = "20260828-invoice1";
+  const VERSION = "20260828-voicebuttons1";
   const STORAGE_KEY = "allonahub_assistant_conversation_id";
   const RATE_KEY = "allonahub_assistant_rate";
   const RAW_URL_PATTERN = /https?:\/\/[^\s<>"')]+/gi;
   const MAX_ACTION_BUTTONS = 3;
+  const SPEECH_RECOGNITION = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   const CHANNELS = ["webchat", "telegram", "partner_panel", "admin_panel", "whatsapp", "instagram", "facebook"];
   const CONTACT_CHANNELS = {
     whatsapp: SCRIPT && SCRIPT.dataset.whatsappUrl || `https://wa.me/905427781868?text=${encodeURIComponent("Merhaba AllonaHub, canlı destek almak istiyorum.")}`,
@@ -234,6 +235,13 @@
       };
     }
 
+    if (hasAny(normalized, ["denizcilik cv", "denizci cv", "denizci cv nasil", "denizci cv nasil olustururum", "denizcilik cv nasil", "denizcilik cv nasil olustururum", "denizci cv olustur", "denizcilik cv olustur", "denizci ozgecmis", "gemi cv", "gemi isi cv", "gemide cv", "crew cv", "crew ozgecmis", "denizcilik icin cv", "gemi isi icin cv"])) {
+      return {
+        message: "Tabii, denizcilik için CV hazırlarken gemi görevi, ehliyet/yeterlilik, STCW ve sertifikalar, gemi deneyimi, vardiya ve referans bilgileri özellikle önemlidir. Denizcilik özel CV formundan başlayabilir, ardından uygun denizcilik iş ilanlarına geçebilirsin. Genel CV oluşturucu da kara/kariyer başvuruları için kullanılabilir.",
+        actions: [pageAction("Denizcilik CV", "maritimeCv"), pageAction("Denizcilik İşleri", "maritime"), pageAction("CV Oluştur", "smartCv")]
+      };
+    }
+
     if (hasAny(normalized, ["hangi hizmet", "hangi modul", "bana uygun", "ne secmeliyim", "hangisini secmeliyim", "shop mu market mi", "yemek mi market mi", "kariyer mi denizcilik mi", "cv mi denizcilik mi"])) {
       return {
         message: "Size uygun modülü seçmek için niyete göre ilerleyelim: ürün alışverişi için Shop, günlük ihtiyaç için Market, yemek için Allona Yemek, iş ve özgeçmiş için Kariyer/CV, gemi ve crew tarafı için Denizcilik doğru başlangıçtır. Hedefinizi tek cümleyle yazarsanız sizi en uygun modüle yönlendiririm.",
@@ -258,7 +266,7 @@
     if (hasAny(normalized, ["cv", "ozgecmis", "kariyer", "is basvurusu", "is ilani", "is ariyorum"])) {
       return {
         message: "Kariyer tarafında en iyi başlangıç güçlü bir CV hazırlamak. Akıllı CV oluşturucuyla bilgilerini düzenleyebilir, PDF üretebilir ve uygun kariyer/başvuru adımlarına geçebilirsin.",
-        actions: [pageAction("CV Oluştur", "smartCv"), pageAction("Kariyer", "career"), pageAction("Denizcilik CV", "maritimeCv")]
+        actions: [pageAction("CV Oluştur", "smartCv"), pageAction("Denizcilik CV", "maritimeCv"), pageAction("Kariyer", "career")]
       };
     }
 
@@ -429,12 +437,13 @@
       .ah-assistant__close{width:34px;height:34px;border:0;border-radius:6px;background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1;cursor:pointer}
       .ah-assistant__messages{padding:14px;overflow:auto;background:var(--as-surface);display:flex;flex-direction:column;gap:10px;color:var(--as-panel-text)}
       .ah-assistant__msg{max-width:88%;padding:10px 12px;border-radius:8px;font-size:14px;line-height:1.42;white-space:pre-wrap;overflow-wrap:anywhere}
+      .ah-assistant__msg--with-actions{max-width:96%;width:min(100%,342px)}
       .ah-assistant__msg--assistant{align-self:flex-start;background:var(--as-card-bg);color:var(--as-panel-text);border:1px solid var(--as-line);box-shadow:0 10px 24px color-mix(in srgb,var(--as-bg) 10%,transparent)}
       .ah-assistant__msg--user{align-self:flex-end;background:linear-gradient(145deg,var(--as-primary),var(--as-primary-soft));color:#fff;border:1px solid color-mix(in srgb,var(--as-primary-soft) 40%,transparent);box-shadow:0 10px 24px color-mix(in srgb,var(--as-primary) 18%,transparent)}
       .ah-assistant__msg--status{align-self:center;background:transparent;color:var(--as-muted);font-size:12px;padding:2px}
       .ah-assistant__msg-text{white-space:pre-wrap}
-      .ah-assistant__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
-      .ah-assistant__action{display:flex;align-items:center;justify-content:center;min-height:36px;padding:8px 9px;border:1px solid color-mix(in srgb,var(--as-primary) 30%,var(--as-line));border-radius:7px;background:color-mix(in srgb,var(--as-primary-soft) 12%,var(--as-panel-bg));color:var(--as-panel-text);text-decoration:none;font-size:12px;font-weight:800;line-height:1.2;text-align:center;overflow-wrap:anywhere}
+      .ah-assistant__actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:7px;margin-top:10px}
+      .ah-assistant__action{display:flex;align-items:center;justify-content:center;min-height:38px;padding:8px 9px;border:1px solid color-mix(in srgb,var(--as-primary) 38%,var(--as-line));border-radius:7px;background:color-mix(in srgb,var(--as-primary-soft) 15%,var(--as-panel-bg));color:var(--as-panel-text);text-decoration:none;font-size:12px;font-weight:850;line-height:1.2;text-align:center;overflow-wrap:anywhere;box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--as-primary) 18%,transparent)}
       .ah-assistant__action:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg));border-color:color-mix(in srgb,var(--as-primary) 50%,var(--as-line))}
       .ah-assistant__foot{position:relative;min-width:0}
       .ah-assistant__quick-drawer{position:relative}
@@ -442,12 +451,21 @@
       .ah-assistant__quick{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--as-line);background:var(--as-panel-bg)}
       .ah-assistant__quick button{border:1px solid color-mix(in srgb,var(--as-primary) 30%,var(--as-line));background:color-mix(in srgb,var(--as-primary-soft) 12%,var(--as-panel-bg));color:var(--as-panel-text);border-radius:6px;padding:7px 9px;font-size:12px;font-weight:700;cursor:pointer}
       .ah-assistant__quick button:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg))}
-      .ah-assistant__form{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px;border-top:1px solid var(--as-line);background:var(--as-panel-bg)}
+      .ah-assistant__form{display:grid;grid-template-columns:minmax(0,1fr) 42px 46px;align-items:end;gap:8px;padding:12px;border-top:1px solid var(--as-line);background:var(--as-panel-bg)}
+      .ah-assistant__form--no-voice{grid-template-columns:minmax(0,1fr) 46px}
       .ah-assistant__input{width:100%;min-height:42px;max-height:110px;resize:none;border:1px solid var(--as-line);border-radius:6px;padding:10px 11px;font:inherit;font-size:14px;line-height:1.35;outline:none;background:var(--as-surface);color:var(--as-panel-text)}
       .ah-assistant__input::placeholder{color:var(--as-muted)}
       .ah-assistant__input:focus{border-color:var(--as-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--as-primary) 16%,transparent)}
-      .ah-assistant__send{width:46px;height:42px;border:0;border-radius:6px;background:var(--as-accent);color:var(--as-accent-text);font-weight:900;cursor:pointer}
-      .ah-assistant__send[disabled]{opacity:.56;cursor:not-allowed}
+      .ah-assistant__voice,.ah-assistant__send{width:100%;height:42px;border-radius:6px;font-weight:900;cursor:pointer}
+      .ah-assistant__voice{position:relative;display:grid;place-items:center;border:1px solid var(--as-line);background:var(--as-surface);color:var(--as-panel-text)}
+      .ah-assistant__voice[hidden]{display:none}
+      .ah-assistant__voice-icon{position:relative;width:16px;height:22px;display:block}
+      .ah-assistant__voice-icon:before{content:"";position:absolute;left:4px;top:1px;width:8px;height:13px;border:2px solid currentColor;border-radius:8px}
+      .ah-assistant__voice-icon:after{content:"";position:absolute;left:1px;top:11px;width:14px;height:9px;border:2px solid currentColor;border-top:0;border-radius:0 0 10px 10px;box-shadow:0 7px 0 -5px currentColor}
+      .ah-assistant--listening .ah-assistant__voice{background:var(--as-accent);color:var(--as-accent-text);border-color:color-mix(in srgb,var(--as-accent) 60%,var(--as-line))}
+      .ah-assistant--listening .ah-assistant__voice:after{content:"";position:absolute;inset:-4px;border-radius:10px;border:2px solid color-mix(in srgb,var(--as-accent) 55%,transparent);animation:ahAssistPulse 1s ease-in-out infinite}
+      .ah-assistant__send{border:0;background:var(--as-accent);color:var(--as-accent-text)}
+      .ah-assistant__send[disabled],.ah-assistant__voice[disabled]{opacity:.56;cursor:not-allowed}
       body[data-theme] .ah-assistant .ah-assistant__panel{background:var(--as-panel-bg) !important;border-color:var(--as-line) !important;box-shadow:var(--as-shadow) !important;color:var(--as-panel-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__head{background:linear-gradient(145deg,var(--as-bg-mid),var(--as-bg-strong)) !important;border-bottom-color:color-mix(in srgb,var(--as-line) 70%,transparent) !important;color:#fff !important}
       body[data-theme] .ah-assistant .ah-assistant__head :where(strong,button){color:#fff !important}
@@ -464,6 +482,8 @@
       body[data-theme] .ah-assistant .ah-assistant__action:hover,body[data-theme] .ah-assistant .ah-assistant__quick button:hover{background:color-mix(in srgb,var(--as-primary-soft) 22%,var(--as-panel-bg)) !important}
       body[data-theme] .ah-assistant .ah-assistant__input{background:var(--as-surface) !important;border-color:var(--as-line) !important;color:var(--as-panel-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__input::placeholder{color:var(--as-muted) !important}
+      body[data-theme] .ah-assistant .ah-assistant__voice{background:var(--as-surface) !important;border-color:var(--as-line) !important;color:var(--as-panel-text) !important}
+      body[data-theme] .ah-assistant.ah-assistant--listening .ah-assistant__voice{background:var(--as-accent) !important;color:var(--as-accent-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__send{background:var(--as-accent) !important;color:var(--as-accent-text) !important}
       body[data-theme] .ah-assistant .ah-assistant__channel,body[data-theme] .ah-assistant .ah-assistant__channel :where(strong,small){color:#fff !important}
       body[data-theme] .ah-assistant .ah-assistant__channel-icon{color:#061b33 !important}
@@ -472,7 +492,8 @@
       body[data-theme] .ah-assistant.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0) !important}
       @supports not (color:color-mix(in srgb,#fff 50%,#000)){.ah-assistant__button{border-color:rgba(255,255,255,.36);box-shadow:0 18px 46px rgba(0,122,255,.34),0 0 0 6px rgba(255,215,0,.08)}.ah-assistant__button:before{background:conic-gradient(from 120deg,rgba(255,215,0,.95),rgba(0,229,255,.45),rgba(255,255,255,.82),rgba(255,215,0,.95))}.ah-assistant__button:after{background:linear-gradient(145deg,var(--as-bg-strong),var(--as-bg-mid))}.ah-assistant__button:hover{box-shadow:0 22px 54px rgba(0,122,255,.42),0 0 0 7px rgba(255,215,0,.12)}.ah-assistant__channel{border-color:rgba(255,255,255,.26)}.ah-assistant__channel:hover{border-color:rgba(0,229,255,.5)}.ah-assistant__head{border-bottom-color:var(--as-line)}body[data-theme] .ah-assistant .ah-assistant__head{border-bottom-color:var(--as-line) !important}.ah-assistant__msg--assistant{box-shadow:0 10px 24px rgba(2,8,20,.12)}.ah-assistant__msg--user{border-color:rgba(255,255,255,.24);box-shadow:0 10px 24px rgba(0,122,255,.18)}.ah-assistant__action,.ah-assistant__quick button{border-color:var(--as-line);background:var(--as-surface)}body[data-theme] .ah-assistant .ah-assistant__action,body[data-theme] .ah-assistant .ah-assistant__quick button{border-color:var(--as-line) !important;background:var(--as-surface) !important}.ah-assistant__action:hover,.ah-assistant__quick button:hover{background:var(--as-panel-bg)}body[data-theme] .ah-assistant .ah-assistant__action:hover,body[data-theme] .ah-assistant .ah-assistant__quick button:hover{background:var(--as-panel-bg) !important}.ah-assistant__input:focus{box-shadow:0 0 0 3px rgba(11,114,255,.14)}}
       @keyframes ahAssistSpin{to{transform:rotate(360deg)}}
-      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant--open .ah-assistant__panel{grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant__button{width:60px;height:60px;border-radius:20px}.ah-assistant__button:after{border-radius:17px}.ah-assistant__button-mark{width:40px;height:40px}.ah-assistant__channels{right:0;bottom:70px;width:min(198px,calc(100vw - 24px));max-height:min(236px,calc(100vh - 100px))}.ah-assistant__channel{min-height:54px;border-radius:16px}.ah-assistant__actions{grid-template-columns:1fr}.ah-assistant__messages{padding-bottom:18px}.ah-assistant__quick-drawer{position:absolute;right:-1px;bottom:calc(100% + 8px);z-index:3;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:end;width:min(304px,calc(100vw - 56px));transform:translateX(calc(100% - 38px));transition:transform .22s ease;pointer-events:none}.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0)}.ah-assistant__quick-toggle{display:grid;place-items:center;width:38px;min-height:48px;border:0;border-radius:8px 0 0 8px;background:var(--as-accent);color:var(--as-accent-text);font-size:22px;font-weight:1000;line-height:1;box-shadow:0 14px 34px rgba(2,8,20,.26);cursor:pointer;pointer-events:auto}.ah-assistant__quick-toggle span{display:block;transition:transform .2s ease}.ah-assistant--quick-open .ah-assistant__quick-toggle span{transform:rotate(180deg)}.ah-assistant__quick{max-height:166px;overflow:auto;display:flex;align-content:flex-start;gap:7px;padding:10px;border:1px solid var(--as-line);border-radius:8px 0 0 8px;background:var(--as-panel-bg);box-shadow:0 18px 52px rgba(2,8,20,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}.ah-assistant--quick-open .ah-assistant__quick{opacity:1;visibility:visible;pointer-events:auto}.ah-assistant__quick button{min-height:34px;padding:7px 9px}.ah-assistant__form{padding:10px;grid-template-columns:minmax(0,1fr) 44px}.ah-assistant__input{min-height:40px}.ah-assistant__send{width:44px;height:40px}}
+      @keyframes ahAssistPulse{0%,100%{opacity:.35;transform:scale(.94)}50%{opacity:.9;transform:scale(1)}}
+      @media (max-width:520px){.ah-assistant{right:12px;bottom:12px}.ah-assistant__panel{right:0;bottom:68px;width:calc(100vw - 24px);height:min(600px,calc(100vh - 92px))}.ah-assistant--open .ah-assistant__panel{grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant__button{width:60px;height:60px;border-radius:20px}.ah-assistant__button:after{border-radius:17px}.ah-assistant__button-mark{width:40px;height:40px}.ah-assistant__channels{right:0;bottom:70px;width:min(198px,calc(100vw - 24px));max-height:min(236px,calc(100vh - 100px))}.ah-assistant__channel{min-height:54px;border-radius:16px}.ah-assistant__msg--with-actions{max-width:100%;width:100%}.ah-assistant__actions{grid-template-columns:1fr}.ah-assistant__messages{padding-bottom:18px}.ah-assistant__quick-drawer{position:absolute;right:-1px;bottom:calc(100% + 8px);z-index:3;display:grid;grid-template-columns:38px minmax(0,1fr);align-items:end;width:min(304px,calc(100vw - 56px));transform:translateX(calc(100% - 38px));transition:transform .22s ease;pointer-events:none}.ah-assistant--quick-open .ah-assistant__quick-drawer{transform:translateX(0)}.ah-assistant__quick-toggle{display:grid;place-items:center;width:38px;min-height:48px;border:0;border-radius:8px 0 0 8px;background:var(--as-accent);color:var(--as-accent-text);font-size:22px;font-weight:1000;line-height:1;box-shadow:0 14px 34px rgba(2,8,20,.26);cursor:pointer;pointer-events:auto}.ah-assistant__quick-toggle span{display:block;transition:transform .2s ease}.ah-assistant--quick-open .ah-assistant__quick-toggle span{transform:rotate(180deg)}.ah-assistant__quick{max-height:166px;overflow:auto;display:flex;align-content:flex-start;gap:7px;padding:10px;border:1px solid var(--as-line);border-radius:8px 0 0 8px;background:var(--as-panel-bg);box-shadow:0 18px 52px rgba(2,8,20,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease,visibility .18s ease}.ah-assistant--quick-open .ah-assistant__quick{opacity:1;visibility:visible;pointer-events:auto}.ah-assistant__quick button{min-height:34px;padding:7px 9px}.ah-assistant__form{padding:10px;grid-template-columns:minmax(0,1fr) 40px 44px}.ah-assistant__form--no-voice{grid-template-columns:minmax(0,1fr) 44px}.ah-assistant__input{min-height:40px}.ah-assistant__voice{height:40px}.ah-assistant__send{height:40px}}
       @media (max-width:520px){html.ah-assistant-mobile-lock,body.ah-assistant-mobile-lock{overflow:hidden!important;height:100%!important;overscroll-behavior:none!important}body.ah-assistant-mobile-lock{position:fixed!important;inset:0!important;width:100%!important;touch-action:none!important}.ah-assistant.ah-assistant--open{position:fixed;inset:0;right:auto;bottom:auto;width:100dvw;height:100dvh;display:block;justify-items:stretch;gap:0}.ah-assistant.ah-assistant--open .ah-assistant__button,.ah-assistant.ah-assistant--open .ah-assistant__channels{display:none}.ah-assistant.ah-assistant--open .ah-assistant__panel{position:fixed;inset:0;width:100dvw;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0;box-shadow:none;display:grid;grid-template-rows:auto minmax(0,1fr) auto}.ah-assistant.ah-assistant--open .ah-assistant__head{display:grid;grid-template-columns:auto minmax(0,1fr);justify-content:start;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}.ah-assistant.ah-assistant--open .ah-assistant__close{order:-1;width:auto;min-width:76px;height:38px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:0;border-radius:8px}.ah-assistant.ah-assistant--open .ah-assistant__close:before{content:"‹";font-size:26px;line-height:1}.ah-assistant.ah-assistant--open .ah-assistant__close:after{content:"Geri";font-size:13px;font-weight:900;line-height:1}.ah-assistant.ah-assistant--open .ah-assistant__title strong{font-size:14px}.ah-assistant.ah-assistant--open .ah-assistant__title span{font-size:11px}.ah-assistant.ah-assistant--open .ah-assistant__messages{min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 18px}.ah-assistant.ah-assistant--open .ah-assistant__foot{padding-bottom:env(safe-area-inset-bottom,0px)}.ah-assistant.ah-assistant--open .ah-assistant__quick-drawer{right:0;bottom:calc(100% + 10px)}}
     `;
     document.head.appendChild(style);
@@ -507,6 +528,7 @@
     textNode.className = "ah-assistant__msg-text";
     textNode.textContent = role === "assistant" ? stripUrlsForActions(text, cleanActions) : text;
     item.appendChild(textNode);
+    if (cleanActions.length) item.classList.add("ah-assistant__msg--with-actions");
     if (role === "assistant") appendActions(item, cleanActions);
     messages.appendChild(item);
     messages.scrollTop = messages.scrollHeight;
@@ -557,7 +579,10 @@
           </div>
           <form class="ah-assistant__form" data-assistant-form>
             <textarea class="ah-assistant__input" rows="1" maxlength="1600" placeholder="Mesajınızı yazın" data-assistant-input></textarea>
-            <button class="ah-assistant__send" type="submit" aria-label="Gönder" title="Gönder">›</button>
+            <button class="ah-assistant__voice" type="button" aria-label="Sesle yaz" title="Sesle yaz" data-assistant-voice>
+              <span class="ah-assistant__voice-icon" aria-hidden="true"></span>
+            </button>
+            <button class="ah-assistant__send" type="submit" aria-label="Gönder" title="Gönder" data-assistant-send>›</button>
           </form>
         </div>
       </section>
@@ -612,12 +637,22 @@
     const messages = root.querySelector("[data-assistant-messages]");
     const input = root.querySelector("[data-assistant-input]");
     const form = root.querySelector("[data-assistant-form]");
-    const sendButton = root.querySelector(".ah-assistant__send");
+    const sendButton = root.querySelector("[data-assistant-send]");
+    const voiceButton = root.querySelector("[data-assistant-voice]");
     const toggleButton = root.querySelector("[data-assistant-toggle]");
     const quickToggleButton = root.querySelector("[data-assistant-quick-toggle]");
     const closeButton = root.querySelector("[data-assistant-close]");
+    const defaultInputPlaceholder = input.getAttribute("placeholder") || "Mesajınızı yazın";
+    let recognition = null;
+    let voiceListening = false;
 
     appendMessage(messages, "assistant", "Merhaba, AllonaHub AI destek asistanına hoş geldiniz. Sipariş, CV-kariyer, denizcilik, partnerlik, akademi ve destek konularında size hızlıca yardımcı olurum. Ne yapmak istediğinizi yazın; sizi en doğru adıma yönlendireyim.");
+
+    if (!SPEECH_RECOGNITION && voiceButton) {
+      voiceButton.hidden = true;
+      voiceButton.disabled = true;
+      form.classList.add("ah-assistant__form--no-voice");
+    }
 
     function setActionsOpen(value) {
       root.classList.toggle("ah-assistant--actions-open", Boolean(value));
@@ -660,6 +695,7 @@
         setActionsOpen(false);
         input.focus();
       } else {
+        stopVoiceCapture();
         setQuickOpen(false);
       }
     }
@@ -668,11 +704,100 @@
       state.busy = value;
       sendButton.disabled = value;
       input.disabled = value;
+      if (voiceButton) voiceButton.disabled = value || !SPEECH_RECOGNITION;
+    }
+
+    function updateInputHeight() {
+      input.style.height = "auto";
+      input.style.height = `${Math.min(input.scrollHeight, 110)}px`;
+    }
+
+    function setVoiceListening(value) {
+      voiceListening = Boolean(value);
+      root.classList.toggle("ah-assistant--listening", voiceListening);
+      if (!voiceButton) return;
+      voiceButton.setAttribute("aria-label", voiceListening ? "Sesle yazmayı durdur" : "Sesle yaz");
+      voiceButton.setAttribute("title", voiceListening ? "Dinlemeyi durdur" : "Sesle yaz");
+      input.setAttribute("placeholder", voiceListening ? "Dinleniyor..." : defaultInputPlaceholder);
+    }
+
+    function appendVoiceText(value) {
+      const spoken = normalizeText(value, 800);
+      if (!spoken) return;
+      const current = normalizeText(input.value, 1600);
+      input.value = current ? `${current} ${spoken}` : spoken;
+      updateInputHeight();
+      input.focus();
+    }
+
+    function ensureRecognition() {
+      if (!SPEECH_RECOGNITION) return null;
+      if (recognition) return recognition;
+      recognition = new SPEECH_RECOGNITION();
+      const language = document.documentElement.lang || navigator.language || "tr-TR";
+      recognition.lang = /^tr/i.test(language) ? language : "tr-TR";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+      recognition.onstart = () => setVoiceListening(true);
+      recognition.onend = () => setVoiceListening(false);
+      recognition.onerror = (event) => {
+        setVoiceListening(false);
+        if (event && event.error === "not-allowed") {
+          appendMessage(messages, "status", "Mikrofon izni verilmedi. Tarayıcı izinlerinden mikrofonu açabilirsiniz.");
+        } else if (event && event.error !== "aborted") {
+          appendMessage(messages, "status", "Ses algılanamadı. Tekrar deneyebilir veya mesajınızı yazabilirsiniz.");
+        }
+      };
+      recognition.onresult = (event) => {
+        let finalText = "";
+        let interimText = "";
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const transcript = event.results[index]?.[0]?.transcript || "";
+          if (event.results[index].isFinal) {
+            finalText += transcript;
+          } else {
+            interimText += transcript;
+          }
+        }
+        if (finalText) appendVoiceText(finalText);
+        if (interimText && !finalText) {
+          input.setAttribute("placeholder", normalizeText(interimText, 80) || "Dinleniyor...");
+        }
+      };
+      return recognition;
+    }
+
+    function stopVoiceCapture() {
+      if (!recognition || !voiceListening) return;
+      try {
+        recognition.stop();
+      } catch (error) {
+        setVoiceListening(false);
+      }
+    }
+
+    function startVoiceCapture() {
+      const speech = ensureRecognition();
+      if (!speech) {
+        appendMessage(messages, "status", "Bu tarayıcı sesle yazmayı desteklemiyor. Mesajınızı yazarak gönderebilirsiniz.");
+        return;
+      }
+      if (voiceListening) {
+        stopVoiceCapture();
+        return;
+      }
+      try {
+        speech.start();
+      } catch (error) {
+        setVoiceListening(false);
+      }
     }
 
     async function submit(text, extra) {
       const clean = normalizeText(text, 1600);
       if (!clean || state.busy) return;
+      stopVoiceCapture();
       if (!rateAllowed()) {
         appendMessage(messages, "status", "Çok sık mesaj gönderildi. Lütfen biraz bekleyin.");
         return;
@@ -736,6 +861,7 @@
         setActionsOpen(false);
         setChatOpen(false);
         setQuickOpen(false);
+        stopVoiceCapture();
       }
     });
 
@@ -760,10 +886,13 @@
       });
     });
 
-    input.addEventListener("input", () => {
-      input.style.height = "auto";
-      input.style.height = `${Math.min(input.scrollHeight, 110)}px`;
-    });
+    if (voiceButton) {
+      voiceButton.addEventListener("click", () => {
+        if (!state.busy) startVoiceCapture();
+      });
+    }
+
+    input.addEventListener("input", updateInputHeight);
 
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
