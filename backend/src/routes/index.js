@@ -123,6 +123,8 @@ const authForgotPasswordSchema = z.object({
   turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
+const PARTNER_PASSWORD_RESET_MESSAGE = "Eğer bu e-posta aktif bir partner hesabına kayıtlıysa şifre sıfırlama bağlantısı gönderildi.";
+
 const auditQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).optional().default(50),
   severity: z.enum(["debug", "info", "warning", "critical"]).optional(),
@@ -1246,6 +1248,12 @@ function authEmailDomain(value) {
 
 function resetPasswordRedirectUrl() {
   return new URL("/pages/account/reset-password.html", `${config.siteUrl}/`).href;
+}
+
+function partnerPasswordResetRedirectUrl() {
+  const target = new URL("/pages/account/reset-password.html", `${config.siteUrl}/`);
+  target.searchParams.set("returnTo", "/pages/partner/partner.html");
+  return target.href;
 }
 
 function publicAuthUser(user) {
@@ -6684,7 +6692,8 @@ const COMPANY_COUNTRY_ALIASES = new Map([
   ["PORTEKIZ", "PT"], ["PORTEKİZ", "PT"], ["PORTUGAL", "PT"], ["PT", "PT"],
   ["POLONYA", "PL"], ["POLAND", "PL"], ["PL", "PL"],
   ["ROMANYA", "RO"], ["ROMANIA", "RO"], ["RO", "RO"],
-  ["YUNANISTAN", "EL"], ["YUNANİSTAN", "EL"], ["GREECE", "EL"], ["GR", "EL"], ["EL", "EL"]
+  ["YUNANISTAN", "EL"], ["YUNANİSTAN", "EL"], ["GREECE", "EL"], ["GR", "EL"], ["EL", "EL"],
+  ["INGILTERE", "GB"], ["İNGİLTERE", "GB"], ["UNITED KINGDOM", "GB"], ["GREAT BRITAIN", "GB"], ["UK", "GB"], ["GB", "GB"]
 ]);
 
 function normalizeCompanyCountryCode(country, explicitCode = "") {
@@ -6746,6 +6755,9 @@ function companyLookupValidation(countryCode, normalizedTaxNumber) {
   }
   if (EU_VIES_COUNTRIES.has(countryCode)) {
     return { tax_number_type: "eu_vat", valid_format: /^[A-Z0-9]{2,14}$/.test(normalizedTaxNumber) };
+  }
+  if (countryCode === "GB") {
+    return { tax_number_type: "company_number", valid_format: /^[A-Z0-9]{2,12}$/.test(normalizedTaxNumber) };
   }
   return { tax_number_type: "tax_number", valid_format: normalizedTaxNumber.length >= 2 };
 }
@@ -6911,6 +6923,120 @@ async function lookupTurkeyCompany({ taxNumber, request }) {
   };
 }
 
+function companiesHouseAddress(address = {}) {
+  return [
+    address.premises,
+    address.address_line_1,
+    address.address_line_2,
+    address.locality,
+    address.region,
+    address.postal_code,
+    address.country
+  ].map((item) => String(item || "").trim()).filter(Boolean).join(", ");
+}
+
+function normalizeCompaniesHouseType(value) {
+  const raw = String(value || "").replace(/-/g, " ").trim();
+  if (!raw) return "";
+  if (/private limited/i.test(raw)) return "Limited Şirket";
+  if (/public limited/i.test(raw)) return "Anonim Şirket";
+  if (/partnership/i.test(raw)) return "Ortaklık";
+  return raw.replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+async function lookupUkCompany({ taxNumber, request }) {
+  const validation = companyLookupValidation("GB", taxNumber);
+  if (!validation.valid_format) {
+    return {
+      ok: true,
+      provider: "uk_companies_house",
+      status: "invalid_format",
+      verified: false,
+      company: null,
+      source: "local_format_validation",
+      fetched_at: new Date().toISOString(),
+      message: "İngiltere şirket numarası formatı doğrulanamadı.",
+      validation
+    };
+  }
+  if (!config.companyLookup.companiesHouseApiKey) {
+    return {
+      ok: false,
+      provider: "uk_companies_house",
+      status: "provider_unconfigured",
+      verified: false,
+      company: null,
+      source: "authorized_provider_required",
+      fetched_at: new Date().toISOString(),
+      message: "İngiltere şirket bilgisi için Companies House API anahtarı sunucu ortamına bağlanmalı.",
+      validation
+    };
+  }
+
+  const url = new URL(`/company/${encodeURIComponent(taxNumber)}`, `${config.companyLookup.companiesHouseApiUrl}/`);
+  const response = await companyLookupFetchWithTimeout(url.href, {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${config.companyLookup.companiesHouseApiKey}:`).toString("base64")}`,
+      Accept: "application/json"
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (response.status === 404) {
+    return {
+      ok: true,
+      provider: "uk_companies_house",
+      status: "not_found",
+      verified: false,
+      company: null,
+      source: "UK Companies House",
+      fetched_at: new Date().toISOString(),
+      message: "Companies House üzerinde aktif şirket kaydı bulunamadı.",
+      validation
+    };
+  }
+  if (!response.ok) throw httpError(payload.message || `Companies House servisi yanıt vermedi: HTTP ${response.status}`, 502);
+
+  const address = payload.registered_office_address || {};
+  const isActive = String(payload.company_status || "").toLowerCase() === "active";
+  const company = {
+    legal_name: String(payload.company_name || "").trim(),
+    display_name: String(payload.company_name || "").trim(),
+    tax_office: "",
+    company_type: normalizeCompaniesHouseType(payload.type),
+    city: String(address.locality || address.region || "").trim(),
+    country: "İngiltere",
+    country_code: "GB",
+    address: companiesHouseAddress(address),
+    website: "",
+    tax_number: String(payload.company_number || taxNumber).trim(),
+    status: String(payload.company_status || "").trim()
+  };
+
+  await auditEvent({
+    request,
+    action: "partner.company_lookup_uk_companies_house",
+    resourceType: "company_lookup",
+    resourceId: company.tax_number,
+    severity: isActive && company.legal_name ? "info" : "warning",
+    source: "server",
+    evidenceTags: ["partner", "company_lookup", "companies_house"],
+    metadata: { country_code: "GB", company_status: company.status || null, found: Boolean(company.legal_name) }
+  });
+
+  return {
+    ok: true,
+    provider: "uk_companies_house",
+    status: isActive && company.legal_name ? "verified" : "not_active",
+    verified: isActive && Boolean(company.legal_name),
+    company: isActive && company.legal_name ? company : null,
+    source: "UK Companies House",
+    fetched_at: new Date().toISOString(),
+    message: isActive ? "" : "Companies House kaydı aktif görünmüyor.",
+    validation
+  };
+}
+
 function partnerApprovalTypeForApplication(application, requestedType) {
   const metadata = partnerApplicationMetadata(application);
   const explicit = normalizePartnerApprovalType(requestedType)
@@ -6954,13 +7080,13 @@ function partnerAuthMetadata(application, partnerType) {
   });
 }
 
-async function findAuthUserByEmail(email, request) {
+async function findAuthUserByEmailWithClient(client, email, request) {
   const target = authEmail(email);
-  if (!target || typeof supabaseAdmin.auth?.admin?.listUsers !== "function") return null;
+  if (!target || typeof client?.auth?.admin?.listUsers !== "function") return null;
 
   const perPage = 1000;
   for (let page = 1; page <= 20; page += 1) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage });
     if (error) {
       request?.log?.warn({ error: error.message, email_hash: authEmailHash(target) }, "Partner auth user lookup failed");
       throw httpError("Partner Auth kullanıcısı kontrol edilemedi. Supabase service-role yetkisini kontrol edin.", 503);
@@ -6974,6 +7100,182 @@ async function findAuthUserByEmail(email, request) {
 
   request?.log?.warn({ email_hash: authEmailHash(target) }, "Partner auth user lookup reached page cap");
   return null;
+}
+
+async function findAuthUserByEmail(email, request) {
+  return findAuthUserByEmailWithClient(supabaseAdmin, email, request);
+}
+
+const INACTIVE_PARTNER_RESET_ACCOUNT_STATUSES = new Set(["inactive", "suspended", "blocked", "disabled", "deactivated", "banned", "deleted"]);
+
+function authUserInactiveForPartnerPasswordReset(user) {
+  if (!user?.id) return true;
+  if (user.deleted_at) return true;
+  const bannedUntil = Date.parse(user.banned_until || "");
+  return Number.isFinite(bannedUntil) && bannedUntil > Date.now();
+}
+
+async function profileStateForPasswordReset(client, user, request) {
+  const metadataRole = String(user?.app_metadata?.role || user?.user_metadata?.role || "").trim().toLowerCase();
+  const metadataStatus = String(user?.app_metadata?.account_status || user?.user_metadata?.account_status || "").trim().toLowerCase();
+  if (!user?.id) return { role: metadataRole, account_status: metadataStatus, lookup_failed: true };
+  try {
+    const { data, error } = await client
+      .from("profiles")
+      .select("role, account_status")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error) {
+      request?.log?.warn({ error: error.message, userId: user.id }, "Partner password reset profile lookup failed");
+      return {
+        role: metadataRole,
+        account_status: metadataStatus,
+        lookup_failed: true
+      };
+    }
+    return {
+      role: String(data?.role || metadataRole || "").trim().toLowerCase(),
+      account_status: String(data?.account_status || metadataStatus || "active").trim().toLowerCase(),
+      lookup_failed: false
+    };
+  } catch (error) {
+    request?.log?.warn({ error: error?.message, userId: user.id }, "Partner password reset profile lookup crashed");
+    return { role: metadataRole, account_status: metadataStatus, lookup_failed: true };
+  }
+}
+
+async function maybeActivePartnerBusinessForUser(client, userId, request) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await client
+      .from("partner_businesses")
+      .select("id, owner_id, email, status, verification_status")
+      .eq("owner_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      request?.log?.warn({ error: error.message, userId }, "Partner password reset business lookup failed");
+      return null;
+    }
+    return data || null;
+  } catch (error) {
+    request?.log?.warn({ error: error?.message, userId }, "Partner password reset business lookup crashed");
+    return null;
+  }
+}
+
+async function maybePartnerBusinessForUser(client, userId, request) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await client
+      .from("partner_businesses")
+      .select("id, owner_id, email, status, verification_status")
+      .eq("owner_id", userId)
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      request?.log?.warn({ error: error.message, userId }, "Partner password reset business status lookup failed");
+      return null;
+    }
+    return data || null;
+  } catch (error) {
+    request?.log?.warn({ error: error?.message, userId }, "Partner password reset business status lookup crashed");
+    return null;
+  }
+}
+
+async function maybeLegacyPartnerForEmail(client, email, request) {
+  const target = authEmail(email);
+  if (!target) return null;
+  try {
+    const { data, error } = await client
+      .from("partners")
+      .select("id, email, status")
+      .eq("email", target)
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      request?.log?.warn({ error: error.message, email_hash: authEmailHash(target) }, "Legacy partner password reset lookup failed");
+      return null;
+    }
+    const status = String(data?.status || "active").trim().toLowerCase();
+    return data && status === "active" ? data : null;
+  } catch (error) {
+    request?.log?.warn({ error: error?.message, email_hash: authEmailHash(target) }, "Legacy partner password reset lookup crashed");
+    return null;
+  }
+}
+
+export async function resolvePartnerPasswordResetEligibility({ email, adminClient = supabaseAdmin, request = null } = {}) {
+  const target = authEmail(email);
+  if (!target) return { eligible: false, reason: "invalid_email" };
+
+  const user = await findAuthUserByEmailWithClient(adminClient, target, request);
+  if (!user?.id) return { eligible: false, reason: "auth_user_not_found" };
+
+  if (authUserInactiveForPartnerPasswordReset(user)) {
+    return { eligible: false, reason: "inactive_auth_user", user_id: user.id };
+  }
+
+  const profile = await profileStateForPasswordReset(adminClient, user, request);
+  const role = profile.role;
+  if (role === "admin" || role === "super_admin") {
+    return { eligible: false, reason: "privileged_role", user_id: user.id, role };
+  }
+  if (INACTIVE_PARTNER_RESET_ACCOUNT_STATUSES.has(profile.account_status)) {
+    return { eligible: false, reason: "inactive_profile", user_id: user.id, role, account_status: profile.account_status };
+  }
+  if (profile.lookup_failed) {
+    return { eligible: false, reason: "profile_lookup_failed", user_id: user.id, role, account_status: profile.account_status || "" };
+  }
+
+  const partnerBusiness = await maybeActivePartnerBusinessForUser(adminClient, user.id, request);
+  if (partnerBusiness) {
+    return {
+      eligible: true,
+      reason: "active_partner_business",
+      user_id: user.id,
+      partner_id: partnerBusiness.id,
+      partner_source: "partner_businesses"
+    };
+  }
+
+  const existingPartnerBusiness = await maybePartnerBusinessForUser(adminClient, user.id, request);
+  const partnerBusinessStatus = String(existingPartnerBusiness?.status || "").trim().toLowerCase();
+  if (existingPartnerBusiness && partnerBusinessStatus && partnerBusinessStatus !== "active") {
+    return {
+      eligible: false,
+      reason: "inactive_partner_business",
+      user_id: user.id,
+      partner_id: existingPartnerBusiness.id,
+      partner_source: "partner_businesses",
+      partner_status: partnerBusinessStatus
+    };
+  }
+
+  const legacyPartner = await maybeLegacyPartnerForEmail(adminClient, target, request);
+  if (legacyPartner) {
+    return {
+      eligible: true,
+      reason: "legacy_partner_record",
+      user_id: user.id,
+      partner_id: legacyPartner.id,
+      partner_source: "partners"
+    };
+  }
+
+  if (role === "partner") {
+    return {
+      eligible: true,
+      reason: "partner_profile_role",
+      user_id: user.id,
+      partner_id: user.id,
+      partner_source: "profiles"
+    };
+  }
+
+  return { eligible: false, reason: "active_partner_not_found", user_id: user.id, role: role || "" };
 }
 
 async function resolveAuthUserById(userId, fallbackEmail, request) {
@@ -9739,6 +10041,10 @@ export function registerRoutes(app) {
       const result = await lookupTurkeyCompany({ taxNumber: normalizedTaxNumber, request });
       return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber };
     }
+    if (countryCode === "GB") {
+      const result = await lookupUkCompany({ taxNumber: normalizedTaxNumber, request });
+      return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber };
+    }
     if (EU_VIES_COUNTRIES.has(countryCode)) {
       const result = await lookupEuVatCompany({ countryCode, taxNumber: normalizedTaxNumber, request });
       return { ...result, country_code: countryCode, normalized_tax_number: normalizedTaxNumber, validation };
@@ -9941,6 +10247,58 @@ export function registerRoutes(app) {
       ok: true,
       user: publicAuthUser(data.user),
       session: data.session || null
+    });
+  });
+
+  app.post("/v1/partner-auth/forgot-password", async (request, reply) => {
+    const payload = parseAuthPayload(authForgotPasswordSchema, request.body);
+    const email = authEmail(payload.email);
+    const redirectTo = partnerPasswordResetRedirectUrl();
+    await verifyTurnstile(request, "forgot_password", payload.turnstileToken);
+
+    const eligibility = await resolvePartnerPasswordResetEligibility({ email, request });
+    let deliveryError = null;
+    let deliveryRequested = false;
+
+    if (eligibility.eligible) {
+      const { error } = await supabasePublic.auth.resetPasswordForEmail(email, { redirectTo });
+      deliveryError = error || null;
+      deliveryRequested = !error;
+      if (error) {
+        request.log.warn({
+          error: error.message,
+          emailDomain: authEmailDomain(email),
+          partner_source: eligibility.partner_source || null
+        }, "Partner password reset email could not be requested");
+      }
+    }
+
+    await auditEvent({
+      request,
+      actorId: eligibility.user_id || null,
+      actorRole: eligibility.eligible ? "partner" : null,
+      action: eligibility.eligible
+        ? (deliveryError ? "partner.password_reset_delivery_failed" : "partner.password_reset_requested")
+        : "partner.password_reset_skipped",
+      severity: eligibility.eligible && !deliveryError ? "info" : "warning",
+      source: "server",
+      resourceType: "partner_auth",
+      resourceId: eligibility.partner_id || null,
+      metadata: {
+        email_hash: authEmailHash(email),
+        email_domain: authEmailDomain(email),
+        eligibility_reason: eligibility.reason,
+        partner_source: eligibility.partner_source || null,
+        delivery_requested: deliveryRequested,
+        redirect_to: redirectTo,
+        code: deliveryError?.code || null
+      },
+      evidenceTags: ["partner", "auth", "password_reset"]
+    });
+
+    return reply.code(202).send({
+      ok: true,
+      message: PARTNER_PASSWORD_RESET_MESSAGE
     });
   });
 

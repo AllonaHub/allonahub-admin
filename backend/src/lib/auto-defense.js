@@ -8,7 +8,7 @@ const TRAVERSAL_PATTERN = /(\.\.\/|\.\.\\|%2e%2e|%252e%252e|\/etc\/passwd|\\wind
 const PROBE_PATTERN = /(\/wp-admin|\/wp-login|\/wordpress|\/xmlrpc\.php|\/phpmyadmin|\/\.env|\/vendor\/phpunit|\/cgi-bin|\/adminer)/i;
 const SENSITIVE_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console|payments|cv|orders|partner|rewards|hp-wallet|cron)\b/i;
 const ADMIN_PATH_PATTERN = /^\/v1\/(admin|ops-console|control-center|owner-console)\b/i;
-const AUTH_PATH_PATTERN = /^\/v1\/auth\/(login|register|forgot-password|turnstile)\b/i;
+const AUTH_PATH_PATTERN = /^\/v1\/(?:auth\/(login|register|forgot-password|turnstile)|partner-auth\/forgot-password)\b/i;
 
 const state = {
   ipScores: new Map(),

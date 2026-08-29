@@ -72,6 +72,8 @@ export const config = {
   companyLookup: {
     turkeyApiUrl: readEnv("COMPANY_LOOKUP_TR_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
     turkeyApiToken: readOptionalSecret("COMPANY_LOOKUP_TR_API_TOKEN"),
+    companiesHouseApiUrl: readEnv("COMPANY_LOOKUP_GB_API_URL", { required: false, defaultValue: "https://api.company-information.service.gov.uk" }).replace(/\/$/, ""),
+    companiesHouseApiKey: readOptionalSecret("COMPANY_LOOKUP_GB_API_KEY", "COMPANIES_HOUSE_API_KEY"),
     timeoutMs: readNumber("COMPANY_LOOKUP_TIMEOUT_MS", 12000)
   },
   cronSecret: readEnv("CRON_SECRET", { required: false, defaultValue: "" }),
