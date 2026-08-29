@@ -262,8 +262,9 @@ body.partner-entry-page .actions .platform-controls{width:100%!important;max-wid
 <div><b>Onaylı Yayın</b><span>Başvurular admin kontrolü sonrası aktif edilir.</span></div>
 </div>
 
-<div class="tabs" role="tablist" aria-label="Partner giriş ve başvuru sekmeleri">
+<div class="tabs" role="tablist" aria-label="Partner giriş, şifre sıfırlama ve başvuru sekmeleri">
 <button id="partnerLoginTab" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="login" onclick="openPartnerTab('login', event)">Giriş</button>
+<button id="partnerForgotTab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="forgot" onclick="openPartnerTab('forgot', event)">Şifremi Unuttum</button>
 <button id="partnerApplyTab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="apply" onclick="openPartnerTab('apply', event)">Başvuru</button>
 </div>
 
@@ -279,6 +280,14 @@ body.partner-entry-page .actions .platform-controls{width:100%!important;max-wid
 <div><b>Kampanya</b><span>Kupon, vitrin ve HP planları.</span></div>
 <div><b>Destek</b><span>Partner talep ve operasyon merkezi.</span></div>
 </div>
+</div>
+
+<div id="forgot" class="form" role="tabpanel" aria-labelledby="partnerForgotTab" hidden>
+<p>Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.</p>
+<div class="input"><input id="forgotPartnerEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Partner şifre sıfırlama e-posta adresi" placeholder="E-posta"></div>
+<div class="security-challenge" data-security-challenge="forgot_password"></div>
+<button class="btn" type="button" onclick="partnerResetPassword()">Şifre Sıfırlama Linki Gönder</button>
+<button class="btn secondary-btn" type="button" onclick="openPartnerTab('login', event)">Girişe Dön</button>
 </div>
 
 <div id="apply" class="form" role="tabpanel" aria-labelledby="partnerApplyTab" hidden>
@@ -475,6 +484,12 @@ function partnerPanelUrl(){
 function partnerLoginUrl(){
   if(isPartnerPortalHost())return partnerPortalUrl("/");
   return partnerPageUrl("/pages/partner/partner.html");
+}
+
+function partnerPasswordResetUrl(){
+  const url=new URL(mainSiteUrl("/pages/account/reset-password.html"));
+  url.searchParams.set("returnTo", partnerLoginUrl());
+  return url.href;
 }
 
 function showNotice(message){
@@ -1114,6 +1129,40 @@ async function partnerLogin(){
   }
 }
 
+async function partnerResetPassword(){
+  const email=normalizePartnerEmail(document.getElementById("forgotPartnerEmail").value);
+
+  if(!partnerRateLimit("partner-forgot-password",4,30*60*1000)){
+    showNotice("Çok fazla deneme. Lütfen kısa süre sonra tekrar deneyin.");
+    return;
+  }
+
+  if(!validPartnerEmail(email)){
+    showNotice("Geçerli bir e-posta adresi giriniz.");
+    return;
+  }
+
+  const btn=document.querySelector("#forgot .btn");
+  if(btn){
+    btn.disabled=true;
+    btn.textContent="Gönderiliyor...";
+  }
+
+  try{
+    await verifySecurityChallenge("forgot_password");
+    const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:partnerPasswordResetUrl()});
+    if(error)throw error;
+    showNotice("Eğer bu e-posta aktif bir partner hesabına kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+  }catch(error){
+    showNotice("Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
+  }finally{
+    if(btn){
+      btn.disabled=false;
+      btn.textContent="Şifre Sıfırlama Linki Gönder";
+    }
+  }
+}
+
 function getApplyData(){
   const partnerName=document.getElementById("partner_name").value.trim();
   const country=selectedCountry();
@@ -1274,26 +1323,26 @@ const partnerPageTranslations={
     "MFA Zorunlu":"MFA Required","Partner panel erişimi iki aşamalı doğrulama ile korunur.":"Partner panel access is protected by two-factor verification.",
     "Cloudflare Kontrolü":"Cloudflare Check","Giriş ve başvuru robot doğrulamasından geçer.":"Login and application pass bot verification.",
     "Onaylı Yayın":"Approved Publishing","Başvurular admin kontrolü sonrası aktif edilir.":"Applications are activated after admin review.",
-    "Giriş":"Login","Başvuru":"Application","E-posta":"Email","Şifre":"Password","Partner Paneline Giriş":"Enter Partner Panel","Google ile Giriş":"Sign in with Google",
+    "Giriş":"Login","Şifremi Unuttum":"Forgot Password","Başvuru":"Application","E-posta":"Email","Şifre":"Password","Partner Paneline Giriş":"Enter Partner Panel","Google ile Giriş":"Sign in with Google","Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.":"Enter the email address registered to your partner account; we will securely send the password reset link.","Şifre Sıfırlama Linki Gönder":"Send Password Reset Link","Girişe Dön":"Back to Login",
     "Sipariş":"Orders","Kargo, hazırlık ve teslimat takibi.":"Track cargo, preparation and delivery.","Finans":"Finance","Hakediş, komisyon ve ödeme özeti.":"Payouts, commission and payment summary.","Kampanya":"Campaigns","Kupon, vitrin ve HP planları.":"Coupon, showcase and HP plans.","Destek":"Support","Partner talep ve operasyon merkezi.":"Partner request and operations center.",
     "Firma / İşletme Adı":"Company / Business Name","Yetkili Ad Soyad":"Authorized Full Name","Telefon numarası":"Phone number","Vergi Numarası":"Tax Number","Vergi Dairesi":"Tax Office","Şirket Türü Seç":"Select Company Type","Web Sitesi (opsiyonel)":"Website (optional)","İl / Şehir":"City","Ülke":"Country","Sektör Seç":"Select Sector","Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?":"Short description: What does your business do? Which products/services will you offer?","Başvuruyu Gönder":"Submit Application","Tümünü Temizle":"Clear All",
     "Partner Avantajları":"Partner Benefits","Başvuru Yap":"Apply","Daha Fazla Görünürlük":"More Visibility","İşletmen AllonaHub modüllerinde doğru müşteriye görünür.":"Your business appears to the right customers in AllonaHub modules.","HP Ekonomisi":"HP Economy","Kullanıcılar HP ve kupon avantajı ile partnerlere daha sık döner.":"Users return to partners more often with HP and coupon benefits.","Güvenli Ödeme":"Secure Payment","Ödeme talepleri, kuponlar ve işlem geçmişi kayıt altında tutulur.":"Payment requests, coupons and transaction history are recorded.","Tek Panel":"One Panel","Ürün, hizmet, kampanya, ödeme ve raporlar tek merkezden yönetilir.":"Products, services, campaigns, payments and reports are managed from one center.","Başvuru Süreci":"Application Process","Hemen Başvur":"Apply Now"
   },
   az:{
     "Ana Sayfa":"Ana səhifə","Kullanıcı Girişi":"İstifadəçi girişi","Kupon":"Kupon","Ara":"Axtar",
-    "Partner Girişi":"Partner girişi","Giriş":"Giriş","Başvuru":"Müraciət","E-posta":"E-poçt","Şifre":"Şifrə","Partner Paneline Giriş":"Partner panelinə giriş","Google ile Giriş":"Google ilə giriş","Başvuruyu Gönder":"Müraciəti göndər","Tümünü Temizle":"Hamısını təmizlə","Firma / İşletme Adı":"Şirkət / biznes adı","Yetkili Ad Soyad":"Səlahiyyətli ad soyad","Telefon numarası":"Telefon nömrəsi","Vergi Numarası":"Vergi nömrəsi","Vergi Dairesi":"Vergi idarəsi","Şirket Türü Seç":"Şirkət növünü seç","İl / Şehir":"Şəhər","Ülke":"Ölkə","Sektör Seç":"Sektoru seç","Partner Avantajları":"Partner üstünlükləri","Başvuru Yap":"Müraciət et","Başvuru Süreci":"Müraciət prosesi","Hemen Başvur":"İndi müraciət et"
+    "Partner Girişi":"Partner girişi","Giriş":"Giriş","Şifremi Unuttum":"Şifrəmi unutdum","Başvuru":"Müraciət","E-posta":"E-poçt","Şifre":"Şifrə","Partner Paneline Giriş":"Partner panelinə giriş","Google ile Giriş":"Google ilə giriş","Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.":"Partner hesabına qeydli e-poçtu yaz; şifrə yeniləmə linkini təhlükəsiz göndərək.","Şifre Sıfırlama Linki Gönder":"Şifrə yeniləmə linki göndər","Girişe Dön":"Girişə dön","Başvuruyu Gönder":"Müraciəti göndər","Tümünü Temizle":"Hamısını təmizlə","Firma / İşletme Adı":"Şirkət / biznes adı","Yetkili Ad Soyad":"Səlahiyyətli ad soyad","Telefon numarası":"Telefon nömrəsi","Vergi Numarası":"Vergi nömrəsi","Vergi Dairesi":"Vergi idarəsi","Şirket Türü Seç":"Şirkət növünü seç","İl / Şehir":"Şəhər","Ülke":"Ölkə","Sektör Seç":"Sektoru seç","Partner Avantajları":"Partner üstünlükləri","Başvuru Yap":"Müraciət et","Başvuru Süreci":"Müraciət prosesi","Hemen Başvur":"İndi müraciət et"
   },
   de:{
     "Ana Sayfa":"Startseite","Kullanıcı Girişi":"Benutzerlogin","Kupon":"Coupon","Ara":"Suchen",
-    "Partner Girişi":"Partner Login","Giriş":"Login","Başvuru":"Bewerbung","E-posta":"E-Mail","Şifre":"Passwort","Partner Paneline Giriş":"Zum Partner Panel","Google ile Giriş":"Mit Google anmelden","Başvuruyu Gönder":"Bewerbung senden","Tümünü Temizle":"Alles löschen","Firma / İşletme Adı":"Firma / Geschäftsname","Yetkili Ad Soyad":"Name der verantwortlichen Person","Telefon numarası":"Telefonnummer","Vergi Numarası":"Steuernummer","Vergi Dairesi":"Finanzamt","Şirket Türü Seç":"Unternehmensform wählen","İl / Şehir":"Stadt","Ülke":"Land","Sektör Seç":"Branche wählen","Partner Avantajları":"Partner Vorteile","Başvuru Yap":"Bewerben","Başvuru Süreci":"Bewerbungsprozess","Hemen Başvur":"Jetzt bewerben"
+    "Partner Girişi":"Partner Login","Giriş":"Login","Şifremi Unuttum":"Passwort vergessen","Başvuru":"Bewerbung","E-posta":"E-Mail","Şifre":"Passwort","Partner Paneline Giriş":"Zum Partner Panel","Google ile Giriş":"Mit Google anmelden","Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.":"Gib die E-Mail-Adresse deines Partnerkontos ein; wir senden dir den Link zum Zurücksetzen des Passworts sicher zu.","Şifre Sıfırlama Linki Gönder":"Passwort-Link senden","Girişe Dön":"Zurück zum Login","Başvuruyu Gönder":"Bewerbung senden","Tümünü Temizle":"Alles löschen","Firma / İşletme Adı":"Firma / Geschäftsname","Yetkili Ad Soyad":"Name der verantwortlichen Person","Telefon numarası":"Telefonnummer","Vergi Numarası":"Steuernummer","Vergi Dairesi":"Finanzamt","Şirket Türü Seç":"Unternehmensform wählen","İl / Şehir":"Stadt","Ülke":"Land","Sektör Seç":"Branche wählen","Partner Avantajları":"Partner Vorteile","Başvuru Yap":"Bewerben","Başvuru Süreci":"Bewerbungsprozess","Hemen Başvur":"Jetzt bewerben"
   },
   ru:{
     "Ana Sayfa":"Главная","Kullanıcı Girişi":"Вход пользователя","Kupon":"Купон","Ara":"Поиск",
-    "Partner Girişi":"Вход партнера","Giriş":"Вход","Başvuru":"Заявка","E-posta":"Эл. почта","Şifre":"Пароль","Partner Paneline Giriş":"Войти в панель партнера","Google ile Giriş":"Войти через Google","Başvuruyu Gönder":"Отправить заявку","Tümünü Temizle":"Очистить все","Firma / İşletme Adı":"Название компании","Yetkili Ad Soyad":"ФИО ответственного","Telefon numarası":"Телефон","Vergi Numarası":"Налоговый номер","Vergi Dairesi":"Налоговая инспекция","Şirket Türü Seç":"Выберите тип компании","İl / Şehir":"Город","Ülke":"Страна","Sektör Seç":"Выберите сектор","Partner Avantajları":"Преимущества партнера","Başvuru Yap":"Подать заявку","Başvuru Süreci":"Процесс заявки","Hemen Başvur":"Подать сейчас"
+    "Partner Girişi":"Вход партнера","Giriş":"Вход","Şifremi Unuttum":"Забыли пароль","Başvuru":"Заявка","E-posta":"Эл. почта","Şifre":"Пароль","Partner Paneline Giriş":"Войти в панель партнера","Google ile Giriş":"Войти через Google","Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.":"Введите e-mail, зарегистрированный для партнерского аккаунта; мы безопасно отправим ссылку для смены пароля.","Şifre Sıfırlama Linki Gönder":"Отправить ссылку для сброса","Girişe Dön":"Вернуться ко входу","Başvuruyu Gönder":"Отправить заявку","Tümünü Temizle":"Очистить все","Firma / İşletme Adı":"Название компании","Yetkili Ad Soyad":"ФИО ответственного","Telefon numarası":"Телефон","Vergi Numarası":"Налоговый номер","Vergi Dairesi":"Налоговая инспекция","Şirket Türü Seç":"Выберите тип компании","İl / Şehir":"Город","Ülke":"Страна","Sektör Seç":"Выберите сектор","Partner Avantajları":"Преимущества партнера","Başvuru Yap":"Подать заявку","Başvuru Süreci":"Процесс заявки","Hemen Başvur":"Подать сейчас"
   },
   ar:{
     "Ana Sayfa":"الصفحة الرئيسية","Kullanıcı Girişi":"دخول المستخدم","Kupon":"قسيمة","Ara":"بحث",
-    "Partner Girişi":"دخول الشريك","Giriş":"دخول","Başvuru":"طلب","E-posta":"البريد الإلكتروني","Şifre":"كلمة المرور","Partner Paneline Giriş":"دخول لوحة الشريك","Google ile Giriş":"الدخول عبر Google","Başvuruyu Gönder":"إرسال الطلب","Tümünü Temizle":"مسح الكل","Firma / İşletme Adı":"اسم الشركة / النشاط","Yetkili Ad Soyad":"اسم المسؤول","Telefon numarası":"رقم الهاتف","Vergi Numarası":"الرقم الضريبي","Vergi Dairesi":"مكتب الضرائب","Şirket Türü Seç":"اختر نوع الشركة","İl / Şehir":"المدينة","Ülke":"الدولة","Sektör Seç":"اختر القطاع","Partner Avantajları":"مزايا الشريك","Başvuru Yap":"قدّم طلبك","Başvuru Süreci":"خطوات الطلب","Hemen Başvur":"قدّم الآن"
+    "Partner Girişi":"دخول الشريك","Giriş":"دخول","Şifremi Unuttum":"نسيت كلمة المرور","Başvuru":"طلب","E-posta":"البريد الإلكتروني","Şifre":"كلمة المرور","Partner Paneline Giriş":"دخول لوحة الشريك","Google ile Giriş":"الدخول عبر Google","Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.":"اكتب البريد الإلكتروني المسجل لحساب الشريك؛ سنرسل رابط تحديث كلمة المرور بأمان.","Şifre Sıfırlama Linki Gönder":"إرسال رابط إعادة تعيين كلمة المرور","Girişe Dön":"العودة إلى الدخول","Başvuruyu Gönder":"إرسال الطلب","Tümünü Temizle":"مسح الكل","Firma / İşletme Adı":"اسم الشركة / النشاط","Yetkili Ad Soyad":"اسم المسؤول","Telefon numarası":"رقم الهاتف","Vergi Numarası":"الرقم الضريبي","Vergi Dairesi":"مكتب الضرائب","Şirket Türü Seç":"اختر نوع الشركة","İl / Şehir":"المدينة","Ülke":"الدولة","Sektör Seç":"اختر القطاع","Partner Avantajları":"مزايا الشريك","Başvuru Yap":"قدّم طلبك","Başvuru Süreci":"خطوات الطلب","Hemen Başvur":"قدّم الآن"
   }
 };
 
