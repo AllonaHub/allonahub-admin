@@ -48,6 +48,7 @@
       login: "Giriş için robot olmadığınızı doğrulayın.",
       register: "Kayıt için robot olmadığınızı doğrulayın.",
       forgot_password: "Şifre sıfırlama için robot olmadığınızı doğrulayın.",
+      partner_company_lookup: "Şirket bilgisi sorgusu için robot olmadığınızı doğrulayın.",
       partner_application: "Başvuru için robot olmadığınızı doğrulayın.",
       order_checkout: "Ödeme için robot olmadığınızı doğrulayın.",
       partner_payment_checkout: "Ödeme için robot olmadığınızı doğrulayın.",
@@ -200,7 +201,6 @@
       const normalizedAction = normalizeAction(action);
       const visibleToken = consumeVisibleToken(action);
       if (visibleWidgets.has(normalizedAction)) {
-        if (!visibleToken) return await execute(normalizedAction);
         return visibleToken;
       }
       return await execute(normalizedAction);

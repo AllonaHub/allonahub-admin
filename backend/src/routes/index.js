@@ -6762,6 +6762,13 @@ function companyLookupValidation(countryCode, normalizedTaxNumber) {
   return { tax_number_type: "tax_number", valid_format: normalizedTaxNumber.length >= 2 };
 }
 
+function companyLookupHasConfiguredProvider(countryCode) {
+  if (countryCode === "TR") return Boolean(config.companyLookup.turkeyApiUrl);
+  if (countryCode === "GB") return Boolean(config.companyLookup.companiesHouseApiKey);
+  if (EU_VIES_COUNTRIES.has(countryCode)) return true;
+  return false;
+}
+
 function xmlEscape(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -10018,7 +10025,6 @@ export function registerRoutes(app) {
 
   app.post("/v1/partner-company-lookup", async (request) => {
     const payload = parseAuthPayload(partnerCompanyLookupSchema, request.body);
-    await verifyTurnstile(request, "partner_company_lookup", payload.turnstileToken);
     const countryCode = normalizeCompanyCountryCode(payload.country, payload.country_code);
     const normalizedTaxNumber = normalizeTaxNumberForCountry(countryCode, payload.tax_number);
     const validation = companyLookupValidation(countryCode, normalizedTaxNumber);
@@ -10035,6 +10041,10 @@ export function registerRoutes(app) {
         validation,
         message: "Vergi numarası formatı doğrulanamadı."
       };
+    }
+
+    if (companyLookupHasConfiguredProvider(countryCode)) {
+      await verifyTurnstile(request, "partner_company_lookup", payload.turnstileToken);
     }
 
     if (countryCode === "TR") {

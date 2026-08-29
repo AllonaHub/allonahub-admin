@@ -341,6 +341,7 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 <div class="input"><select id="country" aria-label="Şirketin kayıtlı olduğu ülke"></select></div>
 <div class="input has-action"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
 <div id="companyLookupStatus" class="lookup-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+<div class="security-challenge" data-security-challenge="partner_company_lookup"></div>
 <div class="input"><input id="partner_name" type="text" autocomplete="organization" aria-label="Firma veya işletme adı" placeholder="Firma / İşletme Adı"></div>
 <div class="input"><input id="tax_office" type="text" autocomplete="off" spellcheck="false" aria-label="Vergi dairesi" placeholder="Vergi Dairesi"></div>
 
@@ -1432,7 +1433,7 @@ initPartnerGoogleCallback();
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/security-challenge.js?v=20260627-partner-turnstile1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260829-partner-company-lookup1" defer></script>
   <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
   <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
