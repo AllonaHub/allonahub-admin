@@ -880,9 +880,13 @@ async function lookupCompanyInfo(){
   try{
     const base=apiBaseUrl();
     if(!base)throw new Error("Şirket bilgisi servisi yapılandırılmadı.");
-    const turnstileToken=await securityChallengeToken("partner_company_lookup");
-    if(!turnstileToken && window.Allona?.securityChallenge?.enabled?.()){
-      throw new Error("Robot doğrulaması tamamlanamadı.");
+    let turnstileToken="";
+    if(window.Allona?.securityChallenge?.enabled?.()){
+      try{
+        turnstileToken=await securityChallengeToken("partner_company_lookup");
+      }catch(error){
+        turnstileToken="";
+      }
     }
     const response=await fetch(`${base}/v1/partner-company-lookup`,{
       method:"POST",
