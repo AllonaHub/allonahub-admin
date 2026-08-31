@@ -117,9 +117,21 @@
       brand: document.querySelector("[data-filter-brand]")?.value || "",
       minPrice: document.querySelector("[data-filter-min]")?.value || "",
       maxPrice: document.querySelector("[data-filter-max]")?.value || "",
-      sort: document.querySelector("[data-filter-sort]")?.value || "newest",
+      sort: document.querySelector("[data-filter-sort]")?.value || "smart",
       quick: document.querySelector("[data-filter-quick]")?.value || ""
     };
+  }
+
+  function enhanceSortControls() {
+    document.querySelectorAll("[data-filter-sort]").forEach((select) => {
+      if (![...select.options].some((option) => option.value === "smart")) {
+        const option = document.createElement("option");
+        option.value = "smart";
+        option.textContent = "Akıllı öneri";
+        select.insertBefore(option, select.firstElementChild);
+      }
+      if (!core.getParam("sort")) select.value = "smart";
+    });
   }
 
   function selectedCurrencyCode() {
@@ -211,6 +223,15 @@
   function applyLocalFilters(filters = filtersFromDom()) {
     let list = products.filter((product) => productMatchesFilters(product, filters));
 
+    if (filters.sort === "smart" && App.shopAlgorithm?.rankSection) {
+      return App.shopAlgorithm.rankSection(list, "catalog", {
+        filters,
+        category: filters.category || categoryPreset(),
+        search: filters.search,
+        quick: filters.quick
+      });
+    }
+
     if (filters.sort === "price_asc") list.sort((a, b) => a.price - b.price);
     else if (filters.sort === "price_desc") list.sort((a, b) => b.price - a.price);
     else if (filters.sort === "best_selling") list.sort((a, b) => b.sold_count - a.sold_count);
@@ -227,6 +248,16 @@
 
   function resolveGridNode(target) {
     return typeof target === "string" ? document.querySelector(target) : target;
+  }
+
+  function gridSurfaceName(node) {
+    if (!node) return "shop_grid";
+    if (node.matches("[data-products-grid]")) return "catalog";
+    if (node.matches("[data-new-grid]")) return "new_arrivals";
+    if (node.matches("[data-best-grid]")) return "best_sellers";
+    if (node.matches("[data-featured-grid]")) return "featured";
+    if (node.matches("[data-recommended-grid]")) return "recommended";
+    return "shop_grid";
   }
 
   function loadingSkeletonMarkup(index) {
@@ -343,6 +374,7 @@
     prepareProductRatings(node, visibleItems);
     markPendingPriceCards(node, visibleItems);
     prepareProductImages(node);
+    App.shopAlgorithm?.recordImpressions?.(visibleItems, { surface: gridSurfaceName(node) });
   }
 
   function renderProductCount(items) {
@@ -413,7 +445,7 @@
     if (brand) url.searchParams.set("brand", brand);
     if (minPrice) url.searchParams.set("min", minPrice);
     if (maxPrice) url.searchParams.set("max", maxPrice);
-    if (sort && sort !== "newest") url.searchParams.set("sort", sort);
+    if (sort && sort !== "smart") url.searchParams.set("sort", sort);
     if (quick) url.searchParams.set("quick", quick);
 
     const next = `${url.pathname}${url.search}${url.hash}`;
@@ -476,13 +508,24 @@
     const filters = filtersFromDom();
     syncFilterUrl(filters);
     updateQuickFilterAvailability(filters);
+    App.shopAlgorithm?.trackCatalogContext?.(filters);
     const filteredProducts = applyLocalFilters(filters);
+    const inStockProducts = products.filter((item) => item.stock > 0);
+    const featuredProducts = App.shopAlgorithm?.rankSection
+      ? App.shopAlgorithm.rankSection(inStockProducts, "featured", { filters }).slice(0, 4)
+      : inStockProducts.slice(0, 4);
+    const featuredIds = new Set(featuredProducts.map((item) => String(item.id || item.slug || item.name)));
+    const recommendedProducts = App.shopAlgorithm?.rankSection
+      ? App.shopAlgorithm.rankSection(inStockProducts, "recommended", { filters })
+        .filter((item) => !featuredIds.has(String(item.id || item.slug || item.name)))
+        .slice(0, 4)
+      : inStockProducts.slice(4, 8);
     renderProductCount(filteredProducts);
     renderGrid("[data-products-grid]", filteredProducts);
     renderGrid("[data-new-grid]", products.slice(0, 4));
     renderGrid("[data-best-grid]", [...products].sort((a, b) => b.sold_count - a.sold_count).slice(0, 4));
-    renderGrid("[data-featured-grid]", products.filter((item) => item.stock > 0).slice(0, 4));
-    renderGrid("[data-recommended-grid]", products.filter((item) => item.stock > 0).slice(4, 8));
+    renderGrid("[data-featured-grid]", featuredProducts);
+    renderGrid("[data-recommended-grid]", recommendedProducts);
   }
 
   function moduleAdMatchesShop(item) {
@@ -629,8 +672,11 @@
     }
 
     const scopedRemoteAds = remoteAds.filter((ad) => !ad.product || isShopCatalogProduct(ad.product));
-    const partnerProducts = productList.filter((item) => item.partner_id && isShopCatalogProduct(item)).map(heroAdFromProduct);
-    const popularProducts = [...productList].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
+    const heroProductPool = App.shopAlgorithm?.rankSection
+      ? App.shopAlgorithm.rankSection(productList, "hero_ad", { filters: filtersFromDom(), maxSellerShare: 0.4 })
+      : productList;
+    const partnerProducts = heroProductPool.filter((item) => item.partner_id && isShopCatalogProduct(item)).map(heroAdFromProduct);
+    const popularProducts = [...heroProductPool].sort((a, b) => b.sold_count - a.sold_count).map(heroAdFromProduct);
     const moduleAds = readShopModuleAdPool().map(heroAdFromModuleRecord);
     const ads = uniqueAds([
       ...moduleAds,
@@ -722,6 +768,7 @@
       }
       renderCategoryOptions();
       renderBrandOptions();
+      enhanceSortControls();
       syncFiltersFromParams();
       updatePriceFilterCurrencyHints();
       renderHomeSections();
@@ -731,6 +778,7 @@
       products = [];
       renderCategoryOptions();
       renderBrandOptions();
+      enhanceSortControls();
       syncFiltersFromParams();
       updatePriceFilterCurrencyHints();
       renderHomeSections();
@@ -741,6 +789,7 @@
   function bindFilters() {
     const form = document.querySelector("[data-product-filters]");
     if (!form) return;
+    enhanceSortControls();
     form.addEventListener("input", core.debounce(renderHomeSections, 160));
     form.addEventListener("change", renderHomeSections);
     form.addEventListener("submit", (event) => {
@@ -765,7 +814,7 @@
           select.value = "";
         });
         form.querySelectorAll("[data-filter-sort]").forEach((select) => {
-          select.value = "newest";
+          select.value = "smart";
         });
         setCategorySelectValue(categoryPreset());
         setQuickFilter("");
@@ -835,6 +884,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!document.querySelector("[data-page='shop']")) return;
+    App.shopAlgorithm?.bindBehaviorSignals?.();
+    enhanceSortControls();
     document.addEventListener("allona:module-ad-banner-ready", (event) => {
       if (event.detail?.key === "shop" && heroAds.length) renderHeroAds(heroAds);
     });
