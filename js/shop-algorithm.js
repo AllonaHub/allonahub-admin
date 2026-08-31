@@ -2,7 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const PROFILE_KEY = "allona.shopInterestProfile.v1";
   const EXPOSURE_KEY = "allona.shopExposureLedger.v1";
-  const VERSION = "20260831-faircommerce1";
+  const VERSION = "20260831-faircommerce2";
   const MAX_PROFILE_TERMS = 48;
   const MAX_PROFILE_ITEMS = 64;
   const PROFILE_DECAY_PER_WEEK = 0.72;
@@ -165,6 +165,13 @@
     return Boolean(text && SENSITIVE_TERMS.some((term) => text.includes(normalizeText(term))));
   }
 
+  function textTerms(value, minLength = 3) {
+    return normalizeText(value)
+      .split(/[\s-]+/)
+      .map((term) => term.trim())
+      .filter((term) => term.length >= minLength && term.length <= 32 && !isSensitive(term));
+  }
+
   function readJson(key, fallback) {
     try {
       const raw = window.localStorage.getItem(key);
@@ -261,10 +268,10 @@
 
     const query = label(detail.search || detail.query || "", "");
     if (query && !isSensitive(query)) {
-      query.split(/\s+/).filter((term) => term.length >= 3).slice(0, 6).forEach((term) => bump(profile.terms, term, weight * 0.7));
+      textTerms(query, 3).slice(0, 6).forEach((term) => bump(profile.terms, term, weight * 0.7));
     }
     if (hasProductSignal) {
-      productText(product).split(/\s+/).filter((term) => term.length >= 4).slice(0, 10).forEach((term) => bump(profile.terms, term, weight * 0.2));
+      textTerms(productText(product), 4).slice(0, 10).forEach((term) => bump(profile.terms, term, weight * 0.2));
     }
     profile.updated_at = new Date().toISOString();
     writeJson(PROFILE_KEY, profile);
