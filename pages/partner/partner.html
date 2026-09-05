@@ -880,25 +880,27 @@ async function lookupCompanyInfo(){
   try{
     const base=apiBaseUrl();
     if(!base)throw new Error("Şirket bilgisi servisi yapılandırılmadı.");
-    let turnstileToken="";
-    if(window.Allona?.securityChallenge?.enabled?.()){
-      try{
-        turnstileToken=await securityChallengeToken("partner_company_lookup");
-      }catch(error){
-        turnstileToken="";
-      }
+    const requestLookup=async(turnstileToken="")=>{
+      const response=await fetch(`${base}/v1/partner-company-lookup`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          country:country.name,
+          country_code:country.code,
+          tax_number:taxNumber,
+          turnstileToken
+        })
+      });
+      const payload=await response.json().catch(()=>({}));
+      return {response,payload};
+    };
+
+    let {response,payload}=await requestLookup("");
+    if(!response.ok && /robot doğrulaması/i.test(payload.message || "") && window.Allona?.securityChallenge?.enabled?.()){
+      const turnstileToken=await securityChallengeToken("partner_company_lookup");
+      if(!turnstileToken)throw new Error("Robot doğrulaması tamamlanamadı.");
+      ({response,payload}=await requestLookup(turnstileToken));
     }
-    const response=await fetch(`${base}/v1/partner-company-lookup`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        country:country.name,
-        country_code:country.code,
-        tax_number:taxNumber,
-        turnstileToken
-      })
-    });
-    const payload=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(payload.message || "Şirket bilgisi sorgulanamadı.");
 
     lastCompanyLookup={
