@@ -70,6 +70,7 @@ export const config = {
     strict: readBool("TURNSTILE_STRICT", false)
   },
   companyLookup: {
+    turkeyProvider: readEnv("COMPANY_LOOKUP_TR_PROVIDER", { required: false, defaultValue: "generic" }),
     turkeyApiUrl: readEnv("COMPANY_LOOKUP_TR_API_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
     turkeyApiToken: readOptionalSecret("COMPANY_LOOKUP_TR_API_TOKEN"),
     companiesHouseApiUrl: readEnv("COMPANY_LOOKUP_GB_API_URL", { required: false, defaultValue: "https://api.company-information.service.gov.uk" }).replace(/\/$/, ""),

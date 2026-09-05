@@ -5,6 +5,14 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { autoDefenseStatus } from "../lib/auto-defense.js";
 import {
+  mukellefInfoLookupUrl,
+  nilveraLookupUrl,
+  normalizeMukellefInfoPayload,
+  normalizeNilveraCompanyPayload,
+  turkeyCompanyLookupIsConfigured,
+  turkeyCompanyLookupProvider
+} from "../lib/company-lookup-providers.js";
+import {
   buildProductSocialMediaDailyPackage,
   buildSocialMediaDailyPackage,
   SOCIAL_MEDIA_PUBLIC_DAILY_PLATFORMS
@@ -6763,7 +6771,7 @@ function companyLookupValidation(countryCode, normalizedTaxNumber) {
 }
 
 function companyLookupHasConfiguredProvider(countryCode) {
-  if (countryCode === "TR") return Boolean(config.companyLookup.turkeyApiUrl);
+  if (countryCode === "TR") return turkeyCompanyLookupIsConfigured(config.companyLookup);
   if (countryCode === "GB") return Boolean(config.companyLookup.companiesHouseApiKey);
   if (EU_VIES_COUNTRIES.has(countryCode)) return true;
   return false;
@@ -6870,6 +6878,57 @@ function normalizeCompanyProviderPayload(payload, fallback = {}) {
   };
 }
 
+async function lookupTurkeyCompanyViaMukellefInfo(taxNumber) {
+  const response = await companyLookupFetchWithTimeout(mukellefInfoLookupUrl(config.companyLookup, taxNumber), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      ApiKey: config.companyLookup.turkeyApiToken
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.isError === true) throw httpError(payload.message || `mukellef.info servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  return {
+    provider: "tr_mukellef_info",
+    source: "mukellef.info",
+    company: normalizeMukellefInfoPayload(payload, { country: "Türkiye", tax_number: taxNumber })
+  };
+}
+
+async function lookupTurkeyCompanyViaNilvera(taxNumber) {
+  const response = await companyLookupFetchWithTimeout(nilveraLookupUrl(config.companyLookup, taxNumber), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${config.companyLookup.turkeyApiToken}`
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw httpError(payload.message || `Nilvera servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  return {
+    provider: "tr_nilvera",
+    source: "Nilvera",
+    company: normalizeNilveraCompanyPayload(payload, { country: "Türkiye", tax_number: taxNumber })
+  };
+}
+
+async function lookupTurkeyCompanyViaGenericProvider(taxNumber) {
+  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  if (config.companyLookup.turkeyApiToken) headers.Authorization = `Bearer ${config.companyLookup.turkeyApiToken}`;
+  const response = await companyLookupFetchWithTimeout(config.companyLookup.turkeyApiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ tax_number: taxNumber, country_code: "TR" })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw httpError(payload.message || `Türkiye şirket servisi yanıt vermedi: HTTP ${response.status}`, 502);
+  return {
+    provider: "tr_authorized_provider",
+    source: config.companyLookup.turkeyApiUrl,
+    company: normalizeCompanyProviderPayload(payload, { country: "Türkiye", tax_number: taxNumber })
+  };
+}
+
 async function lookupTurkeyCompany({ taxNumber, request }) {
   const validation = companyLookupValidation("TR", taxNumber);
   if (!validation.valid_format) {
@@ -6885,7 +6944,8 @@ async function lookupTurkeyCompany({ taxNumber, request }) {
       validation
     };
   }
-  if (!config.companyLookup.turkeyApiUrl) {
+  const provider = turkeyCompanyLookupProvider(config.companyLookup);
+  if (!turkeyCompanyLookupIsConfigured(config.companyLookup)) {
     return {
       ok: false,
       provider: "tr_authorized_provider",
@@ -6894,20 +6954,21 @@ async function lookupTurkeyCompany({ taxNumber, request }) {
       company: null,
       source: "authorized_provider_required",
       fetched_at: new Date().toISOString(),
-      message: "Türkiye VKN/TCKN için canlı şirket bilgisi resmi veya yetkili entegratör servisi gerektirir. COMPANY_LOOKUP_TR_API_URL bağlanınca bu buton otomatik doldurur.",
+      message: provider === "mukellef_info"
+        ? "Türkiye VKN/TCKN için canlı şirket bilgisi mukellef.info API anahtarı gerektirir. COMPANY_LOOKUP_TR_PROVIDER=mukellef_info ve COMPANY_LOOKUP_TR_API_TOKEN bağlanınca bu buton otomatik doldurur."
+        : "Türkiye VKN/TCKN için canlı şirket bilgisi resmi veya yetkili entegratör servisi gerektirir. COMPANY_LOOKUP_TR_API_URL ve gerekiyorsa COMPANY_LOOKUP_TR_API_TOKEN bağlanınca bu buton otomatik doldurur.",
       validation
     };
   }
-  const headers = { "Content-Type": "application/json" };
-  if (config.companyLookup.turkeyApiToken) headers.Authorization = `Bearer ${config.companyLookup.turkeyApiToken}`;
-  const response = await companyLookupFetchWithTimeout(config.companyLookup.turkeyApiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ tax_number: taxNumber, country_code: "TR" })
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw httpError(payload.message || `Türkiye şirket servisi yanıt vermedi: HTTP ${response.status}`, 502);
-  const company = normalizeCompanyProviderPayload(payload, { country: "Türkiye", tax_number: taxNumber });
+  const lookupResult = provider === "mukellef_info"
+    ? await lookupTurkeyCompanyViaMukellefInfo(taxNumber)
+    : provider === "nilvera"
+      ? await lookupTurkeyCompanyViaNilvera(taxNumber)
+      : await lookupTurkeyCompanyViaGenericProvider(taxNumber);
+  const company = lookupResult.company;
+  const status = company.legal_name
+    ? company.status === "inactive" ? "inactive" : "verified"
+    : "not_found";
   await auditEvent({
     request,
     action: "partner.company_lookup_tr",
@@ -6916,15 +6977,15 @@ async function lookupTurkeyCompany({ taxNumber, request }) {
     severity: company.legal_name ? "info" : "warning",
     source: "server",
     evidenceTags: ["partner", "company_lookup", "turkey"],
-    metadata: { provider_configured: true, found: Boolean(company.legal_name) }
+    metadata: { provider_configured: true, provider, found: Boolean(company.legal_name), status }
   });
   return {
     ok: true,
-    provider: "tr_authorized_provider",
-    status: company.legal_name ? "verified" : "not_found",
-    verified: Boolean(company.legal_name),
+    provider: lookupResult.provider,
+    status,
+    verified: Boolean(company.legal_name && status === "verified"),
     company: company.legal_name ? company : null,
-    source: config.companyLookup.turkeyApiUrl,
+    source: lookupResult.source,
     fetched_at: new Date().toISOString(),
     validation
   };

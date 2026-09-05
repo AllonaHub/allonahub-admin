@@ -7,6 +7,7 @@ process.env.SUPABASE_URL ||= "https://example.supabase.co";
 process.env.SUPABASE_ANON_KEY ||= "test-anon-key";
 process.env.SUPABASE_SERVICE_ROLE_KEY ||= "test-service-role-key";
 process.env.TURNSTILE_SECRET_KEY = "";
+process.env.COMPANY_LOOKUP_TR_PROVIDER = "generic";
 process.env.COMPANY_LOOKUP_GB_API_KEY = "";
 
 const { config } = await import("../../src/config.js");
@@ -201,9 +202,11 @@ test("company lookup fails closed when the official provider is not configured",
 test("company lookup does not ask for a robot challenge when the country provider is missing", async () => {
   const previous = {
     turnstileSecret: config.turnstile.secretKey,
+    turkeyProvider: config.companyLookup.turkeyProvider,
     turkeyApiUrl: config.companyLookup.turkeyApiUrl
   };
   config.turnstile.secretKey = "test-turnstile-secret";
+  config.companyLookup.turkeyProvider = "generic";
   config.companyLookup.turkeyApiUrl = "";
 
   const { buildApp } = await import("../../src/app.js");
@@ -226,6 +229,7 @@ test("company lookup does not ask for a robot challenge when the country provide
   } finally {
     await app.close();
     config.turnstile.secretKey = previous.turnstileSecret;
+    config.companyLookup.turkeyProvider = previous.turkeyProvider;
     config.companyLookup.turkeyApiUrl = previous.turkeyApiUrl;
   }
 });
