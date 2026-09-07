@@ -1,13 +1,15 @@
-const ALLONAHUB_CACHE = "allonahub-pwa-20260828-impactstate2";
+const ALLONAHUB_CACHE = "allonahub-pwa-20260907-modulefocus1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./pages/premium.html",
+  "./admin/module-archive.html",
   "./pages/ecosystem/yakında.html",
   "./pages/ecosystem/turkic-world.html",
   "./manifest.json?v=20260622-icon1",
   "./manifest.webmanifest?v=20260622-icon1",
-  "./css/allonahub-home.css?v=20260828-impactstate2",
+  "./css/allonahub-home.css?v=20260907-modulefocus1",
+  "./css/admin-module-archive.css?v=20260907-modulefocus1",
   "./css/turkic-world.css?v=20260827-country1",
   "./css/platform.css?v=20260828-corporate4",
   "./css/home-module-labels.std32.css?v=20260826-active-modules1",
@@ -22,6 +24,7 @@ const APP_SHELL = [
   "./js/sw-refresh.heading2.js?v=20260712-theme-overflow1",
   "./js/privacy-consent.js?v=20260826-active-modules1",
   "./js/allonahub-home.js?v=20260828-impactstate2",
+  "./js/admin-module-archive.js?v=20260907-modulefocus1",
   "./js/assistant-widget.js?v=20260828-warmtone1",
   "./js/pwa-install.js?v=20260712-theme-overflow1",
   "./images/brand/allonahub-icon-180.png?v=20260622-icon1",
@@ -64,10 +67,12 @@ self.addEventListener("fetch", event => {
     requestUrl.pathname.startsWith("/pages/partner/") ||
     requestUrl.pathname.startsWith("/pages/account/") ||
     requestUrl.pathname === "/css/admin-ops.css" ||
+    requestUrl.pathname === "/css/admin-module-archive.css" ||
     requestUrl.pathname === "/css/super-admin.css" ||
     requestUrl.pathname === "/css/partner-os.css" ||
     requestUrl.pathname === "/css/partner-products.css" ||
     requestUrl.pathname === "/js/admin-ops.js" ||
+    requestUrl.pathname === "/js/admin-module-archive.js" ||
     requestUrl.pathname === "/js/super-admin.js" ||
     requestUrl.pathname === "/js/admin-alarm.js" ||
     requestUrl.pathname === "/js/auth.js" ||
