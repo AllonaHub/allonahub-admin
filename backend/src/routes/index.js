@@ -229,6 +229,160 @@ const partnerSupportTicketSchema = z.object({
   message: z.string().trim().min(10).max(2000)
 });
 
+const maritimeFreightRequestSchema = z.object({
+  client_request_id: uuidSchema,
+  cargo_type: z.enum(["bulk", "general-cargo", "container", "tanker"]),
+  load_port: z.string().trim().min(2).max(80),
+  discharge_port: z.string().trim().min(2).max(80),
+  quantity: z.coerce.number().min(1).max(1000000),
+  quantity_unit: z.enum(["MT", "CBM", "TEU"]),
+  laycan_start: z.string().date()
+}).superRefine((payload, context) => {
+  const loadPort = payload.load_port.toLocaleLowerCase("tr-TR");
+  const dischargePort = payload.discharge_port.toLocaleLowerCase("tr-TR");
+  if (loadPort === dischargePort) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["discharge_port"],
+      message: "Yükleme ve tahliye limanları farklı olmalıdır."
+    });
+  }
+
+  const requestedDate = Date.parse(`${payload.laycan_start}T00:00:00Z`);
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const latest = today + 730 * 24 * 60 * 60 * 1000;
+  if (!Number.isFinite(requestedDate) || requestedDate < today || requestedDate > latest) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["laycan_start"],
+      message: "Yükleme tarihi bugün ile iki yıl sonrası arasında olmalıdır."
+    });
+  }
+});
+
+const maritimePartnerApplicationSchema = z.object({
+  client_request_id: uuidSchema,
+  partner_role: z.enum(["shipowner", "broker", "agency", "crewing", "port_service", "technical_service", "other"]),
+  company_name: z.string().trim().min(2).max(160),
+  contact_name: z.string().trim().min(2).max(140),
+  email: emailSchema.transform((value) => value.trim().toLowerCase()),
+  phone: z.string().trim().min(7).max(40).regex(/^[+0-9][0-9\s().-]{6,39}$/),
+  company_type: z.enum(["sole-proprietor", "limited", "joint-stock", "cooperative", "individual", "other"]),
+  country: z.string().trim().min(2).max(90),
+  city: z.string().trim().min(2).max(90),
+  website: z.string().trim().max(500).optional().default("").refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return ["http:", "https:"].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  }, "Web sitesi http veya https adresi olmalıdır."),
+  message: z.string().trim().min(10).max(1200),
+  privacy_consent: z.literal(true),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
+const maritimeListingQuerySchema = z.object({
+  type: z.enum(["crew_position", "vessel"]).optional(),
+  limit: z.coerce.number().int().min(1).max(24).optional().default(24)
+});
+
+const maritimePartnerListingQuerySchema = z.object({
+  status: z.enum(["draft", "pending_review", "active", "paused", "rejected", "archived"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(50)
+});
+
+const maritimePartnerListingSchema = z.object({
+  client_listing_id: uuidSchema,
+  listing_type: z.enum(["crew_position", "vessel"]),
+  title: z.string().trim().min(2).max(140),
+  summary: z.string().trim().min(10).max(360),
+  location_label: z.string().trim().max(120).optional().default(""),
+  detail_label: z.string().trim().max(120).optional().default(""),
+  expires_at: z.string().datetime({ offset: true })
+}).superRefine((payload, context) => {
+  const expiresAt = Date.parse(payload.expires_at);
+  const now = Date.now();
+  const latest = new Date(now);
+  latest.setUTCDate(latest.getUTCDate() + 180);
+  latest.setUTCHours(23, 59, 59, 999);
+  if (!Number.isFinite(expiresAt) || expiresAt < now + 24 * 60 * 60 * 1000 || expiresAt > latest.getTime()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["expires_at"],
+      message: "İlan bitiş tarihi yarın ile 180 gün sonrası arasında olmalıdır."
+    });
+  }
+});
+
+const maritimePartnerApplicationReviewSchema = z.object({
+  decision: z.enum(["start_review", "approve", "reject"]),
+  review_note: z.string().trim().max(800).optional().default("")
+}).superRefine((payload, context) => {
+  if (payload.decision === "reject" && payload.review_note.length < 4) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["review_note"],
+      message: "Ret kararı için kısa bir inceleme notu gereklidir."
+    });
+  }
+});
+
+const maritimeListingReviewSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  review_note: z.string().trim().max(800).optional().default("")
+}).superRefine((payload, context) => {
+  if (payload.decision === "reject" && payload.review_note.length < 4) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["review_note"],
+      message: "Ret kararı için kısa bir inceleme notu gereklidir."
+    });
+  }
+});
+
+const maritimeFreightMatchAssignmentSchema = z.object({
+  partner_user_id: uuidSchema,
+  expires_at: z.string().datetime({ offset: true })
+}).superRefine((payload, context) => {
+  const expiresAt = Date.parse(payload.expires_at);
+  const now = Date.now();
+  if (!Number.isFinite(expiresAt) || expiresAt <= now || expiresAt > now + 30 * 24 * 60 * 60 * 1000) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["expires_at"],
+      message: "Eşleşme süresi gelecek 30 gün içinde olmalıdır."
+    });
+  }
+});
+
+const maritimeFreightOfferSubmitSchema = z.object({
+  client_offer_id: uuidSchema,
+  amount: z.number().positive().max(1000000000),
+  currency: z.enum(["USD", "EUR", "TRY", "GBP"]),
+  pricing_basis: z.enum(["lumpsum", "per_mt", "per_cbm", "per_teu"]),
+  transit_days: z.number().int().min(1).max(365).nullable().optional().default(null),
+  terms_summary: z.string().trim().max(1200).optional().default(""),
+  valid_until: z.string().datetime({ offset: true })
+}).superRefine((payload, context) => {
+  const validUntil = Date.parse(payload.valid_until);
+  const now = Date.now();
+  if (!Number.isFinite(validUntil) || validUntil <= now || validUntil > now + 30 * 24 * 60 * 60 * 1000) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["valid_until"],
+      message: "Teklif geçerlilik süresi gelecek 30 gün içinde olmalıdır."
+    });
+  }
+});
+
+const maritimeFreightReconcileSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(100)
+}).strict();
+
 const partnerProfileUpdateSchema = z.object({
   display_name: z.string().trim().min(2).max(160).optional(),
   legal_name: z.string().trim().max(180).optional().nullable(),
@@ -720,6 +874,13 @@ const adminAuditLogQuerySchema = z.object({
   severity: z.enum(["debug", "info", "warning", "critical"]).optional()
 });
 
+const maritimeTrustQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(120).optional().default(80),
+  status: z.enum(["open", "triage", "awaiting_approval", "approved", "denied", "resolved", "closed", "archived"]).optional(),
+  severity: z.enum(["low", "normal", "high", "critical"]).optional(),
+  case_type: z.enum(["company_verification", "document_verification", "fraud_signal", "communication_complaint", "content_access", "appeal", "privacy_request"]).optional()
+});
+
 const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
 const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "publish_static",
@@ -730,7 +891,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "admin-alarm-external-threats-20260629-1";
+const BACKEND_BUILD_MARKER = "super-admin-maritime-trust-20260911";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -1825,6 +1986,25 @@ async function requireSuperAdmin(request, action) {
   }
 
   ctx.superAdminOwner = owner;
+  return ctx;
+}
+
+async function requirePermanentSuperAdmin(request, action) {
+  const ctx = await requireSuperAdmin(request, action);
+  if (!isSuperAdmin(ctx.profile)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.permanent_role_required",
+      severity: "critical",
+      source: "admin",
+      purpose: "maritime_trust_oversight",
+      evidenceTags: ["super_admin", "owner_lock", "maritime", "access_denied"],
+      metadata: { requested_action: action }
+    });
+    throw httpError("Bu alan sadece kalıcı Super Admin rolüyle açılır.", 403);
+  }
   return ctx;
 }
 
@@ -4136,6 +4316,229 @@ function textSearchFilter(columns, value) {
   const term = cleanSearch(value);
   if (!term) return "";
   return columns.map((column) => `${column}.ilike.%${term}%`).join(",");
+}
+
+function compactPublicText(value, limit = 240) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > limit ? `${text.slice(0, limit - 3)}...` : text;
+}
+
+function safeMetadataKeys(value, limit = 16) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.keys(value)
+    .filter((key) => !/secret|token|password|private|credential|body|content|message|transcript|attachment|recording|email|phone/i.test(key))
+    .slice(0, limit);
+}
+
+function maritimeRiskLevel(value) {
+  if (value === "critical") return "critical";
+  if (value === "high") return "high";
+  if (value === "low") return "low";
+  return "medium";
+}
+
+function maritimeTrustCasePublic(row) {
+  return {
+    id: row.id,
+    case_reference: row.case_reference,
+    case_type: row.case_type,
+    status: row.status,
+    severity: row.severity,
+    risk_level: maritimeRiskLevel(row.severity),
+    subject_type: row.subject_type,
+    subject_id: row.subject_id,
+    partner_id: row.partner_id,
+    seafarer_user_id: row.seafarer_user_id,
+    opened_by: row.opened_by,
+    assigned_to: row.assigned_to,
+    summary_preview: compactPublicText(row.summary, 260),
+    metadata_keys: safeMetadataKeys(row.metadata),
+    metadata_values_included: false,
+    sensitive_content_included: false,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+function maritimeSensitiveAccessRequestPublic(row) {
+  return {
+    id: row.id,
+    case_id: row.case_id,
+    requester_user_id: row.requester_user_id,
+    approver_user_id: row.approver_user_id,
+    second_approver_user_id: row.second_approver_user_id,
+    access_scope: row.access_scope,
+    purpose: row.purpose,
+    status: row.status,
+    starts_at: row.starts_at,
+    expires_at: row.expires_at,
+    created_at: row.created_at,
+    decided_at: row.decided_at,
+    justification_included: false,
+    metadata_keys: safeMetadataKeys(row.metadata),
+    metadata_values_included: false,
+    sensitive_content_included: false
+  };
+}
+
+function maritimeAccessEventPublic(row) {
+  return {
+    id: row.id,
+    actor_user_id: row.actor_user_id,
+    grant_id: row.grant_id,
+    resource_type: row.resource_type,
+    resource_id: row.resource_id,
+    action: row.action,
+    purpose: row.purpose,
+    case_reference: row.case_reference,
+    created_at: row.created_at,
+    metadata_keys: safeMetadataKeys(row.metadata),
+    metadata_values_included: false,
+    sensitive_content_included: false
+  };
+}
+
+function maritimeSecurityAuditPublic(row) {
+  return {
+    id: row.id,
+    actor_id: row.actor_id,
+    actor_role: row.actor_role,
+    action: row.action,
+    resource_type: row.resource_type,
+    resource_id: row.resource_id,
+    severity: row.severity,
+    source: row.source,
+    purpose: row.purpose,
+    evidence_tags: row.evidence_tags || [],
+    request_id: row.request_id,
+    ip_address: row.ip_address,
+    created_at: row.created_at,
+    metadata_included: false,
+    sensitive_content_included: false
+  };
+}
+
+function buildMaritimeTrustSignals({ cases = [], accessRequests = [], accessEvents = [], auditEvents = [] }) {
+  const caseSignals = cases
+    .filter((item) => ["open", "triage", "awaiting_approval"].includes(item.status) && ["high", "critical"].includes(item.severity))
+    .map((item) => ({
+      id: `case:${item.id}`,
+      source_type: "trust_case",
+      severity: maritimeRiskLevel(item.severity),
+      title: item.case_type === "fraud_signal" ? "Fraud sinyali" : "Açık Trust vakası",
+      message: `${item.case_reference || item.id} / ${item.subject_type || "subject"}`,
+      created_at: item.created_at
+    }));
+
+  const accessRequestSignals = accessRequests
+    .filter((item) => ["requested", "second_approval_required"].includes(item.status))
+    .map((item) => ({
+      id: `sensitive-access:${item.id}`,
+      source_type: "sensitive_access_request",
+      severity: item.status === "second_approval_required" ? "critical" : "high",
+      title: "Hassas içerik erişim isteği",
+      message: `${item.access_scope || "scope"} / ${item.purpose || "amaç bekliyor"}`,
+      created_at: item.created_at
+    }));
+
+  const eventSignals = accessEvents
+    .filter((item) => item.action === "sensitive_access" || item.action === "export" || item.action === "download")
+    .map((item) => ({
+      id: `access-event:${item.id}`,
+      source_type: "access_event",
+      severity: item.action === "sensitive_access" ? "critical" : "high",
+      title: "Kaynak erişim olayı",
+      message: `${item.action || "event"} / ${item.resource_type || "resource"}`,
+      created_at: item.created_at
+    }));
+
+  const auditSignals = auditEvents
+    .filter((item) => ["warning", "critical"].includes(item.severity))
+    .map((item) => ({
+      id: `audit:${item.id}`,
+      source_type: "security_audit",
+      severity: item.severity === "critical" ? "critical" : "high",
+      title: item.action || "Maritime audit sinyali",
+      message: `${item.resource_type || "system"} ${item.resource_id || ""}`.trim(),
+      created_at: item.created_at
+    }));
+
+  return [...caseSignals, ...accessRequestSignals, ...eventSignals, ...auditSignals]
+    .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+    .slice(0, 30);
+}
+
+const MARITIME_LISTING_PARTNER_ROLES = Object.freeze({
+  crew_position: ["crewing", "shipowner", "agency"],
+  vessel: ["shipowner", "broker", "agency"]
+});
+
+async function maritimePartnerApplicationsForUser(ctx) {
+  if (isAdmin(ctx.profile)) {
+    return [{
+      id: null,
+      status: "approved",
+      partner_role: "admin",
+      company_name: ctx.profile.full_name || "AllonaHub Admin"
+    }];
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("maritime_partner_applications")
+    .select("id,status,partner_role,company_name,created_at")
+    .eq("user_id", ctx.user.id)
+    .eq("module_key", "maritime")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) {
+    if (looksLikeMissingSchema(error)) {
+      throw httpError("Denizcilik partner onay şeması henüz uygulanmamış.", 503);
+    }
+    throw error;
+  }
+  return data || [];
+}
+
+async function requireApprovedMaritimeListingPartner(ctx, listingType) {
+  const applications = await maritimePartnerApplicationsForUser(ctx);
+  const allowedRoles = MARITIME_LISTING_PARTNER_ROLES[listingType] || [];
+  const approved = applications.find((item) => (
+    item.status === "approved"
+    && (item.partner_role === "admin" || allowedRoles.includes(item.partner_role))
+  ));
+  if (!approved) {
+    throw httpError("Bu ilan türü için onaylı denizcilik partner yetkisi gerekli.", 403);
+  }
+  return approved;
+}
+
+async function requireApprovedMaritimeFreightPartner(ctx) {
+  const applications = await maritimePartnerApplicationsForUser(ctx);
+  const approved = applications.find((item) => (
+    item.status === "approved"
+    && ["admin", "broker", "shipowner", "agency"].includes(item.partner_role)
+  ));
+  if (!approved) {
+    throw httpError("Navlun eşleşmesi için onaylı broker, gemi sahibi veya acente yetkisi gerekli.", 403);
+  }
+  return approved;
+}
+
+function maritimePartnerEligibility(applications) {
+  const approvedApplications = applications.filter((item) => item.status === "approved");
+  const allowedListingTypes = Object.entries(MARITIME_LISTING_PARTNER_ROLES)
+    .filter(([, roles]) => approvedApplications.some((item) => item.partner_role === "admin" || roles.includes(item.partner_role)))
+    .map(([listingType]) => listingType);
+  const approved = approvedApplications[0] || null;
+  const latest = applications[0] || null;
+  return {
+    approved: allowedListingTypes.length > 0,
+    status: approved
+      ? (allowedListingTypes.length ? "approved" : "approved_no_listing_scope")
+      : (latest?.status || "missing"),
+    partner_role: approved?.partner_role || latest?.partner_role || "",
+    allowed_listing_types: allowedListingTypes
+  };
 }
 
 function normalizedReviewValue(value) {
@@ -10435,6 +10838,746 @@ export function registerRoutes(app) {
     return reply.code(202).send({ ok: true });
   });
 
+  app.post("/v1/maritime/freight-requests", {
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, { action: "maritime.freight_request.create" });
+    const payload = parseAuthPayload(maritimeFreightRequestSchema, request.body);
+
+    const rpcResult = await supabaseAdmin.rpc("create_maritime_freight_request", {
+      p_client_request_id: payload.client_request_id,
+      p_user_id: ctx.user.id,
+      p_cargo_type: payload.cargo_type,
+      p_load_port: payload.load_port,
+      p_discharge_port: payload.discharge_port,
+      p_quantity: payload.quantity,
+      p_quantity_unit: payload.quantity_unit,
+      p_laycan_start: payload.laycan_start
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik navlun oluşturma migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (code === "MARITIME_LAYCAN_WINDOW_INVALID") {
+        throw httpError("Yükleme tarihi bugün ile 730 gün sonrası arasında olmalıdır.", 400);
+      }
+      if (code === "MARITIME_REQUEST_IDENTITY_REQUIRED") {
+        throw httpError("Navlun talebi kimliği doğrulanamadı.", 400);
+      }
+      throw rpcResult.error;
+    }
+
+    const rpcRow = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!rpcRow?.id) throw new Error("Maritime freight request RPC returned no request.");
+
+    const duplicate = rpcRow.request_created !== true;
+    const freightRequest = {
+      id: rpcRow.id,
+      reference_no: rpcRow.reference_no,
+      module_key: rpcRow.module_key,
+      status: rpcRow.status,
+      created_at: rpcRow.created_at
+    };
+
+    if (!duplicate) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_request.created",
+        resourceType: "maritime_freight_request",
+        resourceId: freightRequest.id,
+        metadata: { module_key: "maritime" },
+        evidenceTags: ["maritime", "freight_request"]
+      });
+    }
+
+    return reply.code(duplicate ? 200 : 201).send({ ok: true, duplicate, request: freightRequest });
+  });
+
+  app.patch("/v1/maritime/freight-requests/:requestId/cancel", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, { action: "maritime.freight_request.cancel" });
+    const { requestId } = parseAuthPayload(z.object({ requestId: uuidSchema }), request.params);
+    const rpcResult = await supabaseAdmin.rpc("cancel_maritime_freight_request", {
+      p_request_id: requestId,
+      p_user_id: ctx.user.id
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik navlun iptal migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (code === "MARITIME_REQUEST_NOT_FOUND") throw httpError("Navlun talebi bulunamadı.", 404);
+      if (code === "MARITIME_REQUEST_NOT_CANCELLABLE") {
+        throw httpError("Eşleşme veya teklif aşamasındaki navlun talebi panelden iptal edilemez.", 409);
+      }
+      if (code === "MARITIME_REQUEST_IDENTITY_REQUIRED") {
+        throw httpError("Navlun talebi kimliği doğrulanamadı.", 400);
+      }
+      throw rpcResult.error;
+    }
+
+    const rpcRow = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!rpcRow?.id) throw httpError("Navlun iptal sonucu doğrulanamadı.", 409);
+    const duplicate = rpcRow.request_cancelled !== true;
+    const freightRequest = {
+      id: rpcRow.id,
+      reference_no: rpcRow.reference_no,
+      module_key: rpcRow.module_key,
+      status: rpcRow.status,
+      created_at: rpcRow.created_at,
+      updated_at: rpcRow.updated_at
+    };
+
+    if (!duplicate) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_request.cancelled",
+        resourceType: "maritime_freight_request",
+        resourceId: requestId,
+        metadata: { module_key: "maritime", previous_status: rpcRow.previous_status },
+        evidenceTags: ["maritime", "freight_request", "cancellation"]
+      });
+    }
+
+    return reply.code(200).send({ ok: true, duplicate, request: freightRequest });
+  });
+
+  app.patch("/v1/maritime/freight-requests/:requestId/offers/:offerId/accept", {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, { action: "maritime.freight_offer.accept" });
+    const { requestId, offerId } = parseAuthPayload(z.object({
+      requestId: uuidSchema,
+      offerId: uuidSchema
+    }), request.params);
+
+    const rpcResult = await supabaseAdmin.rpc("accept_maritime_freight_offer_v2", {
+      p_request_id: requestId,
+      p_offer_id: offerId,
+      p_user_id: ctx.user.id
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik teklif kabul migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (["MARITIME_REQUEST_NOT_FOUND", "MARITIME_OFFER_NOT_FOUND"].includes(code)) {
+        throw httpError("Navlun talebi veya teklifi bulunamadı.", 404);
+      }
+      const conflictMessages = {
+        MARITIME_OTHER_OFFER_ACCEPTED: "Bu navlun talebi için başka bir teklif kabul edilmiş.",
+        MARITIME_REQUEST_NOT_ACCEPTABLE: "Navlun talebi teklif kabulüne uygun durumda değil.",
+        MARITIME_OFFER_NOT_ACCEPTABLE: "Navlun teklifi artık kabul edilebilir durumda değil.",
+        MARITIME_OFFER_EXPIRED: "Navlun teklifinin geçerlilik süresi dolmuş.",
+        MARITIME_OFFER_STATE_CHANGED: "Navlun teklifinin durumu değişti; talepleri yenileyin.",
+        MARITIME_REQUEST_STATE_CHANGED: "Navlun talebinin durumu değişti; talepleri yenileyin.",
+        MARITIME_ACCEPTANCE_RESULT_MISSING: "Teklif kabul sonucu doğrulanamadı; talepleri yenileyin."
+      };
+      if (conflictMessages[code]) throw httpError(conflictMessages[code], 409);
+      throw rpcResult.error;
+    }
+
+    const accepted = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (
+      !accepted
+      || accepted.freight_request_id !== requestId
+      || accepted.freight_offer_id !== offerId
+      || accepted.request_status !== "accepted"
+      || accepted.offer_status !== "accepted"
+      || !Number.isFinite(Date.parse(String(accepted.accepted_at || "")))
+    ) {
+      throw httpError("Teklif kabul sonucu doğrulanamadı.", 409);
+    }
+    const duplicate = accepted.acceptance_changed !== true;
+
+    if (!duplicate) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_offer.accepted",
+        resourceType: "maritime_freight_request",
+        resourceId: requestId,
+        metadata: {
+          module_key: "maritime",
+          offer_id: offerId,
+          previous_status: accepted.previous_status,
+          new_status: "accepted"
+        },
+        evidenceTags: ["maritime", "freight_request", "offer_acceptance"]
+      });
+    }
+
+    return reply.code(200).send({
+      ok: true,
+      duplicate,
+      request: {
+        id: accepted.freight_request_id,
+        reference_no: accepted.request_reference_no,
+        status: accepted.request_status,
+        updated_at: accepted.accepted_at
+      },
+      offer: {
+        id: accepted.freight_offer_id,
+        offer_reference: accepted.offer_reference_no,
+        status: accepted.offer_status,
+        accepted_at: accepted.accepted_at
+      }
+    });
+  });
+
+  app.get("/v1/maritime/partner/freight-matches", {
+    config: {
+      rateLimit: {
+        max: 60,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner"],
+      mfa: true,
+      action: "maritime.freight_match.list"
+    });
+    const applications = await maritimePartnerApplicationsForUser(ctx);
+    const approval = applications.find((item) => (
+      item.status === "approved"
+      && ["broker", "shipowner", "agency"].includes(item.partner_role)
+    )) || null;
+    const matchResult = await supabaseAdmin
+      .from("maritime_freight_matches")
+      .select("id,freight_request_id,module_key,status,expires_at,created_at,updated_at")
+      .eq("partner_user_id", ctx.user.id)
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (matchResult.error) throw matchResult.error;
+
+    const matches = matchResult.data || [];
+    const requestIds = matches.map((item) => item.freight_request_id);
+    const matchIds = matches.map((item) => item.id);
+    if (!matches.length) {
+      return { ok: true, partner_role: approval?.partner_role || "", matches: [] };
+    }
+
+    const [requestResult, offerResult] = await Promise.all([
+      supabaseAdmin
+        .from("maritime_freight_requests")
+        .select("id,reference_no,module_key,status,cargo_type,load_port,discharge_port,quantity,quantity_unit,laycan_start,created_at,updated_at")
+        .in("id", requestIds)
+        .eq("module_key", "maritime"),
+      supabaseAdmin
+        .from("maritime_freight_offers")
+        .select("id,offer_reference,match_id,freight_request_id,module_key,status,amount,currency,pricing_basis,transit_days,terms_summary,valid_until,submitted_at,accepted_at,created_at,updated_at")
+        .eq("broker_user_id", ctx.user.id)
+        .in("match_id", matchIds)
+        .eq("module_key", "maritime")
+    ]);
+    if (requestResult.error) throw requestResult.error;
+    if (offerResult.error) throw offerResult.error;
+
+    const requestsById = new Map((requestResult.data || []).map((item) => [item.id, item]));
+    const offersByMatch = new Map((offerResult.data || []).map((item) => [item.match_id, item]));
+    return {
+      ok: true,
+      partner_role: approval?.partner_role || "",
+      matches: matches.map((item) => ({
+        ...item,
+        request: requestsById.get(item.freight_request_id) || null,
+        offer: offersByMatch.get(item.id) || null
+      }))
+    };
+  });
+
+  app.post("/v1/maritime/partner/freight-matches/:matchId/offer", {
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: "1 hour"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner"],
+      mfa: true,
+      action: "maritime.freight_offer.submit"
+    });
+    const { matchId } = parseAuthPayload(z.object({ matchId: uuidSchema }), request.params);
+    const payload = parseAuthPayload(maritimeFreightOfferSubmitSchema, request.body || {});
+    const approval = await requireApprovedMaritimeFreightPartner(ctx);
+    const brokerDisplayName = String(ctx.profile.full_name || approval.company_name || "Allona Broker").trim().slice(0, 140);
+    const companyDisplayName = String(approval.company_name || brokerDisplayName).trim().slice(0, 180);
+
+    const rpcResult = await supabaseAdmin.rpc("submit_maritime_freight_offer", {
+      p_match_id: matchId,
+      p_partner_user_id: ctx.user.id,
+      p_client_offer_id: payload.client_offer_id,
+      p_broker_display_name: brokerDisplayName,
+      p_company_display_name: companyDisplayName,
+      p_amount: payload.amount,
+      p_currency: payload.currency,
+      p_pricing_basis: payload.pricing_basis,
+      p_transit_days: payload.transit_days,
+      p_terms_summary: payload.terms_summary,
+      p_valid_until: payload.valid_until
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik navlun eşleşme migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (["MARITIME_MATCH_NOT_FOUND", "MARITIME_REQUEST_NOT_FOUND"].includes(code)) {
+        throw httpError("Navlun eşleşmesi bulunamadı.", 404);
+      }
+      const conflicts = {
+        MARITIME_MATCH_NOT_ACTIVE: "Navlun eşleşmesi artık aktif değil.",
+        MARITIME_OFFER_WINDOW_INVALID: "Teklif geçerlilik tarihi eşleşme süresini aşıyor.",
+        MARITIME_PARTNER_NOT_ELIGIBLE: "Denizcilik partner yetkisi teklif için uygun değil.",
+        MARITIME_REQUEST_NOT_QUOTABLE: "Navlun talebi artık teklif kabul etmiyor.",
+        MARITIME_OFFER_ALREADY_SUBMITTED: "Bu eşleşme için daha önce farklı bir teklif gönderilmiş."
+      };
+      if (conflicts[code]) throw httpError(conflicts[code], 409);
+      throw rpcResult.error;
+    }
+
+    const result = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!result) throw httpError("Navlun teklif sonucu doğrulanamadı.", 409);
+    if (result.offer_created) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_offer.submitted",
+        resourceType: "maritime_freight_offer",
+        resourceId: result.freight_offer_id,
+        metadata: {
+          module_key: "maritime",
+          match_id: matchId,
+          request_id: result.freight_request_id,
+          partner_role: approval.partner_role
+        },
+        evidenceTags: ["maritime", "freight_match", "offer_submission"]
+      });
+    }
+
+    return reply.code(result.offer_created ? 201 : 200).send({
+      ok: true,
+      duplicate: !result.offer_created,
+      match: {
+        id: matchId,
+        status: result.match_status
+      },
+      request: {
+        id: result.freight_request_id,
+        status: result.request_status
+      },
+      offer: {
+        id: result.freight_offer_id,
+        offer_reference: result.offer_reference_no,
+        status: result.offer_status,
+        submitted_at: result.offer_submitted_at
+      }
+    });
+  });
+
+  app.patch("/v1/maritime/partner/freight-matches/:matchId/decline", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner"],
+      mfa: true,
+      action: "maritime.freight_match.decline"
+    });
+    const { matchId } = parseAuthPayload(z.object({ matchId: uuidSchema }), request.params);
+
+    const rpcResult = await supabaseAdmin.rpc("decline_maritime_freight_match", {
+      p_match_id: matchId,
+      p_partner_user_id: ctx.user.id
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik partner çıkış migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (["MARITIME_MATCH_NOT_FOUND", "MARITIME_REQUEST_NOT_FOUND"].includes(code)) {
+        throw httpError("Navlun eşleşmesi bulunamadı.", 404);
+      }
+      const conflicts = {
+        MARITIME_MATCH_NOT_DECLINABLE: "Navlun eşleşmesi artık reddedilebilir durumda değil.",
+        MARITIME_MATCH_HAS_OFFER: "Teklif verilmiş eşleşme reddedilemez; teklifi geri çekme akışını kullanın.",
+        MARITIME_MATCH_STATE_CHANGED: "Navlun eşleşmesinin durumu değişti; eşleşmeleri yenileyin."
+      };
+      if (conflicts[code]) throw httpError(conflicts[code], 409);
+      throw rpcResult.error;
+    }
+
+    const result = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!result) throw httpError("Navlun eşleşmesi reddetme sonucu doğrulanamadı.", 409);
+    if (result.state_changed) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_match.declined",
+        resourceType: "maritime_freight_match",
+        resourceId: result.freight_match_id,
+        metadata: {
+          module_key: "maritime",
+          request_id: result.freight_request_id
+        },
+        evidenceTags: ["maritime", "freight_match", "partner_exit"]
+      });
+    }
+
+    return reply.code(200).send({
+      ok: true,
+      duplicate: !result.state_changed,
+      match: {
+        id: result.freight_match_id,
+        status: result.match_status
+      },
+      request: {
+        id: result.freight_request_id,
+        status: result.request_status
+      }
+    });
+  });
+
+  app.patch("/v1/maritime/partner/freight-matches/:matchId/offer/withdraw", {
+    config: {
+      rateLimit: {
+        max: 20,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner"],
+      mfa: true,
+      action: "maritime.freight_offer.withdraw"
+    });
+    const { matchId } = parseAuthPayload(z.object({ matchId: uuidSchema }), request.params);
+
+    const rpcResult = await supabaseAdmin.rpc("withdraw_maritime_freight_offer", {
+      p_match_id: matchId,
+      p_partner_user_id: ctx.user.id
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik partner çıkış migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (["MARITIME_MATCH_NOT_FOUND", "MARITIME_REQUEST_NOT_FOUND", "MARITIME_OFFER_NOT_FOUND"].includes(code)) {
+        throw httpError("Navlun eşleşmesi veya teklifi bulunamadı.", 404);
+      }
+      const conflicts = {
+        MARITIME_OFFER_NOT_WITHDRAWABLE: "Navlun teklifi artık geri çekilebilir durumda değil.",
+        MARITIME_OFFER_STATE_CHANGED: "Navlun teklifinin durumu değişti; eşleşmeleri yenileyin."
+      };
+      if (conflicts[code]) throw httpError(conflicts[code], 409);
+      throw rpcResult.error;
+    }
+
+    const result = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!result) throw httpError("Navlun teklifini geri çekme sonucu doğrulanamadı.", 409);
+    if (result.state_changed) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.freight_offer.withdrawn",
+        resourceType: "maritime_freight_offer",
+        resourceId: result.freight_offer_id,
+        metadata: {
+          module_key: "maritime",
+          match_id: result.freight_match_id,
+          request_id: result.freight_request_id
+        },
+        evidenceTags: ["maritime", "freight_offer", "partner_exit"]
+      });
+    }
+
+    return reply.code(200).send({
+      ok: true,
+      duplicate: !result.state_changed,
+      match: {
+        id: result.freight_match_id,
+        status: result.match_status
+      },
+      request: {
+        id: result.freight_request_id,
+        status: result.request_status
+      },
+      offer: {
+        id: result.freight_offer_id,
+        status: result.offer_status
+      }
+    });
+  });
+
+  app.get("/v1/maritime/partner/listings", {
+    config: {
+      rateLimit: {
+        max: 60,
+        timeWindow: "10 minutes"
+      }
+    }
+  }, async (request) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      mfa: true,
+      action: "maritime.partner_listing.list"
+    });
+    const query = parseAuthPayload(maritimePartnerListingQuerySchema, request.query || {});
+    const applications = await maritimePartnerApplicationsForUser(ctx);
+    let dbQuery = supabaseAdmin
+      .from("maritime_public_listings")
+      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,published_at,expires_at,submitted_at,reviewed_at,review_note,created_at,updated_at")
+      .eq("partner_user_id", ctx.user.id)
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) dbQuery = dbQuery.eq("status", query.status);
+
+    const { data, error } = await dbQuery;
+    if (error) throw error;
+    return {
+      ok: true,
+      module_key: "maritime",
+      eligibility: maritimePartnerEligibility(applications),
+      listings: data || []
+    };
+  });
+
+  app.post("/v1/maritime/partner/listings", {
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: "1 hour"
+      }
+    }
+  }, async (request, reply) => {
+    const ctx = await requireAuth(request, {
+      roles: ["partner", "admin", "super_admin"],
+      mfa: true,
+      action: "maritime.partner_listing.submit"
+    });
+    const payload = parseAuthPayload(maritimePartnerListingSchema, request.body || {});
+    const approval = await requireApprovedMaritimeListingPartner(ctx, payload.listing_type);
+    const selectFields = "id,module_key,listing_type,status,title,summary,location_label,detail_label,published_at,expires_at,submitted_at,reviewed_at,review_note,created_at,updated_at";
+
+    const existingQuery = await supabaseAdmin
+      .from("maritime_public_listings")
+      .select(selectFields)
+      .eq("partner_user_id", ctx.user.id)
+      .eq("client_listing_id", payload.client_listing_id)
+      .maybeSingle();
+    if (existingQuery.error) throw existingQuery.error;
+    if (existingQuery.data) {
+      return reply.code(200).send({ ok: true, duplicate: true, listing: existingQuery.data });
+    }
+
+    const now = new Date().toISOString();
+    const insertResult = await supabaseAdmin
+      .from("maritime_public_listings")
+      .insert({
+        partner_user_id: ctx.user.id,
+        client_listing_id: payload.client_listing_id,
+        module_key: "maritime",
+        listing_type: payload.listing_type,
+        status: "pending_review",
+        title: payload.title,
+        summary: payload.summary,
+        location_label: payload.location_label,
+        detail_label: payload.detail_label,
+        sort_order: 100,
+        published_at: now,
+        expires_at: payload.expires_at,
+        submission_source: "partner",
+        submitted_at: now
+      })
+      .select(selectFields)
+      .single();
+
+    let listing = insertResult.data;
+    let duplicate = false;
+    if (insertResult.error?.code === "23505") {
+      duplicate = true;
+      const duplicateQuery = await supabaseAdmin
+        .from("maritime_public_listings")
+        .select(selectFields)
+        .eq("partner_user_id", ctx.user.id)
+        .eq("client_listing_id", payload.client_listing_id)
+        .single();
+      if (duplicateQuery.error) throw duplicateQuery.error;
+      listing = duplicateQuery.data;
+    } else if (insertResult.error) {
+      throw insertResult.error;
+    }
+
+    if (!duplicate) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.partner_listing.submitted",
+        resourceType: "maritime_public_listing",
+        resourceId: listing.id,
+        metadata: {
+          module_key: "maritime",
+          listing_type: payload.listing_type,
+          partner_role: approval.partner_role
+        },
+        evidenceTags: ["maritime", "partner_listing", "moderation"]
+      });
+    }
+
+    return reply.code(duplicate ? 200 : 201).send({ ok: true, duplicate, listing });
+  });
+
+  app.get("/v1/public/maritime/listings", {
+    config: {
+      rateLimit: {
+        max: 60,
+        timeWindow: "1 minute"
+      }
+    }
+  }, async (request) => {
+    const query = parseAuthPayload(maritimeListingQuerySchema, request.query);
+    const now = new Date().toISOString();
+    let dbQuery = supabasePublic
+      .from("maritime_public_listings")
+      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,published_at,expires_at,sort_order")
+      .eq("module_key", "maritime")
+      .eq("status", "active")
+      .lte("published_at", now)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order("sort_order", { ascending: true })
+      .order("published_at", { ascending: false })
+      .limit(query.limit);
+    if (query.type) dbQuery = dbQuery.eq("listing_type", query.type);
+
+    const { data, error } = await dbQuery;
+    if (error) throw error;
+    return {
+      ok: true,
+      module_key: "maritime",
+      listings: (data || []).filter((item) => (
+        item.module_key === "maritime"
+        && item.status === "active"
+        && ["crew_position", "vessel"].includes(item.listing_type)
+      ))
+    };
+  });
+
+  app.post("/v1/public/maritime/partner-applications", {
+    config: {
+      rateLimit: {
+        max: 3,
+        timeWindow: "1 hour"
+      }
+    }
+  }, async (request, reply) => {
+    const payload = parseAuthPayload(maritimePartnerApplicationSchema, request.body);
+    await verifyTurnstile(request, "maritime_partner_application", payload.turnstileToken);
+    const ctx = await authContext(request);
+    const selectFields = "id,reference_no,module_key,status,created_at";
+
+    const existingQuery = await supabaseAdmin
+      .from("maritime_partner_applications")
+      .select(selectFields)
+      .eq("client_request_id", payload.client_request_id)
+      .maybeSingle();
+    if (existingQuery.error) throw existingQuery.error;
+    if (existingQuery.data) {
+      return reply.code(200).send({ ok: true, duplicate: true, application: existingQuery.data });
+    }
+
+    const emailHash = authEmailHash(payload.email);
+    const insertResult = await supabaseAdmin
+      .from("maritime_partner_applications")
+      .insert({
+        client_request_id: payload.client_request_id,
+        user_id: ctx?.user?.id || null,
+        module_key: "maritime",
+        status: "pending",
+        partner_role: payload.partner_role,
+        company_name: payload.company_name,
+        contact_name: payload.contact_name,
+        email: payload.email,
+        email_hash: emailHash,
+        phone: payload.phone,
+        company_type: payload.company_type,
+        country: payload.country,
+        city: payload.city,
+        website: payload.website,
+        message: payload.message,
+        privacy_consent_at: new Date().toISOString()
+      })
+      .select(selectFields)
+      .single();
+
+    let application = insertResult.data;
+    let duplicate = false;
+    if (insertResult.error?.code === "23505") {
+      duplicate = true;
+      const duplicateQuery = await supabaseAdmin
+        .from("maritime_partner_applications")
+        .select(selectFields)
+        .eq("client_request_id", payload.client_request_id)
+        .single();
+      if (duplicateQuery.error) throw duplicateQuery.error;
+      application = duplicateQuery.data;
+    } else if (insertResult.error) {
+      throw insertResult.error;
+    }
+
+    if (!duplicate) {
+      await auditEvent({
+        request,
+        actorId: ctx?.user?.id || null,
+        actorRole: ctx?.profile?.role || "anonymous",
+        action: "maritime.partner_application.created",
+        resourceType: "maritime_partner_application",
+        resourceId: application.id,
+        metadata: {
+          module_key: "maritime",
+          partner_role: payload.partner_role,
+          email_hash: emailHash
+        },
+        evidenceTags: ["maritime", "partner_application"]
+      });
+    }
+
+    return reply.code(duplicate ? 200 : 202).send({ ok: true, duplicate, application });
+  });
+
   app.post("/v1/orders", async (request, reply) => {
     const ctx = await requireAuth(request, { action: "order.create" });
     const payload = createOrderSchema.parse(request.body || {});
@@ -12722,6 +13865,136 @@ export function registerRoutes(app) {
     };
   });
 
+  superGet("/maritime-trust", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_trust.view");
+    const queryParams = maritimeTrustQuerySchema.parse(request.query || {});
+    const warnings = [];
+
+    let casesQuery = supabaseAdmin
+      .from("maritime_trust_cases")
+      .select("id,case_reference,case_type,status,severity,subject_type,subject_id,partner_id,seafarer_user_id,opened_by,assigned_to,summary,metadata,created_at,updated_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+    if (queryParams.status) casesQuery = casesQuery.eq("status", queryParams.status);
+    if (queryParams.severity) casesQuery = casesQuery.eq("severity", queryParams.severity);
+    if (queryParams.case_type) casesQuery = casesQuery.eq("case_type", queryParams.case_type);
+
+    const [
+      caseRows,
+      accessRequestRows,
+      accessEventRows,
+      auditRows
+    ] = await Promise.all([
+      runAdminQuery("maritime_trust_cases_control_center", casesQuery, []),
+      runAdminQuery(
+        "maritime_sensitive_access_requests_control_center",
+        supabaseAdmin
+          .from("maritime_sensitive_access_requests")
+          .select("id,case_id,requester_user_id,approver_user_id,second_approver_user_id,access_scope,purpose,status,starts_at,expires_at,created_at,decided_at,metadata", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .limit(queryParams.limit),
+        []
+      ),
+      runAdminQuery(
+        "maritime_access_events_control_center",
+        supabaseAdmin
+          .from("maritime_access_events")
+          .select("id,actor_user_id,grant_id,resource_type,resource_id,action,purpose,case_reference,metadata,created_at", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .limit(queryParams.limit),
+        []
+      ),
+      runAdminQuery(
+        "maritime_security_audit_control_center",
+        supabaseAdmin
+          .from("security_audit_events")
+          .select("id,actor_id,actor_role,action,resource_type,resource_id,severity,source,purpose,evidence_tags,request_id,ip_address,created_at", { count: "exact" })
+          .contains("evidence_tags", ["maritime"])
+          .order("created_at", { ascending: false })
+          .limit(queryParams.limit),
+        []
+      )
+    ]);
+
+    [caseRows, accessRequestRows, accessEventRows, auditRows]
+      .filter((item) => item.warning)
+      .forEach((item) => warnings.push(item.warning));
+
+    const trustCases = (caseRows.data || []).map(maritimeTrustCasePublic);
+    const accessRequests = (accessRequestRows.data || []).map(maritimeSensitiveAccessRequestPublic);
+    const accessEvents = (accessEventRows.data || []).map(maritimeAccessEventPublic);
+    const auditEvents = (auditRows.data || []).map(maritimeSecurityAuditPublic);
+    const complaints = trustCases.filter((item) => ["communication_complaint", "fraud_signal"].includes(item.case_type));
+    const openCases = trustCases.filter((item) => ["open", "triage", "awaiting_approval"].includes(item.status));
+    const criticalCases = trustCases.filter((item) => item.risk_level === "critical");
+    const pendingAccessRequests = accessRequests.filter((item) => ["requested", "second_approval_required"].includes(item.status));
+    const sensitiveAccessEvents = accessEvents.filter((item) => item.action === "sensitive_access");
+    const auditAlerts = auditEvents.filter((item) => ["warning", "critical"].includes(item.severity));
+    const riskSignals = buildMaritimeTrustSignals({
+      cases: caseRows.data || [],
+      accessRequests: accessRequestRows.data || [],
+      accessEvents: accessEventRows.data || [],
+      auditEvents: auditRows.data || []
+    });
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_trust_viewed",
+      severity: riskSignals.some((item) => item.severity === "critical") ? "critical" : "warning",
+      source: "admin",
+      resourceType: "maritime_trust_control_center",
+      purpose: "maritime_fraud_risk_oversight",
+      evidenceTags: ["super_admin", "maritime", "trust_oversight", "metadata_only"],
+      metadata: {
+        limit: queryParams.limit,
+        filters: {
+          status: queryParams.status || "all",
+          severity: queryParams.severity || "all",
+          case_type: queryParams.case_type || "all"
+        },
+        trust_case_count: trustCases.length,
+        risk_signal_count: riskSignals.length,
+        pending_sensitive_access_count: pendingAccessRequests.length,
+        warning_count: warnings.length,
+        content_returned: false
+      }
+    });
+
+    return {
+      ok: true,
+      maritime_trust: {
+        metrics: {
+          total_case_rows: caseRows.count || trustCases.length,
+          open_case_sample: openCases.length,
+          critical_case_sample: criticalCases.length,
+          complaint_or_fraud_sample: complaints.length,
+          pending_sensitive_access_sample: pendingAccessRequests.length,
+          sensitive_access_event_sample: sensitiveAccessEvents.length,
+          audit_alert_sample: auditAlerts.length,
+          risk_signal_sample: riskSignals.length
+        },
+        control_policy: {
+          visible_scope: "metadata_risk_complaint_audit",
+          message_content_returned: false,
+          attachment_content_returned: false,
+          raw_sensitive_justification_returned: false,
+          metadata_values_returned: false,
+          sensitive_content_requires: "case_reference, purpose, reason, timebox and approval workflow",
+          calls_recorded_by_default: false
+        },
+        risk_signals: riskSignals,
+        complaints,
+        trust_cases: trustCases,
+        sensitive_access_requests: accessRequests,
+        access_events: accessEvents,
+        audit_events: auditEvents
+      },
+      schema_warnings: warnings
+    };
+  });
+
   superGet("/action-health", async (request) => {
     const ctx = await requireSuperAdmin(request, "super_admin.action_health.view");
     return superAdminActionHealth(ctx, request);
@@ -14642,6 +15915,288 @@ export function registerRoutes(app) {
     return reply.code(201).send({ ok: true, flag, warnings });
   });
 
+  opsGet("/maritime", async (request) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.maritime.list");
+    const query = adminListQuerySchema.parse(request.query || {});
+    let applicationQuery = supabaseAdmin
+      .from("maritime_partner_applications")
+      .select("id,reference_no,user_id,module_key,status,partner_role,company_name,contact_name,email,country,city,created_at,updated_at,reviewed_at,reviewed_by,review_note")
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    let listingQuery = supabaseAdmin
+      .from("maritime_public_listings")
+      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,partner_user_id,submission_source,published_at,expires_at,submitted_at,reviewed_at,reviewed_by,review_note,created_at,updated_at")
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    let freightQuery = supabaseAdmin
+      .from("maritime_freight_requests")
+      .select("id,reference_no,module_key,status,cargo_type,load_port,discharge_port,quantity,quantity_unit,laycan_start,created_at,updated_at")
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    let matchQuery = supabaseAdmin
+      .from("maritime_freight_matches")
+      .select("id,freight_request_id,partner_user_id,module_key,status,expires_at,created_at,updated_at")
+      .eq("module_key", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(query.limit);
+    if (query.status) {
+      applicationQuery = applicationQuery.eq("status", query.status);
+      listingQuery = listingQuery.eq("status", query.status);
+      freightQuery = freightQuery.eq("status", query.status);
+      matchQuery = matchQuery.eq("status", query.status);
+    }
+    const applicationFilter = textSearchFilter(["company_name", "contact_name", "email", "city", "reference_no"], query.search);
+    const listingFilter = textSearchFilter(["title", "summary", "location_label", "detail_label"], query.search);
+    const freightFilter = textSearchFilter(["reference_no", "load_port", "discharge_port", "cargo_type"], query.search);
+    if (applicationFilter) applicationQuery = applicationQuery.or(applicationFilter);
+    if (listingFilter) listingQuery = listingQuery.or(listingFilter);
+    if (freightFilter) freightQuery = freightQuery.or(freightFilter);
+
+    const [applicationResult, listingResult, freightResult, matchResult] = await Promise.all([
+      applicationQuery,
+      listingQuery,
+      freightQuery,
+      matchQuery
+    ]);
+    if (applicationResult.error) throw applicationResult.error;
+    if (listingResult.error) throw listingResult.error;
+    if (freightResult.error) throw freightResult.error;
+    if (matchResult.error) throw matchResult.error;
+    const applicationRows = applicationResult.data || [];
+    const applicationUserIds = [...new Set(applicationRows.map((item) => item.user_id).filter(Boolean))];
+    let profileRoles = new Map();
+    if (applicationUserIds.length) {
+      const profileResult = await supabaseAdmin
+        .from("profiles")
+        .select("id,role")
+        .in("id", applicationUserIds);
+      if (profileResult.error) throw profileResult.error;
+      profileRoles = new Map((profileResult.data || []).map((item) => [item.id, item.role]));
+    }
+    const applications = applicationRows.map((item) => ({
+      ...item,
+      profile_role: item.user_id ? (profileRoles.get(item.user_id) || "customer") : "unlinked"
+    }));
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "admin.ops.maritime_queue_viewed",
+      resourceType: "maritime_moderation_queue",
+      source: "admin",
+      purpose: "admin_operations",
+      metadata: {
+        application_count: applications.length,
+        listing_count: listingResult.data?.length || 0,
+        freight_request_count: freightResult.data?.length || 0,
+        freight_match_count: matchResult.data?.length || 0,
+        status: query.status || "all",
+        has_search: Boolean(query.search)
+      }
+    });
+
+    return {
+      ok: true,
+      applications,
+      listings: listingResult.data || [],
+      freightRequests: freightResult.data || [],
+      freightMatches: matchResult.data || []
+    };
+  });
+
+  opsPost("/maritime-freight/:requestId/matches", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.maritime_freight.assign");
+    const { requestId } = z.object({ requestId: uuidSchema }).parse(request.params);
+    const payload = maritimeFreightMatchAssignmentSchema.parse(request.body || {});
+    const rpcResult = await supabaseAdmin.rpc("assign_maritime_freight_partner", {
+      p_request_id: requestId,
+      p_partner_user_id: payload.partner_user_id,
+      p_assigned_by: ctx.user.id,
+      p_expires_at: payload.expires_at
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik navlun eşleşme migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (["MARITIME_ASSIGNMENT_TARGET_NOT_FOUND", "MARITIME_REQUEST_NOT_FOUND"].includes(code)) {
+        throw httpError("Navlun talebi veya partner bulunamadı.", 404);
+      }
+      const conflicts = {
+        MARITIME_ASSIGNMENT_WINDOW_INVALID: "Eşleşme süresi geçerli değil.",
+        MARITIME_REQUEST_NOT_MATCHABLE: "Navlun talebi eşleştirmeye uygun durumda değil.",
+        MARITIME_PARTNER_NOT_ELIGIBLE: "Seçilen hesap onaylı denizcilik navlun partneri değil.",
+        MARITIME_MATCH_ALREADY_USED: "Bu partnerin önceki eşleşmesi teklif ürettiği için yeniden açılamaz."
+      };
+      if (conflicts[code]) throw httpError(conflicts[code], 409);
+      throw rpcResult.error;
+    }
+
+    const result = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!result) throw httpError("Navlun eşleşme sonucu doğrulanamadı.", 409);
+    if (result.assignment_changed) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "admin.ops.maritime_freight.assigned",
+        resourceType: "maritime_freight_match",
+        resourceId: result.freight_match_id,
+        source: "admin",
+        purpose: "freight_matching",
+        evidenceTags: ["maritime", "freight_request", "partner_assignment"],
+        metadata: {
+          request_id: result.freight_request_id,
+          partner_user_id: result.assigned_partner_user_id,
+          request_status: result.request_status,
+          match_status: result.match_status
+        }
+      });
+    }
+
+    return reply.code(result.assignment_changed ? 201 : 200).send({
+      ok: true,
+      duplicate: !result.assignment_changed,
+      request: {
+        id: result.freight_request_id,
+        status: result.request_status
+      },
+      match: {
+        id: result.freight_match_id,
+        partner_user_id: result.assigned_partner_user_id,
+        status: result.match_status,
+        expires_at: result.match_expires_at,
+        created_at: result.match_created_at
+      }
+    });
+  });
+
+  opsPatch("/maritime-partner-applications/:applicationId/review", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.maritime_partner_application.review");
+    const { applicationId } = z.object({ applicationId: uuidSchema }).parse(request.params);
+    const payload = maritimePartnerApplicationReviewSchema.parse(request.body || {});
+    const targetStatus = payload.decision === "start_review" ? "in_review" : payload.decision === "approve" ? "approved" : "rejected";
+
+    const currentQuery = await supabaseAdmin
+      .from("maritime_partner_applications")
+      .select("id,module_key,status,partner_role")
+      .eq("id", applicationId)
+      .eq("module_key", "maritime")
+      .maybeSingle();
+    if (currentQuery.error) throw currentQuery.error;
+    if (!currentQuery.data) throw httpError("Denizcilik partner başvurusu bulunamadı.", 404);
+    if (currentQuery.data.status === targetStatus) {
+      return reply.code(200).send({ ok: true, duplicate: true, application: currentQuery.data });
+    }
+    if (!["pending", "in_review"].includes(currentQuery.data.status)) {
+      throw httpError("Başvuru daha önce sonuçlandırılmış; karar değişikliği ayrı yetkili süreç gerektirir.", 409);
+    }
+
+    const now = new Date().toISOString();
+    const updateResult = await supabaseAdmin
+      .from("maritime_partner_applications")
+      .update({
+        status: targetStatus,
+        reviewed_at: now,
+        reviewed_by: ctx.user.id,
+        review_note: payload.review_note
+      })
+      .eq("id", applicationId)
+      .in("status", ["pending", "in_review"])
+      .select("id,reference_no,module_key,status,partner_role,company_name,contact_name,country,city,created_at,updated_at,reviewed_at,review_note")
+      .maybeSingle();
+    if (updateResult.error) throw updateResult.error;
+    if (!updateResult.data) throw httpError("Başvurunun durumu değişti; kuyruğu yenileyin.", 409);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `admin.ops.maritime_partner_application.${targetStatus}`,
+      resourceType: "maritime_partner_application",
+      resourceId: applicationId,
+      source: "admin",
+      purpose: "partner_moderation",
+      evidenceTags: ["maritime", "partner_application", "moderation"],
+      metadata: {
+        previous_status: currentQuery.data.status,
+        new_status: targetStatus,
+        partner_role: currentQuery.data.partner_role,
+        has_review_note: Boolean(payload.review_note)
+      }
+    });
+
+    return reply.code(200).send({ ok: true, duplicate: false, application: updateResult.data });
+  });
+
+  opsPatch("/maritime-listings/:listingId/review", async (request, reply) => {
+    const ctx = await requireOpsAdmin(request, "admin.ops.maritime_listing.review");
+    const { listingId } = z.object({ listingId: uuidSchema }).parse(request.params);
+    const payload = maritimeListingReviewSchema.parse(request.body || {});
+    const targetStatus = payload.decision === "approve" ? "active" : "rejected";
+
+    const currentQuery = await supabaseAdmin
+      .from("maritime_public_listings")
+      .select("id,module_key,status,listing_type,partner_user_id,expires_at")
+      .eq("id", listingId)
+      .eq("module_key", "maritime")
+      .maybeSingle();
+    if (currentQuery.error) throw currentQuery.error;
+    if (!currentQuery.data) throw httpError("Denizcilik ilanı bulunamadı.", 404);
+    if (currentQuery.data.status === targetStatus) {
+      return reply.code(200).send({ ok: true, duplicate: true, listing: currentQuery.data });
+    }
+    if (currentQuery.data.status !== "pending_review") {
+      throw httpError("İlan inceleme kuyruğunda değil; karar uygulanmadı.", 409);
+    }
+    const now = new Date().toISOString();
+    if (targetStatus === "active" && Date.parse(currentQuery.data.expires_at) <= Date.now()) {
+      throw httpError("Süresi dolmuş ilan onaylanamaz; partner yeni bitiş tarihiyle tekrar göndermeli.", 409);
+    }
+
+    const updatePayload = {
+      status: targetStatus,
+      reviewed_at: now,
+      reviewed_by: ctx.user.id,
+      review_note: payload.review_note
+    };
+    if (targetStatus === "active") updatePayload.published_at = now;
+    const updateResult = await supabaseAdmin
+      .from("maritime_public_listings")
+      .update(updatePayload)
+      .eq("id", listingId)
+      .eq("status", "pending_review")
+      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,partner_user_id,published_at,expires_at,submitted_at,reviewed_at,review_note,created_at,updated_at")
+      .maybeSingle();
+    if (updateResult.error) throw updateResult.error;
+    if (!updateResult.data) throw httpError("İlanın durumu değişti; kuyruğu yenileyin.", 409);
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `admin.ops.maritime_listing.${targetStatus}`,
+      resourceType: "maritime_public_listing",
+      resourceId: listingId,
+      source: "admin",
+      purpose: "content_moderation",
+      evidenceTags: ["maritime", "partner_listing", "moderation"],
+      metadata: {
+        previous_status: currentQuery.data.status,
+        new_status: targetStatus,
+        listing_type: currentQuery.data.listing_type,
+        partner_user_id: currentQuery.data.partner_user_id,
+        has_review_note: Boolean(payload.review_note)
+      }
+    });
+
+    return reply.code(200).send({ ok: true, duplicate: false, listing: updateResult.data });
+  });
+
   opsGet("/partner-applications", async (request) => {
     const ctx = await requireOpsAdmin(request, "admin.ops.partner_applications.list");
     const query = adminListQuerySchema.parse(request.query || {});
@@ -16350,6 +17905,64 @@ export function registerRoutes(app) {
       checked: data?.length || 0,
       staleOrders: data || []
     };
+  });
+
+  app.post("/v1/cron/reconcile-maritime", {
+    config: {
+      rateLimit: {
+        max: 12,
+        timeWindow: "1 minute"
+      }
+    }
+  }, async (request) => {
+    if (!config.cronSecret || request.headers["x-cron-secret"] !== config.cronSecret) {
+      await auditEvent({
+        request,
+        action: "cron.maritime_reconcile_denied",
+        severity: "critical",
+        metadata: { path: request.url.split("?")[0] },
+        evidenceTags: ["cron", "maritime", "access_denied"]
+      });
+      throw httpError("Cron yetkisi doğrulanamadı.", 401);
+    }
+
+    const payload = maritimeFreightReconcileSchema.parse(request.body || {});
+    const rpcResult = await supabaseAdmin.rpc("reconcile_maritime_freight_expirations", {
+      p_limit: payload.limit
+    });
+    if (rpcResult.error) {
+      if (looksLikeMissingSchema(rpcResult.error)) {
+        throw httpError("Denizcilik süre sonu migration'ı henüz uygulanmamış.", 503);
+      }
+      const code = String(rpcResult.error.message || "").match(/MARITIME_[A-Z_]+/)?.[0] || "";
+      if (code === "MARITIME_RECONCILE_LIMIT_INVALID") {
+        throw httpError("Denizcilik uzlaştırma limiti geçersiz.", 400);
+      }
+      throw rpcResult.error;
+    }
+
+    const result = Array.isArray(rpcResult.data) ? rpcResult.data[0] : rpcResult.data;
+    if (!result) throw httpError("Denizcilik süre sonu sonucu doğrulanamadı.", 409);
+    const summary = {
+      expired_offers: Number(result.expired_offer_count || 0),
+      expired_matches: Number(result.expired_match_count || 0),
+      reconciled_requests: Number(result.reconciled_request_count || 0),
+      reconciled_terminal_matches: Number(result.reconciled_terminal_match_count || 0)
+    };
+
+    await auditEvent({
+      request,
+      action: "cron.maritime_expirations_reconciled",
+      resourceType: "maritime_freight_workflow",
+      metadata: {
+        module_key: "maritime",
+        limit: payload.limit,
+        ...summary
+      },
+      evidenceTags: ["cron", "maritime", "expiration_reconciliation"]
+    });
+
+    return { ok: true, limit: payload.limit, ...summary };
   });
 
   app.post("/v1/cron/product-reviews/auto-revisions", async (request) => {

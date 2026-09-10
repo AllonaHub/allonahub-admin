@@ -26,6 +26,25 @@
     return Boolean(document.querySelector("[data-login-form]") || document.querySelector("[data-register-form]"));
   }
 
+  function initAuthRouteLinks() {
+    const rawReturnTo = core.getParam("returnTo");
+    if (!rawReturnTo) return;
+    const returnTo = safeReturnTo(rawReturnTo);
+    const accountPath = new URL("./", window.location.href).pathname;
+    const allowedPages = new Set(["login.html", "register.html", "forgot-password.html"]);
+    document.querySelectorAll("[data-auth-route]").forEach((link) => {
+      try {
+        const target = new URL(link.getAttribute("href") || "", window.location.href);
+        const pageName = target.pathname.split("/").pop();
+        if (target.origin !== window.location.origin || !target.pathname.startsWith(accountPath) || !allowedPages.has(pageName)) return;
+        target.searchParams.set("returnTo", returnTo);
+        link.href = `${target.pathname}${target.search}${target.hash}`;
+      } catch (error) {
+        // Static fallback href remains available.
+      }
+    });
+  }
+
   async function redirectAuthenticatedUser(session) {
     if (!isAuthLandingPage()) return;
     const user = await App.auth.getUser();
@@ -210,6 +229,7 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    initAuthRouteLinks();
     initOAuthRedirect();
     initLogin();
     initRegister();

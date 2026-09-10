@@ -1,0 +1,70 @@
+html body.cv-form-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page)):not(:has(.promo-slider)):not(:has(.premium-hero)) {
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: clamp(12px, 2vw, 30px) !important;
+  line-height: normal !important;
+}
+
+body.cv-form-page[data-theme] .app {
+  width: min(100%, 1760px) !important;
+  max-width: 1760px !important;
+  margin: 0 auto !important;
+}
+
+body.cv-form-page.pdf-capture {
+  overflow-x: visible !important;
+}
+
+body.cv-form-page.pdf-capture .previewWrap {
+  overflow: visible !important;
+}
+
+body.cv-form-page.pdf-capture .cvPage {
+  width: 900px !important;
+  min-height: 1270px !important;
+  padding: 34px !important;
+}
+
+body.cv-form-page .cv-toolbar button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+  box-shadow: none;
+}
+
+body.cv-form-page .cv-repeat-group {
+  padding: 15px;
+  border: 1px solid rgba(0, 213, 255, 0.20);
+  border-radius: 8px;
+}
+
+body.cv-form-page .cv-repeat-group--compact {
+  padding: 12px;
+}
+
+body.cv-form-page .photoCell img[hidden],
+body.cv-form-page .emptyPhoto[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  body.cv-form-page[data-theme] .cv-toolbar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
+  body.cv-form-page[data-theme] .cv-toolbar > * {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media print {
+  html body.cv-form-page {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+}

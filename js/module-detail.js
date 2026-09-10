@@ -2,6 +2,7 @@
   const params = new URLSearchParams(window.location.search);
   const rawQuery = safeText(params.get("q") || params.get("topic") || "AllonaHub");
   const rawModule = safeText(params.get("module") || params.get("source") || "");
+  const requestedPartnerRole = safeText(params.get("role") || "").toLocaleLowerCase("tr-TR");
 
   const profiles = [
     {
@@ -9,6 +10,7 @@
       title: "Allona Denizcilik",
       accent: "#00b4d8",
       moduleUrl: "allonadenizcilik.html",
+      partnerUrl: "../partner/maritime-partner.html",
       partnerLabel: "Denizcilik Partneri Ol",
       lead: "Crew, navlun, gemi, brokerlik, liman, acente ve operasyon süreçleri tek profesyonel maritime akışında toplanır.",
       cards: ["Crew ve sertifika kontrolü", "Yük, rota ve navlun talebi", "Gemi ilanı ve broker eşleşmesi", "Operasyon ve evrak takibi"]
@@ -310,6 +312,24 @@
   }
 
   function partnerUrl(profile, topic) {
+    if (profile.partnerUrl) {
+      const normalizedTopic = normalize(topic);
+      const inferredRole = (() => {
+        if (["shipowner", "broker", "agency", "crewing", "port_service", "technical_service"].includes(requestedPartnerRole)) {
+          return requestedPartnerRole;
+        }
+        if (/broker/.test(normalizedTopic)) return "broker";
+        if (/crew|personel|gemiadam/.test(normalizedTopic)) return "crewing";
+        if (/acente|agency/.test(normalizedTopic)) return "agency";
+        if (/liman|port/.test(normalizedTopic)) return "port_service";
+        if (/teknik|servis|bakım|bakim|onarım|onarim/.test(normalizedTopic)) return "technical_service";
+        if (/gemi|vessel|charter|tanker|bulk|tug/.test(normalizedTopic)) return "shipowner";
+        return "";
+      })();
+      const maritimeParams = new URLSearchParams({ source: "module-detail", module: "maritime" });
+      if (inferredRole) maritimeParams.set("role", inferredRole);
+      return `${profile.partnerUrl}?${maritimeParams.toString()}`;
+    }
     return `../partner/partner.html?module=${encodeURIComponent(profile.title)}&intent=application&q=${encodeURIComponent(topic)}`;
   }
 

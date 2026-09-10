@@ -32,7 +32,13 @@ test("production e-invoicing routes fail closed before touching migration tables
 
     const impact = await app.inject({ method: "GET", url: "/v1/platform/impact", headers: { host: "localhost" } });
     assert.equal(impact.statusCode, 200);
-    assert.deepEqual(impact.json(), { ok: true, published: false, metrics: [] });
+    assert.deepEqual(impact.json(), {
+      ok: true,
+      published: false,
+      metrics: [],
+      sourceStatus: "disabled",
+      sourceNotes: ["Public impact aggregates are disabled in this environment."]
+    });
   } finally {
     await app.close();
   }

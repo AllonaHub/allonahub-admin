@@ -103,12 +103,9 @@ Gerçek secretlar yalnızca bu dosyada tutulur:
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-BANK_PAYMENT_API_KEY
-BANK_PAYMENT_SECRET_KEY
-BANK_PAYMENT_API_URL
-PAYMENT_PROVIDER_REFUND_WEBHOOK_URL
-PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET
-PAYMENT_PROVIDER_NATIVE_REFUNDS_ENABLED=false
+IYZICO_API_KEY
+IYZICO_SECRET_KEY
+IYZICO_BASE_URL
 ASSISTANT_ENABLED
 ASSISTANT_AI_PROVIDER
 ASSISTANT_TELEGRAM_BOT_TOKEN
@@ -165,24 +162,30 @@ curl https://api.allonahub.com/health
 - `GET /health`
 - `GET /ready`
 - `POST /v1/orders`
-- `POST /v1/payments/bank/checkout`
-- `GET|POST /v1/payments/bank/callback`
+- `POST /v1/payments/iyzico/checkout`
+- `GET|POST /v1/payments/iyzico/callback`
 - `POST /v1/cv/checkout`
 - `GET /v1/partner/commission/preview`
-- `GET /v1/partner/integrations`
-- `POST /v1/partner/integrations`
-- `POST /v1/partner/integrations/:integrationId/test`
-- `POST /v1/partner/integrations/:integrationId/sync`
-- `POST /v1/partner/integrations/:integrationId/publish-jobs`
-- `GET /v1/admin/ops/integrations`
 - `POST /v1/assistant/messages`
 - `POST /v1/telegram/webhook`
 - `POST /v1/rewards/ledger`
 - `POST /v1/hp-wallet/ledger` legacy alias, yeni geliştirmede kullanılmaz.
 - `POST /v1/cron/reconcile-payments`
-- `POST /v1/cron/integrations/sync`
-- `POST /v1/cron/integrations/publish`
-- `POST /v1/cron/social-media-assets-cleanup`
+- `POST /v1/cron/reconcile-maritime`
+- `GET /v1/public/maritime/listings`
+- `POST /v1/public/maritime/partner-applications`
+- `POST /v1/maritime/freight-requests`
+- `PATCH /v1/maritime/freight-requests/:requestId/cancel`
+- `PATCH /v1/maritime/freight-requests/:requestId/offers/:offerId/accept`
+- `GET|POST /v1/maritime/partner/listings`
+- `GET /v1/maritime/partner/freight-matches`
+- `POST /v1/maritime/partner/freight-matches/:matchId/offer`
+- `PATCH /v1/maritime/partner/freight-matches/:matchId/decline`
+- `PATCH /v1/maritime/partner/freight-matches/:matchId/offer/withdraw`
+- `GET /v1/admin/ops/maritime` (`/v1/ops-console/maritime` alias)
+- `POST /v1/admin/ops/maritime-freight/:requestId/matches`
+- `PATCH /v1/admin/ops/maritime-partner-applications/:applicationId/review`
+- `PATCH /v1/admin/ops/maritime-listings/:listingId/review`
 
 Assistant ikinci aşamada ücretsiz kural tabanlı çalışır:
 
@@ -197,18 +200,24 @@ Migration ve Telegram webhook hazırlığı:
 
 ```bash
 SUPABASE_DB_URL="postgresql://..." ./deploy/assistant/apply-assistant-migration.sh
-SUPABASE_DB_URL="postgresql://..." bash ./deploy/integrations/apply-partner-integration-migrations.sh
 ASSISTANT_TELEGRAM_BOT_TOKEN="..." TELEGRAM_WEBHOOK_SECRET="..." ./deploy/assistant/register-telegram-webhook.sh
 API_URL=https://api.allonahub.com ./deploy/assistant/smoke-test-assistant.sh
 ```
 
-Partner entegrasyon smoke testi:
+Denizcilik migration ve şema doğrulaması:
 
 ```bash
-PARTNER_JWT="..." \
-PARTNER_INTEGRATION_FEED_URL="https://partner.example.com/products.json" \
-node scripts/partner-integration-smoke-test.mjs
+SUPABASE_DB_URL="postgresql://..." ./deploy/maritime/apply-maritime-migrations.sh
+SUPABASE_DB_URL="postgresql://..." ./deploy/maritime/check-maritime-schema.sh
+curl -fsS "https://api.allonahub.com/v1/public/maritime/listings?type=crew_position&limit=1"
 ```
+
+Authenticated navlun oluşturma, iptal ve teklif kabul smoke testleri geçici bir test kullanıcısı access token'ıyla çalıştırılmalı; token komut geçmişine, dokümana veya loglara yazılmamalıdır. Kabul testinde RPC sonrası talep/teklif/event durumları aynı veritabanı oturumunda doğrulanmalıdır.
+Partner ilan smoke testi onaylı partner + `aal2`, admin inceleme testi ise Ops Admin + `aal2` oturumuyla yapılmalı; test tokenları yalnız geçici process environment üzerinden geçirilmelidir.
+Navlun eşleştirme smoke testinde Ops Admin ataması sonrası yalnız atanan `aal2` partner eşleşmeyi görmeli; teklif RPC'si ardından match/offer/request/event kayıtları tek transaction sonucu olarak doğrulanmalıdır.
+Partner çıkış smoke testinde ilk eşleşme teklifsiz reddedilmeli; ikinci eşleşmede teklif gönderilip kabul öncesi geri çekilmelidir. Her iki akışta tekrar çağrının idempotent olduğu, başka partner kimliğiyle 404 döndüğü ve event payload'ın kullanıcı arayüzüne taşınmadığı doğrulanmalıdır.
+Süre sonu smoke testinde geçmiş tarihli bir teklif/eşleşme uzlaştırılmalı; RPC sonucu, `expired`/`closed` satırları, yeniden hesaplanan talep durumu ve payload'sız kullanıcı zaman çizelgesi aynı veritabanı oturumunda doğrulanmalıdır. Aynı cron çağrısının tekrarı ikinci olay üretmemelidir.
+Terminal cleanup smoke testinde kabul edilmiş talebin kazanan eşleşmesi `accepted` kalırken rakip teklif ve cevapsız davet eşleşmeleri `closed` olmalıdır; ikinci cron çağrısı `reconciled_terminal_matches = 0` dönmelidir.
 
 ## Cron
 
@@ -216,24 +225,23 @@ node scripts/partner-integration-smoke-test.mjs
 
 ```bash
 0 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-payments -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
-15 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/sync -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
-25 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/integrations/publish -H "x-cron-secret: GERCEK_CRON_SECRET" >/dev/null
-30 3 * * * cd /opt/allonahub && node backend/scripts/supabase-storage-usage.mjs --bucket=social-media-assets --prefix=social-media --retention-days=2 --dry-run=0 >/var/log/allonahub-social-assets-cleanup.log 2>&1
+*/5 * * * * curl -fsS -X POST https://api.allonahub.com/v1/cron/reconcile-maritime -H "x-cron-secret: GERCEK_CRON_SECRET" -H "Content-Type: application/json" --data '{"limit":100}' >/dev/null
 ```
 
 ## Cloudflare Güvenlik
 
 - SSL/TLS: Full Strict
 - WAF Managed Rules: açık
-- Bot Fight Mode: kurulumda kapali kalabilir; lansmanda Super Bot Fight Mode/Bot Management veya WAF + rate limit profili kullan
+- Bot Fight Mode: açık
 - Rate limit:
   - `/v1/payments/*`
   - `/v1/cv/checkout`
   - `/v1/orders`
   - `/v1/cron/*`
-- Cache: `GET /v1/media/product-images/*` Cloudflare edge cache, diger hassas API cevaplari bypass
+  - `/v1/public/maritime/partner-applications`
+  - `/v1/maritime/*`
+- Cache: `api.allonahub.com` için bypass
 - Minimum TLS: 1.2
-- Sertlestirme sonrasi kontrol: `node deploy/cloudflare/verify-allonahub-security-guards.mjs`
 
 ## Kurumsal E-posta Yönlendirme
 
@@ -246,17 +254,10 @@ sudo bash deploy/hetzner/setup-mail-forwarding.sh
 bash deploy/hetzner/check-mail-forwarding.sh
 ```
 
-Gmail'den cevap yazarken `destek@allonahub.com`, `legal@allonahub.com` ve `basvuru@allonahub.com` gibi adresleri giden kimlik olarak kullanmak için authenticated SMTP/DKIM paketi de hazırlanmıştır:
-
-```bash
-sudo bash deploy/hetzner/setup-mail-submission.sh
-```
-
 Detaylı DNS, port ve doğrulama adımları:
 
 ```text
 docs/deploy/hetzner-email-forwarding.md
-docs/deploy/hetzner-email-outbound-identities.md
 deploy/hetzner/mail-forwarding/dns-records.txt
 ```
 

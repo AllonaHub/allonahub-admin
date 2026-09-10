@@ -1,259 +1,270 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Allona Denizcilik | AllonaHub</title>
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{min-width:1320px;background:#020814;color:white;overflow-x:auto}
-body:before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(circle at top left,#00b7ff55,transparent 35%),radial-gradient(circle at bottom right,#ffd70033,transparent 30%),linear-gradient(135deg,#020814,#061b33,#002b4d)}
-body:after{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(120deg,transparent,#00d5ff18,transparent);animation:wave 8s infinite linear}
-@keyframes wave{0%{transform:translateX(-40%)}100%{transform:translateX(40%)}}
-
-.page{width:1320px;margin:0 auto;padding:18px 22px 60px}
-.glass{background:linear-gradient(145deg,rgba(5,25,50,.92),rgba(3,10,24,.96));border:1px solid rgba(0,229,255,.26);box-shadow:0 0 30px rgba(0,229,255,.13),inset 0 0 22px rgba(255,255,255,.04);border-radius:26px;position:relative;overflow:hidden}
-
-.top-links{height:32px;display:flex;justify-content:flex-end;align-items:center;gap:20px;font-size:12px;opacity:.82;margin-bottom:8px}
-.top-links a{color:white;text-decoration:none}
-
-.header{height:82px;display:grid;grid-template-columns:310px 1fr 410px;gap:18px;align-items:center;margin-bottom:14px}
-.brand{height:82px;display:flex;align-items:center;gap:13px;padding:0 20px}
-.brand img{width:44px;height:44px;object-fit:contain}
-.brand b{font-size:29px;color:#ffd700}
-.brand span{font-size:29px;color:#00e5ff;font-weight:900}
-.search{height:60px;display:flex;align-items:center;gap:14px;padding:0 24px}
-.search-mark{width:25px;height:25px;border:3px solid #00e5ff;border-radius:50%;position:relative;box-shadow:0 0 14px #00e5ff}
-.search-mark:after{content:"";position:absolute;width:11px;height:3px;background:#00e5ff;right:-9px;bottom:-5px;transform:rotate(45deg);border-radius:4px}
-.search input{flex:1;background:transparent;border:0;outline:0;color:white;font-size:15px}
-.actions{height:60px;display:flex;align-items:center;justify-content:space-around}
-.actions a{color:white;text-decoration:none;font-weight:800}
-
-.catbar{height:64px;display:flex;align-items:center;gap:22px;padding:0 20px;margin-bottom:18px;white-space:nowrap}
-.cat-menu{display:flex;align-items:center;gap:12px;color:#ffd700;font-weight:900}
-.lines{width:30px;height:22px;display:flex;flex-direction:column;justify-content:space-between}
-.lines span{height:3px;background:#00e5ff;border-radius:10px;box-shadow:0 0 12px #00e5ff}
-.catbar a{color:white;text-decoration:none;font-weight:800;font-size:14px;opacity:.92}
-
-.hero{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:16px;margin-bottom:18px}
-.hero-main{min-height:300px;padding:30px;background:radial-gradient(circle at right,#00e5ff33,transparent 32%),linear-gradient(135deg,#04152e,#082f5f)}
-.hero-main h1{font-size:48px;color:#ffd700;line-height:1.05;margin-bottom:15px}
-.hero-main p{font-size:18px;opacity:.85;line-height:1.55;max-width:650px}
-.hero-card{padding:24px;min-height:300px}
-.hero-card h3{color:#ffd700;font-size:27px;margin-bottom:10px}
-.hero-card p{opacity:.78;line-height:1.45}
-.flow{margin-top:18px;display:grid;gap:10px}
-.flow div{padding:10px 14px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18);font-size:13px}
-
-.section-title{display:flex;justify-content:space-between;align-items:center;margin:28px 0 14px}
-.section-title h2{color:#ffd700;font-size:30px}
-.section-title a{color:#00e5ff;text-decoration:none;font-weight:900}
-
-.module-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-.module-card{padding:20px;min-height:145px}
-.module-card h3{color:#ffd700;margin-bottom:8px}
-.module-card p{font-size:13px;opacity:.75;line-height:1.45}
-
-.request-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
-.request-main{padding:28px;min-height:260px;background:radial-gradient(circle at right,#ffd70033,transparent 34%),linear-gradient(135deg,#04152e,#082f5f)}
-.request-main h2{color:#ffd700;font-size:34px;margin-bottom:12px}
-.request-main p{opacity:.82;line-height:1.6}
-.req-steps{display:grid;gap:10px;margin-top:16px}
-.req-steps div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
-.request-side{padding:24px}
-.request-side h3{color:#ffd700;font-size:25px;margin-bottom:10px}
-.input-box{height:52px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.22);display:flex;align-items:center;padding:0 16px;margin-top:12px;color:rgba(255,255,255,.75)}
-.btn{display:inline-block;margin-top:16px;padding:13px 26px;border-radius:999px;background:linear-gradient(135deg,#ffd700,#c89200);color:#020814;text-decoration:none;font-weight:900}
-
-.listing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.listing{padding:16px;min-height:270px;text-decoration:none;color:white}
-.listing-img{height:135px;border-radius:18px;background:linear-gradient(135deg,#073c78,#020814);margin-bottom:14px;position:relative;overflow:hidden}
-.listing-img:after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-30px;top:-30px;background:radial-gradient(circle,#00e5ff88,transparent 65%)}
-.listing b{color:#ffd700;font-size:18px}
-.listing p{font-size:13px;opacity:.72;margin:6px 0}
-.meta{display:flex;justify-content:space-between;margin-top:12px;color:#00e5ff;font-weight:900;font-size:13px}
-.price{color:#00e5ff;font-size:21px;font-weight:900;margin-top:8px}
-
-.market-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.board{padding:24px;min-height:190px}
-.board h3{color:#ffd700;font-size:25px;margin-bottom:10px}
-.board p{opacity:.78;line-height:1.48}
-.board small{display:block;margin-top:12px;color:#00e5ff;font-weight:900}
-
-.partner-cta{padding:30px;margin-top:28px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:center}
-.partner-cta h2{color:#ffd700;font-size:34px;margin-bottom:10px}
-.partner-cta p{opacity:.82;line-height:1.6}
-.panel-list{display:grid;gap:10px}
-.panel-list div{padding:12px 15px;border-radius:16px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.18)}
-
-.info{padding:30px;margin-top:28px}
-.info h2{color:#ffd700;font-size:32px;margin-bottom:14px}
-.info h3{color:#00e5ff;margin:22px 0 8px}
-.info p{opacity:.82;line-height:1.65;margin-bottom:10px}
-.footer{padding:25px;text-align:center;opacity:.65;margin-top:22px}
-
-@media (max-width:760px){
-body{min-width:0!important;overflow-x:hidden!important}
-.page{width:100%!important;padding:18px 6px 48px!important}
-.top-links{height:auto!important;justify-content:flex-start!important;gap:8px!important;overflow-x:auto!important;padding-bottom:8px!important}
-.top-links a{flex:0 0 auto!important;padding:9px 12px!important;border:1px solid rgba(0,103,177,.20)!important;border-radius:12px!important;background:rgba(255,255,255,.62)!important}
-.header{height:auto!important;grid-template-columns:1fr!important;gap:10px!important;margin-bottom:10px!important}
-.brand{height:54px!important;justify-content:center!important}
-.search{height:auto!important;min-height:48px!important;padding:0 14px!important}
-.actions{height:auto!important;justify-content:flex-start!important;gap:8px!important;padding:8px!important;flex-wrap:wrap!important}
-.actions a{min-height:36px!important;padding:0 12px!important;border:1px solid rgba(0,103,177,.22)!important;border-radius:10px!important}
-.catbar{height:auto!important;min-height:50px!important;gap:16px!important;overflow-x:auto!important;margin-bottom:18px!important}
-html body[data-theme] .page>section.hero,
-body .page>section.hero{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;overflow:visible!important;margin-bottom:22px!important;padding:0!important;scroll-snap-type:none!important}
-html body[data-theme] .page>section.hero>*,
-body .page>section.hero>*{width:100%!important;min-width:0!important;max-width:none!important;flex-basis:auto!important;scroll-snap-align:none!important}
-.hero-main{min-height:auto!important;padding:24px 18px!important}
-.hero-main h1{font-size:clamp(34px,9vw,42px)!important;line-height:1.06!important}
-.hero-main p{font-size:16px!important}
-.hero-card{min-height:auto!important;padding:20px!important}
-}
-</style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Allona Denizcilik | AllonaHub</title>
+  <meta name="description" content="AllonaHub denizcilik modulu: crew, navlun, gemi ilanlari, brokerlik, liman, acente ve teknik servis akislari.">
+  <link rel="canonical" href="allonadenizcilik.html">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-rail-v6">
+  <link rel="stylesheet" href="../../css/allona-maritime.css?v=20260711-maritime14">
 </head>
+<body class="maritime-page">
+  <a class="maritime-skip-link" href="#maritimeMain">Ana içeriğe geç</a>
+  <div class="site-shell">
+    <main id="maritimeMain" class="maritime-shell" tabindex="-1">
+      <nav class="maritime-top" aria-label="Denizcilik hizli baglantilar">
+        <a href="../account/user-panel.html?module=maritime&amp;view=applications&amp;q=Crew+Ba%C5%9Fvurular%C4%B1m">Crew Basvurularim</a>
+        <a href="../account/maritime-requests.html">Navlun Taleplerim</a>
+        <a href="../partner/maritime-partner.html?role=shipowner">Gemi Sirketi Partneri Ol</a>
+        <a href="../company/destek.html?topic=maritime">Yardim ve Destek</a>
+      </nav>
 
-<body>
-<div class="page">
+      <header class="maritime-header" aria-label="Allona Denizcilik">
+        <a class="maritime-brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
+          <img src="../../images/brand/allonahub-icon-192.png" alt="AllonaHub ikon">
+          <span><b>Allona</b>Hub</span>
+        </a>
+        <form class="maritime-search" action="module-detail.html" method="get">
+          <label for="maritimeSearch">Denizcilik arama</label>
+          <input id="maritimeSearch" name="q" type="search" maxlength="120" placeholder="Crew, gemi, navlun, brokerlik veya liman ara" required>
+          <input type="hidden" name="module" value="maritime">
+          <button type="submit">Ara</button>
+        </form>
+        <div class="maritime-actions" aria-label="Hesap aksiyonlari">
+          <a href="../account/login.html">Giris Yap</a>
+          <a href="../account/user-panel.html?module=maritime&amp;view=listings&amp;q=%C4%B0lanlar%C4%B1m">Ilanlarim</a>
+          <a href="../account/user-panel.html?module=maritime&amp;view=offers&amp;q=Tekliflerim">Tekliflerim</a>
+        </div>
+      </header>
 
-<div class="top-links">
-  <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=applications&amp;q=Crew+Ba%C5%9Fvurular%C4%B1m">Crew Başvurularım</a>
-  <a href="../account/maritime-requests.html">Navlun Taleplerim</a>
-  <a href="../partner/maritime-partner.html?role=shipowner">Gemi Şirketi Partneri Ol</a>
-  <a href="../company/destek.html?topic=allonadenizcilik">Yardım ve Destek</a>
-</div>
+      <nav class="maritime-rail" aria-label="Denizcilik kategorileri">
+        <strong>Denizcilik</strong>
+        <a href="module-detail.html?q=denizcilik+maritime+Crew">Crew</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Y%C3%BCk+%C4%B0lanlar%C4%B1">Yuk Ilanlari</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Navlun">Navlun</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Brokerlik">Brokerlik</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Gemi+%C4%B0lanlar%C4%B1">Gemi Ilanlari</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Chartering">Chartering</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Liman">Liman</a>
+        <a href="module-detail.html?q=denizcilik+maritime+Acente">Acente</a>
+        <a href="../commerce/shop.html?q=Teknik+Servis&amp;source=allonadenizcilik">Teknik Servis</a>
+      </nav>
 
-<div class="header">
-  <div class="brand glass"><b>Allona</b><span>Hub</span></div>
-  <div class="search glass"><div class="search-mark"></div><input type="search" autocomplete="off" spellcheck="false" aria-label="Denizcilik crew, gemi, yük ve navlun arama" placeholder="Crew, gemi, yük, navlun, brokerlik, liman veya acente ara..."></div>
-  <div class="actions glass"><a href="../account/user.html">Giriş Yap</a><a href="../account/user-panel.html?module=allonadenizcilik&amp;view=listings&amp;q=%C4%B0lanlar%C4%B1m">İlanlarım</a><a href="../account/user-panel.html?module=allonadenizcilik&amp;view=offers&amp;q=Tekliflerim">Tekliflerim</a></div>
-</div>
+      <section class="maritime-hero" data-ad-hero aria-labelledby="maritimeTitle">
+        <img class="maritime-hero__media" src="../../images/ads/hero-ad-denizcilik.jpg" alt="Liman operasyonunda yuk gemisi ve denizcilik ekibi" decoding="async" fetchpriority="high">
+        <div class="maritime-hero__copy">
+          <p class="maritime-eyebrow">Global Maritime Is Agi</p>
+          <h1 id="maritimeTitle">Allona Denizcilik</h1>
+          <p class="maritime-hero__lead">Crew ve navlun akis merkezi.</p>
+          <p>Crew, navlun ve gemi operasyonlarini tek AllonaHub akisinda bulusturur.</p>
+          <div class="maritime-hero__actions">
+            <a class="maritime-btn maritime-btn--primary" href="../career/cv-form.html?source=allonadenizcilik&amp;position=Maritime+Crew">Crew CV Olustur</a>
+            <a class="maritime-btn" href="#freightTitle">Navlun Talebi Ac</a>
+            <a class="maritime-btn" href="../partner/maritime-partner.html">Partner Ol</a>
+          </div>
+        </div>
+        <div class="maritime-hero__signal" aria-label="Denizcilik operasyon ozeti">
+          <strong>Modul Durumu</strong>
+          <span>Canli ilanlar dogrulanmis partner verileriyle yayinlanir.</span>
+        </div>
+      </section>
 
-<div class="catbar glass">
-  <div class="cat-menu"><div class="lines"><span></span><span></span><span></span></div>Denizcilik</div>
-  <a href="../search/arama.html?q=denizcilik+maritime+Crew">Crew</a><a href="../search/arama.html?q=denizcilik+maritime+Y%C3%BCk+%C4%B0lanlar%C4%B1">Yük İlanları</a><a href="../search/arama.html?q=denizcilik+maritime+Navlun">Navlun</a><a href="../search/arama.html?q=denizcilik+maritime+Brokerlik">Brokerlik</a><a href="../search/arama.html?q=denizcilik+maritime+Gemi+%C4%B0lanlar%C4%B1">Gemi İlanları</a><a href="../search/arama.html?q=denizcilik+maritime+Chartering">Chartering</a><a href="../search/arama.html?q=denizcilik+maritime+Liman">Liman</a><a href="../search/arama.html?q=denizcilik+maritime+Acente">Acente</a><a href="../commerce/shop.html?q=Teknik+Servis&amp;source=allonadenizcilik">Teknik Servis</a>
-</div>
+      <section class="maritime-section" aria-labelledby="maritimeModules">
+        <div class="maritime-section__head">
+          <div>
+            <span>Moduller</span>
+            <h2 id="maritimeModules">Denizcilik islerini parcalara ayir</h2>
+          </div>
+          <a href="module-detail.html?q=denizcilik+maritime+T%C3%BCm%C3%BCn%C3%BC+G%C3%B6r">Tumunu Gor</a>
+        </div>
+        <div class="maritime-grid maritime-grid--modules">
+          <a class="maritime-card" href="../career/maritime-cv.html"><h3>Crew</h3><p>Gemi personeli, CV, sertifika ve pozisyon eslesmesi.</p><small>Crew akisina git</small></a>
+          <a class="maritime-card" href="#freightTitle"><h3>Navlun</h3><p>Yuk turu, rota, tonaj ve teslim sartlarina gore teklif talebi.</p><small>On talep olustur</small></a>
+          <a class="maritime-card" href="../partner/maritime-partner.html?role=broker"><h3>Brokerlik</h3><p>Yuk, gemi ve charter taraflarini baglayan teklif akisi.</p><small>Broker akisina git</small></a>
+          <a class="maritime-card" href="module-detail.html?q=denizcilik+maritime+Gemi+%C4%B0lanlar%C4%B1"><h3>Gemi Ilanlari</h3><p>Satilik, kiralik, time charter ve voyage charter gemiler.</p><small>Ilan akisina git</small></a>
+          <a class="maritime-card" href="module-detail.html?q=denizcilik+maritime+Liman+Acente"><h3>Liman & Acente</h3><p>Liman hizmetleri, acente operasyonu ve evrak takibi.</p><small>Hizmetleri incele</small></a>
+          <a class="maritime-card" href="../commerce/shop.html?q=Denizcilik+Teknik+Servis&amp;source=allonadenizcilik"><h3>Teknik Servis</h3><p>Bakim, onarim, yedek parca ve teknik tedarik.</p><small>Servisleri ara</small></a>
+          <a class="maritime-card" href="module-detail.html?q=denizcilik+maritime+Chartering"><h3>Chartering</h3><p>Bulk, tanker, container ve general cargo charter surecleri.</p><small>Charter akisina git</small></a>
+          <a class="maritime-card" href="allonasigorta.html?q=Denizcilik+Sigortasi&amp;module=maritime"><h3>Sigorta</h3><p>P&amp;I, H&amp;M ve denizcilik risk cozumleri baglantisi.</p><small>Sigorta modulune git</small></a>
+        </div>
+      </section>
 
-<section class="hero">
-  <div class="hero-main glass">
-    <h1>Allona Denizcilik<br>Global Maritime Ekosistemi</h1>
-    <p>Crew, yük, navlun, brokerlik, gemi alım-satım, chartering, liman, acente, teknik servis ve denizcilik danışmanlığı tek premium platformda birleşir.</p>
+      <section class="maritime-section maritime-split" aria-labelledby="freightTitle">
+        <div class="maritime-flow">
+          <span>Navlun Talebi</span>
+          <h2 id="freightTitle">Yuk bilgisini gir, dogru teklif akisina baglan</h2>
+          <p>Yuk sahibi veya broker; yuk turu, miktar, yukleme limani, tahliye limani, laycan, gemi tipi ve teslim sartlarini girerek guvenli panel akisina devam eder.</p>
+          <ol>
+            <li>Yuk turu: Bulk, General Cargo, Container veya Tanker.</li>
+            <li>Rota: yukleme limani, tahliye limani ve operasyon tarihi.</li>
+            <li>Tonaj, laycan, incoterms ve ozel sartlar.</li>
+            <li>Broker ve gemi sirketlerinden teklif takibi.</li>
+          </ol>
+        </div>
+        <form class="maritime-form" action="../account/login.html" method="get" data-maritime-freight-form>
+          <h3>Hizli navlun on talebi</h3>
+          <p class="maritime-form__note" id="freightPrivacy">Talep bilgileri URL'ye eklenmez; bu sekmede gecici taslak olarak tutulur. Kayit, backend dogrulamasi tamamlanmadan kesin talep sayilmaz.</p>
+          <label for="cargoType">Yuk turu</label>
+          <select id="cargoType" required aria-describedby="freightPrivacy">
+            <option value="">Yuk turu secin</option>
+            <option value="bulk">Bulk</option>
+            <option value="general-cargo">General Cargo</option>
+            <option value="container">Container</option>
+            <option value="tanker">Tanker</option>
+          </select>
+          <label for="loadPort">Yukleme limani</label>
+          <input id="loadPort" autocomplete="off" minlength="2" maxlength="80" placeholder="Orn. Mersin" required>
+          <label for="dischargePort">Tahliye limani</label>
+          <input id="dischargePort" autocomplete="off" minlength="2" maxlength="80" placeholder="Orn. Hamburg" required>
+          <div class="maritime-form__row">
+            <div>
+              <label for="cargoQuantity">Miktar</label>
+              <input id="cargoQuantity" type="number" inputmode="decimal" min="1" max="1000000" step="0.01" placeholder="Orn. 12000" required>
+            </div>
+            <div>
+              <label for="quantityUnit">Birim</label>
+              <select id="quantityUnit" required>
+                <option value="MT">MT</option>
+                <option value="CBM">CBM</option>
+                <option value="TEU">TEU</option>
+              </select>
+            </div>
+          </div>
+          <label for="laycanStart">En erken yukleme tarihi</label>
+          <input id="laycanStart" type="date" required>
+          <input type="hidden" name="returnTo" value="../ecosystem/allonadenizcilik.html?intent=navlun-talebi-olustur&amp;module=maritime">
+          <p class="maritime-form__status" data-maritime-form-status role="status" aria-live="polite"></p>
+          <div class="maritime-form__resume" data-maritime-draft-state hidden>
+            <strong>Navlun taslagi bu sekmede hazir.</strong>
+            <span>Bilgileri kontrol edebilir veya panelde talep akisina devam edebilirsin.</span>
+            <div>
+              <a href="../account/maritime-requests.html">Navlun Taleplerime Git</a>
+              <button type="button" data-maritime-draft-clear>Taslagi Sil</button>
+            </div>
+          </div>
+          <div class="maritime-form__result" data-maritime-request-result role="status" hidden>
+            <strong>Navlun talebin alindi.</strong>
+            <span data-maritime-request-reference></span>
+            <a href="../account/maritime-requests.html">Navlun Taleplerimi Ac</a>
+          </div>
+          <button type="submit" data-maritime-submit>Taslagi Kaydet ve Giris Yap</button>
+          <noscript>Navlun taslagini korumak icin tarayicinda JavaScript etkin olmalidir.</noscript>
+        </form>
+      </section>
+
+      <section class="maritime-section" aria-labelledby="crewTitle">
+        <div class="maritime-section__head">
+          <div>
+            <span>Crew Hazirligi</span>
+            <h2 id="crewTitle" data-maritime-listing-title="crew_position">Crew pozisyon profilleri</h2>
+            <p class="maritime-section__note" data-maritime-listing-note="crew_position">Canli pozisyonlar dogrulanmis kaynaktan yayimlanir. Bu profiller CV ve belge hazirligini dogru role gore baslatir.</p>
+          </div>
+          <a href="module-detail.html?q=denizcilik+maritime+T%C3%BCm+Pozisyonlar">Tum Pozisyonlar</a>
+        </div>
+        <div class="maritime-grid maritime-grid--listings" data-maritime-listings="crew_position">
+          <a class="maritime-listing" href="../career/cv-form.html?position=2nd+Engineer&amp;source=allonadenizcilik">
+            <span class="maritime-listing__image" aria-hidden="true"></span><b>2nd Engineer</b><p>Makine zabiti deneyimi, yeterlilik, STCW ve saglik belgeleri.</p><small>CV profilini hazirla</small>
+          </a>
+          <a class="maritime-listing" href="../career/cv-form.html?position=Able+Seaman&amp;source=allonadenizcilik">
+            <span class="maritime-listing__image" aria-hidden="true"></span><b>Able Seaman</b><p>Guverte deneyimi, gemiadami cuzdani ve gecerli sertifikalar.</p><small>CV profilini hazirla</small>
+          </a>
+          <a class="maritime-listing" href="../career/cv-form.html?position=Chief+Officer&amp;source=allonadenizcilik">
+            <span class="maritime-listing__image" aria-hidden="true"></span><b>Chief Officer</b><p>Uzakyol yeterliligi, vardiya tecrubesi, Ingilizce ve referans.</p><small>CV profilini hazirla</small>
+          </a>
+          <a class="maritime-listing" href="../career/cv-form.html?position=Oiler&amp;source=allonadenizcilik">
+            <span class="maritime-listing__image" aria-hidden="true"></span><b>Oiler</b><p>Makine tayfasi tecrubesi, guvenlik belgeleri ve gorev gecmisi.</p><small>CV profilini hazirla</small>
+          </a>
+        </div>
+      </section>
+
+      <section class="maritime-section" aria-labelledby="marketTitle">
+        <div class="maritime-section__head">
+          <div>
+            <span>Pazar</span>
+            <h2 id="marketTitle">Yuk, gemi ve broker pazari</h2>
+          </div>
+          <a href="module-detail.html?q=denizcilik+maritime+Market+Board">Market Board</a>
+        </div>
+        <div class="maritime-grid maritime-grid--market">
+          <a class="maritime-market" href="#freightTitle"><h3>Yuk Ilanlari</h3><p>Cimento, tahil, demir, proje yuku, konteyner ve genel kargo talepleri.</p><small>Yuk talebi olustur</small></a>
+          <a class="maritime-market" href="../partner/maritime-partner.html?role=shipowner"><h3>Gemi Ilanlari</h3><p>Satilik, kiralik, voyage charter, time charter ve acik pozisyon gemiler.</p><small>Gemi ilani ekle</small></a>
+          <a class="maritime-market" href="../partner/maritime-partner.html?role=broker"><h3>Broker Teklifleri</h3><p>Brokerler yuk ve gemi taraflarini eslestirir, teklif surecleri panelden izlenir.</p><small>Broker paneli</small></a>
+        </div>
+      </section>
+
+      <section class="maritime-section" aria-labelledby="vesselTitle">
+        <div class="maritime-section__head">
+          <div>
+            <span>Gemi Kesfi</span>
+            <h2 id="vesselTitle" data-maritime-listing-title="vessel">Gemi arama profilleri</h2>
+            <p class="maritime-section__note" data-maritime-listing-note="vessel">Yayindaki gemiler aktif durum ve denizcilik modulu dogrulamasindan sonra listelenir. Bu kartlar arama kriterini baslatir.</p>
+          </div>
+          <a href="module-detail.html?q=denizcilik+maritime+T%C3%BCm+Gemiler">Tum Gemiler</a>
+        </div>
+        <div class="maritime-grid maritime-grid--listings" data-maritime-listings="vessel">
+          <a class="maritime-listing" href="module-detail.html?q=denizcilik+maritime+General+Cargo+Vessel"><span class="maritime-listing__image" aria-hidden="true"></span><b>General Cargo Vessel</b><p>DWT, insa yili, klas, bayrak ve ticaret bolgesi kriterleri.</p><small>Arama profilini ac</small></a>
+          <a class="maritime-listing" href="module-detail.html?q=denizcilik+maritime+Bulk+Carrier"><span class="maritime-listing__image" aria-hidden="true"></span><b>Bulk Carrier</b><p>Tonaj, ambar yapisi, laycan ve charter tipi kriterleri.</p><small>Arama profilini ac</small></a>
+          <a class="maritime-listing" href="module-detail.html?q=denizcilik+maritime+Tanker"><span class="maritime-listing__image" aria-hidden="true"></span><b>Tanker</b><p>Yuk sinifi, kapasite, sertifika ve operasyon bolgesi kriterleri.</p><small>Arama profilini ac</small></a>
+          <a class="maritime-listing" href="module-detail.html?q=denizcilik+maritime+Tug+Boat"><span class="maritime-listing__image" aria-hidden="true"></span><b>Tug Boat</b><p>BP, motor gucu, liman operasyonu ve teknik durum kriterleri.</p><small>Arama profilini ac</small></a>
+        </div>
+      </section>
+
+      <section class="maritime-section" aria-labelledby="operationTitle">
+        <div class="maritime-section__head">
+          <div>
+            <span>Surec</span>
+            <h2 id="operationTitle">Operasyon ve dogrulama akisi</h2>
+          </div>
+          <a href="module-detail.html?q=denizcilik+maritime+S%C3%BCre%C3%A7+Takibi">Surec Takibi</a>
+        </div>
+        <div class="maritime-steps">
+          <article><small>1</small><b>Talep</b><p>Yuk, crew, gemi veya hizmet talebi olusturulur.</p></article>
+          <article><small>2</small><b>Dogrulama</b><p>Partner firma ve ilan bilgileri panel katmaninda kontrol edilir.</p></article>
+          <article><small>3</small><b>Eslesme</b><p>Uygun gemi, broker, personel veya servis akisa dahil edilir.</p></article>
+          <article><small>4</small><b>Teklif</b><p>Fiyat, sartlar, evrak ve operasyon detaylari sunulur.</p></article>
+          <article><small>5</small><b>Takip</b><p>Sistem bildirimleri ve kullanici paneliyle surec izlenir.</p></article>
+        </div>
+      </section>
+
+      <section class="maritime-partner" aria-labelledby="partnerTitle">
+        <div>
+          <span>Partner OS</span>
+          <h2 id="partnerTitle">Gemi sirketi, broker, acente veya crewing partneri ol</h2>
+          <p>Denizcilik partnerleri crew talepleri, gemi ilanlari, yuk ilanlari, navlun teklifleri, brokerlik surecleri, evrak takibi ve operasyon bildirimlerini tek sistemden yonetir.</p>
+          <a class="maritime-btn maritime-btn--primary" href="../partner/maritime-partner.html">Denizcilik Partneri Ol</a>
+        </div>
+        <ul>
+          <li>Crew ve CV yonetimi</li>
+          <li>Gemi ve yuk ilanlari</li>
+          <li>Navlun teklif akisi</li>
+          <li>Brokerlik ve charter takibi</li>
+          <li>Acente ve liman hizmetleri</li>
+          <li>Evrak ve sertifika kontrolu</li>
+        </ul>
+      </section>
+
+      <section class="maritime-info" aria-labelledby="infoTitle">
+        <h2 id="infoTitle">Allona Denizcilik: global maritime is agi</h2>
+        <p>Allona Denizcilik; gemi sirketleri, brokerler, acenteler, denizciler, yuk sahipleri ve teknik servis saglayicilarini AllonaHub ekosistemi icinde bulusturan premium maritime moduludur.</p>
+        <h3>Crew ve isveren paneli</h3>
+        <p>Denizciler CV, sertifika, deneyim ve basvuru bilgilerini sisteme ekler; gemi sirketleri pozisyon acar, adaylari inceler ve basvuru surecini panelde takip eder.</p>
+        <h3>Yuk, navlun ve brokerlik</h3>
+        <p>Yuk sahipleri navlun talebi olusturur; brokerler ve gemi sirketleri rota, tonaj, gemi tipi ve laycan bilgilerine gore teklif surecine dahil olur. Kritik kararlar frontend'e guvenmeden backend, RPC veya panel dogrulama katmanlariyla tasarlanmalidir.</p>
+        <h3>Ekosistem baglantisi</h3>
+        <p>Denizcilik akisi Allona Danismanlik, Allona Hukuk, Allona Finans, Allona Sigorta, Allona Egitim ve Kariyer modulleriyle baglantili calisir.</p>
+      </section>
+    </main>
+
+    <div data-layout="footer"></div>
   </div>
-  <div class="hero-card glass">
-    <h3>Crew & Personel Temini</h3>
-    <p>Gemi şirketleri pozisyon açar, denizciler CV ve sertifika ile başvurur, işveren paneli üzerinden aday süreci yönetilir.</p>
-    <div class="flow"><div>Pozisyon aç</div><div>CV kontrol</div><div>Aday eşleşmesi</div></div>
-  </div>
-  <div class="hero-card glass">
-    <h3>Yük & Navlun Akışı</h3>
-    <p>Yük sahibi talep oluşturur, brokerler ve gemi şirketleri navlun teklifleri sunar, süreç panelden takip edilir.</p>
-    <div class="flow"><div>Yük bilgisi</div><div>Navlun teklifi</div><div>Broker eşleşmesi</div></div>
-  </div>
-</section>
-
-<div class="section-title"><h2>Denizcilik Modülleri</h2><a href="../search/arama.html?q=denizcilik+maritime+T%C3%BCm%C3%BCn%C3%BC+G%C3%B6r">Tümünü Gör</a></div>
-<div class="module-grid">
-  <div class="module-card glass"><h3>Crew</h3><p>Gemi personeli, CV, sertifika ve pozisyon eşleşmesi.</p></div>
-  <div class="module-card glass"><h3>Navlun</h3><p>Yük türü, rota, tonaj ve teslim şartlarına göre fiyat talebi.</p></div>
-  <div class="module-card glass"><h3>Brokerlik</h3><p>Yük, gemi ve charter taraflarını bağlayan teklif akışı.</p></div>
-  <div class="module-card glass"><h3>Gemi İlanları</h3><p>Satılık, kiralık, time charter ve voyage charter gemiler.</p></div>
-  <div class="module-card glass"><h3>Liman & Acente</h3><p>Liman hizmetleri, acente, operasyon ve evrak takibi.</p></div>
-  <div class="module-card glass"><h3>Teknik Servis</h3><p>Bakım, onarım, yedek parça ve teknik tedarik.</p></div>
-  <div class="module-card glass"><h3>Chartering</h3><p>Bulk, tanker, container ve general cargo charter süreçleri.</p></div>
-  <div class="module-card glass"><h3>Evrak Takibi</h3><p>Denizci belgeleri, sertifikalar ve süre takibi.</p></div>
-  <div class="module-card glass"><h3>Danışmanlık</h3><p>Crewing, operasyon, bayrak, klas ve mevzuat danışmanlığı.</p></div>
-  <div class="module-card glass"><h3>Sigorta</h3><p>P&I, H&M ve denizcilik risk çözümleri bağlantısı.</p></div>
-</div>
-
-<div class="section-title"><h2>Navlun Fiyat Talebi</h2><a href="../account/maritime-requests.html">Taleplerim</a></div>
-<section class="request-grid">
-  <div class="request-main glass">
-    <h2>Yük Bilgisi Gir, Navlun Teklifi Al</h2>
-    <p>Yük sahibi veya broker; yük türü, miktar, yükleme limanı, tahliye limanı, laycan, gemi tipi ve teslim şartlarını girerek navlun fiyat talebi oluşturur.</p>
-    <div class="req-steps">
-      <div>1. Yük türü: Bulk / General Cargo / Container / Tanker</div>
-      <div>2. Rota: Yükleme limanı → Tahliye limanı</div>
-      <div>3. Tonaj, laycan, incoterms ve özel şartlar</div>
-      <div>4. Broker ve gemi şirketlerinden teklif akışı</div>
-    </div>
-  </div>
-  <div class="request-side glass">
-    <h3>Hızlı Navlun Formu</h3>
-    <div class="input-box">Yük türü seç</div>
-    <div class="input-box">Yükleme limanı</div>
-    <div class="input-box">Tahliye limanı</div>
-    <div class="input-box">Tonaj / CBM</div>
-    <a class="btn" href="../account/user.html?returnTo=..%2Fecosystem%2Fallonadenizcilik.html%3Fintent%3Dnavlun-talebi-olustur%26q%3DNavlun%2BTalebi%2BOlu%25C5%259Ftur">Navlun Talebi Oluştur</a>
-  </div>
-</section>
-
-<div class="section-title"><h2>Aktif Crew Pozisyonları</h2><a href="../search/arama.html?q=denizcilik+maritime+T%C3%BCm+Pozisyonlar">Tüm Pozisyonlar</a></div>
-<div class="listing-grid">
-  <a href="../career/cv-form.html?position=2nd+Engineer&amp;source=allonadenizcilik" class="listing glass" data-module-tags="maritime,crew"><div class="listing-img"></div><b>2nd Engineer</b><p>Bulk Carrier • 10.000 DWT • 6 ay kontrat</p><div class="meta"><span>Acil</span><span>Başvuru Açık</span></div><div class="price">Crew Talebi</div></a>
-  <a href="../career/cv-form.html?position=Able+Seaman&amp;source=allonadenizcilik" class="listing glass" data-module-tags="maritime,crew"><div class="listing-img"></div><b>Able Seaman</b><p>General Cargo • Avrupa rotası</p><div class="meta"><span>24 ay deneyim</span><span>CV gerekli</span></div><div class="price">Crew Talebi</div></a>
-  <a href="../career/cv-form.html?position=Chief+Officer&amp;source=allonadenizcilik" class="listing glass" data-module-tags="maritime,crew"><div class="listing-img"></div><b>Chief Officer</b><p>Dry Bulk • International trade</p><div class="meta"><span>STCW</span><span>İngilizce</span></div><div class="price">Crew Talebi</div></a>
-  <a href="../career/cv-form.html?position=Oiler&amp;source=allonadenizcilik" class="listing glass" data-module-tags="maritime,crew"><div class="listing-img"></div><b>Oiler</b><p>Engine department • Contract open</p><div class="meta"><span>Deneyimli</span><span>Başvuru</span></div><div class="price">Crew Talebi</div></a>
-</div>
-
-<div class="section-title"><h2>Yük, Gemi ve Broker Pazarı</h2><a href="../search/arama.html?q=denizcilik+maritime+Market+Board">Market Board</a></div>
-<div class="market-board">
-  <div class="board glass"><h3>Yük İlanları</h3><p>Çimento, tahıl, demir, proje yükü, konteyner ve genel kargo talepleri.</p><small>Yük talebi oluştur</small></div>
-  <div class="board glass"><h3>Gemi İlanları</h3><p>Satılık, kiralık, voyage charter, time charter ve açık pozisyon gemiler.</p><small>Gemi ilanı ekle</small></div>
-  <div class="board glass"><h3>Broker Teklifleri</h3><p>Brokerler yük ve gemi taraflarını eşleştirir, teklif süreçleri panelden izlenir.</p><small>Broker paneli</small></div>
-</div>
-
-<div class="section-title"><h2>Satılık / Kiralık Gemi İlanları</h2><a href="../search/arama.html?q=denizcilik+maritime+T%C3%BCm+Gemiler">Tüm Gemiler</a></div>
-<div class="listing-grid">
-  <a href="../search/arama.html?q=denizcilik+maritime+General+Cargo+Vessel" class="listing glass" data-module-tags="maritime,vessel"><div class="listing-img"></div><b>General Cargo Vessel</b><p>7.500 DWT • 2008 build • Mediterranean</p><div class="meta"><span>Satılık</span><span>Class valid</span></div><div class="price">Teklif Al</div></a>
-  <a href="../search/arama.html?q=denizcilik+maritime+Bulk+Carrier" class="listing glass" data-module-tags="maritime,vessel"><div class="listing-img"></div><b>Bulk Carrier</b><p>28.000 DWT • Open for charter</p><div class="meta"><span>Charter</span><span>Prompt</span></div><div class="price">Navlun Sor</div></a>
-  <a href="../search/arama.html?q=denizcilik+maritime+Tanker" class="listing glass" data-module-tags="maritime,vessel"><div class="listing-img"></div><b>Tanker</b><p>Oil/Chemical • Regional trade</p><div class="meta"><span>Kiralık</span><span>Broker</span></div><div class="price">Teklif</div></a>
-  <a href="../search/arama.html?q=denizcilik+maritime+Tug+Boat" class="listing glass" data-module-tags="maritime,vessel"><div class="listing-img"></div><b>Tug Boat</b><p>Port operations • Technical ready</p><div class="meta"><span>Satılık</span><span>Inspection</span></div><div class="price">İncele</div></a>
-</div>
-
-<div class="section-title"><h2>Operasyon & Hizmet Akışı</h2><a href="../search/arama.html?q=denizcilik+maritime+S%C3%BCre%C3%A7+Takibi">Süreç Takibi</a></div>
-<div class="module-grid">
-  <div class="module-card glass"><h3>1. Talep</h3><p>Yük, crew, gemi veya hizmet talebi oluşturulur.</p></div>
-  <div class="module-card glass"><h3>2. Doğrulama</h3><p>Partner firma ve ilan bilgileri kontrol edilir.</p></div>
-  <div class="module-card glass"><h3>3. Eşleşme</h3><p>Uygun gemi, broker, personel veya servis eşleştirilir.</p></div>
-  <div class="module-card glass"><h3>4. Teklif</h3><p>Fiyat, şartlar, evrak ve operasyon detayları sunulur.</p></div>
-  <div class="module-card glass"><h3>5. Takip</h3><p>Süreç panelden izlenir, bildirimler gönderilir.</p></div>
-</div>
-
-<section class="partner-cta glass">
-  <div>
-    <h2>Gemi Şirketi, Broker, Acente veya Crewing Partneri Ol</h2>
-    <p>Allona Denizcilik partner paneliyle crew talepleri, gemi ilanları, yük ilanları, navlun teklifleri, brokerlik süreçleri, evrak takibi ve operasyon bildirimleri tek sistemden yönetilir.</p>
-    <a class="btn" href="../partner/maritime-partner.html">Denizcilik Partneri Ol</a>
-  </div>
-  <div class="panel-list">
-    <div>Crew ve CV yönetimi</div>
-    <div>Gemi ve yük ilanları</div>
-    <div>Navlun teklif akışı</div>
-    <div>Brokerlik ve charter takibi</div>
-    <div>Acente ve liman hizmetleri</div>
-    <div>Evrak ve sertifika kontrolü</div>
-  </div>
-</section>
-
-<section class="info glass">
-  <h2>Allona Denizcilik: Global Maritime İş Ağı</h2>
-  <p>Allona Denizcilik; gemi şirketleri, brokerler, acenteler, denizciler, yük sahipleri ve teknik servis sağlayıcılarını tek AllonaHub ekosistemi içinde buluşturan premium maritime modülüdür.</p>
-  <h3>Crew ve İşveren Paneli</h3>
-  <p>Denizciler CV, sertifika, deneyim ve başvuru bilgilerini sisteme ekleyebilir. Gemi şirketleri pozisyon açabilir, adayları inceleyebilir ve başvuru sürecini takip edebilir.</p>
-  <h3>Yük, Navlun ve Brokerlik</h3>
-  <p>Yük sahipleri navlun talebi oluşturur; brokerler ve gemi şirketleri rota, tonaj, gemi tipi ve laycan bilgilerine göre teklif sunabilir. Bu yapı gerçek sistemde rol bazlı panel ve doğrulama ile yönetilir.</p>
-  <h3>Ekosistem Bağlantısı</h3>
-  <p>Allona Denizcilik; Allona Danışmanlık, Allona Hukuk, Allona Finans ve Allona Sigorta modülleriyle bağlantılı çalışabilir. Gemi alım-satımı, charter sözleşmesi, sigorta ve finansman süreçleri tek ekosistemde takip edilebilir.</p>
-</section>
-</div>
-  <div data-layout="footer"></div>
-  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
-  <script src="../../js/platform.js?v=20260828-corpcontrast3" defer></script>
-<script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260619-live5" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260620-auth2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/allona-maritime.js?v=20260711-maritime7" defer></script>
 </body>
 </html>

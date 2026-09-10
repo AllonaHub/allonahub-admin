@@ -9,7 +9,7 @@ Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılı
 - [ ] Kullanıcı Paneli
 - [ ] Partner Paneli
 - [ ] Sipariş Sistemi
-- [ ] Sağlayıcı Ödeme Sistemi
+- [ ] iyzico Ödeme Sistemi
 - [ ] HP / Kupon Sistemi
 - [ ] Finans ve Komisyon Merkezi
 - [ ] Bildirim Sistemi
@@ -20,14 +20,14 @@ Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılı
 - [x] Kullanıcı adres kaydı için `addresses` RLS ve default adres kurallarını migration'a ekle.
 - [x] Gerçek Supabase sepeti için `carts`, `cart_items` ve sepet RPC'lerini hazırla.
 - [x] Sipariş oluşturmayı `create_transaction_order(...)` RPC'sine taşı.
-- [x] Checkout'u kart bilgisi toplamadan Sağlayıcı yönlendirmesine bağla.
+- [x] Checkout'u kart bilgisi toplamadan iyzico yönlendirmesine bağla.
 - [x] Kupon ve HP indirimini MVP seviyesinde server-side doğrula.
 - [x] Kullanıcı Kupon Merkezi sayfasını ekle.
 - [x] Admin sipariş, kupon ve HP/XP yönetim ekranlarını genişlet.
 - [x] Partner Siparişlerim ekranını partner sipariş kalemleriyle hazırla.
-- [x] Sağlayıcı Edge Function durum güncellemelerini yeni `status` alanıyla uyumlu yap.
+- [x] iyzico Edge Function durum güncellemelerini yeni `status` alanıyla uyumlu yap.
 - [ ] Canlı Supabase projesinde `supabase/migrations/20260621015000_transaction_core_mvp.sql` migration'ını çalıştır.
-- [ ] Canlı banka ödeme sandbox/prod secret değerlerini Edge Functions'a gir ve ödeme turunu uçtan uca test et.
+- [ ] Canlı iyzico sandbox/prod secret değerlerini Edge Functions'a gir ve ödeme turunu uçtan uca test et.
 - [ ] Partner/admin sipariş durumu güncellemesini canlı RLS altında gerçek rollerle test et.
 
 ## Öncelik 0 - Yeni Allona Shop Mimari Kararı
@@ -60,10 +60,76 @@ Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılı
 
 ## Öncelik 0.3 - Denizcilik Modülü
 
-- [x] Denizcilik partner başvurusu için Turnstile/backend uyumlu, PII depolamayan özel başvuru sayfasını ekle.
-- [x] Navlun taleplerim için owner-RLS varsayımıyla çalışan takip ekranını, retry ve iki aşamalı aksiyon ergonomisiyle ekle.
-- [x] Denizcilik CTA'larını yeni partner başvurusu ve navlun takip rotalarına bağla; boş link üretme.
-- [ ] Geniş denizcilik backend/RPC/migration setini admin repo mevcut değişiklikleriyle ayrı kontrollü entegrasyon dalgasında birleştir.
+- [x] `pages/ecosystem/allonadenizcilik.html` sayfasını mobile-first, platform footer uyumlu ve gerçek CTA/link akışlarıyla yenile.
+- [x] Eski `pages/ecosystem/denizcilik.html` rotasını inline script/style içermeyen uyumluluk köprüsüne çevir.
+- [x] `pages/career/maritime-cv.html` sayfasını otomatik script yönlendirmesi yerine CV formu, denizcilik modülü ve destek CTA'ları veren geçiş sayfası yap.
+- [x] Denizcilik linkleri ve taslak metadatasını repo genelindeki kanonik `module_key = maritime` değeriyle hizala.
+- [x] Navlun ön talebinde rota/tonaj bilgisini URL'den çıkar; sekmeye özel, süreli taslak geri yükleme ve istemci doğrulaması ekle.
+- [x] Backend'e bağlı olmayan crew ve gemi örneklerini canlı/aktif ilan gibi göstermeyen rol ve arama profillerine dönüştür.
+- [x] Kullanıcının yalnızca kendi kayıtlarını RLS ile okuyabildiği `pages/account/maritime-requests.html` navlun takip ekranını ekle.
+- [x] Crew kartlarından gelen güvenli `source` ve `position` parametrelerini Maritime CV formunda pozisyon ön dolgusuna bağla.
+- [x] Maritime CV pozisyon ön dolgusunu kayıtlı taslaktan sonra deterministik uygula; sentetik input/çift auto-save'i kaldır ve pasif URL ziyaretinin taslağı değiştirmesini önle.
+- [x] Maritime CV profil fotoğrafı önizlemesine anlamlı alternatif metin ekle.
+- [x] Genel partner sayfasındaki şema dışı doğrudan yazmaya bağımlı olmayan, Turnstile + backend + özel RLS tablosu kullanan denizcilik partner başvurusunu ekle.
+- [x] Denizcilik yüzeylerindeki dekoratif radial ışıkları kaldır ve kart/araç yüzeylerini 8px radius standardına hizala.
+- [x] Ana denizcilik ve Maritime CV hero'larını gerçek fotoğraflı tam yüzey düzene taşı; H1 ürün adı, mobil kompakt navigasyon ve kısa viewport sonraki bölüm ipucunu doğrula.
+- [x] Ana denizcilik ve Maritime CV geçiş sayfalarına ilk Tab'da anında görünen skip-link ekle; Enter ile `main` odağını ve mobil/desktop taşmasız klavye akışını doğrula.
+- [x] Kullanıcı panelinde `module=maritime` bağlamını allowlist ile tanı ve Maritime CV, belgeler, navlun talepleri, gemi işleri kısayollarını göster.
+- [x] Navlun takip ekranına yalnızca talep sahibi ve uygun durumlar için backend doğrulamalı iptal akışı ekle.
+- [x] Crew ve gemi özetleri için `status = active`, `module_key = maritime`, yayın ve son kullanma zamanı kontrollü RLS liste modeli/API ekle; veri yoksa profil şablonlarını koru.
+- [x] Denizcilik migration'larını MFA önkoşulu, tek transaction ve üretim RLS/grant/idempotency kontrolüyle uygulayan deploy araçlarını ekle.
+- [x] Broker tekliflerini talep sahibi, teklif sahibi MFA partner ve MFA admin arasında RLS ile sınırla; navlun takip ekranında güvenli teklif özetlerini göster.
+- [x] Talep sahibinin süresi dolmamış broker teklifini iki aşamalı UI onayı ve service-role-only atomik RPC ile kabul etmesini sağla.
+- [x] Navlun takip ekranında RLS ile okunan, event payload göstermeyen allowlist durum geçmişini ekle.
+- [x] Partner OS ilan gönderimini MFA + onaylı denizcilik partneri + idempotency ile `pending_review` kuyruğuna bağla.
+- [x] Admin Operasyon Paneli'ne MFA korumalı denizcilik partner başvurusu ve ilan onay/ret kuyruğunu ekle; active yayın geçişini backend'e taşı.
+- [x] Ops Admin navlun-partner atamasını ve atanan MFA partnerin atomik/idempotent navlun teklif gönderimini Partner OS'ye bağla.
+- [x] Partner OS'de teklif üretmemiş eşleşmeyi reddetme ve kabul edilmemiş teklifi geri çekme akışlarını iki aşamalı onay, service-role-only RPC ve sahip zaman çizelgesiyle tamamla.
+- [x] Süresi dolan navlun eşleşme/tekliflerini sınırlı, atomik ve idempotent RPC + timing-safe cron ile uzlaştır; talep durumunu kalan aktif işe göre yeniden hesapla.
+- [x] Kabul edilmiş/terminal navlun taleplerinde kazanan dışı eşleşmeleri match-first cron uzlaştırmasıyla kapat ve Partner OS'de sonucu beklemeden terminal durum göster.
+- [x] Kullanıcı Bildirim Merkezi'ne owner-RLS navlun olay akışını payload'sız allowlist ile bağla; Partner OS'ye yalnız aktif davetleri sayan anlık menü rozeti ekle.
+- [x] Navlun bildirim CTA'larını UUID allowlist'li hash deep-link ile ilgili takip kartına bağla; dinamik render sonrası vurgu, odak ve filtre toparlaması ekle.
+- [x] Denizcilik bağlamlı kullanıcı paneli arama/kopyalama kontrollerindeki inline stil ve event handler'ları CSP uyumlu sınıf + listener desenine taşı.
+- [x] Kullanıcı panelindeki sabit bildirim rozetini gerçek `quoted` navlun sayacına, demo Maritime işlem satırlarını owner-RLS son olay akışına dönüştür; güvenli fallback ekle.
+- [x] Denizcilik ana aramasını navlun/CV/destek ve maritime detail akışlarına ayır; public vessel detayından role-aware özel denizcilik partner başvurusuna geçişi düzelt.
+- [x] Denizcilik partner başvurusunu güvenli UUID fallback, idempotent ağ tekrarı, tek kullanımlık Turnstile tokenı, PII bellek temizliği ve CSP uyumlu challenge render'ıyla güçlendir.
+- [x] Navlun talebi formuna tek uçuş gönderim kilidi, offline/zaman aşımı toparlaması, depolama kapalı oturum koruması ve backend uyumlu 730 günlük laycan sınırı ekle.
+- [x] Navlun talebi ve ilk `submitted` olayını service-role-only, yarış güvenli idempotent RPC ile tek transaction içinde oluştur; backend doğrudan çift tablo yazımını kaldır.
+- [x] Navlun talebi iptali ile tekil `cancelled` olayını sahiplik/durum kilitli service-role-only RPC içinde atomik ve idempotent yap.
+- [x] Navlun takip ekranı iptal aksiyonuna offline/timeout/401/404/429/503 toparlaması, yanıt doğrulaması ve hata sonrası iki aşamalı onay sıfırlaması ekle.
+- [x] Navlun teklif kabul UI'ına talep bazlı mutation kilidi, offline/timeout/HTTP toparlaması, tüm onayları sıfırlama ve katı kabul yanıtı doğrulaması ekle.
+- [x] Eşzamanlı teklif kabul çağrılarında kilitli `acceptance_changed` raporlayan v2 RPC ile doğru duplicate yanıtı ve tek audit üret; transaction dışı ön okumaları kaldır.
+- [x] Navlun takip kartlarını detay sorgularından önce render et; RLS okumalarına timeout, gecikmeli deep-link odak koruması ve UUID allowlist'li giriş dönüşü ekle.
+- [x] Navlun takip yükleme/ayrıntı hatalarına mobil uyumlu, tek-uçuşlu retry kontrolü ekle; kartları koru ve başarıda kontrolü gizle.
+- [x] Denizcilik partner başvurusu ve navlun takip aksiyonlarına hata/başarı odağı, bağlamlı erişilebilir ad ve iki aşamalı onay durum duyurusu ekle.
+- [x] Maritime giriş CTA'larını CSP uyumlu kanonik auth formlarına taşı; login/register/forgot legacy redirectlerini kaldır, güvenli returnTo ve navlun taslak geri dönüşünü doğrula.
+- [x] Maritime CV PII taslağını 2 saatlik sekme depolamasına taşı; legacy kalıcı anahtarı tek geçişte sil, envelope/alan/satır/fotoğraf sınırlarını ve debounce + `pagehide` kaydını doğrula.
+- [x] Maritime CV mobil araç çubuğunu 320/390 px'de kaydırmasız iki sütuna geçir; dil/kaydet/PDF/temizle kontrollerinin görünürlüğünü ve yatay taşma olmadığını doğrula.
+- [x] Maritime CV PDF bağımlılıklarına SRI/CORS/referrer koruması ekle; toolbar inline handler'larını listener'a taşı ve tek-uçuş/hata toparlama/güvenli dosya adı akışını doğrula.
+- [x] Maritime CV'de gerçek `html2canvas + jsPDF` ile dört sayfalı `%PDF-` indirme smoke testi ve işlem sonrası UI toparlanmasını doğrula.
+- [x] Maritime CV'deki tüm inline event attribute'lerini allowlist'li editör delegation katmanına taşı; dinamik satır yeniden render'ını ve UI tarafında 50 satır sınırını doğrula.
+- [x] Maritime CV inline CSS/JS ve runtime stil yazımlarını yerel dış dosya, sınıf ve `hidden` desenine taşı; screen/print/mobile regresyonunu doğrula.
+- [x] Maritime CV statik/dinamik kontrollerini programatik label/ID ile adlandır; EN/TR/AZ/RU belge dili, toolbar, ARIA/alt ve mesaj yerelleştirmesini 320 px ile depolama-kapalı durumda doğrula.
+- [x] Maritime CV yazma/depolama sınırlarını statik alanlarda 2000, dinamik alanlarda 300 karaktere eşitle; update/remove global fonksiyonlarında key/index/prototype savunmasını doğrula.
+- [ ] Canlı Supabase projesinde denizcilik migration deploy ve şema kontrol scriptlerini çalıştır; backend endpointlerini canlı domain üzerinden smoke test et.
+
+## Öncelik 0.4 - Allona Maritime Autonomous Hiring
+
+- [x] Master Maritime kapsamını mevcut repo, Partner OS ve güvenlik kurallarıyla uyumlu architecture dokümanına ve coverage matrix'e bağla.
+- [x] Seafarer Workspace, Readiness Passport, Smart Document Doctor, Smart Portrait, otomatik CV, Current Work Status, Verified Vessel Profile, structured jobs ve explainable matching için temel şema ekle.
+- [x] Company Maritime Workspace, Private Candidate Room, Multi-Candidate Hiring Room, Crew Room, Allona Connect provider abstraction, Trust Oversight, sensitive access, view/download audit ve permission matrix için RLS kontrollü temel şema ekle.
+- [x] Verified Gold Tick'i kanıtlı doğrulama, Pro Blue Tick'i ayrı üyelik sinyali olarak veri seviyesinde ayır.
+- [x] Allona Connect için raw secret tutmayan ve varsayılan kayıt politikası `not_recorded` olan provider abstraction satırını ekle.
+- [x] Doğrulanmış çalışma ilişkisi olmadan referans isteği açılamamasını trigger ile koru.
+- [x] Yeni çekirdeği kontrol eden `deploy/maritime/check-maritime-hiring-core.sh` scriptini ekle ve migration uygulama zincirine bağla.
+- [x] Super Admin içinde Maritime Trust Control Center sekmesini ve `/v1/control-center/maritime-trust` metadata/risk/şikayet/audit endpointini ekle; özel konuşma içeriği, dosya yolu, görüşme kaydı, ham gerekçe ve metadata değerlerini varsayılan yanıttan dışarıda tut.
+- [x] Ara yayın için Denizcilik hero görselini koruyup mobil üst alan karışmasını sadeleştir; Partner OS içinde yerel demo ödeme/destek/cihaz fallback'lerini kaldır.
+- [ ] Yeni çekirdek migration'ı staging Supabase üzerinde çalıştır ve RLS/grant/policy kontrolünü gerçek veritabanında doğrula.
+- [ ] Seafarer Workspace backend endpointlerini ekle: belge yükleme/onay, Readiness Passport okuma, müsaitlik yenileme, eşleşme ve teklif durumu.
+- [ ] Partner Panel içinde Company Maritime Workspace backend ve UI akışlarını ekle: Operations Center, Jobs, Hiring Room, Smart Matches, Candidate Room, Urgent Crew, Crew Matrix, Offers & Contracts.
+- [ ] Allona Connect mesaj, dosya, görüşme planlama ve WebRTC provider adapter endpointlerini ekle; medya sağlayıcı secret değerlerini sadece server environment üzerinden bağla.
+- [ ] Trust & Communication Oversight hassas içerik erişim akışını ekle; vaka, gerekçe, süre ve çift onay olmadan özel konuşma/dosya/görüşme içeriği açma.
+- [ ] Adaylar arası görünmezlik, partner tenant izolasyonu, Gold/Blue ayrımı, referans yetkisi, sensitive access ve append-only audit için negative testleri ekle.
 
 ## Öncelik 1 - Üretime Hazırlık
 
@@ -71,14 +137,14 @@ Bu 10 sistem çalışır ve doğrulanmış duruma gelmeden halka açık açılı
 - [x] Supabase bağlantısını ortak servis katmanına al.
 - [x] Aktif ürün listeleme, ürün detayı, sepet, favoriler ve auth sayfalarını oluştur.
 - [x] Kullanıcı adres yönetimini Supabase `addresses` tablosuna bağla.
-- [x] Checkout akışını banka ödeme formu Edge Function sözleşmesine bağla.
-- [x] Checkout yasal onaylarını ve Sağlayıcı yönlendirme mantığını kart bilgisi toplamadan hazırla.
+- [x] Checkout akışını iyzico CheckoutForm Edge Function sözleşmesine bağla.
+- [x] Checkout yasal onaylarını ve iyzico yönlendirme mantığını kart bilgisi toplamadan hazırla.
 - [x] Footer yasal linklerini ve şirket bilgilerini AllonaHub odağıyla düzenle.
 - [x] Footer, dil ve tema altyapısını platform geneline bağla.
 - [x] Supabase SQL şemasını ve RLS politikalarını dokümante et.
 - [ ] Supabase SQL Editor üzerinden `supabase/schema.sql` içeriğini canlı projeye uygula.
 - [ ] Supabase Storage bucketlarını oluştur: `product-images`, `brand-assets`, `partner-documents`.
-- [ ] banka ödeme sandbox anahtarlarını Supabase Edge Function secret olarak ekle.
+- [ ] iyzico sandbox anahtarlarını Supabase Edge Function secret olarak ekle.
 - [ ] Cloudflare domain, SSL ve cache kurallarını yayına hazırla.
 
 ## Öncelik 2 - Yönetim

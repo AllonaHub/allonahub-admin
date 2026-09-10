@@ -11,59 +11,17 @@
       return "20260619-live9";
     }
   })();
-  const SERVICE_WORKER_VERSION = "20260828-corpcontrast4";
-
-  const refreshServiceWorker = () => {
-    if(!("serviceWorker" in navigator)){return}
-    if(!(location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){return}
-
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register(`/sw.js?v=${SERVICE_WORKER_VERSION}`, {scope: "/"})
-        .then(registration => registration.update())
-        .catch(() => undefined);
-    });
-  };
-
-  refreshServiceWorker();
-
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
-    { code: "kk", label: "KK" },
-    { code: "uz", label: "UZ" },
-    { code: "ky", label: "KY" },
     { code: "en", label: "EN" },
     { code: "de", label: "DE" },
     { code: "ru", label: "RU" },
     { code: "ar", label: "AR" }
   ];
-  const currencyOptions = [
-    { code: "TRY", label: "TRY", symbol: "₺" },
-    { code: "USD", label: "USD", symbol: "$" },
-    { code: "EUR", label: "EUR", symbol: "€" },
-    { code: "AZN", label: "AZN", symbol: "₼" },
-    { code: "KZT", label: "KZT", symbol: "₸" },
-    { code: "UZS", label: "UZS", symbol: "soʻm" },
-    { code: "KGS", label: "KGS", symbol: "сом" },
-    { code: "AED", label: "AED", symbol: "د.إ" },
-    { code: "SAR", label: "SAR", symbol: "﷼" },
-    { code: "GBP", label: "GBP", symbol: "£" },
-    { code: "RUB", label: "RUB", symbol: "₽" }
-  ];
-  const languageCurrencyMap = {
-    tr: "TRY",
-    az: "AZN",
-    kk: "KZT",
-    uz: "UZS",
-    ky: "KGS",
-    en: "USD",
-    de: "EUR",
-    ru: "RUB",
-    ar: "AED"
-  };
   const themes = [
     { code: "ocean", label: "Deniz" },
-    { code: "corporate", label: "Kurumsal" },
+    { code: "corporate", label: "Sade Kurumsal" },
     { code: "sunset", label: "Gün Batımı" },
     { code: "forest", label: "Yeşil" },
     { code: "turquoise", label: "Turkuaz" },
@@ -77,25 +35,14 @@
     marketplace: "forest",
     graphite: "ocean"
   };
-  const DEFAULT_THEME = "ocean";
-  const THEME_DEFAULT_MIGRATION_KEY = "allona.theme.defaultCorporate.v1";
-  const THEME_OCEAN_RESTORE_KEY = "allona.theme.restoreOcean.v1";
-  if (!localStorage.getItem(THEME_OCEAN_RESTORE_KEY)) {
-    const storedTheme = localStorage.getItem(THEME_KEY);
-    const wasForcedCorporate = localStorage.getItem(THEME_DEFAULT_MIGRATION_KEY) === "1";
-    if (!storedTheme || (storedTheme === "corporate" && wasForcedCorporate)) {
-      localStorage.setItem(THEME_KEY, DEFAULT_THEME);
-    }
-    localStorage.setItem(THEME_OCEAN_RESTORE_KEY, "1");
-  }
   const state = {
     language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || DEFAULT_THEME,
+    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
     packs: {}
   };
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const moduleAdCampaigns = [
-    { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/shop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
+    { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/allonashop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
     { key: "yemek", paths: ["/pages/commerce/allonayemek.html", "/pages/commerce/allonayemek-tumu.html"], title: "Allona Yemek", eyebrow: "Lezzet Reklamı", sentence: "Yakındaki restoranları, fırsat menülerini ve hızlı siparişi canlı reklam vitriniyle öne çıkar.", href: "/pages/commerce/allonayemek.html", image: "/images/ads/hero-ad-yemek.jpg", accent: "#ff8a3d", cta: "Lezzetleri Gör" },
     { key: "market", paths: ["/pages/commerce/allonamarket.html"], title: "Allona Market", eyebrow: "Market Fırsatı", sentence: "Gıda, temizlik ve ev ihtiyaçlarını hızlı teslimat odaklı market akışıyla göster.", href: "/pages/commerce/allonamarket.html", image: "/images/ads/hero-ad-market.jpg", accent: "#20e3a2", cta: "Markete Git" },
     { key: "taksi", paths: ["/pages/ecosystem/allonataksi.html"], title: "Allona Taksi", eyebrow: "Ulaşım", sentence: "Güvenli rota, canlı sürücü akışı ve şehir içi yolculuk fırsatlarını öne çıkar.", href: "/pages/ecosystem/allonataksi.html", image: "/images/ads/hero-ad-taksi.jpg", accent: "#46a6ff", cta: "Taksi Çağır" },
@@ -471,140 +418,12 @@
     document.head.appendChild(link);
   }
 
-  const CORPORATE_CONTRAST_GUARD_ID = "allonahub-corporate-contrast-guard";
-  const CORPORATE_CONTRAST_GUARD_CSS = `
-html body[data-theme="corporate"] span.gold,
-html body[data-theme="corporate"] .logo-title span.gold,
-html body[data-theme="corporate"] .platform-brand-normalized span.gold,
-html body[data-theme="corporate"] .brand-wordmark span.gold,
-html body[data-theme="corporate"] .footer-brand span.gold{color:#7a4f00!important;-webkit-text-fill-color:#7a4f00!important;text-shadow:none!important}
-html body[data-theme="corporate"] button.search-btn,
-html body[data-theme="corporate"] .search button,
-html body[data-theme="corporate"] a.login,
-html body[data-theme="corporate"] button.login,
-html body[data-theme="corporate"] a.btn:not(.btn--ghost):not(.btn--light):not(.secondary-btn),
-html body[data-theme="corporate"] button.btn:not(.btn--ghost):not(.btn--light):not(.secondary-btn),
-html body[data-theme="corporate"] .platform-theme-btn,
-html body[data-theme="corporate"] .pwa-install-button,
-html body[data-theme="corporate"] .ad-hero__button,
-html body[data-theme="corporate"] .module-ad-banner__button,
-html body[data-theme="corporate"] .food-promo-btn,
-html body[data-theme="corporate"] .food-checkout,
-html body[data-theme="corporate"] .pay-btn,
-html body[data-theme="corporate"] .submit-btn,
-html body[data-theme="corporate"] .premium-action:not(.premium-action--ghost),
-html body[data-theme="corporate"] button[type="submit"]{background:#123a56!important;background-image:linear-gradient(135deg,#123a56,#0a5e96)!important;border-color:rgba(18,58,86,.32)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] button.search-btn *,
-html body[data-theme="corporate"] .search button *,
-html body[data-theme="corporate"] a.login *,
-html body[data-theme="corporate"] button.login *,
-html body[data-theme="corporate"] .platform-theme-btn *,
-html body[data-theme="corporate"] .pwa-install-button *,
-html body[data-theme="corporate"] .ad-hero__button *,
-html body[data-theme="corporate"] .module-ad-banner__button *,
-html body[data-theme="corporate"] .food-promo-btn *,
-html body[data-theme="corporate"] .premium-action:not(.premium-action--ghost) *,
-html body[data-theme="corporate"] button[type="submit"] *{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] a.btn.btn--ghost,
-html body[data-theme="corporate"] button.btn.btn--ghost,
-html body[data-theme="corporate"] a.btn.btn--light,
-html body[data-theme="corporate"] button.btn.btn--light,
-html body[data-theme="corporate"] .secondary-btn,
-html body[data-theme="corporate"] .soon-btn.soon-btn--ghost,
-html body[data-theme="corporate"] .platform-action--secondary{background:#fff!important;background-image:none!important;border-color:rgba(19,40,58,.18)!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
-html body[data-theme="corporate"] .module-ad-banner__content,
-html body[data-theme="corporate"] .module-ad-banner__content strong,
-html body[data-theme="corporate"] .module-ad-banner__copy,
-html body[data-theme="corporate"] .module-ad-banner__eyebrow{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] .module-ad-banner__content{background:linear-gradient(90deg,rgba(2,8,20,.62),rgba(2,8,20,.32) 70%,rgba(2,8,20,0))!important}
-html body[data-theme="corporate"] .shop-promo-content,
-html body[data-theme="corporate"] .shop-promo-content h1,
-html body[data-theme="corporate"] .shop-promo-content h2,
-html body[data-theme="corporate"] .shop-promo-content h3,
-html body[data-theme="corporate"] .shop-promo-content p,
-html body[data-theme="corporate"] .shop-promo-content strong,
-html body[data-theme="corporate"] .shop-promo-details,
-html body[data-theme="corporate"] .food-promo-content,
-html body[data-theme="corporate"] .food-promo-content h1,
-html body[data-theme="corporate"] .food-promo-content h2,
-html body[data-theme="corporate"] .food-promo-content h3,
-html body[data-theme="corporate"] .food-promo-content p,
-html body[data-theme="corporate"] .food-promo-content strong,
-html body[data-theme="corporate"] .food-promo-details{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] .food-live-row em,
-html body[data-theme="corporate"] .food-menu-item small,
-html body[data-theme="corporate"] .food-status.is-success{color:#047857!important;-webkit-text-fill-color:#047857!important;text-shadow:none!important}
-html body[data-theme="corporate"] .legal-document__meta,
-html body[data-theme="corporate"] .legal-document__meta span{background:#f3f7fb!important;color:#536171!important;-webkit-text-fill-color:#536171!important;text-shadow:none!important}
-html body[data-theme="corporate"] .soon-pill{background:#fff8e1!important;border-color:rgba(122,79,0,.24)!important;color:#6f4600!important;-webkit-text-fill-color:#6f4600!important;text-shadow:none!important}
-html body[data-theme="corporate"] .pwa-install-dismiss{background:#fff!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;border-color:rgba(19,40,58,.18)!important}
-html body.taxi-module-page[data-theme="corporate"] .map-toolbar,
-html body.taxi-module-page[data-theme="corporate"] .live-map-shell,
-html body.taxi-module-page[data-theme="corporate"] .taxi-live-map{color:#fff!important;-webkit-text-fill-color:#fff!important}
-html body.taxi-module-page[data-theme="corporate"] .live-pill{background:rgba(2,8,20,.82)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.28)!important}
-html body.taxi-module-page[data-theme="corporate"] .live-pill,
-html body.taxi-module-page[data-theme="corporate"] .live-pill span,
-html body.taxi-module-page[data-theme="corporate"] .live-pill strong,
-html body.taxi-module-page[data-theme="corporate"] .live-pill small,
-html body.taxi-module-page[data-theme="corporate"] .live-pill i{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body.taxi-module-page[data-theme="corporate"] .map-tool-btn{background:#123a56!important;background-image:linear-gradient(135deg,#123a56,#0a5e96)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.24)!important}
-html body.taxi-module-page[data-theme="corporate"] .leaflet-control-zoom a{background:#fff!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important}
-html body[data-theme="corporate"] .icon{background:#eef5fa!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel-icon{background:#fff!important;background-image:none!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__send,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__quick-toggle,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__msg--user{background:#123a56!important;background-image:linear-gradient(135deg,#123a56,#0a5e96)!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel *,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__send *,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__quick-toggle *,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__msg--user *{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__panel,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__msg--assistant,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__action,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__quick button,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__voice,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__input{background:#fff!important;color:#13283a!important;-webkit-text-fill-color:#13283a!important;text-shadow:none!important}
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__channel .ah-assistant__channel-icon,
-html body[data-theme="corporate"] .ah-assistant .ah-assistant__close{background:#fff!important;background-image:none!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
-html body[data-theme="corporate"] :is(.btn,.cta-button,.checkout-btn,.payment-button,.pay-btn,.submit-btn,.buy-btn,.cart-btn,.add-to-cart,.search-btn,.login-btn,.platform-action,.platform-theme-btn,.pwa-install-button,.food-checkout,.store-btn,.module-ad-banner__button,.food-promo-btn,.ad-hero__button):not(.btn--ghost):not(.btn--light):not(.platform-action--secondary):not(.store-btn--app){background:linear-gradient(135deg,#123a56,#0a5e96)!important;border-color:rgba(18,58,86,.32)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
-html body[data-theme="corporate"] .module-ad-banner__content{width:min(560px,calc(100% - 48px))!important;min-height:auto!important;margin:24px!important;padding:clamp(20px,3.2vw,34px)!important;border:1px solid rgba(19,40,58,.14)!important;border-radius:8px!important;background:rgba(255,255,255,.92)!important;color:#102334!important;box-shadow:0 18px 42px rgba(19,40,58,.14)!important;text-shadow:none!important}
-html body[data-theme="corporate"] .module-ad-banner__content strong,
-html body[data-theme="corporate"] .module-ad-banner__copy{color:#102334!important;-webkit-text-fill-color:#102334!important;text-shadow:none!important}
-html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!important;border-color:rgba(18,58,86,.18)!important;color:#123a56!important;-webkit-text-fill-color:#123a56!important;text-shadow:none!important}
-@media (max-width:640px){html body[data-theme="corporate"] .module-ad-banner__content{width:calc(100% - 28px)!important;margin:14px!important;padding:20px!important}}
-`;
-
-  function installCorporateContrastGuard() {
-    const target = document.head || document.documentElement;
-    if (!target) return;
-    let style = document.getElementById(CORPORATE_CONTRAST_GUARD_ID);
-    if (!style) {
-      style = document.createElement("style");
-      style.id = CORPORATE_CONTRAST_GUARD_ID;
-    }
-    if (style.textContent !== CORPORATE_CONTRAST_GUARD_CSS) {
-      style.textContent = CORPORATE_CONTRAST_GUARD_CSS;
-    }
-    target.appendChild(style);
-  }
-
-  function refreshCorporateContrastGuard() {
-    installCorporateContrastGuard();
-    if (window.requestAnimationFrame) {
-      window.requestAnimationFrame(installCorporateContrastGuard);
-    }
-    window.setTimeout(installCorporateContrastGuard, 0);
-    window.setTimeout(installCorporateContrastGuard, 700);
-  }
-
   function applyTheme(theme) {
     const normalized = themeAliases[theme] || theme;
-    const selected = themes.some((item) => item.code === normalized) ? normalized : DEFAULT_THEME;
+    const selected = themes.some((item) => item.code === normalized) ? normalized : "ocean";
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);
-    refreshCorporateContrastGuard();
     document.querySelectorAll("[data-theme-select]").forEach((node) => {
       node.value = selected;
     });
@@ -638,10 +457,7 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
         phrases[source] = (translations && translations.tr) || source;
         return;
       }
-      const translated = translations && translations[language];
-      const sourceText = String(source || "").replace(/\s+/g, " ").trim();
-      const translatedText = String(translated || "").replace(/\s+/g, " ").trim();
-      if (translatedText && translatedText !== sourceText) phrases[source] = translated;
+      if (translations && translations[language]) phrases[source] = translations[language];
     });
     return {
       dir: catalog && catalog.dirs && catalog.dirs[language],
@@ -676,7 +492,7 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
       ...catalogPack,
       dir: catalogPack.dir || remotePack.dir || embeddedPack.dir || (selected === "ar" ? "rtl" : "ltr"),
       keys: { ...(embeddedPack.keys || {}), ...(remotePack.keys || {}), ...(catalogPack.keys || {}) },
-      phrases: { ...(catalogPack.phrases || {}), ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}) }
+      phrases: { ...(embeddedPack.phrases || {}), ...(remotePack.phrases || {}), ...(catalogPack.phrases || {}) }
     };
     state.packs[selected] = pack;
     return pack;
@@ -918,41 +734,7 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
     }
   }
 
-  function currentCurrency() {
-    const target = String(App.currency?.state?.target || "TRY").toUpperCase();
-    return currencyOptions.find((item) => item.code === target) || currencyOptions[0];
-  }
-
-  function updateCurrencyControls() {
-    const selected = currentCurrency();
-    document.querySelectorAll("[data-currency-current]").forEach((node) => {
-      node.textContent = selected.label;
-    });
-    document.querySelectorAll("[data-currency-symbol]").forEach((node) => {
-      node.textContent = selected.symbol;
-    });
-    document.querySelectorAll("[data-currency-option]").forEach((node) => {
-      node.classList.toggle("is-active", node.dataset.currencyOption === selected.code);
-      node.setAttribute("aria-checked", node.dataset.currencyOption === selected.code ? "true" : "false");
-    });
-  }
-
-  async function applyCurrency(currency, source) {
-    const selected = currencyOptions.some((item) => item.code === currency) ? currency : "TRY";
-    if (App.currency && App.currency.setCurrency) {
-      await App.currency.setCurrency(selected, { manual: true, source: source || "platform_selector" });
-    }
-    updateCurrencyControls();
-  }
-
-  function syncCurrencyForLanguage(language) {
-    const mappedCurrency = languageCurrencyMap[language];
-    if (!mappedCurrency) return;
-    applyCurrency(mappedCurrency, "language_selector").catch(() => updateCurrencyControls());
-  }
-
-  async function applyLanguage(language, options) {
-    const settings = options || {};
+  async function applyLanguage(language) {
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     state.language = selected;
     localStorage.setItem(LANG_KEY, selected);
@@ -978,9 +760,6 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
       node.setAttribute("aria-checked", node.dataset.languageOption === selected ? "true" : "false");
     });
     document.dispatchEvent(new CustomEvent("allona:language-changed", { detail: { language: selected } }));
-    if (settings.userAction && settings.syncCurrency !== false) {
-      syncCurrencyForLanguage(selected);
-    }
   }
 
   function scheduleLanguageRefresh() {
@@ -1020,15 +799,6 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
           </button>
           <div class="platform-menu" data-platform-menu role="menu" aria-label="Dil seçimi">
             ${languages.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === state.language ? "true" : "false"}" class="platform-menu-item ${item.code === state.language ? "is-active" : ""}" data-language-option="${item.code}">${item.label}</button>`).join("")}
-          </div>
-        </div>
-        <div class="platform-control platform-control--currency" data-platform-control>
-          <button class="platform-control-btn platform-currency-btn" type="button" data-platform-menu-toggle aria-label="Para birimi seçimi" aria-haspopup="menu" aria-expanded="false">
-            <span class="platform-currency-symbol" data-currency-symbol aria-hidden="true">${currentCurrency().symbol}</span>
-            <span class="platform-control-value" data-currency-current>${currentCurrency().label}</span>
-          </button>
-          <div class="platform-menu" data-platform-menu role="menu" aria-label="Para birimi seçimi">
-            ${currencyOptions.map((item) => `<button type="button" role="menuitemradio" aria-checked="${item.code === currentCurrency().code ? "true" : "false"}" class="platform-menu-item ${item.code === currentCurrency().code ? "is-active" : ""}" data-currency-option="${item.code}"><span class="platform-menu-currency">${item.symbol}</span>${item.label}</button>`).join("")}
           </div>
         </div>
         <div class="platform-control platform-control--theme" data-platform-control>
@@ -1214,7 +984,6 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
     document.querySelectorAll("[data-theme-current]").forEach((node) => {
       node.textContent = currentTheme().label;
     });
-    updateCurrencyControls();
   }
 
   function inferRoute(label) {
@@ -1237,7 +1006,7 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
       [/iletişim|bize/i, "/pages/company/iletisim.html"],
       [/modül|hizmet/i, "/index.html#modules"],
       [/kariyer|iş/i, "/pages/career/allonakariyer.html"],
-      [/allona shop|ürün|mağaza/i, "/pages/commerce/shop.html"],
+      [/allona shop|ürün|mağaza/i, "/pages/commerce/allonashop.html"],
       [/yemek|restoran/i, "/pages/commerce/allonayemek.html"],
       [/market/i, "/pages/commerce/allonamarket.html"],
       [/taksi|taxi/i, "/pages/ecosystem/allonataksi.html"]
@@ -1387,14 +1156,6 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
     if (!campaign) return;
     const ad = pickDailyPartnerAd(campaign);
     const banner = createModuleAdBanner(ad, campaign);
-    const shopAnchor = campaign.key === "shop"
-      ? document.querySelector(".shop-landing [data-shop-shortcuts]") || document.querySelector(".shop-landing .shop-category-menu--top")
-      : null;
-    if (shopAnchor) {
-      shopAnchor.insertAdjacentElement("afterend", banner);
-      announceModuleAdBanner(banner);
-      return;
-    }
     const layoutHeader = document.querySelector("[data-layout='header']");
     if (layoutHeader && layoutHeader.parentElement) {
       layoutHeader.insertAdjacentElement("afterend", banner);
@@ -1453,11 +1214,9 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
   function bindEvents() {
     document.addEventListener("change", (event) => {
       const languageSelect = event.target.closest("[data-language-select]");
-      if (languageSelect) applyLanguage(languageSelect.value, { userAction: true });
+      if (languageSelect) applyLanguage(languageSelect.value);
       const themeSelect = event.target.closest("[data-theme-select]");
       if (themeSelect) applyTheme(themeSelect.value);
-      const currencySelect = event.target.closest("[data-currency-select]");
-      if (currencySelect) applyCurrency(currencySelect.value, "platform_select");
     });
     document.addEventListener("click", (event) => {
       const toggle = event.target.closest("[data-platform-menu-toggle]");
@@ -1473,15 +1232,7 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
       const languageOption = event.target.closest("[data-language-option]");
       if (languageOption) {
         event.preventDefault();
-        applyLanguage(languageOption.dataset.languageOption, { userAction: true });
-        closePlatformMenus();
-        return;
-      }
-
-      const currencyOption = event.target.closest("[data-currency-option]");
-      if (currencyOption) {
-        event.preventDefault();
-        applyCurrency(currencyOption.dataset.currencyOption, "platform_menu");
+        applyLanguage(languageOption.dataset.languageOption);
         closePlatformMenus();
         return;
       }
@@ -1513,7 +1264,6 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
       updateAccountLinks();
     });
     document.addEventListener("allona:language-changed", updateAccountLinks);
-    document.addEventListener("allona:currency-changed", updateCurrencyControls);
   }
 
   function closePlatformMenus(except) {
@@ -1548,10 +1298,8 @@ html body[data-theme="corporate"] .module-ad-banner__eyebrow{background:#eef5fa!
 
   App.platform = {
     languages,
-    currencies: currencyOptions,
     themes,
     setLanguage: applyLanguage,
-    setCurrency: applyCurrency,
     setTheme: applyTheme,
     assetUrl
   };

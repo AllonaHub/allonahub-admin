@@ -2,21 +2,12 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Giriş Yap | AllonaHub</title>
-  <link rel="canonical" href="user.html">
-  <meta http-equiv="refresh" content="0; url=user.html">
-  <script>
-    (function(){
-      const target=new URL("user.html", window.location.href);
-      new URLSearchParams(window.location.search).forEach((value,key)=>target.searchParams.set(key,value));
-      target.searchParams.set("tab","login");
-      window.location.replace(target.href+window.location.hash);
-    })();
-  </script>
+  <link rel="canonical" href="login.html">
   <meta name="description" content="AllonaHub hesabınıza giriş yapın.">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260630-currency3">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
 </head>
 <body>
   <div class="site-shell">
@@ -45,8 +36,8 @@
           <span aria-hidden="true">G</span>
           Google ile Giriş Yap
         </button>
-        <div data-auth-status></div>
-        <p class="auth-switch"><a href="user.html?tab=forgot">Şifremi unuttum</a> · <a href="user.html?tab=register">Kayıt ol</a></p>
+        <div data-auth-status role="status" aria-live="polite"></div>
+        <p class="auth-switch"><a href="forgot-password.html" data-auth-route>Şifremi unuttum</a> · <a href="register.html" data-auth-route>Kayıt ol</a></p>
       </section>
     </main>
     <div data-layout="footer"></div>
@@ -54,14 +45,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260619-cvpay2" defer></script>
-  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
   <script src="../../js/supabase-client.js?v=20260623-reset1" defer></script>
   <script src="../../js/auth.js?v=20260623-mfa2" defer></script>
   <script src="../../js/cv-access.js?v=20260619-payform1" defer></script>
   <script src="../../js/cart.js?v=20260621-tx1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
-  <script src="../../js/auth-pages.js?v=20260623-mfa2" defer></script>
-  <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
-<script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/auth-pages.js?v=20260711-authroute1" defer></script>
+  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

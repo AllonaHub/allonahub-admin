@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+CHECK_SCRIPT="$ROOT_DIR/deploy/maritime/check-maritime-schema.sh"
+CORE_CHECK_SCRIPT="$ROOT_DIR/deploy/maritime/check-maritime-hiring-core.sh"
+DB_URL="${SUPABASE_DB_URL:-${DATABASE_URL:-${POSTGRES_URL:-}}}"
+MIGRATIONS=(
+  "$ROOT_DIR/supabase/migrations/20260711123000_create_maritime_freight_requests.sql"
+  "$ROOT_DIR/supabase/migrations/20260711133000_create_maritime_partner_applications.sql"
+  "$ROOT_DIR/supabase/migrations/20260711143000_create_maritime_public_listings.sql"
+  "$ROOT_DIR/supabase/migrations/20260711153000_create_maritime_freight_offers.sql"
+  "$ROOT_DIR/supabase/migrations/20260711163000_add_maritime_listing_approval_workflow.sql"
+  "$ROOT_DIR/supabase/migrations/20260711173000_accept_maritime_freight_offer_rpc.sql"
+  "$ROOT_DIR/supabase/migrations/20260711183000_create_maritime_freight_matching.sql"
+  "$ROOT_DIR/supabase/migrations/20260711193000_add_maritime_partner_exit_workflows.sql"
+  "$ROOT_DIR/supabase/migrations/20260711203000_reconcile_maritime_freight_expirations.sql"
+  "$ROOT_DIR/supabase/migrations/20260711213000_create_maritime_freight_request_rpc.sql"
+  "$ROOT_DIR/supabase/migrations/20260711223000_cancel_maritime_freight_request_rpc.sql"
+  "$ROOT_DIR/supabase/migrations/20260711233000_accept_maritime_freight_offer_v2_rpc.sql"
+  "$ROOT_DIR/supabase/migrations/20260910120000_create_maritime_hiring_core.sql"
+)
+
+if [ -z "$DB_URL" ]; then
+  echo "Set SUPABASE_DB_URL, DATABASE_URL or POSTGRES_URL before applying maritime migrations." >&2
+  exit 1
+fi
+
+if ! command -v psql >/dev/null 2>&1; then
+  echo "psql is required to apply Supabase SQL migrations." >&2
+  exit 1
+fi
+
+for migration in "${MIGRATIONS[@]}"; do
+  if [ ! -f "$migration" ]; then
+    echo "Migration file not found: $migration" >&2
+    exit 1
+  fi
+done
+
+if [ ! -f "$CHECK_SCRIPT" ] || [ ! -f "$CORE_CHECK_SCRIPT" ]; then
+  echo "Maritime check scripts are missing." >&2
+  exit 1
+fi
+
+helper_state="$(
+  psql "$DB_URL" -X -At -v ON_ERROR_STOP=1 -c "
+    select case when
+      to_regprocedure('public.set_updated_at()') is not null
+      and to_regprocedure('public.is_admin()') is not null
+      and to_regprocedure('public.is_partner_or_admin()') is not null
+      and to_regprocedure('public.has_mfa()') is not null
+      and coalesce(
+        pg_get_functiondef(to_regprocedure('public.is_admin()')) ilike '%has_mfa%',
+        false
+      )
+      and coalesce(
+        pg_get_functiondef(to_regprocedure('public.is_partner_or_admin()')) ilike '%has_mfa%',
+        false
+      )
+    then 'ready' else 'missing' end;
+  "
+)"
+
+if [ "$helper_state" != "ready" ]; then
+  echo "Maritime migrations require schema.sql and the MFA enterprise security migration first." >&2
+  echo "Apply 20260619110000_security_hardening.sql and 20260619193000_enterprise_security_controls.sql, then retry." >&2
+  exit 1
+fi
+
+PSQL_FILES=()
+for migration in "${MIGRATIONS[@]}"; do
+  PSQL_FILES+=("-f" "$migration")
+done
+
+echo "Applying ${#MIGRATIONS[@]} maritime migrations in one transaction."
+psql "$DB_URL" -X -v ON_ERROR_STOP=1 --single-transaction "${PSQL_FILES[@]}"
+
+"$CHECK_SCRIPT"
+"$CORE_CHECK_SCRIPT"
+echo "Maritime migrations applied and verified."

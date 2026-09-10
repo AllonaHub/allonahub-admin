@@ -6,9 +6,9 @@
   <title>AllonaHub Partner OS</title>
   <meta name="description" content="AllonaHub Partner OS: QR, NFC, ödeme, ürün, sipariş, hakediş ve operasyon yönetimi.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260827-toaststack1">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260827-toastcontrast1">
+  <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260711-maritime5">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -30,27 +30,13 @@
 
         <nav class="partner-os-menu">
           <button class="is-active" type="button" data-panel-target="dashboard"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></button>
-          <button type="button" data-panel-target="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulum</span></button>
           <button type="button" data-panel-target="payments"><i class="fa-solid fa-tower-broadcast"></i><span>QR & NFC POS</span></button>
-          <div class="partner-os-menu-group">
-            <button type="button" data-panel-target="products" data-product-view-target="list" aria-haspopup="true"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
-            <div class="partner-os-submenu" role="menu" aria-label="Ürünler menüsü">
-              <a href="/pages/partner/partner-products.html"><i class="fa-solid fa-table-list"></i><span>Ürünlerim</span></a>
-              <button type="button" data-product-add data-product-view-target="add"><i class="fa-solid fa-plus"></i><span>Ürün ekle</span></button>
-            </div>
-          </div>
-          <button type="button" data-panel-target="integrations"><i class="fa-solid fa-plug-circle-bolt"></i><span>Entegrasyonlar</span></button>
+          <button type="button" data-panel-target="products"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
+          <button type="button" data-panel-target="maritime"><i class="fa-solid fa-ship"></i><span>Denizcilik</span><span class="partner-os-menu-count" data-maritime-match-count hidden>0</span></button>
           <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
-          <button type="button" data-panel-target="refunds"><i class="fa-solid fa-rotate-left"></i><span>İade & İptal</span></button>
           <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
-          <a href="./e-donusum.html" data-e-invoicing-entry hidden><i class="fa-solid fa-file-invoice"></i><span>e-Dönüşüm & Faturalar</span></a>
-          <button type="button" data-panel-target="growth"><i class="fa-solid fa-tags"></i><span>Promosyon & Fiyat</span></button>
-          <button type="button" data-panel-target="reports"><i class="fa-solid fa-chart-simple"></i><span>Rapor</span></button>
-          <button type="button" data-panel-target="customers"><i class="fa-solid fa-comments-dollar"></i><span>Mağaza & Müşteri</span></button>
-          <button type="button" data-panel-target="ads"><i class="fa-solid fa-rectangle-ad"></i><span>Reklam</span></button>
-          <button type="button" data-panel-target="development"><i class="fa-solid fa-arrow-trend-up"></i><span>Gelişim</span></button>
+          <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
           <button type="button" data-panel-target="operations"><i class="fa-solid fa-store"></i><span>Şube & Cihaz</span></button>
-          <button type="button" data-panel-target="academy"><i class="fa-solid fa-graduation-cap"></i><span>Akademi</span></button>
           <button type="button" data-panel-target="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
           <button type="button" data-panel-target="settings"><i class="fa-solid fa-shield-halved"></i><span>Ayarlar</span></button>
         </nav>
@@ -69,7 +55,7 @@
             <p data-partner-summary>Ürün, sipariş, QR, NFC, hakediş ve kampanya akışları hazırlanıyor.</p>
           </div>
           <div class="partner-os-actions">
-            <a href="../commerce/allonashop.html" data-partner-store-link><i class="fa-solid fa-store"></i><span data-partner-store-label>Mağazaya Git</span></a>
+            <a href="../commerce/allonashop.html"><i class="fa-solid fa-store"></i><span>Mağazaya Git</span></a>
             <button type="button" data-refresh-partner><i class="fa-solid fa-rotate"></i><span>Yenile</span></button>
             <button type="button" data-partner-logout><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Çıkış</span></button>
           </div>
@@ -85,12 +71,8 @@
               <span data-dashboard-subtitle>Canlı performans, ödeme, kampanya ve operasyon verileri burada birleşir.</span>
               <div class="partner-os-hero-actions">
                 <button type="button" data-panel-jump="payments"><i class="fa-solid fa-qrcode"></i><span>Ödeme Al</span></button>
-                <button type="button" data-panel-jump="products" data-product-add data-product-view-target="add"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
-                <button type="button" data-panel-jump="integrations"><i class="fa-solid fa-plug"></i><span>Entegrasyon</span></button>
+                <button type="button" data-panel-jump="products"><i class="fa-solid fa-plus"></i><span>Ürün Ekle</span></button>
                 <button type="button" data-panel-jump="finance"><i class="fa-solid fa-file-invoice-dollar"></i><span>Hakediş</span></button>
-                <button type="button" data-panel-jump="reports"><i class="fa-solid fa-chart-simple"></i><span>Rapor</span></button>
-                <button type="button" data-panel-jump="refunds"><i class="fa-solid fa-rotate-left"></i><span>İade / İptal</span></button>
-                <button type="button" data-panel-jump="onboarding"><i class="fa-solid fa-list-check"></i><span>Kurulumu Bitir</span></button>
               </div>
             </div>
             <div class="partner-os-trust">
@@ -102,40 +84,6 @@
           </div>
 
           <div class="partner-os-kpis" data-partner-kpis></div>
-
-          <section class="partner-os-marketplace-brief" data-marketplace-brief></section>
-
-          <div class="partner-os-grid partner-os-grid--three">
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Mağaza Sağlığı</p>
-                  <h2>Operasyon Puanı</h2>
-                </div>
-              </div>
-              <div class="partner-os-health" data-store-health></div>
-            </section>
-
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Hızlı Aksiyon</p>
-                  <h2>Bugünün İşleri</h2>
-                </div>
-              </div>
-              <div class="partner-os-action-list" data-action-center></div>
-            </section>
-
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Duyurular</p>
-                  <h2>Partner Merkezi</h2>
-                </div>
-              </div>
-              <div class="partner-os-mini-list" data-announcement-list></div>
-            </section>
-          </div>
 
           <div class="partner-os-grid partner-os-grid--two">
             <section class="partner-os-panel">
@@ -161,40 +109,6 @@
           </div>
         </section>
 
-        <section class="partner-os-section" id="onboarding" data-panel-section>
-          <div class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>Kurulum Merkezi</p>
-                <h2>Partner Hesabını Yayına Hazırla</h2>
-              </div>
-              <span class="partner-os-live" data-onboarding-score>Kontrol ediliyor</span>
-            </div>
-            <div class="partner-os-onboarding" data-onboarding-list></div>
-          </div>
-
-          <div class="partner-os-grid partner-os-grid--three">
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-id-card-clip"></i>
-              <h3>Belge ve Profil</h3>
-              <p>Yasal unvan, logo, iletişim, ödeme takvimi ve lokasyon bilgilerini tamamla.</p>
-              <button type="button" data-panel-jump="settings">Bilgileri Aç</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-box-open"></i>
-              <h3>Katalog Hazırlığı</h3>
-              <p>Ürün, hizmet veya menü kayıtlarını fiyat, stok, görsel ve açıklamayla canlıya hazırla.</p>
-              <button type="button" data-panel-jump="products">Kataloğa Git</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-shield-heart"></i>
-              <h3>Güvenlik</h3>
-              <p>MFA, destek kayıtları ve işlem loglarıyla partner hesabını koruma altında tut.</p>
-              <a class="partner-os-link-button" href="../account/mfa.html?returnTo=/pages/partner/partner-panel.html">MFA Ayarları</a>
-            </article>
-          </div>
-        </section>
-
         <section class="partner-os-section" id="payments" data-panel-section>
           <div class="partner-os-panel">
             <div class="partner-os-panel-head">
@@ -202,7 +116,7 @@
                 <p>AllonaPay Terminal</p>
                 <h2>QR, NFC, Link ve POS ile Ödeme Al</h2>
               </div>
-              <span class="partner-os-live">SoftPOS hazır altyapı</span>
+              <span class="partner-os-live">Backend doğrulamalı</span>
             </div>
 
             <div class="partner-os-grid partner-os-grid--terminal">
@@ -247,7 +161,7 @@
             <article class="partner-os-feature">
               <i class="fa-solid fa-mobile-screen-button"></i>
               <h3>NFC SoftPOS</h3>
-              <p>Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için Sağlayıcı Cep POS ve banka adaptörleri.</p>
+              <p>Android NFC cihazla kart, telefon veya saat temassız ödeme kabulü için iyzico Cep POS ve banka adaptörleri.</p>
             </article>
             <article class="partner-os-feature">
               <i class="fa-solid fa-qrcode"></i>
@@ -286,164 +200,111 @@
                 <p>Katalog</p>
                 <h2>Ürün ve Hizmetler</h2>
               </div>
-              <div class="partner-os-panel-actions">
-                <a href="/pages/partner/partner-products.html"><i class="fa-solid fa-table-list"></i><span>Ürünlerim</span></a>
-                <button type="button" data-product-add data-product-view-target="add"><i class="fa-solid fa-plus"></i><span>Ürün / Hizmet Ekle</span></button>
-              </div>
             </div>
-
-            <div class="partner-os-product-summary" data-product-summary></div>
-
-            <div class="partner-os-product-view is-active" data-product-view-panel="list">
-              <div class="partner-os-upload-actions">
-                <button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Excel'e Aktar</span></button>
-                <button type="button" data-download-template><i class="fa-solid fa-download"></i><span>Şablon İndir</span></button>
-                <a href="/pages/partner/partner-products.html#history"><i class="fa-solid fa-clock-rotate-left"></i><span>Ürün Geçmişi</span></a>
-              </div>
-              <div class="partner-os-table-wrap">
-                <table class="partner-os-table">
-                  <thead>
-                    <tr><th>Ürün</th><th>Stok / Kod</th><th>Fiyat</th><th>Durum</th><th>Sinyal</th><th>Aksiyon</th></tr>
-                  </thead>
-                  <tbody data-product-rows></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="partner-os-product-view" data-product-view-panel="add" hidden>
-              <div class="partner-os-module-access" data-module-access></div>
-              <div class="partner-os-upload-actions">
-                <button type="button" data-download-template><i class="fa-solid fa-download"></i><span>Excel Şablonu İndir</span></button>
-                <button type="button" data-bulk-product-trigger><i class="fa-solid fa-file-excel"></i><span>Toplu Ürün Ekle</span></button>
-                <input type="file" data-bulk-product-input accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
-              </div>
-              <div class="partner-os-bulk-result" data-bulk-result hidden></div>
-              <form class="partner-os-product-form" data-product-form>
-                <label><span>Ürün / hizmet adı</span><input name="name" required placeholder="Örn. Şehir içi taksi transferi"></label>
-                <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="market">Allona Market</option><option value="food">Allona Yemek</option><option value="service">Hizmet / Ekosistem</option></select></label>
-                <label><span>Kategori</span><input name="category" required placeholder="Market / Kahvaltı, Burger, hizmet..."></label>
-                <label><span>Restoran / marka adı</span><input name="brand" placeholder="Örn. Allona Market Partneri"></label>
-                <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required placeholder="0.00"></label>
-                <label><span>Stok / kontenjan</span><input name="stock" type="number" min="0" step="1" value="1"></label>
-                <label><span>Yayın durumu</span><select name="status"><option value="draft">Onaya gönder</option><option value="active">Yayın talebi</option></select></label>
-                <label><span>Satıcı görünen adı</span><input name="seller_public_name" placeholder="Müşteriye görünecek mağaza/satıcı adı"></label>
-                <label><span>Satıcı şehir</span><input name="seller_city" placeholder="İstanbul"></label>
-                <label class="partner-os-span-2"><span>Ticari unvan</span><input name="seller_legal_name" placeholder="Fatura ve sözleşmede kullanılacak resmi unvan"></label>
-                <label><span>Satıcı destek iletişimi</span><input name="seller_contact" placeholder="destek@firma.com veya telefon"></label>
-                <label><span>Vergi no maskesi</span><input name="seller_tax_number_masked" placeholder="055****688 gibi"></label>
-                <label class="partner-os-span-2"><span>Fatura sorumluluğu</span><input name="invoice_responsibility" placeholder="Fatura ve satış sonrası sorumluluk ilgili partner/satıcı kaydına göre yürütülür."></label>
-                <label class="partner-os-span-2"><span>Satıcı bilgilendirme notu</span><input name="seller_disclosure" placeholder="Satıcı bilgileri sipariş öncesinde ve faturada gösterilir; destek AllonaHub üzerinden yürütülür."></label>
-                <input name="media_gallery" type="hidden" data-product-media-gallery>
-                <label class="partner-os-span-2"><span>Görsel dosyaları (en fazla 8)</span><input name="image_file" type="file" accept="image/avif,image/jpeg,image/png,image/webp" multiple data-product-image-file></label>
-                <label class="partner-os-span-2"><span>Görsel URL</span><input name="image_url" placeholder="/images/modules/market-water-pack.png veya https://..." data-product-image-url></label>
-                <label class="partner-os-span-2"><span>Video dosyası (en fazla 1)</span><input name="video_file" type="file" accept="video/mp4,video/webm,video/quicktime" data-product-video-file></label>
-                <label class="partner-os-span-2"><span>Video URL</span><input name="video_url" placeholder="https://.../urun-videosu.mp4" data-product-video-url></label>
-                <label class="partner-os-span-2"><span>Açıklama</span><input name="description" placeholder="Müşteriye görünen kısa açıklama"></label>
-                <button type="submit"><i class="fa-solid fa-plus"></i><span>Kataloğa Ekle</span></button>
-              </form>
+            <form class="partner-os-product-form" data-product-form>
+              <label><span>Ürün / hizmet adı</span><input name="name" required placeholder="Örn. Şehir içi taksi transferi"></label>
+              <label><span>Yayın kanalı</span><select name="catalog_scope"><option value="shop">Allona Shop</option><option value="food">Allona Yemek</option><option value="service">Hizmet / Ekosistem</option></select></label>
+              <label><span>Kategori</span><input name="category" required placeholder="Burger, pizza, market, taksi..."></label>
+              <label><span>Restoran / marka adı</span><input name="brand" placeholder="Örn. Allona Burger House"></label>
+              <label><span>Fiyat</span><input name="price" type="number" min="0" step="0.01" required placeholder="0.00"></label>
+              <label><span>Stok / kontenjan</span><input name="stock" type="number" min="0" step="1" value="1"></label>
+              <label><span>Yayın durumu</span><select name="status"><option value="active">Yayında</option><option value="draft">Taslak</option></select></label>
+              <label class="partner-os-span-2"><span>Görsel URL</span><input name="image_url" placeholder="/images/modules/yemek-light-v5.jpg veya https://..."></label>
+              <label class="partner-os-span-2"><span>Açıklama</span><input name="description" placeholder="Müşteriye görünen kısa açıklama"></label>
+              <button type="submit"><i class="fa-solid fa-plus"></i><span>Kataloğa Ekle</span></button>
+            </form>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>Sinyal</th></tr>
+                </thead>
+                <tbody data-product-rows></tbody>
+              </table>
             </div>
           </div>
+
         </section>
 
-        <section class="partner-os-section" id="integrations" data-panel-section>
+        <section class="partner-os-section" id="maritime" data-panel-section>
           <div class="partner-os-panel">
             <div class="partner-os-panel-head">
               <div>
-                <p>Entegrasyon Merkezi</p>
-                <h2>Ürün Akışları ve Connector Altyapısı</h2>
+                <p>Allona Denizcilik</p>
+                <h2>Crew ve Gemi İlanları</h2>
               </div>
-              <span class="partner-os-live">Ücretsiz başlangıç</span>
+              <a href="../ecosystem/allonadenizcilik.html">Modülü Aç</a>
             </div>
-
-            <div class="partner-os-integration-modes" data-integration-modes>
-              <button class="is-active" type="button" data-integration-mode="import">
-                <i class="fa-solid fa-cloud-arrow-down"></i>
-                <span>Ürünleri Çek</span>
-                <small>Ücretsiz</small>
-              </button>
-              <button type="button" data-integration-mode="full">
-                <i class="fa-solid fa-arrows-rotate"></i>
-                <span>Tam Entegrasyon</span>
-                <small>Premium</small>
-              </button>
-            </div>
-            <div class="partner-os-integration-note" data-integration-note></div>
-
-            <div class="partner-os-integration-connectors" data-integration-connectors></div>
-
-            <form class="partner-os-product-form partner-os-integration-form" data-integration-form>
-              <input type="hidden" name="export_enabled" value="false" data-integration-export-enabled>
+            <p class="partner-os-maritime-status" data-maritime-eligibility>Denizcilik partner yetkisi doğrulanıyor.</p>
+            <form class="partner-os-product-form partner-os-maritime-form" data-maritime-listing-form>
               <label>
-                <span>Platform</span>
-                <select name="provider" data-integration-provider></select>
-              </label>
-              <label>
-                <span>Bağlantı adı</span>
-                <input name="display_name" required placeholder="Ana mağaza, XML feed, WooCommerce...">
-              </label>
-              <label>
-                <span>Yayın durumu</span>
-                <select name="default_publish_status">
-                  <option value="draft">Taslakta beklet</option>
-                  <option value="active">Direkt yayına al</option>
+                <span>İlan türü</span>
+                <select name="listing_type" required>
+                  <option value="crew_position">Crew pozisyonu</option>
+                  <option value="vessel">Gemi / kapasite</option>
                 </select>
               </label>
-              <label>
-                <span>Senkron modu</span>
-                <select name="sync_mode">
-                  <option value="manual">Manuel</option>
-                  <option value="scheduled">Zamanlı</option>
-                </select>
-              </label>
-              <label>
-                <span data-integration-source-label>Kaynak / mağaza URL</span>
-                <input name="source_url" placeholder="https://..." data-integration-source-input>
-              </label>
-              <label>
-                <span data-integration-key-label>API anahtarı</span>
-                <input name="api_key" autocomplete="off" placeholder="Gerekiyorsa" data-integration-key-input>
-              </label>
-              <label>
-                <span data-integration-secret-label>API secret / token</span>
-                <input name="api_secret" autocomplete="off" placeholder="Gerekiyorsa" data-integration-secret-input>
-              </label>
-              <label>
-                <span>Varsayılan kanal</span>
-                <select name="module_key">
-                  <option value="shop">Allona Shop</option>
-                  <option value="market">Allona Market</option>
-                  <option value="food">Allona Yemek</option>
-                  <option value="service">Hizmet / Ekosistem</option>
-                </select>
-              </label>
-              <label class="partner-os-span-2">
-                <span>Varsayılan kategori</span>
-                <input name="default_category" placeholder="Genel">
-              </label>
-              <button type="submit"><i class="fa-solid fa-floppy-disk"></i><span>Bağlantıyı Kaydet</span></button>
+              <label><span>Başlık</span><input name="title" minlength="2" maxlength="140" required placeholder="Örn. Chief Officer"></label>
+              <label><span>Konum</span><input name="location_label" maxlength="120" placeholder="Örn. Tuzla / İstanbul"></label>
+              <label><span>Detay etiketi</span><input name="detail_label" maxlength="120" placeholder="Örn. Kontrat 4+1 ay"></label>
+              <label><span>Yayın bitişi</span><input name="expires_at" type="date" required data-maritime-listing-expiry></label>
+              <label class="partner-os-span-2"><span>Kısa özet</span><textarea name="summary" minlength="10" maxlength="360" required placeholder="İlanın halka açık kısa özeti"></textarea></label>
+              <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>İncelemeye Gönder</span></button>
             </form>
-
-            <div class="partner-os-grid partner-os-grid--two">
-              <section class="partner-os-subpanel">
-                <div class="partner-os-panel-head">
-                  <div>
-                    <p>Kayıtlı Bağlantılar</p>
-                    <h2>Partner Connectorları</h2>
-                  </div>
-                </div>
-                <div class="partner-os-integration-list" data-integration-rows></div>
-              </section>
-
-              <section class="partner-os-subpanel">
-                <div class="partner-os-panel-head">
-                  <div>
-                    <p>Çalıştırma Geçmişi</p>
-                    <h2>Senkron Logları</h2>
-                  </div>
-                </div>
-                <div class="partner-os-integration-runs" data-integration-runs></div>
-              </section>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>İlan</th><th>Tür</th><th>Durum</th><th>Bitiş</th><th>İnceleme</th></tr>
+                </thead>
+                <tbody data-maritime-listing-rows></tbody>
+              </table>
             </div>
+          </div>
+
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Navlun Operasyonu</p>
+                <h2>Navlun Eşleşmelerim</h2>
+              </div>
+            </div>
+            <div class="partner-os-table-wrap partner-os-maritime-freight-wrap">
+              <table class="partner-os-table partner-os-maritime-freight-table">
+                <thead>
+                  <tr><th>Talep</th><th>Rota</th><th>Yük</th><th>Eşleşme</th><th>Teklif</th><th>İşlem</th></tr>
+                </thead>
+                <tbody data-maritime-freight-match-rows></tbody>
+              </table>
+            </div>
+            <form class="partner-os-product-form partner-os-maritime-offer-form" data-maritime-offer-form hidden>
+              <input type="hidden" name="match_id">
+              <p class="partner-os-span-2 partner-os-maritime-offer-title" data-maritime-offer-title>Navlun teklifi</p>
+              <label><span>Tutar</span><input name="amount" type="number" min="0.01" max="1000000000" step="0.01" required></label>
+              <label>
+                <span>Para birimi</span>
+                <select name="currency" required>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="TRY">TRY</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </label>
+              <label>
+                <span>Fiyatlama</span>
+                <select name="pricing_basis" required>
+                  <option value="lumpsum">Lumpsum</option>
+                  <option value="per_mt">MT başına</option>
+                  <option value="per_cbm">CBM başına</option>
+                  <option value="per_teu">TEU başına</option>
+                </select>
+              </label>
+              <label><span>Transit gün</span><input name="transit_days" type="number" min="1" max="365" step="1"></label>
+              <label><span>Teklif geçerliliği</span><input name="valid_until" type="datetime-local" required></label>
+              <label class="partner-os-span-2"><span>Şart özeti</span><textarea name="terms_summary" maxlength="1200"></textarea></label>
+              <div class="partner-os-span-2 partner-os-maritime-offer-actions">
+                <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Teklifi Gönder</span></button>
+                <button type="button" data-maritime-offer-cancel><i class="fa-solid fa-xmark"></i><span>Vazgeç</span></button>
+              </div>
+            </form>
           </div>
         </section>
 
@@ -454,93 +315,13 @@
                 <p>Operasyon</p>
                 <h2>Sipariş & Kargo</h2>
               </div>
-              <button type="button" data-export-orders><i class="fa-solid fa-file-export"></i><span>Excel</span></button>
-            </div>
-            <div class="partner-os-order-summary" data-order-summary></div>
-            <div class="partner-os-order-toolbar">
-              <label><span>Müşteri / Sipariş</span><input data-order-search placeholder="Müşteri, sipariş no, ürün"></label>
-              <label><span>Barkod / Takip</span><input data-order-code-filter placeholder="Barkod veya takip no"></label>
-              <label>
-                <span>Durum</span>
-                <select data-order-status-filter>
-                  <option value="all">Tüm siparişler</option>
-                  <option value="confirmed">Onaylandı</option>
-                  <option value="preparing">Hazırlanıyor</option>
-                  <option value="shipped">Kargoda</option>
-                  <option value="delivered">Teslim edildi</option>
-                  <option value="cancelled">İptal</option>
-                </select>
-              </label>
-              <label>
-                <span>Her sayfada</span>
-                <select data-order-page-size>
-                  <option value="20">20 sipariş</option>
-                  <option value="50" selected>50 sipariş</option>
-                  <option value="100">100 sipariş</option>
-                </select>
-              </label>
-              <button type="button" data-clear-order-filters><i class="fa-solid fa-filter-circle-xmark"></i><span>Temizle</span></button>
             </div>
             <div class="partner-os-table-wrap">
               <table class="partner-os-table">
                 <thead>
-                  <tr><th>Sipariş</th><th>Ürünler</th><th>Müşteri</th><th>Tutar</th><th>Sipariş</th><th>Ödeme</th><th>Kargo</th></tr>
+                  <tr><th>Sipariş</th><th>Ürünler</th><th>Tutar</th><th>Sipariş</th><th>Ödeme</th><th>Kargo</th></tr>
                 </thead>
                 <tbody data-order-rows></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="partner-os-grid partner-os-grid--two">
-            <form class="partner-os-panel partner-os-cargo-calculator" data-cargo-calculator>
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Kargo Fiyatları & Desi</p>
-                  <h2>Desi Hesaplama</h2>
-                </div>
-              </div>
-              <div class="partner-os-form-grid">
-                <label><span>En (cm)</span><input name="width" type="number" min="1" step="1" value="20"></label>
-                <label><span>Boy (cm)</span><input name="length" type="number" min="1" step="1" value="20"></label>
-                <label><span>Yükseklik (cm)</span><input name="height" type="number" min="1" step="1" value="10"></label>
-                <label><span>Ağırlık (kg)</span><input name="weight" type="number" min="0" step="0.1" value="1"></label>
-                <label>
-                  <span>Kargo firması</span>
-                  <select name="carrier">
-                    <option value="allona">Allona anlaşmalı</option>
-                    <option value="yurtici">Yurtiçi / benzeri</option>
-                    <option value="mng">MNG / benzeri</option>
-                    <option value="aras">Aras / benzeri</option>
-                  </select>
-                </label>
-                <button type="submit"><i class="fa-solid fa-calculator"></i><span>Hesapla</span></button>
-              </div>
-            </form>
-            <section class="partner-os-panel partner-os-cargo-result" data-cargo-result>
-              <div class="partner-os-terminal-empty">
-                <i class="fa-solid fa-box"></i>
-                <strong>Kargo maliyeti hesaplanmadı</strong>
-                <span>Desi, ağırlık ve tahmini partner taşıma bedeli burada görünecek.</span>
-              </div>
-            </section>
-          </div>
-        </section>
-
-        <section class="partner-os-section" id="refunds" data-panel-section>
-          <div class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>İade & İptal</p>
-                <h2>Partner Onay Merkezi</h2>
-              </div>
-              <span class="partner-os-live" data-refund-cancellation-summary>Kontrol ediliyor</span>
-            </div>
-            <div class="partner-os-table-wrap">
-              <table class="partner-os-table partner-os-refund-table">
-                <thead>
-                  <tr><th>Sipariş</th><th>Tür</th><th>Müşteri</th><th>Partner Tutarı</th><th>Durum</th><th>Neden</th><th>Aksiyon</th></tr>
-                </thead>
-                <tbody data-refund-cancellation-rows></tbody>
               </table>
             </div>
           </div>
@@ -590,188 +371,25 @@
           </section>
         </section>
 
-        <section class="partner-os-section" id="reports" data-panel-section>
-          <div class="partner-os-grid partner-os-grid--two">
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Rapor</p>
-                  <h2>Satış Performansı</h2>
-                </div>
-                <button type="button" data-export-products><i class="fa-solid fa-file-export"></i><span>Excel</span></button>
-              </div>
-              <div class="partner-os-report-cards" data-report-sales-summary></div>
-            </section>
-
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Günlük Kontrol</p>
-                  <h2>Rapor Aksiyonları</h2>
-                </div>
-              </div>
-              <div class="partner-os-action-list" data-report-action-list></div>
-            </section>
-          </div>
-
-          <section class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>Ürün Analizi</p>
-                <h2>Stok, Fiyat ve Yayın Durumu</h2>
-              </div>
-              <a class="partner-os-link-button partner-os-link-button--inline" href="/pages/partner/partner-products.html"><i class="fa-solid fa-table-list"></i><span>Gelişmiş ürün listesi</span></a>
-            </div>
-            <div class="partner-os-table-wrap">
-              <table class="partner-os-table partner-os-report-table">
-                <thead>
-                  <tr><th>Ürün</th><th>Satış</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>Öneri</th></tr>
-                </thead>
-                <tbody data-report-product-rows></tbody>
-              </table>
-            </div>
-          </section>
-        </section>
-
         <section class="partner-os-section" id="growth" data-panel-section>
-          <div class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>Büyüme Merkezi</p>
-                <h2>Kampanya Planla</h2>
-              </div>
-              <span class="partner-os-live">Onay akışına hazır</span>
-            </div>
-            <form class="partner-os-product-form" data-campaign-form>
-              <label><span>Kampanya adı</span><input name="title" required placeholder="Hafta sonu özel indirimi"></label>
-              <label><span>Kampanya türü</span><select name="campaign_type"><option value="coupon">Kupon</option><option value="sponsored_listing">Vitrin reklamı</option><option value="loyalty">HP sadakat</option><option value="free_delivery">Ücretsiz teslimat</option></select></label>
-              <label><span>Başlangıç</span><input name="starts_at" type="date"></label>
-              <label><span>Bitiş</span><input name="ends_at" type="date"></label>
-              <label><span>Bütçe / limit</span><input name="budget" type="number" min="0" step="1" placeholder="1000"></label>
-              <label><span>Hedef</span><select name="objective"><option value="conversion">Satış artırma</option><option value="traffic">Mağaza trafiği</option><option value="retention">Tekrar müşteri</option><option value="launch">Yeni ürün lansmanı</option></select></label>
-              <label class="partner-os-span-2"><span>Açıklama</span><input name="summary" placeholder="Koşullar, hedef ürünler ve görünürlük notu"></label>
-              <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>Kampanyayı Planla</span></button>
-            </form>
-            <div class="partner-os-table-wrap">
-              <table class="partner-os-table">
-                <thead>
-                  <tr><th>Kampanya</th><th>Tür</th><th>Tarih</th><th>Hedef</th><th>Durum</th></tr>
-                </thead>
-                <tbody data-campaign-rows></tbody>
-              </table>
-            </div>
-          </div>
-
           <div class="partner-os-grid partner-os-grid--three">
             <article class="partner-os-feature">
               <i class="fa-solid fa-ticket"></i>
               <h3>Kupon & HP</h3>
               <p>Partner özel kuponları, HP kazandırma ve premium kullanıcı kampanyaları.</p>
-              <button type="button" data-growth-action="coupon">Planla</button>
+              <button type="button" data-growth-action="coupon">Destek Talebi Aç</button>
             </article>
             <article class="partner-os-feature">
               <i class="fa-solid fa-ranking-star"></i>
               <h3>Vitrin Reklamı</h3>
               <p>AllonaShop hero, kategori vitrinleri ve bölgesel sponsorlu görünürlük.</p>
-              <button type="button" data-growth-action="ads">Planla</button>
+              <button type="button" data-growth-action="ads">Destek Talebi Aç</button>
             </article>
             <article class="partner-os-feature">
               <i class="fa-solid fa-users-viewfinder"></i>
               <h3>Tekrar Müşteri</h3>
               <p>Sadakat, favori partner ve müşteri segmentasyonu ile tekrar satış.</p>
-              <button type="button" data-growth-action="loyalty">Planla</button>
-            </article>
-          </div>
-        </section>
-
-        <section class="partner-os-section" id="ads" data-panel-section>
-          <div class="partner-os-grid partner-os-grid--two">
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Reklam Merkezi</p>
-                  <h2>Vitrin, Sponsorlu Görünürlük ve Bütçe</h2>
-                </div>
-                <button type="button" data-panel-jump="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya Planla</span></button>
-              </div>
-              <div class="partner-os-report-cards" data-ads-summary></div>
-            </section>
-
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Reklam Aksiyonları</p>
-                  <h2>Hızlı Plan</h2>
-                </div>
-              </div>
-              <div class="partner-os-action-list" data-ads-action-list></div>
-            </section>
-          </div>
-
-          <div class="partner-os-grid partner-os-grid--three">
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-ranking-star"></i>
-              <h3>Ürün Vitrini</h3>
-              <p>Yayında olan güçlü ürünleri kategori vitrinlerinde görünür yapmak için reklam planı oluştur.</p>
-              <button type="button" data-growth-action="ads">Planla</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-ticket"></i>
-              <h3>Kupon Desteği</h3>
-              <p>Sepet, ürün veya mağaza bazlı kuponlarla kampanya akışını satışa bağla.</p>
-              <button type="button" data-growth-action="coupon">Kupon Aç</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-rotate"></i>
-              <h3>Tekrar Satış</h3>
-              <p>Favori, tekrar müşteri ve HP sadakat kurgularını müşteri segmentlerine bağla.</p>
-              <button type="button" data-growth-action="loyalty">Sadakat Planla</button>
-            </article>
-          </div>
-        </section>
-
-        <section class="partner-os-section" id="customers" data-panel-section>
-          <div class="partner-os-grid partner-os-grid--two">
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Mağaza & Müşteri</p>
-                  <h2>Satıcı Kalitesi</h2>
-                </div>
-                <button type="button" data-panel-jump="support"><i class="fa-solid fa-headset"></i><span>Destek</span></button>
-              </div>
-              <div class="partner-os-report-cards" data-store-customer-summary></div>
-            </section>
-
-            <section class="partner-os-panel">
-              <div class="partner-os-panel-head">
-                <div>
-                  <p>Müşteri Aksiyonları</p>
-                  <h2>Yanıt Bekleyenler</h2>
-                </div>
-              </div>
-              <div class="partner-os-action-list" data-store-customer-actions></div>
-            </section>
-          </div>
-
-          <div class="partner-os-grid partner-os-grid--three">
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-message"></i>
-              <h3>Ürün Soruları</h3>
-              <p>Ürün, teslimat ve satış öncesi soruları destek merkeziyle tek akışta takip et.</p>
-              <button type="button" data-panel-jump="support">Soruları Aç</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-rotate-left"></i>
-              <h3>İade İtirazları</h3>
-              <p>İade ve iptal kararlarını gerekçe, kanıt ve ödeme bildirimiyle birlikte yönet.</p>
-              <button type="button" data-panel-jump="refunds">İadeleri Aç</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-store"></i>
-              <h3>Mağaza Profili</h3>
-              <p>Görünen ad, yasal unvan, iletişim, şehir ve logo bilgilerini güncel tut.</p>
-              <button type="button" data-panel-jump="settings">Profili Aç</button>
+              <button type="button" data-growth-action="loyalty">Destek Talebi Aç</button>
             </article>
           </div>
         </section>
@@ -796,52 +414,6 @@
               </div>
               <div class="partner-os-mini-list" data-device-list></div>
             </section>
-          </div>
-        </section>
-
-        <section class="partner-os-section" id="academy" data-panel-section>
-          <div class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>Partner Akademi</p>
-                <h2>Eğitim, Rehber ve Kontrol Listeleri</h2>
-              </div>
-            </div>
-            <div class="partner-os-academy" data-academy-list></div>
-          </div>
-        </section>
-
-        <section class="partner-os-section" id="development" data-panel-section>
-          <div class="partner-os-panel">
-            <div class="partner-os-panel-head">
-              <div>
-                <p>Gelişim Merkezi</p>
-                <h2>Satıcı Olgunluk ve Büyüme Planı</h2>
-              </div>
-              <span class="partner-os-live" data-development-score>Kontrol ediliyor</span>
-            </div>
-            <div class="partner-os-development-list" data-development-list></div>
-          </div>
-
-          <div class="partner-os-grid partner-os-grid--three">
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-list-check"></i>
-              <h3>Kurulum Tamamlama</h3>
-              <p>Eksik profil, katalog, entegrasyon ve ödeme adımlarını tek sırada tamamla.</p>
-              <button type="button" data-panel-jump="onboarding">Kuruluma Git</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-chart-simple"></i>
-              <h3>Performans İnceleme</h3>
-              <p>Stok, fiyat, yayında kalma ve hakediş metriklerini rapor merkezinden takip et.</p>
-              <button type="button" data-panel-jump="reports">Raporu Aç</button>
-            </article>
-            <article class="partner-os-feature">
-              <i class="fa-solid fa-graduation-cap"></i>
-              <h3>Partner Akademi</h3>
-              <p>Ürün kalitesi, kargo, müşteri yanıtı ve güvenlik kontrol listelerine ulaş.</p>
-              <button type="button" data-panel-jump="academy">Akademiyi Aç</button>
-            </article>
           </div>
         </section>
 
@@ -926,15 +498,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260620-partneros1" defer></script>
-  <script src="../../js/core.js?v=20260827-toaststack1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260629-partnerhost1" defer></script>
-  <script src="../../js/auth.js?v=20260629-partnerhost1" defer></script>
-  <script src="../../js/cart.js?v=20260627-market-owner1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-  <script src="../../js/product-image-upload.js?v=20260630-media2" defer></script>
-  <script src="../../js/partner-os.js?v=20260827-edocflag1" defer></script>
-  <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
-  <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
+  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260619-sec1" defer></script>
+  <script src="../../js/auth.js?v=20260620-account1" defer></script>
+  <script src="../../js/cart.js?v=20260621-tx1" defer></script>
+  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/partner-os.js?v=20260711-maritime5" defer></script>
+  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
 </body>
 </html>

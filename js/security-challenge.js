@@ -48,8 +48,8 @@
       login: "Giriş için robot olmadığınızı doğrulayın.",
       register: "Kayıt için robot olmadığınızı doğrulayın.",
       forgot_password: "Şifre sıfırlama için robot olmadığınızı doğrulayın.",
-      partner_company_lookup: "Şirket bilgisi sorgusu için robot olmadığınızı doğrulayın.",
       partner_application: "Başvuru için robot olmadığınızı doğrulayın.",
+      maritime_partner_application: "Denizcilik partner başvurusu için robot olmadığınızı doğrulayın.",
       order_checkout: "Ödeme için robot olmadığınızı doğrulayın.",
       partner_payment_checkout: "Ödeme için robot olmadığınızı doğrulayın.",
       cv_checkout: "CV ödeme için robot olmadığınızı doğrulayın."
@@ -57,16 +57,18 @@
     return labels[action] || "Robot olmadığınızı doğrulayın.";
   }
 
-  function injectStyle() {
-    if (document.querySelector("style[data-allonahub-turnstile-style]")) return;
-    const style = document.createElement("style");
-    style.dataset.allonahubTurnstileStyle = "true";
-    style.textContent = `
-      .security-challenge,.allonahub-turnstile{display:grid;gap:8px;justify-items:center;margin:14px 0;min-height:78px}
-      .allonahub-turnstile__label{font-size:12px;font-weight:700;color:inherit;opacity:.78;text-align:center}
-      .allonahub-turnstile__widget{min-height:65px}
-    `;
-    document.head.appendChild(style);
+  function buildChallengeContent(container, label, includeWidget) {
+    const labelNode = document.createElement("div");
+    labelNode.className = "allonahub-turnstile__label";
+    labelNode.textContent = label;
+    if (!includeWidget) {
+      container.replaceChildren(labelNode);
+      return null;
+    }
+    const widget = document.createElement("div");
+    widget.className = "allonahub-turnstile__widget";
+    container.replaceChildren(labelNode, widget);
+    return widget;
   }
 
   function resetVisibleWidget(state) {
@@ -94,9 +96,7 @@
     container.dataset.turnstileRendered = "true";
     container.dataset.verified = "false";
     container.classList.add("allonahub-turnstile");
-    container.innerHTML = `<div class="allonahub-turnstile__label">${challengeLabel(normalizedAction)}</div><div class="allonahub-turnstile__widget"></div>`;
-
-    const widgetTarget = container.querySelector(".allonahub-turnstile__widget");
+    const widgetTarget = buildChallengeContent(container, challengeLabel(normalizedAction), true);
     const state = {
       container,
       widgetId: null,
@@ -129,14 +129,13 @@
     if (!siteKey()) return;
     const containers = Array.from(document.querySelectorAll("[data-security-challenge]")).filter(isActiveChallenge);
     if (!containers.length) return;
-    injectStyle();
     try {
       await loadTurnstile();
     } catch (error) {
       containers.forEach((container) => {
         container.classList.add("allonahub-turnstile");
         container.dataset.verified = "false";
-        container.innerHTML = `<div class="allonahub-turnstile__label">${error.message || "Robot doğrulaması yüklenemedi."}</div>`;
+        buildChallengeContent(container, error.message || "Robot doğrulaması yüklenemedi.", false);
       });
       return;
     }
@@ -201,6 +200,7 @@
       const normalizedAction = normalizeAction(action);
       const visibleToken = consumeVisibleToken(action);
       if (visibleWidgets.has(normalizedAction)) {
+        if (!visibleToken) return await execute(normalizedAction);
         return visibleToken;
       }
       return await execute(normalizedAction);
