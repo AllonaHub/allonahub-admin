@@ -10,6 +10,7 @@
   const storageKey = "allonahub.maritime.freightDraft.v1";
   const draftMaxAgeMs = 2 * 60 * 60 * 1000;
   const requestTimeoutMs = 15000;
+  const maritimeBackendBuild = "super-admin-maritime-trust-20260911";
   const cargoTypes = new Set(["bulk", "general-cargo", "container", "tanker"]);
   const quantityUnits = new Set(["MT", "CBM", "TEU"]);
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -30,6 +31,7 @@
   const resultReference = form.querySelector("[data-maritime-request-reference]");
   let currentDraftId = "";
   let requestInFlight = false;
+  let maritimeBackendReady = null;
 
   if (Object.values(fields).some(function (field) { return !field; }) || !returnTo || !submitButton) return;
 
@@ -210,6 +212,35 @@
     return configured || "https://api.allonahub.com";
   }
 
+  async function backendSupportsMaritime() {
+    if (maritimeBackendReady !== null) return maritimeBackendReady;
+    if (/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname) && !(App.config && App.config.apiBaseUrl)) {
+      maritimeBackendReady = false;
+      return maritimeBackendReady;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(function () { controller.abort(); }, 2500);
+    try {
+      const response = await fetch(`${apiBaseUrl()}/health`, {
+        headers: { Accept: "application/json" },
+        signal: controller.signal
+      });
+      if (!response.ok) {
+        maritimeBackendReady = false;
+        return maritimeBackendReady;
+      }
+      const payload = await response.json().catch(function () { return {}; });
+      maritimeBackendReady = payload && payload.build === maritimeBackendBuild;
+      return maritimeBackendReady;
+    } catch (error) {
+      maritimeBackendReady = false;
+      return maritimeBackendReady;
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
   function maritimeSearchTarget(value) {
     const queryText = compact(value, 120);
     const normalized = queryText.toLocaleLowerCase("tr-TR");
@@ -253,6 +284,12 @@
   }
 
   async function createFreightRequest(draft, session) {
+    if (!(await backendSupportsMaritime())) {
+      const unavailableError = new Error("Navlun servisi henuz canli API build'inde aktif degil.");
+      unavailableError.status = 503;
+      throw unavailableError;
+    }
+
     const controller = new AbortController();
     const timeout = window.setTimeout(function () { controller.abort(); }, requestTimeoutMs);
     try {
@@ -363,6 +400,8 @@
   }
 
   async function loadPublicListings() {
+    if (!(await backendSupportsMaritime())) return;
+
     const controller = new AbortController();
     const timeout = window.setTimeout(function () { controller.abort(); }, 4500);
     try {
