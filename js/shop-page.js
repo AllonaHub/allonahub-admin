@@ -713,27 +713,42 @@
 
   function ensureShopPromoRail() {
     let section = document.querySelector("[data-shop-promo-rail]");
+    const moduleBanner = document.querySelector("[data-module-ad-banner][data-module-key='shop']");
+    if (!section && moduleBanner) {
+      section = moduleBanner;
+    }
     if (!section) {
       section = document.createElement("section");
-      section.className = "container shop-promo-section";
-      section.dataset.shopPromoRail = "";
+      const title = document.querySelector(".shop-landing__title");
+      const layoutHeader = document.querySelector("[data-layout='header']");
+      const main = document.querySelector(".site-main");
+      if (title?.parentElement) {
+        title.insertAdjacentElement("afterend", section);
+      } else if (layoutHeader?.parentElement) {
+        layoutHeader.insertAdjacentElement("afterend", section);
+      } else {
+        main?.insertAdjacentElement("afterbegin", section);
+      }
+    }
+
+    section.className = "module-ad-banner module-ad-banner--shop-hero";
+    section.dataset.moduleAdBanner = "";
+    section.dataset.moduleKey = "shop";
+    section.dataset.shopHeroBanner = "";
+    section.dataset.shopPromoRail = "";
+    section.dataset.adSlot = "module:shop:hero";
+    section.setAttribute("aria-label", "Allona Shop ürün reklamları");
+
+    if (!section.querySelector("[data-shop-promo-slider]")) {
       section.setAttribute("aria-label", "Allona Shop ürün reklamları");
       section.innerHTML = `
-        <div class="shop-promo-slider" data-shop-promo-slider aria-label="Allona Shop ürün reklamları">
+        <div class="module-ad-banner__frame shop-promo-slider" data-shop-promo-slider aria-label="Allona Shop ürün reklamları">
           <button class="shop-promo-control shop-promo-control--prev" type="button" data-shop-promo-prev aria-label="Önceki ürün reklamı">‹</button>
           <div class="shop-promo-track" data-shop-promo-track></div>
           <button class="shop-promo-control shop-promo-control--next" type="button" data-shop-promo-next aria-label="Sonraki ürün reklamı">›</button>
           <div class="shop-promo-dots" data-shop-promo-dots aria-label="Ürün reklamı seçimi"></div>
         </div>
       `;
-    }
-
-    const moduleBanner = document.querySelector("[data-module-ad-banner][data-module-key='shop']");
-    if (moduleBanner) {
-      moduleBanner.insertAdjacentElement("afterend", section);
-    } else {
-      const main = document.querySelector(".site-main");
-      main?.insertAdjacentElement("afterbegin", section);
     }
     return section;
   }
