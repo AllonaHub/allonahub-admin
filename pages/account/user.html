@@ -163,7 +163,7 @@ a{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  gap:12px;
+  gap:8px;
   flex-wrap:wrap;
   padding:8px 12px;
 }
@@ -171,6 +171,11 @@ a{
 .actions a{
   font-weight:800;
   color:var(--deep);
+  font-size:14px;
+  line-height:1;
+  white-space:nowrap;
+  padding:8px 9px;
+  border-radius:12px;
 }
 
 .actions .platform-controls-slot{
@@ -412,6 +417,54 @@ a{
   background:linear-gradient(135deg,#ffffff,#eef8ff);
   color:var(--deep);
   border:1px solid rgba(0,150,255,.24);
+}
+
+.partner-entry-card{
+  width:min(790px,100%);
+  margin:-8px auto 26px;
+  padding:22px;
+  text-align:center;
+}
+
+.partner-entry-card h2{
+  color:var(--deep);
+  font-size:clamp(24px,3vw,32px);
+  margin-bottom:8px;
+}
+
+.partner-entry-card p{
+  color:var(--muted);
+  line-height:1.55;
+  margin:0 auto 16px;
+  max-width:620px;
+}
+
+.partner-entry-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.partner-entry-btn{
+  min-height:54px;
+  border-radius:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:0 16px;
+  font-size:15px;
+  font-weight:900;
+  color:white;
+  background:linear-gradient(135deg,var(--neon),var(--blue));
+  box-shadow:0 0 20px rgba(0,213,255,.28);
+}
+
+.partner-entry-btn.secondary{
+  background:linear-gradient(135deg,#ffffff,#eef8ff);
+  color:var(--deep);
+  border:1px solid rgba(0,150,255,.24);
+  box-shadow:0 0 18px rgba(0,213,255,.14);
 }
 
 .link-row{
@@ -696,6 +749,39 @@ a{
     flex-direction:column;
   }
 }
+
+@media(max-width:1180px){
+  .header{
+    height:auto;
+    grid-template-columns:minmax(240px,310px) minmax(0,1fr);
+  }
+
+  .actions{
+    grid-column:1 / -1;
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:640px){
+  .actions{
+    gap:6px;
+    padding:8px;
+  }
+
+  .actions a{
+    font-size:13px;
+    padding:8px;
+  }
+
+  .partner-entry-card{
+    padding:18px;
+    border-radius:22px;
+  }
+
+  .partner-entry-actions{
+    grid-template-columns:1fr;
+  }
+}
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260711-challenge1">
 </head>
@@ -833,6 +919,14 @@ a{
       </p>
     </div>
 
+  </div>
+</section>
+<section class="partner-entry-card glass" aria-labelledby="partnerEntryTitle">
+  <h2 id="partnerEntryTitle">Ekosisteme katıl</h2>
+  <p>Partner olmak isteyen işletmeler başvuru formuna geçebilir; mevcut partnerler panel girişinden hesaplarına ulaşabilir.</p>
+  <div class="partner-entry-actions">
+    <a class="partner-entry-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i> Partner Başvurusu Yap</a>
+    <a class="partner-entry-btn secondary" href="https://partner.allonahub.com/"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Partner Girişi</a>
   </div>
 </section>
 <section class="quick-section">
