@@ -2,6 +2,7 @@
   const App = window.Allona = window.Allona || {};
   const LANG_KEY = "allona.language";
   const THEME_KEY = "allona.theme";
+  const CURRENCY_KEY = "allona.currency";
   const REMOTE_CACHE_PREFIX = "allona.remoteTranslations.";
   const ASSET_VERSION = (() => {
     try {
@@ -19,27 +20,60 @@
     { code: "ru", label: "RU" },
     { code: "ar", label: "AR" }
   ];
+  const currencyOptions = [
+    { code: "TRY", label: "TRY", symbol: "₺" },
+    { code: "AZN", label: "AZN", symbol: "₼" },
+    { code: "USD", label: "USD", symbol: "$" },
+    { code: "EUR", label: "EUR", symbol: "€" },
+    { code: "RUB", label: "RUB", symbol: "₽" },
+    { code: "AED", label: "AED", symbol: "د.إ" }
+  ];
+  const languageCurrencyMap = {
+    tr: "TRY",
+    az: "AZN",
+    en: "USD",
+    de: "EUR",
+    ru: "RUB",
+    ar: "AED"
+  };
   const themes = [
     { code: "ocean", label: "Deniz" },
-    { code: "corporate", label: "Sade Kurumsal" },
+    { code: "white", label: "Açık" },
     { code: "sunset", label: "Gün Batımı" },
-    { code: "forest", label: "Yeşil" },
-    { code: "turquoise", label: "Turkuaz" },
-    { code: "white", label: "Beyaz" }
+    { code: "turquoise", label: "Turkuaz" }
   ];
   const themeAliases = {
     neon: "ocean",
     allona: "ocean",
-    sade: "corporate",
-    kurumsal: "corporate",
-    marketplace: "forest",
+    sade: "ocean",
+    kurumsal: "ocean",
+    corporate: "ocean",
+    "sade-kurumsal": "ocean",
+    forest: "ocean",
+    green: "ocean",
+    marketplace: "ocean",
     graphite: "ocean"
   };
+  const DEFAULT_THEME = "ocean";
+  const normalizeCurrency = (currency) => {
+    const selected = String(currency || "").trim().toUpperCase();
+    return currencyOptions.some((item) => item.code === selected) ? selected : "";
+  };
+  const currencyForLanguage = (language) => normalizeCurrency(languageCurrencyMap[language]) || "TRY";
+  const normalizeTheme = (theme) => {
+    const selected = themeAliases[String(theme || "").trim()] || String(theme || "").trim();
+    return themes.some((item) => item.code === selected) ? selected : DEFAULT_THEME;
+  };
+  const storedLanguage = localStorage.getItem(LANG_KEY);
+  const initialLanguage = languages.some((item) => item.code === storedLanguage) ? storedLanguage : "tr";
   const state = {
-    language: localStorage.getItem(LANG_KEY) || "tr",
-    theme: themeAliases[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY) || "ocean",
+    language: initialLanguage,
+    theme: normalizeTheme(localStorage.getItem(THEME_KEY)),
+    currency: currencyForLanguage(initialLanguage),
     packs: {}
   };
+  localStorage.setItem(THEME_KEY, state.theme);
+  localStorage.setItem(CURRENCY_KEY, state.currency);
   const MODULE_PARTNER_ADS_KEY = "allona.modulePartnerAds";
   const moduleAdCampaigns = [
     { key: "shop", paths: ["/pages/commerce/allonashop.html", "/pages/commerce/shop.html"], title: "Allona Shop", eyebrow: "Günlük Vitrin", sentence: "Seçili ürünleri, kampanyaları ve güvenli sepet akışını tek premium alanda keşfet.", href: "/pages/commerce/allonashop.html", image: "/images/ads/hero-ad-shop.jpg", accent: "#00e5ff", cta: "Alışverişe Git" },
@@ -419,8 +453,7 @@
   }
 
   function applyTheme(theme) {
-    const normalized = themeAliases[theme] || theme;
-    const selected = themes.some((item) => item.code === normalized) ? normalized : "ocean";
+    const selected = normalizeTheme(theme);
     state.theme = selected;
     localStorage.setItem(THEME_KEY, selected);
     document.body.setAttribute("data-theme", selected);
@@ -434,6 +467,46 @@
       node.classList.toggle("is-active", node.dataset.themeOption === selected);
       node.setAttribute("aria-checked", node.dataset.themeOption === selected ? "true" : "false");
     });
+  }
+
+  function currentCurrency() {
+    const target = normalizeCurrency(App.currency?.state?.target) || state.currency || currencyForLanguage(state.language);
+    return currencyOptions.find((item) => item.code === target) || currencyOptions[0];
+  }
+
+  function persistPlatformCurrency(currency, source) {
+    const selected = normalizeCurrency(currency) || currencyForLanguage(state.language);
+    state.currency = selected;
+    localStorage.setItem(CURRENCY_KEY, selected);
+    document.documentElement.setAttribute("data-currency", selected);
+    if (document.body) {
+      document.body.setAttribute("data-currency", selected);
+    }
+    App.currency = App.currency || {};
+    App.currency.state = { ...(App.currency.state || {}), target: selected, source: source || "platform" };
+    document.dispatchEvent(new CustomEvent("allona:currency-changed", {
+      detail: { currency: selected, source: source || "platform" }
+    }));
+    return selected;
+  }
+
+  async function applyCurrency(currency, source) {
+    const selected = normalizeCurrency(currency) || currencyForLanguage(state.language);
+    persistPlatformCurrency(selected, source || "platform");
+    if (App.currency && App.currency.setCurrency) {
+      await App.currency.setCurrency(selected, {
+        manual: !String(source || "").startsWith("language_"),
+        source: source || "platform"
+      });
+      persistPlatformCurrency(selected, source || "platform");
+    }
+    return currentCurrency();
+  }
+
+  function syncCurrencyForLanguage(language) {
+    const mappedCurrency = languageCurrencyMap[language];
+    if (!mappedCurrency) return;
+    applyCurrency(mappedCurrency, "language_selector").catch(() => persistPlatformCurrency(mappedCurrency, "language_selector"));
   }
 
   async function loadSharedCatalog() {
@@ -734,10 +807,14 @@
     }
   }
 
-  async function applyLanguage(language) {
+  async function applyLanguage(language, options) {
+    const settings = options || {};
     const selected = languages.some((item) => item.code === language) ? language : "tr";
     state.language = selected;
     localStorage.setItem(LANG_KEY, selected);
+    if (settings.syncCurrency !== false) {
+      syncCurrencyForLanguage(selected);
+    }
     const pack = await loadLanguage(selected);
     document.documentElement.lang = selected;
     document.documentElement.dir = pack.dir || (selected === "ar" ? "rtl" : "ltr");
@@ -1298,8 +1375,11 @@
 
   App.platform = {
     languages,
+    currencies: currencyOptions,
     themes,
     setLanguage: applyLanguage,
+    setCurrency: applyCurrency,
+    getCurrency: currentCurrency,
     setTheme: applyTheme,
     assetUrl
   };
