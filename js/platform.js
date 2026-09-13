@@ -15,6 +15,9 @@
   const languages = [
     { code: "tr", label: "TR" },
     { code: "az", label: "AZ" },
+    { code: "kk", label: "KK" },
+    { code: "uz", label: "UZ" },
+    { code: "ky", label: "KY" },
     { code: "en", label: "EN" },
     { code: "de", label: "DE" },
     { code: "ru", label: "RU" },
@@ -23,6 +26,9 @@
   const currencyOptions = [
     { code: "TRY", label: "TRY", symbol: "₺" },
     { code: "AZN", label: "AZN", symbol: "₼" },
+    { code: "KZT", label: "KZT", symbol: "₸" },
+    { code: "UZS", label: "UZS", symbol: "soʻm" },
+    { code: "KGS", label: "KGS", symbol: "сом" },
     { code: "USD", label: "USD", symbol: "$" },
     { code: "EUR", label: "EUR", symbol: "€" },
     { code: "RUB", label: "RUB", symbol: "₽" },
@@ -31,6 +37,9 @@
   const languageCurrencyMap = {
     tr: "TRY",
     az: "AZN",
+    kk: "KZT",
+    uz: "UZS",
+    ky: "KGS",
     en: "USD",
     de: "EUR",
     ru: "RUB",
@@ -851,7 +860,8 @@
     if (translationObserver || !document.body) return;
     translationObserver = new MutationObserver((mutations) => {
       if (isApplyingLanguage) return;
-      if (mutations.some((mutation) => mutation.addedNodes && mutation.addedNodes.length)) {
+      const hasAddedElement = mutations.some((mutation) => Array.from(mutation.addedNodes || []).some((node) => node.nodeType === 1));
+      if (hasAddedElement) {
         scheduleLanguageRefresh();
       }
     });

@@ -77,6 +77,7 @@
     min-width: 0;
     align-items: center;
     gap: 9px !important;
+    direction: ltr;
   }
 
   body.maritime-page .mobile-maritime .mobile-maritime__brand img {
@@ -194,6 +195,27 @@
 
   .mobile-maritime__control-slot .platform-menu--wide {
     min-width: 184px;
+  }
+
+  .mobile-maritime__control-slot .platform-control--language .platform-menu {
+    right: max(10px, env(safe-area-inset-right)) !important;
+    left: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(228px, calc(100vw - 20px));
+    min-width: 0;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .mobile-maritime__control-slot .platform-control--language .platform-menu-item {
+    min-width: 0;
+    min-height: 34px;
+    justify-content: center;
+    padding: 0 7px;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .mobile-account {
@@ -403,6 +425,10 @@
     margin-bottom: 3px;
     color: #fff;
     font-size: 13px;
+  }
+
+  .mobile-safety-alert p > span {
+    display: block;
   }
 
   body.maritime-page[data-theme] .mobile-safety-alert,
@@ -654,6 +680,26 @@
   .mobile-maritime input:focus-visible {
     outline: 3px solid #ffd700;
     outline-offset: 3px;
+  }
+
+  html[dir="rtl"] .mobile-maritime,
+  html[dir="rtl"] body.maritime-page .site-footer {
+    text-align: right;
+  }
+
+  html[dir="rtl"] .mobile-maritime .logo-title,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-brand {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  html[dir="rtl"] .mobile-maritime__nav,
+  html[dir="rtl"] .mobile-job-rail,
+  html[dir="rtl"] .mobile-market-rail,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-grid,
+  html[dir="rtl"] body.maritime-page .site-footer .social-icons,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-payment-strip {
+    direction: rtl;
   }
 
   body.maritime-page .site-footer .store-buttons {
