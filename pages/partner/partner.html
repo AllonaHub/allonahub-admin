@@ -217,6 +217,8 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260913-entry1">
+  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260913-entry1">
 </head>
 
 <body class="partner-entry-page">
@@ -229,31 +231,21 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 
 <div class="search glass">
 <span>🔍</span>
-<input id="partnerSearchInput" type="search" aria-label="Partner araması" autocomplete="off" spellcheck="false" placeholder="Partner, ödeme, kampanya, mağaza, QR veya sektör ara...">
+<input id="partnerSearchInput" type="search" aria-label="Partner araması" autocomplete="off" spellcheck="false" placeholder="Partner hesabı, başvuru veya destek ara...">
 <button type="button" onclick="partnerSearch()">Ara</button>
 </div>
 
 <div class="actions glass">
 <span class="partner-actions-links">
-<a href="https://allonahub.com/">Ana Sayfa</a>
+<button class="entry-nav-action" type="button" onclick="goBackToPreviousPage()"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span data-partner-nav="back">Geri Dön</span></button>
+<a id="partnerHomeLink" href="https://allonahub.com/index.html" data-partner-nav="home">Ana Sayfa</a>
+<a id="partnerModuleReturn" class="entry-module-return" href="https://allonahub.com/pages/ecosystem/allonadenizcilik.html" hidden><i class="fa-solid fa-compass" aria-hidden="true"></i><span data-partner-nav="module">Modüle Dön</span></a>
 </span>
 <span class="platform-controls-slot" data-platform-controls-slot></span>
 </div>
 </div>
 
 <section class="hero">
-
-<div class="hero-main glass">
-<h1>AllonaHub Partner Ekosistemine Katıl</h1>
-<p>İşletmeni AllonaHub ekosistemine taşı. Başvurunu gönder, onay sürecinden sonra partner panelinden ürün, hizmet, kampanya ve ödeme süreçlerini yönet.</p>
-
-<div class="hero-badges">
-<div class="badge"><b>QR</b><small>Ödeme Al</small></div>
-<div class="badge"><b>HP</b><small>Kampanya Yönet</small></div>
-<div class="badge"><b>24/7</b><small>Panel Erişimi</small></div>
-</div>
-</div>
-
 <div class="partner-login glass">
 <h2>Partner Girişi</h2>
 <p>Mevcut partnerler giriş yapabilir, yeni işletmeler başvuru oluşturabilir.</p>
@@ -276,12 +268,6 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 <div class="security-challenge" data-security-challenge="login"></div>
 <button class="btn" type="button" onclick="partnerLogin()">Partner Paneline Giriş</button>
 <button class="btn secondary-btn" type="button" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
-<div class="partner-capabilities">
-<div><b>Sipariş</b><span>Kargo, hazırlık ve teslimat takibi.</span></div>
-<div><b>Finans</b><span>Hakediş, komisyon ve ödeme özeti.</span></div>
-<div><b>Kampanya</b><span>Kupon, vitrin ve HP planları.</span></div>
-<div><b>Destek</b><span>Partner talep ve operasyon merkezi.</span></div>
-</div>
 </div>
 
 <div id="forgot" class="form" role="tabpanel" aria-labelledby="partnerForgotTab" hidden>
@@ -406,29 +392,6 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </div>
 </div>
 </section>
-<div class="section-title">
-<h2>Partner Avantajları</h2>
-<a href="#apply" onclick="openPartnerTab('apply', event)">Başvuru Yap</a>
-</div>
-
-<div class="grid-4">
-<div class="card glass"><h3>Daha Fazla Görünürlük</h3><p>İşletmen AllonaHub modüllerinde doğru müşteriye görünür.</p></div>
-<div class="card glass"><h3>HP Ekonomisi</h3><p>Kullanıcılar HP ve kupon avantajı ile partnerlere daha sık döner.</p></div>
-<div class="card glass"><h3>Güvenli Ödeme</h3><p>Ödeme talepleri, kuponlar ve işlem geçmişi kayıt altında tutulur.</p></div>
-<div class="card glass"><h3>Tek Panel</h3><p>Ürün, hizmet, kampanya, ödeme ve raporlar tek merkezden yönetilir.</p></div>
-</div>
-
-<div class="section-title">
-<h2>Başvuru Süreci</h2>
-<a href="#apply" onclick="openPartnerTab('apply', event)">Hemen Başvur</a>
-</div>
-
-<div class="grid-4">
-<div class="card glass"><h3>1. Başvuru</h3><p>İşletme bilgilerini gir ve partner başvurunu gönder.</p></div>
-<div class="card glass"><h3>2. Kontrol</h3><p>AllonaHub ekibi sektör, belge ve uygunluk kontrolü yapar.</p></div>
-<div class="card glass"><h3>3. Panel Açılışı</h3><p>Onaylanan partner için panel erişimi aktif edilir.</p></div>
-<div class="card glass"><h3>4. Satış & Ödeme</h3><p>Ürün, hizmet, kampanya ve QR ödeme akışları başlatılır.</p></div>
-</div>
 
 <div id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></div>
 </div>
@@ -491,7 +454,7 @@ function partnerLoginUrl(){
 
 function showNotice(message){
   const n=document.getElementById("notice");
-  n.textContent=String(message || "");
+  n.textContent=window.AllonaPartnerEntry?.translateText?.(message) || String(message || "");
   n.style.display="block";
   setTimeout(()=>{n.style.display="none"},4500);
 }
@@ -1442,6 +1405,8 @@ initPartnerGoogleCallback();
   <script src="../../js/security-challenge.js?v=20260829-partner-company-lookup1" defer></script>
   <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
   <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
+  <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
+  <script src="../../js/allona-partner-entry.js?v=20260913-entry1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>

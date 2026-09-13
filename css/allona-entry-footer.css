@@ -1,0 +1,190 @@
+:is(body.auth-page, body.partner-entry-page) .site-footer {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  background: #020814 !important;
+  border-top-color: rgba(95, 215, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .store-buttons {
+  display: none !important;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer :where(.footer-col h2, .footer-col h3) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer :where(.footer-col a:not(.footer-brand), .footer-col p, .footer-bottom, .footer-bottom a) {
+  color: #d6e2f2 !important;
+  -webkit-text-fill-color: #d6e2f2 !important;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
+  background: rgba(5, 25, 50, 0.72);
+  border: 1px solid rgba(95, 215, 255, 0.14);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #ffffff !important;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  min-width: 88px;
+  height: 48px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo img {
+  display: block;
+  width: 100%;
+  max-width: 68px;
+  height: 28px;
+  max-height: 28px;
+  object-fit: contain;
+}
+
+:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo--troy img {
+  max-width: 74px;
+}
+
+@media (max-width: 640px) {
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-grid {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: min(82vw, 310px) !important;
+    align-items: start !important;
+    gap: 12px !important;
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    margin-inline: 9px !important;
+    padding: 18px 1px 12px !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-grid::-webkit-scrollbar,
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons::-webkit-scrollbar,
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 16px !important;
+    scroll-snap-align: start;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons,
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    justify-content: start !important;
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    margin-inline: 9px !important;
+    padding-block: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-bottom {
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    margin-inline: 9px !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons {
+    grid-auto-columns: 48px !important;
+    gap: 8px !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a {
+    position: relative;
+    display: inline-flex !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.wa { background: #25d366 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.ig {
+    background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
+  }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.x { background: #000000 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.fb { background: #1877f2 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.yt { background: #ff0000 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.li { background: #0a66c2 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.tg { background: #229ed9 !important; }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.tk {
+    background: #010101 !important;
+    box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.mail { background: #0067b1 !important; }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons :where(.social-icon, b, svg) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+    grid-auto-columns: 76px !important;
+    gap: 8px !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo {
+    width: 76px;
+    min-width: 76px;
+    height: 42px;
+    min-height: 42px;
+    padding: 7px;
+    overflow: hidden;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo img {
+    width: 60px;
+    max-width: 60px;
+    height: 26px;
+    max-height: 26px;
+  }
+}

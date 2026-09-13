@@ -819,13 +819,14 @@ a{
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260913-auth3">
+  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260913-auth4">
+  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260913-entry1">
 </head>
 
 <body class="auth-page">
 <div class="page">
 
-<div class="header">
+<div class="header" data-no-translate>
   <a class="brand glass" href="../../index.html">
     <div><b>Allona</b><span>Hub</span></div>
   </a>
@@ -834,13 +835,15 @@ a{
     <span><i class="fa-solid fa-magnifying-glass"></i></span>
     <label class="sr-only" for="userSearchInput">Hesap merkezi araması</label>
     <input id="userSearchInput" type="search" autocomplete="off" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
-    <button type="button" onclick="userSearch()">Ara</button>
+    <button type="button" onclick="userSearch()" data-auth-text="search">Ara</button>
   </div>
 
   <div class="actions glass">
-    <a href="../../index.html">Ana Sayfa</a>
-    <a href="rewards.html">Kupon</a>
-    <a href="premium.html">Premium</a>
+    <button class="entry-nav-action" type="button" onclick="goBackToPreviousPage()"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span id="authBackLabel">Geri Dön</span></button>
+    <a id="authHomeLink" href="../../index.html">Ana Sayfa</a>
+    <a id="authModuleReturn" class="entry-module-return" href="../ecosystem/allonadenizcilik.html" hidden><i class="fa-solid fa-compass" aria-hidden="true"></i><span>Modüle Dön</span></a>
+    <a href="rewards.html" data-auth-text="coupon">Kupon</a>
+    <a href="premium.html" data-auth-text="premium">Premium</a>
     <span class="platform-controls-slot" data-platform-controls-slot></span>
   </div>
 </div>
@@ -947,39 +950,39 @@ a{
 
   </div>
 </section>
-<section class="partner-entry-card glass" aria-labelledby="partnerEntryTitle">
-  <h2 id="partnerEntryTitle">Ekosisteme katıl</h2>
-  <p>Partner olmak isteyen işletmeler başvuru formuna geçebilir; mevcut partnerler panel girişinden hesaplarına ulaşabilir.</p>
+<section class="partner-entry-card glass" aria-labelledby="partnerEntryTitle" data-no-translate>
+  <h2 id="partnerEntryTitle" data-auth-text="joinTitle">Ekosisteme katıl</h2>
+  <p data-auth-text="joinLead">Partner olmak isteyen işletmeler başvuru formuna geçebilir; mevcut partnerler panel girişinden hesaplarına ulaşabilir.</p>
   <div class="partner-entry-actions">
-    <a class="partner-entry-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i> Partner Başvurusu Yap</a>
-    <a class="partner-entry-btn secondary" href="https://partner.allonahub.com/"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Partner Girişi</a>
+    <a class="partner-entry-btn" href="../partner/partner.html"><i class="fa-solid fa-store" aria-hidden="true"></i><span data-auth-text="partnerApply">Partner Başvurusu Yap</span></a>
+    <a class="partner-entry-btn secondary" href="https://partner.allonahub.com/"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i><span data-auth-text="partnerLogin">Partner Girişi</span></a>
   </div>
 </section>
-<section class="quick-section">
+<section class="quick-section" data-no-translate>
   <div class="quick-title">
-    <h2>AllonaHub Avantajları</h2>
-    <a href="premium.html">Tümünü Gör</a>
+    <h2 data-auth-text="advantagesTitle">AllonaHub Avantajları</h2>
+    <a href="premium.html" data-auth-text="viewAll">Tümünü Gör</a>
   </div>
 
   <div class="quick-grid">
     <div class="quick-card">
-      <h3>HP Dünyası</h3>
-      <p>Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p>
+      <h3 data-auth-text="hpWorld">HP Dünyası</h3>
+      <p data-auth-text="hpWorldDesc">Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.</p>
     </div>
 
     <div class="quick-card">
-      <h3>Mesleğe Özel Panel</h3>
-      <p>Denizci, doktor, çiftçi, avukat veya farklı meslek grupları için kişiselleştirilmiş deneyim.</p>
+      <h3 data-auth-text="professionPanel">Mesleğe Özel Panel</h3>
+      <p data-auth-text="professionPanelDesc">Denizci, doktor, çiftçi, avukat veya farklı meslek grupları için kişiselleştirilmiş deneyim.</p>
     </div>
 
     <div class="quick-card">
-      <h3>Akıllı Bildirimler</h3>
-      <p>İş ilanları, kampanyalar ve partner fırsatları mesleğine göre sana özel gösterilir.</p>
+      <h3 data-auth-text="smartNotifications">Akıllı Bildirimler</h3>
+      <p data-auth-text="smartNotificationsDesc">İş ilanları, kampanyalar ve partner fırsatları mesleğine göre sana özel gösterilir.</p>
     </div>
 
     <div class="quick-card">
-      <h3>Premium Avantajlar</h3>
-      <p>A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p>
+      <h3 data-auth-text="premiumAdvantages">Premium Avantajlar</h3>
+      <p data-auth-text="premiumAdvantagesDesc">A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç.</p>
     </div>
   </div>
 </section>
@@ -1016,6 +1019,37 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
 
 function pageUrl(path){
   return new URL(path, window.location.href).href;
+}
+
+function moduleContextUrl(){
+  const candidates=[new URLSearchParams(window.location.search).get("returnTo"),document.referrer];
+  for(const candidate of candidates){
+    if(!candidate)continue;
+    try{
+      const target=new URL(decodeURIComponent(candidate),window.location.href);
+      if(target.origin!==window.location.origin)continue;
+      if(/^\/pages\/ecosystem\/[^/]+\.html$/i.test(target.pathname) || /^\/denizcilik-modulu(?:\/|$)/i.test(target.pathname)){
+        return target.href;
+      }
+    }catch(error){}
+  }
+  return "";
+}
+
+function configureEntryNavigation(){
+  const moduleLink=document.getElementById("authModuleReturn");
+  const target=moduleContextUrl();
+  if(!moduleLink)return;
+  moduleLink.hidden=!target;
+  if(target)moduleLink.href=target;
+}
+
+function goBackToPreviousPage(){
+  if(window.history.length>1){
+    window.history.back();
+    return;
+  }
+  window.location.href=moduleContextUrl() || pageUrl("/index.html");
 }
 
 const SITE_URL=pageUrl("/pages/account/user-panel.html");
@@ -1724,6 +1758,7 @@ window.AllonaAuthRuntime={
 document.addEventListener("DOMContentLoaded",function(){
   createCountryPicker("registerPicker");
 
+  configureEntryNavigation();
   setCountryByLocale();
   openInitialAuthTab();
   prepareAccountSwitch();
@@ -1767,7 +1802,8 @@ document.addEventListener("click",function(e){
   <script src="../../js/security-challenge.js?v=20260913-mobile1" defer></script>
   <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
   <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
-  <script src="../../js/allona-auth-page.js?v=20260913-auth3" defer></script>
+  <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
+  <script src="../../js/allona-auth-page.js?v=20260913-auth4" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>

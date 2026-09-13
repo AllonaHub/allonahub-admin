@@ -48,12 +48,111 @@ body.auth-page .login-box h1 [data-auth-heading] {
 
 body.auth-page .login-box {
   min-height: 0;
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 100% !important;
+}
+
+body.auth-page .hero {
+  display: block !important;
+  overflow: visible !important;
 }
 
 .registration-name-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+body.auth-page .entry-nav-action,
+body.auth-page .entry-module-return {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ah-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body.auth-page .entry-nav-action:hover,
+body.auth-page .entry-nav-action:focus-visible,
+body.auth-page .entry-module-return:hover,
+body.auth-page .entry-module-return:focus-visible {
+  background: color-mix(in srgb, var(--ah-primary) 14%, transparent);
+  color: var(--ah-primary);
+  outline: none;
+}
+
+body.auth-page .entry-module-return[hidden] {
+  display: none !important;
+}
+
+body.auth-page[data-theme] :where(.quick-card, .partner-entry-card) {
+  border-color: var(--ah-line) !important;
+  background: var(--ah-card) !important;
+  color: var(--ah-ink) !important;
+  box-shadow: var(--ah-shadow-soft) !important;
+}
+
+body.auth-page[data-theme] .quick-card h3 {
+  color: var(--ah-primary) !important;
+  -webkit-text-fill-color: var(--ah-primary) !important;
+}
+
+body.auth-page[data-theme="white"] .quick-card h3 {
+  color: var(--ah-primary-strong) !important;
+  -webkit-text-fill-color: var(--ah-primary-strong) !important;
+}
+
+@media (min-width: 901px) {
+  body.auth-page .login-box {
+    padding: 42px clamp(38px, 5vw, 72px);
+  }
+
+  body.auth-page #login.form.active,
+  body.auth-page #forgot.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  body.auth-page #login.form.active > .input,
+  body.auth-page #forgot.form.active > .input {
+    margin-bottom: 0;
+  }
+
+  body.auth-page #login.form.active > :where(.security-challenge, .oauth-divider, .oauth-grid, .partner-panel-btn, .link-row),
+  body.auth-page #forgot.form.active > :where(p, .security-challenge) {
+    grid-column: 1 / -1;
+  }
+
+  body.auth-page #login.form.active > .btn:not(.social-btn) {
+    grid-column: 1 / -1;
+  }
+
+  body.auth-page #register.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  body.auth-page #register.form.active > :where(.registration-name-grid, .phone-row, .warning-text, .security-challenge, #registerBtn, .oauth-divider, .oauth-grid) {
+    grid-column: 1 / -1;
+  }
+
+  body.auth-page #register.form.active > .input,
+  body.auth-page #register.form.active .registration-name-grid .input {
+    margin-bottom: 0;
+  }
 }
 
 body.auth-page[data-theme] :where(.login-box > p, .phone-auth-lead, .form-note, .partner-entry-card p, .quick-card p) {
@@ -182,61 +281,6 @@ body.auth-page [data-auth-provider][disabled] {
   box-shadow: none !important;
 }
 
-body.auth-page .site-footer .social-icons {
-  display: grid !important;
-  grid-auto-flow: column !important;
-  grid-auto-columns: 48px !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  max-width: 100% !important;
-  overflow-x: auto !important;
-  scrollbar-width: none !important;
-}
-
-body.auth-page .site-footer .social-icons::-webkit-scrollbar {
-  display: none !important;
-}
-
-body.auth-page .site-footer .social-icons a {
-  display: inline-flex !important;
-  width: 48px !important;
-  min-width: 48px !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  border-radius: 8px !important;
-  color: #ffffff !important;
-}
-
-body.auth-page .site-footer .social-icons a.wa { background: #25d366 !important; }
-body.auth-page .site-footer .social-icons a.ig { background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important; }
-body.auth-page .site-footer .social-icons a.x { background: #000000 !important; }
-body.auth-page .site-footer .social-icons a.fb { background: #1877f2 !important; }
-body.auth-page .site-footer .social-icons a.yt { background: #ff0000 !important; }
-body.auth-page .site-footer .social-icons a.li { background: #0a66c2 !important; }
-body.auth-page .site-footer .social-icons a.tg { background: #229ed9 !important; }
-body.auth-page .site-footer .social-icons a.tk { background: #010101 !important; box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55 !important; }
-body.auth-page .site-footer .social-icons a.mail { background: #0067b1 !important; }
-
-body.auth-page .site-footer .social-icons a :where(svg, b) {
-  width: 24px !important;
-  height: 24px !important;
-  fill: currentColor !important;
-}
-
-body.auth-page .site-footer .social-icons a > span {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-}
-
 @media (max-width: 900px) {
   body.auth-page .actions {
     display: flex !important;
@@ -288,6 +332,40 @@ body.auth-page .site-footer .social-icons a > span {
 
   body.auth-page .actions a {
     padding-inline: 6px;
+    font-size: 12px;
+  }
+
+  body.auth-page .actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch !important;
+    overflow: visible !important;
+  }
+
+  body.auth-page .actions > :where(a, button, .platform-controls-slot) {
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+  }
+
+  body.auth-page .actions > :where(a, button) {
+    min-height: 38px;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  body.auth-page .actions .platform-controls-slot,
+  body.auth-page .actions .platform-controls {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  body.auth-page .entry-nav-action,
+  body.auth-page .entry-module-return {
+    min-height: 36px;
+    padding-inline: 7px;
     font-size: 12px;
   }
 

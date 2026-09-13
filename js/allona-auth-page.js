@@ -98,7 +98,10 @@
     invalidEmail: "Geçerli bir e-posta adresi giriniz.",
     passwordTooShort: "Şifre en az 8 karakter olmalıdır.",
     registerSuccess: "Kayıt başarılı. E-posta doğrulaması için gelen kutunu kontrol et.",
-    registerError: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin."
+    registerError: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.",
+    back: "Geri Dön",
+    home: "Ana Sayfa",
+    moduleReturn: "Modüle Dön"
   });
   Object.assign(copy.az, {
     leadRegister: "Ad, soyad, telefon və e-poçt məlumatlarınızla hesabınızı təhlükəsiz və sürətli yaradın.",
@@ -109,7 +112,10 @@
     invalidEmail: "Düzgün e-poçt ünvanı daxil edin.",
     passwordTooShort: "Şifrə ən azı 8 simvoldan ibarət olmalıdır.",
     registerSuccess: "Qeydiyyat uğurla tamamlandı. E-poçt təsdiqi üçün gələnlər qutusunu yoxlayın.",
-    registerError: "Qeydiyyat tamamlanmadı. Məlumatlarınızı yoxlayın."
+    registerError: "Qeydiyyat tamamlanmadı. Məlumatlarınızı yoxlayın.",
+    back: "Geri qayıt",
+    home: "Ana səhifə",
+    moduleReturn: "Modula qayıt"
   });
   Object.assign(copy.en, {
     leadRegister: "Create your account quickly and securely with your first name, last name, phone number and email.",
@@ -120,7 +126,10 @@
     invalidEmail: "Enter a valid email address.",
     passwordTooShort: "Your password must be at least 8 characters.",
     registerSuccess: "Registration successful. Check your inbox to verify your email.",
-    registerError: "Your account could not be created. Please check your details."
+    registerError: "Your account could not be created. Please check your details.",
+    back: "Go Back",
+    home: "Home",
+    moduleReturn: "Back to Module"
   });
   Object.assign(copy.de, {
     leadRegister: "Erstellen Sie Ihr Konto schnell und sicher mit Vorname, Nachname, Telefonnummer und E-Mail-Adresse.",
@@ -131,7 +140,10 @@
     invalidEmail: "Geben Sie eine gültige E-Mail-Adresse ein.",
     passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
     registerSuccess: "Registrierung erfolgreich. Prüfen Sie Ihren Posteingang, um Ihre E-Mail-Adresse zu bestätigen.",
-    registerError: "Das Konto konnte nicht erstellt werden. Prüfen Sie Ihre Angaben."
+    registerError: "Das Konto konnte nicht erstellt werden. Prüfen Sie Ihre Angaben.",
+    back: "Zurück",
+    home: "Startseite",
+    moduleReturn: "Zurück zum Modul"
   });
   Object.assign(copy.ru, {
     leadRegister: "Быстро и безопасно создайте аккаунт, указав имя, фамилию, телефон и e-mail.",
@@ -142,7 +154,10 @@
     invalidEmail: "Введите корректный адрес электронной почты.",
     passwordTooShort: "Пароль должен содержать не менее 8 символов.",
     registerSuccess: "Регистрация завершена. Проверьте почту для подтверждения адреса.",
-    registerError: "Не удалось создать аккаунт. Проверьте введённые данные."
+    registerError: "Не удалось создать аккаунт. Проверьте введённые данные.",
+    back: "Назад",
+    home: "Главная",
+    moduleReturn: "Вернуться в модуль"
   });
   Object.assign(copy.ar, {
     leadRegister: "أنشئ حسابك بسرعة وأمان باستخدام الاسم واسم العائلة ورقم الهاتف والبريد الإلكتروني.",
@@ -153,7 +168,10 @@
     invalidEmail: "أدخل عنوان بريد إلكتروني صحيحًا.",
     passwordTooShort: "يجب ألا تقل كلمة المرور عن 8 أحرف.",
     registerSuccess: "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيد العنوان.",
-    registerError: "تعذر إنشاء الحساب. يرجى التحقق من بياناتك."
+    registerError: "تعذر إنشاء الحساب. يرجى التحقق من بياناتك.",
+    back: "رجوع",
+    home: "الصفحة الرئيسية",
+    moduleReturn: "العودة إلى الوحدة"
   });
   Object.assign(copy.kk, {
     leadRegister: "Аты-жөніңізді, телефон нөміріңізді және e-mail мекенжайыңызды енгізіп, тіркелгіні жылдам әрі қауіпсіз жасаңыз.",
@@ -164,7 +182,10 @@
     invalidEmail: "Жарамды e-mail мекенжайын енгізіңіз.",
     passwordTooShort: "Құпия сөз кемінде 8 таңбадан тұруы керек.",
     registerSuccess: "Тіркелу сәтті аяқталды. E-mail мекенжайын растау үшін поштаңызды тексеріңіз.",
-    registerError: "Тіркелгі жасалмады. Мәліметтеріңізді тексеріңіз."
+    registerError: "Тіркелгі жасалмады. Мәліметтеріңізді тексеріңіз.",
+    back: "Артқа",
+    home: "Басты бет",
+    moduleReturn: "Модульге оралу"
   });
   Object.assign(copy.uz, {
     leadRegister: "Ism, familiya, telefon raqami va e-pochta orqali hisobingizni tez va xavfsiz yarating.",
@@ -175,7 +196,10 @@
     invalidEmail: "To'g'ri e-pochta manzilini kiriting.",
     passwordTooShort: "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
     registerSuccess: "Ro'yxatdan o'tish yakunlandi. E-pochtani tasdiqlash uchun kiruvchi xatlarni tekshiring.",
-    registerError: "Hisob yaratilmadi. Ma'lumotlaringizni tekshiring."
+    registerError: "Hisob yaratilmadi. Ma'lumotlaringizni tekshiring.",
+    back: "Orqaga",
+    home: "Bosh sahifa",
+    moduleReturn: "Modulga qaytish"
   });
   Object.assign(copy.ky, {
     leadRegister: "Атыңыз, фамилияңыз, телефон номериңиз жана e-mail менен аккаунтуңузду тез жана коопсуз түзүңүз.",
@@ -186,7 +210,88 @@
     invalidEmail: "Жарактуу e-mail дарегин киргизиңиз.",
     passwordTooShort: "Сырсөз кеминде 8 белгиден турушу керек.",
     registerSuccess: "Каттоо аяктады. E-mail дарегин тастыктоо үчүн почтаңызды текшериңиз.",
-    registerError: "Аккаунт түзүлгөн жок. Маалыматтарыңызды текшериңиз."
+    registerError: "Аккаунт түзүлгөн жок. Маалыматтарыңызды текшериңиз.",
+    back: "Артка",
+    home: "Башкы бет",
+    moduleReturn: "Модулга кайтуу"
+  });
+
+  const pageSections = {
+    tr: {
+      search: "Ara", searchPlaceholder: "HP, kupon, üyelik, destek veya güvenlik ara...", coupon: "Kupon", premium: "Premium",
+      joinTitle: "Ekosisteme katıl", joinLead: "Partner olmak isteyen işletmeler başvuru formuna geçebilir; mevcut partnerler panel girişinden hesaplarına ulaşabilir.", partnerApply: "Partner Başvurusu Yap",
+      advantagesTitle: "AllonaHub Avantajları", viewAll: "Tümünü Gör", hpWorld: "HP Dünyası", hpWorldDesc: "Alışveriş, görev ve partner işlemlerinden HP kazan. HP ile kupon oluştur ve avantajlardan yararlan.",
+      professionPanel: "Mesleğe Özel Panel", professionPanelDesc: "Denizci, doktor, çiftçi, avukat veya farklı meslek grupları için kişiselleştirilmiş deneyim.",
+      smartNotifications: "Akıllı Bildirimler", smartNotificationsDesc: "İş ilanları, kampanyalar ve partner fırsatları mesleğine göre sana özel gösterilir.",
+      premiumAdvantages: "Premium Avantajlar", premiumAdvantagesDesc: "A+, Gold, Elite Black ve Legend üyelikleri ile özel fırsatların kilidini aç."
+    },
+    az: {
+      search: "Axtar", searchPlaceholder: "HP, kupon, üzvlük, dəstək və ya təhlükəsizlik axtar...", coupon: "Kupon", premium: "Premium",
+      joinTitle: "Ekosistemə qoşul", joinLead: "Partner olmaq istəyən müəssisələr müraciət formasına keçə, mövcud partnerlər isə panel girişindən hesablarına daxil ola bilər.", partnerApply: "Partner müraciəti et",
+      advantagesTitle: "AllonaHub üstünlükləri", viewAll: "Hamısına bax", hpWorld: "HP dünyası", hpWorldDesc: "Alış-veriş, tapşırıq və partner əməliyyatlarından HP qazan. HP ilə kupon yarat və üstünlüklərdən yararlan.",
+      professionPanel: "Peşəyə uyğun panel", professionPanelDesc: "Dənizçi, həkim, fermer, hüquqşünas və digər peşə qrupları üçün fərdiləşdirilmiş təcrübə.",
+      smartNotifications: "Ağıllı bildirişlər", smartNotificationsDesc: "İş elanları, kampaniyalar və partner imkanları peşənə uyğun göstərilir.",
+      premiumAdvantages: "Premium üstünlüklər", premiumAdvantagesDesc: "A+, Gold, Elite Black və Legend üzvlükləri ilə xüsusi imkanları aç."
+    },
+    en: {
+      search: "Search", searchPlaceholder: "Search HP, coupons, membership, support or security...", coupon: "Coupons", premium: "Premium",
+      joinTitle: "Join the ecosystem", joinLead: "Businesses that want to become partners can open the application form; existing partners can access their accounts from the partner login.", partnerApply: "Apply as a Partner",
+      advantagesTitle: "AllonaHub Benefits", viewAll: "View All", hpWorld: "HP World", hpWorldDesc: "Earn HP from shopping, tasks and partner transactions. Create coupons with HP and enjoy the benefits.",
+      professionPanel: "Profession-Specific Panel", professionPanelDesc: "A personalized experience for seafarers, doctors, farmers, lawyers and other professional groups.",
+      smartNotifications: "Smart Notifications", smartNotificationsDesc: "Job listings, campaigns and partner opportunities are shown according to your profession.",
+      premiumAdvantages: "Premium Benefits", premiumAdvantagesDesc: "Unlock special opportunities with A+, Gold, Elite Black and Legend memberships."
+    },
+    de: {
+      search: "Suchen", searchPlaceholder: "HP, Coupons, Mitgliedschaft, Support oder Sicherheit suchen...", coupon: "Coupons", premium: "Premium",
+      joinTitle: "Dem Ökosystem beitreten", joinLead: "Unternehmen können das Partnerformular öffnen; bestehende Partner erreichen ihr Konto über den Partner-Login.", partnerApply: "Partnerantrag stellen",
+      advantagesTitle: "AllonaHub Vorteile", viewAll: "Alle anzeigen", hpWorld: "HP-Welt", hpWorldDesc: "Sammeln Sie HP durch Einkäufe, Aufgaben und Partnertransaktionen. Erstellen Sie Coupons mit HP und nutzen Sie Vorteile.",
+      professionPanel: "Berufsspezifisches Panel", professionPanelDesc: "Eine personalisierte Erfahrung für Seeleute, Ärzte, Landwirte, Juristen und weitere Berufsgruppen.",
+      smartNotifications: "Intelligente Benachrichtigungen", smartNotificationsDesc: "Stellenangebote, Kampagnen und Partnerchancen werden passend zu Ihrem Beruf angezeigt.",
+      premiumAdvantages: "Premium-Vorteile", premiumAdvantagesDesc: "Schalten Sie mit A+, Gold, Elite Black und Legend besondere Möglichkeiten frei."
+    },
+    ru: {
+      search: "Поиск", searchPlaceholder: "Поиск HP, купонов, подписки, поддержки или безопасности...", coupon: "Купоны", premium: "Premium",
+      joinTitle: "Присоединиться к экосистеме", joinLead: "Новые компании могут открыть форму заявки, а действующие партнёры войти в аккаунт через партнёрский вход.", partnerApply: "Подать заявку партнёра",
+      advantagesTitle: "Преимущества AllonaHub", viewAll: "Показать все", hpWorld: "Мир HP", hpWorldDesc: "Получайте HP за покупки, задания и операции партнёров. Создавайте купоны за HP и пользуйтесь преимуществами.",
+      professionPanel: "Панель по профессии", professionPanelDesc: "Персонализированный интерфейс для моряков, врачей, фермеров, юристов и других специалистов.",
+      smartNotifications: "Умные уведомления", smartNotificationsDesc: "Вакансии, кампании и предложения партнёров показываются с учётом вашей профессии.",
+      premiumAdvantages: "Преимущества Premium", premiumAdvantagesDesc: "Откройте особые возможности с подписками A+, Gold, Elite Black и Legend."
+    },
+    ar: {
+      search: "بحث", searchPlaceholder: "ابحث عن HP أو القسائم أو العضوية أو الدعم أو الأمان...", coupon: "القسائم", premium: "بريميوم",
+      joinTitle: "انضم إلى المنظومة", joinLead: "يمكن للأنشطة الراغبة في الشراكة فتح نموذج الطلب، ويمكن للشركاء الحاليين دخول حساباتهم من صفحة الشركاء.", partnerApply: "تقديم طلب شراكة",
+      advantagesTitle: "مزايا AllonaHub", viewAll: "عرض الكل", hpWorld: "عالم HP", hpWorldDesc: "اكسب HP من التسوق والمهام ومعاملات الشركاء، وأنشئ قسائم واستفد من المزايا.",
+      professionPanel: "لوحة مخصصة للمهنة", professionPanelDesc: "تجربة مخصصة للبحارة والأطباء والمزارعين والمحامين وغيرهم من أصحاب المهن.",
+      smartNotifications: "إشعارات ذكية", smartNotificationsDesc: "تظهر الوظائف والحملات وفرص الشركاء بما يتناسب مع مهنتك.",
+      premiumAdvantages: "مزايا بريميوم", premiumAdvantagesDesc: "افتح فرصًا خاصة مع عضويات A+ وGold وElite Black وLegend."
+    },
+    kk: {
+      search: "Іздеу", searchPlaceholder: "HP, купон, мүшелік, қолдау немесе қауіпсіздікті іздеу...", coupon: "Купон", premium: "Premium",
+      joinTitle: "Экожүйеге қосылу", joinLead: "Серіктес болғысы келетін компаниялар өтінім нысанын аша алады, ал қазіргі серіктестер панель арқылы тіркелгісіне кіреді.", partnerApply: "Серіктестік өтінім беру",
+      advantagesTitle: "AllonaHub артықшылықтары", viewAll: "Барлығын көру", hpWorld: "HP әлемі", hpWorldDesc: "Сатып алу, тапсырма және серіктес операцияларынан HP жинаңыз. HP арқылы купон жасап, артықшылықтарды пайдаланыңыз.",
+      professionPanel: "Мамандыққа арналған панель", professionPanelDesc: "Теңізші, дәрігер, фермер, заңгер және басқа мамандықтарға арналған жеке тәжірибе.",
+      smartNotifications: "Ақылды хабарландырулар", smartNotificationsDesc: "Жұмыс орындары, науқандар және серіктес мүмкіндіктері мамандығыңызға сай көрсетіледі.",
+      premiumAdvantages: "Premium артықшылықтары", premiumAdvantagesDesc: "A+, Gold, Elite Black және Legend мүшеліктерімен арнайы мүмкіндіктерді ашыңыз."
+    },
+    uz: {
+      search: "Qidirish", searchPlaceholder: "HP, kupon, a'zolik, yordam yoki xavfsizlikni qidiring...", coupon: "Kupon", premium: "Premium",
+      joinTitle: "Ekotizimga qo'shiling", joinLead: "Hamkor bo'lishni istagan korxonalar ariza shaklini ochishi, amaldagi hamkorlar esa panel orqali hisobiga kirishi mumkin.", partnerApply: "Hamkorlik arizasini yuborish",
+      advantagesTitle: "AllonaHub afzalliklari", viewAll: "Barchasini ko'rish", hpWorld: "HP dunyosi", hpWorldDesc: "Xaridlar, vazifalar va hamkorlik amallaridan HP ishlang. HP bilan kupon yarating va afzalliklardan foydalaning.",
+      professionPanel: "Kasbga mos panel", professionPanelDesc: "Dengizchi, shifokor, fermer, huquqshunos va boshqa kasb guruhlari uchun moslashtirilgan tajriba.",
+      smartNotifications: "Aqlli bildirishnomalar", smartNotificationsDesc: "Ish e'lonlari, kampaniyalar va hamkorlik imkoniyatlari kasbingizga mos ko'rsatiladi.",
+      premiumAdvantages: "Premium afzalliklar", premiumAdvantagesDesc: "A+, Gold, Elite Black va Legend a'zoliklari bilan maxsus imkoniyatlarni oching."
+    },
+    ky: {
+      search: "Издөө", searchPlaceholder: "HP, купон, мүчөлүк, колдоо же коопсуздукту издеңиз...", coupon: "Купон", premium: "Premium",
+      joinTitle: "Экосистемага кошулуу", joinLead: "Өнөктөш болгусу келген ишканалар арыз формасын ача алат, ал эми учурдагы өнөктөштөр панель аркылуу аккаунтуна кирет.", partnerApply: "Өнөктөштүк арыз берүү",
+      advantagesTitle: "AllonaHub артыкчылыктары", viewAll: "Баарын көрүү", hpWorld: "HP дүйнөсү", hpWorldDesc: "Соода, тапшырма жана өнөктөш операцияларынан HP топтоңуз. HP менен купон түзүп, артыкчылыктарды колдонуңуз.",
+      professionPanel: "Кесипке ылайык панель", professionPanelDesc: "Деңизчи, дарыгер, фермер, юрист жана башка кесип топтору үчүн жекелештирилген тажрыйба.",
+      smartNotifications: "Акылдуу билдирмелер", smartNotificationsDesc: "Жумуш жарыялары, өнөктөш кампаниялары жана мүмкүнчүлүктөр кесибиңизге ылайык көрсөтүлөт.",
+      premiumAdvantages: "Premium артыкчылыктар", premiumAdvantagesDesc: "A+, Gold, Elite Black жана Legend мүчөлүктөрү менен атайын мүмкүнчүлүктөрдү ачыңыз."
+    }
+  };
+  Object.entries(pageSections).forEach(function (entry) {
+    Object.assign(copy[entry[0]], entry[1]);
   });
 
   let activeTab = "login";
@@ -236,6 +341,13 @@
   }
 
   function applyTranslations() {
+    const selectedLanguage = language();
+    document.documentElement.lang = selectedLanguage;
+    document.documentElement.dir = selectedLanguage === "ar" ? "rtl" : "ltr";
+    text("authBackLabel", t("back"));
+    text("authHomeLink", t("home"));
+    const moduleReturn = document.querySelector("#authModuleReturn span");
+    if (moduleReturn && moduleReturn.textContent !== t("moduleReturn")) moduleReturn.textContent = t("moduleReturn");
     text("authTabLogin", t("tabLogin"));
     text("authTabRegister", t("tabRegister"));
     text("authTabForgot", t("tabForgot"));
@@ -244,6 +356,7 @@
       if (node.textContent !== value) node.textContent = value;
     });
     placeholder("loginEmail", t("email"));
+    placeholder("userSearchInput", t("searchPlaceholder"));
     placeholder("loginPassword", t("password"));
     placeholder("firstName", t("firstName"));
     placeholder("lastName", t("lastName"));
