@@ -4,15 +4,95 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Allona Denizcilik | AllonaHub</title>
-  <meta name="description" content="AllonaHub denizcilik modulu: crew, navlun, gemi ilanlari, brokerlik, liman, acente ve teknik servis akislari.">
+  <meta name="description" content="AllonaHub Denizcilik: denizcilik iş ilanları, Crew CV, belge ve başvuru takibi.">
   <link rel="canonical" href="allonadenizcilik.html">
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
   <link rel="stylesheet" href="../../css/allona-maritime.css?v=20260911-maritime-cache1">
+  <link rel="stylesheet" href="../../css/allona-maritime-mobile.css?v=20260913-mobile2">
 </head>
 <body class="maritime-page">
-  <a class="maritime-skip-link" href="#maritimeMain">Ana içeriğe geç</a>
+  <a class="maritime-skip-link maritime-skip-link--desktop" href="#maritimeMain">Ana içeriğe geç</a>
+  <a class="maritime-skip-link maritime-skip-link--mobile" href="#mobileMaritimeMain">Ana içeriğe geç</a>
   <div class="site-shell">
-    <main id="maritimeMain" class="maritime-shell" tabindex="-1">
+    <main id="mobileMaritimeMain" class="mobile-maritime" tabindex="-1" aria-label="Allona Denizcilik mobil görünümü">
+      <header class="mobile-maritime__header">
+        <div class="mobile-maritime__top">
+          <a class="mobile-maritime__brand" href="../../index.html" aria-label="AllonaHub ana sayfa">
+            <img src="../../images/brand/allonahub-icon-192.png" alt="AllonaHub">
+            <span><strong>AllonaHub</strong>Denizcilik</span>
+          </a>
+          <a class="mobile-account" href="../account/user.html?returnTo=%2Fpages%2Fecosystem%2Fallonadenizcilik.html" data-maritime-mobile-account>Giriş Yap</a>
+        </div>
+        <nav class="mobile-maritime__nav" aria-label="Denizcilik mobil menü">
+          <a aria-current="page" href="../account/is-ilanlari.html?sector=maritime">İş İlanları</a>
+          <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=applications">Başvurularım</a>
+          <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=offers">İş Tekliflerim</a>
+        </nav>
+      </header>
+
+      <div class="mobile-maritime__content">
+        <form class="mobile-search" data-maritime-mobile-search>
+          <label for="mobileMaritimeSearch">Denizcilik iş ilanı ara</label>
+          <input id="mobileMaritimeSearch" name="q" type="search" autocomplete="off" placeholder="Pozisyon, gemi tipi veya sertifika ara">
+          <button type="submit" aria-label="Ara">Ara</button>
+        </form>
+
+        <section class="mobile-maritime__intro" aria-labelledby="mobileMaritimeTitle">
+          <h1 id="mobileMaritimeTitle">Denizdeki yeni işini bul.</h1>
+          <p>Denizcilik pozisyonlarını incele, Crew profilini tamamla ve başvurularını tek hesabından takip et.</p>
+          <div class="mobile-maritime__actions">
+            <a class="mobile-maritime__button mobile-maritime__button--primary" href="../account/is-ilanlari.html?sector=maritime">İş İlanlarını Gör</a>
+            <a class="mobile-maritime__button" href="../career/cv-form.html?source=allonadenizcilik">Crew CV Oluştur</a>
+          </div>
+        </section>
+
+        <section class="mobile-section" aria-labelledby="mobileJobsTitle">
+          <div class="mobile-section__head">
+            <div><h2 id="mobileJobsTitle">Açık Pozisyonlar</h2><p>Firma bilgileri yalnızca kabul edilen başvuruda açılır.</p></div>
+            <a href="../account/is-ilanlari.html?sector=maritime">Tümü</a>
+          </div>
+          <div class="mobile-job-rail" aria-label="Yatay kaydırılabilir denizcilik iş ilanları">
+            <a class="mobile-job-card" href="../account/user.html?returnTo=..%2Fcareer%2Fcv-form.html%3Fposition%3D2nd%2BEngineer%26source%3Dallonadenizcilik">
+              <span class="mobile-job-card__mark">ENG</span>
+              <span><h3>2nd Engineer</h3><p>Uzakyol seferi, 6 aylık kontrat. Doğrulanmış denizcilik partneri.</p><span class="mobile-job-card__meta"><span>Acil</span><span>Başvuru açık</span></span><span class="mobile-card-link">İlanı incele</span></span>
+            </a>
+            <a class="mobile-job-card" href="../account/user.html?returnTo=..%2Fcareer%2Fcv-form.html%3Fposition%3DAble%2BSeaman%26source%3Dallonadenizcilik">
+              <span class="mobile-job-card__mark">AB</span>
+              <span><h3>Able Seaman</h3><p>Avrupa seferi, 6 aylık kontrat. Doğrulanmış denizcilik partneri.</p><span class="mobile-job-card__meta"><span>24 ay deneyim</span><span>CV gerekli</span></span><span class="mobile-card-link">İlanı incele</span></span>
+            </a>
+            <a class="mobile-job-card" href="../account/user.html?returnTo=..%2Fcareer%2Fcv-form.html%3Fposition%3DChief%2BOfficer%26source%3Dallonadenizcilik">
+              <span class="mobile-job-card__mark">C/O</span>
+              <span><h3>Chief Officer</h3><p>Uluslararası sefer, vardiya sorumluluğu. Doğrulanmış denizcilik partneri.</p><span class="mobile-job-card__meta"><span>STCW</span><span>İngilizce</span></span><span class="mobile-card-link">İlanı incele</span></span>
+            </a>
+            <a class="mobile-job-card" href="../account/user.html?returnTo=..%2Fcareer%2Fcv-form.html%3Fposition%3DOiler%26source%3Dallonadenizcilik">
+              <span class="mobile-job-card__mark">OIL</span>
+              <span><h3>Oiler</h3><p>Makine departmanı, kontrat açık. Doğrulanmış denizcilik partneri.</p><span class="mobile-job-card__meta"><span>Deneyimli</span><span>Başvuru</span></span><span class="mobile-card-link">İlanı incele</span></span>
+            </a>
+          </div>
+          <p class="mobile-privacy-note">Firma adı ve iletişim bilgileri yalnızca kabul edilen başvurunun güvenli hesap ekranında görüntülenir.</p>
+        </section>
+
+        <section class="mobile-section" aria-labelledby="mobileCrewTitle">
+          <div class="mobile-section__head"><div><h2 id="mobileCrewTitle">Crew Hazırlığı</h2><p>Başvuru öncesi profilini tamamla.</p></div></div>
+          <div class="mobile-crew-grid">
+            <a class="mobile-crew-action" href="../career/cv-form.html?source=allonadenizcilik"><strong>Maritime CV</strong><span>Deniz hizmeti, yeterlilik ve sertifikalarını tek profilde topla.</span></a>
+            <a class="mobile-crew-action" href="../account/belgeler.html"><strong>Belgelerim</strong><span>STCW ve denizci belgelerini kontrol et.</span></a>
+            <a class="mobile-crew-action" href="../account/user-panel.html?module=allonadenizcilik&amp;view=applications"><strong>Başvurularım</strong><span>Başvuru durumlarını hesabından takip et.</span></a>
+          </div>
+        </section>
+
+        <section class="mobile-section" aria-labelledby="mobileMarketTitle">
+          <div class="mobile-section__head"><div><h2 id="mobileMarketTitle">Denizcilik Pazarı</h2><p>İş arayan denizci için gerekli bağlantılar.</p></div></div>
+          <div class="mobile-market-rail" aria-label="Yatay kaydırılabilir denizcilik pazarı">
+            <a class="mobile-market-card" href="../search/arama.html?q=denizcilik+crew+ekipman"><h3>Crew Ekipmanları</h3><p>İş kıyafeti, güvenlik ekipmanı ve denizcilik ihtiyaçlarını ara.</p><small>Ürünleri gör</small></a>
+            <a class="mobile-market-card" href="../search/arama.html?q=denizcilik+eğitim+STCW"><h3>Eğitim ve Sertifika</h3><p>Mesleki eğitim ve sertifika seçeneklerine ulaş.</p><small>Eğitimleri gör</small></a>
+            <a class="mobile-market-card" href="../company/destek.html?topic=allonadenizcilik"><h3>Başvuru Desteği</h3><p>Hesap, CV ve başvuru adımlarında destek al.</p><small>Desteğe git</small></a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <main id="maritimeMain" class="maritime-shell desktop-maritime" tabindex="-1">
       <nav class="maritime-top" aria-label="Denizcilik hizli baglantilar">
         <a href="../account/user-panel.html?module=maritime&amp;view=applications&amp;q=Crew+Ba%C5%9Fvurular%C4%B1m">Crew Basvurularim</a>
         <a href="../account/maritime-requests.html">Navlun Taleplerim</a>
@@ -266,5 +346,6 @@
   <script src="../../js/layout.v3.js?v=20260911-maritime-cache1" defer></script>
   <script src="../../js/platform.js?v=20260911-maritime-cache1" defer></script>
   <script src="../../js/allona-maritime.js?v=20260911-maritime-cache1" defer></script>
+  <script src="../../js/allona-maritime-mobile.js?v=20260913-mobile2" defer></script>
 </body>
 </html>

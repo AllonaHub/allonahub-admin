@@ -23,10 +23,20 @@
     if (loader) return loader;
 
     loader = new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (callback, value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        callback(value);
+      };
+      const timeout = window.setTimeout(() => {
+        finish(reject, new Error("Robot doğrulaması zamanında yüklenemedi."));
+      }, 12000);
       const existing = document.querySelector("script[data-allonahub-turnstile]");
       if (existing) {
-        existing.addEventListener("load", () => resolve(true), { once: true });
-        existing.addEventListener("error", reject, { once: true });
+        existing.addEventListener("load", () => finish(resolve, true), { once: true });
+        existing.addEventListener("error", () => finish(reject, new Error("Robot doğrulaması yüklenemedi.")), { once: true });
         return;
       }
 
@@ -35,9 +45,12 @@
       script.async = true;
       script.defer = true;
       script.dataset.allonahubTurnstile = "true";
-      script.onload = () => resolve(true);
-      script.onerror = () => reject(new Error("Robot doğrulaması yüklenemedi."));
+      script.onload = () => finish(resolve, true);
+      script.onerror = () => finish(reject, new Error("Robot doğrulaması yüklenemedi."));
       document.head.appendChild(script);
+    }).catch((error) => {
+      loader = null;
+      throw error;
     });
 
     return loader;
@@ -48,6 +61,7 @@
       login: "Giriş için robot olmadığınızı doğrulayın.",
       register: "Kayıt için robot olmadığınızı doğrulayın.",
       forgot_password: "Şifre sıfırlama için robot olmadığınızı doğrulayın.",
+      partner_company_lookup: "Şirket bilgisi sorgusu için robot olmadığınızı doğrulayın.",
       partner_application: "Başvuru için robot olmadığınızı doğrulayın.",
       maritime_partner_application: "Denizcilik partner başvurusu için robot olmadığınızı doğrulayın.",
       order_checkout: "Ödeme için robot olmadığınızı doğrulayın.",
@@ -55,6 +69,19 @@
       cv_checkout: "CV ödeme için robot olmadığınızı doğrulayın."
     };
     return labels[action] || "Robot olmadığınızı doğrulayın.";
+  }
+
+  function injectStyle() {
+    if (document.querySelector("style[data-allonahub-turnstile-style]")) return;
+    const style = document.createElement("style");
+    style.dataset.allonahubTurnstileStyle = "true";
+    style.textContent = `
+      .security-challenge,.allonahub-turnstile{display:grid;gap:8px;justify-items:center;width:100%;max-width:100%;margin:14px 0;min-height:78px;overflow:hidden}
+      .allonahub-turnstile__label{font-size:12px;font-weight:700;color:inherit;opacity:.78;text-align:center}
+      .allonahub-turnstile__widget{width:100%;max-width:100%;min-height:65px}
+      .allonahub-turnstile__widget>div{max-width:100%;margin-inline:auto}
+    `;
+    document.head.appendChild(style);
   }
 
   function buildChallengeContent(container, label, includeWidget) {
@@ -100,24 +127,28 @@
     const state = {
       container,
       widgetId: null,
-      token: ""
+      token: "",
+      failed: false
     };
 
     state.widgetId = window.turnstile.render(widgetTarget, {
       sitekey: siteKey(),
       action: normalizedAction,
       theme: "light",
-      size: "normal",
+      size: "flexible",
       callback(token) {
         state.token = token || "";
+        state.failed = false;
         container.dataset.verified = state.token ? "true" : "false";
       },
       "error-callback"() {
         state.token = "";
+        state.failed = true;
         container.dataset.verified = "false";
       },
       "expired-callback"() {
         state.token = "";
+        state.failed = false;
         container.dataset.verified = "false";
       }
     });
@@ -129,6 +160,7 @@
     if (!siteKey()) return;
     const containers = Array.from(document.querySelectorAll("[data-security-challenge]")).filter(isActiveChallenge);
     if (!containers.length) return;
+    injectStyle();
     try {
       await loadTurnstile();
     } catch (error) {
@@ -200,7 +232,12 @@
       const normalizedAction = normalizeAction(action);
       const visibleToken = consumeVisibleToken(action);
       if (visibleWidgets.has(normalizedAction)) {
-        if (!visibleToken) return await execute(normalizedAction);
+        const state = visibleWidgets.get(normalizedAction);
+        if (!visibleToken && state && state.failed) {
+          const unavailable = new Error("Robot doğrulaması şu anda kullanılamıyor.");
+          unavailable.status = 0;
+          throw unavailable;
+        }
         return visibleToken;
       }
       return await execute(normalizedAction);

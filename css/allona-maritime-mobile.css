@@ -1,0 +1,576 @@
+.mobile-maritime,
+.maritime-skip-link--mobile {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  html,
+  body.maritime-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body.maritime-page {
+    background: #020814;
+  }
+
+  body.maritime-page .desktop-maritime,
+  body.maritime-page .maritime-skip-link--desktop,
+  body.maritime-page .module-ad-banner {
+    display: none !important;
+  }
+
+  body.maritime-page .maritime-skip-link--mobile {
+    display: inline-flex;
+  }
+
+  body.maritime-page .mobile-maritime {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 0 42px;
+    color: #eef7ff;
+  }
+
+  .mobile-maritime *,
+  .mobile-maritime *::before,
+  .mobile-maritime *::after {
+    box-sizing: border-box;
+  }
+
+  .mobile-maritime a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .mobile-maritime__header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+    background: rgba(2, 8, 20, 0.96);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-maritime__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-maritime__brand {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .mobile-maritime__brand img {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+
+  .mobile-maritime__brand > span {
+    display: block;
+    color: #b9d8e9;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .mobile-maritime__brand strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #ffd700;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .mobile-account {
+    display: inline-flex;
+    min-height: 42px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border: 1px solid rgba(0, 229, 255, 0.34);
+    border-radius: 8px;
+    background: #09233c;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .mobile-maritime__nav {
+    display: flex;
+    max-width: 100%;
+    gap: 8px;
+    margin-top: 9px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .mobile-maritime__nav::-webkit-scrollbar,
+  .mobile-job-rail::-webkit-scrollbar,
+  .mobile-market-rail::-webkit-scrollbar,
+  body.maritime-page .site-footer .social-icons::-webkit-scrollbar,
+  body.maritime-page .site-footer .footer-payment-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-maritime__nav a {
+    display: inline-flex;
+    min-height: 40px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: #d7e9f5;
+    font-size: 12px;
+    font-weight: 850;
+    scroll-snap-align: start;
+  }
+
+  .mobile-maritime__nav a[aria-current="page"] {
+    border-color: rgba(255, 215, 0, 0.45);
+    background: rgba(255, 215, 0, 0.1);
+    color: #ffe86b;
+  }
+
+  .mobile-maritime__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 18px 14px 10px;
+    overflow: hidden;
+  }
+
+  .mobile-maritime__content > *,
+  .mobile-section,
+  .mobile-job-rail,
+  .mobile-market-rail {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .mobile-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .mobile-search label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .mobile-search input {
+    width: 100%;
+    min-width: 0;
+    height: 50px;
+    padding: 0 14px;
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    border-radius: 8px;
+    outline: 0;
+    background: #071a2d;
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+  }
+
+  .mobile-search input::placeholder {
+    color: #8faabb;
+  }
+
+  .mobile-search input:focus {
+    border-color: #00d5ff;
+    box-shadow: 0 0 0 3px rgba(0, 213, 255, 0.14);
+  }
+
+  .mobile-search button {
+    width: 52px;
+    height: 50px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #ffd700;
+    color: #071525;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 950;
+  }
+
+  .mobile-maritime__intro {
+    padding: 4px 0 20px;
+  }
+
+  .mobile-maritime__intro h1 {
+    max-width: 330px;
+    margin: 0 0 10px;
+    color: #fff;
+    font-size: clamp(32px, 10vw, 42px);
+    line-height: 1.04;
+    letter-spacing: 0;
+  }
+
+  .mobile-maritime__intro p {
+    max-width: 510px;
+    margin: 0;
+    color: #b9ccda;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .mobile-maritime__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin-top: 17px;
+  }
+
+  .mobile-maritime__button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid rgba(0, 229, 255, 0.24);
+    border-radius: 8px;
+    background: #0a2945;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .mobile-maritime__button--primary {
+    border-color: #ffd700;
+    background: #ffd700;
+    color: #071525;
+  }
+
+  .mobile-section {
+    padding: 22px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .mobile-section__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+  }
+
+  .mobile-section__head h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .mobile-section__head p {
+    margin: 5px 0 0;
+    color: #91aabd;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .mobile-section__head > a {
+    flex: 0 0 auto;
+    color: #5ee7ff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-job-rail,
+  .mobile-market-rail {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(272px, 86vw);
+    gap: 11px;
+    padding: 1px 1px 10px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .mobile-job-card,
+  .mobile-market-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(0, 229, 255, 0.18);
+    border-radius: 8px;
+    background: #07192c;
+    color: #eef7ff;
+    scroll-snap-align: start;
+  }
+
+  .mobile-job-card {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+    padding: 15px;
+  }
+
+  .mobile-job-card__mark {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border-radius: 8px;
+    background: #103657;
+    color: #5ee7ff;
+    font-size: 12px;
+    font-weight: 950;
+    text-align: center;
+  }
+
+  .mobile-job-card h3,
+  .mobile-market-card h3 {
+    margin: 0 0 6px;
+    color: #fff;
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .mobile-job-card p,
+  .mobile-market-card p {
+    margin: 0;
+    color: #a9bdcb;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .mobile-job-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .mobile-job-card__meta span {
+    display: inline-flex;
+    min-height: 26px;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 215, 0, 0.09);
+    color: #ffe15a;
+    font-size: 11px;
+    font-weight: 850;
+  }
+
+  .mobile-card-link {
+    display: inline-flex;
+    margin-top: 12px;
+    color: #5ee7ff;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-privacy-note {
+    display: flex;
+    gap: 10px;
+    margin: 14px 0 0;
+    padding: 12px;
+    border-left: 3px solid #00d5ff;
+    background: rgba(0, 213, 255, 0.07);
+    color: #b9ccda;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .mobile-crew-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .mobile-crew-action {
+    display: grid;
+    min-height: 112px;
+    align-content: start;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 8px;
+    background: #081c31;
+    color: #eef7ff;
+  }
+
+  .mobile-crew-action:first-child {
+    grid-column: 1 / -1;
+    min-height: 92px;
+    border-color: rgba(255, 215, 0, 0.28);
+  }
+
+  .mobile-crew-action strong {
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .mobile-crew-action span {
+    margin-top: 7px;
+    color: #9fb5c4;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .mobile-market-card {
+    min-height: 142px;
+    padding: 15px;
+  }
+
+  .mobile-market-card small {
+    display: block;
+    margin-top: 12px;
+    color: #5ee7ff;
+    font-weight: 900;
+  }
+
+  .mobile-maritime a:focus-visible,
+  .mobile-maritime button:focus-visible,
+  .mobile-maritime input:focus-visible {
+    outline: 3px solid #ffd700;
+    outline-offset: 3px;
+  }
+
+  body.maritime-page .site-footer .store-buttons {
+    display: none !important;
+  }
+
+  body.maritime-page .site-footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.maritime-page .site-footer .footer-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    gap: 12px !important;
+    margin-inline: 9px !important;
+    padding: 18px 0 8px !important;
+  }
+
+  body.maritime-page .site-footer .footer-col {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 16px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons,
+  body.maritime-page .site-footer .footer-payment-strip,
+  body.maritime-page .site-footer .footer-bottom {
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    margin-inline: 9px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 48px !important;
+    justify-content: start !important;
+    gap: 10px !important;
+    max-width: 100% !important;
+    padding-block: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .social-icons a {
+    position: relative;
+    display: inline-flex !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons a span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  body.maritime-page .site-footer .social-icons .social-icon,
+  body.maritime-page .site-footer .social-icons b,
+  body.maritime-page .site-footer .social-icons svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 76px !important;
+    align-items: center !important;
+    justify-content: start !important;
+    gap: 8px !important;
+    max-width: 100% !important;
+    padding-block: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip .mobile-payment-logo {
+    display: grid !important;
+    width: 76px !important;
+    min-width: 76px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    place-items: center !important;
+    padding: 7px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    background: #fff !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip .mobile-payment-logo img {
+    display: block !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    object-fit: contain !important;
+  }
+}
