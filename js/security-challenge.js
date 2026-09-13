@@ -233,12 +233,15 @@
       const visibleToken = consumeVisibleToken(action);
       if (visibleWidgets.has(normalizedAction)) {
         const state = visibleWidgets.get(normalizedAction);
-        if (!visibleToken && state && state.failed) {
+        if (visibleToken) return visibleToken;
+        if (state && state.failed) {
           const unavailable = new Error("Robot doğrulaması şu anda kullanılamıyor.");
           unavailable.status = 0;
           throw unavailable;
         }
-        return visibleToken;
+        const required = new Error("Önce robot doğrulamasını tamamlayın.");
+        required.status = 400;
+        throw required;
       }
       return await execute(normalizedAction);
     } catch (error) {

@@ -99,6 +99,8 @@
     passwordTooShort: "Şifre en az 8 karakter olmalıdır.",
     registerSuccess: "Kayıt başarılı. E-posta doğrulaması için gelen kutunu kontrol et.",
     registerError: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.",
+    accountExists: "Bu e-posta adresiyle zaten bir hesap var. Giriş yapın veya şifrenizi sıfırlayın.",
+    challengeRequired: "Robot doğrulamasını tamamlayıp yeniden deneyin.",
     back: "Geri Dön",
     home: "Ana Sayfa",
     moduleReturn: "Modüle Dön"
@@ -113,6 +115,8 @@
     passwordTooShort: "Şifrə ən azı 8 simvoldan ibarət olmalıdır.",
     registerSuccess: "Qeydiyyat uğurla tamamlandı. E-poçt təsdiqi üçün gələnlər qutusunu yoxlayın.",
     registerError: "Qeydiyyat tamamlanmadı. Məlumatlarınızı yoxlayın.",
+    accountExists: "Bu e-poçt ünvanı ilə artıq hesab var. Daxil olun və ya şifrənizi yeniləyin.",
+    challengeRequired: "Robot yoxlamasını tamamlayıb yenidən sınayın.",
     back: "Geri qayıt",
     home: "Ana səhifə",
     moduleReturn: "Modula qayıt"
@@ -127,6 +131,8 @@
     passwordTooShort: "Your password must be at least 8 characters.",
     registerSuccess: "Registration successful. Check your inbox to verify your email.",
     registerError: "Your account could not be created. Please check your details.",
+    accountExists: "An account already exists for this email. Sign in or reset your password.",
+    challengeRequired: "Complete the robot verification and try again.",
     back: "Go Back",
     home: "Home",
     moduleReturn: "Back to Module"
@@ -141,6 +147,8 @@
     passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
     registerSuccess: "Registrierung erfolgreich. Prüfen Sie Ihren Posteingang, um Ihre E-Mail-Adresse zu bestätigen.",
     registerError: "Das Konto konnte nicht erstellt werden. Prüfen Sie Ihre Angaben.",
+    accountExists: "Für diese E-Mail-Adresse besteht bereits ein Konto. Melden Sie sich an oder setzen Sie Ihr Passwort zurück.",
+    challengeRequired: "Schließen Sie die Sicherheitsprüfung ab und versuchen Sie es erneut.",
     back: "Zurück",
     home: "Startseite",
     moduleReturn: "Zurück zum Modul"
@@ -155,6 +163,8 @@
     passwordTooShort: "Пароль должен содержать не менее 8 символов.",
     registerSuccess: "Регистрация завершена. Проверьте почту для подтверждения адреса.",
     registerError: "Не удалось создать аккаунт. Проверьте введённые данные.",
+    accountExists: "Для этого адреса уже существует аккаунт. Войдите или сбросьте пароль.",
+    challengeRequired: "Завершите проверку безопасности и повторите попытку.",
     back: "Назад",
     home: "Главная",
     moduleReturn: "Вернуться в модуль"
@@ -169,6 +179,8 @@
     passwordTooShort: "يجب ألا تقل كلمة المرور عن 8 أحرف.",
     registerSuccess: "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيد العنوان.",
     registerError: "تعذر إنشاء الحساب. يرجى التحقق من بياناتك.",
+    accountExists: "يوجد حساب بهذا البريد الإلكتروني. سجل الدخول أو أعد تعيين كلمة المرور.",
+    challengeRequired: "أكمل التحقق الأمني ثم حاول مرة أخرى.",
     back: "رجوع",
     home: "الصفحة الرئيسية",
     moduleReturn: "العودة إلى الوحدة"
@@ -183,6 +195,8 @@
     passwordTooShort: "Құпия сөз кемінде 8 таңбадан тұруы керек.",
     registerSuccess: "Тіркелу сәтті аяқталды. E-mail мекенжайын растау үшін поштаңызды тексеріңіз.",
     registerError: "Тіркелгі жасалмады. Мәліметтеріңізді тексеріңіз.",
+    accountExists: "Бұл e-mail үшін тіркелгі бар. Кіріңіз немесе құпия сөзді қалпына келтіріңіз.",
+    challengeRequired: "Қауіпсіздік тексеруін аяқтап, қайта көріңіз.",
     back: "Артқа",
     home: "Басты бет",
     moduleReturn: "Модульге оралу"
@@ -197,6 +211,8 @@
     passwordTooShort: "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
     registerSuccess: "Ro'yxatdan o'tish yakunlandi. E-pochtani tasdiqlash uchun kiruvchi xatlarni tekshiring.",
     registerError: "Hisob yaratilmadi. Ma'lumotlaringizni tekshiring.",
+    accountExists: "Bu e-pochta uchun hisob mavjud. Kiring yoki parolni tiklang.",
+    challengeRequired: "Xavfsizlik tekshiruvini yakunlab, qayta urinib ko'ring.",
     back: "Orqaga",
     home: "Bosh sahifa",
     moduleReturn: "Modulga qaytish"
@@ -211,6 +227,8 @@
     passwordTooShort: "Сырсөз кеминде 8 белгиден турушу керек.",
     registerSuccess: "Каттоо аяктады. E-mail дарегин тастыктоо үчүн почтаңызды текшериңиз.",
     registerError: "Аккаунт түзүлгөн жок. Маалыматтарыңызды текшериңиз.",
+    accountExists: "Бул e-mail үчүн аккаунт бар. Кириңиз же сырсөздү калыбына келтириңиз.",
+    challengeRequired: "Коопсуздук текшерүүсүн бүтүрүп, кайра аракет кылыңыз.",
     back: "Артка",
     home: "Башкы бет",
     moduleReturn: "Модулга кайтуу"
