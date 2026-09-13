@@ -21,6 +21,10 @@
   -webkit-text-fill-color: #d6e2f2 !important;
 }
 
+:is(body.auth-page, body.partner-entry-page) .site-footer .social-icons svg path {
+  fill: currentColor !important;
+}
+
 :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
   background: rgba(5, 25, 50, 0.72);
   border: 1px solid rgba(95, 215, 255, 0.14);
