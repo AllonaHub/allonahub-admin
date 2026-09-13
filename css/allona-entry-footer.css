@@ -22,7 +22,7 @@
 }
 
 :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons svg path {
-  fill: currentColor !important;
+  fill: #ffffff !important;
 }
 
 :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
