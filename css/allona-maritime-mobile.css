@@ -15,6 +15,14 @@
     background: #020814;
   }
 
+  body.maritime-page .site-shell {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+  }
+
   body.maritime-page .desktop-maritime,
   body.maritime-page .maritime-skip-link--desktop,
   body.maritime-page .module-ad-banner {
@@ -27,9 +35,9 @@
 
   body.maritime-page .mobile-maritime {
     display: block;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
     padding: 0 0 42px;
     color: #eef7ff;
   }
@@ -70,26 +78,28 @@
   }
 
   .mobile-maritime__brand img {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    border-radius: 8px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 0;
     object-fit: contain;
   }
 
-  .mobile-maritime__brand > span {
-    display: block;
-    color: #b9d8e9;
-    font-size: 11px;
-    font-weight: 800;
+  .mobile-maritime__brand .logo-title {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
   }
 
-  .mobile-maritime__brand strong {
-    display: block;
-    margin-bottom: 4px;
-    color: #ffd700;
-    font-size: 18px;
-    line-height: 1;
+  .mobile-maritime__brand .gold {
+    color: #ffd700 !important;
+  }
+
+  .mobile-maritime__brand .blue {
+    color: #00e5ff !important;
   }
 
   .mobile-account {
@@ -572,5 +582,17 @@
     height: 26px !important;
     max-height: 26px !important;
     object-fit: contain !important;
+  }
+}
+
+@media (min-width: 370px) and (max-width: 760px) {
+  .mobile-maritime__brand img {
+    width: 55px;
+    height: 55px;
+    flex-basis: 55px;
+  }
+
+  .mobile-maritime__brand .logo-title {
+    font-size: 30px;
   }
 }
