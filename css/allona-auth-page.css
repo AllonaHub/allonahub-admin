@@ -46,6 +46,16 @@ body.auth-page .login-box h1 [data-auth-heading] {
   text-shadow: none !important;
 }
 
+body.auth-page .login-box {
+  min-height: 0;
+}
+
+.registration-name-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 body.auth-page[data-theme] :where(.login-box > p, .phone-auth-lead, .form-note, .partner-entry-card p, .quick-card p) {
   color: var(--ah-muted) !important;
   -webkit-text-fill-color: var(--ah-muted) !important;
@@ -291,6 +301,11 @@ body.auth-page .site-footer .social-icons a > span {
 
   .oauth-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registration-name-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .phone-row {

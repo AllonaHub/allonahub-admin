@@ -89,6 +89,106 @@
     headingLogin: "аккаунтуңузга кириңиз", headingRegister: "аккаунтуңузду түзүңүз", headingForgot: "сырсөзүңүздү калыбына келтириңиз", leadLogin: "Бир аккаунт менен AllonaHub кызматтарына, HP, купондорго жана premium артыкчылыктарга жетиңиз.", leadRegister: "Жаңы аккаунт түзүп, кесиптик панелди жана билдирүүлөрдү бир профилге топтоңуз.", leadForgot: "Аккаунтка коопсуз кайтуу үчүн e-mail'иңизге тастыктоо шилтемесин жөнөтүңүз.", titleLogin: "AllonaHub кирүү", titleRegister: "AllonaHub каттоо", titleForgot: "AllonaHub сырсөзүн калыбына келтирүү", tabLogin: "Кирүү", tabRegister: "Каттоо", tabForgot: "Сырсөздү унуттум", methodEmail: "E-mail менен кирүү", methodPhone: "Телефон менен кирүү", password: "Сырсөз", loginButton: "Кирүү", phoneLead: "Өлкөңүздү тандаңыз; тастыктоо коду ошол өлкөнүн коду менен жөнөтүлөт.", phone: "Телефон номуру", sendCode: "Тастыктоо кодун жөнөтүү", otp: "6 орундуу тастыктоо коду", verifyCode: "Кодду тастыктап, улантуу", or: "же", googleLogin: "Google менен кирүү", appleLogin: "Apple / iCloud менен кирүү", googleRegister: "Google менен каттоо", appleRegister: "Apple / iCloud менен каттоо", partnerLogin: "Өнөктөш кирүүсү", securityCenter: "Коопсуздук борбору", fullName: "Аты-жөнү", sector: "Тармакты тандаңыз *", profession: "Кесипти издеп, тандаңыз *", professionNote: "Кесипти тандоо милдеттүү. Панель, вакансиялар жана билдирүүлөр тандооңузга ылайыкташтырылат.", createPassword: "Сырсөз түзүү", repeatPassword: "Сырсөздү кайталоо", passwordMismatch: "Сырсөздөр дал келбейт.", createAccount: "Акысыз аккаунт түзүү", resetButton: "Калыбына келтирүү шилтемесин жөнөтүү", resetNote: "Тастыктоо шилтемеси e-mail аркылуу жөнөтүлөт.", countrySearch: "Өлкөнүн атын же кодун жазыңыз...", challengeLogin: "Кирүү коопсуздугун текшерүү", challengeRegister: "Каттоо коопсуздугун текшерүү", challengeForgot: "Сырсөздү калыбына келтирүүнү текшерүү", appleUnavailable: "Apple / iCloud менен кирүү азырынча иштетиле элек.", phoneUnavailable: "SMS менен кирүү азырынча иштетиле элек.", invalidPhone: "Жарактуу телефон номурун киргизиңиз.", codeSent: "Тастыктоо коду {phone} номуруна жөнөтүлдү.", invalidCode: "6 орундуу кодду киргизиңиз.", phoneVerified: "Телефон тастыкталды. Аккаунтуңузга багытталуудасыз.", phoneError: "SMS суроосу аягына чыккан жок.", oauthError: "Бул аккаунт менен кирүүнү баштоо мүмкүн болбоду.", tooMany: "Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз."
   });
 
+  Object.assign(copy.tr, {
+    leadRegister: "Ad, soyad, telefon ve e-posta bilgilerinle hesabını güvenli ve hızlı şekilde oluştur.",
+    firstName: "Ad",
+    lastName: "Soyad",
+    requiredFirstName: "Ad zorunludur.",
+    requiredLastName: "Soyad zorunludur.",
+    invalidEmail: "Geçerli bir e-posta adresi giriniz.",
+    passwordTooShort: "Şifre en az 8 karakter olmalıdır.",
+    registerSuccess: "Kayıt başarılı. E-posta doğrulaması için gelen kutunu kontrol et.",
+    registerError: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin."
+  });
+  Object.assign(copy.az, {
+    leadRegister: "Ad, soyad, telefon və e-poçt məlumatlarınızla hesabınızı təhlükəsiz və sürətli yaradın.",
+    firstName: "Ad",
+    lastName: "Soyad",
+    requiredFirstName: "Adınızı daxil edin.",
+    requiredLastName: "Soyadınızı daxil edin.",
+    invalidEmail: "Düzgün e-poçt ünvanı daxil edin.",
+    passwordTooShort: "Şifrə ən azı 8 simvoldan ibarət olmalıdır.",
+    registerSuccess: "Qeydiyyat uğurla tamamlandı. E-poçt təsdiqi üçün gələnlər qutusunu yoxlayın.",
+    registerError: "Qeydiyyat tamamlanmadı. Məlumatlarınızı yoxlayın."
+  });
+  Object.assign(copy.en, {
+    leadRegister: "Create your account quickly and securely with your first name, last name, phone number and email.",
+    firstName: "First name",
+    lastName: "Last name",
+    requiredFirstName: "First name is required.",
+    requiredLastName: "Last name is required.",
+    invalidEmail: "Enter a valid email address.",
+    passwordTooShort: "Your password must be at least 8 characters.",
+    registerSuccess: "Registration successful. Check your inbox to verify your email.",
+    registerError: "Your account could not be created. Please check your details."
+  });
+  Object.assign(copy.de, {
+    leadRegister: "Erstellen Sie Ihr Konto schnell und sicher mit Vorname, Nachname, Telefonnummer und E-Mail-Adresse.",
+    firstName: "Vorname",
+    lastName: "Nachname",
+    requiredFirstName: "Der Vorname ist erforderlich.",
+    requiredLastName: "Der Nachname ist erforderlich.",
+    invalidEmail: "Geben Sie eine gültige E-Mail-Adresse ein.",
+    passwordTooShort: "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    registerSuccess: "Registrierung erfolgreich. Prüfen Sie Ihren Posteingang, um Ihre E-Mail-Adresse zu bestätigen.",
+    registerError: "Das Konto konnte nicht erstellt werden. Prüfen Sie Ihre Angaben."
+  });
+  Object.assign(copy.ru, {
+    leadRegister: "Быстро и безопасно создайте аккаунт, указав имя, фамилию, телефон и e-mail.",
+    firstName: "Имя",
+    lastName: "Фамилия",
+    requiredFirstName: "Введите имя.",
+    requiredLastName: "Введите фамилию.",
+    invalidEmail: "Введите корректный адрес электронной почты.",
+    passwordTooShort: "Пароль должен содержать не менее 8 символов.",
+    registerSuccess: "Регистрация завершена. Проверьте почту для подтверждения адреса.",
+    registerError: "Не удалось создать аккаунт. Проверьте введённые данные."
+  });
+  Object.assign(copy.ar, {
+    leadRegister: "أنشئ حسابك بسرعة وأمان باستخدام الاسم واسم العائلة ورقم الهاتف والبريد الإلكتروني.",
+    firstName: "الاسم",
+    lastName: "اسم العائلة",
+    requiredFirstName: "الاسم مطلوب.",
+    requiredLastName: "اسم العائلة مطلوب.",
+    invalidEmail: "أدخل عنوان بريد إلكتروني صحيحًا.",
+    passwordTooShort: "يجب ألا تقل كلمة المرور عن 8 أحرف.",
+    registerSuccess: "تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتأكيد العنوان.",
+    registerError: "تعذر إنشاء الحساب. يرجى التحقق من بياناتك."
+  });
+  Object.assign(copy.kk, {
+    leadRegister: "Аты-жөніңізді, телефон нөміріңізді және e-mail мекенжайыңызды енгізіп, тіркелгіні жылдам әрі қауіпсіз жасаңыз.",
+    firstName: "Аты",
+    lastName: "Тегі",
+    requiredFirstName: "Атыңызды енгізіңіз.",
+    requiredLastName: "Тегіңізді енгізіңіз.",
+    invalidEmail: "Жарамды e-mail мекенжайын енгізіңіз.",
+    passwordTooShort: "Құпия сөз кемінде 8 таңбадан тұруы керек.",
+    registerSuccess: "Тіркелу сәтті аяқталды. E-mail мекенжайын растау үшін поштаңызды тексеріңіз.",
+    registerError: "Тіркелгі жасалмады. Мәліметтеріңізді тексеріңіз."
+  });
+  Object.assign(copy.uz, {
+    leadRegister: "Ism, familiya, telefon raqami va e-pochta orqali hisobingizni tez va xavfsiz yarating.",
+    firstName: "Ism",
+    lastName: "Familiya",
+    requiredFirstName: "Ismingizni kiriting.",
+    requiredLastName: "Familiyangizni kiriting.",
+    invalidEmail: "To'g'ri e-pochta manzilini kiriting.",
+    passwordTooShort: "Parol kamida 8 ta belgidan iborat bo'lishi kerak.",
+    registerSuccess: "Ro'yxatdan o'tish yakunlandi. E-pochtani tasdiqlash uchun kiruvchi xatlarni tekshiring.",
+    registerError: "Hisob yaratilmadi. Ma'lumotlaringizni tekshiring."
+  });
+  Object.assign(copy.ky, {
+    leadRegister: "Атыңыз, фамилияңыз, телефон номериңиз жана e-mail менен аккаунтуңузду тез жана коопсуз түзүңүз.",
+    firstName: "Аты",
+    lastName: "Фамилиясы",
+    requiredFirstName: "Атыңызды киргизиңиз.",
+    requiredLastName: "Фамилияңызды киргизиңиз.",
+    invalidEmail: "Жарактуу e-mail дарегин киргизиңиз.",
+    passwordTooShort: "Сырсөз кеминде 8 белгиден турушу керек.",
+    registerSuccess: "Каттоо аяктады. E-mail дарегин тастыктоо үчүн почтаңызды текшериңиз.",
+    registerError: "Аккаунт түзүлгөн жок. Маалыматтарыңызды текшериңиз."
+  });
+
   let activeTab = "login";
   let capabilities = null;
 
@@ -120,6 +220,11 @@
     if (node && node.getAttribute("placeholder") !== value) node.setAttribute("placeholder", value);
   }
 
+  function label(forId, value) {
+    const node = document.querySelector('label[for="' + forId + '"]');
+    if (node && node.textContent !== value) node.textContent = value;
+  }
+
   function applyChallengeLabels() {
     document.querySelectorAll("[data-security-challenge]").forEach(function (host) {
       const action = host.dataset.securityChallenge;
@@ -140,21 +245,25 @@
     });
     placeholder("loginEmail", t("email"));
     placeholder("loginPassword", t("password"));
-    placeholder("fullName", t("fullName"));
+    placeholder("firstName", t("firstName"));
+    placeholder("lastName", t("lastName"));
     placeholder("registerEmail", t("email"));
     placeholder("registerPhone", t("phone"));
-    placeholder("professionSearch", t("profession"));
     placeholder("password1", t("createPassword"));
     placeholder("password2", t("repeatPassword"));
     placeholder("forgotEmail", t("email"));
+    label("firstName", t("firstName"));
+    label("lastName", t("lastName"));
+    label("registerEmail", t("email"));
+    label("registerPhone", t("phone"));
+    label("password1", t("createPassword"));
+    label("password2", t("repeatPassword"));
     document.querySelectorAll(".country-search").forEach(function (node) {
       if (node.getAttribute("placeholder") !== t("countrySearch")) node.setAttribute("placeholder", t("countrySearch"));
     });
-    const sector = document.querySelector("#sectorSelect option[value='']");
-    if (sector && sector.textContent !== t("sector")) sector.textContent = t("sector");
-    text("professionHelp", t("professionNote"));
     text("passwordWarning", t("passwordMismatch"));
-    text("registerBtn", t("createAccount"));
+    if (typeof window.checkPasswords === "function") window.checkPasswords();
+    else text("registerBtn", t("createAccount"));
     const resetButton = document.querySelector("#forgot > .btn");
     if (resetButton && resetButton.textContent !== t("resetButton")) resetButton.textContent = t("resetButton");
     const resetNote = document.querySelector("#forgot > p");
@@ -260,7 +369,8 @@
     applyTranslations: applyTranslations,
     loadCapabilities: loadCapabilities,
     loginWithOAuth: loginWithOAuth,
-    renderTab: renderTab
+    renderTab: renderTab,
+    translate: t
   };
 
   document.addEventListener("allona:language-changed", applyTranslations);
