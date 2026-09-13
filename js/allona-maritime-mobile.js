@@ -33,6 +33,15 @@
     });
   }
 
+  function setupMobileControls() {
+    const languageButton = document.querySelector(".mobile-maritime__control-slot .platform-language-btn");
+    const themeButton = document.querySelector(".mobile-maritime__control-slot .platform-theme-btn");
+    if (!languageButton || !themeButton) return false;
+    languageButton.title = "Dili değiştir";
+    themeButton.title = "Temayı değiştir";
+    return true;
+  }
+
   function logoMarkup(label, source, extraClass) {
     return `<span class="mobile-payment-logo ${extraClass || ""}" role="listitem" aria-label="${label}"><img src="${source}" alt="${label}"></span>`;
   }
@@ -73,6 +82,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     setupSearch();
+    setupMobileControls();
     updateAccountLink();
     watchFooter();
   });

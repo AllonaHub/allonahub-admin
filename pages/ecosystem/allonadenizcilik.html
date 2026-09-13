@@ -8,7 +8,7 @@
   <link rel="canonical" href="allonadenizcilik.html">
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
   <link rel="stylesheet" href="../../css/allona-maritime.css?v=20260911-maritime-cache1">
-  <link rel="stylesheet" href="../../css/allona-maritime-mobile.css?v=20260913-mobile3">
+  <link rel="stylesheet" href="../../css/allona-maritime-mobile.css?v=20260913-mobile4">
 </head>
 <body class="maritime-page">
   <a class="maritime-skip-link maritime-skip-link--desktop" href="#maritimeMain">Ana içeriğe geç</a>
@@ -21,23 +21,35 @@
             <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
             <span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span>
           </a>
-          <a class="mobile-account" href="../account/user.html?returnTo=%2Fpages%2Fecosystem%2Fallonadenizcilik.html" data-maritime-mobile-account>Giriş Yap</a>
+          <div class="mobile-maritime__utilities">
+            <span class="mobile-maritime__control-slot" data-platform-controls-slot="home"></span>
+            <a class="mobile-account" href="../account/user.html?returnTo=%2Fpages%2Fecosystem%2Fallonadenizcilik.html" data-maritime-mobile-account>Giriş Yap</a>
+          </div>
         </div>
         <nav class="mobile-maritime__nav" aria-label="Denizcilik mobil menü">
           <a aria-current="page" href="../account/is-ilanlari.html?sector=maritime">İş İlanları</a>
           <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=applications">Başvurularım</a>
           <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=offers">İş Tekliflerim</a>
+          <a href="../account/user-panel.html?module=allonadenizcilik&amp;view=auto-apply">Otomatik Başvuru</a>
         </nav>
       </header>
 
       <div class="mobile-maritime__content">
         <form class="mobile-search" data-maritime-mobile-search>
           <label for="mobileMaritimeSearch">Denizcilik iş ilanı ara</label>
-          <input id="mobileMaritimeSearch" name="q" type="search" autocomplete="off" placeholder="Pozisyon, gemi tipi veya sertifika ara">
+          <input id="mobileMaritimeSearch" name="q" type="search" autocomplete="off" placeholder="Pozisyon veya sertifika ara">
           <button type="submit" aria-label="Ara">Ara</button>
         </form>
 
         <section class="mobile-maritime__intro" aria-labelledby="mobileMaritimeTitle">
+          <div class="mobile-commission-free" role="note" aria-label="Komisyonsuz iş başvurusu">
+            <strong>Komisyonsuz</strong>
+            <span>İş başvurularında ücret alınmaz</span>
+          </div>
+          <aside class="mobile-safety-alert" role="alert" aria-label="Güvenli başvuru uyarısı">
+            <span class="mobile-safety-alert__icon" aria-hidden="true">!</span>
+            <p><strong>Güvenli başvuru uyarısı</strong>Sadece doğrulanmış mavi rozetli firmalara başvurunuz. Komisyon veya ücret talep edenlere itibar etmeyiniz ve hiçbir koşulda ödeme yapmayınız.</p>
+          </aside>
           <h1 id="mobileMaritimeTitle">Denizdeki yeni işini bul.</h1>
           <p>Denizcilik pozisyonlarını incele, Crew profilini tamamla ve başvurularını tek hesabından takip et.</p>
           <div class="mobile-maritime__actions">
@@ -346,6 +358,6 @@
   <script src="../../js/layout.v3.js?v=20260911-maritime-cache1" defer></script>
   <script src="../../js/platform.js?v=20260911-maritime-cache1" defer></script>
   <script src="../../js/allona-maritime.js?v=20260913-mobile2" defer></script>
-  <script src="../../js/allona-maritime-mobile.js?v=20260913-mobile2" defer></script>
+  <script src="../../js/allona-maritime-mobile.js?v=20260913-mobile3" defer></script>
 </body>
 </html>

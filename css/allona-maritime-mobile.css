@@ -12,7 +12,7 @@
   }
 
   body.maritime-page {
-    background: #020814;
+    background: var(--ah-bg, #020814);
   }
 
   body.maritime-page .site-shell {
@@ -39,7 +39,8 @@
     max-width: none !important;
     margin: 0 !important;
     padding: 0 0 42px;
-    color: #eef7ff;
+    background: var(--ah-page-bg, #020814);
+    color: var(--ah-ink, #eef7ff);
   }
 
   .mobile-maritime *,
@@ -58,8 +59,8 @@
     top: 0;
     z-index: 30;
     padding: 10px 14px 8px;
-    border-bottom: 1px solid rgba(0, 229, 255, 0.18);
-    background: rgba(2, 8, 20, 0.96);
+    border-bottom: 1px solid var(--ah-line, rgba(0, 229, 255, 0.18));
+    background: color-mix(in srgb, var(--ah-bg-strong, #020814) 96%, transparent);
     backdrop-filter: blur(14px);
   }
 
@@ -70,49 +71,126 @@
     gap: 12px;
   }
 
-  .mobile-maritime__brand {
+  body.maritime-page .mobile-maritime .mobile-maritime__brand {
     display: flex;
+    flex: 0 1 auto;
     min-width: 0;
     align-items: center;
-    gap: 9px;
+    gap: 9px !important;
   }
 
-  .mobile-maritime__brand img {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
     border-radius: 0;
     object-fit: contain;
   }
 
-  .mobile-maritime__brand .logo-title {
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
     display: inline-flex;
     align-items: center;
     margin: 0;
-    font-size: 24px;
+    font-size: 21px !important;
     font-weight: 900;
     line-height: 1;
   }
 
-  .mobile-maritime__brand .gold {
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .gold {
     color: #ffd700 !important;
   }
 
-  .mobile-maritime__brand .blue {
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .blue {
     color: #00e5ff !important;
+  }
+
+  .mobile-maritime__utilities,
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    display: flex !important;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .mobile-maritime__utilities {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    flex: 0 0 auto;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    gap: 5px !important;
+    overflow: visible !important;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    width: 85px !important;
+    min-width: 85px !important;
+    max-width: 85px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-value {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-btn,
+  .mobile-maritime__control-slot .platform-language-btn,
+  .mobile-maritime__control-slot .platform-theme-btn {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-globe {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+  }
+
+  .mobile-maritime__control-slot .platform-theme-dot {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-maritime__control-slot .platform-menu {
+    right: 0 !important;
+    left: auto !important;
+    min-width: 132px;
+  }
+
+  .mobile-maritime__control-slot .platform-menu--wide {
+    min-width: 184px;
   }
 
   .mobile-account {
     display: inline-flex;
-    min-height: 42px;
+    min-height: 40px;
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    padding: 0 14px;
-    border: 1px solid rgba(0, 229, 255, 0.34);
+    padding: 0 11px;
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.34));
     border-radius: 8px;
-    background: #09233c;
-    color: #fff;
+    background: color-mix(in srgb, var(--ah-bg-strong, #09233c) 72%, var(--ah-primary, #00e5ff) 28%);
+    color: var(--ah-ink, #fff);
     font-size: 13px;
     font-weight: 900;
   }
@@ -144,16 +222,16 @@
     padding: 0 13px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
-    color: #d7e9f5;
+    color: var(--ah-ink, #d7e9f5);
     font-size: 12px;
     font-weight: 850;
     scroll-snap-align: start;
   }
 
   .mobile-maritime__nav a[aria-current="page"] {
-    border-color: rgba(255, 215, 0, 0.45);
-    background: rgba(255, 215, 0, 0.1);
-    color: #ffe86b;
+    border-color: color-mix(in srgb, var(--ah-accent, #ffd700) 52%, transparent);
+    background: color-mix(in srgb, var(--ah-accent, #ffd700) 12%, transparent);
+    color: var(--ah-accent-soft, #ffe86b);
   }
 
   .mobile-maritime__content {
@@ -201,17 +279,17 @@
     min-width: 0;
     height: 50px;
     padding: 0 14px;
-    border: 1px solid rgba(0, 229, 255, 0.25);
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.25));
     border-radius: 8px;
     outline: 0;
-    background: #071a2d;
-    color: #fff;
+    background: color-mix(in srgb, var(--ah-bg-strong, #071a2d) 92%, transparent);
+    color: var(--ah-ink, #fff);
     font: inherit;
     font-size: 15px;
   }
 
   .mobile-search input::placeholder {
-    color: #8faabb;
+    color: var(--ah-muted, #8faabb);
   }
 
   .mobile-search input:focus {
@@ -237,19 +315,86 @@
     padding: 4px 0 20px;
   }
 
+  .mobile-commission-free {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 7px 11px;
+    border: 1px solid #00e5ff;
+    border-radius: 8px;
+    background: #00345a;
+    color: #dffcff;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.6), inset 0 0 14px rgba(0, 229, 255, 0.16);
+  }
+
+  .mobile-commission-free strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .mobile-commission-free span {
+    color: #aef7ff;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .mobile-safety-alert {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    margin: 0 0 18px;
+    padding: 13px;
+    border: 1px solid #ff4d5f;
+    border-radius: 8px;
+    background: #4a0b14;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(255, 42, 64, 0.2);
+  }
+
+  .mobile-safety-alert__icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    background: #ff3147;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 950;
+  }
+
+  .mobile-safety-alert p {
+    max-width: none;
+    margin: 0;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.48;
+  }
+
+  .mobile-safety-alert strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #fff;
+    font-size: 13px;
+  }
+
   .mobile-maritime__intro h1 {
     max-width: 330px;
     margin: 0 0 10px;
-    color: #fff;
+    color: var(--ah-ink, #fff);
     font-size: clamp(32px, 10vw, 42px);
     line-height: 1.04;
     letter-spacing: 0;
   }
 
-  .mobile-maritime__intro p {
+  .mobile-maritime__intro > p {
     max-width: 510px;
     margin: 0;
-    color: #b9ccda;
+    color: var(--ah-muted, #b9ccda);
     font-size: 15px;
     line-height: 1.55;
   }
@@ -267,10 +412,10 @@
     align-items: center;
     justify-content: center;
     padding: 0 12px;
-    border: 1px solid rgba(0, 229, 255, 0.24);
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.24));
     border-radius: 8px;
-    background: #0a2945;
-    color: #fff;
+    background: color-mix(in srgb, var(--ah-bg-strong, #0a2945) 72%, var(--ah-primary, #00e5ff) 28%);
+    color: var(--ah-ink, #fff);
     font-size: 13px;
     font-weight: 900;
     text-align: center;
@@ -284,7 +429,7 @@
 
   .mobile-section {
     padding: 22px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--ah-line, rgba(255, 255, 255, 0.12));
   }
 
   .mobile-section__head {
@@ -297,21 +442,21 @@
 
   .mobile-section__head h2 {
     margin: 0;
-    color: #fff;
+    color: var(--ah-ink, #fff);
     font-size: 22px;
     line-height: 1.15;
   }
 
   .mobile-section__head p {
     margin: 5px 0 0;
-    color: #91aabd;
+    color: var(--ah-muted, #91aabd);
     font-size: 12px;
     line-height: 1.4;
   }
 
   .mobile-section__head > a {
     flex: 0 0 auto;
-    color: #5ee7ff;
+    color: var(--ah-primary, #5ee7ff);
     font-size: 12px;
     font-weight: 900;
   }
@@ -333,10 +478,10 @@
   .mobile-market-card {
     min-width: 0;
     overflow: hidden;
-    border: 1px solid rgba(0, 229, 255, 0.18);
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.18));
     border-radius: 8px;
-    background: #07192c;
-    color: #eef7ff;
+    background: var(--ah-card, #07192c);
+    color: var(--ah-ink, #eef7ff);
     scroll-snap-align: start;
   }
 
@@ -363,7 +508,7 @@
   .mobile-job-card h3,
   .mobile-market-card h3 {
     margin: 0 0 6px;
-    color: #fff;
+    color: var(--ah-ink, #fff);
     font-size: 17px;
     line-height: 1.2;
   }
@@ -371,7 +516,7 @@
   .mobile-job-card p,
   .mobile-market-card p {
     margin: 0;
-    color: #a9bdcb;
+    color: var(--ah-muted, #a9bdcb);
     font-size: 12px;
     line-height: 1.45;
   }
@@ -398,7 +543,7 @@
   .mobile-card-link {
     display: inline-flex;
     margin-top: 12px;
-    color: #5ee7ff;
+    color: var(--ah-primary, #5ee7ff);
     font-size: 12px;
     font-weight: 900;
   }
@@ -410,7 +555,7 @@
     padding: 12px;
     border-left: 3px solid #00d5ff;
     background: rgba(0, 213, 255, 0.07);
-    color: #b9ccda;
+    color: var(--ah-muted, #b9ccda);
     font-size: 12px;
     line-height: 1.5;
   }
@@ -428,8 +573,8 @@
     padding: 14px;
     border: 1px solid rgba(255, 255, 255, 0.13);
     border-radius: 8px;
-    background: #081c31;
-    color: #eef7ff;
+    background: var(--ah-card, #081c31);
+    color: var(--ah-ink, #eef7ff);
   }
 
   .mobile-crew-action:first-child {
@@ -439,13 +584,13 @@
   }
 
   .mobile-crew-action strong {
-    color: #fff;
+    color: var(--ah-ink, #fff);
     font-size: 14px;
   }
 
   .mobile-crew-action span {
     margin-top: 7px;
-    color: #9fb5c4;
+    color: var(--ah-muted, #9fb5c4);
     font-size: 12px;
     line-height: 1.4;
   }
@@ -458,7 +603,7 @@
   .mobile-market-card small {
     display: block;
     margin-top: 12px;
-    color: #5ee7ff;
+    color: var(--ah-primary, #5ee7ff);
     font-weight: 900;
   }
 
@@ -527,7 +672,25 @@
     justify-content: center !important;
     padding: 0 !important;
     border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
   }
+
+  body.maritime-page .site-footer .social-icons a.wa { background: #25d366 !important; }
+  body.maritime-page .site-footer .social-icons a.ig {
+    background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
+  }
+  body.maritime-page .site-footer .social-icons a.x { background: #000 !important; }
+  body.maritime-page .site-footer .social-icons a.fb { background: #1877f2 !important; }
+  body.maritime-page .site-footer .social-icons a.yt { background: #ff0000 !important; }
+  body.maritime-page .site-footer .social-icons a.li { background: #0a66c2 !important; }
+  body.maritime-page .site-footer .social-icons a.tg { background: #229ed9 !important; }
+  body.maritime-page .site-footer .social-icons a.tk {
+    background: #010101 !important;
+    box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+  body.maritime-page .site-footer .social-icons a.mail { background: #0067b1 !important; }
 
   body.maritime-page .site-footer .social-icons a span {
     position: absolute !important;
@@ -546,6 +709,11 @@
   body.maritime-page .site-footer .social-icons svg {
     width: 24px !important;
     height: 24px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons svg {
+    display: block !important;
+    fill: currentColor !important;
   }
 
   body.maritime-page .site-footer .footer-payment-strip {
@@ -586,13 +754,64 @@
 }
 
 @media (min-width: 370px) and (max-width: 760px) {
-  .mobile-maritime__brand img {
-    width: 55px;
-    height: 55px;
-    flex-basis: 55px;
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    height: 42px !important;
+    flex-basis: 42px !important;
   }
 
-  .mobile-maritime__brand .logo-title {
-    font-size: 30px;
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
+    font-size: 24px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .mobile-maritime__header {
+    padding-inline: 10px;
+  }
+
+  .mobile-maritime__top {
+    gap: 7px;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand {
+    gap: 6px !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
+    font-size: 19px !important;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    width: 81px !important;
+    min-width: 81px !important;
+    max-width: 81px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-btn,
+  .mobile-maritime__control-slot .platform-language-btn,
+  .mobile-maritime__control-slot .platform-theme-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  .mobile-account {
+    min-height: 38px;
+    padding-inline: 9px;
+    font-size: 12px;
   }
 }
