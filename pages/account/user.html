@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../../js/config.js?v=20260627-config-central"></script>
 
 <style>
 *{
@@ -55,6 +56,18 @@ body:before{
 a{
   text-decoration:none;
   color:inherit;
+}
+
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
 }
 
 .page{
@@ -310,6 +323,7 @@ a{
 }
 
 .country-selected{
+  width:100%;
   height:56px;
   border-radius:17px;
   background:#f7fcff;
@@ -320,6 +334,8 @@ a{
   padding:0 16px;
   cursor:pointer;
   color:var(--text);
+  font:inherit;
+  text-align:left;
 }
 
 .country-dropdown{
@@ -354,15 +370,22 @@ a{
 }
 
 .country-item{
+  width:100%;
+  border:0;
   padding:12px 14px;
+  background:transparent;
   cursor:pointer;
   font-size:14px;
   color:var(--text);
   border-bottom:1px solid rgba(0,0,0,.05);
+  font:inherit;
+  text-align:left;
 }
 
-.country-item:hover{
+.country-item:hover,
+.country-item:focus-visible{
   background:#eef8ff;
+  outline:0;
 }
 
 .country-code-tag{
@@ -395,6 +418,10 @@ a{
   margin-top:6px;
   box-shadow:0 0 24px rgba(0,213,255,.36);
   transition:.3s;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
 }
 
 .btn:hover{
@@ -413,7 +440,8 @@ a{
   border:1px solid rgba(0,150,255,.22);
 }
 
-.icloud-btn{
+.icloud-btn,
+.partner-panel-btn{
   background:linear-gradient(135deg,#ffffff,#eef8ff);
   color:var(--deep);
   border:1px solid rgba(0,150,255,.24);
@@ -667,14 +695,21 @@ a{
 }
 
 .profession-item{
+  width:100%;
+  border:0;
   padding:12px 14px;
+  background:transparent;
   border-bottom:1px solid rgba(0,0,0,.05);
   cursor:pointer;
   color:var(--text);
+  font:inherit;
+  text-align:left;
 }
 
-.profession-item:hover{
+.profession-item:hover,
+.profession-item:focus-visible{
   background:#eef8ff;
+  outline:0;
 }
 
 .required-dot{
@@ -783,10 +818,11 @@ a{
   }
 }
 </style>
-  <link rel="stylesheet" href="../../css/platform.css?v=20260711-challenge1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260913-auth2">
 </head>
 
-<body>
+<body class="auth-page">
 <div class="page">
 
 <div class="header">
@@ -796,8 +832,9 @@ a{
 
   <div class="search glass">
     <span><i class="fa-solid fa-magnifying-glass"></i></span>
-    <input id="userSearchInput" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
-    <button onclick="userSearch()">Ara</button>
+    <label class="sr-only" for="userSearchInput">Hesap merkezi araması</label>
+    <input id="userSearchInput" type="search" autocomplete="off" placeholder="HP, kupon, üyelik, destek veya güvenlik ara...">
+    <button type="button" onclick="userSearch()">Ara</button>
   </div>
 
   <div class="actions glass">
@@ -808,77 +845,85 @@ a{
   </div>
 </div>
 <section class="hero">
-  <div class="login-box glass">
+  <div class="login-box glass" data-no-translate>
 
-    <h1>Allona<span>Hub</span>’a Giriş Yap</h1>
-    <p>Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
+    <h1 id="authTitle"><span class="auth-brand">Allona<span>Hub</span></span> <span data-auth-heading>hesabına giriş yap</span></h1>
+    <p id="authLead">Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.</p>
 
-    <div class="tabs">
-      <button class="tab active" onclick="openTab('login', event)">Giriş Yap</button>
-      <button class="tab" onclick="openTab('register', event)">Kayıt Ol</button>
-      <button class="tab" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
+    <div class="tabs" role="tablist" aria-label="Hesap işlemleri">
+      <button id="authTabLogin" class="tab active" type="button" role="tab" aria-selected="true" aria-controls="login" data-auth-tab="login" onclick="openTab('login', event)">Giriş Yap</button>
+      <button id="authTabRegister" class="tab" type="button" role="tab" aria-selected="false" aria-controls="register" data-auth-tab="register" onclick="openTab('register', event)">Kayıt Ol</button>
+      <button id="authTabForgot" class="tab" type="button" role="tab" aria-selected="false" aria-controls="forgot" data-auth-tab="forgot" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
     </div>
+    <div id="authStatus" class="auth-feedback" role="status" aria-live="polite" hidden></div>
 
     <!-- LOGIN -->
-    <div id="login" class="form active">
-      <div class="phone-row">
-        <div id="loginPicker" class="country-picker"></div>
-        <div class="input">
-          <input id="loginEmail" placeholder="E-posta">
-        </div>
+    <div id="login" class="form active" role="tabpanel" aria-labelledby="authTabLogin">
+      <div class="input">
+        <label class="sr-only" for="loginEmail">Giriş e-posta adresi</label>
+        <input id="loginEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
       </div>
 
       <div class="input">
-        <input id="loginPassword" type="password" placeholder="Şifre">
+        <label class="sr-only" for="loginPassword">Giriş şifresi</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Şifre">
       </div>
 
+      <button class="btn" type="button" onclick="loginUser()" data-auth-text="loginButton">Giriş Yap</button>
+
       <div class="security-challenge" data-security-challenge="login"></div>
-      <button class="btn" onclick="loginUser()">Giriş Yap</button>
-      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Giriş Yap</button>
-      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Giriş Yap</button>
+      <div class="oauth-divider"><span data-auth-text="or">veya</span></div>
+      <div class="oauth-grid">
+        <button class="btn social-btn google-auth-btn" type="button" data-auth-provider="google" onclick="AllonaAuthPage.loginWithOAuth('google')"><i class="fa-brands fa-google" aria-hidden="true"></i><span data-auth-text="googleLogin">Google ile Giriş Yap</span></button>
+      </div>
+      <a class="btn social-btn partner-panel-btn" href="https://partner.allonahub.com/">Partner Girişi</a>
 
       <div class="link-row">
-        <a href="user.html?tab=login&amp;method=phone">Telefon ile giriş</a>
         <a href="../company/destek.html">Güvenlik merkezi</a>
       </div>
     </div>
 
     <!-- REGISTER -->
-    <div id="register" class="form">
+    <div id="register" class="form" role="tabpanel" aria-labelledby="authTabRegister">
 
       <div class="input">
-        <input id="fullName" placeholder="Ad Soyad">
+        <label class="sr-only" for="fullName">Ad soyad</label>
+        <input id="fullName" type="text" autocomplete="name" placeholder="Ad Soyad" aria-required="true">
       </div>
 
       <div class="input">
-        <input id="registerEmail" placeholder="E-posta">
+        <label class="sr-only" for="registerEmail">Kayıt e-posta adresi</label>
+        <input id="registerEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta" aria-required="true">
       </div>
 
       <div class="phone-row">
         <div id="registerPicker" class="country-picker"></div>
         <div class="input">
-          <input id="registerPhone" placeholder="Telefon numarası">
+          <label class="sr-only" for="registerPhone">Telefon numarası</label>
+          <input id="registerPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Telefon numarası">
         </div>
       </div>
 
       <div class="profession-wrap">
 
         <div class="select-box">
-          <select id="sectorSelect" onchange="onSectorChange()">
+          <label class="sr-only" for="sectorSelect">Sektör seçimi</label>
+          <select id="sectorSelect" autocomplete="off" aria-required="true" onchange="onSectorChange()">
             <option value="">Sektör Seçiniz *</option>
           </select>
         </div>
 
         <div class="profession-box">
           <div class="input">
-            <input id="professionSearch" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
+            <label class="sr-only" for="professionSearch">Meslek arama ve seçimi</label>
+            <input id="professionSearch" type="search" role="combobox" aria-autocomplete="list" aria-controls="professionResults" aria-expanded="false" aria-describedby="professionHelp" aria-required="true" placeholder="Meslek ara ve seç *" oninput="filterProfessions()" autocomplete="off">
           </div>
-          <div id="professionResults" class="profession-results"></div>
+          <div id="professionResults" class="profession-results" role="listbox" aria-label="Meslek sonuçları"></div>
         </div>
 
       </div>
 
-      <p class="form-note">
+      <p class="form-note" id="professionHelp">
         Meslek seçimi zorunludur. AllonaHub karşılama, panel önerileri, iş ilanları ve bildirimleri seçilen mesleğe göre kişiselleştirir.
       </p>
 
@@ -887,28 +932,30 @@ a{
       <input type="hidden" id="selectedProfessionTitle">
 
       <div class="input">
-        <input id="password1" type="password" placeholder="Şifre oluştur" oninput="checkPasswords()">
+        <label class="sr-only" for="password1">Yeni şifre</label>
+        <input id="password1" type="password" autocomplete="new-password" placeholder="Şifre oluştur" aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
 
       <div class="input">
-        <input id="password2" type="password" placeholder="Şifreyi tekrar gir" oninput="checkPasswords()">
+        <label class="sr-only" for="password2">Yeni şifre tekrarı</label>
+        <input id="password2" type="password" autocomplete="new-password" placeholder="Şifreyi tekrar gir" aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
 
-      <div id="passwordWarning" class="warning-text">Şifreler aynı değil.</div>
+      <div id="passwordWarning" class="warning-text" role="alert" aria-live="polite">Şifreler aynı değil.</div>
 
       <div class="security-challenge" data-security-challenge="register"></div>
       <button id="registerBtn" class="btn" onclick="registerUser()">Ücretsiz Hesap Oluştur</button>
-      <button class="btn social-btn" onclick="loginWithGoogle()">Google ile Kayıt Ol</button>
-      <button class="btn social-btn icloud-btn" onclick="icloudInfo()">iCloud ile Kayıt Ol</button>
+      <div class="oauth-divider"><span data-auth-text="or">veya</span></div>
+      <div class="oauth-grid">
+        <button class="btn social-btn google-auth-btn" type="button" data-auth-provider="google" onclick="AllonaAuthPage.loginWithOAuth('google')"><i class="fa-brands fa-google" aria-hidden="true"></i><span data-auth-text="googleRegister">Google ile Kayıt Ol</span></button>
+      </div>
     </div>
 
     <!-- FORGOT -->
-    <div id="forgot" class="form">
-      <div class="phone-row">
-        <div id="forgotPicker" class="country-picker"></div>
-        <div class="input">
-          <input id="forgotEmail" placeholder="E-posta">
-        </div>
+    <div id="forgot" class="form" role="tabpanel" aria-labelledby="authTabForgot">
+      <div class="input">
+        <label class="sr-only" for="forgotEmail">Şifre sıfırlama e-posta adresi</label>
+        <input id="forgotEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
       </div>
 
       <div class="security-challenge" data-security-challenge="forgot_password"></div>
@@ -961,8 +1008,8 @@ a{
 </div>
 
 <script>
-const SUPABASE_URL="https://xqvikrysciguzholdjeb.supabase.co";
-const SUPABASE_KEY="sb_publishable_-P8KULtNFK5D9XRAeJrdng_zTCZ8zdF";
+const SUPABASE_URL=window.Allona?.config?.supabaseUrl || "";
+const SUPABASE_KEY=window.Allona?.config?.supabaseAnonKey || "";
 function hasPasswordRecoveryParams(){
   const sources=[
     new URLSearchParams(window.location.search || ""),
@@ -970,12 +1017,12 @@ function hasPasswordRecoveryParams(){
   ];
   return sources.some(function(params){
     const type=String(params.get("type") || "").toLowerCase();
-    return type==="recovery" || params.has("access_token") || params.has("refresh_token") || params.has("error_code");
+    return type==="recovery" || type==="password_recovery";
   });
 }
 const IS_PASSWORD_RECOVERY_REDIRECT=hasPasswordRecoveryParams();
 if(IS_PASSWORD_RECOVERY_REDIRECT){
-  const target=new URL("reset-password.html", window.location.href);
+  const target=new URL("/pages/account/reset-password.html", window.location.origin);
   target.search=window.location.search || "";
   target.hash=window.location.hash || "";
   window.location.replace(target.href);
@@ -992,9 +1039,10 @@ function pageUrl(path){
   return new URL(path, window.location.href).href;
 }
 
-const SITE_URL=pageUrl("user-panel.html");
-const RESET_URL=pageUrl("reset-password.html");
+const SITE_URL=pageUrl("/pages/account/user-panel.html");
+const RESET_URL=pageUrl("/pages/account/reset-password.html");
 const AUTH_RETURN_TO_KEY="allonahub.auth.returnTo";
+const OAUTH_RETURN_TO_KEY="allonahub.oauth.returnTo";
 let manualAuthInProgress=false;
 
 function boolParam(name){
@@ -1002,7 +1050,12 @@ function boolParam(name){
   return value==="1" || value==="true" || value==="yes";
 }
 
-const FORCE_ACCOUNT_SWITCH=boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
+function paramValue(name){
+  return String(new URLSearchParams(window.location.search).get(name) || "").trim().toLowerCase();
+}
+
+const PASSWORD_UPDATED_LOGIN=paramValue("password")==="updated" || paramValue("reset")==="success";
+const FORCE_ACCOUNT_SWITCH=PASSWORD_UPDATED_LOGIN || boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
 
 function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
@@ -1090,6 +1143,22 @@ async function applyBackendSession(session){
 
 function loginFailureMessage(error){
   const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
+  const status=Number(error && error.status || 0);
+  const code=String(error && error.payload && error.payload.error || "").toLowerCase();
+  if(
+    status===400 ||
+    status===403 ||
+    raw.includes("robot") ||
+    raw.includes("turnstile") ||
+    raw.includes("cloudflare") ||
+    raw.includes("doğrulama") ||
+    raw.includes("dogrulama")
+  ){
+    return "Güvenlik doğrulaması tamamlanamadı. Lütfen sayfayı yenileyip aynı cihazdan tekrar deneyin.";
+  }
+  if(status===429 || code.includes("auto_defense") || raw.includes("sınırlandırıldı") || raw.includes("sinirlandirildi")){
+    return "Çok fazla deneme algılandı. Lütfen kısa süre bekleyip aynı cihazdan tekrar deneyin.";
+  }
   if(raw.includes("email not confirmed") || raw.includes("not confirmed")){
     return "E-posta adresi henüz doğrulanmamış görünüyor. Lütfen e-posta kutundaki doğrulama bağlantısını kontrol et.";
   }
@@ -1111,7 +1180,7 @@ async function directSupabaseLogin(email,password){
 
 function canUseDirectLoginFallback(error){
   const status=Number(error && error.status || 0);
-  return status===0 || [401,404,405,500,501,502,503,504].includes(status);
+  return status===0 || [404,405,500,501,502,503,504].includes(status);
 }
 
 async function needsMfaVerification(){
@@ -1153,7 +1222,8 @@ function strongEnoughPassword(value){
   return String(value || "").length >= 8;
 }
 
-function clearAuthArtifacts(){
+function clearAuthArtifacts(options){
+  const settings=options || {};
   [
     "allonahub_user_profile",
     "allonahub_auth_verified_at",
@@ -1167,7 +1237,10 @@ function clearAuthArtifacts(){
 
   for(let i=localStorage.length-1;i>=0;i-=1){
     const key=localStorage.key(i) || "";
-    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login")){
+    if(key.startsWith("allonahub.daily-login.") || key.startsWith("allona_rate:login") || settings.allRateLimits && key.startsWith("allona_rate:")){
+      localStorage.removeItem(key);
+    }
+    if(settings.supabaseTokens && (/^sb-.+-auth-token$/.test(key) || key==="supabase.auth.token")){
       localStorage.removeItem(key);
     }
   }
@@ -1176,13 +1249,12 @@ function clearAuthArtifacts(){
 async function prepareAccountSwitch(){
   if(!FORCE_ACCOUNT_SWITCH || IS_PASSWORD_RECOVERY_REDIRECT)return;
   manualAuthInProgress=true;
-  clearAuthArtifacts();
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
   try{
     await supabaseClient.auth.signOut({scope:"local"});
   }catch(error){}
-  finally{
-    manualAuthInProgress=false;
-  }
+  clearAuthArtifacts({supabaseTokens:true,allRateLimits:true});
+  manualAuthInProgress=false;
 }
 
 function rateLimitAction(key, limit, windowMs){
@@ -1200,8 +1272,38 @@ function rateLimitAction(key, limit, windowMs){
 }
 
 function secureAuthAlert(message){
-  alert(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
+  showAuthDialog(message || "İşlem güvenli şekilde tamamlanamadı. Lütfen bilgilerinizi kontrol edin.");
 }
+
+function announceAuthMessage(message){
+  const node=document.getElementById("authStatus");
+  if(!node)return false;
+  node.textContent=message || "";
+  node.hidden=!message;
+  return true;
+}
+
+function showAuthDialog(message){
+  if(!announceAuthMessage(message))alert(message);
+}
+
+const authTabContent={
+  login:{
+    title:"AllonaHub Kullanıcı Girişi",
+    heading:"Allona<span>Hub</span>’a Giriş Yap",
+    lead:"Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş."
+  },
+  register:{
+    title:"AllonaHub Kayıt Ol",
+    heading:"Allona<span>Hub</span>’a Kayıt Ol",
+    lead:"Yeni hesabını oluştur; mesleğine uygun panel, bildirimler, HP dünyası ve kupon avantajları tek profilde açılsın."
+  },
+  forgot:{
+    title:"AllonaHub Şifre Sıfırlama",
+    heading:"Allona<span>Hub</span> Şifreni Sıfırla",
+    lead:"Hesabına güvenli şekilde geri dönebilmen için e-posta adresine doğrulama bağlantısı gönder."
+  }
+};
 
 const countries=[
 {n:"Türkiye",c:"+90",f:"🇹🇷",iso:"TR"},{n:"Azerbaycan",c:"+994",f:"🇦🇿",iso:"AZ"},
@@ -1487,17 +1589,21 @@ function renderProfessionResults(list){
   if(!list.length){
     box.innerHTML="";
     box.classList.remove("active");
+    const input=document.getElementById("professionSearch");
+    if(input)input.setAttribute("aria-expanded","false");
     return;
   }
 
   box.innerHTML=list.map(p=>`
-    <div class="profession-item" onclick="selectProfession('${p.key}')">
+    <button class="profession-item" type="button" role="option" onclick="selectProfession('${p.key}')">
       <b>${p.name}</b><br>
       <small>${p.title} olarak karşılanır</small>
-    </div>
+    </button>
   `).join("");
 
   box.classList.add("active");
+  const input=document.getElementById("professionSearch");
+  if(input)input.setAttribute("aria-expanded","true");
 }
 
 function selectProfession(key){
@@ -1522,6 +1628,8 @@ function selectProfession(key){
   document.getElementById("selectedProfessionTitle").value=profession.title;
 
   document.getElementById("professionResults").classList.remove("active");
+  const input=document.getElementById("professionSearch");
+  if(input)input.setAttribute("aria-expanded","false");
 }
 
 function getGreetingPreview(fullName){
@@ -1535,17 +1643,19 @@ function getGreetingPreview(fullName){
   if(!box)return;
 
   box.innerHTML=`
-    <div class="country-selected" onclick="toggleCountryDropdown('${id}')">
+    <span class="sr-only" id="${id}Label">${id==="registerPicker" ? "Kayıt ülke kodu" : id==="forgotPicker" ? "Şifre sıfırlama ülke kodu" : "Giriş ülke kodu"}</span>
+    <button class="country-selected" type="button" onclick="toggleCountryDropdown('${id}')" aria-haspopup="listbox" aria-expanded="false" aria-controls="${id}Dropdown" aria-labelledby="${id}Label ${id}Text">
       <span id="${id}Text">
         ${selectedCountries[id].f} ${selectedCountries[id].n}
         <span class="country-code-tag">${selectedCountries[id].c}</span>
       </span>
       <span>⌄</span>
-    </div>
+    </button>
 
     <div id="${id}Dropdown" class="country-dropdown">
-      <input class="country-search" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
-      <div id="${id}List"></div>
+      <label class="sr-only" for="${id}CountrySearch">${id==="registerPicker" ? "Kayıt için ülke ara" : id==="forgotPicker" ? "Şifre sıfırlama için ülke ara" : "Giriş için ülke ara"}</label>
+      <input id="${id}CountrySearch" class="country-search" type="search" autocomplete="off" placeholder="Ülke adı veya kod yaz..." oninput="filterCountries('${id}', this.value)">
+      <div id="${id}List" role="listbox" aria-label="Ülke kodları"></div>
     </div>
   `;
 
@@ -1557,7 +1667,15 @@ function toggleCountryDropdown(id){
     if(el.id!==id+"Dropdown")el.classList.remove("active");
   });
 
-  document.getElementById(id+"Dropdown").classList.toggle("active");
+  document.querySelectorAll(".country-selected").forEach(button=>{
+    if(!button.closest(`#${id}`))button.setAttribute("aria-expanded","false");
+  });
+
+  const dropdown=document.getElementById(id+"Dropdown");
+  const toggle=document.querySelector(`#${id} .country-selected`);
+  if(!dropdown)return;
+  const isOpen=dropdown.classList.toggle("active");
+  if(toggle)toggle.setAttribute("aria-expanded",String(isOpen));
 }
 
 function renderCountryList(id,list){
@@ -1565,9 +1683,9 @@ function renderCountryList(id,list){
   if(!listBox)return;
 
   listBox.innerHTML=list.map(item=>`
-    <div class="country-item" onclick="selectCountry('${id}','${item.iso}')">
+    <button class="country-item" type="button" role="option" onclick="selectCountry('${id}','${item.iso}')">
       ${item.f} ${item.n} <span class="country-code-tag">${item.c}</span>
-    </div>
+    </button>
   `).join("");
 }
 
@@ -1597,6 +1715,8 @@ function selectCountry(id,iso){
   if(dropdown){
     dropdown.classList.remove("active");
   }
+  const toggle=document.querySelector(`#${id} .country-selected`);
+  if(toggle)toggle.setAttribute("aria-expanded","false");
 }
 
 function setCountryByLocale(){
@@ -1615,13 +1735,32 @@ function setCountryByLocale(){
 }
 
 function openTab(tabId,event){
-  document.querySelectorAll(".form").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+  const activeTab=authTabContent[tabId] ? tabId : "login";
+  document.querySelectorAll(".form").forEach(el=>{
+    const isActive=el.id===activeTab;
+    el.classList.toggle("active",isActive);
+    el.setAttribute("aria-hidden",String(!isActive));
+  });
+  document.querySelectorAll(".tab").forEach(el=>{
+    const isActive=el.dataset.authTab===activeTab;
+    el.classList.toggle("active",isActive);
+    el.setAttribute("aria-selected",String(isActive));
+    el.tabIndex=isActive ? 0 : -1;
+  });
 
-  document.getElementById(tabId).classList.add("active");
+  if(window.AllonaAuthPage && window.AllonaAuthPage.renderTab){
+    window.AllonaAuthPage.renderTab(activeTab);
+  }else{
+    const page=authTabContent[activeTab];
+    const title=document.getElementById("authTitle");
+    const lead=document.getElementById("authLead");
+    if(title)title.innerHTML=page.heading;
+    if(lead)lead.textContent=page.lead;
+    document.title=page.title;
+  }
 
-  if(event && event.target){
-    event.target.classList.add("active");
+  if(event && event.target && event.target.dataset.authTab===activeTab){
+    event.target.focus({preventScroll:true});
   }
 
   setTimeout(()=>{
@@ -1669,17 +1808,17 @@ async function registerUser(){
   }
 
   if(!fullName){
-    alert("Ad Soyad zorunludur.");
+    showAuthDialog("Ad Soyad zorunludur.");
     return;
   }
 
   if(!isEmail(email)){
-    alert("Geçerli bir e-posta adresi giriniz.");
+    showAuthDialog("Geçerli bir e-posta adresi giriniz.");
     return;
   }
 
   if(!strongEnoughPassword(password)){
-    alert("Şifre en az 8 karakter olmalıdır.");
+    showAuthDialog("Şifre en az 8 karakter olmalıdır.");
     return;
   }
 
@@ -1689,7 +1828,7 @@ async function registerUser(){
   }
 
   if(!selectedProfession){
-    alert("Lütfen sektör ve meslek seçiniz.");
+    showAuthDialog("Lütfen sektör ve meslek seçiniz.");
     return;
   }
 
@@ -1730,7 +1869,7 @@ async function registerUser(){
       greeting:greeting
     }));
 
-    alert("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
+    showAuthDialog("Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.");
   }catch(error){
     secureAuthAlert("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
   }finally{
@@ -1804,28 +1943,7 @@ async function loginUser(){
 }
 
 async function loginWithGoogle(){
-  const redirectUrl=new URL("user.html", window.location.href);
-  redirectUrl.searchParams.set("returnTo",safeReturnTo("user-panel.html"));
-
-  try{
-    const turnstileToken=await securityChallengeToken("login");
-    await authApi("/v1/auth/turnstile",{action:"login",turnstileToken});
-
-    const { error }=await supabaseClient.auth.signInWithOAuth({
-      provider:"google",
-      options:{
-        redirectTo:redirectUrl.href,
-        queryParams:{
-          access_type:"offline",
-          prompt:"select_account"
-        }
-      }
-    });
-
-    if(error)throw error;
-  }catch(error){
-    alert("Google ile giriş başlatılamadı. Lütfen daha sonra tekrar deneyin.");
-  }
+  return window.AllonaAuthPage && window.AllonaAuthPage.loginWithOAuth("google");
 }
 
 async function resetPassword(){
@@ -1854,16 +1972,13 @@ async function resetPassword(){
       const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
       if(resetError)throw resetError;
     }
-    alert("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
+    showAuthDialog("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
   }catch(error){
     secureAuthAlert(error.message || "Şifre sıfırlama başlatılamadı. Lütfen daha sonra tekrar deneyin.");
   }
 }
 
-function icloudInfo(){
-  alert("Giriş İçin Başka Bir Yöntem deneyiniz.");
-}
-  function userSearch(){
+function userSearch(){
   const q=document.getElementById("userSearchInput").value.toLowerCase().trim();
 
   if(!q)return;
@@ -1891,6 +2006,20 @@ function icloudInfo(){
   }
 }
 
+window.AllonaAuthRuntime={
+  client:supabaseClient,
+  selectedCountry:function(id){return selectedCountries[id] || countries[0]},
+  safeReturnTo:safeReturnTo,
+  rateLimitAction:rateLimitAction,
+  securityChallengeToken:securityChallengeToken,
+  showMessage:showAuthDialog,
+  announce:announceAuthMessage,
+  needsMfaVerification:needsMfaVerification,
+  redirectMfa:redirectMfa,
+  clearStoredReturnTo:clearStoredReturnTo,
+  setManualAuth:function(value){manualAuthInProgress=Boolean(value)}
+};
+
 document.addEventListener("DOMContentLoaded",function(){
   ["loginPicker","registerPicker","forgotPicker"].forEach(createCountryPicker);
 
@@ -1900,7 +2029,7 @@ document.addEventListener("DOMContentLoaded",function(){
   prepareAccountSwitch();
   supabaseClient.auth.onAuthStateChange(function(event){
     if(event==="PASSWORD_RECOVERY"){
-      window.location.replace("reset-password.html");
+      window.location.replace(pageUrl("/pages/account/reset-password.html"));
       return;
     }
     if(event==="SIGNED_IN" || event==="INITIAL_SESSION"){
@@ -1929,31 +2058,31 @@ function openInitialAuthTab(){
   const params=new URLSearchParams(window.location.search);
   const raw=(params.get("tab") || params.get("mode") || window.location.hash.replace("#","") || "login").toLowerCase();
   const tab=raw==="register" || raw==="forgot" ? raw : "login";
-  const tabButton=[...document.querySelectorAll(".tab")].find(button=>button.getAttribute("onclick")?.includes(`'${tab}'`));
+  const tabButton=document.querySelector(`[data-auth-tab="${tab}"]`);
   openTab(tab,{target:tabButton});
-  if(String(params.get("method") || "").toLowerCase()==="phone"){
-    setTimeout(function(){
-      secureAuthAlert("Telefon ile giriş altyapısı hazırlanıyor. Şimdilik e-posta veya Google ile güvenli giriş yapabilirsiniz.");
-    },250);
-  }
 }
 
 document.addEventListener("click",function(e){
   if(!e.target.closest(".country-picker")){
     document.querySelectorAll(".country-dropdown").forEach(el=>el.classList.remove("active"));
+    document.querySelectorAll(".country-selected").forEach(button=>button.setAttribute("aria-expanded","false"));
   }
 
   if(!e.target.closest(".profession-box")){
     const box=document.getElementById("professionResults");
     if(box)box.classList.remove("active");
+    const input=document.getElementById("professionSearch");
+    if(input)input.setAttribute("aria-expanded","false");
   }
 });
 </script>
   <div data-layout="footer"></div>
   <script src="../../js/config.js?v=20260623-authunify1" defer></script>
-  <script src="../../js/core.js?v=20260623-locnav1" defer></script>
+  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/security-challenge.js?v=20260913-mobile1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260626-mobile-std34" defer></script>
-  <script src="../../js/platform.js?v=20260626-mobile-std34" defer></script>
+  <script src="../../js/layout.v3.js?v=20260828-storecta2" defer></script>
+  <script src="../../js/platform.js?v=20260828-corpcontrast4" defer></script>
+  <script src="../../js/allona-auth-page.js?v=20260913-auth2" defer></script>
+<script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>

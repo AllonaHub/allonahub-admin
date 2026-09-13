@@ -1,0 +1,269 @@
+(function () {
+  "use strict";
+
+  const copy = {
+    tr: {
+      headingLogin: "hesabına giriş yap",
+      headingRegister: "hesabını oluştur",
+      headingForgot: "şifreni sıfırla",
+      leadLogin: "Tek hesapla AllonaHub ekosistemindeki tüm hizmetlere, HP dünyasına, kuponlara ve premium avantajlara eriş.",
+      leadRegister: "Yeni hesabını oluştur; mesleğine uygun panel, bildirimler ve avantajlar tek profilde açılsın.",
+      leadForgot: "Hesabına güvenli şekilde geri dönebilmen için e-posta adresine doğrulama bağlantısı gönder.",
+      titleLogin: "AllonaHub Kullanıcı Girişi",
+      titleRegister: "AllonaHub Kayıt Ol",
+      titleForgot: "AllonaHub Şifre Sıfırlama",
+      tabLogin: "Giriş Yap",
+      tabRegister: "Kayıt Ol",
+      tabForgot: "Şifremi Unuttum",
+      methodEmail: "E-posta ile giriş",
+      methodPhone: "Telefon ile giriş",
+      email: "E-posta",
+      password: "Şifre",
+      loginButton: "Giriş Yap",
+      phoneLead: "Ülkenizi seçin; doğrulama kodu seçtiğiniz ülke koduyla telefonunuza gönderilsin.",
+      phone: "Telefon numarası",
+      sendCode: "Doğrulama Kodu Gönder",
+      otp: "6 haneli doğrulama kodu",
+      verifyCode: "Kodu Doğrula ve Devam Et",
+      or: "veya",
+      googleLogin: "Google ile Giriş Yap",
+      appleLogin: "Apple / iCloud ile Giriş Yap",
+      googleRegister: "Google ile Kayıt Ol",
+      appleRegister: "Apple / iCloud ile Kayıt Ol",
+      partnerLogin: "Partner Girişi",
+      securityCenter: "Güvenlik merkezi",
+      fullName: "Ad Soyad",
+      sector: "Sektör Seçiniz *",
+      profession: "Meslek ara ve seç *",
+      professionNote: "Meslek seçimi zorunludur. Panel, iş ilanı ve bildirimler seçtiğiniz mesleğe göre kişiselleştirilir.",
+      createPassword: "Şifre oluştur",
+      repeatPassword: "Şifreyi tekrar gir",
+      passwordMismatch: "Şifreler aynı değil.",
+      createAccount: "Ücretsiz Hesap Oluştur",
+      resetButton: "Şifre Sıfırlama Linki Gönder",
+      resetNote: "Güvenlik nedeniyle doğrulama bağlantısı e-posta ile gönderilecektir.",
+      countrySearch: "Ülke adı veya kod yaz...",
+      challengeLogin: "Giriş güvenlik doğrulaması",
+      challengeRegister: "Kayıt güvenlik doğrulaması",
+      challengeForgot: "Şifre sıfırlama güvenlik doğrulaması",
+      appleUnavailable: "Apple / iCloud girişi henüz etkin değil. Yönetici Apple sağlayıcısını etkinleştirdiğinde bu düğme otomatik açılır.",
+      phoneUnavailable: "SMS ile giriş henüz etkin değil. Telefon sağlayıcısı açıldığında bu alan otomatik kullanılabilir.",
+      invalidPhone: "Geçerli bir telefon numarası girin.",
+      codeSent: "Doğrulama kodu {phone} numarasına gönderildi.",
+      invalidCode: "6 haneli doğrulama kodunu girin.",
+      phoneVerified: "Telefon doğrulandı. Hesabınıza yönlendiriliyorsunuz.",
+      phoneError: "SMS işlemi tamamlanamadı. Numarayı kontrol edip tekrar deneyin.",
+      oauthError: "Bu hesapla giriş başlatılamadı. Lütfen tekrar deneyin.",
+      tooMany: "Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin."
+    },
+    az: {
+      headingLogin: "hesabınıza daxil olun", headingRegister: "hesabınızı yaradın", headingForgot: "şifrənizi yeniləyin",
+      leadLogin: "Bir hesabla AllonaHub ekosistemindəki bütün xidmətlərə, HP dünyasına, kuponlara və premium üstünlüklərə çatın.", leadRegister: "Yeni hesabınızı yaradın; peşənizə uyğun panel, bildirişlər və üstünlüklər bir profildə açılsın.", leadForgot: "Hesabınıza təhlükəsiz qayıtmaq üçün e-poçtunuza təsdiq keçidi göndərin.",
+      titleLogin: "AllonaHub Giriş", titleRegister: "AllonaHub Qeydiyyat", titleForgot: "AllonaHub Şifrə Yeniləmə",
+      tabLogin: "Daxil ol", tabRegister: "Qeydiyyat", tabForgot: "Şifrəmi unutdum", methodEmail: "E-poçtla daxil ol", methodPhone: "Telefonla daxil ol", email: "E-poçt", password: "Şifrə", loginButton: "Daxil ol", phoneLead: "Ölkənizi seçin; təsdiq kodu seçdiyiniz ölkə kodu ilə telefonunuza göndərilsin.", phone: "Telefon nömrəsi", sendCode: "Təsdiq kodu göndər", otp: "6 rəqəmli təsdiq kodu", verifyCode: "Kodu təsdiqlə və davam et", or: "və ya", googleLogin: "Google ilə daxil ol", appleLogin: "Apple / iCloud ilə daxil ol", googleRegister: "Google ilə qeydiyyat", appleRegister: "Apple / iCloud ilə qeydiyyat", partnerLogin: "Partnyor girişi", securityCenter: "Təhlükəsizlik mərkəzi", fullName: "Ad Soyad", sector: "Sektor seçin *", profession: "Peşə axtarın və seçin *", professionNote: "Peşə seçimi məcburidir. Panel, iş elanları və bildirişlər peşənizə görə fərdiləşdirilir.", createPassword: "Şifrə yaradın", repeatPassword: "Şifrəni təkrar yazın", passwordMismatch: "Şifrələr eyni deyil.", createAccount: "Pulsuz hesab yarat", resetButton: "Şifrə yeniləmə keçidi göndər", resetNote: "Təhlükəsizlik üçün təsdiq keçidi e-poçtla göndəriləcək.", countrySearch: "Ölkə adı və ya kod yazın...", challengeLogin: "Giriş təhlükəsizlik yoxlaması", challengeRegister: "Qeydiyyat təhlükəsizlik yoxlaması", challengeForgot: "Şifrə yeniləmə yoxlaması", appleUnavailable: "Apple / iCloud girişi hələ aktiv deyil.", phoneUnavailable: "SMS ilə giriş hələ aktiv deyil.", invalidPhone: "Düzgün telefon nömrəsi daxil edin.", codeSent: "Təsdiq kodu {phone} nömrəsinə göndərildi.", invalidCode: "6 rəqəmli təsdiq kodunu daxil edin.", phoneVerified: "Telefon təsdiqləndi. Hesabınıza yönləndirilirsiniz.", phoneError: "SMS əməliyyatı tamamlanmadı.", oauthError: "Bu hesabla giriş başladıla bilmədi.", tooMany: "Çox sayda cəhd edildi. Bir az sonra yenidən sınayın."
+    },
+    en: {
+      headingLogin: "sign in to your account", headingRegister: "create your account", headingForgot: "reset your password",
+      leadLogin: "Use one account to access every AllonaHub service, HP benefits, coupons and premium advantages.", leadRegister: "Create your account and bring your profession-based dashboard, notifications and benefits into one profile.", leadForgot: "Send a verification link to your email to securely regain access to your account.",
+      titleLogin: "AllonaHub Sign In", titleRegister: "Create an AllonaHub Account", titleForgot: "Reset AllonaHub Password",
+      tabLogin: "Sign In", tabRegister: "Register", tabForgot: "Forgot Password", methodEmail: "Sign in with email", methodPhone: "Sign in with phone", email: "Email", password: "Password", loginButton: "Sign In", phoneLead: "Choose your country and we will send the verification code using its calling code.", phone: "Phone number", sendCode: "Send Verification Code", otp: "6-digit verification code", verifyCode: "Verify Code and Continue", or: "or", googleLogin: "Sign in with Google", appleLogin: "Sign in with Apple / iCloud", googleRegister: "Register with Google", appleRegister: "Register with Apple / iCloud", partnerLogin: "Partner Sign In", securityCenter: "Security center", fullName: "Full name", sector: "Select sector *", profession: "Search and select profession *", professionNote: "A profession is required. Your dashboard, job listings and notifications are tailored to your selection.", createPassword: "Create password", repeatPassword: "Repeat password", passwordMismatch: "Passwords do not match.", createAccount: "Create Free Account", resetButton: "Send Password Reset Link", resetNote: "For security, the verification link will be sent by email.", countrySearch: "Type a country name or code...", challengeLogin: "Sign-in security check", challengeRegister: "Registration security check", challengeForgot: "Password reset security check", appleUnavailable: "Apple / iCloud sign-in is not enabled yet. This button will become available automatically when the provider is enabled.", phoneUnavailable: "SMS sign-in is not enabled yet. This section will become available automatically when the phone provider is enabled.", invalidPhone: "Enter a valid phone number.", codeSent: "A verification code was sent to {phone}.", invalidCode: "Enter the 6-digit verification code.", phoneVerified: "Phone verified. Redirecting to your account.", phoneError: "The SMS request could not be completed. Check the number and try again.", oauthError: "Sign-in with this account could not be started. Please try again.", tooMany: "Too many attempts. Please try again shortly."
+    },
+    de: {
+      headingLogin: "bei Ihrem Konto anmelden", headingRegister: "Ihr Konto erstellen", headingForgot: "Ihr Passwort zurücksetzen", leadLogin: "Mit einem Konto greifen Sie auf alle AllonaHub-Dienste, HP-Vorteile, Gutscheine und Premium-Vorteile zu.", leadRegister: "Erstellen Sie Ihr Konto und bündeln Sie berufsspezifische Inhalte in einem Profil.", leadForgot: "Senden Sie einen Bestätigungslink an Ihre E-Mail-Adresse, um sicher zurückzukehren.", titleLogin: "AllonaHub Anmeldung", titleRegister: "AllonaHub Registrierung", titleForgot: "AllonaHub Passwort zurücksetzen", tabLogin: "Anmelden", tabRegister: "Registrieren", tabForgot: "Passwort vergessen", methodEmail: "Mit E-Mail anmelden", methodPhone: "Mit Telefon anmelden", email: "E-Mail", password: "Passwort", loginButton: "Anmelden", phoneLead: "Wählen Sie Ihr Land; der Code wird mit der passenden Vorwahl gesendet.", phone: "Telefonnummer", sendCode: "Bestätigungscode senden", otp: "6-stelliger Bestätigungscode", verifyCode: "Code bestätigen und fortfahren", or: "oder", googleLogin: "Mit Google anmelden", appleLogin: "Mit Apple / iCloud anmelden", googleRegister: "Mit Google registrieren", appleRegister: "Mit Apple / iCloud registrieren", partnerLogin: "Partner-Anmeldung", securityCenter: "Sicherheitscenter", fullName: "Vor- und Nachname", sector: "Branche wählen *", profession: "Beruf suchen und wählen *", professionNote: "Die Berufsauswahl ist erforderlich. Dashboard, Stellen und Mitteilungen werden darauf abgestimmt.", createPassword: "Passwort erstellen", repeatPassword: "Passwort wiederholen", passwordMismatch: "Passwörter stimmen nicht überein.", createAccount: "Kostenloses Konto erstellen", resetButton: "Link zum Zurücksetzen senden", resetNote: "Der Bestätigungslink wird aus Sicherheitsgründen per E-Mail gesendet.", countrySearch: "Land oder Vorwahl eingeben...", challengeLogin: "Sicherheitsprüfung für Anmeldung", challengeRegister: "Sicherheitsprüfung für Registrierung", challengeForgot: "Sicherheitsprüfung für Passwort", appleUnavailable: "Apple / iCloud-Anmeldung ist noch nicht aktiviert.", phoneUnavailable: "SMS-Anmeldung ist noch nicht aktiviert.", invalidPhone: "Geben Sie eine gültige Telefonnummer ein.", codeSent: "Ein Bestätigungscode wurde an {phone} gesendet.", invalidCode: "Geben Sie den 6-stelligen Code ein.", phoneVerified: "Telefon bestätigt. Sie werden weitergeleitet.", phoneError: "Die SMS-Anfrage konnte nicht abgeschlossen werden.", oauthError: "Die Anmeldung konnte nicht gestartet werden.", tooMany: "Zu viele Versuche. Bitte versuchen Sie es später erneut."
+    },
+    ru: {
+      headingLogin: "войдите в свой аккаунт", headingRegister: "создайте свой аккаунт", headingForgot: "сбросьте пароль", leadLogin: "Один аккаунт для всех сервисов AllonaHub, HP, купонов и premium-преимуществ.", leadRegister: "Создайте аккаунт и соберите профессиональную панель и уведомления в одном профиле.", leadForgot: "Получите ссылку на e-mail для безопасного восстановления доступа.", titleLogin: "Вход AllonaHub", titleRegister: "Регистрация AllonaHub", titleForgot: "Сброс пароля AllonaHub", tabLogin: "Войти", tabRegister: "Регистрация", tabForgot: "Забыл пароль", methodEmail: "Вход по e-mail", methodPhone: "Вход по телефону", email: "E-mail", password: "Пароль", loginButton: "Войти", phoneLead: "Выберите страну; код будет отправлен с её телефонным кодом.", phone: "Номер телефона", sendCode: "Отправить код", otp: "6-значный код", verifyCode: "Подтвердить и продолжить", or: "или", googleLogin: "Войти через Google", appleLogin: "Войти через Apple / iCloud", googleRegister: "Регистрация через Google", appleRegister: "Регистрация через Apple / iCloud", partnerLogin: "Вход для партнёров", securityCenter: "Центр безопасности", fullName: "Имя и фамилия", sector: "Выберите сектор *", profession: "Найти и выбрать профессию *", professionNote: "Выбор профессии обязателен. Панель, вакансии и уведомления будут настроены для вас.", createPassword: "Создать пароль", repeatPassword: "Повторить пароль", passwordMismatch: "Пароли не совпадают.", createAccount: "Создать бесплатный аккаунт", resetButton: "Отправить ссылку для сброса", resetNote: "Ссылка будет отправлена по e-mail.", countrySearch: "Введите страну или код...", challengeLogin: "Проверка безопасности входа", challengeRegister: "Проверка безопасности регистрации", challengeForgot: "Проверка сброса пароля", appleUnavailable: "Вход Apple / iCloud пока не включён.", phoneUnavailable: "Вход по SMS пока не включён.", invalidPhone: "Введите корректный номер.", codeSent: "Код отправлен на {phone}.", invalidCode: "Введите 6-значный код.", phoneVerified: "Телефон подтверждён. Переходим в аккаунт.", phoneError: "Не удалось выполнить SMS-запрос.", oauthError: "Не удалось начать вход.", tooMany: "Слишком много попыток. Повторите позже."
+    },
+    ar: {
+      headingLogin: "سجل الدخول إلى حسابك", headingRegister: "أنشئ حسابك", headingForgot: "أعد تعيين كلمة المرور", leadLogin: "حساب واحد لجميع خدمات AllonaHub ومزايا HP والقسائم والمزايا المميزة.", leadRegister: "أنشئ حسابك واجمع لوحة المهنة والإشعارات والمزايا في ملف واحد.", leadForgot: "أرسل رابط تحقق إلى بريدك لاستعادة الوصول بأمان.", titleLogin: "تسجيل دخول AllonaHub", titleRegister: "التسجيل في AllonaHub", titleForgot: "إعادة تعيين كلمة مرور AllonaHub", tabLogin: "تسجيل الدخول", tabRegister: "إنشاء حساب", tabForgot: "نسيت كلمة المرور", methodEmail: "الدخول بالبريد", methodPhone: "الدخول بالهاتف", email: "البريد الإلكتروني", password: "كلمة المرور", loginButton: "تسجيل الدخول", phoneLead: "اختر بلدك لإرسال الرمز بمفتاح الاتصال المناسب.", phone: "رقم الهاتف", sendCode: "إرسال رمز التحقق", otp: "رمز تحقق من 6 أرقام", verifyCode: "تأكيد الرمز والمتابعة", or: "أو", googleLogin: "الدخول بواسطة Google", appleLogin: "الدخول بواسطة Apple / iCloud", googleRegister: "التسجيل بواسطة Google", appleRegister: "التسجيل بواسطة Apple / iCloud", partnerLogin: "دخول الشريك", securityCenter: "مركز الأمان", fullName: "الاسم الكامل", sector: "اختر القطاع *", profession: "ابحث عن المهنة واخترها *", professionNote: "اختيار المهنة مطلوب. سيتم تخصيص اللوحة والوظائف والإشعارات لك.", createPassword: "إنشاء كلمة مرور", repeatPassword: "أعد كتابة كلمة المرور", passwordMismatch: "كلمتا المرور غير متطابقتين.", createAccount: "إنشاء حساب مجاني", resetButton: "إرسال رابط إعادة التعيين", resetNote: "سيُرسل رابط التحقق عبر البريد للأمان.", countrySearch: "اكتب اسم البلد أو الرمز...", challengeLogin: "فحص أمان الدخول", challengeRegister: "فحص أمان التسجيل", challengeForgot: "فحص أمان إعادة التعيين", appleUnavailable: "تسجيل Apple / iCloud غير مفعل حاليًا.", phoneUnavailable: "تسجيل الدخول برسالة SMS غير مفعل حاليًا.", invalidPhone: "أدخل رقم هاتف صحيحًا.", codeSent: "تم إرسال رمز إلى {phone}.", invalidCode: "أدخل رمز التحقق المكون من 6 أرقام.", phoneVerified: "تم تحقق الهاتف. جارٍ التوجيه إلى حسابك.", phoneError: "تعذر إكمال طلب SMS.", oauthError: "تعذر بدء تسجيل الدخول.", tooMany: "محاولات كثيرة. حاول مرة أخرى لاحقًا."
+    }
+  };
+
+  copy.kk = Object.assign({}, copy.en, {
+    headingLogin: "тіркелгіңізге кіріңіз", headingRegister: "тіркелгі жасаңыз", headingForgot: "құпия сөзді қалпына келтіріңіз", leadLogin: "Бір тіркелгімен AllonaHub қызметтеріне, HP, купондарға және premium артықшылықтарға қол жеткізіңіз.", leadRegister: "Жаңа тіркелгі жасап, кәсіби тақта мен хабарламаларды бір профильге жинаңыз.", leadForgot: "Тіркелгіге қауіпсіз қайту үшін e-mail мекенжайыңызға растау сілтемесін жіберіңіз.", titleLogin: "AllonaHub кіру", titleRegister: "AllonaHub тіркелу", titleForgot: "AllonaHub құпия сөзін қалпына келтіру", tabLogin: "Кіру", tabRegister: "Тіркелу", tabForgot: "Құпия сөзді ұмыттым", methodEmail: "E-mail арқылы кіру", methodPhone: "Телефонмен кіру", password: "Құпия сөз", loginButton: "Кіру", phoneLead: "Еліңізді таңдаңыз; растау коды сол елдің кодымен жіберіледі.", phone: "Телефон нөмірі", sendCode: "Растау кодын жіберу", otp: "6 таңбалы растау коды", verifyCode: "Кодты растап, жалғастыру", or: "немесе", googleLogin: "Google арқылы кіру", appleLogin: "Apple / iCloud арқылы кіру", googleRegister: "Google арқылы тіркелу", appleRegister: "Apple / iCloud арқылы тіркелу", partnerLogin: "Серіктес кіруі", securityCenter: "Қауіпсіздік орталығы", fullName: "Аты-жөні", sector: "Саланы таңдаңыз *", profession: "Мамандықты іздеп, таңдаңыз *", professionNote: "Мамандықты таңдау міндетті. Тақта, бос орындар және хабарламалар таңдауыңызға сай теңшеледі.", createPassword: "Құпия сөз жасау", repeatPassword: "Құпия сөзді қайталау", passwordMismatch: "Құпия сөздер сәйкес емес.", createAccount: "Тегін тіркелгі жасау", resetButton: "Қалпына келтіру сілтемесін жіберу", resetNote: "Растау сілтемесі e-mail арқылы жіберіледі.", countrySearch: "Ел атын немесе кодын жазыңыз...", challengeLogin: "Кіру қауіпсіздігін тексеру", challengeRegister: "Тіркелу қауіпсіздігін тексеру", challengeForgot: "Құпия сөзді қалпына келтіруді тексеру", appleUnavailable: "Apple / iCloud арқылы кіру әзірге қосылмаған.", phoneUnavailable: "SMS арқылы кіру әзірге қосылмаған.", invalidPhone: "Жарамды телефон нөмірін енгізіңіз.", codeSent: "Растау коды {phone} нөміріне жіберілді.", invalidCode: "6 таңбалы кодты енгізіңіз.", phoneVerified: "Телефон расталды. Тіркелгіге бағытталудасыз.", phoneError: "SMS өтінімін аяқтау мүмкін болмады.", oauthError: "Бұл тіркелгімен кіруді бастау мүмін болмады.", tooMany: "Өте көп әрекет. Біраздан кейін қайталаңыз."
+  });
+  copy.uz = Object.assign({}, copy.en, {
+    headingLogin: "hisobingizga kiring", headingRegister: "hisobingizni yarating", headingForgot: "parolingizni tiklang", leadLogin: "Bitta hisob bilan barcha AllonaHub xizmatlari, HP, kuponlar va premium afzalliklardan foydalaning.", leadRegister: "Yangi hisob yarating va kasbingizga mos panel, bildirishnomalar hamda afzalliklarni bir profilda jamlang.", leadForgot: "Hisobga xavfsiz qaytish uchun e-pochtangizga tasdiqlash havolasini yuboring.", titleLogin: "AllonaHub kirish", titleRegister: "AllonaHub ro'yxatdan o'tish", titleForgot: "AllonaHub parolni tiklash", tabLogin: "Kirish", tabRegister: "Ro'yxatdan o'tish", tabForgot: "Parolni unutdim", methodEmail: "E-pochta bilan kirish", methodPhone: "Telefon bilan kirish", email: "E-pochta", password: "Parol", loginButton: "Kirish", phoneLead: "Mamlakatingizni tanlang; tasdiqlash kodi tegishli mamlakat kodi bilan yuboriladi.", phone: "Telefon raqami", sendCode: "Tasdiqlash kodini yuborish", otp: "6 xonali tasdiqlash kodi", verifyCode: "Kodni tasdiqlash va davom etish", or: "yoki", googleLogin: "Google bilan kirish", appleLogin: "Apple / iCloud bilan kirish", googleRegister: "Google bilan ro'yxatdan o'tish", appleRegister: "Apple / iCloud bilan ro'yxatdan o'tish", partnerLogin: "Hamkor kirishi", securityCenter: "Xavfsizlik markazi", fullName: "Ism-familiya", sector: "Sohani tanlang *", profession: "Kasbni qidiring va tanlang *", professionNote: "Kasb tanlash majburiy. Panel, ish e'lonlari va bildirishnomalar tanlovingizga moslashtiriladi.", createPassword: "Parol yarating", repeatPassword: "Parolni takrorlang", passwordMismatch: "Parollar mos emas.", createAccount: "Bepul hisob yaratish", resetButton: "Parolni tiklash havolasini yuborish", resetNote: "Tasdiqlash havolasi e-pochta orqali yuboriladi.", countrySearch: "Mamlakat nomi yoki kodini yozing...", challengeLogin: "Kirish xavfsizlik tekshiruvi", challengeRegister: "Ro'yxatdan o'tish xavfsizlik tekshiruvi", challengeForgot: "Parolni tiklash xavfsizlik tekshiruvi", appleUnavailable: "Apple / iCloud orqali kirish hali yoqilmagan.", phoneUnavailable: "SMS orqali kirish hali yoqilmagan.", invalidPhone: "To'g'ri telefon raqamini kiriting.", codeSent: "Tasdiqlash kodi {phone} raqamiga yuborildi.", invalidCode: "6 xonali tasdiqlash kodini kiriting.", phoneVerified: "Telefon tasdiqlandi. Hisobingizga yo'naltirilmoqda.", phoneError: "SMS so'rovi bajarilmadi.", oauthError: "Bu hisob bilan kirishni boshlab bo'lmadi.", tooMany: "Juda ko'p urinish. Birozdan keyin qayta urinib ko'ring."
+  });
+  copy.ky = Object.assign({}, copy.en, {
+    headingLogin: "аккаунтуңузга кириңиз", headingRegister: "аккаунтуңузду түзүңүз", headingForgot: "сырсөзүңүздү калыбына келтириңиз", leadLogin: "Бир аккаунт менен AllonaHub кызматтарына, HP, купондорго жана premium артыкчылыктарга жетиңиз.", leadRegister: "Жаңы аккаунт түзүп, кесиптик панелди жана билдирүүлөрдү бир профилге топтоңуз.", leadForgot: "Аккаунтка коопсуз кайтуу үчүн e-mail'иңизге тастыктоо шилтемесин жөнөтүңүз.", titleLogin: "AllonaHub кирүү", titleRegister: "AllonaHub каттоо", titleForgot: "AllonaHub сырсөзүн калыбына келтирүү", tabLogin: "Кирүү", tabRegister: "Каттоо", tabForgot: "Сырсөздү унуттум", methodEmail: "E-mail менен кирүү", methodPhone: "Телефон менен кирүү", password: "Сырсөз", loginButton: "Кирүү", phoneLead: "Өлкөңүздү тандаңыз; тастыктоо коду ошол өлкөнүн коду менен жөнөтүлөт.", phone: "Телефон номуру", sendCode: "Тастыктоо кодун жөнөтүү", otp: "6 орундуу тастыктоо коду", verifyCode: "Кодду тастыктап, улантуу", or: "же", googleLogin: "Google менен кирүү", appleLogin: "Apple / iCloud менен кирүү", googleRegister: "Google менен каттоо", appleRegister: "Apple / iCloud менен каттоо", partnerLogin: "Өнөктөш кирүүсү", securityCenter: "Коопсуздук борбору", fullName: "Аты-жөнү", sector: "Тармакты тандаңыз *", profession: "Кесипти издеп, тандаңыз *", professionNote: "Кесипти тандоо милдеттүү. Панель, вакансиялар жана билдирүүлөр тандооңузга ылайыкташтырылат.", createPassword: "Сырсөз түзүү", repeatPassword: "Сырсөздү кайталоо", passwordMismatch: "Сырсөздөр дал келбейт.", createAccount: "Акысыз аккаунт түзүү", resetButton: "Калыбына келтирүү шилтемесин жөнөтүү", resetNote: "Тастыктоо шилтемеси e-mail аркылуу жөнөтүлөт.", countrySearch: "Өлкөнүн атын же кодун жазыңыз...", challengeLogin: "Кирүү коопсуздугун текшерүү", challengeRegister: "Каттоо коопсуздугун текшерүү", challengeForgot: "Сырсөздү калыбына келтирүүнү текшерүү", appleUnavailable: "Apple / iCloud менен кирүү азырынча иштетиле элек.", phoneUnavailable: "SMS менен кирүү азырынча иштетиле элек.", invalidPhone: "Жарактуу телефон номурун киргизиңиз.", codeSent: "Тастыктоо коду {phone} номуруна жөнөтүлдү.", invalidCode: "6 орундуу кодду киргизиңиз.", phoneVerified: "Телефон тастыкталды. Аккаунтуңузга багытталуудасыз.", phoneError: "SMS суроосу аягына чыккан жок.", oauthError: "Бул аккаунт менен кирүүнү баштоо мүмкүн болбоду.", tooMany: "Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз."
+  });
+
+  let activeTab = "login";
+  let capabilities = null;
+
+  function runtime() {
+    return window.AllonaAuthRuntime || null;
+  }
+
+  function language() {
+    const selected = String(localStorage.getItem("allona.language") || document.documentElement.lang || "tr").toLowerCase();
+    return copy[selected] ? selected : "tr";
+  }
+
+  function t(key, replacements) {
+    const pack = copy[language()] || copy.tr;
+    let value = String(pack[key] || copy.tr[key] || key);
+    Object.entries(replacements || {}).forEach(function (entry) {
+      value = value.replaceAll("{" + entry[0] + "}", String(entry[1]));
+    });
+    return value;
+  }
+
+  function text(id, value) {
+    const node = document.getElementById(id);
+    if (node && node.textContent !== value) node.textContent = value;
+  }
+
+  function placeholder(id, value) {
+    const node = document.getElementById(id);
+    if (node && node.getAttribute("placeholder") !== value) node.setAttribute("placeholder", value);
+  }
+
+  function applyChallengeLabels() {
+    document.querySelectorAll("[data-security-challenge]").forEach(function (host) {
+      const action = host.dataset.securityChallenge;
+      const value = action === "register" ? t("challengeRegister") : action === "forgot_password" ? t("challengeForgot") : t("challengeLogin");
+      const label = host.querySelector(".allonahub-turnstile__label");
+      if (label && label.textContent !== value) label.textContent = value;
+      host.setAttribute("aria-label", value);
+    });
+  }
+
+  function applyTranslations() {
+    text("authTabLogin", t("tabLogin"));
+    text("authTabRegister", t("tabRegister"));
+    text("authTabForgot", t("tabForgot"));
+    document.querySelectorAll("[data-auth-text]").forEach(function (node) {
+      const value = t(node.dataset.authText);
+      if (node.textContent !== value) node.textContent = value;
+    });
+    placeholder("loginEmail", t("email"));
+    placeholder("loginPassword", t("password"));
+    placeholder("fullName", t("fullName"));
+    placeholder("registerEmail", t("email"));
+    placeholder("registerPhone", t("phone"));
+    placeholder("professionSearch", t("profession"));
+    placeholder("password1", t("createPassword"));
+    placeholder("password2", t("repeatPassword"));
+    placeholder("forgotEmail", t("email"));
+    document.querySelectorAll(".country-search").forEach(function (node) {
+      if (node.getAttribute("placeholder") !== t("countrySearch")) node.setAttribute("placeholder", t("countrySearch"));
+    });
+    const sector = document.querySelector("#sectorSelect option[value='']");
+    if (sector && sector.textContent !== t("sector")) sector.textContent = t("sector");
+    text("professionHelp", t("professionNote"));
+    text("passwordWarning", t("passwordMismatch"));
+    text("registerBtn", t("createAccount"));
+    const resetButton = document.querySelector("#forgot > .btn");
+    if (resetButton && resetButton.textContent !== t("resetButton")) resetButton.textContent = t("resetButton");
+    const resetNote = document.querySelector("#forgot > p");
+    if (resetNote && resetNote.textContent !== t("resetNote")) resetNote.textContent = t("resetNote");
+    const partnerButton = document.querySelector("#login .partner-panel-btn");
+    if (partnerButton && partnerButton.textContent !== t("partnerLogin")) partnerButton.textContent = t("partnerLogin");
+    const securityLink = document.querySelector("#login .link-row a");
+    if (securityLink && securityLink.textContent !== t("securityCenter")) securityLink.textContent = t("securityCenter");
+    applyChallengeLabels();
+    renderTab(activeTab, true);
+    updateProviderControls();
+  }
+
+  function renderTab(tab, skipTranslations) {
+    activeTab = ["login", "register", "forgot"].includes(tab) ? tab : "login";
+    const suffix = activeTab === "register" ? "Register" : activeTab === "forgot" ? "Forgot" : "Login";
+    const heading = document.querySelector("[data-auth-heading]");
+    const lead = document.getElementById("authLead");
+    if (heading && heading.textContent !== t("heading" + suffix)) heading.textContent = t("heading" + suffix);
+    if (lead && lead.textContent !== t("lead" + suffix)) lead.textContent = t("lead" + suffix);
+    document.title = t("title" + suffix);
+    if (!skipTranslations) applyTranslations();
+  }
+
+  function showMessage(message) {
+    const rt = runtime();
+    if (rt && rt.showMessage) rt.showMessage(message);
+  }
+
+  function updateProviderControls() {
+    document.querySelectorAll("[data-auth-provider]").forEach(function (button) {
+      const unavailable = Boolean(capabilities && capabilities.google === false);
+      button.disabled = unavailable;
+      button.setAttribute("aria-disabled", String(unavailable));
+      if (unavailable) button.title = t("oauthError");
+      else button.removeAttribute("title");
+    });
+  }
+
+  async function loadCapabilities() {
+    const app = window.Allona || {};
+    const config = app.config || {};
+    if (!config.supabaseUrl || !config.supabaseAnonKey) return;
+    try {
+      const response = await fetch(String(config.supabaseUrl).replace(/\/$/, "") + "/auth/v1/settings", {
+        headers: {
+          apikey: config.supabaseAnonKey,
+          Authorization: "Bearer " + config.supabaseAnonKey
+        }
+      });
+      if (!response.ok) return;
+      const settings = await response.json();
+      const external = settings && settings.external ? settings.external : {};
+      capabilities = {
+        google: external.google !== false,
+        email: external.email !== false
+      };
+      updateProviderControls();
+    } catch (error) {
+      capabilities = null;
+    }
+  }
+
+  async function loginWithOAuth() {
+    if (capabilities && capabilities.google === false) {
+      showMessage(t("oauthError"));
+      return;
+    }
+    const rt = runtime();
+    if (!rt || !rt.client) {
+      showMessage(t("oauthError"));
+      return;
+    }
+    try {
+      if (rt.setManualAuth) rt.setManualAuth(true);
+      const returnTo = rt.safeReturnTo ? rt.safeReturnTo("user-panel.html") : new URL("user-panel.html", window.location.href).href;
+      const redirect = new URL("/pages/account/user.html", window.location.origin);
+      redirect.searchParams.set("returnTo", returnTo);
+      const options = { redirectTo: redirect.href };
+      options.queryParams = { access_type: "offline", prompt: "select_account" };
+      sessionStorage.setItem("allonahub.oauth.returnTo", returnTo);
+      const result = await rt.client.auth.signInWithOAuth({ provider: "google", options: options });
+      if (result.error) throw result.error;
+    } catch (error) {
+      if (rt.setManualAuth) rt.setManualAuth(false);
+      showMessage(t("oauthError"));
+    }
+  }
+
+  function init() {
+    const selectedTab = document.querySelector("[data-auth-tab].active");
+    activeTab = selectedTab && selectedTab.dataset.authTab || "login";
+    applyTranslations();
+    loadCapabilities();
+    const observer = new MutationObserver(function (mutations) {
+      if (mutations.some(function (mutation) { return mutation.addedNodes && mutation.addedNodes.length; })) applyChallengeLabels();
+    });
+    const loginBox = document.querySelector(".login-box");
+    if (loginBox) observer.observe(loginBox, { childList: true, subtree: true });
+  }
+
+  window.AllonaAuthPage = {
+    applyTranslations: applyTranslations,
+    loadCapabilities: loadCapabilities,
+    loginWithOAuth: loginWithOAuth,
+    renderTab: renderTab
+  };
+
+  document.addEventListener("allona:language-changed", applyTranslations);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
