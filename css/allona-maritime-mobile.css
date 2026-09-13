@@ -626,12 +626,23 @@
 
   body.maritime-page .site-footer .footer-grid {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: min(82vw, 310px) !important;
+    align-items: start !important;
     width: calc(100% - 18px) !important;
     max-width: none !important;
     gap: 12px !important;
     margin-inline: 9px !important;
-    padding: 18px 0 8px !important;
+    padding: 18px 1px 12px !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .footer-grid::-webkit-scrollbar {
+    display: none !important;
   }
 
   body.maritime-page .site-footer .footer-col {
@@ -639,6 +650,7 @@
     min-width: 0 !important;
     height: auto !important;
     padding: 16px !important;
+    scroll-snap-align: start !important;
   }
 
   body.maritime-page .site-footer .social-icons,
