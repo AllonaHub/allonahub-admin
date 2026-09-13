@@ -819,8 +819,8 @@ a{
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260913-auth4">
-  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260913-entry4">
+  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260914-auth5">
+  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry5">
 </head>
 
 <body class="auth-page">
@@ -862,17 +862,17 @@ a{
 
     <!-- LOGIN -->
     <div id="login" class="form active" role="tabpanel" aria-labelledby="authTabLogin">
-      <div class="input">
+      <div class="input auth-login-email">
         <label class="sr-only" for="loginEmail">Giriş e-posta adresi</label>
         <input id="loginEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
       </div>
 
-      <div class="input">
+      <div class="input auth-login-password">
         <label class="sr-only" for="loginPassword">Giriş şifresi</label>
         <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Şifre">
       </div>
 
-      <button class="btn" type="button" onclick="loginUser()" data-auth-text="loginButton">Giriş Yap</button>
+      <button class="btn auth-login-submit" type="button" onclick="loginUser()" data-auth-text="loginButton">Giriş Yap</button>
 
       <div class="security-challenge" data-security-challenge="login"></div>
       <div class="oauth-divider"><span data-auth-text="or">veya</span></div>
@@ -900,12 +900,12 @@ a{
         </div>
       </div>
 
-      <div class="input">
+      <div class="input auth-register-email">
         <label class="sr-only" for="registerEmail">Kayıt e-posta adresi</label>
         <input id="registerEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta" maxlength="180" required aria-required="true">
       </div>
 
-      <div class="phone-row">
+      <div class="phone-row auth-register-phone">
         <div id="registerPicker" class="country-picker"></div>
         <div class="input">
           <label class="sr-only" for="registerPhone">Telefon numarası</label>
@@ -913,12 +913,12 @@ a{
         </div>
       </div>
 
-      <div class="input">
+      <div class="input auth-register-password">
         <label class="sr-only" for="password1">Yeni şifre</label>
         <input id="password1" type="password" autocomplete="new-password" placeholder="Şifre oluştur" minlength="8" required aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
 
-      <div class="input">
+      <div class="input auth-register-password-confirm">
         <label class="sr-only" for="password2">Yeni şifre tekrarı</label>
         <input id="password2" type="password" autocomplete="new-password" placeholder="Şifreyi tekrar gir" minlength="8" required aria-required="true" aria-describedby="passwordWarning" oninput="checkPasswords()">
       </div>
@@ -935,15 +935,15 @@ a{
 
     <!-- FORGOT -->
     <div id="forgot" class="form" role="tabpanel" aria-labelledby="authTabForgot">
-      <div class="input">
+      <div class="input auth-forgot-email">
         <label class="sr-only" for="forgotEmail">Şifre sıfırlama e-posta adresi</label>
         <input id="forgotEmail" type="email" inputmode="email" autocomplete="email" placeholder="E-posta">
       </div>
 
       <div class="security-challenge" data-security-challenge="forgot_password"></div>
-      <button class="btn" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
+      <button class="btn auth-forgot-submit" onclick="resetPassword()">Şifre Sıfırlama Linki Gönder</button>
 
-      <p style="margin-top:16px;font-size:13px;color:#6f8094;text-align:center">
+      <p class="auth-forgot-note" style="margin-top:16px;font-size:13px;color:#6f8094;text-align:center">
         Güvenlik nedeniyle doğrulama linki e-posta ile gönderilecektir.
       </p>
     </div>

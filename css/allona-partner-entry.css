@@ -396,3 +396,327 @@ body.partner-entry-page[data-theme="white"] .input select option {
     width: 100%;
   }
 }
+
+/* Balanced entry workspace: wide form rows with compact, readable mobile flow. */
+body.partner-entry-page .page {
+  padding-bottom: 0 !important;
+}
+
+body.partner-entry-page .header {
+  margin-bottom: 14px;
+}
+
+body.partner-entry-page .hero {
+  margin-bottom: 0;
+}
+
+body.partner-entry-page .partner-login {
+  padding: clamp(20px, 2.4vw, 32px);
+}
+
+body.partner-entry-page .partner-login > p {
+  margin-bottom: 14px;
+}
+
+body.partner-entry-page .partner-security-strip {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+body.partner-entry-page .partner-security-strip > div {
+  min-height: 62px;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+body.partner-entry-page .tabs {
+  margin-bottom: 14px;
+  border-radius: 8px;
+}
+
+body.partner-entry-page .tab {
+  border-radius: 6px;
+}
+
+body.partner-entry-page .input {
+  height: 52px;
+  border-radius: 8px;
+}
+
+body.partner-entry-page .btn {
+  height: auto;
+  min-height: 52px;
+  margin-top: 0;
+  padding: 9px 14px;
+  line-height: 1.25;
+}
+
+body.partner-entry-page .security-challenge {
+  min-height: 72px !important;
+  margin: 4px 0 !important;
+}
+
+body.partner-entry-page #companyLookupStatus {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+body.partner-entry-page #apply .partner-apply-message {
+  height: auto;
+  min-height: 88px;
+}
+
+body.partner-entry-page #apply .partner-apply-message textarea {
+  min-height: 68px;
+}
+
+@media (min-width: 901px) {
+  body.partner-entry-page .partner-login h2 {
+    margin-bottom: 6px;
+    font-size: 30px;
+  }
+
+  body.partner-entry-page #login.form.active {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "email password submit"
+      "challenge google google";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.partner-entry-page #login > .partner-login-email { grid-area: email; }
+  body.partner-entry-page #login > .partner-login-password { grid-area: password; }
+  body.partner-entry-page #login > .partner-login-submit { grid-area: submit; }
+  body.partner-entry-page #login > .security-challenge { grid-area: challenge; }
+  body.partner-entry-page #login > .partner-login-google { grid-area: google; }
+
+  body.partner-entry-page #forgot.form.active {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "lead lead lead"
+      "email submit back"
+      "challenge challenge challenge";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.partner-entry-page #forgot > p { grid-area: lead; margin: 0; }
+  body.partner-entry-page #forgot > .partner-forgot-email { grid-area: email; }
+  body.partner-entry-page #forgot > .partner-forgot-submit { grid-area: submit; }
+  body.partner-entry-page #forgot > .partner-forgot-back { grid-area: back; }
+  body.partner-entry-page #forgot > .security-challenge { grid-area: challenge; }
+
+  body.partner-entry-page #apply.form.active {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      "contact email phone phone"
+      "country tax lookup lookup"
+      "company office type city"
+      "website category message message"
+      "applyChallenge applyChallenge actions actions";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.partner-entry-page #apply > .partner-apply-contact { grid-area: contact; }
+  body.partner-entry-page #apply > .partner-apply-email { grid-area: email; }
+  body.partner-entry-page #apply > .partner-apply-phone { grid-area: phone; }
+  body.partner-entry-page #apply > .partner-apply-country { grid-area: country; }
+  body.partner-entry-page #apply > .partner-apply-tax { grid-area: tax; }
+  body.partner-entry-page #apply > [data-security-challenge="partner_company_lookup"] { grid-area: lookup; }
+  body.partner-entry-page #apply > .partner-apply-company { grid-area: company; }
+  body.partner-entry-page #apply > .partner-apply-tax-office { grid-area: office; }
+  body.partner-entry-page #apply > .partner-apply-type { grid-area: type; }
+  body.partner-entry-page #apply > .partner-apply-city { grid-area: city; }
+  body.partner-entry-page #apply > .partner-apply-website { grid-area: website; }
+  body.partner-entry-page #apply > .partner-apply-category { grid-area: category; }
+  body.partner-entry-page #apply > .partner-apply-message { grid-area: message; }
+  body.partner-entry-page #apply > [data-security-challenge="partner_application"] { grid-area: applyChallenge; }
+  body.partner-entry-page #apply > .form-actions { grid-area: actions; }
+
+  body.partner-entry-page #apply .form-actions {
+    align-self: stretch;
+  }
+
+  body.partner-entry-page #apply .form-actions .btn {
+    height: 100%;
+  }
+
+  body.partner-entry-page #countryCode {
+    width: min(44%, 220px) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  body.partner-entry-page .page {
+    padding-top: 10px;
+  }
+
+  body.partner-entry-page .partner-login {
+    padding: 16px 10px;
+  }
+
+  body.partner-entry-page .partner-login h2 {
+    margin-bottom: 6px;
+    font-size: 27px;
+  }
+
+  body.partner-entry-page .partner-login > p {
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  body.partner-entry-page .partner-security-strip {
+    margin-bottom: 10px;
+  }
+
+  body.partner-entry-page .tabs {
+    margin-bottom: 10px;
+  }
+
+  body.partner-entry-page .input {
+    height: 50px;
+    padding-inline: 11px;
+  }
+
+  body.partner-entry-page #login.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "email password"
+      "submit submit"
+      "challenge challenge"
+      "google google";
+    gap: 9px;
+    align-items: stretch;
+  }
+
+  body.partner-entry-page #login > .partner-login-email { grid-area: email; }
+  body.partner-entry-page #login > .partner-login-password { grid-area: password; }
+  body.partner-entry-page #login > .partner-login-submit { grid-area: submit; }
+  body.partner-entry-page #login > .security-challenge { grid-area: challenge; }
+  body.partner-entry-page #login > .partner-login-google { grid-area: google; }
+
+  body.partner-entry-page #forgot.form.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "lead" "email" "submit" "challenge" "back";
+    gap: 9px;
+  }
+
+  body.partner-entry-page #forgot > p { grid-area: lead; margin: 0; }
+  body.partner-entry-page #forgot > .partner-forgot-email { grid-area: email; }
+  body.partner-entry-page #forgot > .partner-forgot-submit { grid-area: submit; }
+  body.partner-entry-page #forgot > .partner-forgot-back { grid-area: back; }
+  body.partner-entry-page #forgot > .security-challenge { grid-area: challenge; }
+
+  body.partner-entry-page #apply.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "contact email"
+      "phone phone"
+      "country country"
+      "tax tax"
+      "lookup lookup"
+      "company office"
+      "type city"
+      "website category"
+      "message message"
+      "applyChallenge applyChallenge"
+      "actions actions";
+    gap: 9px;
+    align-items: stretch;
+  }
+
+  body.partner-entry-page #apply > .partner-apply-contact { grid-area: contact; }
+  body.partner-entry-page #apply > .partner-apply-email { grid-area: email; }
+  body.partner-entry-page #apply > .partner-apply-phone { grid-area: phone; }
+  body.partner-entry-page #apply > .partner-apply-country { grid-area: country; }
+  body.partner-entry-page #apply > .partner-apply-tax { grid-area: tax; }
+  body.partner-entry-page #apply > [data-security-challenge="partner_company_lookup"] { grid-area: lookup; }
+  body.partner-entry-page #apply > .partner-apply-company { grid-area: company; }
+  body.partner-entry-page #apply > .partner-apply-tax-office { grid-area: office; }
+  body.partner-entry-page #apply > .partner-apply-type { grid-area: type; }
+  body.partner-entry-page #apply > .partner-apply-city { grid-area: city; }
+  body.partner-entry-page #apply > .partner-apply-website { grid-area: website; }
+  body.partner-entry-page #apply > .partner-apply-category { grid-area: category; }
+  body.partner-entry-page #apply > .partner-apply-message { grid-area: message; }
+  body.partner-entry-page #apply > [data-security-challenge="partner_application"] { grid-area: applyChallenge; }
+  body.partner-entry-page #apply > .form-actions { grid-area: actions; }
+
+  body.partner-entry-page #apply .partner-apply-phone {
+    padding-right: 10px;
+  }
+
+  body.partner-entry-page #apply #countryCode {
+    width: 48% !important;
+    min-width: 0;
+    margin-right: 6px !important;
+    font-size: 12px;
+  }
+
+  body.partner-entry-page #apply .partner-apply-tax {
+    height: 50px;
+    min-height: 50px;
+    flex-wrap: nowrap;
+    padding-block: 0;
+    padding-right: 6px;
+  }
+
+  body.partner-entry-page #apply .partner-apply-tax input {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  body.partner-entry-page #apply .lookup-btn {
+    width: auto;
+    min-width: 112px;
+    height: 38px;
+    padding-inline: 9px;
+    font-size: 12px;
+  }
+
+  body.partner-entry-page #apply .form-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  body.partner-entry-page #apply .form-actions .btn {
+    min-height: 52px;
+    padding: 8px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  body.partner-entry-page #login.form.active {
+    grid-template-areas:
+      "email email"
+      "password password"
+      "submit submit"
+      "challenge challenge"
+      "google google";
+  }
+
+  body.partner-entry-page #apply.form.active {
+    grid-template-areas:
+      "contact contact"
+      "email email"
+      "phone phone"
+      "country country"
+      "tax tax"
+      "lookup lookup"
+      "company company"
+      "office office"
+      "type city"
+      "website category"
+      "message message"
+      "applyChallenge applyChallenge"
+      "actions actions";
+  }
+}

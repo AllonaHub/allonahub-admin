@@ -1,6 +1,7 @@
 :is(body.auth-page, body.partner-entry-page) .site-footer {
   width: 100%;
   max-width: 100%;
+  margin-top: 0 !important;
   overflow: hidden;
   background: #020814 !important;
   border-top-color: rgba(95, 215, 255, 0.22) !important;

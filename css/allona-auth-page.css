@@ -397,3 +397,408 @@ body.auth-page [data-auth-provider][disabled] {
     margin-inline: 9px !important;
   }
 }
+
+/* Balanced entry workspace: keep every auth state compact without hiding fields. */
+body.auth-page .page {
+  padding-bottom: 0 !important;
+}
+
+body.auth-page .header {
+  margin-bottom: 14px;
+}
+
+body.auth-page .hero {
+  margin-bottom: 14px;
+}
+
+body.auth-page .login-box {
+  padding: clamp(22px, 3vw, 38px) clamp(18px, 3.5vw, 48px) !important;
+}
+
+body.auth-page .login-box > p {
+  margin-bottom: 16px;
+}
+
+body.auth-page .tabs {
+  margin-bottom: 14px;
+}
+
+body.auth-page :where(.input, .select-box, .country-selected, .btn) {
+  border-radius: 8px;
+}
+
+body.auth-page :where(.input, .select-box, .country-selected) {
+  height: 52px;
+}
+
+body.auth-page .btn {
+  height: auto;
+  min-height: 52px;
+  margin-top: 0;
+  padding: 9px 14px;
+  line-height: 1.25;
+}
+
+body.auth-page .security-challenge {
+  min-height: 72px !important;
+  margin: 4px 0 !important;
+}
+
+body.auth-page :where(#login, #register, #forgot) > .oauth-divider {
+  display: none;
+}
+
+body.auth-page :where(#login, #register) > .oauth-grid {
+  display: block;
+  min-width: 0;
+}
+
+body.auth-page .partner-entry-btn.secondary {
+  color: #06304a !important;
+}
+
+body.auth-page :where(#login, #register) > .oauth-grid .btn {
+  height: 100%;
+}
+
+body.auth-page .partner-entry-card {
+  width: 100%;
+  margin: 0 0 14px;
+  border-radius: 8px;
+}
+
+body.auth-page .quick-section {
+  margin-top: 14px;
+}
+
+body.auth-page .quick-card {
+  min-height: 0;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+@media (min-width: 1241px) {
+  body.auth-page .header {
+    height: auto;
+    min-height: 72px;
+    grid-template-columns: minmax(230px, 280px) minmax(300px, 1fr) minmax(455px, auto);
+    gap: 14px;
+  }
+
+  body.auth-page .brand {
+    height: 72px;
+  }
+
+  body.auth-page .actions {
+    flex-wrap: nowrap;
+    padding: 6px 8px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1240px) {
+  body.auth-page .header {
+    height: auto;
+    grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  body.auth-page .actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 901px) {
+  body.auth-page .login-box h1 {
+    font-size: clamp(36px, 3.2vw, 44px) !important;
+  }
+
+  body.auth-page #login.form.active {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "email password submit"
+      "challenge google partner"
+      "help help help";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.auth-page #login > .auth-login-email { grid-area: email !important; }
+  body.auth-page #login > .auth-login-password { grid-area: password !important; }
+  body.auth-page #login > .auth-login-submit { grid-area: submit !important; }
+  body.auth-page #login > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #login > .oauth-grid { grid-area: google !important; }
+  body.auth-page #login > .partner-panel-btn { grid-area: partner !important; }
+  body.auth-page #login > .link-row { grid-area: help !important; }
+
+  body.auth-page #register.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "first last"
+      "email phone"
+      "password passwordConfirm"
+      "warning warning"
+      "challenge challenge"
+      "submit google";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.auth-page #register > .registration-name-grid {
+    display: contents;
+  }
+
+  body.auth-page #register > .registration-name-grid > .input:first-child { grid-area: first !important; }
+  body.auth-page #register > .registration-name-grid > .input:last-child { grid-area: last !important; }
+  body.auth-page #register > .auth-register-email { grid-area: email !important; }
+  body.auth-page #register > .auth-register-phone { grid-area: phone !important; }
+  body.auth-page #register > .auth-register-password { grid-area: password !important; }
+  body.auth-page #register > .auth-register-password-confirm { grid-area: passwordConfirm !important; }
+  body.auth-page #register > .warning-text { grid-area: warning !important; }
+  body.auth-page #register > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #register > #registerBtn { grid-area: submit !important; }
+  body.auth-page #register > .oauth-grid { grid-area: google !important; }
+
+  body.auth-page #register > .auth-register-phone {
+    grid-template-columns: minmax(170px, 0.72fr) minmax(0, 1.28fr);
+    gap: 10px;
+  }
+
+  body.auth-page #forgot.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "email submit"
+      "challenge challenge"
+      "note note";
+    gap: 10px 12px;
+    align-items: stretch;
+  }
+
+  body.auth-page #forgot > .auth-forgot-email { grid-area: email !important; }
+  body.auth-page #forgot > .auth-forgot-submit { grid-area: submit !important; }
+  body.auth-page #forgot > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #forgot > .auth-forgot-note { grid-area: note !important; }
+
+  body.auth-page .partner-entry-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 0.8fr);
+    grid-template-rows: auto auto;
+    gap: 6px 24px;
+    align-items: center;
+    padding: 18px 22px;
+    text-align: left;
+  }
+
+  body.auth-page .partner-entry-card h2 {
+    grid-column: 1;
+    margin: 0;
+  }
+
+  body.auth-page .partner-entry-card p {
+    grid-column: 1;
+    margin: 0;
+    max-width: none;
+  }
+
+  body.auth-page .partner-entry-actions {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: 100%;
+  }
+
+  body.auth-page .quick-title {
+    margin-bottom: 10px;
+  }
+
+  body.auth-page .quick-title h2 {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 900px) {
+  body.auth-page .page {
+    padding-top: 10px !important;
+  }
+
+  body.auth-page .login-box {
+    padding: 18px 12px !important;
+    border-radius: 8px !important;
+  }
+
+  body.auth-page .login-box h1 {
+    margin-bottom: 7px;
+    font-size: clamp(28px, 8vw, 36px) !important;
+  }
+
+  body.auth-page .login-box > p {
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  body.auth-page .tabs {
+    margin-bottom: 12px;
+    border-radius: 8px;
+  }
+
+  body.auth-page .tab {
+    min-width: 0;
+    padding: 11px 5px;
+    border-radius: 6px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  body.auth-page :where(.input, .select-box, .country-selected) {
+    height: 50px;
+    margin-bottom: 0;
+  }
+
+  body.auth-page #login.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "email password"
+      "submit submit"
+      "challenge challenge"
+      "google partner"
+      "help help";
+    gap: 9px;
+    align-items: stretch;
+  }
+
+  body.auth-page #login > .auth-login-email { grid-area: email !important; }
+  body.auth-page #login > .auth-login-password { grid-area: password !important; }
+  body.auth-page #login > .auth-login-submit { grid-area: submit !important; }
+  body.auth-page #login > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #login > .oauth-grid { grid-area: google !important; }
+  body.auth-page #login > .partner-panel-btn { grid-area: partner !important; }
+  body.auth-page #login > .link-row { grid-area: help !important; }
+
+  body.auth-page #register.form.active {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "first last"
+      "email email"
+      "phone phone"
+      "password passwordConfirm"
+      "warning warning"
+      "challenge challenge"
+      "submit google";
+    gap: 9px;
+    align-items: stretch;
+  }
+
+  body.auth-page #register > .registration-name-grid {
+    display: contents;
+  }
+
+  body.auth-page #register > .registration-name-grid > .input:first-child { grid-area: first !important; }
+  body.auth-page #register > .registration-name-grid > .input:last-child { grid-area: last !important; }
+  body.auth-page #register > .auth-register-email { grid-area: email !important; }
+  body.auth-page #register > .auth-register-phone { grid-area: phone !important; }
+  body.auth-page #register > .auth-register-password { grid-area: password !important; }
+  body.auth-page #register > .auth-register-password-confirm { grid-area: passwordConfirm !important; }
+  body.auth-page #register > .warning-text { grid-area: warning !important; }
+  body.auth-page #register > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #register > #registerBtn { grid-area: submit !important; }
+  body.auth-page #register > .oauth-grid { grid-area: google !important; }
+
+  body.auth-page #register > .auth-register-phone {
+    grid-template-columns: minmax(132px, 0.8fr) minmax(0, 1.2fr) !important;
+    gap: 9px !important;
+  }
+
+  body.auth-page #register .country-picker,
+  body.auth-page #register .auth-register-phone .input {
+    margin-bottom: 0;
+  }
+
+  body.auth-page #forgot.form.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "email" "submit" "challenge" "note";
+    gap: 9px;
+  }
+
+  body.auth-page #forgot > .auth-forgot-email { grid-area: email !important; }
+  body.auth-page #forgot > .auth-forgot-submit { grid-area: submit !important; }
+  body.auth-page #forgot > .security-challenge { grid-area: challenge !important; }
+  body.auth-page #forgot > .auth-forgot-note { grid-area: note !important; }
+
+  body.auth-page .auth-forgot-note,
+  body.auth-page .link-row {
+    margin-top: 0 !important;
+  }
+
+  body.auth-page .partner-entry-card {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 16px 14px;
+  }
+
+  body.auth-page .partner-entry-card p {
+    margin-bottom: 12px;
+  }
+
+  body.auth-page .partner-entry-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  body.auth-page .partner-entry-btn {
+    min-height: 50px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  body.auth-page .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  body.auth-page .quick-card {
+    padding: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  body.auth-page #login.form.active {
+    grid-template-areas:
+      "email email"
+      "password password"
+      "submit submit"
+      "challenge challenge"
+      "google partner"
+      "help help";
+  }
+
+  body.auth-page #register > .auth-register-phone {
+    grid-template-columns: minmax(112px, 0.74fr) minmax(0, 1.26fr) !important;
+  }
+
+  body.auth-page .btn,
+  body.auth-page .partner-entry-btn {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  body.auth-page #register.form.active {
+    grid-template-areas:
+      "first last"
+      "email email"
+      "phone phone"
+      "password passwordConfirm"
+      "warning warning"
+      "challenge challenge"
+      "submit submit"
+      "google google";
+  }
+}

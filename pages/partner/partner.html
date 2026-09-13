@@ -217,8 +217,8 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260913-entry1">
-  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260913-entry4">
+  <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260914-entry2">
+  <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry5">
 </head>
 
 <body class="partner-entry-page">
@@ -263,26 +263,26 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </div>
 
 <div id="login" class="form active" role="tabpanel" aria-labelledby="partnerLoginTab">
-<div class="input"><input id="loginEmail" type="email" inputmode="email" autocomplete="username" spellcheck="false" aria-label="Partner giriş e-posta adresi" placeholder="E-posta"></div>
-<div class="input"><input id="loginPassword" type="password" autocomplete="current-password" aria-label="Partner giriş şifresi" placeholder="Şifre"></div>
+<div class="input partner-login-email"><input id="loginEmail" type="email" inputmode="email" autocomplete="username" spellcheck="false" aria-label="Partner giriş e-posta adresi" placeholder="E-posta"></div>
+<div class="input partner-login-password"><input id="loginPassword" type="password" autocomplete="current-password" aria-label="Partner giriş şifresi" placeholder="Şifre"></div>
 <div class="security-challenge" data-security-challenge="login"></div>
-<button class="btn" type="button" onclick="partnerLogin()">Partner Paneline Giriş</button>
-<button class="btn secondary-btn" type="button" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
+<button class="btn partner-login-submit" type="button" onclick="partnerLogin()">Partner Paneline Giriş</button>
+<button class="btn secondary-btn partner-login-google" type="button" onclick="partnerLoginWithGoogle()">Google ile Giriş</button>
 </div>
 
 <div id="forgot" class="form" role="tabpanel" aria-labelledby="partnerForgotTab" hidden>
 <p>Partner hesabına kayıtlı e-posta adresini yaz; şifre yenileme bağlantısını güvenli şekilde gönderelim.</p>
-<div class="input"><input id="forgotPartnerEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Partner şifre sıfırlama e-posta adresi" placeholder="E-posta"></div>
+<div class="input partner-forgot-email"><input id="forgotPartnerEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Partner şifre sıfırlama e-posta adresi" placeholder="E-posta"></div>
 <div class="security-challenge" data-security-challenge="forgot_password"></div>
-<button class="btn" type="button" onclick="partnerResetPassword()">Şifre Sıfırlama Linki Gönder</button>
-<button class="btn secondary-btn" type="button" onclick="openPartnerTab('login', event)">Girişe Dön</button>
+<button class="btn partner-forgot-submit" type="button" onclick="partnerResetPassword()">Şifre Sıfırlama Linki Gönder</button>
+<button class="btn secondary-btn partner-forgot-back" type="button" onclick="openPartnerTab('login', event)">Girişe Dön</button>
 </div>
 
 <div id="apply" class="form" role="tabpanel" aria-labelledby="partnerApplyTab" hidden>
-<div class="input"><input id="contact_name" type="text" autocomplete="name" aria-label="Yetkili ad soyad" placeholder="Yetkili Ad Soyad"></div>
-<div class="input"><input id="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Başvuru e-posta adresi" placeholder="E-posta"></div>
+<div class="input partner-apply-contact"><input id="contact_name" type="text" autocomplete="name" aria-label="Yetkili ad soyad" placeholder="Yetkili Ad Soyad"></div>
+<div class="input partner-apply-email"><input id="email" type="email" inputmode="email" autocomplete="email" spellcheck="false" aria-label="Başvuru e-posta adresi" placeholder="E-posta"></div>
 
-<div class="input">
+<div class="input partner-apply-phone">
 <select id="countryCode" aria-label="Telefon ülke kodu" autocomplete="tel-country-code" style="width:260px;border-right:1px solid rgba(255,255,255,.15);margin-right:10px;">
 <option value="+90">🇹🇷 Türkiye +90</option>
 <option value="+994">🇦🇿 Azerbaycan +994</option>
@@ -324,14 +324,14 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 <input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" aria-label="Telefon numarası" placeholder="Telefon numarası">
 </div>
 
-<div class="input"><select id="country" aria-label="Şirketin kayıtlı olduğu ülke"></select></div>
-<div class="input has-action"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
+<div class="input partner-apply-country"><select id="country" aria-label="Şirketin kayıtlı olduğu ülke"></select></div>
+<div class="input has-action partner-apply-tax"><input id="tax_number" inputmode="text" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-label="Vergi veya VAT numarası" placeholder="Vergi / VAT Numarası"><button id="companyLookupBtn" class="lookup-btn" type="button" onclick="lookupCompanyInfo()">Bilgileri Getir</button></div>
 <div id="companyLookupStatus" class="lookup-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 <div class="security-challenge" data-security-challenge="partner_company_lookup"></div>
-<div class="input"><input id="partner_name" type="text" autocomplete="organization" aria-label="Firma veya işletme adı" placeholder="Firma / İşletme Adı"></div>
-<div class="input"><input id="tax_office" type="text" autocomplete="off" spellcheck="false" aria-label="Vergi dairesi" placeholder="Vergi Dairesi"></div>
+<div class="input partner-apply-company"><input id="partner_name" type="text" autocomplete="organization" aria-label="Firma veya işletme adı" placeholder="Firma / İşletme Adı"></div>
+<div class="input partner-apply-tax-office"><input id="tax_office" type="text" autocomplete="off" spellcheck="false" aria-label="Vergi dairesi" placeholder="Vergi Dairesi"></div>
 
-<div class="input">
+<div class="input partner-apply-type">
 <select id="company_type" aria-label="Şirket türü">
 <option value="">Şirket Türü Seç</option>
 <option>Şahıs Şirketi</option>
@@ -343,10 +343,10 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </select>
 </div>
 
-<div class="input"><select id="city" aria-label="İl / Şehir"></select></div>
-<div class="input"><input id="website" type="url" inputmode="url" autocomplete="url" spellcheck="false" aria-label="Web sitesi" placeholder="Web Sitesi (opsiyonel)"></div>
+<div class="input partner-apply-city"><select id="city" aria-label="İl / Şehir"></select></div>
+<div class="input partner-apply-website"><input id="website" type="url" inputmode="url" autocomplete="url" spellcheck="false" aria-label="Web sitesi" placeholder="Web Sitesi (opsiyonel)"></div>
 
-<div class="input">
+<div class="input partner-apply-category">
 <select id="category" aria-label="Sektör">
 <option value="">Sektör Seç</option>
 <option>AllonaHub / E-Ticaret</option>
@@ -382,7 +382,7 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 </select>
 </div>
 
-<div class="input textarea"><textarea id="message" autocomplete="off" spellcheck="true" aria-label="İşletme açıklaması" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
+<div class="input textarea partner-apply-message"><textarea id="message" autocomplete="off" spellcheck="true" aria-label="İşletme açıklaması" placeholder="Kısa açıklama: İşletmeniz ne yapıyor? Hangi ürün/hizmetleri sunacaksınız?"></textarea></div>
 <div class="security-challenge" data-security-challenge="partner_application"></div>
 
 <div class="form-actions">
