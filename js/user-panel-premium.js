@@ -6,7 +6,6 @@
   let maritimeActivity = [];
   let maritimeActivityLoaded = false;
   let profileSyncBound = false;
-  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const couponWalletKey = "allonahub_user_coupons_v1";
   const couponHpRewards = {
     WELCOME10: 100,
@@ -14,36 +13,16 @@
     HP20: 200
   };
 
-  const maritimeEventLabels = Object.freeze({
-    submitted: ["fa-file-circle-check", "Navlun talebi alındı"],
-    review_started: ["fa-magnifying-glass", "Navlun incelemesi başladı"],
-    matching_started: ["fa-people-arrows", "Broker eşleştirmesi başladı"],
-    match_declined: ["fa-ban", "Broker eşleşmeyi reddetti"],
-    match_expired: ["fa-clock", "Broker eşleşmesinin süresi doldu"],
-    quote_added: ["fa-file-signature", "Yeni navlun teklifi geldi"],
-    offer_withdrawn: ["fa-rotate-left", "Broker teklifi geri çekti"],
-    offer_expired: ["fa-hourglass-end", "Navlun teklifinin süresi doldu"],
-    accepted: ["fa-circle-check", "Navlun teklifi kabul edildi"],
-    cancelled: ["fa-circle-xmark", "Navlun talebi iptal edildi"],
-    closed: ["fa-lock", "Navlun talebi kapandı"]
-  });
-
-  const maritimeStatusLabels = Object.freeze({
-    submitted: "ALINDI",
-    in_review: "İNCELEMEDE",
-    matching: "EŞLEŞİYOR",
-    quoted: "TEKLİF VAR",
-    accepted: "KABUL EDİLDİ",
-    cancelled: "İPTAL",
-    closed: "KAPANDI"
-  });
-
   const moduleCards = {
     maritime: [
+      ["fa-briefcase", "İş İlanları", "Açık denizcilik pozisyonlarını incele", "/pages/ecosystem/maritime-jobs.html"],
+      ["fa-list-check", "Başvurularım", "Başvuru durumlarını takip et", "/pages/ecosystem/maritime-applications.html"],
+      ["fa-envelope-open-text", "İş Tekliflerim", "Firmalardan gelen teklifleri görüntüle", "/pages/ecosystem/maritime-offers.html"],
+      ["fa-wand-magic-sparkles", "Otomatik Başvuru", "Akıllı başvuru tercihini yönet", "/pages/ecosystem/maritime-auto-apply.html"],
+      ["fa-shield-halved", "Şikayet", "İhbar, ITF, hukuk ve öneri merkezi", "/pages/ecosystem/maritime-complaints.html"],
       ["fa-ship", "Maritime CV", "Denizcilik CV formunu aç", "/pages/career/cv-form.html?source=maritime&position=Maritime+Crew"],
       ["fa-certificate", "Belgeler", "STCW ve sertifika takibi", "/pages/account/belgeler.html"],
-      ["fa-route", "Navlun Talepleri", "Navlun taleplerini ve durumlarını izle", "/pages/account/maritime-requests.html"],
-      ["fa-briefcase", "Gemi İşleri", "Pozisyona uygun ilanlar", "/pages/ecosystem/allonadenizcilik.html"]
+      ["fa-anchor", "Denizcilik Modülü", "Denizcilik ana ekranına dön", "/pages/ecosystem/allonadenizcilik.html"]
     ],
     health: [
       ["fa-user-doctor", "Sağlık Profili", "Uzmanlık ve hizmet bilgileri", "/pages/ecosystem/allonasaglik.html"],
@@ -211,19 +190,13 @@
     return profile?.module === "maritime" || ["maritime", "allonadenizcilik"].includes(requestedModule);
   }
 
-  function formatActivityDate(value) {
-    const date = new Date(String(value || ""));
-    if (Number.isNaN(date.getTime())) return "";
-    return new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
-  }
-
   function setNotificationCount(value) {
     const badge = $("[data-user-notification-count]");
     if (!badge) return;
     const total = Math.max(0, Number(value || 0));
     badge.textContent = total > 99 ? "99+" : String(total);
     badge.hidden = total === 0;
-    badge.setAttribute("aria-label", `${total} teklif bekleyen navlun talebi`);
+    badge.setAttribute("aria-label", `${total} yeni denizcilik iş teklifi`);
   }
 
   function goTo(target) {
@@ -501,37 +474,9 @@
     const isMaritime = isMaritimeContext(profile);
     const hpMultiplier = Math.max(20, Math.round((profile.level || 1) * 8));
     const items = isMaritime
-      ? maritimeActivity.length
-        ? maritimeActivity.map((activity) => {
-          const display = maritimeEventLabels[activity.event.event_type];
-          const eventDate = formatActivityDate(activity.event.created_at);
-          return {
-            icon: display[0],
-            title: display[1],
-            text: `${activity.request.reference_no || "Navlun Talebi"}${eventDate ? ` · ${eventDate}` : ""}`,
-            amount: "GÖR",
-            state: maritimeStatusLabels[activity.request.status] || "GÜNCELLENDİ",
-            href: UUID_PATTERN.test(String(activity.request.id || ""))
-              ? `/pages/account/maritime-requests.html#request-${activity.request.id}`
-              : "/pages/account/maritime-requests.html"
-          };
-        })
-        : maritimeActivityLoaded
-          ? [{
-              icon: "fa-ship",
-              title: "Henüz navlun hareketi yok",
-              text: "Navlun taleplerini denizcilik merkezinden yönet",
-              amount: "AÇ",
-              state: "DENİZCİLİK",
-              href: "/pages/account/maritime-requests.html"
-            }]
-          : [{
-              icon: "fa-spinner",
-              title: "Navlun hareketleri hazırlanıyor",
-              text: "Güvenli kayıtlar yükleniyor",
-              amount: "...",
-              state: "YÜKLENİYOR"
-            }]
+      ? maritimeActivityLoaded
+        ? maritimeActivity
+        : [{ icon: "fa-spinner", title: "Denizcilik alanı hazırlanıyor", text: "Güvenli hesap bilgileri yükleniyor", amount: "...", state: "YÜKLENİYOR" }]
       : [
           { icon: "fa-gift", title: "Günlük Giriş", text: "Bugün giriş yapıldı", amount: `+${hpMultiplier} HP`, state: "TAMAMLANDI" },
           { icon: "fa-store", title: isMaritime ? "Maritime Profil" : "AllonaHub", text: "Profil eşleşmesi güncellendi", amount: "+30 HP", state: "TAMAMLANDI" },
@@ -557,64 +502,29 @@
     maritimeActivity = [];
     maritimeActivityLoaded = false;
     if (!isMaritimeContext(profile)) return;
-    if (!client?.from) {
-      maritimeActivityLoaded = true;
-      renderTransactions(profile);
-      return;
-    }
-
+    const userId = currentUser?.id || "device";
+    const readList = (name) => {
+      try {
+        const rows = JSON.parse(localStorage.getItem(`allonahub.maritime.${name}.v1.${userId}`) || "[]");
+        return Array.isArray(rows) ? rows : [];
+      } catch (error) {
+        return [];
+      }
+    };
+    const applications = readList("applications");
+    const offers = readList("offers");
+    let autoApply = {};
     try {
-      const requestResult = await client
-        .from("maritime_freight_requests")
-        .select("id,reference_no,module_key,status,updated_at")
-        .eq("module_key", "maritime")
-        .order("updated_at", { ascending: false })
-        .limit(20);
-      if (requestResult.error) {
-        maritimeActivityLoaded = true;
-        renderTransactions(profile);
-        return;
-      }
-
-      const requests = (Array.isArray(requestResult.data) ? requestResult.data : []).filter((request) => (
-        request?.module_key === "maritime"
-        && Object.prototype.hasOwnProperty.call(maritimeStatusLabels, request.status)
-        && UUID_PATTERN.test(String(request.id || ""))
-      ));
-      setNotificationCount(requests.filter((request) => request.status === "quoted").length);
-      if (!requests.length) {
-        maritimeActivityLoaded = true;
-        renderTransactions(profile);
-        return;
-      }
-
-      const requestsById = new Map(requests.map((request) => [request.id, request]));
-      const eventResult = await client
-        .from("maritime_freight_request_events")
-        .select("id,freight_request_id,event_type,created_at")
-        .in("freight_request_id", [...requestsById.keys()])
-        .in("event_type", Object.keys(maritimeEventLabels))
-        .order("created_at", { ascending: false })
-        .limit(3);
-      if (eventResult.error) {
-        maritimeActivityLoaded = true;
-        renderTransactions(profile);
-        return;
-      }
-
-      maritimeActivity = (Array.isArray(eventResult.data) ? eventResult.data : [])
-        .filter((event) => (
-          event
-          && Object.prototype.hasOwnProperty.call(maritimeEventLabels, event.event_type)
-          && requestsById.has(String(event.freight_request_id || ""))
-        ))
-        .map((event) => ({ event, request: requestsById.get(String(event.freight_request_id)) }));
-      maritimeActivityLoaded = true;
-      renderTransactions(profile);
-    } catch (error) {
-      maritimeActivityLoaded = true;
-      renderTransactions(profile);
-    }
+      autoApply = JSON.parse(localStorage.getItem(`allonahub.maritime.autoApply.v1.${userId}`) || "{}");
+    } catch (error) {}
+    maritimeActivity = [
+      { icon: "fa-list-check", title: "Başvurularım", text: "Denizcilik başvurularının durumunu takip et", amount: String(applications.length), state: "BAŞVURU", href: "/pages/ecosystem/maritime-applications.html" },
+      { icon: "fa-envelope-open-text", title: "İş Tekliflerim", text: "Firmalardan gelen izinli teklifleri görüntüle", amount: String(offers.length), state: "TEKLİF", href: "/pages/ecosystem/maritime-offers.html" },
+      { icon: "fa-wand-magic-sparkles", title: "Otomatik Başvuru", text: "Akıllı başvuru tercihini yönet", amount: autoApply.enabled === true ? "AÇIK" : "KAPALI", state: "OTOMATİK", href: "/pages/ecosystem/maritime-auto-apply.html" }
+    ];
+    setNotificationCount(offers.length);
+    maritimeActivityLoaded = true;
+    renderTransactions(profile);
   }
 
   function renderPanel(profile) {
@@ -729,7 +639,7 @@
     if (/hp|kupon|puan|cash|bakiye/.test(q)) return goTo("/pages/commerce/kuponlar.html");
     if (/profil|hesap|foto/.test(q)) return goTo("/pages/account/profil.html");
     if (/belge|sertifika/.test(q)) return goTo("/pages/account/belgeler.html");
-    if (/navlun|maritime|denizcilik/.test(q)) return goTo("/pages/account/maritime-requests.html");
+    if (/maritime|denizcilik|gemi işi|iş ilanı/.test(q)) return goTo("/pages/ecosystem/maritime-jobs.html");
     if (/premium|seviye|level/.test(q)) return goTo("/pages/account/premium.html");
     window.location.href = `/pages/search/arama.html?q=${encodeURIComponent(q)}`;
   }

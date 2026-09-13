@@ -1,0 +1,1302 @@
+:root {
+  --maritime-navy: #03172a;
+  --maritime-panel: #07233b;
+  --maritime-panel-strong: #041629;
+  --maritime-cyan: #00dffc;
+  --maritime-blue: #0788ff;
+  --maritime-gold: #ffd447;
+  --maritime-red: #ff465d;
+  --maritime-green: #28d79a;
+  --maritime-text: #f5fbff;
+  --maritime-muted: #a9bed0;
+  --maritime-line: rgba(73, 204, 255, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body.maritime-portal-page {
+  min-width: 0;
+  margin: 0;
+  background: #031326;
+  color: var(--maritime-text);
+  font-family: Inter, Arial, sans-serif;
+}
+
+body.maritime-portal-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+body.maritime-portal-page button,
+body.maritime-portal-page input,
+body.maritime-portal-page select,
+body.maritime-portal-page textarea {
+  font: inherit;
+}
+
+.maritime-portal-shell {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.maritime-portal-header {
+  width: 100%;
+  padding: 14px clamp(14px, 3vw, 40px) 10px;
+  border-bottom: 1px solid var(--maritime-line);
+  background: rgba(2, 16, 31, 0.96);
+}
+
+.maritime-portal-top {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.5fr) auto;
+  gap: 12px;
+  align-items: center;
+  max-width: 1540px;
+  margin-inline: auto;
+}
+
+.maritime-portal-brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.maritime-portal-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.maritime-portal-brand-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.maritime-portal-brand .logo-title {
+  font-size: 23px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.maritime-portal-brand .gold {
+  color: #ffd80a;
+}
+
+.maritime-portal-brand .blue {
+  color: #00dfff;
+}
+
+.maritime-portal-module {
+  color: var(--maritime-cyan);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(0, 223, 252, 0.7);
+}
+
+.maritime-portal-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 86px;
+  min-width: 0;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: rgba(4, 33, 56, 0.9);
+}
+
+.maritime-portal-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 0 15px;
+  background: transparent;
+  color: var(--maritime-text);
+}
+
+.maritime-portal-search button {
+  border: 0;
+  background: linear-gradient(135deg, var(--maritime-cyan), var(--maritime-blue));
+  color: #021525;
+  cursor: pointer;
+  font-weight: 950;
+}
+
+.maritime-portal-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.maritime-portal-actions > :where(a, button) {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: #06223a;
+  color: var(--maritime-text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.maritime-portal-actions .platform-controls-slot {
+  display: inline-flex;
+}
+
+.maritime-portal-nav {
+  display: flex;
+  max-width: 1540px;
+  gap: 8px;
+  margin: 10px auto 0;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.maritime-portal-nav::-webkit-scrollbar,
+.maritime-filter-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.maritime-portal-nav a {
+  display: inline-flex;
+  min-height: 42px;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(5, 31, 53, 0.75);
+  color: #dbeeff;
+  font-size: 13px;
+  font-weight: 850;
+  scroll-snap-align: start;
+}
+
+.maritime-portal-nav a[aria-current="page"] {
+  border-color: var(--maritime-cyan);
+  background: #063b5c;
+  color: #ffffff;
+  box-shadow: inset 0 -3px 0 var(--maritime-cyan);
+}
+
+.maritime-portal-nav a[data-view-link="complaints"] {
+  border-color: rgba(255, 70, 93, 0.72);
+}
+
+.maritime-portal-main {
+  width: 100%;
+}
+
+.maritime-portal-hero {
+  position: relative;
+  display: grid;
+  min-height: 190px;
+  align-items: end;
+  overflow: hidden;
+  background: #062138 url("../images/ads/hero-ad-denizcilik.jpg") center 54% / cover no-repeat;
+}
+
+.maritime-portal-hero::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, rgba(1, 15, 29, 0.96) 0%, rgba(1, 20, 38, 0.84) 48%, rgba(1, 17, 31, 0.34) 100%);
+}
+
+.maritime-portal-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1540px);
+  margin-inline: auto;
+  padding: 32px clamp(16px, 4vw, 58px);
+}
+
+.maritime-portal-hero h1 {
+  max-width: 820px;
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 48px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.maritime-portal-hero p {
+  max-width: 820px;
+  margin: 0;
+  color: #d5e7f3;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.maritime-portal-content {
+  display: grid;
+  width: min(100%, 1540px);
+  min-width: 0;
+  gap: 18px;
+  margin-inline: auto;
+  padding: 22px clamp(14px, 3vw, 40px) 28px;
+}
+
+.maritime-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.maritime-toolbar-copy h2,
+.maritime-section-heading h2 {
+  margin: 0 0 4px;
+  color: var(--maritime-text);
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.maritime-toolbar-copy p,
+.maritime-section-heading p {
+  margin: 0;
+  color: var(--maritime-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.maritime-filter-rail {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.maritime-filter-rail button {
+  min-height: 38px;
+  flex: 0 0 auto;
+  padding: 0 13px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: var(--maritime-panel);
+  color: #d7edfa;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.maritime-filter-rail button[aria-pressed="true"] {
+  border-color: var(--maritime-gold);
+  color: var(--maritime-gold);
+}
+
+.maritime-job-grid,
+.maritime-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.maritime-job-card,
+.maritime-record-card {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 17px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(8, 42, 69, 0.96), rgba(3, 20, 38, 0.98));
+}
+
+.maritime-job-head,
+.maritime-record-head {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.maritime-job-title {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.maritime-job-title h3,
+.maritime-record-head h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.maritime-reference {
+  color: #85bdd6;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.maritime-verified-badge,
+.maritime-status-badge {
+  display: inline-flex;
+  min-height: 28px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid rgba(0, 223, 252, 0.48);
+  border-radius: 999px;
+  background: rgba(0, 126, 206, 0.23);
+  color: #bdf7ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.maritime-verified-badge i {
+  color: #18aaff;
+}
+
+.maritime-job-description,
+.maritime-record-card p {
+  margin: 0;
+  color: var(--maritime-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.maritime-job-meta,
+.maritime-record-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.maritime-job-meta span,
+.maritime-record-meta span {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.16);
+  color: #e8f6ff;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.maritime-job-meta b,
+.maritime-record-meta b {
+  color: #7ec8e6;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.maritime-job-actions,
+.maritime-inline-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.maritime-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: #082a47;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.maritime-button--primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--maritime-cyan), var(--maritime-blue));
+  color: #021525;
+}
+
+.maritime-button--danger {
+  border-color: rgba(255, 70, 93, 0.7);
+  background: #54101b;
+}
+
+.maritime-button[disabled] {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.maritime-empty,
+.maritime-auth-gate {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  padding: 32px clamp(18px, 4vw, 46px);
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(7, 39, 64, 0.95), rgba(3, 18, 35, 0.98));
+  text-align: center;
+}
+
+.maritime-empty > div,
+.maritime-auth-gate > div {
+  display: grid;
+  max-width: 660px;
+  justify-items: center;
+  gap: 12px;
+}
+
+.maritime-empty i,
+.maritime-auth-gate i {
+  color: var(--maritime-cyan);
+  font-size: 34px;
+}
+
+.maritime-empty h2,
+.maritime-auth-gate h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 23px;
+}
+
+.maritime-empty p,
+.maritime-auth-gate p {
+  margin: 0;
+  color: var(--maritime-muted);
+  line-height: 1.6;
+}
+
+.maritime-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.maritime-summary-strip article {
+  padding: 14px;
+  border-left: 3px solid var(--maritime-cyan);
+  background: rgba(5, 34, 57, 0.78);
+}
+
+.maritime-summary-strip strong {
+  display: block;
+  color: #ffffff;
+  font-size: 22px;
+}
+
+.maritime-summary-strip span {
+  color: var(--maritime-muted);
+  font-size: 12px;
+}
+
+.maritime-status-badge[data-status="accepted"],
+.maritime-status-badge[data-status="offer_accepted"] {
+  border-color: rgba(40, 215, 154, 0.55);
+  background: rgba(20, 126, 92, 0.25);
+  color: #a8ffdc;
+}
+
+.maritime-status-badge[data-status="rejected"],
+.maritime-status-badge[data-status="declined"] {
+  border-color: rgba(255, 70, 93, 0.55);
+  background: rgba(138, 18, 39, 0.3);
+  color: #ffd2d8;
+}
+
+.maritime-offer-contact {
+  padding: 12px;
+  border: 1px solid rgba(40, 215, 154, 0.35);
+  border-radius: 7px;
+  background: rgba(20, 126, 92, 0.14);
+}
+
+.maritime-auto-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.maritime-auto-copy,
+.maritime-auto-control {
+  padding: clamp(20px, 3vw, 34px);
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: rgba(5, 31, 53, 0.9);
+}
+
+.maritime-auto-copy h2,
+.maritime-auto-control h2 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 25px;
+}
+
+.maritime-auto-copy > p,
+.maritime-auto-control > p {
+  margin: 0;
+  color: var(--maritime-muted);
+  line-height: 1.7;
+}
+
+.maritime-readiness-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.maritime-readiness-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.maritime-readiness-item > i {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 223, 252, 0.12);
+  color: var(--maritime-cyan);
+}
+
+.maritime-readiness-item strong,
+.maritime-readiness-item small {
+  display: block;
+}
+
+.maritime-readiness-item small {
+  margin-top: 3px;
+  color: var(--maritime-muted);
+}
+
+.maritime-readiness-state {
+  color: var(--maritime-gold);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.maritime-auto-control {
+  display: grid;
+  align-content: center;
+  justify-items: stretch;
+  gap: 14px;
+}
+
+.maritime-auto-control .maritime-button {
+  width: 100%;
+  min-height: 54px;
+}
+
+.maritime-notice {
+  display: none;
+  padding: 12px 14px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 7px;
+  background: #052b45;
+  color: #e6f8ff;
+  line-height: 1.5;
+}
+
+.maritime-notice.is-visible {
+  display: block;
+}
+
+.maritime-complaint-topics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.maritime-topic-button {
+  display: grid;
+  min-height: 142px;
+  align-content: start;
+  gap: 8px;
+  padding: 17px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: rgba(5, 34, 57, 0.88);
+  color: #ffffff;
+  cursor: pointer;
+  text-align: start;
+}
+
+.maritime-topic-button i {
+  color: var(--maritime-cyan);
+  font-size: 24px;
+}
+
+.maritime-topic-button strong {
+  font-size: 16px;
+}
+
+.maritime-topic-button span {
+  color: var(--maritime-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.maritime-topic-button[aria-pressed="true"] {
+  border-color: var(--maritime-gold);
+  box-shadow: inset 0 -3px 0 var(--maritime-gold);
+}
+
+.maritime-complaint-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  padding: 20px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: rgba(3, 23, 42, 0.92);
+}
+
+.maritime-complaint-form h2,
+.maritime-complaint-form > p,
+.maritime-complaint-form .maritime-form-full,
+.maritime-complaint-form .maritime-notice {
+  grid-column: 1 / -1;
+}
+
+.maritime-complaint-form h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 23px;
+}
+
+.maritime-complaint-form > p {
+  margin: -4px 0 4px;
+  color: var(--maritime-muted);
+  line-height: 1.5;
+}
+
+.maritime-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.maritime-field label {
+  color: #dcedf8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.maritime-field :where(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--maritime-line);
+  border-radius: 7px;
+  outline: 0;
+  padding: 11px 12px;
+  background: #061c31;
+  color: #ffffff;
+}
+
+.maritime-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.maritime-form-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+.maritime-account-header .maritime-portal-top {
+  grid-template-columns: minmax(210px, 1fr) auto;
+}
+
+.maritime-account-main {
+  min-height: calc(100vh - 126px);
+  background: #04182b;
+}
+
+.maritime-account-heading {
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  padding: 34px clamp(16px, 4vw, 48px) 4px;
+}
+
+.maritime-account-heading h1 {
+  margin: 0 0 7px;
+  color: #ffffff;
+  font-size: 34px;
+  letter-spacing: 0;
+}
+
+.maritime-account-heading p {
+  margin: 0;
+  color: var(--maritime-muted);
+  line-height: 1.55;
+}
+
+.maritime-account-page .maritime-portal-content {
+  width: min(100%, 1180px);
+  padding-top: 20px;
+}
+
+.maritime-account-layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  min-height: 470px;
+  overflow: hidden;
+  border: 1px solid var(--maritime-line);
+  border-radius: 8px;
+  background: #061f36;
+}
+
+.maritime-account-profile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  padding: 34px 24px;
+  border-right: 1px solid var(--maritime-line);
+  background: #04182c;
+  text-align: center;
+}
+
+.maritime-account-avatar {
+  display: grid;
+  width: 126px;
+  height: 126px;
+  overflow: hidden;
+  place-items: center;
+  border: 3px solid var(--maritime-cyan);
+  border-radius: 50%;
+  background: #0a3655;
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(0, 223, 252, 0.26);
+  font-size: 34px;
+  font-weight: 950;
+}
+
+.maritime-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.maritime-account-profile h2 {
+  max-width: 100%;
+  margin: 18px 0 4px;
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 21px;
+  letter-spacing: 0;
+}
+
+.maritime-account-profile > p {
+  max-width: 100%;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--maritime-muted);
+  font-size: 13px;
+}
+
+.maritime-account-badge {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  margin: 14px 0 20px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 223, 252, 0.42);
+  border-radius: 999px;
+  color: #bdf8ff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.maritime-photo-button {
+  width: 100%;
+  cursor: pointer;
+}
+
+.maritime-photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.maritime-account-profile > small {
+  margin-top: 9px;
+  color: #7f9db1;
+  font-size: 10px;
+}
+
+.maritime-account-profile .maritime-notice {
+  width: 100%;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.maritime-account-actions {
+  min-width: 0;
+  padding: 34px;
+}
+
+.maritime-account-actions > h2 {
+  margin: 0 0 18px;
+  color: #ffffff;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.maritime-account-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.maritime-account-action {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 16px;
+  min-height: 64px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border: 1px solid rgba(94, 205, 255, 0.22);
+  border-radius: 7px;
+  background: #082a46;
+  color: #f2fbff !important;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.maritime-account-action > i:first-child {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(0, 223, 252, 0.12);
+  color: var(--maritime-cyan);
+}
+
+.maritime-account-action > i:last-child {
+  color: #7ba5bc;
+  font-size: 11px;
+}
+
+.maritime-account-signout {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  margin-top: 22px;
+  border: 0;
+  background: transparent;
+  color: #ff9aa8;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+body.maritime-portal-page[data-theme="white"] {
+  --maritime-text: #071928;
+  --maritime-muted: #496273;
+  --maritime-line: rgba(0, 103, 174, 0.23);
+  background: #edf7fb;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-portal-content, .maritime-toolbar-copy h2, .maritime-section-heading h2) {
+  color: #071928;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-job-card, .maritime-record-card, .maritime-auto-copy, .maritime-auto-control, .maritime-empty, .maritime-auth-gate, .maritime-complaint-form, .maritime-topic-button) {
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(8, 54, 84, 0.08);
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-job-title h3, .maritime-record-head h3, .maritime-empty h2, .maritime-auth-gate h2, .maritime-auto-copy h2, .maritime-auto-control h2, .maritime-complaint-form h2, .maritime-topic-button strong) {
+  color: #071928;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-field :where(input, select, textarea) {
+  background: #f7fbfd;
+  color: #071928;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-portal-header {
+  background: #02101f !important;
+  color: #ffffff !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-portal-header :where(.maritime-portal-actions > a, .maritime-portal-actions > button, .maritime-portal-nav a, .maritime-portal-search input) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-portal-search input::placeholder {
+  color: #a9bed0 !important;
+  opacity: 1;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-job-description, .maritime-record-card p, .maritime-toolbar-copy p, .maritime-section-heading p, .maritime-auto-copy > p, .maritime-auto-control > p, .maritime-topic-button span, .maritime-readiness-item small) {
+  color: #3e596b !important;
+  -webkit-text-fill-color: #3e596b !important;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-reference, .maritime-job-actions .maritime-reference) {
+  color: #276b8d !important;
+  -webkit-text-fill-color: #276b8d !important;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-job-meta span, .maritime-record-meta span, .maritime-readiness-item) {
+  border-color: rgba(0, 103, 174, 0.18);
+  background: #eef6fa;
+  color: #153449 !important;
+  -webkit-text-fill-color: #153449 !important;
+}
+
+body.maritime-portal-page[data-theme="white"] :where(.maritime-job-meta b, .maritime-record-meta b) {
+  color: #006b91 !important;
+  -webkit-text-fill-color: #006b91 !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-verified-badge {
+  border-color: #32a4cb;
+  background: #ddf6ff;
+  color: #075f7e !important;
+  -webkit-text-fill-color: #075f7e !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-filter-rail button {
+  border-color: rgba(0, 103, 174, 0.25);
+  background: #e8f3f8;
+  color: #14374e !important;
+  -webkit-text-fill-color: #14374e !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-filter-rail button[aria-pressed="true"] {
+  border-color: #a77a00;
+  color: #745400 !important;
+  -webkit-text-fill-color: #745400 !important;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-button--primary {
+  color: #021525 !important;
+  -webkit-text-fill-color: #021525 !important;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-account-main {
+  background: #edf7fb;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-account-heading h1,
+body.maritime-account-page[data-theme="white"] .maritime-account-actions > h2,
+body.maritime-account-page[data-theme="white"] .maritime-account-profile h2 {
+  color: #071928 !important;
+  -webkit-text-fill-color: #071928 !important;
+}
+
+body.maritime-account-page[data-theme="white"] :where(.maritime-account-layout, .maritime-account-profile) {
+  background: #ffffff;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-account-action {
+  border-color: rgba(0, 103, 174, 0.2);
+  background: #eef7fb;
+  color: #12364c !important;
+  -webkit-text-fill-color: #12364c !important;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-account-badge {
+  color: #075f7e !important;
+  -webkit-text-fill-color: #075f7e !important;
+}
+
+body.maritime-account-page[data-theme="sunset"] .maritime-account-main {
+  background: #2b1027;
+}
+
+body.maritime-account-page[data-theme="sunset"] :where(.maritime-account-layout, .maritime-account-profile) {
+  background: #251126;
+}
+
+body.maritime-account-page[data-theme="sunset"] .maritime-account-action {
+  border-color: rgba(255, 132, 82, 0.3);
+  background: #3a1734;
+}
+
+body.maritime-account-page[data-theme="turquoise"] .maritime-account-main {
+  background: #073b42;
+}
+
+body.maritime-account-page[data-theme="turquoise"] :where(.maritime-account-layout, .maritime-account-profile) {
+  background: #062d36;
+}
+
+@media (max-width: 980px) {
+  .maritime-portal-top {
+    grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .maritime-portal-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .maritime-auto-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-complaint-topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .maritime-portal-header {
+    padding: 10px 10px 8px;
+  }
+
+  .maritime-portal-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .maritime-portal-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .maritime-portal-brand .logo-title {
+    font-size: 20px;
+  }
+
+  .maritime-portal-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    height: 44px;
+  }
+
+  .maritime-portal-actions {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    order: 3;
+  }
+
+  .maritime-portal-actions > :where(a, button) {
+    min-width: 0;
+    padding-inline: 7px;
+    font-size: 11px;
+  }
+
+  .maritime-portal-actions .platform-controls-slot {
+    justify-self: end;
+  }
+
+  .maritime-portal-actions .platform-controls-slot,
+  .maritime-portal-actions .platform-controls-slot .platform-controls {
+    display: flex !important;
+    width: 85px !important;
+    min-width: 85px !important;
+    max-width: 85px !important;
+    flex: 0 0 85px !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    overflow: visible !important;
+  }
+
+  .maritime-portal-actions .platform-control-value {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  .maritime-portal-actions :where(.platform-control-btn, .platform-language-btn, .platform-theme-btn) {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .maritime-portal-actions .platform-control--language .platform-menu {
+    right: max(10px, env(safe-area-inset-right)) !important;
+    left: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(228px, calc(100vw - 20px));
+    min-width: 0;
+  }
+
+  .maritime-portal-nav a {
+    min-height: 40px;
+    flex: 0 0 auto;
+    padding: 0 13px;
+    font-size: 12px;
+  }
+
+  .maritime-portal-hero {
+    min-height: 150px;
+    background-position: center 50%;
+  }
+
+  .maritime-portal-hero-copy {
+    padding: 22px 15px;
+  }
+
+  .maritime-portal-hero h1 {
+    font-size: 30px;
+  }
+
+  .maritime-portal-hero p {
+    font-size: 13px;
+  }
+
+  .maritime-portal-content {
+    gap: 14px;
+    padding: 16px 12px 20px;
+  }
+
+  .maritime-account-heading {
+    padding: 24px 16px 2px;
+  }
+
+  .maritime-account-heading h1 {
+    font-size: 28px;
+  }
+
+  .maritime-account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-account-profile {
+    padding: 26px 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--maritime-line);
+  }
+
+  .maritime-account-actions {
+    padding: 22px 16px;
+  }
+
+  .maritime-account-action-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-filter-rail {
+    width: calc(100vw - 24px);
+  }
+
+  .maritime-job-grid,
+  .maritime-record-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-job-meta,
+  .maritime-record-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-summary-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .maritime-summary-strip article {
+    padding: 10px;
+  }
+
+  .maritime-summary-strip strong {
+    font-size: 18px;
+  }
+
+  .maritime-complaint-form {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .maritime-complaint-form > * {
+    grid-column: 1 !important;
+  }
+
+  .maritime-form-actions,
+  .maritime-form-actions .maritime-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .maritime-portal-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .maritime-portal-actions .platform-controls-slot {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .maritime-complaint-topics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .maritime-topic-button {
+    min-height: 116px;
+  }
+
+  .maritime-summary-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+html[dir="rtl"] .maritime-portal-hero::before {
+  background: linear-gradient(270deg, rgba(1, 15, 29, 0.96) 0%, rgba(1, 20, 38, 0.84) 48%, rgba(1, 17, 31, 0.34) 100%);
+}
+
+html[dir="rtl"] .maritime-summary-strip article {
+  border-left: 0;
+  border-right: 3px solid var(--maritime-cyan);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maritime-portal-page *,
+  .maritime-portal-page *::before,
+  .maritime-portal-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

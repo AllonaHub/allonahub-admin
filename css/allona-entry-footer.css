@@ -1,4 +1,4 @@
-:is(body.auth-page, body.partner-entry-page) .site-footer {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer {
   width: 100%;
   max-width: 100%;
   margin-top: 0 !important;
@@ -8,32 +8,85 @@
   color: #ffffff !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .store-buttons {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .store-buttons {
   display: none !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer :where(.footer-col h2, .footer-col h3) {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer :where(.footer-col h2, .footer-col h3) {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer :where(.footer-col a:not(.footer-brand), .footer-col p, .footer-bottom, .footer-bottom a) {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer :where(.footer-col a:not(.footer-brand), .footer-col p, .footer-bottom, .footer-bottom a) {
   color: #d6e2f2 !important;
   -webkit-text-fill-color: #d6e2f2 !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .social-icons svg path {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons svg path {
   fill: #ffffff !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons {
+  gap: 8px !important;
+}
+
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a {
+  position: relative;
+  display: inline-flex !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  flex: 0 0 48px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.wa { background: #25d366 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.ig {
+  background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
+}
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.x { background: #000000 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.fb { background: #1877f2 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.yt { background: #ff0000 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.li { background: #0a66c2 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.tg { background: #229ed9 !important; }
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.tk {
+  background: #010101 !important;
+  box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+}
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.mail { background: #0067b1 !important; }
+
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a > span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+}
+
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons :where(.social-icon, b, svg) {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-col {
   background: rgba(5, 25, 50, 0.72);
   border: 1px solid rgba(95, 215, 255, 0.14);
   border-radius: 8px;
   padding: 18px;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-payment-strip {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +95,7 @@
   color: #ffffff !important;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .entry-payment-logo {
   display: grid;
   place-items: center;
   width: 88px;
@@ -55,7 +108,7 @@
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo img {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .entry-payment-logo img {
   display: block;
   width: 100%;
   max-width: 68px;
@@ -64,16 +117,16 @@
   object-fit: contain;
 }
 
-:is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo--troy img {
+:is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .entry-payment-logo--troy img {
   max-width: 74px;
 }
 
 @media (max-width: 640px) {
-  :is(body.auth-page, body.partner-entry-page) .site-footer {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer {
     padding: 12px 0 calc(14px + env(safe-area-inset-bottom)) !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-grid {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-grid {
     display: grid !important;
     grid-template-columns: none !important;
     grid-auto-flow: column !important;
@@ -90,13 +143,13 @@
     scrollbar-width: none;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-grid::-webkit-scrollbar,
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons::-webkit-scrollbar,
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip::-webkit-scrollbar {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-grid::-webkit-scrollbar,
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons::-webkit-scrollbar,
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-payment-strip::-webkit-scrollbar {
     display: none;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-col {
     width: 100% !important;
     min-width: 0 !important;
     height: auto !important;
@@ -104,25 +157,25 @@
     scroll-snap-align: start;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-col:not(:first-child) {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     align-content: start !important;
     column-gap: 10px !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) > h3 {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-col:not(:first-child) > h3 {
     grid-column: 1 / -1;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) > a {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-col:not(:first-child) > a {
     min-height: 40px !important;
     padding-block: 3px !important;
     line-height: 1.25 !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons,
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons,
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-payment-strip {
     display: grid !important;
     grid-auto-flow: column !important;
     justify-content: start !important;
@@ -134,18 +187,18 @@
     scrollbar-width: none;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-bottom {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-bottom {
     width: calc(100% - 18px) !important;
     max-width: none !important;
     margin: 0 9px !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons {
     grid-auto-columns: 48px !important;
     gap: 8px !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a {
     position: relative;
     display: inline-flex !important;
     width: 48px !important;
@@ -161,22 +214,22 @@
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.wa { background: #25d366 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.ig {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.wa { background: #25d366 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.ig {
     background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
   }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.x { background: #000000 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.fb { background: #1877f2 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.yt { background: #ff0000 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.li { background: #0a66c2 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.tg { background: #229ed9 !important; }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.tk {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.x { background: #000000 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.fb { background: #1877f2 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.yt { background: #ff0000 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.li { background: #0a66c2 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.tg { background: #229ed9 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.tk {
     background: #010101 !important;
     box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
   }
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a.mail { background: #0067b1 !important; }
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a.mail { background: #0067b1 !important; }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons a span {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons a span {
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;
@@ -188,17 +241,17 @@
     white-space: nowrap !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons :where(.social-icon, b, svg) {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .social-icons :where(.social-icon, b, svg) {
     width: 24px !important;
     height: 24px !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .footer-payment-strip {
     grid-auto-columns: 76px !important;
     gap: 8px !important;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .entry-payment-logo {
     width: 76px;
     min-width: 76px;
     height: 42px;
@@ -207,7 +260,7 @@
     overflow: hidden;
   }
 
-  :is(body.auth-page, body.partner-entry-page) .site-footer .entry-payment-logo img {
+  :is(body.auth-page, body.partner-entry-page, body.maritime-portal-page) .site-footer .entry-payment-logo img {
     width: 60px;
     max-width: 60px;
     height: 26px;
