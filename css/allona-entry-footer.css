@@ -69,6 +69,10 @@
 }
 
 @media (max-width: 640px) {
+  :is(body.auth-page, body.partner-entry-page) .site-footer {
+    padding: 12px 0 calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+
   :is(body.auth-page, body.partner-entry-page) .site-footer .footer-grid {
     display: grid !important;
     grid-template-columns: none !important;
@@ -78,8 +82,8 @@
     gap: 12px !important;
     width: calc(100% - 18px) !important;
     max-width: none !important;
-    margin-inline: 9px !important;
-    padding: 18px 1px 12px !important;
+    margin: 0 9px !important;
+    padding: 10px 1px 8px !important;
     overflow-x: auto !important;
     overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory;
@@ -100,6 +104,23 @@
     scroll-snap-align: start;
   }
 
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-content: start !important;
+    column-gap: 10px !important;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) > h3 {
+    grid-column: 1 / -1;
+  }
+
+  :is(body.auth-page, body.partner-entry-page) .site-footer .footer-col:not(:first-child) > a {
+    min-height: 40px !important;
+    padding-block: 3px !important;
+    line-height: 1.25 !important;
+  }
+
   :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons,
   :is(body.auth-page, body.partner-entry-page) .site-footer .footer-payment-strip {
     display: grid !important;
@@ -107,7 +128,7 @@
     justify-content: start !important;
     width: calc(100% - 18px) !important;
     max-width: none !important;
-    margin-inline: 9px !important;
+    margin: 0 9px !important;
     padding-block: 10px !important;
     overflow-x: auto !important;
     scrollbar-width: none;
@@ -116,7 +137,7 @@
   :is(body.auth-page, body.partner-entry-page) .site-footer .footer-bottom {
     width: calc(100% - 18px) !important;
     max-width: none !important;
-    margin-inline: 9px !important;
+    margin: 0 9px !important;
   }
 
   :is(body.auth-page, body.partner-entry-page) .site-footer .social-icons {
