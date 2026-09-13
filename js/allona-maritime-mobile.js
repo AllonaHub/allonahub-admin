@@ -1,8 +1,26 @@
 (function () {
   const mobileQuery = window.matchMedia("(max-width: 760px)");
+  const moduleLabels = {
+    tr: "Denizcilik",
+    az: "Dənizçilik",
+    kk: "Теңіз саласы",
+    uz: "Dengizchilik",
+    ky: "Деңиз тармагы",
+    en: "Maritime",
+    de: "Seefahrt",
+    ru: "Морское дело",
+    ar: "الملاحة البحرية"
+  };
 
   function mobileOnly() {
     return mobileQuery.matches;
+  }
+
+  function updateBrandModule() {
+    const label = document.querySelector("[data-maritime-brand-module]");
+    if (!label) return;
+    const language = String(localStorage.getItem("allona.language") || document.documentElement.lang || "tr").toLowerCase();
+    label.textContent = moduleLabels[language] || moduleLabels.tr;
   }
 
   async function updateAccountLink() {
@@ -81,9 +99,11 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    updateBrandModule();
     setupSearch();
     setupMobileControls();
     updateAccountLink();
     watchFooter();
   });
+  document.addEventListener("allona:language-changed", updateBrandModule);
 })();

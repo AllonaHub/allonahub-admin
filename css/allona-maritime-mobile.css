@@ -98,6 +98,22 @@
     line-height: 1;
   }
 
+  .mobile-maritime__brand-copy {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+    align-content: center;
+  }
+
+  .mobile-maritime__brand-module {
+    color: #62eaff !important;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.9), 0 0 18px rgba(0, 119, 255, 0.7);
+  }
+
   body.maritime-page .mobile-maritime .mobile-maritime__brand .gold {
     color: #ffd700 !important;
   }
@@ -226,6 +242,13 @@
     font-size: 12px;
     font-weight: 850;
     scroll-snap-align: start;
+  }
+
+  .mobile-maritime__nav a.mobile-maritime__complaint {
+    border-color: rgba(255, 86, 117, 0.72);
+    background: rgba(128, 12, 39, 0.82);
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(255, 48, 91, 0.24);
   }
 
   .mobile-maritime__nav a[aria-current="page"] {
