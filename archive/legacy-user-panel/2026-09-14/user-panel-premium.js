@@ -625,6 +625,10 @@
         return;
       }
       currentUser = loaded.user;
+      if (isMaritimeContext(loaded.profile)) {
+        window.location.replace("/pages/ecosystem/maritime-account.html");
+        return;
+      }
       const profile = await reconcileCouponHp(loaded.profile);
       renderPanel(profile);
       loadMaritimeActivity(profile);

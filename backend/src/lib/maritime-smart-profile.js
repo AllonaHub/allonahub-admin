@@ -624,6 +624,28 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const hasPassport = itemTypes.has("passport") || identityDocuments.some((row) => row.kind === "passport");
   const hasSeamanBook = itemTypes.has("seaman_book") || identityDocuments.some((row) => ["seafarer_book", "seaman_record_book"].includes(row.kind));
   const hasLanguage = languages.length > 0;
+  const criticalDocumentExpired = expiry.alerts.some((alert) => alert.severity === "expired" && ["medical", "passport", "seaman_book"].includes(alert.item_type));
+  const maritimeEvidence = {
+    rank: hasRank,
+    certificates: hasCertificates || itemTypes.has("stcw_certificate"),
+    sea_service: hasSeaService,
+    seaman_book: hasSeamanBook
+  };
+  const hasMaritimeEvidence = Object.values(maritimeEvidence).some(Boolean);
+  const seafarerStatus = !confirmedDocuments.length
+    ? "not_assessed"
+    : conflicts.length || criticalDocumentExpired
+      ? "review_required"
+      : hasIdentity && hasMaritimeEvidence
+        ? "system_approved"
+        : "evidence_required";
+  const seafarerReasonCodes = [
+    !confirmedDocuments.length && "confirmed_document_required",
+    !hasIdentity && "identity_evidence_required",
+    !hasMaritimeEvidence && "maritime_evidence_required",
+    conflicts.length > 0 && "identity_conflict",
+    criticalDocumentExpired && "critical_document_expired"
+  ].filter(Boolean);
   const score = Math.min(100,
     categoryScore(hasIdentity, 15)
     + categoryScore(hasRank, 15)
@@ -652,7 +674,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     !hasCertificates && "certificates_missing",
     medical === "unfit" && "medical_unfit",
     conflicts.length > 0 && "identity_conflict",
-    expiry.alerts.some((alert) => alert.severity === "expired" && ["medical", "passport", "seaman_book"].includes(alert.item_type)) && "critical_document_expired"
+    criticalDocumentExpired && "critical_document_expired"
   ].filter(Boolean);
   const readyToApply = score >= 70 && blockingReasons.length === 0;
   const sourceDocumentIds = uniqueText(cvProfile?.source_document_ids || confirmedDocuments.map((document) => document.id));
@@ -755,6 +777,10 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
       expiry_alerts: expiry.alerts,
       document_counters: expiry.counters,
       confirmed_document_count: confirmedDocuments.length,
+      seafarer_status: seafarerStatus,
+      seafarer_system_approved: seafarerStatus === "system_approved",
+      seafarer_reason_codes: seafarerReasonCodes,
+      seafarer_evidence: maritimeEvidence,
       source_document_ids: sourceDocumentIds
     }
   };

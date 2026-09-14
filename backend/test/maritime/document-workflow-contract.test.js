@@ -10,6 +10,7 @@ const documentUiUrl = new URL("../../../js/allona-maritime-documents.js", import
 const photoUiUrl = new URL("../../../js/allona-maritime-photo.js", import.meta.url);
 const portalCssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-documents.js", import.meta.url);
+const customerProfileUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
 const localReaderUrl = new URL("../../src/lib/maritime-local-document-reader.js", import.meta.url);
 const dockerfileUrl = new URL("../../Dockerfile", import.meta.url);
 const deployUrl = new URL("../../../deploy/maritime/apply-maritime-migrations.sh", import.meta.url);
@@ -70,13 +71,14 @@ test("the production maritime migration chain includes and verifies Global Passp
 });
 
 test("the customer workspace exposes a PDF-only Global Passport flow", async () => {
-  const [page, portal, documentUi, photoUi, portalCss, route] = await Promise.all([
+  const [page, portal, documentUi, photoUi, portalCss, route, customerProfile] = await Promise.all([
     readFile(pageUrl, "utf8"),
     readFile(portalUrl, "utf8"),
     readFile(documentUiUrl, "utf8"),
     readFile(photoUiUrl, "utf8"),
     readFile(portalCssUrl, "utf8"),
-    readFile(routeUrl, "utf8")
+    readFile(routeUrl, "utf8"),
+    readFile(customerProfileUrl, "utf8")
   ]);
   assert.match(page, /class="maritime-document-nav"[^>]+data-view-link="documents"/);
   assert.match(page, /type="file" multiple/);
@@ -133,9 +135,12 @@ test("the customer workspace exposes a PDF-only Global Passport flow", async () 
   assert.match(route, /MARITIME_DOCUMENT_READER_VERSION/);
   assert.match(route, /maritimeDocumentIdentityConflicts/);
   assert.match(route, /MARITIME_DOCUMENT_IDENTITY_CONFLICT/);
-  assert.match(route, /function ensureMaritimeCustomerProfile\(ctx\)/);
-  assert.match(route, /MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED/);
-  assert.match(route, /account_status: "active"/);
+  assert.match(route, /import \{ ensureMaritimeCustomerProfile \}/);
+  assert.match(route, /return ensureMaritimeCustomerProfile\(ctx\)/);
+  assert.match(customerProfile, /function ensureMaritimeCustomerProfile\(ctx\)/);
+  assert.match(customerProfile, /MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED/);
+  assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
+  assert.match(customerProfile, /account_status: "active"/);
   assert.match(route, /MARITIME_DOCUMENT_AI_NOT_CONFIGURED/);
   assert.match(documentUi, /firstFailureMessage/);
   assert.match(documentUi, /error\.code = payload\.code/);

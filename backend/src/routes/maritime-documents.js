@@ -15,6 +15,7 @@ import {
   maritimeDocumentUploadFilesSchema,
   safeMaritimeDocumentName
 } from "../lib/maritime-document-doctor.js";
+import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { auditEvent, authContext, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uploadIntentSchema = z.object({
@@ -55,60 +56,6 @@ function assertDb(result, message) {
   return result.data;
 }
 
-function cleanProfileSeed(value, maxLength = 180) {
-  const clean = String(value || "").replace(/\s+/g, " ").trim();
-  return clean ? clean.slice(0, maxLength) : null;
-}
-
-async function ensureMaritimeCustomerProfile(ctx) {
-  if (ctx.profilePersisted) {
-    if (String(ctx.profile.account_status || "active").toLowerCase() !== "active") {
-      throw httpError("Hesabınız şu anda aktif değil.", 403, "ACCOUNT_NOT_ACTIVE");
-    }
-    return ctx;
-  }
-
-  const metadata = ctx.user.user_metadata || {};
-  const nameParts = [metadata.first_name, metadata.last_name].map((value) => cleanProfileSeed(value, 80)).filter(Boolean);
-  const fullName = cleanProfileSeed(metadata.full_name || metadata.name || nameParts.join(" "));
-  const seed = {
-    id: ctx.user.id,
-    user_id: ctx.user.id,
-    full_name: fullName,
-    email: cleanProfileSeed(ctx.user.email, 320),
-    phone: cleanProfileSeed(ctx.user.phone, 40),
-    role: "customer",
-    account_status: "active",
-    flagged_suspicious: false
-  };
-  const inserted = await supabaseAdmin
-    .from("profiles")
-    .insert(seed)
-    .select("id,role,full_name,phone,account_status")
-    .maybeSingle();
-  if (inserted.error && String(inserted.error.code || "") !== "23505") {
-    throw httpError("Denizci profiliniz hazırlanamadı.", 503, "MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED");
-  }
-
-  let profile = inserted.data || null;
-  if (!profile) {
-    profile = assertDb(await supabaseAdmin
-      .from("profiles")
-      .select("id,role,full_name,phone,account_status")
-      .eq("id", ctx.user.id)
-      .maybeSingle(), "Denizci profiliniz doğrulanamadı.");
-  }
-  if (!profile || !hasRole(profile, "customer")) {
-    throw httpError("Bu alan yalnız denizci kullanıcı hesaplarına açıktır.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
-  }
-  if (String(profile.account_status || "active").toLowerCase() !== "active") {
-    throw httpError("Hesabınız şu anda aktif değil.", 403, "ACCOUNT_NOT_ACTIVE");
-  }
-  ctx.profile = profile;
-  ctx.profilePersisted = true;
-  return ctx;
-}
-
 async function requireCustomer(request, action) {
   const ctx = await authContext(request);
   if (!ctx?.user) throw httpError("Oturum doğrulanamadı.", 401, "AUTH_REQUIRED");
@@ -122,7 +69,7 @@ async function requireCustomer(request, action) {
       resourceType: "maritime_document",
       metadata: { requested_action: action }
     });
-    throw httpError("Bu alan yalnız denizci kullanıcı hesaplarına açıktır.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
+    throw httpError("Bu alan kişisel kullanıcı hesaplarına açıktır. Şirket hesabıyla giriş yaptıysanız kişisel hesabınızla yeniden giriş yapın.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
   }
   return ensureMaritimeCustomerProfile(ctx);
 }

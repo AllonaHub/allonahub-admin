@@ -1001,7 +1001,7 @@
     }
     const accountType = account.context && account.context.type || "customer";
     const destination = App.auth && App.auth.accountHome
-      ? App.auth.accountHome(accountType)
+      ? App.auth.accountHome(accountType, account.context)
       : assetUrl("/pages/account/user-panel.html");
     const label = accountType === "partner" ? localizedText("Şirket Paneli") : localizedText("Hesabım");
     links.forEach((link) => {

@@ -92,7 +92,7 @@ export async function authContext(request) {
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("id, role, full_name, phone, account_status")
+    .select("id, role, full_name, phone, account_status, module, sector_key, sector_name, profession_key, profession_name")
     .eq("id", data.user.id)
       .maybeSingle();
 

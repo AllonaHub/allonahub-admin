@@ -44,6 +44,7 @@ test("smart matching API returns public-safe matches without company identity or
   assert.match(route, /eligible: fresh && row\.hard_gate_status === "passed"/);
   assert.doesNotMatch(route, /partner_businesses"\)\s*\.select\("[^"]*(display_name|email|phone|legal_name)/);
   assert.match(route, /CUSTOMER_ACCOUNT_REQUIRED/);
+  assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
   assert.match(route, /cv_identity: await ownCvIdentity\(user\)/);
   assert.match(route, /metadata\.avatar_url \|\| metadata\.avatar/);
 });
@@ -157,7 +158,7 @@ test("shared maritime navigation keeps complete translations for the smart accou
     FormData,
     console
   });
-  for (const key of ["smartAccountNav", "smartAccountTitle", "smartAccountLead", "smartAccountAddDocument", "globalPassportHelpLabel", "globalPassportHelpTitle", "globalPassportHelpBody", "globalPassportHelpWorldwide", "globalPassportHelpPrivacy", "globalPassportHelpClose"]) {
+  for (const key of ["smartAccountNav", "smartAccountTitle", "smartAccountLead", "smartAccountAddDocument", "globalPassportHelpLabel", "globalPassportHelpTitle", "globalPassportHelpBody", "globalPassportHelpWorldwide", "globalPassportHelpPrivacy", "globalPassportHelpClose", "seafarerStatusLabel", "seafarerStatusApproved", "seafarerStatusReview", "seafarerStatusEvidence", "seafarerStatusPending", "seafarerStatusNote"]) {
     const row = window.__portalCopyRows[key];
     assert.equal(row.length, 9, `${key} must include all nine languages`);
     assert.ok(row.every((value) => String(value).trim()), `${key} contains an empty translation`);
@@ -166,4 +167,43 @@ test("shared maritime navigation keeps complete translations for the smart accou
   assert.equal(window.__portalCopyRows.smartAccountTitle[0], "Global Pasaport CV");
   assert.match(source, /function setGlobalPassportHelp\(open, restoreFocus\)/);
   assert.match(source, /event\.key === "Escape"/);
+  assert.match(source, /function loadSeafarerClassification\(\)/);
+  assert.match(source, /readiness\.seafarer_status/);
+});
+
+test("customer-only maritime pages explain account type without weakening separation", async () => {
+  const source = await readFile(portalUrl, "utf8");
+  const instrumented = source.replace("const copyRows = {", "const copyRows = window.__portalCopyRows = {");
+  const window = { Allona: {} };
+  vm.runInNewContext(instrumented, {
+    window,
+    document: {
+      body: { dataset: { maritimeView: "documents" } },
+      documentElement: { lang: "tr" },
+      readyState: "loading",
+      addEventListener() {},
+      querySelector() { return null; }
+    },
+    localStorage: { getItem() { return null; }, setItem() {} },
+    URL,
+    URLSearchParams,
+    FormData,
+    console
+  });
+  for (const key of [
+    "loginRequiredLead",
+    "personalAccountRequiredTitle",
+    "personalAccountRequiredLead",
+    "personalAccountRule",
+    "switchToPersonalAccount",
+    "createPersonalAccount"
+  ]) {
+    const row = window.__portalCopyRows[key];
+    assert.equal(row.length, 9, `${key} must include all nine languages`);
+    assert.ok(row.every((value) => String(value).trim()), `${key} contains an empty translation`);
+  }
+  assert.match(source, /function personalAccountGate\(context\)/);
+  assert.match(source, /accountSwitchUrl\("login"\)/);
+  assert.match(source, /accountSwitchUrl\("register"\)/);
+  assert.match(source, /if \(customerOnly && session[\s\S]*?personalAccountGate\(context\);/);
 });

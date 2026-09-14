@@ -6,6 +6,7 @@ import {
   maritimeSmartSnapshotHash,
   matchMaritimeJobs
 } from "../lib/maritime-smart-profile.js";
+import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { auditEvent, authContext, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
@@ -67,9 +68,9 @@ async function requireCustomer(request, action) {
       resourceType: "maritime_smart_account",
       metadata: { requested_action: action }
     });
-    throw httpError("Bu alan yalnız denizci kullanıcı hesaplarına açıktır.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
+    throw httpError("Bu alan kişisel kullanıcı hesaplarına açıktır. Şirket hesabıyla giriş yaptıysanız kişisel hesabınızla yeniden giriş yapın.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
   }
-  return ctx;
+  return ensureMaritimeCustomerProfile(ctx);
 }
 
 async function latestSmartState(userId, user) {
@@ -170,7 +171,7 @@ async function smartInputs(userId) {
       .limit(300),
     supabaseAdmin
       .from("maritime_seafarer_workspaces")
-      .select("current_work_status,availability_status,availability_confirmed_at,availability_stale_after")
+      .select("current_work_status,availability_status,availability_confirmed_at,availability_stale_after,metadata")
       .eq("user_id", userId)
       .maybeSingle(),
     supabaseAdmin
@@ -186,6 +187,56 @@ async function smartInputs(userId) {
     workspace: assertDb(workspaceResult, "Denizcilik çalışma alanı okunamadı."),
     documents: assertDb(documentsResult, "Onaylı belgeler okunamadı.") || []
   };
+}
+
+async function persistSeafarerClassification(ctx, snapshot) {
+  const readiness = snapshot?.readiness || {};
+  const profile = snapshot?.profile || {};
+  const status = String(readiness.seafarer_status || "not_assessed");
+  const now = new Date().toISOString();
+  const workspaceResult = await supabaseAdmin
+    .from("maritime_seafarer_workspaces")
+    .select("metadata")
+    .eq("user_id", ctx.user.id)
+    .maybeSingle();
+  if (workspaceResult.error || !workspaceResult.data) {
+    throw httpError("Denizcilik profil durumu kaydedilemedi.", 503, "SEAFARER_CLASSIFICATION_PERSIST_FAILED");
+  }
+  const currentMetadata = workspaceResult.data.metadata && typeof workspaceResult.data.metadata === "object"
+    ? workspaceResult.data.metadata
+    : {};
+  const existingClassification = currentMetadata.seafarer_classification && typeof currentMetadata.seafarer_classification === "object"
+    ? currentMetadata.seafarer_classification
+    : {};
+  const classification = {
+    status,
+    system_approved: readiness.seafarer_system_approved === true,
+    reason_codes: Array.isArray(readiness.seafarer_reason_codes) ? readiness.seafarer_reason_codes : [],
+    evidence: readiness.seafarer_evidence || {},
+    source: "confirmed_document_analysis",
+    evaluated_at: now,
+    approved_at: status === "system_approved" ? existingClassification.approved_at || now : null
+  };
+  const workspaceUpdate = await supabaseAdmin
+    .from("maritime_seafarer_workspaces")
+    .update({ metadata: { ...currentMetadata, seafarer_classification: classification } })
+    .eq("user_id", ctx.user.id);
+  if (workspaceUpdate.error) {
+    throw httpError("Denizcilik profil durumu kaydedilemedi.", 503, "SEAFARER_CLASSIFICATION_PERSIST_FAILED");
+  }
+
+  const profilePatch = { module: "maritime", updated_at: now };
+  if (status === "system_approved") {
+    profilePatch.sector_key = "maritime";
+    profilePatch.sector_name = "Denizcilik";
+    if (profile.canonical_rank) profilePatch.profession_key = String(profile.canonical_rank).slice(0, 90);
+    if (profile.rank) profilePatch.profession_name = String(profile.rank).slice(0, 120);
+  }
+  const profileUpdate = await supabaseAdmin.from("profiles").update(profilePatch).eq("id", ctx.user.id);
+  if (profileUpdate.error) {
+    throw httpError("Denizcilik profil yönlendirmesi kaydedilemedi.", 503, "MARITIME_PROFILE_ACTIVATION_FAILED");
+  }
+  return classification;
 }
 
 export function registerMaritimeSmartAccountRoutes(app) {
@@ -219,6 +270,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
       p_matches: matches
     });
     const prepared = assertDb(rpcResult, "Akıllı hesap hazırlanamadı.");
+    const seafarerClassification = await persistSeafarerClassification(ctx, smartSnapshot);
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -230,6 +282,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
         readiness_score: smartSnapshot.readiness.score,
         match_count: matches.length,
         eligible_match_count: matches.filter((match) => match.eligible).length,
+        seafarer_status: seafarerClassification.status,
         rule_version: MARITIME_SMART_RULE_VERSION
       }
     });

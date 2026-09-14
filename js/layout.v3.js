@@ -222,7 +222,7 @@
         ? await App.auth.getAccountContext(user)
         : { type: "customer" };
       link.href = App.auth.accountHome
-        ? App.auth.accountHome(context.type)
+        ? App.auth.accountHome(context.type, context)
         : core.url("/pages/account/user-panel.html");
       link.textContent = context.type === "partner" ? "Şirket Paneli" : "Hesabım";
     }

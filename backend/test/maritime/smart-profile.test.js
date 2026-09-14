@@ -72,6 +72,9 @@ test("builds a complete smart profile only from user-confirmed readiness data", 
   assert.equal(result.profile.total_sea_service_days, 366);
   assert.equal(result.readiness.score, 100);
   assert.equal(result.readiness.ready_to_apply, true);
+  assert.equal(result.readiness.seafarer_status, "system_approved");
+  assert.equal(result.readiness.seafarer_system_approved, true);
+  assert.deepEqual(result.readiness.seafarer_reason_codes, []);
   assert.equal(result.readiness.confirmed_document_count, 2);
   assert.deepEqual(result.readiness.conflicts, []);
   assert.equal(result.rule_version, "maritime-smart-account-v5");
@@ -153,6 +156,7 @@ test("blocks readiness when a critical identity document is expired", () => {
   const expiredItems = readinessItems.map((item) => item.item_type === "passport" ? { ...item, expires_at: "2025-01-01" } : item);
   const result = smart({ readinessItems: expiredItems });
   assert.equal(result.readiness.ready_to_apply, false);
+  assert.equal(result.readiness.seafarer_status, "review_required");
   assert.ok(result.readiness.blocking_reasons.includes("critical_document_expired"));
   assert.equal(result.readiness.expiry_alerts[0].severity, "expired");
 });
@@ -169,7 +173,20 @@ test("surfaces conflicting identity facts instead of silently choosing one", () 
     })
   });
   assert.equal(result.readiness.ready_to_apply, false);
+  assert.equal(result.readiness.seafarer_status, "review_required");
   assert.equal(result.readiness.conflicts[0].code, "conflicting_holder_name");
+});
+
+test("keeps maritime identity pending until confirmed evidence identifies the person and profession", () => {
+  const result = smart({
+    cvProfile: { profile_payload: {}, source_document_ids: [] },
+    readinessItems: [],
+    documents: []
+  });
+  assert.equal(result.readiness.seafarer_status, "not_assessed");
+  assert.equal(result.readiness.seafarer_system_approved, false);
+  assert.ok(result.readiness.seafarer_reason_codes.includes("confirmed_document_required"));
+  assert.ok(result.readiness.seafarer_reason_codes.includes("maritime_evidence_required"));
 });
 
 test("scores transparent positive matches and never reveals company contact", () => {

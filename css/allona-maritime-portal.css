@@ -496,6 +496,25 @@ body.maritime-portal-page textarea {
   line-height: 1.6;
 }
 
+.maritime-account-type-gate small {
+  max-width: 600px;
+  padding: 11px 13px;
+  border: 1px solid rgba(0, 223, 252, 0.28);
+  border-radius: 6px;
+  background: rgba(0, 223, 252, 0.08);
+  color: #cceef5;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.maritime-auth-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  padding-top: 4px;
+}
+
 .maritime-summary-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1002,6 +1021,58 @@ body.maritime-portal-page textarea {
   color: #bdf8ff;
   font-size: 11px;
   font-weight: 900;
+}
+
+.maritime-seafarer-status {
+  display: grid;
+  width: 100%;
+  gap: 7px;
+  margin: 0 0 18px;
+  padding: 12px;
+  border: 1px solid rgba(255, 194, 82, 0.44);
+  border-radius: 7px;
+  background: rgba(255, 194, 82, 0.08);
+  color: #fff2cf;
+  text-align: start;
+}
+
+.maritime-seafarer-status > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #ffd77f;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.maritime-seafarer-status > strong {
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.maritime-seafarer-status > small {
+  color: #a8c0cf;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.maritime-seafarer-status[data-status="system_approved"] {
+  border-color: rgba(71, 230, 174, 0.55);
+  background: rgba(38, 198, 143, 0.1);
+}
+
+.maritime-seafarer-status[data-status="system_approved"] > span {
+  color: #70f3c3;
+}
+
+.maritime-seafarer-status[data-status="review_required"] {
+  border-color: rgba(255, 113, 130, 0.58);
+  background: rgba(255, 72, 96, 0.09);
+}
+
+.maritime-seafarer-status[data-status="review_required"] > span {
+  color: #ff9aa8;
 }
 
 .maritime-photo-button {
@@ -3261,6 +3332,12 @@ body.maritime-portal-page[data-theme="white"] :where(.maritime-job-title h3, .ma
   color: #071928;
 }
 
+body.maritime-portal-page[data-theme="white"] .maritime-account-type-gate small {
+  border-color: rgba(0, 103, 174, 0.22);
+  background: #eaf7fb;
+  color: #214b61;
+}
+
 body.maritime-portal-page[data-theme="white"] .maritime-field :where(input, select, textarea) {
   background: #f7fbfd;
   color: #071928;
@@ -3367,6 +3444,29 @@ body.maritime-account-page[data-theme="white"] .maritime-account-action--smart {
 body.maritime-account-page[data-theme="white"] .maritime-account-badge {
   color: #075f7e !important;
   -webkit-text-fill-color: #075f7e !important;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-seafarer-status {
+  background: #fff9e9;
+  color: #493500;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-seafarer-status > strong {
+  color: #17384a;
+  -webkit-text-fill-color: #17384a;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-seafarer-status > small {
+  color: #567182;
+  -webkit-text-fill-color: #567182;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-seafarer-status[data-status="system_approved"] {
+  background: #e9fbf4;
+}
+
+body.maritime-account-page[data-theme="white"] .maritime-seafarer-status[data-status="review_required"] {
+  background: #fff0f2;
 }
 
 body.maritime-account-page[data-theme="sunset"] .maritime-account-main {
@@ -3650,8 +3750,14 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   }
 
   .maritime-portal-top {
+    position: relative;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
+  }
+
+  .maritime-portal-brand {
+    min-height: 48px;
+    padding-inline-end: 94px;
   }
 
   .maritime-portal-brand img {
@@ -3672,7 +3778,7 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   .maritime-portal-actions {
     display: grid;
     grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     order: 3;
   }
 
@@ -3683,7 +3789,10 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   }
 
   .maritime-portal-actions .platform-controls-slot {
-    justify-self: end;
+    position: absolute;
+    z-index: 12;
+    top: 4px;
+    inset-inline-end: 0;
   }
 
   .maritime-portal-actions .platform-controls-slot,
@@ -4040,8 +4149,8 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   }
 
   .maritime-portal-actions .platform-controls-slot {
-    grid-column: 1 / -1;
-    justify-self: center;
+    grid-column: auto;
+    justify-self: auto;
   }
 
   .maritime-complaint-topics {

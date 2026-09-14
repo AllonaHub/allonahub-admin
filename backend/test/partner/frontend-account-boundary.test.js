@@ -69,10 +69,10 @@ test("partner accounts ignore customer return paths and resolve to the company p
   assert.equal(destination, "/pages/partner/partner-panel.html");
 });
 
-test("customer accounts keep their requested customer destination", async () => {
+test("customer accounts canonicalize the retired maritime account alias to the user panel", async () => {
   const { auth } = await authRuntime({ role: "customer" });
   const destination = await auth.accountDestination("/pages/ecosystem/maritime-account.html", { id: "account-1" });
-  assert.equal(destination, "/pages/ecosystem/maritime-account.html");
+  assert.equal(destination, "/pages/account/user-panel.html");
 });
 
 test("customer accounts cannot use a company-panel return path", async () => {

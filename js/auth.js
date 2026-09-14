@@ -39,8 +39,7 @@
     }
   }
 
-  function accountHome(accountType) {
-    const path = window.location.pathname;
+  function accountHome(accountType, context) {
     const onPartnerHost = window.location.hostname === "partner.allonahub.com";
     if (accountType === "partner") {
       if (onPartnerHost) return "/panel";
@@ -51,10 +50,7 @@
     };
     if (accountType === "admin") return mainSiteUrl("/admin/index.html");
     if (accountType === "super_admin") return mainSiteUrl("/admin/super-admin.html");
-    if (accountType === "customer") {
-      if (/\/pages\/ecosystem\/maritime-/i.test(path)) return mainSiteUrl("/pages/ecosystem/maritime-account.html");
-      return mainSiteUrl("/pages/account/user-panel.html");
-    }
+    if (accountType === "customer") return mainSiteUrl("/pages/account/user-panel.html");
     return mainSiteUrl("/index.html");
   }
 
@@ -89,6 +85,7 @@
     try {
       const path = new URL(destination, window.location.href).pathname;
       if (/^\/pages\/partner\//i.test(path) || /^\/admin(?:\/|$)/i.test(path)) return fallback;
+      if (/\/pages\/ecosystem\/maritime-account\.html$/i.test(path)) return fallback;
     } catch (error) {
       return fallback;
     }
@@ -98,8 +95,10 @@
   async function accountDestination(requested, userOverride) {
     const fallback = App.core.url("/pages/account/user-panel.html");
     const context = await getAccountContext(userOverride);
-    if (context.type === "customer") return customerReturnPath(requested, fallback);
-    return accountHome(context.type);
+    if (context.type === "customer") {
+      return customerReturnPath(requested, fallback);
+    }
+    return accountHome(context.type, context);
   }
 
   async function requireAccountType(expectedType, options = {}) {
@@ -114,7 +113,7 @@
     const context = await getAccountContext(user);
     const expectedTypes = Array.isArray(expectedType) ? expectedType : [expectedType];
     if (expectedTypes.includes(context.type)) return context;
-    if (options.redirect !== false) window.location.replace(accountHome(context.type));
+    if (options.redirect !== false) window.location.replace(accountHome(context.type, context));
     return null;
   }
 

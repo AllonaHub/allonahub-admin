@@ -13,6 +13,12 @@
   let renderedLanguage = "";
   let accountProfile = null;
   let profileClient = null;
+  const maritimeBasePath = "/pages/ecosystem/";
+
+  function portalUrl(file) {
+    const path = `${maritimeBasePath}${String(file || "").replace(/^\/+/, "")}`;
+    return App.core && App.core.url ? App.core.url(path) : path;
+  }
 
   const copyRows = {
     moduleName: ["Denizcilik", "Dənizçilik", "Теңіз ісі", "Dengizchilik", "Деңизчилик", "Maritime", "Seefahrt", "Морское дело", "الملاحة البحرية"],
@@ -23,7 +29,7 @@
     home: ["Ana Sayfa", "Ana səhifə", "Басты бет", "Bosh sahifa", "Башкы бет", "Home", "Startseite", "Главная", "الصفحة الرئيسية"],
     moduleReturn: ["Modüle Dön", "Modula qayıt", "Модульге оралу", "Modulga qaytish", "Модулга кайтуу", "Back to Module", "Zum Modul", "В модуль", "العودة إلى الوحدة"],
     signIn: ["Giriş Yap", "Daxil ol", "Кіру", "Kirish", "Кирүү", "Sign In", "Anmelden", "Войти", "تسجيل الدخول"],
-    myAccount: ["Hesabım", "Hesabım", "Менің аккаунтым", "Mening hisobim", "Менин аккаунтум", "My Account", "Mein Konto", "Мой аккаунт", "حسابي"],
+    myAccount: ["Kişisel Hesabım", "Şəxsi hesabım", "Жеке аккаунтым", "Shaxsiy hisobim", "Жеке аккаунтум", "My Personal Account", "Mein persönliches Konto", "Мой личный аккаунт", "حسابي الشخصي"],
     companyPanel: ["Şirket Paneli", "Şirkət paneli", "Компания панелі", "Kompaniya paneli", "Компания панели", "Company Panel", "Unternehmensbereich", "Панель компании", "لوحة الشركة"],
     workspaceNav: ["Denizcilik çalışma alanı", "Dənizçilik iş sahəsi", "Теңіз жұмысы кеңістігі", "Dengizchilik ish maydoni", "Деңизчилик иш мейкиндиги", "Maritime workspace", "Maritimer Arbeitsbereich", "Рабочая зона моряка", "مساحة العمل البحرية"],
     uploadDocumentsNav: ["Belgelerim", "Sənədlərim", "Құжаттарым", "Hujjatlarim", "Документтерим", "My Documents", "Meine Dokumente", "Мои документы", "مستنداتي"],
@@ -57,7 +63,13 @@
     globalPassportHelpWorldwide: ["Tek bir ülkeye bağlı değildir. Dünyanın her yerindeki denizcilik şirketlerine sunulabilen ve uluslararası iş başvurularında kullanılmak üzere hazırlanmış global bir kariyer pasaportudur.", "Tək bir ölkəyə bağlı deyil. Dünyanın hər yerindəki dənizçilik şirkətlərinə təqdim edilə bilən və beynəlxalq iş müraciətləri üçün hazırlanmış qlobal karyera pasportudur.", "Ол бір елмен шектелмейді. Әлемнің кез келген жеріндегі теңіз компанияларына ұсынуға және халықаралық жұмыс өтінімдерінде пайдалануға арналған жаһандық мансап паспорты.", "U bitta mamlakat bilan cheklanmaydi. Dunyoning istalgan joyidagi dengizchilik kompaniyalariga taqdim etish va xalqaro ish arizalarida foydalanish uchun yaratilgan global karyera pasportidir.", "Ал бир өлкө менен чектелбейт. Дүйнөнүн бардык жериндеги деңизчилик компанияларына көрсөтүүгө жана эл аралык жумуш арыздарында колдонууга арналган глобалдык карьера паспорту.", "It is not tied to one country. It is a global career passport designed for international job applications and presentation to maritime companies anywhere in the world.", "Er ist nicht an ein einzelnes Land gebunden. Als globaler Karrierepass ist er für internationale Bewerbungen und die Vorlage bei Seefahrtunternehmen weltweit konzipiert.", "Он не привязан к одной стране. Это глобальный карьерный паспорт для международных заявок и представления морским компаниям в любой точке мира.", "لا يرتبط بدولة واحدة، بل هو جواز مهني عالمي صُمم لطلبات العمل الدولية ولتقديمه إلى الشركات البحرية في أي مكان في العالم."],
     globalPassportHelpPrivacy: ["Kontrol sizde kalır: yalnız onayladığınız bilgiler kaydedilir ve şirketlerle yalnız izin verdiğiniz kapsamda paylaşılır. Global Pasaport resmî belgelerin yerine geçmez; onları profesyonel ve doğrulanabilir bir kariyer görünümünde bir araya getirir.", "Nəzarət sizdə qalır: yalnız təsdiqlədiyiniz məlumat saxlanılır və şirkətlərlə yalnız icazə verdiyiniz həcmdə paylaşılır. Global Pasport rəsmi sənədləri əvəz etmir; onları peşəkar və yoxlanıla bilən karyera görünüşündə birləşdirir.", "Бақылау өзіңізде: тек растаған деректер сақталып, компанияларға тек рұқсат еткен көлемде беріледі. Global Passport ресми құжаттарды алмастырмайды, оларды кәсіби әрі тексерілетін мансап көрінісіне біріктіреді.", "Nazorat sizda qoladi: faqat tasdiqlagan maʼlumotlaringiz saqlanadi va kompaniyalarga faqat ruxsat bergan doirada ulashiladi. Global Passport rasmiy hujjatlar o‘rnini bosmaydi; ularni professional va tekshiriladigan karyera ko‘rinishida birlashtiradi.", "Көзөмөл сизде калат: сиз ырастаган маалымат гана сакталат жана компанияларга уруксат берген чекте гана бөлүшүлөт. Global Passport расмий документтерди алмаштырбайт; аларды кесипкөй жана текшерилүүчү карьера көрүнүшүнө бириктирет.", "You remain in control: only details you approve are saved and shared with companies within the permission you grant. Global Passport does not replace official documents; it organizes them into a professional, verifiable career view.", "Sie behalten die Kontrolle: Nur bestätigte Angaben werden gespeichert und nur im freigegebenen Umfang geteilt. Der Global Passport ersetzt keine amtlichen Dokumente, sondern bündelt sie in einer professionellen, prüfbaren Karriereübersicht.", "Контроль остается у вас: сохраняются только подтвержденные данные, а компаниям они передаются лишь в разрешенном вами объеме. Global Passport не заменяет официальные документы, а объединяет их в профессиональное и проверяемое представление карьеры.", "تبقى السيطرة بيدك: لا تُحفظ إلا المعلومات التي توافق عليها ولا تُشارك مع الشركات إلا ضمن النطاق الذي تسمح به. لا يحل جواز السفر العالمي محل المستندات الرسمية، بل ينظمها في عرض مهني قابل للتحقق لمسيرتك."],
     globalPassportHelpClose: ["Açıklamayı kapat", "Açıqlamanı bağla", "Түсіндірмені жабу", "Izohni yopish", "Түшүндүрмөнү жабуу", "Close explanation", "Erklärung schließen", "Закрыть описание", "إغلاق الشرح"],
-    maritimeAccount: ["Denizcilik Hesabı", "Dənizçilik hesabı", "Теңіз аккаунты", "Dengizchilik hisobi", "Деңизчилик аккаунту", "Maritime Account", "Seefahrtkonto", "Морской аккаунт", "حساب بحري"],
+    maritimeAccount: ["Kişisel Denizcilik Profili", "Şəxsi dənizçilik profili", "Жеке теңіз профилі", "Shaxsiy dengizchilik profili", "Жеке деңизчилик профили", "Personal Maritime Profile", "Persönliches Seefahrtprofil", "Личный морской профиль", "ملف بحري شخصي"],
+    seafarerStatusLabel: ["Denizci durumu", "Dənizçi statusu", "Теңізші мәртебесі", "Dengizchi holati", "Деңизчи абалы", "Seafarer status", "Seefahrerstatus", "Статус моряка", "حالة البحار"],
+    seafarerStatusApproved: ["Belgelere göre denizci profili onaylandı", "Sənədlərə əsasən dənizçi profili təsdiqləndi", "Құжаттар бойынша теңізші профилі расталды", "Hujjatlarga ko‘ra dengizchi profili tasdiqlandi", "Документтер боюнча деңизчи профили ырасталды", "Seafarer profile approved from documents", "Seefahrerprofil anhand der Dokumente bestätigt", "Профиль моряка подтверждён по документам", "تم اعتماد ملف البحار بناءً على المستندات"],
+    seafarerStatusReview: ["Belge incelemesi gerekiyor", "Sənəd yoxlaması tələb olunur", "Құжаттарды тексеру қажет", "Hujjatlarni tekshirish kerak", "Документтерди текшерүү керек", "Document review required", "Dokumentenprüfung erforderlich", "Требуется проверка документов", "مراجعة المستندات مطلوبة"],
+    seafarerStatusEvidence: ["Denizcilik belgesi tamamlanmalı", "Dənizçilik sənədi tamamlanmalıdır", "Теңіз құжатын толықтыру қажет", "Dengizchilik hujjatini to‘ldirish kerak", "Деңизчилик документин толуктоо керек", "Maritime evidence required", "Maritimer Nachweis erforderlich", "Требуется морской документ", "يلزم استكمال مستند بحري"],
+    seafarerStatusPending: ["Belge doğrulaması bekleniyor", "Sənəd təsdiqi gözlənilir", "Құжатты растау күтілуде", "Hujjat tasdig‘i kutilmoqda", "Документти ырастоо күтүлүүдө", "Document confirmation pending", "Dokumentenbestätigung ausstehend", "Ожидается подтверждение документов", "بانتظار تأكيد المستندات"],
+    seafarerStatusNote: ["Bu durum, sizin kontrol edip onayladığınız belge içeriklerinin sistem incelemesine dayanır. Düzenleyen kurumun resmî teyidi gerektiğinde ayrıca yapılır.", "Bu status yoxlayıb təsdiqlədiyiniz sənəd məzmununun sistem analizinə əsaslanır. Sənədi verən qurumun rəsmi təsdiqi lazım olduqda ayrıca aparılır.", "Бұл мәртебе сіз тексеріп растаған құжат мазмұнын жүйелік талдауға негізделеді. Құжатты берген мекеменің ресми растауы қажет болса, бөлек жүргізіледі.", "Bu holat siz tekshirgan va tasdiqlagan hujjat mazmunining tizim tahliliga asoslanadi. Hujjatni bergan tashkilotning rasmiy tasdig‘i zarur bo‘lsa, alohida amalga oshiriladi.", "Бул абал сиз текшерип ырастаган документтин мазмунун системалык талдоого негизделет. Документти берген мекеменин расмий ырастоосу керек болсо, өзүнчө жүргүзүлөт.", "This status is based on system analysis of document details you reviewed and confirmed. Official issuer verification is performed separately when required.", "Dieser Status basiert auf der Systemanalyse der von Ihnen geprüften und bestätigten Dokumentangaben. Eine amtliche Prüfung durch den Aussteller erfolgt bei Bedarf separat.", "Этот статус основан на системном анализе данных документов, которые вы проверили и подтвердили. Официальная проверка у выдавшей организации при необходимости проводится отдельно.", "تعتمد هذه الحالة على تحليل النظام لمحتوى المستندات التي راجعتها وأكدتها. ويُجرى التحقق الرسمي من الجهة المصدرة بشكل منفصل عند الحاجة."],
     changePhoto: ["Profil Fotoğrafı Ekle", "Profil şəkli əlavə et", "Профиль суретін қосу", "Profil rasmini qo‘shish", "Профиль сүрөтүн кошуу", "Add Profile Photo", "Profilfoto hinzufügen", "Добавить фото профиля", "إضافة صورة الملف الشخصي"],
     replacePhoto: ["Fotoğrafı Değiştir", "Şəkli dəyişdir", "Суретті өзгерту", "Rasmni o‘zgartirish", "Сүрөттү өзгөртүү", "Change Photo", "Foto ändern", "Изменить фото", "تغيير الصورة"],
     photoHint: ["JPEG, PNG veya WebP. En fazla 2 MB.", "JPEG, PNG və ya WebP. Maksimum 2 MB.", "JPEG, PNG немесе WebP. Ең көбі 2 МБ.", "JPEG, PNG yoki WebP. Eng ko‘pi 2 MB.", "JPEG, PNG же WebP. Эң көп 2 МБ.", "JPEG, PNG, or WebP. Up to 2 MB.", "JPEG, PNG oder WebP. Maximal 2 MB.", "JPEG, PNG или WebP. До 2 МБ.", "JPEG أو PNG أو WebP، بحد أقصى 2 ميجابايت."],
@@ -96,8 +108,13 @@
     applicationSaved: ["Başvurunuz kaydedildi. Durumunu Başvurularım sayfasından takip edebilirsiniz.", "Müraciətiniz saxlanıldı. Vəziyyəti Müraciətlərim səhifəsindən izləyə bilərsiniz.", "Өтінім сақталды. Күйін Өтінімдерім бетінен бақылай аласыз.", "Arizangiz saqlandi. Holatini Arizalarim sahifasidan kuzating.", "Арызыңыз сакталды. Абалын Арыздарым барагынан көрүңүз.", "Your application was saved. Track it from My Applications.", "Ihre Bewerbung wurde gespeichert. Verfolgen Sie sie unter Meine Bewerbungen.", "Заявка сохранена. Следите за ней в разделе «Мои заявки».", "تم حفظ طلبك. تابعه من صفحة طلباتي."],
 
     loginRequiredTitle: ["Bu alan için giriş yapın", "Bu sahə üçün daxil olun", "Бұл бөлімге кіру қажет", "Bu bo‘lim uchun kiring", "Бул бөлүм үчүн кириңиз", "Sign in to continue", "Zum Fortfahren anmelden", "Войдите, чтобы продолжить", "سجّل الدخول للمتابعة"],
-    loginRequiredLead: ["Kişisel başvurularınız ve teklifleriniz yalnızca güvenli hesabınızda görüntülenir.", "Şəxsi müraciət və təklifləriniz yalnız təhlükəsiz hesabınızda görünür.", "Жеке өтінімдер мен ұсыныстар тек қауіпсіз аккаунтта көрсетіледі.", "Shaxsiy ariza va takliflar faqat xavfsiz hisobingizda ko‘rinadi.", "Жеке арыздар жана сунуштар коопсуз аккаунтуңузда гана көрүнөт.", "Personal applications and offers are visible only in your secure account.", "Persönliche Bewerbungen und Angebote sind nur im sicheren Konto sichtbar.", "Личные заявки и предложения видны только в защищенном аккаунте.", "تظهر الطلبات والعروض الشخصية داخل حسابك الآمن فقط."],
+    loginRequiredLead: ["Kişisel AllonaHub hesabınızla giriş yapın. Ayrı bir denizci hesap türü seçmeniz gerekmez; denizcilik profiliniz yüklediğiniz belgelerden, yalnızca sizin onayınızla oluşturulur.", "Şəxsi AllonaHub hesabınızla daxil olun. Ayrı dənizçi hesab növü seçməyə ehtiyac yoxdur; dənizçilik profiliniz yüklədiyiniz sənədlərdən yalnız təsdiqinizlə yaradılır.", "Жеке AllonaHub аккаунтыңызбен кіріңіз. Теңізшіге арналған бөлек аккаунт түрін таңдаудың қажеті жоқ; теңіз профиліңіз жүктеген құжаттарыңыздан тек сіздің растауыңызбен жасалады.", "Shaxsiy AllonaHub hisobingiz bilan kiring. Alohida dengizchi hisob turini tanlash shart emas; dengizchilik profilingiz yuklagan hujjatlaringizdan faqat tasdig‘ingiz bilan yaratiladi.", "Жеке AllonaHub аккаунтуңуз менен кириңиз. Өзүнчө деңизчи аккаунт түрүн тандоонун кереги жок; деңизчилик профилиңиз жүктөгөн документтериңизден сиздин ырастооңуз менен гана түзүлөт.", "Sign in with your personal AllonaHub account. You do not need to select a separate seafarer account type; your maritime profile is created from your documents only after your approval.", "Melden Sie sich mit Ihrem persönlichen AllonaHub-Konto an. Ein eigener Seefahrer-Kontotyp ist nicht erforderlich; Ihr maritimes Profil wird erst nach Ihrer Bestätigung aus Ihren Dokumenten erstellt.", "Войдите в личный аккаунт AllonaHub. Выбирать отдельный тип аккаунта моряка не нужно; морской профиль создается из загруженных документов только после вашего подтверждения.", "سجّل الدخول بحساب AllonaHub الشخصي. لا تحتاج إلى اختيار نوع حساب منفصل للبحّارة؛ يُنشأ ملفك البحري من مستنداتك بعد موافقتك فقط."],
     loginButton: ["Giriş Yap", "Daxil ol", "Кіру", "Kirish", "Кирүү", "Sign In", "Anmelden", "Войти", "تسجيل الدخول"],
+    personalAccountRequiredTitle: ["Kişisel hesapla devam edin", "Şəxsi hesabla davam edin", "Жеке аккаунтпен жалғастырыңыз", "Shaxsiy hisob bilan davom eting", "Жеке аккаунт менен улантыңыз", "Continue with a personal account", "Mit einem persönlichen Konto fortfahren", "Продолжите с личным аккаунтом", "تابع باستخدام حساب شخصي"],
+    personalAccountRequiredLead: ["Şu anda bir şirket hesabıyla giriş yaptınız. Belgeler, Global Pasaport, başvurular ve iş teklifleri kişiye özel olduğu için bu alan yalnızca ayrı bir kişisel AllonaHub hesabında açılır.", "Hazırda şirkət hesabı ilə daxil olmusunuz. Sənədlər, Global Pasport, müraciətlər və iş təklifləri şəxsi olduğuna görə bu sahə yalnız ayrıca şəxsi AllonaHub hesabında açılır.", "Қазір компания аккаунтымен кірдіңіз. Құжаттар, Global Passport, өтінімдер мен жұмыс ұсыныстары жеке болғандықтан, бұл бөлім бөлек жеке AllonaHub аккаунтында ғана ашылады.", "Hozir kompaniya hisobi bilan kirgansiz. Hujjatlar, Global Passport, arizalar va ish takliflari shaxsiy bo‘lgani uchun bu bo‘lim faqat alohida shaxsiy AllonaHub hisobida ochiladi.", "Учурда компания аккаунту менен кирдиңиз. Документтер, Global Passport, арыздар жана жумуш сунуштары жеке болгондуктан, бул бөлүм өзүнчө жеке AllonaHub аккаунтунда гана ачылат.", "You are currently signed in with a company account. Documents, Global Passport, applications and job offers are personal, so this area opens only in a separate personal AllonaHub account.", "Sie sind derzeit mit einem Unternehmenskonto angemeldet. Dokumente, Global Passport, Bewerbungen und Jobangebote sind personenbezogen und stehen daher nur in einem separaten persönlichen AllonaHub-Konto zur Verfügung.", "Сейчас вы вошли через аккаунт компании. Документы, Global Passport, заявки и предложения работы являются личными, поэтому этот раздел доступен только в отдельном личном аккаунте AllonaHub.", "أنت مسجّل الدخول حالياً بحساب شركة. ولأن المستندات وجواز السفر العالمي والطلبات وعروض العمل بيانات شخصية، فلا يفتح هذا القسم إلا في حساب AllonaHub شخصي منفصل."],
+    personalAccountRule: ["İlk kayıtta denizci seçimi yoktur. Normal kişisel kayıt yeterlidir; mesleki yeterlilikleriniz belgeleriniz okunduktan ve siz onayladıktan sonra belirlenir. Şirket ve kişisel hesap için farklı e-posta adresleri kullanın.", "İlk qeydiyyatda dənizçi seçimi yoxdur. Adi şəxsi qeydiyyat kifayətdir; peşə səriştələriniz sənədlər oxunduqdan və siz təsdiqlədikdən sonra müəyyən edilir. Şirkət və şəxsi hesab üçün fərqli e-poçt ünvanlarından istifadə edin.", "Алғашқы тіркеуде теңізші таңдауы жоқ. Қалыпты жеке тіркеу жеткілікті; кәсіби біліктіліктер құжаттар оқылып, сіз растағаннан кейін анықталады. Компания және жеке аккаунт үшін әртүрлі электрондық пошта мекенжайларын пайдаланыңыз.", "Birinchi ro‘yxatdan o‘tishda dengizchi tanlovi yo‘q. Oddiy shaxsiy ro‘yxatdan o‘tish yetarli; kasbiy malakangiz hujjatlar o‘qilib, siz tasdiqlaganingizdan keyin aniqlanadi. Kompaniya va shaxsiy hisob uchun boshqa-boshqa e-pochta manzillaridan foydalaning.", "Биринчи каттоодо деңизчи тандоосу жок. Кадимки жеке каттоо жетиштүү; кесиптик квалификацияңыз документтер окулуп, сиз ырастагандан кийин аныкталат. Компания жана жеке аккаунт үчүн ар башка электрондук почта даректерин колдонуңуз.", "There is no seafarer selection during registration. A standard personal registration is enough; your professional qualifications are identified after your documents are read and you approve the results. Use different email addresses for company and personal accounts.", "Bei der Registrierung gibt es keine Auswahl „Seefahrer“. Eine normale persönliche Registrierung genügt; Ihre beruflichen Qualifikationen werden nach dem Auslesen Ihrer Dokumente und Ihrer Bestätigung ermittelt. Verwenden Sie für Unternehmens- und persönliches Konto unterschiedliche E-Mail-Adressen.", "При регистрации не нужно выбирать тип «моряк». Достаточно обычного личного аккаунта; профессиональная квалификация определяется после чтения документов и вашего подтверждения. Для аккаунта компании и личного аккаунта используйте разные адреса электронной почты.", "لا يوجد اختيار «بحّار» عند التسجيل. يكفي إنشاء حساب شخصي عادي؛ وتُحدَّد مؤهلاتك المهنية بعد قراءة مستنداتك وموافقتك على النتائج. استخدم بريداً إلكترونياً مختلفاً لحساب الشركة والحساب الشخصي."],
+    switchToPersonalAccount: ["Kişisel Hesapla Giriş Yap", "Şəxsi hesabla daxil ol", "Жеке аккаунтпен кіру", "Shaxsiy hisob bilan kirish", "Жеке аккаунт менен кирүү", "Sign In with Personal Account", "Mit persönlichem Konto anmelden", "Войти в личный аккаунт", "تسجيل الدخول بحساب شخصي"],
+    createPersonalAccount: ["Yeni Kişisel Hesap Oluştur", "Yeni şəxsi hesab yarat", "Жаңа жеке аккаунт ашу", "Yangi shaxsiy hisob yaratish", "Жаңы жеке аккаунт түзүү", "Create Personal Account", "Persönliches Konto erstellen", "Создать личный аккаунт", "إنشاء حساب شخصي"],
     noApplicationsTitle: ["Henüz başvurunuz yok", "Hələ müraciətiniz yoxdur", "Әзірге өтінім жоқ", "Hozircha ariza yo‘q", "Азырынча арыз жок", "No applications yet", "Noch keine Bewerbungen", "Заявок пока нет", "لا توجد طلبات بعد"],
     noApplicationsLead: ["Açık iş ilanlarından bir pozisyon seçtiğinizde başvurunuz ve durumu burada görünür.", "Açıq iş elanından vəzifə seçəndə müraciət və vəziyyəti burada görünəcək.", "Ашық орынға өтінім бергенде оның күйі осында көрінеді.", "Ochiq ishga ariza berganingizda holati shu yerda ko‘rinadi.", "Ачык жумушка арыз бергениңизде абалы ушул жерде көрүнөт.", "When you apply to an open position, the application and status appear here.", "Wenn Sie sich bewerben, erscheinen Bewerbung und Status hier.", "После отклика заявка и ее статус появятся здесь.", "عند التقديم لوظيفة ستظهر الطلب وحالته هنا."],
     browseJobs: ["İş İlanlarını İncele", "İş elanlarına bax", "Вакансияларды көру", "Ish eʼlonlarini ko‘rish", "Жумуштарды көрүү", "Browse Job Listings", "Stellen ansehen", "Смотреть вакансии", "استعراض الوظائف"],
@@ -203,6 +220,15 @@
     return `../account/user.html?returnTo=${encodeURIComponent(target)}`;
   }
 
+  function accountSwitchUrl(tab) {
+    const params = new URLSearchParams({
+      returnTo: `${window.location.pathname}${window.location.search}`,
+      forceLogin: "1"
+    });
+    if (tab) params.set("tab", tab);
+    return `../account/user.html?${params.toString()}`;
+  }
+
   function storageKey(type) {
     return `allonahub.maritime.${type}.v1.${userId() || "device"}`;
   }
@@ -268,7 +294,7 @@
       if (!documents) return;
       const link = document.createElement("a");
       link.className = "maritime-smart-nav";
-      link.href = "maritime-smart-account.html";
+      link.href = portalUrl("maritime-smart-account.html");
       link.dataset.viewLink = "smart";
       link.dataset.portalI18n = "smartAccountNav";
       link.textContent = text("smartAccountNav");
@@ -283,7 +309,7 @@
       const context = App.auth && App.auth.getAccountContext ? await App.auth.getAccountContext(session.user) : null;
       if (account) {
         const isPartner = context && context.type === "partner";
-        account.href = App.auth && App.auth.accountHome ? App.auth.accountHome(context && context.type || "customer") : "maritime-account.html";
+        account.href = App.auth && App.auth.accountHome ? App.auth.accountHome(context && context.type || "customer", context) : "/pages/account/user-panel.html";
         account.dataset.portalI18n = isPartner ? "companyPanel" : "myAccount";
         account.textContent = text(isPartner ? "companyPanel" : "myAccount");
       }
@@ -380,7 +406,7 @@
     });
     const count = document.querySelector("[data-jobs-count]");
     if (count) count.textContent = `${filtered.length} ${text("jobsCount")}`;
-    grid.innerHTML = filtered.length ? filtered.map(jobCard).join("") : `<div class="maritime-empty" style="grid-column:1/-1"><div><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>${escapeHtml(text("noJobsTitle"))}</h2><p>${escapeHtml(text("noJobsLead"))}</p><a class="maritime-button" href="maritime-jobs.html">${escapeHtml(text("filterAll"))}</a></div></div>`;
+    grid.innerHTML = filtered.length ? filtered.map(jobCard).join("") : `<div class="maritime-empty" style="grid-column:1/-1"><div><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><h2>${escapeHtml(text("noJobsTitle"))}</h2><p>${escapeHtml(text("noJobsLead"))}</p><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-jobs.html"))}">${escapeHtml(text("filterAll"))}</a></div></div>`;
     const focusId = new URLSearchParams(window.location.search).get("job");
     if (focusId) {
       const card = grid.querySelector(`[data-job-id="${window.CSS && CSS.escape ? CSS.escape(focusId) : focusId}"]`);
@@ -438,6 +464,13 @@
     root.innerHTML = `<section class="maritime-auth-gate"><div><i class="fa-solid fa-user-shield" aria-hidden="true"></i><h2>${escapeHtml(text("loginRequiredTitle"))}</h2><p>${escapeHtml(text("loginRequiredLead"))}</p><a class="maritime-button maritime-button--primary" href="${escapeHtml(loginUrl())}">${escapeHtml(text("loginButton"))}</a></div></section>`;
   }
 
+  function personalAccountGate(context) {
+    const accountHome = App.auth && App.auth.accountHome
+      ? App.auth.accountHome(context && context.type || "partner", context)
+      : "../partner/partner-panel.html";
+    root.innerHTML = `<section class="maritime-auth-gate maritime-account-type-gate"><div><i class="fa-solid fa-building-shield" aria-hidden="true"></i><h2>${escapeHtml(text("personalAccountRequiredTitle"))}</h2><p>${escapeHtml(text("personalAccountRequiredLead"))}</p><small>${escapeHtml(text("personalAccountRule"))}</small><div class="maritime-auth-gate-actions"><a class="maritime-button maritime-button--primary" href="${escapeHtml(accountSwitchUrl("login"))}">${escapeHtml(text("switchToPersonalAccount"))}</a><a class="maritime-button" href="${escapeHtml(accountSwitchUrl("register"))}">${escapeHtml(text("createPersonalAccount"))}</a><a class="maritime-button" href="${escapeHtml(accountHome)}">${escapeHtml(text("companyPanel"))}</a></div></div></section>`;
+  }
+
   async function liveApplications() {
     if (!session || !App.supabase) return [];
     try {
@@ -466,7 +499,7 @@
     const seen = new Set();
     const rows = [...remote, ...local].filter(function (item) { const key = item.id || `${item.job_id}-${item.applied_at}`; if (seen.has(key)) return false; seen.add(key); return true; });
     if (!rows.length) {
-      root.innerHTML = `<section class="maritime-empty"><div><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><h2>${escapeHtml(text("noApplicationsTitle"))}</h2><p>${escapeHtml(text("noApplicationsLead"))}</p><a class="maritime-button maritime-button--primary" href="maritime-jobs.html">${escapeHtml(text("browseJobs"))}</a></div></section>`;
+      root.innerHTML = `<section class="maritime-empty"><div><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><h2>${escapeHtml(text("noApplicationsTitle"))}</h2><p>${escapeHtml(text("noApplicationsLead"))}</p><a class="maritime-button maritime-button--primary" href="${escapeHtml(portalUrl("maritime-jobs.html"))}">${escapeHtml(text("browseJobs"))}</a></div></section>`;
       return;
     }
     const reviewing = rows.filter(function (item) { return ["submitted", "drafted", "awaiting_candidate_approval", "shortlisted", "interviewing"].includes(item.status); }).length;
@@ -491,7 +524,7 @@
     const local = readList("offers");
     const rows = [...remote, ...local];
     if (!rows.length) {
-      root.innerHTML = `<section class="maritime-section-heading"><h2>${escapeHtml(text("offersTitle"))}</h2><p>${escapeHtml(text("offersPrivacy"))}</p></section><section class="maritime-empty"><div><i class="fa-solid fa-envelope-open" aria-hidden="true"></i><h2>${escapeHtml(text("noOffersTitle"))}</h2><p>${escapeHtml(text("noOffersLead"))}</p><a class="maritime-button" href="maritime-applications.html">${escapeHtml(text("applicationsNav"))}</a></div></section>`;
+      root.innerHTML = `<section class="maritime-section-heading"><h2>${escapeHtml(text("offersTitle"))}</h2><p>${escapeHtml(text("offersPrivacy"))}</p></section><section class="maritime-empty"><div><i class="fa-solid fa-envelope-open" aria-hidden="true"></i><h2>${escapeHtml(text("noOffersTitle"))}</h2><p>${escapeHtml(text("noOffersLead"))}</p><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-applications.html"))}">${escapeHtml(text("applicationsNav"))}</a></div></section>`;
       return;
     }
     root.innerHTML = `<section class="maritime-section-heading"><h2>${escapeHtml(text("offersTitle"))}</h2><p>${escapeHtml(text("offersPrivacy"))}</p></section><section class="maritime-record-grid">${rows.map(function (item) { const visible = item.company_contact_visible === true; return `<article class="maritime-record-card"><div class="maritime-record-head"><div><span class="maritime-reference">${escapeHtml(item.job_reference || "")}</span><h3>${escapeHtml(item.job_title || text("genericPosition"))}</h3></div><span class="maritime-status-badge" data-status="${escapeHtml(item.offer_status || "sent")}">${escapeHtml(text("offerSent"))}</span></div><div class="maritime-record-meta"><span><b>${escapeHtml(text("offerStatus"))}</b>${escapeHtml(text("offerSent"))}</span><span><b>${escapeHtml(text("appliedAt"))}</b>${escapeHtml(dateLabel(item.created_at || item.updated_at))}</span></div><div class="maritime-offer-contact"><strong>${escapeHtml(visible && item.company_name ? item.company_name : text("contactHidden"))}</strong>${visible ? `<p>${escapeHtml([item.company_email, item.company_phone].filter(Boolean).join(" · "))}</p>` : ""}</div></article>`; }).join("")}</section>`;
@@ -504,7 +537,7 @@
   function renderAuto() {
     if (!session) return authGate();
     const preference = autoPreference();
-    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="maritime-smart-account.html">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${preference.updated_at ? "is-visible" : ""}" role="status" aria-live="polite" data-auto-notice>${preference.updated_at ? escapeHtml(text(preference.enabled ? "autoSaved" : "autoPaused")) : ""}</div></aside></section>`;
+    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-smart-account.html"))}">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${preference.updated_at ? "is-visible" : ""}" role="status" aria-live="polite" data-auto-notice>${preference.updated_at ? escapeHtml(text(preference.enabled ? "autoSaved" : "autoPaused")) : ""}</div></aside></section>`;
   }
 
   function accountInitials(name) {
@@ -540,21 +573,54 @@
     return accountProfile;
   }
 
+  async function loadSeafarerClassification() {
+    const pending = { status: "not_assessed", system_approved: false };
+    if (!session || !session.access_token) return pending;
+    const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+    try {
+      const response = await fetch(`${base}/v1/maritime/smart-account`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${session.access_token}` }
+      });
+      const payload = await response.json().catch(function () { return {}; });
+      if (!response.ok || payload.ok !== true) return pending;
+      const readiness = payload.run && payload.run.smart_snapshot && payload.run.smart_snapshot.readiness || {};
+      const status = ["system_approved", "review_required", "evidence_required", "not_assessed"].includes(readiness.seafarer_status)
+        ? readiness.seafarer_status
+        : "not_assessed";
+      return { status, system_approved: readiness.seafarer_system_approved === true };
+    } catch (error) {
+      return pending;
+    }
+  }
+
+  function seafarerStatusCopy(status) {
+    if (status === "system_approved") return "seafarerStatusApproved";
+    if (status === "review_required") return "seafarerStatusReview";
+    if (status === "evidence_required") return "seafarerStatusEvidence";
+    return "seafarerStatusPending";
+  }
+
   function accountAction(href, icon, labelKey, modifier) {
-    return `<a class="maritime-account-action ${modifier || ""}" href="${href}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${escapeHtml(text(labelKey))}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>`;
+    return `<a class="maritime-account-action ${modifier || ""}" href="${escapeHtml(href)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${escapeHtml(text(labelKey))}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>`;
   }
 
   async function renderAccount() {
     if (!session) return authGate();
-    const profile = await loadAccountProfile();
+    const [profile, classification] = await Promise.all([loadAccountProfile(), loadSeafarerClassification()]);
     const name = compact(profile.full_name, 120) || "AllonaHub";
     const avatar = safeAvatar(profile.avatar_url || profile.avatar || "");
+    const classificationKey = seafarerStatusCopy(classification.status);
     root.innerHTML = `<section class="maritime-account-layout">
       <aside class="maritime-account-profile">
         <div class="maritime-account-avatar" data-account-avatar>${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : `<span>${escapeHtml(accountInitials(name))}</span>`}</div>
         <h2>${escapeHtml(name)}</h2>
         <p>${escapeHtml(profile.email || session.user.email || "")}</p>
         <span class="maritime-account-badge"><i class="fa-solid fa-anchor" aria-hidden="true"></i>${escapeHtml(text("maritimeAccount"))}</span>
+        <div class="maritime-seafarer-status" data-status="${escapeHtml(classification.status)}">
+          <span><i class="fa-solid ${classification.system_approved ? "fa-circle-check" : "fa-clock"}" aria-hidden="true"></i><b>${escapeHtml(text("seafarerStatusLabel"))}</b></span>
+          <strong>${escapeHtml(text(classificationKey))}</strong>
+          <small>${escapeHtml(text("seafarerStatusNote"))}</small>
+        </div>
         <label class="maritime-button maritime-button--primary maritime-photo-button" for="maritimeAvatarInput"><i class="fa-solid fa-camera" aria-hidden="true"></i><span data-account-photo-label>${escapeHtml(text(avatar ? "replacePhoto" : "changePhoto"))}</span></label>
         <input class="maritime-photo-input" id="maritimeAvatarInput" type="file" accept="image/jpeg,image/png,image/webp" data-account-photo>
         <small>${escapeHtml(text("photoHint"))}</small>
@@ -563,13 +629,13 @@
       <section class="maritime-account-actions" aria-labelledby="maritimeAccountActionsTitle">
         <h2 id="maritimeAccountActionsTitle">${escapeHtml(text("accountActions"))}</h2>
         <div class="maritime-account-action-grid">
-          ${accountAction("maritime-jobs.html", "fa-briefcase", "jobsNav")}
-          ${accountAction("maritime-applications.html", "fa-list-check", "applicationsNav")}
-          ${accountAction("maritime-offers.html", "fa-envelope-open-text", "offersNav")}
-          ${accountAction("maritime-auto-apply.html", "fa-wand-magic-sparkles", "autoNav")}
-          ${accountAction("maritime-smart-account.html", "fa-file-lines", "smartAccountNav", "maritime-account-action--smart")}
-          ${accountAction("maritime-documents.html", "fa-folder-open", "uploadDocumentsNav", "maritime-account-action--danger")}
-          ${accountAction("maritime-complaints.html", "fa-shield-halved", "complaintsNav")}
+          ${accountAction(portalUrl("maritime-jobs.html"), "fa-briefcase", "jobsNav")}
+          ${accountAction(portalUrl("maritime-applications.html"), "fa-list-check", "applicationsNav")}
+          ${accountAction(portalUrl("maritime-offers.html"), "fa-envelope-open-text", "offersNav")}
+          ${accountAction(portalUrl("maritime-auto-apply.html"), "fa-wand-magic-sparkles", "autoNav")}
+          ${accountAction(portalUrl("maritime-smart-account.html"), "fa-file-lines", "smartAccountNav", "maritime-account-action--smart")}
+          ${accountAction(portalUrl("maritime-documents.html"), "fa-folder-open", "uploadDocumentsNav", "maritime-account-action--danger")}
+          ${accountAction(portalUrl("maritime-complaints.html"), "fa-shield-halved", "complaintsNav")}
         </div>
         <button class="maritime-account-signout" type="button" data-account-signout><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>${escapeHtml(text("signOut"))}</button>
       </section>
@@ -742,14 +808,14 @@
           referrer = document.referrer ? new URL(document.referrer, window.location.href) : null;
         } catch (error) {}
         if (referrer && referrer.origin === window.location.origin && history.length > 1) history.back();
-        else window.location.href = "allonadenizcilik.html";
+        else window.location.href = portalUrl("allonadenizcilik.html");
         return;
       }
       const signOut = event.target.closest("[data-account-signout]");
       if (signOut) {
         signOut.disabled = true;
         Promise.resolve(App.auth && App.auth.signOut ? App.auth.signOut({ redirect: false }) : null)
-          .then(function () { window.location.href = "allonadenizcilik.html"; })
+          .then(function () { window.location.href = portalUrl("allonadenizcilik.html"); })
           .catch(function () { signOut.disabled = false; });
         return;
       }
@@ -787,7 +853,7 @@
       if (search) {
         event.preventDefault();
         const query = compact(new FormData(search).get("q"), 80);
-        window.location.href = `maritime-jobs.html?q=${encodeURIComponent(query)}`;
+        window.location.href = `${portalUrl("maritime-jobs.html")}?q=${encodeURIComponent(query)}`;
         return;
       }
       const complaint = event.target.closest("[data-complaint-form]");
@@ -815,7 +881,7 @@
     const context = await syncSession();
     const customerOnly = ["applications", "offers", "auto", "account", "documents", "smart"].includes(view);
     if (customerOnly && session && (!context || context.type !== "customer")) {
-      if (context && App.auth && App.auth.accountHome) window.location.replace(App.auth.accountHome(context.type));
+      personalAccountGate(context);
       return;
     }
     document.querySelectorAll("[data-view-link]").forEach(function (link) {

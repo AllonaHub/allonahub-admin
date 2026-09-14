@@ -1115,7 +1115,7 @@ function safeReturnTo(fallback){
   return pageUrl(fallbackPath);
 }
 
-function accountHome(accountType){
+function accountHome(accountType,context){
   if(accountType==="partner")return pageUrl("/pages/partner/partner-panel.html");
   if(accountType==="admin")return pageUrl("/admin/index.html");
   if(accountType==="super_admin")return pageUrl("/admin/super-admin.html");
@@ -1127,7 +1127,7 @@ async function accountContext(user){
   if(!user)return {type:"anonymous",profile:null,partnerBusiness:null};
   const profileResult=await supabaseClient
     .from("profiles")
-    .select("id,role,account_status")
+    .select("id,role,account_status,module")
     .eq("id",user.id)
     .maybeSingle();
   if(profileResult.error)throw profileResult.error;
@@ -1159,13 +1159,14 @@ async function authorizedReturnTo(user,fallback){
     const destination=safeReturnTo(fallback || "user-panel.html");
     try{
       const path=new URL(destination,window.location.href).pathname;
-      if(/^\/pages\/partner\//i.test(path) || /^\/admin(?:\/|$)/i.test(path))return accountHome("customer");
+      if(/^\/pages\/partner\//i.test(path) || /^\/admin(?:\/|$)/i.test(path))return accountHome("customer",context);
+      if(/\/pages\/ecosystem\/maritime-account\.html$/i.test(path))return accountHome("customer",context);
     }catch(error){
-      return accountHome("customer");
+      return accountHome("customer",context);
     }
     return destination;
   }
-  return accountHome(context.type);
+  return accountHome(context.type,context);
 }
 
 function apiBaseUrl(){
@@ -1918,8 +1919,8 @@ document.addEventListener("click",function(e){
   <script src="../../js/config.js?v=20260623-authunify1" defer></script>
   <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/security-challenge.js?v=20260914-authfix1" defer></script>
-  <script src="../../js/layout.v3.js?v=20260914-account-boundary2" defer></script>
-  <script src="../../js/platform.js?v=20260914-account-boundary2" defer></script>
+  <script src="../../js/layout.v3.js?v=20260914-user-panel1" defer></script>
+  <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
   <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
   <script src="../../js/allona-auth-page.js?v=20260914-authfix1" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>

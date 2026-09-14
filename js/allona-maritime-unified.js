@@ -263,7 +263,7 @@
     try {
       const user = window.Allona && window.Allona.auth ? await window.Allona.auth.getUser() : null;
       if (user) {
-        link.href = "maritime-account.html";
+        link.href = "../account/user-panel.html";
         link.dataset.maritimeAuthenticated = "true";
       }
       applyMaritimeLanguage();

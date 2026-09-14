@@ -2,55 +2,25 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Denizcilik Hesabım | AllonaHub</title>
-  <meta name="description" content="AllonaHub Denizcilik kullanıcı hesabı ve iş başvuru merkezi.">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260914-global-passport1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hesabıma Yönlendiriliyor | AllonaHub</title>
+  <meta name="description" content="AllonaHub kişisel hesabınıza yönlendiriliyorsunuz.">
+  <link rel="canonical" href="https://allonahub.com/pages/account/user-panel.html">
+  <meta http-equiv="refresh" content="0;url=../account/user-panel.html">
 </head>
-<body class="maritime-portal-page maritime-account-page" data-maritime-view="account">
-  <div class="maritime-portal-shell">
-    <header class="maritime-portal-header maritime-account-header" data-no-translate>
-      <div class="maritime-portal-top">
-        <a class="maritime-portal-brand" href="allonadenizcilik.html" aria-label="AllonaHub Denizcilik">
-          <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
-          <span class="maritime-portal-brand-copy"><span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span><span class="maritime-portal-module" data-portal-i18n="moduleName">Denizcilik</span></span>
-        </a>
-        <div class="maritime-portal-actions">
-          <button type="button" data-go-back><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span data-portal-i18n="back">Geri Dön</span></button>
-          <a href="../../index.html" data-portal-i18n="home">Ana Sayfa</a>
-          <a href="allonadenizcilik.html" data-portal-i18n="moduleReturn">Modüle Dön</a>
-          <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
-        </div>
-      </div>
-      <nav class="maritime-portal-nav" aria-label="Denizcilik çalışma alanı" data-portal-i18n-aria="workspaceNav">
-        <a class="maritime-document-nav" href="maritime-documents.html" data-view-link="documents" data-portal-i18n="uploadDocumentsNav">Belgelerim</a>
-        <a class="maritime-smart-nav" href="maritime-smart-account.html" data-view-link="smart" data-portal-i18n="smartAccountNav">GP CV</a>
-        <a href="maritime-jobs.html" data-view-link="jobs" data-portal-i18n="jobsNav">İş İlanları</a>
-        <a href="maritime-applications.html" data-view-link="applications" data-portal-i18n="applicationsNav">Başvurularım</a>
-        <a href="maritime-offers.html" data-view-link="offers" data-portal-i18n="offersNav">İş Tekliflerim</a>
-        <a href="maritime-auto-apply.html" data-view-link="auto" data-portal-i18n="autoNav">Otomatik Başvuru</a>
-        <a href="maritime-complaints.html" data-view-link="complaints" data-portal-i18n="complaintsNav">Şikayet</a>
-      </nav>
-    </header>
-    <main class="maritime-portal-main maritime-account-main">
-      <div class="maritime-account-heading">
-        <h1 data-portal-title>Denizcilik Hesabım</h1>
-        <p data-portal-lead>Profilinizi ve denizcilik iş süreçlerinizi sade bir ekrandan yönetin.</p>
-      </div>
-      <div class="maritime-portal-content" data-portal-root>
-        <div class="maritime-empty"><div><i class="fa-solid fa-user" aria-hidden="true"></i><h2>Hesabınız hazırlanıyor</h2></div></div>
-      </div>
-    </main>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="../../js/config.js?v=20260627-config-central" defer></script>
-  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
-  <script src="../../js/auth.js?v=20260914-account-boundary2" defer></script>
-  <script src="../../js/user-profile-sync.js?v=20260621-hp1" defer></script>
-  <script src="../../js/platform.js?v=20260914-account-boundary2" defer></script>
-  <script src="../../js/allona-maritime-portal.js?v=20260914-gp-cv1" defer></script>
+<body>
+  <main>
+    <p>Yeni hesabınıza yönlendiriliyorsunuz.</p>
+    <p><a href="../account/user-panel.html">Hesabıma Git</a></p>
+    <p><a href="allonadenizcilik.html">Modüle Dön</a> · <a href="../../index.html">Ana Sayfa</a></p>
+  </main>
+  <script>
+    (function () {
+      var target = new URL("../account/user-panel.html", window.location.href);
+      target.search = window.location.search;
+      target.hash = window.location.hash;
+      window.location.replace(target.href);
+    })();
+  </script>
 </body>
 </html>
