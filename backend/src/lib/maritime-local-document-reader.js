@@ -583,7 +583,7 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
 async function availableTesseractLanguages() {
   const { stdout } = await execFileAsync("tesseract", ["--list-langs"], { timeout: 15000, maxBuffer: 1024 * 1024 });
   const available = new Set(String(stdout || "").split(/\r?\n/).map((value) => value.trim()).filter(Boolean));
-  const preferred = ["eng", "tur", "aze", "rus", "ara", "deu"].filter((language) => available.has(language));
+  const preferred = ["eng", "tur", "aze", "spa", "rus", "ara", "deu"].filter((language) => available.has(language));
   return preferred.length ? preferred.join("+") : "eng";
 }
 

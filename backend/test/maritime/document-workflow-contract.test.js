@@ -47,6 +47,7 @@ test("production keeps a local OCR reader available when no external AI key is c
   assert.match(localReader, /tesseract/);
   assert.match(dockerfile, /poppler-utils/);
   assert.match(dockerfile, /tesseract-ocr-data-aze/);
+  assert.match(dockerfile, /tesseract-ocr-data-spa/);
   assert.match(dockerfile, /tesseract-ocr-data-tur/);
 });
 

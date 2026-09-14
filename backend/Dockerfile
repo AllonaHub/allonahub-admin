@@ -14,6 +14,7 @@ RUN apk add --no-cache \
   tesseract-ocr-data-deu \
   tesseract-ocr-data-eng \
   tesseract-ocr-data-rus \
+  tesseract-ocr-data-spa \
   tesseract-ocr-data-tur
 COPY --from=deps /app/node_modules ./node_modules
 COPY package*.json ./
