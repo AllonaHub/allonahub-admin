@@ -1,0 +1,110 @@
+/* Auth fields must remain readable after theme changes and browser autofill. */
+body.auth-page[data-theme] {
+  --auth-field-bg: color-mix(in srgb, var(--ah-bg-strong) 94%, var(--ah-primary) 6%);
+  --auth-field-ink: var(--ah-ink, #f8fbff);
+  --auth-field-placeholder: var(--ah-muted, rgba(255, 255, 255, 0.76));
+}
+
+body.auth-page[data-theme] :where(
+  .input,
+  .select-box,
+  .country-selected,
+  .country-dropdown,
+  .country-search,
+  .profession-results
+) {
+  border-color: var(--ah-line) !important;
+  background: var(--auth-field-bg) !important;
+  color: var(--auth-field-ink) !important;
+}
+
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .select-box select,
+  .country-selected,
+  .country-search,
+  .country-item,
+  .profession-item
+) {
+  background-color: transparent !important;
+  color: var(--auth-field-ink) !important;
+  -webkit-text-fill-color: var(--auth-field-ink) !important;
+  caret-color: var(--ah-primary) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+)::placeholder {
+  color: var(--auth-field-placeholder) !important;
+  -webkit-text-fill-color: var(--auth-field-placeholder) !important;
+  opacity: 1 !important;
+}
+
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+):-webkit-autofill,
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+):-webkit-autofill:hover,
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+):-webkit-autofill:focus,
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+):autofill {
+  color: var(--auth-field-ink) !important;
+  -webkit-text-fill-color: var(--auth-field-ink) !important;
+  caret-color: var(--ah-primary) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
+  box-shadow: 0 0 0 1000px var(--auth-field-bg) inset !important;
+  transition: background-color 99999s ease-out 0s;
+}
+
+body.auth-page[data-theme] :where(
+  .search input,
+  .input input,
+  .country-search
+)::selection {
+  background: var(--ah-primary);
+  color: var(--ah-bg-strong);
+  -webkit-text-fill-color: var(--ah-bg-strong);
+}
+
+body.auth-page[data-theme="white"] :where(
+  .search input,
+  .input input,
+  .select-box select,
+  .country-selected,
+  .country-search
+) {
+  color-scheme: light;
+}
+
+body.auth-page[data-theme]:not([data-theme="white"]) :where(
+  .search input,
+  .input input,
+  .select-box select,
+  .country-selected,
+  .country-search
+) {
+  color-scheme: dark;
+}
+
+body.auth-page[data-theme] .select-box select option {
+  background: var(--ah-bg-strong) !important;
+  color: var(--ah-ink) !important;
+  -webkit-text-fill-color: var(--ah-ink) !important;
+}
