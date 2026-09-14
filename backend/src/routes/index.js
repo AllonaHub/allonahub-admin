@@ -10419,6 +10419,7 @@ export function registerRoutes(app) {
 	    service: "allonahub-backend",
 	    build: BACKEND_BUILD_MARKER,
 	    super_admin_action_health_route: true,
+	    maritime_document_ai_ready: Boolean(config.maritimeDocuments.aiApiKey),
 	    time: new Date().toISOString()
 	  }));
 

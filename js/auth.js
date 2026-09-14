@@ -62,8 +62,10 @@
     const user = userOverride || await getUser();
     if (!user) return { type: "anonymous", user: null, profile: null, partnerBusiness: null };
 
-    const profile = await getProfile(user.id);
-    const role = String(profile?.role || "").trim().toLowerCase();
+    const profile = await getPersistedProfile(user.id);
+    const trustedAuthRole = String(user.app_metadata?.role || "").trim().toLowerCase();
+    const role = String(profile?.role || trustedAuthRole || "customer").trim().toLowerCase();
+    const resolvedProfile = profile || { id: user.id, role, account_status: "active" };
     let partnerBusiness = null;
 
     if (role === "partner") {
@@ -79,7 +81,7 @@
     }
 
     const type = ["customer", "partner", "admin", "super_admin"].includes(role) ? role : "unknown";
-    return { type, user, profile, partnerBusiness };
+    return { type, user, profile: resolvedProfile, profilePersisted: Boolean(profile), partnerBusiness };
   }
 
   function customerReturnPath(requested, fallback) {
@@ -369,7 +371,7 @@
     return true;
   }
 
-  async function getProfile(userId) {
+  async function getPersistedProfile(userId) {
     const user = userId ? { id: userId } : await getUser();
     if (!user) return null;
 
@@ -380,14 +382,23 @@
       .maybeSingle();
 
     if (error) throw error;
-    if (data) return data;
+    return data || null;
+  }
+
+  async function getProfile(userId) {
+    const user = userId ? { id: userId } : await getUser();
+    if (!user) return null;
+
+    const profile = await getPersistedProfile(user.id);
+    if (profile) return profile;
 
     const authUser = await getUser();
+    const trustedAuthRole = String(authUser?.app_metadata?.role || "").trim().toLowerCase();
     return {
       id: user.id,
       full_name: authUser && authUser.user_metadata && authUser.user_metadata.full_name || "",
       phone: authUser && authUser.user_metadata && authUser.user_metadata.phone || "",
-      role: "customer"
+      role: trustedAuthRole || "customer"
     };
   }
 

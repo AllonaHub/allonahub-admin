@@ -15,7 +15,7 @@ function queryResult(data) {
   };
 }
 
-async function authRuntime({ role, partnerBusiness = null, pathname = "/pages/account/user.html", hostname = "allonahub.com" }) {
+async function authRuntime({ role, authRole = "", profileExists = true, partnerBusiness = null, pathname = "/pages/account/user.html", hostname = "allonahub.com" }) {
   const source = await readFile(authScriptUrl, "utf8");
   const replacements = [];
   const window = {
@@ -32,14 +32,14 @@ async function authRuntime({ role, partnerBusiness = null, pathname = "/pages/ac
       core: { url: (value) => value },
       supabase: {
         auth: {
-          async getUser() { return { data: { user: { id: "account-1" } }, error: null }; }
+          async getUser() { return { data: { user: { id: "account-1", app_metadata: authRole ? { role: authRole } : {} } }, error: null }; }
         }
       },
       db: {
         client() {
           return {
             from(table) {
-              if (table === "profiles") return queryResult({ id: "account-1", role });
+              if (table === "profiles") return queryResult(profileExists ? { id: "account-1", role } : null);
               if (table === "partner_businesses") return queryResult(partnerBusiness);
               throw new Error(`Unexpected table: ${table}`);
             }
@@ -117,4 +117,23 @@ test("a customer account is redirected away from the partner panel", async () =>
   const result = await auth.requireAccountType("partner", { user: { id: "account-1" } });
   assert.equal(result, null);
   assert.deepEqual(replacements, ["https://allonahub.com/pages/account/user-panel.html"]);
+});
+
+test("a standard auth account without a profile is recovered as a customer", async () => {
+  const { auth } = await authRuntime({ role: "customer", profileExists: false });
+  const context = await auth.getAccountContext({ id: "account-1", app_metadata: {} });
+  assert.equal(context.type, "customer");
+  assert.equal(context.profilePersisted, false);
+});
+
+test("a trusted partner auth role never falls through to the customer account", async () => {
+  const { auth } = await authRuntime({
+    role: "customer",
+    authRole: "partner",
+    profileExists: false,
+    partnerBusiness: { id: "business-1", status: "active" }
+  });
+  const context = await auth.getAccountContext({ id: "account-1", app_metadata: { role: "partner" } });
+  assert.equal(context.type, "partner");
+  assert.equal(context.profilePersisted, false);
 });

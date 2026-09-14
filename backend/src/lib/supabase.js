@@ -92,7 +92,7 @@ export async function authContext(request) {
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("id, role, full_name, phone")
+    .select("id, role, full_name, phone, account_status")
     .eq("id", data.user.id)
       .maybeSingle();
 
@@ -107,7 +107,8 @@ export async function authContext(request) {
   return {
     jwt: token,
     user: data.user,
-    profile: { ...(profile || { id: data.user.id }), role },
+    profile: { ...(profile || { id: data.user.id, account_status: "active" }), role },
+    profilePersisted: Boolean(profile),
     jwtClaims: claims,
     authenticatorAssuranceLevel: aal,
     mfaVerified: aal === "aal2",

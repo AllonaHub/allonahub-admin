@@ -115,6 +115,12 @@ test("the customer workspace exposes a PDF-only Global Passport flow", async () 
   assert.match(route, /MARITIME_DOCUMENT_READER_VERSION/);
   assert.match(route, /maritimeDocumentIdentityConflicts/);
   assert.match(route, /MARITIME_DOCUMENT_IDENTITY_CONFLICT/);
+  assert.match(route, /function ensureMaritimeCustomerProfile\(ctx\)/);
+  assert.match(route, /MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED/);
+  assert.match(route, /account_status: "active"/);
+  assert.match(route, /MARITIME_DOCUMENT_AI_NOT_CONFIGURED/);
+  assert.match(documentUi, /firstFailureMessage/);
+  assert.match(documentUi, /error\.code = payload\.code/);
   assert.match(route, /maritimeDocumentSignatureMatches\(bytes, "image\/webp"\)/);
   assert.doesNotMatch(documentUi, /name="certificate_codes"/);
   assert.doesNotMatch(portal, /career\/cv-form\.html/);

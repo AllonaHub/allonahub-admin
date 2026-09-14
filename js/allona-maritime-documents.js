@@ -256,6 +256,7 @@
     if (!response.ok || payload.ok !== true) {
       const error = new Error(payload.message || "REQUEST_FAILED");
       error.status = response.status;
+      error.code = payload.code || "REQUEST_FAILED";
       throw error;
     }
     return payload;
@@ -1255,6 +1256,7 @@
       const fileMap = new Map(state.files.map(function (item) { return [item.id, item.file]; }));
       let completed = 0;
       let failed = 0;
+      let firstFailureMessage = "";
       for (const upload of intent.uploads || []) {
         const file = fileMap.get(upload.client_file_id);
         try {
@@ -1265,6 +1267,7 @@
           await api(`/v1/maritime/documents/${encodeURIComponent(upload.intake_id)}/analyze`, { method: "POST", body: JSON.stringify({ language: language() }) });
         } catch (error) {
           failed += 1;
+          if (!firstFailureMessage && error && error.status) firstFailureMessage = error.message || "";
         }
       }
       state.files = [];
@@ -1272,7 +1275,7 @@
       renderSelection();
       await loadRemote();
       setProgress(false);
-      setStatus(failed ? text("uploadFailed") : text("statusComplete"), failed ? "error" : "success");
+      setStatus(failed ? firstFailureMessage || text("uploadFailed") : text("statusComplete"), failed ? "error" : "success");
       if (!failed) document.querySelector("[data-global-passport-section]")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } finally {
       state.busy = false;
