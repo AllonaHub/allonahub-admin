@@ -50,7 +50,10 @@
     const user = await App.auth.getUser();
     if (!user) return;
 
-    const returnTo = safeReturnTo(core.getParam("returnTo"));
+    const requestedReturnTo = safeReturnTo(core.getParam("returnTo"));
+    const returnTo = App.auth.accountDestination
+      ? await App.auth.accountDestination(requestedReturnTo, user)
+      : requestedReturnTo;
     if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded(returnTo)) return;
     if (App.complianceAudit && session) {
       await App.complianceAudit.record({
@@ -125,10 +128,13 @@
         if (App.cvAccess && App.cvAccess.ensureAccess) {
           await App.cvAccess.ensureAccess("login");
         }
-        const returnTo = safeReturnTo(core.getParam("returnTo"));
+        const user = await App.auth.getUser();
+        const requestedReturnTo = safeReturnTo(core.getParam("returnTo"));
+        const returnTo = App.auth.accountDestination
+          ? await App.auth.accountDestination(requestedReturnTo, user)
+          : requestedReturnTo;
         if (App.auth.redirectToMfaIfNeeded && await App.auth.redirectToMfaIfNeeded(returnTo)) return;
         if (App.complianceAudit) {
-          const user = await App.auth.getUser();
           await App.complianceAudit.record({
             category: "account",
             action: "login_success",
@@ -191,7 +197,11 @@
           });
         }
         core.toast("Kayıt oluşturuldu. E-posta doğrulaması gerekiyorsa gelen kutunuzu kontrol edin.");
-        window.location.href = safeReturnTo(core.getParam("returnTo"));
+        const user = await App.auth.getUser();
+        const requestedReturnTo = safeReturnTo(core.getParam("returnTo"));
+        window.location.href = user && App.auth.accountDestination
+          ? await App.auth.accountDestination(requestedReturnTo, user)
+          : requestedReturnTo;
       } catch (error) {
         const message = /çok fazla|kontrol edin|geçerli|şifre/i.test(error.message || "") ? error.message : authError(error, "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
         core.toast(message, "error");

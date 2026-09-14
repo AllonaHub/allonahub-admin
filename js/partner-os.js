@@ -600,6 +600,10 @@
   async function loadPartnerOs() {
     showAlert("Partner OS yükleniyor...");
     try {
+      const accountAccess = App.auth.requireAccountType
+        ? await App.auth.requireAccountType(["partner", "admin", "super_admin"], { redirect: true })
+        : null;
+      if (!accountAccess) return;
       state.access = await App.auth.requireRole(["partner", "admin", "super_admin"]);
       if (!state.access) return;
       try {

@@ -64,6 +64,13 @@
     return target;
   }
 
+  async function completeAuthorizedReturnTo() {
+    const target = completeReturnTo();
+    const user = await App.auth.getUser();
+    if (!user || !App.auth.accountDestination) return target;
+    return App.auth.accountDestination(target, user);
+  }
+
   function returnTo() {
     const fallback = core.url("/pages/account/user-panel.html");
     const raw = core.getParam("returnTo") || "";
@@ -205,6 +212,9 @@
       window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(target)}`);
       return;
     }
+    if (App.auth.accountDestination) {
+      rememberReturnTo(await App.auth.accountDestination(returnTo(), user));
+    }
     state.status = await App.auth.mfaStatus();
     render();
   }
@@ -244,7 +254,7 @@
       await App.auth.mfaVerify({ factorId: state.enrollment.factorId, code });
       setStatus("MFA etkinleştirildi.", "success");
       await load();
-      window.location.href = completeReturnTo();
+      window.location.href = await completeAuthorizedReturnTo();
     } catch (error) {
       setStatus(error.message || "Kod doğrulanamadı.", "error");
     } finally {
@@ -261,7 +271,7 @@
     try {
       await App.auth.mfaChallengeAndVerify(factorId, form.elements.code.value);
       setStatus("MFA doğrulandı.", "success");
-      window.location.href = completeReturnTo();
+      window.location.href = await completeAuthorizedReturnTo();
     } catch (error) {
       setStatus(error.message || "Kod doğrulanamadı.", "error");
     } finally {

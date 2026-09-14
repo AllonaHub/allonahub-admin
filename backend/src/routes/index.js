@@ -30,6 +30,7 @@ import {
   paymentProviderDispatchStatus
 } from "../lib/payment-provider-dispatch.js";
 import { decryptSecretValue, encryptSecretValue, secretVaultStatus } from "../lib/secret-vault.js";
+import { assertActivePartnerBusiness } from "../lib/partner-account-boundary.js";
 import {
   MARKETPLACE_BRANDING_SANITIZER_VERSION,
   cleanMarketplaceCode,
@@ -7020,7 +7021,7 @@ function partnerPaymentStatusLabel(status) {
   return labels[status] || "Oluşturuldu";
 }
 
-async function ensurePartnerBusiness(ctx, request) {
+async function ensurePartnerBusiness(ctx) {
   const { data: existing, error } = await supabaseAdmin
     .from("partner_businesses")
     .select("*")
@@ -7029,37 +7030,7 @@ async function ensurePartnerBusiness(ctx, request) {
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (existing) return existing;
-
-  const displayName = String(ctx.profile.full_name || ctx.user.user_metadata?.full_name || ctx.user.email || "Allona Partner").slice(0, 160);
-  const { data: created, error: createError } = await supabaseAdmin
-    .from("partner_businesses")
-    .insert({
-      owner_id: ctx.user.id,
-      display_name: displayName,
-      legal_name: displayName,
-      email: ctx.user.email || null,
-      phone: ctx.profile.phone || null,
-      status: "active",
-      verification_status: "pending",
-      metadata: {
-        created_from: "partner_os_auto_bootstrap"
-      }
-    })
-    .select("*")
-    .single();
-  if (createError) throw createError;
-
-  await auditEvent({
-    request,
-    actorId: ctx.user.id,
-    actorRole: ctx.profile.role,
-    action: "partner.business_auto_created",
-    resourceType: "partner_business",
-    resourceId: created.id,
-    metadata: { display_name: displayName }
-  });
-  return created;
+  return assertActivePartnerBusiness(existing);
 }
 
 function partnerApplicationMetadata(application) {

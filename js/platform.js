@@ -965,27 +965,32 @@
     return false;
   }
 
-  async function hasAuthenticatedUser() {
+  async function authenticatedAccount() {
     try {
       if (App.auth && App.auth.getUser) {
         const user = await App.auth.getUser();
-        if (user) return true;
+        if (user) {
+          const context = App.auth.getAccountContext
+            ? await App.auth.getAccountContext(user)
+            : { type: "customer", user };
+          return { user, context };
+        }
       }
       if (App.supabase && App.supabase.auth && App.supabase.auth.getUser) {
         const { data, error } = await App.supabase.auth.getUser();
-        if (!error && data && data.user) return true;
+        if (!error && data && data.user) return { user: data.user, context: { type: "customer", user: data.user } };
       }
     } catch (error) {
       // Header state must not trust stale local storage after password/session changes.
     }
-    return hasStoredAuthSession();
+    return hasStoredAuthSession() ? { user: null, context: { type: "customer" } } : null;
   }
 
   async function updateAccountLinks() {
     const links = accountLinkCandidates();
     if (!links.length) return;
-    const loggedIn = await hasAuthenticatedUser();
-    if (!loggedIn) {
+    const account = await authenticatedAccount();
+    if (!account) {
       links.forEach((link) => {
         link.href = assetUrl("/pages/account/user.html");
         link.textContent = localizedText("Giriş Yap");
@@ -994,10 +999,15 @@
       });
       return;
     }
+    const accountType = account.context && account.context.type || "customer";
+    const destination = App.auth && App.auth.accountHome
+      ? App.auth.accountHome(accountType)
+      : assetUrl("/pages/account/user-panel.html");
+    const label = accountType === "partner" ? localizedText("Şirket Paneli") : localizedText("Hesabım");
     links.forEach((link) => {
-      link.href = assetUrl("/pages/account/user-panel.html");
-      link.textContent = localizedText("Hesabım");
-      link.setAttribute("aria-label", localizedText("Hesabım"));
+      link.href = destination;
+      link.textContent = label;
+      link.setAttribute("aria-label", label);
       link.setAttribute("data-account-link", "");
     });
   }

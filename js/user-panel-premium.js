@@ -615,6 +615,10 @@
     }
 
     try {
+      const accountAccess = window.Allona && window.Allona.auth && window.Allona.auth.requireAccountType
+        ? await window.Allona.auth.requireAccountType("customer", { redirect: true })
+        : null;
+      if (!accountAccess) return;
       const loaded = await sync.load(client);
       if (!loaded || !loaded.user) {
         window.location.href = "/pages/account/user.html";

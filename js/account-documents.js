@@ -211,6 +211,10 @@
       setStatus("Belge merkezi için profil bağlantısı hazırlanamadı.", "error");
       return;
     }
+    const accountAccess = App.auth && App.auth.requireAccountType
+      ? await App.auth.requireAccountType("customer", { redirect: true })
+      : null;
+    if (!accountAccess) return;
     const loaded = await sync.load(client);
     if (!loaded || !loaded.user) {
       window.location.href = "user.html";

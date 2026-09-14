@@ -24,6 +24,7 @@
     moduleReturn: ["Modüle Dön", "Modula qayıt", "Модульге оралу", "Modulga qaytish", "Модулга кайтуу", "Back to Module", "Zum Modul", "В модуль", "العودة إلى الوحدة"],
     signIn: ["Giriş Yap", "Daxil ol", "Кіру", "Kirish", "Кирүү", "Sign In", "Anmelden", "Войти", "تسجيل الدخول"],
     myAccount: ["Hesabım", "Hesabım", "Менің аккаунтым", "Mening hisobim", "Менин аккаунтум", "My Account", "Mein Konto", "Мой аккаунт", "حسابي"],
+    companyPanel: ["Şirket Paneli", "Şirkət paneli", "Компания панелі", "Kompaniya paneli", "Компания панели", "Company Panel", "Unternehmensbereich", "Панель компании", "لوحة الشركة"],
     workspaceNav: ["Denizcilik çalışma alanı", "Dənizçilik iş sahəsi", "Теңіз жұмысы кеңістігі", "Dengizchilik ish maydoni", "Деңизчилик иш мейкиндиги", "Maritime workspace", "Maritimer Arbeitsbereich", "Рабочая зона моряка", "مساحة العمل البحرية"],
     jobsNav: ["İş İlanları", "İş elanları", "Жұмыс орындары", "Ish eʼlonlari", "Жумуш жарыялары", "Job Listings", "Stellenangebote", "Вакансии", "الوظائف"],
     applicationsNav: ["Başvurularım", "Müraciətlərim", "Өтінімдерім", "Arizalarim", "Арыздарым", "My Applications", "Meine Bewerbungen", "Мои заявки", "طلباتي"],
@@ -245,15 +246,22 @@
   async function syncSession() {
     session = App.auth && App.auth.getSession ? await App.auth.getSession() : null;
     const account = document.querySelector("[data-portal-account]");
-    if (!account) return;
     if (session) {
-      account.href = "maritime-account.html";
-      account.dataset.portalI18n = "myAccount";
-      account.textContent = text("myAccount");
+      const context = App.auth && App.auth.getAccountContext ? await App.auth.getAccountContext(session.user) : null;
+      if (account) {
+        const isPartner = context && context.type === "partner";
+        account.href = App.auth && App.auth.accountHome ? App.auth.accountHome(context && context.type || "customer") : "maritime-account.html";
+        account.dataset.portalI18n = isPartner ? "companyPanel" : "myAccount";
+        account.textContent = text(isPartner ? "companyPanel" : "myAccount");
+      }
+      return context;
     } else {
-      account.href = loginUrl();
-      account.dataset.portalI18n = "signIn";
-      account.textContent = text("signIn");
+      if (account) {
+        account.href = loginUrl();
+        account.dataset.portalI18n = "signIn";
+        account.textContent = text("signIn");
+      }
+      return null;
     }
   }
 
@@ -356,6 +364,10 @@
       window.location.href = loginUrl(`${target.pathname}${target.search}`);
       return;
     }
+    const access = App.auth && App.auth.requireAccountType
+      ? await App.auth.requireAccountType("customer", { user: session.user, redirect: true })
+      : null;
+    if (!access) return;
     const rows = applicationRows();
     rows.unshift({
       id: `application-${job.id}-${Date.now()}`,
@@ -740,7 +752,12 @@
   async function renderView() {
     renderedLanguage = language();
     setStaticTranslations();
-    await syncSession();
+    const context = await syncSession();
+    const customerOnly = ["applications", "offers", "auto", "account"].includes(view);
+    if (customerOnly && session && (!context || context.type !== "customer")) {
+      if (context && App.auth && App.auth.accountHome) window.location.replace(App.auth.accountHome(context.type));
+      return;
+    }
     document.querySelectorAll("[data-view-link]").forEach(function (link) {
       if (link.dataset.viewLink === view) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");

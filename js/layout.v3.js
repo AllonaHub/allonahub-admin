@@ -218,8 +218,13 @@
     if (!link || !App.auth) return;
     const user = await App.auth.getUser();
     if (user) {
-      link.href = core.url("/pages/account/user-panel.html");
-      link.textContent = "Hesabım";
+      const context = App.auth.getAccountContext
+        ? await App.auth.getAccountContext(user)
+        : { type: "customer" };
+      link.href = App.auth.accountHome
+        ? App.auth.accountHome(context.type)
+        : core.url("/pages/account/user-panel.html");
+      link.textContent = context.type === "partner" ? "Şirket Paneli" : "Hesabım";
     }
   }
 

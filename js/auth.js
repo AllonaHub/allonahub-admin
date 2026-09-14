@@ -39,22 +39,81 @@
     }
   }
 
-  async function getOwnedPartnerBusiness(userId) {
-    if (!App.supabase || !userId) return null;
-    try {
-      const { data, error } = await App.supabase
+  function accountHome(accountType) {
+    const path = window.location.pathname;
+    const onPartnerHost = window.location.hostname === "partner.allonahub.com";
+    if (accountType === "partner") {
+      if (onPartnerHost) return "/panel";
+      return App.core.url("/pages/partner/partner-panel.html");
+    }
+    const mainSiteUrl = function (target) {
+      return onPartnerHost ? new URL(target, "https://allonahub.com").href : App.core.url(target);
+    };
+    if (accountType === "admin") return mainSiteUrl("/admin/index.html");
+    if (accountType === "super_admin") return mainSiteUrl("/admin/super-admin.html");
+    if (accountType === "customer") {
+      if (/\/pages\/ecosystem\/maritime-/i.test(path)) return mainSiteUrl("/pages/ecosystem/maritime-account.html");
+      return mainSiteUrl("/pages/account/user-panel.html");
+    }
+    return mainSiteUrl("/index.html");
+  }
+
+  async function getAccountContext(userOverride) {
+    const user = userOverride || await getUser();
+    if (!user) return { type: "anonymous", user: null, profile: null, partnerBusiness: null };
+
+    const profile = await getProfile(user.id);
+    const role = String(profile?.role || "").trim().toLowerCase();
+    let partnerBusiness = null;
+
+    if (role === "partner") {
+      const { data, error } = await App.db.client()
         .from("partner_businesses")
-        .select("id, owner_id, partner_code, display_name, legal_name, partner_type, email, phone, city, country, status, verification_status, trust_score, level, xp")
-        .eq("owner_id", userId)
-        .eq("status", "active")
+        .select("id, owner_id, partner_code, display_name, partner_type, status, verification_status")
+        .eq("owner_id", user.id)
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
-      if (error) return null;
-      return data || null;
+      if (error) throw error;
+      partnerBusiness = data || null;
+    }
+
+    const type = ["customer", "partner", "admin", "super_admin"].includes(role) ? role : "unknown";
+    return { type, user, profile, partnerBusiness };
+  }
+
+  function customerReturnPath(requested, fallback) {
+    const destination = safeReturnPath(requested, fallback);
+    try {
+      const path = new URL(destination, window.location.href).pathname;
+      if (/^\/pages\/partner\//i.test(path) || /^\/admin(?:\/|$)/i.test(path)) return fallback;
     } catch (error) {
+      return fallback;
+    }
+    return destination;
+  }
+
+  async function accountDestination(requested, userOverride) {
+    const fallback = App.core.url("/pages/account/user-panel.html");
+    const context = await getAccountContext(userOverride);
+    if (context.type === "customer") return customerReturnPath(requested, fallback);
+    return accountHome(context.type);
+  }
+
+  async function requireAccountType(expectedType, options = {}) {
+    const user = options.user || await getUser();
+    if (!user) {
+      if (options.allowAnonymous) return null;
+      const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+      window.location.replace(App.core.url(`/pages/account/user.html?returnTo=${returnTo}`));
       return null;
     }
+
+    const context = await getAccountContext(user);
+    const expectedTypes = Array.isArray(expectedType) ? expectedType : [expectedType];
+    if (expectedTypes.includes(context.type)) return context;
+    if (options.redirect !== false) window.location.replace(accountHome(context.type));
+    return null;
   }
 
   async function signIn(email, password) {
@@ -385,16 +444,6 @@
     if (!user) return null;
     const profile = await getProfile(user.id);
     if (!profile || !roles.includes(profile.role)) {
-      if (roles.includes("partner")) {
-        const partnerBusiness = await getOwnedPartnerBusiness(user.id);
-        if (partnerBusiness) {
-          return {
-            user,
-            profile: { ...(profile || { id: user.id }), role: "partner" },
-            partnerBusiness
-          };
-        }
-      }
       throw new Error("Bu alana erişim yetkiniz yok.");
     }
     return { user, profile };
@@ -418,6 +467,10 @@
     mfaUnenroll,
     mfaUrl,
     redirectToMfaIfNeeded,
+    accountHome,
+    getAccountContext,
+    accountDestination,
+    requireAccountType,
     requireAuth,
     requireRole,
     clearLocalAuthState
