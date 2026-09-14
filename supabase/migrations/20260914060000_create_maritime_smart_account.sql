@@ -258,7 +258,7 @@ join lateral (
 where listing.listing_type = 'crew_position'
   and listing.partner_user_id is not null
   and listing.status in ('pending_review', 'active', 'paused')
-on conflict (public_listing_id) do nothing;
+on conflict (public_listing_id) where public_listing_id is not null do nothing;
 
 drop policy if exists maritime_smart_account_runs_select_own_or_admin on public.maritime_smart_account_runs;
 create policy maritime_smart_account_runs_select_own_or_admin

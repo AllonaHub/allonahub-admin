@@ -31,6 +31,7 @@ test("smart account writes remain customer-only, reviewable, and separated from 
   assert.match(migration, /fresh confirmed smart match required/);
   assert.match(migration, /existing_match\.stale_after <= now\(\)/);
   assert.match(migration, /critical maritime document expired/);
+  assert.match(migration, /on conflict \(public_listing_id\) where public_listing_id is not null do nothing/);
   assert.match(migration, /grant execute on function public\.prepare_maritime_smart_account\(uuid, text, text, jsonb, jsonb\) to service_role/);
   assert.doesNotMatch(migration, /grant execute on function public\.prepare_maritime_smart_account\([^\n]+\) to authenticated/);
 });
