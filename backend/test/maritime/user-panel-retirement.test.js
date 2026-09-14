@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const newPanelUrl = new URL("../../../pages/account/user-panel.html", import.meta.url);
 const legacyAliasUrl = new URL("../../../pages/ecosystem/maritime-account.html", import.meta.url);
-const archiveBase = new URL("../../../archive/legacy-user-panel/2026-09-14/", import.meta.url);
+const archiveBase = new URL("../../../.archive/legacy-user-panel/2026-09-14/", import.meta.url);
 const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.url);
 const profileHelperUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
 
