@@ -2,7 +2,8 @@
   "use strict";
 
   const App = window.Allona = window.Allona || {};
-  if (window.matchMedia("(max-width: 760px)").matches && document.querySelector(".mobile-maritime")) return;
+  const allScreensMobileExperience = document.body && document.body.dataset.maritimeExperience === "mobile-all-screens";
+  if ((allScreensMobileExperience || window.matchMedia("(max-width: 760px)").matches) && document.querySelector(".mobile-maritime")) return;
   const form = document.querySelector("[data-maritime-freight-form]");
   if (!form) return;
   const searchForm = document.querySelector(".maritime-search");

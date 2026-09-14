@@ -1,5 +1,6 @@
 (function () {
   const mobileQuery = window.matchMedia("(max-width: 760px)");
+  const allScreensExperience = document.body && document.body.dataset.maritimeExperience === "mobile-all-screens";
   const languageCodes = ["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"];
   const languageNames = {
     tr: "Türkçe",
@@ -23,7 +24,6 @@
     brandModule: ["Denizcilik", "Dənizçilik", "Теңіз ісі", "Dengizchilik", "Деңизчилик", "Maritime", "Seefahrt", "Морское дело", "الملاحة البحرية"],
     signIn: ["Giriş Yap", "Daxil ol", "Кіру", "Kirish", "Кирүү", "Sign In", "Anmelden", "Войти", "تسجيل الدخول"],
     myAccount: ["Hesabım", "Hesabım", "Менің аккаунтым", "Mening hisobim", "Менин аккаунтум", "My Account", "Mein Konto", "Мой аккаунт", "حسابي"],
-    companyPanel: ["Şirket Paneli", "Şirkət paneli", "Компания панелі", "Kompaniya paneli", "Компания панели", "Company Panel", "Unternehmensbereich", "Панель компании", "لوحة الشركة"],
     mobileMenuLabel: ["Denizcilik mobil menü", "Dənizçilik mobil menyusu", "Теңіз ісі мобильді мәзірі", "Dengizchilik mobil menyusi", "Деңизчилик мобилдик менюсу", "Maritime mobile menu", "Mobiles Seefahrt-Menü", "Мобильное меню морского раздела", "قائمة الملاحة البحرية للجوال"],
     jobListings: ["İş İlanları", "İş elanları", "Жұмыс орындары", "Ish eʼlonlari", "Жумуш жарыялары", "Job Listings", "Stellenangebote", "Вакансии", "الوظائف"],
     myApplications: ["Başvurularım", "Müraciətlərim", "Өтінімдерім", "Arizalarim", "Арыздарым", "My Applications", "Meine Bewerbungen", "Мои заявки", "طلباتي"],
@@ -133,7 +133,7 @@
   }));
 
   function mobileOnly() {
-    return mobileQuery.matches;
+    return allScreensExperience || mobileQuery.matches;
   }
 
   function currentLanguage(event) {
@@ -251,12 +251,7 @@
     const description = document.querySelector("[data-maritime-description]");
     if (description) description.setAttribute("content", copy.pageDescription);
     const account = document.querySelector("[data-maritime-mobile-account]");
-    if (account) {
-      const accountLabel = account.dataset.maritimeAuthenticated === "true"
-        ? (account.dataset.maritimeAccountKind === "partner" ? copy.companyPanel : copy.myAccount)
-        : copy.signIn;
-      setNodeText(account, accountLabel);
-    }
+    if (account) setNodeText(account, account.dataset.maritimeAuthenticated === "true" ? copy.myAccount : copy.signIn);
     localizeLanguageControl(language, copy);
     applyFooterLanguage(copy);
   }
@@ -268,10 +263,8 @@
     try {
       const user = window.Allona && window.Allona.auth ? await window.Allona.auth.getUser() : null;
       if (user) {
-        const context = window.Allona.auth.getAccountContext ? await window.Allona.auth.getAccountContext(user) : { type: "customer" };
-        link.href = window.Allona.auth.accountHome ? window.Allona.auth.accountHome(context.type) : "maritime-account.html";
+        link.href = "maritime-account.html";
         link.dataset.maritimeAuthenticated = "true";
-        link.dataset.maritimeAccountKind = context.type;
       }
       applyMaritimeLanguage();
     } catch (error) {
