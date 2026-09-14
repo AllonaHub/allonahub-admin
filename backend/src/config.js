@@ -168,6 +168,7 @@ export const config = {
   },
   maritimeDocuments: {
     aiApiKey: readOptionalSecret("MARITIME_DOCUMENT_AI_API_KEY", "OPENAI_API_KEY", "ASSISTANT_AI_API_KEY"),
+    localReaderEnabled: readBool("MARITIME_DOCUMENT_LOCAL_READER_ENABLED", true),
     aiBaseUrl: readEnv("MARITIME_DOCUMENT_AI_BASE_URL", {
       required: false,
       defaultValue: "https://api.openai.com/v1/responses"

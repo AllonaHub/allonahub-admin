@@ -13,6 +13,7 @@ import {
   maritimeDocumentUploadFilesSchema,
   safeMaritimeDocumentName
 } from "../../src/lib/maritime-document-doctor.js";
+import { parseMaritimeOcrPages } from "../../src/lib/maritime-local-document-reader.js";
 
 const localized = (values = {}) => ({ tr: null, az: null, kk: null, uz: null, ky: null, en: null, de: null, ru: null, ar: null, ...values });
 
@@ -202,6 +203,45 @@ test("upgrades legacy extraction payloads with empty multilingual fields", () =>
   assert.deepEqual(parsed.achievements, []);
   assert.equal(parsed.rank_i18n.en, null);
   assert.deepEqual(parsed.endorsements_i18n.ar, []);
+});
+
+test("local OCR fallback extracts reviewable facts for international maritime documents", () => {
+  const fixtures = [
+    {
+      name: "honduras.pdf",
+      expected: { type: "stcw_certificate", country: "HN", number: "ALS C-026/CH-03558", holder: "Ahadov Ilham" },
+      text: "REPUBLIC OF HONDURAS\nCERTIFICATE OF TRAINING NO ALS C-026/CH-03558\nThis is to certify that Mr. Ahadov Ilham date of birth 25/08/1999 holder of an Azerbaijani Passport No C03358710.\nRegulation VI/6 and Section A-VI/6 of the STCW Code."
+    },
+    {
+      name: "panama.pdf",
+      expected: { type: "seafarer_book", country: "PA", number: "PA0660680", holder: "ZIYA GULIYEV" },
+      text: "REPUBLIC OF PANAMA\nPANAMA MARITIME AUTHORITY\nSeaman's Book\nName of holder: ZIYA GULIYEV\nDocument No: PA0660680\nDate of issue: 02-05-2025\nDate of expiry: 21-05-2026\nCapacity: Officer in charge of a navigational watch"
+    },
+    {
+      name: "azerbaijan.pdf",
+      expected: { type: "seafarer_book", country: "AZ", number: "SH-458721", holder: "JAHID ABDULLAYEV" },
+      text: "AZƏRBAYCAN RESPUBLİKASI\nDənizçinin şəxsiyyət sənədi\nAdı Soyadı: JAHID ABDULLAYEV\nBelge No: SH-458721\nDoğum tarixi: 17.04.1994\nVəzifə: Motorman"
+    },
+    {
+      name: "turkiye.pdf",
+      expected: { type: "competency_certificate", country: "TR", number: "SI-123456", holder: "ALI YILMAZ" },
+      text: "TÜRKİYE CUMHURİYETİ\nGEMİADAMI YETERLİK BELGESİ\nAdı Soyadı: ALI YILMAZ\nBelge Numarası: SI-123456\nDoğum tarihi: 12.03.1990\nGörevi: Usta Gemici"
+    }
+  ];
+
+  for (const fixture of fixtures) {
+    const parsed = maritimeDocumentExtractionSchema.parse(parseMaritimeOcrPages({
+      pageTexts: [fixture.text],
+      fileName: fixture.name,
+      outputLanguage: "tr",
+      usedOcr: true
+    }));
+    assert.equal(parsed.document_type, fixture.expected.type);
+    assert.equal(parsed.document_country_code, fixture.expected.country);
+    assert.equal(parsed.document_number, fixture.expected.number);
+    assert.equal(parsed.holder_name, fixture.expected.holder);
+    assert.deepEqual(maritimeDocumentEvidenceIssues(parsed), []);
+  }
 });
 
 test("sends PDFs as private request input and requires strict structured output", async () => {

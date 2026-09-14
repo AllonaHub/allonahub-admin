@@ -10420,6 +10420,8 @@ export function registerRoutes(app) {
 	    build: BACKEND_BUILD_MARKER,
 	    super_admin_action_health_route: true,
 	    maritime_document_ai_ready: Boolean(config.maritimeDocuments.aiApiKey),
+	    maritime_document_local_reader_ready: Boolean(config.maritimeDocuments.localReaderEnabled),
+	    maritime_document_reader_mode: config.maritimeDocuments.aiApiKey ? "ai" : (config.maritimeDocuments.localReaderEnabled ? "local_ocr" : "unavailable"),
 	    time: new Date().toISOString()
 	  }));
 

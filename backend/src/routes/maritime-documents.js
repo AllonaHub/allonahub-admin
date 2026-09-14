@@ -312,7 +312,7 @@ export function registerMaritimeDocumentRoutes(app) {
   }, async (request, reply) => {
     const ctx = await requireCustomer(request, "maritime.document.upload_intent");
     const input = uploadIntentSchema.parse(request.body || {});
-    if (!config.maritimeDocuments.aiApiKey) {
+    if (!config.maritimeDocuments.aiApiKey && !config.maritimeDocuments.localReaderEnabled) {
       throw httpError("Belge okuma hizmeti henüz yapılandırılmadı.", 503, "MARITIME_DOCUMENT_AI_NOT_CONFIGURED");
     }
     const batchId = randomUUID();
@@ -461,7 +461,8 @@ export function registerMaritimeDocumentRoutes(app) {
         apiBaseUrl: config.maritimeDocuments.aiBaseUrl,
         model: config.maritimeDocuments.aiModel,
         outputLanguage: analysisInput.language,
-        timeoutMs: config.maritimeDocuments.aiTimeoutMs
+        timeoutMs: config.maritimeDocuments.aiTimeoutMs,
+        localReaderEnabled: config.maritimeDocuments.localReaderEnabled
       });
       const extractionId = randomUUID();
       const extraction = assertDb(await supabaseAdmin.from("maritime_document_extractions").insert({

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { analyzeMaritimeDocumentLocally } from "./maritime-local-document-reader.js";
 
 export const MARITIME_DOCUMENT_BUCKET = "maritime-private-documents";
 export const MARITIME_PROFILE_PHOTO_BUCKET = "maritime-profile-photos";
@@ -788,9 +789,14 @@ export async function analyzeMaritimeDocument({
   model = "gpt-4.1-mini",
   outputLanguage = "tr",
   timeoutMs = 90000,
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  localReaderEnabled = true
 }) {
   if (!apiKey) {
+    if (localReaderEnabled) {
+      const localPayload = await analyzeMaritimeDocumentLocally({ bytes, mimeType, fileName, outputLanguage });
+      return maritimeDocumentExtractionSchema.parse(localPayload);
+    }
     const error = new Error("Maritime document AI is not configured");
     error.code = "MARITIME_DOCUMENT_AI_NOT_CONFIGURED";
     throw error;

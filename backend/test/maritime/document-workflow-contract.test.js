@@ -10,6 +10,8 @@ const documentUiUrl = new URL("../../../js/allona-maritime-documents.js", import
 const photoUiUrl = new URL("../../../js/allona-maritime-photo.js", import.meta.url);
 const portalCssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-documents.js", import.meta.url);
+const localReaderUrl = new URL("../../src/lib/maritime-local-document-reader.js", import.meta.url);
+const dockerfileUrl = new URL("../../Dockerfile", import.meta.url);
 const deployUrl = new URL("../../../deploy/maritime/apply-maritime-migrations.sh", import.meta.url);
 const schemaCheckUrl = new URL("../../../deploy/maritime/check-maritime-hiring-core.sh", import.meta.url);
 
@@ -29,6 +31,22 @@ test("document storage and extracted records remain private until explicit confi
   assert.match(migration, /maritime document identity conflict/);
   assert.match(migration, /'maritime-profile-photos'[\s\S]*?false/);
   assert.match(migration, /'image\/webp'/);
+});
+
+test("production keeps a local OCR reader available when no external AI key is configured", async () => {
+  const [route, localReader, dockerfile] = await Promise.all([
+    readFile(routeUrl, "utf8"),
+    readFile(localReaderUrl, "utf8"),
+    readFile(dockerfileUrl, "utf8")
+  ]);
+  assert.match(route, /localReaderEnabled: config\.maritimeDocuments\.localReaderEnabled/);
+  assert.match(route, /!config\.maritimeDocuments\.aiApiKey && !config\.maritimeDocuments\.localReaderEnabled/);
+  assert.match(localReader, /pdftotext/);
+  assert.match(localReader, /pdftoppm/);
+  assert.match(localReader, /tesseract/);
+  assert.match(dockerfile, /poppler-utils/);
+  assert.match(dockerfile, /tesseract-ocr-data-aze/);
+  assert.match(dockerfile, /tesseract-ocr-data-tur/);
 });
 
 test("the production maritime migration chain includes and verifies Global Passport data", async () => {
