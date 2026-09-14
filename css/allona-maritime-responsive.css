@@ -1,0 +1,1104 @@
+body.maritime-page {
+  min-height: 100vh;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.mobile-maritime {
+  display: block;
+}
+
+.maritime-skip-link--mobile {
+  display: none;
+}
+
+.maritime-skip-link {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 12000;
+  min-height: 44px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid #00d5ff;
+  border-radius: 8px;
+  background: #020814;
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+  transform: translateY(calc(-100% - 20px));
+}
+
+.maritime-skip-link:focus-visible {
+  outline: 3px solid #ffd700;
+  outline-offset: 3px;
+  transform: translateY(0);
+}
+
+@media (min-width: 0) {
+  html,
+  body.maritime-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body.maritime-page {
+    background: var(--ah-bg, #020814);
+  }
+
+  body.maritime-page .site-shell {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  body.maritime-page .module-ad-banner {
+    display: none !important;
+  }
+
+  body.maritime-page .maritime-skip-link--mobile {
+    display: inline-flex;
+  }
+
+  body.maritime-page .mobile-maritime {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 0 42px;
+    background: var(--ah-page-bg, #020814);
+    color: var(--ah-ink, #eef7ff);
+  }
+
+  .mobile-maritime *,
+  .mobile-maritime *::before,
+  .mobile-maritime *::after {
+    box-sizing: border-box;
+  }
+
+  .mobile-maritime a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .mobile-maritime__header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--ah-line, rgba(0, 229, 255, 0.18));
+    background: color-mix(in srgb, var(--ah-bg-strong, #020814) 96%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-maritime__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 9px !important;
+    direction: ltr;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    flex: 0 0 38px !important;
+    border-radius: 0;
+    object-fit: contain;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    font-size: 21px !important;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .mobile-maritime__brand-copy {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+    align-content: center;
+  }
+
+  .mobile-maritime__brand-module {
+    color: #62eaff !important;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.9), 0 0 18px rgba(0, 119, 255, 0.7);
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .gold {
+    color: #ffd700 !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .blue {
+    color: #00e5ff !important;
+  }
+
+  .mobile-maritime__utilities,
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    display: flex !important;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .mobile-maritime__utilities {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    flex: 0 0 auto;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    gap: 5px !important;
+    overflow: visible !important;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    width: 85px !important;
+    min-width: 85px !important;
+    max-width: 85px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-value {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-btn,
+  .mobile-maritime__control-slot .platform-language-btn,
+  .mobile-maritime__control-slot .platform-theme-btn {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-globe {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+  }
+
+  .mobile-maritime__control-slot .platform-theme-dot {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-maritime__control-slot .platform-menu {
+    right: 0 !important;
+    left: auto !important;
+    min-width: 132px;
+  }
+
+  .mobile-maritime__control-slot .platform-menu--wide {
+    min-width: 184px;
+  }
+
+  .mobile-maritime__control-slot .platform-control--language .platform-menu {
+    right: max(10px, env(safe-area-inset-right)) !important;
+    left: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(228px, calc(100vw - 20px));
+    min-width: 0;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .mobile-maritime__control-slot .platform-control--language .platform-menu-item {
+    min-width: 0;
+    min-height: 34px;
+    justify-content: center;
+    padding: 0 7px;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .mobile-account {
+    display: inline-flex;
+    min-height: 40px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0 11px;
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.34));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ah-bg-strong, #09233c) 72%, var(--ah-primary, #00e5ff) 28%);
+    color: var(--ah-ink, #fff);
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .mobile-maritime__nav {
+    display: flex;
+    max-width: 100%;
+    gap: 8px;
+    margin-top: 9px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .mobile-maritime__nav::-webkit-scrollbar,
+  .mobile-job-rail::-webkit-scrollbar,
+  .mobile-market-rail::-webkit-scrollbar,
+  body.maritime-page .site-footer .social-icons::-webkit-scrollbar,
+  body.maritime-page .site-footer .footer-payment-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-maritime__nav a {
+    display: inline-flex;
+    min-height: 40px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: var(--ah-ink, #d7e9f5);
+    font-size: 12px;
+    font-weight: 850;
+    scroll-snap-align: start;
+  }
+
+  .mobile-maritime__nav a.mobile-maritime__complaint {
+    border-color: rgba(255, 86, 117, 0.72);
+    background: rgba(128, 12, 39, 0.82);
+    color: #ffffff !important;
+    box-shadow: 0 0 16px rgba(255, 48, 91, 0.24);
+  }
+
+  .mobile-maritime__nav a[aria-current="page"] {
+    border-color: color-mix(in srgb, var(--ah-accent, #ffd700) 52%, transparent);
+    background: color-mix(in srgb, var(--ah-accent, #ffd700) 12%, transparent);
+    color: var(--ah-accent-soft, #ffe86b);
+  }
+
+  .mobile-maritime__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 18px 14px 10px;
+    overflow: hidden;
+  }
+
+  .mobile-maritime__content > *,
+  .mobile-section,
+  .mobile-job-rail,
+  .mobile-market-rail {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .mobile-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .mobile-search label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .mobile-search input {
+    width: 100%;
+    min-width: 0;
+    height: 50px;
+    padding: 0 14px;
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.25));
+    border-radius: 8px;
+    outline: 0;
+    background: color-mix(in srgb, var(--ah-bg-strong, #071a2d) 92%, transparent);
+    color: var(--ah-ink, #fff);
+    font: inherit;
+    font-size: 15px;
+  }
+
+  .mobile-search input::placeholder {
+    color: var(--ah-muted, #8faabb);
+  }
+
+  .mobile-search input:focus {
+    border-color: #00d5ff;
+    box-shadow: 0 0 0 3px rgba(0, 213, 255, 0.14);
+  }
+
+  .mobile-search button {
+    width: 52px;
+    height: 50px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: #ffd700;
+    color: #071525;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 950;
+  }
+
+  .mobile-maritime__intro {
+    padding: 4px 0 20px;
+  }
+
+  .mobile-commission-free {
+    display: inline-flex;
+    min-height: 38px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-bottom: 12px;
+    padding: 7px 11px;
+    border: 1px solid #00e5ff;
+    border-radius: 8px;
+    background: #00345a;
+    color: #dffcff;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.6), inset 0 0 14px rgba(0, 229, 255, 0.16);
+  }
+
+  .mobile-commission-free strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .mobile-commission-free span {
+    color: #aef7ff;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .mobile-safety-alert {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    margin: 0 0 18px;
+    padding: 13px;
+    border: 1px solid #ff4d5f;
+    border-radius: 8px;
+    background: #4a0b14;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(255, 42, 64, 0.2);
+  }
+
+  .mobile-safety-alert__icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    background: #ff3147;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 950;
+  }
+
+  .mobile-safety-alert p {
+    max-width: none;
+    margin: 0;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.48;
+  }
+
+  .mobile-safety-alert strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #fff;
+    font-size: 13px;
+  }
+
+  .mobile-safety-alert p > span {
+    display: block;
+  }
+
+  body.maritime-page[data-theme] .mobile-safety-alert,
+  body.maritime-page[data-theme] .mobile-safety-alert p,
+  body.maritime-page[data-theme] .mobile-safety-alert strong,
+  body.maritime-page[data-theme] .mobile-safety-alert__icon {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+  }
+
+  body.maritime-page[data-theme] .mobile-commission-free,
+  body.maritime-page[data-theme] .mobile-commission-free strong {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+  }
+
+  body.maritime-page[data-theme] .mobile-commission-free span {
+    color: #aef7ff !important;
+    -webkit-text-fill-color: #aef7ff !important;
+  }
+
+  .mobile-maritime__intro h1 {
+    max-width: 330px;
+    margin: 0 0 10px;
+    color: var(--ah-ink, #fff);
+    font-size: 40px;
+    line-height: 1.04;
+    letter-spacing: 0;
+  }
+
+  .mobile-maritime__intro > p {
+    max-width: 510px;
+    margin: 0;
+    color: var(--ah-muted, #b9ccda);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .mobile-maritime__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin-top: 17px;
+  }
+
+  .mobile-maritime__button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.24));
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ah-bg-strong, #0a2945) 72%, var(--ah-primary, #00e5ff) 28%);
+    color: var(--ah-ink, #fff);
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .mobile-maritime__button--primary {
+    border-color: #ffd700;
+    background: #ffd700;
+    color: #071525;
+  }
+
+  .mobile-section {
+    padding: 22px 0;
+    border-top: 1px solid var(--ah-line, rgba(255, 255, 255, 0.12));
+  }
+
+  .mobile-section__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+  }
+
+  .mobile-section__head h2 {
+    margin: 0;
+    color: var(--ah-ink, #fff);
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .mobile-section__head p {
+    margin: 5px 0 0;
+    color: var(--ah-muted, #91aabd);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .mobile-section__head > a {
+    flex: 0 0 auto;
+    color: var(--ah-primary, #5ee7ff);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-job-rail,
+  .mobile-market-rail {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(272px, 86vw);
+    gap: 11px;
+    padding: 1px 1px 10px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .mobile-job-card,
+  .mobile-market-card {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--ah-line, rgba(0, 229, 255, 0.18));
+    border-radius: 8px;
+    background: var(--ah-card, #07192c);
+    color: var(--ah-ink, #eef7ff);
+    scroll-snap-align: start;
+  }
+
+  .mobile-job-card {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+    padding: 15px;
+  }
+
+  .mobile-job-card__mark {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    border-radius: 8px;
+    background: #103657;
+    color: #5ee7ff;
+    font-size: 12px;
+    font-weight: 950;
+    text-align: center;
+  }
+
+  .mobile-job-card h3,
+  .mobile-market-card h3 {
+    margin: 0 0 6px;
+    color: var(--ah-ink, #fff);
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .mobile-job-card p,
+  .mobile-market-card p {
+    margin: 0;
+    color: var(--ah-muted, #a9bdcb);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .mobile-job-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .mobile-job-card__meta span {
+    display: inline-flex;
+    min-height: 26px;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 215, 0, 0.09);
+    color: #ffe15a;
+    font-size: 11px;
+    font-weight: 850;
+  }
+
+  .mobile-card-link {
+    display: inline-flex;
+    margin-top: 12px;
+    color: var(--ah-primary, #5ee7ff);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mobile-privacy-note {
+    display: flex;
+    gap: 10px;
+    margin: 14px 0 0;
+    padding: 12px;
+    border-left: 3px solid #00d5ff;
+    background: rgba(0, 213, 255, 0.07);
+    color: var(--ah-muted, #b9ccda);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .mobile-crew-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .mobile-crew-action {
+    display: grid;
+    min-height: 112px;
+    align-content: start;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 8px;
+    background: var(--ah-card, #081c31);
+    color: var(--ah-ink, #eef7ff);
+  }
+
+  .mobile-crew-action:first-child {
+    grid-column: 1 / -1;
+    min-height: 92px;
+    border-color: rgba(255, 215, 0, 0.28);
+  }
+
+  .mobile-crew-action strong {
+    color: var(--ah-ink, #fff);
+    font-size: 14px;
+  }
+
+  .mobile-crew-action span {
+    margin-top: 7px;
+    color: var(--ah-muted, #9fb5c4);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .mobile-market-card {
+    min-height: 142px;
+    padding: 15px;
+  }
+
+  .mobile-market-card small {
+    display: block;
+    margin-top: 12px;
+    color: var(--ah-primary, #5ee7ff);
+    font-weight: 900;
+  }
+
+  .mobile-maritime a:focus-visible,
+  .mobile-maritime button:focus-visible,
+  .mobile-maritime input:focus-visible {
+    outline: 3px solid #ffd700;
+    outline-offset: 3px;
+  }
+
+  html[dir="rtl"] .mobile-maritime,
+  html[dir="rtl"] body.maritime-page .site-footer {
+    text-align: right;
+  }
+
+  html[dir="rtl"] .mobile-maritime .logo-title,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-brand {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  html[dir="rtl"] .mobile-maritime__nav,
+  html[dir="rtl"] .mobile-job-rail,
+  html[dir="rtl"] .mobile-market-rail,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-grid,
+  html[dir="rtl"] body.maritime-page .site-footer .social-icons,
+  html[dir="rtl"] body.maritime-page .site-footer .footer-payment-strip {
+    direction: rtl;
+  }
+
+  body.maritime-page .site-footer .store-buttons {
+    display: none !important;
+  }
+
+  body.maritime-page .site-footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.maritime-page .site-footer .footer-grid {
+    display: grid !important;
+    grid-template-columns: none !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: min(82vw, 310px) !important;
+    align-items: start !important;
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    gap: 12px !important;
+    margin-inline: 9px !important;
+    padding: 18px 1px 12px !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .footer-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body.maritime-page .site-footer .footer-col {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 16px !important;
+    scroll-snap-align: start !important;
+  }
+
+  body.maritime-page .site-footer .social-icons,
+  body.maritime-page .site-footer .footer-payment-strip,
+  body.maritime-page .site-footer .footer-bottom {
+    width: calc(100% - 18px) !important;
+    max-width: none !important;
+    margin-inline: 9px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 48px !important;
+    justify-content: start !important;
+    gap: 8px !important;
+    max-width: 100% !important;
+    padding-block: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .social-icons a {
+    position: relative;
+    display: inline-flex !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  body.maritime-page .site-footer .social-icons a.wa { background: #25d366 !important; }
+  body.maritime-page .site-footer .social-icons a.ig {
+    background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
+  }
+  body.maritime-page .site-footer .social-icons a.x { background: #000 !important; }
+  body.maritime-page .site-footer .social-icons a.fb { background: #1877f2 !important; }
+  body.maritime-page .site-footer .social-icons a.yt { background: #ff0000 !important; }
+  body.maritime-page .site-footer .social-icons a.li { background: #0a66c2 !important; }
+  body.maritime-page .site-footer .social-icons a.tg { background: #229ed9 !important; }
+  body.maritime-page .site-footer .social-icons a.tk {
+    background: #010101 !important;
+    box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+  body.maritime-page .site-footer .social-icons a.mail { background: #0067b1 !important; }
+
+  body.maritime-page .site-footer .social-icons a span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  body.maritime-page .site-footer .social-icons .social-icon,
+  body.maritime-page .site-footer .social-icons b,
+  body.maritime-page .site-footer .social-icons svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  body.maritime-page .site-footer .social-icons svg {
+    display: block !important;
+    fill: currentColor !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 76px !important;
+    align-items: center !important;
+    justify-content: start !important;
+    gap: 8px !important;
+    max-width: 100% !important;
+    padding-block: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip .mobile-payment-logo {
+    display: grid !important;
+    width: 76px !important;
+    min-width: 76px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    place-items: center !important;
+    padding: 7px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+    background: #fff !important;
+  }
+
+  body.maritime-page .site-footer .footer-payment-strip .mobile-payment-logo img {
+    display: block !important;
+    width: 60px !important;
+    max-width: 60px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    object-fit: contain !important;
+  }
+}
+
+@media (min-width: 761px) {
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__header {
+    padding: 14px clamp(24px, 4vw, 64px) 12px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__top,
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__nav {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__nav {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__content {
+    max-width: none;
+    margin-inline: 0;
+    padding: 32px clamp(24px, 4vw, 64px) 24px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-search {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-search button {
+    width: 84px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__intro {
+    padding: 8px 0 34px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__intro h1 {
+    max-width: 760px;
+    font-size: 52px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__intro > p {
+    max-width: 760px;
+    font-size: 17px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__actions {
+    grid-template-columns: repeat(2, minmax(0, 260px));
+    width: min(100%, 532px);
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-section {
+    padding: 30px 0;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-section__head h2 {
+    font-size: 26px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-job-rail,
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-market-rail {
+    grid-auto-flow: row;
+    grid-auto-columns: initial;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 1px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-job-card,
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-market-card {
+    height: 100%;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-crew-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-crew-action:first-child {
+    grid-column: auto;
+    min-height: 112px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime .mobile-maritime__brand img {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    height: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime .mobile-maritime__brand .logo-title {
+    font-size: 24px !important;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    grid-auto-columns: initial !important;
+    width: calc(100% - 48px) !important;
+    max-width: none !important;
+    gap: clamp(18px, 2.4vw, 38px) !important;
+    margin-inline: 24px !important;
+    padding: 36px 0 28px !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-col {
+    padding: 0 !important;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .social-icons,
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-payment-strip,
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-bottom {
+    width: calc(100% - 48px) !important;
+    max-width: none !important;
+    margin-inline: 24px !important;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .social-icons,
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-payment-strip {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+  }
+}
+
+@media (min-width: 1000px) {
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-market-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1180px) {
+  body.maritime-page[data-maritime-experience="responsive"] .mobile-job-rail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  body.maritime-page[data-maritime-experience="responsive"] .site-footer .footer-grid {
+    grid-template-columns: minmax(240px, 1.35fr) repeat(4, minmax(130px, 1fr)) !important;
+  }
+}
+
+@media (min-width: 370px) and (max-width: 760px) {
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    height: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
+    font-size: 24px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .mobile-maritime__intro h1 {
+    font-size: 34px;
+  }
+
+  .mobile-maritime__header {
+    padding-inline: 10px;
+  }
+
+  .mobile-maritime__top {
+    gap: 7px;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand {
+    gap: 6px !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand img {
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    height: 34px !important;
+    flex-basis: 34px !important;
+  }
+
+  body.maritime-page .mobile-maritime .mobile-maritime__brand .logo-title {
+    font-size: 19px !important;
+  }
+
+  .mobile-maritime__control-slot,
+  .mobile-maritime__control-slot .platform-controls {
+    width: 81px !important;
+    min-width: 81px !important;
+    max-width: 81px !important;
+  }
+
+  .mobile-maritime__control-slot .platform-control-btn,
+  .mobile-maritime__control-slot .platform-language-btn,
+  .mobile-maritime__control-slot .platform-theme-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  .mobile-account {
+    min-height: 38px;
+    padding-inline: 9px;
+    font-size: 12px;
+  }
+}
