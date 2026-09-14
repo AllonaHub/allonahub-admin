@@ -100,6 +100,7 @@ test("smart account is a dedicated no-footer workspace with explicit approval ac
   assert.match(css, /#00eaff/);
   assert.match(css, /\.maritime-global-passport-help-card/);
   assert.match(css, /\.maritime-global-passport-help-toggle\[aria-expanded="true"\]/);
+  assert.match(css, /\.maritime-global-passport-help-card \{[\s\S]*position: fixed;[\s\S]*max-height: calc\(100dvh - 24px\);[\s\S]*transform: translateY\(-50%\);/);
 });
 
 test("every smart-account label has a complete nine-language row", async () => {

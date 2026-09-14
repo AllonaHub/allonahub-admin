@@ -811,11 +811,22 @@ body.maritime-portal-page textarea {
 }
 
 .maritime-global-passport-help-toggle {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  overflow: visible;
   border-radius: 50%;
   box-shadow: 0 0 18px rgba(0, 223, 252, 0.2);
   font-size: 16px;
+  line-height: 1;
+}
+
+.maritime-global-passport-help-toggle i {
+  display: block;
+  line-height: 1;
 }
 
 .maritime-global-passport-help-toggle:hover,
@@ -3769,8 +3780,17 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   }
 
   .maritime-global-passport-help-card {
-    width: min(420px, calc(100vw - 32px));
-    max-height: calc(100dvh - 190px);
+    position: fixed;
+    z-index: 1000;
+    top: 50%;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    left: max(12px, env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    transform: translateY(-50%);
+    overscroll-behavior: contain;
   }
 
   .maritime-account-layout {
