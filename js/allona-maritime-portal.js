@@ -26,6 +26,8 @@
     myAccount: ["Hesabım", "Hesabım", "Менің аккаунтым", "Mening hisobim", "Менин аккаунтум", "My Account", "Mein Konto", "Мой аккаунт", "حسابي"],
     companyPanel: ["Şirket Paneli", "Şirkət paneli", "Компания панелі", "Kompaniya paneli", "Компания панели", "Company Panel", "Unternehmensbereich", "Панель компании", "لوحة الشركة"],
     workspaceNav: ["Denizcilik çalışma alanı", "Dənizçilik iş sahəsi", "Теңіз жұмысы кеңістігі", "Dengizchilik ish maydoni", "Деңизчилик иш мейкиндиги", "Maritime workspace", "Maritimer Arbeitsbereich", "Рабочая зона моряка", "مساحة العمل البحرية"],
+    uploadDocumentsNav: ["Belgelerim", "Sənədlərim", "Құжаттарым", "Hujjatlarim", "Документтерим", "My Documents", "Meine Dokumente", "Мои документы", "مستنداتي"],
+    smartAccountNav: ["GP CV", "GP CV", "GP CV", "GP CV", "GP CV", "GP CV", "GP CV", "GP CV", "GP CV"],
     jobsNav: ["İş İlanları", "İş elanları", "Жұмыс орындары", "Ish eʼlonlari", "Жумуш жарыялары", "Job Listings", "Stellenangebote", "Вакансии", "الوظائف"],
     applicationsNav: ["Başvurularım", "Müraciətlərim", "Өтінімдерім", "Arizalarim", "Арыздарым", "My Applications", "Meine Bewerbungen", "Мои заявки", "طلباتي"],
     offersNav: ["İş Tekliflerim", "İş təkliflərim", "Жұмыс ұсыныстарым", "Ish takliflarim", "Жумуш сунуштарым", "Job Offers", "Jobangebote", "Предложения работы", "عروض العمل"],
@@ -44,6 +46,17 @@
     complaintsLead: ["Dolandırıcılık ihbarı, ITF bildirimi, hukuki destek talebi veya geliştirme önerinizi doğru ekibe iletin.", "Dələduzluq ihbarı, ITF müraciəti, hüquqi dəstək tələbi və ya inkişaf təklifinizi doğru komandaya göndərin.", "Алаяқтық туралы хабарды, ITF өтінімін, заң көмегін немесе ұсынысты тиісті топқа жіберіңіз.", "Firibgarlik xabari, ITF murojaati, huquqiy yordam yoki taklifingizni tegishli jamoaga yuboring.", "Алдамчылык кабарын, ITF арызын, укуктук жардамды же сунушту тиешелүү топко жөнөтүңүз.", "Send a fraud report, ITF request, legal support request, or improvement suggestion to the right team.", "Senden Sie Betrugsmeldungen, ITF-Anliegen, Rechtsanfragen oder Vorschläge an das zuständige Team.", "Направьте сообщение о мошенничестве, обращение ITF, запрос юрпомощи или предложение нужной команде.", "أرسل بلاغ الاحتيال أو طلب ITF أو الدعم القانوني أو اقتراح التطوير إلى الفريق المختص."],
     accountTitle: ["Denizcilik Hesabım", "Dənizçilik hesabım", "Теңіз аккаунтым", "Dengizchilik hisobim", "Деңизчилик аккаунтум", "My Maritime Account", "Mein Seefahrtkonto", "Мой морской аккаунт", "حسابي البحري"],
     accountLead: ["Profilinizi ve denizcilik iş süreçlerinizi sade bir ekrandan yönetin.", "Profilinizi və dənizçilik iş proseslərinizi sadə bir ekrandan idarə edin.", "Профиль мен теңіздегі жұмыс үдерістерін қарапайым бір экраннан басқарыңыз.", "Profil va dengizchilik ish jarayonlarini sodda bir ekrandan boshqaring.", "Профилиңизди жана деңизчилик жумуш процесстерин жөнөкөй бир экрандан башкарыңыз.", "Manage your profile and maritime job activity from one simple screen.", "Verwalten Sie Ihr Profil und Ihre maritimen Bewerbungen auf einer übersichtlichen Seite.", "Управляйте профилем и морскими вакансиями на одном простом экране.", "أدر ملفك ونشاطك الوظيفي البحري من شاشة بسيطة واحدة."],
+    documentsTitle: ["Belgelerim ve Global Pasaport", "Sənədlərim və Global Pasport", "Құжаттарым және Global Passport", "Hujjatlarim va Global Passport", "Документтерим жана Global Passport", "My Documents and Global Passport", "Meine Dokumente und Global Passport", "Мои документы и Global Passport", "مستنداتي وجواز السفر العالمي"],
+    documentsLead: ["PDF belgelerinizi yükleyin; sistem Global Pasaportunuzu oluştursun, siz kontrol edip onaylayın.", "PDF sənədlərinizi yükləyin; sistem Global Pasportunuzu yaratsın, siz yoxlayıb təsdiqləyin.", "PDF құжаттарыңызды жүктеңіз; жүйе Global Passport профилін жасап, сіз тексеріп растайсыз.", "PDF hujjatlaringizni yuklang; tizim Global Passport profilingizni yaratsin, siz tekshirib tasdiqlang.", "PDF документтериңизди жүктөңүз; система Global Passport профилин түзсүн, сиз текшерип ырастайсыз.", "Upload your PDF documents; the system creates your Global Passport for you to review and confirm.", "Laden Sie Ihre PDF-Dokumente hoch; das System erstellt Ihren Global Passport zur Prüfung und Bestätigung.", "Загрузите PDF-документы; система создаст Global Passport для проверки и подтверждения.", "ارفع مستندات PDF ليُنشئ النظام جواز سفرك العالمي وتراجعه ثم تؤكده."],
+    smartAccountTitle: ["Global Pasaport CV", "Global Pasport CV", "Global Passport CV", "Global Passport CV", "Global Passport CV", "Global Passport CV", "Global-Passport-CV", "Global Passport CV", "السيرة الذاتية لجواز السفر العالمي"],
+    smartAccountLead: ["GP CV'nizi görüntüleyin; yeni hizmet, sertifika veya referans belgesi ekleyerek Global Pasaportunuzu güncel tutun.", "GP CV-yə baxın; yeni xidmət, sertifikat və ya istinad sənədi əlavə edərək Global Pasportunuzu aktual saxlayın.", "GP CV құжатын көріп, жаңа қызмет, сертификат немесе ұсыным құжатын қосу арқылы Global Passport деректерін жаңартып отырыңыз.", "GP CV-ni ko‘ring; yangi xizmat, sertifikat yoki tavsiya hujjatini qo‘shib Global Passport maʼlumotlarini yangilab boring.", "GP CV-ни көрүп, жаңы кызмат, сертификат же сунуш документин кошуу менен Global Passport маалыматын жаңыртып туруңуз.", "View your GP CV and keep your Global Passport current by adding new service, certificate, or reference documents.", "Zeigen Sie Ihren GP CV an und halten Sie den Global Passport mit neuen Dienstzeit-, Zertifikats- oder Referenznachweisen aktuell.", "Просматривайте GP CV и обновляйте Global Passport, добавляя новые документы о стаже, сертификаты или рекомендации.", "اعرض GP CV وحافظ على تحديث جواز السفر العالمي بإضافة مستندات خدمة أو شهادات أو مراجع جديدة."],
+    smartAccountAddDocument: ["Belge Ekle", "Sənəd əlavə et", "Құжат қосу", "Hujjat qo‘shish", "Документ кошуу", "Add Document", "Dokument hinzufügen", "Добавить документ", "إضافة مستند"],
+    globalPassportHelpLabel: ["Global Pasaport hakkında bilgi", "Global Pasport haqqında məlumat", "Global Passport туралы ақпарат", "Global Passport haqida maʼlumot", "Global Passport жөнүндө маалымат", "About Global Passport", "Informationen zum Global Passport", "О Global Passport", "حول جواز السفر العالمي"],
+    globalPassportHelpTitle: ["Global Pasaport Nedir?", "Global Pasport nədir?", "Global Passport деген не?", "Global Passport nima?", "Global Passport деген эмне?", "What Is Global Passport?", "Was ist der Global Passport?", "Что такое Global Passport?", "ما هو جواز السفر العالمي؟"],
+    globalPassportHelpBody: ["Global Pasaport, denizcilik kariyerinizin yaşayan dijital özetidir. Deniz hizmetiniz, yeterlilikleriniz, sertifikalarınız, referanslarınız ve mesleki bilgileriniz tek, düzenli ve sürekli güncellenebilen bir profilde birleşir. Yeni bir kontrat veya belge eklediğinizde sistem bilgileri okur, onayınızdan sonra doğru bölüme işler ve GP CV'nizi günceller. Böylece deneyiminiz şirketler tarafından daha hızlı anlaşılır; doğrulanmış ilanlarla eşleştirme ve başvuru hazırlığı daha isabetli yapılır.", "Global Pasport dənizçilik karyeranızın yaşayan rəqəmsal xülasəsidir. Dəniz xidmətiniz, səriştələriniz, sertifikatlarınız, istinadlarınız və peşəkar məlumatlarınız vahid, nizamlı və daim yenilənə bilən profildə birləşir. Yeni müqavilə və ya sənəd əlavə etdikdə sistem məlumatı oxuyur, təsdiqinizdən sonra düzgün bölməyə yazır və GP CV-ni yeniləyir. Beləliklə təcrübəniz şirkətlər tərəfindən daha tez anlaşılır, təsdiqli elanlarla uyğunlaşdırma və müraciət hazırlığı daha dəqiq aparılır.", "Global Passport – теңіздегі мансабыңыздың үнемі жаңарып отыратын цифрлық қорытындысы. Теңіз қызметі, біліктілік, сертификаттар, ұсынымдар және кәсіби деректер бір реттелген профильде бірігеді. Жаңа келісімшарт немесе құжат қосылғанда жүйе оны оқып, сіз растағаннан кейін тиісті бөлімге енгізеді және GP CV-ді жаңартады. Осылайша компаниялар тәжірибеңізді тез түсініп, тексерілген вакансиялармен сәйкестендіру мен өтінім дайындау дәлірек орындалады.", "Global Passport dengizchilik faoliyatingizning doim yangilanadigan raqamli xulosasidir. Dengiz xizmati, malaka, sertifikatlar, tavsiyalar va kasbiy maʼlumotlar bitta tartibli profilda jamlanadi. Yangi kontrakt yoki hujjat qo‘shilganda tizim uni o‘qiydi, tasdig‘ingizdan so‘ng tegishli bo‘limga kiritadi va GP CV-ni yangilaydi. Shunda kompaniyalar tajribangizni tezroq anglaydi, tasdiqlangan eʼlonlar bilan moslashtirish va ariza tayyorlash aniqroq bo‘ladi.", "Global Passport деңизчилик карьераңыздын дайыма жаңыланып турган санарип жыйынтыгы. Деңиз кызматы, квалификация, сертификаттар, сунуштар жана кесиптик маалыматтар бир иреттүү профилде биригет. Жаңы контракт же документ кошулганда система аны окуп, сиз ырастагандан кийин туура бөлүмгө киргизет жана GP CV-ни жаңыртат. Ошентип компаниялар тажрыйбаңызды тез түшүнүп, текшерилген вакансияларга дал келтирүү жана арыз даярдоо так жүргүзүлөт.", "Global Passport is the living digital record of your maritime career. It brings your sea service, qualifications, certificates, references, and professional details into one organized profile that grows with you. When you add a new contract or document, the system reads it, places approved details in the right section, and refreshes your GP CV. Companies can understand your experience faster, while verified-job matching and application preparation become more precise.", "Der Global Passport ist die fortlaufende digitale Übersicht Ihrer Seefahrtkarriere. Dienstzeiten, Befähigungen, Zertifikate, Referenzen und berufliche Angaben werden in einem geordneten, laufend aktualisierbaren Profil zusammengeführt. Bei einem neuen Vertrag oder Dokument liest das System die Angaben aus, ordnet bestätigte Daten richtig zu und aktualisiert Ihren GP CV. Unternehmen erfassen Ihre Erfahrung schneller; Abgleich mit verifizierten Stellen und Bewerbungsvorbereitung werden präziser.", "Global Passport — это постоянно обновляемая цифровая история вашей морской карьеры. Морской стаж, квалификации, сертификаты, рекомендации и профессиональные сведения объединяются в одном упорядоченном профиле. При добавлении нового контракта или документа система считывает данные, после вашего подтверждения помещает их в нужный раздел и обновляет GP CV. Компаниям проще быстро оценить опыт, а подбор проверенных вакансий и подготовка заявок становятся точнее.", "جواز السفر العالمي هو السجل الرقمي المتجدد لمسيرتك البحرية. يجمع خدمتك البحرية ومؤهلاتك وشهاداتك ومراجعك وبياناتك المهنية في ملف واحد منظم يتطور معك. عند إضافة عقد أو مستند جديد، يقرأ النظام البيانات ويضع المعلومات التي توافق عليها في القسم الصحيح ويحدث GP CV. وبذلك تفهم الشركات خبرتك بسرعة أكبر وتصبح مطابقة الوظائف الموثقة وتجهيز الطلبات أكثر دقة."],
+    globalPassportHelpWorldwide: ["Tek bir ülkeye bağlı değildir. Dünyanın her yerindeki denizcilik şirketlerine sunulabilen ve uluslararası iş başvurularında kullanılmak üzere hazırlanmış global bir kariyer pasaportudur.", "Tək bir ölkəyə bağlı deyil. Dünyanın hər yerindəki dənizçilik şirkətlərinə təqdim edilə bilən və beynəlxalq iş müraciətləri üçün hazırlanmış qlobal karyera pasportudur.", "Ол бір елмен шектелмейді. Әлемнің кез келген жеріндегі теңіз компанияларына ұсынуға және халықаралық жұмыс өтінімдерінде пайдалануға арналған жаһандық мансап паспорты.", "U bitta mamlakat bilan cheklanmaydi. Dunyoning istalgan joyidagi dengizchilik kompaniyalariga taqdim etish va xalqaro ish arizalarida foydalanish uchun yaratilgan global karyera pasportidir.", "Ал бир өлкө менен чектелбейт. Дүйнөнүн бардык жериндеги деңизчилик компанияларына көрсөтүүгө жана эл аралык жумуш арыздарында колдонууга арналган глобалдык карьера паспорту.", "It is not tied to one country. It is a global career passport designed for international job applications and presentation to maritime companies anywhere in the world.", "Er ist nicht an ein einzelnes Land gebunden. Als globaler Karrierepass ist er für internationale Bewerbungen und die Vorlage bei Seefahrtunternehmen weltweit konzipiert.", "Он не привязан к одной стране. Это глобальный карьерный паспорт для международных заявок и представления морским компаниям в любой точке мира.", "لا يرتبط بدولة واحدة، بل هو جواز مهني عالمي صُمم لطلبات العمل الدولية ولتقديمه إلى الشركات البحرية في أي مكان في العالم."],
+    globalPassportHelpPrivacy: ["Kontrol sizde kalır: yalnız onayladığınız bilgiler kaydedilir ve şirketlerle yalnız izin verdiğiniz kapsamda paylaşılır. Global Pasaport resmî belgelerin yerine geçmez; onları profesyonel ve doğrulanabilir bir kariyer görünümünde bir araya getirir.", "Nəzarət sizdə qalır: yalnız təsdiqlədiyiniz məlumat saxlanılır və şirkətlərlə yalnız icazə verdiyiniz həcmdə paylaşılır. Global Pasport rəsmi sənədləri əvəz etmir; onları peşəkar və yoxlanıla bilən karyera görünüşündə birləşdirir.", "Бақылау өзіңізде: тек растаған деректер сақталып, компанияларға тек рұқсат еткен көлемде беріледі. Global Passport ресми құжаттарды алмастырмайды, оларды кәсіби әрі тексерілетін мансап көрінісіне біріктіреді.", "Nazorat sizda qoladi: faqat tasdiqlagan maʼlumotlaringiz saqlanadi va kompaniyalarga faqat ruxsat bergan doirada ulashiladi. Global Passport rasmiy hujjatlar o‘rnini bosmaydi; ularni professional va tekshiriladigan karyera ko‘rinishida birlashtiradi.", "Көзөмөл сизде калат: сиз ырастаган маалымат гана сакталат жана компанияларга уруксат берген чекте гана бөлүшүлөт. Global Passport расмий документтерди алмаштырбайт; аларды кесипкөй жана текшерилүүчү карьера көрүнүшүнө бириктирет.", "You remain in control: only details you approve are saved and shared with companies within the permission you grant. Global Passport does not replace official documents; it organizes them into a professional, verifiable career view.", "Sie behalten die Kontrolle: Nur bestätigte Angaben werden gespeichert und nur im freigegebenen Umfang geteilt. Der Global Passport ersetzt keine amtlichen Dokumente, sondern bündelt sie in einer professionellen, prüfbaren Karriereübersicht.", "Контроль остается у вас: сохраняются только подтвержденные данные, а компаниям они передаются лишь в разрешенном вами объеме. Global Passport не заменяет официальные документы, а объединяет их в профессиональное и проверяемое представление карьеры.", "تبقى السيطرة بيدك: لا تُحفظ إلا المعلومات التي توافق عليها ولا تُشارك مع الشركات إلا ضمن النطاق الذي تسمح به. لا يحل جواز السفر العالمي محل المستندات الرسمية، بل ينظمها في عرض مهني قابل للتحقق لمسيرتك."],
+    globalPassportHelpClose: ["Açıklamayı kapat", "Açıqlamanı bağla", "Түсіндірмені жабу", "Izohni yopish", "Түшүндүрмөнү жабуу", "Close explanation", "Erklärung schließen", "Закрыть описание", "إغلاق الشرح"],
     maritimeAccount: ["Denizcilik Hesabı", "Dənizçilik hesabı", "Теңіз аккаунты", "Dengizchilik hisobi", "Деңизчилик аккаунту", "Maritime Account", "Seefahrtkonto", "Морской аккаунт", "حساب بحري"],
     changePhoto: ["Profil Fotoğrafı Ekle", "Profil şəkli əlavə et", "Профиль суретін қосу", "Profil rasmini qo‘shish", "Профиль сүрөтүн кошуу", "Add Profile Photo", "Profilfoto hinzufügen", "Добавить фото профиля", "إضافة صورة الملف الشخصي"],
     replacePhoto: ["Fotoğrafı Değiştir", "Şəkli dəyişdir", "Суретті өзгерту", "Rasmni o‘zgartirish", "Сүрөттү өзгөртүү", "Change Photo", "Foto ändern", "Изменить фото", "تغيير الصورة"],
@@ -228,9 +241,14 @@
       const value = text(node.dataset.portalI18nAria);
       if (value) node.setAttribute("aria-label", value);
     });
+    document.querySelectorAll("[data-portal-i18n-title]").forEach(function (node) {
+      const value = text(node.dataset.portalI18nTitle);
+      if (value) node.setAttribute("title", value);
+    });
     const pageMap = {
       jobs: ["jobsTitle", "jobsLead"], applications: ["applicationsTitle", "applicationsLead"], offers: ["offersTitle", "offersLead"],
-      auto: ["autoTitle", "autoLead"], complaints: ["complaintsTitle", "complaintsLead"], account: ["accountTitle", "accountLead"]
+      auto: ["autoTitle", "autoLead"], complaints: ["complaintsTitle", "complaintsLead"], account: ["accountTitle", "accountLead"],
+      documents: ["documentsTitle", "documentsLead"], smart: ["smartAccountTitle", "smartAccountLead"]
     };
     const pageCopy = pageMap[view] || pageMap.jobs;
     const title = document.querySelector("[data-portal-title]");
@@ -241,6 +259,21 @@
     const query = new URLSearchParams(window.location.search).get("q");
     if (searchInput && query && !searchInput.value) searchInput.value = compact(query, 80);
     document.title = `${text(pageCopy[0])} | AllonaHub`;
+  }
+
+  function ensureSmartNavigation() {
+    document.querySelectorAll(".maritime-portal-nav").forEach(function (nav) {
+      if (nav.querySelector('[data-view-link="smart"]')) return;
+      const documents = nav.querySelector('[data-view-link="documents"]');
+      if (!documents) return;
+      const link = document.createElement("a");
+      link.className = "maritime-smart-nav";
+      link.href = "maritime-smart-account.html";
+      link.dataset.viewLink = "smart";
+      link.dataset.portalI18n = "smartAccountNav";
+      link.textContent = text("smartAccountNav");
+      documents.insertAdjacentElement("afterend", link);
+    });
   }
 
   async function syncSession() {
@@ -471,7 +504,7 @@
   function renderAuto() {
     if (!session) return authGate();
     const preference = autoPreference();
-    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="../career/cv-form.html?source=allonadenizcilik">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${preference.updated_at ? "is-visible" : ""}" role="status" aria-live="polite" data-auto-notice>${preference.updated_at ? escapeHtml(text(preference.enabled ? "autoSaved" : "autoPaused")) : ""}</div></aside></section>`;
+    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="maritime-smart-account.html">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${preference.updated_at ? "is-visible" : ""}" role="status" aria-live="polite" data-auto-notice>${preference.updated_at ? escapeHtml(text(preference.enabled ? "autoSaved" : "autoPaused")) : ""}</div></aside></section>`;
   }
 
   function accountInitials(name) {
@@ -507,8 +540,8 @@
     return accountProfile;
   }
 
-  function accountAction(href, icon, labelKey) {
-    return `<a class="maritime-account-action" href="${href}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${escapeHtml(text(labelKey))}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>`;
+  function accountAction(href, icon, labelKey, modifier) {
+    return `<a class="maritime-account-action ${modifier || ""}" href="${href}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${escapeHtml(text(labelKey))}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>`;
   }
 
   async function renderAccount() {
@@ -534,8 +567,8 @@
           ${accountAction("maritime-applications.html", "fa-list-check", "applicationsNav")}
           ${accountAction("maritime-offers.html", "fa-envelope-open-text", "offersNav")}
           ${accountAction("maritime-auto-apply.html", "fa-wand-magic-sparkles", "autoNav")}
-          ${accountAction("../career/cv-form.html?source=allonadenizcilik", "fa-file-lines", "maritimeCvAction")}
-          ${accountAction("../account/belgeler.html", "fa-certificate", "documentsAction")}
+          ${accountAction("maritime-smart-account.html", "fa-file-lines", "smartAccountNav", "maritime-account-action--smart")}
+          ${accountAction("maritime-documents.html", "fa-folder-open", "uploadDocumentsNav", "maritime-account-action--danger")}
           ${accountAction("maritime-complaints.html", "fa-shield-halved", "complaintsNav")}
         </div>
         <button class="maritime-account-signout" type="button" data-account-signout><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>${escapeHtml(text("signOut"))}</button>
@@ -679,8 +712,29 @@
     }
   }
 
+  function setGlobalPassportHelp(open, restoreFocus) {
+    const toggle = document.querySelector("[data-global-passport-help-toggle]");
+    const card = document.querySelector("[data-global-passport-help-card]");
+    if (!toggle || !card) return;
+    toggle.setAttribute("aria-expanded", String(open));
+    card.hidden = !open;
+    if (open) card.scrollTop = 0;
+    else if (restoreFocus) toggle.focus({ preventScroll: true });
+  }
+
   function bindEvents() {
     document.addEventListener("click", function (event) {
+      const helpToggle = event.target.closest("[data-global-passport-help-toggle]");
+      if (helpToggle) {
+        setGlobalPassportHelp(helpToggle.getAttribute("aria-expanded") !== "true");
+        return;
+      }
+      if (event.target.closest("[data-global-passport-help-close]")) {
+        setGlobalPassportHelp(false, true);
+        return;
+      }
+      const openHelp = document.querySelector('[data-global-passport-help-toggle][aria-expanded="true"]');
+      if (openHelp && !event.target.closest(".maritime-global-passport-help")) setGlobalPassportHelp(false);
       const back = event.target.closest("[data-go-back]");
       if (back) {
         let referrer = null;
@@ -747,13 +801,19 @@
       const photo = event.target.closest("[data-account-photo]");
       if (photo) saveAccountPhoto(photo);
     });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && document.querySelector('[data-global-passport-help-toggle][aria-expanded="true"]')) {
+        setGlobalPassportHelp(false, true);
+      }
+    });
   }
 
   async function renderView() {
     renderedLanguage = language();
     setStaticTranslations();
     const context = await syncSession();
-    const customerOnly = ["applications", "offers", "auto", "account"].includes(view);
+    const customerOnly = ["applications", "offers", "auto", "account", "documents", "smart"].includes(view);
     if (customerOnly && session && (!context || context.type !== "customer")) {
       if (context && App.auth && App.auth.accountHome) window.location.replace(App.auth.accountHome(context.type));
       return;
@@ -767,6 +827,14 @@
     else if (view === "offers") await renderOffers();
     else if (view === "auto") renderAuto();
     else if (view === "account") await renderAccount();
+    else if (view === "documents") {
+      if (!session) authGate();
+      else document.dispatchEvent(new CustomEvent("allona:maritime-documents-ready", { detail: { session, context } }));
+    }
+    else if (view === "smart") {
+      if (!session) authGate();
+      else document.dispatchEvent(new CustomEvent("allona:maritime-smart-account-ready", { detail: { session, context } }));
+    }
     else renderComplaints();
   }
 
@@ -774,6 +842,7 @@
     if (!root) return;
     const main = document.querySelector(".maritime-portal-main");
     if (main) main.setAttribute("data-no-translate", "");
+    ensureSmartNavigation();
     bindEvents();
     await renderView();
     document.addEventListener("allona:language-changed", function (event) {

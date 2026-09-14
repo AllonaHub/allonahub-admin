@@ -19,6 +19,8 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260711223000_cancel_maritime_freight_request_rpc.sql"
   "$ROOT_DIR/supabase/migrations/20260711233000_accept_maritime_freight_offer_v2_rpc.sql"
   "$ROOT_DIR/supabase/migrations/20260910120000_create_maritime_hiring_core.sql"
+  "$ROOT_DIR/supabase/migrations/20260914050000_create_maritime_document_doctor.sql"
+  "$ROOT_DIR/supabase/migrations/20260914060000_create_maritime_smart_account.sql"
 )
 
 if [ -z "$DB_URL" ]; then

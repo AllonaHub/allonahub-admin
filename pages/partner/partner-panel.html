@@ -243,10 +243,16 @@
                   <option value="vessel">Gemi / kapasite</option>
                 </select>
               </label>
+              <label data-maritime-crew-field><span>Rütbe / pozisyon kodu</span><input name="rank_code" maxlength="80" placeholder="Örn. chief_officer"></label>
               <label><span>Başlık</span><input name="title" minlength="2" maxlength="140" required placeholder="Örn. Chief Officer"></label>
               <label><span>Konum</span><input name="location_label" maxlength="120" placeholder="Örn. Tuzla / İstanbul"></label>
               <label><span>Detay etiketi</span><input name="detail_label" maxlength="120" placeholder="Örn. Kontrat 4+1 ay"></label>
+              <label data-maritime-crew-field><span>Zorunlu sertifika kodları</span><input name="required_certificate_codes" maxlength="500" placeholder="Örn. STCW II/2, GMDSS"></label>
+              <label data-maritime-crew-field><span>Asgari deniz hizmeti günü</span><input name="minimum_sea_service_days" type="number" min="0" max="20000" value="0"></label>
+              <label data-maritime-crew-field><span>İngilizce seviyesi</span><select name="english_level"><option value="">Zorunlu değil</option><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option><option value="fluent">Akıcı</option><option value="native">Ana dil</option></select></label>
               <label><span>Yayın bitişi</span><input name="expires_at" type="date" required data-maritime-listing-expiry></label>
+              <label class="partner-os-checkbox" data-maritime-crew-field><input name="medical_required" type="checkbox" checked><span>Geçerli sağlık belgesi zorunlu</span></label>
+              <label class="partner-os-checkbox" data-maritime-crew-field><input name="available_now_required" type="checkbox"><span>Hemen katılım zorunlu</span></label>
               <label class="partner-os-span-2"><span>Kısa özet</span><textarea name="summary" minlength="10" maxlength="360" required placeholder="İlanın halka açık kısa özeti"></textarea></label>
               <button type="submit"><i class="fa-solid fa-paper-plane"></i><span>İncelemeye Gönder</span></button>
             </form>

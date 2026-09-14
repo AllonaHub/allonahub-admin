@@ -35,7 +35,13 @@ begin
     'public.maritime_can_access_connect_thread(uuid)',
     'public.maritime_can_access_connect_thread_content(uuid)',
     'public.maritime_valid_hiring_transition(text,text)',
-    'public.maritime_record_access_event(uuid,text,uuid,text,text,text,jsonb)'
+    'public.maritime_record_access_event(uuid,text,uuid,text,text,text,jsonb)',
+    'public.confirm_maritime_document_extraction(uuid,jsonb)',
+    'public.prepare_maritime_smart_account(uuid,text,text,jsonb,jsonb)',
+    'public.confirm_maritime_smart_account(uuid,boolean)',
+    'public.create_maritime_application_drafts(uuid,uuid[],boolean)',
+    'public.submit_maritime_application(uuid,boolean)',
+    'public.set_maritime_availability(text,date,boolean)'
   ] loop
     if to_regprocedure(helper_name) is null then
       raise exception 'Missing maritime hiring helper function: %', helper_name;
@@ -47,6 +53,9 @@ begin
     'maritime_readiness_passports',
     'maritime_readiness_items',
     'maritime_document_intakes',
+    'maritime_document_batches',
+    'maritime_document_extractions',
+    'maritime_cv_profiles',
     'maritime_smart_portrait_reviews',
     'maritime_cv_generations',
     'maritime_work_status_events',
@@ -56,6 +65,8 @@ begin
     'maritime_job_assistant_drafts',
     'maritime_hiring_applications',
     'maritime_match_results',
+    'maritime_smart_account_runs',
+    'maritime_application_permission_batches',
     'maritime_hiring_rooms',
     'maritime_private_candidate_rooms',
     'maritime_crew_rooms',
@@ -113,10 +124,15 @@ begin
       ('maritime_seafarer_workspaces', 'maritime_seafarer_workspaces_select_own_or_admin'),
       ('maritime_readiness_passports', 'maritime_readiness_passports_select_own_or_admin'),
       ('maritime_document_intakes', 'maritime_document_intakes_select_own_or_admin'),
+      ('maritime_document_batches', 'maritime_document_batches_select_own_or_admin'),
+      ('maritime_document_extractions', 'maritime_document_extractions_select_own_or_admin'),
+      ('maritime_cv_profiles', 'maritime_cv_profiles_select_own_or_admin'),
       ('maritime_vessel_profiles', 'maritime_partner_tables_select_partner_or_admin'),
       ('maritime_jobs', 'maritime_jobs_select_partner_or_admin'),
       ('maritime_hiring_applications', 'maritime_applications_select_participant'),
       ('maritime_match_results', 'maritime_match_results_select_participant'),
+      ('maritime_smart_account_runs', 'maritime_smart_account_runs_select_own_or_admin'),
+      ('maritime_application_permission_batches', 'maritime_application_permission_batches_select_own_or_admin'),
       ('maritime_hiring_rooms', 'maritime_hiring_rooms_select_partner_or_admin'),
       ('maritime_private_candidate_rooms', 'maritime_candidate_rooms_select_participant'),
       ('maritime_crew_rooms', 'maritime_crew_rooms_select_partner_or_member'),
@@ -139,6 +155,31 @@ begin
       raise exception 'Missing maritime hiring core RLS policy: %.%', expected_policy.table_name, expected_policy.policy_name;
     end if;
   end loop;
+
+  if not exists (
+    select 1
+    from storage.buckets
+    where id = 'maritime-private-documents'
+      and public = false
+      and file_size_limit = 47185920
+  ) or not exists (
+    select 1
+    from storage.buckets
+    where id = 'maritime-profile-photos'
+      and public = false
+      and file_size_limit = 2097152
+  ) then
+    raise exception 'Private maritime storage buckets are missing or unsafe';
+  end if;
+
+  if has_function_privilege('anon', 'public.confirm_maritime_document_extraction(uuid,jsonb)', 'EXECUTE')
+    or not has_function_privilege('authenticated', 'public.confirm_maritime_document_extraction(uuid,jsonb)', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.prepare_maritime_smart_account(uuid,text,text,jsonb,jsonb)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.prepare_maritime_smart_account(uuid,text,text,jsonb,jsonb)', 'EXECUTE')
+    or has_function_privilege('anon', 'public.submit_maritime_application(uuid,boolean)', 'EXECUTE')
+    or not has_function_privilege('authenticated', 'public.submit_maritime_application(uuid,boolean)', 'EXECUTE') then
+    raise exception 'Maritime Global Passport function grants are unsafe';
+  end if;
 
   if not exists (
     select 1

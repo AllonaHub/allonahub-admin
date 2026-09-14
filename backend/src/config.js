@@ -166,6 +166,17 @@ export const config = {
     metaGraphVersion: readEnv("ASSISTANT_META_GRAPH_VERSION", { required: false, defaultValue: "v23.0" }).replace(/^\/+|\/+$/g, ""),
     metaSendTimeoutMs: readNumber("ASSISTANT_META_SEND_TIMEOUT_MS", 10000)
   },
+  maritimeDocuments: {
+    aiApiKey: readOptionalSecret("MARITIME_DOCUMENT_AI_API_KEY", "OPENAI_API_KEY", "ASSISTANT_AI_API_KEY"),
+    aiBaseUrl: readEnv("MARITIME_DOCUMENT_AI_BASE_URL", {
+      required: false,
+      defaultValue: "https://api.openai.com/v1/responses"
+    }).replace(/\/$/, ""),
+    aiModel: readEnv("MARITIME_DOCUMENT_AI_MODEL", { required: false, defaultValue: "gpt-4.1" }),
+    aiTimeoutMs: readNumber("MARITIME_DOCUMENT_AI_TIMEOUT_MS", 90000),
+    signedDownloadExpiresSeconds: readNumber("MARITIME_DOCUMENT_DOWNLOAD_EXPIRES_SECONDS", 120),
+    retentionDays: readNumber("MARITIME_DOCUMENT_RETENTION_DAYS", 365)
+  },
   socialMedia: {
     dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),
     dryRun: readBool("SOCIAL_MEDIA_DRY_RUN", true),

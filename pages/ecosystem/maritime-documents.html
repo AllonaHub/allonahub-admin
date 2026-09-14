@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Belgelerim ve Global Pasaport | AllonaHub</title>
+  <meta name="description" content="Denizcilik belgelerinizi PDF olarak yükleyin, Global Pasaport önizlemesini kontrol edip onaylayın.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260914-gp-update1">
+</head>
+<body class="maritime-portal-page maritime-account-page maritime-documents-page" data-maritime-view="documents">
+  <div class="maritime-portal-shell">
+    <header class="maritime-portal-header maritime-account-header" data-no-translate>
+      <div class="maritime-portal-top">
+        <a class="maritime-portal-brand" href="allonadenizcilik.html" aria-label="AllonaHub Denizcilik">
+          <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
+          <span class="maritime-portal-brand-copy"><span class="logo-title"><span class="gold">Allona</span><span class="blue">Hub</span></span><span class="maritime-portal-module" data-portal-i18n="moduleName">Denizcilik</span></span>
+        </a>
+        <div class="maritime-portal-actions">
+          <button type="button" data-go-back><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span data-portal-i18n="back">Geri Dön</span></button>
+          <a href="../../index.html" data-portal-i18n="home">Ana Sayfa</a>
+          <a href="allonadenizcilik.html" data-portal-i18n="moduleReturn">Modüle Dön</a>
+          <a href="../account/user.html?returnTo=%2Fpages%2Fecosystem%2Fmaritime-documents.html" data-portal-account data-portal-i18n="signIn">Giriş Yap</a>
+          <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
+        </div>
+      </div>
+      <nav class="maritime-portal-nav" aria-label="Denizcilik çalışma alanı" data-portal-i18n-aria="workspaceNav">
+        <a class="maritime-document-nav" href="maritime-documents.html" data-view-link="documents" data-portal-i18n="uploadDocumentsNav">Belgelerim</a>
+        <a class="maritime-smart-nav" href="maritime-smart-account.html" data-view-link="smart" data-portal-i18n="smartAccountNav">GP CV</a>
+        <a href="maritime-jobs.html" data-view-link="jobs" data-portal-i18n="jobsNav">İş İlanları</a>
+        <a href="maritime-applications.html" data-view-link="applications" data-portal-i18n="applicationsNav">Başvurularım</a>
+        <a href="maritime-offers.html" data-view-link="offers" data-portal-i18n="offersNav">İş Tekliflerim</a>
+        <a href="maritime-auto-apply.html" data-view-link="auto" data-portal-i18n="autoNav">Otomatik Başvuru</a>
+        <a href="maritime-complaints.html" data-view-link="complaints" data-portal-i18n="complaintsNav">Şikayet</a>
+      </nav>
+    </header>
+
+    <main class="maritime-portal-main maritime-account-main">
+      <div class="maritime-account-heading">
+        <h1 data-portal-title>Belgelerim ve Global Pasaport</h1>
+        <p data-portal-lead>PDF belgelerinizi yükleyin; sistem Global Pasaportunuzu oluştursun, siz kontrol edip onaylayın.</p>
+      </div>
+
+      <div class="maritime-portal-content maritime-document-workspace" data-portal-root>
+        <section class="maritime-document-upload-layout maritime-document-upload-layout--single" id="maritimeDocumentUpload">
+          <form class="maritime-document-upload-panel" data-document-upload-form>
+            <div class="maritime-document-section-head">
+              <span class="maritime-document-kicker" data-document-i18n="smartDoctor">Belgelerim</span>
+              <h2 data-document-i18n="uploadHeading">PDF belgelerinizi yükleyin</h2>
+              <p data-document-i18n="uploadLead">Tek seferde en fazla 20 PDF dosyası seçebilirsiniz.</p>
+            </div>
+
+            <div class="maritime-passport-update-note" data-passport-update-note hidden>
+              <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+              <div><strong data-document-i18n="updateModeTitle">Global Pasaporta Yeni Belge Ekle</strong><p data-document-i18n="updateModeLead">Yeni kontrat, deniz hizmeti, sertifika veya referans belgeniz mevcut kayıtları silmeden analiz edilir. Siz onayladıktan sonra doğru bölüme eklenir.</p></div>
+            </div>
+
+            <label class="maritime-document-dropzone" for="maritimeDocumentFiles" data-document-dropzone>
+              <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+              <strong data-document-i18n="chooseFiles">PDF belgelerini seçin</strong>
+              <span data-document-i18n="chooseFilesHint">PDF dosyalarını buraya bırakabilir veya cihazınızdan seçebilirsiniz.</span>
+              <small data-document-i18n="fileLimits">Her dosya en fazla 45 MB, toplam paket en fazla 150 MB.</small>
+            </label>
+            <input class="maritime-document-file-input" id="maritimeDocumentFiles" name="files" type="file" multiple accept="application/pdf,.pdf" data-document-files>
+
+            <div class="maritime-document-selection" data-document-selection hidden>
+              <div class="maritime-document-selection-head"><strong data-document-i18n="selectedFiles">Seçilen belgeler</strong><button type="button" data-clear-documents><i class="fa-solid fa-xmark" aria-hidden="true"></i><span data-document-i18n="clear">Temizle</span></button></div>
+              <div class="maritime-document-file-rail" data-document-file-rail></div>
+            </div>
+
+            <label class="maritime-document-consent">
+              <input type="checkbox" name="analysis_consent" required>
+              <span data-document-i18n="analysisConsent">Belgelerimin yalnız denizcilik profilimi önceden doldurmak amacıyla güvenli belge analiz hizmeti tarafından işlenmesini kabul ediyorum.</span>
+            </label>
+
+            <div class="maritime-document-upload-actions">
+              <button class="maritime-button maritime-button--primary maritime-global-passport-create" type="submit" data-document-submit disabled><i class="fa-solid fa-passport" aria-hidden="true"></i><span data-document-i18n="uploadAndAnalyze">Global Pasaportu Oluştur</span></button>
+              <p data-document-i18n="confirmationRule">Hiçbir bilgi siz kontrol edip onaylamadan CV'nize kaydedilmez.</p>
+            </div>
+            <div class="maritime-notice" role="status" aria-live="polite" data-document-status></div>
+            <div class="maritime-document-progress" data-document-progress hidden><span></span><div><b data-document-progress-label>Hazırlanıyor</b><small data-document-progress-detail></small></div></div>
+          </form>
+        </section>
+
+        <section class="maritime-global-passport-section" aria-labelledby="maritimeGlobalPassportTitle" data-global-passport-section hidden>
+          <div class="maritime-document-section-head maritime-global-passport-head">
+            <div><span class="maritime-document-kicker" data-document-i18n="globalPassportKicker">Oluşturulan Profil</span><h2 id="maritimeGlobalPassportTitle" data-document-i18n="globalPassportTitle">Global Pasaport Önizlemesi</h2></div>
+            <p data-document-i18n="globalPassportLead">Belgelerden okunan bilgileri kontrol edin. Yalnız doğruysa tek seferde onaylayın.</p>
+          </div>
+          <div class="maritime-global-passport-preview" data-global-passport-preview></div>
+          <div class="maritime-global-passport-actions">
+            <button class="maritime-button maritime-button--primary" type="button" data-confirm-global-passport><i class="fa-solid fa-check-double" aria-hidden="true"></i><span data-document-i18n="confirmGlobalPassport">Bilgiler Doğru, Global Pasaportu Onayla</span></button>
+            <a class="maritime-button" href="maritime-smart-account.html?openCv=1&amp;updated=1" data-open-maritime-cv hidden><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span data-document-i18n="viewMaritimeCv">GP CV'yi Gör</span></a>
+          </div>
+        </section>
+
+        <section class="maritime-document-review-section" aria-labelledby="maritimeDocumentReviewTitle">
+          <div class="maritime-document-section-head maritime-document-review-head">
+            <div><span class="maritime-document-kicker" data-document-i18n="reviewKicker">Belgelerim</span><h2 id="maritimeDocumentReviewTitle" data-document-i18n="reviewHeading">Yüklenen Belgeler</h2></div>
+            <p data-document-i18n="reviewLead">Yüklediğiniz PDF belgelerini ve okuma durumlarını burada görebilirsiniz.</p>
+          </div>
+          <div class="maritime-document-review-rail" data-document-review-list>
+            <article class="maritime-document-empty"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><strong data-document-i18n="noDocuments">Henüz belge yüklenmedi</strong><span data-document-i18n="noDocumentsLead">İlk belge paketiniz analiz edildiğinde sonuçlar burada görünecek.</span></article>
+          </div>
+        </section>
+
+        <nav class="maritime-document-bottom-actions" aria-label="Belge sayfası bağlantıları" data-document-i18n-aria="documentPageLinks">
+          <a class="maritime-button" href="maritime-account.html"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span data-document-i18n="backToPanel">Panele Dön</span></a>
+          <a class="maritime-button maritime-button--primary" href="maritime-jobs.html"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span data-document-i18n="matchingJobs">Siteme Uygun İşler</span></a>
+        </nav>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260914-account-boundary2" defer></script>
+  <script src="../../js/platform.js?v=20260914-account-boundary2" defer></script>
+  <script src="../../js/allona-maritime-documents.js?v=20260914-gp-update1" defer></script>
+  <script src="../../js/allona-maritime-portal.js?v=20260914-gp-update1" defer></script>
+</body>
+</html>

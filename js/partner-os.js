@@ -366,6 +366,7 @@
         option.disabled = !allowedTypes.includes(option.value);
       });
       if (listingType.selectedOptions[0]?.disabled && allowedTypes.length) listingType.value = allowedTypes[0];
+      configureMaritimeCrewFields();
     }
     eligibilityNode.dataset.approved = eligibility.approved ? "true" : "false";
     eligibilityNode.textContent = eligibility.approved
@@ -672,6 +673,17 @@
     if (!input.value) input.value = suggested;
   }
 
+  function configureMaritimeCrewFields() {
+    const form = $("[data-maritime-listing-form]");
+    if (!form) return;
+    const crewSelected = form.elements.listing_type?.value === "crew_position";
+    $all("[data-maritime-crew-field]", form).forEach((field) => { field.hidden = !crewSelected; });
+    ["rank_code", "required_certificate_codes"].forEach((name) => {
+      const input = form.elements[name];
+      if (input) input.required = crewSelected;
+    });
+  }
+
   function activatePanel(id) {
     $all("[data-panel-section]").forEach((section) => section.classList.toggle("is-active", section.id === id));
     $all("[data-panel-target]").forEach((button) => button.classList.toggle("is-active", button.dataset.panelTarget === id));
@@ -833,6 +845,14 @@
           summary: data.summary,
           location_label: data.location_label || "",
           detail_label: data.detail_label || "",
+          rank_code: data.listing_type === "crew_position" ? data.rank_code || "" : "",
+          required_certificate_codes: data.listing_type === "crew_position"
+            ? String(data.required_certificate_codes || "").split(/[,;|]/).map((item) => item.trim()).filter(Boolean)
+            : [],
+          minimum_sea_service_days: data.listing_type === "crew_position" ? Number(data.minimum_sea_service_days) || 0 : 0,
+          required_languages: data.listing_type === "crew_position" && data.english_level ? [{ language: "English", level: data.english_level }] : [],
+          medical_required: data.listing_type === "crew_position" ? form.elements.medical_required.checked : false,
+          available_now_required: data.listing_type === "crew_position" ? form.elements.available_now_required.checked : false,
           expires_at: new Date(expiresAt).toISOString()
         })
       });
@@ -1214,6 +1234,7 @@
     const maritimeListingForm = $("[data-maritime-listing-form]");
     if (maritimeListingForm) {
       configureMaritimeExpiry();
+      configureMaritimeCrewFields();
       maritimeListingForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createMaritimeListing(maritimeListingForm);
@@ -1245,6 +1266,7 @@
     }
 
     document.addEventListener("change", (event) => {
+      if (event.target.matches("[data-maritime-listing-form] [name='listing_type']")) configureMaritimeCrewFields();
       const status = event.target.closest("[data-order-status]");
       if (status) updateOrder(status.dataset.orderStatus, { order_status: status.value });
     });

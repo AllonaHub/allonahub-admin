@@ -10,6 +10,8 @@ import { PlatformContextError } from "./modules/platform/errors.js";
 import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerEInvoicingRoutes } from "./routes/e-invoicing.js";
 import { registerRoutes } from "./routes/index.js";
+import { registerMaritimeDocumentRoutes } from "./routes/maritime-documents.js";
+import { registerMaritimeSmartAccountRoutes } from "./routes/maritime-smart-account.js";
 import { registerPlatformRoutes } from "./routes/platform.js";
 
 function requestId() {
@@ -70,6 +72,7 @@ export async function buildApp() {
         "BANK_PAYMENT_API_KEY",
         "ASSISTANT_AI_API_KEY",
         "OPENAI_API_KEY",
+        "MARITIME_DOCUMENT_AI_API_KEY",
         "ASSISTANT_TELEGRAM_BOT_TOKEN",
         "ASSISTANT_META_ACCESS_TOKEN",
         "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
@@ -91,6 +94,7 @@ export async function buildApp() {
         "config.bankPayment.secretKey",
         "config.bankPayment.apiKey",
         "config.assistant.aiApiKey",
+        "config.maritimeDocuments.aiApiKey",
         "config.assistant.telegramBotToken",
         "config.assistant.telegramWebhookSecret",
         "config.assistant.metaAccessToken",
@@ -275,5 +279,7 @@ export async function buildApp() {
   registerPlatformRoutes(app);
   registerEInvoicingRoutes(app);
   registerAssistantRoutes(app);
+  registerMaritimeDocumentRoutes(app);
+  registerMaritimeSmartAccountRoutes(app);
   return app;
 }

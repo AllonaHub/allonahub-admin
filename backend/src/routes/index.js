@@ -288,7 +288,7 @@ const maritimePartnerApplicationSchema = z.object({
 
 const maritimeListingQuerySchema = z.object({
   type: z.enum(["crew_position", "vessel"]).optional(),
-  limit: z.coerce.number().int().min(1).max(24).optional().default(24)
+  limit: z.coerce.number().int().min(1).max(48).optional().default(24)
 });
 
 const maritimePartnerListingQuerySchema = z.object({
@@ -303,6 +303,15 @@ const maritimePartnerListingSchema = z.object({
   summary: z.string().trim().min(10).max(360),
   location_label: z.string().trim().max(120).optional().default(""),
   detail_label: z.string().trim().max(120).optional().default(""),
+  rank_code: z.string().trim().max(80).optional().default(""),
+  required_certificate_codes: z.array(z.string().trim().min(1).max(80)).max(24).optional().default([]),
+  minimum_sea_service_days: z.coerce.number().int().min(0).max(20000).optional().default(0),
+  required_languages: z.array(z.object({
+    language: z.string().trim().min(2).max(60),
+    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2", "fluent", "native"]).optional().default("B1")
+  }).strict()).max(12).optional().default([]),
+  medical_required: z.boolean().optional().default(true),
+  available_now_required: z.boolean().optional().default(false),
   expires_at: z.string().datetime({ offset: true })
 }).superRefine((payload, context) => {
   const expiresAt = Date.parse(payload.expires_at);
@@ -316,6 +325,12 @@ const maritimePartnerListingSchema = z.object({
       path: ["expires_at"],
       message: "İlan bitiş tarihi yarın ile 180 gün sonrası arasında olmalıdır."
     });
+  }
+  if (payload.listing_type === "crew_position" && !payload.rank_code) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["rank_code"], message: "Crew ilanında rütbe zorunludur." });
+  }
+  if (payload.listing_type === "crew_position" && payload.required_certificate_codes.length === 0) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["required_certificate_codes"], message: "Crew ilanında en az bir sertifika koşulu zorunludur." });
   }
 });
 
@@ -11361,7 +11376,65 @@ export function registerRoutes(app) {
     });
     const payload = parseAuthPayload(maritimePartnerListingSchema, request.body || {});
     const approval = await requireApprovedMaritimeListingPartner(ctx, payload.listing_type);
-    const selectFields = "id,module_key,listing_type,status,title,summary,location_label,detail_label,published_at,expires_at,submitted_at,reviewed_at,review_note,created_at,updated_at";
+    const selectFields = "id,module_key,listing_type,status,title,summary,location_label,detail_label,matching_requirements,published_at,expires_at,submitted_at,reviewed_at,review_note,created_at,updated_at";
+    let maritimeBusiness = null;
+    if (payload.listing_type === "crew_position") {
+      const businessResult = await supabaseAdmin
+        .from("partner_businesses")
+        .select("id")
+        .eq("owner_id", ctx.user.id)
+        .eq("partner_type", "maritime")
+        .eq("status", "active")
+        .eq("verification_status", "verified")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (businessResult.error) throw businessResult.error;
+      if (!businessResult.data) throw httpError("Crew ilanı için aktif ve doğrulanmış denizcilik şirketi hesabı gereklidir.", 403);
+      maritimeBusiness = businessResult.data;
+    }
+    const upsertSmartJob = async (listingRow) => {
+      if (payload.listing_type !== "crew_position" || !maritimeBusiness) return;
+      const requirements = listingRow.matching_requirements || {};
+      const rankCode = String(requirements.rank_code || "").trim();
+      const certificateCodes = Array.isArray(requirements.required_certificate_codes)
+        ? requirements.required_certificate_codes
+        : [];
+      const requirementsComplete = Boolean(rankCode && certificateCodes.length);
+      const jobResult = await supabaseAdmin
+        .from("maritime_jobs")
+        .upsert({
+          partner_id: maritimeBusiness.id,
+          public_listing_id: listingRow.id,
+          created_by: ctx.user.id,
+          status: listingRow.status === "active" ? "open" : "pending_review",
+          rank_code: rankCode || null,
+          job_title: listingRow.title,
+          hard_gates: {
+            required_certificate_codes: certificateCodes,
+            minimum_sea_service_days: Number(requirements.minimum_sea_service_days) || 0,
+            medical_required: requirements.medical_required !== false,
+            available_now_required: requirements.available_now_required === true,
+            requirements_complete: requirementsComplete
+          },
+          structured_requirements: {
+            required_languages: Array.isArray(requirements.required_languages) ? requirements.required_languages : [],
+            location_label: listingRow.location_label,
+            contract_label: listingRow.detail_label
+          },
+          source_free_text: listingRow.summary,
+          submitted_at: listingRow.submitted_at || new Date().toISOString(),
+          opened_at: listingRow.status === "active" ? listingRow.published_at || new Date().toISOString() : null,
+          metadata: {
+            source: "partner_public_listing",
+            location_label: listingRow.location_label,
+            detail_label: listingRow.detail_label,
+            requirements_complete: requirementsComplete,
+            company_contact_visible: false
+          }
+        }, { onConflict: "public_listing_id" });
+      if (jobResult.error) throw jobResult.error;
+    };
 
     const existingQuery = await supabaseAdmin
       .from("maritime_public_listings")
@@ -11371,6 +11444,7 @@ export function registerRoutes(app) {
       .maybeSingle();
     if (existingQuery.error) throw existingQuery.error;
     if (existingQuery.data) {
+      await upsertSmartJob(existingQuery.data);
       return reply.code(200).send({ ok: true, duplicate: true, listing: existingQuery.data });
     }
 
@@ -11387,6 +11461,14 @@ export function registerRoutes(app) {
         summary: payload.summary,
         location_label: payload.location_label,
         detail_label: payload.detail_label,
+        matching_requirements: payload.listing_type === "crew_position" ? {
+          rank_code: payload.rank_code,
+          required_certificate_codes: payload.required_certificate_codes,
+          minimum_sea_service_days: payload.minimum_sea_service_days,
+          required_languages: payload.required_languages,
+          medical_required: payload.medical_required,
+          available_now_required: payload.available_now_required
+        } : {},
         sort_order: 100,
         published_at: now,
         expires_at: payload.expires_at,
@@ -11411,6 +11493,8 @@ export function registerRoutes(app) {
     } else if (insertResult.error) {
       throw insertResult.error;
     }
+
+    await upsertSmartJob(listing);
 
     if (!duplicate) {
       await auditEvent({
