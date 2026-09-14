@@ -7,7 +7,7 @@
   <meta name="description" content="Denizcilik belgelerinizi PDF olarak yükleyin, Global Pasaport önizlemesini kontrol edip onaylayın.">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260914-user-panel2">
+  <link rel="stylesheet" href="../../css/allona-maritime-portal.css?v=20260914-passport-review2">
 </head>
 <body class="maritime-portal-page maritime-account-page maritime-documents-page" data-maritime-view="documents">
   <div class="maritime-portal-shell">
@@ -51,6 +51,23 @@
               <p data-document-i18n="uploadLead">Tek seferde en fazla 20 PDF dosyası seçebilirsiniz.</p>
             </div>
 
+            <section class="maritime-photo-studio" aria-labelledby="maritimeProfilePhotoTitle">
+              <div class="maritime-photo-preview" data-profile-photo-preview><span><i class="fa-solid fa-user" aria-hidden="true"></i></span></div>
+              <div class="maritime-photo-copy">
+                <span class="maritime-document-kicker" data-document-i18n="profilePhotoRequired">Zorunlu Alan</span>
+                <h3 id="maritimeProfilePhotoTitle" data-document-i18n="profilePhotoTitle">Global Pasaport fotoğrafınızı ekleyin</h3>
+                <p data-document-i18n="profilePhotoLead">Global Pasaport yalnız kaydedilmiş bir profil fotoğrafıyla oluşturulur. Fotoğraf cihazınızda hazırlanır ve siz onaylamadan kaydedilmez.</p>
+                <small data-document-i18n="profilePhotoHint">JPG, PNG veya WebP; en fazla 12 MB.</small>
+                <input class="maritime-photo-input" id="maritimeProfilePhoto" type="file" accept="image/jpeg,image/png,image/webp" data-profile-photo-input>
+                <div class="maritime-photo-actions">
+                  <label class="maritime-button" for="maritimeProfilePhoto"><i class="fa-solid fa-camera" aria-hidden="true"></i><span data-document-i18n="chooseProfilePhoto">Fotoğraf Seç</span></label>
+                  <button class="maritime-button maritime-button--success" type="button" data-profile-photo-save hidden><i class="fa-solid fa-check" aria-hidden="true"></i><span data-document-i18n="saveProfilePhoto">Fotoğrafı Kaydet</span></button>
+                  <button class="maritime-button maritime-button--danger-outline" type="button" data-profile-photo-delete hidden><i class="fa-solid fa-trash" aria-hidden="true"></i><span data-document-i18n="deleteProfilePhoto">Fotoğrafı Sil</span></button>
+                </div>
+                <div class="maritime-photo-status" role="status" aria-live="polite" data-profile-photo-status></div>
+              </div>
+            </section>
+
             <div class="maritime-passport-update-note" data-passport-update-note hidden>
               <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
               <div><strong data-document-i18n="updateModeTitle">Global Pasaporta Yeni Belge Ekle</strong><p data-document-i18n="updateModeLead">Yeni kontrat, deniz hizmeti, sertifika veya referans belgeniz mevcut kayıtları silmeden analiz edilir. Siz onayladıktan sonra doğru bölüme eklenir.</p></div>
@@ -78,6 +95,7 @@
               <button class="maritime-button maritime-button--primary maritime-global-passport-create" type="submit" data-document-submit disabled><i class="fa-solid fa-passport" aria-hidden="true"></i><span data-document-i18n="uploadAndAnalyze">Global Pasaportu Oluştur</span></button>
               <p data-document-i18n="confirmationRule">Hiçbir bilgi siz kontrol edip onaylamadan CV'nize kaydedilmez.</p>
             </div>
+            <div class="maritime-passport-required-notice" role="status" data-photo-required-notice><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span data-document-i18n="photoRequiredNotice">Global Pasaport oluşturmak için önce fotoğrafınızı ekleyip kaydedin.</span></div>
             <div class="maritime-notice" role="status" aria-live="polite" data-document-status></div>
             <div class="maritime-document-progress" data-document-progress hidden><span></span><div><b data-document-progress-label>Hazırlanıyor</b><small data-document-progress-detail></small></div></div>
           </form>
@@ -88,6 +106,7 @@
             <div><span class="maritime-document-kicker" data-document-i18n="globalPassportKicker">Oluşturulan Profil</span><h2 id="maritimeGlobalPassportTitle" data-document-i18n="globalPassportTitle">Global Pasaport Önizlemesi</h2></div>
             <p data-document-i18n="globalPassportLead">Belgelerden okunan bilgileri kontrol edin. Yalnız doğruysa tek seferde onaylayın.</p>
           </div>
+          <div class="maritime-passport-readiness" data-global-passport-readiness></div>
           <div class="maritime-global-passport-preview" data-global-passport-preview></div>
           <div class="maritime-global-passport-actions">
             <button class="maritime-button maritime-button--primary" type="button" data-confirm-global-passport><i class="fa-solid fa-check-double" aria-hidden="true"></i><span data-document-i18n="confirmGlobalPassport">Bilgiler Doğru, Global Pasaportu Onayla</span></button>
@@ -119,7 +138,8 @@
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260914-account-boundary3" defer></script>
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
-  <script src="../../js/allona-maritime-documents.js?v=20260914-gp-recovery1" defer></script>
+  <script src="../../js/allona-maritime-photo.js?v=20260914-passport-photo2" defer></script>
+  <script src="../../js/allona-maritime-documents.js?v=20260914-passport-review2" defer></script>
   <script src="../../js/allona-maritime-portal.js?v=20260914-user-panel1" defer></script>
 </body>
 </html>

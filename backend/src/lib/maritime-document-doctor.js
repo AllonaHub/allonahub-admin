@@ -4,7 +4,7 @@ import { analyzeMaritimeDocumentLocally } from "./maritime-local-document-reader
 
 export const MARITIME_DOCUMENT_BUCKET = "maritime-private-documents";
 export const MARITIME_PROFILE_PHOTO_BUCKET = "maritime-profile-photos";
-export const MARITIME_DOCUMENT_READER_VERSION = 6;
+export const MARITIME_DOCUMENT_READER_VERSION = 7;
 export const MARITIME_DOCUMENT_MAX_FILES = 20;
 export const MARITIME_DOCUMENT_MAX_FILE_BYTES = 45 * 1024 * 1024;
 export const MARITIME_DOCUMENT_MAX_BATCH_BYTES = 150 * 1024 * 1024;
@@ -761,6 +761,36 @@ export function maritimeDocumentIdentityConflicts(existingPayload, incomingPaylo
   return conflicts;
 }
 
+export function maritimeGlobalPassportReadiness(payload, { hasPhoto = false } = {}) {
+  const identityDocuments = Array.isArray(payload?.identity_documents) ? payload.identity_documents : [];
+  const passport = identityDocuments.find((row) => row?.kind === "passport") || (
+    payload?.document_type === "passport"
+      ? {
+          document_number: payload.document_number,
+          issuing_country: payload.document_country,
+          issue_date: payload.issue_date,
+          expiry_date: payload.expiry_date
+        }
+      : null
+  );
+  const missing = [];
+  if (!hasPhoto) missing.push("profile_photo");
+  if (!String(payload?.given_names || "").trim()) missing.push("given_names");
+  if (!String(payload?.family_name || "").trim()) missing.push("family_name");
+  if (!String(payload?.date_of_birth || "").trim()) missing.push("date_of_birth");
+  if (!String(payload?.place_of_birth || "").trim()) missing.push("place_of_birth");
+  if (!String(payload?.nationality || "").trim()) missing.push("nationality");
+  if (!passport) {
+    missing.push("passport");
+  } else {
+    if (!String(passport.document_number || "").trim()) missing.push("passport_number");
+    if (!String(passport.issuing_country || "").trim()) missing.push("passport_issuing_country");
+    if (!String(passport.issue_date || "").trim()) missing.push("passport_issue_date");
+    if (!String(passport.expiry_date || "").trim()) missing.push("passport_expiry_date");
+  }
+  return { ready: missing.length === 0, missing };
+}
+
 function responseText(payload) {
   if (typeof payload?.output_text === "string") return payload.output_text;
   const chunks = [];
@@ -824,6 +854,8 @@ export async function analyzeMaritimeDocument({
     "Do not turn certificate titles into claimed employment experience. Employment and sea service require an explicit vessel or employer record with dates or a clearly labeled service statement.",
     "Treat No Limit, Unlimited, Lifetime, Non Expiring, and equivalent wording as validity_status non_expiring with expiry_date null. Use dated only when an explicit expiry date is visible.",
     "Use the MRZ only to corroborate visible identity fields. If visible text and MRZ conflict, keep the clearly labeled value and add a warning.",
+    "For passports, cross-check surname, given names, document number, nationality, date of birth, sex, and expiry date against the MRZ. Keep surname and given_names in their separate fields and never replace a missing name with an account name or email address.",
+    "Contact details printed in an issuing authority footer belong to the authority, not the holder. Populate contact only from a CV or a field explicitly labeled as the holder's personal contact.",
     "Do not treat a sample row, blank form row, form question, unchecked checkbox, signature date, print date, or verification URL as holder data.",
     "For each structured row set source_page to the visible one-based PDF page and confidence to a calibrated 0-1 reading confidence. Use confidence below 0.75 for ambiguous handwriting, blur, crop, glare, or conflicting values.",
     "For every extracted name, document number, authority, date, rank, certificate code, STCW reference, vessel, IMO number, company, and sea-service date, add a field_evidence row tied to the exact one-based source page and visible page region.",

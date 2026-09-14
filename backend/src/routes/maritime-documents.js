@@ -8,6 +8,7 @@ import {
   MARITIME_PROFILE_PHOTO_BUCKET,
   MARITIME_PROFILE_PHOTO_MAX_BYTES,
   analyzeMaritimeDocument,
+  maritimeGlobalPassportReadiness,
   maritimeDocumentIdentityConflicts,
   maritimeDocumentExtractionSchema,
   maritimeDocumentSha256,
@@ -33,7 +34,8 @@ const rejectionSchema = z.object({
 }).strict();
 
 const analysisRequestSchema = z.object({
-  language: z.enum(["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"]).default("tr")
+  language: z.enum(["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"]).default("tr"),
+  force: z.boolean().optional().default(false)
 }).strict();
 const profilePhotoIntentSchema = z.object({
   mime_type: z.literal("image/webp"),
@@ -94,13 +96,123 @@ async function ownedIntake(userId, intakeId) {
 async function ownedExtraction(userId, extractionId) {
   const result = await supabaseAdmin
     .from("maritime_document_extractions")
-    .select("id,intake_id,seafarer_user_id,status,extracted_payload,overall_confidence,created_at,updated_at")
+    .select("id,intake_id,seafarer_user_id,status,extracted_payload,user_corrections,confirmed_payload,overall_confidence,created_at,updated_at")
     .eq("id", extractionId)
     .eq("seafarer_user_id", userId)
     .maybeSingle();
   const data = assertDb(result, "Belge analiz kaydı okunamadı.");
   if (!data) throw httpError("Belge analiz kaydı bulunamadı.", 404, "MARITIME_EXTRACTION_NOT_FOUND");
   return data;
+}
+
+async function hasStoredProfilePhoto(userId) {
+  const result = await supabaseAdmin.storage
+    .from(MARITIME_PROFILE_PHOTO_BUCKET)
+    .list(`users/${userId}`, { limit: 20, search: "profile.webp" });
+  return !result.error && Array.isArray(result.data) && result.data.some((item) => item?.name === "profile.webp");
+}
+
+const PROFILE_ARRAY_KEYS = new Set([
+  "suitable_positions", "certificate_codes", "certificate_records", "identity_documents", "education",
+  "medical_records", "vaccinations", "endorsements", "restrictions", "sea_service", "languages",
+  "emergency_contacts", "references", "field_evidence", "source_languages", "notes", "warnings", "skills", "achievements"
+]);
+const PROFILE_OBJECT_KEYS = new Set([
+  "contact", "physical_profile", "rank_i18n", "nationality_i18n", "professional_summary_i18n",
+  "suitable_positions_i18n", "endorsements_i18n", "restrictions_i18n", "ocr_quality"
+]);
+
+function payloadPriority(payload) {
+  return ({
+    unknown: 0,
+    other: 5,
+    training_certificate: 10,
+    stcw_certificate: 15,
+    medical_certificate: 20,
+    competency_certificate: 30,
+    sea_service_record: 35,
+    cv: 45,
+    visa: 55,
+    seafarer_book: 70,
+    passport: 100
+  })[payload?.document_type] || 0;
+}
+
+function mergeUniqueRows(first, second) {
+  const seen = new Set();
+  return [...(Array.isArray(first) ? first : []), ...(Array.isArray(second) ? second : [])].filter((row) => {
+    const key = JSON.stringify(row);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function mergeConfirmedPayloads(payloads) {
+  const merged = {};
+  for (const payload of [...payloads].sort((a, b) => payloadPriority(a) - payloadPriority(b))) {
+    for (const [key, value] of Object.entries(payload || {})) {
+      if (value === null || value === undefined || value === "") continue;
+      if (PROFILE_ARRAY_KEYS.has(key)) {
+        merged[key] = mergeUniqueRows(merged[key], value);
+      } else if (PROFILE_OBJECT_KEYS.has(key) && value && typeof value === "object" && !Array.isArray(value)) {
+        merged[key] = { ...(merged[key] || {}), ...Object.fromEntries(Object.entries(value).filter(([, item]) => item !== null && item !== undefined && item !== "")) };
+      } else {
+        merged[key] = value;
+      }
+    }
+  }
+  return merged;
+}
+
+function profileCompletion(payload) {
+  let score = 0;
+  if (payload?.holder_name) score += 10;
+  if (payload?.nationality) score += 10;
+  if (payload?.date_of_birth) score += 10;
+  if (payload?.rank) score += 15;
+  if (payload?.suitable_positions?.length) score += 10;
+  if (payload?.certificate_codes?.length || payload?.certificate_records?.length) score += 20;
+  if (payload?.sea_service?.length) score += 10;
+  if (["fit", "fit_with_restrictions"].includes(payload?.medical_fitness) || payload?.medical_records?.length) score += 10;
+  if (payload?.identity_documents?.length) score += 5;
+  return Math.min(100, score);
+}
+
+async function rebuildConfirmedProfile(userId) {
+  const result = await supabaseAdmin
+    .from("maritime_document_extractions")
+    .select("intake_id,confirmed_payload")
+    .eq("seafarer_user_id", userId)
+    .eq("status", "confirmed");
+  const rows = assertDb(result, "Global Pasaport yeniden oluşturulamadı.") || [];
+  const payload = mergeConfirmedPayloads(rows.map((row) => row.confirmed_payload).filter(Boolean));
+  assertDb(await supabaseAdmin.from("maritime_cv_profiles").upsert({
+    seafarer_user_id: userId,
+    profile_status: rows.length ? "user_confirmed" : "draft",
+    profile_payload: payload,
+    source_document_ids: [...new Set(rows.map((row) => row.intake_id).filter(Boolean))],
+    completion_percent: profileCompletion(payload),
+    last_user_confirmed_at: rows.length ? new Date().toISOString() : null
+  }, { onConflict: "seafarer_user_id" }), "Global Pasaport yeniden oluşturulamadı.");
+  return payload;
+}
+
+async function updateReadinessSource(userId, intake, payload) {
+  const sourceReference = intake.file_sha256 || intake.id;
+  const summary = [payload.document_title, payload.document_number, payload.expiry_date].filter(Boolean).join(" · ") || "Kullanıcı tarafından düzeltilmiş denizcilik belgesi";
+  assertDb(await supabaseAdmin.from("maritime_readiness_items").update({
+    value_payload: payload,
+    value_summary: summary,
+    user_confirmed_at: new Date().toISOString()
+  }).eq("seafarer_user_id", userId).eq("source_reference_hash", sourceReference), "Düzeltilen belge profili güncellenemedi.");
+}
+
+async function removeReadinessSource(userId, intake) {
+  const sourceReference = intake.file_sha256 || intake.id;
+  assertDb(await supabaseAdmin.from("maritime_readiness_items").delete()
+    .eq("seafarer_user_id", userId)
+    .eq("source_reference_hash", sourceReference), "Belge Global Pasaporttan çıkarılamadı.");
 }
 
 function profilePhotoPath(userId) {
@@ -167,12 +279,16 @@ async function documentState(userId) {
       .eq("seafarer_user_id", userId)
       .maybeSingle()
   ]);
+  const profilePhotoReady = await hasStoredProfilePhoto(userId);
+  const profilePayload = assertDb(profileResult, "Denizcilik CV profili okunamadı.")?.profile_payload || {};
   return {
     batches: assertDb(batchesResult, "Belge paketleri okunamadı.") || [],
     documents: assertDb(intakesResult, "Belgeler okunamadı.") || [],
     extractions: assertDb(extractionsResult, "Belge analizleri okunamadı.") || [],
     cv_profile: assertDb(profileResult, "Denizcilik CV profili okunamadı.") || null,
-    profile_photo_url: await signedProfilePhoto(userId)
+    profile_photo_url: profilePhotoReady ? await signedProfilePhoto(userId) : "",
+    profile_photo_ready: profilePhotoReady,
+    global_passport_readiness: maritimeGlobalPassportReadiness(profilePayload, { hasPhoto: profilePhotoReady })
   };
 }
 
@@ -259,6 +375,9 @@ export function registerMaritimeDocumentRoutes(app) {
   }, async (request, reply) => {
     const ctx = await requireCustomer(request, "maritime.document.upload_intent");
     const input = uploadIntentSchema.parse(request.body || {});
+    if (!(await hasStoredProfilePhoto(ctx.user.id))) {
+      throw httpError("Global Pasaport için önce profil fotoğrafınızı ekleyip kaydedin.", 409, "MARITIME_PROFILE_PHOTO_REQUIRED");
+    }
     if (!config.maritimeDocuments.aiApiKey && !config.maritimeDocuments.localReaderEnabled) {
       throw httpError("Belge okuma hizmeti henüz yapılandırılmadı.", 503, "MARITIME_DOCUMENT_AI_NOT_CONFIGURED");
     }
@@ -339,7 +458,8 @@ export function registerMaritimeDocumentRoutes(app) {
     const intakeId = z.string().uuid().parse(request.params?.intakeId);
     const analysisInput = analysisRequestSchema.parse(request.body || {});
     const intake = await ownedIntake(ctx.user.id, intakeId);
-    if (["pending_user_confirmation", "user_confirmed", "verification_pending", "verified"].includes(intake.status)) {
+    const forcedDraftRefresh = analysisInput.force === true && ["pending_user_confirmation", "user_confirmed"].includes(intake.status);
+    if (["pending_user_confirmation", "user_confirmed", "verification_pending", "verified"].includes(intake.status) && !forcedDraftRefresh) {
       const existing = await supabaseAdmin
         .from("maritime_document_extractions")
         .select("id,intake_id,status,extracted_payload,overall_confidence,created_at,updated_at")
@@ -350,7 +470,7 @@ export function registerMaritimeDocumentRoutes(app) {
         .maybeSingle();
       return { ok: true, extraction: assertDb(existing, "Belge analizi okunamadı."), idempotent: true };
     }
-    if (!["pending_upload", "uploaded", "analysis_failed"].includes(intake.status)) {
+    if (!["pending_upload", "uploaded", "analysis_failed"].includes(intake.status) && !forcedDraftRefresh) {
       throw httpError("Belge şu anda analiz edilemez.", 409, "MARITIME_DOCUMENT_STATE_CONFLICT");
     }
 
@@ -380,7 +500,7 @@ export function registerMaritimeDocumentRoutes(app) {
     })
       .eq("id", intake.id)
       .eq("seafarer_user_id", ctx.user.id)
-      .in("status", ["pending_upload", "uploaded", "analysis_failed"])
+      .in("status", ["pending_upload", "uploaded", "analysis_failed", ...(forcedDraftRefresh ? ["pending_user_confirmation", "user_confirmed"] : [])])
       .select("id")
       .maybeSingle(), "Belge analiz için kilitlenemedi.");
     if (!claim) {
@@ -411,19 +531,36 @@ export function registerMaritimeDocumentRoutes(app) {
         timeoutMs: config.maritimeDocuments.aiTimeoutMs,
         localReaderEnabled: config.maritimeDocuments.localReaderEnabled
       });
-      const extractionId = randomUUID();
-      const extraction = assertDb(await supabaseAdmin.from("maritime_document_extractions").insert({
-        id: extractionId,
+      const existingDraft = forcedDraftRefresh
+        ? assertDb(await supabaseAdmin.from("maritime_document_extractions")
+          .select("id,status,confirmed_payload")
+          .eq("intake_id", intake.id)
+          .eq("seafarer_user_id", ctx.user.id)
+          .in("status", ["pending_user_confirmation", "confirmed"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(), "Mevcut belge taslağı okunamadı.")
+        : null;
+      const extractionId = existingDraft?.id || randomUUID();
+      const extractionRecord = {
         intake_id: intake.id,
         seafarer_user_id: ctx.user.id,
         status: "pending_user_confirmation",
-        provider: "openai_responses",
-        model_version: config.maritimeDocuments.aiModel,
+        provider: config.maritimeDocuments.aiApiKey ? "openai_responses" : "local_ocr",
+        model_version: config.maritimeDocuments.aiApiKey ? config.maritimeDocuments.aiModel : `local-reader-v${MARITIME_DOCUMENT_READER_VERSION}`,
         extraction_version: MARITIME_DOCUMENT_READER_VERSION,
         extracted_payload: payload,
         overall_confidence: payload.confidence,
-        warnings: payload.warnings
-      }).select("id,intake_id,status,extracted_payload,overall_confidence,created_at,updated_at").single(), "Belge analiz sonucu kaydedilemedi.");
+        warnings: payload.warnings,
+        user_corrections: null,
+        confirmed_at: null,
+        rejected_at: null
+      };
+      if (existingDraft?.status !== "confirmed") extractionRecord.confirmed_payload = null;
+      const extractionQuery = existingDraft
+        ? supabaseAdmin.from("maritime_document_extractions").update(extractionRecord).eq("id", extractionId).eq("seafarer_user_id", ctx.user.id)
+        : supabaseAdmin.from("maritime_document_extractions").insert({ id: extractionId, ...extractionRecord });
+      const extraction = assertDb(await extractionQuery.select("id,intake_id,status,extracted_payload,overall_confidence,created_at,updated_at").single(), "Belge analiz sonucu kaydedilemedi.");
       await supabaseAdmin.from("maritime_document_intakes").update({
         status: "pending_user_confirmation",
         document_type: payload.document_type,
@@ -445,7 +582,8 @@ export function registerMaritimeDocumentRoutes(app) {
           document_country_code: payload.document_country_code,
           template_family: payload.template_family,
           confidence: payload.confidence,
-          evidence_count: payload.field_evidence.length
+          evidence_count: payload.field_evidence.length,
+          reanalysis: forcedDraftRefresh
         }
       });
       return { ok: true, extraction };
@@ -489,7 +627,17 @@ export function registerMaritimeDocumentRoutes(app) {
       .eq("seafarer_user_id", ctx.user.id)
       .maybeSingle();
     const currentProfile = assertDb(currentProfileResult, "Denizcilik CV profili doğrulanamadı.");
-    const identityConflicts = maritimeDocumentIdentityConflicts(currentProfile?.profile_payload || {}, confirmedPayload);
+    let conflictProfile = currentProfile?.profile_payload || {};
+    if (extraction.confirmed_payload) {
+      const otherConfirmed = assertDb(await supabaseAdmin
+        .from("maritime_document_extractions")
+        .select("confirmed_payload")
+        .eq("seafarer_user_id", ctx.user.id)
+        .eq("status", "confirmed")
+        .neq("id", extraction.id), "Mevcut denizcilik kimliği doğrulanamadı.");
+      conflictProfile = mergeConfirmedPayloads((otherConfirmed || []).map((row) => row.confirmed_payload).filter(Boolean));
+    }
+    const identityConflicts = maritimeDocumentIdentityConflicts(conflictProfile, confirmedPayload);
     if (identityConflicts.length) {
       await auditEvent({
         request,
@@ -508,6 +656,7 @@ export function registerMaritimeDocumentRoutes(app) {
       p_confirmed_payload: confirmedPayload
     });
     const confirmed = assertDb(result, "Belge bilgileri onaylanamadı.");
+    await rebuildConfirmedProfile(ctx.user.id);
     const intake = await ownedIntake(ctx.user.id, extraction.intake_id);
     await refreshBatch(intake.batch_id, ctx.user.id);
     await auditEvent({
@@ -522,6 +671,45 @@ export function registerMaritimeDocumentRoutes(app) {
     return { ok: true, confirmed };
   });
 
+  app.post("/v1/maritime/document-extractions/:extractionId/correct", {
+    config: { rateLimit: { max: 30, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.document.correct");
+    const extractionId = z.string().uuid().parse(request.params?.extractionId);
+    const input = confirmationSchema.parse(request.body || {});
+    const extraction = await ownedExtraction(ctx.user.id, extractionId);
+    if (extraction.status !== "confirmed") {
+      throw httpError("Yalnız onaylanmış bir belge düzeltilebilir.", 409, "MARITIME_EXTRACTION_STATE_CONFLICT");
+    }
+    const original = maritimeDocumentExtractionSchema.parse(extraction.extracted_payload);
+    const correctedPayload = maritimeDocumentExtractionSchema.parse({
+      ...input.payload,
+      reader_version: original.reader_version,
+      ocr_quality: original.ocr_quality,
+      field_evidence: original.field_evidence,
+      confidence: original.confidence,
+      warnings: original.warnings
+    });
+    assertDb(await supabaseAdmin.from("maritime_document_extractions").update({
+      user_corrections: correctedPayload,
+      confirmed_payload: correctedPayload,
+      confirmed_at: new Date().toISOString()
+    }).eq("id", extraction.id).eq("seafarer_user_id", ctx.user.id), "Belge düzeltmeleri kaydedilemedi.");
+    const intake = await ownedIntake(ctx.user.id, extraction.intake_id);
+    await updateReadinessSource(ctx.user.id, intake, correctedPayload);
+    const profilePayload = await rebuildConfirmedProfile(ctx.user.id);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.document_extraction_corrected",
+      resourceType: "maritime_document_extraction",
+      resourceId: extraction.id,
+      metadata: { document_type: correctedPayload.document_type, user_confirmed: true }
+    });
+    return { ok: true, corrected: true, profile_payload: profilePayload };
+  });
+
   app.post("/v1/maritime/document-extractions/:extractionId/reject", {
     config: { rateLimit: { max: 30, timeWindow: "10 minutes" } }
   }, async (request) => {
@@ -530,7 +718,7 @@ export function registerMaritimeDocumentRoutes(app) {
     const input = rejectionSchema.parse(request.body || {});
     const extraction = await ownedExtraction(ctx.user.id, extractionId);
     if (extraction.status === "rejected") return { ok: true, rejected: true, idempotent: true };
-    if (extraction.status !== "pending_user_confirmation") {
+    if (!["pending_user_confirmation", "confirmed"].includes(extraction.status)) {
       throw httpError("Bu analiz artık reddedilemez.", 409, "MARITIME_EXTRACTION_STATE_CONFLICT");
     }
     const now = new Date().toISOString();
@@ -541,6 +729,10 @@ export function registerMaritimeDocumentRoutes(app) {
     }).eq("id", extraction.id).eq("seafarer_user_id", ctx.user.id), "Belge analizi reddedilemedi.");
     assertDb(await supabaseAdmin.from("maritime_document_intakes").update({ status: "rejected" }).eq("id", extraction.intake_id).eq("seafarer_user_id", ctx.user.id), "Belge durumu güncellenemedi.");
     const intake = await ownedIntake(ctx.user.id, extraction.intake_id);
+    if (extraction.status === "confirmed" || extraction.confirmed_payload) {
+      await removeReadinessSource(ctx.user.id, intake);
+      await rebuildConfirmedProfile(ctx.user.id);
+    }
     await refreshBatch(intake.batch_id, ctx.user.id);
     return { ok: true, rejected: true };
   });

@@ -148,8 +148,9 @@
     fileTooLarge: ["Dosyalardan biri 45 MB sınırını aşıyor.", "Fayllardan biri 45 MB həddini keçir.", "Файлдардың бірі 45 МБ шегінен асады.", "Fayllardan biri 45 MB limitdan oshadi.", "Файлдардын бири 45 МБ чектен ашат.", "One file exceeds the 45 MB limit.", "Eine Datei überschreitet 45 MB.", "Один из файлов превышает 45 МБ.", "أحد الملفات يتجاوز 45 ميجابايت."],
     batchTooLarge: ["Toplam belge boyutu 150 MB sınırını aşıyor.", "Ümumi sənəd ölçüsü 150 MB həddini keçir.", "Жалпы көлем 150 МБ шегінен асады.", "Jami hajm 150 MB limitdan oshadi.", "Жалпы көлөм 150 МБ чектен ашат.", "The batch exceeds the 150 MB limit.", "Das Paket überschreitet 150 MB.", "Общий размер превышает 150 МБ.", "يتجاوز الحجم الإجمالي 150 ميجابايت."],
     profilePhotoKicker: ["CV Fotoğrafı", "CV fotosu", "CV фотосы", "CV fotosurati", "CV сүрөтү", "CV Photo", "CV-Foto", "Фото для CV", "صورة السيرة"],
-    profilePhotoTitle: ["Fotoğrafınızı CV standardına hazırlayın", "Fotonuzu CV standartına hazırlayın", "Фотоны CV стандартына дайындаңыз", "Suratingizni CV standartiga tayyorlang", "Сүрөтүңүздү CV стандартына даярдаңыз", "Prepare your photo for your CV", "Foto für den Lebenslauf vorbereiten", "Подготовьте фото для CV", "جهّز صورتك للسيرة"],
-    profilePhotoLead: ["Fotoğraf cihazınızda işlenir; yüzünüz yeniden üretilmeden kişi arka plandan ayrılır ve arka plan beyaza çevrilir. Kaydetmeden önce sonucu siz kontrol edersiniz.", "Foto cihazınızda işlənir; üzünüz yenidən yaradılmadan şəxs fondan ayrılır və fon ağ edilir. Saxlamadan əvvəl nəticəni siz yoxlayırsınız.", "Фото құрылғыңызда өңделеді; бет қайта жасалмай, адам фоннан ажыратылып, фон ағартылады. Сақтар алдында нәтижені тексересіз.", "Surat qurilmangizda qayta ishlanadi; yuz qayta yaratilmaydi, shaxs fondan ajratilib fon oq qilinadi. Saqlashdan oldin tekshirasiz.", "Сүрөт түзмөгүңүздө иштетилет; жүз кайра түзүлбөй, адам фондон бөлүнүп, фон агартылат. Сактоодон мурда текшересиз.", "The photo is processed on your device. The person is separated from the background without regenerating the face, and the background is turned white. You review it before saving.", "Das Foto wird auf Ihrem Gerät verarbeitet. Die Person wird ohne Neugenerierung des Gesichts vom Hintergrund getrennt und der Hintergrund wird weiß. Vor dem Speichern prüfen Sie das Ergebnis.", "Фото обрабатывается на устройстве. Человек отделяется от фона без перерисовки лица, а фон становится белым. Перед сохранением вы проверяете результат.", "تُعالج الصورة على جهازك، ويُفصل الشخص عن الخلفية دون إعادة توليد الوجه ثم تصبح الخلفية بيضاء. تراجع النتيجة قبل الحفظ."],
+    profilePhotoRequired: ["Zorunlu alan", "Məcburi sahə", "Міндетті өріс", "Majburiy maydon", "Милдеттүү талаа", "Required field", "Pflichtfeld", "Обязательное поле", "حقل إلزامي"],
+    profilePhotoTitle: ["Global Pasaport fotoğrafınızı ekleyin", "Global Pasport şəklinizi əlavə edin", "Global Passport фотосын қосыңыз", "Global Passport suratingizni qo‘shing", "Global Passport сүрөтүңүздү кошуңуз", "Add your Global Passport photo", "Foto für den Global Passport hinzufügen", "Добавьте фото для Global Passport", "أضف صورتك لجواز السفر العالمي"],
+    profilePhotoLead: ["Global Pasaport yalnız kaydedilmiş bir profil fotoğrafıyla oluşturulur. Fotoğraf cihazınızda, yüzünüz yeniden üretilmeden hazırlanır ve siz onaylamadan kaydedilmez.", "Global Pasport yalnız saxlanılmış profil fotosu ilə yaradılır. Foto cihazınızda üz yenidən yaradılmadan hazırlanır və təsdiqiniz olmadan saxlanmır.", "Global Passport тек сақталған профиль фотосымен жасалады. Фото құрылғыда бет өзгертілмей өңделеді және растаусыз сақталмайды.", "Global Passport faqat saqlangan profil surati bilan yaratiladi. Surat qurilmada yuz o‘zgartirilmasdan tayyorlanadi va tasdiqsiz saqlanmaydi.", "Global Passport сакталган профиль сүрөтү менен гана түзүлөт. Сүрөт түзмөктө жүз өзгөртүлбөй даярдалат жана ырастоосуз сакталбайт.", "A Global Passport can only be created with a saved profile photo. The photo is prepared on your device without regenerating your face and is not saved without your approval.", "Ein Global Passport wird nur mit einem gespeicherten Profilfoto erstellt. Das Foto wird auf Ihrem Gerät ohne Neugenerierung des Gesichts vorbereitet und nicht ohne Ihre Zustimmung gespeichert.", "Global Passport создается только с сохраненной фотографией профиля. Фото обрабатывается на устройстве без изменения лица и не сохраняется без вашего подтверждения.", "لا يُنشأ جواز السفر العالمي إلا بصورة ملف شخصي محفوظة. تُجهز الصورة على جهازك دون إعادة توليد الوجه ولا تُحفظ دون موافقتك."],
     chooseProfilePhoto: ["Fotoğraf Seç / Değiştir", "Foto seç / dəyiş", "Фото таңдау / ауыстыру", "Surat tanlash / almashtirish", "Сүрөт тандоо / алмаштыруу", "Choose / Replace Photo", "Foto wählen / ersetzen", "Выбрать / заменить фото", "اختيار / استبدال الصورة"],
     saveProfilePhoto: ["Önizlemeyi Kaydet", "Ön baxışı saxla", "Алдын ала көріністі сақтау", "Ko‘rinishni saqlash", "Алдын ала көрүнүштү сактоо", "Save Preview", "Vorschau speichern", "Сохранить результат", "حفظ المعاينة"],
     deleteProfilePhoto: ["Fotoğrafı Sil", "Fotonu sil", "Фотоны жою", "Suratni o‘chirish", "Сүрөттү өчүрүү", "Delete Photo", "Foto löschen", "Удалить фото", "حذف الصورة"],
@@ -160,6 +161,14 @@
     photoDeleted: ["CV fotoğrafı silindi.", "CV fotosu silindi.", "CV фотосы жойылды.", "CV surati o‘chirildi.", "CV сүрөтү өчүрүлдү.", "CV photo deleted.", "CV-Foto gelöscht.", "Фото для CV удалено.", "حُذفت صورة السيرة."],
     photoNeedsReview: ["Arka plan tam ayrışmamış olabilir. Önizlemeyi dikkatle kontrol edin.", "Fon tam ayrılmamış ola bilər. Ön baxışı diqqətlə yoxlayın.", "Фон толық ажыратылмауы мүмкін. Нәтижені мұқият тексеріңіз.", "Fon to‘liq ajralmagan bo‘lishi mumkin. Natijani diqqat bilan tekshiring.", "Фон толук бөлүнбөшү мүмкүн. Натыйжаны кылдат текшериңиз.", "The background may not be fully separated. Review the preview carefully.", "Der Hintergrund ist möglicherweise nicht vollständig getrennt. Bitte genau prüfen.", "Фон мог отделиться не полностью. Внимательно проверьте результат.", "قد لا تكون الخلفية مفصولة بالكامل. راجع المعاينة بعناية."],
     photoFailed: ["Fotoğraf hazırlanamadı. Daha net ve aydınlık bir fotoğraf deneyin.", "Foto hazırlana bilmədi. Daha aydın foto sınayın.", "Фото дайындалмады. Анығырақ әрі жарық фото қолданыңыз.", "Surat tayyorlanmadi. Aniqroq va yorug‘ suratni sinang.", "Сүрөт даярдалган жок. Тагыраак жана жарык сүрөттү тандаңыз.", "The photo could not be prepared. Try a clearer, well-lit photo.", "Das Foto konnte nicht vorbereitet werden. Versuchen Sie ein klareres, gut beleuchtetes Foto.", "Не удалось подготовить фото. Попробуйте более четкий и светлый снимок.", "تعذر تجهيز الصورة. جرّب صورة أوضح وبإضاءة جيدة."],
+    photoRequiredNotice: ["Global Pasaport oluşturmak için önce fotoğrafınızı ekleyip kaydedin.", "Global Pasport yaratmaq üçün əvvəlcə fotonuzu əlavə edib saxlayın.", "Global Passport жасау үшін алдымен фотоны қосып сақтаңыз.", "Global Passport yaratish uchun avval suratingizni qo‘shib saqlang.", "Global Passport түзүү үчүн адегенде сүрөтүңүздү кошуп сактаңыз.", "Add and save your photo before creating a Global Passport.", "Fügen Sie zuerst Ihr Foto hinzu und speichern Sie es.", "Перед созданием Global Passport добавьте и сохраните фото.", "أضف صورتك واحفظها قبل إنشاء جواز السفر العالمي."],
+    requiredMissingTitle: ["Global Pasaport için eksik zorunlu bilgiler", "Global Pasport üçün çatışmayan məcburi məlumatlar", "Global Passport үшін міндетті деректер жетіспейді", "Global Passport uchun majburiy maʼlumotlar yetishmaydi", "Global Passport үчүн милдеттүү маалыматтар жетишпейт", "Required Global Passport details are missing", "Pflichtangaben für den Global Passport fehlen", "Не заполнены обязательные данные Global Passport", "بيانات إلزامية ناقصة لجواز السفر العالمي"],
+    requiredMissingLead: ["Belge doğru okunmadıysa aşağıdaki belge kartını açıp alanları düzeltin veya Yeniden Tara düğmesini kullanın.", "Sənəd düzgün oxunmayıbsa aşağıdakı sənəd kartını açıb sahələri düzəldin və ya Yenidən Oxu düyməsini istifadə edin.", "Құжат дұрыс оқылмаса, төмендегі құжат картасын ашып өрістерді түзетіңіз немесе қайта сканерлеңіз.", "Hujjat noto‘g‘ri o‘qilgan bo‘lsa, pastdagi kartani ochib maydonlarni tuzating yoki qayta skanerlang.", "Документ туура окулбаса, төмөнкү картаны ачып талааларды оңдоңуз же кайра сканерлеңиз.", "If a document was read incorrectly, open its card below to correct the fields or run the scan again.", "Wenn ein Dokument falsch gelesen wurde, öffnen Sie die Karte unten, korrigieren Sie die Felder oder scannen Sie erneut.", "Если документ распознан неверно, откройте карточку ниже, исправьте поля или запустите повторное сканирование.", "إذا قُرئ المستند بشكل غير صحيح، افتح بطاقته أدناه وصحح الحقول أو أعد المسح."],
+    readyForConfirmation: ["Zorunlu kimlik bilgileri ve fotoğraf tamamlandı. Belgeleri kontrol edip onaylayabilirsiniz.", "Məcburi şəxsiyyət məlumatları və foto tamamlandı. Sənədləri yoxlayıb təsdiqləyə bilərsiniz.", "Міндетті жеке деректер мен фото дайын. Құжаттарды тексеріп растауға болады.", "Majburiy shaxsiy maʼlumotlar va surat tayyor. Hujjatlarni tekshirib tasdiqlashingiz mumkin.", "Милдеттүү жеке маалыматтар жана сүрөт даяр. Документтерди текшерип ырастай аласыз.", "The required identity details and photo are complete. You can review and confirm the documents.", "Pflichtangaben und Foto sind vollständig. Sie können die Dokumente prüfen und bestätigen.", "Обязательные данные и фото заполнены. Можно проверить и подтвердить документы.", "اكتملت بيانات الهوية الإلزامية والصورة. يمكنك مراجعة المستندات وتأكيدها."],
+    saveCorrections: ["Düzeltmeleri Kaydet", "Düzəlişləri saxla", "Түзетулерді сақтау", "Tuzatishlarni saqlash", "Оңдоолорду сактоо", "Save Corrections", "Korrekturen speichern", "Сохранить исправления", "حفظ التصحيحات"],
+    correctionsSaved: ["Düzeltmeler kaydedildi ve Global Pasaport yeniden oluşturuldu.", "Düzəlişlər saxlanıldı və Global Pasport yenidən yaradıldı.", "Түзетулер сақталып, Global Passport қайта жасалды.", "Tuzatishlar saqlandi va Global Passport qayta yaratildi.", "Оңдоолор сакталды жана Global Passport кайра түзүлдү.", "Corrections were saved and the Global Passport was rebuilt.", "Korrekturen gespeichert und Global Passport neu erstellt.", "Исправления сохранены, Global Passport пересобран.", "حُفظت التصحيحات وأعيد إنشاء جواز السفر العالمي."],
+    rescanDocument: ["Belgeyi Yeniden Tara", "Sənədi yenidən oxu", "Құжатты қайта сканерлеу", "Hujjatni qayta skanerlash", "Документти кайра сканерлөө", "Scan Document Again", "Dokument erneut scannen", "Сканировать документ снова", "إعادة مسح المستند"],
+    removeFromPassport: ["Global Pasaporttan Çıkar", "Global Pasportdan çıxar", "Global Passport ішінен шығару", "Global Passportdan olib tashlash", "Global Passportтон чыгаруу", "Remove from Global Passport", "Aus Global Passport entfernen", "Удалить из Global Passport", "إزالة من جواز السفر العالمي"],
     personalDetails: ["Kişisel ve iletişim bilgileri", "Şəxsi və əlaqə məlumatları", "Жеке және байланыс деректері", "Shaxsiy va aloqa maʼlumotlari", "Жеке жана байланыш маалыматы", "Personal and contact details", "Persönliche Daten und Kontakt", "Личные и контактные данные", "البيانات الشخصية وبيانات الاتصال"],
     contactDetails: ["İletişim bilgileri", "Əlaqə məlumatları", "Байланыс деректері", "Aloqa maʼlumotlari", "Байланыш маалыматы", "Contact details", "Kontaktdaten", "Контактные данные", "بيانات الاتصال"],
     familyName: ["Soyadı", "Soyadı", "Тегі", "Familiya", "Фамилиясы", "Family name", "Nachname", "Фамилия", "اسم العائلة"],
@@ -327,6 +336,12 @@
       remove.hidden = !state.pendingPhoto && !state.remote?.profile_photo_url;
       remove.disabled = state.photoBusy;
     }
+    const requiredNotice = document.querySelector("[data-photo-required-notice]");
+    if (requiredNotice) requiredNotice.hidden = Boolean(state.remote?.profile_photo_ready || state.remote?.profile_photo_url);
+  }
+
+  function hasSavedProfilePhoto() {
+    return Boolean(state.remote?.profile_photo_ready || state.remote?.profile_photo_url);
   }
 
   async function prepareProfilePhoto(file) {
@@ -368,8 +383,11 @@
         body: JSON.stringify({ confirmation: true, upload_id: upload.upload_id })
       });
       state.remote = { ...(state.remote || {}), profile_photo_url: confirmed.profile_photo_url || prepared.preview_url };
+      state.remote.profile_photo_ready = true;
       state.pendingPhoto = null;
       renderProfilePhoto();
+      renderSelection();
+      renderGlobalPassport();
       setPhotoStatus(text("photoSaved"), "success");
     } catch (error) {
       setPhotoStatus(text("photoFailed"), "error");
@@ -392,12 +410,15 @@
     try {
       await api("/v1/maritime/profile-photo", { method: "DELETE" });
       state.remote = { ...(state.remote || {}), profile_photo_url: "" };
+      state.remote.profile_photo_ready = false;
       setPhotoStatus(text("photoDeleted"), "success");
     } catch (error) {
       setPhotoStatus(text("photoFailed"), "error");
     } finally {
       state.photoBusy = false;
       renderProfilePhoto();
+      renderSelection();
+      renderGlobalPassport();
     }
   }
 
@@ -464,7 +485,8 @@
     const submit = document.querySelector("[data-document-submit]");
     if (!section || !rail || !submit) return;
     section.hidden = !state.files.length;
-    submit.disabled = !state.files.length || state.busy;
+    submit.disabled = !state.files.length || state.busy || !hasSavedProfilePhoto();
+    submit.title = hasSavedProfilePhoto() ? "" : text("photoRequiredNotice");
     rail.innerHTML = state.files.map(function (item) {
       return `<article class="maritime-document-file-chip"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i><span><strong>${escapeHtml(item.file.name)}</strong><small>${escapeHtml(formatBytes(item.file.size))}</small></span><button type="button" data-remove-file="${escapeHtml(item.id)}" aria-label="${escapeHtml(text("clear"))}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></article>`;
     }).join("");
@@ -528,8 +550,8 @@
     return options.map(function ([value, key]) { return `<option value="${value}"${value === selected ? " selected" : ""}>${escapeHtml(text(key))}</option>`; }).join("");
   }
 
-  function field(label, name, value, type) {
-    return `<label class="maritime-document-field"><span>${escapeHtml(text(label))}</span><input name="${name}" type="${type || "text"}" value="${escapeHtml(inputValue(value))}" maxlength="240"></label>`;
+  function field(label, name, value, type, required) {
+    return `<label class="maritime-document-field"><span>${escapeHtml(text(label))}${required ? " *" : ""}</span><input name="${name}" type="${type || "text"}" value="${escapeHtml(inputValue(value))}" maxlength="240"${required ? " required" : ""}></label>`;
   }
 
   function recordValue(label, value, options) {
@@ -653,14 +675,27 @@
     });
   }
 
+  function identitySourcePriority(payload) {
+    return ({ passport: 100, seafarer_book: 80, visa: 60, cv: 50, competency_certificate: 35, sea_service_record: 30, medical_certificate: 25, stcw_certificate: 20, training_certificate: 15, other: 5, unknown: 0 })[payload?.document_type] || 0;
+  }
+
+  function reviewPayload(extraction) {
+    const original = extraction?.status === "pending_user_confirmation"
+      ? extraction?.extracted_payload || {}
+      : extraction?.confirmed_payload || extraction?.extracted_payload || {};
+    const form = extraction?.id ? document.querySelector(`[data-extraction-form="${CSS.escape(extraction.id)}"]`) : null;
+    return form ? confirmationPayload(form, original) : original;
+  }
+
   function globalPassportDraft() {
     const remote = state.remote || {};
     const extractionPayloads = (remote.extractions || [])
       .filter(function (row) { return !["rejected", "analysis_failed"].includes(row.status); })
-      .map(function (row) { return row.confirmed_payload || row.extracted_payload; })
+      .map(reviewPayload)
+      .sort(function (first, second) { return identitySourcePriority(second) - identitySourcePriority(first); })
       .filter(Boolean);
     const confirmedProfile = remote.cv_profile && remote.cv_profile.profile_payload;
-    const payloads = confirmedProfile ? extractionPayloads.concat([confirmedProfile]) : extractionPayloads;
+    const payloads = extractionPayloads.length ? extractionPayloads : confirmedProfile ? [confirmedProfile] : [];
     if (!payloads.length) return null;
 
     const documents = [];
@@ -713,17 +748,15 @@
     const achievements = mergedDraftRows(payloads, "achievements", function (row) {
       return [row.title, row.date].map(function (value) { return String(value || "").toLowerCase(); }).join("|");
     });
-    const sessionMetadata = state.session?.user?.user_metadata || {};
-    const holderName = firstDraftValue(payloads, "holder_name")
-      || [firstDraftValue(payloads, "given_names"), firstDraftValue(payloads, "family_name")].filter(Boolean).join(" ")
-      || sessionMetadata.full_name
-      || sessionMetadata.name
-      || state.session?.user?.email?.split("@")[0]
-      || "AllonaHub";
+    const familyName = firstDraftValue(payloads, "family_name");
+    const givenNames = firstDraftValue(payloads, "given_names");
+    const middleName = firstDraftValue(payloads, "middle_name");
+    const holderName = [givenNames, middleName, familyName].filter(Boolean).join(" ") || firstDraftValue(payloads, "holder_name") || "";
     return {
       holder_name: holderName,
-      family_name: firstDraftValue(payloads, "family_name"),
-      given_names: firstDraftValue(payloads, "given_names"),
+      family_name: familyName,
+      given_names: givenNames,
+      middle_name: middleName,
       nationality: localizedValue(firstDraftValue(payloads, "nationality_i18n"), firstDraftValue(payloads, "nationality")),
       date_of_birth: firstDraftValue(payloads, "date_of_birth"),
       place_of_birth: firstDraftValue(payloads, "place_of_birth"),
@@ -753,6 +786,33 @@
       extracted_record_count: identityDocuments.length + credentials.length + seaService.length + languages.length + education.length + medicalRecords.length + vaccinations.length + references.length + skills.length + achievements.length,
       pending_extraction_ids: (remote.extractions || []).filter(function (row) { return row.status === "pending_user_confirmation"; }).map(function (row) { return row.id; })
     };
+  }
+
+  function globalPassportReadiness(draft) {
+    const passport = (draft?.identity_documents || []).find(function (row) { return row?.kind === "passport"; });
+    const missing = [];
+    if (!hasSavedProfilePhoto()) missing.push("profilePhotoKicker");
+    if (!draft?.given_names) missing.push("givenNames");
+    if (!draft?.family_name) missing.push("familyName");
+    if (!draft?.date_of_birth) missing.push("dateOfBirth");
+    if (!draft?.place_of_birth) missing.push("placeOfBirth");
+    if (!draft?.nationality) missing.push("nationality");
+    if (!passport) {
+      missing.push("identityDocuments");
+    } else {
+      if (!passport.document_number) missing.push("documentNumber");
+      if (!passport.issuing_country) missing.push("issuingCountry");
+      if (!passport.issue_date) missing.push("issueDate");
+      if (!passport.expiry_date) missing.push("expiryDate");
+    }
+    return { ready: missing.length === 0, missing: Array.from(new Set(missing)) };
+  }
+
+  function readinessMarkup(readiness) {
+    if (readiness.ready) {
+      return `<div class="maritime-passport-readiness-card is-ready"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>${escapeHtml(text("readyForConfirmation"))}</p></div>`;
+    }
+    return `<div class="maritime-passport-readiness-card is-missing"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><div><strong>${escapeHtml(text("requiredMissingTitle"))}</strong><p>${escapeHtml(text("requiredMissingLead"))}</p><ul>${readiness.missing.map(function (key) { return `<li>${escapeHtml(text(key))}</li>`; }).join("")}</ul></div></div>`;
   }
 
   function passportFact(labelKey, value, options) {
@@ -934,7 +994,20 @@
       const level = localizedValue(row.level_i18n, row.level);
       return `<span><b>${escapeHtml(name)}</b>${level ? `<small>${escapeHtml(level)}</small>` : ""}</span>`;
     }).join("");
-    const sourceFacts = [passportFact("sourceDocuments", draft.source_document_count), passportFact("extractedRecords", draft.extracted_record_count)].join("");
+    const identityColumns = [
+      passportSection("personalDetails", identityFacts ? `<dl class="maritime-cv-facts">${identityFacts}</dl>` : ""),
+      passportSection("contactDetails", contactFacts ? `<dl class="maritime-cv-facts">${contactFacts}</dl>` : ""),
+      passportSection("physicalDetails", physicalFacts ? `<dl class="maritime-cv-facts">${physicalFacts}</dl>` : "")
+    ].filter(Boolean).join("");
+    const credentialMeta = [passportSection("endorsements", endorsementMarkup), passportSection("restrictions", restrictionMarkup)].filter(Boolean).join("");
+    const healthColumns = [
+      passportSection("medicalRecords", medicalMarkup ? `<div class="maritime-cv-record-list">${medicalMarkup}</div>` : ""),
+      passportSection("vaccinations", vaccinationMarkup ? `<div class="maritime-cv-record-list">${vaccinationMarkup}</div>` : "")
+    ].filter(Boolean).join("");
+    const languageColumns = [
+      passportSection("languages", languageMarkup ? `<div class="maritime-cv-language-list maritime-cv-language-list--v4">${languageMarkup}</div>` : ""),
+      passportSection("references", referenceMarkup ? `<div class="maritime-cv-record-list">${referenceMarkup}</div>` : "")
+    ].filter(Boolean).join("");
     return `<div class="maritime-cv-layout maritime-cv-layout--v4">
       <span class="maritime-cv-neon-rail" aria-hidden="true"></span>
       <div class="maritime-cv-body">
@@ -943,30 +1016,17 @@
           <div class="maritime-cv-head"><span>${escapeHtml(text("maritimeLabel"))}</span><h2>${escapeHtml(draft.holder_name)}</h2><p>${escapeHtml(draft.rank || text("globalPassportSummary"))}</p></div>
           <div class="maritime-cv-v4-brand"><span>ALLONA HUB</span><strong>${escapeHtml(text("globalPassportTitle"))}</strong></div>
         </header>
-        ${passportSection("professionalSummary", `<p class="maritime-cv-summary-copy">${escapeHtml(draft.professional_summary)}</p><dl class="maritime-cv-facts maritime-cv-facts--compact maritime-global-passport-source-facts">${sourceFacts}</dl>`)}
-        <div class="maritime-cv-v4-grid maritime-cv-v4-grid--three">
-          ${passportSection("personalDetails", `<dl class="maritime-cv-facts">${identityFacts}</dl>`)}
-          ${passportSection("contactDetails", `<dl class="maritime-cv-facts">${contactFacts}</dl>`)}
-          ${passportSection("physicalDetails", `<dl class="maritime-cv-facts">${physicalFacts}</dl>`)}
-        </div>
+        ${passportSection("professionalSummary", `<p class="maritime-cv-summary-copy">${escapeHtml(draft.professional_summary)}</p>`)}
+        ${identityColumns ? `<div class="maritime-cv-v4-grid maritime-cv-v4-grid--three">${identityColumns}</div>` : ""}
         ${passportSection("identityDocuments", documentMarkup ? `<div class="maritime-cv-record-list maritime-cv-record-list--two">${documentMarkup}</div>` : "")}
         ${passportSection("autoCredentialsTitle", credentialMarkup ? `<div class="maritime-cv-record-list">${credentialMarkup}</div>` : "")}
-        <div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">
-          ${passportSection("endorsements", endorsementMarkup)}
-          ${passportSection("restrictions", restrictionMarkup)}
-        </div>
+        ${credentialMeta ? `<div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">${credentialMeta}</div>` : ""}
         ${passportSection("skills", skillMarkup)}
         ${passportSection("achievements", achievementMarkup ? `<div class="maritime-cv-record-list maritime-cv-record-list--two">${achievementMarkup}</div>` : "")}
         ${passportSection("education", educationMarkup ? `<div class="maritime-cv-record-list maritime-cv-record-list--two">${educationMarkup}</div>` : "")}
-        <div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">
-          ${passportSection("medicalRecords", medicalMarkup ? `<div class="maritime-cv-record-list">${medicalMarkup}</div>` : "")}
-          ${passportSection("vaccinations", vaccinationMarkup ? `<div class="maritime-cv-record-list">${vaccinationMarkup}</div>` : "")}
-        </div>
+        ${healthColumns ? `<div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">${healthColumns}</div>` : ""}
         ${passportSection("serviceHistory", serviceMarkup ? `<div class="maritime-cv-service-list">${serviceMarkup}</div>` : "")}
-        <div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">
-          ${passportSection("languages", languageMarkup ? `<div class="maritime-cv-language-list maritime-cv-language-list--v4">${languageMarkup}</div>` : "")}
-          ${passportSection("references", referenceMarkup ? `<div class="maritime-cv-record-list">${referenceMarkup}</div>` : "")}
-        </div>
+        ${languageColumns ? `<div class="maritime-cv-v4-grid maritime-cv-v4-grid--two">${languageColumns}</div>` : ""}
         <div class="maritime-cv-v4-notes"><p><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>${escapeHtml(text("confirmationRule"))}</p><p><i class="fa-solid fa-lock" aria-hidden="true"></i>${escapeHtml(text("privacyNote"))}</p></div>
       </div>
       <span class="maritime-cv-neon-rail" aria-hidden="true"></span>
@@ -975,8 +1035,17 @@
 
   function reviewCard(documentRow, extraction, index) {
     const status = extraction?.status || documentRow.status;
-    const payload = extraction?.confirmed_payload || extraction?.extracted_payload || {};
+    const payload = extraction?.status === "pending_user_confirmation"
+      ? extraction?.extracted_payload || {}
+      : extraction?.confirmed_payload || extraction?.extracted_payload || {};
     const pending = extraction?.status === "pending_user_confirmation";
+    const confirmed = extraction?.status === "confirmed";
+    const editable = pending || confirmed;
+    const identityDocument = ["passport", "seafarer_book", "visa"].includes(payload.document_type);
+    const passportDocument = payload.document_type === "passport";
+    const cvDocument = payload.document_type === "cv";
+    const qualificationDocument = ["competency_certificate", "stcw_certificate", "training_certificate", "sea_service_record", "cv"].includes(payload.document_type);
+    const medicalDocument = payload.document_type === "medical_certificate";
     const retry = ["analysis_failed", "quarantined", "uploaded", "pending_upload"].includes(documentRow.status);
     const confidence = Math.round((Number(extraction?.overall_confidence ?? payload.confidence) || 0) * 100);
     const statusClass = ["user_confirmed", "verification_pending", "verified", "confirmed"].includes(status) ? "is-confirmed" : status === "rejected" ? "is-rejected" : pending ? "is-review" : "";
@@ -984,53 +1053,36 @@
     const evidenceCount = Array.isArray(payload.field_evidence) ? payload.field_evidence.length : 0;
     const sourceMeta = [readerVersion ? `V${readerVersion}` : "", payload.document_country_code || "", evidenceCount ? `${evidenceCount} ${text("sourceEvidence")}` : ""].filter(Boolean).join(" · ");
     const summary = `<div class="maritime-document-card-summary"><span class="maritime-document-type-icon"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span><span><strong>${escapeHtml(documentRow.original_file_name || payload.document_title || text("documentLabel"))}</strong><small>PDF · ${escapeHtml(formatBytes(documentRow.file_size_bytes))}${sourceMeta ? ` · ${escapeHtml(sourceMeta)}` : ""}</small></span><span class="maritime-document-state ${statusClass}">${escapeHtml(statusLabel(status))}</span></div>`;
-    const utility = `<div class="maritime-document-card-utility"><button type="button" data-open-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-eye" aria-hidden="true"></i>${escapeHtml(text("openDocument"))}</button>${retry ? `<button type="button" data-retry-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>${escapeHtml(text("retryAnalysis"))}</button>` : ""}</div>`;
-    return `<article class="maritime-document-review-card ${statusClass}">${summary}${utility}</article>`;
-    /* The detailed field editor is intentionally retained below as a dormant fallback.
-       The Belgelerim flow now uses the consolidated Global Passport preview and one approval. */
-    if (!pending) return `<article class="maritime-document-review-card ${statusClass}">${summary}${utility}</article>`;
+    const utility = `<div class="maritime-document-card-utility"><button type="button" data-open-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-eye" aria-hidden="true"></i>${escapeHtml(text("openDocument"))}</button>${pending || confirmed ? `<button type="button" data-rescan-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>${escapeHtml(text("rescanDocument"))}</button>` : retry ? `<button type="button" data-retry-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-rotate" aria-hidden="true"></i>${escapeHtml(text("retryAnalysis"))}</button>` : ""}</div>`;
+    if (!editable) return `<article class="maritime-document-review-card ${statusClass}">${summary}${utility}</article>`;
 
-    return `<details class="maritime-document-review-card is-review"${index === 0 ? " open" : ""}><summary>${summary}</summary><form class="maritime-document-review-form" data-extraction-form="${escapeHtml(extraction.id)}">
+    return `<details class="maritime-document-review-card ${statusClass}"${pending && index === 0 ? " open" : ""}><summary>${summary}</summary><form class="maritime-document-review-form" data-extraction-form="${escapeHtml(extraction.id)}" data-extraction-status="${escapeHtml(extraction.status)}">
       <div class="maritime-document-review-title"><div><h3>${escapeHtml(text("verifyDetails"))}</h3><p>${escapeHtml(text("confirmationRule"))}</p>${readerVersion ? `<div class="maritime-document-evidence-badges"><span><i class="fa-solid fa-microchip" aria-hidden="true"></i>${escapeHtml(text("readerVersion"))}: V${readerVersion}</span>${payload.template_family ? `<span><i class="fa-solid fa-layer-group" aria-hidden="true"></i>${escapeHtml(text("classifiedTemplate"))}: ${escapeHtml(payload.template_family)}</span>` : ""}<span><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>${evidenceCount} ${escapeHtml(text("sourceEvidence"))}</span></div>` : ""}</div><span>${escapeHtml(text("confidence"))}: <b>${confidence}%</b></span></div>
       <div class="maritime-document-form-grid">
         <div class="maritime-document-form-subhead maritime-document-form-wide"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><h3>${escapeHtml(text("detailedRecords"))}</h3></div>
         <label class="maritime-document-field"><span>${escapeHtml(text("documentType"))}</span><select name="document_type">${documentTypeOptions(payload.document_type)}</select></label>
         ${field("documentTitle", "document_title", payload.document_title)}
-        ${field("issuingCountry", "document_country", payload.document_country)}
+        ${field("issuingCountry", "document_country", payload.document_country, "text", passportDocument)}
         <label class="maritime-document-field"><span>${escapeHtml(text("languages"))}</span><input name="source_languages" type="text" value="${escapeHtml(arrayText(payload.source_languages))}" maxlength="400"></label>
         <div class="maritime-document-form-subhead maritime-document-form-wide"><i class="fa-solid fa-user" aria-hidden="true"></i><h3>${escapeHtml(text("personalDetails"))}</h3></div>
         ${field("holderName", "holder_name", payload.holder_name)}
-        ${field("familyName", "family_name", payload.family_name)}
-        ${field("givenNames", "given_names", payload.given_names)}
+        ${field("familyName", "family_name", payload.family_name, "text", passportDocument)}
+        ${field("givenNames", "given_names", payload.given_names, "text", passportDocument)}
         ${field("middleName", "middle_name", payload.middle_name)}
-        ${field("documentNumber", "document_number", payload.document_number)}
+        ${field("documentNumber", "document_number", payload.document_number, "text", identityDocument)}
         ${field("issuingAuthority", "issuing_authority", payload.issuing_authority)}
-        ${field("nationality", "nationality", payload.nationality)}
-        ${field("dateOfBirth", "date_of_birth", payload.date_of_birth, "date")}
-        ${field("placeOfBirth", "place_of_birth", payload.place_of_birth)}
+        ${field("nationality", "nationality", payload.nationality, "text", passportDocument)}
+        ${field("dateOfBirth", "date_of_birth", payload.date_of_birth, "date", passportDocument)}
+        ${field("placeOfBirth", "place_of_birth", payload.place_of_birth, "text", passportDocument)}
         ${field("gender", "gender", payload.gender)}
-        ${field("maritalStatus", "marital_status", payload.marital_status)}
-        ${field("issueDate", "issue_date", payload.issue_date, "date")}
-        ${field("expiryDate", "expiry_date", payload.expiry_date, "date")}
-        ${field("rank", "rank", payload.rank)}
-        <label class="maritime-document-field"><span>${escapeHtml(text("medicalFitness"))}</span><select name="medical_fitness">${medicalOptions(payload.medical_fitness || "not_stated")}</select></label>
-        <label class="maritime-document-field"><span>${escapeHtml(text("suitablePositions"))}</span><input name="suitable_positions" type="text" value="${escapeHtml(arrayText(payload.suitable_positions))}" maxlength="1800"></label>
-        ${field("email", "contact_email", payload.contact?.email, "email")}
-        ${field("phone", "contact_phone", payload.contact?.phone, "tel")}
-        ${field("secondaryPhone", "contact_secondary_phone", payload.contact?.secondary_phone, "tel")}
-        ${field("permanentAddress", "contact_permanent_address", payload.contact?.permanent_address)}
-        ${field("nearestAirport", "contact_nearest_airport", payload.contact?.nearest_airport)}
-        ${field("heightCm", "physical_height_cm", payload.physical_profile?.height_cm, "number")}
-        ${field("weightKg", "physical_weight_kg", payload.physical_profile?.weight_kg, "number")}
-        ${field("eyeColor", "physical_eye_color", payload.physical_profile?.eye_color)}
-        ${field("hairColor", "physical_hair_color", payload.physical_profile?.hair_color)}
-        ${field("shoeSize", "physical_shoe_size", payload.physical_profile?.shoe_size)}
-        ${field("overallSize", "physical_overall_size", payload.physical_profile?.overall_size)}
-        <label class="maritime-document-field maritime-document-form-wide"><span>${escapeHtml(text("professionalSummary"))}</span><textarea name="professional_summary" rows="3" maxlength="1200">${escapeHtml(inputValue(payload.professional_summary))}</textarea></label>
-        ${field("desiredSalary", "desired_salary_amount", payload.desired_salary_amount, "number")}
-        ${field("desiredSalaryCurrency", "desired_salary_currency", payload.desired_salary_currency)}
-        ${field("availability", "availability_text", payload.availability_text)}
-        ${certificateRecordsMarkup(payload)}
+        ${cvDocument ? field("maritalStatus", "marital_status", payload.marital_status) : '<input type="hidden" name="marital_status" value="">'}
+        ${field("issueDate", "issue_date", payload.issue_date, "date", passportDocument)}
+        ${field("expiryDate", "expiry_date", payload.expiry_date, "date", passportDocument)}
+        ${qualificationDocument ? field("rank", "rank", payload.rank) : '<input type="hidden" name="rank" value="">'}
+        ${medicalDocument || cvDocument ? `<label class="maritime-document-field"><span>${escapeHtml(text("medicalFitness"))}</span><select name="medical_fitness">${medicalOptions(payload.medical_fitness || "not_stated")}</select></label>` : '<input type="hidden" name="medical_fitness" value="not_stated">'}
+        ${qualificationDocument ? `<label class="maritime-document-field"><span>${escapeHtml(text("suitablePositions"))}</span><input name="suitable_positions" type="text" value="${escapeHtml(arrayText(payload.suitable_positions))}" maxlength="1800"></label>` : '<input type="hidden" name="suitable_positions" value="">'}
+        ${cvDocument ? `${field("email", "contact_email", payload.contact?.email, "email")}${field("phone", "contact_phone", payload.contact?.phone, "tel")}${field("secondaryPhone", "contact_secondary_phone", payload.contact?.secondary_phone, "tel")}${field("permanentAddress", "contact_permanent_address", payload.contact?.permanent_address)}${field("nearestAirport", "contact_nearest_airport", payload.contact?.nearest_airport)}${field("heightCm", "physical_height_cm", payload.physical_profile?.height_cm, "number")}${field("weightKg", "physical_weight_kg", payload.physical_profile?.weight_kg, "number")}${field("eyeColor", "physical_eye_color", payload.physical_profile?.eye_color)}${field("hairColor", "physical_hair_color", payload.physical_profile?.hair_color)}${field("shoeSize", "physical_shoe_size", payload.physical_profile?.shoe_size)}${field("overallSize", "physical_overall_size", payload.physical_profile?.overall_size)}<label class="maritime-document-field maritime-document-form-wide"><span>${escapeHtml(text("professionalSummary"))}</span><textarea name="professional_summary" rows="3" maxlength="1200">${escapeHtml(inputValue(payload.professional_summary))}</textarea></label>${field("desiredSalary", "desired_salary_amount", payload.desired_salary_amount, "number")}${field("desiredSalaryCurrency", "desired_salary_currency", payload.desired_salary_currency)}${field("availability", "availability_text", payload.availability_text)}` : '<input type="hidden" name="contact_email" value=""><input type="hidden" name="contact_phone" value=""><input type="hidden" name="contact_secondary_phone" value=""><input type="hidden" name="contact_permanent_address" value=""><input type="hidden" name="contact_nearest_airport" value=""><input type="hidden" name="physical_height_cm" value=""><input type="hidden" name="physical_weight_kg" value=""><input type="hidden" name="physical_eye_color" value=""><input type="hidden" name="physical_hair_color" value=""><input type="hidden" name="physical_shoe_size" value=""><input type="hidden" name="physical_overall_size" value=""><input type="hidden" name="professional_summary" value=""><input type="hidden" name="desired_salary_amount" value=""><input type="hidden" name="desired_salary_currency" value=""><input type="hidden" name="availability_text" value="">'}
+        ${qualificationDocument ? certificateRecordsMarkup(payload) : ""}
         ${structuredRecordsMarkup(payload)}
         <label class="maritime-document-field"><span>${escapeHtml(text("endorsements"))}</span><input name="endorsements" type="text" value="${escapeHtml(arrayText(payload.endorsements))}" maxlength="3600"></label>
         <label class="maritime-document-field"><span>${escapeHtml(text("restrictions"))}</span><input name="restrictions" type="text" value="${escapeHtml(arrayText(payload.restrictions))}" maxlength="3600"></label>
@@ -1040,7 +1092,7 @@
       </div>
       ${Array.isArray(payload.warnings) && payload.warnings.length ? `<div class="maritime-document-warnings"><strong>${escapeHtml(text("warnings"))}</strong><ul>${payload.warnings.map(function (warning) { return `<li>${escapeHtml(warning)}</li>`; }).join("")}</ul></div>` : ""}
       ${utility}
-      <div class="maritime-document-review-actions"><button class="maritime-button maritime-button--danger-outline" type="button" data-reject-extraction="${escapeHtml(extraction.id)}"><i class="fa-solid fa-xmark" aria-hidden="true"></i>${escapeHtml(text("rejectDetails"))}</button><button class="maritime-button maritime-button--primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>${escapeHtml(text("confirmDetails"))}</button></div>
+      <div class="maritime-document-review-actions"><button class="maritime-button maritime-button--danger-outline" type="button" data-reject-extraction="${escapeHtml(extraction.id)}"><i class="fa-solid fa-xmark" aria-hidden="true"></i>${escapeHtml(text(confirmed ? "removeFromPassport" : "rejectDetails"))}</button><button class="maritime-button maritime-button--primary" type="submit"><i class="fa-solid fa-check" aria-hidden="true"></i>${escapeHtml(text(confirmed ? "saveCorrections" : "confirmDetails"))}</button></div>
     </form></details>`;
   }
 
@@ -1049,37 +1101,44 @@
     const preview = document.querySelector("[data-global-passport-preview]");
     const confirm = document.querySelector("[data-confirm-global-passport]");
     const openCv = document.querySelector("[data-open-maritime-cv]");
-    if (!section || !preview || !confirm || !openCv) return;
+    const readinessTarget = document.querySelector("[data-global-passport-readiness]");
+    if (!section || !preview || !confirm || !openCv || !readinessTarget) return;
     const draft = globalPassportDraft();
     section.hidden = !draft;
     if (!draft) {
       preview.innerHTML = "";
+      readinessTarget.innerHTML = "";
       return;
     }
     preview.innerHTML = globalPassportPreviewMarkup(draft);
+    const readiness = globalPassportReadiness(draft);
+    readinessTarget.innerHTML = readinessMarkup(readiness);
     const pending = draft.pending_extraction_ids.length > 0;
     confirm.hidden = !pending;
-    confirm.disabled = state.busy;
-    openCv.hidden = pending || !state.remote?.cv_profile;
+    confirm.disabled = state.busy || !readiness.ready;
+    confirm.title = readiness.ready ? "" : text("requiredMissingTitle");
+    openCv.hidden = pending || !state.remote?.cv_profile || !readiness.ready;
   }
 
   function renderRemote() {
     const remote = state.remote || { documents: [], extractions: [], cv_profile: null };
     applyUpdateModeCopy();
-    renderGlobalPassport();
     const list = document.querySelector("[data-document-review-list]");
     if (!list) return;
     const extractionMap = new Map((remote.extractions || []).map(function (item) { return [item.intake_id, item]; }));
     if (!remote.documents?.length) {
       list.innerHTML = `<article class="maritime-document-empty"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><strong>${escapeHtml(text("noDocuments"))}</strong><span>${escapeHtml(text("noDocumentsLead"))}</span></article>`;
+      renderGlobalPassport();
       return;
     }
     list.innerHTML = remote.documents.map(function (item, index) { return reviewCard(item, extractionMap.get(item.id), index); }).join("");
+    renderGlobalPassport();
   }
 
   async function loadRemote() {
     try {
       state.remote = await api("/v1/maritime/documents", { method: "GET" });
+      renderProfilePhoto();
       renderRemote();
     } catch (error) {
       setStatus(text("loadFailed"), "error");
@@ -1155,6 +1214,38 @@
 
   function confirmationPayload(form, original) {
     const data = new FormData(form);
+    const documentType = String(data.get("document_type") || "unknown");
+    const familyName = nullable(data.get("family_name"));
+    const givenNames = nullable(data.get("given_names"));
+    const middleName = nullable(data.get("middle_name"));
+    const holderName = [givenNames, middleName, familyName].filter(Boolean).join(" ") || nullable(data.get("holder_name"));
+    const documentNumberValue = nullable(data.get("document_number"));
+    const issuingAuthorityValue = nullable(data.get("issuing_authority"));
+    const documentCountryValue = nullable(data.get("document_country"));
+    const issueDateValue = nullable(data.get("issue_date"));
+    const expiryDateValue = nullable(data.get("expiry_date"));
+    const identityKind = ({ passport: "passport", seafarer_book: "seafarer_book", visa: "visa" })[documentType];
+    const identityDocuments = (Array.isArray(original.identity_documents) ? original.identity_documents : []).map(function (row) { return { ...row }; });
+    if (identityKind) {
+      const index = identityDocuments.findIndex(function (row) { return row?.kind === identityKind; });
+      const current = index >= 0 ? identityDocuments[index] : {};
+      const next = {
+        ...current,
+        kind: identityKind,
+        label: nullable(data.get("document_title")) || current.label || documentTypeLabel(documentType),
+        issuing_country: documentCountryValue,
+        document_number: documentNumberValue,
+        issuing_authority: issuingAuthorityValue,
+        place_of_issue: current.place_of_issue || null,
+        issue_date: issueDateValue,
+        expiry_date: expiryDateValue,
+        validity_status: expiryDateValue ? "dated" : current.validity_status || "not_stated",
+        source_page: current.source_page || null,
+        confidence: Number(current.confidence) || 0
+      };
+      if (index >= 0) identityDocuments[index] = next;
+      else identityDocuments.push(next);
+    }
     const records = certificateRecords(original).slice(0, 40).map(function (row) {
       return {
         ...row,
@@ -1184,30 +1275,31 @@
     const sameList = function (first, second) { return JSON.stringify(first || []) === JSON.stringify(second || []); };
     return {
       ...original,
-      document_type: String(data.get("document_type") || "unknown"),
+      document_type: documentType,
       document_title: nullable(data.get("document_title")),
-      document_country: nullable(data.get("document_country")),
+      document_country: documentCountryValue,
       source_languages: splitValues(data.get("source_languages")).slice(0, 20),
-      holder_name: nullable(data.get("holder_name")),
-      family_name: nullable(data.get("family_name")),
-      given_names: nullable(data.get("given_names")),
-      middle_name: nullable(data.get("middle_name")),
-      document_number: nullable(data.get("document_number")),
-      issuing_authority: nullable(data.get("issuing_authority")),
+      holder_name: holderName,
+      family_name: familyName,
+      given_names: givenNames,
+      middle_name: middleName,
+      document_number: documentNumberValue,
+      issuing_authority: issuingAuthorityValue,
       nationality,
       nationality_i18n: nationality === original.nationality ? normalizedLocalizedText(original.nationality_i18n) : normalizedLocalizedText({}),
       date_of_birth: nullable(data.get("date_of_birth")),
       place_of_birth: nullable(data.get("place_of_birth")),
       gender: nullable(data.get("gender")),
       marital_status: nullable(data.get("marital_status")),
-      issue_date: nullable(data.get("issue_date")),
-      expiry_date: nullable(data.get("expiry_date")),
+      issue_date: issueDateValue,
+      expiry_date: expiryDateValue,
       rank,
       rank_i18n: rank === original.rank ? normalizedLocalizedText(original.rank_i18n) : normalizedLocalizedText({}),
       suitable_positions: positions,
       suitable_positions_i18n: sameList(positions, original.suitable_positions) ? normalizedLocalizedList(original.suitable_positions_i18n) : normalizedLocalizedList({}),
       certificate_codes: certificateCodes,
       certificate_records: records,
+      identity_documents: identityDocuments,
       endorsements,
       endorsements_i18n: sameList(endorsements, original.endorsements) ? normalizedLocalizedList(original.endorsements_i18n) : normalizedLocalizedList({}),
       restrictions,
@@ -1239,6 +1331,7 @@
   }
 
   async function uploadAndAnalyze(form) {
+    if (!hasSavedProfilePhoto()) throw new Error(text("photoRequiredNotice"));
     validateFiles(state.files.map(function (item) { return item.file; }));
     if (!form.elements.analysis_consent.checked) throw new Error(text("consentRequired"));
     state.busy = true;
@@ -1299,6 +1392,24 @@
     }
   }
 
+  async function rescanAnalysis(intakeId, button) {
+    button.disabled = true;
+    setProgress(true, text("statusAnalyzing"), text("rescanDocument"), 55);
+    try {
+      await api(`/v1/maritime/documents/${encodeURIComponent(intakeId)}/analyze`, {
+        method: "POST",
+        body: JSON.stringify({ language: language(), force: true })
+      });
+      await loadRemote();
+      setStatus(text("statusComplete"), "success");
+    } catch (error) {
+      setStatus(error.message || text("uploadFailed"), "error");
+    } finally {
+      button.disabled = false;
+      setProgress(false);
+    }
+  }
+
   async function openDocument(intakeId, button) {
     button.disabled = true;
     try {
@@ -1325,6 +1436,20 @@
       return row.status === "pending_user_confirmation" && row.extracted_payload;
     });
     if (!pending.length || state.busy) return;
+    const draft = globalPassportDraft();
+    const readiness = globalPassportReadiness(draft);
+    if (!readiness.ready) {
+      setStatus(`${text("requiredMissingTitle")}: ${readiness.missing.map(text).join(", ")}`, "error");
+      document.querySelector("[data-global-passport-readiness]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    for (const extraction of pending) {
+      const form = document.querySelector(`[data-extraction-form="${CSS.escape(extraction.id)}"]`);
+      if (form && !form.reportValidity()) {
+        form.closest("details")?.setAttribute("open", "");
+        return;
+      }
+    }
     const updating = hasExistingGlobalPassport();
     state.busy = true;
     button.disabled = true;
@@ -1333,10 +1458,14 @@
     setProgress(true, text("globalPassportConfirming"), `0 / ${pending.length}`, 5);
     let completed = 0;
     try {
-      for (const extraction of pending) {
+      const ordered = [...pending].sort(function (first, second) {
+        return identitySourcePriority(reviewPayload(first)) - identitySourcePriority(reviewPayload(second));
+      });
+      for (const extraction of ordered) {
+        const payload = reviewPayload(extraction);
         await api(`/v1/maritime/document-extractions/${encodeURIComponent(extraction.id)}/confirm`, {
           method: "POST",
-          body: JSON.stringify({ payload: extraction.extracted_payload, confirmation: true })
+          body: JSON.stringify({ payload, confirmation: true })
         });
         completed += 1;
         setProgress(true, text("globalPassportConfirming"), `${completed} / ${pending.length}`, Math.round(completed / pending.length * 100));
@@ -1368,11 +1497,14 @@
     renderSelection();
     setStatus(text("saving"));
     try {
-      const payload = confirmationPayload(form, extraction.extracted_payload || {});
-      await api(`/v1/maritime/document-extractions/${encodeURIComponent(extractionId)}/confirm`, { method: "POST", body: JSON.stringify({ payload, confirmation: true }) });
+      const original = extraction.confirmed_payload || extraction.extracted_payload || {};
+      const payload = confirmationPayload(form, original);
+      const correcting = extraction.status === "confirmed";
+      await api(`/v1/maritime/document-extractions/${encodeURIComponent(extractionId)}/${correcting ? "correct" : "confirm"}`, { method: "POST", body: JSON.stringify({ payload, confirmation: true }) });
       const refreshed = await refreshSmartAccountAfterDocumentChange();
       await loadRemote();
-      setStatus(text(refreshed ? (updating ? "globalPassportUpdated" : "globalPassportConfirmed") : "smartRefreshFailed"), refreshed ? "success" : "error");
+      const resultKey = correcting ? "correctionsSaved" : refreshed ? (updating ? "globalPassportUpdated" : "globalPassportConfirmed") : "saved";
+      setStatus(text(resultKey), "success");
     } catch (error) {
       setStatus(error.message || text("uploadFailed"), "error");
     } finally {
@@ -1399,6 +1531,14 @@
     const input = document.querySelector("[data-document-files]");
     const dropzone = document.querySelector("[data-document-dropzone]");
     const form = document.querySelector("[data-document-upload-form]");
+    const photoInput = document.querySelector("[data-profile-photo-input]");
+    if (photoInput) photoInput.addEventListener("change", function () {
+      const file = photoInput.files && photoInput.files[0];
+      photoInput.value = "";
+      if (file) prepareProfilePhoto(file);
+    });
+    document.querySelector("[data-profile-photo-save]")?.addEventListener("click", saveProfilePhoto);
+    document.querySelector("[data-profile-photo-delete]")?.addEventListener("click", deleteProfilePhoto);
     if (input) input.addEventListener("change", function () { addFiles(input.files); input.value = ""; });
     if (dropzone) {
       ["dragenter", "dragover"].forEach(function (name) { dropzone.addEventListener(name, function (event) { event.preventDefault(); dropzone.classList.add("is-dragging"); }); });
@@ -1415,6 +1555,12 @@
       event.preventDefault();
       confirmExtraction(reviewForm);
     });
+    document.addEventListener("input", function (event) {
+      if (event.target.closest("[data-extraction-form]")) renderGlobalPassport();
+    });
+    document.addEventListener("change", function (event) {
+      if (event.target.closest("[data-extraction-form]")) renderGlobalPassport();
+    });
 
     document.addEventListener("click", function (event) {
       const remove = event.target.closest("[data-remove-file]");
@@ -1426,6 +1572,8 @@
       if (open) { openDocument(open.dataset.openIntake, open); return; }
       const retry = event.target.closest("[data-retry-intake]");
       if (retry) { retryAnalysis(retry.dataset.retryIntake, retry); return; }
+      const rescan = event.target.closest("[data-rescan-intake]");
+      if (rescan) { rescanAnalysis(rescan.dataset.rescanIntake, rescan); return; }
       const reject = event.target.closest("[data-reject-extraction]");
       if (reject) rejectExtraction(reject.dataset.rejectExtraction, reject);
     });

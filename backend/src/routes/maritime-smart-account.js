@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MARITIME_PROFILE_PHOTO_BUCKET } from "../lib/maritime-document-doctor.js";
+import { MARITIME_PROFILE_PHOTO_BUCKET, maritimeGlobalPassportReadiness } from "../lib/maritime-document-doctor.js";
 import {
   MARITIME_SMART_RULE_VERSION,
   buildMaritimeSmartProfile,
@@ -43,16 +43,17 @@ function assertDb(result, message) {
 }
 
 async function ownCvIdentity(user) {
-  const metadata = user?.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {};
-  const raw = String(metadata.avatar_url || metadata.avatar || "").trim();
-  const fallbackAvatarUrl = (
-    (/^https:\/\//i.test(raw) && raw.length <= 2048)
-    || (/^data:image\/(?:png|jpe?g|webp);base64,/i.test(raw) && raw.length <= 2000000)
-  ) ? raw : "";
   const signed = await supabaseAdmin.storage
     .from(MARITIME_PROFILE_PHOTO_BUCKET)
     .createSignedUrl(`users/${user?.id}/profile.webp`, 600);
-  return { avatar_url: signed.error ? fallbackAvatarUrl : String(signed.data?.signedUrl || fallbackAvatarUrl) };
+  return { avatar_url: signed.error ? "" : String(signed.data?.signedUrl || "") };
+}
+
+async function hasStoredProfilePhoto(userId) {
+  const result = await supabaseAdmin.storage
+    .from(MARITIME_PROFILE_PHOTO_BUCKET)
+    .list(`users/${userId}`, { limit: 20, search: "profile.webp" });
+  return !result.error && Array.isArray(result.data) && result.data.some((item) => item?.name === "profile.webp");
 }
 
 async function requireCustomer(request, action) {
@@ -254,6 +255,12 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const input = await smartInputs(ctx.user.id);
     if (!input.cvProfile || !input.documents.some((document) => ["user_confirmed", "verification_pending", "verified"].includes(document.status))) {
       throw httpError("Akıllı hesap için önce en az bir belgeyi kontrol edip onaylayın.", 409, "CONFIRMED_DOCUMENT_REQUIRED");
+    }
+    const passportReadiness = maritimeGlobalPassportReadiness(input.cvProfile.profile_payload || {}, {
+      hasPhoto: await hasStoredProfilePhoto(ctx.user.id)
+    });
+    if (!passportReadiness.ready) {
+      throw httpError(`Global Pasaport için zorunlu alanlar eksik: ${passportReadiness.missing.join(", ")}.`, 409, "GLOBAL_PASSPORT_REQUIRED_FIELDS_MISSING");
     }
     const jobs = await verifiedOpenJobs();
     const smartSnapshot = buildMaritimeSmartProfile(input);

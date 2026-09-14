@@ -45,6 +45,48 @@ function firstMatch(text, patterns) {
   return null;
 }
 
+function firstPageMatch(pageTexts, patterns) {
+  for (let index = 0; index < pageTexts.length; index += 1) {
+    const value = firstMatch(pageTexts[index], patterns);
+    if (value) return { value, page: index + 1 };
+  }
+  return null;
+}
+
+function normalizedName(value) {
+  return compact(String(value || "")
+    .replace(/[<|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim(), 240);
+}
+
+function plausibleName(value, maxWords = 6) {
+  const clean = normalizedName(value);
+  if (!clean || /\d/.test(clean)) return null;
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (!words.length || words.length > maxWords) return null;
+  if (!words.every((word) => /^[\p{L}'’-]+$/u.test(word))) return null;
+  const normalized = normalizedForSearch(clean);
+  if (/\b(date|birth|nationality|passport|document|authority|republic|certificate|maritime|gender|sex|height|address|email|phone|signature|surname|given name)\b/.test(normalized)) return null;
+  return clean;
+}
+
+function splitHumanName(holder, explicitFamily = null, explicitGiven = null, explicitMiddle = null) {
+  const family = plausibleName(explicitFamily, 3);
+  const given = plausibleName(explicitGiven, 4);
+  const middle = plausibleName(explicitMiddle, 3);
+  const full = plausibleName(holder || [given, middle, family].filter(Boolean).join(" "));
+  if (family || given) return { holder_name: full || [given, middle, family].filter(Boolean).join(" "), family_name: family, given_names: given, middle_name: middle };
+  const parts = String(full || "").split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return { holder_name: full, family_name: null, given_names: full, middle_name: null };
+  return {
+    holder_name: full,
+    family_name: parts.at(-1),
+    given_names: parts.slice(0, -1).join(" "),
+    middle_name: null
+  };
+}
+
 const MONTHS = new Map([
   ["january", 1], ["jan", 1], ["ocak", 1],
   ["february", 2], ["feb", 2], ["subat", 2], ["şubat", 2],
@@ -83,6 +125,50 @@ function validDate(year, month, day) {
   const parsed = new Date(Date.UTC(year, month - 1, day));
   if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return null;
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function mrzDate(value, kind) {
+  const match = String(value || "").replace(/O/g, "0").match(/^(\d{2})(\d{2})(\d{2})$/);
+  if (!match) return null;
+  const currentYear = new Date().getUTCFullYear();
+  const shortYear = Number(match[1]);
+  const year = kind === "birth"
+    ? (2000 + shortYear > currentYear ? 1900 + shortYear : 2000 + shortYear)
+    : 2000 + shortYear;
+  return validDate(year, Number(match[2]), Number(match[3]));
+}
+
+function normalizeMrzLine(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9<]/g, "");
+}
+
+function parsePassportMrz(text) {
+  const lines = String(text || "").split(/\r?\n/).map(normalizeMrzLine).filter((line) => line.length >= 38);
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const first = lines[index];
+    const second = lines[index + 1];
+    if (!/^P</.test(first) || second.length < 38) continue;
+    const nameZone = first.slice(5, 44);
+    const [familyRaw, givenRaw = ""] = nameZone.split("<<");
+    const familyName = normalizedName(familyRaw.replace(/</g, " "));
+    const givenNames = normalizedName(givenRaw.replace(/</g, " "));
+    const documentNumber = compact(second.slice(0, 9).replace(/</g, "").replace(/O/g, "0"), 40);
+    const nationalityCode = second.slice(10, 13).replace(/</g, "");
+    const dateOfBirth = mrzDate(second.slice(13, 19), "birth");
+    const gender = second.slice(20, 21) === "M" ? "Male" : second.slice(20, 21) === "F" ? "Female" : null;
+    const expiryDate = mrzDate(second.slice(21, 27), "expiry");
+    return {
+      holder_name: normalizedName([givenNames, familyName].filter(Boolean).join(" ")),
+      family_name: familyName,
+      given_names: givenNames,
+      document_number: documentNumber,
+      nationality_code: nationalityCode || null,
+      date_of_birth: dateOfBirth,
+      gender,
+      expiry_date: expiryDate
+    };
+  }
+  return null;
 }
 
 function labeledDate(pageTexts, labels) {
@@ -124,16 +210,20 @@ function countryDetails(text) {
 }
 
 function documentType(text, fileName) {
-  const normalized = normalizedForSearch(`${fileName} ${text.slice(0, 12000)}`);
-  if (/\b(curriculum vitae|cv form|ozgecmis)\b/.test(normalized)) return "cv";
+  const normalized = normalizedForSearch(String(text || "").slice(0, 30000));
+  const normalizedFileName = normalizedForSearch(fileName);
+  const clearCv = /\b(curriculum vitae|cv form|ozgecmis)\b/.test(normalized)
+    && /\b(personal details|personal information|sea service|sea experience|work experience|education|contact)\b/.test(normalized);
+  if (clearCv) return "cv";
   if (/\bcertificate of competency|competency certificate|yeterlik belgesi\b/.test(normalized)) return "competency_certificate";
   if (/\bstcw\b/.test(normalized) && /\bcertificate\b/.test(normalized)) return "stcw_certificate";
   if (/\bcertificate of training|training certificate|sertifikat|sertifika\b/.test(normalized)) return "training_certificate";
   if (/\b(seaman s book|seafarer s book|libreta de embarque|denizci cuzdan)\b/.test(normalized)) return "seafarer_book";
   if (/\bdenizcinin sexsiyyet senedi|gemiadami cuzdan|gemi adami cuzdan\b/.test(normalized)) return "seafarer_book";
-  if (/\bpassport\b/.test(normalized)) return "passport";
+  if (/\bpassport\b/.test(normalized) || /\bP<[A-Z]{3}/.test(String(text || "").toUpperCase())) return "passport";
   if (/\bmedical (certificate|examination)|saglik raporu\b/.test(normalized)) return "medical_certificate";
   if (/\bsea service|service record|deniz hizmet\b/.test(normalized)) return "sea_service_record";
+  if (/\b(curriculum vitae|cv form|ozgecmis)\b/.test(normalizedFileName)) return "cv";
   return "unknown";
 }
 
@@ -141,8 +231,28 @@ function holderName(text) {
   return firstMatch(text, [
     /(?:this is to certify that|certify that)[ \t]+(?:mr\.?|ms\.?|mrs\.?)?[ \t]*([\p{L}][\p{L}'’-]+(?:[ \t]+[\p{L}][\p{L}'’-]+){1,4})(?=[ \t]+(?:date of birth|born|holder|nationality|passport))/iu,
     /(?:name of (?:the )?(?:holder|seafarer)|holder(?:'s)? name|full name|ad[ıi] soyad[ıi]|soyad[ıi][, \t]+ad[ıi])[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]+(?:[ \t]+[\p{L}][\p{L}'’-]+){1,4})(?=[ \t]*\n|$)/imu,
-    /(?:surname and given names?)[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]+(?:[ \t]+[\p{L}][\p{L}'’-]+){1,4})(?=[ \t]*\n|$)/imu
+    /(?:surname and given names?)[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]+(?:[ \t]+[\p{L}][\p{L}'’-]+){1,4})(?=[ \t]*\n|$)/imu,
+    /(?:ad[ıi][ \t]+soyad[ıi]|adı[ \t]+və[ \t]+soyadı|soyadı[ \t]+və[ \t]+adı)[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]+(?:[ \t]+[\p{L}][\p{L}'’-]+){1,4})(?=[ \t]*\n|$)/imu
   ]);
+}
+
+function labeledIdentity(pageTexts, mrz) {
+  const family = firstPageMatch(pageTexts, [
+    /(?:^|\n)[ \t]*(?:soyad[ıi]|surname|family name|familiya)[ \t]*(?:\/[^:\n]+)?[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]*(?:[ \t]+[\p{L}][\p{L}'’-]*){0,3})(?=[ \t]*\n|$)/imu
+  ]);
+  const given = firstPageMatch(pageTexts, [
+    /(?:^|\n)[ \t]*(?:ad[ıi]|given names?|first names?|name)[ \t]*(?:\/[^:\n]+)?[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]*(?:[ \t]+[\p{L}][\p{L}'’-]*){0,3})(?=[ \t]*\n|$)/imu
+  ]);
+  const middle = firstPageMatch(pageTexts, [
+    /(?:^|\n)[ \t]*(?:ata ad[ıi]|patronymic|middle name)[ \t]*(?:\/[^:\n]+)?[ \t]*[:#-]?[ \t]*([\p{L}][\p{L}'’-]*(?:[ \t]+[\p{L}][\p{L}'’-]*){0,2})(?=[ \t]*\n|$)/imu
+  ]);
+  const named = splitHumanName(
+    mrz?.holder_name,
+    mrz?.family_name || family?.value,
+    mrz?.given_names || given?.value,
+    middle?.value
+  );
+  return { ...named, page: family?.page || given?.page || middle?.page || null };
 }
 
 function rankValue(text) {
@@ -169,7 +279,8 @@ function documentNumber(text) {
   return firstMatch(text, [
     /certificate\s+of\s+training\s+(?:no\.?|n[oº°.]?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9 /.-]{3,40})/iu,
     /(?:certificate|document|passport|seaman(?:'s)? book|seafarer(?:'s)? book|licen[cs]e|diploma)\s*(?:number|no\.?|n[oº°.]?)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/.-]{3,40})/iu,
-    /(?:belge|sertifika|pasaport)\s*(?:no|numaras[ıi])\s*[:#-]?\s*([A-Z0-9][A-Z0-9/.-]{3,40})/iu
+    /(?:belge|sertifika|pasaport|s[əe]n[əe]d)\s*(?:no|n[oö]mr[əe]si|numaras[ıi])\s*[:#-]?\s*([A-Z0-9][A-Z0-9/.-]{3,40})/iu,
+    /(?:passport no|passport number|document no|s[əe]n[əe]din n[oö]mr[əe]si)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/.-]{3,40})/iu
   ]);
 }
 
@@ -207,16 +318,38 @@ function certificateCodes(text) {
   return unique(matches.map((value) => compact(value, 100))).slice(0, 40);
 }
 
-function contactDetails(text) {
-  const emails = unique(String(text || "").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu) || []);
-  const phones = unique(String(text || "").match(/(?:\+|00)?\d[\d ()-]{7,}\d/g) || []).map((value) => compact(value, 40));
+function contactDetails(pageTexts, type) {
+  if (type !== "cv") {
+    return { email: null, phone: null, secondary_phone: null, permanent_address: null, nearest_airport: null };
+  }
+  const cvText = pageTexts
+    .filter((page) => documentType(page, "") === "cv")
+    .slice(0, 3)
+    .join("\n");
+  const email = firstMatch(cvText, [/(?:personal\s+)?(?:e-?mail|email address)\s*[:#-]\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/iu]);
+  const phonePattern = /(?:mobile|phone|telephone|telefon|mobil)\s*[:#-]\s*((?:\+|00)?\d[\d ()-]{7,}\d)/giu;
+  const phones = unique([...cvText.matchAll(phonePattern)].map((match) => compact(match[1], 40)));
   return {
-    email: emails[0] || null,
+    email,
     phone: phones[0] || null,
     secondary_phone: phones[1] || null,
-    permanent_address: firstMatch(text, [/(?:permanent address|address|adres)\s*[:#-]\s*([^\n]{5,220})/iu]),
-    nearest_airport: firstMatch(text, [/(?:nearest airport|en yak[ıi]n havaliman[ıi])\s*[:#-]\s*([^\n]{3,120})/iu])
+    permanent_address: firstMatch(cvText, [/(?:permanent address|home address|ikamet adresi)\s*[:#-]\s*([^\n]{5,220})/iu]),
+    nearest_airport: firstMatch(cvText, [/(?:nearest airport|en yak[ıi]n havaliman[ıi])\s*[:#-]\s*([^\n]{3,120})/iu])
   };
+}
+
+function normalizedGender(value) {
+  const normalized = normalizedForSearch(value);
+  if (["m", "male", "erkek", "kisi"].includes(normalized)) return "Male";
+  if (["f", "female", "kadin", "qadin"].includes(normalized)) return "Female";
+  return null;
+}
+
+function cleanPlaceOfBirth(value) {
+  const clean = compact(value, 80);
+  const normalized = normalizedForSearch(clean);
+  if (!clean || /\d/.test(clean) || /\b(nationality|milliyyeti|height|gender|sex|date|passport|document)\b/.test(normalized)) return null;
+  return clean;
 }
 
 function localWarning(language, lowText) {
@@ -233,13 +366,25 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
   const text = pages.join("\n\f\n");
   const type = documentType(text, fileName);
   const country = countryDetails(text);
-  const name = holderName(text);
-  const number = documentNumber(text);
-  const authority = issuingAuthority(text, country);
-  const birth = labeledDate(pages, "date of birth|birth date|dob|doğum tarihi|do[ğg]um tarixi");
+  const mrz = parsePassportMrz(text);
+  const labeledName = labeledIdentity(pages, mrz);
+  const name = labeledName.holder_name || holderName(text) || mrz?.holder_name || null;
+  const nameParts = splitHumanName(name, labeledName.family_name || mrz?.family_name, labeledName.given_names || mrz?.given_names, labeledName.middle_name);
+  const number = type === "cv" ? null : type === "passport" ? mrz?.document_number || documentNumber(text) : documentNumber(text) || mrz?.document_number || null;
+  const authority = type === "cv" ? null : issuingAuthority(text, country);
+  const mrzBirth = mrz?.date_of_birth ? { value: mrz.date_of_birth, printed: mrz.date_of_birth, page: findPage(pages, mrz.date_of_birth) } : null;
+  const birth = type === "passport"
+    ? mrzBirth || labeledDate(pages, "date of birth|birth date|dob|doğum tarihi|do[ğg]um tarixi")
+    : labeledDate(pages, "date of birth|birth date|dob|doğum tarihi|do[ğg]um tarixi") || mrzBirth;
   const issue = labeledDate(pages, "date of issue|issue date|issued on|veriliş tarihi|verilm[əe] tarixi");
-  const expiry = labeledDate(pages, "date of expiry|expiry date|valid until|son geçerlilik tarihi|bitm[əe] tarixi");
-  const nationality = firstMatch(text, [/(?:nationality|milliy[əe]ti|uyru[ğg]u)\s*[:#-]?\s*([\p{L}][\p{L} -]{2,50})/iu]);
+  const expiry = labeledDate(pages, "date of expiry|expiry date|valid until|son geçerlilik tarihi|bitm[əe] tarixi|etibarl[ıi]l[ıi]q m[üu]dd[əe]ti") || (mrz?.expiry_date ? { value: mrz.expiry_date, printed: mrz.expiry_date, page: findPage(pages, mrz.expiry_date) } : null);
+  const mrzNationality = ({ AZE: "Azerbaijani", TUR: "Turkish", PAN: "Panamanian", HND: "Honduran" }[mrz?.nationality_code] || null);
+  const labeledNationality = firstMatch(text, [/(?:nationality|milliy[əe]ti|v[əe]t[əe]ndaşl[ıi]ğ[ıi]|uyru[ğg]u)\s*(?:\/[^:\n]+)?\s*[:#-]?\s*([\p{L}][\p{L} -]{2,50})/iu]);
+  const nationality = type === "passport" ? mrzNationality || labeledNationality : labeledNationality || mrzNationality;
+  const placeOfBirth = cleanPlaceOfBirth(firstMatch(text, [/(?:place of birth|do[ğg]um yeri|do[ğg]uldu[ğg]u yer)\s*(?:\/[^:\n]+)?\s*[:#-]?\s*([^\n]{2,80})/iu]));
+  const gender = type === "passport"
+    ? mrz?.gender || normalizedGender(firstMatch(text, [/(?:sex|gender|cinsiyet|cinsi)\s*(?:\/[^:\n]+)?\s*[:#-]?\s*([^\n]{1,20})/iu]))
+    : normalizedGender(firstMatch(text, [/(?:sex|gender|cinsiyet|cinsi)\s*(?:\/[^:\n]+)?\s*[:#-]?\s*([^\n]{1,20})/iu])) || mrz?.gender || null;
   const rank = rankValue(text);
   const title = documentTitle(text, type);
   const stcw = stcwReferences(text);
@@ -249,7 +394,7 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
     const row = evidence(fieldPath, value, page, confidence, printed);
     if (row) evidenceRows.push(row);
   };
-  addEvidence("holder_name", name);
+  addEvidence("holder_name", name, labeledName.page || findPage(pages, name));
   addEvidence("document_number", number);
   addEvidence("issuing_authority", authority);
   if (birth) addEvidence("date_of_birth", birth.value, birth.page, usedOcr ? 0.68 : 0.84, birth.printed);
@@ -257,64 +402,121 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
   if (expiry) addEvidence("expiry_date", expiry.value, expiry.page, usedOcr ? 0.68 : 0.84, expiry.printed);
   addEvidence("rank", rank);
 
-  const certificateLike = ["training_certificate", "stcw_certificate", "competency_certificate"].includes(type);
-  const identityLike = ["passport", "seafarer_book"].includes(type);
-  const certificateRecords = certificateLike ? [{
-    code: codes[0] || null,
-    document_number: number,
+  const pageFacts = pages.map((pageText, index) => {
+    const pageType = documentType(pageText, "");
+    const pageCountry = countryDetails(pageText);
+    const pageMrz = parsePassportMrz(pageText);
+    const pageNumber = pageType === "passport" ? pageMrz?.document_number || documentNumber(pageText) : documentNumber(pageText);
+    const pageIssue = labeledDate([pageText], "date of issue|issue date|issued on|veriliş tarihi|verilm[əe] tarixi");
+    const pageExpiry = labeledDate([pageText], "date of expiry|expiry date|valid until|son geçerlilik tarihi|bitm[əe] tarixi|etibarl[ıi]l[ıi]q m[üu]dd[əe]ti")
+      || (pageMrz?.expiry_date ? { value: pageMrz.expiry_date } : null);
+    return {
+      page: index + 1,
+      text: pageText,
+      type: pageType,
+      country: pageCountry,
+      number: pageNumber,
+      title: documentTitle(pageText, pageType),
+      authority: issuingAuthority(pageText, pageCountry),
+      issue: pageIssue?.value || null,
+      expiry: pageExpiry?.value || null,
+      rank: rankValue(pageText),
+      codes: certificateCodes(pageText),
+      stcw: stcwReferences(pageText)
+    };
+  });
+  const certificateFacts = pageFacts.filter((item) => ["training_certificate", "stcw_certificate", "competency_certificate"].includes(item.type));
+  if (!certificateFacts.length && ["training_certificate", "stcw_certificate", "competency_certificate"].includes(type)) {
+    certificateFacts.push({ page: findPage(pages, number || title), type, country, number, title, authority, issue: issue?.value || null, expiry: expiry?.value || null, rank, codes, stcw });
+  }
+  const certificateRecords = unique(certificateFacts.map((item) => JSON.stringify({
+    code: item.codes[0] || null,
+    document_number: item.number,
     certificate_serial: null,
     endorsement_number: null,
-    title,
-    title_i18n: nullableLocalized(title),
-    issuing_country: country.country,
-    issuing_authority: authority,
+    title: item.title,
+    title_i18n: nullableLocalized(item.title),
+    issuing_country: item.country.country,
+    issuing_authority: item.authority,
     approval_authority: null,
     approval_reference: null,
     place_of_issue: null,
     course_start_date: null,
     course_end_date: null,
-    issue_date: issue?.value || null,
-    expiry_date: expiry?.value || null,
-    validity_status: expiry ? "dated" : "not_stated",
-    rank_or_capacity: rank,
-    rank_or_capacity_i18n: nullableLocalized(rank),
-    stcw_references: stcw,
-    source_page: findPage(pages, number || title),
+    issue_date: item.issue,
+    expiry_date: item.expiry,
+    validity_status: item.expiry ? "dated" : "not_stated",
+    rank_or_capacity: item.rank,
+    rank_or_capacity_i18n: nullableLocalized(item.rank),
+    stcw_references: item.stcw,
+    source_page: item.page,
     confidence: usedOcr ? 0.66 : 0.8
-  }] : [];
-  if (certificateRecords.length) {
-    if (codes[0]) addEvidence("certificate_records[0].code", codes[0]);
-    if (number) addEvidence("certificate_records[0].document_number", number);
-    if (authority) addEvidence("certificate_records[0].issuing_authority", authority);
-    if (rank) addEvidence("certificate_records[0].rank_or_capacity", rank);
-    stcw.forEach((value, index) => addEvidence(`certificate_records[0].stcw_references[${index}]`, value));
-  }
+  }))).map((item) => JSON.parse(item));
+  certificateRecords.forEach((row, recordIndex) => {
+    if (row.code) addEvidence(`certificate_records[${recordIndex}].code`, row.code, row.source_page);
+    if (row.document_number) addEvidence(`certificate_records[${recordIndex}].document_number`, row.document_number, row.source_page);
+    if (row.issuing_authority) addEvidence(`certificate_records[${recordIndex}].issuing_authority`, row.issuing_authority, row.source_page);
+    if (row.rank_or_capacity) addEvidence(`certificate_records[${recordIndex}].rank_or_capacity`, row.rank_or_capacity, row.source_page);
+    row.stcw_references.forEach((value, stcwIndex) => addEvidence(`certificate_records[${recordIndex}].stcw_references[${stcwIndex}]`, value, row.source_page));
+  });
 
-  const identityDocuments = identityLike ? [{
-    kind: type === "passport" ? "passport" : "seafarer_book",
-    label: title,
-    issuing_country: country.country,
-    document_number: number,
-    issuing_authority: authority,
-    place_of_issue: null,
-    issue_date: issue?.value || null,
-    expiry_date: expiry?.value || null,
-    validity_status: expiry ? "dated" : "not_stated",
-    source_page: findPage(pages, number || title),
-    confidence: usedOcr ? 0.66 : 0.8
-  }] : [];
-  if (identityDocuments.length) {
-    if (number) addEvidence("identity_documents[0].document_number", number);
-    if (authority) addEvidence("identity_documents[0].issuing_authority", authority);
-    if (issue) addEvidence("identity_documents[0].issue_date", issue.value, issue.page, usedOcr ? 0.68 : 0.84, issue.printed);
-    if (expiry) addEvidence("identity_documents[0].expiry_date", expiry.value, expiry.page, usedOcr ? 0.68 : 0.84, expiry.printed);
+  const identityFacts = pageFacts.filter((item) => ["passport", "seafarer_book"].includes(item.type));
+  if (!identityFacts.length && ["passport", "seafarer_book"].includes(type)) {
+    identityFacts.push({ page: findPage(pages, number || title), type, country, number, title, authority, issue: issue?.value || null, expiry: expiry?.value || null });
   }
+  const identityDocuments = unique(identityFacts.map((item) => JSON.stringify({
+    kind: item.type === "passport" ? "passport" : "seafarer_book",
+    label: item.title,
+    issuing_country: item.country.country,
+    document_number: item.number,
+    issuing_authority: item.authority,
+    place_of_issue: null,
+    issue_date: item.issue,
+    expiry_date: item.expiry,
+    validity_status: item.expiry ? "dated" : "not_stated",
+    source_page: item.page,
+    confidence: usedOcr ? 0.66 : 0.8
+  }))).map((item) => JSON.parse(item));
+  identityDocuments.forEach((row, recordIndex) => {
+    if (row.document_number) addEvidence(`identity_documents[${recordIndex}].document_number`, row.document_number, row.source_page);
+    if (row.issuing_authority) addEvidence(`identity_documents[${recordIndex}].issuing_authority`, row.issuing_authority, row.source_page);
+    if (row.issue_date) addEvidence(`identity_documents[${recordIndex}].issue_date`, row.issue_date, row.source_page);
+    if (row.expiry_date) addEvidence(`identity_documents[${recordIndex}].expiry_date`, row.expiry_date, row.source_page);
+  });
+
+  const medicalFacts = pageFacts.filter((item) => item.type === "medical_certificate");
+  if (!medicalFacts.length && type === "medical_certificate") {
+    medicalFacts.push({ page: findPage(pages, number || title), type, country, number, title, authority, issue: issue?.value || null, expiry: expiry?.value || null, text });
+  }
+  const medicalRecords = medicalFacts.map((item) => {
+    const medicalText = item.text || "";
+    const result = /\bunfit\b/i.test(medicalText) ? "unfit" : /\bfit(?:\s+for\s+(?:sea|duty|service))?\b/i.test(medicalText) ? "fit" : "not_stated";
+    return {
+      record_type: "medical_certificate",
+      document_number: item.number,
+      result,
+      restrictions: [],
+      issuing_authority: item.authority,
+      place_of_issue: null,
+      issue_date: item.issue,
+      expiry_date: item.expiry,
+      validity_status: item.expiry ? "dated" : "not_stated",
+      source_page: item.page,
+      confidence: usedOcr ? 0.66 : 0.8
+    };
+  });
+  medicalRecords.forEach((row, index) => {
+    if (row.document_number) addEvidence(`medical_records[${index}].document_number`, row.document_number, row.source_page);
+    if (row.issuing_authority) addEvidence(`medical_records[${index}].issuing_authority`, row.issuing_authority, row.source_page);
+    if (row.issue_date) addEvidence(`medical_records[${index}].issue_date`, row.issue_date, row.source_page);
+    if (row.expiry_date) addEvidence(`medical_records[${index}].expiry_date`, row.expiry_date, row.source_page);
+  });
 
   const readablePages = pages.filter((page) => normalizedForSearch(page).length >= 30).length;
   const lowText = readablePages < pages.length || normalizedForSearch(text).length < 80;
   const confidence = lowText ? 0.4 : usedOcr ? 0.66 : 0.8;
   return {
-    reader_version: 6,
+    reader_version: 7,
     document_type: type,
     document_title: title,
     document_country: country.country,
@@ -329,16 +531,16 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
     },
     field_evidence: evidenceRows.slice(0, 300),
     source_languages: sourceLanguages(text),
-    holder_name: name,
-    family_name: null,
-    given_names: null,
-    middle_name: null,
+    holder_name: nameParts.holder_name,
+    family_name: nameParts.family_name,
+    given_names: nameParts.given_names,
+    middle_name: nameParts.middle_name,
     document_number: number,
     issuing_authority: authority,
     nationality,
     date_of_birth: birth?.value || null,
-    place_of_birth: firstMatch(text, [/(?:place of birth|do[ğg]um yeri)\s*[:#-]?\s*([^\n]{2,80})/iu]),
-    gender: firstMatch(text, [/(?:sex|gender|cinsiyet)\s*[:#-]?\s*([^\n]{1,20})/iu]),
+    place_of_birth: placeOfBirth,
+    gender,
     marital_status: firstMatch(text, [/(?:marital status|medeni hali)\s*[:#-]?\s*([^\n]{2,30})/iu]),
     issue_date: issue?.value || null,
     expiry_date: expiry?.value || null,
@@ -352,7 +554,7 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
     certificate_records: certificateRecords,
     identity_documents: identityDocuments,
     education: [],
-    medical_records: [],
+    medical_records: medicalRecords,
     vaccinations: [],
     endorsements: [],
     endorsements_i18n: emptyLocalizedList(),
@@ -360,7 +562,7 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
     restrictions_i18n: emptyLocalizedList(),
     sea_service: [],
     languages: [],
-    contact: contactDetails(text),
+    contact: contactDetails(pages, type),
     physical_profile: { height_cm: null, weight_kg: null, eye_color: null, hair_color: null, shoe_size: null, overall_size: null },
     emergency_contacts: [],
     references: [],
@@ -371,7 +573,7 @@ export function parseMaritimeOcrPages({ pageTexts, fileName, outputLanguage = "t
     desired_salary_amount: null,
     desired_salary_currency: null,
     availability_text: null,
-    medical_fitness: type === "medical_certificate" && /\bfit\b/i.test(text) ? "fit" : "not_stated",
+    medical_fitness: medicalRecords.find((row) => row.result !== "not_stated")?.result || "not_stated",
     notes: [],
     confidence,
     warnings: [localWarning(outputLanguage, lowText)]
@@ -385,12 +587,32 @@ async function availableTesseractLanguages() {
   return preferred.length ? preferred.join("+") : "eng";
 }
 
-async function runOcr(imagePath, languages) {
-  const { stdout } = await execFileAsync("tesseract", [imagePath, "stdout", "-l", languages, "--psm", "6"], {
+async function runOcrPass(imagePath, languages, pageSegmentationMode) {
+  const { stdout } = await execFileAsync("tesseract", [imagePath, "stdout", "-l", languages, "--psm", pageSegmentationMode, "-c", "preserve_interword_spaces=1"], {
     timeout: LOCAL_READER_TIMEOUT_MS,
     maxBuffer: LOCAL_READER_MAX_BUFFER
   });
   return String(stdout || "");
+}
+
+function mergeOcrPasses(values) {
+  const seen = new Set();
+  const lines = [];
+  for (const value of values) {
+    for (const line of String(value || "").split(/\r?\n/)) {
+      const normalized = normalizedForSearch(line);
+      if (!normalized || seen.has(normalized)) continue;
+      seen.add(normalized);
+      lines.push(line.trim());
+    }
+  }
+  return lines.join("\n");
+}
+
+async function runOcr(imagePath, languages) {
+  const sparse = await runOcrPass(imagePath, languages, "11");
+  const automatic = await runOcrPass(imagePath, languages, "1").catch(() => "");
+  return mergeOcrPasses([sparse, automatic]);
 }
 
 async function pdfPageCount(filePath) {
@@ -416,7 +638,7 @@ async function extractPdfPages(filePath, workDir) {
   }
 
   const prefix = path.join(workDir, "page");
-  await execFileAsync("pdftoppm", ["-jpeg", "-r", "180", "-f", "1", "-l", String(pageCount), filePath, prefix], {
+  await execFileAsync("pdftoppm", ["-jpeg", "-r", "260", "-f", "1", "-l", String(pageCount), filePath, prefix], {
     timeout: LOCAL_READER_TIMEOUT_MS,
     maxBuffer: 4 * 1024 * 1024
   });

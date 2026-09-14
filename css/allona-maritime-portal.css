@@ -1247,6 +1247,30 @@ body.maritime-portal-page textarea {
   box-shadow: 0 0 18px rgba(0, 223, 252, 0.24);
 }
 
+.maritime-global-passport-create:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.maritime-passport-required-notice {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 79, 105, 0.55);
+  border-radius: 7px;
+  background: rgba(116, 12, 32, 0.38);
+  color: #ffe8ec;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.maritime-passport-required-notice[hidden] {
+  display: none;
+}
+
 .maritime-global-passport-section {
   display: grid;
   min-width: 0;
@@ -1276,6 +1300,71 @@ body.maritime-portal-page textarea {
   border-radius: 7px;
   background: #021321;
   scrollbar-color: rgba(0, 223, 252, 0.56) #021321;
+}
+
+.maritime-passport-readiness {
+  min-width: 0;
+}
+
+.maritime-passport-readiness-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 190, 54, 0.56);
+  border-radius: 7px;
+  background: rgba(98, 62, 4, 0.34);
+  color: #fff8dc;
+}
+
+.maritime-passport-readiness-card.is-ready {
+  border-color: rgba(40, 215, 154, 0.56);
+  background: rgba(7, 91, 65, 0.38);
+  color: #e6fff6;
+}
+
+.maritime-passport-readiness-card > i {
+  margin-top: 2px;
+  color: #ffd067;
+  font-size: 18px;
+}
+
+.maritime-passport-readiness-card.is-ready > i {
+  color: #4ce6af;
+}
+
+.maritime-passport-readiness-card :where(strong, p, ul) {
+  margin: 0;
+}
+
+.maritime-passport-readiness-card strong {
+  display: block;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.maritime-passport-readiness-card p {
+  margin-top: 4px;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.maritime-passport-readiness-card ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0 0;
+  list-style: none;
+}
+
+.maritime-passport-readiness-card li {
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 216, 124, 0.38);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.16);
+  font-size: 11px;
+  font-weight: 750;
 }
 
 .maritime-global-passport-preview .maritime-cv-layout {
@@ -3503,6 +3592,28 @@ body.maritime-account-page[data-theme="turquoise"] .maritime-account-action--sma
 body.maritime-documents-page[data-theme="white"] :where(.maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty, .maritime-document-file-chip, .maritime-document-progress) {
   background: #ffffff;
   color: #071928;
+}
+
+body.maritime-documents-page[data-theme="white"] .maritime-passport-required-notice {
+  border-color: #d33b55;
+  background: #fff0f3;
+  color: #8f1830;
+}
+
+body.maritime-documents-page[data-theme="white"] .maritime-passport-readiness-card.is-missing {
+  border-color: #d79a25;
+  background: #fff8e8;
+  color: #61420b;
+}
+
+body.maritime-documents-page[data-theme="white"] .maritime-passport-readiness-card.is-ready {
+  border-color: #168961;
+  background: #ecfff7;
+  color: #0c5d43;
+}
+
+body.maritime-documents-page[data-theme="white"] .maritime-passport-readiness-card strong {
+  color: #122b3a;
 }
 
 body.maritime-documents-page[data-theme="white"] :where(.maritime-document-dropzone, .maritime-document-field input, .maritime-document-field select, .maritime-document-field textarea) {

@@ -6,6 +6,7 @@ import {
   MARITIME_DOCUMENT_MAX_FILES,
   MARITIME_DOCUMENT_READER_VERSION,
   analyzeMaritimeDocument,
+  maritimeGlobalPassportReadiness,
   maritimeDocumentEvidenceIssues,
   maritimeDocumentExtractionSchema,
   maritimeDocumentIdentityConflicts,
@@ -18,7 +19,7 @@ import { parseMaritimeOcrPages } from "../../src/lib/maritime-local-document-rea
 const localized = (values = {}) => ({ tr: null, az: null, kk: null, uz: null, ky: null, en: null, de: null, ru: null, ar: null, ...values });
 
 const extraction = {
-  reader_version: 6,
+  reader_version: 7,
   document_type: "competency_certificate",
   document_title: "Certificate of Competency",
   document_country: "Türkiye",
@@ -143,7 +144,7 @@ test("accepts country-agnostic detailed maritime CV facts and non-expiring crede
 });
 
 test("requires source-page evidence for every critical identifier", () => {
-  assert.equal(MARITIME_DOCUMENT_READER_VERSION, 6);
+  assert.equal(MARITIME_DOCUMENT_READER_VERSION, 7);
   assert.deepEqual(maritimeDocumentEvidenceIssues(extraction), []);
   const withoutDocumentNumberEvidence = {
     ...extraction,
@@ -189,7 +190,7 @@ test("rejects impossible or reversed validity and sea-service dates", () => {
 });
 
 test("upgrades legacy extraction payloads with empty multilingual fields", () => {
-  const legacy = { ...extraction, reader_version: 5 };
+  const legacy = { ...extraction, reader_version: 6 };
   delete legacy.rank_i18n;
   delete legacy.nationality_i18n;
   delete legacy.certificate_records;
@@ -197,7 +198,7 @@ test("upgrades legacy extraction payloads with empty multilingual fields", () =>
   delete legacy.endorsements_i18n;
   delete legacy.restrictions_i18n;
   const parsed = maritimeDocumentExtractionSchema.parse(legacy);
-  assert.equal(parsed.reader_version, 6);
+  assert.equal(parsed.reader_version, 7);
   assert.deepEqual(parsed.certificate_records, []);
   assert.deepEqual(parsed.skills, []);
   assert.deepEqual(parsed.achievements, []);
@@ -244,6 +245,96 @@ test("local OCR fallback extracts reviewable facts for international maritime do
   }
 });
 
+test("uses Azerbaijani passport labels and MRZ without treating issuer contacts as holder data", () => {
+  const passport = parseMaritimeOcrPages({
+    pageTexts: [`AZƏRBAYCAN RESPUBLİKASI
+PASPORT
+Soyadı / Surname: QULIYEV
+Adı / Given names: ZIYA
+Doğulduğu yer / Place of birth: BAKI
+Doğum tarixi / Date of birth: 22.02.1993
+Verilmə tarixi / Date of issue: 02.05.2025
+Etibarlılıq müddəti / Date of expiry: 02.05.2035
+Passport No: C03434797
+P<AZEQULIYEV<<ZIYA<<<<<<<<<<<<<<<<<<<<<<<<
+C034347977AZE9302224M3505028<<<<<<<<<<<<<<04
+Authority email: authority@example.invalid`],
+    fileName: "azerbaijan-passport.pdf",
+    outputLanguage: "az",
+    usedOcr: true
+  });
+  assert.equal(passport.document_type, "passport");
+  assert.equal(passport.family_name, "QULIYEV");
+  assert.equal(passport.given_names, "ZIYA");
+  assert.equal(passport.holder_name, "ZIYA QULIYEV");
+  assert.equal(passport.date_of_birth, "1993-02-22");
+  assert.equal(passport.place_of_birth, "BAKI");
+  assert.equal(passport.document_number, "C03434797");
+  assert.equal(passport.contact.email, null);
+});
+
+test("does not turn certificate footers or adjacent labels into seafarer facts", () => {
+  const certificate = parseMaritimeOcrPages({
+    pageTexts: [`CERTIFICATE OF TRAINING NO ALS C-001/CH-13653
+This is to certify that Mr. Ahadov Ilham date of birth 25/08/1999 holder of an Azerbaijani Passport No C03358710.
+Minimum Standards of Competence in Safety Familiarization / Basic Training
+APPROVED BY REPUBLIC OF HONDURAS
+Address: 4-6 Filellinon, Piraeus 185 36, Greece Tel: +30 2104294418-9 Email: info@maritimetraining.invalid
+Place of birth 1.6 Nationality
+Sex M Height 182`],
+    fileName: "MOTORMAN AHADOV ILHAM CV FORM.pdf",
+    outputLanguage: "en",
+    usedOcr: true
+  });
+  assert.equal(certificate.document_type, "training_certificate");
+  assert.equal(certificate.holder_name, "Ahadov Ilham");
+  assert.equal(certificate.place_of_birth, null);
+  assert.equal(certificate.gender, null);
+  assert.deepEqual(certificate.contact, { email: null, phone: null, secondary_phone: null, permanent_address: null, nearest_airport: null });
+  assert.equal(certificate.certificate_records[0].document_number, "ALS C-001/CH-13653");
+});
+
+test("keeps medical fitness inside a medical record", () => {
+  const medical = parseMaritimeOcrPages({
+    pageTexts: [`REPUBLIC OF AZERBAIJAN
+MEDICAL CERTIFICATE
+Certificate No: MED-7788
+Name of holder: ZIYA QULIYEV
+Date of issue: 02.05.2025
+Date of expiry: 02.05.2027
+The seafarer is FIT FOR SEA SERVICE`],
+    fileName: "medical.pdf",
+    outputLanguage: "az",
+    usedOcr: false
+  });
+  assert.equal(medical.document_type, "medical_certificate");
+  assert.equal(medical.medical_fitness, "fit");
+  assert.equal(medical.medical_records[0].document_number, "MED-7788");
+  assert.equal(medical.medical_records[0].result, "fit");
+});
+
+test("requires a saved portrait and complete passport identity before Global Passport preparation", () => {
+  const incomplete = maritimeGlobalPassportReadiness({ given_names: "Ziya", family_name: "Quliyev" }, { hasPhoto: false });
+  assert.equal(incomplete.ready, false);
+  assert.ok(incomplete.missing.includes("profile_photo"));
+  assert.ok(incomplete.missing.includes("passport"));
+  const complete = maritimeGlobalPassportReadiness({
+    given_names: "Ziya",
+    family_name: "Quliyev",
+    date_of_birth: "1993-02-22",
+    place_of_birth: "Bakı",
+    nationality: "Azerbaijani",
+    identity_documents: [{
+      kind: "passport",
+      document_number: "C03434797",
+      issuing_country: "Azerbaijan",
+      issue_date: "2025-05-02",
+      expiry_date: "2035-05-02"
+    }]
+  }, { hasPhoto: true });
+  assert.deepEqual(complete, { ready: true, missing: [] });
+});
+
 test("sends PDFs as private request input and requires strict structured output", async () => {
   let requestBody;
   const result = await analyzeMaritimeDocument({
@@ -271,7 +362,7 @@ test("sends PDFs as private request input and requires strict structured output"
   assert.match(requestBody.input[0].content[0].text, /Panama, Honduras, Azerbaijan, Turkey/i);
   assert.match(requestBody.input[0].content[0].text, /source_page/i);
   assert.match(requestBody.input[0].content[0].text, /field_evidence/i);
-  assert.match(requestBody.input[0].content[0].text, /reader_version 6/i);
+  assert.match(requestBody.input[0].content[0].text, /reader_version 7/i);
   assert.match(requestBody.input[0].content[0].text, /certificate serials, endorsement numbers/i);
   assert.match(requestBody.input[0].content[0].text, /Do not turn certificate titles into claimed employment experience/i);
   assert.doesNotMatch(requestBody.input[0].content[0].text, /ignore all prior instructions/i);

@@ -46,7 +46,10 @@ test("smart matching API returns public-safe matches without company identity or
   assert.match(route, /CUSTOMER_ACCOUNT_REQUIRED/);
   assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
   assert.match(route, /cv_identity: await ownCvIdentity\(user\)/);
-  assert.match(route, /metadata\.avatar_url \|\| metadata\.avatar/);
+  assert.doesNotMatch(route, /metadata\.avatar_url \|\| metadata\.avatar/);
+  assert.match(route, /maritimeGlobalPassportReadiness/);
+  assert.match(route, /GLOBAL_PASSPORT_REQUIRED_FIELDS_MISSING/);
+  assert.match(route, /profile\.webp/);
 });
 
 test("verified partner crew listings persist complete matching requirements", async () => {
