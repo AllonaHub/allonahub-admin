@@ -10,6 +10,7 @@ const documentUiUrl = new URL("../../../js/allona-maritime-documents.js", import
 const photoUiUrl = new URL("../../../js/allona-maritime-photo.js", import.meta.url);
 const portalCssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-documents.js", import.meta.url);
+const appUrl = new URL("../../src/app.js", import.meta.url);
 const customerProfileUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
 const localReaderUrl = new URL("../../src/lib/maritime-local-document-reader.js", import.meta.url);
 const dockerfileUrl = new URL("../../Dockerfile", import.meta.url);
@@ -72,14 +73,15 @@ test("the production maritime migration chain includes and verifies Global Passp
 });
 
 test("the customer workspace exposes a PDF-only Global Passport flow", async () => {
-  const [page, portal, documentUi, photoUi, portalCss, route, customerProfile] = await Promise.all([
+  const [page, portal, documentUi, photoUi, portalCss, route, customerProfile, app] = await Promise.all([
     readFile(pageUrl, "utf8"),
     readFile(portalUrl, "utf8"),
     readFile(documentUiUrl, "utf8"),
     readFile(photoUiUrl, "utf8"),
     readFile(portalCssUrl, "utf8"),
     readFile(routeUrl, "utf8"),
-    readFile(customerProfileUrl, "utf8")
+    readFile(customerProfileUrl, "utf8"),
+    readFile(appUrl, "utf8")
   ]);
   assert.match(page, /class="maritime-document-nav"[^>]+data-view-link="documents"/);
   assert.match(page, /type="file" multiple/);
@@ -136,6 +138,11 @@ test("the customer workspace exposes a PDF-only Global Passport flow", async () 
   assert.match(portalCss, /\.maritime-global-passport-actions \.maritime-button\[hidden\][\s\S]*?display: none !important/);
   assert.match(route, /\/v1\/maritime\/profile-photo\/upload-intent/);
   assert.match(route, /\/v1\/maritime\/profile-photo\/confirm/);
+  assert.match(route, /app\.post\("\/v1\/maritime\/profile-photo"/);
+  assert.match(route, /Buffer\.isBuffer\(request\.body\)/);
+  assert.match(app, /addContentTypeParser\("image\/webp"/);
+  assert.match(documentUi, /fetch\(`\$\{apiBase\(\)\}\/v1\/maritime\/profile-photo`/);
+  assert.doesNotMatch(documentUi, /\/v1\/maritime\/profile-photo\/upload-intent/);
   assert.match(route, /pendingProfilePhotoPath/);
   assert.match(route, /upload_id/);
   assert.match(route, /\.upload\(path, bytes/);

@@ -149,6 +149,9 @@ export async function buildApp() {
       done(error);
     }
   });
+  app.addContentTypeParser("image/webp", { parseAs: "buffer" }, (_request, body, done) => {
+    done(null, body);
+  });
 
   await app.register(helmet, {
     global: true,

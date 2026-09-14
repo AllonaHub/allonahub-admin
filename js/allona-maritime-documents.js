@@ -161,6 +161,7 @@
     photoDeleted: ["CV fotoğrafı silindi.", "CV fotosu silindi.", "CV фотосы жойылды.", "CV surati o‘chirildi.", "CV сүрөтү өчүрүлдү.", "CV photo deleted.", "CV-Foto gelöscht.", "Фото для CV удалено.", "حُذفت صورة السيرة."],
     photoNeedsReview: ["Arka plan tam ayrışmamış olabilir. Önizlemeyi dikkatle kontrol edin.", "Fon tam ayrılmamış ola bilər. Ön baxışı diqqətlə yoxlayın.", "Фон толық ажыратылмауы мүмкін. Нәтижені мұқият тексеріңіз.", "Fon to‘liq ajralmagan bo‘lishi mumkin. Natijani diqqat bilan tekshiring.", "Фон толук бөлүнбөшү мүмкүн. Натыйжаны кылдат текшериңиз.", "The background may not be fully separated. Review the preview carefully.", "Der Hintergrund ist möglicherweise nicht vollständig getrennt. Bitte genau prüfen.", "Фон мог отделиться не полностью. Внимательно проверьте результат.", "قد لا تكون الخلفية مفصولة بالكامل. راجع المعاينة بعناية."],
     photoFailed: ["Fotoğraf hazırlanamadı. Daha net ve aydınlık bir fotoğraf deneyin.", "Foto hazırlana bilmədi. Daha aydın foto sınayın.", "Фото дайындалмады. Анығырақ әрі жарық фото қолданыңыз.", "Surat tayyorlanmadi. Aniqroq va yorug‘ suratni sinang.", "Сүрөт даярдалган жок. Тагыраак жана жарык сүрөттү тандаңыз.", "The photo could not be prepared. Try a clearer, well-lit photo.", "Das Foto konnte nicht vorbereitet werden. Versuchen Sie ein klareres, gut beleuchtetes Foto.", "Не удалось подготовить фото. Попробуйте более четкий и светлый снимок.", "تعذر تجهيز الصورة. جرّب صورة أوضح وبإضاءة جيدة."],
+    photoSaveFailed: ["Fotoğraf hazırlandı ancak güvenli alana kaydedilemedi. Bağlantınızı kontrol edip tekrar deneyin.", "Foto hazırlandı, lakin təhlükəsiz sahədə saxlanmadı. Bağlantınızı yoxlayıb yenidən sınayın.", "Фото дайындалды, бірақ қауіпсіз сақтау орнына жазылмады. Байланысты тексеріп, қайталап көріңіз.", "Surat tayyorlandi, ammo xavfsiz joyga saqlanmadi. Ulanishni tekshirib, qayta urinib ko‘ring.", "Сүрөт даярдалды, бирок коопсуз жерге сакталган жок. Байланышты текшерип, кайра аракет кылыңыз.", "The photo was prepared but could not be saved securely. Check your connection and try again.", "Das Foto wurde vorbereitet, konnte aber nicht sicher gespeichert werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.", "Фото подготовлено, но не удалось безопасно сохранить. Проверьте соединение и повторите попытку.", "تم تجهيز الصورة ولكن تعذر حفظها بأمان. تحقق من الاتصال وحاول مرة أخرى."],
     photoRequiredNotice: ["Global Pasaport oluşturmak için önce fotoğrafınızı ekleyip kaydedin.", "Global Pasport yaratmaq üçün əvvəlcə fotonuzu əlavə edib saxlayın.", "Global Passport жасау үшін алдымен фотоны қосып сақтаңыз.", "Global Passport yaratish uchun avval suratingizni qo‘shib saqlang.", "Global Passport түзүү үчүн адегенде сүрөтүңүздү кошуп сактаңыз.", "Add and save your photo before creating a Global Passport.", "Fügen Sie zuerst Ihr Foto hinzu und speichern Sie es.", "Перед созданием Global Passport добавьте и сохраните фото.", "أضف صورتك واحفظها قبل إنشاء جواز السفر العالمي."],
     requiredMissingTitle: ["Global Pasaport için eksik zorunlu bilgiler", "Global Pasport üçün çatışmayan məcburi məlumatlar", "Global Passport үшін міндетті деректер жетіспейді", "Global Passport uchun majburiy maʼlumotlar yetishmaydi", "Global Passport үчүн милдеттүү маалыматтар жетишпейт", "Required Global Passport details are missing", "Pflichtangaben für den Global Passport fehlen", "Не заполнены обязательные данные Global Passport", "بيانات إلزامية ناقصة لجواز السفر العالمي"],
     requiredMissingLead: ["Belge doğru okunmadıysa aşağıdaki belge kartını açıp alanları düzeltin veya Yeniden Tara düğmesini kullanın.", "Sənəd düzgün oxunmayıbsa aşağıdakı sənəd kartını açıb sahələri düzəldin və ya Yenidən Oxu düyməsini istifadə edin.", "Құжат дұрыс оқылмаса, төмендегі құжат картасын ашып өрістерді түзетіңіз немесе қайта сканерлеңіз.", "Hujjat noto‘g‘ri o‘qilgan bo‘lsa, pastdagi kartani ochib maydonlarni tuzating yoki qayta skanerlang.", "Документ туура окулбаса, төмөнкү картаны ачып талааларды оңдоңуз же кайра сканерлеңиз.", "If a document was read incorrectly, open its card below to correct the fields or run the scan again.", "Wenn ein Dokument falsch gelesen wurde, öffnen Sie die Karte unten, korrigieren Sie die Felder oder scannen Sie erneut.", "Если документ распознан неверно, откройте карточку ниже, исправьте поля или запустите повторное сканирование.", "إذا قُرئ المستند بشكل غير صحيح، افتح بطاقته أدناه وصحح الحقول أو أعد المسح."],
@@ -371,17 +372,24 @@
     setPhotoStatus(text("saving"));
     try {
       const prepared = state.pendingPhoto;
-      const intent = await api("/v1/maritime/profile-photo/upload-intent", {
+      const session = state.session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
+      if (!session?.access_token) throw new Error("AUTH_REQUIRED");
+      const response = await fetch(`${apiBase()}/v1/maritime/profile-photo`, {
         method: "POST",
-        body: JSON.stringify({ mime_type: "image/webp", size_bytes: prepared.blob.size })
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "image/webp"
+        },
+        body: prepared.blob
       });
-      const upload = intent.upload || {};
-      const result = await App.supabase.storage.from(upload.bucket).uploadToSignedUrl(upload.path, upload.token, prepared.blob, { contentType: "image/webp", upsert: false });
-      if (result.error) throw result.error;
-      const confirmed = await api("/v1/maritime/profile-photo/confirm", {
-        method: "POST",
-        body: JSON.stringify({ confirmation: true, upload_id: upload.upload_id })
-      });
+      const confirmed = await response.json().catch(function () { return {}; });
+      if (!response.ok || confirmed.ok !== true) {
+        const error = new Error(confirmed.message || "MARITIME_PHOTO_SAVE_FAILED");
+        error.status = response.status;
+        error.code = confirmed.code || "MARITIME_PHOTO_SAVE_FAILED";
+        throw error;
+      }
       state.remote = { ...(state.remote || {}), profile_photo_url: confirmed.profile_photo_url || prepared.preview_url };
       state.remote.profile_photo_ready = true;
       state.pendingPhoto = null;
@@ -390,7 +398,8 @@
       renderGlobalPassport();
       setPhotoStatus(text("photoSaved"), "success");
     } catch (error) {
-      setPhotoStatus(text("photoFailed"), "error");
+      console.warn("Maritime profile photo save failed", { code: error?.code || "UNKNOWN", status: error?.status || null });
+      setPhotoStatus(text("photoSaveFailed"), "error");
     } finally {
       state.photoBusy = false;
       renderProfilePhoto();

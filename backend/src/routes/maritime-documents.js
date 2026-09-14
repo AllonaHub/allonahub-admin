@@ -300,6 +300,33 @@ export function registerMaritimeDocumentRoutes(app) {
     return { ok: true, ...(await documentState(ctx.user.id)) };
   });
 
+  app.post("/v1/maritime/profile-photo", {
+    bodyLimit: MARITIME_PROFILE_PHOTO_MAX_BYTES,
+    config: { rateLimit: { max: 10, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.profile_photo.upload");
+    const bytes = Buffer.isBuffer(request.body) ? request.body : Buffer.alloc(0);
+    if (!bytes.length || bytes.length > MARITIME_PROFILE_PHOTO_MAX_BYTES || !maritimeDocumentSignatureMatches(bytes, "image/webp")) {
+      throw httpError("Profil fotoğrafı güvenli biçimde doğrulanamadı.", 400, "MARITIME_PHOTO_INVALID");
+    }
+    const path = profilePhotoPath(ctx.user.id);
+    const saved = await supabaseAdmin.storage.from(MARITIME_PROFILE_PHOTO_BUCKET).upload(path, bytes, {
+      contentType: "image/webp",
+      upsert: true
+    });
+    if (saved.error) throw httpError("Profil fotoğrafı kaydedilemedi.", 503, "MARITIME_PHOTO_SAVE_FAILED");
+    const url = await signedProfilePhoto(ctx.user.id);
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.profile_photo_saved",
+      resourceType: "maritime_profile_photo",
+      metadata: { bytes: bytes.length, direct_private_upload: true, face_pixels_regenerated: false }
+    });
+    return { ok: true, profile_photo_url: url };
+  });
+
   app.post("/v1/maritime/profile-photo/upload-intent", {
     config: { rateLimit: { max: 10, timeWindow: "10 minutes" } }
   }, async (request, reply) => {
