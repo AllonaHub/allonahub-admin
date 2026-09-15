@@ -41,7 +41,13 @@ begin
     'public.confirm_maritime_smart_account(uuid,boolean)',
     'public.create_maritime_application_drafts(uuid,uuid[],boolean)',
     'public.submit_maritime_application(uuid,boolean)',
-    'public.set_maritime_availability(text,date,boolean)'
+    'public.set_maritime_availability(text,date,boolean)',
+    'public.enforce_maritime_application_match_firewall()',
+    'public.maritime_device_registration_allowed(text)',
+    'public.maritime_check_device_access(uuid,text)',
+    'public.maritime_bind_device_to_user(uuid,text,text,text)',
+    'public.save_locked_maritime_cv_profile(uuid,jsonb,integer,text,text)',
+    'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)'
   ] loop
     if to_regprocedure(helper_name) is null then
       raise exception 'Missing maritime hiring helper function: %', helper_name;
@@ -56,6 +62,8 @@ begin
     'maritime_document_batches',
     'maritime_document_extractions',
     'maritime_cv_profiles',
+    'maritime_cv_identity_locks',
+    'maritime_cv_device_bindings',
     'maritime_smart_portrait_reviews',
     'maritime_cv_generations',
     'maritime_work_status_events',
@@ -179,6 +187,47 @@ begin
     or has_function_privilege('anon', 'public.submit_maritime_application(uuid,boolean)', 'EXECUTE')
     or not has_function_privilege('authenticated', 'public.submit_maritime_application(uuid,boolean)', 'EXECUTE') then
     raise exception 'Maritime Global Passport function grants are unsafe';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_trigger trigger_row
+    where trigger_row.tgrelid = 'public.maritime_hiring_applications'::regclass
+      and trigger_row.tgname = 'maritime_application_match_firewall'
+      and not trigger_row.tgisinternal
+  ) or has_function_privilege('authenticated', 'public.enforce_maritime_application_match_firewall()', 'EXECUTE') then
+    raise exception 'Maritime application matching firewall is missing or unsafe';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_trigger trigger_row
+    where trigger_row.tgrelid = 'public.maritime_cv_profiles'::regclass
+      and trigger_row.tgname = 'maritime_cv_profiles_identity_lock'
+      and not trigger_row.tgisinternal
+  )
+    or has_function_privilege('authenticated', 'public.save_locked_maritime_cv_profile(uuid,jsonb,integer,text,text)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.save_locked_maritime_cv_profile(uuid,jsonb,integer,text,text)', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)', 'EXECUTE') then
+    raise exception 'Maritime CV identity lock functions, trigger, or grants are unsafe';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.maritime_cv_identity_locks'::regclass
+      and contype = 'u'
+      and pg_get_constraintdef(oid) ilike '%person_fingerprint%'
+  )
+    or not exists (
+      select 1
+      from pg_constraint
+      where conrelid = 'public.maritime_cv_device_bindings'::regclass
+        and contype = 'p'
+        and pg_get_constraintdef(oid) ilike '%device_fingerprint%'
+    ) then
+    raise exception 'Maritime CV identity or device uniqueness constraint is missing';
   end if;
 
   if not exists (

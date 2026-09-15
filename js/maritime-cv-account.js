@@ -37,6 +37,15 @@
     return String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
   }
 
+  async function deviceKey() {
+    if (!App.cvAccess || typeof App.cvAccess.getDeviceKey !== "function") {
+      const error = new Error("DEVICE_SECURITY_UNAVAILABLE");
+      error.code = "MARITIME_DEVICE_KEY_REQUIRED";
+      throw error;
+    }
+    return App.cvAccess.getDeviceKey();
+  }
+
   async function api(path, options) {
     session = session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
     if (!session?.access_token) {
@@ -44,11 +53,13 @@
       error.code = "AUTH_REQUIRED";
       throw error;
     }
+    const currentDeviceKey = await deviceKey();
     const response = await fetch(`${apiBase()}${path}`, {
       ...options,
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${session.access_token}`,
+        "X-Allona-Device-Key": currentDeviceKey,
         ...(options && options.body && !(options.body instanceof Blob) ? { "Content-Type": "application/json" } : {}),
         ...(options && options.headers || {})
       }
@@ -56,11 +67,27 @@
     const payload = await response.json().catch(function () { return {}; });
     if (!response.ok || payload.ok !== true) {
       const error = new Error(payload.message || "REQUEST_FAILED");
-      error.code = payload.code || "REQUEST_FAILED";
+      error.code = payload.code || payload.error || "REQUEST_FAILED";
       error.status = response.status;
       throw error;
     }
     return payload;
+  }
+
+  function identityErrorMessage(error) {
+    const messages = {
+      MARITIME_IDENTITY_ALREADY_REGISTERED: ["identityAlreadyRegistered", "This person is already registered. Contact support if these details belong to you."],
+      MARITIME_IDENTITY_LOCKED: ["identityChangeBlocked", "Saved personal details can only be changed through support verification."],
+      MARITIME_DEVICE_ALREADY_BOUND: ["deviceAlreadyBound", "This device is linked to another account. Contact support if you cannot access your account."],
+      MARITIME_DEVICE_KEY_REQUIRED: ["deviceSecurityFailed", "Secure device identification could not be completed. Check your browser security settings."],
+      MARITIME_DEVICE_BINDING_REQUIRED: ["deviceSecurityFailed", "Secure device identification could not be completed. Check your browser security settings."]
+    };
+    const entry = messages[String(error?.code || "")];
+    return entry ? copy(entry[0], entry[1]) : copy("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.");
+  }
+
+  function applyIdentityLock(lock) {
+    if (typeof window.applyMaritimeIdentityLock === "function") window.applyMaritimeIdentityLock(lock || { locked: false, fields: [] });
   }
 
   function showPhoto(url) {
@@ -115,10 +142,12 @@
         method: "PUT",
         body: JSON.stringify({ cv: cleanCv, confirmation: true })
       });
+      applyIdentityLock(result.identity_lock);
       setCopyStatus("accountSaved", "Your Maritime CV and photo were saved to your account.", "success");
       return result;
     } catch (error) {
-      setCopyStatus("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.", "error");
+      statusCopyState = null;
+      setStatus(identityErrorMessage(error), "error");
       throw error;
     } finally {
       saving = false;
@@ -140,18 +169,65 @@
     try {
       const result = await api("/v1/maritime/cv-profile", { method: "GET" });
       if (result.cv && window.applyMaritimeCVData) window.applyMaritimeCVData(result.cv);
+      applyIdentityLock(result.identity_lock);
       showPhoto(result.profile_photo_url);
       setCopyStatus(result.cv ? "accountLoaded" : "accountStart", result.cv ? "Your saved Maritime CV is open." : "Complete your Maritime CV and select Save.", result.cv ? "success" : "info");
     } catch (error) {
-      setCopyStatus("accountSaveFailed", "Your Maritime CV could not be loaded. Please reload the page.", "error");
+      statusCopyState = null;
+      setStatus(identityErrorMessage(error), "error");
+    }
+  }
+
+  function supportDialog() {
+    return document.querySelector("[data-cv-identity-support-dialog]");
+  }
+
+  function openSupportDialog() {
+    const dialog = supportDialog();
+    if (!dialog) return;
+    const status = dialog.querySelector("[data-cv-identity-support-status]");
+    if (status) status.textContent = "";
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  }
+
+  async function submitIdentitySupport(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = String(new FormData(form).get("message") || "").trim();
+    const submit = form.querySelector('[type="submit"]');
+    const target = form.querySelector("[data-cv-identity-support-status]");
+    if (message.length < 10) {
+      if (target) target.textContent = copy("identitySupportDetailRequired", "Explain the requested correction in at least 10 characters.");
+      return;
+    }
+    if (submit) submit.disabled = true;
+    if (target) target.textContent = copy("identitySupportSending", "Creating your secure support request...");
+    try {
+      const result = await api("/v1/maritime/cv-profile/identity-change-request", {
+        method: "POST",
+        body: JSON.stringify({ message, confirmation: true })
+      });
+      if (target) target.textContent = copy(result.already_open ? "identitySupportAlreadyOpen" : "identitySupportSent", result.already_open ? "You already have an open identity correction request." : "Your identity correction request was sent securely.");
+      form.querySelector("textarea").value = "";
+    } catch (error) {
+      if (target) target.textContent = error.message || copy("identitySupportFailed", "The support request could not be created.");
+    } finally {
+      if (submit) submit.disabled = false;
     }
   }
 
   document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-open-cv-identity-support]")) {
+      openSupportDialog();
+      return;
+    }
     if (!event.target.closest("[data-cv-go-back]")) return;
     if (document.referrer && new URL(document.referrer, window.location.href).origin === window.location.origin && history.length > 1) history.back();
     else window.location.href = "allonadenizcilik.html";
   });
+
+  document.querySelector("[data-cv-identity-support-form]")?.addEventListener("submit", submitIdentitySupport);
 
   document.addEventListener("allonahub:maritime-cv-language", function () {
     if (statusCopyState?.kind === "login") showLoginPrompt();

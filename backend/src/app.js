@@ -240,7 +240,7 @@ export async function buildApp() {
       : Number.isInteger(rawStatus) && rawStatus >= 400 && rawStatus <= 599
       ? rawStatus
       : 500;
-    const trustedDomainError = error instanceof EInvoicingError || error instanceof PlatformContextError;
+    const trustedDomainError = error instanceof EInvoicingError || error instanceof PlatformContextError || error?.exposeCode === true;
     const normalizedErrorCode = String(error?.code || "").trim().toUpperCase();
     const safeAnyCode = trustedDomainError && /^[A-Z][A-Z0-9_]{2,79}$/.test(normalizedErrorCode)
       ? normalizedErrorCode

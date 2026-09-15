@@ -13,6 +13,7 @@
   let renderedLanguage = "";
   let accountProfile = null;
   let profileClient = null;
+  let smartApplicationState = { run: null, matches: [], application_drafts: [] };
   const maritimeBasePath = "/pages/ecosystem/";
 
   function portalUrl(file) {
@@ -102,6 +103,13 @@
     internationalRoute: ["Uluslararası", "Beynəlxalq", "Халықаралық", "Xalqaro", "Эл аралык", "International", "International", "Международный", "دولي"],
     apply: ["Başvur", "Müraciət et", "Өтінім беру", "Ariza berish", "Арыз берүү", "Apply", "Bewerben", "Откликнуться", "تقديم"],
     applied: ["Başvuruldu", "Müraciət edildi", "Өтінім берілді", "Ariza berildi", "Арыз берилди", "Applied", "Beworben", "Заявка отправлена", "تم التقديم"],
+    completeGlobalCv: ["Önce Global CV'yi tamamlayın", "Əvvəlcə Global CV-ni tamamlayın", "Алдымен Global CV-ді толтырыңыз", "Avval Global CV-ni to‘ldiring", "Адегенде Global CV-ни толуктаңыз", "Complete Global CV first", "Global CV zuerst vervollständigen", "Сначала заполните Global CV", "أكمل Global CV أولاً"],
+    confirmGlobalCv: ["Önce Global CV'yi onaylayın", "Əvvəlcə Global CV-ni təsdiqləyin", "Алдымен Global CV-ді растаңыз", "Avval Global CV-ni tasdiqlang", "Адегенде Global CV-ни ырастагыла", "Confirm Global CV first", "Global CV zuerst bestätigen", "Сначала подтвердите Global CV", "أكد Global CV أولاً"],
+    notEligibleForPosition: ["CV'niz bu pozisyona uygun değil", "CV-niz bu vəzifəyə uyğun deyil", "CV бұл орынға сәйкес емес", "CV bu lavozimga mos emas", "CV бул кызматка туура келбейт", "Your CV does not match this position", "Ihr CV passt nicht zu dieser Stelle", "Ваш CV не подходит для этой должности", "سيرتك لا تطابق هذه الوظيفة"],
+    eligibilityUnavailable: ["Uygunluk doğrulanamadı", "Uyğunluq təsdiqlənmədi", "Сәйкестік расталмады", "Moslik tasdiqlanmadi", "Шайкештик ырасталган жок", "Eligibility could not be verified", "Eignung konnte nicht geprüft werden", "Не удалось проверить соответствие", "تعذر التحقق من الأهلية"],
+    applicationConfirm: ["CV'niz bu ilana uygundur. Başvuruyu doğrulanmış firmaya göndermek istiyor musunuz?", "CV-niz bu elana uyğundur. Müraciəti təsdiqlənmiş şirkətə göndərmək istəyirsiniz?", "CV осы орынға сәйкес. Өтінімді расталған компанияға жібересіз бе?", "CV bu eʼlonga mos. Arizani tasdiqlangan kompaniyaga yuborasizmi?", "CV бул жарыяга туура келет. Арызды текшерилген компанияга жөнөтөсүзбү?", "Your CV matches this listing. Submit the application to the verified company?", "Ihr CV passt zu dieser Stelle. Bewerbung an das verifizierte Unternehmen senden?", "Ваш CV подходит. Отправить заявку проверенной компании?", "سيرتك مطابقة. هل تريد إرسال الطلب إلى الشركة الموثقة؟"],
+    applicationSending: ["Uygunluk doğrulanıyor ve başvuru gönderiliyor...", "Uyğunluq yoxlanılır və müraciət göndərilir...", "Сәйкестік тексеріліп, өтінім жіберілуде...", "Moslik tekshirilib, ariza yuborilmoqda...", "Шайкештик текшерилип, арыз жөнөтүлүүдө...", "Checking eligibility and submitting...", "Eignung wird geprüft und Bewerbung gesendet...", "Проверяем соответствие и отправляем заявку...", "جارٍ التحقق من الأهلية وإرسال الطلب..."],
+    applicationFailed: ["Başvuru gönderilemedi. Global CV eşleşmenizi yenileyip tekrar deneyin.", "Müraciət göndərilmədi. Global CV uyğunluğunu yeniləyib yenidən cəhd edin.", "Өтінім жіберілмеді. Global CV сәйкестігін жаңартып көріңіз.", "Ariza yuborilmadi. Global CV mosligini yangilab qayta urinib ko‘ring.", "Арыз жөнөтүлгөн жок. Global CV шайкештигин жаңыртып кайталаңыз.", "Application could not be submitted. Refresh your Global CV match and try again.", "Bewerbung konnte nicht gesendet werden. Aktualisieren Sie Ihren Global-CV-Abgleich.", "Заявка не отправлена. Обновите сопоставление Global CV.", "تعذر إرسال الطلب. حدّث مطابقة Global CV وحاول مجدداً."],
     jobSafeSummary: ["Pozisyon doğrulanmış firma havuzunda yayınlanır. Ayrıntılı şirket bilgileri yalnızca kabul edilen başvuruda görünür.", "Vəzifə təsdiqlənmiş şirkət hovuzunda yayımlanır. Ətraflı şirkət məlumatı yalnız qəbul edilən müraciətdə görünür.", "Лауазым расталған компаниялар пулында жарияланады. Толық дерек тек қабылданған өтінімде көрінеді.", "Lavozim tasdiqlangan kompaniyalar tizimida eʼlon qilinadi. Batafsil maʼlumot faqat qabul qilingan arizada ko‘rinadi.", "Кызмат текшерилген компаниялар тизмесинде жарыяланат. Толук маалымат кабыл алынган арызда гана көрүнөт.", "The position is published in the verified company pool. Full company details appear only after acceptance.", "Die Stelle wird im Pool verifizierter Unternehmen veröffentlicht. Details erscheinen erst nach Annahme.", "Вакансия размещена в пуле проверенных компаний. Полные данные видны только после принятия заявки.", "تُنشر الوظيفة ضمن مجموعة الشركات الموثقة، ولا تظهر التفاصيل الكاملة إلا بعد قبول الطلب."],
     noJobsTitle: ["Uygun ilan bulunamadı", "Uyğun elan tapılmadı", "Сәйкес вакансия табылмады", "Mos eʼlon topilmadi", "Ылайыктуу жарыя табылган жок", "No matching listings", "Keine passenden Stellen", "Подходящих вакансий нет", "لا توجد وظائف مطابقة"],
     noJobsLead: ["Aramanızı değiştirin veya tüm pozisyonları yeniden görüntüleyin.", "Axtarışı dəyişin və ya bütün vəzifələri yenidən göstərin.", "Іздеуді өзгертіңіз немесе барлық орынды қайта көрсетіңіз.", "Qidiruvni o‘zgartiring yoki barcha lavozimlarni ko‘ring.", "Издөөнү өзгөртүңүз же бардык кызматтарды көрүңүз.", "Change your search or show all positions again.", "Ändern Sie die Suche oder zeigen Sie alle Stellen.", "Измените поиск или покажите все вакансии.", "غيّر البحث أو اعرض جميع الوظائف من جديد."],
@@ -373,6 +381,7 @@
       }).map(function (item) {
         return {
           id: item.id,
+          smartJobId: item.smart_job_id || null,
           reference: `AH-${String(item.id).slice(0, 8).toUpperCase()}`,
           title: compact(item.title, 140),
           summary: compact(item.summary, 360),
@@ -394,17 +403,79 @@
     return readList("applications");
   }
 
-  function isApplied(jobId) {
-    return applicationRows().some(function (item) { return item.job_id === jobId && item.status !== "withdrawn"; });
+  function smartMatchFor(job) {
+    if (!job || !job.smartJobId) return null;
+    return (smartApplicationState.matches || []).find(function (match) { return match.job_id === job.smartJobId; }) || null;
+  }
+
+  function smartDraftFor(job) {
+    if (!job || !job.smartJobId) return null;
+    return (smartApplicationState.application_drafts || []).find(function (draft) { return draft.job_id === job.smartJobId; }) || null;
+  }
+
+  function jobApplicationGate(job) {
+    if (!session) return { disabled: false, applied: false, label: "apply", reason: "" };
+    const draft = smartDraftFor(job);
+    if (draft && draft.status === "submitted") return { disabled: true, applied: true, label: "applied", reason: "" };
+    if (!job.smartJobId) return { disabled: true, applied: false, label: "eligibilityUnavailable", reason: text("eligibilityUnavailable") };
+    const run = smartApplicationState.run;
+    if (!run) return { disabled: true, applied: false, label: "completeGlobalCv", reason: text("completeGlobalCv") };
+    if (run.status !== "user_confirmed") return { disabled: true, applied: false, label: "confirmGlobalCv", reason: text("confirmGlobalCv") };
+    const match = smartMatchFor(job);
+    if (!match || match.eligible !== true || match.hard_gate_status !== "passed") {
+      return { disabled: true, applied: false, label: "notEligibleForPosition", reason: text("notEligibleForPosition") };
+    }
+    return { disabled: false, applied: false, label: "apply", reason: "" };
+  }
+
+  async function loadSmartApplicationState() {
+    smartApplicationState = { run: null, matches: [], application_drafts: [] };
+    if (!session?.access_token) return smartApplicationState;
+    const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+    try {
+      const response = await fetch(`${base}/v1/maritime/smart-account`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${session.access_token}` }
+      });
+      const payload = await response.json().catch(function () { return {}; });
+      if (!response.ok || payload.ok !== true) return smartApplicationState;
+      smartApplicationState = {
+        run: payload.run || null,
+        matches: Array.isArray(payload.matches) ? payload.matches : [],
+        application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : []
+      };
+    } catch (error) {}
+    return smartApplicationState;
+  }
+
+  async function smartApplicationApi(path, options) {
+    if (!session?.access_token) throw new Error("AUTH_REQUIRED");
+    const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+    const response = await fetch(`${base}${path}`, {
+      ...options,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+        ...(options?.headers || {})
+      }
+    });
+    const payload = await response.json().catch(function () { return {}; });
+    if (!response.ok || payload.ok !== true) throw new Error(payload.message || "APPLICATION_FAILED");
+    smartApplicationState = {
+      run: payload.run || smartApplicationState.run,
+      matches: Array.isArray(payload.matches) ? payload.matches : smartApplicationState.matches,
+      application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : smartApplicationState.application_drafts
+    };
+    return payload;
   }
 
   function jobCard(job) {
-    const applied = isApplied(job.id);
+    const gate = jobApplicationGate(job);
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">
       <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div>
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       <div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>
-      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${applied ? "disabled" : ""}><i class="fa-solid ${applied ? "fa-check" : "fa-paper-plane"}" aria-hidden="true"></i>${escapeHtml(text(applied ? "applied" : "apply"))}</button></div>
+      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.disabled ? "disabled" : ""} ${gate.reason ? `title="${escapeHtml(gate.reason)}"` : ""}><i class="fa-solid ${gate.applied ? "fa-check" : gate.disabled ? "fa-shield-halved" : "fa-paper-plane"}" aria-hidden="true"></i>${escapeHtml(text(gate.label))}</button></div>
     </article>`;
   }
 
@@ -429,7 +500,7 @@
 
   async function applyToJob(jobId) {
     const job = jobs.find(function (item) { return item.id === jobId; });
-    if (!job || isApplied(jobId)) return;
+    if (!job) return;
     if (!session) {
       const target = new URL(window.location.href);
       target.searchParams.set("apply", jobId);
@@ -440,30 +511,41 @@
       ? await App.auth.requireAccountType("customer", { user: session.user, redirect: true })
       : null;
     if (!access) return;
-    const rows = applicationRows();
-    rows.unshift({
-      id: `application-${job.id}-${Date.now()}`,
-      job_id: job.id,
-      job_title: job.title,
-      job_reference: job.reference,
-      status: "submitted",
-      applied_at: new Date().toISOString(),
-      location: job.location,
-      contract: job.contract,
-      company_contact_visible: false
-    });
-    writeList("applications", rows);
-    renderJobResults();
     const notice = document.querySelector("[data-jobs-notice]");
-    if (notice) {
-      notice.textContent = text("applicationSaved");
-      notice.classList.add("is-visible");
-      notice.scrollIntoView({ block: "nearest" });
+    const gate = jobApplicationGate(job);
+    if (gate.disabled) {
+      if (notice) { notice.textContent = gate.reason || text("notEligibleForPosition"); notice.classList.add("is-visible", "is-warning"); }
+      return;
+    }
+    if (!window.confirm(text("applicationConfirm"))) return;
+    if (notice) { notice.textContent = text("applicationSending"); notice.className = "maritime-notice is-visible"; }
+    try {
+      let draft = smartDraftFor(job);
+      if (!draft) {
+        await smartApplicationApi(`/v1/maritime/smart-account/${encodeURIComponent(smartApplicationState.run.id)}/application-drafts`, {
+          method: "POST",
+          body: JSON.stringify({ confirmation: true, job_ids: [job.smartJobId] })
+        });
+        draft = smartDraftFor(job);
+      }
+      if (!draft) throw new Error("APPLICATION_DRAFT_NOT_FOUND");
+      if (draft.status !== "submitted") {
+        await smartApplicationApi(`/v1/maritime/application-drafts/${encodeURIComponent(draft.id)}/submit`, {
+          method: "POST",
+          body: JSON.stringify({ confirmation: true })
+        });
+      }
+      renderJobResults();
+      if (notice) { notice.textContent = text("applicationSaved"); notice.className = "maritime-notice is-visible is-success"; notice.scrollIntoView({ block: "nearest" }); }
+    } catch (error) {
+      await loadSmartApplicationState();
+      renderJobResults();
+      if (notice) { notice.textContent = text("applicationFailed"); notice.className = "maritime-notice is-visible is-error"; }
     }
   }
 
   async function renderJobs() {
-    const liveJobs = await loadPublicJobs();
+    const [liveJobs] = await Promise.all([loadPublicJobs(), loadSmartApplicationState()]);
     jobs = liveJobs.length ? liveJobs : normalizedSeedJobs();
     root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><strong class="maritime-reference" data-jobs-count></strong></section>
       <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>

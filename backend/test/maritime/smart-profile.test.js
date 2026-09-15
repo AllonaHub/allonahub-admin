@@ -14,7 +14,7 @@ const cvProfile = {
     rank: "Chief Officer",
     rank_i18n: { tr: "Birinci Zabit", az: "Baş köməkçi", kk: "Аға көмекші", uz: "Bosh yordamchi", ky: "Башкы жардамчы", en: "Chief Officer", de: "Erster Offizier", ru: "Старший помощник", ar: "كبير الضباط" },
     suitable_positions: ["Chief Officer"],
-    certificate_codes: ["STCW II/2", "GMDSS"],
+    certificate_codes: ["STCW II/2", "GMDSS", "SP", "SH", "SI", "SL", "SO"],
     certificate_records: [{
       code: "SH",
       document_number: "COC-1001",
@@ -31,7 +31,14 @@ const cvProfile = {
       expiry_date: "2030-01-01",
       rank_or_capacity: "Chief Officer",
       rank_or_capacity_i18n: { tr: "Birinci Zabit", az: "Baş köməkçi", kk: null, uz: null, ky: null, en: "Chief Officer", de: "Erster Offizier", ru: "Старший помощник", ar: "كبير الضباط" }
-    }],
+    }, ...["SP", "SI", "SL", "SO"].map((code) => ({
+      code,
+      document_number: `${code}-1001`,
+      title: `${code} Certificate`,
+      issue_date: "2025-01-01",
+      expiry_date: "2030-01-01",
+      validity_status: "dated"
+    }))],
     endorsements: ["Tanker familiarization"],
     endorsements_i18n: { tr: ["Tanker aşinalığı"], az: ["Tanker tanışlığı"], kk: [], uz: [], ky: [], en: ["Tanker familiarization"], de: ["Tanker-Grundausbildung"], ru: ["Подготовка по танкерам"], ar: ["الإلمام بالناقلات"] },
     restrictions: [],
@@ -77,7 +84,7 @@ test("builds a complete smart profile only from user-confirmed readiness data", 
   assert.deepEqual(result.readiness.seafarer_reason_codes, []);
   assert.equal(result.readiness.confirmed_document_count, 2);
   assert.deepEqual(result.readiness.conflicts, []);
-  assert.equal(result.rule_version, "maritime-smart-account-v5");
+  assert.equal(result.rule_version, "maritime-smart-account-v6");
   assert.equal(result.cv_draft.template_version, "allonahub-maritime-cv-v6");
   assert.equal(result.cv_draft.source_document_ids, undefined);
   assert.equal(result.cv_draft.certificate_records[0].document_number, "COC-1001");
@@ -159,6 +166,21 @@ test("blocks readiness when a critical identity document is expired", () => {
   assert.equal(result.readiness.seafarer_status, "review_required");
   assert.ok(result.readiness.blocking_reasons.includes("critical_document_expired"));
   assert.equal(result.readiness.expiry_alerts[0].severity, "expired");
+});
+
+test("keeps smart applications locked when one of the five core STCW records is incomplete", () => {
+  const incompleteProfile = {
+    ...cvProfile,
+    profile_payload: {
+      ...cvProfile.profile_payload,
+      certificate_codes: cvProfile.profile_payload.certificate_codes.filter((code) => code !== "SO"),
+      certificate_records: cvProfile.profile_payload.certificate_records.filter((row) => row.code !== "SO")
+    }
+  };
+  const result = smart({ cvProfile: incompleteProfile });
+  assert.equal(result.readiness.ready_to_apply, false);
+  assert.ok(result.readiness.missing_items.includes("certificate:SO"));
+  assert.ok(result.readiness.blocking_reasons.includes("core_stcw_certificates_missing"));
 });
 
 test("surfaces conflicting identity facts instead of silently choosing one", () => {
@@ -245,6 +267,32 @@ test("does not invent missing qualifications or mark a hard-gate mismatch eligib
   assert.equal(match.hard_gate_status, "failed");
   assert.ok(match.missing_requirements.includes("rank"));
   assert.ok(match.missing_requirements.some((item) => item.includes("ADVANCED-DP")));
+});
+
+test("blocks a motorman from applying to a second engineer position even when every other gate passes", () => {
+  const motormanProfile = {
+    ...cvProfile,
+    profile_payload: {
+      ...cvProfile.profile_payload,
+      rank: "Motorçu",
+      suitable_positions: ["Motorman"]
+    }
+  };
+  const match = matchMaritimeJob(smart({ cvProfile: motormanProfile }), {
+    id: "20000000-0000-4000-8000-000000000004",
+    partner_id: "30000000-0000-4000-8000-000000000001",
+    job_reference: "MJ-SECOND-ENGINEER-01",
+    job_title: "Second Engineer",
+    rank_code: "second_engineer",
+    hard_gates: {
+      required_certificate_codes: ["SP", "SH", "SI", "SL", "SO"],
+      minimum_sea_service_days: 0,
+      medical_required: true
+    }
+  });
+  assert.equal(match.eligible, false);
+  assert.equal(match.hard_gate_status, "failed");
+  assert.ok(match.missing_requirements.includes("rank"));
 });
 
 test("never treats an underspecified job as eligible", () => {

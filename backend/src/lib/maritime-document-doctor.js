@@ -9,6 +9,7 @@ export const MARITIME_DOCUMENT_MAX_FILES = 20;
 export const MARITIME_DOCUMENT_MAX_FILE_BYTES = 45 * 1024 * 1024;
 export const MARITIME_DOCUMENT_MAX_BATCH_BYTES = 150 * 1024 * 1024;
 export const MARITIME_PROFILE_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+export const MARITIME_REQUIRED_STCW_CODES = Object.freeze(["SP", "SH", "SI", "SL", "SO"]);
 export const MARITIME_DOCUMENT_MIME_TYPES = Object.freeze([
   "application/pdf",
   "image/jpeg",
@@ -773,13 +774,30 @@ export function maritimeGlobalPassportReadiness(payload, { hasPhoto = false } = 
         }
       : null
   );
+  const seamanBook = identityDocuments.find((row) => ["seafarer_book", "seaman_book", "seaman_record_book"].includes(String(row?.kind || "").trim().toLowerCase()));
+  const medicalRecords = Array.isArray(payload?.medical_records) ? payload.medical_records : [];
+  const medical = medicalRecords.find((row) => String(row?.record_type || "").trim().toLowerCase() === "medical_certificate") || medicalRecords[0];
+  const certificateRecords = Array.isArray(payload?.certificate_records) ? payload.certificate_records : [];
+  const certificateByCode = new Map(certificateRecords.map((row) => [
+    String(row?.code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, ""),
+    row
+  ]).filter(([code]) => code));
+  const hasExpiry = (row) => Boolean(
+    String(row?.expiry_date || "").trim()
+    || String(row?.validity_status || "").trim().toLowerCase() === "non_expiring"
+  );
   const missing = [];
   if (!hasPhoto) missing.push("profile_photo");
+  if (!String(payload?.rank || "").trim()) missing.push("rank");
   if (!String(payload?.given_names || "").trim()) missing.push("given_names");
   if (!String(payload?.family_name || "").trim()) missing.push("family_name");
+  if (!String(payload?.middle_name || "").trim()) missing.push("middle_name");
   if (!String(payload?.date_of_birth || "").trim()) missing.push("date_of_birth");
   if (!String(payload?.place_of_birth || "").trim()) missing.push("place_of_birth");
   if (!String(payload?.nationality || "").trim()) missing.push("nationality");
+  if (!String(payload?.gender || "").trim()) missing.push("gender");
+  if (!String(payload?.contact?.email || "").trim()) missing.push("contact_email");
+  if (!String(payload?.contact?.phone || "").trim()) missing.push("contact_phone");
   if (!passport) {
     missing.push("passport");
   } else {
@@ -787,6 +805,33 @@ export function maritimeGlobalPassportReadiness(payload, { hasPhoto = false } = 
     if (!String(passport.issuing_country || "").trim()) missing.push("passport_issuing_country");
     if (!String(passport.issue_date || "").trim()) missing.push("passport_issue_date");
     if (!String(passport.expiry_date || "").trim()) missing.push("passport_expiry_date");
+  }
+  if (!seamanBook) {
+    missing.push("seaman_book");
+  } else {
+    if (!String(seamanBook.document_number || "").trim()) missing.push("seaman_book_number");
+    if (!String(seamanBook.issue_date || "").trim()) missing.push("seaman_book_issue_date");
+    if (!hasExpiry(seamanBook)) missing.push("seaman_book_expiry_date");
+  }
+  if (!medical) {
+    missing.push("medical_certificate");
+  } else {
+    if (!String(medical.document_number || "").trim()) missing.push("medical_certificate_number");
+    if (!String(medical.issue_date || "").trim()) missing.push("medical_certificate_issue_date");
+    if (!hasExpiry(medical)) missing.push("medical_certificate_expiry_date");
+  }
+  if (!["fit", "fit_with_restrictions"].includes(String(payload?.medical_fitness || "").trim().toLowerCase())) {
+    missing.push("medical_fitness");
+  }
+  for (const code of MARITIME_REQUIRED_STCW_CODES) {
+    const certificate = certificateByCode.get(code);
+    if (!certificate) {
+      missing.push(`certificate_${code.toLowerCase()}`);
+      continue;
+    }
+    if (!String(certificate.document_number || "").trim()) missing.push(`certificate_${code.toLowerCase()}_number`);
+    if (!String(certificate.issue_date || "").trim()) missing.push(`certificate_${code.toLowerCase()}_issue_date`);
+    if (!hasExpiry(certificate)) missing.push(`certificate_${code.toLowerCase()}_expiry_date`);
   }
   return { ready: missing.length === 0, missing };
 }

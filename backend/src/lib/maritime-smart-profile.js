@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
-export const MARITIME_SMART_RULE_VERSION = "maritime-smart-account-v5";
+export const MARITIME_SMART_RULE_VERSION = "maritime-smart-account-v6";
+export const MARITIME_REQUIRED_STCW_CODES = Object.freeze(["SP", "SH", "SI", "SL", "SO"]);
 
 const languageCodes = ["tr", "az", "kk", "uz", "ky", "en", "de", "ru", "ar"];
 
@@ -27,7 +28,7 @@ const rankAliases = new Map([
   ["bosun", "bosun"], ["boatswain", "bosun"], ["lostromo", "bosun"],
   ["able seaman", "able_seaman"], ["ab", "able_seaman"], ["usta gemici", "able_seaman"],
   ["ordinary seaman", "ordinary_seaman"], ["os", "ordinary_seaman"], ["gemici", "ordinary_seaman"],
-  ["oiler", "oiler"], ["motorman", "oiler"], ["yagci", "oiler"],
+  ["oiler", "oiler"], ["motorman", "oiler"], ["motorcu", "oiler"], ["motorçu", "oiler"], ["yagci", "oiler"], ["yağcı", "oiler"],
   ["cook", "cook"], ["chief cook", "cook"], ["asci", "cook"],
   ["steward", "steward"], ["messman", "steward"]
 ]);
@@ -622,6 +623,13 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const hasIdentity = Boolean(holderName && dateOfBirth);
   const hasRank = Boolean(rank || positions.length);
   const hasCertificates = certificates.length > 0;
+  const completeCertificateCodes = new Set(certificateRecords.filter((row) => (
+    text(row.document_number)
+    && text(row.issue_date)
+    && (text(row.expiry_date) || text(row.validity_status) === "non_expiring")
+  )).map((row) => certificateToken(row.code)).filter(Boolean));
+  const missingCoreCertificates = MARITIME_REQUIRED_STCW_CODES.filter((code) => !completeCertificateCodes.has(code));
+  const hasCoreCertificates = missingCoreCertificates.length === 0;
   const hasSeaService = seaService.length > 0;
   const hasMedical = medical === "fit" || medical === "fit_with_restrictions";
   const hasPassport = itemTypes.has("passport") || identityDocuments.some((row) => row.kind === "passport");
@@ -631,6 +639,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const maritimeEvidence = {
     rank: hasRank,
     certificates: hasCertificates || itemTypes.has("stcw_certificate"),
+    core_stcw_certificates: hasCoreCertificates,
     sea_service: hasSeaService,
     seaman_book: hasSeamanBook
   };
@@ -665,6 +674,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     !hasIdentity && "identity",
     !hasRank && "rank",
     !hasCertificates && "certificates",
+    ...missingCoreCertificates.map((code) => `certificate:${code}`),
     !hasSeaService && "sea_service",
     !hasMedical && "medical",
     !hasPassport && "passport",
@@ -676,6 +686,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     !hasIdentity && "identity_missing",
     !hasRank && "rank_missing",
     !hasCertificates && "certificates_missing",
+    !hasCoreCertificates && "core_stcw_certificates_missing",
     medical === "unfit" && "medical_unfit",
     conflicts.length > 0 && "identity_conflict",
     criticalDocumentExpired && "critical_document_expired"
@@ -783,6 +794,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
       document_counters: expiry.counters,
       confirmed_document_count: confirmedDocuments.length,
       archived_document_count: archivedDocuments.length,
+      missing_core_certificates: missingCoreCertificates,
       seafarer_status: seafarerStatus,
       seafarer_system_approved: seafarerStatus === "system_approved",
       seafarer_reason_codes: seafarerReasonCodes,

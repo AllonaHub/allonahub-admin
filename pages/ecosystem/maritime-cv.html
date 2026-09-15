@@ -10,7 +10,7 @@
  <script src="../../js/vendor/html2canvas-1.4.1.min.js" defer></script>
 <script src="../../js/vendor/jspdf-2.5.1.umd.min.js" defer></script>
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
-  <link rel="stylesheet" href="../../css/maritime-cv-form.css?v=20260915-stcw2">
+  <link rel="stylesheet" href="../../css/maritime-cv-form.css?v=20260915-match6">
 </head>
 <body class="cv-form-page cv-module-page" data-no-translate>
 
@@ -45,6 +45,15 @@
   </div>
 
   <div class="cv-account-status" role="status" aria-live="polite" data-cv-account-status></div>
+
+  <section class="cv-identity-lock-notice" data-cv-identity-lock-notice hidden>
+    <span class="cv-identity-lock-icon" aria-hidden="true">&#128274;</span>
+    <div>
+      <strong data-i18n="identityLockedTitle">Personal details are securely locked</strong>
+      <p data-i18n="identityLockedBody">After the first save, identity details cannot be cleared or changed from this form.</p>
+    </div>
+    <button type="button" class="secondary" data-open-cv-identity-support data-i18n="identitySupportButton">Request a correction</button>
+  </section>
 
   <div class="layout">
 
@@ -318,6 +327,14 @@
 
         <label data-i18n="document">Document</label>
         <input id="medicalDoc" value="">
+
+        <label data-i18n="medicalFitness">Medical fitness</label>
+        <select id="medicalFitness">
+          <option value="" data-i18n="selectMedicalFitness">Select fitness status</option>
+          <option value="fit" data-i18n="fit">Fit</option>
+          <option value="fit_with_restrictions" data-i18n="fitWithRestrictions">Fit with restrictions</option>
+          <option value="unfit" data-i18n="unfit">Unfit</option>
+        </select>
 
         <label data-i18n="validityPeriod">Validity Period</label>
         <input id="medicalGrade" value="">
@@ -667,6 +684,7 @@
 
           <tr>
             <th data-i18n="document">Document</th>
+            <th data-i18n="medicalFitness">Medical fitness</th>
             <th data-i18n="validityPeriod">Validity Period</th>
             <th data-i18n="placeOfIssue">Place</th>
             <th data-i18n="dateIssued">Date Issued</th>
@@ -675,6 +693,7 @@
 
           <tr>
             <td id="cv_medicalDoc"></td>
+            <td id="cv_medicalFitness"></td>
             <td id="cv_medicalGrade"></td>
             <td id="cv_medicalPlace"></td>
             <td id="cv_medicalIssue"></td>
@@ -810,17 +829,35 @@
     </main>
   </div>
 </div>
+  <dialog class="cv-identity-support-dialog" data-cv-identity-support-dialog>
+    <form method="dialog" data-cv-identity-support-form>
+      <div class="cv-identity-support-head">
+        <h2 data-i18n="identitySupportTitle">Personal detail correction</h2>
+        <button type="button" class="cv-dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">&times;</button>
+      </div>
+      <p data-i18n="identitySupportLead">For account security, locked identity details are changed only after a support review.</p>
+      <label for="cvIdentitySupportMessage" data-i18n="identitySupportMessage">Explain which detail must be corrected and why</label>
+      <textarea id="cvIdentitySupportMessage" name="message" minlength="10" maxlength="2000" required data-i18n-placeholder="identitySupportPlaceholder"></textarea>
+      <p class="cv-identity-support-status" role="status" aria-live="polite" data-cv-identity-support-status></p>
+      <div class="cv-identity-support-actions">
+        <button type="button" class="secondary" onclick="this.closest('dialog').close()" data-i18n="identitySupportCancel">Cancel</button>
+        <button type="submit" data-i18n="identitySupportSend">Send securely</button>
+      </div>
+    </form>
+  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="../../js/config.js?v=20260627-config-central" defer></script>
   <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
   <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
   <script src="../../js/auth.js?v=20260914-account-boundary3" defer></script>
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
+  <script src="../../js/cv-access.js?v=20260915-identity1" defer></script>
   <script src="../../js/allona-maritime-photo.js?v=20260914-passport-photo2" defer></script>
-  <script src="../../js/maritime-cv-draft.js?v=20260915-stcw3" defer></script>
-  <script src="../../js/maritime-cv-form.js?v=20260915-stcw3" defer></script>
-  <script src="../../js/maritime-cv-controls.js?v=20260915-stcw3" defer></script>
-  <script src="../../js/maritime-cv-entry.js?v=20260915-stcw3" defer></script>
-  <script src="../../js/maritime-cv-account.js?v=20260915-stcw3" defer></script>
+  <script src="../../js/maritime-cv-draft.js?v=20260915-value5" defer></script>
+  <script src="../../js/maritime-cv-value-localizer.js?v=20260915-value5" defer></script>
+  <script src="../../js/maritime-cv-form.js?v=20260915-match6" defer></script>
+  <script src="../../js/maritime-cv-controls.js?v=20260915-match6" defer></script>
+  <script src="../../js/maritime-cv-entry.js?v=20260915-value5" defer></script>
+  <script src="../../js/maritime-cv-account.js?v=20260915-value5" defer></script>
 </body>
 </html>

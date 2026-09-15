@@ -21,6 +21,8 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260910120000_create_maritime_hiring_core.sql"
   "$ROOT_DIR/supabase/migrations/20260914050000_create_maritime_document_doctor.sql"
   "$ROOT_DIR/supabase/migrations/20260914060000_create_maritime_smart_account.sql"
+  "$ROOT_DIR/supabase/migrations/20260915193000_enforce_maritime_application_match_firewall.sql"
+  "$ROOT_DIR/supabase/migrations/20260915211500_lock_maritime_cv_identity.sql"
 )
 
 if [ -z "$DB_URL" ]; then

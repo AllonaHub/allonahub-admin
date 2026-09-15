@@ -61,6 +61,7 @@ test("the production maritime migration chain includes and verifies Global Passp
   ]);
   assert.match(deploy, /20260914050000_create_maritime_document_doctor\.sql/);
   assert.match(deploy, /20260914060000_create_maritime_smart_account\.sql/);
+  assert.match(deploy, /20260915193000_enforce_maritime_application_match_firewall\.sql/);
   for (const table of [
     "maritime_document_batches",
     "maritime_document_extractions",
@@ -106,16 +107,27 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(maritimeCvPage, /data-cv-action="remove-photo"/);
   assert.match(maritimeCvPage, /data-cv-action="add-stcw"/);
   assert.match(maritimeCvPage, /data-cv-action="generate-summary"/);
+  assert.match(maritimeCvPage, /id="medicalFitness"/);
   assert.match(maritimeCvPage, /js\/vendor\/html2canvas-1\.4\.1\.min\.js/);
   assert.match(maritimeCvPage, /js\/vendor\/jspdf-2\.5\.1\.umd\.min\.js/);
   assert.doesNotMatch(maritimeCvPage, /cdnjs\.cloudflare\.com\/ajax\/libs\/(?:html2canvas|jspdf)/);
   assert.match(maritimeCvPage, /maritime-cv-account\.js/);
   assert.match(maritimeCvForm, /window\.getMaritimeCVData = getCVData/);
   for (const code of ["SP", "SH", "SI", "SL", "SO", "SA", "SE"]) assert.match(maritimeCvForm, new RegExp(`code: "${code}"`));
+  for (const code of ["SP", "SH", "SI", "SL", "SO"]) assert.match(maritimeCvForm, new RegExp(`id: "${code.toLowerCase()}"[^\n]+required: true`));
+  for (const label of [
+    "Chemical Tanker Certificate (SA)",
+    "Kimyasal Tanker Sertifikası (SA)",
+    "Kimyəvi Tanker Sertifikatı (SA)",
+    "Сертификат химического танкера (SA)"
+  ]) assert.ok(maritimeCvForm.includes(label));
   for (const key of ["photoHelp", "validityPeriod", "competencyHelp", "stcwHelp", "certificateNumber", "unlimited", "generateSummary"]) {
     assert.ok((maritimeCvForm.match(new RegExp(`${key}:`, "g")) || []).length >= 4, `${key} must exist in all four CV languages`);
   }
   assert.match(maritimeCvForm, /generatedProfessionalSummary/);
+  assert.match(maritimeCvForm, /function validateMaritimeCV\(options\)/);
+  assert.match(maritimeCvForm, /preset\?\.id === "sa"/);
+  assert.match(maritimeCvForm, /data-cv-key="included"/);
   assert.match(maritimeCvForm, /summaryMode === "auto"/);
   assert.match(maritimeCvAccount, /\/v1\/maritime\/cv-profile/);
   assert.match(maritimeCvAccount, /\/v1\/maritime\/profile-photo/);

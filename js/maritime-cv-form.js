@@ -12,12 +12,14 @@ const textFields = [
   "schoolName","schoolPlace","schoolGrade","schoolFrom","schoolTo",
   "azSpeak","azRead","azWrite","trSpeak","trRead","trWrite",
   "enSpeak","enRead","enWrite","ruSpeak","ruRead","ruWrite",
-  "medicalDoc","medicalGrade","medicalPlace","medicalIssue","medicalExpiry",
+  "medicalDoc","medicalFitness","medicalGrade","medicalPlace","medicalIssue","medicalExpiry",
   "competencyClass","competencyCountry","competencyCertificate",
   "competencyIssued","competencyExpires","competencyLimit","note"
 ];
 const maxTextLength = 2000;
 const maxRepeatFieldLength = 300;
+const immutableIdentityFieldIds = Object.freeze(["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"]);
+let identityLockState = Object.freeze({ locked: false, fields: [] });
 const dateFieldIds = new Set([
   "birthDate", "passportIssued", "passportValid", "seamanBookIssued", "seamanBookValid",
   "seafarerIdIssued", "seafarerIdValid", "schoolFrom", "schoolTo", "medicalIssue", "medicalExpiry",
@@ -25,16 +27,16 @@ const dateFieldIds = new Set([
 ]);
 const repeatRowKeys = Object.freeze({
   additional: Object.freeze(["name", "institute", "place", "issue", "cert", "expiry"]),
-  stcw: Object.freeze(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"]),
+  stcw: Object.freeze(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
   sea: Object.freeze(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
 });
 
 const stcwPresets = Object.freeze([
-  Object.freeze({ id: "sp", code: "SP", titleKey: "stcwSp", editableTitle: false }),
-  Object.freeze({ id: "sh", code: "SH", titleKey: "stcwSh", editableTitle: false }),
-  Object.freeze({ id: "si", code: "SI", titleKey: "stcwSi", editableTitle: false }),
-  Object.freeze({ id: "sl", code: "SL", titleKey: "stcwSl", editableTitle: false }),
-  Object.freeze({ id: "so", code: "SO", titleKey: "stcwSo", editableTitle: false }),
+  Object.freeze({ id: "sp", code: "SP", titleKey: "stcwSp", editableTitle: false, required: true }),
+  Object.freeze({ id: "sh", code: "SH", titleKey: "stcwSh", editableTitle: false, required: true }),
+  Object.freeze({ id: "si", code: "SI", titleKey: "stcwSi", editableTitle: false, required: true }),
+  Object.freeze({ id: "sl", code: "SL", titleKey: "stcwSl", editableTitle: false, required: true }),
+  Object.freeze({ id: "so", code: "SO", titleKey: "stcwSo", editableTitle: false, required: true }),
   Object.freeze({ id: "sa", code: "SA", titleKey: "stcwSa", editableTitle: true }),
   Object.freeze({ id: "se", code: "SE", titleKey: "stcwSe", editableTitle: true })
 ]);
@@ -51,7 +53,8 @@ function newStcwRow(preset){
     cert: "",
     number: "",
     expiry: "",
-    unlimited: "false"
+    unlimited: "false",
+    included: "true"
   };
 }
 
@@ -200,6 +203,15 @@ function escapeHTML(value){
     certificateNumber:"Certificate No.",
     certificateNumberPlaceholder:"Enter only the number after the code",
     unlimited:"No expiry / Unlimited",
+    requiredBadge:"Required",
+    optionalBadge:"Optional",
+    includeInCv:"Show in CV",
+    requiredCvMessage:"Complete the required fields before saving, downloading, or creating your Global CV: {fields}.",
+    medicalFitness:"Medical fitness",
+    selectMedicalFitness:"Select fitness status",
+    fit:"Fit",
+    fitWithRestrictions:"Fit with restrictions",
+    unfit:"Unfit",
     additionalCertificatesHelp:"Add welder, fitter and any other professional certificates not listed below.",
     stcwHelp:"Enter only your certificate number, issue details and validity for the prepared STCW rows. You can add another certificate at any time.",
     customCertificate:"Other STCW Certificate",
@@ -209,7 +221,7 @@ function escapeHTML(value){
     stcwSi:"Security Awareness Training",
     stcwSl:"Proficiency in Survival Craft and Rescue Boats (PSCRB)",
     stcwSo:"Basic Safety Training (BST)",
-    stcwSa:"STCW Certificate (SA)",
+    stcwSa:"Chemical Tanker Certificate (SA)",
     stcwSe:"STCW Certificate (SE)",
     institute:"Institute",
     place:"Place",
@@ -248,6 +260,26 @@ function escapeHTML(value){
     accountSaveFailed:"Your Maritime CV could not be saved to your account. Please try again.",
     accountLoginRequired:"Sign in to save your Maritime CV to your account.",
     draftSaveFailed:"CV draft could not be saved. Check your browser storage settings.",
+    identityLockedTitle:"Personal details are securely locked",
+    identityLockedBody:"After the first save, identity details cannot be cleared or changed from this form.",
+    identityLockedField:"This personal detail is locked. Request a verified correction from support to change it.",
+    identitySupportButton:"Request a correction",
+    identitySupportTitle:"Personal detail correction",
+    identitySupportLead:"For account security, locked identity details are changed only after a support review.",
+    identitySupportMessage:"Explain which detail must be corrected and why",
+    identitySupportPlaceholder:"State the incorrect detail, the correct information, and the reason for the change.",
+    identitySupportCancel:"Cancel",
+    identitySupportSend:"Send securely",
+    identitySupportDetailRequired:"Explain the requested correction in at least 10 characters.",
+    identitySupportSending:"Creating your secure support request...",
+    identitySupportSent:"Your identity correction request was sent securely.",
+    identitySupportAlreadyOpen:"You already have an open identity correction request.",
+    identitySupportFailed:"The support request could not be created.",
+    identityAlreadyRegistered:"This person is already registered. Contact support if these details belong to you.",
+    identityChangeBlocked:"Saved personal details can only be changed through support verification.",
+    deviceAlreadyBound:"This device is linked to another account. Contact support if you cannot access your account.",
+    deviceSecurityFailed:"Secure device identification could not be completed. Check your browser security settings.",
+    resetConfirmLocked:"Clear all non-personal information? Your locked identity details and photo will be kept.",
     resetConfirm:"Clear all information?",
     photoInvalid:"Profile photo must be JPEG, PNG or WebP and no larger than 12 MB.",
     photoUnsafe:"Profile photo could not be read safely.",
@@ -368,6 +400,15 @@ function escapeHTML(value){
     certificateNumber:"Sertifika No.",
     certificateNumberPlaceholder:"Koddan sonraki numarayı yazın",
     unlimited:"Süresiz / Limitsiz",
+    requiredBadge:"Zorunlu",
+    optionalBadge:"İsteğe bağlı",
+    includeInCv:"CV'de göster",
+    requiredCvMessage:"Kaydetmeden, indirmeden veya Global CV oluşturmadan önce zorunlu alanları tamamlayın: {fields}.",
+    medicalFitness:"Sağlık uygunluğu",
+    selectMedicalFitness:"Sağlık durumunu seçin",
+    fit:"Uygun",
+    fitWithRestrictions:"Kısıtlamayla uygun",
+    unfit:"Uygun değil",
     additionalCertificatesHelp:"Kaynakçı, fitter ve aşağıda yer almayan diğer mesleki sertifikalarınızı ekleyin.",
     stcwHelp:"Hazır STCW satırlarında yalnızca sertifika numaranızı, veriliş bilgilerini ve geçerliliği girin. İstediğiniz zaman başka sertifika ekleyebilirsiniz.",
     customCertificate:"Diğer STCW Sertifikası",
@@ -377,7 +418,7 @@ function escapeHTML(value){
     stcwSi:"Güvenlik Farkındalık Eğitimi",
     stcwSl:"Can Kurtarma Araçları ve Kurtarma Botları Kullanma Yeterliği (PSCRB)",
     stcwSo:"Temel Emniyet Eğitimi (BST)",
-    stcwSa:"SA Kodlu STCW Sertifikası",
+    stcwSa:"Kimyasal Tanker Sertifikası (SA)",
     stcwSe:"SE Kodlu STCW Sertifikası",
     institute:"Kurum",
     place:"Yer",
@@ -416,6 +457,26 @@ function escapeHTML(value){
     accountSaveFailed:"Maritime CV hesabınıza kaydedilemedi. Lütfen tekrar deneyin.",
     accountLoginRequired:"Maritime CV'nizi hesabınıza kaydetmek için giriş yapın.",
     draftSaveFailed:"CV taslağı kaydedilemedi. Tarayıcı depolama ayarlarını kontrol edin.",
+    identityLockedTitle:"Kişisel bilgiler güvenle kilitlendi",
+    identityLockedBody:"İlk kayıttan sonra kimlik bilgileri bu formdan temizlenemez veya değiştirilemez.",
+    identityLockedField:"Bu kişisel bilgi kilitlidir. Değişiklik için destekten doğrulanmış düzeltme talebi açın.",
+    identitySupportButton:"Düzeltme talebi oluştur",
+    identitySupportTitle:"Kişisel bilgi düzeltme talebi",
+    identitySupportLead:"Hesap güvenliği için kilitli kimlik bilgileri yalnız destek incelemesinden sonra değiştirilir.",
+    identitySupportMessage:"Hangi bilginin neden düzeltilmesi gerektiğini açıklayın",
+    identitySupportPlaceholder:"Yanlış bilgiyi, doğru bilgiyi ve değişiklik nedenini yazın.",
+    identitySupportCancel:"Vazgeç",
+    identitySupportSend:"Güvenli gönder",
+    identitySupportDetailRequired:"İstenen düzeltmeyi en az 10 karakterle açıklayın.",
+    identitySupportSending:"Güvenli destek talebiniz oluşturuluyor...",
+    identitySupportSent:"Kimlik düzeltme talebiniz güvenli biçimde gönderildi.",
+    identitySupportAlreadyOpen:"Zaten açık bir kimlik düzeltme talebiniz var.",
+    identitySupportFailed:"Destek talebi oluşturulamadı.",
+    identityAlreadyRegistered:"Bu kişi sistemde kayıtlıdır. Bilgiler size aitse destekle iletişime geçin.",
+    identityChangeBlocked:"Kaydedilmiş kişisel bilgiler yalnız destek doğrulamasıyla değiştirilebilir.",
+    deviceAlreadyBound:"Bu cihaz başka bir hesaba bağlıdır. Hesabınıza erişemiyorsanız destekle iletişime geçin.",
+    deviceSecurityFailed:"Güvenli cihaz tanımlaması tamamlanamadı. Tarayıcı güvenlik ayarlarınızı kontrol edin.",
+    resetConfirmLocked:"Kişisel bilgiler dışındaki tüm bilgiler temizlensin mi? Kilitli kimlik bilgileriniz ve fotoğrafınız korunacaktır.",
     resetConfirm:"Tüm bilgiler temizlensin mi?",
     photoInvalid:"Profil fotoğrafı JPEG, PNG veya WebP formatında ve en fazla 12 MB olmalıdır.",
     photoUnsafe:"Profil fotoğrafı güvenli biçimde okunamadı.",
@@ -537,6 +598,15 @@ function escapeHTML(value){
     certificateNumber:"Sertifikat No.",
     certificateNumberPlaceholder:"Koddan sonrakı nömrəni yazın",
     unlimited:"Müddətsiz / Limitsiz",
+    requiredBadge:"Məcburi",
+    optionalBadge:"İstəyə bağlı",
+    includeInCv:"CV-də göstər",
+    requiredCvMessage:"Yadda saxlamadan, endirmədən və ya Global CV yaratmadan əvvəl məcburi sahələri tamamlayın: {fields}.",
+    medicalFitness:"Tibbi uyğunluq",
+    selectMedicalFitness:"Tibbi uyğunluğu seçin",
+    fit:"Uyğundur",
+    fitWithRestrictions:"Məhdudiyyətlə uyğundur",
+    unfit:"Uyğun deyil",
     additionalCertificatesHelp:"Qaynaqçı, fitter və aşağıda göstərilməyən digər peşə sertifikatlarınızı əlavə edin.",
     stcwHelp:"Hazır STCW sətirlərində yalnız sertifikat nömrəsini, verilmə məlumatlarını və etibarlılığı daxil edin. İstədiyiniz vaxt başqa sertifikat əlavə edə bilərsiniz.",
     customCertificate:"Digər STCW Sertifikatı",
@@ -546,7 +616,7 @@ function escapeHTML(value){
     stcwSi:"Təhlükəsizlik üzrə Məlumatlandırma Təlimi",
     stcwSl:"Xilasetmə Vasitələri və Xilasedici Qayıqlar üzrə Hazırlıq (PSCRB)",
     stcwSo:"Əsas Təhlükəsizlik Hazırlığı (BST)",
-    stcwSa:"SA Kodlu STCW Sertifikatı",
+    stcwSa:"Kimyəvi Tanker Sertifikatı (SA)",
     stcwSe:"SE Kodlu STCW Sertifikatı",
     institute:"Qurum",
     place:"Yer",
@@ -585,6 +655,26 @@ function escapeHTML(value){
     accountSaveFailed:"Maritime CV hesabınıza yazıla bilmədi. Yenidən cəhd edin.",
     accountLoginRequired:"Maritime CV-ni hesabınıza yazmaq üçün daxil olun.",
     draftSaveFailed:"CV qaralaması saxlanmadı. Brauzer yaddaşı ayarlarını yoxlayın.",
+    identityLockedTitle:"Şəxsi məlumatlar təhlükəsiz şəkildə kilidləndi",
+    identityLockedBody:"İlk yadda saxlamadan sonra şəxsiyyət məlumatları bu formadan silinə və ya dəyişdirilə bilməz.",
+    identityLockedField:"Bu şəxsi məlumat kilidlidir. Dəyişiklik üçün dəstəkdən təsdiqlənmiş düzəliş sorğusu yaradın.",
+    identitySupportButton:"Düzəliş sorğusu yarat",
+    identitySupportTitle:"Şəxsi məlumat düzəlişi",
+    identitySupportLead:"Hesab təhlükəsizliyi üçün kilidli şəxsiyyət məlumatları yalnız dəstək yoxlamasından sonra dəyişdirilir.",
+    identitySupportMessage:"Hansı məlumatın niyə düzəldilməli olduğunu izah edin",
+    identitySupportPlaceholder:"Yanlış məlumatı, düzgün məlumatı və dəyişiklik səbəbini yazın.",
+    identitySupportCancel:"Ləğv et",
+    identitySupportSend:"Təhlükəsiz göndər",
+    identitySupportDetailRequired:"İstənilən düzəlişi ən azı 10 simvolla izah edin.",
+    identitySupportSending:"Təhlükəsiz dəstək sorğunuz yaradılır...",
+    identitySupportSent:"Şəxsiyyət düzəlişi sorğunuz təhlükəsiz şəkildə göndərildi.",
+    identitySupportAlreadyOpen:"Artıq açıq şəxsiyyət düzəlişi sorğunuz var.",
+    identitySupportFailed:"Dəstək sorğusu yaradıla bilmədi.",
+    identityAlreadyRegistered:"Bu şəxs sistemdə qeydiyyatdadır. Məlumatlar sizə aiddirsə, dəstəklə əlaqə saxlayın.",
+    identityChangeBlocked:"Yadda saxlanmış şəxsi məlumatlar yalnız dəstək təsdiqi ilə dəyişdirilə bilər.",
+    deviceAlreadyBound:"Bu cihaz başqa hesaba bağlıdır. Hesabınıza daxil ola bilmirsinizsə, dəstəklə əlaqə saxlayın.",
+    deviceSecurityFailed:"Təhlükəsiz cihaz tanınması tamamlanmadı. Brauzer təhlükəsizlik ayarlarını yoxlayın.",
+    resetConfirmLocked:"Şəxsi məlumatlardan başqa bütün məlumatlar silinsin? Kilidli şəxsiyyət məlumatlarınız və şəkliniz qorunacaq.",
     resetConfirm:"Bütün məlumatlar təmizlənsin?",
     photoInvalid:"Profil fotosu JPEG, PNG və ya WebP formatında və ən çox 12 MB olmalıdır.",
     photoUnsafe:"Profil fotosu təhlükəsiz şəkildə oxunmadı.",
@@ -705,6 +795,15 @@ function escapeHTML(value){
     certificateNumber:"Номер Сертификата",
     certificateNumberPlaceholder:"Введите номер после кода",
     unlimited:"Бессрочно / Без ограничений",
+    requiredBadge:"Обязательно",
+    optionalBadge:"Необязательно",
+    includeInCv:"Показывать в CV",
+    requiredCvMessage:"Перед сохранением, скачиванием или созданием Global CV заполните обязательные поля: {fields}.",
+    medicalFitness:"Медицинская годность",
+    selectMedicalFitness:"Выберите статус годности",
+    fit:"Годен",
+    fitWithRestrictions:"Годен с ограничениями",
+    unfit:"Не годен",
     additionalCertificatesHelp:"Добавьте свидетельства сварщика, фиттера и другие профессиональные сертификаты, которых нет ниже.",
     stcwHelp:"В готовых строках STCW укажите только номер, сведения о выдаче и срок действия. Другой сертификат можно добавить в любое время.",
     customCertificate:"Другой Сертификат STCW",
@@ -714,7 +813,7 @@ function escapeHTML(value){
     stcwSi:"Подготовка по осведомлённости в области охраны",
     stcwSl:"Подготовка по спасательным шлюпкам, плотам и дежурным шлюпкам (PSCRB)",
     stcwSo:"Начальная подготовка по безопасности (BST)",
-    stcwSa:"Сертификат STCW с кодом SA",
+    stcwSa:"Сертификат химического танкера (SA)",
     stcwSe:"Сертификат STCW с кодом SE",
     institute:"Учреждение",
     place:"Место",
@@ -753,6 +852,26 @@ function escapeHTML(value){
     accountSaveFailed:"Не удалось сохранить Maritime CV. Повторите попытку.",
     accountLoginRequired:"Войдите, чтобы сохранить Maritime CV в учетной записи.",
     draftSaveFailed:"Не удалось сохранить черновик CV. Проверьте настройки хранилища браузера.",
+    identityLockedTitle:"Личные данные надежно заблокированы",
+    identityLockedBody:"После первого сохранения идентификационные данные нельзя удалить или изменить в этой форме.",
+    identityLockedField:"Эти личные данные заблокированы. Для изменения создайте подтвержденный запрос в поддержку.",
+    identitySupportButton:"Запросить исправление",
+    identitySupportTitle:"Исправление личных данных",
+    identitySupportLead:"Для безопасности аккаунта заблокированные данные меняются только после проверки поддержкой.",
+    identitySupportMessage:"Объясните, какие данные и почему нужно исправить",
+    identitySupportPlaceholder:"Укажите неверные данные, правильные данные и причину изменения.",
+    identitySupportCancel:"Отмена",
+    identitySupportSend:"Отправить безопасно",
+    identitySupportDetailRequired:"Опишите исправление минимум в 10 символах.",
+    identitySupportSending:"Создается защищенный запрос в поддержку...",
+    identitySupportSent:"Запрос на исправление данных безопасно отправлен.",
+    identitySupportAlreadyOpen:"У вас уже есть открытый запрос на исправление данных.",
+    identitySupportFailed:"Не удалось создать запрос в поддержку.",
+    identityAlreadyRegistered:"Этот человек уже зарегистрирован. Если данные принадлежат вам, обратитесь в поддержку.",
+    identityChangeBlocked:"Сохраненные личные данные можно изменить только после проверки поддержкой.",
+    deviceAlreadyBound:"Это устройство связано с другим аккаунтом. Если у вас нет доступа, обратитесь в поддержку.",
+    deviceSecurityFailed:"Не удалось безопасно определить устройство. Проверьте настройки безопасности браузера.",
+    resetConfirmLocked:"Удалить все данные, кроме личных? Заблокированные данные и фотография будут сохранены.",
     resetConfirm:"Очистить всю информацию?",
     photoInvalid:"Фото профиля должно быть в формате JPEG, PNG или WebP и не превышать 12 МБ.",
     photoUnsafe:"Не удалось безопасно прочитать фото профиля.",
@@ -766,6 +885,33 @@ function escapeHTML(value){
 
 function t(key){
   return translations[currentLang]?.[key] || translations.en[key] || key;
+}
+
+function applyMaritimeIdentityLock(lock){
+  const locked = Boolean(lock && lock.locked);
+  const requested = new Set(Array.isArray(lock?.fields) ? lock.fields : []);
+  const fields = immutableIdentityFieldIds.filter(id => !requested.size || requested.has(id));
+  identityLockState = Object.freeze({ locked, fields: locked ? fields : [] });
+  const active = new Set(identityLockState.fields);
+
+  immutableIdentityFieldIds.forEach(id => {
+    const control = document.getElementById(id);
+    if(!control) return;
+    const fieldLocked = locked && active.has(id);
+    control.readOnly = fieldLocked;
+    control.classList.toggle("cv-identity-locked", fieldLocked);
+    if(fieldLocked){
+      control.setAttribute("aria-readonly", "true");
+      control.title = t("identityLockedField");
+    } else {
+      control.removeAttribute("aria-readonly");
+      control.removeAttribute("title");
+    }
+  });
+
+  const notice = document.querySelector("[data-cv-identity-lock-notice]");
+  if(notice) notice.hidden = !locked;
+  document.body.classList.toggle("has-maritime-identity-lock", locked);
 }
 
 function associateEditorLabels(root){
@@ -843,6 +989,8 @@ function translatePage(){
     el.setAttribute("alt", t(el.getAttribute("data-alt-i18n")));
   });
   associateEditorLabels();
+  markRequiredCvLabels();
+  applyMaritimeIdentityLock(identityLockState);
 }
   function renderAdditionalInputs(){
   const box = document.getElementById("additionalInputs");
@@ -929,9 +1077,9 @@ function renderAdditionals(){
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.name, "semantic"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute, "organization"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place, "proper"))}</td>
       <td>${escapeHTML(formatDisplayDate(item.issue))}</td>
       <td>${escapeHTML(item.cert)}</td>
       <td>${escapeHTML(formatDisplayDate(item.expiry))}</td>
@@ -953,13 +1101,16 @@ function renderSTCWInputs(){
     const title = preset && !preset.editableTitle ? t(preset.titleKey) : "";
     const editableTitle = !preset || preset.editableTitle;
     const div = document.createElement("div");
-    div.className = `group cv-repeat-group cv-stcw-card${preset ? " is-preset" : " is-custom"}`;
+    div.className = `group cv-repeat-group cv-stcw-card${preset ? " is-preset" : " is-custom"}${item.included === "false" ? " is-excluded" : ""}`;
 
     div.innerHTML = `
       <div class="cv-stcw-card-head">
         <span class="cv-certificate-code">${escapeHTML(code || String(index + 1))}</span>
         <h3>${escapeHTML(title || item.name || t(preset?.titleKey || "customCertificate"))}</h3>
+        <span class="cv-requirement-badge${preset?.required ? " is-required" : ""}">${t(preset?.required ? "requiredBadge" : "optionalBadge")}</span>
       </div>
+
+      ${preset?.id === "sa" ? `<label class="cv-include-check"><input type="checkbox" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="included" ${item.included !== "false" ? "checked" : ""}><span>${t("includeInCv")}</span></label>` : ""}
 
       ${editableTitle ? `
         <label>${t("courseName")}</label>
@@ -974,7 +1125,7 @@ function renderSTCWInputs(){
       <label>${t("certificateNumber")}</label>
       <div class="cv-certificate-number-field">
         <span>${escapeHTML(code || "-")}</span>
-        <input value="${escapeAttr(item.number || item.cert)}" placeholder="${escapeAttr(t("certificateNumberPlaceholder"))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="number">
+        <input value="${escapeAttr(item.number || item.cert)}" placeholder="${escapeAttr(t("certificateNumberPlaceholder"))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="number" ${preset?.required ? "required aria-required=\"true\"" : ""}>
       </div>
 
       <label>${t("institute")}</label>
@@ -986,7 +1137,7 @@ function renderSTCWInputs(){
       <div class="row2">
         <div>
           <label>${t("dateIssued")}</label>
-          <input type="date" value="${escapeAttr(normalizeDateInput(item.issue))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="issue">
+          <input type="date" value="${escapeAttr(normalizeDateInput(item.issue))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="issue" ${preset?.required ? "required aria-required=\"true\"" : ""}>
         </div>
 
         <div>
@@ -1020,7 +1171,7 @@ function updateSTCW(index, key, value){
   const nextValue = String(value ?? "").slice(0, maxRepeatFieldLength);
   stcwData[rowIndex][key] = key === "code" ? nextValue.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) : nextValue;
   if(key === "unlimited" && nextValue === "true") stcwData[rowIndex].expiry = "";
-  if(key === "unlimited") renderSTCWInputs();
+  if(key === "unlimited" || key === "included") renderSTCWInputs();
   renderSTCW();
   autoSaveCV();
 }
@@ -1051,10 +1202,10 @@ function renderSTCW(){
 
   tbody.innerHTML = "";
 
-  stcwData.forEach(item => {
+  stcwData.filter(item => item.included !== "false").forEach(item => {
     const tr = document.createElement("tr");
     const preset = stcwPresets.find(entry => entry.id === item.presetId) || null;
-    const certificateTitle = preset && !item.name ? t(preset.titleKey) : translateDynamicValue(item.name || t(preset?.titleKey || "customCertificate"));
+    const certificateTitle = preset && !item.name ? t(preset.titleKey) : translateDynamicValue(item.name || t(preset?.titleKey || "customCertificate"), "semantic");
     const code = String(item.code || preset?.code || "").toUpperCase();
     const number = String(item.number || item.cert || "").trim();
     const certificateNumber = code && number && !number.toUpperCase().startsWith(`${code}-`) ? `${code}-${number}` : number || code;
@@ -1062,10 +1213,10 @@ function renderSTCW(){
 
     tr.innerHTML = `
       <td>${escapeHTML(certificateTitle)}</td>
-      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute, "organization"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place, "proper"))}</td>
       <td>${escapeHTML(formatDisplayDate(item.issue))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank, "semantic"))}</td>
       <td>${escapeHTML(certificateNumber)}</td>
       <td>${escapeHTML(expiry)}</td>
     `;
@@ -1182,13 +1333,13 @@ function renderSea(){
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHTML(item.vessel)}</td>
-      <td>${escapeHTML(item.company)}</td>
-      <td>${escapeHTML(translateDynamicValue(item.type))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.flag))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.vessel, "vessel"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.company, "organization"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.type, "semantic"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.flag, "semantic"))}</td>
       <td>${escapeHTML(item.dwt)}</td>
       <td>${escapeHTML(item.grt)}</td>
-      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank, "semantic"))}</td>
       <td>${escapeHTML(formatDisplayDate(item.signon))}</td>
       <td>${escapeHTML(formatDisplayDate(item.signoff))}</td>
     `;
@@ -1221,7 +1372,82 @@ function persistCV(){
   return Boolean(cvDraftStore && cvDraftStore.write(getCVData()));
 }
 
+const requiredCvFields = Object.freeze([
+  ["position", "position"], ["familyName", "familyName"], ["firstName", "firstName"], ["fatherName", "fatherName"],
+  ["birthDate", "birthDate"], ["birthPlace", "birthPlace"], ["nationality", "nationality"], ["gender", "gender"],
+  ["mobile", "mobile"], ["email", "email"], ["passportNo", "number"], ["passportCountry", "issuingCountry"],
+  ["passportIssued", "issued"], ["passportValid", "valid"], ["seamanBookNo", "seamanBookNo"],
+  ["seamanBookIssued", "issued"], ["seamanBookValid", "valid"], ["medicalDoc", "document"],
+  ["medicalFitness", "medicalFitness"], ["medicalIssue", "dateOfIssue"], ["medicalExpiry", "dateOfExpiry"]
+]);
+
+function markRequiredCvLabels(){
+  requiredCvFields.forEach(([id]) => {
+    const control = document.getElementById(id);
+    if(!control) return;
+    control.required = true;
+    control.setAttribute("aria-required", "true");
+    const label = document.querySelector(`label[for="${id}"]`) || control.previousElementSibling;
+    if(label instanceof HTMLLabelElement) label.classList.add("cv-required-label");
+  });
+  const photoLabel = document.querySelector('label[for="photoInput"]');
+  if(photoLabel) photoLabel.classList.add("cv-required-label");
+}
+
+function clearCvValidation(){
+  document.querySelectorAll(".cv-field-invalid").forEach(node => node.classList.remove("cv-field-invalid"));
+  document.querySelectorAll('[aria-invalid="true"]').forEach(node => node.removeAttribute("aria-invalid"));
+}
+
+function invalidateCvControl(control){
+  if(!control) return;
+  control.classList.add("cv-field-invalid");
+  control.setAttribute("aria-invalid", "true");
+}
+
+function validateMaritimeCV(options){
+  clearCvValidation();
+  const missing = [];
+  let firstInvalid = null;
+  requiredCvFields.forEach(([id, labelKey]) => {
+    const control = document.getElementById(id);
+    if(control && !String(control.value || "").trim()) {
+      invalidateCvControl(control);
+      firstInvalid = firstInvalid || control;
+      missing.push(t(labelKey));
+    }
+  });
+  const photo = document.getElementById("cv_photo");
+  if(!photo || photo.hidden || !String(photo.getAttribute("src") || "").trim()) {
+    const photoControl = document.getElementById("photoInput");
+    invalidateCvControl(photoControl);
+    firstInvalid = firstInvalid || photoControl;
+    missing.push(t("photo"));
+  }
+  stcwPresets.filter(preset => preset.required).forEach(preset => {
+    const index = stcwData.findIndex(row => row.presetId === preset.id || String(row.code || "").toUpperCase() === preset.code);
+    const row = index >= 0 ? stcwData[index] : null;
+    const complete = row && row.included !== "false" && String(row.number || row.cert || "").trim() && normalizeDateInput(row.issue)
+      && (row.unlimited === "true" || normalizeDateInput(row.expiry));
+    if(complete) return;
+    const control = index >= 0 ? document.querySelector(`[data-cv-row="stcw"][data-cv-index="${index}"][data-cv-key="number"]`) : null;
+    const card = control?.closest(".cv-stcw-card") || null;
+    if(card) card.classList.add("cv-field-invalid");
+    if(control) control.setAttribute("aria-invalid", "true");
+    firstInvalid = firstInvalid || control || card;
+    missing.push(`${preset.code} ${t("certificate")}`);
+  });
+  if(!missing.length) return true;
+  if(options?.announce !== false) alert(t("requiredCvMessage").replace("{fields}", [...new Set(missing)].join(", ")));
+  if(firstInvalid) {
+    firstInvalid.scrollIntoView({ block:"center", behavior:"smooth" });
+    if(typeof firstInvalid.focus === "function") firstInvalid.focus({ preventScroll:true });
+  }
+  return false;
+}
+
 async function saveCV(){
+  if(!validateMaritimeCV()) return;
   if(autoSaveTimer){
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = 0;
@@ -1232,7 +1458,15 @@ async function saveCV(){
       await window.AllonaMaritimeCvAccount.save(getCVData());
       alert(t("accountSaved"));
     } catch(error){
-      alert(t(error && error.code === "AUTH_REQUIRED" ? "accountLoginRequired" : "accountSaveFailed"));
+      const errorKeys = {
+        AUTH_REQUIRED:"accountLoginRequired",
+        MARITIME_IDENTITY_ALREADY_REGISTERED:"identityAlreadyRegistered",
+        MARITIME_IDENTITY_LOCKED:"identityChangeBlocked",
+        MARITIME_DEVICE_ALREADY_BOUND:"deviceAlreadyBound",
+        MARITIME_DEVICE_KEY_REQUIRED:"deviceSecurityFailed",
+        MARITIME_DEVICE_BINDING_REQUIRED:"deviceSecurityFailed"
+      };
+      alert(t(errorKeys[error && error.code] || "accountSaveFailed"));
     }
     return;
   }
@@ -1284,6 +1518,7 @@ function normalizeStcwRows(rows){
     if(!clean.number) clean.number = legacyMatch ? legacyMatch[2] : legacyNumber;
     clean.code = String(clean.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
     clean.unlimited = clean.unlimited === "true" || /^(no limit|unlimited|limitsiz|müddətsiz|бессрочно)$/i.test(String(clean.expiry || "").trim()) ? "true" : "false";
+    clean.included = clean.included === "false" ? "false" : "true";
     if(clean.unlimited === "true") clean.expiry = "";
 
     const preset = stcwPresets.find(entry => entry.id === clean.presetId || entry.code === clean.code);
@@ -1402,10 +1637,13 @@ if(photoInput){
   });
 }
 function resetForm(){
-  const ok = confirm(t("resetConfirm"));
+  const identityLocked = identityLockState.locked;
+  const lockedFields = new Set(identityLockState.fields);
+  const ok = confirm(t(identityLocked ? "resetConfirmLocked" : "resetConfirm"));
   if(!ok) return;
 
   textFields.forEach(id => {
+    if(identityLocked && lockedFields.has(id)) return;
     const el = document.getElementById(id);
     if(el){
       el.value = "";
@@ -1419,9 +1657,9 @@ function resetForm(){
 
   const fileInput = document.getElementById("photoInput");
 
-  setMaritimeCvPhoto("");
+  if(!identityLocked) setMaritimeCvPhoto("");
 
-  if(fileInput){
+  if(fileInput && !identityLocked){
     fileInput.value = "";
   }
 
@@ -1429,7 +1667,8 @@ function resetForm(){
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = 0;
   }
-  cvDraftStore?.clear();
+  if(identityLocked) persistCV();
+  else cvDraftStore?.clear();
 
   renderAdditionalInputs();
   renderSTCWInputs();
@@ -1470,6 +1709,7 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 window.getMaritimeCVData = getCVData;
+window.validateMaritimeCV = validateMaritimeCV;
 window.setMaritimeCvPhoto = setMaritimeCvPhoto;
 window.applyMaritimeCVData = function(data){
   applyCVData(data);
@@ -1479,6 +1719,7 @@ window.applyMaritimeCVData = function(data){
   syncCV();
   translatePage();
 };
+window.applyMaritimeIdentityLock = applyMaritimeIdentityLock;
   const valueTranslations = {
   excellent:{ en:"Excellent", tr:"Mükemmel", az:"Əla", ru:"Отлично" },
   good:{ en:"Good", tr:"İyi", az:"Yaxşı", ru:"Хорошо" },
@@ -1522,7 +1763,10 @@ window.applyMaritimeCVData = function(data){
   containerShip:{ en:"Container Ship", tr:"Konteyner Gemisi", az:"Konteyner Gəmisi", ru:"Контейнеровоз" },
   tanker:{ en:"Tanker", tr:"Tanker", az:"Tanker", ru:"Танкер" },
   tugboat:{ en:"Tugboat", tr:"Römorkör", az:"Yedək Gəmisi", ru:"Буксир" },
-  unlimited:{ en:"Unlimited", tr:"Süresiz", az:"Müddətsiz", ru:"Бессрочно" }
+  unlimited:{ en:"Unlimited", tr:"Süresiz", az:"Müddətsiz", ru:"Бессрочно" },
+  fit:{ en:"Fit", tr:"Uygun", az:"Uyğundur", ru:"Годен" },
+  fitWithRestrictions:{ en:"Fit with restrictions", tr:"Kısıtlamayla uygun", az:"Məhdudiyyətlə uyğundur", ru:"Годен с ограничениями" },
+  unfit:{ en:"Unfit", tr:"Uygun değil", az:"Uyğun deyil", ru:"Не годен" }
 };
 
 function normalizeText(value){
@@ -1539,8 +1783,86 @@ function normalizeText(value){
     .replace(/\s+/g," ");
 }
 
-function translateUserValue(value){
+const fieldLocalizationContexts = Object.freeze({
+  position:"semantic",
+  familyName:"name",
+  firstName:"name",
+  fatherName:"name",
+  birth:"proper",
+  birthDate:"date",
+  birthPlace:"proper",
+  nationality:"semantic",
+  gender:"semantic",
+  marital:"semantic",
+  address:"freeText",
+  airport:"proper",
+  height:"number",
+  weight:"number",
+  eyes:"semantic",
+  hair:"semantic",
+  shoes:"number",
+  overall:"semantic",
+  mobile:"contact",
+  email:"contact",
+  kinName:"name",
+  kinPhone:"contact",
+  kinRelation:"semantic",
+  kinAddress:"freeText",
+  passportDoc:"semantic",
+  passportNo:"identifier",
+  passportCountry:"semantic",
+  passportPlace:"proper",
+  passportIssued:"date",
+  passportValid:"date",
+  windows:"semantic",
+  office:"semantic",
+  internet:"semantic",
+  seamanBookNo:"identifier",
+  seamanBookPlace:"proper",
+  seamanBookIssued:"date",
+  seamanBookValid:"date",
+  seafarerIdNo:"identifier",
+  seafarerIdPlace:"proper",
+  seafarerIdIssued:"date",
+  seafarerIdValid:"date",
+  schoolName:"organization",
+  schoolPlace:"proper",
+  schoolGrade:"semantic",
+  schoolFrom:"date",
+  schoolTo:"date",
+  azSpeak:"semantic",
+  azRead:"semantic",
+  azWrite:"semantic",
+  trSpeak:"semantic",
+  trRead:"semantic",
+  trWrite:"semantic",
+  enSpeak:"semantic",
+  enRead:"semantic",
+  enWrite:"semantic",
+  ruSpeak:"semantic",
+  ruRead:"semantic",
+  ruWrite:"semantic",
+  medicalDoc:"semantic",
+  medicalFitness:"semantic",
+  medicalGrade:"semantic",
+  medicalPlace:"proper",
+  medicalIssue:"date",
+  medicalExpiry:"date",
+  competencyClass:"semantic",
+  competencyCountry:"semantic",
+  competencyCertificate:"identifier",
+  competencyIssued:"date",
+  competencyExpires:"date",
+  competencyLimit:"freeText",
+  note:"freeText"
+});
+
+function translateUserValue(value, context){
   const raw = String(value || "");
+  const localizer = window.AllonaMaritimeCvValueLocalizer;
+  if(localizer && typeof localizer.localize === "function"){
+    return localizer.localize(raw, currentLang, fieldLocalizationContexts[context] || context || "semantic");
+  }
   const key = normalizeText(raw);
 
   for(const itemKey in valueTranslations){
@@ -1556,8 +1878,8 @@ function translateUserValue(value){
   return raw;
 }
 
-function translateDynamicValue(value){
-  return translateUserValue(value);
+function translateDynamicValue(value, context){
+  return translateUserValue(value, context || "semantic");
 }
 
 function dateValue(value){
@@ -1594,12 +1916,15 @@ function serviceDuration(days){
 }
 
 function completedCertificateCount(){
-  return [...additionalData, ...stcwData].filter(row => String(row.cert || row.number || row.issue || row.institute || "").trim()).length;
+  return [...additionalData, ...stcwData.filter(row => row.included !== "false")].filter(row => String(row.cert || row.number || row.issue || row.institute || "").trim()).length;
 }
 
 function generatedProfessionalSummary(){
-  const name = [valueOf("firstName"), valueOf("familyName")].filter(Boolean).join(" ").trim();
-  const role = translateUserValue(valueOf("position"));
+  const name = [
+    translateUserValue(valueOf("firstName"), "firstName"),
+    translateUserValue(valueOf("familyName"), "familyName")
+  ].filter(Boolean).join(" ").trim();
+  const role = translateUserValue(valueOf("position"), "position");
   const experienceRows = seaData.filter(row => String(row.vessel || row.company || row.rank || row.signon || "").trim());
   const days = seaServiceDays();
   const certificateCount = completedCertificateCount();
@@ -1660,7 +1985,7 @@ function generateSummary(){
 function syncCV(){
   textFields.forEach(id => {
     const raw = id === "note" && summaryMode === "auto" ? generatedProfessionalSummary() : (dateFieldIds.has(id) ? formatDisplayDate(valueOf(id)) : valueOf(id));
-    const translated = id === "note" && summaryMode === "custom" ? raw : translateUserValue(raw);
+    const translated = translateUserValue(raw, id);
     setCV(id, escapeHTML(translated).replace(/\n/g, "<br>"));
   });
 

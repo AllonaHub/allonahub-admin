@@ -9,7 +9,7 @@
     }),
     stcw: Object.freeze({
       handler: "updateSTCW",
-      keys: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"])
+      keys: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"])
     }),
     sea: Object.freeze({
       handler: "updateSea",
@@ -53,6 +53,7 @@
 
   async function downloadPDF() {
     if (pdfDownloadInProgress) return;
+    if (typeof window.validateMaritimeCV === "function" && !window.validateMaritimeCV()) return;
 
     const html2canvas = window.html2canvas;
     const JsPdf = window.jspdf && window.jspdf.jsPDF;
@@ -118,7 +119,7 @@
 
   function handleEditorInput(event) {
     const input = event.target;
-    if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement)) return;
+    if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) return;
 
     const rowType = input.dataset.cvRow;
     if (rowType) {

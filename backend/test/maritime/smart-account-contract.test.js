@@ -4,15 +4,20 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const migrationUrl = new URL("../../../supabase/migrations/20260914060000_create_maritime_smart_account.sql", import.meta.url);
+const firewallMigrationUrl = new URL("../../../supabase/migrations/20260915193000_enforce_maritime_application_match_firewall.sql", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-smart-account.js", import.meta.url);
 const pageUrl = new URL("../../../pages/ecosystem/maritime-smart-account.html", import.meta.url);
 const uiUrl = new URL("../../../js/allona-maritime-smart-account.js", import.meta.url);
 const cssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const mainRoutesUrl = new URL("../../src/routes/index.js", import.meta.url);
 const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.url);
+const identityLockMigrationUrl = new URL("../../../supabase/migrations/20260915211500_lock_maritime_cv_identity.sql", import.meta.url);
+const cvFormUrl = new URL("../../../js/maritime-cv-form.js", import.meta.url);
+const cvAccountUrl = new URL("../../../js/maritime-cv-account.js", import.meta.url);
+const cvPageUrl = new URL("../../../pages/ecosystem/maritime-cv.html", import.meta.url);
 
 test("smart account writes remain customer-only, reviewable, and separated from final submission", async () => {
-  const migration = await readFile(migrationUrl, "utf8");
+  const [migration, firewall] = await Promise.all([readFile(migrationUrl, "utf8"), readFile(firewallMigrationUrl, "utf8")]);
   assert.match(migration, /role = 'customer'/);
   assert.match(migration, /status = 'user_confirmed'/);
   assert.match(migration, /prepare_application_draft_only/);
@@ -34,6 +39,14 @@ test("smart account writes remain customer-only, reviewable, and separated from 
   assert.match(migration, /on conflict \(public_listing_id\) where public_listing_id is not null do nothing/);
   assert.match(migration, /grant execute on function public\.prepare_maritime_smart_account\(uuid, text, text, jsonb, jsonb\) to service_role/);
   assert.doesNotMatch(migration, /grant execute on function public\.prepare_maritime_smart_account\([^\n]+\) to authenticated/);
+  assert.match(firewall, /maritime_application_match_firewall/);
+  assert.match(firewall, /update of status, job_id, seafarer_user_id, metadata/);
+  assert.match(firewall, /run\.rule_version = 'maritime-smart-account-v6'/);
+  assert.match(firewall, /readiness,ready_to_apply/);
+  assert.match(firewall, /match\.hard_gate_status = 'passed'/);
+  assert.match(firewall, /match\.stale_after > now\(\)/);
+  assert.match(firewall, /run\.seafarer_user_id = new\.seafarer_user_id/);
+  assert.match(firewall, /match\.job_id = new\.job_id/);
 });
 
 test("smart matching API returns public-safe matches without company identity or contacts", async () => {
@@ -52,9 +65,78 @@ test("smart matching API returns public-safe matches without company identity or
   assert.match(route, /data_origin !== "user_entered_maritime_cv"/);
   assert.match(route, /profile\.webp/);
   assert.match(route, /summaryMode: z\.enum\(\["auto", "custom"\]\)/);
-  assert.match(route, /new Set\(\["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"\]\)/);
+  assert.match(route, /new Set\(\["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"\]\)/);
   assert.match(route, /validity_status: unlimited \? "non_expiring"/);
   assert.match(route, /manualStcwPresets/);
+  assert.match(route, /Kimyasal Tanker Sertifikası \(SA\)/);
+  assert.match(route, /Chemical Tanker Certificate \(SA\)/);
+  assert.match(route, /MARITIME_CV_REQUIRED_FIELDS_MISSING/);
+  assert.match(route, /hasPhoto: await hasStoredProfilePhoto/);
+  assert.match(route, /save_locked_maritime_cv_profile/);
+  assert.match(route, /maritime_check_device_access/);
+  assert.match(route, /MARITIME_IDENTITY_ALREADY_REGISTERED/);
+  assert.match(route, /MARITIME_DEVICE_ALREADY_BOUND/);
+  assert.match(route, /\/v1\/admin\/maritime\/cv-identity-corrections\/:ticketId\/approve/);
+  assert.match(route, /MARITIME_IDENTITY_CHANGE_APPROVED/);
+  assert.match(route, /\["admin", "super_admin"\]/);
+  assert.match(route, /!hasMfa\(ctx\)/);
+});
+
+test("Maritime CV identity and device controls are enforced by private database locks", async () => {
+  const migration = await readFile(identityLockMigrationUrl, "utf8");
+  assert.match(migration, /create table if not exists public\.maritime_cv_identity_locks/);
+  assert.match(migration, /person_fingerprint text not null unique/);
+  assert.match(migration, /create table if not exists public\.maritime_cv_device_bindings/);
+  assert.match(migration, /device_fingerprint text primary key/);
+  assert.match(migration, /MARITIME_IDENTITY_ALREADY_REGISTERED/);
+  assert.match(migration, /MARITIME_IDENTITY_LOCKED/);
+  assert.match(migration, /MARITIME_DEVICE_ALREADY_BOUND/);
+  assert.match(migration, /before insert or update of seafarer_user_id, profile_status, profile_payload, last_user_confirmed_at/);
+  assert.match(migration, /assigned_admin_id = p_approved_by/);
+  assert.match(migration, /ticket\.status = 'in_progress'/);
+  assert.match(migration, /v_birth_date !~ '\^\[0-9\]\{4\}-\[0-9\]\{2\}-\[0-9\]\{2\}\$'/);
+  assert.match(migration, /v_birth_place is null or v_nationality is null or v_gender is null/);
+  assert.match(migration, /maritime_identity_security_review_required/);
+  assert.match(migration, /profile_status = 'draft'/);
+  assert.match(migration, /identity_security_hold/);
+  assert.match(migration, /grant execute on function public\.save_locked_maritime_cv_profile\(uuid, jsonb, integer, text, text\) to service_role/);
+  assert.doesNotMatch(migration, /grant execute on function public\.save_locked_maritime_cv_profile\([^\n]+\) to authenticated/);
+});
+
+test("Maritime CV locks personal fields and clear preserves identity after first save", async () => {
+  const [form, account, page] = await Promise.all([
+    readFile(cvFormUrl, "utf8"),
+    readFile(cvAccountUrl, "utf8"),
+    readFile(cvPageUrl, "utf8")
+  ]);
+  assert.match(form, /immutableIdentityFieldIds = Object\.freeze\(\["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"\]\)/);
+  assert.match(form, /control\.readOnly = fieldLocked/);
+  assert.match(form, /if\(identityLocked && lockedFields\.has\(id\)\) return/);
+  assert.match(form, /if\(!identityLocked\) setMaritimeCvPhoto\(""\)/);
+  assert.match(form, /\["fatherName", "fatherName"\]/);
+  assert.match(account, /"X-Allona-Device-Key": currentDeviceKey/);
+  assert.match(account, /identity-change-request/);
+  assert.match(page, /data-cv-identity-lock-notice/);
+  assert.match(page, /data-cv-identity-support-dialog/);
+  assert.match(page, /js\/cv-access\.js/);
+});
+
+test("email and Google registration flows enforce the one-device account boundary", async () => {
+  const [routes, accountPage, authPage] = await Promise.all([
+    readFile(mainRoutesUrl, "utf8"),
+    readFile(new URL("../../../pages/account/user.html", import.meta.url), "utf8"),
+    readFile(new URL("../../../js/allona-auth-page.js", import.meta.url), "utf8")
+  ]);
+  assert.match(routes, /device_key: z\.string\(\)\.trim\(\)\.regex\(\/\^\[0-9a-f\]\{64\}\$\/i\)/);
+  assert.match(routes, /maritime_device_registration_allowed/);
+  assert.match(routes, /maritime_bind_device_to_user/);
+  assert.match(routes, /Registration rolled back after device binding failure/);
+  assert.match(routes, /\/v1\/auth\/device\/claim/);
+  assert.match(accountPage, /device_key:deviceKey/);
+  assert.match(accountPage, /claimCustomerAccountDevice/);
+  assert.match(accountPage, /context\.type==="customer" && !await claimCustomerAccountDevice\(verified\.user\)/);
+  assert.match(accountPage, /window\.Allona\.cvAccess\.getDeviceKey\(\)/);
+  assert.match(authPage, /allonahub\.oauth\.mode/);
 });
 
 test("verified partner crew listings persist complete matching requirements", async () => {
@@ -66,6 +148,8 @@ test("verified partner crew listings persist complete matching requirements", as
   assert.match(routes, /public_listing_id: listingRow\.id/);
   assert.match(routes, /matching_requirements/);
   assert.match(routes, /max\(48\)/);
+  assert.match(routes, /smart_job_id/);
+  assert.match(routes, /new Map\(\(smartJobs\.data \|\| \[\]\)\.map/);
 });
 
 test("smart account is a dedicated no-footer workspace with explicit approval actions", async () => {
@@ -180,6 +264,10 @@ test("shared maritime navigation keeps complete translations for the smart accou
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /function loadSeafarerClassification\(\)/);
   assert.match(source, /readiness\.seafarer_status/);
+  assert.match(source, /function jobApplicationGate\(job\)/);
+  assert.match(source, /\/v1\/maritime\/smart-account\/\$\{encodeURIComponent\(smartApplicationState\.run\.id\)\}\/application-drafts/);
+  assert.match(source, /\/v1\/maritime\/application-drafts\/\$\{encodeURIComponent\(draft\.id\)\}\/submit/);
+  assert.doesNotMatch(source, /id: `application-\$\{job\.id\}-\$\{Date\.now\(\)\}`/);
 });
 
 test("customer-only maritime pages explain account type without weakening separation", async () => {

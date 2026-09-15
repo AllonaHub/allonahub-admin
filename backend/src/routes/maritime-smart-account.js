@@ -7,7 +7,7 @@ import {
   matchMaritimeJobs
 } from "../lib/maritime-smart-profile.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
-import { auditEvent, authContext, hasRole, supabaseAdmin } from "../lib/supabase.js";
+import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
 const applicationParamsSchema = z.object({ applicationId: z.string().uuid() }).strict();
@@ -31,12 +31,12 @@ const manualCvFieldKeys = new Set([
   "passportDoc", "passportNo", "passportCountry", "passportPlace", "passportIssued", "passportValid", "windows", "office", "internet",
   "seamanBookNo", "seamanBookPlace", "seamanBookIssued", "seamanBookValid", "seafarerIdNo", "seafarerIdPlace", "seafarerIdIssued", "seafarerIdValid",
   "schoolName", "schoolPlace", "schoolGrade", "schoolFrom", "schoolTo", "azSpeak", "azRead", "azWrite", "trSpeak", "trRead", "trWrite",
-  "enSpeak", "enRead", "enWrite", "ruSpeak", "ruRead", "ruWrite", "medicalDoc", "medicalGrade", "medicalPlace", "medicalIssue", "medicalExpiry",
+  "enSpeak", "enRead", "enWrite", "ruSpeak", "ruRead", "ruWrite", "medicalDoc", "medicalFitness", "medicalGrade", "medicalPlace", "medicalIssue", "medicalExpiry",
   "competencyClass", "competencyCountry", "competencyCertificate", "competencyIssued", "competencyExpires", "competencyLimit", "note"
 ]);
 const manualCvRowKeys = {
   additional: new Set(["name", "institute", "place", "issue", "cert", "expiry"]),
-  stcw: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"]),
+  stcw: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
   sea: new Set(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
 };
 function restrictedStringRecord(allowedKeys, maxLength) {
@@ -55,12 +55,80 @@ const manualCvSchema = z.object({
   seaData: z.array(restrictedStringRecord(manualCvRowKeys.sea, 300)).max(50).default([])
 }).strict();
 const manualCvRequestSchema = z.object({ cv: manualCvSchema, confirmation: z.literal(true) }).strict();
+const identitySupportRequestSchema = z.object({
+  message: z.string().trim().min(10).max(2000),
+  confirmation: z.literal(true)
+}).strict();
+const identityCorrectionParamsSchema = z.object({ ticketId: z.string().uuid() }).strict();
+const identityDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}, "Geçerli bir doğum tarihi gereklidir.");
+const identityCorrectionApprovalSchema = z.object({
+  confirmation: z.literal("MARITIME_IDENTITY_CHANGE_APPROVED"),
+  identity: z.object({
+    given_names: z.string().trim().min(2).max(160),
+    family_name: z.string().trim().min(2).max(160),
+    middle_name: z.string().trim().min(2).max(160),
+    date_of_birth: identityDateSchema,
+    place_of_birth: z.string().trim().min(2).max(160),
+    nationality: z.string().trim().min(2).max(120),
+    gender: z.string().trim().min(1).max(80)
+  }).strict()
+}).strict();
+const maritimeIdentityLockedFields = Object.freeze([
+  "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"
+]);
 
 function httpError(message, statusCode = 400, code = "MARITIME_SMART_ACCOUNT_REQUEST_ERROR") {
   const error = new Error(message);
   error.statusCode = statusCode;
   error.code = code;
+  error.exposeCode = true;
   return error;
+}
+
+function requestDeviceKey(request) {
+  const value = String(request.headers["x-allona-device-key"] || "").trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(value)) {
+    throw httpError("Güvenli cihaz tanımlaması tamamlanamadı. Tarayıcı güvenlik ayarlarınızı kontrol edip yeniden deneyin.", 400, "MARITIME_DEVICE_KEY_REQUIRED");
+  }
+  return value;
+}
+
+function identitySecurityError(source, fallbackMessage = "Maritime CV güvenlik doğrulaması tamamlanamadı.") {
+  const text = String(source || "");
+  if (text.includes("MARITIME_IDENTITY_ALREADY_REGISTERED")) {
+    return httpError("Bu kişi sistemde kayıtlıdır. Bilgiler size aitse destekle iletişime geçin.", 409, "MARITIME_IDENTITY_ALREADY_REGISTERED");
+  }
+  if (text.includes("MARITIME_IDENTITY_LOCKED") || text.includes("MARITIME_IDENTITY_OWNER_LOCKED")) {
+    return httpError("Kaydedilmiş kişisel bilgiler yalnız destek doğrulamasıyla değiştirilebilir.", 409, "MARITIME_IDENTITY_LOCKED");
+  }
+  if (text.includes("MARITIME_DEVICE_ALREADY_BOUND")) {
+    return httpError("Bu cihaz başka bir hesaba bağlıdır. Hesabınıza erişemiyorsanız destekle iletişime geçin.", 409, "MARITIME_DEVICE_ALREADY_BOUND");
+  }
+  if (text.includes("MARITIME_DEVICE_BINDING_REQUIRED") || text.includes("MARITIME_DEVICE_KEY_INVALID")) {
+    return httpError("Güvenli cihaz tanımlaması tamamlanamadı. Yeniden giriş yapıp tekrar deneyin.", 409, "MARITIME_DEVICE_BINDING_REQUIRED");
+  }
+  if (text.includes("MARITIME_IDENTITY_REQUIRED")) {
+    return httpError("Ad, soyad, baba adı, doğum tarihi, doğum yeri, vatandaşlık ve cinsiyet eksiksiz doldurulmalıdır.", 409, "MARITIME_IDENTITY_REQUIRED");
+  }
+  return httpError(fallbackMessage, 503, "MARITIME_IDENTITY_SECURITY_UNAVAILABLE");
+}
+
+function assertIdentitySecurity(result, fallbackMessage) {
+  if (result.error) {
+    throw identitySecurityError(`${result.error.message || ""} ${result.error.details || ""} ${result.error.hint || ""}`, fallbackMessage);
+  }
+  if (typeof result.data === "string") {
+    try {
+      return JSON.parse(result.data);
+    } catch {
+      throw identitySecurityError("", fallbackMessage);
+    }
+  }
+  return result.data || {};
 }
 
 function assertDb(result, message) {
@@ -108,7 +176,7 @@ const manualStcwPresets = Object.freeze({
   si: Object.freeze({ code: "SI", tr: "Güvenlik Farkındalık Eğitimi", az: "Təhlükəsizlik üzrə Məlumatlandırma Təlimi", en: "Security Awareness Training", ru: "Подготовка по осведомлённости в области охраны" }),
   sl: Object.freeze({ code: "SL", tr: "Can Kurtarma Araçları ve Kurtarma Botları Kullanma Yeterliği (PSCRB)", az: "Xilasetmə Vasitələri və Xilasedici Qayıqlar üzrə Hazırlıq (PSCRB)", en: "Proficiency in Survival Craft and Rescue Boats (PSCRB)", ru: "Подготовка по спасательным шлюпкам, плотам и дежурным шлюпкам (PSCRB)" }),
   so: Object.freeze({ code: "SO", tr: "Temel Emniyet Eğitimi (BST)", az: "Əsas Təhlükəsizlik Hazırlığı (BST)", en: "Basic Safety Training (BST)", ru: "Начальная подготовка по безопасности (BST)" }),
-  sa: Object.freeze({ code: "SA", tr: "SA Kodlu STCW Sertifikası", az: "SA Kodlu STCW Sertifikatı", en: "STCW Certificate (SA)", ru: "Сертификат STCW с кодом SA" }),
+  sa: Object.freeze({ code: "SA", tr: "Kimyasal Tanker Sertifikası (SA)", az: "Kimyəvi Tanker Sertifikatı (SA)", en: "Chemical Tanker Certificate (SA)", ru: "Сертификат химического танкера (SA)" }),
   se: Object.freeze({ code: "SE", tr: "SE Kodlu STCW Sertifikası", az: "SE Kodlu STCW Sertifikatı", en: "STCW Certificate (SE)", ru: "Сертификат STCW с кодом SE" })
 });
 
@@ -128,6 +196,7 @@ function manualCertificate(row, language, type = "training") {
   const rawNumber = cvText(row.number || row.cert);
   const documentNumber = code && rawNumber && !rawNumber.toUpperCase().startsWith(`${code}-`) ? `${code}-${rawNumber}` : rawNumber;
   const unlimited = type === "stcw" && cvText(row.unlimited) === "true";
+  if (type === "stcw" && cvText(row.included) === "false") return null;
   const hasUserData = [row.name, row.institute, row.place, row.issue, row.rank, row.cert, row.number, row.expiry].some((value) => cvText(value));
   if (type === "stcw" && stcwTitle?.preset && !hasUserData && !unlimited) return null;
   if (!title && !documentNumber) return null;
@@ -289,7 +358,7 @@ function manualCvPayload(cv) {
     certificate_records: certificateRecords,
     certificate_codes: [...new Set(certificateRecords.map((row) => row.code).filter(Boolean))],
     medical_records: medicalRecords,
-    medical_fitness: "not_stated",
+    medical_fitness: ["fit", "fit_with_restrictions", "unfit"].includes(cvText(fields.medicalFitness)) ? cvText(fields.medicalFitness) : "not_stated",
     sea_service: seaService,
     languages: [manualLanguage(fields, "az", cv.lang), manualLanguage(fields, "tr", cv.lang), manualLanguage(fields, "en", cv.lang), manualLanguage(fields, "ru", cv.lang)].filter(Boolean),
     skills,
@@ -339,6 +408,24 @@ async function requireCustomer(request, action) {
   return ensureMaritimeCustomerProfile(ctx);
 }
 
+async function requireIdentitySupportAdmin(request, action) {
+  const ctx = await authContext(request);
+  if (!ctx?.user) throw httpError("Oturum doğrulanamadı.", 401, "AUTH_REQUIRED");
+  if (!hasRole(ctx.profile, ["admin", "super_admin"]) || !hasMfa(ctx)) {
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.cv_identity_support_denied",
+      severity: "critical",
+      resourceType: "maritime_cv_identity",
+      metadata: { requested_action: action, mfa_verified: hasMfa(ctx) }
+    });
+    throw httpError("Bu işlem için MFA doğrulamalı yönetici yetkisi gereklidir.", 403, "MARITIME_IDENTITY_ADMIN_APPROVAL_REQUIRED");
+  }
+  return ctx;
+}
+
 async function latestSmartState(userId, user) {
   const runResult = await supabaseAdmin
     .from("maritime_smart_account_runs")
@@ -368,9 +455,10 @@ async function latestSmartState(userId, user) {
       .limit(100)
   ]);
   const now = Date.now();
+  const currentRule = run.rule_version === MARITIME_SMART_RULE_VERSION;
   const matches = (assertDb(matchesResult, "Akıllı eşleşmeler okunamadı.") || []).map((row) => {
     const staleAt = Date.parse(row.stale_after || "");
-    const fresh = Number.isFinite(staleAt) && staleAt > now;
+    const fresh = currentRule && Number.isFinite(staleAt) && staleAt > now;
     const publicMatch = { ...(row.input_snapshot || {}) };
     delete publicMatch.partner_id;
     return {
@@ -510,11 +598,22 @@ export function registerMaritimeSmartAccountRoutes(app) {
     config: { rateLimit: { max: 60, timeWindow: "1 minute" } }
   }, async (request) => {
     const ctx = await requireCustomer(request, "maritime.cv_profile.read");
+    const deviceKey = requestDeviceKey(request);
+    const deviceAccess = assertIdentitySecurity(await supabaseAdmin.rpc("maritime_check_device_access", {
+      p_user_id: ctx.user.id,
+      p_device_key: deviceKey
+    }), "Cihaz erişimi doğrulanamadı.");
+    if (deviceAccess.allowed !== true) throw identitySecurityError(deviceAccess.code);
     const profile = assertDb(await supabaseAdmin
       .from("maritime_cv_profiles")
       .select("profile_status,profile_payload,completion_percent,last_user_confirmed_at,updated_at")
       .eq("seafarer_user_id", ctx.user.id)
       .maybeSingle(), "Maritime CV kaydı okunamadı.");
+    const identityLock = assertDb(await supabaseAdmin
+      .from("maritime_cv_identity_locks")
+      .select("locked_at,identity_version")
+      .eq("user_id", ctx.user.id)
+      .maybeSingle(), "Maritime CV kimlik kilidi okunamadı.");
     const photo = await ownCvIdentity(ctx.user);
     const payload = profile?.profile_payload || {};
     return {
@@ -525,6 +624,12 @@ export function registerMaritimeSmartAccountRoutes(app) {
       updated_at: profile?.updated_at || null,
       profile_photo_url: photo.avatar_url,
       profile_photo_ready: Boolean(photo.avatar_url),
+      identity_lock: {
+        locked: Boolean(identityLock),
+        locked_at: identityLock?.locked_at || null,
+        version: identityLock?.identity_version || null,
+        fields: identityLock ? maritimeIdentityLockedFields : []
+      },
       global_cv_readiness: maritimeGlobalPassportReadiness(payload, { hasPhoto: Boolean(photo.avatar_url) })
     };
   });
@@ -533,17 +638,23 @@ export function registerMaritimeSmartAccountRoutes(app) {
     config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
   }, async (request) => {
     const ctx = await requireCustomer(request, "maritime.cv_profile.save");
+    const deviceKey = requestDeviceKey(request);
     const input = manualCvRequestSchema.parse(request.body || {});
     const payload = manualCvPayload(input.cv);
+    const cvReadiness = maritimeGlobalPassportReadiness(payload, {
+      hasPhoto: await hasStoredProfilePhoto(ctx.user.id)
+    });
+    if (!cvReadiness.ready) {
+      throw httpError(`Maritime CV için zorunlu alanlar eksik: ${cvReadiness.missing.join(", ")}.`, 409, "MARITIME_CV_REQUIRED_FIELDS_MISSING");
+    }
     const now = new Date().toISOString();
-    const profile = assertDb(await supabaseAdmin.from("maritime_cv_profiles").upsert({
-      seafarer_user_id: ctx.user.id,
-      profile_status: "user_confirmed",
-      profile_payload: payload,
-      source_document_ids: [],
-      completion_percent: manualCvCompletion(payload),
-      last_user_confirmed_at: now
-    }, { onConflict: "seafarer_user_id" }).select("profile_status,completion_percent,last_user_confirmed_at,updated_at").single(), "Maritime CV kaydedilemedi.");
+    const profile = assertIdentitySecurity(await supabaseAdmin.rpc("save_locked_maritime_cv_profile", {
+      p_user_id: ctx.user.id,
+      p_profile_payload: payload,
+      p_completion_percent: manualCvCompletion(payload),
+      p_device_key: deviceKey,
+      p_user_agent: String(request.headers["user-agent"] || "").slice(0, 500)
+    }), "Maritime CV güvenli biçimde kaydedilemedi.");
     assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
       .update({ status: "superseded" })
       .eq("seafarer_user_id", ctx.user.id)
@@ -560,7 +671,136 @@ export function registerMaritimeSmartAccountRoutes(app) {
       resourceType: "maritime_cv_profile",
       metadata: { source: "user_entered_maritime_cv", completion_percent: profile.completion_percent }
     });
-    return { ok: true, cv: input.cv, profile };
+    return {
+      ok: true,
+      cv: input.cv,
+      profile,
+      identity_lock: {
+        locked: true,
+        locked_at: profile.last_user_confirmed_at || now,
+        version: "maritime-identity-v1",
+        fields: maritimeIdentityLockedFields
+      }
+    };
+  });
+
+  app.post("/v1/maritime/cv-profile/identity-change-request", {
+    config: { rateLimit: { max: 3, timeWindow: "24 hours" } }
+  }, async (request, reply) => {
+    const ctx = await requireCustomer(request, "maritime.cv_profile.identity_change_request");
+    const deviceKey = requestDeviceKey(request);
+    const deviceAccess = assertIdentitySecurity(await supabaseAdmin.rpc("maritime_check_device_access", {
+      p_user_id: ctx.user.id,
+      p_device_key: deviceKey
+    }), "Cihaz erişimi doğrulanamadı.");
+    if (deviceAccess.allowed !== true) throw identitySecurityError(deviceAccess.code);
+    const input = identitySupportRequestSchema.parse(request.body || {});
+    const identityLock = assertDb(await supabaseAdmin
+      .from("maritime_cv_identity_locks")
+      .select("locked_at")
+      .eq("user_id", ctx.user.id)
+      .maybeSingle(), "Maritime CV kimlik kilidi doğrulanamadı.");
+    if (!identityLock) {
+      throw httpError("Henüz kilitlenmiş bir Maritime CV kimliği bulunmuyor.", 409, "MARITIME_IDENTITY_NOT_LOCKED");
+    }
+
+    const existing = assertDb(await supabaseAdmin
+      .from("support_tickets")
+      .select("id,status,created_at")
+      .eq("user_id", ctx.user.id)
+      .eq("category", "maritime_identity_change")
+      .in("status", ["open", "in_progress"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(), "Kimlik değişikliği destek kaydı kontrol edilemedi.");
+    if (existing) return reply.code(200).send({ ok: true, ticket: existing, already_open: true });
+
+    const ticket = assertDb(await supabaseAdmin.from("support_tickets").insert({
+      user_id: ctx.user.id,
+      requester_type: "user",
+      category: "maritime_identity_change",
+      priority: "high",
+      title: "Maritime CV kişisel bilgi değişikliği",
+      message: input.message,
+      status: "open",
+      metadata: {
+        source: "maritime_cv_identity_lock",
+        identity_locked_at: identityLock.locked_at,
+        requested_fields: maritimeIdentityLockedFields
+      }
+    }).select("id,status,created_at").single(), "Kimlik değişikliği destek kaydı oluşturulamadı.");
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.cv_identity_change_requested",
+      resourceType: "support_ticket",
+      resourceId: ticket.id,
+      severity: "warning",
+      metadata: { identity_locked_at: identityLock.locked_at }
+    });
+    return reply.code(201).send({ ok: true, ticket, already_open: false });
+  });
+
+  app.post("/v1/admin/maritime/cv-identity-corrections/:ticketId/approve", {
+    config: { rateLimit: { max: 10, timeWindow: "1 hour" } }
+  }, async (request) => {
+    const ctx = await requireIdentitySupportAdmin(request, "maritime.cv_identity_support.approve");
+    const { ticketId } = identityCorrectionParamsSchema.parse(request.params || {});
+    const input = identityCorrectionApprovalSchema.parse(request.body || {});
+    const ticket = assertDb(await supabaseAdmin
+      .from("support_tickets")
+      .select("id,user_id,category,status,assigned_admin_id,metadata")
+      .eq("id", ticketId)
+      .maybeSingle(), "Kimlik düzeltme destek kaydı okunamadı.");
+    if (!ticket || ticket.category !== "maritime_identity_change" || !ticket.user_id) {
+      throw httpError("Geçerli bir Maritime CV kimlik düzeltme talebi bulunamadı.", 404, "MARITIME_IDENTITY_SUPPORT_CASE_REQUIRED");
+    }
+    if (!["open", "in_progress"].includes(ticket.status)) {
+      throw httpError("Bu kimlik düzeltme talebi artık işlem için açık değildir.", 409, "MARITIME_IDENTITY_SUPPORT_CASE_CLOSED");
+    }
+    if (ticket.assigned_admin_id && ticket.assigned_admin_id !== ctx.user.id) {
+      throw httpError("Bu talep başka bir yetkiliye atanmıştır.", 409, "MARITIME_IDENTITY_SUPPORT_CASE_ASSIGNED");
+    }
+
+    const claimedTicket = assertDb(await supabaseAdmin
+      .from("support_tickets")
+      .update({
+        status: "in_progress",
+        assigned_admin_id: ctx.user.id,
+        metadata: {
+          ...(ticket.metadata && typeof ticket.metadata === "object" ? ticket.metadata : {}),
+          identity_review_claimed_at: new Date().toISOString(),
+          identity_review_claimed_by: ctx.user.id
+        }
+      })
+      .eq("id", ticket.id)
+      .in("status", ["open", "in_progress"])
+      .or(`assigned_admin_id.is.null,assigned_admin_id.eq.${ctx.user.id}`)
+      .select("id,user_id,status,assigned_admin_id")
+      .single(), "Kimlik düzeltme talebi güvenli incelemeye alınamadı.");
+    if (claimedTicket.assigned_admin_id !== ctx.user.id) {
+      throw httpError("Kimlik düzeltme talebi yetkiliye atanamadı.", 409, "MARITIME_IDENTITY_SUPPORT_CASE_ASSIGNED");
+    }
+
+    const correction = assertIdentitySecurity(await supabaseAdmin.rpc("support_replace_maritime_cv_identity", {
+      p_user_id: claimedTicket.user_id,
+      p_new_identity: input.identity,
+      p_ticket_id: claimedTicket.id,
+      p_approved_by: ctx.user.id
+    }), "Kimlik düzeltmesi güvenli biçimde tamamlanamadı.");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.cv_identity_changed_by_support",
+      resourceType: "maritime_cv_identity",
+      resourceId: claimedTicket.user_id,
+      severity: "critical",
+      metadata: { ticket_id: claimedTicket.id, mfa_verified: true }
+    });
+    return { ok: true, correction };
   });
 
   app.get("/v1/maritime/smart-account", {

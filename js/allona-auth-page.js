@@ -476,6 +476,7 @@
       const options = { redirectTo: redirect.href };
       options.queryParams = { access_type: "offline", prompt: "select_account" };
       sessionStorage.setItem("allonahub.oauth.returnTo", returnTo);
+      sessionStorage.setItem("allonahub.oauth.mode", activeTab === "register" ? "register" : "login");
       const result = await rt.client.auth.signInWithOAuth({ provider: "google", options: options });
       if (result.error) throw result.error;
     } catch (error) {

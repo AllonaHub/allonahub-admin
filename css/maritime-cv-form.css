@@ -105,12 +105,54 @@ body.cv-form-page .cv-stcw-card.is-custom {
   border-left-color: #f6b64b;
 }
 
+body.cv-form-page .cv-stcw-card.is-excluded {
+  opacity: 0.7;
+  border-left-color: rgba(185, 216, 232, 0.42);
+}
+
 body.cv-form-page .cv-stcw-card-head {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+body.cv-form-page .cv-requirement-badge {
+  justify-self: end;
+  max-width: 92px;
+  padding: 4px 7px;
+  border: 1px solid rgba(185, 216, 232, 0.35);
+  border-radius: 5px;
+  color: #b9d8e8;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+body.cv-form-page .cv-requirement-badge.is-required {
+  border-color: rgba(255, 84, 112, 0.72);
+  color: #ffb8c3;
+}
+
+body.cv-form-page .cv-include-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+body.cv-form-page .cv-required-label::after {
+  content: " *";
+  color: #ff6b84;
+  font-weight: 900;
+}
+
+body.cv-form-page .cv-field-invalid,
+body.cv-form-page input.cv-field-invalid,
+body.cv-form-page select.cv-field-invalid {
+  border-color: #ff5470 !important;
+  box-shadow: 0 0 0 2px rgba(255, 84, 112, 0.2) !important;
 }
 
 body.cv-form-page .cv-stcw-card-head h3 {
@@ -268,7 +310,116 @@ body.cv-module-page .cv-account-status a {
   font-weight: 800;
 }
 
+body.cv-module-page .cv-identity-lock-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 234, 255, 0.5);
+  border-radius: 6px;
+  background: rgba(0, 165, 210, 0.12);
+  color: #e8fbff;
+}
+
+body.cv-module-page .cv-identity-lock-notice[hidden] {
+  display: none !important;
+}
+
+body.cv-module-page .cv-identity-lock-notice strong,
+body.cv-module-page .cv-identity-lock-notice p {
+  display: block;
+  margin: 0;
+}
+
+body.cv-module-page .cv-identity-lock-notice p {
+  margin-top: 3px;
+  color: #b9d8e8;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+body.cv-module-page .cv-identity-lock-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #00eaff;
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(0, 234, 255, 0.3);
+}
+
+body.cv-module-page .cv-identity-locked {
+  border-color: rgba(0, 234, 255, 0.42) !important;
+  background: rgba(0, 143, 183, 0.12) !important;
+  color: inherit !important;
+  cursor: not-allowed;
+}
+
+body.cv-module-page .cv-identity-support-dialog {
+  width: min(92vw, 560px);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid rgba(0, 234, 255, 0.62);
+  border-radius: 8px;
+  background: #071929;
+  color: #effcff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58), 0 0 28px rgba(0, 234, 255, 0.2);
+}
+
+body.cv-module-page .cv-identity-support-dialog::backdrop {
+  background: rgba(0, 5, 12, 0.78);
+}
+
+body.cv-module-page .cv-identity-support-dialog form {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+body.cv-module-page .cv-identity-support-head,
+body.cv-module-page .cv-identity-support-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+body.cv-module-page .cv-identity-support-head h2,
+body.cv-module-page .cv-identity-support-dialog p {
+  margin: 0;
+}
+
+body.cv-module-page .cv-dialog-close {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+body.cv-module-page .cv-identity-support-dialog textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+body.cv-module-page .cv-identity-support-status {
+  min-height: 20px;
+  color: #8df5ff;
+  font-size: 12px;
+}
+
 @media (max-width: 980px) {
+  body.cv-module-page .cv-identity-lock-notice {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  body.cv-module-page .cv-identity-lock-notice button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
   body.cv-module-page .topbar {
     align-items: stretch;
   }

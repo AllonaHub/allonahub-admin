@@ -313,26 +313,58 @@ The seafarer is FIT FOR SEA SERVICE`],
   assert.equal(medical.medical_records[0].result, "fit");
 });
 
-test("requires a saved portrait and complete passport identity before Global Passport preparation", () => {
+test("requires essential identity, medical, seaman-book, and five core STCW records before Global CV preparation", () => {
   const incomplete = maritimeGlobalPassportReadiness({ given_names: "Ziya", family_name: "Quliyev" }, { hasPhoto: false });
   assert.equal(incomplete.ready, false);
   assert.ok(incomplete.missing.includes("profile_photo"));
   assert.ok(incomplete.missing.includes("passport"));
+  assert.ok(incomplete.missing.includes("certificate_sp"));
   const complete = maritimeGlobalPassportReadiness({
+    rank: "Motorman",
     given_names: "Ziya",
     family_name: "Quliyev",
+    middle_name: "Ali",
     date_of_birth: "1993-02-22",
     place_of_birth: "Bakı",
     nationality: "Azerbaijani",
-    identity_documents: [{
-      kind: "passport",
-      document_number: "C03434797",
-      issuing_country: "Azerbaijan",
-      issue_date: "2025-05-02",
-      expiry_date: "2035-05-02"
-    }]
+    gender: "Male",
+    contact: { email: "ziya@example.invalid", phone: "+994000000000" },
+    identity_documents: [
+      { kind: "passport", document_number: "C03434797", issuing_country: "Azerbaijan", issue_date: "2025-05-02", expiry_date: "2035-05-02" },
+      { kind: "seafarer_book", document_number: "SB-1001", issue_date: "2025-05-02", expiry_date: "2030-05-02" }
+    ],
+    medical_fitness: "fit",
+    medical_records: [{ record_type: "medical_certificate", document_number: "MED-1001", issue_date: "2026-01-01", expiry_date: "2028-01-01" }],
+    certificate_records: ["SP", "SH", "SI", "SL", "SO"].map((code) => ({
+      code,
+      document_number: `${code}-1001`,
+      issue_date: "2025-01-01",
+      expiry_date: "2030-01-01"
+    }))
   }, { hasPhoto: true });
   assert.deepEqual(complete, { ready: true, missing: [] });
+
+  const optionalSaRemoved = maritimeGlobalPassportReadiness({
+    rank: "Motorman",
+    given_names: "Ziya",
+    family_name: "Quliyev",
+    middle_name: "Ali",
+    date_of_birth: "1993-02-22",
+    place_of_birth: "Bakı",
+    nationality: "Azerbaijani",
+    gender: "Male",
+    contact: { email: "ziya@example.invalid", phone: "+994000000000" },
+    identity_documents: [
+      { kind: "passport", document_number: "C03434797", issuing_country: "Azerbaijan", issue_date: "2025-05-02", expiry_date: "2035-05-02" },
+      { kind: "seafarer_book", document_number: "SB-1001", issue_date: "2025-05-02", expiry_date: "2030-05-02" }
+    ],
+    medical_fitness: "fit",
+    medical_records: [{ record_type: "medical_certificate", document_number: "MED-1001", issue_date: "2026-01-01", expiry_date: "2028-01-01" }],
+    certificate_records: ["SP", "SH", "SI", "SL"].map((code) => ({ code, document_number: `${code}-1001`, issue_date: "2025-01-01", expiry_date: "2030-01-01" }))
+  }, { hasPhoto: true });
+  assert.equal(optionalSaRemoved.ready, false);
+  assert.ok(optionalSaRemoved.missing.includes("certificate_so"));
+  assert.equal(optionalSaRemoved.missing.some((item) => item.includes("sa")), false);
 });
 
 test("sends PDFs as private request input and requires strict structured output", async () => {

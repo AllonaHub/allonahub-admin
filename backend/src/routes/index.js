@@ -124,8 +124,13 @@ const authRegisterSchema = z.object({
   full_name: z.string().trim().min(2).max(160),
   phone: phoneSchema,
   profile: authProfileSchema,
+  device_key: z.string().trim().regex(/^[0-9a-f]{64}$/i),
   turnstileToken: z.string().trim().max(4096).optional().default("")
 });
+
+const authDeviceClaimSchema = z.object({
+  device_key: z.string().trim().regex(/^[0-9a-f]{64}$/i)
+}).strict();
 
 const authForgotPasswordSchema = z.object({
   email: emailSchema,
@@ -1195,9 +1200,13 @@ function requestHostname(request) {
   return String(request.headers.host || "").split(":")[0].trim().toLowerCase();
 }
 
-function httpError(message, statusCode) {
+function httpError(message, statusCode, code = null) {
   const error = new Error(message);
   error.statusCode = statusCode;
+  if (code) {
+    error.code = code;
+    error.exposeCode = true;
+  }
   return error;
 }
 
@@ -1429,6 +1438,26 @@ function authEmailHash(value) {
 
 function authEmailDomain(value) {
   return authEmail(value).split("@")[1] || "";
+}
+
+function assertAuthDeviceSecurity(result, fallbackMessage) {
+  if (result.error) {
+    const source = `${result.error.message || ""} ${result.error.details || ""}`;
+    if (source.includes("MARITIME_DEVICE_ALREADY_BOUND")) {
+      throw httpError("Bu cihaz başka bir hesaba bağlıdır. Hesabınıza erişemiyorsanız destekle iletişime geçin.", 409, "MARITIME_DEVICE_ALREADY_BOUND");
+    }
+    throw httpError(fallbackMessage, 503, "ACCOUNT_DEVICE_SECURITY_UNAVAILABLE");
+  }
+  let data;
+  try {
+    data = typeof result.data === "string" ? JSON.parse(result.data) : result.data || {};
+  } catch {
+    throw httpError(fallbackMessage, 503, "ACCOUNT_DEVICE_SECURITY_UNAVAILABLE");
+  }
+  if (data.allowed === false || data.code === "MARITIME_DEVICE_ALREADY_BOUND") {
+    throw httpError("Bu cihaz başka bir hesaba bağlıdır. Hesabınıza erişemiyorsanız destekle iletişime geçin.", 409, "MARITIME_DEVICE_ALREADY_BOUND");
+  }
+  return data;
 }
 
 function resetPasswordRedirectUrl() {
@@ -10667,6 +10696,25 @@ export function registerRoutes(app) {
     const email = authEmail(payload.email);
     await verifyTurnstile(request, "register", payload.turnstileToken);
 
+    try {
+      assertAuthDeviceSecurity(await supabaseAdmin.rpc("maritime_device_registration_allowed", {
+        p_device_key: payload.device_key.toLowerCase()
+      }), "Cihaz güvenlik kontrolü şu anda tamamlanamadı.");
+    } catch (error) {
+      await auditEvent({
+        request,
+        action: "auth.register_device_denied",
+        severity: "warning",
+        metadata: {
+          email_hash: authEmailHash(email),
+          email_domain: authEmailDomain(email),
+          code: error.code || null
+        },
+        evidenceTags: ["auth", "register", "device_security", "denied"]
+      });
+      throw error;
+    }
+
     const { data, error } = await supabasePublic.auth.signUp({
       email,
       password: payload.password,
@@ -10693,6 +10741,36 @@ export function registerRoutes(app) {
 
     await upsertAuthProfile(data.user, { ...payload, email }, request);
 
+    try {
+      assertAuthDeviceSecurity(await supabaseAdmin.rpc("maritime_bind_device_to_user", {
+        p_user_id: data.user.id,
+        p_device_key: payload.device_key.toLowerCase(),
+        p_binding_source: "account_registration",
+        p_user_agent: String(request.headers["user-agent"] || "").slice(0, 500)
+      }), "Hesap cihaz güvenliği tamamlanamadı.");
+    } catch (deviceError) {
+      const rollback = await supabaseAdmin.auth.admin.deleteUser(data.user.id);
+      request.log.warn({
+        userId: data.user.id,
+        deviceError: deviceError.message,
+        rollbackError: rollback.error?.message || null
+      }, "Registration rolled back after device binding failure");
+      await auditEvent({
+        request,
+        actorId: data.user.id,
+        actorRole: "customer",
+        action: "auth.register_device_binding_failed",
+        severity: "critical",
+        metadata: {
+          email_hash: authEmailHash(email),
+          code: deviceError.code || null,
+          rollback_succeeded: !rollback.error
+        },
+        evidenceTags: ["auth", "register", "device_security", "rollback"]
+      });
+      throw deviceError;
+    }
+
     await auditEvent({
       request,
       actorId: data.user.id,
@@ -10711,6 +10789,33 @@ export function registerRoutes(app) {
       user: publicAuthUser(data.user),
       session: data.session || null
     });
+  });
+
+  app.post("/v1/auth/device/claim", {
+    config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireAuth(request);
+    if (!hasRole(ctx.profile, "customer")) {
+      throw httpError("Bu cihaz yalnız kişisel kullanıcı hesabına bağlanabilir.", 403, "CUSTOMER_ACCOUNT_REQUIRED");
+    }
+    const payload = authDeviceClaimSchema.parse(request.body || {});
+    const binding = assertAuthDeviceSecurity(await supabaseAdmin.rpc("maritime_bind_device_to_user", {
+      p_user_id: ctx.user.id,
+      p_device_key: payload.device_key.toLowerCase(),
+      p_binding_source: "account_access",
+      p_user_agent: String(request.headers["user-agent"] || "").slice(0, 500)
+    }), "Hesap cihaz güvenliği tamamlanamadı.");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "auth.device_claimed",
+      resourceType: "account_device",
+      severity: "info",
+      metadata: { source: "account_access" },
+      evidenceTags: ["auth", "device_security", "oauth"]
+    });
+    return { ok: true, binding };
   });
 
   app.post("/v1/partner-auth/forgot-password", async (request, reply) => {
@@ -11543,14 +11648,29 @@ export function registerRoutes(app) {
 
     const { data, error } = await dbQuery;
     if (error) throw error;
+    const listings = (data || []).filter((item) => (
+      item.module_key === "maritime"
+      && item.status === "active"
+      && ["crew_position", "vessel"].includes(item.listing_type)
+    ));
+    const crewListingIds = listings.filter((item) => item.listing_type === "crew_position").map((item) => item.id);
+    let smartJobByListing = new Map();
+    if (crewListingIds.length) {
+      const smartJobs = await supabaseAdmin
+        .from("maritime_jobs")
+        .select("id,public_listing_id")
+        .in("public_listing_id", crewListingIds)
+        .eq("status", "open");
+      if (smartJobs.error) throw smartJobs.error;
+      smartJobByListing = new Map((smartJobs.data || []).map((job) => [job.public_listing_id, job.id]));
+    }
     return {
       ok: true,
       module_key: "maritime",
-      listings: (data || []).filter((item) => (
-        item.module_key === "maritime"
-        && item.status === "active"
-        && ["crew_position", "vessel"].includes(item.listing_type)
-      ))
+      listings: listings.map((item) => ({
+        ...item,
+        smart_job_id: item.listing_type === "crew_position" ? smartJobByListing.get(item.id) || null : null
+      }))
     };
   });
 

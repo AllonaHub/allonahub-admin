@@ -1,26 +1,59 @@
 (function () {
   const App = window.Allona = window.Allona || {};
   const DEVICE_STORAGE_KEY = "allona_cv_device_id_v1";
+  const DEVICE_COOKIE_KEY = "allona_cv_device_id_v1";
   const DEVICE_USERS_KEY = "allona_cv_device_users_v1";
   const LOCAL_USAGE_PREFIX = "allona_cv_local_usage_v1:";
 
   function randomId() {
     if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
-    return `cv-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    if (window.crypto && window.crypto.getRandomValues) {
+      const bytes = new Uint8Array(24);
+      window.crypto.getRandomValues(bytes);
+      return Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+    const error = new Error("DEVICE_CRYPTO_UNAVAILABLE");
+    error.code = "DEVICE_CRYPTO_UNAVAILABLE";
+    throw error;
+  }
+
+  function readDeviceCookie() {
+    const prefix = `${DEVICE_COOKIE_KEY}=`;
+    const row = String(document.cookie || "").split(";").map((item) => item.trim()).find((item) => item.startsWith(prefix));
+    return row ? decodeURIComponent(row.slice(prefix.length)) : "";
+  }
+
+  function writeDeviceCookie(value) {
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `${DEVICE_COOKIE_KEY}=${encodeURIComponent(value)}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
   }
 
   function getRawDeviceId() {
-    let id = localStorage.getItem(DEVICE_STORAGE_KEY);
+    let stored = "";
+    try { stored = localStorage.getItem(DEVICE_STORAGE_KEY) || ""; } catch (error) {}
+    const cookie = readDeviceCookie();
+    let id = cookie || stored;
     if (!id) {
       id = randomId();
-      localStorage.setItem(DEVICE_STORAGE_KEY, id);
+    }
+    try { localStorage.setItem(DEVICE_STORAGE_KEY, id); } catch (error) {}
+    writeDeviceCookie(id);
+    if (!readDeviceCookie() && !stored) {
+      try { stored = localStorage.getItem(DEVICE_STORAGE_KEY) || ""; } catch (error) {}
+      if (!stored) {
+        const error = new Error("DEVICE_STORAGE_UNAVAILABLE");
+        error.code = "DEVICE_STORAGE_UNAVAILABLE";
+        throw error;
+      }
     }
     return id;
   }
 
   async function sha256(value) {
     if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
-      return `raw:${value}`;
+      const error = new Error("DEVICE_CRYPTO_UNAVAILABLE");
+      error.code = "DEVICE_CRYPTO_UNAVAILABLE";
+      throw error;
     }
     const buffer = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
     return Array.from(new Uint8Array(buffer))

@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (function () {
+      var target = new URL("user.html", window.location.href);
+      target.searchParams.set("tab", "register");
+      var returnTo = new URLSearchParams(window.location.search).get("returnTo");
+      if (returnTo) target.searchParams.set("returnTo", returnTo);
+      window.location.replace(target.href);
+    })();
+  </script>
   <title>Kayıt Ol | AllonaHub</title>
-  <link rel="canonical" href="register.html">
+  <link rel="canonical" href="user.html?tab=register">
   <meta name="description" content="AllonaHub hesabı oluşturun.">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260626-mobile-std34">

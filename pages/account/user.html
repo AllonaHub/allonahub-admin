@@ -1251,6 +1251,34 @@ async function directSupabaseLogin(email,password){
   return data;
 }
 
+async function claimCustomerAccountDevice(user){
+  try{
+    const {data}=await supabaseClient.auth.getSession();
+    const token=data && data.session && data.session.access_token;
+    if(!token || !user || !user.id)throw new Error("Oturum cihaz doğrulaması için hazır değil.");
+    const deviceKey=await window.Allona.cvAccess.getDeviceKey();
+    const response=await fetch(apiBaseUrl()+"/v1/auth/device/claim",{
+      method:"POST",
+      headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
+      body:JSON.stringify({device_key:deviceKey})
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok || result.ok===false){
+      const error=new Error(result.message || "Cihaz güvenlik kontrolü tamamlanamadı.");
+      error.status=response.status;
+      error.payload=result;
+      throw error;
+    }
+    try{sessionStorage.removeItem("allonahub.oauth.mode");}catch(error){}
+    return true;
+  }catch(error){
+    try{sessionStorage.removeItem("allonahub.oauth.mode");}catch(ignore){}
+    try{await supabaseClient.auth.signOut({scope:"local"});}catch(ignore){}
+    showAuthDialog(registerFailureMessage(error));
+    return false;
+  }
+}
+
 function canUseDirectLoginFallback(error){
   const status=Number(error && error.status || 0);
   return status===0 || [404,405,500,501,502,503,504].includes(status);
@@ -1274,6 +1302,8 @@ async function redirectAuthenticatedUser(){
   try{
     const {data,error}=await supabaseClient.auth.getUser();
     if(error || !data || !data.user)return;
+    const context=await accountContext(data.user);
+    if(context.type==="customer" && !await claimCustomerAccountDevice(data.user))return;
     const returnTo=await authorizedReturnTo(data.user,"user-panel.html");
     if(await needsMfaVerification()){
       redirectMfa(returnTo);
@@ -1584,8 +1614,16 @@ function authText(key,fallback){
 }
 
 function registerFailureMessage(error){
-  const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
+  const original=String(error && (error.message || error.error_description || error.error) || "");
+  const raw=original.toLowerCase();
   const status=Number(error && error.status || 0);
+  const code=String(error && error.payload && (error.payload.error || error.payload.code) || "").toUpperCase();
+  if(code==="MARITIME_DEVICE_ALREADY_BOUND" || raw.includes("cihaz başka bir hesaba bağlıdır")){
+    return original || "Bu cihaz başka bir hesaba bağlıdır. Hesabınıza erişemiyorsanız destekle iletişime geçin.";
+  }
+  if(code==="ACCOUNT_DEVICE_SECURITY_UNAVAILABLE" || raw.includes("cihaz güvenlik")){
+    return original || "Cihaz güvenlik kontrolü tamamlanamadı. Lütfen daha sonra yeniden deneyin.";
+  }
   if(status===429 || raw.includes("rate") || raw.includes("too many")){
     return authText("tooMany","Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.");
   }
@@ -1669,6 +1707,7 @@ async function registerUser(){
     manualAuthInProgress=true;
     setAuthBusy(submit,true);
     announceAuthMessage("");
+    const deviceKey=await window.Allona.cvAccess.getDeviceKey();
     const result=await authApi("/v1/auth/register",{
       email:email,
       password:password,
@@ -1677,6 +1716,7 @@ async function registerUser(){
       profile:{
         country:country.n
       },
+      device_key:deviceKey,
       turnstileToken:await securityChallengeToken("register")
     });
 
@@ -1757,6 +1797,9 @@ async function loginUser(){
       secureAuthAlert("Oturum güvenli şekilde doğrulanamadı. Lütfen tekrar deneyin.");
       return;
     }
+
+    const context=await accountContext(verified.user);
+    if(context.type==="customer" && !await claimCustomerAccountDevice(verified.user))return;
 
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
     const returnTo=await authorizedReturnTo(verified.user,"user-panel.html");
@@ -1921,6 +1964,7 @@ document.addEventListener("click",function(e){
   <script src="../../js/security-challenge.js?v=20260914-authfix1" defer></script>
   <script src="../../js/layout.v3.js?v=20260914-user-panel1" defer></script>
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
+  <script src="../../js/cv-access.js?v=20260915-identity1" defer></script>
   <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
   <script src="../../js/allona-auth-page.js?v=20260914-authfix1" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
