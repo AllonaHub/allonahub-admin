@@ -30,9 +30,21 @@ const repeatRowKeys = Object.freeze({
   stcw: Object.freeze(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
   sea: Object.freeze([
     "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
-    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt"
+    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt",
+    "rowId", "serviceDocumentId", "serviceDocumentName", "serviceDocumentSize", "serviceDocumentStatus", "saved"
   ])
 });
+
+const maxSeaServiceDocumentBytes = 45 * 1024 * 1024;
+
+function createSeaRowId(){
+  if(window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(character){
+    const random = Math.floor(Math.random() * 16);
+    const value = character === "x" ? random : (random & 3) | 8;
+    return value.toString(16);
+  });
+}
 
 const stcwPresets = Object.freeze([
   Object.freeze({ id: "sp", code: "SP", titleKey: "stcwSp", editableTitle: false, required: true }),
@@ -63,6 +75,7 @@ function newStcwRow(preset){
 
 function newSeaRow(){
   return {
+    rowId:createSeaRowId(),
     imo:"",
     vessel:"",
     company:"",
@@ -83,7 +96,12 @@ function newSeaRow(){
     referenceCompanyPhone:"",
     referencePhone:"",
     lookupProvider:"",
-    lookupFetchedAt:""
+    lookupFetchedAt:"",
+    serviceDocumentId:"",
+    serviceDocumentName:"",
+    serviceDocumentSize:"",
+    serviceDocumentStatus:"",
+    saved:"false"
   };
 }
 
@@ -277,6 +295,24 @@ function escapeHTML(value){
     referenceCompanyPhone:"Company Phone",
     referencePhone:"Authorized Person Phone",
     seaRequiredMessage:"Complete the required sea-service and reference fields for experience {row}: {fields}.",
+    serviceDocument:"Sea-service document",
+    addServiceDocument:"Add Service Document",
+    replaceServiceDocument:"Replace Service Document",
+    serviceDocumentHelp:"Take a photo, choose an image from your library, or select an existing PDF. Images are converted to PDF and stored securely.",
+    serviceDocumentRequired:"Sea-service document",
+    serviceDocumentSelected:"Document: {name}",
+    serviceDocumentUploading:"Saving the sea-service document...",
+    serviceDocumentUploaded:"The sea-service document was saved securely.",
+    serviceDocumentFailed:"The sea-service document could not be saved. Sign in and try again.",
+    serviceDocumentInvalid:"Select a PDF, JPEG, PNG or WebP document.",
+    serviceDocumentTooLarge:"The sea-service document cannot exceed 45 MB.",
+    serviceDocumentLink:"View sea-service document",
+    saveExperience:"Save Experience",
+    experienceSaved:"Saved and added to the CV",
+    experienceNeedsSave:"Complete the required fields and save this experience.",
+    experienceSavedAlert:"The sea experience was saved and added to the CV.",
+    experienceSaveFailed:"The sea experience could not be saved.",
+    experienceDateInvalid:"The sign-off date cannot be earlier than the sign-on date.",
 
     addAdditional:"+ Add Additional Row",
     addSTCW:"+ Add STCW Certificate",
@@ -499,6 +535,24 @@ function escapeHTML(value){
     referenceCompanyPhone:"Şirket Telefonu",
     referencePhone:"Yetkili Kişi Telefonu",
     seaRequiredMessage:"{row}. deniz tecrübesi için zorunlu gemi ve referans alanlarını tamamlayın: {fields}.",
+    serviceDocument:"Hizmet belgesi",
+    addServiceDocument:"Hizmet Belgesi Ekle",
+    replaceServiceDocument:"Hizmet Belgesini Değiştir",
+    serviceDocumentHelp:"Fotoğraf çekin, arşivinizden görsel seçin veya mevcut PDF dosyasını ekleyin. Görseller PDF'e dönüştürülerek güvenli biçimde saklanır.",
+    serviceDocumentRequired:"Hizmet belgesi",
+    serviceDocumentSelected:"Belge: {name}",
+    serviceDocumentUploading:"Hizmet belgesi kaydediliyor...",
+    serviceDocumentUploaded:"Hizmet belgesi güvenli biçimde kaydedildi.",
+    serviceDocumentFailed:"Hizmet belgesi kaydedilemedi. Giriş yapıp yeniden deneyin.",
+    serviceDocumentInvalid:"PDF, JPEG, PNG veya WebP belge seçin.",
+    serviceDocumentTooLarge:"Hizmet belgesi 45 MB'tan büyük olamaz.",
+    serviceDocumentLink:"Hizmet belgesini görüntüle",
+    saveExperience:"Tecrübeyi Kaydet",
+    experienceSaved:"Kaydedildi ve CV'ye eklendi",
+    experienceNeedsSave:"Zorunlu alanları tamamlayıp bu tecrübeyi kaydedin.",
+    experienceSavedAlert:"Deniz tecrübesi kaydedildi ve CV'ye eklendi.",
+    experienceSaveFailed:"Deniz tecrübesi kaydedilemedi.",
+    experienceDateInvalid:"Ayrılış tarihi katılış tarihinden önce olamaz.",
 
     addAdditional:"+ Ek Sertifika Ekle",
     addSTCW:"+ STCW Sertifikası Ekle",
@@ -722,6 +776,24 @@ function escapeHTML(value){
     referenceCompanyPhone:"Şirkət Telefonu",
     referencePhone:"Səlahiyyətli Şəxsin Telefonu",
     seaRequiredMessage:"{row}-ci dəniz təcrübəsi üçün məcburi gəmi və referans sahələrini tamamlayın: {fields}.",
+    serviceDocument:"Dəniz xidməti sənədi",
+    addServiceDocument:"Xidmət Sənədi Əlavə Et",
+    replaceServiceDocument:"Xidmət Sənədini Dəyişdir",
+    serviceDocumentHelp:"Şəkil çəkin, qalereyadan şəkil seçin və ya mövcud PDF faylını əlavə edin. Şəkillər PDF-ə çevrilərək təhlükəsiz saxlanılır.",
+    serviceDocumentRequired:"Dəniz xidməti sənədi",
+    serviceDocumentSelected:"Sənəd: {name}",
+    serviceDocumentUploading:"Xidmət sənədi saxlanılır...",
+    serviceDocumentUploaded:"Xidmət sənədi təhlükəsiz saxlanıldı.",
+    serviceDocumentFailed:"Xidmət sənədi saxlanmadı. Daxil olub yenidən cəhd edin.",
+    serviceDocumentInvalid:"PDF, JPEG, PNG və ya WebP sənədi seçin.",
+    serviceDocumentTooLarge:"Xidmət sənədi 45 MB-dan böyük ola bilməz.",
+    serviceDocumentLink:"Xidmət sənədinə bax",
+    saveExperience:"Təcrübəni Yadda Saxla",
+    experienceSaved:"Yadda saxlanıldı və CV-yə əlavə edildi",
+    experienceNeedsSave:"Məcburi sahələri tamamlayıb bu təcrübəni yadda saxlayın.",
+    experienceSavedAlert:"Dəniz təcrübəsi yadda saxlanıldı və CV-yə əlavə edildi.",
+    experienceSaveFailed:"Dəniz təcrübəsi yadda saxlanmadı.",
+    experienceDateInvalid:"Çıxış tarixi giriş tarixindən əvvəl ola bilməz.",
 
     addAdditional:"+ Əlavə Sertifikat Əlavə Et",
     addSTCW:"+ STCW Sertifikatı Əlavə Et",
@@ -944,6 +1016,24 @@ function escapeHTML(value){
     referenceCompanyPhone:"Телефон Компании",
     referencePhone:"Телефон Представителя",
     seaRequiredMessage:"Заполните обязательные сведения о судне и рекомендателе для опыта № {row}: {fields}.",
+    serviceDocument:"Документ о морском стаже",
+    addServiceDocument:"Добавить Документ о Стаже",
+    replaceServiceDocument:"Заменить Документ о Стаже",
+    serviceDocumentHelp:"Сфотографируйте документ, выберите изображение из галереи или готовый PDF. Изображение будет преобразовано в PDF и сохранено безопасно.",
+    serviceDocumentRequired:"Документ о морском стаже",
+    serviceDocumentSelected:"Документ: {name}",
+    serviceDocumentUploading:"Документ о стаже сохраняется...",
+    serviceDocumentUploaded:"Документ о стаже безопасно сохранён.",
+    serviceDocumentFailed:"Не удалось сохранить документ о стаже. Войдите и повторите попытку.",
+    serviceDocumentInvalid:"Выберите документ PDF, JPEG, PNG или WebP.",
+    serviceDocumentTooLarge:"Размер документа не должен превышать 45 МБ.",
+    serviceDocumentLink:"Посмотреть документ о стаже",
+    saveExperience:"Сохранить Опыт",
+    experienceSaved:"Сохранено и добавлено в CV",
+    experienceNeedsSave:"Заполните обязательные поля и сохраните этот опыт.",
+    experienceSavedAlert:"Морской опыт сохранён и добавлен в CV.",
+    experienceSaveFailed:"Не удалось сохранить морской опыт.",
+    experienceDateInvalid:"Дата списания не может быть раньше даты посадки.",
 
     addAdditional:"+ Добавить Сертификат",
     addSTCW:"+ Добавить STCW",
@@ -1393,8 +1483,8 @@ function renderSeaInputs(){
 
       <div class="row2">
         <div>
-          <label>${t("mmsi")}</label>
-          <input inputmode="numeric" value="${escapeAttr(item.mmsi)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="mmsi">
+          <label class="cv-required-label">${t("mmsi")}</label>
+          <input inputmode="numeric" required aria-required="true" value="${escapeAttr(item.mmsi)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="mmsi">
         </div>
         <div>
           <label>${t("callSign")}</label>
@@ -1404,13 +1494,13 @@ function renderSeaInputs(){
 
       <div class="row2">
         <div>
-          <label>DWT</label>
-          <input value="${escapeAttr(item.dwt)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="dwt">
+          <label class="cv-required-label">DWT</label>
+          <input required aria-required="true" value="${escapeAttr(item.dwt)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="dwt">
         </div>
 
         <div>
-          <label>GRT</label>
-          <input value="${escapeAttr(item.grt)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="grt">
+          <label class="cv-required-label">GRT</label>
+          <input required aria-required="true" value="${escapeAttr(item.grt)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="grt">
         </div>
       </div>
 
@@ -1461,7 +1551,30 @@ function renderSeaInputs(){
         </div>
       </div>
 
-      <button type="button" class="secondary" data-cv-action="remove-sea" data-cv-index="${index}">${t("deleteExperience")}</button>
+      <div class="cv-sea-document-panel${item.serviceDocumentStatus === "uploading" ? " is-uploading" : item.serviceDocumentId ? " is-ready" : ""}">
+        <strong>${t("serviceDocument")}</strong>
+        <p>${item.serviceDocumentId
+          ? t("serviceDocumentSelected").replace("{name}", escapeHTML(item.serviceDocumentName || t("serviceDocument")))
+          : t("serviceDocumentHelp")}</p>
+        <span class="cv-sea-document-status" role="status" aria-live="polite">${item.serviceDocumentStatus === "uploading"
+          ? t("serviceDocumentUploading")
+          : item.serviceDocumentStatus === "failed"
+          ? t("serviceDocumentFailed")
+          : item.serviceDocumentId
+          ? t("serviceDocumentUploaded")
+          : ""}</span>
+        <input class="cv-sea-document-input" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,image/*" data-cv-service-document data-cv-index="${index}" aria-label="${escapeAttr(t("serviceDocument"))}">
+      </div>
+
+      <div class="cv-sea-save-state ${item.saved === "true" ? "is-saved" : "is-pending"}" role="status" aria-live="polite">
+        ${item.saved === "true" ? t("experienceSaved") : t("experienceNeedsSave")}
+      </div>
+
+      <div class="cv-sea-actions">
+        <button type="button" class="secondary cv-sea-delete" data-cv-action="remove-sea" data-cv-index="${index}">${t("deleteExperience")}</button>
+        <button type="button" class="secondary" data-cv-action="choose-sea-document" data-cv-index="${index}"${item.serviceDocumentStatus === "uploading" ? " disabled" : ""}>${item.serviceDocumentId ? t("replaceServiceDocument") : t("addServiceDocument")}</button>
+        <button type="button" data-cv-action="save-sea" data-cv-index="${index}"${item.serviceDocumentStatus === "uploading" ? " disabled" : ""}>${t("saveExperience")}</button>
+      </div>
     `;
 
     box.appendChild(div);
@@ -1474,8 +1587,168 @@ function updateSea(index, key, value){
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex] || !repeatRowKeys.sea.includes(key)) return;
   const clean = String(value ?? "").slice(0, maxRepeatFieldLength);
   seaData[rowIndex][key] = key === "imo" ? clean.replace(/\D/g, "").slice(0, 7) : clean;
+  seaData[rowIndex].saved = "false";
+  const state = document.querySelector(`.cv-sea-card [data-cv-index="${rowIndex}"]`)?.closest(".cv-sea-card")?.querySelector(".cv-sea-save-state");
+  if(state){
+    state.className = "cv-sea-save-state is-pending";
+    state.textContent = t("experienceNeedsSave");
+  }
   renderSea();
   autoSaveCV();
+}
+
+function seaRowHasData(row){
+  const ignored = new Set(["rowId", "lookupProvider", "lookupFetchedAt", "serviceDocumentStatus", "saved"]);
+  return repeatRowKeys.sea.some(key => !ignored.has(key) && String(row?.[key] || "").trim());
+}
+
+function seaServiceDocumentUrl(documentId){
+  const id = String(documentId || "").trim();
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return "";
+  return `https://allonahub.com/pages/ecosystem/maritime-service-document.html?id=${encodeURIComponent(id)}`;
+}
+
+function openSeaServiceDocumentPicker(index){
+  const rowIndex = Number(index);
+  if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex]) return;
+  document.querySelector(`[data-cv-service-document][data-cv-index="${rowIndex}"]`)?.click();
+}
+
+function imageElement(file){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("SEA_SERVICE_IMAGE_INVALID"));
+    };
+    image.src = url;
+  });
+}
+
+async function prepareSeaServicePdf(file){
+  if(file.type === "application/pdf" || /\.pdf$/i.test(file.name || "")){
+    return { blob:file, name:String(file.name || "sea-service-document.pdf").replace(/[^a-z0-9._ -]+/gi, "-").slice(0, 180) };
+  }
+  if(!/^image\/(jpeg|png|webp)$/i.test(file.type || "")) throw new Error("SEA_SERVICE_DOCUMENT_INVALID");
+  const JsPdf = window.jspdf && window.jspdf.jsPDF;
+  if(typeof JsPdf !== "function") throw new Error("SEA_SERVICE_PDF_LIBRARY_MISSING");
+  const image = await imageElement(file);
+  const maxDimension = 2600;
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext("2d", { alpha:false });
+  if(!context) throw new Error("SEA_SERVICE_IMAGE_INVALID");
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const orientation = canvas.width > canvas.height ? "landscape" : "portrait";
+  const pdf = new JsPdf({ orientation, unit:"mm", format:"a4", compress:true });
+  const pageWidth = orientation === "landscape" ? 297 : 210;
+  const pageHeight = orientation === "landscape" ? 210 : 297;
+  const ratio = Math.min((pageWidth - 18) / canvas.width, (pageHeight - 18) / canvas.height);
+  const width = canvas.width * ratio;
+  const height = canvas.height * ratio;
+  pdf.addImage(canvas.toDataURL("image/jpeg", 0.9), "JPEG", (pageWidth - width) / 2, (pageHeight - height) / 2, width, height, undefined, "FAST");
+  const base = String(file.name || "sea-service-document").replace(/\.[^.]+$/, "").replace(/[^a-z0-9._ -]+/gi, "-").slice(0, 170);
+  return { blob:pdf.output("blob"), name:`${base || "sea-service-document"}.pdf` };
+}
+
+async function attachSeaServiceDocument(index, file){
+  const rowIndex = Number(index);
+  const row = seaData[rowIndex];
+  if(!Number.isInteger(rowIndex) || rowIndex < 0 || !row || !(file instanceof File)) return;
+  if(!file.size || file.size > maxSeaServiceDocumentBytes){
+    alert(t("serviceDocumentTooLarge"));
+    return;
+  }
+  const validType = file.type === "application/pdf" || /^image\/(jpeg|png|webp)$/i.test(file.type || "") || /\.(pdf|jpe?g|png|webp)$/i.test(file.name || "");
+  if(!validType){
+    alert(t("serviceDocumentInvalid"));
+    return;
+  }
+  row.serviceDocumentStatus = "uploading";
+  row.saved = "false";
+  renderSeaInputs();
+  renderSea();
+  try{
+    if(!window.AllonaMaritimeCvAccount || typeof window.AllonaMaritimeCvAccount.archiveSeaServiceDocument !== "function") throw new Error("SEA_SERVICE_UPLOAD_UNAVAILABLE");
+    const prepared = await prepareSeaServicePdf(file);
+    const result = await window.AllonaMaritimeCvAccount.archiveSeaServiceDocument(prepared.blob, row.rowId, prepared.name);
+    row.serviceDocumentId = String(result?.document?.id || "");
+    row.serviceDocumentName = String(result?.document?.original_file_name || prepared.name).slice(0, maxRepeatFieldLength);
+    row.serviceDocumentSize = String(result?.document?.file_size_bytes || prepared.blob.size || "");
+    row.serviceDocumentStatus = "uploaded";
+    row.saved = "false";
+    persistCV();
+  } catch(error){
+    row.serviceDocumentStatus = "failed";
+    alert(t("serviceDocumentFailed"));
+  }
+  renderSeaInputs();
+  renderSea();
+  autoSaveCV();
+}
+
+const requiredSeaFields = Object.freeze([
+  ["imo", "imoNumber"], ["vessel", "vessel"], ["company", "company"], ["type", "vesselType"], ["flag", "flag"],
+  ["mmsi", "mmsi"], ["dwt", "DWT"], ["grt", "GRT"], ["rank", "rank"], ["signon", "signOn"], ["signoff", "signOff"],
+  ["referenceName", "referenceName"], ["referenceCompanyEmail", "referenceCompanyEmail"],
+  ["referenceCompanyPhone", "referenceCompanyPhone"], ["referencePhone", "referencePhone"], ["serviceDocumentId", "serviceDocumentRequired"]
+]);
+
+function validateSeaExperience(index, options){
+  const rowIndex = Number(index);
+  const row = seaData[rowIndex];
+  if(!Number.isInteger(rowIndex) || rowIndex < 0 || !row) return false;
+  const card = document.querySelector(`[data-cv-row="sea"][data-cv-index="${rowIndex}"]`)?.closest(".cv-sea-card");
+  card?.querySelectorAll(".cv-field-invalid").forEach(node => node.classList.remove("cv-field-invalid"));
+  card?.querySelectorAll('[aria-invalid="true"]').forEach(node => node.removeAttribute("aria-invalid"));
+  const missing = [];
+  let firstInvalid = null;
+  requiredSeaFields.forEach(([key, labelKey]) => {
+    const value = String(row[key] || "").trim();
+    const invalid = !value || (key === "imo" && !validImo(value)) || (key === "referenceCompanyEmail" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+    if(!invalid) return;
+    const control = key === "serviceDocumentId"
+      ? card?.querySelector(".cv-sea-document-panel")
+      : card?.querySelector(`[data-cv-key="${key}"]`);
+    invalidateCvControl(control);
+    firstInvalid = firstInvalid || control;
+    missing.push(labelKey === "DWT" || labelKey === "GRT" ? labelKey : t(labelKey));
+  });
+  const start = dateValue(row.signon);
+  const end = dateValue(row.signoff);
+  if(start && end && end < start){
+    const control = card?.querySelector('[data-cv-key="signoff"]');
+    invalidateCvControl(control);
+    firstInvalid = firstInvalid || control;
+    missing.push(t("experienceDateInvalid"));
+  }
+  if(missing.length && options?.announce !== false){
+    alert(t("seaRequiredMessage").replace("{row}", String(rowIndex + 1)).replace("{fields}", [...new Set(missing)].join(", ")));
+    firstInvalid?.scrollIntoView({ block:"center", behavior:"smooth" });
+    firstInvalid?.focus?.({ preventScroll:true });
+  }
+  return !missing.length;
+}
+
+function saveSeaExperience(index){
+  const rowIndex = Number(index);
+  if(!validateSeaExperience(rowIndex)) return;
+  seaData[rowIndex].saved = "true";
+  seaData[rowIndex].serviceDocumentStatus = "uploaded";
+  persistCV();
+  renderSeaInputs();
+  renderSea();
+  syncCV();
+  alert(t("experienceSavedAlert"));
 }
 
 function validImo(value){
@@ -1523,6 +1796,7 @@ async function lookupSeaVessel(index, button){
     });
     row.lookupProvider = String(vessel.provider || "marinetraffic");
     row.lookupFetchedAt = String(vessel.fetched_at || new Date().toISOString());
+    row.saved = "false";
     renderSeaInputs();
     renderSea();
     autoSaveCV();
@@ -1563,7 +1837,7 @@ function renderSea(){
 
   tbody.innerHTML = "";
 
-  seaData.forEach(item => {
+  seaData.filter(item => item.saved === "true").forEach(item => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -1581,7 +1855,8 @@ function renderSea(){
     tbody.appendChild(tr);
     const details = document.createElement("tr");
     details.className = "cv-sea-detail-row";
-    details.innerHTML = `<td colspan="9"><strong>${escapeHTML(t("referenceDetails"))}:</strong> ${escapeHTML(translateDynamicValue(item.referenceName, "proper"))} · ${escapeHTML(item.referenceCompanyEmail)} · ${escapeHTML(t("referenceCompanyPhone"))}: ${escapeHTML(item.referenceCompanyPhone)} · ${escapeHTML(t("referencePhone"))}: ${escapeHTML(item.referencePhone)}<br><strong>${escapeHTML(t("mmsi"))}:</strong> ${escapeHTML(item.mmsi)} · <strong>${escapeHTML(t("callSign"))}:</strong> ${escapeHTML(item.callSign)} · <strong>${escapeHTML(t("buildYear"))}:</strong> ${escapeHTML(item.buildYear)} · <strong>${escapeHTML(t("netTonnage"))}:</strong> ${escapeHTML(item.netTonnage)} · <strong>${escapeHTML(t("lengthOverall"))}:</strong> ${escapeHTML(item.lengthOverall)}</td>`;
+    const serviceUrl = seaServiceDocumentUrl(item.serviceDocumentId);
+    details.innerHTML = `<td colspan="9"><strong>${escapeHTML(t("referenceDetails"))}:</strong> ${escapeHTML(translateDynamicValue(item.referenceName, "proper"))} · ${escapeHTML(item.referenceCompanyEmail)} · ${escapeHTML(t("referenceCompanyPhone"))}: ${escapeHTML(item.referenceCompanyPhone)} · ${escapeHTML(t("referencePhone"))}: ${escapeHTML(item.referencePhone)}<br><strong>${escapeHTML(t("mmsi"))}:</strong> ${escapeHTML(item.mmsi)} · <strong>${escapeHTML(t("callSign"))}:</strong> ${escapeHTML(item.callSign)} · <strong>${escapeHTML(t("buildYear"))}:</strong> ${escapeHTML(item.buildYear)} · <strong>${escapeHTML(t("netTonnage"))}:</strong> ${escapeHTML(item.netTonnage)} · <strong>${escapeHTML(t("lengthOverall"))}:</strong> ${escapeHTML(item.lengthOverall)}${serviceUrl ? `<br><a class="cv-service-document-link" href="${escapeAttr(serviceUrl)}" target="_blank" rel="noopener">${escapeHTML(t("serviceDocumentLink"))}: ${escapeHTML(item.serviceDocumentName || t("serviceDocument"))}</a>` : ""}</td>`;
     tbody.appendChild(details);
   });
 }
@@ -1675,24 +1950,35 @@ function validateMaritimeCV(options){
     firstInvalid = firstInvalid || control || card;
     missing.push(`${preset.code} ${t("certificate")}`);
   });
-  const requiredSeaFields = [
-    ["imo", "imoNumber"], ["vessel", "vessel"], ["company", "company"], ["type", "vesselType"], ["flag", "flag"],
-    ["rank", "rank"], ["signon", "signOn"], ["signoff", "signOff"], ["referenceName", "referenceName"],
-    ["referenceCompanyEmail", "referenceCompanyEmail"], ["referenceCompanyPhone", "referenceCompanyPhone"], ["referencePhone", "referencePhone"]
-  ];
   seaData.forEach((row, index) => {
-    const hasExperience = repeatRowKeys.sea.some(key => !["lookupProvider", "lookupFetchedAt"].includes(key) && String(row[key] || "").trim());
+    const hasExperience = seaRowHasData(row);
     if(!hasExperience) return;
     const rowMissing = [];
     requiredSeaFields.forEach(([key, labelKey]) => {
       const value = String(row[key] || "").trim();
       const invalid = !value || (key === "imo" && !validImo(value)) || (key === "referenceCompanyEmail" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
       if(!invalid) return;
-      const control = document.querySelector(`[data-cv-row="sea"][data-cv-index="${index}"][data-cv-key="${key}"]`);
+      const control = key === "serviceDocumentId"
+        ? document.querySelector(`[data-cv-service-document][data-cv-index="${index}"]`)?.closest(".cv-sea-document-panel")
+        : document.querySelector(`[data-cv-row="sea"][data-cv-index="${index}"][data-cv-key="${key}"]`);
       invalidateCvControl(control);
       firstInvalid = firstInvalid || control;
-      rowMissing.push(t(labelKey));
+      rowMissing.push(labelKey === "DWT" || labelKey === "GRT" ? labelKey : t(labelKey));
     });
+    const start = dateValue(row.signon);
+    const end = dateValue(row.signoff);
+    if(start && end && end < start){
+      const control = document.querySelector(`[data-cv-row="sea"][data-cv-index="${index}"][data-cv-key="signoff"]`);
+      invalidateCvControl(control);
+      firstInvalid = firstInvalid || control;
+      rowMissing.push(t("experienceDateInvalid"));
+    }
+    if(row.saved !== "true"){
+      const control = document.querySelector(`[data-cv-action="save-sea"][data-cv-index="${index}"]`);
+      invalidateCvControl(control);
+      firstInvalid = firstInvalid || control;
+      rowMissing.push(t("saveExperience"));
+    }
     if(rowMissing.length) missing.push(t("seaRequiredMessage").replace("{row}", String(index + 1)).replace("{fields}", rowMissing.join(", ")));
   });
   if(!missing.length) return true;
@@ -1799,6 +2085,16 @@ function normalizeStcwRows(rows){
     ...customRows
   ].slice(0, maxRepeatRows);
 }
+
+function normalizeSeaRows(rows){
+  return rows.map(row => {
+    const clean = { ...newSeaRow(), ...row };
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clean.rowId)) clean.rowId = createSeaRowId();
+    if(clean.saved !== "true" && clean.saved !== "false") clean.saved = seaRowHasData(clean) ? "true" : "false";
+    if(clean.serviceDocumentId && !clean.serviceDocumentStatus) clean.serviceDocumentStatus = "uploaded";
+    return clean;
+  }).slice(0, maxRepeatRows);
+}
 function applyCVData(data){
   if(!data || typeof data !== "object") return;
 
@@ -1822,7 +2118,7 @@ function applyCVData(data){
 
     additionalData = sanitizeDraftRows(data.additionalData, repeatRowKeys.additional);
     stcwData = normalizeStcwRows(sanitizeDraftRows(data.stcwData, repeatRowKeys.stcw));
-    seaData = sanitizeDraftRows(data.seaData, repeatRowKeys.sea);
+    seaData = normalizeSeaRows(sanitizeDraftRows(data.seaData, repeatRowKeys.sea));
 
     if(data.photo && cvDraftStore?.isSafePhotoDataUrl(data.photo)){
       setMaritimeCvPhoto(data.photo);
@@ -1974,6 +2270,9 @@ document.addEventListener("DOMContentLoaded", function(){
 window.getMaritimeCVData = getCVData;
 window.validateMaritimeCV = validateMaritimeCV;
 window.lookupSeaVessel = lookupSeaVessel;
+window.openSeaServiceDocumentPicker = openSeaServiceDocumentPicker;
+window.attachSeaServiceDocument = attachSeaServiceDocument;
+window.saveSeaExperience = saveSeaExperience;
 window.setMaritimeCvPhoto = setMaritimeCvPhoto;
 window.applyMaritimeCVData = function(data){
   applyCVData(data);
@@ -2154,7 +2453,7 @@ function dateValue(value){
 }
 
 function seaServiceDays(){
-  return seaData.reduce((total, row) => {
+  return seaData.filter(row => row.saved === "true").reduce((total, row) => {
     const start = dateValue(row.signon);
     const end = dateValue(row.signoff);
     if(!start || !end || end < start) return total;
@@ -2189,7 +2488,7 @@ function generatedProfessionalSummary(){
     translateUserValue(valueOf("familyName"), "familyName")
   ].filter(Boolean).join(" ").trim();
   const role = translateUserValue(valueOf("position"), "position");
-  const experienceRows = seaData.filter(row => String(row.vessel || row.company || row.rank || row.signon || "").trim());
+  const experienceRows = seaData.filter(row => row.saved === "true" && String(row.vessel || row.company || row.rank || row.signon || "").trim());
   const days = seaServiceDays();
   const certificateCount = completedCertificateCount();
   const vesselTypes = [...new Set(experienceRows.map(row => translateDynamicValue(row.type)).filter(Boolean))].slice(0, 3);

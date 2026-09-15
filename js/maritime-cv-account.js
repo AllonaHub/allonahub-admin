@@ -141,6 +141,23 @@
     return api("/v1/maritime/profile-photo", { method: "DELETE" });
   }
 
+  async function archiveSeaServiceDocument(file, experienceId, originalName) {
+    if (!(file instanceof Blob) || !file.size) {
+      const error = new Error("SEA_SERVICE_DOCUMENT_INVALID");
+      error.code = "SEA_SERVICE_DOCUMENT_INVALID";
+      throw error;
+    }
+    return api("/v1/maritime/sea-service-documents", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/pdf",
+        "X-Allona-File-Name": encodeURIComponent(String(originalName || "sea-service-document.pdf").slice(0, 180)),
+        "X-Allona-Maritime-Experience-Id": String(experienceId || "")
+      },
+      body: file
+    });
+  }
+
   async function save(data) {
     if (saving) return;
     saving = true;
@@ -250,7 +267,7 @@
     else if (statusCopyState?.key) setCopyStatus(statusCopyState.key, statusCopyState.fallback, statusCopyState.tone);
   });
 
-  window.AllonaMaritimeCvAccount = Object.freeze({ save, removePhoto });
+  window.AllonaMaritimeCvAccount = Object.freeze({ save, removePhoto, archiveSeaServiceDocument });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", load, { once: true });
   else load();
 })();

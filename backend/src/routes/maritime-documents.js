@@ -90,6 +90,54 @@ function archiveFileName(request) {
   return safeMaritimeDocumentName(decoded || "maritime-document.pdf");
 }
 
+function seaServiceExperienceId(request) {
+  return z.string().uuid().parse(String(request.headers["x-allona-maritime-experience-id"] || ""));
+}
+
+const SEA_SERVICE_DOCUMENT_SOURCE = "maritime_cv_sea_service";
+const PARTNER_DOCUMENT_ACCESS_STATUSES = Object.freeze(["submitted", "shortlisted", "interviewing", "offer_sent", "offer_accepted", "hired"]);
+
+async function seaServiceDocument(intakeId) {
+  const result = await supabaseAdmin
+    .from("maritime_document_intakes")
+    .select("id,seafarer_user_id,status,document_type,storage_bucket,storage_path,original_file_name,mime_type,file_size_bytes,metadata,created_at,updated_at")
+    .eq("id", intakeId)
+    .maybeSingle();
+  const data = assertDb(result, "Hizmet belgesi okunamadı.");
+  if(!data || data.document_type !== "sea_service_record" || data.metadata?.source !== SEA_SERVICE_DOCUMENT_SOURCE) {
+    throw httpError("Hizmet belgesi bulunamadı.", 404, "MARITIME_SEA_SERVICE_DOCUMENT_NOT_FOUND");
+  }
+  return data;
+}
+
+async function activePartnerIdsForUser(userId) {
+  const [ownedResult, staffResult] = await Promise.all([
+    supabaseAdmin.from("partner_businesses").select("id").eq("owner_id", userId).eq("status", "active"),
+    supabaseAdmin.from("partner_staff").select("partner_id").eq("user_id", userId).eq("status", "active")
+  ]);
+  const ids = new Set((assertDb(ownedResult, "Şirket yetkisi doğrulanamadı.") || []).map(row => row.id));
+  (assertDb(staffResult, "Şirket personel yetkisi doğrulanamadı.") || []).forEach(row => ids.add(row.partner_id));
+  if(!ids.size) return [];
+  const activeResult = await supabaseAdmin.from("partner_businesses").select("id").in("id", [...ids]).eq("status", "active");
+  return (assertDb(activeResult, "Şirket durumu doğrulanamadı.") || []).map(row => row.id);
+}
+
+async function seaServiceDocumentAccess(ctx, document) {
+  if(ctx.user.id === document.seafarer_user_id) return "owner";
+  if(hasRole(ctx.profile, ["admin", "super_admin"])) return "admin";
+  if(!hasRole(ctx.profile, "partner")) return "";
+  const partnerIds = await activePartnerIdsForUser(ctx.user.id);
+  if(!partnerIds.length) return "";
+  const applicationResult = await supabaseAdmin
+    .from("maritime_hiring_applications")
+    .select("id")
+    .eq("seafarer_user_id", document.seafarer_user_id)
+    .in("partner_id", partnerIds)
+    .in("status", PARTNER_DOCUMENT_ACCESS_STATUSES)
+    .limit(1);
+  return (assertDb(applicationResult, "Başvuru yetkisi doğrulanamadı.") || []).length ? "partner_application" : "";
+}
+
 async function ownedIntake(userId, intakeId) {
   const result = await supabaseAdmin
     .from("maritime_document_intakes")
@@ -549,6 +597,109 @@ export function registerMaritimeDocumentRoutes(app) {
       await supabaseAdmin.storage.from(MARITIME_DOCUMENT_BUCKET).remove([storagePath]);
       throw error;
     }
+  });
+
+  app.post("/v1/maritime/sea-service-documents", {
+    bodyLimit: MARITIME_DOCUMENT_MAX_FILE_BYTES,
+    config: { rateLimit: { max: 30, timeWindow: "10 minutes" } }
+  }, async (request, reply) => {
+    const ctx = await requireCustomer(request, "maritime.sea_service_document.archive");
+    const experienceId = seaServiceExperienceId(request);
+    const bytes = Buffer.isBuffer(request.body) ? request.body : Buffer.alloc(0);
+    if(!bytes.length || bytes.length > MARITIME_DOCUMENT_MAX_FILE_BYTES) {
+      throw httpError("Hizmet belgesinin boyutu doğrulanamadı.", 400, "MARITIME_SEA_SERVICE_DOCUMENT_INVALID_SIZE");
+    }
+    if(!maritimeDocumentSignatureMatches(bytes, "application/pdf")) {
+      throw httpError("Hizmet belgesi geçerli bir PDF değil.", 400, "MARITIME_SEA_SERVICE_DOCUMENT_SIGNATURE_MISMATCH");
+    }
+    const intakeId = randomUUID();
+    const safeName = archiveFileName(request);
+    const storagePath = `users/${ctx.user.id}/sea-service/${experienceId}/${intakeId}-${safeName}`;
+    const now = new Date().toISOString();
+    const saved = await supabaseAdmin.storage.from(MARITIME_DOCUMENT_BUCKET).upload(storagePath, bytes, {
+      contentType: "application/pdf",
+      upsert: false
+    });
+    if(saved.error) throw httpError("Hizmet belgesi güvenli arşive kaydedilemedi.", 503, "MARITIME_SEA_SERVICE_DOCUMENT_ARCHIVE_FAILED");
+    try {
+      const document = assertDb(await supabaseAdmin.from("maritime_document_intakes").insert({
+        id: intakeId,
+        seafarer_user_id: ctx.user.id,
+        status: "user_confirmed",
+        document_type: "sea_service_record",
+        storage_bucket: MARITIME_DOCUMENT_BUCKET,
+        storage_path: storagePath,
+        original_file_name: safeName,
+        mime_type: "application/pdf",
+        file_size_bytes: bytes.length,
+        file_sha256: maritimeDocumentSha256(bytes),
+        upload_completed_at: now,
+        confirmed_by_user_at: now,
+        user_confirmation_required: false,
+        retention_until: retentionDate(),
+        metadata: {
+          source: SEA_SERVICE_DOCUMENT_SOURCE,
+          experience_id: experienceId,
+          storage_only: true,
+          document_analysis: false,
+          uploaded_by_user_at: now
+        }
+      }).select("id,status,document_type,original_file_name,mime_type,file_size_bytes,created_at,updated_at").single(), "Hizmet belgesi kaydı oluşturulamadı.");
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.sea_service_document_archived",
+        resourceType: "maritime_document_intake",
+        resourceId: intakeId,
+        metadata: { experience_id: experienceId, file_size_bytes: bytes.length, document_analysis: false }
+      });
+      reply.code(201);
+      return { ok: true, document };
+    } catch(error) {
+      await supabaseAdmin.storage.from(MARITIME_DOCUMENT_BUCKET).remove([storagePath]);
+      throw error;
+    }
+  });
+
+  app.get("/v1/maritime/sea-service-documents/:intakeId/access", {
+    config: { rateLimit: { max: 40, timeWindow: "5 minutes" } }
+  }, async (request) => {
+    const ctx = await authContext(request);
+    if(!ctx?.user) throw httpError("Belgeyi görüntülemek için giriş yapın.", 401, "AUTH_REQUIRED");
+    const intakeId = z.string().uuid().parse(request.params?.intakeId);
+    const document = await seaServiceDocument(intakeId);
+    const access = await seaServiceDocumentAccess(ctx, document);
+    if(!access) {
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.sea_service_document_access_denied",
+        severity: "warning",
+        resourceType: "maritime_document_intake",
+        resourceId: document.id
+      });
+      throw httpError("Bu hizmet belgesini görüntüleme yetkiniz bulunmuyor.", 403, "MARITIME_SEA_SERVICE_DOCUMENT_ACCESS_DENIED");
+    }
+    const expiresIn = 300;
+    const signed = await supabaseAdmin.storage.from(document.storage_bucket).createSignedUrl(document.storage_path, expiresIn);
+    if(signed.error || !signed.data?.signedUrl) throw httpError("Hizmet belgesi görüntüleme bağlantısı oluşturulamadı.", 503, "MARITIME_SEA_SERVICE_DOCUMENT_SIGNING_FAILED");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "maritime.sea_service_document_access_granted",
+      resourceType: "maritime_document_intake",
+      resourceId: document.id,
+      metadata: { access, expires_in_seconds: expiresIn }
+    });
+    return {
+      ok: true,
+      url: signed.data.signedUrl,
+      expires_in_seconds: expiresIn,
+      document: { id: document.id, name: document.original_file_name, mime_type: document.mime_type }
+    };
   });
 
   app.post("/v1/maritime/documents/:intakeId/analyze", {

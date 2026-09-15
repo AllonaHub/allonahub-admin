@@ -225,6 +225,7 @@ export async function buildApp() {
       "Content-Type",
       "X-Requested-With",
       "X-Allona-File-Name",
+      "X-Allona-Maritime-Experience-Id",
       "X-Allona-Device-Key",
       "X-Allona-Passkey-Proof"
     ]

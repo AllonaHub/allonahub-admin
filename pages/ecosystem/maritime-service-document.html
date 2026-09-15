@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hizmet Belgesi | AllonaHub Denizcilik</title>
+  <meta name="description" content="AllonaHub Denizcilik hizmet belgesi güvenli görüntüleme alanı.">
+  <link rel="stylesheet" href="../../css/maritime-service-document.css?v=20260916-seaservice1">
+</head>
+<body>
+  <header class="service-header">
+    <a class="service-brand" href="allonadenizcilik.html" aria-label="AllonaHub Denizcilik">
+      <img src="../../images/brand/allona.logo.png" alt="AllonaHub">
+      <span><strong>AllonaHub</strong><small data-copy="maritime">Denizcilik</small></span>
+    </a>
+    <nav class="service-nav" aria-label="Sayfa bağlantıları">
+      <button type="button" class="service-button service-button--quiet" data-go-back><span aria-hidden="true">&#8592;</span> <span data-copy="back">Geri Dön</span></button>
+      <a href="../../index.html" data-copy="home">Ana Sayfa</a>
+      <a href="allonadenizcilik.html" data-copy="module">Modüle Dön</a>
+      <select data-language aria-label="Dil">
+        <option value="tr">Türkçe</option>
+        <option value="az">Azərbaycanca</option>
+        <option value="kk">Қазақша</option>
+        <option value="uz">O'zbekcha</option>
+        <option value="ky">Кыргызча</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="ru">Русский</option>
+        <option value="ar">العربية</option>
+      </select>
+    </nav>
+  </header>
+
+  <main class="service-main">
+    <section class="service-intro">
+      <div>
+        <p class="service-kicker" data-copy="secure">Güvenli belge görüntüleme</p>
+        <h1 data-copy="title">Hizmet Belgesi</h1>
+        <p data-copy="lead">Bu belge yalnızca belge sahibi, yetkili yönetici veya aktif işe alım sürecindeki firma tarafından görüntülenebilir.</p>
+      </div>
+      <a class="service-button" data-open-document href="#" target="_blank" rel="noopener" hidden data-copy="open">Yeni sekmede aç</a>
+    </section>
+
+    <section class="service-status" role="status" aria-live="polite" data-status>
+      <span class="service-spinner" aria-hidden="true"></span>
+      <p data-copy="loading">Belge için güvenli erişim hazırlanıyor...</p>
+    </section>
+
+    <section class="service-login" data-login hidden>
+      <h2 data-copy="loginTitle">Giriş gerekli</h2>
+      <p data-copy="loginLead">Belgeyi görüntülemek için ilgili hesabınızla giriş yapın.</p>
+      <div class="service-login-actions">
+        <a class="service-button" data-user-login href="../account/user.html" data-copy="userLogin">Denizci girişi</a>
+        <a class="service-button service-button--quiet" data-partner-login href="../partner/partner.html" data-copy="partnerLogin">Firma girişi</a>
+      </div>
+    </section>
+
+    <section class="service-error" data-error hidden>
+      <h2 data-copy="errorTitle">Belge açılamadı</h2>
+      <p data-error-message></p>
+      <button type="button" class="service-button" data-retry data-copy="retry">Tekrar dene</button>
+    </section>
+
+    <section class="service-viewer" data-viewer hidden>
+      <iframe title="Hizmet Belgesi" data-document-frame referrerpolicy="no-referrer"></iframe>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260914-account-boundary3" defer></script>
+  <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
+  <script src="../../js/cv-access.js?v=20260916-passkey1" defer></script>
+  <script src="../../js/maritime-service-document.js?v=20260916-seaservice1" defer></script>
+</body>
+</html>

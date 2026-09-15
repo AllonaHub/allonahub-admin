@@ -41,7 +41,8 @@ const manualCvRowKeys = {
   stcw: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
   sea: new Set([
     "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
-    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt"
+    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt",
+    "rowId", "serviceDocumentId", "serviceDocumentName", "serviceDocumentSize", "serviceDocumentStatus", "saved"
   ])
 };
 function restrictedStringRecord(allowedKeys, maxLength) {
@@ -59,17 +60,24 @@ const manualCvSchema = z.object({
   stcwData: z.array(restrictedStringRecord(manualCvRowKeys.stcw, 300)).max(50).default([]),
   seaData: z.array(restrictedStringRecord(manualCvRowKeys.sea, 300)).max(50).default([])
 }).strict().superRefine((value, context) => {
+  const experienceIds = new Set();
   value.seaData.forEach((row, index) => {
-    const contentKeys = [...manualCvRowKeys.sea].filter((key) => !["lookupProvider", "lookupFetchedAt"].includes(key));
+    const contentKeys = [...manualCvRowKeys.sea].filter((key) => !["rowId", "lookupProvider", "lookupFetchedAt", "serviceDocumentStatus", "saved"].includes(key));
     if (!contentKeys.some((key) => String(row[key] || "").trim())) return;
-    const required = ["imo", "vessel", "company", "type", "flag", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"];
+    const required = ["rowId", "imo", "vessel", "company", "type", "flag", "mmsi", "dwt", "grt", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "serviceDocumentId"];
     required.forEach((key) => {
       if (!String(row[key] || "").trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, key], message: "Deniz hizmeti referans alanı zorunludur." });
     });
+    if (row.rowId && !z.string().uuid().safeParse(row.rowId).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "rowId"], message: "Geçerli tecrübe kimliği gereklidir." });
+    if (row.rowId && experienceIds.has(row.rowId)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "rowId"], message: "Aynı tecrübe kaydı tekrar kullanılamaz." });
+    if (row.rowId) experienceIds.add(row.rowId);
+    if (row.serviceDocumentId && !z.string().uuid().safeParse(row.serviceDocumentId).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "serviceDocumentId"], message: "Geçerli hizmet belgesi kimliği gereklidir." });
+    if (row.saved !== "true") context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "saved"], message: "Deniz tecrübesi önce kullanıcı tarafından kaydedilmelidir." });
     if (row.imo && !isValidImoNumber(row.imo)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "imo"], message: "Geçerli bir IMO numarası gereklidir." });
     if (row.referenceCompanyEmail && !z.string().email().safeParse(row.referenceCompanyEmail).success) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "referenceCompanyEmail"], message: "Geçerli şirket e-postası gereklidir." });
     }
+    if (row.signon && row.signoff && row.signoff < row.signon) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "signoff"], message: "Ayrılış tarihi katılış tarihinden önce olamaz." });
   });
 });
 const manualCvRequestSchema = z.object({ cv: manualCvSchema, confirmation: z.literal(true) }).strict();
@@ -420,6 +428,28 @@ function manualCvCompletion(payload) {
   return Math.min(100, Math.round((checks.filter(Boolean).length / checks.length) * 70 + (detailed.filter(Boolean).length / detailed.length) * 30));
 }
 
+async function assertOwnedSeaServiceDocuments(userId, seaData) {
+  const rows = seaData.filter((row) => String(row.serviceDocumentId || "").trim());
+  if (!rows.length) return;
+  const ids = [...new Set(rows.map((row) => row.serviceDocumentId))];
+  const result = await supabaseAdmin
+    .from("maritime_document_intakes")
+    .select("id,seafarer_user_id,status,document_type,metadata")
+    .in("id", ids)
+    .eq("seafarer_user_id", userId);
+  const documents = assertDb(result, "Hizmet belgeleri doğrulanamadı.") || [];
+  const byId = new Map(documents.map((document) => [document.id, document]));
+  for (const row of rows) {
+    const document = byId.get(row.serviceDocumentId);
+    const valid = document
+      && document.document_type === "sea_service_record"
+      && ["user_confirmed", "verified"].includes(document.status)
+      && document.metadata?.source === "maritime_cv_sea_service"
+      && document.metadata?.experience_id === row.rowId;
+    if (!valid) throw httpError("Hizmet belgesi bu deniz tecrübesiyle güvenli biçimde eşleştirilemedi.", 409, "MARITIME_SEA_SERVICE_DOCUMENT_MISMATCH");
+  }
+}
+
 async function ownCvIdentity(user) {
   const signed = await supabaseAdmin.storage
     .from(MARITIME_PROFILE_PHOTO_BUCKET)
@@ -684,6 +714,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.cv_profile.save");
     const deviceKey = requestDeviceKey(request);
     const input = manualCvRequestSchema.parse(request.body || {});
+    await assertOwnedSeaServiceDocuments(ctx.user.id, input.cv.seaData);
     const payload = manualCvPayload(input.cv);
     const cvReadiness = maritimeGlobalPassportReadiness(payload, {
       hasPhoto: await hasStoredProfilePhoto(ctx.user.id)

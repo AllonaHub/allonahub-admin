@@ -27,6 +27,8 @@
     "remove-stcw": "removeSTCW",
     "remove-sea": "removeSea",
     "lookup-sea-imo": "lookupSeaVessel",
+    "choose-sea-document": "openSeaServiceDocumentPicker",
+    "save-sea": "saveSeaExperience",
     "remove-photo": "removePhoto",
     "generate-summary": "generateSummary"
   });
@@ -94,6 +96,17 @@
         const imageData = canvas.toDataURL("image/jpeg", 0.98);
         if (index > 0) pdf.addPage();
         pdf.addImage(imageData, "JPEG", 0, 0, 210, 297);
+        const pageRect = pages[index].getBoundingClientRect();
+        if (pageRect.width > 0 && pageRect.height > 0) {
+          pages[index].querySelectorAll("a.cv-service-document-link[href]").forEach(anchor => {
+            const rect = anchor.getBoundingClientRect();
+            const x = Math.max(0, (rect.left - pageRect.left) * 210 / pageRect.width);
+            const y = Math.max(0, (rect.top - pageRect.top) * 297 / pageRect.height);
+            const width = Math.min(210 - x, Math.max(2, rect.width * 210 / pageRect.width));
+            const height = Math.min(297 - y, Math.max(2, rect.height * 297 / pageRect.height));
+            if (/^https:\/\/allonahub\.com\//i.test(anchor.href)) pdf.link(x, y, width, height, { url: anchor.href });
+          });
+        }
       }
 
       if (!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.authorizeOrCheckout !== "function") {
@@ -130,7 +143,8 @@
   }
 
   function callGlobal(name, ...args) {
-    if (typeof window[name] === "function") window[name](...args);
+    if (typeof window[name] === "function") return window[name](...args);
+    return undefined;
   }
 
   function validRowIndex(value) {
@@ -174,7 +188,7 @@
     const action = button.dataset.cvAction || "";
     const handler = actionBindings[action];
     if (!handler) return;
-    if (action.startsWith("remove-") || action === "lookup-sea-imo") {
+    if (action.startsWith("remove-") || action === "lookup-sea-imo" || action === "choose-sea-document" || action === "save-sea") {
       const index = validRowIndex(button.dataset.cvIndex);
       if (index === null) return;
       callGlobal(handler, index, button);
@@ -193,6 +207,14 @@
     const editor = document.getElementById("cvEditor");
     editor?.addEventListener("input", handleEditorInput);
     editor?.addEventListener("click", handleEditorClick);
+    editor?.addEventListener("change", event => {
+      const input = event.target;
+      if (!(input instanceof HTMLInputElement) || !input.matches("[data-cv-service-document]")) return;
+      const index = validRowIndex(input.dataset.cvIndex);
+      const file = input.files?.[0] || null;
+      input.value = "";
+      if (index !== null && file) callGlobal("attachSeaServiceDocument", index, file);
+    });
   }
 
   if (document.readyState === "loading") {
