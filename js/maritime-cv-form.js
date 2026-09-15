@@ -1,11 +1,11 @@
 const cvDraftStore = window.AllonaMaritimeCvDraft;
-let currentLang = "en";
+let currentLang = ["en", "tr", "az", "ru"].includes(document.documentElement.lang) ? document.documentElement.lang : "en";
 
 const textFields = [
-  "position","familyName","firstName","fatherName","birth","marital","address","airport",
+  "position","familyName","firstName","fatherName","birth","birthDate","birthPlace","nationality","gender","marital","address","airport",
   "height","weight","eyes","hair","shoes","overall",
   "mobile","email","kinName","kinPhone","kinRelation","kinAddress",
-  "passportDoc","passportNo","passportPlace","passportIssued","passportValid",
+  "passportDoc","passportNo","passportCountry","passportPlace","passportIssued","passportValid",
   "windows","office","internet",
   "seamanBookNo","seamanBookPlace","seamanBookIssued","seamanBookValid",
   "seafarerIdNo","seafarerIdPlace","seafarerIdIssued","seafarerIdValid",
@@ -18,15 +18,47 @@ const textFields = [
 ];
 const maxTextLength = 2000;
 const maxRepeatFieldLength = 300;
+const dateFieldIds = new Set([
+  "birthDate", "passportIssued", "passportValid", "seamanBookIssued", "seamanBookValid",
+  "seafarerIdIssued", "seafarerIdValid", "schoolFrom", "schoolTo", "medicalIssue", "medicalExpiry",
+  "competencyIssued", "competencyExpires"
+]);
 const repeatRowKeys = Object.freeze({
   additional: Object.freeze(["name", "institute", "place", "issue", "cert", "expiry"]),
-  stcw: Object.freeze(["name", "institute", "place", "issue", "rank", "cert", "expiry"]),
+  stcw: Object.freeze(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"]),
   sea: Object.freeze(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
 });
 
+const stcwPresets = Object.freeze([
+  Object.freeze({ id: "sp", code: "SP", titleKey: "stcwSp", editableTitle: false }),
+  Object.freeze({ id: "sh", code: "SH", titleKey: "stcwSh", editableTitle: false }),
+  Object.freeze({ id: "si", code: "SI", titleKey: "stcwSi", editableTitle: false }),
+  Object.freeze({ id: "sl", code: "SL", titleKey: "stcwSl", editableTitle: false }),
+  Object.freeze({ id: "so", code: "SO", titleKey: "stcwSo", editableTitle: false }),
+  Object.freeze({ id: "sa", code: "SA", titleKey: "stcwSa", editableTitle: true }),
+  Object.freeze({ id: "se", code: "SE", titleKey: "stcwSe", editableTitle: true })
+]);
+
+function newStcwRow(preset){
+  return {
+    presetId: preset?.id || "",
+    code: preset?.code || "",
+    name: "",
+    institute: "",
+    place: "",
+    issue: "",
+    rank: "",
+    cert: "",
+    number: "",
+    expiry: "",
+    unlimited: "false"
+  };
+}
+
 let additionalData = [];
-let stcwData = [];
+let stcwData = stcwPresets.map(newStcwRow);
 let seaData = [];
+let summaryMode = "auto";
 const maxRepeatRows = 50;
 let autoSaveTimer = 0;
 
@@ -35,25 +67,11 @@ function valueOf(id){
   return el ? el.value : "";
 }
 
-function htmlValue(id){
-  return escapeHTML(valueOf(id)).replace(/\n/g, "<br>");
-}
-
 function setCV(id, value){
   const el = document.getElementById("cv_" + id);
   if(el){
     el.innerHTML = value || "";
   }
-}
-
-function syncCV(){
-  textFields.forEach(id => {
-    setCV(id, htmlValue(id));
-  });
-
-  renderAdditionals();
-  renderSTCW();
-  renderSea();
 }
 
 function escapeAttr(value){
@@ -73,6 +91,12 @@ function escapeHTML(value){
   const translations = {
   en: {
     formTitle:"CV Information",
+    moduleSubtitle:"Manage your maritime career details in one profile",
+    back:"Back",
+    home:"Home",
+    moduleReturn:"Back to Module",
+    documents:"My Documents",
+    globalCv:"Global CV",
     applicationForm:"Application Form",
     personalDetails:"Personal Details",
     bodyDetails:"Body Details",
@@ -96,10 +120,16 @@ function escapeHTML(value){
     firstName:"First Name",
     fatherName:"Father’s Name",
     birth:"Date and Place of Birth",
+    birthDate:"Date of Birth",
+    birthPlace:"Place of Birth",
+    nationality:"Nationality",
+    gender:"Gender",
     marital:"Marital Status",
     address:"Permanent Address",
     airport:"Nearest Airport",
     photo:"PHOTO",
+    removePhoto:"Remove photo",
+    photoHelp:"Add a clear portrait photo. You can remove it and upload another photo at any time.",
 
     height:"Height",
     weight:"Weight",
@@ -152,6 +182,7 @@ function escapeHTML(value){
     writing:"Writing",
 
     grade:"Grade",
+    validityPeriod:"Validity Period",
     dateOfIssue:"Date of Issue",
     dateOfExpiry:"Date of Expiry",
     dateIssued:"Date Issued",
@@ -162,8 +193,24 @@ function escapeHTML(value){
     certificate:"Certificate",
     expires:"Expires",
     limitations:"Details of Limitations",
+    competencyHelp:"Add your officer competency, welder, fitter or other professional competency certificate here.",
 
     courseName:"Course / Certificate",
+    certificateCode:"Certificate Code",
+    certificateNumber:"Certificate No.",
+    certificateNumberPlaceholder:"Enter only the number after the code",
+    unlimited:"No expiry / Unlimited",
+    additionalCertificatesHelp:"Add welder, fitter and any other professional certificates not listed below.",
+    stcwHelp:"Enter only your certificate number, issue details and validity for the prepared STCW rows. You can add another certificate at any time.",
+    customCertificate:"Other STCW Certificate",
+    customCertificateName:"Certificate name",
+    stcwSp:"International Safety Management (ISM Code)",
+    stcwSh:"Designated Security Duties (DSD)",
+    stcwSi:"Security Awareness Training",
+    stcwSl:"Proficiency in Survival Craft and Rescue Boats (PSCRB)",
+    stcwSo:"Basic Safety Training (BST)",
+    stcwSa:"STCW Certificate (SA)",
+    stcwSe:"STCW Certificate (SE)",
     institute:"Institute",
     place:"Place",
     rank:"Rank",
@@ -180,15 +227,29 @@ function escapeHTML(value){
     deleteRow:"Delete Row",
     deleteCertificate:"Delete Certificate",
     deleteExperience:"Delete Experience",
+    noteHelp:"Leave this field empty to create a professional summary from your position, certificates and sea experience.",
+    notePlaceholder:"Optional personal note",
+    generateSummary:"Create summary from my information",
+    summaryGenerated:"The professional summary was created from your CV information.",
+    removePhotoFailed:"The photo could not be removed from your account. Please try again.",
+    photoRemoved:"The profile photo was removed.",
     saveDraft:"Save",
     downloadPdf:"Download PDF",
     clearForm:"Clear",
     cvLanguage:"CV language",
     photoAlt:"CV profile photo",
     draftSaved:"CV draft will be kept in this tab for 2 hours.",
+    accountSaved:"Your Maritime CV and photo were saved to your account.",
+    accountSaving:"Saving Maritime CV to your account...",
+    accountLoading:"Loading your saved Maritime CV...",
+    accountLoaded:"Your saved Maritime CV is open.",
+    accountStart:"Complete your Maritime CV and select Save.",
+    signIn:"Sign in",
+    accountSaveFailed:"Your Maritime CV could not be saved to your account. Please try again.",
+    accountLoginRequired:"Sign in to save your Maritime CV to your account.",
     draftSaveFailed:"CV draft could not be saved. Check your browser storage settings.",
     resetConfirm:"Clear all information?",
-    photoInvalid:"Profile photo must be JPEG, PNG or WebP and no larger than 2 MB.",
+    photoInvalid:"Profile photo must be JPEG, PNG or WebP and no larger than 12 MB.",
     photoUnsafe:"Profile photo could not be read safely.",
     photoReadFailed:"Profile photo could not be read.",
     rowLimit:"You can add up to 50 rows in this section.",
@@ -198,6 +259,12 @@ function escapeHTML(value){
   },
     tr: {
     formTitle:"CV Bilgileri",
+    moduleSubtitle:"Denizcilik kariyer bilgilerinizi tek profilde yönetin",
+    back:"Geri Dön",
+    home:"Ana Sayfa",
+    moduleReturn:"Modüle Dön",
+    documents:"Belgelerim",
+    globalCv:"Global CV",
     applicationForm:"Başvuru Formu",
     personalDetails:"Kişisel Bilgiler",
     bodyDetails:"Fiziksel Bilgiler",
@@ -221,10 +288,16 @@ function escapeHTML(value){
     firstName:"Adı",
     fatherName:"Baba Adı",
     birth:"Doğum Tarihi ve Yeri",
+    birthDate:"Doğum Tarihi",
+    birthPlace:"Doğum Yeri",
+    nationality:"Uyruğu",
+    gender:"Cinsiyet",
     marital:"Medeni Durum",
     address:"Daimi Adres",
     airport:"En Yakın Havalimanı",
     photo:"FOTOĞRAF",
+    removePhoto:"Fotoğrafı Sil",
+    photoHelp:"Net bir portre fotoğrafı ekleyin. İstediğiniz zaman silip başka bir fotoğraf yükleyebilirsiniz.",
 
     height:"Boy",
     weight:"Kilo",
@@ -277,6 +350,7 @@ function escapeHTML(value){
     writing:"Yazma",
 
     grade:"Derece",
+    validityPeriod:"Geçerlilik Süresi",
     dateOfIssue:"Veriliş Tarihi",
     dateOfExpiry:"Son Geçerlilik Tarihi",
     dateIssued:"Veriliş Tarihi",
@@ -287,8 +361,24 @@ function escapeHTML(value){
     certificate:"Sertifika",
     expires:"Geçerlilik",
     limitations:"Sınırlamalar",
+    competencyHelp:"Zabit yeterliliği, kaynakçı, fitter veya diğer mesleki yeterlilik belgenizi buraya ekleyin.",
 
     courseName:"Kurs / Sertifika",
+    certificateCode:"Sertifika Kodu",
+    certificateNumber:"Sertifika No.",
+    certificateNumberPlaceholder:"Koddan sonraki numarayı yazın",
+    unlimited:"Süresiz / Limitsiz",
+    additionalCertificatesHelp:"Kaynakçı, fitter ve aşağıda yer almayan diğer mesleki sertifikalarınızı ekleyin.",
+    stcwHelp:"Hazır STCW satırlarında yalnızca sertifika numaranızı, veriliş bilgilerini ve geçerliliği girin. İstediğiniz zaman başka sertifika ekleyebilirsiniz.",
+    customCertificate:"Diğer STCW Sertifikası",
+    customCertificateName:"Sertifika adı",
+    stcwSp:"Uluslararası Emniyet Yönetimi (ISM Kodu)",
+    stcwSh:"Belirlenmiş Güvenlik Görevleri (DSD)",
+    stcwSi:"Güvenlik Farkındalık Eğitimi",
+    stcwSl:"Can Kurtarma Araçları ve Kurtarma Botları Kullanma Yeterliği (PSCRB)",
+    stcwSo:"Temel Emniyet Eğitimi (BST)",
+    stcwSa:"SA Kodlu STCW Sertifikası",
+    stcwSe:"SE Kodlu STCW Sertifikası",
     institute:"Kurum",
     place:"Yer",
     rank:"Rütbe",
@@ -305,15 +395,29 @@ function escapeHTML(value){
     deleteRow:"Satırı Sil",
     deleteCertificate:"Sertifikayı Sil",
     deleteExperience:"Tecrübeyi Sil",
+    noteHelp:"Pozisyonunuz, sertifikalarınız ve deniz tecrübenizden profesyonel özet oluşturulması için bu alanı boş bırakın.",
+    notePlaceholder:"İsteğe bağlı kişisel not",
+    generateSummary:"Bilgilerimden Özet Oluştur",
+    summaryGenerated:"Profesyonel özet CV bilgilerinizden oluşturuldu.",
+    removePhotoFailed:"Fotoğraf hesabınızdan silinemedi. Lütfen yeniden deneyin.",
+    photoRemoved:"Profil fotoğrafı silindi.",
     saveDraft:"Kaydet",
     downloadPdf:"PDF İndir",
     clearForm:"Temizle",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotoğrafı",
     draftSaved:"CV taslağı bu sekmede 2 saat saklanacak.",
+    accountSaved:"Maritime CV bilgileriniz ve fotoğrafınız hesabınıza kaydedildi.",
+    accountSaving:"Maritime CV hesabınıza kaydediliyor...",
+    accountLoading:"Kayıtlı Maritime CV bilgileriniz yükleniyor...",
+    accountLoaded:"Kayıtlı Maritime CV bilgileriniz açıldı.",
+    accountStart:"Maritime CV'nizi doldurup Kaydet düğmesine basın.",
+    signIn:"Giriş yapın",
+    accountSaveFailed:"Maritime CV hesabınıza kaydedilemedi. Lütfen tekrar deneyin.",
+    accountLoginRequired:"Maritime CV'nizi hesabınıza kaydetmek için giriş yapın.",
     draftSaveFailed:"CV taslağı kaydedilemedi. Tarayıcı depolama ayarlarını kontrol edin.",
     resetConfirm:"Tüm bilgiler temizlensin mi?",
-    photoInvalid:"Profil fotoğrafı JPEG, PNG veya WebP formatında ve en fazla 2 MB olmalıdır.",
+    photoInvalid:"Profil fotoğrafı JPEG, PNG veya WebP formatında ve en fazla 12 MB olmalıdır.",
     photoUnsafe:"Profil fotoğrafı güvenli biçimde okunamadı.",
     photoReadFailed:"Profil fotoğrafı okunamadı.",
     rowLimit:"Bu bölüme en fazla 50 satır eklenebilir.",
@@ -322,8 +426,14 @@ function escapeHTML(value){
     pdfGenerationFailed:"PDF oluşturulamadı. Lütfen yeniden deneyin."
   },
 
-  az: {
+    az: {
     formTitle:"CV Məlumatları",
+    moduleSubtitle:"Dənizçilik karyera məlumatlarınızı bir profildə idarə edin",
+    back:"Geri Qayıt",
+    home:"Ana səhifə",
+    moduleReturn:"Modula qayıt",
+    documents:"Sənədlərim",
+    globalCv:"Global CV",
     applicationForm:"Müraciət Forması",
     personalDetails:"Şəxsi Məlumatlar",
     bodyDetails:"Fiziki Məlumatlar",
@@ -347,10 +457,16 @@ function escapeHTML(value){
     firstName:"Ad",
     fatherName:"Ata Adı",
     birth:"Doğum Tarixi və Yeri",
+    birthDate:"Doğum tarixi",
+    birthPlace:"Doğum yeri",
+    nationality:"Vətəndaşlıq",
+    gender:"Cins",
     marital:"Ailə Vəziyyəti",
     address:"Daimi Ünvan",
     airport:"Ən Yaxın Hava Limanı",
     photo:"FOTO",
+    removePhoto:"Şəkli Sil",
+    photoHelp:"Aydın portret şəkli əlavə edin. İstədiyiniz vaxt silib başqa şəkil yükləyə bilərsiniz.",
 
     height:"Boy",
     weight:"Çəki",
@@ -403,6 +519,7 @@ function escapeHTML(value){
     writing:"Yazı",
 
     grade:"Dərəcə",
+    validityPeriod:"Etibarlılıq Müddəti",
     dateOfIssue:"Verilmə Tarixi",
     dateOfExpiry:"Bitmə Tarixi",
     dateIssued:"Verilmə Tarixi",
@@ -413,8 +530,24 @@ function escapeHTML(value){
     certificate:"Sertifikat",
     expires:"Etibarlılıq",
     limitations:"Məhdudiyyətlər",
+    competencyHelp:"Zabit səriştəsi, qaynaqçı, fitter və ya digər peşə səriştəsi sertifikatınızı buraya əlavə edin.",
 
     courseName:"Kurs / Sertifikat",
+    certificateCode:"Sertifikat Kodu",
+    certificateNumber:"Sertifikat No.",
+    certificateNumberPlaceholder:"Koddan sonrakı nömrəni yazın",
+    unlimited:"Müddətsiz / Limitsiz",
+    additionalCertificatesHelp:"Qaynaqçı, fitter və aşağıda göstərilməyən digər peşə sertifikatlarınızı əlavə edin.",
+    stcwHelp:"Hazır STCW sətirlərində yalnız sertifikat nömrəsini, verilmə məlumatlarını və etibarlılığı daxil edin. İstədiyiniz vaxt başqa sertifikat əlavə edə bilərsiniz.",
+    customCertificate:"Digər STCW Sertifikatı",
+    customCertificateName:"Sertifikat adı",
+    stcwSp:"Beynəlxalq Təhlükəsizliyin İdarə Edilməsi (ISM Kodu)",
+    stcwSh:"Təyin Edilmiş Təhlükəsizlik Vəzifələri (DSD)",
+    stcwSi:"Təhlükəsizlik üzrə Məlumatlandırma Təlimi",
+    stcwSl:"Xilasetmə Vasitələri və Xilasedici Qayıqlar üzrə Hazırlıq (PSCRB)",
+    stcwSo:"Əsas Təhlükəsizlik Hazırlığı (BST)",
+    stcwSa:"SA Kodlu STCW Sertifikatı",
+    stcwSe:"SE Kodlu STCW Sertifikatı",
     institute:"Qurum",
     place:"Yer",
     rank:"Rütbə",
@@ -431,15 +564,29 @@ function escapeHTML(value){
     deleteRow:"Sətri Sil",
     deleteCertificate:"Sertifikatı Sil",
     deleteExperience:"Təcrübəni Sil",
+    noteHelp:"Vəzifə, sertifikat və dəniz təcrübənizə əsasən peşəkar xülasə hazırlanması üçün bu sahəni boş saxlayın.",
+    notePlaceholder:"İstəyə bağlı şəxsi qeyd",
+    generateSummary:"Məlumatlarımdan Xülasə Yarat",
+    summaryGenerated:"Peşəkar xülasə CV məlumatlarınızdan yaradıldı.",
+    removePhotoFailed:"Şəkil hesabınızdan silinə bilmədi. Yenidən cəhd edin.",
+    photoRemoved:"Profil şəkli silindi.",
     saveDraft:"Yadda saxla",
     downloadPdf:"PDF endir",
     clearForm:"Təmizlə",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotosu",
     draftSaved:"CV qaralaması bu tabda 2 saat saxlanacaq.",
+    accountSaved:"Maritime CV məlumatlarınız və şəkliniz hesabınıza yazıldı.",
+    accountSaving:"Maritime CV hesabınıza yazılır...",
+    accountLoading:"Saxlanmış Maritime CV məlumatlarınız yüklənir...",
+    accountLoaded:"Saxlanmış Maritime CV məlumatlarınız açıldı.",
+    accountStart:"Maritime CV-ni doldurub Yadda saxla düyməsini seçin.",
+    signIn:"Daxil olun",
+    accountSaveFailed:"Maritime CV hesabınıza yazıla bilmədi. Yenidən cəhd edin.",
+    accountLoginRequired:"Maritime CV-ni hesabınıza yazmaq üçün daxil olun.",
     draftSaveFailed:"CV qaralaması saxlanmadı. Brauzer yaddaşı ayarlarını yoxlayın.",
     resetConfirm:"Bütün məlumatlar təmizlənsin?",
-    photoInvalid:"Profil fotosu JPEG, PNG və ya WebP formatında və ən çox 2 MB olmalıdır.",
+    photoInvalid:"Profil fotosu JPEG, PNG və ya WebP formatında və ən çox 12 MB olmalıdır.",
     photoUnsafe:"Profil fotosu təhlükəsiz şəkildə oxunmadı.",
     photoReadFailed:"Profil fotosu oxunmadı.",
     rowLimit:"Bu bölməyə ən çox 50 sətir əlavə edilə bilər.",
@@ -449,6 +596,12 @@ function escapeHTML(value){
   },
     ru: {
     formTitle:"Информация CV",
+    moduleSubtitle:"Управляйте данными морской карьеры в одном профиле",
+    back:"Назад",
+    home:"Главная",
+    moduleReturn:"В модуль",
+    documents:"Мои документы",
+    globalCv:"Global CV",
     applicationForm:"Форма Заявки",
     personalDetails:"Личная Информация",
     bodyDetails:"Физические Данные",
@@ -472,10 +625,16 @@ function escapeHTML(value){
     firstName:"Имя",
     fatherName:"Отчество",
     birth:"Дата и Место Рождения",
+    birthDate:"Дата рождения",
+    birthPlace:"Место рождения",
+    nationality:"Гражданство",
+    gender:"Пол",
     marital:"Семейное Положение",
     address:"Постоянный Адрес",
     airport:"Ближайший Аэропорт",
     photo:"ФОТО",
+    removePhoto:"Удалить фото",
+    photoHelp:"Добавьте чёткую портретную фотографию. Её можно удалить и заменить в любое время.",
 
     height:"Рост",
     weight:"Вес",
@@ -528,6 +687,7 @@ function escapeHTML(value){
     writing:"Письмо",
 
     grade:"Степень",
+    validityPeriod:"Срок Действия",
     dateOfIssue:"Дата Выдачи",
     dateOfExpiry:"Срок Действия",
     dateIssued:"Дата Выдачи",
@@ -538,8 +698,24 @@ function escapeHTML(value){
     certificate:"Сертификат",
     expires:"Истекает",
     limitations:"Ограничения",
+    competencyHelp:"Добавьте сюда диплом судоводителя, сварщика, фиттера или другое профессиональное свидетельство.",
 
     courseName:"Курс / Сертификат",
+    certificateCode:"Код Сертификата",
+    certificateNumber:"Номер Сертификата",
+    certificateNumberPlaceholder:"Введите номер после кода",
+    unlimited:"Бессрочно / Без ограничений",
+    additionalCertificatesHelp:"Добавьте свидетельства сварщика, фиттера и другие профессиональные сертификаты, которых нет ниже.",
+    stcwHelp:"В готовых строках STCW укажите только номер, сведения о выдаче и срок действия. Другой сертификат можно добавить в любое время.",
+    customCertificate:"Другой Сертификат STCW",
+    customCertificateName:"Название сертификата",
+    stcwSp:"Международное управление безопасностью (Кодекс ISM)",
+    stcwSh:"Назначенные обязанности по охране (DSD)",
+    stcwSi:"Подготовка по осведомлённости в области охраны",
+    stcwSl:"Подготовка по спасательным шлюпкам, плотам и дежурным шлюпкам (PSCRB)",
+    stcwSo:"Начальная подготовка по безопасности (BST)",
+    stcwSa:"Сертификат STCW с кодом SA",
+    stcwSe:"Сертификат STCW с кодом SE",
     institute:"Учреждение",
     place:"Место",
     rank:"Должность",
@@ -556,15 +732,29 @@ function escapeHTML(value){
     deleteRow:"Удалить Строку",
     deleteCertificate:"Удалить Сертификат",
     deleteExperience:"Удалить Опыт",
+    noteHelp:"Оставьте поле пустым, чтобы создать профессиональное резюме по должности, сертификатам и морскому опыту.",
+    notePlaceholder:"Необязательное личное примечание",
+    generateSummary:"Создать Резюме по Моим Данным",
+    summaryGenerated:"Профессиональное резюме создано по данным CV.",
+    removePhotoFailed:"Не удалось удалить фотографию из учетной записи. Повторите попытку.",
+    photoRemoved:"Фотография профиля удалена.",
     saveDraft:"Сохранить",
     downloadPdf:"Скачать PDF",
     clearForm:"Очистить",
     cvLanguage:"Язык CV",
     photoAlt:"Фото профиля CV",
     draftSaved:"Черновик CV будет храниться в этой вкладке 2 часа.",
+    accountSaved:"Maritime CV и фотография сохранены в вашей учетной записи.",
+    accountSaving:"Maritime CV сохраняется в вашей учетной записи...",
+    accountLoading:"Загружается сохранённый Maritime CV...",
+    accountLoaded:"Сохранённый Maritime CV открыт.",
+    accountStart:"Заполните Maritime CV и нажмите Сохранить.",
+    signIn:"Войти",
+    accountSaveFailed:"Не удалось сохранить Maritime CV. Повторите попытку.",
+    accountLoginRequired:"Войдите, чтобы сохранить Maritime CV в учетной записи.",
     draftSaveFailed:"Не удалось сохранить черновик CV. Проверьте настройки хранилища браузера.",
     resetConfirm:"Очистить всю информацию?",
-    photoInvalid:"Фото профиля должно быть в формате JPEG, PNG или WebP и не превышать 2 МБ.",
+    photoInvalid:"Фото профиля должно быть в формате JPEG, PNG или WebP и не превышать 12 МБ.",
     photoUnsafe:"Не удалось безопасно прочитать фото профиля.",
     photoReadFailed:"Не удалось прочитать фото профиля.",
     rowLimit:"В этот раздел можно добавить не более 50 строк.",
@@ -628,6 +818,7 @@ function changeLanguage(lang){
   renderSTCWInputs();
   renderSeaInputs();
   syncCV();
+  document.dispatchEvent(new CustomEvent("allonahub:maritime-cv-language", { detail: { language: currentLang } }));
 }
 
 function translatePage(){
@@ -676,13 +867,13 @@ function translatePage(){
       <input value="${escapeAttr(item.place)}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="place">
 
       <label>${t("dateIssued")}</label>
-      <input value="${escapeAttr(item.issue)}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="issue">
+      <input type="date" value="${escapeAttr(normalizeDateInput(item.issue))}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="issue">
 
       <label>Cert. No</label>
       <input value="${escapeAttr(item.cert)}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="cert">
 
       <label>${t("dateExpiry")}</label>
-      <input value="${escapeAttr(item.expiry)}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="expiry">
+      <input type="date" value="${escapeAttr(normalizeDateInput(item.expiry))}" data-cv-row="additional" data-cv-index="${index}" data-cv-key="expiry">
 
       <button type="button" class="secondary" data-cv-action="remove-additional" data-cv-index="${index}">${t("deleteRow")}</button>
     `;
@@ -738,12 +929,12 @@ function renderAdditionals(){
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHTML(item.name)}</td>
-      <td>${escapeHTML(item.institute)}</td>
-      <td>${escapeHTML(item.place)}</td>
-      <td>${escapeHTML(item.issue)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(formatDisplayDate(item.issue))}</td>
       <td>${escapeHTML(item.cert)}</td>
-      <td>${escapeHTML(item.expiry)}</td>
+      <td>${escapeHTML(formatDisplayDate(item.expiry))}</td>
     `;
 
     tbody.appendChild(tr);
@@ -757,14 +948,34 @@ function renderSTCWInputs(){
   box.innerHTML = "";
 
   stcwData.forEach((item, index) => {
+    const preset = stcwPresets.find(entry => entry.id === item.presetId) || null;
+    const code = String(item.code || preset?.code || "").toUpperCase();
+    const title = preset && !preset.editableTitle ? t(preset.titleKey) : "";
+    const editableTitle = !preset || preset.editableTitle;
     const div = document.createElement("div");
-    div.className = "group cv-repeat-group";
+    div.className = `group cv-repeat-group cv-stcw-card${preset ? " is-preset" : " is-custom"}`;
 
     div.innerHTML = `
-      <h3>${t("stcwCertificates")} ${index + 1}</h3>
+      <div class="cv-stcw-card-head">
+        <span class="cv-certificate-code">${escapeHTML(code || String(index + 1))}</span>
+        <h3>${escapeHTML(title || item.name || t(preset?.titleKey || "customCertificate"))}</h3>
+      </div>
 
-      <label>${t("courseName")}</label>
-      <input value="${escapeAttr(item.name)}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="name">
+      ${editableTitle ? `
+        <label>${t("courseName")}</label>
+        <input value="${escapeAttr(item.name)}" placeholder="${escapeAttr(t(preset?.titleKey || "customCertificateName"))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="name">
+      ` : ""}
+
+      ${preset ? "" : `
+        <label>${t("certificateCode")}</label>
+        <input class="cv-code-input" value="${escapeAttr(code)}" maxlength="8" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="code">
+      `}
+
+      <label>${t("certificateNumber")}</label>
+      <div class="cv-certificate-number-field">
+        <span>${escapeHTML(code || "-")}</span>
+        <input value="${escapeAttr(item.number || item.cert)}" placeholder="${escapeAttr(t("certificateNumberPlaceholder"))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="number">
+      </div>
 
       <label>${t("institute")}</label>
       <input value="${escapeAttr(item.institute)}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="institute">
@@ -775,7 +986,7 @@ function renderSTCWInputs(){
       <div class="row2">
         <div>
           <label>${t("dateIssued")}</label>
-          <input value="${escapeAttr(item.issue)}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="issue">
+          <input type="date" value="${escapeAttr(normalizeDateInput(item.issue))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="issue">
         </div>
 
         <div>
@@ -784,19 +995,18 @@ function renderSTCWInputs(){
         </div>
       </div>
 
-      <div class="row2">
-        <div>
-          <label>Cert. No</label>
-          <input value="${escapeAttr(item.cert)}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="cert">
-        </div>
-
+      <div class="cv-validity-row">
         <div>
           <label>${t("dateExpiry")}</label>
-          <input value="${escapeAttr(item.expiry)}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="expiry">
+          <input type="date" value="${escapeAttr(normalizeDateInput(item.expiry))}" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="expiry" ${item.unlimited === "true" ? "disabled" : ""}>
         </div>
+        <label class="cv-unlimited-check">
+          <input type="checkbox" data-cv-row="stcw" data-cv-index="${index}" data-cv-key="unlimited" ${item.unlimited === "true" ? "checked" : ""}>
+          <span>${t("unlimited")}</span>
+        </label>
       </div>
 
-      <button type="button" class="secondary" data-cv-action="remove-stcw" data-cv-index="${index}">${t("deleteCertificate")}</button>
+      ${preset ? "" : `<button type="button" class="secondary" data-cv-action="remove-stcw" data-cv-index="${index}">${t("deleteCertificate")}</button>`}
     `;
 
     box.appendChild(div);
@@ -807,7 +1017,10 @@ function renderSTCWInputs(){
 function updateSTCW(index, key, value){
   const rowIndex = Number(index);
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !stcwData[rowIndex] || !repeatRowKeys.stcw.includes(key)) return;
-  stcwData[rowIndex][key] = String(value ?? "").slice(0, maxRepeatFieldLength);
+  const nextValue = String(value ?? "").slice(0, maxRepeatFieldLength);
+  stcwData[rowIndex][key] = key === "code" ? nextValue.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) : nextValue;
+  if(key === "unlimited" && nextValue === "true") stcwData[rowIndex].expiry = "";
+  if(key === "unlimited") renderSTCWInputs();
   renderSTCW();
   autoSaveCV();
 }
@@ -816,15 +1029,7 @@ function updateSTCW(index, key, value){
     alert(t("rowLimit"));
     return;
   }
-  stcwData.push({
-    name:"",
-    institute:"",
-    place:"",
-    issue:"",
-    rank:"",
-    cert:"",
-    expiry:""
-  });
+  stcwData.push(newStcwRow());
 
   renderSTCWInputs();
   renderSTCW();
@@ -848,15 +1053,21 @@ function renderSTCW(){
 
   stcwData.forEach(item => {
     const tr = document.createElement("tr");
+    const preset = stcwPresets.find(entry => entry.id === item.presetId) || null;
+    const certificateTitle = preset && !item.name ? t(preset.titleKey) : translateDynamicValue(item.name || t(preset?.titleKey || "customCertificate"));
+    const code = String(item.code || preset?.code || "").toUpperCase();
+    const number = String(item.number || item.cert || "").trim();
+    const certificateNumber = code && number && !number.toUpperCase().startsWith(`${code}-`) ? `${code}-${number}` : number || code;
+    const expiry = item.unlimited === "true" ? t("unlimited") : formatDisplayDate(item.expiry);
 
     tr.innerHTML = `
-      <td>${escapeHTML(item.name)}</td>
-      <td>${escapeHTML(item.institute)}</td>
-      <td>${escapeHTML(item.place)}</td>
-      <td>${escapeHTML(item.issue)}</td>
-      <td>${escapeHTML(item.rank)}</td>
-      <td>${escapeHTML(item.cert)}</td>
-      <td>${escapeHTML(item.expiry)}</td>
+      <td>${escapeHTML(certificateTitle)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
+      <td>${escapeHTML(formatDisplayDate(item.issue))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(certificateNumber)}</td>
+      <td>${escapeHTML(expiry)}</td>
     `;
 
     tbody.appendChild(tr);
@@ -906,12 +1117,12 @@ function renderSeaInputs(){
       <div class="row2">
         <div>
           <label>${t("signOn")}</label>
-          <input value="${escapeAttr(item.signon)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signon">
+          <input type="date" value="${escapeAttr(normalizeDateInput(item.signon))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signon">
         </div>
 
         <div>
           <label>${t("signOff")}</label>
-          <input value="${escapeAttr(item.signoff)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signoff">
+          <input type="date" value="${escapeAttr(normalizeDateInput(item.signoff))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signoff">
         </div>
       </div>
 
@@ -973,13 +1184,13 @@ function renderSea(){
     tr.innerHTML = `
       <td>${escapeHTML(item.vessel)}</td>
       <td>${escapeHTML(item.company)}</td>
-      <td>${escapeHTML(item.type)}</td>
-      <td>${escapeHTML(item.flag)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.type))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.flag))}</td>
       <td>${escapeHTML(item.dwt)}</td>
       <td>${escapeHTML(item.grt)}</td>
-      <td>${escapeHTML(item.rank)}</td>
-      <td>${escapeHTML(item.signon)}</td>
-      <td>${escapeHTML(item.signoff)}</td>
+      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
+      <td>${escapeHTML(formatDisplayDate(item.signon))}</td>
+      <td>${escapeHTML(formatDisplayDate(item.signoff))}</td>
     `;
 
     tbody.appendChild(tr);
@@ -992,10 +1203,12 @@ function getCVData(){
   textFields.forEach(id => {
     fields[id] = String(valueOf(id)).slice(0, maxTextLength);
   });
+  if(summaryMode === "auto") fields.note = generatedProfessionalSummary().slice(0, maxTextLength);
 
   const photo = document.getElementById("cv_photo")?.getAttribute("src") || "";
   return {
     lang: currentLang,
+    summaryMode,
     fields,
     additionalData,
     stcwData,
@@ -1008,12 +1221,22 @@ function persistCV(){
   return Boolean(cvDraftStore && cvDraftStore.write(getCVData()));
 }
 
-function saveCV(){
+async function saveCV(){
   if(autoSaveTimer){
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = 0;
   }
-  alert(persistCV() ? t("draftSaved") : t("draftSaveFailed"));
+  const localSaved = persistCV();
+  if(window.AllonaMaritimeCvAccount && typeof window.AllonaMaritimeCvAccount.save === "function"){
+    try{
+      await window.AllonaMaritimeCvAccount.save(getCVData());
+      alert(t("accountSaved"));
+    } catch(error){
+      alert(t(error && error.code === "AUTH_REQUIRED" ? "accountLoginRequired" : "accountSaveFailed"));
+    }
+    return;
+  }
+  alert(localSaved ? t("draftSaved") : t("draftSaveFailed"));
 }
 
 function autoSaveCV(){
@@ -1033,8 +1256,52 @@ function sanitizeDraftRows(value, keys){
     return clean;
   });
 }
-  function loadCV(){
-  const data = cvDraftStore?.read();
+
+function normalizeDateInput(value){
+  const clean = String(value || "").trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const localized = clean.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if(!localized) return "";
+  return `${localized[3]}-${localized[2].padStart(2, "0")}-${localized[1].padStart(2, "0")}`;
+}
+
+function formatDisplayDate(value){
+  const normalized = normalizeDateInput(value);
+  if(!normalized) return String(value || "");
+  const [year, month, day] = normalized.split("-");
+  return currentLang === "en" ? `${day}/${month}/${year}` : `${day}.${month}.${year}`;
+}
+
+function normalizeStcwRows(rows){
+  const presetRows = new Map();
+  const customRows = [];
+
+  rows.forEach(row => {
+    const clean = { ...newStcwRow(), ...row };
+    const legacyNumber = String(clean.number || clean.cert || "").trim();
+    const legacyMatch = legacyNumber.match(/^(SP|SH|SI|SL|SO|SA|SE)[\s-]*(.*)$/i);
+    if(!clean.code && legacyMatch) clean.code = legacyMatch[1].toUpperCase();
+    if(!clean.number) clean.number = legacyMatch ? legacyMatch[2] : legacyNumber;
+    clean.code = String(clean.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    clean.unlimited = clean.unlimited === "true" || /^(no limit|unlimited|limitsiz|müddətsiz|бессрочно)$/i.test(String(clean.expiry || "").trim()) ? "true" : "false";
+    if(clean.unlimited === "true") clean.expiry = "";
+
+    const preset = stcwPresets.find(entry => entry.id === clean.presetId || entry.code === clean.code);
+    if(preset && !presetRows.has(preset.id)) {
+      clean.presetId = preset.id;
+      clean.code = preset.code;
+      presetRows.set(preset.id, clean);
+    } else {
+      customRows.push(clean);
+    }
+  });
+
+  return [
+    ...stcwPresets.map(preset => presetRows.get(preset.id) || newStcwRow(preset)),
+    ...customRows
+  ].slice(0, maxRepeatRows);
+}
+function applyCVData(data){
   if(!data || typeof data !== "object") return;
 
     if(data.lang && translations[data.lang]){
@@ -1043,32 +1310,62 @@ function sanitizeDraftRows(value, keys){
       if(langSelect) langSelect.value = currentLang;
     }
 
+    summaryMode = data.summaryMode === "custom" || (!data.summaryMode && String(data.fields?.note || "").trim()) ? "custom" : "auto";
+
     if(data.fields && typeof data.fields === "object" && !Array.isArray(data.fields)){
       textFields.forEach(id => {
         const el = document.getElementById(id);
         if(el){
-          el.value = String(data.fields[id] ?? "").slice(0, maxTextLength);
+          const value = String(data.fields[id] ?? "").slice(0, maxTextLength);
+          el.value = id === "note" && summaryMode === "auto" ? "" : (el instanceof HTMLInputElement && el.type === "date" ? normalizeDateInput(value) : value);
         }
       });
     }
 
     additionalData = sanitizeDraftRows(data.additionalData, repeatRowKeys.additional);
-    stcwData = sanitizeDraftRows(data.stcwData, repeatRowKeys.stcw);
+    stcwData = normalizeStcwRows(sanitizeDraftRows(data.stcwData, repeatRowKeys.stcw));
     seaData = sanitizeDraftRows(data.seaData, repeatRowKeys.sea);
 
     if(data.photo && cvDraftStore?.isSafePhotoDataUrl(data.photo)){
-      const img = document.getElementById("cv_photo");
-      const empty = document.getElementById("emptyPhoto");
-
-      if(img){
-        img.src = data.photo;
-        img.hidden = false;
-      }
-
-      if(empty){
-        empty.hidden = true;
-      }
+      setMaritimeCvPhoto(data.photo);
     }
+}
+
+function loadCV(){
+  applyCVData(cvDraftStore?.read());
+}
+
+function setMaritimeCvPhoto(url){
+  const img = document.getElementById("cv_photo");
+  const empty = document.getElementById("emptyPhoto");
+  const remove = document.querySelector('[data-cv-action="remove-photo"]');
+  const safeUrl = String(url || "");
+
+  if(img){
+    if(safeUrl){
+      img.src = safeUrl;
+      img.hidden = false;
+    } else {
+      img.removeAttribute("src");
+      img.hidden = true;
+    }
+  }
+  if(empty) empty.hidden = Boolean(safeUrl);
+  if(remove) remove.hidden = !safeUrl;
+}
+
+async function removePhoto(){
+  try{
+    if(window.AllonaMaritimeCvAccount && typeof window.AllonaMaritimeCvAccount.removePhoto === "function"){
+      await window.AllonaMaritimeCvAccount.removePhoto();
+    }
+    setMaritimeCvPhoto("");
+    if(photoInput) photoInput.value = "";
+    autoSaveCV();
+    alert(t("photoRemoved"));
+  } catch(error){
+    alert(t("removePhotoFailed"));
+  }
 }
 
 const photoInput = document.getElementById("photoInput");
@@ -1092,17 +1389,7 @@ if(photoInput){
         alert(t("photoUnsafe"));
         return;
       }
-      const img = document.getElementById("cv_photo");
-      const empty = document.getElementById("emptyPhoto");
-
-      if(img){
-        img.src = photoData;
-        img.hidden = false;
-      }
-
-      if(empty){
-        empty.hidden = true;
-      }
+      setMaritimeCvPhoto(photoData);
 
       autoSaveCV();
     };
@@ -1114,7 +1401,7 @@ if(photoInput){
     reader.readAsDataURL(file);
   });
 }
-  function resetForm(){
+function resetForm(){
   const ok = confirm(t("resetConfirm"));
   if(!ok) return;
 
@@ -1126,21 +1413,13 @@ if(photoInput){
   });
 
   additionalData = [];
-  stcwData = [];
+  stcwData = stcwPresets.map(newStcwRow);
   seaData = [];
+  summaryMode = "auto";
 
-  const img = document.getElementById("cv_photo");
-  const empty = document.getElementById("emptyPhoto");
   const fileInput = document.getElementById("photoInput");
 
-  if(img){
-    img.removeAttribute("src");
-    img.hidden = true;
-  }
-
-  if(empty){
-    empty.hidden = false;
-  }
+  setMaritimeCvPhoto("");
 
   if(fileInput){
     fileInput.value = "";
@@ -1189,6 +1468,17 @@ document.addEventListener("DOMContentLoaded", function(){
   document.body.dataset.maritimeCvReady = "true";
   document.dispatchEvent(new Event("allonahub:maritime-cv-ready"));
 });
+
+window.getMaritimeCVData = getCVData;
+window.setMaritimeCvPhoto = setMaritimeCvPhoto;
+window.applyMaritimeCVData = function(data){
+  applyCVData(data);
+  renderAdditionalInputs();
+  renderSTCWInputs();
+  renderSeaInputs();
+  syncCV();
+  translatePage();
+};
   const valueTranslations = {
   excellent:{ en:"Excellent", tr:"Mükemmel", az:"Əla", ru:"Отлично" },
   good:{ en:"Good", tr:"İyi", az:"Yaxşı", ru:"Хорошо" },
@@ -1207,7 +1497,32 @@ document.addEventListener("DOMContentLoaded", function(){
   motorman:{ en:"Motorman", tr:"Makine Tayfası", az:"Motorçu", ru:"Моторист" },
   cadet:{ en:"Cadet", tr:"Stajyer", az:"Kadet", ru:"Кадет" },
   captain:{ en:"Captain", tr:"Kaptan", az:"Kapitan", ru:"Капитан" },
-  engineer:{ en:"Engineer", tr:"Mühendis", az:"Mühəndis", ru:"Инженер" }
+  engineer:{ en:"Engineer", tr:"Mühendis", az:"Mühəndis", ru:"Инженер" },
+  fitter:{ en:"Fitter", tr:"Fitter", az:"Fitter", ru:"Фиттер" },
+  welder:{ en:"Welder", tr:"Kaynakçı", az:"Qaynaqçı", ru:"Сварщик" },
+  bosun:{ en:"Bosun", tr:"Lostromo", az:"Bosman", ru:"Боцман" },
+  ableSeaman:{ en:"Able Seaman", tr:"Usta Gemici", az:"Bacarıqlı Matros", ru:"Квалифицированный Матрос" },
+  ordinarySeaman:{ en:"Ordinary Seaman", tr:"Gemici", az:"Matros", ru:"Матрос" },
+  chiefOfficer:{ en:"Chief Officer", tr:"Birinci Zabit", az:"Baş Köməkçi", ru:"Старший Помощник" },
+  secondOfficer:{ en:"Second Officer", tr:"İkinci Zabit", az:"İkinci Köməkçi", ru:"Второй Помощник" },
+  thirdOfficer:{ en:"Third Officer", tr:"Üçüncü Zabit", az:"Üçüncü Köməkçi", ru:"Третий Помощник" },
+  chiefEngineer:{ en:"Chief Engineer", tr:"Başmühendis", az:"Baş Mühəndis", ru:"Старший Механик" },
+  secondEngineer:{ en:"Second Engineer", tr:"İkinci Mühendis", az:"İkinci Mühəndis", ru:"Второй Механик" },
+  electrician:{ en:"Electrician", tr:"Elektrikçi", az:"Elektrik", ru:"Электрик" },
+  cook:{ en:"Cook", tr:"Aşçı", az:"Aşpaz", ru:"Повар" },
+  steward:{ en:"Steward", tr:"Kamarot", az:"Stüard", ru:"Стюард" },
+  male:{ en:"Male", tr:"Erkek", az:"Kişi", ru:"Мужской" },
+  female:{ en:"Female", tr:"Kadın", az:"Qadın", ru:"Женский" },
+  brown:{ en:"Brown", tr:"Kahverengi", az:"Qəhvəyi", ru:"Карий" },
+  black:{ en:"Black", tr:"Siyah", az:"Qara", ru:"Чёрный" },
+  blue:{ en:"Blue", tr:"Mavi", az:"Mavi", ru:"Голубой" },
+  green:{ en:"Green", tr:"Yeşil", az:"Yaşıl", ru:"Зелёный" },
+  generalCargo:{ en:"General Cargo", tr:"Genel Kargo", az:"Ümumi Yük Gəmisi", ru:"Сухогруз" },
+  bulkCarrier:{ en:"Bulk Carrier", tr:"Dökme Yük Gemisi", az:"Quru Yük Gəmisi", ru:"Балкер" },
+  containerShip:{ en:"Container Ship", tr:"Konteyner Gemisi", az:"Konteyner Gəmisi", ru:"Контейнеровоз" },
+  tanker:{ en:"Tanker", tr:"Tanker", az:"Tanker", ru:"Танкер" },
+  tugboat:{ en:"Tugboat", tr:"Römorkör", az:"Yedək Gəmisi", ru:"Буксир" },
+  unlimited:{ en:"Unlimited", tr:"Süresiz", az:"Müddətsiz", ru:"Бессрочно" }
 };
 
 function normalizeText(value){
@@ -1241,86 +1556,115 @@ function translateUserValue(value){
   return raw;
 }
 
+function translateDynamicValue(value){
+  return translateUserValue(value);
+}
+
+function dateValue(value){
+  const normalized = normalizeDateInput(value);
+  if(!normalized) return null;
+  const date = new Date(`${normalized}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function seaServiceDays(){
+  return seaData.reduce((total, row) => {
+    const start = dateValue(row.signon);
+    const end = dateValue(row.signoff);
+    if(!start || !end || end < start) return total;
+    return total + Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  }, 0);
+}
+
+function serviceDuration(days){
+  const years = Math.floor(days / 365);
+  const months = Math.floor((days % 365) / 30);
+  const remainingDays = (days % 365) % 30;
+  const parts = [];
+  const labels = {
+    en: { year: "year", years: "years", month: "month", months: "months", day: "day", days: "days" },
+    tr: { year: "yıl", years: "yıl", month: "ay", months: "ay", day: "gün", days: "gün" },
+    az: { year: "il", years: "il", month: "ay", months: "ay", day: "gün", days: "gün" },
+    ru: { year: "год", years: "лет", month: "месяц", months: "месяцев", day: "день", days: "дней" }
+  }[currentLang];
+  if(years) parts.push(`${years} ${years === 1 ? labels.year : labels.years}`);
+  if(months) parts.push(`${months} ${months === 1 ? labels.month : labels.months}`);
+  if(remainingDays || !parts.length) parts.push(`${remainingDays} ${remainingDays === 1 ? labels.day : labels.days}`);
+  return parts.join(" ");
+}
+
+function completedCertificateCount(){
+  return [...additionalData, ...stcwData].filter(row => String(row.cert || row.number || row.issue || row.institute || "").trim()).length;
+}
+
+function generatedProfessionalSummary(){
+  const name = [valueOf("firstName"), valueOf("familyName")].filter(Boolean).join(" ").trim();
+  const role = translateUserValue(valueOf("position"));
+  const experienceRows = seaData.filter(row => String(row.vessel || row.company || row.rank || row.signon || "").trim());
+  const days = seaServiceDays();
+  const certificateCount = completedCertificateCount();
+  const vesselTypes = [...new Set(experienceRows.map(row => translateDynamicValue(row.type)).filter(Boolean))].slice(0, 3);
+  const hasDigitalSkills = [valueOf("windows"), valueOf("office"), valueOf("internet")].some(Boolean);
+  const languageCount = ["az", "tr", "en", "ru"].filter(code => [valueOf(`${code}Speak`), valueOf(`${code}Read`), valueOf(`${code}Write`)].some(Boolean)).length;
+
+  const subject = name || ({ en: "The candidate", tr: "Aday", az: "Namizəd", ru: "Кандидат" }[currentLang]);
+  const profession = role || ({ en: "maritime professional", tr: "denizcilik profesyoneli", az: "dənizçilik mütəxəssisi", ru: "морской специалист" }[currentLang]);
+  const sentences = [];
+
+  if(currentLang === "tr"){
+    sentences.push(experienceRows.length
+      ? `${subject}, ${profession} pozisyonunda ${days ? serviceDuration(days) : `${experienceRows.length} gemi kaydı`} deniz hizmeti tecrübesine sahiptir.`
+      : `${subject}, ${profession} pozisyonunda göreve ve uygun denizcilik fırsatlarını değerlendirmeye hazırdır.`);
+    if(vesselTypes.length) sentences.push(`${vesselTypes.join(", ")} tipi gemilerde kayıtlı çalışma deneyimi bulunmaktadır.`);
+    if(certificateCount) sentences.push(`CV profilinde ${certificateCount} denizcilik ve mesleki sertifika kaydı yer almaktadır.`);
+    if(languageCount || hasDigitalSkills) sentences.push(`${languageCount ? `${languageCount} dilde beyan edilmiş iletişim yetkinliği` : ""}${languageCount && hasDigitalSkills ? " ve " : ""}${hasDigitalSkills ? "bilgisayar kullanma becerileri" : ""} ile gemi operasyonlarına uyum sağlayabilir.`);
+  } else if(currentLang === "az"){
+    sentences.push(experienceRows.length
+      ? `${subject}, ${profession} vəzifəsində ${days ? serviceDuration(days) : `${experienceRows.length} gəmi qeydi`} dəniz xidməti təcrübəsinə malikdir.`
+      : `${subject}, ${profession} vəzifəsində işə başlamağa və uyğun dənizçilik imkanlarını dəyərləndirməyə hazırdır.`);
+    if(vesselTypes.length) sentences.push(`${vesselTypes.join(", ")} tipli gəmilərdə qeyd edilmiş iş təcrübəsi vardır.`);
+    if(certificateCount) sentences.push(`CV profilində ${certificateCount} dənizçilik və peşə sertifikatı qeydi mövcuddur.`);
+    if(languageCount || hasDigitalSkills) sentences.push(`${languageCount ? `${languageCount} dil üzrə göstərilmiş ünsiyyət bacarığı` : ""}${languageCount && hasDigitalSkills ? " və " : ""}${hasDigitalSkills ? "kompüter bacarıqları" : ""} ilə gəmi əməliyyatlarına uyğunlaşa bilər.`);
+  } else if(currentLang === "ru"){
+    sentences.push(experienceRows.length
+      ? `${subject} имеет морской стаж ${days ? serviceDuration(days) : `по ${experienceRows.length} судам`} в должности ${profession}.`
+      : `${subject} готов к работе в должности ${profession} и к рассмотрению подходящих морских вакансий.`);
+    if(vesselTypes.length) sentences.push(`Имеется заявленный опыт работы на судах типов: ${vesselTypes.join(", ")}.`);
+    if(certificateCount) sentences.push(`В профиле CV указано морских и профессиональных сертификатов: ${certificateCount}.`);
+    if(languageCount || hasDigitalSkills) sentences.push(`${languageCount ? `Заявлены навыки общения на ${languageCount} языках` : ""}${languageCount && hasDigitalSkills ? " и " : ""}${hasDigitalSkills ? "навыки работы с компьютером" : ""}, необходимые для адаптации к судовым операциям.`);
+  } else {
+    sentences.push(experienceRows.length
+      ? `${subject} has ${days ? serviceDuration(days) : `recorded service across ${experienceRows.length} vessels`} of sea-service experience as ${profession}.`
+      : `${subject} is ready to work as ${profession} and pursue suitable maritime assignments.`);
+    if(vesselTypes.length) sentences.push(`Recorded experience includes ${vesselTypes.join(", ")} vessels.`);
+    if(certificateCount) sentences.push(`The CV profile lists ${certificateCount} maritime and professional certificate record${certificateCount === 1 ? "" : "s"}.`);
+    if(languageCount || hasDigitalSkills) sentences.push(`${languageCount ? `Declared communication skills in ${languageCount} languages` : ""}${languageCount && hasDigitalSkills ? " and " : ""}${hasDigitalSkills ? "computer proficiency" : ""} support readiness for vessel operations.`);
+  }
+
+  return sentences.join(" ");
+}
+
+function setSummaryModeFromInput(value){
+  summaryMode = String(value || "").trim() ? "custom" : "auto";
+}
+
+function generateSummary(){
+  summaryMode = "auto";
+  const note = document.getElementById("note");
+  if(note) note.value = "";
+  syncCV();
+  autoSaveCV();
+  alert(t("summaryGenerated"));
+}
+
 function syncCV(){
   textFields.forEach(id => {
-    const translated = translateUserValue(valueOf(id));
+    const raw = id === "note" && summaryMode === "auto" ? generatedProfessionalSummary() : (dateFieldIds.has(id) ? formatDisplayDate(valueOf(id)) : valueOf(id));
+    const translated = id === "note" && summaryMode === "custom" ? raw : translateUserValue(raw);
     setCV(id, escapeHTML(translated).replace(/\n/g, "<br>"));
   });
 
   renderAdditionals();
   renderSTCW();
   renderSea();
-}
-  function translateDynamicValue(value){
-  return translateUserValue(value);
-}
-
-function renderAdditionals(){
-  const tbody = document.getElementById("cv_additionalRows");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  additionalData.forEach(item => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
-      <td>${escapeHTML(item.issue)}</td>
-      <td>${escapeHTML(item.cert)}</td>
-      <td>${escapeHTML(item.expiry)}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-
-function renderSTCW(){
-  const tbody = document.getElementById("cv_stcwRows");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  stcwData.forEach(item => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${escapeHTML(translateDynamicValue(item.name))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.institute))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.place))}</td>
-      <td>${escapeHTML(item.issue)}</td>
-      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
-      <td>${escapeHTML(item.cert)}</td>
-      <td>${escapeHTML(item.expiry)}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
-
-function renderSea(){
-  const tbody = document.getElementById("cv_seaRows");
-  if(!tbody) return;
-
-  tbody.innerHTML = "";
-
-  seaData.forEach(item => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${escapeHTML(translateDynamicValue(item.vessel))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.company))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.type))}</td>
-      <td>${escapeHTML(translateDynamicValue(item.flag))}</td>
-      <td>${escapeHTML(item.dwt)}</td>
-      <td>${escapeHTML(item.grt)}</td>
-      <td>${escapeHTML(translateDynamicValue(item.rank))}</td>
-      <td>${escapeHTML(item.signon)}</td>
-      <td>${escapeHTML(item.signoff)}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
 }

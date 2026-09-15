@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maritime CV | AllonaHub</title>
+<meta name="description" content="Denizcilik bilgilerinizi ve fotoğrafınızı kendi hesabınıza kaydedebileceğiniz Maritime CV alanı.">
+
+<link rel="stylesheet" href="../../css/maritime-cv-form-base.css?v=20260915-stcw2">
+ <script src="../../js/vendor/html2canvas-1.4.1.min.js" defer></script>
+<script src="../../js/vendor/jspdf-2.5.1.umd.min.js" defer></script>
+  <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
+  <link rel="stylesheet" href="../../css/maritime-cv-form.css?v=20260915-stcw2">
+</head>
+<body class="cv-form-page cv-module-page" data-no-translate>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="../../images/brand/allona.logo.png" alt="AllonaHub Logo">
+      <div>
+        <h1>AllonaHub Maritime CV</h1>
+        <span data-i18n="moduleSubtitle">Denizcilik kariyer bilgilerinizi tek profilde yönetin</span>
+      </div>
+    </div>
+
+    <div class="actions cv-toolbar">
+      <button type="button" class="secondary" data-cv-go-back aria-label="Geri Dön"><span aria-hidden="true">&#8592;</span> <span data-i18n="back">Geri Dön</span></button>
+      <a class="cv-toolbar-link" href="../../index.html" data-i18n="home">Ana Sayfa</a>
+      <a class="cv-toolbar-link" href="allonadenizcilik.html" data-i18n="moduleReturn">Modüle Dön</a>
+      <a class="cv-toolbar-link" href="maritime-documents.html" data-i18n="documents">Belgelerim</a>
+      <a class="cv-toolbar-link" href="maritime-smart-account.html" data-i18n="globalCv">Global CV</a>
+      <select id="langSelect" aria-label="CV language" data-aria-i18n="cvLanguage">
+        <option value="en">English</option>
+        <option value="tr">Türkçe</option>
+        <option value="az">Azərbaycanca</option>
+        <option value="ru">Русский</option>
+      </select>
+
+      <button id="cvSaveButton" type="button" data-i18n="saveDraft">Save</button>
+      <button id="cvPdfButton" type="button" data-i18n="downloadPdf">Download PDF</button>
+      <button id="cvResetButton" class="secondary" type="button" data-i18n="clearForm">Clear</button>
+    </div>
+  </div>
+
+  <div class="cv-account-status" role="status" aria-live="polite" data-cv-account-status></div>
+
+  <div class="layout">
+
+    <!-- LEFT FORM PANEL -->
+    <aside id="cvEditor" class="formPanel" aria-labelledby="cvEditorTitle">
+
+      <h2 id="cvEditorTitle" data-i18n="formTitle">CV Bilgileri</h2>
+
+      <div class="group">
+        <h3 data-i18n="personalDetails">Personal Details</h3>
+
+        <label data-i18n="position">Position</label>
+        <input id="position" value="" autocomplete="organization-title">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="familyName">Family Name</label>
+            <input id="familyName" value="" autocomplete="family-name">
+          </div>
+
+          <div>
+            <label data-i18n="firstName">First Name</label>
+            <input id="firstName" value="" autocomplete="given-name">
+          </div>
+        </div>
+
+        <label data-i18n="fatherName">Father’s Name</label>
+        <input id="fatherName" value="" autocomplete="additional-name">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="birthDate">Date of Birth</label>
+            <input id="birthDate" type="date" value="" autocomplete="bday">
+          </div>
+          <div>
+            <label data-i18n="birthPlace">Place of Birth</label>
+            <input id="birthPlace" value="">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label data-i18n="nationality">Nationality</label>
+            <input id="nationality" value="" autocomplete="country-name">
+          </div>
+          <div>
+            <label data-i18n="gender">Gender</label>
+            <input id="gender" value="">
+          </div>
+        </div>
+
+        <label data-i18n="marital">Marital Status</label>
+        <input id="marital" value="">
+
+        <label data-i18n="address">Permanent Address</label>
+        <input id="address" value="" autocomplete="street-address">
+
+        <label data-i18n="airport">Nearest Airport</label>
+        <textarea id="airport"></textarea>
+
+        <div class="cv-photo-field-head">
+          <label for="photoInput" data-i18n="photo">Photo</label>
+          <button type="button" class="cv-photo-remove" data-cv-action="remove-photo" data-i18n="removePhoto" hidden>Remove photo</button>
+        </div>
+        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp">
+        <p class="cv-field-help" data-i18n="photoHelp">Add a clear portrait photo. You can remove it and upload another photo at any time.</p>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="bodyDetails">Body Details</h3>
+
+        <div class="row3">
+          <div>
+            <label data-i18n="height">Height</label>
+            <input id="height" value="">
+          </div>
+
+          <div>
+            <label data-i18n="weight">Weight</label>
+            <input id="weight" value="">
+          </div>
+
+          <div>
+            <label data-i18n="eyes">Eyes Color</label>
+            <input id="eyes" value="">
+          </div>
+        </div>
+
+        <div class="row3">
+          <div>
+            <label data-i18n="hair">Hair Color</label>
+            <input id="hair" value="">
+          </div>
+
+          <div>
+            <label data-i18n="shoes">Safety Shoes</label>
+            <input id="shoes" value="">
+          </div>
+
+          <div>
+            <label data-i18n="overall">Overalls</label>
+            <input id="overall" value="">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="contactDetails">Contact Details</h3>
+
+        <label data-i18n="mobile">Mobile</label>
+        <input id="mobile" type="tel" inputmode="tel" value="" autocomplete="tel">
+
+        <label data-i18n="email">E-mail Address</label>
+        <input id="email" type="email" inputmode="email" value="" autocomplete="email">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="nextOfKin">Next of Kin</h3>
+
+        <label data-i18n="kinName">Next of Kin</label>
+        <input id="kinName" value="">
+
+        <label data-i18n="kinPhone">Phone</label>
+        <input id="kinPhone" type="tel" inputmode="tel" value="" autocomplete="off">
+
+        <label data-i18n="kinRelation">Relationship</label>
+        <input id="kinRelation" value="">
+
+        <label data-i18n="kinAddress">Address</label>
+        <input id="kinAddress" value="">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="passportDetails">Travel Passport Details</h3>
+
+        <label data-i18n="document">Document</label>
+        <input id="passportDoc" value="">
+
+        <label data-i18n="number">Number</label>
+        <input id="passportNo" value="">
+
+        <label data-i18n="issuingCountry">Issuing Country</label>
+        <input id="passportCountry" value="">
+
+        <label data-i18n="placeOfIssue">Place of Issue</label>
+        <input id="passportPlace" value="">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="passportIssued" type="date" value="">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="passportValid" type="date" value="">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="computerSkills">Computer Skills</h3>
+
+        <label data-i18n="windows">Windows</label>
+        <input id="windows" value="">
+
+        <label data-i18n="office">Microsoft Office</label>
+        <input id="office" value="">
+
+        <label data-i18n="internet">Internet</label>
+        <input id="internet" value="">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="seamanBookDetails">Seaman’s Book Details</h3>
+
+        <label data-i18n="seamanBookNo">Seaman Book Document Number</label>
+        <input id="seamanBookNo" value="">
+
+        <label data-i18n="seamanBookPlace">Seaman Book Place of Issue</label>
+        <input id="seamanBookPlace" value="">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="seamanBookIssued" type="date" value="">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="seamanBookValid" type="date" value="">
+          </div>
+        </div>
+
+        <label data-i18n="seafarerIdNo">Seafarers Identity Document Number</label>
+        <input id="seafarerIdNo" value="">
+
+        <label data-i18n="seafarerIdPlace">Seafarers Identity Place of Issue</label>
+        <input id="seafarerIdPlace" value="">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="issued">Issued</label>
+            <input id="seafarerIdIssued" type="date" value="">
+          </div>
+
+          <div>
+            <label data-i18n="valid">Valid</label>
+            <input id="seafarerIdValid" type="date" value="">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="education">Education</h3>
+
+        <label data-i18n="schoolName">Full Name of School</label>
+        <input id="schoolName" value="">
+
+        <label data-i18n="schoolPlace">Place of Issue</label>
+        <input id="schoolPlace" value="">
+
+        <label data-i18n="schoolGrade">Grade / Class</label>
+        <input id="schoolGrade" value="">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="from">From</label>
+            <input id="schoolFrom" type="date" value="">
+          </div>
+
+          <div>
+            <label data-i18n="to">To</label>
+            <input id="schoolTo" type="date" value="">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="languageKnowledge">Knowledge of Language</h3>
+
+        <label data-i18n="azerbaijanLang">Azerbaijan</label>
+        <div class="row3">
+          <input id="azSpeak" value="" data-ph="speaking">
+          <input id="azRead" value="" data-ph="reading">
+          <input id="azWrite" value="" data-ph="writing">
+        </div>
+
+        <label data-i18n="turkishLang">Turkish</label>
+        <div class="row3">
+          <input id="trSpeak" value="" data-ph="speaking">
+          <input id="trRead" value="" data-ph="reading">
+          <input id="trWrite" value="" data-ph="writing">
+        </div>
+
+        <label data-i18n="englishLang">English</label>
+        <div class="row3">
+          <input id="enSpeak" value="" data-ph="speaking">
+          <input id="enRead" value="" data-ph="reading">
+          <input id="enWrite" value="" data-ph="writing">
+        </div>
+
+        <label data-i18n="russianLang">Russian</label>
+        <div class="row3">
+          <input id="ruSpeak" value="" data-ph="speaking">
+          <input id="ruRead" value="" data-ph="reading">
+          <input id="ruWrite" value="" data-ph="writing">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="medicalInfo">Medical Information</h3>
+
+        <label data-i18n="document">Document</label>
+        <input id="medicalDoc" value="">
+
+        <label data-i18n="validityPeriod">Validity Period</label>
+        <input id="medicalGrade" value="">
+
+        <label data-i18n="placeOfIssue">Place of Issue</label>
+        <input id="medicalPlace" value="">
+
+        <div class="row2">
+          <div>
+            <label data-i18n="dateOfIssue">Date of Issue</label>
+            <input id="medicalIssue" type="date" value="">
+          </div>
+
+          <div>
+            <label data-i18n="dateOfExpiry">Date of Expiry</label>
+            <input id="medicalExpiry" type="date" value="">
+          </div>
+        </div>
+      </div>
+      <div class="group">
+        <h3 data-i18n="competency">Certificate of Competency</h3>
+        <p class="cv-field-help" data-i18n="competencyHelp">Add your officer competency, welder, fitter or other professional competency certificate here.</p>
+
+        <label data-i18n="classGrade">Class / Grade</label>
+        <input id="competencyClass" value="">
+
+        <label data-i18n="issuingCountry">Issuing Country</label>
+        <input id="competencyCountry" value="">
+
+        <label data-i18n="certificate">Certificate</label>
+        <textarea id="competencyCertificate"></textarea>
+
+        <label data-i18n="dateIssued">Date Issued</label>
+        <input id="competencyIssued" type="date" value="">
+
+        <label data-i18n="expires">Expires</label>
+        <input id="competencyExpires" type="date" value="">
+
+        <label data-i18n="limitations">Details of Limitations</label>
+        <input id="competencyLimit" value="">
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="additionalCertificates">Additional Certificates</h3>
+        <p class="cv-field-help" data-i18n="additionalCertificatesHelp">Add welder, fitter and any other professional certificates not listed below.</p>
+        <div id="additionalInputs"></div>
+        <button type="button" data-cv-action="add-additional" data-i18n="addAdditional">+ Add Additional Row</button>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="stcwCertificates">STCW and Other Certificates</h3>
+        <p class="cv-field-help" data-i18n="stcwHelp">Enter only your certificate number, issue details and validity for the prepared STCW rows. You can add another certificate at any time.</p>
+        <div id="stcwInputs"></div>
+        <button type="button" data-cv-action="add-stcw" data-i18n="addSTCW">+ Add STCW Certificate</button>
+      </div>
+
+      <div class="group">
+        <h3 data-i18n="seaExperience">Sea Experience</h3>
+        <div id="seaInputs"></div>
+        <button type="button" data-cv-action="add-sea" data-i18n="addSea">+ Add Sea Experience</button>
+      </div>
+
+      <div class="group">
+        <h3 id="cvNoteTitle" data-i18n="note">Note</h3>
+        <p class="cv-field-help" data-i18n="noteHelp">Leave this field empty to create a professional summary from your position, certificates and sea experience.</p>
+        <textarea id="note" aria-labelledby="cvNoteTitle" data-ph="notePlaceholder"></textarea>
+        <button type="button" class="secondary cv-summary-button" data-cv-action="generate-summary" data-i18n="generateSummary">Create summary from my information</button>
+      </div>
+
+    </aside>
+    <!-- RIGHT PREVIEW PANEL -->
+    <main class="previewWrap" aria-labelledby="cvPreviewTitle">
+
+      <!-- PAGE 1 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div id="cvPreviewTitle" class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="personalDetails">Personal Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="position">Position</td>
+            <td colspan="2" id="cv_position"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="familyName">Family Name</td>
+            <td id="cv_familyName"></td>
+            <td rowspan="12" class="photoCell">
+              <div class="emptyPhoto" id="emptyPhoto" data-i18n="photo">PHOTO</div>
+              <img id="cv_photo" alt="CV profile photo" data-alt-i18n="photoAlt" hidden>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="firstName">First Name</td>
+            <td id="cv_firstName"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="fatherName">Father’s Name</td>
+            <td id="cv_fatherName"></td>
+          </tr>
+
+          <tr><td class="labelCell" data-i18n="birthDate">Date of Birth</td><td id="cv_birthDate"></td></tr>
+          <tr><td class="labelCell" data-i18n="birthPlace">Place of Birth</td><td id="cv_birthPlace"></td></tr>
+          <tr><td class="labelCell" data-i18n="nationality">Nationality</td><td id="cv_nationality"></td></tr>
+          <tr><td class="labelCell" data-i18n="gender">Gender</td><td id="cv_gender"></td></tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="marital">Marital Status</td>
+            <td id="cv_marital"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="address">Permanent Address</td>
+            <td id="cv_address"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="airport">Nearest Airport</td>
+            <td id="cv_airport"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="height">Height</td>
+            <td id="cv_height"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="weight">Weight</td>
+            <td id="cv_weight"></td>
+          </tr>
+        </table>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="eyes">Eyes Color</td>
+            <td id="cv_eyes"></td>
+            <td class="labelCell" data-i18n="hair">Hair Color</td>
+            <td id="cv_hair"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="shoes">Safety Shoes</td>
+            <td id="cv_shoes"></td>
+            <td class="labelCell" data-i18n="overall">Overalls</td>
+            <td id="cv_overall"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="contactDetails">Contact Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="mobile">Mobile</td>
+            <td id="cv_mobile"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="email">E-mail Address</td>
+            <td id="cv_email"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="nextOfKin">Next of Kin</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="kinName">Next of Kin</td>
+            <td id="cv_kinName"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinPhone">Phone</td>
+            <td id="cv_kinPhone"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinRelation">Relationship</td>
+            <td id="cv_kinRelation"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="kinAddress">Address</td>
+            <td id="cv_kinAddress"></td>
+          </tr>
+        </table>
+        <div class="sectionTitle" data-i18n="passportDetails">Travel Passport Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="number">Number</th>
+            <th data-i18n="issuingCountry">Issuing Country</th>
+            <th data-i18n="placeOfIssue">Place of Issue</th>
+            <th data-i18n="issued">Issued</th>
+            <th data-i18n="valid">Valid</th>
+          </tr>
+
+          <tr>
+            <td id="cv_passportDoc"></td>
+            <td id="cv_passportNo"></td>
+            <td id="cv_passportCountry"></td>
+            <td id="cv_passportPlace"></td>
+            <td id="cv_passportIssued"></td>
+            <td id="cv_passportValid"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="computerSkills">Computer Skills</div>
+
+        <table class="cvTable">
+          <tr>
+            <td class="labelCell" data-i18n="windows">Windows</td>
+            <td id="cv_windows"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="office">Microsoft Office</td>
+            <td id="cv_office"></td>
+          </tr>
+
+          <tr>
+            <td class="labelCell" data-i18n="internet">Internet</td>
+            <td id="cv_internet"></td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- PAGE 2 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="seamanBookDetails">Seaman’s Book Details</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="number">Number</th>
+            <th data-i18n="placeOfIssue">Place of Issue</th>
+            <th data-i18n="issued">Issued</th>
+            <th data-i18n="valid">Valid</th>
+          </tr>
+
+          <tr>
+            <td data-i18n="seamanBook">Seaman Book</td>
+            <td id="cv_seamanBookNo"></td>
+            <td id="cv_seamanBookPlace"></td>
+            <td id="cv_seamanBookIssued"></td>
+            <td id="cv_seamanBookValid"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="seafarerIdentity">Seafarers Identity</td>
+            <td id="cv_seafarerIdNo"></td>
+            <td id="cv_seafarerIdPlace"></td>
+            <td id="cv_seafarerIdIssued"></td>
+            <td id="cv_seafarerIdValid"></td>
+          </tr>
+        </table>
+        <div class="sectionTitle" data-i18n="education">Education</div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="schoolName">School</th>
+            <th data-i18n="placeOfIssue">Place</th>
+            <th data-i18n="classGrade">Grade / Class</th>
+            <th data-i18n="from">From</th>
+            <th data-i18n="to">To</th>
+          </tr>
+
+          <tr>
+            <td id="cv_schoolName"></td>
+            <td id="cv_schoolPlace"></td>
+            <td id="cv_schoolGrade"></td>
+            <td id="cv_schoolFrom"></td>
+            <td id="cv_schoolTo"></td>
+          </tr>
+        </table>
+
+        <div class="sectionTitle" data-i18n="languageKnowledge">
+          Knowledge of Language
+        </div>
+
+        <table class="cvTable">
+          <tr>
+            <th data-i18n="language">Language</th>
+            <th data-i18n="speaking">Speaking</th>
+            <th data-i18n="reading">Reading</th>
+            <th data-i18n="writing">Writing</th>
+          </tr>
+
+          <tr>
+            <td data-i18n="azerbaijani">Azerbaijani</td>
+            <td id="cv_azSpeak"></td>
+            <td id="cv_azRead"></td>
+            <td id="cv_azWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="turkish">Turkish</td>
+            <td id="cv_trSpeak"></td>
+            <td id="cv_trRead"></td>
+            <td id="cv_trWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="english">English</td>
+            <td id="cv_enSpeak"></td>
+            <td id="cv_enRead"></td>
+            <td id="cv_enWrite"></td>
+          </tr>
+
+          <tr>
+            <td data-i18n="russian">Russian</td>
+            <td id="cv_ruSpeak"></td>
+            <td id="cv_ruRead"></td>
+            <td id="cv_ruWrite"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="medicalInfo">
+          Medical Information
+        </div>
+
+        <table class="cvTable">
+
+          <tr>
+            <th data-i18n="document">Document</th>
+            <th data-i18n="validityPeriod">Validity Period</th>
+            <th data-i18n="placeOfIssue">Place</th>
+            <th data-i18n="dateIssued">Date Issued</th>
+            <th data-i18n="dateExpiry">Expiry</th>
+          </tr>
+
+          <tr>
+            <td id="cv_medicalDoc"></td>
+            <td id="cv_medicalGrade"></td>
+            <td id="cv_medicalPlace"></td>
+            <td id="cv_medicalIssue"></td>
+            <td id="cv_medicalExpiry"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="certificateCompetency">
+          Certificate of Competency
+        </div>
+
+        <table class="cvTable">
+
+          <tr>
+            <th data-i18n="classGrade">Class / Grade</th>
+            <th data-i18n="issuingCountry">Country</th>
+            <th data-i18n="certificate">Certificate</th>
+            <th data-i18n="dateIssued">Issued</th>
+            <th data-i18n="expires">Expires</th>
+            <th data-i18n="limitations">Limitations</th>
+          </tr>
+
+          <tr>
+            <td id="cv_competencyClass"></td>
+            <td id="cv_competencyCountry"></td>
+            <td id="cv_competencyCertificate"></td>
+            <td id="cv_competencyIssued"></td>
+            <td id="cv_competencyExpires"></td>
+            <td id="cv_competencyLimit"></td>
+          </tr>
+
+        </table>
+
+        <div class="sectionTitle" data-i18n="additionalCertificates">
+          Additional Certificates
+        </div>
+
+        <table class="cvTable">
+
+          <thead>
+
+          <tr>
+            <th data-i18n="courseName">Course / Certificate</th>
+            <th data-i18n="institute">Institute</th>
+            <th data-i18n="place">Place</th>
+            <th data-i18n="dateIssued">Issued</th>
+            <th data-i18n="certificateNumber">Cert. No</th>
+            <th data-i18n="dateExpiry">Expiry</th>
+          </tr>
+
+          </thead>
+
+          <tbody id="cv_additionalRows"></tbody>
+
+        </table>
+
+      </section>
+      <!-- PAGE 3 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="stcwCertificates">
+          STCW and Other Certificates
+        </div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th data-i18n="courseName">Course / Certificate</th>
+              <th data-i18n="institute">Institute</th>
+              <th data-i18n="place">Place</th>
+              <th data-i18n="dateIssued">Issued</th>
+              <th data-i18n="rank">Rank</th>
+              <th data-i18n="certificateNumber">Cert. No</th>
+              <th data-i18n="dateExpiry">Expiry</th>
+            </tr>
+          </thead>
+
+          <tbody id="cv_stcwRows"></tbody>
+        </table>
+
+        <div class="sectionTitle" data-i18n="seaExperience">
+          Sea Experience
+        </div>
+
+        <table class="cvTable">
+          <thead>
+            <tr>
+              <th data-i18n="vessel">Vessel</th>
+              <th data-i18n="company">Company</th>
+              <th data-i18n="vesselType">Type of Vessel</th>
+              <th data-i18n="flag">Flag</th>
+              <th>DWT</th>
+              <th>GRT</th>
+              <th data-i18n="rank">Rank</th>
+              <th data-i18n="signOn">Sign On</th>
+              <th data-i18n="signOff">Sign Off</th>
+            </tr>
+          </thead>
+
+          <tbody id="cv_seaRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PAGE 4 -->
+      <section class="cvPage">
+        <div class="cvNeonBorder"></div>
+
+        <div class="cvHeader">
+          <div class="cvTitle" data-i18n="applicationForm">Application Form</div>
+
+          <div class="cvBrand">
+            <strong>ALLONAHUB</strong>
+            <small>Maritime Crew System</small>
+          </div>
+        </div>
+
+        <div class="sectionTitle" data-i18n="note">Note</div>
+
+        <div class="noteBox" id="cv_note"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260627-config-central" defer></script>
+  <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260621-tx1" defer></script>
+  <script src="../../js/auth.js?v=20260914-account-boundary3" defer></script>
+  <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
+  <script src="../../js/allona-maritime-photo.js?v=20260914-passport-photo2" defer></script>
+  <script src="../../js/maritime-cv-draft.js?v=20260915-stcw3" defer></script>
+  <script src="../../js/maritime-cv-form.js?v=20260915-stcw3" defer></script>
+  <script src="../../js/maritime-cv-controls.js?v=20260915-stcw3" defer></script>
+  <script src="../../js/maritime-cv-entry.js?v=20260915-stcw3" defer></script>
+  <script src="../../js/maritime-cv-account.js?v=20260915-stcw3" defer></script>
+</body>
+</html>

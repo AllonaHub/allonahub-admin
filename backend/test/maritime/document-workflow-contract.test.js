@@ -5,10 +5,12 @@ import vm from "node:vm";
 
 const migrationUrl = new URL("../../../supabase/migrations/20260914050000_create_maritime_document_doctor.sql", import.meta.url);
 const pageUrl = new URL("../../../pages/ecosystem/maritime-documents.html", import.meta.url);
+const maritimeCvPageUrl = new URL("../../../pages/ecosystem/maritime-cv.html", import.meta.url);
+const maritimeCvFormUrl = new URL("../../../js/maritime-cv-form.js", import.meta.url);
+const maritimeCvAccountUrl = new URL("../../../js/maritime-cv-account.js", import.meta.url);
 const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.url);
 const documentUiUrl = new URL("../../../js/allona-maritime-documents.js", import.meta.url);
 const photoUiUrl = new URL("../../../js/allona-maritime-photo.js", import.meta.url);
-const portalCssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-documents.js", import.meta.url);
 const appUrl = new URL("../../src/app.js", import.meta.url);
 const customerProfileUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
@@ -72,77 +74,72 @@ test("the production maritime migration chain includes and verifies Global Passp
   assert.match(schemaCheck, /Maritime Global Passport function grants are unsafe/);
 });
 
-test("the customer workspace exposes a PDF-only Global Passport flow", async () => {
-  const [page, portal, documentUi, photoUi, portalCss, route, customerProfile, app] = await Promise.all([
+test("the customer workspace separates manual Maritime CV, PDF archive, and Global CV", async () => {
+  const [page, maritimeCvPage, maritimeCvForm, maritimeCvAccount, portal, documentUi, photoUi, route, customerProfile, app] = await Promise.all([
     readFile(pageUrl, "utf8"),
+    readFile(maritimeCvPageUrl, "utf8"),
+    readFile(maritimeCvFormUrl, "utf8"),
+    readFile(maritimeCvAccountUrl, "utf8"),
     readFile(portalUrl, "utf8"),
     readFile(documentUiUrl, "utf8"),
     readFile(photoUiUrl, "utf8"),
-    readFile(portalCssUrl, "utf8"),
     readFile(routeUrl, "utf8"),
     readFile(customerProfileUrl, "utf8"),
     readFile(appUrl, "utf8")
   ]);
   assert.match(page, /class="maritime-document-nav"[^>]+data-view-link="documents"/);
+  assert.match(page, /href="maritime-cv\.html"[^>]+data-view-link="maritime-cv"/);
+  assert.match(page, /data-create-global-cv/);
   assert.match(page, /type="file" multiple/);
   assert.match(page, /accept="application\/pdf,\.pdf"/);
-  assert.match(page, /data-document-i18n="uploadAndAnalyze">Global Pasaportu Oluştur/);
+  assert.match(page, /data-document-i18n="saveDocuments">Belgeleri Kaydet/);
+  assert.match(page, /Belgeler okunmaz ve CV alanlarını değiştirmez/);
   assert.match(page, /id="maritimeDocumentUpload"/);
-  assert.match(page, /data-passport-update-note/);
-  assert.match(page, /data-global-passport-preview/);
-  assert.match(page, /data-global-passport-readiness/);
-  assert.match(page, /data-confirm-global-passport/);
-  assert.match(page, /data-open-maritime-cv/);
   assert.match(page, /data-document-i18n="backToPanel"/);
   assert.match(page, /data-document-i18n="matchingJobs"/);
-  assert.match(page, /data-profile-photo-input/);
-  assert.match(page, /data-photo-required-notice/);
-  assert.match(page, /allona-maritime-photo\.js/);
-  assert.doesNotMatch(page, /selfie_segmentation/);
+  assert.doesNotMatch(page, /data-profile-photo-input|data-extraction-form|data-confirm-global-passport/);
   assert.doesNotMatch(page, /<(?:input|select|textarea)[^>]+name="(?:document_type|document_title|description|holder_name)"/);
   assert.ok(page.indexOf('data-view-link="documents"') < page.indexOf('data-view-link="jobs"'));
-  assert.match(portal, /\["applications", "offers", "auto", "account", "documents", "smart"\]/);
+  assert.match(maritimeCvPage, /<title>Maritime CV \| AllonaHub<\/title>/);
+  assert.match(maritimeCvPage, /<body[^>]+data-no-translate/);
+  assert.match(maritimeCvPage, /id="photoInput"/);
+  assert.match(maritimeCvPage, /data-cv-action="remove-photo"/);
+  assert.match(maritimeCvPage, /data-cv-action="add-stcw"/);
+  assert.match(maritimeCvPage, /data-cv-action="generate-summary"/);
+  assert.match(maritimeCvPage, /js\/vendor\/html2canvas-1\.4\.1\.min\.js/);
+  assert.match(maritimeCvPage, /js\/vendor\/jspdf-2\.5\.1\.umd\.min\.js/);
+  assert.doesNotMatch(maritimeCvPage, /cdnjs\.cloudflare\.com\/ajax\/libs\/(?:html2canvas|jspdf)/);
+  assert.match(maritimeCvPage, /maritime-cv-account\.js/);
+  assert.match(maritimeCvForm, /window\.getMaritimeCVData = getCVData/);
+  for (const code of ["SP", "SH", "SI", "SL", "SO", "SA", "SE"]) assert.match(maritimeCvForm, new RegExp(`code: "${code}"`));
+  for (const key of ["photoHelp", "validityPeriod", "competencyHelp", "stcwHelp", "certificateNumber", "unlimited", "generateSummary"]) {
+    assert.ok((maritimeCvForm.match(new RegExp(`${key}:`, "g")) || []).length >= 4, `${key} must exist in all four CV languages`);
+  }
+  assert.match(maritimeCvForm, /generatedProfessionalSummary/);
+  assert.match(maritimeCvForm, /summaryMode === "auto"/);
+  assert.match(maritimeCvAccount, /\/v1\/maritime\/cv-profile/);
+  assert.match(maritimeCvAccount, /\/v1\/maritime\/profile-photo/);
+  assert.match(maritimeCvAccount, /method: "DELETE"/);
+  assert.doesNotMatch(portal, /career\/cv-form\.html/);
   assert.match(portal, /allona:maritime-documents-ready/);
-  assert.match(documentUi, /maxFiles = 20/);
-  assert.match(documentUi, /maxFileBytes = 45 \* 1024 \* 1024/);
+  assert.match(documentUi, /const maxFiles = 20/);
+  assert.match(documentUi, /const maxFileBytes = 45 \* 1024 \* 1024/);
   assert.match(documentUi, /const allowedTypes = \["application\/pdf"\]/);
-  assert.match(documentUi, /function globalPassportDraft\(\)/);
-  assert.match(documentUi, /function globalPassportPreviewMarkup\(draft\)/);
-  assert.match(documentUi, /function confirmGlobalPassport\(button\)/);
-  assert.match(documentUi, /function isUpdateMode\(\)/);
-  assert.match(documentUi, /function refreshSmartAccountAfterDocumentChange\(\)/);
+  assert.match(documentUi, /\/v1\/maritime\/documents\/archive/);
   assert.match(documentUi, /\/v1\/maritime\/smart-account\/prepare/);
-  assert.match(documentUi, /event\.target\.closest\("\[data-extraction-form\]"\)/);
-  assert.match(documentUi, /event\.target\.closest\("\[data-reject-extraction\]"\)/);
-  assert.match(documentUi, /function evidenceSourcePage\(payload, fieldPath, value\)/);
-  assert.doesNotMatch(documentUi, /source_page: 1/);
-  assert.match(documentUi, /body: JSON\.stringify\(\{ payload, confirmation: true \}\)/);
-  assert.match(documentUi, /function globalPassportReadiness\(draft\)/);
-  assert.match(documentUi, /function rescanAnalysis\(intakeId, button\)/);
-  assert.doesNotMatch(documentUi, /sessionMetadata\.full_name|user\?\.email\?\.split/);
-  assert.match(documentUi, /mime_type: "application\/pdf"/);
-  assert.match(documentUi, /confirmation: true/);
-  assert.match(documentUi, /certificateRecordsMarkup/);
-  assert.match(documentUi, /certificate_records: records/);
-  assert.match(documentUi, /identity_documents/);
-  assert.match(documentUi, /physical_profile/);
-  assert.match(documentUi, /medical_records: medicalRecords/);
-  assert.match(documentUi, /vaccinations/);
-  assert.match(documentUi, /education/);
-  assert.match(documentUi, /skills/);
-  assert.match(documentUi, /achievements/);
-  assert.match(documentUi, /references/);
-  assert.match(documentUi, /sourceEvidence/);
+  assert.doesNotMatch(documentUi, /\/analyze|document-extractions|evidenceSourcePage|globalPassportDraft/);
   assert.match(photoUi, /face_pixels_regenerated: false/);
   assert.doesNotMatch(photoUi, /fetch\(|XMLHttpRequest|WebSocket/);
-  assert.match(portalCss, /\.maritime-global-passport-actions \.maritime-button\[hidden\][\s\S]*?display: none !important/);
+  assert.match(route, /app\.post\("\/v1\/maritime\/documents\/archive"/);
+  assert.match(route, /document_analysis: false/);
+  assert.match(route, /maritimeDocumentSignatureMatches\(bytes, "application\/pdf"\)/);
+  assert.match(app, /addContentTypeParser\("application\/pdf"/);
+  assert.match(app, /"X-Allona-File-Name"/);
   assert.match(route, /\/v1\/maritime\/profile-photo\/upload-intent/);
   assert.match(route, /\/v1\/maritime\/profile-photo\/confirm/);
   assert.match(route, /app\.post\("\/v1\/maritime\/profile-photo"/);
   assert.match(route, /Buffer\.isBuffer\(request\.body\)/);
   assert.match(app, /addContentTypeParser\("image\/webp"/);
-  assert.match(documentUi, /fetch\(`\$\{apiBase\(\)\}\/v1\/maritime\/profile-photo`/);
-  assert.doesNotMatch(documentUi, /\/v1\/maritime\/profile-photo\/upload-intent/);
   assert.match(route, /pendingProfilePhotoPath/);
   assert.match(route, /upload_id/);
   assert.match(route, /\.upload\(path, bytes/);
@@ -150,31 +147,20 @@ test("the customer workspace exposes a PDF-only Global Passport flow", async () 
   assert.match(route, /MARITIME_DOCUMENT_READER_VERSION/);
   assert.match(route, /maritimeDocumentIdentityConflicts/);
   assert.match(route, /MARITIME_DOCUMENT_IDENTITY_CONFLICT/);
-  assert.match(route, /MARITIME_PROFILE_PHOTO_REQUIRED/);
-  assert.match(route, /\["pending_user_confirmation", "user_confirmed"\]\.includes\(intake\.status\)/);
-  assert.match(route, /\.neq\("id", extraction\.id\)/);
-  assert.match(route, /extraction\.status === "confirmed" \|\| extraction\.confirmed_payload/);
-  assert.match(route, /\/v1\/maritime\/document-extractions\/:extractionId\/correct/);
-  assert.match(route, /rebuildConfirmedProfile/);
   assert.match(route, /import \{ ensureMaritimeCustomerProfile \}/);
   assert.match(route, /return ensureMaritimeCustomerProfile\(ctx\)/);
   assert.match(customerProfile, /function ensureMaritimeCustomerProfile\(ctx\)/);
   assert.match(customerProfile, /MARITIME_CUSTOMER_PROFILE_RECOVERY_FAILED/);
   assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
   assert.match(customerProfile, /account_status: "active"/);
-  assert.match(route, /MARITIME_DOCUMENT_AI_NOT_CONFIGURED/);
-  assert.match(documentUi, /firstFailureMessage/);
   assert.match(documentUi, /error\.code = payload\.code/);
   assert.match(route, /maritimeDocumentSignatureMatches\(bytes, "image\/webp"\)/);
   assert.doesNotMatch(documentUi, /name="certificate_codes"/);
-  assert.doesNotMatch(portal, /career\/cv-form\.html/);
 });
 
 test("every document label has a complete nine-language row", async () => {
   const source = await readFile(documentUiUrl, "utf8");
-  const instrumented = source
-    .replace("const copyRows = {", "const copyRows = window.__documentCopyRows = {")
-    .replace("const documentTypeLabels = {", "const documentTypeLabels = window.__documentTypeLabels = {");
+  const instrumented = source.replace("const copyRows = {", "const copyRows = window.__documentCopyRows = {");
   const window = { Allona: {} };
   vm.runInNewContext(instrumented, {
     window,
@@ -191,10 +177,6 @@ test("every document label has a complete nine-language row", async () => {
     console
   });
   for (const [key, row] of Object.entries(window.__documentCopyRows)) {
-    assert.equal(row.length, 9, `${key} must include all nine languages`);
-    assert.ok(row.every((value) => String(value).trim()), `${key} contains an empty translation`);
-  }
-  for (const [key, row] of Object.entries(window.__documentTypeLabels)) {
     assert.equal(row.length, 9, `${key} must include all nine languages`);
     assert.ok(row.every((value) => String(value).trim()), `${key} contains an empty translation`);
   }

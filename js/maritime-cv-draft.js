@@ -7,7 +7,7 @@
   const moduleKey = "maritime";
   const maxAgeMs = 2 * 60 * 60 * 1000;
   const maxSerializedLength = 4 * 1024 * 1024;
-  const maxPhotoBytes = 2 * 1024 * 1024;
+  const maxPhotoBytes = 12 * 1024 * 1024;
   const maxPhotoDataUrlLength = Math.ceil(maxPhotoBytes * 4 / 3) + 128;
   const photoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 

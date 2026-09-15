@@ -591,6 +591,9 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     return normalized.language ? normalized : null;
   }, ["language", "level"], 30);
   const confirmedDocuments = array(documents).filter((document) => ["user_confirmed", "verification_pending", "verified"].includes(document.status));
+  const archivedDocuments = array(documents).filter((document) => ["uploaded", "user_confirmed", "verification_pending", "verified"].includes(document.status));
+  const manualCvConfirmed = cvProfile?.profile_status === "user_confirmed" && payload.data_origin === "user_entered_maritime_cv";
+  const confirmedProfileSource = manualCvConfirmed || confirmedDocuments.length > 0;
   const expiry = expiryState(items, now);
   const conflicts = identityConflicts(items);
   const medical = text(firstSourceText(sources, "medical_fitness") || medicalRecords.find((row) => row.result !== "not_stated")?.result || "not_stated");
@@ -632,15 +635,16 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     seaman_book: hasSeamanBook
   };
   const hasMaritimeEvidence = Object.values(maritimeEvidence).some(Boolean);
-  const seafarerStatus = !confirmedDocuments.length
+  const seafarerStatus = !confirmedProfileSource
     ? "not_assessed"
     : conflicts.length || criticalDocumentExpired
       ? "review_required"
-      : hasIdentity && hasMaritimeEvidence
+      : hasIdentity && hasMaritimeEvidence && confirmedDocuments.length > 0
         ? "system_approved"
         : "evidence_required";
   const seafarerReasonCodes = [
-    !confirmedDocuments.length && "confirmed_document_required",
+    !confirmedProfileSource && "confirmed_profile_required",
+    manualCvConfirmed && !confirmedDocuments.length && "documents_not_verified",
     !hasIdentity && "identity_evidence_required",
     !hasMaritimeEvidence && "maritime_evidence_required",
     conflicts.length > 0 && "identity_conflict",
@@ -655,7 +659,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     + categoryScore(hasPassport, 10)
     + categoryScore(hasSeamanBook, 5)
     + categoryScore(hasLanguage, 5)
-    + categoryScore(confirmedDocuments.length > 0, 5)
+    + categoryScore(confirmedProfileSource, 5)
   );
   const missing = [
     !hasIdentity && "identity",
@@ -668,7 +672,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
     !hasLanguage && "languages"
   ].filter(Boolean);
   const blockingReasons = [
-    !confirmedDocuments.length && "no_confirmed_documents",
+    !confirmedProfileSource && "no_confirmed_profile",
     !hasIdentity && "identity_missing",
     !hasRank && "rank_missing",
     !hasCertificates && "certificates_missing",
@@ -682,6 +686,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   return {
     rule_version: MARITIME_SMART_RULE_VERSION,
     profile: {
+      data_origin: payload.data_origin || (confirmedDocuments.length ? "confirmed_document_analysis" : "unknown"),
       holder_name: holderName,
       family_name: firstSourceText(sources, "family_name"),
       given_names: firstSourceText(sources, "given_names"),
@@ -718,7 +723,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
       references,
       professional_summary: professionalSummary,
       professional_summary_i18n: professionalSummaryI18n,
-      professional_summary_origin: explicitSummary ? "document" : "generated_from_verified_data",
+      professional_summary_origin: explicitSummary ? (manualCvConfirmed ? "user_entered" : "document") : "generated_from_verified_data",
       desired_salary_amount: Number(firstSourceText(sources, "desired_salary_amount")) || null,
       desired_salary_currency: firstSourceText(sources, "desired_salary_currency"),
       availability_text: firstSourceText(sources, "availability_text"),
@@ -744,7 +749,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
       physical_profile: physicalProfile,
       professional_summary: professionalSummary,
       professional_summary_i18n: professionalSummaryI18n,
-      professional_summary_origin: explicitSummary ? "document" : "generated_from_verified_data",
+      professional_summary_origin: explicitSummary ? (manualCvConfirmed ? "user_entered" : "document") : "generated_from_verified_data",
       desired_salary_amount: Number(firstSourceText(sources, "desired_salary_amount")) || null,
       desired_salary_currency: firstSourceText(sources, "desired_salary_currency"),
       availability_text: firstSourceText(sources, "availability_text"),
@@ -777,6 +782,7 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
       expiry_alerts: expiry.alerts,
       document_counters: expiry.counters,
       confirmed_document_count: confirmedDocuments.length,
+      archived_document_count: archivedDocuments.length,
       seafarer_status: seafarerStatus,
       seafarer_system_approved: seafarerStatus === "system_approved",
       seafarer_reason_codes: seafarerReasonCodes,

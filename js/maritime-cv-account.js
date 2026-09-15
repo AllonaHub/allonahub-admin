@@ -1,0 +1,164 @@
+(function () {
+  "use strict";
+
+  const App = window.Allona = window.Allona || {};
+  let session = null;
+  let saving = false;
+  let statusCopyState = null;
+
+  function copy(key, fallback) {
+    return typeof window.t === "function" ? window.t(key) : fallback;
+  }
+
+  function statusTarget() {
+    return document.querySelector("[data-cv-account-status]");
+  }
+
+  function setStatus(message, tone, html) {
+    const target = statusTarget();
+    if (!target) return;
+    if (html) target.innerHTML = html;
+    else target.textContent = message || "";
+    target.className = `cv-account-status${message || html ? " is-visible" : ""}${tone ? ` is-${tone}` : ""}`;
+  }
+
+  function setCopyStatus(key, fallback, tone) {
+    statusCopyState = { key, fallback, tone };
+    setStatus(copy(key, fallback), tone);
+  }
+
+  function showLoginPrompt() {
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    statusCopyState = { kind: "login", tone: "warning" };
+    setStatus("", "warning", `<a href="../account/user.html?returnTo=${returnTo}">${copy("accountLoginRequired", "Sign in to save your Maritime CV to your account.")}</a>`);
+  }
+
+  function apiBase() {
+    return String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+  }
+
+  async function api(path, options) {
+    session = session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
+    if (!session?.access_token) {
+      const error = new Error("AUTH_REQUIRED");
+      error.code = "AUTH_REQUIRED";
+      throw error;
+    }
+    const response = await fetch(`${apiBase()}${path}`, {
+      ...options,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        ...(options && options.body && !(options.body instanceof Blob) ? { "Content-Type": "application/json" } : {}),
+        ...(options && options.headers || {})
+      }
+    });
+    const payload = await response.json().catch(function () { return {}; });
+    if (!response.ok || payload.ok !== true) {
+      const error = new Error(payload.message || "REQUEST_FAILED");
+      error.code = payload.code || "REQUEST_FAILED";
+      error.status = response.status;
+      throw error;
+    }
+    return payload;
+  }
+
+  function showPhoto(url) {
+    if (!url) return;
+    if (typeof window.setMaritimeCvPhoto === "function") {
+      window.setMaritimeCvPhoto(url);
+      return;
+    }
+    const image = document.getElementById("cv_photo");
+    const empty = document.getElementById("emptyPhoto");
+    if (image) {
+      image.src = url;
+      image.hidden = false;
+    }
+    if (empty) empty.hidden = true;
+    const remove = document.querySelector('[data-cv-action="remove-photo"]');
+    if (remove) remove.hidden = false;
+  }
+
+  async function savePhoto(file) {
+    if (!file) return;
+    if (!window.AllonaMaritimePhoto || typeof window.AllonaMaritimePhoto.prepare !== "function") {
+      throw new Error("PHOTO_PREPARATION_UNAVAILABLE");
+    }
+    const prepared = await window.AllonaMaritimePhoto.prepare(file);
+    const result = await api("/v1/maritime/profile-photo", {
+      method: "POST",
+      headers: { "Content-Type": "image/webp" },
+      body: prepared.blob
+    });
+    showPhoto(result.profile_photo_url || prepared.preview_url);
+  }
+
+  async function removePhoto() {
+    session = session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
+    if (!session?.access_token) return { ok: true, local_only: true };
+    return api("/v1/maritime/profile-photo", { method: "DELETE" });
+  }
+
+  async function save(data) {
+    if (saving) return;
+    saving = true;
+    const button = document.getElementById("cvSaveButton");
+    if (button) button.disabled = true;
+    setCopyStatus("accountSaving", "Saving Maritime CV to your account...", "progress");
+    try {
+      const photo = document.getElementById("photoInput")?.files?.[0] || null;
+      if (photo) await savePhoto(photo);
+      const cleanCv = JSON.parse(JSON.stringify(data || {}));
+      delete cleanCv.photo;
+      const result = await api("/v1/maritime/cv-profile", {
+        method: "PUT",
+        body: JSON.stringify({ cv: cleanCv, confirmation: true })
+      });
+      setCopyStatus("accountSaved", "Your Maritime CV and photo were saved to your account.", "success");
+      return result;
+    } catch (error) {
+      setCopyStatus("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.", "error");
+      throw error;
+    } finally {
+      saving = false;
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function load() {
+    session = App.auth && App.auth.getSession ? await App.auth.getSession() : null;
+    if (!session) {
+      showLoginPrompt();
+      return;
+    }
+    if (App.auth && App.auth.requireAccountType) {
+      const access = await App.auth.requireAccountType("customer", { user: session.user, redirect: true });
+      if (!access) return;
+    }
+    setCopyStatus("accountLoading", "Loading your saved Maritime CV...", "progress");
+    try {
+      const result = await api("/v1/maritime/cv-profile", { method: "GET" });
+      if (result.cv && window.applyMaritimeCVData) window.applyMaritimeCVData(result.cv);
+      showPhoto(result.profile_photo_url);
+      setCopyStatus(result.cv ? "accountLoaded" : "accountStart", result.cv ? "Your saved Maritime CV is open." : "Complete your Maritime CV and select Save.", result.cv ? "success" : "info");
+    } catch (error) {
+      setCopyStatus("accountSaveFailed", "Your Maritime CV could not be loaded. Please reload the page.", "error");
+    }
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest("[data-cv-go-back]")) return;
+    if (document.referrer && new URL(document.referrer, window.location.href).origin === window.location.origin && history.length > 1) history.back();
+    else window.location.href = "allonadenizcilik.html";
+  });
+
+  document.addEventListener("allonahub:maritime-cv-language", function () {
+    if (statusCopyState?.kind === "login") showLoginPrompt();
+    else if (statusCopyState?.key) setCopyStatus(statusCopyState.key, statusCopyState.fallback, statusCopyState.tone);
+  });
+
+  window.AllonaMaritimeCvAccount = Object.freeze({ save, removePhoto });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", load, { once: true });
+  else load();
+})();

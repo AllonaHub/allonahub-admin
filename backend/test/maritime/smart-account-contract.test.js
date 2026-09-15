@@ -48,8 +48,13 @@ test("smart matching API returns public-safe matches without company identity or
   assert.match(route, /cv_identity: await ownCvIdentity\(user\)/);
   assert.doesNotMatch(route, /metadata\.avatar_url \|\| metadata\.avatar/);
   assert.match(route, /maritimeGlobalPassportReadiness/);
-  assert.match(route, /GLOBAL_PASSPORT_REQUIRED_FIELDS_MISSING/);
+  assert.match(route, /GLOBAL_CV_REQUIRED_FIELDS_MISSING/);
+  assert.match(route, /data_origin !== "user_entered_maritime_cv"/);
   assert.match(route, /profile\.webp/);
+  assert.match(route, /summaryMode: z\.enum\(\["auto", "custom"\]\)/);
+  assert.match(route, /new Set\(\["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"\]\)/);
+  assert.match(route, /validity_status: unlimited \? "non_expiring"/);
+  assert.match(route, /manualStcwPresets/);
 });
 
 test("verified partner crew listings persist complete matching requirements", async () => {
@@ -68,8 +73,9 @@ test("smart account is a dedicated no-footer workspace with explicit approval ac
   assert.match(page, /data-maritime-view="smart"/);
   assert.doesNotMatch(page, /<footer/i);
   assert.match(page, /data-view-link="smart"/);
-  assert.match(page, /maritime-documents\.html\?mode=update#maritimeDocumentUpload/);
-  assert.match(page, /data-portal-i18n="smartAccountAddDocument">Belge Ekle/);
+  assert.match(page, /href="maritime-cv\.html"/);
+  assert.match(page, /data-portal-i18n="smartAccountAddDocument">Maritime CV'yi Düzenle/);
+  assert.match(page, /<title>Global CV \| AllonaHub<\/title>/);
   assert.match(page, /data-global-passport-help-toggle/);
   assert.match(page, /data-global-passport-help-card hidden/);
   assert.match(page, /data-portal-i18n="globalPassportHelpWorldwide"/);
@@ -161,13 +167,15 @@ test("shared maritime navigation keeps complete translations for the smart accou
     FormData,
     console
   });
-  for (const key of ["smartAccountNav", "smartAccountTitle", "smartAccountLead", "smartAccountAddDocument", "globalPassportHelpLabel", "globalPassportHelpTitle", "globalPassportHelpBody", "globalPassportHelpWorldwide", "globalPassportHelpPrivacy", "globalPassportHelpClose", "seafarerStatusLabel", "seafarerStatusApproved", "seafarerStatusReview", "seafarerStatusEvidence", "seafarerStatusPending", "seafarerStatusNote"]) {
+  for (const key of ["maritimeCvNav", "smartAccountNav", "smartAccountTitle", "smartAccountLead", "smartAccountAddDocument", "globalPassportHelpLabel", "globalPassportHelpTitle", "globalPassportHelpBody", "globalPassportHelpWorldwide", "globalPassportHelpPrivacy", "globalPassportHelpClose", "seafarerStatusLabel", "seafarerStatusApproved", "seafarerStatusReview", "seafarerStatusEvidence", "seafarerStatusPending", "seafarerStatusNote"]) {
     const row = window.__portalCopyRows[key];
     assert.equal(row.length, 9, `${key} must include all nine languages`);
     assert.ok(row.every((value) => String(value).trim()), `${key} contains an empty translation`);
   }
-  assert.deepEqual(Array.from(window.__portalCopyRows.smartAccountNav), Array(9).fill("GP CV"));
-  assert.equal(window.__portalCopyRows.smartAccountTitle[0], "Global Pasaport CV");
+  assert.deepEqual(Array.from(window.__portalCopyRows.smartAccountNav), Array(9).fill("Global CV"));
+  assert.deepEqual(Array.from(window.__portalCopyRows.maritimeCvNav), Array(9).fill("Maritime CV"));
+  assert.equal(window.__portalCopyRows.smartAccountTitle[0], "Global CV");
+  assert.doesNotMatch(source, /Global Pasaport|Global Passport|GP CV/);
   assert.match(source, /function setGlobalPassportHelp\(open, restoreFocus\)/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /function loadSeafarerClassification\(\)/);

@@ -1176,6 +1176,67 @@ body.maritime-portal-page textarea {
   width: min(100%, 1380px);
 }
 
+.maritime-cv-source-card,
+.maritime-global-cv-create-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  padding: clamp(18px, 2.4vw, 28px);
+  border: 1px solid rgba(0, 223, 252, 0.34);
+  border-radius: 8px;
+  background: #061f36;
+  box-shadow: 0 14px 34px rgba(0, 8, 20, 0.24);
+}
+
+.maritime-cv-source-card {
+  margin-bottom: 16px;
+}
+
+.maritime-global-cv-create-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 16px;
+  border-color: rgba(0, 234, 255, 0.56);
+  background: linear-gradient(110deg, #06253f 0%, #073253 100%);
+  box-shadow: 0 0 24px rgba(0, 234, 255, 0.1);
+}
+
+.maritime-cv-source-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(0, 223, 252, 0.12);
+  color: var(--maritime-cyan);
+  font-size: 22px;
+}
+
+.maritime-cv-source-card h2,
+.maritime-global-cv-create-card h2 {
+  margin: 3px 0 5px;
+  color: #ffffff;
+  font-size: clamp(19px, 2vw, 24px);
+  letter-spacing: 0;
+}
+
+.maritime-cv-source-card p,
+.maritime-global-cv-create-card p {
+  max-width: 860px;
+  margin: 0;
+  color: var(--maritime-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.maritime-cv-source-status {
+  display: inline-flex;
+  margin-top: 9px;
+  color: var(--maritime-cyan);
+  font-size: 12px;
+}
+
 .maritime-document-upload-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(290px, 0.65fr);
@@ -3589,9 +3650,19 @@ body.maritime-account-page[data-theme="turquoise"] .maritime-account-action--sma
   background: #075260;
 }
 
-body.maritime-documents-page[data-theme="white"] :where(.maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty, .maritime-document-file-chip, .maritime-document-progress) {
+body.maritime-documents-page[data-theme="white"] :where(.maritime-cv-source-card, .maritime-global-cv-create-card, .maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty, .maritime-document-file-chip, .maritime-document-progress) {
   background: #ffffff;
   color: #071928;
+}
+
+body.maritime-documents-page[data-theme="white"] :where(.maritime-cv-source-card h2, .maritime-global-cv-create-card h2) {
+  color: #071928;
+  -webkit-text-fill-color: #071928;
+}
+
+body.maritime-documents-page[data-theme="white"] :where(.maritime-cv-source-card p, .maritime-global-cv-create-card p) {
+  color: #496273;
+  -webkit-text-fill-color: #496273;
 }
 
 body.maritime-documents-page[data-theme="white"] .maritime-passport-required-notice {
@@ -3682,7 +3753,7 @@ body.maritime-documents-page[data-theme="white"] .maritime-button--danger-outlin
   -webkit-text-fill-color: #a40d25;
 }
 
-body.maritime-documents-page[data-theme="sunset"] :where(.maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty) {
+body.maritime-documents-page[data-theme="sunset"] :where(.maritime-cv-source-card, .maritime-global-cv-create-card, .maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty) {
   background: #251126;
 }
 
@@ -3694,7 +3765,7 @@ body.maritime-documents-page[data-theme="sunset"] :where(.maritime-document-cred
   background: #35152f;
 }
 
-body.maritime-documents-page[data-theme="turquoise"] :where(.maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty) {
+body.maritime-documents-page[data-theme="turquoise"] :where(.maritime-cv-source-card, .maritime-global-cv-create-card, .maritime-document-upload-panel, .maritime-document-summary, .maritime-document-review-section, .maritime-document-review-card, .maritime-document-empty) {
   background: #062d36;
 }
 
@@ -4693,6 +4764,18 @@ body.maritime-documents-page[data-theme="white"] .maritime-document-record-row d
 }
 
 @media (max-width: 700px) {
+  .maritime-cv-source-card,
+  .maritime-global-cv-create-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+    align-items: start;
+  }
+
+  .maritime-cv-source-card .maritime-button,
+  .maritime-global-cv-create-card .maritime-button {
+    width: 100%;
+  }
+
   .maritime-photo-studio {
     grid-template-columns: 104px minmax(0, 1fr);
     gap: 14px;

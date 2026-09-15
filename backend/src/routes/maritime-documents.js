@@ -81,6 +81,15 @@ function retentionDate() {
   return new Date(Date.now() + days * 86400000).toISOString();
 }
 
+function archiveFileName(request) {
+  const encoded = String(request.headers["x-allona-file-name"] || "").slice(0, 900);
+  let decoded = encoded;
+  try {
+    decoded = decodeURIComponent(encoded);
+  } catch (error) {}
+  return safeMaritimeDocumentName(decoded || "maritime-document.pdf");
+}
+
 async function ownedIntake(userId, intakeId) {
   const result = await supabaseAdmin
     .from("maritime_document_intakes")
@@ -185,7 +194,7 @@ async function rebuildConfirmedProfile(userId) {
     .select("intake_id,confirmed_payload")
     .eq("seafarer_user_id", userId)
     .eq("status", "confirmed");
-  const rows = assertDb(result, "Global Pasaport yeniden oluşturulamadı.") || [];
+  const rows = assertDb(result, "Global CV yeniden oluşturulamadı.") || [];
   const payload = mergeConfirmedPayloads(rows.map((row) => row.confirmed_payload).filter(Boolean));
   assertDb(await supabaseAdmin.from("maritime_cv_profiles").upsert({
     seafarer_user_id: userId,
@@ -194,7 +203,7 @@ async function rebuildConfirmedProfile(userId) {
     source_document_ids: [...new Set(rows.map((row) => row.intake_id).filter(Boolean))],
     completion_percent: profileCompletion(payload),
     last_user_confirmed_at: rows.length ? new Date().toISOString() : null
-  }, { onConflict: "seafarer_user_id" }), "Global Pasaport yeniden oluşturulamadı.");
+  }, { onConflict: "seafarer_user_id" }), "Global CV yeniden oluşturulamadı.");
   return payload;
 }
 
@@ -212,7 +221,7 @@ async function removeReadinessSource(userId, intake) {
   const sourceReference = intake.file_sha256 || intake.id;
   assertDb(await supabaseAdmin.from("maritime_readiness_items").delete()
     .eq("seafarer_user_id", userId)
-    .eq("source_reference_hash", sourceReference), "Belge Global Pasaporttan çıkarılamadı.");
+    .eq("source_reference_hash", sourceReference), "Belge Global CV kaydından çıkarılamadı.");
 }
 
 function profilePhotoPath(userId) {
@@ -281,6 +290,7 @@ async function documentState(userId) {
   ]);
   const profilePhotoReady = await hasStoredProfilePhoto(userId);
   const profilePayload = assertDb(profileResult, "Denizcilik CV profili okunamadı.")?.profile_payload || {};
+  const globalCvReadiness = maritimeGlobalPassportReadiness(profilePayload, { hasPhoto: profilePhotoReady });
   return {
     batches: assertDb(batchesResult, "Belge paketleri okunamadı.") || [],
     documents: assertDb(intakesResult, "Belgeler okunamadı.") || [],
@@ -288,7 +298,8 @@ async function documentState(userId) {
     cv_profile: assertDb(profileResult, "Denizcilik CV profili okunamadı.") || null,
     profile_photo_url: profilePhotoReady ? await signedProfilePhoto(userId) : "",
     profile_photo_ready: profilePhotoReady,
-    global_passport_readiness: maritimeGlobalPassportReadiness(profilePayload, { hasPhoto: profilePhotoReady })
+    global_cv_readiness: globalCvReadiness,
+    global_passport_readiness: globalCvReadiness
   };
 }
 
@@ -403,7 +414,7 @@ export function registerMaritimeDocumentRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.document.upload_intent");
     const input = uploadIntentSchema.parse(request.body || {});
     if (!(await hasStoredProfilePhoto(ctx.user.id))) {
-      throw httpError("Global Pasaport için önce profil fotoğrafınızı ekleyip kaydedin.", 409, "MARITIME_PROFILE_PHOTO_REQUIRED");
+      throw httpError("Global CV için önce Maritime CV alanında profil fotoğrafınızı ekleyip kaydedin.", 409, "MARITIME_PROFILE_PHOTO_REQUIRED");
     }
     if (!config.maritimeDocuments.aiApiKey && !config.maritimeDocuments.localReaderEnabled) {
       throw httpError("Belge okuma hizmeti henüz yapılandırılmadı.", 503, "MARITIME_DOCUMENT_AI_NOT_CONFIGURED");
@@ -475,6 +486,68 @@ export function registerMaritimeDocumentRoutes(app) {
     } catch (error) {
       await supabaseAdmin.from("maritime_document_batches").update({ status: "failed" }).eq("id", batchId);
       throw httpError("Belge yükleme bağlantıları oluşturulamadı.", 503, "MARITIME_UPLOAD_SIGNING_FAILED");
+    }
+  });
+
+  app.post("/v1/maritime/documents/archive", {
+    bodyLimit: MARITIME_DOCUMENT_MAX_FILE_BYTES,
+    config: { rateLimit: { max: 30, timeWindow: "10 minutes" } }
+  }, async (request, reply) => {
+    const ctx = await requireCustomer(request, "maritime.document.archive");
+    const bytes = Buffer.isBuffer(request.body) ? request.body : Buffer.alloc(0);
+    if (!bytes.length || bytes.length > MARITIME_DOCUMENT_MAX_FILE_BYTES) {
+      throw httpError("PDF dosyasının boyutu doğrulanamadı.", 400, "MARITIME_DOCUMENT_INVALID_SIZE");
+    }
+    if (!maritimeDocumentSignatureMatches(bytes, "application/pdf")) {
+      throw httpError("Yüklenen dosya geçerli bir PDF değil.", 400, "MARITIME_DOCUMENT_SIGNATURE_MISMATCH");
+    }
+
+    const intakeId = randomUUID();
+    const safeName = archiveFileName(request);
+    const storagePath = `users/${ctx.user.id}/archive/${intakeId}-${safeName}`;
+    const now = new Date().toISOString();
+    const saved = await supabaseAdmin.storage.from(MARITIME_DOCUMENT_BUCKET).upload(storagePath, bytes, {
+      contentType: "application/pdf",
+      upsert: false
+    });
+    if (saved.error) throw httpError("PDF belgesi güvenli arşive kaydedilemedi.", 503, "MARITIME_DOCUMENT_ARCHIVE_FAILED");
+
+    try {
+      const document = assertDb(await supabaseAdmin.from("maritime_document_intakes").insert({
+        id: intakeId,
+        seafarer_user_id: ctx.user.id,
+        status: "uploaded",
+        document_type: "unknown",
+        storage_bucket: MARITIME_DOCUMENT_BUCKET,
+        storage_path: storagePath,
+        original_file_name: safeName,
+        mime_type: "application/pdf",
+        file_size_bytes: bytes.length,
+        file_sha256: maritimeDocumentSha256(bytes),
+        upload_completed_at: now,
+        user_confirmation_required: false,
+        retention_until: retentionDate(),
+        metadata: {
+          source: "maritime_documents_archive",
+          storage_only: true,
+          document_analysis: false,
+          uploaded_by_user_at: now
+        }
+      }).select("id,status,original_file_name,mime_type,file_size_bytes,created_at,updated_at").single(), "PDF belge kaydı oluşturulamadı.");
+      await auditEvent({
+        request,
+        actorId: ctx.user.id,
+        actorRole: ctx.profile.role,
+        action: "maritime.document_archived",
+        resourceType: "maritime_document_intake",
+        resourceId: intakeId,
+        metadata: { file_size_bytes: bytes.length, document_analysis: false }
+      });
+      reply.code(201);
+      return { ok: true, document };
+    } catch (error) {
+      await supabaseAdmin.storage.from(MARITIME_DOCUMENT_BUCKET).remove([storagePath]);
+      throw error;
     }
   });
 

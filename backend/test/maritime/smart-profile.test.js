@@ -185,8 +185,29 @@ test("keeps maritime identity pending until confirmed evidence identifies the pe
   });
   assert.equal(result.readiness.seafarer_status, "not_assessed");
   assert.equal(result.readiness.seafarer_system_approved, false);
-  assert.ok(result.readiness.seafarer_reason_codes.includes("confirmed_document_required"));
+  assert.ok(result.readiness.seafarer_reason_codes.includes("confirmed_profile_required"));
   assert.ok(result.readiness.seafarer_reason_codes.includes("maritime_evidence_required"));
+});
+
+test("builds Global CV from a user-confirmed Maritime CV without treating archived files as verified evidence", () => {
+  const result = smart({
+    cvProfile: {
+      profile_status: "user_confirmed",
+      profile_payload: {
+        ...cvProfile.profile_payload,
+        data_origin: "user_entered_maritime_cv"
+      },
+      source_document_ids: []
+    },
+    readinessItems: [],
+    documents: [{ id: "10000000-0000-4000-8000-000000000009", status: "uploaded" }]
+  });
+  assert.equal(result.profile.data_origin, "user_entered_maritime_cv");
+  assert.equal(result.cv_draft.holder_name, "Sample Seafarer");
+  assert.equal(result.readiness.confirmed_document_count, 0);
+  assert.equal(result.readiness.seafarer_status, "evidence_required");
+  assert.equal(result.readiness.seafarer_system_approved, false);
+  assert.ok(result.readiness.seafarer_reason_codes.includes("documents_not_verified"));
 });
 
 test("scores transparent positive matches and never reveals company contact", () => {

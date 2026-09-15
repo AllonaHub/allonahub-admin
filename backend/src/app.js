@@ -152,6 +152,9 @@ export async function buildApp() {
   app.addContentTypeParser("image/webp", { parseAs: "buffer" }, (_request, body, done) => {
     done(null, body);
   });
+  app.addContentTypeParser("application/pdf", { parseAs: "buffer" }, (_request, body, done) => {
+    done(null, body);
+  });
 
   await app.register(helmet, {
     global: true,
@@ -212,7 +215,7 @@ export async function buildApp() {
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"]
+    allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With", "X-Allona-File-Name"]
   });
 
   registerAutoDefense(app);

@@ -6,6 +6,20 @@ html body.cv-form-page[data-theme]:not(:has(.site-shell)):not(:has(.about-page))
   line-height: normal !important;
 }
 
+body.cv-module-page {
+  background: linear-gradient(145deg, #020814 0%, #061a2f 48%, #020814 100%) !important;
+}
+
+body.cv-module-page .topbar,
+body.cv-module-page .formPanel,
+body.cv-module-page .previewWrap {
+  border-radius: 8px;
+}
+
+body.cv-module-page :where(button, select) {
+  border-radius: 6px;
+}
+
 body.cv-form-page[data-theme] .app {
   width: min(100%, 1760px) !important;
   max-width: 1760px !important;
@@ -43,8 +57,140 @@ body.cv-form-page .cv-repeat-group--compact {
 }
 
 body.cv-form-page .photoCell img[hidden],
-body.cv-form-page .emptyPhoto[hidden] {
+body.cv-form-page .emptyPhoto[hidden],
+body.cv-form-page [hidden] {
   display: none !important;
+}
+
+body.cv-form-page .cv-photo-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+
+body.cv-form-page .cv-photo-field-head label {
+  margin: 0;
+}
+
+body.cv-form-page .cv-photo-remove {
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 91, 115, 0.7);
+  background: rgba(255, 91, 115, 0.12);
+  color: #ffb8c3;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+body.cv-form-page .cv-field-help {
+  margin: 7px 0 12px;
+  color: #b9d8e8;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+body.cv-form-page .cv-summary-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+body.cv-form-page .cv-stcw-card {
+  border-left: 3px solid #00eaff;
+  background: rgba(5, 24, 43, 0.82);
+}
+
+body.cv-form-page .cv-stcw-card.is-custom {
+  border-left-color: #f6b64b;
+}
+
+body.cv-form-page .cv-stcw-card-head {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+body.cv-form-page .cv-stcw-card-head h3 {
+  margin: 0;
+  color: #f4fbff;
+  font-size: 13px;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body.cv-form-page .cv-certificate-code {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  min-height: 34px;
+  border: 1px solid rgba(0, 234, 255, 0.75);
+  border-radius: 6px;
+  background: #062844;
+  color: #62efff;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(0, 234, 255, 0.18);
+}
+
+body.cv-form-page .cv-certificate-number-field {
+  display: grid;
+  grid-template-columns: minmax(42px, auto) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+body.cv-form-page .cv-certificate-number-field > span {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  padding: 0 9px;
+  border: 1px solid rgba(0, 213, 255, 0.4);
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+  background: rgba(0, 213, 255, 0.14);
+  color: #8df5ff;
+  font-weight: 900;
+}
+
+body.cv-form-page .cv-certificate-number-field input {
+  border-radius: 0 6px 6px 0;
+}
+
+body.cv-form-page .cv-validity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(145px, 0.8fr);
+  align-items: end;
+  gap: 10px;
+}
+
+body.cv-form-page .cv-unlimited-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 41px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 213, 255, 0.28);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #cdebf4;
+  cursor: pointer;
+}
+
+body.cv-form-page .cv-unlimited-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: #00d5ff;
+}
+
+body.cv-form-page input:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
 }
 
 @media (max-width: 720px) {
@@ -60,11 +206,105 @@ body.cv-form-page .emptyPhoto[hidden] {
     width: 100% !important;
     min-width: 0 !important;
   }
+
+  body.cv-form-page .cv-validity-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media print {
   html body.cv-form-page {
     background: #ffffff !important;
     background-color: #ffffff !important;
+  }
+}
+
+body.cv-module-page .cv-toolbar-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 213, 255, 0.38);
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.cv-module-page .cv-toolbar-link:hover,
+body.cv-module-page .cv-toolbar-link:focus-visible {
+  border-color: #00eaff;
+  box-shadow: 0 0 18px rgba(0, 234, 255, 0.28);
+}
+
+body.cv-module-page .cv-account-status {
+  display: none;
+  margin: 10px 0 14px;
+  padding: 11px 14px;
+  border: 1px solid rgba(0, 213, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 213, 255, 0.08);
+  color: inherit;
+}
+
+body.cv-module-page .cv-account-status.is-visible {
+  display: block;
+}
+
+body.cv-module-page .cv-account-status.is-success {
+  border-color: rgba(35, 209, 139, 0.62);
+  background: rgba(35, 209, 139, 0.1);
+}
+
+body.cv-module-page .cv-account-status.is-error,
+body.cv-module-page .cv-account-status.is-warning {
+  border-color: rgba(255, 84, 112, 0.65);
+  background: rgba(255, 84, 112, 0.1);
+}
+
+body.cv-module-page .cv-account-status a {
+  color: #00eaff;
+  font-weight: 800;
+}
+
+@media (max-width: 980px) {
+  body.cv-module-page .topbar {
+    align-items: stretch;
+  }
+
+  body.cv-module-page .cv-toolbar {
+    display: flex !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    scroll-snap-type: x proximity;
+  }
+
+  body.cv-module-page .cv-toolbar > * {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-width: 42px !important;
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1280px) {
+  body.cv-module-page .layout {
+    display: grid !important;
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr) !important;
+  }
+
+  body.cv-module-page .formPanel {
+    max-height: calc(100vh - 145px);
+    overflow: auto;
+  }
+}
+
+@media print {
+  body.cv-module-page .topbar,
+  body.cv-module-page .cv-account-status,
+  body.cv-module-page .formPanel {
+    display: none !important;
   }
 }

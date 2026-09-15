@@ -9,7 +9,7 @@
     }),
     stcw: Object.freeze({
       handler: "updateSTCW",
-      keys: new Set(["name", "institute", "place", "issue", "rank", "cert", "expiry"])
+      keys: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited"])
     }),
     sea: Object.freeze({
       handler: "updateSea",
@@ -22,7 +22,9 @@
     "add-sea": "addSea",
     "remove-additional": "removeAdditional",
     "remove-stcw": "removeSTCW",
-    "remove-sea": "removeSea"
+    "remove-sea": "removeSea",
+    "remove-photo": "removePhoto",
+    "generate-summary": "generateSummary"
   });
 
   function safeFilePart(value, fallback) {
@@ -124,13 +126,15 @@
       const index = validRowIndex(input.dataset.cvIndex);
       const key = input.dataset.cvKey || "";
       if (binding && index !== null && binding.keys.has(key)) {
-        callGlobal(binding.handler, index, key, capControlValue(input, 300));
+        const value = input.type === "checkbox" ? String(input.checked) : capControlValue(input, 300);
+        callGlobal(binding.handler, index, key, value);
       }
       return;
     }
 
     if (input.type === "file" || !input.id) return;
     capControlValue(input, 2000);
+    if (input.id === "note") callGlobal("setSummaryModeFromInput", input.value);
     callGlobal("syncCV");
     callGlobal("autoSaveCV");
   }
