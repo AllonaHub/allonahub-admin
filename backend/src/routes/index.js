@@ -902,6 +902,53 @@ const maritimeTrustQuerySchema = z.object({
   case_type: z.enum(["company_verification", "document_verification", "fraud_signal", "communication_complaint", "content_access", "appeal", "privacy_request"]).optional()
 });
 
+const maritimeAdminUserListSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).optional().default(80),
+  search: z.string().trim().max(120).optional().default(""),
+  profile_status: z.enum(["draft", "user_confirmed", "verification_pending", "verified", "stale", "restricted"]).optional(),
+  account_status: z.enum(["active", "passive", "suspended"]).optional()
+});
+
+const maritimeAdminAccountUpdateSchema = z.object({
+  full_name: z.string().trim().min(2).max(180).optional(),
+  email: emailSchema.optional(),
+  phone: z.string().trim().max(40).optional(),
+  account_status: z.enum(["active", "passive", "suspended"]).optional(),
+  flagged_suspicious: z.boolean().optional(),
+  risk_level: z.enum(["low", "medium", "high", "critical"]).optional(),
+  reason: z.string().trim().min(6).max(1200)
+}).refine((value) => (
+  value.full_name !== undefined ||
+  value.email !== undefined ||
+  value.phone !== undefined ||
+  value.account_status !== undefined ||
+  value.flagged_suspicious !== undefined ||
+  value.risk_level !== undefined
+), "En az bir kullanıcı alanı güncellenmelidir.");
+
+const maritimeAdminCvUpdateSchema = z.object({
+  profile_payload: z.record(z.unknown()),
+  profile_status: z.enum(["draft", "user_confirmed", "verification_pending", "verified", "stale", "restricted"]),
+  completion_percent: z.coerce.number().int().min(0).max(100),
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const maritimeAdminDecisionSchema = z.object({
+  decision: z.enum(["approve", "return_to_review", "restrict"]),
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const maritimeAdminDocumentDecisionSchema = z.object({
+  status: z.enum(["verified", "rejected", "revoked"]),
+  reason: z.string().trim().min(6).max(1200)
+});
+
+const maritimeAdminResetSchema = z.object({
+  scope: z.enum(["cv", "security", "full_maritime"]),
+  confirmation_public_id: z.string().trim().regex(/^AL-[0-9]{5,}$/i),
+  reason: z.string().trim().min(10).max(1200)
+});
+
 const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
 const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "publish_static",
@@ -912,7 +959,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "super-admin-maritime-trust-20260911";
+const BACKEND_BUILD_MARKER = "super-admin-maritime-users-20260916";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -6742,6 +6789,7 @@ async function loadAdminDashboardData(warnings) {
 function publicProfile(profile) {
   return {
     id: profile.id,
+    public_id: profile.public_id || "",
     full_name: profile.full_name || "",
     email: profile.email || "",
     phone: profile.phone || "",
@@ -6753,6 +6801,75 @@ function publicProfile(profile) {
     last_admin_note: profile.last_admin_note || "",
     created_at: profile.created_at || null,
     updated_at: profile.updated_at || null
+  };
+}
+
+function normalizeAllonaPublicId(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+async function resolveMaritimeAdminUser(userRef) {
+  const raw = String(userRef || "").trim();
+  const publicId = normalizeAllonaPublicId(raw);
+  const isUuid = uuidSchema.safeParse(raw).success;
+  if (!isUuid && !/^AL-[0-9]{5,}$/.test(publicId)) {
+    throw httpError("Geçerli bir AL kullanıcı kodu veya kullanıcı kimliği girin.", 400, "MARITIME_ADMIN_USER_REFERENCE_INVALID");
+  }
+
+  let query = supabaseAdmin.from("profiles").select("*").eq("role", "customer");
+  query = isUuid
+    ? query.eq("id", raw)
+    : query.eq("public_id", publicId);
+  const { data: profile, error } = await query.maybeSingle();
+  if (error) throw error;
+  if (!profile) throw httpError("Kullanıcı bulunamadı.", 404, "MARITIME_ADMIN_USER_NOT_FOUND");
+
+  if (String(profile.module || "").toLowerCase() !== "maritime") {
+    const cv = await supabaseAdmin
+      .from("maritime_cv_profiles")
+      .select("id")
+      .eq("seafarer_user_id", profile.id)
+      .maybeSingle();
+    if (cv.error) throw cv.error;
+    if (!cv.data) throw httpError("Bu kullanıcıda denizcilik profili bulunmuyor.", 404, "MARITIME_ADMIN_USER_NOT_FOUND");
+  }
+  return profile;
+}
+
+function maritimeAdminAuthUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email || "",
+    phone: user.phone || "",
+    email_confirmed_at: user.email_confirmed_at || null,
+    phone_confirmed_at: user.phone_confirmed_at || null,
+    last_sign_in_at: user.last_sign_in_at || null,
+    banned_until: user.banned_until || null,
+    created_at: user.created_at || null,
+    updated_at: user.updated_at || null
+  };
+}
+
+function maritimeAdminDocument(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    batch_id: row.batch_id || null,
+    status: row.status,
+    document_type: row.document_type || "unknown",
+    original_file_name: row.original_file_name || "Belge",
+    mime_type: row.mime_type || "",
+    file_size_bytes: row.file_size_bytes || 0,
+    ocr_confidence: row.ocr_confidence ?? null,
+    classification_confidence: row.classification_confidence ?? null,
+    user_confirmation_required: Boolean(row.user_confirmation_required),
+    confirmed_by_user_at: row.confirmed_by_user_at || null,
+    retention_until: row.retention_until || null,
+    analysis_error: row.analysis_error || null,
+    metadata: row.metadata || {},
+    created_at: row.created_at || null,
+    updated_at: row.updated_at || null
   };
 }
 
@@ -15407,6 +15524,459 @@ export function registerRoutes(app) {
     });
 
     return { ok: true, user: publicProfile(updated) };
+  });
+
+  superGet("/maritime-users", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.list");
+    const queryParams = maritimeAdminUserListSchema.parse(request.query || {});
+    const profileSelect = [
+      "id,public_id,full_name,email,phone,role,module,account_status,flagged_suspicious,risk_level,created_at,updated_at",
+      queryParams.profile_status ? "maritime_cv_profiles!inner(profile_status)" : ""
+    ].filter(Boolean).join(",");
+    let query = supabaseAdmin
+      .from("profiles")
+      .select(profileSelect, { count: "exact" })
+      .eq("role", "customer")
+      .eq("module", "maritime")
+      .order("created_at", { ascending: false })
+      .limit(queryParams.limit);
+
+    if (queryParams.account_status) query = query.eq("account_status", queryParams.account_status);
+    if (queryParams.profile_status) query = query.eq("maritime_cv_profiles.profile_status", queryParams.profile_status);
+    if (queryParams.search) {
+      const cleanSearch = queryParams.search.replace(/[^\p{L}\p{N}@.+\- ]/gu, " ").replace(/\s+/g, " ").trim();
+      if (cleanSearch) {
+        const like = `%${cleanSearch}%`;
+        query = query.or(`public_id.ilike.${like},full_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`);
+      }
+    }
+
+    const profilesResult = await runAdminQuery("maritime_super_admin_users", query, []);
+    const profiles = profilesResult.data || [];
+    const userIds = profiles.map((item) => item.id);
+    let cvRows = [];
+    let workspaceRows = [];
+    if (userIds.length) {
+      const [cvResult, workspaceResult] = await Promise.all([
+        supabaseAdmin
+          .from("maritime_cv_profiles")
+          .select("seafarer_user_id,profile_status,completion_percent,last_user_confirmed_at,updated_at")
+          .in("seafarer_user_id", userIds),
+        supabaseAdmin
+          .from("maritime_seafarer_workspaces")
+          .select("user_id,workspace_status,readiness_score,readiness_level,current_work_status,availability_status,updated_at")
+          .in("user_id", userIds)
+      ]);
+      if (cvResult.error) throw cvResult.error;
+      if (workspaceResult.error) throw workspaceResult.error;
+      cvRows = cvResult.data || [];
+      workspaceRows = workspaceResult.data || [];
+    }
+
+    const cvByUser = new Map(cvRows.map((item) => [item.seafarer_user_id, item]));
+    const workspaceByUser = new Map(workspaceRows.map((item) => [item.user_id, item]));
+    const users = profiles.map((profile) => ({
+        ...publicProfile(profile),
+        module: profile.module || "",
+        maritime_cv: cvByUser.get(profile.id) || null,
+        maritime_workspace: workspaceByUser.get(profile.id) || null
+      }));
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_users_viewed",
+      source: "admin",
+      resourceType: "maritime_user",
+      severity: "warning",
+      evidenceTags: ["super_admin", "maritime", "personal_data"],
+      metadata: {
+        count: users.length,
+        search_used: Boolean(queryParams.search),
+        account_status: queryParams.account_status || "all",
+        profile_status: queryParams.profile_status || "all"
+      }
+    });
+
+    return {
+      ok: true,
+      users,
+      count: users.length,
+      total: profilesResult.count,
+      schema_warnings: profilesResult.warning ? [profilesResult.warning] : []
+    };
+  });
+
+  superGet("/maritime-users/:userRef", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.detail");
+    const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const [
+      authResult,
+      cvResult,
+      workspaceResult,
+      readinessResult,
+      readinessItemsResult,
+      documentsResult,
+      extractionsResult,
+      generationsResult,
+      runsResult,
+      applicationsResult,
+      offersResult,
+      supportResult,
+      snapshotsResult,
+      identityResult,
+      passkeyResult,
+      deviceResult,
+      photoResult
+    ] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(profile.id),
+      supabaseAdmin.from("maritime_cv_profiles").select("*").eq("seafarer_user_id", profile.id).maybeSingle(),
+      supabaseAdmin.from("maritime_seafarer_workspaces").select("*").eq("user_id", profile.id).maybeSingle(),
+      supabaseAdmin.from("maritime_readiness_passports").select("*").eq("seafarer_user_id", profile.id).maybeSingle(),
+      supabaseAdmin.from("maritime_readiness_items").select("*").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(200),
+      supabaseAdmin.from("maritime_document_intakes").select("id,batch_id,seafarer_user_id,status,document_type,original_file_name,mime_type,file_size_bytes,ocr_confidence,classification_confidence,user_confirmation_required,confirmed_by_user_at,retention_until,analysis_error,metadata,created_at,updated_at").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(200),
+      supabaseAdmin.from("maritime_document_extractions").select("id,intake_id,status,provider,model_version,extraction_version,extracted_payload,overall_confidence,warnings,user_corrections,confirmed_payload,confirmed_at,rejected_at,created_at,updated_at").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(200),
+      supabaseAdmin.from("maritime_cv_generations").select("*").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(50),
+      supabaseAdmin.from("maritime_smart_account_runs").select("*").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(50),
+      supabaseAdmin.from("maritime_hiring_applications").select("*,job:maritime_jobs(id,job_reference,job_title,rank_code,status)").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(100),
+      supabaseAdmin.from("maritime_offers_contracts").select("*").eq("seafarer_user_id", profile.id).order("created_at", { ascending: false }).limit(100),
+      supabaseAdmin.from("support_tickets").select("id,category,priority,title,status,assigned_admin_id,created_at,updated_at,metadata").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(100),
+      supabaseAdmin.from("maritime_super_admin_snapshots").select("id,action,reason,actor_user_id,created_at,retention_until").eq("target_user_id", profile.id).order("created_at", { ascending: false }).limit(100),
+      supabaseAdmin.from("maritime_cv_identity_locks").select("locked_at,updated_at,identity_version").eq("user_id", profile.id).maybeSingle(),
+      supabaseAdmin.from("maritime_passkey_credentials").select("created_at,updated_at,last_used_at,credential_device_type,credential_backed_up,revoked_at").eq("user_id", profile.id).maybeSingle(),
+      supabaseAdmin.from("maritime_cv_device_bindings").select("device_fingerprint", { count: "exact", head: true }).eq("user_id", profile.id),
+      supabaseAdmin.storage.from("maritime-profile-photos").createSignedUrl(`users/${profile.id}/profile.webp`, 300)
+    ]);
+
+    const databaseResults = [
+      cvResult,
+      workspaceResult,
+      readinessResult,
+      readinessItemsResult,
+      documentsResult,
+      extractionsResult,
+      generationsResult,
+      runsResult,
+      applicationsResult,
+      offersResult,
+      supportResult,
+      snapshotsResult,
+      identityResult,
+      passkeyResult,
+      deviceResult
+    ];
+    const databaseError = databaseResults.find((item) => item.error)?.error;
+    if (databaseError) throw databaseError;
+    if (authResult.error) throw authResult.error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_user_detail_viewed",
+      source: "admin",
+      resourceType: "maritime_user",
+      resourceId: profile.id,
+      severity: "critical",
+      purpose: "maritime_user_administration",
+      evidenceTags: ["super_admin", "maritime", "personal_data", "sensitive_access"],
+      metadata: {
+        public_id: profile.public_id,
+        document_count: documentsResult.data?.length || 0,
+        application_count: applicationsResult.data?.length || 0
+      }
+    });
+
+    return {
+      ok: true,
+      user: publicProfile(profile),
+      profile,
+      auth: maritimeAdminAuthUser(authResult.data?.user),
+      cv_profile: cvResult.data || null,
+      workspace: workspaceResult.data || null,
+      readiness: readinessResult.data || null,
+      readiness_items: readinessItemsResult.data || [],
+      documents: (documentsResult.data || []).map(maritimeAdminDocument),
+      extractions: extractionsResult.data || [],
+      cv_generations: generationsResult.data || [],
+      smart_account_runs: runsResult.data || [],
+      applications: applicationsResult.data || [],
+      offers: offersResult.data || [],
+      support_tickets: supportResult.data || [],
+      admin_history: snapshotsResult.data || [],
+      security: {
+        identity_lock: identityResult.data || null,
+        passkey: passkeyResult.data || null,
+        device_binding_count: deviceResult.count || 0
+      },
+      profile_photo_url: photoResult.error ? "" : String(photoResult.data?.signedUrl || "")
+    };
+  });
+
+  superPatch("/maritime-users/:userRef/account", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.account_update");
+    const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
+    const body = maritimeAdminAccountUpdateSchema.parse(request.body || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const authBefore = await supabaseAdmin.auth.admin.getUserById(profile.id);
+    if (authBefore.error || !authBefore.data?.user) throw authBefore.error || httpError("Kullanıcı giriş kaydı bulunamadı.", 404);
+
+    const snapshot = await supabaseAdmin.from("maritime_super_admin_snapshots").insert({
+      target_user_id: profile.id,
+      actor_user_id: ctx.user.id,
+      action: "account_update",
+      reason: body.reason,
+      snapshot: {
+        profile,
+        auth: maritimeAdminAuthUser(authBefore.data.user)
+      }
+    });
+    if (snapshot.error) throw snapshot.error;
+
+    const normalizedEmail = body.email ? authEmail(body.email) : null;
+    const authPatch = {};
+    if (body.full_name !== undefined || body.phone !== undefined) {
+      authPatch.user_metadata = {
+        ...(authBefore.data.user.user_metadata || {}),
+        ...(body.full_name !== undefined ? { full_name: body.full_name } : {}),
+        ...(body.phone !== undefined ? { phone: body.phone } : {})
+      };
+    }
+    if (normalizedEmail && normalizedEmail !== authEmail(authBefore.data.user.email)) {
+      authPatch.email = normalizedEmail;
+      authPatch.email_confirm = true;
+    }
+    if (Object.keys(authPatch).length) {
+      const authUpdate = await supabaseAdmin.auth.admin.updateUserById(profile.id, authPatch);
+      if (authUpdate.error) throw authUpdate.error;
+    }
+
+    const profilePatch = {
+      module: "maritime",
+      updated_at: new Date().toISOString()
+    };
+    ["full_name", "phone", "account_status", "flagged_suspicious", "risk_level"].forEach((key) => {
+      if (body[key] !== undefined) profilePatch[key] = body[key];
+    });
+    if (normalizedEmail) profilePatch.email = normalizedEmail;
+    const { data: updated, error } = await supabaseAdmin
+      .from("profiles")
+      .update(profilePatch)
+      .eq("id", profile.id)
+      .select("*")
+      .single();
+    if (error) {
+      if (authPatch.email) {
+        await supabaseAdmin.auth.admin.updateUserById(profile.id, {
+          email: authBefore.data.user.email,
+          email_confirm: Boolean(authBefore.data.user.email_confirmed_at)
+        });
+      }
+      throw error;
+    }
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_user_account_updated",
+      source: "admin",
+      resourceType: "maritime_user",
+      resourceId: profile.id,
+      severity: "critical",
+      evidenceTags: ["super_admin", "maritime", "account_update"],
+      metadata: { public_id: profile.public_id, changed_fields: Object.keys(profilePatch), reason: body.reason }
+    });
+    return { ok: true, user: publicProfile(updated) };
+  });
+
+  superPatch("/maritime-users/:userRef/cv", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.cv_update");
+    const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
+    const body = maritimeAdminCvUpdateSchema.parse(request.body || {});
+    const profilePayload = JSON.parse(JSON.stringify(body.profile_payload));
+    const manualFields = profilePayload?.manual_cv?.fields;
+    if (manualFields && typeof manualFields === "object" && !Array.isArray(manualFields)) {
+      profilePayload.given_names = String(manualFields.firstName || "").trim();
+      profilePayload.family_name = String(manualFields.familyName || "").trim();
+      profilePayload.middle_name = String(manualFields.fatherName || "").trim();
+      profilePayload.date_of_birth = String(manualFields.birthDate || "").trim();
+      profilePayload.place_of_birth = String(manualFields.birthPlace || "").trim();
+      profilePayload.nationality = String(manualFields.nationality || "").trim();
+      profilePayload.gender = String(manualFields.gender || "").trim();
+      profilePayload.holder_name = [
+        profilePayload.given_names,
+        profilePayload.middle_name,
+        profilePayload.family_name
+      ].filter(Boolean).join(" ");
+    }
+    if (Buffer.byteLength(JSON.stringify(profilePayload), "utf8") > 500000) {
+      throw httpError("CV verisi güvenli boyut sınırını aşıyor.", 413, "MARITIME_ADMIN_CV_TOO_LARGE");
+    }
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const { data, error } = await supabaseAdmin.rpc("super_admin_update_maritime_cv", {
+      p_target_user_id: profile.id,
+      p_actor_user_id: ctx.user.id,
+      p_profile_payload: profilePayload,
+      p_profile_status: body.profile_status,
+      p_completion_percent: body.completion_percent,
+      p_reason: body.reason
+    });
+    if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_user_cv_updated",
+      source: "admin",
+      resourceType: "maritime_cv_profile",
+      resourceId: profile.id,
+      severity: "critical",
+      evidenceTags: ["super_admin", "maritime", "cv_update", "identity_override"],
+      metadata: {
+        public_id: profile.public_id,
+        profile_status: body.profile_status,
+        completion_percent: body.completion_percent,
+        reason: body.reason
+      }
+    });
+    return { ok: true, result: data };
+  });
+
+  superPost("/maritime-users/:userRef/decision", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.decision");
+    const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
+    const body = maritimeAdminDecisionSchema.parse(request.body || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const { data, error } = await supabaseAdmin.rpc("super_admin_decide_maritime_user", {
+      p_target_user_id: profile.id,
+      p_actor_user_id: ctx.user.id,
+      p_decision: body.decision,
+      p_reason: body.reason
+    });
+    if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: `super_admin.maritime_user_${body.decision}`,
+      source: "admin",
+      resourceType: "maritime_user",
+      resourceId: profile.id,
+      severity: body.decision === "restrict" ? "critical" : "warning",
+      evidenceTags: ["super_admin", "maritime", "decision"],
+      metadata: { public_id: profile.public_id, decision: body.decision, reason: body.reason }
+    });
+    return { ok: true, result: data };
+  });
+
+  superPost("/maritime-users/:userRef/documents/:documentId/decision", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.document_decision");
+    const { userRef, documentId } = z.object({
+      userRef: z.string().trim().min(1).max(80),
+      documentId: uuidSchema
+    }).parse(request.params || {});
+    const body = maritimeAdminDocumentDecisionSchema.parse(request.body || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const review = await supabaseAdmin.rpc("super_admin_review_maritime_document", {
+      p_target_user_id: profile.id,
+      p_actor_user_id: ctx.user.id,
+      p_document_id: documentId,
+      p_status: body.status,
+      p_reason: body.reason
+    });
+    if (review.error) throw review.error;
+    const { data: updated, error } = await supabaseAdmin
+      .from("maritime_document_intakes")
+      .select("id,batch_id,seafarer_user_id,status,document_type,original_file_name,mime_type,file_size_bytes,ocr_confidence,classification_confidence,user_confirmation_required,confirmed_by_user_at,retention_until,analysis_error,metadata,created_at,updated_at")
+      .eq("id", documentId)
+      .eq("seafarer_user_id", profile.id)
+      .single();
+    if (error) throw error;
+
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_document_reviewed",
+      source: "admin",
+      resourceType: "maritime_document_intake",
+      resourceId: documentId,
+      severity: body.status === "verified" ? "warning" : "critical",
+      evidenceTags: ["super_admin", "maritime", "document_review"],
+      metadata: { public_id: profile.public_id, status: body.status, reason: body.reason }
+    });
+    return { ok: true, document: maritimeAdminDocument(updated) };
+  });
+
+  superGet("/maritime-users/:userRef/documents/:documentId/download", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.document_download");
+    const { userRef, documentId } = z.object({
+      userRef: z.string().trim().min(1).max(80),
+      documentId: uuidSchema
+    }).parse(request.params || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const { data: document, error } = await supabaseAdmin
+      .from("maritime_document_intakes")
+      .select("id,seafarer_user_id,storage_bucket,storage_path,original_file_name,status")
+      .eq("id", documentId)
+      .eq("seafarer_user_id", profile.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!document) throw httpError("Belge bulunamadı.", 404, "MARITIME_DOCUMENT_NOT_FOUND");
+    const signed = await supabaseAdmin.storage
+      .from(document.storage_bucket)
+      .createSignedUrl(document.storage_path, 120, { download: document.original_file_name || "maritime-document" });
+    if (signed.error || !signed.data?.signedUrl) throw httpError("Belge bağlantısı oluşturulamadı.", 503, "MARITIME_DOCUMENT_DOWNLOAD_FAILED");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_document_accessed",
+      source: "admin",
+      resourceType: "maritime_document_intake",
+      resourceId: document.id,
+      severity: "critical",
+      purpose: "maritime_document_administration",
+      evidenceTags: ["super_admin", "maritime", "document_access", "sensitive_access"],
+      metadata: { public_id: profile.public_id, expires_in_seconds: 120 }
+    });
+    return { ok: true, url: signed.data.signedUrl, expires_in_seconds: 120 };
+  });
+
+  superPost("/maritime-users/:userRef/reset", async (request) => {
+    const ctx = await requirePermanentSuperAdmin(request, "super_admin.maritime_users.reset");
+    const { userRef } = z.object({ userRef: z.string().trim().min(1).max(80) }).parse(request.params || {});
+    const body = maritimeAdminResetSchema.parse(request.body || {});
+    const profile = await resolveMaritimeAdminUser(userRef);
+    const { data, error } = await supabaseAdmin.rpc("super_admin_reset_maritime_user", {
+      p_target_user_id: profile.id,
+      p_actor_user_id: ctx.user.id,
+      p_scope: body.scope,
+      p_confirmation_public_id: normalizeAllonaPublicId(body.confirmation_public_id),
+      p_reason: body.reason
+    });
+    if (error) throw error;
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: "super_admin.maritime_user_reset",
+      source: "admin",
+      resourceType: "maritime_user",
+      resourceId: profile.id,
+      severity: "critical",
+      evidenceTags: ["super_admin", "maritime", "reset", "owner_confirmed"],
+      metadata: {
+        public_id: profile.public_id,
+        scope: body.scope,
+        reason: body.reason,
+        snapshot_retained_days: 90
+      }
+    });
+    return { ok: true, result: data };
   });
 
   superGet("/partners", async (request) => {

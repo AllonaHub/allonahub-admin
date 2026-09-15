@@ -1227,6 +1227,7 @@
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Maritime Trust", "Denizcilik şikayet, fraud sinyali, erişim olayı ve audit akışı", "<button type=\"button\" data-view-jump=\"maritime-trust\">İzle</button>", "critical"),
+      ownerLine("Denizcilik kullanıcıları", "AL kimliğiyle kullanıcı bulma, CV ve belge onayı, düzenleme ve kontrollü temizleme", "<a href=\"./maritime-users.html\">Yönet</a>", "critical"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
       ownerLine("Yayın hattı", gitops.enabled ? "Güvenli webhook açık" : "Onay kaydı açık, otomatik GitOps kapalı", "<button type=\"button\" data-release-open>Onay ver</button>", gitops.enabled ? "high" : "medium"),
@@ -1270,7 +1271,7 @@
     const gitops = payload.gitops || {};
     return [
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")}`, "", system.database === "online" ? "low" : "high"),
-      ownerLine("Backend build", escape(system.build || "-"), "maritime-trust görünmüyorsa API redeploy eski build'de kalmıştır", system.build === "super-admin-maritime-trust-20260911" ? "low" : "high"),
+      ownerLine("Backend build", escape(system.build || "-"), "denizcilik kullanıcı yönetimi görünmüyorsa API redeploy eski build'de kalmıştır", system.build === "super-admin-maritime-users-20260916" ? "low" : "high"),
       ownerLine("Yetki merkezi", "Rol, durum ve risk komutları backend route ailesi üzerinden çalışır.", `${formatNumber(summary.total_users)} kullanıcı`, "medium"),
       ownerLine("Partner kararları", "Başvurular inceleme/onay/ret akışına bağlı.", `${formatNumber(summary.pending_applications)} bekleyen`, summary.pending_applications ? "high" : "low"),
       ownerLine("Modül yönetimi", "Ana sayfa modülleri ve görünürlük kayıtları yüklendi.", `${formatNumber(summary.homepage_modules)} modül`, "low"),

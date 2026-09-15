@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Denizcilik Kullanıcı Yönetimi | AllonaHub</title>
+  <link rel="stylesheet" href="../css/platform.css?v=20260626-mobile-std27">
+  <link rel="stylesheet" href="../css/admin-maritime-users.css?v=20260916-admin3">
+</head>
+<body data-page="super-admin" data-theme="graphite">
+  <header class="mau-topbar">
+    <a class="mau-brand" href="./super-admin.html" aria-label="AllonaHub Süper Admin">
+      <strong>Allona<span>Hub</span></strong>
+      <small>Denizcilik Kullanıcı Yönetimi</small>
+    </a>
+    <nav class="mau-top-actions" aria-label="Sayfa bağlantıları">
+      <button type="button" class="mau-btn mau-btn-ghost" data-back>Geri Dön</button>
+      <a class="mau-btn mau-btn-ghost" href="../index.html">Ana Sayfa</a>
+      <a class="mau-btn mau-btn-ghost" href="./super-admin.html">Süper Admin</a>
+      <button type="button" class="mau-btn mau-btn-danger" data-signout>Çıkış</button>
+    </nav>
+  </header>
+
+  <main class="mau-shell">
+    <aside class="mau-directory" aria-label="Denizcilik kullanıcıları">
+      <div class="mau-directory-head">
+        <p class="mau-kicker">AL kimlik dizini</p>
+        <h1>Denizcilik Kullanıcıları</h1>
+        <p>Kullanıcıyı AL-50001, ad, e-posta veya telefon ile bulun.</p>
+      </div>
+      <form class="mau-search" data-search-form>
+        <label for="maritimeUserSearch">Kullanıcı ara</label>
+        <div class="mau-search-row">
+          <input id="maritimeUserSearch" name="search" type="search" autocomplete="off" placeholder="AL-50001 veya kullanıcı bilgisi">
+          <button class="mau-btn" type="submit">Ara</button>
+        </div>
+        <div class="mau-filter-row">
+          <select name="profile_status" aria-label="CV durumu">
+            <option value="">Tüm CV durumları</option>
+            <option value="draft">Taslak</option>
+            <option value="user_confirmed">Kullanıcı onaylı</option>
+            <option value="verification_pending">İncelemede</option>
+            <option value="verified">Doğrulanmış</option>
+            <option value="stale">Güncelleme gerekli</option>
+            <option value="restricted">Kısıtlı</option>
+          </select>
+          <select name="account_status" aria-label="Hesap durumu">
+            <option value="">Tüm hesaplar</option>
+            <option value="active">Aktif</option>
+            <option value="passive">Pasif</option>
+            <option value="suspended">Askıda</option>
+          </select>
+        </div>
+      </form>
+      <div class="mau-directory-status" data-directory-status>Yetki doğrulanıyor.</div>
+      <div class="mau-user-list" data-user-list></div>
+    </aside>
+
+    <section class="mau-workspace" aria-live="polite">
+      <div class="mau-alert" data-alert hidden></div>
+      <div class="mau-empty" data-empty-state>
+        <strong>Bir kullanıcı seçin</strong>
+        <p>Hesap, CV, belge, başvuru ve güvenlik kayıtları burada açılacak.</p>
+      </div>
+
+      <div data-user-workspace hidden>
+        <header class="mau-user-head">
+          <div class="mau-portrait" data-profile-photo-wrap>
+            <img data-profile-photo alt="Denizci profil fotoğrafı" hidden>
+            <span data-profile-photo-empty>Fotoğraf yok</span>
+          </div>
+          <div>
+            <p class="mau-kicker">Denizci hesabı</p>
+            <h2 data-user-name>-</h2>
+            <div class="mau-badges">
+              <span class="mau-id" data-user-public-id>AL-</span>
+              <span data-user-account-status>-</span>
+              <span data-user-cv-status>-</span>
+            </div>
+          </div>
+          <div class="mau-decision-panel">
+            <label for="decisionReason">Karar gerekçesi</label>
+            <input id="decisionReason" type="text" maxlength="1200" data-decision-reason placeholder="En az 6 karakter">
+            <div class="mau-action-row">
+              <button class="mau-btn" type="button" data-decision="approve">Onayla</button>
+              <button class="mau-btn mau-btn-ghost" type="button" data-decision="return_to_review">İncelemeye Al</button>
+              <button class="mau-btn mau-btn-danger" type="button" data-decision="restrict">Kısıtla</button>
+            </div>
+          </div>
+        </header>
+
+        <nav class="mau-tabs" aria-label="Kullanıcı yönetim bölümleri">
+          <button class="is-active" type="button" data-tab="account">Hesap</button>
+          <button type="button" data-tab="cv">Maritime CV</button>
+          <button type="button" data-tab="documents">Belgeler</button>
+          <button type="button" data-tab="activity">Başvuru ve Teklifler</button>
+          <button type="button" data-tab="security">Güvenlik</button>
+        </nav>
+
+        <section class="mau-view is-active" data-view="account">
+          <div class="mau-section-head">
+            <div><p class="mau-kicker">Hesap bilgileri</p><h3>Kullanıcı Kaydı</h3></div>
+            <span>AL kimliği kalıcıdır ve değiştirilemez.</span>
+          </div>
+          <form data-account-form>
+            <div class="mau-form-grid">
+              <label>Ad Soyad<input name="full_name" type="text" maxlength="180" required></label>
+              <label>E-posta<input name="email" type="email" maxlength="180" required></label>
+              <label>Telefon<input name="phone" type="tel" maxlength="40"></label>
+              <label>Hesap Durumu<select name="account_status"><option value="active">Aktif</option><option value="passive">Pasif</option><option value="suspended">Askıda</option></select></label>
+              <label>Risk Seviyesi<select name="risk_level"><option value="low">Düşük</option><option value="medium">Orta</option><option value="high">Yüksek</option><option value="critical">Kritik</option></select></label>
+              <label class="mau-check"><input name="flagged_suspicious" type="checkbox"><span>Şüpheli hesap işareti</span></label>
+              <label class="mau-span-all">Değişiklik gerekçesi<textarea name="reason" rows="3" minlength="6" maxlength="1200" required></textarea></label>
+            </div>
+            <div class="mau-form-actions"><button class="mau-btn" type="submit">Hesap Bilgilerini Kaydet</button></div>
+          </form>
+          <div class="mau-stats" data-account-stats></div>
+        </section>
+
+        <section class="mau-view" data-view="cv">
+          <div class="mau-section-head">
+            <div><p class="mau-kicker">Tam kayıt düzenleme</p><h3>Maritime CV</h3></div>
+            <span>Kimlik değişiklikleri çakışma kontrolünden geçer.</span>
+          </div>
+          <form data-cv-form>
+            <div class="mau-form-grid mau-cv-settings">
+              <label>CV Dili<select name="cv_language"><option value="tr">Türkçe</option><option value="az">Azərbaycanca</option><option value="en">English</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="ar">العربية</option><option value="kk">Қазақша</option><option value="uz">O'zbekcha</option><option value="ky">Кыргызча</option></select></label>
+              <label>Mesleki Özet<select name="summary_mode"><option value="auto">Otomatik oluştur</option><option value="custom">Kullanıcının metni</option></select></label>
+              <label>CV Durumu<select name="profile_status"><option value="draft">Taslak</option><option value="user_confirmed">Kullanıcı onaylı</option><option value="verification_pending">İncelemede</option><option value="verified">Doğrulanmış</option><option value="stale">Güncelleme gerekli</option><option value="restricted">Kısıtlı</option></select></label>
+              <label>Tamamlanma Oranı<input name="completion_percent" type="number" min="0" max="100"></label>
+              <label class="mau-span-all">Değişiklik gerekçesi<textarea name="reason" rows="2" minlength="6" maxlength="1200" required></textarea></label>
+            </div>
+            <div class="mau-cv-editor" data-cv-fields></div>
+            <div class="mau-collections" data-cv-collections></div>
+            <div class="mau-form-actions"><button class="mau-btn" type="submit">Maritime CV'yi Kaydet</button></div>
+          </form>
+        </section>
+
+        <section class="mau-view" data-view="documents">
+          <div class="mau-section-head"><div><p class="mau-kicker">Belge kasası</p><h3>Yüklenen Belgeler</h3></div><span data-document-count>0 belge</span></div>
+          <div class="mau-record-list" data-documents></div>
+        </section>
+
+        <section class="mau-view" data-view="activity">
+          <div class="mau-section-head"><div><p class="mau-kicker">Denizcilik akışı</p><h3>Başvurular ve Teklifler</h3></div></div>
+          <div class="mau-split">
+            <div><h4>Başvurular</h4><div class="mau-record-list" data-applications></div></div>
+            <div><h4>Teklifler</h4><div class="mau-record-list" data-offers></div></div>
+          </div>
+        </section>
+
+        <section class="mau-view" data-view="security">
+          <div class="mau-section-head"><div><p class="mau-kicker">Owner kontrollü</p><h3>Güvenlik ve Temizleme</h3></div><span>Her işlem audit kaydına yazılır.</span></div>
+          <div class="mau-stats" data-security-stats></div>
+          <div class="mau-split">
+            <div>
+              <h4>Yönetim Geçmişi</h4>
+              <div class="mau-record-list" data-admin-history></div>
+            </div>
+            <form class="mau-danger-zone" data-reset-form>
+              <h4>Kontrollü Temizleme</h4>
+              <p>İşlem öncesi 90 gün saklanan denetim kaydı oluşturulur. AL kimliği ve giriş hesabı silinmez; güvenlik anahtarı yeniden kurulmalıdır.</p>
+              <label>Kapsam<select name="scope"><option value="cv">Yalnız CV ve eşleşmeleri</option><option value="security">Passkey ve cihaz bağları</option><option value="full_maritime">Tüm aktif denizcilik verileri</option></select></label>
+              <label>Onay için AL kimliğini yazın<input name="confirmation_public_id" type="text" autocomplete="off" placeholder="AL-50001" required></label>
+              <label>Temizleme gerekçesi<textarea name="reason" rows="4" minlength="10" maxlength="1200" required></textarea></label>
+              <button class="mau-btn mau-btn-danger" type="submit">Kontrollü Temizlemeyi Başlat</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/config.js?v=20260623-mfa2"></script>
+  <script src="../js/core.js?v=20260623-mfa2"></script>
+  <script src="../js/supabase-client.js?v=20260623-mfa2"></script>
+  <script src="../js/auth.js?v=20260623-mfa2"></script>
+  <script src="../js/admin-maritime-users.js?v=20260916-admin3"></script>
+</body>
+</html>
