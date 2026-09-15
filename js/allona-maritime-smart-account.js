@@ -69,7 +69,9 @@
     prepareAllLead: ["Uygun ilanlar için taslak hazırlanır; hiçbir başvuru gönderilmez.", "Uyğun elanlar üçün layihə hazırlanır; heç bir müraciət göndərilmir.", "Сәйкес вакансияларға жобалар жасалады; ешбір өтінім жіберілмейді.", "Mos eʼlonlar uchun loyihalar tayyorlanadi; hech bir ariza yuborilmaydi.", "Ылайыктуу жарыяларга долбоор даярдалат; эч бир арыз жөнөтүлбөйт.", "Drafts are prepared for eligible jobs; no application is submitted.", "Für geeignete Stellen werden Entwürfe erstellt; nichts wird versendet.", "Для подходящих вакансий создаются черновики; заявки не отправляются.", "تُجهز مسودات للوظائف المؤهلة دون إرسال أي طلب."],
     noEligible: ["Şu anda taslak hazırlanabilecek yeni uygun ilan yok.", "Hazırda layihə hazırlana bilən yeni uyğun elan yoxdur.", "Қазір жоба жасауға болатын жаңа сәйкес вакансия жоқ.", "Hozir loyiha tayyorlanadigan yangi mos eʼlon yo‘q.", "Азыр долбоор даярдай турган жаңы ылайыктуу жарыя жок.", "There is no new eligible job to prepare right now.", "Derzeit gibt es keine neue geeignete Stelle für einen Entwurf.", "Сейчас нет новых подходящих вакансий для черновика.", "لا توجد حاليًا وظيفة مؤهلة جديدة لإعداد مسودة."],
     cvTitle: ["Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV"],
-    savePdf: ["Yazdır / PDF Kaydet", "Çap et / PDF saxla", "Басып шығару / PDF сақтау", "Chop etish / PDF saqlash", "Басып чыгаруу / PDF сактоо", "Print / Save as PDF", "Drucken / Als PDF speichern", "Печать / Сохранить PDF", "طباعة / حفظ PDF"],
+    savePdf: ["Global CV PDF İndir · 15 USD", "Global CV PDF endir · 15 USD", "Global CV PDF жүктеу · 15 USD", "Global CV PDF yuklab olish · 15 USD", "Global CV PDF жүктөп алуу · 15 USD", "Download Global CV PDF · $15", "Global CV PDF herunterladen · 15 USD", "Скачать Global CV PDF · 15 USD", "تنزيل Global CV PDF · 15 USD"],
+    pdfPaymentFailed: ["15 USD tutarındaki Global CV PDF ödemesi başlatılamadı. Global CV oluşturmak ve güncellemek ücretsiz kalır.", "15 USD məbləğində Global CV PDF ödənişi başladılmadı. Global CV yaratmaq və yeniləmək pulsuz qalır.", "15 USD Global CV PDF төлемі басталмады. Global CV жасау және жаңарту тегін қалады.", "15 USD Global CV PDF to‘lovi boshlanmadi. Global CV yaratish va yangilash bepul qoladi.", "15 USD Global CV PDF төлөмү башталган жок. Global CV түзүү жана жаңыртуу акысыз бойдон калат.", "The $15 Global CV PDF payment could not be started. Creating and updating Global CV remains free.", "Die Zahlung von 15 USD für das Global-CV-PDF konnte nicht gestartet werden. Erstellen und Aktualisieren bleiben kostenlos.", "Не удалось начать оплату Global CV PDF стоимостью 15 USD. Создание и обновление Global CV остаются бесплатными.", "تعذر بدء دفع 15 دولارا لتنزيل Global CV PDF. يظل إنشاء Global CV وتحديثه مجانيا."],
+    pdfLoginRequired: ["Global CV PDF indirmek için giriş yapın.", "Global CV PDF endirmək üçün daxil olun.", "Global CV PDF жүктеу үшін жүйеге кіріңіз.", "Global CV PDF yuklab olish uchun tizimga kiring.", "Global CV PDF жүктөп алуу үчүн кириңиз.", "Sign in to download the Global CV PDF.", "Melden Sie sich an, um das Global-CV-PDF herunterzuladen.", "Войдите, чтобы скачать Global CV PDF.", "سجل الدخول لتنزيل Global CV PDF."],
     close: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
     personalDetails: ["Kişisel Bilgiler", "Şəxsi məlumatlar", "Жеке мәліметтер", "Shaxsiy maʼlumotlar", "Жеке маалыматтар", "Personal Details", "Persönliche Angaben", "Личные данные", "البيانات الشخصية"],
     nationality: ["Uyruk", "Vətəndaşlıq", "Азаматтық", "Fuqarolik", "Жарандык", "Nationality", "Staatsangehörigkeit", "Гражданство", "الجنسية"],
@@ -151,6 +153,13 @@
     vesselType: ["Gemi tipi", "Gəmi növü", "Кеме түрі", "Kema turi", "Кеме түрү", "Vessel type", "Schiffstyp", "Тип судна", "نوع السفينة"],
     grt: ["GRT", "GRT", "GRT", "GRT", "GRT", "GRT", "BRZ", "GRT", "GRT"],
     dwt: ["DWT", "DWT", "DWT", "DWT", "DWT", "DWT", "DWT", "DWT", "DWT"],
+    netTonnage: ["Net tonaj", "Net tonaj", "Таза тоннаж", "Sof tonnaj", "Таза тоннаж", "Net tonnage", "Nettoraumzahl", "Чистый тоннаж", "الحمولة الصافية"],
+    mmsi: ["MMSI", "MMSI", "MMSI", "MMSI", "MMSI", "MMSI", "MMSI", "MMSI", "MMSI"],
+    callSign: ["Çağrı işareti", "Çağırış işarəsi", "Шақыру белгісі", "Chaqiruv belgisi", "Чакыруу белгиси", "Call sign", "Rufzeichen", "Позывной", "إشارة النداء"],
+    buildYear: ["İnşa yılı", "İnşa ili", "Жасалған жылы", "Qurilgan yil", "Курулган жылы", "Year built", "Baujahr", "Год постройки", "سنة البناء"],
+    lengthOverall: ["Tam boy", "Ümumi uzunluq", "Жалпы ұзындық", "Umumiy uzunlik", "Жалпы узундук", "Length overall", "Länge über alles", "Наибольшая длина", "الطول الكلي"],
+    referenceName: ["Yetkili / referans kişi", "Səlahiyyətli / referans şəxs", "Уәкілетті / ұсыным беруші", "Vakil / tavsiya beruvchi", "Ыйгарым укуктуу / сунуштоочу", "Authorized / reference person", "Bevollmächtigte Referenzperson", "Представитель / рекомендатель", "المخول / الشخص المرجعي"],
+    companyPhone: ["Şirket telefonu", "Şirkət telefonu", "Компания телефоны", "Kompaniya telefoni", "Компания телефону", "Company phone", "Unternehmenstelefon", "Телефон компании", "هاتف الشركة"],
     engine: ["Ana makine", "Baş mühərrik", "Негізгі қозғалтқыш", "Asosiy dvigatel", "Негизги кыймылдаткыч", "Main engine", "Hauptmaschine", "Главный двигатель", "المحرك الرئيسي"],
     period: ["Hizmet dönemi", "Xidmət dövrü", "Қызмет мерзімі", "Xizmat davri", "Кызмат мөөнөтү", "Service period", "Dienstzeit", "Период службы", "فترة الخدمة"],
     serviceRecords: ["Hizmet kaydı", "Xidmət qeydi", "Қызмет жазбасы", "Xizmat qaydi", "Кызмат жазуусу", "Service records", "Dienstnachweise", "Записи службы", "سجلات الخدمة"],
@@ -553,6 +562,15 @@
         cvFact(text("seaDays"), row.total_days ? `${row.total_days} ${text("days")}` : ""),
         cvFact(text("grt"), row.gross_tonnage),
         cvFact(text("dwt"), row.deadweight_tonnage),
+        cvFact(text("netTonnage"), row.net_tonnage),
+        cvFact(text("mmsi"), row.mmsi),
+        cvFact(text("callSign"), row.call_sign),
+        cvFact(text("buildYear"), row.build_year),
+        cvFact(text("lengthOverall"), row.length_overall_m ? `${row.length_overall_m} m` : ""),
+        cvFact(text("referenceName"), row.reference_name),
+        cvFact(text("email"), row.reference_company_email),
+        cvFact(text("companyPhone"), row.reference_company_phone),
+        cvFact(text("phone"), row.reference_phone),
         cvFact(text("engine"), [row.engine_make_model, row.engine_power_kw ? `${row.engine_power_kw} kW` : ""].filter(Boolean).join(" · "))
       ], "maritime-cv-facts--service")}</article>`;
     }).join("");
@@ -561,6 +579,7 @@
         cvFact(text("company"), row.company),
         cvFact(text("rank"), row.position),
         cvFact(text("phone"), row.phone),
+        cvFact(text("companyPhone"), row.company_phone),
         cvFact(text("email"), row.email)
       ], "maritime-cv-facts--compact")}</article>`;
     }).join("");
@@ -735,7 +754,7 @@
 
   function setBusy(busy) {
     state.busy = busy;
-    document.querySelectorAll("[data-prepare-smart], [data-confirm-smart], [data-available-now], [data-prepare-drafts], [data-prepare-all], [data-submit-application]").forEach(function (button) {
+    document.querySelectorAll("[data-prepare-smart], [data-confirm-smart], [data-available-now], [data-prepare-drafts], [data-prepare-all], [data-submit-application], [data-print-cv]").forEach(function (button) {
       if (busy) button.disabled = true;
       else if (button.hasAttribute("data-prepare-drafts")) button.disabled = state.payload?.run?.status !== "user_confirmed" || !state.selected.size;
       else button.disabled = false;
@@ -855,9 +874,30 @@
     if (dialog && typeof dialog.close === "function" && dialog.open) dialog.close();
   }
 
-  function printCv() {
-    openCv();
-    window.print();
+  async function printCv() {
+    if (state.busy) return;
+    setBusy(true);
+    try {
+      if (!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.authorizeOrCheckout !== "function") {
+        const error = new Error("MARITIME_COMMERCE_UNAVAILABLE");
+        error.code = "MARITIME_COMMERCE_UNAVAILABLE";
+        throw error;
+      }
+      const authorization = await window.AllonaMaritimeCommerce.authorizeOrCheckout("global_cv_pdf");
+      if (!authorization) return;
+      openCv();
+      document.body.classList.add("maritime-print-authorized");
+      const clearPrintAuthorization = function () {
+        document.body.classList.remove("maritime-print-authorized");
+      };
+      window.addEventListener("afterprint", clearPrintAuthorization, { once: true });
+      window.print();
+      window.setTimeout(clearPrintAuthorization, 60000);
+    } catch (error) {
+      setNotice(text(error?.code === "AUTH_REQUIRED" ? "pdfLoginRequired" : "pdfPaymentFailed"), "error");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function submitApplication(applicationId) {

@@ -11,6 +11,7 @@ import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerEInvoicingRoutes } from "./routes/e-invoicing.js";
 import { registerRoutes } from "./routes/index.js";
 import { registerMaritimeDocumentRoutes } from "./routes/maritime-documents.js";
+import { registerMaritimeCommerceRoutes } from "./routes/maritime-commerce.js";
 import { registerMaritimePasskeyRoutes } from "./routes/maritime-passkey.js";
 import { registerMaritimeSmartAccountRoutes } from "./routes/maritime-smart-account.js";
 import { registerPlatformRoutes } from "./routes/platform.js";
@@ -74,6 +75,7 @@ export async function buildApp() {
         "ASSISTANT_AI_API_KEY",
         "OPENAI_API_KEY",
         "MARITIME_DOCUMENT_AI_API_KEY",
+        "MARINETRAFFIC_API_KEY",
         "ASSISTANT_TELEGRAM_BOT_TOKEN",
         "ASSISTANT_META_ACCESS_TOKEN",
         "ASSISTANT_META_WHATSAPP_ACCESS_TOKEN",
@@ -96,6 +98,7 @@ export async function buildApp() {
         "config.bankPayment.apiKey",
         "config.assistant.aiApiKey",
         "config.maritimeDocuments.aiApiKey",
+        "config.maritimeVesselLookup.marineTrafficApiKey",
         "config.assistant.telegramBotToken",
         "config.assistant.telegramWebhookSecret",
         "config.assistant.metaAccessToken",
@@ -118,6 +121,7 @@ export async function buildApp() {
         "bankPayment.secretKey",
         "bankPayment.apiKey",
         "assistant.aiApiKey",
+        "maritimeVesselLookup.marineTrafficApiKey",
         "assistant.telegramBotToken",
         "assistant.telegramWebhookSecret",
         "assistant.metaAccessToken",
@@ -294,6 +298,7 @@ export async function buildApp() {
   registerEInvoicingRoutes(app);
   registerAssistantRoutes(app);
   registerMaritimeDocumentRoutes(app);
+  registerMaritimeCommerceRoutes(app);
   registerMaritimePasskeyRoutes(app);
   registerMaritimeSmartAccountRoutes(app);
   return app;

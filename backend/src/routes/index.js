@@ -11997,9 +11997,11 @@ export function registerRoutes(app) {
     const token = String(payload.token || "").trim();
     const orderId = payload.orderId ? uuidSchema.parse(payload.orderId) : "";
     const cvPaymentId = payload.cvPaymentId ? uuidSchema.parse(payload.cvPaymentId) : "";
+    const maritimePaymentId = payload.maritimePaymentId ? uuidSchema.parse(payload.maritimePaymentId) : "";
     const partnerPaymentIntentId = payload.partnerPaymentIntentId ? uuidSchema.parse(payload.partnerPaymentIntentId) : "";
+    const suppliedResourceIds = [orderId, cvPaymentId, maritimePaymentId, partnerPaymentIntentId].filter(Boolean);
 
-    if (!token || token.length > 500 || (!orderId && !cvPaymentId && !partnerPaymentIntentId)) {
+    if (!token || token.length > 500 || suppliedResourceIds.length !== 1) {
       await auditEvent({
         request,
         action: "payment.callback_invalid",
@@ -12008,19 +12010,21 @@ export function registerRoutes(app) {
           provider: "bank_payment",
           has_order_id: Boolean(orderId),
           has_cv_payment_id: Boolean(cvPaymentId),
+          has_maritime_payment_id: Boolean(maritimePaymentId),
           has_partner_payment_intent_id: Boolean(partnerPaymentIntentId)
         }
       });
       return reply.code(400).send({ ok: false, message: "Ödeme referansı doğrulanamadı." });
     }
 
-    const { ok, result } = await queryBankCheckoutDetail(token, partnerPaymentIntentId || cvPaymentId || orderId || token);
+    const callbackResourceId = partnerPaymentIntentId || maritimePaymentId || cvPaymentId || orderId;
+    const { ok, result } = await queryBankCheckoutDetail(token, callbackResourceId);
     const paymentStatus = ok && result.status === "success" && result.paymentStatus === "SUCCESS" ? "paid" : "failed";
     await auditEvent({
       request,
       action: "payment.callback_verified",
-      resourceType: partnerPaymentIntentId ? "partner_payment_intent" : cvPaymentId ? "cv_payment" : "order",
-      resourceId: partnerPaymentIntentId || cvPaymentId || orderId,
+      resourceType: partnerPaymentIntentId ? "partner_payment_intent" : maritimePaymentId ? "maritime_pdf_payment" : cvPaymentId ? "cv_payment" : "order",
+      resourceId: callbackResourceId,
       severity: paymentStatus === "paid" ? "info" : "warning",
       metadata: {
         provider: "bank_payment",
@@ -12028,6 +12032,72 @@ export function registerRoutes(app) {
         payment_status: result.paymentStatus || "unknown"
       }
     });
+
+    if (maritimePaymentId) {
+      const { data: payment, error: paymentError } = await supabaseAdmin
+        .from("maritime_pdf_payments")
+        .select("*")
+        .eq("id", maritimePaymentId)
+        .maybeSingle();
+      if (paymentError) throw paymentError;
+      if (!payment) return reply.code(404).send({ ok: false, message: "Denizcilik PDF ödeme kaydı bulunamadı." });
+
+      const providerConversationId = String(result.conversationId || result.conversation_id || "").trim();
+      const providerAmount = Number(result.paidPrice ?? result.price ?? result.amount ?? result.paymentAmount);
+      const providerCurrency = String(result.currency || result.currencyCode || "").trim().toUpperCase();
+      const amountMatches = Number.isFinite(providerAmount) && Math.abs(providerAmount - Number(payment.amount)) < 0.001;
+      const currencyMatches = providerCurrency === String(payment.currency || "").toUpperCase();
+      const conversationMatches = providerConversationId === payment.id;
+      const verifiedStatus = paymentStatus === "paid" && amountMatches && currencyMatches && conversationMatches ? "paid" : "failed";
+
+      if (verifiedStatus === "paid") {
+        const grant = await supabaseAdmin.rpc("grant_maritime_pdf_entitlement", {
+          p_payment_id: payment.id,
+          p_provider_reference: result.paymentId || token,
+          p_provider_status: result.paymentStatus || result.status || "SUCCESS"
+        });
+        if (grant.error) throw grant.error;
+      } else {
+        const { error: updateError } = await supabaseAdmin
+          .from("maritime_pdf_payments")
+          .update({
+            status: "failed",
+            provider_reference: result.paymentId || token,
+            provider_status: result.paymentStatus || result.status || "verification_failed",
+            metadata: {
+              ...(payment.metadata || {}),
+              callback_verification: {
+                amount_matches: amountMatches,
+                currency_matches: currencyMatches,
+                conversation_matches: conversationMatches
+              }
+            }
+          })
+          .eq("id", payment.id)
+          .neq("status", "paid");
+        if (updateError) throw updateError;
+      }
+
+      await auditEvent({
+        request,
+        action: "maritime.pdf_payment_callback_processed",
+        resourceType: "maritime_pdf_payment",
+        resourceId: payment.id,
+        severity: verifiedStatus === "paid" ? "info" : "critical",
+        metadata: {
+          product: payment.product,
+          payment_status: verifiedStatus,
+          amount_matches: amountMatches,
+          currency_matches: currencyMatches,
+          conversation_matches: conversationMatches
+        }
+      });
+      const returnPath = payment.product === "global_cv_pdf"
+        ? "/pages/ecosystem/maritime-smart-account.html?openCv=1"
+        : "/pages/ecosystem/maritime-cv.html";
+      const separator = returnPath.includes("?") ? "&" : "?";
+      return redirect(reply, `${config.siteUrl}${returnPath}${separator}payment=${verifiedStatus}&product=${encodeURIComponent(payment.product)}`);
+    }
 
     if (cvPaymentId) {
       const { data: payment, error: paymentError } = await supabaseAdmin

@@ -28,7 +28,10 @@ const dateFieldIds = new Set([
 const repeatRowKeys = Object.freeze({
   additional: Object.freeze(["name", "institute", "place", "issue", "cert", "expiry"]),
   stcw: Object.freeze(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
-  sea: Object.freeze(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
+  sea: Object.freeze([
+    "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
+    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt"
+  ])
 });
 
 const stcwPresets = Object.freeze([
@@ -55,6 +58,32 @@ function newStcwRow(preset){
     expiry: "",
     unlimited: "false",
     included: "true"
+  };
+}
+
+function newSeaRow(){
+  return {
+    imo:"",
+    vessel:"",
+    company:"",
+    type:"",
+    flag:"",
+    dwt:"",
+    grt:"",
+    netTonnage:"",
+    buildYear:"",
+    mmsi:"",
+    callSign:"",
+    lengthOverall:"",
+    rank:"",
+    signon:"",
+    signoff:"",
+    referenceName:"",
+    referenceCompanyEmail:"",
+    referenceCompanyPhone:"",
+    referencePhone:"",
+    lookupProvider:"",
+    lookupFetchedAt:""
   };
 }
 
@@ -232,6 +261,22 @@ function escapeHTML(value){
     flag:"Flag",
     signOn:"Sign On",
     signOff:"Sign Off",
+    imoNumber:"IMO Number",
+    lookupVessel:"Find Vessel by IMO",
+    lookupSuccess:"Available vessel details were added. Review and complete any missing fields.",
+    lookupFailed:"Vessel details could not be retrieved. Check the IMO number and complete the fields manually.",
+    lookupManualHint:"Enter a valid IMO number to retrieve available vessel particulars. Fields not returned by the provider remain editable.",
+    mmsi:"MMSI",
+    callSign:"Call Sign",
+    buildYear:"Year Built",
+    lengthOverall:"Length Overall (m)",
+    netTonnage:"Net Tonnage",
+    referenceDetails:"Reference Contact Details",
+    referenceName:"Authorized / Reference Person",
+    referenceCompanyEmail:"Company E-mail",
+    referenceCompanyPhone:"Company Phone",
+    referencePhone:"Authorized Person Phone",
+    seaRequiredMessage:"Complete the required sea-service and reference fields for experience {row}: {fields}.",
 
     addAdditional:"+ Add Additional Row",
     addSTCW:"+ Add STCW Certificate",
@@ -246,7 +291,7 @@ function escapeHTML(value){
     removePhotoFailed:"The photo could not be removed from your account. Please try again.",
     photoRemoved:"The profile photo was removed.",
     saveDraft:"Save",
-    downloadPdf:"Download PDF",
+    downloadPdf:"Download PDF · $7",
     clearForm:"Clear",
     cvLanguage:"CV language",
     photoAlt:"CV profile photo",
@@ -292,7 +337,11 @@ function escapeHTML(value){
     rowLimit:"You can add up to 50 rows in this section.",
     pdfLibraryFailed:"The PDF library could not be loaded. Check your connection and try again.",
     pdfPreviewMissing:"The PDF preview was not found. Reload the page and try again.",
-    pdfGenerationFailed:"The PDF could not be created. Please try again."
+    pdfGenerationFailed:"The PDF could not be created. Please try again.",
+    pdfLoginRequired:"Sign in before downloading your PDF.",
+    pdfSaveRequired:"Save your Maritime CV before downloading the PDF.",
+    pdfPaymentSecurityFailed:"The secure payment address could not be verified.",
+    pdfPaymentFailed:"The $7 PDF payment could not be started. Saving and editing your CV remain free."
   },
     tr: {
     formTitle:"CV Bilgileri",
@@ -434,6 +483,22 @@ function escapeHTML(value){
     flag:"Bayrak",
     signOn:"Katılış",
     signOff:"Ayrılış",
+    imoNumber:"IMO Numarası",
+    lookupVessel:"IMO ile Gemiyi Bul",
+    lookupSuccess:"Bulunabilen gemi bilgileri eklendi. Eksik alanları kontrol edip tamamlayın.",
+    lookupFailed:"Gemi bilgileri alınamadı. IMO numarasını kontrol edip alanları elle tamamlayın.",
+    lookupManualHint:"Geçerli IMO numarasını girerek mevcut gemi bilgilerini getirin. Sağlayıcının döndürmediği alanlar düzenlenebilir kalır.",
+    mmsi:"MMSI",
+    callSign:"Çağrı İşareti",
+    buildYear:"İnşa Yılı",
+    lengthOverall:"Tam Boy (m)",
+    netTonnage:"Net Tonaj",
+    referenceDetails:"Referans İletişim Bilgileri",
+    referenceName:"Şirket Yetkilisi / Referans Kişi",
+    referenceCompanyEmail:"Şirket E-postası",
+    referenceCompanyPhone:"Şirket Telefonu",
+    referencePhone:"Yetkili Kişi Telefonu",
+    seaRequiredMessage:"{row}. deniz tecrübesi için zorunlu gemi ve referans alanlarını tamamlayın: {fields}.",
 
     addAdditional:"+ Ek Sertifika Ekle",
     addSTCW:"+ STCW Sertifikası Ekle",
@@ -448,7 +513,7 @@ function escapeHTML(value){
     removePhotoFailed:"Fotoğraf hesabınızdan silinemedi. Lütfen yeniden deneyin.",
     photoRemoved:"Profil fotoğrafı silindi.",
     saveDraft:"Kaydet",
-    downloadPdf:"PDF İndir",
+    downloadPdf:"PDF İndir · 7 USD",
     clearForm:"Temizle",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotoğrafı",
@@ -494,7 +559,11 @@ function escapeHTML(value){
     rowLimit:"Bu bölüme en fazla 50 satır eklenebilir.",
     pdfLibraryFailed:"PDF kütüphanesi yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.",
     pdfPreviewMissing:"PDF önizlemesi bulunamadı. Sayfayı yenileyip yeniden deneyin.",
-    pdfGenerationFailed:"PDF oluşturulamadı. Lütfen yeniden deneyin."
+    pdfGenerationFailed:"PDF oluşturulamadı. Lütfen yeniden deneyin.",
+    pdfLoginRequired:"PDF indirmeden önce giriş yapın.",
+    pdfSaveRequired:"PDF indirmeden önce Maritime CV'nizi kaydedin.",
+    pdfPaymentSecurityFailed:"Güvenli ödeme adresi doğrulanamadı.",
+    pdfPaymentFailed:"7 USD tutarındaki PDF ödemesi başlatılamadı. CV'yi kaydetmek ve düzenlemek ücretsiz kalır."
   },
 
     az: {
@@ -637,6 +706,22 @@ function escapeHTML(value){
     flag:"Bayraq",
     signOn:"Giriş",
     signOff:"Çıxış",
+    imoNumber:"IMO Nömrəsi",
+    lookupVessel:"IMO ilə Gəmini Tap",
+    lookupSuccess:"Tapılan gəmi məlumatları əlavə edildi. Çatışmayan sahələri yoxlayıb tamamlayın.",
+    lookupFailed:"Gəmi məlumatları alınmadı. IMO nömrəsini yoxlayıb sahələri əl ilə tamamlayın.",
+    lookupManualHint:"Mövcud gəmi məlumatlarını gətirmək üçün etibarlı IMO nömrəsini daxil edin. Təchizatçının qaytarmadığı sahələr redaktə edilə bilər.",
+    mmsi:"MMSI",
+    callSign:"Çağırış İşarəsi",
+    buildYear:"İnşa İli",
+    lengthOverall:"Ümumi Uzunluq (m)",
+    netTonnage:"Net Tonaj",
+    referenceDetails:"Referans Əlaqə Məlumatları",
+    referenceName:"Şirkət Nümayəndəsi / Referans Şəxs",
+    referenceCompanyEmail:"Şirkət E-poçtu",
+    referenceCompanyPhone:"Şirkət Telefonu",
+    referencePhone:"Səlahiyyətli Şəxsin Telefonu",
+    seaRequiredMessage:"{row}-ci dəniz təcrübəsi üçün məcburi gəmi və referans sahələrini tamamlayın: {fields}.",
 
     addAdditional:"+ Əlavə Sertifikat Əlavə Et",
     addSTCW:"+ STCW Sertifikatı Əlavə Et",
@@ -651,7 +736,7 @@ function escapeHTML(value){
     removePhotoFailed:"Şəkil hesabınızdan silinə bilmədi. Yenidən cəhd edin.",
     photoRemoved:"Profil şəkli silindi.",
     saveDraft:"Yadda saxla",
-    downloadPdf:"PDF endir",
+    downloadPdf:"PDF endir · 7 USD",
     clearForm:"Təmizlə",
     cvLanguage:"CV dili",
     photoAlt:"CV profil fotosu",
@@ -697,7 +782,11 @@ function escapeHTML(value){
     rowLimit:"Bu bölməyə ən çox 50 sətir əlavə edilə bilər.",
     pdfLibraryFailed:"PDF kitabxanası yüklənmədi. Bağlantını yoxlayıb yenidən cəhd edin.",
     pdfPreviewMissing:"PDF önizləməsi tapılmadı. Səhifəni yeniləyib təkrar cəhd edin.",
-    pdfGenerationFailed:"PDF yaradıla bilmədi. Yenidən cəhd edin."
+    pdfGenerationFailed:"PDF yaradıla bilmədi. Yenidən cəhd edin.",
+    pdfLoginRequired:"PDF endirməzdən əvvəl daxil olun.",
+    pdfSaveRequired:"PDF endirməzdən əvvəl Maritime CV-ni yadda saxlayın.",
+    pdfPaymentSecurityFailed:"Təhlükəsiz ödəniş ünvanı təsdiqlənmədi.",
+    pdfPaymentFailed:"7 USD məbləğində PDF ödənişi başladılmadı. CV-ni saxlamaq və redaktə etmək pulsuz qalır."
   },
     ru: {
     formTitle:"Информация CV",
@@ -839,6 +928,22 @@ function escapeHTML(value){
     flag:"Флаг",
     signOn:"Посадка",
     signOff:"Списание",
+    imoNumber:"Номер IMO",
+    lookupVessel:"Найти судно по IMO",
+    lookupSuccess:"Доступные сведения о судне добавлены. Проверьте и заполните недостающие поля.",
+    lookupFailed:"Не удалось получить сведения о судне. Проверьте номер IMO и заполните поля вручную.",
+    lookupManualHint:"Введите действительный номер IMO для получения доступных характеристик судна. Поля, не возвращенные поставщиком, остаются редактируемыми.",
+    mmsi:"MMSI",
+    callSign:"Позывной",
+    buildYear:"Год Постройки",
+    lengthOverall:"Наибольшая Длина (м)",
+    netTonnage:"Чистый Тоннаж",
+    referenceDetails:"Контактные Данные Рекомендателя",
+    referenceName:"Представитель Компании / Рекомендатель",
+    referenceCompanyEmail:"E-mail Компании",
+    referenceCompanyPhone:"Телефон Компании",
+    referencePhone:"Телефон Представителя",
+    seaRequiredMessage:"Заполните обязательные сведения о судне и рекомендателе для опыта № {row}: {fields}.",
 
     addAdditional:"+ Добавить Сертификат",
     addSTCW:"+ Добавить STCW",
@@ -853,7 +958,7 @@ function escapeHTML(value){
     removePhotoFailed:"Не удалось удалить фотографию из учетной записи. Повторите попытку.",
     photoRemoved:"Фотография профиля удалена.",
     saveDraft:"Сохранить",
-    downloadPdf:"Скачать PDF",
+    downloadPdf:"Скачать PDF · 7 USD",
     clearForm:"Очистить",
     cvLanguage:"Язык CV",
     photoAlt:"Фото профиля CV",
@@ -899,7 +1004,11 @@ function escapeHTML(value){
     rowLimit:"В этот раздел можно добавить не более 50 строк.",
     pdfLibraryFailed:"Не удалось загрузить библиотеку PDF. Проверьте соединение и повторите попытку.",
     pdfPreviewMissing:"Предпросмотр PDF не найден. Обновите страницу и повторите попытку.",
-    pdfGenerationFailed:"Не удалось создать PDF. Повторите попытку."
+    pdfGenerationFailed:"Не удалось создать PDF. Повторите попытку.",
+    pdfLoginRequired:"Войдите в аккаунт перед скачиванием PDF.",
+    pdfSaveRequired:"Сохраните Maritime CV перед скачиванием PDF.",
+    pdfPaymentSecurityFailed:"Не удалось проверить безопасный адрес оплаты.",
+    pdfPaymentFailed:"Не удалось начать оплату PDF стоимостью 7 USD. Сохранение и редактирование CV остаются бесплатными."
   }
 };
 
@@ -1253,22 +1362,45 @@ function renderSeaInputs(){
 
   seaData.forEach((item, index) => {
     const div = document.createElement("div");
-    div.className = "group cv-repeat-group";
+    div.className = "group cv-repeat-group cv-sea-card";
 
     div.innerHTML = `
       <h3>${t("seaExperience")} ${index + 1}</h3>
 
-      <label>${t("vessel")}</label>
-      <input value="${escapeAttr(item.vessel)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="vessel">
+      <label class="cv-required-label">${t("imoNumber")}</label>
+      <div class="cv-imo-lookup-row">
+        <input inputmode="numeric" maxlength="7" required aria-required="true" aria-label="${escapeAttr(t("imoNumber"))}" value="${escapeAttr(item.imo)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="imo">
+        <button type="button" class="secondary" data-cv-action="lookup-sea-imo" data-cv-index="${index}">${t("lookupVessel")}</button>
+      </div>
+      <p class="cv-field-help">${t("lookupManualHint")}</p>
 
-      <label>${t("company")}</label>
-      <input value="${escapeAttr(item.company)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="company">
+      <label class="cv-required-label">${t("vessel")}</label>
+      <input required aria-required="true" value="${escapeAttr(item.vessel)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="vessel">
 
-      <label>${t("vesselType")}</label>
-      <input value="${escapeAttr(item.type)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="type">
+      <label class="cv-required-label">${t("company")}</label>
+      <input required aria-required="true" value="${escapeAttr(item.company)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="company">
 
-      <label>${t("flag")}</label>
-      <input value="${escapeAttr(item.flag)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="flag">
+      <div class="row2">
+        <div>
+          <label class="cv-required-label">${t("vesselType")}</label>
+          <input required aria-required="true" value="${escapeAttr(item.type)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="type">
+        </div>
+        <div>
+          <label class="cv-required-label">${t("flag")}</label>
+          <input required aria-required="true" value="${escapeAttr(item.flag)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="flag">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>${t("mmsi")}</label>
+          <input inputmode="numeric" value="${escapeAttr(item.mmsi)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="mmsi">
+        </div>
+        <div>
+          <label>${t("callSign")}</label>
+          <input value="${escapeAttr(item.callSign)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="callSign">
+        </div>
+      </div>
 
       <div class="row2">
         <div>
@@ -1282,18 +1414,50 @@ function renderSeaInputs(){
         </div>
       </div>
 
-      <label>${t("rank")}</label>
-      <input value="${escapeAttr(item.rank)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="rank">
+      <div class="row2">
+        <div>
+          <label>${t("netTonnage")}</label>
+          <input inputmode="decimal" value="${escapeAttr(item.netTonnage)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="netTonnage">
+        </div>
+        <div>
+          <label>${t("buildYear")}</label>
+          <input inputmode="numeric" value="${escapeAttr(item.buildYear)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="buildYear">
+        </div>
+      </div>
+
+      <label>${t("lengthOverall")}</label>
+      <input inputmode="decimal" value="${escapeAttr(item.lengthOverall)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="lengthOverall">
+
+      <label class="cv-required-label">${t("rank")}</label>
+      <input required aria-required="true" value="${escapeAttr(item.rank)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="rank">
 
       <div class="row2">
         <div>
-          <label>${t("signOn")}</label>
-          <input type="date" value="${escapeAttr(normalizeDateInput(item.signon))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signon">
+          <label class="cv-required-label">${t("signOn")}</label>
+          <input type="date" required aria-required="true" value="${escapeAttr(normalizeDateInput(item.signon))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signon">
         </div>
 
         <div>
-          <label>${t("signOff")}</label>
-          <input type="date" value="${escapeAttr(normalizeDateInput(item.signoff))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signoff">
+          <label class="cv-required-label">${t("signOff")}</label>
+          <input type="date" required aria-required="true" value="${escapeAttr(normalizeDateInput(item.signoff))}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="signoff">
+        </div>
+      </div>
+
+      <div class="cv-sea-reference-fields">
+        <h4>${t("referenceDetails")}</h4>
+        <label class="cv-required-label">${t("referenceName")}</label>
+        <input required aria-required="true" value="${escapeAttr(item.referenceName)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="referenceName">
+        <label class="cv-required-label">${t("referenceCompanyEmail")}</label>
+        <input type="email" required aria-required="true" value="${escapeAttr(item.referenceCompanyEmail)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="referenceCompanyEmail">
+        <div class="row2">
+          <div>
+            <label class="cv-required-label">${t("referenceCompanyPhone")}</label>
+            <input type="tel" required aria-required="true" value="${escapeAttr(item.referenceCompanyPhone)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="referenceCompanyPhone">
+          </div>
+          <div>
+            <label class="cv-required-label">${t("referencePhone")}</label>
+            <input type="tel" required aria-required="true" value="${escapeAttr(item.referencePhone)}" data-cv-row="sea" data-cv-index="${index}" data-cv-key="referencePhone">
+          </div>
         </div>
       </div>
 
@@ -1308,26 +1472,76 @@ function renderSeaInputs(){
 function updateSea(index, key, value){
   const rowIndex = Number(index);
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex] || !repeatRowKeys.sea.includes(key)) return;
-  seaData[rowIndex][key] = String(value ?? "").slice(0, maxRepeatFieldLength);
+  const clean = String(value ?? "").slice(0, maxRepeatFieldLength);
+  seaData[rowIndex][key] = key === "imo" ? clean.replace(/\D/g, "").slice(0, 7) : clean;
   renderSea();
   autoSaveCV();
+}
+
+function validImo(value){
+  const imo = String(value || "").replace(/\D/g, "").slice(0, 7);
+  if(!/^\d{7}$/.test(imo)) return false;
+  const checksum = imo.slice(0, 6).split("").reduce((sum, digit, index) => sum + Number(digit) * (7 - index), 0) % 10;
+  return checksum === Number(imo[6]);
+}
+
+async function lookupSeaVessel(index, button){
+  const rowIndex = Number(index);
+  const row = seaData[rowIndex];
+  if(!Number.isInteger(rowIndex) || !row) return;
+  if(!validImo(row.imo)){
+    alert(t("lookupFailed"));
+    return;
+  }
+  if(!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.lookupVessel !== "function"){
+    alert(t("lookupFailed"));
+    return;
+  }
+  if(button){
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+  }
+  try{
+    const result = await window.AllonaMaritimeCommerce.lookupVessel(row.imo);
+    const vessel = result.vessel || {};
+    const values = {
+      imo:vessel.imo,
+      vessel:vessel.vessel_name,
+      company:vessel.company_name,
+      type:vessel.vessel_type,
+      flag:vessel.flag,
+      dwt:vessel.dwt,
+      grt:vessel.grt,
+      netTonnage:vessel.net_tonnage,
+      buildYear:vessel.build_year,
+      mmsi:vessel.mmsi,
+      callSign:vessel.call_sign,
+      lengthOverall:vessel.length_overall_m
+    };
+    Object.entries(values).forEach(([key, value]) => {
+      if(value !== null && value !== undefined && value !== "" && !String(row[key] || "").trim()) row[key] = String(value);
+    });
+    row.lookupProvider = String(vessel.provider || "marinetraffic");
+    row.lookupFetchedAt = String(vessel.fetched_at || new Date().toISOString());
+    renderSeaInputs();
+    renderSea();
+    autoSaveCV();
+    alert(t("lookupSuccess"));
+  } catch(error){
+    alert(t("lookupFailed"));
+  } finally{
+    if(button){
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    }
+  }
 }
   function addSea(){
   if(seaData.length >= maxRepeatRows){
     alert(t("rowLimit"));
     return;
   }
-  seaData.push({
-    vessel:"",
-    company:"",
-    type:"",
-    flag:"",
-    dwt:"",
-    grt:"",
-    rank:"",
-    signon:"",
-    signoff:""
-  });
+  seaData.push(newSeaRow());
 
   renderSeaInputs();
   renderSea();
@@ -1353,7 +1567,7 @@ function renderSea(){
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${escapeHTML(translateDynamicValue(item.vessel, "vessel"))}</td>
+      <td>${escapeHTML(translateDynamicValue(item.vessel, "vessel"))}<br><small>IMO: ${escapeHTML(item.imo)}</small></td>
       <td>${escapeHTML(translateDynamicValue(item.company, "organization"))}</td>
       <td>${escapeHTML(translateDynamicValue(item.type, "semantic"))}</td>
       <td>${escapeHTML(translateDynamicValue(item.flag, "semantic"))}</td>
@@ -1365,6 +1579,10 @@ function renderSea(){
     `;
 
     tbody.appendChild(tr);
+    const details = document.createElement("tr");
+    details.className = "cv-sea-detail-row";
+    details.innerHTML = `<td colspan="9"><strong>${escapeHTML(t("referenceDetails"))}:</strong> ${escapeHTML(translateDynamicValue(item.referenceName, "proper"))} · ${escapeHTML(item.referenceCompanyEmail)} · ${escapeHTML(t("referenceCompanyPhone"))}: ${escapeHTML(item.referenceCompanyPhone)} · ${escapeHTML(t("referencePhone"))}: ${escapeHTML(item.referencePhone)}<br><strong>${escapeHTML(t("mmsi"))}:</strong> ${escapeHTML(item.mmsi)} · <strong>${escapeHTML(t("callSign"))}:</strong> ${escapeHTML(item.callSign)} · <strong>${escapeHTML(t("buildYear"))}:</strong> ${escapeHTML(item.buildYear)} · <strong>${escapeHTML(t("netTonnage"))}:</strong> ${escapeHTML(item.netTonnage)} · <strong>${escapeHTML(t("lengthOverall"))}:</strong> ${escapeHTML(item.lengthOverall)}</td>`;
+    tbody.appendChild(details);
   });
 }
 
@@ -1456,6 +1674,26 @@ function validateMaritimeCV(options){
     if(control) control.setAttribute("aria-invalid", "true");
     firstInvalid = firstInvalid || control || card;
     missing.push(`${preset.code} ${t("certificate")}`);
+  });
+  const requiredSeaFields = [
+    ["imo", "imoNumber"], ["vessel", "vessel"], ["company", "company"], ["type", "vesselType"], ["flag", "flag"],
+    ["rank", "rank"], ["signon", "signOn"], ["signoff", "signOff"], ["referenceName", "referenceName"],
+    ["referenceCompanyEmail", "referenceCompanyEmail"], ["referenceCompanyPhone", "referenceCompanyPhone"], ["referencePhone", "referencePhone"]
+  ];
+  seaData.forEach((row, index) => {
+    const hasExperience = repeatRowKeys.sea.some(key => !["lookupProvider", "lookupFetchedAt"].includes(key) && String(row[key] || "").trim());
+    if(!hasExperience) return;
+    const rowMissing = [];
+    requiredSeaFields.forEach(([key, labelKey]) => {
+      const value = String(row[key] || "").trim();
+      const invalid = !value || (key === "imo" && !validImo(value)) || (key === "referenceCompanyEmail" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+      if(!invalid) return;
+      const control = document.querySelector(`[data-cv-row="sea"][data-cv-index="${index}"][data-cv-key="${key}"]`);
+      invalidateCvControl(control);
+      firstInvalid = firstInvalid || control;
+      rowMissing.push(t(labelKey));
+    });
+    if(rowMissing.length) missing.push(t("seaRequiredMessage").replace("{row}", String(index + 1)).replace("{fields}", rowMissing.join(", ")));
   });
   if(!missing.length) return true;
   if(options?.announce !== false) alert(t("requiredCvMessage").replace("{fields}", [...new Set(missing)].join(", ")));
@@ -1735,6 +1973,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 window.getMaritimeCVData = getCVData;
 window.validateMaritimeCV = validateMaritimeCV;
+window.lookupSeaVessel = lookupSeaVessel;
 window.setMaritimeCvPhoto = setMaritimeCvPhoto;
 window.applyMaritimeCVData = function(data){
   applyCVData(data);

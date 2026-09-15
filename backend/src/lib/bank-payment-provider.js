@@ -182,6 +182,63 @@ export function cvCheckoutPayload({ payment, profile, user, callbackUrl, ip }) {
   };
 }
 
+export function maritimePdfCheckoutPayload({ payment, profile, user, callbackUrl, ip }) {
+  const { name, surname } = splitName(profile?.full_name || user.email || "Allona Maritime Customer", "Allona Maritime Customer");
+  const productNames = {
+    maritime_cv_pdf: "AllonaHub Maritime CV PDF",
+    global_cv_pdf: "AllonaHub Global CV PDF"
+  };
+  const price = amount(payment.amount);
+
+  return {
+    locale: "en",
+    conversationId: payment.id,
+    price,
+    paidPrice: price,
+    currency: "USD",
+    basketId: `MARITIME-PDF-${payment.id}`,
+    paymentGroup: "PRODUCT",
+    callbackUrl,
+    enabledInstallments: [1],
+    buyer: {
+      id: user.id,
+      name,
+      surname,
+      identityNumber: "11111111111",
+      email: user.email,
+      gsmNumber: profile?.phone || "",
+      registrationAddress: "AllonaHub Maritime Digital Service",
+      city: "Istanbul",
+      country: "Turkey",
+      zipCode: "34000",
+      ip: ip || "0.0.0.0"
+    },
+    shippingAddress: {
+      address: "AllonaHub Maritime Digital Service",
+      zipCode: "34000",
+      contactName: `${name} ${surname}`,
+      city: "Istanbul",
+      country: "Turkey"
+    },
+    billingAddress: {
+      address: "AllonaHub Maritime Digital Service",
+      zipCode: "34000",
+      contactName: `${name} ${surname}`,
+      city: "Istanbul",
+      country: "Turkey"
+    },
+    basketItems: [
+      {
+        id: `${payment.product}-${payment.id}`,
+        price,
+        name: productNames[payment.product] || "AllonaHub Maritime PDF",
+        category1: "Maritime",
+        itemType: "VIRTUAL"
+      }
+    ]
+  };
+}
+
 export function partnerPaymentIntentCheckoutPayload({ intent, business, buyer, callbackUrl, ip }) {
   const { name, surname } = splitName(buyer?.customer_name || intent.customer_name || "Allona Müşteri");
   const amountValue = amount(intent.amount);

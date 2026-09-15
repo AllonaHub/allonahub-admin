@@ -8,6 +8,7 @@ import {
 } from "../lib/maritime-smart-profile.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { requireMaritimePasskeyProof } from "../lib/maritime-passkey.js";
+import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
@@ -38,7 +39,10 @@ const manualCvFieldKeys = new Set([
 const manualCvRowKeys = {
   additional: new Set(["name", "institute", "place", "issue", "cert", "expiry"]),
   stcw: new Set(["presetId", "code", "name", "institute", "place", "issue", "rank", "cert", "number", "expiry", "unlimited", "included"]),
-  sea: new Set(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
+  sea: new Set([
+    "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
+    "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt"
+  ])
 };
 function restrictedStringRecord(allowedKeys, maxLength) {
   return z.record(z.string().max(maxLength)).superRefine((value, context) => {
@@ -54,7 +58,20 @@ const manualCvSchema = z.object({
   additionalData: z.array(restrictedStringRecord(manualCvRowKeys.additional, 300)).max(50).default([]),
   stcwData: z.array(restrictedStringRecord(manualCvRowKeys.stcw, 300)).max(50).default([]),
   seaData: z.array(restrictedStringRecord(manualCvRowKeys.sea, 300)).max(50).default([])
-}).strict();
+}).strict().superRefine((value, context) => {
+  value.seaData.forEach((row, index) => {
+    const contentKeys = [...manualCvRowKeys.sea].filter((key) => !["lookupProvider", "lookupFetchedAt"].includes(key));
+    if (!contentKeys.some((key) => String(row[key] || "").trim())) return;
+    const required = ["imo", "vessel", "company", "type", "flag", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"];
+    required.forEach((key) => {
+      if (!String(row[key] || "").trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, key], message: "Deniz hizmeti referans alanı zorunludur." });
+    });
+    if (row.imo && !isValidImoNumber(row.imo)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "imo"], message: "Geçerli bir IMO numarası gereklidir." });
+    if (row.referenceCompanyEmail && !z.string().email().safeParse(row.referenceCompanyEmail).success) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "referenceCompanyEmail"], message: "Geçerli şirket e-postası gereklidir." });
+    }
+  });
+});
 const manualCvRequestSchema = z.object({ cv: manualCvSchema, confirmation: z.literal(true) }).strict();
 const identitySupportRequestSchema = z.object({
   message: z.string().trim().min(10).max(2000),
@@ -151,7 +168,9 @@ function cvDate(value) {
 }
 
 function cvNumber(value) {
-  const numeric = Number(String(value ?? "").replace(/[^0-9.]/g, ""));
+  const clean = String(value ?? "").replace(/[^0-9.]/g, "");
+  if (!clean) return null;
+  const numeric = Number(clean);
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : null;
 }
 
@@ -301,18 +320,41 @@ function manualCvPayload(cv) {
   }] : [];
   const seaService = cv.seaData.map((row) => ({
     vessel_name: cvText(row.vessel) || null,
+    imo_number: isValidImoNumber(row.imo) ? normalizeImoNumber(row.imo) : null,
     company_name: cvText(row.company) || null,
     vessel_type: cvText(row.type) || null,
     vessel_type_i18n: localizedManualValue(cv.lang, row.type),
     flag: cvText(row.flag) || null,
     deadweight_tonnage: cvNumber(row.dwt),
     gross_tonnage: cvNumber(row.grt),
+    net_tonnage: cvNumber(row.netTonnage),
+    build_year: cvNumber(row.buildYear),
+    mmsi: cvText(row.mmsi) || null,
+    call_sign: cvText(row.callSign) || null,
+    length_overall_m: cvNumber(row.lengthOverall),
     rank: cvText(row.rank) || null,
     rank_i18n: localizedManualValue(cv.lang, row.rank),
     sign_on_date: cvDate(row.signon),
     sign_off_date: cvDate(row.signoff),
+    reference_name: cvText(row.referenceName) || null,
+    reference_company_email: cvText(row.referenceCompanyEmail) || null,
+    reference_company_phone: cvText(row.referenceCompanyPhone) || null,
+    reference_phone: cvText(row.referencePhone) || null,
+    lookup_provider: cvText(row.lookupProvider) || null,
+    lookup_fetched_at: cvText(row.lookupFetchedAt) || null,
     confidence: 1
   })).filter((row) => row.vessel_name || row.company_name || row.rank || row.sign_on_date);
+  const references = cv.seaData.map((row) => ({
+    name: cvText(row.referenceName) || null,
+    company: cvText(row.company) || null,
+    position: "Vessel service reference",
+    phone: cvText(row.referencePhone) || null,
+    company_phone: cvText(row.referenceCompanyPhone) || null,
+    email: cvText(row.referenceCompanyEmail) || null,
+    vessel_name: cvText(row.vessel) || null,
+    imo_number: isValidImoNumber(row.imo) ? normalizeImoNumber(row.imo) : null,
+    confidence: 1
+  })).filter((row) => row.name || row.company || row.phone || row.email);
   const skills = [fields.windows, fields.office, fields.internet].map(cvText).filter(Boolean).map((name) => ({ name, category: "digital", confidence: 1 }));
   const emergencyContacts = cvText(fields.kinName) || cvText(fields.kinPhone) ? [{
     name: cvText(fields.kinName) || null,
@@ -364,6 +406,7 @@ function manualCvPayload(cv) {
     languages: [manualLanguage(fields, "az", cv.lang), manualLanguage(fields, "tr", cv.lang), manualLanguage(fields, "en", cv.lang), manualLanguage(fields, "ru", cv.lang)].filter(Boolean),
     skills,
     emergency_contacts: emergencyContacts,
+    references,
     professional_summary: cvText(fields.note) || null,
     professional_summary_i18n: localizedManualValue(cv.lang, fields.note),
     notes: cvText(fields.note) ? [cvText(fields.note)] : [],

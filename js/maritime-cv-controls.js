@@ -13,7 +13,10 @@
     }),
     sea: Object.freeze({
       handler: "updateSea",
-      keys: new Set(["vessel", "company", "type", "flag", "dwt", "grt", "rank", "signon", "signoff"])
+      keys: new Set([
+        "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
+        "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt"
+      ])
     })
   });
   const actionBindings = Object.freeze({
@@ -23,6 +26,7 @@
     "remove-additional": "removeAdditional",
     "remove-stcw": "removeSTCW",
     "remove-sea": "removeSea",
+    "lookup-sea-imo": "lookupSeaVessel",
     "remove-photo": "removePhoto",
     "generate-summary": "generateSummary"
   });
@@ -92,9 +96,32 @@
         pdf.addImage(imageData, "JPEG", 0, 0, 210, 297);
       }
 
+      if (!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.authorizeOrCheckout !== "function") {
+        const error = new Error("MARITIME_COMMERCE_UNAVAILABLE");
+        error.code = "MARITIME_COMMERCE_UNAVAILABLE";
+        throw error;
+      }
+      const authorization = await window.AllonaMaritimeCommerce.authorizeOrCheckout("maritime_cv_pdf");
+      if (!authorization) return;
       pdf.save(fileName);
     } catch (error) {
-      window.alert(message("pdfGenerationFailed", "The PDF could not be created. Please try again."));
+      const key = error?.code === "AUTH_REQUIRED"
+        ? "pdfLoginRequired"
+        : error?.code === "MARITIME_CV_REQUIRED"
+        ? "pdfSaveRequired"
+        : error?.code === "UNTRUSTED_PAYMENT_URL"
+        ? "pdfPaymentSecurityFailed"
+        : String(error?.code || "").includes("PAYMENT") || error?.status === 402 || error?.status === 503
+        ? "pdfPaymentFailed"
+        : "pdfGenerationFailed";
+      const fallbacks = {
+        pdfLoginRequired: "Sign in before downloading your PDF.",
+        pdfSaveRequired: "Save your Maritime CV before downloading the PDF.",
+        pdfPaymentSecurityFailed: "The secure payment address could not be verified.",
+        pdfPaymentFailed: "The PDF payment could not be started. Please try again.",
+        pdfGenerationFailed: "The PDF could not be created. Please try again."
+      };
+      window.alert(message(key, fallbacks[key]));
     } finally {
       document.body.classList.remove("pdf-capture");
       pdfDownloadInProgress = false;
@@ -147,10 +174,10 @@
     const action = button.dataset.cvAction || "";
     const handler = actionBindings[action];
     if (!handler) return;
-    if (action.startsWith("remove-")) {
+    if (action.startsWith("remove-") || action === "lookup-sea-imo") {
       const index = validRowIndex(button.dataset.cvIndex);
       if (index === null) return;
-      callGlobal(handler, index);
+      callGlobal(handler, index, button);
       return;
     }
     callGlobal(handler);

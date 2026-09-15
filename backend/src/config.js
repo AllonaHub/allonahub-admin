@@ -321,6 +321,17 @@ export const config = {
     refundPath: readEnv("BANK_PAYMENT_REFUND_PATH", { required: false, defaultValue: "/payments/refund" }),
     cancelPath: readEnv("BANK_PAYMENT_CANCEL_PATH", { required: false, defaultValue: "/payments/cancel" })
   },
+  maritimeVesselLookup: {
+    enabled: readBool("MARITIME_VESSEL_LOOKUP_ENABLED", false),
+    provider: readEnv("MARITIME_VESSEL_LOOKUP_PROVIDER", { required: false, defaultValue: "marinetraffic" }).toLowerCase(),
+    marineTrafficApiKey: readOptionalSecret("MARINETRAFFIC_API_KEY"),
+    marineTrafficBaseUrl: readEnv("MARINETRAFFIC_API_BASE_URL", {
+      required: false,
+      defaultValue: "https://services.marinetraffic.com/api"
+    }).replace(/\/$/, ""),
+    timeoutMs: Math.max(1000, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_TIMEOUT_MS", 12000), 30000)),
+    cacheHours: Math.max(1, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_CACHE_HOURS", 168), 720))
+  },
   paymentProvider: {
     refundWebhookUrl: readEnv("PAYMENT_PROVIDER_REFUND_WEBHOOK_URL", { required: false, defaultValue: "" }).replace(/\/$/, ""),
     refundWebhookSecret: readOptionalSecret("PAYMENT_PROVIDER_REFUND_WEBHOOK_SECRET"),

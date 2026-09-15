@@ -46,6 +46,50 @@ body.cv-form-page .cv-toolbar button:disabled {
   box-shadow: none;
 }
 
+@media (min-width: 721px) {
+  body.cv-module-page .topbar {
+    align-items: center;
+  }
+
+  body.cv-module-page .brand {
+    flex: 0 0 auto;
+  }
+
+  body.cv-module-page .cv-toolbar {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 234, 255, 0.56) rgba(0, 0, 0, 0.18);
+  }
+
+  body.cv-module-page .cv-toolbar > * {
+    flex: 0 0 auto;
+  }
+
+  body.cv-module-page .cv-toolbar :where(button, select, .cv-toolbar-link) {
+    min-height: 38px;
+    padding: 8px 10px;
+  }
+
+  body.cv-module-page .cv-toolbar::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  body.cv-module-page .cv-toolbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  body.cv-module-page .cv-toolbar::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: rgba(0, 234, 255, 0.56);
+  }
+}
+
 body.cv-form-page .cv-repeat-group {
   padding: 15px;
   border: 1px solid rgba(0, 213, 255, 0.20);
@@ -54,6 +98,44 @@ body.cv-form-page .cv-repeat-group {
 
 body.cv-form-page .cv-repeat-group--compact {
   padding: 12px;
+}
+
+body.cv-form-page .cv-sea-card {
+  border-left: 3px solid #00eaff;
+  background: rgba(5, 24, 43, 0.82);
+}
+
+body.cv-form-page .cv-imo-lookup-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+
+body.cv-form-page .cv-imo-lookup-row button {
+  min-width: 138px;
+  margin-top: 0;
+}
+
+body.cv-form-page .cv-sea-reference-fields {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid rgba(0, 234, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 234, 255, 0.045);
+}
+
+body.cv-form-page .cv-sea-reference-fields h4 {
+  margin: 0 0 10px;
+  color: #62efff;
+  font-size: 12px;
+}
+
+body.cv-form-page .cv-sea-detail-row td {
+  padding: 8px;
+  background: #f4fbff;
+  font-size: 9px;
+  line-height: 1.45;
 }
 
 body.cv-form-page .photoCell img[hidden],
@@ -99,6 +181,16 @@ body.cv-form-page .cv-summary-button {
 body.cv-form-page .cv-stcw-card {
   border-left: 3px solid #00eaff;
   background: rgba(5, 24, 43, 0.82);
+}
+
+@media (max-width: 620px) {
+  body.cv-form-page .cv-imo-lookup-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.cv-form-page .cv-imo-lookup-row button {
+    width: 100%;
+  }
 }
 
 body.cv-form-page .cv-stcw-card.is-custom {
@@ -247,6 +339,10 @@ body.cv-form-page input:disabled {
   body.cv-form-page[data-theme] .cv-toolbar > * {
     width: 100% !important;
     min-width: 0 !important;
+  }
+
+  body.cv-form-page[data-theme] .cv-toolbar > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   body.cv-form-page .cv-validity-row {
@@ -453,6 +549,20 @@ body.cv-module-page .cv-identity-support-status {
 }
 
 @media print {
+  body.cv-module-page:not(.maritime-print-authorized) * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.cv-module-page:not(.maritime-print-authorized)::before {
+    display: block !important;
+    visibility: visible !important;
+    padding: 24mm;
+    color: #111827;
+    font: 700 15px/1.5 Arial, sans-serif;
+    content: "PDF indirme işlemini Maritime CV sayfasındaki güvenli ödeme düğmesinden başlatın.";
+  }
+
   body.cv-module-page .topbar,
   body.cv-module-page .cv-account-status,
   body.cv-module-page .formPanel {

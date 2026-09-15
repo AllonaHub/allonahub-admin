@@ -4914,6 +4914,20 @@ html[dir="rtl"] .maritime-document-progress > span {
     background: #ffffff !important;
   }
 
+  body.maritime-smart-account-page:not(.maritime-print-authorized) * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.maritime-smart-account-page:not(.maritime-print-authorized)::before {
+    display: block !important;
+    visibility: visible !important;
+    padding: 24mm;
+    color: #111827;
+    font: 700 15px/1.5 Arial, sans-serif;
+    content: "Global CV PDF indirme işlemini güvenli ödeme düğmesinden başlatın.";
+  }
+
   body.maritime-smart-account-page :where(.maritime-portal-header, .maritime-account-heading) {
     display: none !important;
   }

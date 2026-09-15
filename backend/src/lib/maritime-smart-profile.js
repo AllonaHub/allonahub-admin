@@ -46,6 +46,12 @@ function text(value) {
   return String(value ?? "").trim();
 }
 
+function optionalNumber(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function folded(value) {
   return text(value)
     .normalize("NFKD")
@@ -347,10 +353,19 @@ function seaServiceRecord(rowValue) {
     sign_on_date: text(row.sign_on_date) || null,
     sign_off_date: text(row.sign_off_date) || null,
     total_days: Number.isInteger(row.total_days) ? row.total_days : null,
-    gross_tonnage: Number.isFinite(Number(row.gross_tonnage)) ? Number(row.gross_tonnage) : null,
-    deadweight_tonnage: Number.isFinite(Number(row.deadweight_tonnage)) ? Number(row.deadweight_tonnage) : null,
+    gross_tonnage: optionalNumber(row.gross_tonnage),
+    deadweight_tonnage: optionalNumber(row.deadweight_tonnage),
+    net_tonnage: optionalNumber(row.net_tonnage),
+    build_year: optionalNumber(row.build_year),
+    mmsi: text(row.mmsi) || null,
+    call_sign: text(row.call_sign) || null,
+    length_overall_m: optionalNumber(row.length_overall_m),
+    reference_name: text(row.reference_name) || null,
+    reference_company_email: text(row.reference_company_email) || null,
+    reference_company_phone: text(row.reference_company_phone) || null,
+    reference_phone: text(row.reference_phone) || null,
     engine_make_model: text(row.engine_make_model) || null,
-    engine_power_kw: Number.isFinite(Number(row.engine_power_kw)) ? Number(row.engine_power_kw) : null,
+    engine_power_kw: optionalNumber(row.engine_power_kw),
     source_page: recordPage(row),
     confidence: recordConfidence(row)
   };
@@ -567,7 +582,18 @@ export function buildMaritimeSmartProfile({ cvProfile, readinessItems = [], work
   const achievements = uniqueRecords(sources.flatMap((source) => array(source.achievements)), achievementRecord, ["title", "date"], 40);
   const references = uniqueRecords(sources.flatMap((source) => array(source.references)), (rowValue) => {
     const row = object(rowValue);
-    const normalized = { name: text(row.name) || null, company: text(row.company) || null, position: text(row.position) || null, phone: text(row.phone) || null, email: text(row.email) || null, source_page: recordPage(row), confidence: recordConfidence(row) };
+    const normalized = {
+      name: text(row.name) || null,
+      company: text(row.company) || null,
+      position: text(row.position) || null,
+      phone: text(row.phone) || null,
+      company_phone: text(row.company_phone) || null,
+      email: text(row.email) || null,
+      vessel_name: text(row.vessel_name) || null,
+      imo_number: /^\d{7}$/.test(text(row.imo_number)) ? text(row.imo_number) : null,
+      source_page: recordPage(row),
+      confidence: recordConfidence(row)
+    };
     return normalized.name || normalized.company ? normalized : null;
   }, ["name", "company", "phone", "email"], 30);
   const emergencyContacts = uniqueRecords(sources.flatMap((source) => array(source.emergency_contacts)), (rowValue) => {

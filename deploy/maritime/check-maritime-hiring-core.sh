@@ -47,7 +47,9 @@ begin
     'public.maritime_check_device_access(uuid,text)',
     'public.maritime_bind_device_to_user(uuid,text,text,text)',
     'public.save_locked_maritime_cv_profile(uuid,jsonb,integer,text,text)',
-    'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)'
+    'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)',
+    'public.grant_maritime_pdf_entitlement(uuid,text,text)',
+    'public.consume_maritime_pdf_download(uuid,text,text,uuid)'
   ] loop
     if to_regprocedure(helper_name) is null then
       raise exception 'Missing maritime hiring helper function: %', helper_name;
@@ -102,7 +104,14 @@ begin
     'maritime_permission_matrix',
     'maritime_entity_versions',
     'maritime_workflow_transition_log',
-    'maritime_trust_badges'
+    'maritime_trust_badges',
+    'maritime_commerce_settings',
+    'maritime_premium_features',
+    'maritime_premium_memberships',
+    'maritime_pdf_payments',
+    'maritime_pdf_entitlements',
+    'maritime_pdf_downloads',
+    'maritime_vessel_lookup_cache'
   ] loop
     if to_regclass(format('public.%I', expected_table)) is null then
       raise exception 'Missing maritime hiring core table: %', expected_table;
@@ -211,6 +220,17 @@ begin
     or has_function_privilege('authenticated', 'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)', 'EXECUTE')
     or not has_function_privilege('service_role', 'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)', 'EXECUTE') then
     raise exception 'Maritime CV identity lock functions, trigger, or grants are unsafe';
+  end if;
+
+  if has_function_privilege('authenticated', 'public.grant_maritime_pdf_entitlement(uuid,text,text)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.grant_maritime_pdf_entitlement(uuid,text,text)', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.consume_maritime_pdf_download(uuid,text,text,uuid)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.consume_maritime_pdf_download(uuid,text,text,uuid)', 'EXECUTE')
+    or exists (
+      select 1 from public.maritime_commerce_settings
+      where premium_surface_enabled or premium_entitlements_enabled
+    ) then
+    raise exception 'Hidden Maritime Premium or PDF entitlement boundary is unsafe';
   end if;
 
   if not exists (
