@@ -74,13 +74,27 @@
     return payload;
   }
 
+  async function passkeyProof() {
+    if (!window.AllonaMaritimePasskey || typeof window.AllonaMaritimePasskey.authorize !== "function") {
+      const error = new Error("PASSKEY_SECURITY_UNAVAILABLE");
+      error.code = "MARITIME_PASSKEY_UNSUPPORTED";
+      throw error;
+    }
+    return window.AllonaMaritimePasskey.authorize();
+  }
+
   function identityErrorMessage(error) {
     const messages = {
       MARITIME_IDENTITY_ALREADY_REGISTERED: ["identityAlreadyRegistered", "This person is already registered. Contact support if these details belong to you."],
       MARITIME_IDENTITY_LOCKED: ["identityChangeBlocked", "Saved personal details can only be changed through support verification."],
       MARITIME_DEVICE_ALREADY_BOUND: ["deviceAlreadyBound", "This device is linked to another account. Contact support if you cannot access your account."],
       MARITIME_DEVICE_KEY_REQUIRED: ["deviceSecurityFailed", "Secure device identification could not be completed. Check your browser security settings."],
-      MARITIME_DEVICE_BINDING_REQUIRED: ["deviceSecurityFailed", "Secure device identification could not be completed. Check your browser security settings."]
+      MARITIME_DEVICE_BINDING_REQUIRED: ["deviceSecurityFailed", "Secure device identification could not be completed. Check your browser security settings."],
+      MARITIME_PASSKEY_UNSUPPORTED: ["passkeyUnsupported", "This browser does not support secure device verification. Use current Safari, Chrome or Edge."],
+      MARITIME_PASSKEY_CANCELLED: ["passkeyCancelled", "Device verification was cancelled or timed out."],
+      MARITIME_PASSKEY_VERIFICATION_REQUIRED: ["passkeyRequired", "Verify with Touch ID, Face ID or your screen lock to save."],
+      MARITIME_PASSKEY_VERIFICATION_FAILED: ["passkeyFailed", "Secure device verification failed. Please try again."],
+      MARITIME_PASSKEY_SECURITY_UNAVAILABLE: ["passkeyUnavailable", "Secure device verification is temporarily unavailable."]
     };
     const entry = messages[String(error?.code || "")];
     return entry ? copy(entry[0], entry[1]) : copy("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.");
@@ -138,8 +152,10 @@
       if (photo) await savePhoto(photo);
       const cleanCv = JSON.parse(JSON.stringify(data || {}));
       delete cleanCv.photo;
+      const proof = await passkeyProof();
       const result = await api("/v1/maritime/cv-profile", {
         method: "PUT",
+        headers: { "X-Allona-Passkey-Proof": proof },
         body: JSON.stringify({ cv: cleanCv, confirmation: true })
       });
       applyIdentityLock(result.identity_lock);

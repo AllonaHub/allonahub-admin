@@ -11,6 +11,7 @@ import { registerAssistantRoutes } from "./routes/assistant.js";
 import { registerEInvoicingRoutes } from "./routes/e-invoicing.js";
 import { registerRoutes } from "./routes/index.js";
 import { registerMaritimeDocumentRoutes } from "./routes/maritime-documents.js";
+import { registerMaritimePasskeyRoutes } from "./routes/maritime-passkey.js";
 import { registerMaritimeSmartAccountRoutes } from "./routes/maritime-smart-account.js";
 import { registerPlatformRoutes } from "./routes/platform.js";
 
@@ -215,7 +216,14 @@ export async function buildApp() {
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With", "X-Allona-File-Name"]
+    allowedHeaders: [
+      "Authorization",
+      "Content-Type",
+      "X-Requested-With",
+      "X-Allona-File-Name",
+      "X-Allona-Device-Key",
+      "X-Allona-Passkey-Proof"
+    ]
   });
 
   registerAutoDefense(app);
@@ -286,6 +294,7 @@ export async function buildApp() {
   registerEInvoicingRoutes(app);
   registerAssistantRoutes(app);
   registerMaritimeDocumentRoutes(app);
+  registerMaritimePasskeyRoutes(app);
   registerMaritimeSmartAccountRoutes(app);
   return app;
 }

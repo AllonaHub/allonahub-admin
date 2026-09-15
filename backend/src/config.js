@@ -50,6 +50,10 @@ const requiredAllowedOrigins = [
   "https://partner.allonahub.com",
   "https://allonahub.github.io"
 ];
+const requiredWebAuthnOrigins = [
+  "https://allonahub.com",
+  "https://www.allonahub.com"
+];
 
 export const config = {
   env: runtimeEnvironment,
@@ -62,6 +66,16 @@ export const config = {
     requiredAllowedOrigins
   ),
   allowedHosts: csv(readEnv("ALLOWED_HOSTS", { required: false, defaultValue: "api.allonahub.com,admin.allonahub.com,localhost,127.0.0.1" })),
+  webauthn: {
+    rpName: readEnv("WEBAUTHN_RP_NAME", { required: false, defaultValue: "AllonaHub Maritime" }),
+    rpId: readEnv("WEBAUTHN_RP_ID", { required: false, defaultValue: "allonahub.com" }).toLowerCase(),
+    allowedOrigins: csvWithDefaults(
+      readEnv("WEBAUTHN_ALLOWED_ORIGINS", { required: false, defaultValue: requiredWebAuthnOrigins.join(",") }),
+      requiredWebAuthnOrigins
+    ),
+    challengeTtlSeconds: readNumber("WEBAUTHN_CHALLENGE_TTL_SECONDS", 300),
+    proofTtlSeconds: readNumber("WEBAUTHN_PROOF_TTL_SECONDS", 300)
+  },
   adminHosts: csv(readEnv("ADMIN_HOSTS", { required: false, defaultValue: "admin.allonahub.com,api.allonahub.com" })),
   adminIpAllowlist: csv(readEnv("ADMIN_IP_ALLOWLIST", { required: false, defaultValue: "" })),
   mfaRequiredRoles: csv(readEnv("MFA_REQUIRED_ROLES", { required: false, defaultValue: "partner,courier,admin,super_admin" })),

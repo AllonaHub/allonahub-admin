@@ -7,6 +7,7 @@ import {
   matchMaritimeJobs
 } from "../lib/maritime-smart-profile.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
+import { requireMaritimePasskeyProof } from "../lib/maritime-passkey.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
@@ -647,6 +648,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     if (!cvReadiness.ready) {
       throw httpError(`Maritime CV için zorunlu alanlar eksik: ${cvReadiness.missing.join(", ")}.`, 409, "MARITIME_CV_REQUIRED_FIELDS_MISSING");
     }
+    await requireMaritimePasskeyProof(request, ctx.user.id);
     const now = new Date().toISOString();
     const profile = assertIdentitySecurity(await supabaseAdmin.rpc("save_locked_maritime_cv_profile", {
       p_user_id: ctx.user.id,
@@ -886,6 +888,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.smart_account.confirm");
     const { runId } = runParamsSchema.parse(request.params || {});
     confirmationSchema.parse(request.body || {});
+    await requireMaritimePasskeyProof(request, ctx.user.id);
     const result = assertDb(await ctx.db.rpc("confirm_maritime_smart_account", {
       p_run_id: runId,
       p_confirmation: true
@@ -907,6 +910,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.smart_account.prepare_application_drafts");
     const { runId } = runParamsSchema.parse(request.params || {});
     const input = draftSchema.parse(request.body || {});
+    await requireMaritimePasskeyProof(request, ctx.user.id);
     const result = assertDb(await ctx.db.rpc("create_maritime_application_drafts", {
       p_run_id: runId,
       p_job_ids: input.job_ids,
@@ -931,6 +935,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.application.submit");
     const { applicationId } = applicationParamsSchema.parse(request.params || {});
     confirmationSchema.parse(request.body || {});
+    await requireMaritimePasskeyProof(request, ctx.user.id);
     const result = assertDb(await ctx.db.rpc("submit_maritime_application", {
       p_application_id: applicationId,
       p_confirmation: true

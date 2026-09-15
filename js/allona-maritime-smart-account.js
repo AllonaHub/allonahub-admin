@@ -56,6 +56,7 @@
     confirmDone: ["Akıllı profiliniz ve CV özetiniz onaylandı.", "Ağıllı profiliniz və CV xülasəniz təsdiqləndi.", "Ақылды профиль мен CV қорытындысы расталды.", "Aqlli profil va CV xulosasi tasdiqlandi.", "Акылдуу профиль жана CV жыйынтыгы ырасталды.", "Your smart profile and CV summary were confirmed.", "Smart-Profil und CV-Übersicht wurden bestätigt.", "Умный профиль и сводка CV подтверждены.", "تم تأكيد ملفك الذكي وملخص السيرة."],
     draftsDone: ["Başvuru taslakları hazır. Her ilanı kontrol edip ayrı ayrı gönderebilirsiniz.", "Müraciət layihələri hazırdır. Hər elanı yoxlayıb ayrıca göndərə bilərsiniz.", "Өтінім жобалары дайын. Әр вакансияны тексеріп, бөлек жібере аласыз.", "Ariza loyihalari tayyor. Har bir eʼlonni tekshirib alohida yuboring.", "Арыз долбоорлору даяр. Ар бир жарыяны текшерип өзүнчө жөнөтүңүз.", "Application drafts are ready. Review and submit each listing separately.", "Bewerbungsentwürfe sind bereit. Jede Stelle einzeln prüfen und senden.", "Черновики готовы. Проверьте и отправьте каждую заявку отдельно.", "مسودات الطلبات جاهزة. راجع كل وظيفة وأرسلها بشكل منفصل."],
     requestError: ["İşlem tamamlanamadı. Lütfen tekrar deneyin.", "Əməliyyat tamamlanmadı. Yenidən cəhd edin.", "Әрекет аяқталмады. Қайталап көріңіз.", "Amal tugallanmadi. Qayta urinib ko‘ring.", "Аракет аяктаган жок. Кайра аракет кылыңыз.", "The action could not be completed. Please try again.", "Aktion konnte nicht abgeschlossen werden. Bitte erneut versuchen.", "Не удалось завершить действие. Повторите попытку.", "تعذر إكمال العملية. حاول مرة أخرى."],
+    passkeyError: ["Devam etmek için Touch ID, Face ID veya ekran kilidinizle cihazınızı doğrulayın.", "Davam etmək üçün Touch ID, Face ID və ya ekran kilidi ilə cihazınızı təsdiqləyin.", "Жалғастыру үшін құрылғыны Touch ID, Face ID немесе экран құлпы арқылы растаңыз.", "Davom etish uchun qurilmangizni Touch ID, Face ID yoki ekran qulfi bilan tasdiqlang.", "Улантуу үчүн түзмөгүңүздү Touch ID, Face ID же экран кулпусу менен ырастаңыз.", "Verify your device with Touch ID, Face ID or your screen lock to continue.", "Bestätigen Sie Ihr Gerät mit Touch ID, Face ID oder der Bildschirmsperre.", "Для продолжения подтвердите устройство через Touch ID, Face ID или блокировку экрана.", "للمتابعة، تحقّق من جهازك باستخدام Touch ID أو Face ID أو قفل الشاشة."],
     documentRequired: ["Global CV oluşturmak için önce Maritime CV'nizde ad, soyad, doğum tarihi, pozisyon ve fotoğrafınızı kaydedin.", "Global CV yaratmaq üçün əvvəlcə Maritime CV-də ad, soyad, doğum tarixi, vəzifə və fotonu saxlayın.", "Global CV жасау үшін алдымен Maritime CV-де аты-жөніңізді, туған күніңізді, лауазымыңызды және фотоны сақтаңыз.", "Global CV yaratish uchun avval Maritime CV-da ism, familiya, tug‘ilgan sana, lavozim va suratni saqlang.", "Global CV түзүү үчүн адегенде Maritime CV-де аты-жөнүңүздү, туулган күнүңүздү, кызматыңызды жана сүрөттү сактаңыз.", "Before creating Global CV, save your first name, family name, date of birth, position, and photo in Maritime CV.", "Speichern Sie vor der Erstellung von Global CV Vorname, Familienname, Geburtsdatum, Position und Foto im Maritime CV.", "Перед созданием Global CV сохраните в Maritime CV имя, фамилию, дату рождения, должность и фотографию.", "قبل إنشاء Global CV احفظ الاسم واسم العائلة وتاريخ الميلاد والوظيفة والصورة في Maritime CV."],
     uploadDocuments: ["Belgelerim", "Sənədlərim", "Құжаттарым", "Hujjatlarim", "Документтерим", "My Documents", "Meine Dokumente", "Мои документы", "مستنداتي"],
     actionCenter: ["Akıllı İşlem Merkezi", "Ağıllı əməliyyat mərkəzi", "Ақылды әрекет орталығы", "Aqlli amallar markazi", "Акылдуу аракет борбору", "Smart Action Center", "Intelligentes Aktionszentrum", "Центр умных действий", "مركز الإجراءات الذكية"],
@@ -297,6 +298,20 @@
     return String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
   }
 
+  async function deviceKey() {
+    if (!App.cvAccess || typeof App.cvAccess.getDeviceKey !== "function") throw new Error("MARITIME_DEVICE_KEY_REQUIRED");
+    return App.cvAccess.getDeviceKey();
+  }
+
+  async function passkeyHeaders() {
+    if (!window.AllonaMaritimePasskey || typeof window.AllonaMaritimePasskey.authorize !== "function") throw new Error("MARITIME_PASSKEY_UNSUPPORTED");
+    return { "X-Allona-Passkey-Proof": await window.AllonaMaritimePasskey.authorize() };
+  }
+
+  function actionErrorText(error) {
+    return String(error?.code || "").startsWith("MARITIME_PASSKEY_") ? text("passkeyError") : text("requestError");
+  }
+
   async function api(path, options) {
     const session = state.session || (App.auth && App.auth.getSession ? await App.auth.getSession() : null);
     if (!session?.access_token) throw new Error("AUTH_REQUIRED");
@@ -305,6 +320,7 @@
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${session.access_token}`,
+        "X-Allona-Device-Key": await deviceKey(),
         ...(options && options.body ? { "Content-Type": "application/json" } : {}),
         ...(options && options.headers || {})
       }
@@ -313,7 +329,7 @@
     if (!response.ok || payload.ok !== true) {
       const error = new Error(payload.message || "REQUEST_FAILED");
       error.status = response.status;
-      error.code = payload.code || "";
+      error.code = payload.code || payload.error || "";
       throw error;
     }
     return payload;
@@ -765,11 +781,11 @@
     if (!run || state.busy) return;
     setBusy(true);
     try {
-      state.payload = await api(`/v1/maritime/smart-account/${encodeURIComponent(run.id)}/confirm`, { method: "POST", body: JSON.stringify({ confirmation: true }) });
+      state.payload = await api(`/v1/maritime/smart-account/${encodeURIComponent(run.id)}/confirm`, { method: "POST", headers: await passkeyHeaders(), body: JSON.stringify({ confirmation: true }) });
       render();
       setNotice(text("confirmDone"), "success");
     } catch (error) {
-      setNotice(text("requestError"), "error");
+      setNotice(actionErrorText(error), "error");
     } finally {
       setBusy(false);
     }
@@ -796,12 +812,12 @@
     if (!run || run.status !== "user_confirmed" || !state.selected.size || state.busy) return;
     setBusy(true);
     try {
-      state.payload = await api(`/v1/maritime/smart-account/${encodeURIComponent(run.id)}/application-drafts`, { method: "POST", body: JSON.stringify({ confirmation: true, job_ids: Array.from(state.selected) }) });
+      state.payload = await api(`/v1/maritime/smart-account/${encodeURIComponent(run.id)}/application-drafts`, { method: "POST", headers: await passkeyHeaders(), body: JSON.stringify({ confirmation: true, job_ids: Array.from(state.selected) }) });
       state.selected.clear();
       render();
       setNotice(text("draftsDone"), "success");
     } catch (error) {
-      setNotice(text("requestError"), "error");
+      setNotice(actionErrorText(error), "error");
     } finally {
       setBusy(false);
     }
@@ -848,11 +864,11 @@
     if (!applicationId || state.busy || !window.confirm(text("finalConfirm"))) return;
     setBusy(true);
     try {
-      state.payload = await api(`/v1/maritime/application-drafts/${encodeURIComponent(applicationId)}/submit`, { method: "POST", body: JSON.stringify({ confirmation: true }) });
+      state.payload = await api(`/v1/maritime/application-drafts/${encodeURIComponent(applicationId)}/submit`, { method: "POST", headers: await passkeyHeaders(), body: JSON.stringify({ confirmation: true }) });
       render();
       setNotice(text("submitted"), "success");
     } catch (error) {
-      setNotice(text("requestError"), "error");
+      setNotice(actionErrorText(error), "error");
     } finally {
       setBusy(false);
     }
