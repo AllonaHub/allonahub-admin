@@ -338,7 +338,7 @@ export const config = {
   countryEngine: {
     enabled: readBool("COUNTRY_ENGINE_ENABLED", runtimeEnvironment !== "production"),
     adminWritesEnabled: readBool("COUNTRY_ENGINE_ADMIN_WRITES_ENABLED", false),
-    publicImpactEnabled: readBool("COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED", runtimeEnvironment !== "production")
+    publicImpactEnabled: readBool("COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED", true)
   },
   cvPriceTry: readNumber("CV_PRICE_TRY", 149.99),
   supabase: {

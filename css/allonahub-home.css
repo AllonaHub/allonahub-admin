@@ -2396,3 +2396,27 @@ html body.allonahub-home-page[data-theme="white"] .turkic-home-entry__countries 
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+/* Keep the search field dominant while the action stays content-sized. */
+body.allonahub-home-page > header .nav-search input {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+body.allonahub-home-page > header .nav-search .search-btn {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: max-content !important;
+  padding-inline: 12px !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 760px) {
+  body.allonahub-home-page > header .nav-search .search-btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding-inline: 10px !important;
+    font-size: 12px !important;
+  }
+}

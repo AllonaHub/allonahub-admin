@@ -7,6 +7,7 @@ test("production e-invoicing routes fail closed before touching migration tables
     LOG_LEVEL: "silent",
     E_INVOICING_ENABLED: "false",
     COUNTRY_ENGINE_ENABLED: "false",
+    COUNTRY_ENGINE_PUBLIC_IMPACT_ENABLED: "false",
     SUPABASE_URL: "https://example.supabase.co",
     SUPABASE_ANON_KEY: "test-anon",
     SUPABASE_SERVICE_ROLE_KEY: "test-service",

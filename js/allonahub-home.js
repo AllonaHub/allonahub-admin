@@ -367,19 +367,18 @@ const verifiedStatKeys={
 activeUsers:["active_user_count","user_count"],
 activeAds:["active_partner_count","partner_count"],
 jobAds:["new_user_count","new_member_count"],
-crewApps:["crew_count","maritime_crew_count"],
+activeListings:["active_listing_count","active_job_count"],
 dailyHP:["hp_points_issued","daily_hp_points"]
 };
 const statLabels={
 activeUsers:"Aktif Kullanıcı",
 activeAds:"Aktif Partner",
 jobAds:"Yeni Üyeler",
-crewApps:"Crew",
+activeListings:"İlanlar",
 dailyHP:"Sadakat Puanı"
 };
-const requiredVerifiedStats=["activeUsers","activeAds","jobAds"];
+const requiredVerifiedStats=["activeUsers","activeAds","jobAds","activeListings"];
 const optionalStatFallbacks={
-crewApps:"Henüz ölçülmüyor",
 dailyHP:"Henüz ölçülmüyor"
 };
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}

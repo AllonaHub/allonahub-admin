@@ -119,7 +119,7 @@ export function registerPlatformRoutes(app) {
   });
 
   app.get("/v1/platform/impact", async () => {
-    if (!config.countryEngine.enabled || !config.countryEngine.publicImpactEnabled) {
+    if (!config.countryEngine.publicImpactEnabled) {
       return {
         ok: true,
         published: false,
@@ -130,7 +130,7 @@ export function registerPlatformRoutes(app) {
     }
     const liveImpact = await repository.listLivePublicImpact();
     const metrics = publicImpactPayload(liveImpact.metrics);
-    const required = new Set(["active_user_count", "active_partner_count", "new_user_count"]);
+    const required = new Set(["active_user_count", "active_partner_count", "new_user_count", "active_listing_count"]);
     const published = [...required].every((key) => metrics.some((metric) => (
       metric.metricKey === key && Number.isFinite(Number(metric.value))
     )));

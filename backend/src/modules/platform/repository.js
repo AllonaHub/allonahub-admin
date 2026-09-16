@@ -236,7 +236,7 @@ export class CountryRepository {
     const periodEnd = new Date().toISOString();
     const newUsersPeriodStart = isoDaysAgo(7);
     const hpPeriodStart = isoDaysAgo(7);
-    const [activeUsers, activePartners, newUsers, hpEarned] = await Promise.all([
+    const [activeUsers, activePartners, newUsers, activeListings, hpEarned] = await Promise.all([
       countRows(this.activeProfilesQuery(), "impact_active_users"),
       countRows(
         this.client
@@ -249,6 +249,17 @@ export class CountryRepository {
       countRows(
         this.activeProfilesQuery().gte("created_at", newUsersPeriodStart),
         "impact_new_users"
+      ),
+      countRows(
+        this.client
+          .from("maritime_public_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("module_key", "maritime")
+          .eq("listing_type", "crew_position")
+          .eq("status", "active")
+          .lte("published_at", periodEnd)
+          .or(`expires_at.is.null,expires_at.gt.${periodEnd}`),
+        "impact_active_listings"
       ),
       this.sumHpEarnedSince(hpPeriodStart)
     ]);
@@ -277,12 +288,18 @@ export class CountryRepository {
         periodEnd,
         dataSource: "public.profiles",
         aggregationMethod: "son 7 gunde olusan aktif profil sayisi"
+      }),
+      impactMetric({
+        metricKey: "active_listing_count",
+        value: activeListings,
+        periodStart: null,
+        periodEnd,
+        dataSource: "public.maritime_public_listings",
+        aggregationMethod: "yayinda olan, suresi dolmamis aktif denizcilik is ilani sayisi"
       })
     ];
 
-    const sourceNotes = [
-      "crew_count: kanonik crew basvuru/profil kaynagi yok; profil metninden tahmin edilmedi"
-    ];
+    const sourceNotes = [];
 
     if (hpEarned !== null) {
       metrics.push(impactMetric({

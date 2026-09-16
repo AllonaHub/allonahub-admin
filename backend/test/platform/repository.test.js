@@ -107,6 +107,10 @@ function countBuilder(value, calls, table) {
       filters.push(["gte", column, filterValue]);
       return builder;
     },
+    lte(column, filterValue) {
+      filters.push(["lte", column, filterValue]);
+      return builder;
+    },
     then(resolve) {
       calls.push({ table, filters });
       resolve({ count: value, error: null });
@@ -146,7 +150,7 @@ test("live public impact computes only aggregate metrics from canonical tables",
       return {
         select(columns, options = {}) {
           if (options.head) {
-            const count = table === "profiles" ? profileCounts.shift() : 4;
+            const count = table === "profiles" ? profileCounts.shift() : table === "maritime_public_listings" ? 7 : 4;
             return countBuilder(count, calls, table);
           }
           assert.equal(table, "hp_ledger");
@@ -163,17 +167,25 @@ test("live public impact computes only aggregate metrics from canonical tables",
     "active_user_count",
     "active_partner_count",
     "new_user_count",
+    "active_listing_count",
     "hp_points_issued"
   ]);
   assert.equal(result.metrics.find((item) => item.metric_key === "active_user_count").numeric_value, 12);
   assert.equal(result.metrics.find((item) => item.metric_key === "active_partner_count").numeric_value, 4);
   assert.equal(result.metrics.find((item) => item.metric_key === "new_user_count").numeric_value, 3);
+  assert.equal(result.metrics.find((item) => item.metric_key === "active_listing_count").numeric_value, 7);
   assert.equal(result.metrics.find((item) => item.metric_key === "hp_points_issued").numeric_value, 50);
-  assert.ok(result.sourceNotes.some((note) => note.includes("crew_count")));
+  assert.deepEqual(result.sourceNotes, []);
   assert.ok(calls.some((call) => (
     call.table === "partner_businesses"
     && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "status" && filter[2] === "active")
     && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "verification_status" && filter[2] === "verified")
+  )));
+  assert.ok(calls.some((call) => (
+    call.table === "maritime_public_listings"
+    && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "listing_type" && filter[2] === "crew_position")
+    && call.filters.some((filter) => filter[0] === "eq" && filter[1] === "status" && filter[2] === "active")
+    && call.filters.some((filter) => filter[0] === "lte" && filter[1] === "published_at")
   )));
   assert.equal(calls.filter((call) => call.table === "profiles").length, 2);
 });
