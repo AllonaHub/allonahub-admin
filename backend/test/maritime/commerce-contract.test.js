@@ -124,6 +124,10 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
     assert.match(smartRoute, new RegExp(key));
   }
   assert.match(cvForm, /function validImo\(value\)/);
+  assert.match(cvForm, /new URLSearchParams\(window\.location\.search\)\.get\("imo"\)/);
+  for (const handler of ["addSea", "removeSea", "updateSea", "lookupSeaVessel", "saveSeaExperience"]) {
+    assert.match(cvForm, new RegExp(`window\\.${handler} = ${handler}`));
+  }
   assert.match(smartRoute, /isValidImoNumber\(row\.imo\)/);
   assert.match(smartProfile, /reference_company_phone/);
   assert.match(smartProfile, /length_overall_m/);

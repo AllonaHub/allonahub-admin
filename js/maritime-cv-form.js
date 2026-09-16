@@ -2258,6 +2258,16 @@ document.addEventListener("DOMContentLoaded", function(){
 
   loadCV();
 
+  const requestedImo = new URLSearchParams(window.location.search).get("imo");
+  if(validImo(requestedImo)){
+    let row = seaData.find(item => item.imo === requestedImo);
+    if(!row && seaData.length < maxRepeatRows){
+      row = newSeaRow();
+      seaData.push(row);
+    }
+    if(row) row.imo = requestedImo;
+  }
+
   translatePage();
   renderAdditionalInputs();
   renderSTCWInputs();
@@ -2269,10 +2279,27 @@ document.addEventListener("DOMContentLoaded", function(){
 
 window.getMaritimeCVData = getCVData;
 window.validateMaritimeCV = validateMaritimeCV;
+window.changeLanguage = changeLanguage;
+window.saveCV = saveCV;
+window.resetForm = resetForm;
+window.addAdditional = addAdditional;
+window.removeAdditional = removeAdditional;
+window.updateAdditional = updateAdditional;
+window.addSTCW = addSTCW;
+window.removeSTCW = removeSTCW;
+window.updateSTCW = updateSTCW;
+window.addSea = addSea;
+window.removeSea = removeSea;
+window.updateSea = updateSea;
 window.lookupSeaVessel = lookupSeaVessel;
 window.openSeaServiceDocumentPicker = openSeaServiceDocumentPicker;
 window.attachSeaServiceDocument = attachSeaServiceDocument;
 window.saveSeaExperience = saveSeaExperience;
+window.removePhoto = removePhoto;
+window.generateSummary = generateSummary;
+window.setSummaryModeFromInput = setSummaryModeFromInput;
+window.syncCV = syncCV;
+window.autoSaveCV = autoSaveCV;
 window.setMaritimeCvPhoto = setMaritimeCvPhoto;
 window.applyMaritimeCVData = function(data){
   applyCVData(data);
