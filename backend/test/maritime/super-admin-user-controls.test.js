@@ -81,6 +81,6 @@ test("Maritime Super Admin page supports search, full review, decisions, and con
   assert.match(ui, /window\.confirm\("Bu işlem aktif denizcilik verilerini temizleyecek/);
   assert.match(ui, /body: \{ decision, reason \}/);
   assert.match(superAdminPage, /href="\.\/maritime-users\.html"/);
-  assert.match(superAdminUi, /super-admin-maritime-users-20260916/);
+  assert.match(superAdminUi, /maritime-guided-cv-20260916/);
   assert.match(deploy, /20260916014500_create_maritime_super_admin_user_controls\.sql/);
 });

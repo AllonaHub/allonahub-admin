@@ -1271,7 +1271,7 @@
     const gitops = payload.gitops || {};
     return [
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")}`, "", system.database === "online" ? "low" : "high"),
-      ownerLine("Backend build", escape(system.build || "-"), "denizcilik kullanıcı yönetimi görünmüyorsa API redeploy eski build'de kalmıştır", system.build === "super-admin-maritime-users-20260916" ? "low" : "high"),
+      ownerLine("Backend build", escape(system.build || "-"), "denizcilik kullanıcı yönetimi görünmüyorsa API redeploy eski build'de kalmıştır", system.build === "maritime-guided-cv-20260916" ? "low" : "high"),
       ownerLine("Yetki merkezi", "Rol, durum ve risk komutları backend route ailesi üzerinden çalışır.", `${formatNumber(summary.total_users)} kullanıcı`, "medium"),
       ownerLine("Partner kararları", "Başvurular inceleme/onay/ret akışına bağlı.", `${formatNumber(summary.pending_applications)} bekleyen`, summary.pending_applications ? "high" : "low"),
       ownerLine("Modül yönetimi", "Ana sayfa modülleri ve görünürlük kayıtları yüklendi.", `${formatNumber(summary.homepage_modules)} modül`, "low"),
