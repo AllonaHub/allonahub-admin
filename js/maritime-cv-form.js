@@ -1483,9 +1483,16 @@ function renderSeaInputs(){
   seaData.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "group cv-repeat-group cv-sea-card";
+    const vesselPhotoUrl = trustedVesselPhotoUrl(item.vesselPhotoUrl);
+    const vesselPhotoSourceUrl = trustedVesselPhotoSourceUrl(item.vesselPhotoSourceUrl);
+    const vesselPhotoCredit = String(item.vesselPhotoCredit || "VesselFinder").slice(0, 80);
+    const vesselPhotoMarkup = vesselPhotoUrl
+      ? `<figure class="cv-vessel-photo cv-vessel-photo--editor">${vesselPhotoSourceUrl ? `<a href="${escapeAttr(vesselPhotoSourceUrl)}" target="_blank" rel="noopener noreferrer"><img src="${escapeAttr(vesselPhotoUrl)}" crossorigin="anonymous" referrerpolicy="no-referrer" alt="${escapeAttr(`${item.vessel || t("vessel")} · ${t("vesselPhoto")}`)}"></a>` : `<img src="${escapeAttr(vesselPhotoUrl)}" crossorigin="anonymous" referrerpolicy="no-referrer" alt="${escapeAttr(`${item.vessel || t("vessel")} · ${t("vesselPhoto")}`)}">`}<figcaption>${escapeHTML(t("vesselPhoto"))} · ${escapeHTML(vesselPhotoCredit)}</figcaption></figure>`
+      : "";
 
     div.innerHTML = `
       <h3>${t("seaExperience")} ${index + 1}</h3>
+      ${vesselPhotoMarkup}
 
       <label class="cv-required-label">${t("imoNumber")}</label>
       <div class="cv-imo-lookup-row">
@@ -1608,6 +1615,7 @@ function renderSeaInputs(){
     `;
 
     box.appendChild(div);
+    div.querySelector(".cv-vessel-photo--editor img")?.addEventListener("error", () => div.querySelector(".cv-vessel-photo--editor")?.remove(), { once:true });
   });
   associateEditorLabels(box);
 }

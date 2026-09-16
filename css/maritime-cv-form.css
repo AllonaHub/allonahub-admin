@@ -166,6 +166,18 @@ body.cv-form-page .cv-vessel-photo figcaption {
   line-height: 1.3;
 }
 
+body.cv-form-page .cv-vessel-photo--editor {
+  margin: 0 0 12px;
+  padding: 8px;
+  border: 1px solid rgba(0, 234, 255, 0.28);
+  border-radius: 5px;
+  background: rgba(0, 234, 255, 0.045);
+}
+
+body.cv-form-page .cv-vessel-photo--editor figcaption {
+  color: #b9d8e8;
+}
+
 body.cv-form-page .photoCell img[hidden],
 body.cv-form-page .emptyPhoto[hidden],
 body.cv-form-page [hidden] {
