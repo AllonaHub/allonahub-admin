@@ -190,7 +190,26 @@ export const config = {
     aiModel: readEnv("MARITIME_DOCUMENT_AI_MODEL", { required: false, defaultValue: "gpt-4.1" }),
     aiTimeoutMs: readNumber("MARITIME_DOCUMENT_AI_TIMEOUT_MS", 90000),
     signedDownloadExpiresSeconds: readNumber("MARITIME_DOCUMENT_DOWNLOAD_EXPIRES_SECONDS", 120),
-    retentionDays: readNumber("MARITIME_DOCUMENT_RETENTION_DAYS", 365)
+    retentionDays: readNumber("MARITIME_DOCUMENT_RETENTION_DAYS", 0),
+    userMaxBytes: readNumber("MARITIME_DOCUMENT_USER_MAX_BYTES", 536870912),
+    userMaxFiles: readNumber("MARITIME_DOCUMENT_USER_MAX_FILES", 200)
+  },
+  maritimeReferenceNotifications: {
+    enabled: readBool("MARITIME_REFERENCE_NOTIFICATIONS_ENABLED", true),
+    recipient: readEnv("MARITIME_REFERENCE_NOTIFICATION_TO", {
+      required: false,
+      defaultValue: "Allahonahub@gmail.com"
+    }),
+    sender: readEnv("MARITIME_REFERENCE_NOTIFICATION_FROM", {
+      required: false,
+      defaultValue: "AllonaHub Denizcilik <bildirim@allonahub.com>"
+    }),
+    resendApiKey: readOptionalSecret("RESEND_API_KEY", "MARITIME_REFERENCE_RESEND_API_KEY"),
+    resendApiUrl: readEnv("RESEND_API_URL", {
+      required: false,
+      defaultValue: "https://api.resend.com/emails"
+    }),
+    timeoutMs: readNumber("MARITIME_REFERENCE_EMAIL_TIMEOUT_MS", 12000)
   },
   socialMedia: {
     dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),

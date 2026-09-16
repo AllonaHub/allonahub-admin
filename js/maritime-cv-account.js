@@ -158,6 +158,39 @@
     });
   }
 
+  async function saveSeaExperience(data, rowIndex) {
+    const cv = data && typeof data === "object" ? data : {};
+    const experience = Array.isArray(cv.seaData) ? cv.seaData[Number(rowIndex)] : null;
+    const fields = cv.fields && typeof cv.fields === "object" ? cv.fields : {};
+    if (!experience) {
+      const error = new Error("MARITIME_REFERENCE_EXPERIENCE_REQUIRED");
+      error.code = "MARITIME_REFERENCE_EXPERIENCE_REQUIRED";
+      throw error;
+    }
+    return api("/v1/maritime/reference-verifications", {
+      method: "POST",
+      body: JSON.stringify({
+        experience,
+        candidate: {
+          first_name: String(fields.firstName || "").trim(),
+          middle_name: String(fields.fatherName || "").trim(),
+          family_name: String(fields.familyName || "").trim()
+        },
+        cv_summary: {
+          current_position: String(fields.position || "").trim(),
+          competency_class: String(fields.competencyClass || "").trim(),
+          competency_certificate: String(fields.competencyCertificate || "").trim(),
+          medical_expiry: String(fields.medicalExpiry || "").trim(),
+          certificate_codes: [...new Set((Array.isArray(cv.stcwData) ? cv.stcwData : [])
+            .filter(row => row && row.included !== "false")
+            .map(row => String(row.code || "").trim().toUpperCase())
+            .filter(Boolean))]
+        },
+        confirmation: true
+      })
+    });
+  }
+
   async function save(data) {
     if (saving) return;
     saving = true;
@@ -267,7 +300,7 @@
     else if (statusCopyState?.key) setCopyStatus(statusCopyState.key, statusCopyState.fallback, statusCopyState.tone);
   });
 
-  window.AllonaMaritimeCvAccount = Object.freeze({ save, removePhoto, archiveSeaServiceDocument });
+  window.AllonaMaritimeCvAccount = Object.freeze({ save, removePhoto, archiveSeaServiceDocument, saveSeaExperience });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", load, { once: true });
   else load();
 })();

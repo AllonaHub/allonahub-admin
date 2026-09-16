@@ -337,7 +337,10 @@ function trustedVesselPhotoSourceUrl(value){
     saveExperience:"Save Experience",
     experienceSaved:"Saved and added to the CV",
     experienceNeedsSave:"Complete the required fields and save this experience.",
+    experienceSaving:"Saving the experience and creating the reference verification record...",
     experienceSavedAlert:"The sea experience was saved and added to the CV.",
+    referenceNotificationSent:" The reference verification notice was sent to AllonaHub.",
+    referenceNotificationQueued:" The reference verification notice was queued securely.",
     experienceSaveFailed:"The sea experience could not be saved.",
     experienceDateInvalid:"The sign-off date cannot be earlier than the sign-on date.",
 
@@ -578,7 +581,10 @@ function trustedVesselPhotoSourceUrl(value){
     saveExperience:"Tecrübeyi Kaydet",
     experienceSaved:"Kaydedildi ve CV'ye eklendi",
     experienceNeedsSave:"Zorunlu alanları tamamlayıp bu tecrübeyi kaydedin.",
+    experienceSaving:"Tecrübe kaydediliyor ve referans doğrulama kaydı oluşturuluyor...",
     experienceSavedAlert:"Deniz tecrübesi kaydedildi ve CV'ye eklendi.",
+    referenceNotificationSent:" Referans doğrulama bildirimi AllonaHub'a gönderildi.",
+    referenceNotificationQueued:" Referans doğrulama bildirimi güvenli kuyruğa alındı.",
     experienceSaveFailed:"Deniz tecrübesi kaydedilemedi.",
     experienceDateInvalid:"Ayrılış tarihi katılış tarihinden önce olamaz.",
 
@@ -820,7 +826,10 @@ function trustedVesselPhotoSourceUrl(value){
     saveExperience:"Təcrübəni Yadda Saxla",
     experienceSaved:"Yadda saxlanıldı və CV-yə əlavə edildi",
     experienceNeedsSave:"Məcburi sahələri tamamlayıb bu təcrübəni yadda saxlayın.",
+    experienceSaving:"Təcrübə saxlanılır və referans yoxlama qeydi yaradılır...",
     experienceSavedAlert:"Dəniz təcrübəsi yadda saxlanıldı və CV-yə əlavə edildi.",
+    referenceNotificationSent:" Referans yoxlama bildirişi AllonaHub-a göndərildi.",
+    referenceNotificationQueued:" Referans yoxlama bildirişi təhlükəsiz növbəyə alındı.",
     experienceSaveFailed:"Dəniz təcrübəsi yadda saxlanmadı.",
     experienceDateInvalid:"Çıxış tarixi giriş tarixindən əvvəl ola bilməz.",
 
@@ -1061,7 +1070,10 @@ function trustedVesselPhotoSourceUrl(value){
     saveExperience:"Сохранить Опыт",
     experienceSaved:"Сохранено и добавлено в CV",
     experienceNeedsSave:"Заполните обязательные поля и сохраните этот опыт.",
+    experienceSaving:"Опыт сохраняется, запись проверки рекомендации создаётся...",
     experienceSavedAlert:"Морской опыт сохранён и добавлен в CV.",
+    referenceNotificationSent:" Уведомление о проверке рекомендации отправлено в AllonaHub.",
+    referenceNotificationQueued:" Уведомление о проверке рекомендации помещено в защищённую очередь.",
     experienceSaveFailed:"Не удалось сохранить морской опыт.",
     experienceDateInvalid:"Дата списания не может быть раньше даты посадки.",
 
@@ -1782,16 +1794,44 @@ function validateSeaExperience(index, options){
   return !missing.length;
 }
 
-function saveSeaExperience(index){
+async function saveSeaExperience(index){
   const rowIndex = Number(index);
   if(!validateSeaExperience(rowIndex)) return;
-  seaData[rowIndex].saved = "true";
-  seaData[rowIndex].serviceDocumentStatus = "uploaded";
-  persistCV();
-  renderSeaInputs();
-  renderSea();
-  syncCV();
-  alert(t("experienceSavedAlert"));
+  const row = seaData[rowIndex];
+  const button = document.querySelector(`[data-cv-action="save-sea"][data-cv-index="${rowIndex}"]`);
+  const state = button?.closest(".cv-sea-card")?.querySelector(".cv-sea-save-state");
+  const previousSaved = row.saved;
+  row.saved = "true";
+  row.serviceDocumentStatus = "uploaded";
+  if(button){
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+  }
+  if(state){
+    state.className = "cv-sea-save-state is-pending";
+    state.textContent = t("experienceSaving");
+  }
+  try{
+    if(!window.AllonaMaritimeCvAccount || typeof window.AllonaMaritimeCvAccount.saveSeaExperience !== "function") throw new Error("MARITIME_REFERENCE_SAVE_UNAVAILABLE");
+    const result = await window.AllonaMaritimeCvAccount.saveSeaExperience(getCVData(), rowIndex);
+    persistCV();
+    renderSeaInputs();
+    renderSea();
+    syncCV();
+    const sent = result?.notification?.status === "sent";
+    alert(t("experienceSavedAlert") + t(sent ? "referenceNotificationSent" : "referenceNotificationQueued"));
+  } catch(error){
+    row.saved = previousSaved === "true" ? "true" : "false";
+    renderSeaInputs();
+    renderSea();
+    alert(t("experienceSaveFailed"));
+  } finally {
+    const nextButton = document.querySelector(`[data-cv-action="save-sea"][data-cv-index="${rowIndex}"]`);
+    if(nextButton){
+      nextButton.disabled = false;
+      nextButton.removeAttribute("aria-busy");
+    }
+  }
 }
 
 function validImo(value){

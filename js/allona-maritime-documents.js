@@ -55,6 +55,11 @@
     consentRequired: ["Belgeleri kaydetmek için saklama onayını işaretleyin.", "Sənədləri saxlamaq üçün razılığı işarələyin.", "Сақтау келісімін белгілеңіз.", "Saqlash roziligini belgilang.", "Сактоо макулдугун белгилеңиз.", "Accept document storage before saving.", "Stimmen Sie vor dem Speichern der Ablage zu.", "Подтвердите хранение документов.", "وافق على حفظ المستندات قبل المتابعة."],
     loadFailed: ["Bilgiler şu anda yüklenemedi.", "Məlumatlar indi yüklənmədi.", "Деректер жүктелмеді.", "Maʼlumotlar yuklanmadi.", "Маалымат жүктөлгөн жок.", "Information could not be loaded.", "Informationen konnten nicht geladen werden.", "Не удалось загрузить данные.", "تعذر تحميل المعلومات."],
     openDocument: ["Belgeyi Aç", "Sənədi aç", "Құжатты ашу", "Hujjatni ochish", "Документти ачуу", "Open Document", "Dokument öffnen", "Открыть документ", "فتح المستند"],
+    deleteDocument: ["Belgeyi Sil", "Sənədi sil", "Құжатты жою", "Hujjatni o‘chirish", "Документти өчүрүү", "Delete Document", "Dokument löschen", "Удалить документ", "حذف المستند"],
+    deleteDocumentConfirm: ["Bu belge özel arşivinizden kalıcı olarak silinsin mi?", "Bu sənəd şəxsi arxivinizdən həmişəlik silinsin?", "Бұл құжат жеке мұрағаттан біржола жойылсын ба?", "Bu hujjat shaxsiy arxivdan butunlay o‘chirilsinmi?", "Бул документ жеке архивден биротоло өчүрүлсүнбү?", "Permanently delete this document from your private archive?", "Dieses Dokument dauerhaft aus Ihrem privaten Archiv löschen?", "Навсегда удалить этот документ из личного архива?", "هل تريد حذف هذا المستند نهائياً من أرشيفك الخاص؟"],
+    documentDeleted: ["Belge özel arşivinizden silindi.", "Sənəd şəxsi arxivinizdən silindi.", "Құжат жеке мұрағаттан жойылды.", "Hujjat shaxsiy arxivdan o‘chirildi.", "Документ жеке архивден өчүрүлдү.", "The document was deleted from your private archive.", "Das Dokument wurde aus Ihrem privaten Archiv gelöscht.", "Документ удалён из личного архива.", "تم حذف المستند من أرشيفك الخاص."],
+    deleteFailed: ["Belge silinemedi. Maritime CV içinde kullanılıyorsa önce ilgili tecrübeyi güncelleyin.", "Sənəd silinmədi. Maritime CV-də istifadə olunursa əvvəl müvafiq təcrübəni yeniləyin.", "Құжат жойылмады. Maritime CV-де қолданылса, алдымен тәжірибені жаңартыңыз.", "Hujjat o‘chirilmadi. Maritime CV-da ishlatilsa, avval tajribani yangilang.", "Документ өчүрүлгөн жок. Maritime CV-де колдонулса, адегенде тажрыйбаны жаңыртыңыз.", "The document could not be deleted. If it is used in Maritime CV, update that experience first.", "Das Dokument konnte nicht gelöscht werden. Aktualisieren Sie zuerst den Eintrag im Maritime CV.", "Не удалось удалить документ. Если он используется в Maritime CV, сначала обновите запись.", "تعذر حذف المستند. إذا كان مستخدماً في Maritime CV فحدّث الخبرة أولاً."],
+    storageUsage: ["Özel arşiv kullanımı", "Şəxsi arxiv istifadəsi", "Жеке мұрағатты пайдалану", "Shaxsiy arxivdan foydalanish", "Жеке архивди колдонуу", "Private archive usage", "Nutzung des privaten Archivs", "Использование личного архива", "استخدام الأرشيف الخاص"],
     documentSaved: ["Kaydedildi", "Saxlanıldı", "Сақталды", "Saqlandi", "Сакталды", "Saved", "Gespeichert", "Сохранено", "تم الحفظ"]
   };
 
@@ -124,6 +129,7 @@
 
   function formatBytes(value) {
     const bytes = Math.max(0, Number(value) || 0);
+    if (!bytes) return "0 KB";
     return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
@@ -188,12 +194,15 @@
     const list = document.querySelector("[data-document-review-list]");
     if (!list) return;
     const documents = Array.isArray(state.remote?.documents) ? state.remote.documents : [];
+    const usage = state.remote?.storage_usage;
+    const usageTarget = document.querySelector("[data-document-storage-usage]");
+    if (usageTarget && usage) usageTarget.textContent = `${text("storageUsage")}: ${formatBytes(usage.used_bytes)} / ${formatBytes(usage.max_bytes)} · ${usage.file_count} / ${usage.max_files}`;
     if (!documents.length) {
       list.innerHTML = `<article class="maritime-document-empty"><i class="fa-solid fa-file-shield" aria-hidden="true"></i><strong>${escapeHtml(text("noDocuments"))}</strong><span>${escapeHtml(text("noDocumentsLead"))}</span></article>`;
       return;
     }
     list.innerHTML = documents.map(function (documentRow) {
-      return `<article class="maritime-document-review-card is-confirmed"><div class="maritime-document-card-summary"><span class="maritime-document-type-icon"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span><span><strong>${escapeHtml(documentRow.original_file_name || "PDF")}</strong><small>PDF · ${escapeHtml(formatBytes(documentRow.file_size_bytes))}</small></span><span class="maritime-document-state is-confirmed">${escapeHtml(text("documentSaved"))}</span></div><div class="maritime-document-card-utility"><button type="button" data-open-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-eye" aria-hidden="true"></i>${escapeHtml(text("openDocument"))}</button></div></article>`;
+      return `<article class="maritime-document-review-card is-confirmed"><div class="maritime-document-card-summary"><span class="maritime-document-type-icon"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span><span><strong>${escapeHtml(documentRow.original_file_name || "PDF")}</strong><small>PDF · ${escapeHtml(formatBytes(documentRow.file_size_bytes))}</small></span><span class="maritime-document-state is-confirmed">${escapeHtml(text("documentSaved"))}</span></div><div class="maritime-document-card-utility"><button type="button" data-open-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-eye" aria-hidden="true"></i>${escapeHtml(text("openDocument"))}</button><button type="button" data-delete-intake="${escapeHtml(documentRow.id)}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>${escapeHtml(text("deleteDocument"))}</button></div></article>`;
     }).join("");
   }
 
@@ -295,6 +304,19 @@
     }
   }
 
+  async function deleteDocument(intakeId, button) {
+    if (!window.confirm(text("deleteDocumentConfirm"))) return;
+    button.disabled = true;
+    try {
+      await api(`/v1/maritime/documents/${encodeURIComponent(intakeId)}`, { method: "DELETE" });
+      await loadRemote();
+      setStatus(text("documentDeleted"), "success");
+    } catch (error) {
+      setStatus(error.message && error.message !== "REQUEST_FAILED" ? error.message : text("deleteFailed"), "error");
+      button.disabled = false;
+    }
+  }
+
   function bindEvents() {
     const input = document.querySelector("[data-document-files]");
     const dropzone = document.querySelector("[data-document-dropzone]");
@@ -330,7 +352,9 @@
       const create = event.target.closest("[data-create-global-cv]");
       if (create) return createGlobalCv(create);
       const open = event.target.closest("[data-open-intake]");
-      if (open) openDocument(open.dataset.openIntake, open);
+      if (open) return openDocument(open.dataset.openIntake, open);
+      const removeSaved = event.target.closest("[data-delete-intake]");
+      if (removeSaved) deleteDocument(removeSaved.dataset.deleteIntake, removeSaved);
     });
   }
 

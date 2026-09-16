@@ -8,6 +8,7 @@ import {
 } from "../lib/maritime-smart-profile.js";
 import { ensureMaritimeCustomerProfile } from "../lib/maritime-customer-profile.js";
 import { requireMaritimePasskeyProof } from "../lib/maritime-passkey.js";
+import { queueMaritimeReferenceNotification } from "../lib/maritime-reference-notifications.js";
 import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
@@ -98,6 +99,33 @@ const manualCvSchema = z.object({
   });
 });
 const manualCvRequestSchema = z.object({ cv: manualCvSchema, confirmation: z.literal(true) }).strict();
+const maritimeReferenceRequestSchema = z.object({
+  experience: restrictedStringRecord(manualCvRowKeys.sea, 300).superRefine((row, context) => {
+    const required = ["rowId", "imo", "vessel", "company", "type", "flag", "mmsi", "dwt", "grt", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "serviceDocumentId"];
+    required.forEach((key) => {
+      if (!cvText(row[key])) context.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: "Deniz hizmeti referans alanı zorunludur." });
+    });
+    if (row.rowId && !z.string().uuid().safeParse(row.rowId).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["rowId"], message: "Geçerli tecrübe kimliği gereklidir." });
+    if (row.serviceDocumentId && !z.string().uuid().safeParse(row.serviceDocumentId).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["serviceDocumentId"], message: "Geçerli hizmet belgesi kimliği gereklidir." });
+    if (row.saved !== "true") context.addIssue({ code: z.ZodIssueCode.custom, path: ["saved"], message: "Deniz tecrübesi kaydı onaylanmalıdır." });
+    if (row.imo && !isValidImoNumber(row.imo)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["imo"], message: "Geçerli bir IMO numarası gereklidir." });
+    if (row.referenceCompanyEmail && !z.string().email().safeParse(row.referenceCompanyEmail).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["referenceCompanyEmail"], message: "Geçerli şirket e-postası gereklidir." });
+    if (row.signon && row.signoff && row.signoff < row.signon) context.addIssue({ code: z.ZodIssueCode.custom, path: ["signoff"], message: "Ayrılış tarihi katılış tarihinden önce olamaz." });
+  }),
+  candidate: z.object({
+    first_name: z.string().trim().min(1).max(160),
+    middle_name: z.string().trim().max(160).default(""),
+    family_name: z.string().trim().min(1).max(160)
+  }).strict(),
+  cv_summary: z.object({
+    current_position: z.string().trim().max(160).default(""),
+    competency_class: z.string().trim().max(160).default(""),
+    competency_certificate: z.string().trim().max(160).default(""),
+    medical_expiry: z.string().trim().max(20).default(""),
+    certificate_codes: z.array(z.string().trim().min(1).max(40)).max(30).default([])
+  }).strict(),
+  confirmation: z.literal(true)
+}).strict();
 const identitySupportRequestSchema = z.object({
   message: z.string().trim().min(10).max(2000),
   confirmation: z.literal(true)
@@ -470,6 +498,55 @@ async function assertOwnedSeaServiceDocuments(userId, seaData) {
   }
 }
 
+function referenceCandidateName(candidate) {
+  return [candidate.first_name, candidate.middle_name, candidate.family_name].map(cvText).filter(Boolean).join(" ");
+}
+
+function referenceSummaryFromCv(cv) {
+  return {
+    current_position: cvText(cv.fields.position),
+    competency_class: cvText(cv.fields.competencyClass),
+    competency_certificate: cvText(cv.fields.competencyCertificate),
+    medical_expiry: cvText(cv.fields.medicalExpiry),
+    certificate_codes: [...new Set(cv.stcwData
+      .filter((row) => row.included !== "false")
+      .map((row) => cvText(row.code).toUpperCase())
+      .filter(Boolean))]
+  };
+}
+
+async function maritimePublicId(userId) {
+  const profile = assertDb(await supabaseAdmin.from("profiles").select("public_id").eq("id", userId).maybeSingle(), "Allona ID okunamadı.");
+  const publicId = cvText(profile?.public_id);
+  if (!publicId) throw httpError("Allona ID henüz oluşturulmadı. Lütfen sayfayı yenileyip tekrar deneyin.", 409, "MARITIME_PUBLIC_ID_REQUIRED");
+  return publicId;
+}
+
+async function notifyReference({ request, ctx, experience, candidate, cvSummary, publicId }) {
+  const result = await queueMaritimeReferenceNotification({
+    supabase: supabaseAdmin,
+    userId: ctx.user.id,
+    publicId,
+    candidateName: referenceCandidateName(candidate),
+    experience,
+    cvSummary
+  });
+  await auditEvent({
+    request,
+    actorId: ctx.user.id,
+    actorRole: ctx.profile.role,
+    action: "maritime.reference_verification_notification_queued",
+    resourceType: "maritime_reference_verification_request",
+    resourceId: result.request_id,
+    metadata: {
+      experience_id: experience.rowId,
+      delivery_status: result.status,
+      idempotent: result.idempotent === true
+    }
+  });
+  return result;
+}
+
 async function ownCvIdentity(user) {
   const signed = await supabaseAdmin.storage
     .from(MARITIME_PROFILE_PHOTO_BUCKET)
@@ -728,6 +805,31 @@ export function registerMaritimeSmartAccountRoutes(app) {
     };
   });
 
+  app.post("/v1/maritime/reference-verifications", {
+    config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
+  }, async (request, reply) => {
+    const ctx = await requireCustomer(request, "maritime.reference_verification.create");
+    const input = maritimeReferenceRequestSchema.parse(request.body || {});
+    await assertOwnedSeaServiceDocuments(ctx.user.id, [input.experience]);
+    const notification = await notifyReference({
+      request,
+      ctx,
+      experience: input.experience,
+      candidate: input.candidate,
+      cvSummary: input.cv_summary,
+      publicId: await maritimePublicId(ctx.user.id)
+    });
+    reply.code(notification.idempotent ? 200 : 201);
+    return {
+      ok: true,
+      notification: {
+        request_id: notification.request_id,
+        status: notification.status,
+        idempotent: notification.idempotent === true
+      }
+    };
+  });
+
   app.put("/v1/maritime/cv-profile", {
     config: { rateLimit: { max: 20, timeWindow: "10 minutes" } }
   }, async (request) => {
@@ -767,10 +869,40 @@ export function registerMaritimeSmartAccountRoutes(app) {
       resourceType: "maritime_cv_profile",
       metadata: { source: "user_entered_maritime_cv", completion_percent: profile.completion_percent }
     });
+    const referenceNotifications = [];
+    const publicId = await maritimePublicId(ctx.user.id);
+    for (const experience of input.cv.seaData.filter((row) => row.saved === "true")) {
+      try {
+        referenceNotifications.push(await notifyReference({
+          request,
+          ctx,
+          experience,
+          candidate: {
+            first_name: input.cv.fields.firstName,
+            middle_name: input.cv.fields.fatherName || "",
+            family_name: input.cv.fields.familyName
+          },
+          cvSummary: referenceSummaryFromCv(input.cv),
+          publicId
+        }));
+      } catch (error) {
+        request.log.warn({
+          code: "MARITIME_REFERENCE_NOTIFICATION_RETRY_REQUIRED",
+          experienceId: experience.rowId,
+          errorCode: error?.code || "REFERENCE_NOTIFICATION_FAILED"
+        }, "Maritime reference notification could not be queued after CV save");
+        referenceNotifications.push({ status: "failed", experience_id: experience.rowId });
+      }
+    }
     return {
       ok: true,
       cv: input.cv,
       profile,
+      reference_notifications: referenceNotifications.map((item) => ({
+        request_id: item.request_id || null,
+        status: item.status,
+        idempotent: item.idempotent === true
+      })),
       identity_lock: {
         locked: true,
         locked_at: profile.last_user_confirmed_at || now,

@@ -111,7 +111,8 @@ begin
     'maritime_pdf_payments',
     'maritime_pdf_entitlements',
     'maritime_pdf_downloads',
-    'maritime_vessel_lookup_cache'
+    'maritime_vessel_lookup_cache',
+    'maritime_reference_verification_requests'
   ] loop
     if to_regclass(format('public.%I', expected_table)) is null then
       raise exception 'Missing maritime hiring core table: %', expected_table;
