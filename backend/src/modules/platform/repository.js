@@ -232,6 +232,27 @@ export class CountryRepository {
     return total;
   }
 
+  async sumCurrentProfileHp() {
+    let total = 0;
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await this.client
+        .from("profiles")
+        .select("hp")
+        .range(from, from + pageSize - 1);
+      if (error) {
+        if (["42703", "42P01", "PGRST204", "PGRST205"].includes(error.code)) return null;
+        throw databaseFailure("profiles_hp", error);
+      }
+      const page = data || [];
+      total += page.reduce((sum, item) => sum + Math.max(0, Number(item.hp || 0)), 0);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+    return total;
+  }
+
   async listLivePublicImpact() {
     const periodEnd = new Date().toISOString();
     const newUsersPeriodStart = isoDaysAgo(7);
@@ -301,18 +322,29 @@ export class CountryRepository {
 
     const sourceNotes = [];
 
-    if (hpEarned !== null) {
+    let hpValue = hpEarned;
+    let hpDataSource = "public.hp_ledger";
+    let hpPeriod = hpPeriodStart;
+    let hpAggregation = "son 7 gunde olusan pozitif earn hareketlerinin toplami";
+    if (hpValue === null) {
+      hpValue = await this.sumCurrentProfileHp();
+      hpDataSource = "public.profiles.hp";
+      hpPeriod = null;
+      hpAggregation = "aktif profillerde kayitli mevcut sadakat puani bakiyelerinin toplami";
+    }
+
+    if (hpValue !== null) {
       metrics.push(impactMetric({
         metricKey: "hp_points_issued",
-        value: hpEarned,
-        periodStart: hpPeriodStart,
+        value: hpValue,
+        periodStart: hpPeriod,
         periodEnd,
-        dataSource: "public.hp_ledger",
-        aggregationMethod: "son 7 gunde olusan pozitif earn hareketlerinin toplami",
+        dataSource: hpDataSource,
+        aggregationMethod: hpAggregation,
         unit: "hp"
       }));
     } else {
-      sourceNotes.push("hp_points_issued: public.hp_ledger kaynagina ulasilamadi");
+      sourceNotes.push("hp_points_issued: sadakat puani kaynagina ulasilamadi");
     }
 
     return { metrics, sourceNotes };

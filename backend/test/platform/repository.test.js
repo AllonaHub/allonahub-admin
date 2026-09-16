@@ -189,3 +189,22 @@ test("live public impact computes only aggregate metrics from canonical tables",
   )));
   assert.equal(calls.filter((call) => call.table === "profiles").length, 2);
 });
+
+test("profile HP aggregate is a safe fallback when the ledger is unavailable", async () => {
+  const calls = [];
+  const client = {
+    from(table) {
+      assert.equal(table, "profiles");
+      return {
+        select(columns) {
+          assert.equal(columns, "hp");
+          return rowsBuilder([{ hp: 250 }, { hp: 90 }, { hp: -20 }], calls, table);
+        }
+      };
+    }
+  };
+
+  const repository = new CountryRepository(client);
+  assert.equal(await repository.sumCurrentProfileHp(), 340);
+  assert.equal(calls.length, 1);
+});
