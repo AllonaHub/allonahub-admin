@@ -236,6 +236,17 @@ begin
   if not exists (
     select 1
     from pg_constraint
+    where conrelid = 'public.maritime_vessel_lookup_cache'::regclass
+      and conname = 'maritime_vessel_lookup_cache_provider_check'
+      and pg_get_constraintdef(oid) ilike '%marinetraffic%'
+      and pg_get_constraintdef(oid) ilike '%wikidata%'
+  ) then
+    raise exception 'Maritime vessel lookup cache provider constraint is incomplete';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
     where conrelid = 'public.maritime_cv_identity_locks'::regclass
       and contype = 'u'
       and pg_get_constraintdef(oid) ilike '%person_fingerprint%'

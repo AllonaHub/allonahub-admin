@@ -264,7 +264,7 @@ export function registerMaritimeCommerceRoutes(app) {
       const expiresAt = new Date(Date.parse(fetchedAt) + config.maritimeVesselLookup.cacheHours * 3600000).toISOString();
       assertDb(await supabaseAdmin.from("maritime_vessel_lookup_cache").upsert({
         imo_number: imo,
-        provider: "marinetraffic",
+        provider: vessel.provider,
         vessel_payload: vessel,
         fetched_at: fetchedAt,
         expires_at: expiresAt
@@ -278,7 +278,7 @@ export function registerMaritimeCommerceRoutes(app) {
       action: "maritime.vessel_lookup_completed",
       resourceType: "maritime_vessel",
       resourceId: null,
-      metadata: { imo, provider: "marinetraffic", cache_hit: cacheHit }
+      metadata: { imo, provider: vessel.provider, cache_hit: cacheHit }
     });
     return { ok: true, vessel, cache_hit: cacheHit };
   });

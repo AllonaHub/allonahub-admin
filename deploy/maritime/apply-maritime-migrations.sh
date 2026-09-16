@@ -26,6 +26,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260916003000_add_maritime_passkey_security.sql"
   "$ROOT_DIR/supabase/migrations/20260916014500_create_maritime_super_admin_user_controls.sql"
   "$ROOT_DIR/supabase/migrations/20260916030000_create_maritime_premium_and_pdf_access.sql"
+  "$ROOT_DIR/supabase/migrations/20260916040000_add_open_vessel_lookup_fallback.sql"
 )
 
 if [ -z "$DB_URL" ]; then

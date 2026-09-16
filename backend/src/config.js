@@ -324,10 +324,15 @@ export const config = {
   maritimeVesselLookup: {
     enabled: readBool("MARITIME_VESSEL_LOOKUP_ENABLED", false),
     provider: readEnv("MARITIME_VESSEL_LOOKUP_PROVIDER", { required: false, defaultValue: "marinetraffic" }).toLowerCase(),
+    publicFallbackEnabled: readBool("MARITIME_VESSEL_PUBLIC_FALLBACK_ENABLED", true),
     marineTrafficApiKey: readOptionalSecret("MARINETRAFFIC_API_KEY"),
     marineTrafficBaseUrl: readEnv("MARINETRAFFIC_API_BASE_URL", {
       required: false,
       defaultValue: "https://services.marinetraffic.com/api"
+    }).replace(/\/$/, ""),
+    wikidataBaseUrl: readEnv("WIKIDATA_SPARQL_BASE_URL", {
+      required: false,
+      defaultValue: "https://query.wikidata.org/sparql"
     }).replace(/\/$/, ""),
     timeoutMs: Math.max(1000, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_TIMEOUT_MS", 12000), 30000)),
     cacheHours: Math.max(1, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_CACHE_HOURS", 168), 720))

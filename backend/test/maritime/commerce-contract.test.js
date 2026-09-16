@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const migrationUrl = new URL("../../../supabase/migrations/20260916030000_create_maritime_premium_and_pdf_access.sql", import.meta.url);
+const vesselFallbackMigrationUrl = new URL("../../../supabase/migrations/20260916040000_add_open_vessel_lookup_fallback.sql", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-commerce.js", import.meta.url);
 const mainRoutesUrl = new URL("../../src/routes/index.js", import.meta.url);
 const providerUrl = new URL("../../src/lib/maritime-vessel-provider.js", import.meta.url);
@@ -84,15 +85,25 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
   assert.doesNotMatch(`${cvPage}\n${smartPage}`, /data-premium|premium-button|Premium'a Geç/i);
 });
 
-test("IMO lookup uses a server-only official adapter and sea references are required end to end", async () => {
-  const [provider, route, cvForm, smartRoute, smartProfile] = await Promise.all([
+test("IMO lookup uses a server-only official adapter with an open fallback and sea references are required end to end", async () => {
+  const [provider, route, cvForm, smartRoute, smartProfile, fallbackMigration, deploy, schemaCheck] = await Promise.all([
     readFile(providerUrl, "utf8"),
     readFile(routeUrl, "utf8"),
     readFile(cvFormUrl, "utf8"),
     readFile(smartRouteUrl, "utf8"),
-    readFile(smartProfileUrl, "utf8")
+    readFile(smartProfileUrl, "utf8"),
+    readFile(vesselFallbackMigrationUrl, "utf8"),
+    readFile(deployUrl, "utf8"),
+    readFile(schemaCheckUrl, "utf8")
   ]);
   assert.match(provider, /vesselmasterdata\/\$\{encodeURIComponent\(apiKey\)\}/);
+  assert.match(provider, /application\/sparql-results\+json/);
+  assert.match(provider, /wdt:P458/);
+  assert.match(provider, /wdt:P1093/);
+  assert.match(provider, /wdt:P4519/);
+  assert.match(fallbackMigration, /provider in \('marinetraffic', 'wikidata'\)/);
+  assert.match(deploy, /20260916040000_add_open_vessel_lookup_fallback\.sql/);
+  assert.match(schemaCheck, /Maritime vessel lookup cache provider constraint is incomplete/);
   assert.match(provider, /endpoint\.searchParams\.set\("imo", imo\)/);
   assert.match(provider, /SUMMER_DWT/);
   assert.doesNotMatch(provider, /localStorage|sessionStorage|document\./);
@@ -145,4 +156,41 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     build: 2005
   });
   assert.equal(provider.normalizeMarineTrafficVessel({ IMO: "9360284" }), null);
+  assert.equal(provider.normalizeMarineTrafficVessel({ IMO: "9360283" }).dwt, null);
+
+  const openVessel = provider.normalizeWikidataVesselBindings([{
+    ship: { value: "http://www.wikidata.org/entity/Q105765847" },
+    imo: { value: "9360283" },
+    shipNameEn: { value: "MSC AUBE F" },
+    instanceLabel: { value: "container ship" },
+    flagLabel: { value: "Panama" },
+    gross: { value: "12679" },
+    dwt: { value: "15220" },
+    mmsi: { value: "352001323" },
+    callSign: { value: "3E4052" },
+    serviceEntry: { value: "2005-01-01T00:00:00Z" },
+    length: { value: "147" },
+    breadth: { value: "25" }
+  }], "9360283");
+  assert.deepEqual({
+    name: openVessel.vessel_name,
+    type: openVessel.vessel_type,
+    flag: openVessel.flag,
+    dwt: openVessel.dwt,
+    grt: openVessel.grt,
+    provider: openVessel.provider,
+    license: openVessel.provider_license
+  }, {
+    name: "MSC AUBE F",
+    type: "container ship",
+    flag: "Panama",
+    dwt: 15220,
+    grt: 12679,
+    provider: "wikidata",
+    license: "CC0-1.0"
+  });
+  assert.equal(provider.normalizeWikidataVesselBindings([{
+    ship: { value: "http://www.wikidata.org/entity/Q105765847" },
+    imo: { value: "9360283" }
+  }], "9360283").grt, null);
 });
