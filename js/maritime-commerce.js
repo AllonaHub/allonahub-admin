@@ -51,6 +51,25 @@
     return payload;
   }
 
+  async function publicApi(path, options) {
+    const response = await fetch(`${apiBase()}${path}`, {
+      ...options,
+      headers: {
+        Accept: "application/json",
+        ...(options && options.headers || {})
+      }
+    });
+    const payload = await response.json().catch(function () { return {}; });
+    if (!response.ok || payload.ok !== true) {
+      const error = new Error(payload.message || "REQUEST_FAILED");
+      error.status = response.status;
+      error.code = payload.error || payload.code || "REQUEST_FAILED";
+      error.payload = payload;
+      throw error;
+    }
+    return payload;
+  }
+
   function idempotencyKey(product) {
     if (pendingKeys.has(product)) return pendingKeys.get(product);
     let key = "";
@@ -117,7 +136,7 @@
   }
 
   async function lookupVessel(imo) {
-    return api(`/v1/maritime/vessels/${encodeURIComponent(String(imo || ""))}`, { method: "GET" });
+    return publicApi(`/v1/maritime/vessels/${encodeURIComponent(String(imo || ""))}`, { method: "GET" });
   }
 
   window.AllonaMaritimeCommerce = Object.freeze({ authorizeDownload, startCheckout, authorizeOrCheckout, lookupVessel });

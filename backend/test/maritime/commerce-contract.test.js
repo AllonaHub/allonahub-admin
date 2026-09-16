@@ -87,10 +87,11 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
 });
 
 test("IMO lookup uses a server-only official adapter with an open fallback and sea references are required end to end", async () => {
-  const [provider, route, cvForm, smartRoute, smartProfile, fallbackMigration, currentVesselMigration, deploy, schemaCheck] = await Promise.all([
+  const [provider, route, cvForm, commerceUi, smartRoute, smartProfile, fallbackMigration, currentVesselMigration, deploy, schemaCheck] = await Promise.all([
     readFile(providerUrl, "utf8"),
     readFile(routeUrl, "utf8"),
     readFile(cvFormUrl, "utf8"),
+    readFile(commerceUiUrl, "utf8"),
     readFile(smartRouteUrl, "utf8"),
     readFile(smartProfileUrl, "utf8"),
     readFile(vesselFallbackMigrationUrl, "utf8"),
@@ -119,6 +120,8 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
   assert.doesNotMatch(route, /requireCustomer\(request, "maritime\.vessel_lookup"\)/);
   assert.match(route, /actorId: ctx\?\.user\?\.id \|\| null/);
   assert.match(route, /rateLimit: \{ max: 10, timeWindow: "1 minute" \}/);
+  assert.match(commerceUi, /return publicApi\(`\/v1\/maritime\/vessels\/\$\{encodeURIComponent/);
+  assert.doesNotMatch(commerceUi, /return api\(`\/v1\/maritime\/vessels\/\$\{encodeURIComponent/);
   for (const key of ["referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"]) {
     assert.match(cvForm, new RegExp(`data-cv-key="${key}"`));
     assert.match(smartRoute, new RegExp(key));
