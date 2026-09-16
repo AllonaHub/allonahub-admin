@@ -116,7 +116,9 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.doesNotMatch(maritimeCvPage, /cdnjs\.cloudflare\.com\/ajax\/libs\/(?:html2canvas|jspdf)/);
   assert.match(maritimeCvPage, /maritime-cv-account\.js/);
   assert.match(maritimeCvForm, /window\.getMaritimeCVData = getCVData/);
-  for (const code of ["SP", "SH", "SI", "SL", "SO", "SA", "SE"]) assert.match(maritimeCvForm, new RegExp(`code: "${code}"`));
+  for (const code of ["SP", "SH", "SI", "SL", "SO", "SA"]) assert.match(maritimeCvForm, new RegExp(`code: "${code}"`));
+  assert.doesNotMatch(maritimeCvForm, /id: "se"[^\n]+code: "SE"/);
+  assert.match(maritimeCvForm, /removedSePreset && !hasSeCertificateData/);
   for (const code of ["SP", "SH", "SI", "SL", "SO"]) assert.match(maritimeCvForm, new RegExp(`id: "${code.toLowerCase()}"[^\n]+required: true`));
   for (const label of [
     "Chemical Tanker Certificate (SA)",

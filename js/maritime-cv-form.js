@@ -53,8 +53,7 @@ const stcwPresets = Object.freeze([
   Object.freeze({ id: "si", code: "SI", titleKey: "stcwSi", editableTitle: false, required: true }),
   Object.freeze({ id: "sl", code: "SL", titleKey: "stcwSl", editableTitle: false, required: true }),
   Object.freeze({ id: "so", code: "SO", titleKey: "stcwSo", editableTitle: false, required: true }),
-  Object.freeze({ id: "sa", code: "SA", titleKey: "stcwSa", editableTitle: true }),
-  Object.freeze({ id: "se", code: "SE", titleKey: "stcwSe", editableTitle: true })
+  Object.freeze({ id: "sa", code: "SA", titleKey: "stcwSa", editableTitle: true })
 ]);
 
 function newStcwRow(preset){
@@ -295,7 +294,6 @@ function trustedVesselPhotoSourceUrl(value){
     stcwSl:"Proficiency in Survival Craft and Rescue Boats (PSCRB)",
     stcwSo:"Basic Safety Training (BST)",
     stcwSa:"Chemical Tanker Certificate (SA)",
-    stcwSe:"STCW Certificate (SE)",
     institute:"Institute",
     place:"Place",
     rank:"Rank",
@@ -539,7 +537,6 @@ function trustedVesselPhotoSourceUrl(value){
     stcwSl:"Can Kurtarma Araçları ve Kurtarma Botları Kullanma Yeterliği (PSCRB)",
     stcwSo:"Temel Emniyet Eğitimi (BST)",
     stcwSa:"Kimyasal Tanker Sertifikası (SA)",
-    stcwSe:"SE Kodlu STCW Sertifikası",
     institute:"Kurum",
     place:"Yer",
     rank:"Rütbe",
@@ -784,7 +781,6 @@ function trustedVesselPhotoSourceUrl(value){
     stcwSl:"Xilasetmə Vasitələri və Xilasedici Qayıqlar üzrə Hazırlıq (PSCRB)",
     stcwSo:"Əsas Təhlükəsizlik Hazırlığı (BST)",
     stcwSa:"Kimyəvi Tanker Sertifikatı (SA)",
-    stcwSe:"SE Kodlu STCW Sertifikatı",
     institute:"Qurum",
     place:"Yer",
     rank:"Rütbə",
@@ -1028,7 +1024,6 @@ function trustedVesselPhotoSourceUrl(value){
     stcwSl:"Подготовка по спасательным шлюпкам, плотам и дежурным шлюпкам (PSCRB)",
     stcwSo:"Начальная подготовка по безопасности (BST)",
     stcwSa:"Сертификат химического танкера (SA)",
-    stcwSe:"Сертификат STCW с кодом SE",
     institute:"Учреждение",
     place:"Место",
     rank:"Должность",
@@ -2158,6 +2153,11 @@ function normalizeStcwRows(rows){
 
   rows.forEach(row => {
     const clean = { ...newStcwRow(), ...row };
+    const removedSePreset = clean.presetId === "se";
+    const hasSeCertificateData = ["name", "institute", "place", "issue", "rank", "cert", "number", "expiry"]
+      .some(key => String(clean[key] || "").trim());
+    if(removedSePreset && !hasSeCertificateData) return;
+    if(removedSePreset) clean.presetId = "";
     const legacyNumber = String(clean.number || clean.cert || "").trim();
     const legacyMatch = legacyNumber.match(/^(SP|SH|SI|SL|SO|SA|SE)[\s-]*(.*)$/i);
     if(!clean.code && legacyMatch) clean.code = legacyMatch[1].toUpperCase();
