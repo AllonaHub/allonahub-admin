@@ -134,8 +134,9 @@ test("Maritime CV personal lock upgrades existing identities without weakening d
   for (const field of ["rank", "marital_status", "permanent_address", "nearest_airport"]) assert.match(migration, new RegExp(field));
   assert.match(migration, /v_person_fingerprint <> v_lock\.person_fingerprint/);
   assert.match(migration, /MARITIME_IDENTITY_ALREADY_REGISTERED/);
-  assert.match(route, /maritimeIdentityLockVersion = "maritime-personal-v2"/);
-  assert.match(route, /identityLock\.identity_version === maritimeIdentityLockVersion/);
+  assert.match(route, /enforceSavedPersonalDetails\(savedIdentityLock, savedProfile, input\.cv\)/);
+  assert.match(route, /normalizedLockedCvValue/);
+  assert.match(route, /MARITIME_IDENTITY_LOCKED/);
   assert.match(route, /\.from\("maritime_cv_identity_locks"\)[\s\S]*?\.select\("locked_at,identity_version"\)/);
   assert.match(route, /locked: Boolean\(identityLock\)/);
 });

@@ -166,13 +166,9 @@ const identityCorrectionApprovalSchema = z.object({
     gender: z.string().trim().min(1).max(80)
   }).strict()
 }).strict();
-const maritimeCoreIdentityLockedFields = Object.freeze([
-  "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"
-]);
 const maritimeIdentityLockedFields = Object.freeze([
   "position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"
 ]);
-const maritimeIdentityLockVersion = "maritime-personal-v2";
 
 function httpError(message, statusCode = 400, code = "MARITIME_SMART_ACCOUNT_REQUEST_ERROR") {
   const error = new Error(message);
@@ -235,6 +231,41 @@ function assertDb(result, message) {
 
 function cvText(value) {
   return String(value ?? "").trim();
+}
+
+function normalizedLockedCvValue(value) {
+  return cvText(value).normalize("NFKC").replace(/\s+/g, " ");
+}
+
+function lockedCvValue(profilePayload, field) {
+  const manualFields = profilePayload?.manual_cv?.fields;
+  if (manualFields && Object.prototype.hasOwnProperty.call(manualFields, field)) return cvText(manualFields[field]);
+  const fallback = {
+    position: profilePayload?.rank,
+    firstName: profilePayload?.given_names,
+    familyName: profilePayload?.family_name,
+    fatherName: profilePayload?.middle_name,
+    birthDate: profilePayload?.date_of_birth,
+    birthPlace: profilePayload?.place_of_birth,
+    nationality: profilePayload?.nationality,
+    gender: profilePayload?.gender,
+    marital: profilePayload?.marital_status,
+    address: profilePayload?.contact?.permanent_address,
+    airport: profilePayload?.contact?.nearest_airport
+  };
+  return cvText(fallback[field]);
+}
+
+function enforceSavedPersonalDetails(identityLock, currentProfile, nextCv) {
+  if (!identityLock || !currentProfile?.profile_payload) return;
+  for (const field of maritimeIdentityLockedFields) {
+    const previous = normalizedLockedCvValue(lockedCvValue(currentProfile.profile_payload, field));
+    if (!previous) continue;
+    const next = normalizedLockedCvValue(nextCv.fields[field]);
+    if (next !== previous) {
+      throw httpError("Kaydedilmiş kişisel bilgiler yalnız destek doğrulamasıyla değiştirilebilir.", 409, "MARITIME_IDENTITY_LOCKED");
+    }
+  }
 }
 
 function cvDate(value) {
@@ -969,9 +1000,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
         locked_at: identityLock?.locked_at || null,
         version: identityLock?.identity_version || null,
         fields: identityLock
-          ? identityLock.identity_version === maritimeIdentityLockVersion
-            ? maritimeIdentityLockedFields
-            : maritimeCoreIdentityLockedFields
+          ? maritimeIdentityLockedFields.filter((field) => Boolean(lockedCvValue(payload, field)))
           : []
       },
       global_cv_readiness: maritimeGlobalPassportReadiness(payload, { hasPhoto: Boolean(photo.avatar_url) })
@@ -1154,6 +1183,21 @@ export function registerMaritimeSmartAccountRoutes(app) {
     const ctx = await requireCustomer(request, "maritime.cv_profile.save");
     const deviceKey = requestDeviceKey(request);
     const input = manualCvRequestSchema.parse(request.body || {});
+    const [currentProfile, currentIdentityLock] = await Promise.all([
+      supabaseAdmin
+        .from("maritime_cv_profiles")
+        .select("profile_payload")
+        .eq("seafarer_user_id", ctx.user.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("maritime_cv_identity_locks")
+        .select("locked_at,identity_version")
+        .eq("user_id", ctx.user.id)
+        .maybeSingle()
+    ]);
+    const savedProfile = assertDb(currentProfile, "Mevcut Maritime CV kaydı okunamadı.");
+    const savedIdentityLock = assertDb(currentIdentityLock, "Maritime CV kimlik kilidi okunamadı.");
+    enforceSavedPersonalDetails(savedIdentityLock, savedProfile, input.cv);
     await assertOwnedSeaServiceDocuments(ctx.user.id, input.cv.seaData);
     const payload = manualCvPayload(input.cv);
     const cvReadiness = maritimeGlobalPassportReadiness(payload, {
@@ -1231,11 +1275,7 @@ export function registerMaritimeSmartAccountRoutes(app) {
         locked: Boolean(identityLock),
         locked_at: identityLock?.locked_at || profile.last_user_confirmed_at || now,
         version: identityLock?.identity_version || null,
-        fields: identityLock
-          ? identityLock.identity_version === maritimeIdentityLockVersion
-            ? maritimeIdentityLockedFields
-            : maritimeCoreIdentityLockedFields
-          : []
+        fields: identityLock ? maritimeIdentityLockedFields : []
       }
     };
   });
