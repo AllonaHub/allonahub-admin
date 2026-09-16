@@ -244,7 +244,7 @@ export function registerMaritimeCommerceRoutes(app) {
   app.get("/v1/maritime/vessels/:imo", {
     config: { rateLimit: { max: 10, timeWindow: "1 minute" } }
   }, async (request) => {
-    const ctx = await requireCustomer(request, "maritime.vessel_lookup");
+    const ctx = await authContext(request);
     const input = imoParamsSchema.parse(request.params || {});
     const imo = normalizeImoNumber(input.imo);
     if (!isValidImoNumber(imo)) {
@@ -273,8 +273,8 @@ export function registerMaritimeCommerceRoutes(app) {
     }
     await auditEvent({
       request,
-      actorId: ctx.user.id,
-      actorRole: ctx.profile.role,
+      actorId: ctx?.user?.id || null,
+      actorRole: ctx?.profile?.role || null,
       action: "maritime.vessel_lookup_completed",
       resourceType: "maritime_vessel",
       resourceId: null,

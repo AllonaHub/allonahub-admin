@@ -109,6 +109,9 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
   assert.doesNotMatch(provider, /localStorage|sessionStorage|document\./);
   assert.match(route, /app\.get\("\/v1\/maritime\/vessels\/:imo"/);
   assert.match(route, /maritime_vessel_lookup_cache/);
+  assert.doesNotMatch(route, /requireCustomer\(request, "maritime\.vessel_lookup"\)/);
+  assert.match(route, /actorId: ctx\?\.user\?\.id \|\| null/);
+  assert.match(route, /rateLimit: \{ max: 10, timeWindow: "1 minute" \}/);
   for (const key of ["referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"]) {
     assert.match(cvForm, new RegExp(`data-cv-key="${key}"`));
     assert.match(smartRoute, new RegExp(key));

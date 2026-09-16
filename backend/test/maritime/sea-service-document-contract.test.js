@@ -37,7 +37,7 @@ test("sea experience requires a securely archived service document before it rea
   assert.match(controls, /pdf\.link\(x, y, width, height/);
   assert.match(controls, /attachSeaServiceDocument/);
   assert.match(account, /\/v1\/maritime\/sea-service-documents/);
-  assert.match(page, /maritime-cv-form\.js\?v=20260916-seaservice1/);
+  assert.match(page, /maritime-cv-form\.js\?v=20260916-imo-open1/);
   assert.match(css, /\.cv-sea-actions/);
   assert.match(css, /\.cv-service-document-link/);
 });
