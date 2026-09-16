@@ -37,4 +37,7 @@ begin
 end;
 $$;
 
+alter table public.maritime_vessel_lookup_cache enable row level security;
+revoke all on public.maritime_vessel_lookup_cache from public, anon, authenticated;
+
 commit;
