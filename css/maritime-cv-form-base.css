@@ -351,22 +351,41 @@ textarea:focus{
 
 .photoCell{
   width:clamp(116px, 22vw, 220px);
-  height:clamp(150px, 30vw, 285px);
-  padding:0!important;
+  height:auto;
+  padding:clamp(4px, .65vw, 7px)!important;
   text-align:center;
+  vertical-align:top!important;
+  background:#f4fbff;
   border:2px solid #00aaff!important;
 }
 
-.photoCell img{
+.cvPhotoFrame{
+  position:relative;
+  width:min(100%, 200px);
+  aspect-ratio:3 / 4;
+  margin:0 auto;
+  overflow:hidden;
+  border-radius:8px;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px rgba(21,151,255,.28);
+}
+
+.photoCell img,
+.emptyPhoto{
+  position:absolute;
+  inset:0;
   width:100%;
   height:100%;
-  object-fit:cover;
+}
+
+.photoCell img{
+  object-fit:contain;
+  object-position:center;
+  background:#fff;
   display:block;
 }
 
 .emptyPhoto{
-  width:100%;
-  height:100%;
   background:linear-gradient(135deg,#eaf8ff,#ffffff);
   display:flex;
   align-items:center;
@@ -488,8 +507,7 @@ textarea:focus{
   }
 
   .photoCell{
-    width:96px;
-    height:126px;
+    width:104px;
   }
 
   .emptyPhoto{
@@ -511,8 +529,7 @@ textarea:focus{
   }
 
   .photoCell{
-    width:78px;
-    height:108px;
+    width:88px;
   }
 }
 
@@ -640,7 +657,14 @@ body{
 .photoCell{
 
     width:42mm!important;
-    height:52mm!important;
+    height:auto!important;
+
+}
+
+.cvPhotoFrame{
+
+    width:38mm!important;
+    aspect-ratio:3 / 4!important;
 
 }
 

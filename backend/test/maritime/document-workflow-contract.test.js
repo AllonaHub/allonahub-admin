@@ -11,6 +11,7 @@ const maritimeCvAccountUrl = new URL("../../../js/maritime-cv-account.js", impor
 const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.url);
 const documentUiUrl = new URL("../../../js/allona-maritime-documents.js", import.meta.url);
 const photoUiUrl = new URL("../../../js/allona-maritime-photo.js", import.meta.url);
+const maritimeCvBaseCssUrl = new URL("../../../css/maritime-cv-form-base.css", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-documents.js", import.meta.url);
 const appUrl = new URL("../../src/app.js", import.meta.url);
 const customerProfileUrl = new URL("../../src/lib/maritime-customer-profile.js", import.meta.url);
@@ -76,7 +77,7 @@ test("the production maritime migration chain includes and verifies Global Passp
 });
 
 test("the customer workspace separates manual Maritime CV, PDF archive, and Global CV", async () => {
-  const [page, maritimeCvPage, maritimeCvForm, maritimeCvAccount, portal, documentUi, photoUi, route, customerProfile, app] = await Promise.all([
+  const [page, maritimeCvPage, maritimeCvForm, maritimeCvAccount, portal, documentUi, photoUi, maritimeCvBaseCss, route, customerProfile, app] = await Promise.all([
     readFile(pageUrl, "utf8"),
     readFile(maritimeCvPageUrl, "utf8"),
     readFile(maritimeCvFormUrl, "utf8"),
@@ -84,6 +85,7 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
     readFile(portalUrl, "utf8"),
     readFile(documentUiUrl, "utf8"),
     readFile(photoUiUrl, "utf8"),
+    readFile(maritimeCvBaseCssUrl, "utf8"),
     readFile(routeUrl, "utf8"),
     readFile(customerProfileUrl, "utf8"),
     readFile(appUrl, "utf8")
@@ -105,6 +107,7 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(maritimeCvPage, /<body[^>]+data-no-translate/);
   assert.match(maritimeCvPage, /id="photoInput"/);
   assert.match(maritimeCvPage, /data-cv-action="remove-photo"/);
+  assert.match(maritimeCvPage, /class="cvPhotoFrame"/);
   assert.match(maritimeCvPage, /data-cv-action="add-stcw"/);
   assert.match(maritimeCvPage, /data-cv-action="generate-summary"/);
   assert.match(maritimeCvPage, /id="medicalFitness"/);
@@ -142,6 +145,9 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.doesNotMatch(documentUi, /\/analyze|document-extractions|evidenceSourcePage|globalPassportDraft/);
   assert.match(photoUi, /face_pixels_regenerated: false/);
   assert.doesNotMatch(photoUi, /fetch\(|XMLHttpRequest|WebSocket/);
+  assert.match(maritimeCvBaseCss, /\.cvPhotoFrame\s*\{[\s\S]*?aspect-ratio:3 \/ 4/);
+  assert.match(maritimeCvBaseCss, /\.photoCell img\s*\{[\s\S]*?object-fit:contain/);
+  assert.match(maritimeCvBaseCss, /@media print[\s\S]*?\.cvPhotoFrame\s*\{[\s\S]*?width:38mm!important/);
   assert.match(route, /app\.post\("\/v1\/maritime\/documents\/archive"/);
   assert.match(route, /document_analysis: false/);
   assert.match(route, /maritimeDocumentSignatureMatches\(bytes, "application\/pdf"\)/);

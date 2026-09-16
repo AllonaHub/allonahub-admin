@@ -6,7 +6,7 @@
 <title>Maritime CV | AllonaHub</title>
 <meta name="description" content="Denizcilik bilgilerinizi ve fotoğrafınızı kendi hesabınıza kaydedebileceğiniz Maritime CV alanı.">
 
-<link rel="stylesheet" href="../../css/maritime-cv-form-base.css?v=20260915-stcw2">
+<link rel="stylesheet" href="../../css/maritime-cv-form-base.css?v=20260916-photo-fit1">
  <script src="../../js/vendor/html2canvas-1.4.1.min.js" defer></script>
 <script src="../../js/vendor/jspdf-2.5.1.umd.min.js" defer></script>
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
@@ -433,8 +433,10 @@
             <td class="labelCell" data-i18n="familyName">Family Name</td>
             <td id="cv_familyName"></td>
             <td rowspan="12" class="photoCell">
-              <div class="emptyPhoto" id="emptyPhoto" data-i18n="photo">PHOTO</div>
-              <img id="cv_photo" alt="CV profile photo" data-alt-i18n="photoAlt" hidden>
+              <div class="cvPhotoFrame">
+                <div class="emptyPhoto" id="emptyPhoto" data-i18n="photo">PHOTO</div>
+                <img id="cv_photo" alt="CV profile photo" data-alt-i18n="photoAlt" hidden>
+              </div>
             </td>
           </tr>
 
