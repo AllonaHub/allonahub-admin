@@ -31,8 +31,11 @@ test("sea experience requires a securely archived service document before it rea
   assert.match(form, /className = "cv-sea-photo-row"/);
   assert.match(form, /addEventListener\("error", \(\) => photoRow\.remove\(\)/);
   assert.match(form, /cv-vessel-photo--editor/);
-  assert.match(form, /accept="application\/pdf,\.pdf,image\/jpeg,image\/png,image\/webp,image\/\*"/);
+  assert.match(form, /accept="image\/jpeg,image\/png,image\/webp,image\/\*" capture="environment"/);
+  assert.match(form, /accept="application\/pdf,\.pdf" data-cv-service-document data-cv-source="pdf"/);
   assert.match(form, /data-cv-action="choose-sea-document"/);
+  assert.match(form, /data-cv-action="choose-sea-document-source"/);
+  for (const source of ["camera", "library", "pdf"]) assert.match(form, new RegExp(`data-cv-source="${source}"`));
   assert.match(form, /data-cv-action="save-sea"/);
   assert.match(form, /seaData\.filter\(item => item\.saved === "true"\)/);
   assert.match(form, /serviceDocumentId/);
@@ -41,8 +44,9 @@ test("sea experience requires a securely archived service document before it rea
   assert.match(controls, /pdf\.link\(x, y, width, height/);
   assert.match(controls, /attachSeaServiceDocument/);
   assert.match(account, /\/v1\/maritime\/sea-service-documents/);
-  assert.match(page, /maritime-cv-form\.js\?v=20260916-remove-se1/);
+  assert.match(page, /maritime-cv-form\.js\?v=20260916-guided-cv1/);
   assert.match(css, /\.cv-sea-actions/);
+  assert.match(css, /\.cv-sea-document-choice-actions/);
   assert.match(css, /\.cv-service-document-link/);
 });
 

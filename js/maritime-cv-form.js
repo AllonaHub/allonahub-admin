@@ -13,13 +13,16 @@ const textFields = [
   "azSpeak","azRead","azWrite","trSpeak","trRead","trWrite",
   "enSpeak","enRead","enWrite","ruSpeak","ruRead","ruWrite",
   "medicalDoc","medicalFitness","medicalGrade","medicalPlace","medicalIssue","medicalExpiry",
-  "competencyClass","competencyCountry","competencyCertificate",
+  "tradeSpecialty","competencyClass","competencyCountry","competencyCertificate",
   "competencyIssued","competencyExpires","competencyLimit","note"
 ];
 const maxTextLength = 2000;
 const maxRepeatFieldLength = 300;
-const immutableIdentityFieldIds = Object.freeze(["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"]);
+const immutableIdentityFieldIds = Object.freeze([
+  "position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"
+]);
 let identityLockState = Object.freeze({ locked: false, fields: [] });
+let identityFieldNoticeTimer = 0;
 const dateFieldIds = new Set([
   "birthDate", "passportIssued", "passportValid", "seamanBookIssued", "seamanBookValid",
   "seafarerIdIssued", "seafarerIdValid", "schoolFrom", "schoolTo", "medicalIssue", "medicalExpiry",
@@ -200,6 +203,15 @@ function trustedVesselPhotoSourceUrl(value){
     nationality:"Nationality",
     gender:"Gender",
     marital:"Marital Status",
+    selectGender:"Select gender",
+    genderMale:"Male",
+    genderFemale:"Female",
+    selectMaritalStatus:"Select marital status",
+    maritalSingle:"Single",
+    maritalMarried:"Married",
+    maritalDivorced:"Divorced",
+    maritalWidowed:"Widowed",
+    maritalSeparated:"Separated",
     address:"Permanent Address",
     airport:"Nearest Airport",
     photo:"PHOTO",
@@ -212,6 +224,21 @@ function trustedVesselPhotoSourceUrl(value){
     hair:"Hair Color",
     shoes:"Safety Shoes",
     overall:"Overalls",
+    selectEyeColor:"Select eye color",
+    selectHairColor:"Select hair color",
+    selectShoeSize:"Select shoe size",
+    selectOverallSize:"Select overall size",
+    colorBrown:"Brown",
+    colorBlack:"Black",
+    colorBlue:"Blue",
+    colorGreen:"Green",
+    colorHazel:"Hazel",
+    colorGrey:"Grey",
+    colorBlond:"Blond",
+    colorRed:"Red",
+    colorWhite:"White",
+    hairBald:"Bald",
+    optionOther:"Other",
 
     mobile:"Mobile",
     email:"E-mail Address",
@@ -219,12 +246,24 @@ function trustedVesselPhotoSourceUrl(value){
     kinPhone:"Phone",
     kinRelation:"Relationship",
     kinAddress:"Address",
+    selectRelationship:"Select relationship",
+    relationshipSpouse:"Spouse",
+    relationshipParent:"Parent",
+    relationshipChild:"Child",
+    relationshipSibling:"Sibling",
 
     document:"Document",
     number:"Number",
     placeOfIssue:"Place of Issue",
     issued:"Issued",
     valid:"Valid",
+    selectPassportType:"Select passport type",
+    passportOrdinary:"Ordinary passport",
+    passportDiplomatic:"Diplomatic passport",
+    passportService:"Service / official passport",
+    passportSpecial:"Special passport",
+    passportTemporary:"Temporary / emergency passport",
+    passportRefugee:"Refugee travel document",
 
     windows:"Windows",
     office:"Microsoft Office",
@@ -255,6 +294,10 @@ function trustedVesselPhotoSourceUrl(value){
     speaking:"Speaking",
     reading:"Reading",
     writing:"Writing",
+    selectSkillLevel:"Select level",
+    skillGood:"Good",
+    skillIntermediate:"Intermediate",
+    skillBasic:"Basic",
 
     grade:"Grade",
     validityPeriod:"Validity Period",
@@ -269,6 +312,12 @@ function trustedVesselPhotoSourceUrl(value){
     expires:"Expires",
     limitations:"Details of Limitations",
     competencyHelp:"Add your officer competency, welder, fitter or other professional competency certificate here.",
+    tradeSpecialty:"Certified trade specialty",
+    selectTradeSpecialty:"No additional trade specialty",
+    tradeWelder:"Welder",
+    tradeFlameCutter:"Flame Cutter",
+    tradeFitter:"Fitter",
+    tradeSpecialtyHelp:"Choose this only when you hold the corresponding professional certificate. It will appear next to your position in the CV.",
 
     courseName:"Course / Certificate",
     certificateCode:"Certificate Code",
@@ -288,6 +337,7 @@ function trustedVesselPhotoSourceUrl(value){
     stcwHelp:"Enter only your certificate number, issue details and validity for the prepared STCW rows. You can add another certificate at any time.",
     customCertificate:"Other STCW Certificate",
     customCertificateName:"Certificate name",
+    automaticCodeShort:"AUTO",
     stcwSp:"International Safety Management (ISM Code)",
     stcwSh:"Designated Security Duties (DSD)",
     stcwSi:"Security Awareness Training",
@@ -324,6 +374,10 @@ function trustedVesselPhotoSourceUrl(value){
     addServiceDocument:"Add Service Document",
     replaceServiceDocument:"Replace Service Document",
     serviceDocumentHelp:"Take a photo, choose an image from your library, or select an existing PDF. Images are converted to PDF and stored securely.",
+    serviceDocumentChooseTitle:"How would you like to add the sea-service document?",
+    serviceDocumentCamera:"Take a Photo",
+    serviceDocumentLibrary:"Choose from Photo Library",
+    serviceDocumentPdf:"Choose PDF from Files",
     serviceDocumentRequired:"Sea-service document",
     serviceDocumentSelected:"Document: {name}",
     serviceDocumentUploading:"Saving the sea-service document...",
@@ -364,13 +418,14 @@ function trustedVesselPhotoSourceUrl(value){
     accountSaving:"Saving Maritime CV to your account...",
     accountLoading:"Loading your saved Maritime CV...",
     accountLoaded:"Your saved Maritime CV is open.",
-    accountStart:"Complete your Maritime CV and select Save.",
+    accountStart:"Complete the relevant fields to add your Maritime CV to your account.",
+    accountFieldsRequired:"Complete the relevant fields to add your Maritime CV to your account.",
     signIn:"Sign in",
     accountSaveFailed:"Your Maritime CV could not be saved to your account. Please try again.",
     accountLoginRequired:"Sign in to save your Maritime CV to your account.",
     draftSaveFailed:"CV draft could not be saved. Check your browser storage settings.",
     identityLockedTitle:"Personal details are securely locked",
-    identityLockedBody:"After the first save, identity details cannot be cleared or changed from this form.",
+    identityLockedBody:"After the first save, personal details cannot be cleared or changed from this form. Your photo remains replaceable.",
     identityLockedField:"This personal detail is locked. Request a verified correction from support to change it.",
     identitySupportButton:"Request a correction",
     identitySupportTitle:"Personal detail correction",
@@ -443,6 +498,15 @@ function trustedVesselPhotoSourceUrl(value){
     nationality:"Uyruğu",
     gender:"Cinsiyet",
     marital:"Medeni Durum",
+    selectGender:"Cinsiyet seçin",
+    genderMale:"Erkek",
+    genderFemale:"Kadın",
+    selectMaritalStatus:"Medeni durum seçin",
+    maritalSingle:"Bekar",
+    maritalMarried:"Evli",
+    maritalDivorced:"Boşanmış",
+    maritalWidowed:"Dul",
+    maritalSeparated:"Ayrı yaşıyor",
     address:"Daimi Adres",
     airport:"En Yakın Havalimanı",
     photo:"FOTOĞRAF",
@@ -455,6 +519,21 @@ function trustedVesselPhotoSourceUrl(value){
     hair:"Saç Rengi",
     shoes:"İş Ayakkabısı",
     overall:"Tulum Bedeni",
+    selectEyeColor:"Göz rengi seçin",
+    selectHairColor:"Saç rengi seçin",
+    selectShoeSize:"Ayakkabı numarası seçin",
+    selectOverallSize:"Tulum bedeni seçin",
+    colorBrown:"Kahverengi",
+    colorBlack:"Siyah",
+    colorBlue:"Mavi",
+    colorGreen:"Yeşil",
+    colorHazel:"Ela",
+    colorGrey:"Gri",
+    colorBlond:"Sarı",
+    colorRed:"Kızıl",
+    colorWhite:"Beyaz",
+    hairBald:"Kel",
+    optionOther:"Diğer",
 
     mobile:"Telefon",
     email:"E-posta Adresi",
@@ -462,12 +541,24 @@ function trustedVesselPhotoSourceUrl(value){
     kinPhone:"Telefon",
     kinRelation:"Yakınlık Derecesi",
     kinAddress:"Adres",
+    selectRelationship:"Yakınlık derecesi seçin",
+    relationshipSpouse:"Eş",
+    relationshipParent:"Anne / Baba",
+    relationshipChild:"Çocuk",
+    relationshipSibling:"Kardeş",
 
     document:"Belge",
     number:"Numara",
     placeOfIssue:"Düzenleme Yeri",
     issued:"Veriliş",
     valid:"Geçerlilik",
+    selectPassportType:"Pasaport türünü seçin",
+    passportOrdinary:"Umuma mahsus pasaport",
+    passportDiplomatic:"Diplomatik pasaport",
+    passportService:"Hizmet / resmî pasaport",
+    passportSpecial:"Hususi pasaport",
+    passportTemporary:"Geçici / acil pasaport",
+    passportRefugee:"Mülteci seyahat belgesi",
 
     windows:"Windows",
     office:"Microsoft Office",
@@ -498,6 +589,10 @@ function trustedVesselPhotoSourceUrl(value){
     speaking:"Konuşma",
     reading:"Okuma",
     writing:"Yazma",
+    selectSkillLevel:"Seviye seçin",
+    skillGood:"İyi",
+    skillIntermediate:"Orta",
+    skillBasic:"Temel",
 
     grade:"Derece",
     validityPeriod:"Geçerlilik Süresi",
@@ -512,6 +607,12 @@ function trustedVesselPhotoSourceUrl(value){
     expires:"Geçerlilik",
     limitations:"Sınırlamalar",
     competencyHelp:"Zabit yeterliliği, kaynakçı, fitter veya diğer mesleki yeterlilik belgenizi buraya ekleyin.",
+    tradeSpecialty:"Belgeli mesleki uzmanlık",
+    selectTradeSpecialty:"Ek mesleki uzmanlık yok",
+    tradeWelder:"Kaynakçı",
+    tradeFlameCutter:"Alevle Kesim Uzmanı",
+    tradeFitter:"Fitter",
+    tradeSpecialtyHelp:"Yalnız ilgili mesleki sertifikanız varsa seçin. Seçiminiz CV'de pozisyonunuzun yanında gösterilir.",
 
     courseName:"Kurs / Sertifika",
     certificateCode:"Sertifika Kodu",
@@ -531,6 +632,7 @@ function trustedVesselPhotoSourceUrl(value){
     stcwHelp:"Hazır STCW satırlarında yalnızca sertifika numaranızı, veriliş bilgilerini ve geçerliliği girin. İstediğiniz zaman başka sertifika ekleyebilirsiniz.",
     customCertificate:"Diğer STCW Sertifikası",
     customCertificateName:"Sertifika adı",
+    automaticCodeShort:"OTO",
     stcwSp:"Uluslararası Emniyet Yönetimi (ISM Kodu)",
     stcwSh:"Belirlenmiş Güvenlik Görevleri (DSD)",
     stcwSi:"Güvenlik Farkındalık Eğitimi",
@@ -567,6 +669,10 @@ function trustedVesselPhotoSourceUrl(value){
     addServiceDocument:"Hizmet Belgesi Ekle",
     replaceServiceDocument:"Hizmet Belgesini Değiştir",
     serviceDocumentHelp:"Fotoğraf çekin, arşivinizden görsel seçin veya mevcut PDF dosyasını ekleyin. Görseller PDF'e dönüştürülerek güvenli biçimde saklanır.",
+    serviceDocumentChooseTitle:"Hizmet belgesini nasıl eklemek istersiniz?",
+    serviceDocumentCamera:"Fotoğraf Çek",
+    serviceDocumentLibrary:"Fotoğraf Arşivinden Seç",
+    serviceDocumentPdf:"Dosyalardan PDF Seç",
     serviceDocumentRequired:"Hizmet belgesi",
     serviceDocumentSelected:"Belge: {name}",
     serviceDocumentUploading:"Hizmet belgesi kaydediliyor...",
@@ -607,13 +713,14 @@ function trustedVesselPhotoSourceUrl(value){
     accountSaving:"Maritime CV hesabınıza kaydediliyor...",
     accountLoading:"Kayıtlı Maritime CV bilgileriniz yükleniyor...",
     accountLoaded:"Kayıtlı Maritime CV bilgileriniz açıldı.",
-    accountStart:"Maritime CV'nizi doldurup Kaydet düğmesine basın.",
+    accountStart:"Maritime CV'nizin hesabınıza eklenebilmesi için ilgili alanları doldurun.",
+    accountFieldsRequired:"Maritime CV'nizin hesabınıza eklenebilmesi için ilgili alanları doldurun.",
     signIn:"Giriş yapın",
     accountSaveFailed:"Maritime CV hesabınıza kaydedilemedi. Lütfen tekrar deneyin.",
     accountLoginRequired:"Maritime CV'nizi hesabınıza kaydetmek için giriş yapın.",
     draftSaveFailed:"CV taslağı kaydedilemedi. Tarayıcı depolama ayarlarını kontrol edin.",
     identityLockedTitle:"Kişisel bilgiler güvenle kilitlendi",
-    identityLockedBody:"İlk kayıttan sonra kimlik bilgileri bu formdan temizlenemez veya değiştirilemez.",
+    identityLockedBody:"İlk kayıttan sonra kişisel bilgiler bu formdan temizlenemez veya değiştirilemez. Fotoğrafınızı değiştirmeye devam edebilirsiniz.",
     identityLockedField:"Bu kişisel bilgi kilitlidir. Değişiklik için destekten doğrulanmış düzeltme talebi açın.",
     identitySupportButton:"Düzeltme talebi oluştur",
     identitySupportTitle:"Kişisel bilgi düzeltme talebi",
@@ -687,6 +794,15 @@ function trustedVesselPhotoSourceUrl(value){
     nationality:"Vətəndaşlıq",
     gender:"Cins",
     marital:"Ailə Vəziyyəti",
+    selectGender:"Cinsi seçin",
+    genderMale:"Kişi",
+    genderFemale:"Qadın",
+    selectMaritalStatus:"Ailə vəziyyətini seçin",
+    maritalSingle:"Subay",
+    maritalMarried:"Evli",
+    maritalDivorced:"Boşanmış",
+    maritalWidowed:"Dul",
+    maritalSeparated:"Ayrı yaşayır",
     address:"Daimi Ünvan",
     airport:"Ən Yaxın Hava Limanı",
     photo:"FOTO",
@@ -699,6 +815,21 @@ function trustedVesselPhotoSourceUrl(value){
     hair:"Saç Rəngi",
     shoes:"İş Ayaqqabısı",
     overall:"Kombinezon Ölçüsü",
+    selectEyeColor:"Göz rəngini seçin",
+    selectHairColor:"Saç rəngini seçin",
+    selectShoeSize:"Ayaqqabı ölçüsünü seçin",
+    selectOverallSize:"Kombinezon ölçüsünü seçin",
+    colorBrown:"Qəhvəyi",
+    colorBlack:"Qara",
+    colorBlue:"Mavi",
+    colorGreen:"Yaşıl",
+    colorHazel:"Fındıq rəngi",
+    colorGrey:"Boz",
+    colorBlond:"Sarı",
+    colorRed:"Qızılı-qırmızı",
+    colorWhite:"Ağ",
+    hairBald:"Keçəl",
+    optionOther:"Digər",
 
     mobile:"Mobil",
     email:"E-poçt Ünvanı",
@@ -706,12 +837,24 @@ function trustedVesselPhotoSourceUrl(value){
     kinPhone:"Telefon",
     kinRelation:"Qohumluq Dərəcəsi",
     kinAddress:"Ünvan",
+    selectRelationship:"Qohumluq dərəcəsini seçin",
+    relationshipSpouse:"Həyat yoldaşı",
+    relationshipParent:"Ana / Ata",
+    relationshipChild:"Övlad",
+    relationshipSibling:"Bacı / Qardaş",
 
     document:"Sənəd",
     number:"Nömrə",
     placeOfIssue:"Verilmə Yeri",
     issued:"Verilmə Tarixi",
     valid:"Etibarlıdır",
+    selectPassportType:"Pasport növünü seçin",
+    passportOrdinary:"Ümumvətəndaş pasportu",
+    passportDiplomatic:"Diplomatik pasport",
+    passportService:"Xidməti / rəsmi pasport",
+    passportSpecial:"Xüsusi pasport",
+    passportTemporary:"Müvəqqəti / təcili pasport",
+    passportRefugee:"Qaçqın səyahət sənədi",
 
     windows:"Windows",
     office:"Microsoft Office",
@@ -742,6 +885,10 @@ function trustedVesselPhotoSourceUrl(value){
     speaking:"Danışıq",
     reading:"Oxuma",
     writing:"Yazı",
+    selectSkillLevel:"Səviyyəni seçin",
+    skillGood:"Yaxşı",
+    skillIntermediate:"Orta",
+    skillBasic:"Əsas",
 
     grade:"Dərəcə",
     validityPeriod:"Etibarlılıq Müddəti",
@@ -756,6 +903,12 @@ function trustedVesselPhotoSourceUrl(value){
     expires:"Etibarlılıq",
     limitations:"Məhdudiyyətlər",
     competencyHelp:"Zabit səriştəsi, qaynaqçı, fitter və ya digər peşə səriştəsi sertifikatınızı buraya əlavə edin.",
+    tradeSpecialty:"Sertifikatlı peşə ixtisası",
+    selectTradeSpecialty:"Əlavə peşə ixtisası yoxdur",
+    tradeWelder:"Qaynaqçı",
+    tradeFlameCutter:"Alovla Kəsmə Mütəxəssisi",
+    tradeFitter:"Fitter",
+    tradeSpecialtyHelp:"Yalnız müvafiq peşə sertifikatınız varsa seçin. Seçim CV-də vəzifənizin yanında göstərilir.",
 
     courseName:"Kurs / Sertifikat",
     certificateCode:"Sertifikat Kodu",
@@ -775,6 +928,7 @@ function trustedVesselPhotoSourceUrl(value){
     stcwHelp:"Hazır STCW sətirlərində yalnız sertifikat nömrəsini, verilmə məlumatlarını və etibarlılığı daxil edin. İstədiyiniz vaxt başqa sertifikat əlavə edə bilərsiniz.",
     customCertificate:"Digər STCW Sertifikatı",
     customCertificateName:"Sertifikat adı",
+    automaticCodeShort:"AUTO",
     stcwSp:"Beynəlxalq Təhlükəsizliyin İdarə Edilməsi (ISM Kodu)",
     stcwSh:"Təyin Edilmiş Təhlükəsizlik Vəzifələri (DSD)",
     stcwSi:"Təhlükəsizlik üzrə Məlumatlandırma Təlimi",
@@ -811,6 +965,10 @@ function trustedVesselPhotoSourceUrl(value){
     addServiceDocument:"Xidmət Sənədi Əlavə Et",
     replaceServiceDocument:"Xidmət Sənədini Dəyişdir",
     serviceDocumentHelp:"Şəkil çəkin, qalereyadan şəkil seçin və ya mövcud PDF faylını əlavə edin. Şəkillər PDF-ə çevrilərək təhlükəsiz saxlanılır.",
+    serviceDocumentChooseTitle:"Xidmət sənədini necə əlavə etmək istəyirsiniz?",
+    serviceDocumentCamera:"Şəkil Çək",
+    serviceDocumentLibrary:"Foto Qalereyadan Seç",
+    serviceDocumentPdf:"Fayllardan PDF Seç",
     serviceDocumentRequired:"Dəniz xidməti sənədi",
     serviceDocumentSelected:"Sənəd: {name}",
     serviceDocumentUploading:"Xidmət sənədi saxlanılır...",
@@ -851,13 +1009,14 @@ function trustedVesselPhotoSourceUrl(value){
     accountSaving:"Maritime CV hesabınıza yazılır...",
     accountLoading:"Saxlanmış Maritime CV məlumatlarınız yüklənir...",
     accountLoaded:"Saxlanmış Maritime CV məlumatlarınız açıldı.",
-    accountStart:"Maritime CV-ni doldurub Yadda saxla düyməsini seçin.",
+    accountStart:"Maritime CV-nin hesabınıza əlavə edilməsi üçün müvafiq sahələri doldurun.",
+    accountFieldsRequired:"Maritime CV-nin hesabınıza əlavə edilməsi üçün müvafiq sahələri doldurun.",
     signIn:"Daxil olun",
     accountSaveFailed:"Maritime CV hesabınıza yazıla bilmədi. Yenidən cəhd edin.",
     accountLoginRequired:"Maritime CV-ni hesabınıza yazmaq üçün daxil olun.",
     draftSaveFailed:"CV qaralaması saxlanmadı. Brauzer yaddaşı ayarlarını yoxlayın.",
     identityLockedTitle:"Şəxsi məlumatlar təhlükəsiz şəkildə kilidləndi",
-    identityLockedBody:"İlk yadda saxlamadan sonra şəxsiyyət məlumatları bu formadan silinə və ya dəyişdirilə bilməz.",
+    identityLockedBody:"İlk yadda saxlamadan sonra şəxsi məlumatlar bu formadan silinə və ya dəyişdirilə bilməz. Şəkli dəyişməyə davam edə bilərsiniz.",
     identityLockedField:"Bu şəxsi məlumat kilidlidir. Dəyişiklik üçün dəstəkdən təsdiqlənmiş düzəliş sorğusu yaradın.",
     identitySupportButton:"Düzəliş sorğusu yarat",
     identitySupportTitle:"Şəxsi məlumat düzəlişi",
@@ -930,6 +1089,15 @@ function trustedVesselPhotoSourceUrl(value){
     nationality:"Гражданство",
     gender:"Пол",
     marital:"Семейное Положение",
+    selectGender:"Выберите пол",
+    genderMale:"Мужской",
+    genderFemale:"Женский",
+    selectMaritalStatus:"Выберите семейное положение",
+    maritalSingle:"Не состоит в браке",
+    maritalMarried:"Состоит в браке",
+    maritalDivorced:"Разведён(а)",
+    maritalWidowed:"Вдовец / вдова",
+    maritalSeparated:"Живёт отдельно",
     address:"Постоянный Адрес",
     airport:"Ближайший Аэропорт",
     photo:"ФОТО",
@@ -942,6 +1110,21 @@ function trustedVesselPhotoSourceUrl(value){
     hair:"Цвет Волос",
     shoes:"Защитная Обувь",
     overall:"Размер Комбинезона",
+    selectEyeColor:"Выберите цвет глаз",
+    selectHairColor:"Выберите цвет волос",
+    selectShoeSize:"Выберите размер обуви",
+    selectOverallSize:"Выберите размер комбинезона",
+    colorBrown:"Карий",
+    colorBlack:"Чёрный",
+    colorBlue:"Голубой",
+    colorGreen:"Зелёный",
+    colorHazel:"Ореховый",
+    colorGrey:"Серый",
+    colorBlond:"Светлый",
+    colorRed:"Рыжий",
+    colorWhite:"Белый",
+    hairBald:"Без волос",
+    optionOther:"Другое",
 
     mobile:"Мобильный",
     email:"Электронная Почта",
@@ -949,12 +1132,24 @@ function trustedVesselPhotoSourceUrl(value){
     kinPhone:"Телефон",
     kinRelation:"Степень Родства",
     kinAddress:"Адрес",
+    selectRelationship:"Выберите степень родства",
+    relationshipSpouse:"Супруг(а)",
+    relationshipParent:"Родитель",
+    relationshipChild:"Ребёнок",
+    relationshipSibling:"Брат / сестра",
 
     document:"Документ",
     number:"Номер",
     placeOfIssue:"Место Выдачи",
     issued:"Выдан",
     valid:"Действителен",
+    selectPassportType:"Выберите тип паспорта",
+    passportOrdinary:"Обычный заграничный паспорт",
+    passportDiplomatic:"Дипломатический паспорт",
+    passportService:"Служебный / официальный паспорт",
+    passportSpecial:"Специальный паспорт",
+    passportTemporary:"Временный / экстренный паспорт",
+    passportRefugee:"Проездной документ беженца",
 
     windows:"Windows",
     office:"Microsoft Office",
@@ -985,6 +1180,10 @@ function trustedVesselPhotoSourceUrl(value){
     speaking:"Разговор",
     reading:"Чтение",
     writing:"Письмо",
+    selectSkillLevel:"Выберите уровень",
+    skillGood:"Хорошо",
+    skillIntermediate:"Средне",
+    skillBasic:"Базовый",
 
     grade:"Степень",
     validityPeriod:"Срок Действия",
@@ -999,6 +1198,12 @@ function trustedVesselPhotoSourceUrl(value){
     expires:"Истекает",
     limitations:"Ограничения",
     competencyHelp:"Добавьте сюда диплом судоводителя, сварщика, фиттера или другое профессиональное свидетельство.",
+    tradeSpecialty:"Подтверждённая рабочая специальность",
+    selectTradeSpecialty:"Без дополнительной специальности",
+    tradeWelder:"Сварщик",
+    tradeFlameCutter:"Газорезчик",
+    tradeFitter:"Фиттер",
+    tradeSpecialtyHelp:"Выберите только при наличии соответствующего профессионального сертификата. Специальность будет указана рядом с должностью в CV.",
 
     courseName:"Курс / Сертификат",
     certificateCode:"Код Сертификата",
@@ -1018,6 +1223,7 @@ function trustedVesselPhotoSourceUrl(value){
     stcwHelp:"В готовых строках STCW укажите только номер, сведения о выдаче и срок действия. Другой сертификат можно добавить в любое время.",
     customCertificate:"Другой Сертификат STCW",
     customCertificateName:"Название сертификата",
+    automaticCodeShort:"AUTO",
     stcwSp:"Международное управление безопасностью (Кодекс ISM)",
     stcwSh:"Назначенные обязанности по охране (DSD)",
     stcwSi:"Подготовка по осведомлённости в области охраны",
@@ -1054,6 +1260,10 @@ function trustedVesselPhotoSourceUrl(value){
     addServiceDocument:"Добавить Документ о Стаже",
     replaceServiceDocument:"Заменить Документ о Стаже",
     serviceDocumentHelp:"Сфотографируйте документ, выберите изображение из галереи или готовый PDF. Изображение будет преобразовано в PDF и сохранено безопасно.",
+    serviceDocumentChooseTitle:"Как добавить документ о стаже?",
+    serviceDocumentCamera:"Сфотографировать",
+    serviceDocumentLibrary:"Выбрать из фотогалереи",
+    serviceDocumentPdf:"Выбрать PDF из файлов",
     serviceDocumentRequired:"Документ о морском стаже",
     serviceDocumentSelected:"Документ: {name}",
     serviceDocumentUploading:"Документ о стаже сохраняется...",
@@ -1094,13 +1304,14 @@ function trustedVesselPhotoSourceUrl(value){
     accountSaving:"Maritime CV сохраняется в вашей учетной записи...",
     accountLoading:"Загружается сохранённый Maritime CV...",
     accountLoaded:"Сохранённый Maritime CV открыт.",
-    accountStart:"Заполните Maritime CV и нажмите Сохранить.",
+    accountStart:"Заполните соответствующие поля, чтобы добавить Maritime CV в свою учётную запись.",
+    accountFieldsRequired:"Заполните соответствующие поля, чтобы добавить Maritime CV в свою учётную запись.",
     signIn:"Войти",
     accountSaveFailed:"Не удалось сохранить Maritime CV. Повторите попытку.",
     accountLoginRequired:"Войдите, чтобы сохранить Maritime CV в учетной записи.",
     draftSaveFailed:"Не удалось сохранить черновик CV. Проверьте настройки хранилища браузера.",
     identityLockedTitle:"Личные данные надежно заблокированы",
-    identityLockedBody:"После первого сохранения идентификационные данные нельзя удалить или изменить в этой форме.",
+    identityLockedBody:"После первого сохранения личные данные нельзя удалить или изменить в этой форме. Фотографию можно заменить.",
     identityLockedField:"Эти личные данные заблокированы. Для изменения создайте подтвержденный запрос в поддержку.",
     identitySupportButton:"Запросить исправление",
     identitySupportTitle:"Исправление личных данных",
@@ -1143,6 +1354,36 @@ function t(key){
   return translations[currentLang]?.[key] || translations.en[key] || key;
 }
 
+function lockedIdentityControl(target){
+  return target instanceof Element ? target.closest(".cv-identity-locked") : null;
+}
+
+function hideIdentityFieldNotice(){
+  window.clearTimeout(identityFieldNoticeTimer);
+  document.querySelector(".cv-identity-field-notice")?.remove();
+}
+
+function showIdentityFieldNotice(control){
+  if(!(control instanceof HTMLElement)) return;
+  hideIdentityFieldNotice();
+  const notice = document.createElement("div");
+  notice.className = "cv-identity-field-notice";
+  notice.setAttribute("role", "status");
+  notice.textContent = t("identityLockedField");
+  document.body.appendChild(notice);
+  const fieldRect = control.getBoundingClientRect();
+  const noticeRect = notice.getBoundingClientRect();
+  const margin = 10;
+  const left = Math.min(Math.max(margin, fieldRect.left), Math.max(margin, window.innerWidth - noticeRect.width - margin));
+  const below = fieldRect.bottom + 8;
+  const top = below + noticeRect.height <= window.innerHeight - margin
+    ? below
+    : Math.max(margin, fieldRect.top - noticeRect.height - 8);
+  notice.style.left = `${Math.round(left)}px`;
+  notice.style.top = `${Math.round(top)}px`;
+  identityFieldNoticeTimer = window.setTimeout(hideIdentityFieldNotice, 3800);
+}
+
 function applyMaritimeIdentityLock(lock){
   const locked = Boolean(lock && lock.locked);
   const requested = new Set(Array.isArray(lock?.fields) ? lock.fields : []);
@@ -1154,13 +1395,17 @@ function applyMaritimeIdentityLock(lock){
     const control = document.getElementById(id);
     if(!control) return;
     const fieldLocked = locked && active.has(id);
-    control.readOnly = fieldLocked;
+    if("readOnly" in control) control.readOnly = fieldLocked;
     control.classList.toggle("cv-identity-locked", fieldLocked);
     if(fieldLocked){
       control.setAttribute("aria-readonly", "true");
+      if(control instanceof HTMLSelectElement) control.setAttribute("aria-disabled", "true");
+      control.dataset.identityLockedValue = control.value;
       control.title = t("identityLockedField");
     } else {
       control.removeAttribute("aria-readonly");
+      control.removeAttribute("aria-disabled");
+      delete control.dataset.identityLockedValue;
       control.removeAttribute("title");
     }
   });
@@ -1169,6 +1414,30 @@ function applyMaritimeIdentityLock(lock){
   if(notice) notice.hidden = !locked;
   document.body.classList.toggle("has-maritime-identity-lock", locked);
 }
+
+document.addEventListener("pointerdown", event => {
+  const control = lockedIdentityControl(event.target);
+  if(!control) return;
+  event.preventDefault();
+  showIdentityFieldNotice(control);
+}, true);
+
+document.addEventListener("keydown", event => {
+  const control = lockedIdentityControl(event.target);
+  if(!control || !["Enter", " ", "ArrowDown", "ArrowUp", "Backspace", "Delete"].includes(event.key)) return;
+  event.preventDefault();
+  showIdentityFieldNotice(control);
+}, true);
+
+document.addEventListener("change", event => {
+  const control = lockedIdentityControl(event.target);
+  if(!control) return;
+  const savedValue = control.dataset.identityLockedValue;
+  if(typeof savedValue === "string" && control.value !== savedValue) control.value = savedValue;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  showIdentityFieldNotice(control);
+}, true);
 
 function associateEditorLabels(root){
   const scope = root || document.getElementById("cvEditor");
@@ -1244,6 +1513,8 @@ function translatePage(){
   document.querySelectorAll("[data-alt-i18n]").forEach(el => {
     el.setAttribute("alt", t(el.getAttribute("data-alt-i18n")));
   });
+  const fieldNotice = document.querySelector(".cv-identity-field-notice");
+  if(fieldNotice) fieldNotice.textContent = t("identityLockedField");
   associateEditorLabels();
   markRequiredCvLabels();
   applyMaritimeIdentityLock(identityLockState);
@@ -1345,6 +1616,50 @@ function renderAdditionals(){
   });
 }
 
+const certificateCodeStopWords = new Set([
+  "a", "an", "and", "certificate", "course", "for", "in", "of", "the", "training",
+  "belgesi", "belge", "egitimi", "kursu", "sertifika", "sertifikasi", "ve",
+  "kurs", "sertifikat", "sertifikati", "telim", "ve",
+  "dlya", "i", "kurs", "obuchenie", "sertifikat"
+]);
+const certificateCodeTransliteration = Object.freeze({
+  "ı":"i", "ə":"e", "ğ":"g", "ş":"s", "ç":"c", "ö":"o", "ü":"u",
+  "а":"a", "б":"b", "в":"v", "г":"g", "д":"d", "е":"e", "ё":"e", "ж":"zh", "з":"z", "и":"i", "й":"y",
+  "к":"k", "л":"l", "м":"m", "н":"n", "о":"o", "п":"p", "р":"r", "с":"s", "т":"t", "у":"u", "ф":"f",
+  "х":"h", "ц":"ts", "ч":"ch", "ш":"sh", "щ":"sh", "ъ":"", "ы":"y", "ь":"", "э":"e", "ю":"yu", "я":"ya"
+});
+
+function certificateCodeWords(value){
+  const transliterated = Array.from(String(value || "").toLowerCase(), character => certificateCodeTransliteration[character] ?? character).join("");
+  return transliterated.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+}
+
+function deriveCertificateCode(value){
+  const words = certificateCodeWords(value);
+  const significant = words.filter(word => !certificateCodeStopWords.has(word));
+  const source = significant.length ? significant : words;
+  if(!source.length) return "";
+  if(source.length === 1) return source[0].slice(0, 4).toUpperCase();
+  return source.map(word => word[0]).join("").slice(0, 8).toUpperCase();
+}
+
+function updateStcwCardPresentation(index){
+  const row = stcwData[index];
+  const card = document.querySelector(`[data-cv-stcw-card="${index}"]`);
+  if(!row || !card) return;
+  const preset = stcwPresets.find(entry => entry.id === row.presetId) || null;
+  const code = String(row.code || preset?.code || "").toUpperCase();
+  const title = preset && !preset.editableTitle ? t(preset.titleKey) : String(row.name || t(preset?.titleKey || "customCertificate"));
+  const badge = card.querySelector(".cv-certificate-code");
+  const heading = card.querySelector(".cv-stcw-card-head h3");
+  const numberPrefix = card.querySelector(".cv-certificate-number-field span");
+  const codeInput = card.querySelector('[data-cv-key="code"]');
+  if(badge) badge.textContent = code || t("automaticCodeShort");
+  if(heading) heading.textContent = title;
+  if(numberPrefix) numberPrefix.textContent = code || "-";
+  if(codeInput && codeInput.value !== code) codeInput.value = code;
+}
+
 function renderSTCWInputs(){
   const box = document.getElementById("stcwInputs");
   if(!box) return;
@@ -1353,15 +1668,17 @@ function renderSTCWInputs(){
 
   stcwData.forEach((item, index) => {
     const preset = stcwPresets.find(entry => entry.id === item.presetId) || null;
+    if(!preset && item.name && !item.code) item.code = deriveCertificateCode(item.name);
     const code = String(item.code || preset?.code || "").toUpperCase();
     const title = preset && !preset.editableTitle ? t(preset.titleKey) : "";
     const editableTitle = !preset || preset.editableTitle;
     const div = document.createElement("div");
     div.className = `group cv-repeat-group cv-stcw-card${preset ? " is-preset" : " is-custom"}${item.included === "false" ? " is-excluded" : ""}`;
+    div.dataset.cvStcwCard = String(index);
 
     div.innerHTML = `
       <div class="cv-stcw-card-head">
-        <span class="cv-certificate-code">${escapeHTML(code || String(index + 1))}</span>
+        <span class="cv-certificate-code">${escapeHTML(code || t("automaticCodeShort"))}</span>
         <h3>${escapeHTML(title || item.name || t(preset?.titleKey || "customCertificate"))}</h3>
         <span class="cv-requirement-badge${preset?.required ? " is-required" : ""}">${t(preset?.required ? "requiredBadge" : "optionalBadge")}</span>
       </div>
@@ -1426,8 +1743,10 @@ function updateSTCW(index, key, value){
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !stcwData[rowIndex] || !repeatRowKeys.stcw.includes(key)) return;
   const nextValue = String(value ?? "").slice(0, maxRepeatFieldLength);
   stcwData[rowIndex][key] = key === "code" ? nextValue.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) : nextValue;
+  if(key === "name" && !stcwData[rowIndex].presetId) stcwData[rowIndex].code = deriveCertificateCode(nextValue);
   if(key === "unlimited" && nextValue === "true") stcwData[rowIndex].expiry = "";
   if(key === "unlimited" || key === "included") renderSTCWInputs();
+  else if(key === "name" || key === "code") updateStcwCardPresentation(rowIndex);
   renderSTCW();
   autoSaveCV();
 }
@@ -1607,7 +1926,17 @@ function renderSeaInputs(){
           : item.serviceDocumentId
           ? t("serviceDocumentUploaded")
           : ""}</span>
-        <input class="cv-sea-document-input" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,image/*" data-cv-service-document data-cv-index="${index}" aria-label="${escapeAttr(t("serviceDocument"))}">
+        <div class="cv-sea-document-choice" data-cv-service-document-choice="${index}" hidden>
+          <span>${t("serviceDocumentChooseTitle")}</span>
+          <div class="cv-sea-document-choice-actions">
+            <button type="button" class="secondary" data-cv-action="choose-sea-document-source" data-cv-source="camera" data-cv-index="${index}">${t("serviceDocumentCamera")}</button>
+            <button type="button" class="secondary" data-cv-action="choose-sea-document-source" data-cv-source="library" data-cv-index="${index}">${t("serviceDocumentLibrary")}</button>
+            <button type="button" class="secondary" data-cv-action="choose-sea-document-source" data-cv-source="pdf" data-cv-index="${index}">${t("serviceDocumentPdf")}</button>
+          </div>
+        </div>
+        <input class="cv-sea-document-input" type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="environment" data-cv-service-document data-cv-source="camera" data-cv-index="${index}" aria-label="${escapeAttr(t("serviceDocumentCamera"))}">
+        <input class="cv-sea-document-input" type="file" accept="image/jpeg,image/png,image/webp,image/*" data-cv-service-document data-cv-source="library" data-cv-index="${index}" aria-label="${escapeAttr(t("serviceDocumentLibrary"))}">
+        <input class="cv-sea-document-input" type="file" accept="application/pdf,.pdf" data-cv-service-document data-cv-source="pdf" data-cv-index="${index}" aria-label="${escapeAttr(t("serviceDocumentPdf"))}">
       </div>
 
       <div class="cv-sea-save-state ${item.saved === "true" ? "is-saved" : "is-pending"}" role="status" aria-live="polite">
@@ -1661,7 +1990,20 @@ function seaServiceDocumentUrl(documentId){
 function openSeaServiceDocumentPicker(index){
   const rowIndex = Number(index);
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex]) return;
-  document.querySelector(`[data-cv-service-document][data-cv-index="${rowIndex}"]`)?.click();
+  document.querySelectorAll("[data-cv-service-document-choice]").forEach(panel => {
+    if(panel.getAttribute("data-cv-service-document-choice") !== String(rowIndex)) panel.hidden = true;
+  });
+  const choice = document.querySelector(`[data-cv-service-document-choice="${rowIndex}"]`);
+  if(choice) choice.hidden = !choice.hidden;
+}
+
+function openSeaServiceDocumentSource(index, source){
+  const rowIndex = Number(index);
+  const normalizedSource = String(source || "");
+  if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex] || !["camera", "library", "pdf"].includes(normalizedSource)) return;
+  const choice = document.querySelector(`[data-cv-service-document-choice="${rowIndex}"]`);
+  if(choice) choice.hidden = true;
+  document.querySelector(`[data-cv-service-document][data-cv-index="${rowIndex}"][data-cv-source="${normalizedSource}"]`)?.click();
 }
 
 function imageElement(file){
@@ -1980,7 +2322,8 @@ function persistCV(){
 const requiredCvFields = Object.freeze([
   ["position", "position"], ["familyName", "familyName"], ["firstName", "firstName"], ["fatherName", "fatherName"],
   ["birthDate", "birthDate"], ["birthPlace", "birthPlace"], ["nationality", "nationality"], ["gender", "gender"],
-  ["mobile", "mobile"], ["email", "email"], ["passportNo", "number"], ["passportCountry", "issuingCountry"],
+  ["marital", "marital"], ["address", "address"], ["airport", "airport"],
+  ["mobile", "mobile"], ["email", "email"], ["passportDoc", "document"], ["passportNo", "number"], ["passportCountry", "issuingCountry"],
   ["passportIssued", "issued"], ["passportValid", "valid"], ["seamanBookNo", "seamanBookNo"],
   ["seamanBookIssued", "issued"], ["seamanBookValid", "valid"], ["medicalDoc", "document"],
   ["medicalFitness", "medicalFitness"], ["medicalIssue", "dateOfIssue"], ["medicalExpiry", "dateOfExpiry"]
@@ -2390,6 +2733,7 @@ window.removeSea = removeSea;
 window.updateSea = updateSea;
 window.lookupSeaVessel = lookupSeaVessel;
 window.openSeaServiceDocumentPicker = openSeaServiceDocumentPicker;
+window.openSeaServiceDocumentSource = openSeaServiceDocumentSource;
 window.attachSeaServiceDocument = attachSeaServiceDocument;
 window.saveSeaExperience = saveSeaExperience;
 window.removePhoto = removePhoto;
@@ -2411,10 +2755,24 @@ window.applyMaritimeIdentityLock = applyMaritimeIdentityLock;
   excellent:{ en:"Excellent", tr:"Mükemmel", az:"Əla", ru:"Отлично" },
   good:{ en:"Good", tr:"İyi", az:"Yaxşı", ru:"Хорошо" },
   average:{ en:"Average", tr:"Orta", az:"Orta", ru:"Средний" },
-  poor:{ en:"Poor", tr:"Zayıf", az:"Zəif", ru:"Слабый" },
+  poor:{ en:"Basic", tr:"Temel", az:"Əsas", ru:"Базовый" },
 
   single:{ en:"Single", tr:"Bekar", az:"Subay", ru:"Холост" },
   married:{ en:"Married", tr:"Evli", az:"Evli", ru:"Женат" },
+  divorced:{ en:"Divorced", tr:"Boşanmış", az:"Boşanmış", ru:"Разведён(а)" },
+  widowed:{ en:"Widowed", tr:"Dul", az:"Dul", ru:"Вдовец / вдова" },
+  separated:{ en:"Separated", tr:"Ayrı yaşıyor", az:"Ayrı yaşayır", ru:"Живёт отдельно" },
+  spouse:{ en:"Spouse", tr:"Eş", az:"Həyat yoldaşı", ru:"Супруг(а)" },
+  parent:{ en:"Parent", tr:"Anne / Baba", az:"Ana / Ata", ru:"Родитель" },
+  child:{ en:"Child", tr:"Çocuk", az:"Övlad", ru:"Ребёнок" },
+  sibling:{ en:"Sibling", tr:"Kardeş", az:"Bacı / Qardaş", ru:"Брат / сестра" },
+  other:{ en:"Other", tr:"Diğer", az:"Digər", ru:"Другое" },
+  ordinaryPassport:{ en:"Ordinary passport", tr:"Umuma mahsus pasaport", az:"Ümumvətəndaş pasportu", ru:"Обычный заграничный паспорт" },
+  diplomaticPassport:{ en:"Diplomatic passport", tr:"Diplomatik pasaport", az:"Diplomatik pasport", ru:"Дипломатический паспорт" },
+  servicePassport:{ en:"Service / official passport", tr:"Hizmet / resmî pasaport", az:"Xidməti / rəsmi pasport", ru:"Служебный / официальный паспорт" },
+  specialPassport:{ en:"Special passport", tr:"Hususi pasaport", az:"Xüsusi pasport", ru:"Специальный паспорт" },
+  temporaryPassport:{ en:"Temporary / emergency passport", tr:"Geçici / acil pasaport", az:"Müvəqqəti / təcili pasport", ru:"Временный / экстренный паспорт" },
+  refugeeTravelDocument:{ en:"Refugee travel document", tr:"Mülteci seyahat belgesi", az:"Qaçqın səyahət sənədi", ru:"Проездной документ беженца" },
 
   azerbaijan:{ en:"Azerbaijan", tr:"Azerbaycan", az:"Azərbaycan", ru:"Азербайджан" },
   turkey:{ en:"Turkey", tr:"Türkiye", az:"Türkiyə", ru:"Турция" },
@@ -2445,6 +2803,13 @@ window.applyMaritimeIdentityLock = applyMaritimeIdentityLock;
   black:{ en:"Black", tr:"Siyah", az:"Qara", ru:"Чёрный" },
   blue:{ en:"Blue", tr:"Mavi", az:"Mavi", ru:"Голубой" },
   green:{ en:"Green", tr:"Yeşil", az:"Yaşıl", ru:"Зелёный" },
+  hazel:{ en:"Hazel", tr:"Ela", az:"Fındıq rəngi", ru:"Ореховый" },
+  grey:{ en:"Grey", tr:"Gri", az:"Boz", ru:"Серый" },
+  blond:{ en:"Blond", tr:"Sarı", az:"Sarı", ru:"Светлый" },
+  red:{ en:"Red", tr:"Kızıl", az:"Qızılı-qırmızı", ru:"Рыжий" },
+  white:{ en:"White", tr:"Beyaz", az:"Ağ", ru:"Белый" },
+  bald:{ en:"Bald", tr:"Kel", az:"Keçəl", ru:"Без волос" },
+  flameCutter:{ en:"Flame Cutter", tr:"Alevle Kesim Uzmanı", az:"Alovla Kəsmə Mütəxəssisi", ru:"Газорезчик" },
   generalCargo:{ en:"General Cargo", tr:"Genel Kargo", az:"Ümumi Yük Gəmisi", ru:"Сухогруз" },
   bulkCarrier:{ en:"Bulk Carrier", tr:"Dökme Yük Gemisi", az:"Quru Yük Gəmisi", ru:"Балкер" },
   containerShip:{ en:"Container Ship", tr:"Konteyner Gemisi", az:"Konteyner Gəmisi", ru:"Контейнеровоз" },
@@ -2535,6 +2900,7 @@ const fieldLocalizationContexts = Object.freeze({
   medicalPlace:"proper",
   medicalIssue:"date",
   medicalExpiry:"date",
+  tradeSpecialty:"semantic",
   competencyClass:"semantic",
   competencyCountry:"semantic",
   competencyCertificate:"identifier",
@@ -2548,14 +2914,15 @@ function translateUserValue(value, context){
   const raw = String(value || "");
   const localizer = window.AllonaMaritimeCvValueLocalizer;
   if(localizer && typeof localizer.localize === "function"){
-    return localizer.localize(raw, currentLang, fieldLocalizationContexts[context] || context || "semantic");
+    const localized = localizer.localize(raw, currentLang, fieldLocalizationContexts[context] || context || "semantic");
+    if(localized !== raw) return localized;
   }
   const key = normalizeText(raw);
 
   for(const itemKey in valueTranslations){
     const item = valueTranslations[itemKey];
-
-    const matched = Object.values(item).some(v => normalizeText(v) === key);
+    const canonicalKey = normalizeText(itemKey.replace(/([a-z0-9])([A-Z])/g, "$1_$2"));
+    const matched = canonicalKey === key || Object.values(item).some(v => normalizeText(v) === key);
 
     if(matched){
       return item[currentLang] || raw;
@@ -2567,6 +2934,13 @@ function translateUserValue(value, context){
 
 function translateDynamicValue(value, context){
   return translateUserValue(value, context || "semantic");
+}
+
+function displayPosition(){
+  const position = translateUserValue(valueOf("position"), "position");
+  const specialty = translateUserValue(valueOf("tradeSpecialty"), "tradeSpecialty");
+  if(position && specialty) return `${position} (${specialty})`;
+  return position || specialty;
 }
 
 function dateValue(value){
@@ -2611,7 +2985,7 @@ function generatedProfessionalSummary(){
     translateUserValue(valueOf("firstName"), "firstName"),
     translateUserValue(valueOf("familyName"), "familyName")
   ].filter(Boolean).join(" ").trim();
-  const role = translateUserValue(valueOf("position"), "position");
+  const role = displayPosition();
   const experienceRows = seaData.filter(row => row.saved === "true" && String(row.vessel || row.company || row.rank || row.signon || "").trim());
   const days = seaServiceDays();
   const certificateCount = completedCertificateCount();
@@ -2672,7 +3046,7 @@ function generateSummary(){
 function syncCV(){
   textFields.forEach(id => {
     const raw = id === "note" && summaryMode === "auto" ? generatedProfessionalSummary() : (dateFieldIds.has(id) ? formatDisplayDate(valueOf(id)) : valueOf(id));
-    const translated = translateUserValue(raw, id);
+    const translated = id === "position" ? displayPosition() : id === "note" && summaryMode === "auto" ? raw : translateUserValue(raw, id);
     setCV(id, escapeHTML(translated).replace(/\n/g, "<br>"));
   });
 

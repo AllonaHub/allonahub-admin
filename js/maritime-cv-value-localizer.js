@@ -267,6 +267,7 @@
       if (key) return localizedValues[key]?.[targetLanguage] || raw;
     }
 
+    if (["tr", "az"].includes(targetLanguage) && !/[\u0400-\u04ff]/.test(raw)) return raw;
     return transliterate(raw, targetLanguage);
   }
 

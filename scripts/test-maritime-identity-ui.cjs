@@ -20,16 +20,22 @@ const executablePath = process.env.CHROME_PATH || "/Applications/Google Chrome.a
         document.getElementById("birthDate").value = "1990-01-01";
         document.getElementById("birthPlace").value = "Baku";
         document.getElementById("nationality").value = "Azerbaijani";
-        document.getElementById("gender").value = "Male";
+        document.getElementById("gender").value = "male";
         document.getElementById("position").value = "Motorman";
+        document.getElementById("marital").value = "single";
+        document.getElementById("address").value = "Baku";
+        document.getElementById("airport").value = "GYD";
         window.applyMaritimeIdentityLock({
           locked: true,
-          fields: ["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"]
+          fields: ["position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"]
         });
       });
 
       const state = await page.evaluate(() => ({
-        locked: ["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"].every((id) => document.getElementById(id).readOnly),
+        locked: ["position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"].every((id) => {
+          const control = document.getElementById(id);
+          return control instanceof HTMLSelectElement ? control.getAttribute("aria-disabled") === "true" : control.readOnly;
+        }),
         fatherRequired: document.getElementById("fatherName").required,
         noticeVisible: !document.querySelector("[data-cv-identity-lock-notice]").hidden,
         horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
@@ -47,7 +53,7 @@ const executablePath = process.env.CHROME_PATH || "/Applications/Google Chrome.a
         fatherName: document.getElementById("fatherName").value,
         position: document.getElementById("position").value
       }));
-      assert.deepEqual(cleared, { firstName: "Nijat", familyName: "Mahmudov", fatherName: "Ali", position: "" });
+      assert.deepEqual(cleared, { firstName: "Nijat", familyName: "Mahmudov", fatherName: "Ali", position: "Motorman" });
 
       await page.click("[data-open-cv-identity-support]");
       assert.equal(await page.locator("[data-cv-identity-support-dialog]").getAttribute("open"), "");

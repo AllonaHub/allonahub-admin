@@ -796,8 +796,11 @@ export function maritimeGlobalPassportReadiness(payload, { hasPhoto = false } = 
   if (!String(payload?.place_of_birth || "").trim()) missing.push("place_of_birth");
   if (!String(payload?.nationality || "").trim()) missing.push("nationality");
   if (!String(payload?.gender || "").trim()) missing.push("gender");
+  if (!String(payload?.marital_status || "").trim()) missing.push("marital_status");
   if (!String(payload?.contact?.email || "").trim()) missing.push("contact_email");
   if (!String(payload?.contact?.phone || "").trim()) missing.push("contact_phone");
+  if (!String(payload?.contact?.permanent_address || "").trim()) missing.push("permanent_address");
+  if (!String(payload?.contact?.nearest_airport || "").trim()) missing.push("nearest_airport");
   if (!passport) {
     missing.push("passport");
   } else {

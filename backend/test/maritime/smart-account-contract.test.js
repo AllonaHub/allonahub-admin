@@ -12,6 +12,7 @@ const cssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.ur
 const mainRoutesUrl = new URL("../../src/routes/index.js", import.meta.url);
 const portalUrl = new URL("../../../js/allona-maritime-portal.js", import.meta.url);
 const identityLockMigrationUrl = new URL("../../../supabase/migrations/20260915211500_lock_maritime_cv_identity.sql", import.meta.url);
+const personalLockMigrationUrl = new URL("../../../supabase/migrations/20260916160000_expand_maritime_cv_personal_lock.sql", import.meta.url);
 const cvFormUrl = new URL("../../../js/maritime-cv-form.js", import.meta.url);
 const cvAccountUrl = new URL("../../../js/maritime-cv-account.js", import.meta.url);
 const cvPageUrl = new URL("../../../pages/ecosystem/maritime-cv.html", import.meta.url);
@@ -109,8 +110,12 @@ test("Maritime CV locks personal fields and clear preserves identity after first
     readFile(cvAccountUrl, "utf8"),
     readFile(cvPageUrl, "utf8")
   ]);
-  assert.match(form, /immutableIdentityFieldIds = Object\.freeze\(\["firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"\]\)/);
+  for (const field of ["position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"]) {
+    assert.match(form, new RegExp(`"${field}"`));
+  }
   assert.match(form, /control\.readOnly = fieldLocked/);
+  assert.match(form, /showIdentityFieldNotice/);
+  assert.match(form, /control\.setAttribute\("aria-disabled", "true"\)/);
   assert.match(form, /if\(identityLocked && lockedFields\.has\(id\)\) return/);
   assert.match(form, /if\(!identityLocked\) setMaritimeCvPhoto\(""\)/);
   assert.match(form, /\["fatherName", "fatherName"\]/);
@@ -119,6 +124,20 @@ test("Maritime CV locks personal fields and clear preserves identity after first
   assert.match(page, /data-cv-identity-lock-notice/);
   assert.match(page, /data-cv-identity-support-dialog/);
   assert.match(page, /js\/cv-access\.js/);
+});
+
+test("Maritime CV personal lock upgrades existing identities without weakening duplicate-person protection", async () => {
+  const [migration, route] = await Promise.all([readFile(personalLockMigrationUrl, "utf8"), readFile(routeUrl, "utf8")]);
+  assert.match(migration, /maritime_cv_identity_snapshot_hash_v1/);
+  assert.match(migration, /v_lock\.identity_version = 'maritime-identity-v1'/);
+  assert.match(migration, /identity_version = 'maritime-personal-v2'/);
+  for (const field of ["rank", "marital_status", "permanent_address", "nearest_airport"]) assert.match(migration, new RegExp(field));
+  assert.match(migration, /v_person_fingerprint <> v_lock\.person_fingerprint/);
+  assert.match(migration, /MARITIME_IDENTITY_ALREADY_REGISTERED/);
+  assert.match(route, /maritimeIdentityLockVersion = "maritime-personal-v2"/);
+  assert.match(route, /identityLock\.identity_version === maritimeIdentityLockVersion/);
+  assert.match(route, /\.from\("maritime_cv_identity_locks"\)[\s\S]*?\.select\("locked_at,identity_version"\)/);
+  assert.match(route, /locked: Boolean\(identityLock\)/);
 });
 
 test("email and Google registration flows enforce the one-device account boundary", async () => {

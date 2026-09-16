@@ -28,6 +28,7 @@
     "remove-sea": "removeSea",
     "lookup-sea-imo": "lookupSeaVessel",
     "choose-sea-document": "openSeaServiceDocumentPicker",
+    "choose-sea-document-source": "openSeaServiceDocumentSource",
     "save-sea": "saveSeaExperience",
     "remove-photo": "removePhoto",
     "generate-summary": "generateSummary"
@@ -206,10 +207,11 @@
     const action = button.dataset.cvAction || "";
     const handler = actionBindings[action];
     if (!handler) return;
-    if (action.startsWith("remove-") || action === "lookup-sea-imo" || action === "choose-sea-document" || action === "save-sea") {
+    if (action.startsWith("remove-") || action === "lookup-sea-imo" || action === "choose-sea-document" || action === "choose-sea-document-source" || action === "save-sea") {
       const index = validRowIndex(button.dataset.cvIndex);
       if (index === null) return;
-      callGlobal(handler, index, button);
+      if (action === "choose-sea-document-source") callGlobal(handler, index, button.dataset.cvSource);
+      else callGlobal(handler, index, button);
       return;
     }
     callGlobal(handler);

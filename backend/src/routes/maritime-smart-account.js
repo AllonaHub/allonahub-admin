@@ -35,7 +35,7 @@ const manualCvFieldKeys = new Set([
   "seamanBookNo", "seamanBookPlace", "seamanBookIssued", "seamanBookValid", "seafarerIdNo", "seafarerIdPlace", "seafarerIdIssued", "seafarerIdValid",
   "schoolName", "schoolPlace", "schoolGrade", "schoolFrom", "schoolTo", "azSpeak", "azRead", "azWrite", "trSpeak", "trRead", "trWrite",
   "enSpeak", "enRead", "enWrite", "ruSpeak", "ruRead", "ruWrite", "medicalDoc", "medicalFitness", "medicalGrade", "medicalPlace", "medicalIssue", "medicalExpiry",
-  "competencyClass", "competencyCountry", "competencyCertificate", "competencyIssued", "competencyExpires", "competencyLimit", "note"
+  "tradeSpecialty", "competencyClass", "competencyCountry", "competencyCertificate", "competencyIssued", "competencyExpires", "competencyLimit", "note"
 ]);
 const manualCvRowKeys = {
   additional: new Set(["name", "institute", "place", "issue", "cert", "expiry"]),
@@ -166,9 +166,13 @@ const identityCorrectionApprovalSchema = z.object({
     gender: z.string().trim().min(1).max(80)
   }).strict()
 }).strict();
-const maritimeIdentityLockedFields = Object.freeze([
+const maritimeCoreIdentityLockedFields = Object.freeze([
   "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender"
 ]);
+const maritimeIdentityLockedFields = Object.freeze([
+  "position", "firstName", "familyName", "fatherName", "birthDate", "birthPlace", "nationality", "gender", "marital", "address", "airport"
+]);
+const maritimeIdentityLockVersion = "maritime-personal-v2";
 
 function httpError(message, statusCode = 400, code = "MARITIME_SMART_ACCOUNT_REQUEST_ERROR") {
   const error = new Error(message);
@@ -267,8 +271,7 @@ const manualStcwPresets = Object.freeze({
   si: Object.freeze({ code: "SI", tr: "Güvenlik Farkındalık Eğitimi", az: "Təhlükəsizlik üzrə Məlumatlandırma Təlimi", en: "Security Awareness Training", ru: "Подготовка по осведомлённости в области охраны" }),
   sl: Object.freeze({ code: "SL", tr: "Can Kurtarma Araçları ve Kurtarma Botları Kullanma Yeterliği (PSCRB)", az: "Xilasetmə Vasitələri və Xilasedici Qayıqlar üzrə Hazırlıq (PSCRB)", en: "Proficiency in Survival Craft and Rescue Boats (PSCRB)", ru: "Подготовка по спасательным шлюпкам, плотам и дежурным шлюпкам (PSCRB)" }),
   so: Object.freeze({ code: "SO", tr: "Temel Emniyet Eğitimi (BST)", az: "Əsas Təhlükəsizlik Hazırlığı (BST)", en: "Basic Safety Training (BST)", ru: "Начальная подготовка по безопасности (BST)" }),
-  sa: Object.freeze({ code: "SA", tr: "Kimyasal Tanker Sertifikası (SA)", az: "Kimyəvi Tanker Sertifikatı (SA)", en: "Chemical Tanker Certificate (SA)", ru: "Сертификат химического танкера (SA)" }),
-  se: Object.freeze({ code: "SE", tr: "SE Kodlu STCW Sertifikası", az: "SE Kodlu STCW Sertifikatı", en: "STCW Certificate (SE)", ru: "Сертификат STCW с кодом SE" })
+  sa: Object.freeze({ code: "SA", tr: "Kimyasal Tanker Sertifikası (SA)", az: "Kimyəvi Tanker Sertifikatı (SA)", en: "Chemical Tanker Certificate (SA)", ru: "Сертификат химического танкера (SA)" })
 });
 
 function manualStcwTitle(row, language) {
@@ -429,7 +432,18 @@ function manualCvPayload(cv) {
     imo_number: isValidImoNumber(row.imo) ? normalizeImoNumber(row.imo) : null,
     confidence: 1
   })).filter((row) => row.name || row.company || row.phone || row.email);
-  const skills = [fields.windows, fields.office, fields.internet].map(cvText).filter(Boolean).map((name) => ({ name, category: "digital", confidence: 1 }));
+  const skills = [
+    ["Windows", fields.windows],
+    ["Microsoft Office", fields.office],
+    ["Internet", fields.internet]
+  ].filter(([, level]) => cvText(level)).map(([name, level]) => ({ name: `${name}: ${cvText(level)}`, category: "digital", confidence: 1 }));
+  const tradeSpecialties = {
+    welder: "Welder",
+    flame_cutter: "Flame Cutter",
+    fitter: "Fitter"
+  };
+  const tradeSpecialty = tradeSpecialties[cvText(fields.tradeSpecialty)];
+  if (tradeSpecialty) skills.push({ name: tradeSpecialty, category: "trade", confidence: 1 });
   const emergencyContacts = cvText(fields.kinName) || cvText(fields.kinPhone) ? [{
     name: cvText(fields.kinName) || null,
     relationship: cvText(fields.kinRelation) || null,
@@ -954,7 +968,11 @@ export function registerMaritimeSmartAccountRoutes(app) {
         locked: Boolean(identityLock),
         locked_at: identityLock?.locked_at || null,
         version: identityLock?.identity_version || null,
-        fields: identityLock ? maritimeIdentityLockedFields : []
+        fields: identityLock
+          ? identityLock.identity_version === maritimeIdentityLockVersion
+            ? maritimeIdentityLockedFields
+            : maritimeCoreIdentityLockedFields
+          : []
       },
       global_cv_readiness: maritimeGlobalPassportReadiness(payload, { hasPhoto: Boolean(photo.avatar_url) })
     };
@@ -1153,6 +1171,11 @@ export function registerMaritimeSmartAccountRoutes(app) {
       p_device_key: deviceKey,
       p_user_agent: String(request.headers["user-agent"] || "").slice(0, 500)
     }), "Maritime CV güvenli biçimde kaydedilemedi.");
+    const identityLock = assertDb(await supabaseAdmin
+      .from("maritime_cv_identity_locks")
+      .select("locked_at,identity_version")
+      .eq("user_id", ctx.user.id)
+      .maybeSingle(), "Maritime CV kimlik kilidi okunamadı.");
     assertDb(await supabaseAdmin.from("maritime_smart_account_runs")
       .update({ status: "superseded" })
       .eq("seafarer_user_id", ctx.user.id)
@@ -1205,10 +1228,14 @@ export function registerMaritimeSmartAccountRoutes(app) {
         idempotent: item.idempotent === true
       })),
       identity_lock: {
-        locked: true,
-        locked_at: profile.last_user_confirmed_at || now,
-        version: "maritime-identity-v1",
-        fields: maritimeIdentityLockedFields
+        locked: Boolean(identityLock),
+        locked_at: identityLock?.locked_at || profile.last_user_confirmed_at || now,
+        version: identityLock?.identity_version || null,
+        fields: identityLock
+          ? identityLock.identity_version === maritimeIdentityLockVersion
+            ? maritimeIdentityLockedFields
+            : maritimeCoreIdentityLockedFields
+          : []
       }
     };
   });

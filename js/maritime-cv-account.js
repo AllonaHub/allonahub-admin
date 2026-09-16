@@ -100,6 +100,21 @@
     return entry ? copy(entry[0], entry[1]) : copy("accountSaveFailed", "Your Maritime CV could not be saved to your account. Please try again.");
   }
 
+  function isIdentitySecurityError(error) {
+    return new Set([
+      "MARITIME_IDENTITY_ALREADY_REGISTERED",
+      "MARITIME_IDENTITY_LOCKED",
+      "MARITIME_DEVICE_ALREADY_BOUND",
+      "MARITIME_DEVICE_KEY_REQUIRED",
+      "MARITIME_DEVICE_BINDING_REQUIRED",
+      "MARITIME_PASSKEY_UNSUPPORTED",
+      "MARITIME_PASSKEY_CANCELLED",
+      "MARITIME_PASSKEY_VERIFICATION_REQUIRED",
+      "MARITIME_PASSKEY_VERIFICATION_FAILED",
+      "MARITIME_PASSKEY_SECURITY_UNAVAILABLE"
+    ]).has(String(error?.code || ""));
+  }
+
   function applyIdentityLock(lock) {
     if (typeof window.applyMaritimeIdentityLock === "function") window.applyMaritimeIdentityLock(lock || { locked: false, fields: [] });
   }
@@ -237,10 +252,14 @@
       if (result.cv && window.applyMaritimeCVData) window.applyMaritimeCVData(result.cv);
       applyIdentityLock(result.identity_lock);
       showPhoto(result.profile_photo_url);
-      setCopyStatus(result.cv ? "accountLoaded" : "accountStart", result.cv ? "Your saved Maritime CV is open." : "Complete your Maritime CV and select Save.", result.cv ? "success" : "info");
+      setCopyStatus(result.cv ? "accountLoaded" : "accountStart", result.cv ? "Your saved Maritime CV is open." : "Complete the relevant fields to add your Maritime CV to your account.", result.cv ? "success" : "info");
     } catch (error) {
-      statusCopyState = null;
-      setStatus(identityErrorMessage(error), "error");
+      if (isIdentitySecurityError(error)) {
+        statusCopyState = null;
+        setStatus(identityErrorMessage(error), "error");
+      } else {
+        setCopyStatus("accountFieldsRequired", "Complete the relevant fields to add your Maritime CV to your account.", "info");
+      }
     }
   }
 

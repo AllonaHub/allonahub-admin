@@ -111,6 +111,12 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
   assert.match(maritimeCvPage, /data-cv-action="add-stcw"/);
   assert.match(maritimeCvPage, /data-cv-action="generate-summary"/);
   assert.match(maritimeCvPage, /id="medicalFitness"/);
+  for (const id of ["gender", "marital", "eyes", "hair", "shoes", "overall", "passportDoc", "windows", "office", "internet", "tradeSpecialty"]) {
+    assert.match(maritimeCvPage, new RegExp(`<select id="${id}"`));
+  }
+  for (const language of ["az", "tr", "en", "ru"]) {
+    for (const skill of ["Speak", "Read", "Write"]) assert.match(maritimeCvPage, new RegExp(`<select id="${language}${skill}"`));
+  }
   assert.match(maritimeCvPage, /js\/vendor\/html2canvas-1\.4\.1\.min\.js/);
   assert.match(maritimeCvPage, /js\/vendor\/jspdf-2\.5\.1\.umd\.min\.js/);
   assert.doesNotMatch(maritimeCvPage, /cdnjs\.cloudflare\.com\/ajax\/libs\/(?:html2canvas|jspdf)/);
@@ -126,10 +132,13 @@ test("the customer workspace separates manual Maritime CV, PDF archive, and Glob
     "Kimyəvi Tanker Sertifikatı (SA)",
     "Сертификат химического танкера (SA)"
   ]) assert.ok(maritimeCvForm.includes(label));
-  for (const key of ["photoHelp", "validityPeriod", "competencyHelp", "stcwHelp", "certificateNumber", "unlimited", "generateSummary"]) {
+  for (const key of ["photoHelp", "validityPeriod", "competencyHelp", "stcwHelp", "certificateNumber", "unlimited", "generateSummary", "accountFieldsRequired", "selectSkillLevel", "tradeSpecialty", "serviceDocumentChooseTitle"]) {
     assert.ok((maritimeCvForm.match(new RegExp(`${key}:`, "g")) || []).length >= 4, `${key} must exist in all four CV languages`);
   }
   assert.match(maritimeCvForm, /generatedProfessionalSummary/);
+  assert.match(maritimeCvForm, /deriveCertificateCode/);
+  assert.match(maritimeCvForm, /updateStcwCardPresentation/);
+  assert.match(maritimeCvForm, /displayPosition/);
   assert.match(maritimeCvForm, /function validateMaritimeCV\(options\)/);
   assert.match(maritimeCvForm, /preset\?\.id === "sa"/);
   assert.match(maritimeCvForm, /data-cv-key="included"/);

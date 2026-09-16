@@ -10,7 +10,7 @@
  <script src="../../js/vendor/html2canvas-1.4.1.min.js" defer></script>
 <script src="../../js/vendor/jspdf-2.5.1.umd.min.js" defer></script>
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
-  <link rel="stylesheet" href="../../css/maritime-cv-form.css?v=20260916-vessel-photo2">
+  <link rel="stylesheet" href="../../css/maritime-cv-form.css?v=20260916-guided-cv1">
 </head>
 <body class="cv-form-page cv-module-page" data-no-translate>
 
@@ -101,12 +101,23 @@
           </div>
           <div>
             <label data-i18n="gender">Gender</label>
-            <input id="gender" value="">
+            <select id="gender">
+              <option value="" data-i18n="selectGender">Select gender</option>
+              <option value="male" data-i18n="genderMale">Male</option>
+              <option value="female" data-i18n="genderFemale">Female</option>
+            </select>
           </div>
         </div>
 
         <label data-i18n="marital">Marital Status</label>
-        <input id="marital" value="">
+        <select id="marital">
+          <option value="" data-i18n="selectMaritalStatus">Select marital status</option>
+          <option value="single" data-i18n="maritalSingle">Single</option>
+          <option value="married" data-i18n="maritalMarried">Married</option>
+          <option value="divorced" data-i18n="maritalDivorced">Divorced</option>
+          <option value="widowed" data-i18n="maritalWidowed">Widowed</option>
+          <option value="separated" data-i18n="maritalSeparated">Separated</option>
+        </select>
 
         <label data-i18n="address">Permanent Address</label>
         <input id="address" value="" autocomplete="street-address">
@@ -138,24 +149,53 @@
 
           <div>
             <label data-i18n="eyes">Eyes Color</label>
-            <input id="eyes" value="">
+            <select id="eyes">
+              <option value="" data-i18n="selectEyeColor">Select eye color</option>
+              <option value="brown" data-i18n="colorBrown">Brown</option>
+              <option value="black" data-i18n="colorBlack">Black</option>
+              <option value="blue" data-i18n="colorBlue">Blue</option>
+              <option value="green" data-i18n="colorGreen">Green</option>
+              <option value="hazel" data-i18n="colorHazel">Hazel</option>
+              <option value="grey" data-i18n="colorGrey">Grey</option>
+              <option value="other" data-i18n="optionOther">Other</option>
+            </select>
           </div>
         </div>
 
         <div class="row3">
           <div>
             <label data-i18n="hair">Hair Color</label>
-            <input id="hair" value="">
+            <select id="hair">
+              <option value="" data-i18n="selectHairColor">Select hair color</option>
+              <option value="black" data-i18n="colorBlack">Black</option>
+              <option value="brown" data-i18n="colorBrown">Brown</option>
+              <option value="blond" data-i18n="colorBlond">Blond</option>
+              <option value="red" data-i18n="colorRed">Red</option>
+              <option value="grey" data-i18n="colorGrey">Grey</option>
+              <option value="white" data-i18n="colorWhite">White</option>
+              <option value="bald" data-i18n="hairBald">Bald</option>
+              <option value="other" data-i18n="optionOther">Other</option>
+            </select>
           </div>
 
           <div>
             <label data-i18n="shoes">Safety Shoes</label>
-            <input id="shoes" value="">
+            <select id="shoes">
+              <option value="" data-i18n="selectShoeSize">Select shoe size</option>
+              <option value="35">35</option><option value="36">36</option><option value="37">37</option><option value="38">38</option>
+              <option value="39">39</option><option value="40">40</option><option value="41">41</option><option value="42">42</option>
+              <option value="43">43</option><option value="44">44</option><option value="45">45</option><option value="46">46</option>
+              <option value="47">47</option><option value="48">48</option><option value="49">49</option><option value="50">50</option>
+            </select>
           </div>
 
           <div>
             <label data-i18n="overall">Overalls</label>
-            <input id="overall" value="">
+            <select id="overall">
+              <option value="" data-i18n="selectOverallSize">Select overall size</option>
+              <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+              <option value="XL">XL</option><option value="2XL">2XL</option><option value="3XL">3XL</option><option value="4XL">4XL</option><option value="5XL">5XL</option>
+            </select>
           </div>
         </div>
       </div>
@@ -179,7 +219,14 @@
         <input id="kinPhone" type="tel" inputmode="tel" value="" autocomplete="off">
 
         <label data-i18n="kinRelation">Relationship</label>
-        <input id="kinRelation" value="">
+        <select id="kinRelation">
+          <option value="" data-i18n="selectRelationship">Select relationship</option>
+          <option value="spouse" data-i18n="relationshipSpouse">Spouse</option>
+          <option value="parent" data-i18n="relationshipParent">Parent</option>
+          <option value="child" data-i18n="relationshipChild">Child</option>
+          <option value="sibling" data-i18n="relationshipSibling">Sibling</option>
+          <option value="other" data-i18n="optionOther">Other</option>
+        </select>
 
         <label data-i18n="kinAddress">Address</label>
         <input id="kinAddress" value="">
@@ -189,7 +236,15 @@
         <h3 data-i18n="passportDetails">Travel Passport Details</h3>
 
         <label data-i18n="document">Document</label>
-        <input id="passportDoc" value="">
+        <select id="passportDoc">
+          <option value="" data-i18n="selectPassportType">Select passport type</option>
+          <option value="ordinary_passport" data-i18n="passportOrdinary">Ordinary passport</option>
+          <option value="diplomatic_passport" data-i18n="passportDiplomatic">Diplomatic passport</option>
+          <option value="service_passport" data-i18n="passportService">Service / official passport</option>
+          <option value="special_passport" data-i18n="passportSpecial">Special passport</option>
+          <option value="temporary_passport" data-i18n="passportTemporary">Temporary / emergency passport</option>
+          <option value="refugee_travel_document" data-i18n="passportRefugee">Refugee travel document</option>
+        </select>
 
         <label data-i18n="number">Number</label>
         <input id="passportNo" value="">
@@ -217,13 +272,28 @@
         <h3 data-i18n="computerSkills">Computer Skills</h3>
 
         <label data-i18n="windows">Windows</label>
-        <input id="windows" value="">
+        <select id="windows" class="cv-skill-level-select">
+          <option value="" data-i18n="selectSkillLevel">Select level</option>
+          <option value="good" data-i18n="skillGood">Good</option>
+          <option value="average" data-i18n="skillIntermediate">Intermediate</option>
+          <option value="poor" data-i18n="skillBasic">Basic</option>
+        </select>
 
         <label data-i18n="office">Microsoft Office</label>
-        <input id="office" value="">
+        <select id="office" class="cv-skill-level-select">
+          <option value="" data-i18n="selectSkillLevel">Select level</option>
+          <option value="good" data-i18n="skillGood">Good</option>
+          <option value="average" data-i18n="skillIntermediate">Intermediate</option>
+          <option value="poor" data-i18n="skillBasic">Basic</option>
+        </select>
 
         <label data-i18n="internet">Internet</label>
-        <input id="internet" value="">
+        <select id="internet" class="cv-skill-level-select">
+          <option value="" data-i18n="selectSkillLevel">Select level</option>
+          <option value="good" data-i18n="skillGood">Good</option>
+          <option value="average" data-i18n="skillIntermediate">Intermediate</option>
+          <option value="poor" data-i18n="skillBasic">Basic</option>
+        </select>
       </div>
 
       <div class="group">
@@ -295,30 +365,30 @@
 
         <label data-i18n="azerbaijanLang">Azerbaijan</label>
         <div class="row3">
-          <input id="azSpeak" value="" data-ph="speaking">
-          <input id="azRead" value="" data-ph="reading">
-          <input id="azWrite" value="" data-ph="writing">
+          <select id="azSpeak" data-aria-i18n="speaking"><option value="" data-i18n="speaking">Speaking</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="azRead" data-aria-i18n="reading"><option value="" data-i18n="reading">Reading</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="azWrite" data-aria-i18n="writing"><option value="" data-i18n="writing">Writing</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
         </div>
 
         <label data-i18n="turkishLang">Turkish</label>
         <div class="row3">
-          <input id="trSpeak" value="" data-ph="speaking">
-          <input id="trRead" value="" data-ph="reading">
-          <input id="trWrite" value="" data-ph="writing">
+          <select id="trSpeak" data-aria-i18n="speaking"><option value="" data-i18n="speaking">Speaking</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="trRead" data-aria-i18n="reading"><option value="" data-i18n="reading">Reading</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="trWrite" data-aria-i18n="writing"><option value="" data-i18n="writing">Writing</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
         </div>
 
         <label data-i18n="englishLang">English</label>
         <div class="row3">
-          <input id="enSpeak" value="" data-ph="speaking">
-          <input id="enRead" value="" data-ph="reading">
-          <input id="enWrite" value="" data-ph="writing">
+          <select id="enSpeak" data-aria-i18n="speaking"><option value="" data-i18n="speaking">Speaking</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="enRead" data-aria-i18n="reading"><option value="" data-i18n="reading">Reading</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="enWrite" data-aria-i18n="writing"><option value="" data-i18n="writing">Writing</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
         </div>
 
         <label data-i18n="russianLang">Russian</label>
         <div class="row3">
-          <input id="ruSpeak" value="" data-ph="speaking">
-          <input id="ruRead" value="" data-ph="reading">
-          <input id="ruWrite" value="" data-ph="writing">
+          <select id="ruSpeak" data-aria-i18n="speaking"><option value="" data-i18n="speaking">Speaking</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="ruRead" data-aria-i18n="reading"><option value="" data-i18n="reading">Reading</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
+          <select id="ruWrite" data-aria-i18n="writing"><option value="" data-i18n="writing">Writing</option><option value="good" data-i18n="skillGood">Good</option><option value="average" data-i18n="skillIntermediate">Intermediate</option><option value="poor" data-i18n="skillBasic">Basic</option></select>
         </div>
       </div>
 
@@ -357,6 +427,15 @@
       <div class="group">
         <h3 data-i18n="competency">Certificate of Competency</h3>
         <p class="cv-field-help" data-i18n="competencyHelp">Add your officer competency, welder, fitter or other professional competency certificate here.</p>
+
+        <label data-i18n="tradeSpecialty">Certified trade specialty</label>
+        <select id="tradeSpecialty">
+          <option value="" data-i18n="selectTradeSpecialty">No additional trade specialty</option>
+          <option value="welder" data-i18n="tradeWelder">Welder</option>
+          <option value="flame_cutter" data-i18n="tradeFlameCutter">Flame Cutter</option>
+          <option value="fitter" data-i18n="tradeFitter">Fitter</option>
+        </select>
+        <p class="cv-field-help" data-i18n="tradeSpecialtyHelp">Choose this only when you hold the corresponding professional certificate. It will appear next to your position in the CV.</p>
 
         <label data-i18n="classGrade">Class / Grade</label>
         <input id="competencyClass" value="">
@@ -858,11 +937,11 @@
   <script src="../../js/maritime-commerce.js?v=20260916-public-imo2" defer></script>
   <script src="../../js/allona-maritime-photo.js?v=20260914-passport-photo2" defer></script>
   <script src="../../js/maritime-cv-draft.js?v=20260915-value5" defer></script>
-  <script src="../../js/maritime-cv-value-localizer.js?v=20260915-value5" defer></script>
-  <script src="../../js/maritime-cv-form.js?v=20260916-remove-se1" defer></script>
+  <script src="../../js/maritime-cv-value-localizer.js?v=20260916-guided-cv1" defer></script>
+  <script src="../../js/maritime-cv-form.js?v=20260916-guided-cv1" defer></script>
   <script src="../../js/maritime-pdf-names.js?v=20260916-pdf-quality1" defer></script>
-  <script src="../../js/maritime-cv-controls.js?v=20260916-pdf-quality1" defer></script>
+  <script src="../../js/maritime-cv-controls.js?v=20260916-guided-cv1" defer></script>
   <script src="../../js/maritime-cv-entry.js?v=20260915-value5" defer></script>
-  <script src="../../js/maritime-cv-account.js?v=20260916-reference-email1" defer></script>
+  <script src="../../js/maritime-cv-account.js?v=20260916-guided-cv1" defer></script>
 </body>
 </html>

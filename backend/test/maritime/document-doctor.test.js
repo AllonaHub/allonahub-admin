@@ -328,7 +328,8 @@ test("requires essential identity, medical, seaman-book, and five core STCW reco
     place_of_birth: "Bakı",
     nationality: "Azerbaijani",
     gender: "Male",
-    contact: { email: "ziya@example.invalid", phone: "+994000000000" },
+    marital_status: "single",
+    contact: { email: "ziya@example.invalid", phone: "+994000000000", permanent_address: "Bakı", nearest_airport: "GYD" },
     identity_documents: [
       { kind: "passport", document_number: "C03434797", issuing_country: "Azerbaijan", issue_date: "2025-05-02", expiry_date: "2035-05-02" },
       { kind: "seafarer_book", document_number: "SB-1001", issue_date: "2025-05-02", expiry_date: "2030-05-02" }
@@ -353,7 +354,8 @@ test("requires essential identity, medical, seaman-book, and five core STCW reco
     place_of_birth: "Bakı",
     nationality: "Azerbaijani",
     gender: "Male",
-    contact: { email: "ziya@example.invalid", phone: "+994000000000" },
+    marital_status: "single",
+    contact: { email: "ziya@example.invalid", phone: "+994000000000", permanent_address: "Bakı", nearest_airport: "GYD" },
     identity_documents: [
       { kind: "passport", document_number: "C03434797", issuing_country: "Azerbaijan", issue_date: "2025-05-02", expiry_date: "2035-05-02" },
       { kind: "seafarer_book", document_number: "SB-1001", issue_date: "2025-05-02", expiry_date: "2030-05-02" }
