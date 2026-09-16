@@ -27,6 +27,9 @@ test("sea experience requires a securely archived service document before it rea
   for (const field of ["imo", "vessel", "company", "type", "flag", "mmsi", "dwt", "grt", "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"]) {
     assert.match(form, new RegExp(`data-cv-key="${field}"`));
   }
+  for (const field of ["vesselPhotoUrl", "vesselPhotoSourceUrl", "vesselPhotoCredit"]) assert.match(form, new RegExp(field));
+  assert.match(form, /className = "cv-sea-photo-row"/);
+  assert.match(form, /addEventListener\("error", \(\) => photoRow\.remove\(\)/);
   assert.match(form, /accept="application\/pdf,\.pdf,image\/jpeg,image\/png,image\/webp,image\/\*"/);
   assert.match(form, /data-cv-action="choose-sea-document"/);
   assert.match(form, /data-cv-action="save-sea"/);
@@ -37,7 +40,7 @@ test("sea experience requires a securely archived service document before it rea
   assert.match(controls, /pdf\.link\(x, y, width, height/);
   assert.match(controls, /attachSeaServiceDocument/);
   assert.match(account, /\/v1\/maritime\/sea-service-documents/);
-  assert.match(page, /maritime-cv-form\.js\?v=20260916-imo-current3/);
+  assert.match(page, /maritime-cv-form\.js\?v=20260916-vessel-photo1/);
   assert.match(css, /\.cv-sea-actions/);
   assert.match(css, /\.cv-service-document-link/);
 });

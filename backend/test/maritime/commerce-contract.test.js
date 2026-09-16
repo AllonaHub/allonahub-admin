@@ -115,13 +115,14 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
   assert.doesNotMatch(provider, /localStorage|sessionStorage|document\./);
   assert.match(route, /app\.get\("\/v1\/maritime\/vessels\/:imo"/);
   assert.match(route, /maritime_vessel_lookup_cache/);
-  assert.match(route, /cached\?\.provider !== "wikidata"/);
+  assert.match(route, /cachedPayload && Object\.prototype\.hasOwnProperty\.call\(cachedPayload, "vessel_photo_url"\)/);
   assert.match(route, /cacheWrite\.error\?\.code === "23514"/);
   assert.doesNotMatch(route, /requireCustomer\(request, "maritime\.vessel_lookup"\)/);
   assert.match(route, /actorId: ctx\?\.user\?\.id \|\| null/);
   assert.match(route, /rateLimit: \{ max: 10, timeWindow: "1 minute" \}/);
   assert.match(commerceUi, /return publicApi\(`\/v1\/maritime\/vessels\/\$\{encodeURIComponent/);
   assert.doesNotMatch(commerceUi, /return api\(`\/v1\/maritime\/vessels\/\$\{encodeURIComponent/);
+  assert.match(smartRoute, /Gemi fotoğrafı güvenilir sağlayıcıdan gelmelidir/);
   for (const key of ["referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone"]) {
     assert.match(cvForm, new RegExp(`data-cv-key="${key}"`));
     assert.match(smartRoute, new RegExp(key));
@@ -213,6 +214,7 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
 
   const currentPublicVessel = provider.normalizeVesselFinderHtml(`
     <title>NUR K, General Cargo Ship - IMO 9389370</title>
+    <a href="/ship-photos/18504"><img class="main-photo" src="https://static.vesselfinder.net/ship-photo/9389370-354186000-photo/1?v1" alt="NUR K photo"></a>
     <table>
       <tr><td>IMO number</td><td>9389370</td></tr>
       <tr><td>Vessel Name</td><td>NUR K</td></tr>
@@ -236,7 +238,9 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     mmsi: currentPublicVessel.mmsi,
     callSign: currentPublicVessel.call_sign,
     build: currentPublicVessel.build_year,
-    provider: currentPublicVessel.provider
+    provider: currentPublicVessel.provider,
+    photo: currentPublicVessel.vessel_photo_url,
+    photoCredit: currentPublicVessel.vessel_photo_credit
   }, {
     name: "NUR K",
     type: "General Cargo Ship",
@@ -246,8 +250,14 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     mmsi: "620800377",
     callSign: "D6A4377",
     build: 2006,
-    provider: "vesselfinder_public"
+    provider: "vesselfinder_public",
+    photo: "https://static.vesselfinder.net/ship-photo/9389370-354186000-photo/1?v1",
+    photoCredit: "VesselFinder"
   });
+  assert.equal(provider.normalizeVesselFinderHtml(`
+    <table><tr><td>IMO number</td><td>9389370</td></tr><tr><td>Vessel Name</td><td>NUR K</td></tr></table>
+    <img class="main-photo" src="https://example.com/ship-photo/9389370-malicious/1">
+  `, "9389370").vessel_photo_url, null);
   assert.equal(provider.normalizeVesselFinderHtml(`
     <table><tr><td>IMO number</td><td>9389371</td></tr><tr><td>Vessel Name</td><td>WRONG</td></tr></table>
   `, "9389370"), null);

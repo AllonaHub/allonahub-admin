@@ -138,6 +138,34 @@ body.cv-form-page .cv-sea-detail-row td {
   line-height: 1.45;
 }
 
+body.cv-form-page .cv-sea-photo-row td {
+  padding: 7px 8px 4px;
+  background: #f4fbff;
+}
+
+body.cv-form-page .cv-vessel-photo {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0;
+}
+
+body.cv-form-page .cv-vessel-photo img {
+  display: block;
+  width: 34mm;
+  height: 21mm;
+  border: 1px solid #1597ff;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+body.cv-form-page .cv-vessel-photo figcaption {
+  max-width: 34mm;
+  color: #31556b;
+  font-size: 7.5px;
+  line-height: 1.3;
+}
+
 body.cv-form-page .photoCell img[hidden],
 body.cv-form-page .emptyPhoto[hidden],
 body.cv-form-page [hidden] {

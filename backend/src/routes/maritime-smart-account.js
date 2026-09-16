@@ -42,9 +42,20 @@ const manualCvRowKeys = {
   sea: new Set([
     "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
     "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt",
+    "vesselPhotoUrl", "vesselPhotoSourceUrl", "vesselPhotoCredit",
     "rowId", "serviceDocumentId", "serviceDocumentName", "serviceDocumentSize", "serviceDocumentStatus", "saved"
   ])
 };
+function trustedVesselPhotoUrl(value, source = false) {
+  try {
+    const url = new URL(String(value || ""));
+    if (url.protocol !== "https:") return false;
+    if (source) return url.hostname === "www.vesselfinder.com" && /^\/vessels\/details\/\d{7}$/i.test(url.pathname);
+    return url.hostname === "static.vesselfinder.net" && /^\/ship-photo\/\d{7}-/i.test(url.pathname);
+  } catch (error) {
+    return false;
+  }
+}
 function restrictedStringRecord(allowedKeys, maxLength) {
   return z.record(z.string().max(maxLength)).superRefine((value, context) => {
     for (const key of Object.keys(value)) {
@@ -76,6 +87,12 @@ const manualCvSchema = z.object({
     if (row.imo && !isValidImoNumber(row.imo)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "imo"], message: "Geçerli bir IMO numarası gereklidir." });
     if (row.referenceCompanyEmail && !z.string().email().safeParse(row.referenceCompanyEmail).success) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "referenceCompanyEmail"], message: "Geçerli şirket e-postası gereklidir." });
+    }
+    if (row.vesselPhotoUrl && !trustedVesselPhotoUrl(row.vesselPhotoUrl)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "vesselPhotoUrl"], message: "Gemi fotoğrafı güvenilir sağlayıcıdan gelmelidir." });
+    }
+    if (row.vesselPhotoSourceUrl && !trustedVesselPhotoUrl(row.vesselPhotoSourceUrl, true)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "vesselPhotoSourceUrl"], message: "Gemi fotoğrafı kaynak bağlantısı geçersizdir." });
     }
     if (row.signon && row.signoff && row.signoff < row.signon) context.addIssue({ code: z.ZodIssueCode.custom, path: ["seaData", index, "signoff"], message: "Ayrılış tarihi katılış tarihinden önce olamaz." });
   });
@@ -350,6 +367,9 @@ function manualCvPayload(cv) {
     reference_phone: cvText(row.referencePhone) || null,
     lookup_provider: cvText(row.lookupProvider) || null,
     lookup_fetched_at: cvText(row.lookupFetchedAt) || null,
+    vessel_photo_url: cvText(row.vesselPhotoUrl) || null,
+    vessel_photo_source_url: cvText(row.vesselPhotoSourceUrl) || null,
+    vessel_photo_credit: cvText(row.vesselPhotoCredit) || null,
     confidence: 1
   })).filter((row) => row.vessel_name || row.company_name || row.rank || row.sign_on_date);
   const references = cv.seaData.map((row) => ({

@@ -31,6 +31,7 @@ const repeatRowKeys = Object.freeze({
   sea: Object.freeze([
     "imo", "vessel", "company", "type", "flag", "dwt", "grt", "netTonnage", "buildYear", "mmsi", "callSign", "lengthOverall",
     "rank", "signon", "signoff", "referenceName", "referenceCompanyEmail", "referenceCompanyPhone", "referencePhone", "lookupProvider", "lookupFetchedAt",
+    "vesselPhotoUrl", "vesselPhotoSourceUrl", "vesselPhotoCredit",
     "rowId", "serviceDocumentId", "serviceDocumentName", "serviceDocumentSize", "serviceDocumentStatus", "saved"
   ])
 });
@@ -97,6 +98,9 @@ function newSeaRow(){
     referencePhone:"",
     lookupProvider:"",
     lookupFetchedAt:"",
+    vesselPhotoUrl:"",
+    vesselPhotoSourceUrl:"",
+    vesselPhotoCredit:"",
     serviceDocumentId:"",
     serviceDocumentName:"",
     serviceDocumentSize:"",
@@ -137,6 +141,28 @@ function escapeHTML(value){
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function trustedVesselPhotoUrl(value){
+  try{
+    const url = new URL(String(value || ""));
+    if(url.protocol !== "https:") return "";
+    const allowed = url.hostname === "static.vesselfinder.net" && /^\/ship-photo\/\d{7}-/i.test(url.pathname);
+    return allowed ? url.href : "";
+  } catch(error){
+    return "";
+  }
+}
+
+function trustedVesselPhotoSourceUrl(value){
+  try{
+    const url = new URL(String(value || ""));
+    return url.protocol === "https:" && url.hostname === "www.vesselfinder.com" && /^\/vessels\/details\/\d{7}$/i.test(url.pathname)
+      ? url.href
+      : "";
+  } catch(error){
+    return "";
+  }
 }
   const translations = {
   en: {
@@ -274,6 +300,7 @@ function escapeHTML(value){
     place:"Place",
     rank:"Rank",
     vessel:"Vessel",
+    vesselPhoto:"Vessel photo",
     company:"Company",
     vesselType:"Type of Vessel",
     flag:"Flag",
@@ -514,6 +541,7 @@ function escapeHTML(value){
     place:"Yer",
     rank:"Rütbe",
     vessel:"Gemi",
+    vesselPhoto:"Gemi fotoğrafı",
     company:"Şirket",
     vesselType:"Gemi Tipi",
     flag:"Bayrak",
@@ -755,6 +783,7 @@ function escapeHTML(value){
     place:"Yer",
     rank:"Rütbə",
     vessel:"Gəmi",
+    vesselPhoto:"Gəmi fotosu",
     company:"Şirkət",
     vesselType:"Gəmi Tipi",
     flag:"Bayraq",
@@ -995,6 +1024,7 @@ function escapeHTML(value){
     place:"Место",
     rank:"Должность",
     vessel:"Судно",
+    vesselPhoto:"Фотография судна",
     company:"Компания",
     vesselType:"Тип Судна",
     flag:"Флаг",
@@ -1587,6 +1617,11 @@ function updateSea(index, key, value){
   if(!Number.isInteger(rowIndex) || rowIndex < 0 || !seaData[rowIndex] || !repeatRowKeys.sea.includes(key)) return;
   const clean = String(value ?? "").slice(0, maxRepeatFieldLength);
   seaData[rowIndex][key] = key === "imo" ? clean.replace(/\D/g, "").slice(0, 7) : clean;
+  if(key === "imo"){
+    seaData[rowIndex].vesselPhotoUrl = "";
+    seaData[rowIndex].vesselPhotoSourceUrl = "";
+    seaData[rowIndex].vesselPhotoCredit = "";
+  }
   seaData[rowIndex].saved = "false";
   const state = document.querySelector(`.cv-sea-card [data-cv-index="${rowIndex}"]`)?.closest(".cv-sea-card")?.querySelector(".cv-sea-save-state");
   if(state){
@@ -1796,6 +1831,9 @@ async function lookupSeaVessel(index, button){
     });
     row.lookupProvider = String(vessel.provider || "marinetraffic");
     row.lookupFetchedAt = String(vessel.fetched_at || new Date().toISOString());
+    row.vesselPhotoUrl = trustedVesselPhotoUrl(vessel.vessel_photo_url);
+    row.vesselPhotoSourceUrl = trustedVesselPhotoSourceUrl(vessel.vessel_photo_source_url || vessel.provider_source_url);
+    row.vesselPhotoCredit = row.vesselPhotoUrl ? String(vessel.vessel_photo_credit || "VesselFinder").slice(0, 80) : "";
     row.saved = "false";
     renderSeaInputs();
     renderSea();
@@ -1838,6 +1876,17 @@ function renderSea(){
   tbody.innerHTML = "";
 
   seaData.filter(item => item.saved === "true").forEach(item => {
+    const photoUrl = trustedVesselPhotoUrl(item.vesselPhotoUrl);
+    if(photoUrl){
+      const photoRow = document.createElement("tr");
+      photoRow.className = "cv-sea-photo-row";
+      const sourceUrl = trustedVesselPhotoSourceUrl(item.vesselPhotoSourceUrl);
+      const credit = String(item.vesselPhotoCredit || "VesselFinder").slice(0, 80);
+      const imageMarkup = `<img src="${escapeAttr(photoUrl)}" crossorigin="anonymous" referrerpolicy="no-referrer" alt="${escapeAttr(`${item.vessel || t("vessel")} · ${t("vesselPhoto")}`)}">`;
+      photoRow.innerHTML = `<td colspan="9"><figure class="cv-vessel-photo">${sourceUrl ? `<a href="${escapeAttr(sourceUrl)}" target="_blank" rel="noopener noreferrer">${imageMarkup}</a>` : imageMarkup}<figcaption>${escapeHTML(t("vesselPhoto"))} · ${escapeHTML(credit)}</figcaption></figure></td>`;
+      photoRow.querySelector("img")?.addEventListener("error", () => photoRow.remove(), { once:true });
+      tbody.appendChild(photoRow);
+    }
     const tr = document.createElement("tr");
 
     tr.innerHTML = `

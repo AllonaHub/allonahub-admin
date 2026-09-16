@@ -256,7 +256,10 @@ export function registerMaritimeCommerceRoutes(app) {
       .eq("imo_number", imo)
       .gt("expires_at", new Date().toISOString())
       .maybeSingle(), "IMO önbelleği okunamadı.");
-    let vessel = cached?.provider !== "wikidata" ? cached?.vessel_payload || null : null;
+    const cachedPayload = cached?.provider !== "wikidata" ? cached?.vessel_payload || null : null;
+    let vessel = cachedPayload && Object.prototype.hasOwnProperty.call(cachedPayload, "vessel_photo_url")
+      ? cachedPayload
+      : null;
     let cacheHit = Boolean(vessel);
     if (!vessel) {
       vessel = await lookupVesselByImo(imo);

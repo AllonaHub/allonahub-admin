@@ -58,6 +58,22 @@ function publicTableRows(html) {
   return rows;
 }
 
+function vesselFinderPhoto(html, imo) {
+  for (const imageMatch of String(html || "").matchAll(/<img\b[^>]*>/gi)) {
+    const tag = imageMatch[0];
+    if (!/\bclass=["'][^"']*\bmain-photo\b[^"']*["']/i.test(tag)) continue;
+    const rawSource = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
+    if (!rawSource) continue;
+    try {
+      const photoUrl = new URL(decodeHtml(rawSource), "https://static.vesselfinder.net");
+      if (photoUrl.protocol !== "https:" || photoUrl.hostname !== "static.vesselfinder.net") continue;
+      if (!photoUrl.pathname.startsWith(`/ship-photo/${imo}-`)) continue;
+      return photoUrl.href;
+    } catch (error) {}
+  }
+  return null;
+}
+
 export function normalizeImoNumber(value) {
   return String(value ?? "").toUpperCase().replace(/^IMO\s*/i, "").replace(/\D/g, "").slice(0, 7);
 }
@@ -106,6 +122,7 @@ export function normalizeVesselFinderHtml(value, expectedImo = "") {
   if (!isValidImoNumber(imo) || imo !== wantedImo) return null;
 
   const titleName = decodeHtml(html.match(/<title[^>]*>([^,<]+?)(?:,|\s+-\s+)/i)?.[1]);
+  const providerSourceUrl = `https://www.vesselfinder.com/vessels/details/${imo}`;
   return {
     imo,
     vessel_name: text(rows.get("vessel name") || titleName),
@@ -123,10 +140,13 @@ export function normalizeVesselFinderHtml(value, expectedImo = "") {
     build_year: number(rows.get("year of build")),
     length_overall_m: number(rows.get("length overall")),
     breadth_m: number(rows.get("beam")),
+    vessel_photo_url: vesselFinderPhoto(html, imo),
+    vessel_photo_source_url: providerSourceUrl,
+    vessel_photo_credit: "VesselFinder",
     provider: "vesselfinder_public",
     provider_record_kind: "public_vessel_particulars",
     provider_license: null,
-    provider_source_url: `https://www.vesselfinder.com/vessels/details/${imo}`
+    provider_source_url: providerSourceUrl
   };
 }
 
