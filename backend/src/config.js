@@ -211,6 +211,21 @@ export const config = {
     }),
     timeoutMs: readNumber("MARITIME_REFERENCE_EMAIL_TIMEOUT_MS", 12000)
   },
+  marsoh: {
+    companyMessagingEnabled: readBool("MARSOH_COMPANY_MESSAGING_ENABLED", false),
+    maxMessageChars: Math.max(200, Math.min(readNumber("MARSOH_MAX_MESSAGE_CHARS", 2000), 2000)),
+    sendRatePerMinute: Math.max(2, Math.min(readNumber("MARSOH_SEND_RATE_PER_MINUTE", 12), 60)),
+    newAccountRatePerMinute: Math.max(1, Math.min(readNumber("MARSOH_NEW_ACCOUNT_RATE_PER_MINUTE", 5), 20)),
+    translationRatePerMinute: Math.max(1, Math.min(readNumber("MARSOH_TRANSLATION_RATE_PER_MINUTE", 10), 30)),
+    classifierApiKey: readOptionalSecret("MARSOH_CLASSIFIER_API_KEY", "ASSISTANT_AI_API_KEY", "OPENAI_API_KEY"),
+    classifierBaseUrl: readEnv("MARSOH_CLASSIFIER_BASE_URL", { required: false, defaultValue: "https://api.openai.com/v1/responses" }).replace(/\/$/, ""),
+    classifierModel: readEnv("MARSOH_CLASSIFIER_MODEL", { required: false, defaultValue: "gpt-4o-mini" }),
+    translationApiKey: readOptionalSecret("MARSOH_TRANSLATION_API_KEY", "ASSISTANT_AI_API_KEY", "OPENAI_API_KEY"),
+    translationBaseUrl: readEnv("MARSOH_TRANSLATION_BASE_URL", { required: false, defaultValue: "https://api.openai.com/v1/responses" }).replace(/\/$/, ""),
+    translationModel: readEnv("MARSOH_TRANSLATION_MODEL", { required: false, defaultValue: "gpt-4o-mini" }),
+    providerTimeoutMs: Math.max(2000, Math.min(readNumber("MARSOH_PROVIDER_TIMEOUT_MS", 12000), 30000)),
+    abuseHashSecret: readOptionalSecret("MARSOH_ABUSE_HASH_SECRET")
+  },
   socialMedia: {
     dispatchEnabled: readBool("SOCIAL_MEDIA_DISPATCH_ENABLED", false),
     dryRun: readBool("SOCIAL_MEDIA_DRY_RUN", true),

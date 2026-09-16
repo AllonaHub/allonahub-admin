@@ -12,7 +12,10 @@
     businesses: [],
     settings: [],
     modules: [],
-    maritimeTrust: null
+    maritimeTrust: null,
+    marsohModeration: [],
+    marsohReports: [],
+    marsohSanctions: []
   };
 
   const viewLoaders = {
@@ -1040,6 +1043,7 @@
     system: ["Sistem Ayarları", "Bakım, ödeme, partner başvurusu ve komisyon kontrolleri"],
     security: ["Güvenlik Merkezi", "Başarısız giriş, IP, audit ve auto-defense sinyalleri"],
     "maritime-trust": ["Maritime Trust", "Denizcilik metadata, risk, şikayet ve audit kontrolü"],
+    "marsoh-moderation": ["MarSoh Moderasyonu", "Karantina, yaptırım ve audit kontrollü yayın kararları"],
     audit: ["Audit Log", "Append-only kritik işlem kayıtları"]
   };
 
@@ -1227,6 +1231,7 @@
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Maritime Trust", "Denizcilik şikayet, fraud sinyali, erişim olayı ve audit akışı", "<button type=\"button\" data-view-jump=\"maritime-trust\">İzle</button>", "critical"),
+      ownerLine("MarSoh moderasyonu", "Karantinaya alınan sohbet mesajlarını yayınla, reddet veya kullanıcı yaptırımı uygula.", "<button type=\"button\" data-view-jump=\"marsoh-moderation\">Kuyruğu Aç</button>", "critical"),
       ownerLine("Denizcilik kullanıcıları", "AL kimliğiyle kullanıcı bulma, CV ve belge onayı, düzenleme ve kontrollü temizleme", "<a href=\"./maritime-users.html\">Yönet</a>", "critical"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
       ownerLine("Komut sağlık testi", "Panel komutlarını mevcut kontrol merkezi verisiyle kontrol et.", "<button type=\"button\" data-action-health-check>Komutları Test Et</button>", "medium"),
@@ -1638,6 +1643,95 @@
     ].join(""));
   }
 
+  async function loadOwnerMarsohModeration() {
+    ownerLoading("MarSoh Moderasyonu");
+    const payload = await api("/v1/admin/marsoh/moderation?limit=120");
+    state.marsohModeration = payload.queue || [];
+    state.marsohReports = payload.reports || [];
+    state.marsohSanctions = payload.sanctions || [];
+    const queueRows = state.marsohModeration.map((item) => {
+      const message = item.message || {};
+      const channel = item.channel || {};
+      const trust = item.sender_trust || {};
+      const confidence = `${Math.round(Number(item.confidence || 0) * 100)}%`;
+      const details = `${escape(message.body || "-")}<br><em>${escape(channel.slug || "-")} / ${escape(item.language || "und")} / ${escape(item.category || "-")} / ${escape(item.rule_code || "-")} / güven ${escape(confidence)}</em><br><em>${escape(item.administrator_explanation || "-")}</em>`;
+      const actions = `<button type="button" data-marsoh-context="${escape(item.message_id)}">İlgili Geçmiş</button> <button type="button" data-marsoh-admin-action="published" data-message-id="${escape(item.message_id)}">Yayınla</button> <button type="button" data-marsoh-admin-action="rejected" data-message-id="${escape(item.message_id)}">Reddet</button> <button type="button" data-marsoh-admin-action="temporary_mute" data-user-id="${escape(message.sender_user_id || "")}">24 Saat Sustur</button> <button type="button" data-marsoh-admin-action="permanent_ban" data-user-id="${escape(message.sender_user_id || "")}">Sohbetten Engelle</button>`;
+      return ownerLine(message.sender_display_name || trust.public_id || "Gönderici", details, actions, Number(item.confidence || 0) >= .9 ? "critical" : "high");
+    });
+    const reportRows = state.marsohReports.map((item) => {
+      const message = item.message || {};
+      const details = `${escape(message.body || "Mesaj yayından kaldırılmış olabilir.")}<br><em>${escape(item.reason_code || "other")} / ${formatDate(item.created_at)}${item.note ? ` / ${escape(item.note)}` : ""}</em>`;
+      const actions = message.message_id
+        ? `<button type="button" data-marsoh-context="${escape(item.message_id)}">İlgili Geçmiş</button> <button type="button" data-marsoh-report-action="dismissed" data-report-id="${escape(item.id)}">Bildirimi Kapat</button> <button type="button" data-marsoh-admin-action="rejected" data-message-id="${escape(item.message_id)}">Mesajı Reddet</button> <button type="button" data-marsoh-admin-action="temporary_mute" data-user-id="${escape(message.sender_user_id || "")}">24 Saat Sustur</button> <button type="button" data-marsoh-admin-action="permanent_ban" data-user-id="${escape(message.sender_user_id || "")}">Sohbetten Engelle</button>`
+        : `<button type="button" data-marsoh-report-action="dismissed" data-report-id="${escape(item.id)}">Bildirimi Kapat</button>`;
+      return ownerLine(message.sender_display_name || item.message_id || "Bildirilen mesaj", details, actions, item.reason_code === "fraud" || item.reason_code === "harassment" ? "critical" : "high");
+    });
+    const sanctionRows = state.marsohSanctions.map((item) => ownerLine(
+      `${item.sanction_type === "permanent_ban" ? "Kalıcı yasak" : "Geçici susturma"} / ${item.user_id}`,
+      `${escape(item.reason || "-")} / ${formatDate(item.starts_at)}${item.expires_at ? ` - ${formatDate(item.expires_at)}` : ""}`,
+      `<button type="button" data-marsoh-admin-action="lift" data-sanction-id="${escape(item.id)}">Yaptırımı Kaldır</button>`,
+      item.sanction_type === "permanent_ban" ? "critical" : "high"
+    ));
+    ownerSetOutput([
+      ownerLine("Güvenlik sınırı", "Karantina durumu ve sınıflandırıcı ayrıntıları yalnızca MFA doğrulamalı yöneticiye açıktır. Mesaj HTML olarak çalıştırılmaz.", "", "critical"),
+      ownerLine("Karantina kuyruğu", `${formatNumber(state.marsohModeration.length)} mesaj`, "", state.marsohModeration.length ? "high" : "low"),
+      queueRows.length ? queueRows.join("") : ownerEmpty("Karantinada mesaj bulunmuyor."),
+      ownerLine("Kullanıcı bildirimleri", `${formatNumber(state.marsohReports.length)} açık bildirim`, "", state.marsohReports.length ? "high" : "low"),
+      reportRows.length ? reportRows.join("") : ownerEmpty("Açık MarSoh bildirimi bulunmuyor."),
+      ownerLine("Aktif yaptırımlar", `${formatNumber(state.marsohSanctions.length)} kayıt`, "", state.marsohSanctions.length ? "high" : "low"),
+      sanctionRows.length ? sanctionRows.join("") : ownerEmpty("Aktif MarSoh yaptırımı bulunmuyor.")
+    ].join(""));
+  }
+
+  async function runMarsohAdminAction(button) {
+    const action = button.dataset.marsohAdminAction;
+    const messageId = button.dataset.messageId;
+    const userId = button.dataset.userId;
+    const sanctionId = button.dataset.sanctionId;
+    const labels = {
+      published: "Mesaj diğer kullanıcılara yayımlanacak.",
+      rejected: "Mesaj kalıcı olarak reddedilecek.",
+      temporary_mute: "Kullanıcı 24 saat boyunca MarSoh'da susturulacak.",
+      permanent_ban: "Kullanıcı MarSoh'dan kalıcı olarak engellenecek.",
+      lift: "Seçili MarSoh yaptırımı kaldırılacak."
+    };
+    await runConfirmed(labels[action] || "MarSoh işlemi uygulanacak.", async (reason) => {
+      if (action === "published" || action === "rejected") {
+        await api(`/v1/admin/marsoh/messages/${encodeURIComponent(messageId)}/decision`, { method: "POST", body: { decision: action, reason } });
+      } else if (action === "lift") {
+        await api(`/v1/admin/marsoh/sanctions/${encodeURIComponent(sanctionId)}/lift`, { method: "POST", body: {} });
+      } else {
+        await api("/v1/admin/marsoh/sanctions", { method: "POST", body: { user_id: userId, sanction_type: action, reason, ...(action === "temporary_mute" ? { duration_minutes: 1440 } : {}) } });
+      }
+    }, { trigger: button, defaultReason: labels[action] || "MarSoh yönetici işlemi", requireReason: true });
+  }
+
+  async function runMarsohReportAction(button) {
+    const action = button.dataset.marsohReportAction;
+    const reportId = button.dataset.reportId;
+    const labels = {
+      dismissed: "Kullanıcı bildirimi işlem gerektirmediği gerekçesiyle kapatılacak.",
+      actioned: "Kullanıcı bildirimi gerekli işlem uygulanmış olarak kapatılacak."
+    };
+    await runConfirmed(labels[action] || "MarSoh bildirimi sonuçlandırılacak.", async (reason) => {
+      await api(`/v1/admin/marsoh/reports/${encodeURIComponent(reportId)}/decision`, {
+        method: "POST",
+        body: { decision: action, reason }
+      });
+    }, { trigger: button, defaultReason: labels[action] || "MarSoh bildirim kararı", requireReason: true });
+  }
+
+  async function showMarsohContext(messageId) {
+    const payload = await api(`/v1/admin/marsoh/messages/${encodeURIComponent(messageId)}/context`);
+    const rows = (payload.messages || []).map((item) => ownerLine(
+      `${item.id === messageId ? "Hedef mesaj / " : ""}${item.sender_display_name || item.sender_user_id || "Gönderici"}`,
+      escape(item.body || "-"),
+      `${escape(item.language || "und")} / ${formatDate(item.accepted_at)}`,
+      item.id === messageId ? "critical" : "medium"
+    ));
+    openDrawer("MarSoh İlgili Mesaj Geçmişi", rows.length ? rows.join("") : ownerEmpty("İlgili mesaj geçmişi bulunamadı."));
+  }
+
   async function loadOwnerSystem() {
     ownerLoading("Sistem Ayarları");
     const payload = await api("/v1/control-center/settings");
@@ -1710,6 +1804,7 @@
       else if (view === "system") await loadOwnerSystem();
       else if (view === "security") await loadOwnerSecurity();
       else if (view === "maritime-trust") await loadOwnerMaritimeTrust();
+      else if (view === "marsoh-moderation") await loadOwnerMarsohModeration();
       else if (view === "audit") await loadOwnerAudit();
     } catch (error) {
       ownerSetOutput(ownerLine("Erişim engellendi", escape(publicError(error, "Süper Admin verisi alınamadı.")), "", "critical"));
@@ -1947,6 +2042,15 @@
 
         const maritimeAccessEventDetail = eventClosest(event, "[data-maritime-access-event-detail]");
         if (maritimeAccessEventDetail) showMaritimeAccessEventDetail(maritimeAccessEventDetail.dataset.maritimeAccessEventDetail);
+
+        const marsohAdminAction = eventClosest(event, "[data-marsoh-admin-action]");
+        if (marsohAdminAction) await runMarsohAdminAction(marsohAdminAction);
+
+        const marsohReportAction = eventClosest(event, "[data-marsoh-report-action]");
+        if (marsohReportAction) await runMarsohReportAction(marsohReportAction);
+
+        const marsohContext = eventClosest(event, "[data-marsoh-context]");
+        if (marsohContext) await showMarsohContext(marsohContext.dataset.marsohContext);
 
         const moduleMapDetail = eventClosest(event, "[data-module-map-detail]");
         if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);

@@ -49,7 +49,12 @@ begin
     'public.save_locked_maritime_cv_profile(uuid,jsonb,integer,text,text)',
     'public.support_replace_maritime_cv_identity(uuid,jsonb,uuid,uuid)',
     'public.grant_maritime_pdf_entitlement(uuid,text,text)',
-    'public.consume_maritime_pdf_download(uuid,text,text,uuid)'
+    'public.consume_maritime_pdf_download(uuid,text,text,uuid)',
+    'public.marsoh_can_read_channel(uuid)',
+    'public.marsoh_sender_is_blocked(uuid)',
+    'public.marsoh_visible_messages(uuid,timestamp with time zone,integer)',
+    'public.marsoh_accept_text_message(uuid,uuid,uuid,text,uuid,text,text,text,text,text,text,text,numeric,text,text,text,text,text)',
+    'public.marsoh_admin_decide_message(uuid,uuid,text,text)'
   ] loop
     if to_regprocedure(helper_name) is null then
       raise exception 'Missing maritime hiring helper function: %', helper_name;
@@ -114,7 +119,20 @@ begin
     'maritime_vessel_lookup_cache',
     'maritime_reference_verification_requests',
     'maritime_employment_reference_claims',
-    'maritime_partner_reference_reviews'
+    'maritime_partner_reference_reviews',
+    'marsoh_channels',
+    'marsoh_channel_memberships',
+    'marsoh_messages',
+    'marsoh_moderation_decisions',
+    'marsoh_published_messages',
+    'marsoh_translation_cache',
+    'marsoh_message_reactions',
+    'marsoh_user_blocks',
+    'marsoh_message_reports',
+    'marsoh_user_sanctions',
+    'marsoh_rate_limit_events',
+    'marsoh_audit_events',
+    'marsoh_topic_cards'
   ] loop
     if to_regclass(format('public.%I', expected_table)) is null then
       raise exception 'Missing maritime hiring core table: %', expected_table;
@@ -246,6 +264,32 @@ begin
       and pg_get_constraintdef(oid) ilike '%wikidata%'
   ) then
     raise exception 'Maritime vessel lookup cache provider constraint is incomplete';
+  end if;
+
+  if has_table_privilege('authenticated', 'public.marsoh_messages', 'SELECT')
+    or has_table_privilege('authenticated', 'public.marsoh_messages', 'INSERT')
+    or has_table_privilege('authenticated', 'public.marsoh_moderation_decisions', 'SELECT')
+    or has_table_privilege('authenticated', 'public.marsoh_message_reactions', 'SELECT')
+    or not has_table_privilege('authenticated', 'public.marsoh_published_messages', 'SELECT')
+    or not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime'
+        and schemaname = 'public'
+        and tablename = 'marsoh_published_messages'
+    ) then
+    raise exception 'MarSoh moderation or Realtime publication boundary is unsafe';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies policy
+    where policy.schemaname = 'public'
+      and policy.tablename = 'marsoh_published_messages'
+      and policy.policyname = 'marsoh_published_member_select'
+      and policy.qual ilike '%sender_user_id <> auth.uid()%'
+      and policy.qual ilike '%marsoh_sender_is_blocked%'
+  ) then
+    raise exception 'MarSoh published-message RLS does not protect sender moderation state or user blocks';
   end if;
 
   if not exists (

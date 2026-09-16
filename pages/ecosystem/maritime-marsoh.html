@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MarSoh | AllonaHub Denizcilik</title>
+  <meta name="description" content="MarSoh, doğrulanmış AllonaHub denizcilik kullanıcılarının güvenli küresel sohbet ağıdır.">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260916-marsoh1">
+  <link rel="stylesheet" href="../../css/marsoh.css?v=20260916-marsoh1">
+</head>
+<body class="marsoh-page" data-page="marsoh">
+  <a class="marsoh-skip" href="#marsohMessages" data-marsoh-copy="skip">Mesajlara geç</a>
+  <header class="marsoh-topbar">
+    <a class="marsoh-brand" href="../../index.html" aria-label="AllonaHub ana sayfa" data-marsoh-aria="homeLabel">
+      <img src="../../images/brand/allona.logo.png" alt="">
+      <span><strong><span class="marsoh-gold">Allona</span><span class="marsoh-blue">Hub</span></strong><small>Denizcilik</small></span>
+    </a>
+    <nav class="marsoh-breadcrumbs" aria-label="Sayfa bağlantıları" data-marsoh-aria="breadcrumbLabel">
+      <button type="button" data-marsoh-back data-marsoh-copy="back">Geri Dön</button>
+      <a href="../../index.html" data-marsoh-copy="home">Ana Sayfa</a>
+      <a href="allonadenizcilik.html" data-marsoh-copy="module">Modüle Dön</a>
+    </nav>
+    <div class="marsoh-tools">
+      <label class="marsoh-language">
+        <span class="sr-only" data-marsoh-copy="language">Dil</span>
+        <select data-marsoh-language aria-label="Sohbet dili" data-marsoh-aria="chatLanguage">
+          <option value="tr">Türkçe</option>
+          <option value="az">Azərbaycanca</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <span data-platform-controls-slot="home"></span>
+    </div>
+  </header>
+
+  <main class="marsoh-shell" data-marsoh-shell aria-busy="true">
+    <section class="marsoh-auth-gate" data-marsoh-auth-gate hidden>
+      <div class="marsoh-gate-mark" aria-hidden="true">M</div>
+      <h1>MarSoh</h1>
+      <p data-marsoh-copy="loginRequired">MarSoh'u kullanmak için aktif AllonaHub hesabınızla giriş yapın.</p>
+      <a class="marsoh-primary-action" data-marsoh-login href="../account/user.html" data-marsoh-copy="signIn">Giriş Yap</a>
+    </section>
+
+    <aside class="marsoh-channels" data-marsoh-channels-panel aria-label="Sohbet odaları" data-marsoh-aria="rooms">
+      <div class="marsoh-product-mark">
+        <span class="marsoh-product-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <path d="M15 17h25a10 10 0 0 1 10 10v9a10 10 0 0 1-10 10H29l-10 7 2-7h-6A10 10 0 0 1 5 36v-9a10 10 0 0 1 10-10Z"/>
+            <circle cx="30" cy="31" r="11"/><path d="M30 20v5m0 12v5m-11-11h5m12 0h5"/>
+            <path d="M25 31a5 5 0 0 1 10 0"/>
+          </svg>
+        </span>
+        <span><strong>MarSoh</strong><small data-marsoh-copy="tagline">Denizcilerin küresel sohbet ağı</small></span>
+        <span class="marsoh-total-badge" data-marsoh-total-unread hidden>0</span>
+      </div>
+      <button class="marsoh-mobile-close" type="button" data-marsoh-close-channels aria-label="Odaları kapat" data-marsoh-aria="closeRooms">×</button>
+      <div class="marsoh-channel-heading">
+        <h2 data-marsoh-copy="rooms">Odalar</h2>
+        <span class="marsoh-live-dot"><i></i><span data-marsoh-copy="live">Canlı</span></span>
+      </div>
+      <div class="marsoh-channel-list" data-marsoh-channel-list>
+        <div class="marsoh-channel-skeleton"></div><div class="marsoh-channel-skeleton"></div><div class="marsoh-channel-skeleton"></div>
+      </div>
+      <label class="marsoh-notification-setting">
+        <span data-marsoh-copy="notifications">Bildirim tercihi</span>
+        <select data-marsoh-notification>
+          <option value="all" data-marsoh-copy="notifyAll">Tümü</option>
+          <option value="mentions" data-marsoh-copy="notifyMentions">Yalnızca bahsetmeler</option>
+          <option value="muted" data-marsoh-copy="notifyMuted">Sessiz</option>
+        </select>
+      </label>
+    </aside>
+
+    <section class="marsoh-conversation" data-marsoh-conversation hidden>
+      <header class="marsoh-room-header">
+        <button class="marsoh-icon-button marsoh-mobile-rooms" type="button" data-marsoh-open-channels aria-label="Sohbet odalarını aç" title="Odalar" data-marsoh-aria="openRooms" data-marsoh-title="rooms">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <div><h1 data-marsoh-room-title>MarSoh</h1><p data-marsoh-room-subtitle></p></div>
+        <span class="marsoh-room-count" data-marsoh-room-count aria-live="polite"></span>
+        <button class="marsoh-icon-button marsoh-info-toggle" type="button" data-marsoh-open-info aria-label="Topluluk kurallarını aç" title="Topluluk kuralları" data-marsoh-aria="openRules" data-marsoh-title="rules">?</button>
+      </header>
+
+      <aside class="marsoh-pinned" data-marsoh-pinned role="note">
+        <span aria-hidden="true">⚓</span><p></p>
+      </aside>
+      <article class="marsoh-topic" data-marsoh-topic hidden>
+        <div><span data-marsoh-copy="todayTopic">Bugünün deniz konusu</span><h2></h2></div><p></p>
+      </article>
+
+      <div class="marsoh-stream-wrap">
+        <button class="marsoh-history" type="button" data-marsoh-load-history hidden data-marsoh-copy="older">Önceki mesajları yükle</button>
+        <div id="marsohMessages" class="marsoh-messages" data-marsoh-messages role="log" aria-live="polite" aria-relevant="additions text" tabindex="0">
+          <div class="marsoh-message-skeleton"></div><div class="marsoh-message-skeleton"></div><div class="marsoh-message-skeleton"></div>
+        </div>
+        <div class="marsoh-unread-line" data-marsoh-unread-line hidden><span data-marsoh-copy="newMessages">Yeni mesajlar</span></div>
+        <button class="marsoh-jump-latest" type="button" data-marsoh-jump-latest hidden aria-label="En yeni mesaja dön" title="En yeni mesaja dön" data-marsoh-aria="jumpLatest" data-marsoh-title="jumpLatest">↓</button>
+      </div>
+
+      <div class="marsoh-composer-area">
+        <div class="marsoh-emoji-panel" data-marsoh-emoji-panel hidden aria-label="Emoji seçici" data-marsoh-aria="emojiPicker">
+          <button type="button">😀</button><button type="button">🙂</button><button type="button">⚓</button><button type="button">🌊</button><button type="button">👍</button><button type="button">👏</button>
+        </div>
+        <div class="marsoh-listening" data-marsoh-listening hidden role="status"><i></i><span data-marsoh-copy="listening">Dinleniyor…</span></div>
+        <form class="marsoh-composer" data-marsoh-composer>
+          <button class="marsoh-icon-button" type="button" data-marsoh-emoji aria-label="Emoji seç" title="Emoji" data-marsoh-aria="chooseEmoji" data-marsoh-title="chooseEmoji">☺</button>
+          <label class="sr-only" for="marsohInput" data-marsoh-copy="messageLabel">Mesaj</label>
+          <textarea id="marsohInput" data-marsoh-input rows="1" maxlength="2000" placeholder="Denizcilik hakkında bir şey yazın" data-marsoh-placeholder="messagePlaceholder"></textarea>
+          <button class="marsoh-icon-button marsoh-mic" type="button" data-marsoh-mic aria-label="Sesle yaz" title="Sesle yaz" data-marsoh-aria="voiceTyping" data-marsoh-title="voiceTyping" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3m-4 0h8"/></svg>
+          </button>
+          <button class="marsoh-send" type="submit" data-marsoh-send aria-label="Mesaj gönder" title="Gönder" data-marsoh-aria="sendMessage" data-marsoh-title="sendMessage">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-8-6 18-3-7-8-3Zm8 3 9-11"/></svg>
+          </button>
+        </form>
+        <p class="marsoh-composer-note" data-marsoh-policy-note></p>
+        <div class="marsoh-status" data-marsoh-status role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <aside class="marsoh-info" data-marsoh-info hidden>
+      <button class="marsoh-info-close" type="button" data-marsoh-close-info aria-label="Topluluk kurallarını kapat" data-marsoh-aria="closeRules">×</button>
+      <section>
+        <span class="marsoh-info-kicker" data-marsoh-copy="safeCommunity">Güvenli topluluk</span>
+        <h2 data-marsoh-copy="roomInfo">Oda bilgisi</h2>
+        <p data-marsoh-copy="roomInfoText">MarSoh, denizcilerin tecrübe ve fikir paylaşımı içindir.</p>
+      </section>
+      <section>
+        <h3 data-marsoh-copy="rules">Topluluk kuralları</h3>
+        <ul>
+          <li data-marsoh-copy="ruleContact">İletişim bilgisi ve dış bağlantı paylaşmayın.</li>
+          <li data-marsoh-copy="ruleRecruitment">İş ilanı veya personel arama paylaşmayın.</li>
+          <li data-marsoh-copy="ruleRespect">Saygılı, güvenli ve konuya uygun konuşun.</li>
+          <li data-marsoh-copy="ruleMoney">Komisyon, ödeme veya aracılık talep etmeyin.</li>
+        </ul>
+      </section>
+      <section class="marsoh-safety-card">
+        <span aria-hidden="true">!</span><div><h3 data-marsoh-copy="seaSafety">Denizde güvenlik</h3><p data-marsoh-copy="seaSafetyText">Acil bir durumda sohbet yerine geminizin resmi acil durum prosedürünü izleyin.</p></div>
+      </section>
+    </aside>
+  </main>
+
+  <div class="marsoh-modal" data-marsoh-action-modal hidden>
+    <div class="marsoh-modal-card" role="dialog" aria-modal="true" aria-labelledby="marsohActionTitle">
+      <h2 id="marsohActionTitle" data-marsoh-action-title>Mesaj işlemleri</h2>
+      <div data-marsoh-action-list></div>
+      <button type="button" class="marsoh-modal-close" data-marsoh-modal-close data-marsoh-copy="close">Kapat</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/core.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/auth.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/platform.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/marsoh-i18n.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/marsoh-speech-provider.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/marsoh.js?v=20260916-marsoh1" defer></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+:root {
+  --marsoh-bg: #03070d;
+  --marsoh-panel: #08131f;
+  --marsoh-panel-2: #0d1e2c;
+  --marsoh-line: rgba(91, 219, 237, .2);
+  --marsoh-text: #f4fbff;
+  --marsoh-muted: #9fb2c2;
+  --marsoh-blue: #00c9ef;
+  --marsoh-turquoise: #14e0c1;
+  --marsoh-gold: #efc75e;
+  --marsoh-danger: #ff5c6d;
+  --marsoh-success: #4ed79b;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body.marsoh-page { margin: 0; overflow: hidden; background: var(--marsoh-bg); color: var(--marsoh-text); font-family: Inter, Arial, sans-serif; }
+.marsoh-page [hidden] { display: none !important; }
+body.marsoh-page > .marsoh-topbar,
+body.marsoh-page > main.marsoh-shell { width: 100% !important; max-width: none !important; margin: 0 !important; }
+button, input, textarea, select { font: inherit; letter-spacing: 0; }
+button, a, textarea, select { outline: none; }
+button:focus-visible, a:focus-visible, textarea:focus-visible, select:focus-visible { box-shadow: 0 0 0 3px rgba(20, 224, 193, .45); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.marsoh-skip { position: fixed; z-index: 1000; left: 12px; top: -80px; padding: 12px 16px; background: #fff; color: #00131f; border-radius: 6px; }
+.marsoh-skip:focus { top: 12px; }
+
+.marsoh-topbar { height: 76px; display: grid; grid-template-columns: minmax(190px, 280px) 1fr auto; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--marsoh-line); background: rgba(3, 8, 15, .96); }
+.marsoh-brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; min-width: 0; }
+.marsoh-brand img { width: 44px; height: 44px; object-fit: contain; }
+.marsoh-brand strong { display: block; font-size: 20px; line-height: 1; }
+.marsoh-brand small { display: block; margin-top: 5px; color: var(--marsoh-blue); font-weight: 800; }
+.marsoh-gold { color: var(--marsoh-gold); }.marsoh-blue { color: var(--marsoh-blue); }
+.marsoh-breadcrumbs { display: flex; justify-content: center; gap: 8px; min-width: 0; }
+.marsoh-breadcrumbs a, .marsoh-breadcrumbs button { min-height: 44px; display: inline-flex; align-items: center; border: 1px solid transparent; padding: 0 10px; color: var(--marsoh-muted); background: transparent; text-decoration: none; cursor: pointer; }
+.marsoh-breadcrumbs a:hover, .marsoh-breadcrumbs button:hover { color: #fff; border-color: var(--marsoh-line); }
+.marsoh-tools { display: flex; align-items: center; gap: 8px; }
+.marsoh-language select, .marsoh-notification-setting select { min-height: 44px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: var(--marsoh-panel); color: var(--marsoh-text); padding: 0 10px; }
+
+.marsoh-shell { height: calc(100vh - 76px); height: calc(100dvh - 76px); display: grid; grid-template-columns: minmax(238px, 286px) minmax(0, 1fr) minmax(245px, 310px); background: linear-gradient(145deg, rgba(0, 201, 239, .04), transparent 28%), var(--marsoh-bg); }
+.marsoh-auth-gate { grid-column: 1 / -1; place-self: center; text-align: center; width: min(520px, calc(100vw - 32px)); }
+.marsoh-gate-mark { width: 72px; height: 72px; display: grid; place-items: center; margin: 0 auto 18px; border: 1px solid var(--marsoh-blue); border-radius: 50%; color: var(--marsoh-gold); font-size: 34px; font-weight: 900; box-shadow: 0 0 28px rgba(0, 201, 239, .25); }
+.marsoh-auth-gate h1 { margin: 0; font-size: 36px; }.marsoh-auth-gate p { color: var(--marsoh-muted); line-height: 1.6; }
+.marsoh-primary-action { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 22px; border-radius: 6px; background: linear-gradient(120deg, var(--marsoh-blue), var(--marsoh-turquoise)); color: #00131d; font-weight: 900; text-decoration: none; }
+
+.marsoh-channels, .marsoh-info { min-height: 0; overflow: auto; background: rgba(8, 19, 31, .88); }
+.marsoh-channels { position: relative; padding: 18px 14px; border-right: 1px solid var(--marsoh-line); }
+.marsoh-info { padding: 22px 18px; border-left: 1px solid var(--marsoh-line); }
+.marsoh-info-toggle, .marsoh-info-close { display: none; }
+.marsoh-product-mark { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding-bottom: 18px; border-bottom: 1px solid var(--marsoh-line); }
+.marsoh-product-icon { position: relative; width: 52px; height: 52px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(20, 224, 193, .42); border-radius: 50%; background: rgba(0, 201, 239, .08); box-shadow: 0 0 22px rgba(0, 201, 239, .18); }
+.marsoh-product-icon::after { content: ""; position: absolute; inset: -5px; border: 1px solid rgba(0, 201, 239, .22); border-radius: 50%; animation: marsoh-sonar 3.8s ease-out infinite; }
+.marsoh-product-icon svg { width: 38px; height: 38px; fill: none; stroke: var(--marsoh-turquoise); stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.marsoh-product-mark strong { display: block; font-size: 23px; }.marsoh-product-mark small { color: var(--marsoh-muted); display: block; margin-top: 4px; line-height: 1.25; }
+.marsoh-total-badge { position: absolute; top: 0; right: 0; min-width: 23px; height: 23px; display: grid; place-items: center; padding: 0 6px; border-radius: 999px; background: var(--marsoh-gold); color: #0a1118; font-size: 12px; font-weight: 900; }
+.marsoh-channel-heading { display: flex; align-items: center; justify-content: space-between; margin: 20px 4px 10px; }.marsoh-channel-heading h2 { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--marsoh-muted); }
+.marsoh-live-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--marsoh-success); font-size: 12px; }.marsoh-live-dot i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.marsoh-channel-list { display: grid; gap: 6px; }
+.marsoh-channel-button { width: 100%; min-height: 58px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--marsoh-text); text-align: left; cursor: pointer; }
+.marsoh-channel-button:hover, .marsoh-channel-button.is-active { border-color: var(--marsoh-line); background: linear-gradient(120deg, rgba(0, 201, 239, .13), rgba(239, 199, 94, .06)); }
+.marsoh-channel-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #10283a; color: var(--marsoh-blue); font-weight: 900; }
+.marsoh-channel-button strong, .marsoh-channel-button small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.marsoh-channel-button small { margin-top: 3px; color: var(--marsoh-muted); }
+.marsoh-channel-unread { min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 6px; border-radius: 999px; background: var(--marsoh-blue); color: #00131f; font-weight: 900; font-size: 12px; }
+.marsoh-channel-skeleton { height: 58px; border-radius: 6px; background: linear-gradient(100deg, #0b1b28 20%, #132b3a 50%, #0b1b28 80%); background-size: 220% 100%; animation: marsoh-shimmer 1.5s infinite; }
+.marsoh-notification-setting { display: grid; gap: 7px; margin-top: 20px; color: var(--marsoh-muted); font-size: 12px; font-weight: 800; }.marsoh-notification-setting select { width: 100%; }
+.marsoh-mobile-close { display: none; }
+
+.marsoh-conversation { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; background: rgba(3, 9, 16, .7); }
+.marsoh-room-header { min-height: 70px; display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--marsoh-line); }.marsoh-room-header h1 { margin: 0; font-size: 20px; }.marsoh-room-header p { margin: 4px 0 0; color: var(--marsoh-muted); font-size: 12px; }.marsoh-room-count { margin-left: auto; color: var(--marsoh-muted); font-size: 12px; }
+.marsoh-icon-button { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--marsoh-muted); cursor: pointer; }.marsoh-icon-button:hover { border-color: var(--marsoh-line); color: #fff; background: rgba(0, 201, 239, .08); }.marsoh-icon-button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.marsoh-mobile-rooms { display: none; }
+.marsoh-pinned { display: flex; align-items: center; gap: 10px; margin: 10px 16px 0; padding: 10px 12px; border-left: 3px solid var(--marsoh-gold); background: rgba(239, 199, 94, .07); color: #e7edf1; }.marsoh-pinned p { margin: 0; font-size: 12px; line-height: 1.45; }
+.marsoh-topic { display: grid; grid-template-columns: minmax(150px, .45fr) 1fr; gap: 16px; margin: 10px 16px 0; padding: 12px 14px; border: 1px solid rgba(0, 201, 239, .18); background: linear-gradient(120deg, rgba(0, 201, 239, .08), rgba(20, 224, 193, .04)); }.marsoh-topic span { color: var(--marsoh-turquoise); font-size: 11px; font-weight: 900; text-transform: uppercase; }.marsoh-topic h2 { margin: 4px 0 0; font-size: 15px; }.marsoh-topic p { margin: 0; color: var(--marsoh-muted); line-height: 1.45; font-size: 13px; }
+.marsoh-stream-wrap { position: relative; min-height: 0; overflow: hidden; }.marsoh-messages { height: 100%; overflow: auto; overscroll-behavior: contain; padding: 18px clamp(14px, 3vw, 34px) 26px; scroll-behavior: smooth; }
+.marsoh-history { display: block; margin: 10px auto 0; min-height: 38px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: var(--marsoh-panel); color: var(--marsoh-text); padding: 0 14px; cursor: pointer; }
+.marsoh-message { max-width: min(76%, 680px); margin: 10px 0; }.marsoh-message.is-own { margin-left: auto; }.marsoh-message-head { display: flex; align-items: center; gap: 7px; margin: 0 8px 5px; color: var(--marsoh-muted); font-size: 11px; }.marsoh-message.is-own .marsoh-message-head { justify-content: flex-end; }
+.marsoh-message-head strong { color: #dcebf3; font-size: 12px; }.marsoh-verified { color: var(--marsoh-blue); }.marsoh-country, .marsoh-message-language { padding: 2px 5px; border: 1px solid var(--marsoh-line); border-radius: 4px; }
+.marsoh-bubble { position: relative; padding: 11px 13px; border: 1px solid rgba(132, 175, 195, .2); border-radius: 6px; background: var(--marsoh-panel-2); color: var(--marsoh-text); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }.marsoh-message.is-own .marsoh-bubble { border-color: rgba(0, 201, 239, .35); background: linear-gradient(135deg, #0b3143, #0a2735); }
+.marsoh-message.is-failed .marsoh-bubble { border-color: rgba(255, 92, 109, .58); }.marsoh-message-status { display: flex; justify-content: flex-end; gap: 6px; margin: 5px 7px 0 auto; padding: 0; border: 0; background: transparent; color: var(--marsoh-muted); font-size: 11px; }.marsoh-message-status.is-error { min-height: 32px; color: var(--marsoh-danger); cursor: pointer; }
+.marsoh-message-menu { position: absolute; right: 4px; top: 4px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--marsoh-muted); cursor: pointer; opacity: 0; }.marsoh-bubble:hover .marsoh-message-menu, .marsoh-message-menu:focus-visible { opacity: 1; }
+.marsoh-translate { margin: 6px 8px 0; border: 0; background: transparent; color: var(--marsoh-blue); padding: 0; font-size: 12px; cursor: pointer; }.marsoh-translation { margin: 8px 8px 0; padding: 9px 10px; border-left: 2px solid var(--marsoh-turquoise); background: rgba(20, 224, 193, .05); color: #d9f6f0; font-size: 13px; }.marsoh-translation small { display: block; color: var(--marsoh-muted); margin-top: 5px; }
+.marsoh-reactions { display: flex; gap: 4px; margin: 5px 7px 0; }.marsoh-reactions button { min-width: 34px; min-height: 30px; border: 1px solid var(--marsoh-line); border-radius: 999px; background: rgba(255,255,255,.03); color: #fff; cursor: pointer; }
+.marsoh-date-divider { display: flex; align-items: center; gap: 10px; margin: 22px 0; color: var(--marsoh-muted); font-size: 11px; text-transform: uppercase; }.marsoh-date-divider::before, .marsoh-date-divider::after { content: ""; height: 1px; flex: 1; background: var(--marsoh-line); }
+.marsoh-empty { min-height: 100%; display: grid; place-content: center; text-align: center; color: var(--marsoh-muted); padding: 30px; }.marsoh-empty strong { color: var(--marsoh-text); font-size: 19px; margin-bottom: 7px; }
+.marsoh-message-skeleton { width: 58%; height: 66px; margin: 12px 0; border-radius: 6px; background: linear-gradient(100deg, #07141f 20%, #102635 50%, #07141f 80%); background-size: 220% 100%; animation: marsoh-shimmer 1.5s infinite; }.marsoh-message-skeleton:nth-child(2) { margin-left: auto; width: 45%; }
+.marsoh-unread-line { position: absolute; left: 12px; right: 12px; top: 50%; z-index: 3; display: flex; align-items: center; gap: 8px; color: var(--marsoh-gold); font-size: 11px; font-weight: 900; }.marsoh-unread-line::before, .marsoh-unread-line::after { content: ""; height: 1px; flex: 1; background: currentColor; }
+.marsoh-jump-latest { position: absolute; right: 18px; bottom: 14px; width: 44px; height: 44px; border: 1px solid var(--marsoh-line); border-radius: 50%; background: #0b2130; color: var(--marsoh-blue); cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.marsoh-composer-area { position: relative; min-width: 0; border-top: 1px solid var(--marsoh-line); padding: 10px 14px max(10px, env(safe-area-inset-bottom)); background: rgba(4, 11, 18, .98); }.marsoh-composer { width: 100% !important; max-width: 100% !important; min-width: 0 !important; min-height: 58px; display: flex; align-items: flex-end; gap: 5px; border: 1px solid rgba(0, 201, 239, .28); border-radius: 8px; background: #091824; padding: 4px 5px; }.marsoh-composer textarea { width: auto !important; min-width: 0 !important; flex: 1 1 0; max-height: 132px; resize: none; border: 0; background: transparent; color: #fff; padding: 13px 6px; line-height: 1.4; }.marsoh-composer textarea::placeholder { color: #718797; }
+.marsoh-send { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 auto; border: 0; border-radius: 50%; background: linear-gradient(135deg, var(--marsoh-blue), var(--marsoh-turquoise)); color: #00141d; cursor: pointer; }.marsoh-send:disabled { opacity: .45; }.marsoh-send svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.marsoh-mic.is-listening { color: var(--marsoh-danger); box-shadow: 0 0 0 5px rgba(255,92,109,.12); }.marsoh-listening { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 8px 58px; color: var(--marsoh-danger); font-size: 12px; }.marsoh-listening i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; animation: marsoh-pulse 1s infinite; }
+.marsoh-emoji-panel { position: absolute; left: 16px; bottom: calc(100% + 8px); z-index: 5; display: flex; gap: 4px; padding: 8px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: #0c1c29; box-shadow: 0 16px 30px rgba(0,0,0,.4); }.marsoh-emoji-panel button { width: 42px; height: 42px; border: 0; background: transparent; font-size: 21px; cursor: pointer; }
+.marsoh-composer-note { margin: 6px 7px 0; color: var(--marsoh-muted); font-size: 10px; line-height: 1.35; }.marsoh-status { min-height: 16px; margin: 4px 7px 0; color: var(--marsoh-danger); font-size: 11px; }
+
+.marsoh-info section { padding: 0 0 20px; margin-bottom: 20px; border-bottom: 1px solid var(--marsoh-line); }.marsoh-info h2, .marsoh-info h3 { margin: 5px 0 10px; }.marsoh-info p, .marsoh-info li { color: var(--marsoh-muted); font-size: 13px; line-height: 1.55; }.marsoh-info ul { margin: 0; padding-left: 18px; }.marsoh-info-kicker { color: var(--marsoh-gold); font-size: 11px; text-transform: uppercase; font-weight: 900; }
+.marsoh-safety-card { display: flex; gap: 10px; }.marsoh-safety-card > span { width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--marsoh-gold); border-radius: 50%; color: var(--marsoh-gold); font-weight: 900; }
+.marsoh-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.7); }.marsoh-modal-card { width: min(420px, 100%); max-height: min(620px, 90vh); overflow: auto; border: 1px solid var(--marsoh-line); border-radius: 8px; background: #091824; padding: 18px; }.marsoh-modal-card h2 { margin-top: 0; }.marsoh-modal-card button, .marsoh-modal-card select, .marsoh-modal-card textarea { width: 100%; min-height: 46px; margin-top: 8px; border: 1px solid var(--marsoh-line); border-radius: 6px; background: #0e2231; color: #fff; padding: 10px; }.marsoh-modal-card button { cursor: pointer; }.marsoh-modal-card .is-danger { border-color: rgba(255,92,109,.55); color: #ff9ba6; }.marsoh-modal-close { margin-top: 16px !important; }
+
+@keyframes marsoh-shimmer { to { background-position: -220% 0; } }
+@keyframes marsoh-sonar { 0% { transform: scale(.85); opacity: .8; } 70%,100% { transform: scale(1.25); opacity: 0; } }
+@keyframes marsoh-pulse { 50% { opacity: .35; transform: scale(.78); } }
+
+@media (max-width: 1120px) {
+  .marsoh-shell { position: relative; grid-template-columns: minmax(225px, 270px) minmax(0, 1fr); }
+  .marsoh-info { position: absolute; z-index: 21; inset: 0 0 0 auto; display: block !important; width: min(88vw, 360px); transform: translateX(105%); transition: transform .2s ease; box-shadow: -18px 0 45px rgba(0,0,0,.5); }
+  .marsoh-info.is-open { transform: translateX(0); }
+  .marsoh-info-toggle { display: grid; }
+  .marsoh-info-close { display: block; width: 44px; height: 44px; margin: -10px -6px 8px auto; border: 0; background: transparent; color: #fff; font-size: 26px; cursor: pointer; }
+}
+@media (max-width: 760px) {
+  body.marsoh-page { overflow: hidden; }body.marsoh-page > header.marsoh-topbar { position: relative !important; top: auto !important; height: 68px !important; min-height: 68px !important; max-height: 68px !important; display: grid !important; grid-template-columns: minmax(0,1fr) auto !important; align-items: center !important; gap: 8px !important; padding: 0 12px !important; overflow: hidden !important; flex-wrap: nowrap !important; }.marsoh-brand img { width: 38px; height: 38px; }.marsoh-brand strong { font-size: 18px; }.marsoh-brand small { font-size: 11px; }body.marsoh-page > header .marsoh-breadcrumbs { display: none !important; width: auto !important; flex: 0 0 auto !important; }.marsoh-tools [data-platform-controls-slot] { display: none !important; }.marsoh-tools { min-width: 0; justify-content: flex-end; }.marsoh-language select { min-height: 44px; max-width: 118px; }
+  .marsoh-shell { height: calc(100vh - 68px); height: calc(100dvh - 68px); display: block; position: relative; }.marsoh-conversation { height: 100%; }.marsoh-channels { position: absolute; z-index: 20; inset: 0 auto 0 0; width: min(86vw, 340px); transform: translateX(-105%); transition: transform .2s ease; box-shadow: 18px 0 45px rgba(0,0,0,.5); }.marsoh-channels.is-open { transform: translateX(0); }.marsoh-mobile-close { display: block; position: absolute; right: 8px; top: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: #fff; font-size: 26px; cursor: pointer; }.marsoh-mobile-rooms { display: grid; }.marsoh-room-header { min-height: 62px; padding: 8px 10px; }.marsoh-room-count { display: none; }
+  .marsoh-pinned { margin: 7px 8px 0; }.marsoh-topic { grid-template-columns: 1fr; gap: 5px; margin: 7px 8px 0; }.marsoh-topic p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }.marsoh-messages { padding: 12px 9px 20px; }.marsoh-message { max-width: 88%; }.marsoh-message-menu { opacity: 1; }.marsoh-composer-area { padding-left: 6px; padding-right: 6px; }.marsoh-composer { gap: 0; }.marsoh-icon-button, .marsoh-send { width: 46px; height: 46px; }.marsoh-composer-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }.marsoh-emoji-panel { left: 6px; max-width: calc(100vw - 12px); overflow-x: auto; }.marsoh-auth-gate { padding: 20px; }
+}
+@media (max-width: 360px) { .marsoh-message { max-width: 94%; }.marsoh-composer textarea { padding-left: 2px; padding-right: 2px; }.marsoh-brand small { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }
