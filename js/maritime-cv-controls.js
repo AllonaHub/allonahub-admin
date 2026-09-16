@@ -33,16 +33,6 @@
     "generate-summary": "generateSummary"
   });
 
-  function safeFilePart(value, fallback) {
-    const normalized = String(value || "")
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9_-]+/gi, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 48);
-    return normalized || fallback;
-  }
-
   function setPdfBusy(button, busy) {
     if (!button) return;
     button.disabled = busy;
@@ -55,6 +45,20 @@
 
   function message(key, fallback) {
     return typeof window.t === "function" ? window.t(key) : fallback;
+  }
+
+  async function waitForPdfAssets(root) {
+    if (document.fonts?.ready) await document.fonts.ready.catch(() => undefined);
+    const images = Array.from(root.querySelectorAll("img"));
+    await Promise.all(images.map(image => {
+      if (image.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        const done = () => resolve();
+        image.addEventListener("load", done, { once: true });
+        image.addEventListener("error", done, { once: true });
+        window.setTimeout(done, 8000);
+      });
+    }));
   }
 
   async function downloadPDF() {
@@ -75,9 +79,13 @@
     }
 
     const button = document.getElementById("cvPdfButton");
-    const first = safeFilePart(document.getElementById("firstName")?.value, "User");
-    const last = safeFilePart(document.getElementById("familyName")?.value, "CV");
-    const fileName = `AllonaHub_CV_${first}_${last}.pdf`;
+    if (!window.AllonaMaritimePdfNames || typeof window.AllonaMaritimePdfNames.maritimeCv !== "function") {
+      window.alert(message("pdfGenerationFailed", "The PDF could not be created. Please try again."));
+      return;
+    }
+    const firstName = document.getElementById("firstName")?.value;
+    const familyName = document.getElementById("familyName")?.value;
+    const fileName = window.AllonaMaritimePdfNames.maritimeCv(firstName, familyName);
 
     pdfDownloadInProgress = true;
     setPdfBusy(button, true);
@@ -85,25 +93,35 @@
 
     try {
       await new Promise(resolve => window.requestAnimationFrame(resolve));
+      await waitForPdfAssets(document.querySelector(".previewWrap") || document.body);
       const pdf = new JsPdf("p", "mm", "a4");
+      pdf.setProperties({
+        title: `${String(firstName || "").trim()} ${String(familyName || "").trim()} CV`.trim(),
+        subject: "AllonaHub Maritime CV",
+        author: "AllonaHub"
+      });
 
       for (let index = 0; index < pages.length; index += 1) {
         const canvas = await html2canvas(pages[index], {
-          scale: 2,
+          scale: 2.5,
           useCORS: true,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
+          imageTimeout: 15000,
+          logging: false
         });
-        const imageData = canvas.toDataURL("image/jpeg", 0.98);
+        const imageData = canvas.toDataURL("image/jpeg", 1);
         if (index > 0) pdf.addPage();
-        pdf.addImage(imageData, "JPEG", 0, 0, 210, 297);
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imageData, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
         const pageRect = pages[index].getBoundingClientRect();
         if (pageRect.width > 0 && pageRect.height > 0) {
           pages[index].querySelectorAll("a.cv-service-document-link[href]").forEach(anchor => {
             const rect = anchor.getBoundingClientRect();
-            const x = Math.max(0, (rect.left - pageRect.left) * 210 / pageRect.width);
-            const y = Math.max(0, (rect.top - pageRect.top) * 297 / pageRect.height);
-            const width = Math.min(210 - x, Math.max(2, rect.width * 210 / pageRect.width));
-            const height = Math.min(297 - y, Math.max(2, rect.height * 297 / pageRect.height));
+            const x = Math.max(0, (rect.left - pageRect.left) * pageWidth / pageRect.width);
+            const y = Math.max(0, (rect.top - pageRect.top) * pageHeight / pageRect.height);
+            const width = Math.min(pageWidth - x, Math.max(2, rect.width * pageWidth / pageRect.width));
+            const height = Math.min(pageHeight - y, Math.max(2, rect.height * pageHeight / pageRect.height));
             if (/^https:\/\/allonahub\.com\//i.test(anchor.href)) pdf.link(x, y, width, height, { url: anchor.href });
           });
         }

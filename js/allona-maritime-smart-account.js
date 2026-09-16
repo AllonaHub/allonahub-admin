@@ -71,6 +71,7 @@
     cvTitle: ["Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV", "Global CV"],
     savePdf: ["Global CV PDF İndir · 15 USD", "Global CV PDF endir · 15 USD", "Global CV PDF жүктеу · 15 USD", "Global CV PDF yuklab olish · 15 USD", "Global CV PDF жүктөп алуу · 15 USD", "Download Global CV PDF · $15", "Global CV PDF herunterladen · 15 USD", "Скачать Global CV PDF · 15 USD", "تنزيل Global CV PDF · 15 USD"],
     pdfPaymentFailed: ["15 USD tutarındaki Global CV PDF ödemesi başlatılamadı. Global CV oluşturmak ve güncellemek ücretsiz kalır.", "15 USD məbləğində Global CV PDF ödənişi başladılmadı. Global CV yaratmaq və yeniləmək pulsuz qalır.", "15 USD Global CV PDF төлемі басталмады. Global CV жасау және жаңарту тегін қалады.", "15 USD Global CV PDF to‘lovi boshlanmadi. Global CV yaratish va yangilash bepul qoladi.", "15 USD Global CV PDF төлөмү башталган жок. Global CV түзүү жана жаңыртуу акысыз бойдон калат.", "The $15 Global CV PDF payment could not be started. Creating and updating Global CV remains free.", "Die Zahlung von 15 USD für das Global-CV-PDF konnte nicht gestartet werden. Erstellen und Aktualisieren bleiben kostenlos.", "Не удалось начать оплату Global CV PDF стоимостью 15 USD. Создание и обновление Global CV остаются бесплатными.", "تعذر بدء دفع 15 دولارا لتنزيل Global CV PDF. يظل إنشاء Global CV وتحديثه مجانيا."],
+    pdfGenerationFailed: ["Global CV PDF hazırlanamadı. Bilgilerinizi ve fotoğrafınızı kontrol edip yeniden deneyin.", "Global CV PDF hazırlana bilmədi. Məlumat və şəklinizi yoxlayıb yenidən cəhd edin.", "Global CV PDF дайындалмады. Деректеріңіз бен фотоңызды тексеріп, қайталап көріңіз.", "Global CV PDF tayyorlanmadi. Maʼlumot va rasmingizni tekshirib, qayta urinib ko‘ring.", "Global CV PDF даярдалган жок. Маалымат жана сүрөтүңүздү текшерип, кайра аракет кылыңыз.", "The Global CV PDF could not be created. Check your information and photo, then try again.", "Das Global-CV-PDF konnte nicht erstellt werden. Prüfen Sie Angaben und Foto und versuchen Sie es erneut.", "Не удалось создать PDF Global CV. Проверьте данные и фотографию и повторите попытку.", "تعذر إنشاء ملف Global CV بصيغة PDF. تحقق من بياناتك وصورتك ثم أعد المحاولة."],
     pdfLoginRequired: ["Global CV PDF indirmek için giriş yapın.", "Global CV PDF endirmək üçün daxil olun.", "Global CV PDF жүктеу үшін жүйеге кіріңіз.", "Global CV PDF yuklab olish uchun tizimga kiring.", "Global CV PDF жүктөп алуу үчүн кириңиз.", "Sign in to download the Global CV PDF.", "Melden Sie sich an, um das Global-CV-PDF herunterzuladen.", "Войдите, чтобы скачать Global CV PDF.", "سجل الدخول لتنزيل Global CV PDF."],
     close: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
     personalDetails: ["Kişisel Bilgiler", "Şəxsi məlumatlar", "Жеке мәліметтер", "Shaxsiy maʼlumotlar", "Жеке маалыматтар", "Personal Details", "Persönliche Angaben", "Личные данные", "البيانات الشخصية"],
@@ -874,10 +875,105 @@
     if (dialog && typeof dialog.close === "function" && dialog.open) dialog.close();
   }
 
+  async function waitForPdfAssets(root) {
+    if (document.fonts?.ready) await document.fonts.ready.catch(() => undefined);
+    const images = Array.from(root.querySelectorAll("img"));
+    await Promise.all(images.map(function (image) {
+      if (image.complete) return Promise.resolve();
+      return new Promise(function (resolve) {
+        const done = function () { resolve(); };
+        image.addEventListener("load", done, { once: true });
+        image.addEventListener("error", done, { once: true });
+        window.setTimeout(done, 8000);
+      });
+    }));
+  }
+
+  function globalCvBreakpoints(layout, canvas) {
+    const layoutRect = layout.getBoundingClientRect();
+    const scale = canvas.width / Math.max(1, layoutRect.width);
+    const candidates = Array.from(layout.querySelectorAll([
+      ".maritime-cv-profile-head",
+      ".maritime-cv-v4-section",
+      ".maritime-cv-v4-grid",
+      ".maritime-cv-record",
+      ".maritime-cv-service-row",
+      ".maritime-cv-v4-notes"
+    ].join(","))).map(function (element) {
+      const rect = element.getBoundingClientRect();
+      return Math.round((rect.bottom - layoutRect.top) * scale);
+    }).filter(function (value) {
+      return value > 0 && value < canvas.height;
+    });
+    return Array.from(new Set(candidates)).sort(function (first, second) { return first - second; });
+  }
+
+  function addGlobalCvPages(pdf, canvas, breakpoints) {
+    const margin = 8;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const contentWidth = pageWidth - margin * 2;
+    const contentHeight = pageHeight - margin * 2;
+    const maximumSliceHeight = Math.floor(canvas.width * contentHeight / contentWidth);
+    let start = 0;
+    let pageIndex = 0;
+
+    while (start < canvas.height) {
+      const target = Math.min(canvas.height, start + maximumSliceHeight);
+      const minimumUsefulBreak = start + Math.floor(maximumSliceHeight * 0.55);
+      const safeBreaks = breakpoints.filter(function (point) { return point > minimumUsefulBreak && point <= target; });
+      const end = target === canvas.height ? target : (safeBreaks.at(-1) || target);
+      const sliceHeight = Math.max(1, end - start);
+      const slice = document.createElement("canvas");
+      slice.width = canvas.width;
+      slice.height = sliceHeight;
+      const context = slice.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, slice.width, slice.height);
+      context.drawImage(canvas, 0, start, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+      const renderedHeight = sliceHeight * contentWidth / canvas.width;
+      if (pageIndex > 0) pdf.addPage();
+      pdf.addImage(slice.toDataURL("image/jpeg", 1), "JPEG", margin, margin, contentWidth, renderedHeight, undefined, "FAST");
+      start = end;
+      pageIndex += 1;
+    }
+  }
+
   async function printCv() {
     if (state.busy) return;
     setBusy(true);
     try {
+      const html2canvas = window.html2canvas;
+      const JsPdf = window.jspdf && window.jspdf.jsPDF;
+      if (typeof html2canvas !== "function" || typeof JsPdf !== "function" || !window.AllonaMaritimePdfNames) {
+        const error = new Error("MARITIME_PDF_LIBRARY_UNAVAILABLE");
+        error.code = "MARITIME_PDF_LIBRARY_UNAVAILABLE";
+        throw error;
+      }
+      const run = state.payload && state.payload.run;
+      const cv = run && run.smart_snapshot && run.smart_snapshot.cv_draft || {};
+      const fileName = window.AllonaMaritimePdfNames.globalCv(cv.given_names, cv.family_name, cv.holder_name);
+      openCv();
+      const layout = document.querySelector(".maritime-cv-layout");
+      if (!layout) throw new Error("GLOBAL_CV_PREVIEW_MISSING");
+      document.body.classList.add("maritime-pdf-capture");
+      await new Promise(function (resolve) { window.requestAnimationFrame(resolve); });
+      await waitForPdfAssets(layout);
+      const canvas = await html2canvas(layout, {
+        scale: 2.25,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+        logging: false,
+        windowWidth: 1180
+      });
+      const pdf = new JsPdf("p", "mm", "a4", true);
+      pdf.setProperties({
+        title: `Global CV - ${String(cv.holder_name || [cv.given_names, cv.family_name].filter(Boolean).join(" ")).trim()}`,
+        subject: "AllonaHub Global CV",
+        author: "AllonaHub"
+      });
+      addGlobalCvPages(pdf, canvas, globalCvBreakpoints(layout, canvas));
       if (!window.AllonaMaritimeCommerce || typeof window.AllonaMaritimeCommerce.authorizeOrCheckout !== "function") {
         const error = new Error("MARITIME_COMMERCE_UNAVAILABLE");
         error.code = "MARITIME_COMMERCE_UNAVAILABLE";
@@ -885,17 +981,17 @@
       }
       const authorization = await window.AllonaMaritimeCommerce.authorizeOrCheckout("global_cv_pdf");
       if (!authorization) return;
-      openCv();
-      document.body.classList.add("maritime-print-authorized");
-      const clearPrintAuthorization = function () {
-        document.body.classList.remove("maritime-print-authorized");
-      };
-      window.addEventListener("afterprint", clearPrintAuthorization, { once: true });
-      window.print();
-      window.setTimeout(clearPrintAuthorization, 60000);
+      pdf.save(fileName);
     } catch (error) {
-      setNotice(text(error?.code === "AUTH_REQUIRED" ? "pdfLoginRequired" : "pdfPaymentFailed"), "error");
+      const code = String(error?.code || "");
+      const key = code === "AUTH_REQUIRED"
+        ? "pdfLoginRequired"
+        : code.includes("PAYMENT") || error?.status === 402 || error?.status === 503
+        ? "pdfPaymentFailed"
+        : "pdfGenerationFailed";
+      setNotice(text(key), "error");
     } finally {
+      document.body.classList.remove("maritime-pdf-capture");
       setBusy(false);
     }
   }

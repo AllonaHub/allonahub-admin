@@ -4501,6 +4501,27 @@ body.maritime-documents-page[data-theme="white"] .maritime-document-record-row d
   width: min(1180px, calc(100vw - 28px));
 }
 
+body.maritime-smart-account-page.maritime-pdf-capture .maritime-cv-dialog[open] {
+  width: 1180px;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+
+body.maritime-smart-account-page.maritime-pdf-capture .maritime-cv-sheet {
+  width: 1180px;
+  padding: 0;
+  background: #ffffff;
+}
+
+body.maritime-smart-account-page.maritime-pdf-capture :where(.maritime-cv-toolbar, .maritime-cv-actions) {
+  display: none;
+}
+
+body.maritime-smart-account-page.maritime-pdf-capture .maritime-cv-layout--v4 {
+  border-radius: 0;
+}
+
 .maritime-cv-layout.maritime-cv-layout--v4 {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr) 10px;

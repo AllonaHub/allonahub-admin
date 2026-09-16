@@ -169,7 +169,9 @@ test("smart account is a dedicated no-footer workspace with explicit approval ac
   assert.match(ui, /data-prepare-all/);
   assert.match(ui, /data-open-cv/);
   assert.match(ui, /data-print-cv/);
-  assert.match(ui, /window\.print\(\)/);
+  assert.match(ui, /addGlobalCvPages/);
+  assert.match(ui, /pdf\.save\(fileName\)/);
+  assert.doesNotMatch(ui, /window\.print\(\)/);
   assert.match(ui, /state\.cvOpen/);
   assert.match(ui, /maritime-cv-avatar/);
   assert.match(ui, /cv\.certificate_records/);

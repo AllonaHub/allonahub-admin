@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import vm from "node:vm";
 
 const migrationUrl = new URL("../../../supabase/migrations/20260916030000_create_maritime_premium_and_pdf_access.sql", import.meta.url);
 const vesselFallbackMigrationUrl = new URL("../../../supabase/migrations/20260916040000_add_open_vessel_lookup_fallback.sql", import.meta.url);
@@ -18,6 +19,7 @@ const cvCssUrl = new URL("../../../css/maritime-cv-form.css", import.meta.url);
 const smartCssUrl = new URL("../../../css/allona-maritime-portal.css", import.meta.url);
 const smartRouteUrl = new URL("../../src/routes/maritime-smart-account.js", import.meta.url);
 const smartProfileUrl = new URL("../../src/lib/maritime-smart-profile.js", import.meta.url);
+const pdfNamesUrl = new URL("../../../js/maritime-pdf-names.js", import.meta.url);
 const deployUrl = new URL("../../../deploy/maritime/apply-maritime-migrations.sh", import.meta.url);
 const schemaCheckUrl = new URL("../../../deploy/maritime/check-maritime-hiring-core.sh", import.meta.url);
 
@@ -77,13 +79,31 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
   assert.match(cvPage, /PDF İndir · 7 USD/);
   assert.match(cvForm, /Download PDF · \$7/);
   assert.match(cvControls, /authorizeOrCheckout\("maritime_cv_pdf"\)/);
+  assert.match(cvControls, /scale: 2\.5/);
+  assert.match(cvControls, /AllonaMaritimePdfNames\.maritimeCv/);
   assert.match(smartUi, /Download Global CV PDF · \$15/);
   assert.match(smartUi, /authorizeOrCheckout\("global_cv_pdf"\)/);
-  assert.match(smartUi, /classList\.add\("maritime-print-authorized"\)/);
+  assert.match(smartUi, /AllonaMaritimePdfNames\.globalCv/);
+  assert.match(smartUi, /addGlobalCvPages/);
+  assert.match(smartUi, /pdf\.save\(fileName\)/);
+  assert.doesNotMatch(smartUi, /window\.print\(\)/);
+  assert.match(smartPage, /html2canvas-1\.4\.1\.min\.js/);
+  assert.match(smartPage, /jspdf-2\.5\.1\.umd\.min\.js/);
+  assert.match(smartPage, /maritime-pdf-names\.js/);
   assert.match(cvCss, /not\(\.maritime-print-authorized\)/);
   assert.match(smartCss, /not\(\.maritime-print-authorized\)/);
+  assert.match(smartCss, /maritime-pdf-capture/);
   assert.match(commerceUi, /UNTRUSTED_PAYMENT_URL/);
   assert.doesNotMatch(`${cvPage}\n${smartPage}`, /data-premium|premium-button|Premium'a Geç/i);
+});
+
+test("paid Maritime PDF filenames preserve the CV owner's name in the approved order", async () => {
+  const source = await readFile(pdfNamesUrl, "utf8");
+  const window = {};
+  vm.runInNewContext(source, { window });
+  assert.equal(window.AllonaMaritimePdfNames.maritimeCv("Nıjat", "Mahmudov"), "AllonaHub_Nıjat_Mahmudov_CV.pdf");
+  assert.equal(window.AllonaMaritimePdfNames.globalCv("Nıjat", "Mahmudov", ""), "Global_CV_Nıjat_Mahmudov_AllonaHub.pdf");
+  assert.equal(window.AllonaMaritimePdfNames.globalCv("", "", "Əli Məmməd oğlu"), "Global_CV_Əli_Məmməd_oğlu_AllonaHub.pdf");
 });
 
 test("IMO lookup uses a server-only official adapter with an open fallback and sea references are required end to end", async () => {
