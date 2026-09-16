@@ -113,6 +113,44 @@ function assertResult(result, message) {
   return result?.data;
 }
 
+async function upsertEmploymentReferenceClaim({ supabase, record, userId, notification }) {
+  const exp = notification.payload.experience;
+  const imo = clean(exp.imo, 20).replace(/\D/g, "");
+  const superseded = await supabase.from("maritime_employment_reference_claims").update({
+    status: "withdrawn",
+    metadata: {
+      source: "maritime_cv_reference",
+      limited_partner_disclosure: true,
+      superseded_by_fingerprint: notification.fingerprint
+    }
+  })
+    .eq("seafarer_user_id", userId)
+    .eq("experience_id", exp.row_id)
+    .neq("fingerprint", notification.fingerprint)
+    .neq("status", "withdrawn");
+  assertResult(superseded, "Superseded employment reference claims could not be closed");
+  const claim = await supabase.from("maritime_employment_reference_claims").upsert({
+    reference_request_id: record.id,
+    seafarer_user_id: userId,
+    experience_id: exp.row_id,
+    fingerprint: notification.fingerprint,
+    imo_number: imo,
+    candidate_public_id: notification.payload.public_id,
+    candidate_name: notification.payload.candidate_name,
+    vessel_name: exp.vessel,
+    source_company_name: exp.company || null,
+    rank_name: exp.rank || null,
+    service_start: exp.sign_on || null,
+    service_end: exp.sign_off || null,
+    service_document_id: exp.service_document_id || null,
+    metadata: {
+      source: "maritime_cv_reference",
+      limited_partner_disclosure: true
+    }
+  }, { onConflict: "seafarer_user_id,experience_id,fingerprint" }).select("id,status").single();
+  return assertResult(claim, "Employment reference claim could not be stored");
+}
+
 async function sendWithResend(record, notification) {
   const settings = config.maritimeReferenceNotifications;
   if (!settings.enabled) return { status: "queued", error: "NOTIFICATIONS_DISABLED" };
@@ -159,9 +197,6 @@ export async function queueMaritimeReferenceNotification({ supabase, userId, pub
     .eq("fingerprint", notification.fingerprint)
     .maybeSingle();
   const existing = assertResult(match, "Reference notification lookup failed");
-  if (existing?.status === "sent") {
-    return { request_id: existing.id, status: "sent", idempotent: true };
-  }
 
   let record = existing;
   if (!record) {
@@ -189,7 +224,11 @@ export async function queueMaritimeReferenceNotification({ supabase, userId, pub
     } else {
       record = assertResult(inserted, "Reference notification could not be queued");
     }
-    if (record?.status === "sent") return { request_id: record.id, status: "sent", idempotent: true };
+  }
+
+  const claim = await upsertEmploymentReferenceClaim({ supabase, record, userId, notification });
+  if (record?.status === "sent") {
+    return { request_id: record.id, claim_id: claim.id, status: "sent", idempotent: true };
   }
 
   const attempts = Number(record.attempts || 0) + 1;
@@ -210,6 +249,7 @@ export async function queueMaritimeReferenceNotification({ supabase, userId, pub
   assertResult(await supabase.from("maritime_reference_verification_requests").update(update).eq("id", record.id), "Reference notification result could not be saved");
   return {
     request_id: record.id,
+    claim_id: claim.id,
     status: delivery.status,
     idempotent: false,
     configured: Boolean(config.maritimeReferenceNotifications.resendApiKey)

@@ -29,6 +29,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260916040000_add_open_vessel_lookup_fallback.sql"
   "$ROOT_DIR/supabase/migrations/20260916050000_add_current_public_vessel_provider.sql"
   "$ROOT_DIR/supabase/migrations/20260916060000_add_maritime_reference_notifications_and_storage_policy.sql"
+  "$ROOT_DIR/supabase/migrations/20260916070000_create_maritime_partner_reference_center.sql"
 )
 
 if [ -z "$DB_URL" ]; then

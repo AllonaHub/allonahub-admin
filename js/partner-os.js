@@ -19,6 +19,8 @@
     maritimeListingsError: "",
     maritimeFreightMatches: [],
     maritimeFreightMatchesError: "",
+    maritimeReferenceCenter: { access: { approved: false, reason: "loading" }, businesses: [], vessels: [], claims: [] },
+    maritimeReferenceCenterError: "",
     metrics: {},
     recommendations: []
   };
@@ -103,8 +105,8 @@
 
   function statusClass(status) {
     if (["active", "accepted", "paid", "settled", "delivered", "verified"].includes(status)) return "partner-os-status--good";
-    if (["pending", "pending_review", "in_review", "invited", "matching", "quoted", "submitted", "created", "awaiting_payment", "provider_pending", "review", "preparing"].includes(status)) return "partner-os-status--warn";
-    if (["failed", "cancelled", "declined", "closed", "expired", "rejected", "withdrawn", "suspended", "blocked"].includes(status)) return "partner-os-status--bad";
+    if (["pending", "pending_review", "in_review", "needs_review", "changes_requested", "unverified", "invited", "matching", "quoted", "submitted", "created", "awaiting_payment", "provider_pending", "review", "preparing"].includes(status)) return "partner-os-status--warn";
+    if (["failed", "cancelled", "declined", "denied", "closed", "expired", "rejected", "withdrawn", "suspended", "blocked"].includes(status)) return "partner-os-status--bad";
     return "";
   }
 
@@ -154,7 +156,11 @@
       loading: "Doğrulanıyor",
       missing: "Başvuru bulunamadı",
       unavailable: "Doğrulama alınamadı",
-      approved_no_listing_scope: "İlan yetkisi tanımlı değil"
+      approved_no_listing_scope: "İlan yetkisi tanımlı değil",
+      denied: "Çalışmadı",
+      needs_review: "İnceleme gerekli",
+      changes_requested: "Düzeltme gerekli",
+      unverified: "Doğrulanmadı"
     };
     return labels[status] || status || "-";
   }
@@ -395,6 +401,87 @@
     `).join("");
   }
 
+  function shortDate(value) {
+    if (!value) return "-";
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (Number.isNaN(parsed.getTime())) return "-";
+    return parsed.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
+  }
+
+  function maritimeReferenceAccessLabel(access) {
+    const reason = access?.reason || "unavailable";
+    if (reason === "ready") return "Onaylı IMO numaralarınızla eşleşen eski çalışan kayıtları hazır.";
+    if (reason === "no_matches") return "Onaylı IMO numaralarınız hazır. Henüz eşleşen eski çalışan kaydı bulunmuyor.";
+    if (reason === "verified_vessel_required") return "Şirketiniz doğrulandı. Eski çalışan eşleşmesi için en az bir IMO numarasını onaya gönderin.";
+    if (reason === "partner_verification_required") return "Bu merkez, şirket doğrulaması tamamlandıktan sonra açılır.";
+    return "Referans merkezi şu anda yüklenemedi.";
+  }
+
+  function renderMaritimeReferenceCenter() {
+    const center = state.maritimeReferenceCenter || {};
+    const businesses = Array.isArray(center.businesses) ? center.businesses : [];
+    const vessels = Array.isArray(center.vessels) ? center.vessels : [];
+    const claims = Array.isArray(center.claims) ? center.claims : [];
+    const nav = $("[data-maritime-reference-nav]");
+    const count = $("[data-maritime-reference-count]");
+    const accessNode = $("[data-maritime-reference-access]");
+    const vesselForm = $("[data-maritime-vessel-form]");
+    const partnerSelect = $("[data-maritime-vessel-partner]");
+    const vesselRows = $("[data-maritime-vessel-rows]");
+    const claimRows = $("[data-maritime-reference-rows]");
+    const maritimePartner = businesses.length > 0 || state.business?.partner_type === "maritime";
+
+    if (nav) nav.hidden = !maritimePartner;
+    if (count) {
+      const pendingCount = claims.filter((claim) => !claim.review).length;
+      count.textContent = pendingCount > 99 ? "99+" : String(pendingCount);
+      count.hidden = pendingCount === 0;
+      count.setAttribute("aria-label", `${pendingCount} bekleyen eski çalışan doğrulaması`);
+    }
+    if (accessNode) {
+      accessNode.dataset.approved = center.access?.approved ? "true" : "false";
+      accessNode.textContent = state.maritimeReferenceCenterError || maritimeReferenceAccessLabel(center.access);
+    }
+    if (vesselForm) vesselForm.hidden = !center.access?.approved;
+    if (partnerSelect) {
+      const selected = partnerSelect.value;
+      partnerSelect.innerHTML = businesses.map((business) => (
+        `<option value="${escape(business.id)}">${escape(business.display_name || business.legal_name || business.partner_code)}</option>`
+      )).join("");
+      if (businesses.some((business) => business.id === selected)) partnerSelect.value = selected;
+    }
+    if (vesselRows) {
+      const businessById = new Map(businesses.map((business) => [business.id, business]));
+      vesselRows.innerHTML = vessels.length ? vessels.map((vessel) => {
+        const business = businessById.get(vessel.partner_id) || {};
+        const status = vessel.verification_status || vessel.status || "pending_review";
+        return `<tr>
+          <td><strong>${escape(vessel.vessel_name || "Gemi kaydı")}</strong><br><small>${escape([vessel.vessel_type, vessel.flag_state].filter(Boolean).join(" / ") || "-")}</small></td>
+          <td>${escape(vessel.imo_number || "-")}</td>
+          <td>${escape(business.display_name || business.legal_name || business.partner_code || "-")}</td>
+          <td>${statusPill(status)}</td>
+          <td>${formatDate(vessel.updated_at)}</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="5">Henüz IMO doğrulama talebi bulunmuyor.</td></tr>`;
+    }
+    if (claimRows) {
+      claimRows.innerHTML = claims.length ? claims.map((claim) => {
+        const decision = claim.review?.decision || "pending";
+        return `<tr>
+          <td><strong>${escape(claim.candidate_name)}</strong><br><small>${escape(claim.candidate_public_id)}</small></td>
+          <td><strong>${escape(claim.vessel_name)}</strong><br><small>IMO ${escape(claim.imo_number)}</small></td>
+          <td>${escape(claim.rank_name || "-")}<br><small>${shortDate(claim.service_start)} - ${shortDate(claim.service_end)}</small></td>
+          <td>${statusPill(decision)}${claim.review?.review_note ? `<br><small>${escape(claim.review.review_note)}</small>` : ""}</td>
+          <td><div class="partner-os-maritime-row-actions">
+            <button type="button" data-reference-decision="confirmed" data-reference-claim="${escape(claim.id)}" data-reference-partner="${escape(claim.partner_id)}" aria-pressed="${decision === "confirmed"}"><i class="fa-solid fa-check"></i><span>Çalıştı</span></button>
+            <button type="button" data-reference-decision="denied" data-reference-claim="${escape(claim.id)}" data-reference-partner="${escape(claim.partner_id)}" aria-pressed="${decision === "denied"}"><i class="fa-solid fa-xmark"></i><span>Çalışmadı</span></button>
+            <button type="button" data-reference-decision="needs_review" data-reference-claim="${escape(claim.id)}" data-reference-partner="${escape(claim.partner_id)}" aria-pressed="${decision === "needs_review"}"><i class="fa-solid fa-magnifying-glass"></i><span>İncele</span></button>
+          </div></td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="5">Onaylı IMO numaralarınızla eşleşen eski çalışan kaydı bulunmuyor.</td></tr>`;
+    }
+  }
+
   function freightMoney(value, currency) {
     const amount = Number(value);
     const code = String(currency || "");
@@ -629,7 +716,7 @@
         return;
       }
       renderAll();
-      await Promise.all([loadMaritimeListings(), loadMaritimeFreightMatches()]);
+      await Promise.all([loadMaritimeListings(), loadMaritimeFreightMatches(), loadMaritimeReferenceCenter()]);
     } catch (error) {
       showAlert(error.message || "Bu alana erişim yetkiniz yok.", "error");
     }
@@ -647,6 +734,23 @@
       state.maritimeListingsError = error.message || "Denizcilik ilanları yüklenemedi.";
     }
     renderMaritimeListings();
+  }
+
+  async function loadMaritimeReferenceCenter() {
+    state.maritimeReferenceCenterError = "";
+    try {
+      const payload = await apiFetch("/v1/maritime/partner/reference-center");
+      state.maritimeReferenceCenter = {
+        access: payload.access || { approved: false, reason: "unavailable" },
+        businesses: Array.isArray(payload.businesses) ? payload.businesses : [],
+        vessels: Array.isArray(payload.vessels) ? payload.vessels : [],
+        claims: Array.isArray(payload.claims) ? payload.claims : []
+      };
+    } catch (error) {
+      state.maritimeReferenceCenter = { access: { approved: false, reason: "unavailable" }, businesses: [], vessels: [], claims: [] };
+      state.maritimeReferenceCenterError = error.message || "Referans merkezi yüklenemedi.";
+    }
+    renderMaritimeReferenceCenter();
   }
 
   async function loadMaritimeFreightMatches() {
@@ -1080,6 +1184,70 @@
     }
   }
 
+  async function submitMaritimeVessel(form) {
+    const data = Object.fromEntries(new FormData(form).entries());
+    data.imo = String(data.imo || "").replace(/\D/g, "");
+    if (!/^\d{7}$/.test(data.imo)) {
+      toast("Yedi haneli geçerli bir IMO numarası girin.", "error");
+      return;
+    }
+    const button = form.querySelector("button[type='submit']");
+    if (button) button.disabled = true;
+    try {
+      const payload = await apiFetch("/v1/maritime/partner/vessels", {
+        method: "POST",
+        body: JSON.stringify({ partner_id: data.partner_id, imo: data.imo, confirmation: true })
+      });
+      const vessel = payload.vessel;
+      if (vessel) {
+        const vessels = state.maritimeReferenceCenter.vessels || [];
+        state.maritimeReferenceCenter.vessels = [vessel, ...vessels.filter((item) => item.id !== vessel.id)];
+      }
+      form.elements.imo.value = "";
+      renderMaritimeReferenceCenter();
+      toast(payload.duplicate ? "Bu IMO daha önce doğrulama sürecine alınmış." : "IMO doğrulama talebi incelemeye gönderildi.");
+    } catch (error) {
+      toast(error.message || "IMO doğrulama talebi oluşturulamadı.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function reviewMaritimeReference(button) {
+    const claimId = String(button.dataset.referenceClaim || "");
+    const partnerId = String(button.dataset.referencePartner || "");
+    const decision = String(button.dataset.referenceDecision || "");
+    const notes = {
+      confirmed: "Şirket, belirtilen çalışma kaydını doğruladı.",
+      denied: "Şirket, belirtilen çalışma kaydını doğrulamadı.",
+      needs_review: "Şirket, çalışma kaydı için ayrıntılı inceleme istedi."
+    };
+    if (!claimId || !partnerId || !notes[decision]) return;
+    const rowButtons = Array.from(button.closest("tr")?.querySelectorAll("[data-reference-decision]") || []);
+    rowButtons.forEach((item) => { item.disabled = true; });
+    try {
+      const payload = await apiFetch(`/v1/maritime/partner/reference-claims/${encodeURIComponent(claimId)}/review`, {
+        method: "POST",
+        body: JSON.stringify({
+          partner_id: partnerId,
+          decision,
+          review_note: notes[decision],
+          confirmation: true
+        })
+      });
+      state.maritimeReferenceCenter.claims = (state.maritimeReferenceCenter.claims || []).map((claim) => (
+        claim.id === claimId && claim.partner_id === partnerId
+          ? { ...claim, review: payload.review || { decision, review_note: notes[decision], reviewed_at: new Date().toISOString() } }
+          : claim
+      ));
+      renderMaritimeReferenceCenter();
+      toast("Çalışma referansı değerlendirildi ve denetim kaydına işlendi.");
+    } catch (error) {
+      rowButtons.forEach((item) => { item.disabled = false; });
+      toast(error.message || "Referans kararı kaydedilemedi.", "error");
+    }
+  }
+
   async function saveProfile(form) {
     const data = Object.fromEntries(new FormData(form).entries());
     try {
@@ -1203,6 +1371,7 @@
       const maritimeMatchDecline = event.target.closest("[data-maritime-match-decline]");
       const maritimeOfferWithdraw = event.target.closest("[data-maritime-offer-withdraw]");
       const maritimeOfferCancel = event.target.closest("[data-maritime-offer-cancel]");
+      const maritimeReferenceDecision = event.target.closest("[data-reference-decision]");
 
       if (nav) activatePanel(nav.dataset.panelTarget);
       if (jump) activatePanel(jump.dataset.panelJump);
@@ -1213,6 +1382,7 @@
       if (maritimeMatchDecline) declineMaritimeFreightMatch(maritimeMatchDecline);
       if (maritimeOfferWithdraw) withdrawMaritimeFreightOffer(maritimeOfferWithdraw);
       if (maritimeOfferCancel) closeMaritimeFreightOfferForm();
+      if (maritimeReferenceDecision) reviewMaritimeReference(maritimeReferenceDecision);
     });
 
     const paymentForm = $("[data-payment-form]");
@@ -1246,6 +1416,14 @@
       maritimeOfferForm.addEventListener("submit", (event) => {
         event.preventDefault();
         createMaritimeFreightOffer(maritimeOfferForm);
+      });
+    }
+
+    const maritimeVesselForm = $("[data-maritime-vessel-form]");
+    if (maritimeVesselForm) {
+      maritimeVesselForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submitMaritimeVessel(maritimeVesselForm);
       });
     }
 

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../../css/styles.v2.css?v=20260620-wide1">
   <link rel="stylesheet" href="../../css/platform.css?v=20260911-maritime-cache1">
-  <link rel="stylesheet" href="../../css/partner-os.css?v=20260911-maritime-cache1">
+  <link rel="stylesheet" href="../../css/partner-os.css?v=20260916-reference-center1">
 </head>
 <body>
   <div class="site-shell partner-os-shell" data-page="partner-os">
@@ -33,6 +33,7 @@
           <button type="button" data-panel-target="payments"><i class="fa-solid fa-tower-broadcast"></i><span>QR & NFC POS</span></button>
           <button type="button" data-panel-target="products"><i class="fa-solid fa-boxes-stacked"></i><span>Ürünler</span></button>
           <button type="button" data-panel-target="maritime"><i class="fa-solid fa-ship"></i><span>Denizcilik</span><span class="partner-os-menu-count" data-maritime-match-count hidden>0</span></button>
+          <button type="button" data-panel-target="maritime-references" data-maritime-reference-nav hidden><i class="fa-solid fa-user-check"></i><span>Eski Çalışanlar</span><span class="partner-os-menu-count" data-maritime-reference-count hidden>0</span></button>
           <button type="button" data-panel-target="orders"><i class="fa-solid fa-truck-fast"></i><span>Sipariş & Kargo</span></button>
           <button type="button" data-panel-target="finance"><i class="fa-solid fa-wallet"></i><span>Finans</span></button>
           <button type="button" data-panel-target="growth"><i class="fa-solid fa-bullhorn"></i><span>Kampanya</span></button>
@@ -314,6 +315,56 @@
           </div>
         </section>
 
+        <section class="partner-os-section" id="maritime-references" data-panel-section>
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>IMO Yetkilendirmesi</p>
+                <h2>Gemi ve Referans Merkezi</h2>
+              </div>
+              <button type="button" data-panel-jump="maritime"><i class="fa-solid fa-arrow-left"></i><span>Denizciliğe Dön</span></button>
+            </div>
+            <p class="partner-os-maritime-status" data-maritime-reference-access>Denizcilik şirketi ve IMO yetkisi doğrulanıyor.</p>
+            <form class="partner-os-product-form partner-os-maritime-vessel-form" data-maritime-vessel-form hidden>
+              <label>
+                <span>Denizcilik şirketi</span>
+                <select name="partner_id" required data-maritime-vessel-partner></select>
+              </label>
+              <label>
+                <span>IMO numarası</span>
+                <input name="imo" inputmode="numeric" pattern="[0-9]{7}" minlength="7" maxlength="7" placeholder="9389370" required>
+              </label>
+              <button type="submit"><i class="fa-solid fa-shield-halved"></i><span>IMO Doğrulamasına Gönder</span></button>
+            </form>
+            <div class="partner-os-table-wrap">
+              <table class="partner-os-table">
+                <thead>
+                  <tr><th>Gemi</th><th>IMO</th><th>Şirket</th><th>Durum</th><th>Son işlem</th></tr>
+                </thead>
+                <tbody data-maritime-vessel-rows></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="partner-os-panel">
+            <div class="partner-os-panel-head">
+              <div>
+                <p>Referans Doğrulaması</p>
+                <h2>Eski Çalışanlar</h2>
+              </div>
+            </div>
+            <p class="partner-os-maritime-status">Yalnız şirketinize onaylanmış IMO numaralarıyla eşleşen sınırlı çalışma özetleri gösterilir. Adayın iletişim, pasaport ve adres bilgileri paylaşılmaz.</p>
+            <div class="partner-os-table-wrap partner-os-maritime-reference-wrap">
+              <table class="partner-os-table partner-os-maritime-reference-table">
+                <thead>
+                  <tr><th>Denizci</th><th>Gemi / IMO</th><th>Görev / Tarih</th><th>Durum</th><th>Değerlendirme</th></tr>
+                </thead>
+                <tbody data-maritime-reference-rows></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section class="partner-os-section" id="orders" data-panel-section>
           <div class="partner-os-panel">
             <div class="partner-os-panel-head">
@@ -509,7 +560,7 @@
   <script src="../../js/auth.js?v=20260914-account-boundary2" defer></script>
   <script src="../../js/cart.js?v=20260621-tx1" defer></script>
   <script src="../../js/layout.v3.js?v=20260914-account-boundary2" defer></script>
-  <script src="../../js/partner-os.js?v=20260914-account-boundary2" defer></script>
+  <script src="../../js/partner-os.js?v=20260916-reference-center1" defer></script>
   <script src="../../js/platform.js?v=20260914-account-boundary2" defer></script>
 </body>
 </html>

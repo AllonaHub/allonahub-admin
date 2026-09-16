@@ -708,6 +708,40 @@
   opacity: 0.62;
 }
 
+.partner-os-maritime-vessel-form {
+  margin: 16px 0;
+}
+
+.partner-os-maritime-reference-table {
+  min-width: 920px;
+}
+
+.partner-os-maritime-reference-table .partner-os-maritime-row-actions {
+  min-width: 310px;
+}
+
+.partner-os-maritime-reference-table button[data-reference-decision="confirmed"] {
+  border-color: rgba(48, 221, 143, 0.52);
+  color: #59f1a5;
+  background: rgba(0, 151, 83, 0.15);
+}
+
+.partner-os-maritime-reference-table button[data-reference-decision="denied"] {
+  border-color: rgba(255, 105, 120, 0.52);
+  color: #ff9aa7;
+  background: rgba(145, 25, 43, 0.16);
+}
+
+.partner-os-maritime-reference-table button[data-reference-decision="needs_review"] {
+  border-color: color-mix(in srgb, var(--ah-accent) 52%, var(--ah-line));
+  color: var(--ah-accent);
+  background: color-mix(in srgb, var(--ah-accent) 11%, var(--ah-bg-mid));
+}
+
+.partner-os-maritime-reference-table button[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 35%, transparent);
+}
+
 .partner-os-payment-preview {
   min-height: 360px;
   border: 1px solid color-mix(in srgb, var(--ah-line) 70%, transparent);
