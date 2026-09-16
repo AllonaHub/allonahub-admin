@@ -262,13 +262,18 @@ export function registerMaritimeCommerceRoutes(app) {
       vessel = await lookupVesselByImo(imo);
       const fetchedAt = vessel.fetched_at || new Date().toISOString();
       const expiresAt = new Date(Date.parse(fetchedAt) + config.maritimeVesselLookup.cacheHours * 3600000).toISOString();
-      assertDb(await supabaseAdmin.from("maritime_vessel_lookup_cache").upsert({
+      const cacheWrite = await supabaseAdmin.from("maritime_vessel_lookup_cache").upsert({
         imo_number: imo,
         provider: vessel.provider,
         vessel_payload: vessel,
         fetched_at: fetchedAt,
         expires_at: expiresAt
-      }, { onConflict: "imo_number" }), "IMO önbelleği güncellenemedi.");
+      }, { onConflict: "imo_number" });
+      const providerConstraintPending = vessel.provider === "vesselfinder_public"
+        && cacheWrite.error?.code === "23514";
+      if (!providerConstraintPending) {
+        assertDb(cacheWrite, "IMO önbelleği güncellenemedi.");
+      }
       cacheHit = false;
     }
     await auditEvent({

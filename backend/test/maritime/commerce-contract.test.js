@@ -115,6 +115,7 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
   assert.match(route, /app\.get\("\/v1\/maritime\/vessels\/:imo"/);
   assert.match(route, /maritime_vessel_lookup_cache/);
   assert.match(route, /cached\?\.provider !== "wikidata"/);
+  assert.match(route, /cacheWrite\.error\?\.code === "23514"/);
   assert.doesNotMatch(route, /requireCustomer\(request, "maritime\.vessel_lookup"\)/);
   assert.match(route, /actorId: ctx\?\.user\?\.id \|\| null/);
   assert.match(route, /rateLimit: \{ max: 10, timeWindow: "1 minute" \}/);
