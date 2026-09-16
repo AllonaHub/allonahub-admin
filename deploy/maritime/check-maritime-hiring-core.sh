@@ -239,6 +239,7 @@ begin
     where conrelid = 'public.maritime_vessel_lookup_cache'::regclass
       and conname = 'maritime_vessel_lookup_cache_provider_check'
       and pg_get_constraintdef(oid) ilike '%marinetraffic%'
+      and pg_get_constraintdef(oid) ilike '%vesselfinder_public%'
       and pg_get_constraintdef(oid) ilike '%wikidata%'
   ) then
     raise exception 'Maritime vessel lookup cache provider constraint is incomplete';

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const migrationUrl = new URL("../../../supabase/migrations/20260916030000_create_maritime_premium_and_pdf_access.sql", import.meta.url);
 const vesselFallbackMigrationUrl = new URL("../../../supabase/migrations/20260916040000_add_open_vessel_lookup_fallback.sql", import.meta.url);
+const currentVesselMigrationUrl = new URL("../../../supabase/migrations/20260916050000_add_current_public_vessel_provider.sql", import.meta.url);
 const routeUrl = new URL("../../src/routes/maritime-commerce.js", import.meta.url);
 const mainRoutesUrl = new URL("../../src/routes/index.js", import.meta.url);
 const providerUrl = new URL("../../src/lib/maritime-vessel-provider.js", import.meta.url);
@@ -86,13 +87,14 @@ test("only paid PDF controls are visible and no Premium surface is rendered", as
 });
 
 test("IMO lookup uses a server-only official adapter with an open fallback and sea references are required end to end", async () => {
-  const [provider, route, cvForm, smartRoute, smartProfile, fallbackMigration, deploy, schemaCheck] = await Promise.all([
+  const [provider, route, cvForm, smartRoute, smartProfile, fallbackMigration, currentVesselMigration, deploy, schemaCheck] = await Promise.all([
     readFile(providerUrl, "utf8"),
     readFile(routeUrl, "utf8"),
     readFile(cvFormUrl, "utf8"),
     readFile(smartRouteUrl, "utf8"),
     readFile(smartProfileUrl, "utf8"),
     readFile(vesselFallbackMigrationUrl, "utf8"),
+    readFile(currentVesselMigrationUrl, "utf8"),
     readFile(deployUrl, "utf8"),
     readFile(schemaCheckUrl, "utf8")
   ]);
@@ -102,13 +104,17 @@ test("IMO lookup uses a server-only official adapter with an open fallback and s
   assert.match(provider, /wdt:P1093/);
   assert.match(provider, /wdt:P4519/);
   assert.match(fallbackMigration, /provider in \('marinetraffic', 'wikidata'\)/);
+  assert.match(currentVesselMigration, /'vesselfinder_public'/);
+  assert.match(currentVesselMigration, /delete from public\.maritime_vessel_lookup_cache/);
   assert.match(deploy, /20260916040000_add_open_vessel_lookup_fallback\.sql/);
+  assert.match(deploy, /20260916050000_add_current_public_vessel_provider\.sql/);
   assert.match(schemaCheck, /Maritime vessel lookup cache provider constraint is incomplete/);
   assert.match(provider, /endpoint\.searchParams\.set\("imo", imo\)/);
   assert.match(provider, /SUMMER_DWT/);
   assert.doesNotMatch(provider, /localStorage|sessionStorage|document\./);
   assert.match(route, /app\.get\("\/v1\/maritime\/vessels\/:imo"/);
   assert.match(route, /maritime_vessel_lookup_cache/);
+  assert.match(route, /cached\?\.provider !== "wikidata"/);
   assert.doesNotMatch(route, /requireCustomer\(request, "maritime\.vessel_lookup"\)/);
   assert.match(route, /actorId: ctx\?\.user\?\.id \|\| null/);
   assert.match(route, /rateLimit: \{ max: 10, timeWindow: "1 minute" \}/);
@@ -196,4 +202,45 @@ test("IMO check digit and MarineTraffic normalization reject bad identifiers", a
     ship: { value: "http://www.wikidata.org/entity/Q105765847" },
     imo: { value: "9360283" }
   }], "9360283").grt, null);
+
+  const currentPublicVessel = provider.normalizeVesselFinderHtml(`
+    <title>NUR K, General Cargo Ship - IMO 9389370</title>
+    <table>
+      <tr><td>IMO number</td><td>9389370</td></tr>
+      <tr><td>Vessel Name</td><td>NUR K</td></tr>
+      <tr><td>Ship Type</td><td>General Cargo Ship</td></tr>
+      <tr><td>Flag</td><td>Comoros</td></tr>
+      <tr><td>Year of Build</td><td>2006</td></tr>
+      <tr><td>Length Overall <small>(m)</small></td><td>81.00</td></tr>
+      <tr><td>Beam <small>(m)</small></td><td>13.60</td></tr>
+      <tr><td>Gross Tonnage</td><td>1972</td></tr>
+      <tr><td>Deadweight <small>(t)</small></td><td>3349</td></tr>
+      <tr><td>IMO / MMSI</td><td>9389370 / 620800377</td></tr>
+      <tr><td>Callsign</td><td>D6A4377</td></tr>
+    </table>
+  `, "9389370");
+  assert.deepEqual({
+    name: currentPublicVessel.vessel_name,
+    type: currentPublicVessel.vessel_type,
+    flag: currentPublicVessel.flag,
+    dwt: currentPublicVessel.dwt,
+    grt: currentPublicVessel.grt,
+    mmsi: currentPublicVessel.mmsi,
+    callSign: currentPublicVessel.call_sign,
+    build: currentPublicVessel.build_year,
+    provider: currentPublicVessel.provider
+  }, {
+    name: "NUR K",
+    type: "General Cargo Ship",
+    flag: "Comoros",
+    dwt: 3349,
+    grt: 1972,
+    mmsi: "620800377",
+    callSign: "D6A4377",
+    build: 2006,
+    provider: "vesselfinder_public"
+  });
+  assert.equal(provider.normalizeVesselFinderHtml(`
+    <table><tr><td>IMO number</td><td>9389371</td></tr><tr><td>Vessel Name</td><td>WRONG</td></tr></table>
+  `, "9389370"), null);
 });

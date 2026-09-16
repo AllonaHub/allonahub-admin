@@ -31,6 +31,33 @@ function year(value) {
   return match ? Number(match[1]) : null;
 }
 
+function decodeHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function publicTableRows(html) {
+  const rows = new Map();
+  for (const rowMatch of String(html || "").matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const cells = [...rowMatch[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)]
+      .map((match) => decodeHtml(match[1]));
+    if (cells.length < 2 || !cells[0] || !cells[1]) continue;
+    const label = cells[0].toLowerCase().replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+    if (!rows.has(label)) rows.set(label, cells[1]);
+  }
+  return rows;
+}
+
 export function normalizeImoNumber(value) {
   return String(value ?? "").toUpperCase().replace(/^IMO\s*/i, "").replace(/\D/g, "").slice(0, 7);
 }
@@ -66,6 +93,40 @@ export function normalizeMarineTrafficVessel(value) {
     provider: "marinetraffic",
     provider_record_kind: "vessel_particulars_legacy",
     provider_license: "commercial_api"
+  };
+}
+
+export function normalizeVesselFinderHtml(value, expectedImo = "") {
+  const html = String(value || "");
+  const rows = publicTableRows(html);
+  const combinedImoMmsi = rows.get("imo / mmsi") || "";
+  const [combinedImo, combinedMmsi] = combinedImoMmsi.split("/").map((entry) => entry.trim());
+  const imo = normalizeImoNumber(rows.get("imo number") || combinedImo);
+  const wantedImo = normalizeImoNumber(expectedImo || imo);
+  if (!isValidImoNumber(imo) || imo !== wantedImo) return null;
+
+  const titleName = decodeHtml(html.match(/<title[^>]*>([^,<]+?)(?:,|\s+-\s+)/i)?.[1]);
+  return {
+    imo,
+    vessel_name: text(rows.get("vessel name") || titleName),
+    company_name: null,
+    owner_name: null,
+    technical_manager: null,
+    commercial_manager: null,
+    vessel_type: text(rows.get("ship type")),
+    flag: text(rows.get("flag") || rows.get("ais flag")),
+    dwt: number(rows.get("deadweight")),
+    grt: number(rows.get("gross tonnage")),
+    net_tonnage: number(rows.get("net tonnage")),
+    mmsi: text(combinedMmsi),
+    call_sign: text(rows.get("callsign")),
+    build_year: number(rows.get("year of build")),
+    length_overall_m: number(rows.get("length overall")),
+    breadth_m: number(rows.get("beam")),
+    provider: "vesselfinder_public",
+    provider_record_kind: "public_vessel_particulars",
+    provider_license: null,
+    provider_source_url: `https://www.vesselfinder.com/vessels/details/${imo}`
   };
 }
 
@@ -123,8 +184,13 @@ function wikidataConfigured() {
     && Boolean(config.maritimeVesselLookup.wikidataBaseUrl);
 }
 
+function publicVesselPageConfigured() {
+  return config.maritimeVesselLookup.publicFallbackEnabled === true
+    && Boolean(config.maritimeVesselLookup.vesselFinderPublicBaseUrl);
+}
+
 export function maritimeVesselLookupConfigured() {
-  return marineTrafficConfigured() || wikidataConfigured();
+  return marineTrafficConfigured() || publicVesselPageConfigured() || wikidataConfigured();
 }
 
 function providerError(message, statusCode, code) {
@@ -236,6 +302,42 @@ async function lookupWikidataByImo(imo, options = {}) {
   }
 }
 
+async function lookupVesselFinderPublicByImo(imo, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), config.maritimeVesselLookup.timeoutMs);
+  const fetchImpl = options.fetchImpl || fetch;
+  const baseUrl = options.vesselFinderPublicBaseUrl || config.maritimeVesselLookup.vesselFinderPublicBaseUrl;
+  const endpoint = new URL(`${baseUrl.replace(/\/$/, "")}/${encodeURIComponent(imo)}`);
+
+  try {
+    const response = await fetchImpl(endpoint, {
+      method: "GET",
+      headers: {
+        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": "AllonaHub/1.0 (+https://allonahub.com; maritime vessel lookup)"
+      },
+      signal: controller.signal
+    });
+    if (response.status === 429) {
+      throw providerError("Güncel açık gemi kaynağı istek sınırına ulaştı. Bir süre sonra yeniden deneyin.", 429, "MARITIME_VESSEL_LOOKUP_RATE_LIMITED");
+    }
+    if (!response.ok) {
+      throw providerError("Güncel açık gemi kaynağından bilgi alınamadı.", 502, "MARITIME_VESSEL_LOOKUP_FAILED");
+    }
+    const html = await response.text();
+    if (html.length > 2_000_000) {
+      throw providerError("Güncel açık gemi kaynağının yanıtı işlenemedi.", 502, "MARITIME_VESSEL_LOOKUP_FAILED");
+    }
+    const vessel = normalizeVesselFinderHtml(html, imo);
+    if (!vessel?.vessel_name) {
+      throw providerError("Bu IMO numarası için güncel açık gemi kaydı doğrulanamadı. Alanları elle tamamlayabilirsiniz.", 404, "MARITIME_VESSEL_NOT_FOUND");
+    }
+    return vessel;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function lookupVesselByImo(value, options = {}) {
   const imo = normalizeImoNumber(value);
   if (!isValidImoNumber(imo)) {
@@ -259,13 +361,13 @@ export async function lookupVesselByImo(value, options = {}) {
     }
   }
 
-  if (wikidataConfigured() || options.forcePublicFallback) {
+  if (publicVesselPageConfigured() || options.forcePublicFallback) {
     try {
-      const vessel = await lookupWikidataByImo(imo, options);
+      const vessel = await lookupVesselFinderPublicByImo(imo, options);
       return { ...vessel, fetched_at: new Date().toISOString() };
     } catch (error) {
       if (error?.name === "AbortError") {
-        throw providerError("Açık gemi veri kaynağı zamanında yanıt vermedi. Alanları elle tamamlayabilirsiniz.", 504, "MARITIME_VESSEL_LOOKUP_TIMEOUT");
+        throw providerError("Güncel açık gemi kaynağı zamanında yanıt vermedi. Alanları elle tamamlayabilirsiniz.", 504, "MARITIME_VESSEL_LOOKUP_TIMEOUT");
       }
       if (officialError && error?.statusCode === 404) throw officialError;
       if (error?.exposeCode) throw error;

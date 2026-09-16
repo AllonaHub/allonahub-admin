@@ -334,6 +334,10 @@ export const config = {
       required: false,
       defaultValue: "https://query.wikidata.org/sparql"
     }).replace(/\/$/, ""),
+    vesselFinderPublicBaseUrl: readEnv("VESSELFINDER_PUBLIC_BASE_URL", {
+      required: false,
+      defaultValue: "https://www.vesselfinder.com/vessels/details"
+    }).replace(/\/$/, ""),
     timeoutMs: Math.max(1000, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_TIMEOUT_MS", 12000), 30000)),
     cacheHours: Math.max(1, Math.min(readNumber("MARITIME_VESSEL_LOOKUP_CACHE_HOURS", 168), 720))
   },
