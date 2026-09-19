@@ -43,4 +43,10 @@ test("local model revisions and offline runtime are pinned", () => {
   assert.match(dockerfile, /Helsinki-NLP\/opus-mt-trk-en/);
   assert.match(dockerfile, /HF_HUB_OFFLINE=1/);
   assert.match(dockerfile, /TRANSFORMERS_OFFLINE=1/);
+  const engine = read("backend/local-translator/translation_engine.py");
+  assert.match(engine, /M2M100Tokenizer/);
+  assert.match(engine, /MarianTokenizer/);
+  const server = read("backend/local-translator/server.py");
+  assert.match(server, /except TranslationInputError as error/);
+  assert.doesNotMatch(server, /except ValueError as error/);
 });

@@ -5,7 +5,7 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from translation_engine import MAX_TEXT_CHARS, SUPPORTED_LANGUAGES, TranslationEngine
+from translation_engine import MAX_TEXT_CHARS, SUPPORTED_LANGUAGES, TranslationEngine, TranslationInputError
 
 
 MAX_REQUEST_BYTES = 16 * 1024
@@ -70,12 +70,12 @@ class TranslationHandler(BaseHTTPRequestHandler):
                 source = str(payload.get("source_language", "")).lower()
                 target = str(payload.get("target_language", "")).lower()
                 if not isinstance(text, str) or len(text) > MAX_TEXT_CHARS:
-                    raise ValueError("text_too_long")
+                    raise TranslationInputError("text_too_long")
                 result = ENGINE.translate(text, source, target)
                 return self._json(200, {"ok": True, **result})
             except (UnicodeDecodeError, json.JSONDecodeError):
                 return self._json(400, {"ok": False, "code": "INVALID_JSON"})
-            except ValueError as error:
+            except TranslationInputError as error:
                 return self._json(400, {"ok": False, "code": str(error).upper()})
             except Exception:
                 return self._json(503, {"ok": False, "code": "TRANSLATION_UNAVAILABLE"})

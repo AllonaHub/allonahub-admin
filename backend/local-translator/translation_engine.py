@@ -14,6 +14,10 @@ MAX_TEXT_CHARS = 2000
 MAX_SOURCE_TOKENS = 850
 
 
+class TranslationInputError(ValueError):
+    pass
+
+
 @dataclass(frozen=True)
 class TranslationStep:
     model_key: str
@@ -32,7 +36,7 @@ def plan_translation(source_language: str, target_language: str) -> tuple[Transl
     source = str(source_language or "").strip().lower()
     target = str(target_language or "").strip().lower()
     if source not in SUPPORTED_LANGUAGES or target not in SUPPORTED_LANGUAGES:
-        raise ValueError("unsupported_language")
+        raise TranslationInputError("unsupported_language")
     if source == target:
         return ()
     if source == "ky":
@@ -47,22 +51,23 @@ def plan_translation(source_language: str, target_language: str) -> tuple[Transl
 def normalize_input(text: str) -> str:
     value = str(text or "").replace("\x00", "").strip()
     if not value:
-        raise ValueError("empty_text")
+        raise TranslationInputError("empty_text")
     if len(value) > MAX_TEXT_CHARS:
-        raise ValueError("text_too_long")
+        raise TranslationInputError("text_too_long")
     return value
 
 
 class CTranslateModel:
     def __init__(self, model_path: str, cpu_threads: int):
         import ctranslate2
-        from transformers import AutoTokenizer
+        from transformers import M2M100Tokenizer, MarianTokenizer
 
         self.path = Path(model_path)
         if not (self.path / "model.bin").is_file():
             raise RuntimeError(f"model_not_ready:{self.path.name}")
-        self.tokenizer = AutoTokenizer.from_pretrained(str(self.path), local_files_only=True)
-        self.is_m2m100 = hasattr(self.tokenizer, "lang_code_to_token")
+        self.is_m2m100 = (self.path / "sentencepiece.bpe.model").is_file()
+        tokenizer_class = M2M100Tokenizer if self.is_m2m100 else MarianTokenizer
+        self.tokenizer = tokenizer_class.from_pretrained(str(self.path), local_files_only=True)
         self.translator = ctranslate2.Translator(
             str(self.path),
             device="cpu",
@@ -76,7 +81,7 @@ class CTranslateModel:
         token = language_map.get(language, f"__{language}__")
         token_id = self.tokenizer.convert_tokens_to_ids(token)
         if token_id == self.tokenizer.unk_token_id:
-            raise ValueError("unsupported_model_language")
+            raise RuntimeError("unsupported_model_language")
         return token
 
     def _source_tokens(self, text: str, source_language: str, target_language: str) -> list[str]:
@@ -110,7 +115,7 @@ class CTranslateModel:
         if current:
             chunks.append(current)
         if any(self._token_count(chunk, source_language, target_language) > MAX_SOURCE_TOKENS for chunk in chunks):
-            raise ValueError("text_token_limit")
+            raise TranslationInputError("text_token_limit")
         return chunks
 
     def translate(self, text: str, source_language: str, target_language: str) -> str:
