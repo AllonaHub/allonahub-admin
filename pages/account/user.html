@@ -7,7 +7,7 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../../js/config.js?v=20260627-config-central"></script>
+<script src="../../js/config.js?v=20260919-authfix2"></script>
 
 <style>
 *{
@@ -1176,6 +1176,10 @@ function apiBaseUrl(){
   return configured || "https://api.allonahub.com";
 }
 
+function isLocalAuthPreview(){
+  return /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+}
+
 async function securityChallengeToken(action){
   if(window.Allona && window.Allona.securityChallenge && window.Allona.securityChallenge.enabled()){
     return window.Allona.securityChallenge.tokenFor(action);
@@ -1251,7 +1255,28 @@ async function directSupabaseLogin(email,password){
   return data;
 }
 
+async function directSupabaseRegistration(payload){
+  const {data,error}=await supabaseClient.auth.signUp({
+    email:payload.email,
+    password:payload.password,
+    options:{
+      data:{
+        full_name:payload.full_name,
+        phone:payload.phone,
+        country:payload.profile && payload.profile.country || ""
+      },
+      emailRedirectTo:pageUrl("/pages/account/user.html?tab=login")
+    }
+  });
+  if(error)throw error;
+  if(!data || !data.user)throw new Error("Kayıt güvenli şekilde oluşturulamadı.");
+  return data;
+}
+
 async function claimCustomerAccountDevice(user){
+  // Local static previews do not have the trusted service-role backend. Device
+  // binding is enforced by the production auth endpoint and on live access.
+  if(isLocalAuthPreview())return true;
   try{
     const {data}=await supabaseClient.auth.getSession();
     const token=data && data.session && data.session.access_token;
@@ -1277,11 +1302,6 @@ async function claimCustomerAccountDevice(user){
     showAuthDialog(registerFailureMessage(error));
     return false;
   }
-}
-
-function canUseDirectLoginFallback(error){
-  const status=Number(error && error.status || 0);
-  return status===0 || [404,405,500,501,502,503,504].includes(status);
 }
 
 async function needsMfaVerification(){
@@ -1708,7 +1728,7 @@ async function registerUser(){
     setAuthBusy(submit,true);
     announceAuthMessage("");
     const deviceKey=await window.Allona.cvAccess.getDeviceKey();
-    const result=await authApi("/v1/auth/register",{
+    const registrationPayload={
       email:email,
       password:password,
       full_name:fullName,
@@ -1717,8 +1737,17 @@ async function registerUser(){
         country:country.n
       },
       device_key:deviceKey,
-      turnstileToken:await securityChallengeToken("register")
-    });
+      turnstileToken:""
+    };
+
+    let result;
+    if(isLocalAuthPreview()){
+      await securityChallengeToken("register");
+      result=await directSupabaseRegistration(registrationPayload);
+    }else{
+      registrationPayload.turnstileToken=await securityChallengeToken("register");
+      result=await authApi("/v1/auth/register",registrationPayload);
+    }
 
     const session=await applyBackendSession(result.session);
 
@@ -1771,16 +1800,16 @@ async function loginUser(){
     }catch(error){}
 
     let data;
-    try{
+    if(isLocalAuthPreview()){
+      await securityChallengeToken("login");
+      data=await directSupabaseLogin(email,password);
+    }else{
       data = await authApi("/v1/auth/login",{
         email:email,
         password:password,
         turnstileToken:await securityChallengeToken("login")
       });
       await applyBackendSession(data.session);
-    }catch(backendError){
-      if(!canUseDirectLoginFallback(backendError))throw backendError;
-      data = await directSupabaseLogin(email,password);
     }
 
     if(!data || !data.user){
@@ -1839,16 +1868,15 @@ async function resetPassword(){
   try{
     setAuthBusy(submit,true);
     announceAuthMessage("");
-    try{
+    if(isLocalAuthPreview()){
+      await securityChallengeToken("forgot_password");
+      const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
+      if(resetError)throw resetError;
+    }else{
       await authApi("/v1/auth/forgot-password",{
         email:email,
         turnstileToken:await securityChallengeToken("forgot_password")
       });
-    }catch(error){
-      const backendUnavailable=error.status===0 || [404,405,500,501,502,503,504].includes(Number(error.status));
-      if(!backendUnavailable)throw error;
-      const { error:resetError }=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});
-      if(resetError)throw resetError;
     }
     showAuthDialog("Eğer bu e-posta sistemde kayıtlıysa şifre sıfırlama bağlantısı gönderildi.");
   }catch(error){
@@ -1959,9 +1987,8 @@ document.addEventListener("click",function(e){
 });
 </script>
   <div data-layout="footer"></div>
-  <script src="../../js/config.js?v=20260623-authunify1" defer></script>
   <script src="../../js/core.js?v=20260712-premium-page1" defer></script>
-  <script src="../../js/security-challenge.js?v=20260914-authfix1" defer></script>
+  <script src="../../js/security-challenge.js?v=20260919-authfix2" defer></script>
   <script src="../../js/layout.v3.js?v=20260914-user-panel1" defer></script>
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
   <script src="../../js/cv-access.js?v=20260915-identity1" defer></script>
