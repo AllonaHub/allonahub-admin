@@ -438,26 +438,120 @@ body.maritime-portal-page textarea {
   justify-items: end;
 }
 
-.maritime-job-eligibility {
-  display: block;
-  max-width: 330px;
-  color: #b7d6e7;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-  text-align: end;
+.maritime-record-badges {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
 }
 
-.maritime-job-eligibility.is-action {
-  color: #8ceeff;
+.maritime-application-mode {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid rgba(236, 194, 94, 0.5);
+  border-radius: 999px;
+  background: rgba(236, 194, 94, 0.12);
+  color: #ffe7a9;
+  font-size: 10px;
+  font-weight: 900;
 }
 
-.maritime-job-eligibility.is-mismatch {
-  color: #f2d58b;
+.maritime-application-dialog {
+  width: min(520px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid rgba(0, 223, 252, 0.48);
+  border-radius: 8px;
+  background: #041b2d;
+  color: #ffffff;
+  box-shadow: 0 28px 90px rgba(0, 7, 18, 0.72), 0 0 34px rgba(0, 192, 255, 0.16);
 }
 
-.maritime-job-eligibility.is-pending {
-  color: #b9c8d4;
+.maritime-application-dialog::backdrop {
+  background: rgba(0, 9, 20, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.maritime-application-dialog-shell {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 17px;
+  padding: 30px 28px 24px;
+  background: linear-gradient(145deg, rgba(8, 48, 76, 0.98), rgba(3, 19, 36, 0.99));
+  text-align: center;
+}
+
+.maritime-application-dialog-close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(130, 203, 232, 0.28);
+  border-radius: 50%;
+  background: rgba(2, 22, 39, 0.72);
+  color: #d9f4ff;
+  cursor: pointer;
+}
+
+.maritime-application-dialog-close:focus-visible {
+  outline: 3px solid var(--maritime-gold);
+  outline-offset: 2px;
+}
+
+.maritime-application-dialog-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(0, 223, 252, 0.55);
+  border-radius: 50%;
+  background: rgba(0, 133, 190, 0.2);
+  color: #79efff;
+  box-shadow: 0 0 24px rgba(0, 216, 255, 0.2);
+  font-size: 24px;
+}
+
+.maritime-application-dialog-copy {
+  display: grid;
+  max-width: 430px;
+  gap: 8px;
+}
+
+.maritime-application-dialog-copy h2,
+.maritime-application-dialog-copy p {
+  margin: 0;
+}
+
+.maritime-application-dialog-copy h2 {
+  font-size: clamp(21px, 4vw, 27px);
+  line-height: 1.2;
+}
+
+.maritime-application-dialog-copy p {
+  color: #c6dfec;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.maritime-application-dialog-actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+}
+
+.maritime-application-dialog-actions .maritime-button {
+  min-width: 140px;
 }
 
 .maritime-button {
@@ -3553,19 +3647,38 @@ body.maritime-portal-page[data-theme="white"] :where(.maritime-reference, .marit
   -webkit-text-fill-color: #276b8d !important;
 }
 
-body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility {
+body.maritime-portal-page[data-theme="white"] .maritime-application-mode {
+  border-color: rgba(132, 93, 0, 0.32);
+  background: #fff6db;
+  color: #765500;
+  -webkit-text-fill-color: #765500;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog {
+  border-color: rgba(0, 103, 174, 0.35);
+  background: #ffffff;
+  color: #102735;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-shell {
+  background: #ffffff;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-copy h2 {
+  color: #102735;
+  -webkit-text-fill-color: #102735;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-copy p {
   color: #365c72;
   -webkit-text-fill-color: #365c72;
 }
 
-body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility.is-action {
-  color: #006f91;
-  -webkit-text-fill-color: #006f91;
-}
-
-body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility.is-mismatch {
-  color: #795800;
-  -webkit-text-fill-color: #795800;
+body.maritime-portal-page[data-theme="white"] .maritime-application-dialog-close {
+  border-color: rgba(0, 103, 174, 0.24);
+  background: #eef6fa;
+  color: #164e6d;
+  -webkit-text-fill-color: #164e6d;
 }
 
 body.maritime-portal-page[data-theme="white"] :where(.maritime-job-meta span, .maritime-record-meta span, .maritime-readiness-item) {
@@ -4305,9 +4418,12 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
     flex-direction: column;
   }
 
+  .maritime-record-head {
+    flex-direction: column;
+  }
+
   .maritime-job-action-group,
-  .maritime-job-action-group .maritime-button,
-  .maritime-job-eligibility {
+  .maritime-job-action-group .maritime-button {
     width: 100%;
     max-width: none;
   }
@@ -4316,8 +4432,18 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
     justify-items: stretch;
   }
 
-  .maritime-job-eligibility {
-    text-align: start;
+  .maritime-record-badges {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .maritime-application-dialog-shell {
+    padding: 28px 18px 20px;
+  }
+
+  .maritime-application-dialog-actions,
+  .maritime-application-dialog-actions .maritime-button {
+    width: 100%;
   }
 
   .maritime-summary-strip {

@@ -41,6 +41,10 @@ begin
     'public.confirm_maritime_smart_account(uuid,boolean)',
     'public.create_maritime_application_drafts(uuid,uuid[],boolean)',
     'public.submit_maritime_application(uuid,boolean)',
+    'public.apply_maritime_automatic_applications(uuid,uuid)',
+    'public.set_maritime_auto_apply_preference(boolean,boolean)',
+    'public.maritime_auto_apply_after_run_confirmation()',
+    'public.maritime_auto_apply_after_match_change()',
     'public.set_maritime_availability(text,date,boolean)',
     'public.enforce_maritime_application_match_firewall()',
     'public.maritime_device_registration_allowed(text)',
@@ -82,6 +86,7 @@ begin
     'maritime_match_results',
     'maritime_smart_account_runs',
     'maritime_application_permission_batches',
+    'maritime_auto_apply_preferences',
     'maritime_hiring_rooms',
     'maritime_private_candidate_rooms',
     'maritime_crew_rooms',
@@ -171,6 +176,7 @@ begin
       ('maritime_match_results', 'maritime_match_results_select_participant'),
       ('maritime_smart_account_runs', 'maritime_smart_account_runs_select_own_or_admin'),
       ('maritime_application_permission_batches', 'maritime_application_permission_batches_select_own_or_admin'),
+      ('maritime_auto_apply_preferences', 'maritime_auto_apply_preferences_select_own_or_admin'),
       ('maritime_hiring_rooms', 'maritime_hiring_rooms_select_partner_or_admin'),
       ('maritime_private_candidate_rooms', 'maritime_candidate_rooms_select_participant'),
       ('maritime_crew_rooms', 'maritime_crew_rooms_select_partner_or_member'),
@@ -227,6 +233,45 @@ begin
       and not trigger_row.tgisinternal
   ) or has_function_privilege('authenticated', 'public.enforce_maritime_application_match_firewall()', 'EXECUTE') then
     raise exception 'Maritime application matching firewall is missing or unsafe';
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'maritime_hiring_applications'
+      and column_name = 'submission_mode'
+      and is_nullable = 'NO'
+      and column_default ilike '%manual%'
+  ) or not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.maritime_hiring_applications'::regclass
+      and conname = 'maritime_hiring_applications_submission_mode_check'
+      and pg_get_constraintdef(oid) ilike '%manual%'
+      and pg_get_constraintdef(oid) ilike '%automatic%'
+  ) then
+    raise exception 'Maritime application submission source boundary is incomplete';
+  end if;
+
+  if has_function_privilege('anon', 'public.set_maritime_auto_apply_preference(boolean,boolean)', 'EXECUTE')
+    or not has_function_privilege('authenticated', 'public.set_maritime_auto_apply_preference(boolean,boolean)', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.apply_maritime_automatic_applications(uuid,uuid)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.apply_maritime_automatic_applications(uuid,uuid)', 'EXECUTE')
+    or not exists (
+      select 1
+      from pg_trigger trigger_row
+      where trigger_row.tgrelid = 'public.maritime_smart_account_runs'::regclass
+        and trigger_row.tgname = 'maritime_auto_apply_run_confirmation'
+        and not trigger_row.tgisinternal
+    ) or not exists (
+      select 1
+      from pg_trigger trigger_row
+      where trigger_row.tgrelid = 'public.maritime_match_results'::regclass
+        and trigger_row.tgname = 'maritime_auto_apply_match_change'
+        and not trigger_row.tgisinternal
+    ) then
+    raise exception 'Maritime automatic application consent boundary is missing or unsafe';
   end if;
 
   if not exists (

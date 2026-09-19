@@ -15,6 +15,10 @@ import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/
 const runParamsSchema = z.object({ runId: z.string().uuid() }).strict();
 const applicationParamsSchema = z.object({ applicationId: z.string().uuid() }).strict();
 const confirmationSchema = z.object({ confirmation: z.literal(true) }).strict();
+const autoApplyPreferenceSchema = z.object({
+  enabled: z.boolean(),
+  confirmation: z.literal(true)
+}).strict();
 const availabilitySchema = z.object({
   confirmation: z.literal(true),
   work_status: z.enum(["available_now", "available_from_date", "onboard", "on_leave", "not_available"]),
@@ -829,6 +833,22 @@ async function maritimeApplicationReadiness(userId) {
   };
 }
 
+async function maritimeAutoApplyPreference(userId) {
+  const result = await supabaseAdmin
+    .from("maritime_auto_apply_preferences")
+    .select("enabled,enabled_at,disabled_at,last_processed_at,updated_at")
+    .eq("seafarer_user_id", userId)
+    .maybeSingle();
+  const preference = assertDb(result, "Otomatik başvuru tercihi okunamadı.") || null;
+  return {
+    enabled: preference?.enabled === true,
+    enabled_at: preference?.enabled_at || null,
+    disabled_at: preference?.disabled_at || null,
+    last_processed_at: preference?.last_processed_at || null,
+    updated_at: preference?.updated_at || null
+  };
+}
+
 async function latestSmartState(userId, user) {
   const [applicationReadiness, cvIdentity] = await Promise.all([
     maritimeApplicationReadiness(userId),
@@ -1440,6 +1460,35 @@ export function registerMaritimeSmartAccountRoutes(app) {
   }, async (request) => {
     const ctx = await requireCustomer(request, "maritime.smart_account.read");
     return { ok: true, ...(await latestSmartState(ctx.user.id, ctx.user)) };
+  });
+
+  app.get("/v1/maritime/auto-apply", {
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.auto_apply.read");
+    return { ok: true, preference: await maritimeAutoApplyPreference(ctx.user.id) };
+  });
+
+  app.post("/v1/maritime/auto-apply", {
+    config: { rateLimit: { max: 8, timeWindow: "10 minutes" } }
+  }, async (request) => {
+    const ctx = await requireCustomer(request, "maritime.auto_apply.update");
+    const input = autoApplyPreferenceSchema.parse(request.body || {});
+    await requireMaritimePasskeyProof(request, ctx.user.id);
+    const result = assertDb(await ctx.db.rpc("set_maritime_auto_apply_preference", {
+      p_enabled: input.enabled,
+      p_confirmation: true
+    }), "Otomatik başvuru tercihi kaydedilemedi.");
+    await auditEvent({
+      request,
+      actorId: ctx.user.id,
+      actorRole: ctx.profile.role,
+      action: input.enabled ? "maritime.auto_apply_enabled" : "maritime.auto_apply_disabled",
+      resourceType: "maritime_auto_apply_preference",
+      resourceId: ctx.user.id,
+      metadata: { submitted_count: Number(result?.submitted_count) || 0 }
+    });
+    return { ok: true, preference: await maritimeAutoApplyPreference(ctx.user.id) };
   });
 
   app.post("/v1/maritime/smart-account/prepare", {

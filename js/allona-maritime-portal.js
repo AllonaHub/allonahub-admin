@@ -13,6 +13,7 @@
   let renderedLanguage = "";
   let accountProfile = null;
   let profileClient = null;
+  let autoPreferenceState = { enabled: false, updated_at: null };
   let smartApplicationState = { run: null, matches: [], application_drafts: [], application_readiness: { documents_state: "unknown", has_saved_maritime_cv: false, has_confirmed_maritime_cv: false } };
   const maritimeBasePath = "/pages/ecosystem/";
 
@@ -103,6 +104,10 @@
     internationalRoute: ["Uluslararası", "Beynəlxalq", "Халықаралық", "Xalqaro", "Эл аралык", "International", "International", "Международный", "دولي"],
     apply: ["Başvur", "Müraciət et", "Өтінім беру", "Ariza berish", "Арыз берүү", "Apply", "Bewerben", "Откликнуться", "تقديم"],
     applied: ["Başvuruldu", "Müraciət edildi", "Өтінім берілді", "Ariza berildi", "Арыз берилди", "Applied", "Beworben", "Заявка отправлена", "تم التقديم"],
+    applicationBlockedTitle: ["Başvuru şu anda gönderilemiyor", "Müraciət hazırda göndərilə bilmir", "Өтінімді қазір жіберу мүмкін емес", "Arizani hozir yuborib bo‘lmaydi", "Арызды азыр жөнөтүү мүмкүн эмес", "Application cannot be sent yet", "Bewerbung kann noch nicht gesendet werden", "Заявку пока нельзя отправить", "لا يمكن إرسال الطلب الآن"],
+    applicationDialogClose: ["Kapat", "Bağla", "Жабу", "Yopish", "Жабуу", "Close", "Schließen", "Закрыть", "إغلاق"],
+    qualificationMismatchTemplate: ["Mevcut yeterliliğiniz {position} pozisyonuyla eşleşmediği için başvuru yapılamaz.", "Mövcud səriştəniz {position} vəzifəsinə uyğun gəlmədiyi üçün müraciət göndərilə bilməz.", "Қазіргі біліктілігіңіз {position} лауазымына сәйкес келмегендіктен өтінім жіберілмейді.", "Hozirgi malakangiz {position} lavozimiga mos kelmagani uchun ariza yuborilmaydi.", "Учурдагы квалификацияңыз {position} кызматына дал келбегендиктен арыз жөнөтүлбөйт.", "Your current qualifications do not match the {position} position, so this application cannot be submitted.", "Ihre aktuelle Qualifikation entspricht nicht der Position {position}; die Bewerbung kann daher nicht gesendet werden.", "Ваша текущая квалификация не соответствует должности {position}, поэтому заявку нельзя отправить.", "لا تتطابق مؤهلاتك الحالية مع وظيفة {position}، لذلك لا يمكن إرسال الطلب."],
+    automaticApplicationSubmitted: ["Otomatik Başvuru Yapıldı", "Avtomatik müraciət edildi", "Автоматты өтінім жіберілді", "Avtomatik ariza yuborildi", "Автоматтык арыз жөнөтүлдү", "Applied Automatically", "Automatisch beworben", "Автоматическая заявка отправлена", "تم التقديم تلقائياً"],
     uploadDocuments: ["Belgelerini Yükle", "Sənədlərini yüklə", "Құжаттарыңды жүкте", "Hujjatlaringizni yuklang", "Документтериңизди жүктөңүз", "Upload Documents", "Dokumente hochladen", "Загрузить документы", "تحميل المستندات"],
     documentsMissingReason: ["Uygun ilanları belirleyebilmemiz için denizcilik belgelerinizi yükleyin.", "Uyğun elanları müəyyən etmək üçün dənizçilik sənədlərinizi yükləyin.", "Сәйкес вакансияларды анықтау үшін теңіз құжаттарыңызды жүктеңіз.", "Mos ishlarni aniqlashimiz uchun dengizchilik hujjatlaringizni yuklang.", "Ылайыктуу жумуштарды аныктоо үчүн деңизчилик документтериңизди жүктөңүз.", "Upload your maritime documents so we can identify matching listings.", "Laden Sie Ihre Seefahrtsdokumente hoch, damit passende Stellen ermittelt werden können.", "Загрузите морские документы, чтобы мы могли определить подходящие вакансии.", "حمّل مستنداتك البحرية لنتمكن من تحديد الوظائف المناسبة."],
     reviewDocuments: ["Belgelerini Tamamla", "Sənədlərini tamamla", "Құжаттарыңды аяқта", "Hujjatlaringizni yakunlang", "Документтериңизди толуктаңыз", "Complete Documents", "Dokumente vervollständigen", "Завершить документы", "استكمال المستندات"],
@@ -174,6 +179,8 @@
     disableAuto: ["Otomatik Başvuruyu Durdur", "Avtomatik müraciəti dayandır", "Автоматты өтінімді тоқтату", "Avtomatik arizani to‘xtatish", "Автоматтык арызды токтотуу", "Pause Auto Apply", "Automatische Bewerbung pausieren", "Приостановить автоподачу", "إيقاف التقديم التلقائي"],
     autoSaved: ["Tercihiniz kaydedildi. Profil ve belge kontrolleri tamamlanınca otomatik başvuru başlayacaktır.", "Seçiminiz saxlanıldı. Profil və sənəd yoxlamaları tamamlananda avtomatik müraciət başlayacaq.", "Таңдау сақталды. Профиль мен құжат тексерілген соң автоматты өтінім басталады.", "Tanlov saqlandi. Profil va hujjatlar tekshirilgach avtomatik ariza boshlanadi.", "Тандоо сакталды. Профиль жана документтер текшерилгенден кийин автоматтык арыз башталат.", "Your preference was saved. Auto apply will begin after profile and document checks are complete.", "Ihre Einstellung wurde gespeichert. Der Start erfolgt nach Profil- und Dokumentenprüfung.", "Настройка сохранена. Автоподача начнется после проверки профиля и документов.", "تم حفظ تفضيلك، وسيبدأ التقديم بعد اكتمال فحص الملف والمستندات."],
     autoPaused: ["Otomatik başvuru tercihi durduruldu.", "Avtomatik müraciət seçimi dayandırıldı.", "Автоматты өтінім тоқтатылды.", "Avtomatik ariza to‘xtatildi.", "Автоматтык арыз токтотулду.", "Auto apply was paused.", "Automatische Bewerbung wurde pausiert.", "Автоподача приостановлена.", "تم إيقاف التقديم التلقائي."],
+    autoSaving: ["Tercihiniz güvenli biçimde kaydediliyor...", "Seçiminiz təhlükəsiz şəkildə saxlanılır...", "Таңдауыңыз қауіпсіз сақталуда...", "Tanlovingiz xavfsiz saqlanmoqda...", "Тандооңуз коопсуз сакталууда...", "Saving your preference securely...", "Ihre Einstellung wird sicher gespeichert...", "Настройка безопасно сохраняется...", "جارٍ حفظ تفضيلك بأمان..."],
+    autoSaveFailed: ["Otomatik başvuru tercihi kaydedilemedi. Global CV'nizi ve uygunluk durumunuzu kontrol edip yeniden deneyin.", "Avtomatik müraciət seçimi saxlanılmadı. Global CV və uyğunluq vəziyyətinizi yoxlayıb yenidən cəhd edin.", "Автоматты өтінім баптауы сақталмады. Global CV мен сәйкестік күйін тексеріп, қайталап көріңіз.", "Avtomatik ariza tanlovi saqlanmadi. Global CV va moslik holatini tekshirib qayta urinib ko‘ring.", "Автоматтык арыз тандоосу сакталган жок. Global CV жана шайкештик абалын текшерип кайра аракет кылыңыз.", "Auto-apply preference could not be saved. Check your Global CV and eligibility, then try again.", "Die Einstellung konnte nicht gespeichert werden. Prüfen Sie Global CV und Eignung und versuchen Sie es erneut.", "Настройку автоподачи сохранить не удалось. Проверьте Global CV и соответствие, затем повторите попытку.", "تعذر حفظ تفضيل التقديم التلقائي. تحقق من Global CV وحالة الأهلية ثم حاول مجدداً."],
     prepareCv: ["CV ve Belgeleri Tamamla", "CV və sənədləri tamamla", "CV мен құжаттарды толтыру", "CV va hujjatlarni to‘ldirish", "CV жана документтерди толуктоо", "Complete CV and Documents", "CV und Dokumente vervollständigen", "Заполнить CV и документы", "استكمال السيرة والمستندات"],
 
     complaintOptions: ["Bildirim türünü seçin", "Bildiriş növünü seçin", "Хабар түрін таңдаңыз", "Xabar turini tanlang", "Билдирүү түрүн тандаңыз", "Choose a report type", "Meldungsart auswählen", "Выберите тип обращения", "اختر نوع البلاغ"],
@@ -222,6 +229,12 @@
 
   function text(key) {
     return translations[language()][key] || translations.tr[key] || key;
+  }
+
+  function formatText(key, values) {
+    return Object.entries(values || {}).reduce(function (result, entry) {
+      return result.replaceAll(`{${entry[0]}}`, String(entry[1] == null ? "" : entry[1]));
+    }, text(key));
   }
 
   function escapeHtml(value) {
@@ -433,30 +446,30 @@
     if (draft && draft.status === "submitted") return { disabled: true, applied: true, label: "applied", reason: "" };
     const readiness = smartApplicationState.application_readiness || {};
     if (readiness.documents_state === "missing") {
-      return { disabled: false, applied: false, label: "uploadDocuments", reason: text("documentsMissingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "uploadDocuments", reason: text("documentsMissingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
     }
     if (readiness.documents_state === "processing") {
-      return { disabled: false, applied: false, label: "reviewDocuments", reason: text("documentsPendingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "reviewDocuments", reason: text("documentsPendingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
     }
     if (readiness.documents_state !== "confirmed") {
-      return { disabled: true, applied: false, label: "eligibilityUnavailable", reason: text("eligibilityUnavailableReason"), tone: "pending" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("eligibilityUnavailableReason"), tone: "pending" };
     }
     if (readiness.has_saved_maritime_cv !== true) {
-      return { disabled: false, applied: false, label: "completeMaritimeCv", reason: text("maritimeCvMissingReason"), href: portalUrl("maritime-cv.html"), tone: "action" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "completeMaritimeCv", reason: text("maritimeCvMissingReason"), href: portalUrl("maritime-cv.html"), tone: "action" };
     }
     const run = smartApplicationState.run;
-    if (!run) return { disabled: false, applied: false, label: "completeGlobalCv", reason: text("globalCvMissingReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
-    if (run.status !== "user_confirmed") return { disabled: false, applied: false, label: "confirmGlobalCv", reason: text("confirmGlobalCvReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
-    if (!job.smartJobId) return { disabled: true, applied: false, label: "listingRequirementsPending", reason: text("listingRequirementsPendingReason"), tone: "pending" };
+    if (!run) return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "completeGlobalCv", reason: text("globalCvMissingReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+    if (run.status !== "user_confirmed") return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "confirmGlobalCv", reason: text("confirmGlobalCvReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+    if (!job.smartJobId) return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("listingRequirementsPendingReason"), tone: "pending" };
     const match = smartMatchFor(job);
     if (!match || match.hard_gate_status === "stale") {
-      return { disabled: false, applied: false, label: "refreshEligibility", reason: text("refreshEligibilityReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", actionLabel: "refreshEligibility", reason: text("refreshEligibilityReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
     }
     if (match.hard_gate_status === "needs_data") {
-      return { disabled: true, applied: false, label: "listingRequirementsPending", reason: text("listingRequirementsPendingReason"), tone: "pending" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", reason: text("listingRequirementsPendingReason"), tone: "pending" };
     }
     if (match.eligible !== true || match.hard_gate_status !== "passed") {
-      return { disabled: true, applied: false, label: "notEligibleForPosition", reason: text("notEligibleReason"), tone: "mismatch" };
+      return { blocked: true, disabled: false, applied: false, label: "apply", reason: formatText("qualificationMismatchTemplate", { position: job.title || text("genericPosition") }), tone: "mismatch" };
     }
     return { disabled: false, applied: false, label: "apply", reason: "" };
   }
@@ -483,13 +496,20 @@
 
   async function smartApplicationApi(path, options) {
     if (!session?.access_token) throw new Error("AUTH_REQUIRED");
+    if (!App.cvAccess || typeof App.cvAccess.getDeviceKey !== "function") throw new Error("Güvenli cihaz doğrulaması hazırlanamadı.");
+    if (!window.AllonaMaritimePasskey || typeof window.AllonaMaritimePasskey.authorize !== "function") throw new Error("Güvenli cihaz doğrulaması bu tarayıcıda kullanılamıyor.");
     const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+    const securityHeaders = {
+      "X-Allona-Device-Key": await App.cvAccess.getDeviceKey(),
+      "X-Allona-Passkey-Proof": await window.AllonaMaritimePasskey.authorize()
+    };
     const response = await fetch(`${base}${path}`, {
       ...options,
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/json",
+        ...securityHeaders,
         ...(options?.headers || {})
       }
     });
@@ -505,11 +525,9 @@
   }
 
   function jobApplicationAction(job, gate) {
-    const icon = gate.applied ? "fa-check" : gate.disabled ? "fa-shield-halved" : gate.href ? "fa-arrow-right" : "fa-paper-plane";
-    const title = gate.reason ? ` title="${escapeHtml(gate.reason)}"` : "";
+    const icon = gate.applied ? "fa-check" : "fa-paper-plane";
     const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.label))}`;
-    if (gate.href) return `<a class="maritime-button maritime-button--primary" href="${escapeHtml(gate.href)}"${title}>${content}</a>`;
-    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.disabled ? "disabled" : ""}${title}>${content}</button>`;
+    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.applied ? "disabled" : ""}>${content}</button>`;
   }
 
   function jobCard(job) {
@@ -518,8 +536,39 @@
       <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div>
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       <div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>
-      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><div class="maritime-job-action-group">${gate.reason ? `<small class="maritime-job-eligibility is-${escapeHtml(gate.tone || "neutral")}">${escapeHtml(gate.reason)}</small>` : ""}${jobApplicationAction(job, gate)}</div></div>
+      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><div class="maritime-job-action-group">${jobApplicationAction(job, gate)}</div></div>
     </article>`;
+  }
+
+  function applicationDialogMarkup() {
+    return `<dialog class="maritime-application-dialog" data-application-dialog aria-labelledby="maritimeApplicationDialogTitle" aria-describedby="maritimeApplicationDialogMessage"><div class="maritime-application-dialog-shell"><button class="maritime-application-dialog-close" type="button" data-application-dialog-close aria-label="${escapeHtml(text("applicationDialogClose"))}"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><div class="maritime-application-dialog-icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></div><div class="maritime-application-dialog-copy"><span class="maritime-reference">AllonaHub Denizcilik</span><h2 id="maritimeApplicationDialogTitle">${escapeHtml(text("applicationBlockedTitle"))}</h2><p id="maritimeApplicationDialogMessage" data-application-dialog-message></p></div><div class="maritime-application-dialog-actions"><a class="maritime-button maritime-button--primary" href="#" data-application-dialog-action hidden></a><button class="maritime-button" type="button" data-application-dialog-close>${escapeHtml(text("applicationDialogClose"))}</button></div></div></dialog>`;
+  }
+
+  function closeApplicationDialog() {
+    const dialog = document.querySelector("[data-application-dialog]");
+    if (!dialog) return;
+    if (typeof dialog.close === "function" && dialog.open) dialog.close();
+    else dialog.removeAttribute("open");
+  }
+
+  function showApplicationDialog(gate) {
+    const dialog = document.querySelector("[data-application-dialog]");
+    if (!dialog) return;
+    const message = dialog.querySelector("[data-application-dialog-message]");
+    const action = dialog.querySelector("[data-application-dialog-action]");
+    if (message) message.textContent = gate.reason || text("applicationFailed");
+    if (action) {
+      if (gate.href) {
+        action.href = gate.href;
+        action.textContent = text(gate.actionLabel || "refreshEligibility");
+        action.hidden = false;
+      } else {
+        action.hidden = true;
+        action.removeAttribute("href");
+      }
+    }
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
   }
 
   function renderJobResults() {
@@ -556,8 +605,9 @@
     if (!access) return;
     const notice = document.querySelector("[data-jobs-notice]");
     const gate = jobApplicationGate(job);
-    if (gate.disabled) {
-      if (notice) { notice.textContent = gate.reason || text("notEligibleReason"); notice.classList.add("is-visible", "is-warning"); }
+    if (gate.applied) return;
+    if (gate.blocked) {
+      showApplicationDialog(gate);
       return;
     }
     if (!window.confirm(text("applicationConfirm"))) return;
@@ -583,7 +633,8 @@
     } catch (error) {
       await loadSmartApplicationState();
       renderJobResults();
-      if (notice) { notice.textContent = text("applicationFailed"); notice.className = "maritime-notice is-visible is-error"; }
+      const serverMessage = compact(error && error.message, 320);
+      showApplicationDialog({ reason: serverMessage && !/^[A-Z0-9_]+$/.test(serverMessage) ? serverMessage : text("applicationFailed") });
     }
   }
 
@@ -592,7 +643,7 @@
     jobs = liveJobs.length ? liveJobs : normalizedSeedJobs();
     root.innerHTML = `<section class="maritime-toolbar"><div class="maritime-toolbar-copy"><h2>${escapeHtml(text("openJobs"))}</h2><p>${escapeHtml(text("openJobsLead"))}</p></div><strong class="maritime-reference" data-jobs-count></strong></section>
       <div class="maritime-filter-rail" role="toolbar" aria-label="${escapeHtml(text("openJobs"))}">${[["all", "filterAll"], ["deck", "filterDeck"], ["engine", "filterEngine"], ["electrical", "filterElectrical"], ["hotel", "filterHotel"]].map(function (item) { return `<button type="button" data-job-filter="${item[0]}" aria-pressed="${item[0] === activeFilter}">${escapeHtml(text(item[1]))}</button>`; }).join("")}</div>
-      <div class="maritime-notice" role="status" aria-live="polite" data-jobs-notice></div><section class="maritime-job-grid" data-jobs-grid></section>`;
+      <div class="maritime-notice" role="status" aria-live="polite" data-jobs-notice></div><section class="maritime-job-grid" data-jobs-grid></section>${applicationDialogMarkup()}`;
     renderJobResults();
     const pendingId = new URLSearchParams(window.location.search).get("apply");
     if (pendingId && session) await applyToJob(pendingId);
@@ -612,11 +663,15 @@
   async function liveApplications() {
     if (!session || !App.supabase) return [];
     try {
-      const result = await App.supabase.from("maritime_hiring_applications").select("id,job_id,status,submitted_at,updated_at,metadata").eq("seafarer_user_id", userId()).order("created_at", { ascending: false }).limit(100);
+      let result = await App.supabase.from("maritime_hiring_applications").select("id,job_id,status,submission_mode,submitted_at,updated_at,metadata").eq("seafarer_user_id", userId()).order("created_at", { ascending: false }).limit(100);
+      if (result.error && /submission_mode/i.test(String(result.error.message || ""))) {
+        result = await App.supabase.from("maritime_hiring_applications").select("id,job_id,status,submitted_at,updated_at,metadata").eq("seafarer_user_id", userId()).order("created_at", { ascending: false }).limit(100);
+      }
       if (result.error) return [];
       return (result.data || []).map(function (item) {
         const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
-        return { id: item.id, job_id: item.job_id, job_title: compact(metadata.job_title, 140) || text("genericPosition"), job_reference: compact(metadata.job_reference, 40) || `AH-${String(item.job_id).slice(0, 8).toUpperCase()}`, status: item.status, applied_at: item.submitted_at || item.updated_at, location: compact(metadata.location_label, 120), contract: compact(metadata.detail_label, 120) };
+        const submissionMode = item.submission_mode === "automatic" || metadata.application_mode === "automatic" ? "automatic" : "manual";
+        return { id: item.id, job_id: item.job_id, job_title: compact(metadata.job_title, 140) || text("genericPosition"), job_reference: compact(metadata.job_reference, 40) || `AH-${String(item.job_id).slice(0, 8).toUpperCase()}`, status: item.status, submission_mode: submissionMode, applied_at: item.submitted_at || item.updated_at, location: compact(metadata.location_label, 120), contract: compact(metadata.detail_label, 120) };
       });
     } catch (error) {
       return [];
@@ -642,7 +697,7 @@
     }
     const reviewing = rows.filter(function (item) { return ["submitted", "drafted", "awaiting_candidate_approval", "shortlisted", "interviewing"].includes(item.status); }).length;
     const accepted = rows.filter(function (item) { return ["offer_sent", "offer_accepted", "hired"].includes(item.status); }).length;
-    root.innerHTML = `<section class="maritime-summary-strip"><article><strong>${rows.length}</strong><span>${escapeHtml(text("totalApplications"))}</span></article><article><strong>${reviewing}</strong><span>${escapeHtml(text("reviewing"))}</span></article><article><strong>${accepted}</strong><span>${escapeHtml(text("accepted"))}</span></article></section><section class="maritime-record-grid">${rows.map(function (item) { const statusKey = applicationStatusKey(item.status); return `<article class="maritime-record-card"><div class="maritime-record-head"><div><span class="maritime-reference">${escapeHtml(item.job_reference || "")}</span><h3>${escapeHtml(item.job_title || text("genericPosition"))}</h3></div><span class="maritime-status-badge" data-status="${escapeHtml(item.status)}">${escapeHtml(text(statusKey))}</span></div><p>${escapeHtml(text("applicationFor"))}</p><div class="maritime-record-meta"><span><b>${escapeHtml(text("appliedAt"))}</b>${escapeHtml(dateLabel(item.applied_at))}</span><span><b>${escapeHtml(text("statusLabel"))}</b>${escapeHtml(text(statusKey))}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(item.location || text("globalRoute"))}</span></div></article>`; }).join("")}</section>`;
+    root.innerHTML = `<section class="maritime-summary-strip"><article><strong>${rows.length}</strong><span>${escapeHtml(text("totalApplications"))}</span></article><article><strong>${reviewing}</strong><span>${escapeHtml(text("reviewing"))}</span></article><article><strong>${accepted}</strong><span>${escapeHtml(text("accepted"))}</span></article></section><section class="maritime-record-grid">${rows.map(function (item) { const statusKey = applicationStatusKey(item.status); const automaticBadge = item.submission_mode === "automatic" ? `<span class="maritime-application-mode"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text("automaticApplicationSubmitted"))}</span>` : ""; return `<article class="maritime-record-card"><div class="maritime-record-head"><div><span class="maritime-reference">${escapeHtml(item.job_reference || "")}</span><h3>${escapeHtml(item.job_title || text("genericPosition"))}</h3></div><div class="maritime-record-badges">${automaticBadge}<span class="maritime-status-badge" data-status="${escapeHtml(item.status)}">${escapeHtml(text(statusKey))}</span></div></div><p>${escapeHtml(text("applicationFor"))}</p><div class="maritime-record-meta"><span><b>${escapeHtml(text("appliedAt"))}</b>${escapeHtml(dateLabel(item.applied_at))}</span><span><b>${escapeHtml(text("statusLabel"))}</b>${escapeHtml(text(statusKey))}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(item.location || text("globalRoute"))}</span></div></article>`; }).join("")}</section>`;
   }
 
   async function liveOffers() {
@@ -668,14 +723,53 @@
     root.innerHTML = `<section class="maritime-section-heading"><h2>${escapeHtml(text("offersTitle"))}</h2><p>${escapeHtml(text("offersPrivacy"))}</p></section><section class="maritime-record-grid">${rows.map(function (item) { const visible = item.company_contact_visible === true; return `<article class="maritime-record-card"><div class="maritime-record-head"><div><span class="maritime-reference">${escapeHtml(item.job_reference || "")}</span><h3>${escapeHtml(item.job_title || text("genericPosition"))}</h3></div><span class="maritime-status-badge" data-status="${escapeHtml(item.offer_status || "sent")}">${escapeHtml(text("offerSent"))}</span></div><div class="maritime-record-meta"><span><b>${escapeHtml(text("offerStatus"))}</b>${escapeHtml(text("offerSent"))}</span><span><b>${escapeHtml(text("appliedAt"))}</b>${escapeHtml(dateLabel(item.created_at || item.updated_at))}</span></div><div class="maritime-offer-contact"><strong>${escapeHtml(visible && item.company_name ? item.company_name : text("contactHidden"))}</strong>${visible ? `<p>${escapeHtml([item.company_email, item.company_phone].filter(Boolean).join(" · "))}</p>` : ""}</div></article>`; }).join("")}</section>`;
   }
 
-  function autoPreference() {
-    try { return JSON.parse(localStorage.getItem(storageKey("autoApply")) || "{}"); } catch (error) { return {}; }
+  async function loadAutoPreference() {
+    autoPreferenceState = { enabled: false, updated_at: null };
+    if (!session?.access_token) return autoPreferenceState;
+    const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
+    try {
+      const response = await fetch(`${base}/v1/maritime/auto-apply`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${session.access_token}` }
+      });
+      const payload = await response.json().catch(function () { return {}; });
+      if (!response.ok || payload.ok !== true) throw new Error(payload.message || "AUTO_APPLY_LOAD_FAILED");
+      autoPreferenceState = payload.preference || autoPreferenceState;
+    } catch (error) {
+      autoPreferenceState.load_error = true;
+    }
+    return autoPreferenceState;
   }
 
-  function renderAuto() {
+  async function renderAuto() {
     if (!session) return authGate();
-    const preference = autoPreference();
-    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-smart-account.html"))}">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${preference.updated_at ? "is-visible" : ""}" role="status" aria-live="polite" data-auto-notice>${preference.updated_at ? escapeHtml(text(preference.enabled ? "autoSaved" : "autoPaused")) : ""}</div></aside></section>`;
+    const preference = await loadAutoPreference();
+    const noticeKey = preference.load_error ? "autoSaveFailed" : preference.updated_at ? (preference.enabled ? "autoSaved" : "autoPaused") : "";
+    root.innerHTML = `<section class="maritime-auto-layout"><div class="maritime-auto-copy"><h2>${escapeHtml(text("autoHeading"))}</h2><p>${escapeHtml(text("autoDescription"))}</p><div class="maritime-readiness-list"><div class="maritime-readiness-item"><i class="fa-solid fa-user-check" aria-hidden="true"></i><span><strong>${escapeHtml(text("profileReady"))}</strong><small>${escapeHtml(text("profileReadyDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span><strong>${escapeHtml(text("maritimeCv"))}</strong><small>${escapeHtml(text("maritimeCvDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div><div class="maritime-readiness-item"><i class="fa-solid fa-passport" aria-hidden="true"></i><span><strong>${escapeHtml(text("globalPassport"))}</strong><small>${escapeHtml(text("globalPassportDesc"))}</small></span><span class="maritime-readiness-state">${escapeHtml(text("pendingCheck"))}</span></div></div></div><aside class="maritime-auto-control"><h2>${escapeHtml(text("autoControlTitle"))}</h2><p>${escapeHtml(text("autoControlLead"))}</p><button class="maritime-button maritime-button--primary" type="button" data-auto-toggle aria-pressed="${preference.enabled === true}"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>${escapeHtml(text(preference.enabled === true ? "disableAuto" : "enableAuto"))}</button><a class="maritime-button" href="${escapeHtml(portalUrl("maritime-smart-account.html"))}">${escapeHtml(text("prepareCv"))}</a><div class="maritime-notice ${noticeKey ? "is-visible" : ""} ${preference.load_error ? "is-error" : preference.updated_at ? "is-success" : ""}" role="status" aria-live="polite" data-auto-notice>${noticeKey ? escapeHtml(text(noticeKey)) : ""}</div></aside></section>`;
+  }
+
+  async function toggleAutoPreference(button) {
+    const notice = document.querySelector("[data-auto-notice]");
+    const nextEnabled = autoPreferenceState.enabled !== true;
+    button.disabled = true;
+    if (notice) {
+      notice.textContent = text("autoSaving");
+      notice.className = "maritime-notice is-visible";
+    }
+    try {
+      const payload = await smartApplicationApi("/v1/maritime/auto-apply", {
+        method: "POST",
+        body: JSON.stringify({ enabled: nextEnabled, confirmation: true })
+      });
+      autoPreferenceState = payload.preference || { enabled: nextEnabled, updated_at: new Date().toISOString() };
+      await renderAuto();
+    } catch (error) {
+      button.disabled = false;
+      if (notice) {
+        const serverMessage = compact(error && error.message, 320);
+        notice.textContent = serverMessage && !/^[A-Z0-9_]+$/.test(serverMessage) ? serverMessage : text("autoSaveFailed");
+        notice.className = "maritime-notice is-visible is-error";
+      }
+    }
   }
 
   function accountInitials(name) {
@@ -958,6 +1052,15 @@
           .catch(function () { signOut.disabled = false; });
         return;
       }
+      if (event.target.closest("[data-application-dialog-close]")) {
+        closeApplicationDialog();
+        return;
+      }
+      const applicationDialog = event.target.closest("[data-application-dialog]");
+      if (applicationDialog && event.target === applicationDialog) {
+        closeApplicationDialog();
+        return;
+      }
       const filter = event.target.closest("[data-job-filter]");
       if (filter) {
         activeFilter = filter.dataset.jobFilter || "all";
@@ -972,9 +1075,7 @@
       }
       const toggle = event.target.closest("[data-auto-toggle]");
       if (toggle && session) {
-        const current = autoPreference();
-        localStorage.setItem(storageKey("autoApply"), JSON.stringify({ enabled: current.enabled !== true, updated_at: new Date().toISOString() }));
-        renderAuto();
+        toggleAutoPreference(toggle);
         return;
       }
       const topic = event.target.closest("[data-complaint-topic]");
@@ -1030,7 +1131,7 @@
     if (view === "jobs") await renderJobs();
     else if (view === "applications") await renderApplications();
     else if (view === "offers") await renderOffers();
-    else if (view === "auto") renderAuto();
+    else if (view === "auto") await renderAuto();
     else if (view === "account") await renderAccount();
     else if (view === "documents") {
       if (!session) authGate();

@@ -32,6 +32,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260916070000_create_maritime_partner_reference_center.sql"
   "$ROOT_DIR/supabase/migrations/20260916160000_expand_maritime_cv_personal_lock.sql"
   "$ROOT_DIR/supabase/migrations/20260916183000_create_marsoh_community_chat.sql"
+  "$ROOT_DIR/supabase/migrations/20260919182500_add_maritime_application_submission_mode.sql"
 )
 
 if [ -z "$DB_URL" ]; then
