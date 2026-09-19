@@ -182,7 +182,8 @@
   }
 
   function addTranslationControls(article, message) {
-    if (message.own || !message.id || message.local_status) return;
+    const sourceLanguage = String(message.language || "und").trim().toLowerCase();
+    if (!message.id || message.local_status || sourceLanguage === "und" || sourceLanguage === state.locale) return;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "marsoh-translate";

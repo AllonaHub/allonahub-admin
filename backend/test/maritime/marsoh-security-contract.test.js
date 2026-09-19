@@ -92,11 +92,14 @@ test("network failures expose retry and delete while policy failures expose edit
 });
 
 test("translation is authenticated, rate limited, cached, and published-only", async () => {
-  const [migration, route] = await sources();
+  const [migration, route, , ui] = await sources();
   assert.match(route, /visiblePublished\(ctx, messageId\)/);
   assert.match(route, /MARSOH_TRANSLATION_RATE_LIMITED/);
   assert.match(route, /marsoh_translation_cache/);
   assert.match(migration, /unique \(message_id, target_language, source_hash\)/);
+  const controls = ui.slice(ui.indexOf("function addTranslationControls"), ui.indexOf("async function toggleReaction"));
+  assert.match(controls, /sourceLanguage === state\.locale/);
+  assert.doesNotMatch(controls, /message\.own/);
 });
 
 test("speech provider produces editable text and never creates audio media", async () => {
