@@ -34,6 +34,8 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260916183000_create_marsoh_community_chat.sql"
   "$ROOT_DIR/supabase/migrations/20260919182500_add_maritime_application_submission_mode.sql"
   "$ROOT_DIR/supabase/migrations/20260919203000_expand_marsoh_languages_and_reactions.sql"
+  "$ROOT_DIR/supabase/migrations/20260919221500_fix_marsoh_topic_utf8.sql"
+  "$ROOT_DIR/supabase/migrations/20260920013000_expand_marsoh_admin_management.sql"
 )
 
 if [ -z "$DB_URL" ]; then

@@ -36,6 +36,32 @@ const reportDecisionSchema = z.object({
   decision: z.enum(["dismissed", "actioned"]),
   reason: z.string().trim().min(3).max(500)
 }).strict();
+const localizedTextSchema = z.object(Object.fromEntries(
+  marsohLanguages.map((language) => [language, z.string().trim().max(2000).optional()])
+)).strict();
+const topicDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const adminTopicSchema = z.object({
+  title_i18n: localizedTextSchema,
+  body_i18n: localizedTextSchema,
+  status: z.enum(["active", "archived"]).default("active")
+}).strict();
+const adminChannelSchema = z.object({
+  status: z.enum(["active", "paused", "archived"]).optional(),
+  slow_mode_seconds: z.number().int().min(0).max(300).optional(),
+  name_i18n: localizedTextSchema.optional(),
+  pinned_notice_i18n: localizedTextSchema.optional()
+}).strict().refine((value) => Object.keys(value).length > 0, "En az bir oda ayarı gereklidir.");
+const adminAnnouncementSchema = z.object({
+  channel_id: uuidSchema,
+  idempotency_key: uuidSchema,
+  body: z.string().min(1).max(4000),
+  language: languageSchema
+}).strict();
+const bulkRemoveSchema = z.object({
+  channel_id: uuidSchema.nullable().optional().default(null),
+  reason: z.string().trim().min(6).max(500),
+  confirmation: z.literal("MARSOH_ALL_MESSAGES_REMOVE")
+}).strict();
 const sanctionSchema = z.object({
   user_id: uuidSchema,
   sanction_type: z.enum(["temporary_mute", "permanent_ban"]),
@@ -67,6 +93,13 @@ function sha256(value) {
 function opaqueHash(value) {
   const secret = config.marsoh.abuseHashSecret || config.supabase.serviceRoleKey;
   return createHmac("sha256", secret).update(String(value || "unknown"), "utf8").digest("hex");
+}
+
+function cleanLocalizedMap(value, maxLength) {
+  return Object.fromEntries(marsohLanguages.flatMap((language) => {
+    const text = sanitizeMarsohText(value?.[language] || "", maxLength);
+    return text ? [[language, text]] : [];
+  }));
 }
 
 function requestIp(request) {
@@ -615,6 +648,137 @@ export function registerMarsohRoutes(app) {
     const blockedUserId = uuidSchema.parse(request.params?.userId);
     assertDb(await supabaseAdmin.from("marsoh_user_blocks").delete().eq("blocker_user_id", ctx.user.id).eq("blocked_user_id", blockedUserId), "Kullanıcı engeli kaldırılamadı.");
     return { ok: true, blocked: false };
+  });
+
+  app.get("/v1/admin/marsoh/management", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request) => {
+    await requireModerator(request, "marsoh.management.read");
+    const limit = Math.max(1, Math.min(Number(request.query?.limit) || 80, 200));
+    const before = request.query?.before ? z.string().datetime({ offset: true }).parse(request.query.before) : null;
+    let messagesQuery = supabaseAdmin.from("marsoh_published_messages")
+      .select("message_id,channel_id,sender_user_id,actor_type,body,language,sender_display_name,sender_badge,sender_country_code,published_at")
+      .order("published_at", { ascending: false })
+      .limit(limit + 1);
+    if (before) messagesQuery = messagesQuery.lt("published_at", before);
+    const [channelsResult, topicsResult, messagesResult, auditResult] = await Promise.all([
+      supabaseAdmin.from("marsoh_channels")
+        .select("id,slug,channel_type,country_code,status,name_i18n,pinned_notice_i18n,slow_mode_seconds,updated_at")
+        .order("channel_type", { ascending: true }).order("country_code", { ascending: true }),
+      supabaseAdmin.from("marsoh_topic_cards")
+        .select("id,topic_date,title_i18n,body_i18n,status,created_at,updated_at,updated_by")
+        .order("topic_date", { ascending: false }).limit(14),
+      messagesQuery,
+      supabaseAdmin.from("marsoh_audit_events")
+        .select("id,actor_user_id,action,resource_type,resource_id,metadata,created_at")
+        .order("created_at", { ascending: false }).limit(100)
+    ]);
+    const channels = assertDb(channelsResult, "MarSoh odaları okunamadı.") || [];
+    const topics = assertDb(topicsResult, "MarSoh konu kartları okunamadı.") || [];
+    const messageRows = assertDb(messagesResult, "Yayımlanmış MarSoh mesajları okunamadı.") || [];
+    const audit = assertDb(auditResult, "MarSoh yönetim kayıtları okunamadı.") || [];
+    const hasMore = messageRows.length > limit;
+    const messages = messageRows.slice(0, limit);
+    return {
+      ok: true,
+      channels,
+      topics,
+      messages,
+      audit,
+      next_cursor: hasMore ? messages[messages.length - 1]?.published_at || null : null
+    };
+  });
+
+  app.patch("/v1/admin/marsoh/channels/:channelId", async (request) => {
+    const ctx = await requireModerator(request, "marsoh.management.channel.update");
+    const channelId = uuidSchema.parse(request.params?.channelId);
+    const input = adminChannelSchema.parse(request.body || {});
+    const current = assertDb(await supabaseAdmin.from("marsoh_channels")
+      .select("id,name_i18n,pinned_notice_i18n").eq("id", channelId).maybeSingle(), "MarSoh odası okunamadı.");
+    if (!current) throw httpError("MarSoh odası bulunamadı.", 404, "MARSOH_CHANNEL_NOT_FOUND");
+    const update = { updated_at: new Date().toISOString() };
+    if (input.status !== undefined) update.status = input.status;
+    if (input.slow_mode_seconds !== undefined) update.slow_mode_seconds = input.slow_mode_seconds;
+    if (input.name_i18n) update.name_i18n = { ...(current.name_i18n || {}), ...cleanLocalizedMap(input.name_i18n, 120) };
+    if (input.pinned_notice_i18n) update.pinned_notice_i18n = { ...(current.pinned_notice_i18n || {}), ...cleanLocalizedMap(input.pinned_notice_i18n, 600) };
+    const channel = assertDb(await supabaseAdmin.from("marsoh_channels").update(update).eq("id", channelId)
+      .select("id,slug,status,name_i18n,pinned_notice_i18n,slow_mode_seconds,updated_at").single(), "MarSoh odası güncellenemedi.");
+    await marsohAudit({ request, ctx, action: "marsoh.management.channel_updated", resourceType: "marsoh_channel", resourceId: channelId, metadata: { fields: Object.keys(input) } });
+    return { ok: true, channel };
+  });
+
+  app.put("/v1/admin/marsoh/topics/:topicDate", async (request) => {
+    const ctx = await requireModerator(request, "marsoh.management.topic.update");
+    const topicDate = topicDateSchema.parse(request.params?.topicDate);
+    const input = adminTopicSchema.parse(request.body || {});
+    const titleI18n = cleanLocalizedMap(input.title_i18n, 160);
+    const bodyI18n = cleanLocalizedMap(input.body_i18n, 800);
+    if (!titleI18n.tr || !titleI18n.az || !titleI18n.en || !bodyI18n.tr || !bodyI18n.az || !bodyI18n.en) {
+      throw httpError("Türkçe, Azerbaycanca ve İngilizce konu başlığı ile soru metni zorunludur.", 400, "MARSOH_TOPIC_CORE_LANGUAGES_REQUIRED");
+    }
+    const existing = assertDb(await supabaseAdmin.from("marsoh_topic_cards").select("id,created_by").eq("topic_date", topicDate).maybeSingle(), "MarSoh konusu okunamadı.");
+    const topic = assertDb(await supabaseAdmin.from("marsoh_topic_cards").upsert({
+      ...(existing?.id ? { id: existing.id } : {}),
+      topic_date: topicDate,
+      title_i18n: titleI18n,
+      body_i18n: bodyI18n,
+      status: input.status,
+      created_by: existing?.created_by || ctx.user.id,
+      updated_by: ctx.user.id,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "topic_date" }).select("id,topic_date,title_i18n,body_i18n,status,updated_at").single(), "MarSoh konusu kaydedilemedi.");
+    await marsohAudit({ request, ctx, action: "marsoh.management.topic_updated", resourceType: "marsoh_topic_card", resourceId: topic.id, metadata: { topic_date: topicDate, status: input.status } });
+    return { ok: true, topic };
+  });
+
+  app.post("/v1/admin/marsoh/messages", async (request, reply) => {
+    const ctx = await requireModerator(request, "marsoh.management.announcement.publish");
+    const input = adminAnnouncementSchema.parse(request.body || {});
+    const body = sanitizeMarsohText(input.body, 4000);
+    if (!body) throw httpError("Yönetim mesajı boş bırakılamaz.", 400, "MARSOH_MESSAGE_EMPTY");
+    if (body.length > config.marsoh.maxMessageChars) throw httpError(`Mesaj en fazla ${config.marsoh.maxMessageChars} karakter olabilir.`, 400, "MARSOH_MESSAGE_TOO_LONG");
+    const channel = assertDb(await supabaseAdmin.from("marsoh_channels").select("id,status").eq("id", input.channel_id).maybeSingle(), "MarSoh odası okunamadı.");
+    if (!channel || channel.status !== "active") throw httpError("Yalnızca aktif bir MarSoh odasına duyuru gönderilebilir.", 409, "MARSOH_CHANNEL_PAUSED");
+    const messageId = randomUUID();
+    const hash = sha256(normalizedModerationText(body));
+    const acceptedRows = assertDb(await supabaseAdmin.rpc("marsoh_accept_text_message", {
+      p_message_id: messageId,
+      p_channel_id: channel.id,
+      p_sender_user_id: ctx.user.id,
+      p_actor_type: "moderator",
+      p_idempotency_key: input.idempotency_key,
+      p_body: body,
+      p_normalized_hash: hash,
+      p_language: input.language,
+      p_sender_display_name: "AllonaHub MarSoh Yönetimi",
+      p_sender_badge: "moderator",
+      p_sender_country_code: null,
+      p_category: "community_notice",
+      p_confidence: 1,
+      p_rule_code: "ADMIN_NOTICE",
+      p_administrator_explanation: "MFA doğrulamalı MarSoh yöneticisi tarafından yayımlandı.",
+      p_recommended_action: "publish",
+      p_decision: "published",
+      p_classifier_version: "admin-v1"
+    }), "MarSoh yönetim mesajı yayımlanamadı.") || [];
+    const acceptedId = acceptedRows[0]?.message_id || messageId;
+    await marsohAudit({ request, ctx, action: "marsoh.management.announcement_published", resourceType: "marsoh_message", resourceId: acceptedId, contentHash: hash, metadata: { channel_id: channel.id, language: input.language } });
+    reply.code(201);
+    return { ok: true, message_id: acceptedId };
+  });
+
+  app.post("/v1/admin/marsoh/messages/bulk-remove", async (request) => {
+    const ctx = await requireModerator(request, "marsoh.management.messages.bulk_remove");
+    const input = bulkRemoveSchema.parse(request.body || {});
+    if (input.channel_id) {
+      const channel = assertDb(await supabaseAdmin.from("marsoh_channels").select("id").eq("id", input.channel_id).maybeSingle(), "MarSoh odası okunamadı.");
+      if (!channel) throw httpError("MarSoh odası bulunamadı.", 404, "MARSOH_CHANNEL_NOT_FOUND");
+    }
+    const removed = assertDb(await supabaseAdmin.rpc("marsoh_admin_remove_published_messages", {
+      p_actor_user_id: ctx.user.id,
+      p_reason: input.reason,
+      p_channel_id: input.channel_id || null
+    }), "MarSoh mesajları yayından kaldırılamadı.");
+    await auditEvent({ request, actorId: ctx.user.id, actorRole: ctx.profile.role, action: "marsoh.management.bulk_removed", resourceType: "marsoh_channel", resourceId: input.channel_id || null, metadata: { removed_count: Number(removed || 0), reason: input.reason } });
+    return { ok: true, removed_count: Number(removed || 0) };
   });
 
   app.get("/v1/admin/marsoh/moderation", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request) => {

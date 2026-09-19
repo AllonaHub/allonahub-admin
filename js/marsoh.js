@@ -20,6 +20,17 @@
     tr: "tr-TR", az: "az-AZ", en: "en-US", de: "de-DE", ru: "ru-RU",
     ar: "ar-SA", kk: "kk-KZ", uz: "uz-UZ", ky: "ky-KG"
   };
+  const COUNTRY_ROOM_NOTICES = {
+    tr: "Saygılı, güvenli ve denizcilik odaklı sohbet edin.",
+    az: "Hörmətli, təhlükəsiz və dənizçilik yönümlü söhbət edin.",
+    en: "Keep the conversation respectful, safe, and maritime-focused.",
+    de: "Bleiben Sie respektvoll, sicher und beim Thema Seefahrt.",
+    ru: "Общайтесь уважительно, безопасно и по морской теме.",
+    ar: "تحدث باحترام وأمان والتزم بالموضوع البحري.",
+    kk: "Құрметпен, қауіпсіз және теңіз тақырыбында сөйлесіңіз.",
+    uz: "Hurmat bilan, xavfsiz va dengiz mavzusida suhbatlashing.",
+    ky: "Урматтоо менен, коопсуз жана деңиз темасында сүйлөшүңүз."
+  };
   const state = {
     session: null,
     locale: I18n.current(),
@@ -148,7 +159,12 @@
     }
     return I18n.localized(channel.name_i18n, state.locale) || channel.slug;
   }
-  function localizePinned(channel) { return I18n.localized(channel.pinned_notice_i18n, state.locale) || t("defaultPinned"); }
+  function hasBrokenEncoding(value) { return /\uFFFD|Ã|Ä|Å|Â|Ð|Ñ/.test(String(value || "")); }
+  function localizePinned(channel) {
+    const value = I18n.localized(channel.pinned_notice_i18n, state.locale);
+    if (channel.channel_type === "country" && (!value || hasBrokenEncoding(value))) return COUNTRY_ROOM_NOTICES[state.locale] || COUNTRY_ROOM_NOTICES.en;
+    return value || t("defaultPinned");
+  }
 
   function renderChannels() {
     const target = $("[data-marsoh-channel-list]");
@@ -451,6 +467,12 @@
         upsertMessage({ id: row.message_id, server_id: row.message_id, channel_id: row.channel_id, sender: { id: row.sender_user_id, display_name: row.sender_display_name, badge: row.sender_badge, country_code: row.sender_country_code, actor_type: row.actor_type }, body: row.body, language: row.language, time: row.published_at, own, local_status: own ? "sent" : undefined });
         renderMessages({ preserveBottom: wasNearBottom });
         if (!wasNearBottom) { $("[data-marsoh-unread-line]").hidden = false; $("[data-marsoh-jump-latest]").hidden = false; }
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "marsoh_published_messages" }, (payload) => {
+        const removedId = payload.old?.message_id;
+        if (!removedId || state.currentChannel?.id !== channelId) return;
+        state.messages = state.messages.filter((message) => message.id !== removedId && message.server_id !== removedId);
+        renderMessages({ preserveBottom: nearBottom() });
       }).subscribe((status) => {
         if (status === "SUBSCRIBED") setConnectionStatus("live");
         else if (!navigator.onLine) setConnectionStatus("offline");

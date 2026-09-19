@@ -15,7 +15,12 @@
     maritimeTrust: null,
     marsohModeration: [],
     marsohReports: [],
-    marsohSanctions: []
+    marsohSanctions: [],
+    marsohChannels: [],
+    marsohTopics: [],
+    marsohMessages: [],
+    marsohAudit: [],
+    marsohMessageCursor: null
   };
 
   const viewLoaders = {
@@ -1043,7 +1048,7 @@
     system: ["Sistem Ayarları", "Bakım, ödeme, partner başvurusu ve komisyon kontrolleri"],
     security: ["Güvenlik Merkezi", "Başarısız giriş, IP, audit ve auto-defense sinyalleri"],
     "maritime-trust": ["Maritime Trust", "Denizcilik metadata, risk, şikayet ve audit kontrolü"],
-    "marsoh-moderation": ["MarSoh Moderasyonu", "Karantina, yaptırım ve audit kontrollü yayın kararları"],
+    "marsoh-moderation": ["MarSoh Yönetimi", "Odalar, günlük konu, mesajlar, bildirimler ve güvenlik kararları"],
     audit: ["Audit Log", "Append-only kritik işlem kayıtları"]
   };
 
@@ -1643,12 +1648,51 @@
     ].join(""));
   }
 
+  const marsohLanguageLabels = {
+    tr: "Türkçe", az: "Azərbaycanca", en: "English", de: "Deutsch", ru: "Русский",
+    ar: "العربية", kk: "Қазақша", uz: "O‘zbekcha", ky: "Кыргызча"
+  };
+
+  function marsohLocalizedFields(prefix, values, options) {
+    const multiline = Boolean(options && options.multiline);
+    const maxLength = Number(options && options.maxLength || (multiline ? 800 : 160));
+    return Object.entries(marsohLanguageLabels).map(([language, label]) => {
+      const value = escape(values && values[language] || "");
+      const required = ["tr", "az", "en"].includes(language) && options?.requiredCore ? " required" : "";
+      const control = multiline
+        ? `<textarea name="${escape(prefix)}_${language}" maxlength="${maxLength}" rows="3"${required}>${value}</textarea>`
+        : `<input name="${escape(prefix)}_${language}" type="text" maxlength="${maxLength}" value="${value}"${required}>`;
+      return `<label><span>${escape(label)}</span>${control}</label>`;
+    }).join("");
+  }
+
+  function marsohMapFromForm(form, prefix) {
+    const data = new FormData(form);
+    return Object.fromEntries(Object.keys(marsohLanguageLabels).map((language) => [language, String(data.get(`${prefix}_${language}`) || "").trim()]));
+  }
+
+  function marsohChannelLabel(channel) {
+    return channel?.name_i18n?.tr || channel?.name_i18n?.az || channel?.name_i18n?.en || channel?.slug || "Oda";
+  }
+
+  function marsohPanel(title, subtitle, content, tone) {
+    return `<section class="sa-marsoh-panel${tone ? ` is-${escape(tone)}` : ""}"><header><div><h2>${escape(title)}</h2><p>${escape(subtitle || "")}</p></div></header>${content}</section>`;
+  }
+
   async function loadOwnerMarsohModeration() {
-    ownerLoading("MarSoh Moderasyonu");
-    const payload = await api("/v1/admin/marsoh/moderation?limit=120");
-    state.marsohModeration = payload.queue || [];
-    state.marsohReports = payload.reports || [];
-    state.marsohSanctions = payload.sanctions || [];
+    ownerLoading("MarSoh Yönetimi");
+    const [moderationPayload, managementPayload] = await Promise.all([
+      api("/v1/admin/marsoh/moderation?limit=120"),
+      api("/v1/admin/marsoh/management?limit=100")
+    ]);
+    state.marsohModeration = moderationPayload.queue || [];
+    state.marsohReports = moderationPayload.reports || [];
+    state.marsohSanctions = moderationPayload.sanctions || [];
+    state.marsohChannels = managementPayload.channels || [];
+    state.marsohTopics = managementPayload.topics || [];
+    state.marsohMessages = managementPayload.messages || [];
+    state.marsohAudit = managementPayload.audit || [];
+    state.marsohMessageCursor = managementPayload.next_cursor || null;
     const queueRows = state.marsohModeration.map((item) => {
       const message = item.message || {};
       const channel = item.channel || {};
@@ -1672,14 +1716,67 @@
       `<button type="button" data-marsoh-admin-action="lift" data-sanction-id="${escape(item.id)}">Yaptırımı Kaldır</button>`,
       item.sanction_type === "permanent_ban" ? "critical" : "high"
     ));
+
+    const channelOptions = state.marsohChannels.map((channel) => `<option value="${escape(channel.id)}">${escape(marsohChannelLabel(channel))}</option>`).join("");
+    const latestTopic = state.marsohTopics[0] || {
+      topic_date: new Date().toISOString().slice(0, 10),
+      title_i18n: {}, body_i18n: {}, status: "active"
+    };
+    const announcementForm = `
+      <form class="sa-marsoh-form" data-marsoh-announcement-form>
+        <label><span>Yayın odası</span><select name="channel_id" required>${channelOptions}</select></label>
+        <label><span>Mesaj dili</span><select name="language">${Object.entries(marsohLanguageLabels).map(([value, label]) => `<option value="${value}">${escape(label)}</option>`).join("")}</select></label>
+        <label class="is-wide"><span>Yönetim mesajı</span><textarea name="body" rows="3" maxlength="2000" required placeholder="Topluluk veya denizde güvenlik duyurusunu yazın"></textarea></label>
+        <button class="sa-btn" type="submit">MarSoh’ta Yayınla</button>
+      </form>`;
+    const topicForm = `
+      <form class="sa-marsoh-form" data-marsoh-topic-form>
+        <label><span>Yayın tarihi</span><input name="topic_date" type="date" value="${escape(latestTopic.topic_date)}" required></label>
+        <label><span>Durum</span><select name="status"><option value="active" ${latestTopic.status === "active" ? "selected" : ""}>Aktif</option><option value="archived" ${latestTopic.status === "archived" ? "selected" : ""}>Arşiv</option></select></label>
+        <details class="sa-marsoh-locales is-wide" open><summary>Başlık çevirileri</summary><div>${marsohLocalizedFields("title", latestTopic.title_i18n, { requiredCore: true })}</div></details>
+        <details class="sa-marsoh-locales is-wide" open><summary>Soru çevirileri</summary><div>${marsohLocalizedFields("body", latestTopic.body_i18n, { multiline: true, maxLength: 800, requiredCore: true })}</div></details>
+        <button class="sa-btn" type="submit">Günün Konusunu Kaydet</button>
+      </form>`;
+    const channelForms = state.marsohChannels.map((channel) => `
+      <form class="sa-marsoh-channel" data-marsoh-channel-form data-channel-id="${escape(channel.id)}">
+        <header><div><strong>${escape(marsohChannelLabel(channel))}</strong><small>${escape(channel.slug)}${channel.country_code ? ` / ${escape(channel.country_code)}` : ""}</small></div><span class="sa-marsoh-status">${escape(channel.status)}</span></header>
+        <div class="sa-marsoh-form">
+          <label><span>Oda durumu</span><select name="status"><option value="active" ${channel.status === "active" ? "selected" : ""}>Aktif</option><option value="paused" ${channel.status === "paused" ? "selected" : ""}>Duraklat</option><option value="archived" ${channel.status === "archived" ? "selected" : ""}>Arşivle</option></select></label>
+          <label><span>Yavaş mod (saniye)</span><input name="slow_mode_seconds" type="number" min="0" max="300" value="${escape(channel.slow_mode_seconds)}" required></label>
+          <details class="sa-marsoh-locales is-wide"><summary>Oda adı çevirileri</summary><div>${marsohLocalizedFields("name", channel.name_i18n, { maxLength: 120 })}</div></details>
+          <details class="sa-marsoh-locales is-wide"><summary>Sabit güvenlik metinleri</summary><div>${marsohLocalizedFields("notice", channel.pinned_notice_i18n, { multiline: true, maxLength: 600 })}</div></details>
+          <button class="sa-btn sa-btn-ghost" type="submit">Odayı Güncelle</button>
+        </div>
+      </form>`).join("");
+    const messageRows = state.marsohMessages.map((item) => ownerLine(
+      item.sender_display_name || "Gönderici",
+      `${escape(item.body || "-")}<br><em>${escape(marsohChannelLabel(state.marsohChannels.find((channel) => channel.id === item.channel_id)))} / ${escape(item.language || "und")} / ${formatDate(item.published_at)}</em>`,
+      `<button type="button" data-marsoh-context="${escape(item.message_id)}">Geçmiş</button> <button type="button" data-marsoh-admin-action="rejected" data-message-id="${escape(item.message_id)}">Mesajı Sil</button> <button type="button" data-marsoh-admin-action="temporary_mute" data-user-id="${escape(item.sender_user_id)}">24 Saat Sustur</button>`,
+      item.actor_type === "moderator" ? "medium" : "low"
+    ));
+    const bulkControls = `
+      <div class="sa-marsoh-danger-zone">
+        <label><span>Temizlenecek alan</span><select data-marsoh-bulk-channel><option value="">Tüm MarSoh odaları</option>${channelOptions}</select></label>
+        <p>Mesajlar halka açık akıştan kaldırılır; kabul kaydı, şikâyetler ve audit kanıtı korunur.</p>
+        <button class="sa-btn sa-btn-danger" type="button" data-marsoh-bulk-remove>Tüm Yayınlanmış Mesajları Sil</button>
+      </div>`;
+    const auditRows = state.marsohAudit.slice(0, 40).map((item) => ownerLine(
+      item.action || "MarSoh işlemi",
+      `${formatDate(item.created_at)} / ${escape(item.resource_type || "-")} ${escape(item.resource_id || "")}`,
+      item.actor_user_id ? `Yönetici ${escape(item.actor_user_id)}` : "Sistem",
+      /removed|rejected|sanction|report/.test(item.action || "") ? "high" : "low"
+    ));
     ownerSetOutput([
-      ownerLine("Güvenlik sınırı", "Karantina durumu ve sınıflandırıcı ayrıntıları yalnızca MFA doğrulamalı yöneticiye açıktır. Mesaj HTML olarak çalıştırılmaz.", "", "critical"),
-      ownerLine("Karantina kuyruğu", `${formatNumber(state.marsohModeration.length)} mesaj`, "", state.marsohModeration.length ? "high" : "low"),
-      queueRows.length ? queueRows.join("") : ownerEmpty("Karantinada mesaj bulunmuyor."),
-      ownerLine("Kullanıcı bildirimleri", `${formatNumber(state.marsohReports.length)} açık bildirim`, "", state.marsohReports.length ? "high" : "low"),
-      reportRows.length ? reportRows.join("") : ownerEmpty("Açık MarSoh bildirimi bulunmuyor."),
-      ownerLine("Aktif yaptırımlar", `${formatNumber(state.marsohSanctions.length)} kayıt`, "", state.marsohSanctions.length ? "high" : "low"),
-      sanctionRows.length ? sanctionRows.join("") : ownerEmpty("Aktif MarSoh yaptırımı bulunmuyor.")
+      `<div class="sa-marsoh-stats"><div><strong>${formatNumber(state.marsohChannels.length)}</strong><span>Oda</span></div><div><strong>${formatNumber(state.marsohMessages.length)}</strong><span>Son mesaj</span></div><div><strong>${formatNumber(state.marsohReports.length)}</strong><span>Açık bildirim</span></div><div><strong>${formatNumber(state.marsohModeration.length)}</strong><span>Karantina</span></div></div>`,
+      marsohPanel("Yönetimden paylaşım", "Seçilen odada AllonaHub MarSoh Yönetimi adıyla yayımlanır.", announcementForm),
+      marsohPanel("Bugünün deniz konusu", "Başlık ve soru metnini günlük olarak dokuz dilde yönetebilirsiniz.", topicForm),
+      marsohPanel("Oda yönetimi", "Oda durumunu, yavaş modu, adları ve sabit güvenlik metinlerini yönetin.", `<div class="sa-marsoh-channels">${channelForms || ownerEmpty("MarSoh odası bulunamadı.")}</div>`),
+      marsohPanel("Yayımlanmış mesajlar", "Hatalı bir mesajı tek tek kaldırın veya gerekli kullanıcı yaptırımını uygulayın.", `<div data-marsoh-published-list>${messageRows.length ? messageRows.join("") : ownerEmpty("Yayımlanmış mesaj bulunmuyor.")}</div>${state.marsohMessageCursor ? `<button class="sa-btn sa-btn-ghost sa-marsoh-more" type="button" data-marsoh-load-more>Daha Eski Mesajları Getir</button>` : ""}`),
+      marsohPanel("Toplu temizlik", "Yüksek riskli işlem. Her kullanım gerekçe ve yönetici kimliğiyle kaydedilir.", bulkControls, "danger"),
+      marsohPanel("Karantina kuyruğu", `${formatNumber(state.marsohModeration.length)} mesaj güvenlik kararı bekliyor.`, queueRows.length ? queueRows.join("") : ownerEmpty("Karantinada mesaj bulunmuyor.")),
+      marsohPanel("Şikâyet ve bildirimler", `${formatNumber(state.marsohReports.length)} açık kullanıcı bildirimi bulunuyor.`, reportRows.length ? reportRows.join("") : ownerEmpty("Açık MarSoh bildirimi bulunmuyor.")),
+      marsohPanel("Aktif yaptırımlar", `${formatNumber(state.marsohSanctions.length)} kullanıcı yaptırımı aktif.`, sanctionRows.length ? sanctionRows.join("") : ownerEmpty("Aktif MarSoh yaptırımı bulunmuyor.")),
+      marsohPanel("MarSoh işlem geçmişi", "Son yönetim, moderasyon, şikâyet ve güvenlik kayıtları.", auditRows.length ? auditRows.join("") : ownerEmpty("MarSoh audit kaydı bulunmuyor."))
     ].join(""));
   }
 
@@ -1690,7 +1787,7 @@
     const sanctionId = button.dataset.sanctionId;
     const labels = {
       published: "Mesaj diğer kullanıcılara yayımlanacak.",
-      rejected: "Mesaj kalıcı olarak reddedilecek.",
+      rejected: "Mesaj halka açık MarSoh akışından kaldırılacak; güvenlik ve audit kaydı korunacak.",
       temporary_mute: "Kullanıcı 24 saat boyunca MarSoh'da susturulacak.",
       permanent_ban: "Kullanıcı MarSoh'dan kalıcı olarak engellenecek.",
       lift: "Seçili MarSoh yaptırımı kaldırılacak."
@@ -1719,6 +1816,110 @@
         body: { decision: action, reason }
       });
     }, { trigger: button, defaultReason: labels[action] || "MarSoh bildirim kararı", requireReason: true });
+  }
+
+  async function submitMarsohAnnouncement(form) {
+    const data = new FormData(form);
+    const button = $("button[type='submit']", form);
+    if (button) button.disabled = true;
+    try {
+      await api("/v1/admin/marsoh/messages", {
+        method: "POST",
+        body: {
+          channel_id: String(data.get("channel_id") || ""),
+          language: String(data.get("language") || "tr"),
+          body: String(data.get("body") || "").trim(),
+          idempotency_key: crypto.randomUUID()
+        }
+      });
+      setAlert("Yönetim mesajı MarSoh’ta yayımlandı ve audit kaydı oluşturuldu.", "ok");
+      await loadOwnerMarsohModeration();
+    } catch (error) {
+      setAlert(publicError(error, "Yönetim mesajı yayımlanamadı."), "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function submitMarsohTopic(form) {
+    const data = new FormData(form);
+    const topicDate = String(data.get("topic_date") || "");
+    const button = $("button[type='submit']", form);
+    if (button) button.disabled = true;
+    try {
+      await api(`/v1/admin/marsoh/topics/${encodeURIComponent(topicDate)}`, {
+        method: "PUT",
+        body: {
+          title_i18n: marsohMapFromForm(form, "title"),
+          body_i18n: marsohMapFromForm(form, "body"),
+          status: String(data.get("status") || "active")
+        }
+      });
+      setAlert("Günün deniz konusu tüm dil alanlarıyla kaydedildi.", "ok");
+      await loadOwnerMarsohModeration();
+    } catch (error) {
+      setAlert(publicError(error, "Günün deniz konusu kaydedilemedi."), "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function submitMarsohChannel(form) {
+    const data = new FormData(form);
+    const channelId = form.dataset.channelId;
+    const button = $("button[type='submit']", form);
+    if (button) button.disabled = true;
+    try {
+      await api(`/v1/admin/marsoh/channels/${encodeURIComponent(channelId)}`, {
+        method: "PATCH",
+        body: {
+          status: String(data.get("status") || "active"),
+          slow_mode_seconds: Number(data.get("slow_mode_seconds") || 0),
+          name_i18n: marsohMapFromForm(form, "name"),
+          pinned_notice_i18n: marsohMapFromForm(form, "notice")
+        }
+      });
+      setAlert("MarSoh oda ayarları güncellendi.", "ok");
+      await loadOwnerMarsohModeration();
+    } catch (error) {
+      setAlert(publicError(error, "Oda ayarları güncellenemedi."), "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  async function removeAllMarsohMessages(button) {
+    const channelId = String($("[data-marsoh-bulk-channel]")?.value || "") || null;
+    const channel = state.marsohChannels.find((item) => item.id === channelId);
+    const scope = channel ? marsohChannelLabel(channel) : "tüm MarSoh odaları";
+    await runConfirmed(`${scope} içindeki bütün yayımlanmış mesajlar halka açık akıştan kaldırılacak. Bu işlem geri alınamaz.`, async (reason) => {
+      const payload = await api("/v1/admin/marsoh/messages/bulk-remove", {
+        method: "POST",
+        body: { channel_id: channelId, reason, confirmation: "MARSOH_ALL_MESSAGES_REMOVE" }
+      });
+      setAlert(`${formatNumber(payload.removed_count)} mesaj halka açık akıştan kaldırıldı.`, "ok");
+    }, { trigger: button, defaultReason: `${scope} için yönetici toplu temizlik kararı`, requireReason: true });
+  }
+
+  async function loadMoreMarsohMessages(button) {
+    if (!state.marsohMessageCursor) return;
+    button.disabled = true;
+    try {
+      const payload = await api(`/v1/admin/marsoh/management?limit=100&before=${encodeURIComponent(state.marsohMessageCursor)}`);
+      const rows = (payload.messages || []).map((item) => ownerLine(
+        item.sender_display_name || "Gönderici",
+        `${escape(item.body || "-")}<br><em>${escape(marsohChannelLabel(state.marsohChannels.find((channel) => channel.id === item.channel_id)))} / ${escape(item.language || "und")} / ${formatDate(item.published_at)}</em>`,
+        `<button type="button" data-marsoh-context="${escape(item.message_id)}">Geçmiş</button> <button type="button" data-marsoh-admin-action="rejected" data-message-id="${escape(item.message_id)}">Mesajı Sil</button> <button type="button" data-marsoh-admin-action="temporary_mute" data-user-id="${escape(item.sender_user_id)}">24 Saat Sustur</button>`,
+        item.actor_type === "moderator" ? "medium" : "low"
+      ));
+      $("[data-marsoh-published-list]")?.insertAdjacentHTML("beforeend", rows.join(""));
+      state.marsohMessages.push(...(payload.messages || []));
+      state.marsohMessageCursor = payload.next_cursor || null;
+      if (!state.marsohMessageCursor) button.remove();
+    } catch (error) {
+      setAlert(publicError(error, "Eski MarSoh mesajları yüklenemedi."), "error");
+      button.disabled = false;
+    }
   }
 
   async function showMarsohContext(messageId) {
@@ -2001,6 +2202,27 @@
           return;
         }
 
+        const marsohAnnouncementForm = eventClosest(event, "[data-marsoh-announcement-form]");
+        if (marsohAnnouncementForm) {
+          event.preventDefault();
+          await submitMarsohAnnouncement(marsohAnnouncementForm);
+          return;
+        }
+
+        const marsohTopicForm = eventClosest(event, "[data-marsoh-topic-form]");
+        if (marsohTopicForm) {
+          event.preventDefault();
+          await submitMarsohTopic(marsohTopicForm);
+          return;
+        }
+
+        const marsohChannelForm = eventClosest(event, "[data-marsoh-channel-form]");
+        if (marsohChannelForm) {
+          event.preventDefault();
+          await submitMarsohChannel(marsohChannelForm);
+          return;
+        }
+
         const releaseForm = eventClosest(event, "[data-release-form]");
         if (releaseForm) {
           event.preventDefault();
@@ -2051,6 +2273,12 @@
 
         const marsohContext = eventClosest(event, "[data-marsoh-context]");
         if (marsohContext) await showMarsohContext(marsohContext.dataset.marsohContext);
+
+        const marsohBulkRemove = eventClosest(event, "[data-marsoh-bulk-remove]");
+        if (marsohBulkRemove) await removeAllMarsohMessages(marsohBulkRemove);
+
+        const marsohLoadMore = eventClosest(event, "[data-marsoh-load-more]");
+        if (marsohLoadMore) await loadMoreMarsohMessages(marsohLoadMore);
 
         const moduleMapDetail = eventClosest(event, "[data-module-map-detail]");
         if (moduleMapDetail) showModuleMapDetail(moduleMapDetail.dataset.moduleMapDetail);

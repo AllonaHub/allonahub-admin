@@ -1848,6 +1848,220 @@ body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel .s
   font-weight: 950;
 }
 
+/* MarSoh owner management */
+body[data-page="super-admin"] .sa-marsoh-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+body[data-page="super-admin"] .sa-marsoh-stats > div {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  align-content: center;
+  padding: 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: var(--sa-panel);
+  box-shadow: var(--sa-shadow);
+}
+
+body[data-page="super-admin"] .sa-marsoh-stats strong {
+  color: var(--sa-blue);
+  font-size: 24px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-stats span {
+  color: var(--sa-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel {
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: var(--sa-panel);
+  box-shadow: var(--sa-shadow);
+  min-width: 0;
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel.is-danger {
+  border-color: rgba(211, 58, 83, 0.34);
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sa-line);
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel h2,
+body[data-page="super-admin"] .sa-marsoh-panel p {
+  margin: 0;
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel h2 {
+  font-size: 17px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-panel header p,
+body[data-page="super-admin"] .sa-marsoh-danger-zone p {
+  margin-top: 5px;
+  color: var(--sa-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form label,
+body[data-page="super-admin"] .sa-marsoh-danger-zone label,
+body[data-page="super-admin"] .sa-marsoh-locales label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--sa-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form input,
+body[data-page="super-admin"] .sa-marsoh-form select,
+body[data-page="super-admin"] .sa-marsoh-form textarea,
+body[data-page="super-admin"] .sa-marsoh-danger-zone select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: var(--sa-panel-soft);
+  color: var(--sa-text);
+  outline: none;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form input:focus,
+body[data-page="super-admin"] .sa-marsoh-form select:focus,
+body[data-page="super-admin"] .sa-marsoh-form textarea:focus {
+  border-color: var(--sa-blue);
+  box-shadow: 0 0 0 3px rgba(23, 103, 232, 0.12);
+}
+
+body[data-page="super-admin"] .sa-marsoh-form .is-wide,
+body[data-page="super-admin"] .sa-marsoh-form > button {
+  grid-column: 1 / -1;
+}
+
+body[data-page="super-admin"] .sa-marsoh-form > button {
+  justify-self: start;
+}
+
+body[data-page="super-admin"] .sa-marsoh-locales {
+  padding: 10px 0;
+  border-top: 1px solid var(--sa-line);
+}
+
+body[data-page="super-admin"] .sa-marsoh-locales summary {
+  color: var(--sa-blue);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+body[data-page="super-admin"] .sa-marsoh-locales > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 10px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-channels {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-channel {
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  padding: 12px;
+  background: var(--sa-panel-soft);
+}
+
+body[data-page="super-admin"] .sa-marsoh-channel > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-channel header div {
+  display: grid;
+  gap: 3px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-channel small,
+body[data-page="super-admin"] .sa-marsoh-status {
+  color: var(--sa-muted);
+  font-size: 12px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-status {
+  align-self: start;
+  padding: 4px 8px;
+  border: 1px solid var(--sa-line);
+  border-radius: 999px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-danger-zone {
+  display: grid;
+  grid-template-columns: minmax(180px, 280px) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding-top: 14px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-more {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  body[data-page="super-admin"] .sa-marsoh-stats,
+  body[data-page="super-admin"] .sa-marsoh-locales > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="super-admin"] .sa-marsoh-danger-zone {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 560px) {
+  body[data-page="super-admin"] .sa-marsoh-stats,
+  body[data-page="super-admin"] .sa-marsoh-form,
+  body[data-page="super-admin"] .sa-marsoh-locales > div {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="super-admin"] .sa-marsoh-panel {
+    padding: 12px;
+  }
+}
+
 body[data-page="super-admin"] .sa-shell > .sa-main:only-child .sa-login-panel > .sa-btn {
   display: inline-flex;
   align-items: center;

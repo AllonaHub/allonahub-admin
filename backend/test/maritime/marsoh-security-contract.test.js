@@ -13,9 +13,12 @@ const modulePageUrl = new URL("../../../pages/ecosystem/allonadenizcilik.html", 
 const adminPageUrl = new URL("../../../admin/super-admin.html", import.meta.url);
 const adminUiUrl = new URL("../../../js/super-admin.js", import.meta.url);
 const reactionMigrationUrl = new URL("../../../supabase/migrations/20260919203000_expand_marsoh_languages_and_reactions.sql", import.meta.url);
+const adminManagementMigrationUrl = new URL("../../../supabase/migrations/20260920013000_expand_marsoh_admin_management.sql", import.meta.url);
+const maritimeDeployUrl = new URL("../../../deploy/maritime/apply-maritime-migrations.sh", import.meta.url);
+const maritimeSchemaCheckUrl = new URL("../../../deploy/maritime/check-maritime-hiring-core.sh", import.meta.url);
 
 async function sources() {
-  return Promise.all([migrationUrl, routeUrl, appUrl, uiUrl, speechUrl, pageUrl, cssUrl, modulePageUrl, adminPageUrl, adminUiUrl, reactionMigrationUrl].map((url) => readFile(url, "utf8")));
+  return Promise.all([migrationUrl, routeUrl, appUrl, uiUrl, speechUrl, pageUrl, cssUrl, modulePageUrl, adminPageUrl, adminUiUrl, reactionMigrationUrl, adminManagementMigrationUrl].map((url) => readFile(url, "utf8")));
 }
 
 test("unauthenticated visitors cannot read or write MarSoh", async () => {
@@ -155,6 +158,40 @@ test("admin moderation requires MFA and every decision is audited", async () => 
   assert.match(adminUi, /data-marsoh-admin-action="rejected"/);
   assert.match(adminUi, /data-marsoh-report-action="dismissed"/);
   assert.match(route, /\/v1\/admin\/marsoh\/reports\/:reportId\/decision/);
+});
+
+test("MarSoh owner management controls rooms, topics, announcements, reports, and public removals", async () => {
+  const [, route, , , , , , , adminPage, adminUi, , managementMigration] = await sources();
+  const [deployScript, schemaCheck] = await Promise.all([readFile(maritimeDeployUrl, "utf8"), readFile(maritimeSchemaCheckUrl, "utf8")]);
+  assert.match(adminPage, /data-view-target="marsoh-moderation">MarSoh<\/button>/);
+  assert.match(adminUi, /data-marsoh-announcement-form/);
+  assert.match(adminUi, /data-marsoh-topic-form/);
+  assert.match(adminUi, /data-marsoh-channel-form/);
+  assert.match(adminUi, /data-marsoh-bulk-remove/);
+  assert.match(adminUi, /Tüm Yayınlanmış Mesajları Sil/);
+  assert.match(route, /app\.get\("\/v1\/admin\/marsoh\/management"[\s\S]*requireModerator\(request, "marsoh\.management\.read"\)/);
+  assert.match(route, /app\.patch\("\/v1\/admin\/marsoh\/channels\/:channelId"[\s\S]*marsoh\.management\.channel_updated/);
+  assert.match(route, /app\.put\("\/v1\/admin\/marsoh\/topics\/:topicDate"[\s\S]*marsoh\.management\.topic_updated/);
+  assert.match(route, /app\.post\("\/v1\/admin\/marsoh\/messages"[\s\S]*ADMIN_NOTICE/);
+  assert.match(route, /app\.post\("\/v1\/admin\/marsoh\/messages\/bulk-remove"/);
+  assert.match(route, /confirmation: z\.literal\("MARSOH_ALL_MESSAGES_REMOVE"\)/);
+  assert.match(managementMigration, /create or replace function public\.marsoh_admin_remove_published_messages/);
+  assert.match(managementMigration, /delete from public\.marsoh_published_messages/);
+  assert.doesNotMatch(managementMigration, /delete from public\.marsoh_messages/);
+  assert.match(managementMigration, /MARSOH_SERVICE_ROLE_REQUIRED/);
+  assert.match(managementMigration, /marsoh\.management\.bulk_removed/);
+  assert.match(deployScript, /20260920013000_expand_marsoh_admin_management\.sql/);
+  assert.match(schemaCheck, /marsoh_admin_remove_published_messages\(uuid,text,uuid\)/);
+});
+
+test("admin removals disappear from open chats and Turkish/Azerbaijani room text has safe fallbacks", async () => {
+  const [, , , ui, , , , , , , , managementMigration] = await sources();
+  assert.match(ui, /event: "DELETE"[\s\S]*table: "marsoh_published_messages"/);
+  assert.match(ui, /state\.messages = state\.messages\.filter/);
+  assert.match(ui, /COUNTRY_ROOM_NOTICES/);
+  assert.match(ui, /hasBrokenEncoding/);
+  assert.match(managementMigration, /U&'Sayg\\0131l\\0131, g\\00FCvenli/);
+  assert.match(managementMigration, /U&'H\\00F6rm\\0259tli, t\\0259hl\\00FCk\\0259siz/);
 });
 
 test("message reports remain as evidence when a published projection is removed", async () => {

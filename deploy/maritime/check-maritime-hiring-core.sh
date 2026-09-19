@@ -58,7 +58,8 @@ begin
     'public.marsoh_sender_is_blocked(uuid)',
     'public.marsoh_visible_messages(uuid,timestamp with time zone,integer)',
     'public.marsoh_accept_text_message(uuid,uuid,uuid,text,uuid,text,text,text,text,text,text,text,numeric,text,text,text,text,text)',
-    'public.marsoh_admin_decide_message(uuid,uuid,text,text)'
+    'public.marsoh_admin_decide_message(uuid,uuid,text,text)',
+    'public.marsoh_admin_remove_published_messages(uuid,text,uuid)'
   ] loop
     if to_regprocedure(helper_name) is null then
       raise exception 'Missing maritime hiring helper function: %', helper_name;
@@ -347,6 +348,22 @@ begin
       and policy.qual ilike '%marsoh_sender_is_blocked%'
   ) then
     raise exception 'MarSoh published-message RLS does not protect sender moderation state or user blocks';
+  end if;
+
+  if has_function_privilege('authenticated', 'public.marsoh_admin_remove_published_messages(uuid,text,uuid)', 'EXECUTE')
+    or not has_function_privilege('service_role', 'public.marsoh_admin_remove_published_messages(uuid,text,uuid)', 'EXECUTE')
+    or exists (
+      select 1
+      from (values ('created_by'), ('updated_by'), ('updated_at')) as expected(column_name)
+      where not exists (
+        select 1
+        from information_schema.columns column_info
+        where column_info.table_schema = 'public'
+          and column_info.table_name = 'marsoh_topic_cards'
+          and column_info.column_name = expected.column_name
+      )
+    ) then
+    raise exception 'MarSoh management function grants or topic audit columns are incomplete';
   end if;
 
   if not exists (
