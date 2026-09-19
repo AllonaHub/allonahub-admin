@@ -983,6 +983,43 @@ body.maritime-page {
 }
 
 @media (min-width: 761px) {
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry-band {
+    width: min(100%, 620px);
+    margin: 18px 0 26px;
+    padding: 0;
+    justify-self: start;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry {
+    min-height: 88px;
+    grid-template-columns: 56px minmax(0, 1fr) 36px;
+    gap: 12px;
+    padding: 13px 12px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry__icon {
+    width: 54px;
+    height: 54px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry__icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry__copy strong {
+    font-size: 23px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry__copy span {
+    margin-top: 5px;
+    font-size: 13px;
+  }
+
+  body.maritime-page[data-maritime-experience="responsive"] .marsoh-entry__signal {
+    min-width: 34px;
+  }
+
   body.maritime-page[data-maritime-experience="responsive"] .mobile-maritime__header {
     padding: 14px clamp(24px, 4vw, 64px) 12px;
   }

@@ -179,10 +179,13 @@ try {
         scrollWidth: document.documentElement.scrollWidth,
         left: rect.left,
         right: rect.right,
+        width: rect.width,
         height: rect.height,
         label: entry.getAttribute("aria-label"),
         href: entry.getAttribute("href"),
         title: entry.querySelector("strong")?.textContent,
+        iconWidth: entry.querySelector(".marsoh-entry__icon")?.getBoundingClientRect().width,
+        titleSize: Number.parseFloat(getComputedStyle(entry.querySelector("strong")).fontSize),
         animation: getComputedStyle(entry.querySelector(".marsoh-entry__icon"), "::after").animationName
       };
     });
@@ -193,6 +196,9 @@ try {
     assert.equal(layout.label, "MarSoh sohbet alanını aç");
     assert.ok(["/maritime/marsoh", "/pages/ecosystem/maritime-marsoh.html"].includes(layout.href));
     assert.equal(layout.title, "MarSoh");
+    assert.ok(layout.iconWidth >= 48 && layout.iconWidth <= 54, `${width}px MarSoh ikon oranı bozuldu`);
+    assert.ok(layout.titleSize >= 22 && layout.titleSize <= 24, `${width}px MarSoh başlık oranı bozuldu`);
+    if (width > 760) assert.ok(layout.width <= 620, `${width}px masaüstü MarSoh butonu gereğinden fazla uzuyor`);
     assert.equal(layout.animation, "none");
     await entryFocusCheck(page, width);
     await context.close();
