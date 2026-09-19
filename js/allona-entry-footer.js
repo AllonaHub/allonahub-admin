@@ -57,8 +57,6 @@
     cookiePolicy: ["Çerez Politikası", "Kuki siyasəti", "Cookie саясаты", "Cookie siyosati", "Cookie саясаты", "Cookie Policy", "Cookie-Richtlinie", "Политика cookies", "سياسة ملفات تعريف الارتباط"],
     terms: ["Kullanım Şartları", "İstifadə şərtləri", "Пайдалану шарттары", "Foydalanish shartlari", "Колдонуу шарттары", "Terms of Use", "Nutzungsbedingungen", "Условия использования", "شروط الاستخدام"],
     securityPolicy: ["Güvenlik Politikası", "Təhlükəsizlik siyasəti", "Қауіпсіздік саясаты", "Xavfsizlik siyosati", "Коопсуздук саясаты", "Security Policy", "Sicherheitsrichtlinie", "Политика безопасности", "سياسة الأمان"],
-    trustMark: ["ETBİS ve Güven Damgası", "ETBİS və Güvən nişanı", "ETBİS және Сенім белгісі", "ETBİS va Ishonch belgisi", "ETBİS жана Ишеним белгиси", "ETBIS and Trust Mark", "ETBIS und Vertrauenssiegel", "ETBIS и знак доверия", "ETBIS وعلامة الثقة"],
-    trustShort: ["ETBİS/Güven", "ETBİS/Güvən", "ETBİS/Сенім", "ETBİS/Ishonch", "ETBİS/Ишеним", "ETBIS/Trust", "ETBIS/Vertrauen", "ETBIS/Доверие", "ETBIS/الثقة"],
     rightsReserved: ["Tüm hakları saklıdır.", "Bütün hüquqlar qorunur.", "Барлық құқықтар қорғалған.", "Barcha huquqlar himoyalangan.", "Бардык укуктар корголгон.", "All rights reserved.", "Alle Rechte vorbehalten.", "Все права защищены.", "جميع الحقوق محفوظة."]
   };
 
@@ -82,7 +80,7 @@
       { title: "shopping", links: ["products", null, "allonaFood", null, "coupons", "favorites", "orders"] },
       { title: "customer", links: ["aboutUs", "contact", "supportCenter", "academy", "myDocuments", "notifications", "delivery", "returns"] },
       { title: "ecosystem", links: ["allModules", "partnerApplication", "coupon", null, "career", "partnerMembership"] },
-      { title: "legal", links: ["distanceSales", "preliminaryInfo", "privacyPolicy", "kvkkNotice", "cookiePolicy", "terms", "securityPolicy", "trustMark"] }
+      { title: "legal", links: ["distanceSales", "preliminaryInfo", "privacyPolicy", "kvkkNotice", "cookiePolicy", "terms", "securityPolicy"] }
     ];
     mappings.forEach(function (mapping, index) {
       if (!mapping || !columns[index]) return;
@@ -97,7 +95,7 @@
     const bottom = footer.querySelector(".footer-bottom");
     if (bottom) {
       setText(bottom.querySelector(":scope > span:first-child"), `© ${new Date().getFullYear()} AllonaHub. ${copy.rightsReserved}`);
-      const keys = ["terms", "privacyPolicy", "cookiePolicy", "trustShort"];
+      const keys = ["terms", "privacyPolicy", "cookiePolicy"];
       bottom.querySelectorAll(".footer-bottom__links a").forEach(function (link, index) { setText(link, copy[keys[index]]); });
     }
   }
