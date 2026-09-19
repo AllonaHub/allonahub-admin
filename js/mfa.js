@@ -66,6 +66,11 @@
 
   async function completeAuthorizedReturnTo() {
     const target = completeReturnTo();
+    // Dedicated admin entry points already established this target. The
+    // destination page performs the authoritative role, MFA and owner checks;
+    // do not let a profile row hidden by RLS downgrade the return to a customer
+    // panel after a successful MFA challenge.
+    if (isProtectedAdminReturn(target)) return target;
     const user = await App.auth.getUser();
     if (!user || !App.auth.accountDestination) return target;
     return App.auth.accountDestination(target, user);
@@ -93,6 +98,14 @@
     } catch {
       return window.location.hostname === "admin.allonahub.com" && (String(target || "") === "/" || !String(target || "").trim());
     }
+  }
+
+  function isProtectedAdminReturn(target) {
+    const path = targetPath(target);
+    return /\/admin\/super-admin\.html$/i.test(path)
+      || /\/admin\/index\.html$/i.test(path)
+      || /\/admin\/$/i.test(path)
+      || isAdminHostRoot(target);
   }
 
   function qrSrc(value) {
@@ -212,8 +225,9 @@
       window.location.href = core.url(`/pages/account/user.html?returnTo=${encodeURIComponent(target)}`);
       return;
     }
-    if (App.auth.accountDestination) {
-      rememberReturnTo(await App.auth.accountDestination(returnTo(), user));
+    const requestedTarget = returnTo();
+    if (App.auth.accountDestination && !isProtectedAdminReturn(requestedTarget)) {
+      rememberReturnTo(await App.auth.accountDestination(requestedTarget, user));
     }
     state.status = await App.auth.mfaStatus();
     render();

@@ -94,3 +94,13 @@ test("normal login page sends protected account roles back to their dedicated po
   assert.match(page, /if\(accountType==="partner"\)return pageUrl\("\/pages\/partner\/partner\.html"\)/);
   assert.match(page, /if\(await rejectProtectedAccountOnCustomerLogin\(context\)\)return;/);
 });
+
+test("MFA preserves a dedicated admin return target until the protected page rechecks authorization", async () => {
+  const page = await source("pages/account/mfa.html");
+  const mfa = await source("js/mfa.js");
+
+  assert.match(page, /js\/mfa\.js\?v=20260920-admin-return1/);
+  assert.match(mfa, /if \(isProtectedAdminReturn\(target\)\) return target;/);
+  assert.match(mfa, /\/admin\\\/super-admin\\\.html\$\/i/);
+  assert.match(mfa, /App\.auth\.accountDestination && !isProtectedAdminReturn\(requestedTarget\)/);
+});
