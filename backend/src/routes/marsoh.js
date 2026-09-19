@@ -277,6 +277,29 @@ async function marsohAudit({ request, ctx, action, resourceType, resourceId = nu
   await auditEvent({ request, actorId: ctx?.user?.id || null, actorRole: ctx?.profile?.role || null, action, resourceType, resourceId, metadata });
 }
 
+async function removePublishedMessagesWithoutRpc({ request, ctx, channelId, reason }) {
+  let removed = 0;
+  for (let batch = 0; batch < 200; batch += 1) {
+    let query = supabaseAdmin.from("marsoh_published_messages").select("message_id").order("published_at", { ascending: true }).limit(500);
+    if (channelId) query = query.eq("channel_id", channelId);
+    const rows = assertDb(await query, "Yayımlanmış MarSoh mesajları okunamadı.") || [];
+    const messageIds = rows.map((row) => row.message_id);
+    if (!messageIds.length) break;
+    assertDb(await supabaseAdmin.from("marsoh_moderation_decisions").update({
+      decision: "rejected",
+      decided_by: ctx.user.id,
+      decided_at: new Date().toISOString(),
+      administrator_explanation: reason,
+      updated_at: new Date().toISOString()
+    }).in("message_id", messageIds), "MarSoh moderasyon kararları güncellenemedi.");
+    assertDb(await supabaseAdmin.from("marsoh_published_messages").delete().in("message_id", messageIds), "MarSoh mesajları yayından kaldırılamadı.");
+    removed += messageIds.length;
+    if (messageIds.length < 500) break;
+  }
+  await marsohAudit({ request, ctx, action: "marsoh.management.bulk_removed", resourceType: "marsoh_channel", resourceId: channelId || null, metadata: { reason, removed_count: removed, fallback: true } });
+  return removed;
+}
+
 async function recordRateEvent(request, ctx, eventType, channelId = null, bodyHash = null) {
   const ip = requestIp(request);
   assertDb(await supabaseAdmin.from("marsoh_rate_limit_events").insert({
@@ -664,7 +687,7 @@ export function registerMarsohRoutes(app) {
         .select("id,slug,channel_type,country_code,status,name_i18n,pinned_notice_i18n,slow_mode_seconds,updated_at")
         .order("channel_type", { ascending: true }).order("country_code", { ascending: true }),
       supabaseAdmin.from("marsoh_topic_cards")
-        .select("id,topic_date,title_i18n,body_i18n,status,created_at,updated_at,updated_by")
+        .select("id,topic_date,title_i18n,body_i18n,status,created_at")
         .order("topic_date", { ascending: false }).limit(14),
       messagesQuery,
       supabaseAdmin.from("marsoh_audit_events")
@@ -714,17 +737,14 @@ export function registerMarsohRoutes(app) {
     if (!titleI18n.tr || !titleI18n.az || !titleI18n.en || !bodyI18n.tr || !bodyI18n.az || !bodyI18n.en) {
       throw httpError("Türkçe, Azerbaycanca ve İngilizce konu başlığı ile soru metni zorunludur.", 400, "MARSOH_TOPIC_CORE_LANGUAGES_REQUIRED");
     }
-    const existing = assertDb(await supabaseAdmin.from("marsoh_topic_cards").select("id,created_by").eq("topic_date", topicDate).maybeSingle(), "MarSoh konusu okunamadı.");
+    const existing = assertDb(await supabaseAdmin.from("marsoh_topic_cards").select("id").eq("topic_date", topicDate).maybeSingle(), "MarSoh konusu okunamadı.");
     const topic = assertDb(await supabaseAdmin.from("marsoh_topic_cards").upsert({
       ...(existing?.id ? { id: existing.id } : {}),
       topic_date: topicDate,
       title_i18n: titleI18n,
       body_i18n: bodyI18n,
-      status: input.status,
-      created_by: existing?.created_by || ctx.user.id,
-      updated_by: ctx.user.id,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "topic_date" }).select("id,topic_date,title_i18n,body_i18n,status,updated_at").single(), "MarSoh konusu kaydedilemedi.");
+      status: input.status
+    }, { onConflict: "topic_date" }).select("id,topic_date,title_i18n,body_i18n,status,created_at").single(), "MarSoh konusu kaydedilemedi.");
     await marsohAudit({ request, ctx, action: "marsoh.management.topic_updated", resourceType: "marsoh_topic_card", resourceId: topic.id, metadata: { topic_date: topicDate, status: input.status } });
     return { ok: true, topic };
   });
@@ -772,12 +792,18 @@ export function registerMarsohRoutes(app) {
       const channel = assertDb(await supabaseAdmin.from("marsoh_channels").select("id").eq("id", input.channel_id).maybeSingle(), "MarSoh odası okunamadı.");
       if (!channel) throw httpError("MarSoh odası bulunamadı.", 404, "MARSOH_CHANNEL_NOT_FOUND");
     }
-    const removed = assertDb(await supabaseAdmin.rpc("marsoh_admin_remove_published_messages", {
+    const rpcResult = await supabaseAdmin.rpc("marsoh_admin_remove_published_messages", {
       p_actor_user_id: ctx.user.id,
       p_reason: input.reason,
       p_channel_id: input.channel_id || null
-    }), "MarSoh mesajları yayından kaldırılamadı.");
-    await auditEvent({ request, actorId: ctx.user.id, actorRole: ctx.profile.role, action: "marsoh.management.bulk_removed", resourceType: "marsoh_channel", resourceId: input.channel_id || null, metadata: { removed_count: Number(removed || 0), reason: input.reason } });
+    });
+    const missingRpc = rpcResult?.error && /marsoh_admin_remove_published_messages|schema cache|function/i.test(String(rpcResult.error.message || rpcResult.error.details || ""));
+    const removed = missingRpc
+      ? await removePublishedMessagesWithoutRpc({ request, ctx, channelId: input.channel_id || null, reason: input.reason })
+      : assertDb(rpcResult, "MarSoh mesajları yayından kaldırılamadı.");
+    if (!missingRpc) {
+      await auditEvent({ request, actorId: ctx.user.id, actorRole: ctx.profile.role, action: "marsoh.management.bulk_removed", resourceType: "marsoh_channel", resourceId: input.channel_id || null, metadata: { removed_count: Number(removed || 0), reason: input.reason } });
+    }
     return { ok: true, removed_count: Number(removed || 0) };
   });
 
