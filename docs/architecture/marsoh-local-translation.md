@@ -15,12 +15,12 @@ MarSoh message translation runs inside AllonaHub's own production server. Messag
 
 The primary model is the MIT-licensed `facebook/m2m100_418M`, pinned to commit `55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636` and converted to CTranslate2 INT8 format during the container build. It directly serves Turkish, Azerbaijani, English, German, Russian, Arabic, Kazakh, and Uzbek.
 
-Kyrgyz uses MIT-licensed directional fine-tunes derived from M2M100:
+Kyrgyz uses Apache-2.0 licensed OPUS-MT Turkic-language models from Helsinki-NLP:
 
-- `alinatl/m2m100-en-ky` at `ccc530699de3ac70a9025dbab7e3a28f0a0d7fbf`
-- `alinatl/m2m100-ky-en` at `b58e6ac487460ea01f333dd9bb9150c7fd2ec57b`
+- `Helsinki-NLP/opus-mt-en-trk` at `f9d8f6cd9d95d2f8ce34943c1f6cfe610d3bbf92`
+- `Helsinki-NLP/opus-mt-trk-en` at `be5007c9e9ab775de82c5d7409ae7d2b330190cc`
 
-Kyrgyz-to-non-English and non-English-to-Kyrgyz translations pivot through English. This keeps all nine AllonaHub languages available without a paid service, but a two-step translation can be less precise than a direct model. Machine translation should therefore be presented as automatic translation, not as a certified or human translation.
+The English-to-Turkic model is explicitly prompted with the `kir_Cyrl` target code. Kyrgyz-to-non-English and non-English-to-Kyrgyz translations pivot through English. This keeps all nine AllonaHub languages available without a paid service, but a two-step translation can be less precise than a direct model. Machine translation should therefore be presented as automatic translation, not as a certified or human translation.
 
 ## Configuration
 

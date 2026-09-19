@@ -37,11 +37,10 @@ test("translation route authorizes published visibility before calling local inf
 test("local model revisions and offline runtime are pinned", () => {
   const dockerfile = read("backend/local-translator/Dockerfile");
   assert.match(dockerfile, /M2M100_REVISION=55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636/);
-  assert.match(dockerfile, /EN_KY_REVISION=ccc530699de3ac70a9025dbab7e3a28f0a0d7fbf/);
-  assert.match(dockerfile, /KY_EN_REVISION=b58e6ac487460ea01f333dd9bb9150c7fd2ec57b/);
-  const preparation = read("backend/local-translator/prepare_models.py");
-  assert.match(preparation, /tokenizer_config\["src_lang"\] = "en"/);
-  assert.match(preparation, /allow_patterns=MODEL_FILES/);
+  assert.match(dockerfile, /EN_TRK_REVISION=f9d8f6cd9d95d2f8ce34943c1f6cfe610d3bbf92/);
+  assert.match(dockerfile, /TRK_EN_REVISION=be5007c9e9ab775de82c5d7409ae7d2b330190cc/);
+  assert.match(dockerfile, /Helsinki-NLP\/opus-mt-en-trk/);
+  assert.match(dockerfile, /Helsinki-NLP\/opus-mt-trk-en/);
   assert.match(dockerfile, /HF_HUB_OFFLINE=1/);
   assert.match(dockerfile, /TRANSFORMERS_OFFLINE=1/);
 });

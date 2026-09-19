@@ -4,8 +4,8 @@ ARG CT2_VERSION=4.8.2
 ARG TRANSFORMERS_VERSION=4.57.6
 ARG TORCH_VERSION=2.8.0
 ARG M2M100_REVISION=55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636
-ARG EN_KY_REVISION=ccc530699de3ac70a9025dbab7e3a28f0a0d7fbf
-ARG KY_EN_REVISION=b58e6ac487460ea01f333dd9bb9150c7fd2ec57b
+ARG EN_TRK_REVISION=f9d8f6cd9d95d2f8ce34943c1f6cfe610d3bbf92
+ARG TRK_EN_REVISION=be5007c9e9ab775de82c5d7409ae7d2b330190cc
 
 ENV HF_HUB_DISABLE_TELEMETRY=1 \
     TRANSFORMERS_NO_ADVISORY_WARNINGS=1
@@ -17,13 +17,6 @@ RUN apt-get update && \
 RUN python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch==${TORCH_VERSION}" && \
     python -m pip install --no-cache-dir "ctranslate2==${CT2_VERSION}" "transformers==${TRANSFORMERS_VERSION}" sentencepiece==0.2.1 safetensors==0.6.2
 
-WORKDIR /build
-COPY prepare_models.py ./prepare_models.py
-RUN python prepare_models.py \
-      --en-ky-revision "${EN_KY_REVISION}" \
-      --ky-en-revision "${KY_EN_REVISION}" \
-      --output-root /sources
-
 RUN ct2-transformers-converter \
       --model facebook/m2m100_418M \
       --revision "${M2M100_REVISION}" \
@@ -31,16 +24,18 @@ RUN ct2-transformers-converter \
       --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json vocab.json generation_config.json \
       --output_dir /models/m2m100 && \
     ct2-transformers-converter \
-      --model /sources/m2m100-en-ky \
+      --model Helsinki-NLP/opus-mt-en-trk \
+      --revision "${EN_TRK_REVISION}" \
       --quantization int8 \
-      --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json added_tokens.json vocab.json generation_config.json \
-      --output_dir /models/m2m100-en-ky && \
+      --copy_files source.spm target.spm tokenizer_config.json vocab.json generation_config.json \
+      --output_dir /models/opus-en-trk && \
     ct2-transformers-converter \
-      --model /sources/m2m100-ky-en \
+      --model Helsinki-NLP/opus-mt-trk-en \
+      --revision "${TRK_EN_REVISION}" \
       --quantization int8 \
-      --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json added_tokens.json vocab.json generation_config.json \
-      --output_dir /models/m2m100-ky-en && \
-    rm -rf /root/.cache/huggingface /sources && \
+      --copy_files source.spm target.spm tokenizer_config.json vocab.json generation_config.json \
+      --output_dir /models/opus-trk-en && \
+    rm -rf /root/.cache/huggingface && \
     find /models -type f \( -name '*.bin' -o -name '*.json' -o -name '*.model' \) | sort
 
 FROM python:3.11-slim AS runtime

@@ -23,8 +23,8 @@ class TranslationStep:
 
 MODEL_PATHS = {
     "m2m100": "/models/m2m100",
-    "en_ky": "/models/m2m100-en-ky",
-    "ky_en": "/models/m2m100-ky-en",
+    "en_ky": "/models/opus-en-trk",
+    "ky_en": "/models/opus-trk-en",
 }
 
 
@@ -61,9 +61,8 @@ class CTranslateModel:
         self.path = Path(model_path)
         if not (self.path / "model.bin").is_file():
             raise RuntimeError(f"model_not_ready:{self.path.name}")
-        # Kyrgyz fine-tunes store ky as an added token. Loading with a known
-        # base language avoids the upstream tokenizer rejecting that extension.
-        self.tokenizer = AutoTokenizer.from_pretrained(str(self.path), local_files_only=True, src_lang="en")
+        self.tokenizer = AutoTokenizer.from_pretrained(str(self.path), local_files_only=True)
+        self.is_m2m100 = hasattr(self.tokenizer, "lang_code_to_token")
         self.translator = ctranslate2.Translator(
             str(self.path),
             device="cpu",
@@ -80,21 +79,20 @@ class CTranslateModel:
             raise ValueError("unsupported_model_language")
         return token
 
-    def _source_tokens(self, text: str, source_language: str) -> list[str]:
-        language_map = getattr(self.tokenizer, "lang_code_to_token", {})
-        if source_language in language_map:
+    def _source_tokens(self, text: str, source_language: str, target_language: str) -> list[str]:
+        if self.is_m2m100:
             self.tokenizer.src_lang = source_language
             token_ids = self.tokenizer.encode(text)
         else:
-            token_ids = self.tokenizer.encode(text, add_special_tokens=False)
-            token_ids = [self.tokenizer.convert_tokens_to_ids(self._language_token(source_language)), *token_ids, self.tokenizer.eos_token_id]
+            value = f">>kir_Cyrl<< {text}" if target_language == "ky" else text
+            token_ids = self.tokenizer.encode(value)
         return self.tokenizer.convert_ids_to_tokens(token_ids)
 
-    def _token_count(self, text: str, source_language: str) -> int:
-        return len(self._source_tokens(text, source_language))
+    def _token_count(self, text: str, source_language: str, target_language: str) -> int:
+        return len(self._source_tokens(text, source_language, target_language))
 
-    def _chunks(self, text: str, source_language: str) -> list[str]:
-        if self._token_count(text, source_language) <= MAX_SOURCE_TOKENS:
+    def _chunks(self, text: str, source_language: str, target_language: str) -> list[str]:
+        if self._token_count(text, source_language, target_language) <= MAX_SOURCE_TOKENS:
             return [text]
 
         parts = [part for part in re.split(r"(?<=[.!?…])\s+|\n+", text) if part.strip()]
@@ -104,30 +102,33 @@ class CTranslateModel:
         current = ""
         for part in parts:
             candidate = f"{current} {part.strip()}".strip()
-            if current and self._token_count(candidate, source_language) > MAX_SOURCE_TOKENS:
+            if current and self._token_count(candidate, source_language, target_language) > MAX_SOURCE_TOKENS:
                 chunks.append(current)
                 current = part.strip()
             else:
                 current = candidate
         if current:
             chunks.append(current)
-        if any(self._token_count(chunk, source_language) > MAX_SOURCE_TOKENS for chunk in chunks):
+        if any(self._token_count(chunk, source_language, target_language) > MAX_SOURCE_TOKENS for chunk in chunks):
             raise ValueError("text_token_limit")
         return chunks
 
     def translate(self, text: str, source_language: str, target_language: str) -> str:
-        target_prefix = [self._language_token(target_language)]
+        target_prefix = [self._language_token(target_language)] if self.is_m2m100 else None
         translated_parts: list[str] = []
-        for chunk in self._chunks(text, source_language):
-            source_tokens = self._source_tokens(chunk, source_language)
-            results = self.translator.translate_batch(
-                [source_tokens],
-                target_prefix=[target_prefix],
+        for chunk in self._chunks(text, source_language, target_language):
+            source_tokens = self._source_tokens(chunk, source_language, target_language)
+            options = dict(
                 beam_size=4,
                 max_decoding_length=1024,
                 repetition_penalty=1.08,
             )
-            output_tokens = results[0].hypotheses[0][1:]
+            if target_prefix:
+                options["target_prefix"] = [target_prefix]
+            results = self.translator.translate_batch([source_tokens], **options)
+            output_tokens = results[0].hypotheses[0]
+            if target_prefix:
+                output_tokens = output_tokens[1:]
             output_ids = self.tokenizer.convert_tokens_to_ids(output_tokens)
             translated = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
             if not translated:
