@@ -23,6 +23,16 @@ test("auth page loads one cache-busted config and challenge runtime", async () =
   assert.match(page, /js\/security-challenge\.js\?v=20260919-authfix2/);
 });
 
+test("GitHub Pages auth mirror redirects to the protected canonical domain", async () => {
+  const page = await source("pages/account/user.html");
+
+  assert.match(page, /window\.location\.hostname!=="allonahub\.github\.io"/);
+  assert.match(page, /new URL\("\/pages\/account\/user\.html","https:\/\/allonahub\.com"\)/);
+  assert.match(page, /target\.origin!==current\.origin/);
+  assert.match(page, /canonical\.searchParams\.set\("returnTo",canonicalPath\+target\.search\+target\.hash\)/);
+  assert.match(page, /window\.location\.replace\(canonical\.href\)/);
+});
+
 test("direct email auth is strictly limited to local previews", async () => {
   const page = await source("pages/account/user.html");
 

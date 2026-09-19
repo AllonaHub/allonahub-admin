@@ -5,6 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AllonaHub Kullanıcı Girişi</title>
 
+<script>
+(function redirectGitHubPagesAuthMirror(){
+  const mirrorPrefix="/allonahub-admin";
+  if(window.location.hostname!=="allonahub.github.io" || !window.location.pathname.startsWith(mirrorPrefix+"/"))return;
+
+  const current=new URL(window.location.href);
+  const canonical=new URL("/pages/account/user.html","https://allonahub.com");
+  current.searchParams.forEach((value,key)=>canonical.searchParams.append(key,value));
+
+  const rawReturnTo=current.searchParams.get("returnTo");
+  if(rawReturnTo){
+    try{
+      const target=new URL(decodeURIComponent(rawReturnTo),current);
+      if(target.origin!==current.origin)throw new Error("Unsafe return target");
+      const canonicalPath=target.pathname.startsWith(mirrorPrefix+"/")
+        ? target.pathname.slice(mirrorPrefix.length)
+        : target.pathname;
+      if(!/^\/(?:pages|admin|index\.html)(?:\/|$)/i.test(canonicalPath))throw new Error("Unsupported return target");
+      canonical.searchParams.set("returnTo",canonicalPath+target.search+target.hash);
+    }catch(error){
+      canonical.searchParams.delete("returnTo");
+    }
+  }
+
+  window.location.replace(canonical.href);
+})();
+</script>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../../js/config.js?v=20260919-authfix2"></script>
