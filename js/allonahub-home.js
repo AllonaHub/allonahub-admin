@@ -511,3 +511,43 @@ if(e.key==="Enter"){globalSearch()}
 });
 }
 if(globalSearchButton){globalSearchButton.addEventListener("click",globalSearch);}
+
+function homeFooterLogoMarkup(label,source,extraClass){
+return `<span class="home-payment-logo ${extraClass||""}" role="listitem" aria-label="${label}"><img src="${source}" alt="${label}"></span>`;
+}
+
+function enhanceHomeFooter(){
+const strip=document.querySelector(".site-footer .footer-payment-strip");
+if(!strip){return false}
+const storeButtons=document.querySelector(".site-footer .store-buttons");
+if(storeButtons){storeButtons.hidden=true}
+if(strip.dataset.homeLogosReady!=="true"){
+strip.dataset.homeLogosReady="true";
+strip.setAttribute("role","list");
+strip.innerHTML=[
+homeFooterLogoMarkup("TROY","https://www.troyodeme.com/upload/cmspagefile/image/anasayfa/TROY-Logo-Tagline.png","home-payment-logo--troy"),
+homeFooterLogoMarkup("Visa","https://cdn.simpleicons.org/visa/1434CB"),
+homeFooterLogoMarkup("Mastercard","https://cdn.simpleicons.org/mastercard/EB001B"),
+homeFooterLogoMarkup("American Express","https://cdn.simpleicons.org/americanexpress/006FCF"),
+homeFooterLogoMarkup("PayPal","https://cdn.simpleicons.org/paypal/003087"),
+homeFooterLogoMarkup("Google Pay","https://cdn.simpleicons.org/googlepay/3C4043"),
+homeFooterLogoMarkup("Apple Pay","https://cdn.simpleicons.org/applepay/000000")
+].join("");
+}
+return true;
+}
+
+function watchHomeFooter(){
+if(enhanceHomeFooter()){return}
+const observer=new MutationObserver(function(){
+if(enhanceHomeFooter()){observer.disconnect()}
+});
+observer.observe(document.body,{childList:true,subtree:true});
+window.setTimeout(function(){observer.disconnect()},10000);
+}
+
+if(document.readyState==="loading"){
+document.addEventListener("DOMContentLoaded",watchHomeFooter,{once:true});
+}else{
+watchHomeFooter();
+}
