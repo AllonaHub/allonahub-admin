@@ -8,7 +8,7 @@ import {
   normalizedModerationText,
   sanitizeMarsohText
 } from "../lib/marsoh-moderation.js";
-import { translateMarsohText } from "../lib/marsoh-translation.js";
+import { translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uuidSchema = z.string().uuid();
@@ -542,9 +542,14 @@ export function registerMarsohRoutes(app) {
     assertDb(rate, "Çeviri hız limiti denetlenemedi.");
     if ((rate.count || 0) >= config.marsoh.translationRatePerMinute) throw httpError("Çok fazla çeviri isteği gönderildi.", 429, "MARSOH_TRANSLATION_RATE_LIMITED");
     await recordRateEvent(request, ctx, "translation", message.channel_id, sourceHash);
-    let translated;
+    let translation;
     try {
-      translated = await translateMarsohText(message.body, input.target_language, {
+      translation = await translateMarsohTextDetailed(message.body, input.target_language, {
+        sourceLanguage: message.language,
+        provider: config.marsoh.translationProvider,
+        localUrl: config.marsoh.translationLocalUrl,
+        localSecret: config.marsoh.translationLocalSecret,
+        localTimeoutMs: config.marsoh.translationLocalTimeoutMs,
         apiKey: config.marsoh.translationApiKey,
         baseUrl: config.marsoh.translationBaseUrl,
         model: config.marsoh.translationModel,
@@ -557,11 +562,11 @@ export function registerMarsohRoutes(app) {
       message_id: messageId,
       target_language: input.target_language,
       source_hash: sourceHash,
-      translated_text: translated,
-      provider: "openai_responses",
-      model: config.marsoh.translationModel
+      translated_text: translation.translated_text,
+      provider: translation.provider,
+      model: translation.model
     }, { onConflict: "message_id,target_language,source_hash" }), "Çeviri önbelleğe kaydedilemedi.");
-    return { ok: true, translated_text: translated, target_language: input.target_language, automatic: true, cached: false };
+    return { ok: true, translated_text: translation.translated_text, target_language: input.target_language, automatic: true, cached: false };
   });
 
   app.post("/v1/maritime/marsoh/messages/:messageId/reactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request) => {

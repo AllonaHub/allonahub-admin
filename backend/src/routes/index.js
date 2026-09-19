@@ -959,7 +959,7 @@ const SUPER_ADMIN_RELEASE_APPROVAL_TYPES = [
   "risk_override"
 ];
 const SUPER_ADMIN_GRANTABLE_ROLES = ["customer", "partner", "courier", "admin", "super_admin"];
-const BACKEND_BUILD_MARKER = "marsoh-multilingual-chat-20260919";
+const BACKEND_BUILD_MARKER = "marsoh-local-translation-20260919";
 const SUPER_ADMIN_WORK_QUEUE_SOURCE_MODULES = ["admin_ops", "avm", "food", "taxi", "social_media", "partner", "user_panel", "security", "legal", "release", "system", "other"];
 const SUPER_ADMIN_WORK_QUEUE_STATUSES = ["open", "in_progress", "waiting_owner", "decided", "resolved", "cancelled"];
 const SUPER_ADMIN_WORK_QUEUE_PRIORITIES = ["low", "normal", "high", "urgent"];
@@ -10568,6 +10568,8 @@ export function registerRoutes(app) {
 	    maritime_document_ai_ready: Boolean(config.maritimeDocuments.aiApiKey),
 	    maritime_document_local_reader_ready: Boolean(config.maritimeDocuments.localReaderEnabled),
 	    maritime_document_reader_mode: config.maritimeDocuments.aiApiKey ? "ai" : (config.maritimeDocuments.localReaderEnabled ? "local_ocr" : "unavailable"),
+	    marsoh_translation_mode: config.marsoh.translationProvider,
+	    marsoh_local_translation_configured: Boolean(config.marsoh.translationLocalUrl),
 	    time: new Date().toISOString()
 	  }));
 
