@@ -29,7 +29,7 @@ try {
         ok: true,
         channels: [
           { id: worldId, slug: "world", channel_type: "world", country_code: null, status: "active", slow_mode_seconds: 3, name_i18n: { tr: "Dünya Genel", az: "Dünya söhbəti", en: "World Chat" }, pinned_notice_i18n: { tr: "Kişisel iletişim bilgisi paylaşmayın.", az: "Şəxsi əlaqə məlumatı paylaşmayın.", en: "Do not share personal contact details." } },
-          { id: trId, slug: "country-tr", channel_type: "country", country_code: "TR", status: "active", slow_mode_seconds: 5, name_i18n: { tr: "Türkiye Odası", az: "Türkiyə otağı", en: "Türkiye Room" }, pinned_notice_i18n: { tr: "Saygılı, güvenli ve denizcilik odaklı sohbet edin.", az: "Hörmətli, təhlükəsiz və dənizçilik yönümlü söhbət edin.", en: "Keep the conversation respectful, safe, and maritime-focused." } }
+          { id: trId, slug: "country-tr", channel_type: "country", country_code: "TR", status: "active", slow_mode_seconds: 5, name_i18n: { tr: "TÃ¼rkiye OdasÄ±", az: "TÃ¼rkiyÉ™ otaÄŸÄ±", en: "Türkiye Room" }, pinned_notice_i18n: { tr: "SaygÄ±lÄ±, gÃ¼venli ve denizcilik odaklÄ± sohbet edin.", az: "Hörmətli, təhlükəsiz və dənizçilik yönümlü söhbət edin.", en: "Keep the conversation respectful, safe, and maritime-focused." } }
         ],
         topics: [{ id: "55555555-5555-4555-8555-555555555555", topic_date: "2026-09-20", status: "active", title_i18n: { tr: "Bugünün deniz konusu", az: "Günün dəniz mövzusu", en: "Today's sea topic" }, body_i18n: { tr: "Uzun vardiyalarda ekip içi iletişimi güçlendiren en iyi alışkanlık nedir?", az: "Uzun növbələrdə ekip ünsiyyətini gücləndirən ən yaxşı vərdiş nədir?", en: "Which habit best strengthens crew communication during long watches?" } }],
         messages: [{ message_id: messageId, channel_id: worldId, sender_user_id: userId, actor_type: "seafarer", body: "Denizde güvenlik her vardiyada ortak sorumluluktur.", language: "tr", sender_display_name: "Denizci AL-50001", published_at: "2026-09-20T12:00:00.000Z" }],
@@ -53,7 +53,9 @@ try {
       bulkControl: Boolean(document.querySelector("[data-marsoh-bulk-remove]")),
       turkishSourceFields: document.querySelectorAll('[data-marsoh-topic-form] [name$="_tr"]').length,
       editableForeignFields: document.querySelectorAll('[data-marsoh-topic-form] [name$="_az"], [data-marsoh-topic-form] [name$="_en"], [data-marsoh-topic-form] [name$="_de"]').length,
-      translationPreviews: document.querySelectorAll('[data-marsoh-topic-form] .sa-marsoh-translation-preview').length
+      translationPreviews: document.querySelectorAll('[data-marsoh-topic-form] .sa-marsoh-translation-preview').length,
+      turkeyLabel: [...document.querySelectorAll("[data-marsoh-channel-form] header strong")].find((element) => element.textContent.includes("Türkiye"))?.textContent,
+      turkeySource: [...document.querySelectorAll('[data-marsoh-channel-form] [name="name_tr"]')].find((element) => element.value.includes("Türkiye"))?.value
     }));
     assert.equal(layout.scrollWidth, layout.viewport, `${width}px yatay taşma var`);
     assert.equal(layout.navLabel, "MarSoh");
@@ -65,6 +67,8 @@ try {
     assert.equal(layout.turkishSourceFields, 2);
     assert.equal(layout.editableForeignFields, 0);
     assert.equal(layout.translationPreviews, 16);
+    assert.equal(layout.turkeyLabel, "Türkiye Odası");
+    assert.equal(layout.turkeySource, "Türkiye Odası");
     console.log(`Super Admin MarSoh responsive ${width}px: OK`);
     await context.close();
   }
