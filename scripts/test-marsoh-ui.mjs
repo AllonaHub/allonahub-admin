@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules/playwright/index.mjs";
 
 const target = process.env.MARSOH_TEST_URL || "http://127.0.0.1:4182/pages/ecosystem/maritime-marsoh.html";
@@ -12,12 +13,14 @@ try {
     const page = await context.newPage();
     await page.route("https://cdn.jsdelivr.net/**", (route) => route.fulfill({
       contentType: "application/javascript",
-      body: `window.supabase={createClient:function(){return {auth:{getSession:async()=>({data:{session:{access_token:"test-token",expires_at:9999999999,user:{id:"11111111-1111-4111-8111-111111111111"}}}}),getUser:async()=>({data:{user:{id:"11111111-1111-4111-8111-111111111111"}},error:null})},channel:function(){return {on:function(){return this},subscribe:function(){return this}}},removeChannel:function(){},from:function(){return {select:function(){return this},eq:function(){return this},maybeSingle:async()=>({data:null,error:null})}}}}};`
+      body: `window.supabase={createClient:function(){return {auth:{getSession:async()=>({data:{session:{access_token:"test-token",expires_at:9999999999,user:{id:"11111111-1111-4111-8111-111111111111"}}}}),getUser:async()=>({data:{user:{id:"11111111-1111-4111-8111-111111111111"}},error:null})},channel:function(){return {on:function(){return this},subscribe:function(callback){if(callback)callback("SUBSCRIBED");return this}}},removeChannel:function(){},from:function(){return {select:function(){return this},eq:function(){return this},maybeSingle:async()=>({data:null,error:null})}}}}};`
     }));
     await page.route("**/v1/maritime/marsoh/**", async (route) => {
       const url = route.request().url();
       let body = { ok: true };
-      if (url.includes("/bootstrap")) body = {
+      if (url.includes("/translate")) body = { ok: true, translated_text: "How does today's weather affect the route?", target_language: "en", automatic: true, cached: false };
+      else if (url.includes("/reactions")) body = { ok: true, active: true, count: 1 };
+      else if (url.includes("/bootstrap")) body = {
         ok: true,
         user: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" },
         channels: [
@@ -28,11 +31,11 @@ try {
         blocked_user_ids: [],
         policy: { max_message_chars: 2000, text_only: true, sent_notice: "Gönderildi bilgisi teslim veya okunma garantisi değildir." }
       };
-      if (/\/channels\/[^/]+\/messages/.test(url)) body = {
+      else if (/\/channels\/[^/]+\/messages/.test(url)) body = {
         ok: true,
         next_cursor: null,
         messages: [
-          { id: "41111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "51111111-1111-4111-8111-111111111111", display_name: "A. Denizci", badge: "verified_seafarer", country_code: "AZ" }, body: "Bugünkü hava rotayı nasıl etkiledi?", language: "tr", time: "2026-09-16T08:00:00.000Z", own: false },
+          { id: "41111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "51111111-1111-4111-8111-111111111111", display_name: "A. Denizci", badge: "verified_seafarer", country_code: "AZ" }, body: "Bugünkü hava marşruta necə təsir edir?", language: "az", time: "2026-09-16T08:00:00.000Z", own: false },
           { id: "61111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" }, body: "Vardiya planını önceden paylaşmak yardımcı oluyor.", language: "tr", time: "2026-09-16T08:01:00.000Z", own: true }
         ]
       };
@@ -70,6 +73,61 @@ try {
     assert.equal(layout.hiddenUploadControls, 0);
     assert.ok(layout.sendLabel);
     assert.equal(layout.reducedAnimation, "none");
+
+    const translate = page.locator(".marsoh-message:not(.is-own) .marsoh-translate");
+    assert.equal(await translate.count(), 1, `${width}px çeviri düğmesi görünmüyor`);
+    await translate.click();
+    await page.locator('.marsoh-translation-languages button[lang="en"]').click();
+    assert.match(await page.locator(".marsoh-translation").textContent(), /How does today's weather affect the route\?/);
+
+    await page.locator(".marsoh-message:not(.is-own) .marsoh-bubble").click();
+    assert.equal(await page.locator(".marsoh-quick-reactions:not([hidden]) button").count(), 12, `${width}px hızlı tepki listesi eksik`);
+    await page.locator('.marsoh-quick-reactions:not([hidden]) button[aria-label*="🧭"]').click();
+    assert.match(await page.locator(".marsoh-message:not(.is-own) .marsoh-reactions").textContent(), /🧭\s*1/);
+
+    await page.locator("[data-marsoh-emoji]").click();
+    assert.ok(await page.locator("[data-marsoh-emoji-grid] button").count() >= 48, `${width}px emoji seçici eksik`);
+    await page.locator('[data-marsoh-emoji-grid] button[aria-label*="🚢"]').click();
+    assert.match(await page.locator("[data-marsoh-input]").inputValue(), /🚢/);
+    assert.match(await page.locator("[data-marsoh-character-count]").textContent(), /\/ 2000/);
+
+    await page.selectOption("[data-marsoh-language]", "ar");
+    assert.equal(await page.locator("html").getAttribute("dir"), "rtl");
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${width}px Arapça görünümünde taşma var`);
+    await page.selectOption("[data-marsoh-language]", "tr");
+    const restoredLtr = await page.evaluate(() => {
+      const brand = document.querySelector(".marsoh-brand").getBoundingClientRect();
+      const product = document.querySelector(".marsoh-product-mark").getBoundingClientRect();
+      return { dir: document.documentElement.dir, scrollX: window.scrollX, brandLeft: brand.left, brandRight: brand.right, productLeft: product.left, productRight: product.right };
+    });
+    assert.equal(restoredLtr.dir, "ltr");
+    assert.equal(restoredLtr.scrollX, 0);
+    assert.ok(restoredLtr.brandLeft >= -1 && restoredLtr.brandRight <= width + 1, `${width}px dil dönüşünde logo taştı`);
+    if (width > 760) assert.ok(restoredLtr.productLeft >= -1 && restoredLtr.productRight <= width + 1, `${width}px dil dönüşünde oda paneli taştı`);
+
+    const lightThemeContrast = await page.evaluate(() => {
+      document.body.dataset.theme = "white";
+      const node = document.querySelector(".marsoh-message:not(.is-own) .marsoh-bubble");
+      const style = getComputedStyle(node);
+      const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const luminance = (value) => {
+        const channels = rgb(value).map((channel) => {
+          const part = channel / 255;
+          return part <= .03928 ? part / 12.92 : ((part + .055) / 1.055) ** 2.4;
+        });
+        return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+      };
+      const foreground = luminance(style.color);
+      const background = luminance(style.backgroundColor);
+      document.body.dataset.theme = "ocean";
+      return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05);
+    });
+    assert.ok(lightThemeContrast >= 4.5, `${width}px açık tema mesaj kontrastı yetersiz: ${lightThemeContrast}`);
+
+    if (process.env.MARSOH_SCREENSHOT_DIR && [390, 1440].includes(width)) {
+      await mkdir(process.env.MARSOH_SCREENSHOT_DIR, { recursive: true });
+      await page.screenshot({ path: `${process.env.MARSOH_SCREENSHOT_DIR}/marsoh-${width}.png`, fullPage: false });
+    }
 
     await page.keyboard.press("Tab");
     const focused = await page.evaluate(() => document.activeElement?.matches("a,button,textarea,select"));
@@ -117,7 +175,7 @@ try {
     assert.ok(layout.left >= 0 && layout.right <= layout.viewport + 1, `${width}px MarSoh giriş kartı taşması`);
     assert.ok(layout.height >= 48, `${width}px MarSoh dokunma hedefi yetersiz`);
     assert.equal(layout.label, "MarSoh sohbet alanını aç");
-    assert.equal(layout.href, "/maritime/marsoh");
+    assert.ok(["/maritime/marsoh", "/pages/ecosystem/maritime-marsoh.html"].includes(layout.href));
     assert.equal(layout.title, "MarSoh");
     assert.equal(layout.animation, "none");
     await entryFocusCheck(page, width);

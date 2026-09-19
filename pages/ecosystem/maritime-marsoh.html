@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MarSoh | AllonaHub Denizcilik</title>
   <meta name="description" content="MarSoh, doğrulanmış AllonaHub denizcilik kullanıcılarının güvenli küresel sohbet ağıdır.">
-  <link rel="stylesheet" href="../../css/platform.css?v=20260916-marsoh1">
-  <link rel="stylesheet" href="../../css/marsoh.css?v=20260916-marsoh1">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260919-marsoh2">
+  <link rel="stylesheet" href="../../css/marsoh.css?v=20260919-marsoh2">
 </head>
 <body class="marsoh-page" data-page="marsoh">
   <a class="marsoh-skip" href="#marsohMessages" data-marsoh-copy="skip">Mesajlara geç</a>
@@ -27,6 +27,12 @@
           <option value="tr">Türkçe</option>
           <option value="az">Azərbaycanca</option>
           <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+          <option value="ar">العربية</option>
+          <option value="kk">Қазақша</option>
+          <option value="uz">O‘zbekcha</option>
+          <option value="ky">Кыргызча</option>
         </select>
       </label>
       <span data-platform-controls-slot="home"></span>
@@ -77,7 +83,10 @@
           <span aria-hidden="true">☰</span>
         </button>
         <div><h1 data-marsoh-room-title>MarSoh</h1><p data-marsoh-room-subtitle></p></div>
-        <span class="marsoh-room-count" data-marsoh-room-count aria-live="polite"></span>
+        <div class="marsoh-room-meta">
+          <span class="marsoh-connection" data-marsoh-connection data-state="connecting" role="status" aria-live="polite"><i></i><span data-marsoh-copy="connecting">Bağlanıyor</span></span>
+          <span class="marsoh-room-count" data-marsoh-room-count aria-live="polite"></span>
+        </div>
         <button class="marsoh-icon-button marsoh-info-toggle" type="button" data-marsoh-open-info aria-label="Topluluk kurallarını aç" title="Topluluk kuralları" data-marsoh-aria="openRules" data-marsoh-title="rules">?</button>
       </header>
 
@@ -99,9 +108,13 @@
 
       <div class="marsoh-composer-area">
         <div class="marsoh-emoji-panel" data-marsoh-emoji-panel hidden aria-label="Emoji seçici" data-marsoh-aria="emojiPicker">
-          <button type="button">😀</button><button type="button">🙂</button><button type="button">⚓</button><button type="button">🌊</button><button type="button">👍</button><button type="button">👏</button>
+          <div class="marsoh-emoji-panel__head"><strong data-marsoh-copy="emojiPicker">Emoji seçici</strong><button type="button" data-marsoh-emoji-close aria-label="Kapat" data-marsoh-aria="close">×</button></div>
+          <div class="marsoh-emoji-grid" data-marsoh-emoji-grid></div>
         </div>
-        <div class="marsoh-listening" data-marsoh-listening hidden role="status"><i></i><span data-marsoh-copy="listening">Dinleniyor…</span></div>
+        <div class="marsoh-listening" data-marsoh-listening hidden role="status">
+          <i></i><div><strong data-marsoh-copy="listening">Dinleniyor…</strong><span data-marsoh-copy="listeningHint">Konuşmanız yazıya çevriliyor. Bitirmek için mikrofona dokunun.</span></div>
+          <button type="button" data-marsoh-stop-listening data-marsoh-copy="stopListening">Dinlemeyi durdur</button>
+        </div>
         <form class="marsoh-composer" data-marsoh-composer>
           <button class="marsoh-icon-button" type="button" data-marsoh-emoji aria-label="Emoji seç" title="Emoji" data-marsoh-aria="chooseEmoji" data-marsoh-title="chooseEmoji">☺</button>
           <label class="sr-only" for="marsohInput" data-marsoh-copy="messageLabel">Mesaj</label>
@@ -113,6 +126,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 17-8-6 18-3-7-8-3Zm8 3 9-11"/></svg>
           </button>
         </form>
+        <div class="marsoh-composer-meta"><span data-marsoh-character-count>0 / 2000</span><span data-marsoh-copy="tapForReaction">Tepki bırakmak için mesaja dokunun</span></div>
         <p class="marsoh-composer-note" data-marsoh-policy-note></p>
         <div class="marsoh-status" data-marsoh-status role="status" aria-live="polite"></div>
       </div>
@@ -149,13 +163,13 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-  <script src="../../js/config.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/core.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/supabase-client.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/auth.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/platform.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/marsoh-i18n.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/marsoh-speech-provider.js?v=20260916-marsoh1" defer></script>
-  <script src="../../js/marsoh.js?v=20260916-marsoh1" defer></script>
+  <script src="../../js/config.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/core.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/supabase-client.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/auth.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/platform.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/marsoh-i18n.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/marsoh-speech-provider.js?v=20260919-marsoh2" defer></script>
+  <script src="../../js/marsoh.js?v=20260919-marsoh2" defer></script>
 </body>
 </html>

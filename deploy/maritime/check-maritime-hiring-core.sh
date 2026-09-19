@@ -327,6 +327,18 @@ begin
 
   if not exists (
     select 1
+    from pg_constraint
+    where conrelid = 'public.marsoh_message_reactions'::regclass
+      and conname = 'marsoh_message_reactions_emoji_check'
+      and pg_get_constraintdef(oid) like '%🧭%'
+      and pg_get_constraintdef(oid) like '%🫡%'
+      and pg_get_constraintdef(oid) like '%😊%'
+  ) then
+    raise exception 'MarSoh reaction constraint is incomplete';
+  end if;
+
+  if not exists (
+    select 1
     from pg_policies policy
     where policy.schemaname = 'public'
       and policy.tablename = 'marsoh_published_messages'

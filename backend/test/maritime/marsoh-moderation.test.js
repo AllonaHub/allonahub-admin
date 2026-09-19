@@ -61,3 +61,31 @@ test("HTML and script input remains inert plain text data", () => {
 test("translation never produces a fake result without a configured provider", async () => {
   await assert.rejects(() => translateMarsohText("Merhaba", "en", {}), (error) => error.code === "MARSOH_TRANSLATION_UNAVAILABLE");
 });
+
+test("translation provider sends a maritime plain-text request and returns provider output", async () => {
+  let requestBody;
+  const translated = await translateMarsohText("Vardiya düzeni nasıl?", "de", {
+    apiKey: "test-key",
+    baseUrl: "https://provider.example/v1/responses",
+    model: "translation-test",
+    fetchImpl: async (_url, options) => {
+      requestBody = JSON.parse(options.body);
+      return { ok: true, json: async () => ({ output_text: "Wie ist der Wachplan?" }) };
+    }
+  });
+  assert.equal(translated, "Wie ist der Wachplan?");
+  assert.match(requestBody.input[0].content, /German/);
+  assert.match(requestBody.input[0].content, /plain text/);
+  assert.equal(requestBody.input[1].content, "Vardiya düzeni nasıl?");
+});
+
+test("translation rejects unsupported target languages before contacting a provider", async () => {
+  let called = false;
+  await assert.rejects(() => translateMarsohText("Merhaba", "xx", {
+    apiKey: "test-key",
+    baseUrl: "https://provider.example/v1/responses",
+    model: "translation-test",
+    fetchImpl: async () => { called = true; return { ok: true, json: async () => ({ output_text: "x" }) }; }
+  }), (error) => error.code === "MARSOH_TRANSLATION_LANGUAGE_UNSUPPORTED");
+  assert.equal(called, false);
+});

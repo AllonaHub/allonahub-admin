@@ -8,10 +8,21 @@ function outputText(payload) {
   return "";
 }
 
+const LANGUAGE_NAMES = {
+  tr: "Turkish", az: "Azerbaijani", en: "English", de: "German", ru: "Russian",
+  ar: "Arabic", kk: "Kazakh", uz: "Uzbek", ky: "Kyrgyz"
+};
+
 export async function translateMarsohText(text, targetLanguage, options = {}) {
   if (!options.apiKey) {
     const error = new Error("MarSoh translation provider is not configured.");
     error.code = "MARSOH_TRANSLATION_UNAVAILABLE";
+    throw error;
+  }
+  const targetName = LANGUAGE_NAMES[targetLanguage];
+  if (!targetName) {
+    const error = new Error("MarSoh translation language is not supported.");
+    error.code = "MARSOH_TRANSLATION_LANGUAGE_UNSUPPORTED";
     throw error;
   }
   const controller = new AbortController();
@@ -25,7 +36,7 @@ export async function translateMarsohText(text, targetLanguage, options = {}) {
         model: options.model,
         temperature: 0,
         input: [
-          { role: "system", content: `Translate the supplied maritime community message into ${targetLanguage}. Preserve meaning and tone. Return only the translation as plain text. Never add links or contact details.` },
+          { role: "system", content: `Translate the supplied maritime community message into ${targetName}. Preserve maritime terminology, meaning, names, numbers, and tone. Return only the translated plain text. Do not answer the message, explain the translation, add Markdown, or invent links or contact details.` },
           { role: "user", content: String(text || "").slice(0, 2000) }
         ]
       })

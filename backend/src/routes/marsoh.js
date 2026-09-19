@@ -12,7 +12,8 @@ import { translateMarsohText } from "../lib/marsoh-translation.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uuidSchema = z.string().uuid();
-const languageSchema = z.string().trim().toLowerCase().regex(/^[a-z]{2,3}$/).default("tr");
+const marsohLanguages = ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"];
+const languageSchema = z.enum(marsohLanguages).default("tr");
 const sendSchema = z.object({
   channel_id: uuidSchema,
   idempotency_key: uuidSchema,
@@ -20,7 +21,7 @@ const sendSchema = z.object({
   language: languageSchema
 }).strict();
 const translationSchema = z.object({ target_language: languageSchema }).strict();
-const reactionSchema = z.object({ emoji: z.enum(["👍", "⚓", "👏", "❤️", "🌊"]) }).strict();
+const reactionSchema = z.object({ emoji: z.enum(["👍", "❤️", "👏", "⚓", "🌊", "💪", "🙏", "🫡", "🚢", "🧭", "✨", "😊"]) }).strict();
 const reportSchema = z.object({
   reason_code: z.enum(["spam", "harassment", "fraud", "recruitment", "contact_sharing", "other"]),
   note: z.string().trim().max(500).optional().default("")
@@ -118,7 +119,10 @@ async function verifiedCountry(userId) {
 
 function countryNames(country) {
   const label = String(country?.native_name || country?.country_name || country?.country_code || "Country").trim();
-  return { tr: `${label} Odası`, az: `${label} otağı`, en: `${label} Room` };
+  return {
+    tr: `${label} Odası`, az: `${label} otağı`, en: `${label} Room`, de: `Raum ${label}`,
+    ru: `Комната: ${label}`, ar: `غرفة ${label}`, kk: `${label} бөлмесі`, uz: `${label} xonasi`, ky: `${label} бөлмөсү`
+  };
 }
 
 function safePublicActorName(value, fallback) {
@@ -177,7 +181,13 @@ async function ensureChannels(ctx, country) {
       pinned_notice_i18n: {
         tr: "Kişisel iletişim bilgisi ve iş ilanı paylaşmayın.",
         az: "Şəxsi əlaqə məlumatı və iş elanı paylaşmayın.",
-        en: "Do not share personal contact details or job ads."
+        en: "Do not share personal contact details or job ads.",
+        de: "Teilen Sie keine persönlichen Kontaktdaten oder Stellenanzeigen.",
+        ru: "Не публикуйте личные контакты или вакансии.",
+        ar: "لا تشارك بيانات الاتصال الشخصية أو إعلانات الوظائف.",
+        kk: "Жеке байланыс деректерін немесе жұмыс жарнамаларын бөліспеңіз.",
+        uz: "Shaxsiy aloqa ma'lumotlari yoki ish e'lonlarini ulashmang.",
+        ky: "Жеке байланыш маалыматтарын же жумуш жарыяларын бөлүшпөңүз."
       },
       created_by_system: true
     }, { onConflict: "slug" }), "Ülke odası hazırlanamadı.");
@@ -405,7 +415,13 @@ export function registerMarsohRoutes(app) {
     const sentNotice = {
       tr: "Mesajlar güvenlik amacıyla otomatik olarak denetlenebilir, geciktirilebilir veya dağıtılmayabilir; Gönderildi bilgisi teslim/okunma garantisi değildir.",
       az: "Mesajlar təhlükəsizlik məqsədilə avtomatik yoxlanıla, gecikdirilə və ya paylanmaya bilər; Göndərildi məlumatı çatdırılma və ya oxunma zəmanəti deyil.",
-      en: "Messages may be automatically reviewed, delayed, or withheld for safety; Sent does not guarantee delivery or reading."
+      en: "Messages may be automatically reviewed, delayed, or withheld for safety; Sent does not guarantee delivery or reading.",
+      de: "Nachrichten können aus Sicherheitsgründen automatisch geprüft, verzögert oder zurückgehalten werden; Gesendet garantiert weder Zustellung noch Lesen.",
+      ru: "В целях безопасности сообщения могут автоматически проверяться, задерживаться или не распространяться; статус Отправлено не гарантирует доставку или прочтение.",
+      ar: "قد تخضع الرسائل للمراجعة الآلية أو التأخير أو الحجب لأغراض السلامة؛ حالة تم الإرسال لا تضمن التسليم أو القراءة.",
+      kk: "Қауіпсіздік үшін хабарламалар автоматты түрде тексерілуі, кешіктірілуі немесе таратылмауы мүмкін; Жөнелтілді күйі жеткізілгеніне не оқылғанына кепілдік бермейді.",
+      uz: "Xabarlar xavfsizlik uchun avtomatik tekshirilishi, kechiktirilishi yoki tarqatilmasligi mumkin; Yuborildi holati yetkazilgan yoki o'qilganini kafolatlamaydi.",
+      ky: "Коопсуздук үчүн билдирүүлөр автоматтык түрдө текшерилиши, кечигиши же таратылбай калышы мүмкүн; Жөнөтүлдү абалы жеткирилгенине же окулганына кепилдик бербейт."
     };
     return {
       ok: true,
@@ -548,7 +564,7 @@ export function registerMarsohRoutes(app) {
     return { ok: true, translated_text: translated, target_language: input.target_language, automatic: true, cached: false };
   });
 
-  app.post("/v1/maritime/marsoh/messages/:messageId/reactions", async (request) => {
+  app.post("/v1/maritime/marsoh/messages/:messageId/reactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (request) => {
     const ctx = await requireMarsohUser(request, "marsoh.reaction.toggle");
     const messageId = uuidSchema.parse(request.params?.messageId);
     const input = reactionSchema.parse(request.body || {});

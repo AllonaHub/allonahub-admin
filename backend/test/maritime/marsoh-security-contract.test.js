@@ -12,9 +12,10 @@ const cssUrl = new URL("../../../css/marsoh.css", import.meta.url);
 const modulePageUrl = new URL("../../../pages/ecosystem/allonadenizcilik.html", import.meta.url);
 const adminPageUrl = new URL("../../../admin/super-admin.html", import.meta.url);
 const adminUiUrl = new URL("../../../js/super-admin.js", import.meta.url);
+const reactionMigrationUrl = new URL("../../../supabase/migrations/20260919203000_expand_marsoh_languages_and_reactions.sql", import.meta.url);
 
 async function sources() {
-  return Promise.all([migrationUrl, routeUrl, appUrl, uiUrl, speechUrl, pageUrl, cssUrl, modulePageUrl, adminPageUrl, adminUiUrl].map((url) => readFile(url, "utf8")));
+  return Promise.all([migrationUrl, routeUrl, appUrl, uiUrl, speechUrl, pageUrl, cssUrl, modulePageUrl, adminPageUrl, adminUiUrl, reactionMigrationUrl].map((url) => readFile(url, "utf8")));
 }
 
 test("unauthenticated visitors cannot read or write MarSoh", async () => {
@@ -79,7 +80,7 @@ test("idempotent offline outbox retries without duplicate server messages", asyn
   const [, route] = await sources();
   assert.match(route, /\.eq\("sender_user_id", ctx\.user\.id\)\.eq\("idempotency_key", input\.idempotency_key\)/);
   assert.match(ui, /indexedDB\.open\(DB_NAME, 1\)/);
-  assert.match(ui, /window\.addEventListener\("online", flushOutbox\)/);
+  assert.match(ui, /window\.addEventListener\("online", async \(\) =>[\s\S]*await flushOutbox\(\)/);
 });
 
 test("network failures expose retry and delete while policy failures expose edit and delete", async () => {
@@ -102,8 +103,22 @@ test("speech provider produces editable text and never creates audio media", asy
   const [, , , ui, speech, page] = await sources();
   assert.match(speech, /SpeechRecognition \|\| window\.webkitSpeechRecognition/);
   assert.match(speech, /interimResults = true/);
-  assert.match(ui, /input\.value = `\$\{prefix\}\$\{finalText \|\| interimText\}`/);
+  assert.match(speech, /combinedText: joinSpeech\(\[this\.finalText, interimText\]\)/);
+  assert.match(speech, /this\.desiredActive[\s\S]*this\.startRecognition\(\)/);
+  assert.match(ui, /onText\(\{ combinedText \}\)/);
   assert.doesNotMatch(`${speech}\n${ui}\n${page}`, /MediaRecorder|audio\/|Blob\(|getUserMedia|voice_message/);
+});
+
+test("translation languages and emoji reactions share the same strict server and database allowlists", async () => {
+  const [, route, , ui, , , , , , , reactionMigration] = await sources();
+  for (const language of ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"]) {
+    assert.match(route, new RegExp(`"${language}"`));
+  }
+  for (const emoji of ["👍", "❤️", "👏", "⚓", "🌊", "💪", "🙏", "🫡", "🚢", "🧭", "✨", "😊"]) {
+    assert.ok(route.includes(emoji), `server reaction allowlist is missing ${emoji}`);
+    assert.ok(ui.includes(emoji), `client reaction allowlist is missing ${emoji}`);
+    assert.ok(reactionMigration.includes(emoji), `database reaction constraint is missing ${emoji}`);
+  }
 });
 
 test("MarSoh has no attachment, camera, file, video, audio, GIF, or storage feature", async () => {
@@ -178,7 +193,7 @@ test("the responsive UI covers required widths, keyboard labels, and reduced mot
 test("the maritime module exposes the exact MarSoh name, route, accessible label, and unread badge", async () => {
   const [, , , , , , , modulePage] = await sources();
   assert.match(modulePage, />MarSoh</);
-  assert.match(modulePage, /href="\/maritime\/marsoh"/);
+  assert.match(modulePage, /href="\/(?:maritime\/marsoh|pages\/ecosystem\/maritime-marsoh\.html)"/);
   assert.match(modulePage, /data-maritime-i18n-aria="marsohAria"/);
   assert.match(modulePage, /data-marsoh-entry-unread/);
 });

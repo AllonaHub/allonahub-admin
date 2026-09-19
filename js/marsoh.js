@@ -5,7 +5,21 @@
   const I18n = window.MarSohI18n;
   const DB_NAME = "allonahub-marsoh";
   const STORE_NAME = "outbox";
-  const ALLOWED_REACTIONS = ["👍", "⚓", "👏", "❤️", "🌊"];
+  const ALLOWED_REACTIONS = ["👍", "❤️", "👏", "⚓", "🌊", "💪", "🙏", "🫡", "🚢", "🧭", "✨", "😊"];
+  const COMPOSER_EMOJIS = [
+    "😀", "😄", "😊", "🙂", "😉", "😍", "🤝", "🫡", "👍", "👎", "👏", "🙏",
+    "💪", "❤️", "💙", "✨", "🎉", "✅", "⚠️", "💡", "🔥", "🌍", "🌊", "⚓",
+    "🚢", "⛴️", "🛳️", "🛟", "🧭", "⛵", "🌅", "🌙", "☀️", "🌧️", "🌬️", "📡",
+    "🛠️", "⚙️", "🦺", "👨‍✈️", "👩‍✈️", "🧑‍🔧", "📝", "📌", "❓", "❗", "💬", "🙌"
+  ];
+  const LANGUAGE_LABELS = {
+    tr: "Türkçe", az: "Azərbaycanca", en: "English", de: "Deutsch", ru: "Русский",
+    ar: "العربية", kk: "Қазақша", uz: "O‘zbekcha", ky: "Кыргызча"
+  };
+  const LOCALE_TAGS = {
+    tr: "tr-TR", az: "az-AZ", en: "en-US", de: "de-DE", ru: "ru-RU",
+    ar: "ar-SA", kk: "kk-KZ", uz: "uz-UZ", ky: "ky-KG"
+  };
   const state = {
     session: null,
     locale: I18n.current(),
@@ -18,7 +32,8 @@
     speech: null,
     speechBase: "",
     outboxDb: null,
-    modalTrigger: null
+    modalTrigger: null,
+    connectionState: "connecting"
   };
 
   const $ = (selector, root) => (root || document).querySelector(selector);
@@ -36,6 +51,24 @@
   const apiBase = () => String(App.config?.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
 
   function setStatus(message) { const target = $("[data-marsoh-status]"); if (target) target.textContent = message || ""; }
+  function setConnectionStatus(status) {
+    state.connectionState = ["live", "offline", "connecting"].includes(status) ? status : "connecting";
+    const target = $("[data-marsoh-connection]");
+    if (!target) return;
+    target.dataset.state = state.connectionState;
+    const label = $("span", target);
+    if (label) label.textContent = t(state.connectionState);
+  }
+  function composerLimit() { return Math.max(1, Number(state.bootstrap?.policy?.max_message_chars) || 2000); }
+  function updateComposerMeta() {
+    const input = $("[data-marsoh-input]");
+    const counter = $("[data-marsoh-character-count]");
+    if (!input || !counter) return;
+    const limit = composerLimit();
+    input.maxLength = limit;
+    counter.textContent = `${input.value.length} / ${limit} ${t("characters")}`;
+    counter.classList.toggle("is-near-limit", input.value.length >= limit * 0.9);
+  }
   function nearBottom() { const target = $("[data-marsoh-messages]"); return target ? target.scrollHeight - target.scrollTop - target.clientHeight < 90 : true; }
   function scrollLatest(smooth) { const target = $("[data-marsoh-messages]"); if (target) target.scrollTo({ top: target.scrollHeight, behavior: smooth ? "smooth" : "auto" }); }
 
@@ -104,14 +137,15 @@
   }
 
   function localizeChannel(channel) {
+    if (channel.channel_type === "world") return t("worldRoom");
     if (channel.country_code && window.Intl?.DisplayNames) {
-      const locale = state.locale === "az" ? "az-AZ" : state.locale === "en" ? "en-US" : "tr-TR";
+      const locale = LOCALE_TAGS[state.locale] || "tr-TR";
       const country = new Intl.DisplayNames([locale], { type: "region" }).of(channel.country_code);
-      if (country) return state.locale === "az" ? `${country} otağı` : state.locale === "en" ? `${country} Room` : `${country} Odası`;
+      if (country) return t("countryRoom").replace("{country}", country);
     }
     return I18n.localized(channel.name_i18n, state.locale) || channel.slug;
   }
-  function localizePinned(channel) { return I18n.localized(channel.pinned_notice_i18n, state.locale); }
+  function localizePinned(channel) { return I18n.localized(channel.pinned_notice_i18n, state.locale) || t("defaultPinned"); }
 
   function renderChannels() {
     const target = $("[data-marsoh-channel-list]");
@@ -137,8 +171,8 @@
     if (badge) { badge.hidden = !total; badge.textContent = total > 99 ? "99+" : String(total); }
   }
 
-  function dateKey(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString(state.locale === "az" ? "az-AZ" : state.locale === "en" ? "en-US" : "tr-TR", { day: "numeric", month: "long", year: "numeric" }); }
-  function timeLabel(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString(state.locale === "az" ? "az-AZ" : state.locale === "en" ? "en-US" : "tr-TR", { hour: "2-digit", minute: "2-digit" }); }
+  function dateKey(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString(LOCALE_TAGS[state.locale] || "tr-TR", { day: "numeric", month: "long", year: "numeric" }); }
+  function timeLabel(value) { const date = new Date(value); return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString(LOCALE_TAGS[state.locale] || "tr-TR", { hour: "2-digit", minute: "2-digit" }); }
 
   function statusLabel(message) {
     if (!message.own) return "";
@@ -148,42 +182,161 @@
   }
 
   function addTranslationControls(article, message) {
-    if (message.own || !message.id || message.language === "und" || message.language === state.locale || message.local_status) return;
+    if (message.own || !message.id || message.local_status) return;
     const button = document.createElement("button");
-    button.type = "button"; button.className = "marsoh-translate"; button.textContent = t("translate");
-    button.addEventListener("click", async () => {
+    button.type = "button";
+    button.className = "marsoh-translate";
+    button.textContent = t("translate");
+    button.setAttribute("aria-expanded", "false");
+
+    const chooser = document.createElement("div");
+    chooser.className = "marsoh-translation-chooser";
+    chooser.hidden = true;
+    chooser.setAttribute("role", "group");
+    chooser.setAttribute("aria-label", t("translateTo"));
+    const chooserLabel = document.createElement("strong");
+    chooserLabel.textContent = t("translateTo");
+    chooser.append(chooserLabel);
+
+    const options = document.createElement("div");
+    options.className = "marsoh-translation-languages";
+    for (const language of I18n.SUPPORTED || ["tr", "az", "en"]) {
+      const languageButton = document.createElement("button");
+      languageButton.type = "button";
+      languageButton.lang = language;
+      languageButton.textContent = LANGUAGE_LABELS[language] || language.toUpperCase();
+      languageButton.classList.toggle("is-preferred", language === state.locale);
+      languageButton.addEventListener("click", async () => {
+        options.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+        button.textContent = t("translating");
+        const oldBox = $(".marsoh-translation", article);
+        if (oldBox) oldBox.remove();
+        try {
+          message.translations = message.translations || {};
+          let translated = message.translations[language];
+          if (!translated) {
+            const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/translate`, {
+              method: "POST",
+              body: JSON.stringify({ target_language: language })
+            });
+            translated = payload.translated_text;
+            message.translations[language] = translated;
+          }
+          const box = document.createElement("div");
+          box.className = "marsoh-translation";
+          box.lang = language;
+          box.dir = language === "ar" ? "rtl" : "auto";
+          const text = document.createElement("span");
+          text.textContent = translated;
+          const label = document.createElement("small");
+          label.textContent = `${t("automaticTranslation")} · ${LANGUAGE_LABELS[language] || language.toUpperCase()}`;
+          box.append(text, label);
+          chooser.after(box);
+          chooser.hidden = true;
+          button.textContent = t("showOriginal");
+          button.setAttribute("aria-expanded", "true");
+        } catch {
+          const box = document.createElement("div");
+          box.className = "marsoh-translation is-error";
+          box.textContent = t("translationUnavailable");
+          chooser.after(box);
+          chooser.hidden = true;
+          button.textContent = t("translate");
+          button.setAttribute("aria-expanded", "false");
+        } finally {
+          options.querySelectorAll("button").forEach((item) => { item.disabled = false; });
+        }
+      });
+      options.append(languageButton);
+    }
+    chooser.append(options);
+    button.addEventListener("click", () => {
       const existing = $(".marsoh-translation", article);
-      if (existing) { existing.hidden = !existing.hidden; button.textContent = existing.hidden ? t("translate") : t("showOriginal"); return; }
-      button.disabled = true;
-      try {
-        const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/translate`, { method: "POST", body: JSON.stringify({ target_language: state.locale }) });
-        const box = document.createElement("div"); box.className = "marsoh-translation"; box.textContent = payload.translated_text;
-        const label = document.createElement("small"); label.textContent = t("automaticTranslation"); box.append(label); article.append(box); button.textContent = t("showOriginal");
-      } catch { setStatus(t("translationUnavailable")); }
-      finally { button.disabled = false; }
+      if (existing && !existing.hidden) {
+        existing.hidden = true;
+        chooser.hidden = true;
+        button.textContent = t("translate");
+        button.setAttribute("aria-expanded", "false");
+        return;
+      }
+      if (existing?.hidden) {
+        existing.hidden = false;
+        button.textContent = t("showOriginal");
+        button.setAttribute("aria-expanded", "true");
+        return;
+      }
+      chooser.hidden = !chooser.hidden;
+      button.setAttribute("aria-expanded", String(!chooser.hidden));
     });
-    article.append(button);
+    article.append(button, chooser);
   }
 
-  function addReactions(article, message) {
+  async function toggleReaction(message, emoji, trigger) {
+    if (trigger) trigger.disabled = true;
+    try {
+      const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/reactions`, {
+        method: "POST",
+        body: JSON.stringify({ emoji })
+      });
+      const others = (message.reactions || []).filter((item) => item.emoji !== emoji);
+      message.reactions = payload.count ? [...others, { emoji, count: payload.count, mine: payload.active }] : others;
+      renderMessages({ preserveBottom: nearBottom() });
+    } catch (error) {
+      setStatus(error.message || t("failed"));
+      if (trigger) trigger.disabled = false;
+    }
+  }
+
+  function addReactions(article, bubble, message) {
     if (message.own || !message.id || message.local_status) return;
     const reactionState = new Map((message.reactions || []).map((item) => [item.emoji, item]));
     const bar = document.createElement("div"); bar.className = "marsoh-reactions";
-    for (const emoji of ALLOWED_REACTIONS) {
-      const current = reactionState.get(emoji) || { count: 0, mine: false };
-      const button = document.createElement("button"); button.type = "button"; button.textContent = `${emoji}${current.count ? ` ${current.count}` : ""}`; button.title = t("chooseReaction"); button.classList.toggle("is-active", current.mine === true);
-      button.addEventListener("click", async () => {
-        try {
-          const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/reactions`, { method: "POST", body: JSON.stringify({ emoji }) });
-          const others = (message.reactions || []).filter((item) => item.emoji !== emoji);
-          message.reactions = payload.count ? [...others, { emoji, count: payload.count, mine: payload.active }] : others;
-          renderMessages({ preserveBottom: nearBottom() });
-        }
-        catch (error) { setStatus(error.message); }
-      });
+    for (const [emoji, current] of reactionState) {
+      if (!current.count) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = `${emoji} ${current.count}`;
+      button.title = t("chooseReaction");
+      button.setAttribute("aria-label", `${t("chooseReaction")}: ${emoji}, ${current.count}`);
+      button.classList.toggle("is-active", current.mine === true);
+      button.addEventListener("click", (event) => { event.stopPropagation(); toggleReaction(message, emoji, button); });
       bar.append(button);
     }
-    article.append(bar);
+    if (bar.childElementCount) article.append(bar);
+
+    const tray = document.createElement("div");
+    tray.className = "marsoh-quick-reactions";
+    tray.hidden = true;
+    tray.setAttribute("role", "toolbar");
+    tray.setAttribute("aria-label", t("reactions"));
+    for (const emoji of ALLOWED_REACTIONS) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = emoji;
+      button.title = t("chooseReaction");
+      button.setAttribute("aria-label", `${t("chooseReaction")}: ${emoji}`);
+      button.classList.toggle("is-active", reactionState.get(emoji)?.mine === true);
+      button.addEventListener("click", (event) => { event.stopPropagation(); toggleReaction(message, emoji, button); });
+      tray.append(button);
+    }
+    article.append(tray);
+
+    const openTray = (event) => {
+      if (event.target.closest("button") || window.getSelection()?.toString()) return;
+      $$(".marsoh-quick-reactions").forEach((item) => {
+        if (item !== tray) { item.hidden = true; item.closest(".marsoh-message")?.classList.remove("has-open-reactions"); }
+      });
+      tray.hidden = !tray.hidden;
+      article.classList.toggle("has-open-reactions", !tray.hidden);
+      if (!tray.hidden) $("button", tray)?.focus({ preventScroll: true });
+    };
+    bubble.tabIndex = 0;
+    bubble.setAttribute("role", "button");
+    bubble.setAttribute("aria-label", `${message.body}. ${t("tapForReaction")}`);
+    bubble.addEventListener("click", openTray);
+    bubble.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openTray(event); }
+    });
   }
 
   function renderMessages(options) {
@@ -208,14 +361,14 @@
       const name = document.createElement("strong"); name.textContent = message.sender?.display_name || state.bootstrap?.user?.display_name || "Denizci"; head.append(name);
       if (message.sender?.badge) { const badge = document.createElement("span"); badge.className = "marsoh-verified"; badge.textContent = message.sender.badge === "verified_company" ? "◆" : "✓"; badge.title = message.sender.badge === "verified_company" ? t("verifiedCompany") : t("verifiedSeafarer"); head.append(badge); }
       if (message.sender?.country_code) { const country = document.createElement("span"); country.className = "marsoh-country"; country.textContent = message.sender.country_code; head.append(country); }
-      if (message.language && message.language !== "und") { const language = document.createElement("span"); language.className = "marsoh-message-language"; language.textContent = message.language.toUpperCase(); head.append(language); }
+      if (message.language && message.language !== "und" && message.language.toUpperCase() !== message.sender?.country_code) { const language = document.createElement("span"); language.className = "marsoh-message-language"; language.textContent = message.language.toUpperCase(); head.append(language); }
       const time = document.createElement("time"); time.dateTime = message.time || message.created_at || ""; time.textContent = timeLabel(time.dateTime); head.append(time); article.append(head);
       const bubble = document.createElement("div"); bubble.className = "marsoh-bubble";
       const body = document.createElement("span"); body.textContent = message.body; bubble.append(body);
-      if (!message.own || message.local_status === "failed") { const menu = document.createElement("button"); menu.type = "button"; menu.className = "marsoh-message-menu"; menu.textContent = "⋯"; menu.setAttribute("aria-label", t("actionTitle")); menu.addEventListener("click", () => openMessageActions(message)); bubble.append(menu); }
+      if (!message.own || message.local_status === "failed") { const menu = document.createElement("button"); menu.type = "button"; menu.className = "marsoh-message-menu"; menu.textContent = "⋯"; menu.setAttribute("aria-label", t("actionTitle")); menu.addEventListener("click", (event) => { event.stopPropagation(); openMessageActions(message); }); bubble.append(menu); }
       article.append(bubble);
       if (message.own) { const status = document.createElement("button"); status.type = "button"; status.className = `marsoh-message-status${message.local_status === "failed" ? " is-error" : ""}`; status.textContent = `${message.local_status === "failed" ? "! " : ""}${statusLabel(message)}`; if (message.local_status === "failed") status.addEventListener("click", () => openFailedActions(message)); article.append(status); }
-      addTranslationControls(article, message); addReactions(article, message); target.append(article);
+      addTranslationControls(article, message); addReactions(article, bubble, message); target.append(article);
     }
     const count = $("[data-marsoh-room-count]");
     if (count) count.textContent = `${sorted.length} ${t("messages")}`;
@@ -256,7 +409,9 @@
   }
   function subscribe(channelId) {
     stopRealtime();
-    if (!App.supabase?.channel) return;
+    if (!navigator.onLine) { setConnectionStatus("offline"); return; }
+    if (!App.supabase?.channel) { setConnectionStatus("connecting"); return; }
+    setConnectionStatus("connecting");
     state.realtime = App.supabase.channel(`marsoh:${channelId}:${state.bootstrap.user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "marsoh_published_messages", filter: `channel_id=eq.${channelId}` }, (payload) => {
         const row = payload.new || {};
@@ -266,7 +421,11 @@
         upsertMessage({ id: row.message_id, server_id: row.message_id, channel_id: row.channel_id, sender: { id: row.sender_user_id, display_name: row.sender_display_name, badge: row.sender_badge, country_code: row.sender_country_code, actor_type: row.actor_type }, body: row.body, language: row.language, time: row.published_at, own, local_status: own ? "sent" : undefined });
         renderMessages({ preserveBottom: wasNearBottom });
         if (!wasNearBottom) { $("[data-marsoh-unread-line]").hidden = false; $("[data-marsoh-jump-latest]").hidden = false; }
-      }).subscribe();
+      }).subscribe((status) => {
+        if (status === "SUBSCRIBED") setConnectionStatus("live");
+        else if (!navigator.onLine) setConnectionStatus("offline");
+        else setConnectionStatus("connecting");
+      });
   }
 
   async function openChannel(channel) {
@@ -353,19 +512,78 @@
     showActions(t("reportReason"), reasons.map(([reason, label]) => ({ label: t(label), run: async () => { await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/report`, { method: "POST", body: JSON.stringify({ reason_code: reason }) }); setStatus(t("reportSaved")); } })));
   }
 
-  function resizeInput() { const input = $("[data-marsoh-input]"); if (!input) return; input.style.height = "auto"; input.style.height = `${Math.min(input.scrollHeight, 132)}px`; }
+  function resizeInput() {
+    const input = $("[data-marsoh-input]");
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 132)}px`;
+    updateComposerMeta();
+  }
+
+  function renderComposerEmojis() {
+    const grid = $("[data-marsoh-emoji-grid]");
+    if (!grid) return;
+    grid.replaceChildren();
+    for (const emoji of COMPOSER_EMOJIS) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = emoji;
+      button.setAttribute("aria-label", `${t("chooseEmoji")}: ${emoji}`);
+      button.addEventListener("click", () => {
+        const input = $("[data-marsoh-input]");
+        if (!input || input.value.length + emoji.length > composerLimit()) return;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        input.setRangeText(emoji, start, end, "end");
+        input.focus();
+        resizeInput();
+      });
+      grid.append(button);
+    }
+  }
 
   function setupSpeech() {
     const button = $("[data-marsoh-mic]");
     if (!button || !window.MarSohSpeech?.BrowserSpeechToTextProvider) return;
     state.speech = new window.MarSohSpeech.BrowserSpeechToTextProvider({
-      onStart() { state.speechBase = $("[data-marsoh-input]").value.trim(); button.classList.add("is-listening"); $("[data-marsoh-listening]").hidden = false; },
-      onText({ finalText, interimText }) { const input = $("[data-marsoh-input]"); const prefix = state.speechBase ? `${state.speechBase} ` : ""; input.value = `${prefix}${finalText || interimText}`.trimStart(); resizeInput(); },
-      onError(code) { setStatus(code === "SPEECH_PERMISSION_DENIED" ? t("micDenied") : code === "SPEECH_TIMEOUT" ? t("micTimeout") : t("micError")); },
-      onEnd() { button.classList.remove("is-listening"); $("[data-marsoh-listening]").hidden = true; }
+      onStart() {
+        state.speechBase = $("[data-marsoh-input]").value.trim();
+        button.classList.add("is-listening");
+        button.setAttribute("aria-pressed", "true");
+        button.setAttribute("aria-label", t("stopListening"));
+        $("[data-marsoh-listening]").hidden = false;
+      },
+      onListening() { setStatus(""); },
+      onText({ combinedText }) {
+        const input = $("[data-marsoh-input]");
+        const combined = [state.speechBase, combinedText].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+        input.value = combined.slice(0, composerLimit());
+        resizeInput();
+      },
+      onError(code, detail) {
+        const message = code === "SPEECH_PERMISSION_DENIED" ? t("micDenied") : code === "SPEECH_TIMEOUT" ? t("micTimeout") : t("micError");
+        setStatus(message);
+        if (detail?.recoverable === false) state.speech?.stop();
+      },
+      onEnd() {
+        button.classList.remove("is-listening");
+        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-label", t("voiceTyping"));
+        $("[data-marsoh-listening]").hidden = true;
+      }
     });
-    button.hidden = !state.speech.supported();
-    button.addEventListener("click", () => { if (state.speech.active) state.speech.stop(); else { setStatus(""); try { state.speech.start(state.locale); } catch { setStatus(t("micError")); } } });
+    const supported = state.speech.supported();
+    button.hidden = !supported;
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", () => {
+      if (state.speech.active) state.speech.stop();
+      else {
+        setStatus("");
+        try { state.speech.start(state.locale); }
+        catch { setStatus(supported ? t("micError") : t("micUnsupported")); }
+      }
+    });
+    $("[data-marsoh-stop-listening]")?.addEventListener("click", () => state.speech?.stop());
   }
 
   function renderTopic() {
@@ -382,30 +600,52 @@
     $("[data-marsoh-modal-close]")?.addEventListener("click", closeModal);
     $("[data-marsoh-action-modal]")?.addEventListener("click", (event) => { if (event.target === event.currentTarget) closeModal(); });
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$('[data-marsoh-action-modal]')?.hidden) closeModal(); });
-    $("[data-marsoh-language]")?.addEventListener("change", (event) => { state.locale = I18n.normalize(event.target.value); localStorage.setItem("allona.language", state.locale); I18n.apply(state.locale); renderChannels(); renderTopic(); renderMessages(); if (state.currentChannel) { $("[data-marsoh-room-title]").textContent = localizeChannel(state.currentChannel); $("[data-marsoh-pinned] p").textContent = localizePinned(state.currentChannel); } });
-    $("[data-marsoh-composer]")?.addEventListener("submit", async (event) => { event.preventDefault(); const input = $("[data-marsoh-input]"); const body = input.value.trim(); if (!body || !state.currentChannel) return; input.value = ""; resizeInput(); await queueMessage(body); });
+    $("[data-marsoh-language]")?.addEventListener("change", (event) => {
+      state.locale = I18n.normalize(event.target.value);
+      localStorage.setItem("allona.language", state.locale);
+      I18n.apply(state.locale);
+      state.speech?.setLanguage(state.locale);
+      renderComposerEmojis(); renderChannels(); renderTopic(); renderMessages(); updateComposerMeta(); setConnectionStatus(state.connectionState);
+      if (state.currentChannel) { $("[data-marsoh-room-title]").textContent = localizeChannel(state.currentChannel); $("[data-marsoh-pinned] p").textContent = localizePinned(state.currentChannel); }
+      $("[data-marsoh-policy-note]").textContent = t("sentNotice");
+    });
+    $("[data-marsoh-composer]")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = $("[data-marsoh-input]");
+      const body = input.value.trim();
+      if (!body || !state.currentChannel) return;
+      if (state.speech?.active) state.speech.stop();
+      input.value = "";
+      resizeInput();
+      await queueMessage(body);
+    });
     $("[data-marsoh-input]")?.addEventListener("input", resizeInput);
     $("[data-marsoh-input]")?.addEventListener("keydown", (event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); $("[data-marsoh-composer]").requestSubmit(); } });
-    $("[data-marsoh-emoji]")?.addEventListener("click", () => { const panel = $("[data-marsoh-emoji-panel]"); panel.hidden = !panel.hidden; });
-    $$("[data-marsoh-emoji-panel] button").forEach((button) => button.addEventListener("click", () => { const input = $("[data-marsoh-input]"); input.value += button.textContent; input.focus(); resizeInput(); $("[data-marsoh-emoji-panel]").hidden = true; }));
+    $("[data-marsoh-emoji]")?.addEventListener("click", (event) => { event.stopPropagation(); const panel = $("[data-marsoh-emoji-panel]"); panel.hidden = !panel.hidden; });
+    $("[data-marsoh-emoji-close]")?.addEventListener("click", () => { $("[data-marsoh-emoji-panel]").hidden = true; $("[data-marsoh-emoji]")?.focus(); });
     $("[data-marsoh-load-history]")?.addEventListener("click", () => state.cursor && loadMessages(state.cursor));
     $("[data-marsoh-jump-latest]")?.addEventListener("click", () => { scrollLatest(true); $("[data-marsoh-jump-latest]").hidden = true; $("[data-marsoh-unread-line]").hidden = true; });
     $("[data-marsoh-messages]")?.addEventListener("scroll", () => { if (nearBottom()) { $("[data-marsoh-jump-latest]").hidden = true; $("[data-marsoh-unread-line]").hidden = true; } });
     $("[data-marsoh-notification]")?.addEventListener("change", async (event) => { if (!state.currentChannel) return; try { await api(`/v1/maritime/marsoh/channels/${encodeURIComponent(state.currentChannel.id)}/notification-preference`, { method: "PATCH", body: JSON.stringify({ preference: event.target.value }) }); state.currentChannel.notification_preference = event.target.value; } catch (error) { setStatus(error.message); } });
-    window.addEventListener("online", flushOutbox);
-    window.addEventListener("beforeunload", stopRealtime);
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-marsoh-emoji-panel], [data-marsoh-emoji]")) $("[data-marsoh-emoji-panel]").hidden = true;
+      if (!event.target.closest(".marsoh-message")) $$(".marsoh-quick-reactions").forEach((item) => { item.hidden = true; item.closest(".marsoh-message")?.classList.remove("has-open-reactions"); });
+    });
+    window.addEventListener("online", async () => { setConnectionStatus("connecting"); if (state.currentChannel) subscribe(state.currentChannel.id); await flushOutbox(); });
+    window.addEventListener("offline", () => setConnectionStatus("offline"));
+    window.addEventListener("beforeunload", () => { stopRealtime(); state.speech?.stop(); });
   }
 
   async function init() {
     if (!document.querySelector("[data-page='marsoh']")) return;
-    state.locale = I18n.apply(state.locale); bind(); setupSpeech();
+    state.locale = I18n.apply(state.locale); renderComposerEmojis(); bind(); setupSpeech(); updateComposerMeta();
     try { state.outboxDb = await openOutbox(); } catch { state.outboxDb = null; }
     state.session = App.auth?.getSession ? await App.auth.getSession() : null;
     if (!state.session?.access_token) { loginGate(true); $("[data-marsoh-shell]").setAttribute("aria-busy", "false"); return; }
     try {
       const payload = await api(`/v1/maritime/marsoh/bootstrap?language=${encodeURIComponent(state.locale)}`);
-      state.bootstrap = payload; state.blocked = new Set(payload.blocked_user_ids || []); loginGate(false);
-      $("[data-marsoh-policy-note]").textContent = payload.policy?.sent_notice || "";
+      state.bootstrap = payload; state.blocked = new Set(payload.blocked_user_ids || []); loginGate(false); updateComposerMeta();
+      $("[data-marsoh-policy-note]").textContent = t("sentNotice");
       renderChannels(); renderTopic();
       const first = payload.channels?.find((channel) => channel.slug === "world") || payload.channels?.[0];
       if (first) await openChannel(first);
