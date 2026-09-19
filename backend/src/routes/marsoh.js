@@ -8,7 +8,7 @@ import {
   normalizedModerationText,
   sanitizeMarsohText
 } from "../lib/marsoh-moderation.js";
-import { translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
+import { translateMarsohLocalizedFromTurkish, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uuidSchema = z.string().uuid();
@@ -43,14 +43,19 @@ const topicDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const adminTopicSchema = z.object({
   title_i18n: localizedTextSchema,
   body_i18n: localizedTextSchema,
-  status: z.enum(["active", "archived"]).default("active")
+  status: z.enum(["active", "archived"]).default("active"),
+  auto_translate_from_tr: z.boolean().default(true)
 }).strict();
 const adminChannelSchema = z.object({
   status: z.enum(["active", "paused", "archived"]).optional(),
   slow_mode_seconds: z.number().int().min(0).max(300).optional(),
   name_i18n: localizedTextSchema.optional(),
-  pinned_notice_i18n: localizedTextSchema.optional()
-}).strict().refine((value) => Object.keys(value).length > 0, "En az bir oda ayarı gereklidir.");
+  pinned_notice_i18n: localizedTextSchema.optional(),
+  auto_translate_from_tr: z.boolean().default(true)
+}).strict().refine((value) => value.status !== undefined
+  || value.slow_mode_seconds !== undefined
+  || value.name_i18n !== undefined
+  || value.pinned_notice_i18n !== undefined, "En az bir oda ayarı gereklidir.");
 const adminAnnouncementSchema = z.object({
   channel_id: uuidSchema,
   idempotency_key: uuidSchema,
@@ -100,6 +105,34 @@ function cleanLocalizedMap(value, maxLength) {
     const text = sanitizeMarsohText(value?.[language] || "", maxLength);
     return text ? [[language, text]] : [];
   }));
+}
+
+function marsohTranslationOptions() {
+  return {
+    provider: config.marsoh.translationProvider,
+    localUrl: config.marsoh.translationLocalUrl,
+    localSecret: config.marsoh.translationLocalSecret,
+    localTimeoutMs: config.marsoh.translationLocalTimeoutMs,
+    apiKey: config.marsoh.translationApiKey,
+    baseUrl: config.marsoh.translationBaseUrl,
+    model: config.marsoh.translationModel,
+    timeoutMs: config.marsoh.providerTimeoutMs,
+    concurrency: 2
+  };
+}
+
+async function localizedAdminTextFromTurkish(value, maxLength) {
+  const source = sanitizeMarsohText(value?.tr || "", maxLength);
+  if (!source) throw httpError("Türkçe kaynak metin zorunludur.", 400, "MARSOH_TURKISH_SOURCE_REQUIRED");
+  try {
+    const result = await translateMarsohLocalizedFromTurkish(source, marsohTranslationOptions());
+    return {
+      localized: cleanLocalizedMap(result.localized, maxLength),
+      providers: result.providers
+    };
+  } catch {
+    throw httpError("Diğer dil çevirileri şu anda oluşturulamadı. İçerik kaydedilmedi; lütfen yeniden deneyin.", 503, "MARSOH_ADMIN_TRANSLATION_UNAVAILABLE");
+  }
 }
 
 function requestIp(request) {
@@ -720,11 +753,28 @@ export function registerMarsohRoutes(app) {
     const update = { updated_at: new Date().toISOString() };
     if (input.status !== undefined) update.status = input.status;
     if (input.slow_mode_seconds !== undefined) update.slow_mode_seconds = input.slow_mode_seconds;
-    if (input.name_i18n) update.name_i18n = { ...(current.name_i18n || {}), ...cleanLocalizedMap(input.name_i18n, 120) };
-    if (input.pinned_notice_i18n) update.pinned_notice_i18n = { ...(current.pinned_notice_i18n || {}), ...cleanLocalizedMap(input.pinned_notice_i18n, 600) };
+    const translationProviders = {};
+    if (input.name_i18n) {
+      if (input.auto_translate_from_tr) {
+        const translated = await localizedAdminTextFromTurkish(input.name_i18n, 120);
+        update.name_i18n = translated.localized;
+        translationProviders.name = translated.providers;
+      } else {
+        update.name_i18n = { ...(current.name_i18n || {}), ...cleanLocalizedMap(input.name_i18n, 120) };
+      }
+    }
+    if (input.pinned_notice_i18n) {
+      if (input.auto_translate_from_tr) {
+        const translated = await localizedAdminTextFromTurkish(input.pinned_notice_i18n, 600);
+        update.pinned_notice_i18n = translated.localized;
+        translationProviders.notice = translated.providers;
+      } else {
+        update.pinned_notice_i18n = { ...(current.pinned_notice_i18n || {}), ...cleanLocalizedMap(input.pinned_notice_i18n, 600) };
+      }
+    }
     const channel = assertDb(await supabaseAdmin.from("marsoh_channels").update(update).eq("id", channelId)
       .select("id,slug,status,name_i18n,pinned_notice_i18n,slow_mode_seconds,updated_at").single(), "MarSoh odası güncellenemedi.");
-    await marsohAudit({ request, ctx, action: "marsoh.management.channel_updated", resourceType: "marsoh_channel", resourceId: channelId, metadata: { fields: Object.keys(input) } });
+    await marsohAudit({ request, ctx, action: "marsoh.management.channel_updated", resourceType: "marsoh_channel", resourceId: channelId, metadata: { fields: Object.keys(input), source_language: "tr", auto_translated_languages: input.auto_translate_from_tr ? marsohLanguages.filter((language) => language !== "tr") : [], translation_providers: translationProviders } });
     return { ok: true, channel };
   });
 
@@ -732,10 +782,23 @@ export function registerMarsohRoutes(app) {
     const ctx = await requireModerator(request, "marsoh.management.topic.update");
     const topicDate = topicDateSchema.parse(request.params?.topicDate);
     const input = adminTopicSchema.parse(request.body || {});
-    const titleI18n = cleanLocalizedMap(input.title_i18n, 160);
-    const bodyI18n = cleanLocalizedMap(input.body_i18n, 800);
-    if (!titleI18n.tr || !titleI18n.az || !titleI18n.en || !bodyI18n.tr || !bodyI18n.az || !bodyI18n.en) {
-      throw httpError("Türkçe, Azerbaycanca ve İngilizce konu başlığı ile soru metni zorunludur.", 400, "MARSOH_TOPIC_CORE_LANGUAGES_REQUIRED");
+    let titleI18n;
+    let bodyI18n;
+    let translationProviders = {};
+    if (input.auto_translate_from_tr) {
+      const [translatedTitle, translatedBody] = await Promise.all([
+        localizedAdminTextFromTurkish(input.title_i18n, 160),
+        localizedAdminTextFromTurkish(input.body_i18n, 800)
+      ]);
+      titleI18n = translatedTitle.localized;
+      bodyI18n = translatedBody.localized;
+      translationProviders = { title: translatedTitle.providers, body: translatedBody.providers };
+    } else {
+      titleI18n = cleanLocalizedMap(input.title_i18n, 160);
+      bodyI18n = cleanLocalizedMap(input.body_i18n, 800);
+      if (!titleI18n.tr || !titleI18n.az || !titleI18n.en || !bodyI18n.tr || !bodyI18n.az || !bodyI18n.en) {
+        throw httpError("Türkçe, Azerbaycanca ve İngilizce konu başlığı ile soru metni zorunludur.", 400, "MARSOH_TOPIC_CORE_LANGUAGES_REQUIRED");
+      }
     }
     const existing = assertDb(await supabaseAdmin.from("marsoh_topic_cards").select("id").eq("topic_date", topicDate).maybeSingle(), "MarSoh konusu okunamadı.");
     const topic = assertDb(await supabaseAdmin.from("marsoh_topic_cards").upsert({
@@ -745,7 +808,7 @@ export function registerMarsohRoutes(app) {
       body_i18n: bodyI18n,
       status: input.status
     }, { onConflict: "topic_date" }).select("id,topic_date,title_i18n,body_i18n,status,created_at").single(), "MarSoh konusu kaydedilemedi.");
-    await marsohAudit({ request, ctx, action: "marsoh.management.topic_updated", resourceType: "marsoh_topic_card", resourceId: topic.id, metadata: { topic_date: topicDate, status: input.status } });
+    await marsohAudit({ request, ctx, action: "marsoh.management.topic_updated", resourceType: "marsoh_topic_card", resourceId: topic.id, metadata: { topic_date: topicDate, status: input.status, source_language: "tr", auto_translated_languages: input.auto_translate_from_tr ? marsohLanguages.filter((language) => language !== "tr") : [], translation_providers: translationProviders } });
     return { ok: true, topic };
   });
 

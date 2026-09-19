@@ -13,6 +13,8 @@ const LANGUAGE_NAMES = Object.freeze({
   ar: "Arabic", kk: "Kazakh", uz: "Uzbek", ky: "Kyrgyz"
 });
 
+export const MARSOH_SUPPORTED_LANGUAGES = Object.freeze(Object.keys(LANGUAGE_NAMES));
+
 function translationError(code, message, cause) {
   const error = new Error(message, cause ? { cause } : undefined);
   error.code = code;
@@ -120,4 +122,37 @@ export async function translateMarsohTextDetailed(text, targetLanguage, options 
 export async function translateMarsohText(text, targetLanguage, options = {}) {
   const result = await translateMarsohTextDetailed(text, targetLanguage, options);
   return result.translated_text;
+}
+
+export async function translateMarsohLocalizedFromTurkish(text, options = {}) {
+  const source = String(text || "").trim().slice(0, 2000);
+  if (!source) throw translationError("MARSOH_TRANSLATION_EMPTY", "Turkish source text is empty.");
+
+  const languages = (options.languages || MARSOH_SUPPORTED_LANGUAGES)
+    .filter((language, index, list) => LANGUAGE_NAMES[language] && list.indexOf(language) === index);
+  const targets = languages.filter((language) => language !== "tr");
+  const concurrency = Math.max(1, Math.min(Number(options.concurrency) || 2, 4));
+  const translate = options.translateImpl || translateMarsohTextDetailed;
+  const localized = { tr: source };
+  const providers = {};
+
+  for (let index = 0; index < targets.length; index += concurrency) {
+    const batch = targets.slice(index, index + concurrency);
+    const results = await Promise.all(batch.map(async (targetLanguage) => {
+      const result = await translate(source, targetLanguage, {
+        ...options,
+        sourceLanguage: "tr"
+      });
+      return [targetLanguage, result];
+    }));
+    for (const [language, result] of results) {
+      localized[language] = translatedText(result?.translated_text);
+      providers[language] = {
+        provider: String(result?.provider || "unknown").slice(0, 80),
+        model: String(result?.model || "unknown").slice(0, 120)
+      };
+    }
+  }
+
+  return { localized, providers };
 }

@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { translateMarsohText, translateMarsohTextDetailed } from "../../src/lib/marsoh-translation.js";
+import {
+  MARSOH_SUPPORTED_LANGUAGES,
+  translateMarsohLocalizedFromTurkish,
+  translateMarsohText,
+  translateMarsohTextDetailed
+} from "../../src/lib/marsoh-translation.js";
 
 
 test("local server translation works without a paid API key", async () => {
@@ -81,4 +86,35 @@ test("unsupported source language is rejected before local server contact", asyn
     }
   }), (error) => error.code === "MARSOH_TRANSLATION_LANGUAGE_UNSUPPORTED");
   assert.equal(called, false);
+});
+
+test("Turkish admin source is translated into every supported MarSoh language", async () => {
+  const calls = [];
+  const result = await translateMarsohLocalizedFromTurkish("Bugünün deniz konusu", {
+    concurrency: 3,
+    translateImpl: async (text, targetLanguage, options) => {
+      calls.push({ text, targetLanguage, sourceLanguage: options.sourceLanguage });
+      return {
+        translated_text: `${targetLanguage}:translated`,
+        provider: "test_provider",
+        model: "test_model"
+      };
+    }
+  });
+
+  assert.deepEqual(Object.keys(result.localized).sort(), [...MARSOH_SUPPORTED_LANGUAGES].sort());
+  assert.equal(result.localized.tr, "Bugünün deniz konusu");
+  assert.equal(result.localized.en, "en:translated");
+  assert.equal(calls.length, MARSOH_SUPPORTED_LANGUAGES.length - 1);
+  assert.ok(calls.every((call) => call.sourceLanguage === "tr"));
+  assert.ok(calls.every((call) => call.targetLanguage !== "tr"));
+});
+
+test("admin localization fails atomically when one target translation fails", async () => {
+  await assert.rejects(() => translateMarsohLocalizedFromTurkish("Güvenli vardiya", {
+    translateImpl: async (_text, targetLanguage) => {
+      if (targetLanguage === "ru") throw new Error("provider unavailable");
+      return { translated_text: `${targetLanguage}:ok`, provider: "test", model: "test" };
+    }
+  }), /provider unavailable/);
 });

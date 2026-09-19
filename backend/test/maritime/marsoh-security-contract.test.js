@@ -172,6 +172,12 @@ test("MarSoh owner management controls rooms, topics, announcements, reports, an
   assert.match(route, /app\.get\("\/v1\/admin\/marsoh\/management"[\s\S]*requireModerator\(request, "marsoh\.management\.read"\)/);
   assert.match(route, /app\.patch\("\/v1\/admin\/marsoh\/channels\/:channelId"[\s\S]*marsoh\.management\.channel_updated/);
   assert.match(route, /app\.put\("\/v1\/admin\/marsoh\/topics\/:topicDate"[\s\S]*marsoh\.management\.topic_updated/);
+  assert.match(route, /auto_translate_from_tr: z\.boolean\(\)\.default\(true\)/);
+  assert.match(route, /translateMarsohLocalizedFromTurkish/);
+  assert.match(route, /source_language: "tr"/);
+  assert.match(adminUi, /auto_translate_from_tr: true/);
+  assert.match(adminUi, /Kaydet ve 9 Dile Uygula/);
+  assert.doesNotMatch(adminUi, /name="\$\{escape\(prefix\)\}_\$\{language\}"/);
   assert.match(route, /app\.post\("\/v1\/admin\/marsoh\/messages"[\s\S]*ADMIN_NOTICE/);
   assert.match(route, /app\.post\("\/v1\/admin\/marsoh\/messages\/bulk-remove"/);
   assert.match(route, /confirmation: z\.literal\("MARSOH_ALL_MESSAGES_REMOVE"\)/);

@@ -1656,19 +1656,20 @@
   function marsohLocalizedFields(prefix, values, options) {
     const multiline = Boolean(options && options.multiline);
     const maxLength = Number(options && options.maxLength || (multiline ? 800 : 160));
-    return Object.entries(marsohLanguageLabels).map(([language, label]) => {
-      const value = escape(values && values[language] || "");
-      const required = ["tr", "az", "en"].includes(language) && options?.requiredCore ? " required" : "";
-      const control = multiline
-        ? `<textarea name="${escape(prefix)}_${language}" maxlength="${maxLength}" rows="3"${required}>${value}</textarea>`
-        : `<input name="${escape(prefix)}_${language}" type="text" maxlength="${maxLength}" value="${value}"${required}>`;
-      return `<label><span>${escape(label)}</span>${control}</label>`;
-    }).join("");
+    const sourceValue = escape(values && values.tr || "");
+    const sourceControl = multiline
+      ? `<textarea name="${escape(prefix)}_tr" maxlength="${maxLength}" rows="3" required>${sourceValue}</textarea>`
+      : `<input name="${escape(prefix)}_tr" type="text" maxlength="${maxLength}" value="${sourceValue}" required>`;
+    const previews = Object.entries(marsohLanguageLabels)
+      .filter(([language]) => language !== "tr")
+      .map(([language, label]) => `<div class="sa-marsoh-translation-preview"><span>${escape(label)}</span><p lang="${escape(language)}" dir="${language === "ar" ? "rtl" : "auto"}">${escape(values && values[language] || "Henüz oluşturulmadı")}</p></div>`)
+      .join("");
+    return `<label class="sa-marsoh-source"><span>Türkçe ana metin</span>${sourceControl}<small>Kaydettiğinizde sunucu diğer sekiz dili otomatik oluşturur.</small></label><details class="sa-marsoh-preview"><summary>Mevcut otomatik çevirileri göster</summary><div>${previews}</div></details>`;
   }
 
   function marsohMapFromForm(form, prefix) {
     const data = new FormData(form);
-    return Object.fromEntries(Object.keys(marsohLanguageLabels).map((language) => [language, String(data.get(`${prefix}_${language}`) || "").trim()]));
+    return { tr: String(data.get(`${prefix}_tr`) || "").trim() };
   }
 
   function marsohChannelLabel(channel) {
@@ -1733,9 +1734,9 @@
       <form class="sa-marsoh-form" data-marsoh-topic-form>
         <label><span>Yayın tarihi</span><input name="topic_date" type="date" value="${escape(latestTopic.topic_date)}" required></label>
         <label><span>Durum</span><select name="status"><option value="active" ${latestTopic.status === "active" ? "selected" : ""}>Aktif</option><option value="archived" ${latestTopic.status === "archived" ? "selected" : ""}>Arşiv</option></select></label>
-        <details class="sa-marsoh-locales is-wide" open><summary>Başlık çevirileri</summary><div>${marsohLocalizedFields("title", latestTopic.title_i18n, { requiredCore: true })}</div></details>
-        <details class="sa-marsoh-locales is-wide" open><summary>Soru çevirileri</summary><div>${marsohLocalizedFields("body", latestTopic.body_i18n, { multiline: true, maxLength: 800, requiredCore: true })}</div></details>
-        <button class="sa-btn" type="submit">Günün Konusunu Kaydet</button>
+        <section class="sa-marsoh-locales is-wide"><h4>Başlık</h4><div>${marsohLocalizedFields("title", latestTopic.title_i18n, { requiredCore: true })}</div></section>
+        <section class="sa-marsoh-locales is-wide"><h4>Günün sorusu</h4><div>${marsohLocalizedFields("body", latestTopic.body_i18n, { multiline: true, maxLength: 800, requiredCore: true })}</div></section>
+        <button class="sa-btn" type="submit">Kaydet ve 9 Dile Uygula</button>
       </form>`;
     const channelForms = state.marsohChannels.map((channel) => `
       <form class="sa-marsoh-channel" data-marsoh-channel-form data-channel-id="${escape(channel.id)}">
@@ -1743,9 +1744,9 @@
         <div class="sa-marsoh-form">
           <label><span>Oda durumu</span><select name="status"><option value="active" ${channel.status === "active" ? "selected" : ""}>Aktif</option><option value="paused" ${channel.status === "paused" ? "selected" : ""}>Duraklat</option><option value="archived" ${channel.status === "archived" ? "selected" : ""}>Arşivle</option></select></label>
           <label><span>Yavaş mod (saniye)</span><input name="slow_mode_seconds" type="number" min="0" max="300" value="${escape(channel.slow_mode_seconds)}" required></label>
-          <details class="sa-marsoh-locales is-wide"><summary>Oda adı çevirileri</summary><div>${marsohLocalizedFields("name", channel.name_i18n, { maxLength: 120 })}</div></details>
-          <details class="sa-marsoh-locales is-wide"><summary>Sabit güvenlik metinleri</summary><div>${marsohLocalizedFields("notice", channel.pinned_notice_i18n, { multiline: true, maxLength: 600 })}</div></details>
-          <button class="sa-btn sa-btn-ghost" type="submit">Odayı Güncelle</button>
+          <section class="sa-marsoh-locales is-wide"><h4>Oda adı</h4><div>${marsohLocalizedFields("name", channel.name_i18n, { maxLength: 120 })}</div></section>
+          <section class="sa-marsoh-locales is-wide"><h4>Sabit güvenlik metni</h4><div>${marsohLocalizedFields("notice", channel.pinned_notice_i18n, { multiline: true, maxLength: 600 })}</div></section>
+          <button class="sa-btn sa-btn-ghost" type="submit">Odayı Güncelle ve 9 Dile Uygula</button>
         </div>
       </form>`).join("");
     const messageRows = state.marsohMessages.map((item) => ownerLine(
@@ -1769,8 +1770,8 @@
     ownerSetOutput([
       `<div class="sa-marsoh-stats"><div><strong>${formatNumber(state.marsohChannels.length)}</strong><span>Oda</span></div><div><strong>${formatNumber(state.marsohMessages.length)}</strong><span>Son mesaj</span></div><div><strong>${formatNumber(state.marsohReports.length)}</strong><span>Açık bildirim</span></div><div><strong>${formatNumber(state.marsohModeration.length)}</strong><span>Karantina</span></div></div>`,
       marsohPanel("Yönetimden paylaşım", "Seçilen odada AllonaHub MarSoh Yönetimi adıyla yayımlanır.", announcementForm),
-      marsohPanel("Bugünün deniz konusu", "Başlık ve soru metnini günlük olarak dokuz dilde yönetebilirsiniz.", topicForm),
-      marsohPanel("Oda yönetimi", "Oda durumunu, yavaş modu, adları ve sabit güvenlik metinlerini yönetin.", `<div class="sa-marsoh-channels">${channelForms || ownerEmpty("MarSoh odası bulunamadı.")}</div>`),
+      marsohPanel("Bugünün deniz konusu", "Türkçe başlığı ve soruyu yazın; sunucu diğer sekiz dili kaydetmeden önce otomatik oluşturur.", topicForm),
+      marsohPanel("Oda yönetimi", "Türkçe oda adı ve güvenlik metni diğer sekiz dile sunucuda otomatik çevrilir.", `<div class="sa-marsoh-channels">${channelForms || ownerEmpty("MarSoh odası bulunamadı.")}</div>`),
       marsohPanel("Yayımlanmış mesajlar", "Hatalı bir mesajı tek tek kaldırın veya gerekli kullanıcı yaptırımını uygulayın.", `<div data-marsoh-published-list>${messageRows.length ? messageRows.join("") : ownerEmpty("Yayımlanmış mesaj bulunmuyor.")}</div>${state.marsohMessageCursor ? `<button class="sa-btn sa-btn-ghost sa-marsoh-more" type="button" data-marsoh-load-more>Daha Eski Mesajları Getir</button>` : ""}`),
       marsohPanel("Toplu temizlik", "Yüksek riskli işlem. Her kullanım gerekçe ve yönetici kimliğiyle kaydedilir.", bulkControls, "danger"),
       marsohPanel("Karantina kuyruğu", `${formatNumber(state.marsohModeration.length)} mesaj güvenlik kararı bekliyor.`, queueRows.length ? queueRows.join("") : ownerEmpty("Karantinada mesaj bulunmuyor.")),
@@ -1852,10 +1853,11 @@
         body: {
           title_i18n: marsohMapFromForm(form, "title"),
           body_i18n: marsohMapFromForm(form, "body"),
-          status: String(data.get("status") || "active")
+          status: String(data.get("status") || "active"),
+          auto_translate_from_tr: true
         }
       });
-      setAlert("Günün deniz konusu tüm dil alanlarıyla kaydedildi.", "ok");
+      setAlert("Günün deniz konusu Türkçeden çevrilerek dokuz dilde kaydedildi.", "ok");
       await loadOwnerMarsohModeration();
     } catch (error) {
       setAlert(publicError(error, "Günün deniz konusu kaydedilemedi."), "error");
@@ -1876,10 +1878,11 @@
           status: String(data.get("status") || "active"),
           slow_mode_seconds: Number(data.get("slow_mode_seconds") || 0),
           name_i18n: marsohMapFromForm(form, "name"),
-          pinned_notice_i18n: marsohMapFromForm(form, "notice")
+          pinned_notice_i18n: marsohMapFromForm(form, "notice"),
+          auto_translate_from_tr: true
         }
       });
-      setAlert("MarSoh oda ayarları güncellendi.", "ok");
+      setAlert("MarSoh oda ayarları Türkçeden çevrilerek dokuz dilde güncellendi.", "ok");
       await loadOwnerMarsohModeration();
     } catch (error) {
       setAlert(publicError(error, "Oda ayarları güncellenemedi."), "error");

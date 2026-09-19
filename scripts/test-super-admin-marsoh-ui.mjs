@@ -50,7 +50,10 @@ try {
       announcementForm: Boolean(document.querySelector("[data-marsoh-announcement-form]")),
       channelForms: document.querySelectorAll("[data-marsoh-channel-form]").length,
       deleteControls: document.querySelectorAll('[data-marsoh-admin-action="rejected"]').length,
-      bulkControl: Boolean(document.querySelector("[data-marsoh-bulk-remove]"))
+      bulkControl: Boolean(document.querySelector("[data-marsoh-bulk-remove]")),
+      turkishSourceFields: document.querySelectorAll('[data-marsoh-topic-form] [name$="_tr"]').length,
+      editableForeignFields: document.querySelectorAll('[data-marsoh-topic-form] [name$="_az"], [data-marsoh-topic-form] [name$="_en"], [data-marsoh-topic-form] [name$="_de"]').length,
+      translationPreviews: document.querySelectorAll('[data-marsoh-topic-form] .sa-marsoh-translation-preview').length
     }));
     assert.equal(layout.scrollWidth, layout.viewport, `${width}px yatay taşma var`);
     assert.equal(layout.navLabel, "MarSoh");
@@ -59,6 +62,9 @@ try {
     assert.equal(layout.channelForms, 2);
     assert.ok(layout.deleteControls >= 1);
     assert.equal(layout.bulkControl, true);
+    assert.equal(layout.turkishSourceFields, 2);
+    assert.equal(layout.editableForeignFields, 0);
+    assert.equal(layout.translationPreviews, 16);
     console.log(`Super Admin MarSoh responsive ${width}px: OK`);
     await context.close();
   }

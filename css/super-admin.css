@@ -1976,6 +1976,12 @@ body[data-page="super-admin"] .sa-marsoh-locales {
   border-top: 1px solid var(--sa-line);
 }
 
+body[data-page="super-admin"] .sa-marsoh-locales h4 {
+  margin: 0;
+  color: var(--sa-text);
+  font-size: 14px;
+}
+
 body[data-page="super-admin"] .sa-marsoh-locales summary {
   color: var(--sa-blue);
   cursor: pointer;
@@ -1987,6 +1993,53 @@ body[data-page="super-admin"] .sa-marsoh-locales > div {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding-top: 10px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-locales .sa-marsoh-source,
+body[data-page="super-admin"] .sa-marsoh-locales .sa-marsoh-preview {
+  grid-column: 1 / -1;
+}
+
+body[data-page="super-admin"] .sa-marsoh-source small {
+  color: var(--sa-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+body[data-page="super-admin"] .sa-marsoh-preview {
+  padding: 10px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+  background: color-mix(in srgb, var(--sa-panel-soft) 84%, transparent);
+}
+
+body[data-page="super-admin"] .sa-marsoh-preview > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+}
+
+body[data-page="super-admin"] .sa-marsoh-translation-preview {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--sa-line);
+  border-radius: var(--sa-radius);
+}
+
+body[data-page="super-admin"] .sa-marsoh-translation-preview span {
+  color: var(--sa-blue);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body[data-page="super-admin"] .sa-marsoh-translation-preview p {
+  margin: 5px 0 0;
+  color: var(--sa-text);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 body[data-page="super-admin"] .sa-marsoh-channels {
@@ -2053,7 +2106,8 @@ body[data-page="super-admin"] .sa-marsoh-more {
 @media (max-width: 560px) {
   body[data-page="super-admin"] .sa-marsoh-stats,
   body[data-page="super-admin"] .sa-marsoh-form,
-  body[data-page="super-admin"] .sa-marsoh-locales > div {
+  body[data-page="super-admin"] .sa-marsoh-locales > div,
+  body[data-page="super-admin"] .sa-marsoh-preview > div {
     grid-template-columns: 1fr;
   }
 
