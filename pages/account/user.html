@@ -1201,6 +1201,22 @@ async function authorizedReturnTo(user,fallback){
   return accountHome(context.type,context);
 }
 
+function protectedAccountLoginPath(accountType){
+  if(accountType==="super_admin")return pageUrl("/admin/super-admin-login.html");
+  if(accountType==="admin")return pageUrl("/admin/admin-login.html");
+  if(accountType==="partner")return pageUrl("/pages/partner/partner.html");
+  return "";
+}
+
+async function rejectProtectedAccountOnCustomerLogin(context){
+  const loginPath=protectedAccountLoginPath(context && context.type);
+  if(!loginPath)return false;
+  clearAuthArtifacts();
+  try{await supabaseClient.auth.signOut({scope:"local"});}catch(error){}
+  showAuthDialog("Bu hesap normal kullanıcı girişini kullanamaz. Güvenli hesap giriş kapısını kullanın: "+loginPath);
+  return true;
+}
+
 function apiBaseUrl(){
   const app=window.Allona || {};
   const configured=String(app.config && app.config.apiBaseUrl || "").replace(/\/$/,"");
@@ -1255,6 +1271,9 @@ function loginFailureMessage(error){
   const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
   const status=Number(error && error.status || 0);
   const code=String(error && error.payload && error.payload.error || "").toLowerCase();
+  if(code==="privileged_login_required" || code==="partner_login_required" || code==="account_portal_required"){
+    return String(error && error.message || "Bu hesap için güvenli hesap giriş kapısını kullanın.");
+  }
   if(code==="customer_account_required"){
     return "Bu hesap bir yönetici veya şirket hesabıdır. Güvenli yönetim girişine yönlendiriliyorsunuz.";
   }
@@ -1358,6 +1377,7 @@ async function redirectAuthenticatedUser(){
     const {data,error}=await supabaseClient.auth.getUser();
     if(error || !data || !data.user)return;
     const context=await accountContext(data.user);
+    if(await rejectProtectedAccountOnCustomerLogin(context))return;
     if(context.type==="customer" && !await claimCustomerAccountDevice(data.user))return;
     const returnTo=await authorizedReturnTo(data.user,"user-panel.html");
     if(await needsMfaVerification()){

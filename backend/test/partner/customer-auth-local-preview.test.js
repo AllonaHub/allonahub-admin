@@ -85,3 +85,12 @@ test("a non-Turnstile 403 is not mislabeled as a robot verification failure", as
   assert.doesNotMatch(registrationFailure, /status===403/);
   assert.match(registrationFailure, /code==="CUSTOMER_ACCOUNT_REQUIRED"/);
 });
+
+test("normal login page sends protected account roles back to their dedicated portals", async () => {
+  const page = await source("pages/account/user.html");
+
+  assert.match(page, /if\(accountType==="super_admin"\)return pageUrl\("\/admin\/super-admin-login\.html"\)/);
+  assert.match(page, /if\(accountType==="admin"\)return pageUrl\("\/admin\/admin-login\.html"\)/);
+  assert.match(page, /if\(accountType==="partner"\)return pageUrl\("\/pages\/partner\/partner\.html"\)/);
+  assert.match(page, /if\(await rejectProtectedAccountOnCustomerLogin\(context\)\)return;/);
+});

@@ -1538,6 +1538,52 @@ function publicAuthUser(user) {
   };
 }
 
+export function publicLoginAccessForRole({ profileRole = "", authRole = "", profileLookupFailed = false } = {}) {
+  const role = String(profileRole || authRole || "customer").trim().toLowerCase();
+  if (profileLookupFailed && !profileRole && !authRole) {
+    return {
+      allowed: false,
+      role: "unknown",
+      error: "ACCOUNT_ROLE_UNAVAILABLE",
+      message: "Hesap türü güvenli şekilde doğrulanamadı. Lütfen kısa süre sonra yeniden deneyin."
+    };
+  }
+  if (role === "customer") return { allowed: true, role, error: null, message: "" };
+  if (role === "super_admin") {
+    return {
+      allowed: false,
+      role,
+      error: "PRIVILEGED_LOGIN_REQUIRED",
+      message: "Süper Admin hesabıyla yalnızca güvenli Süper Admin giriş kapısından giriş yapılabilir.",
+      login_path: "/admin/super-admin-login.html"
+    };
+  }
+  if (role === "admin") {
+    return {
+      allowed: false,
+      role,
+      error: "PRIVILEGED_LOGIN_REQUIRED",
+      message: "Admin hesabıyla yalnızca güvenli Admin giriş kapısından giriş yapılabilir.",
+      login_path: "/admin/admin-login.html"
+    };
+  }
+  if (role === "partner") {
+    return {
+      allowed: false,
+      role,
+      error: "PARTNER_LOGIN_REQUIRED",
+      message: "Partner hesabıyla yalnızca Partner giriş kapısından giriş yapılabilir.",
+      login_path: "/pages/partner/partner.html"
+    };
+  }
+  return {
+    allowed: false,
+    role,
+    error: "ACCOUNT_PORTAL_REQUIRED",
+    message: "Bu hesap türü normal kullanıcı giriş kapısını kullanamaz."
+  };
+}
+
 function compactRow(row) {
   return Object.fromEntries(
     Object.entries(row).filter(([, value]) => value !== undefined && value !== null && value !== "")
@@ -10788,6 +10834,39 @@ export function registerRoutes(app) {
         evidenceTags: ["auth", "login", "failed"]
       });
       return reply.code(401).send({ ok: false, message: "E-posta veya şifre doğru değil." });
+    }
+
+    const profileResult = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    const portalAccess = publicLoginAccessForRole({
+      profileRole: profileResult.data?.role || "",
+      authRole: data.user.app_metadata?.role || "",
+      profileLookupFailed: Boolean(profileResult.error)
+    });
+    if (!portalAccess.allowed) {
+      await auditEvent({
+        request,
+        actorId: data.user.id,
+        actorRole: portalAccess.role,
+        action: "auth.login_wrong_portal",
+        severity: "warning",
+        metadata: {
+          email_domain: authEmailDomain(email),
+          error: portalAccess.error,
+          login_path: portalAccess.login_path || null,
+          profile_lookup_failed: Boolean(profileResult.error)
+        },
+        evidenceTags: ["auth", "login", "account_boundary"]
+      });
+      return reply.code(portalAccess.error === "ACCOUNT_ROLE_UNAVAILABLE" ? 503 : 403).send({
+        ok: false,
+        error: portalAccess.error,
+        message: portalAccess.message,
+        login_path: portalAccess.login_path || null
+      });
     }
 
     await auditEvent({

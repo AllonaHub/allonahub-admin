@@ -11,7 +11,7 @@ process.env.COMPANY_LOOKUP_TR_PROVIDER = "generic";
 process.env.COMPANY_LOOKUP_GB_API_KEY = "";
 
 const { config } = await import("../../src/config.js");
-const { resolvePartnerPasswordResetEligibility } = await import("../../src/routes/index.js");
+const { publicLoginAccessForRole, resolvePartnerPasswordResetEligibility } = await import("../../src/routes/index.js");
 
 function queryResult(data = null, error = null) {
   return { data, error };
@@ -56,6 +56,19 @@ function fakeSupabaseAdmin({ users = [], profile = null, profileError = null, pa
     }
   };
 }
+
+test("normal customer login rejects privileged accounts and points to their dedicated portals", () => {
+  assert.deepEqual(publicLoginAccessForRole({ profileRole: "customer" }), {
+    allowed: true,
+    role: "customer",
+    error: null,
+    message: ""
+  });
+  assert.equal(publicLoginAccessForRole({ profileRole: "super_admin" }).login_path, "/admin/super-admin-login.html");
+  assert.equal(publicLoginAccessForRole({ authRole: "admin" }).login_path, "/admin/admin-login.html");
+  assert.equal(publicLoginAccessForRole({ profileRole: "partner" }).login_path, "/pages/partner/partner.html");
+  assert.equal(publicLoginAccessForRole({ profileLookupFailed: true }).error, "ACCOUNT_ROLE_UNAVAILABLE");
+});
 
 test("partner password reset eligibility allows active partner businesses only", async () => {
   const user = { id: "user-partner", email: "partner@example.com" };
