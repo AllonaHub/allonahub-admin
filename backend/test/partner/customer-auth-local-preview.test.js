@@ -65,3 +65,23 @@ test("device binding is bypassed only for the local static preview", async () =>
   assert.match(page, /async function claimCustomerAccountDevice\(user\)\{\s*\/\/[^]*?if\(isLocalAuthPreview\(\)\)return true;/);
   assert.match(page, /fetch\(apiBaseUrl\(\)\+"\/v1\/auth\/device\/claim"/);
 });
+
+test("normal login preserves trusted admin roles when profile RLS hides the row", async () => {
+  const page = await source("pages/account/user.html");
+
+  assert.match(page, /const trustedAuthRole=String\(user\.app_metadata && user\.app_metadata\.role \|\| ""\)/);
+  assert.match(page, /const role=String\(profile\.role \|\| trustedAuthRole \|\| "customer"\)/);
+  assert.match(page, /if\(context\.type==="customer" && !await claimCustomerAccountDevice\(verified\.user\)\)return;/);
+});
+
+test("a non-Turnstile 403 is not mislabeled as a robot verification failure", async () => {
+  const page = await source("pages/account/user.html");
+  const loginFailure = page.slice(page.indexOf("function loginFailureMessage"), page.indexOf("async function directSupabaseLogin"));
+  const registrationFailure = page.slice(page.indexOf("function registerFailureMessage"), page.indexOf("function normalizeRegistrationPhone"));
+
+  assert.doesNotMatch(loginFailure, /status===403/);
+  assert.match(loginFailure, /code\.includes\("turnstile"\)/);
+  assert.match(loginFailure, /code==="customer_account_required"/);
+  assert.doesNotMatch(registrationFailure, /status===403/);
+  assert.match(registrationFailure, /code==="CUSTOMER_ACCOUNT_REQUIRED"/);
+});

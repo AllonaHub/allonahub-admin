@@ -1161,7 +1161,11 @@ async function accountContext(user){
   if(profileResult.error)throw profileResult.error;
 
   const profile=profileResult.data || {};
-  const role=String(profile.role || "customer").trim().toLowerCase();
+  // Profiles may be hidden by RLS on the public login page. Supabase
+  // app_metadata is server-controlled, so it is a safe routing fallback for
+  // admin and partner accounts until the protected page rechecks the role.
+  const trustedAuthRole=String(user.app_metadata && user.app_metadata.role || "").trim().toLowerCase();
+  const role=String(profile.role || trustedAuthRole || "customer").trim().toLowerCase();
   let partnerBusiness=null;
   if(role==="partner"){
     const partnerResult=await supabaseClient
@@ -1251,8 +1255,11 @@ function loginFailureMessage(error){
   const raw=String(error && (error.message || error.error_description || error.error) || "").toLowerCase();
   const status=Number(error && error.status || 0);
   const code=String(error && error.payload && error.payload.error || "").toLowerCase();
+  if(code==="customer_account_required"){
+    return "Bu hesap bir yönetici veya şirket hesabıdır. Güvenli yönetim girişine yönlendiriliyorsunuz.";
+  }
   if(
-    status===403 ||
+    code.includes("turnstile") ||
     raw.includes("robot") ||
     raw.includes("turnstile") ||
     raw.includes("cloudflare") ||
@@ -1672,13 +1679,16 @@ function registerFailureMessage(error){
   if(code==="ACCOUNT_DEVICE_SECURITY_UNAVAILABLE" || raw.includes("cihaz güvenlik")){
     return original || "Cihaz güvenlik kontrolü tamamlanamadı. Lütfen daha sonra yeniden deneyin.";
   }
+  if(code==="CUSTOMER_ACCOUNT_REQUIRED"){
+    return original || "Bu hesap kişisel kullanıcı hesabı değildir. Hesap türünüze ait giriş alanını kullanın.";
+  }
   if(status===429 || raw.includes("rate") || raw.includes("too many")){
     return authText("tooMany","Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.");
   }
   if(raw.includes("already") || raw.includes("registered") || raw.includes("exists")){
     return authText("accountExists","Bu e-posta adresiyle zaten bir hesap var. Giriş yapın veya şifrenizi sıfırlayın.");
   }
-  if(status===403 || raw.includes("robot") || raw.includes("turnstile") || raw.includes("cloudflare") || raw.includes("doğrulama")){
+  if(code.includes("TURNSTILE") || raw.includes("robot") || raw.includes("turnstile") || raw.includes("cloudflare") || raw.includes("doğrulama")){
     return authText("challengeRequired","Robot doğrulamasını tamamlayıp yeniden deneyin.");
   }
   return authText("registerError","Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
