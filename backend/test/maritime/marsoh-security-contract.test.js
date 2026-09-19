@@ -113,6 +113,8 @@ test("speech provider produces editable text and never creates audio media", asy
   assert.match(speech, /this\.desiredActive[\s\S]*this\.startRecognition\(\)/);
   assert.match(ui, /onText\(\{ combinedText \}\)/);
   assert.doesNotMatch(`${speech}\n${ui}\n${page}`, /MediaRecorder|audio\/|Blob\(|getUserMedia|voice_message/);
+  assert.match(page, /data-marsoh-voice-typing="disabled"/);
+  assert.match(ui, /dataset\.marsohVoiceTyping !== "enabled"/);
 });
 
 test("translation languages and emoji reactions share the same strict server and database allowlists", async () => {

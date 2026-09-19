@@ -66,6 +66,7 @@ try {
         headerBottom: header.bottom,
         conversationTop: document.querySelector("[data-marsoh-conversation]").getBoundingClientRect().top,
         hiddenUploadControls: document.querySelectorAll('input[type="file"], [data-attachment], [data-camera], [data-audio]').length,
+        voiceTypingHidden: document.querySelector("[data-marsoh-mic]")?.hidden,
         sendLabel: document.querySelector("[data-marsoh-send]").getAttribute("aria-label"),
         reducedAnimation: getComputedStyle(document.querySelector(".marsoh-product-icon"), "::after").animationName
         ,shell: document.querySelector("[data-marsoh-shell]").getBoundingClientRect().toJSON()
@@ -80,6 +81,7 @@ try {
     assert.ok(layout.composerBottom <= layout.viewportHeight + 1, `${width}px composer ekran dışı`);
     assert.ok(layout.conversationTop >= layout.headerBottom - 1, `${width}px üst bölüm çakışması`);
     assert.equal(layout.hiddenUploadControls, 0);
+    assert.equal(layout.voiceTypingHidden, true, `${width}px sesle yazma düğmesi gizli değil`);
     assert.ok(layout.sendLabel);
     assert.equal(layout.reducedAnimation, "none");
 

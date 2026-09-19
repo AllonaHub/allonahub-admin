@@ -575,6 +575,10 @@
   function setupSpeech() {
     const button = $("[data-marsoh-mic]");
     if (!button || !window.MarSohSpeech?.BrowserSpeechToTextProvider) return;
+    if (document.body.dataset.marsohVoiceTyping !== "enabled") {
+      button.hidden = true;
+      return;
+    }
     state.speech = new window.MarSohSpeech.BrowserSpeechToTextProvider({
       onStart() {
         state.speechBase = $("[data-marsoh-input]").value.trim();
