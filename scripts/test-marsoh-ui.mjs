@@ -45,7 +45,9 @@ try {
         next_cursor: null,
         messages: [
           { id: "41111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "51111111-1111-4111-8111-111111111111", display_name: "A. Denizci", badge: "verified_seafarer", country_code: "AZ" }, body: "Bugünkü hava marşruta necə təsir edir?", language: "az", time: "2026-09-16T08:00:00.000Z", own: false },
-          { id: "61111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" }, body: "Vardiya planını önceden paylaşmak yardımcı oluyor.", language: "tr", time: "2026-09-16T08:01:00.000Z", own: true }
+          { id: "61111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" }, body: "Vardiya planını önceden paylaşmak yardımcı oluyor.", language: "tr", time: "2026-09-16T08:01:00.000Z", own: true },
+          { id: "71111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" }, body: "Tamam", language: "tr", time: "2026-09-16T08:02:00.000Z", own: true },
+          { id: "81111111-1111-4111-8111-111111111111", channel_id: "21111111-1111-4111-8111-111111111111", sender: { id: "11111111-1111-4111-8111-111111111111", display_name: "Denizci", badge: "verified_seafarer", country_code: "TR" }, body: "Uzun vardiya değişimlerinde rota, hava ve güvenlik notlarının ekip tarafından açık ve eksiksiz biçimde paylaşılması iletişimi güçlendirir.", language: "tr", time: "2026-09-16T08:03:00.000Z", own: true }
         ]
       };
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
@@ -84,6 +86,21 @@ try {
     assert.equal(layout.voiceTypingHidden, true, `${width}px sesle yazma düğmesi gizli değil`);
     assert.ok(layout.sendLabel);
     assert.equal(layout.reducedAnimation, "none");
+
+    const bubbleSizing = await page.evaluate(() => {
+      const ownBubbles = [...document.querySelectorAll(".marsoh-message.is-own .marsoh-bubble")];
+      const shortBubble = ownBubbles.find((bubble) => bubble.textContent.trim() === "Tamam");
+      const longBubble = ownBubbles.find((bubble) => bubble.textContent.startsWith("Uzun vardiya"));
+      const message = longBubble?.closest(".marsoh-message");
+      return {
+        shortWidth: shortBubble?.getBoundingClientRect().width || 0,
+        longWidth: longBubble?.getBoundingClientRect().width || 0,
+        messageWidth: message?.getBoundingClientRect().width || 0
+      };
+    });
+    assert.ok(bubbleSizing.shortWidth > 0 && bubbleSizing.shortWidth < 100, `${width}px kısa mesaj balonu içeriğe göre küçülmüyor`);
+    assert.ok(bubbleSizing.longWidth > bubbleSizing.shortWidth, `${width}px uzun mesaj balonu içeriğe göre genişlemiyor`);
+    assert.ok(bubbleSizing.longWidth <= bubbleSizing.messageWidth + 1, `${width}px uzun mesaj balonu güvenli genişliği aşıyor`);
 
     const translate = page.locator(".marsoh-message:not(.is-own) .marsoh-translate");
     assert.equal(await translate.count(), 1, `${width}px çeviri düğmesi görünmüyor`);
