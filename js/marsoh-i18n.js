@@ -142,46 +142,64 @@
   const EXTRAS = {
     tr: {
       worldRoom: "Dünya Genel", countryRoom: "{country} Odası",
+      autoTranslate: "Otomatik çeviri", translationReady: "9 dil hazır",
+      autoTranslateHint: "Diğer kullanıcıların yabancı dildeki yayımlanmış mesajlarını seçtiğiniz sohbet diline otomatik çevirir.",
       defaultPinned: "Kişisel iletişim bilgisi, iş ilanı veya ücret talebi paylaşmayın.",
       sentNotice: "Mesajlar güvenlik amacıyla otomatik olarak denetlenebilir, geciktirilebilir veya dağıtılmayabilir; Gönderildi bilgisi teslim veya okunma garantisi değildir."
     },
     az: {
       worldRoom: "Dünya söhbəti", countryRoom: "{country} otağı",
+      autoTranslate: "Avtomatik tərcümə", translationReady: "9 dil hazırdır",
+      autoTranslateHint: "Digər istifadəçilərin xarici dildə yayımlanmış mesajlarını seçdiyiniz söhbət dilinə avtomatik tərcümə edir.",
       defaultPinned: "Şəxsi əlaqə məlumatı, iş elanı və ya ödəniş tələbi paylaşmayın.",
       sentNotice: "Mesajlar təhlükəsizlik məqsədilə avtomatik yoxlanıla, gecikdirilə və ya paylanmaya bilər; Göndərildi məlumatı çatdırılma və ya oxunma zəmanəti deyil."
     },
     en: {
       worldRoom: "World Chat", countryRoom: "{country} Room",
+      autoTranslate: "Automatic translation", translationReady: "9 languages ready",
+      autoTranslateHint: "Automatically translates other users' published foreign-language messages into your selected chat language.",
       defaultPinned: "Do not share personal contact details, job ads, or payment requests.",
       sentNotice: "Messages may be automatically reviewed, delayed, or withheld for safety; Sent does not guarantee delivery or reading."
     },
     de: {
       worldRoom: "Weltweiter Chat", countryRoom: "Raum {country}",
+      autoTranslate: "Automatische Übersetzung", translationReady: "9 Sprachen verfügbar",
+      autoTranslateHint: "Übersetzt veröffentlichte fremdsprachige Nachrichten anderer Benutzer automatisch in die ausgewählte Chatsprache.",
       defaultPinned: "Teilen Sie keine persönlichen Kontaktdaten, Stellenanzeigen oder Zahlungsaufforderungen.",
       sentNotice: "Nachrichten können aus Sicherheitsgründen automatisch geprüft, verzögert oder zurückgehalten werden; Gesendet garantiert weder Zustellung noch Lesen."
     },
     ru: {
       worldRoom: "Мировой чат", countryRoom: "Комната: {country}",
+      autoTranslate: "Автоперевод", translationReady: "Доступно 9 языков",
+      autoTranslateHint: "Автоматически переводит опубликованные сообщения других пользователей на выбранный язык чата.",
       defaultPinned: "Не публикуйте личные контакты, вакансии или требования оплаты.",
       sentNotice: "В целях безопасности сообщения могут автоматически проверяться, задерживаться или не распространяться; статус Отправлено не гарантирует доставку или прочтение."
     },
     ar: {
       worldRoom: "المحادثة العالمية", countryRoom: "غرفة {country}",
+      autoTranslate: "الترجمة التلقائية", translationReady: "9 لغات جاهزة",
+      autoTranslateHint: "يترجم تلقائيًا رسائل المستخدمين الآخرين المنشورة بلغات أجنبية إلى لغة المحادثة التي اخترتها.",
       defaultPinned: "لا تشارك بيانات الاتصال الشخصية أو إعلانات الوظائف أو طلبات الدفع.",
       sentNotice: "قد تخضع الرسائل للمراجعة الآلية أو التأخير أو الحجب لأغراض السلامة؛ حالة تم الإرسال لا تضمن التسليم أو القراءة."
     },
     kk: {
       worldRoom: "Әлемдік чат", countryRoom: "{country} бөлмесі",
+      autoTranslate: "Автоматты аударма", translationReady: "9 тіл дайын",
+      autoTranslateHint: "Басқа пайдаланушылардың жарияланған шет тіліндегі хабарламаларын таңдалған чат тіліне автоматты түрде аударады.",
       defaultPinned: "Жеке байланыс деректерін, жұмыс жарнамаларын немесе төлем талаптарын бөліспеңіз.",
       sentNotice: "Қауіпсіздік үшін хабарламалар автоматты түрде тексерілуі, кешіктірілуі немесе таратылмауы мүмкін; Жөнелтілді күйі жеткізілгеніне не оқылғанына кепілдік бермейді."
     },
     uz: {
       worldRoom: "Jahon suhbati", countryRoom: "{country} xonasi",
+      autoTranslate: "Avtomatik tarjima", translationReady: "9 til tayyor",
+      autoTranslateHint: "Boshqa foydalanuvchilarning chet tilida e'lon qilingan xabarlarini tanlangan suhbat tiliga avtomatik tarjima qiladi.",
       defaultPinned: "Shaxsiy aloqa ma'lumotlari, ish e'lonlari yoki to'lov talablarini ulashmang.",
       sentNotice: "Xabarlar xavfsizlik uchun avtomatik tekshirilishi, kechiktirilishi yoki tarqatilmasligi mumkin; Yuborildi holati yetkazilgan yoki o'qilganini kafolatlamaydi."
     },
     ky: {
       worldRoom: "Дүйнөлүк маек", countryRoom: "{country} бөлмөсү",
+      autoTranslate: "Автоматтык котормо", translationReady: "9 тил даяр",
+      autoTranslateHint: "Башка колдонуучулардын чет тилде жарыяланган билдирүүлөрүн тандалган маек тилине автоматтык түрдө которот.",
       defaultPinned: "Жеке байланыш маалыматтарын, жумуш жарыяларын же төлөм талаптарын бөлүшпөңүз.",
       sentNotice: "Коопсуздук үчүн билдирүүлөр автоматтык түрдө текшерилиши, кечигиши же таратылбай калышы мүмкүн; Жөнөтүлдү абалы жеткирилгенине же окулганына кепилдик бербейт."
     }

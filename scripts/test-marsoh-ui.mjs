@@ -18,7 +18,16 @@ try {
     await page.route("**/v1/maritime/marsoh/**", async (route) => {
       const url = route.request().url();
       let body = { ok: true };
-      if (url.includes("/translate")) body = { ok: true, translated_text: "How does today's weather affect the route?", target_language: "en", automatic: true, cached: false };
+      if (url.includes("/translate")) {
+        const targetLanguage = JSON.parse(route.request().postData() || "{}").target_language || "tr";
+        body = {
+          ok: true,
+          translated_text: targetLanguage === "en" ? "How does today's weather affect the route?" : "Bugünkü hava rotayı nasıl etkiliyor?",
+          target_language: targetLanguage,
+          automatic: true,
+          cached: false
+        };
+      }
       else if (url.includes("/reactions")) body = { ok: true, active: true, count: 1 };
       else if (url.includes("/bootstrap")) body = {
         ok: true,
@@ -76,6 +85,11 @@ try {
 
     const translate = page.locator(".marsoh-message:not(.is-own) .marsoh-translate");
     assert.equal(await translate.count(), 1, `${width}px çeviri düğmesi görünmüyor`);
+    const autoTranslate = page.locator("[data-marsoh-auto-translate]");
+    assert.equal(await autoTranslate.count(), 1, `${width}px otomatik çeviri anahtarı görünmüyor`);
+    assert.equal(await autoTranslate.isChecked(), true, `${width}px otomatik çeviri varsayılan olarak açık değil`);
+    await page.waitForSelector(".marsoh-message:not(.is-own) .marsoh-translation");
+    assert.match(await page.locator(".marsoh-translation").textContent(), /Bugünkü hava rotayı nasıl etkiliyor\?/);
     await translate.click();
     await page.locator('.marsoh-translation-languages button[lang="en"]').click();
     assert.match(await page.locator(".marsoh-translation").textContent(), /How does today's weather affect the route\?/);

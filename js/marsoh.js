@@ -33,7 +33,10 @@
     speechBase: "",
     outboxDb: null,
     modalTrigger: null,
-    connectionState: "connecting"
+    connectionState: "connecting",
+    autoTranslate: localStorage.getItem("allona.marsoh.autoTranslate") !== "off",
+    autoTranslationCount: 0,
+    autoTranslationWindowStarted: 0
   };
 
   const $ = (selector, root) => (root || document).querySelector(selector);
@@ -181,6 +184,68 @@
     return t("sent");
   }
 
+  function reserveAutomaticTranslation() {
+    const now = Date.now();
+    if (!state.autoTranslationWindowStarted || now - state.autoTranslationWindowStarted >= 60000) {
+      state.autoTranslationWindowStarted = now;
+      state.autoTranslationCount = 0;
+    }
+    if (state.autoTranslationCount >= 8) return false;
+    state.autoTranslationCount += 1;
+    return true;
+  }
+
+  async function translateMessage(article, message, language, button, chooser, options) {
+    message.translationPending = message.translationPending || new Set();
+    if (message.translationPending.has(language)) return;
+    message.translationPending.add(language);
+    const languageButtons = chooser.querySelectorAll("button");
+    languageButtons.forEach((item) => { item.disabled = true; });
+    button.disabled = true;
+    button.textContent = t("translating");
+    const oldBox = $(".marsoh-translation", article);
+    if (oldBox) oldBox.remove();
+    try {
+      message.translations = message.translations || {};
+      let translated = message.translations[language];
+      if (!translated) {
+        const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/translate`, {
+          method: "POST",
+          body: JSON.stringify({ target_language: language })
+        });
+        translated = payload.translated_text;
+        message.translations[language] = translated;
+      }
+      const box = document.createElement("div");
+      box.className = "marsoh-translation";
+      box.lang = language;
+      box.dir = language === "ar" ? "rtl" : "auto";
+      const text = document.createElement("span");
+      text.textContent = translated;
+      const label = document.createElement("small");
+      label.textContent = `${t("automaticTranslation")} · ${LANGUAGE_LABELS[language] || language.toUpperCase()}`;
+      box.append(text, label);
+      chooser.after(box);
+      chooser.hidden = true;
+      button.textContent = t("showOriginal");
+      button.setAttribute("aria-expanded", "true");
+    } catch {
+      if (!options?.silentFailure) {
+        const box = document.createElement("div");
+        box.className = "marsoh-translation is-error";
+        box.textContent = t("translationUnavailable");
+        chooser.after(box);
+      }
+      chooser.hidden = true;
+      button.textContent = t("translate");
+      button.setAttribute("aria-expanded", "false");
+    } finally {
+      message.translationPending.delete(language);
+      languageButtons.forEach((item) => { item.disabled = false; });
+      button.disabled = false;
+    }
+  }
+
   function addTranslationControls(article, message) {
     if (message.own || !message.id || message.local_status) return;
     const button = document.createElement("button");
@@ -206,47 +271,7 @@
       languageButton.lang = language;
       languageButton.textContent = LANGUAGE_LABELS[language] || language.toUpperCase();
       languageButton.classList.toggle("is-preferred", language === state.locale);
-      languageButton.addEventListener("click", async () => {
-        options.querySelectorAll("button").forEach((item) => { item.disabled = true; });
-        button.textContent = t("translating");
-        const oldBox = $(".marsoh-translation", article);
-        if (oldBox) oldBox.remove();
-        try {
-          message.translations = message.translations || {};
-          let translated = message.translations[language];
-          if (!translated) {
-            const payload = await api(`/v1/maritime/marsoh/messages/${encodeURIComponent(message.id)}/translate`, {
-              method: "POST",
-              body: JSON.stringify({ target_language: language })
-            });
-            translated = payload.translated_text;
-            message.translations[language] = translated;
-          }
-          const box = document.createElement("div");
-          box.className = "marsoh-translation";
-          box.lang = language;
-          box.dir = language === "ar" ? "rtl" : "auto";
-          const text = document.createElement("span");
-          text.textContent = translated;
-          const label = document.createElement("small");
-          label.textContent = `${t("automaticTranslation")} · ${LANGUAGE_LABELS[language] || language.toUpperCase()}`;
-          box.append(text, label);
-          chooser.after(box);
-          chooser.hidden = true;
-          button.textContent = t("showOriginal");
-          button.setAttribute("aria-expanded", "true");
-        } catch {
-          const box = document.createElement("div");
-          box.className = "marsoh-translation is-error";
-          box.textContent = t("translationUnavailable");
-          chooser.after(box);
-          chooser.hidden = true;
-          button.textContent = t("translate");
-          button.setAttribute("aria-expanded", "false");
-        } finally {
-          options.querySelectorAll("button").forEach((item) => { item.disabled = false; });
-        }
-      });
+      languageButton.addEventListener("click", () => translateMessage(article, message, language, button, chooser));
       options.append(languageButton);
     }
     chooser.append(options);
@@ -254,14 +279,15 @@
       const existing = $(".marsoh-translation", article);
       if (existing && !existing.hidden) {
         existing.hidden = true;
-        chooser.hidden = true;
+        chooser.hidden = false;
         button.textContent = t("translate");
-        button.setAttribute("aria-expanded", "false");
+        button.setAttribute("aria-expanded", "true");
         return;
       }
       if (existing?.hidden) {
-        existing.hidden = false;
-        button.textContent = t("showOriginal");
+        existing.remove();
+        chooser.hidden = false;
+        button.textContent = t("translate");
         button.setAttribute("aria-expanded", "true");
         return;
       }
@@ -269,6 +295,10 @@
       button.setAttribute("aria-expanded", String(!chooser.hidden));
     });
     article.append(button, chooser);
+    const sourceLanguage = String(message.language || "").toLowerCase();
+    if (state.autoTranslate && sourceLanguage && sourceLanguage !== "und" && sourceLanguage !== state.locale && reserveAutomaticTranslation()) {
+      queueMicrotask(() => translateMessage(article, message, state.locale, button, chooser, { silentFailure: true }));
+    }
   }
 
   async function toggleReaction(message, emoji, trigger) {
@@ -430,7 +460,7 @@
 
   async function openChannel(channel) {
     state.currentChannel = channel;
-    state.messages = []; state.cursor = null; renderChannels();
+    state.messages = []; state.cursor = null; state.autoTranslationCount = 0; state.autoTranslationWindowStarted = Date.now(); renderChannels();
     $("[data-marsoh-channels-panel]")?.classList.remove("is-open");
     $("[data-marsoh-room-title]").textContent = localizeChannel(channel);
     $("[data-marsoh-room-subtitle]").textContent = t("memberRoom");
@@ -609,6 +639,17 @@
       if (state.currentChannel) { $("[data-marsoh-room-title]").textContent = localizeChannel(state.currentChannel); $("[data-marsoh-pinned] p").textContent = localizePinned(state.currentChannel); }
       $("[data-marsoh-policy-note]").textContent = t("sentNotice");
     });
+    const autoTranslate = $("[data-marsoh-auto-translate]");
+    if (autoTranslate) {
+      autoTranslate.checked = state.autoTranslate;
+      autoTranslate.addEventListener("change", () => {
+        state.autoTranslate = autoTranslate.checked;
+        localStorage.setItem("allona.marsoh.autoTranslate", state.autoTranslate ? "on" : "off");
+        state.autoTranslationCount = 0;
+        state.autoTranslationWindowStarted = Date.now();
+        renderMessages({ preserveBottom: nearBottom() });
+      });
+    }
     $("[data-marsoh-composer]")?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const input = $("[data-marsoh-input]");

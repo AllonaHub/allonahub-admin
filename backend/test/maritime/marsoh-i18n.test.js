@@ -44,6 +44,15 @@ test("Arabic switches the document to RTL while other languages remain LTR", asy
   assert.equal(document.documentElement.dir, "ltr");
 });
 
+test("automatic translation controls are localized in all supported languages", async () => {
+  const { i18n } = await loadI18n();
+  for (const language of i18n.SUPPORTED) {
+    assert.ok(i18n.COPY[language].autoTranslate?.trim(), `${language}.autoTranslate is missing`);
+    assert.ok(i18n.COPY[language].translationReady?.trim(), `${language}.translationReady is missing`);
+    assert.ok(i18n.COPY[language].autoTranslateHint?.trim(), `${language}.autoTranslateHint is missing`);
+  }
+});
+
 test("speech provider keeps editable transcript through browser restarts without audio persistence", async () => {
   const source = await readFile(speechUrl, "utf8");
   const instances = [];

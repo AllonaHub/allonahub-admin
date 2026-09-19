@@ -100,6 +100,9 @@ test("translation is authenticated, rate limited, cached, and published-only", a
   assert.match(migration, /unique \(message_id, target_language, source_hash\)/);
   const controls = ui.slice(ui.indexOf("function addTranslationControls"), ui.indexOf("async function toggleReaction"));
   assert.match(controls, /message\.own/);
+  assert.match(ui, /allona\.marsoh\.autoTranslate/);
+  assert.match(ui, /sourceLanguage !== state\.locale/);
+  assert.match(ui, /reserveAutomaticTranslation\(\)/);
 });
 
 test("speech provider produces editable text and never creates audio media", async () => {
@@ -191,6 +194,8 @@ test("the responsive UI covers required widths, keyboard labels, and reduced mot
   assert.match(css, /@media \(max-width: 360px\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(css, /width: 48px; height: 48px/);
+  assert.match(page, /data-marsoh-auto-translate/);
+  assert.match(css, /\.marsoh-auto-translate/);
 });
 
 test("the maritime module exposes the exact MarSoh name, route, accessible label, and unread badge", async () => {
