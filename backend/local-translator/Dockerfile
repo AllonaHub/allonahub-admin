@@ -17,6 +17,13 @@ RUN apt-get update && \
 RUN python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu "torch==${TORCH_VERSION}" && \
     python -m pip install --no-cache-dir "ctranslate2==${CT2_VERSION}" "transformers==${TRANSFORMERS_VERSION}" sentencepiece==0.2.1 safetensors==0.6.2
 
+WORKDIR /build
+COPY prepare_models.py ./prepare_models.py
+RUN python prepare_models.py \
+      --en-ky-revision "${EN_KY_REVISION}" \
+      --ky-en-revision "${KY_EN_REVISION}" \
+      --output-root /sources
+
 RUN ct2-transformers-converter \
       --model facebook/m2m100_418M \
       --revision "${M2M100_REVISION}" \
@@ -24,18 +31,16 @@ RUN ct2-transformers-converter \
       --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json vocab.json generation_config.json \
       --output_dir /models/m2m100 && \
     ct2-transformers-converter \
-      --model alinatl/m2m100-en-ky \
-      --revision "${EN_KY_REVISION}" \
+      --model /sources/m2m100-en-ky \
       --quantization int8 \
       --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json added_tokens.json vocab.json generation_config.json \
       --output_dir /models/m2m100-en-ky && \
     ct2-transformers-converter \
-      --model alinatl/m2m100-ky-en \
-      --revision "${KY_EN_REVISION}" \
+      --model /sources/m2m100-ky-en \
       --quantization int8 \
       --copy_files sentencepiece.bpe.model tokenizer_config.json special_tokens_map.json added_tokens.json vocab.json generation_config.json \
       --output_dir /models/m2m100-ky-en && \
-    rm -rf /root/.cache/huggingface && \
+    rm -rf /root/.cache/huggingface /sources && \
     find /models -type f \( -name '*.bin' -o -name '*.json' -o -name '*.model' \) | sort
 
 FROM python:3.11-slim AS runtime
