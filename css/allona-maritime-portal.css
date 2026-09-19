@@ -425,6 +425,41 @@ body.maritime-portal-page textarea {
   justify-content: flex-end;
 }
 
+.maritime-job-actions {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.maritime-job-action-group {
+  display: grid;
+  min-width: 0;
+  max-width: min(100%, 330px);
+  gap: 7px;
+  justify-items: end;
+}
+
+.maritime-job-eligibility {
+  display: block;
+  max-width: 330px;
+  color: #b7d6e7;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: end;
+}
+
+.maritime-job-eligibility.is-action {
+  color: #8ceeff;
+}
+
+.maritime-job-eligibility.is-mismatch {
+  color: #f2d58b;
+}
+
+.maritime-job-eligibility.is-pending {
+  color: #b9c8d4;
+}
+
 .maritime-button {
   display: inline-flex;
   min-height: 44px;
@@ -3518,6 +3553,21 @@ body.maritime-portal-page[data-theme="white"] :where(.maritime-reference, .marit
   -webkit-text-fill-color: #276b8d !important;
 }
 
+body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility {
+  color: #365c72;
+  -webkit-text-fill-color: #365c72;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility.is-action {
+  color: #006f91;
+  -webkit-text-fill-color: #006f91;
+}
+
+body.maritime-portal-page[data-theme="white"] .maritime-job-eligibility.is-mismatch {
+  color: #795800;
+  -webkit-text-fill-color: #795800;
+}
+
 body.maritime-portal-page[data-theme="white"] :where(.maritime-job-meta span, .maritime-record-meta span, .maritime-readiness-item) {
   border-color: rgba(0, 103, 174, 0.18);
   background: #eef6fa;
@@ -4248,6 +4298,26 @@ body.maritime-smart-account-page .maritime-cv-credential-list :where(dt, dd) {
   .maritime-job-meta,
   .maritime-record-meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .maritime-job-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .maritime-job-action-group,
+  .maritime-job-action-group .maritime-button,
+  .maritime-job-eligibility {
+    width: 100%;
+    max-width: none;
+  }
+
+  .maritime-job-action-group {
+    justify-items: stretch;
+  }
+
+  .maritime-job-eligibility {
+    text-align: start;
   }
 
   .maritime-summary-strip {

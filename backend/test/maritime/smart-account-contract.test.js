@@ -59,7 +59,8 @@ test("smart matching API returns public-safe matches without company identity or
   assert.doesNotMatch(route, /partner_businesses"\)\s*\.select\("[^"]*(display_name|email|phone|legal_name)/);
   assert.match(route, /CUSTOMER_ACCOUNT_REQUIRED/);
   assert.match(route, /Bu alan kişisel kullanıcı hesaplarına açıktır/);
-  assert.match(route, /cv_identity: await ownCvIdentity\(user\)/);
+  assert.match(route, /const \[applicationReadiness, cvIdentity\] = await Promise\.all/);
+  assert.match(route, /application_readiness: applicationReadiness, cv_identity: cvIdentity/);
   assert.doesNotMatch(route, /metadata\.avatar_url \|\| metadata\.avatar/);
   assert.match(route, /maritimeGlobalPassportReadiness/);
   assert.match(route, /GLOBAL_CV_REQUIRED_FIELDS_MISSING/);

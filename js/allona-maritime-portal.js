@@ -13,7 +13,7 @@
   let renderedLanguage = "";
   let accountProfile = null;
   let profileClient = null;
-  let smartApplicationState = { run: null, matches: [], application_drafts: [] };
+  let smartApplicationState = { run: null, matches: [], application_drafts: [], application_readiness: { documents_state: "unknown", has_saved_maritime_cv: false, has_confirmed_maritime_cv: false } };
   const maritimeBasePath = "/pages/ecosystem/";
 
   function portalUrl(file) {
@@ -103,10 +103,24 @@
     internationalRoute: ["Uluslararası", "Beynəlxalq", "Халықаралық", "Xalqaro", "Эл аралык", "International", "International", "Международный", "دولي"],
     apply: ["Başvur", "Müraciət et", "Өтінім беру", "Ariza berish", "Арыз берүү", "Apply", "Bewerben", "Откликнуться", "تقديم"],
     applied: ["Başvuruldu", "Müraciət edildi", "Өтінім берілді", "Ariza berildi", "Арыз берилди", "Applied", "Beworben", "Заявка отправлена", "تم التقديم"],
+    uploadDocuments: ["Belgelerini Yükle", "Sənədlərini yüklə", "Құжаттарыңды жүкте", "Hujjatlaringizni yuklang", "Документтериңизди жүктөңүз", "Upload Documents", "Dokumente hochladen", "Загрузить документы", "تحميل المستندات"],
+    documentsMissingReason: ["Uygun ilanları belirleyebilmemiz için denizcilik belgelerinizi yükleyin.", "Uyğun elanları müəyyən etmək üçün dənizçilik sənədlərinizi yükləyin.", "Сәйкес вакансияларды анықтау үшін теңіз құжаттарыңызды жүктеңіз.", "Mos ishlarni aniqlashimiz uchun dengizchilik hujjatlaringizni yuklang.", "Ылайыктуу жумуштарды аныктоо үчүн деңизчилик документтериңизди жүктөңүз.", "Upload your maritime documents so we can identify matching listings.", "Laden Sie Ihre Seefahrtsdokumente hoch, damit passende Stellen ermittelt werden können.", "Загрузите морские документы, чтобы мы могли определить подходящие вакансии.", "حمّل مستنداتك البحرية لنتمكن من تحديد الوظائف المناسبة."],
+    reviewDocuments: ["Belgelerini Tamamla", "Sənədlərini tamamla", "Құжаттарыңды аяқта", "Hujjatlaringizni yakunlang", "Документтериңизди толуктаңыз", "Complete Documents", "Dokumente vervollständigen", "Завершить документы", "استكمال المستندات"],
+    documentsPendingReason: ["Belgeleriniz yüklendi. İnceleme ve onay adımlarını tamamlayın.", "Sənədləriniz yüklənib. Yoxlama və təsdiq addımlarını tamamlayın.", "Құжаттарыңыз жүктелді. Тексеру және растау қадамдарын аяқтаңыз.", "Hujjatlaringiz yuklandi. Tekshirish va tasdiqlash bosqichlarini yakunlang.", "Документтериңиз жүктөлдү. Текшерүү жана ырастоо кадамдарын бүтүрүңүз.", "Your documents are uploaded. Complete the review and confirmation steps.", "Ihre Dokumente wurden hochgeladen. Schließen Sie Prüfung und Bestätigung ab.", "Документы загружены. Завершите проверку и подтверждение.", "تم تحميل مستنداتك. أكمل خطوات المراجعة والتأكيد."],
+    completeMaritimeCv: ["Maritime CV'ni Tamamla", "Maritime CV-ni tamamla", "Maritime CV-ді аяқта", "Maritime CV-ni yakunlang", "Maritime CV-ни толуктаңыз", "Complete Maritime CV", "Maritime CV vervollständigen", "Заполнить Maritime CV", "استكمال Maritime CV"],
+    maritimeCvMissingReason: ["Yeterliliğinizi ilanlarla eşleştirebilmek için Maritime CV'nizi tamamlayın.", "Səriştənizi elanlarla uyğunlaşdırmaq üçün Maritime CV-ni tamamlayın.", "Біліктілігіңізді вакансиялармен сәйкестендіру үшін Maritime CV-ді аяқтаңыз.", "Malakangizni ishlar bilan moslashtirish uchun Maritime CV-ni yakunlang.", "Квалификацияңызды жумуштарга дал келтирүү үчүн Maritime CV-ни толуктаңыз.", "Complete your Maritime CV so your qualifications can be matched with listings.", "Vervollständigen Sie Ihr Maritime CV, damit Ihre Qualifikationen abgeglichen werden können.", "Заполните Maritime CV, чтобы сопоставить квалификацию с вакансиями.", "أكمل Maritime CV لمطابقة مؤهلاتك مع الوظائف."],
     completeGlobalCv: ["Önce Global CV'yi tamamlayın", "Əvvəlcə Global CV-ni tamamlayın", "Алдымен Global CV-ді толтырыңыз", "Avval Global CV-ni to‘ldiring", "Адегенде Global CV-ни толуктаңыз", "Complete Global CV first", "Global CV zuerst vervollständigen", "Сначала заполните Global CV", "أكمل Global CV أولاً"],
+    globalCvMissingReason: ["İlan uygunluğunuzu hesaplamak için Global CV'nizi oluşturun.", "Elan uyğunluğunuzu hesablamaq üçün Global CV-ni yaradın.", "Вакансияға сәйкестікті есептеу үшін Global CV жасаңыз.", "Ishga mosligingizni hisoblash uchun Global CV yarating.", "Жумушка шайкештигиңизди эсептөө үчүн Global CV түзүңүз.", "Create your Global CV so listing eligibility can be calculated.", "Erstellen Sie Ihr Global CV, damit die Stelleneignung berechnet werden kann.", "Создайте Global CV, чтобы рассчитать соответствие вакансии.", "أنشئ Global CV لحساب مدى توافقك مع الوظيفة."],
     confirmGlobalCv: ["Önce Global CV'yi onaylayın", "Əvvəlcə Global CV-ni təsdiqləyin", "Алдымен Global CV-ді растаңыз", "Avval Global CV-ni tasdiqlang", "Адегенде Global CV-ни ырастагыла", "Confirm Global CV first", "Global CV zuerst bestätigen", "Сначала подтвердите Global CV", "أكد Global CV أولاً"],
-    notEligibleForPosition: ["CV'niz bu pozisyona uygun değil", "CV-niz bu vəzifəyə uyğun deyil", "CV бұл орынға сәйкес емес", "CV bu lavozimga mos emas", "CV бул кызматка туура келбейт", "Your CV does not match this position", "Ihr CV passt nicht zu dieser Stelle", "Ваш CV не подходит для этой должности", "سيرتك لا تطابق هذه الوظيفة"],
-    eligibilityUnavailable: ["Uygunluk doğrulanamadı", "Uyğunluq təsdiqlənmədi", "Сәйкестік расталмады", "Moslik tasdiqlanmadi", "Шайкештик ырасталган жок", "Eligibility could not be verified", "Eignung konnte nicht geprüft werden", "Не удалось проверить соответствие", "تعذر التحقق من الأهلية"],
+    confirmGlobalCvReason: ["Başvurmadan önce Global CV'nizdeki bilgileri kontrol edip onaylayın.", "Müraciətdən əvvəl Global CV məlumatlarını yoxlayıb təsdiqləyin.", "Өтінім бермес бұрын Global CV деректерін тексеріп, растаңыз.", "Ariza berishdan oldin Global CV maʼlumotlarini tekshirib tasdiqlang.", "Арыз берүүдөн мурда Global CV маалыматын текшерип ырастагыла.", "Review and confirm your Global CV before applying.", "Prüfen und bestätigen Sie Ihr Global CV vor der Bewerbung.", "Перед откликом проверьте и подтвердите Global CV.", "راجع Global CV وأكده قبل التقديم."],
+    notEligibleForPosition: ["Yeterlilik Eşleşmedi", "Səriştə uyğun gəlmədi", "Біліктілік сәйкес келмеді", "Malaka mos kelmadi", "Квалификация дал келген жок", "Qualification Not Matched", "Qualifikation stimmt nicht überein", "Квалификация не совпала", "المؤهل غير متطابق"],
+    notEligibleReason: ["Bu ilan için yeterliliğiniz eşleşmiyor.", "Bu elan üçün səriştəniz uyğun gəlmir.", "Бұл вакансияға біліктілігіңіз сәйкес келмейді.", "Bu ish uchun malakangiz mos kelmaydi.", "Бул жумушка квалификацияңыз дал келбейт.", "Your qualifications do not match this listing.", "Ihre Qualifikationen stimmen mit dieser Stelle nicht überein.", "Ваша квалификация не соответствует этой вакансии.", "مؤهلاتك لا تتطابق مع هذه الوظيفة."],
+    refreshEligibility: ["Eşleştirmeyi Güncelle", "Uyğunluğu yenilə", "Сәйкестікті жаңарту", "Moslikni yangilang", "Шайкештикти жаңыртуу", "Refresh Match", "Abgleich aktualisieren", "Обновить соответствие", "تحديث المطابقة"],
+    refreshEligibilityReason: ["CV veya ilan bilgileri değişti. Uygunluk eşleştirmenizi güncelleyin.", "CV və ya elan məlumatı dəyişib. Uyğunluq yoxlamasını yeniləyin.", "CV немесе вакансия деректері өзгерді. Сәйкестікті жаңартыңыз.", "CV yoki ish maʼlumoti o‘zgardi. Moslikni yangilang.", "CV же жумуш маалыматы өзгөрдү. Шайкештикти жаңыртыңыз.", "Your CV or the listing changed. Refresh the eligibility match.", "Ihr CV oder die Stelle wurde geändert. Aktualisieren Sie den Abgleich.", "CV или вакансия изменились. Обновите проверку соответствия.", "تغيرت بيانات CV أو الوظيفة. حدّث مطابقة الأهلية."],
+    listingRequirementsPending: ["İlan Bilgileri Hazırlanıyor", "Elan məlumatı hazırlanır", "Вакансия деректері дайындалуда", "Ish maʼlumoti tayyorlanmoqda", "Жумуш маалыматы даярдалууда", "Listing Details Pending", "Stellendaten werden vorbereitet", "Данные вакансии готовятся", "جارٍ إعداد بيانات الوظيفة"],
+    listingRequirementsPendingReason: ["Bu ilanın yeterlilik kriterleri tamamlandığında başvuru açılacaktır.", "Elanın səriştə meyarları tamamlandıqda müraciət açılacaq.", "Вакансия талаптары толық болғанда өтінім ашылады.", "Ish malaka mezonlari tayyor bo‘lganda ariza ochiladi.", "Жумуштун квалификация талаптары даяр болгондо арыз ачылат.", "Applications will open when this listing's qualification criteria are complete.", "Bewerbungen werden geöffnet, sobald die Qualifikationskriterien vollständig sind.", "Подача откроется после заполнения требований к квалификации.", "سيفتح التقديم بعد اكتمال معايير المؤهل لهذه الوظيفة."],
+    eligibilityUnavailable: ["Kontrol Bekleniyor", "Yoxlama gözlənilir", "Тексеру күтілуде", "Tekshiruv kutilmoqda", "Текшерүү күтүлүүдө", "Check Pending", "Prüfung ausstehend", "Ожидается проверка", "بانتظار التحقق"],
+    eligibilityUnavailableReason: ["Bilgileriniz şu anda kontrol edilemiyor. Lütfen biraz sonra yeniden deneyin.", "Məlumatınız hazırda yoxlanıla bilmir. Bir az sonra yenidən cəhd edin.", "Деректеріңіз қазір тексерілмейді. Кейінірек қайталап көріңіз.", "Maʼlumotlaringiz hozir tekshirilmayapti. Birozdan keyin qayta urinib ko‘ring.", "Маалыматыңыз азыр текшерилбей жатат. Бир аздан кийин кайра аракет кылыңыз.", "Your information cannot be checked right now. Please try again shortly.", "Ihre Angaben können derzeit nicht geprüft werden. Versuchen Sie es später erneut.", "Сейчас данные нельзя проверить. Повторите попытку позже.", "تعذر التحقق من بياناتك حالياً. حاول مرة أخرى بعد قليل."],
     applicationConfirm: ["CV'niz bu ilana uygundur. Başvuruyu doğrulanmış firmaya göndermek istiyor musunuz?", "CV-niz bu elana uyğundur. Müraciəti təsdiqlənmiş şirkətə göndərmək istəyirsiniz?", "CV осы орынға сәйкес. Өтінімді расталған компанияға жібересіз бе?", "CV bu eʼlonga mos. Arizani tasdiqlangan kompaniyaga yuborasizmi?", "CV бул жарыяга туура келет. Арызды текшерилген компанияга жөнөтөсүзбү?", "Your CV matches this listing. Submit the application to the verified company?", "Ihr CV passt zu dieser Stelle. Bewerbung an das verifizierte Unternehmen senden?", "Ваш CV подходит. Отправить заявку проверенной компании?", "سيرتك مطابقة. هل تريد إرسال الطلب إلى الشركة الموثقة؟"],
     applicationSending: ["Uygunluk doğrulanıyor ve başvuru gönderiliyor...", "Uyğunluq yoxlanılır və müraciət göndərilir...", "Сәйкестік тексеріліп, өтінім жіберілуде...", "Moslik tekshirilib, ariza yuborilmoqda...", "Шайкештик текшерилип, арыз жөнөтүлүүдө...", "Checking eligibility and submitting...", "Eignung wird geprüft und Bewerbung gesendet...", "Проверяем соответствие и отправляем заявку...", "جارٍ التحقق من الأهلية وإرسال الطلب..."],
     applicationFailed: ["Başvuru gönderilemedi. Global CV eşleşmenizi yenileyip tekrar deneyin.", "Müraciət göndərilmədi. Global CV uyğunluğunu yeniləyib yenidən cəhd edin.", "Өтінім жіберілмеді. Global CV сәйкестігін жаңартып көріңіз.", "Ariza yuborilmadi. Global CV mosligini yangilab qayta urinib ko‘ring.", "Арыз жөнөтүлгөн жок. Global CV шайкештигин жаңыртып кайталаңыз.", "Application could not be submitted. Refresh your Global CV match and try again.", "Bewerbung konnte nicht gesendet werden. Aktualisieren Sie Ihren Global-CV-Abgleich.", "Заявка не отправлена. Обновите сопоставление Global CV.", "تعذر إرسال الطلب. حدّث مطابقة Global CV وحاول مجدداً."],
@@ -417,19 +431,38 @@
     if (!session) return { disabled: false, applied: false, label: "apply", reason: "" };
     const draft = smartDraftFor(job);
     if (draft && draft.status === "submitted") return { disabled: true, applied: true, label: "applied", reason: "" };
-    if (!job.smartJobId) return { disabled: true, applied: false, label: "eligibilityUnavailable", reason: text("eligibilityUnavailable") };
+    const readiness = smartApplicationState.application_readiness || {};
+    if (readiness.documents_state === "missing") {
+      return { disabled: false, applied: false, label: "uploadDocuments", reason: text("documentsMissingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
+    }
+    if (readiness.documents_state === "processing") {
+      return { disabled: false, applied: false, label: "reviewDocuments", reason: text("documentsPendingReason"), href: portalUrl("maritime-documents.html"), tone: "action" };
+    }
+    if (readiness.documents_state !== "confirmed") {
+      return { disabled: true, applied: false, label: "eligibilityUnavailable", reason: text("eligibilityUnavailableReason"), tone: "pending" };
+    }
+    if (readiness.has_saved_maritime_cv !== true) {
+      return { disabled: false, applied: false, label: "completeMaritimeCv", reason: text("maritimeCvMissingReason"), href: portalUrl("maritime-cv.html"), tone: "action" };
+    }
     const run = smartApplicationState.run;
-    if (!run) return { disabled: true, applied: false, label: "completeGlobalCv", reason: text("completeGlobalCv") };
-    if (run.status !== "user_confirmed") return { disabled: true, applied: false, label: "confirmGlobalCv", reason: text("confirmGlobalCv") };
+    if (!run) return { disabled: false, applied: false, label: "completeGlobalCv", reason: text("globalCvMissingReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+    if (run.status !== "user_confirmed") return { disabled: false, applied: false, label: "confirmGlobalCv", reason: text("confirmGlobalCvReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+    if (!job.smartJobId) return { disabled: true, applied: false, label: "listingRequirementsPending", reason: text("listingRequirementsPendingReason"), tone: "pending" };
     const match = smartMatchFor(job);
-    if (!match || match.eligible !== true || match.hard_gate_status !== "passed") {
-      return { disabled: true, applied: false, label: "notEligibleForPosition", reason: text("notEligibleForPosition") };
+    if (!match || match.hard_gate_status === "stale") {
+      return { disabled: false, applied: false, label: "refreshEligibility", reason: text("refreshEligibilityReason"), href: portalUrl("maritime-smart-account.html"), tone: "action" };
+    }
+    if (match.hard_gate_status === "needs_data") {
+      return { disabled: true, applied: false, label: "listingRequirementsPending", reason: text("listingRequirementsPendingReason"), tone: "pending" };
+    }
+    if (match.eligible !== true || match.hard_gate_status !== "passed") {
+      return { disabled: true, applied: false, label: "notEligibleForPosition", reason: text("notEligibleReason"), tone: "mismatch" };
     }
     return { disabled: false, applied: false, label: "apply", reason: "" };
   }
 
   async function loadSmartApplicationState() {
-    smartApplicationState = { run: null, matches: [], application_drafts: [] };
+    smartApplicationState = { run: null, matches: [], application_drafts: [], application_readiness: { documents_state: "unknown", has_saved_maritime_cv: false, has_confirmed_maritime_cv: false } };
     if (!session?.access_token) return smartApplicationState;
     const base = String(App.config && App.config.apiBaseUrl || "https://api.allonahub.com").replace(/\/$/, "");
     try {
@@ -441,7 +474,8 @@
       smartApplicationState = {
         run: payload.run || null,
         matches: Array.isArray(payload.matches) ? payload.matches : [],
-        application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : []
+        application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : [],
+        application_readiness: payload.application_readiness || smartApplicationState.application_readiness
       };
     } catch (error) {}
     return smartApplicationState;
@@ -464,9 +498,18 @@
     smartApplicationState = {
       run: payload.run || smartApplicationState.run,
       matches: Array.isArray(payload.matches) ? payload.matches : smartApplicationState.matches,
-      application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : smartApplicationState.application_drafts
+      application_drafts: Array.isArray(payload.application_drafts) ? payload.application_drafts : smartApplicationState.application_drafts,
+      application_readiness: payload.application_readiness || smartApplicationState.application_readiness
     };
     return payload;
+  }
+
+  function jobApplicationAction(job, gate) {
+    const icon = gate.applied ? "fa-check" : gate.disabled ? "fa-shield-halved" : gate.href ? "fa-arrow-right" : "fa-paper-plane";
+    const title = gate.reason ? ` title="${escapeHtml(gate.reason)}"` : "";
+    const content = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${escapeHtml(text(gate.label))}`;
+    if (gate.href) return `<a class="maritime-button maritime-button--primary" href="${escapeHtml(gate.href)}"${title}>${content}</a>`;
+    return `<button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.disabled ? "disabled" : ""}${title}>${content}</button>`;
   }
 
   function jobCard(job) {
@@ -475,7 +518,7 @@
       <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div>
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
       <div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>
-      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><button class="maritime-button maritime-button--primary" type="button" data-apply-job="${escapeHtml(job.id)}" ${gate.disabled ? "disabled" : ""} ${gate.reason ? `title="${escapeHtml(gate.reason)}"` : ""}><i class="fa-solid ${gate.applied ? "fa-check" : gate.disabled ? "fa-shield-halved" : "fa-paper-plane"}" aria-hidden="true"></i>${escapeHtml(text(gate.label))}</button></div>
+      <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><div class="maritime-job-action-group">${gate.reason ? `<small class="maritime-job-eligibility is-${escapeHtml(gate.tone || "neutral")}">${escapeHtml(gate.reason)}</small>` : ""}${jobApplicationAction(job, gate)}</div></div>
     </article>`;
   }
 
@@ -514,7 +557,7 @@
     const notice = document.querySelector("[data-jobs-notice]");
     const gate = jobApplicationGate(job);
     if (gate.disabled) {
-      if (notice) { notice.textContent = gate.reason || text("notEligibleForPosition"); notice.classList.add("is-visible", "is-warning"); }
+      if (notice) { notice.textContent = gate.reason || text("notEligibleReason"); notice.classList.add("is-visible", "is-warning"); }
       return;
     }
     if (!window.confirm(text("applicationConfirm"))) return;

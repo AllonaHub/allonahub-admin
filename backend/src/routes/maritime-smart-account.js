@@ -797,7 +797,43 @@ async function maritimePartnerReferenceCenter(userId) {
   };
 }
 
+async function maritimeApplicationReadiness(userId) {
+  const [profileResult, documentsResult] = await Promise.all([
+    supabaseAdmin
+      .from("maritime_cv_profiles")
+      .select("profile_status,profile_payload,last_user_confirmed_at")
+      .eq("seafarer_user_id", userId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("maritime_document_intakes")
+      .select("status")
+      .eq("seafarer_user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100)
+  ]);
+  const profile = assertDb(profileResult, "Başvuru CV durumu okunamadı.") || null;
+  const documents = assertDb(documentsResult, "Başvuru belge durumu okunamadı.") || [];
+  const uploadedStatuses = new Set([
+    "uploaded", "analysis_queued", "analyzing", "pending_user_confirmation", "user_confirmed",
+    "verification_pending", "verified", "analysis_failed", "classified", "ocr_draft"
+  ]);
+  const confirmedStatuses = new Set(["user_confirmed", "verification_pending", "verified"]);
+  const uploadedDocuments = documents.filter((document) => uploadedStatuses.has(document.status));
+  const confirmedDocuments = documents.filter((document) => confirmedStatuses.has(document.status));
+
+  return {
+    documents_state: confirmedDocuments.length ? "confirmed" : uploadedDocuments.length ? "processing" : "missing",
+    has_saved_maritime_cv: profile?.profile_payload?.data_origin === "user_entered_maritime_cv",
+    has_confirmed_maritime_cv: Boolean(profile?.last_user_confirmed_at),
+    cv_status: profile?.profile_status || "missing"
+  };
+}
+
 async function latestSmartState(userId, user) {
+  const [applicationReadiness, cvIdentity] = await Promise.all([
+    maritimeApplicationReadiness(userId),
+    ownCvIdentity(user)
+  ]);
   const runResult = await supabaseAdmin
     .from("maritime_smart_account_runs")
     .select("id,status,rule_version,input_snapshot_hash,smart_snapshot,match_count,eligible_match_count,confirmed_at,created_at,updated_at")
@@ -807,7 +843,7 @@ async function latestSmartState(userId, user) {
     .limit(1)
     .maybeSingle();
   const run = assertDb(runResult, "Akıllı hesap kaydı okunamadı.") || null;
-  if (!run) return { run: null, matches: [], application_drafts: [], cv_identity: await ownCvIdentity(user) };
+  if (!run) return { run: null, matches: [], application_drafts: [], application_readiness: applicationReadiness, cv_identity: cvIdentity };
 
   const [matchesResult, applicationsResult] = await Promise.all([
     supabaseAdmin
@@ -857,7 +893,7 @@ async function latestSmartState(userId, user) {
       company_contact_visible: false,
       final_submission_confirmed: application.candidate_consent_snapshot?.final_submission_confirmed === true
     }));
-  return { run, matches, application_drafts: applicationDrafts, cv_identity: await ownCvIdentity(user) };
+  return { run, matches, application_drafts: applicationDrafts, application_readiness: applicationReadiness, cv_identity: cvIdentity };
 }
 
 async function verifiedOpenJobs() {
