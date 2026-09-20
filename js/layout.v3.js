@@ -131,6 +131,7 @@
             <h3>Alışveriş</h3>
             <a href="${core.url("/pages/commerce/shop.html")}">Ürünler</a>
             <a href="${core.url("/pages/commerce/allonashop.html")}">Allona Shop</a>
+            <a href="${core.url("/pages/ecosystem/allonadenizcilik.html")}">Allona Denizcilik</a>
             <a href="${core.url("/pages/commerce/allonayemek.html")}">Allona Yemek</a>
             <a href="${core.url("/pages/commerce/allonamarket.html")}">Allona Market</a>
             <a href="${core.url("/pages/commerce/kuponlar.html")}">Kuponlar</a>

@@ -2270,17 +2270,21 @@ html body.allonahub-home-page[data-theme="white"] .turkic-home-entry__countries 
     display: grid !important;
     grid-template-columns: none !important;
     grid-auto-flow: column !important;
-    grid-auto-columns: min(82vw, 310px) !important;
+    grid-auto-columns: min(72vw, 270px) !important;
     align-items: start !important;
     width: calc(100% - 18px) !important;
     max-width: none !important;
-    gap: 12px !important;
+    gap: 0 !important;
     margin-inline: 9px !important;
-    padding: 18px 1px 12px !important;
+    padding: 0 !important;
     overflow-x: auto !important;
     overscroll-behavior-inline: contain !important;
-    scroll-snap-type: x mandatory !important;
+    scroll-snap-type: none !important;
     scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.045) !important;
   }
 
   html body.allonahub-home-page .site-footer .footer-grid::-webkit-scrollbar,
@@ -2291,10 +2295,25 @@ html body.allonahub-home-page[data-theme="white"] .turkic-home-entry__countries 
 
   html body.allonahub-home-page .site-footer .footer-col {
     width: 100% !important;
+    max-width: none !important;
     min-width: 0 !important;
     height: auto !important;
     padding: 16px !important;
-    scroll-snap-align: start !important;
+    border: 0 !important;
+    border-inline-end: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    scroll-snap-align: none !important;
+  }
+
+  html body.allonahub-home-page .site-footer .footer-col:first-child {
+    max-width: none !important;
+    flex-basis: auto !important;
+  }
+
+  html body.allonahub-home-page .site-footer .footer-col:last-child {
+    border-inline-end: 0 !important;
   }
 
   html body.allonahub-home-page .site-footer .footer-col a,

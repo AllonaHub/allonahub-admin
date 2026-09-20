@@ -146,7 +146,7 @@
   function footerColumnMap() {
     return [
       null,
-      { title: "shopping", links: ["products", null, "allonaFood", null, "coupons", "favorites", "orders"] },
+      { title: "shopping", links: ["products", null, "experienceLabel", "allonaFood", null, "coupons", "favorites", "orders"] },
       { title: "customer", links: ["aboutUs", "contact", "supportCenter", "academy", "myDocuments", "notifications", "delivery", "returns"] },
       { title: "ecosystem", links: ["allModules", "partnerApplication", "coupon", null, "career", "partnerMembership"] },
       { title: "legal", links: ["distanceSales", "preliminaryInfo", "privacyPolicy", "kvkkNotice", "cookiePolicy", "terms", "securityPolicy"] }
