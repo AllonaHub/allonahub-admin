@@ -43,7 +43,7 @@
     const onPartnerHost = window.location.hostname === "partner.allonahub.com";
     if (accountType === "partner") {
       if (context?.partnerBusiness?.partner_type === "maritime") {
-        if (onPartnerHost) return "/maripartner";
+        if (onPartnerHost) return "/pages/partner/maripartner.html";
         return App.core.url("/pages/partner/maripartner.html");
       }
       if (onPartnerHost) return "/panel";

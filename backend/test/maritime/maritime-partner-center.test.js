@@ -228,5 +228,7 @@ test("maritime partner routing remains isolated from general Partner OS", () => 
   assert.match(auth, /partnerBusiness\?\.partner_type === "maritime"/);
   assert.match(auth, /pages\/partner\/maripartner\.html/);
   assert.match(partner, /type==="maritime"/);
-  assert.match(partner, /partnerPortalUrl\("\/maripartner"\)/);
+  assert.match(partner, /partnerPortalUrl\("\/pages\/partner\/maripartner\.html"\)/);
+  assert.doesNotMatch(auth, /return "\/maripartner"/);
+  assert.doesNotMatch(partner, /partnerPortalUrl\("\/maripartner"\)/);
 });

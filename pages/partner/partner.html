@@ -445,7 +445,7 @@ function mainSiteUrl(path){
 function partnerPanelUrl(partnerType){
   const type=String(partnerType || localStorage.getItem("allonaPartnerType") || "").toLowerCase();
   if(type==="maritime"){
-    if(isPartnerPortalHost())return partnerPortalUrl("/maripartner");
+    if(isPartnerPortalHost())return partnerPortalUrl("/pages/partner/maripartner.html");
     return partnerPageUrl("/pages/partner/maripartner.html");
   }
   if(isPartnerPortalHost())return partnerPortalUrl("/panel");
