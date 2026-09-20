@@ -390,6 +390,34 @@ body.maritime-portal-page textarea {
   line-height: 1.55;
 }
 
+.maritime-job-highlights {
+  display: grid;
+  grid-template-columns: minmax(110px, .8fr) repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.maritime-job-highlights > * {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 223, 252, .2);
+  border-radius: 6px;
+  background: rgba(0, 126, 206, .12);
+  color: #dff8ff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.maritime-job-highlights strong {
+  border-color: rgba(205, 166, 77, .48);
+  background: rgba(205, 166, 77, .12);
+  color: #ffe39a;
+  font-size: 17px;
+  font-weight: 900;
+}
+
 .maritime-job-meta,
 .maritime-record-meta {
   display: grid;
@@ -415,6 +443,18 @@ body.maritime-portal-page textarea {
   color: #7ec8e6;
   font-size: 9px;
   text-transform: uppercase;
+}
+
+.maritime-job-meta .is-risk {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 184, 77, .38);
+  background: rgba(125, 71, 0, .18);
+}
+
+@media (max-width: 700px) {
+  .maritime-job-highlights {
+    grid-template-columns: 1fr;
+  }
 }
 
 .maritime-job-actions,

@@ -98,6 +98,15 @@
     department: ["Departman", "Şöbə", "Бөлім", "Bo‘lim", "Бөлүм", "Department", "Abteilung", "Отдел", "القسم"],
     contract: ["Kontrat", "Müqavilə", "Келісімшарт", "Shartnoma", "Келишим", "Contract", "Vertrag", "Контракт", "العقد"],
     route: ["Sefer", "Səfər", "Бағыт", "Yo‘nalish", "Багыт", "Route", "Fahrtgebiet", "Рейс", "الرحلة"],
+    minimumExperience: ["En az deneyim", "Minimum təcrübə", "Ең аз тәжірибе", "Eng kam tajriba", "Эң аз тажрыйба", "Minimum experience", "Mindesterfahrung", "Минимальный опыт", "الحد الأدنى للخبرة"],
+    months: ["ay", "ay", "ай", "oy", "ай", "months", "Monate", "месяцев", "أشهر"],
+    salary: ["Maaş", "Maaş", "Жалақы", "Maosh", "Айлык", "Salary", "Gehalt", "Зарплата", "الراتب"],
+    joiningDate: ["Katılım tarihi", "Qoşulma tarixi", "Қосылу күні", "Qo‘shilish sanasi", "Кошулуу күнү", "Joining date", "Einstiegsdatum", "Дата посадки", "تاريخ الالتحاق"],
+    joiningPort: ["Katılım limanı", "Qoşulma limanı", "Қосылу порты", "Qo‘shilish porti", "Кошулуу порту", "Joining port", "Einstiegshafen", "Порт посадки", "ميناء الالتحاق"],
+    currentPort: ["Şirket onaylı mevcut konum", "Şirkətin təsdiqlədiyi cari mövqe", "Компания растаған ағымдағы орын", "Kompaniya tasdiqlagan joriy joylashuv", "Компания ырастаган учурдагы жайгашуу", "Company-confirmed location", "Vom Unternehmen bestätigter Standort", "Текущее местоположение, подтвержденное компанией", "الموقع الحالي المؤكد من الشركة"],
+    nextPort: ["Sonraki liman", "Növbəti liman", "Келесі порт", "Keyingi port", "Кийинки порт", "Next port", "Nächster Hafen", "Следующий порт", "الميناء التالي"],
+    vesselSpecs: ["Gemi bilgisi", "Gəmi məlumatı", "Кеме мәліметі", "Kema maʼlumoti", "Кеме маалыматы", "Vessel details", "Schiffsdaten", "Данные судна", "بيانات السفينة"],
+    routeRisk: ["Rota riski", "Marşrut riski", "Маршрут тәуекелі", "Yo‘nalish xavfi", "Багыт коркунучу", "Route risk", "Routenrisiko", "Риск маршрута", "مخاطر المسار"],
     sixMonths: ["6 ay", "6 ay", "6 ай", "6 oy", "6 ай", "6 months", "6 Monate", "6 месяцев", "6 أشهر"],
     globalRoute: ["Global", "Qlobal", "Жаһандық", "Global", "Глобалдык", "Global", "Global", "Международный", "عالمي"],
     europeRoute: ["Avrupa", "Avropa", "Еуропа", "Yevropa", "Европа", "Europe", "Europa", "Европа", "أوروبا"],
@@ -406,6 +415,8 @@
         return item && item.module_key === "maritime" && item.listing_type === "crew_position" && item.status === "active"
           && Number.isFinite(published) && published <= Date.now() && (expires === null || Number.isFinite(expires) && expires > Date.now());
       }).map(function (item) {
+        const requirements = item.matching_requirements && typeof item.matching_requirements === "object" ? item.matching_requirements : {};
+        const vessel = requirements.vessel_public_profile && typeof requirements.vessel_public_profile === "object" ? requirements.vessel_public_profile : {};
         return {
           id: item.id,
           smartJobId: item.smart_job_id || null,
@@ -414,6 +425,20 @@
           summary: compact(item.summary, 360),
           location: compact(item.location_label, 120) || text("globalRoute"),
           contract: compact(item.detail_label, 120) || text("sixMonths"),
+          experienceMonths: Number(requirements.minimum_sea_service_months) || 0,
+          salary: requirements.salary && Number(requirements.salary.amount) ? Number(requirements.salary.amount).toLocaleString(localeCodes[language()] || "tr-TR") + " " + compact(requirements.salary.currency, 6) : "",
+          joiningDate: compact(requirements.joining_date, 10),
+          joiningPort: compact(requirements.joining_port, 120),
+          currentPort: compact(requirements.current_port, 120),
+          nextPort: compact(requirements.next_port, 120),
+          tradingArea: compact(requirements.trading_area_label, 120),
+          warRisk: compact(requirements.war_risk_label, 180),
+          warRiskNote: compact(requirements.war_risk_note, 240),
+          vesselType: compact(vessel.vessel_type, 120),
+          vesselFlag: compact(vessel.flag_state, 80),
+          vesselDwt: Number(vessel.deadweight) || null,
+          vesselGt: Number(vessel.gross_tonnage) || null,
+          hasOperationalDetails: Boolean(requirements.joining_date || requirements.salary || requirements.vessel_public_profile),
           department: "all",
           verified: true,
           live: true
@@ -532,10 +557,16 @@
 
   function jobCard(job) {
     const gate = jobApplicationGate(job);
+    const vesselFacts = [job.vesselType, job.vesselDwt ? job.vesselDwt.toLocaleString(localeCodes[language()] || "tr-TR") + " DWT" : "", job.vesselGt ? job.vesselGt.toLocaleString(localeCodes[language()] || "tr-TR") + " GT" : "", job.vesselFlag].filter(Boolean).join(" · ");
+    const highlights = job.hasOperationalDetails ? `<div class="maritime-job-highlights"><strong>${escapeHtml(job.salary || "-")}</strong><span>${escapeHtml(text("minimumExperience"))}: ${escapeHtml(String(job.experienceMonths))} ${escapeHtml(text("months"))}</span><span>${escapeHtml(text("joiningDate"))}: ${escapeHtml(job.joiningDate ? dateLabel(job.joiningDate) : "-")}</span></div>` : "";
+    const metadata = job.hasOperationalDetails
+      ? `<div class="maritime-job-meta"><span><b>${escapeHtml(text("vesselSpecs"))}</b>${escapeHtml(vesselFacts || "-")}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.tradingArea || job.location)}</span><span><b>${escapeHtml(text("joiningPort"))}</b>${escapeHtml(job.joiningPort || "-")}</span><span><b>${escapeHtml(text("currentPort"))}</b>${escapeHtml(job.currentPort || "-")}</span><span><b>${escapeHtml(text("nextPort"))}</b>${escapeHtml(job.nextPort || "-")}</span>${job.warRisk ? `<span class="is-risk"><b>${escapeHtml(text("routeRisk"))}</b>${escapeHtml([job.warRisk, job.warRiskNote].filter(Boolean).join(" · "))}</span>` : ""}</div>`
+      : `<div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>`;
     return `<article class="maritime-job-card" data-job-id="${escapeHtml(job.id)}" data-department="${escapeHtml(job.department)}">
       <div class="maritime-job-head"><div class="maritime-job-title"><span class="maritime-reference">${escapeHtml(job.reference)}</span><h3>${escapeHtml(job.title)}</h3></div><span class="maritime-verified-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${escapeHtml(text("verifiedCompany"))}</span></div>
+      ${highlights}
       <p class="maritime-job-description">${escapeHtml(job.summary)}</p>
-      <div class="maritime-job-meta"><span><b>${escapeHtml(text("department"))}</b>${escapeHtml(departmentLabel(job.department))}</span><span><b>${escapeHtml(text("contract"))}</b>${escapeHtml(job.contract)}</span><span><b>${escapeHtml(text("route"))}</b>${escapeHtml(job.location)}</span></div>
+      ${metadata}
       <div class="maritime-job-actions"><span class="maritime-reference">${escapeHtml(text("companyHidden"))}</span><div class="maritime-job-action-group">${jobApplicationAction(job, gate)}</div></div>
     </article>`;
   }

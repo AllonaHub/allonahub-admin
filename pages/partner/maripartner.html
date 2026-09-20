@@ -7,7 +7,7 @@
   <title>MariPartner | AllonaHub Denizcilik</title>
   <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
-  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner6">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner-job2">
 </head>
 <body class="mp-body">
   <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
@@ -15,8 +15,8 @@
     <button class="mp-mobile-menu" type="button" data-mp-mobile-menu aria-label="Ana menüyü aç" aria-expanded="false">☰</button>
     <div class="mp-brand-wrap">
       <button class="mp-brand" type="button" data-mp-company-profile aria-label="Şirket profilini aç">
-        <span class="mp-brand__mark" data-mp-company-avatar aria-hidden="true">MP</span>
-        <span class="mp-brand__copy"><strong data-mp-company-name>Şirket hesabı</strong><small>MariPartner</small></span>
+        <span class="mp-brand__mark" data-mp-company-avatar data-no-translate aria-hidden="true">MP</span>
+        <span class="mp-brand__copy"><strong data-mp-company-name data-no-translate>Şirket hesabı</strong><small>MariPartner</small></span>
       </button>
       <button class="mp-verify-mark" type="button" data-mp-verification-badge aria-label="Doğrulama durumunu aç">✓</button>
     </div>
@@ -134,31 +134,30 @@
   </template>
 
   <template id="mpJobCreateTemplate">
-    <form class="mp-form" data-mp-job-form>
-      <p class="mp-note">İlanın başlığı, rütbesi ve zorunlu belgeleri uygun aday eşleştirmesinde kullanılır. Şirket iletişim bilgileri adaylara açık gösterilmez.</p>
-      <label class="mp-full"><span>İlan başlığı</span><input name="title" required minlength="2" maxlength="140" placeholder="Örn. Genel Kargo Gemisi için Yağcı"></label>
-      <label><span>Aranan rütbe</span><select name="rank_code" required><option value="">Seçin</option><option value="master">Kaptan</option><option value="chief_officer">Baş Zabit</option><option value="second_officer">İkinci Zabit</option><option value="third_officer">Üçüncü Zabit</option><option value="chief_engineer">Baş Mühendis</option><option value="second_engineer">İkinci Mühendis</option><option value="third_engineer">Üçüncü Mühendis</option><option value="oiler">Yağcı / Motorman</option><option value="able_seaman">Usta Gemici</option><option value="ordinary_seaman">Gemici</option><option value="cook">Aşçı</option><option value="electrician">Elektrikçi</option></select></label>
-      <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required></label>
-      <label><span>Gemi türü</span><input name="vessel_type" required minlength="2" maxlength="120" placeholder="Örn. Genel kargo"></label>
-      <label><span>Katılım tarihi</span><input type="date" name="joining_date" required></label>
-      <label><span>Katılım limanı / çalışma bölgesi</span><input name="location_label" required minlength="2" maxlength="120" placeholder="Örn. İstanbul / Akdeniz"></label>
-      <label><span>Kontrat bilgisi</span><input name="detail_label" required minlength="2" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+    <form class="mp-form mp-job-form" data-mp-job-form>
+      <p class="mp-note">Önce şirketinize kayıtlı gemiyi seçin. Gemi adı ve IMO yalnız şirket ekranında kalır; denizci ilanında rütbe, ücret, rota ve güvenli teknik gemi özeti gösterilir.</p>
+      <label class="mp-full"><span>İlan verilecek gemi</span><select name="vessel_profile_id" data-mp-vessel-options required><option value="">Gemi adı · IMO ile seçin</option></select></label>
+      <div class="mp-job-vessel-preview mp-full" data-mp-job-vessel-preview aria-live="polite">Gemi seçildiğinde tür, bayrak ve tonaj bilgileri burada doğrulanır.</div>
+      <label><span>Aranan rütbe</span><select name="rank_code" required><option value="">Seçin</option><option value="master">Kaptan</option><option value="chief_officer">Baş Zabit</option><option value="second_officer">İkinci Zabit</option><option value="third_officer">Üçüncü Zabit</option><option value="chief_engineer">Baş Mühendis</option><option value="second_engineer">İkinci Mühendis</option><option value="third_engineer">Üçüncü Mühendis</option><option value="oiler">Yağcı / Motorman</option><option value="able_seaman">Usta Gemici</option><option value="ordinary_seaman">Gemici</option><option value="cook">Aşçı</option><option value="electrician">Elektrik Zabiti</option></select></label>
+      <label><span>En az deniz hizmeti (ay)</span><input type="number" name="minimum_sea_service_months" required min="0" max="600" value="6" inputmode="numeric"></label>
       <label><span>Ücret</span><input type="number" name="salary_amount" required min="1" max="1000000" step="0.01" inputmode="decimal" placeholder="3500"></label>
       <label><span>Para birimi</span><select name="salary_currency" required><option value="">Seçin</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="TRY">TRY</option><option value="AZN">AZN</option></select></label>
-      <label><span>En az deniz hizmeti (gün)</span><input type="number" name="minimum_sea_service_days" min="0" max="20000" value="0"></label>
+      <label><span>Katılım tarihi</span><input type="date" name="joining_date" required></label>
+      <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required><small>Katılım tarihinden en fazla 3 gün sonrası.</small></label>
+      <label><span>Kontrat bilgisi</span><input name="contract_label" required minlength="2" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+      <label><span>Katılım limanı</span><input name="joining_port" required minlength="2" maxlength="120" placeholder="Örn. İstanbul Ambarlı"></label>
+      <label><span>Geminin mevcut limanı / konumu</span><input name="current_port" required minlength="2" maxlength="120" placeholder="Şirket tarafından güncel olarak doğrulanır"></label>
+      <label><span>Bir sonraki liman</span><input name="next_port" required minlength="2" maxlength="120" placeholder="Örn. Pire"></label>
+      <label><span>Çalışma bölgesi</span><select name="trading_area" required><option value="">Seçin</option><option value="worldwide">Dünya geneli</option><option value="mediterranean">Akdeniz</option><option value="black_sea">Karadeniz</option><option value="north_sea_baltic">Kuzey Denizi ve Baltık</option><option value="north_atlantic">Kuzey Atlantik</option><option value="south_atlantic">Güney Atlantik</option><option value="red_sea_gulf_of_aden">Kızıldeniz ve Aden Körfezi</option><option value="arabian_gulf_indian_ocean">Basra Körfezi ve Hint Okyanusu</option><option value="west_africa_gulf_of_guinea">Batı Afrika ve Gine Körfezi</option><option value="east_africa">Doğu Afrika</option><option value="southeast_asia">Güneydoğu Asya</option><option value="east_asia">Doğu Asya</option><option value="australia_pacific">Avustralya ve Pasifik</option><option value="north_america">Kuzey Amerika</option><option value="central_south_america_caribbean">Orta/Güney Amerika ve Karayipler</option><option value="domestic_coastal">Kabotaj / kıyı seferi</option><option value="other">Diğer rota</option></select></label>
+      <label><span>Savaş / yüksek risk bölgesi</span><select name="war_risk_status" required><option value="">Seçin</option><option value="no_known_listed_area">Bilinen listelenmiş risk bölgesi yok</option><option value="listed_area_planned">Riskli bölge geçişi planlanıyor</option><option value="route_under_review">Rota ve risk değerlendirmesi kesinleşmedi</option></select></label>
+      <label class="mp-full" data-mp-war-note hidden><span>Rota risk açıklaması</span><input name="war_risk_note" maxlength="240" placeholder="Geçiş bölgesi ve şirketin uygulayacağı emniyet tedbirlerini kısaca yazın."></label>
       <label><span>Gerekli dil</span><select name="language"><option value="">Dil şartı yok</option><option value="English">İngilizce</option><option value="Turkish">Türkçe</option><option value="Azerbaijani">Azerbaycanca</option><option value="Russian">Rusça</option></select></label>
       <label><span>Dil seviyesi</span><select name="language_level"><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option><option value="fluent">Akıcı</option><option value="native">Ana dil</option></select></label>
-      <label class="mp-full"><span>Kısa açıklama</span><textarea name="summary" required minlength="10" maxlength="360" placeholder="Pozisyon, gemi tipi, katılım ve çalışma koşullarını kısa ve açık biçimde yazın."></textarea></label>
-      <label class="mp-full"><span>Tercih edilen ek koşullar</span><textarea name="preferred_conditions" maxlength="500" placeholder="Zorunlu olmayan tecrübe, dil veya gemi tipi tercihlerini yazın."></textarea></label>
-      <fieldset><legend>Zorunlu sertifikalar</legend><div class="mp-certificate-grid">
-        <label class="mp-check"><input type="checkbox" name="certificates" value="SH" checked> SH</label>
-        <label class="mp-check"><input type="checkbox" name="certificates" value="SI" checked> SI</label>
-        <label class="mp-check"><input type="checkbox" name="certificates" value="SO" checked> SO</label>
-        <label class="mp-check"><input type="checkbox" name="certificates" value="SP" checked> SP</label>
-        <label class="mp-check"><input type="checkbox" name="certificates" value="SA"> SA / Kimyasal tanker</label>
-      </div></fieldset>
-      <label class="mp-check"><input type="checkbox" name="medical_required" checked> Geçerli sağlık uygunluğu zorunlu</label>
-      <label class="mp-check"><input type="checkbox" name="available_now_required"> Hemen katılabilir aday zorunlu</label>
+      <div class="mp-smart-summary mp-full"><span>Akıllı ilan özeti</span><output data-mp-job-summary>Rütbe ve ilan koşulları seçildiğinde adayların göreceği kısa açıklama burada oluşur.</output></div>
+      <label class="mp-full"><span>Tercih edilen ek koşullar</span><textarea name="preferred_conditions" maxlength="500" placeholder="Yalnız zorunlu olmayan ek tercihleri yazın."></textarea></label>
+      <fieldset><legend>Zorunlu sertifikalar</legend><p class="mp-field-help">Temel STCW belgeleri hazır seçilir. Rütbeye göre yeterlilik belgesi otomatik eklenir; yalnız gerçekten zorunlu olan ilave belgeleri seçin.</p><div class="mp-certificate-grid" data-mp-job-certificates></div></fieldset>
+      <div class="mp-medical-lock mp-full"><strong>Geçerli sağlık uygunluğu zorunlu</strong><span>Denizcilik ilanlarında bu güvenlik şartı kapatılamaz.</span></div>
+      <label class="mp-check mp-full"><input type="checkbox" name="available_now_required"> Hemen katılabilir aday zorunlu</label>
       <button class="mp-primary" type="submit">İlanı Onaya Gönder</button>
     </form>
   </template>
@@ -459,6 +458,7 @@
   <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/auth.js?v=20260920-partner-routing1" defer></script>
   <script src="../../js/platform.js?v=20260920-maripartner5" defer></script>
-  <script src="../../js/maripartner.js?v=20260920-maripartner6" defer></script>
+  <script src="../../js/maripartner-i18n.js?v=20260920-maripartner-job2" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner-job2" defer></script>
 </body>
 </html>

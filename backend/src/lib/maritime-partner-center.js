@@ -54,6 +54,113 @@ export const MARIPARTNER_REFERENCE_QUESTIONS = Object.freeze([
   "eligible_for_rehire"
 ]);
 
+export const MARIPARTNER_JOB_RANKS = Object.freeze({
+  master: "Kaptan",
+  chief_officer: "Baş Zabit",
+  second_officer: "İkinci Zabit",
+  third_officer: "Üçüncü Zabit",
+  chief_engineer: "Baş Mühendis",
+  second_engineer: "İkinci Mühendis",
+  third_engineer: "Üçüncü Mühendis",
+  oiler: "Yağcı / Motorman",
+  able_seaman: "Usta Gemici",
+  ordinary_seaman: "Gemici",
+  cook: "Aşçı",
+  electrician: "Elektrik Zabiti"
+});
+
+export const MARIPARTNER_TRADING_AREAS = Object.freeze({
+  worldwide: "Dünya geneli",
+  mediterranean: "Akdeniz",
+  black_sea: "Karadeniz",
+  north_sea_baltic: "Kuzey Denizi ve Baltık",
+  north_atlantic: "Kuzey Atlantik",
+  south_atlantic: "Güney Atlantik",
+  red_sea_gulf_of_aden: "Kızıldeniz ve Aden Körfezi",
+  arabian_gulf_indian_ocean: "Basra Körfezi ve Hint Okyanusu",
+  west_africa_gulf_of_guinea: "Batı Afrika ve Gine Körfezi",
+  east_africa: "Doğu Afrika",
+  southeast_asia: "Güneydoğu Asya",
+  east_asia: "Doğu Asya",
+  australia_pacific: "Avustralya ve Pasifik",
+  north_america: "Kuzey Amerika",
+  central_south_america_caribbean: "Orta/Güney Amerika ve Karayipler",
+  domestic_coastal: "Kabotaj / kıyı seferi",
+  other: "Diğer rota"
+});
+
+export const MARIPARTNER_WAR_RISK_STATUSES = Object.freeze({
+  no_known_listed_area: "Beyan edilen rotada bilinen listelenmiş risk bölgesi yok",
+  listed_area_planned: "Listelenmiş veya yüksek riskli bölge geçişi planlanıyor",
+  route_under_review: "Rota ve risk değerlendirmesi henüz kesinleşmedi"
+});
+
+export const MARIPARTNER_JOB_CERTIFICATE_CODES = Object.freeze([
+  "SP", "SH", "SI", "SL", "SO", "SA",
+  "II/1", "II/2", "II/4", "II/5",
+  "III/1", "III/2", "III/4", "III/6",
+  "IV/2", "V/1-1", "V/1-2", "V/2",
+  "SHIP-COOK", "ADVANCED-DP"
+]);
+
+export const MARIPARTNER_RANK_CERTIFICATE_CODES = Object.freeze({
+  master: "II/2",
+  chief_officer: "II/2",
+  second_officer: "II/1",
+  third_officer: "II/1",
+  chief_engineer: "III/2",
+  second_engineer: "III/2",
+  third_engineer: "III/1",
+  oiler: "III/4",
+  able_seaman: "II/5",
+  ordinary_seaman: "II/4",
+  cook: "SHIP-COOK",
+  electrician: "III/6"
+});
+
+function compactJobText(value, maxLength = 160) {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+export function buildMariPartnerJobPresentation(input, vessel) {
+  const rankLabel = MARIPARTNER_JOB_RANKS[input?.rank_code] || compactJobText(input?.rank_code, 80) || "Denizci";
+  const tradingAreaLabel = MARIPARTNER_TRADING_AREAS[input?.trading_area] || "Belirtilen rota";
+  const warRiskLabel = MARIPARTNER_WAR_RISK_STATUSES[input?.war_risk_status] || MARIPARTNER_WAR_RISK_STATUSES.route_under_review;
+  const months = Math.max(0, Math.trunc(Number(input?.minimum_sea_service_months) || 0));
+  const amount = Number(input?.salary_amount);
+  const salary = Number.isFinite(amount) ? `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(amount)} ${input?.salary_currency || ""}`.trim() : "";
+  const vesselType = compactJobText(vessel?.vessel_type, 120) || "Deniz ticaret gemisi";
+  const experience = months ? `en az ${months} ay deniz hizmeti` : "deniz hizmeti için başlangıç seviyesi kabul edilebilir";
+  const route = [compactJobText(input?.joining_port, 120), tradingAreaLabel].filter(Boolean).join(" / ");
+  const summary = `${vesselType} tipi gemide ${rankLabel} pozisyonu; ${experience}. ${compactJobText(input?.joining_date, 10)} tarihinde ${compactJobText(input?.joining_port, 120)} limanından katılım. Çalışma bölgesi: ${tradingAreaLabel}.`;
+  const metadata = vessel?.metadata && typeof vessel.metadata === "object" ? vessel.metadata : {};
+  return {
+    title: rankLabel,
+    summary: compactJobText(summary, 360),
+    location_label: compactJobText(route, 120),
+    detail_label: compactJobText([input?.contract_label, salary].filter(Boolean).join(" · "), 120),
+    minimum_sea_service_days: months * 30,
+    public_vessel: {
+      vessel_type: vesselType,
+      flag_state: compactJobText(vessel?.flag_state, 80) || null,
+      gross_tonnage: Number.isFinite(Number(metadata.gross_tonnage)) ? Number(metadata.gross_tonnage) : null,
+      deadweight: Number.isFinite(Number(metadata.deadweight)) ? Number(metadata.deadweight) : null,
+      year_built: Number.isFinite(Number(metadata.year_built)) ? Number(metadata.year_built) : null
+    },
+    route: {
+      current_port: compactJobText(input?.current_port, 120),
+      current_position_source: "company_confirmed",
+      joining_port: compactJobText(input?.joining_port, 120),
+      next_port: compactJobText(input?.next_port, 120),
+      trading_area: input?.trading_area,
+      trading_area_label: tradingAreaLabel,
+      war_risk_status: input?.war_risk_status,
+      war_risk_label: warRiskLabel,
+      war_risk_note: compactJobText(input?.war_risk_note, 240) || null
+    }
+  };
+}
+
 export function normalizeImo(value) {
   const digits = String(value || "").replace(/\D/g, "");
   return /^\d{7}$/.test(digits) ? digits : null;

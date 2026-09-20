@@ -11836,7 +11836,7 @@ export function registerRoutes(app) {
     const now = new Date().toISOString();
     let dbQuery = supabasePublic
       .from("maritime_public_listings")
-      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,published_at,expires_at,sort_order")
+      .select("id,module_key,listing_type,status,title,summary,location_label,detail_label,matching_requirements,published_at,expires_at,sort_order")
       .eq("module_key", "maritime")
       .eq("status", "active")
       .lte("published_at", now)
@@ -11867,10 +11867,39 @@ export function registerRoutes(app) {
     return {
       ok: true,
       module_key: "maritime",
-      listings: listings.map((item) => ({
-        ...item,
-        smart_job_id: item.listing_type === "crew_position" ? smartJobByListing.get(item.id) || null : null
-      }))
+      listings: listings.map((item) => {
+        const requirements = item.matching_requirements && typeof item.matching_requirements === "object" ? item.matching_requirements : {};
+        const publicVessel = requirements.vessel_public_profile && typeof requirements.vessel_public_profile === "object" ? requirements.vessel_public_profile : {};
+        return {
+          ...item,
+          matching_requirements: item.listing_type === "crew_position" ? {
+            rank_code: requirements.rank_code || null,
+            minimum_sea_service_months: Number(requirements.minimum_sea_service_months) || Math.ceil((Number(requirements.minimum_sea_service_days) || 0) / 30),
+            required_certificate_codes: Array.isArray(requirements.required_certificate_codes) ? requirements.required_certificate_codes : [],
+            required_languages: Array.isArray(requirements.required_languages) ? requirements.required_languages : [],
+            medical_required: requirements.medical_required !== false,
+            available_now_required: requirements.available_now_required === true,
+            vessel_public_profile: {
+              vessel_type: publicVessel.vessel_type || requirements.vessel_type || null,
+              flag_state: publicVessel.flag_state || null,
+              gross_tonnage: Number(publicVessel.gross_tonnage) || null,
+              deadweight: Number(publicVessel.deadweight) || null,
+              year_built: Number(publicVessel.year_built) || null
+            },
+            joining_date: requirements.joining_date || null,
+            joining_port: requirements.joining_port || null,
+            current_port: requirements.current_port || null,
+            next_port: requirements.next_port || null,
+            trading_area: requirements.trading_area || null,
+            trading_area_label: requirements.trading_area_label || null,
+            war_risk_status: requirements.war_risk_status || null,
+            war_risk_label: requirements.war_risk_label || null,
+            war_risk_note: requirements.war_risk_note || null,
+            salary: requirements.salary && typeof requirements.salary === "object" ? { amount: Number(requirements.salary.amount) || null, currency: requirements.salary.currency || null } : null
+          } : {},
+          smart_job_id: item.listing_type === "crew_position" ? smartJobByListing.get(item.id) || null : null
+        };
+      })
     };
   });
 

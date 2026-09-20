@@ -1,6 +1,9 @@
 (function () {
   "use strict";
   const App = window.Allona = window.Allona || {};
+  const I18n = window.MariPartnerI18n;
+  const t = (source) => I18n?.t(source) || source;
+  const applyI18n = (root) => { I18n?.apply(root || document.body); };
   const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null, finance: null, selectedRoomId: "", routeSync: false, candidateFilters: {} };
   const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", "candidate-detail": "Aday Detayı", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", finance: "Finans ve Faturalandırma", company: "Şirket Hesabı", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi", "ready-pool": "Hazır Aday Havuzu", matches: "Akıllı Eşleşmeler", urgent: "Acil Personel ve Replacement", pending: "Bekleyen İşlemler", pipeline: "Hiring Pipeline", interviews: "Görüşmeler", offers: "Teklifler ve Kontratlar", "active-crew": "Aktif Mürettebat", relief: "Relief ve Rehire" };
   const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", "candidate-detail": "mpPersonnelDataTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", finance: "mpFinanceTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate", "ready-pool": "mpReadyPoolTemplate", matches: "mpPersonnelDataTemplate", pending: "mpPersonnelDataTemplate", pipeline: "mpPersonnelDataTemplate", interviews: "mpPersonnelDataTemplate", offers: "mpPersonnelDataTemplate", "active-crew": "mpPersonnelDataTemplate", relief: "mpPersonnelDataTemplate", urgent: "mpUrgentTemplate" };
@@ -16,6 +19,17 @@
     ["employment_confirmed", "Adayın şirkette çalıştığını doğruluyor musunuz?"], ["rank_confirmed", "Beyan edilen görev/rütbe doğru mu?"],
     ["service_dates_confirmed", "Hizmet tarihleri doğru mu?"], ["completed_contract", "Kontratını tamamladı mı?"], ["eligible_for_rehire", "Yeniden işe almayı değerlendirir misiniz?"]
   ];
+  const jobRankLabels = Object.freeze({ master: "Kaptan", chief_officer: "Baş Zabit", second_officer: "İkinci Zabit", third_officer: "Üçüncü Zabit", chief_engineer: "Baş Mühendis", second_engineer: "İkinci Mühendis", third_engineer: "Üçüncü Mühendis", oiler: "Yağcı / Motorman", able_seaman: "Usta Gemici", ordinary_seaman: "Gemici", cook: "Aşçı", electrician: "Elektrik Zabiti" });
+  const tradingAreaLabels = Object.freeze({ worldwide: "Dünya geneli", mediterranean: "Akdeniz", black_sea: "Karadeniz", north_sea_baltic: "Kuzey Denizi ve Baltık", north_atlantic: "Kuzey Atlantik", south_atlantic: "Güney Atlantik", red_sea_gulf_of_aden: "Kızıldeniz ve Aden Körfezi", arabian_gulf_indian_ocean: "Basra Körfezi ve Hint Okyanusu", west_africa_gulf_of_guinea: "Batı Afrika ve Gine Körfezi", east_africa: "Doğu Afrika", southeast_asia: "Güneydoğu Asya", east_asia: "Doğu Asya", australia_pacific: "Avustralya ve Pasifik", north_america: "Kuzey Amerika", central_south_america_caribbean: "Orta/Güney Amerika ve Karayipler", domestic_coastal: "Kabotaj / kıyı seferi", other: "Diğer rota" });
+  const coreCertificates = Object.freeze([
+    ["SP", "SP · Uluslararası Emniyet Yönetimi"], ["SH", "SH · Belirlenmiş Güvenlik Görevleri"], ["SI", "SI · Güvenlik Farkındalığı"],
+    ["SL", "SL · Can Kurtarma Araçları"], ["SO", "SO · Temel Emniyet Eğitimi"]
+  ]);
+  const rankCertificates = Object.freeze({ master: ["II/2", "STCW II/2 · Kaptan / Baş Zabit"], chief_officer: ["II/2", "STCW II/2 · Kaptan / Baş Zabit"], second_officer: ["II/1", "STCW II/1 · Vardiya Zabiti"], third_officer: ["II/1", "STCW II/1 · Vardiya Zabiti"], chief_engineer: ["III/2", "STCW III/2 · Baş / İkinci Mühendis"], second_engineer: ["III/2", "STCW III/2 · Baş / İkinci Mühendis"], third_engineer: ["III/1", "STCW III/1 · Makine Vardiya Zabiti"], oiler: ["III/4", "STCW III/4 · Makine Vardiya Tayfası"], able_seaman: ["II/5", "STCW II/5 · Usta Gemici"], ordinary_seaman: ["II/4", "STCW II/4 · Güverte Vardiya Tayfası"], cook: ["SHIP-COOK", "Gemi Aşçısı Yeterlilik Belgesi"], electrician: ["III/6", "STCW III/6 · Elektro-Teknik Zabit"] });
+  const optionalCertificates = Object.freeze([
+    ["IV/2", "STCW IV/2 · GMDSS"], ["SA", "SA · Kimyasal Tanker"], ["V/1-1", "STCW V/1-1 · Petrol/Kimyasal Tanker"],
+    ["V/1-2", "STCW V/1-2 · İleri Petrol/Kimyasal Tanker"], ["V/2", "STCW V/2 · Sıvılaştırılmış Gaz Tankeri"], ["ADVANCED-DP", "İleri DP Yeterliliği"]
+  ]);
   const $ = (selector, root) => (root || document).querySelector(selector);
   const $$ = (selector, root) => Array.from((root || document).querySelectorAll(selector));
 
@@ -51,14 +65,15 @@
     const target = $("[data-mp-alert]");
     target.hidden = !message;
     target.classList.toggle("is-success", tone === "success");
-    target.textContent = message || "";
+    target.textContent = message ? t(message) : "";
     if (message) target.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function dateTime(value) {
     if (!value) return "-";
     const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? "-" : parsed.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+    const locales = { tr: "tr-TR", az: "az-AZ", kk: "kk-KZ", uz: "uz-UZ", ky: "ky-KG", en: "en-GB", de: "de-DE", ru: "ru-RU", ar: "ar" };
+    return Number.isNaN(parsed.getTime()) ? "-" : parsed.toLocaleString(locales[localStorage.getItem("allona.language")] || "tr-TR", { dateStyle: "medium", timeStyle: "short" });
   }
 
   function toInputDate(value) {
@@ -74,7 +89,7 @@
   function option(value, label) {
     const item = document.createElement("option");
     item.value = value;
-    item.textContent = label;
+    item.textContent = t(label);
     return item;
   }
 
@@ -91,11 +106,13 @@
   }
 
   function statusLabel(value) {
-    return ({ draft: "Taslak", unverified: "Doğrulanmadı", partner_asserted: "Doğrulama bekliyor", pending_review: "Onay bekliyor", verified: "Doğrulandı", active: "Yayında", open: "Açık", paused: "Duraklatıldı", rejected: "Düzeltme gerekli", archived: "Arşivlendi", closed: "Kapandı", cancelled: "İptal", filled: "Pozisyon doldu", offer: "Teklif aşaması", hired: "İşe alındı" })[value] || value || "Bekliyor";
+    const label = ({ draft: "Taslak", unverified: "Doğrulanmadı", partner_asserted: "Doğrulama bekliyor", pending_review: "Onay bekliyor", verified: "Doğrulandı", active: "Yayında", open: "Açık", paused: "Duraklatıldı", rejected: "Düzeltme gerekli", archived: "Arşivlendi", closed: "Kapandı", cancelled: "İptal", filled: "Pozisyon doldu", offer: "Teklif aşaması", hired: "İşe alındı" })[value] || value || "Bekliyor";
+    return t(label);
   }
 
   function relationshipLabel(value) {
-    return ({ owner: "Gemi sahibi", manager: "Teknik yönetici", operator: "İşletmeci", crewing_agent: "Personel acentesi", employer: "İşveren", authorized_representative: "Yetkili temsilci" })[value] || value || "Şirket ilişkisi";
+    const label = ({ owner: "Gemi sahibi", manager: "Teknik yönetici", operator: "İşletmeci", crewing_agent: "Personel acentesi", employer: "İşveren", authorized_representative: "Yetkili temsilci" })[value] || value || "Şirket ilişkisi";
+    return t(label);
   }
 
   function candidateLabel(room) {
@@ -155,8 +172,90 @@
     $$('[data-mp-vessel-options]', root).forEach((select) => {
       const first = select.options[0] ? select.options[0].cloneNode(true) : null;
       select.replaceChildren(...(first ? [first] : []));
-      (state.data.vessels || []).forEach((vessel) => select.append(option(vessel.id, `${vessel.vessel_name} · IMO ${vessel.imo_number}`)));
+      const vessels = state.data.vessels || [];
+      vessels.forEach((vessel) => select.append(option(vessel.id, `${vessel.vessel_name} · IMO ${vessel.imo_number}`)));
+      if (!vessels.length && first) {
+        first.textContent = t("Önce Gemiler alanından bir gemi ekleyin");
+        first.disabled = true;
+      }
     });
+  }
+
+  function vesselForJob(form) {
+    const id = $('[name="vessel_profile_id"]', form)?.value;
+    return (state.data.vessels || []).find((vessel) => vessel.id === id) || null;
+  }
+
+  function certificateCheck(code, label, checked, locked) {
+    return '<label class="mp-check' + (locked ? ' is-locked' : '') + '"><input type="checkbox" name="certificates" value="' + escape(code) + '" ' + (checked ? 'checked' : '') + ' ' + (locked ? 'disabled' : '') + '> <span><strong>' + escape(code) + '</strong><small>' + escape(t(label)) + '</small></span></label>';
+  }
+
+  function renderJobCertificates(form) {
+    const target = $("[data-mp-job-certificates]", form);
+    if (!target) return;
+    const previous = new Set(selectedValues(form, "certificates"));
+    const rankCode = $('[name="rank_code"]', form)?.value;
+    const vesselType = String(vesselForJob(form)?.vessel_type || "").toLocaleLowerCase("tr-TR");
+    const rankCertificate = rankCertificates[rankCode];
+    const recommended = new Set(previous);
+    if (/chemical|kimyasal/.test(vesselType)) recommended.add("SA");
+    target.innerHTML = [
+      ...coreCertificates.map(([code, label]) => certificateCheck(code, label, true, true)),
+      ...(rankCertificate ? [certificateCheck(rankCertificate[0], rankCertificate[1], true, true)] : []),
+      ...optionalCertificates.filter(([code]) => code !== rankCertificate?.[0]).map(([code, label]) => certificateCheck(code, label, recommended.has(code), false))
+    ].join("");
+  }
+
+  function addDays(dateValue, days) {
+    const date = new Date(dateValue + "T00:00:00");
+    if (Number.isNaN(date.getTime())) return "";
+    date.setDate(date.getDate() + days);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  function refreshJobForm(form) {
+    if (!form) return;
+    const vessel = vesselForJob(form);
+    const metadata = vessel?.metadata || {};
+    const currentPort = $('[name="current_port"]', form);
+    const nextPort = $('[name="next_port"]', form);
+    if (currentPort && !currentPort.value) currentPort.value = metadata.current_port || metadata.last_port || "";
+    if (nextPort && !nextPort.value) nextPort.value = metadata.next_port || metadata.destination || "";
+    const preview = $("[data-mp-job-vessel-preview]", form);
+    if (preview) {
+      const facts = vessel ? [vessel.vessel_name, "IMO " + vessel.imo_number, vessel.vessel_type, vessel.flag_state, metadata.deadweight ? metadata.deadweight + " DWT" : null, metadata.gross_tonnage ? metadata.gross_tonnage + " GT" : null].filter(Boolean) : [];
+      preview.innerHTML = facts.length ? '<strong>' + escape(facts.slice(0, 2).join(" · ")) + '</strong><span>' + escape(facts.slice(2).join(" · ")) + '</span><small>Gemi adı ve IMO aday ilanında gösterilmez.</small>' : "Gemi seçildiğinde tür, bayrak ve tonaj bilgileri burada doğrulanır.";
+    }
+    const joining = $('[name="joining_date"]', form);
+    const expiry = $('[name="expires_at"]', form);
+    if (joining && expiry && joining.value) {
+      expiry.min = new Date().toISOString().slice(0, 10);
+      expiry.max = addDays(joining.value, 3);
+      if (!expiry.value || expiry.value > expiry.max || expiry.value < expiry.min) expiry.value = expiry.max;
+    }
+    const language = $('[name="language"]', form);
+    const level = $('[name="language_level"]', form);
+    if (level) level.disabled = !language?.value;
+    const risk = $('[name="war_risk_status"]', form)?.value;
+    const riskWrap = $("[data-mp-war-note]", form);
+    const riskInput = $('[name="war_risk_note"]', form);
+    if (riskWrap && riskInput) {
+      const needsNote = Boolean(risk && risk !== "no_known_listed_area");
+      riskWrap.hidden = !needsNote;
+      riskInput.required = needsNote;
+    }
+    const summary = $("[data-mp-job-summary]", form);
+    if (summary) {
+      const rank = jobRankLabels[$('[name="rank_code"]', form)?.value] || "Aranan rütbe";
+      const months = Number($('[name="minimum_sea_service_months"]', form)?.value || 0);
+      const salary = $('[name="salary_amount"]', form)?.value;
+      const currency = $('[name="salary_currency"]', form)?.value;
+      const area = tradingAreaLabels[$('[name="trading_area"]', form)?.value] || "çalışma bölgesi";
+      const vesselType = vessel?.vessel_type || "gemi türü";
+      summary.textContent = rank + " · " + (months ? "en az " + months + " ay deneyim" : "başlangıç seviyesi") + " · " + (salary && currency ? salary + " " + currency : "ücret bekleniyor") + " · " + vesselType + " · " + area;
+    }
+    renderJobCertificates(form);
+    applyI18n(form);
   }
 
   function candidateFacts(room) {
@@ -501,7 +600,7 @@
     setActiveNavigation("center");
     if (trigger?.hasAttribute?.("data-mp-center")) state.lastFocus = trigger;
     else if (!state.lastFocus) state.lastFocus = document.activeElement;
-    $("[data-mp-drawer-title]").textContent = "İşlemler";
+    $("[data-mp-drawer-title]").textContent = t("İşlemler");
     $("[data-mp-back]").hidden = true;
     body.replaceChildren(template.content.cloneNode(true));
     renderCounters(body);
@@ -511,6 +610,7 @@
     else setRoute("personnel", "operations", true);
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
+    applyI18n(body);
     $("[data-mp-close]", wrap).focus();
   }
 
@@ -519,7 +619,7 @@
     const tab = button.dataset.mpCenterTab;
     $$('[data-mp-center-tab]', root).forEach((item) => { item.setAttribute("aria-selected", String(item === button)); item.tabIndex = item === button ? 0 : -1; });
     $$('[data-mp-center-pane]', root).forEach((pane) => { pane.hidden = pane.dataset.mpCenterPane !== tab; });
-    $("[data-mp-drawer-title]").textContent = ({ operations: "İşlemler", trust: "Güven", management: "Yönetim" })[tab] || "Personel Merkezi";
+    $("[data-mp-drawer-title]").textContent = t(({ operations: "İşlemler", trust: "Güven", management: "Yönetim" })[tab] || "Personel Merkezi");
     setRoute("personnel", tab, replace);
   }
 
@@ -540,7 +640,7 @@
     const wrap = $("[data-mp-drawer-wrap]");
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
-    $("[data-mp-drawer-title]").textContent = titles[panel];
+    $("[data-mp-drawer-title]").textContent = t(titles[panel]);
     $("[data-mp-back]").hidden = standalonePanels.has(panel);
     body.replaceChildren(template.content.cloneNode(true));
     fillJobs(body);
@@ -550,20 +650,20 @@
     fillVessels(body);
     if (panel === "refresh" || panel === "evidence" || panel === "review") $$('input[name="expires_at"]', body).forEach((input) => { input.value = toInputDate(); });
     if (panel === "job-create") {
-      const expiry = $('input[name="expires_at"]', body);
-      if (expiry) expiry.value = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
       const joining = $('input[name="joining_date"]', body);
       if (joining) {
         const minimum = new Date().toISOString().slice(0, 10);
         joining.min = minimum;
         joining.value = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
       }
+      refreshJobForm($("[data-mp-job-form]", body));
     }
     if (panel === "evidence") addRequirement(body);
     renderWorkspacePanel(body, panel);
     renderHistory(body, panel);
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
+    applyI18n(body);
     $("[data-mp-close]", wrap).focus();
     setRoute(panel, null, false);
   }
@@ -656,6 +756,7 @@
     renderMatches();
     renderCounters(document);
     renderOperationFeed();
+    applyI18n(document.body);
   }
 
   async function load(partnerId) {
@@ -736,20 +837,22 @@
     const payload = {
       partner_id: state.partnerId,
       client_listing_id: clientId(),
-      title: data.get("title"),
-      summary: data.get("summary"),
-      vessel_type: data.get("vessel_type"),
+      vessel_profile_id: data.get("vessel_profile_id"),
       joining_date: data.get("joining_date"),
-      location_label: data.get("location_label"),
-      detail_label: data.get("detail_label"),
+      joining_port: data.get("joining_port"),
+      current_port: data.get("current_port"),
+      next_port: data.get("next_port"),
+      trading_area: data.get("trading_area"),
+      war_risk_status: data.get("war_risk_status"),
+      war_risk_note: data.get("war_risk_note") || "",
+      contract_label: data.get("contract_label"),
       salary_amount: Number(data.get("salary_amount")),
       salary_currency: data.get("salary_currency"),
       preferred_conditions: data.get("preferred_conditions") || "",
       rank_code: data.get("rank_code"),
       required_certificate_codes: certificates,
-      minimum_sea_service_days: Number(data.get("minimum_sea_service_days") || 0),
+      minimum_sea_service_months: Number(data.get("minimum_sea_service_months") || 0),
       required_languages: language ? [{ language, level: data.get("language_level") || "B1" }] : [],
-      medical_required: data.get("medical_required") === "on",
       available_now_required: data.get("available_now_required") === "on",
       expires_at: expiry.toISOString()
     };
@@ -1136,6 +1239,11 @@
   });
 
   document.addEventListener("change", (event) => {
+    const jobForm = event.target.closest("[data-mp-job-form]");
+    if (jobForm && event.target.matches('[name="vessel_profile_id"], [name="rank_code"], [name="joining_date"], [name="salary_currency"], [name="trading_area"], [name="war_risk_status"], [name="language"]')) {
+      refreshJobForm(jobForm);
+      return;
+    }
     if (event.target.matches("[data-mp-saved-search]")) {
       const selected = (state.data.saved_searches || []).find((item) => item.id === event.target.value);
       if (selected) {
@@ -1154,6 +1262,11 @@
     $$('.mp-stars input[type="radio"]', row).forEach((input) => { input.disabled = event.target.checked; input.required = !event.target.checked; if (event.target.checked) input.checked = false; });
   });
   document.addEventListener("input", (event) => {
+    const jobForm = event.target.closest("[data-mp-job-form]");
+    if (jobForm && event.target.matches('[name="minimum_sea_service_months"], [name="salary_amount"]')) {
+      refreshJobForm(jobForm);
+      return;
+    }
     if (!event.target.matches("[data-mp-reference-comment]")) return;
     const counter = $("[data-mp-reference-count]", event.target.closest("form"));
     if (counter) counter.textContent = String(event.target.value.length);
@@ -1188,5 +1301,9 @@
     selectCenterTab(next); next.focus();
   });
   window.addEventListener("popstate", () => { if (state.data) applyRouteState(); });
+  document.addEventListener("allona:language-changed", () => {
+    if (state.data) render();
+    applyI18n(document.body);
+  });
   window.addEventListener("load", initialize, { once: true });
 })();

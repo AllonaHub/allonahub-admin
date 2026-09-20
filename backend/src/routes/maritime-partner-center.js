@@ -2,12 +2,19 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 import { isValidImoNumber, normalizeImoNumber } from "../lib/maritime-vessel-provider.js";
+import { MARSOH_SUPPORTED_LANGUAGES, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
 import {
   MARIPARTNER_REFERENCE_CATEGORIES,
   MARIPARTNER_REFERENCE_QUESTIONS,
   MARIPARTNER_REFRESH_QUESTIONS,
   MARIPARTNER_SLA_STAGES,
+  MARIPARTNER_JOB_RANKS,
+  MARIPARTNER_JOB_CERTIFICATE_CODES,
+  MARIPARTNER_RANK_CERTIFICATE_CODES,
+  MARIPARTNER_TRADING_AREAS,
+  MARIPARTNER_WAR_RISK_STATUSES,
   approvedReferenceSummary,
+  buildMariPartnerJobPresentation,
   canReadMariPartnerFinance,
   constantTimeHashEqual,
   createReviewerCredentials,
@@ -28,6 +35,10 @@ import {
 
 const uuid = z.string().uuid();
 const optionalUuid = uuid.nullable().optional();
+const partnerUiTranslationSchema = z.object({
+  target_language: z.enum(MARSOH_SUPPORTED_LANGUAGES),
+  texts: z.array(z.string().trim().min(1).max(360)).min(1).max(40)
+}).strict();
 const refreshFiltersSchema = z.object({
   rank: z.string().trim().max(120).optional().default(""),
   vessel_type: z.string().trim().max(120).optional().default(""),
@@ -173,27 +184,34 @@ const partnerLogoIntentSchema = z.object({ partner_id: uuid, mime_type: z.litera
 const partnerJobSchema = z.object({
   partner_id: uuid,
   client_listing_id: uuid,
-  title: z.string().trim().min(2).max(140),
-  summary: z.string().trim().min(10).max(360),
-  vessel_type: z.string().trim().min(2).max(120),
+  vessel_profile_id: uuid,
   joining_date: z.string().date(),
-  location_label: z.string().trim().min(2).max(120),
-  detail_label: z.string().trim().min(2).max(120),
+  joining_port: z.string().trim().min(2).max(120),
+  current_port: z.string().trim().min(2).max(120),
+  next_port: z.string().trim().min(2).max(120),
+  trading_area: z.enum(Object.keys(MARIPARTNER_TRADING_AREAS)),
+  war_risk_status: z.enum(Object.keys(MARIPARTNER_WAR_RISK_STATUSES)),
+  war_risk_note: z.string().trim().max(240).optional().default(""),
+  contract_label: z.string().trim().min(2).max(120),
   salary_amount: z.number().positive().max(1000000),
   salary_currency: z.enum(["USD", "EUR", "GBP", "TRY", "AZN"]),
   preferred_conditions: z.string().trim().max(500).optional().default(""),
-  rank_code: z.string().trim().min(1).max(80),
-  required_certificate_codes: z.array(z.string().trim().min(1).max(80)).min(1).max(24),
-  minimum_sea_service_days: z.number().int().min(0).max(20000).default(0),
+  rank_code: z.enum(Object.keys(MARIPARTNER_JOB_RANKS)),
+  required_certificate_codes: z.array(z.enum(MARIPARTNER_JOB_CERTIFICATE_CODES)).min(1).max(24),
+  minimum_sea_service_months: z.number().int().min(0).max(600).default(0),
   required_languages: z.array(z.object({ language: z.string().trim().min(2).max(60), level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2", "fluent", "native"]) }).strict()).max(12).default([]),
-  medical_required: z.boolean().default(true),
   available_now_required: z.boolean().default(false),
   expires_at: z.string().datetime()
 }).strict().superRefine((value, ctx) => {
   const expiry = new Date(value.expires_at).getTime();
   const joining = new Date(`${value.joining_date}T00:00:00Z`).getTime();
-  if (!Number.isFinite(expiry) || expiry < Date.now() + 86400000 || expiry > Date.now() + 180 * 86400000) ctx.addIssue({ code: "custom", path: ["expires_at"], message: "İlan bitiş tarihi yarın ile 180 gün sonrası arasında olmalıdır." });
-  if (!Number.isFinite(joining) || joining < Date.now() - 86400000 || joining > expiry) ctx.addIssue({ code: "custom", path: ["joining_date"], message: "Katılım tarihi bugün ile ilan bitiş tarihi arasında olmalıdır." });
+  if (!Number.isFinite(joining) || joining < Date.now() - 86400000 || joining > Date.now() + 365 * 86400000) ctx.addIssue({ code: "custom", path: ["joining_date"], message: "Katılım tarihi bugün ile bir yıl sonrası arasında olmalıdır." });
+  if (!Number.isFinite(expiry) || expiry < Date.now() || expiry > joining + 3 * 86400000 + 86399999) ctx.addIssue({ code: "custom", path: ["expires_at"], message: "İlan bitiş tarihi katılım tarihinden en fazla üç gün sonra olabilir." });
+  if (value.war_risk_status !== "no_known_listed_area" && value.war_risk_note.length < 6) ctx.addIssue({ code: "custom", path: ["war_risk_note"], message: "Riskli veya kesinleşmemiş rota için kısa bir açıklama girin." });
+  const requiredCodes = ["SP", "SH", "SI", "SL", "SO", MARIPARTNER_RANK_CERTIFICATE_CODES[value.rank_code]];
+  requiredCodes.filter(Boolean).forEach((code) => {
+    if (!value.required_certificate_codes.includes(code)) ctx.addIssue({ code: "custom", path: ["required_certificate_codes"], message: code + " rütbe ve temel emniyet eşleştirmesi için zorunludur." });
+  });
 });
 const partnerVesselSchema = z.object({
   partner_id: uuid,
@@ -596,6 +614,44 @@ async function logAction(request, ctx, action, resourceType, resourceId, metadat
   await auditEvent({ request, actorId: ctx.user.id, actorRole: ctx.profile.role, action, resourceType, resourceId, metadata, severity, evidenceTags: ["maripartner", "maritime_hiring"] });
 }
 
+const partnerUiTranslationCache = new Map();
+
+function partnerUiTranslationOptions() {
+  return {
+    provider: config.marsoh.translationProvider,
+    localUrl: config.marsoh.translationLocalUrl,
+    localSecret: config.marsoh.translationLocalSecret,
+    localTimeoutMs: config.marsoh.translationLocalTimeoutMs,
+    apiKey: config.marsoh.translationApiKey,
+    baseUrl: config.marsoh.translationBaseUrl,
+    model: config.marsoh.translationModel,
+    timeoutMs: config.marsoh.providerTimeoutMs,
+    sourceLanguage: "tr"
+  };
+}
+
+async function translatePartnerUiTexts(texts, targetLanguage) {
+  const unique = [...new Set(texts.map((text) => text.replace(/\s+/g, " ").trim()))];
+  if (targetLanguage === "tr") return Object.fromEntries(unique.map((text) => [text, text]));
+  const translated = {};
+  const options = partnerUiTranslationOptions();
+  for (let index = 0; index < unique.length; index += 4) {
+    const batch = unique.slice(index, index + 4);
+    const results = await Promise.all(batch.map(async (source) => {
+      const key = `${targetLanguage}:${sha256(source)}`;
+      if (partnerUiTranslationCache.has(key)) return [source, partnerUiTranslationCache.get(key)];
+      const result = await translateMarsohTextDetailed(source, targetLanguage, options);
+      const value = String(result.translated_text || "").trim();
+      if (!value) throw httpError("Arayüz çevirisi şu anda oluşturulamadı.", 503, "MARIPARTNER_UI_TRANSLATION_UNAVAILABLE");
+      partnerUiTranslationCache.set(key, value);
+      if (partnerUiTranslationCache.size > 12000) partnerUiTranslationCache.delete(partnerUiTranslationCache.keys().next().value);
+      return [source, value];
+    }));
+    results.forEach(([source, value]) => { translated[source] = value; });
+  }
+  return translated;
+}
+
 export function registerMaritimePartnerCenterRoutes(app) {
   app.get("/v1/maritime/partner-center", async (request) => {
     const partnerId = request.query?.partner_id ? uuid.parse(request.query.partner_id) : null;
@@ -611,6 +667,17 @@ export function registerMaritimePartnerCenterRoutes(app) {
     ]);
     const notificationPreferences = assertDb(preferenceResult, "Bildirim tercihleri okunamadı.") || { in_app_mode: "all", email_digest: "off", category_preferences: {} };
     return { ...base, restricted: false, ...dashboard, notification_preferences: notificationPreferences };
+  });
+
+  app.post("/v1/maritime/partner-center/ui-translations", { config: { rateLimit: { max: 24, timeWindow: "1 minute" } } }, async (request) => {
+    const body = partnerUiTranslationSchema.parse(request.body || {});
+    await requirePartnerMembership(request, "ui_translation.read");
+    try {
+      return { ok: true, target_language: body.target_language, translations: await translatePartnerUiTexts(body.texts, body.target_language) };
+    } catch (error) {
+      if (error?.statusCode) throw error;
+      throw httpError("Arayüz çevirisi şu anda oluşturulamadı. Sayfayı kullanmaya devam edebilirsiniz.", 503, "MARIPARTNER_UI_TRANSLATION_UNAVAILABLE");
+    }
   });
 
   app.get("/v1/maritime/partner-center/finance", async (request) => {
@@ -764,17 +831,35 @@ export function registerMaritimePartnerCenterRoutes(app) {
     const body = partnerJobSchema.parse(request.body || {});
     const access = await requirePartner(request, "job.create", body.partner_id, { manager: true });
     await ensureHiringAuthority(access);
+    const vessel = assertDb(await supabaseAdmin.from("maritime_vessel_profiles")
+      .select("id,vessel_name,vessel_type,flag_state,status,verification_status,metadata")
+      .eq("id", body.vessel_profile_id)
+      .eq("partner_id", body.partner_id)
+      .neq("status", "archived")
+      .maybeSingle(), "İlanda kullanılacak gemi doğrulanamadı.");
+    if (!vessel) throw httpError("Şirketinize kayıtlı geçerli bir gemi seçin.", 403, "MARIPARTNER_JOB_VESSEL_DENIED");
+    const presentation = buildMariPartnerJobPresentation(body, vessel);
     const existing = assertDb(await supabaseAdmin.from("maritime_public_listings").select("id,status,title,created_at").eq("partner_user_id", access.ctx.user.id).eq("client_listing_id", body.client_listing_id).maybeSingle(), "İlan tekrar kontrolü yapılamadı.");
     const now = new Date().toISOString();
     const matchingRequirements = {
       rank_code: body.rank_code,
       required_certificate_codes: body.required_certificate_codes,
-      minimum_sea_service_days: body.minimum_sea_service_days,
+      minimum_sea_service_months: body.minimum_sea_service_months,
+      minimum_sea_service_days: presentation.minimum_sea_service_days,
       required_languages: body.required_languages,
-      medical_required: body.medical_required,
+      medical_required: true,
       available_now_required: body.available_now_required,
-      vessel_type: body.vessel_type,
+      vessel_type: presentation.public_vessel.vessel_type,
+      vessel_public_profile: presentation.public_vessel,
       joining_date: body.joining_date,
+      joining_port: body.joining_port,
+      current_port: body.current_port,
+      next_port: body.next_port,
+      trading_area: body.trading_area,
+      trading_area_label: presentation.route.trading_area_label,
+      war_risk_status: body.war_risk_status,
+      war_risk_label: presentation.route.war_risk_label,
+      war_risk_note: presentation.route.war_risk_note,
       salary: { amount: body.salary_amount, currency: body.salary_currency }
     };
     const listing = existing || assertDb(await supabaseAdmin.from("maritime_public_listings").insert({
@@ -783,10 +868,10 @@ export function registerMaritimePartnerCenterRoutes(app) {
         module_key: "maritime",
         listing_type: "crew_position",
         status: "pending_review",
-        title: body.title,
-        summary: body.summary,
-        location_label: body.location_label,
-        detail_label: body.detail_label,
+        title: presentation.title,
+        summary: presentation.summary,
+        location_label: presentation.location_label,
+        detail_label: presentation.detail_label,
         matching_requirements: matchingRequirements,
         sort_order: 100,
         published_at: now,
@@ -798,24 +883,25 @@ export function registerMaritimePartnerCenterRoutes(app) {
     if (existingJob) return reply.code(200).send({ ok: true, duplicate: true, listing, job: existingJob });
     const jobResult = await supabaseAdmin.from("maritime_jobs").insert({
       partner_id: body.partner_id,
+      vessel_profile_id: body.vessel_profile_id,
       public_listing_id: listing.id,
       created_by: access.ctx.user.id,
       status: "pending_review",
       rank_code: body.rank_code,
-      job_title: body.title,
+      job_title: presentation.title,
       contract_start: body.joining_date,
-      hard_gates: { required_certificate_codes: body.required_certificate_codes, minimum_sea_service_days: body.minimum_sea_service_days, medical_required: body.medical_required, available_now_required: body.available_now_required, requirements_complete: true },
-      structured_requirements: { required_languages: body.required_languages, location_label: body.location_label, contract_label: body.detail_label, vessel_type: body.vessel_type, joining_date: body.joining_date, salary: { amount: body.salary_amount, currency: body.salary_currency }, preferred_conditions: body.preferred_conditions },
-      source_free_text: body.summary,
+      hard_gates: { required_certificate_codes: body.required_certificate_codes, minimum_sea_service_days: presentation.minimum_sea_service_days, medical_required: true, available_now_required: body.available_now_required, requirements_complete: true },
+      structured_requirements: { required_languages: body.required_languages, location_label: presentation.location_label, contract_label: body.contract_label, vessel_type: presentation.public_vessel.vessel_type, vessel_public_profile: presentation.public_vessel, joining_date: body.joining_date, joining_port: body.joining_port, current_port: body.current_port, next_port: body.next_port, trading_area: body.trading_area, trading_area_label: presentation.route.trading_area_label, war_risk_status: body.war_risk_status, war_risk_label: presentation.route.war_risk_label, war_risk_note: presentation.route.war_risk_note, salary: { amount: body.salary_amount, currency: body.salary_currency }, minimum_sea_service_months: body.minimum_sea_service_months, preferred_conditions: body.preferred_conditions },
+      source_free_text: presentation.summary,
       submitted_at: now,
-      metadata: { source: "maripartner", public_listing_id: listing.id, expires_at: body.expires_at, company_contact_visible: false }
+      metadata: { source: "maripartner", public_listing_id: listing.id, expires_at: body.expires_at, company_contact_visible: false, vessel_identity_visible: false, current_position_source: presentation.route.current_position_source }
     }).select("id,job_reference,job_title,rank_code,status,created_at").single();
     if (jobResult.error) {
       if (!existing) await supabaseAdmin.from("maritime_public_listings").delete().eq("id", listing.id).eq("partner_user_id", access.ctx.user.id);
       throw httpError("Akıllı eşleştirme ilanı oluşturulamadı.", 500, "MARIPARTNER_JOB_CREATE_FAILED");
     }
     const job = jobResult.data;
-    await logAction(request, access.ctx, "maripartner.job_submitted", "maritime_job", job.id, { partner_id: body.partner_id, public_listing_id: listing.id, rank_code: body.rank_code });
+    await logAction(request, access.ctx, "maripartner.job_submitted", "maritime_job", job.id, { partner_id: body.partner_id, public_listing_id: listing.id, vessel_profile_id: body.vessel_profile_id, rank_code: body.rank_code });
     return reply.code(existing ? 200 : 201).send({ ok: true, duplicate: Boolean(existing), listing, job });
   });
 
