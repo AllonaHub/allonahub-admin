@@ -42,6 +42,10 @@
   function accountHome(accountType, context) {
     const onPartnerHost = window.location.hostname === "partner.allonahub.com";
     if (accountType === "partner") {
+      if (context?.partnerBusiness?.partner_type === "maritime") {
+        if (onPartnerHost) return "/maripartner";
+        return App.core.url("/pages/partner/maripartner.html");
+      }
       if (onPartnerHost) return "/panel";
       return App.core.url("/pages/partner/partner-panel.html");
     }
@@ -74,6 +78,17 @@
         .maybeSingle();
       if (error) throw error;
       partnerBusiness = data || null;
+      if (!partnerBusiness) {
+        const { data: staff } = await App.db.client()
+          .from("partner_staff")
+          .select("partner_businesses!inner(id, owner_id, partner_code, display_name, partner_type, status, verification_status)")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        partnerBusiness = staff?.partner_businesses || null;
+      }
     }
 
     const type = ["customer", "partner", "admin", "super_admin"].includes(role) ? role : "unknown";

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>MariPartner | AllonaHub Denizcilik</title>
+  <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
+  <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner1">
+</head>
+<body class="mp-body">
+  <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
+  <header class="mp-header">
+    <a class="mp-brand" href="../ecosystem/allonadenizcilik.html" aria-label="AllonaHub Denizcilik ana sayfası">
+      <span class="mp-brand__mark" aria-hidden="true">A</span>
+      <span><strong>AllonaHub</strong><small>MariPartner</small></span>
+    </a>
+    <div class="mp-header__actions">
+      <a href="../ecosystem/allonadenizcilik.html">Denizcilik</a>
+      <button type="button" data-mp-refresh aria-label="Panel verilerini yenile">Yenile</button>
+      <button class="mp-account" type="button" data-mp-account aria-haspopup="menu">Şirket hesabı</button>
+    </div>
+  </header>
+
+  <main id="mainContent" class="mp-main">
+    <section class="mp-hero" aria-labelledby="mpTitle">
+      <div>
+        <p class="mp-eyebrow">Doğrulanmış denizcilik şirketi çalışma alanı</p>
+        <h1 id="mpTitle">MariPartner</h1>
+        <p>Aday havuzunu güncelleyin, kanıtları minimum gerekli kapsamda yönetin ve işe alım dosyalarını güvenli biçimde ilerletin.</p>
+      </div>
+      <label class="mp-company-switch" for="mpCompany">
+        <span>Aktif şirket</span>
+        <select id="mpCompany" data-mp-company aria-label="Aktif denizcilik şirketini seç"></select>
+      </label>
+    </section>
+
+    <div class="mp-alert" data-mp-alert role="status" aria-live="polite" hidden></div>
+
+    <section class="mp-stats" aria-label="Canlı işe alım özeti">
+      <article><span>Açık ilan</span><strong data-mp-count="open_jobs">-</strong></article>
+      <article><span>Yetkili aday</span><strong data-mp-count="authorized_candidates">-</strong></article>
+      <article><span>Uygun eşleşme</span><strong data-mp-count="eligible_matches">-</strong></article>
+      <article><span>Geciken adım</span><strong data-mp-count="overdue_steps">-</strong></article>
+      <article><span>Bekleyen kanıt</span><strong data-mp-count="pending_evidence">-</strong></article>
+    </section>
+
+    <section class="mp-personnel" aria-labelledby="personnelTitle">
+      <div class="mp-section-head">
+        <div>
+          <p>Şirket içi işe alım operasyonu</p>
+          <h2 id="personnelTitle">Personel Merkezi</h2>
+        </div>
+        <span class="mp-security-badge">Korumalı şirket alanı</span>
+      </div>
+      <button class="mp-center-entry" type="button" data-mp-center aria-haspopup="dialog">
+        <span class="mp-center-entry__icon" aria-hidden="true">PM</span>
+        <span><strong>Personel Merkezini Aç</strong><small>Beş güvenli işe alım işlemini tek merkezden yönetin</small></span>
+        <span class="mp-counter" data-mp-main-counter hidden></span>
+        <span class="mp-center-entry__arrow" aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <section class="mp-workspace" aria-labelledby="matchesTitle">
+      <div class="mp-section-head">
+        <div><p>Mevcut ilan ve aday ilişkileri</p><h2 id="matchesTitle">Güvenli eşleşmeler</h2></div>
+        <select data-mp-job-filter aria-label="İlana göre eşleşmeleri filtrele"><option value="">Tüm ilanlar</option></select>
+      </div>
+      <div class="mp-match-list" data-mp-match-list aria-live="polite">
+        <div class="mp-skeleton"></div><div class="mp-skeleton"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="mp-drawer-wrap" data-mp-drawer-wrap hidden>
+    <button class="mp-backdrop" type="button" data-mp-close aria-label="Personel Merkezini kapat"></button>
+    <aside class="mp-drawer" data-mp-drawer role="dialog" aria-modal="true" aria-labelledby="mpDrawerTitle">
+      <header>
+        <button class="mp-back" type="button" data-mp-back aria-label="Personel Merkezi işlemlerine dön" hidden>←</button>
+        <div><p>Personel Merkezi</p><h2 id="mpDrawerTitle" data-mp-drawer-title>İşlem</h2></div>
+        <button class="mp-close" type="button" data-mp-close aria-label="Kapat">×</button>
+      </header>
+      <div class="mp-drawer__body" data-mp-drawer-body></div>
+    </aside>
+  </div>
+
+  <template id="mpCenterTemplate">
+    <div class="mp-center-menu">
+      <p class="mp-note">Sayaçlar yalnız şirketinizin gerçek ve işlem bekleyen kayıtlarından hesaplanır.</p>
+      <div class="mp-action-grid">
+        <button type="button" data-mp-panel="refresh"><span class="mp-action-icon" aria-hidden="true">↻</span><strong>Havuzu Güncelle</strong><small>Aday uygunluk bilgisini yenile</small><span class="mp-counter" data-mp-action-count="pending_refresh" hidden></span></button>
+        <button type="button" data-mp-panel="evidence"><span class="mp-action-icon" aria-hidden="true">✓</span><strong>Kanıt Kontrolü</strong><small>Minimum gerekli belge akışı</small><span class="mp-counter" data-mp-action-count="pending_evidence" hidden></span></button>
+        <button type="button" data-mp-panel="sla"><span class="mp-action-icon" aria-hidden="true">◷</span><strong>Süreç Süreleri</strong><small>SLA ve gecikme takibi</small><span class="mp-counter" data-mp-action-count="overdue_steps" hidden></span></button>
+        <button type="button" data-mp-panel="handover"><span class="mp-action-icon" aria-hidden="true">⇄</span><strong>Dosya Devri</strong><small>Sorumlu ve yedek aktarımı</small></button>
+        <button type="button" data-mp-panel="review"><span class="mp-action-icon" aria-hidden="true">⌁</span><strong>Güvenli İnceleme</strong><small>Süreli ve alan sınırlı erişim</small><span class="mp-counter" data-mp-action-count="active_reviewer_passes" hidden></span></button>
+      </div>
+    </div>
+  </template>
+
+  <template id="mpRefreshTemplate">
+    <form class="mp-form" data-mp-refresh-form>
+      <p class="mp-note">Yalnız şirketinizin kabul edilmiş özel aday odalarındaki denizcilere uygulama içi güncelleme görevi gönderilir.</p>
+      <label><span>Başlık</span><input name="title" required maxlength="140" value="Bilgilerinizi güncelleyin"></label>
+      <label><span>İlan</span><select name="job_id" data-mp-form-jobs><option value="">Genel aday havuzu</option></select></label>
+      <fieldset><legend>Havuz filtreleri</legend><div class="mp-filter-grid">
+        <label><span>Rütbe</span><input name="filter_rank" maxlength="120"></label>
+        <label><span>Gemi tipi</span><input name="filter_vessel_type" maxlength="120"></label>
+        <label><span>En erken katılım</span><input type="date" name="filter_earliest_join_date"></label>
+        <label><span>Müsaitlik</span><select name="filter_availability_status"><option value="">Tümü</option><option value="fresh">Güncel</option><option value="stale">Güncelleme gerekli</option><option value="expired">Süresi dolmuş</option><option value="unknown">Bilinmiyor</option></select></label>
+        <label><span>Belge hazırlığı</span><select name="filter_document_status"><option value="">Tümü</option><option value="verified_ready">Doğrulanmış hazır</option><option value="ready_review">İncelemeye hazır</option><option value="draft">Taslak</option><option value="unverified">Doğrulanmamış</option><option value="blocked">Engelli</option></select></label>
+        <label><span>Şirket ilişkisi</span><input value="Yalnız mevcut izinli ilişki" disabled></label>
+      </div></fieldset>
+      <fieldset><legend>Adaylar</legend><div class="mp-check-list" data-mp-form-candidates></div></fieldset>
+      <fieldset><legend>Güvenli sorular</legend>
+        <label class="mp-check"><input type="checkbox" name="questions" value="availability" checked> Uygunluk durumu</label>
+        <label class="mp-check"><input type="checkbox" name="questions" value="available_from" checked> En erken katılım tarihi</label>
+        <label class="mp-check"><input type="checkbox" name="questions" value="preferred_vessel_type"> Tercih edilen gemi tipi</label>
+        <label class="mp-check"><input type="checkbox" name="questions" value="preferred_contract_length"> Tercih edilen kontrat süresi</label>
+        <label class="mp-check"><input type="checkbox" name="questions" value="interest_status"> İlgi durumu</label>
+        <label class="mp-check"><input type="checkbox" name="questions" value="critical_document_change"> Kritik belge değişikliği</label>
+      </fieldset>
+      <label><span>Son yanıt tarihi</span><input type="datetime-local" name="expires_at" required></label>
+      <button class="mp-primary" type="submit">Güncelleme Görevi Oluştur</button>
+    </form>
+    <div class="mp-history" data-mp-refresh-history></div>
+  </template>
+
+  <template id="mpEvidenceTemplate">
+    <form class="mp-form" data-mp-evidence-template-form>
+      <h3>Kanıt şablonu</h3>
+      <label><span>Şablon adı</span><input name="name" required maxlength="140" placeholder="Örn. Kısa liste kontrolü"></label>
+      <label><span>İşe alım aşaması</span><select name="hiring_stage"><option value="search">Arama</option><option value="shortlist">Kısa liste</option><option value="conditional_hire">Koşullu işe alım</option><option value="onboarding">İşe giriş</option></select></label>
+      <div class="mp-requirements" data-mp-requirements></div>
+      <button type="button" class="mp-secondary" data-mp-add-requirement>Gereksinim ekle</button>
+      <button class="mp-primary" type="submit">Şablonu Kaydet</button>
+    </form>
+    <form class="mp-form" data-mp-evidence-request-form>
+      <h3>Adaydan kanıt iste</h3>
+      <label><span>Şablon</span><select name="template_id" data-mp-template-options required></select></label>
+      <label><span>Aday</span><select name="candidate_room_id" data-mp-candidate-options required></select></label>
+      <label><span>Amaç</span><textarea name="purpose" required maxlength="500" placeholder="Bu kanıtın işe alım aşamasındaki amacı"></textarea></label>
+      <label><span>Erişim bitişi</span><input type="datetime-local" name="expires_at" required></label>
+      <button class="mp-primary" type="submit">Kanıt Talebi Oluştur</button>
+    </form>
+    <div class="mp-history" data-mp-evidence-history></div>
+  </template>
+
+  <template id="mpSlaTemplate">
+    <form class="mp-form" data-mp-sla-form>
+      <label><span>Aşama</span><select name="stage"><option value="shortlist_review">Kısa liste inceleme</option><option value="technical_review">Teknik inceleme</option><option value="manager_decision">Yönetici kararı</option><option value="offer_preparation">Teklif hazırlama</option><option value="candidate_response">Aday yanıtı</option><option value="joining_preparation">Katılım hazırlığı</option></select></label>
+      <label><span>Hedef süre (dakika)</span><input type="number" name="target_minutes" min="15" max="525600" value="1440" required></label>
+      <label><span>Birincil sorumlu rolü</span><input name="primary_role" maxlength="80" value="recruiter" required></label>
+      <label><span>Birincil sorumlu</span><select name="primary_user_id" data-mp-team-options><option value="">Role göre ata</option></select></label>
+      <label><span>Yedek sorumlu</span><select name="backup_user_id" data-mp-team-options><option value="">Seçilmedi</option></select></label>
+      <label><span>Ön uyarı (dakika)</span><input type="number" name="notify_before_minutes" min="0" max="10080" value="60"></label>
+      <button class="mp-primary" type="submit">Süre Kuralını Kaydet</button>
+    </form>
+    <form class="mp-form" data-mp-sla-start-form>
+      <h3>Süre takibini başlat</h3>
+      <label><span>Süre kuralı</span><select name="policy_id" data-mp-policy-options required></select></label>
+      <label><span>Açık işe alım dosyası</span><select name="hiring_room_id" data-mp-hiring-options required></select></label>
+      <label><span>Aday kapsamı</span><select name="candidate_room_id" data-mp-candidate-options><option value="">Dosyanın tamamı</option></select></label>
+      <button class="mp-primary" type="submit">Süre Takibini Başlat</button>
+    </form>
+    <div class="mp-history" data-mp-sla-history></div>
+  </template>
+
+  <template id="mpHandoverTemplate">
+    <form class="mp-form" data-mp-handover-form>
+      <label><span>Açık işe alım dosyası</span><select name="hiring_room_id" data-mp-hiring-options required></select></label>
+      <label><span>Yeni sorumlu</span><select name="new_owner_user_id" data-mp-team-options required></select></label>
+      <label><span>Yedek sorumlu</span><select name="backup_user_id" data-mp-team-options><option value="">Seçilmedi</option></select></label>
+      <label><span>Devir nedeni</span><textarea name="reason" required maxlength="500"></textarea></label>
+      <label><span>Sonraki işlem</span><input name="next_action" maxlength="500"></label>
+      <label><span>Sonraki işlem tarihi</span><input type="datetime-local" name="next_action_at"></label>
+      <label><span>Sorun notu</span><textarea name="issue_note" maxlength="1000"></textarea></label>
+      <button class="mp-primary" type="submit">Dosyayı Güvenli Devret</button>
+    </form>
+    <div class="mp-history" data-mp-handover-history></div>
+  </template>
+
+  <template id="mpReviewTemplate">
+    <form class="mp-form" data-mp-review-form>
+      <p class="mp-note">Bağlantı otomatik gönderilmez. Ham erişim anahtarı yalnız oluşturma anında gösterilir ve veritabanında saklanmaz.</p>
+      <label><span>Aday</span><select name="candidate_room_id" data-mp-candidate-options required></select></label>
+      <label><span>İlan</span><select name="job_id" data-mp-form-jobs><option value="">Aday odasındaki ilan</option></select></label>
+      <label><span>İnceleyen kişi</span><input name="reviewer_name" required maxlength="160"></label>
+      <label><span>Doğrulanmış iletişim</span><input name="reviewer_contact" required maxlength="250" autocomplete="off"></label>
+      <label><span>İnceleme amacı</span><textarea name="purpose" required maxlength="500"></textarea></label>
+      <fieldset><legend>Görülebilecek alanlar</legend>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="display_name" checked> Güvenli görünen ad</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="rank" checked> Yeterlilik / rütbe</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="sea_service_summary" checked> Deniz hizmeti özeti</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="vessel_experience"> Gemi tecrübesi</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="certificate_status"> Sertifika durumu</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="interview_result"> Görüşme sonucu</label>
+        <label class="mp-check"><input type="checkbox" name="allowed_fields" value="company_notes"> Şirket notları</label>
+      </fieldset>
+      <label><span>Erişim bitişi</span><input type="datetime-local" name="expires_at" required></label>
+      <label><span>Azami görüntüleme</span><input type="number" name="max_uses" min="1" max="20" value="1" required></label>
+      <label class="mp-check"><input type="checkbox" name="download_allowed"> İndirmeye izin ver</label>
+      <button class="mp-primary" type="submit">Güvenli Geçiş Oluştur</button>
+    </form>
+    <div class="mp-credential" data-mp-credential hidden></div>
+    <div class="mp-history" data-mp-review-history></div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="../../js/config.js?v=20260920-maripartner1" defer></script>
+  <script src="../../js/core.js?v=20260920-maripartner1" defer></script>
+  <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
+  <script src="../../js/auth.js?v=20260920-maripartner1" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner1" defer></script>
+</body>
+</html>

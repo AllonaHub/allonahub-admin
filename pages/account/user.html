@@ -1144,6 +1144,7 @@ function safeReturnTo(fallback){
 }
 
 function accountHome(accountType,context){
+  if(accountType==="partner" && context && context.partnerBusiness && context.partnerBusiness.partner_type==="maritime")return pageUrl("/pages/partner/maripartner.html");
   if(accountType==="partner")return pageUrl("/pages/partner/partner-panel.html");
   if(accountType==="admin")return pageUrl("/admin/index.html");
   if(accountType==="super_admin")return pageUrl("/admin/super-admin.html");
@@ -1170,7 +1171,7 @@ async function accountContext(user){
   if(role==="partner"){
     const partnerResult=await supabaseClient
       .from("partner_businesses")
-      .select("id,status,verification_status")
+      .select("id,status,verification_status,partner_type")
       .eq("owner_id",user.id)
       .order("created_at",{ascending:true})
       .limit(1)

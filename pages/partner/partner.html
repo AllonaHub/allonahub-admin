@@ -442,7 +442,12 @@ function mainSiteUrl(path){
   return new URL(path, MAIN_SITE_ORIGIN).href;
 }
 
-function partnerPanelUrl(){
+function partnerPanelUrl(partnerType){
+  const type=String(partnerType || localStorage.getItem("allonaPartnerType") || "").toLowerCase();
+  if(type==="maritime"){
+    if(isPartnerPortalHost())return partnerPortalUrl("/maripartner");
+    return partnerPageUrl("/pages/partner/maripartner.html");
+  }
   if(isPartnerPortalHost())return partnerPortalUrl("/panel");
   return partnerPageUrl("/pages/partner/partner-panel.html");
 }
@@ -595,7 +600,7 @@ async function completePartnerGoogleLogin(session){
   localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
   if(await enforcePartnerMfa())return;
-  window.location.href=partnerPanelUrl();
+  window.location.href=partnerPanelUrl(data.partner_type);
 }
 
 function initPartnerGoogleCallback(){
@@ -1124,7 +1129,7 @@ async function partnerLogin(){
     localStorage.setItem("allonahub_auth_verified_at",new Date().toISOString());
 
     if(await enforcePartnerMfa())return;
-    window.location.href=partnerPanelUrl();
+    window.location.href=partnerPanelUrl(partner.partner_type);
 
   }catch(err){
     showNotice("Giriş sırasında hata oluştu. Lütfen tekrar deneyin.");

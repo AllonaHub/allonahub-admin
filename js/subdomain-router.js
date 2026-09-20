@@ -15,6 +15,7 @@
         "/basvuru": "/pages/partner/partner.html",
         "/panel": "/pages/partner/partner-panel.html",
         "/os": "/pages/partner/partner-panel.html",
+        "/maripartner": "/pages/partner/maripartner.html",
         "/products": "/pages/partner/partner-products.html",
         "/urunlerim": "/pages/partner/partner-products.html",
         "/ürünlerim": "/pages/partner/partner-products.html"

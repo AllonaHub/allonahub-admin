@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CHECK_SCRIPT="$ROOT_DIR/deploy/maritime/check-maritime-schema.sh"
 CORE_CHECK_SCRIPT="$ROOT_DIR/deploy/maritime/check-maritime-hiring-core.sh"
+MARIPARTNER_CHECK_SCRIPT="$ROOT_DIR/deploy/maritime/check-maripartner-schema.sh"
 DB_URL="${SUPABASE_DB_URL:-${DATABASE_URL:-${POSTGRES_URL:-}}}"
 MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260711123000_create_maritime_freight_requests.sql"
@@ -36,6 +37,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260919203000_expand_marsoh_languages_and_reactions.sql"
   "$ROOT_DIR/supabase/migrations/20260919221500_fix_marsoh_topic_utf8.sql"
   "$ROOT_DIR/supabase/migrations/20260920013000_expand_marsoh_admin_management.sql"
+  "$ROOT_DIR/supabase/migrations/20260920153000_create_maripartner_personnel_center.sql"
 )
 
 if [ -z "$DB_URL" ]; then
@@ -55,7 +57,7 @@ for migration in "${MIGRATIONS[@]}"; do
   fi
 done
 
-if [ ! -f "$CHECK_SCRIPT" ] || [ ! -f "$CORE_CHECK_SCRIPT" ]; then
+if [ ! -f "$CHECK_SCRIPT" ] || [ ! -f "$CORE_CHECK_SCRIPT" ] || [ ! -f "$MARIPARTNER_CHECK_SCRIPT" ]; then
   echo "Maritime check scripts are missing." >&2
   exit 1
 fi
@@ -95,4 +97,5 @@ psql "$DB_URL" -X -v ON_ERROR_STOP=1 --single-transaction "${PSQL_FILES[@]}"
 
 "$CHECK_SCRIPT"
 "$CORE_CHECK_SCRIPT"
+"$MARIPARTNER_CHECK_SCRIPT"
 echo "Maritime migrations applied and verified."

@@ -134,6 +134,11 @@ Company Maritime Workspace, Partner Panel icinde mevcut tenant modeliyle calisir
 | Versiyonlama ve geri alma | Sadece altyapi hazir | `maritime_job_versions`, `maritime_entity_versions`, rollback pointer. UI/backend yok. |
 | Sahte calisan ekran uretilmesin | Uygulandi | Super Admin Trust ekrani gercek backend endpointine bagli; Seafarer/Partner urun ekranlari endpoint olmadan calisiyor gibi acilmadi. |
 | Coverage matrix | Uygulandi | Bu tablo master kapsam icin baslangic matrisi olarak eklendi. |
+| AM-20260919-01 Live Talent Pool Refresh | Approved + implemented | MariPartner Personel Merkezi, yetkili Private Candidate Room filtresi, aday islem kutusu, alan bazli teyit ve gercek zaman damgali sonuc kaydi. |
+| AM-20260919-02 Minimum Necessary Evidence Orchestrator | Approved + implemented | Asama bazli sablon, Readiness Passport metadata ozeti, aday rizasi ve mevcut sensitive-access vaka akisi. |
+| AM-20260919-03 Hiring SLA & Escalation Engine | Approved + implemented | Sunucu zamanli SLA, yaklasan/geciken durum, hatirlatma, yedek sorumluya atomik yonlendirme, gerekceli uzatma ve audit. |
+| AM-20260919-04 Recruiter Handover Ledger | Approved + implemented | Yetkili sirket personeline atomik sahiplik devri, yapilandirilmis devir ozeti ve degistirilemez audit kaydi. |
+| AM-20260919-05 Secure Reviewer Pass | Approved + implemented | Hashli token/kod, sure ve kullanim siniri, alan allowlist'i, kapali aday-ilan kontrolu, karar ve indirme audit'i. |
 
 ## Sonraki Uygulama Sirasi
 

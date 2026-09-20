@@ -13,6 +13,7 @@
     settings: [],
     modules: [],
     maritimeTrust: null,
+    mariPartner: null,
     marsohModeration: [],
     marsohReports: [],
     marsohSanctions: [],
@@ -1048,6 +1049,7 @@
     system: ["Sistem Ayarları", "Bakım, ödeme, partner başvurusu ve komisyon kontrolleri"],
     security: ["Güvenlik Merkezi", "Başarısız giriş, IP, audit ve auto-defense sinyalleri"],
     "maritime-trust": ["Maritime Trust", "Denizcilik metadata, risk, şikayet ve audit kontrolü"],
+    "maripartner-management": ["MariPartner Yönetimi", "Denizcilik şirketleri, aday havuzu, kanıt, SLA, devir ve güvenli inceleme kontrolü"],
     "marsoh-moderation": ["MarSoh Yönetimi", "Odalar, günlük konu, mesajlar, bildirimler ve güvenlik kararları"],
     audit: ["Audit Log", "Append-only kritik işlem kayıtları"]
   };
@@ -1236,6 +1238,7 @@
       ownerLine("Bekleyen başvuru", formatNumber(summary.pending_applications), "<button type=\"button\" data-view-jump=\"partners\">Karar ver</button>", summary.pending_applications ? "high" : "low"),
       ownerLine("Güvenlik uyarısı", `${formatNumber(summary.security_alerts_24h)} / son 24 saat`, "<button type=\"button\" data-view-jump=\"security\">İncele</button>", summary.security_alerts_24h ? "high" : "low"),
       ownerLine("Maritime Trust", "Denizcilik şikayet, fraud sinyali, erişim olayı ve audit akışı", "<button type=\"button\" data-view-jump=\"maritime-trust\">İzle</button>", "critical"),
+      ownerLine("MariPartner Yönetimi", "Denizcilik şirketi personel havuzu, kanıt, SLA, dosya devri ve güvenli inceleme kontrolü", "<button type=\"button\" data-view-jump=\"maripartner-management\">Yönet</button>", "critical"),
       ownerLine("MarSoh moderasyonu", "Karantinaya alınan sohbet mesajlarını yayınla, reddet veya kullanıcı yaptırımı uygula.", "<button type=\"button\" data-view-jump=\"marsoh-moderation\">Kuyruğu Aç</button>", "critical"),
       ownerLine("Denizcilik kullanıcıları", "AL kimliğiyle kullanıcı bulma, CV ve belge onayı, düzenleme ve kontrollü temizleme", "<a href=\"./maritime-users.html\">Yönet</a>", "critical"),
       ownerLine("Sistem sağlığı", `API ${escape(system.api || "-")} / DB ${escape(system.database || "-")} / Auto-defense ${formatNumber(system.auto_defense && system.auto_defense.recent_incident_count)} olay`, "<button type=\"button\" data-view-jump=\"alerts\">Risk akışı</button>", system.database === "online" ? "low" : "high"),
@@ -2027,6 +2030,76 @@
     ownerSetOutput(rows.length ? rows.join("") : ownerEmpty("Audit kaydı bulunamadı."));
   }
 
+  async function loadOwnerMariPartner() {
+    ownerLoading("MariPartner Yönetimi");
+    const payload = await api("/v1/admin/maripartner?limit=120");
+    state.mariPartner = payload;
+    const businessRows = (payload.businesses || []).map((item) => ownerLine(
+      item.display_name || item.partner_code || "Denizcilik şirketi",
+      `${escape(item.partner_code || "-")} / ${escape(item.status || "-")} / ${escape(item.verification_status || "-")}`,
+      "şirket tenantı",
+      item.verification_status === "verified" ? "low" : "medium"
+    ));
+    const refreshRows = (payload.refresh_campaigns || []).map((item) => ownerLine(
+      item.title || "Havuz güncellemesi",
+      `${escape(item.status || "-")} / son tarih ${formatDate(item.expires_at)}`,
+      ["scheduled", "sent"].includes(item.status) ? `<button type="button" data-maripartner-admin-action="cancel_refresh" data-resource-id="${escape(item.id)}">İptal Et</button>` : "",
+      item.status === "expired" ? "medium" : "low"
+    ));
+    const evidenceRows = (payload.evidence_requests || []).map((item) => ownerLine(
+      "Kanıt talebi",
+      `${escape(item.purpose || "-")} / ${escape(item.status || "-")} / ${formatDate(item.expires_at)}`,
+      ["requested", "candidate_action"].includes(item.status) ? `<button type="button" data-maripartner-admin-action="cancel_evidence" data-resource-id="${escape(item.id)}">İptal Et</button>` : `partner ${escape(item.partner_id || "-")}`,
+      ["requested", "candidate_action"].includes(item.status) ? "medium" : "low"
+    ));
+    const policyRows = (payload.sla_policies || []).map((item) => ownerLine(
+      item.stage || "SLA kuralı",
+      `${formatNumber(item.target_minutes)} dakika / partner ${escape(item.partner_id || "-")}`,
+      `<button type="button" data-maripartner-admin-action="deactivate_sla" data-resource-id="${escape(item.id)}">Pasifleştir</button>`,
+      "low"
+    ));
+    const slaRows = (payload.sla_instances || []).map((item) => ownerLine(
+      item.stage || "Süreç",
+      `${escape(item.status || "-")} / hedef ${formatDate(item.extended_until || item.due_at)}`,
+      `dosya ${escape(item.hiring_room_id || "-")}`,
+      item.status === "overdue" ? "critical" : item.status === "approaching" ? "medium" : "low"
+    ));
+    const handoverRows = (payload.handovers || []).map((item) => ownerLine(
+      "Dosya devri",
+      `${escape(item.previous_owner_user_id || "-")} → ${escape(item.new_owner_user_id || "-")} / ${escape(item.reason || "-")}`,
+      formatDate(item.created_at),
+      "low"
+    ));
+    const passRows = (payload.reviewer_passes || []).map((item) => ownerLine(
+      item.reviewer_name || "İnceleyen",
+      `${escape(item.status || "-")} / ${escape(item.purpose || "-")} / kullanım ${formatNumber(item.use_count)}/${formatNumber(item.max_uses)}`,
+      item.status === "active" ? `<button type="button" data-maripartner-admin-action="revoke_pass" data-resource-id="${escape(item.id)}">Erişimi İptal Et</button>` : "",
+      item.status === "active" ? "medium" : "low"
+    ));
+    ownerSetOutput([
+      `<div class="sa-marsoh-stats"><div><strong>${formatNumber((payload.businesses || []).length)}</strong><span>Denizcilik şirketi</span></div><div><strong>${formatNumber((payload.refresh_campaigns || []).filter((item) => ["scheduled", "sent"].includes(item.status)).length)}</strong><span>Aktif yenileme</span></div><div><strong>${formatNumber((payload.evidence_requests || []).filter((item) => ["requested", "candidate_action"].includes(item.status)).length)}</strong><span>Bekleyen kanıt</span></div><div><strong>${formatNumber((payload.sla_instances || []).filter((item) => item.status === "overdue").length)}</strong><span>Geciken adım</span></div></div>`,
+      marsohPanel("Denizcilik şirketleri", "MariPartner erişimi yalnız aktif ve doğrulanmış şirket üyelikleriyle açılır.", businessRows.join("") || ownerEmpty("Denizcilik şirketi bulunamadı.")),
+      marsohPanel("Havuz güncellemeleri", "Şirketin yetkili özel aday ilişkileriyle sınırlı görevler.", refreshRows.join("") || ownerEmpty("Havuz güncellemesi bulunamadı.")),
+      marsohPanel("Kanıt kontrolü", "Minimum gerekli veri ve süreli hassas erişim talepleri.", evidenceRows.join("") || ownerEmpty("Kanıt talebi bulunamadı.")),
+      marsohPanel("SLA kuralları", "Şirketlerin etkin süreç hedefleri ve sorumluluk kuralları.", policyRows.join("") || ownerEmpty("Etkin SLA kuralı bulunamadı.")),
+      marsohPanel("Süreç süreleri", "Sunucu saatiyle hesaplanan canlı SLA durumu.", slaRows.join("") || ownerEmpty("Süreç süresi kaydı bulunamadı.")),
+      marsohPanel("Dosya devir defteri", "Eski ve yeni sorumlu ile gerekçeli, değiştirilemez devir geçmişi.", handoverRows.join("") || ownerEmpty("Devir kaydı bulunamadı.")),
+      marsohPanel("Güvenli inceleme geçişleri", "Süreli, alan sınırlı ve ham anahtarı saklanmayan harici inceleme erişimleri.", passRows.join("") || ownerEmpty("İnceleme geçişi bulunamadı."))
+    ].join(""));
+  }
+
+  async function runMariPartnerAdminAction(button) {
+    const action = button.dataset.maripartnerAdminAction;
+    const resourceId = button.dataset.resourceId;
+    const labels = { cancel_refresh: "havuz güncellemesini iptal et", cancel_evidence: "kanıt talebini iptal et", revoke_pass: "inceleme erişimini iptal et", deactivate_sla: "SLA kuralını pasifleştir" };
+    const message = `MariPartner işlemi: ${labels[action] || action}`;
+    await runConfirmed(message, async (reason) => {
+      await api("/v1/admin/maripartner/action", { method: "POST", body: { action, resource_id: resourceId, reason } });
+      await loadOwnerMariPartner();
+      setAlert("MariPartner yönetim işlemi tamamlandı.", "ok");
+    }, { trigger: button, defaultReason: message, requireReason: true });
+  }
+
   async function loadOwnerView(view, params) {
     setAlert("");
     setCommandHeader(view);
@@ -2043,6 +2116,7 @@
       else if (view === "system") await loadOwnerSystem();
       else if (view === "security") await loadOwnerSecurity();
       else if (view === "maritime-trust") await loadOwnerMaritimeTrust();
+      else if (view === "maripartner-management") await loadOwnerMariPartner();
       else if (view === "marsoh-moderation") await loadOwnerMarsohModeration();
       else if (view === "audit") await loadOwnerAudit();
     } catch (error) {
@@ -2302,6 +2376,9 @@
 
         const maritimeAccessEventDetail = eventClosest(event, "[data-maritime-access-event-detail]");
         if (maritimeAccessEventDetail) showMaritimeAccessEventDetail(maritimeAccessEventDetail.dataset.maritimeAccessEventDetail);
+
+        const mariPartnerAdminAction = eventClosest(event, "[data-maripartner-admin-action]");
+        if (mariPartnerAdminAction) await runMariPartnerAdminAction(mariPartnerAdminAction);
 
         const marsohAdminAction = eventClosest(event, "[data-marsoh-admin-action]");
         if (marsohAdminAction) await runMarsohAdminAction(marsohAdminAction);

@@ -13,6 +13,7 @@ import { registerRoutes } from "./routes/index.js";
 import { registerMaritimeDocumentRoutes } from "./routes/maritime-documents.js";
 import { registerMaritimeCommerceRoutes } from "./routes/maritime-commerce.js";
 import { registerMaritimePasskeyRoutes } from "./routes/maritime-passkey.js";
+import { registerMaritimePartnerCenterRoutes } from "./routes/maritime-partner-center.js";
 import { registerMaritimeSmartAccountRoutes } from "./routes/maritime-smart-account.js";
 import { registerMarsohRoutes } from "./routes/marsoh.js";
 import { registerPlatformRoutes } from "./routes/platform.js";
@@ -305,6 +306,7 @@ export async function buildApp() {
   registerMaritimeDocumentRoutes(app);
   registerMaritimeCommerceRoutes(app);
   registerMaritimePasskeyRoutes(app);
+  registerMaritimePartnerCenterRoutes(app);
   registerMaritimeSmartAccountRoutes(app);
   registerMarsohRoutes(app);
   return app;

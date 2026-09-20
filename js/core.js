@@ -110,6 +110,7 @@
     "partner-orders.html": "/pages/partner/partner-orders.html",
     "partner-order-detail.html": "/pages/partner/partner-order-detail.html",
     "partner-panel.html": "/pages/partner/partner-panel.html",
+    "maripartner.html": "/pages/partner/maripartner.html",
     "partner-products.html": "/pages/partner/partner-products.html",
     "partner-pay.html": "/pages/partner/pay.html",
     "partner-uyelik.html": "/pages/partner/partner-uyelik.html",
