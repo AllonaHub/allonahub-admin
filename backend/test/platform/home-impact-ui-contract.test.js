@@ -8,6 +8,32 @@ async function source(path) {
   return readFile(new URL(path, root), "utf8");
 }
 
+test("smart platform name is consistent across home, ecosystem and installed app", async () => {
+  const name = "AllonaHub Akıllı Platform";
+  for (const path of ["index.html", "pages/ecosystem/ecosystem.html"]) {
+    const html = await source(path);
+    assert.ok(html.includes(`<title>${name}</title>`));
+    assert.doesNotMatch(html, /yeni nesil süper uygulama/i);
+    assert.match(html, /platform\.js\?v=20260920-smart-platform1/);
+  }
+  assert.ok((await source("index.html")).includes(`<h1 class="home-page-title">${name}</h1>`));
+  const current = JSON.parse(await source("manifest.json"));
+  assert.equal(current.name, name);
+  assert.equal(current.short_name, "AllonaHub");
+  assert.deepEqual(JSON.parse(await source("manifest.webmanifest")), current);
+  assert.match(await source("index.html"), /manifest\.json\?v=20260920-smart-platform1/);
+});
+
+test("smart platform title has translations for every supported language", async () => {
+  const catalog = JSON.parse(await source("i18n/catalog.json"));
+  const translations = catalog.phrases["AllonaHub Akıllı Platform"];
+  for (const language of ["tr", "az", "en", "de", "ru", "ar", "kk", "uz", "ky"]) {
+    assert.ok(translations[language]?.startsWith("AllonaHub "), language);
+  }
+  assert.equal(translations.tr, "AllonaHub Akıllı Platform");
+  assert.equal(translations.en, "AllonaHub Smart Platform");
+});
+
 test("homepage binds the listings card to the live aggregate metric", async () => {
   const [html, script] = await Promise.all([
     source("index.html"),

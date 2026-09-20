@@ -4231,13 +4231,16 @@
       "ar": "AllonaHub + ظهور منتجات الرياضة",
       "tr": "AllonaHub + Spor ürün görünürlüğü"
     },
-    "AllonaHub | Yeni Nesil Süper Uygulama": {
-      "az": "AllonaHub | Yeni nəsil super tətbiq",
-      "en": "AllonaHub | Next-Generation Super App",
-      "de": "AllonaHub | Super-App der nächsten Generation",
-      "ru": "AllonaHub | Суперприложение нового поколения",
-      "ar": "AllonaHub | تطبيق فائق من الجيل الجديد",
-      "tr": "AllonaHub | Yeni Nesil Süper Uygulama"
+    "AllonaHub Akıllı Platform": {
+      "az": "AllonaHub Ağıllı Platforma",
+      "en": "AllonaHub Smart Platform",
+      "de": "AllonaHub Intelligente Plattform",
+      "ru": "AllonaHub Умная платформа",
+      "ar": "AllonaHub المنصة الذكية",
+      "kk": "AllonaHub Ақылды платформа",
+      "uz": "AllonaHub Aqlli platforma",
+      "ky": "AllonaHub Акылдуу платформа",
+      "tr": "AllonaHub Akıllı Platform"
     },
     "AllonaHub Bağlantıları": {
       "az": "AllonaHub bağlantıları",
