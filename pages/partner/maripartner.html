@@ -7,26 +7,29 @@
   <title>MariPartner | AllonaHub Denizcilik</title>
   <meta name="description" content="AllonaHub Denizcilik doğrulanmış şirket personel merkezi.">
   <link rel="stylesheet" href="../../css/platform.css?v=20260920-maripartner1">
-  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner1">
+  <link rel="stylesheet" href="../../css/maripartner.css?v=20260920-maripartner4">
 </head>
 <body class="mp-body">
   <a class="mp-skip" href="#mainContent">İçeriğe geç</a>
   <header class="mp-header">
-    <a class="mp-brand" href="../ecosystem/allonadenizcilik.html" aria-label="AllonaHub Denizcilik ana sayfası">
-      <span class="mp-brand__mark" aria-hidden="true">A</span>
-      <span><strong>AllonaHub</strong><small>MariPartner</small></span>
-    </a>
+    <div class="mp-brand-wrap">
+      <button class="mp-brand" type="button" data-mp-company-profile aria-label="Şirket profilini aç">
+        <span class="mp-brand__mark" data-mp-company-avatar aria-hidden="true">MP</span>
+        <span class="mp-brand__copy"><strong data-mp-company-name>Şirket hesabı</strong><small>MariPartner</small></span>
+      </button>
+      <button class="mp-verify-mark" type="button" data-mp-verification-badge aria-label="Doğrulama durumunu aç">✓</button>
+    </div>
     <div class="mp-header__actions">
-      <a href="../ecosystem/allonadenizcilik.html">Denizcilik</a>
+      <a href="../ecosystem/allonadenizcilik.html" aria-label="Denizcilik modülüne dön">Modüle Dön</a>
       <button type="button" data-mp-refresh aria-label="Panel verilerini yenile">Yenile</button>
-      <button class="mp-account" type="button" data-mp-account aria-haspopup="menu">Şirket hesabı</button>
+      <button class="mp-account" type="button" data-mp-account aria-haspopup="dialog">Şirket Profili</button>
     </div>
   </header>
 
   <main id="mainContent" class="mp-main">
     <section class="mp-hero" aria-labelledby="mpTitle">
       <div>
-        <p class="mp-eyebrow">Doğrulanmış denizcilik şirketi çalışma alanı</p>
+        <p class="mp-eyebrow" data-mp-hero-eyebrow>Denizcilik şirketi çalışma alanı</p>
         <h1 id="mpTitle">MariPartner</h1>
         <p>Aday havuzunu güncelleyin, kanıtları minimum gerekli kapsamda yönetin ve işe alım dosyalarını güvenli biçimde ilerletin.</p>
       </div>
@@ -38,28 +41,33 @@
 
     <div class="mp-alert" data-mp-alert role="status" aria-live="polite" hidden></div>
 
+    <nav class="mp-command-bar" aria-label="MariPartner ana işlemleri">
+      <button class="mp-command-bar__primary" type="button" data-mp-open="job-create">
+        <span aria-hidden="true">＋</span><span><strong>Yeni İlan Oluştur</strong><small>Doğrulama için gönder</small></span>
+      </button>
+      <button type="button" data-mp-open="jobs"><span aria-hidden="true">▤</span><span><strong>İlanlar</strong><small data-mp-nav-count="jobs">0 kayıt</small></span></button>
+      <button type="button" data-mp-open="vessels"><span aria-hidden="true">⚓</span><span><strong>Gemilerim</strong><small data-mp-nav-count="vessels">0 gemi</small></span></button>
+      <button type="button" data-mp-open="candidates"><span aria-hidden="true">◎</span><span><strong>Adaylar</strong><small data-mp-nav-count="candidates">0 aday</small></span></button>
+      <button type="button" data-mp-open="applications"><span aria-hidden="true">◇</span><span><strong>Başvurular</strong><small data-mp-nav-count="applications">0 dosya</small></span></button>
+      <button type="button" data-mp-open="notifications"><span aria-hidden="true">◉</span><span><strong>Bildirimler</strong><small data-mp-nav-count="notifications">0 yeni</small></span></button>
+      <button type="button" data-mp-center><span aria-hidden="true">⌘</span><span><strong>Personel Merkezi</strong><small>Güvenli operasyonlar</small><b class="mp-counter" data-mp-main-counter hidden></b></span></button>
+      <a href="../ecosystem/maritime-marsoh.html"><span aria-hidden="true">◌</span><span><strong>MarSoh</strong><small>Denizcilik sohbeti</small></span></a>
+    </nav>
+
+    <section class="mp-verification-strip" data-mp-verification-strip aria-label="Şirket doğrulama durumu">
+      <button type="button" data-mp-open="verification">
+        <span class="mp-verification-strip__icon" aria-hidden="true">✓</span>
+        <span><strong data-mp-verification-title>Şirket doğrulaması kontrol ediliyor</strong><small data-mp-verification-copy>İlan ve işe alım yetkileriniz hazırlanıyor.</small></span>
+        <span aria-hidden="true">→</span>
+      </button>
+    </section>
+
     <section class="mp-stats" aria-label="Canlı işe alım özeti">
       <article><span>Açık ilan</span><strong data-mp-count="open_jobs">-</strong></article>
       <article><span>Yetkili aday</span><strong data-mp-count="authorized_candidates">-</strong></article>
       <article><span>Uygun eşleşme</span><strong data-mp-count="eligible_matches">-</strong></article>
       <article><span>Geciken adım</span><strong data-mp-count="overdue_steps">-</strong></article>
       <article><span>Bekleyen kanıt</span><strong data-mp-count="pending_evidence">-</strong></article>
-    </section>
-
-    <section class="mp-personnel" aria-labelledby="personnelTitle">
-      <div class="mp-section-head">
-        <div>
-          <p>Şirket içi işe alım operasyonu</p>
-          <h2 id="personnelTitle">Personel Merkezi</h2>
-        </div>
-        <span class="mp-security-badge">Korumalı şirket alanı</span>
-      </div>
-      <button class="mp-center-entry" type="button" data-mp-center aria-haspopup="dialog">
-        <span class="mp-center-entry__icon" aria-hidden="true">PM</span>
-        <span><strong>Personel Merkezini Aç</strong><small>Beş güvenli işe alım işlemini tek merkezden yönetin</small></span>
-        <span class="mp-counter" data-mp-main-counter hidden></span>
-        <span class="mp-center-entry__arrow" aria-hidden="true">→</span>
-      </button>
     </section>
 
     <section class="mp-workspace" aria-labelledby="matchesTitle">
@@ -84,6 +92,101 @@
       <div class="mp-drawer__body" data-mp-drawer-body></div>
     </aside>
   </div>
+
+  <template id="mpJobsTemplate">
+    <div class="mp-drawer-tools">
+      <p class="mp-note">İlanlar moderasyon ve doğrulama akışından geçer. Onaylanan ilanlar denizcilere açılır.</p>
+      <button class="mp-primary" type="button" data-mp-open="job-create">Yeni İlan Oluştur</button>
+    </div>
+    <div class="mp-history" data-mp-jobs-list></div>
+  </template>
+
+  <template id="mpJobCreateTemplate">
+    <form class="mp-form" data-mp-job-form>
+      <p class="mp-note">İlanın başlığı, rütbesi ve zorunlu belgeleri uygun aday eşleştirmesinde kullanılır. Şirket iletişim bilgileri adaylara açık gösterilmez.</p>
+      <label class="mp-full"><span>İlan başlığı</span><input name="title" required minlength="2" maxlength="140" placeholder="Örn. Genel Kargo Gemisi için Yağcı"></label>
+      <label><span>Aranan rütbe</span><select name="rank_code" required><option value="">Seçin</option><option value="master">Kaptan</option><option value="chief_officer">Baş Zabit</option><option value="second_officer">İkinci Zabit</option><option value="third_officer">Üçüncü Zabit</option><option value="chief_engineer">Baş Mühendis</option><option value="second_engineer">İkinci Mühendis</option><option value="third_engineer">Üçüncü Mühendis</option><option value="oiler">Yağcı / Motorman</option><option value="able_seaman">Usta Gemici</option><option value="ordinary_seaman">Gemici</option><option value="cook">Aşçı</option><option value="electrician">Elektrikçi</option></select></label>
+      <label><span>İlan bitiş tarihi</span><input type="date" name="expires_at" required></label>
+      <label><span>Katılım / bölge</span><input name="location_label" maxlength="120" placeholder="Örn. İstanbul / İlk uygun liman"></label>
+      <label><span>Kontrat bilgisi</span><input name="detail_label" maxlength="120" placeholder="Örn. 4+1 ay kontrat"></label>
+      <label><span>En az deniz hizmeti (gün)</span><input type="number" name="minimum_sea_service_days" min="0" max="20000" value="0"></label>
+      <label><span>Gerekli dil</span><select name="language"><option value="">Dil şartı yok</option><option value="English">İngilizce</option><option value="Turkish">Türkçe</option><option value="Azerbaijani">Azerbaycanca</option><option value="Russian">Rusça</option></select></label>
+      <label><span>Dil seviyesi</span><select name="language_level"><option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="C2">C2</option><option value="fluent">Akıcı</option><option value="native">Ana dil</option></select></label>
+      <label class="mp-full"><span>Kısa açıklama</span><textarea name="summary" required minlength="10" maxlength="360" placeholder="Pozisyon, gemi tipi, katılım ve çalışma koşullarını kısa ve açık biçimde yazın."></textarea></label>
+      <fieldset><legend>Zorunlu sertifikalar</legend><div class="mp-certificate-grid">
+        <label class="mp-check"><input type="checkbox" name="certificates" value="SH" checked> SH</label>
+        <label class="mp-check"><input type="checkbox" name="certificates" value="SI" checked> SI</label>
+        <label class="mp-check"><input type="checkbox" name="certificates" value="SO" checked> SO</label>
+        <label class="mp-check"><input type="checkbox" name="certificates" value="SP" checked> SP</label>
+        <label class="mp-check"><input type="checkbox" name="certificates" value="SA"> SA / Kimyasal tanker</label>
+      </div></fieldset>
+      <label class="mp-check"><input type="checkbox" name="medical_required" checked> Geçerli sağlık uygunluğu zorunlu</label>
+      <label class="mp-check"><input type="checkbox" name="available_now_required"> Hemen katılabilir aday zorunlu</label>
+      <button class="mp-primary" type="submit">İlanı Onaya Gönder</button>
+    </form>
+  </template>
+
+  <template id="mpCandidatesTemplate"><div class="mp-history" data-mp-candidates-list></div></template>
+  <template id="mpApplicationsTemplate"><div class="mp-history" data-mp-applications-list></div></template>
+  <template id="mpNotificationsTemplate"><div class="mp-history" data-mp-notifications-list></div></template>
+
+  <template id="mpVesselsTemplate">
+    <div class="mp-drawer-tools">
+      <p class="mp-note">Şirketinize ait veya şirketiniz tarafından yönetilen gemileri IMO numarasıyla kaydedin. IMO kaydı gemi bilgilerini getirir; şirket-gemi ilişkiniz ayrıca doğrulanır.</p>
+      <button class="mp-primary" type="button" data-mp-open="vessel-create">Gemi Ekle</button>
+    </div>
+    <div class="mp-history mp-vessel-list" data-mp-vessels-list></div>
+  </template>
+
+  <template id="mpVesselCreateTemplate">
+    <form class="mp-form mp-vessel-form" data-mp-vessel-form>
+      <p class="mp-note">IMO numarasını girip bilgileri getirin. Bulunamayan zorunlu alanları elle tamamlayabilirsiniz. Kayıt, yönetim doğrulamasından sonra doğrulanmış gemi olur.</p>
+      <div class="mp-imo-lookup mp-full">
+        <label><span>IMO numarası</span><input name="imo_number" inputmode="numeric" autocomplete="off" required pattern="[0-9]{7}" minlength="7" maxlength="7" placeholder="Örn. 9389370"></label>
+        <button class="mp-secondary" type="button" data-mp-vessel-lookup>Bilgileri Getir</button>
+      </div>
+      <div class="mp-lookup-result mp-full" data-mp-vessel-lookup-result role="status" aria-live="polite" hidden></div>
+      <label><span>Gemi adı</span><input name="vessel_name" required minlength="2" maxlength="160"></label>
+      <label><span>Gemi tipi</span><input name="vessel_type" required minlength="2" maxlength="120" placeholder="Örn. Genel Kargo"></label>
+      <label><span>Bayrak</span><input name="flag_state" required minlength="2" maxlength="80"></label>
+      <label><span>Şirketin ilişkisi</span><select name="relationship_role" required><option value="">Seçin</option><option value="owner">Gemi sahibi</option><option value="manager">Teknik yönetici</option><option value="operator">İşletmeci</option><option value="crewing_agent">Personel acentesi</option><option value="employer">İşveren</option><option value="authorized_representative">Yetkili temsilci</option></select></label>
+      <label><span>MMSI</span><input name="mmsi" inputmode="numeric" pattern="[0-9]{7,9}" maxlength="9"></label>
+      <label><span>Çağrı işareti</span><input name="call_sign" maxlength="40"></label>
+      <label><span>Gross tonaj (GRT)</span><input name="gross_tonnage" type="number" min="0" step="0.01"></label>
+      <label><span>Deadweight (DWT)</span><input name="deadweight" type="number" min="0" step="0.01"></label>
+      <label><span>Yapım yılı</span><input name="year_built" type="number" min="1850" max="2100"></label>
+      <label><span>İlişki başlangıcı</span><input name="valid_from" type="date"></label>
+      <label><span>İlişki bitişi</span><input name="valid_until" type="date"></label>
+      <input name="provider" type="hidden">
+      <button class="mp-primary" type="submit">Gemiyi Doğrulamaya Gönder</button>
+    </form>
+  </template>
+
+  <template id="mpCompanyTemplate">
+    <section class="mp-company-profile">
+      <div class="mp-logo-editor">
+        <span class="mp-logo-editor__preview" data-mp-logo-preview aria-hidden="true">MP</span>
+        <div><strong>Şirket profil görseli</strong><p>JPG, PNG veya WebP yükleyin. Görsel güvenli biçimde kare WebP olarak hazırlanır.</p><label class="mp-secondary mp-file-button"><input type="file" accept="image/jpeg,image/png,image/webp" data-mp-logo-input>Görsel Seç</label></div>
+      </div>
+      <form class="mp-form" data-mp-profile-form>
+        <label><span>Görünen şirket adı</span><input name="display_name" required minlength="2" maxlength="160"></label>
+        <label><span>Yasal şirket adı</span><input name="legal_name" maxlength="180"></label>
+        <label><span>Ülke</span><input name="country" maxlength="90"></label>
+        <label><span>Şehir</span><input name="city" maxlength="90"></label>
+        <label><span>Şirket telefonu</span><input name="phone" maxlength="40"></label>
+        <label class="mp-full"><span>Şirket açıklaması</span><textarea name="description" maxlength="1200"></textarea></label>
+        <button class="mp-primary" type="submit">Şirket Profilini Kaydet</button>
+      </form>
+    </section>
+  </template>
+
+  <template id="mpVerificationTemplate">
+    <section class="mp-verification-panel">
+      <p class="mp-note">Doğrulama rozeti, şirket kimliğinin ve işe alım temsilcisi yetkisinin güncel olduğunu gösterir. Süresi dolan kontroller yenilenmeden yeni ilan yayımlanamaz.</p>
+      <div class="mp-requirement-list" data-mp-verification-list></div>
+      <div class="mp-verification-detail" data-mp-verification-detail></div>
+    </section>
+  </template>
 
   <template id="mpCenterTemplate">
     <div class="mp-center-menu">
@@ -260,6 +363,6 @@
   <script src="../../js/core.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/supabase-client.js?v=20260920-maripartner1" defer></script>
   <script src="../../js/auth.js?v=20260920-partner-routing1" defer></script>
-  <script src="../../js/maripartner.js?v=20260920-maripartner2" defer></script>
+  <script src="../../js/maripartner.js?v=20260920-maripartner4" defer></script>
 </body>
 </html>

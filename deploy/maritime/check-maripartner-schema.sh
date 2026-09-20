@@ -157,6 +157,29 @@ begin
   ) then
     raise exception 'Verified partner account role synchronization triggers are missing';
   end if;
+
+  if not exists (
+    select 1 from storage.buckets
+    where id = 'maritime-partner-logos'
+      and public = true
+      and file_size_limit = 2097152
+      and allowed_mime_types = array['image/webp']::text[]
+  ) then
+    raise exception 'MariPartner company logo bucket is missing or unsafe';
+  end if;
+
+  if exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and roles::text like '%authenticated%'
+      and (
+        coalesce(qual, '') like '%maritime-partner-logos%'
+        or coalesce(with_check, '') like '%maritime-partner-logos%'
+      )
+  ) then
+    raise exception 'MariPartner logo bucket must not allow direct authenticated writes';
+  end if;
 end
 $maripartner_check$;
 SQL

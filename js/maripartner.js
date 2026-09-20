@@ -1,9 +1,10 @@
 (function () {
   "use strict";
   const App = window.Allona = window.Allona || {};
-  const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null };
-  const titles = { refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi" };
-  const templates = { refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate" };
+  const state = { session: null, data: null, partnerId: "", activePanel: "", lastFocus: null, pendingLogoPath: null };
+  const titles = { jobs: "Şirket İlanları", "job-create": "Yeni İlan Oluştur", vessels: "Gemilerim", "vessel-create": "Gemi Ekle", candidates: "Yetkili Adaylar", applications: "Başvurular ve İşe Alım Dosyaları", notifications: "Şirket Bildirimleri", company: "Şirket Profili", verification: "Doğrulama Şartları", refresh: "Havuzu Güncelle", evidence: "Kanıt Kontrolü", sla: "Süreç Süreleri", handover: "Dosya Devri", review: "Güvenli İnceleme", references: "Doğrulanmış Referans", governance: "Karar ve Değer Merkezi" };
+  const templates = { jobs: "mpJobsTemplate", "job-create": "mpJobCreateTemplate", vessels: "mpVesselsTemplate", "vessel-create": "mpVesselCreateTemplate", candidates: "mpCandidatesTemplate", applications: "mpApplicationsTemplate", notifications: "mpNotificationsTemplate", company: "mpCompanyTemplate", verification: "mpVerificationTemplate", refresh: "mpRefreshTemplate", evidence: "mpEvidenceTemplate", sla: "mpSlaTemplate", handover: "mpHandoverTemplate", review: "mpReviewTemplate", references: "mpReferencesTemplate", governance: "mpGovernanceTemplate" };
+  const standalonePanels = new Set(["jobs", "job-create", "vessels", "vessel-create", "candidates", "applications", "notifications", "company", "verification"]);
   const referenceCategories = [
     ["professional_competence", "Mesleki yeterlilik"], ["safety_awareness", "Emniyet farkındalığı"], ["rule_compliance", "Kural uyumu"],
     ["teamwork", "Ekip çalışması"], ["communication", "İletişim"], ["reliability", "Güvenilirlik"], ["punctuality", "Dakiklik"],
@@ -76,6 +77,26 @@
     return item;
   }
 
+  function initials(value) {
+    return String(value || "MP").split(/\s+/).filter(Boolean).map((item) => item[0]).join("").slice(0, 2).toLocaleUpperCase("tr-TR");
+  }
+
+  function clientId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+      const random = Math.floor(Math.random() * 16);
+      return (character === "x" ? random : (random & 3) | 8).toString(16);
+    });
+  }
+
+  function statusLabel(value) {
+    return ({ draft: "Taslak", unverified: "Doğrulanmadı", partner_asserted: "Doğrulama bekliyor", pending_review: "Onay bekliyor", verified: "Doğrulandı", active: "Yayında", open: "Açık", paused: "Duraklatıldı", rejected: "Düzeltme gerekli", archived: "Arşivlendi", closed: "Kapandı", cancelled: "İptal", filled: "Pozisyon doldu", offer: "Teklif aşaması", hired: "İşe alındı" })[value] || value || "Bekliyor";
+  }
+
+  function relationshipLabel(value) {
+    return ({ owner: "Gemi sahibi", manager: "Teknik yönetici", operator: "İşletmeci", crewing_agent: "Personel acentesi", employer: "İşveren", authorized_representative: "Yetkili temsilci" })[value] || value || "Şirket ilişkisi";
+  }
+
   function candidateLabel(room) {
     const name = room.candidate?.full_name || room.candidate?.public_id || "Aday";
     return `${name} · ${room.status}`;
@@ -131,6 +152,74 @@
 
   function historyCard(title, detail, meta, className, action) {
     return `<article class="${escape(className || "")}"><strong>${escape(title)}</strong><span>${escape(detail || "")}</span><small>${escape(meta || "")}</small>${action || ""}</article>`;
+  }
+
+  function setAvatar(target, business) {
+    if (!target) return;
+    const name = business?.display_name || "MariPartner";
+    target.innerHTML = business?.logo_url ? `<img src="${escape(business.logo_url)}" alt="">` : escape(initials(name));
+  }
+
+  function renderWorkspacePanel(root, panel) {
+    if (panel === "jobs") {
+      const target = $("[data-mp-jobs-list]", root);
+      const jobs = state.data.jobs || [];
+      target.innerHTML = `<h3>İlan kayıtları</h3>${jobs.length ? jobs.map((item) => {
+        const title = item.title || item.job_title;
+        const detail = [item.location_label || item.structured_requirements?.location_label, item.detail_label || item.structured_requirements?.contract_label, item.rank_code].filter(Boolean).join(" · ");
+        return `<article><div class="mp-history-card-head"><strong>${escape(title)}</strong><span class="mp-status-pill is-${escape(item.status)}">${escape(statusLabel(item.status))}</span></div><span>${escape(detail || "Denizcilik pozisyonu")}</span><small>${escape(item.summary || item.source_free_text || item.job_reference || "")} · ${escape(dateTime(item.created_at || item.submitted_at))}</small></article>`;
+      }).join("") : '<div class="mp-empty">Henüz ilan oluşturulmadı. İlk doğrulanmış ilanınızı oluşturabilirsiniz.</div>'}`;
+    }
+    if (panel === "candidates") {
+      const target = $("[data-mp-candidates-list]", root);
+      const rooms = state.data.candidate_rooms || [];
+      target.innerHTML = `<h3>Yetkili aday ilişkileri</h3>${rooms.length ? rooms.map((room) => {
+        const job = (state.data.jobs || []).find((item) => item.id === room.job_id);
+        return historyCard(room.candidate?.full_name || room.candidate?.public_id || "Aday", `${job?.job_title || "Genel aday havuzu"} · ${statusLabel(room.status)}`, room.expires_at ? `Yetki bitişi: ${dateTime(room.expires_at)}` : "Aktif şirket ilişkisi");
+      }).join("") : '<div class="mp-empty">Henüz şirketinizle açık ve izinli bir aday ilişkisi bulunmuyor.</div>'}`;
+    }
+    if (panel === "applications") {
+      const target = $("[data-mp-applications-list]", root);
+      const rooms = state.data.candidate_rooms || [];
+      target.innerHTML = `<h3>Başvuru ve işe alım dosyaları</h3>${rooms.length ? rooms.map((room) => {
+        const job = (state.data.jobs || []).find((item) => item.id === room.job_id);
+        return historyCard(job?.job_title || "İşe alım dosyası", `${candidateLabel(room)} · ${statusLabel(room.status)}`, room.hiring_room_id ? `Dosya: ${room.hiring_room_id.slice(0, 8).toLocaleUpperCase("tr-TR")}` : "Dosya hazırlanıyor");
+      }).join("") : '<div class="mp-empty">Henüz açık başvuru veya işe alım dosyası bulunmuyor.</div>'}`;
+    }
+    if (panel === "notifications") {
+      const target = $("[data-mp-notifications-list]", root);
+      const notifications = state.data.partner_notifications || [];
+      target.innerHTML = `<h3>Okunmamış bildirimler</h3>${notifications.length ? notifications.map((item) => historyCard(item.title, item.message, dateTime(item.created_at))).join("") : '<div class="mp-empty">Yeni şirket bildirimi yok.</div>'}`;
+    }
+    if (panel === "vessels") {
+      const target = $("[data-mp-vessels-list]", root);
+      const vessels = state.data.vessels || [];
+      target.innerHTML = `<h3>Kayıtlı gemiler</h3>${vessels.length ? vessels.map((item) => {
+        const facts = [item.vessel_type, item.flag_state, item.metadata?.gross_tonnage ? `GRT ${item.metadata.gross_tonnage}` : "", item.metadata?.deadweight ? `DWT ${item.metadata.deadweight}` : "", item.metadata?.year_built ? `Yapım ${item.metadata.year_built}` : ""].filter(Boolean);
+        const relationship = item.relationship || {};
+        return `<article><div class="mp-history-card-head"><strong>${escape(item.vessel_name)}</strong><span class="mp-status-pill is-${escape(item.verification_status)}">${escape(statusLabel(item.verification_status))}</span></div><span>IMO ${escape(item.imo_number)}</span><div class="mp-vessel-facts">${facts.map((fact) => `<span>${escape(fact)}</span>`).join("")}</div><div class="mp-vessel-relationship">${escape(relationshipLabel(relationship.relationship_role))} · ${escape(statusLabel(relationship.verification_status))}</div></article>`;
+      }).join("") : '<div class="mp-empty">Henüz gemi kaydı bulunmuyor. IMO numarasıyla ilk geminizi ekleyebilirsiniz.</div>'}`;
+    }
+    if (panel === "company") {
+      const business = state.data.partner || {};
+      setAvatar($("[data-mp-logo-preview]", root), business);
+      const form = $("[data-mp-profile-form]", root);
+      ["display_name", "legal_name", "country", "city", "phone", "description"].forEach((key) => { if (form.elements[key]) form.elements[key].value = business[key] || ""; });
+    }
+    if (panel === "verification") {
+      const verification = state.data.verification || {};
+      const requirements = [
+        [verification.company_active, "Aktif şirket hesabı", "Şirket hesabı askıda veya arşivde olmamalıdır."],
+        [verification.company_verified, "Şirket kimliği doğrulaması", "Yasal şirket ve yetkili bilgileri yönetim tarafından doğrulanır."],
+        [verification.cycle_current, "Güncel doğrulama döngüsü", "Doğrulama süresi dolduğunda yeniden kontrol gerekir."],
+        [verification.recruiter_authorized, "Yetkili işe alım temsilcisi", "İlan ve aday işlemleri yalnız yetkili şirket temsilcileri tarafından yapılır."]
+      ];
+      $("[data-mp-verification-list]", root).innerHTML = requirements.map(([complete, title, copy]) => `<article class="${complete ? "is-complete" : ""}"><span aria-hidden="true">${complete ? "✓" : "!"}</span><span><strong>${escape(title)}</strong><small>${escape(copy)}</small></span><b>${complete ? "Tamam" : "Eksik"}</b></article>`).join("");
+      const cycle = verification.cycle;
+      $("[data-mp-verification-detail]", root).textContent = verification.ready_for_hiring
+        ? `Şirketiniz doğrulanmış ve işe alım işlemlerine yetkilidir.${cycle?.expires_at ? ` Güncel doğrulama ${dateTime(cycle.expires_at)} tarihine kadar geçerlidir.` : ""}`
+        : "Eksik bir doğrulama adımı varsa yeni ilan ve yetkili işe alım işlemleri güvenlik amacıyla sınırlandırılır. Düzenleme için AllonaHub destek ekibiyle iletişime geçin.";
+    }
   }
 
   function renderHistory(root, panel) {
@@ -264,14 +353,19 @@
     if (wrap.hidden) state.lastFocus = trigger || document.activeElement;
     const body = $("[data-mp-drawer-body]");
     $("[data-mp-drawer-title]").textContent = titles[panel];
-    $("[data-mp-back]").hidden = false;
+    $("[data-mp-back]").hidden = standalonePanels.has(panel);
     body.replaceChildren(template.content.cloneNode(true));
     fillJobs(body);
     fillCandidates(body);
     fillTeam(body);
     fillHiringRooms(body);
     if (panel === "refresh" || panel === "evidence" || panel === "review") $$('input[name="expires_at"]', body).forEach((input) => { input.value = toInputDate(); });
+    if (panel === "job-create") {
+      const expiry = $('input[name="expires_at"]', body);
+      if (expiry) expiry.value = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    }
     if (panel === "evidence") addRequirement(body);
+    renderWorkspacePanel(body, panel);
     renderHistory(body, panel);
     wrap.hidden = false;
     document.body.style.overflow = "hidden";
@@ -299,10 +393,40 @@
 
   function render() {
     Object.entries(state.data.counters || {}).forEach(([key, value]) => { const target = $(`[data-mp-count="${key}"]`); if (target) target.textContent = Number(value || 0).toLocaleString("tr-TR"); });
-    $("[data-mp-account]").textContent = state.data.partner?.display_name || "Şirket hesabı";
+    const business = state.data.partner || {};
+    const verification = state.data.verification || {};
+    $("[data-mp-company-name]").textContent = business.display_name || "Şirket hesabı";
+    setAvatar($("[data-mp-company-avatar]"), business);
+    const badge = $("[data-mp-verification-badge]");
+    badge.classList.toggle("is-verified", Boolean(verification.ready_for_hiring));
+    badge.textContent = verification.ready_for_hiring ? "✓" : "!";
+    badge.setAttribute("aria-label", verification.ready_for_hiring ? "Doğrulanmış şirket. Doğrulama ayrıntılarını aç" : "Doğrulama bekliyor. Şartları aç");
+    const strip = $("[data-mp-verification-strip]");
+    strip.classList.toggle("is-verified", Boolean(verification.ready_for_hiring));
+    $("[data-mp-verification-title]").textContent = verification.ready_for_hiring ? "Doğrulanmış denizcilik şirketi" : "Şirket doğrulama adımları tamamlanmalı";
+    $("[data-mp-verification-copy]").textContent = verification.ready_for_hiring ? "İlan ve işe alım temsilcisi yetkileriniz güncel." : "Eksik şartları görmek için doğrulama durumunu açın.";
+    $("[data-mp-hero-eyebrow]").textContent = verification.ready_for_hiring ? "Doğrulanmış denizcilik şirketi çalışma alanı" : "Denizcilik şirketi doğrulama çalışma alanı";
     const company = $("[data-mp-company]");
     company.replaceChildren(...(state.data.memberships || []).map((item) => option(item.id, item.display_name)));
     company.value = state.partnerId;
+    const counts = {
+      jobs: (state.data.jobs || []).length,
+      candidates: (state.data.candidate_rooms || []).length,
+      applications: new Set((state.data.candidate_rooms || []).map((item) => item.hiring_room_id).filter(Boolean)).size,
+      notifications: (state.data.partner_notifications || []).length,
+      vessels: (state.data.vessels || []).length
+    };
+    Object.entries(counts).forEach(([key, value]) => {
+      const target = $(`[data-mp-nav-count="${key}"]`);
+      if (target) target.textContent = `${Number(value).toLocaleString("tr-TR")} ${key === "candidates" ? "aday" : key === "applications" ? "dosya" : key === "notifications" ? "yeni" : key === "vessels" ? "gemi" : "kayıt"}`;
+    });
+    const canCreateJob = !state.data.restricted && verification.ready_for_hiring;
+    $$('[data-mp-open="job-create"]').forEach((button) => {
+      button.dataset.mpBlocked = canCreateJob ? "false" : "true";
+      button.setAttribute("aria-disabled", String(!canCreateJob));
+      button.title = canCreateJob ? "Yeni denizcilik ilanı oluştur" : "İlan oluşturmak için şirket ve temsilci doğrulaması tamamlanmalıdır.";
+    });
+    $$('[data-mp-center]').forEach((button) => { button.disabled = Boolean(state.data.restricted); });
     fillJobs(document, true);
     renderMatches();
     renderCounters(document);
@@ -322,6 +446,156 @@
     button.setAttribute("aria-busy", "true");
     try { await task(); }
     finally { button.disabled = false; button.removeAttribute("aria-busy"); }
+  }
+
+  async function prepareLogo(file) {
+    if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type || "")) throw new Error("JPG, PNG veya WebP biçiminde bir şirket görseli seçin.");
+    if (file.size > 8 * 1024 * 1024) throw new Error("Seçilen görsel en fazla 8 MB olabilir.");
+    const sourceUrl = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const node = new Image();
+        node.onload = () => resolve(node);
+        node.onerror = () => reject(new Error("Şirket görseli okunamadı."));
+        node.src = sourceUrl;
+      });
+      const size = Math.min(image.naturalWidth, image.naturalHeight);
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 640;
+      const context = canvas.getContext("2d", { alpha: false });
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, 640, 640);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, (image.naturalWidth - size) / 2, (image.naturalHeight - size) / 2, size, size, 0, 0, 640, 640);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", .9));
+      if (!blob) throw new Error("Şirket görseli hazırlanamadı.");
+      return blob;
+    } finally {
+      URL.revokeObjectURL(sourceUrl);
+    }
+  }
+
+  async function uploadLogo(file) {
+    if (!App.supabase?.storage) throw new Error("Güvenli görsel yükleme bağlantısı hazırlanamadı.");
+    const blob = await prepareLogo(file);
+    const intent = await api("/v1/maritime/partner-center/profile/logo-intent", { method: "POST", body: { partner_id: state.partnerId, mime_type: "image/webp" } });
+    const { error } = await App.supabase.storage.from(intent.bucket).uploadToSignedUrl(intent.path, intent.token, blob, { contentType: "image/webp", upsert: true });
+    if (error) throw new Error(error.message || "Şirket görseli yüklenemedi.");
+    state.pendingLogoPath = intent.path;
+    const preview = $("[data-mp-logo-preview]", $("[data-mp-drawer-body]"));
+    if (preview) preview.innerHTML = `<img src="${escape(URL.createObjectURL(blob))}" alt="">`;
+    alert("Şirket görseli hazırlandı. Değişikliği tamamlamak için profili kaydedin.", "success");
+  }
+
+  async function submitProfile(form) {
+    const data = new FormData(form);
+    const body = { partner_id: state.partnerId };
+    ["display_name", "legal_name", "country", "city", "phone", "description"].forEach((key) => { body[key] = String(data.get(key) || "").trim() || null; });
+    if (state.pendingLogoPath) body.logo_path = state.pendingLogoPath;
+    await api("/v1/maritime/partner-center/profile", { method: "PATCH", body });
+    state.pendingLogoPath = null;
+    await load(state.partnerId);
+    openPanel("company", state.lastFocus);
+    alert("Şirket profili güncellendi.", "success");
+  }
+
+  async function submitJob(form) {
+    const data = new FormData(form);
+    const certificates = selectedValues(form, "certificates");
+    if (!certificates.length) throw new Error("En az bir zorunlu sertifika seçin.");
+    const language = String(data.get("language") || "");
+    const expiry = new Date(`${data.get("expires_at")}T23:59:59`);
+    const payload = {
+      partner_id: state.partnerId,
+      client_listing_id: clientId(),
+      title: data.get("title"),
+      summary: data.get("summary"),
+      location_label: data.get("location_label") || "",
+      detail_label: data.get("detail_label") || "",
+      rank_code: data.get("rank_code"),
+      required_certificate_codes: certificates,
+      minimum_sea_service_days: Number(data.get("minimum_sea_service_days") || 0),
+      required_languages: language ? [{ language, level: data.get("language_level") || "B1" }] : [],
+      medical_required: data.get("medical_required") === "on",
+      available_now_required: data.get("available_now_required") === "on",
+      expires_at: expiry.toISOString()
+    };
+    await api("/v1/maritime/partner-center/jobs", { method: "POST", body: payload });
+    await load(state.partnerId);
+    openPanel("jobs", state.lastFocus);
+    alert("İlanınız doğrulama ve yayın incelemesine gönderildi.", "success");
+  }
+
+  function vesselNumber(value) {
+    const normalized = String(value ?? "").trim().replace(",", ".");
+    if (!normalized) return null;
+    const number = Number(normalized);
+    return Number.isFinite(number) && number >= 0 ? number : null;
+  }
+
+  async function lookupVessel(form) {
+    const imo = String(form.elements.imo_number.value || "").replace(/\D/g, "").slice(0, 7);
+    form.elements.imo_number.value = imo;
+    if (!/^\d{7}$/.test(imo)) throw new Error("Yedi haneli geçerli bir IMO numarası girin.");
+    const button = $("[data-mp-vessel-lookup]", form);
+    const result = $("[data-mp-vessel-lookup-result]", form);
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    result.hidden = false;
+    result.classList.remove("is-error");
+    result.textContent = "Gemi bilgileri aranıyor...";
+    try {
+      const payload = await api(`/v1/maritime/vessels/${encodeURIComponent(imo)}`);
+      const vessel = payload.vessel || {};
+      const values = {
+        vessel_name: vessel.vessel_name,
+        vessel_type: vessel.vessel_type,
+        flag_state: vessel.flag,
+        mmsi: vessel.mmsi,
+        call_sign: vessel.call_sign,
+        gross_tonnage: vessel.grt,
+        deadweight: vessel.dwt,
+        year_built: vessel.build_year,
+        provider: vessel.provider
+      };
+      Object.entries(values).forEach(([key, value]) => { if (form.elements[key] && value !== null && value !== undefined && value !== "") form.elements[key].value = value; });
+      result.textContent = `${vessel.vessel_name || `IMO ${imo}`} bilgileri getirildi. Eksik alanları kontrol edip tamamlayın.`;
+    } catch (error) {
+      result.classList.add("is-error");
+      result.textContent = `${error.message || "Gemi bilgileri getirilemedi."} Zorunlu alanları elle doldurarak kayda devam edebilirsiniz.`;
+    } finally {
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+    }
+  }
+
+  async function submitVessel(form) {
+    const data = new FormData(form);
+    const validFrom = String(data.get("valid_from") || "") || null;
+    const validUntil = String(data.get("valid_until") || "") || null;
+    if (validFrom && validUntil && validUntil < validFrom) throw new Error("İlişki bitiş tarihi başlangıç tarihinden önce olamaz.");
+    const body = {
+      partner_id: state.partnerId,
+      imo_number: String(data.get("imo_number") || "").replace(/\D/g, "").slice(0, 7),
+      vessel_name: String(data.get("vessel_name") || "").trim(),
+      vessel_type: String(data.get("vessel_type") || "").trim(),
+      flag_state: String(data.get("flag_state") || "").trim(),
+      relationship_role: data.get("relationship_role"),
+      mmsi: String(data.get("mmsi") || "").trim() || null,
+      call_sign: String(data.get("call_sign") || "").trim() || null,
+      gross_tonnage: vesselNumber(data.get("gross_tonnage")),
+      deadweight: vesselNumber(data.get("deadweight")),
+      year_built: vesselNumber(data.get("year_built")),
+      valid_from: validFrom,
+      valid_until: validUntil,
+      provider: String(data.get("provider") || "").trim() || null
+    };
+    await api("/v1/maritime/partner-center/vessels", { method: "POST", body });
+    await load(state.partnerId);
+    openPanel("vessels", state.lastFocus);
+    alert("Gemi kaydı oluşturuldu ve şirket-gemi ilişkisi doğrulamaya gönderildi.", "success");
   }
 
   async function submitRefresh(form) {
@@ -416,6 +690,33 @@
   }
 
   document.addEventListener("click", async (event) => {
+    const verificationBadge = event.target.closest("[data-mp-verification-badge]");
+    if (verificationBadge) {
+      event.preventDefault();
+      event.stopPropagation();
+      openPanel("verification", verificationBadge);
+      return;
+    }
+    const profileButton = event.target.closest("[data-mp-company-profile], [data-mp-account]");
+    if (profileButton) {
+      openPanel("company", profileButton);
+      return;
+    }
+    const workspaceButton = event.target.closest("[data-mp-open]");
+    if (workspaceButton) {
+      if (workspaceButton.dataset.mpBlocked === "true") {
+        alert("İlan oluşturmak için şirket doğrulaması ve işe alım temsilcisi yetkisi tamamlanmalıdır.");
+        return;
+      }
+      openPanel(workspaceButton.dataset.mpOpen, workspaceButton);
+      return;
+    }
+    const vesselLookup = event.target.closest("[data-mp-vessel-lookup]");
+    if (vesselLookup) {
+      try { await lookupVessel(vesselLookup.closest("form")); }
+      catch (error) { alert(error.message || "Gemi bilgileri getirilemedi."); }
+      return;
+    }
     const centerButton = event.target.closest("[data-mp-center]");
     if (centerButton) openCenter(centerButton);
     const panelButton = event.target.closest("[data-mp-panel]");
@@ -463,7 +764,7 @@
 
   document.addEventListener("submit", async (event) => {
     const form = event.target;
-    const handler = form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : null;
+    const handler = form.matches("[data-mp-job-form]") ? submitJob : form.matches("[data-mp-vessel-form]") ? submitVessel : form.matches("[data-mp-profile-form]") ? submitProfile : form.matches("[data-mp-refresh-form]") ? submitRefresh : form.matches("[data-mp-evidence-template-form]") ? submitEvidenceTemplate : form.matches("[data-mp-evidence-request-form]") ? submitEvidenceRequest : form.matches("[data-mp-sla-form]") ? submitSla : form.matches("[data-mp-sla-start-form]") ? submitSlaStart : form.matches("[data-mp-sla-extend-form]") ? submitSlaExtend : form.matches("[data-mp-handover-form]") ? submitHandover : form.matches("[data-mp-review-form]") ? submitReview : form.matches("[data-mp-reference-form]") ? submitEmployerReference : null;
     if (!handler) return;
     event.preventDefault();
     try { await submitWithButton(form, () => handler(form)); }
@@ -471,6 +772,11 @@
   });
 
   document.addEventListener("change", (event) => {
+    if (event.target.matches("[data-mp-logo-input]")) {
+      const file = event.target.files?.[0];
+      if (file) uploadLogo(file).catch((error) => alert(error.message || "Şirket görseli yüklenemedi."));
+      return;
+    }
     if (!event.target.matches('[name^="na_"]')) return;
     const row = event.target.closest(".mp-rating-row");
     $$('.mp-stars input[type="radio"]', row).forEach((input) => { input.disabled = event.target.checked; input.required = !event.target.checked; if (event.target.checked) input.checked = false; });
@@ -486,6 +792,11 @@
   $("[data-mp-refresh]").addEventListener("click", () => load(state.partnerId).then(() => alert("Panel verileri yenilendi.", "success")).catch((error) => alert(error.message)));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !$("[data-mp-drawer-wrap]").hidden) closePanel();
+    if (event.target.matches?.("[data-mp-verification-badge]") && ["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      openPanel("verification", event.target);
+      return;
+    }
     const tab = event.target.closest?.("[data-mp-center-tab]");
     if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();

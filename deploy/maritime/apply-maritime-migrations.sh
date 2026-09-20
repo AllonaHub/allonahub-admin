@@ -40,6 +40,7 @@ MIGRATIONS=(
   "$ROOT_DIR/supabase/migrations/20260920153000_create_maripartner_personnel_center.sql"
   "$ROOT_DIR/supabase/migrations/20260920190000_expand_maripartner_trust_reference_layer.sql"
   "$ROOT_DIR/supabase/migrations/20260920213000_sync_verified_partner_account_roles.sql"
+  "$ROOT_DIR/supabase/migrations/20260920223000_create_maripartner_company_logos.sql"
 )
 
 if [ -z "$DB_URL" ]; then

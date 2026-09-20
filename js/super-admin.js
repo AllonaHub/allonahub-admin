@@ -2100,8 +2100,19 @@
       `partner ${escape(item.partner_id || "-")}`,
       item.status === "active" ? "low" : "medium"
     ));
+    const vesselRows = (payload.vessel_relationships || []).map((item) => {
+      const vessel = item.vessel || {};
+      const actions = `<button type="button" data-maripartner-admin-action="vessel_verify" data-resource-id="${escape(item.id)}">Doğrula</button> <button type="button" data-maripartner-admin-action="vessel_reject" data-resource-id="${escape(item.id)}">Reddet</button>`;
+      return ownerLine(
+        `${vessel.vessel_name || "Gemi"} · IMO ${item.imo_number || "-"}`,
+        `${escape(vessel.vessel_type || "Gemi tipi belirtilmedi")} / ${escape(vessel.flag_state || "Bayrak belirtilmedi")} / ${escape(item.company_name || "-")} / ${escape(item.relationship_role || "-")}`,
+        actions,
+        item.verification_status === "disputed" ? "critical" : "medium"
+      );
+    });
     ownerSetOutput([
-      `<div class="sa-marsoh-stats"><div><strong>${formatNumber((payload.businesses || []).length)}</strong><span>Denizcilik şirketi</span></div><div><strong>${formatNumber((payload.employer_references || []).length)}</strong><span>Referans incelemesi</span></div><div><strong>${formatNumber((payload.reference_disputes || []).length)}</strong><span>Açık itiraz</span></div><div><strong>${formatNumber((payload.sla_instances || []).filter((item) => item.status === "overdue").length)}</strong><span>Geciken adım</span></div></div>`,
+      `<div class="sa-marsoh-stats"><div><strong>${formatNumber((payload.businesses || []).length)}</strong><span>Denizcilik şirketi</span></div><div><strong>${formatNumber((payload.vessel_relationships || []).length)}</strong><span>Gemi doğrulaması</span></div><div><strong>${formatNumber((payload.employer_references || []).length)}</strong><span>Referans incelemesi</span></div><div><strong>${formatNumber((payload.sla_instances || []).filter((item) => item.status === "overdue").length)}</strong><span>Geciken adım</span></div></div>`,
+      marsohPanel("Gemi doğrulama kuyruğu", "Partnerin IMO ile kaydettiği gemi bilgisi sahipliği kanıtlamaz. Şirket-gemi ilişkisini güvenilir kaynağa göre doğrulayın veya reddedin.", vesselRows.join("") || ownerEmpty("İnceleme bekleyen gemi kaydı yok.")),
       marsohPanel("Tarihsel gemi-şirket yetkisi", "Güncel sahiplik tek başına geçmiş çalışma dönemini doğrulamaz. IMO, şirket rolü ve geçerli tarih aralığını resmî kanıta göre kaydedin.", `<form class="sa-inline-form" data-maripartner-relationship-form><select name="partner_id" required><option value="">Şirket seçin</option>${(payload.businesses || []).map((item) => `<option value="${escape(item.id)}">${escape(item.display_name || item.partner_code)}</option>`).join("")}</select><input name="imo_number" inputmode="numeric" pattern="[0-9]{7}" maxlength="7" placeholder="IMO (7 hane)" required><input name="company_name" maxlength="240" placeholder="Tarihsel şirket adı" required><select name="relationship_role"><option value="employer">İşveren</option><option value="owner">Donatan</option><option value="manager">Yönetici</option><option value="operator">Operatör</option><option value="crewing_agent">Crewing agent</option><option value="authorized_representative">Yetkili temsilci</option></select><input type="date" name="valid_from"><input type="date" name="valid_until"><select name="verification_status"><option value="admin_verified">Admin doğruladı</option><option value="registry_verified">Sicil doğruladı</option></select><input name="reason" minlength="6" maxlength="1000" placeholder="Kanıt ve karar gerekçesi" required><button type="submit">Tarihsel Yetkiyi Kaydet</button></form>`),
       marsohPanel("Denizcilik şirketleri", "MariPartner erişimi yalnız aktif ve doğrulanmış şirket üyelikleriyle açılır.", businessRows.join("") || ownerEmpty("Denizcilik şirketi bulunamadı.")),
       marsohPanel("Doğrulanmış işveren referansları", "Adaya ve kamuya kapalı; tarihsel çalışma ilişkisi, moderasyon ve ikinci inceleme korumalıdır.", referenceRows.join("") || ownerEmpty("İnceleme bekleyen referans yok.")),
@@ -2119,7 +2130,7 @@
   async function runMariPartnerAdminAction(button) {
     const action = button.dataset.maripartnerAdminAction;
     const resourceId = button.dataset.resourceId;
-    const labels = { cancel_refresh: "havuz güncellemesini iptal et", cancel_evidence: "kanıt talebini iptal et", revoke_pass: "inceleme erişimini iptal et", deactivate_sla: "SLA kuralını pasifleştir", reference_approve: "işveren referansını onayla", reference_second_approve: "işveren referansına bağımsız ikinci onay ver", reference_reject: "işveren referansını reddet", reference_changes: "işveren referansı için değişiklik iste" };
+    const labels = { cancel_refresh: "havuz güncellemesini iptal et", cancel_evidence: "kanıt talebini iptal et", revoke_pass: "inceleme erişimini iptal et", deactivate_sla: "SLA kuralını pasifleştir", reference_approve: "işveren referansını onayla", reference_second_approve: "işveren referansına bağımsız ikinci onay ver", reference_reject: "işveren referansını reddet", reference_changes: "işveren referansı için değişiklik iste", vessel_verify: "şirket-gemi ilişkisini doğrula", vessel_reject: "şirket-gemi ilişkisini reddet" };
     const message = `MariPartner işlemi: ${labels[action] || action}`;
     await runConfirmed(message, async (reason) => {
       await api("/v1/admin/maripartner/action", { method: "POST", body: { action, resource_id: resourceId, reason } });

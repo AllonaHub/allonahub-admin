@@ -135,6 +135,7 @@ test("MariPartner frontend exposes one Personel Merkezi with three tabs and pres
   assert.equal((html.match(/data-mp-center(?:\s|>)/g) || []).length, 1);
   assert.match(html, /id="mpCenterTemplate"/);
   assert.match(html, /data-mp-main-counter/);
+  assert.doesNotMatch(html, /class="mp-personnel"/);
   assert.match(html, />Personel Merkezi</);
   for (const label of ["Havuzu Güncelle", "Kanıt Kontrolü", "Süreç Süreleri", "Dosya Devri", "Güvenli İnceleme"]) assert.match(html, new RegExp(label));
   for (const label of ["İşlemler", "Güven", "Yönetim", "Firmalara Özel Doğrulanmış Referans"]) assert.match(html, new RegExp(label));
@@ -149,6 +150,60 @@ test("MariPartner frontend exposes one Personel Merkezi with three tabs and pres
   assert.match(css, /mp-rating-row/);
   assert.match(js, /referenceCategories/);
   assert.match(js, /data-mp-reference-match/);
+});
+
+test("MariPartner vessel registry uses IMO lookup and keeps company ownership pending verification", () => {
+  const html = read("pages/partner/maripartner.html");
+  const js = read("js/maripartner.js");
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  for (const label of ["Gemilerim", "Gemi Ekle", "Bilgileri Getir", "Gemiyi Doğrulamaya Gönder"]) assert.match(html, new RegExp(label));
+  assert.match(html, /data-mp-vessel-form/);
+  assert.match(html, /name="imo_number"[^>]+pattern="\[0-9\]\{7\}"/);
+  assert.match(html, /name="relationship_role"/);
+  assert.match(js, /\/v1\/maritime\/vessels\//);
+  assert.match(js, /\/v1\/maritime\/partner-center\/vessels/);
+  assert.match(route, /isValidImoNumber\(value\.imo_number\)/);
+  assert.match(route, /requirePartner\(request, "vessel\.create", body\.partner_id, \{ manager: true \}\)/);
+  assert.match(route, /source_type: "company_attestation"/);
+  assert.match(route, /verification_status: "partner_asserted"/);
+  assert.match(route, /maripartner\.vessel_submitted/);
+  assert.match(route, /\.eq\("partner_id", partnerId\)/);
+  assert.match(route, /vessel_relationships/);
+  assert.match(route, /vessel_verify/);
+  assert.match(route, /vessel_reject/);
+  assert.match(route, /vessel_verification_decision/);
+  const admin = read("js/super-admin.js");
+  assert.match(admin, /Gemi doğrulama kuyruğu/);
+  assert.match(admin, /data-maripartner-admin-action="vessel_verify"/);
+  assert.match(admin, /data-maripartner-admin-action="vessel_reject"/);
+});
+
+test("MariPartner exposes a real company workspace, moderated job entry and verified identity controls", () => {
+  const html = read("pages/partner/maripartner.html");
+  const js = read("js/maripartner.js");
+  const css = read("css/maripartner.css");
+  const route = read("backend/src/routes/maritime-partner-center.js");
+  const migration = read("supabase/migrations/20260920223000_create_maripartner_company_logos.sql");
+  for (const label of ["Yeni İlan Oluştur", "İlanlar", "Adaylar", "Başvurular", "Bildirimler", "Şirket Profili", "MarSoh"]) assert.match(html, new RegExp(label));
+  assert.match(html, /data-mp-company-name/);
+  assert.match(html, /data-mp-company-avatar/);
+  assert.match(html, /data-mp-verification-badge/);
+  assert.match(html, /data-mp-job-form/);
+  assert.match(html, /data-mp-logo-input/);
+  assert.match(js, /\/v1\/maritime\/partner-center\/jobs/);
+  assert.match(js, /profile\/logo-intent/);
+  assert.match(js, /uploadToSignedUrl/);
+  assert.match(route, /requirePartnerMembership/);
+  assert.match(route, /partnerVerificationSummary/);
+  assert.match(route, /createSignedUploadUrl/);
+  assert.match(route, /ensureHiringAuthority/);
+  assert.match(route, /maripartner\.job_submitted/);
+  assert.match(route, /maripartner\.profile_updated/);
+  assert.match(migration, /maritime-partner-logos/);
+  assert.match(migration, /array\['image\/webp'\]/);
+  assert.doesNotMatch(migration, /create policy/i);
+  assert.match(css, /mp-command-bar/);
+  assert.match(css, /mp-logo-editor/);
 });
 
 test("historical employer matching requires IMO and overlapping verified authority", () => {
