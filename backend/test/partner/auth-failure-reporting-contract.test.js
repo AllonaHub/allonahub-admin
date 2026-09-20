@@ -37,3 +37,18 @@ test("super admin exposes the 90-day auth failure report", async () => {
   assert.match(script, /\/v1\/control-center\/auth-failures\?days=90&limit=300/);
   assert.match(script, /Son 90 gündeki giriş, kayıt ve e-posta teslim sorunları/);
 });
+
+test("customer registration reports email throttling and supports secure confirmation resend", async () => {
+  const [routes, page] = await Promise.all([
+    source("backend/src/routes/index.js"),
+    source("pages/account/user.html")
+  ]);
+  assert.match(routes, /error: "AUTH_EMAIL_RATE_LIMITED"/);
+  assert.match(routes, /app\.post\("\/v1\/auth\/resend-confirmation"/);
+  assert.match(routes, /verifyTurnstile\(request, "resend_confirmation"/);
+  assert.match(routes, /supabasePublic\.auth\.resend\(\{/);
+  assert.match(routes, /Do not reveal whether an address exists in Auth/);
+  assert.match(page, /id="resendConfirmationBtn"/);
+  assert.match(page, /authApi\("\/v1\/auth\/resend-confirmation"/);
+  assert.match(page, /AUTH_EMAIL_RATE_LIMITED/);
+});

@@ -80,6 +80,7 @@ test("authentication failure classifier reports actionable login, registration a
   assert.equal(classifyAuthFailure({ message: "535 Authentication credentials invalid" }, "password_reset").reason_code, "email_delivery_failed");
   assert.equal(classifyAuthFailure({ code: "ACCOUNT_DEVICE_SECURITY_UNAVAILABLE" }, "register").reason_code, "device_security_unavailable");
   assert.equal(classifyAuthFailure({ message: "Turnstile challenge failed" }, "register").reason_code, "robot_verification_failed");
+  assert.equal(classifyAuthFailure({ code: "over_email_send_rate_limit", message: "Email rate limit exceeded" }, "register").reason_code, "rate_limited");
 });
 
 test("partner password reset eligibility allows active partner businesses only", async () => {

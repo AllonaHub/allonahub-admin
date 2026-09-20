@@ -137,6 +137,11 @@ const authForgotPasswordSchema = z.object({
   turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
+const authResendConfirmationSchema = z.object({
+  email: emailSchema,
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
 const PARTNER_PASSWORD_RESET_MESSAGE = "Eğer bu e-posta aktif bir partner hesabına kayıtlıysa şifre sıfırlama bağlantısı gönderildi.";
 
 const auditQuerySchema = z.object({
@@ -1499,6 +1504,7 @@ const AUTH_FAILURE_ACTIONS = Object.freeze([
   "auth.register_failed",
   "auth.register_device_denied",
   "auth.register_device_binding_failed",
+  "auth.confirmation_resend_failed",
   "auth.password_reset_delivery_failed",
   "partner.password_reset_delivery_failed"
 ]);
@@ -1526,14 +1532,14 @@ export function classifyAuthFailure(error, stage = "unknown") {
   if (/invalid_credentials|invalid login credentials|invalid password|wrong password/.test(raw)) {
     return { reason_code: "invalid_credentials", category: "credentials", summary: "E-posta veya şifre eşleşmedi." };
   }
+  if (/rate|too many|429|limit/.test(raw)) {
+    return { reason_code: "rate_limited", category: "rate_limit", summary: "Çok fazla deneme nedeniyle işlem sınırlandı." };
+  }
   if (/smtp|535|mail.*send|email.*deliver|confirmation.*email/.test(raw)) {
     return { reason_code: "email_delivery_failed", category: "email_delivery", summary: "Doğrulama veya sıfırlama e-postası gönderilemedi." };
   }
   if (/turnstile|robot doğrulama|challenge/.test(raw)) {
     return { reason_code: "robot_verification_failed", category: "robot_verification", summary: "Robot doğrulaması tamamlanamadı." };
-  }
-  if (/rate|too many|429|limit/.test(raw)) {
-    return { reason_code: "rate_limited", category: "rate_limit", summary: "Çok fazla deneme nedeniyle işlem sınırlandı." };
   }
   if (/already registered|user_already_exists|already exists|email_exists/.test(raw)) {
     return { reason_code: "account_already_exists", category: "registration", summary: "Bu e-posta ile daha önce hesap oluşturulmuş." };
@@ -11107,6 +11113,13 @@ export function registerRoutes(app) {
       if (failure.reason_code === "email_delivery_failed") {
         return reply.code(503).send({ ok: false, error: "AUTH_EMAIL_DELIVERY_FAILED", message: "Doğrulama e-postası şu anda gönderilemedi. Lütfen kısa süre sonra yeniden deneyin." });
       }
+      if (failure.reason_code === "rate_limited") {
+        return reply.code(429).send({
+          ok: false,
+          error: "AUTH_EMAIL_RATE_LIMITED",
+          message: "Doğrulama e-postası gönderim sınırına ulaşıldı. Bu hesap henüz oluşturulmadı; kısa süre sonra yeniden deneyin veya Google ile kayıt olun."
+        });
+      }
       return reply.code(400).send({ ok: false, error: "AUTH_REGISTRATION_FAILED", message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
     }
 
@@ -11160,6 +11173,83 @@ export function registerRoutes(app) {
       user: publicAuthUser(data.user),
       session: data.session || null
     });
+  });
+
+  app.post("/v1/auth/resend-confirmation", {
+    config: { rateLimit: { max: 3, timeWindow: "1 hour" } }
+  }, async (request, reply) => {
+    const payload = parseAuthPayload(authResendConfirmationSchema, request.body);
+    const email = authEmail(payload.email);
+    try {
+      await verifyTurnstile(request, "resend_confirmation", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.confirmation_resend_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
+
+    const redirectTo = new URL("/pages/account/user.html?tab=login", `${config.siteUrl}/`).href;
+    const { error } = await supabasePublic.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: redirectTo }
+    });
+
+    if (error) {
+      const failure = await recordAuthFailure({
+        request,
+        action: "auth.confirmation_resend_failed",
+        email,
+        stage: "confirmation_resend",
+        error,
+        statusCode: error.status || 400
+      });
+      if (failure.reason_code === "rate_limited") {
+        return reply.code(429).send({
+          ok: false,
+          error: "AUTH_EMAIL_RATE_LIMITED",
+          message: "Doğrulama e-postası gönderim sınırına ulaşıldı. Lütfen daha sonra yeniden deneyin."
+        });
+      }
+      if (failure.reason_code === "email_delivery_failed") {
+        return reply.code(503).send({
+          ok: false,
+          error: "AUTH_EMAIL_DELIVERY_FAILED",
+          message: "Doğrulama e-postası şu anda gönderilemedi. Lütfen daha sonra yeniden deneyin."
+        });
+      }
+      // Do not reveal whether an address exists in Auth.
+      return reply.send({
+        ok: true,
+        message: "Hesap doğrulama bekliyorsa yeni e-posta gönderim isteği alındı."
+      });
+    }
+
+    await auditEvent({
+      request,
+      actorId: await resolveAuthActorId(email),
+      actorRole: "customer",
+      action: "auth.confirmation_resend_requested",
+      severity: "info",
+      metadata: {
+        email_hash: authEmailHash(email),
+        email_masked: maskAuthEmail(email),
+        email_domain: authEmailDomain(email)
+      },
+      evidenceTags: ["auth", "email_confirmation", "resend"],
+      retentionDays: 90
+    });
+
+    return {
+      ok: true,
+      message: "Hesap doğrulama bekliyorsa yeni e-posta gönderim isteği alındı."
+    };
   });
 
   app.post("/v1/auth/device/claim", {

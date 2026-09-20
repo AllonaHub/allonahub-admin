@@ -444,6 +444,51 @@ body.auth-page .security-challenge {
   margin: 4px 0 !important;
 }
 
+body.auth-page .auth-verification-help {
+  align-items: center;
+  background: color-mix(in srgb, var(--ah-bg-strong, #ffffff) 88%, var(--ah-primary, #00d5ff) 12%);
+  border: 1px solid color-mix(in srgb, var(--ah-primary, #00d5ff) 55%, var(--ah-line, transparent));
+  border-left: 4px solid var(--ah-primary-strong, #087ea4);
+  color: var(--ah-ink, #123247);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 12px 0;
+  padding: 12px 14px;
+}
+
+body.auth-page .auth-verification-help[hidden] {
+  display: none !important;
+}
+
+body.auth-page .auth-verification-help strong,
+body.auth-page .auth-verification-help p {
+  color: inherit;
+  margin: 0;
+}
+
+body.auth-page .auth-verification-help p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+body.auth-page .auth-resend-confirmation {
+  min-height: 44px;
+  padding: 9px 13px;
+  width: auto;
+}
+
+@media (max-width: 680px) {
+  body.auth-page .auth-verification-help {
+    grid-template-columns: 1fr;
+  }
+
+  body.auth-page .auth-resend-confirmation {
+    width: 100%;
+  }
+}
+
 body.auth-page :where(#login, #register, #forgot) > .oauth-divider {
   display: none;
 }

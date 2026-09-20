@@ -854,7 +854,7 @@ a{
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
-  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260917-auth-layout1">
+  <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260920-authmail1">
   <link rel="stylesheet" href="../../css/allona-auth-field-contrast.css?v=20260914-auth-fields1">
   <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry6">
 </head>
@@ -895,6 +895,13 @@ a{
       <button id="authTabForgot" class="tab" type="button" role="tab" aria-selected="false" aria-controls="forgot" data-auth-tab="forgot" onclick="openTab('forgot', event)">Şifremi Unuttum</button>
     </div>
     <div id="authStatus" class="auth-feedback" role="status" aria-live="polite" hidden></div>
+    <div id="verificationHelp" class="auth-verification-help" role="region" aria-live="polite" hidden>
+      <div>
+        <strong data-auth-text="verificationTitle">E-posta doğrulaması bekleniyor</strong>
+        <p id="verificationHelpText" data-auth-text="verificationHelp">Gelen kutusu ve spam klasörünü kontrol edin. Bağlantı gelmediyse yeniden gönderin.</p>
+      </div>
+      <button id="resendConfirmationBtn" class="btn auth-resend-confirmation" type="button" onclick="resendConfirmation()" data-auth-text="resendConfirmation">Doğrulama e-postasını yeniden gönder</button>
+    </div>
 
     <!-- LOGIN -->
     <div id="login" class="form active" role="tabpanel" aria-labelledby="authTabLogin">
@@ -1712,6 +1719,9 @@ function registerFailureMessage(error){
   if(code==="AUTH_EMAIL_DELIVERY_FAILED"){
     return original || "Doğrulama e-postası şu anda gönderilemedi. Lütfen kısa süre sonra yeniden deneyin.";
   }
+  if(code==="AUTH_EMAIL_RATE_LIMITED"){
+    return original || authText("emailRateLimited","Doğrulama e-postası gönderim sınırına ulaşıldı. Kısa süre sonra yeniden deneyin veya Google ile kayıt olun.");
+  }
   if(status===429 || raw.includes("rate") || raw.includes("too many")){
     return authText("tooMany","Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.");
   }
@@ -1833,6 +1843,7 @@ async function registerUser(){
       return;
     }
 
+    showVerificationHelp(email);
     showAuthDialog(authText("registerSuccess","Kayıt başarılı. E-posta doğrulaması için gelen kutunu kontrol et."));
   }catch(error){
     secureAuthAlert(registerFailureMessage(error));
@@ -1907,10 +1918,68 @@ async function loginUser(){
     clearStoredReturnTo();
     window.location.href = returnTo;
   }catch(error){
+    const code=String(error && error.payload && error.payload.error || "").toUpperCase();
+    const raw=String(error && error.message || "").toLowerCase();
+    if(code==="AUTH_EMAIL_NOT_CONFIRMED" || raw.includes("email not confirmed") || raw.includes("e-posta adresinizi doğruladıktan")){
+      showVerificationHelp(email);
+    }
     secureAuthAlert(loginFailureMessage(error));
   }finally{
     setAuthBusy(submit,false);
     manualAuthInProgress=false;
+  }
+}
+
+let pendingVerificationEmail="";
+
+function showVerificationHelp(email){
+  const panel=document.getElementById("verificationHelp");
+  const normalized=normalizeEmail(email);
+  if(normalized)pendingVerificationEmail=normalized;
+  if(panel)panel.hidden=false;
+}
+
+async function resendConfirmation(){
+  const submit=document.getElementById("resendConfirmationBtn");
+  const email=normalizeEmail(
+    pendingVerificationEmail ||
+    document.getElementById("loginEmail").value ||
+    document.getElementById("registerEmail").value
+  );
+  if(!isEmail(email)){
+    secureAuthAlert(authText("invalidEmail","Geçerli bir e-posta adresi giriniz."));
+    return;
+  }
+  const limit=rateLimitAction("resend-confirmation",3,60*60*1000);
+  if(!limit.allowed){
+    secureAuthAlert(authText("emailRateLimited","Doğrulama e-postası gönderim sınırına ulaşıldı. Kısa süre sonra yeniden deneyin veya Google ile kayıt olun."));
+    return;
+  }
+  try{
+    setAuthBusy(submit,true);
+    if(isLocalAuthPreview()){
+      const {error}=await supabaseClient.auth.resend({
+        type:"signup",
+        email:email,
+        options:{emailRedirectTo:pageUrl("/pages/account/user.html?tab=login")}
+      });
+      if(error)throw error;
+    }else{
+      await authApi("/v1/auth/resend-confirmation",{
+        email:email,
+        turnstileToken:await securityChallengeToken("resend_confirmation")
+      });
+    }
+    showAuthDialog(authText("resendConfirmationSuccess","Hesap doğrulama bekliyorsa yeni e-posta gönderim isteği alındı. Gelen kutusu ve spam klasörünü kontrol edin."));
+  }catch(error){
+    const code=String(error && error.payload && error.payload.error || "").toUpperCase();
+    if(code==="AUTH_EMAIL_RATE_LIMITED" || Number(error && error.status || 0)===429){
+      secureAuthAlert(authText("emailRateLimited","Doğrulama e-postası gönderim sınırına ulaşıldı. Kısa süre sonra yeniden deneyin veya Google ile kayıt olun."));
+    }else{
+      secureAuthAlert(error.message || authText("resendConfirmationError","Doğrulama e-postası gönderilemedi. Lütfen daha sonra yeniden deneyin."));
+    }
+  }finally{
+    setAuthBusy(submit,false);
   }
 }
 
@@ -2061,7 +2130,7 @@ document.addEventListener("click",function(e){
   <script src="../../js/platform.js?v=20260914-user-panel1" defer></script>
   <script src="../../js/cv-access.js?v=20260915-identity1" defer></script>
   <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
-  <script src="../../js/allona-auth-page.js?v=20260914-authfix1" defer></script>
+  <script src="../../js/allona-auth-page.js?v=20260920-authmail1" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>
