@@ -2462,6 +2462,66 @@ html body.allonahub-home-page[data-theme="white"] .turkic-home-entry__countries 
     overflow: visible !important;
   }
 
+  body.allonahub-home-page .site-footer .social-icons {
+    justify-content: start !important;
+    gap: 8px !important;
+    padding-block: 10px !important;
+  }
+
+  body.allonahub-home-page .site-footer .social-icons a {
+    position: relative;
+    box-sizing: content-box !important;
+    display: inline-flex !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  body.allonahub-home-page .site-footer .social-icons a.wa { background: #25d366 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.ig {
+    background: radial-gradient(circle at 30% 104%, #ffd600 0 20%, #ff7a00 34%, #ff0169 58%, #d300c5 76%, #7638fa 100%) !important;
+  }
+  body.allonahub-home-page .site-footer .social-icons a.x { background: #000 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.fb { background: #1877f2 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.yt { background: #ff0000 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.li { background: #0a66c2 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.tg { background: #229ed9 !important; }
+  body.allonahub-home-page .site-footer .social-icons a.tk {
+    background: #010101 !important;
+    box-shadow: inset 2px 0 0 #25f4ee, inset -2px 0 0 #fe2c55, 0 8px 18px rgba(0, 0, 0, 0.2) !important;
+  }
+  body.allonahub-home-page .site-footer .social-icons a.mail { background: #0067b1 !important; }
+
+  body.allonahub-home-page .site-footer .social-icons a span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  body.allonahub-home-page .site-footer .social-icons :where(.social-icon, b, svg) {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  body.allonahub-home-page .site-footer .social-icons svg {
+    display: block !important;
+    fill: currentColor !important;
+  }
+
   body.allonahub-home-page .site-footer .footer-payment-strip .home-payment-logo {
     box-sizing: border-box !important;
     display: grid !important;
