@@ -8,6 +8,7 @@ MarSoh message translation runs inside AllonaHub's own production server. Messag
 - The service accepts plain text up to 2,000 characters and returns plain text only.
 - Requests are serialized during model inference and capped at four waiting requests to protect the host.
 - The API stores successful results in `marsoh_translation_cache`, keyed by message, target language, and source hash.
+- The source hash includes the translation-engine cache version. A motor upgrade ignores stale translations without deleting historical rows, then caches the new result normally.
 - A failed local translation does not interrupt chat. The UI receives the existing temporary-unavailable response.
 - An external provider can remain configured as a future fallback, but no paid API key is required for the local path.
 - Translation v2 normalizes Unicode input, protects maritime identifiers, applies a reviewed nine-language maritime glossary, and performs target-language script, repetition, punctuation, and structured-token checks.

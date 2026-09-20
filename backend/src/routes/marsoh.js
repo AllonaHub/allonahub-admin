@@ -8,7 +8,11 @@ import {
   normalizedModerationText,
   sanitizeMarsohText
 } from "../lib/marsoh-moderation.js";
-import { translateMarsohLocalizedFromTurkish, translateMarsohTextDetailed } from "../lib/marsoh-translation.js";
+import {
+  MARSOH_TRANSLATION_CACHE_VERSION,
+  translateMarsohLocalizedFromTurkish,
+  translateMarsohTextDetailed
+} from "../lib/marsoh-translation.js";
 import { auditEvent, authContext, hasMfa, hasRole, supabaseAdmin } from "../lib/supabase.js";
 
 const uuidSchema = z.string().uuid();
@@ -621,7 +625,7 @@ export function registerMarsohRoutes(app) {
     const input = translationSchema.parse(request.body || {});
     await denyOwnMessageAction(ctx, messageId);
     const message = await visiblePublished(ctx, messageId);
-    const sourceHash = sha256(message.body);
+    const sourceHash = sha256(`${MARSOH_TRANSLATION_CACHE_VERSION}:${message.body}`);
     const cached = assertDb(await supabaseAdmin.from("marsoh_translation_cache")
       .select("translated_text,provider,model").eq("message_id", messageId)
       .eq("target_language", input.target_language).eq("source_hash", sourceHash).maybeSingle(), "Çeviri önbelleği okunamadı.");

@@ -14,6 +14,7 @@ const LANGUAGE_NAMES = Object.freeze({
 });
 
 export const MARSOH_SUPPORTED_LANGUAGES = Object.freeze(Object.keys(LANGUAGE_NAMES));
+export const MARSOH_TRANSLATION_CACHE_VERSION = "2.0.0";
 
 function translationError(code, message, cause) {
   const error = new Error(message, cause ? { cause } : undefined);

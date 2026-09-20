@@ -1,11 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  MARSOH_TRANSLATION_CACHE_VERSION,
   MARSOH_SUPPORTED_LANGUAGES,
   translateMarsohLocalizedFromTurkish,
   translateMarsohText,
   translateMarsohTextDetailed
 } from "../../src/lib/marsoh-translation.js";
+
+test("translation cache version follows the local quality engine release", () => {
+  assert.equal(MARSOH_TRANSLATION_CACHE_VERSION, "2.0.0");
+});
 
 
 test("local server translation works without a paid API key", async () => {

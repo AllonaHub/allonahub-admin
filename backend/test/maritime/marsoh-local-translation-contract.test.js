@@ -31,6 +31,7 @@ test("translation route authorizes published visibility before calling local inf
   const handler = route.slice(start, end);
   assert.ok(handler.indexOf("visiblePublished(ctx, messageId)") < handler.indexOf("translateMarsohTextDetailed"));
   assert.match(handler, /marsoh_translation_cache/);
+  assert.match(handler, /MARSOH_TRANSLATION_CACHE_VERSION/);
   assert.match(handler, /MARSOH_TRANSLATION_RATE_LIMITED/);
 });
 
