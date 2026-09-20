@@ -217,6 +217,7 @@ body.partner-entry-page .actions .platform-theme-btn{min-width:112px!important}
 }
 </style>
   <link rel="stylesheet" href="../../css/platform.css?v=20260828-corporate4">
+  <link rel="stylesheet" href="../../css/password-visibility.css?v=20260920-auth2">
   <link rel="stylesheet" href="../../css/allona-partner-entry.css?v=20260914-entry2">
   <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry6">
 </head>
@@ -1060,13 +1061,13 @@ async function partnerLogin(){
   const email=normalizePartnerEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
 
-  if(!partnerRateLimit("partner-login",8,15*60*1000)){
-    showNotice("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
+  if(!validPartnerEmail(email) || !password){
+    showNotice("E-posta ve şifrenizi kontrol edin.");
     return;
   }
 
-  if(!validPartnerEmail(email) || !password){
-    showNotice("E-posta ve şifrenizi kontrol edin.");
+  if(!partnerRateLimit("partner-login",15,15*60*1000)){
+    showNotice("Kısa sürede çok fazla giriş denemesi yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.");
     return;
   }
 
@@ -1077,10 +1078,6 @@ async function partnerLogin(){
   try{
     await verifySecurityChallenge("login");
     clearPartnerAuth();
-    try{
-      await supabaseClient.auth.signOut({scope:"local"});
-    }catch(error){}
-
     const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
 
     if(error || !data || !data.user){
@@ -1410,6 +1407,7 @@ initPartnerGoogleCallback();
   <script src="../../js/security-challenge.js?v=20260829-partner-company-lookup1" defer></script>
   <script src="../../js/layout.v3.js?v=20260919-footer-trust1" defer></script>
   <script src="../../js/platform.js?v=20260920-partner-light1" defer></script>
+  <script src="../../js/password-visibility.js?v=20260920-auth2" defer></script>
   <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
   <script src="../../js/allona-partner-entry.js?v=20260913-entry1" defer></script>
   <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>

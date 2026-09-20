@@ -857,6 +857,7 @@ a{
   <link rel="stylesheet" href="../../css/allona-auth-page.css?v=20260920-authmail1">
   <link rel="stylesheet" href="../../css/allona-auth-field-contrast.css?v=20260914-auth-fields1">
   <link rel="stylesheet" href="../../css/allona-entry-footer.css?v=20260914-entry6">
+  <link rel="stylesheet" href="../../css/password-visibility.css?v=20260920-auth2">
 </head>
 
 <body class="auth-page">
@@ -1115,7 +1116,7 @@ function paramValue(name){
 }
 
 const PASSWORD_UPDATED_LOGIN=paramValue("password")==="updated" || paramValue("reset")==="success";
-const FORCE_ACCOUNT_SWITCH=PASSWORD_UPDATED_LOGIN || boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
+const FORCE_ACCOUNT_SWITCH=boolParam("switchAccount") || boolParam("forceLogin") || boolParam("logoutFirst");
 
 function normalizeReturnTo(value,fallback){
   const fallbackPath=fallback || "user-panel.html";
@@ -1895,15 +1896,15 @@ async function loginUser(){
   const submit=document.getElementById("loginBtn");
   const email=normalizeEmail(document.getElementById("loginEmail").value);
   const password=document.getElementById("loginPassword").value;
-  const limit=rateLimitAction("login",15,15*60*1000);
-
-  if(!limit.allowed){
-    secureAuthAlert("Çok fazla giriş denemesi. Lütfen kısa süre sonra tekrar deneyin.");
-    return;
-  }
 
   if(!isEmail(email) || !password){
     secureAuthAlert("E-posta ve şifrenizi kontrol edin.");
+    return;
+  }
+
+  const limit=rateLimitAction("login",15,15*60*1000);
+  if(!limit.allowed){
+    secureAuthAlert("Kısa sürede çok fazla giriş denemesi yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.");
     return;
   }
 
@@ -2153,6 +2154,9 @@ document.addEventListener("DOMContentLoaded",function(){
   configureEntryNavigation();
   setCountryByLocale();
   openInitialAuthTab();
+  if(PASSWORD_UPDATED_LOGIN){
+    announceAuthMessage("Şifren başarıyla güncellendi. Açık oturumun korunarak hesabına yönlendiriliyorsun.");
+  }
   prepareAccountSwitch();
   supabaseClient.auth.onAuthStateChange(function(event){
     if(event==="PASSWORD_RECOVERY"){
@@ -2211,6 +2215,7 @@ document.addEventListener("click",function(e){
   <script src="../../js/cv-access.js?v=20260915-identity1" defer></script>
   <script src="../../js/allona-entry-footer.js?v=20260913-entry1" defer></script>
   <script src="../../js/allona-auth-page.js?v=20260920-authmail1" defer></script>
+  <script src="../../js/password-visibility.js?v=20260920-auth2" defer></script>
 <script src="../../js/privacy-consent.js?v=20260712-theme-overflow1" defer></script>
 </body>
 </html>

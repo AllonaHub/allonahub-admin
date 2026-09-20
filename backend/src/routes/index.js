@@ -11124,6 +11124,14 @@ export function registerRoutes(app) {
       }
     });
     if (error) throw httpError("Yeni şifre kaydedilemedi. Lütfen tekrar deneyin.", 503, "TEMPORARY_PASSWORD_CHANGE_FAILED");
+    let replacementSession = null;
+    if (ctx.user.email) {
+      const replacement = await supabasePublic.auth.signInWithPassword({
+        email: ctx.user.email,
+        password: payload.password
+      });
+      if (!replacement.error && replacement.data?.session) replacementSession = replacement.data.session;
+    }
     await auditEvent({
       request,
       actorId: ctx.user.id,
@@ -11132,9 +11140,14 @@ export function registerRoutes(app) {
       resourceType: "authentication",
       resourceId: ctx.user.id,
       severity: "info",
-      evidenceTags: ["auth", "password", "temporary_access"]
+      evidenceTags: ["auth", "password", "temporary_access"],
+      metadata: { replacement_session_issued: Boolean(replacementSession) }
     });
-    return { ok: true };
+    return {
+      ok: true,
+      session: replacementSession,
+      reauthentication_required: !replacementSession
+    };
   });
 
   app.post("/v1/auth/register", async (request, reply) => {

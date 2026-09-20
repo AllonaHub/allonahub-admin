@@ -117,12 +117,13 @@
       const data = core.parseForm(form);
       button.disabled = true;
       try {
-        const limit = security && security.rateLimit("login", { limit: 8, windowMs: 15 * 60 * 1000 });
-        if (limit && !limit.allowed) {
-          throw new Error(`Çok fazla giriş denemesi. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
-        }
         if (security && !security.isEmail(data.email)) {
           throw new Error("Geçerli bir e-posta adresi girin.");
+        }
+        if (!String(data.password || "")) throw new Error("E-posta ve şifrenizi kontrol edin.");
+        const limit = security && security.rateLimit("login", { limit: 15, windowMs: 15 * 60 * 1000 });
+        if (limit && !limit.allowed) {
+          throw new Error(`Kısa sürede çok fazla giriş denemesi yapıldı. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
         }
         await App.auth.signIn(data.email, data.password);
         if (App.cvAccess && App.cvAccess.ensureAccess) {
@@ -220,12 +221,12 @@
       const data = core.parseForm(form);
       button.disabled = true;
       try {
-        const limit = security && security.rateLimit("forgot-password", { limit: 4, windowMs: 30 * 60 * 1000 });
-        if (limit && !limit.allowed) {
-          throw new Error(`Çok fazla deneme. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
-        }
         if (security && !security.isEmail(data.email)) {
           throw new Error("Geçerli bir e-posta adresi girin.");
+        }
+        const limit = security && security.rateLimit("forgot-password", { limit: 6, windowMs: 30 * 60 * 1000 });
+        if (limit && !limit.allowed) {
+          throw new Error(`Kısa sürede çok fazla bağlantı istendi. ${limit.retryAfter} saniye sonra tekrar deneyin.`);
         }
         await App.auth.resetPassword(data.email);
         core.renderStatus("[data-auth-status]", "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", "success");
