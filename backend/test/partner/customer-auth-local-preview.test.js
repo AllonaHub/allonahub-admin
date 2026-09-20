@@ -20,7 +20,18 @@ test("auth page loads one cache-busted config and challenge runtime", async () =
 
   assert.equal((page.match(/js\/config\.js/g) || []).length, 1);
   assert.match(page, /js\/config\.js\?v=20260919-authfix2/);
-  assert.match(page, /js\/security-challenge\.js\?v=20260919-authfix2/);
+  assert.match(page, /js\/security-challenge\.js\?v=20260920-auth-session2/);
+});
+
+test("Turnstile challenge recovers without weakening server verification", async () => {
+  const runtime = await source("js/security-challenge.js");
+
+  assert.match(runtime, /retry:\s*"never"/);
+  assert.match(runtime, /state\.retryCount <= 2/);
+  assert.match(runtime, /window\.turnstile\.reset\(state\.widgetId\)/);
+  assert.match(runtime, /"unsupported-callback"/);
+  assert.match(runtime, /Güvenlik kontrolünü yeniden dene/);
+  assert.doesNotMatch(runtime, /turnstileToken\s*=\s*["']bypass/);
 });
 
 test("GitHub Pages auth mirror redirects to the protected canonical domain", async () => {

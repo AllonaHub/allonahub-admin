@@ -80,6 +80,10 @@
       .allonahub-turnstile__label{font-size:12px;font-weight:700;color:inherit;opacity:.78;text-align:center}
       .allonahub-turnstile__widget{width:100%;max-width:100%;min-height:65px}
       .allonahub-turnstile__widget>div{max-width:100%;margin-inline:auto}
+      .allonahub-turnstile__status{font-size:12px;line-height:1.45;color:inherit;opacity:.82;text-align:center}
+      .allonahub-turnstile__retry{min-height:40px;padding:8px 14px;border:1px solid rgba(14,116,144,.36);border-radius:8px;background:#ecfeff;color:#0e5263;font:700 12px/1.2 inherit;cursor:pointer}
+      .allonahub-turnstile__retry[hidden]{display:none}
+      .allonahub-turnstile__retry:focus-visible{outline:3px solid rgba(6,182,212,.35);outline-offset:2px}
     `;
     document.head.appendChild(style);
   }
@@ -94,16 +98,63 @@
     }
     const widget = document.createElement("div");
     widget.className = "allonahub-turnstile__widget";
-    container.replaceChildren(labelNode, widget);
-    return widget;
+    const status = document.createElement("div");
+    status.className = "allonahub-turnstile__status";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "allonahub-turnstile__retry";
+    retry.textContent = "Güvenlik kontrolünü yeniden dene";
+    retry.hidden = true;
+    container.replaceChildren(labelNode, widget, status, retry);
+    return { widget, status, retry };
+  }
+
+  function clearRetryTimer(state) {
+    if (!state || !state.retryTimer) return;
+    window.clearTimeout(state.retryTimer);
+    state.retryTimer = null;
+  }
+
+  function resetVisibleWidgetAfterFailure(state, automatic) {
+    if (!state || !window.turnstile || state.widgetId === null) return;
+    clearRetryTimer(state);
+    state.token = "";
+    state.failed = false;
+    state.recovering = true;
+    state.container.dataset.verified = "false";
+    state.retry.hidden = true;
+    state.status.textContent = automatic
+      ? "Güvenlik kontrolü yeniden hazırlanıyor..."
+      : "Güvenlik kontrolü yenilendi. Lütfen doğrulamayı tamamlayın.";
+    const delay = automatic ? Math.min(6000, 1200 * Math.max(1, state.retryCount)) : 0;
+    state.retryTimer = window.setTimeout(() => {
+      state.retryTimer = null;
+      try {
+        window.turnstile.reset(state.widgetId);
+        state.recovering = false;
+      } catch (error) {
+        state.recovering = false;
+        state.failed = true;
+        state.status.textContent = "Güvenlik kontrolü yenilenemedi. Lütfen yeniden deneyin.";
+        state.retry.hidden = false;
+      }
+    }, delay);
   }
 
   function resetVisibleWidget(state) {
     if (!state || !window.turnstile || state.widgetId === null) return;
+    clearRetryTimer(state);
     try {
       window.turnstile.reset(state.widgetId);
     } catch (error) {}
     state.token = "";
+    state.failed = false;
+    state.recovering = false;
+    state.retryCount = 0;
+    if (state.status) state.status.textContent = "";
+    if (state.retry) state.retry.hidden = true;
     state.container.dataset.verified = "false";
   }
 
@@ -123,33 +174,74 @@
     container.dataset.turnstileRendered = "true";
     container.dataset.verified = "false";
     container.classList.add("allonahub-turnstile");
-    const widgetTarget = buildChallengeContent(container, challengeLabel(normalizedAction), true);
+    const content = buildChallengeContent(container, challengeLabel(normalizedAction), true);
     const state = {
       container,
       widgetId: null,
       token: "",
-      failed: false
+      failed: false,
+      recovering: false,
+      retryCount: 0,
+      retryTimer: null,
+      status: content.status,
+      retry: content.retry
     };
 
-    state.widgetId = window.turnstile.render(widgetTarget, {
+    state.retry.addEventListener("click", () => resetVisibleWidgetAfterFailure(state, false));
+
+    state.widgetId = window.turnstile.render(content.widget, {
       sitekey: siteKey(),
       action: normalizedAction,
-      theme: "light",
+      theme: "auto",
       size: "flexible",
+      retry: "never",
+      "refresh-expired": "auto",
+      "refresh-timeout": "auto",
       callback(token) {
+        clearRetryTimer(state);
         state.token = token || "";
         state.failed = false;
+        state.recovering = false;
+        state.retryCount = 0;
+        state.status.textContent = "";
+        state.retry.hidden = true;
         container.dataset.verified = state.token ? "true" : "false";
       },
-      "error-callback"() {
+      "error-callback"(errorCode) {
         state.token = "";
         state.failed = true;
+        state.recovering = false;
+        state.retryCount += 1;
         container.dataset.verified = "false";
+        if (state.retryCount <= 2) {
+          window.setTimeout(() => resetVisibleWidgetAfterFailure(state, true), 0);
+        } else {
+          state.status.textContent = "Güvenlik kontrolü tamamlanamadı. Bağlantınızı kontrol edip yeniden deneyin.";
+          state.retry.hidden = false;
+        }
+        return true;
       },
       "expired-callback"() {
         state.token = "";
         state.failed = false;
         container.dataset.verified = "false";
+        state.status.textContent = "Güvenlik kontrolünün süresi doldu; yenileniyor...";
+      },
+      "timeout-callback"() {
+        state.token = "";
+        state.failed = true;
+        container.dataset.verified = "false";
+        state.status.textContent = "Güvenlik kontrolü zaman aşımına uğradı.";
+        state.retry.hidden = false;
+      },
+      "unsupported-callback"() {
+        clearRetryTimer(state);
+        state.token = "";
+        state.failed = true;
+        state.recovering = false;
+        container.dataset.verified = "false";
+        state.status.textContent = "Bu tarayıcı güvenlik kontrolünü desteklemiyor. Güncel Safari, Chrome veya Edge ile yeniden deneyin.";
+        state.retry.hidden = true;
       }
     });
 
@@ -234,6 +326,11 @@
       if (visibleWidgets.has(normalizedAction)) {
         const state = visibleWidgets.get(normalizedAction);
         if (visibleToken) return visibleToken;
+        if (state && state.recovering) {
+          const recovering = new Error("Robot doğrulaması yeniden hazırlanıyor. Lütfen birkaç saniye sonra tekrar deneyin.");
+          recovering.status = 0;
+          throw recovering;
+        }
         if (state && state.failed) {
           const unavailable = new Error("Robot doğrulaması şu anda kullanılamıyor.");
           unavailable.status = 0;
