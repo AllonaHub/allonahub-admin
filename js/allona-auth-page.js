@@ -288,6 +288,91 @@
     moduleReturn: "Модулга кайтуу"
   });
 
+  const emailCodeCopy = {
+    tr: {
+      verificationHelp: "Gelen kutusu ve spam klasöründeki 6 haneli kodu girin.",
+      verificationCodeLabel: "6 haneli doğrulama kodu",
+      verifyEmailCode: "Kodu Doğrula",
+      verificationCodeInvalid: "6 haneli doğrulama kodunu girin.",
+      verificationCodeSuccess: "E-posta adresiniz doğrulandı. Hesabınıza güvenle giriş yapabilirsiniz.",
+      verificationCodeError: "Doğrulama tamamlanamadı. Yeni kod isteyip tekrar deneyin.",
+      resendConfirmation: "Yeni kod gönder"
+    },
+    az: {
+      verificationHelp: "Gələnlər və spam qovluğundakı 6 rəqəmli kodu daxil edin.",
+      verificationCodeLabel: "6 rəqəmli təsdiq kodu",
+      verifyEmailCode: "Kodu təsdiqlə",
+      verificationCodeInvalid: "6 rəqəmli təsdiq kodunu daxil edin.",
+      verificationCodeSuccess: "E-poçt ünvanınız təsdiqləndi. Hesabınıza təhlükəsiz daxil ola bilərsiniz.",
+      verificationCodeError: "Təsdiq tamamlanmadı. Yeni kod istəyib yenidən sınayın.",
+      resendConfirmation: "Yeni kod göndər"
+    },
+    en: {
+      verificationHelp: "Enter the 6-digit code from your inbox or spam folder.",
+      verificationCodeLabel: "6-digit verification code",
+      verifyEmailCode: "Verify Code",
+      verificationCodeInvalid: "Enter the 6-digit verification code.",
+      verificationCodeSuccess: "Your email address is verified. You can now sign in securely.",
+      verificationCodeError: "Verification could not be completed. Request a new code and try again.",
+      resendConfirmation: "Send new code"
+    },
+    de: {
+      verificationHelp: "Geben Sie den 6-stelligen Code aus Ihrem Posteingang oder Spam-Ordner ein.",
+      verificationCodeLabel: "6-stelliger Bestätigungscode",
+      verifyEmailCode: "Code bestätigen",
+      verificationCodeInvalid: "Geben Sie den 6-stelligen Bestätigungscode ein.",
+      verificationCodeSuccess: "Ihre E-Mail-Adresse wurde bestätigt. Sie können sich jetzt sicher anmelden.",
+      verificationCodeError: "Die Bestätigung konnte nicht abgeschlossen werden. Fordern Sie einen neuen Code an.",
+      resendConfirmation: "Neuen Code senden"
+    },
+    ru: {
+      verificationHelp: "Введите 6-значный код из входящих или папки спам.",
+      verificationCodeLabel: "6-значный код подтверждения",
+      verifyEmailCode: "Подтвердить код",
+      verificationCodeInvalid: "Введите 6-значный код подтверждения.",
+      verificationCodeSuccess: "Адрес электронной почты подтверждён. Теперь можно безопасно войти.",
+      verificationCodeError: "Не удалось завершить подтверждение. Запросите новый код и повторите попытку.",
+      resendConfirmation: "Отправить новый код"
+    },
+    ar: {
+      verificationHelp: "أدخل الرمز المكون من 6 أرقام من صندوق الوارد أو الرسائل غير المرغوب فيها.",
+      verificationCodeLabel: "رمز تحقق من 6 أرقام",
+      verifyEmailCode: "تأكيد الرمز",
+      verificationCodeInvalid: "أدخل رمز التحقق المكون من 6 أرقام.",
+      verificationCodeSuccess: "تم تأكيد بريدك الإلكتروني. يمكنك الآن تسجيل الدخول بأمان.",
+      verificationCodeError: "تعذر إكمال التحقق. اطلب رمزًا جديدًا وحاول مرة أخرى.",
+      resendConfirmation: "إرسال رمز جديد"
+    },
+    kk: {
+      verificationHelp: "Кіріс немесе спам қалтасындағы 6 таңбалы кодты енгізіңіз.",
+      verificationCodeLabel: "6 таңбалы растау коды",
+      verifyEmailCode: "Кодты растау",
+      verificationCodeInvalid: "6 таңбалы растау кодын енгізіңіз.",
+      verificationCodeSuccess: "E-mail мекенжайыңыз расталды. Енді қауіпсіз кіре аласыз.",
+      verificationCodeError: "Растау аяқталмады. Жаңа код сұрап, қайталап көріңіз.",
+      resendConfirmation: "Жаңа код жіберу"
+    },
+    uz: {
+      verificationHelp: "Kiruvchi yoki spam papkasidagi 6 xonali kodni kiriting.",
+      verificationCodeLabel: "6 xonali tasdiqlash kodi",
+      verifyEmailCode: "Kodni tasdiqlash",
+      verificationCodeInvalid: "6 xonali tasdiqlash kodini kiriting.",
+      verificationCodeSuccess: "E-pochta manzilingiz tasdiqlandi. Endi xavfsiz kirishingiz mumkin.",
+      verificationCodeError: "Tasdiqlash yakunlanmadi. Yangi kod so'rab, qayta urinib ko'ring.",
+      resendConfirmation: "Yangi kod yuborish"
+    },
+    ky: {
+      verificationHelp: "Кирген каттар же спам папкасындагы 6 орундуу кодду киргизиңиз.",
+      verificationCodeLabel: "6 орундуу тастыктоо коду",
+      verifyEmailCode: "Кодду тастыктоо",
+      verificationCodeInvalid: "6 орундуу тастыктоо кодун киргизиңиз.",
+      verificationCodeSuccess: "E-mail дарегиңиз тастыкталды. Эми коопсуз кире аласыз.",
+      verificationCodeError: "Тастыктоо аяктаган жок. Жаңы код сурап, кайра аракет кылыңыз.",
+      resendConfirmation: "Жаңы код жөнөтүү"
+    }
+  };
+  Object.entries(emailCodeCopy).forEach(([language, messages]) => Object.assign(copy[language], messages));
+
   const pageSections = {
     tr: {
       search: "Ara", searchPlaceholder: "HP, kupon, üyelik, destek veya güvenlik ara...", coupon: "Kupon", premium: "Premium",

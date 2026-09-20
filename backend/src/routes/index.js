@@ -142,6 +142,12 @@ const authResendConfirmationSchema = z.object({
   turnstileToken: z.string().trim().max(4096).optional().default("")
 });
 
+const authVerifyEmailCodeSchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().regex(/^\d{6}$/),
+  turnstileToken: z.string().trim().max(4096).optional().default("")
+});
+
 const PARTNER_PASSWORD_RESET_MESSAGE = "Eğer bu e-posta aktif bir partner hesabına kayıtlıysa şifre sıfırlama bağlantısı gönderildi.";
 
 const auditQuerySchema = z.object({
@@ -1505,6 +1511,7 @@ const AUTH_FAILURE_ACTIONS = Object.freeze([
   "auth.register_device_denied",
   "auth.register_device_binding_failed",
   "auth.confirmation_resend_failed",
+  "auth.confirmation_code_failed",
   "auth.password_reset_delivery_failed",
   "partner.password_reset_delivery_failed"
 ]);
@@ -7902,6 +7909,32 @@ async function findAuthUserByEmail(email, request) {
   return findAuthUserByEmailWithClient(supabaseAdmin, email, request);
 }
 
+async function createPendingCustomerAfterEmailThrottle(payload, email, request) {
+  const existing = await findAuthUserByEmail(email, request);
+  if (existing) {
+    throw httpError("Bu e-posta adresiyle zaten bir hesap var. Giriş yapın veya doğrulama e-postasını yeniden gönderin.", 409, "AUTH_ACCOUNT_EXISTS");
+  }
+
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password: payload.password,
+    email_confirm: false,
+    user_metadata: authUserMetadata(payload),
+    app_metadata: {
+      role: "customer",
+      email_delivery_pending: true
+    }
+  });
+  if (error || !data?.user) {
+    request?.log?.warn({
+      error: error?.message || "missing_auth_user",
+      email_hash: authEmailHash(email)
+    }, "Pending customer recovery after email throttle failed");
+    throw httpError("Hesap şu anda oluşturulamadı. Lütfen kısa süre sonra yeniden deneyin.", 503, "AUTH_REGISTRATION_RECOVERY_FAILED");
+  }
+  return data.user;
+}
+
 const INACTIVE_PARTNER_RESET_ACCOUNT_STATUSES = new Set(["inactive", "suspended", "blocked", "disabled", "deactivated", "banned", "deleted"]);
 
 function authUserInactiveForPartnerPasswordReset(user) {
@@ -11103,7 +11136,7 @@ export function registerRoutes(app) {
       throw error;
     }
 
-    const { data, error } = await supabasePublic.auth.signUp({
+    const signUpResult = await supabasePublic.auth.signUp({
       email,
       password: payload.password,
       options: {
@@ -11111,6 +11144,9 @@ export function registerRoutes(app) {
         emailRedirectTo: new URL("/pages/account/user.html?tab=login", `${config.siteUrl}/`).href
       }
     });
+    let data = signUpResult.data;
+    const error = signUpResult.error;
+    let emailDeliveryPending = false;
 
     if (error || !data?.user) {
       const failure = await recordAuthFailure({
@@ -11128,13 +11164,12 @@ export function registerRoutes(app) {
         return reply.code(503).send({ ok: false, error: "AUTH_EMAIL_DELIVERY_FAILED", message: "Doğrulama e-postası şu anda gönderilemedi. Lütfen kısa süre sonra yeniden deneyin." });
       }
       if (failure.reason_code === "rate_limited") {
-        return reply.code(429).send({
-          ok: false,
-          error: "AUTH_EMAIL_RATE_LIMITED",
-          message: "Doğrulama e-postası gönderim sınırına ulaşıldı. Bu hesap henüz oluşturulmadı; kısa süre sonra yeniden deneyin veya Google ile kayıt olun."
-        });
+        const recoveredUser = await createPendingCustomerAfterEmailThrottle(payload, email, request);
+        data = { user: recoveredUser, session: null };
+        emailDeliveryPending = true;
+      } else {
+        return reply.code(400).send({ ok: false, error: "AUTH_REGISTRATION_FAILED", message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
       }
-      return reply.code(400).send({ ok: false, error: "AUTH_REGISTRATION_FAILED", message: "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin." });
     }
 
     await upsertAuthProfile(data.user, { ...payload, email }, request);
@@ -11177,16 +11212,78 @@ export function registerRoutes(app) {
       severity: "info",
       metadata: {
         email_domain: authEmailDomain(email),
-        session_created: Boolean(data.session)
+        session_created: Boolean(data.session),
+        email_delivery_pending: emailDeliveryPending
       },
       evidenceTags: ["auth", "register"]
     });
 
-    return reply.code(201).send({
+    return reply.code(emailDeliveryPending ? 202 : 201).send({
       ok: true,
       user: publicAuthUser(data.user),
-      session: data.session || null
+      session: data.session || null,
+      verification_pending: !data.user.email_confirmed_at,
+      email_delivery_pending: emailDeliveryPending,
+      message: emailDeliveryPending
+        ? "Hesabınız güvenli biçimde oluşturuldu. Doğrulama e-postası için gönderim isteğini kısa süre sonra yeniden deneyin."
+        : "Hesabınız oluşturuldu. E-posta doğrulama kodunu girerek hesabınızı etkinleştirin."
     });
+  });
+
+  app.post("/v1/auth/verify-email-code", {
+    config: { rateLimit: { max: 8, timeWindow: "15 minutes" } }
+  }, async (request, reply) => {
+    const payload = parseAuthPayload(authVerifyEmailCodeSchema, request.body);
+    const email = authEmail(payload.email);
+    try {
+      await verifyTurnstile(request, "verify_email_code", payload.turnstileToken);
+    } catch (error) {
+      await recordAuthFailure({
+        request,
+        action: "auth.confirmation_code_failed",
+        email,
+        stage: "robot_verification",
+        error,
+        provider: "cloudflare"
+      });
+      throw error;
+    }
+
+    const { data, error } = await supabasePublic.auth.verifyOtp({
+      email,
+      token: payload.code,
+      type: "signup"
+    });
+    if (error || !data?.user || !data?.session) {
+      await recordAuthFailure({
+        request,
+        action: "auth.confirmation_code_failed",
+        email,
+        stage: "confirmation_code",
+        error,
+        statusCode: error?.status || 400
+      });
+      return reply.code(400).send({
+        ok: false,
+        error: "AUTH_CONFIRMATION_CODE_INVALID",
+        message: "Doğrulama kodu geçersiz veya süresi dolmuş. Yeni kod isteyip tekrar deneyin."
+      });
+    }
+
+    await auditEvent({
+      request,
+      actorId: data.user.id,
+      actorRole: "customer",
+      action: "auth.email_confirmed_with_code",
+      severity: "info",
+      metadata: { email_domain: authEmailDomain(email) },
+      evidenceTags: ["auth", "email_confirmation", "otp"]
+    });
+    return {
+      ok: true,
+      user: publicAuthUser(data.user),
+      session: data.session
+    };
   });
 
   app.post("/v1/auth/resend-confirmation", {

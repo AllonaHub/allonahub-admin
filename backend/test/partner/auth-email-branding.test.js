@@ -10,7 +10,7 @@ async function source(file) {
   return fs.readFile(path.join(root, file), "utf8");
 }
 
-test("confirmation email uses the AllonaHub identity and secure verification link", async () => {
+test("confirmation email uses the AllonaHub identity and a scanner-safe verification code", async () => {
   const [template, script] = await Promise.all([
     source("supabase/auth-email-templates/confirmation.html"),
     source("scripts/apply-supabase-auth-email-branding.mjs")
@@ -18,7 +18,9 @@ test("confirmation email uses the AllonaHub identity and secure verification lin
 
   assert.match(template, /Ekosisteme hoş geldiniz/);
   assert.match(template, /https:\/\/allonahub\.com\/images\/allona-logo-mark\.png/);
-  assert.match(template, /href="\{\{ \.ConfirmationURL \}\}"/);
+  assert.match(template, /\{\{ \.Token \}\}/);
+  assert.doesNotMatch(template, /href="\{\{ \.ConfirmationURL \}\}"/);
+  assert.match(template, /tek kullanımlık kod/);
   assert.match(template, /AllonaHub giriş sayfasını aç/);
   assert.doesNotMatch(template, /<script\b/i);
   assert.doesNotMatch(template, /Alloana Hub|Allono Hub/);

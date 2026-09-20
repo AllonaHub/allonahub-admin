@@ -452,7 +452,7 @@ body.auth-page .auth-verification-help {
   color: var(--ah-ink, #123247);
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, auto);
   margin: 12px 0;
   padding: 12px 14px;
 }
@@ -479,6 +479,39 @@ body.auth-page .auth-resend-confirmation {
   width: auto;
 }
 
+body.auth-page .auth-verification-actions {
+  align-items: stretch;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(112px, .7fr) minmax(124px, .8fr) minmax(148px, 1fr);
+}
+
+body.auth-page .auth-verification-code {
+  background: var(--ah-bg-strong, #ffffff);
+  border: 1px solid var(--ah-line, rgba(0, 150, 255, .25));
+  border-radius: 7px;
+  color: var(--ah-ink, #102033);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: center;
+  width: 100%;
+}
+
+body.auth-page .auth-verification-code:focus-visible {
+  border-color: var(--ah-primary, #00d5ff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ah-primary, #00d5ff) 22%, transparent);
+  outline: none;
+}
+
+body.auth-page .auth-verify-code {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
 @media (max-width: 680px) {
   body.auth-page .auth-verification-help {
     grid-template-columns: 1fr;
@@ -486,6 +519,10 @@ body.auth-page .auth-resend-confirmation {
 
   body.auth-page .auth-resend-confirmation {
     width: 100%;
+  }
+
+  body.auth-page .auth-verification-actions {
+    grid-template-columns: 1fr;
   }
 }
 

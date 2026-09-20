@@ -898,9 +898,14 @@ a{
     <div id="verificationHelp" class="auth-verification-help" role="region" aria-live="polite" hidden>
       <div>
         <strong data-auth-text="verificationTitle">E-posta doğrulaması bekleniyor</strong>
-        <p id="verificationHelpText" data-auth-text="verificationHelp">Gelen kutusu ve spam klasörünü kontrol edin. Bağlantı gelmediyse yeniden gönderin.</p>
+        <p id="verificationHelpText" data-auth-text="verificationHelp">Gelen kutusu ve spam klasöründeki 6 haneli kodu girin.</p>
       </div>
-      <button id="resendConfirmationBtn" class="btn auth-resend-confirmation" type="button" onclick="resendConfirmation()" data-auth-text="resendConfirmation">Doğrulama e-postasını yeniden gönder</button>
+      <div class="auth-verification-actions">
+        <label class="sr-only" for="verificationCode" data-auth-text="verificationCodeLabel">6 haneli doğrulama kodu</label>
+        <input id="verificationCode" class="auth-verification-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" aria-label="6 haneli doğrulama kodu">
+        <button id="verifyEmailCodeBtn" class="btn auth-verify-code" type="button" onclick="verifyEmailCode()" data-auth-text="verifyEmailCode">Kodu Doğrula</button>
+        <button id="resendConfirmationBtn" class="btn auth-resend-confirmation" type="button" onclick="resendConfirmation()" data-auth-text="resendConfirmation">Yeni kod gönder</button>
+      </div>
     </div>
 
     <!-- LOGIN -->
@@ -2003,6 +2008,48 @@ async function resendConfirmation(){
     }else{
       secureAuthAlert(error.message || authText("resendConfirmationError","Doğrulama e-postası gönderilemedi. Lütfen daha sonra yeniden deneyin."));
     }
+  }finally{
+    setAuthBusy(submit,false);
+  }
+}
+
+async function verifyEmailCode(){
+  const submit=document.getElementById("verifyEmailCodeBtn");
+  const email=normalizeEmail(
+    pendingVerificationEmail ||
+    document.getElementById("loginEmail").value ||
+    document.getElementById("registerEmail").value
+  );
+  const code=String(document.getElementById("verificationCode").value || "").replace(/\D/g,"").slice(0,6);
+  if(!isEmail(email)){
+    secureAuthAlert(authText("invalidEmail","Geçerli bir e-posta adresi giriniz."));
+    return;
+  }
+  if(!/^\d{6}$/.test(code)){
+    secureAuthAlert(authText("verificationCodeInvalid","6 haneli doğrulama kodunu girin."));
+    document.getElementById("verificationCode").focus();
+    return;
+  }
+  try{
+    setAuthBusy(submit,true);
+    let data;
+    if(isLocalAuthPreview()){
+      const result=await supabaseClient.auth.verifyOtp({email:email,token:code,type:"signup"});
+      if(result.error)throw result.error;
+      data=result.data;
+    }else{
+      data=await authApi("/v1/auth/verify-email-code",{
+        email:email,
+        code:code,
+        turnstileToken:await securityChallengeToken("verify_email_code")
+      });
+      await applyBackendSession(data.session);
+    }
+    if(!data || !data.user || !data.session)throw new Error(authText("verificationCodeError","Doğrulama tamamlanamadı. Yeni kod isteyip tekrar deneyin."));
+    document.getElementById("verificationHelp").hidden=true;
+    showAuthDialog(authText("verificationCodeSuccess","E-posta adresiniz doğrulandı. Hesabınıza güvenle giriş yapabilirsiniz."));
+  }catch(error){
+    secureAuthAlert(error.message || authText("verificationCodeError","Doğrulama tamamlanamadı. Yeni kod isteyip tekrar deneyin."));
   }finally{
     setAuthBusy(submit,false);
   }

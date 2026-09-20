@@ -53,6 +53,22 @@ test("customer registration reports email throttling and supports secure confirm
   assert.match(page, /AUTH_EMAIL_RATE_LIMITED/);
 });
 
+test("email throttling preserves the pending account and confirmation uses a six digit code", async () => {
+  const [routes, page, template] = await Promise.all([
+    source("backend/src/routes/index.js"),
+    source("pages/account/user.html"),
+    source("supabase/auth-email-templates/confirmation.html")
+  ]);
+  assert.match(routes, /createPendingCustomerAfterEmailThrottle/);
+  assert.match(routes, /email_confirm:\s*false/);
+  assert.match(routes, /app\.post\("\/v1\/auth\/verify-email-code"/);
+  assert.match(routes, /verifyOtp\(\{[\s\S]*type:\s*"signup"/);
+  assert.match(page, /id="verificationCode"/);
+  assert.match(page, /authApi\("\/v1\/auth\/verify-email-code"/);
+  assert.match(template, /\{\{ \.Token \}\}/);
+  assert.doesNotMatch(template, /href="\{\{ \.ConfirmationURL \}\}"/);
+});
+
 test("customer login separates provider outages and rate limits from invalid credentials", async () => {
   const [routes, page] = await Promise.all([
     source("backend/src/routes/index.js"),

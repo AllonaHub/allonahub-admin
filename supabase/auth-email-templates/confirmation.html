@@ -24,22 +24,19 @@
               <td align="center" style="padding:34px 34px 12px;">
                 <h1 style="margin:0;color:#082b45;font-size:28px;line-height:1.25;font-weight:800;">Ekosisteme hoş geldiniz</h1>
                 <p style="margin:16px 0 0;color:#496176;font-size:16px;line-height:1.65;">
-                  AllonaHub hesabınız başarıyla oluşturuldu. Hesabınızı etkinleştirmek ve güvenli biçimde giriş yapmak için e-posta adresinizi doğrulayın.
+                  AllonaHub hesabınız başarıyla oluşturuldu. Aşağıdaki tek kullanımlık kodu giriş sayfasına yazarak e-posta adresinizi doğrulayın.
                 </p>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding:18px 34px 10px;">
-                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#0077e6;color:#ffffff;text-decoration:none;border-radius:6px;padding:15px 26px;font-size:16px;line-height:1;font-weight:800;box-shadow:0 8px 20px rgba(0,119,230,.24);">E-postamı doğrula</a>
+                <div style="display:inline-block;background:#edf9ff;border:2px solid #00bfe9;color:#082b45;border-radius:8px;padding:15px 26px;font-size:30px;line-height:1;font-weight:800;letter-spacing:8px;box-shadow:0 8px 20px rgba(0,119,230,.16);">{{ .Token }}</div>
               </td>
             </tr>
             <tr>
               <td style="padding:16px 34px 8px;">
                 <p style="margin:0;color:#62778a;font-size:13px;line-height:1.65;text-align:center;">
-                  Düğme açılmazsa aşağıdaki güvenli bağlantıyı tarayıcınıza yapıştırın:
-                </p>
-                <p style="margin:8px 0 0;font-size:12px;line-height:1.55;word-break:break-all;text-align:center;">
-                  <a href="{{ .ConfirmationURL }}" style="color:#006bcf;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                  Bu kod kısa süre geçerlidir. Kodu yalnızca AllonaHub giriş sayfasındaki e-posta doğrulama alanına yazın; kimseyle paylaşmayın.
                 </p>
               </td>
             </tr>
