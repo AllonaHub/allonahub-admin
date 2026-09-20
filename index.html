@@ -13,7 +13,7 @@
 
 <link rel="manifest" href="manifest.json?v=20260622-icon1">
 <link rel="apple-touch-icon" href="images/brand/allonahub-icon-180.png?v=20260622-icon1">
-  <link rel="stylesheet" href="css/allonahub-home.css?v=20260920-home-footer1">
+  <link rel="stylesheet" href="css/allonahub-home.css?v=20260920-home-risk1">
 <link rel="stylesheet" href="css/platform.css?v=20260911-maritime-cache1">
 <link rel="stylesheet" href="css/home-module-labels.std32.css?v=20260826-active-modules1">
 <script src="js/subdomain-router.js?v=20260629-subdomains1"></script>
@@ -22,8 +22,6 @@
 <body class="allonahub-home-page">
 
 <div class="top-mini-nav">
-<a href="pages/wallet/hp-nedir.html" hidden>HP nedir?</a>
-<a href="pages/commerce/kuponlar.html" hidden>İndirim Kuponu</a>
 <a href="pages/account/user.html">Ekosisteme Katıl</a>
 <a href="pages/company/hakkimizda.html">Hakkımızda</a>
 <a href="pages/company/destek.html">Yardım ve Destek</a>
@@ -44,8 +42,6 @@
 
 <nav>
 <a href="#modules">Hizmetlerimiz</a>
-<a href="pages/commerce/kuponlar.html" hidden>Kupon</a>
-<a href="pages/premium.html">Premium</a>
 <a href="pages/partner/partner.html">Partner Ol</a>
 <a class="login" href="pages/account/user.html" data-account-link>Giriş Yap</a>
 <span class="platform-controls-slot" data-platform-controls-slot="home"></span>
@@ -64,7 +60,7 @@
 </div>
 </section>
 
-<section class="premium-hero ad-hero" aria-label="AllonaHub reklam vitrini" data-ad-hero>
+<section class="home-hero ad-hero" aria-label="AllonaHub reklam vitrini" data-ad-hero>
 <h1 class="home-page-title">AllonaHub yeni nesil süper uygulama</h1>
 <div class="ad-hero__viewport">
 <div class="ad-hero__slides" data-ad-slides></div>
@@ -86,7 +82,6 @@
 <div class="stat-live-card" aria-label="Aktif Partner: veri bekleniyor"><span class="stat-dot" aria-hidden="true"></span><p>Aktif Partner</p><h3 id="activeAds" aria-live="polite" aria-label="Aktif Partner: veri bekleniyor">—</h3></div>
 <div class="stat-live-card" aria-label="Yeni Üyeler: veri bekleniyor"><span class="stat-dot" aria-hidden="true"></span><p>Yeni Üyeler</p><h3 id="jobAds" aria-live="polite" aria-label="Yeni Üyeler: veri bekleniyor">—</h3></div>
 <div class="stat-live-card" aria-label="İlanlar: veri bekleniyor"><span class="stat-dot" aria-hidden="true"></span><p>İlanlar</p><h3 id="activeListings" aria-live="polite" aria-label="İlanlar: veri bekleniyor">—</h3></div>
-<div class="stat-live-card" aria-label="Sadakat Puanı: veri bekleniyor"><span class="stat-dot" aria-hidden="true"></span><p>Sadakat Puanı</p><h3 id="dailyHP" aria-live="polite" aria-label="Sadakat Puanı: veri bekleniyor">—</h3></div>
 </section>
 <p class="live-stats-source" id="liveStatsSource">Doğrulanmış aggregate veri yayınlandığında sayaçlar güncellenir.</p>
 
@@ -100,137 +95,6 @@
 
 <a class="module-card module-card--denizcilik" data-public-module="primary" href="pages/ecosystem/allonadenizcilik.html"><div><h3>Allona Denizcilik</h3><p>Gemi ve crew hizmetleri</p></div></a>
 <a class="module-card module-card--shop" data-public-module="primary" href="pages/commerce/allonashop.html"><div><h3>Allona Shop</h3><p>Alışveriş ve pazaryeri</p></div></a>
-<a class="module-card module-card--yemek" href="pages/commerce/allonayemek.html"><div><h3>Allona Yemek</h3><p>Restoran ve paket servis</p></div></a>
-<a class="module-card module-card--market" href="pages/commerce/allonamarket.html"><div><h3>Allona Market</h3><p>Günlük market ihtiyaçları</p></div></a>
-<a class="module-card module-card--taksi" href="pages/ecosystem/allonataksi.html"><div><h3>Allona Taksi</h3><p>Şehir içi ulaşım</p></div></a>
-<a class="module-card module-card--avm-dunyasi module-card--soon" href="pages/ecosystem/yakında.html?module=avm-dunyasi" aria-label="AVM Dünyası yakında hizmetinizde"><div><h3>AVM Dünyası</h3><p>Mağaza, eğlence ve alışveriş merkezi</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-<a class="module-card module-card--seyahat module-card--soon" href="pages/ecosystem/yakında.html?module=seyahat" aria-label="Seyahat ve Turizm yakında hizmetinizde"><div><h3>Seyahat & Turizm</h3><p>Otel, bilet ve tur</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--gayrimenkul module-card--soon" href="pages/ecosystem/yakında.html?module=gayrimenkul" aria-label="Gayrimenkul yakında hizmetinizde"><div><h3>Gayrimenkul</h3><p>Kiralık ve satılık</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--hukuk module-card--soon" href="pages/ecosystem/yakında.html?module=hukuk" aria-label="Hukuk yakında hizmetinizde"><div><h3>Hukuk</h3><p>Avukat ve danışmanlık</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--danismanlik module-card--soon" href="pages/ecosystem/yakında.html?module=danismanlik" aria-label="Danışmanlık yakında hizmetinizde"><div><h3>Danışmanlık</h3><p>Profesyonel destek</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-<a class="module-card module-card--egitim module-card--soon" href="pages/ecosystem/yakında.html?module=egitim" aria-label="Eğitim yakında hizmetinizde"><div><h3>Eğitim</h3><p>Kurslar ve öğrenim</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--kariyer module-card--soon" href="pages/ecosystem/yakında.html?module=kariyer" aria-label="Kariyer yakında hizmetinizde"><div><h3>Kariyer</h3><p>İş ve kariyer fırsatları</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--finans module-card--soon" href="pages/ecosystem/yakında.html?module=finans" aria-label="Finans yakında hizmetinizde"><div><h3>Finans</h3><p>Ödeme ve finansal hizmetler</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--otomotiv module-card--soon" href="pages/ecosystem/yakında.html?module=otomotiv" aria-label="Otomotiv yakında hizmetinizde"><div><h3>Otomotiv</h3><p>Araç ve ulaşım çözümleri</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--eglence module-card--soon" href="pages/ecosystem/yakında.html?module=eglence" aria-label="Eğlence ve Etkinlik yakında hizmetinizde"><div><h3>Eğlence & Etkinlik</h3><p>Festival, konser ve etkinlikler</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-<a class="module-card module-card--evcilhayvan module-card--soon" href="pages/ecosystem/yakında.html?module=evcilhayvan" aria-label="Evcil Hayvan yakında hizmetinizde"><div><h3>Evcil Hayvan</h3><p>Veteriner, bakım ve ürünler</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--teknoloji module-card--soon" href="pages/ecosystem/yakında.html?module=teknoloji" aria-label="Teknoloji yakında hizmetinizde"><div><h3>Teknoloji</h3><p>Elektronik ve dijital çözümler</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--sporfitnes module-card--soon" href="pages/ecosystem/yakında.html?module=sporfitnes" aria-label="Spor ve Fitness yakında hizmetinizde"><div><h3>Spor & Fitness</h3><p>Spor salonu ve sağlıklı yaşam</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--guzellik module-card--soon" href="pages/ecosystem/yakında.html?module=guzellik" aria-label="Güzellik ve Kozmetik yakında hizmetinizde"><div><h3>Güzellik & Kozmetik</h3><p>Bakım, kozmetik ve güzellik</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--sigorta module-card--soon" href="pages/ecosystem/yakında.html?module=sigorta" aria-label="Sigorta yakında hizmetinizde"><div><h3>Sigorta</h3><p>Araç, konut ve sağlık sigortası</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-<a class="module-card module-card--kurye module-card--soon" href="pages/ecosystem/yakında.html?module=kurye" aria-label="Kurye ve Teslimat yakında hizmetinizde"><div><h3>Kurye & Teslimat</h3><p>Hızlı kurye ve teslimat</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--evhizmetleri module-card--soon" href="pages/ecosystem/yakında.html?module=evhizmetleri" aria-label="Ev Hizmetleri yakında hizmetinizde"><div><h3>Ev Hizmetleri</h3><p>Temizlik, elektrik ve tadilat</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--lojistik module-card--soon" href="pages/ecosystem/yakında.html?module=lojistik" aria-label="Kargo ve Lojistik yakında hizmetinizde"><div><h3>Kargo & Lojistik</h3><p>Depo, taşıma ve lojistik</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--nakliye module-card--soon" href="pages/ecosystem/yakında.html?module=nakliye" aria-label="Nakliye yakında hizmetinizde"><div><h3>Nakliye</h3><p>Ev, ofis, parça eşya ve asansörlü nakliye</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--organizasyon module-card--soon" href="pages/ecosystem/yakında.html?module=organizasyon" aria-label="Organizasyon ve Düğün yakında hizmetinizde"><div><h3>Organizasyon & Düğün</h3><p>Düğün, davet ve etkinlik planlama</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-<a class="module-card module-card--tarim module-card--soon" href="pages/ecosystem/yakında.html?module=tarim" aria-label="Allona Tarım yakında hizmetinizde"><div><h3>Allona Tarım</h3><p>Çiftçilik, gübre, tohum ve TARSİM</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--insaatyapi module-card--soon" href="pages/ecosystem/yakında.html?module=insaat" aria-label="İnşaat ve Yapı yakında hizmetinizde"><div><h3>İnşaat & Yapı</h3><p>Müteahhit, yapı, proje ve mühendislik</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--muhendislik module-card--soon" href="pages/ecosystem/yakında.html?module=muhendislik" aria-label="Mühendislik yakında hizmetinizde"><div><h3>Mühendislik</h3><p>Teknik proje, çizim ve mühendislik</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--trade module-card--soon" href="pages/ecosystem/yakında.html?module=trade" aria-label="Trade yakında hizmetinizde"><div><h3>Trade</h3><p>İthalat, ihracat ve global ticaret</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--otelcilik module-card--soon" href="pages/ecosystem/yakında.html?module=otelcilik" aria-label="Otelcilik yakında hizmetinizde"><div><h3>Otelcilik</h3><p>Otel kiralama, konaklama</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-<a class="module-card module-card--saglik module-card--soon" href="pages/ecosystem/yakında.html?module=saglik" aria-label="Allona Sağlık yakında hizmetinizde"><div><h3>Allona Sağlık</h3><p>Sağlık ve güzellik</p><span class="module-status">Yakında hizmetinizde</span></div></a>
-
-</div>
-</section>
-
-<section class="turkic-home-entry" aria-labelledby="turkicHomeTitle">
-<div class="turkic-home-entry__content">
-<span>ALLONAHUB 2030</span>
-<h2 id="turkicHomeTitle">Türk Dünyası Dijital Ticaret Koridoru</h2>
-<p>Türkiye merkezli ortak hesap, ülke bazlı modül aktivasyonu, Partner Passport, B2B, lojistik ve sınır ötesi ticaret yol haritası.</p>
-<a href="pages/ecosystem/turkic-world.html">Türk Dünyası Hub’ı Aç</a>
-</div>
-<div class="turkic-home-entry__countries" aria-label="Planlanan ülkeler"><strong>TR</strong><span>→</span><strong>AZ</strong><span>→</span><strong>KZ</strong><strong>UZ</strong><strong>KG</strong></div>
-</section>
-
-<section class="section" id="premium">
-<h2 class="section-title">Premium Üyelikler</h2>
-<p class="section-sub">Statü, avantaj ve sadakat odaklı üyelik sistemi.</p>
-
-<div class="tiers">
-
-<div class="tier">
-<h3>A+</h3>
-<p>Premium Başlangıç Paketi</p>
-<ul>
-<li>✔️ HP bonusları</li>
-<li>✔️ Özel kampanyalar</li>
-<li>✔️ Seviye koruma</li>
-</ul>
-<details class="tier-more">
-<summary>Daha fazla</summary>
-<div class="tier-more__content">
-<p class="tier-note">Başlangıç avantajlarının tamamı.</p>
-<a href="pages/commerce/odeme.html?paket=aplus" class="tier-price">109,99 ₺ / Ay</a>
-</div>
-</details>
-</div>
-
-<div class="tier featured">
-<h3>Gold</h3>
-<p>En dengeli paket</p>
-<ul>
-<li>✔️ A+'daki hepsi</li>
-<li>✔️ Hızlı seviye yükseltme (x2)</li>
-<li>✔️ Daha fazla HP kazan</li>
-</ul>
-<details class="tier-more">
-<summary>Daha fazla</summary>
-<div class="tier-more__content">
-<ul>
-<li>✔️ Partner indirimleri</li>
-<li>✔️ Öncelikli kampanyalar</li>
-</ul>
-<a href="pages/commerce/odeme.html?paket=gold" class="tier-price">229,99 ₺ / Ay</a>
-</div>
-</details>
-</div>
-
-<div class="tier">
-<h3>Elite Black</h3>
-<p>Prestij ve özel erişim</p>
-<ul>
-<li>✔️ Gold'daki hepsi</li>
-<li>✔️ VIP rozet</li>
-<li>✔️ Elite kampanyalar</li>
-</ul>
-<details class="tier-more">
-<summary>Daha fazla</summary>
-<div class="tier-more__content">
-<ul>
-<li>✔️ Özel partner ayrıcalığı</li>
-</ul>
-<a href="pages/commerce/odeme.html?paket=eliteblack" class="tier-price">1499,99 ₺ / Ay</a>
-</div>
-</details>
-</div>
-
-<div class="tier legend">
-<h3>LEGEND</h3>
-<p>Yılda ortalama üyelik ücretinin 5-10 katı kadar avantaj</p>
-<ul>
-<li>✔️ Elite Black'teki özelliklerin hepsi</li>
-<li>✔️ Özel tasarımlı profil</li>
-<li>✔️ Bütün alışverişlerde %5 indirim</li>
-</ul>
-<details class="tier-more">
-<summary>Daha fazla</summary>
-<div class="tier-more__content">
-<ul>
-<li>✔️ Ücretsiz kargo</li>
-<li>✔️ Doğum günü hediyesi</li>
-<li>✔️ Bütün işlemlerde HP avantajı (x2)</li>
-<li>✔️ Öncelikli müşteri desteği</li>
-</ul>
-<a href="pages/commerce/odeme.html?paket=legend" class="tier-price">1999,99 ₺ / Ay</a>
-</div>
-</details>
-</div>
 
 </div>
 </section>
@@ -238,7 +102,7 @@
 <section class="section" id="partner">
 <div class="partner">
 <h2>AllonaHub Partner Ekosistemine Katıl</h2>
-<p>Restoran, mağaza, ulaşım, kariyer, denizcilik, sağlık, finans, lojistik ve hizmet sağlayıcıları için güçlü dijital büyüme alanı.</p>
+<p>Allona Denizcilik ve Allona Shop ekosisteminde yer almak isteyen işletmeler için başvuru alanı.</p>
 <a class="btn" href="pages/partner/partner.html">Partner Başvurusu Yap</a>
 </div>
 </section>
@@ -256,8 +120,7 @@
 <script src="js/platform.js?v=20260911-maritime-cache1" defer></script>
   <script src="js/privacy-consent.js?v=20260911-maritime-cache1" defer></script>
 <script src="js/sw-refresh.heading2.js?v=20260911-maritime-cache1" defer></script>
-<script src="js/allonahub-home.js?v=20260920-home-footer1" defer></script>
+<script src="js/allonahub-home.js?v=20260920-home-risk1" defer></script>
 <script src="js/pwa-install.js?v=20260911-maritime-cache1" defer></script>
-<script src="js/assistant-widget.js?v=20260828-warmtone1" defer data-channel="webchat"></script>
 </body>
 </html>

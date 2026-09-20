@@ -22,10 +22,7 @@ setInterval(updateHeroTime,1000);
 }
 
 const heroAdModules=[
-{title:"Allona Shop",eyebrow:"Alışveriş",sentence:"Yeni fırsatları, güvenli sepeti ve kampanyaları tek ekranda keşfet.",href:"pages/commerce/allonashop.html",image:"images/ads/hero-ad-shop.jpg",accent:"#00e5ff",cta:"Alışverişe Git"},
-{title:"Allona Yemek",eyebrow:"Yemek",sentence:"Yakındaki lezzetleri sıcak servis ve hızlı sipariş akışıyla sofrana taşı.",href:"pages/commerce/allonayemek.html",image:"images/ads/hero-ad-yemek.jpg",accent:"#ff8a3d",cta:"Lezzetleri Gör"},
-{title:"Allona Market",eyebrow:"Market",sentence:"Günlük ihtiyaçlarını hızlı teslimat ve kolay sepet deneyimiyle tamamla.",href:"pages/commerce/allonamarket.html",image:"images/ads/hero-ad-market.jpg",accent:"#20e3a2",cta:"Markete Git"},
-{title:"Allona Taksi",eyebrow:"Ulaşım",sentence:"Şehir içi yolculuklarını güvenli rota ve canlı sürücü akışıyla başlat.",href:"pages/ecosystem/allonataksi.html",image:"images/ads/hero-ad-taksi.jpg",accent:"#46a6ff",cta:"Taksi Çağır"},
+{title:"Allona Shop",eyebrow:"Alışveriş",sentence:"Yeni ürünleri ve alışveriş seçeneklerini tek ekranda keşfet.",href:"pages/commerce/allonashop.html",image:"images/ads/hero-ad-shop.jpg",accent:"#00e5ff",cta:"Alışverişe Git"},
 {title:"Denizcilik",eyebrow:"Maritime",sentence:"Gemi, crew ve denizcilik fırsatlarını profesyonel ağ içinde buluştur.",href:"pages/ecosystem/allonadenizcilik.html",image:"images/ads/hero-ad-denizcilik.jpg",accent:"#00b4d8",cta:"Denize Açıl"}
 ];
 
@@ -319,68 +316,19 @@ requestBrowserLocation({prompt:true});
 bindLocationPrompt();
 setLocationByBrowser();
 
-const approvedAds={
-pet:[
-{title:"Kayıp Kedi Aranıyor",desc:"Beyaz-gri British, son görüldüğü yer Kadıköy.",meta:"Kayıp • Kadıköy • 2 saat önce"},
-{title:"Golden Sahiplendirme",desc:"Aşıları tam, aile ortamına uygun.",meta:"Sahiplendirme • Ataşehir"},
-{title:"Bulunan Köpek",desc:"Tasmali erkek köpek bulundu.",meta:"Bulundu • Beşiktaş"}
-],
-job:[
-{title:"Muhasebe Personeli",desc:"Tam zamanlı ofis pozisyonu.",meta:"İş İlanı • İstanbul"},
-{title:"E-Ticaret Uzmanı",desc:"Pazaryeri ürün yönetimi bilen ekip arkadaşı.",meta:"Aranıyor • Hibrit"},
-{title:"Satış Danışmanı",desc:"Mağaza satış deneyimi olan.",meta:"Aranıyor • Avrupa Yakası"}
-],
-maritime:[
-{title:"2nd Engineer Aranıyor",desc:"Bulk carrier için deneyimli personel.",meta:"Denizcilik • Acil"},
-{title:"AB Aranıyor",desc:"24 ay deneyimli güverte personeli.",meta:"Crew • İstanbul"},
-{title:"Chief Officer",desc:"Kuru yük gemisi için aday aranıyor.",meta:"Maritime • Başvuru açık"}
-],
-realestate:[
-{title:"2+1 Kiralık Daire",desc:"Site içinde, ulaşımı kolay.",meta:"Kiralık • Beylikdüzü"},
-{title:"Satılık Villa",desc:"Bahçeli, güvenlikli lüks yaşam alanı.",meta:"Satılık • Büyükçekmece"},
-{title:"Ofis Kiralık",desc:"Merkezi konum, hazır kullanıma uygun.",meta:"Kiralık • Şişli"}
-],
-service:[
-{title:"Acil Tesisatçı Aranıyor",desc:"Su kaçağı için yakındaki ustalar.",meta:"Hizmet Talebi • Acil"},
-{title:"Ev Temizliği",desc:"Haftalık temizlik hizmeti aranıyor.",meta:"Aranıyor • Kadıköy"},
-{title:"Boyacı Usta",desc:"2+1 daire boya işi için teklif bekleniyor.",meta:"Teklif • İstanbul"}
-]
-};
-
-let adIndex={};
-function rotateAds(){
-document.querySelectorAll(".live-ad-card").forEach(card=>{
-const type=card.dataset.type;
-const ads=approvedAds[type];
-adIndex[type]=(adIndex[type]||0)%ads.length;
-const ad=ads[adIndex[type]];
-card.querySelector(".ad-title").textContent=ad.title;
-card.querySelector(".ad-desc").textContent=ad.desc;
-card.querySelector(".ad-meta").textContent=ad.meta;
-adIndex[type]++;
-});
-}
-rotateAds();
-setInterval(rotateAds,6000);
-
 const verifiedStatKeys={
 activeUsers:["active_user_count","user_count"],
 activeAds:["active_partner_count","partner_count"],
 jobAds:["new_user_count","new_member_count"],
-activeListings:["active_listing_count","active_job_count"],
-dailyHP:["hp_points_issued","daily_hp_points"]
+activeListings:["active_listing_count","active_job_count"]
 };
 const statLabels={
 activeUsers:"Aktif Kullanıcı",
 activeAds:"Aktif Partner",
 jobAds:"Yeni Üyeler",
-activeListings:"İlanlar",
-dailyHP:"Sadakat Puanı"
+activeListings:"İlanlar"
 };
 const requiredVerifiedStats=["activeUsers","activeAds","jobAds","activeListings"];
-const optionalStatFallbacks={
-dailyHP:"Henüz ölçülmüyor"
-};
 function formatNumber(num){return Number(num).toLocaleString("tr-TR")}
 function metricKeyOf(item){return item?.metricKey||item?.metric_key}
 function globalMetricOnly(item){return !(item?.countryId||item?.country_id)&&!(item?.corridorId||item?.corridor_id)}
@@ -403,18 +351,13 @@ card?.classList.toggle("has-missing-source",missing);
 if(card){card["__allonaSource_aria-label"]=ariaText}
 card?.setAttribute("aria-label",ariaText);
 }
-function markOptionalStatsMissing(){Object.entries(optionalStatFallbacks).forEach(([id,text])=>setLiveStatState(id,text,"missing"))}
 function clearLiveStats(){Object.keys(verifiedStatKeys).forEach(id=>setLiveStatState(id,"—","pending"))}
 function updateLiveStats(metrics){
 const globalMetrics=(metrics||[]).filter(globalMetricOnly);
-const updatedStats=new Set();
 Object.entries(verifiedStatKeys).forEach(([id,keys])=>{
 const metric=globalMetrics.find(item=>keys.includes(metricKeyOf(item)));
 const numericValue=metric?finiteMetricValue(metric.value):null;
-if(numericValue!==null){setLiveStatState(id,formatNumber(numericValue),"verified");updatedStats.add(id)}
-});
-Object.entries(optionalStatFallbacks).forEach(([id,text])=>{
-if(!updatedStats.has(id)){setLiveStatState(id,text,"missing")}
+if(numericValue!==null){setLiveStatState(id,formatNumber(numericValue),"verified")}
 });
 }
 async function loadVerifiedStats(){
@@ -426,8 +369,7 @@ const response=await fetch(`${base}/v1/platform/impact`,{headers:{Accept:"applic
 if(!response.ok){throw new Error(`impact ${response.status}`)}
 const payload=await response.json();
 if(!Array.isArray(payload.metrics)||!payload.metrics.length){
-markOptionalStatsMissing();
-if(source){source.textContent=payload.sourceNotes?.join(" • ")||"Doğrulanmış aggregate veri henüz yayınlanmadı."}
+if(source){source.textContent="Doğrulanmış aggregate veri henüz yayınlanmadı."}
 return
 }
 updateLiveStats(payload.metrics);
@@ -436,10 +378,9 @@ const node=document.getElementById(id);
 return node&&node.textContent.trim()!=="—";
 });
 if(source){
-const optionalNotes=Array.isArray(payload.sourceNotes)&&payload.sourceNotes.length?` ${payload.sourceNotes.join(" • ")}`:"";
 source.textContent=hasRequiredStats
-?"Sayaçlar production aggregate veriden gelir; yeni üyeler son 7 günü gösterir."+optionalNotes
-:payload.sourceNotes?.join(" • ")||"Zorunlu aggregate kaynakları henüz tamamlanmadı.";
+?"Sayaçlar production aggregate veriden gelir; yeni üyeler son 7 günü gösterir."
+:"Zorunlu aggregate kaynakları henüz tamamlanmadı.";
 }
 }catch(error){
 if(source){source.textContent="Canlı sayaç kaynağına şu anda ulaşılamıyor."}
@@ -448,40 +389,8 @@ if(source){source.textContent="Canlı sayaç kaynağına şu anda ulaşılamıyo
 loadVerifiedStats();
 
 const searchRoutes=[
-{keys:["türk dünyası","turkic world","ticaret koridoru","azerbaycan","kazakistan","özbekistan","kırgızistan"],url:"/pages/ecosystem/turkic-world.html"},
 {keys:["shop","alışveriş","pazaryeri","ürün"],url:"/pages/commerce/allonashop.html"},
-{keys:["yemek","restoran","burger","pizza"],url:"/pages/commerce/allonayemek.html"},
-{keys:["market","süpermarket","gıda"],url:"/pages/commerce/allonamarket.html"},
-{keys:["taksi","ulaşım"],url:"/pages/ecosystem/allonataksi.html"},
-{keys:["denizcilik","gemi","crew","maritime"],url:"/pages/ecosystem/allonadenizcilik.html"},
-{keys:["avm","alışveriş merkezi","mall"],url:"/pages/ecosystem/yakında.html?module=avm-dunyasi"},
-{keys:["sağlık","doktor","eczane"],url:"/pages/ecosystem/yakında.html?module=saglik"},
-{keys:["seyahat","turizm","bilet"],url:"/pages/ecosystem/yakında.html?module=seyahat"},
-{keys:["gayrimenkul","ev","arsa","kiralık","satılık"],url:"/pages/ecosystem/yakında.html?module=gayrimenkul"},
-{keys:["hukuk","avukat"],url:"/pages/ecosystem/yakında.html?module=hukuk"},
-{keys:["danışmanlık","vize","ikamet"],url:"/pages/ecosystem/yakında.html?module=danismanlik"},
-{keys:["eğitim","kurs"],url:"/pages/ecosystem/yakında.html?module=egitim"},
-{keys:["kariyer","iş","cv"],url:"/pages/ecosystem/yakında.html?module=kariyer"},
-{keys:["finans","kredi"],url:"/pages/ecosystem/yakında.html?module=finans"},
-{keys:["otomotiv","araç","araba"],url:"/pages/ecosystem/yakında.html?module=otomotiv"},
-{keys:["eğlence","etkinlik","konser","maç"],url:"/pages/ecosystem/yakında.html?module=eglence"},
-{keys:["evcil","pet","veteriner"],url:"/pages/ecosystem/yakında.html?module=evcilhayvan"},
-{keys:["teknoloji","telefon","bilgisayar"],url:"/pages/ecosystem/yakında.html?module=teknoloji"},
-{keys:["spor","fitness"],url:"/pages/ecosystem/yakında.html?module=sporfitnes"},
-{keys:["güzellik","kozmetik"],url:"/pages/ecosystem/yakında.html?module=guzellik"},
-{keys:["sigorta","kasko","dask"],url:"/pages/ecosystem/yakında.html?module=sigorta"},
-{keys:["kurye","teslimat"],url:"/pages/ecosystem/yakında.html?module=kurye"},
-{keys:["ev hizmetleri","temizlik","usta"],url:"/pages/ecosystem/yakında.html?module=evhizmetleri"},
-{keys:["kargo","lojistik"],url:"/pages/ecosystem/yakında.html?module=lojistik"},
-{keys:["nakliye","taşıma"],url:"/pages/ecosystem/yakında.html?module=nakliye"},
-{keys:["organizasyon","düğün","nişan"],url:"/pages/ecosystem/yakında.html?module=organizasyon"},
-{keys:["tarım","çiftçi","gübre","tohum"],url:"/pages/ecosystem/yakında.html?module=tarim"},
-{keys:["inşaat","yapı","müteahhit"],url:"/pages/ecosystem/yakında.html?module=insaat"},
-{keys:["mühendislik","mühendis"],url:"/pages/ecosystem/yakında.html?module=muhendislik"},
-{keys:["trade","ithalat","ihracat"],url:"/pages/ecosystem/yakında.html?module=trade"},
-{keys:["otelcilik","otel","konaklama"],url:"/pages/ecosystem/yakında.html?module=otelcilik"},
-{keys:["kupon","hp","kampanya","indirim"],url:"/pages/commerce/kuponlar.html"},
-{keys:["wallet","pay"],url:"/pages/account/rewards.html"}
+{keys:["denizcilik","gemi","crew","maritime"],url:"/pages/ecosystem/allonadenizcilik.html"}
 ];
 
 function appUrl(path){
@@ -498,7 +407,7 @@ const q=cleanSearchText(input&&input.value).toLocaleLowerCase("tr-TR");
 if(!q){return}
 const found=searchRoutes.find(item=>item.keys.some(k=>q.includes(k)));
 if(found){window.location.href=appUrl(found.url)}
-else{window.location.href=appUrl(`/pages/search/arama.html?q=${encodeURIComponent(q)}`)}
+else{window.location.href=appUrl("/index.html#modules")}
 }
 
 window.globalSearch=globalSearch;
@@ -512,28 +421,25 @@ if(e.key==="Enter"){globalSearch()}
 }
 if(globalSearchButton){globalSearchButton.addEventListener("click",globalSearch);}
 
-function homeFooterLogoMarkup(label,source,extraClass){
-return `<span class="home-payment-logo ${extraClass||""}" role="listitem" aria-label="${label}"><img src="${source}" alt="${label}"></span>`;
-}
+const homeFooterBlockedRoutes=[
+"/pages/commerce/allonayemek.html",
+"/pages/commerce/allonamarket.html",
+"/pages/commerce/kuponlar.html",
+"/pages/premium.html",
+"/pages/career/allonakariyer.html"
+];
 
 function enhanceHomeFooter(){
-const strip=document.querySelector(".site-footer .footer-payment-strip");
-if(!strip){return false}
+const footer=document.querySelector(".site-footer");
+if(!footer){return false}
+footer.querySelectorAll("a[href]").forEach(link=>{
+const href=new URL(link.href,window.location.href).pathname;
+if(homeFooterBlockedRoutes.includes(href)){link.remove()}
+});
 const storeButtons=document.querySelector(".site-footer .store-buttons");
-if(storeButtons){storeButtons.hidden=true}
-if(strip.dataset.homeLogosReady!=="true"){
-strip.dataset.homeLogosReady="true";
-strip.setAttribute("role","list");
-strip.innerHTML=[
-homeFooterLogoMarkup("TROY","https://www.troyodeme.com/upload/cmspagefile/image/anasayfa/TROY-Logo-Tagline.png","home-payment-logo--troy"),
-homeFooterLogoMarkup("Visa","https://cdn.simpleicons.org/visa/1434CB"),
-homeFooterLogoMarkup("Mastercard","https://cdn.simpleicons.org/mastercard/EB001B"),
-homeFooterLogoMarkup("American Express","https://cdn.simpleicons.org/americanexpress/006FCF"),
-homeFooterLogoMarkup("PayPal","https://cdn.simpleicons.org/paypal/003087"),
-homeFooterLogoMarkup("Google Pay","https://cdn.simpleicons.org/googlepay/3C4043"),
-homeFooterLogoMarkup("Apple Pay","https://cdn.simpleicons.org/applepay/000000")
-].join("");
-}
+if(storeButtons){storeButtons.remove()}
+const paymentStrip=document.querySelector(".site-footer .footer-payment-strip");
+if(paymentStrip){paymentStrip.remove()}
 return true;
 }
 
