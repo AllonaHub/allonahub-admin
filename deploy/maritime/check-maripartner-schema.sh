@@ -131,6 +131,32 @@ begin
   ) then
     raise exception 'Employer reference guard is missing hardened SECURITY DEFINER settings';
   end if;
+
+  if to_regprocedure('public.sync_verified_partner_business_roles()') is null
+    or to_regprocedure('public.sync_verified_partner_staff_role()') is null then
+    raise exception 'Verified partner account role synchronization functions are missing';
+  end if;
+
+  if has_function_privilege('anon', 'public.sync_verified_partner_business_roles()', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.sync_verified_partner_business_roles()', 'EXECUTE')
+    or has_function_privilege('anon', 'public.sync_verified_partner_staff_role()', 'EXECUTE')
+    or has_function_privilege('authenticated', 'public.sync_verified_partner_staff_role()', 'EXECUTE') then
+    raise exception 'Direct client execution detected on verified partner role synchronization';
+  end if;
+
+  if not exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.partner_businesses'::regclass
+      and tgname = 'partner_businesses_sync_verified_roles'
+      and not tgisinternal
+  ) or not exists (
+    select 1 from pg_trigger
+    where tgrelid = 'public.partner_staff'::regclass
+      and tgname = 'partner_staff_sync_verified_role'
+      and not tgisinternal
+  ) then
+    raise exception 'Verified partner account role synchronization triggers are missing';
+  end if;
 end
 $maripartner_check$;
 SQL

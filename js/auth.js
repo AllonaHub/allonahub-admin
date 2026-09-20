@@ -64,11 +64,10 @@
 
     const profile = await getPersistedProfile(user.id);
     const trustedAuthRole = String(user.app_metadata?.role || "").trim().toLowerCase();
-    const role = String(profile?.role || trustedAuthRole || "customer").trim().toLowerCase();
-    const resolvedProfile = profile || { id: user.id, role, account_status: "active" };
+    let role = String(profile?.role || trustedAuthRole || "customer").trim().toLowerCase();
     let partnerBusiness = null;
 
-    if (role === "partner") {
+    if (!["admin", "super_admin"].includes(role)) {
       const { data, error } = await App.db.client()
         .from("partner_businesses")
         .select("id, owner_id, partner_code, display_name, partner_type, status, verification_status")
@@ -78,7 +77,7 @@
         .maybeSingle();
       if (error) throw error;
       partnerBusiness = data || null;
-      if (!partnerBusiness) {
+      if (!partnerBusiness && role === "partner") {
         const { data: staff } = await App.db.client()
           .from("partner_staff")
           .select("partner_businesses!inner(id, owner_id, partner_code, display_name, partner_type, status, verification_status)")
@@ -89,8 +88,17 @@
           .maybeSingle();
         partnerBusiness = staff?.partner_businesses || null;
       }
+
+      if (role === "customer"
+        && partnerBusiness?.status === "active"
+        && partnerBusiness?.verification_status === "verified") {
+        role = "partner";
+      }
     }
 
+    const resolvedProfile = profile
+      ? { ...profile, role }
+      : { id: user.id, role, account_status: "active" };
     const type = ["customer", "partner", "admin", "super_admin"].includes(role) ? role : "unknown";
     return { type, user, profile: resolvedProfile, profilePersisted: Boolean(profile), partnerBusiness };
   }

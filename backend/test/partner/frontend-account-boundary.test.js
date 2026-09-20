@@ -91,6 +91,38 @@ test("a company row cannot promote a customer profile into the partner role", as
   await assert.rejects(() => auth.requireRole(["partner"]), /erişim yetkiniz yok/i);
 });
 
+test("an active verified maritime business owner resolves to MariPartner even with a legacy customer profile", async () => {
+  const { auth } = await authRuntime({
+    role: "customer",
+    partnerBusiness: {
+      id: "business-1",
+      partner_type: "maritime",
+      status: "active",
+      verification_status: "verified"
+    }
+  });
+  const context = await auth.getAccountContext({ id: "account-1" });
+  assert.equal(context.type, "partner");
+  assert.equal(context.profile.role, "partner");
+  assert.equal(await auth.accountDestination("/pages/account/user-panel.html", { id: "account-1" }), "/pages/partner/maripartner.html");
+});
+
+test("a verified maritime owner is redirected away from the customer panel", async () => {
+  const { auth, replacements } = await authRuntime({
+    role: "customer",
+    partnerBusiness: {
+      id: "business-1",
+      partner_type: "maritime",
+      status: "active",
+      verification_status: "verified"
+    },
+    pathname: "/pages/account/user-panel.html"
+  });
+  const result = await auth.requireAccountType("customer", { user: { id: "account-1" } });
+  assert.equal(result, null);
+  assert.deepEqual(replacements, ["/pages/partner/maripartner.html"]);
+});
+
 test("admin accounts resolve to their own administration area", async () => {
   const { auth } = await authRuntime({ role: "admin" });
   const destination = await auth.accountDestination("/pages/account/user-panel.html", { id: "account-1" });

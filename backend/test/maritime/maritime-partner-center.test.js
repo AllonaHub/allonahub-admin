@@ -232,3 +232,16 @@ test("maritime partner routing remains isolated from general Partner OS", () => 
   assert.doesNotMatch(auth, /return "\/maripartner"/);
   assert.doesNotMatch(partner, /partnerPortalUrl\("\/maripartner"\)/);
 });
+
+test("verified partner role synchronization is migration-backed and client-inaccessible", () => {
+  const migration = read("supabase/migrations/20260920213000_sync_verified_partner_account_roles.sql");
+  const applyScript = read("deploy/maritime/apply-maritime-migrations.sh");
+  const checkScript = read("deploy/maritime/check-maripartner-schema.sh");
+  assert.match(migration, /status = 'active'.*verification_status = 'verified'/s);
+  assert.match(migration, /role not in \('admin', 'super_admin'\)/);
+  assert.match(migration, /partner_businesses_sync_verified_roles/);
+  assert.match(migration, /partner_staff_sync_verified_role/);
+  assert.match(migration, /revoke all on function public\.sync_verified_partner_business_roles\(\) from public, anon, authenticated/);
+  assert.match(applyScript, /20260920213000_sync_verified_partner_account_roles\.sql/);
+  assert.match(checkScript, /Verified partner account role synchronization triggers are missing/);
+});
